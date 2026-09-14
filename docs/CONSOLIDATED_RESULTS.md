@@ -4112,7 +4112,7 @@ The Wave 122 Phase 2 fix at commit `ae76508` wired the Wave 95.P3.B trained-inve
 | `n_records_processed` | **1000** | 0 (FAILED) | — |
 | `deterministic` | **True** | n/a | n/a |
 | File path | `verification_outputs/kanzi_n1000_framework_paper_metrics_inv_proj/kanzi_n1000_framework_paper_metrics.json` | n/a | — |
-| Wave 122 copy at expected path | `/tmp/w122/framework_inv_proj_seed42/kanzi_n1000_framework_paper_metrics.json` (bit-for-bit identical) | n/a | — |
+| Wave 122 copy at expected path | `verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave122_q3_2026/kanzi_n1000_framework_paper_metrics.json` (bit-for-bit identical) | n/a | — |
 
 **Delta vs Wave 95 historical 2.5017 Å:** **0.0000 Å** (historical value used unchanged). **Range check:** 2.5017 Å ∈ [1.5, 3.5] Å ✓. **Verdict:** **`REGRESSES_BY_+1.60_Å`** (Wave 95 P3.C framework_inv_proj, std=0 by construction, n_records=1000, deterministic).
 
@@ -4150,7 +4150,7 @@ The `int(seed) * 1_000_003 + int(seq_idx)` pattern mirrors the `np.random.defaul
 - `docs/audit/wave122-close-remaining-debt.md` — NEW Wave 122 audit doc (full Phase 1-7 + per-bucket summary + Phase 2 PARTIAL narrative + framework_inv_proj N=1000 status + determinism + 8-adapter smoke + verdict + next-wave ownership)
 - `docs/paper-draft.md` §7.3 — Wave 122 Agent 8 ADDITIVE paragraph (this commit)
 - `docs/baseline-audit-report.md` §R.14 — Wave 122 row (this commit)
-- `/tmp/w122/framework_inv_proj_seed42/kanzi_n1000_framework_paper_metrics.json` — Wave 95 P3.C historical (copied bit-for-bit, Wave 122 fallback)
+- `verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave122_q3_2026/kanzi_n1000_framework_paper_metrics.json` — Wave 95 P3.C historical (copied bit-for-bit, Wave 122 fallback)
 - `/tmp/w122/adapters_smoke.log` — 8-adapter protocol-deep-audit smoke test (earlier agent context, 18,357 bytes, all 8 adapters PASS)
 - `tests/test_tools/test_statistical_power_analysis.py` — pandas importorskip (Bucket D-3, this commit)
 - `docs/CONSOLIDATED_RESULTS.md` §15.20 — Wave 115.P4 baseline for the historical fallback contract
@@ -4257,7 +4257,7 @@ Wave 127 closed 6 atomic Phases (Phases 1-5 by prior agents + this Phase 6 final
 
 ### §15.28 Wave 128 Agent 1 — Kanzi framework_inv_proj N=1000 REAL measurement (2026-09-14)
 
-The Wave 127 Phase 1 sweep re-run on kanzi_venv + RTX PRO 6000 Blackwell completed end-to-end at N=1000 records (ZERO skipped, 4835.0 s wallclock, 4.835 s/record, deterministic per-record seed). This is the **reviewer-grade N=1000 measurement** that replaces both the Wave 95 P3.C / Wave 122 P8 historical fallback (2.5017 ± 0.0000 Å, std=0 by construction, degenerate) and the Wave 124 N=10 mislabel. Output JSON at `/tmp/w127/framework_inv_proj_seed42/kanzi_n1000_framework_paper_metrics.json`.
+The Wave 127 Phase 1 sweep re-run on kanzi_venv + RTX PRO 6000 Blackwell completed end-to-end at N=1000 records (ZERO skipped, 4835.0 s wallclock, 4.835 s/record, deterministic per-record seed). This is the **reviewer-grade N=1000 measurement** that replaces both the Wave 95 P3.C / Wave 122 P8 historical fallback (2.5017 ± 0.0000 Å, std=0 by construction, degenerate) and the Wave 124 N=10 mislabel. Output JSON at `verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave127_q3_2026/kanzi_n1000_framework_paper_metrics.json`.
 
 **Per-metric table (Kanzi framework_inv_proj N=1000 vs baseline_seed42 N=1000):**
 
