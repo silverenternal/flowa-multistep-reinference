@@ -119,7 +119,7 @@ def apply_entropy_encoding(theta: torch.Tensor) -> torch.Tensor:
 
 def _inv_freq(qkv_size: int) -> torch.Tensor:
     """RoFormer inverse-frequency schedule for rotary embeddings."""
-    return 1.0 / (
+    return 1.0 / (  # type: ignore[no-any-return]
         UPPER_FREQ ** (torch.arange(0, qkv_size, 2, dtype=torch.float32) / qkv_size)
     )
 
@@ -178,8 +178,8 @@ class MultiHeadAttention(nn.Module):
         k = self.key(x).reshape(L, self.num_heads, self.qkv_size)
         v = self.value(x).reshape(L, self.num_heads, self.qkv_size)
         # Apply rotary embeddings to q and k only
-        q = _rotary_embedding(q, self.inv_freq)
-        k = _rotary_embedding(k, self.inv_freq)
+        q = _rotary_embedding(q, self.inv_freq)  # type: ignore[arg-type]
+        k = _rotary_embedding(k, self.inv_freq)  # type: ignore[arg-type]
         # Attention logits: (num_heads, L, L)
         attn_logits = torch.einsum("thd,Thd->htT", q, k) / math.sqrt(self.qkv_size)
         attn = torch.softmax(attn_logits, dim=-1)
@@ -187,7 +187,7 @@ class MultiHeadAttention(nn.Module):
         out = torch.einsum("htT,Thd->thd", attn, v)
         # Concatenate heads: (L, num_heads * qkv_size)
         out = out.reshape(L, self.num_heads * self.qkv_size)
-        return self.mha_output(out)
+        return self.mha_output(out)  # type: ignore[no-any-return]
 
 
 class SelfAttentionBlock(nn.Module):
@@ -244,7 +244,7 @@ class RobertaHead(nn.Module):
         x = self.fc1(x)
         x = gelu_exact(x)
         x = self.second_layer_norm(x)
-        return self.final_fc(x)
+        return self.final_fc(x)  # type: ignore[no-any-return]
 
 
 # ---------------------------------------------------------------------------
@@ -307,7 +307,7 @@ class ProtBFNTransformer(nn.Module):
         x = self.emb_layer_norm_before(x)
         for layer in self.layers:
             x = layer(x)
-        return self.lm_head(x)
+        return self.lm_head(x)  # type: ignore[no-any-return]
 
     @classmethod
     def load_from_pytree(
@@ -358,7 +358,7 @@ class ProtBFNTransformer(nn.Module):
         # register_buffer, not stored in the pytree).
         for name, module in model.named_modules():
             if isinstance(module, MultiHeadAttention):
-                sd[f"{name}.inv_freq"] = module.inv_freq.to(device=device)
+                sd[f"{name}.inv_freq"] = module.inv_freq.to(device=device)  # type: ignore[assignment]
         missing, unexpected = model.load_state_dict(sd, strict=False)
         if unexpected:
             raise ValueError(f"unexpected_state_dict_keys:{unexpected}")

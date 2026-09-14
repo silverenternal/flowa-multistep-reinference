@@ -291,7 +291,7 @@ class ConcreteFlowMol3Materializer:
             source_round=native_state_bundle.source_round,
             source_digest=native_state_bundle.source_digest,
             provenance=native_state_bundle.provenance + ("materializer:flowmol3",),
-            materializer_handle=self._handle,
+            materializer_handle=self._handle,  # type: ignore[arg-type]
         )
 
     def envelope_to_native(
@@ -355,7 +355,7 @@ class ConcreteFlowMol3Materializer:
             source_round=env.source_round,
             source_digest=env.source_digest,
             provenance=env.provenance,
-            materializer_handle=env.materializer_handle,
+            materializer_handle=env.materializer_handle,  # type: ignore[arg-type]
         )
 
     def materialize(
@@ -370,7 +370,7 @@ class ConcreteFlowMol3Materializer:
             source_round=envelope_state.source_round,
             source_digest=envelope_state.source_digest,
             provenance=envelope_state.provenance,
-            materializer_handle=envelope_state.materializer_handle,
+            materializer_handle=envelope_state.materializer_handle,  # type: ignore[arg-type]
         )
         return self.envelope_to_native(legacy_env, atom_count=atom_count)
 
@@ -483,7 +483,7 @@ class ConcreteGraphBFNMaterializer:
             source_round=native_state_bundle.source_round,
             source_digest=native_state_bundle.source_digest,
             provenance=native_state_bundle.provenance + ("materializer:graphbfn",),
-            materializer_handle=self._handle,
+            materializer_handle=self._handle,  # type: ignore[arg-type]
         )
 
     def envelope_to_native(
@@ -547,7 +547,7 @@ class ConcreteGraphBFNMaterializer:
             source_round=env.source_round,
             source_digest=env.source_digest,
             provenance=env.provenance,
-            materializer_handle=env.materializer_handle,
+            materializer_handle=env.materializer_handle,  # type: ignore[arg-type]
         )
 
     def materialize(
@@ -562,7 +562,7 @@ class ConcreteGraphBFNMaterializer:
             source_round=envelope_state.source_round,
             source_digest=envelope_state.source_digest,
             provenance=envelope_state.provenance,
-            materializer_handle=envelope_state.materializer_handle,
+            materializer_handle=envelope_state.materializer_handle,  # type: ignore[arg-type]
         )
         return self.envelope_to_native(legacy_env, atom_count=atom_count)
 
@@ -882,7 +882,7 @@ class ConcreteProtBFNMaterializer:
             source_round=env.source_round,
             source_digest=env.source_digest,
             provenance=env.provenance,
-            materializer_handle=env.materializer_handle,
+            materializer_handle=env.materializer_handle,  # type: ignore[arg-type]
         )
 
     def envelope_to_native(
@@ -897,7 +897,7 @@ class ConcreteProtBFNMaterializer:
             source_round=envelope_state.source_round,
             source_digest=envelope_state.source_digest,
             provenance=envelope_state.provenance,
-            materializer_handle=envelope_state.materializer_handle,
+            materializer_handle=envelope_state.materializer_handle,  # type: ignore[arg-type]
         )
         return self.materialize(env, atom_count=atom_count)
 
@@ -941,12 +941,12 @@ class ConcreteProtBFNMaterializer:
 
 def default_flowmol3_materializer() -> MaterializationRouteProtocol:
     """Return the canonical :class:`ConcreteFlowMol3Materializer` factory."""
-    return ConcreteFlowMol3Materializer()
+    return ConcreteFlowMol3Materializer()  # type: ignore[return-value]
 
 
 def default_graphbfn_materializer() -> MaterializationRouteProtocol:
     """Return the canonical :class:`ConcreteGraphBFNMaterializer` factory."""
-    return ConcreteGraphBFNMaterializer()
+    return ConcreteGraphBFNMaterializer()  # type: ignore[return-value]
 
 
 def default_protbfn_materializer() -> MaterializationRouteProtocol:
@@ -958,7 +958,7 @@ def default_protbfn_materializer() -> MaterializationRouteProtocol:
     surface or the new ``dematerialize`` / ``materialize`` typed surface
     transparently.
     """
-    return ConcreteProtBFNMaterializer()
+    return ConcreteProtBFNMaterializer()  # type: ignore[return-value]
 
 
 __all__ = [

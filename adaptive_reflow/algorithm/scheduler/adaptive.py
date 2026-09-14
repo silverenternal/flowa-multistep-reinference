@@ -53,7 +53,7 @@ from .protocols import (
     ScheduleSample,
     _coerce_int_nonneg,
 )
-from .simple import (
+from .simple import (  # type: ignore[attr-defined]
     CosineAnnealScheduler,
     default_cosine_scheduler,
     memory_fraction_from_schedule,

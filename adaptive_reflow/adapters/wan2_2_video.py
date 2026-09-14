@@ -59,7 +59,7 @@ from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
@@ -179,7 +179,7 @@ Variant = Literal["t2v_a14b", "ti2v_5b", "i2v_a14b"]
 Mode = Literal["synthetic", "upstream"]  # 'upstream' wires WanT2V directly.
 
 # Local type alias (avoid numpy at module-import hot annotation paths).
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 
 # ---------------------------------------------------------------------------
@@ -680,7 +680,7 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
         if int(synthetic_hidden) <= 0:
             raise ValueError("synthetic_hidden_must_be_positive")
 
-        self._variant: Variant = variant  # type: ignore[assignment]
+        self._variant: Variant = variant
         self._num_steps = int(num_steps)
         self._solver = str(solver)
         self._seed_offset = int(seed_offset)
@@ -740,7 +740,7 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
                 self._mode = "synthetic"
         elif force_mode == "synthetic":
             self._mode = "synthetic"
-        elif force_mode == "torch":
+        elif force_mode == "torch":  # type: ignore[comparison-overlap]
             if not torch_is_available():
                 raise RuntimeError("torch requested but not installed")
             if not self._weights_path.exists():
@@ -768,7 +768,7 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
         self._upstream_context: Any = None  # cached context for current prompt
         self._upstream_context_null: Any = None
         self._upstream_offload: bool = True
-        if self._mode == "torch":
+        if self._mode == "torch":  # type: ignore[comparison-overlap]
             # Production path is intentionally not implemented here
             # — the design spec lists the dependency blockers
             # (Wan2.2 paper PDF, DiT weights, umT5-XXL, flash-attn,
@@ -1157,7 +1157,7 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
         delta: ODEConditionDelta,
     ) -> ODEConditionDelta:
         del bundle
-        new_spec = dict(delta.delta_spec)
+        new_spec = dict(delta.delta_spec)  # type: ignore[call-overload]
         new_spec.setdefault("target_distribution", "wan_bench_2k")
         new_spec.setdefault("integrator_config_hash", WAN22_CONFIG_HASH)
         new_spec.setdefault("num_steps", WAN22_NUM_STEPS_DEFAULT)
@@ -1198,7 +1198,7 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
         ``(C, T_lat, H_lat, W_lat)`` float64 array (copy-safe to
         mutate).
         """
-        if self._mode == "torch":
+        if self._mode == "torch":  # type: ignore[comparison-overlap]
             assert self._dit is not None
             return _torch_velocity_field(
                 self._dit,
@@ -1278,10 +1278,10 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
                 "missing_native_state", context=state.native_state_digest
             )
 
-        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
+        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))  # type: ignore[attr-defined]
         if num_steps <= 0:
             raise ValueError(ERR_WAN22_NUM_STEPS)
-        solver_kind = str(condition.delta_spec.get("solver", self._solver))
+        solver_kind = str(condition.delta_spec.get("solver", self._solver))  # type: ignore[attr-defined]
         if solver_kind not in WAN22_SOLVERS:
             raise ValueError(
                 f"{ERR_WAN22_SOLVER_UNKNOWN}:{solver_kind!r}; expected "
@@ -1763,7 +1763,7 @@ def default_wan22_video_flowmatchingodeadapter(
     upstream ``WanT2V`` harness (auto-resolves when the upstream
     constructor succeeds at the resolved weights directory).
     """
-    return Wan22VideoAdapter(
+    return Wan22VideoAdapter(  # type: ignore[abstract]
         variant=variant,
         weights_path=weights_path,
         text_encoder_weights_path=text_encoder_weights_path,

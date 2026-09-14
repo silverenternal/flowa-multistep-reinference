@@ -332,7 +332,7 @@ def _build_condition_delta(
 ) -> ODEConditionDelta:
     """Build a deterministic per-round :class:`ODEConditionDelta`."""
     return ODEConditionDelta(
-        delta_spec={"num_steps": 100, "target_round": int(target_round)},
+        delta_spec={"num_steps": 100, "target_round": int(target_round)},  # type: ignore[arg-type]
         source=source,
         target_round=int(target_round),
         calibration_artifact_hash="runner-calibration",

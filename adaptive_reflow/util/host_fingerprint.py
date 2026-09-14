@@ -87,7 +87,7 @@ def compute_host_fingerprint() -> dict[str, str]:
         "captured_at": datetime.now(UTC).isoformat(),
     }
     try:
-        import torch  # type: ignore[import-untyped]
+        import torch
 
         fp["torch"] = torch.__version__
         fp["cuda"] = torch.version.cuda or "none"
@@ -118,7 +118,7 @@ def capture_host_fingerprint() -> dict[str, str]:
 # ---------------------------------------------------------------------------
 
 
-def with_host_fingerprint(payload: dict | list) -> dict:
+def with_host_fingerprint(payload: dict | list) -> dict:  # type: ignore[type-arg]
     """Return a copy of ``payload`` with ``_host_fingerprint`` appended.
 
     Parameters

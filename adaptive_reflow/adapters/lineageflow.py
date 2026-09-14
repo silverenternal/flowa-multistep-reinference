@@ -88,7 +88,7 @@ import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
@@ -298,7 +298,7 @@ ERR_LINEAGEFLOW_FAMILY_ID_INVALID: str = "lineageflow_family_id_invalid"
 #: :func:`_torch_velocity_field`. Module-scope so the class-body
 #: dict literal can reference it directly (Python class bodies do
 #: not allow ``lambda`` definitions).
-_LINEAGEFLOW_HF_OUTPUT_EXTRACTOR = staticmethod(  # type: ignore[var-annotated]
+_LINEAGEFLOW_HF_OUTPUT_EXTRACTOR = staticmethod(
     lambda out: getattr(out, "logits", out.last_hidden_state)
 )
 
@@ -310,7 +310,7 @@ Mode = Literal["torch", "synthetic"]
 LINEAGEFLOW_MECHANISM_ID: str = "lineageflow@v1"
 
 # Local type alias.
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 
 # ---------------------------------------------------------------------------
@@ -906,7 +906,7 @@ class LineageFlowClassifierAwareRestart:
         # to obtain an .encoder attribute and a forward signature
         # that yields a (B, L, V) tensor. Any instantiation that
         # demands real weights raises and we degrade to the proxy.
-        from models.config import FlowTransformerConfig  # type: ignore[import-not-found]
+        from models.config import FlowTransformerConfig
         stub_cfg = FlowTransformerConfig(
             pretrained_model_name="dummy",
             aa_vocab=int(LINEAGEFLOW_VOCAB_SIZE),
@@ -976,7 +976,7 @@ def _install_checkpoint_compat() -> type:
     import sys
     import types
     if "core.sampler" in sys.modules and hasattr(sys.modules["core.sampler"], "SamplerConfig"):
-        return sys.modules["core.sampler"].SamplerConfig
+        return sys.modules["core.sampler"].SamplerConfig  # type: ignore[no-any-return]
     if "core" not in sys.modules:
         sys.modules["core"] = types.ModuleType("core")
     mod = types.ModuleType("core.sampler")
@@ -984,9 +984,9 @@ def _install_checkpoint_compat() -> type:
         pass
     SamplerConfig.__module__ = "core.sampler"
     SamplerConfig.__qualname__ = "SamplerConfig"
-    mod.SamplerConfig = SamplerConfig
+    mod.SamplerConfig = SamplerConfig  # type: ignore[attr-defined]
     sys.modules["core.sampler"] = mod
-    sys.modules["core"].sampler = mod
+    sys.modules["core"].sampler = mod  # type: ignore[attr-defined]
     return SamplerConfig
 
 
@@ -1148,7 +1148,7 @@ def _load_torch_model(weights_path: Path) -> Any:
             hidden_size = 1280
 
         try:
-            from transformers import EsmModel  # type: ignore[import-not-found]
+            from transformers import EsmModel
 
             model = EsmModel.from_pretrained(
                 "facebook/esm2_t33_650M_UR50D", ignore_mismatched_sizes=True
@@ -1319,7 +1319,7 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
     # shape-vs-input check fires. ``shim_input_shape`` is
     # ``LINEAGEFLOW_STATE_SHAPE == (256, 33)`` so the unwrapped
     # output's leading two dims must match the input.
-    _SHIM_INVOCATION_SPEC: dict = {
+    _SHIM_INVOCATION_SPEC: dict = {  # type: ignore[type-arg]
         "input_type": "long_int",
         "kwargs": {"vocab_size": int(LINEAGEFLOW_VOCAB_SIZE)},
         "output_extractor": _LINEAGEFLOW_HF_OUTPUT_EXTRACTOR,
@@ -1516,7 +1516,7 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
             # dict object keeps the cached entry byte-identical
             # while refreshing the LRU order.
             self._conditioning_cache.put(cache_hash, existing)
-            return existing
+            return existing  # type: ignore[no-any-return]
         entry = _synthetic_family_conditioning(
             family_id=family_id, seed=int(seed),
         )
@@ -1869,7 +1869,7 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         downstream observability.
         """
         del bundle
-        new_spec = dict(delta.delta_spec)
+        new_spec = dict(delta.delta_spec)  # type: ignore[call-overload]
         # Resolve family id.
         family_id = str(new_spec.get("family_id", self._family_id))
         if not family_id:
@@ -1972,15 +1972,15 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
                 "missing_native_state", context=state.native_state_digest
             )
         num_steps = int(
-            condition.delta_spec.get("num_steps", self._num_steps)
+            condition.delta_spec.get("num_steps", self._num_steps)  # type: ignore[attr-defined]
         )
         if num_steps <= 0:
             raise ValueError(ERR_LINEAGEFLOW_NUM_STEPS)
         guidance_scale = float(
-            condition.delta_spec.get("guidance_scale", self._guidance_scale)
+            condition.delta_spec.get("guidance_scale", self._guidance_scale)  # type: ignore[attr-defined]
         )
         sampler_id = str(
-            condition.delta_spec.get("sampler_id", self._solver)
+            condition.delta_spec.get("sampler_id", self._solver)  # type: ignore[attr-defined]
         )
         if sampler_id not in LINEAGEFLOW_INTEGRATORS:
             raise ValueError(
@@ -1993,13 +1993,13 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         # delta from a hostile test), fall back to encoding the default
         # family id.
         cond_hash = str(
-            condition.delta_spec.get("conditioning_cache_hash", "")
+            condition.delta_spec.get("conditioning_cache_hash", "")  # type: ignore[attr-defined]
         )
         if cond_hash and cond_hash in self._conditioning_cache:
             conditioning = self._conditioning_cache[cond_hash]
         else:
             family_id = str(
-                condition.delta_spec.get("family_id", self._family_id)
+                condition.delta_spec.get("family_id", self._family_id)  # type: ignore[attr-defined]
             )
             conditioning = self._resolve_conditioning(
                 family_id=family_id, seed=int(seed),

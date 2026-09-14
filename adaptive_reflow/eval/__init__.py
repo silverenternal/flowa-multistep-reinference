@@ -263,7 +263,7 @@ _LAZY_MODULE_SYMBOLS: dict[str, str] = {
 }
 
 
-def __getattr__(name: str):  # PEP 562 lazy loader
+def __getattr__(name: str):  # type: ignore[no-untyped-def]  # PEP 562 lazy loader
     """Lazily import rdkit- and cycle-dependent submodules on first access.
 
     Triggered when ``from adaptive_reflow.eval import X`` (or

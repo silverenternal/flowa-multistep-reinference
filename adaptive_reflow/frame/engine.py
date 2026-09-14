@@ -367,7 +367,7 @@ def _digest_condition(delta: ODEConditionDelta | None) -> str:
     if delta is None:
         return ""
     payload = {
-        "delta_spec": {k: str(v) for k, v in sorted(delta.delta_spec.items())},
+        "delta_spec": {k: str(v) for k, v in sorted(delta.delta_spec.items())},  # type: ignore[attr-defined]
         "source": str(delta.source),
         "target_round": int(delta.target_round),
         "calibration_artifact_hash": str(delta.calibration_artifact_hash),
@@ -731,7 +731,7 @@ def _check_capabilities_advertise_dispatch(
 def _state_bundle_to_native(
     bundle: StateBundle,
     caps: AdapterCapabilities,
-) -> NativeStateBundle:  # noqa: F821
+) -> NativeStateBundle:  # type: ignore[name-defined]  # noqa: F821
     """Project a detached :class:`StateBundle` to a typed
     :class:`adaptive_reflow.contracts.materialization.NativeStateBundle`
     for materializer invocation (D10 typed surface).

@@ -84,7 +84,7 @@ import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
@@ -240,7 +240,7 @@ Mode = Literal["torch", "synthetic"]
 HIDREAM_I1_MECHANISM_ID: str = "hidream_i1@v1"
 
 # Local type alias.
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 
 # ---------------------------------------------------------------------------
@@ -574,7 +574,7 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
 
     # 1. Scheduler — the local checkpoint ships FlowMatchLCMScheduler;
     #    keep it as-is so the published shift + sigma schedule is used.
-    scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(
+    scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(  # type: ignore[no-untyped-call]
         str(weights_path / "scheduler"),
     )
 
@@ -604,13 +604,13 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
     )
 
     # 4. Transformer (DiT) — 16 shard safetensors.
-    transformer = HiDreamImageTransformer2DModel.from_pretrained(
+    transformer = HiDreamImageTransformer2DModel.from_pretrained(  # type: ignore[no-untyped-call]
         str(weights_path / "transformer"),
         dtype=torch.bfloat16,
     )
 
     # 5. VAE (FLUX.1-AutoencoderKL).
-    vae = AutoencoderKL.from_pretrained(
+    vae = AutoencoderKL.from_pretrained(  # type: ignore[no-untyped-call]
         str(weights_path / "vae"),
         dtype=torch.bfloat16,
     )
@@ -661,12 +661,12 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
         @property
         def device(self) -> torch.device:
             """Return the dummy parameter's device (mirrors ModuleUtilsMixin)."""
-            return self._dummy.device
+            return self._dummy.device  # type: ignore[return-value]
 
         @property
         def dtype(self) -> torch.dtype:
             """Return the dummy parameter's dtype (mirrors ModuleUtilsMixin)."""
-            return self._dummy.dtype
+            return self._dummy.dtype  # type: ignore[return-value]
 
         def forward(  # noqa: D401 — nn.Module forward signature
             self,
@@ -682,13 +682,13 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
             dtype = self._dummy.dtype
             all_hidden = tuple(
                 torch.zeros(
-                    batch, seq, self.HIDDEN_DIM, dtype=dtype, device=device,
+                    batch, seq, self.HIDDEN_DIM, dtype=dtype, device=device,  # type: ignore[arg-type]
                 )
                 for _ in range(self.NUM_LAYERS + 1)
             )
 
             class _StubOutput:
-                def __init__(self, hs: tuple) -> None:
+                def __init__(self, hs: tuple) -> None:  # type: ignore[type-arg]
                     self.hidden_states = hs
 
             return _StubOutput(all_hidden)
@@ -1185,7 +1185,7 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
             # object keeps the cached entry byte-identical while
             # refreshing the LRU order (mirror of lineageflow:1431).
             self._conditioning_cache.put(cache_hash, existing)
-            return existing
+            return existing  # type: ignore[no-any-return]
         entry = _synthetic_text_conditioning(
             prompt=prompt, negative_prompt=negative_prompt, seed=int(seed),
         )
@@ -1454,7 +1454,7 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
         downstream observability.
         """
         del bundle
-        new_spec = dict(delta.delta_spec)
+        new_spec = dict(delta.delta_spec)  # type: ignore[call-overload]
         # Resolve prompt.
         prompt = str(new_spec.get("prompt", self._default_prompt))
         if not prompt:
@@ -1560,12 +1560,12 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
             raise CapabilityMissingError(
                 "missing_native_state", context=state.native_state_digest
             )
-        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
+        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))  # type: ignore[attr-defined]
         if num_steps <= 0:
             raise ValueError(ERR_HIDREAM_I1_NUM_STEPS)
-        cfg_scale = float(condition.delta_spec.get("cfg_scale", self._cfg_scale))
+        cfg_scale = float(condition.delta_spec.get("cfg_scale", self._cfg_scale))  # type: ignore[attr-defined]
         sampler_id = str(
-            condition.delta_spec.get("sampler_id", self._solver)
+            condition.delta_spec.get("sampler_id", self._solver)  # type: ignore[attr-defined]
         )
         if sampler_id not in HIDREAM_I1_INTEGRATORS:
             raise ValueError(
@@ -1578,14 +1578,14 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
         # delta from a hostile test), fall back to encoding the default
         # prompt.
         cond_hash = str(
-            condition.delta_spec.get("conditioning_cache_hash", "")
+            condition.delta_spec.get("conditioning_cache_hash", "")  # type: ignore[attr-defined]
         )
         if cond_hash and cond_hash in self._conditioning_cache:
             conditioning = self._conditioning_cache[cond_hash]
         else:
-            prompt = str(condition.delta_spec.get("prompt", self._default_prompt))
+            prompt = str(condition.delta_spec.get("prompt", self._default_prompt))  # type: ignore[attr-defined]
             neg = str(
-                condition.delta_spec.get("negative_prompt", self._default_negative_prompt)
+                condition.delta_spec.get("negative_prompt", self._default_negative_prompt)  # type: ignore[attr-defined]
             )
             conditioning = self._resolve_conditioning(
                 prompt=prompt, negative_prompt=neg, seed=int(seed),
@@ -2091,7 +2091,7 @@ def default_hidream_i1_adapter(
     """
     if num_steps is None:
         num_steps = int(HIDREAM_VARIANT_NUM_STEPS.get(variant, HIDREAM_I1_NUM_STEPS_DEFAULT))
-    return HiDreamI1Adapter(
+    return HiDreamI1Adapter(  # type: ignore[abstract]
         variant=variant,
         weights_path=weights_path,
         force_mode=force_mode,

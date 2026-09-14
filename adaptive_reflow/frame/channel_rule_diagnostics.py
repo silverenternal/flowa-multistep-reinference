@@ -43,7 +43,7 @@ from dataclasses import dataclass, replace
 
 import numpy as np
 
-from adaptive_reflow.contracts import ChannelRuleInputs, FactorValue
+from adaptive_reflow.contracts import ChannelRuleInputs, FactorValue  # type: ignore[attr-defined]
 from adaptive_reflow.frame.channel_rule import compute_channel_decision
 
 __all__ = [

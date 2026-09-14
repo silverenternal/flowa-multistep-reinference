@@ -55,7 +55,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, TypeAlias, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -279,7 +279,7 @@ class _SyntheticBackend:
 _SYNTHETIC_BACKEND: _SyntheticBackend = _SyntheticBackend()
 
 # Local type alias to keep numpy dependency off hot annotation paths.
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 
 def _probe_dgl() -> bool:
@@ -374,7 +374,7 @@ def _install_upstream_stubs() -> None:
                     out.append(src[start:end].sum())
             return _torch.stack(out)
 
-        ts_mod.segment_csr = _segment_csr
+        ts_mod.segment_csr = _segment_csr  # type: ignore[attr-defined]
         sys.modules["torch_scatter"] = ts_mod
     # --- posebusters stub ---------------------------------------------------
     # Wave 73 Agent 3 — GAP-6 (surfaced by closing GAP-4): the stub's
@@ -418,7 +418,7 @@ def _install_upstream_stubs() -> None:
         _torch.serialization.add_safe_globals([_pathlib.PosixPath])
     except Exception:  # noqa: BLE001 - if torch isn't importable we don't care
         pass
-    _install_upstream_stubs._installed = True
+    _install_upstream_stubs._installed = True  # type: ignore[attr-defined]
 
 
 def _try_import_upstream_flowmol(
@@ -462,7 +462,7 @@ def _try_import_upstream_flowmol(
     if repo_str not in sys.path:
         sys.path.insert(0, repo_str)
     try:
-        from flowmol.models.flowmol import FlowMol  # type: ignore[import-not-found]
+        from flowmol.models.flowmol import FlowMol
     except Exception as exc:  # noqa: BLE001 - permissive on purpose
         return None, f"upstream_flowmol_import_failed:{type(exc).__name__}:{exc}"
     return FlowMol, None
@@ -542,7 +542,7 @@ def _sample_e0(seed: int, n_atoms: int) -> ArrayF64:
     FlowMol3 prior where most pairs start unconnected.
     """
     rng = np.random.default_rng(int(seed) + 4)
-    e = np.full(
+    e = np.full(  # type: ignore[var-annotated]
         (int(n_atoms), int(n_atoms)),
         int(FLOWMOL3ADAPTER_N_BOND_TYPES) - 1,
         dtype=np.int64,
@@ -578,7 +578,7 @@ def _sample_native_state(seed: int) -> dict[str, Any]:
 
 
 @contextlib.contextmanager
-def _seed_everything(seed: int, device: str):
+def _seed_everything(seed: int, device: str):  # type: ignore[no-untyped-def]
     """Seed torch + numpy + cuda RNGs and restore them on exit.
 
     Wave 74 F2: the upstream zavalab FlowMol3 ``FlowMol.sample``
@@ -711,7 +711,7 @@ def _numpy_velocity_field(
     # One-hot the bond label (n_atoms, n_atoms, n_bond_types) and
     # project to a continuous logit velocity via the per-pair weight
     # matrix.
-    e_one_hot = np.zeros(
+    e_one_hot = np.zeros(  # type: ignore[var-annotated]
         (n_atoms, n_atoms, int(FLOWMOL3ADAPTER_N_BOND_TYPES)),
         dtype=np.float64,
     )
@@ -1219,7 +1219,7 @@ def _channel_aware_blend(
         )
     elif n_fresh > n_prior:
         # Pad prior with zeros to match fresh shape, blend, then truncate.
-        pad = np.zeros((n_fresh - n_prior, 3), dtype=np.float64)
+        pad = np.zeros((n_fresh - n_prior, 3), dtype=np.float64)  # type: ignore[var-annotated]
         x_prior_pad = np.concatenate(
             [np.asarray(prior["x"], dtype=np.float64), pad], axis=0
         )
@@ -1250,7 +1250,7 @@ def _channel_aware_blend(
             dtype=np.float64,
         )
     elif n_fresh > n_prior:
-        pad = np.zeros(n_fresh - n_prior, dtype=np.float64)
+        pad = np.zeros(n_fresh - n_prior, dtype=np.float64)  # type: ignore[assignment]
         c_prior_pad = np.concatenate(
             [np.asarray(prior["c"], dtype=np.float64), pad], axis=0
         )
@@ -1261,7 +1261,7 @@ def _channel_aware_blend(
         )
         out["c"] = c_blended_full[:n_prior]
     else:
-        pad = np.zeros(n_prior - n_fresh, dtype=np.float64)
+        pad = np.zeros(n_prior - n_fresh, dtype=np.float64)  # type: ignore[assignment]
         c_fresh_pad = np.concatenate(
             [np.asarray(fresh["c"], dtype=np.float64), pad], axis=0
         )
@@ -1313,7 +1313,7 @@ def _channel_aware_blend(
             # Defensive: a non-square fresh bond matrix still has to
             # reach the prior's pair dim. Pad the missing columns with
             # the no-bond sentinel.
-            pad_e_col = np.full(
+            pad_e_col = np.full(  # type: ignore[var-annotated]
                 (n_prior, n_prior - n_cols_fresh),
                 int(FLOWMOL3ADAPTER_N_BOND_TYPES) - 1,
                 dtype=np.int64,
@@ -1327,7 +1327,7 @@ def _channel_aware_blend(
         prior_a = np.asarray(prior["a"], dtype=np.int64)
     else:
         # fresh is shorter — pad fresh to prior's shape with no-bond.
-        pad_e_rows = np.full(
+        pad_e_rows = np.full(  # type: ignore[var-annotated]
             (n_prior - n_fresh, n_fresh),
             int(FLOWMOL3ADAPTER_N_BOND_TYPES) - 1,
             dtype=np.int64,
@@ -1335,13 +1335,13 @@ def _channel_aware_blend(
         fresh_e_pad = np.concatenate(
             [np.asarray(fresh["e"], dtype=np.int64), pad_e_rows], axis=0
         )
-        pad_e_cols = np.full(
+        pad_e_cols = np.full(  # type: ignore[var-annotated]
             (n_prior, n_prior - n_fresh),
             int(FLOWMOL3ADAPTER_N_BOND_TYPES) - 1,
             dtype=np.int64,
         )
         fresh_e = np.concatenate([fresh_e_pad, pad_e_cols], axis=1)
-        pad_a = np.zeros(n_prior - n_fresh, dtype=np.int64)
+        pad_a = np.zeros(n_prior - n_fresh, dtype=np.int64)  # type: ignore[var-annotated]
         fresh_a = np.concatenate(
             [np.asarray(fresh["a"], dtype=np.int64), pad_a], axis=0
         )
@@ -1562,10 +1562,10 @@ def _ctmc_real_velocity_field_ex(
         x_pred.cpu().numpy().astype(np.float64)
         - np.asarray(x, dtype=np.float64).reshape(n_atoms, 3)
     ) * inv_dt
-    c_pred_np = c_pred.cpu().numpy().astype(np.float64)
-    p_a_np = p_a.cpu().numpy().astype(np.float64)
-    p_c_np = p_c.cpu().numpy().astype(np.float64)
-    p_e_np = p_e.cpu().numpy().astype(np.float64)
+    c_pred_np = c_pred.cpu().numpy().astype(np.float64)  # type: ignore[var-annotated]
+    p_a_np = p_a.cpu().numpy().astype(np.float64)  # type: ignore[var-annotated]
+    p_c_np = p_c.cpu().numpy().astype(np.float64)  # type: ignore[var-annotated]
+    p_e_np = p_e.cpu().numpy().astype(np.float64)  # type: ignore[var-annotated]
     return (
         np.nan_to_num(v_x, nan=0.0, posinf=0.0, neginf=0.0),
         c_pred_np,
@@ -2214,9 +2214,9 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             )
         # Memory fraction per channel (default 0.5 when the policy omits
         # the channel key).
-        beta_coord = policy.beta_by_channel.get(ChannelName("coordinate"))  # type: ignore[arg-type]
-        beta_charge = policy.beta_by_channel.get(ChannelName("charge"))  # type: ignore[arg-type]
-        beta_pair = policy.beta_by_channel.get(ChannelName("raw_pair"))  # type: ignore[arg-type]
+        beta_coord = policy.beta_by_channel.get(ChannelName("coordinate"))  # type: ignore[call-overload]
+        beta_charge = policy.beta_by_channel.get(ChannelName("charge"))  # type: ignore[call-overload]
+        beta_pair = policy.beta_by_channel.get(ChannelName("raw_pair"))  # type: ignore[call-overload]
         memory_fraction: dict[ChannelName, float] = {
             ChannelName("coordinate"): 1.0
             - float(beta_coord)
@@ -2323,14 +2323,14 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             # (``coordinate`` / ``charge`` / ``raw_pair``) trigger the
             # fail-closed rejection.
             channel_keys = set(FLOWMOL3ADAPTER_CHANNELS)
-            offending = set(delta.delta_spec.keys()) & channel_keys
+            offending = set(delta.delta_spec.keys()) & channel_keys  # type: ignore[attr-defined]
             if offending:
                 raise CapabilityMissingError(
                     "has_condition_injection",
                     context="flowmol3adapter_is_unconditional",
                 )
         return ODEConditionDelta(
-            delta_spec=dict(delta.delta_spec),
+            delta_spec=dict(delta.delta_spec),  # type: ignore[call-overload]
             source=str(delta.source),
             target_round=int(delta.target_round),
             calibration_artifact_hash=str(delta.calibration_artifact_hash),
@@ -2522,7 +2522,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 "missing_native_state", context=str(state.native_state_digest)
             )
         n_atoms = int(prior_entry["n_atoms"])
-        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
+        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))  # type: ignore[attr-defined]
         if num_steps <= 0:
             raise ValueError("num_steps_must_be_positive")
 
@@ -2544,7 +2544,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         # sampled adapter label (0..9), and we place the mask token at
         # its dedicated index so the CTMC step sees a clean one-hot for
         # each class.
-        a0_one_hot = np.zeros(
+        a0_one_hot = np.zeros(  # type: ignore[var-annotated]
             (n, n_atom_types_upstream + 1), dtype=np.float32
         )
         clipped = np.clip(a_np, 0, n_atom_types_upstream - 1)
@@ -2559,7 +2559,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             ) - 1
         )
         n_charge_classes = int(getattr(self._model, "n_atom_charges", 6))
-        c0_one_hot = np.zeros((n, n_charge_classes + 1), dtype=np.float32)
+        c0_one_hot = np.zeros((n, n_charge_classes + 1), dtype=np.float32)  # type: ignore[var-annotated]
         for i in range(n):
             c0_one_hot[i, int(c_idx[i])] = 1.0
         # Edge prior: shape (n_pairs, n_bond_types + 1). The upstream's
@@ -2572,7 +2572,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         e_model_lbl = np.asarray(FLOWMOL3_ADAPTER_TO_MODEL_BOND,
                                   dtype=np.int64)[e_np]
         n_bond_types_upstream = int(getattr(self._model, "n_bond_types", 4))
-        e0_one_hot_full = np.zeros(
+        e0_one_hot_full = np.zeros(  # type: ignore[var-annotated]
             (n, n, n_bond_types_upstream + 1), dtype=np.float32
         )
         for i in range(n):
@@ -2655,7 +2655,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         # Edges: ``mol`` exposes ``bond_src_idxs`` / ``bond_dst_idxs`` /
         # ``bond_types`` in upstream class indices (kekulized: 0..3).
         # Reconstruct the symmetric ``(n, n)`` adapter bond label.
-        e_full_model = np.full(
+        e_full_model = np.full(  # type: ignore[var-annotated]
             (n_final, n_final),
             FLOWMOL3ADAPTER_N_BOND_TYPES - 1,
             dtype=np.int64,
@@ -2809,7 +2809,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 "missing_native_state", context=str(state.native_state_digest)
             )
         n_atoms = int(prior_entry["n_atoms"])
-        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
+        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))  # type: ignore[attr-defined]
         if num_steps <= 0:
             raise ValueError("num_steps_must_be_positive")
         n_mol = int(n_molecules)
@@ -2830,7 +2830,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         # repeated across the batch is the canonical Wave 70 path).
         x0_np = np.asarray(prior_entry["x"], dtype=np.float32).reshape(n, 3)
         a_np = np.asarray(prior_entry["a"], dtype=np.int64).reshape(n)
-        a0_one_hot = np.zeros(
+        a0_one_hot = np.zeros(  # type: ignore[var-annotated]
             (n, n_atom_types_upstream + 1), dtype=np.float32
         )
         clipped = np.clip(a_np, 0, n_atom_types_upstream - 1)
@@ -2840,14 +2840,14 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         c_idx = np.clip(
             np.rint(c_np).astype(np.int64) + 2, 0, n_charge_classes - 1
         )
-        c0_one_hot = np.zeros((n, n_charge_classes + 1), dtype=np.float32)
+        c0_one_hot = np.zeros((n, n_charge_classes + 1), dtype=np.float32)  # type: ignore[var-annotated]
         for i in range(n):
             c0_one_hot[i, int(c_idx[i])] = 1.0
         e_np = np.asarray(prior_entry["e"], dtype=np.int64).reshape(n, n)
         e_np = np.clip(e_np, 0, FLOWMOL3ADAPTER_N_BOND_TYPES - 1)
         e_model_lbl = np.asarray(FLOWMOL3_ADAPTER_TO_MODEL_BOND,
                                   dtype=np.int64)[e_np]
-        e0_one_hot_full = np.zeros(
+        e0_one_hot_full = np.zeros(  # type: ignore[var-annotated]
             (n, n, n_bond_types_upstream + 1), dtype=np.float32
         )
         for i in range(n):
@@ -2907,7 +2907,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 dtype=np.int64,
             ).reshape(n_final)
             c_final = c_idx_arr.astype(np.float64).reshape(n_final)
-            e_full_model = np.full(
+            e_full_model = np.full(  # type: ignore[var-annotated]
                 (n_final, n_final),
                 FLOWMOL3ADAPTER_N_BOND_TYPES - 1,
                 dtype=np.int64,
@@ -2962,14 +2962,14 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             cur_n = int(arr.shape[0])
             if cur_n == max_n:
                 return arr
-            pad = np.zeros((max_n - cur_n, 3), dtype=np.float64)
-            return np.concatenate([arr, pad], axis=0)
+            pad = np.zeros((max_n - cur_n, 3), dtype=np.float64)  # type: ignore[var-annotated]
+            return np.concatenate([arr, pad], axis=0)  # type: ignore[no-any-return]
 
         def _pad_c(arr: np.ndarray) -> np.ndarray:
             cur_n = int(arr.shape[0])
             if cur_n == max_n:
                 return arr
-            return np.concatenate(
+            return np.concatenate(  # type: ignore[no-any-return]
                 [arr, np.zeros(max_n - cur_n, dtype=np.float64)], axis=0,
             )
 
@@ -2977,7 +2977,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             cur_n = int(arr.shape[0])
             if cur_n == max_n:
                 return arr
-            return np.concatenate(
+            return np.concatenate(  # type: ignore[no-any-return]
                 [arr, np.zeros(max_n - cur_n, dtype=np.int64)], axis=0,
             )
 
@@ -2985,12 +2985,12 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             cur_n = int(arr.shape[0])
             if cur_n == max_n:
                 return arr
-            pad_e = np.full(
+            pad_e = np.full(  # type: ignore[var-annotated]
                 (max_n - cur_n, max_n),
                 FLOWMOL3ADAPTER_N_BOND_TYPES - 1,
                 dtype=np.int64,
             )
-            return np.concatenate([arr, pad_e], axis=0)
+            return np.concatenate([arr, pad_e], axis=0)  # type: ignore[no-any-return]
 
         x_padded = [_pad_x(x) for x in x_batch]
         c_padded = [_pad_c(c) for c in c_batch]
@@ -3118,7 +3118,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             raise CapabilityMissingError(
                 "missing_native_state", context=str(state.native_state_digest)
             )
-        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
+        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))  # type: ignore[attr-defined]
         if num_steps <= 0:
             raise ValueError("num_steps_must_be_positive")
         n_mol = int(n_molecules)
@@ -3137,10 +3137,10 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         e_cur = np.asarray(prior_entry["e"], dtype=np.int64).copy()
         a_cur = np.asarray(prior_entry["a"], dtype=np.int64).copy()
         # Allocate trajectory buffers.
-        traj_x = np.empty((num_steps + 1, n_atoms, 3), dtype=np.float64)
-        traj_c = np.empty((num_steps + 1, n_atoms), dtype=np.float64)
-        traj_e = np.empty((num_steps + 1, n_atoms, n_atoms), dtype=np.int64)
-        traj_a = np.empty((num_steps + 1, n_atoms), dtype=np.int64)
+        traj_x = np.empty((num_steps + 1, n_atoms, 3), dtype=np.float64)  # type: ignore[var-annotated]
+        traj_c = np.empty((num_steps + 1, n_atoms), dtype=np.float64)  # type: ignore[var-annotated]
+        traj_e = np.empty((num_steps + 1, n_atoms, n_atoms), dtype=np.int64)  # type: ignore[var-annotated]
+        traj_a = np.empty((num_steps + 1, n_atoms), dtype=np.int64)  # type: ignore[var-annotated]
         traj_x[0] = x_cur
         traj_c[0] = c_cur
         traj_e[0] = e_cur
@@ -3314,17 +3314,17 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         max_n_atoms = int(
             max(int(ns["n_atoms"]) for ns in native_states)
         )
-        traj_x_batch = np.zeros(
+        traj_x_batch = np.zeros(  # type: ignore[var-annotated]
             (n_mol, int(num_steps) + 1, max_n_atoms, 3), dtype=np.float64,
         )
-        traj_c_batch = np.zeros(
+        traj_c_batch = np.zeros(  # type: ignore[var-annotated]
             (n_mol, int(num_steps) + 1, max_n_atoms), dtype=np.float64,
         )
-        traj_e_batch = np.full(
+        traj_e_batch = np.full(  # type: ignore[var-annotated]
             (n_mol, int(num_steps) + 1, max_n_atoms, max_n_atoms),
             FLOWMOL3ADAPTER_N_BOND_TYPES - 1, dtype=np.int64,
         )
-        traj_a_batch = np.zeros(
+        traj_a_batch = np.zeros(  # type: ignore[var-annotated]
             (n_mol, int(num_steps) + 1, max_n_atoms), dtype=np.int64,
         )
         x_final_list: list[np.ndarray] = []
@@ -3396,14 +3396,14 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             cur_n = int(arr.shape[0])
             if cur_n == target:
                 return arr
-            pad = np.zeros((target - cur_n, 3), dtype=np.float64)
-            return np.concatenate([arr, pad], axis=0)
+            pad = np.zeros((target - cur_n, 3), dtype=np.float64)  # type: ignore[var-annotated]
+            return np.concatenate([arr, pad], axis=0)  # type: ignore[no-any-return]
 
         def _pad_c(arr: np.ndarray, target: int) -> np.ndarray:
             cur_n = int(arr.shape[0])
             if cur_n == target:
                 return arr
-            return np.concatenate(
+            return np.concatenate(  # type: ignore[no-any-return]
                 [arr, np.zeros(target - cur_n, dtype=np.float64)], axis=0,
             )
 
@@ -3411,7 +3411,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             cur_n = int(arr.shape[0])
             if cur_n == target:
                 return arr
-            return np.concatenate(
+            return np.concatenate(  # type: ignore[no-any-return]
                 [arr, np.zeros(target - cur_n, dtype=np.int64)], axis=0,
             )
 
@@ -3423,19 +3423,19 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             cur_m = int(arr.shape[1])
             # Pad columns first if needed.
             if cur_m < target:
-                col_pad = np.full(
+                col_pad = np.full(  # type: ignore[var-annotated]
                     (cur_n, target - cur_m),
                     FLOWMOL3ADAPTER_N_BOND_TYPES - 1,
                     dtype=np.int64,
                 )
                 arr = np.concatenate([arr, col_pad], axis=1)
             # Then pad rows.
-            row_pad = np.full(
+            row_pad = np.full(  # type: ignore[var-annotated]
                 (target - cur_n, target),
                 FLOWMOL3ADAPTER_N_BOND_TYPES - 1,
                 dtype=np.int64,
             )
-            return np.concatenate([arr, row_pad], axis=0)
+            return np.concatenate([arr, row_pad], axis=0)  # type: ignore[no-any-return]
 
         x_padded = [_pad_x(x, max_n_atoms) for x in x_final_list]
         c_padded = [_pad_c(c, max_n_atoms) for c in c_final_list]
@@ -3550,7 +3550,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             raise CapabilityMissingError(
                 "missing_native_state", context=str(state.native_state_digest)
             )
-        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
+        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))  # type: ignore[attr-defined]
         if num_steps <= 0:
             raise ValueError("num_steps_must_be_positive")
         n_mol = int(n_molecules)
@@ -3575,10 +3575,10 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         e_cur = np.asarray(prior_entry["e"], dtype=np.int64).copy()
         a_cur = np.asarray(prior_entry["a"], dtype=np.int64).copy()
         # Allocate trajectory buffers.
-        traj_x = np.empty((num_steps + 1, n_atoms, 3), dtype=np.float64)
-        traj_c = np.empty((num_steps + 1, n_atoms), dtype=np.float64)
-        traj_e = np.empty((num_steps + 1, n_atoms, n_atoms), dtype=np.int64)
-        traj_a = np.empty((num_steps + 1, n_atoms), dtype=np.int64)
+        traj_x = np.empty((num_steps + 1, n_atoms, 3), dtype=np.float64)  # type: ignore[var-annotated]
+        traj_c = np.empty((num_steps + 1, n_atoms), dtype=np.float64)  # type: ignore[var-annotated]
+        traj_e = np.empty((num_steps + 1, n_atoms, n_atoms), dtype=np.int64)  # type: ignore[var-annotated]
+        traj_a = np.empty((num_steps + 1, n_atoms), dtype=np.int64)  # type: ignore[var-annotated]
         traj_x[0] = x_cur
         traj_c[0] = c_cur
         traj_e[0] = e_cur
@@ -3634,7 +3634,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 # end produces the discrete label.
                 # Atom types: per-atom Q via Q_per_position
                 # (n_atoms, K_atom, K_atom).
-                Q_a_per = np.empty(
+                Q_a_per = np.empty(  # type: ignore[var-annotated]
                     (n_atoms, FLOWMOL3ADAPTER_N_ATOM_TYPES,
                      FLOWMOL3ADAPTER_N_ATOM_TYPES),
                     dtype=np.float64,
@@ -3663,7 +3663,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 upper_idx = np.triu_indices(n_atoms, k=1)
                 n_pairs = int(upper_idx[0].size)
                 p_e_ut = p_e_marg[upper_idx[0], upper_idx[1]]
-                Q_e_per = np.empty(
+                Q_e_per = np.empty(  # type: ignore[var-annotated]
                     (n_pairs, FLOWMOL3ADAPTER_N_BOND_TYPES,
                      FLOWMOL3ADAPTER_N_BOND_TYPES),
                     dtype=np.float64,
@@ -3686,10 +3686,10 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                     seed=int(seed) + i * 31 + 13,
                 )
                 s_e_final = np.asarray(bond_traj.states[-1], dtype=np.float64)
-                e_ut = stochastic_categorical_sample(
+                e_ut = stochastic_categorical_sample(  # type: ignore[var-annotated]
                     s_e_final, seed=int(seed) + i * 31 + 19
                 ).astype(np.int64)
-                e_new = np.full(
+                e_new = np.full(  # type: ignore[var-annotated]
                     (n_atoms, n_atoms),
                     FLOWMOL3ADAPTER_N_BOND_TYPES - 1,
                     dtype=np.int64,
@@ -4271,7 +4271,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         }
         for r in results:
             out[r.kind] = r
-        return out
+        return out  # type: ignore[return-value]
 
     # ------------------------------------------------------------------
     # 9. inject_forward_noise (optional — P0-7 close, r17-audit P-01)
@@ -4582,8 +4582,8 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                         self.dropped: list[str] = []
 
                     def emit(self, record: logging.LogRecord) -> None:
-                        if record.args and isinstance(record.args[0], str):
-                            self.dropped.append(record.args[0])
+                        if record.args and isinstance(record.args[0], str):  # type: ignore[index]
+                            self.dropped.append(record.args[0])  # type: ignore[index]
 
                 _capture = _DroppedSmilesCapture()
                 _upstream_logger = logging.getLogger(
@@ -4609,7 +4609,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                     n_bonds = int(rkm.GetNumBonds())
                 else:
                     n_bonds = int(
-                        getattr(first, "bond_types", None).shape[0]
+                        getattr(first, "bond_types", None).shape[0]  # type: ignore[union-attr]
                     ) if getattr(first, "bond_types", None) is not None else 0
                 metadata.update(
                     {
@@ -4652,7 +4652,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         cached_smiles = str(entry.get("rdkit_mol_smiles", "") or "")
         if cached_smiles:
             sampled = []
-            upstream_decode_error: str | None = None
+            upstream_decode_error: str | None = None  # type: ignore[no-redef]
             try:
                 from adaptive_reflow.adapters.flowmol3_metrics_upstream import (
                     sampled_mols_from_smiles as _sampled_mols_from_smiles,
@@ -4673,7 +4673,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                     n_bonds = int(rkm.GetNumBonds())
                 else:
                     n_bonds = int(
-                        getattr(first, "bond_types", None).shape[0]
+                        getattr(first, "bond_types", None).shape[0]  # type: ignore[union-attr]
                     ) if getattr(first, "bond_types", None) is not None else 0
                 metadata.update(
                     {
@@ -4830,9 +4830,9 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             return None
         try:
             mol = _Chem.AddHs(mol)
-            params = _Chem.AllChem.ETKDGv3()
+            params = _Chem.AllChem.ETKDGv3()  # type: ignore[attr-defined]
             params.randomSeed = 0xF00D
-            if _Chem.AllChem.EmbedMolecule(mol, params) != 0:
+            if _Chem.AllChem.EmbedMolecule(mol, params) != 0:  # type: ignore[attr-defined]
                 return None
         except Exception:  # noqa: BLE001 — embed can raise on weird mols.
             return None
@@ -4983,7 +4983,7 @@ def default_flowmol3adapter(
             # Caller did not override ``backend`` explicitly; map
             # from force_mode to the native backend token.
             backend = "torch" if force_mode in {"real", "auto"} else "numpy"
-    return FlowMol3V2Adapter(
+    return FlowMol3V2Adapter(  # type: ignore[abstract]
         backend=str(backend),
         num_steps=int(num_steps),
         weights_path=weights_path,

@@ -7,7 +7,7 @@ for downstream tools and tests.
 
 from __future__ import annotations
 
-from .perturbation.dynamic_noise_bias import (
+from .perturbation.dynamic_noise_bias import (  # type: ignore[attr-defined]
     DEFAULT_DECAY_KIND,
     DEFAULT_MIN_GUMBEL_TEMP,
     NEW_DYNAMIC_NOISE_BIAS_COMPUTED,

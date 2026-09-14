@@ -67,7 +67,7 @@ from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
@@ -182,7 +182,7 @@ ERR_LUMINA_TEXT_EMBED_MISSING: str = "lumina_image_2_0_text_embed_missing"
 ERR_LUMINA_PROMPT_MISSING: str = "lumina_image_2_0_prompt_missing"
 
 # Local type alias (avoid numpy at module-import hot annotation paths).
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 Mode = Literal["torch", "synthetic", "upstream"]
 
@@ -447,7 +447,7 @@ def _load_torch_pipeline(weights_dir: Path, *, dtype: Any) -> Any:
     import torch  # local import -- torch is optional at the framework level.
     from diffusers import Lumina2Pipeline  # local import -- diffusers is optional.
 
-    pipeline = Lumina2Pipeline.from_pretrained(
+    pipeline = Lumina2Pipeline.from_pretrained(  # type: ignore[no-untyped-call]
         str(weights_dir),
         torch_dtype=dtype,
         variant=None,
@@ -516,7 +516,7 @@ def _load_upstream_pipeline(
 
     # Late-bound shim import -- keeps the module importable on
     # stdlib-only test runners.
-    from adaptive_reflow.adapters.lumina_image_2_0_upstream_shim import (
+    from adaptive_reflow.adapters.lumina_image_2_0_upstream_shim import (  # type: ignore[attr-defined]
         import_upstream_harness,
     )
 
@@ -1212,7 +1212,7 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
         bundle: StateBundle,
         delta: ODEConditionDelta,
     ) -> ODEConditionDelta:
-        new_spec = dict(delta.delta_spec)
+        new_spec = dict(delta.delta_spec)  # type: ignore[call-overload]
         # Stamp paper defaults; the framework's ``delta_spec`` can
         # override these per-round.
         new_spec.setdefault(
@@ -1259,7 +1259,7 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
             )
             self._put_text_embed(
                 cache_key,
-                (text_emb, uncond_text_emb, attn_mask, uncond_attn_mask),
+                (text_emb, uncond_text_emb, attn_mask, uncond_attn_mask),  # type: ignore[arg-type]
             )
         new_spec["text_embed_cache_key"] = cache_key
         return ODEConditionDelta(
@@ -1305,7 +1305,7 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
             rng = np.random.default_rng(seed)
             text_emb = rng.standard_normal((1, 1, 2304)).astype(np.float64)
             uncond_text_emb = np.zeros_like(text_emb)
-            attn_mask = np.ones((1, 1), dtype=np.int64)
+            attn_mask = np.ones((1, 1), dtype=np.int64)  # type: ignore[var-annotated]
             return text_emb, uncond_text_emb, attn_mask, attn_mask
 
         # Torch mode: lazy-import Gemma2Model + tokenizer, encode.
@@ -1375,7 +1375,7 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
             # framework -- mixing-and-matching is a documented
             # foot-gun, so the upstream mode uses ``hidden_states[-2]``
             # below.
-            if self._mode == "upstream":
+            if self._mode == "upstream":  # type: ignore[comparison-overlap]
                 # Upstream's ``encode_prompt`` returns the second-to-
                 # last Gemma2 hidden layer (``hidden_states[-2]``)
                 # rather than ``last_hidden_state``. The diffusers
@@ -1410,7 +1410,7 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
         # upstream's ``forward_with_cfg`` does the conditional /
         # unconditional split internally via
         # ``cond_eps, uncond_eps = torch.split(eps, len(eps)//2)``.
-        if self._mode == "upstream":
+        if self._mode == "upstream":  # type: ignore[comparison-overlap]
             text_emb = torch.cat([cond_h, uncond_h], dim=0)
             encoder_attention_mask = torch.cat([attn, uncond_attn], dim=0)
             return (
@@ -1508,7 +1508,7 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
             raise CapabilityMissingError(
                 "missing_native_state", context=state.native_state_digest
             )
-        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
+        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))  # type: ignore[attr-defined]
         if num_steps <= 0:
             raise ValueError(ERR_LUMINA_NUM_STEPS)
         x0 = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(
@@ -1519,7 +1519,7 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
         # ``compose_condition``). In synthetic mode the cached entries
         # are NumPy placeholders; in torch mode they are the actual
         # Gemma2 hidden states.
-        cache_key = str(condition.delta_spec.get("text_embed_cache_key", ""))
+        cache_key = str(condition.delta_spec.get("text_embed_cache_key", ""))  # type: ignore[attr-defined]
         if not cache_key:
             raise CapabilityMissingError(
                 "text_embed_cache_key_missing",
@@ -1531,17 +1531,17 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
                 ERR_LUMINA_TEXT_EMBED_MISSING,
                 context=cache_key,
             )
-        text_emb, uncond_text_emb, attn_mask, uncond_attn_mask = cached
+        text_emb, uncond_text_emb, attn_mask, uncond_attn_mask = cached  # type: ignore[misc]
 
         # Per-round overrides for CFG (paper §4.5 + framework control).
         guidance_scale = float(
-            condition.delta_spec.get("guidance_scale", self._guidance_scale)
+            condition.delta_spec.get("guidance_scale", self._guidance_scale)  # type: ignore[attr-defined]
         )
         cfg_trunc_ratio = float(
-            condition.delta_spec.get("cfg_trunc_ratio", self._cfg_trunc_ratio)
+            condition.delta_spec.get("cfg_trunc_ratio", self._cfg_trunc_ratio)  # type: ignore[attr-defined]
         )
         cfg_normalization = bool(
-            condition.delta_spec.get("cfg_normalization", self._cfg_normalization)
+            condition.delta_spec.get("cfg_normalization", self._cfg_normalization)  # type: ignore[attr-defined]
         )
 
         solver_kind = str(self._solver)
@@ -1826,7 +1826,7 @@ def default_lumina_image_2_0_adapter(
     of those exist and ``force_mode`` is ``"auto"``, the adapter falls
     back to ``synthetic`` mode (testing-only).
     """
-    return LuminaImage20Adapter(
+    return LuminaImage20Adapter(  # type: ignore[abstract]
         weights_path=weights_path,
         force_mode=force_mode,
         num_steps=num_steps,

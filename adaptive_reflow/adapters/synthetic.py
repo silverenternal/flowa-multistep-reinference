@@ -234,13 +234,13 @@ class SyntheticContinuousAdapter(FlowMatchingODEAdapter):
     ) -> ODEConditionDelta:
         if not self.condition_match:
             return ODEConditionDelta(
-                delta_spec={},
+                delta_spec={},  # type: ignore[arg-type]
                 source="",
                 target_round=int(delta.target_round) + 1,
                 calibration_artifact_hash="",
             )
         return ODEConditionDelta(
-            delta_spec=dict(delta.delta_spec),
+            delta_spec=dict(delta.delta_spec),  # type: ignore[call-overload]
             source=str(delta.source),
             target_round=int(delta.target_round),
             calibration_artifact_hash=str(delta.calibration_artifact_hash),
@@ -424,7 +424,7 @@ class SyntheticDiscreteAdapter(FlowMatchingODEAdapter):
     ) -> ODEConditionDelta:
         del bundle
         return ODEConditionDelta(
-            delta_spec=dict(delta.delta_spec),
+            delta_spec=dict(delta.delta_spec),  # type: ignore[call-overload]
             source=str(delta.source),
             target_round=int(delta.target_round),
             calibration_artifact_hash=str(delta.calibration_artifact_hash),
@@ -607,7 +607,7 @@ class SyntheticMixedChannelAdapter(FlowMatchingODEAdapter):
     ) -> ODEConditionDelta:
         del bundle
         return ODEConditionDelta(
-            delta_spec=dict(delta.delta_spec),
+            delta_spec=dict(delta.delta_spec),  # type: ignore[call-overload]
             source=str(delta.source),
             target_round=int(delta.target_round),
             calibration_artifact_hash=str(delta.calibration_artifact_hash),

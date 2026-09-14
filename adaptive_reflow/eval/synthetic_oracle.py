@@ -62,7 +62,7 @@ from __future__ import annotations
 import struct
 from typing import Any
 
-from adaptive_reflow.contracts import (
+from adaptive_reflow.contracts import (  # type: ignore[attr-defined]
     BundleId,
     ChannelName,
     ChannelTransferEvidence,

@@ -398,7 +398,7 @@ class LinearBlend:
             if audit_codes is not None:
                 audit_codes.append(PER_CHANNEL_BLEND_M_ONE_SHORTCIRCUIT)
             return prior.copy()
-        return m * prior + (1.0 - m) * fresh
+        return m * prior + (1.0 - m) * fresh  # type: ignore[no-any-return]
 
 
 # ---------------------------------------------------------------------------
@@ -450,17 +450,17 @@ class LogitBlend:
         if m == 0.0:
             if audit_codes is not None:
                 audit_codes.append(PER_CHANNEL_BLEND_M_ZERO_SHORTCIRCUIT)
-            return np.argmax(fresh, axis=-1)
+            return np.argmax(fresh, axis=-1)  # type: ignore[no-any-return]
         if m == 1.0:
             if audit_codes is not None:
                 audit_codes.append(PER_CHANNEL_BLEND_M_ONE_SHORTCIRCUIT)
-            return np.argmax(prior, axis=-1)
+            return np.argmax(prior, axis=-1)  # type: ignore[no-any-return]
         blended = m * prior + (1.0 - m) * fresh
         # Numerically stable softmax via max-shift.
         shifted = blended - np.max(blended, axis=-1, keepdims=True)
         exp = np.exp(shifted)
         softmax = exp / np.sum(exp, axis=-1, keepdims=True)
-        return np.argmax(softmax, axis=-1)
+        return np.argmax(softmax, axis=-1)  # type: ignore[no-any-return]
 
 
 # ---------------------------------------------------------------------------
@@ -564,7 +564,7 @@ class MaskedBlend:
             blended = np.where(mask_arr == 0, fresh, blended)
         if sentinel_mask.any():
             blended = np.where(sentinel_mask, prior, blended)
-        return blended
+        return blended  # type: ignore[no-any-return]
 
 
 # ---------------------------------------------------------------------------
@@ -658,8 +658,8 @@ class GumbelBlend:
                     audit_codes.append(
                         f"{PER_CHANNEL_BLEND_TAU_FLOOR_HIT}:tau={tau_in!r}"
                     )
-                return np.argmax(fresh, axis=-1)
-            return np.argmax(fresh / tau_in, axis=-1)
+                return np.argmax(fresh, axis=-1)  # type: ignore[no-any-return]
+            return np.argmax(fresh / tau_in, axis=-1)  # type: ignore[no-any-return]
         if m == 1.0:
             if audit_codes is not None:
                 audit_codes.append(PER_CHANNEL_BLEND_M_ONE_SHORTCIRCUIT)
@@ -668,8 +668,8 @@ class GumbelBlend:
                     audit_codes.append(
                         f"{PER_CHANNEL_BLEND_TAU_FLOOR_HIT}:tau={tau_in!r}"
                     )
-                return np.argmax(prior, axis=-1)
-            return np.argmax(prior / tau_in, axis=-1)
+                return np.argmax(prior, axis=-1)  # type: ignore[no-any-return]
+            return np.argmax(prior / tau_in, axis=-1)  # type: ignore[no-any-return]
 
         blended = m * prior + (1.0 - m) * fresh
         if tau_in <= self._tau_floor:
@@ -677,8 +677,8 @@ class GumbelBlend:
                 audit_codes.append(
                     f"{PER_CHANNEL_BLEND_TAU_FLOOR_HIT}:tau={tau_in!r}"
                 )
-            return np.argmax(blended, axis=-1)
-        return np.argmax(blended / tau_in, axis=-1)
+            return np.argmax(blended, axis=-1)  # type: ignore[no-any-return]
+        return np.argmax(blended / tau_in, axis=-1)  # type: ignore[no-any-return]
 
 
 # ---------------------------------------------------------------------------
@@ -900,7 +900,7 @@ class PerChannelBlender:
         for untyped channels.
         """
         ch_str = str(channel)
-        family = self._family_overrides.get(ch_str)
+        family = self._family_overrides.get(ch_str)  # type: ignore[call-overload]
         if family is None and self._channel_types is not None:
             kind = self._channel_types.get(channel)
             family = DEFAULT_BLEND_FAMILY_BY_CHANNEL.get(str(kind), LINEAR_FAMILY)

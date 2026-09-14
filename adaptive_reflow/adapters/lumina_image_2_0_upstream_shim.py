@@ -73,7 +73,7 @@ def _install_flash_attn_stub() -> None:
     fa = types.ModuleType("flash_attn")
     fab = types.ModuleType("flash_attn.bert_padding")
 
-    def _flash_attn_varlen_func(q, k, v, *args, **kwargs):  # noqa: ANN001, D401
+    def _flash_attn_varlen_func(q, k, v, *args, **kwargs):  # type: ignore[no-untyped-def]  # noqa: ANN001, D401
         # q/k/v are (T, H, D) tensors. Fall back to SDPA on (B, H, T, D).
         q_b = q.unsqueeze(0).transpose(1, 2)
         k_b = k.unsqueeze(0).transpose(1, 2)
@@ -81,21 +81,21 @@ def _install_flash_attn_stub() -> None:
         out = F.scaled_dot_product_attention(q_b, k_b, v_b)
         return out.transpose(1, 2).squeeze(0)
 
-    def _index_first_axis(index, x):  # noqa: ANN001, D401
+    def _index_first_axis(index, x):  # type: ignore[no-untyped-def]  # noqa: ANN001, D401
         return x[index]
 
-    def _pad_input(hidden_states, indices, num_new_tokens, *args, **kwargs):  # noqa: ANN001, D401
+    def _pad_input(hidden_states, indices, num_new_tokens, *args, **kwargs):  # type: ignore[no-untyped-def]  # noqa: ANN001, D401
         # Reference flash_attn signature: returns (padded, indices, batch_sizes).
         return hidden_states, indices, None
 
-    def _unpad_input(x, indices, batch_sizes, *args, **kwargs):  # noqa: ANN001, D401
+    def _unpad_input(x, indices, batch_sizes, *args, **kwargs):  # type: ignore[no-untyped-def]  # noqa: ANN001, D401
         # Reference flash_attn signature: returns (unpadded, indices, batch_sizes, seqlens).
         return x[indices], indices, batch_sizes, None
 
-    fa.flash_attn_varlen_func = _flash_attn_varlen_func
-    fab.index_first_axis = _index_first_axis
-    fab.pad_input = _pad_input
-    fab.unpad_input = _unpad_input
+    fa.flash_attn_varlen_func = _flash_attn_varlen_func  # type: ignore[attr-defined]
+    fab.index_first_axis = _index_first_axis  # type: ignore[attr-defined]
+    fab.pad_input = _pad_input  # type: ignore[attr-defined]
+    fab.unpad_input = _unpad_input  # type: ignore[attr-defined]
     sys.modules["flash_attn"] = fa
     sys.modules["flash_attn.bert_padding"] = fab
 

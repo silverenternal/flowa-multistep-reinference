@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
@@ -42,7 +42,7 @@ from adaptive_reflow.adapters._adapter_common import (
     per_position_entropy_reduction,
 )
 
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 
 #: Per-position categorical vocabulary size for LineageFlow (Pfam-RP55
@@ -185,7 +185,7 @@ class LineageFlowGlue:
             "phi1_entropy_reduction_normalised": phi1,
             "phi2_max_prob_delta": phi2,
             "phi3_argmax_turnover_signed": phi3,
-            "weights": [w1, w2, w3],
+            "weights": [w1, w2, w3],  # type: ignore[dict-item]
             "K": int(LINEAGEFLOW_VOCAB_SIZE),
             "seed": (int(seed) if seed is not None else None),
             "nfe": (int(nfe) if nfe is not None else None),

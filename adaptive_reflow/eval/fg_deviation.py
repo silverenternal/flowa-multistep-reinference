@@ -391,7 +391,7 @@ def count_fg_hits(
 
     is_mapping = isinstance(smarts_list, Mapping)
     items: list[tuple[str, str]] = (
-        list(smarts_list.items()) if is_mapping
+        list(smarts_list.items()) if is_mapping  # type: ignore[union-attr]
         else [(s, s) for s in smarts_list]
     )
     hits: dict[str, int] = {}
@@ -451,7 +451,7 @@ def _aggregate_occurrence_rates(
     """
     is_mapping = isinstance(smarts_list, Mapping)
     keys: list[str] = (
-        list(smarts_list.keys()) if is_mapping
+        list(smarts_list.keys()) if is_mapping  # type: ignore[union-attr]
         else list(smarts_list)
     )
     sums: dict[str, int] = {k: 0 for k in keys}

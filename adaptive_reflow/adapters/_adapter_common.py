@@ -15,14 +15,14 @@ import hashlib
 from collections import OrderedDict
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
 
 from adaptive_reflow.universal.state import ChannelName, TensorRef
 
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 
 def seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:

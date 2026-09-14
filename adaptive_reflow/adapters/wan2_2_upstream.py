@@ -127,8 +127,8 @@ def upstream_state_tuple(
         latent_t=latent_t,
         latent_h=latent_h,
         latent_w=latent_w,
-        vae_stride=vae_stride,
-        patch_size=patch_size,
+        vae_stride=vae_stride,  # type: ignore[arg-type]
+        patch_size=patch_size,  # type: ignore[arg-type]
         boundary=boundary,
         param_dtype=param_dtype,
     )

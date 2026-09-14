@@ -506,7 +506,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
                 self._weights_path = (
                     Path(resolved) if resolved is not None else MNIST_FM_DEFAULT_WEIGHTS
                 )
-            self._weights: list[ArrayF64] = load_weights(self._weights_path)
+            self._weights: list[ArrayF64] = load_weights(self._weights_path)  # type: ignore[no-redef]
         self._native_states: NativeStateCache = NativeStateCache(
             maxsize=MNIST_FM_NATIVE_STATES_MAXSIZE
         )
@@ -706,7 +706,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         delta: ODEConditionDelta,
     ) -> ODEConditionDelta:
         del bundle
-        new_spec = dict(delta.delta_spec)
+        new_spec = dict(delta.delta_spec)  # type: ignore[call-overload]
         new_spec.setdefault("target_distribution", "mnist")
         new_spec.setdefault("integrator_config_hash", MNIST_FM_CONFIG_HASH)
         new_spec.setdefault("integrator", self._integrator)
@@ -739,7 +739,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
             raise CapabilityMissingError(
                 "missing_native_state", context=state.native_state_digest
             )
-        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
+        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))  # type: ignore[attr-defined]
         if num_steps <= 0:
             raise ValueError("num_steps_must_be_positive")
         x0 = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(MNIST_FLAT_DIM)
@@ -961,7 +961,7 @@ def default_mnist_fm_adapter(
     tests and external callers use it to point at a synthetic or
     randomized weights file when the canonical artefact is missing.
     """
-    return MnistFmAdapter(weights_path=weights_path)
+    return MnistFmAdapter(weights_path=weights_path)  # type: ignore[abstract]
 
 
 __all__ = [

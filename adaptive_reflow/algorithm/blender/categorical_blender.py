@@ -460,7 +460,7 @@ def _logit_space_blend(
     exp_lb = np.exp(log_blend)
     denom = exp_lb.sum(axis=-1, keepdims=True)
     denom = np.maximum(denom, float(eps_log))
-    return exp_lb / denom
+    return exp_lb / denom  # type: ignore[no-any-return]
 
 
 def _sentinel_short_circuit(
@@ -498,7 +498,7 @@ def _sentinel_short_circuit(
     # Where sentinel applies, emit (use_prior ? prior : fresh).
     out = np.where(use_prior, prior, fresh)
     # Where no sentinel applies, fall back to the blended value.
-    return np.where(sentinel_mask, out, blended)
+    return np.where(sentinel_mask, out, blended)  # type: ignore[no-any-return]
 
 
 def _masked_categorical_blend(
@@ -532,7 +532,7 @@ def _masked_categorical_blend(
                 f"{CATEGORICAL_BLEND_MASK_FRESH_FALLBACK}:n={n_fallback}"
             )
         broadcast = np.broadcast_to(fallback_mask[..., None], blended.shape)
-        return np.where(broadcast, fresh, blended)
+        return np.where(broadcast, fresh, blended)  # type: ignore[no-any-return]
     return blended
 
 
@@ -561,7 +561,7 @@ def _gumbel_anneal_sample(
     log_p = np.log(np.maximum(probs, 0.0) + float(eps_log))
     uniform = np.maximum(rng.random(log_p.shape), float(eps_log))
     gumbel = -np.log(-np.log(uniform) + float(eps_log)) + float(eps_log)
-    return np.exp((log_p + gumbel) / max(float(temperature), float(eps_log)))
+    return np.exp((log_p + gumbel) / max(float(temperature), float(eps_log)))  # type: ignore[no-any-return]
 
 
 # ---------------------------------------------------------------------------

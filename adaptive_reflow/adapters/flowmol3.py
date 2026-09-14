@@ -51,7 +51,7 @@ import json
 import os
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field, replace
-from typing import Any, cast
+from typing import Any, TypeAlias, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -92,7 +92,7 @@ from adaptive_reflow.writer.registry import (
 )
 
 # Local type alias — kept parallel to other adapters.
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 #: Default absolute path to the published FlowMol3 PyTorch Lightning
 #: checkpoint used by :func:`default_flowmol3_adapter` when
@@ -965,7 +965,7 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
             dataset="flowmol3_smiles_pl", variant="v1"
         )
         od_delta = ODEConditionDelta(
-            delta_spec=dict(delta.delta_spec),
+            delta_spec=dict(delta.delta_spec),  # type: ignore[call-overload]
             source="flowmol3_adapter",
             target_round=int(bundle.source_round) + 1,
             calibration_artifact_hash="flowmol3_null_calibration",
@@ -990,7 +990,7 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
         ``(state.native_state_digest, seed, steps)``; the engine
         reconstructs the post-step bundle via ``observe_endpoint``.
         """
-        steps = int(condition.delta_spec.get("num_steps", 1))
+        steps = int(condition.delta_spec.get("num_steps", 1))  # type: ignore[attr-defined]
         if steps <= 0:
             raise ValueError("steps_must_be_positive")
         _require_valid(state, "validate_state_bundle")
@@ -1449,7 +1449,7 @@ def default_flowmol3_adapter(
         # force_mode == "auto": silently degrade to synthetic; the
         # caller sees an adapter with ``_real_ckpt_meta=None`` so the
         # downstream eval report can surface ``synthetic_fallback``.
-    return FlowMol3Adapter(
+    return FlowMol3Adapter(  # type: ignore[abstract]
         atom_type_entropy_restart_policy=atom_type_entropy_restart_policy,
         force_mode=str(force_mode),
         real_ckpt_meta=real_ckpt_meta,

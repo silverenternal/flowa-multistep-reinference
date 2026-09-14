@@ -83,7 +83,7 @@ from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
@@ -257,7 +257,7 @@ FREQ_FLOW_UPSTREAM_TARBALL_SHA256: str = (
 FREQ_FLOW_MECHANISM_ID: str = "freqflow@v1"
 
 # Local type alias.
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 
 # ---------------------------------------------------------------------------
@@ -492,7 +492,7 @@ def _synthetic_class_conditioning(
     cache_hash = _class_label_cache_hash(class_label)
     rng = np.random.default_rng(int(seed) ^ int(cache_hash[:8], 16))
     # 1001-dim one-hot (1000 ImageNet classes + 1 unconditional).
-    one_hot = np.zeros(1001, dtype=np.float64)
+    one_hot = np.zeros(1001, dtype=np.float64)  # type: ignore[var-annotated]
     one_hot[int(class_label) % 1001] = 1.0
     return {
         "class_label": int(class_label),
@@ -1059,7 +1059,7 @@ class FreqFlowAdapter(FlowMatchingODEAdapter):
         downstream observability.
         """
         del bundle
-        new_spec = dict(delta.delta_spec)
+        new_spec = dict(delta.delta_spec)  # type: ignore[call-overload]
         # Resolve class label.
         class_label = int(new_spec.get("class_label", self._class_label))
         if class_label < 0 or class_label >= 1001:
@@ -1165,14 +1165,14 @@ class FreqFlowAdapter(FlowMatchingODEAdapter):
             raise CapabilityMissingError(
                 "missing_native_state", context=state.native_state_digest
             )
-        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
+        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))  # type: ignore[attr-defined]
         if num_steps <= 0:
             raise ValueError(ERR_FREQ_FLOW_NUM_STEPS)
         guidance_scale = float(
-            condition.delta_spec.get("guidance_scale", self._guidance_scale)
+            condition.delta_spec.get("guidance_scale", self._guidance_scale)  # type: ignore[attr-defined]
         )
         frequency_mix = float(
-            condition.delta_spec.get("frequency_mix", self._frequency_mix)
+            condition.delta_spec.get("frequency_mix", self._frequency_mix)  # type: ignore[attr-defined]
         )
         if frequency_mix < 0.0 or frequency_mix > 1.0:
             raise ValueError(
@@ -1180,7 +1180,7 @@ class FreqFlowAdapter(FlowMatchingODEAdapter):
                 "; expected in [0.0, 1.0]"
             )
         sampler_id = str(
-            condition.delta_spec.get("sampler_id", self._solver)
+            condition.delta_spec.get("sampler_id", self._solver)  # type: ignore[attr-defined]
         )
         if sampler_id not in FREQ_FLOW_INTEGRATORS:
             raise ValueError(
@@ -1193,13 +1193,13 @@ class FreqFlowAdapter(FlowMatchingODEAdapter):
         # delta from a hostile test), fall back to encoding the default
         # class label.
         cond_hash = str(
-            condition.delta_spec.get("conditioning_cache_hash", "")
+            condition.delta_spec.get("conditioning_cache_hash", "")  # type: ignore[attr-defined]
         )
         if cond_hash and cond_hash in self._conditioning_cache:
             conditioning = self._conditioning_cache[cond_hash]
         else:
             class_label = int(
-                condition.delta_spec.get("class_label", self._class_label)
+                condition.delta_spec.get("class_label", self._class_label)  # type: ignore[attr-defined]
             )
             conditioning = self._resolve_conditioning(
                 class_label=class_label, seed=int(seed),
@@ -1512,7 +1512,7 @@ def default_freqflow_adapter(
     """
     if num_steps is None:
         num_steps = int(FREQ_FLOW_NUM_STEPS_DEFAULT)
-    return FreqFlowAdapter(
+    return FreqFlowAdapter(  # type: ignore[abstract]
         weights_path=weights_path,
         force_mode=force_mode,
         num_steps=int(num_steps),

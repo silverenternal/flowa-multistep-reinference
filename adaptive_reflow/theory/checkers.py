@@ -134,7 +134,7 @@ class Theorem1Statement:
     root_cell_mass: float
     posterior_evidence: float
 
-    def __post_init__(self) -> None:  # type: ignore[override]
+    def __post_init__(self) -> None:
         for name in ("bl_distance", "root_cell_mass", "posterior_evidence"):
             v = getattr(self, name)
             if v is None:

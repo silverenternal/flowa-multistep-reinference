@@ -1103,7 +1103,7 @@ class BatchedTrajectoryRunner:
                     if accepts_pq:
                         kwargs["paper_quantities"] = pq_payload
                     try:
-                        scheduler.record_round_feedback(**kwargs)
+                        scheduler.record_round_feedback(**kwargs)  # type: ignore[arg-type]
                     except TypeError:
                         # Defensive fallback — keep the runner
                         # backward-compatible with any scheduler family
@@ -1113,7 +1113,7 @@ class BatchedTrajectoryRunner:
                                 int(r), feedback
                             )
                         except TypeError:
-                            scheduler.record_round_feedback(
+                            scheduler.record_round_feedback(  # type: ignore[call-arg]
                                 int(r), paper_quantities=pq_payload
                             )
 

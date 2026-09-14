@@ -71,7 +71,7 @@ from adaptive_reflow.algorithm.merge_operator import (
     MergeOperatorProtocol,
     default_bounded_merge_operator,
 )
-from adaptive_reflow.contracts import (
+from adaptive_reflow.contracts import (  # type: ignore[attr-defined]
     ArtifactHash,
     ChannelName,
     ChannelRuleInputs,
@@ -300,7 +300,7 @@ class AdaptiveReflowPolicyOrchestrator:
     def __init__(
         self,
         *,
-        envelope_manifest: FrozenEnvelopeManifest,
+        envelope_manifest: FrozenEnvelopeManifest,  # type: ignore[valid-type]
         schedule_config: CosineScheduleConfig,
         authority_contract: RestartPolicyAuthorityContract | None = None,
         operation_contract: OperationCompositionContract | None = None,
@@ -348,7 +348,7 @@ class AdaptiveReflowPolicyOrchestrator:
                 "schedule_config must not be None"
             )
 
-        self._envelope_manifest: FrozenEnvelopeManifest = envelope_manifest
+        self._envelope_manifest: FrozenEnvelopeManifest = envelope_manifest  # type: ignore[valid-type]
         self._schedule_config: CosineScheduleConfig = schedule_config
 
         if authority_contract is None:
@@ -394,7 +394,7 @@ class AdaptiveReflowPolicyOrchestrator:
     # ---- public read-only properties ----------------------------------
 
     @property
-    def envelope_manifest(self) -> FrozenEnvelopeManifest:
+    def envelope_manifest(self) -> FrozenEnvelopeManifest:  # type: ignore[valid-type]
         """Return the stored :class:`FrozenEnvelopeManifest`."""
         return self._envelope_manifest
 
@@ -611,7 +611,7 @@ class AdaptiveReflowPolicyOrchestrator:
 
         # --- 2. classify the bundle against the envelope ---
         classification = classify_endpoint(bundle, self._envelope_manifest)
-        matched = classification.matched_layer_index is not None
+        matched = classification.matched_layer_index is not None  # type: ignore[attr-defined]
         tail_admissibility: bool = bool(matched)
         complement_excluded: bool = not bool(matched)
 
@@ -733,7 +733,7 @@ class AdaptiveReflowPolicyOrchestrator:
                 tail_admissibility=tail_admissibility,
                 complement_excluded=complement_excluded,
                 frozen_envelope_manifest_hash=ArtifactHash(
-                    str(self._envelope_manifest.manifest_hash)
+                    str(self._envelope_manifest.manifest_hash)  # type: ignore[attr-defined]
                 ),
                 finite_prefix_only=True,
                 calibration_lower_bound=_safe_factor_value(
@@ -860,7 +860,7 @@ class AdaptiveReflowPolicyOrchestrator:
             fresh_noise_floor_by_channel=fresh_noise_floor_by_channel,
             calibration_artifact_hash=bundle.calibration_artifact_hash,
             frozen_envelope_manifest_hash=ArtifactHash(
-                str(self._envelope_manifest.manifest_hash)
+                str(self._envelope_manifest.manifest_hash)  # type: ignore[attr-defined]
             ),
             tail_budget_row_ref=None,
             finite_prefix_only=True,

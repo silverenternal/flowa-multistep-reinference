@@ -37,7 +37,7 @@ import os
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
@@ -197,7 +197,7 @@ AUDIT_PROTBFN_UPSTREAM_JAX: str = "protbfn_upstream_jax"
 PROTBFN_UPSTREAM_VOCAB_SIZE: int = 32
 
 # Local type alias.
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 
 # ---------------------------------------------------------------------------
@@ -301,7 +301,7 @@ def _sample_uniform_categorical(
     vocab_size: int,
 ) -> ArrayF64:
     """Sample a ``(L, K)`` per-position uniform categorical."""
-    theta = np.full(
+    theta = np.full(  # type: ignore[var-annotated]
         (int(length), int(vocab_size)), 1.0 / float(vocab_size), dtype=np.float64
     )
     # Tiny per-position jitter so the prior has finite entropy and the
@@ -320,7 +320,7 @@ def _softmax(z: np.ndarray, axis: int = -1) -> np.ndarray:
     z = np.asarray(z, dtype=np.float64)
     z = z - np.max(z, axis=axis, keepdims=True)
     exp_z = np.exp(z)
-    return exp_z / np.sum(exp_z, axis=axis, keepdims=True)
+    return exp_z / np.sum(exp_z, axis=axis, keepdims=True)  # type: ignore[no-any-return]
 
 
 # ---------------------------------------------------------------------------
@@ -758,7 +758,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
             raise CapabilityMissingError(
                 "missing_native_state", context=state.native_state_digest
             )
-        beta_raw = policy.beta_by_channel.get(AMINO_ACID_CATEGORICAL)
+        beta_raw = policy.beta_by_channel.get(AMINO_ACID_CATEGORICAL)  # type: ignore[call-overload]
         if beta_raw is None:
             # Derive the default memory fraction from the BFN
             # algorithm's own posterior concentration rate rather
@@ -867,7 +867,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         know which conditioning surface is in play.
         """
         del bundle  # amino-acid channel is unconditional beyond the prior
-        new_spec = dict(delta.delta_spec)
+        new_spec = dict(delta.delta_spec)  # type: ignore[call-overload]
         # Inject the adapter's mechanism identity and integrator config
         # so downstream observers know which model is in play.
         new_spec.setdefault("model_family", str(self._mechanism))
@@ -925,7 +925,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         synthetic Bayesian-update step applied to the previous row.
         """
         L, K = theta0.shape
-        traj = np.empty((int(num_steps) + 1, int(L), int(K)), dtype=np.float64)
+        traj = np.empty((int(num_steps) + 1, int(L), int(K)), dtype=np.float64)  # type: ignore[var-annotated]
         traj[0] = theta0.copy()
         theta = theta0.copy()
         assert self._synthetic_weights is not None
@@ -1031,7 +1031,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         if K_upstream > K_surface:
             one_hot_surface = one_hot_upstream[:, :K_surface]
         else:
-            pad = np.zeros(
+            pad = np.zeros(  # type: ignore[var-annotated]
                 (int(sample_length), K_surface - K_upstream), dtype=np.float64
             )
             one_hot_surface = np.concatenate(
@@ -1047,7 +1047,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
 
         # 4. Build the trajectory.
         L = int(sample_length)
-        traj = np.empty((int(num_steps) + 1, L, K_surface), dtype=np.float64)
+        traj = np.empty((int(num_steps) + 1, L, K_surface), dtype=np.float64)  # type: ignore[var-annotated]
         traj[0] = np.asarray(theta0, dtype=np.float64).reshape(L, K_surface)
         # Carry-forward intermediate rows from theta0 — the upstream
         # sampler does not expose intermediate states.
@@ -1197,7 +1197,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
 
     def upstream_repo_path(self) -> Any:
         """Return the absolute path to the upstream InstaDeep repo."""
-        from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (
+        from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (  # type: ignore[attr-defined]
             UPSTREAM_REPO_ROOT,
         )
 
@@ -1215,7 +1215,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         """
         if self._checkpoint_path is not None and self._checkpoint_path.is_dir():
             return self._checkpoint_path
-        from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (
+        from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (  # type: ignore[attr-defined]
             default_upstream_weights_path,
         )
 
@@ -1235,11 +1235,11 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         installed; raises :class:`FileNotFoundError` if the upstream
         repo is missing on disk.
         """
-        from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (
+        from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (  # type: ignore[attr-defined]
             try_import_upstream as _try_import,
         )
 
-        return _try_import()
+        return _try_import()  # type: ignore[no-any-return]
 
     # ------------------------------------------------------------------
     # 6.7. Algorithm-2 / Algorithm-3 plumbing (paper-faithful samplers)
@@ -1280,8 +1280,8 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         K_MODEL = 32
         z = rng.standard_normal(size=(L, K_MODEL)).astype(np.float64)
         # Uniform prior in logit space y_0 = 0.
-        y = np.zeros((L, K_MODEL), dtype=np.float64)
-        traj = np.empty((n + 1, L, K_MODEL), dtype=np.float64)
+        y = np.zeros((L, K_MODEL), dtype=np.float64)  # type: ignore[var-annotated]
+        traj = np.empty((n + 1, L, K_MODEL), dtype=np.float64)  # type: ignore[var-annotated]
         traj[0] = _softmax(y, axis=-1)
 
         encoder = self._torch_model  # may be None
@@ -1310,7 +1310,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
             inner_z = inner_rng.standard_normal(size=(L, K_MODEL)).astype(
                 np.float64
             )
-            inner_y = np.zeros((L, K_MODEL), dtype=np.float64)
+            inner_y = np.zeros((L, K_MODEL), dtype=np.float64)  # type: ignore[var-annotated]
             for inner_step in range(n):
                 s = (inner_step + 1) / n
                 beta_s = 2.0 * (s ** 2.0)
@@ -1372,7 +1372,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
             # Fixed per-particle noise z of shape (P, L, K).
             zs = rng.standard_normal(size=(p, L, K_MODEL)).astype(np.float64)
             # Particle priors y_0 = 0 of shape (P, L, K).
-            ys = np.zeros((p, L, K_MODEL), dtype=np.float64)
+            ys = np.zeros((p, L, K_MODEL), dtype=np.float64)  # type: ignore[var-annotated]
 
             for step_index in range(n):
                 t = step_index / n
@@ -1383,7 +1383,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
 
                 # Step every particle.
                 new_ys = np.empty_like(ys)
-                log_probs = np.zeros((p,), dtype=np.float64)
+                log_probs = np.zeros((p,), dtype=np.float64)  # type: ignore[var-annotated]
                 x_one_hot = np.eye(K_MODEL, dtype=np.float64)[x_int]
                 for particle_idx in range(p):
                     theta = _softmax(ys[particle_idx], axis=-1)
@@ -1420,7 +1420,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
             y_1 = ys[0]
             theta = _softmax(y_1, axis=-1)
             phi = self._forward_encoder(encoder, theta)
-            return np.argmax(phi, axis=-1).astype(np.int64)
+            return np.argmax(phi, axis=-1).astype(np.int64)  # type: ignore[no-any-return]
 
         return inpaint_fn
 
@@ -1486,7 +1486,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
             pad = np.zeros((L, K_theta - net.shape[-1]), dtype=np.float64)
             net = np.concatenate([net, pad], axis=-1)
             net = net / np.maximum(net.sum(axis=-1, keepdims=True), 1e-30)
-        return net
+        return net  # type: ignore[no-any-return]
 
     # ------------------------------------------------------------------
     # 6.8. Paper-metric orchestrator
@@ -1532,7 +1532,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
             approximate_loss,
             transformer_to_numpy_fn,
         )
-        from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (
+        from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (  # type: ignore[attr-defined]
             mirror_repetition_score,
             mirror_sample_to_string,
         )
@@ -1549,7 +1549,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         if encoder is not None:
             fwd = transformer_to_numpy_fn(encoder)
         else:
-            def fwd(_t):
+            def fwd(_t):  # type: ignore[no-untyped-def]
                 return sample_kwargs["theta_traj"][
                             -1
                         ]  # synthetic placeholder
@@ -1619,14 +1619,14 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         try:
             from Bio import Seq, SeqIO  # local import — biopython is in venv
         except Exception:
-            SeqIO = None
-            Seq = None
+            SeqIO = None  # type: ignore[assignment]
+            Seq = None  # type: ignore[assignment]
         if SeqIO is not None and out_dir is not None:
             out_root = Path(str(out_dir))
             out_root.mkdir(parents=True, exist_ok=True)
             fasta_records = []
             for i, (s, p, r) in enumerate(zip(seqs, perps, rep_scores, strict=False)):
-                rec = SeqIO.SeqRecord(
+                rec = SeqIO.SeqRecord(  # type: ignore[attr-defined]
                     Seq.Seq(s),
                     id=f"sample_{i}",
                     description=f"loss: {losses[i]:.2f}, perplexity: {p:.2f}, "
@@ -1635,7 +1635,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                 )
                 fasta_records.append(rec)
             if inpaint_argmax is not None:
-                rec_inpaint = SeqIO.SeqRecord(
+                rec_inpaint = SeqIO.SeqRecord(  # type: ignore[attr-defined]
                     Seq.Seq(mirror_sample_to_string(inpaint_argmax)),
                     id=f"{self._mechanism}-inpainted",
                     description=f"inpainted with AAR {aar}",
@@ -1697,7 +1697,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                 "missing_native_state", context=state.native_state_digest
             )
         num_steps = int(
-            condition.delta_spec.get("num_steps", self._num_steps)
+            condition.delta_spec.get("num_steps", self._num_steps)  # type: ignore[attr-defined]
         )
         if num_steps <= 0:
             raise ValueError(ERR_PROTBFN_NUM_STEPS)
@@ -1801,7 +1801,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                         # Apply softmax and project back to surface
                         # vocab if needed.
                         net_full = (
-                            torch.softmax(logits, dim=-1)
+                            torch.softmax(logits, dim=-1)  # type: ignore[var-annotated]
                             .detach()
                             .cpu()
                             .numpy()
@@ -2093,7 +2093,7 @@ def default_protbfnabbfn_adapter(
         max_seq_length = ABBFN_MAX_LENGTH
     if mechanism == "ProtBFN" and max_seq_length is None:
         max_seq_length = PROTBFN_MAX_LENGTH
-    return ProtBFNAbBFNAdapter(
+    return ProtBFNAbBFNAdapter(  # type: ignore[abstract]
         checkpoint_path=checkpoint_path,
         mechanism=mechanism,
         force_mode=force_mode,

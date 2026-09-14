@@ -245,11 +245,11 @@ def read_fasta(path: str | Path) -> list[tuple[str, str]]:
     if not fasta_path.is_file():
         raise FileNotFoundError(f"fasta_not_found:{fasta_path}")
     try:
-        from Bio import SeqIO  # type: ignore[import-not-found]
+        from Bio import SeqIO
 
         return [
             (str(rec.id), str(rec.seq))
-            for rec in SeqIO.parse(str(fasta_path), "fasta")
+            for rec in SeqIO.parse(str(fasta_path), "fasta")  # type: ignore[no-untyped-call]
         ]
     except ImportError:
         pass

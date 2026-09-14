@@ -69,12 +69,12 @@ from __future__ import annotations
 import contextlib
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
 
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 #: Supported dtype tags the wrappers accept.
 #: ``"float32"`` — SiT-XL/2 / FreqFlow / Kanzi encoder / MM-FM.
@@ -593,7 +593,7 @@ class DiffusersPipelineFactory:
                 continue
         try:
             pipeline_cls = self.resolve_transformer_class()
-            return pipeline_cls(**kwargs)
+            return pipeline_cls(**kwargs)  # type: ignore[misc]
         except Exception:
             return None
 

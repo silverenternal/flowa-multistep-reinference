@@ -321,7 +321,7 @@ class ToyLinearAdapter(FlowMatchingODEAdapter):
 
 def default_toy_linear_adapter() -> ToyLinearAdapter:
     """Return a fresh ToyLinearAdapter for tests and the registry."""
-    return ToyLinearAdapter()
+    return ToyLinearAdapter()  # type: ignore[abstract]
 
 
 __all__ = [

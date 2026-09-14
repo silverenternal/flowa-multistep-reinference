@@ -105,7 +105,7 @@ def _aggregate_instance_rates(
     """
     is_mapping = isinstance(smarts_list, Mapping)
     keys: list[str] = (
-        list(smarts_list.keys()) if is_mapping
+        list(smarts_list.keys()) if is_mapping  # type: ignore[union-attr]
         else list(smarts_list)
     )
     sums: dict[str, int] = {k: 0 for k in keys}
@@ -273,7 +273,7 @@ def compute_fg_deviation_eq4(
         ref_raw = list(reference_smiles)
         base["reference_source"] = "explicit_smiles_arg"
     else:
-        ref_raw: list[str] = []
+        ref_raw: list[str] = []  # type: ignore[no-redef]
         if reference_smiles_path is not None:
             ref_path = Path(reference_smiles_path)
             if ref_path.exists():

@@ -308,7 +308,7 @@ class HFCosineClipScoreEvaluator(CLIPScoreProtocol):
             local_files_only=True,
             use_safetensors=False,
         )
-        processor = AutoProcessor.from_pretrained(  # type: ignore[no-untyped-call]
+        processor = AutoProcessor.from_pretrained(
             self._model_name,
             local_files_only=True,
         )

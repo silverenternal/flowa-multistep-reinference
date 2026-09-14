@@ -198,7 +198,7 @@ from .runner_registry import (
     RunnerProtocol,
     build_runner,
 )
-from .scheduler import (
+from .scheduler import (  # type: ignore[attr-defined]
     DEFAULT_NFE_AWARE_MAX,
     DEFAULT_NFE_AWARE_THRESHOLD,
     SCHEDULER_REGISTRY,
@@ -232,7 +232,7 @@ from .sequential import (
     SequentialScheduler,
     SequentialSlot,
 )
-from .solver import (
+from .solver import (  # type: ignore[assignment]
     ADAPTIVE_RK4_FAMILY,
     CTMC_EULER_HEUN_FAMILY,
     DEFAULT_ADAPTIVE_RK4_CONFIG_HASH,

@@ -73,7 +73,7 @@ from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
@@ -180,7 +180,7 @@ GRAPHBFN_SEED_OFFSET_DEFAULT: int = 0
 GRAPHBFN_DEFAULT_MEMORY_FRACTION: float = 0.5
 
 # Local type alias (avoid numpy at module-import hot annotation paths).
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 #: Mode literal — torch (production) or synthetic (test-only).
 GraphBFNMode = Literal["torch", "synthetic"]
@@ -247,7 +247,7 @@ def graphbfn_resolve_weights_path(
 
 def _memory_fraction_for(policy: RestartPolicy, channel: ChannelName) -> float:
     """Return ``m = 1 - beta`` for ``channel`` (default 0.5 when omitted)."""
-    beta_raw = policy.beta_by_channel.get(channel)  # type: ignore[arg-type]
+    beta_raw = policy.beta_by_channel.get(channel)  # type: ignore[call-overload]
     if beta_raw is None:
         return float(GRAPHBFN_DEFAULT_MEMORY_FRACTION)
     beta = float(beta_raw)
@@ -312,7 +312,7 @@ def _uniform_edge_existence_logits(*, n_nodes: int, rng: np.random.Generator) ->
     """
     if n_nodes <= 0:
         return np.zeros((0, 0), dtype=np.float64)
-    logits = np.zeros((int(n_nodes), int(n_nodes)), dtype=np.float64)
+    logits = np.zeros((int(n_nodes), int(n_nodes)), dtype=np.float64)  # type: ignore[var-annotated]
     # Block self-loops via -inf on the diagonal.
     np.fill_diagonal(logits, -np.inf)
     return logits
@@ -754,8 +754,8 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
         )
         adjacency = _uniform_edge_existence_logits(n_nodes=0, rng=rng)
         # Placeholder charge / valence scalars — also empty at t=0.
-        charge = np.zeros((0,), dtype=np.float64)
-        valence = np.zeros((0,), dtype=np.float64)
+        charge = np.zeros((0,), dtype=np.float64)  # type: ignore[var-annotated]
+        valence = np.zeros((0,), dtype=np.float64)  # type: ignore[var-annotated]
 
         digest = digest_state(
             {
@@ -1007,7 +1007,7 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
         can apply the property-conditioning mask at every BFN step.
         """
         del bundle
-        new_spec = dict(delta.delta_spec)
+        new_spec = dict(delta.delta_spec)  # type: ignore[call-overload]
         new_spec.setdefault("target_distribution", self._dataset)
         new_spec.setdefault("integrator_config_hash", self._caps.native_config_hash)
         new_spec.setdefault("variant", self._variant)
@@ -1079,11 +1079,11 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
                 "missing_native_state", context=state.native_state_digest
             )
 
-        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
+        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))  # type: ignore[attr-defined]
         if num_steps <= 0:
             raise ValueError(ERR_GRAPHBFN_NUM_STEPS)
-        cond_kind = str(condition.delta_spec.get("condition_kind", "unconditional"))
-        cond_value = condition.delta_spec.get("property_value", None)
+        cond_kind = str(condition.delta_spec.get("condition_kind", "unconditional"))  # type: ignore[attr-defined]
+        cond_value = condition.delta_spec.get("property_value", None)  # type: ignore[attr-defined]
         cond_value_f = float(cond_value) if cond_value is not None else None
 
         theta_node = np.asarray(prior_entry["theta_node"], dtype=np.float64).copy()
@@ -1509,7 +1509,7 @@ def default_graphbfn_adapter(
     default) routes into ``synthetic`` mode so the adapter runs
     hermetically on CPU-only environments.
     """
-    return GraphBFNAdapter(
+    return GraphBFNAdapter(  # type: ignore[abstract]
         variant=variant,
         dataset=dataset,
         num_steps=num_steps,

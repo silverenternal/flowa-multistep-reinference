@@ -143,11 +143,11 @@ def _read_fasta_simple(path: str | Path) -> list[tuple[str, str]]:
     if not fasta_path.is_file():
         raise FileNotFoundError(f"fasta_not_found:{fasta_path}")
     try:
-        from Bio import SeqIO  # type: ignore[import-not-found]
+        from Bio import SeqIO
 
         return [
             (str(rec.id), str(rec.seq))
-            for rec in SeqIO.parse(str(fasta_path), "fasta")
+            for rec in SeqIO.parse(str(fasta_path), "fasta")  # type: ignore[no-untyped-call]
         ]
     except ImportError:
         pass
@@ -185,7 +185,7 @@ def _collect_aa_histograms(
     therefore easy to detect downstream (``row.sum() == 0``).
     """
     aa_to_idx = {aa: i for i, aa in enumerate(alphabet)}
-    counts = np.zeros((max_length, len(alphabet)), dtype=np.float64)
+    counts = np.zeros((max_length, len(alphabet)), dtype=np.float64)  # type: ignore[var-annotated]
     for _rid, seq in sequences:
         upper = seq.strip().upper()
         n = min(len(upper), max_length)
@@ -230,15 +230,15 @@ def _smooth_histograms(
     # Avoid divide-by-zero on rows that contain only zero counts even
     # after smoothing (should not happen but defensive).
     safe_total = np.where(smoothed_total > 0, smoothed_total, 1.0)
-    return smoothed / safe_total
+    return smoothed / safe_total  # type: ignore[no-any-return]
 
 
 def _global_distribution(histograms: np.ndarray) -> np.ndarray:
     """Length-pooled AA distribution from a per-position count matrix."""
     total = histograms.sum(axis=0)
     if total.sum() <= 0:
-        return np.full_like(total, 1.0 / total.size)
-    return total / total.sum()
+        return np.full_like(total, 1.0 / total.size)  # type: ignore[no-any-return]
+    return total / total.sum()  # type: ignore[no-any-return]
 
 
 def _flat_reference(max_length: int) -> np.ndarray:

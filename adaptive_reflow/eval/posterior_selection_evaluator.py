@@ -124,7 +124,7 @@ from adaptive_reflow.adapters.twodim_fm import (
     TwoDimFMAdapter,
     default_twodim_fm_adapter,
 )
-from adaptive_reflow.contracts import (
+from adaptive_reflow.contracts import (  # type: ignore[attr-defined]
     BundleId,
     ChannelName,
     ChannelTransferEvidence,
@@ -1076,7 +1076,7 @@ class EvidenceScaleGapMetric:
         n_gen = self._n_gen
         endpoints: NDArray[np.float64] = np.empty((n_gen, 2), dtype=np.float64)
         condition = ODEConditionDelta(
-            delta_spec={"num_steps": self._adapter._num_steps},  # noqa: SLF001 — test seam
+            delta_spec={"num_steps": self._adapter._num_steps},  # type: ignore[arg-type]  # noqa: SLF001 — test seam
             source=_INTERNAL_CONDITION_SOURCE,
             target_round=1,
             calibration_artifact_hash=_INTERNAL_CALIBRATION_HASH,

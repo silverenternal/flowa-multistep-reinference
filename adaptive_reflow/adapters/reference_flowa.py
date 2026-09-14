@@ -253,7 +253,7 @@ class ReferenceFlowAAdapter(FlowMatchingODEAdapter):
         # Flow-A does not edit it. We return a fresh instance so the
         # engine can compare structural equality without aliasing.
         return ODEConditionDelta(
-            delta_spec=dict(delta.delta_spec),
+            delta_spec=dict(delta.delta_spec),  # type: ignore[call-overload]
             source=str(delta.source),
             target_round=int(delta.target_round),
             calibration_artifact_hash=str(delta.calibration_artifact_hash),

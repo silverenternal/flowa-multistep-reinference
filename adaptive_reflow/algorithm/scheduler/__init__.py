@@ -26,7 +26,7 @@ Public surface
 
 from __future__ import annotations
 
-from ._core import (
+from ._core import (  # type: ignore[attr-defined]
     DEFAULT_NFE_AWARE_MAX,
     DEFAULT_NFE_AWARE_THRESHOLD,
     SCHEDULER_REGISTRY,

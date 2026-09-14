@@ -81,12 +81,12 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
 
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 #: Default VAE downsample factor (SD-VAE convention).
 DEFAULT_VAE_DOWNSAMPLE: int = 8
@@ -589,7 +589,7 @@ class DiffusersVAEWrapper:
         dtype = self._torch_dtype()
         with torch.no_grad():
             z_t = torch.as_tensor(z, dtype=dtype).unsqueeze(0)
-            decoded = self._vae.decode(z_t).sample
+            decoded = self._vae.decode(z_t).sample  # type: ignore[union-attr]
             decoded = ((decoded.squeeze(0).clamp(-1, 1) + 1.0) * 0.5).cpu().numpy()
         pixels = np.asarray(decoded, dtype=np.float64)
         return DiffusersVAEResult(
@@ -622,7 +622,7 @@ class DiffusersVAEWrapper:
         dtype = self._torch_dtype()
         with torch.no_grad():
             x_t = torch.as_tensor(x * 2.0 - 1.0, dtype=dtype).unsqueeze(0)
-            latent_dist = self._vae.encode(x_t).latent_dist
+            latent_dist = self._vae.encode(x_t).latent_dist  # type: ignore[union-attr]
             z = latent_dist.sample().squeeze(0).cpu().numpy()
         z = np.asarray(z, dtype=np.float64)
         return DiffusersVAEResult(
@@ -684,7 +684,7 @@ def vae_for_family(
 
         if _Path(str(weights_path)).exists():
             wrapper = DiffusersVAEWrapper.from_diffusers_pretrained(
-                str(weights_path), shape=shape, dtype=str(dtype),
+                str(weights_path), shape=shape, dtype=str(dtype),  # type: ignore[arg-type]
             )
             if wrapper.is_available:
                 return wrapper

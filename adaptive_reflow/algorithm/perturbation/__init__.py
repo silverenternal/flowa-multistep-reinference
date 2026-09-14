@@ -85,7 +85,7 @@ default_uniform_fresh_perturbation = _perturbation_mod.default_uniform_fresh_per
 del _perturbation_mod
 
 
-def __getattr__(name: str):
+def __getattr__(name: str):  # type: ignore[no-untyped-def]
     """PEP 562 lazy lookup for round2_extra symbols.
 
     Imported on first access to break the algorithm → scheduler →

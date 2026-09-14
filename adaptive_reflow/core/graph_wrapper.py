@@ -68,12 +68,12 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
 
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 #: Edge-index dtype. ``int64`` matches both DGL and PyG.
 EdgeIndexDType = np.int64
@@ -562,7 +562,7 @@ class DGLGraphBridge:
             (int(graph.num_nodes()), DEFAULT_NODE_FEATURE_DIM), dtype=np.float64
         )
         ei = (
-            torch.stack(graph.edges()).detach().cpu().numpy().astype(np.int64)
+            torch.stack(graph.edges()).detach().cpu().numpy().astype(np.int64)  # type: ignore[var-annotated]
             if int(graph.num_edges()) > 0
             else np.zeros((2, 0), dtype=np.int64)
         )

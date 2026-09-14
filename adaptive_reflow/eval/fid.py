@@ -716,7 +716,7 @@ def _torchvision_version_or_unknown() -> str:
     major-bump surfaces as a hash change.
     """
     try:
-        import torchvision as _tv  # type: ignore[import-not-found]
+        import torchvision as _tv
     except ImportError:  # pragma: no cover — environment-dependent
         return "unknown"
     version = getattr(_tv, "__version__", None)

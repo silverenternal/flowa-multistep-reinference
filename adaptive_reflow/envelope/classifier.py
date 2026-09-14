@@ -103,58 +103,58 @@ def _read_observables(bundle: Any) -> dict[str, object]:
     return obs
 
 
-def _within_layer(layer: EnvelopeLayer, obs: Mapping[str, object]) -> bool:
+def _within_layer(layer: EnvelopeLayer, obs: Mapping[str, object]) -> bool:  # type: ignore[valid-type]
     """Return True iff ``obs`` satisfies every threshold on ``layer``.
 
     Missing observable fields cause the layer to *fail* (strict ordering: the
     envelope is fail-closed when evidence is incomplete).
     """
     rms = _coerce_float(obs.get(OBS_COORDINATE_EXTENT_RMS))
-    if rms is None or rms > float(layer.coordinate_extent_rms_max):
+    if rms is None or rms > float(layer.coordinate_extent_rms_max):  # type: ignore[attr-defined]
         return False
 
     pocket_d = _coerce_float(obs.get(OBS_POCKET_DISTANCE))
     if pocket_d is None:
         return False
-    pocket_d_max = float(layer.pocket_distance_max)
+    pocket_d_max = float(layer.pocket_distance_max)  # type: ignore[attr-defined]
     if math.isinf(pocket_d_max):
         pass  # +inf means "not bounded"
     elif pocket_d > pocket_d_max:
         return False
 
     support = _coerce_float(obs.get(OBS_POCKET_CONTACT_SUPPORT))
-    if support is None or support < float(layer.pocket_contact_support_min):
+    if support is None or support < float(layer.pocket_contact_support_min):  # type: ignore[attr-defined]
         return False
 
     atom_count = _coerce_int(obs.get(OBS_ATOM_COUNT))
     if atom_count is None:
         return False
-    if atom_count < int(layer.atom_count_min) or atom_count > int(layer.atom_count_max):
+    if atom_count < int(layer.atom_count_min) or atom_count > int(layer.atom_count_max):  # type: ignore[attr-defined]
         return False
 
     graph_c = _coerce_int(obs.get(OBS_GRAPH_COMPLEXITY))
-    if graph_c is None or graph_c > int(layer.graph_complexity_max):
+    if graph_c is None or graph_c > int(layer.graph_complexity_max):  # type: ignore[attr-defined]
         return False
 
     pair_entropy = _coerce_float(obs.get(OBS_PAIR_ENTROPY))
-    if pair_entropy is None or pair_entropy < float(layer.pair_entropy_min):
+    if pair_entropy is None or pair_entropy < float(layer.pair_entropy_min):  # type: ignore[attr-defined]
         return False
 
     proj_loss = _coerce_float(obs.get(OBS_PROJECTION_LOSS))
-    if proj_loss is None or proj_loss > float(layer.projection_loss_max):
+    if proj_loss is None or proj_loss > float(layer.projection_loss_max):  # type: ignore[attr-defined]
         return False
 
     return not (
-        (layer.internal_geometry_pass_required and _coerce_bool(obs.get(OBS_GEOMETRY_PASS)) is not True)
+        (layer.internal_geometry_pass_required and _coerce_bool(obs.get(OBS_GEOMETRY_PASS)) is not True)  # type: ignore[attr-defined]
         or (
-            layer.evaluator_provenance_required
+            layer.evaluator_provenance_required  # type: ignore[attr-defined]
             and _coerce_bool(obs.get(OBS_EVALUATOR_PROVENANCE_PRESENT)) is not True
         )
     )
 
 
 def _classify_blocker(
-    layer: EnvelopeLayer,
+    layer: EnvelopeLayer,  # type: ignore[valid-type]
     obs: Mapping[str, object],
 ) -> ComplementBlockerCode:
     """Return the first matching blocker for ``obs`` against ``layer``.
@@ -174,12 +174,12 @@ def _classify_blocker(
     if mat_pass is False:
         return _BLOCKER_MATERIALIZATION
 
-    if layer.internal_geometry_pass_required:
+    if layer.internal_geometry_pass_required:  # type: ignore[attr-defined]
         geo_pass = _coerce_bool(obs.get(OBS_GEOMETRY_PASS))
         if geo_pass is False:
             return _BLOCKER_GEOMETRY
 
-    if layer.evaluator_provenance_required:
+    if layer.evaluator_provenance_required:  # type: ignore[attr-defined]
         prov_present = _coerce_bool(obs.get(OBS_EVALUATOR_PROVENANCE_PRESENT))
         if prov_present is False:
             return _BLOCKER_EVAL_PROVENANCE

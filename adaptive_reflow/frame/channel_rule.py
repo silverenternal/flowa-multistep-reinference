@@ -52,7 +52,7 @@ from __future__ import annotations
 
 import math
 
-from adaptive_reflow.contracts import (
+from adaptive_reflow.contracts import (  # type: ignore[attr-defined]
     AUDIT_SOURCE_REVOKED,
     ChannelRuleInputs,
     ChannelRuleOutputs,

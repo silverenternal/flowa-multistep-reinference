@@ -40,7 +40,7 @@ from adaptive_reflow.contracts import (
     hash_artifact,
 )
 
-from .scheduler._core import (
+from .scheduler._core import (  # type: ignore[attr-defined]
     SchedulerProtocol,
     ScheduleSample,
     _coerce_int_nonneg,

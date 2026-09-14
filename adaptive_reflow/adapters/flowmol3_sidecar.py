@@ -486,7 +486,7 @@ class FlowMol3SidecarProcess:
                 f"sidecar_eof_or_timeout:rc={rc}:stderr_tail={stderr_tail[:200]!r}"
             )
         try:
-            return json.loads(line)
+            return json.loads(line)  # type: ignore[no-any-return]
         except json.JSONDecodeError as exc:
             raise FlowMol3SidecarError(
                 f"sidecar_reply_invalid_json:{exc}:line={line[:200]!r}"
@@ -515,7 +515,7 @@ def _readline_with_timeout(stream: Any, timeout_s: float) -> str | None:
     while True:
         line = stream.readline()
         if line:
-            return line
+            return line  # type: ignore[no-any-return]
         if time.monotonic() >= deadline:
             return None
         time.sleep(0.005)

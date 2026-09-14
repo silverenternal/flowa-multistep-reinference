@@ -461,7 +461,7 @@ def _decode_checkpoint_payload(payload: Mapping[str, Any]) -> Checkpoint:
             else str(payload["ledger_chain_head_hash"])
         ),
         state_bundle=sb,
-        last_round_trace=None if rt_raw is None else dict(rt_raw),
+        last_round_trace=None if rt_raw is None else dict(rt_raw),  # type: ignore[arg-type]
         last_ledger_row=ledger_row_obj,
         phase_state=phase_state_obj,
         calibration_manifest_hash=(

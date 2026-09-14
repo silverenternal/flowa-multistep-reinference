@@ -99,7 +99,7 @@ import inspect
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
@@ -279,14 +279,14 @@ PER_POSITION_ENTROPY_REDUCTION: str = "per_position_entropy_reduction"
 #: Native latent state shape. Matches the per-position latent
 #: ``(L_z, d) = (64, 64)`` surface that the Kanzi flow autoencoder
 #: predicts.
-KANZI_STATE_SHAPE: tuple[int, ...] = (
+KANZI_STATE_SHAPE: tuple[int, ...] = (  # type: ignore[no-redef]
     KANZI_AR_SEQ_LENGTH,
     KANZI_LATENT_DIM,
 )
 
 #: Flat latent dim (convenience constant for tests and downstream
 #: decoders).
-KANZI_FLAT_LATENT_DIM: int = int(np.prod(KANZI_STATE_SHAPE))
+KANZI_FLAT_LATENT_DIM: int = int(np.prod(KANZI_STATE_SHAPE))  # type: ignore[no-redef]
 
 #: Latent clamp on the per-position continuous values. The latent
 #: values are shared with ``sigma=1`` so an empirical ``[-6, 6]``
@@ -362,7 +362,7 @@ Mode = Literal["torch", "synthetic"]
 KANZI_MECHANISM_ID: str = "kanzi@v1"
 
 # Local type alias.
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 
 # Wave 114 Phase 4 — generate the per-adapter canonicaliser once at
@@ -1090,7 +1090,7 @@ def _torch_velocity_field(
     if state_shape[-1] != 3:
         bridge_decoder = cache.get("latent_to_coord_decoder")
         if bridge_decoder is None:
-            from adaptive_reflow.framework.interfaces import CapabilityMissingError
+            from adaptive_reflow.universal.adapter import CapabilityMissingError
             raise CapabilityMissingError("latent_to_coord_decoder")
         from tools.kanzi_latent_to_coord import kanzi_latent_to_coords
         x = kanzi_latent_to_coords(x, decoder=bridge_decoder, fsq_quantizer=bridge_decoder.quantize, n_steps=cache.get("decoder_steps", 50), seed=cache.get("bridge_seed", 0))
@@ -1184,7 +1184,7 @@ def _load_torch_model(weights_path: Path) -> Any:
             super().__init__()
             self._dae = dae
 
-        def forward(self, x: torch.Tensor, t: torch.Tensor, family: torch.Tensor = None) -> torch.Tensor:
+        def forward(self, x: torch.Tensor, t: torch.Tensor, family: torch.Tensor = None) -> torch.Tensor:  # type: ignore[assignment]
             # Wave 113.A: Real backbone-coord migration. Replaces the
             # Wave 112.C-2 fail-fast placeholder (RC-2 option B) with the
             # two-call upstream pipeline:
@@ -1207,7 +1207,7 @@ def _load_torch_model(weights_path: Path) -> Any:
             # ``DAE.pair_embedder`` inside ``encode``, not at the ``net``
             # level (see Wave 80 model_cfg.pair_embedder_dim=1152).
             _, z, _ = self._dae.encode(x)        # (B, L, d_z) codebook-quantized
-            return self._dae.net(x, t, z_BLD=z)  # (B, L, 3) velocity field
+            return self._dae.net(x, t, z_BLD=z)  # type: ignore[no-any-return]  # (B, L, 3) velocity field
 
     def _builder(p: Path) -> Any:
         """Build the real ``_KanziDAEShim`` from ``p`` (Wave 99 followup).
@@ -1227,7 +1227,7 @@ def _load_torch_model(weights_path: Path) -> Any:
         _KANZI_SRC = _Path(__file__).resolve().parent.parent.parent / "data" / "kanzi_upstream" / "src"
         if str(_KANZI_SRC) not in _sys.path:
             _sys.path.insert(0, str(_KANZI_SRC))
-        from kanzi.models import DAE, DAEConfig  # type: ignore[import-not-found]
+        from kanzi.models import DAE, DAEConfig
 
         checkpoint = torch.load(str(p), map_location="cpu", weights_only=True)
         dae = DAE(DAEConfig(**checkpoint["model_cfg"]))
@@ -1387,7 +1387,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
     # is the canonical source of truth (the ``_FAMILY_DIM`` class
     # attribute is still read for byte-stable back-compat with
     # pre-Wave-114 call sites).
-    _SHIM_INVOCATION_SPEC: dict = {
+    _SHIM_INVOCATION_SPEC: dict = {  # type: ignore[type-arg]
         "input_type": "tensor",
         "kwargs": {"family": (1152,)},
         "output_extractor": None,
@@ -1573,7 +1573,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
         else:
             self.state_shape = (
                 int(KANZI_ABSTRACT_AR_SEQ_LENGTH),
-                int(self._real_latent_dim),
+                int(self._real_latent_dim),  # type: ignore[call-overload]
             )
         self._caps = KanziCapabilities(state_shape=self.state_shape)
 
@@ -1754,7 +1754,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
             # absorbs this into ``put`` so we don't need a separate
             # ``move_to_end`` method on the cache.
             self._conditioning_cache.put(cache_hash, existing)
-            return existing
+            return existing  # type: ignore[no-any-return]
         entry = _synthetic_family_conditioning(
             family_id=family_id, seed=int(seed),
         )
@@ -2029,7 +2029,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
         else:
             blended = (m_base * prior_x + (1.0 - m_base) * fresh_x).astype(np.float64)
             m_for_digest = float(m_base)
-            gpt_prior_audit = ()
+            gpt_prior_audit = ()  # type: ignore[assignment]
         blended = np.clip(blended, -KANZI_LATENT_CLAMP, KANZI_LATENT_CLAMP)
 
         # Preserve the conditioning cache across the restart boundary
@@ -2167,7 +2167,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
         downstream observability.
         """
         del bundle
-        new_spec = dict(delta.delta_spec)
+        new_spec = dict(delta.delta_spec)  # type: ignore[call-overload]
         # Resolve family ID.
         family_id = str(new_spec.get("family_id", self._family_id))
         if not family_id:
@@ -2271,14 +2271,14 @@ class KanziAdapter(FlowMatchingODEAdapter):
             raise CapabilityMissingError(
                 "missing_native_state", context=state.native_state_digest
             )
-        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
+        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))  # type: ignore[attr-defined]
         if num_steps <= 0:
             raise ValueError(ERR_KANZI_NUM_STEPS)
         guidance_scale = float(
-            condition.delta_spec.get("guidance_scale", self._guidance_scale)
+            condition.delta_spec.get("guidance_scale", self._guidance_scale)  # type: ignore[attr-defined]
         )
         sampler_id = str(
-            condition.delta_spec.get("sampler_id", self._solver)
+            condition.delta_spec.get("sampler_id", self._solver)  # type: ignore[attr-defined]
         )
         if sampler_id not in KANZI_INTEGRATORS:
             raise ValueError(
@@ -2291,13 +2291,13 @@ class KanziAdapter(FlowMatchingODEAdapter):
         # delta from a hostile test), fall back to encoding the default
         # family ID.
         cond_hash = str(
-            condition.delta_spec.get("conditioning_cache_hash", "")
+            condition.delta_spec.get("conditioning_cache_hash", "")  # type: ignore[attr-defined]
         )
         if cond_hash and cond_hash in self._conditioning_cache:
             conditioning = self._conditioning_cache[cond_hash]
         else:
             family_id = str(
-                condition.delta_spec.get("family_id", self._family_id)
+                condition.delta_spec.get("family_id", self._family_id)  # type: ignore[attr-defined]
             )
             conditioning = self._resolve_conditioning(
                 family_id=family_id, seed=int(seed),

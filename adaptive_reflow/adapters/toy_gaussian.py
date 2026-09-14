@@ -373,7 +373,7 @@ class ToyGaussianAdapter(FlowMatchingODEAdapter):
     ) -> ODEConditionDelta:
         del bundle  # unused; condition is a passthrough
         return ODEConditionDelta(
-            delta_spec=dict(delta.delta_spec),
+            delta_spec=dict(delta.delta_spec),  # type: ignore[call-overload]
             source=str(delta.source),
             target_round=int(delta.target_round),
             calibration_artifact_hash=str(delta.calibration_artifact_hash),
@@ -405,7 +405,7 @@ class ToyGaussianAdapter(FlowMatchingODEAdapter):
         # ``1.0`` for the canonical forward-flow contract). Both Euler
         # and analytic integration are deterministic — the seed affects
         # only the integrator trace hash, not the trajectory itself.
-        target_mean = float(condition.delta_spec.get("target_mean", 1.0))
+        target_mean = float(condition.delta_spec.get("target_mean", 1.0))  # type: ignore[attr-defined]
         x = float(prior["x"])
         euler_positions: list[float] = [x]
         for _ in range(self._num_steps):
@@ -533,7 +533,7 @@ class ToyGaussianAdapter(FlowMatchingODEAdapter):
 
 def default_toy_gaussian_adapter() -> ToyGaussianAdapter:
     """Return a fresh :class:`ToyGaussianAdapter` for tests and the registry."""
-    return ToyGaussianAdapter()
+    return ToyGaussianAdapter()  # type: ignore[abstract]
 
 
 __all__ = [

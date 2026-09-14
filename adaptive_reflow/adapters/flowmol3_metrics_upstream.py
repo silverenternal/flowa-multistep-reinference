@@ -233,9 +233,9 @@ def sampled_mols_from_smiles(smiles_list: Sequence[str]) -> list[Any]:
             _LOGGER.warning("sampled_mols_from_smiles: RDKit could not parse SMILES %r", smi)
             continue
         rdkit_mol = Chem.AddHs(rdkit_mol)
-        params = Chem.AllChem.ETKDGv3()
+        params = Chem.AllChem.ETKDGv3()  # type: ignore[attr-defined]
         params.randomSeed = 0xF00D
-        embed_status = Chem.AllChem.EmbedMolecule(rdkit_mol, params)
+        embed_status = Chem.AllChem.EmbedMolecule(rdkit_mol, params)  # type: ignore[attr-defined]
         if embed_status != 0:
             _LOGGER.warning(
                 "sampled_mols_from_smiles: ETKDGv3 embed failed for %r (status=%d); skipping",
@@ -244,7 +244,7 @@ def sampled_mols_from_smiles(smiles_list: Sequence[str]) -> list[Any]:
             )
             continue
         try:
-            Chem.AllChem.MMFFOptimizeMolecule(rdkit_mol, maxIters=200)
+            Chem.AllChem.MMFFOptimizeMolecule(rdkit_mol, maxIters=200)  # type: ignore[attr-defined]
         except Exception as exc:  # noqa: BLE001 — MMFF can refuse unusual geom.
             _LOGGER.debug(
                 "sampled_mols_from_smiles: MMFF optimize failed for %r (%s); using embed geometry",

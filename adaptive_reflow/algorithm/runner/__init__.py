@@ -54,7 +54,7 @@ from .sequential import (
 )
 
 
-def __getattr__(name: str):
+def __getattr__(name: str):  # type: ignore[no-untyped-def]
     """PEP 562 lazy lookup for ``runner.py`` symbols.
 
     Loaded on first attribute access to break the algorithm →

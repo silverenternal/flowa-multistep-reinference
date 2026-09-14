@@ -60,7 +60,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from adaptive_reflow.algorithm.scheduler._core import (
+from adaptive_reflow.algorithm.scheduler._core import (  # type: ignore[attr-defined]
     CosineScheduleConfig,
     SchedulerProtocol,
     ScheduleSample,

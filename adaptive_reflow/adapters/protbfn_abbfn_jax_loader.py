@@ -107,7 +107,7 @@ class _StubPyTreeDef:
         # bottom-up state list described in the module docstring.
         self._state = state  # type: ignore[assignment]
 
-    def __reduce_ex__(self, protocol: int) -> tuple[object, ...]:
+    def __reduce_ex__(self, protocol: int) -> tuple[object, ...]:  # type: ignore[override]
         return (_StubPyTreeDef, ())
 
 
@@ -144,13 +144,13 @@ def _install_jax_pickle_stubs() -> None:
     try:
         import numpy._core.multiarray as _ncm
 
-        _ncm._reconstruct = _fake_reconstruct  # type: ignore[attr-defined]
+        _ncm._reconstruct = _fake_reconstruct  # type: ignore[misc]
     except Exception:  # pragma: no cover — defensive
         pass
     try:
         import numpy.core.multiarray as _ncm_legacy
 
-        _ncm_legacy._reconstruct = _fake_reconstruct  # type: ignore[attr-defined]
+        _ncm_legacy._reconstruct = _fake_reconstruct
     except Exception:  # pragma: no cover — defensive
         pass
 
@@ -169,7 +169,7 @@ def _load_state_list(weights_dir: Path) -> list[object]:
     """
     _install_jax_pickle_stubs()
     td_obj = np.load(weights_dir / "tree_def.npy", allow_pickle=True).item()
-    return list(td_obj._state)  # type: ignore[attr-defined]
+    return list(td_obj._state)
 
 
 def _leaf_index_for_position(state: list[object], pos: int) -> int:
@@ -188,7 +188,7 @@ def _leaf_index_for_position(state: list[object], pos: int) -> int:
     ``k`` and ``slot`` are recovered by inverting the layout above.
     """
     # Sanity check: pos must be a leaf
-    if state[pos][2] is not None:
+    if state[pos][2] is not None:  # type: ignore[index]
         raise ValueError(f"position_is_not_a_leaf:{pos}")
     # Each child of root occupies 3 entries starting at 2 + 3 * k.
     # A leaf position p belongs to child k = p // 3 (since each child
@@ -228,7 +228,7 @@ def _walk_state(state: list[object]) -> list[tuple[str, int]]:
 
     leaves: list[tuple[str, int]] = []
     leaf_counter = 0
-    for k, module_name in enumerate(root_names):  # type: ignore[union-attr]
+    for k, module_name in enumerate(root_names):
         dict_pos = 2 + PROTBFN_ROOT_CHILD_STRIDE * k
         child_names = state[dict_pos][2]  # type: ignore[index]
         if child_names is None:
@@ -261,7 +261,7 @@ def _walk_state(state: list[object]) -> list[tuple[str, int]]:
 # ---------------------------------------------------------------------------
 
 
-class ProtBFNParamTree(OrderedDict):
+class ProtBFNParamTree(OrderedDict):  # type: ignore[type-arg]
     """``OrderedDict`` mapping ``name_path`` -> ``np.ndarray`` for a Haiku tree.
 
     Iteration order matches the canonical Haiku module hierarchy

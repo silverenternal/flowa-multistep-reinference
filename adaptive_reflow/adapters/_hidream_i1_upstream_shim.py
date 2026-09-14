@@ -131,13 +131,13 @@ def _resolve_pipeline_class() -> type:
             )
             cls = getattr(mod, "HiDreamImagePipeline", None)
             if cls is not None:
-                return cls
+                return cls  # type: ignore[no-any-return]
         except Exception:  # noqa: BLE001 — best-effort upstream
             pass
 
     # 2. diffusers fallback.
     try:
-        from diffusers import HiDreamImagePipeline  # type: ignore
+        from diffusers import HiDreamImagePipeline
         return HiDreamImagePipeline
     except ImportError as exc:  # pragma: no cover — guaranteed to surface
         raise ImportError(
@@ -158,12 +158,12 @@ def _resolve_output_class() -> type | None:
             )
             cls = getattr(mod, "HiDreamImagePipelineOutput", None)
             if cls is not None:
-                return cls
+                return cls  # type: ignore[no-any-return]
         except Exception:  # noqa: BLE001
             pass
     try:
         from diffusers.pipelines.hidream_image import HiDreamImagePipelineOutput  # type: ignore
-        return HiDreamImagePipelineOutput  # type: ignore[return-value]
+        return HiDreamImagePipelineOutput  # type: ignore[no-any-return]
     except ImportError:
         return None
 
@@ -192,14 +192,14 @@ def _resolve_scheduler_class(name: str) -> type:
                     mod, "FlashFlowMatchEulerDiscreteScheduler", None,
                 )
                 if cls is not None:
-                    return cls
+                    return cls  # type: ignore[no-any-return]
             except Exception:  # noqa: BLE001
                 pass
         # Fallback to FlowMatchEulerDiscreteScheduler (diffusers has no
         # FlashFlowMatch equivalent; the upstream FlashFlowMatch is the
         # Fast variant's scheduler).
-        from diffusers import FlowMatchEulerDiscreteScheduler  # type: ignore
-        return FlowMatchEulerDiscreteScheduler  # type: ignore[return-value]
+        from diffusers import FlowMatchEulerDiscreteScheduler
+        return FlowMatchEulerDiscreteScheduler
     if name in ("unipc", "flowunipc", "flow_unipc"):
         if upstream_is_available():
             try:
@@ -209,16 +209,16 @@ def _resolve_scheduler_class(name: str) -> type:
                 )
                 cls = getattr(mod, "FlowUniPCMultistepScheduler", None)
                 if cls is not None:
-                    return cls
+                    return cls  # type: ignore[no-any-return]
             except Exception:  # noqa: BLE001
                 pass
         # diffusers has no UniPC equivalent for HiDream; fall back to
         # FlowMatchEulerDiscreteScheduler (lossy but valid).
-        from diffusers import FlowMatchEulerDiscreteScheduler  # type: ignore
-        return FlowMatchEulerDiscreteScheduler  # type: ignore[return-value]
+        from diffusers import FlowMatchEulerDiscreteScheduler
+        return FlowMatchEulerDiscreteScheduler
     if name in ("euler", "flowmatcheuler"):
-        from diffusers import FlowMatchEulerDiscreteScheduler  # type: ignore
-        return FlowMatchEulerDiscreteScheduler  # type: ignore[return-value]
+        from diffusers import FlowMatchEulerDiscreteScheduler
+        return FlowMatchEulerDiscreteScheduler
     raise ValueError(f"hidream_i1_upstream_shim: unknown scheduler name {name!r}")
 
 
@@ -264,7 +264,7 @@ def _make_hidream_pipeline(
     import inspect
 
     pipeline_cls = _resolve_pipeline_class()
-    sig = inspect.signature(pipeline_cls.__init__)
+    sig = inspect.signature(pipeline_cls.__init__)  # type: ignore[misc]
     if "transformer" in sig.parameters:
         pipeline = pipeline_cls(
             scheduler=scheduler,
@@ -289,7 +289,7 @@ def _make_hidream_pipeline(
         # ``components`` property valid.
         upstream_cls = pipeline_cls
 
-        def _subclass_init(
+        def _subclass_init(  # type: ignore[no-untyped-def]
             self,
             scheduler,
             vae,
@@ -303,7 +303,7 @@ def _make_hidream_pipeline(
             tokenizer_4,
             transformer,
         ):
-            upstream_cls.__init__(
+            upstream_cls.__init__(  # type: ignore[misc]
                 self,
                 scheduler=scheduler,
                 vae=vae,

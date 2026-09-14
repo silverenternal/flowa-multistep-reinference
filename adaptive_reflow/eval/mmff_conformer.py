@@ -127,12 +127,12 @@ def embed_mmff(
         _LOGGER.debug("mmff_conformer.embed_mmff: AddHs failed (%s)", exc)
         return MMFF_CONFORMER_FAILURE, float("inf")
 
-    params = AllChem.ETKDGv3()
+    params = AllChem.ETKDGv3()  # type: ignore[attr-defined]
     params.randomSeed = int(seed)
 
     try:
         conf_ids = list(
-            AllChem.EmbedMultipleConfs(mol_h, numConfs=int(num_confs), params=params)
+            AllChem.EmbedMultipleConfs(mol_h, numConfs=int(num_confs), params=params)  # type: ignore[attr-defined]
         )
     except Exception as exc:  # noqa: BLE001 — permissive on purpose
         _LOGGER.debug("mmff_conformer.embed_mmff: EmbedMultipleConfs failed (%s)", exc)
@@ -148,7 +148,7 @@ def embed_mmff(
     # returns a list of convergence codes (0 == converged) and writes
     # the minimised coordinates back onto the conformers.
     try:
-        AllChem.MMFFOptimizeMoleculeConfs(mol_h, maxIters=int(max_iters))
+        AllChem.MMFFOptimizeMoleculeConfs(mol_h, maxIters=int(max_iters))  # type: ignore[attr-defined]
     except Exception as exc:  # noqa: BLE001 — permissive on purpose
         _LOGGER.debug(
             "mmff_conformer.embed_mmff: MMFFOptimizeMoleculeConfs failed (%s)", exc
@@ -163,8 +163,8 @@ def embed_mmff(
     best_energy: float = float("inf")
     for cid in conf_ids:
         try:
-            props = AllChem.MMFFGetMoleculeProperties(mol_h)
-            ff = AllChem.MMFFGetMoleculeForceField(mol_h, props, confId=cid)
+            props = AllChem.MMFFGetMoleculeProperties(mol_h)  # type: ignore[attr-defined]
+            ff = AllChem.MMFFGetMoleculeForceField(mol_h, props, confId=cid)  # type: ignore[attr-defined]
             if ff is None:
                 continue
             energy = float(ff.CalcEnergy())

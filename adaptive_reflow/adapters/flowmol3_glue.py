@@ -56,7 +56,7 @@ import sys
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
@@ -69,7 +69,7 @@ from adaptive_reflow.adapters.flowmol3_metrics_upstream import (
 )
 from adaptive_reflow.universal.state import ChannelName
 
-ArrayF64 = NDArray[np.float64]
+ArrayF64: TypeAlias = NDArray[np.float64]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -658,9 +658,9 @@ class FlowMol3Glue:
         """
         if beta_by_channel is None:
             beta_by_channel = {
-                "raw_pair": 0.5,
-                "charge": 0.5,
-                "coordinate": 0.5,
+                "raw_pair": 0.5,  # type: ignore[dict-item]
+                "charge": 0.5,  # type: ignore[dict-item]
+                "coordinate": 0.5,  # type: ignore[dict-item]
             }
         return FlowMol3RestartPolicy(
             mode=str(mode),
@@ -893,11 +893,11 @@ class FlowMol3Glue:
             "phi5_neg_med_rmsd_after_xtb": (
                 float(phi5) if phi5 is not None else None
             ),
-            "weights": list(effective_weights.as_tuple()),
+            "weights": list(effective_weights.as_tuple()),  # type: ignore[dict-item]
             "has_geometry": bool(has_geometry),
             "K_atom_types": int(K_atom_types),
             "K_bond_types": int(K_bond_types),
-            "pinned_commit": FLOWMOL3_PINNED_COMMIT,
+            "pinned_commit": FLOWMOL3_PINNED_COMMIT,  # type: ignore[dict-item]
         }
 
 

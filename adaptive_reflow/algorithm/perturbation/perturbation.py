@@ -832,7 +832,7 @@ class PaperQuantityAttractorInversion:
         if default_sigma is None:
             self._default_sigma = float(DEFAULT_BRAI_SIGMA)
         else:
-            self._default_sigma = _coerce_positive_real(
+            self._default_sigma = _coerce_positive_real(  # type: ignore[has-type]
                 default_sigma, name="default_sigma"
             )
         # User-supplied callables are accepted as-is; we do NOT
@@ -846,7 +846,7 @@ class PaperQuantityAttractorInversion:
                 "family": self.FAMILY,
                 "eps_scale": float(self._eps_scale),
                 "grad_eps": float(self._grad_eps),
-                "default_sigma": float(self._default_sigma),
+                "default_sigma": float(self._default_sigma),  # type: ignore[has-type]
                 "has_log_p_qty": bool(log_p_qty is not None),
                 "has_grad_log_p_qty": bool(grad_log_p_qty is not None),
             }
@@ -867,7 +867,7 @@ class PaperQuantityAttractorInversion:
     @property
     def default_sigma(self) -> float:
         """Return the configured default Gaussian prior scale."""
-        return float(self._default_sigma)
+        return float(self._default_sigma)  # type: ignore[has-type]
 
     @property
     def family(self) -> str:
@@ -961,13 +961,13 @@ class PaperQuantityAttractorInversion:
         if e_rho_raw is None or not math.isfinite(float(e_rho_raw)):
             if audit_codes is not None:
                 audit_codes.append(BRAI_NONFINITE_QUANTITY_COERCED)
-            sigma = float(self._default_sigma)
+            sigma = float(self._default_sigma)  # type: ignore[has-type]
         else:
             sigma = float(e_rho_raw)
             # Guard against zero / negative e_rho (the paper-quantity
             # gap must be positive).
             if sigma <= 0.0:
-                sigma = float(self._default_sigma)
+                sigma = float(self._default_sigma)  # type: ignore[has-type]
 
         # -- 3. Compute grad log P_qty. --
         # Priority: (a) user-supplied analytic gradient, (b) finite-
@@ -1025,7 +1025,7 @@ class PaperQuantityAttractorInversion:
             "family": self.FAMILY,
             "eps_scale": float(self._eps_scale),
             "grad_eps": float(self._grad_eps),
-            "default_sigma": float(self._default_sigma),
+            "default_sigma": float(self._default_sigma),  # type: ignore[has-type]
             "has_log_p_qty": bool(self._log_p_qty is not None),
             "has_grad_log_p_qty": bool(self._grad_log_p_qty is not None),
         }
