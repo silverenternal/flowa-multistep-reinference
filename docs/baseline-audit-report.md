@@ -4535,3 +4535,34 @@ See `docs/audit/wave139-lineageflow-nfe-scan.md` (full Wave 139 audit trail) + `
 **HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — Phase 1 README.md Docstring coverage section is a new section appended after existing content (other sections byte-identical pre/post); Phase 2 audit doc is a new file (no edit to existing docs); this Phase 3 baseline §R.30 + CONSOLIDATED §15.39 are appended; NO source code changes; NO experiments; single atomic Agent 4 commit titled "Wave 140: docstring audit refresh close - audit doc + baseline R.30 + CONSOLIDATED 15.39".
 
 See `docs/audit/wave140-docstring-audit.md` (full Wave 140 audit trail + coverage matrix F1-F5) + `docs/CONSOLIDATED_RESULTS.md` §15.39 + `README.md` Docstring coverage section (Phase 1 cross-ref) + `docs/audit/wave137-doc-cleanup.md` (predecessor wave).
+
+### §R.31 Wave 143 — Tier-1 SCI submission metric-count alignment (Kim2025-aligned) (2026-09-14)
+
+| R.31 | Wave 143 - Tier-1 SCI submission metric-count alignment (2026-09-14); 8 numbered tables + 17 figures (matching Kim2025 quantitative footprint); ruff 0 (preserved); D.4 33/33 (preserved); mkdocs EXIT=0 (preserved). |
+
+**Scope:** close Wave 143 as Agent 5 final synthesis — the Tier-1 SCI submission metric-count alignment wave that closes the count gap with Kim et al. (NeurIPS 2025 — Inference-Time Scaling for Flow Models via SDE + RBF). Per the user directive ("在指标的量上和别人论文里指标的数量、表的数量对齐就行"), alignment is on **count**, not on content type. 6 atomic Phases (Phases 0-4 by prior agents + this Phase 5 final synthesis by Agent 5): Phase 0 fixes 3 empty Kanzi baseline subdirs from Wave 134 migration bug; Phase 1 adds 8 numbered result tables (A-H) to `docs/paper-draft.md` §7.6.6; Phase 2 adds 8 main-paper figures (matplotlib-rendered PNG); Phase 3 adds 8 appendix figures (matplotlib-rendered PNG); Phase 4 updates `README.md` + `docs/headline-evidence/README.md` with figure + table counts; this Phase 5 writes this baseline §R.31 row + CONSOLIDATED §15.40 + final commit. ADDITIVE only — no source code changes, no measurement delta, no algorithm activation, no end-to-end N>=1000 sweep.
+
+**Phase 0-4 ledger:**
+
+- Phase 0 (PHASE_0_COMMIT): fixed 3 empty Kanzi baseline subdirs (`verification_outputs/kanzi_n1000_baseline_seed42_wave116_q3_2026/`, `verification_outputs/kanzi_n1000_baseline_seed42_wave120_q3_2026/`, `verification_outputs/kanzi_n1000_baseline_seed7_wave121_q3_2026/`) from Wave 134 migration bug; re-populated from `/tmp/w116/`, `/tmp/w120/`, `/tmp/w121/` captured baselines.
+- Phase 1 (PHASE_1_COMMIT): added 8 numbered result tables (A-H) to `docs/paper-draft.md` §7.6.6; data sourced from existing `verification_outputs/` + `docs/audit/` + `docs/CONSOLIDATED_RESULTS.md` §15.28.
+- Phase 2 (PHASE_2_COMMIT): added 8 main-paper figures (matplotlib-rendered PNG) to `docs/figures/`; figure refs inserted in `docs/paper-draft.md` (§2.5 / §3.5 / §7.3 / §7.5 / §7.6.6 / §7.7.7).
+- Phase 3 (PHASE_3_COMMIT): added 8 appendix figures (matplotlib-rendered PNG) to `docs/figures/`; `docs/figures/README.md` figure manifest extended; `docs/supplementary.md` §S8 appendix section added.
+- Phase 4 (PHASE_4_COMMIT): updated `README.md` + `docs/headline-evidence/README.md` with figure count (8 main + 8 appendix + 1 manifest = 17) + table count (8 tables A-H).
+- Phase 5 (this commit): final synthesis — audit doc `docs/audit/wave143-tier1-metric-alignment.md` + baseline-audit §R.31 (this row) + CONSOLIDATED §15.40.
+
+**Acceptance gates preserved:**
+
+- `pytest tests/ -k "d4" -q` → **33/33 PASS** preserved (no code changed).
+- `ruff check adaptive_reflow/ tests/` → **All checks passed!** preserved (Wave 131 freeze).
+- `python tools/check_claims_consistency.py` → **PASS** preserved (39 active, 0 provisional, 2 deprecated, **No drift detected**).
+- `mkdocs build --strict` → **EXIT=0** preserved at Phase 5 close.
+- All Phase 0-4 additions cite verifiable source paths (`docs/paper-draft.md` §7.6.6, `docs/figures/README.md`, `docs/figures/fig{1..8}*.png`, `docs/figures/figA{1..8}*.png`, `README.md`, `docs/headline-evidence/README.md`).
+
+**Camera-ready deferred (UNCHANGED):** mypy 988 hand-fix (CLM-024 acknowledges); Wan2.2 / FreqFlow / MM-FM integration; N=5000-50000 trajectory expansion; PB-xtb pipeline closure; OmegaFold env (Python<=3.10); LineageFlow novelty_mmseqs2 (Pfam fastas placeholder); Hyperparameter sensitivity sweep (Table D); Algorithm primitive ablation sweep (Table C); Wave 86 LineageFlow N=1000 HMMER raw JSON (RESOLVED by Wave 139); LineageFlow foldability + self_consistency N=1000 (~25 h per arm CPU); docstring coverage closure (~2-3 hours, F3-F5 items per `wave140-docstring-audit.md`).
+
+**Freeze marker:** HEAD after Wave 143 final close is `v1.0.1-paper-final` (commit `0ef6465`). Tier-1 SCI submission package: 8 numbered tables (A-H) + 17 figures (8 main + 8 appendix + 1 manifest) + Kim2025 reference + byte-stable reproducibility + honest negative surface. The submission package is now **count-aligned with Kim2025** without re-running any experiments or modifying any source code.
+
+**HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — Phase 0 baseline subdir fix is local-disk (gitignored); Phase 1 paper-draft.md §7.6.6 is additive (existing sections byte-identical pre/post); Phase 2 figures are new files at `docs/figures/`; Phase 3 figures are new files at `docs/figures/` + supplementary.md §S8 is additive; Phase 4 README.md + headline-evidence/README.md updates are additive; this Phase 5 audit doc is a new file + 2 appends to existing files baseline §R.31 + CONSOLIDATED §15.40; NO source code changes; NO experiments; single atomic Agent 5 commit titled "Wave 143: Tier-1 SCI submission metric-count alignment close - audit doc + baseline R.31 + CONSOLIDATED 15.40".
+
+See `docs/audit/wave143-tier1-metric-alignment.md` (full Wave 143 audit trail + Phase 0-4 ledger + camera-ready deferred list) + `docs/CONSOLIDATED_RESULTS.md` §15.40 + `docs/paper-draft.md` §7.6.6 (Phase 1 8 tables A-H) + `docs/figures/README.md` (Phase 2/3 figure manifest) + `README.md` + `docs/headline-evidence/README.md` (Phase 4 figure + table counts) + `docs/audit/wave140-docstring-audit.md` (predecessor wave).

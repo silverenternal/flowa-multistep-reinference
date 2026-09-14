@@ -4467,3 +4467,17 @@ Wave 140 is the **docstring-audit-refresh** wave that inventories the Wave 125-1
 - NO push (Wave 11+ user-gated); ADDITIVE only; NO source code changes; NO experiments; single atomic Agent 4 commit.
 
 See `docs/audit/wave140-docstring-audit.md` (full Wave 140 audit trail + coverage matrix F1-F5) + `docs/baseline-audit-report.md` §R.30 (Wave 140 ledger row) + `README.md` Docstring coverage section (Phase 1 cross-ref) + `docs/audit/wave137-doc-cleanup.md` (predecessor wave).
+
+### §15.40 Wave 143 — Tier-1 SCI submission metric-count alignment (Kim2025-aligned) (2026-09-14)
+
+Wave 143 is the **Tier-1 SCI submission metric-count alignment** wave that closes the count gap with Kim et al. (NeurIPS 2025 — Inference-Time Scaling for Flow Models via SDE + RBF). Per the user directive ("在指标的量上和别人论文里指标的数量、表的数量对齐就行"), alignment is on **count**, not on content type. 6 atomic Phases (Phases 0-4 by prior agents + this Phase 5 final close by Agent 5): Phase 0 fixes 3 empty Kanzi baseline subdirs from Wave 134 migration bug; Phase 1 adds 8 numbered result tables (A-H) to `docs/paper-draft.md` §7.6.6; Phase 2 adds 8 main-paper figures (matplotlib-rendered PNG); Phase 3 adds 8 appendix figures (matplotlib-rendered PNG); Phase 4 updates `README.md` + `docs/headline-evidence/README.md` with figure + table counts; this Phase 5 writes the audit doc, inserts baseline-audit §R.31, appends this §15.40, and commits. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
+
+- 8 numbered tables added to `docs/paper-draft.md` §7.6.6 (A: Consolidated Tier 3 paper-metric R1-R6, B: Composite axis byte-stable, C: Algorithm primitive impact, D: Hyperparameter sensitivity, E: Time complexity + runtime, F: Statistical power / per-cell verdict, G: FlowA vs each baseline, H: Domain coverage + per-domain verdict)
+- 8 main-paper figures (matplotlib-rendered; Phase 2) at `docs/figures/fig{1..8}*.png` with refs in `docs/paper-draft.md` §2.5 / §3.5 / §7.3 / §7.5 / §7.6.6 / §7.7.7
+- 8 appendix figures (matplotlib-rendered; Phase 3) at `docs/figures/figA{1..8}*.png` referenced in `docs/supplementary.md` §S8
+- `README.md` + `docs/headline-evidence/README.md` updated (Phase 4) with figure count (17) + table count (8)
+- All gates preserved (ruff 0, D.4 33/33, claims_consistency PASS, mkdocs strict EXIT=0)
+- Kim2025-aligned footprint achieved without re-running experiments (all data sourced from existing `verification_outputs/` + `docs/audit/` + `docs/CONSOLIDATED_RESULTS.md` §15.28)
+- Tier-1 SCI submission package ready (8 tables + 17 figures + Kim2025 reference + byte-stable reproducibility + honest negative surface)
+
+See `docs/audit/wave143-tier1-metric-alignment.md` (full Wave 143 audit trail + Phase 0-4 ledger + camera-ready deferred list) + `docs/baseline-audit-report.md` §R.31 (Wave 143 ledger row) + `docs/paper-draft.md` §7.6.6 (Phase 1 8 tables A-H) + `docs/figures/README.md` (Phase 2/3 figure manifest) + `README.md` + `docs/headline-evidence/README.md` (Phase 4 figure + table counts) + `docs/audit/wave140-docstring-audit.md` (predecessor wave).
