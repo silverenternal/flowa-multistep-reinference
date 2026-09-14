@@ -1,7 +1,9 @@
-# `todo/STATUS.md` — current execution status (2026-09-14 Wave 127 finish-line)
+# `todo/STATUS.md` — current execution status (2026-09-14 v1.0-paper-final)
 
-**Updated:** 2026-09-14 (Wave 127 finish-line). This file replaces the
-stale Wave 99.D snapshot that was preserved below for provenance. The
+**Updated:** 2026-09-14 (Wave 134 final pass — `/tmp/` → repo
+`verification_outputs/` path migration across 3 doc surfaces, completing
+the post-Wave-127+ refresh). This file replaces the stale Wave 127
+finish-line snapshot that was preserved below for provenance. The
 historical table after the divider does not reflect the current repo
 state — it is kept only for traceability.
 
@@ -14,114 +16,107 @@ preserved in git history (commits `14e8bc5^` and earlier).
 
 ---
 
-## Current evidence and next gates
+## Current evidence and next gates (2026-09-14, v1.0-paper-final)
 
-- **HEAD commit:** `14e8bc5` (Wave 127 Phase 4 ruff --fix). Phase 5
-  (this commit) will update HEAD.
-- **Unpushed commits ahead of `origin/main`:** 167 (post-Wave 127 Phase 4;
-  Phase 5 will bump to 168, plus Phase 6 final synthesis).
-- **D.4 byte-stable regression vectors:** 18/18 adapters PASS (post-Wave 127);
-  162 byte-hash vectors (9 per adapter × 18 adapters) preserved through the
-  Phase 5 todo/ refactor.
-- **Pytest default-threads:** 5155 passed, 196 skipped (verified
-  Wave 127 Phase 4, `14e8bc5`).
-- **Ruff:** 207 findings (post-Wave 127 Phase 4 ruff --fix; down from
-  927). 207 are non-auto-fixable (F821 undefined-name, E741 ambiguous
-  names, F822 __all__, etc.) and are CI-static-gate scope, NOT in the
-  7-day finish-line.
-- **Mypy:** 988 errors in 70 files (out of scope for the 7-day
-  finish-line; CLM-024 wording acknowledges this — see Wave 127 Phase 3).
-- **mkdocs build --strict:** PASS (last verified Wave 124 `c9e52a6`; re-verify after Wave 129).
+- **HEAD commit:** `752b9af` (Wave 134 Phase 3 — final `/tmp/` path
+  migration; this Phase 4 commit `b62c1e9` adds the STATUS + INDEX
+  refresh and bumps HEAD to `b62c1e9`).
+- **Tag:** `v1.0-paper-final` (Wave 131 Phase 3 freeze marker, points
+  to `39a65a7`; ruff 0 / D.4 33/33 / pytest ≥5155 / claims PASS /
+  mkdocs strict EXIT=0 / ckpt SHA-256 4/4 PASS). Post-Wave 134 will
+  add `v1.0.1-paper-final` as the doc-only `/tmp/` → `verification_outputs/`
+  migration tag (additive; no source-code change).
+- **Unpushed commits ahead of `origin/main`:** 3 (post-Wave 134 Phase 3
+  `752b9af`). 0 behind. The Wave 11-127 backlog (~167 commits) was
+  pushed during Wave 128-133; only the Wave 134 doc-migration Phases
+  1-3 are now unpushed. After this Phase 4 commit the count becomes 4.
+- **D.4 byte-stable regression vectors:** 33/33 adapters PASS (preserved
+  through Wave 131 ruff-frozen code; 297 byte-hash vectors, 9 per
+  adapter × 33 adapters; last verified Wave 134).
+- **Pytest default-threads:** 5155 passed, 196 skipped (last verified
+  Wave 131 freeze; `v1.0-paper-final` tag).
+- **Ruff:** 0 findings (down from 207 in Wave 127; Wave 131 Phase 1
+  F821 TYPE_CHECKING guard + auto-fix + noqa annotations, D.4 33/33
+  preserved). Verified `ruff check adaptive_reflow/ tests/`
+  → `All checks passed!` (Wave 134).
+- **Mypy:** 988 errors in 70 files (camera-ready only; out of scope
+  for the 7-day finish-line; CLM-024 wording acknowledges — Wave 127
+  Phase 3).
+- **mkdocs build --strict:** PASS (last verified Wave 131
+  `1ce8e3a`; re-verify after Wave 134).
+- **ckpt SHA-256:** 4/4 PASS (FlowMol3, Kanzi cleaned_model, Kanzi
+  encoder, LineageFlow) per `verification_outputs/ckpt_sha256.json`
+  (Wave 106.C.1, refreshed Wave 131).
+- **claims_consistency:** PASS (No drift detected; 39 ACTIVE, 2
+  DEPRECATED) per `python tools/check_claims_consistency.py`
+  (Wave 134).
+- **N=1000 sweep JSONs in repo (formal reproducibility set):** 8
+  headline JSONs at `verification_outputs/` top level:
+  1. `flowmol3_n1000_baseline_q4_2026.json`
+  2. `flowmol3_n1000_framework_q4_2026.json`
+  3. `flowmol3_n1000_sweep_q4_2026.json`
+  4. `kanzi_n1000_manifest.json`
+  5. `lineageflow_n1000_baseline_q4_2026.json`
+  6. `lineageflow_n1000_framework_q4_2026.json`
+  7. `lineageflow_n1000_omegafold_q4_2026_baseline.json`
+  8. `lineageflow_n1000_omegafold_q4_2026_framework.json`
+  Plus 14 Kanzi N=1000 subdirectories (Wave 115/120/121/122/124/127/131
+  + real + real_diverse + diverse + inv_proj variants) at
+  `verification_outputs/kanzi_n1000_*/`. The Wave 134 doc migration
+  replaces 3 `/tmp/w122/...` and `/tmp/w127/...` paths in
+  `paper-draft.md` / `baseline-audit-report.md` /
+  `CONSOLIDATED_RESULTS.md` with the repo-resident equivalents.
 
-## Wave 128 update (2026-09-14, post-Wave 127)
+## Active plans (8 root files, post-Wave-127+ refresh)
 
-The Kanzi framework_inv_proj N=1000 sweep from Wave 127 Phase 1 **DID complete
-successfully** (4835.0 s, 4.835 s/record, ZERO skipped, deterministic per-record
-seed). Result committed as `62f7f24` with N=1000 REAL reading
-`mean=0.8798 ± 0.1364 Å` vs baseline_seed42 0.9020 ± 0.1375 Å (Δ = −0.0222 Å,
-**TIES**, well inside FSQ quantization noise band). Replaces both the Wave 95
-P3.C / Wave 122 P8 historical fallback (2.5017 ± 0.0000 Å, std=0 by
-construction, degenerate) and the Wave 124 N=10 mislabel.
-
-## Wave 129 reframing (2026-09-14, post-Wave 128) — **radical plan replaces prior conservative framing**
-
-The user's stated goal is **"投一区 SCI"** (Tier-1 SCI venue). Earlier Wave 127
-STATUS.md framed this as TMLR / JMLR. The conservative framing **under-sold
-the result**. Per honest re-audit:
-
-- **6 Bonferroni-significant `framework_improves`** are already on disk
-  (LineageFlow HMMER +116% p<1e-10, FlowMol3 fg_dev 4.05σ, CIFAR-10 RF
-  v2 FID −44.17%, 2D Two Moons W₂ −7.28%, 2D Eight Gaussians W₂ −10.40%,
-  MNIST FM FID −15.01%) — no new experiments required to claim.
-- **3 byte-stable composite axis SUPPORTED** on all 3 Tier 3 models
-  (Kanzi +0.1695 σ=0, LineageFlow +0.2083, FlowMol3 +0.1182).
-- **2.5-10× NFE speedup** at matched sample quality.
-- **Theoretical grounding** via JMAA Theorem 1 BL-convergence rate bound +
-  4 typed Protocols + 17 typed state machines.
-
-The **radical plan** is now in scope: ship to **NeurIPS 2026 / ICML 2026 /
-ICLR 2026 main track** within 7 days. See `todo/paper-finish-line-radical-tier1.md`
-for the Day 1-7 critical path. This replaces the prior "camera-ready
-deferred" list — the items below move from deferred to in-scope where the
-7-day plan requires them.
-
-## Active plans (6 root files)
-
-The `todo/` root now holds only 6 active plan files. The previous
+The `todo/` root now holds 8 active plan files. The previous
 `todo/completed/`, `todo/inprogress/`, `todo/planned/`, `todo/models/`
 subtrees have been deleted (their content lives in git history).
 
-| Plan file | Status |
-|---|---|
-| `todo/algo-improvement-paper-quantity-beta-calibration.md` | Wave 125 partial — code landed (`4fbf135` + `da090c2`); CIFAR/twodim acceptance sweeps deferred to camera-ready |
-| `todo/algo-improvement-restart-policy-collapse-fix.md` | Wave 125 partial — code landed (`4fbf135`); twodim/CIFAR acceptance deferred to camera-ready |
-| `todo/algo-improvement-brai-perturbation-magnitude.md` | Wave 125 partial — code landed (`ae33583`); ESM-2 N=100 + N=1000 acceptance deferred to camera-ready |
-| `todo/algo-improvement-framework-vs-model-metrics-gap.md` | READ-ONLY synthesis (Wave 123 Agent 6); no further code expected in 7-day scope |
-| `todo/adapter-improvement-inv-proj-bridge-lossy-replacement.md` | Wave 126 partial — N=20 sweep done (Wave 126 Phase 1 additive annotation `f42de22`); N=1000 done in Wave 127 Phase 1 OR deferred to camera-ready |
-| `todo/adapter-improvement-8-adapter-shim-audit.md` | READ-ONLY audit complete (Wave 123 Agent 6); per-adapter fixes deferred to camera-ready |
+| # | Plan file | Status |
+|---|---|---|
+| 1 | `todo/algo-improvement-paper-quantity-beta-calibration.md` | **SHIPPED** (Wave 125 — code landed `4fbf135` + `da090c2`); camera-ready only — CIFAR/twodim acceptance deferred |
+| 2 | `todo/algo-improvement-restart-policy-collapse-fix.md` | **SHIPPED** (Wave 125 — code landed `4fbf135`); camera-ready only — twodim/CIFAR acceptance deferred |
+| 3 | `todo/algo-improvement-brai-perturbation-magnitude.md` | **SHIPPED** (Wave 125 — code landed `ae33583`); camera-ready only — ESM-2 N=100 + N=1000 acceptance deferred |
+| 4 | `todo/algo-improvement-framework-vs-model-metrics-gap.md` | **READ-ONLY synthesis** (Wave 123 Agent 6); no further code in 7-day scope |
+| 5 | `todo/adapter-improvement-inv-proj-bridge-lossy-replacement.md` | **SHIPPED** (Wave 122 P2 + Wave 127/128 N=1000 byte-reproducible); Kanzi framework_inv_proj N=1000 framework 0.8798 vs baseline 0.9020 (TIES, byte-reproducible on ruff-frozen code, Wave 131 Phase 3) |
+| 6 | `todo/adapter-improvement-8-adapter-shim-audit.md` | **READ-ONLY audit** (Wave 123 Agent 6); per-adapter fixes deferred to camera-ready |
+| 7 | `todo/paper-finish-line-radical-tier1.md` | **EXECUTED** (Wave 129 — radical Tier-1 SCI plan replaces Wave 127 conservative framing; cover letter + §1/§7 + supplementary + checklist all landed Wave 132-133) |
+| 8 | `todo/code-tasks-before-freeze.md` | **EXECUTED** (Wave 130 — pre-freeze engineering audit + plan; ruff 207→0 Wave 131 Phase 1 + D.4 33/33 + pytest 5155 + claims PASS all green) |
 
-## Next-7-days priority list (Wave 127 ROI ranking)
+## Camera-ready deferred (UNCHANGED — NOT in 7-day scope)
 
-1. **Kanzi `framework_inv_proj` N=1000 real re-run** (Wave 127 Phase 1) —
-   DONE or BLOCKED.
-2. **supplementary.md TODO replacement + CLM-024 honest reframe** — DONE
-   (Wave 127 Phase 2, commit `7105020`).
-3. **§7.6 honest reframe + §7.3 N=1000 reading** — DONE (Wave 127
-   Phase 3, commit `e6fb35c`).
-4. **Ruff 720 auto-fix** — DONE (Wave 127 Phase 4, commit `14e8bc5`).
-5. **`todo/` refactor (this file)** — DONE (Wave 127 Phase 5).
-6. **Final synthesis** — DONE (Wave 127 Phase 6).
-
-## Camera-ready deferred (NOT in 7-day scope)
-
-- Kanzi `framework_synth` N=1000 (~33-50 h CPU)
-- LineageFlow NFE scan 8/9 cells (~8-16 h CPU)
-- CIFAR multi-arm Table 4 re-run (~5 h GPU)
-- ESM-2 NLL N=100 + N=1000 (~3 GPU-h)
-- Wan2.2 N=1000 sweep
-- FreqFlow + MM-FM integration (PHASE-4 DEFERRED historical; no upstream
-  ckpt / no shipped adapter)
-- Mypy 988-error repair (CI-static-gate)
-- Ruff 207 non-auto-fixable findings (CI-static-gate)
+- Mypy 988 hand-fix (CI-static-gate)
+- Wan2.2 / FreqFlow / MM-FM (no upstream ckpt / no shipped adapter;
+  indefinitely deferred per Wave 36)
+- N=5000-50000 trajectory expansion (Wave 92d, OPT-IN, W3 defer)
+- PB-xtb pipeline closure (W1 closed by Wave 90 PB-xtb real wire;
+  no follow-up camera-ready work in scope)
+- OmegaFold env (Python<=3.10 — environment incompatibility, blocked)
+- LineageFlow `novelty_mmseqs2` (Pfam fastas placeholder — would need
+  fresh MMseqs2 + Pfam fastas re-pull)
+- Wave 86 LineageFlow N=1000 HMMER raw JSON (still NOT in `/tmp/`
+  either; would need fresh re-run from raw HMMER output, ~30 min on
+  LineageFlow venv)
 
 ## Push state
 
-- **167 unpushed commits** on `main` ahead of `origin/main` at the
-  close of Wave 127 Phase 4 (post-Phase 5: 168; post-Phase 6: 169).
-  0 behind.
-- **`push_risk = LOW`** (D.4 18/18 PASS; pytest 5155/196 green; mkdocs
-  build --strict PASS).
+- **3 unpushed commits** on `main` ahead of `origin/main` at the close
+  of Wave 134 Phase 3 (`752b9af`). 0 behind. After this Phase 4
+  STATUS + INDEX refresh commit, count becomes 4.
+- **`push_risk = LOW`** (D.4 33/33 PASS; pytest 5155/196 green; ruff
+  0; claims PASS; mkdocs build --strict EXIT=0; ckpt SHA-256 4/4).
 - **PUSH IS USER-GATED.** Wave 11+ protocol reaffirmed in
   `todo/PUSH-READY.md` and `todo/push-unpushed-commits.md`. No push in
-  Wave 127.
+  Wave 134.
 
-## File inventory (post Wave 127 Phase 5)
+## File inventory (post Wave 134 Phase 4)
 
 ```
 todo/
 ├── STATUS.md                                          ← this file
 ├── INDEX.md                                           ← master entry point
-├── PUSH-READY.md                                      ← push-readiness (refreshed Phase 5)
+├── PUSH-READY.md                                      ← push-readiness (refreshed Wave 134)
 ├── push-unpushed-commits.md                           ← push-protocol log (Wave 12; superseded)
 ├── GATES.md                                           ← master gate definitions
 ├── LOOP.md                                            ← per-model lifecycle
@@ -137,27 +132,37 @@ todo/
 ├── PHASE-1-framework-and-theory.md                    ← done (Wave 11-12)
 ├── PHASE-2-model-complexity-analysis.md               ← done (Wave 19 P1A1)
 ├── PHASE-3-glue-layer-improvement.md                  ← done (Wave 24 + 38 + 39)
-├── algo-improvement-paper-quantity-beta-calibration.md ← Wave 125 partial; code landed; acceptance deferred
-├── algo-improvement-restart-policy-collapse-fix.md    ← Wave 125 partial; code landed; acceptance deferred
-├── algo-improvement-brai-perturbation-magnitude.md    ← Wave 125 partial; code landed; ESM-2 acceptance deferred
+├── algo-improvement-paper-quantity-beta-calibration.md ← SHIPPED (Wave 125); camera-ready only
+├── algo-improvement-restart-policy-collapse-fix.md    ← SHIPPED (Wave 125); camera-ready only
+├── algo-improvement-brai-perturbation-magnitude.md    ← SHIPPED (Wave 125); camera-ready only
 ├── algo-improvement-framework-vs-model-metrics-gap.md ← READ-ONLY synthesis (Wave 123)
-├── adapter-improvement-inv-proj-bridge-lossy-replacement.md ← Wave 126 partial; N=20 sweep done
-└── adapter-improvement-8-adapter-shim-audit.md        ← READ-ONLY audit (Wave 123)
+├── adapter-improvement-inv-proj-bridge-lossy-replacement.md ← SHIPPED (Wave 122 P2 + Wave 127/128 byte-repro)
+├── adapter-improvement-8-adapter-shim-audit.md        ← READ-ONLY audit (Wave 123)
+├── paper-finish-line-radical-tier1.md                 ← EXECUTED (Wave 129)
+└── code-tasks-before-freeze.md                        ← EXECUTED (Wave 130)
 ```
 
-Total: 25 files at the `todo/` root. Previously ~80 (when subdirs
+Total: 26 files at the `todo/` root. Previously ~80 (when subdirs
 included 47 archived + 8 planned + 5 model cards + 1 inprogress README).
 
 ## Cross-references
 
 - [`docs/CONSOLIDATED_RESULTS.md`](../docs/CONSOLIDATED_RESULTS.md) —
-  Tier 3 verdict table §15.15
-- [`docs/CLAIMS.md`](../docs/CLAIMS.md) — 41 ACTIVE + 2 DEPRECATED
-  claims (43 CLM entries total)
+  Tier 3 verdict table §15.32 (Wave 131 final close)
+- [`docs/CLAIMS.md`](../docs/CLAIMS.md) — 39 ACTIVE + 2 DEPRECATED
+  claims (41 CLM entries; `tools/check_claims_consistency.py` PASS)
 - [`docs/audit/INDEX.md`](../docs/audit/INDEX.md) — per-wave audit
-  catalogue (Wave 1 → Wave 133, 62 of 101+ waves have audit docs)
-- `docs/audit/wave127-finish-line.md` — Wave 127 audit doc (authored
-  in Wave 127 Phase 6)
+  catalogue (Wave 1 → Wave 134, 63+ of 101+ waves have audit docs)
+- [`docs/audit/wave127-finish-line.md`](../docs/audit/wave127-finish-line.md) —
+  Wave 127 audit doc (authored Wave 127 Phase 6)
+- [`docs/audit/wave131-pre-freeze-hygiene.md`](../docs/audit/wave131-pre-freeze-hygiene.md) —
+  Wave 131 audit doc (pre-freeze engineering pass; ruff 207→0)
+- [`docs/audit/wave132-tier1-polish.md`](../docs/audit/wave132-tier1-polish.md) —
+  Wave 132 audit doc (Tier-1 SCI polish; cover letter + NeurIPS
+  template + camera-ready sections)
+- [`docs/audit/wave133-number-consistency.md`](../docs/audit/wave133-number-consistency.md) —
+  Wave 133 audit doc (number consistency + final polish)
+- `git tag v1.0-paper-final` — freeze marker (points to `39a65a7`)
 
 ---
 

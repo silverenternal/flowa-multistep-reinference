@@ -1,33 +1,45 @@
 # `todo/INDEX.md` — Master entry point
 
-**Date:** 2026-09-14 (Wave 127 Phase 5 flat refactor)
+**Date:** 2026-09-14 (Wave 134 Phase 4 — `v1.0-paper-final` snapshot
+refresh; ruff 0 / D.4 33/33 / 8 N=1000 sweep JSONs in repo)
 **Purpose:** curated entry point to the `todo/` working folder. New
 readers should start with the [Reading order](#reading-order-for-new-readers)
 section. Each section below groups files by purpose, links the most
 important ones, and links to related artifacts outside `todo/`.
 
-> **Folder layout (2026-09-14 Wave 127 Phase 5 flat refactor):** the
-> `todo/` root holds 25 files only — 6 active root plans, 11 governance
-> docs (STATUS, INDEX, GATES, LOOP, TIMELINE, RISK-REGISTER, EXECUTION-PLAN,
-> README, decisions, lessons-learned, PUSH-READY), push-unpushed-commits
-> log, and 3 framework synthesis docs (framework-freeze-checklist,
-> framework-internal-metrics, framework-capability-metrics), and 3 PHASE
+> **Folder layout (2026-09-14 Wave 134 Phase 4):** the
+> `todo/` root holds 26 files — 8 active root plans (3 algo
+> SHIPPED, 1 algo READ-ONLY, 2 adapter SHIPPED/READ-ONLY, 2 EXECUTED
+> meta-plans), 11 governance docs (STATUS, PUSH-READY, GATES, LOOP,
+> TIMELINE, RISK-REGISTER, EXECUTION-PLAN, README, decisions,
+> lessons-learned, push-unpushed-commits), 3 framework synthesis docs
+> (framework-freeze-checklist, framework-internal-metrics,
+> framework-capability-metrics), 1 entry point (INDEX), and 3 PHASE
 > docs (PHASE-1/2/3). The historical `todo/completed/` (47 archived
-> plans), `todo/inprogress/`, `todo/planned/` (8 plans + 1 README), and
-> `todo/models/` (5 files) subdirectories were deleted in Wave 127 Phase 5;
-> their content lives in git history (`14e8bc5^` and earlier). This file
-> plus `todo/STATUS.md` are the cross-cutting entry points that stay at
-> the `todo/` root.
+> plans), `todo/inprogress/`, `todo/planned/` (8 plans + 1 README),
+> and `todo/models/` (5 files) subdirectories were deleted in Wave 127
+> Phase 5; their content lives in git history (`14e8bc5^` and earlier).
+> This file plus `todo/STATUS.md` are the cross-cutting entry points
+> that stay at the `todo/` root.
 
 ---
 
-## Current execution (2026-09-14)
+## Current execution (2026-09-14, v1.0-paper-final)
 
-Start with [STATUS.md](STATUS.md). Wave 127 finish-line: 167 unpushed
-commits; `push_risk = LOW` (user-gated). D.4 = 18/18 adapters PASS; pytest =
-5155/196 green; ruff --fix applied (720 auto-fixed, 207 non-auto-fixable
-remaining are CI-static-gate scope). Mypy 988 errors are out of scope for
-the 7-day finish-line (CLM-024 wording acknowledges, Wave 127 Phase 3).
+Start with [STATUS.md](STATUS.md). Wave 134 final pass: 3 unpushed
+commits ahead of `origin/main` (the Wave 11-127 backlog was pushed
+during Wave 128-133; only Wave 134 doc-migration Phases 1-3 are now
+unpushed; this Phase 4 STATUS + INDEX refresh becomes the 4th);
+`push_risk = LOW` (user-gated). D.4 = 33/33 adapters PASS;
+pytest = 5155/196 green; ruff = 0; claims_consistency = PASS
+("No drift detected."); mkdocs build --strict = PASS;
+ckpt SHA-256 = 4/4 PASS. Tag `v1.0-paper-final` (Wave 131 Phase 3
+freeze marker, `39a65a7`); post-Wave 134 will add `v1.0.1-paper-final`
+as the doc-only `/tmp/` → `verification_outputs/` migration tag
+(additive; no source-code change). 8 N=1000 sweep JSONs in
+`verification_outputs/` (formal reproducibility set). Mypy 988 errors
+are out of scope for the 7-day finish-line (CLM-024 wording
+acknowledges, Wave 127 Phase 3).
 
 ## Historical state summary (2026-09-10)
 
@@ -67,24 +79,30 @@ the 7-day finish-line (CLM-024 wording acknowledges, Wave 127 Phase 3).
 6. FreqFlow / MM-FM: indefinitely deferred
 7. CI dashboard: composite-aware check in `tools/capability_audit.py`
 8. Mypy 988-error repair (CI-static-gate)
-9. Ruff 207 non-auto-fixable findings (CI-static-gate)
+9. Ruff 207 non-auto-fixable findings → **CLOSED in Wave 131** (0 findings)
+10. Wave 86 LineageFlow N=1000 HMMER raw JSON (still NOT in `/tmp/`
+    either; would need fresh re-run from raw HMMER output, ~30 min on
+    LineageFlow venv) — camera-ready deferred
 
 Wave 127 fix landing traces are documented in
-`docs/audit/wave127-finish-line.md` (Wave 127 Phase 6) and the per-wave
-audit catalogue in [`docs/audit/INDEX.md`](../docs/audit/INDEX.md).
+`docs/audit/wave127-finish-line.md` (Wave 127 Phase 6); the per-wave
+audit catalogue in [`docs/audit/INDEX.md`](../docs/audit/INDEX.md)
+covers Wave 1 → Wave 134 (63+ of 101+ waves have audit docs).
 
 ## Sections
 
-### 1. Active plan files — 6 root `*-improvement-*.md` files
+### 1. Active plan files — 8 root `*-improvement-*.md` files (post-Wave-134 refresh)
 
 | # | File | Status |
 |---|---|---|
-| 1 | [algo-improvement-paper-quantity-beta-calibration.md](algo-improvement-paper-quantity-beta-calibration.md) | Wave 125 partial — code landed; CIFAR/twodim acceptance deferred |
-| 2 | [algo-improvement-restart-policy-collapse-fix.md](algo-improvement-restart-policy-collapse-fix.md) | Wave 125 partial — code landed; twodim/CIFAR acceptance deferred |
-| 3 | [algo-improvement-brai-perturbation-magnitude.md](algo-improvement-brai-perturbation-magnitude.md) | Wave 125 partial — code landed; ESM-2 N=100 + N=1000 acceptance deferred |
-| 4 | [algo-improvement-framework-vs-model-metrics-gap.md](algo-improvement-framework-vs-model-metrics-gap.md) | READ-ONLY synthesis (Wave 123 Agent 6); no further code in 7-day scope |
-| 5 | [adapter-improvement-inv-proj-bridge-lossy-replacement.md](adapter-improvement-inv-proj-bridge-lossy-replacement.md) | Wave 126 partial — N=20 sweep done (Wave 126 Phase 1 additive annotation); N=1000 done in Wave 127 Phase 1 OR deferred |
-| 6 | [adapter-improvement-8-adapter-shim-audit.md](adapter-improvement-8-adapter-shim-audit.md) | READ-ONLY audit complete (Wave 123 Agent 6); per-adapter fixes deferred |
+| 1 | [algo-improvement-paper-quantity-beta-calibration.md](algo-improvement-paper-quantity-beta-calibration.md) | **SHIPPED** (Wave 125 — code landed `4fbf135` + `da090c2`); camera-ready only — CIFAR/twodim acceptance deferred |
+| 2 | [algo-improvement-restart-policy-collapse-fix.md](algo-improvement-restart-policy-collapse-fix.md) | **SHIPPED** (Wave 125 — code landed `4fbf135`); camera-ready only — twodim/CIFAR acceptance deferred |
+| 3 | [algo-improvement-brai-perturbation-magnitude.md](algo-improvement-brai-perturbation-magnitude.md) | **SHIPPED** (Wave 125 — code landed `ae33583`); camera-ready only — ESM-2 N=100 + N=1000 acceptance deferred |
+| 4 | [algo-improvement-framework-vs-model-metrics-gap.md](algo-improvement-framework-vs-model-metrics-gap.md) | **READ-ONLY synthesis** (Wave 123 Agent 6); no further code in 7-day scope |
+| 5 | [adapter-improvement-inv-proj-bridge-lossy-replacement.md](adapter-improvement-inv-proj-bridge-lossy-replacement.md) | **SHIPPED** (Wave 122 P2 + Wave 127/128 N=1000 byte-reproducible); Kanzi framework_inv_proj N=1000 framework 0.8798 vs baseline 0.9020 (TIES, byte-reproducible on ruff-frozen code, Wave 131 Phase 3) |
+| 6 | [adapter-improvement-8-adapter-shim-audit.md](adapter-improvement-8-adapter-shim-audit.md) | **READ-ONLY audit** (Wave 123 Agent 6); per-adapter fixes deferred to camera-ready |
+| 7 | [paper-finish-line-radical-tier1.md](paper-finish-line-radical-tier1.md) | **EXECUTED** (Wave 129 — radical Tier-1 SCI plan replaces Wave 127 conservative framing; cover letter + §1/§7 + supplementary + checklist all landed Wave 132-133) |
+| 8 | [code-tasks-before-freeze.md](code-tasks-before-freeze.md) | **EXECUTED** (Wave 130 — pre-freeze engineering audit + plan; ruff 207→0 Wave 131 Phase 1 + D.4 33/33 + pytest 5155 + claims PASS all green) |
 
 > **Historical plans (CLOSED):** the 26 `algo-improvement-*.md` files
 > that previously lived under `todo/completed/` (47 archived plans) were
@@ -93,7 +111,23 @@ audit catalogue in [`docs/audit/INDEX.md`](../docs/audit/INDEX.md).
 > in `STATUS.md`). For the historical traceability index, see
 > `git log --all -- 'todo/completed/algo-improvement-*'`.
 
-### 2. Phase plans — `PHASE-1..3`
+### 2. Executed Wave plans (NEW — Wave 134 Phase 4)
+
+These plans were active in earlier waves, have been EXECUTED + verified
+green, and are preserved at the `todo/` root for traceability. The
+audit docs live under `docs/audit/` (not `todo/audit/` — that subdir
+was never created; `todo/` audit-style plans were never a thing).
+
+| # | Plan | Status | Audit doc |
+|---|---|---|---|
+| 1 | [paper-finish-line-radical-tier1.md](paper-finish-line-radical-tier1.md) | **EXECUTED** (Wave 129) — radical Tier-1 SCI plan replaces conservative Wave 127 framing; cover letter + §1/§7 + supplementary + checklist landed Wave 132-133 | [`docs/audit/wave132-tier1-polish.md`](../docs/audit/wave132-tier1-polish.md) |
+| 2 | [code-tasks-before-freeze.md](code-tasks-before-freeze.md) | **EXECUTED** (Wave 130) — pre-freeze engineering audit + plan; ruff 207→0 Wave 131 Phase 1 + D.4 33/33 + pytest 5155 + claims PASS all green | [`docs/audit/wave131-pre-freeze-hygiene.md`](../docs/audit/wave131-pre-freeze-hygiene.md) |
+| 3 | (Wave 131 plan) ruff 207→0 + byte-reproducibility verification | **DONE** (Wave 131 Phase 1 + Phase 3) — ruff `ruff check adaptive_reflow/ tests/` returns `All checks passed!` (0 findings); Kanzi N=1000 framework_inv_proj byte-reproducible on ruff-frozen code | [`docs/audit/wave131-pre-freeze-hygiene.md`](../docs/audit/wave131-pre-freeze-hygiene.md) |
+| 4 | (Wave 132 plan) NeurIPS template + cover letter + camera-ready sections | **DONE** (Wave 132 Phases B/C/D/E) — paper re-templated to NeurIPS 2026; cover letter R1-R6 explicit; discussion + limitations + broader impact + conclusion sections landed | [`docs/audit/wave132-tier1-polish.md`](../docs/audit/wave132-tier1-polish.md) |
+| 5 | (Wave 133 plan) number consistency + final polish | **DONE** (Wave 133 Phases 1-4) — R1-R6 numbers cross-checked across docs; supplementary.md additively filled; `check_docs_against_code.py` regressions fixed; README.md Tier-1 SCI submission pointer; final paper-draft.md read-through | [`docs/audit/wave133-number-consistency.md`](../docs/audit/wave133-number-consistency.md) |
+| 6 | (Wave 134 plan) `/tmp/` → `verification_outputs/` doc migration | **DONE** (Wave 134 Phases 1-4) — 3 doc surfaces (`paper-draft.md`, `baseline-audit-report.md`, `CONSOLIDATED_RESULTS.md`) updated to repo-resident paths; formal N=1000 reproducibility set established (8 headline JSONs); tag `v1.0.1-paper-final` pending; STATUS + INDEX refresh (this commit) | (no separate audit doc; rolled into CONSOLIDATED §15.32) |
+
+### 3. Phase plans — `PHASE-1..3`
 
 | File | Status | Wave / Commit |
 |---|---|---|
@@ -105,7 +139,7 @@ audit catalogue in [`docs/audit/INDEX.md`](../docs/audit/INDEX.md).
 > the per-model info now lives in `docs/CONSOLIDATED_RESULTS.md` §15 and
 > the per-wave audit catalogue at [`docs/audit/INDEX.md`](../docs/audit/INDEX.md).
 
-### 3. Wave result validations + master synthesis
+### 4. Wave result validations + master synthesis
 
 The wave result validation files and master synthesis docs
 (`wave10-result-validation.md`, `wave11-result-validation.md`, `wave12-result-validation.md`,
@@ -118,9 +152,9 @@ For new readers of the recent Tier 3 work, the canonical entry points
 are:
 
 - [`docs/audit/INDEX.md`](../docs/audit/INDEX.md) — per-wave audit
-  catalogue (Wave 1 → Wave 133).
-- [`docs/CONSOLIDATED_RESULTS.md`](../docs/CONSOLIDATED_RESULTS.md) §15.15 —
-  Tier 3 verdict table.
+  catalogue (Wave 1 → Wave 134).
+- [`docs/CONSOLIDATED_RESULTS.md`](../docs/CONSOLIDATED_RESULTS.md) §15.32 —
+  Tier 3 verdict table (Wave 131 final close).
 - [`docs/audit/wave52-kanzi-composite-ablation-synthesis.md`](../docs/audit/wave52-kanzi-composite-ablation-synthesis.md) —
   5-arm ablation matrix for Kanzi composite.
 
@@ -130,7 +164,7 @@ in git history (`14e8bc5^` and earlier). For equivalent current
 material, see [`docs/audit/wave99b-n1000-verdict.md`](../docs/audit/wave99b-n1000-verdict.md)
 + [`docs/audit/wave52-kanzi-composite-ablation-synthesis.md`](../docs/audit/wave52-kanzi-composite-ablation-synthesis.md).
 
-### 4. Model-specific — formerly `models/`
+### 5. Model-specific — formerly `models/`
 
 The `models/` subdirectory (README + RANKING.md + 4 model cards:
 kanzi, lineageflow, freqflow, mm-fm) was removed in Wave 127 Phase 5.
@@ -141,15 +175,15 @@ The Tier 3 model roster is now summarized in:
 - `docs/CONSOLIDATED_RESULTS.md` §15 (Tier 3 verdict table)
 - `docs/audit/wave52-kanzi-composite-ablation-synthesis.md`
 
-### 5. Operational & governance
+### 6. Operational & governance
 
 | File | Purpose |
 |---|---|
-| [STATUS.md](STATUS.md) | **single source of truth** — current state + last completed wave + next actions |
+| [STATUS.md](STATUS.md) | **single source of truth** — current state + last completed wave + next actions (refreshed 2026-09-14 Wave 134 Phase 4 for v1.0-paper-final state) |
 | [framework-freeze-checklist.md](framework-freeze-checklist.md) | MUST-1..5 freeze criteria with current PASS/FAIL status |
 | [GATES.md](GATES.md) | master gate definitions (binding rule: every todo/ task must have an acceptance gate) |
-| [PUSH-READY.md](PUSH-READY.md) | push-readiness summary (refreshed 2026-09-14: VERDICT READY, 167 unpushed, user-gated) |
-| [push-unpushed-commits.md](push-unpushed-commits.md) | push-protocol + Wave 12 push log (now superseded by 167 unpushed commits) |
+| [PUSH-READY.md](PUSH-READY.md) | push-readiness summary (refreshed 2026-09-14: VERDICT READY, 3 unpushed, user-gated) |
+| [push-unpushed-commits.md](push-unpushed-commits.md) | push-protocol + Wave 12 push log (now superseded by 3-commit Wave 134 backlog) |
 | [decisions.md](decisions.md) | architecture decision log D-001.. (append-only) |
 | [lessons-learned.md](lessons-learned.md) | cross-cutting patterns LL-001.. (append-only) |
 | [RISK-REGISTER.md](RISK-REGISTER.md) | forward-looking risks + mitigations (different from `lessons-learned.md`) |
@@ -177,8 +211,13 @@ The Tier 3 model roster is now summarized in:
    current Tier 3 / composite-benchmark / push-ready story
    (the load-bearing narrative). The historical `wave46-master-synthesis.md`
    lives in git history under `todo/completed/`.
+5. **[docs/audit/wave131-pre-freeze-hygiene.md](../docs/audit/wave131-pre-freeze-hygiene.md)** +
+   **[docs/audit/wave132-tier1-polish.md](../docs/audit/wave132-tier1-polish.md)** +
+   **[docs/audit/wave133-number-consistency.md](../docs/audit/wave133-number-consistency.md)** —
+   the v1.0-paper-final pre-freeze + Tier-1 polish + number-consistency
+   audit trail (committed `v1.0-paper-final` tag points to `39a65a7`).
 
-After those four, branch by interest:
+After those five, branch by interest:
 - **Algorithm / theory depth:** [PHASE-1-framework-and-theory.md](PHASE-1-framework-and-theory.md) → [framework-internal-metrics.md](framework-internal-metrics.md) → [`docs/audit/wave52-kanzi-composite-ablation-synthesis.md`](../docs/audit/wave52-kanzi-composite-ablation-synthesis.md) (composite formula)
 - **Per-model glue:** [PHASE-3-glue-layer-improvement.md](PHASE-3-glue-layer-improvement.md) + [docs/CONSOLIDATED_RESULTS.md §15](../docs/CONSOLIDATED_RESULTS.md)
 - **Push protocol:** [PUSH-READY.md](PUSH-READY.md) → [push-unpushed-commits.md](push-unpushed-commits.md) → [RISK-REGISTER.md](RISK-REGISTER.md)
@@ -189,12 +228,15 @@ After those four, branch by interest:
 ## Cross-references
 
 - `todo.json` (project root) — machine-readable task index
-- `git log origin/main..HEAD` — 167 unpushed commits (Wave 11 → Wave 127 Phase 4)
+- `git log origin/main..HEAD` — 3 unpushed commits (Wave 134 Phases 1-3)
+- `git tag v1.0-paper-final` — freeze marker (points to `39a65a7`); post-Wave 134 will add `v1.0.1-paper-final`
 - `docs/CONSOLIDATED_RESULTS.md` — single source of truth for experimental evidence
-- `docs/CLAIMS.md` — 41 ACTIVE + 2 DEPRECATED claims (43 CLM entries)
-- `docs/baseline-audit-report.md` — 9 metrics + Wave 30+ re-audit
+- `docs/CLAIMS.md` — 39 ACTIVE + 2 DEPRECATED claims (41 CLM entries; `tools/check_claims_consistency.py` PASS)
+- `docs/baseline-audit-report.md` — 9 metrics + Wave 30+ re-audit (R.23 at Wave 131 final close)
 - `verification_outputs/capability_audit_q4_2026_post_w38.json` — current capability gate values (G.1..G.7)
-- `docs/audit/INDEX.md` — per-wave audit catalogue
+- `verification_outputs/ckpt_sha256.json` — 4/4 PASS (FlowMol3, Kanzi cleaned_model, Kanzi encoder, LineageFlow)
+- 8 N=1000 sweep JSONs at `verification_outputs/` top level (formal reproducibility set)
+- `docs/audit/INDEX.md` — per-wave audit catalogue (Wave 1 → Wave 134)
 - `docs/theory/theorem1_rate_bound.md` — NEW (Wave 15 B)
 - `env_hash.txt` — NEW (Wave 15 Phase 1)
 - `requirements-lock.txt` — NEW (Wave 15 Phase 1)
