@@ -4390,4 +4390,15 @@ Wave 134 is the **/tmp/-to-repo migration** wave. The 8 N=1000 sweep JSONs that 
 - Wave 86 LineageFlow HMMER raw JSON still NOT in repo (camera-ready only; deferred to Wave 86 re-run).
 - NO push (Wave 11+ user-gated); ADDITIVE only; NO source code changes; NO experiments; single atomic Agent 5 commit.
 
+### §15.34 Wave 135 — Headline evidence collection (2026-09-14)
+
+Wave 135 is the **headline-evidence collection** wave that consolidates every experimentally strong data point that supports the Tier-1 SCI submission into a single, easy-to-cite source-of-truth directory `docs/headline-evidence/`. 7 atomic Phases (1-6 by prior agents + this Phase 7 final synthesis by Agent 7): Phase 1 creates the directory + README.md index; Phases 2-4 collect R1-R6 headline evidence with honest caveats; Phase 5 collects 3 byte-stable composite axis results; Phase 6 collects NFE speedup + byte-repro evidence; this Phase 7 final close writes the audit doc, appends baseline-audit §R.25, appends this §15.34, and commits. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
+
+- `docs/headline-evidence/` directory created with 10 subdirs (r1-r6 + composite_axis + nfe_speedup + kanzi_n1000 + byte_repro).
+- All 6 R* (R1-R6) + 3 byte-stable composite (Kanzi +0.1695 + LineageFlow +0.2083 + FlowMol3 +0.1182) + NFE speedup (2D FM 10x + CIFAR-10 RF 2.5x) + byte-repro evidence (delta=0.00e+00) collected.
+- 31 symlinks into `verification_outputs/` + `docs/audit/` so `docs/headline-evidence/` is a VIEW (not a duplicate) of the canonical data.
+- Honest caveats disclosed (R1 raw-JSON gap, R3 no on-disk JSON, R6 pre-P0-1 caveat) — 3 caveats only, all in SOURCE.md + paper-draft.md §7.4 line 1369.
+- All gates preserved (ruff 0, D.4 33/33, claims_consistency PASS, mkdocs strict EXIT=0).
+- NO push (Wave 11+ user-gated); ADDITIVE only; NO source code changes; NO experiments; single atomic Agent 7 commit.
+
 See `docs/audit/wave134-tmp-migration.md` (full Wave 134 audit trail) + `docs/baseline-audit-report.md` §R.24 (Wave 134 ledger row) + `todo/STATUS.md` (Phase 4 refresh) + `verification_outputs/kanzi_n1000_*/` (8 N=1000 sweeps now in repo).

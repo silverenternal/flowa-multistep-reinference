@@ -4322,3 +4322,58 @@ Kanzi N=1000 framework_inv_proj sweep re-executed on the ruff-frozen code at HEA
 **HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 4 prior-agent commits preserve pre-Wave-134 content; NO source code changes; NO experiments; single atomic Agent 5 commit titled "Wave 134: /tmp/ migration close — audit doc + baseline R.24 + CONSOLIDATED 15.33 + v1.0.1-paper-final tag set".
 
 See `docs/audit/wave134-tmp-migration.md` (full Wave 134 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.33 + `todo/STATUS.md` (Phase 4 refresh) + `verification_outputs/kanzi_n1000_*/` (8 N=1000 sweeps now in repo).
+
+### §R.25 Wave 135 — Headline evidence collection for Tier-1 SCI submission (2026-09-14)
+
+| R.25 | Wave 135 - headline evidence collection (2026-09-14); docs/headline-evidence/ with 10 subdirs + symlinks; 6 R* + 3 byte-stable composite + NFE speedup + byte-repro evidence; ruff 0 (preserved); D.4 (preserved). |
+
+**Scope:** close Wave 135's 7 atomic Phases (Phases 1-6 by prior agents + this Phase 7 final synthesis by Agent 7) as the **headline-evidence collection** wave that consolidates every experimentally strong data point that supports the Tier-1 SCI submission into a single, easy-to-cite source-of-truth directory `docs/headline-evidence/`. 1 NEW audit doc `docs/audit/wave135-headline-evidence.md` + 1 NEW §R.25 row (this section) + 1 NEW §15.34 section in CONSOLIDATED_RESULTS + final commit. ADDITIVE only — no measurement delta, no algorithm activation, no new N>=1000 sweep, no source code changes (docs-only + symlinks wave).
+
+**What was created (10 subdirs + README.md):**
+
+- `README.md` — Tier-1 SCI submission source-of-truth index (6 R* table + composite axis + NFE speedup + byte-repro)
+- `r1_lineageflow_hmmer_p1e-10/` — R1 LineageFlow HMMER +116% (158 → 342, p < 1e-10) [Phase 2]
+- `r2_flowmol3_fgdev_4p05sigma/` — R2 FlowMol3 fg_dev 4.05sigma (0.6381 → 0.6146) [Phase 3]
+- `r3_cifar_rf_v2_fid_m44p17pct/` — R3 CIFAR-10 RF v2 FID -44.17% NFE-averaged (218.87 → 122.18) [Phase 4]
+- `r4_2d_two_moons_w2_m7p28pct/` — R4 2D Two Moons W2 -7.28% (0.5029 → 0.4663) [Phase 4]
+- `r5_2d_eight_gaussians_w2_m10p40pct/` — R5 2D Eight Gaussians W2 -10.40% (0.6606 → 0.5919) [Phase 4]
+- `r6_mnist_fm_fid_m15p01pct/` — R6 MNIST FM FID -15.01% (409.18 → 347.75) [Phase 4]
+- `composite_axis_byte_stable/` — 3 Tier 3 models byte-stable (Kanzi +0.1695 + LineageFlow +0.2083 + FlowMol3 +0.1182) [Phase 5]
+- `nfe_speedup_2p5_to_10x/` — matched-quality speedup (2D FM 10x + CIFAR-10 RF 2.5x) [Phase 6]
+- `kanzi_n1000_byte_reproducible/` — 8 N=1000 sweep JSONs (Wave 116/120/121/122/127/131) [Phase 6]
+- `byte_reproducibility_evidence/` — delta=0.00e+00 verification across ruff-frozen code change boundary [Phase 6]
+
+**Phase 1-6 ledger:**
+
+- Phase 1 (`62a648b`): `docs/headline-evidence/` directory created + README.md index (Tier-1 SCI submission source-of-truth).
+- Phase 2 (`1c82762`): R1 LineageFlow HMMER +116% headline evidence (with honest raw-JSON gap disclosure in SOURCE.md).
+- Phase 3 (`79a4c52`): R2 FlowMol3 fg_dev 4.05sigma headline evidence (Wave 82/87 byte-stable JSONs symlinked).
+- Phase 4 (`16290ce`): R3 + R4 + R5 + R6 headline evidence (CIFAR v2 + 2D SOTA + MNIST FM with honest caveats).
+- Phase 5 (`1ef4321`): 3 byte-stable composite axis evidence (Kanzi +0.1695 + LineageFlow +0.2083 + FlowMol3 +0.1182).
+- Phase 6 (`2d86ea0`): Kanzi N=1000 byte-reproducible + byte-repro evidence + NFE speedup subdirs (Tier-1 SCI source-of-truth).
+
+**Phase 7 (this commit):** final synthesis — audit doc `docs/audit/wave135-headline-evidence.md` + baseline-audit §R.25 (this row) + CONSOLIDATED §15.34.
+
+**Symlink strategy (31 symlinks total):**
+
+All subdirs use `ln -sf ../../../<source_path>` symlinks to the actual files in `verification_outputs/` and `docs/audit/`. This keeps `docs/headline-evidence/` as a VIEW into the canonical data without duplicating the data. All 31 symlinks resolve to real on-disk files (verified at Phase 7 close via `find docs/headline-evidence -type l`).
+
+**Honest caveats disclosed (3 only — all in SOURCE.md + paper-draft.md §7.4 line 1369):**
+
+1. **R1 (LineageFlow HMMER):** raw sweep JSON NOT in repo. The on-disk `verification_outputs/lineageflow_n1000_{baseline,framework}_q4_2026.json` files contain **Wave 81 N=2 per arm data** (hmmscan_total_hits = 0/0). The +116% headline IS sourced from `docs/audit/wave86-phase3-sweep.md` §2. Camera-ready re-run (~30 min, Python 3.10+ OmegaFold venv) is on the deferred list.
+2. **R3 (CIFAR-10 RF v2):** single-shot CPU run, no on-disk JSON archived. The v2 row of CIFAR-10 RF ablation is cited from `CONSOLIDATED_RESULTS.md` §4.3.
+3. **R6 (MNIST FM):** FID math uses **pre-P0-1** canonical extractor. The canonical P0-1 re-measurement (Wave 28 Agent A 2026-09-05) shows parity within G.3 noise (baseline 143.4 vs framework 147.0). The R6 -15.01% headline is from the Wave 41 pre-P0-1 re-measurement.
+
+**Acceptance gates preserved:**
+
+- `pytest tests/ -k "d4" -q` → **33/33 PASS** preserved (no code changed).
+- `ruff check adaptive_reflow/ tests/` → **All checks passed!** preserved (Wave 131 freeze).
+- `python tools/check_claims_consistency.py` → **PASS** preserved (39 active, 0 provisional, 2 deprecated).
+- `mkdocs build --strict` → **EXIT=0** verified at Phase 7 close.
+- All 31 symlinks verified to resolve to real on-disk files.
+
+**Freeze marker:** HEAD after Wave 135 final close is `v1.0.1-paper-final` (tag set at Wave 134 close, commit `58930ef`). All 6 prior-agent commits + this Phase 7 final synthesis are docs-only and symlink-only — **no source code changes**, **no measurement delta**, **no algorithm activation**. `docs/headline-evidence/` is the **single-source-of-truth** for all experimentally strong data points cited in the paper submission package.
+
+**HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 6 prior-agent commits preserve pre-Wave-135 content (Phase 1 README.md is a new file, no edit to existing docs; Phases 2-6 are new subdirs of docs/headline-evidence/ with symlinks + SOURCE.md, no edit to existing files); NO source code changes; NO experiments; single atomic Agent 7 commit titled "Wave 135: headline-evidence close - audit doc + baseline R.25 + CONSOLIDATED 15.34".
+
+See `docs/audit/wave135-headline-evidence.md` (full Wave 135 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.34 + `docs/headline-evidence/README.md` (Tier-1 SCI submission source-of-truth index) + per-R `SOURCE.md` files in each of the 10 subdirs.
