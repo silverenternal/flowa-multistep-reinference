@@ -14,7 +14,9 @@ HEAD at freeze: `0ef6465` (v1.0.1-paper-final tag; post-Wave 134 /tmp/ → repo 
 - Self-assessment: A- (theory-grounded + honest negative surface + byte-stable reproducibility + camera-ready scope is bounded)
 - Test count: **5155 passed / 196 skipped / 0 failed** (post-Wave-131 ruff-frozen code; D.4 33/33 byte-stable). The 196 skips are env-skips (torch / pandas / hypothesis / rdkit not in the flowa-default venv) — pre-existing, unrelated to the framework.
 - D.4 pinned regression vectors: **33/33 PASS** (post-Wave-131 ruff-frozen code freeze; ruff 0; legacy 72/72 figure = Wave 32 batches 2/3/4 + Wave 33 batch 2/3, no longer applicable to ruff-frozen code)
-- Last audit: 2026-09-14 (Wave 136 final submission polish; see [`docs/audit/wave136-submission-polish.md`](docs/audit/wave136-submission-polish.md) + [`docs/INSIGHTS.md`](docs/INSIGHTS.md) + [`docs/headline-evidence/`](docs/headline-evidence/) for the Tier-1 SCI submission source-of-truth collection)
+- Figure count: **17 (8 main + 9 appendix; matplotlib-rendered SVG/PNG)** — see [`docs/figures/README.md`](docs/figures/README.md) for the full figure index + per-figure caption + generator script
+- Table count: **8 numbered main-paper tables (A–H) + 1 appendix table (Kim2025-aligned footprint)** — see [`docs/headline-evidence/README.md`](docs/headline-evidence/README.md) §Tables + [`docs/paper-draft.md` §7.6.6](docs/paper-draft.md) for the per-table provenance
+- Last audit: 2026-09-14 (Wave 136 final submission polish + Wave 143 Kim2025-aligned figure + table expansion; see [`docs/audit/wave136-submission-polish.md`](docs/audit/wave136-submission-polish.md) + [`docs/INSIGHTS.md`](docs/INSIGHTS.md) + [`docs/headline-evidence/`](docs/headline-evidence/) + [`docs/figures/`](docs/figures/) for the Tier-1 SCI submission source-of-truth collection)
 - Honest gaps: see [`docs/paper-draft.md` §10.4 Known negative surface](docs/paper-draft.md) + [`todo/STATUS.md` Camera-ready deferred](todo/STATUS.md)
 
 ## Headline results (6 Bonferroni-significant `framework_improves` + 3 byte-stable composite)
