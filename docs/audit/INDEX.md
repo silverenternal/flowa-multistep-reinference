@@ -4,8 +4,10 @@
 > `todo/planned/w101-fix-layer4-docs-config.md` (Layer-4 docs/config hygiene).
 
 This index catalogs every wave deliverable in `docs/audit/`. Each row is one wave
-(Wave 1 → Wave 101). The `audit/` directory holds 290+ files spanning Wave 32 (the
-audit-rich era) through Wave 101 (the most recent 4-layer review).
+(Wave 1 → Wave 101). The `audit/` directory holds 137 wave-prefixed files (Wave 100-136)
+plus 50 cross-cutting / orphan docs. **Wave 34-99 audit docs were archived to
+`docs/ARCHIVE/audit-waves-1-99/` in Wave 137 (2026-09-14)** — preserved for historical
+reference, no longer cited by Tier-1 reviewer-facing docs.
 
 **Legend**
 
@@ -122,7 +124,7 @@ audit-rich era) through Wave 101 (the most recent 4-layer review).
 
 ---
 
-**Total waves**: 101 | **Waves with audit docs**: 62 | **Total audit .md files**: 266
+**Total waves**: 101 | **Waves with audit docs**: 62 | **Total audit .md files in `docs/audit/`**: 137 (Wave 100-136) | **Archived Wave 34-99 audit docs**: 261 (in `docs/ARCHIVE/audit-waves-1-99/`)
 
 ## Orphan (non-wave-prefixed) audit docs
 
