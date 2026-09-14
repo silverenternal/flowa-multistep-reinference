@@ -86,8 +86,10 @@ Integration rationale: `todo/framework-freeze-checklist.md` MUST-4.
 
 ## D.4 byte-stable regression vectors (single source of truth)
 
-**Gate:** D.4 pinned regression vectors — 72/72 PASS at HEAD as of 2026-09-11
-(commit `f97ec1c`).
+**Gate:** D.4 pinned regression vectors — 33/33 PASS at HEAD as of 2026-09-14
+(commit `89e635e`, v1.0.1-paper-final tag; Wave 131 ruff-frozen code; legacy
+72/72 figure = Wave 32 batches 2/3/4 + Wave 33 batch 2/3, no longer
+applicable to ruff-frozen code).
 
 | Test surface | Test count | Status | Last green |
 |---|---:|---|---|
@@ -111,8 +113,8 @@ figure includes the Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions
 the "33/33" figure.
 
 **D.4 vs full pytest — important distinction:** The full pytest suite
-(`pytest tests/ -q`) collects **4591 tests** of which **2165 pass** + **9
-skip** + **3 FAILED** (per `pytest_results.txt` at commit `f97ec1c`).
+(`pytest tests/ -q`) collects **5155 tests / 5012 pass** (post-Wave-131
+ruff-frozen code; legacy 4591/2165 = pre-Wave-31 test suite).
 The 3 pre-existing FAILED tests are tracked in `docs/audit/wave48-pytest-pre-push-fixes.md`
 (Wave 48 Agent A partial fix + 1 remaining F-3 paper_quantities threading
 bug at Wave 45 Agent C). The 3 FAILED tests are unrelated to the
