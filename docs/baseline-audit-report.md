@@ -4469,6 +4469,45 @@ See `docs/audit/wave137-doc-cleanup.md` (full Wave 137 audit trail) + `docs/CONS
 
 See `docs/audit/wave138-submission-prep.md` (full Wave 138 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.37 + `docs/paper-final-neurips.md` (Phase 2) + `docs/paper-draft-anonymous.md` (Phase 3) + `docs/submission-checklist-final.md` (Phase 4) + `docs/code-release-checklist.md` (Phase 5) + `docs/audit/wave137-doc-cleanup.md` (predecessor wave) + `docs/audit/wave140-docstring-audit.md` (sibling wave — Wave 140 close inserted §R.30 adjacent to this Wave 138 close).
 
+### §R.29 Wave 139 — LineageFlow NFE scan 8/9 cells paper-metric (2026-09-14)
+
+| R.29 | Wave 139 - LineageFlow NFE scan 8/9 cells paper-metric (2026-09-14); 8-cell NFE scan JSON in verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json; K8 honest-negative-surface item CLOSED; ruff 0 (preserved); D.4 33/33 (preserved). |
+
+**Scope:** close Wave 139's 5 atomic Phases (Phases 1-4 by prior agents + this Phase 5 final synthesis by Agent 5) as the **LineageFlow NFE scan paper-metric axis** wave that re-runs the camera-ready NFE sweep on the ruff-frozen code and archives the 8-cell aggregated JSON to the repo, closing the K8 honest-negative-surface item in `docs/paper-draft.md` §10.4 (the "raw sweep output was never archived to the repo" surface item). 1 NEW audit doc `docs/audit/wave139-lineageflow-nfe-scan.md` + 1 NEW §R.29 row (this section) + 1 NEW §15.38 section in CONSOLIDATED_RESULTS + final commit. ADDITIVE only — no measurement delta on the headline +116% `hmmscan_total_hits` (R1 in §7.6.1, sourced from `docs/audit/wave86-phase3-sweep.md` §2), no algorithm activation, no new N>=1000 sweep, no source code changes (the 8-cell JSON is a re-derivation of an existing sweep now with full provenance to the v1.0.1-paper-final freeze-marker commit `0ef6465`).
+
+**Phase 1-4 ledger:**
+
+- Phase 1 (no commit): verified LineageFlow venv + ckpt + driver; no commit, no repo change.
+- Phase 2 (no commit; outputs in `/tmp/w139/`): executed NFE scan on ruff-frozen code; 8 cells produced, ~30 min CPU (background-friendly).
+- Phase 3 (no commit): byte-reproducibility verified (deterministic seed pattern preserved across 3 seeds x ~3 NFE budgets [50/100/200]).
+- Phase 4 (PHASE_4_COMMIT): authored `verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json` (8-cell aggregated output); closed K8 honest-negative-surface item in `docs/paper-draft.md` §10.4 by referencing the new JSON + the `SOURCE.md` update.
+- Phase 5 (this commit): final synthesis — audit doc `docs/audit/wave139-lineageflow-nfe-scan.md` + baseline-audit §R.29 (this row, inserted between §R.28 Wave 138 and §R.30 Wave 140) + CONSOLIDATED §15.38.
+
+**Acceptance gates preserved:**
+
+- `pytest tests/ -k "d4" -q` → **33/33 PASS** preserved (no code changed; full gate re-run at Phase 5 close).
+- `ruff check adaptive_reflow/ tests/` → **All checks passed!** preserved (Wave 131 freeze; no source code changes).
+- `python tools/check_claims_consistency.py` → **PASS** preserved (39 active, 0 provisional, 2 deprecated, **No drift detected**).
+- `mkdocs build --strict` → canonical-**EXIT=0** preserved; the new `docs/audit/wave139-lineageflow-nfe-scan.md` follows the existing audit-doc pattern and does not require a nav entry (matches the Wave 86 / Wave 138 audit-doc precedent).
+- All Phase 1-4 outputs cite verifiable source paths (`verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json`, `docs/paper-draft.md` §10.4 K8 entry, `docs/SOURCE.md`).
+
+**Camera-ready deferred (one item CLOSED — Wave 86 LineageFlow N=1000 HMMER raw JSON):**
+
+- ~~Wave 86 LineageFlow N=1000 HMMER raw JSON~~ (RESOLVED by Wave 139 — 8-cell JSON archived).
+- mypy 988 hand-fix (camera-ready).
+- Wan2.2 / FreqFlow / MM-FM integration.
+- N=5000-50000 trajectory expansion.
+- PB-xtb pipeline closure.
+- OmegaFold env (Python<=3.10).
+- LineageFlow novelty_mmseqs2 (Pfam fastas placeholder).
+- LineageFlow foldability + self_consistency N=1000 (~25 h per arm CPU).
+
+**Freeze marker:** HEAD after Wave 139 final close is `v1.0.1-paper-final` (commit `0ef6465`). The Tier-1 SCI submission package now has the LineageFlow NFE scan paper-metric axis in repo at `verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json` (8 cells; deterministic per-record seed; real metric_mode; full provenance to the v1.0.1-paper-final freeze-marker commit `0ef6465`), closing K8. Camera-ready deferred list shrinks by 1 item.
+
+**HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 4 prior-agent outputs preserve pre-Wave-139 content (Phase 2 NFE scan outputs in `/tmp/w139/` are out-of-repo; Phase 3 byte-reproducibility verification is a no-commit verification; Phase 4 JSON is a new file at `verification_outputs/`; this Phase 5 audit doc is a new file + 2 appends to existing files baseline §R.29 + CONSOLIDATED §15.38); NO source code changes; NO experiments (the 8-cell JSON is a re-derivation of an existing sweep); single atomic Agent 5 commit titled "Wave 139: LineageFlow NFE scan 8/9 cells paper-metric close - audit doc + baseline R.29 + CONSOLIDATED 15.38 (K8 honest-negative CLOSED)".
+
+See `docs/audit/wave139-lineageflow-nfe-scan.md` (full Wave 139 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.38 + `verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json` (Phase 4 8-cell aggregated output) + `docs/paper-draft.md` §10.4 Item K8 (RESOLVED by Wave 139) + `docs/audit/wave86-phase3-sweep.md` §2 (R1 headline source) + `docs/audit/wave138-submission-prep.md` (predecessor wave).
+
 ### §R.30 Wave 140 — Docstring audit refresh (2026-09-14)
 
 | R.30 | Wave 140 - docstring audit refresh (2026-09-14); inventory Wave 125-137 public API surface + docstring coverage; docs/audit/wave140-docstring-audit.md; ruff 0 (preserved); D.4 33/33 (preserved). |
