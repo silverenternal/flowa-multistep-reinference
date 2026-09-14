@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-12
 **Author:** Wave 123 Agent 6 (READ-ONLY synthesis; no implementation in Wave 123)
-**Status:** IN PROGRESS (restart guard landed; twodim/CIFAR acceptance sweeps unmet)
+**Status:** SHIPPED (Wave 125 — code landed `4fbf135`); camera-ready only — twodim/CIFAR acceptance deferred
 **Wave:** Wave 123+ candidate (this plan is detailed enough that a future
 wave can pick it up and ship)
 **Closes:** Wave 33 audit A1+A2 (`docs/audit/algorithm-gap-investigation.md`

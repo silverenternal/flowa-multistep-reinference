@@ -2,6 +2,7 @@
 
 **Date:** 2026-09-14
 **Author:** Wave 130 audit (post-Wave 129)
+**Status:** EXECUTED (Wave 130 — pre-freeze engineering audit + plan; ruff 207→0 Wave 131 Phase 1 + D.4 33/33 + pytest 5155 + claims PASS all green)
 **Purpose:** Inventory all remaining code modification tasks. Per user directive "后面我们都搞完了数据肯定要全部重新跑一遍来冻结的" — this is the **pre-freeze engineering pass** that must complete BEFORE we run the final big-batch experiments.
 
 ---

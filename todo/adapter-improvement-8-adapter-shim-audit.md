@@ -3,7 +3,7 @@
 **Date:** 2026-09-12
 **Author:** Wave 123 Agent 6 (READ-ONLY synthesis; this plan is an
 audit + recommendation, NOT a code change)
-**Status:** AUDIT COMPLETE; IMPLEMENTATION DEFERRED (per-adapter fixes and full acceptance remain open)
+**Status:** READ-ONLY audit (Wave 123 Agent 6); per-adapter fixes deferred to camera-ready
 **Wave:** Wave 123+ candidate (READ-ONLY audit; produces recommendations
 for Wave 124+)
 **Companion synthesis doc:** `todo/algo-improvement-framework-vs-model-metrics-gap.md`

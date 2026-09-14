@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-12
 **Author:** Wave 123 Agent 6 (READ-ONLY synthesis; no implementation in Wave 123)
-**Status:** IN PROGRESS (target-threshold code landed; CIFAR/twodim acceptance sweeps unmet)
+**Status:** SHIPPED (Wave 125 — code landed `4fbf135` + `da090c2`); camera-ready only — CIFAR/twodim acceptance deferred
 **Wave:** Wave 123+ candidate (this plan is detailed enough that a future
 wave can pick it up and ship)
 **Closes:** Wave 33 audit Gap A Cause B3 (cosine ramp drives late-round

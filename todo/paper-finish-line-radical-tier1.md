@@ -5,6 +5,7 @@
 **Date:** 2026-09-14
 **Author:** Wave 129 planning (post-Wave 127+128)
 **Replaces:** Wave 127 STATUS.md "camera-ready deferred" list
+**Status:** EXECUTED (Wave 129 — radical Tier-1 SCI plan replaces Wave 127 conservative framing; cover letter + §1/§7 + supplementary + checklist all landed Wave 132-133)
 
 ---
 

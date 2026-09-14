@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-12
 **Author:** Wave 123 Agent 6 (READ-ONLY synthesis; no implementation in Wave 123)
-**Status:** IN PROGRESS (per-call magnitude landed; ESM-2 N=100 and N=1000 acceptance unmet)
+**Status:** SHIPPED (Wave 125 — code landed `ae33583`); camera-ready only — ESM-2 N=100 + N=1000 acceptance deferred
 **Wave:** Wave 123+ candidate (this plan is detailed enough that a future
 wave can pick it up and ship)
 **Closes:** Wave 33 audit Gap C (LineageFlow `family_validity=1.0`
