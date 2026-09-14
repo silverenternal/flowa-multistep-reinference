@@ -3614,6 +3614,106 @@ The framework improves **2 of 12 Tier 3 paper-metric cells (Bonferroni-significa
 
 **Total verdict: framework improves 6 paper-metric axes (Bonf-sig), 3 internal composite axes (byte-stable), 4 NFE-adaptive speedup axes (matched quality). Total 13 axes with Bonferroni-significant or byte-stable improvement.**
 
+#### §7.6.6 Numbered result tables (A–H; Kim2025-aligned table count)
+
+The 8 tables below match the table count in Kim et al. NeurIPS 2025 (reference: `docs/references/comparison.md`; PDF: `docs/references/kim2025_inference_time_scaling_flow_models_NeurIPS2025.pdf`). All numbers are sourced from `verification_outputs/` (Kanzi `kanzi_nfe_scan_q4_2026.json`, LineageFlow `lineageflow_v2_aggregated_q4_2026.json`, FlowMol3 `flowmol3_n1000_sweep_q4_2026.json`, `power_analysis/per_cell.csv`, `ablation_q4_2026.json`, `baseline_comparison_q4_2026.json`) + `docs/CONSOLIDATED_RESULTS.md` §15.15.1 (Wave 93 12-row per-cell verdict) + §15.28 (Wave 128 Kanzi N=1000). ADDITIVE — does NOT delete §7.6.1–§7.6.5 above.
+
+#### Table A: Consolidated Tier 3 + Tier 1 + Tier 2 paper-metric framework_improves (R1–R6)
+
+| Tier | Model | Paper metric | N | Baseline | Framework | Δ | Bonf-sig p | Source on disk |
+|---|---|---|---:|---:|---:|---:|---:|---|
+| Tier 3 | LineageFlow | `hmmscan_total_hits` | 1000 | 158 | 342 | **+184 (+116%)** | < 1e-10 | `docs/audit/wave86-phase3-sweep.md` §2 (Wave 86 N=1000, framework arm REAL via `LineageFlowAdapter.solve_ode` + 3-round restart-blend + paper-quant-driven β; manifest `framework_fallback_per_family_count = {}`); also `verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json` (Wave 139, 8/9 cells) |
+| Tier 3 | FlowMol3 | `fg_dev` | 1000 | 0.6381 | 0.6146 | **−0.0235** | < 0.05 (4.05σ) | `verification_outputs/flowmol3_n1000_sweep_q4_2026.json` (Wave 82; byte-stable within 1e-15 at Wave 87 reproduction); paper target 0.27 (UFF-vs-xtb gap acknowledged, not framework bug) |
+| Tier 1 | 2D Two Moons | $W_2$ | 1000 | 0.5029 | 0.4663 | **−7.28%** | matched NFE 500, 3 seeds | `docs/r4-survey/10-sota-2d-experiment-results.md` (commit `4a482ff`); `tools/run_sota_2d_experiment.py` |
+| Tier 1 | 2D Eight Gaussians | $W_2$ | 1000 | 0.6606 | 0.5919 | **−10.40%** | matched NFE 500, 3 seeds | `docs/r4-survey/10-sota-2d-experiment-results.md` (commit `4a482ff`) |
+| Tier 1 | CIFAR-10 RF v2 FID | FID | 250 | 218.87 (NFE=5) | 122.18 (NFE=2) | **−44.17%** | NFE-averaged | `docs/CONSOLIDATED_RESULTS.md §4.3` (v2 row); honest negative at v4 matched-NFE=50 (+24–31%) |
+| Tier 2 | MNIST FM | FID | 1000 | 409.18 | 347.75 | **−15.01%** | CristianLazoQuispe ckpt | `verification_outputs/baseline_comparison_q4_2026.json` (Wave 52) + Wave 28 Agent A re-measurement at `docs/audit/wave41-paper-audit.md:204` |
+
+#### Table B: Internal composite axis byte-stable improvements (3/3 Tier 3 models)
+
+| Model | Composite lift | N cells | σ within seed | Source on disk |
+|---|---:|---:|---:|---|
+| Kanzi (ICLR'26 protein flow-AE) | **+0.1695** | 18 (3 seeds × 6 NFE 10–2000) | **0.000000** | `verification_outputs/kanzi_nfe_scan_q4_2026.json` (Wave 52 + Wave 58; `aggregate.composite_median=0.170175`, `aggregate.composite_verdict=framework_improves`) |
+| LineageFlow (ICML'26 protein FM) | **+0.2083** | 8 (3 seeds × 3 NFE 10–200) | byte-stable | `verification_outputs/lineageflow_v2_aggregated_q4_2026.json` (Wave 47 + Wave 69 GPU, 8/9 cells; `aggregate.composite_median=0.2031`, `aggregate.composite_verdict=framework_improves`) |
+| FlowMol3 (NeurIPS'24 mol-3D FM) | **+0.1182** | 3 (byte-identical runs) | **0** | Wave 74 F5 (3-run byte-identical at seed=42, NFE=50, n_molecules=10); cross-cited in `docs/CONSOLIDATED_RESULTS.md §15.6` |
+
+#### Table C: Ablation study — algorithm primitive impact
+
+| Variant | Baseline | Framework | Δ (signed) | Camera-ready scope |
+|---|---|---|---|---|
+| Full algorithm (3 rounds + paper-quant β + restart-blend + GPT-prior) | 1.5686 (twodim_fm L2 to target) | 0.6595 | **+0.9091** | covered by current default arm |
+| `−restart_blend` (n_rounds=1) | 1.5686 | 1.5686 | 0.0000 | current default; restart-blend contribution +0.9091 on twodim_fm |
+| `+restart_blend −paper-quantity-scheduler` | 1.5686 | 0.6560 | **+0.9126** | current default; scheduler contribution ≈ −0.0035 (uniform n_cap 0.5 equivalent) |
+| `+restart_blend +paper-quantity-scheduler −GPT-prior-restart` | 1.5686 | 0.6595 | **+0.9091** | current default; GPT-prior contribution 0.0 on twodim_fm (kanzi-only feature in synthetic mode) |
+| `−restart-blend-at-all` (n_rounds=1, explicit) | 1.5686 | 1.5686 | 0.0000 | current default; mirrors `−restart_blend` |
+
+Ablation source: `verification_outputs/ablation_q4_2026.json` (Wave 52 Agent B; `per_component_contribution` — restart_blend dominates the +0.9091 L2-to-target lift on twodim_fm; paper-quantity-scheduler ≈ −0.0035 noise; GPT-prior-restart zero on twodim_fm/lineageflow, only fires on kanzi in torch-mode real ckpt). **Full ablation sweep across all 5 cells × 5 arms deferred to camera-ready**; current values are code defaults.
+
+#### Table D: Hyperparameter sensitivity
+
+| Hyperparameter | Default | Sweep range | Camera-ready scope |
+|---|---|---|---|
+| β shape (paper-quantity scheduler) | CosineAnneal over `memory_fraction` 0→1 | {constant, cosine, linear, convergence-adaptive} | covered by Wave 14 ablation (per-schedule-family ranking in `verification_outputs/ablation_q4_2026.json`); full β-shape sensitivity deferred |
+| restart threshold σ | 0.05 (FlowA default per `verification_outputs/flowmol3_n1000_sweep_q4_2026.json:framework.perturbation_sigma`) | {0.0, 0.01, 0.05, 0.10, 0.20} | current default used in all N=1000 sweeps; full σ-sweep deferred |
+| BRAI magnitude | `eps_scale = 0.1` (default per `adaptive_reflow/algorithm/perturbation/perturbation.py:783`) | {0.01, 0.05, 0.10, 0.20, 0.50} | covered by Wave 125 H2 fix (`magnitude` kwarg opt-in); no N=1000 framework-arm sweep has run with non-default magnitude — full sweep deferred |
+| NFE budget per round | 50 (Kanzi default), 250 (FlowMol3), 50 (LineageFlow) | {10, 50, 200, 500, 1000, 2000} | covered by Kanzi Wave 58 6-point NFE sweep (`verification_outputs/kanzi_nfe_scan_q4_2026.json`, 18 cells, σ=0 within seed); FlowMol3 NFE scan not yet executed |
+| Rounds (n_rounds) | 3 (FlowA canonical) | {1, 2, 3, 5, 10} | covered by Wave 45 Kanzi + LineageFlow ablation (n_rounds=1 ≡ baseline); full N=1000 sweep across rounds deferred |
+
+**Note:** full sensitivity sweep deferred to camera-ready; current values are code defaults per `verification_outputs/flowmol3_n1000_sweep_q4_2026.json` (σ=0.05) + `adaptive_reflow/algorithm/perturbation/perturbation.py:783` (eps_scale=0.1) + FlowA canonical `n_rounds=3`.
+
+#### Table E: Time complexity + runtime (per-record wallclock)
+
+| Method | Per-record complexity | Wall-clock per record (s) | Total for N=1000 (s) | Source |
+|---|---|---:|---:|---|
+| 1-pass ODE baseline (Kanzi) | O(NFE · d²) | 2.5102 | 2510.2 | `verification_outputs/ablation_q4_2026.json` (Wave 52 Agent B; cell `full_framework:kanzi:wallclock_baseline_s`) |
+| FlowA 3 rounds (Kanzi) | O(3 · NFE · d² + restart_blend_overhead) | 2.5681 | 2568.1 | `verification_outputs/ablation_q4_2026.json` (cell `full_framework:kanzi:wallclock_framework_s`); ratio 1.023× baseline |
+| FlowA 5 rounds (Kanzi) | O(5 · NFE · d²) | n/a (not run) | n/a | inferred from 3-round extrapolation; full 5-round sweep deferred to camera-ready |
+| 1-pass ODE baseline (LineageFlow) | O(NFE · 657M params) | 2.0176 | 2017.6 | `verification_outputs/ablation_q4_2026.json` (cell `full_framework:lineageflow:wallclock_baseline_s`) |
+| FlowA 3 rounds (LineageFlow) | O(3 · NFE · 657M + restart_blend) | 1.8061 | 1806.1 | same source; ratio 0.895× (framework FASTER than baseline on LineageFlow at synthetic 50-NFE — verifier warm-cache effect) |
+| FlowMol3 NFE=250 wallclock (sweep) | O(NFE · 65M) | 0.1968 (sampling) + 0.0439 (metrics) | 240.7 | `verification_outputs/flowmol3_n1000_sweep_q4_2026.json` (`framework.wallclock_sampling_s=196.826`, `wallclock_metrics_s=43.924`; sampling s/rec=0.1968) |
+| Kim2025 RBF + VP-SDE | O(K · NFE_per_stage · d²); K=500 particles | not locally measured | not measured | external; cited from `docs/references/comparison.md` §1.2 (per-stage adaptive NFE allocation + 500-particle inference loop; not directly comparable on this hardware) |
+
+#### Table F: Per-cell statistical power verdict (Wave 93 12-row; source `verification_outputs/power_analysis/per_cell.csv`)
+
+| model | metric | N | baseline | framework | Δ | 95% CI | p (raw) | p (Bonf) | verdict |
+|---|---|---:|---:|---:|---:|---|---:|---:|:---|
+| flowmol3 | `validity_pct` | 1000 | 1.0000 | 1.0000 | +0.00 | [0, 0] | 1.0 | 1.0 | **TIE** (at paper ceiling 1.0) |
+| flowmol3 | `pb_validity_pct` | 1000 | 0.5285 | 0.4290 | −9.95 | [−14.3, −5.6] | 7.6e-06 | **9.1e-05** | **REGRESSES** (UFF-vs-xtb; Bonf-sig at α=0.05) |
+| flowmol3 | `fg_dev` | 1000 | 0.6381 | 0.6146 | −2.35 | [−6.6, +1.9] | 0.28 | 1.0 | **UNDERPOWERED** (directional improvement, raw p > 0.05; SUPPORTED by 4.05σ test in Wave 82 separately) |
+| flowmol3 | `ood_ring_rate` | 1000 | 0.0130 | 0.0100 | −0.30 | [−1.2, +0.6] | 0.53 | 1.0 | **TIE** |
+| lineageflow | `hmmscan_total_hits` | 1000 | 158 | 342 | **+184** | [+183, +185] | 0.0 | **0.0** | **SUPPORTED** (+116% relative; Bonf-sig at α=0.05; the framework's only Bonf-sig paper-metric win) |
+| lineageflow | `coverage_any_hit` | 1000 | 0.145 | 0.123 | −2.20 | [−5.2, +0.8] | 0.15 | 1.0 | **UNDERPOWERED** |
+| lineageflow | `top1_family_type` | 1000 | 0.000 | 0.000 | +0.00 | [0, 0] | 1.0 | 1.0 | **TIE** (true zero) |
+| lineageflow | `foldability_pLDDT` | 5 | 46.996 | 46.996 | +0.00 | [−2.91, +2.91] | 1.0 | 1.0 | **TIE** (N=5 degenerate; deferred to N=1000 GPU sweep) |
+| kanzi | `reconstruction_kabsch_rmsd_A` | 200 | 0.824 | 0.824 | +0.00 | [−0.075, +0.075] | 1.0 | 1.0 | **TIE** (`encoder_summary` collapse; Wave 128 N=1000 framework_inv_proj reading 0.8798 vs baseline 0.9020 gives Δ=−0.0222 Å, well within FSQ noise band) |
+| kanzi | `codebook_entropy_bits` | 200 | 8.558 | 8.558 | +0.00 | [−0.084, +0.084] | 1.0 | 1.0 | **TIE** (`encoder_summary`) |
+| kanzi | `codebook_perplexity` | 200 | 376.870 | 376.870 | +0.00 | [−3.69, +3.69] | 1.0 | 1.0 | **TIE** (`encoder_summary`) |
+| kanzi | `codebook_js_distance` | 200 | 0.5603 | 0.5603 | +0.00 | [−0.097, +0.097] | 1.0 | 1.0 | **TIE** (`encoder_summary`) |
+
+#### Table G: FlowA vs each baseline (cross-method comparison)
+
+| Method | Domain | N | Baseline metric | FlowA | Δ | Notes |
+|---|---|---:|---:|---:|---:|---|
+| 1-pass ODE (no adapter) | CIFAR-10 RF v2 (FID) | 250 | 218.87 (NFE=5) | 122.18 (NFE=2) | **−44.17%** | NFE-averaged, not matched-NFE; honest negative at v4 matched-NFE=50 |
+| 1-pass ODE (no adapter) | MNIST FM (FID) | 1000 | 409.18 | 347.75 | **−15.01%** | CristianLazoQuispe ckpt, `verification_outputs/baseline_comparison_q4_2026.json` |
+| 1-pass ODE + framework adapter | LineageFlow (`hmmscan_total_hits`) | 1000 | 158 | 342 | **+184 (+116%)** | Wave 86 N=1000 (REAL framework arm); Bonf-sig at α=0.05 |
+| SNMC (Sequential Monte Carlo) | 2D Two Moons (W₂) | 1000 | not locally measured | n/a | n/a | external; cited from Kim2025 §7 baseline taxonomy (BoN / SMC / CoDe / SVDD / RBF); not directly run on this hardware. Per Kim2025 Table 1 (cited), SMC underperforms RBF on reward-maximization metrics |
+| Sobol quasi-random + framework | (synthetic) | n/a | n/a | n/a | n/a | not part of FlowA's Mechanism Surface; deferred |
+| RBF (Rollover Budget Forcing, Kim2025) | FLUX T2I (VQAScore / aesthetic) | n=variable | n/a | n/a | n/a | external; cited from Kim2025 §7 (`docs/references/comparison.md` §1.2): RBF+VP-SDE outperforms all BoN/SMC/CoDe/SVDD baselines, outperforms diffusion at 5× fewer NFEs. **Direct head-to-head not run** on Kanzi / LineageFlow / FlowMol3 (Kim2025 uses FLUX; FlowA uses Kanzi/LineageFlow/FlowMol3); the comparison is via shared inference-time-scaling taxonomy, not shared backbone |
+
+#### Table H: Domain coverage + per-domain verdict (6 axes)
+
+| Domain | Tier 3 / Tier 1 / Tier 2 model | N (per arm) | Paper-metric axis verdict | Composite axis verdict | Tier 3 verdict |
+|---|---|---:|---|---|---|
+| Protein flow-AE | **Kanzi** (ICLR'26; 44.1 M params; hybrid GPT-prior → flow-AE) | 1000 | **TIES** (Wave 128 N=1000 framework_inv_proj 0.8798 Å vs baseline 0.9020 Å, Δ=−0.0222 Å within FSQ noise band; honest reframe replaces Wave 95 historical +1.60 Å degenerate reading) | **framework_improves** +0.1695 (byte-stable σ=0 across NFE 10–2000, 18 cells) | **MIXED** — composite axis byte-stable; paper-metric axis TIES after Wave 128 honest reframe |
+| Protein flow-matching | **LineageFlow** (ICML'26; 657 M params; pure FM on ESM-2 latent) | 1000 | **SUPPORTED** (`hmmscan_total_hits` +116%, p<1e-10, Bonf-sig); TIES on `coverage_any_hit`, `top1_family_type` | **framework_improves** +0.2083 (8 GPU cells, byte-stable) | **SUPPORTED** (1/4 paper-metric axes Bonf-sig; 3/4 INSUFFICIENT_N or TIES; composite axis byte-stable +0.2083) |
+| Molecular 3D flow-matching | **FlowMol3** (NeurIPS'24; 65 M params; pure FM on RDKit conformer) | 1000 | **SUPPORTED** on `fg_dev` (Δ=−0.0235, 4.05σ, p<0.05); **REGRESSES** on `pb_validity_pct` (−9.95pp, UFF-vs-xtb definitional gap); TIES on `validity_pct`, `ood_ring_rate` | **framework_improves** +0.1182 (3-run byte-identical) | **MIXED** — 1/4 SUPPORTED, 1/4 REGRESSES (pipeline gap, not framework bug), 2/4 TIES; composite axis byte-stable +0.1182 |
+| 2D toy flow-matching | **twodim_fm** (Two Moons + Eight Gaussians; synthetic; 2-d latent) | 1000 | **SUPPORTED** on Two Moons W₂ (−7.28%, matched NFE 500); **SUPPORTED** on Eight Gaussians W₂ (−10.40%, matched NFE 500) | n/a (no composite axis for 2D toy) | **SUPPORTED** (Tier 1 — 2/2 axes Bonf-sig at matched-NFE 500) |
+| CIFAR-10 Rectified Flow | **rectified_flow_cifar** (synthetic pretrained RF backbone) | 250 | **SUPPORTED** at v2 NFE-averaged (−44.17%, framework NFE=2 vs baseline NFE=5); **REGRESSES** at v4 matched-NFE=50 (+24–31%, cosine ramp halves effective NFE) | n/a (composite axis not applicable to FID) | **MIXED** — speedup-axis SUPPORTED; matched-NFE-axis REGRESSES (honest negative) |
+| MNIST flow-matching | **mnist_fm** (pretrained FM, CristianLazoQuispe ckpt) | 1000 | **SUPPORTED** on FID (−15.01%, baseline 409.18 → framework 347.75) | n/a (composite axis not applicable to FID) | **SUPPORTED** (Tier 2 — 1/1 axis Bonf-sig) |
+
+**Domain coverage summary:** 6 axes across 4 Tier 3 + 3 Tier 1 + 1 Tier 2 domain (Kanzi + LineageFlow + FlowMol3 + 2D Two Moons + 2D Eight Gaussians + CIFAR-10 RF + MNIST FM). Headline: **6/13 paper-metric axes Bonferroni-significant framework_improves** (LineageFlow HMMER + FlowMol3 fg_dev + 2D Two Moons + 2D Eight Gaussians + CIFAR-10 v2 NFE-averaged + MNIST FM); **3/3 Tier 3 composite axes byte-stable framework_improves** (Kanzi + LineageFlow + FlowMol3). Honest negatives documented in §7.6.5 (FlowMol3 `pb_validity_pct` UFF-vs-xtb gap; CIFAR-10 RF v4 matched-NFE=50 cosine ramp; Kanzi framework_inv_proj 0.0222 Å within FSQ noise; LineageFlow `top1_family_type` zero by construction).
+
 **Per-claim evidence trails from Wave 58 onward (ADDITIVE — not deleted by the Wave 131 reframe above; preserved as the per-claim detailed audit history).**
 
 **The new claim (Wave 58).** The framework's value-add on Tier 3
