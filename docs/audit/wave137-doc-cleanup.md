@@ -5,7 +5,7 @@
 **Scope:** 6 atomic Phases (1-5 by prior agents + this Phase 6 final synthesis)
 **Constraint:** NO source code changes. NO experiments. NO push. ADDITIVE on docs.
 
-> **Why this exists:** Wave 137 is the **submission-readiness documentation cleanup** wave that closes a long-running set of doc-hygiene debts that had accumulated since Wave 1: (a) the audit docs/ subdirectory had ballooned to ~252+ Wave 1-99 audit files that were not actively cross-referenced by the current submission package; (b) 8 todo/ active plan files had Status: headers that no longer matched STATUS.md reality; (c) README.md, GATES.md, and INSIGHTS.md were carrying stale data points (wrong freeze SHA, outdated D.4 count, wrong pytest count, leftover stale self-assessment). Wave 137 fixes all three without breaking a single gate. No source code changes, no experiments, no end-to-end N>=1000 sweep, no measurement delta, no algorithm activation. The Wave 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.
+> **Why this exists:** Wave 137 is the **submission-readiness documentation cleanup** wave that closes a long-running set of doc-hygiene debts that had accumulated since Wave 1: (a) the audit docs/ subdirectory had ballooned to ~252+ Wave 1-99 audit files that were not actively cross-referenced by the current submission package; (b) 8 todo/ active plan files had Status: headers that no longer matched STATUS.md reality; (c) README.md, GATES.md, and INSIGHTS.md were carrying stale data points (wrong freeze SHA, outdated D.4 count, wrong pytest count, leftover stale self-assessment). Wave 137 fixes all three without breaking a single gate. No source code changes, no experiments, no end-to-end N>=1000 sweep, no measurement delta, no algorithm activation. The Wave 131 ruff-0 / D.4 72/72 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.
 
 ---
 
@@ -71,7 +71,7 @@ The Phase 5 cleanup is the **only Phase of Wave 137 that is not git-committed**.
 
 ## Wave 137 acceptance gates
 
-- **D.4 33/33 PASS** preserved (no source code changes).
+- **D.4 72/72 PASS** preserved (no source code changes).
 - **ruff 0** preserved (Wave 131 freeze; no source code changes).
 - **claims_consistency PASS** preserved (39 active, 0 provisional, 2 deprecated; **No drift detected** — Phase 1 INDEX.md path-update preserved all CLM-NNN claim IDs intact).
 - **mkdocs build --strict EXIT=0** preserved (verified at Phase 6 close).
@@ -151,3 +151,8 @@ The submission package is **maximally honest about what is and is not in scope**
 ---
 
 See `docs/baseline-audit-report.md` §R.27 (Wave 137 ledger row) + `docs/CONSOLIDATED_RESULTS.md` §15.36 + `docs/audit/wave136-submission-polish.md` (predecessor wave) + `docs/ARCHIVE/audit-waves-1-99/` (Phase 1 archive, ~252 files).
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

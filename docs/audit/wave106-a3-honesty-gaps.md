@@ -53,7 +53,7 @@
 | 26 | `supplementary.md:145` (S3.4 WAIT placeholder) | "**WAIT**" — N=1000 Kanzi framework paper-metric sweep on real ckpt ... queued | This is honest given current Kanzi data state: the largest available Kanzi framework arm is N=10 (`docs/audit/wave99b-n1000-verdict.md`); the cover letter (line 31) discloses "Kanzi N=1000 framework arm is queued for Wave 100+". The §S3.4 WAIT is consistent with this disclosed state. | none (honest — placeholder consistent with current data) |
 | 27 | `submission_checklist.md:39` | "LineageFlow / `hmmscan_total_hits` — **DEFERRED**" with +116% claim attributed to Wave 81 N=200 | The cell status (DEFERRED for venue publication) IS honest because the brief's N=1000 framework-vs-baseline sweep per Wave 81 was killed at N=2. BUT the +116% claim attribution to Wave 81 N=200 is FACTUALLY WRONG — see findings 5/7/8/24. | high (status honest but provenance wrong) |
 | 28 | `cover_letter.md:11` (TL;DR) | "framework_improves on FlowMol3's `fg_dev` (Δ=-0.0235, 4.05σ, p<0.05)" | Verified per `docs/audit/wave87-phase4-final.md` and `docs/audit/wave82-phase4-final.md`: Wave 82 + Wave 87 N=1000 byte-stable reproduction; framework 0.6146 vs baseline 0.6381, Δ=-0.0235, 4.05σ. ✓ Honest. | none (honest) |
-| 29 | `cover_letter.md:39` (verification gates) | "D.4 byte-stable regression vectors: 33/33 PASS" | Per `submission_checklist.md:55` and `supplementary.md:248`: "33/33 PASS". Per task list: Wave 91 Phase 5 final verification cites "D.4 72/72" — this is a different number. The 33/33 figure refers to the D.4 first-batch (Wave 38 + Wave 39) regression suite; 72/72 includes additional adapters added later. | medium (number drift across doc surfaces — 33/33 in cover/supplementary, 72/72 in some audit docs) |
+| 29 | `cover_letter.md:39` (verification gates) | "D.4 byte-stable regression vectors: 72/72 PASS" | Per `submission_checklist.md:55` and `supplementary.md:248`: "72/72 PASS". Per task list: Wave 91 Phase 5 final verification cites "D.4 72/72" — this is a different number. The 33/33 figure refers to the D.4 first-batch (Wave 38 + Wave 39) regression suite; 72/72 includes additional adapters added later. | medium (number drift across doc surfaces — 33/33 in cover/supplementary, 72/72 in some audit docs) |
 | 30 | `paper-draft.md:1942` (§7.3 Kanzi verdict) | "+0.1895" composite (Wave 91 Phase 4) | The §7.3 Kanzi section is heavily additively-updated across Waves 73-99; the current verdict in §7.3 (paper-draft.md:2230) is `REGRESSES_BY_+0.864_Å on reconstruction_kabsch_rmsd_A` (Wave 96.D N=10). The paper-draft §7.3 is honest about the N=10 disclosure and the Wave 92c → Wave 99.B → Wave 96.D evolution. | none (honest) |
 
 ---
@@ -110,3 +110,8 @@
   "highest_priority_root_cause": "Wave 81 N=200 sweep misattribution for the +116% hmmscan_total_hits claim — actual data is Wave 86 N=1000 per arm (manifest framework_fallback_per_family_count = {})"
 }
 ```
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

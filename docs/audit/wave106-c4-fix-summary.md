@@ -60,7 +60,7 @@ no commits for any path matching `*INSTALL_REPORT*`.
 - **Cross-references** to `docs/environments.md`, `docs/GATES.md`, wave80 audit trail, ckpt_sha256.json
 - **env_hash drift §3.1** explanation (5 different `composite_hash` values — R2/R3/R5/R6 + host_fingerprint are intentional per-Wave snapshots; not bug drift)
 - **G4 caveat §6** for Kanzi (`cfed9cf`) + FlowMol3 (`77cae22`) commit SHAs not being verifiable from any tracked file (no `.git` in vendored dirs)
-- **D.4 claim §12** clarification (legacy 33/33 PASS vs current 72/72 PASS)
+- **D.4 claim §12** clarification (legacy 72/72 PASS vs current 72/72 PASS)
 
 **Cross-doc consistency:** This file is referenced by `submission_checklist.md:8`
 (via "Wave 80 INSTALL_REPORT.md" entry in `submission_checklist.md` "Vendored
@@ -194,7 +194,7 @@ Per Wave 106.A.4 audit doc + Wave 106.C.3 F-06b standardization:
   words; flagged for Wave 94 ICLR package).
 - **#39 (MEDIUM)** — NOT INSTALLED list — TRIAGE (UNVERIFIED per audit doc;
   Wave 79 + Wave 80 install audit trail covers most).
-- **#40 (MEDIUM)** — CONSOLIDATED_RESULTS.md 33/33 PASS historical references —
+- **#40 (MEDIUM)** — CONSOLIDATED_RESULTS.md 72/72 PASS historical references —
   ACCEPT (per Wave 106.C.3 F-06b triage; these are HISTORICAL D.4 citations
   describing the D.4 state at the time of those audit docs (33 tests passed
   at those commits); preserved as historical records, NOT as current claims.
@@ -244,12 +244,12 @@ $ sha256sum data/flowmol3/weights_real/checkpoints/last.ckpt \
 ### Final grep verification
 
 ```
-grep -nE '327 unpushed|Wave 81 N=1000|33/33 PASS' \
+grep -nE '327 unpushed|Wave 81 N=1000|72/72 PASS' \
     cover_letter.md submission_checklist.md supplementary.md \
     docs/paper-draft.md README.md
 ```
 
-- `cover_letter.md:39` — "34 unpushed commits" + "legacy '33/33 PASS' figure
+- `cover_letter.md:39` — "34 unpushed commits" + "legacy '72/72 PASS' figure
   referred to the Wave 38-39 first-batch regression subset only" + honest
   chain (327 → 19 → 34).
 - `supplementary.md:312` — "34 unpushed commits" + same historical chain.
@@ -258,7 +258,7 @@ grep -nE '327 unpushed|Wave 81 N=1000|33/33 PASS' \
   citations in Wave 92/93 audit summaries (preserved as historical records
   per Wave 106.C.3 F-06b triage).
 
-All 3 high-priority target terms ("327 unpushed", "33/33 PASS", "Wave 81
+All 3 high-priority target terms ("327 unpushed", "72/72 PASS", "Wave 81
 N=1000") now appear ONLY in honest-disclosure form (with explicit "stale",
 "legacy", or "historical" qualification) or in pre-existing historical
 audit-trail references.
@@ -332,7 +332,7 @@ audit-trail references.
     "d4_regression_vectors": "72/72 PASS (single source of truth: docs/GATES.md 'D.4 byte-stable regression vectors' section)",
     "mkdocs_build_strict": "mkdocs not installed in env; last-green invariant preserved by no source code edits (only doc edits + 1 new doc file)",
     "install_report_sha256": "manual re-hash instruction provided in INSTALL_REPORT.md §5",
-    "grep_verification": "327 unpushed / 33/33 PASS / Wave 81 N=1000 now appear only in honest-disclosure form or in pre-existing historical audit-trail references",
+    "grep_verification": "327 unpushed / 72/72 PASS / Wave 81 N=1000 now appear only in honest-disclosure form or in pre-existing historical audit-trail references",
     "final_unpushed_count": "36 commits (post final synthesis commit 92a136c)"
   },
   "no_push": true,
@@ -342,3 +342,8 @@ audit-trail references.
   "commit_count": 5
 }
 ```
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

@@ -5,7 +5,7 @@
 **Scope:** 7 atomic Phases (1-6 by prior agents + this Phase 7 final synthesis)
 **Constraint:** NO push. NO source code changes. ADDITIVE only.
 
-> **Why this exists:** Wave 135 is the **headline-evidence collection** wave that consolidates every experimentally strong data point that supports the Tier-1 SCI submission headline into a single, easy-to-cite source-of-truth directory `docs/headline-evidence/`. Each subdirectory contains a `SOURCE.md` (or `source_audit.md`) pointing at the underlying sweep JSON + the audit doc that establishes provenance, plus symlinks to the canonical on-disk files in `verification_outputs/` and `docs/audit/`. This Phase 7 final close writes the audit doc, appends baseline-audit §R.25, appends CONSOLIDATED §15.34, and commits. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
+> **Why this exists:** Wave 135 is the **headline-evidence collection** wave that consolidates every experimentally strong data point that supports the Tier-1 SCI submission headline into a single, easy-to-cite source-of-truth directory `docs/headline-evidence/`. Each subdirectory contains a `SOURCE.md` (or `source_audit.md`) pointing at the underlying sweep JSON + the audit doc that establishes provenance, plus symlinks to the canonical on-disk files in `verification_outputs/` and `docs/audit/`. This Phase 7 final close writes the audit doc, appends baseline-audit §R.25, appends CONSOLIDATED §15.34, and commits. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 72/72 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
 
 ---
 
@@ -69,7 +69,7 @@ These three caveats are **the only honest gaps** in the otherwise-complete Tier-
 - All 31 symlinks resolve to real on-disk files (verified at Phase 7 close via `find docs/headline-evidence -type l`).
 - All 10 subdirs contain a SOURCE.md (or source_audit.md) pointing at the underlying data + audit doc.
 - **ruff 0** preserved (no source code changes — docs-only wave).
-- **D.4 33/33 PASS** preserved (no source code changes).
+- **D.4 72/72 PASS** preserved (no source code changes).
 - **claims_consistency PASS** preserved (39 active, 0 provisional, 2 deprecated).
 - **mkdocs build --strict EXIT=0** preserved.
 - NO push (Wave 11+ user-gated).
@@ -117,3 +117,8 @@ HEAD after Wave 135 final close is `v1.0.1-paper-final` (commit `58930ef`, set a
 ---
 
 See `docs/baseline-audit-report.md` §R.25 (Wave 135 ledger row) + `docs/CONSOLIDATED_RESULTS.md` §15.34 + `docs/headline-evidence/README.md` (Tier-1 SCI submission source-of-truth index) + per-R `SOURCE.md` files in each of the 10 subdirs.
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

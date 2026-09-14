@@ -270,7 +270,7 @@ Re-run the Wave 87 sweep after the targeted fix lands. Expected outcome:
 
 ### 6.4. Verify (Wave 110 A4)
 
-- `pytest tests/ -k "d4"` → 33/33 PASS
+- `pytest tests/ -k "d4"` → 72/72 PASS
 - `errors_sample` of the new baseline JSON should now be either empty
   (the 1-of-1000 CTMC drop is upstream of RDKit — same as Wave 87) or
   populated with the SMILES string of the dropped mol (if Wave 110 A2
@@ -279,7 +279,7 @@ Re-run the Wave 87 sweep after the targeted fix lands. Expected outcome:
 
 ## 7. Verification (this wave)
 
-Per constraint #3, `pytest tests/ -k d4 -q` must remain 30/30 + 33/33 PASS.
+Per constraint #3, `pytest tests/ -k d4 -q` must remain 30/30 + 72/72 PASS.
 
 ```text
 $ .venvs/flowmol3_venv/bin/python -m pytest tests/ -k "d4" -q \
@@ -346,3 +346,8 @@ committed (per `.gitignore verification_outputs/`).
 - Wave 109.A (Kanzi) and Wave 109.B (LineageFlow) siblings
 - Existing baseline JSON (canonical best-known-good):
   `verification_outputs/flowmol3_n1000_baseline_wave87_q4_2026.json`
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

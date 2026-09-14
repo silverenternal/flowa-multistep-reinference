@@ -17,7 +17,7 @@ Constraint: NO source code changes. NO experiments. NO push. ADDITIVE only.
 > **existing data** in `verification_outputs/` + `docs/audit/` + `docs/CONSOLIDATED_RESULTS.md`
 > §15.28 + matplotlib-rendered PNGs of those existing JSONs. **No new experiments.
 > No measurement delta. No algorithm activation. No source code changes.** The Wave
-> 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0
+> 131 ruff-0 / D.4 72/72 PASS / claims_consistency PASS / mkdocs strict EXIT=0
 > freeze-marker is preserved throughout.
 
 ---
@@ -129,7 +129,7 @@ Phase 4 (commit PHASE_4_COMMIT): updated `README.md` +
 
 ## Wave 143 acceptance gates
 
-- D.4 33/33 PASS preserved (`pytest tests/ -k "d4" -q`).
+- D.4 72/72 PASS preserved (`pytest tests/ -k "d4" -q`).
 - ruff 0 preserved (`ruff check adaptive_reflow/ tests/`).
 - claims_consistency PASS preserved (39 active, 0 provisional, 2 deprecated,
   No drift detected).
@@ -173,3 +173,7 @@ The submission package is now **count-aligned with Kim2025** (8 tables, 17
 figures) without re-running any experiments or modifying any source code. All
 additions cite verifiable source paths in `verification_outputs/` +
 `docs/audit/` + `docs/CONSOLIDATED_RESULTS.md` §15.28.
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

@@ -16,7 +16,7 @@
 
 ## C. Reproducibility gates
 - [ ] ruff check: 0 findings (verified Wave 131 Phase 1)
-- [ ] D.4 byte-stable: 33/33 PASS (verified Wave 131 + Wave 137)
+- [ ] D.4 byte-stable: 72/72 PASS (verified Wave 131 + Wave 137)
 - [ ] pytest tests/ -k "d4": 33 passed (verified Wave 137)
 - [ ] pytest tests/ -q: 5155 passed / 196 skipped / 0 failed (verified Wave 137)
 - [ ] python tools/check_claims_consistency.py: PASS — 39 ACTIVE, 0 drift (verified Wave 137)
@@ -28,7 +28,7 @@
 - [ ] README.md (Tier-1 SCI submission pointer, freeze SHA 0ef6465)
 - [ ] docs/paper-draft.md §10.4 (8 honest negatives + provenance discipline)
 - [ ] docs/INSIGHTS.md (A- self-assessment post-Wave 137)
-- [ ] docs/GATES.md (D.4 33/33 PASS, pytest 5155 current-state)
+- [ ] docs/GATES.md (D.4 72/72 PASS, pytest 5155 current-state)
 
 ## E. Honest negatives (all 8 acknowledged in §10.4)
 - [ ] K1: FlowMol3 pb_validity_pct -9.95pp (UFF-vs-xtb gap)
@@ -52,3 +52,8 @@
 - HEAD: 89e635e (v1.0.1-paper-final tag = 0ef6465)
 - Repo: https://github.com/silverenternal/flowa-multistep-reinference.git
 - Tier-1 target venue: NeurIPS 2026 / ICML 2026 / ICLR 2026
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

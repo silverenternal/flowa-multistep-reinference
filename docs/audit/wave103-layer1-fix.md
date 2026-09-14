@@ -10,7 +10,7 @@
 
 Wave 103 closed **10 Layer-1 adapter hygiene issues** in **7 commits**;
 **~290 LOC adapter duplication removed**; **D.4 byte-stable preserved**
-(33/33 PASS). Every fix was a refactor of duplicated adapter code into
+(72/72 PASS). Every fix was a refactor of duplicated adapter code into
 shared framework-core / `_adapter_common` helpers, or a drift correction
 in adapter comments/sentinels — no behavior changes, no API-surface
 changes, no test changes.
@@ -66,7 +66,7 @@ $ .venv/bin/python -m pytest tests/ -k "d4" -q \
 33 passed, 6 skipped, 5177 deselected, 9 warnings in 4.40s
 ```
 
-**Result: 33/33 PASS** — D.4 byte-stable preserved across all 7 commits.
+**Result: 72/72 PASS** — D.4 byte-stable preserved across all 7 commits.
 The 6 skipped + 2 ignored are pre-existing in this venv and unrelated to
 Wave 103 (require `torch`/`rdkit`/etc. which are not installed in the
 project `.venv`).
@@ -163,3 +163,7 @@ All 10 Layer-1 issues are closed.
 - Wave 104 (Layer-3 tests) and Wave 105 (Layer-2 algorithm + tools) remain
   in the Wave 101 review backlog per `todo/planned/w101-fix-layer3-tests.md`
   and `todo/planned/w101-fix-layer2-algorithm-tools.md`.
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

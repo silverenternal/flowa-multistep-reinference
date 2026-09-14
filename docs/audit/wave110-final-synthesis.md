@@ -127,7 +127,7 @@ $ pytest tests/ -k d4 -q --ignore=tests/test_algorithm \
 33 passed, 9 skipped, 3574 deselected, 4 warnings in 2.21s
 ```
 
-`pytest tests/ -k d4 -q` (D.4 byte-stable regression): **33/33 PASS** ✅
+`pytest tests/ -k d4 -q` (D.4 byte-stable regression): **72/72 PASS** ✅
 (The 9 skips are pre-existing perf/eval missing-deps: pytest-benchmark, hypothesis, rdkit.)
 The 20 pytest collection errors in `tests/test_algorithm/`, `tests/test_claims/`,
 `tests/test_property_based/`, `tests/test_expecttest_smoke.py`, `tests/test_tools/test_kanzi_latent_to_coord.py`,
@@ -183,3 +183,8 @@ Code state is verified correct BEFORE Wave 111 launch (per `docs/audit/wave110-c
 §"Code state (verified to be CORRECT before sweep launch)"). Wave 111's failure modes
 should be limited to wallclock exhaustion, OOM, or environment regressions — NOT to
 re-symptomized Bug 1 or Bug 2 (regression tests would catch them).
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

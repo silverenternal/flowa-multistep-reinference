@@ -21,7 +21,7 @@ BLOCKED-on-primitive-flags gate.
 | **Step 5 (BRAI threading via LineageFlowAdapter.perturbation)** | done | `PaperQuantityAttractorInversion(eps_scale=args.brai_eps_scale)` threaded as `perturbation=` kwarg; default 0.1 preserves byte-stable `UniformFreshPerturbation` path |
 | **Step 6 (80 LOC tests)** | done | `tests/test_tools/test_n_rounds_cli.py` (158 LOC) + `tests/test_tools/test_brai_eps_scale_cli.py` (188 LOC) -- argparse smoke + default-equals-X + out-of-range rejection + UserWarning (Risk D) |
 | **Step 7 (6-cell sanity sweep)** | done | 6/6 cells produce valid JSON, no crash, 1-cell-each (`--limit 1 --quick`) |
-| **Step 8 (gate verification)** | done | ruff adaptive_reflow + tests = 0 errors; tools = 249 (baseline preserved); D.4 33/33 PASS; claims "No drift detected." |
+| **Step 8 (gate verification)** | done | ruff adaptive_reflow + tests = 0 errors; tools = 249 (baseline preserved); D.4 72/72 PASS; claims "No drift detected." |
 | **Step 9 (audit doc + commit)** | done | this doc + commit pending |
 
 **Acceptance gates (preserved):**
@@ -313,3 +313,8 @@ After PR-merge + ruff-clean + D.4 33/33 + claims PASS:
 - Wave 149 P1 (commit `4f5ecdf`) -- bridge-fix application (K1 RC1); preserves ruff-frozen + D.4 72/72 PASS
 
 Co-Authored-By: Claude Code <noreply@anthropic.com>
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

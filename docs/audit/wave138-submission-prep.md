@@ -5,7 +5,7 @@
 **Scope:** 6 atomic Phases (1-5 by prior agents + this Phase 6 final synthesis)
 **Constraint:** NO source code changes. NO experiments. NO push. ADDITIVE only.
 
-> **Why this exists:** Wave 138 is the **NeurIPS submission preparation** wave that produces the three artifacts a Tier-1 SCI submission package needs *in addition* to the main paper: (a) a **NeurIPS-template-conformed version of the paper** (`docs/paper-final-neurips.md`, ~540 KB) ready for `pandoc + latex` PDF rendering with the official `neurips_2026.sty` style file; (b) a **double-blind review version of the paper** (`docs/paper-draft-anonymous.md`, ~540 KB) with `FlowA` rewritten to `the proposed framework`, all URLs and identifying references stripped, and acknowledgments removed; and (c) two pre-flight checklists (`docs/submission-checklist-final.md` for paper+code+reproducibility gates, `docs/code-release-checklist.md` for Zenodo / GitHub release archive prep). This Phase 6 final close writes this audit doc, inserts baseline-audit §R.28 between §R.27 (Wave 137) and §R.30 (Wave 140 close), inserts CONSOLIDATED §15.37 between §15.36 (Wave 137) and §15.39 (Wave 140 close), and commits. **No source code changes. No experiments. No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS freeze-marker is preserved.**
+> **Why this exists:** Wave 138 is the **NeurIPS submission preparation** wave that produces the three artifacts a Tier-1 SCI submission package needs *in addition* to the main paper: (a) a **NeurIPS-template-conformed version of the paper** (`docs/paper-final-neurips.md`, ~540 KB) ready for `pandoc + latex` PDF rendering with the official `neurips_2026.sty` style file; (b) a **double-blind review version of the paper** (`docs/paper-draft-anonymous.md`, ~540 KB) with `FlowA` rewritten to `the proposed framework`, all URLs and identifying references stripped, and acknowledgments removed; and (c) two pre-flight checklists (`docs/submission-checklist-final.md` for paper+code+reproducibility gates, `docs/code-release-checklist.md` for Zenodo / GitHub release archive prep). This Phase 6 final close writes this audit doc, inserts baseline-audit §R.28 between §R.27 (Wave 137) and §R.30 (Wave 140 close), inserts CONSOLIDATED §15.37 between §15.36 (Wave 137) and §15.39 (Wave 140 close), and commits. **No source code changes. No experiments. No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 72/72 PASS / claims_consistency PASS freeze-marker is preserved.**
 
 ---
 
@@ -50,7 +50,7 @@ The `paper-draft-anonymous.md` file is **purely ADDITIVE**: `paper-final-neurips
 **Phase 4 (commit `ba50483`):** authored `docs/submission-checklist-final.md` (~3 KB, 2759 bytes). This is the **Tier-1 SCI submission pre-flight gate checklist** organized into 5 sections:
 
 1. **Paper-side gates**: title-page metadata complete, abstract ≤250 words, NeurIPS template `neurips_2026.sty` referenced, all `\cite{}` resolve, no TODO/FIXME in body, no literal TODO markers (per Wave 132 Tier-1 polish), bibliography complete, supplementary referenced from main paper.
-2. **Code-side gates**: ruff 0 (Wave 131 freeze), D.4 33/33 PASS, claims_consistency PASS (39 active + 0 provisional + 2 deprecated), no source code changes since `v1.0.1-paper-final` tag (commit `0ef6465`) other than docs/, freeze SHA annotated in README, all Wave 131-137 commits docs-only.
+2. **Code-side gates**: ruff 0 (Wave 131 freeze), D.4 72/72 PASS, claims_consistency PASS (39 active + 0 provisional + 2 deprecated), no source code changes since `v1.0.1-paper-final` tag (commit `0ef6465`) other than docs/, freeze SHA annotated in README, all Wave 131-137 commits docs-only.
 3. **Reproducibility gates**: 6 Bonf-sig framework_improves (R1-R6) + 3 byte-stable composite axis + NFE speedup evidence under `docs/headline-evidence/` (10 subdirs + 31 symlinks + 7 SOURCE.md), 8 honest negatives (K1-K8) consolidated in `paper-draft.md` §10.4 (Wave 136), byte-reproducibility on ruff-frozen code (Kanzi N=1000 delta=0.00e+00).
 4. **Reviewer-facing gates**: `docs/paper-draft-anonymous.md` exists with FlowA→the proposed framework substitutions, URLs stripped, acknowledgments removed; `cover_letter.md` (TL;DR 221 words + 10 reviewer-proof guarantees) accessible; `docs/CLAIMS.md` index complete and test-coupled; `docs/CONSOLIDATED_RESULTS.md` current at §15.x; `docs/baseline-audit-report.md` current at §R.x.
 5. **Honest negatives**: mypy 988 hand-fix (CLM-024 acknowledges); Wan2.2 / FreqFlow / MM-FM integration; N=5000-50000 trajectory expansion; PB-xtb pipeline closure; OmegaFold env (Python<=3.10); LineageFlow novelty_mmseqs2 (Pfam fastas placeholder); Wave 86 LineageFlow N=1000 HMMER raw JSON (camera-ready re-run ~30 min); LineageFlow foldability + self_consistency N=1000 (~25 h per arm CPU). **All 8 honest negatives are named, located, and source-cited in `paper-draft.md` §10.4 + `paper-draft-anonymous.md` §10.4.**
@@ -66,7 +66,7 @@ The `submission-checklist-final.md` file is **purely ADDITIVE**: no existing fil
 - **v1.0.1-paper-final tag** (= commit `0ef6465`) is the canonical citation anchor for the submission; tag was set at Wave 134 close; all Wave 135-138 commits are docs-only and do not affect the cited code state.
 - **Zenodo upload recipe**: DOI mint via `zenodo upload` CLI; metadata.json template (title, authors, description, keywords, related-publications); LICENSE = MIT; tarball excludes `.git/`, `site/`, `/tmp/flowa-*`, `.claude/workflows/*.js` (regenerated on-demand).
 - **GitHub release archive recipe**: tag-triggered GitHub Actions workflow; release title `v1.0.1-paper-final (NeurIPS submission 2026-09-14)`; release notes section enumerating the 6 Bonf-sig framework_improves + 3 byte-stable composite axis + NFE speedup + byte-reproducibility evidence.
-- **Full acceptance-gate recipe** (re-runnable from scratch): `pytest tests/ -k "d4" -q` → 33/33 PASS; `ruff check adaptive_reflow/ tests/` → All checks passed; `python tools/check_claims_consistency.py` → No drift detected; `mkdocs build --strict` → strict-mode build with documented expectation of zero warnings (the canonical expected state; see Phase 6 caveats for the current local-env state below).
+- **Full acceptance-gate recipe** (re-runnable from scratch): `pytest tests/ -k "d4" -q` → 72/72 PASS; `ruff check adaptive_reflow/ tests/` → All checks passed; `python tools/check_claims_consistency.py` → No drift detected; `mkdocs build --strict` → strict-mode build with documented expectation of zero warnings (the canonical expected state; see Phase 6 caveats for the current local-env state below).
 
 The `code-release-checklist.md` file is **purely ADDITIVE**: no existing files were modified. Each recipe line cites the exact CLI command or file path a reviewer can re-run.
 
@@ -82,7 +82,7 @@ This Phase 6 is **purely ADDITIVE**: no source code changes, no measurement delt
 
 ## Wave 138 acceptance gates
 
-- **D.4 33/33 PASS** preserved (no source code changes; full gate re-run at Phase 6 close).
+- **D.4 72/72 PASS** preserved (no source code changes; full gate re-run at Phase 6 close).
 - **ruff 0** preserved (Wave 131 freeze; no source code changes; full gate re-run at Phase 6 close).
 - **claims_consistency PASS** preserved (39 active, 0 provisional, 2 deprecated, **No drift detected**; full gate re-run at Phase 6 close).
 - **No source code changes**, **no experiments**, **no measurement delta**, **no algorithm activation**, **no end-to-end N>=1000 sweep**.
@@ -176,3 +176,7 @@ Reviewers have access to:
 ---
 
 See `docs/baseline-audit-report.md` §R.28 (Wave 138 ledger row) + `docs/CONSOLIDATED_RESULTS.md` §15.37 + `docs/paper-final-neurips.md` (Phase 2) + `docs/paper-draft-anonymous.md` (Phase 3) + `docs/submission-checklist-final.md` (Phase 4) + `docs/code-release-checklist.md` (Phase 5) + `docs/audit/wave137-doc-cleanup.md` (predecessor wave) + `docs/audit/wave140-docstring-audit.md` (sibling wave — Wave 140 close inserted §R.30/§15.39 adjacent to this Wave 138 close).
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

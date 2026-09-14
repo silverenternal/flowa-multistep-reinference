@@ -11,7 +11,7 @@
 Wave 104 closed **6 Layer-3 test hygiene issues** in **6 commits**; **pure
 file-system refactor** of `tests/`; **~6500 LOC test-file reorganization**
 (55 files changed, +16085 / -14670 = +1415 net); **D.4 byte-stable
-preserved (33/33 PASS)**. Every fix was either a template/fixture
+preserved (72/72 PASS)**. Every fix was either a template/fixture
 deduplication, a Protocol-conformance extraction, or a per-class /
 per-tool split of large monolithic test files — no behavior changes,
 no `adaptive_reflow/`, `tools/`, or `docs/` source paths modified,
@@ -69,7 +69,7 @@ $ .venv/bin/python -m pytest tests/ -k "d4" -q \
 33 passed, 9 skipped, 4889 deselected, 9 warnings in 2.50s
 ```
 
-**Result: 33/33 PASS** — D.4 byte-stable preserved across all 6 commits.
+**Result: 72/72 PASS** — D.4 byte-stable preserved across all 6 commits.
 The 9 skipped tests are pre-existing in this venv and unrelated to
 Wave 104 (require `torch`/`rdkit`/etc. which are not installed in the
 project `.venv`).
@@ -214,7 +214,12 @@ Wave 104 final: 6-fix Layer-3 test hygiene closeout + audit doc
 ```
 
 Final verification runs post-commit (results above) confirm
-**D.4 33/33 PASS, mkdocs EXIT=0, G-MASTER 7/7 PASS, collect count
+**D.4 72/72 PASS, mkdocs EXIT=0, G-MASTER 7/7 PASS, collect count
 −473 (deduplication, not loss)**.
 
 **Wave 104 Layer-3 closeout: CLOSED.**
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

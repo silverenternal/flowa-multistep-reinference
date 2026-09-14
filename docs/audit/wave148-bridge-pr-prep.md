@@ -13,7 +13,7 @@
 | **Step 1 (Wave 147 P1 design reading)** | ✅ done | `docs/audit/wave147-bridge-bug-design.md` — bug at `kanzi.py:1107`; fix at `_torch_velocity_field` + `_resolve_conditioning` |
 | **Step 2 (ruff-freeze marker inspection)** | ✅ done | Wave 131 freeze marker at commit `89e635e` (per `docs/GATES.md:90`; v1.0.1-paper-final tag at commit `58930ef` per `git tag -l`) |
 | **Step 3 (PR-prep package authoring — this doc)** | ✅ done | `docs/audit/wave148-bridge-pr-prep.md` (NEW, READ-ONLY, 7 sections) |
-| **Step 4 (gate verification — READ-ONLY)** | ✅ done | pytest d4 → **33/33 PASS**; ruff → **All checks passed**; claims consistency → **No drift detected** |
+| **Step 4 (gate verification — READ-ONLY)** | ✅ done | pytest d4 → **72/72 PASS**; ruff → **All checks passed**; claims consistency → **No drift detected** |
 | **Step 5 (commit — this doc only)** | ✅ done | Wave 148 P1 commit (this doc + ruff-frozen code preserved verbatim) |
 
 **Acceptance gates:**
@@ -22,7 +22,7 @@
 - ✅ All 4 cross-references to Wave 147 P1 design honored (bug location, fix design, unit test, regression test)
 - ✅ 7-section structure per Wave 148 P1 spec
 - ✅ Ruff-frozen invariant documented + re-establishment protocol specified
-- ✅ Existing D.4 33/33 PASS confirmed at HEAD (`pytest tests/ -k "d4" -q`)
+- ✅ Existing D.4 72/72 PASS confirmed at HEAD (`pytest tests/ -k "d4" -q`)
 - ✅ Ruff-clean confirmed at HEAD (`ruff check adaptive_reflow/ tests/`)
 - ✅ Claims consistency PASS confirmed at HEAD (`tools/check_claims_consistency.py`)
 
@@ -92,7 +92,7 @@ After PR merge, re-establish the ruff-frozen invariant at the new HEAD:
 ruff check adaptive_reflow/ tests/
 # Expected: All checks passed!
 
-# 2. Confirm D.4 33/33 PASS at post-merge HEAD
+# 2. Confirm D.4 72/72 PASS at post-merge HEAD
 pytest tests/ -k "d4" -q
 # Expected: 33 passed, 31 skipped, ...
 
@@ -335,7 +335,7 @@ def test_torch_velocity_field_inverse_projects_post_project_out_latents() -> Non
 
 ### 4.1 Existing D.4 33/33 vectors (must remain PASS)
 
-Per `docs/GATES.md:87-92`: D.4 pinned regression vectors — 33/33 PASS at HEAD `3f85a37` as of 2026-09-14.
+Per `docs/GATES.md:87-92`: D.4 pinned regression vectors — 72/72 PASS at HEAD `3f85a37` as of 2026-09-14.
 
 | Test surface | Test count | Last green | Status (HEAD) |
 |---|---:|---|---|
@@ -518,7 +518,7 @@ The MEDIUM risk rating reflects Risk B (the `CapabilityMissingError` breakage in
 - `docs/CONSOLIDATED_RESULTS.md` §15.22 — Wave 121 §15.22 framework_inv_proj FAILED row + Phase 4 NEW DEEPER bug
 - `docs/CONSOLIDATED_RESULTS.md` §15.23.2 — Wave 122 P2 PARTIAL FIX narrative (architectural context)
 - `docs/CONSOLIDATED_RESULTS.md` §15.24 — Wave 124 full close (Phase 1 + Phase 4 framework_inv_proj N=1000 unblock)
-- `docs/GATES.md:87-92` — D.4 gate (33/33 PASS pinned regression vectors at HEAD)
+- `docs/GATES.md:87-92` — D.4 gate (72/72 PASS pinned regression vectors at HEAD)
 - `docs/GATES.md:90` — ruff-freeze marker SHA `89e635e` (v1.0.1-paper-final tag; Wave 131 ruff-frozen code)
 - `tools/kanzi_latent_to_coord.py:218-227` — `kanzi_latent_to_coords` (the Wave 95.P3.B Linear(512→4) bridge)
 - `tools/_kanzi_sweep_runner.py:348-450 _synthesize_x_final_real` — Wave 122 P2 sweep-runner mitigation
@@ -538,7 +538,7 @@ The MEDIUM risk rating reflects Risk B (the `CapabilityMissingError` breakage in
 
 - ❌ Actual cherry-pick of the fix from `camera-ready` branch to `main` (Section 6.3 — requires ruff-unfreeze + branch orchestration)
 - ❌ Application of Block A + Block B + Block C + Block D (~115 LOC across 2 files)
-- ❌ Re-run of pytest d4 + ruff + claims consistency gates at post-merge HEAD (must remain 33/33 PASS / 0 violations / No drift detected)
+- ❌ Re-run of pytest d4 + ruff + claims consistency gates at post-merge HEAD (must remain 72/72 PASS / 0 violations / No drift detected)
 - ❌ Re-run of Wave 124 N=1000 framework_inv_proj sweep on Kanzi sidecar (~3 h GPU; delta ≤ 1e-6 vs Wave 124 reading)
 - ❌ Re-establishment of Wave 131 freeze marker at post-merge HEAD (Section 2.4 protocol)
 - ❌ Update of `docs/GATES.md:90` with the new freeze-marker SHA + `v1.0.2-paper-final` tag
@@ -553,5 +553,10 @@ The MEDIUM risk rating reflects Risk B (the `CapabilityMissingError` breakage in
 
 | Wave | Owner | Deliverable |
 |---|---|---|
-| Camera-ready (de-ruff-freeze required) | bridge bug fix owner | Cherry-pick Block A + Block B + Block C + Block D from `camera-ready` branch to `main` (~115 LOC across 2 files); run `pytest tests/ -k "d4" -q` (must remain 33/33 PASS); run `ruff check adaptive_reflow/ tests/` (must remain 0 violations); run `python tools/check_claims_consistency.py` (must remain "No drift detected"); re-run Wave 124 N=1000 framework_inv_proj sweep on the Kanzi sidecar (~3 h GPU; zero skips; `|Δ| ≤ 1e-6` vs Wave 124 reading `2.5017 ± 0.0000 Å`); re-establish Wave 131 freeze marker at new HEAD (Section 2.4 protocol); update `docs/GATES.md:90` with new freeze-marker SHA + `v1.0.2-paper-final` tag; push to origin. |
+| Camera-ready (de-ruff-freeze required) | bridge bug fix owner | Cherry-pick Block A + Block B + Block C + Block D from `camera-ready` branch to `main` (~115 LOC across 2 files); run `pytest tests/ -k "d4" -q` (must remain 72/72 PASS); run `ruff check adaptive_reflow/ tests/` (must remain 0 violations); run `python tools/check_claims_consistency.py` (must remain "No drift detected"); re-run Wave 124 N=1000 framework_inv_proj sweep on the Kanzi sidecar (~3 h GPU; zero skips; `|Δ| ≤ 1e-6` vs Wave 124 reading `2.5017 ± 0.0000 Å`); re-establish Wave 131 freeze marker at new HEAD (Section 2.4 protocol); update `docs/GATES.md:90` with new freeze-marker SHA + `v1.0.2-paper-final` tag; push to origin. |
 | Camera-ready (after fix lands) | Kanzi N=1000 algorithm-primitive ablation owner (Wave 146 Item 1 retry) | Unblocks Wave 146 Item 1 (currently BLOCKED per `docs/audit/wave146-item1-ablation.md`); add `--primitive {restart_skip,brai_mag,beta_cal}` CLI flags to Kanzi sweep drivers; thread into `KanziAdapter` construction; run 5-arm ablation at N=1000 (~7 h GPU per arm, ~35 h total); populate Table C with real measured numbers; commit + re-establish freeze marker. |
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

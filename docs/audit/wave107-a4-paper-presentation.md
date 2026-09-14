@@ -4,7 +4,7 @@
 **Status:** READ-ONLY audit doc. No source/docs edits, no commits.
 **Scope:** Find EXISTING patterns/templates/sections in the repo that can be REUSED to honestly present the stochastic N=1000 framework-vs-baseline data in paper §7 + cover letter. Avoid reinventing.
 
-**Repo HEAD at audit time:** `c0dd9e4` (Wave 106.C.5 final synthesis: 107 findings → 30 fixes + 77 triaged; D.4 33/33 PASS, mkdocs EXIT=0).
+**Repo HEAD at audit time:** `c0dd9e4` (Wave 106.C.5 final synthesis: 107 findings → 30 fixes + 77 triaged; D.4 72/72 PASS, mkdocs EXIT=0).
 
 ---
 
@@ -334,3 +334,8 @@ All 5 fixes are ≤ 3 LOC of drop-in text per fix. **Total honesty-gap remediati
 ```
 
 **11 reuse opportunities, all drop-in. NO new template code required. ~23 LOC of paper-package drop-in text + ~15 LOC of honesty-gap remediation = ~38 LOC total.**
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

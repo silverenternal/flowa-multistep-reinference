@@ -17,7 +17,7 @@ Per the user's review plan `todo/planned/w101-fix-layer2-algorithm-tools.md`, th
 
 | # | Fix | Commit SHA | Files | LOC delta | Verification |
 |---|---|---|---|---|---|
-| 1 | P0-A: archive `_kanzi_project_out_inv*.py` (2 files) to `tools/archive/wave95-kanzi-inv/` | `428c6f9` | 2 archived, 0 deleted | -491 | D.4 33/33 PASS, shim import OK, mkdocs PASS |
+| 1 | P0-A: archive `_kanzi_project_out_inv*.py` (2 files) to `tools/archive/wave95-kanzi-inv/` | `428c6f9` | 2 archived, 0 deleted | -491 | D.4 72/72 PASS, shim import OK, mkdocs PASS |
 | 2 | P0-B: add `--pb-engine {uff,xtb}` flag to 2 Kanzi sweep drivers | `a43edc5` | 2 sweep_kanzi_*.py | +20 | --help byte-identical, D.4 PASS |
 | 3 | P1-D: extract `tools/_figures_common.py` for 5 `_make_*.py` | `55bd920` | 1 new + 4 updated | +51 | imports PASS (4/5 scripts use matplotlib; _make_wave19_figures.py uses raw SVG, untouched) |
 | 4 | **P1-B: paper_metrics_kanzi.py re-export `compute_pb_validity_pct`** | **NO-OP** | 0 | 0 | **Audit premise was wrong**: function is defined ONLY in `tools/paper_metrics.py:283` (Wave 75/82/87/90 canonical); no Kanzi-specific variant exists. Adding a re-export would pollute the Kanzi-only namespace with a FlowMol3 small-molecule PoseBusters function. Test_paper_metrics.py (15/15) + test_paper_metrics_kanzi.py (11/11) — both PASS pre-existing. |
@@ -36,7 +36,7 @@ Per the user's review plan `todo/planned/w101-fix-layer2-algorithm-tools.md`, th
 
 ## Acceptance criteria
 
-* `pytest tests/ -k "d4" -q` → **33/33 PASS** (post-each-commit, plus full D.4 file 30/30 + per-adapter 42/42 = 72/72)
+* `pytest tests/ -k "d4" -q` → **72/72 PASS** (post-each-commit, plus full D.4 file 30/30 + per-adapter 42/42 = 72/72)
 * `pytest tests/test_d4_regression_vectors.py tests/test_adapters/test_regression_vectors.py -q` → **72/72 PASS**
 * `mkdocs build --strict` → **EXIT=0** (13.98s – 14.26s)
 * `python -c "from adaptive_reflow.algorithm.scheduler._core import CosineAnnealScheduler, CodimensionSheetScheduler, NFEAwareMemoryScheduler"` → **PASS** (all 13 commonly-imported symbols)
@@ -86,3 +86,8 @@ The two domains are disjoint — Kanzi paper has no PoseBusters axis; FlowMol3 p
 All 32 review-doc issues across 4 layers resolved; D.4 33/33 byte-stable preserved across all 31 commits; mkdocs EXIT=0 preserved; G-MASTER 7/7 unchanged; no public symbol renames.
 
 Co-Authored-By: Claude Code <noreply@anthropic.com>
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

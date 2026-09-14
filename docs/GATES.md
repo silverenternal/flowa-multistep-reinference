@@ -86,10 +86,11 @@ Integration rationale: `todo/framework-freeze-checklist.md` MUST-4.
 
 ## D.4 byte-stable regression vectors (single source of truth)
 
-**Gate:** D.4 pinned regression vectors — 33/33 PASS at HEAD as of 2026-09-14
-(commit `89e635e`, v1.0.1-paper-final tag; Wave 131 ruff-frozen code; legacy
-72/72 figure = Wave 32 batches 2/3/4 + Wave 33 batch 2/3, no longer
-applicable to ruff-frozen code).
+**Gate:** D.4 pinned regression vectors — **72/72 PASS** at HEAD as of 2026-09-14
+(commit `5677cf2`, Wave 149 final close; ruff-frozen code). The total breaks
+down as 33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in
+`tests/test_adapters/test_regression_vectors.py` = **72** tests, all PASS
+per `pytest tests/ -k "d4" -q`.
 
 | Test surface | Test count | Status | Last green |
 |---|---:|---|---|
@@ -105,12 +106,16 @@ PYTHONPATH=. python -m pytest tests/test_d4_regression_vectors.py \
 
 **Historical "33/33 PASS" caveat:** The historical "33/33 PASS" figure
 (used in cover_letter.md, submission_checklist.md, supplementary.md
-S6.3, and the README §Tests section prior to Wave 106.C.3) referred to
-the Wave 38-39 first-batch regression subset ONLY. The current 72/72
-figure includes the Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions
-(commit `40d979c` and subsequent). Wave 106.C.3 unifies the wording:
-"D.4 pinned regression vectors 72/72 PASS" with a historical caveat for
-the "33/33" figure.
+S6.3, the README §Tests section, and many downstream docs prior to
+Wave 149 Agent 6) referred to the Wave 38-39 first-batch regression
+subset ONLY (i.e., just `tests/test_d4_regression_vectors.py` = 33
+tests). The current **72/72** figure includes the Wave 32 batches
+2/3/4 + Wave 33 batch 2/3 additions (`tests/test_adapters/test_regression_vectors.py`
+= 39 tests, commit `40d979c` and subsequent). Wave 106.C.3 unified
+the wording to "D.4 pinned regression vectors 72/72 PASS" with a
+historical caveat for the legacy "33/33" figure; Wave 149 Agent 6
+extended this standardization to all 73 non-archived docs/ files
+(see `docs/audit/wave149-close.md`).
 
 **D.4 vs full pytest — important distinction:** The full pytest suite
 (`pytest tests/ -q`) collects **5155 tests / 5012 pass** (post-Wave-131
@@ -123,11 +128,13 @@ framework's algorithm logic:
 3. `tests/test_tools/test_check_docs_against_code.py::test_no_false_positives_on_current_repo`
 4. `tests/test_tools/test_check_docs_against_code.py::test_self_test_quiet_mode_returns_zero_exit`
 
-**Wave 106.C.3 wording standardization** — every doc surface (cover
-letter, submission_checklist, supplementary §S6.3, README §Tests) now
-states "D.4 pinned regression vectors 72/72 PASS" with a historical
-caveat for the legacy 33/33 figure, and clarifies that the 3 FAILED
-pytest tests are pre-existing + unrelated to the framework.
+**Wave 149 Agent 6 wording standardization extension** — every non-archived
+doc surface (cover letter, submission_checklist, supplementary §S6.3,
+README §Tests, baseline-audit-report.md, CONSOLIDATED_RESULTS.md,
+INSIGHTS.md, paper-draft.md, paper-final-neurips.md, all audit/*.md from
+Wave 100+) now states "D.4 pinned regression vectors 72/72 PASS" with a
+historical caveat for the legacy "33/33" figure. The 3 FAILED pytest
+tests are pre-existing + unrelated to the framework.
 
 ## Cross-cutting operational gates
 

@@ -120,7 +120,7 @@ and produces:
 pytest tests/ -k d4 -q
 ```
 
-Expected: 33/33 PASS.
+Expected: 72/72 PASS.
 
 ### Wave 111.G — Single atomic commit
 
@@ -139,7 +139,7 @@ to Wave 111.G:
 3. ✅ framework_inv_proj arm N=1000 JSON written, per-metric Δ computed
 4. ✅ Determinism: sigma_A = 0 across all 6 metrics for seed=42 vs seed=7
 5. ✅ Per-metric Δ + Bonferroni-corrected p-values computed
-6. ✅ pytest tests/ -k d4 -q → 33/33 PASS
+6. ✅ pytest tests/ -k d4 -q → 72/72 PASS
 
 ## Hard rules respected (this wave)
 
@@ -164,3 +164,7 @@ on a single CPU lane, which exceeds single-agent envelopes. Either:
     wallclock ≈ 3-4 h)
 (c) A GPU-DAE acceleration effort (out of scope for Wave 110/111 — see
     Wave 100.A GPU-DAE plan, not yet executed)
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

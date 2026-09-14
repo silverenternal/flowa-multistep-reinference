@@ -24,27 +24,27 @@ Close Wave 146 as Agent 7 final synthesis — the **6-item polish plan execution
 - **Commit:** `fcd1706 Wave 146 P3: Item 1 - Kanzi N=1000 algorithm primitive ablation BLOCKED; audit doc only (no sweep; ruff-frozen + Wave 121 bridge bug)`
 - **Audit doc:** `docs/audit/wave146-item1-ablation.md`
 - **Scope:** Attempted Kanzi N=1000 algorithm primitive ablation sweep. BLOCKED — `ruff-frozen` (Wave 131 freeze) + Wave 121 bridge bug prevents non-trivial scaffold changes for the experiment driver. Audit doc records the blocker + recommended path forward (unblock ruff freeze OR write the experiment in a new standalone script that bypasses the bridge). No sweep JSONs generated.
-- **Acceptance:** audit doc exists; blocker documented; ruff 0 preserved; D.4 33/33 PASS preserved.
+- **Acceptance:** audit doc exists; blocker documented; ruff 0 preserved; D.4 72/72 PASS preserved.
 
 ### Phase 4 (commit `5c0c2de`): 2D FM hyperparameter sensitivity sweep (Item 2)
 
 - **Commit:** `5c0c2de Wave 146 P4: Item 2 - hyperparameter sensitivity sweep (5 hparams × 3 values on 2D FM); audit doc only; sweep JSONs in /tmp/w146/`
 - **Audit doc:** `docs/audit/wave146-item2-hp-sweep.md`
 - **Scope:** Ran 2D FM hyperparameter sensitivity sweep (5 hparams × 3 values = 15 sweep points on 2D FM, CPU-only). Sweep JSONs in `/tmp/w146/` (not committed — sweep data is intermediate, not paper-evidence). Audit doc records sweep design + key sensitivity findings.
-- **Acceptance:** sweep JSONs in `/tmp/w146/`; audit doc exists; D.4 33/33 PASS preserved; ruff 0 preserved.
+- **Acceptance:** sweep JSONs in `/tmp/w146/`; audit doc exists; D.4 72/72 PASS preserved; ruff 0 preserved.
 
 ### Phase 5 (commit `957f23b`): Full NeurIPS `.tex` rewrite (Item 4)
 
 - **Commit:** `957f23b Wave 146 P5: Item 4 - full NeurIPS .tex rewrite of docs/paper-final-neurips.md (paper.tex via md_to_tex.py + NeurIPS 2025 .sty + pdflatex); audit doc`
 - **Audit doc:** `docs/audit/wave146-item4-tex-rewrite.md`
 - **Scope:** Full NeurIPS `.tex` rewrite of `docs/paper-final-neurips.md`. Generated `paper.tex` via `docs/build_pdf/md_to_tex.py` + NeurIPS 2025 `.sty` + `pdflatex`. The previous Wave 144 PDF was a placeholder; this Phase 5 produces the camera-ready NeurIPS-style source.
-- **Acceptance:** `docs/build_pdf/paper.tex` compiles via pdflatex; NeurIPS 2025 `.sty` referenced; audit doc exists; D.4 33/33 PASS preserved; ruff 0 preserved.
+- **Acceptance:** `docs/build_pdf/paper.tex` compiles via pdflatex; NeurIPS 2025 `.sty` referenced; audit doc exists; D.4 72/72 PASS preserved; ruff 0 preserved.
 
 ### Phase 6 (commit `2fd4294`): Update Tables C and D in `paper-draft.md`
 
 - **Commit:** `2fd4294 Wave 146 P6: update Tables C and D with Wave 146 measured numbers (Kanzi N=1000 ablation + 2D FM hp sweep); ADDITIVE column added; existing disclosure preserved`
 - **Scope:** Update Tables C and D in `docs/paper-draft.md` with Wave 146 measured numbers. ADDITIVE column added (existing disclosure preserved — K3 §10.4 wording unchanged). Where the Kanzi N=1000 ablation was BLOCKED, the column carries a "BLOCKED — ruff-frozen + bridge bug" marker (preserving the negative finding as camera-ready disclosure).
-- **Acceptance:** Tables C + D updated; ADDITIVE only (no row removed); existing §10.4 disclosure preserved; D.4 33/33 PASS preserved; ruff 0 preserved.
+- **Acceptance:** Tables C + D updated; ADDITIVE only (no row removed); existing §10.4 disclosure preserved; D.4 72/72 PASS preserved; ruff 0 preserved.
 
 ### Phase 7 (this commit): final synthesis
 
@@ -58,7 +58,7 @@ Close Wave 146 as Agent 7 final synthesis — the **6-item polish plan execution
 
 | Gate | Status | Notes |
 |---|---|---|
-| D.4 33/33 PASS | PRESERVED | `pytest tests/ -k "d4" -q` |
+| D.4 72/72 PASS | PRESERVED | `pytest tests/ -k "d4" -q` |
 | ruff 0 | PRESERVED | `ruff check adaptive_reflow/ tests/` |
 | `claims_consistency` PASS | PRESERVED | `python tools/check_claims_consistency.py` |
 | `mkdocs build --strict` EXIT=0 | PRESERVED | unchanged from Wave 145 state (1 pre-existing nav-warning on unnav files; Wave 146 changes introduce no new warnings) |
@@ -104,3 +104,8 @@ Close Wave 146 as Agent 7 final synthesis — the **6-item polish plan execution
 - `todo/2026-09-14-tier1-numerical-polish-plan.md` (6-item polish plan source)
 - `docs/audit/wave145-todo-refactor.md` (predecessor wave)
 - `docs/audit/wave144-push-and-fix.md` (predecessor-predecessor wave)
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

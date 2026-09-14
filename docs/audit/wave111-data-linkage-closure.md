@@ -29,7 +29,7 @@ findings). The plan's C-9 closure is this document.
 | **C-8** | [`937a1b6`](https://github.com/hugo/flowa-multistep-reinference/commit/937a1b6) | Add docs/configs.md index of run profiles | F-A010 (canonical driver unused by wrappers — doc-only) |
 | **C-9** | _this doc_ | Record Wave 111 data-linkage closure | — |
 
-**Verification gates preserved:** `D.4 byte-stable = 33/33 PASS`, `mkdocs build --strict = EXIT=0`,
+**Verification gates preserved:** `D.4 byte-stable = 72/72 PASS`, `mkdocs build --strict = EXIT=0`,
 `GPU util > 40% during 10-record smoke sweep` (verified for C-1 — see §3 below).
 
 ---
@@ -283,7 +283,7 @@ Per wave111-data-linkage-plan.md §2.3 cross-reference matrix (with resolutions)
 1. **NO push.** Every commit lands on the working tree; user-gated push.
 2. **Backward compat:** existing CLI flags still work without `--config`.
    Resolution order: **CLI flag > YAML value > module-level default**.
-3. **D.4 byte-stable = 33/33 PASS** preserved across C-1..C-8 (verified
+3. **D.4 byte-stable = 72/72 PASS** preserved across C-1..C-8 (verified
    post-commit; running host reproduces 72 passed across
    `test_d4_regression_vectors.py` + `test_adapters/test_regression_vectors.py`).
 4. **`mkdocs build --strict` = EXIT=0** preserved across C-1..C-8
@@ -352,3 +352,8 @@ All 8 commits cited above verified with `git rev-parse --verify <sha>`
 ---
 
 **END OF CLOSURE — AUDIT-ONLY — NO PUSH**
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

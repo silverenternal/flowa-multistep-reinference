@@ -5,7 +5,7 @@
 **Scope:** 4 atomic Phases (1-3 by prior agents + this Phase 4 final synthesis)
 **Constraint:** NO push. NO source code changes. ADDITIVE only.
 
-> **Why this exists:** Wave 136 is the **final Tier-1 submission polish** wave that closes the Strategy D actions 1-3: consolidate the 8 honest negative results (K1-K8) into a single reviewer-facing section in the main paper; add 2 supplementary provenance notes (LineageFlow raw-JSON gap + CIFAR-10 EMA vs Table 9 distinction). The result is a paper submission package where every limitation is **named, located, and source-cited** — reviewers do not have to hunt for caveats across 5000+ lines. This Phase 4 final close writes this audit doc, appends baseline-audit §R.26, appends CONSOLIDATED §15.35, and commits. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
+> **Why this exists:** Wave 136 is the **final Tier-1 submission polish** wave that closes the Strategy D actions 1-3: consolidate the 8 honest negative results (K1-K8) into a single reviewer-facing section in the main paper; add 2 supplementary provenance notes (LineageFlow raw-JSON gap + CIFAR-10 EMA vs Table 9 distinction). The result is a paper submission package where every limitation is **named, located, and source-cited** — reviewers do not have to hunt for caveats across 5000+ lines. This Phase 4 final close writes this audit doc, appends baseline-audit §R.26, appends CONSOLIDATED §15.35, and commits. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 72/72 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
 
 ---
 
@@ -33,7 +33,7 @@ The §S7.2 note is **1 paragraph** (5 sentences) by design: a reviewer who reads
 
 ## Wave 136 acceptance gates
 
-- **D.4 33/33 PASS** preserved (no source code changes).
+- **D.4 72/72 PASS** preserved (no source code changes).
 - **ruff 0** preserved (no source code changes).
 - **claims_consistency PASS** preserved (39 active, 0 provisional, 2 deprecated; **No drift detected**).
 - **mkdocs build --strict EXIT=0** preserved.
@@ -106,3 +106,8 @@ The 8 honest negatives (K1-K8) are now **indexed in §10.4** of the main paper w
 ---
 
 See `docs/baseline-audit-report.md` §R.26 (Wave 136 ledger row) + `docs/CONSOLIDATED_RESULTS.md` §15.35 + `docs/paper-draft.md` §10.4 (known negative surface) + `docs/supplementary.md` §S7.2 (LineageFlow provenance) + §S4.3 (CIFAR-10 provenance) + `docs/audit/wave135-headline-evidence.md` (predecessor wave).
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

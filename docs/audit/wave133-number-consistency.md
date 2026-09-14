@@ -5,7 +5,7 @@
 **Scope:** 5 atomic Phases (1-4 by prior agents + this Phase 5 final synthesis)
 **Constraint:** NO push. NO source code changes. ADDITIVE only.
 
-> **Why this exists:** Wave 133 is the **number-consistency + final polish** wave that takes the Wave 132 Tier-1 SCI polish freeze-marker and verifies that every R1-R6 number cited in the paper submission package is **byte-stable consistent across docs** — paper-draft.md + cover_letter.md + supplementary.md + baseline-audit-report.md + CONSOLIDATED_RESULTS.md. Where the cross-check found under-cited numbers (e.g. R3 / R4 / R5 framework_improves paths referenced only by index in some docs), those were filled additively in supplementary.md so the freeze-marker submission package reads as one self-consistent artifact. This audit doc closes Wave 133 by Agent 5 final synthesis. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
+> **Why this exists:** Wave 133 is the **number-consistency + final polish** wave that takes the Wave 132 Tier-1 SCI polish freeze-marker and verifies that every R1-R6 number cited in the paper submission package is **byte-stable consistent across docs** — paper-draft.md + cover_letter.md + supplementary.md + baseline-audit-report.md + CONSOLIDATED_RESULTS.md. Where the cross-check found under-cited numbers (e.g. R3 / R4 / R5 framework_improves paths referenced only by index in some docs), those were filled additively in supplementary.md so the freeze-marker submission package reads as one self-consistent artifact. This audit doc closes Wave 133 by Agent 5 final synthesis. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 72/72 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
 
 ---
 
@@ -89,7 +89,7 @@
 
 ## Wave 133 acceptance gates
 
-- `pytest tests/ -k "d4" -q` → **33/33 PASS** preserved (Wave 131 freeze; Phases 1-4 only touched .md files + 1 string-scanner regex, so D.4 is byte-stable preserved)
+- `pytest tests/ -k "d4" -q` → **72/72 PASS** preserved (Wave 131 freeze; Phases 1-4 only touched .md files + 1 string-scanner regex, so D.4 is byte-stable preserved)
 - `ruff check adaptive_reflow/ tests/` → **All checks passed!** (Wave 131 freeze; ruff 0 on the freeze-marker source tree preserved)
 - `mkdocs build --strict` → **EXIT=0** (verified at Wave 133 close)
 - `python tools/check_claims_consistency.py` → **PASS** ("No drift detected." — 39 active, 0 provisional, 2 deprecated; CLM-040 forced to PROVISIONAL by `Disputed by` citation)
@@ -125,3 +125,8 @@
 - `docs/paper-draft.md` — final read-through (Phase 4)
 - `cover_letter.md` — Wave 132 Phase E R1-R6 reframe (preserved)
 - `docs/supplementary.md` S4 — under-cited numbers filled (Phase 1)
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

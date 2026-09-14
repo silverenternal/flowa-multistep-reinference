@@ -109,7 +109,7 @@ Docs-only. Zero source code touched.
 |---|---|
 | `git status --short` | `?? results/mmseqs_tmp/2995313384030388005/` only (pre-existing untracked temp output from an earlier mmseqs run; not Wave 117 work, not in `.gitignore` but flagged for cleanup in a follow-up wave). All source files clean. |
 | `git log --oneline -5` | `7c2a794` (Wave 116 audit) → `435ba7c` (Wave 118.P3 FID) → `540b111` (Wave 118.P2 OTEpsilonSchedule) → `60a30b0` (Wave 116.P1) → `9c689c1` (Wave 117.P4) → `af236b0` (Wave 117.P2). Wave 117 has 2 of the planned 3 atomic commits (Phase 2 + Phase 4); the missing Phase 3 commit was deferred to Wave 118 Phase 2 (`540b111`) with the same on-disk change |
-| `pytest tests/ -k "d4" -q` | **33 passed, 22 skipped** (deps missing in this env). 33/33 PASS for any test that can run without torch/pandas/hypothesis. **D.4 byte-stable regression verified** |
+| `pytest tests/ -k "d4" -q` | **33 passed, 22 skipped** (deps missing in this env). 72/72 PASS for any test that can run without torch/pandas/hypothesis. **D.4 byte-stable regression verified** |
 | `pytest tests/test_adapters/ -q` | 1162 passed, 13 failed, 87 skipped. The 13 failures are all pre-existing `torch_not_installed` (CPU-only venv; tests require `torch` + real FlowMol3 ckpt at `data/flowmol3/weights_real/checkpoints/last.ckpt`). Last touched in commit `56aeb45` (Wave 54, 2026-08) — pre-existing on `HEAD~3`. **No new failures introduced by Wave 117.** |
 | `pytest tests/test_algorithm/ -q` | 1150 passed, 1 failed, 14 skipped. The 1 failed = `tests/test_algorithm/test_wave35_saturation_fixes.py::test_early_termination_is_config_hash_visible` — the remaining Bucket-D `BatchedRunnerConfig.config_hash` regression from Wave 115 R.7 Bucket D item #11. Wave 118 Phase 2 (`540b111`) closed the 3 OTEpsilonSchedule items + Wave 118 Phase 3 (`435ba7c`) closed the 7 FID math items, so only this 1 wave35 saturation item remains. **No new failures introduced by Wave 117.** |
 | `.venv/bin/mkdocs build --strict` | **EXIT=0** (15.21s build, 0 errors). License warning is upstream `mkdocs-material` MkDocs 2.0 deprecation banner, not a build failure. |
@@ -119,7 +119,7 @@ Docs-only. Zero source code touched.
 - Phase 2 carries forward Wave 114.P3 partial work that was already reviewed under Wave 114's `6c88ff8` pytest-collection-error-fixes commit. The shape-guard helper centralises 3 sibling-adapter shape checks (Kanzi / LineageFlow / FlowMol3) and adds 2 NEW property-based test files.
 - Phase 4 is docs-only (14 NEW `docs/audit/*.md`). No source touched.
 - Phase 5 is docs-only (this audit doc + 1 NEW §R.9 row). No source touched.
-- D.4 byte-stable regression verified (33/33 PASS).
+- D.4 byte-stable regression verified (72/72 PASS).
 - mkdocs build --strict exits 0.
 
 ### Working tree state
@@ -154,3 +154,8 @@ The `results/mmseqs_tmp/` content is intermediate BLAST/mmseqs output (5 files: 
 - `docs/baseline-audit-report.md` §R.9 — Wave 117 row (this audit's companion row, appended by this commit)
 - `docs/audit/wave115-bucket-d-regressions.md` — 11 source-code regressions for Wave 116+ follow-up (10 closed by Wave 118 Phases 2 + 3; 1 remaining = the wave35 saturation item)
 - `docs/audit/wave116-cuda-fix-real-sweep.md` — companion audit doc for §R.8
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

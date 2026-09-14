@@ -11,7 +11,7 @@ Wave 144 is the **paper-submission-readiness close-out** wave that:
 3. **Phase 3** produces a NeurIPS-style placeholder PDF for OpenReview upload,
 4. **Phase 4** (this commit) performs final synthesis — this audit doc + `docs/baseline-audit-report.md` §R.32 + `docs/CONSOLIDATED_RESULTS.md` §15.41 + atomic commit.
 
-The Wave 131 freeze-marker (ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0) is preserved across all four Phases.
+The Wave 131 freeze-marker (ruff-0 / D.4 72/72 PASS / claims_consistency PASS / mkdocs strict EXIT=0) is preserved across all four Phases.
 
 ---
 
@@ -93,7 +93,7 @@ All gates preserved through Phase 1-4:
 | 18 commits pushed to `origin/main` | PASS | Phase 1 |
 | 3 Kanzi baseline JSONs force-added | PASS | Phase 2 (closes Wave 143 Phase 0 honest finding) |
 | Placeholder PDF generated | PASS | Phase 3 (`docs/paper-final-neurips.pdf`, 117 pp) |
-| D.4 33/33 PASS preserved | PASS | No `tests/d4` changes |
+| D.4 72/72 PASS preserved | PASS | No `tests/d4` changes |
 | ruff 0 preserved | PASS | No `adaptive_reflow/` or `tests/` changes |
 | `claims_consistency` PASS preserved | PASS | No source-of-truth changes |
 | `mkdocs build --strict` EXIT=0 preserved | PASS | No `.md` nav changes |
@@ -132,7 +132,7 @@ HEAD after Wave 144 final close is `v1.0.1-paper-final` (commit `0ef6465`).
 - `docs/paper-final-neurips.pdf` (placeholder PDF for OpenReview upload, 117 pp)
 - All commits (Wave 137-144) public on `origin/main`
 - All Kanzi baseline JSONs (Wave 134 migration bug) closed
-- ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker preserved
+- ruff-0 / D.4 72/72 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker preserved
 
 **OpenReview upload ready:** PDF + supplementary + code archive + Kim2025-aligned metric count + honest negative surface all in place. Camera-ready wave may now proceed at user discretion.
 
@@ -150,3 +150,8 @@ HEAD after Wave 144 final close is `v1.0.1-paper-final` (commit `0ef6465`).
 ---
 
 See `docs/audit/wave144-agent3-pdf-generation.md` (Phase 3 detailed PDF toolchain audit + converter table + 6 honest limitations) + `docs/baseline-audit-report.md` §R.32 (Wave 144 ledger row) + `docs/CONSOLIDATED_RESULTS.md` §15.41 (Wave 144 close section) + `docs/audit/wave143-tier1-metric-alignment.md` (predecessor wave) + `docs/baseline-audit-report.md` §R.31 (Wave 143 close row).
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

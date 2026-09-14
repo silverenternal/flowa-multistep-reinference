@@ -179,7 +179,7 @@ After a quick scan, every `adaptive_reflow/algorithm/*.py` module has at least o
 
 Per-fix:
 1. `pytest tests/ -q` → same number of collected tests as before (no test is lost)
-2. `pytest tests/ -k "d4" -q` → 33/33 PASS (byte-stable)
+2. `pytest tests/ -k "d4" -q` → 72/72 PASS (byte-stable)
 3. `pytest tests/test_algorithm/ -q` → no new failures
 4. `pytest tests/test_adapters/ -q` → no new failures
 5. `python tools/capability_audit.py` → G-MASTER 7/7 unchanged
@@ -188,3 +188,8 @@ Per-fix:
 ---
 
 REVIEW COMPLETE — found 6 issues across 4 dimensions (file-bloat 4, fixture-dup 0, naming 1, slow-tests 0, coverage-blind 0, deprecated 0).
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

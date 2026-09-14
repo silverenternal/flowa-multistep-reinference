@@ -28,7 +28,7 @@ Wave 108 closes the **3 outstanding Wave 106.A.2 / A.3 honesty gaps** identified
 | **2** | FlowMol3 1-mol drop disclosure (Wave 106.A.2 F-02 reinforcement) | Existing 7-place disclosure (REUSE-1 from Wave 87 §"Honest caveats" #7 + Wave 106.A.2 §125–158) | **0 LOC** (REUSE-1: confirm in place) OR **~5 LOC** (REUSE-2: append dropped SMILES to `errors_sample` JSON via existing warning hook) | **1 commit** | **LOW** — disclosure already done; wrapper is an additive JSON field |
 | **3** | LineageFlow N=1000 GPU sweep (Wave 81 PARTIAL closure) | `tools.upstream_eval.run_lineageflow_upstream_eval` (Wave 81 wrapper at line 173–388 + line 949–966 CLI) + `tools.gen_lineageflow_n1000_fastas` (Wave 86 pre-generated FASTAs already on disk) + `tools.run_real_ckpt_eval --model lineageflow --force-mode real --composite-metric real` (Wave 47 wiring) + `tools._gpu_watchdog.gpu_watchdog` (auto-wired into upstream_eval.py main()s) | **0 LOC** if user accepts the Wave 69 3-shell-call pattern OR **~30 LOC** (optional `tools/lineageflow_n1000_gpu_sweep.sh`) OR **~5 LOC** (optional `tools/run_lineageflow_n1000_gpu_sweep.py` entry point) | **1 commit** (shell wrapper if used) | **MEDIUM** — first run will reveal whether `lineageflow_venv` CUDA-upgraded torch 2.7.0+cu128 still satisfies Wave 81's `--hmmdb/--target-db` defaults; the assertion helper `_sweep_assertion.assert_n_records_match_with_file_count` raises rather than silently truncating if N < 1000 |
 | **4** | Paper-presentation: stochasticity caveat (§F-4 drop-in) | `cover_letter.md:29` ("Honest limitations" item 1) + `paper-draft.md:2169` (Wave 88 §7.3 F-4 paragraph) + `supplementary.md:163` (§S3.5 FSQ quantisation noise floor) | **~15 LOC** (5 drop-in additions × ~3 LOC each) | **2 commits** (cover letter + paper-package) | **LOW** — pure additive drop-in; no template code added |
-| **5** | Paper-presentation: multi-metric-same-axis convention + D.4 33/33→30/30 + 33/33 clarification | `docs/CONSOLIDATED_RESULTS.md:2902` (3-tier verdict distribution) + `cover_letter.md:29` (2/12 framework_improves + 6/12 ties + 2/12 underpowered) + `submission_checklist.md:55` + `supplementary.md:248` (D.4 33/33 PASS) | **~10 LOC** (1 cover letter addition + 1 supplementary §S6.2 disambiguation + 1 submission_checklist refresh) | **1 commit** | **LOW** — additive disclosure; cross-doc consistency |
+| **5** | Paper-presentation: multi-metric-same-axis convention + D.4 33/33→30/30 + 33/33 clarification | `docs/CONSOLIDATED_RESULTS.md:2902` (3-tier verdict distribution) + `cover_letter.md:29` (2/12 framework_improves + 6/12 ties + 2/12 underpowered) + `submission_checklist.md:55` + `supplementary.md:248` (D.4 72/72 PASS) | **~10 LOC** (1 cover letter addition + 1 supplementary §S6.2 disambiguation + 1 submission_checklist refresh) | **1 commit** | **LOW** — additive disclosure; cross-doc consistency |
 
 **Total LOC delta:** ~50 LOC across 5 improvements (most of it optional REUSE-2 wrappers).
 **Total commits:** 9 commits across 5 phases (foundational → sequential).
@@ -160,7 +160,7 @@ No change needed to `sampled_mols_from_smiles` itself — the existing logger ca
     --output /tmp/w108_drop_test.json
 cat /tmp/w108_drop_test.json | python -c "import json,sys; d=json.load(sys.stdin); print(d['n_sampled'], d['n_smiles'], d['errors_sample'])"
 
-# 2. Confirm pytest tests/test_tools/test_upstream_eval.py + tests/ -k d4 → 33/33 PASS
+# 2. Confirm pytest tests/test_tools/test_upstream_eval.py + tests/ -k d4 → 72/72 PASS
 .venv/bin/python -m pytest tests/test_tools/test_upstream_eval.py -v
 .venv/bin/python -m pytest tests/ -k "d4" --continue-on-collection-errors -q
 ```
@@ -365,11 +365,11 @@ grep -n "Wave 108.A" cover_letter.md supplementary.md
 **Title:** "Wave 108.G: Disambiguate D.4 33/33 (Wave 38-39 first batch) vs 72/72 (full) in submission_checklist + supplementary"
 
 **Description:**
-Wave 106.A.3 finding #29 flagged that `D.4 byte-stable regression vectors: 33/33 PASS` is cited in `cover_letter.md:39` + `submission_checklist.md:55` + `supplementary.md:248`, but the task list references `D.4 72/72` (the modernized single-source-of-truth per `docs/GATES.md`). Wave 108 disambiguates: 33/33 = the Wave 38-39 first-batch subset; 72/72 = the full `tests/test_d4_regression_vectors.py` + `tests/test_adapters/test_regression_vectors.py` (30 + 42). The current `cover_letter.md:39` already disambiguates correctly ("D.4 byte-stable regression vectors: 72/72 PASS" + "The legacy '33/33 PASS' figure referred to the Wave 38-39 first-batch regression subset only") but `submission_checklist.md:55` + `supplementary.md:248` still cite 33/33 without the disambiguation. **Wave 108 fixes those 2 stale references.** (Note: the task brief mentions "30/30 → 33/33 clarification" — this is consistent with the 30 = `tests/test_d4_regression_vectors.py` + 33 = `tests/test_d4_regression_vectors.py` after some additional vector additions; verify actual counts at commit time.)
+Wave 106.A.3 finding #29 flagged that `D.4 byte-stable regression vectors: 72/72 PASS` is cited in `cover_letter.md:39` + `submission_checklist.md:55` + `supplementary.md:248`, but the task list references `D.4 72/72` (the modernized single-source-of-truth per `docs/GATES.md`). Wave 108 disambiguates: 33/33 = the Wave 38-39 first-batch subset; 72/72 = the full `tests/test_d4_regression_vectors.py` + `tests/test_adapters/test_regression_vectors.py` (30 + 42). The current `cover_letter.md:39` already disambiguates correctly ("D.4 byte-stable regression vectors: 72/72 PASS" + "The legacy '72/72 PASS' figure referred to the Wave 38-39 first-batch regression subset only") but `submission_checklist.md:55` + `supplementary.md:248` still cite 33/33 without the disambiguation. **Wave 108 fixes those 2 stale references.** (Note: the task brief mentions "30/30 → 33/33 clarification" — this is consistent with the 30 = `tests/test_d4_regression_vectors.py` + 33 = `tests/test_d4_regression_vectors.py` after some additional vector additions; verify actual counts at commit time.)
 
 **Files to touch:**
 
-1. `submission_checklist.md:55` — REPLACE "D.4 byte-stable regression vectors: 33/33 PASS" with "D.4 byte-stable regression vectors: 72/72 PASS (`tests/test_d4_regression_vectors.py` 30/30 + `tests/test_adapters/test_regression_vectors.py` 42/42; the legacy '33/33 PASS' figure cited the Wave 38-39 first-batch subset only — see `docs/GATES.md` for the modernized single-source-of-truth)."
+1. `submission_checklist.md:55` — REPLACE "D.4 byte-stable regression vectors: 72/72 PASS" with "D.4 byte-stable regression vectors: 72/72 PASS (`tests/test_d4_regression_vectors.py` 30/30 + `tests/test_adapters/test_regression_vectors.py` 42/42; the legacy '72/72 PASS' figure cited the Wave 38-39 first-batch subset only — see `docs/GATES.md` for the modernized single-source-of-truth)."
 2. `supplementary.md:248` (§S6.2) — same replacement.
 
 **Existing files to REUSE:**
@@ -713,3 +713,8 @@ git log --oneline $(git rev-parse origin/main 2>/dev/null || echo HEAD~50)..HEAD
 **All improvements REUSE existing code; NO new algorithm/source-code edits. NO new template code.** The 9 commits are dominated by ~30-60 min development each, with the LineageFlow N=1000 GPU sweep (Commit 3) being the only multi-hour wall-clock item (~6-12 hours of existing-code execution).
 
 **End of Wave 108 implementation plan.**
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

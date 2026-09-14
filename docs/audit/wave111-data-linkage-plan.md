@@ -71,7 +71,7 @@ The 3 Wave 111.0 audits surface **2 distinct failure surfaces** in the sweep-dri
 - **Acceptance criteria:**
   1. `next(dae.parameters()).device` returns `cuda:0` after runner init when CUDA is available (single-shot smoke).
   2. `nvidia-smi --query-gpu=utilization.gpu` shows > 40% during a 10-record smoke sweep.
-  3. `pytest tests/ -k d4 -q` → 33/33 PASS (byte-stable).
+  3. `pytest tests/ -k d4 -q` → 72/72 PASS (byte-stable).
   4. `pytest tests/test_tools/ -v` → green.
   5. `mkdocs build --strict` → EXIT=0.
 - **Risk level:** LOW — identical pattern to already-working `sweep_kanzi_n1000_diverse.py:136`.
@@ -84,7 +84,7 @@ The 3 Wave 111.0 audits surface **2 distinct failure surfaces** in the sweep-dri
 - **Acceptance criteria:**
   1. Calling `_KanziDAEShim.forward(...)` outside of synthetic mode raises `NotImplementedError` with the documented message.
   2. The existing synthetic-mode code path (`self._synthetic_weights is not None`) is **not** affected — framework synthetic sweep still runs.
-  3. `pytest tests/ -k d4 -q` → 33/33 PASS.
+  3. `pytest tests/ -k d4 -q` → 72/72 PASS.
   4. `pytest tests/test_tools/ -v` → green (no test exercises the shim in framework arm).
   5. `mkdocs build --strict` → EXIT=0.
 - **Risk level:** LOW — fail-fast is the documented Wave 110.B intent.
@@ -98,7 +98,7 @@ The 3 Wave 111.0 audits surface **2 distinct failure surfaces** in the sweep-dri
   1. `device = next(model.parameters()).device` is computed once at the top of `_torch_velocity_field`.
   2. All 3 `torch.as_tensor(...)` calls carry `device=device`.
   3. After C-1 lands, the input tensor lands on CUDA when the model is on CUDA.
-  4. `pytest tests/ -k d4 -q` → 33/33 PASS.
+  4. `pytest tests/ -k d4 -q` → 72/72 PASS.
   5. `mkdocs build --strict` → EXIT=0.
 - **Risk level:** LOW — pure device-pass-through, no numerical change.
 - **Depends on:** C-1 (DAE must be on CUDA for the device= path to matter).
@@ -138,7 +138,7 @@ The 3 Wave 111.0 audits surface **2 distinct failure surfaces** in the sweep-dri
   2. Driver 3 (inv_proj) exposes `--pb-engine` (closes Wave 105 P0-B).
   3. Driver 1 (baseline) exposes `--n-steps-decoder` instead of hardcoded `nfe_steps=100`.
   4. Default `force_mode` flows from runner → profile (closes F-A004).
-  5. Backward compat: omitting `--config` reproduces Wave 110.C PARTIAL output exactly (CLI defaults unchanged). `pytest tests/ -k d4 -q` → 33/33 PASS; `mkdocs build --strict` → EXIT=0.
+  5. Backward compat: omitting `--config` reproduces Wave 110.C PARTIAL output exactly (CLI defaults unchanged). `pytest tests/ -k d4 -q` → 72/72 PASS; `mkdocs build --strict` → EXIT=0.
 - **Risk level:** MED — touches 3 sweep drivers; default-value alignment is error-prone.
 - **Depends on:** C-4, C-5.
 
@@ -151,7 +151,7 @@ The 3 Wave 111.0 audits surface **2 distinct failure surfaces** in the sweep-dri
   2. `wave87_n1000_sweep.py` converts module constants to argparse + `--config` (10 module-level constants become flags).
   3. `lineageflow_n1000_gpu_sweep.sh` shell hardcodes (`NFE`, `SEEDS`, `N_SAMPLES`, `VENV_PY`, `timeout`) move to a profile; shell becomes thin launcher.
   4. `upstream_eval.py` (3 argparse blocks) all accept `--config` or read from `--profile <yaml>` envvar.
-  5. `pytest tests/ -k d4 -q` → 33/33 PASS; `pytest tests/test_tools/ -v` → green; `mkdocs build --strict` → EXIT=0.
+  5. `pytest tests/ -k d4 -q` → 72/72 PASS; `pytest tests/test_tools/ -v` → green; `mkdocs build --strict` → EXIT=0.
 - **Risk level:** MED — touches shell + 3 Python drivers; wave87 module-constant removal is breaking unless guarded.
 - **Depends on:** C-4, C-6.
 
@@ -163,7 +163,7 @@ The 3 Wave 111.0 audits surface **2 distinct failure surfaces** in the sweep-dri
   1. `docs/configs.md` lists all profiles in `configs/runs/` with one-line summaries.
   2. Each profile entry links to its source YAML and the audit docs that motivated it.
   3. `mkdocs build --strict` → EXIT=0 (nav entry valid, no broken links).
-  4. `pytest tests/ -k d4 -q` → 33/33 PASS (doc-only change).
+  4. `pytest tests/ -k d4 -q` → 72/72 PASS (doc-only change).
   5. Manual: opening `docs/configs.md` in mkdocs preview shows all 3 initial profiles.
 - **Risk level:** LOW — doc + nav entry; no source code touched.
 - **Depends on:** C-5 (needs the 3 profiles to exist to index).
@@ -177,7 +177,7 @@ The 3 Wave 111.0 audits surface **2 distinct failure surfaces** in the sweep-dri
   2. The closure doc reproduces the per-commit verification log (D.4 33/33 + mkdocs EXIT=0 + GPU util > 40%).
   3. The closure doc maps every F-A/B/C-### finding to its closing commit.
   4. `mkdocs build --strict` → EXIT=0.
-  5. `pytest tests/ -k d4 -q` → 33/33 PASS.
+  5. `pytest tests/ -k d4 -q` → 72/72 PASS.
 - **Risk level:** LOW — audit-only doc, no source.
 - **Depends on:** C-1..C-8 (must land first to cite SHAs).
 
@@ -448,3 +448,8 @@ All SHAs from the current HEAD `70501280ac0e9e197064d3b2b029bb0787289403`:
 ---
 
 **END OF PLAN — READ-ONLY — NO COMMITS**
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

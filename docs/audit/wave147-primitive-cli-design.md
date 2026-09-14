@@ -23,7 +23,7 @@
 - READ-ONLY design only (`grep`, `cat`, `sed`)
 - Proposed CLI signature documented for 2 BLOCKED hparams
 - Out-of-scope is implementation (camera-ready)
-- Existing Wave 121 Phase 1 regression test at `tests/test_adapters/test_kanzi_smoke.py:523` (per-call validator) continues to PASS (D.4 33/33 PASS confirmed at HEAD)
+- Existing Wave 121 Phase 1 regression test at `tests/test_adapters/test_kanzi_smoke.py:523` (per-call validator) continues to PASS (D.4 72/72 PASS confirmed at HEAD)
 
 ---
 
@@ -197,3 +197,8 @@ No drift detected
 - Wave 131 ruff-freeze (commit `28e3bf9` + downstream) — preserved
 - Wave 137 ruff-frozen status — preserved
 - Wave 147 P1 bridge-bug design (`docs/audit/wave147-bridge-bug-design.md`) — sibling design doc, no conflict
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

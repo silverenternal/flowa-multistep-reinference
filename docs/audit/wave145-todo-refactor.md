@@ -7,7 +7,7 @@
 
 Wave 145 is the **post-submission todo/ folder organization** wave. The Tier-1 SCI submission package shipped in Wave 143-144 (8 tables A-H + 17 figures + Kim2025 reference + byte-stable reproducibility + honest negative surface + `docs/paper-final-neurips.pdf` placeholder + 18 commits pushed to `origin/main` + 3 Kanzi baseline JSONs restored). With the submission package out, the `todo/` folder — the canonical Wave 1-145 work-tracking surface — had drifted: 29 files spanning LIVE plans, STALE drafts, SHIPPED ledges, and REDUNDANT legacy notes. Wave 145 reorganizes the `todo/` folder to reflect current reality without deleting any history.
 
-The Wave 131 freeze-marker (ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0) is preserved across all six Phases.
+The Wave 131 freeze-marker (ruff-0 / D.4 72/72 PASS / claims_consistency PASS / mkdocs strict EXIT=0) is preserved across all six Phases.
 
 ---
 
@@ -114,3 +114,7 @@ HEAD after Wave 145 final close is `v1.0.1-paper-final` (commit `0ef6465`). The 
 **HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — Phases 2-5 modified `todo/` file headers/status lines (no content scope shift), Phase 6 is a new audit doc + 2 appends to existing files baseline §R.33 + CONSOLIDATED §15.42; NO source code changes; NO experiments; NO measurement delta; single atomic Agent 6 commit titled "Wave 145: todo/ folder refactor close - audit doc + baseline R.33 + CONSOLIDATED 15.42".
 
 See `docs/audit/wave144-push-and-fix.md` (predecessor wave) + `docs/baseline-audit-report.md` §R.32 (Wave 144 ledger row) + `docs/CONSOLIDATED_RESULTS.md` §15.41 (Wave 144 close section) + `todo/2026-09-14-tier1-numerical-polish-plan.md` (Phase 3 polish plan, 6 items) + `todo/EXECUTION-PLAN.md` FINAL CLOSE section (Phase 5).
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

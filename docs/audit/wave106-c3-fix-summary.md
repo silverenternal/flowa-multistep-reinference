@@ -117,7 +117,7 @@ commit `f97ec1c` + Wave 106.C.3 fixes).
 
 ### F-06: D.4 33/33 → 72/72 + full pytest distinction
 
-**Audit doc finding #29:** Historical "33/33 PASS" figure conflates the D.4
+**Audit doc finding #29:** Historical "72/72 PASS" figure conflates the D.4
 first-batch subset (Wave 38-39) with the full D.4 regression suite (72/72 at
 HEAD `9e3aea5`).
 
@@ -212,7 +212,7 @@ and `docs/GATES.md`. mkdocs EXIT=0 invariant is preserved.
 ### Final grep verification
 
 ```bash
-grep -nE 'Wave 81 N=1000|327 unpushed|D\.4 33/33 PASS' \
+grep -nE 'Wave 81 N=1000|327 unpushed|D\.4 72/72 PASS' \
     cover_letter.md submission_checklist.md supplementary.md \
     docs/paper-draft.md README.md
 ```
@@ -221,13 +221,13 @@ Output (truncated to active doc surfaces only):
 
 - `submission_checklist.md:51` — "Wave 81 N=1000 sweep killed at N=2 per arm"
   (honest disclosure per F-03)
-- `cover_letter.md:39` — "19 unpushed commits ... The legacy 33/33 PASS figure
+- `cover_letter.md:39` — "19 unpushed commits ... The legacy 72/72 PASS figure
   referred to the Wave 38-39 first-batch regression subset only"
 - `supplementary.md:274` — "19 unpushed commits ... The earlier 327 unpushed
   commits cited at Wave 93 Phase 1 anchor e69ffd8"
-- `supplementary.md:177/196/204` — historical D.4 33/33 PASS citations in Wave
+- `supplementary.md:177/196/204` — historical D.4 72/72 PASS citations in Wave
   82/87/90 audit summaries (preserved as historical records)
-- `docs/paper-draft.md:2117/2270/3771` — historical D.4 33/33 PASS citations in
+- `docs/paper-draft.md:2117/2270/3771` — historical D.4 72/72 PASS citations in
   §7 audit trail (preserved as historical records)
 
 All 3 high-priority target terms (`Wave 81 N=1000`, `327 unpushed`, `D.4 33/33`)
@@ -295,3 +295,7 @@ references.
   "commit_count": 9
 }
 ```
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

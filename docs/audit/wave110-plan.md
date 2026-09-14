@@ -87,7 +87,7 @@ Commit title: `Wave 110.A: Fix framework_synthetic 4-d→512-d shape mismatch in
 | 1 | `_synthesize_x_final_synthetic` emits shape `(64, 512)` instead of `(64, 4)` | `python -c "from tools._kanzi_sweep_runner import _synthesize_x_final_synthetic; import numpy as np; x = _synthesize_x_final_synthetic(0, seed=42); assert x.shape == (64, 512); print(x.shape, np.linalg.norm(x))"` |
 | 2 | Sweep completes N=1000 records without `bridge_failed:RuntimeError` | `pytest tests/ -k "test_kanzi_latent_to_coord or test_sweep_kanzi" -v` all PASS |
 | 3 | Per-record index diversity ≥ Wave 96.D threshold (>500 unique codewords across N=1000) | Run N=100 sweep with `--limit 100 --seed 42`, count unique idx values |
-| 4 | `pytest tests/ -k d4 -q` → 33/33 PASS | Bash output |
+| 4 | `pytest tests/ -k d4 -q` → 72/72 PASS | Bash output |
 | 5 | `mkdocs build --strict` → EXIT=0 | Bash output |
 
 ### Wave 110.B — Fix Bug 2 (framework_inv_proj shape mismatch)
@@ -99,7 +99,7 @@ Commit title: `Wave 110.B: Fix framework_inv_proj by forcing KanziAdapter real m
 | 1 | `run_kanzi_sweep(mode="framework_inv_proj", ...)` constructs adapter with `force_mode="real"` | Grep + Read tools/_kanzi_sweep_runner.py:340-360 |
 | 2 | Sweep completes N=1000 records without `_velocity_field` shape crash | Run `--limit 10 --seed 42` smoke test |
 | 3 | Per-record index diversity ≥ Bug 1 acceptance threshold | Same as #3 above |
-| 4 | `pytest tests/ -k d4 -q` → 33/33 PASS | Bash output |
+| 4 | `pytest tests/ -k d4 -q` → 72/72 PASS | Bash output |
 | 5 | `mkdocs build --strict` → EXIT=0 | Bash output |
 
 ### Wave 110.C — Re-run Kanzi N=1000 sweep (both arms)
@@ -113,7 +113,7 @@ Commit title: `Wave 110.C: Re-run Kanzi N=1000 framework arms with Bug 1+2 fixes
 | 3 | framework_inv_proj arm N=1000 JSON written, per-metric Δ computed | Read `/tmp/w110c_kanzi_framework_inv_proj_seed42/kanzi_n1000_paper_metrics.json` |
 | 4 | Determinism: re-run baseline with `--seed 7`, per-record sigma=0 across all 6 metrics | Diff two baseline JSONs, report max sigma |
 | 5 | Per-metric Δ + Bonferroni-corrected p-values computed | Python script output |
-| 6 | `pytest tests/ -k d4 -q` → 33/33 PASS | Bash output |
+| 6 | `pytest tests/ -k d4 -q` → 72/72 PASS | Bash output |
 
 ### Wave 110.D — Final synthesis + Wave 109.A closure
 
@@ -124,7 +124,7 @@ Commit title: `Wave 110.D: Author wave110-final-synthesis.md + close Wave 109.A 
 | 1 | `docs/audit/wave110-final-synthesis.md` authored with per-arm table + σ_A + p-values | File exists |
 | 2 | `docs/audit/wave109-a-kanzi-n1000.md` updated additively to note Bug 1+2 now fixed | Grep |
 | 3 | `docs/audit/wave96a-diagnose-collapse.md` cross-referenced | Grep |
-| 4 | `pytest tests/ -k d4 -q` → 33/33 PASS | Bash output |
+| 4 | `pytest tests/ -k d4 -q` → 72/72 PASS | Bash output |
 | 5 | `mkdocs build --strict` → EXIT=0 | Bash output |
 
 ## Hard rules (apply to every agent)
@@ -146,3 +146,8 @@ Commit title: `Wave 110.D: Author wave110-final-synthesis.md + close Wave 109.A 
 - W110.C: ~80 min wallclock (waits for baseline sweep loop, ETA from prior wave ~70 min; both framework arms ~10 min each after fix)
 - W110.D: ~20 min wallclock
 - Total: ~3 hours wallclock + audit + commits
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

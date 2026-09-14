@@ -233,7 +233,7 @@ time .venvs/kanzi_venv/bin/python tools/sweep_kanzi_n1000_paper_metrics.py \
 
 ```bash
 pytest tests/ -k "d4" -v
-# Expected: 33/33 PASS
+# Expected: 72/72 PASS
 ```
 
 The fix is non-functional from the byte-stable perspective — `_kanzi_sweep_runner.py:340` adds a device move after `.eval()`, which doesn't change any tensor values. All deterministic regression vectors must remain PASS.
@@ -288,3 +288,7 @@ If this prints `0.0`, RC-2 is still in effect and the framework arm is honest ab
 - `7050128` Wave 110.D: Author wave110-final-synthesis.md + close Wave 109.A follow-up
 
 (Pre-Wave-100 SHAs cited inline in §6 above for the older `.to("cuda")` precedent and runner extraction.)
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

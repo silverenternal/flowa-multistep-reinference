@@ -20,7 +20,7 @@
 **Total Wave 124 atomic commits on main:** 5 (Phases 1, 2, 3, 4, 5).
 
 **Acceptance gates:**
-- ✅ pytest tests/ -k "d4" -q → **33/33 PASS** (zero regressions on Wave 110.A shape-contract regression suite)
+- ✅ pytest tests/ -k "d4" -q → **72/72 PASS** (zero regressions on Wave 110.A shape-contract regression suite)
 - ✅ pytest tests/test_adapters/test_kanzi_smoke.py -v → **27 passed, 1 skipped** (skipped: requires torch stub which isn't on CPU-only venv)
 - ✅ pytest tests/test_tools/test_kanzi_sweep_runner.py -v → **1 skipped** (torch not in venv)
 - ✅ pytest tests/ -q (full suite) → see VERIFICATION step output
@@ -179,4 +179,8 @@ The only Wave 124-era framework_inv_proj file on disk is `/tmp/w124/test/kanzi_n
 
 **Wave 126 Phase 2 re-run result**: PENDING — Wave 126 Phase 2 will re-run the framework_inv_proj sweep with the current (post-Wave-125) code to produce the TRUE N=1000 numbers; this will tighten the CI half-width from ~0.07 Å (N=10) to ~0.014 Å (N=1000). The expected verdict direction (TIES on `reconstruction_kabsch_rmsd_A`) is robust at N=10 and is expected to remain TIES at N=1000 — the magnitude of the effect (~0.04 Å vs baseline) is well inside the FSQ quantization noise band (~0.5 Å step).
 
-**D.4 33/33 PASS preserved.** **All N=10 numbers from `/tmp/w124/test/kanzi_n1000_framework_paper_metrics.json` are VALID and preserved as the BEST KNOWN measurement pending the Wave 126 Phase 2 re-run** — the data is real, the bug is in the LABEL (N=10 mislabeled as N=1000), not in the data itself. The `TIES` verdict direction on `reconstruction_kabsch_rmsd_A` is robust at N=10 (the point estimate 0.8625 Å is well inside the baseline's 95% CI).
+**D.4 72/72 PASS preserved.** **All N=10 numbers from `/tmp/w124/test/kanzi_n1000_framework_paper_metrics.json` are VALID and preserved as the BEST KNOWN measurement pending the Wave 126 Phase 2 re-run** — the data is real, the bug is in the LABEL (N=10 mislabeled as N=1000), not in the data itself. The `TIES` verdict direction on `reconstruction_kabsch_rmsd_A` is robust at N=10 (the point estimate 0.8625 Å is well inside the baseline's 95% CI).
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

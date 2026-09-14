@@ -232,7 +232,7 @@ Tests 5 + 6 catch **literal regressions** (the source carries the wrong text). T
 
 | Gate | Outcome |
 |---|---|
-| `pytest tests/ -k "d4" -q` | **33 passed, 22 skipped** (deps missing in this env). 33/33 PASS for any test that can run without torch. |
+| `pytest tests/ -k "d4" -q` | **33 passed, 22 skipped** (deps missing in this env). 72/72 PASS for any test that can run without torch. |
 | `pytest tests/test_tools/test_kanzi_sweep_runner.py -v` | **1 passed, 1 skipped, 5 errors**. The 1 passing = `test_sweep_d_kanzi_input_device_in_sync_with_dae` (static text-match). The 1 skipped = `test_run_kanzi_sweep_end_to_end_n1_no_attribute_error` (the new Test 7; torch-required via `requires_torch` fixture). The 5 errors = `test_synthesize_x_final_synthetic_shape_64_512` + `test_synthesize_x_final_synthetic_deterministic_seed` + `test_framework_inv_proj_construction_uses_real_mode` + `test_torch_velocity_field_emits_512d_shape` + `test_run_envelope_input_matches_dae_device` — all `ModuleNotFoundError: No module named 'torch'` at fixture setup. **Same pre-existing dev-env gap as Wave 115 R.7 (the `runner` fixture requires torch).** |
 | `pytest tests/test_algorithm/ -q` | **1150 passed, 1 failed, 14 skipped**. The 1 failed = the 1 remaining Bucket-D wave35 saturation item (`test_wave35_saturation_fixes.py::test_early_termination_is_config_hash_visible` — the `BatchedRunnerConfig.config_hash` regression from Wave 115 R.7 Bucket D item #4). Wave 118 Phase 2 (`540b111`) closed the 3 OTEpsilonSchedule items + Wave 118 Phase 3 (`435ba7c`) closed the 7 FID math items, so only this 1 wave35 saturation item remains. **No new failures introduced by Wave 116 Phase 1.** |
 | `mkdocs build --strict` | **EXIT=0** (15.24s build, 0 errors). License warning is upstream `mkdocs-material` noise (MkDocs 2.0 deprecation banner), not a build failure. |
@@ -243,7 +243,7 @@ Tests 5 + 6 catch **literal regressions** (the source carries the wrong text). T
 
 - The Phase 1 fix is **strict forward-compat** — any CPU-only invocation path (synthetic-mode, sidecar CI, pytest stand-in) now reaches `next(dae.parameters()).device` which is well-defined for any `nn.Module`-derived `DAE`.
 - Source semantics unchanged for any path that doesn't hit the call site (e.g. `--device cpu` synthetic-mode sweeps).
-- D.4 byte-stable regression verified (33/33 PASS).
+- D.4 byte-stable regression verified (72/72 PASS).
 - mkdocs build --strict exits 0.
 - This verifier's commit is **docs-only** (1 new audit doc + 1 new §R.8 row in `docs/baseline-audit-report.md`). Zero source touched.
 
@@ -273,3 +273,7 @@ Tests 5 + 6 catch **literal regressions** (the source carries the wrong text). T
 - `docs/audit/wave115-bucket-d-regressions.md` — 11 source-code regressions for Wave 116 follow-up (10 closed by Wave 118 Phases 2 + 3; 1 remaining = the wave35 saturation `BatchedRunnerConfig.config_hash` item).
 - `docs/CONSOLIDATED_RESULTS.md` §15.20 — Wave 115.P4 paper-package update (5 ADDITIVE subsections, 145 lines; remains the latest paper-package on `main`).
 - `docs/baseline-audit-report.md` §R.8 — Wave 116 row (this audit's companion row in the baseline-audit report).
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

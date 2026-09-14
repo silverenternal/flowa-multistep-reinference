@@ -29,7 +29,7 @@ This audit doc `docs/audit/wave147-followup.md` + baseline-audit-report.md §R.3
 ---
 
 ## Acceptance gates
-- **D.4 33/33 PASS** preserved (`pytest tests/ -k "d4" -q`)
+- **D.4 72/72 PASS** preserved (`pytest tests/ -k "d4" -q`)
 - **ruff 0** preserved (`ruff check adaptive_reflow/ tests/`)
 - **claims_consistency PASS** preserved (`python tools/check_claims_consistency.py`)
 - **mkdocs build --strict EXIT=0** (if mkdocs available; UNCHANGED from Wave 146 state — 1 pre-existing nav-warning on unnav files: `code-release-checklist.md`, `paper-draft-anonymous.md`, `paper-final-neurips.md`, `submission-checklist-final.md`, `headline-evidence/*/SOURCE.md+source_audit*.md`, `references/comparison.md` — NOT introduced by Wave 147)
@@ -60,4 +60,9 @@ This audit doc `docs/audit/wave147-followup.md` + baseline-audit-report.md §R.3
 - `docs/audit/wave146-item2-hp-sweep.md` — Wave 146 P4 2D FM hp sweep (referenced in Phase 5 §7.6 reframe)
 - `docs/baseline-audit-report.md` §R.34 — predecessor Wave 146 close row
 - `docs/CONSOLIDATED_RESULTS.md` §15.43 — predecessor Wave 146 close section
-- `docs/GATES.md` D.4 gate — 33/33 PASS pinned regression vectors at HEAD
+- `docs/GATES.md` D.4 gate — 72/72 PASS pinned regression vectors at HEAD
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

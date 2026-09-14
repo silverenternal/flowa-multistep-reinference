@@ -209,7 +209,7 @@ $ pytest tests/ -k "d4" -q
 33 passed, 22 skipped in X.XXs
 ```
 
-The **11 failed** are exactly the Bucket-D regressions listed above (3 hparam-derived + 7 FID math + 1 wave35 saturation). **No new failures introduced by Phase 5A/B/C.** The `d4` regression-vector suite remains 33/33 PASS as required by the Wave 115 hard rule.
+The **11 failed** are exactly the Bucket-D regressions listed above (3 hparam-derived + 7 FID math + 1 wave35 saturation). **No new failures introduced by Phase 5A/B/C.** The `d4` regression-vector suite remains 72/72 PASS as required by the Wave 115 hard rule.
 
 ---
 
@@ -282,7 +282,7 @@ Both are static source-text matches; they do NOT require torch. They pass with t
 - Phase 4 is ADDITIVE everywhere — no deletions to existing paper/CONSOLIDATED text.
 - Phases 5A/B/C are tests-only (9 LOC tests total) — no source semantics changed.
 - Phase 5D is doc-only (1 new audit doc).
-- D.4 byte-stable regression verified post-Phase-5A/B/C (33/33 PASS).
+- D.4 byte-stable regression verified post-Phase-5A/B/C (72/72 PASS).
 - mkdocs build --strict exits 0.
 - All 6 atomic commits land independently and are revert-safe.
 
@@ -359,3 +359,7 @@ The Wave 115.P4 historical fallback (Wave 88 + Wave 95 + Wave 96.E)
 is **PRESERVED ADDITIVELY** per the HARD RULES — no Wave 115.P4
 numbers are replaced because the Wave 120 framework-arm sweeps did
 not produce complete data.
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

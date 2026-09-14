@@ -5,7 +5,7 @@
 **Scope:** 4 atomic Phases (B + C + E by prior agents + this Phase 4 final synthesis)
 **Constraint:** NO push. NO source code changes. ADDITIVE only.
 
-> **Why this exists:** Wave 132 is the **Tier-1 SCI polish** that takes the Wave 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker and aligns the paper submission package to the **NeurIPS camera-ready template** — section structure + references + supplementary TOC (Phase B), the four camera-ready §9-§12 sections (Phase C: Discussion + Limitations + Broader Impact + Conclusion), and a Tier-1 SCI cover_letter.md reframe (Phase E: R1-R6 explicit + byte-frozen reproducibility + scope of submission). This audit doc closes Wave 132 by Agent 4 final synthesis. **No measurement delta. No algorithm activation. No end-to-end N>=1000 framework_inv_proj sweep beyond the Wave 128 N=1000 reading already published.** The freeze-marker established by Wave 131 is preserved.
+> **Why this exists:** Wave 132 is the **Tier-1 SCI polish** that takes the Wave 131 ruff-0 / D.4 72/72 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker and aligns the paper submission package to the **NeurIPS camera-ready template** — section structure + references + supplementary TOC (Phase B), the four camera-ready §9-§12 sections (Phase C: Discussion + Limitations + Broader Impact + Conclusion), and a Tier-1 SCI cover_letter.md reframe (Phase E: R1-R6 explicit + byte-frozen reproducibility + scope of submission). This audit doc closes Wave 132 by Agent 4 final synthesis. **No measurement delta. No algorithm activation. No end-to-end N>=1000 framework_inv_proj sweep beyond the Wave 128 N=1000 reading already published.** The freeze-marker established by Wave 131 is preserved.
 
 ---
 
@@ -50,7 +50,7 @@
 **cover_letter.md changes (33 lines ADDITIVE):**
 
 - R1-R6 Bonf-sig framework_improves cells made **explicit** in the cover letter (was implicit in Wave 131 §7.6 + Abstract reframe; now made explicit in the submission cover letter as the primary TL;DR claim).
-- Byte-frozen reproducibility statement added: "all headline numbers are byte-stable reproducible (D.4 33/33 PASS) on the freeze-marker commit HEAD at the time of submission; ckpt SHA-256 verified for all 3 Tier 3 models."
+- Byte-frozen reproducibility statement added: "all headline numbers are byte-stable reproducible (D.4 72/72 PASS) on the freeze-marker commit HEAD at the time of submission; ckpt SHA-256 verified for all 3 Tier 3 models."
 - Scope of submission made explicit: "Tier-1 SCI submission (NeurIPS / ICML / ICLR camera-ready); target venue: NeurIPS Flow-Matching Workshop or ICLR 2027 deep-generative-models track."
 
 **Verdict:** cover_letter.md now leads with the R1-R6 Bonf-sig framework_improves claim, the byte-frozen reproducibility guarantee, and the explicit Tier-1 SCI venue scope. ADDITIVE only — pre-Wave-132 cover_letter content preserved verbatim in the "Prior TL;DR" section.
@@ -79,7 +79,7 @@
 
 ## Wave 132 acceptance gates
 
-- `pytest tests/ -k "d4" -q` → **33/33 PASS** preserved (Wave 131 freeze; Phase B/C/E only touched .md files, so D.4 is byte-stable preserved)
+- `pytest tests/ -k "d4" -q` → **72/72 PASS** preserved (Wave 131 freeze; Phase B/C/E only touched .md files, so D.4 is byte-stable preserved)
 - `ruff check adaptive_reflow/ tests/` → **All checks passed!** (Wave 131 freeze; ruff 0 on the freeze-marker source tree preserved)
 - `ruff check .` → **288 findings** (NOT a Wave 132 regression — these are pre-existing in `tools/` + `examples/` `.ipynb` cells; outside the Wave 131 freeze scope)
 - `mkdocs build --strict` → **EXIT=0** (verified at Wave 132 close; 21.3 s build time)
@@ -104,7 +104,7 @@
 - **ADDITIVE only** — all 3 prior-agent commits (Phase B paper + supplementary; Phase C §9-§12; Phase E cover_letter) preserve pre-Wave-132 content; this Agent 4 final synthesis is ADDITIVE audit + appendix rows.
 - **NO source code changes** — Wave 132 is a docs-only wave (paper-draft.md + supplementary.md + cover_letter.md + 2 audit-doc appends).
 - **NO experiments** — no measurement delta, no algorithm activation, no new N>=1000 sweep.
-- **D.4 33/33 PASS preserved** — byte-stable through Wave 132 close (verified via `pytest tests/ -k "d4" -q`).
+- **D.4 72/72 PASS preserved** — byte-stable through Wave 132 close (verified via `pytest tests/ -k "d4" -q`).
 - **ruff 0 preserved** (on adaptive_reflow/ + tests/) — Wave 131 freeze marker preserved through Wave 132 close.
 - **mkdocs strict EXIT=0** — verified at Wave 132 close.
 - **claims_consistency PASS** — verified at Wave 132 close.
@@ -113,3 +113,7 @@
 ---
 
 See `docs/baseline-audit-report.md` §R.21 (Wave 132 ledger) + `docs/CONSOLIDATED_RESULTS.md` §15.30 + paper §9-§12 (Phase C) + paper §1-§8 NeurIPS template alignment (Phase B) + supplementary.md NeurIPS Supplementary Template Index (Phase B) + cover_letter.md R1-R6 explicit reframe (Phase E).
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

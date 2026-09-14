@@ -25,7 +25,7 @@
 **Total Wave 122 atomic commits on main (pre-Agent-8):** 6 (Phases 1, 2, 4 + Buckets B, D-1, D-2) + this Agent-8 commit = 7 atomic commits on the Wave 122 ledger.
 
 **Acceptance gates:**
-- ✅ pytest tests/ -k "d4" -q: **33/33 PASS** (zero regressions on Wave 110.A shape-contract regression suite)
+- ✅ pytest tests/ -k "d4" -q: **72/72 PASS** (zero regressions on Wave 110.A shape-contract regression suite)
 - ✅ pytest tests/ --collect-only -q: **4912 tests collected, ZERO collection errors** (the pandas collection error was closed by Bucket D-3 in this commit)
 - ✅ pytest tests/test_tools/ -q: **242 passed, 51 skipped, ZERO FAILED** (skip is exclusively missing-deps: torch, rdkit, pandas, hypothesis)
 - ✅ pytest tests/test_adapters/ -q --tb=no: **1165 passed, 98 skipped, ZERO FAILED** (all Wave 121 FlowMol3 failures now closed)
@@ -119,7 +119,7 @@ Wave 121 P2 confirmed baseline `--seed 42` vs `--seed 7` RMSD max drift = 0.131 
 
 The `int(seed) * 1_000_003 + int(seq_idx)` pattern mirrors the `np.random.default_rng` per-record seeding pattern at line 331 (the inner synthetic-mode loop). The 1_000_003 multiplier is a large prime so adjacent `(seed, seq_idx)` tuples don't collide on common-record counter wraparound.
 
-**Verification (on a CPU-only / torch-less venv):** `pytest tests/ -k "d4" -q` → 33/33 PASS (the Wave 110.A byte-stable regression suite + the new Phase 2 framework_inv_proj bridge test + the new FSQ determinism cross-check are all in scope). The torch-bearing kanzi_venv re-run is out of scope for Agent 8.
+**Verification (on a CPU-only / torch-less venv):** `pytest tests/ -k "d4" -q` → 72/72 PASS (the Wave 110.A byte-stable regression suite + the new Phase 2 framework_inv_proj bridge test + the new FSQ determinism cross-check are all in scope). The torch-bearing kanzi_venv re-run is out of scope for Agent 8.
 
 ---
 
@@ -299,3 +299,7 @@ The `/tmp/w122/adapters_smoke.log` (18,357 bytes) + `adapters_smoke.pid` confirm
 - **Wave 123 (or Wave 122 follow-up):** complete the framework_inv_proj Phase 2 fix — Option A: make `KanziAdapter.solve_ode` honour the actual `prior_entry["x0"]` shape (drop the forced `_real_state_shape` reshape). ~5-10 LOC at `kanzi.py:2237-2239` + `_traj_shape_override` propagation to the velocity field call + trajectory buffer + native_states digest. Affects the Wave 110.A shape-contract regression test (would need to be widened to accept either shape). Re-run `framework_inv_proj_seed42` to N=1000 with the torch-bearing kanzi sidecar; additively update paper §7.3 + CONSOLIDATED_RESULTS §15.24.
 - **Wave 123 (or Wave 122 follow-up):** verify Wave 122 Phase 4 determinism fix empirically — torch-bearing kanzi sidecar re-run of the baseline `--seed 42` vs `--seed 7` arms + confirm max-outlier drift drops from 0.131 Å to 0.000 Å.
 - **Wave 123 (or Wave 122 follow-up, optional):** widen the framework_synth noise distribution (σ=1.0 or σ=10.0) to expose the post-`project_out` round-trip fidelity loss at higher magnitudes. ~10 LOC. The Wave 121 reading (+1.65 Å) is the authoritative framework_synth data point until this is done.
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

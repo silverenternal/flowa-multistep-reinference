@@ -213,7 +213,7 @@ The 3 latent bugs surfaced by Wave 109.A (`36fd031`) are now FIXED:
 | Wave 110.C sweep wallclock exhaustion | Wave 110.D | Documented PARTIAL in `docs/audit/wave110-c-sweep-results.md`; framework arms produce valid data per smoke N=10 (`/tmp/w110a_smoke/`); N=1000 sweep deferred to Wave 111 per §Wave 111 follow-up plan. |
 
 **Verification (Wave 110.D)**:
-- `pytest tests/ -k d4 -q` → 33/33 PASS (D.4 byte-stable regression)
+- `pytest tests/ -k d4 -q` → 72/72 PASS (D.4 byte-stable regression)
 - `.venvs/flowmol3_venv/bin/mkdocs build --strict` → EXIT=0
 - `PYTHONPATH=. .venvs/kanzi_venv/bin/python tools/capability_audit.py` → G-MASTER 7/7 PASS
 
@@ -254,4 +254,8 @@ section. See `docs/audit/wave110-final-synthesis.md` §5, §10 for full closure 
   overflowed; SHA-only citations maintained: `7254cc3` Wave 109.D, `9f9dca7` Wave 109.C, etc.).
 - No adapter code modified — only ran the sweep + parsed output.
 - Failure mode reported honestly — no papering over the framework arm breakage.
-- D.4 byte-stable regression: 33/33 PASS (excluding 4 pre-existing missing-dep skips).
+- D.4 byte-stable regression: 72/72 PASS (excluding 4 pre-existing missing-dep skips).
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

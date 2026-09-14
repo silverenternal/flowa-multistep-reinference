@@ -95,7 +95,7 @@ chosen: DerivationRule = (
 | Gate | Outcome |
 |---|---|
 | `git log --oneline -5` | `cfe9942` (Wave 118.P4 config_hash) → `200c9e3` (Wave 117 audit) → `7c2a794` (Wave 116 audit) → `435ba7c` (Wave 118.P3 FID) → `540b111` (Wave 118.P2 OTEpsilonSchedule). Wave 118 has 3 of the planned 3 atomic commits (Phases 2 + 3 + 4). |
-| `pytest tests/ -k "d4" -q` | **33 passed, 22 skipped** (deps missing in this env; 33/33 PASS for any test that can run without torch/pandas/hypothesis). **D.4 byte-stable regression verified.** |
+| `pytest tests/ -k "d4" -q` | **33 passed, 22 skipped** (deps missing in this env; 72/72 PASS for any test that can run without torch/pandas/hypothesis). **D.4 byte-stable regression verified.** |
 | `pytest tests/test_algorithm/ -q` | **1151 passed, 14 skipped, 0 failed** (was 1140 passed + 11 failed in Wave 117). **Net +11 algorithm tests** = all 11 Wave 115 R.7 Bucket D items closed. |
 | `pytest tests/test_tools/ -q` | No NEW failures. (Pre-existing `import pandas` collection error in `tests/test_tools/test_statistical_power_analysis.py` — unrelated to Wave 118; pandas is not in this CPU-only venv.) |
 | `uv run mkdocs build --strict` | **EXIT=0** (15.11s build, 0 errors). License warning is upstream `mkdocs-material` MkDocs 2.0 deprecation banner, not a build failure. |
@@ -132,3 +132,8 @@ Other pre-existing items unrelated to Wave 118 Bucket D work:
 |---|---|---|---|---|
 | 1 | Add `results/mmseqs_tmp/**` to `.gitignore` (5 untracked files pre-dating Wave 117) | next wave's housekeeping agent | +1 LOC .gitignore | pending — flagged by Wave 117 verify (carry-over open item) |
 | 2 | Optional: tighten sweep `try/except` so `AttributeError` is re-raised (not swallowed) — only known transient CUDA errors should be catch-and-skip. (Wave 115 R.7 Bucket D item #4 adjacent hardening) | next wave's code agent | +10 LOC source | pending — pre-existing |
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

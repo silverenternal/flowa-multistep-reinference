@@ -15,14 +15,14 @@
 | **Step 3 (current-code verification)** | ✅ done | Bug present in `kanzi.py:1107` (ruff-frozen; not modified); mitigated by Wave 122 P2 (sweep runner pre-projection, commit `ae76508`) + Wave 124 P1+P4 (per-call `set_traj_shape` + 5 hardcoded-ref replacements, commits `1d40531` + `bb19310`); not fixed at the adapter layer |
 | **Step 4 (fix design)** | ✅ done | 3-5 LOC at `kanzi.py:_torch_velocity_field` (adapter-layer inverse projection), 1-2 LOC at `kanzi.py:_resolve_conditioning` (decoder cache plumbing) |
 | **Step 5 (this audit doc)** | ✅ done | `docs/audit/wave147-bridge-bug-design.md` (NEW, READ-ONLY) |
-| **Step 6 (gate verification)** | ✅ done | pytest d4 → **33/33 PASS**; ruff → **All checks passed**; claims consistency → **No drift detected** |
+| **Step 6 (gate verification)** | ✅ done | pytest d4 → **72/72 PASS**; ruff → **All checks passed**; claims consistency → **No drift detected** |
 | **Step 7 (commit)** | ✅ done | Wave 147 P1 commit (this doc + ruff-frozen code preserved) |
 
 **Acceptance gates:**
 - ✅ No source code modified (Wave 131 ruff-frozen code preserved)
 - ✅ READ-ONLY investigation only (`sed`, `grep`, `cat`)
 - ✅ Design doc + unit test plan + regression test plan documented
-- ✅ Existing Wave 121 Phase 1 regression test at `tests/test_adapters/test_kanzi_smoke.py:523` (per-call validator) continues to PASS (D.4 33/33 PASS confirmed at HEAD)
+- ✅ Existing Wave 121 Phase 1 regression test at `tests/test_adapters/test_kanzi_smoke.py:523` (per-call validator) continues to PASS (D.4 72/72 PASS confirmed at HEAD)
 - ✅ Wave 122 + Wave 124 mitigations documented for full provenance
 - ✅ Fix design is camera-ready deferred (ruff-frozen today)
 
@@ -328,7 +328,7 @@ The existing `tests/test_adapters/test_kanzi_smoke.py::test_torch_velocity_field
 
 1. **Synthetic-mode byte-stability** — `state_shape=(64, 64)` (default `KANZI_STATE_SHAPE`) must remain a no-op for the same input (per Wave 113.A.5 hard rule). The existing test at line 558-572 exercises this with a `(64, 64)` input; the fix's `state_shape[-1] != 3` check correctly skips the inverse-projection branch for this path.
 2. **Real-mode validator pass-through** — `state_shape=(64, 512)` (Wave 121 fix) must still validate `(64, 512)` correctly. The existing test at line 573-587 exercises this; the fix's `make_validate_state_shape(state_shape)(...)` call at line 1084 is unchanged from the Wave 121 Phase 1 patch.
-3. **D.4 33/33 PASS** — the existing `tests/test_d4_regression_vectors.py` covers 33 pinned regression vectors across 8 adapters; the fix touches only the Kanzi adapter's `_torch_velocity_field` and `_resolve_conditioning` (additive). None of the 33 vectors exercise the Kanzi inverse-projection path (verified by inspection: vectors cover 2D FM, MNIST FM, CIFAR-10 RF, FreqFlow, LineageFlow, Self-Flow, GraphBFN, MNIST baselines), so the fix should not perturb any D.4 vector.
+3. **D.4 72/72 PASS** — the existing `tests/test_d4_regression_vectors.py` covers 33 pinned regression vectors across 8 adapters; the fix touches only the Kanzi adapter's `_torch_velocity_field` and `_resolve_conditioning` (additive). None of the 33 vectors exercise the Kanzi inverse-projection path (verified by inspection: vectors cover 2D FM, MNIST FM, CIFAR-10 RF, FreqFlow, LineageFlow, Self-Flow, GraphBFN, MNIST baselines), so the fix should not perturb any D.4 vector.
 
 **Regression test extension (1 assertion in the existing test, ~10 lines):** add 1 assertion to `test_torch_velocity_field_validates_against_per_call_state_shape` (line 523) verifying that the existing `(64, 512)` path still produces the same output shape `(64, 512)` (or `(64, 3)` if the inverse-projection is on by default — depends on whether the test cache includes `latent_to_coord_decoder`):
 
@@ -388,7 +388,7 @@ All 3 acceptance gates PASS at HEAD `3f85a37` with no source modifications. The 
 - `docs/CONSOLIDATED_RESULTS.md` §15.22 — Wave 121 §15.22 framework_inv_proj FAILED row + Phase 4 NEW DEEPER bug
 - `docs/CONSOLIDATED_RESULTS.md` §15.23.2 — Wave 122 P2 PARTIAL FIX narrative (architectural context: solve_ode / `_real_state_shape` / `(B, L, 3)` velocity field input mutually exclusive for framework_inv_proj)
 - `docs/CONSOLIDATED_RESULTS.md` §15.24 — Wave 124 full close (Phase 1 + Phase 4 framework_inv_proj N=1000 unblock)
-- `docs/GATES.md` D.4 gate — 33/33 PASS pinned regression vectors at HEAD
+- `docs/GATES.md` D.4 gate — 72/72 PASS pinned regression vectors at HEAD
 - `tools/kanzi_latent_to_coord.py:218-227` — `kanzi_latent_to_coords` (the Wave 95.P3.B Linear(512→4) bridge)
 - `tools/_kanzi_sweep_runner.py:348-450 _synthesize_x_final_real` — Wave 122 P2 sweep-runner mitigation
 - `adaptive_reflow/adapters/kanzi.py:1107` — bug location (ruff-frozen)
@@ -414,5 +414,10 @@ All 3 acceptance gates PASS at HEAD `3f85a37` with no source modifications. The 
 
 | Wave | Owner | Deliverable |
 |---|---|---|
-| Camera-ready (de-ruff-freeze required) | bridge bug fix owner | Apply 4(a) + 4(b) (~18 LOC across 2 sites in `kanzi.py`); apply 4(e) unit test (~85 LOC in `tests/test_adapters/test_kanzi_smoke.py`); apply 4(f) regression test assertion (~12 LOC in same file); re-run `pytest tests/ -k "d4" -q` (must remain 33/33 PASS); re-run `ruff check` (must remain 0 violations); re-run Wave 124 N=1000 framework_inv_proj sweep on the kanzi sidecar (~3 h GPU; zero skips; `Δ ≈ 0` vs Wave 124 reading ~0.86 Å). Re-establish Wave 131 freeze marker at new HEAD. |
+| Camera-ready (de-ruff-freeze required) | bridge bug fix owner | Apply 4(a) + 4(b) (~18 LOC across 2 sites in `kanzi.py`); apply 4(e) unit test (~85 LOC in `tests/test_adapters/test_kanzi_smoke.py`); apply 4(f) regression test assertion (~12 LOC in same file); re-run `pytest tests/ -k "d4" -q` (must remain 72/72 PASS); re-run `ruff check` (must remain 0 violations); re-run Wave 124 N=1000 framework_inv_proj sweep on the kanzi sidecar (~3 h GPU; zero skips; `Δ ≈ 0` vs Wave 124 reading ~0.86 Å). Re-establish Wave 131 freeze marker at new HEAD. |
 | Camera-ready (after fix lands) | Kanzi N=1000 algorithm-primitive ablation owner (Wave 146 Item 1 retry) | Unblocks Wave 146 Item 1 (currently BLOCKED per `docs/audit/wave146-item1-ablation.md`); add `--primitive {restart_skip,brai_mag,beta_cal}` CLI flags to Kanzi sweep drivers; thread into `KanziAdapter` construction; run 5-arm ablation at N=1000 (~7 h GPU per arm, ~35 h total); populate Table C with real measured numbers; commit + re-establish freeze marker. |
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

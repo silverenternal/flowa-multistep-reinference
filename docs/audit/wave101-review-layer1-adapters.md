@@ -336,7 +336,7 @@ The policy IS lazy (it stays None until first use). The comment is accurate but 
 **Net LOC delta**: ~ -290 LOC across adapters/, ~ +35 LOC in `_adapter_common.py` / `core.ckpt_loader`. Net: -255 LOC and 5 comment/doc/code drifts closed.
 
 **Acceptance criteria for the fix pass**:
-1. D.4 byte-stable regression: `pytest tests/ -k "d4" -q` → 33/33 PASS (no D.4 vector changes)
+1. D.4 byte-stable regression: `pytest tests/ -k "d4" -q` → 72/72 PASS (no D.4 vector changes)
 2. Adapter conformance: `pytest tests/test_adapters/ -q` → no new failures
 3. Capability audit: `python tools/capability_audit.py` → G-MASTER 7/7 unchanged
 4. Per-adapter smoke: each of kanzi/lineageflow/hidream_i1/flowmol3_v2 boots in `force_mode='auto'` and `force_mode='synthetic'` without raising
@@ -352,3 +352,8 @@ The policy IS lazy (it stays None until first use). The comment is accurate but 
 ---
 
 REVIEW COMPLETE — found 10 issues across 4 dimensions (duplication 4, loading-path 1, public-API 0, dead-code 1, comment-drift 4).
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

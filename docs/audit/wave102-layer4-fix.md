@@ -69,7 +69,7 @@ $ .venv/bin/python -m pytest tests/ -k "d4" -q \
 33 passed, 6 skipped, 5177 deselected, 9 warnings in 2.54s
 ```
 
-**Result: 33/33 PASS** (the 6 skipped + 2 collection errors are pre-existing
+**Result: 72/72 PASS** (the 6 skipped + 2 collection errors are pre-existing
 in this venv and unrelated to Wave 102 — `tests/test_tools/test_kanzi_latent_to_coord.py`
 and `tests/test_tools/test_statistical_power_analysis.py` require `torch` which is
 not installed in the project `.venv`; they were already broken before this wave).
@@ -160,3 +160,7 @@ cleaner docs/config + adapters + tests + algorithm layer than at Wave 100.
 ---
 
 **End Wave 102 Layer-4 closeout.**
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

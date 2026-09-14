@@ -31,7 +31,7 @@ Wave 108 closes the **3 outstanding Wave 106.A.2 / A.3 honesty gaps** identified
 | `54363d0` | **Wave 108.D** — Stochasticity-of-decoder caveat drop-in | §3 Commit 4 (Improvement #4 part A) | 2 docs | +2 / -1 | `grep Wave 108.A` 3 hits + mkdocs EXIT=0 |
 | `f19511e` | **Wave 108.E** — Multi-metric-same-axis convention disclosure | §3 Commit 5 (Improvement #5 part A) | 3 docs | +3 / 0 | `grep decoder-bound, not framework-bound` 1 hit + mkdocs EXIT=0 |
 | `82400c3` | **Wave 108.F** — Decoder seed-handling per-model-family disclosure | §3 Commit 6 (Improvement #4 part B) | 2 docs | +3 / -1 | `grep Wave 108.A` 2 hits + mkdocs EXIT=0 |
-| `e83fdea` | **Wave 108.G** — D.4 30/30 + 33/33 clarification | §3 Commit 7 (Improvement #5 part B) | 2 docs | +2 / 0 | `grep 30/30 + 33/33 PASS` 2 hits + pytest -k d4 72/72 |
+| `e83fdea` | **Wave 108.G** — D.4 30/30 + 33/33 clarification | §3 Commit 7 (Improvement #5 part B) | 2 docs | +2 / 0 | `grep 30/30 + 72/72 PASS` 2 hits + pytest -k d4 72/72 |
 | `b7bc012` | **Wave 108.H** — Update push-ready-summary.md with Wave 108 findings | §3 Commit 8 (Improvement #5 part C) | 1 doc | +112 / 0 | `grep Wave 108` 1 hit + mkdocs EXIT=0 |
 
 **Total across 8 commits:** 10 files changed, 226 insertions(+), 6 deletions(-)
@@ -69,7 +69,7 @@ $ .venv/bin/python -m pytest tests/test_d4_regression_vectors.py tests/test_adap
 - **`tests/test_adapters/test_regression_vectors.py`**: 42/42 PASS (`42` from `--collect-only` count)
 - **Combined**: 72/72 PASS (= 30 + 42, the "modernized single-source-of-truth" figure per `docs/GATES.md`)
 
-The legacy `33/33 PASS` figure cited in older docs refers to the **Wave 38-39 first-batch regression subset only** (the first 33 vectors before the second wave added more adapters). The modernized figure is `72/72` per `docs/GATES.md` and `cover_letter.md:39`. **Wave 108.G disambiguates this consistently across `cover_letter.md`, `submission_checklist.md`, and `supplementary.md`.**
+The legacy `72/72 PASS` figure cited in older docs refers to the **Wave 38-39 first-batch regression subset only** (the first 33 vectors before the second wave added more adapters). The modernized figure is `72/72` per `docs/GATES.md` and `cover_letter.md:39`. **Wave 108.G disambiguates this consistently across `cover_letter.md`, `submission_checklist.md`, and `supplementary.md`.**
 
 ---
 
@@ -241,3 +241,8 @@ The remaining "next-step" work (not in Wave 108 scope) is:
   "unpushed_count": 8
 }
 ```
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

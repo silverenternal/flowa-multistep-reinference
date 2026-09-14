@@ -190,7 +190,7 @@ No actionable dead code beyond Rank 5 (`_kanzi_project_out_inv*.py` archives).
 ## Section 8 — Acceptance criteria
 
 Per-fix:
-1. `pytest tests/ -k "d4" -q` → 33/33 PASS (no D.4 vector changes)
+1. `pytest tests/ -k "d4" -q` → 72/72 PASS (no D.4 vector changes)
 2. `pytest tests/test_algorithm/ tests/test_tools/ -q` → no new failures
 3. `python tools/capability_audit.py` → G-MASTER 7/7 unchanged
 4. `mkdocs build --strict` → exits 0
@@ -199,3 +199,8 @@ Per-fix:
 ---
 
 REVIEW COMPLETE — found 9 issues across 5 dimensions (scheduler-bloat 2, runner-bloat 2, glue-bloat 1, import-hygiene 0, dead-code 0, cli-consistency 1, subpackage-grouping 1).
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

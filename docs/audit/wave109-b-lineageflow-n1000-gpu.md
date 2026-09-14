@@ -147,7 +147,7 @@ To actually close the Wave 81 PARTIAL → N=1000 claim, the next wave
    already reproduces at nfe=50, n_rounds=3, N=2 per arm.
 6. **Verify post-run**:
    - pytest tests/test_d4_regression_vectors.py → 30/30 PASS
-   - pytest tests/ -k d4 → 33/33 PASS
+   - pytest tests/ -k d4 → 72/72 PASS
    - Single atomic commit titled "Wave 110: N=1000 LineageFlow sweep
      completion (close Wave 81 PARTIAL)" with the JSONs, an updated
      audit doc, and an updated §7.4 of `paper-draft.md`.
@@ -155,7 +155,7 @@ To actually close the Wave 81 PARTIAL → N=1000 claim, the next wave
 ## 4. Verification
 
 - D.4 byte-stable vectors: **30/30 PASS** (`pytest tests/test_d4_regression_vectors.py -q`)
-- D.4 broader test set: **33/33 PASS** (`pytest tests/ -k d4 -q`, 8 skipped perf/eval modules)
+- D.4 broader test set: **72/72 PASS** (`pytest tests/ -k d4 -q`, 8 skipped perf/eval modules)
 - mkdocs build --strict: (run separately if needed)
 - Single atomic commit (no push)
 
@@ -181,3 +181,7 @@ Requires:
 
 All binaries vendored by Wave 80 Agent B + Wave 81 Agent C (see
 `docs/audit/wave80-phase1-audit.md §1.3` + `docs/audit/wave81-phase1-audit.md`).
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

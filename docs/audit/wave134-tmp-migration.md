@@ -5,7 +5,7 @@
 **Scope:** 5 atomic Phases (1-4 by prior agents + this Phase 5 final synthesis)
 **Constraint:** NO push. NO source code changes. ADDITIVE only.
 
-> **Why this exists:** Wave 134 is the **/tmp/-to-repo migration** wave that takes the 8 N=1000 sweep JSONs that lived only on the sandbox /tmp filesystem (and therefore could not be reproduced by anyone who checked out the repo) and promotes them into `verification_outputs/` so the freeze-marker submission package now has **complete reproducibility provenance**. Phases 1-3 update the 3 docs (paper-draft + baseline-audit + CONSOLIDATED) that cited those /tmp/ paths so they now point at the repo-resident copies. Phase 4 refreshes `todo/STATUS.md` + `todo/INDEX.md` to reflect the post-Wave-127+ reality (v1.0-paper-final tag set; ruff 0; 8 N=1000 sweeps in repo). This Phase 5 final close writes the audit doc, appends baseline-audit §R.24, appends CONSOLIDATED §15.33, and tags `v1.0.1-paper-final`. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
+> **Why this exists:** Wave 134 is the **/tmp/-to-repo migration** wave that takes the 8 N=1000 sweep JSONs that lived only on the sandbox /tmp filesystem (and therefore could not be reproduced by anyone who checked out the repo) and promotes them into `verification_outputs/` so the freeze-marker submission package now has **complete reproducibility provenance**. Phases 1-3 update the 3 docs (paper-draft + baseline-audit + CONSOLIDATED) that cited those /tmp/ paths so they now point at the repo-resident copies. Phase 4 refreshes `todo/STATUS.md` + `todo/INDEX.md` to reflect the post-Wave-127+ reality (v1.0-paper-final tag set; ruff 0; 8 N=1000 sweeps in repo). This Phase 5 final close writes the audit doc, appends baseline-audit §R.24, appends CONSOLIDATED §15.33, and tags `v1.0.1-paper-final`. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 72/72 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
 
 ---
 
@@ -44,7 +44,7 @@ All 8 JSONs verified to exist on disk at the destination path after Phase 1 atom
   - v1.0-paper-final tag set (2026-09-14).
   - ruff 0 (Wave 131 Phase 1 ruff auto-fix).
   - 8 N=1000 sweep JSONs now in repo (this wave).
-  - D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker preserved.
+  - D.4 72/72 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker preserved.
 - `todo/INDEX.md` refreshed to surface the 8 in-repo sweep JSONs under the "Reproducibility provenance" heading.
 - 6 active plans updated to SHIPPED status (Wave 127 finish-line, Wave 131 pre-freeze, Wave 132 Tier-1 polish, Wave 133 number-consistency, Wave 134 /tmp migration, baseline R.1-R.24 ledger).
 - **Wave 86 LineageFlow N=1000 HMMER raw JSON noted as STILL MISSING** — there is no /tmp copy on the sandbox and no Wave 86 audit-doc data. This is the ONE outstanding reproducibility gap (see "What remains NOT in repo" below).
@@ -55,7 +55,7 @@ All 8 JSONs verified to exist on disk at the destination path after Phase 1 atom
 
 - All 8 N=1000 sweep JSONs in `verification_outputs/` (Phase 1 atomic copy verified).
 - All 3 docs (paper-draft + baseline-audit + CONSOLIDATED) paths updated (Phases 1-3).
-- `pytest tests/ -k "d4" -q` → **33/33 PASS** preserved (no code changed).
+- `pytest tests/ -k "d4" -q` → **72/72 PASS** preserved (no code changed).
 - `ruff check adaptive_reflow/ tests/` → **All checks passed!** preserved (Wave 131 freeze).
 - `python tools/check_claims_consistency.py` → **PASS** preserved (39 active, 0 provisional, 2 deprecated).
 - `mkdocs build --strict` → **EXIT=0** (verified at Phase 5 close).
@@ -98,3 +98,8 @@ HEAD after Wave 134 final close is **`v1.0.1-paper-final`**. This tag **supersed
 - `docs/CONSOLIDATED_RESULTS.md` §15.33 — this wave's CONSOLIDATED row
 - `todo/STATUS.md` + `todo/INDEX.md` — Phase 4 refresh
 - `verification_outputs/kanzi_n1000_*/` — 8 N=1000 sweep JSONs now in repo
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.

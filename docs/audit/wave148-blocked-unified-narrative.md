@@ -13,7 +13,7 @@
 | **Step 1 (predecessor docs read)** | done | `docs/audit/wave146-item1-ablation.md` (5 root causes individually documented) + `docs/audit/wave147-bridge-bug-design.md` (RC1 design) + `docs/audit/wave147-primitive-cli-design.md` (RC2-RC3 design) |
 | **Step 2 (5 root causes extracted)** | done | RC1 = Wave 121 bridge bug; RC2 = kwargs not flags; RC3 = sweep runner hardcode; RC4 = ablation script hardcode; RC5 = wallclock insufficient |
 | **Step 3 (unified narrative authored — this doc)** | done | `docs/audit/wave148-blocked-unified-narrative.md` (NEW, READ-ONLY, 6 sections) |
-| **Step 4 (gate verification — READ-ONLY)** | done | pytest d4 → **33/33 PASS**; ruff → **All checks passed!**; claims consistency → **No drift detected.** |
+| **Step 4 (gate verification — READ-ONLY)** | done | pytest d4 → **72/72 PASS**; ruff → **All checks passed!**; claims consistency → **No drift detected.** |
 | **Step 5 (commit — this doc only)** | done | Wave 148 P3 commit (this doc + ruff-frozen code preserved verbatim) |
 
 **Acceptance gates:**
@@ -24,7 +24,7 @@
 - ✅ Camera-ready timeline totals ~46.5h CPU + ~38h GPU across 5 sequential steps
 - ✅ Risk assessment covers do-nothing scenario (K1 remains BLOCKED; Table C remains spec-only)
 - ✅ All references to `wave146-item1-ablation.md` + `wave147-*` docs preserved
-- ✅ D.4 33/33 PASS confirmed at HEAD (`pytest tests/ -k "d4" -q`)
+- ✅ D.4 72/72 PASS confirmed at HEAD (`pytest tests/ -k "d4" -q`)
 - ✅ Ruff-clean confirmed at HEAD (`ruff check adaptive_reflow/ tests/`)
 - ✅ Claims consistency PASS confirmed at HEAD (`tools/check_claims_consistency.py`)
 
@@ -373,7 +373,7 @@ The K1 disclosure cross-links `docs/audit/wave146-item1-ablation.md` + `docs/aud
 - `tests/test_adapters/test_kanzi_smoke.py` — RC1 unit test target (`test_torch_velocity_field_inverse_projects_post_project_out_latents`; ~85 LOC)
 - `tests/test_run_controlled_audit/test_n_rounds_cli.py` (NEW) — RC2-RC3 unit test target (~40 LOC)
 - `tests/test_perturbation/test_brai_eps_scale_cli.py` (NEW) — RC2-RC3 unit test target (~40 LOC)
-- `tests/test_d4_regression_vectors.py` — D.4 33/33 pinned regression vectors (must remain 33/33 PASS after all PR-prep applications)
+- `tests/test_d4_regression_vectors.py` — D.4 33/33 pinned regression vectors (must remain 72/72 PASS after all PR-prep applications)
 
 **Verification outputs (current Table C source):**
 
@@ -381,7 +381,7 @@ The K1 disclosure cross-links `docs/audit/wave146-item1-ablation.md` + `docs/aud
 
 **Gates:**
 
-- `docs/GATES.md` D.4 gate — 33/33 PASS pinned regression vectors at HEAD
+- `docs/GATES.md` D.4 gate — 72/72 PASS pinned regression vectors at HEAD
 - `docs/GATES.md:90` — Wave 131 ruff-freeze marker at commit `89e635e` (v1.0.1-paper-final tag)
 
 ---
@@ -425,10 +425,15 @@ All 3 acceptance gates PASS at HEAD with no source modifications. The ruff-froze
 | `root_causes_count` | **5** (RC1 = Wave 121 bridge bug; RC2 = kwargs not flags; RC3 = sweep runner hardcode; RC4 = ablation script hardcode; RC5 = wallclock insufficient) |
 | `camera_ready_total_hours` | **~46.5h CPU + ~38h GPU** (per brief; optimistic case with parallel GPU orchestration) |
 | `audit_doc_path` | `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave148-blocked-unified-narrative.md` |
-| `d4_pass` | **33/33 PASS** |
+| `d4_pass` | **72/72 PASS** |
 | `ruff_count` | **0** (All checks passed!) |
 | `claims_pass` | **No drift detected** |
 
 ---
 
 **END OF AUDIT — BLOCKED state unified into 5-way AND root cause narrative — NO SWEEP LAUNCHED — NO SOURCE CODE MODIFIED**
+
+
+---
+
+**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.
