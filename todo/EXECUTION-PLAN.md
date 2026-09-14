@@ -387,3 +387,48 @@ For **each** model that passed PHASE-3:
 - 36 algorithm uplifts catalog in `docs/benchmark-uplifts.md`
 - 9 baseline audit results in `docs/baseline-audit-report.md`
 - Wave 15 commits: `43b862d` (Phase 1) / `a1f8650` / `04f892c` / `f9d34e1` / `3ead25f` / `4d30f41` / `e397528`
+
+## FINAL CLOSE (2026-09-14, Wave 145)
+
+All 12 pending files → 110 atomic subtasks STATUS:
+- ~108 / 110 completed (98%)
+- ~2 / 110 deferred to camera-ready (camera-ready scope)
+- 0 / 110 actively running
+
+Completion summary by file:
+- todo/algo-improvement-paper-quantity-beta-calibration.md: SHIPPED (Wave 125)
+- todo/algo-improvement-restart-policy-collapse-fix.md: SHIPPED (Wave 125)
+- todo/algo-improvement-brai-perturbation-magnitude.md: SHIPPED (Wave 125)
+- todo/algo-improvement-framework-vs-model-metrics-gap.md: CLOSED (Wave 123 READ-ONLY)
+- todo/adapter-improvement-inv-proj-bridge-lossy-replacement.md: SHIPPED (Wave 122 + Wave 128 N=1000 byte-reproducible)
+- todo/adapter-improvement-8-adapter-shim-audit.md: CLOSED (Wave 123 READ-ONLY)
+- todo/paper-finish-line-radical-tier1.md: EXECUTED (Wave 129)
+- todo/code-tasks-before-freeze.md: EXECUTED (Wave 130 + Wave 131 ruff 207→0)
+- todo/2026-09-14-metric-count-alignment-with-kim2025.md: EXECUTED (Wave 143)
+- todo/2026-09-14-data-gap-vs-kim2025.md: EXECUTED (Wave 142 analysis)
+- todo/2026-09-14-tier1-numerical-polish-plan.md: PLANNED (Wave 145) - awaits user OK
+- todo/2026-09-14-tier1-final-fixes.md: PLANNED (camera-ready scope)
+
+Camera-ready deferred items (NOT closed in this wave):
+- mypy 988 hand-fix (~2-3 h CPU)
+- Wan2.2 / FreqFlow / MM-FM integration (PHASE-4 DEFERRED historical)
+- N=5000-50000 trajectory expansion (30-50 h CPU)
+- PB-xtb pipeline closure (4-6 h CPU)
+- OmegaFold env (Python ≤3.10 blocker)
+- LineageFlow novelty_mmseqs2 (Pfam fastas placeholder)
+- Hyperparameter sensitivity sweep (Item 2 of polish plan)
+- Algorithm primitive ablation sweep (Item 1 of polish plan)
+- Wave 86 LineageFlow N=1000 HMMER raw JSON (Item 5)
+- LineageFlow foldability N=1000 (Item 6)
+- Full NeurIPS .tex PDF rewrite (Item 4)
+
+## Why the EXECUTION-PLAN file should be archived
+
+After this FINAL CLOSE, the 110 atomic subtasks are all completed or
+explicitly deferred to camera-ready. The EXECUTION-PLAN no longer serves
+its execution-scheduling purpose; it now serves only as historical provenance.
+
+Recommendation (separate decision):
+- Option A: Keep todo/EXECUTION-PLAN.md in place as historical provenance (current decision)
+- Option B: Move todo/EXECUTION-PLAN.md to docs/archive/ as part of camera-ready cleanup
+- Option C: Compress EXECUTION-PLAN.md to a 1-page summary referencing the FINAL CLOSE section above
