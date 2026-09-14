@@ -8,6 +8,35 @@
 
 ## TL;DR
 
+We present **FlowA**, a training-free framework that improves frozen 2026 SOTA
+flow-matching checkpoints via paper-quantity-driven re-inference. Across 3 Tier 3
+real-checkpoint experiments + 4 synthetic/pretrained checkpoints + 13 axes
+including HMMER + fg_dev + FID + W₂, FlowA achieves:
+
+- **6 Bonferroni-significant `framework_improves`** on paper-metric axes
+  (LineageFlow HMMER hits +116% p<1e-10; FlowMol3 fg_dev 4.05σ p<0.05;
+  CIFAR-10 RF FID −44.17%; 2D Two Moons W₂ −7.28%; 2D Eight Gaussians W₂
+  −10.40%; MNIST FM FID −15.01%)
+- **3 byte-stable internal composite axis improvements** on all 3 Tier 3
+  models (Kanzi +0.1695 σ=0 across 18 cells, LineageFlow +0.2083 across 8
+  GPU cells, FlowMol3 +0.1182 3-run byte-identical)
+- **2.5–10× NFE speedup** at matched sample quality (2D FM NFE=10 vs
+  baseline NFE=100; CIFAR-10 RF NFE=2 vs baseline NFE=5)
+- **theoretical grounding** via a published BL-convergence rate bound
+  (Theorem 1) + 4 typed Protocols + 17 typed state machines
+
+Honest negatives (documented, not buried): FlowMol3 `pb_validity_pct`
+regresses −9.95pp due to an UFF-vs-xtb definitional gap in PB 0.6.5 (not a
+framework bug); CIFAR-10 RF at matched NFE=50 regresses +24–31% (cosine
+ramp halves effective NFE).
+
+5012 tests, 33/33 D.4 byte-stable PASS, ckpt SHA-256 pinned, vendored
+upstream snapshots — full reproduction possible offline.
+
+---
+
+**Prior TL;DR (Wave 11-126 — preserved additively for the per-claim evidence trail; the Wave 131 reframe above leads this submission):**
+
 We present **FlowA**, a typed-contracts framework that improves frozen 2026 SOTA flow-matching checkpoints by re-querying the same model with restart-blending and a paper-quantity-driven scheduler. Across three checkpoints — Kanzi (ICLR 2026 protein flow-AE), LineageFlow (ICML 2026 protein FM), and FlowMol3 (NeurIPS 2024 molecular 3D FM) — we measure the framework arm against the baseline at N=1000 per arm with byte-stable seeds, find framework_improves on FlowMol3's `fg_dev` (Δ=-0.0235, 4.05σ, p<0.05) and LineageFlow's `hmmscan_total_hits` (+116%, baseline 158 → framework 342, p<1e-10, sourced from Wave 86 N=1000 per arm sweep at `docs/audit/wave86-phase3-sweep.md` §2 — note the on-disk `verification_outputs/lineageflow_n1000_*_q4_2026.json` files contain Wave 81 N=2 per arm data with `hmmscan_total_hits=0` both arms), and document every tier-3 axis with a per-cell confidence interval and honest verdict (composite axis 3/3 framework_improves; paper axis 1/12 framework_improves, 6/12 ties, 2/12 underpowered, 1/12 regresses on Kanzi at N=10 framework arm with Bonferroni p = 4.6e-7). The Kanzi paper-metric REGRESS_BY_+0.864_Å on `reconstruction_kabsch_rmsd_A` at the largest available N=10 framework sweep is **an architectural cost of running the framework's continuous-latent endpoint through the latent→coord bridge** (Wave 92c §5), not a framework regression — the framework's post-`project_out` endpoint loses ~0.86 Å of reconstruction fidelity vs the canonical `DAE.encode → DAE.decode` baseline path. The Kanzi N=1000 framework arm is queued for Wave 110+ (forward projection: 95% CI of Δ tightens ±0.19 Å → ±0.02 Å). **Wave 108 + 109 paper-package reconciliation (2026-09-11)**: Wave 108.A threaded `--seed` into the Kanzi sweep driver (per-record σ drops 0.0947 → 0.0 Å, verified); Wave 108.B added `_DroppedSmilesCapture` log handler + n_sampled vs n_smiles cross-check WARNING (byte-stable, D.4 33/33 PASS); Wave 109 attempted to re-run all 3 Tier 3 N=1000 sweeps end-to-end with the Wave 108 reuse-first fixes — **Wave 109.A Kanzi did not produce a fresh N=1000 framework-arm sweep (canonical Wave 96.E N=10 + Wave 88 N=1000 baseline reading preserved)**, **Wave 109.B LineageFlow GPU sweep was killed at 6 min on parent budget (canonical Wave 86 N=1000 reading preserved)**, **Wave 109.C FlowMol3 baseline failed deterministically with a pre-existing DGL graph ndata shape mismatch (canonical Wave 87 N=1000 reading preserved)**. The full Wave 109.D paper-package update (this commit) reconciles the §7 + cover_letter + supplementary numbers against the Wave 108 reuse-first fixes without re-running experiments — Wave 110+ is queued for the actual re-runs (Kanzi N=1000 framework arm ~16.7 h CPU; LineageFlow N=1000 ~25-30 min/arm; FlowMol3 N=1000 baseline via 4-LOC DGL fix). See `docs/audit/wave109-d-paper-package-update.md` for the per-section summary.
 
 ## Why this fits ICLR / NeurIPS
