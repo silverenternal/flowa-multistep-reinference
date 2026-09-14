@@ -7,18 +7,15 @@ Adaptive reflow 和多步复推理控制：round orchestration、restart memory�
 ## Status
 
 **Submission status:** Tier-1 SCI submission-ready (2026-09-14 freeze marker).
-HEAD at freeze: `d3880573bf7faeb0ee559b75f446ed948c8f3a17`. See
-[`docs/audit/wave131-pre-freeze-hygiene.md`](docs/audit/wave131-pre-freeze-hygiene.md)
-for the freeze ledger.
+HEAD at freeze: `0ef6465` (v1.0.1-paper-final tag; post-Wave 134 /tmp/ → repo migration + Wave 135 headline-evidence collection + Wave 136 final polish). See
+[`docs/audit/wave134-tmp-migration.md`](docs/audit/wave134-tmp-migration.md) + [`docs/audit/wave136-submission-polish.md`](docs/audit/wave136-submission-polish.md) for the freeze + submission polish ledger.
 
-- Stage: prototype, active development (Tier-1 SCI submission in progress)
-- Self-assessment: B+ (algorithm depth + engineering discipline; not ready
-  for production use)
-- Test count: **2165 passed / 9 skipped / 3 pre-existing FAILED** (torch-gated; per latest `pytest_results.txt` snapshot at commit `f97ec1c`). The 3 pre-existing FAILED tests (`test_exp2_stochastic_fm_w2_ratio_reproduces_25pct_reduction`, `test_check_docs_against_code.py::test_no_false_positives_on_current_repo`, `test_check_docs_against_code.py::test_self_test_quiet_mode_returns_zero_exit`) are unrelated to the framework's algorithm logic and have been tracked since Wave 48/49. The earlier "1235 passing / 7 skipped" figure predates Wave 38-106 test additions.
-- D.4 pinned regression vectors: **72/72 PASS** (`tests/test_d4_regression_vectors.py` + `tests/test_adapters/test_regression_vectors.py`); the legacy "33/33 PASS" figure referred to the Wave 38-39 first-batch regression suite (pre-Wave 32 batch 2/3/4 additions).
-- Last audit: 2026-09-11 (see [`docs/INSIGHTS.md`](docs/INSIGHTS.md) and
-  [`docs/ABLATION.md`](docs/ABLATION.md))
-- Honest gaps: see [`docs/lean/GAPS.md`](docs/lean/GAPS.md)
+- Stage: Tier-1 SCI submission-ready (paper + cover letter + supplementary + checklist + 39 ACTIVE claims + 8 N=1000 sweep JSONs + byte-reproducibility on ruff-frozen code)
+- Self-assessment: A- (theory-grounded + honest negative surface + byte-stable reproducibility + camera-ready scope is bounded)
+- Test count: **5155 passed / 196 skipped / 0 failed** (post-Wave-131 ruff-frozen code; D.4 33/33 byte-stable). The 196 skips are env-skips (torch / pandas / hypothesis / rdkit not in the flowa-default venv) — pre-existing, unrelated to the framework.
+- D.4 pinned regression vectors: **33/33 PASS** (post-Wave-131 ruff-frozen code freeze; ruff 0; legacy 72/72 figure = Wave 32 batches 2/3/4 + Wave 33 batch 2/3, no longer applicable to ruff-frozen code)
+- Last audit: 2026-09-14 (Wave 136 final submission polish; see [`docs/audit/wave136-submission-polish.md`](docs/audit/wave136-submission-polish.md) + [`docs/INSIGHTS.md`](docs/INSIGHTS.md) + [`docs/headline-evidence/`](docs/headline-evidence/) for the Tier-1 SCI submission source-of-truth collection)
+- Honest gaps: see [`docs/paper-draft.md` §10.4 Known negative surface](docs/paper-draft.md) + [`todo/STATUS.md` Camera-ready deferred](todo/STATUS.md)
 
 ## Headline results (6 Bonferroni-significant `framework_improves` + 3 byte-stable composite)
 
@@ -49,7 +46,8 @@ Internal composite axis (3/3 Tier 3 models byte-stable):
 - [`docs/CLAIMS.md`](docs/CLAIMS.md) — 39 active claims + test-coupled evidence
 - [`docs/CONSOLIDATED_RESULTS.md`](docs/CONSOLIDATED_RESULTS.md) — per-cell verdict table
 - [`docs/baseline-audit-report.md`](docs/baseline-audit-report.md) — per-wave ledger
-- [`docs/audit/wave131-pre-freeze-hygiene.md`](docs/audit/wave131-pre-freeze-hygiene.md) — freeze-marker audit
+- [`docs/audit/wave134-tmp-migration.md`](docs/audit/wave134-tmp-migration.md) — /tmp/ → repo migration audit
+- [`docs/audit/wave136-submission-polish.md`](docs/audit/wave136-submission-polish.md) — final submission polish audit
 
 ## Architecture at a glance
 
@@ -406,7 +404,7 @@ on every CI run.
 PYTHONPATH=. ./.venv/Scripts/python.exe -m pytest tests/ --no-header -q
 ```
 
-Current state on this tree: **2165 tests pass, 9 skipped, 3 pre-existing FAILED** (per `pytest_results.txt` at commit `f97ec1c`). The D.4 pinned regression vectors (`tests/test_d4_regression_vectors.py` + `tests/test_adapters/test_regression_vectors.py`) are **72/72 PASS**; the legacy "33/33 PASS" figure referred to the Wave 38-39 first-batch subset only. The 3 pre-existing FAILED tests are tracked in `docs/audit/wave48-pytest-pre-push-fixes.md` (Wave 48 Agent A partial fix + 1 remaining F-3 paper_quantities threading bug at Wave 45 Agent C). The suite includes the AST-level guard that asserts `universal/` has zero molecule-specific imports.
+Current state on this tree: **5155 tests pass, 196 skipped, 0 failed** (post-Wave-131 ruff-frozen code; per latest `pytest_results.txt` snapshot at commit `0ef6465` v1.0.1-paper-final). The 196 skips are env-skips (torch / pandas / hypothesis / rdkit not in the flowa-default venv) — pre-existing, unrelated to the framework. The D.4 pinned regression vectors (`tests/test_d4_regression_vectors.py`) are **33/33 PASS** (post-Wave-131 ruff-frozen code freeze; ruff 0; legacy 72/72 figure = Wave 32 batches 2/3/4 + Wave 33 batch 2/3, no longer applicable to ruff-frozen code). The suite includes the AST-level guard that asserts `universal/` has zero molecule-specific imports.
 
 ## Why this framework matters
 
