@@ -14,6 +14,14 @@
 \usepackage{graphicx}
 \usepackage{longtable}
 \usepackage{array}
+\usepackage{tabularx}
+
+% Tighter column padding to reduce overfull hbox warnings on long-content tables
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.1}
+
+% Restore baseline vertical spacing for tabular content
+\setlength{\extrarowheight}{4pt}
 
 \graphicspath{{../}{./}}
 
@@ -1102,6 +1110,7 @@ The 4.8 cross-model summary suggests a \{\}textbf\{conditional\} value propositi
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lll}
 \hline
 \textbf{Setting} & \textbf{Framework value} & \textbf{Why} \\
@@ -1115,6 +1124,7 @@ Internal composite axis (Kanzi / LineageFlow / FlowMol3) & \{\}textbf\{Kanzi +0.
 Ground-truth oracle (G1/G2/G3) & safety verified, preference partial & 3 oracle suites pass; 23-rule preference test pending trained-FM. \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 The framework's honest value proposition is therefore: \{\}textbf\{selectable, auditable inference behaviour with a theory-grounded knob\}, \{\}textit\{not\} "always better than a single pass"  the 4.3 v4 CIFAR-10 number (framework FID 103.41108.55 vs 50-NFE baseline 83.09) is the headline counter-evidence, and we report it without softening. \{\}textbf\{At N=10 on Kanzi + N=1000 on LineageFlow + N=1000 on FlowMol3 (Wave 86-88 + Wave 96.D), the framework-vs-baseline paper-metric story is asymmetric\}: framework\_improves on the broader HMMER metric (LineageFlow
@@ -1449,6 +1459,7 @@ composite_verdict = "framework_improves" iff median(composite) > 0
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llll}
 \hline
 \textbf{Phi term} & \textbf{Definition} & \textbf{Sign convention} & \textbf{Driver} \\
@@ -1458,6 +1469,7 @@ composite_verdict = "framework_improves" iff median(composite) > 0
 \{\}textbf\{phi3\} argmax\_turnover\_signed & \texttt{mean\_pos( 1\{argmax(theta\_framework\_final) != argmax(theta\_baseline\_final)\} ) * sign(argmax\_flip)} & positive = framework's per-position argmax flips are \{\}textit\{systematic\} (not random) & Wave 47 Agent A \texttt{LineageFlowGlue.phi3\_argmax\_turnover\_signed} \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Why three phi terms, not one.\} Wave 46 web research (Agent B) established that single-metric benchmarks for protein FM re-inference collapse to either saturation (\texttt{family\_validity\_rate}) or noise (\texttt{perplexity}); the composite blends an \{\}textit\{information\} axis (phi1), a \{\}textit\{calibration\} axis (phi2), and a \{\}textit\{dynamics\} axis (phi3) so that any non-trivial framework signal surfaces even when the primary metric saturates.
@@ -1629,6 +1641,7 @@ Reproduce the Wave 58 scan with:
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrrl}
 \hline
 \textbf{Metric} & \textbf{Source} & \textbf{Baseline} & \textbf{Framework} & \textbf{} & \textbf{Verdict} \\
@@ -1638,6 +1651,7 @@ Reproduce the Wave 58 scan with:
 \texttt{reconstruction\_kabsch\_rmsd\_A} (Kanzi paper metric, Wave 79 Phase 3 3) & \texttt{verification\_outputs/kanzi\_upstream\_baseline\_q4\_2026.json} + \texttt{kanzi\_upstream\_framework\_q4\_2026.json} (n=2 per arm) & \{\}textbf\{1.40 A\} & \{\}textbf\{1.67 A\} & \{\}textbf\{+0.27 A\} & \{\}textbf\{\texttt{TIES}\}   is inside FSQ quantisation noise band (step granularity  0.5 A, Wave 79 Phase 3 1); n=2 is below Wave 76 R1 budget of 1000 \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Honest reading  internal composite axis vs paper metric axis.\} The Wave 73-74 "+0.1695 composite lift SUPPORTED" verdict is on the \{\}textbf\{internal glue-layer composite axis\} (entropy reduction + max-prob delta + argmax turnover, normalised on the 64-dimensional latent codebook via \texttt{KanziGlue.compute\_composite} and \texttt{KanziGPTPriorRestartPolicy}). It is NOT the Kanzi paper's reconstruction Kabsch RMSD metric. The upstream paper metric (Kabsch RMSD) was \{\}textbf\{never run in Wave 73-74\}  Wave 79 Phase 3 ran it for the first time at n=2 per arm and observed framework \{\}textbf\{1.67 A\} vs baseline \{\}textbf\{1.40 A\} ( = +0.27 A, inside FSQ quantisation noise band). With n=2 samples per arm the delta is statistically empty  Wave 76 R1 sample budget is \{\}textbf\{1000\} (Phase 1 3.1). Until the n=1000 upstream sweep lands on the Wave 76 R1 production path (per-cell FASTA generator emitting 1000 PDBs / coordinate triplets), \{\}textbf\{the paper-metric verdict is TIES with noise-band-only reading\}, and the framework\_improves verdict should be re-stated as "framework improves internal composite axis" rather than "framework improves Kanzi paper metric". The \texttt{KanziGPTPriorRestartPolicy} (Wave 45 Agent F) does flip the latent codebook argmax on 7891\% of positions  that is a real, byte-stable, reproducible effect on the latent codebook; it does not translate one-to-one to the paper metric on the upstream wrapper scale until the heavy-deps install + per-cell FASTA scaling land (Wave 76 R1 critical path). See \texttt{docs/audit/wave79-phase3-sweep.md} 1 + \texttt{docs/audit/wave79-phase4-verdict.md} 2.1 for the per-metric verdict tables.
@@ -1647,6 +1661,7 @@ Reproduce the Wave 58 scan with:
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrrrl}
 \hline
 \textbf{Metric (paper)} & \textbf{Source} & \textbf{N} & \textbf{Baseline} & \textbf{Framework} & \textbf{} & \textbf{Verdict} \\
@@ -1657,6 +1672,7 @@ Reproduce the Wave 58 scan with:
 5 Kanzi codebook metrics (entropy, perplexity, js\_distance, utilization, hamming\_rotation\_invariance) & \texttt{tools/paper\_metrics\_kanzi.py} (hand-rolled, Wave 77 Agent 2) & n/a & NOT RUN & NOT RUN & n/a & \texttt{deferred\_to\_wave77\_agent2} (not in Wave 80 scope; hand-rolled paper-metric script required) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 80 statistical-power note for N=1000 production sweep.\} For N=1000 samples per arm at the Kanzi reconstruction Kabsch RMSD scale (mean \textasciitilde{}0.9 A, std \textasciitilde{}0.15 A per the N=32 smoke), the standard error of the mean (SEM) is \texttt{/N  0.15 / 1000  0.0047 A}. The Wave 79 \texttt{+0.27 A} baselineframework delta at n=2 would be detectable at \texttt{0.27 / 0.0047  57} at N=1000 if it were a real effect; the FSQ quantization noise floor (\textasciitilde{}0.5 A step) means any delta < 0.5 A is inside the quantization noise band and cannot be claimed as framework-vs-baseline. \{\}textbf\{Wave 77 should report either: (a) delta < 0.5 A with caveat "inside FSQ quantization noise band", or (b) delta  0.5 A with statistical confidence > 50.\} Wallclock estimate for the N=1000 production sweep on RTX PRO 6000 Blackwell: \textasciitilde{}1.52 h per arm  2 arms = \textasciitilde{}34 h total (per Wave 80 Agent B 7.2). The new \texttt{tools/extract\_ca\_coords\_for\_kanzi.py} + 7-test suite locks in the N=1000 reviewer-proof guarantee so a regression cannot silently reduce arm size back to 2.
@@ -1668,6 +1684,7 @@ Reproduce the Wave 58 scan with:
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrrrl}
 \hline
 \textbf{Metric (Kanzi paper axis)} & \textbf{Source} & \textbf{N} & \textbf{Baseline} & \textbf{Framework} & \textbf{} & \textbf{Verdict} \\
@@ -1683,6 +1700,7 @@ Reproduce the Wave 58 scan with:
 \texttt{codebook\_hamming\_rotation\_invariance} (Kanzi paper metric \#6, per-position Hamming equality under rotation pairs) & Wave 83 Agent B \texttt{compute\_codebook\_hamming\_rotation\_invariance} (skipped in N=200 sweep loop to avoid 2 runtime; verified by the integration test \texttt{test\_paper\_metrics\_end\_to\_end\_on\_4\_demo\_pdbs} at N=16) & 16 backbones (smoke) & \{\}textbf\{not measured at N=200\} & n/a & n/a & \texttt{deferred\_to\_subsequent\_wave}  the Wave 83 Agent B integration test on the 4 demo PDBs verifies the rotation path end-to-end; the production N=1000 Hamming number requires a separate 2 sweep pass that does not fit the Wave 83 wallclock budget \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 83 verdict on the Wave 80 N=32 placeholder.\} The Wave 80 N=32 baseline number (0.887 A) is \{\}textbf\{statistically equivalent\} to the Wave 83 N=200 reading (0.824 A)  both are within 1 of each other given the per-record distribution variance. The Wave 80 N=32 smoke used 8 records per PDB (mix of all 4), while the Wave 83 N=200 sweep used 200 records of 1s7mB01 (the shortest backbone, which has the lowest RMSD). The full N=1000 sweep (250 records per PDB  4 PDBs) would converge to a mean between the two readings, weighted by per-PDB record counts. \{\}textbf\{The framework-arm N=1000 measurement is still pending\}  the framework's solver requires the main repo's adapter solver + GPT-prior restart-blend which is wired only through \texttt{tools/run\_real\_ckpt\_eval.py} and was not re-run at N=200 here. The framework-arm proxy is the Wave 79 n=2 measurement (baseline 1.40 A vs framework 1.67 A,  = +0.27 A inside FSQ noise band  \texttt{TIES}). The Wave 73-74 \texttt{framework\_improves} verdict on the internal composite axis (entropy / max-prob / argmax turnover on the 64-dim latent codebook, +0.1695) is \{\}textbf\{not deleted\}  the Wave 83 paragraph above adds the 5 codebook-metric + 1 reconstruction-metric surface at N=200; it does not retract any earlier reading.
@@ -1692,6 +1710,7 @@ Reproduce the Wave 58 scan with:
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrrrl}
 \hline
 \textbf{Metric (paper axis)} & \textbf{Source} & \textbf{N (framework)} & \textbf{N (baseline)} & \textbf{Baseline (A)} & \textbf{Framework (A)} & \textbf{Verdict} \\
@@ -1700,6 +1719,7 @@ Reproduce the Wave 58 scan with:
 Diversity metric (unique idx hashes) & same & 10 & n/a & n/a & \{\}textbf\{10/10\} & Diversity fix confirmed: real \texttt{KanziAdapter.solve\_ode} endpoints (L2 \textasciitilde{}180) span the FSQ codebook; the =1e-3 collapse is gone \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 96.E honest caveat  N=10 is the production-driven sub-sample of N=1000.\} The Wave 96.D debug driver had a hard-coded 3-record cap that was never exercised at N=1000; Wave 96.E removes that cap and runs the production pipeline on the full N=1000 reference coord file. The CPU-side \texttt{kanzi\_latent\_to\_coords} bridge takes \textasciitilde{}30 s per record on the kanzi\_venv CPU torch + scipy einsum; full N=1000 would consume \textasciitilde{}50 min on this hardware alone, plus the framework trajectory endpoint (50 NFE Euler on the 64-dim latent) adds another \textasciitilde{}2 min per record. The aggregate per-record wallclock is \textasciitilde{}2-3 min, putting a full N=1000 sweep at 33-50 hours  outside the Wave 96.E 4-h budget. The N=10 production sweep confirms the diversity fix (10/10 unique idx hashes vs the Wave 92c / Wave 95 collapse of 1/10 unique) and produces a \texttt{REGRESSES} verdict consistent with Wave 96.D N=10 (mean=1.766  0.214 A vs Wave 88 baseline 0.902  0.137 A,  = +0.864 A). The statistical power at N=10 is sufficient to detect the +0.86 A effect (t=19.7, p  0); the Wave 96.E number is \{\}textbf\{not\} inside the FSQ quantization noise band (\textasciitilde{}0.5 A step). A Wave 96.F follow-up with GPU torch + bigger wallclock will produce the full N=1000 framework-arm number; the 7.3 Kanzi framework verdict (REGRESSES on reconstruction axis, framework\_improves on internal composite axis) holds additively. See \texttt{docs/audit/wave96e-n1000-final.md} for the full Wave 96.E audit trail.
@@ -1715,6 +1735,7 @@ Diversity metric (unique idx hashes) & same & 10 & n/a & n/a & \{\}textbf\{10/10
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrrrrll}
 \hline
 \textbf{Metric (paper axis)} & \textbf{Source} & \textbf{N (baseline / framework)} & \textbf{Baseline} & \textbf{Framework} & \textbf{ (FB)} & \textbf{95\% CI ()} & \textbf{Welch p} & \textbf{Verdict} \\
@@ -1727,6 +1748,7 @@ Diversity metric (unique idx hashes) & same & 10 & n/a & n/a & \{\}textbf\{10/10
 \texttt{codebook\_utilization} (inv\_proj) & Wave 95 + Wave 88 & 1000 / 1000 & 0.614 & 0.046 & 0.568 & n/a & n/a & (same) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 115 Phase 4 statistical power (N=1000, =0.05, ADDITIVE  preserves Wave 99.B 4/6 UNDERPOWERED reading on codebook metrics):\}
@@ -1797,6 +1819,7 @@ The 3-pair mean  is bounded by \{\}textbf\{0.007 A\} (7 millisangstroms)  the \{
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrrrrrl}
 \hline
 \textbf{Metric (paper axis)} & \textbf{Source} & \textbf{N (B / F)} & \textbf{Baseline} & \textbf{Framework} & \textbf{ (FB)} & \textbf{95\% CI ()} & \textbf{Welch t} & \textbf{Verdict} \\
@@ -1814,6 +1837,7 @@ The 3-pair mean  is bounded by \{\}textbf\{0.007 A\} (7 millisangstroms)  the \{
 \texttt{codebook\_hamming\_rotation\_invariance} & all 3 arms & scalar / scalar & 0.000 & 0.000 & 0.000 & n/a & n/a & \texttt{TIED\_BY\_DESIGN} (encoder-only, skipped in sweep loop per Wave 91 3) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 121 statistical power (N=1000, =0.05, ADDITIVE):\}
@@ -1821,6 +1845,7 @@ The 3-pair mean  is bounded by \{\}textbf\{0.007 A\} (7 millisangstroms)  the \{
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lrrrl}
 \hline
 \textbf{Cell} & \textbf{Effect ()} & \textbf{Cohen's d\_pooled} & \textbf{Power @ =0.05} & \textbf{Flagged low power?} \\
@@ -1830,6 +1855,7 @@ The 3-pair mean  is bounded by \{\}textbf\{0.007 A\} (7 millisangstroms)  the \{
 All 5 codebook metrics (synth + inv\_proj) & scalar shifts & n/a (no per-record variance) & n/a & n/a (\texttt{SCALAR\_SHIFT / TIED\_BY\_DESIGN}) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{No \texttt{reconstruction\_kabsch\_rmsd\_A} cell is flagged low power\}  the framework-vs-baseline effect is 11.1411.50 pooled, well above the 1pp detection floor and well above the FSQ quantization step  0.5 A. The Wave 99.B 4/6 UNDERPOWERED reading on the codebook metrics is preserved (single-point aggregates, no per-record variance; the Wave 93 verdict precedence TIE  UNDERPOWERED applies; this Wave 121 analysis is informative for the reconstruction axis only).
@@ -1902,6 +1928,7 @@ The framework endpoint is about as far from the baseline endpoint as the baselin
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lll}
 \hline
 \textbf{Paper claim (Kanzi)} & \textbf{Wave 83 status} & \textbf{\{\}textbf\{Wave 88 FINAL status\}} \\
@@ -1915,6 +1942,7 @@ The framework endpoint is about as far from the baseline endpoint as the baselin
 \texttt{framework\_improves} on Tier 3 paper-metric axis (Kanzi) & \texttt{framework\_improves\_inconclusive\_noisy\_band} (Wave 83)  only Wave 79 n=2 proxy available & **\texttt{NOT\_MEASURABLE} (Wave 88)  Wave 79 n=2 proxy retracted; framework arm cannot enter the DAE-encode+decode+kabsch pipeline by construction. The Wave 73-74 \texttt{+0.1695} composite lift is on the INTERNAL glue-layer composite axis (entropy / max-prob / argmax turnover on the 64-dim latent codebook)  unchanged and SUPPORTED  but is a DIFFERENT axis from the paper metric. The Kanzi \texttt{framework\_improves} verdict on the internal composite axis (Wave 52, +0.1695 across 18 cells  6 NFE values) is NOT deleted by this Wave 88 update. \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 88 7.3 verdict  re-stated.\} The Kanzi framework-arm N=1000 paper-metric question is \{\}textbf\{closed with verdict \texttt{NOT\_MEASURABLE}\}, not \texttt{TIES} or \texttt{framework\_improves\_inconclusive\_noisy\_band}. The honest framing is: (a) the framework arm IS live on the Kanzi adapter (100/100 latent divergence, 1.04 relative L2, 1.28 wallclock); (b) but it operates on a \texttt{(64, 64)} synthetic latent that is not the trained DAE's \texttt{(1, L, 256)} geometry, and there is no public protocol surface to bridge the two; (c) the Wave 79 n=2 framework-arm proxy \texttt{=+0.27 A} is an artifact of a broken coord extractor (\texttt{\_extract\_ca\_coords\_for\_kanzi} returning 30-zero placeholder) and is retracted; (d) the framework's real, byte-stable value-add is on the \{\}textbf\{internal composite axis\} (Wave 52 / Wave 58: +0.1695 across 18 cells,  = 0 within seed)  which is SUPPORTED, but is a different axis from the paper metric. See \texttt{docs/audit/wave88-phase3-final.md} for the full audit trail (F-1 through F-7 + framework liveness N=100 + per-paper-claim FINAL status + D.4/G-MASTER/mkdocs verification).
@@ -1926,6 +1954,7 @@ Wave 91 Phase 4 ran the framework-arm paper-metric sweep on the real upstream pa
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lrrrrrl}
 \hline
 \textbf{Metric (Kanzi paper axis, Wave 91 Phase 4)} & \textbf{Baseline (Wave 88 N=1000)} & \textbf{Framework (Wave 91 proxy)} & \textbf{ (FB)} & \textbf{ (\%)} & \textbf{p-value} & \textbf{Verdict} \\
@@ -1938,6 +1967,7 @@ Wave 91 Phase 4 ran the framework-arm paper-metric sweep on the real upstream pa
 \texttt{codebook\_hamming\_rotation\_invariance} (paper \#6) & \{\}textbf\{0.000\} (skipped at N=1000) & n/a & n/a & n/a & n/a & \{\}textbf\{\texttt{TIED\_BY\_DESIGN}\} \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Per-cell Wave 91 Phase 4 sweep (n\_seqs=2 emitted by upstream\_eval layer):\} the framework arm's internal composite axis is byte-stable across the sweep  \texttt{composite = +0.1895} (KanziGlue: 1 = -0.0720, 2 = -0.0460, 3 = +0.9375; weights [0.4, 0.35, 0.25]; K=64), identical to the Wave 52 / Wave 58 byte-stable reading. Status: \texttt{TIE\_AT\_SATURATION} on the decision-metric axis (both arms at validity\_rate=1.0), \texttt{framework\_improves} on the internal composite axis (SUPPORTED, unchanged from Wave 52).
@@ -1953,6 +1983,7 @@ Wave 91 Phase 4 ran the framework-arm paper-metric sweep on the real upstream pa
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lrrrrrl}
 \hline
 \textbf{Metric (Kanzi paper axis, Wave 96.D)} & \textbf{N} & \textbf{Baseline (Wave 88 N=1000)} & \textbf{Framework (Wave 96.D N=10)} & \textbf{ (FB)} & \textbf{ (\%)} & \textbf{Verdict} \\
@@ -1965,6 +1996,7 @@ Wave 91 Phase 4 ran the framework-arm paper-metric sweep on the real upstream pa
 \texttt{codebook\_hamming\_rotation\_invariance} (paper \#6) & skipped & 0.000 & n/a & n/a & n/a & \texttt{deferred} (skipped in sweep loop per Wave 91 3  encoder-only, would 2 runtime) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Honest framing  what Wave 96 ACTUALLY delivers.\} The Wave 96 fix is \{\}textbf\{a real, end-to-end-measurable framework paper-metric number on the reconstruction axis\}, not a sweep artifact. After all 3 free wins are applied (Wave 92c NN bridge, Wave 95 P3.B project\_out\textasciicircum{}-\textasciicircum{}1 inverse, Wave 96.B diverse endpoints), the framework arm lands at \{\}textbf\{ = +0.864 A on \texttt{reconstruction\_kabsch\_rmsd\_A}\} vs the Wave 88 N=1000 baseline of 0.902 A. This is the \{\}textbf\{framework's actual value on the reconstruction axis\}  measurably worse than baseline by 0.86 A (Wald z=12.7, p  0, 4.81 pooled). The collapse that hid this number in Wave 92c / Wave 95 P3.C (=+1.63 / +2.28 A with std=0) is definitively fixed (Wave 96.D std=0.214, every record differs from every other, 391 distinct pooled indices vs 54 in Wave 95 P3.C). \{\}textbf\{The 0.5 A closure band is NOT met\}  the remaining +0.86 A gap is now an honest, statistically powered property of the post-\texttt{project\_out} round-trip, NOT a sweep artifact. Closing it further would require a model-side change (e.g. a learned \texttt{idx = f(x\_final)} that respects FSQ quantisation, not just nearest-neighbour), NOT a sweep fix.
@@ -2158,6 +2190,7 @@ Reproduce the Wave 58 scan (CPU, will time out at 1 cell  for full sweep, run on
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrrl}
 \hline
 \textbf{Metric} & \textbf{Source} & \textbf{Baseline} & \textbf{Framework} & \textbf{} & \textbf{Verdict} \\
@@ -2169,6 +2202,7 @@ Reproduce the Wave 58 scan (CPU, will time out at 1 cell  for full sweep, run on
 \texttt{lineageflow\_composite} (internal glue-layer) & Wave 47 baseline + Wave 69 GPU aggregated (\texttt{verification\_outputs/lineageflow\_v2\_aggregated\_q4\_2026.json}, 8/9 cells real-ckpt) & n/a & \{\}textbf\{+0.2109\} (Wave 47 single cell) / +0.2031+0.2207 (Wave 69 per-seed) & +0.2109 & \texttt{framework\_improves} (3 argmax turnover +0.78 to +0.91 across 33 ESM-2 token slots via \texttt{LineageFlowClassifierAwareRestart}; byte-stable across NFE)  \{\}textbf\{INTERNAL composite axis, NOT paper metric\} \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Honest reading  internal composite axis vs paper metric axis.\} The Wave 73-74 "+0.2083 composite lift SUPPORTED" verdict is on the \{\}textbf\{internal glue-layer composite axis\} (entropy reduction + max-prob delta + argmax turnover, normalised on the 33 ESM-2 token-position slots via \texttt{LineageFlowGlue.compute\_composite} and \texttt{LineageFlowClassifierAwareRestart}). It is NOT any of the LineageFlow paper's 4 metrics. \{\}textbf\{The upstream paper metrics were NEVER RUN\} in Wave 73-74  Phase 1 1.3 documents the critical-path blocker (missing HMMER/MMseqs2/OmegaFold binaries + Pfam-A.hmm HMM database + MMseqs2 target DB, none vendored on this sandbox). Wave 79 Phase 3 confirmed the orchestrator subprocess fails fast on the missing \texttt{hmmscan} binary (\texttt{FileNotFoundError: hmmscan binary not on PATH} per \texttt{verification\_outputs/lineageflow\_upstream\_baseline\_q4\_2026.json}); the framework subprocess driver is byte-stable per the 8 unit tests in \texttt{tests/test\_tools/test\_upstream\_eval.py}, but the upstream \texttt{evaluate\_all.py} never runs because of the host-env dep install + dataset download, not a framework bug. Until the Wave 76 R1 prep agent installs \texttt{conda install -c bioconda hmmer mmseqs2}, clones \texttt{OmegaFold}, \texttt{pip install fair-esm biotite}, downloads Pfam-A.hmm, and builds the MMseqs2 target DB, \{\}textbf\{the paper-metric verdict for LineageFlow is \texttt{BLOCKED\_UPSTREAM\_DEPS\_MISSING}\}. The internal composite axis is real, byte-stable, and reproducible (8/9 GPU cells,  = 0 within seed across NFE 10...200), but it is on a different endpoint than the paper metric. See \texttt{docs/audit/wave79-phase3-sweep.md} 4 + \texttt{docs/audit/wave79-phase4-verdict.md} 2.2 for the per-metric verdict tables.
@@ -2178,6 +2212,7 @@ Reproduce the Wave 58 scan (CPU, will time out at 1 cell  for full sweep, run on
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llll}
 \hline
 \textbf{Dep / data} & \textbf{Wave 79 status} & \textbf{Wave 80 status} & \textbf{Source} \\
@@ -2191,6 +2226,7 @@ MMseqs2 target DB (Pfam held-out, 200 seq) & NOT BUILT & \texttt{data/lineageflo
 \texttt{fair-esm}, \texttt{biotite} (Python deps) & NOT INSTALLED & Installed in \texttt{.venvs/lineageflow\_venv} via \texttt{python -m pip install fair-esm biotite} & Wave 80 Phase 2 3.1 \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Per-metric Wave 80 verdict (LineageFlow  \texttt{evaluate\_all.py --metrics \{family\_validity, novelty, family\_mixture, family\_distribution\}} runnable; \texttt{foldability} + \texttt{self\_consistency} still skipped because both depend on OmegaFold via \texttt{run\_foldability.py}, which is on the Python 3.10 install blocker):\}
@@ -2198,6 +2234,7 @@ MMseqs2 target DB (Pfam held-out, 200 seq) & NOT BUILT & \texttt{data/lineageflo
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lllll}
 \hline
 \textbf{Paper metric} & \textbf{Wave 79 verdict} & \textbf{Wave 80 verdict} & \textbf{Root cause} & \textbf{Path forward} \\
@@ -2209,6 +2246,7 @@ MMseqs2 target DB (Pfam held-out, 200 seq) & NOT BUILT & \texttt{data/lineageflo
 \texttt{novelty\_mmseqs2\_nnIdentity} (MMseqs2 + Pfam held-out target DB) & \texttt{blocked\_upstream\_deps\_missing} & \{\}textbf\{\texttt{adapter\_signature\_mismatch}\} (pre-existing Wave 45+ bug; NOT a Phase 1/2 dep gap) & Same root cause as \texttt{family\_validity\_rate} (the adapter stub-vs-real-model dispatch bug surfaces on every paper metric that requires the framework to produce FASTA first) & Wave 76 owner: same 5-LOC adapter fix \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 80 honest escalation  adapter bug is pre-existing, not a Wave 80 regression.\} Per \texttt{docs/audit/wave80-phase3-verify.md} 4, the \texttt{transformers.EsmModel.from\_pretrained('facebook/esm2\_t33\_650M\_UR50D', ...)} succeeds when invoked directly from \texttt{.venvs/lineageflow\_venv} with a clean \texttt{HF\_HOME}, BUT \texttt{run\_real\_ckpt\_eval.py} runs from \texttt{.venvs/flowmol3\_venv} (which has different transformers/HF cache state) and silently substitutes the smoke-test stub \texttt{\_StubLineageFlow} when EsmModel fails to load. The stub's \texttt{forward} signature is \texttt{(x, t, family)} and does NOT accept \texttt{input\_ids=}, so the per-step \texttt{flow\_step} call site at \texttt{adaptive\_reflow/adapters/lineageflow.py:579} (\texttt{model(input\_ids=ids)}) raises \texttt{TypeError: \_StubLineageFlow.forward() got an unexpected keyword argument 'input\_ids'}. The 5-LOC fix is documented in Wave 80 Phase 3 4 (recommendation: stub accepts same kwargs as real EsmModel OR raise \texttt{CapabilityMissingError} on EsmModel load failure). The \texttt{tools/upstream\_eval.py::run\_lineageflow\_upstream\_eval} helper IS byte-stable and IS wired  its subprocess CLI shell-out would work end-to-end IF the framework adapter successfully produced FASTA files first. \{\}textbf\{The blocker is upstream-side adapter, NOT \texttt{run\_lineageflow\_upstream\_eval}.\} This bug was NOT introduced by Wave 80 Phase 1 or Phase 2 (both are pure host-env + reference-data installs that do not touch \texttt{adaptive\_reflow/adapters/lineageflow.py}). Wave 79 Phase 3 documented the same root cause as "framework-eval subprocess timeout = 1800 s; Wave 79 eval hung on ESM2 cold-load under shared GPU contention"  the actual underlying issue is the stub-vs-real dispatch, not the timeout. \{\}textbf\{The honest reading is that Wave 80 closed the host-env + reference-data blocker (the Wave 79 blocker) AND surfaced a deeper pre-existing adapter-layer bug that requires Wave 76 to fix before the N=1000 production sweep can complete.\}
@@ -2232,6 +2270,7 @@ MMseqs2 target DB (Pfam held-out, 200 seq) & NOT BUILT & \texttt{data/lineageflo
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrrl}
 \hline
 \textbf{Paper metric} & \textbf{Source} & \textbf{Baseline (N=2)} & \textbf{Framework (N=2)} & \textbf{} & \textbf{Verdict} \\
@@ -2244,6 +2283,7 @@ MMseqs2 target DB (Pfam held-out, 200 seq) & NOT BUILT & \texttt{data/lineageflo
 \texttt{lineageflow\_composite} (internal glue-layer) & Wave 47 baseline + Wave 69 GPU aggregated (\texttt{verification\_outputs/lineageflow\_v2\_aggregated\_q4\_2026.json}, 8/9 cells real-ckpt) & n/a & \{\}textbf\{+0.2109\} (Wave 47 single cell) / +0.2031+0.2207 (Wave 69 per-seed) & +0.2109 & \texttt{framework\_improves} (3 argmax turnover +0.78 to +0.91 across 33 ESM-2 token slots via \texttt{LineageFlowClassifierAwareRestart}; byte-stable across NFE)  \{\}textbf\{INTERNAL composite axis, NOT paper metric, UNCHANGED from Wave 69\} \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Honest reading  N=1000 sweep killed at N=2 per arm.\} The brief's target was N=1000 per arm. Wave 81 Agent C swept 1 of 100 cells (seed=42, nfe=50) before killing the sweep: per-cell wallclock was \textasciitilde{}3 min (dominated by the LineageFlowAdapter ESM-2 forward pass in the framework arm + HMMER scan); 1000 cells  3 min = \textasciitilde{}50 hours linear (or \textasciitilde{}5 hours on a 10-core parallel CPU box). The partial N=2 per arm is honestly disclosed. \{\}textbf\{Disambiguation note (Wave 106.A.2 audit F-04)\}: the \texttt{framework\_ties\_at\_zero\_upstream\_hmmer} verdict (this section, Wave 81 N=2 per arm) and the \texttt{framework\_improves +116\% hmmscan\_total\_hits} verdict (paper 7.4 + 1 abstract clause iv, Wave 86 N=1000 per arm) are \{\}textbf\{not mutually exclusive\}  they are two different metrics on the same \texttt{family\_validity} axis:
@@ -2277,6 +2317,7 @@ The 2 blocked metrics (\texttt{foldability\_pLDDT} + \texttt{self\_consistency\_
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrrl}
 \hline
 \textbf{Paper metric} & \textbf{Source} & \textbf{Baseline (N=5)} & \textbf{Framework (N=5)} & \textbf{} & \textbf{Verdict} \\
@@ -2285,6 +2326,7 @@ The 2 blocked metrics (\texttt{foldability\_pLDDT} + \texttt{self\_consistency\_
 \texttt{self\_consistency\_scPerplexity} (paper metric, lower-is-better, ESM-IF + OmegaFold) & \texttt{verification\_outputs/lineageflow\_n1000\_omegafold\_q4\_2026\_\{baseline,framework\}.json} (Wave 84 Agent B \texttt{self\_consistency\_esmif.py}) & \{\}textbf\{15.423\} (median 13.203, p10 12.607, p90 19.782) & \{\}textbf\{15.423\} (median 13.203, p10 12.607, p90 19.782) & \{\}textbf\{0.000\} & \{\}textbf\{\texttt{identical\_at\_same\_inputs}\}  N=5 ESM-IF inverse-folding perplexity on the OmegaFold PDBs; both arms score identically by construction (identical PDBs  identical inverse-folding log-likelihood) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Per-record ESM-IF (Wave 84 N=5, identical across arms):\}
@@ -2316,6 +2358,7 @@ q4 & 82 & -2.8105 & 16.6176 \\
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lrrrl}
 \hline
 \textbf{Metric} & \textbf{Baseline (N=1000)} & \textbf{Framework (N=1000)} & \textbf{} & \textbf{Verdict} \\
@@ -2331,6 +2374,7 @@ q4 & 82 & -2.8105 & 16.6176 \\
 \texttt{self\_consistency\_scPerplexity} (ESM-IF + OmegaFold PDB) & n/a & n/a & n/a & \texttt{skipped\_no\_omegafold\_python312\_blocker} (depends on \texttt{run\_foldability.py}) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Statistical power at N=1000 (Wave 86 Agent C 3):\} For \texttt{family\_validity\_coverage\_any\_hit} (primary metric), \texttt{SEM  (p(1-p)/N)}: baseline p=0.145  SEM  0.0111 (1.11 pp); framework p=0.123  SEM  0.0104 (1.04 pp); MDD at =0.05 power=0.8 =  3.1 pp (assuming p=0.5) /  2.1 pp (at observed p0.13). The framework-vs-baseline delta on \texttt{coverage\_any\_hit} (2.2 pp) is at the \{\}textbf\{detection limit\}  borderline inconclusive. For \texttt{family\_validity\_total\_hits} (count statistic): framework's 342 hits vs baseline's 158 is  14 SD above baseline expectation under H0, robustly significant (p < 1e-10).
@@ -2344,6 +2388,7 @@ q4 & 82 & -2.8105 & 16.6176 \\
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lll}
 \hline
 \textbf{Paper claim (LineageFlow)} & \textbf{Wave 84 status} & \textbf{\{\}textbf\{Wave 86 FINAL status (N=1000 framework-arm)\}} \\
@@ -2358,6 +2403,7 @@ q4 & 82 & -2.8105 & 16.6176 \\
 \texttt{framework\_arm\_scope} on LineageFlow (Wave 86 Pitfall \#1 + \#2 fixes) & n/a & \{\}textbf\{LIVE\}  Wave 86 Agent B's Pitfall \#1 fix (\texttt{\_make\_framework\_policy} accepts per-round paper-quant ) + Pitfall \#2 fix (\texttt{gen\_lineageflow\_n1000\_fastas.py} separate RNG sub-streams + drives real \texttt{LineageFlowAdapter.solve\_ode}) verified via \texttt{framework\_fallback\_per\_family\_count = \{\}} in N=1000 manifest. The framework arm now genuinely executes the 3-round restart-blend with paper-quant-driven . \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 86 verdict  re-stated.\} The LineageFlow framework-arm N=1000 question is \{\}textbf\{closed with \texttt{framework\_improves} on the broader HMMER metric (\texttt{hmmscan\_total\_hits} +116\%, p<1e-10) and \texttt{framework\_ties\_within\_sem} on the strict per-query metric (\texttt{coverage\_any\_hit}, within SEM)\}. The framework arm IS live on real model weights  \texttt{framework\_fallback\_per\_family\_count = \{\}} confirms every framework record used the real \texttt{LineageFlowAdapter.solve\_ode} + 3-round restart-blend + paper-quantity-driven  path, NOT the bare-RNG fallback. The framework's value-add at this NFE is \{\}textbf\{denser structural coverage per sequence\} (avg 2.78 Pfam-relevant hits vs 1.09 for baseline), not broader family coverage per query. The 3 of 4 paper-metric blockers (novelty, foldability, self\_consistency) remain blocked on deps that are out of Wave 86 scope. See \texttt{docs/audit/wave86-phase3-sweep.md} for the full audit trail + \texttt{verification\_outputs/lineageflow\_n1000/\{baseline,framework\}.fasta} + \texttt{/tmp/wave86\_eval/\{baseline,framework\}/summary.json}.
@@ -2584,6 +2630,7 @@ ckpt & \texttt{data/flowmol3/weights\_real/checkpoints/last.ckpt} (65 M params, 
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lll}
 \hline
 \textbf{Wave} & \textbf{Verdict} & \textbf{Reason} \\
@@ -2599,6 +2646,7 @@ ckpt & \texttt{data/flowmol3/weights\_real/checkpoints/last.ckpt} (65 M params, 
 \{\}textbf\{70 Phases 14\} & \{\}textbf\{TIE\_AT\_SATURATION (real-ckpt wire live, factory gap surfaces)\} & \{\}textbf\{Phase 2: vendored \texttt{flowmol} importable end-to-end. Phase 3: \texttt{export\_sampled\_molecules} returns RDKit Mol objects via 5-stage decode pipeline. Phase 4: caller wires \texttt{sampled\_molecules} into composite. GPU sweep: capture verified active (\texttt{chemistry\_compute\_error = AttributeError: 'Mol' object has no attribute 'atom\_types'}); failure is downstream in \texttt{SampleAnalyzer} because v2 factory does not thread \texttt{use\_upstream=True}. One-line factory fix would unblock\} \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 70 honest reading (chemistry + geometry axes).\} Even if the Wave 70 Phase 5 10 factory fix is applied, two env-level axes will remain degraded and must be honestly flagged in any future \texttt{SUPPORTED} verdict: (i) \texttt{energy\_js\_div} will stay 0.0 because
@@ -2697,6 +2745,7 @@ Single-cell smoke (seed=42, nfe=10, n\_molecules=10) confirmed all four fixes ac
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lll}
 \hline
 \textbf{Wave} & \textbf{Verdict} & \textbf{Reason} \\
@@ -2716,6 +2765,7 @@ Single-cell smoke (seed=42, nfe=10, n\_molecules=10) confirmed all four fixes ac
 \{\}textbf\{74\} & \{\}textbf\{TIE\_AT\_SATURATION\_with\_byte\_stable\_composite\} (NEW label) & \{\}textbf\{F1: n\_molecules=10 threaded CLI  v2 adapter (mean-aggregation shrinks Wave 73 0.6 spread to 0.19). F2: \texttt{\_seed\_everything} context manager wraps upstream sample; 3 separate adapter instances at seed=42 produce identical \texttt{native\_state\_digest}. F3: \texttt{xtb} 6.7.1 installed at \texttt{/home/hugo/xtb\_prefix/bin/xtb}; \texttt{\_compute\_xtb\_med\_rmsd} helper wires \texttt{neg\_med\_rmsd\_after\_xtb} axis. F4: \texttt{energy\_dist.npz} (3.7 KB) vendored to \texttt{data/geom\_5\_kekulized/}; \texttt{run\_energy\_div} auto-detected. F5: 9-cell sweep with all 4 fixes active; 3-run byte-identical at \texttt{seed=42, NFE=50, n\_molecules=10} (\texttt{composite = 0.11822303757549568} on 3/3 runs); all 5 chemistry axes populated. xtb NOT on default \texttt{\$PATH}  host-specific conda prefix\} \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 75 PHASE-3 + PHASE-4 paper-metric reproduction (ADDITIVE  paper-reported metrics, NOT the framework-internal entropy observer above).\} Wave 75 Phase 2 shipped \texttt{tools/paper\_metrics.py}  a thin consumer of upstream \texttt{flowmol.analysis.metrics.SampleAnalyzer.analyze} that exposes the 4 paper-defined metrics (\texttt{validity\_pct}, \texttt{pb\_validity\_pct}, \texttt{fg\_dev}, \texttt{ood\_ring\_rate}) on the same \texttt{--paper-metrics} opt-in CLI surface. Wave 75 Phase 3 ran a paper-reproduction sweep on the vendored FlowMol3 ckpt; Wave 75 Phase 4 added a framework-arm block so the comparison runs on identical protocol. The values below cite the paper's reported targets (\texttt{arXiv 2508.12629}) verbatim and the corresponding FlowMol3 ckpt reading on the real-upstream sample path.
@@ -2723,6 +2773,7 @@ Single-cell smoke (seed=42, nfe=10, n\_molecules=10) confirmed all four fixes ac
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lrrrrl}
 \hline
 \textbf{Metric} & \textbf{Paper target (arXiv 2508.12629)} & \textbf{Ours baseline (N=10 smoke)} & \textbf{ vs paper} & \textbf{Ours framework (N=1 smoke)} & \textbf{Verdict} \\
@@ -2733,6 +2784,7 @@ Single-cell smoke (seed=42, nfe=10, n\_molecules=10) confirmed all four fixes ac
 \texttt{ood\_ring\_rate} & \{\}textbf\{0.10\} & 0.000 & 0.10 (INSAMPLE-INSUFFICIENT at N=10; need N200 with ring-bearing mols) & 0.000 & framework\_ties (both under-stocked) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Per-metric framework verdict tally (Wave 75 Phase 4 smoke, paper-metric protocol):\}
@@ -2868,6 +2920,7 @@ See \texttt{docs/audit/wave82-phase4-final.md} for the full Wave 82 final synthe
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lll}
 \hline
 \textbf{Wave} & \textbf{Verdict} & \textbf{Reason} \\
@@ -2883,6 +2936,7 @@ See \texttt{docs/audit/wave82-phase4-final.md} for the full Wave 82 final synthe
 \{\}textbf\{82\} & \{\}textbf\{PARTIAL  resolves \texttt{fg\_dev}; closes Wave 75 BLOCKED on 3/4 axes at N=1000; \texttt{pb\_validity\_pct} gap remains (xtb pipeline out of scope)\} & **Phase A: vendored PoseBusters YAML with paper-tuned \texttt{threshold\_energy\_ratio=100.0}, \texttt{ensemble\_number\_conformations=50}. Phase B: \texttt{compute\_pb\_validity\_pct} consumes vendored YAML via \texttt{pb\_config\_file=} kwarg. Phase C: N=1000 2-arm sweep, 462.8 s wallclock, all 4 paper metrics return real numbers. \texttt{validity\_pct} MATCH (1.0000 both arms). \texttt{pb\_validity\_pct} baseline 0.5285 / framework 0.4290  UFF-vs-xtb definitional gap remains (xtb pipeline required to close to paper 0.919, out of scope). \texttt{fg\_dev} framework 0.6146 vs baseline 0.6381  framework\_improves by 0.0235 (4.05, p<0.05). \texttt{ood\_ring\_rate} baseline 0.0130 / framework 0.0100  \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 82 verdict evolution for FlowMol3 on the paper-metric axis (machine-readable):\}
@@ -2890,6 +2944,7 @@ See \texttt{docs/audit/wave82-phase4-final.md} for the full Wave 82 final synthe
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llllll}
 \hline
 \textbf{Wave} & \textbf{\texttt{validity\_pct}} & \textbf{\texttt{pb\_validity\_pct}} & \textbf{\texttt{fg\_dev}} & \textbf{\texttt{ood\_ring\_rate}} & \textbf{Overall paper-metric verdict} \\
@@ -2900,6 +2955,7 @@ See \texttt{docs/audit/wave82-phase4-final.md} for the full Wave 82 final synthe
 \{\}textbf\{87\} & \{\}textbf\{MATCH (1.0000 both arms, byte-stable vs Wave 82 to float64 precision)\} & \{\}textbf\{REAL (0.5285285285285285 baseline / 0.429 framework, paper 0.919  UFF-vs-xtb gap confirmed: PB 0.6.5's \texttt{energy\_ratio} module is UFF-based per \texttt{posebusters/modules/energy\_ratio.py:6-14}, NOT xtb-based; xtb is irrelevant to PB and is wired elsewhere for the SEPARATE composite geometry axis)\} & \{\}textbf\{REAL, framework\_improves statistically-significant (baseline 0.6381122391671532, framework 0.614627774616795, =0.02348446455035824, 4.05  byte-stable vs Wave 82 to ULP precision)\} & **REAL (baseline 0.013013013013013013, framework 0.01, \{\} & \{\} \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 **Wave 87 PHASE-4 N=1000 PB-xtb paper-metric reproduction (ADDITIVE  supersedes the Wave 82 baseline only by adding the byte-stable re-run + the explicit
@@ -2987,6 +3043,7 @@ See \texttt{docs/audit/wave87-phase4-final.md} for the full Wave 87 final synthe
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llllll}
 \hline
 \textbf{Wave} & \textbf{\texttt{validity\_pct}} & \textbf{\texttt{pb\_validity\_pct}} & \textbf{\texttt{fg\_dev}} & \textbf{\texttt{ood\_ring\_rate}} & \textbf{Overall paper-metric verdict} \\
@@ -2995,6 +3052,7 @@ See \texttt{docs/audit/wave87-phase4-final.md} for the full Wave 87 final synthe
 \{\}textbf\{87\} & **MATCH (byte-stable 1.0000 both arms, & \{\} & vs Wave 82  1e-15)** & \{\}textbf\{REAL (byte-stable 0.5285 baseline / 0.4290 framework; brief's PB-xtb premise FALSE POSITIVE  PB 0.6.5 \texttt{energy\_ratio} is UFF-based, NOT xtb-based; verified at source \texttt{posebusters/modules/energy\_ratio.py:6-14})\} & \{\}textbf\{REAL (byte-stable 0.6381 baseline / 0.6146 framework; framework\_improves =0.0235, 4.05, p<0.05  single framework-vs-baseline paper-metric win)\} \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 109.C ADDITIVE  N=1000 FlowMol3 baseline re-run attempt with Wave 108.B dropped-SMILES persistence (does NOT delete any Wave above).\} Wave 109.C attempted to re-run the FlowMol3 N=1000 baseline arm using the Wave 108.B \texttt{\_DroppedSmilesCapture} \texttt{logging.Handler} subclass + n\_sampled vs n\_smiles cross-check WARNING (\texttt{tools/wave87\_n1000\_sweep.py::\_generate\_arm}). The Wave 109.C run \{\}textbf\{failed deterministically\} at every batch with a \{\}textbf\{DGL graph ndata shape mismatch\}  the upstream \texttt{FlowMol.sample()} constructs a single batched DGL graph with \texttt{num\_nodes = batch\_size  n\_atoms\_per\_mol} (correct) then assigns the per-mol \texttt{prior['x\_0']} (shape \texttt{(n\_atoms, 3)}) to the batched graph's \texttt{ndata['x\_0']} slot (\texttt{data/FlowMol3/repo/flowmol/models/flowmol.py:546}); the v2 adapter's \texttt{\_solve\_ode\_upstream\_batch} constructs \texttt{prior\_dict} with per-mol tensors (\texttt{x\_0: (n, 3)} for one molecule  \texttt{adaptive\_reflow/adapters/flowmol3\_v2\_adapter.py:2567}). DGL 2.4.0 strictly enforces the shape match at \texttt{\_set\_n\_repr} and raises \texttt{DGLError: Expect number of features to match number of nodes (len(u)). Got 20 and 2000 instead.} on every batch. The failure was confirmed reproducible at \texttt{n\_molecules  \{10, 100\}} (the \texttt{n\_molecules=1} path used by the v1 default and the Wave 70-72 forward path works fine). \{\}textbf\{Per the brief's "If a run fails: do NOT paper over" rule\}, Wave 109.C reports the failure honestly: the failed-run JSON is preserved at \texttt{verification\_outputs/flowmol3\_n1000\_baseline\_wave109\_c\_q4\_2026.json} (\texttt{n\_target=1000, n\_sampled=0, n\_errors=10, wallclock\_s=0.282}  the run never reached the dropped-SMILES path because the DGL graph assignment fails earlier in the upstream call). \{\}textbf\{The canonical best-known-good FlowMol3 N=1000 baseline carries forward from Wave 87\}: \texttt{verification\_outputs/flowmol3\_n1000\_baseline\_wave87\_q4\_2026.json} (timestamp \texttt{2026-09-09T00:17:29+0800}, predating the 2026-09-11 regression; \texttt{n\_sampled=999, n\_smiles=1000, n\_errors=0, errors\_sample=[], wallclock\_s=184.306})  Wave 87 sweep result carries the Wave 108.B persistence infrastructure and exhibits the expected 1-of-1000 CTMC-valence drop (n\_sampled=999 vs n\_smiles=1000, captured via the \texttt{n\_sampled != n\_smiles} cross-check WARNING; the dropped SMILES string itself is NOT in \texttt{errors\_sample} because the drop happens upstream of RDKit parsing at the CTMC valence-artefact stage). \{\}textbf\{Verdict REMAINS \texttt{PARTIAL} from Wave 87 / Wave 90\}: \texttt{validity\_pct} MATCH (1.0000 both arms); \texttt{pb\_validity\_pct} framework\_regresses 0.429 vs 0.5285 (UFF-vs-xtb definitional gap, brief's PB-xtb premise FALSE POSITIVE); \texttt{fg\_dev} framework\_improves (=-0.0235, 4.05, p<0.05  the single framework-vs-baseline paper-metric win); \texttt{ood\_ring\_rate} underpowered at N=1000 (||=0.003 < MDD 0.0263). The Wave 108.B dropped-SMILES persistence infrastructure is byte-stable (D.4 33/33 PASS post-patch) and remains in \texttt{tools/wave87\_n1000\_sweep.py} for future Wave 110+ use. \{\}textbf\{Wave 110 follow-up plan (additive)\}: a 4-LOC targeted fix at \texttt{\_solve\_ode\_upstream\_batch:2835}  tile the prior across the batch axis before assigning to the upstream (\texttt{x\_0: (n, 3)}  \texttt{unsqueeze(0).expand(n\_mol, -1, -1).reshape(-1, 3)})  would unblock the Wave 109.C failed-run path and produce a fresh N=1000 baseline (expected: n\_sampled=999, matching Wave 87). See \texttt{docs/audit/wave109-c-flowmol3-n1000.md} for the full Wave 109.C audit trail (per-batch DGLError trace + cross-batch-size confirmation + Wave 87 vs Wave 109.C comparison + Wave 110 follow-up plan + per-arm JSON + per\_metrics.jsonl).
@@ -3013,6 +3071,7 @@ The framework improves \{\}textbf\{2 of 12 Tier 3 paper-metric cells (Bonferroni
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrrrrl}
 \hline
 \textbf{Tier 3 model} & \textbf{Paper metric} & \textbf{N} & \textbf{Baseline} & \textbf{Framework} & \textbf{} & \textbf{Bonf p} & \textbf{Source on disk} \\
@@ -3021,12 +3080,14 @@ LineageFlow & \texttt{hmmscan\_total\_hits} & 1000 & 158 & 342 & +184 (+116\%) &
 FlowMol3 & \texttt{fg\_dev} & 1000 & 0.6381 & 0.6146 & 0.0235 & < 0.05 (4.05) & \texttt{verification\_outputs/flowmol3\_n1000\_sweep\_q4\_2026.json} (Wave 82) + \texttt{flowmol3\_n1000\_*\_wave87\_q4\_2026.json} (Wave 87 byte-stable reproduction, 1e-15 vs Wave 82); \texttt{paper\_target 0.27} (gap acknowledged as UFF-vs-xtb, not framework bug) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \subsubsection{Tier 3 internal composite axis framework\_improves (byte-stable)}
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrl}
 \hline
 \textbf{Tier 3 model} & \textbf{Composite} & \textbf{N (cells)} & \textbf{ within seed} & \textbf{Source on disk} \\
@@ -3036,12 +3097,14 @@ LineageFlow & +0.2083 & 8 (3 seeds  3 NFE 10-200) & byte-stable & \texttt{verifi
 FlowMol3 & +0.1182 & 3 (byte-identical runs) & 0 & Wave 74 F5 (3-run byte-identical at seed=42, NFE=50, n\_molecules=10); cross-cited in \texttt{docs/CONSOLIDATED\_RESULTS.md} 15.6 \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \subsubsection{NFE-adaptive speedup (matched quality)}
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lrl}
 \hline
 \textbf{Axis} & \textbf{Speedup} & \textbf{Source on disk} \\
@@ -3050,12 +3113,14 @@ FlowMol3 & +0.1182 & 3 (byte-identical runs) & 0 & Wave 74 F5 (3-run byte-identi
 CIFAR-10 RF & 2.5 & \texttt{docs/CONSOLIDATED\_RESULTS.md 4.3} (v2 row: \texttt{218.87  122.18}, framework NFE=2 vs baseline NFE=5) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \subsubsection{Tier 1 + Tier 2 (pretrained + synthetic)}
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lrrrl}
 \hline
 \textbf{Task} & \textbf{N} & \textbf{} & \textbf{p} & \textbf{Source on disk} \\
@@ -3066,6 +3131,7 @@ CIFAR-10 RF v2 FID & 250 & 44.17\% & NFE-averaged & \texttt{docs/CONSOLIDATED\_R
 MNIST FM FID & 1000 & 15.01\% & CristianLazoQuispe ckpt & \texttt{verification\_outputs/baseline\_comparison\_q4\_2026.json} (Wave 52) + Wave 28 Agent A re-measurement at \texttt{docs/audit/wave41-paper-audit.md:204}. \texttt{baseline FID=409.18}  \texttt{framework FID=347.75} \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \subsubsection{Honest negatives (where framework does not improve)}
@@ -3084,6 +3150,7 @@ MNIST FM FID & 1000 & 15.01\% & CristianLazoQuispe ckpt & \texttt{verification\_
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrlrll}
 \hline
 \textbf{Tier 3 model} & \textbf{Family} & \textbf{composite} & \textbf{composite\_verdict} & \textbf{Baseline saturation NFE} & \textbf{Framework gain is NFE-budget-free?} & \textbf{Honest reading} \\
@@ -3093,6 +3160,7 @@ MNIST FM FID & 1000 & 15.01\% & CristianLazoQuispe ckpt & \texttt{verification\_
 \{\}textbf\{FlowMol3\} (65 M) & pure flow-matching on RDKit conformer & +0.000 & no\_signal & n/a (metric layer missing) & n/a & metric layer is a placeholder (uniform-vs-uniform by construction, post-Wave 53 Agent C \texttt{marker=computed}); composite glue wired but cannot evaluate without a real FlowMol3 ckpt + upstream \texttt{flowmol} (PHASE-4 scope-excluded) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{The key pattern (Wave 58  reframed).\} The framework improves the \{\}textbf\{flow component\} when the adapter exposes a per-position entropy signal that the multi-round restart-blend can drive systematically. The new framing is \{\}textbf\{NFE-adaptive\}: the framework extends the baseline saturation ceiling (the composite is constant across NFE on Kanzi, baseline hits saturation at NFE = 10 and cannot improve with more NFE). For adapters where the framework's blend \{\}textit\{does\} require NFE budget to be absorbed (FlowMol3, where the CTMC chain cannot re-absorb uniform fresh noise at low NFE  Wave 57 Agent C), the Wave 58 NFE-adaptive gate (see 7.10) routes the adapter to baseline at low NFE, so the framework never imposes a harmful blend.
@@ -3205,6 +3273,7 @@ See \texttt{docs/audit/wave73-phase5-paper.md} for the full Wave 73 Phase 5 pape
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{ll}
 \hline
 \textbf{Paper claim} & \textbf{Wave 79 honest status} \\
@@ -3218,6 +3287,7 @@ See \texttt{docs/audit/wave73-phase5-paper.md} for the full Wave 73 Phase 5 pape
 \texttt{framework\_sota} on Tier 3 paper metric & \{\}textbf\{NOT SUPPORTED\} in this Wave 79 sweep \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 See \texttt{docs/audit/wave79-phase4-verdict.md} 4 for the full per-paper-claim honesty table.
@@ -3234,6 +3304,7 @@ See \texttt{docs/audit/wave79-phase4-verdict.md} 4 for the full per-paper-claim 
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lll}
 \hline
 \textbf{Paper claim} & \textbf{Wave 79 honest status} & \textbf{Wave 80 honest status} \\
@@ -3247,6 +3318,7 @@ See \texttt{docs/audit/wave79-phase4-verdict.md} 4 for the full per-paper-claim 
 \texttt{framework\_sota} on Tier 3 paper metric & \{\}textbf\{NOT SUPPORTED\} in Wave 79 sweep & \{\}textbf\{NOT SUPPORTED  UNCHANGED\} (Kanzi N=1000 production sweep + LineageFlow adapter fix + FlowMol3 N500 sweep all deferred to future waves) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 See \texttt{docs/audit/wave80-phase4-final.md} "Per-paper-claim honest support status" for the full table with per-metric root cause + path forward.
@@ -3263,6 +3335,7 @@ See \texttt{docs/audit/wave80-phase4-final.md} "Per-paper-claim honest support s
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lll}
 \hline
 \textbf{Paper claim} & \textbf{Wave 80 honest status} & \textbf{Wave 81 honest status} \\
@@ -3276,6 +3349,7 @@ See \texttt{docs/audit/wave80-phase4-final.md} "Per-paper-claim honest support s
 \texttt{framework\_sota} on Tier 3 paper metric & \{\}textbf\{NOT SUPPORTED  UNCHANGED\} & \{\}textbf\{NOT SUPPORTED  UNCHANGED\} (Kanzi N=1000 production sweep + LineageFlow N=1000 production sweep + FlowMol3 N500 sweep all deferred to future waves; Wave 81 closed the LineageFlow adapter-bug blocker but the brief's N=1000 production sweep target requires the scale-up path items 1+3+4 in 5 of \texttt{docs/audit/wave81-phase3-sweep.md}) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 See \texttt{docs/audit/wave81-phase4-final.md} for the full Wave 81 per-paper-claim honesty table with per-metric root cause + path forward.
@@ -3295,6 +3369,7 @@ See \texttt{docs/audit/wave81-phase4-final.md} for the full Wave 81 per-paper-cl
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lll}
 \hline
 \textbf{Paper claim} & \textbf{Wave 81 honest status} & \textbf{Wave 82 honest status} \\
@@ -3308,6 +3383,7 @@ See \texttt{docs/audit/wave81-phase4-final.md} for the full Wave 81 per-paper-cl
 \texttt{framework\_sota} on Tier 3 paper metric & \{\}textbf\{NOT SUPPORTED  UNCHANGED\} & \{\}textbf\{NOT SUPPORTED  UNCHANGED\} (Kanzi N=1000 production sweep + LineageFlow N=1000 production sweep + FlowMol3 xtb-pipeline closure (Wave 82 Agent A Phase C, \textasciitilde{}80 LOC) all deferred to future waves; Wave 82 closes the Wave 75 FlowMol3 N=10  N=1000 paper-metric data gap but the brief's headline \texttt{pb\_validity\_pct = 0.919} target requires the xtb pipeline to close to paper parity) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 82 honest verdict (Tier 3 paper-metric framing).\} The headline Tier 3 value-add claim remains on the \{\}textbf\{internal composite axis\} (real, byte-stable, reproducible across NFE and across runs), NOT on upstream paper metrics. Wave 82 advances the FlowMol3 paper-metric data by:
@@ -3337,6 +3413,7 @@ See \texttt{docs/audit/wave82-phase4-final.md} for the full Wave 82 final synthe
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrrl}
 \hline
 \textbf{Kanzi paper metric} & \textbf{Source} & \textbf{N} & \textbf{Baseline (N=200)} & \textbf{Framework arm} & \textbf{Verdict} \\
@@ -3349,6 +3426,7 @@ See \texttt{docs/audit/wave82-phase4-final.md} for the full Wave 82 final synthe
 \texttt{codebook\_hamming\_rotation\_invariance} (paper metric \#6, per-position Hamming equality under rotation pairs) & Wave 83 Agent B \texttt{compute\_codebook\_hamming\_rotation\_invariance} (skipped in N=200 sweep loop to avoid 2 runtime; verified by integration test \texttt{test\_paper\_metrics\_end\_to\_end\_on\_4\_demo\_pdbs} at N=16) & 16 backbones (smoke) & \{\}textbf\{not measured at N=200\} & n/a & \texttt{deferred\_to\_subsequent\_wave}  production N=1000 Hamming requires a separate 2 sweep pass; the encoder-quality reading is identical across N=16 and N=1000 because the rotation loop is encoder-side, not data-side \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Per-paper-claim support status (Wave 83 update, machine-readable):\}
@@ -3356,6 +3434,7 @@ See \texttt{docs/audit/wave82-phase4-final.md} for the full Wave 82 final synthe
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lll}
 \hline
 \textbf{Paper claim} & \textbf{Wave 82 honest status} & \textbf{Wave 83 honest status} \\
@@ -3369,6 +3448,7 @@ See \texttt{docs/audit/wave82-phase4-final.md} for the full Wave 82 final synthe
 \texttt{framework\_sota} on Tier 3 paper metric & \{\}textbf\{NOT SUPPORTED  UNCHANGED\} & \{\}textbf\{NOT SUPPORTED  UNCHANGED\} (FlowMol3 xtb-pipeline closure still deferred; Kanzi framework-arm N=1000 still deferred; LineageFlow framework-arm N=1000 still deferred) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 83 honest verdict (Tier 3 paper-metric framing).\} Wave 83 advances the \{\}textbf\{Kanzi paper-metric data\} from \texttt{Wave 80 N=32 baseline-only smoke + Wave 79 n=2 framework-arm TIES} to \{\}textbf\{\texttt{Wave 83 N=200 baseline-only 5/6-metric surface + Wave 79 n=2 framework-arm TIES + Wave 83 Agent B N=16 Hamming smoke}\}. Net change vs Wave 82: 1 additional model (Kanzi) moves from \texttt{infra-ready, N=1000 production sweep deferred to Wave 77} to \texttt{baseline-arm N=200 computed for 5/6 metrics; Hamming metric at N=16 smoke; framework-arm N=1000 still deferred}. The honest reading is unchanged: \{\}textbf\{the framework-vs-baseline Tier 3 paper-metric story is \texttt{TIES / NOISY-BAND} on all 3 models at N=1000\} (Wave 79 Kanzi n=2 proxy, Wave 82 FlowMol3 1/4 axes framework\_improves / 3/4 axes framework\_ties\_or\_regresses, LineageFlow adapter-bug closed but N=1000 framework-arm still deferred). The internal composite axis (Wave 47/52/69) remains the framework's real, byte-stable, NFE-independent value-add  SUPPORTED on all 3 models. See \texttt{docs/audit/wave83-phase4-final.md} for the full Wave 83 final synthesis with per-metric numbers + D.4 / G-MASTER / mkdocs verification + per-paper-claim honest support status table.
@@ -3385,6 +3465,7 @@ See \texttt{docs/audit/wave82-phase4-final.md} for the full Wave 82 final synthe
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lll}
 \hline
 \textbf{Paper claim} & \textbf{Wave 83 honest status} & \textbf{Wave 84 honest status} \\
@@ -3398,6 +3479,7 @@ See \texttt{docs/audit/wave82-phase4-final.md} for the full Wave 82 final synthe
 \texttt{framework\_sota} on Tier 3 paper metric & \{\}textbf\{NOT SUPPORTED  UNCHANGED\} & \{\}textbf\{NOT SUPPORTED  UNCHANGED\} (Kanzi framework-arm N=1000 still deferred; LineageFlow framework-arm N=1000 still deferred; FlowMol3 xtb-pipeline closure still deferred) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 84 honest verdict (Tier 3 paper-metric framing, FINAL).\} Wave 84 advances the \{\}textbf\{LineageFlow paper-metric data\} from \texttt{Wave 81 N=2 (family\_validity + novelty ties\_at\_zero\_or\_saturation) + Wave 80/81 foldability + self\_consistency skipped\_no\_omegafold\_python312\_blocker} to \{\}textbf\{\texttt{Wave 84 N=5 smoke (foldability\_pLDDT = 46.996 + self\_consistency\_scPerplexity = 15.423, both real numbers from the OmegaFold CPU + ESM-IF CPU pipeline) + Wave 81 N=2 (family\_validity + novelty ties)}\}. \{\}textbf\{Net change vs Wave 83: 2 additional paper metrics on LineageFlow move from \texttt{skipped\_no\_omegafold\_python312\_blocker} to \texttt{infra\_ready\_real\_number\_first\_time}\}  closing the final LineageFlow host-env + reference-data blocker. \{\}textbf\{ALL 3 Tier 3 models  ALL their paper metrics now have at least N=5 smoke or larger real numbers\} (Kanzi N=200 baseline; LineageFlow N=5 foldability + self\_consistency + N=2 family\_validity + novelty; FlowMol3 N=1000 paper-parity). The honest reading is unchanged: \{\}textbf\{the framework-vs-baseline Tier 3 paper-metric story is \texttt{TIES / NOISY-BAND} on all 3 models at every available sample size\}, with the \{\}textbf\{single exception\} of FlowMol3 \texttt{fg\_dev} (Wave 82: framework 0.6146 vs baseline 0.6381, =0.0235, 4.05 statistically significant at =0.05 power=0.8  the framework's only clean paper-metric win). The internal composite axis (Wave 47/52/69) remains the framework's real, byte-stable, NFE-independent value-add  SUPPORTED on all 3 models. See \texttt{docs/audit/wave84-phase3-final.md} for the full Wave 84 final synthesis with per-metric numbers + D.4 / G-MASTER / mkdocs verification + per-paper-claim FINAL honest support status table.
@@ -3414,6 +3496,7 @@ See \texttt{docs/audit/wave82-phase4-final.md} for the full Wave 82 final synthe
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lll}
 \hline
 \textbf{Paper claim (FlowMol3, arXiv 2508.12629)} & \textbf{Wave 82 honest status} & \textbf{\{\}textbf\{Wave 87 honest status\}} \\
@@ -3427,6 +3510,7 @@ See \texttt{docs/audit/wave82-phase4-final.md} for the full Wave 82 final synthe
 \{\}textbf\{\texttt{PB-xtb pipeline wire}\} (Pitfall \#6) & N/A (Wave 82 vendored YAML was already correctly configured; not formally audited) & \{\}textbf\{FALSE POSITIVE  wire is correct\} per Wave 87 Agent A audit 1-3: \texttt{compute\_pb\_validity\_pct} correctly loads the vendored YAML via \texttt{yaml.safe\_load} + \texttt{analyzer.buster = posebusters.PoseBusters(config=...)}; xtb is irrelevant to PB's \texttt{energy\_ratio} check; xtb IS used elsewhere (\texttt{\_compute\_xtb\_geometry\_metrics}  \texttt{-med\_rmsd\_after\_xtb} composite geometry axis). 0 LOC of pipeline changes required. \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 The honest reading is unchanged from Wave 84: \{\}textbf\{the framework-vs-baseline Tier 3 paper-metric story is \texttt{TIES / NOISY-BAND} on all 3 models at every available sample size\}, with the \{\}textbf\{single exception\} of FlowMol3 \texttt{fg\_dev} (Wave 82). The internal composite axis (Wave 47/52/69) remains the framework's real, byte-stable, NFE-independent value-add - SUPPORTED on all 3 models. See \texttt{docs/audit/wave87-phase4-final.md} for the Wave 87 final synthesis + per-metric byte-stable table + D.4/G-MASTER/mkdocs verification + UFF-vs-xtb comparison.
@@ -3447,6 +3531,7 @@ The honest reading is unchanged from Wave 84: \{\}textbf\{the framework-vs-basel
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llll}
 \hline
 \textbf{Paper claim} & \textbf{FlowMol3 (Wave 87)} & \textbf{LineageFlow (Wave 86 + 87)} & \textbf{\{\}textbf\{Kanzi (Wave 88)\}} \\
@@ -3457,6 +3542,7 @@ The honest reading is unchanged from Wave 84: \{\}textbf\{the framework-vs-basel
 \texttt{framework\_sota} on Tier 3 paper-metric axis (50\% reduction) & NO & NO & \{\}textbf\{NO\}  never run on real N=1000 paper metric; framework arm \texttt{NOT\_MEASURABLE} (Wave 88 F-3) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{The 7.6 honest verdict is therefore now: \texttt{framework\_improves} on Tier 3 paper metric  NOT MEASURABLE on Kanzi, PARTIAL on FlowMol3, TIES on LineageFlow; \texttt{framework\_improves} on Tier 3 INTERNAL composite axis  SUPPORTED on all 3 models (Kanzi +0.1695, LineageFlow +0.2083, FlowMol3 +0.1182).\} The "framework extends baseline plateau" claim remains TRUE for the internal composite axis on all 3 models. The "framework improves paper metric" claim is now formally \texttt{NOT\_MEASURABLE} on Kanzi (Wave 88 F-3), \texttt{PARTIAL} on FlowMol3 (1/4 axes, \texttt{fg\_dev}), and \texttt{TIES} on LineageFlow (Wave 86)  a more honest, more differentiated reading than the Wave 87 "TIES / NOISY-BAND on all 3" headline. See \texttt{docs/audit/wave88-phase3-final.md} for the full audit trail + D.4/G-MASTER/mkdocs verification + per-paper-claim FINAL status table.
@@ -3466,6 +3552,7 @@ The honest reading is unchanged from Wave 84: \{\}textbf\{the framework-vs-basel
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lllrrrrl}
 \hline
 \textbf{Tier 3 model} & \textbf{Paper metric} & \textbf{Source} & \textbf{N} & \textbf{Baseline} & \textbf{Framework} & \textbf{} & \textbf{Verdict} \\
@@ -3484,6 +3571,7 @@ The honest reading is unchanged from Wave 84: \{\}textbf\{the framework-vs-basel
 \{\}textbf\{Kanzi\} & 5 codebook metrics (entropy / perplexity / JS / utilization / hamming) & Wave 83 Agent B & 200 & (encoder-side, no framework arm) & n/a & n/a & \{\}textbf\{\texttt{encoder\_summary}\}  UNCHANGED from Wave 83; not Wave 88 scope \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Per-paper-claim Tier 3 FINAL verdict (\texttt{framework\_improves} on Tier 3 paper-metric axis):\}
@@ -3491,6 +3579,7 @@ The honest reading is unchanged from Wave 84: \{\}textbf\{the framework-vs-basel
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llll}
 \hline
 \textbf{Paper claim} & \textbf{FlowMol3 (Wave 87)} & \textbf{LineageFlow (Wave 86)} & \textbf{Kanzi (Wave 88)} \\
@@ -3501,6 +3590,7 @@ The honest reading is unchanged from Wave 84: \{\}textbf\{the framework-vs-basel
 \texttt{framework\_sota} on Tier 3 paper-metric axis (50\% reduction) & NO & NO & NO  never run on real N=1000 paper metric; framework arm \texttt{NOT\_MEASURABLE} (Wave 88 F-3) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{The 7.6 honest verdict is now FINAL and consolidated across Wave 86-88:\}
@@ -3527,6 +3617,7 @@ The revised 5.7 limitations entry 11 (now \texttt{11'.}) acknowledges all 6 pitf
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrrrlrrrl}
 \hline
 \textbf{model} & \textbf{metric} & \textbf{N} & \textbf{baseline} & \textbf{framework} & \textbf{} & \textbf{95\% CI} & \textbf{p (raw)} & \textbf{p (Bonf)} & \textbf{power@1pp} & \textbf{verdict} \\
@@ -3545,6 +3636,7 @@ kanzi & \texttt{codebook\_perplexity} & 200 & 376.870 & 376.870 & +0.0000 & [3.6
 kanzi & \texttt{codebook\_js\_distance} & 200 & 0.5603 & 0.5603 & +0.0000 & [0.097, +0.097] & 1.0 & 1.0 & 0.055 & \{\}textbf\{TIE\} (\texttt{encoder\_summary}, same) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Verdict reframe  what the data actually says (Wave 93).\} Out of 12 cells, \{\}textbf\{0 cells show the framework with a Bonferroni-significant improvement AND adequate post-hoc power at the 1pp effect-size floor\} (i.e. 0 strict \texttt{SUPPORTED}); \{\}textbf\{8 cells are \texttt{TIE}\}  4 Kanzi codebook cells by \texttt{encoder\_summary} construction, plus \texttt{flowmol3:validity\_pct} at the 1.0 saturation ceiling, \texttt{flowmol3:ood\_ring\_rate} at 0.3pp (within noise floor), \texttt{lineageflow:top1\_family\_type} at true zero (Wave 81 caveat), and \texttt{lineageflow:foldability\_pLDDT} at N=5 (degenerate); \{\}textbf\{4 cells are \texttt{UNDERPOWERED}\} at the 1pp floor  \texttt{flowmol3:pb\_validity\_pct} (=9.95pp, raw p=7.6e-06, Bonf p=9.1e-05  framework REGRESSES by \textasciitilde{}10pp on this axis, real effect but 1pp floor absorbs it), \texttt{flowmol3:fg\_dev} (=2.35pp, raw p=0.28, NOT significant at the 1pp floor), \texttt{lineageflow:hmmscan\_total\_hits} (=+184 hits, p\_bonf=0  framework IMPROVES massively, but the script's 1pp sensitivity floor in raw-count units is negligible so power@1pp  0.05), \texttt{lineageflow:coverage\_any\_hit} (=2.2pp, raw p=0.15, within SEM at N=1000). \{\}textbf\{The framework does not regress on any measured paper metric at the Bonferroni-corrected =0.05 level\} (the only negative-Bonf cell is \texttt{flowmol3:pb\_validity\_pct} where Bonf p=9.1e-05, =9.95pp  REGRESSES by \textasciitilde{}10pp on the PoseBusters axis; see Wave 87 7.5 UFF-vs-xtb definitional caveat). \{\}textbf\{The framework's two real framework\_improves wins are \texttt{lineageflow:hmmscan\_total\_hits} (+184 hits, +116\%, p\_bonf=0) and \texttt{flowmol3:fg\_dev} (=2.35pp, but raw p=0.28  does NOT reach =0.05)\}  the only Bonferroni-significant framework improvement is \texttt{lineageflow:hmmscan\_total\_hits}. \{\}textbf\{Reading: the framework's value-add is asymmetric and concentrated on \}specific axes\{\}textbf\{, not a uniform uplift.\} On broader coverage axes where the framework's multi-round restart-blend exposes more latent diversity (LineageFlow \texttt{hmmscan\_total\_hits}), the framework improves dramatically. On per-query primary axes where the baseline is at or near saturation (LineageFlow \texttt{coverage\_any\_hit}, FlowMol3 \texttt{validity\_pct}), the framework ties. On tight-distance / structural-precision axes (FlowMol3 \texttt{fg\_dev}), the framework shows a directional improvement but is borderline at the N=1000 sample size for the 1pp threshold. On the Kanzi paper-metric axis, the framework arm is structurally NOT\_MEASURABLE (Wave 88 F-3) so the 4 Kanzi cells reduce to a 4-cell TIE by construction  \{\}textbf\{the Kanzi story lives on the INTERNAL composite axis (Wave 52 +0.1695, byte-stable across NFE 10...2000) where the framework supports the framework\_improves verdict without the paper-metric bridge constraint\}.
@@ -3573,6 +3665,7 @@ The scan extends the Wave 44 3-point sweep (NFE  \{10, 50, 200\}) to a 6-point l
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lll}
 \hline
 \textbf{Knob} & \textbf{Value} & \textbf{Source} \\
@@ -3586,6 +3679,7 @@ Source JSON (Kanzi) & \texttt{verification\_outputs/kanzi\_nfe\_scan\_q4\_2026.j
 Source JSON (LineageFlow) & \texttt{verification\_outputs/lineageflow\_real\_force\_mode\_q4\_2026.json} (1/9 cells computed, 8 PENDING on CPU bandwidth) & Wave 58 Agent 3 \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \subsubsection{Kanzi NFE scan  18/18 cells computed, composite constant across NFE}
@@ -3712,6 +3806,7 @@ The decision logic is the \texttt{low\_nfe\_restart\_gate} helper at
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{ll}
 \hline
 \textbf{Property} & \textbf{Effect} \\
@@ -3721,6 +3816,7 @@ The decision logic is the \texttt{low\_nfe\_restart\_gate} helper at
 \{\}textbf\{Unknown budget fails open\} & If no candidate (kwarg / policy attr / constructor) resolves to a usable integer, the gate does NOT fire and the blend proceeds. This is what keeps every pre-Wave-58 caller byte-identical. \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Why the gate is shipped FlowMol3-only for now (Wave 58).\} The gate's evidence base is the 9-cell FlowMol3 v3 grid (Wave 57 Agent B), not Kanzi or LineageFlow. On both Kanzi and LineageFlow the NFE scan shows baseline saturates at NFE = 10 (7.7.3, 7.7.4), so the framework composite is already NFE-budget-free on those adapters  there is no NFE budget at which the restart-blend is harmful, and gating the framework off would discard a +0.169 / +0.211 composite lift at zero cost. If the gate were generalised to Kanzi / LineageFlow via the \texttt{low\_nfe\_restart\_gate} helper, the threshold would need to be set to 0 (i.e. disabled) for the same reason  the NFE-adaptive story is empirically tied to the FlowMol3 CTMC chain, not to the Kanzi / LineageFlow adapters.
@@ -3772,6 +3868,7 @@ other 8 are PENDING on CPU bandwidth. The "framework composite constant across N
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrlrl}
 \hline
 \textbf{Model} & \textbf{NFE grid} & \textbf{seeds  NFE = cells} & \textbf{\texttt{NFE\_95} baseline / framework} & \textbf{\texttt{speedup\_95} per seed} & \textbf{mean} & \textbf{Real measurement?} \\
@@ -3781,6 +3878,7 @@ other 8 are PENDING on CPU bandwidth. The "framework composite constant across N
 \{\}textbf\{FlowMol3\} & \{5, 10, 25, 50, 100, 200\} & 1  6 = \{\}textbf\{6\} & 5 / 5 & 1.0 /  /  & \{\}textbf\{1.0\} (degenerate) & \{\}textbf\{NO\}  synthetic mode, GAP-4 open (7.5) \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \texttt{NFE\_99} is identical to \texttt{NFE\_95} in every row. \{\}textbf\{Cross-model consistency: \texttt{none}\}  no model shows a convergence speedup, so the claim is not "supported on some models and not others"; it is simply absent everywhere.
@@ -4183,6 +4281,7 @@ The shared helper \texttt{low\_nfe\_restart\_gate(coerce\_nfe\_budget(nfe\_budge
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lcl}
 \hline
 \textbf{Adapter} & \textbf{Gate adoption (Wave 58 evidence)} & \textbf{Reasoning} \\
@@ -4193,6 +4292,7 @@ The shared helper \texttt{low\_nfe\_restart\_gate(coerce\_nfe\_budget(nfe\_budge
 All other 11 adapters & \{\}textbf\{not evaluated\} & requires per-adapter NFE scan + composite glue for the value-add to surface; Wave 59+ work \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Why the gate is shipped FlowMol3-only for now (Wave 58).\} The gate's evidence base is the 9-cell FlowMol3 v3 grid (Wave 57 Agent B) + the Wave 58 NFE-adaptive gate implementation audit (Wave 58 Agent 1). No other adapter has both an NFE-degrading framework interaction documented AND a real-ckpt composite glue to evaluate the gate's effect. Shipping the gate as adapter-agnostic infrastructure (the \texttt{\_adapter\_common.py} helper) without per-adapter calibration would create the same kind of "framework silently flatlines everywhere" risk that the unknown- budget-fails-open rule was designed to prevent.
@@ -4308,6 +4408,7 @@ The baseline selection is derived in
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lllll}
 \hline
 \textbf{Baseline} & \textbf{Axis} & \textbf{Venue} & \textbf{NFE} & \textbf{What it tests against the framework} \\
@@ -4317,6 +4418,7 @@ The baseline selection is derived in
 \{\}textbf\{DPMSolver++ multistep\} (Lu et al. 2022/2023) & inference-time solver quality & ICLR 2023 & 20 & The published solver-side ceiling. Isolates whether the framework's gain is merely a better inner integrator, which a stronger solver would also deliver. \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 The three axes matter because the framework's claim is specifically an \{\}textbf\{outer-loop\} claim. Baselines 1 and 2 test whether the outer loop is \{\}textit\{necessary\}; baseline 3 tests whether it is \{\}textit\{sufficient\}  i.e. whether the same benefit is available by swapping the inner solver alone.
@@ -4356,6 +4458,7 @@ Comparison is on the signed-mean metric axis of
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llllll}
 \hline
 \textbf{Model} & \textbf{iCT 1-step} & \textbf{RF+Reflow 1-step} & \textbf{DPMSolver++ 20-step} & \textbf{Framework vs \{\}textbf\{native\} baseline (measured)} & \textbf{Source} \\
@@ -4367,6 +4470,7 @@ LineageFlow (ICML 2026, protein) & \texttt{NOT APPLICABLE} (no CM-iCT ckpt) & \t
 FlowMol3 (NeurIPS 2024, molecule) & \texttt{NOT APPLICABLE} (no CM-iCT ckpt for 3D molecular FM) & \texttt{NOT APPLICABLE} (no Reflow variant) & \texttt{NOT APPLICABLE} (no DPMSolver++ variant for 3D coordinates) & composite +0.000, \texttt{no\_signal}  metric layer missing (no real-ckpt \texttt{frac\_valid\_mols}); 8.6 MolDiff-style composite 0.16/0.08/0.06 at NFE 10/50/250 (synthetic-mode baseline) & 7.5, 7.6, 8.6 \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 Two properties of this table are worth stating explicitly rather than leaving to the reader to notice.
@@ -4392,6 +4496,7 @@ The 2D and CIFAR-10 rows do not have the saturation problem: $W_2$ and FID are u
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lll}
 \hline
 \textbf{Item} & \textbf{Status} & \textbf{Blocker / Evidence} \\
@@ -4406,6 +4511,7 @@ Kanzi / LineageFlow decision-metric row meaningfulness & \{\}textbf\{BLOCKED\} (
 FlowMol3 row & \{\}textbf\{BLOCKED\} & metric layer is a placeholder uniform-vs-uniform (7.5); composite reads \texttt{+0.000 no\_signal} honestly, not silently \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Wave 52 Agent B partial close.\} The Tier 1 (toy) + Tier 2 (CIFAR-10 RF) baseline runs are complete on the synthetic-mode Protocol surface. The honest reading from
@@ -4441,6 +4547,7 @@ All entries operate on the \{\}textit\{same\} upstream checkpoint; the compariso
 \begin{table}[ht]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrrll}
 \hline
 \textbf{Model (paper)} & \textbf{Baseline (paper)} & \textbf{Baseline NFE} & \textbf{Baseline \texttt{composite\_self}} & \textbf{Framework \texttt{composite} (delta)} & \textbf{Verdict} & \textbf{Source} \\
@@ -4458,6 +4565,7 @@ FlowMol3 & CM-iCT / Reflow / DPMSolver++ &  & \texttt{NOT APPLICABLE} &  & not a
 Kanzi & CM-iCT / Reflow / DPMSolver++ &  & \texttt{NOT APPLICABLE} &  & not applicable  no published single-step / 2-reflow / multistep solver variant of the Kanzi flow-AE velocity field; framework is the only published re-inference method for this ckpt & deferred \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \{\}textbf\{Three honest readings from Table 15.\} First, the framework's composite advantage is the \{\}textbf\{argmax-redistribution signal\} (\_3 in 7.2), not entropy reduction or max-prob sharpening. On LineageFlow the framework's \_3 is +0.84 (84\% signed argmax turnover) vs the baselines' 0.56 to 0.25 (22-38\% absolute turnover, signed negative because most positions refine rather than flip). This is a categorical difference  no pure integrator achieves it at NFE=10  and it is the empirical signature of the restart-blend that the framework's outer loop adds. Second, the Tier 3 baselines are \{\}textbf\{synthetic-mode\} on the FlowMol3 axis (no MolDiff / EquiFM ckpts in this sandbox) and \{\}textbf\{CPU-only, low-NFE\} on the LineageFlow axis (CPU bandwidth caps each baseline at NFE=10). The framework's value-add reads correctly through both limitations but the \{\}textit\{quantitative\} magnitudes on FlowMol3 are placeholders until the real-ckpt chemistry metric lands. Third, the Tier 3 results sit on \{\}textbf\{two non-overlapping axes\}: LineageFlow uses the framework's composite axis (7.2) at NFE=10 on a real protein-FM ckpt; Kanzi uses the same composite axis at NFE 10...2000 on a real protein flow-AE ckpt. The Tier 1 + Tier 2 comparisons of 8.3 use the \{\}textit\{decision-metric\} axis (W\_2, FID) on synthetic-mode Protocol surfaces. The headline cross-model reading is therefore: \{\}textbf\{framework improves the composite axis on every real-ckpt Tier 3 model it can be measured on, and improves the decision-metric axis on the Tier 1 toy where the metric is unsaturated\}.
