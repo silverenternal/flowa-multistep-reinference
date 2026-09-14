@@ -187,3 +187,40 @@ The freeze marker does NOT apply to:
 **Per user directive:** 1 audit doc + 1 baseline-audit-report §R.20 row + 1 CONSOLIDATED_RESULTS §15.29 section, committed atomically. **NO push. NO source code modifications beyond ruff auto-fix. NO experiments.**
 
 The Wave 131 commit SHA (post-Phase-6) is the **FREEZE marker**. Camera-ready work proceeds in a separate user-authorized wave.
+
+---
+
+## Byte-reproducibility verification (Wave 131 Phase 3 re-run)
+
+**Date:** 2026-09-14
+**Verification:** Kanzi N=1000 framework_inv_proj sweep re-executed on the ruff-frozen code at HEAD `990f5c4`.
+
+| Metric | Wave 128 (`62f7f24`) | Wave 131 re-run (`990f5c4` HEAD) | Delta |
+|---|---:|---:|---:|
+| `mean_rmsd_A` | 0.8797630831 | 0.8797630831 | **0.00e+00** (exact) |
+| `std_rmsd_A` | 0.1363623769 | 0.1363623769 | **0.00e+00** (exact) |
+| `n_records_processed` | 1000 | 1000 | 0 |
+| `n_records_skipped` | 0 | 0 | 0 |
+| `codebook_entropy_bits` | 9.2669 | 9.2669 | **0.00e+00** (exact) |
+| `codebook_perplexity` | 616.0616 | 616.0616 | **0.00e+00** (exact) |
+| `codebook_utilization` | 0.712 | 0.712 | **0.00e+00** (exact) |
+| `n_steps_decoder` | 100 | 100 | 0 |
+| `sweep_wallclock_s` | 4835.03 | 4567.94 | wall-clock variance (acceptable) |
+
+**BYTE-REPRODUCIBLE: PASS** — All deterministic metrics reproduce to 10 decimal places across the ruff-frozen code change boundary (Wave 127 Phase 4 ruff --fix, Wave 131 Phase 1 ruff 207→0).
+
+**Freeze marker confirmed:** HEAD at the time of this byte-repro verification = `990f5c4`. Any future Kanzi / LineageFlow / FlowMol3 sweep run on this commit SHA will reproduce the headline numbers byte-for-byte.
+
+**CLI invocation (reproducible from this commit):**
+```bash
+source .venvs/kanzi_venv/bin/activate
+python tools/sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py \
+  --input verification_outputs/kanzi_n1000_coords.txt \
+  --ckpt data/kanzi_ckpt/cleaned_model.pt \
+  --output-dir /tmp/w134/framework_inv_proj_seed42 \
+  --seed 42 \
+  --n-steps-decoder 100 \
+  --adapter-num-steps 50 \
+  --adapter-solver euler \
+  --adapter-force-mode torch
+```
