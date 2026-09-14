@@ -1083,6 +1083,19 @@ def _torch_velocity_field(
     # real-mode calls now validate against ``(64, 512)`` correctly.
     x = make_validate_state_shape(state_shape)(np.asarray(x, dtype=np.float64))
 
+    # Wave 149 P1 (Wave 148 P1 PR-prep application): adapter-layer inverse projection.
+    # When state_shape[-1] != 3 (post-project_out latents), apply Wave 95.P3.B bridge
+    # to project (L, n_channels_decoder) -> (L, 3) backbone coords BEFORE model forward.
+    # Closes Wave 121 P4 NEW DEEPER bug at kanzi.py:_torch_velocity_field.
+    if state_shape[-1] != 3:
+        bridge_decoder = cache.get("latent_to_coord_decoder")
+        if bridge_decoder is None:
+            from adaptive_reflow.framework.interfaces import CapabilityMissingError
+            raise CapabilityMissingError("latent_to_coord_decoder")
+        from tools.kanzi_latent_to_coord import kanzi_latent_to_coords
+        x = kanzi_latent_to_coords(x, decoder=bridge_decoder, fsq_quantizer=bridge_decoder.quantize, n_steps=cache.get("decoder_steps", 50), seed=cache.get("bridge_seed", 0))
+        state_shape = (*state_shape[:-1], 3)
+
     import torch  # local import — torch is optional at the framework level.
 
     with torch.no_grad():
@@ -1745,6 +1758,11 @@ class KanziAdapter(FlowMatchingODEAdapter):
         entry = _synthetic_family_conditioning(
             family_id=family_id, seed=int(seed),
         )
+        # Wave 149 P1: stash real DAE decoder in cache so _torch_velocity_field can inverse-project
+        if self._mode == "torch" and self._model is not None:
+            entry["latent_to_coord_decoder"] = self._model._dae
+            entry["decoder_steps"] = int(self._num_steps)
+            entry["bridge_seed"] = int(seed)
         self._conditioning_cache.put(cache_hash, entry)
         return entry
 

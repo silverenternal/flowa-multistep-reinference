@@ -612,6 +612,115 @@ def test_torch_velocity_field_validates_against_per_call_state_shape() -> None:
     )
     assert out_default.shape == (64, 64)
 
+    # Wave 149 P1 regression: real-mode (64, 512) input must still validate
+    cache_no_bridge = {"family_embed": np.zeros(1152, dtype=np.float64)}
+    out_real_no_bridge = _torch_velocity_field(model=model, x=x_real, t=0.5, dtype=_torch.float64, cache=cache_no_bridge, guidance_scale=1.0, state_shape=(64, 512))
+    assert out_real_no_bridge.shape == (64, 512)
+
+
+def test_torch_velocity_field_inverse_projects_post_project_out_latents() -> None:
+    """Wave 149 P1 unit test: ``_torch_velocity_field`` must inverse-project
+    (L, n_channels_decoder) post-`project_out` latents to (L, 3) backbone
+    coords BEFORE invoking ``model(x_t, ...)``.
+
+    Closes the Wave 121 P4 NEW DEEPER bug at `kanzi.py:1107` (matmul
+    64x512 vs 3x256 in `DAE.encode`) at the ADAPTER LAYER. Pre-fix,
+    the velocity field would pass `(1, 64, 512)` directly to the model's
+    `_KanziDAEShim.forward` -> `DAE.encode(x)` -> `DAE.up`
+    (`nn.Linear(3, 256)`), which crashes with a matmul shape mismatch.
+    Post-fix, the velocity field detects `state_shape[-1] != 3`, calls
+    `tools.kanzi_latent_to_coord.kanzi_latent_to_coords` with the
+    cached decoder, and feeds `(1, 64, 3)` to the model.
+
+    This test exercises 3 paths:
+      - Path A: (L, 512) input -> inverse-projected -> (1, 64, 3) reaches model
+      - Path B: (L, 3) input -> no-op -> (1, 64, 3) reaches model (byte-stable)
+      - Path C: missing bridge decoder in cache -> CapabilityMissingError
+
+    Uses a stub `nn.Module` whose `forward` records the input shape so
+    we can assert that the model receives `(B, L, 3)` regardless of
+    input state_shape. The `kanzi_latent_to_coords` call is stubbed
+    via a fake `latent_to_coord_decoder` in the cache.
+    """
+    pytest.importorskip("torch", reason="torch is required for the stub DAE model")
+
+    import torch as _torch
+
+    from adaptive_reflow.adapters.kanzi import _torch_velocity_field
+
+    class _StubDae(_torch.nn.Module):
+        """Stub recording the input shape seen by `forward`."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self._dummy = _torch.nn.Parameter(_torch.zeros(1))
+            self.last_x_shape = None
+
+        def forward(self, x, t, family=None):  # noqa: D401
+            self.last_x_shape = tuple(x.shape)
+            return _torch.zeros_like(x)
+
+    model = _StubDae()
+
+    class _StubBridgeDecoder:
+        def quantize(self, z):  # noqa: D401
+            return z
+
+        def decode(self, idx_BL, n_steps=50, seed=0):  # noqa: D401
+            B, L = idx_BL.shape[0], idx_BL.shape[1]
+            return _torch.zeros((B, L, 3), dtype=_torch.float64)
+
+    bridge = _StubBridgeDecoder()
+
+    import sys
+    sys.modules.setdefault("tools.kanzi_latent_to_coord", type(sys)("tools.kanzi_latent_to_coord"))
+    sys.modules["tools.kanzi_latent_to_coord"].kanzi_latent_to_coords = (
+        lambda x, decoder, fsq_quantizer, n_steps, seed:
+            _torch.zeros((1, x.shape[0], 3), dtype=_torch.float64).numpy()
+    )
+
+    cache = {
+        "family_embed": np.zeros(1152, dtype=np.float64),
+        "latent_to_coord_decoder": bridge,
+        "decoder_steps": 50,
+        "bridge_seed": 0,
+    }
+
+    # Path A: (L, 512) input -> inverse-projected to (1, 64, 3)
+    x_latent = np.random.default_rng(0).standard_normal((64, 512)).astype(np.float64)
+    out_latent = _torch_velocity_field(
+        model=model, x=x_latent, t=0.5,
+        dtype=_torch.float64, cache=cache,
+        guidance_scale=1.0, state_shape=(64, 512),
+    )
+    assert model.last_x_shape == (1, 64, 3), (
+        f"expected model to receive (1, 64, 3), got {model.last_x_shape}"
+    )
+    assert out_latent.shape == (64, 3)
+    assert out_latent.dtype == np.float64
+    assert np.isfinite(out_latent).all()
+
+    # Path B: (L, 3) input -> no-op (byte-stable for synthetic mode)
+    x_backbone = np.random.default_rng(1).standard_normal((64, 3)).astype(np.float64)
+    out_backbone = _torch_velocity_field(
+        model=model, x=x_backbone, t=0.5,
+        dtype=_torch.float64, cache=cache,
+        guidance_scale=1.0, state_shape=(64, 3),
+    )
+    assert model.last_x_shape == (1, 64, 3)
+    assert out_backbone.shape == (64, 3)
+    assert np.isfinite(out_backbone).all()
+
+    # Path C: missing bridge decoder in cache -> CapabilityMissingError
+    cache_no_bridge = {"family_embed": np.zeros(1152, dtype=np.float64)}
+    with pytest.raises(Exception) as exc_info:
+        _torch_velocity_field(
+            model=model, x=x_latent, t=0.5,
+            dtype=_torch.float64, cache=cache_no_bridge,
+            guidance_scale=1.0, state_shape=(64, 512),
+        )
+    assert "latent_to_coord_decoder" in str(exc_info.value)
+
 
 def test_module_constants_consistent() -> None:
     """Module-level constants must be coherent with each other."""
