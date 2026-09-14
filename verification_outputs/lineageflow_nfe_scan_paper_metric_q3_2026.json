@@ -1,0 +1,2248 @@
+{
+  "schema": "lineageflow_nfe_scan_paper_metric.v1",
+  "model": "lineageflow",
+  "axis": "protein_fm",
+  "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+  "wave": "139",
+  "freeze_marker": "v1.0.1-paper-final (commit 0ef6465)",
+  "metric_mode": "real",
+  "cells": [
+    {
+      "schema": "real_ckpt_eval_report.v1",
+      "model": "lineageflow",
+      "axis": "protein_fm",
+      "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+      "domain": "protein_fm",
+      "downstream_metrics": {
+        "domain": "protein_fm",
+        "axis": "protein_fm",
+        "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+        "primary_metric": {
+          "name": "family_validity_rate",
+          "direction": "higher_is_better",
+          "saturation_threshold": 0.999,
+          "improvement_bar": 0.005,
+          "definition": "fraction of generated protein sequences whose Pfam-family prediction matches the conditioning family ID (Wave 10 anchor)"
+        },
+        "secondary_metrics": [
+          {
+            "name": "perplexity",
+            "direction": "lower_is_better",
+            "saturation_threshold": 1.05,
+            "improvement_bar": 0.02,
+            "definition": "exp(-mean(log p(seq))) post-Wave-33 per-position entropy headroom (the Wave-33 paper-quantity-aware scheduler surfaces this signal)"
+          },
+          {
+            "name": "novelty",
+            "direction": "higher_is_better",
+            "saturation_threshold": 0.99,
+            "improvement_bar": 0.01,
+            "definition": "1 - |generated intersect reference| / |generated| against Pfam"
+          },
+          {
+            "name": "lineageflow_composite",
+            "direction": "higher_is_better",
+            "saturation_threshold": null,
+            "improvement_bar": 0.05,
+            "is_composite": true,
+            "composite_components": [
+              "per_position_entropy_reduction_normalised",
+              "per_position_max_prob_delta",
+              "argmax_turnover_signed"
+            ],
+            "composite_weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "definition": "100% flow-component composite: framework-vs-baseline delta on per-position entropy, max-prob sharpness, and argmax turnover. Bounded in [-1, 1]. Positive = framework improves the flow bundle. Computed by LineageFlowGlue.compute_composite (Wave 47)."
+          }
+        ],
+        "adapter_factory": "adaptive_reflow.adapters.lineageflow:default_lineageflow_adapter",
+        "adapter_import_path": "adaptive_reflow.adapters.lineageflow",
+        "adapter_module_alias": "lineageflow",
+        "channel_name": "amino_acid_categorical",
+        "nfe_paper_default": 50
+      },
+      "seeds": [
+        42
+      ],
+      "nfe_budgets": [
+        50
+      ],
+      "n_rounds_framework": 3,
+      "force_mode": "real",
+      "metric_mode": "real",
+      "restart_min_nfe": 20,
+      "cells": [
+        {
+          "model": "lineageflow",
+          "seed": 42,
+          "nfe_budget": 50,
+          "axis": "protein_fm",
+          "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+          "primary_metric_name": "family_validity_rate",
+          "primary_metric_direction": "higher_is_better",
+          "n_rounds_framework": 3,
+          "force_mode_requested": "real",
+          "metric_mode_requested": "real",
+          "restart_min_nfe_requested": 20,
+          "adapter_mode": "torch",
+          "baseline_metric": 1.0,
+          "baseline_marker": "computed",
+          "baseline_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.7441
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 42,
+            "nfe_budget": 50,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 42,
+              "nfe_budget": 50,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": false,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "framework_metric": 1.0,
+          "framework_marker": "computed",
+          "framework_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.6912
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 42,
+            "nfe_budget": 50,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 42,
+              "nfe_budget": 50,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": true,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "composite": 0.20312494925931135,
+          "composite_marker": "computed",
+          "composite_debug": {
+            "seed": 42,
+            "nfe_budget": 50,
+            "composite": 0.20312494925931135,
+            "phi1_entropy_reduction_normalised": -7.493552615159954e-15,
+            "phi2_max_prob_delta": -1.4497338756489094e-07,
+            "phi3_argmax_turnover_signed": 0.8125,
+            "weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "K": 33,
+            "glue_class": "LineageFlowGlue"
+          },
+          "composite_components": {
+            "phi1_entropy_reduction_normalised": -7.493552615159954e-15,
+            "phi2_max_prob_delta": -1.4497338756489094e-07,
+            "phi3_argmax_turnover_signed": 0.8125
+          },
+          "composite_weights": [
+            0.4,
+            0.35,
+            0.25
+          ],
+          "composite_K": 33,
+          "upstream_eval_metrics": {
+            "status": 1.0,
+            "family_validity__n_total": 2.0,
+            "family_validity__missing_family_headers": 0.0,
+            "family_validity__hmmscan_total_hits": 0.0,
+            "family_validity__hmmscan_unique_queries": 0.0,
+            "family_validity__coverage_any_hit": 0.0,
+            "family_validity__top1_family_accuracy": 0.0,
+            "family_validity__topk_contains_intended": 0.0,
+            "family_validity__topk_family": 10.0,
+            "family_validity__intended_hit_rate_evalue": 0.0,
+            "family_validity__evalue_threshold": 0.001,
+            "family_validity__score_margin_mean": NaN,
+            "family_validity__score_margin_median": NaN,
+            "novelty__n_total": 2.0,
+            "novelty__missing_family_headers": 0.0,
+            "novelty__n_with_family": 2.0,
+            "metric_kind": "family_validity+foldability+self_consistency+novelty",
+            "upstream_orchestrator": "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/evaluate_all.py",
+            "sweep_n_records_actual": 0,
+            "sweep_n_records_requested": 2,
+            "sweep_n_records_match": false,
+            "sweep_name": "run_lineageflow_upstream_eval"
+          },
+          "upstream_eval_debug": {
+            "n_samples": 1,
+            "lineageflow_flag": true,
+            "kanzi_flag": false,
+            "flowmol3_flag": false,
+            "lineageflow": "computed"
+          },
+          "delta_pct": 0.0,
+          "signed_delta_pct": 0.0,
+          "saturation_at_ceiling": true,
+          "status": "TIE_AT_SATURATION",
+          "wallclock_baseline_s": 23.5622,
+          "wallclock_framework_s": 23.7509,
+          "wallclock_ratio": 1.008
+        }
+      ],
+      "aggregate": {
+        "n_cells": 1,
+        "n_supported": 0,
+        "n_tie": 0,
+        "n_tie_at_saturation": 1,
+        "n_regression": 0,
+        "n_pending": 0,
+        "n_blocked": 0,
+        "n_run_error": 0,
+        "n_real_computed": 1,
+        "n_synthetic_fallback": 0,
+        "composite_median": 0.203125,
+        "composite_verdict": "framework_improves",
+        "n_composite_computed": 1,
+        "n_composite_blocked": 0,
+        "g1_mean_signed_delta_pct": 0.0,
+        "verdict_overall": "TIE_AT_SATURATION"
+      },
+      "env_hash": {
+        "lock_hash": "983f7707e7207ed6dee1972cc1fb9306448ad6367963edefd612f88b76519092",
+        "python_version": "Python 3.12.13",
+        "torch_version": "torch:2.7.0+cu128+cuda12.8",
+        "adapter_deps_hash": "c3c0294d0795e89e89c567a8da52002a825257df893c173b2fac6b4e734e0beb",
+        "composite_hash": "193e049e8189a69ad704ab4c601390c6d214746809cc3719868dd849745ac9fe",
+        "committed_env_hash_path": "/home/hugo/codes/flowa-multistep-reinference/env_hash.txt",
+        "committed_env_hash_lines": 12
+      },
+      "timestamp": "2026-09-14T03:56:40.826466+00:00",
+      "tool": "tools/run_real_ckpt_eval.py",
+      "spec_source": "docs/audit/phase-4-eval-pipeline.md",
+      "data_sources": {
+        "adapter_registry": "adaptive_reflow/adapters/__init__.py:ADAPTER_REGISTRY",
+        "downstream_metrics": "tools/run_real_ckpt_eval.py:DOWNSTREAM_METRICS",
+        "env_hash_capture": "scripts/capture_env_hash.py",
+        "canonical_inception": "tools/run_image_eval.py:load_inception_for_fid",
+        "metric_layer_w43": "tools/run_real_ckpt_eval.py:_compute_kanzi_real_metric, _compute_lineageflow_real_metric (Wave 43 Agent A real-metric layer)"
+      },
+      "notes": "Per-cell value surface for PHASE-4 G-MASTER-CAPABILITY extension. Fold cells[] into tools/capability_audit.py:evidence[] to extend G.1-G.4. metric_mode='synthetic' returns the documented Wave 33 cold-clone trivial reading. metric_mode='real' runs the per-model real downstream metric (protein_sequence_validity_rate for kanzi; family_validity_rate for lineageflow) via the upstream package + Bio.SeqIO / ESM-2 PLL. See docs/audit/wave43-metric-layer-fix.md. MM-FM cells are BLOCKED on the missing adapter file (Wave 21 M-agent + Wave 21.5 re-spawn both stalled)."
+    },
+    {
+      "schema": "real_ckpt_eval_report.v1",
+      "model": "lineageflow",
+      "axis": "protein_fm",
+      "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+      "domain": "protein_fm",
+      "downstream_metrics": {
+        "domain": "protein_fm",
+        "axis": "protein_fm",
+        "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+        "primary_metric": {
+          "name": "family_validity_rate",
+          "direction": "higher_is_better",
+          "saturation_threshold": 0.999,
+          "improvement_bar": 0.005,
+          "definition": "fraction of generated protein sequences whose Pfam-family prediction matches the conditioning family ID (Wave 10 anchor)"
+        },
+        "secondary_metrics": [
+          {
+            "name": "perplexity",
+            "direction": "lower_is_better",
+            "saturation_threshold": 1.05,
+            "improvement_bar": 0.02,
+            "definition": "exp(-mean(log p(seq))) post-Wave-33 per-position entropy headroom (the Wave-33 paper-quantity-aware scheduler surfaces this signal)"
+          },
+          {
+            "name": "novelty",
+            "direction": "higher_is_better",
+            "saturation_threshold": 0.99,
+            "improvement_bar": 0.01,
+            "definition": "1 - |generated intersect reference| / |generated| against Pfam"
+          },
+          {
+            "name": "lineageflow_composite",
+            "direction": "higher_is_better",
+            "saturation_threshold": null,
+            "improvement_bar": 0.05,
+            "is_composite": true,
+            "composite_components": [
+              "per_position_entropy_reduction_normalised",
+              "per_position_max_prob_delta",
+              "argmax_turnover_signed"
+            ],
+            "composite_weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "definition": "100% flow-component composite: framework-vs-baseline delta on per-position entropy, max-prob sharpness, and argmax turnover. Bounded in [-1, 1]. Positive = framework improves the flow bundle. Computed by LineageFlowGlue.compute_composite (Wave 47)."
+          }
+        ],
+        "adapter_factory": "adaptive_reflow.adapters.lineageflow:default_lineageflow_adapter",
+        "adapter_import_path": "adaptive_reflow.adapters.lineageflow",
+        "adapter_module_alias": "lineageflow",
+        "channel_name": "amino_acid_categorical",
+        "nfe_paper_default": 50
+      },
+      "seeds": [
+        42
+      ],
+      "nfe_budgets": [
+        100
+      ],
+      "n_rounds_framework": 3,
+      "force_mode": "real",
+      "metric_mode": "real",
+      "restart_min_nfe": 20,
+      "cells": [
+        {
+          "model": "lineageflow",
+          "seed": 42,
+          "nfe_budget": 100,
+          "axis": "protein_fm",
+          "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+          "primary_metric_name": "family_validity_rate",
+          "primary_metric_direction": "higher_is_better",
+          "n_rounds_framework": 3,
+          "force_mode_requested": "real",
+          "metric_mode_requested": "real",
+          "restart_min_nfe_requested": 20,
+          "adapter_mode": "torch",
+          "baseline_metric": 1.0,
+          "baseline_marker": "computed",
+          "baseline_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.7441
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 42,
+            "nfe_budget": 100,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 42,
+              "nfe_budget": 100,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": false,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "framework_metric": 1.0,
+          "framework_marker": "computed",
+          "framework_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.6912
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 42,
+            "nfe_budget": 100,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 42,
+              "nfe_budget": 100,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": true,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "composite": 0.20312494925931135,
+          "composite_marker": "computed",
+          "composite_debug": {
+            "seed": 42,
+            "nfe_budget": 100,
+            "composite": 0.20312494925931135,
+            "phi1_entropy_reduction_normalised": -7.493552615159954e-15,
+            "phi2_max_prob_delta": -1.449733875651891e-07,
+            "phi3_argmax_turnover_signed": 0.8125,
+            "weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "K": 33,
+            "glue_class": "LineageFlowGlue"
+          },
+          "composite_components": {
+            "phi1_entropy_reduction_normalised": -7.493552615159954e-15,
+            "phi2_max_prob_delta": -1.449733875651891e-07,
+            "phi3_argmax_turnover_signed": 0.8125
+          },
+          "composite_weights": [
+            0.4,
+            0.35,
+            0.25
+          ],
+          "composite_K": 33,
+          "upstream_eval_metrics": {
+            "status": 1.0,
+            "family_validity__n_total": 2.0,
+            "family_validity__missing_family_headers": 0.0,
+            "family_validity__hmmscan_total_hits": 0.0,
+            "family_validity__hmmscan_unique_queries": 0.0,
+            "family_validity__coverage_any_hit": 0.0,
+            "family_validity__top1_family_accuracy": 0.0,
+            "family_validity__topk_contains_intended": 0.0,
+            "family_validity__topk_family": 10.0,
+            "family_validity__intended_hit_rate_evalue": 0.0,
+            "family_validity__evalue_threshold": 0.001,
+            "family_validity__score_margin_mean": NaN,
+            "family_validity__score_margin_median": NaN,
+            "novelty__n_total": 2.0,
+            "novelty__missing_family_headers": 0.0,
+            "novelty__n_with_family": 2.0,
+            "metric_kind": "family_validity+foldability+self_consistency+novelty",
+            "upstream_orchestrator": "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/evaluate_all.py",
+            "sweep_n_records_actual": 0,
+            "sweep_n_records_requested": 2,
+            "sweep_n_records_match": false,
+            "sweep_name": "run_lineageflow_upstream_eval"
+          },
+          "upstream_eval_debug": {
+            "n_samples": 1,
+            "lineageflow_flag": true,
+            "kanzi_flag": false,
+            "flowmol3_flag": false,
+            "lineageflow": "computed"
+          },
+          "delta_pct": 0.0,
+          "signed_delta_pct": 0.0,
+          "saturation_at_ceiling": true,
+          "status": "TIE_AT_SATURATION",
+          "wallclock_baseline_s": 53.333,
+          "wallclock_framework_s": 55.7987,
+          "wallclock_ratio": 1.0462
+        }
+      ],
+      "aggregate": {
+        "n_cells": 1,
+        "n_supported": 0,
+        "n_tie": 0,
+        "n_tie_at_saturation": 1,
+        "n_regression": 0,
+        "n_pending": 0,
+        "n_blocked": 0,
+        "n_run_error": 0,
+        "n_real_computed": 1,
+        "n_synthetic_fallback": 0,
+        "composite_median": 0.203125,
+        "composite_verdict": "framework_improves",
+        "n_composite_computed": 1,
+        "n_composite_blocked": 0,
+        "g1_mean_signed_delta_pct": 0.0,
+        "verdict_overall": "TIE_AT_SATURATION"
+      },
+      "env_hash": {
+        "lock_hash": "983f7707e7207ed6dee1972cc1fb9306448ad6367963edefd612f88b76519092",
+        "python_version": "Python 3.12.13",
+        "torch_version": "torch:2.7.0+cu128+cuda12.8",
+        "adapter_deps_hash": "c3c0294d0795e89e89c567a8da52002a825257df893c173b2fac6b4e734e0beb",
+        "composite_hash": "193e049e8189a69ad704ab4c601390c6d214746809cc3719868dd849745ac9fe",
+        "committed_env_hash_path": "/home/hugo/codes/flowa-multistep-reinference/env_hash.txt",
+        "committed_env_hash_lines": 12
+      },
+      "timestamp": "2026-09-14T03:59:39.284883+00:00",
+      "tool": "tools/run_real_ckpt_eval.py",
+      "spec_source": "docs/audit/phase-4-eval-pipeline.md",
+      "data_sources": {
+        "adapter_registry": "adaptive_reflow/adapters/__init__.py:ADAPTER_REGISTRY",
+        "downstream_metrics": "tools/run_real_ckpt_eval.py:DOWNSTREAM_METRICS",
+        "env_hash_capture": "scripts/capture_env_hash.py",
+        "canonical_inception": "tools/run_image_eval.py:load_inception_for_fid",
+        "metric_layer_w43": "tools/run_real_ckpt_eval.py:_compute_kanzi_real_metric, _compute_lineageflow_real_metric (Wave 43 Agent A real-metric layer)"
+      },
+      "notes": "Per-cell value surface for PHASE-4 G-MASTER-CAPABILITY extension. Fold cells[] into tools/capability_audit.py:evidence[] to extend G.1-G.4. metric_mode='synthetic' returns the documented Wave 33 cold-clone trivial reading. metric_mode='real' runs the per-model real downstream metric (protein_sequence_validity_rate for kanzi; family_validity_rate for lineageflow) via the upstream package + Bio.SeqIO / ESM-2 PLL. See docs/audit/wave43-metric-layer-fix.md. MM-FM cells are BLOCKED on the missing adapter file (Wave 21 M-agent + Wave 21.5 re-spawn both stalled)."
+    },
+    {
+      "schema": "real_ckpt_eval_report.v1",
+      "model": "lineageflow",
+      "axis": "protein_fm",
+      "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+      "domain": "protein_fm",
+      "downstream_metrics": {
+        "domain": "protein_fm",
+        "axis": "protein_fm",
+        "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+        "primary_metric": {
+          "name": "family_validity_rate",
+          "direction": "higher_is_better",
+          "saturation_threshold": 0.999,
+          "improvement_bar": 0.005,
+          "definition": "fraction of generated protein sequences whose Pfam-family prediction matches the conditioning family ID (Wave 10 anchor)"
+        },
+        "secondary_metrics": [
+          {
+            "name": "perplexity",
+            "direction": "lower_is_better",
+            "saturation_threshold": 1.05,
+            "improvement_bar": 0.02,
+            "definition": "exp(-mean(log p(seq))) post-Wave-33 per-position entropy headroom (the Wave-33 paper-quantity-aware scheduler surfaces this signal)"
+          },
+          {
+            "name": "novelty",
+            "direction": "higher_is_better",
+            "saturation_threshold": 0.99,
+            "improvement_bar": 0.01,
+            "definition": "1 - |generated intersect reference| / |generated| against Pfam"
+          },
+          {
+            "name": "lineageflow_composite",
+            "direction": "higher_is_better",
+            "saturation_threshold": null,
+            "improvement_bar": 0.05,
+            "is_composite": true,
+            "composite_components": [
+              "per_position_entropy_reduction_normalised",
+              "per_position_max_prob_delta",
+              "argmax_turnover_signed"
+            ],
+            "composite_weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "definition": "100% flow-component composite: framework-vs-baseline delta on per-position entropy, max-prob sharpness, and argmax turnover. Bounded in [-1, 1]. Positive = framework improves the flow bundle. Computed by LineageFlowGlue.compute_composite (Wave 47)."
+          }
+        ],
+        "adapter_factory": "adaptive_reflow.adapters.lineageflow:default_lineageflow_adapter",
+        "adapter_import_path": "adaptive_reflow.adapters.lineageflow",
+        "adapter_module_alias": "lineageflow",
+        "channel_name": "amino_acid_categorical",
+        "nfe_paper_default": 50
+      },
+      "seeds": [
+        43
+      ],
+      "nfe_budgets": [
+        50
+      ],
+      "n_rounds_framework": 3,
+      "force_mode": "real",
+      "metric_mode": "real",
+      "restart_min_nfe": 20,
+      "cells": [
+        {
+          "model": "lineageflow",
+          "seed": 43,
+          "nfe_budget": 50,
+          "axis": "protein_fm",
+          "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+          "primary_metric_name": "family_validity_rate",
+          "primary_metric_direction": "higher_is_better",
+          "n_rounds_framework": 3,
+          "force_mode_requested": "real",
+          "metric_mode_requested": "real",
+          "restart_min_nfe_requested": 20,
+          "adapter_mode": "torch",
+          "baseline_metric": 1.0,
+          "baseline_marker": "computed",
+          "baseline_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.7441
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 43,
+            "nfe_budget": 50,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 43,
+              "nfe_budget": 50,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": false,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "framework_metric": 1.0,
+          "framework_marker": "computed",
+          "framework_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.7034
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 43,
+            "nfe_budget": 50,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 43,
+              "nfe_budget": 50,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": true,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "composite": 0.19921870132780845,
+          "composite_marker": "computed",
+          "composite_debug": {
+            "seed": 43,
+            "nfe_budget": 50,
+            "composite": 0.19921870132780845,
+            "phi1_entropy_reduction_normalised": -7.493552615159954e-15,
+            "phi2_max_prob_delta": -1.3906339584256438e-07,
+            "phi3_argmax_turnover_signed": 0.796875,
+            "weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "K": 33,
+            "glue_class": "LineageFlowGlue"
+          },
+          "composite_components": {
+            "phi1_entropy_reduction_normalised": -7.493552615159954e-15,
+            "phi2_max_prob_delta": -1.3906339584256438e-07,
+            "phi3_argmax_turnover_signed": 0.796875
+          },
+          "composite_weights": [
+            0.4,
+            0.35,
+            0.25
+          ],
+          "composite_K": 33,
+          "upstream_eval_metrics": {
+            "status": 1.0,
+            "family_validity__n_total": 2.0,
+            "family_validity__missing_family_headers": 0.0,
+            "family_validity__hmmscan_total_hits": 0.0,
+            "family_validity__hmmscan_unique_queries": 0.0,
+            "family_validity__coverage_any_hit": 0.0,
+            "family_validity__top1_family_accuracy": 0.0,
+            "family_validity__topk_contains_intended": 0.0,
+            "family_validity__topk_family": 10.0,
+            "family_validity__intended_hit_rate_evalue": 0.0,
+            "family_validity__evalue_threshold": 0.001,
+            "family_validity__score_margin_mean": NaN,
+            "family_validity__score_margin_median": NaN,
+            "novelty__n_total": 2.0,
+            "novelty__missing_family_headers": 0.0,
+            "novelty__n_with_family": 2.0,
+            "metric_kind": "family_validity+foldability+self_consistency+novelty",
+            "upstream_orchestrator": "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/evaluate_all.py",
+            "sweep_n_records_actual": 0,
+            "sweep_n_records_requested": 2,
+            "sweep_n_records_match": false,
+            "sweep_name": "run_lineageflow_upstream_eval"
+          },
+          "upstream_eval_debug": {
+            "n_samples": 1,
+            "lineageflow_flag": true,
+            "kanzi_flag": false,
+            "flowmol3_flag": false,
+            "lineageflow": "computed"
+          },
+          "delta_pct": 0.0,
+          "signed_delta_pct": 0.0,
+          "saturation_at_ceiling": true,
+          "status": "TIE_AT_SATURATION",
+          "wallclock_baseline_s": 23.0155,
+          "wallclock_framework_s": 23.0083,
+          "wallclock_ratio": 0.9997
+        }
+      ],
+      "aggregate": {
+        "n_cells": 1,
+        "n_supported": 0,
+        "n_tie": 0,
+        "n_tie_at_saturation": 1,
+        "n_regression": 0,
+        "n_pending": 0,
+        "n_blocked": 0,
+        "n_run_error": 0,
+        "n_real_computed": 1,
+        "n_synthetic_fallback": 0,
+        "composite_median": 0.199219,
+        "composite_verdict": "framework_improves",
+        "n_composite_computed": 1,
+        "n_composite_blocked": 0,
+        "g1_mean_signed_delta_pct": 0.0,
+        "verdict_overall": "TIE_AT_SATURATION"
+      },
+      "env_hash": {
+        "lock_hash": "983f7707e7207ed6dee1972cc1fb9306448ad6367963edefd612f88b76519092",
+        "python_version": "Python 3.12.13",
+        "torch_version": "torch:2.7.0+cu128+cuda12.8",
+        "adapter_deps_hash": "c3c0294d0795e89e89c567a8da52002a825257df893c173b2fac6b4e734e0beb",
+        "composite_hash": "193e049e8189a69ad704ab4c601390c6d214746809cc3719868dd849745ac9fe",
+        "committed_env_hash_path": "/home/hugo/codes/flowa-multistep-reinference/env_hash.txt",
+        "committed_env_hash_lines": 12
+      },
+      "timestamp": "2026-09-14T04:01:12.030125+00:00",
+      "tool": "tools/run_real_ckpt_eval.py",
+      "spec_source": "docs/audit/phase-4-eval-pipeline.md",
+      "data_sources": {
+        "adapter_registry": "adaptive_reflow/adapters/__init__.py:ADAPTER_REGISTRY",
+        "downstream_metrics": "tools/run_real_ckpt_eval.py:DOWNSTREAM_METRICS",
+        "env_hash_capture": "scripts/capture_env_hash.py",
+        "canonical_inception": "tools/run_image_eval.py:load_inception_for_fid",
+        "metric_layer_w43": "tools/run_real_ckpt_eval.py:_compute_kanzi_real_metric, _compute_lineageflow_real_metric (Wave 43 Agent A real-metric layer)"
+      },
+      "notes": "Per-cell value surface for PHASE-4 G-MASTER-CAPABILITY extension. Fold cells[] into tools/capability_audit.py:evidence[] to extend G.1-G.4. metric_mode='synthetic' returns the documented Wave 33 cold-clone trivial reading. metric_mode='real' runs the per-model real downstream metric (protein_sequence_validity_rate for kanzi; family_validity_rate for lineageflow) via the upstream package + Bio.SeqIO / ESM-2 PLL. See docs/audit/wave43-metric-layer-fix.md. MM-FM cells are BLOCKED on the missing adapter file (Wave 21 M-agent + Wave 21.5 re-spawn both stalled)."
+    },
+    {
+      "schema": "real_ckpt_eval_report.v1",
+      "model": "lineageflow",
+      "axis": "protein_fm",
+      "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+      "domain": "protein_fm",
+      "downstream_metrics": {
+        "domain": "protein_fm",
+        "axis": "protein_fm",
+        "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+        "primary_metric": {
+          "name": "family_validity_rate",
+          "direction": "higher_is_better",
+          "saturation_threshold": 0.999,
+          "improvement_bar": 0.005,
+          "definition": "fraction of generated protein sequences whose Pfam-family prediction matches the conditioning family ID (Wave 10 anchor)"
+        },
+        "secondary_metrics": [
+          {
+            "name": "perplexity",
+            "direction": "lower_is_better",
+            "saturation_threshold": 1.05,
+            "improvement_bar": 0.02,
+            "definition": "exp(-mean(log p(seq))) post-Wave-33 per-position entropy headroom (the Wave-33 paper-quantity-aware scheduler surfaces this signal)"
+          },
+          {
+            "name": "novelty",
+            "direction": "higher_is_better",
+            "saturation_threshold": 0.99,
+            "improvement_bar": 0.01,
+            "definition": "1 - |generated intersect reference| / |generated| against Pfam"
+          },
+          {
+            "name": "lineageflow_composite",
+            "direction": "higher_is_better",
+            "saturation_threshold": null,
+            "improvement_bar": 0.05,
+            "is_composite": true,
+            "composite_components": [
+              "per_position_entropy_reduction_normalised",
+              "per_position_max_prob_delta",
+              "argmax_turnover_signed"
+            ],
+            "composite_weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "definition": "100% flow-component composite: framework-vs-baseline delta on per-position entropy, max-prob sharpness, and argmax turnover. Bounded in [-1, 1]. Positive = framework improves the flow bundle. Computed by LineageFlowGlue.compute_composite (Wave 47)."
+          }
+        ],
+        "adapter_factory": "adaptive_reflow.adapters.lineageflow:default_lineageflow_adapter",
+        "adapter_import_path": "adaptive_reflow.adapters.lineageflow",
+        "adapter_module_alias": "lineageflow",
+        "channel_name": "amino_acid_categorical",
+        "nfe_paper_default": 50
+      },
+      "seeds": [
+        43
+      ],
+      "nfe_budgets": [
+        100
+      ],
+      "n_rounds_framework": 3,
+      "force_mode": "real",
+      "metric_mode": "real",
+      "restart_min_nfe": 20,
+      "cells": [
+        {
+          "model": "lineageflow",
+          "seed": 43,
+          "nfe_budget": 100,
+          "axis": "protein_fm",
+          "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+          "primary_metric_name": "family_validity_rate",
+          "primary_metric_direction": "higher_is_better",
+          "n_rounds_framework": 3,
+          "force_mode_requested": "real",
+          "metric_mode_requested": "real",
+          "restart_min_nfe_requested": 20,
+          "adapter_mode": "torch",
+          "baseline_metric": 1.0,
+          "baseline_marker": "computed",
+          "baseline_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.7441
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 43,
+            "nfe_budget": 100,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 43,
+              "nfe_budget": 100,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": false,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "framework_metric": 1.0,
+          "framework_marker": "computed",
+          "framework_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.7034
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 43,
+            "nfe_budget": 100,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 43,
+              "nfe_budget": 100,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": true,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "composite": 0.19921870132780845,
+          "composite_marker": "computed",
+          "composite_debug": {
+            "seed": 43,
+            "nfe_budget": 100,
+            "composite": 0.19921870132780845,
+            "phi1_entropy_reduction_normalised": -7.493552615159954e-15,
+            "phi2_max_prob_delta": -1.3906339584310648e-07,
+            "phi3_argmax_turnover_signed": 0.796875,
+            "weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "K": 33,
+            "glue_class": "LineageFlowGlue"
+          },
+          "composite_components": {
+            "phi1_entropy_reduction_normalised": -7.493552615159954e-15,
+            "phi2_max_prob_delta": -1.3906339584310648e-07,
+            "phi3_argmax_turnover_signed": 0.796875
+          },
+          "composite_weights": [
+            0.4,
+            0.35,
+            0.25
+          ],
+          "composite_K": 33,
+          "upstream_eval_metrics": {
+            "status": 1.0,
+            "family_validity__n_total": 2.0,
+            "family_validity__missing_family_headers": 0.0,
+            "family_validity__hmmscan_total_hits": 0.0,
+            "family_validity__hmmscan_unique_queries": 0.0,
+            "family_validity__coverage_any_hit": 0.0,
+            "family_validity__top1_family_accuracy": 0.0,
+            "family_validity__topk_contains_intended": 0.0,
+            "family_validity__topk_family": 10.0,
+            "family_validity__intended_hit_rate_evalue": 0.0,
+            "family_validity__evalue_threshold": 0.001,
+            "family_validity__score_margin_mean": NaN,
+            "family_validity__score_margin_median": NaN,
+            "novelty__n_total": 2.0,
+            "novelty__missing_family_headers": 0.0,
+            "novelty__n_with_family": 2.0,
+            "metric_kind": "family_validity+foldability+self_consistency+novelty",
+            "upstream_orchestrator": "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/evaluate_all.py",
+            "sweep_n_records_actual": 0,
+            "sweep_n_records_requested": 2,
+            "sweep_n_records_match": false,
+            "sweep_name": "run_lineageflow_upstream_eval"
+          },
+          "upstream_eval_debug": {
+            "n_samples": 1,
+            "lineageflow_flag": true,
+            "kanzi_flag": false,
+            "flowmol3_flag": false,
+            "lineageflow": "computed"
+          },
+          "delta_pct": 0.0,
+          "signed_delta_pct": 0.0,
+          "saturation_at_ceiling": true,
+          "status": "TIE_AT_SATURATION",
+          "wallclock_baseline_s": 46.6166,
+          "wallclock_framework_s": 46.6165,
+          "wallclock_ratio": 1.0
+        }
+      ],
+      "aggregate": {
+        "n_cells": 1,
+        "n_supported": 0,
+        "n_tie": 0,
+        "n_tie_at_saturation": 1,
+        "n_regression": 0,
+        "n_pending": 0,
+        "n_blocked": 0,
+        "n_run_error": 0,
+        "n_real_computed": 1,
+        "n_synthetic_fallback": 0,
+        "composite_median": 0.199219,
+        "composite_verdict": "framework_improves",
+        "n_composite_computed": 1,
+        "n_composite_blocked": 0,
+        "g1_mean_signed_delta_pct": 0.0,
+        "verdict_overall": "TIE_AT_SATURATION"
+      },
+      "env_hash": {
+        "lock_hash": "983f7707e7207ed6dee1972cc1fb9306448ad6367963edefd612f88b76519092",
+        "python_version": "Python 3.12.13",
+        "torch_version": "torch:2.7.0+cu128+cuda12.8",
+        "adapter_deps_hash": "c3c0294d0795e89e89c567a8da52002a825257df893c173b2fac6b4e734e0beb",
+        "composite_hash": "193e049e8189a69ad704ab4c601390c6d214746809cc3719868dd849745ac9fe",
+        "committed_env_hash_path": "/home/hugo/codes/flowa-multistep-reinference/env_hash.txt",
+        "committed_env_hash_lines": 12
+      },
+      "timestamp": "2026-09-14T04:03:54.490913+00:00",
+      "tool": "tools/run_real_ckpt_eval.py",
+      "spec_source": "docs/audit/phase-4-eval-pipeline.md",
+      "data_sources": {
+        "adapter_registry": "adaptive_reflow/adapters/__init__.py:ADAPTER_REGISTRY",
+        "downstream_metrics": "tools/run_real_ckpt_eval.py:DOWNSTREAM_METRICS",
+        "env_hash_capture": "scripts/capture_env_hash.py",
+        "canonical_inception": "tools/run_image_eval.py:load_inception_for_fid",
+        "metric_layer_w43": "tools/run_real_ckpt_eval.py:_compute_kanzi_real_metric, _compute_lineageflow_real_metric (Wave 43 Agent A real-metric layer)"
+      },
+      "notes": "Per-cell value surface for PHASE-4 G-MASTER-CAPABILITY extension. Fold cells[] into tools/capability_audit.py:evidence[] to extend G.1-G.4. metric_mode='synthetic' returns the documented Wave 33 cold-clone trivial reading. metric_mode='real' runs the per-model real downstream metric (protein_sequence_validity_rate for kanzi; family_validity_rate for lineageflow) via the upstream package + Bio.SeqIO / ESM-2 PLL. See docs/audit/wave43-metric-layer-fix.md. MM-FM cells are BLOCKED on the missing adapter file (Wave 21 M-agent + Wave 21.5 re-spawn both stalled)."
+    },
+    {
+      "schema": "real_ckpt_eval_report.v1",
+      "model": "lineageflow",
+      "axis": "protein_fm",
+      "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+      "domain": "protein_fm",
+      "downstream_metrics": {
+        "domain": "protein_fm",
+        "axis": "protein_fm",
+        "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+        "primary_metric": {
+          "name": "family_validity_rate",
+          "direction": "higher_is_better",
+          "saturation_threshold": 0.999,
+          "improvement_bar": 0.005,
+          "definition": "fraction of generated protein sequences whose Pfam-family prediction matches the conditioning family ID (Wave 10 anchor)"
+        },
+        "secondary_metrics": [
+          {
+            "name": "perplexity",
+            "direction": "lower_is_better",
+            "saturation_threshold": 1.05,
+            "improvement_bar": 0.02,
+            "definition": "exp(-mean(log p(seq))) post-Wave-33 per-position entropy headroom (the Wave-33 paper-quantity-aware scheduler surfaces this signal)"
+          },
+          {
+            "name": "novelty",
+            "direction": "higher_is_better",
+            "saturation_threshold": 0.99,
+            "improvement_bar": 0.01,
+            "definition": "1 - |generated intersect reference| / |generated| against Pfam"
+          },
+          {
+            "name": "lineageflow_composite",
+            "direction": "higher_is_better",
+            "saturation_threshold": null,
+            "improvement_bar": 0.05,
+            "is_composite": true,
+            "composite_components": [
+              "per_position_entropy_reduction_normalised",
+              "per_position_max_prob_delta",
+              "argmax_turnover_signed"
+            ],
+            "composite_weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "definition": "100% flow-component composite: framework-vs-baseline delta on per-position entropy, max-prob sharpness, and argmax turnover. Bounded in [-1, 1]. Positive = framework improves the flow bundle. Computed by LineageFlowGlue.compute_composite (Wave 47)."
+          }
+        ],
+        "adapter_factory": "adaptive_reflow.adapters.lineageflow:default_lineageflow_adapter",
+        "adapter_import_path": "adaptive_reflow.adapters.lineageflow",
+        "adapter_module_alias": "lineageflow",
+        "channel_name": "amino_acid_categorical",
+        "nfe_paper_default": 50
+      },
+      "seeds": [
+        44
+      ],
+      "nfe_budgets": [
+        50
+      ],
+      "n_rounds_framework": 3,
+      "force_mode": "real",
+      "metric_mode": "real",
+      "restart_min_nfe": 20,
+      "cells": [
+        {
+          "model": "lineageflow",
+          "seed": 44,
+          "nfe_budget": 50,
+          "axis": "protein_fm",
+          "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+          "primary_metric_name": "family_validity_rate",
+          "primary_metric_direction": "higher_is_better",
+          "n_rounds_framework": 3,
+          "force_mode_requested": "real",
+          "metric_mode_requested": "real",
+          "restart_min_nfe_requested": 20,
+          "adapter_mode": "torch",
+          "baseline_metric": 1.0,
+          "baseline_marker": "computed",
+          "baseline_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.7441
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 44,
+            "nfe_budget": 50,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 44,
+              "nfe_budget": 50,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": false,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "framework_metric": 1.0,
+          "framework_marker": "computed",
+          "framework_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.7102
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 44,
+            "nfe_budget": 50,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 44,
+              "nfe_budget": 50,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": true,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "composite": 0.22070307470499168,
+          "composite_marker": "computed",
+          "composite_debug": {
+            "seed": 44,
+            "nfe_budget": 50,
+            "composite": 0.22070307470499168,
+            "phi1_entropy_reduction_normalised": -7.620561981518596e-15,
+            "phi2_max_prob_delta": -1.4370001507424217e-07,
+            "phi3_argmax_turnover_signed": 0.8828125,
+            "weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "K": 33,
+            "glue_class": "LineageFlowGlue"
+          },
+          "composite_components": {
+            "phi1_entropy_reduction_normalised": -7.620561981518596e-15,
+            "phi2_max_prob_delta": -1.4370001507424217e-07,
+            "phi3_argmax_turnover_signed": 0.8828125
+          },
+          "composite_weights": [
+            0.4,
+            0.35,
+            0.25
+          ],
+          "composite_K": 33,
+          "upstream_eval_metrics": {
+            "status": 1.0,
+            "family_validity__n_total": 2.0,
+            "family_validity__missing_family_headers": 0.0,
+            "family_validity__hmmscan_total_hits": 0.0,
+            "family_validity__hmmscan_unique_queries": 0.0,
+            "family_validity__coverage_any_hit": 0.0,
+            "family_validity__top1_family_accuracy": 0.0,
+            "family_validity__topk_contains_intended": 0.0,
+            "family_validity__topk_family": 10.0,
+            "family_validity__intended_hit_rate_evalue": 0.0,
+            "family_validity__evalue_threshold": 0.001,
+            "family_validity__score_margin_mean": NaN,
+            "family_validity__score_margin_median": NaN,
+            "novelty__n_total": 2.0,
+            "novelty__missing_family_headers": 0.0,
+            "novelty__n_with_family": 2.0,
+            "metric_kind": "family_validity+foldability+self_consistency+novelty",
+            "upstream_orchestrator": "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/evaluate_all.py",
+            "sweep_n_records_actual": 0,
+            "sweep_n_records_requested": 2,
+            "sweep_n_records_match": false,
+            "sweep_name": "run_lineageflow_upstream_eval"
+          },
+          "upstream_eval_debug": {
+            "n_samples": 1,
+            "lineageflow_flag": true,
+            "kanzi_flag": false,
+            "flowmol3_flag": false,
+            "lineageflow": "computed"
+          },
+          "delta_pct": 0.0,
+          "signed_delta_pct": 0.0,
+          "saturation_at_ceiling": true,
+          "status": "TIE_AT_SATURATION",
+          "wallclock_baseline_s": 23.5243,
+          "wallclock_framework_s": 23.5322,
+          "wallclock_ratio": 1.0003
+        }
+      ],
+      "aggregate": {
+        "n_cells": 1,
+        "n_supported": 0,
+        "n_tie": 0,
+        "n_tie_at_saturation": 1,
+        "n_regression": 0,
+        "n_pending": 0,
+        "n_blocked": 0,
+        "n_run_error": 0,
+        "n_real_computed": 1,
+        "n_synthetic_fallback": 0,
+        "composite_median": 0.220703,
+        "composite_verdict": "framework_improves",
+        "n_composite_computed": 1,
+        "n_composite_blocked": 0,
+        "g1_mean_signed_delta_pct": 0.0,
+        "verdict_overall": "TIE_AT_SATURATION"
+      },
+      "env_hash": {
+        "lock_hash": "983f7707e7207ed6dee1972cc1fb9306448ad6367963edefd612f88b76519092",
+        "python_version": "Python 3.12.13",
+        "torch_version": "torch:2.7.0+cu128+cuda12.8",
+        "adapter_deps_hash": "c3c0294d0795e89e89c567a8da52002a825257df893c173b2fac6b4e734e0beb",
+        "composite_hash": "193e049e8189a69ad704ab4c601390c6d214746809cc3719868dd849745ac9fe",
+        "committed_env_hash_path": "/home/hugo/codes/flowa-multistep-reinference/env_hash.txt",
+        "committed_env_hash_lines": 12
+      },
+      "timestamp": "2026-09-14T04:05:30.116469+00:00",
+      "tool": "tools/run_real_ckpt_eval.py",
+      "spec_source": "docs/audit/phase-4-eval-pipeline.md",
+      "data_sources": {
+        "adapter_registry": "adaptive_reflow/adapters/__init__.py:ADAPTER_REGISTRY",
+        "downstream_metrics": "tools/run_real_ckpt_eval.py:DOWNSTREAM_METRICS",
+        "env_hash_capture": "scripts/capture_env_hash.py",
+        "canonical_inception": "tools/run_image_eval.py:load_inception_for_fid",
+        "metric_layer_w43": "tools/run_real_ckpt_eval.py:_compute_kanzi_real_metric, _compute_lineageflow_real_metric (Wave 43 Agent A real-metric layer)"
+      },
+      "notes": "Per-cell value surface for PHASE-4 G-MASTER-CAPABILITY extension. Fold cells[] into tools/capability_audit.py:evidence[] to extend G.1-G.4. metric_mode='synthetic' returns the documented Wave 33 cold-clone trivial reading. metric_mode='real' runs the per-model real downstream metric (protein_sequence_validity_rate for kanzi; family_validity_rate for lineageflow) via the upstream package + Bio.SeqIO / ESM-2 PLL. See docs/audit/wave43-metric-layer-fix.md. MM-FM cells are BLOCKED on the missing adapter file (Wave 21 M-agent + Wave 21.5 re-spawn both stalled)."
+    },
+    {
+      "schema": "real_ckpt_eval_report.v1",
+      "model": "lineageflow",
+      "axis": "protein_fm",
+      "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+      "domain": "protein_fm",
+      "downstream_metrics": {
+        "domain": "protein_fm",
+        "axis": "protein_fm",
+        "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+        "primary_metric": {
+          "name": "family_validity_rate",
+          "direction": "higher_is_better",
+          "saturation_threshold": 0.999,
+          "improvement_bar": 0.005,
+          "definition": "fraction of generated protein sequences whose Pfam-family prediction matches the conditioning family ID (Wave 10 anchor)"
+        },
+        "secondary_metrics": [
+          {
+            "name": "perplexity",
+            "direction": "lower_is_better",
+            "saturation_threshold": 1.05,
+            "improvement_bar": 0.02,
+            "definition": "exp(-mean(log p(seq))) post-Wave-33 per-position entropy headroom (the Wave-33 paper-quantity-aware scheduler surfaces this signal)"
+          },
+          {
+            "name": "novelty",
+            "direction": "higher_is_better",
+            "saturation_threshold": 0.99,
+            "improvement_bar": 0.01,
+            "definition": "1 - |generated intersect reference| / |generated| against Pfam"
+          },
+          {
+            "name": "lineageflow_composite",
+            "direction": "higher_is_better",
+            "saturation_threshold": null,
+            "improvement_bar": 0.05,
+            "is_composite": true,
+            "composite_components": [
+              "per_position_entropy_reduction_normalised",
+              "per_position_max_prob_delta",
+              "argmax_turnover_signed"
+            ],
+            "composite_weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "definition": "100% flow-component composite: framework-vs-baseline delta on per-position entropy, max-prob sharpness, and argmax turnover. Bounded in [-1, 1]. Positive = framework improves the flow bundle. Computed by LineageFlowGlue.compute_composite (Wave 47)."
+          }
+        ],
+        "adapter_factory": "adaptive_reflow.adapters.lineageflow:default_lineageflow_adapter",
+        "adapter_import_path": "adaptive_reflow.adapters.lineageflow",
+        "adapter_module_alias": "lineageflow",
+        "channel_name": "amino_acid_categorical",
+        "nfe_paper_default": 50
+      },
+      "seeds": [
+        44
+      ],
+      "nfe_budgets": [
+        100
+      ],
+      "n_rounds_framework": 3,
+      "force_mode": "real",
+      "metric_mode": "real",
+      "restart_min_nfe": 20,
+      "cells": [
+        {
+          "model": "lineageflow",
+          "seed": 44,
+          "nfe_budget": 100,
+          "axis": "protein_fm",
+          "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+          "primary_metric_name": "family_validity_rate",
+          "primary_metric_direction": "higher_is_better",
+          "n_rounds_framework": 3,
+          "force_mode_requested": "real",
+          "metric_mode_requested": "real",
+          "restart_min_nfe_requested": 20,
+          "adapter_mode": "torch",
+          "baseline_metric": 1.0,
+          "baseline_marker": "computed",
+          "baseline_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.7441
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 44,
+            "nfe_budget": 100,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 44,
+              "nfe_budget": 100,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": false,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "framework_metric": 1.0,
+          "framework_marker": "computed",
+          "framework_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.7102
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 44,
+            "nfe_budget": 100,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 44,
+              "nfe_budget": 100,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": true,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "composite": 0.22070307470499168,
+          "composite_marker": "computed",
+          "composite_debug": {
+            "seed": 44,
+            "nfe_budget": 100,
+            "composite": 0.22070307470499168,
+            "phi1_entropy_reduction_normalised": -7.620561981518596e-15,
+            "phi2_max_prob_delta": -1.4370001507477072e-07,
+            "phi3_argmax_turnover_signed": 0.8828125,
+            "weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "K": 33,
+            "glue_class": "LineageFlowGlue"
+          },
+          "composite_components": {
+            "phi1_entropy_reduction_normalised": -7.620561981518596e-15,
+            "phi2_max_prob_delta": -1.4370001507477072e-07,
+            "phi3_argmax_turnover_signed": 0.8828125
+          },
+          "composite_weights": [
+            0.4,
+            0.35,
+            0.25
+          ],
+          "composite_K": 33,
+          "upstream_eval_metrics": {
+            "status": 1.0,
+            "family_validity__n_total": 2.0,
+            "family_validity__missing_family_headers": 0.0,
+            "family_validity__hmmscan_total_hits": 0.0,
+            "family_validity__hmmscan_unique_queries": 0.0,
+            "family_validity__coverage_any_hit": 0.0,
+            "family_validity__top1_family_accuracy": 0.0,
+            "family_validity__topk_contains_intended": 0.0,
+            "family_validity__topk_family": 10.0,
+            "family_validity__intended_hit_rate_evalue": 0.0,
+            "family_validity__evalue_threshold": 0.001,
+            "family_validity__score_margin_mean": NaN,
+            "family_validity__score_margin_median": NaN,
+            "novelty__n_total": 2.0,
+            "novelty__missing_family_headers": 0.0,
+            "novelty__n_with_family": 2.0,
+            "metric_kind": "family_validity+foldability+self_consistency+novelty",
+            "upstream_orchestrator": "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/evaluate_all.py",
+            "sweep_n_records_actual": 0,
+            "sweep_n_records_requested": 2,
+            "sweep_n_records_match": false,
+            "sweep_name": "run_lineageflow_upstream_eval"
+          },
+          "upstream_eval_debug": {
+            "n_samples": 1,
+            "lineageflow_flag": true,
+            "kanzi_flag": false,
+            "flowmol3_flag": false,
+            "lineageflow": "computed"
+          },
+          "delta_pct": 0.0,
+          "signed_delta_pct": 0.0,
+          "saturation_at_ceiling": true,
+          "status": "TIE_AT_SATURATION",
+          "wallclock_baseline_s": 47.1534,
+          "wallclock_framework_s": 47.1241,
+          "wallclock_ratio": 0.9994
+        }
+      ],
+      "aggregate": {
+        "n_cells": 1,
+        "n_supported": 0,
+        "n_tie": 0,
+        "n_tie_at_saturation": 1,
+        "n_regression": 0,
+        "n_pending": 0,
+        "n_blocked": 0,
+        "n_run_error": 0,
+        "n_real_computed": 1,
+        "n_synthetic_fallback": 0,
+        "composite_median": 0.220703,
+        "composite_verdict": "framework_improves",
+        "n_composite_computed": 1,
+        "n_composite_blocked": 0,
+        "g1_mean_signed_delta_pct": 0.0,
+        "verdict_overall": "TIE_AT_SATURATION"
+      },
+      "env_hash": {
+        "lock_hash": "983f7707e7207ed6dee1972cc1fb9306448ad6367963edefd612f88b76519092",
+        "python_version": "Python 3.12.13",
+        "torch_version": "torch:2.7.0+cu128+cuda12.8",
+        "adapter_deps_hash": "c3c0294d0795e89e89c567a8da52002a825257df893c173b2fac6b4e734e0beb",
+        "composite_hash": "193e049e8189a69ad704ab4c601390c6d214746809cc3719868dd849745ac9fe",
+        "committed_env_hash_path": "/home/hugo/codes/flowa-multistep-reinference/env_hash.txt",
+        "committed_env_hash_lines": 12
+      },
+      "timestamp": "2026-09-14T04:08:13.874552+00:00",
+      "tool": "tools/run_real_ckpt_eval.py",
+      "spec_source": "docs/audit/phase-4-eval-pipeline.md",
+      "data_sources": {
+        "adapter_registry": "adaptive_reflow/adapters/__init__.py:ADAPTER_REGISTRY",
+        "downstream_metrics": "tools/run_real_ckpt_eval.py:DOWNSTREAM_METRICS",
+        "env_hash_capture": "scripts/capture_env_hash.py",
+        "canonical_inception": "tools/run_image_eval.py:load_inception_for_fid",
+        "metric_layer_w43": "tools/run_real_ckpt_eval.py:_compute_kanzi_real_metric, _compute_lineageflow_real_metric (Wave 43 Agent A real-metric layer)"
+      },
+      "notes": "Per-cell value surface for PHASE-4 G-MASTER-CAPABILITY extension. Fold cells[] into tools/capability_audit.py:evidence[] to extend G.1-G.4. metric_mode='synthetic' returns the documented Wave 33 cold-clone trivial reading. metric_mode='real' runs the per-model real downstream metric (protein_sequence_validity_rate for kanzi; family_validity_rate for lineageflow) via the upstream package + Bio.SeqIO / ESM-2 PLL. See docs/audit/wave43-metric-layer-fix.md. MM-FM cells are BLOCKED on the missing adapter file (Wave 21 M-agent + Wave 21.5 re-spawn both stalled)."
+    },
+    {
+      "schema": "real_ckpt_eval_report.v1",
+      "model": "lineageflow",
+      "axis": "protein_fm",
+      "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+      "domain": "protein_fm",
+      "downstream_metrics": {
+        "domain": "protein_fm",
+        "axis": "protein_fm",
+        "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+        "primary_metric": {
+          "name": "family_validity_rate",
+          "direction": "higher_is_better",
+          "saturation_threshold": 0.999,
+          "improvement_bar": 0.005,
+          "definition": "fraction of generated protein sequences whose Pfam-family prediction matches the conditioning family ID (Wave 10 anchor)"
+        },
+        "secondary_metrics": [
+          {
+            "name": "perplexity",
+            "direction": "lower_is_better",
+            "saturation_threshold": 1.05,
+            "improvement_bar": 0.02,
+            "definition": "exp(-mean(log p(seq))) post-Wave-33 per-position entropy headroom (the Wave-33 paper-quantity-aware scheduler surfaces this signal)"
+          },
+          {
+            "name": "novelty",
+            "direction": "higher_is_better",
+            "saturation_threshold": 0.99,
+            "improvement_bar": 0.01,
+            "definition": "1 - |generated intersect reference| / |generated| against Pfam"
+          },
+          {
+            "name": "lineageflow_composite",
+            "direction": "higher_is_better",
+            "saturation_threshold": null,
+            "improvement_bar": 0.05,
+            "is_composite": true,
+            "composite_components": [
+              "per_position_entropy_reduction_normalised",
+              "per_position_max_prob_delta",
+              "argmax_turnover_signed"
+            ],
+            "composite_weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "definition": "100% flow-component composite: framework-vs-baseline delta on per-position entropy, max-prob sharpness, and argmax turnover. Bounded in [-1, 1]. Positive = framework improves the flow bundle. Computed by LineageFlowGlue.compute_composite (Wave 47)."
+          }
+        ],
+        "adapter_factory": "adaptive_reflow.adapters.lineageflow:default_lineageflow_adapter",
+        "adapter_import_path": "adaptive_reflow.adapters.lineageflow",
+        "adapter_module_alias": "lineageflow",
+        "channel_name": "amino_acid_categorical",
+        "nfe_paper_default": 50
+      },
+      "seeds": [
+        42
+      ],
+      "nfe_budgets": [
+        200
+      ],
+      "n_rounds_framework": 3,
+      "force_mode": "real",
+      "metric_mode": "real",
+      "restart_min_nfe": 20,
+      "cells": [
+        {
+          "model": "lineageflow",
+          "seed": 42,
+          "nfe_budget": 200,
+          "axis": "protein_fm",
+          "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+          "primary_metric_name": "family_validity_rate",
+          "primary_metric_direction": "higher_is_better",
+          "n_rounds_framework": 3,
+          "force_mode_requested": "real",
+          "metric_mode_requested": "real",
+          "restart_min_nfe_requested": 20,
+          "adapter_mode": "torch",
+          "baseline_metric": 1.0,
+          "baseline_marker": "computed",
+          "baseline_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.7441
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 42,
+            "nfe_budget": 200,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 42,
+              "nfe_budget": 200,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": false,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "framework_metric": 1.0,
+          "framework_marker": "computed",
+          "framework_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.6912
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 42,
+            "nfe_budget": 200,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 42,
+              "nfe_budget": 200,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": true,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "composite": 0.20312494925931135,
+          "composite_marker": "computed",
+          "composite_debug": {
+            "seed": 42,
+            "nfe_budget": 200,
+            "composite": 0.20312494925931135,
+            "phi1_entropy_reduction_normalised": -7.493552615159954e-15,
+            "phi2_max_prob_delta": -1.449733875648774e-07,
+            "phi3_argmax_turnover_signed": 0.8125,
+            "weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "K": 33,
+            "glue_class": "LineageFlowGlue"
+          },
+          "composite_components": {
+            "phi1_entropy_reduction_normalised": -7.493552615159954e-15,
+            "phi2_max_prob_delta": -1.449733875648774e-07,
+            "phi3_argmax_turnover_signed": 0.8125
+          },
+          "composite_weights": [
+            0.4,
+            0.35,
+            0.25
+          ],
+          "composite_K": 33,
+          "upstream_eval_metrics": {
+            "status": 1.0,
+            "family_validity__n_total": 2.0,
+            "family_validity__missing_family_headers": 0.0,
+            "family_validity__hmmscan_total_hits": 0.0,
+            "family_validity__hmmscan_unique_queries": 0.0,
+            "family_validity__coverage_any_hit": 0.0,
+            "family_validity__top1_family_accuracy": 0.0,
+            "family_validity__topk_contains_intended": 0.0,
+            "family_validity__topk_family": 10.0,
+            "family_validity__intended_hit_rate_evalue": 0.0,
+            "family_validity__evalue_threshold": 0.001,
+            "family_validity__score_margin_mean": NaN,
+            "family_validity__score_margin_median": NaN,
+            "novelty__n_total": 2.0,
+            "novelty__missing_family_headers": 0.0,
+            "novelty__n_with_family": 2.0,
+            "metric_kind": "family_validity+foldability+self_consistency+novelty",
+            "upstream_orchestrator": "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/evaluate_all.py",
+            "sweep_n_records_actual": 0,
+            "sweep_n_records_requested": 2,
+            "sweep_n_records_match": false,
+            "sweep_name": "run_lineageflow_upstream_eval"
+          },
+          "upstream_eval_debug": {
+            "n_samples": 1,
+            "lineageflow_flag": true,
+            "kanzi_flag": false,
+            "flowmol3_flag": false,
+            "lineageflow": "computed"
+          },
+          "delta_pct": 0.0,
+          "signed_delta_pct": 0.0,
+          "saturation_at_ceiling": true,
+          "status": "TIE_AT_SATURATION",
+          "wallclock_baseline_s": 93.0772,
+          "wallclock_framework_s": 93.108,
+          "wallclock_ratio": 1.0003
+        }
+      ],
+      "aggregate": {
+        "n_cells": 1,
+        "n_supported": 0,
+        "n_tie": 0,
+        "n_tie_at_saturation": 1,
+        "n_regression": 0,
+        "n_pending": 0,
+        "n_blocked": 0,
+        "n_run_error": 0,
+        "n_real_computed": 1,
+        "n_synthetic_fallback": 0,
+        "composite_median": 0.203125,
+        "composite_verdict": "framework_improves",
+        "n_composite_computed": 1,
+        "n_composite_blocked": 0,
+        "g1_mean_signed_delta_pct": 0.0,
+        "verdict_overall": "TIE_AT_SATURATION"
+      },
+      "env_hash": {
+        "lock_hash": "983f7707e7207ed6dee1972cc1fb9306448ad6367963edefd612f88b76519092",
+        "python_version": "Python 3.12.13",
+        "torch_version": "torch:2.7.0+cu128+cuda12.8",
+        "adapter_deps_hash": "c3c0294d0795e89e89c567a8da52002a825257df893c173b2fac6b4e734e0beb",
+        "composite_hash": "193e049e8189a69ad704ab4c601390c6d214746809cc3719868dd849745ac9fe",
+        "committed_env_hash_path": "/home/hugo/codes/flowa-multistep-reinference/env_hash.txt",
+        "committed_env_hash_lines": 12
+      },
+      "timestamp": "2026-09-14T04:13:17.660752+00:00",
+      "tool": "tools/run_real_ckpt_eval.py",
+      "spec_source": "docs/audit/phase-4-eval-pipeline.md",
+      "data_sources": {
+        "adapter_registry": "adaptive_reflow/adapters/__init__.py:ADAPTER_REGISTRY",
+        "downstream_metrics": "tools/run_real_ckpt_eval.py:DOWNSTREAM_METRICS",
+        "env_hash_capture": "scripts/capture_env_hash.py",
+        "canonical_inception": "tools/run_image_eval.py:load_inception_for_fid",
+        "metric_layer_w43": "tools/run_real_ckpt_eval.py:_compute_kanzi_real_metric, _compute_lineageflow_real_metric (Wave 43 Agent A real-metric layer)"
+      },
+      "notes": "Per-cell value surface for PHASE-4 G-MASTER-CAPABILITY extension. Fold cells[] into tools/capability_audit.py:evidence[] to extend G.1-G.4. metric_mode='synthetic' returns the documented Wave 33 cold-clone trivial reading. metric_mode='real' runs the per-model real downstream metric (protein_sequence_validity_rate for kanzi; family_validity_rate for lineageflow) via the upstream package + Bio.SeqIO / ESM-2 PLL. See docs/audit/wave43-metric-layer-fix.md. MM-FM cells are BLOCKED on the missing adapter file (Wave 21 M-agent + Wave 21.5 re-spawn both stalled)."
+    },
+    {
+      "schema": "real_ckpt_eval_report.v1",
+      "model": "lineageflow",
+      "axis": "protein_fm",
+      "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+      "domain": "protein_fm",
+      "downstream_metrics": {
+        "domain": "protein_fm",
+        "axis": "protein_fm",
+        "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+        "primary_metric": {
+          "name": "family_validity_rate",
+          "direction": "higher_is_better",
+          "saturation_threshold": 0.999,
+          "improvement_bar": 0.005,
+          "definition": "fraction of generated protein sequences whose Pfam-family prediction matches the conditioning family ID (Wave 10 anchor)"
+        },
+        "secondary_metrics": [
+          {
+            "name": "perplexity",
+            "direction": "lower_is_better",
+            "saturation_threshold": 1.05,
+            "improvement_bar": 0.02,
+            "definition": "exp(-mean(log p(seq))) post-Wave-33 per-position entropy headroom (the Wave-33 paper-quantity-aware scheduler surfaces this signal)"
+          },
+          {
+            "name": "novelty",
+            "direction": "higher_is_better",
+            "saturation_threshold": 0.99,
+            "improvement_bar": 0.01,
+            "definition": "1 - |generated intersect reference| / |generated| against Pfam"
+          },
+          {
+            "name": "lineageflow_composite",
+            "direction": "higher_is_better",
+            "saturation_threshold": null,
+            "improvement_bar": 0.05,
+            "is_composite": true,
+            "composite_components": [
+              "per_position_entropy_reduction_normalised",
+              "per_position_max_prob_delta",
+              "argmax_turnover_signed"
+            ],
+            "composite_weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "definition": "100% flow-component composite: framework-vs-baseline delta on per-position entropy, max-prob sharpness, and argmax turnover. Bounded in [-1, 1]. Positive = framework improves the flow bundle. Computed by LineageFlowGlue.compute_composite (Wave 47)."
+          }
+        ],
+        "adapter_factory": "adaptive_reflow.adapters.lineageflow:default_lineageflow_adapter",
+        "adapter_import_path": "adaptive_reflow.adapters.lineageflow",
+        "adapter_module_alias": "lineageflow",
+        "channel_name": "amino_acid_categorical",
+        "nfe_paper_default": 50
+      },
+      "seeds": [
+        43
+      ],
+      "nfe_budgets": [
+        200
+      ],
+      "n_rounds_framework": 3,
+      "force_mode": "real",
+      "metric_mode": "real",
+      "restart_min_nfe": 20,
+      "cells": [
+        {
+          "model": "lineageflow",
+          "seed": 43,
+          "nfe_budget": 200,
+          "axis": "protein_fm",
+          "paper": "ICML 2026 (arXiv:2605.22252) - Lin et al.",
+          "primary_metric_name": "family_validity_rate",
+          "primary_metric_direction": "higher_is_better",
+          "n_rounds_framework": 3,
+          "force_mode_requested": "real",
+          "metric_mode_requested": "real",
+          "restart_min_nfe_requested": 20,
+          "adapter_mode": "torch",
+          "baseline_metric": 1.0,
+          "baseline_marker": "computed",
+          "baseline_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.7441
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 43,
+            "nfe_budget": 200,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 43,
+              "nfe_budget": 200,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": false,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "framework_metric": 1.0,
+          "framework_marker": "computed",
+          "framework_debug": {
+            "n_sequences": 1,
+            "n_valid": 1,
+            "validity_rate": 1.0,
+            "perplexity_threshold": 50.0,
+            "per_seq_perplexity": [
+              1.7034
+            ],
+            "decode_strategy": "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL (Wave 44 Tier-3 close)",
+            "esm_model": "facebook/esm2_t33_650M_UR50D",
+            "seq_length": 256,
+            "trace_source": "captured_via_solve_ode",
+            "seed": 43,
+            "nfe_budget": 200,
+            "paper_quantities": {
+              "model": "lineageflow",
+              "seed": 43,
+              "nfe_budget": 200,
+              "paper_quantities_status": "computed",
+              "paper_quantities_cache_hit": true,
+              "paper_quantities_cache_key": "lineageflow|0.5 * math.sin(x)",
+              "paper_quantities_profile_source": "0.5 * math.sin(x)",
+              "paper_quantities_values": {
+                "A_g": 0.9521370566823365,
+                "B_g": 1.1697133872585566,
+                "C_g": 1.240756198591853,
+                "e_rho": 0.00010000000000000002,
+                "rho": 0.1,
+                "c": 1.0,
+                "eta": 0.1,
+                "K": 8.0,
+                "h": 0.01
+              }
+            },
+            "observation_surface": {
+              "observation_kind_requested": "discrete_tokens",
+              "observation_surface": "legacy_observe_token_indices",
+              "model": "lineageflow",
+              "observe_returned_kinds": [],
+              "observe_missing_kind": "discrete_tokens",
+              "observation_channel": "amino_acid_categorical"
+            }
+          },
+          "composite": 0.19921870132780845,
+          "composite_marker": "computed",
+          "composite_debug": {
+            "seed": 43,
+            "nfe_budget": 200,
+            "composite": 0.19921870132780845,
+            "phi1_entropy_reduction_normalised": -7.493552615159954e-15,
+            "phi2_max_prob_delta": -1.3906339584255083e-07,
+            "phi3_argmax_turnover_signed": 0.796875,
+            "weights": [
+              0.4,
+              0.35,
+              0.25
+            ],
+            "K": 33,
+            "glue_class": "LineageFlowGlue"
+          },
+          "composite_components": {
+            "phi1_entropy_reduction_normalised": -7.493552615159954e-15,
+            "phi2_max_prob_delta": -1.3906339584255083e-07,
+            "phi3_argmax_turnover_signed": 0.796875
+          },
+          "composite_weights": [
+            0.4,
+            0.35,
+            0.25
+          ],
+          "composite_K": 33,
+          "upstream_eval_metrics": {
+            "status": 1.0,
+            "family_validity__n_total": 2.0,
+            "family_validity__missing_family_headers": 0.0,
+            "family_validity__hmmscan_total_hits": 0.0,
+            "family_validity__hmmscan_unique_queries": 0.0,
+            "family_validity__coverage_any_hit": 0.0,
+            "family_validity__top1_family_accuracy": 0.0,
+            "family_validity__topk_contains_intended": 0.0,
+            "family_validity__topk_family": 10.0,
+            "family_validity__intended_hit_rate_evalue": 0.0,
+            "family_validity__evalue_threshold": 0.001,
+            "family_validity__score_margin_mean": NaN,
+            "family_validity__score_margin_median": NaN,
+            "novelty__n_total": 2.0,
+            "novelty__missing_family_headers": 0.0,
+            "novelty__n_with_family": 2.0,
+            "metric_kind": "family_validity+foldability+self_consistency+novelty",
+            "upstream_orchestrator": "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/evaluate_all.py",
+            "sweep_n_records_actual": 0,
+            "sweep_n_records_requested": 2,
+            "sweep_n_records_match": false,
+            "sweep_name": "run_lineageflow_upstream_eval"
+          },
+          "upstream_eval_debug": {
+            "n_samples": 1,
+            "lineageflow_flag": true,
+            "kanzi_flag": false,
+            "flowmol3_flag": false,
+            "lineageflow": "computed"
+          },
+          "delta_pct": 0.0,
+          "signed_delta_pct": 0.0,
+          "saturation_at_ceiling": true,
+          "status": "TIE_AT_SATURATION",
+          "wallclock_baseline_s": 93.0187,
+          "wallclock_framework_s": 92.8656,
+          "wallclock_ratio": 0.9984
+        }
+      ],
+      "aggregate": {
+        "n_cells": 1,
+        "n_supported": 0,
+        "n_tie": 0,
+        "n_tie_at_saturation": 1,
+        "n_regression": 0,
+        "n_pending": 0,
+        "n_blocked": 0,
+        "n_run_error": 0,
+        "n_real_computed": 1,
+        "n_synthetic_fallback": 0,
+        "composite_median": 0.199219,
+        "composite_verdict": "framework_improves",
+        "n_composite_computed": 1,
+        "n_composite_blocked": 0,
+        "g1_mean_signed_delta_pct": 0.0,
+        "verdict_overall": "TIE_AT_SATURATION"
+      },
+      "env_hash": {
+        "lock_hash": "983f7707e7207ed6dee1972cc1fb9306448ad6367963edefd612f88b76519092",
+        "python_version": "Python 3.12.13",
+        "torch_version": "torch:2.7.0+cu128+cuda12.8",
+        "adapter_deps_hash": "c3c0294d0795e89e89c567a8da52002a825257df893c173b2fac6b4e734e0beb",
+        "composite_hash": "193e049e8189a69ad704ab4c601390c6d214746809cc3719868dd849745ac9fe",
+        "committed_env_hash_path": "/home/hugo/codes/flowa-multistep-reinference/env_hash.txt",
+        "committed_env_hash_lines": 12
+      },
+      "timestamp": "2026-09-14T04:18:19.352632+00:00",
+      "tool": "tools/run_real_ckpt_eval.py",
+      "spec_source": "docs/audit/phase-4-eval-pipeline.md",
+      "data_sources": {
+        "adapter_registry": "adaptive_reflow/adapters/__init__.py:ADAPTER_REGISTRY",
+        "downstream_metrics": "tools/run_real_ckpt_eval.py:DOWNSTREAM_METRICS",
+        "env_hash_capture": "scripts/capture_env_hash.py",
+        "canonical_inception": "tools/run_image_eval.py:load_inception_for_fid",
+        "metric_layer_w43": "tools/run_real_ckpt_eval.py:_compute_kanzi_real_metric, _compute_lineageflow_real_metric (Wave 43 Agent A real-metric layer)"
+      },
+      "notes": "Per-cell value surface for PHASE-4 G-MASTER-CAPABILITY extension. Fold cells[] into tools/capability_audit.py:evidence[] to extend G.1-G.4. metric_mode='synthetic' returns the documented Wave 33 cold-clone trivial reading. metric_mode='real' runs the per-model real downstream metric (protein_sequence_validity_rate for kanzi; family_validity_rate for lineageflow) via the upstream package + Bio.SeqIO / ESM-2 PLL. See docs/audit/wave43-metric-layer-fix.md. MM-FM cells are BLOCKED on the missing adapter file (Wave 21 M-agent + Wave 21.5 re-spawn both stalled)."
+    }
+  ],
+  "n_cells": 8,
+  "aggregate": {
+    "n_records_processed": 8,
+    "n_synthetic_fallback": 0,
+    "n_tie_at_saturation": 8,
+    "n_regression": 0,
+    "composite_median_min": 0.199219,
+    "composite_median_max": 0.220703,
+    "composite_median_mean": 0.20605475,
+    "deterministic": false,
+    "timestamp": "2026-09-14T04:20:56.235949Z"
+  },
+  "wave_86_audit_reference": "docs/audit/wave86-phase3-sweep.md (original +116% R1 headline)"
+}

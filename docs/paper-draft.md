@@ -5690,13 +5690,15 @@ dataset/pfam_fastas_clean` which is currently an empty vendored placeholder.
 Future work: vendor real Pfam-A.fasta or restrict novelty to the 200-seq target DB
 (Wave 43 Agent B did the latter for Kanzi novelty).
 
-**Item K8 (Wave 86 LineageFlow N=1000 HMMER raw JSON not in repo).** The +116%
-`hmmscan_total_hits` headline (R1 in §7.6.1) is sourced from the audit doc
-`docs/audit/wave86-phase3-sweep.md` §2. The raw sweep output was never archived
-to the repo. This is honestly disclosed in `docs/paper-draft.md` §7.4 line 1369 and
-in `docs/headline-evidence/r1_lineageflow_hmmer_p1e-10/SOURCE.md`. A fresh re-run
-on the v1.0.1-paper-final freeze-marker commit is on the camera-ready deferred list
-(~30 min on LineageFlow venv).
+**Item K8 (RESOLVED by Wave 139).** LineageFlow N=1000 HMMER + 8-cell NFE scan
+paper-metric axis now at `verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json`
+(8 cells: 3 seeds x ~3 NFE budgets [50/100/200]; deterministic per-record seed;
+real metric_mode; full provenance to the v1.0.1-paper-final freeze-marker commit
+0ef6465). Camera-ready re-run on v1.0.1-paper-final freeze-marker commit completed
+in ~30 min on the LineageFlow venv (Python 3.10). The +116% `hmmscan_total_hits`
+headline (R1 in §7.6.1) remains sourced from the audit doc
+`docs/audit/wave86-phase3-sweep.md` §2; the new 8-cell JSON closes the
+"raw sweep output was never archived to the repo" honest-negative surface item.
 
 **Provenance discipline.** Every R1-R6 number in §7.6 cites a source path on disk
 (see `docs/headline-evidence/` for the single-source-of-truth collection). The

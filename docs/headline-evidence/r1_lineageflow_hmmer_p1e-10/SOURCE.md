@@ -19,6 +19,14 @@ The Wave 86 N=1000 raw sweep output was never archived to the repo (transient
 /tmp/ directory, gitignored). This is **honestly disclosed** in
 `docs/paper-draft.md` §7.4 line 1369 and `docs/baseline-audit-report.md` §R.16.
 
+**Wave 139 follow-up (closes K8 honest-negative-surface item).** The full 8-cell
+NFE scan paper-metric axis is now archived at
+`verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json`
+(8 cells: 3 seeds x ~3 NFE budgets [50/100/200]; real metric_mode; deterministic
+per-record seed; full provenance to the v1.0.1-paper-final freeze-marker commit
+0ef6465). Camera-ready re-run on the freeze-marker commit completed in ~30 min
+on the LineageFlow venv (Python 3.10).
+
 ## Statistical power
 
 - Family-validity `total_hits` is a Poisson-distributed count statistic
