@@ -73,7 +73,8 @@ def test_infeasible_budget_is_not_claimed_matched(local_weights, budget):
 
 def test_cli_passes_exact_count_and_guard_switch(monkeypatch, tmp_path):
     seen = []
-    def run(spec):
+    def run(spec, *, n_rounds_override=None, brai_eps_scale=None):
+        del n_rounds_override, brai_eps_scale  # Wave 149 P2 kwargs; mock ignores
         seen.append(spec)
         return audit.CellResult(spec.model, spec.seed, spec.nfe, spec.sigma,
                                 baseline_metric=1., framework_metric=1.,

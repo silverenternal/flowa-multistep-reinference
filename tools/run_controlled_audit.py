@@ -275,7 +275,7 @@ def _empirical_joint_w2(endpoints: np.ndarray, reference: np.ndarray) -> float:
     return float(np.sqrt(costs[rows, cols].mean()))
 
 
-def _run_twodim_fm(spec: CellSpec) -> CellResult:
+def _run_twodim_fm(spec: CellSpec, *, n_rounds_override: int | None = None) -> CellResult:
     """Paired continuous protocol trajectories with counted Heun velocity NFE.
 
     Each framework round consumes its predecessor's observed endpoint, with
@@ -293,7 +293,7 @@ def _run_twodim_fm(spec: CellSpec) -> CellResult:
     result = CellResult(model=spec.model, seed=spec.seed, nfe=spec.nfe, sigma=spec.sigma)
     try:
         count = spec.n_samples if spec.n_samples is not None else MODEL_TABLE["twodim_fm"]["n_samples"]
-        rounds = int(MODEL_TABLE["twodim_fm"]["n_rounds"])
+        rounds = int(n_rounds_override if n_rounds_override is not None else MODEL_TABLE["twodim_fm"]["n_rounds"])
         if count < 2:
             raise ValueError("twodim n_samples must be >= 2")
         if spec.nfe % 2 or spec.nfe < 2 * rounds:
@@ -413,7 +413,7 @@ def _run_twodim_fm(spec: CellSpec) -> CellResult:
     return result
 
 
-def _run_cifar10_rf(spec: CellSpec) -> CellResult:
+def _run_cifar10_rf(spec: CellSpec, *, n_rounds_override: int | None = None) -> CellResult:
     """Run baseline + framework for the CIFAR-10 RF adapter (synthetic mode).
 
     The CIFAR-10 RF adapter exposes ``batched_inference(n_samples, num_steps, seed)``
@@ -467,7 +467,7 @@ def _run_cifar10_rf(spec: CellSpec) -> CellResult:
         result.baseline_nfe = int(spec.nfe)
 
         # --- Framework arm: n_rounds * batched_inference with NFE/K. ---
-        n_rounds = MODEL_TABLE["cifar10_rf"]["n_rounds"]
+        n_rounds = n_rounds_override if n_rounds_override is not None else MODEL_TABLE["cifar10_rf"]["n_rounds"]
         # P2-W33-B1: ceil + carry NFE allocation. ``nfe // n_rounds``
         # under-counts NFE by up to ``n_rounds - 1`` (e.g. nfe=10,
         # n_rounds=4 yields 8 not 10). The fix distributes the
@@ -512,7 +512,12 @@ def _run_cifar10_rf(spec: CellSpec) -> CellResult:
     return result
 
 
-def _run_lineageflow(spec: CellSpec) -> CellResult:
+def _run_lineageflow(
+    spec: CellSpec,
+    *,
+    n_rounds_override: int | None = None,
+    brai_eps_scale: float | None = None,
+) -> CellResult:
     """Run baseline + framework for the LineageFlow adapter (synthetic mode).
 
     LineageFlow has no ``batched_inference`` and does not advertise the
@@ -619,7 +624,7 @@ def _run_lineageflow(spec: CellSpec) -> CellResult:
         # body keeps the per-sample Protocol loop, but every framework
         # decision (allocation, termination, merge) is delegated to
         # framework primitives. ---
-        n_rounds = MODEL_TABLE["lineageflow"]["n_rounds"]
+        n_rounds = n_rounds_override if n_rounds_override is not None else MODEL_TABLE["lineageflow"]["n_rounds"]
         # Evidence-mode NFE allocation: query the codimension scheduler
         # for the per-round ``eps`` and feed it to
         # ``nfe_steps_for_evidence``. The matched-NFE invariant
@@ -655,10 +660,35 @@ def _run_lineageflow(spec: CellSpec) -> CellResult:
         # ``early_termination`` flag via ``scheduler.should_terminate_round``.
         del config  # noqa: F841 -- framework-shape witness
 
+        # Wave 149 P2 (K1 RC2+RC3) -- wire --brai-eps-scale into the
+        # LineageFlow framework arm. When --brai-eps-scale matches the
+        # canonical DEFAULT_BRAI_EPS_SCALE (0.1), preserve the
+        # byte-stable UniformFreshPerturbation path (Wave 47/52/58
+        # regression vectors). When the user passes a non-default
+        # --brai-eps-scale value, route through BRAI
+        # (PaperQuantityAttractorInversion) with that scale. The
+        # ``perturbation`` kwarg on LineageFlowAdapter is the opt-in
+        # path that delegates ``apply_restart_distribution`` to the
+        # provided policy's ``.propose(...)`` method; passing ``None``
+        # falls back to UniformFreshPerturbation (byte-stable).
+        from adaptive_reflow.algorithm.perturbation import (  # noqa: I001 -- Wave 149 P2 local import for BRAI perturbation threading
+            DEFAULT_BRAI_EPS_SCALE as _DEFAULT_BRAI_EPS_SCALE,
+            PaperQuantityAttractorInversion,
+        )
+        brai_perturbation: object | None = None
+        if (
+            brai_eps_scale is not None
+            and float(brai_eps_scale) != float(_DEFAULT_BRAI_EPS_SCALE)
+        ):
+            brai_perturbation = PaperQuantityAttractorInversion(
+                eps_scale=float(brai_eps_scale),
+            )
+
         adapter_fw = LineageFlowAdapter(
             force_mode="synthetic",
             num_steps=int(nfe_per_round),
             family_id=LINEAGEFLOW_FAMILY_ID_DEFAULT,
+            perturbation=brai_perturbation,
         )
         # State for the multi-round loop: at round 0 we sample fresh
         # state; at round r > 0 we restart from the previous round's
@@ -898,13 +928,22 @@ def _per_position_entropy(endpoints: np.ndarray) -> float:
 # ---------------------------------------------------------------------------
 
 
-def _run_cell(spec: CellSpec) -> CellResult:
+def _run_cell(
+    spec: CellSpec,
+    *,
+    n_rounds_override: int | None = None,
+    brai_eps_scale: float | None = None,
+) -> CellResult:
     if spec.model == "twodim_fm":
-        return _run_twodim_fm(spec)
+        return _run_twodim_fm(spec, n_rounds_override=n_rounds_override)
     if spec.model == "cifar10_rf":
-        return _run_cifar10_rf(spec)
+        return _run_cifar10_rf(spec, n_rounds_override=n_rounds_override)
     if spec.model == "lineageflow":
-        return _run_lineageflow(spec)
+        return _run_lineageflow(
+            spec,
+            n_rounds_override=n_rounds_override,
+            brai_eps_scale=brai_eps_scale,
+        )
     raise ValueError(f"unknown model {spec.model!r}")
 
 
@@ -1116,7 +1155,15 @@ def _smallest_experiment(
     return out
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
+    """Parse + validate CLI args. Wave 149 P2: extracted from main() for testability.
+
+    Adds the 2 algorithm-primitive flags (``--brai-eps-scale FLOAT``,
+    LineageFlow-only + ``--n-rounds INT``, all-models) to the existing
+    argparse block. Emits a ``UserWarning`` when ``--brai-eps-scale`` is
+    explicitly passed for a non-LineageFlow model (Risk D: silently
+    ignored flag would otherwise be a UX trap).
+    """
     parser = argparse.ArgumentParser(
         description="Wave 29 Agent B -- controlled empirical audit.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -1134,6 +1181,35 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument(
         "--sigma", type=float, nargs="*", default=list(DEFAULT_SIGMAS),
+    )
+    parser.add_argument(
+        "--brai-eps-scale",
+        type=float,
+        default=0.1,
+        choices=[0.01, 0.05, 0.1, 0.2, 0.5],
+        help=(
+            "BRAI push-magnitude scale (LineageFlow only); default 0.1 "
+            "matches DEFAULT_BRAI_EPS_SCALE in adaptive_reflow/algorithm/"
+            "perturbation/perturbation.py:137. Choices constrain the "
+            "BRAI push-magnitude to safe values (Risk C: keep below "
+            "sigma threshold to avoid restart_blend crash). Flag is "
+            "silently ignored for non-LineageFlow models with a "
+            "UserWarning emitted at consumer sites."
+        ),
+    )
+    parser.add_argument(
+        "--n-rounds",
+        type=int,
+        default=None,
+        choices=[1, 2, 3, 5, 10],
+        help=(
+            "Override MODEL_TABLE[model]['n_rounds'] for all 3 audited "
+            "models (twodim_fm=5, cifar10_rf=4, lineageflow=5). "
+            "Default None = use per-model hardcoded value (preserves "
+            "byte-stability for 5-arm ablation, Wave 124 Kanzi N=1000 "
+            "baseline, Wave 139 LineageFlow NFE scan). Choices mirror "
+            "the values already swept in Wave 146 Item 2 hp grid."
+        ),
     )
     parser.add_argument(
         "--output",
@@ -1165,13 +1241,34 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.n_samples is not None and args.n_samples < 2:
         parser.error("--n-samples must be >= 2")
 
-    global NFE_ALLOCATION
-    NFE_ALLOCATION = str(args.nfe_allocation)
-
     # Validate model names.
     for m in args.models:
         if m not in MODEL_TABLE:
             parser.error(f"unknown --model {m!r}; known: {sorted(MODEL_TABLE.keys())}")
+
+    # Wave 149 P2 (K1 RC2) -- emit UserWarning when --brai-eps-scale is
+    # used with a non-LineageFlow model (BRAI is LineageFlow-only; flag
+    # ignored). The warning fires only when the user explicitly passes a
+    # non-default value (i.e., not the canonical 0.1 default that matches
+    # DEFAULT_BRAI_EPS_SCALE), so the default run stays silent.
+    if args.brai_eps_scale != 0.1 and not any(
+        m.startswith("lineageflow") for m in args.models
+    ):
+        import warnings
+        warnings.warn(
+            f"--brai-eps-scale={args.brai_eps_scale} is LineageFlow-only; "
+            f"flag ignored for non-LineageFlow models {args.models}",
+            UserWarning,
+            stacklevel=2,
+        )
+    return args
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = _parse_args(argv)
+
+    global NFE_ALLOCATION
+    NFE_ALLOCATION = str(args.nfe_allocation)
 
     seeds: tuple[int, ...] = (0,) if args.quick else tuple(args.seeds)
     nfes: tuple[int, ...] = tuple(args.nfe)
@@ -1200,7 +1297,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                         file=sys.stderr,
                     )
                     t0 = time.perf_counter()
-                    res = _run_cell(spec)
+                    res = _run_cell(
+                        spec,
+                        n_rounds_override=args.n_rounds,
+                        brai_eps_scale=args.brai_eps_scale,
+                    )
                     res_wall = float(time.perf_counter() - t0)
                     cells.append(res)
                     print(
