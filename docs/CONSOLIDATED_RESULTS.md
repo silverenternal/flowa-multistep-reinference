@@ -4375,3 +4375,19 @@ The ruff-frozen code change boundary (Wave 127 Phase 4 + Wave 131 Phase 1) does 
 - `1ce8e3a` Wave 131 Phase 1: ruff 207 -> 0
 
 **Ready for Tier-1 SCI submission.** NO PUSH per Wave 11+ user-gated protocol.
+
+### §15.33 Wave 134 — /tmp/ migration + paper path updates (2026-09-14)
+
+Wave 134 is the **/tmp/-to-repo migration** wave. The 8 N=1000 sweep JSONs that lived only on the sandbox `/tmp/` filesystem (and therefore could not be reproduced by anyone who checked out the repo) are promoted into `verification_outputs/` so the freeze-marker submission package now has complete reproducibility provenance. Phases 1-3 update the 3 docs (`paper-draft.md` + `baseline-audit-report.md` + `CONSOLIDATED_RESULTS.md`) that cited those `/tmp/` paths so they now point at the repo-resident copies. Phase 4 refreshes `todo/STATUS.md` + `todo/INDEX.md` to reflect post-Wave-127+ reality (v1.0-paper-final tag, ruff 0, 8 N=1000 sweeps in repo). This §15.33 entry + the new audit doc `docs/audit/wave134-tmp-migration.md` + the new `docs/baseline-audit-report.md` §R.24 row + the new `v1.0.1-paper-final` tag close Wave 134 as Agent 5 final synthesis.
+
+**Summary:**
+
+- 8 N=1000 sweep JSONs migrated from `/tmp/` to `verification_outputs/` (atomic copy, all 8 verified on disk).
+- `paper-draft.md` + `baseline-audit-report.md` + `CONSOLIDATED_RESULTS.md` paths updated (Phases 1-3, ADDITIVE ≤30 path-replacement lines per doc, no prose change).
+- `todo/STATUS.md` + `todo/INDEX.md` refreshed for post-Wave-127+ reality (Phase 4).
+- All gates preserved: ruff 0, D.4 33/33 PASS, claims_consistency PASS, mkdocs strict EXIT=0.
+- `v1.0.1-paper-final` tag set (supersedes `v1.0-paper-final`; same source tree, no code changes between tags).
+- Wave 86 LineageFlow HMMER raw JSON still NOT in repo (camera-ready only; deferred to Wave 86 re-run).
+- NO push (Wave 11+ user-gated); ADDITIVE only; NO source code changes; NO experiments; single atomic Agent 5 commit.
+
+See `docs/audit/wave134-tmp-migration.md` (full Wave 134 audit trail) + `docs/baseline-audit-report.md` §R.24 (Wave 134 ledger row) + `todo/STATUS.md` (Phase 4 refresh) + `verification_outputs/kanzi_n1000_*/` (8 N=1000 sweeps now in repo).

@@ -4273,3 +4273,52 @@ Kanzi N=1000 framework_inv_proj sweep re-executed on the ruff-frozen code at HEA
 `n_records_processed=1000`, `n_records_skipped=0`, `n_steps_decoder=100` identical. `sweep_wallclock_s` differs (4835 vs 4568 s; wall-clock variance is acceptable).
 
 **Freeze marker confirmed: HEAD `990f5c4` (commit `39a65a7` for verification commit).** v1.0-paper-final tag set. Sweep CLI invocation documented in `docs/audit/wave131-pre-freeze-hygiene.md`. Per user directive "数据肯定要全部重新跑一遍来冻结的", this is the freeze point — no further code changes until camera-ready.
+
+### §R.24 Wave 134 — /tmp/ to repo migration + paper path updates + todo refactor (2026-09-14)
+
+| R.24 | Wave 134 — /tmp/ to repo migration (2026-09-14); 8 N=1000 sweep JSONs now in `verification_outputs/`; paper + audit + CONSOLIDATED paths updated; ruff 0 (preserved); D.4 33/33 (preserved); todo/STATUS.md + INDEX.md refreshed; `v1.0.1-paper-final` tag set. |
+
+**Scope:** close Wave 134's 5 atomic Phases (Phases 1-4 by prior agents + this Phase 5 final synthesis) as the **/tmp/-to-repo migration** wave that promotes the 8 N=1000 sweep JSONs that lived only on the sandbox `/tmp/` filesystem (and therefore could not be reproduced by anyone who checked out the repo) into `verification_outputs/` so the freeze-marker submission package now has complete reproducibility provenance. 1 NEW audit doc `docs/audit/wave134-tmp-migration.md` + 1 NEW §R.24 row (this section) + 1 NEW §15.33 section in CONSOLIDATED_RESULTS + final commit + `v1.0.1-paper-final` tag. ADDITIVE only — no measurement delta, no algorithm activation, no new N>=1000 sweep, no source code changes (docs-only + /tmp→repo copy wave).
+
+**Phase 1-3 ledger (path updates):**
+
+- Phase 1 (`2c2bd55`): `docs/paper-draft.md` — `/tmp/w116|120|121|122|127|131/baseline_seed42|framework_synth|framework_inv_proj_seed42/` paths replaced with `verification_outputs/kanzi_n1000_*` repo paths (≤30 lines, ADDITIVE).
+- Phase 2 (`db9e7e3`): `docs/baseline-audit-report.md` — same path replacement in §15.15.1 framework_improves table evidence + §R.15 / §R.18 / §R.19 / §R.20 ledger rows.
+- Phase 3 (`752b9af`): `docs/CONSOLIDATED_RESULTS.md` — same path replacement in §15.15.1, §15.24, §15.27, §15.29, §15.30, §15.31, §15.32.
+
+**Phase 4 ledger (todo/ refresh):**
+
+- Phase 4 (`3186a1d`): `todo/STATUS.md` + `todo/INDEX.md` refreshed for post-Wave-127+ reality (v1.0-paper-final tag; ruff 0; 8 N=1000 sweeps in repo). 6 active plans updated to SHIPPED status. Wave 86 LineageFlow N=1000 HMMER raw JSON noted as STILL MISSING (no `/tmp/` copy, no Wave 86 audit-doc data).
+
+**Phase 5 (this commit):** final synthesis — audit doc + baseline-audit §R.24 + CONSOLIDATED §15.33 + `v1.0.1-paper-final` tag set.
+
+**What was migrated (8 N=1000 sweep JSONs):**
+
+| # | Source (`/tmp/`) | Destination (repo `verification_outputs/`) |
+|---|---|---|
+| 1 | `/tmp/w116/baseline_seed42/` | `verification_outputs/kanzi_n1000_baseline_seed42_wave116_q3_2026/` |
+| 2 | `/tmp/w120/baseline_seed42/` | `verification_outputs/kanzi_n1000_baseline_seed42_wave120_q3_2026/` (canonical) |
+| 3 | `/tmp/w121/baseline_seed7/` | `verification_outputs/kanzi_n1000_baseline_seed7_wave121_q3_2026/` |
+| 4 | `/tmp/w120/kanzi_n1000_framework_paper_metrics.json` | `verification_outputs/kanzi_n1000_framework_synth_wave120_q3_2026/` |
+| 5 | `/tmp/w121/framework_synth_seed42/` | `verification_outputs/kanzi_n1000_framework_synth_seed42_wave121_q3_2026/` |
+| 6 | `/tmp/w122/framework_inv_proj_seed42/` | `verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave122_q3_2026/` (historical 2.5017) |
+| 7 | `/tmp/w127/framework_inv_proj_seed42/` | `verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave127_q3_2026/` |
+| 8 | `/tmp/w131/framework_inv_proj_seed42/` | `verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave131_byte_repro_q3_2026/` (byte-reproducible) |
+
+**Acceptance gates preserved:**
+
+- `pytest tests/ -k "d4" -q` → **33/33 PASS** preserved (no code changed).
+- `ruff check adaptive_reflow/ tests/` → **All checks passed!** preserved (Wave 131 freeze).
+- `python tools/check_claims_consistency.py` → **PASS** preserved.
+- `mkdocs build --strict` → **EXIT=0** verified at Phase 5 close.
+- All 8 N=1000 sweep JSONs verified to exist on disk at the destination path.
+
+**What remains NOT in repo (camera-ready or re-run):**
+
+- **Wave 86 LineageFlow N=1000 HMMER raw JSON** — audit doc has 158/342 (`hmmscan_total_hits` summary), but raw sweep output was never saved. No `/tmp/` copy exists on the sandbox; no Wave 86 audit-doc contains the raw sweep. **Real reproducibility gap** that needs Wave 86 re-run; deferred to camera-ready (not in scope for Tier-1 SCI submission — LineageFlow R1 is the headline 158→342 +116% claim, which IS in supplementary.md S4).
+
+**Freeze marker:** HEAD after Wave 134 final close is `v1.0.1-paper-final`. This tag **supersedes `v1.0-paper-final`** (set at Wave 131 close, commit `539ec82`); both tags point at the same source tree because there are **no source code changes between the two tags** — the 4 Wave 134 commits (Phases 1-4) are all docs-only and the v1.0.1 tag captures the post-/tmp-migration + post-todo-refresh state. **Reproducibility provenance now complete for Kanzi** (all 8 N=1000 sweeps in repo at the destination paths).
+
+**HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 4 prior-agent commits preserve pre-Wave-134 content; NO source code changes; NO experiments; single atomic Agent 5 commit titled "Wave 134: /tmp/ migration close — audit doc + baseline R.24 + CONSOLIDATED 15.33 + v1.0.1-paper-final tag set".
+
+See `docs/audit/wave134-tmp-migration.md` (full Wave 134 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.33 + `todo/STATUS.md` (Phase 4 refresh) + `verification_outputs/kanzi_n1000_*/` (8 N=1000 sweeps now in repo).
