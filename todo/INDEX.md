@@ -103,6 +103,7 @@ covers Wave 1 → Wave 134 (63+ of 101+ waves have audit docs).
 | 6 | [adapter-improvement-8-adapter-shim-audit.md](adapter-improvement-8-adapter-shim-audit.md) | **READ-ONLY audit** (Wave 123 Agent 6); per-adapter fixes deferred to camera-ready |
 | 7 | [paper-finish-line-radical-tier1.md](paper-finish-line-radical-tier1.md) | **EXECUTED** (Wave 129 — radical Tier-1 SCI plan replaces Wave 127 conservative framing; cover letter + §1/§7 + supplementary + checklist all landed Wave 132-133) |
 | 8 | [code-tasks-before-freeze.md](code-tasks-before-freeze.md) | **EXECUTED** (Wave 130 — pre-freeze engineering audit + plan; ruff 207→0 Wave 131 Phase 1 + D.4 33/33 + pytest 5155 + claims PASS all green) |
+| 9 | [2026-09-14-tier1-numerical-polish-plan.md](2026-09-14-tier1-numerical-polish-plan.md) | **PLANNED - 6 polish items** (Wave 145 Phase 3 — algorithm ablation + hyperparameter sweep + CIFAR v4 audit + PDF + LineageFlow N=1000 + LineageFlow foldability; awaits user OK before launch) |
 
 > **Historical plans (CLOSED):** the 26 `algo-improvement-*.md` files
 > that previously lived under `todo/completed/` (47 archived plans) were

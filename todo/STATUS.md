@@ -1,6 +1,6 @@
 # `todo/STATUS.md` — current execution status (2026-09-14 v1.0-paper-final)
 
-**Updated:** 2026-09-14 (Wave 134 final pass — `/tmp/` → repo
+**Updated:** 2026-09-14 (Wave 145 final pass — todo/ folder refactor; 9 active plan Status: headers refreshed; new todo/2026-09-14-tier1-numerical-polish-plan.md added; v1.0.1-paper-final tag on origin/main with 18 Wave 137-143 commits pushed + Wave 144 push + fix + PDF close). All gates green.
 `verification_outputs/` path migration across 3 doc surfaces, completing
 the post-Wave-127+ refresh). This file replaces the stale Wave 127
 finish-line snapshot that was preserved below for provenance. The
@@ -18,7 +18,7 @@ preserved in git history (commits `14e8bc5^` and earlier).
 
 ## Current evidence and next gates (2026-09-14, v1.0-paper-final)
 
-- **HEAD commit:** `752b9af` (Wave 134 Phase 3 — final `/tmp/` path
+- **HEAD commit:** `1d1723d` (Wave 144 Phase 4 final close; 18 commits ahead of v1.1-paper-final planned tag). (Wave 134 Phase 3 — final `/tmp/` path
   migration; this Phase 4 commit `b62c1e9` adds the STATUS + INDEX
   refresh and bumps HEAD to `b62c1e9`).
 - **Tag:** `v1.0-paper-final` (Wave 131 Phase 3 freeze marker, points
@@ -26,7 +26,7 @@ preserved in git history (commits `14e8bc5^` and earlier).
   mkdocs strict EXIT=0 / ckpt SHA-256 4/4 PASS). Post-Wave 134 will
   add `v1.0.1-paper-final` as the doc-only `/tmp/` → `verification_outputs/`
   migration tag (additive; no source-code change).
-- **Unpushed commits ahead of `origin/main`:** 3 (post-Wave 134 Phase 3
+- **Unpushed commits ahead of `origin/main`:** 2 (Wave 144 Phase 2 + Phase 4; awaiting user OK). (post-Wave 134 Phase 3
   `752b9af`). 0 behind. The Wave 11-127 backlog (~167 commits) was
   pushed during Wave 128-133; only the Wave 134 doc-migration Phases
   1-3 are now unpushed. After this Phase 4 commit the count becomes 4.

@@ -1,9 +1,16 @@
 # Push unpushed commits to origin
 
-**Status:** DEFERRED (historical Wave 12 push completed; current branch has later user-gated commits)
+**Status:** HISTORICAL LEDGER (Wave 12 push completed; superseded by `todo/PUSH-READY.md`)
 **Date:** 2026-09-13 (state correction)
 **Owner:** framework maintainer
 **Goal:** push the 5+ unpushed commits from Wave 6 → Wave 12 to `origin/main`.
+
+> **Provenance notice (2026-09-14 Wave 145 Phase 4 refresh):** this file
+> is the original Wave 12 push log. It is **superseded** by the current
+> `todo/PUSH-READY.md`, which tracks the live state (18 Wave 137-143
+> commits already pushed to `origin/main`; 2 unpushed Wave 144 Phase 2
+> + Phase 4 commits awaiting user OK). Kept here for traceability per
+> the project's additive / never-delete historical ledger convention.
 
 ## Background
 
