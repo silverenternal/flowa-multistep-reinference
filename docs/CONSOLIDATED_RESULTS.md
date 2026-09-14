@@ -4428,3 +4428,15 @@ Wave 137 is the **submission-readiness documentation cleanup** wave that closes 
 - NO push (Wave 11+ user-gated); ADDITIVE only; NO source code changes; NO experiments; single atomic Agent 6 commit.
 
 See `docs/audit/wave137-doc-cleanup.md` (full Wave 137 audit trail) + `docs/baseline-audit-report.md` §R.27 (Wave 137 ledger row) + `docs/ARCHIVE/audit-waves-1-99/` (Phase 1 archive) + `todo/STATUS.md` (Phase 2 refresh) + `README.md` (Phase 3 refresh) + `GATES.md` + `INSIGHTS.md` (Phase 4 refresh) + `docs/audit/wave136-submission-polish.md` (predecessor wave).
+
+### §15.39 Wave 140 — Docstring audit refresh (2026-09-14)
+
+Wave 140 is the **docstring-audit-refresh** wave that inventories the Wave 125-137 public API surface (Wave 38 + Wave 131/132 docstrings + 6 new public symbols in Wave 125-137) and documents the docstring coverage matrix (F1-F5) as a Tier-1 SCI submission camera-ready scope artifact. 3 atomic Phases (Phases 1-2 by prior agents + this Phase 3 final synthesis by Agent 4): Phase 1 authors `README.md` Docstring coverage section (cross-ref to Phase 2 audit doc); Phase 2 authors `docs/audit/wave140-docstring-audit.md` (read-only inventory + coverage matrix); this Phase 3 writes the baseline §R.30 row, appends this §15.39, and commits. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
+
+- `docs/audit/wave140-docstring-audit.md`: inventory of Wave 125-137 public API surface (149 lines, 5-item coverage matrix F1-F5); existing Wave 38 + Wave 131/132 docstrings already cover 27/33 public symbols (82%)
+- Docstring coverage matrix (F1-F5): F1 = well-documented (27 symbols), F2 = minimal docstring (3 symbols), F3-F5 = missing/needed (~6 symbols); camera-ready remediation: ~2-3 hours to patch the F3-F5 items
+- Existing Wave 38 + Wave 131/132 docstrings are sufficient for the **current** Tier-1 SCI submission package; F3-F5 closure is a camera-ready polish item (not a blocker)
+- All gates preserved (ruff 0, D.4 33/33, claims_consistency PASS, mkdocs strict EXIT=0)
+- NO push (Wave 11+ user-gated); ADDITIVE only; NO source code changes; NO experiments; single atomic Agent 4 commit.
+
+See `docs/audit/wave140-docstring-audit.md` (full Wave 140 audit trail + coverage matrix F1-F5) + `docs/baseline-audit-report.md` §R.30 (Wave 140 ledger row) + `README.md` Docstring coverage section (Phase 1 cross-ref) + `docs/audit/wave137-doc-cleanup.md` (predecessor wave).

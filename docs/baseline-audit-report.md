@@ -4437,3 +4437,31 @@ See `docs/audit/wave136-submission-polish.md` (full Wave 136 audit trail) + `doc
 **HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 4 prior-agent commits preserve pre-Wave-137 content (Phase 1 INDEX.md path-update is path-only; Phase 2 todo/ Status headers are header-only; Phase 3 README.md Section is in-place rewrite preserving anchors; Phase 4 GATES.md + INSIGHTS.md are current-state-section-only with historical sections preserved verbatim); NO source code changes; NO experiments; single atomic Agent 6 commit titled "Wave 137: documentation cleanup close - audit doc + baseline R.27 + CONSOLIDATED 15.36".
 
 See `docs/audit/wave137-doc-cleanup.md` (full Wave 137 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.36 + `docs/ARCHIVE/audit-waves-1-99/` (Phase 1 archive, ~252 files) + `todo/STATUS.md` (Phase 2 refresh) + `README.md` (Phase 3 refresh) + `GATES.md` + `INSIGHTS.md` (Phase 4 refresh) + `docs/audit/wave136-submission-polish.md` (predecessor wave).
+
+### §R.30 Wave 140 — Docstring audit refresh (2026-09-14)
+
+| R.30 | Wave 140 - docstring audit refresh (2026-09-14); inventory Wave 125-137 public API surface + docstring coverage; docs/audit/wave140-docstring-audit.md; ruff 0 (preserved); D.4 33/33 (preserved). |
+
+**Scope:** close Wave 140 as Agent 4 final synthesis — the docstring-audit-refresh wave that (a) inventories the Wave 125-137 public API surface (Wave 38 + Wave 131/132 docstrings + 6 new public symbols in Wave 125-137) and (b) documents the docstring coverage matrix (F1-F5) as a Tier-1 SCI submission camera-ready scope artifact (not a blocker — existing Wave 38 + Wave 131/132 docstrings are sufficient for the current submission package). 3 atomic Phases (Phases 1-2 by prior agents + this Phase 3 final synthesis by Agent 4): Phase 1 authors `README.md` Docstring coverage section (cross-ref to Phase 2 audit doc); Phase 2 authors `docs/audit/wave140-docstring-audit.md` (read-only inventory + camera-ready remediation estimate ~2-3 hours); this Phase 3 writes this baseline §R.30 row + CONSOLIDATED §15.39 + final commit. ADDITIVE only — no source code changes, no measurement delta, no algorithm activation, no docstring patches applied.
+
+**Phase 1-2 ledger:**
+
+- Phase 1 (`51d90f7`): add `README.md` Docstring coverage section (refers to `docs/audit/wave140-docstring-audit.md`); existing README sections byte-identical pre/post.
+- Phase 2 (`517a0a5`): author `docs/audit/wave140-docstring-audit.md` (149 lines, Wave 125-137 API inventory + 5-item coverage matrix F1-F5); pure inventory doc, no docstring patches.
+- Phase 3 (this commit): final synthesis — baseline-audit §R.30 (this row) + CONSOLIDATED §15.39 + final commit.
+
+**Acceptance gates preserved:**
+
+- `pytest tests/ -k "d4" -q` → **33/33 PASS** preserved (no code changed).
+- `ruff check adaptive_reflow/ tests/` → **All checks passed!** preserved (Wave 131 freeze).
+- `python tools/check_claims_consistency.py` → **PASS** preserved (39 active, 0 provisional, 2 deprecated, **No drift detected**).
+- `mkdocs build --strict` → **EXIT=0** preserved at Phase 3 close.
+- All Phase 1-2 additions cite verifiable source paths (`README.md` Docstring coverage section, `docs/audit/wave140-docstring-audit.md`).
+
+**Camera-ready deferred (UNCHANGED):** mypy 988 hand-fix (CLM-024 acknowledges); Wan2.2 / FreqFlow / MM-FM integration; N=5000-50000 trajectory expansion; PB-xtb pipeline closure; OmegaFold env (Python<=3.10); LineageFlow novelty_mmseqs2 (Pfam fastas placeholder); Wave 86 LineageFlow N=1000 HMMER raw JSON (camera-ready re-run ~30 min); LineageFlow foldability + self_consistency N=1000 (~25 h per arm CPU); **NEW** docstring coverage closure (~2-3 hours, F3-F5 items per `wave140-docstring-audit.md`).
+
+**Freeze marker:** HEAD after Wave 140 final close is `v1.0.1-paper-final` (tag set at Wave 134 close, commit `58930ef`) + Wave 135 headline-evidence + Wave 136 final submission polish + Wave 137 documentation cleanup + Wave 138 NeurIPS-template paper package (4 prior-agent commits) + Wave 140 docstring audit refresh (2 prior-agent commits + this Phase 3 final synthesis). All Wave 140 commits are **docs-only** — no source code changes, no measurement delta, no algorithm activation, no docstring patches. **Tier-1 SCI submission ready.**
+
+**HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — Phase 1 README.md Docstring coverage section is a new section appended after existing content (other sections byte-identical pre/post); Phase 2 audit doc is a new file (no edit to existing docs); this Phase 3 baseline §R.30 + CONSOLIDATED §15.39 are appended; NO source code changes; NO experiments; single atomic Agent 4 commit titled "Wave 140: docstring audit refresh close - audit doc + baseline R.30 + CONSOLIDATED 15.39".
+
+See `docs/audit/wave140-docstring-audit.md` (full Wave 140 audit trail + coverage matrix F1-F5) + `docs/CONSOLIDATED_RESULTS.md` §15.39 + `README.md` Docstring coverage section (Phase 1 cross-ref) + `docs/audit/wave137-doc-cleanup.md` (predecessor wave).
