@@ -4406,3 +4406,34 @@ See `docs/audit/wave135-headline-evidence.md` (full Wave 135 audit trail) + `doc
 **HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 3 prior-agent commits preserve pre-Wave-136 content (Phase 1 §10.4 appended after the existing §10.1-§10.3 content; Phase 2 §S7.2 appended after §S7.1; Phase 3 §S4.3 appended after §S4.2); NO source code changes; NO experiments; single atomic Agent 4 commit titled "Wave 136: final submission polish close - audit doc + baseline R.26 + CONSOLIDATED 15.35".
 
 See `docs/audit/wave136-submission-polish.md` (full Wave 136 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.35 + `docs/paper-draft.md` §10.4 (known negative surface) + `docs/supplementary.md` §S7.2 (LineageFlow provenance) + §S4.3 (CIFAR-10 provenance) + `docs/audit/wave135-headline-evidence.md` (predecessor wave).
+
+### §R.27 Wave 137 — Documentation cleanup (archive + refresh + close out) (2026-09-14)
+
+| R.27 | Wave 137 - documentation cleanup (2026-09-14); ~252 Wave 1-99 audit docs archived to docs/ARCHIVE/audit-waves-1-99/ + INDEX.md path-update + todo/ 8 active plan Status headers refresh + README.md / GATES.md / INSIGHTS.md current-state refresh; ruff 0 (preserved); D.4 33/33 (preserved); mkdocs EXIT=0 (preserved). |
+
+**Scope:** close Wave 137's 6 atomic Phases (Phases 1-5 by prior agents + this Phase 6 final synthesis by Agent 6) as the **submission-readiness documentation cleanup** wave that (a) archives ~252 stale Wave 1-99 audit docs out of the audit/ top-level directory into docs/ARCHIVE/audit-waves-1-99/, (b) refreshes 8 todo/ active plan Status: headers to match the post-Wave-134 STATUS.md reality, (c) refreshes README.md / GATES.md / INSIGHTS.md current-state sections to the post-Wave-136 freeze-marker values, and (d) closes the wave with this audit doc + baseline §R.27 + CONSOLIDATED §15.36. 1 NEW audit doc `docs/audit/wave137-doc-cleanup.md` + 1 NEW §R.27 row (this section) + 1 NEW §15.36 section in CONSOLIDATED_RESULTS + final commit. ADDITIVE only — no measurement delta, no algorithm activation, no new N>=1000 sweep, no source code changes (docs-only wave).
+
+**Phase 1-5 ledger:**
+
+- Phase 1 (`3f4a09e`): archive ~252 Wave 1-99 audit docs to `docs/ARCHIVE/audit-waves-1-99/` + INDEX.md path-update for waves 1-99 cross-references; git mv semantics preserves blob SHA-1 history.
+- Phase 2 (`119a050`): refresh `Status:` header in 8 todo/ active plan files (4 SHIPPED + 2 EXECUTED + 2 READ-ONLY); body of every plan byte-identical pre/post.
+- Phase 3 (`2151d0e`): README.md Status section refresh — freeze SHA `0ef6465` (v1.0.1-paper-final), D.4 33/33, pytest 5155/196 green, drop B+ self-assessment, Tier-1 SCI submission-ready status; rest of README byte-identical pre/post.
+- Phase 4 (`78eaeb6`): GATES.md + INSIGHTS.md current-state refresh; push-ready-summary.md historical ledger rows preserved verbatim per ADDITIVE rule.
+- Phase 5 (no commit, out-of-repo cleanup): delete 96 workflow `.js` scripts (~1.2 MB) + ~28 /tmp/flowa-* transient dirs (~3 GB); verified `git status` clean; documented in Phase 5 ledger section of the audit doc.
+- Phase 6 (this commit): final synthesis — audit doc `docs/audit/wave137-doc-cleanup.md` + baseline-audit §R.27 (this row) + CONSOLIDATED §15.36.
+
+**Acceptance gates preserved:**
+
+- `pytest tests/ -k "d4" -q` → **33/33 PASS** preserved (no code changed).
+- `ruff check adaptive_reflow/ tests/` → **All checks passed!** preserved (Wave 131 freeze).
+- `python tools/check_claims_consistency.py` → **PASS** preserved (39 active, 0 provisional, 2 deprecated, **No drift detected** — Phase 1 INDEX.md path-update preserved all CLM-NNN claim IDs intact).
+- `mkdocs build --strict` → **EXIT=0** verified at Phase 6 close.
+- All Phase 1-4 additions cite verifiable source paths (`docs/audit/wave137-doc-cleanup.md`, `docs/ARCHIVE/audit-waves-1-99/`, `todo/STATUS.md`, `docs/GATES.md`, `docs/INSIGHTS.md`).
+
+**Camera-ready deferred (UNCHANGED):** mypy 988 hand-fix (CLM-024 acknowledges); Wan2.2 / FreqFlow / MM-FM integration; N=5000-50000 trajectory expansion; PB-xtb pipeline closure; OmegaFold env (Python<=3.10); LineageFlow novelty_mmseqs2 (Pfam fastas placeholder); Wave 86 LineageFlow N=1000 HMMER raw JSON (camera-ready re-run ~30 min); LineageFlow foldability + self_consistency N=1000 (~25 h per arm CPU).
+
+**Freeze marker:** HEAD after Wave 137 final close is `v1.0.1-paper-final` (tag set at Wave 134 close, commit `58930ef`) + Wave 135 headline-evidence extension (6 atomic Phases) + Wave 136 final submission polish (3 prior-agent commits + Phase 4 final synthesis) + Wave 137 documentation cleanup (4 prior-agent commits + this Phase 6 final synthesis). All Wave 137 commits are **docs-only** — no source code changes, no measurement delta, no algorithm activation. **Tier-1 SCI submission ready.**
+
+**HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 4 prior-agent commits preserve pre-Wave-137 content (Phase 1 INDEX.md path-update is path-only; Phase 2 todo/ Status headers are header-only; Phase 3 README.md Section is in-place rewrite preserving anchors; Phase 4 GATES.md + INSIGHTS.md are current-state-section-only with historical sections preserved verbatim); NO source code changes; NO experiments; single atomic Agent 6 commit titled "Wave 137: documentation cleanup close - audit doc + baseline R.27 + CONSOLIDATED 15.36".
+
+See `docs/audit/wave137-doc-cleanup.md` (full Wave 137 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.36 + `docs/ARCHIVE/audit-waves-1-99/` (Phase 1 archive, ~252 files) + `todo/STATUS.md` (Phase 2 refresh) + `README.md` (Phase 3 refresh) + `GATES.md` + `INSIGHTS.md` (Phase 4 refresh) + `docs/audit/wave136-submission-polish.md` (predecessor wave).

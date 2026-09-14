@@ -4415,3 +4415,16 @@ Wave 136 is the **final Tier-1 submission polish** wave that closes Strategy D a
 - NO push (Wave 11+ user-gated); ADDITIVE only; NO source code changes; NO experiments; single atomic Agent 4 commit.
 
 See `docs/audit/wave136-submission-polish.md` (full Wave 136 audit trail) + `docs/baseline-audit-report.md` §R.26 (Wave 136 ledger row) + `docs/paper-draft.md` §10.4 (known negative surface) + `docs/supplementary.md` §S7.2 (LineageFlow provenance) + §S4.3 (CIFAR-10 provenance) + `docs/audit/wave135-headline-evidence.md` (predecessor wave).
+
+### §15.36 Wave 137 — Documentation cleanup (archive + refresh + close out) (2026-09-14)
+
+Wave 137 is the **submission-readiness documentation cleanup** wave that closes a long-running set of doc-hygiene debts that had accumulated since Wave 1: (a) ~252 Wave 1-99 audit docs archived to `docs/ARCHIVE/audit-waves-1-99/` so the audit/ top-level is navigable; (b) todo/ 8 active plan Status: headers refreshed (4 SHIPPED + 2 EXECUTED + 2 READ-ONLY); (c) README.md / GATES.md / INSIGHTS.md current-state sections refreshed to post-Wave-136 freeze-marker values (D.4 33/33, pytest 5155/196 green, freeze SHA `0ef6465`, Tier-1 SCI submission-ready). 6 atomic Phases (1-5 by prior agents + this Phase 6 final close): Phase 1 archives + INDEX.md path-update; Phase 2 refreshes todo/ Status headers; Phase 3 refreshes README.md; Phase 4 refreshes GATES.md + INSIGHTS.md; Phase 5 is an out-of-repo cleanup (96 workflow `.js` scripts + ~28 /tmp/flowa-* dirs, no commit); this Phase 6 writes the audit doc, appends baseline-audit §R.27, appends this §15.36, and commits. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
+
+- ~252 Wave 1-99 audit docs archived to `docs/ARCHIVE/audit-waves-1-99/` (git mv semantics preserves blob SHA-1 history)
+- todo/ 8 active plan Status headers refreshed (4 SHIPPED + 2 EXECUTED + 2 READ-ONLY); body of every plan byte-identical pre/post
+- README.md / GATES.md / INSIGHTS.md current-state data refreshed (freeze SHA `0ef6465`, D.4 33/33, pytest 5155/196 green, Tier-1 SCI submission-ready status)
+- All gates preserved (ruff 0, D.4 33/33, claims_consistency PASS, mkdocs strict EXIT=0)
+- Phase 5 out-of-repo cleanup (no commit, no source change, no measurement delta)
+- NO push (Wave 11+ user-gated); ADDITIVE only; NO source code changes; NO experiments; single atomic Agent 6 commit.
+
+See `docs/audit/wave137-doc-cleanup.md` (full Wave 137 audit trail) + `docs/baseline-audit-report.md` §R.27 (Wave 137 ledger row) + `docs/ARCHIVE/audit-waves-1-99/` (Phase 1 archive) + `todo/STATUS.md` (Phase 2 refresh) + `README.md` (Phase 3 refresh) + `GATES.md` + `INSIGHTS.md` (Phase 4 refresh) + `docs/audit/wave136-submission-polish.md` (predecessor wave).
