@@ -5813,6 +5813,72 @@ R5-survey (`docs/r4-survey/14-cifar-experiment-results.md` for CIFAR-10
 2.5×) and R4-survey (`docs/r4-survey/10-sota-2d-experiment-results.md`
 for 2D FM 10×).
 
+**R1-R6 verification_outputs/ cross-link expansion (Wave 152 P2 — ADDITIVE
+reviewer-verifiable chain, does NOT delete or rewrite any prose above).**
+Every R1-R6 headline-evidence claim above is anchored to a single
+on-disk sweep JSON (or CSV) so a reviewer can verify the number in 1 step
+by `sha256sum` + file open. Path + sha256 per R.N, computed 2026-09-14:
+
+- **R1 LineageFlow `hmmscan_total_hits` +116% (N=1000).** Honest provenance
+  note: the on-disk
+  `verification_outputs/lineageflow_n1000_framework_q4_2026.json`
+  (sha256 `ae24d5e6b934fd9d1223ca158ab7aaee7a4c10fe2a6ff429ad04b55b94353153`)
+  + `verification_outputs/lineageflow_n1000_baseline_q4_2026.json`
+  (sha256 `ae24d5e6b934fd9d1223ca158ab7aaee7a4c10fe2a6ff429ad04b55b94353153`)
+  both contain the Wave 81 N=2 per-arm partial data (`hmmscan_total_hits=0/0`),
+  so the +116% headline is sourced from the Wave 86 audit doc
+  (`docs/audit/wave86-phase3-sweep.md` §2), NOT those JSONs (consistent
+  with the K8 honest-negative-surface disclosure in §10.4 + the R1
+  SOURCE.md in `docs/headline-evidence/r1_lineageflow_hmmer_p1e-10/`).
+  Companion NFE scan: `verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json`
+  (sha256 `4b241e732de1d9620e373962e419e8ca5a44f9f32085d5e31608926a97d2f6ca`,
+  Wave 139, 8 cells × 3 seeds × NFE 50/100/200, N=1000 paper-metric axis).
+- **R2 FlowMol3 `fg_dev` 4.05σ (N=1000).** Primary sweep
+  `verification_outputs/flowmol3_n1000_sweep_q4_2026.json`
+  (sha256 `caf9412e74304346f80ac027fa836a7c0460ed51a3b97bbc87a0ced04e658302`).
+  Companion arms: `verification_outputs/flowmol3_n1000_baseline_q4_2026.json`
+  (sha256 `beb0174d1acf1b0ee4fae9812815fa305d2f359b378adbeb89ba2c198b84173c`)
+  + `verification_outputs/flowmol3_n1000_framework_q4_2026.json`
+  (sha256 `b44452a958394d3ff6668c7b4ae460b28dba064a0313ea93cae460a650988295`).
+  Byte-stable reproduction (Wave 87) + Wave 89 paper-metric audit all
+  reference these three JSONs.
+- **R3 CIFAR-10 RF v2 FID −44.17% (NFE-averaged).** The v2 sweep was a
+  single-shot CPU run and is NOT archived as a standalone JSON
+  (`docs/headline-evidence/r3_cifar_rf_v2_fid_m44p17pct/SOURCE.md`
+  acknowledges this gap). Re-run from the v2 row CLI in
+  `docs/CONSOLIDATED_RESULTS.md` §6 line 177 (post-Wave-151 P5 audit
+  correction; §4.3 is the 2D FM ablation, not CIFAR). Companion aggregate:
+  `verification_outputs/baseline_comparison_q4_2026.json`
+  (sha256 `3e71ed24cc03025f90fbdcd28a6815f42b866903aad58f0d442bd6e3b8e0de75`)
+  carries the `rectified_flow_cifar` framework-vs-baseline signed delta
+  for the Tier 1 speedup table.
+- **R4 2D Two Moons W₂ −7.28% (matched NFE 500).** CSVs from
+  `tools/run_sota_2d_experiment.py` (commit `4a482ff`): baseline
+  `verification_outputs/noise_injection_two_moons_baseline.csv`
+  (sha256 `bcd1bb1ca17ecc53c9abf794f8404f678979c00c996b058e86b2548570aaa325`)
+  + framework `verification_outputs/noise_injection_two_moons_framework.csv`
+  (sha256 `162406303bddbdf20792e841b9ed8616ec98ba259d855828b89ce9453b6d177b`).
+  Cross-cite `docs/r4-survey/10-sota-2d-experiment-results.md`.
+- **R5 2D Eight Gaussians W₂ −10.40% (matched NFE 500).** CSVs from
+  the same `tools/run_sota_2d_experiment.py` invocation: baseline
+  `verification_outputs/noise_injection_eight_gaussians_baseline.csv`
+  (sha256 `3c928aa31babea6c818d227290a6bbce1259b2bd2649ea34a75a1d557eb3d85d`)
+  + framework `verification_outputs/noise_injection_eight_gaussians_framework.csv`
+  (sha256 `51902d37c709774dbc156d7d7c4aabb2be9cf86a85a019f63ed16aa76c95886d`).
+  Same R4-survey source.
+- **R6 MNIST FM FID −15.01%.**
+  `verification_outputs/baseline_comparison_q4_2026.json`
+  (sha256 `3e71ed24cc03025f90fbdcd28a6815f42b866903aad58f0d442bd6e3b8e0de75`)
+  carries the `mnist_fm` row (R6 + R3 both anchor here; pre-P0-1
+  inceptionv3_torchvision honest caveat in the R6 SOURCE.md
+  `docs/headline-evidence/r6_mnist_fm_fid_m15p01pct/`).
+- **Wave 152 P1 framework_synth companion sweep** (parallel empirical
+  evidence to the Wave 124-128 framework_inv_proj reading on Kanzi):
+  `verification_outputs/kanzi_n1000_framework_synth_w152_q4_2026/kanzi_n1000_framework_paper_metrics.json`
+  (sha256 `40b6d99815c18133d5862548c70d14d4f58f276cba8042f6667095108b67e934`,
+  n_records=1000, deterministic per-record seed, full provenance per
+  `docs/audit/wave152-framework-synth.md`).
+
 **What FlowA does NOT claim.** Six deliberate non-claims: (i) **no
 paper-metric axis improvement on Kanzi** — framework arm is
 `NOT_MEASURABLE` by structural shape mismatch (Wave 88 F-3, the
