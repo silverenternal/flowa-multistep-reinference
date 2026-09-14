@@ -3811,7 +3811,7 @@ The Phase 2 fix at `_synthesize_x_final_real` lines 399-424 correctly wires the 
 
 **Wave 122 framework_inv_proj N=1000 reading — Wave 95 P3.C historical PRESERVED ADDITIVELY:**
 
-No Wave 122 framework_inv_proj N=1000 reading REPLACES the Wave 95 historical (`2.5017 ± 0.0000 Å`, std=0 by construction, deterministic, n_records=1000). The historical value is the authoritative framework_inv_proj data point. File path: `/tmp/w122/framework_inv_proj_seed42/kanzi_n1000_framework_paper_metrics.json` (copied bit-for-bit from `verification_outputs/kanzi_n1000_framework_paper_metrics_inv_proj/kanzi_n1000_framework_paper_metrics.json`).
+No Wave 122 framework_inv_proj N=1000 reading REPLACES the Wave 95 historical (`2.5017 ± 0.0000 Å`, std=0 by construction, deterministic, n_records=1000). The historical value is the authoritative framework_inv_proj data point. File path: `verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave122_q3_2026/kanzi_n1000_framework_paper_metrics.json` (copied bit-for-bit from `verification_outputs/kanzi_n1000_framework_paper_metrics_inv_proj/kanzi_n1000_framework_paper_metrics.json`).
 
 **Delta vs Wave 95 historical 2.5017 Å:** 0.0000 Å (historical value used unchanged). Range check: 2.5017 Å ∈ [1.5, 3.5] Å ✓.
 
@@ -4124,7 +4124,7 @@ See `docs/audit/wave127-finish-line.md` for the full Wave 127 audit trail + `doc
 
 ### §R.19 Wave 128 — Kanzi framework_inv_proj N=1000 REAL measurement (2026-09-14)
 
-The Wave 127 Phase 1 sweep re-run completed end-to-end at N=1000 records on kanzi_venv + RTX PRO 6000 Blackwell (4835.0 s wallclock, 4.835 s/record, ZERO skipped, deterministic per-record seed). The N=1000 output JSON at `/tmp/w127/framework_inv_proj_seed42/kanzi_n1000_framework_paper_metrics.json` is the canonical reviewer-grade measurement that **REPLACES both** the Wave 95 P3.C / Wave 122 P8 historical fallback (`mean=2.5017 ± 0.0000 Å`, std=0 by construction, degenerate) and the Wave 124 N=10 mislabel.
+The Wave 127 Phase 1 sweep re-run completed end-to-end at N=1000 records on kanzi_venv + RTX PRO 6000 Blackwell (4835.0 s wallclock, 4.835 s/record, ZERO skipped, deterministic per-record seed). The N=1000 output JSON at `verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave127_q3_2026/kanzi_n1000_framework_paper_metrics.json` is the canonical reviewer-grade measurement that **REPLACES both** the Wave 95 P3.C / Wave 122 P8 historical fallback (`mean=2.5017 ± 0.0000 Å`, std=0 by construction, degenerate) and the Wave 124 N=10 mislabel.
 
 **Headline N=1000 reading:** `reconstruction_kabsch_rmsd_A` framework_inv_proj mean = **0.8798 ± 0.1364 Å** (n_records=1000, std=0.1364, deterministic). Baseline_seed42 (Wave 88 / Wave 120): 0.9020 ± 0.1375 Å (n=1000). **Δ = −0.0222 Å** (95% CI half-width ≈ 0.0084 Å at N=1000).
 
@@ -4156,7 +4156,7 @@ The Wave 127 Phase 1 sweep re-run completed end-to-end at N=1000 records on kanz
 
 **Camera-ready deferred items** (unchanged from Wave 127 STATUS.md): Kanzi framework_synth N=1000 (~33-50 h CPU); LineageFlow NFE scan 8/9 cells (~8-16 h CPU); CIFAR multi-arm Table 4 re-run (~5 h GPU); ESM-2 NLL N=100 + N=1000 (~3 GPU-h); Wan2.2 N=1000 sweep; FreqFlow + MM-FM integration (PHASE-4 DEFERRED); Mypy 988-error repair; Ruff 207 non-auto-fixable findings.
 
-See `docs/audit/wave127-finish-line.md` (Wave 127 final-close audit) + `docs/paper-draft.md` §7.3 Wave 128 paragraph + `docs/CONSOLIDATED_RESULTS.md` §15.28 + raw sweep output at `/tmp/w127/framework_inv_proj_seed42/kanzi_n1000_framework_paper_metrics.json`.
+See `docs/audit/wave127-finish-line.md` (Wave 127 final-close audit) + `docs/paper-draft.md` §7.3 Wave 128 paragraph + `docs/CONSOLIDATED_RESULTS.md` §15.28 + raw sweep output at `verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave127_q3_2026/kanzi_n1000_framework_paper_metrics.json`.
 
 ### §R.20 Wave 131 — Pre-freeze engineering pass (ruff 207 -> 0 + paper reframe + byte-reproducibility) (2026-09-14)
 
