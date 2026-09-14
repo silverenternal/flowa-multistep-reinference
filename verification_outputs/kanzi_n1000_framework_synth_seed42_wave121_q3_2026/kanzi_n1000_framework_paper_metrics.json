@@ -1,0 +1,59 @@
+{
+  "tool": "tools.sweep_kanzi_n1000_framework_paper_metrics",
+  "model": "kanzi",
+  "axis": "protein_fm",
+  "paper": "ICLR 2026 (arXiv:2510.00351) - Shah et al.",
+  "nfe_budget": "n/a (framework endpoint synthesised directly; no ODE rollout at the adapter layer for this sweep \u2014 see docstring \u00a71)",
+  "seed": 42,
+  "input_file": "verification_outputs/kanzi_n1000_coords.txt",
+  "ckpt_path": "/home/hugo/codes/flowa-multistep-reinference/data/kanzi_ckpt/cleaned_model.pt",
+  "vocab_size": 1000,
+  "n_records_processed": 1000,
+  "sweep_wallclock_s": 2641.846956712998,
+  "per_seq_wallclock_s": 2.641846956712998,
+  "reconstruction_kabsch_rmsd_A": {
+    "n_seqs": 1000.0,
+    "mean_rmsd_A": 2.5538032478967336,
+    "min_rmsd_A": 2.5538032478967336,
+    "max_rmsd_A": 2.5538032478967336,
+    "std_rmsd_A": 4.443114211273408e-16
+  },
+  "codebook_metrics": {
+    "codebook_entropy_bits": 5.484069531114783,
+    "codebook_perplexity": 44.757871714533465,
+    "codebook_js_distance": 0.0,
+    "codebook_utilization": 0.049,
+    "codebook_hamming_rotation_invariance": 0.0
+  },
+  "codebook_metrics_notes": {
+    "entropy": "computed across all N record indices concatenated",
+    "perplexity": "2 ** entropy",
+    "js_distance": "pair=records_0_1_L=64",
+    "utilization": "computed across all N record indices concatenated",
+    "hamming_rotation_invariance": "skipped in sweep loop (encoder-only; would 2x runtime)"
+  },
+  "x_final_synthesis": "N(0, 1e-3) seeded by record_idx; shape (L=64, n_channels_decoder=512); post-project_out codes (Wave 110.A \u2014 was (64, 4) pre-project_out which crashed on Wave 95.P3.C bridge contract); mean-centered; sigma << KANZI_LATENT_CLAMP",
+  "bridge": "tools.kanzi_latent_to_coord.kanzi_latent_to_coords",
+  "n_steps_decoder": 100,
+  "deterministic": true,
+  "wave": "wave91-rerun",
+  "verdict": {
+    "arm": "framework_only",
+    "metric_kind": "kanzi_paper_metrics",
+    "baseline_arm_source": "verification_outputs/wave88_kanzi_n1000_baseline/kanzi_n1000_paper_metrics.json (Wave 88 N=1000 baseline arm: mean=0.902 \u00c5, std=0.137, n=1000)"
+  },
+  "kanzi_state_shape": [
+    64,
+    64
+  ],
+  "kanzi_ar_seq_length": 64,
+  "kanzi_latent_dim": 64,
+  "framework_solver": "n/a (endpoint synthesised directly; framework_adapter.solve_ode is intentionally not invoked per record to keep the sweep under the 30-min budget \u2014 the bridge path is identical)",
+  "framework_adapter_force_mode": "n/a",
+  "pb_engine": "uff",
+  "pb_engine_note": "PoseBusters engine for downstream pb_validity_pct (Wave 82 wire). 'uff' = Wave 87 backwards-compatible byte-stable baseline; 'xtb' = Wave 90 PB-xtb bridge.",
+  "sweep_n_records_actual": 1000,
+  "sweep_n_records_requested": 1000,
+  "sweep_n_records_match": true,
+  "sweep_name": "sweep_kanzi_n1000_framework_paper_metrics"
+}

@@ -1,0 +1,57 @@
+{
+  "tool": "tools.sweep_kanzi_n1000_paper_metrics",
+  "model": "kanzi",
+  "axis": "protein_fm",
+  "paper": "ICLR 2026 (arXiv:2510.00351) - Shah et al.",
+  "nfe_budget": "n/a (DAE encode is direct; not a flow rollout)",
+  "seed": 7,
+  "input_file": "verification_outputs/kanzi_n1000_coords.txt",
+  "ckpt_path": "/home/hugo/codes/flowa-multistep-reinference/data/kanzi_ckpt/cleaned_model.pt",
+  "vocab_size": 1000,
+  "n_records_processed": 1000,
+  "sweep_wallclock_s": 1457.2606017229991,
+  "per_seq_wallclock_s": 1.4572606017229992,
+  "reconstruction_kabsch_rmsd_A": {
+    "n_seqs": 1000.0,
+    "mean_rmsd_A": 0.9088571505326483,
+    "min_rmsd_A": 0.5024155410397432,
+    "max_rmsd_A": 1.4543355839444259,
+    "std_rmsd_A": 0.14396145138193406
+  },
+  "codebook_metrics": {
+    "codebook_entropy_bits": 8.557924099803149,
+    "codebook_perplexity": 376.87024904688076,
+    "codebook_js_distance": 0.5603367233496926,
+    "codebook_utilization": 0.614,
+    "codebook_hamming_rotation_invariance": 0.0
+  },
+  "codebook_metrics_notes": {
+    "entropy": "computed across all N record indices concatenated",
+    "perplexity": "2 ** entropy",
+    "js_distance": "pair=records_0_1_L=39",
+    "utilization": "computed across all N record indices concatenated",
+    "hamming_rotation_invariance": "skipped in sweep loop (encoder-only; would 2x runtime)"
+  },
+  "x_final_synthesis": "n/a (baseline arm \u2014 no framework endpoint; DAE encode/decode directly on input coords)",
+  "bridge": "n/a (baseline arm \u2014 no framework bridge)",
+  "n_steps_decoder": 100,
+  "deterministic": true,
+  "wave": "wave83",
+  "verdict": {
+    "arm": "baseline_only",
+    "metric_kind": "kanzi_paper_metrics",
+    "framework_arm_source": "Wave 79 Phase 3: n=2 baseline=1.40 \u00c5 vs framework=1.67 \u00c5 (\u0394=+0.27 \u00c5 inside FSQ quantisation noise band); not re-run at N=1000 here (the framework arm requires the main repo's adapter solver + GPT-prior restart-blend which is wired only through tools/run_real_ckpt_eval.py \u2014 see docs/audit/wave83-phase4-final.md)"
+  },
+  "n_records_by_pdb": {
+    "1s7mB01": 250,
+    "2hoxA01": 250,
+    "3bg1B01": 250,
+    "6nrzA01": 250
+  },
+  "pb_engine": "uff",
+  "pb_engine_note": "PoseBusters engine for downstream pb_validity_pct (Wave 82 wire). 'uff' = Wave 87 backwards-compatible byte-stable baseline; 'xtb' = Wave 90 PB-xtb bridge.",
+  "sweep_n_records_actual": 1000,
+  "sweep_n_records_requested": 1000,
+  "sweep_n_records_match": true,
+  "sweep_name": "sweep_kanzi_n1000_paper_metrics"
+}

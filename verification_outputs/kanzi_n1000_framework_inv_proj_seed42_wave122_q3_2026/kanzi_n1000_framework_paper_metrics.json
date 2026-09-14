@@ -1,0 +1,47 @@
+{
+  "tool": "tools.sweep_kanzi_n1000_framework_paper_metrics_inv_proj",
+  "model": "kanzi",
+  "axis": "protein_fm",
+  "paper": "ICLR 2026 (arXiv:2510.00351) - Shah et al.",
+  "nfe_budget": "n/a (framework endpoint synthesised directly; no ODE rollout at the adapter layer for this sweep \u2014 the bridge path is identical)",
+  "seed": 42,
+  "input_file": "verification_outputs/kanzi_n1000_coords.txt",
+  "ckpt_path": "data/kanzi_ckpt/cleaned_model.pt",
+  "vocab_size": 1000,
+  "n_records_processed": 1000,
+  "n_records_skipped": 0,
+  "skip_reasons": {},
+  "sweep_wallclock_s": 7523.878236183897,
+  "per_seq_wallclock_s": 7.523878236183896,
+  "reconstruction_kabsch_rmsd_A": {
+    "n_seqs": 1000.0,
+    "mean_rmsd_A": 2.501727252738653,
+    "min_rmsd_A": 2.501727252738653,
+    "max_rmsd_A": 2.501727252738653,
+    "std_rmsd_A": 0.0
+  },
+  "codebook_metrics": {
+    "codebook_entropy_bits": 5.390319531114783,
+    "codebook_perplexity": 41.94187726951975,
+    "codebook_js_distance": 0.0,
+    "codebook_utilization": 0.046,
+    "codebook_hamming_rotation_invariance": 0.0
+  },
+  "codebook_metrics_notes": {
+    "entropy": "computed across all N record indices concatenated",
+    "perplexity": "2 ** entropy",
+    "js_distance": "pair=records_0_1_L=64",
+    "utilization": "computed across all N record indices concatenated",
+    "hamming_rotation_invariance": "skipped in sweep loop (encoder-only; would 2x runtime)"
+  },
+  "x_final_synthesis": "N(0, 1e-3) seeded by record_idx; shape (KANZI_AR_SEQ_LENGTH=64, n_channels_decoder=512); sigma << FSQ half-grid spacing",
+  "bridge": "tools.kanzi_latent_to_coord.kanzi_latent_to_coords with Phase 3.B trained Linear(512 \u2192 4) inverse of project_out (commit 378dc4a, per-sample RMSE 3.54e-3 << FSQ half-grid 0.5)",
+  "n_steps_decoder": 100,
+  "deterministic": true,
+  "wave": "95 Phase 3.C",
+  "verdict": {
+    "arm": "framework_only_with_project_out_inv",
+    "baseline_arm_source": "verification_outputs/wave88_kanzi_n1000_baseline/kanzi_n1000_paper_metrics.json (Wave 88 N=1000 baseline arm: mean=0.902 \u00c5, std=0.137, n=1000)",
+    "metric_kind": "kanzi_paper_metrics"
+  }
+}
