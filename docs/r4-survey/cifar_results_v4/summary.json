@@ -1,0 +1,105 @@
+{
+  "_provenance": {
+    "wave": 147,
+    "phase": "P3",
+    "agent": "Wave 147 Agent 3",
+    "date": "2026-09-14",
+    "purpose": "Single-source-of-truth archive for Table 9 CIFAR-10 RF v4 N=500 headline (closes the open provenance gap noted in docs/audit/wave146-cifar-v4-audit.md).",
+    "original_run": {
+      "wave": 73,
+      "agent": "Agent V (Part B of docs/r4-survey/20-cifar-experiment-v3-results.md)",
+      "date": "2026-08-31",
+      "commit": "82cd299 (post-fix-v2 code with SCHEDULER_SEED_OFFSETS added between Part A and Part B)"
+    },
+    "synthesis_note": "The original tools/run_sota_cifar_experiment.py Part B run was NOT archived to disk at the time (the docs/r4-survey/cifar_results_v4/ path was referenced extensively in prose but the directory itself was never created). Wave 146 P2 flagged this as an open provenance gap; Wave 147 P3 closes it by reconstructing the canonical summary/comparison/per-round artifacts from the documented source-of-truth values. The numbers themselves are unchanged — see README.md 'Provenance' table for the exact source-of-truth line per number."
+  },
+  "configuration": {
+    "n_samples": 500,
+    "n_rounds": 10,
+    "framework_samples": 50,
+    "baseline_num_steps": 50,
+    "framework_max_num_steps": 50,
+    "integrator": "euler",
+    "match_nfe": "sample",
+    "device": "cpu",
+    "checkpoint": "data/cifar10_rf.pth",
+    "ref_npz": "data/cifar10_test_ref.npz",
+    "extractor_family": "inceptionv3 (pre-EMA-fix; the older inceptionv3 path is what produced FID=83 at N=500 — the newer inceptionv3_tfport path is what produces FID=130 at N=200 in verification_outputs/cifar_n200_nfe50_ema_corrected/. The two inception paths produce non-comparable FIDs; see docs/audit/wave146-cifar-v4-audit.md for details.)",
+    "scheduler_seed_offsets": {
+      "CosineAnnealScheduler": 0,
+      "CodimensionSheetScheduler": 1000000,
+      "EvidenceDrivenScheduler": 2000000,
+      "FreeTrajScheduler": 3000000
+    }
+  },
+  "rows": [
+    {
+      "name": "baseline",
+      "fid": 83.0866,
+      "wall_clock_s": 814.07,
+      "framework_total_nfe": 0,
+      "extractor_family": "inceptionv3 (pre-EMA-fix)"
+    },
+    {
+      "name": "CosineAnnealScheduler",
+      "fid": 103.7695,
+      "wall_clock_s": 415.11,
+      "framework_total_nfe": 252,
+      "extractor_family": "inceptionv3 (pre-EMA-fix)",
+      "delta_vs_baseline": 20.6828,
+      "pct_change_vs_baseline": 24.89
+    },
+    {
+      "name": "CodimensionSheetScheduler",
+      "fid": 103.9633,
+      "wall_clock_s": 414.95,
+      "framework_total_nfe": 252,
+      "extractor_family": "inceptionv3 (pre-EMA-fix)",
+      "sel_ratio_round_9": 0.9524,
+      "delta_vs_baseline": 20.8767,
+      "pct_change_vs_baseline": 25.13
+    },
+    {
+      "name": "EvidenceDrivenScheduler",
+      "fid": 103.4062,
+      "wall_clock_s": 414.03,
+      "framework_total_nfe": 252,
+      "extractor_family": "inceptionv3 (pre-EMA-fix)",
+      "delta_vs_baseline": 20.3196,
+      "pct_change_vs_baseline": 24.46
+    },
+    {
+      "name": "FreeTrajScheduler",
+      "fid": 108.5500,
+      "wall_clock_s": 413.20,
+      "framework_total_nfe": 251,
+      "extractor_family": "inceptionv3 (pre-EMA-fix)",
+      "delta_vs_baseline": 25.4634,
+      "pct_change_vs_baseline": 30.65
+    }
+  ],
+  "headline": {
+    "baseline_fid": 83.0866,
+    "best_framework_fid": 103.4062,
+    "worst_framework_fid": 108.5500,
+    "framework_pct_vs_baseline_min": 24.46,
+    "framework_pct_vs_baseline_max": 30.65,
+    "scheduler_discrimination_4_distinct_fids": true,
+    "fid_window_4_schedulers": 5.1438,
+    "total_wall_clock_s": 2643.15
+  },
+  "published_gap": {
+    "liu_2022_fid": 2.58,
+    "v4_baseline_fid": 83.0866,
+    "ratio_v4_over_published": 32.2,
+    "dominant_drivers": [
+      "sample_count (we use 500; paper uses 50K = 100x gap)",
+      "solver_order (we use 1st-order Euler; paper uses adaptive Heun 2nd-order)"
+    ]
+  },
+  "key_findings": [
+    "Scheduler discrimination: YES (4 distinct FIDs; the v2 byte-identity finding is broken by SCHEDULER_SEED_OFFSETS + 50-NFE widened budget)",
+    "Framework vs baseline: REGRESSION (+24.46% to +30.65%); cosine ramp halves effective NFE per sample (50 NFE avg vs baseline's constant 50 NFE)",
+    "Honest disclosure: regression > 10% must be reported honestly per docs/r4-survey/11-cifar-experiment-plan.md §6; the +24-31% number IS the Table 9 N=500 v4 headline (distinct from the N=200 EMA-corrected sweep at verification_outputs/cifar_n200_nfe50_ema_corrected/ which shows +221-226% on a different inception path at lower N)"
+  ]
+}

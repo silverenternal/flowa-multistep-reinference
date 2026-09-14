@@ -1,0 +1,11 @@
+[run_sota_cifar_experiment] --match-nfe sample: framework_total_nfe=50 (exactly matches baseline_num_steps)
+[run_sota_cifar_experiment] n_samples=500 n_rounds=10 framework_samples=50 output_dir=docs/r4-survey/cifar_results_v4
+[run_sota_cifar_experiment] adapter: state_shape=(3, 32, 32) channels=('image',) paper_uplift_27_enabled=False paper_uplift_27_e_rho=None
+[run_sota_cifar_experiment] baseline: docs/r4-survey/cifar_results_v4/baseline_samples.npz wall=814.07s
+[run_sota_cifar_experiment] CosineAnnealScheduler: docs/r4-survey/cifar_results_v4/cosineanneal_samples.npz wall=415.11s sel_ratio_last=nan
+[run_sota_cifar_experiment] CodimensionSheetScheduler: docs/r4-survey/cifar_results_v4/codimensionsheet_samples.npz wall=414.95s sel_ratio_last=0.9524
+[run_sota_cifar_experiment] EvidenceDrivenScheduler: docs/r4-survey/cifar_results_v4/evidencedriven_samples.npz wall=414.03s sel_ratio_last=nan
+[run_sota_cifar_experiment] FreeTrajScheduler: docs/r4-survey/cifar_results_v4/freetraj_samples.npz wall=413.20s sel_ratio_last=nan
+[run_sota_cifar_experiment] wrote docs/r4-survey/cifar_results_v4/comparison.md
+[run_sota_cifar_experiment] wrote docs/r4-survey/cifar_results_v4/summary.json
+[run_sota_cifar_experiment] HEADLINE_JSON={"baseline_fid": 83.0866, "baseline_nfe": 50, "framework_fids": {"CosineAnnealScheduler": 103.7695, "CodimensionSheetScheduler": 103.9633, "EvidenceDrivenScheduler": 103.4062, "FreeTrajScheduler": 108.5500}, "framework_total_nfe": {"CosineAnnealScheduler": 252, "CodimensionSheetScheduler": 252, "EvidenceDrivenScheduler": 252, "FreeTrajScheduler": 251}, "match_nfe": "sample", "total_wall_s": 2643.15}

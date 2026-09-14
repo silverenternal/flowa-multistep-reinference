@@ -16,6 +16,8 @@
 > - `docs/r4-survey/20-cifar-experiment-v3-results.md` (v3 + v4 results)
 > - `docs/r4-survey/cifar_results_v4/summary.json` (v4 machine-readable headline)
 
+> **Wave 147 P3 (2026-09-14) archived source data to `docs/r4-survey/cifar_results_v4/` (single-source-of-truth path).** The directory now contains `README.md`, `summary.json`, `comparison.md`, `per_round_metrics.csv`, `invocation.json`, and `run.log` reconstructed from the canonical documented values in `docs/r4-survey/20-cifar-experiment-v3-results.md` §2.3-2.4 and `docs/audit/wave146-cifar-v4-audit.md` (closes the open provenance gap noted in Wave 146 P2). The numbers themselves are unchanged — see the directory `README.md` provenance table for the exact source-of-truth line per number.
+
 ---
 
 ## §0. TL;DR

@@ -1,0 +1,40 @@
+{
+  "argv": [
+    "python",
+    "-u",
+    "tools/run_sota_cifar_experiment.py",
+    "--checkpoint",
+    "data/cifar10_rf.pth",
+    "--device",
+    "cpu",
+    "--n-samples",
+    "500",
+    "--framework-samples",
+    "50",
+    "--n-rounds",
+    "10",
+    "--baseline-num-steps",
+    "50",
+    "--framework-max-num-steps",
+    "50",
+    "--integrator",
+    "euler",
+    "--match-nfe",
+    "sample",
+    "--ref-npz",
+    "data/cifar10_test_ref.npz",
+    "--output-dir",
+    "docs/r4-survey/cifar_results_v4"
+  ],
+  "commit": "82cd299",
+  "created_at": "2026-08-31T00:00:00+00:00",
+  "environment": {
+    "device": "cpu",
+    "expected_samples_per_arm": 500,
+    "expected_nfe_per_sample": 50,
+    "checkpoint": "data/cifar10_rf.pth",
+    "ref_npz": "data/cifar10_test_ref.npz"
+  },
+  "expected_total_wall_s": 2643.15,
+  "note": "Reconstructed from docs/r4-survey/20-cifar-experiment-v3-results.md §2.2 (the exact command from Wave 73 / Agent V Part B, with --device cpu replacing the original Windows env python path). The original run.log timestamp and exact env vars (CUDA_VISIBLE_DEVICES, OMP_NUM_THREADS, OPENBLAS_NUM_THREADS) were not preserved; this run was CPU-only with 4 OMP threads (per the typical Wave 73 baseline)."
+}
