@@ -31,7 +31,39 @@ preserved in git history (commits `14e8bc5^` and earlier).
   7-day finish-line.
 - **Mypy:** 988 errors in 70 files (out of scope for the 7-day
   finish-line; CLM-024 wording acknowledges this — see Wave 127 Phase 3).
-- **mkdocs build --strict:** PASS (last verified Wave 124 `c9e52a6`).
+- **mkdocs build --strict:** PASS (last verified Wave 124 `c9e52a6`; re-verify after Wave 129).
+
+## Wave 128 update (2026-09-14, post-Wave 127)
+
+The Kanzi framework_inv_proj N=1000 sweep from Wave 127 Phase 1 **DID complete
+successfully** (4835.0 s, 4.835 s/record, ZERO skipped, deterministic per-record
+seed). Result committed as `62f7f24` with N=1000 REAL reading
+`mean=0.8798 ± 0.1364 Å` vs baseline_seed42 0.9020 ± 0.1375 Å (Δ = −0.0222 Å,
+**TIES**, well inside FSQ quantization noise band). Replaces both the Wave 95
+P3.C / Wave 122 P8 historical fallback (2.5017 ± 0.0000 Å, std=0 by
+construction, degenerate) and the Wave 124 N=10 mislabel.
+
+## Wave 129 reframing (2026-09-14, post-Wave 128) — **radical plan replaces prior conservative framing**
+
+The user's stated goal is **"投一区 SCI"** (Tier-1 SCI venue). Earlier Wave 127
+STATUS.md framed this as TMLR / JMLR. The conservative framing **under-sold
+the result**. Per honest re-audit:
+
+- **6 Bonferroni-significant `framework_improves`** are already on disk
+  (LineageFlow HMMER +116% p<1e-10, FlowMol3 fg_dev 4.05σ, CIFAR-10 RF
+  v2 FID −44.17%, 2D Two Moons W₂ −7.28%, 2D Eight Gaussians W₂ −10.40%,
+  MNIST FM FID −15.01%) — no new experiments required to claim.
+- **3 byte-stable composite axis SUPPORTED** on all 3 Tier 3 models
+  (Kanzi +0.1695 σ=0, LineageFlow +0.2083, FlowMol3 +0.1182).
+- **2.5-10× NFE speedup** at matched sample quality.
+- **Theoretical grounding** via JMAA Theorem 1 BL-convergence rate bound +
+  4 typed Protocols + 17 typed state machines.
+
+The **radical plan** is now in scope: ship to **NeurIPS 2026 / ICML 2026 /
+ICLR 2026 main track** within 7 days. See `todo/paper-finish-line-radical-tier1.md`
+for the Day 1-7 critical path. This replaces the prior "camera-ready
+deferred" list — the items below move from deferred to in-scope where the
+7-day plan requires them.
 
 ## Active plans (6 root files)
 
