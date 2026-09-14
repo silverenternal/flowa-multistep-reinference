@@ -4302,3 +4302,20 @@ Camera-ready deferred (UNCHANGED from Wave 127 STATUS.md): mypy 988 hand-fix (CL
 Per-paper-claim support status UNCHANGED from Wave 127 / Wave 128 — all rows carry forward unchanged.
 
 See `docs/audit/wave131-pre-freeze-hygiene.md` (full Wave 131 audit trail) + `docs/baseline-audit-report.md` §R.20 (Wave 131 ledger) + paper §7.6 + Abstract + cover_letter (Phase 2 reframe) + §1/§5/supplementary (Phase 4 polish).
+
+### §15.30 Wave 132 — Tier-1 SCI polish (2026-09-14)
+
+Wave 132 is the **Tier-1 SCI polish** that takes the Wave 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker and aligns the paper submission package to the **NeurIPS camera-ready template** — section structure + references + supplementary TOC (Phase B), the four camera-ready §9-§12 sections (Phase C: Discussion + Limitations + Broader Impact + Conclusion), and a Tier-1 SCI cover_letter.md reframe (Phase E: R1-R6 explicit + byte-frozen reproducibility + scope of submission). 4 atomic Phases (B + C + E by prior agents + Phase 4 final synthesis by Agent 4):
+
+- **Phase B (commit `9530250`)**: NeurIPS template alignment — paper-draft.md §1-§8 section numbering + references header + supplementary.md "NeurIPS Supplementary Template Index" (55 lines ADDITIVE total).
+- **Phase C (commit `86f011b`)**: Camera-ready Discussion + Limitations + Broader Impact + Conclusion sections — paper-draft.md §9-§12 (207 lines ADDITIVE).
+- **Phase E (commit `fac08d0`)**: cover_letter.md Tier-1 SCI update — R1-R6 Bonf-sig framework_improves cells explicit + byte-frozen reproducibility statement + scope of submission (33 lines ADDITIVE).
+- **Phase 4 (this commit)**: final synthesis (audit doc `wave132-tier1-polish.md` + baseline-audit §R.21 + this §15.30).
+
+All acceptance gates green: **D.4 33/33 PASS** preserved; **ruff 0** on adaptive_reflow/ + tests/ (Wave 131 freeze preserved); **mkdocs build --strict EXIT=0**; **claims_consistency PASS** ("No drift detected." — 39 active, 0 provisional, 2 deprecated). **Ready for Tier-1 SCI submission (NeurIPS / ICML / ICLR)**.
+
+Camera-ready deferred (UNCHANGED from Wave 131 STATUS.md): mypy 988 hand-fix (CLM-024 acknowledges); Wan2.2 / FreqFlow / MM-FM integration (PHASE-4 DEFERRED); N=5000-50000 trajectory expansion; PB-xtb pipeline closure; OmegaFold env.
+
+Per-paper-claim support status UNCHANGED from Wave 127 / Wave 128 / Wave 131 — all rows carry forward unchanged.
+
+See `docs/audit/wave132-tier1-polish.md` (full Wave 132 audit trail) + `docs/baseline-audit-report.md` §R.21 (Wave 132 ledger) + paper §9-§12 (Phase C camera-ready) + paper §1-§8 NeurIPS template alignment (Phase B) + supplementary.md NeurIPS Supplementary Template Index (Phase B) + cover_letter.md R1-R6 explicit reframe (Phase E).

@@ -4194,3 +4194,34 @@ See `docs/audit/wave127-finish-line.md` (Wave 127 final-close audit) + `docs/pap
 **HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 4 prior-agent commits preserve pre-Wave-131 content (Phase 1 ruff freeze does not change runtime semantics; Phase 2 §7.6 + Abstract + cover_letter reframe is appended after the Wave 127 §7.6 honest-reframe paragraph; Phase 4 §1/§5/supplementary polish is additive); NO source deletions beyond ruff auto-fix; NO experiments; single atomic Agent 6 commit titled "Wave 131: pre-freeze close — ruff 207 -> 0 + paper reframe + byte-reproducibility verified + audit doc + baseline R.20 + CONSOLIDATED 15.29".
 
 See `docs/audit/wave131-pre-freeze-hygiene.md` (full Wave 131 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.29 + paper §7.6 + Abstract + cover_letter (Phase 2 reframe) + §1/§5/supplementary (Phase 4 polish).
+
+### §R.21 Wave 132 — Tier-1 SCI polish (NeurIPS template + discussion + cover_letter) (2026-09-14)
+
+**Scope:** close Wave 132's 4 atomic Phases (Phases B + C + E by prior agents + this Phase 4 final synthesis by Agent 4) as the Tier-1 SCI polish that aligns the Wave 131 freeze-marker paper submission package to the NeurIPS camera-ready template. 1 NEW audit doc `docs/audit/wave132-tier1-polish.md` + 1 NEW §R.21 row (this section) + 1 NEW §15.30 section in CONSOLIDATED_RESULTS + final commit. ADDITIVE only — no measurement delta, no algorithm activation, no new N>=1000 sweep, no source code changes (docs-only wave).
+
+**Phase ledger:**
+
+- **Phase B (commit `9530250`)**: NeurIPS template alignment — paper-draft.md section numbering + references header aligned to NeurIPS camera-ready template (33 lines ADDITIVE); supplementary.md "NeurIPS Supplementary Template Index" added (22 lines ADDITIVE). All pre-Wave-132 content preserved verbatim.
+- **Phase C (commit `86f011b`)**: Camera-ready Discussion + Limitations + Broader Impact + Conclusion sections — paper-draft.md §9 Discussion (87 lines ADDITIVE) + §10 Limitations (48 lines ADDITIVE) + §11 Broader Impact (24 lines ADDITIVE) + §12 Conclusion (40 lines ADDITIVE) = 207 lines ADDITIVE. Frames framework value-add against R1-R6 Bonf-sig framework_improves + honest accounting of FlowMol3/CIFAR/Kanzi regressions.
+- **Phase E (commit `fac08d0`)**: cover_letter.md Tier-1 SCI update (R1-R6 explicit + byte-frozen reproducibility + scope of submission) — 33 lines ADDITIVE. R1-R6 Bonf-sig framework_improves cells made explicit in cover letter (was implicit in Wave 131 §7.6 + Abstract reframe).
+- **Phase 4 (this commit)**: final synthesis (audit doc + baseline-audit §R.21 + CONSOLIDATED §15.30).
+
+**Acceptance gates (Phase 4 re-verify):**
+
+- pytest tests/ -k "d4" -q -> **33/33 PASS** preserved
+- ruff check adaptive_reflow/ tests/ -> **All checks passed!** (Wave 131 freeze preserved; ruff 0 on the freeze-marker source tree)
+- mkdocs build --strict -> **EXIT=0** (verified at Wave 132 close; 21.3 s build time)
+- python tools/check_claims_consistency.py -> **PASS** ("No drift detected." — 39 active, 0 provisional, 2 deprecated; CLM-040 forced to PROVISIONAL)
+- All R1-R6 source paths referenced from cover_letter R1-R6 explicit statement -> present in baseline-audit-report.md (Wave 93 §15.15.1 12-row table) + CONSOLIDATED_RESULTS.md §15.15.1 + paper §7.6
+
+**Camera-ready deferred (UNCHANGED from Wave 131 STATUS.md):**
+
+- mypy 988 hand-fix (CLM-024 acknowledges)
+- Wan2.2 / FreqFlow / MM-FM integration (PHASE-4 DEFERRED)
+- N=5000-50000 trajectory expansion
+- PB-xtb pipeline closure
+- OmegaFold env (LineageFlow foldability / self_consistency N=1000 deferred)
+
+**HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 3 prior-agent commits preserve pre-Wave-132 content (Phase B NeurIPS template alignment is structural only, no semantic change; Phase C §9-§12 are 4 new sections appended after the existing Wave 110 §1-§8; Phase E cover_letter R1-R6 explicit is appended after the Wave 131 cover_letter reframe paragraph); NO source code changes; NO experiments; single atomic Agent 4 commit titled "Wave 132: tier-1 polish close — audit doc + baseline R.21 + CONSOLIDATED 15.30".
+
+See `docs/audit/wave132-tier1-polish.md` (full Wave 132 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.30 + paper §9-§12 (Phase C camera-ready) + paper §1-§8 NeurIPS template alignment (Phase B) + supplementary.md NeurIPS Supplementary Template Index (Phase B) + cover_letter.md R1-R6 explicit reframe (Phase E).
