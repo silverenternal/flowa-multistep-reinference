@@ -218,9 +218,9 @@ def test_checkpoints_stay_stdlib_only() -> None:
                 for n in node.names:
                     if n.name.split(".")[0] in forbidden:
                         offenders.add(n.name)
-            elif isinstance(node, ast.ImportFrom):
+            elif isinstance(node, ast.ImportFrom):  # noqa: SIM102
                 if node.module and node.module.split(".")[0] in forbidden:
-                        offenders.add(node.module)
+                    offenders.add(node.module)
         return offenders
 
     for rel in (

@@ -425,7 +425,7 @@ def test_assert_state_shape_no_op_when_expected_shape_is_none() -> None:
     responsible for the N contract, not the shape contract).
     """
     helper = _import_helper()
-    adapter = _FakeAdapter(state_shape=(64, 64))
+    _FakeAdapter(state_shape=(64, 64))
     # No expected_shape + no adapter.state_shape → no-op.
     adapter_no_shape = type(
         "NoShapeAdapter", (), {},
@@ -606,7 +606,7 @@ def test_helper_module_resolves_to_same_object_across_5_drivers() -> None:
     sys.path.insert(0, str(repo_root))
 
     helper_module = importlib.import_module("tools._sweep_assertion")
-    canonical_id = id(helper_module)
+    id(helper_module)
 
     for driver_name, expected_symbols in _DRIVER_IMPORT_SENTINELS:
         driver_module = importlib.import_module(driver_name)

@@ -35,6 +35,7 @@ run on offline, CPU-only, weight-free sandboxes.
 
 from __future__ import annotations
 
+import contextlib
 import os
 import socket
 import sys
@@ -261,25 +262,21 @@ def serial_tool() -> None:
             except (OSError, ValueError):
                 stale_pid = 0
             if stale_pid and not _pid_alive(stale_pid):
-                try:
+                with contextlib.suppress(OSError):
                     lock_path.unlink()
-                except OSError:
-                    pass
                 continue
             if time.time() > deadline:
                 raise RuntimeError(
                     f"serial_tool: lockfile {lock_path} held by PID "
                     f"{stale_pid} after {timeout}s — aborting."
-                )
+                ) from None
             time.sleep(poll_interval)
 
     try:
         yield
     finally:
-        try:
+        with contextlib.suppress(FileNotFoundError):
             lock_path.unlink()
-        except FileNotFoundError:
-            pass
 
 
 def _pid_alive(pid: int) -> bool:

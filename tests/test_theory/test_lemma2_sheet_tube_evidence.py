@@ -31,7 +31,8 @@ from adaptive_reflow.theory.checkers import sheet_tube_evidence
 
 def test_sheet_tube_evidence_returns_finite_values():
     g = lambda s: 0.0  # noqa: E731 (trivial profile)
-    phi = lambda x, y: 1.0 + 0.1 * x  # bounded, linear in x
+    def phi(x, y):
+        return 1.0 + 0.1 * x  # bounded, linear in x
     evidence = sheet_tube_evidence(g, eps=0.1, phi=phi)
     assert math.isfinite(evidence.lhs)
     assert math.isfinite(evidence.rhs)
@@ -137,7 +138,7 @@ def test_ratio_witness_converges_to_one_for_proposition_two_profile():
     # (the O(eps^2) convergence gives monotonic distance reduction
     # from eps = 0.5 onward for this specific g_a).
     distances = [abs(r - 1.0) for r in ratios]
-    for prev, curr in zip(distances, distances[1:]):
+    for prev, curr in zip(distances, distances[1:], strict=False):
         assert curr <= prev + 1e-12, (
             f"distance to 1 should decrease as eps -> 0; got "
             f"{distances}"
@@ -173,7 +174,7 @@ def test_ratio_witness_zero_profile_phi_one_converges_to_one():
 
     # (2) Trend: distance to 1 is non-increasing as eps decreases.
     distances = [abs(r - 1.0) for r in ratios]
-    for prev, curr in zip(distances, distances[1:]):
+    for prev, curr in zip(distances, distances[1:], strict=False):
         assert curr <= prev + 1e-12, (
             f"distance to 1 should decrease as eps -> 0; got "
             f"{distances}"
@@ -197,7 +198,7 @@ def test_ratio_witness_smooth_phi_converges_to_one():
     )
     # Trend: distances decrease.
     distances = [abs(r - 1.0) for r in ratios]
-    for prev, curr in zip(distances, distances[1:]):
+    for prev, curr in zip(distances, distances[1:], strict=False):
         assert curr <= prev + 1e-12, (
             f"distance to 1 should decrease as eps -> 0; got "
             f"{distances}"

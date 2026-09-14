@@ -203,7 +203,7 @@ def test_run_eval_writes_to_output_dir(tmp_path: Path):
     out_dir = tmp_path / "ev_out"
     class _A:
         name = "fake"
-    result = _run_eval_module_fn(
+    _run_eval_module_fn(
         adapter=_A(),
         dataset={"name": "x"},
         metric=["fid"],

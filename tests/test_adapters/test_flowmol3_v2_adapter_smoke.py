@@ -214,7 +214,7 @@ def test_build_initial_state_returns_correct_shape(
     """``build_initial_state`` returns a well-formed StateBundle."""
     assert isinstance(initial_bundle, StateBundle)
     # Channels: one TensorRef per supported channel.
-    assert set(str(k) for k in initial_bundle.channels.keys()) == set(
+    assert set(str(k) for k in initial_bundle.channels) == set(
         str(k) for k in FLOWMOL3ADAPTER_CHANNELS
     )
     # Validate the bundle.

@@ -184,7 +184,7 @@ def test_cosine_regime_is_monotone_when_unbounded() -> None:
         sel = selector.select_detailed(0.1, e_rho, round_index=r)
         values.append(float(sel.eps_next))
     # Each value <= previous one (non-increasing).
-    for prev, cur in zip(values[:-1], values[1:]):
+    for prev, cur in zip(values[:-1], values[1:], strict=False):
         assert cur <= prev + 1e-12
     # The audit code is ``eps_regime_ok`` — no clamps.
     sel = selector.select_detailed(0.1, e_rho, round_index=0)

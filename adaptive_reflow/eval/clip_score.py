@@ -491,10 +491,7 @@ def _aggregate(
     # to ``ddof=0`` (population std) — the alternative would yield NaN
     # which would be a useless signal for a single-pair batch.
     n = int(arr.shape[0])
-    if n >= 2:
-        std = float(arr.std(ddof=1))
-    else:
-        std = float(arr.std(ddof=0))
+    std = float(arr.std(ddof=1)) if n >= 2 else float(arr.std(ddof=0))
     return mean, std
 
 

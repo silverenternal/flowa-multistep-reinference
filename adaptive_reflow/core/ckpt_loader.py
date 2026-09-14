@@ -74,6 +74,7 @@ adapter refactors can adopt without breaking the digests.
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import io
 import struct
@@ -465,14 +466,12 @@ def load_state_dict_strict_safe(
     # ``nn.Module`` — otherwise we hand the state dict back to the
     # caller untouched so they can dispatch into diffusers / jax.
     if hasattr(model, "load_state_dict") and isinstance(sd, dict):
-        try:
-            model.load_state_dict(sd, strict=bool(strict))
-        except Exception:
+        with contextlib.suppress(Exception):
             # Strict-mode mismatch is expected when the upstream
             # checkpoint carries auxiliary heads; swallow and
             # return the raw state dict so the caller can
             # decide.
-            pass
+            model.load_state_dict(sd, strict=bool(strict))
     return dict(sd) if isinstance(sd, dict) else sd
 
 

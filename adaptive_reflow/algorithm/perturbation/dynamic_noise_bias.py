@@ -300,10 +300,7 @@ class Theorem1DynamicNoiseBias:
         sheet = sheet_A * eps
         cell = cell_C * packing_B * eps * eps
         denom = sheet + cell
-        if denom <= 0.0:
-            ratio = 0.0
-        else:
-            ratio = sheet / denom
+        ratio = 0.0 if denom <= 0.0 else sheet / denom
 
         # Posterior-mean proxy via materializer (identity if None).
         if self._materializer is None:

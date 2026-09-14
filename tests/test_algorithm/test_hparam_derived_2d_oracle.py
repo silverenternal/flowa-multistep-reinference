@@ -141,11 +141,11 @@ def _moment_matched_target_effective(
     w = [wi / total for wi in weights]
     d = target.components[0].dim
     mu_eff = [0.0] * d
-    for wi, comp in zip(w, target.components):
+    for wi, comp in zip(w, target.components, strict=False):
         for k in range(d):
             mu_eff[k] += wi * comp.mu[k]
     sigma_eff = [[0.0] * d for _ in range(d)]
-    for wi, comp in zip(w, target.components):
+    for wi, comp in zip(w, target.components, strict=False):
         for i in range(d):
             for j in range(d):
                 sigma_eff[i][j] += wi * (
@@ -164,7 +164,7 @@ def _alpha_blend_mean(
     alpha: float,
 ) -> tuple[float, ...]:
     a = float(alpha)
-    return tuple(a * p + (1.0 - a) * f for p, f in zip(prior_mu, fresh_mu))
+    return tuple(a * p + (1.0 - a) * f for p, f in zip(prior_mu, fresh_mu, strict=False))
 
 
 def _alpha_blend_cov(
@@ -405,7 +405,7 @@ def test_derived_hparams_match_handset_baseline_on_2d_oracle() -> None:
     # MC noise. Both trajectories use the same oracle seed; the
     # only difference is the memory_fraction derivation path which,
     # with a missing W2 context, collapses to ADR-0010 verbatim.
-    for derived_k, hand_k in zip(derived_traj, hand_traj):
+    for derived_k, hand_k in zip(derived_traj, hand_traj, strict=False):
         assert abs(derived_k - hand_k) < 0.10, (
             f"derived vs hand-set KL drift: {derived_k} vs {hand_k} "
             f"(MC noise tolerance 0.10)"
@@ -935,7 +935,7 @@ def test_subdispatch_closed_forms(
     """SigmoidMidpointSteepnessRule + ConvergenceAdaptivePolyRule sub-dispatchers."""
     method = getattr(rule, expected_subpath)
     ctx = ctx_factory() if ctx_factory is not None else None
-    if ctx is None:
+    if ctx is None:  # noqa: SIM108
         # BoundaryConditionRule.derive_s ignores context entirely.
         got = method(None)  # type: ignore[arg-type]
     else:

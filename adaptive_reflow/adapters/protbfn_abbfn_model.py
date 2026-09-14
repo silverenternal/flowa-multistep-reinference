@@ -312,7 +312,7 @@ class ProtBFNTransformer(nn.Module):
     @classmethod
     def load_from_pytree(
         cls,
-        pytree: ProtBFNParamTree,  # type: ignore[name-defined]
+        pytree: ProtBFNParamTree,  # type: ignore[name-defined]  # noqa: F821
         *,
         config: ProtBFNModelConfig | None = None,
         device: str | torch.device = "cpu",

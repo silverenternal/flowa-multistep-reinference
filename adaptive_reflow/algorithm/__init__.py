@@ -120,11 +120,11 @@ from .per_channel_blender import (
     BLEND_FAMILY_BY_CHANNEL,
     DEFAULT_BLEND_FAMILY_BY_CHANNEL,
     DEFAULT_TAU_DEFAULT,
-    DEFAULT_TAU_FLOOR,
+    DEFAULT_TAU_FLOOR,  # noqa: F811
     EPS_LOG,
     GRAPH_FAMILY,
     GUMBEL_FAMILY,
-    LINEAR_FAMILY,
+    LINEAR_FAMILY,  # noqa: F811
     LOGIT_FAMILY,
     MASKED_FAMILY,
     PER_CHANNEL_BLEND_FALLTHROUGH,
@@ -250,7 +250,7 @@ from .solver import (
     HeunSolver,
     IntegratorProtocol,
     RK4Solver,
-    build_solver_from_config,
+    build_solver_from_config,  # noqa: F811
     default_ctmc_euler_heun_solver,
     default_euler_solver,
     default_heun_solver,

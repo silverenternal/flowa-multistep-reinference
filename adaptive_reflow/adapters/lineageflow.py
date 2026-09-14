@@ -83,6 +83,7 @@ Tasks satisfied
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -583,8 +584,8 @@ def _torch_velocity_field(
         ids = torch.argmax(
             torch.as_tensor(x, dtype=dtype), dim=-1
         ).long().unsqueeze(0)
-        t_t = torch.tensor([float(t)], dtype=dtype)
-        family_t = torch.as_tensor(
+        torch.tensor([float(t)], dtype=dtype)
+        torch.as_tensor(
             cache.get("family_embed", np.zeros(LINEAGEFLOW_FAMILY_EMBED_DIM)),
             dtype=dtype,
         ).unsqueeze(0)
@@ -898,7 +899,7 @@ class LineageFlowClassifierAwareRestart:
         import torch.nn.functional as F  # noqa: F401  (used inside try)
 
         flat = np.asarray(theta, dtype=np.float64).reshape(LINEAGEFLOW_STATE_SHAPE)
-        cfg_obj = getattr(cls, "__init__", None)
+        getattr(cls, "__init__", None)
         # If the constructor signature is callable, build a stub
         # FlowTransformerConfig and instantiate. We deliberately
         # do NOT load the 657M weights — a no-op config is enough
@@ -1169,12 +1170,10 @@ def _load_torch_model(weights_path: Path) -> Any:
         # mismatch, etc.) propagates to ``load_real_weights`` where it is
         # surfaced as ``CapabilityMissingError("lineageflow_esm_load_failed")``.
 
-        try:
-            model.load_state_dict(sd, strict=False)
-        except Exception:
+        with contextlib.suppress(Exception):
             # Stub fallback: copy nothing - the stub's forward is
             # shape-only and the load is best-effort.
-            pass
+            model.load_state_dict(sd, strict=False)
         model.eval()
         return model
 

@@ -568,10 +568,7 @@ def _run_construction_shape_guard(
     # the module-level default ``_SHIM_INVOCATION_SPEC``).
     cls_spec = getattr(type(adapter), "_SHIM_INVOCATION_SPEC", None)
     if shim_invocation_spec is None:
-        if isinstance(cls_spec, dict):
-            spec = cls_spec
-        else:
-            spec = _SHIM_INVOCATION_SPEC
+        spec = cls_spec if isinstance(cls_spec, dict) else _SHIM_INVOCATION_SPEC
     else:
         spec = shim_invocation_spec
     input_type = str(spec.get("input_type", "tensor"))

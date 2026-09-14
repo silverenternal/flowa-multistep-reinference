@@ -147,7 +147,7 @@ def _compute_fresh_param(rng_seed_blob: str, shape: tuple[int, int]) -> np.ndarr
     so test (6) can verify the per-channel blend math independently of
     the adapter.
     """
-    seed = int(hashlib.sha256(rng_seed_blob.encode("utf-8")).hexdigest()[:8], 16)
+    int(hashlib.sha256(rng_seed_blob.encode("utf-8")).hexdigest()[:8], 16)
     return np.zeros(shape, dtype=np.float64)
 
 
@@ -225,7 +225,7 @@ def test_build_initial_state_returns_correct_shape() -> None:
     # The state-shape surrogate is the empty tuple.
     assert adapter.state_shape == ()
     # All five channels are populated.
-    assert set(str(k) for k in bundle.channels.keys()) == {
+    assert set(str(k) for k in bundle.channels) == {
         "atoms",
         "bonds",
         "adjacency",
@@ -589,7 +589,7 @@ def test_protocol_methods_are_non_mutating() -> None:
     bundle_before = _hash_bundle(bundle)
 
     # ``export_endpoint`` must not mutate the input.
-    endpoint = adapter.export_endpoint(bundle)
+    adapter.export_endpoint(bundle)
     assert _hash_bundle(bundle) == bundle_before
 
     # ``detach_and_validate_endpoint`` must not mutate the input.

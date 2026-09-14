@@ -424,7 +424,6 @@ def test_assert_convergence_rate_flags_monotone_violation() -> None:
     """A non-monotone FID trajectory is flagged ``monotone=False``."""
     d = 4
     n = 64
-    rounds = 3
     eps_schedule = [0.5, 0.25, 0.125]
     registry = NuGReferenceRegistry(feature_dim=d, monte_carlo_n=0)
     ref: tuple[np.ndarray, np.ndarray] = registry.get_or_compute(

@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import hashlib
 import os
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -515,7 +515,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
             except Exception as _exc:  # pragma: no cover — defensive
                 raise RuntimeError(
                     f"upstream_jax_shim_import_failed:{type(_exc).__name__}:{_exc}"
-                )
+                ) from _exc
             if not is_upstream_available():
                 raise RuntimeError(
                     "upstream_jax_requested_but_jax_stack_unavailable: "
@@ -1549,9 +1549,10 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         if encoder is not None:
             fwd = transformer_to_numpy_fn(encoder)
         else:
-            fwd = lambda _t: sample_kwargs["theta_traj"][
-                -1
-            ]  # synthetic placeholder
+            def fwd(_t):
+                return sample_kwargs["theta_traj"][
+                            -1
+                        ]  # synthetic placeholder
 
         samples: list[np.ndarray] = []
         losses: list[float] = []
@@ -1574,7 +1575,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         # 2. Convert + compute perplexity + repetition score.
         seqs: list[str] = [mirror_sample_to_string(s) for s in samples]
         perps: list[float] = [
-            float(np.exp(loss / max(len(s), 1))) for loss, s in zip(losses, seqs)
+            float(np.exp(loss / max(len(s), 1))) for loss, s in zip(losses, seqs, strict=False)
         ]
         rep_scores: list[float] = [mirror_repetition_score(s) for s in seqs]
 
@@ -1582,7 +1583,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         if filter_samples:
             kept = [
                 (s, p, r)
-                for s, p, r in zip(seqs, perps, rep_scores)
+                for s, p, r in zip(seqs, perps, rep_scores, strict=False)
                 if p < perplexity_threshold and r < repetition_threshold
             ]
             filtered_count = len(seqs) - len(kept)
@@ -1608,7 +1609,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
             mask_arr = np.asarray(inpaint_mask, dtype=np.int64).reshape(-1)
             errors = sum(
                 int(a != b)
-                for a, b in zip(original_str, inpainted_str)
+                for a, b in zip(original_str, inpainted_str, strict=False)
             )
             denom = max(int(np.sum(1 - mask_arr)), 1)
             aar = 1.0 - float(errors) / float(denom)
@@ -1624,7 +1625,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
             out_root = Path(str(out_dir))
             out_root.mkdir(parents=True, exist_ok=True)
             fasta_records = []
-            for i, (s, p, r) in enumerate(zip(seqs, perps, rep_scores)):
+            for i, (s, p, r) in enumerate(zip(seqs, perps, rep_scores, strict=False)):
                 rec = SeqIO.SeqRecord(
                     Seq.Seq(s),
                     id=f"sample_{i}",

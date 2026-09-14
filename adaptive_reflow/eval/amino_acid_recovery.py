@@ -288,7 +288,7 @@ def _pair_records(
     if generated and all(rid in ref_by_id for rid, _ in generated):
         return [(rid, seq, ref_by_id[rid]) for rid, seq in generated]
     pairs: list[tuple[str, str, str]] = []
-    for (gid, gseq), (_rid, rseq) in zip(generated, reference):
+    for (gid, gseq), (_rid, rseq) in zip(generated, reference, strict=False):
         pairs.append((gid, gseq, rseq))
     return pairs
 

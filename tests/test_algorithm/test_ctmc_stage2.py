@@ -123,7 +123,7 @@ def test_stochastic_categorical_sample_produces_diverse_tokens():
     assert labels.dtype == np.int64
     # Each of the K classes should be hit at least once (with K=12
     # and uniform 1/K, this is overwhelmingly likely for n=1000).
-    unique_labels = set(int(l) for l in labels)
+    unique_labels = set(int(_l) for _l in labels)
     assert len(unique_labels) >= 10  # at least 10 of 12 classes
 
 
@@ -259,7 +259,7 @@ def test_ctmc_solver_with_stochastic_sample_diverse_labels():
     t_grid = np.linspace(0.0, 1.0, 6, dtype=np.float64)
     traj = solver.integrate(dynamics, state_0, t_grid, None, seed=42)
     final = traj.states[-1]
-    unique = set(int(l) for l in final)
+    unique = set(int(_l) for _l in final)
     # With K=12 and n=200, we expect to hit all 12 classes (overwhelmingly likely).
     assert len(unique) >= 10
 
@@ -312,7 +312,6 @@ def test_oom_safe_at_flowmol3_scales():
 
     # Trajectory cache: int64 labels, batch=16, NFE=250, n_atoms=50.
     batch = 16
-    NFE = 250
     n_atoms = 50
     bytes_per_label = 8  # int64
     # With stochastic_sample=True, only the final state is stored as
@@ -378,7 +377,7 @@ def test_ctmc_synthetic_2d_oracle_kl_monotonic():
         ),
     )
     # Prior: single Gaussian centered at origin, identity covariance.
-    prior = GaussianMeanCov(mu=(0.0, 0.0), sigma=((1.0, 0.0), (0.0, 1.0)))
+    GaussianMeanCov(mu=(0.0, 0.0), sigma=((1.0, 0.0), (0.0, 1.0)))
 
     # Discretize the prior into K=16 grid cells (8x2 mesh). For each cell,
     # define the rate matrix as the cell-vs-target-mass ratio minus 1.

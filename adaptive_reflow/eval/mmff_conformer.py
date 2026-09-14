@@ -148,12 +148,11 @@ def embed_mmff(
     # returns a list of convergence codes (0 == converged) and writes
     # the minimised coordinates back onto the conformers.
     try:
-        results = AllChem.MMFFOptimizeMoleculeConfs(mol_h, maxIters=int(max_iters))
+        AllChem.MMFFOptimizeMoleculeConfs(mol_h, maxIters=int(max_iters))
     except Exception as exc:  # noqa: BLE001 — permissive on purpose
         _LOGGER.debug(
             "mmff_conformer.embed_mmff: MMFFOptimizeMoleculeConfs failed (%s)", exc
         )
-        results = None
 
     # Score each conformer with single-point MMFF94 and pick the
     # lowest-energy one. ``MMFFOptimizeMoleculeConfs`` returns a tuple

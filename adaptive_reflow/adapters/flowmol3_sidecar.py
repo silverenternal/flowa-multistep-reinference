@@ -61,6 +61,7 @@ a shell or a notebook without dragging in the framework.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import subprocess
@@ -322,33 +323,23 @@ class FlowMol3SidecarProcess:
                     pass
         finally:
             if proc.poll() is None:
-                try:
+                with contextlib.suppress(OSError):
                     proc.terminate()
-                except OSError:
-                    pass
                 try:
                     proc.wait(timeout=5.0)
                 except subprocess.TimeoutExpired:
                     proc.kill()
-                    try:
+                    with contextlib.suppress(subprocess.TimeoutExpired):
                         proc.wait(timeout=2.0)
-                    except subprocess.TimeoutExpired:
-                        pass
             if proc.stdout is not None:
-                try:
+                with contextlib.suppress(OSError):
                     proc.stdout.close()
-                except OSError:
-                    pass
             if proc.stderr is not None:
-                try:
+                with contextlib.suppress(OSError):
                     proc.stderr.close()
-                except OSError:
-                    pass
             if proc.stdin is not None:
-                try:
+                with contextlib.suppress(OSError):
                     proc.stdin.close()
-                except OSError:
-                    pass
 
     # ------------------------------------------------------------------
     # Dunder
@@ -363,10 +354,8 @@ class FlowMol3SidecarProcess:
 
     def __del__(self) -> None:
         # Best-effort cleanup if the user forgot to ``close()``.
-        try:
+        with contextlib.suppress(Exception):
             self.close()
-        except Exception:
-            pass
 
     # ------------------------------------------------------------------
     # Diagnostics

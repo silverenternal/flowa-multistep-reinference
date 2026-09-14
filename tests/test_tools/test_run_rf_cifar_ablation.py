@@ -257,9 +257,13 @@ def test_require_reference_flag_defaults_false() -> None:
 
 def test_arm_fingerprint_binds_content_and_parameters(tmp_path: Path) -> None:
     from tools.run_rf_cifar_ablation import _arm_fingerprint
-    p = tmp_path / "input.bin"; p.write_bytes(b"ab")
+    p = tmp_path / "input.bin"
+    p.write_bytes(b"ab")
     a = _arm_fingerprint("cosine", 2, 4, 2, None, p)
-    st = p.stat(); p.write_bytes(b"cd"); import os; os.utime(p, ns=(st.st_atime_ns, st.st_mtime_ns))
+    st = p.stat()
+    p.write_bytes(b"cd")
+    import os
+    os.utime(p, ns=(st.st_atime_ns, st.st_mtime_ns))
     b = _arm_fingerprint("cosine", 2, 4, 2, None, p)
     assert a != b
     assert a != _arm_fingerprint("cosine", 3, 4, 2, None, p)

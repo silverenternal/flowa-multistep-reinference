@@ -484,7 +484,7 @@ def _fit_nu_g_gaussian(
             [1.0 / math.sqrt(1.0 + float(g(float(x))) ** 2) for x in candidates]
         )
         u = rng.uniform(size=int(n))
-        for x, p, ui in zip(candidates, accept_prob, u):
+        for x, p, ui in zip(candidates, accept_prob, u, strict=False):
             if ui < p:
                 accepted.append(float(x))
     x_samples: np.ndarray = np.asarray(accepted[: int(n)], dtype=np.float64)
@@ -555,7 +555,7 @@ class InceptionV3TheoremAlignedFIDEvaluator(InceptionV3FIDEvaluator):
         ref_sigma_arr = np.asarray(ref_sigma, dtype=np.float64)
         out: list[FIDPerRoundResult] = []
         for r, (feats, eps) in enumerate(
-            zip(features_per_round, epsilon_schedule)
+            zip(features_per_round, epsilon_schedule, strict=False)
         ):
             result = self._compute_one_round(
                 feats, ref_mu_arr, ref_sigma_arr, paper_quantities, float(eps)

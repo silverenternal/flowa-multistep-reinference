@@ -145,7 +145,7 @@ def test_classifier_aware_restart_proxy_is_deterministic_and_bounded() -> None:
         _lineageflow_classifier_confidence_proxy,
     )
 
-    policy = LineageFlowClassifierAwareRestart(enable_upstream_probe=False)
+    LineageFlowClassifierAwareRestart(enable_upstream_probe=False)
     # Spike: every position has probability 1 on vocab index 0 → max = 1.0.
     spike = np.zeros(LINEAGEFLOW_STATE_SHAPE, dtype=np.float64)
     spike[:, 0] = 1.0

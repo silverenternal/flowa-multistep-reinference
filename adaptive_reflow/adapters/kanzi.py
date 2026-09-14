@@ -93,6 +93,7 @@ Tasks satisfied
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import inspect
 from collections.abc import Mapping
@@ -575,13 +576,11 @@ def _gpt_prior_already_installed() -> bool:
 # Avoids the importlib round-trip inside ``_install_gpt_prior_patch``
 # on every module reload.
 if not _gpt_prior_already_installed():
-    try:
-        _install_gpt_prior_patch()
-    except Exception:
+    with contextlib.suppress(Exception):
         # Defensive: a failing monkey-patch must never break the
         # synthetic-mode adapter import path. Tests verify the patch
         # behaviour on a best-effort basis.
-        pass
+        _install_gpt_prior_patch()
 
 
 def kanzi_resolve_weights_path(
@@ -1004,7 +1003,7 @@ class KanziGPTPriorRestartPolicy:
                 f"({KANZI_AR_SEQ_LENGTH!r}, {KANZI_VOCAB_SIZE!r})"
             )
         entropy = self._entropy_from_logits(logits)
-        log_K = float(np.log(float(KANZI_VOCAB_SIZE)))
+        float(np.log(float(KANZI_VOCAB_SIZE)))
         # Normalise entropy into [0, 1] via the floor / ceiling
         # anchors. Values below the floor map to 0 (high
         # confidence); values above the ceiling map to 1 (no

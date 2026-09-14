@@ -136,7 +136,7 @@ def test_bonferroni_correction_applied_correctly() -> None:
         assert p == pytest.approx(first_p, rel=1e-9)
 
     # p_bonf = p_raw * N (and is < 1 for our synthetic setup).
-    for p_raw, p_bonf in zip(p_raw_values, p_bonf_values):
+    for p_raw, p_bonf in zip(p_raw_values, p_bonf_values, strict=False):
         assert p_bonf == pytest.approx(p_raw * n_cells, rel=1e-9)
         assert p_bonf < 1.0
 

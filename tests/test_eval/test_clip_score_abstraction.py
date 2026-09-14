@@ -163,18 +163,20 @@ def test_graceful_nan_without_transformers() -> None:
         for k, v in sys.modules.items()
         if k == "transformers" or k.startswith("transformers.")
     }
-    with mock.patch.dict(sys.modules, {k: None for k in hidden}, clear=False):
+    with (
+        mock.patch.dict(sys.modules, {k: None for k in hidden}, clear=False),
+        mock.patch("builtins.__import__", side_effect=_blocked_import),
+    ):
         # ``None`` values in ``sys.modules`` cause ImportError on the
         # next import. We further patch ``__builtins__.__import__`` to
         # guarantee the block — covers both ``import transformers`` and
         # ``from transformers import AutoModel`` paths.
-        with mock.patch("builtins.__import__", side_effect=_blocked_import):
-            # Call ``score`` — should NOT raise, must return NaN.
-            prompts = ["a photo of a cat", "a photo of a dog"]
-            # ``images`` is a list of dummy arrays; the load attempt
-            # fails before we get to the forward pass.
-            dummy_images = [object(), object()]
-            result = evaluator.score(dummy_images, prompts)
+        # Call ``score`` — should NOT raise, must return NaN.
+        prompts = ["a photo of a cat", "a photo of a dog"]
+        # ``images`` is a list of dummy arrays; the load attempt
+        # fails before we get to the forward pass.
+        dummy_images = [object(), object()]
+        result = evaluator.score(dummy_images, prompts)
 
     assert isinstance(result, CLIPScoreResult)
     assert result.n_pairs == 2

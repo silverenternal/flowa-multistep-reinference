@@ -401,7 +401,7 @@ def test_determinism(wan22_adapter: object) -> None:
         trace_b = wan22_adapter2.solve_ode(state_b, cond, seed=42)
         endpoint_b = wan22_adapter2.observe_endpoint(trace_b, state_b)
         deltas_b.append(_endpoint_native(wan22_adapter2, endpoint_b.native_state_digest).copy())
-    for a, b in zip(deltas_a, deltas_b):
+    for a, b in zip(deltas_a, deltas_b, strict=False):
         assert np.array_equal(a, b), "Determinism violated across runs"
 
 

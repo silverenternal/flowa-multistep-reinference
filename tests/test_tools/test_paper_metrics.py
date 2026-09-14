@@ -249,7 +249,7 @@ def test_validity_pct_known_answer(monkeypatch: pytest.MonkeyPatch) -> None:
     ``frac_valid_mols=0.75``; we assert the helper passes that value
     through unmodified.
     """
-    canned = _install_mock_flowmol(monkeypatch)
+    _install_mock_flowmol(monkeypatch)
     # Import the paper_metrics module AFTER the mock is installed so
     # the lazy import picks up our fake shim.
     from tools import paper_metrics  # noqa: PLC0415
@@ -282,7 +282,7 @@ def test_pb_validity_pct_subset_vs_full(monkeypatch: pytest.MonkeyPatch) -> None
     different results. The vendored YAML bucket returns ``pb_valid = 0.92``
     (paper-parity value), the subset bucket returns ``pb_valid = 0.8``.
     """
-    canned = _install_mock_flowmol(monkeypatch)
+    _install_mock_flowmol(monkeypatch)
     # Mock posebusters + yaml so the vendored-YAML injection branch
     # can run (otherwise compute_pb_validity_pct raises FileNotFoundError).
     import types as _types
@@ -343,7 +343,7 @@ def test_fg_deviation_geom_drugs_vs_nci_proxy(monkeypatch: pytest.MonkeyPatch) -
     are different (proving the reference-selection code path actually
     runs).
     """
-    canned = _install_mock_flowmol(monkeypatch)
+    _install_mock_flowmol(monkeypatch)
     from tools import paper_metrics  # noqa: PLC0415
 
     mols = [_FakeSampledMolecule() for _ in range(4)]
@@ -414,7 +414,7 @@ def test_aggregator_returns_all_4_metrics(monkeypatch: pytest.MonkeyPatch) -> No
     call and extracts the 4 paper-parity metrics. This test verifies
     the dataclass shape.
     """
-    canned = _install_mock_flowmol(monkeypatch)
+    _install_mock_flowmol(monkeypatch)
     from tools import paper_metrics  # noqa: PLC0415
 
     mols = [_FakeSampledMolecule() for _ in range(4)]
@@ -468,7 +468,7 @@ def test_pb_validity_pct_uses_xtb_energy_ratio(
     (~0.92). We mock ``posebusters.PoseBusters`` so the test runs
     without RDKit / PoseBusters deps installed.
     """
-    canned = _install_mock_flowmol(monkeypatch)
+    _install_mock_flowmol(monkeypatch)
     # Mock posebusters + yaml in sys.modules so the YAML injection
     # branch in compute_pb_validity_pct can run.
     import types as _types
@@ -544,7 +544,7 @@ def test_pb_validity_pct_returns_real_number_when_xtb_installed(
     This test verifies the happy path: returns a real number, not a
     sentinel ``0.0`` from upstream import failure or YAML parse error.
     """
-    canned = _install_mock_flowmol(monkeypatch)
+    _install_mock_flowmol(monkeypatch)
     import types as _types
 
     fake_posebusters = _types.ModuleType("posebusters")
@@ -606,7 +606,7 @@ def test_pb_validity_pct_falls_back_to_uff_when_xtb_missing(
     absent, ``compute_pb_validity_pct`` does NOT raise
     ``FileNotFoundError`` (it falls back gracefully to subset_pb).
     """
-    canned = _install_mock_flowmol(monkeypatch)
+    _install_mock_flowmol(monkeypatch)
     import types as _types
 
     fake_posebusters = _types.ModuleType("posebusters")
@@ -709,7 +709,7 @@ def test_compute_pb_validity_pct_does_not_call_xtb_optimization(
     If a future refactor inadvertently wires xtb into the PB path,
     this test will FAIL loudly.
     """
-    canned = _install_mock_flowmol(monkeypatch)
+    _install_mock_flowmol(monkeypatch)
 
     # Sentinel 1: any subprocess.run call from inside
     # compute_pb_validity_pct would be a violation (xtb is
@@ -895,7 +895,7 @@ def test_pb_validity_pct_vendored_yaml_injection_matches_paper_target(
     PB requires torch + dgl + RDKit + posebusters all installed and
     is gated on the ``flowmol3_venv`` sidecar).
     """
-    canned = _install_mock_flowmol(monkeypatch)
+    _install_mock_flowmol(monkeypatch)
 
     import types as _types  # noqa: PLC0415
 
@@ -1318,7 +1318,7 @@ def test_compute_pb_validity_pct_xtb_missing(monkeypatch: pytest.MonkeyPatch) ->
     import errno
     import os
 
-    canned = _install_mock_flowmol(monkeypatch)
+    _install_mock_flowmol(monkeypatch)
     import types as _types
 
     fake_posebusters = _types.ModuleType("posebusters")

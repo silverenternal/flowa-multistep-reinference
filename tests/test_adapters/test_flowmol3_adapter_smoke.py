@@ -210,7 +210,7 @@ class TestFlowMol3FailClosed:
         # ``AttributeError`` (because the input is not a real bundle
         # and lacks ``.channels``); the fail-closed contract is that
         # ANY exception bubbles up, not a silent return.
-        with pytest.raises(Exception):  # noqa: BLE001 — fail-closed contract
+        with pytest.raises(Exception):  # noqa: BLE001, B017 — fail-closed contract
             adapter.apply_restart_distribution(
                 "not a bundle",  # type: ignore[arg-type]
                 policy=None,

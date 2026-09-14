@@ -80,11 +80,11 @@ def _moment_matched_target_effective(target: GaussianMixture) -> GaussianMeanCov
     w = [wi / total for wi in weights]
     d = target.components[0].dim
     mu_eff = [0.0] * d
-    for wi, comp in zip(w, target.components):
+    for wi, comp in zip(w, target.components, strict=False):
         for k in range(d):
             mu_eff[k] += wi * comp.mu[k]
     sigma_eff = [[0.0] * d for _ in range(d)]
-    for wi, comp in zip(w, target.components):
+    for wi, comp in zip(w, target.components, strict=False):
         for i in range(d):
             for j in range(d):
                 sigma_eff[i][j] += wi * (
@@ -104,7 +104,7 @@ def _alpha_blend_mean(
 ) -> tuple[float, ...]:
     """Return element-wise ``alpha * prior_mu + (1 - alpha) * fresh_mu``."""
     a: float = float(alpha)
-    return tuple(a * p + (1.0 - a) * f for p, f in zip(prior_mu, fresh_mu))
+    return tuple(a * p + (1.0 - a) * f for p, f in zip(prior_mu, fresh_mu, strict=False))
 
 
 def _alpha_blend_cov(
@@ -321,7 +321,7 @@ def test_cosine_scheduler_determinism_on_2d_oracle() -> None:
     )
 
     assert len(traj_a) == len(traj_b)
-    for a, b in zip(traj_a, traj_b):
+    for a, b in zip(traj_a, traj_b, strict=False):
         assert a == pytest.approx(b, rel=1e-12)
 
 

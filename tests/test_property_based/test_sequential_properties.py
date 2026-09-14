@@ -83,11 +83,10 @@ def test_sequential_cycle_length_equals_sum(slots: list) -> None:
 def test_sequential_rounds_partition_chain(slots: list) -> None:
     chain = SequentialScheduler(schedulers=slots)
     total = chain.total_rounds
-    seen_slots: set[int] = set()
     for r in range(total):
         idx, slot, _ = chain._resolve_slot(r)
         assert 0 <= idx < len(chain.slots)
-        assert idx not in seen_slots or True  # multiple rounds can map to same slot
+        assert True  # multiple rounds can map to same slot
         assert slot.scheduler is chain.slots[idx].scheduler
 
 

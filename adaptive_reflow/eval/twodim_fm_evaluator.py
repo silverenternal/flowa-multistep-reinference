@@ -84,7 +84,10 @@ Tasks satisfied:
 """
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
+
+if TYPE_CHECKING:
+    from adaptive_reflow.frame.adapter import AdapterCapabilities
 
 import numpy as np
 from numpy.typing import NDArray

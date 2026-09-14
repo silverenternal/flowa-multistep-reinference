@@ -627,7 +627,7 @@ def test_upstream_eval_kanzi_wave92b_n_samples_knob_honored() -> None:
         with mock.patch.object(
             upstream.subprocess, "run", side_effect=side_effect,
         ) as _mock_run_over:
-            result_over = upstream.run_kanzi_upstream_eval(
+            upstream.run_kanzi_upstream_eval(
                 sequences_path=str(coords_path),
                 output_dir=str(outdir),
                 n_samples=10000,

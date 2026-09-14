@@ -325,7 +325,7 @@ def per_position_freq_l1(
     # ------------------------------------------------------------------
     # 3. Build the count matrices and smooth.
     # ------------------------------------------------------------------
-    n_aa = len(STANDARD_AA_ALPHABET)
+    len(STANDARD_AA_ALPHABET)
     if max_length <= 0:
         raise ValueError(f"max_length_must_be_positive:{max_length}")
 

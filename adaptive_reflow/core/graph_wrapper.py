@@ -283,7 +283,6 @@ def merge_graph_batches(payloads: Iterable[GraphPayload]) -> GraphBatch:
     d_graph = plist[0].graph_feature_dim
 
     node_chunks: list[ArrayF64] = []
-    edge_chunks: list[ArrayF64] = []
     edge_idx_chunks: list[NDArray[np.int64]] = []
     edge_feat_chunks: list[ArrayF64] = []
     graph_chunks: list[ArrayF64] = []

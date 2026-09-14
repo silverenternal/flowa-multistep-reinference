@@ -498,7 +498,7 @@ class AdaptiveRK4Solver:
             # tolerance 1e-3).
             tol = 1e-3
             accepted_this_step = False
-            for attempt in range(8):
+            for _attempt in range(8):
                 proposed += 1
                 k1 = dynamics.step(
                     s, t_i, h, condition,

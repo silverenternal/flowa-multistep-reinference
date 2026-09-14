@@ -53,7 +53,11 @@ from .protocols import (
     ScheduleSample,
     _coerce_int_nonneg,
 )
-from .simple import CosineAnnealScheduler, default_cosine_scheduler
+from .simple import (
+    CosineAnnealScheduler,
+    default_cosine_scheduler,
+    memory_fraction_from_schedule,
+)
 
 # ---------------------------------------------------------------------------
 # Convergence-adaptive scheduler — default multi-metric feedback weights
@@ -1880,7 +1884,7 @@ class CodimensionSheetScheduler:
             return False
         tol = self._early_stop_plateau_rel_tol
         recent = history[-(window + 1):]
-        for prev, cur in zip(recent[:-1], recent[1:]):
+        for prev, cur in zip(recent[:-1], recent[1:], strict=False):
             denom = max(abs(float(prev)), 1e-12)
             if abs(float(cur) - float(prev)) / denom >= tol:
                 return False

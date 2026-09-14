@@ -139,8 +139,8 @@ def test_framework_fasta_differs_from_baseline_at_byte_level(tmp_path: Path) -> 
     # match by index since both arms produce N=10 records in the
     # same order).
     diff_count = 0
-    for (b_hdr, b_seq), (f_hdr, f_seq) in zip(
-        baseline_records, framework_records,
+    for (_b_hdr, b_seq), (_f_hdr, f_seq) in zip(
+        baseline_records, framework_records, strict=False,
     ):
         # The headers themselves differ by the ``arm_seed<N>`` prefix
         # (always-true). Compare sequence payloads only.

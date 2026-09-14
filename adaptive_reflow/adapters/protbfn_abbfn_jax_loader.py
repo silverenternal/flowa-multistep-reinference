@@ -241,7 +241,7 @@ def _walk_state(state: list[object]) -> list[tuple[str, int]]:
         # state list. state[dict_pos-1] is the FIRST name in child_names
         # (e.g. 'b' / 'offset'), state[dict_pos-2] is the SECOND name
         # (e.g. 'w' / 'scale'). Pre-order DFS visits first name first.
-        for slot, child_name in enumerate(child_names):
+        for _slot, child_name in enumerate(child_names):
             leaf_name = (
                 f"{module_name}/{child_name}"
                 if module_name

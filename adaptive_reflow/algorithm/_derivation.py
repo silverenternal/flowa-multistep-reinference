@@ -1356,7 +1356,7 @@ def default_alpha_grad(
                 context, "e_rho", float(e_rho)
             )
         try:
-            value = chosen.derive(context)
+            chosen.derive(context)
         except ValueError:
             return 0.5
         # FisherMemoryFraction returns the product

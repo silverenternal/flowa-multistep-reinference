@@ -33,22 +33,24 @@ def test_bounded_lipschitz_distance_2d_raises_without_scipy() -> None:
     # The ``linear_sum_assignment`` symbol is imported lazily inside the
     # function under test, so stubbing the parent ``scipy.optimize``
     # module is sufficient to trigger the ImportError branch.
-    with patch.dict(sys.modules, {"scipy.optimize": None}):
-        with pytest.raises(ImportError, match=r"scipy>=1\.7"):
-            bounded_lipschitz_distance_2d(
-                left=[[0.0, 0.0], [1.0, 1.0]],
-                right=[[0.5, 0.5], [1.5, 1.5]],
-            )
+    with patch.dict(sys.modules, {"scipy.optimize": None}), pytest.raises(
+        ImportError, match=r"scipy>=1\.7"
+    ):
+        bounded_lipschitz_distance_2d(
+            left=[[0.0, 0.0], [1.0, 1.0]],
+            right=[[0.5, 0.5], [1.5, 1.5]],
+        )
 
 
 def test_bounded_lipschitz_distance_2d_importerror_message_names_pip_install() -> None:
     """The error message must include an actionable install hint."""
-    with patch.dict(sys.modules, {"scipy.optimize": None}):
-        with pytest.raises(ImportError) as exc_info:
-            bounded_lipschitz_distance_2d(
-                left=[[0.0, 0.0], [1.0, 1.0]],
-                right=[[0.5, 0.5], [1.5, 1.5]],
-            )
+    with patch.dict(sys.modules, {"scipy.optimize": None}), pytest.raises(
+        ImportError
+    ) as exc_info:
+        bounded_lipschitz_distance_2d(
+            left=[[0.0, 0.0], [1.0, 1.0]],
+            right=[[0.5, 0.5], [1.5, 1.5]],
+        )
     message = str(exc_info.value)
     # The Hungarian-algorithm symbol name is what makes the requirement
     # unambiguous — a bare "install scipy" would not satisfy the

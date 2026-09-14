@@ -600,7 +600,7 @@ class FlowMol3AtomTypeEntropyRestartPolicy:
                 f"(n_atoms, {FLOWMOL3_ATOM_TYPE_VOCAB_SIZE!r})"
             )
         entropy = self._entropy_from_logits(atom_logits)
-        log_K = float(np.log(float(FLOWMOL3_ATOM_TYPE_VOCAB_SIZE)))
+        float(np.log(float(FLOWMOL3_ATOM_TYPE_VOCAB_SIZE)))
         # Normalise entropy into [0, 1] via the floor / ceiling
         # anchors. Values below the floor map to 0 (high
         # confidence); values above the ceiling map to 1 (no

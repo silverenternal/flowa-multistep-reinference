@@ -66,6 +66,7 @@ disables CFG (single forward pass).
 """
 from __future__ import annotations
 
+import contextlib
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, Literal
@@ -569,19 +570,15 @@ class DiffusersPipelineFactory:
 
         kwargs: dict[str, Any] = {}
         if scheduler_cls is not None:
-            try:
+            with contextlib.suppress(Exception):
                 kwargs["scheduler"] = scheduler_cls.from_pretrained(
                     str(wp / "scheduler"),
                 )
-            except Exception:
-                pass
         if vae_cls is not None:
-            try:
+            with contextlib.suppress(Exception):
                 kwargs["vae"] = vae_cls.from_pretrained(
                     str(wp / "vae"), dtype=dtype,
                 )
-            except Exception:
-                pass
         try:
             kwargs["transformer"] = transformer_cls.from_pretrained(
                 str(wp / "transformer"), dtype=dtype,

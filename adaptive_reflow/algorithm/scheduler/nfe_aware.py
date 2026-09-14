@@ -36,7 +36,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable, Mapping
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -45,6 +45,12 @@ from adaptive_reflow.contracts import (
     CosineScheduleSample,
     hash_artifact,
 )
+
+if TYPE_CHECKING:
+    from adaptive_reflow.algorithm._derivation import (
+        DerivationContext,
+        DerivationRule,
+    )
 
 from .adaptive import (
     CodimensionSheetScheduler,
@@ -370,10 +376,7 @@ class NFEAwareMemoryScheduler:
                 f"cycle_length={length}, got {round_in_cycle!r}"
             )
 
-        if length == 1:
-            u_r = 0.5
-        else:
-            u_r = float(round_in_cycle) / (length - 1)
+        u_r = 0.5 if length == 1 else float(round_in_cycle) / (length - 1)
 
         codes: tuple[str, ...] = (
             "schedule_nfe_aware_memory",

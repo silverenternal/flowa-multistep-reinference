@@ -157,7 +157,7 @@ def stub_inception_v3(monkeypatch: pytest.MonkeyPatch) -> None:
             # summary, then project to 2048 dims via a small
             # orthonormal-like linear map so the output range is
             # bounded in [-2, 2].
-            bsz = int(x.shape[0])
+            int(x.shape[0])
             # Per-batch summary: mean over channels and spatial dims.
             summary = x.to(torch.float32).mean(dim=(1, 2, 3))  # (B,) in [-1, 1]
             # Expand to 2048 via a deterministic, content-dependent

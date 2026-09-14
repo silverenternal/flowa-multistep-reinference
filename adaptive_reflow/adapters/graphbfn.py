@@ -1437,7 +1437,7 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
         cond_value = float(property_value) if property_value is not None else None
         out: list[dict[str, ArrayF64]] = []
         rng = np.random.default_rng(int(seed))
-        for k in range(int(n_samples)):
+        for _k in range(int(n_samples)):
             sample_seed = int(rng.integers(0, 2**31 - 1))
             n_nodes = int(rng.integers(1, max(2, self._max_nodes)))
             n_edges = int(rng.integers(1, max(2, 2 * n_nodes)))

@@ -962,7 +962,7 @@ def _aggregate_continuous(traj_x: ArrayF64) -> tuple[float, float, float, float]
     # Endpoint-driven summary: use the endpoint variance as a
     # coarse proxy for ``sheet_A`` (lower variance → higher sheet
     # evidence). The other three quantities default to neutral.
-    if traj_x.ndim == 1:
+    if traj_x.ndim == 1:  # noqa: SIM108
         endpoint_var = float(np.var(traj_x))
     else:
         # Reduce over the leading axis (e.g. trajectory steps) and

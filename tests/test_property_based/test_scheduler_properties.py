@@ -259,11 +259,11 @@ def test_linear_monotone_direction(
     cap_values = [sched.sample(0, r, 0).n_cap for r in range(length)]
     if n_max >= n_min:
         # closed form: round 0 (=n_max) >= round N-1 (=n_min)
-        for a, b in zip(cap_values, cap_values[1:]):
+        for a, b in zip(cap_values, cap_values[1:], strict=False):
             assert a >= b - 1e-9
     else:
         # closed form: round 0 (=n_max, smaller) <= round N-1 (=n_min, larger)
-        for a, b in zip(cap_values, cap_values[1:]):
+        for a, b in zip(cap_values, cap_values[1:], strict=False):
             assert a <= b + 1e-9
 
 
@@ -344,8 +344,8 @@ def test_polynomial_power_one_matches_linear(
     linear = LinearScheduler(cycle_length=length, n_min=n_min, n_max=n_max)
     for r in range(length):
         p = poly.sample(0, r, 0).n_cap
-        l = linear.sample(0, r, 0).n_cap
-        assert math.isclose(p, l, abs_tol=1e-9)
+        l_value = linear.sample(0, r, 0).n_cap
+        assert math.isclose(p, l_value, abs_tol=1e-9)
 
 
 # ---------------------------------------------------------------------------

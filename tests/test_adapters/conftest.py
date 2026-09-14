@@ -53,9 +53,7 @@ def mnist_train_smoke_skip_guard() -> bool:
     """
     if _MNIST_TRAIN_IMAGES_GZ.exists():
         return False
-    if _probe_mnist_mirror():
-        return False
-    return True
+    return not _probe_mnist_mirror()
 
 
 @pytest.fixture(scope="session")

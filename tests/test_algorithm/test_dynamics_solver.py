@@ -305,7 +305,7 @@ def test_flowmol3_dynamics_step_4_channel_tuple():
     atom = default_ctmc_dynamics()
     bond = default_ctmc_dynamics()
     dynamics = FlowMol3Dynamics(coord_dynamics=coord, atom_dynamics=atom, bond_dynamics=bond)
-    Q2 = np.array([[-1.0, 1.0], [1.0, -1.0]], dtype=np.float64)
+    np.array([[-1.0, 1.0], [1.0, -1.0]], dtype=np.float64)
     state = (
         np.array([1.0, 2.0], dtype=np.float64),
         np.array([1.0, 0.0], dtype=np.float64),

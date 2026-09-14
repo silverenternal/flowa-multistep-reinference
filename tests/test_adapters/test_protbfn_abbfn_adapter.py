@@ -732,8 +732,7 @@ def test_force_mode_upstream_jax_in_allowlist() -> None:
 
     from adaptive_reflow.adapters import protbfn_abbfn_upstream_shim as shim
 
-    with patch.object(shim, "is_upstream_available", return_value=False):
-        with pytest.raises(RuntimeError, match="upstream_jax_requested"):
+    with patch.object(shim, "is_upstream_available", return_value=False), pytest.raises(RuntimeError, match="upstream_jax_requested"):  # noqa: SIM117
             ProtBFNAbBFNAdapter(
                 mechanism="ProtBFN",
                 force_mode="upstream_jax",

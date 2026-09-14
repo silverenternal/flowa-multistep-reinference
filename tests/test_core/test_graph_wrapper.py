@@ -162,7 +162,7 @@ def test_merge_then_split_round_trip() -> None:
     # node offset so the edge indices are in the per-graph space).
     split = split_graph_batch(batch)
     assert len(split) == 3
-    for original, recovered in zip(payloads, split):
+    for original, recovered in zip(payloads, split, strict=False):
         assert original.node_features.shape == recovered.node_features.shape
         np.testing.assert_array_equal(original.node_features, recovered.node_features)
         np.testing.assert_array_equal(original.edge_features, recovered.edge_features)
@@ -196,7 +196,7 @@ def test_split_then_merge_round_trip() -> None:
     via_method = batch.split()
     via_fn = split_graph_batch(batch)
     assert len(via_method) == len(via_fn)
-    for a, b in zip(via_method, via_fn):
+    for a, b in zip(via_method, via_fn, strict=False):
         np.testing.assert_array_equal(a.node_features, b.node_features)
         np.testing.assert_array_equal(a.edge_index, b.edge_index)
 

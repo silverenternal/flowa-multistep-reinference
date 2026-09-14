@@ -322,11 +322,11 @@ def _moment_matched_target_effective(
     w = [wi / total for wi in weights]
     d = target.components[0].dim
     mu_eff = [0.0] * d
-    for wi, comp in zip(w, target.components):
+    for wi, comp in zip(w, target.components, strict=False):
         for k in range(d):
             mu_eff[k] += wi * comp.mu[k]
     sigma_eff = [[0.0] * d for _ in range(d)]
-    for wi, comp in zip(w, target.components):
+    for wi, comp in zip(w, target.components, strict=False):
         for i in range(d):
             for j in range(d):
                 sigma_eff[i][j] += wi * (
@@ -345,7 +345,7 @@ def _alpha_blend_mean(
     alpha: float,
 ) -> tuple[float, ...]:
     a = float(alpha)
-    return tuple(a * p + (1.0 - a) * f for p, f in zip(prior_mu, fresh_mu))
+    return tuple(a * p + (1.0 - a) * f for p, f in zip(prior_mu, fresh_mu, strict=False))
 
 
 def _alpha_blend_cov(
@@ -494,7 +494,7 @@ def _run_derived_trajectory(
         assert 0.0 <= cad_ema <= 1.0
         weights = default_metric_weights(context=derivation_context)
         assert isinstance(weights, dict)
-        for w_key, w_val in weights.items():
+        for _w_key, w_val in weights.items():
             assert math.isfinite(w_val)
             assert w_val > 0.0
         jitter = default_jitter_std(context=derivation_context)

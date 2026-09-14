@@ -4875,7 +4875,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         atom_indices: list[int] = []
         for i in range(n_atoms):
             a_idx = int(a[i])
-            if a_idx < 0 or a_idx >= len(atom_symbols):
+            if a_idx < 0 or a_idx >= len(atom_symbols):  # noqa: SIM108
                 # Out-of-range atom type — replace with 'C' (graceful).
                 symbol = "C"
             else:
@@ -4913,10 +4913,8 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             # Try permissive build (no sanitize) so callers that only
             # need the structural layout (positions + bonds) still get
             # a usable Mol. Skip valence errors.
-            try:
+            with contextlib.suppress(Exception):
                 _Chem.GetSSSR(mol)  # ring detection only
-            except Exception:  # noqa: BLE001
-                pass
         # Set 3D conformer (always attempt, even on partial mols).
         try:
             conf = _Chem.Conformer(n_atoms)

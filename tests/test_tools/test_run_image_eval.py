@@ -547,7 +547,7 @@ def test_per_round_emits_per_round_metrics(
     """
     samples_dir = tmp_path / "samples"
     samples_dir.mkdir()
-    rounds = [_seed_round_dir(samples_dir, r, n_samples=2) for r in range(3)]
+    [_seed_round_dir(samples_dir, r, n_samples=2) for r in range(3)]
     out_path = tmp_path / "report.json"
 
     # Reference stats: shape doesn't matter here — the FID may be NaN

@@ -731,7 +731,7 @@ def _check_capabilities_advertise_dispatch(
 def _state_bundle_to_native(
     bundle: StateBundle,
     caps: AdapterCapabilities,
-) -> NativeStateBundle:
+) -> NativeStateBundle:  # noqa: F821
     """Project a detached :class:`StateBundle` to a typed
     :class:`adaptive_reflow.contracts.materialization.NativeStateBundle`
     for materializer invocation (D10 typed surface).

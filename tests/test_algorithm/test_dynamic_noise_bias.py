@@ -56,7 +56,7 @@ def test_theorem1_eps_decays_monotonically() -> None:
         )
         eps_values.append(result.epsilon_per_channel["default"])
     # Monotone non-increasing.
-    for a, b in zip(eps_values, eps_values[1:]):
+    for a, b in zip(eps_values, eps_values[1:], strict=False):
         assert a >= b, f"eps did not decay: {eps_values}"
 
 
@@ -240,7 +240,7 @@ def test_fail_closed_on_invalid_pq() -> None:
 def test_audit_code_emission_for_continuous() -> None:
     bias = Theorem1DynamicNoiseBias()
     codes: list[str] = []
-    result = bias.compute_noise_bias(
+    bias.compute_noise_bias(
         previous_endpoint={"x": 0},
         paper_quantities=_pq(),
         round_index=0,
@@ -270,7 +270,7 @@ def test_selection_ratio_increases_as_eps_decreases() -> None:
         )
         ratios.append(result.selection_ratio)
     # Each subsequent ratio >= previous (eps decays -> sheet dominates).
-    for a, b in zip(ratios, ratios[1:]):
+    for a, b in zip(ratios, ratios[1:], strict=False):
         assert a <= b, f"selection_ratio did not increase: {ratios}"
 
 

@@ -79,6 +79,7 @@ Tasks satisfied
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -1073,10 +1074,8 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
         # Move pipeline components to the requested device (idempotent).
         if device is not None:
             target = torch.device(device)
-            try:
+            with contextlib.suppress(Exception):  # best-effort device placement
                 self._pipeline.to(target)
-            except Exception:  # noqa: BLE001 — best-effort device placement
-                pass
         # ``self._pipeline(...)`` accepts both pre-tokenised strings and
         # lists of strings; the diffusers default returns PIL images.
         result = self._pipeline(
@@ -1983,8 +1982,8 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
         neg_str = str(
             negative_prompt if negative_prompt is not None else self._default_negative_prompt
         )
-        cfg = float(cfg_scale if cfg_scale is not None else self._cfg_scale)
-        conditioning = self._resolve_conditioning(
+        float(cfg_scale if cfg_scale is not None else self._cfg_scale)
+        self._resolve_conditioning(
             prompt=prompt_str, negative_prompt=neg_str, seed=int(seed),
         )
         rng = np.random.default_rng(int(seed))

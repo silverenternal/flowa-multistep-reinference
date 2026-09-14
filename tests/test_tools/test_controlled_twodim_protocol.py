@@ -30,7 +30,7 @@ def test_chained_states_actual_nfe_and_guard(local_weights, guard, expected_rest
         assert sum(r["restart_skipped"] for r in rows) == 4 - expected_restarts
         assert rows[0]["solve_initial"] == sample["initial"]
         assert [r["steps"] for r in rows] == result.protocol["per_round_steps"]
-        for previous, current in zip(rows, rows[1:]):
+        for previous, current in zip(rows, rows[1:], strict=False):
             assert previous["endpoint"] == current["previous_endpoint"]
             assert previous["endpoint_digest"] == current["previous_digest"]
             if current["restart_skipped"]:

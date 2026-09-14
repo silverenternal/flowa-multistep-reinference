@@ -190,7 +190,7 @@ def test_expecttest_paper_selection_ratio_at_eps_one() -> None:
     production-mode float equality would silently accept.
     """
     sheet_a, packing_b, cell_c, eps = 0.5, 0.3, 1.2, 1.0
-    expected = (sheet_a * 1.0) / (sheet_a * 1.0 + cell_c * packing_b * 1.0)
+    (sheet_a * 1.0) / (sheet_a * 1.0 + cell_c * packing_b * 1.0)
     # Production function signature is
     #     paper_selection_ratio(sheet_A, packing_B, cell_C, eps) -> float
     # Mirroring its closed form here so the smoke test is self-contained.

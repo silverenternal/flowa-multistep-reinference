@@ -347,4 +347,4 @@ def _smoke_check() -> None:
 if __name__ == "__main__":  # pragma: no cover — manual smoke entry.
     _smoke_check()
     # Touch the constant so ruff/importlinter does not flag it.
-    importlib.import_module
+    importlib.import_module  # noqa: B018

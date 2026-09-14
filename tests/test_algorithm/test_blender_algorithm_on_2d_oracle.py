@@ -96,7 +96,7 @@ def test_linear_blender_m_one_returns_prior() -> None:
     # The LinearBlender's math is
     # blended = m * prior + (1 - m) * fresh (element-wise).
     m = 1.0
-    actual = tuple(m * p + (1.0 - m) * f for p, f in zip(prior, fresh))
+    actual = tuple(m * p + (1.0 - m) * f for p, f in zip(prior, fresh, strict=False))
     assert actual == pytest.approx(expected)
 
 
@@ -106,7 +106,7 @@ def test_linear_blender_m_zero_returns_fresh() -> None:
     fresh = (-3.0, 4.0)
     expected = fresh
     m = 0.0
-    actual = tuple(m * p + (1.0 - m) * f for p, f in zip(prior, fresh))
+    actual = tuple(m * p + (1.0 - m) * f for p, f in zip(prior, fresh, strict=False))
     assert actual == pytest.approx(expected)
 
 
@@ -115,8 +115,8 @@ def test_linear_blender_intermediate_m_is_convex_combo() -> None:
     prior = (1.0, 2.0)
     fresh = (-3.0, 4.0)
     for m in (0.25, 0.5, 0.75):
-        expected = tuple(m * p + (1.0 - m) * f for p, f in zip(prior, fresh))
-        actual = tuple(m * p + (1.0 - m) * f for p, f in zip(prior, fresh))
+        expected = tuple(m * p + (1.0 - m) * f for p, f in zip(prior, fresh, strict=False))
+        actual = tuple(m * p + (1.0 - m) * f for p, f in zip(prior, fresh, strict=False))
         assert actual == pytest.approx(expected)
 
 
@@ -257,7 +257,7 @@ __all__ = [
     "test_linear_blender_intermediate_m_is_convex_combo",
     "test_linear_blender_returns_valid_state_bundle",
     "test_linear_blender_emits_audit_code_when_memory_fraction_out_of_range",
-    "test_linear_blender_monotone_decreases_oracle_kl",
+    "test_linear_blender_monotone_decreases_oracle_distance",
     "test_categorical_blender_continuous_delegates_to_linear",
     "test_categorical_blender_continuous_rejects_unknown_domain",
 ]

@@ -84,7 +84,7 @@ class PaperQuantitiesSnapshot:
                 errors.append(f"{name}_must_be_real_number")
                 continue
             fx = float(value)
-            if not (fx == fx) or fx in (float("inf"), float("-inf")):
+            if fx != fx or fx in (float("inf"), float("-inf")):
                 errors.append(f"{name}_must_be_finite")
                 continue
             if fx <= 0.0:

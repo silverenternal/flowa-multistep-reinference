@@ -62,6 +62,7 @@ References:
 """
 from __future__ import annotations
 
+import contextlib
 import json
 from pathlib import Path
 from typing import Any
@@ -210,10 +211,8 @@ def _audit_tool():
     from tools import run_regression_vector_audit as audit
     yield audit
     if sys_path_added:
-        try:
+        with contextlib.suppress(ValueError):
             sys.path.remove(str(_REPO_ROOT))
-        except ValueError:
-            pass
 
 
 @pytest.fixture(scope="module")

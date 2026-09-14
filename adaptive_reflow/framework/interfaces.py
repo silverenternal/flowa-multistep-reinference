@@ -64,7 +64,7 @@ from __future__ import annotations
 import warnings
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, Protocol, runtime_checkable
 
 from adaptive_reflow.framework._compliance import (
@@ -100,7 +100,7 @@ __all__ = [
     "ObservationKind",
     "ObservationResult",
     "FlowMatchingODEAdapterWithObservation",
-    "AdapterCompliance",
+    "AdapterCompliance",  # noqa: F822
     "implements",
     "assert_adapter_compliance",
     "MissingProtocolError",
@@ -463,7 +463,7 @@ class PosteriorEvaluator(Protocol):
 # ---------------------------------------------------------------------------
 
 
-class ObservationKind(str, Enum):
+class ObservationKind(StrEnum):
     """Model-agnostic observation tags for :class:`AdapterObservationProtocol`.
 
     Each tag identifies a *kind* of observation the adapter can return.

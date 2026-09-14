@@ -38,6 +38,7 @@ existing _load_diffusion_pipeline falls back to diffusers).
 """
 from __future__ import annotations
 
+import contextlib
 import importlib
 import importlib.util as _il
 import os
@@ -406,13 +407,11 @@ def run_hidream_i1_eval(
     # Optional device placement.
     if device is not None:
         target = torch.device(str(device))
-        try:
+        with contextlib.suppress(Exception):  # best-effort
             pipeline.to(target)
-        except Exception:  # noqa: BLE001 — best-effort
-            pass
 
     written: list[Path] = []
-    for idx, (prompt, seed) in enumerate(zip(prompts, seeds)):
+    for idx, (prompt, seed) in enumerate(zip(prompts, seeds, strict=False)):
         generator = torch.Generator(device="cpu").manual_seed(int(seed))
         result = pipeline(
             prompt=prompt,

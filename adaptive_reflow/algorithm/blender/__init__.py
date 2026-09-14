@@ -45,7 +45,7 @@ from .per_channel_blender import (
     BLEND_FAMILY_BY_CHANNEL,
     DEFAULT_BLEND_FAMILY_BY_CHANNEL,
     DEFAULT_TAU_DEFAULT,
-    DEFAULT_TAU_FLOOR,
+    DEFAULT_TAU_FLOOR,  # noqa: F811
     EPS_LOG,
     GRAPH_FAMILY,
     GUMBEL_FAMILY,
@@ -74,7 +74,7 @@ DEFAULT_DISTANCE_DECAY_CONFIG_HASH = _blender_mod.DEFAULT_DISTANCE_DECAY_CONFIG_
 DEFAULT_DISTANCE_DECAY_TEMPERATURE = _blender_mod.DEFAULT_DISTANCE_DECAY_TEMPERATURE
 DEFAULT_LINEAR_CONFIG_HASH = _blender_mod.DEFAULT_LINEAR_CONFIG_HASH
 DISTANCE_DECAY_FAMILY = _blender_mod.DISTANCE_DECAY_FAMILY
-LINEAR_FAMILY = _blender_mod.LINEAR_FAMILY
+LINEAR_FAMILY = _blender_mod.LINEAR_FAMILY  # noqa: F811
 DistanceDecayBlender = _blender_mod.DistanceDecayBlender
 LinearBlender = _blender_mod.LinearBlender
 RestartBlenderProtocol = _blender_mod.RestartBlenderProtocol

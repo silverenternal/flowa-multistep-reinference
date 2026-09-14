@@ -81,10 +81,7 @@ class _FakeTensor:
         return np.asarray(self._arr, dtype=np.float64)
 
     def squeeze(self, dim: int | None = None) -> _FakeTensor:
-        if dim is None:
-            new = self._arr.squeeze()
-        else:
-            new = self._arr.squeeze(axis=dim)
+        new = self._arr.squeeze() if dim is None else self._arr.squeeze(axis=dim)
         return _FakeTensor(new, dtype=self._dtype, device=self._device)
 
     def unsqueeze(self, dim: int) -> _FakeTensor:

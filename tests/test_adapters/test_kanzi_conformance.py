@@ -420,7 +420,7 @@ def test_observe_token_indices_chain_walk_through_restart() -> None:
     bundle = adapter.build_initial_state(batch_id="w45_chain", sample_id="s_chain")
     delta = _make_delta(target_round=1)
     delta = adapter.compose_condition(bundle, delta)
-    trace1 = adapter.solve_ode(bundle, delta, seed=42)
+    adapter.solve_ode(bundle, delta, seed=42)
 
     policy = FinalRestartPolicy(
         policy_id=PolicyId("uniform-beta-0.5"),

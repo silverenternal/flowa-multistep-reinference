@@ -743,11 +743,10 @@ class BFNDynamics:
             e_rho = float(paper_quantities.exterior_gap_e_rho)
             if math.isfinite(e_rho) and e_rho > 0.0:
                 floor = e_rho * EXTERIOR_GAP_FLOOR_FRACTION
-                if dt_f < floor:
-                    if audit_codes is not None:
-                        audit_codes.append(
-                            "dynamics_alpha_floored_by_paper_exterior_gap"
-                        )
+                if dt_f < floor and audit_codes is not None:
+                    audit_codes.append(
+                        "dynamics_alpha_floored_by_paper_exterior_gap"
+                    )
         return pred_logits - state_t
 
     def to_config(self) -> dict[str, Any]:

@@ -273,9 +273,10 @@ def test_compute_med_rmsd_rejects_non_dict_payload(
             pickle.dump([1, 2, 3], fh)  # NOT a dict — must surface as XtbBridgeError
         return _completed_proc(returncode=0, stdout="", stderr="")
 
-    with patch.object(bridge.subprocess, "run", side_effect=fake_run):
-        with pytest.raises(bridge.XtbBridgeError) as excinfo:
-            bridge.compute_med_rmsd(init_sdf, opt_sdf)
+    with patch.object(bridge.subprocess, "run", side_effect=fake_run), pytest.raises(
+        bridge.XtbBridgeError
+    ) as excinfo:
+        bridge.compute_med_rmsd(init_sdf, opt_sdf)
     # Error message must mention the malformed payload type.
     assert "non-dict" in str(excinfo.value).lower()
 
@@ -408,13 +409,14 @@ def test_missing_xtb_returns_graceful_error(
     init_sdf = tmp_path / "init.sdf"
     init_sdf.write_text("init\n", encoding="utf-8")
 
-    with patch.object(bridge.subprocess, "run") as mock_run:
-        with pytest.raises(bridge.XtbBridgeError) as excinfo:
-            bridge.xtb_optimize_sdf(
-                sdf_in,
-                init_sdf,
-                # xtb_binary=None → defer to env/default/PATH resolution
-            )
+    with patch.object(bridge.subprocess, "run") as mock_run, pytest.raises(
+        bridge.XtbBridgeError
+    ) as excinfo:
+        bridge.xtb_optimize_sdf(
+            sdf_in,
+            init_sdf,
+            # xtb_binary=None → defer to env/default/PATH resolution
+        )
 
     # No subprocess attempted.
     mock_run.assert_not_called()
@@ -471,14 +473,15 @@ def test_xtb_optimize_sdf_timeout_raises_xtb_bridge_error(
         # Mirror the real subprocess.TimeoutExpired signature.
         raise subprocess.TimeoutExpired(cmd=cmd, timeout=kwargs.get("timeout"))
 
-    with patch.object(bridge.subprocess, "run", side_effect=fake_run):
-        with pytest.raises(bridge.XtbBridgeError) as excinfo:
-            bridge.xtb_optimize_sdf(
-                sdf_in,
-                init_sdf,
-                xtb_binary=str(fake_xtb),
-                timeout_s=5,
-            )
+    with patch.object(bridge.subprocess, "run", side_effect=fake_run), pytest.raises(
+        bridge.XtbBridgeError
+    ) as excinfo:
+        bridge.xtb_optimize_sdf(
+            sdf_in,
+            init_sdf,
+            xtb_binary=str(fake_xtb),
+            timeout_s=5,
+        )
 
     # Chained cause preserved (callers can introspect if needed).
     assert isinstance(excinfo.value.__cause__, subprocess.TimeoutExpired)
@@ -501,9 +504,10 @@ def test_compute_med_rmsd_timeout_raises_xtb_bridge_error(
     def fake_run(cmd: list[str], **kwargs: Any) -> None:
         raise subprocess.TimeoutExpired(cmd=cmd, timeout=kwargs.get("timeout"))
 
-    with patch.object(bridge.subprocess, "run", side_effect=fake_run):
-        with pytest.raises(bridge.XtbBridgeError) as excinfo:
-            bridge.compute_med_rmsd(init_sdf, opt_sdf, timeout_s=2)
+    with patch.object(bridge.subprocess, "run", side_effect=fake_run), pytest.raises(
+        bridge.XtbBridgeError
+    ) as excinfo:
+        bridge.compute_med_rmsd(init_sdf, opt_sdf, timeout_s=2)
 
     assert isinstance(excinfo.value.__cause__, subprocess.TimeoutExpired)
 

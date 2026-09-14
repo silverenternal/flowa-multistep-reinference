@@ -36,6 +36,7 @@ Contract
 """
 from __future__ import annotations
 
+import contextlib
 import inspect
 import math
 from collections.abc import Mapping
@@ -426,19 +427,15 @@ class SequentialScheduler:
                 )
                 if accepts_pq is None:
                     accepts_pq = _scheduler_accepts_paper_quantities(sub)
-                    try:
+                    with contextlib.suppress(AttributeError, TypeError):
                         sub._wave38_accepts_paper_quantities = accepts_pq
-                    except (AttributeError, TypeError):
-                        pass  # Slot doesn't allow attribute set; retry next call.
                 accepts_metrics = getattr(
                     sub, "_wave38_accepts_metrics", None
                 )
                 if accepts_metrics is None:
                     accepts_metrics = _scheduler_accepts_metrics(sub)
-                    try:
+                    with contextlib.suppress(AttributeError, TypeError):
                         sub._wave38_accepts_metrics = accepts_metrics
-                    except (AttributeError, TypeError):
-                        pass
                 kwargs: dict[str, object] = {"round_in_cycle": int(sub_round)}
                 if accepts_metrics:
                     kwargs["metrics"] = metrics

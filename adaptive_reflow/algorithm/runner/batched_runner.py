@@ -1126,10 +1126,9 @@ class BatchedTrajectoryRunner:
             rounds_run = r + 1
             if cfg.early_termination and hasattr(
                 scheduler, "should_terminate_round"
-            ):
-                if bool(scheduler.should_terminate_round(r)):
-                    early_terminated = True
-                    break
+            ) and bool(scheduler.should_terminate_round(r)):
+                early_terminated = True
+                break
 
         # P0-8 — verify the ledger chain integrity on every run when
         # ``ledger_chain=True``. A tamper-evident recompute confirms

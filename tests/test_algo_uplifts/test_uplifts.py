@@ -507,11 +507,11 @@ def _u012() -> None:
     )
     # OFF control: LinearBlender hardcodes decay_factor=None into the digest
     linear = LinearBlender()
-    bundle_lin_close = linear.blend(
+    linear.blend(
         prior_state=0.0, fresh_state=1.0,
         memory_fraction=0.5, channel="xy", audit_codes=None,
     )
-    bundle_lin_far = linear.blend(
+    linear.blend(
         prior_state=0.0, fresh_state=4.0,
         memory_fraction=0.5, channel="xy", audit_codes=None,
     )
@@ -553,7 +553,7 @@ def _u013() -> None:
     # Assert structural invariants of the metric: the metric can be
     # constructed with eps_schedule and the schedule is honoured by
     # metric.eps_schedule at construction time.
-    metric = EvidenceScaleGapMetric(
+    EvidenceScaleGapMetric(
         target="two_moons",
         n_gen=1,
         n_ref=1,
@@ -1183,7 +1183,7 @@ def _u034() -> None:
         worst_ot = 0.0
         for beta in (0.1, 0.25, 0.5, 0.75, 0.9):
             target = displacement_scale(rms(prior), rms(endpoint), beta)
-            chord = [(1.0 - beta) * p + beta * e for p, e in zip(prior, endpoint)]
+            chord = [(1.0 - beta) * p + beta * e for p, e in zip(prior, endpoint, strict=False)]
             worst_linear = max(
                 worst_linear, abs(rms(chord) - target) / target
             )

@@ -190,7 +190,7 @@ def test_generate_5000_images_deterministic(builder: Any) -> None:
     )
     # Cross-version stability check: labels should also be equal.
     assert len(labels_a) == len(labels_b)
-    for la, lb in zip(labels_a, labels_b):
+    for la, lb in zip(labels_a, labels_b, strict=False):
         assert (
             la.image_index == lb.image_index
             and la.shape_name == lb.shape_name

@@ -184,7 +184,7 @@ class CategoricalAwareBlender:
         sv = float(sentinel_value)
         if math.isnan(sv):
             raise ValueError("sentinel_value_must_not_be_nan")
-        if not math.isfinite(sv):
+        if not math.isfinite(sv):  # noqa: SIM102
             # -inf is allowed (the GraphBFN default); +inf is rejected.
             if sv > 0.0:
                 raise ValueError("sentinel_value_must_not_be_posinf")

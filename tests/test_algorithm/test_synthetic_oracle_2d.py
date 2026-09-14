@@ -72,7 +72,7 @@ def test_synthetic_oracle_is_runtime_checkable_protocol() -> None:
     ``GaussianVsGaussianOracle`` and ``GaussianVsMixtureOracle``
     satisfy the surface.
     """
-    I = ((1.0, 0.0), (0.0, 1.0))
+    I = ((1.0, 0.0), (0.0, 1.0))  # noqa: E741
     g = GaussianVsGaussianOracle(mu_1=(0.0, 0.0), sigma_1=I)
     mix = GaussianVsMixtureOracle(
         weights=(0.5, 0.5),
@@ -86,7 +86,7 @@ def test_synthetic_oracle_is_runtime_checkable_protocol() -> None:
 def test_synthetic_oracle_exposes_required_methods() -> None:
     """Oracle instances expose ``kl_divergence``, ``bl_distance``,
     ``target_name``."""
-    I = ((1.0, 0.0), (0.0, 1.0))
+    I = ((1.0, 0.0), (0.0, 1.0))  # noqa: E741
     g = GaussianVsGaussianOracle(mu_1=(1.0, 1.0), sigma_1=I, name="toy")
     assert callable(g.kl_divergence)
     assert callable(g.bl_distance)
@@ -135,7 +135,7 @@ def test_kl_N0I_vs_N0_4I() -> None:
 
 def test_kl_is_asymmetric() -> None:
     """KL is asymmetric: ``KL(p||q) != KL(q||p)`` in general."""
-    I = _I2
+    I = _I2  # noqa: E741
     s4 = ((4.0, 0.0), (0.0, 4.0))
     p = GaussianMeanCov(mu=(0.0, 0.0), sigma=I)
     q = GaussianMeanCov(mu=(1.0, 1.0), sigma=s4)

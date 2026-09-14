@@ -75,7 +75,6 @@ def _re_inference_jittered(x: float, seed: int) -> list[float]:
     import numpy as np
 
     rng = np.random.default_rng(int(seed) + 31)
-    n_cap_base = 0.5
     # Posterior draws: for K independent candidate jitter scales,
     # compute the marginal likelihood of x. We use the latent scale
     # directly: theta_hat ~ U(0.01, 0.20) and we rank theta against

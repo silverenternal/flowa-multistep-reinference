@@ -413,9 +413,9 @@ def _extract_checkpoint_state_dict(payload: Any) -> Mapping[str, Any]:
             if not keys or len(keys) != len(shadows):
                 raise RuntimeError("CIFAR EMA shadow_params count does not match model")
             if any(not hasattr(v, "shape") or tuple(v.shape) != tuple(model[k].shape)
-                   for k, v in zip(keys, shadows)):
+                   for k, v in zip(keys, shadows, strict=False)):
                 raise RuntimeError("CIFAR EMA shadow_params shapes do not match model")
-            out = dict(zip(keys, shadows))
+            out = dict(zip(keys, shadows, strict=False))
             if "module.sigmas" in model:
                 out["module.sigmas"] = model["module.sigmas"]
             return out

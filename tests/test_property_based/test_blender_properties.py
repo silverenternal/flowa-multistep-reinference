@@ -92,7 +92,7 @@ def test_linear_blend_convex_combination(
         for p, f in zip(prior, fresh, strict=True)
     )
     assert len(out) == len(expected)
-    for o, e in zip(out, expected):
+    for o, e in zip(out, expected, strict=False):
         assert math.isclose(o, e, abs_tol=1e-12)
 
 

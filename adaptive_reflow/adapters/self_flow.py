@@ -86,6 +86,7 @@ Tasks satisfied
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 from collections import OrderedDict
 from collections.abc import Mapping
@@ -503,7 +504,7 @@ def _load_torch_model(weights_path: Path) -> Any:
     in_channels = int(sd["x_embedder.proj.weight"].shape[1])
     out_channels_raw = int(sd["final_layer.linear.weight"].shape[0])
     patch_size = int(round(np.sqrt(out_channels_raw / 4.0)))
-    n_classes = int(sd["y_embedder.embedding_table.weight"].shape[0])
+    int(sd["y_embedder.embedding_table.weight"].shape[0])
 
     # Try to instantiate via diffusers' SiT (when available).
     try:
@@ -562,12 +563,10 @@ def _load_torch_model(weights_path: Path) -> Any:
 
         model = _StubSiT()
 
-    try:
-        model.load_state_dict(sd, strict=False)
-    except Exception:
+    with contextlib.suppress(Exception):
         # Stub fallback: copy nothing — the stub's forward is
         # shape-only and the load is best-effort.
-        pass
+        model.load_state_dict(sd, strict=False)
     model.eval()
     return model
 

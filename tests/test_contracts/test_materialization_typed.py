@@ -364,7 +364,7 @@ def test_native_channel_accessor_is_protocol() -> None:
         NativeChannelAccessor as _NCA,
     )
 
-    assert hasattr(_NCA, "__call__") or hasattr(_NCA, "_is_runtime_protocol")
+    assert callable(_NCA) or hasattr(_NCA, "_is_runtime_protocol")
 
 
 # ---------------------------------------------------------------------------

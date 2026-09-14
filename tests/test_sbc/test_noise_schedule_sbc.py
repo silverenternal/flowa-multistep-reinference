@@ -188,7 +188,7 @@ def test_cosine_inject_noise_sbc_calibrated() -> None:
         n_cap = float(max(0.05, min(0.95, float(theta))))
         state = np.zeros(1, dtype=np.float64)
         rng = np.random.default_rng(int(seed))
-        out = scheduler.inject_noise(
+        scheduler.inject_noise(
             state,
             sample.as_cosine_schedule_sample(),
             generator=rng,

@@ -22,7 +22,7 @@ from .flowmol3 import (  # noqa: I001 -- alphabetical re-export ordering
 )
 from .flowmol3_v2_adapter import (
     AUDIT_FLOWMOL3_NUMPY_BACKEND,
-    AUDIT_FLOWMOL3_RESTART_BLEND,
+    AUDIT_FLOWMOL3_RESTART_BLEND,  # noqa: F811
     AUDIT_FLOWMOL3_TORCH_BACKEND,
     AUDIT_FLOWMOL3_TRAJECTORY_BUILT,
     FLOWMOL3ADAPTER_CHANNEL_DOMAINS,

@@ -295,7 +295,7 @@ def _dot(a: Sequence[float], b: Sequence[float]) -> float:
         raise ValueError(
             f"vector length mismatch: {len(a)} vs {len(b)}"
         )
-    return sum(ai * bi for ai, bi in zip(a, b))
+    return sum(ai * bi for ai, bi in zip(a, b, strict=False))
 
 
 def _chol_lower(
@@ -462,7 +462,7 @@ def _logpdf_single(
     """Return ``log N(x; mu, Sigma)`` for a pre-computed Cholesky /
     inverse / log-det.
     """
-    diff = [xi - mu_i for xi, mu_i in zip(x, mu)]
+    diff = [xi - mu_i for xi, mu_i in zip(x, mu, strict=False)]
     q = _quad_form(inv_sigma, diff)
     return -0.5 * (d * math.log(2.0 * math.pi) + log_det_sigma + q)
 
@@ -524,7 +524,7 @@ def kl_divergence_two_gaussians(
         return _solve_spd(matrix, b)
 
     # Term 1: (mu_q - mu_p)^T Sigma_q^{-1} (mu_q - mu_p).
-    diff = tuple(mq - mp for mp, mq in zip(p.mu, q.mu))
+    diff = tuple(mq - mp for mp, mq in zip(p.mu, q.mu, strict=False))
     inv_diff = solve_spd(q.sigma, diff)
     mean_term = _dot(diff, inv_diff)
 
@@ -577,8 +577,7 @@ def w2_squared_two_gaussians(
         raise ValueError(
             f"dimension mismatch: p is {p.dim}-D, q is {q.dim}-D"
         )
-    d = p.dim
-    mean_term = sum((mp - mq) ** 2 for mp, mq in zip(p.mu, q.mu))
+    mean_term = sum((mp - mq) ** 2 for mp, mq in zip(p.mu, q.mu, strict=False))
     # Sigma_p^{1/2}: Cholesky factor Lp with Lp Lp^T = Sigma_p.
     # The PSD square root is Lp^T Lp... wait, that's Lp^T @ Lp which
     # equals (Lp Lp^T)^T = Sigma_p^T = Sigma_p. So Lp^T @ Lp = Sigma_p
@@ -590,7 +589,7 @@ def w2_squared_two_gaussians(
     # ``Sigma^{1/2} = L`` (the lower-triangular Cholesky factor)
     # which satisfies ``Sigma^{1/2} (Sigma^{1/2})^T = Sigma``.
     Lp = _chol_lower(p.sigma)
-    Lq = _chol_lower(q.sigma)
+    _chol_lower(q.sigma)
     # B = Lp^T Sigma_q Lp; take its unique PSD square root via
     # Cholesky to obtain ``(Lp^T Sigma_q Lp)^{1/2}`` and then
     # ``Sigma_p^{1/2} B^{1/2} = Lp (B^{1/2})``. (Uniqueness of
@@ -975,7 +974,7 @@ class GaussianVsMixtureOracle:
                 mu=tuple(float(m) for m in mu),
                 sigma=tuple(tuple(float(s) for s in row) for row in sigma),
             )
-            for mu, sigma in zip(mus, sigmas)
+            for mu, sigma in zip(mus, sigmas, strict=False)
         )
         self._target = GaussianMixture(
             weights=tuple(float(w) for w in weights),
@@ -990,11 +989,11 @@ class GaussianVsMixtureOracle:
         w_list = [w / total_w for w in w_list]
         d = components[0].dim
         mu_eff = [0.0] * d
-        for w, comp in zip(w_list, components):
+        for w, comp in zip(w_list, components, strict=False):
             for k in range(d):
                 mu_eff[k] += w * comp.mu[k]
         sigma_eff = [[0.0] * d for _ in range(d)]
-        for w, comp in zip(w_list, components):
+        for w, comp in zip(w_list, components, strict=False):
             for i in range(d):
                 for j in range(d):
                     sigma_eff[i][j] += w * (
@@ -1077,11 +1076,11 @@ class GaussianMixtureKLOracle:
         total_w = sum(weights)
         weights = [w / total_w for w in weights]
         mu_eff = [0.0] * d
-        for w, comp in zip(weights, target.components):
+        for w, comp in zip(weights, target.components, strict=False):
             for k in range(d):
                 mu_eff[k] += w * comp.mu[k]
         sigma_eff = [[0.0] * d for _ in range(d)]
-        for w, comp in zip(weights, target.components):
+        for w, comp in zip(weights, target.components, strict=False):
             for i in range(d):
                 for j in range(d):
                     sigma_eff[i][j] += w * (
@@ -1139,7 +1138,7 @@ def synthetic_2d_target() -> GaussianMixture:
 
     used as the framework's first ground-truth litmus test (P-13).
     """
-    I = ((1.0, 0.0), (0.0, 1.0))
+    I = ((1.0, 0.0), (0.0, 1.0))  # noqa: E741
     return GaussianMixture(
         weights=(0.5, 0.5),
         components=(
