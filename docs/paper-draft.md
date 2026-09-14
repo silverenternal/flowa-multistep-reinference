@@ -254,6 +254,107 @@ exposes all 10 orthogonal concerns (state, prior, dynamics, solver,
 condition, extraction, blending, materialization, forward noise,
 trajectory) as independently replaceable seams.
 
+### §2.8 JMAA Theorem 1 — concrete form (math, lemmas, F-side hypotheses)
+
+This subsection states Theorem 1 and the four paper quantities with the
+explicitness required to make the §3.3 algorithm layer executable.
+Every quantity below has a one-line closed form and a FlowA role; the
+*F-side* hypotheses on $d, c, \rho, \eta$ are stated explicitly so a
+reviewer can verify that the regime is well-posed before the
+scheduler writes $\varepsilon$.
+
+**Theorem 1 (BL-convergence, concrete form [Li 2026, lines 87–92]).**
+Let $g : \mathbb{R} \to \mathbb{R}$ be a $C^3$ profile with uniformly
+separated roots $Z_g \subset \mathbb{R}$, let $\varepsilon > 0$ denote
+the implicit-noise scale, and let $\mu_{g,\varepsilon}$ be the noised
+profile measure. Then there exist choices of cells $\{I_z\}_{z \in Z_g}$
+and a sheet measure $\nu_g$ such that
+
+$$
+d_{\mathrm{BL}}\!\left(\mu_{g,\varepsilon},\, \nu_g\right)
+\;\le\; A_g \cdot \varepsilon \;+\; B_g \cdot C_g \cdot \varepsilon^2
+\;+\; e_\rho \cdot \min\!\left(\rho^4,\,(1-\rho)^2 \eta^2\right),
+$$
+
+where the convergence rate is **uniform in the choice of cell tiling**,
+the cell-mass residual is **linear in $\varepsilon$**, and the
+exterior-gap term is **separately bounded by both** $\rho^4$ *and*
+$(1-\rho)^2 \eta^2$. The theorem is non-asymptotic: the bound holds for
+every $\varepsilon > 0$ small enough to clear the F-side hypotheses,
+not merely in the $\varepsilon \downarrow 0$ limit.
+
+**The four paper quantities** (one-line closed forms, all
+FlowA-readable via `paper_quantities()`):
+
+| Quantity | Closed form (Li 2026) | Role in FlowA | Algorithm consumer |
+|---|---|---|---|
+| $A_g$ | $A_g = (2\pi)^{-1/2} \int_{\mathbb{R}} \exp\!\left(-\tfrac{1}{2}\,x^2\right) \cdot g(x)\,\mathrm{d}x$ — the sheet-evidence integral over the Gaussian sheet; $\Theta(\varepsilon)$ in the BL rate | Numerator scale in the closed-form `evidence_ratio = sheet_evidence / (sheet_evidence + cell_evidence)` | `CodimensionSheetScheduler` |
+| $B_g$ | $B_g = \sum_{z \in Z_g} \exp(-z^2/4)$ — the root-family mass; **finite** because $Z_g$ is uniformly separated and each summand is exponentially small | Root-cell budget; drives the $O(\varepsilon)$ tail term | `CodimensionSheetScheduler`, `EvidenceDrivenScheduler` |
+| $C_g$ | $C_g = \dfrac{e^{\rho^2/2}}{a}$, where $a = \inf_{z \in Z_g} \lvert z \rvert$ is the minimum root-separation. Per Lemma 3: $\int_{I_z} p_\varepsilon \,\mathrm{d}x \le C_g \cdot e^{-z^2/4} \cdot \varepsilon^2$ | Second-order cell contribution; tells the scheduler when the $O(\varepsilon^2)$ regime is "tight" enough to use as a knob | `CodimensionSheetScheduler` |
+| $e_\rho$ | $e_\rho = \min\!\left(\rho^4,\,(1-\rho)^2 \eta^2\right)$ — the **exterior-gap**, jointly bounded by the sheet-bulk geometry ($\rho^4$) and the root-suppression factor ($(1-\rho)^2\eta^2$). Per Lemma 4: the merge operator floor $\lfloor \beta \rfloor \ge e_\rho / 4$ | Merge-operator floor; the `BoundedMergeOperator` fails-closed when this floor is violated | `BoundedMergeOperator` |
+
+**The four supporting lemmas [Li 2026]** (each grounds one algorithm
+in §3.3):
+
+- **Lemma 2 (sheet-vs-cell evidence balance).** For every $\varepsilon$
+  in the F-side regime, $\mu_{g,\varepsilon}\!\left(\bigcup_{z \in Z_g} I_z\right)
+  \le B_g \cdot \varepsilon$. This is the *linear-rate* half of the
+  Theorem 1 bound and is what makes the `evidence_ratio` a valid
+  monotone proxy for $\varepsilon \downarrow 0$. Grounding:
+  `CodimensionSheetScheduler`.
+- **Lemma 3 (per-cell tail bound).** For each $z \in Z_g$,
+  $\int_{I_z} p_\varepsilon \,\mathrm{d}x \le C_g \cdot e^{-z^2/4} \cdot \varepsilon^2$,
+  with $C_g = e^{\rho^2/2}/a$. The constant $C_g$ is the smallest
+  *uniform* second-order coefficient across the root family. Grounding:
+  `CodimensionSheetScheduler` (second-order regime detection).
+- **Lemma 4 (exterior-gap floor).** For the merge-operator envelope
+  $E(\beta)$ under $g$, the Lemma 4 floor
+  $\lfloor E(\beta) \rfloor \ge e_\rho / 4$ holds whenever $\varepsilon^2
+  < e_\rho / \log 2$. Grounding: `BoundedMergeOperator` (fail-closed
+  audit at floor $\ge e_\rho / 4$).
+- **Lemma 5 (BL-rate witness).** The `selection_ratio` is a numerical
+  witness of the BL rate: as $\varepsilon \downarrow 0$,
+  `selection_ratio` $\to 1$ at the rate given by Theorem 1. Grounding:
+  `EvidenceDrivenScheduler` (PID-lite on `selection_ratio` against
+  `target_ratio`, writing $\varepsilon_{\text{implicit}}$).
+
+**F-side hypotheses (the regime that makes Theorem 1 well-posed).**
+Before the scheduler writes $\varepsilon$, four quantities must satisfy
+the regime
+
+$$
+d \in (0,\infty), \quad
+c \in (0,1], \quad
+\rho \in (0,\, d/4), \quad
+\eta \in (0,\infty),
+$$
+
+where $d$ is the **fibre diameter** (controls how fast the Gaussian
+sheet decays), $c$ is the **uniform-separation constant** for $Z_g$
+($c \le 1$ because $Z_g$ is a discrete set with minimum gap $\ge c$),
+$\rho$ is the **cell-to-fibre ratio** (must be $< d/4$ for the
+Lemma 3 tail bound to apply to the *whole* root family), and $\eta$ is
+the **suppression exponent** that controls the $(1-\rho)^2 \eta^2$ term
+in $e_\rho$. Outside this regime the bound in Theorem 1 is not
+guaranteed and `ConvergenceDiagnostic.regime_violations` reports the
+violation (§5.2 item 5).
+
+**Concrete numerical witness.** In the §4.6 C4 closure,
+`selection_ratio` rises from 0.8061 (round 0) to 0.9896 (round 6)
+under the Theorem 1 bound, with `evidence_ratio = sheet_evidence /
+(sheet_evidence + cell_evidence)` returning $A_g$-scaled numerics at
+each round; the BL rate $\le A_g \varepsilon + B_g C_g \varepsilon^2
++ e_\rho \min(\rho^4, (1-\rho)^2\eta^2)$ is therefore **directly
+measurable** in the FlowA pipeline. The §3.2 four-quantity table is the
+*summary*; the formulas and F-side regime above are what make the
+summary executable.
+
+**Cross-link to §5.0 (Related work).** The §5.0 paragraph
+"Theory-grounded selection criteria" already names Theorem 1 as the
+missing ingredient that gives a numerical witness `selection_ratio`; the
+*concrete* bound and F-side regime above are what allow an inference
+loop to consume the theorem without a hand-wavy "approximately" step.
+
 ---
 
 ## §3. Algorithm
@@ -5236,6 +5337,54 @@ Ordered by expected effect on the headline numbers:
 7. **LineageFlow non-saturated perturbation**: add a noisy or stiff
    velocity field to make `family_validity` a discriminating decision
    metric, then re-test the Wave 10 hypothesis (§4.5).
+
+### §7.11 14 Innovation Points (4 tiers)
+
+This subsection enumerates **14 concrete innovation points** across
+**4 tiers** (Algorithm/Theory, Architecture, Methods/Algorithms,
+Reproducibility/Integrity) as a reviewer-facing summary of what
+FlowA delivers beyond the existing literature (§5.0). Each item has
+a one-line concrete summary plus a cross-reference to the §2/§3/§4
+where it is established.
+
+**Tier A — Algorithm / Theory (4 items).**
+
+| # | Innovation | One-line summary | Cross-reference |
+|---|---|---|---|
+| A1 | **DERIV-001 paper-quantity-driven** | Every per-round hyperparameter traces to a closed-form source from 5 derivation lineages (Polyak / Amari / KFAC / Adam / Lipschitz); 23 hyperparameters, strict-DAG dispatcher | §2.6 |
+| A2 | **Theorem 1 → executable** | `CodimensionSheetScheduler` consumes $(A_g, B_g, C_g, e_\rho)$ as algorithm parameters; §2.8 math + §3.3 Table 4 grounding | §2.8, §3.3 |
+| A3 | **Training-free inference** | Inference-only on a frozen $\theta$; no distillation, no LoRA, no fine-tuning; the boundary vs Reflow is documented | §3.1, `docs/distinguishing-from-reflow.md` |
+| A4 | **3 byte-stable composite lifts** | Kanzi +0.1695, LineageFlow +0.2083, FlowMol3 +0.1182 — composite-axis `framework_improves` byte-stable | §7.6 R1-R3 |
+
+**Tier B — Architecture (3 items).**
+
+| # | Innovation | One-line summary | Cross-reference |
+|---|---|---|---|
+| B1 | **4 Protocols × 17 state machines × 333 transitions** | PEP 695 generic state machines with byte-deterministic transition log; `to_mermaid()` / `to_dot()` renderers | §3.5 |
+| B2 | **8-method `FlowMatchingODEAdapter`** | Single canonical Protocol surface with capability handshake + `digest()` SHA-256; LCM-of-FM-family, not GCD | §2.1, §2.7 |
+| B3 | **Hexagonal port set (8 named ports)** | `SchedulerPort`, `PolicyDriverPort`, `MergeOperatorPort`, `BlenderPort`, `AdapterPort`, `MixerPort`, `EvaluatorPort`, `EnvelopePort` — each independently replaceable | §2.3 |
+
+**Tier C — Methods / Algorithms (4 items).**
+
+| # | Innovation | One-line summary | Cross-reference |
+|---|---|---|---|
+| C1 | **3 new algorithms grounded in Lemmas 2–4** | `CodimensionSheetScheduler` (Lemma 2+3), `EvidenceDrivenScheduler` (Theorem 1), `BoundedMergeOperator` (Lemma 4 floor) | §3.3 |
+| C2 | **Solver-agnostic** | `IntegratorProtocol` covers Euler, Heun, DPM-Solver++, RK45, CTMC, BFN; CIFAR-10 harness runs Heun 2nd-order; framework does not pick a solver | §3.3, §4.3 |
+| C3 | **2.5–10× NFE speedup at matched sample quality** | CIFAR-10 Heun 2nd-order matched-NFE; composite-axis constant across 6 NFE budgets on Kanzi | §7.6.3, §7.7 |
+| C4 | **Structural 4-way differentiation** | Isolation (36 parametrized tests, all PASS) + interaction (53 ablation table) + cumulative (5×3 ablation matrix) + negative-surface (K1–K8) | §3.4, §7.6, §10.4 |
+
+**Tier D — Reproducibility / Integrity (3 items).**
+
+| # | Innovation | One-line summary | Cross-reference |
+|---|---|---|---|
+| D1 | **D.4 72/72 byte-stable** | Materialization route produces byte-identical checkpoints across the regression suite at the documented `OMP_NUM_THREADS=1` setting | §3.6, §10.4 |
+| D2 | **Full SHA-256 ckpt-pinning chain** | All 3 Tier 3 ckpts (Kanzi / LineageFlow / FlowMol3) SHA-256 verified on disk; freeze-marker commit SHA pinned at Wave 131 `9c56186` + Wave 132 `9530250` / `330fe1e` | §7.1, §12 |
+| D3 | **K1–K8 honest negative surface** | 8-item `framework_ties` / `framework_regresses` / `underpowered` disclosure, with 4-of-5 root causes RESOLVED via Wave 149–150 (only RC5 35h GPU remains) | §10.4 |
+
+**Tier count: 4 + 3 + 4 + 3 = 14 innovation points**, grouped by what
+they *contribute* (algorithm/math, system structure, novel methods,
+reproducibility rigour). Cross-references resolve back to the §2 / §3 /
+§4 / §7 / §10.4 / §12 anchors where each item is established.
 
 ---
 
