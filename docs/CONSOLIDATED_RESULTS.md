@@ -4497,3 +4497,19 @@ Key Wave 144 deliverables:
 - **Tier-1 SCI submission OpenReview upload ready** — PDF + supplementary + code archive + Kim2025-aligned metric count + honest negative surface all in place.
 
 See `docs/audit/wave144-push-and-fix.md` (full Wave 144 audit trail + Phase 1-4 ledger + acceptance gates + camera-ready deferred list) + `docs/audit/wave144-agent3-pdf-generation.md` (Phase 3 detailed PDF toolchain audit + converter table + 6 honest limitations) + `docs/baseline-audit-report.md` §R.32 (Wave 144 ledger row) + `docs/paper-final-neurips.pdf` (Phase 3 placeholder PDF, 117 pp) + `docs/paper-final-neurips.md` (canonical source) + `docs/audit/wave143-tier1-metric-alignment.md` (predecessor wave) + `docs/CONSOLIDATED_RESULTS.md` §15.40 (Wave 143 close section).
+
+### §15.42 Wave 145 — todo/ folder refactor (2026-09-14)
+
+Wave 145 is the **post-submission todo/ folder organization** wave. With the Wave 143 Tier-1 SCI submission package shipped (8 tables A-H + 17 figures + Kim2025 reference + byte-stable reproducibility + honest negative surface + `docs/paper-final-neurips.pdf` placeholder) and Wave 144 push-backlog closed (18 commits to `origin/main` + 3 Kanzi baseline JSONs restored), the `todo/` folder had drifted: 29 files spanning LIVE plans, STALE drafts, SHIPPED ledges, and REDUNDANT legacy notes. Wave 145 reorganizes the `todo/` folder to reflect current reality without deleting any history. 6 atomic Phases total. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
+
+Key Wave 145 deliverables:
+
+- **9 active plan `Status:` headers refreshed (Phase 2)** — SHIPPED/CLOSED/EXECUTED per `todo/STATUS.md` reality. No plan content modified; only metadata headers reflect execution state.
+- **1 new polish plan added (Phase 3)** — `todo/2026-09-14-tier1-numerical-polish-plan.md` (6 items: algorithm ablation + hyperparameter sweep + CIFAR v4 audit + PDF + LineageFlow N=1000 + LineageFlow foldability). Awaits user OK before launch (Wave 11+ user-gated).
+- **`STATUS.md` + `INDEX.md` + `PUSH-READY.md` refreshed (Phase 4)** — Wave 137-145 reality; 2 unpushed commits awaiting user OK; 18 pushed in Wave 144 Phase 1; v1.0.1-paper-final tag on `origin/main`.
+- **`EXECUTION-PLAN.md` FINAL CLOSE appended (Phase 5)** — 108/110 subtasks completed; 2/110 deferred to camera-ready (NeurIPS-style `.tex` rewrite + LineageFlow foldability N=1000).
+- **Phase 6 (this commit)** — audit doc `docs/audit/wave145-todo-refactor.md` + baseline-audit §R.33 + this §15.42 + atomic commit.
+- **All gates preserved** — ruff 0, D.4 33/33, claims_consistency PASS; mkdocs strict unchanged from Wave 144 (1 pre-existing nav-warning on unnav files; Wave 145 introduces no new warnings).
+- **`todo/` folder organized for post-submission camera-ready work** — LIVE plans reflect current reality; STALE plans refreshed; SHIPPED work tracked in audit trail (not in `todo/`); REDUNDANT legacy notes preserved but not active.
+
+See `docs/audit/wave145-todo-refactor.md` (full Wave 145 audit trail + Phase 1-6 ledger + acceptance gates + camera-ready deferred list) + `docs/baseline-audit-report.md` §R.33 (Wave 145 ledger row) + `todo/2026-09-14-tier1-numerical-polish-plan.md` (Phase 3 polish plan, 6 items) + `todo/EXECUTION-PLAN.md` FINAL CLOSE section (Phase 5) + `docs/audit/wave144-push-and-fix.md` (predecessor wave) + `docs/CONSOLIDATED_RESULTS.md` §15.41 (Wave 144 close section).
