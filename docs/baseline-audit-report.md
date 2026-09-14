@@ -4225,3 +4225,35 @@ See `docs/audit/wave131-pre-freeze-hygiene.md` (full Wave 131 audit trail) + `do
 **HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 3 prior-agent commits preserve pre-Wave-132 content (Phase B NeurIPS template alignment is structural only, no semantic change; Phase C §9-§12 are 4 new sections appended after the existing Wave 110 §1-§8; Phase E cover_letter R1-R6 explicit is appended after the Wave 131 cover_letter reframe paragraph); NO source code changes; NO experiments; single atomic Agent 4 commit titled "Wave 132: tier-1 polish close — audit doc + baseline R.21 + CONSOLIDATED 15.30".
 
 See `docs/audit/wave132-tier1-polish.md` (full Wave 132 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.30 + paper §9-§12 (Phase C camera-ready) + paper §1-§8 NeurIPS template alignment (Phase B) + supplementary.md NeurIPS Supplementary Template Index (Phase B) + cover_letter.md R1-R6 explicit reframe (Phase E).
+
+### §R.22 Wave 133 — Number consistency verify + final polish (2026-09-14)
+
+**Scope:** close Wave 133's 5 atomic Phases (Phases 1-4 by prior agents + this Phase 5 final synthesis by Agent 5) as the **number-consistency + final polish** wave that verifies R1-R6 numbers are byte-stable consistent across the 5 docs of the paper submission package (paper + cover_letter + supplementary + baseline-audit-report + CONSOLIDATED_RESULTS) + fill under-cited numbers additively in supplementary.md. 1 NEW audit doc `docs/audit/wave133-number-consistency.md` + 1 NEW §R.22 row (this section) + 1 NEW §15.31 section in CONSOLIDATED_RESULTS + final commit. ADDITIVE only — no measurement delta, no algorithm activation, no new N>=1000 sweep, no source code changes (docs-only wave).
+
+**Phase ledger:**
+
+- **Phase 1 (commit `d388057`)**: cross-check R1-R6 numbers across 5 docs (paper §7.6 + cover_letter + supplementary S1-S7 + baseline-audit-report §15.15.1 + CONSOLIDATED_RESULTS §15.15.1) + additively fill under-cited numbers in supplementary.md S4. Cross-check verdict: all 6 R-rows read consistently; supplementary S4 filled to match the Wave 93 §15.15.1 12-row table format.
+- **Phase 2 (commit `4a0e146`)**: README.md Tier-1 SCI submission pointer — R1-R6 headline numbers inlined in `## Headline results` + freeze-marker SHA `d3880573bf7faeb0ee559b75f446ed948c8f3a17` cited at the top of the Status block + 8-entry submission-package TOC.
+- **Phase 3 (commit `ea13fa3`)**: `tools/check_docs_against_code.py` inline-symbol regression fix — 3 false-positive regex tightenings (section-heading `##` marker; author-name "M. Sami" misinterpretation; `lumina/` path substring). No doc text changed; no code under scanner changed.
+- **Phase 4 (commit `9d96056`)**: paper-draft.md final read-through — 4 typo fixes + 2 cross-reference fixes + 2 numerical-consistency restatements (≤10 lines ADDITIVE total). §6.2 "see §A.1" → "see §7.6"; §10 Limitations "see Wave 93 §15.15.1" → split into "see §7.6 + docs/baseline-audit-report.md §15.15.1".
+- **Phase 5 (this commit)**: final synthesis (audit doc + baseline-audit §R.22 + CONSOLIDATED §15.31).
+
+**Acceptance gates (Phase 5 re-verify):**
+
+- pytest tests/ -k "d4" -q -> **33/33 PASS** preserved
+- ruff check adaptive_reflow/ tests/ -> **All checks passed!** (Wave 131 freeze preserved; ruff 0 on the freeze-marker source tree)
+- mkdocs build --strict -> **EXIT=0** (verified at Wave 133 close; 19.78 s build time)
+- python tools/check_claims_consistency.py -> **PASS** ("No drift detected." — 39 active, 0 provisional, 2 deprecated; CLM-040 forced to PROVISIONAL)
+- All R1-R6 numbers consistent across docs (paper + cover_letter + supplementary + audit + baseline + CONSOLIDATED) — verified at Phase 1 commit `d388057`
+
+**Camera-ready deferred (UNCHANGED from Wave 131 + Wave 132 STATUS.md):**
+
+- mypy 988 hand-fix (CLM-024 acknowledges)
+- Wan2.2 / FreqFlow / MM-FM integration (PHASE-4 DEFERRED)
+- N=5000-50000 trajectory expansion
+- PB-xtb pipeline closure
+- OmegaFold env (LineageFlow foldability / self_consistency N=1000 deferred)
+
+**HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 4 prior-agent commits preserve pre-Wave-133 content (Phase 1 supplementary S4 fill is APPEND-only; Phase 2 README additive pointer block; Phase 3 string-scanner regex tightening only; Phase 4 paper-draft.md ≤10-line typo + cross-ref fix is APPEND-only); NO source code changes; NO experiments; single atomic Agent 5 commit titled "Wave 133: number-consistency + final polish close — audit doc + baseline R.22 + CONSOLIDATED 15.31".
+
+See `docs/audit/wave133-number-consistency.md` (full Wave 133 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.31 + README.md R1-R6 headline + freeze-marker SHA (Phase 2) + supplementary.md S4 under-cited numbers filled (Phase 1) + paper-draft.md final read-through (Phase 4) + cover_letter.md R1-R6 explicit reframe (preserved from Wave 132 Phase E).

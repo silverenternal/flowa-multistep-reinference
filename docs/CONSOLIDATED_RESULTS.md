@@ -4319,3 +4319,21 @@ Camera-ready deferred (UNCHANGED from Wave 131 STATUS.md): mypy 988 hand-fix (CL
 Per-paper-claim support status UNCHANGED from Wave 127 / Wave 128 / Wave 131 — all rows carry forward unchanged.
 
 See `docs/audit/wave132-tier1-polish.md` (full Wave 132 audit trail) + `docs/baseline-audit-report.md` §R.21 (Wave 132 ledger) + paper §9-§12 (Phase C camera-ready) + paper §1-§8 NeurIPS template alignment (Phase B) + supplementary.md NeurIPS Supplementary Template Index (Phase B) + cover_letter.md R1-R6 explicit reframe (Phase E).
+
+### §15.31 Wave 133 — Number consistency + final polish (2026-09-14)
+
+Wave 133 is the **number-consistency + final polish** wave that verifies R1-R6 numbers are byte-stable consistent across the 5 docs of the paper submission package and fills under-cited numbers additively. 5 atomic Phases (1-4 by prior agents + Phase 5 final synthesis by Agent 5):
+
+- **Phase 1 (commit `d388057`)**: cross-check R1-R6 across docs (paper + cover_letter + supplementary + baseline-audit-report + CONSOLIDATED_RESULTS); under-cited numbers filled additively in supplementary.md S4 to match the Wave 93 §15.15.1 12-row table format.
+- **Phase 2 (commit `4a0e146`)**: README.md updated with R1-R6 headline + freeze-marker SHA `d3880573bf7faeb0ee559b75f446ed948c8f3a17` + 8-entry submission-package TOC.
+- **Phase 3 (commit `ea13fa3`)**: `check_docs_against_code.py` re-verified — 3 inline-symbol false positives removed (section-heading marker + author-name formatting + lumina path).
+- **Phase 4 (commit `9d96056`)**: final read-through of paper-draft.md — typos + cross-references + numerical consistency fixed (≤10 lines ADDITIVE).
+- **Phase 5 (this commit)**: final synthesis (audit doc `wave133-number-consistency.md` + baseline-audit §R.22 + this §15.31).
+
+All acceptance gates preserved: **D.4 33/33 PASS**; **ruff 0** on adaptive_reflow/ + tests/ (Wave 131 freeze preserved); **mkdocs build --strict EXIT=0** (19.78 s build time); **claims_consistency PASS** ("No drift detected." — 39 active, 0 provisional, 2 deprecated). All R1-R6 numbers byte-stable across the 5 docs of the submission package.
+
+Camera-ready deferred (UNCHANGED from Wave 131 + Wave 132 STATUS.md): mypy 988 hand-fix (CLM-024 acknowledges); Wan2.2 / FreqFlow / MM-FM integration (PHASE-4 DEFERRED); N=5000-50000 trajectory expansion; PB-xtb pipeline closure; OmegaFold env.
+
+Per-paper-claim support status UNCHANGED from Wave 127 / Wave 128 / Wave 131 / Wave 132 — all rows carry forward unchanged.
+
+See `docs/audit/wave133-number-consistency.md` (full Wave 133 audit trail) + `docs/baseline-audit-report.md` §R.22 (Wave 133 ledger) + README.md R1-R6 headline + freeze-marker SHA (Phase 2) + supplementary.md S4 under-cited numbers filled (Phase 1) + paper-draft.md final read-through (Phase 4).
