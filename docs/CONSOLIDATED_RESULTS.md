@@ -4402,3 +4402,16 @@ Wave 135 is the **headline-evidence collection** wave that consolidates every ex
 - NO push (Wave 11+ user-gated); ADDITIVE only; NO source code changes; NO experiments; single atomic Agent 7 commit.
 
 See `docs/audit/wave134-tmp-migration.md` (full Wave 134 audit trail) + `docs/baseline-audit-report.md` §R.24 (Wave 134 ledger row) + `todo/STATUS.md` (Phase 4 refresh) + `verification_outputs/kanzi_n1000_*/` (8 N=1000 sweeps now in repo).
+
+### §15.35 Wave 136 — Final Tier-1 submission polish (2026-09-14)
+
+Wave 136 is the **final Tier-1 submission polish** wave that closes Strategy D actions 1-3: consolidate the 8 honest negative results (K1-K8) into a single reviewer-facing section in the main paper + add 2 supplementary provenance notes (LineageFlow raw-JSON gap + CIFAR-10 EMA vs Table 9 distinction). 4 atomic Phases (1-3 by prior agents + this Phase 4 final synthesis by Agent 4): Phase 1 adds `docs/paper-draft.md` §10.4 (8 honest negatives K1-K8 + byte-reproducibility provenance framing); Phase 2 adds `docs/supplementary.md` §S7.2 (LineageFlow raw-JSON N=2 placeholder gap + audit-doc source); Phase 3 adds `docs/supplementary.md` §S4.3 (CIFAR-10 N=200 EMA sweep vs Table 9 N=500 sweep distinction); this Phase 4 final close writes the audit doc, appends baseline-audit §R.26, appends this §15.35, and commits. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
+
+- `docs/paper-draft.md` §10.4 "Known negative surface & provenance discipline" added (+67 lines, 8 honest negatives K1-K8 with byte-reproducibility provenance framing)
+- `docs/supplementary.md` §S7.2 LineageFlow provenance note added (+7 lines, raw-JSON N=2 placeholder gap + audit-doc source)
+- `docs/supplementary.md` §S4.3 CIFAR-10 provenance note added (+7 lines, N=200 EMA sweep vs Table 9 N=500 sweep distinction)
+- All gates preserved (ruff 0, D.4 33/33, claims_consistency PASS, mkdocs strict EXIT=0)
+- Tier-1 SCI submission ready (reviewer-facing negatives indexed in §10.4, supplementary provenance notes at the right place in the reading path)
+- NO push (Wave 11+ user-gated); ADDITIVE only; NO source code changes; NO experiments; single atomic Agent 4 commit.
+
+See `docs/audit/wave136-submission-polish.md` (full Wave 136 audit trail) + `docs/baseline-audit-report.md` §R.26 (Wave 136 ledger row) + `docs/paper-draft.md` §10.4 (known negative surface) + `docs/supplementary.md` §S7.2 (LineageFlow provenance) + §S4.3 (CIFAR-10 provenance) + `docs/audit/wave135-headline-evidence.md` (predecessor wave).

@@ -4377,3 +4377,32 @@ All subdirs use `ln -sf ../../../<source_path>` symlinks to the actual files in 
 **HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 6 prior-agent commits preserve pre-Wave-135 content (Phase 1 README.md is a new file, no edit to existing docs; Phases 2-6 are new subdirs of docs/headline-evidence/ with symlinks + SOURCE.md, no edit to existing files); NO source code changes; NO experiments; single atomic Agent 7 commit titled "Wave 135: headline-evidence close - audit doc + baseline R.25 + CONSOLIDATED 15.34".
 
 See `docs/audit/wave135-headline-evidence.md` (full Wave 135 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.34 + `docs/headline-evidence/README.md` (Tier-1 SCI submission source-of-truth index) + per-R `SOURCE.md` files in each of the 10 subdirs.
+
+### §R.26 Wave 136 — Final Tier-1 submission polish (Strategy D actions 1-3) (2026-09-14)
+
+| R.26 | Wave 136 - final submission polish (2026-09-14); §10.4 known-negative-surface + §S7.2 LineageFlow provenance + §S4.3 CIFAR-10 provenance; ruff 0 (preserved); D.4 33/33 (preserved); mkdocs EXIT=0. |
+
+**Scope:** close Wave 136's 4 atomic Phases (Phases 1-3 by prior agents + this Phase 4 final synthesis by Agent 4) as the **final Tier-1 submission polish** that consolidates the 8 honest negatives (K1-K8) into a single reviewer-facing section in the main paper and adds 2 supplementary provenance notes (LineageFlow raw-JSON gap + CIFAR-10 EMA vs Table 9 distinction). 1 NEW audit doc `docs/audit/wave136-submission-polish.md` + 1 NEW §R.26 row (this section) + 1 NEW §15.35 section in CONSOLIDATED_RESULTS + final commit. ADDITIVE only — no measurement delta, no algorithm activation, no new N>=1000 sweep, no source code changes (docs-only wave).
+
+**Phase 1-3 ledger:**
+
+- Phase 1 (`bb0716b`): add `docs/paper-draft.md` §10.4 "Known negative surface & provenance discipline" section (+67 lines, 8 honest negatives K1-K8 + byte-reproducibility provenance framing).
+- Phase 2 (`08792ba`): add `docs/supplementary.md` §S7.2 LineageFlow provenance note (+7 lines, raw-JSON N=2 placeholder gap + audit-doc source).
+- Phase 3 (`fbb407e`): add `docs/supplementary.md` §S4.3 CIFAR-10 provenance note (+7 lines, N=200 EMA sweep vs Table 9 N=500 sweep distinction).
+- Phase 4 (this commit): final synthesis — audit doc `docs/audit/wave136-submission-polish.md` + baseline-audit §R.26 (this row) + CONSOLIDATED §15.35.
+
+**Acceptance gates preserved:**
+
+- `pytest tests/ -k "d4" -q` → **33/33 PASS** preserved (no code changed).
+- `ruff check adaptive_reflow/ tests/` → **All checks passed!** preserved (Wave 131 freeze).
+- `python tools/check_claims_consistency.py` → **PASS** preserved (39 active, 0 provisional, 2 deprecated, **No drift detected**).
+- `mkdocs build --strict` → **EXIT=0** verified at Phase 4 close.
+- All §10.4 / §S7.2 / §S4.3 additions cite verifiable source paths (`docs/audit/waveNN-*.md`, `docs/headline-evidence/<subdir>/SOURCE.md`, `verification_outputs/<file>.json`).
+
+**Camera-ready deferred (UNCHANGED):** mypy 988 hand-fix (CLM-024 acknowledges); Wan2.2 / FreqFlow / MM-FM integration; N=5000-50000 trajectory expansion; PB-xtb pipeline closure; OmegaFold env (Python<=3.10); LineageFlow novelty_mmseqs2 (Pfam fastas placeholder); Wave 86 LineageFlow N=1000 HMMER raw JSON (camera-ready re-run ~30 min); LineageFlow foldability + self_consistency N=1000 (~25 h per arm CPU).
+
+**Freeze marker:** HEAD after Wave 136 final close is `v1.0.1-paper-final` (tag set at Wave 134 close, commit `58930ef`) + Wave 135 /tmp/-resident extension (6 atomic Phases) + Wave 136 final submission polish (3 prior-agent commits + this Phase 4 final synthesis). All Wave 136 commits are **docs-only** — no source code changes, no measurement delta, no algorithm activation. **Tier-1 SCI submission ready.**
+
+**HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 3 prior-agent commits preserve pre-Wave-136 content (Phase 1 §10.4 appended after the existing §10.1-§10.3 content; Phase 2 §S7.2 appended after §S7.1; Phase 3 §S4.3 appended after §S4.2); NO source code changes; NO experiments; single atomic Agent 4 commit titled "Wave 136: final submission polish close - audit doc + baseline R.26 + CONSOLIDATED 15.35".
+
+See `docs/audit/wave136-submission-polish.md` (full Wave 136 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.35 + `docs/paper-draft.md` §10.4 (known negative surface) + `docs/supplementary.md` §S7.2 (LineageFlow provenance) + §S4.3 (CIFAR-10 provenance) + `docs/audit/wave135-headline-evidence.md` (predecessor wave).
