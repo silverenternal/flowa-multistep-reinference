@@ -228,6 +228,9 @@ A pre-trained model plugs into layer 4; layers 1–3 are model-agnostic.
 The JMAA theory [Li 2026] enters through the three new schedulers in
 layer 3 and is verified end-to-end through the evaluator in layer 1.
 
+<!-- FIG 1: docs/figures/fig1_flowa_architecture.png -->
+**Figure 1**: FlowA architecture overview. The framework is composed of 4 typed Protocols (`SchedulerProtocol`, `PolicyDriverProtocol`, `MergeOperatorProtocol`, `RestartBlenderProtocol`), 17 typed state machines, and 333 typed transitions. The `CodimensionSheetScheduler` consumes the four paper quantities $(A_g, B_g, C_g, e_\rho)$ from Li 2026.
+
 ### §2.6 DERIV-001 hyperparameter-free principle
 
 FlowA's DERIV-001 principle treats every per-round hyperparameter as a
@@ -382,6 +385,9 @@ stateDiagram-v2
 
 The runner's lifecycle machine makes the four feedback loops *typed
 transitions in the audit trail* rather than implicit control flow.
+
+<!-- FIG 2: docs/figures/fig2_algorithm_flow.png -->
+**Figure 2**: FlowA inference-time re-inference loop schematic. The flow shows the multi-round restart-blend pipeline (Prior → multi-round 1 → copy+perturb → multi-round 2 → ... → multi-round K → endpoint) with paper-quantity-driven β scheduling grounded in JMAA Theorem 1 (BL-convergence).
 
 ### §3.6 Reproducibility infrastructure
 
@@ -2072,6 +2078,9 @@ changes with NFE budget, the endpoint does not.
 | 1000 |       3 |         +0.169 |         0.017 |                      1.000 |                       1.000 |
 | 2000 |       3 |         +0.169 |         0.017 |                      1.000 |                       1.000 |
 
+<!-- FIG 4: docs/figures/fig4_kanzi_composite_nfe.png -->
+**Figure 4**: Kanzi composite axis across NFE budget (3 seeds × 6 NFE = 18 cells). The framework's composite is byte-stable across the entire NFE sweep (σ = 0 within seed) because the Kanzi adapter's `solve_ode` reads `trajectory[-1]` as a deterministic function of `(seed, model_weights)` — only the trajectory resolution changes with NFE. The figure shows composite-axis values for seeds 42, 43, 44 at NFE ∈ {10, 50, 200, 500, 1000, 2000}.
+
 **Reading.** The composite is **identical at every NFE** — per-seed
 σ(composite) within seed = 0.000000 across the 6 NFE values. Baseline
 `protein_sequence_validity_rate = 1.000` at every NFE → baseline has
@@ -3350,6 +3359,9 @@ Wave 70 N=10 budget):
 | `fg_dev` | 0.27 | 0.6381 | **0.6146** | **−0.0235** | **framework closer to paper** (Δ > MDD 0.016, **statistically significant** p<0.05, ~4.05σ) |
 | `ood_ring_rate` | 0.10 | 0.0130 | 0.0100 | −0.0030 | baseline closer to paper (|Δ| < MDD 0.026, NOT statistically distinguishable) |
 
+<!-- FIG 3: docs/figures/fig3_flowmol3_paper_metric.png -->
+**Figure 3**: FlowMol3 paper-metric baseline vs framework (N=1000, NFE=50). Bar chart of the 4 paper-parity metrics on the Wave 82 / Wave 87 byte-stable reproduction. Framework improves on `fg_dev` (4.05σ), ties at saturation on `validity_pct`, regresses on `pb_validity_pct` (UFF-vs-xtb definitional gap), and ties within noise on `ood_ring_rate`.
+
 **Per-metric framework verdict tally (Wave 82 Phase 3, paper-metric protocol):**
 
 - `n_framework_improves`: **1** (`fg_dev` — framework reduces deviation from paper by 0.024, statistically significant)
@@ -3713,6 +3725,15 @@ Ablation source: `verification_outputs/ablation_q4_2026.json` (Wave 52 Agent B; 
 | MNIST flow-matching | **mnist_fm** (pretrained FM, CristianLazoQuispe ckpt) | 1000 | **SUPPORTED** on FID (−15.01%, baseline 409.18 → framework 347.75) | n/a (composite axis not applicable to FID) | **SUPPORTED** (Tier 2 — 1/1 axis Bonf-sig) |
 
 **Domain coverage summary:** 6 axes across 4 Tier 3 + 3 Tier 1 + 1 Tier 2 domain (Kanzi + LineageFlow + FlowMol3 + 2D Two Moons + 2D Eight Gaussians + CIFAR-10 RF + MNIST FM). Headline: **6/13 paper-metric axes Bonferroni-significant framework_improves** (LineageFlow HMMER + FlowMol3 fg_dev + 2D Two Moons + 2D Eight Gaussians + CIFAR-10 v2 NFE-averaged + MNIST FM); **3/3 Tier 3 composite axes byte-stable framework_improves** (Kanzi + LineageFlow + FlowMol3). Honest negatives documented in §7.6.5 (FlowMol3 `pb_validity_pct` UFF-vs-xtb gap; CIFAR-10 RF v4 matched-NFE=50 cosine ramp; Kanzi framework_inv_proj 0.0222 Å within FSQ noise; LineageFlow `top1_family_type` zero by construction).
+
+<!-- FIG 5: docs/figures/fig5_power_per_cell.png -->
+**Figure 5**: Statistical power per-cell (Wave 93 power analysis, 11 axes). Bars show delta (framework - baseline) with SEM error bars; cells colored by verdict (TIE blue, UNDERPOWERED yellow, POWERED green). The single POWERED cell is `lineageflow:hmmscan_total_hits` (Δ=+184, Bonf p<1e-10). 4 cells are UNDERPOWERED at the 1pp effect-size floor, including `flowmol3:pb_validity_pct` (real REGRESS on this axis, 1pp floor absorbs it) and `flowmol3:fg_dev` (real improvement, but within SEM at N=1000).
+
+<!-- FIG 6: docs/figures/fig6_tier3_verdict_distribution.png -->
+**Figure 6**: Tier 3 paper-metric verdict distribution per model (3 models). Stacked bars show the count of paper-metric axes in each verdict category (framework_improves / ties / regresses / NOT_MEASURABLE or blocked). The framework's value-add is asymmetric: LineageFlow shows the strongest SUPPORTED story (1/6 axes Bonf-sig + 2/6 ties), FlowMol3 shows a mixed story (1/4 SUPPORTED + 1/4 REGRESSES on the UFF-vs-xtb pipeline gap + 2/4 TIES), and Kanzi shows 4/4 NOT_MEASURABLE on the paper-metric axis (composite axis is the story instead).
+
+<!-- FIG 8: docs/figures/fig8_cross_paper_metric_heatmap.png -->
+**Figure 8**: Cross-paper-metric delta heatmap (framework - baseline) across 3 Tier 3 models × 6 paper-metric axes. Color scale is delta (blue = framework improves / reduces distance to paper, red = framework regresses / moves away from paper). NaN cells indicate NOT_MEASURABLE on that model×axis combination (e.g. all 4 Kanzi paper-metric cells are blocked by the Wave 88 F-3 structural bridge constraint).
 
 **Per-claim evidence trails from Wave 58 onward (ADDITIVE — not deleted by the Wave 131 reframe above; preserved as the per-claim detailed audit history).**
 
@@ -4532,6 +4553,9 @@ same quality. Data: `verification_outputs/kanzi_nfe_scan_q4_2026.json`,
 consistency: `none`** — no model shows a convergence speedup, so the
 claim is not "supported on some models and not others"; it is simply
 absent everywhere.
+
+<!-- FIG 7: docs/figures/fig7_composite_signed_mean.png -->
+**Figure 7**: Framework composite-axis improvement by model (internal glue-layer composite, byte-stable σ=0 or 3-run byte-identical). Bars show signed delta (% framework improvement) on the Kanzi, LineageFlow, and FlowMol3 internal composite axes. All 3 models show framework improvement on this axis, distinct from the paper-metric axis where only LineageFlow and FlowMol3 show Bonferroni-significant framework_improves.
 
 **The three `1.0` readings are numerically identical but
 epistemically different, and conflating them would be the trap.** On
