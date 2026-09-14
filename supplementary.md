@@ -214,6 +214,10 @@ N=1000 queued (~16.7 h CPU on `kanzi_venv`, or ~10× fewer hours on GPU
 if FSQ decode path can be JIT'd). See `docs/audit/wave109-d-paper-package-update.md`
 §3 + `docs/CONSOLIDATED_RESULTS.md` §15.19.
 
+### S3.7 Wave 133 Kanzi cross-doc consistency (additive)
+
+**Wave 133 Phase 1 cross-doc consistency note (additive; does NOT delete or rewrite any prior Wave content).** Two Kanzi numbers are cross-cited from this section into `docs/paper-draft.md` + `cover_letter.md` + `docs/CONSOLIDATED_RESULTS.md` + `docs/baseline-audit-report.md` and are restated here for self-containment: (a) Kanzi **internal composite axis +0.1695** byte-stable σ=0 across 18 cells (3 seeds × 6 NFE 10…2000) — source `verification_outputs/kanzi_nfe_scan_q4_2026.json` (`aggregate.composite_median=0.170175`, `aggregate.composite_verdict=framework_improves`); cross-cited in `docs/CONSOLIDATED_RESULTS.md` §15.6 + `docs/baseline-audit-report.md` §R.7. (b) Kanzi **`reconstruction_kabsch_rmsd_A` framework_inv_proj N=1000 = 0.8798 Å ± 0.1364 Å** (Wave 128 N=1000 REAL reading; Δ = −0.0222 Å vs baseline 0.9020 Å ± 0.1375 Å, TIES inside FSQ quantization noise band) — source `/tmp/w127/framework_inv_proj_seed42/kanzi_n1000_framework_paper_metrics.json` (4835.0 s, 4.835 s/record, 1000/1000 zero-skipped, deterministic); cross-cited in `docs/CONSOLIDATED_RESULTS.md` §15.28 + `docs/baseline-audit-report.md` §R.19 + `docs/audit/wave127-finish-line.md`.
+
 ---
 
 ## S4. LineageFlow audit — Wave 81 + 82 + 83
@@ -294,6 +298,10 @@ with a 1-cell smoke first; expected per-arm wallclock ~25-30 min based
 on the smoke-test extrapolation (nfe=50 took 5 min; nfe=250 = 5× bigger;
 2 h cap). The +116% headline claim does not depend on a re-run — it
 reproduces at nfe=50 / N=2 per arm / Wave 81 smoke test.
+
+### S4.6 Wave 133 LineageFlow cross-doc consistency (additive)
+
+**Wave 133 Phase 1 cross-doc consistency note (additive; does NOT delete or rewrite any prior Wave content).** LineageFlow **internal composite axis +0.2083** byte-stable across 8/9 cells (3 seeds × 3 NFE; one cell BLOCKED on upstream-deps per Wave 47) is cross-cited from this section into `docs/paper-draft.md` §7.6.2 + `cover_letter.md` TL;DR + §1 contribution bullet and is restated here for self-containment — source `verification_outputs/lineageflow_v2_aggregated_q4_2026.json` (`aggregate.composite_median=0.20312494925931135`, `aggregate.composite_verdict=framework_improves`, `n_real_computed=8`, `n_synthetic_fallback=0`, `aggregate.verdict_overall=framework_improves`); cross-cited in `docs/paper-draft.md` §7.6.2 + `cover_letter.md` line 21 + line 77 + `docs/audit/wave47-lineageflow-v2.md` + `docs/audit/wave69-lineageflow-gpu.md` + `docs/audit/wave75-phase6-final.md` (Table 1).
 
 ---
 
@@ -398,6 +406,10 @@ the Wave 109.C failed-run path and produce a fresh N=1000 baseline
 trail (per-batch DGLError trace + cross-batch-size confirmation + Wave
 87 vs Wave 109.C comparison + Wave 110 follow-up plan + per-arm JSON
 + per_metrics.jsonl).
+
+### S5.7 Wave 133 FlowMol3 cross-doc consistency (additive)
+
+**Wave 133 Phase 1 cross-doc consistency note (additive; does NOT delete or rewrite any prior Wave content).** FlowMol3 **internal composite axis +0.1182** 3-run byte-identical at seed=42 / NFE=50 / n_molecules=10 (Wave 74 F.5) is cross-cited from this section into `docs/paper-draft.md` §7.6.2 + `cover_letter.md` TL;DR + §1 contribution bullet and is restated here for self-containment — source `verification_outputs/flowmol3_real_composite_q4_2026.json` (Wave 74 F.5 3-run byte-identical sweep, n_molecules=10, seed_base=42, perturbation_sigma=0.05) cross-cited in `docs/CONSOLIDATED_RESULTS.md` §15.6 + `docs/audit/wave74-phase5-sweep.md` + `docs/audit/wave74-phase6-final.md`. Same-source fg_dev per-arm numbers `baseline=0.6381` / `framework=0.6146` (Δ = −0.0235, 4.05σ, p<0.05, framework_improves) — source `verification_outputs/flowmol3_n1000_baseline_q4_2026.json` (Wave 87 N=1000, n_sampled=999, seed=42) + `verification_outputs/flowmol3_n1000_framework_q4_2026.json` (Wave 87 N=1000, n_sampled=1000, seed=42) + byte-stable Wave 90 re-run `verification_outputs/flowmol3_n1000_*_wave87_q4_2026.json` (Δ≤1e-15).
 
 ---
 
