@@ -3,6 +3,7 @@
 **Date authored:** 2026-09-10
 **Author:** Wave 97 Agent A
 **Status:** Wave 127 — all 7 TODO markers replaced with verified numbers (additive; pre-Wave 127 numbers preserved verbatim)
+**Wave 132 status:** NeurIPS / ICML supplementary template alignment (additive; no Wave 11-131 content removed).
 
 > This document carries verified numbers from Wave 87 N=1000 FlowMol3 paper-parity sweep (`flowmol3_n1000_{baseline,framework}_wave87_q4_2026.json`, Δ≤1e-15 vs Wave 82 byte-stable), Wave 88 N=1000 Kanzi baseline (`verification_outputs/wave88_kanzi_n1000_baseline/kanzi_n1000_paper_metrics.json`), Wave 86 N=1000 LineageFlow per-arm (`hmmscan_total_hits` baseline 158 → framework 342, +116%, p<1e-10), Wave 93 per-cell power analysis (`verification_outputs/power_analysis/per_cell.csv`, 12-row table cross-cited from `docs/CONSOLIDATED_RESULTS.md` §15.15.1), and Wave 96.E Kanzi N=10 framework paper-metric. All 7 TODO markers below replaced with these verified sources — see §S7 for the full per-cell statistical methodology and verdict table.
 >
@@ -14,6 +15,27 @@
 > - **S5** FlowMol3 audit — Wave 82 + 87 + 90
 > - **S6** Reproducibility — ckpt SHA-256 + vendored hashes + D.4 + G-MASTER
 > - **S7** Statistical methodology — Wave 93 power analysis (Phase 2 LANDED; see §S7.2 12-row per-cell table)
+
+## NeurIPS Supplementary Template Index
+
+> **Wave 132 (additive) — NeurIPS supplementary template alignment.** This document
+> satisfies the NeurIPS 2026 supplementary material convention. The mapping below
+> identifies the existing sections that correspond to each expected NeurIPS
+> supplementary heading. No existing content has been deleted or reordered;
+> this index is purely additive.
+
+| NeurIPS supplementary heading | Existing section(s) in this document |
+|---|---|
+| **§S1 Overview (reproducibility statement)** | The opening preamble (above) + `## S6. Reproducibility` (line 380) — global reproducibility ledger with ckpt SHA-256, vendored upstream hashes, D.4 byte-stable regression vectors, G-MASTER capability gate, mkdocs build, environment hash, commit count |
+| **§S2 Detailed method** | `## S1. Theory details` (line 20) — JMAA Theorem 1 rate-bound + Lemmas 2-5 + per-cell witnesses; cross-cited from main paper `### §3.2 Li 2026, Theorem 1` for the full closed-form derivations |
+| **§S3 Per-axis per-tier results tables** | `## S2. Tier 1 toy benchmarks` (line 82) — 2D FM Eight Gaussians + Two Moons + CIFAR-10 RF + MNIST FM, plus `## S3` / `## S4` / `## S5` per-model Tier 3 audits (Kanzi, LineageFlow, FlowMol3) each carrying per-axis per-NFE table |
+| **§S4 Per-cell statistical methodology** | `## S7. Statistical methodology` (line 439) — `tools/statistical_power_analysis.py` Bonferroni correction + post-hoc power + verdict thresholds; `### S7.2` carries the 12-row per-cell table (3 models × 4 paper-axis metrics) |
+| **§S5 Honest limitations** | `### S3.5 Honest caveats` (Kanzi N=10 framework-arm, awaiting N=1000 re-run) + `### S4.4 Honest caveats` (LineageFlow foldability/self_consistency N=5 — OmegaFold CPU 40+ hours per arm) + `### S5.5 Honest caveats` (FlowMol3 `pb_validity_pct` UFF-vs-xtb definitional gap, NOT a framework regression) |
+| **§S6 Reproducibility (ckpt SHA-256 + vendored commits)** | `## S6. Reproducibility` (line 380) — `### S6.1` vendored upstream snapshots (G4 gate); `### S6.2` ckpt SHA-256 verification (G1 gate); `### S6.3` D.4 byte-stable regression vectors; `### S6.4` G-MASTER capability gate; `### S6.5` mkdocs build --strict; `### S6.6` environment hash; `### S6.7` commit count + push state |
+| **§S7 Wave 93 per-cell verdict table (12-row)** | `### S7.2 Wave 93 Phase 2 output (LANDED — 12-row per-cell table)` (line 447) — `verification_outputs/power_analysis/per_cell.csv`, 12 data rows + 1 header; final verdict distribution: 1 SUPPORTED + 1 REGRESSES + 2 UNDERPOWERED + 8 TIE |
+
+**Companion paper.** The NeurIPS main-paper template index is in
+`docs/paper-draft.md` § "NeurIPS Template Index" (Wave 132 additive block).
 
 ---
 

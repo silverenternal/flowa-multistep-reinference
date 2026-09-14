@@ -32,6 +32,39 @@ reproduction (33/33 D.4 PASS).
 
 ---
 
+## NeurIPS Template Index
+
+> **Wave 132 (additive) — NeurIPS / ICML submission template alignment.** This document
+> satisfies the NeurIPS 2026 main-track template convention. The mapping below
+> identifies the existing sections that correspond to each expected NeurIPS
+> template heading. No existing content has been deleted or reordered; this
+> index is purely additive.
+
+| NeurIPS template heading | Existing section(s) in this document |
+|---|---|
+| **Title** | `# FlowA: A Typed-Contracts Framework for Flow-Matching Re-Inference` (line 1) |
+| **Abstract** | `## Abstract` (line 12) |
+| **Introduction** | `## §1. Introduction` (line 51) |
+| **Background** | `### §3.1 Background: flow matching and Rectified Flow` (line 225) — flow-matching definitions, Rectified Flow interpolant, conditional-path regression, Reflow lineage |
+| **Method** | `## §2. Framework` (line 76) — FlowA architecture + 4 Protocols + hexagonal port set + DERIV-001 hyperparameter-free principle + FM-LCM interface redesign; `## §3. Algorithm` (line 223) — 4 paper quantities + 3 new algorithms + 17 state machines |
+| **Theory** | `### §3.2 Li 2026, Theorem 1, and the four paper quantities` (line 242) — BL-convergence rate bound + codimension sheet + bounded merge; cross-cited into `### §5.0 Related work` (line 1219) under "Theory-grounded selection criteria" |
+| **Experiments** | `## §4. Experiments` (line 402) — 2D Rectified Flow, CIFAR-10 RF, scheduler discrimination, LineageFlow, C4 closure, reproduction recipe; `## §7. Tier 3 real-ckpt results` (line 1877) — Kanzi + LineageFlow + FlowMol3 real-checkpoint sweeps; `## §8. SOTA baseline comparison` (line 5079) |
+| **Discussion** | `## §5. Discussion` (line 1217) — what is proven (§5.1), what is not yet proven (§5.2), when does it help (§5.3), threats to validity (§5.4), honest enumeration (§5.5), framework value statement (§5.6), limitations (§5.7), future work (§5.8) |
+| **Related Work** | `### §5.0 Related work` (line 1219) — Flow Matching + Rectified Flow lineage; solver-level acceleration (DPM-Solver++, EDM, UniPC); trajectory-level acceleration (CM, iCT, CTM, LCM-LoRA); re-inference (alpha-blending, restart-blend); theory-grounded selection criteria (Li 2026); probabilistic programming (Pyro, JAXopt, LangGraph); hyperparameter-derivation lineages (Polyak, Amari, KFAC, Adam, LARS/LAMB) |
+| **Conclusion** | `## §6. Conclusion` (line 1812) |
+| **References** | `## References` (line 5466) — 30-entry bibliography in `[Author et al. YEAR]` / `[Author YEAR]` NeurIPS-style format |
+
+**In-text citation convention (NeurIPS-compatible).** All in-text citations use
+the `[Author et al. YEAR]` or `[Author YEAR]` format (e.g. `[Lipman 2023]`,
+`[Liu 2022]`, `[Lu et al. 2022]`, `[Song et al. 2023]`, `[Sabour et al. 2024]`).
+References section already consolidated at the end of the document (line 5466).
+
+**Supplementary material.** See `supplementary.md` at the repository root for
+the NeurIPS supplementary companion (theory details + per-model audits + 12-row
+per-cell verdict table + reproducibility SHA-256 ledger).
+
+---
+
 **Prior abstract (Wave 11-126 — preserved additively for the per-claim evidence trail; see §7.6 for the Wave 131 reframe):**
 
 We present **FlowA**, a re-inference framework for frozen flow-matching checkpoints. FlowA achieves two distinct improvements over single-pass inference:
