@@ -4481,3 +4481,19 @@ Wave 143 is the **Tier-1 SCI submission metric-count alignment** wave that close
 - Tier-1 SCI submission package ready (8 tables + 17 figures + Kim2025 reference + byte-stable reproducibility + honest negative surface)
 
 See `docs/audit/wave143-tier1-metric-alignment.md` (full Wave 143 audit trail + Phase 0-4 ledger + camera-ready deferred list) + `docs/baseline-audit-report.md` §R.31 (Wave 143 ledger row) + `docs/paper-draft.md` §7.6.6 (Phase 1 8 tables A-H) + `docs/figures/README.md` (Phase 2/3 figure manifest) + `README.md` + `docs/headline-evidence/README.md` (Phase 4 figure + table counts) + `docs/audit/wave140-docstring-audit.md` (predecessor wave).
+
+### §15.41 Wave 144 — Push 18 commits + fix 3 Kanzi baseline JSONs + generate NeurIPS-style PDF (2026-09-14)
+
+Wave 144 is the **paper-submission-readiness close-out** wave that finally closes the 7-wave push-backlog (Phase 1), force-adds the 3 Wave-134-migration-lost Kanzi baseline JSONs (Phase 2), and produces a NeurIPS-style placeholder PDF for OpenReview upload (Phase 3). Phase 4 (this commit) performs final synthesis. 4 atomic Phases total. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
+
+Key Wave 144 deliverables:
+
+- **18 commits pushed to origin/main (Phase 1)** — closes the 7-wave push-backlog (Wave 137-143); `git log origin/main..HEAD` returns empty post-push; first push since Wave 136.
+- **3 Kanzi baseline JSONs force-added via `git add -f` (Phase 2)** — `verification_outputs/kanzi_n1000_baseline_seed{42_wave116,42_wave120,7_wave121}_q3_2026/`; closes Wave 143 Phase 0 honest finding (Wave 134 migration bug); restores byte-stable reproducibility provenance chain.
+- **Placeholder PDF generated (Phase 3)** at `docs/paper-final-neurips.pdf` (1,209,393 bytes, 117 pp); build pipeline: `docs/build_pdf/md_to_tex.py` → `pdflatex` → `docs/build_pdf/paper.pdf` → copied to `docs/paper-final-neurips.pdf`; source markdown `docs/paper-final-neurips.md` (547,600 bytes, canonical).
+- **Phase 4 (this commit)** — audit doc `docs/audit/wave144-push-and-fix.md` + baseline-audit §R.32 + this §15.41 + atomic commit.
+- **All gates preserved** — ruff 0, D.4 33/33, claims_consistency PASS, mkdocs strict EXIT=0.
+- **Honest limitation:** pandoc is absent + NeurIPS CDN URLs return 404. Placeholder PDF is sufficient for OpenReview upload (PDF format); full NeurIPS-style `.tex` rewrite (~6-8 h CPU) deferred to camera-ready scope.
+- **Tier-1 SCI submission OpenReview upload ready** — PDF + supplementary + code archive + Kim2025-aligned metric count + honest negative surface all in place.
+
+See `docs/audit/wave144-push-and-fix.md` (full Wave 144 audit trail + Phase 1-4 ledger + acceptance gates + camera-ready deferred list) + `docs/audit/wave144-agent3-pdf-generation.md` (Phase 3 detailed PDF toolchain audit + converter table + 6 honest limitations) + `docs/baseline-audit-report.md` §R.32 (Wave 144 ledger row) + `docs/paper-final-neurips.pdf` (Phase 3 placeholder PDF, 117 pp) + `docs/paper-final-neurips.md` (canonical source) + `docs/audit/wave143-tier1-metric-alignment.md` (predecessor wave) + `docs/CONSOLIDATED_RESULTS.md` §15.40 (Wave 143 close section).
