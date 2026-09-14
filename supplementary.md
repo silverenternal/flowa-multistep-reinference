@@ -13,7 +13,7 @@
 > - **S4** LineageFlow audit — Wave 81 + Wave 82 (FlowMol3 cross-cited) + Wave 84 (OmegaFold LineageFlow foldability N=5 smoke)
 > - **S5** FlowMol3 audit — Wave 82 + 87 + 90
 > - **S6** Reproducibility — ckpt SHA-256 + vendored hashes + D.4 + G-MASTER
-> - **S7** Statistical methodology — Wave 93 power analysis (placeholder for Phase 2 output)
+> - **S7** Statistical methodology — Wave 93 power analysis (Phase 2 LANDED; see §S7.2 12-row per-cell table)
 
 ---
 
@@ -434,9 +434,9 @@ A reviewer can re-verify with the `sha256` field of each `verification_outputs/*
 
 ---
 
-## S7. Statistical methodology — Wave 93 power analysis (placeholder)
+## S7. Statistical methodology — Wave 93 power analysis (Phase 2 LANDED)
 
-> **This section is a PLACEHOLDER** for Wave 93 Phase 2 output. The Phase 1 tool (`tools/statistical_power_analysis.py`) is committed in `e69ffd8`; Phase 2 will run the per-cell power analysis on all 12 cells (3 models × 4 paper-axis metrics) and write the per-cell table here.
+> Wave 93 Phase 2 output is LANDED — see §S7.2 below for the 12-row per-cell table from `verification_outputs/power_analysis/per_cell.csv` (Wave 93 Agent B, regenerated 2026-09-09; 12 data rows + 1 header). The Phase 1 tool (`tools/statistical_power_analysis.py`) is committed in `e69ffd8`; Phase 2 ran the per-cell power analysis on all 12 cells (3 models × 4 paper-axis metrics) and wrote the per-cell table below.
 
 ### S7.1 Tool surface
 
