@@ -480,6 +480,13 @@ A reviewer can re-verify with the `sha256` field of each `verification_outputs/*
 
 ### S7.2 Wave 93 Phase 2 output (LANDED — 12-row per-cell table)
 
+**Provenance note:** The on-disk `verification_outputs/lineageflow_n1000_{baseline,framework}_q4_2026.json`
+files contain Wave 81 N=2 per arm data (the sweep was killed after 1 of 100 cells
+due to per-cell wallclock ~3 min). The canonical N=1000 +116% `hmmscan_total_hits`
+headline (baseline 158 -> framework 342, p < 1e-10) is sourced from
+`docs/audit/wave86-phase3-sweep.md` §2. A fresh re-run on the v1.0.1-paper-final
+freeze-marker commit is on the camera-ready deferred list.
+
 <!-- Wave 127 verified (additive) — per-cell table replaced with the actual Phase 2 output. Source: `verification_outputs/power_analysis/per_cell.csv` (Wave 93 Agent B, regenerated 2026-09-09) — 12 data rows + 1 header. Full table cross-cited from `docs/CONSOLIDATED_RESULTS.md` §15.15.1.
 
 | model | metric | N | baseline | framework | Δ (pp) | 95% CI (pp) | p (raw) | p (Bonf) | power@1pp | verdict |
