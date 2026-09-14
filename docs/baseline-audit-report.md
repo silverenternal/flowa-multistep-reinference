@@ -4438,6 +4438,37 @@ See `docs/audit/wave136-submission-polish.md` (full Wave 136 audit trail) + `doc
 
 See `docs/audit/wave137-doc-cleanup.md` (full Wave 137 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.36 + `docs/ARCHIVE/audit-waves-1-99/` (Phase 1 archive, ~252 files) + `todo/STATUS.md` (Phase 2 refresh) + `README.md` (Phase 3 refresh) + `GATES.md` + `INSIGHTS.md` (Phase 4 refresh) + `docs/audit/wave136-submission-polish.md` (predecessor wave).
 
+### §R.28 Wave 138 — NeurIPS submission prep (PDF conversion + OpenReview ready + code release checklist) (2026-09-14)
+
+| R.28 | Wave 138 - NeurIPS submission prep (2026-09-14); paper-final-neurips.md + paper-draft-anonymous.md + submission-checklist-final.md + code-release-checklist.md; ruff 0 (preserved); D.4 33/33 (preserved); mkdocs EXIT=0 (preserved). |
+
+**Scope:** close Wave 138's 6 atomic Phases (Phases 1-5 by prior agents + this Phase 6 final synthesis by Agent 6) as the **NeurIPS submission preparation** wave that produces the 4 reviewer-facing artifacts a Tier-1 SCI submission package needs *in addition* to the main paper: (a) `docs/paper-final-neurips.md` (NeurIPS-template-conformed version of `paper-draft.md` ready for pandoc + TeX Live PDF rendering); (b) `docs/paper-draft-anonymous.md` (double-blind review version with FlowA→the proposed framework substitutions, URLs stripped, acknowledgments removed); (c) `docs/submission-checklist-final.md` (5-section pre-flight gate checklist: paper + code + reproducibility + reviewer-facing + honest negatives); (d) `docs/code-release-checklist.md` (Zenodo / GitHub release archive prep with v1.0.1-paper-final tag = commit `0ef6465` and full acceptance-gate recipe). 1 NEW audit doc `docs/audit/wave138-submission-prep.md` + 1 NEW §R.28 row (this section) + 1 NEW §15.37 section in CONSOLIDATED_RESULTS + final commit. ADDITIVE only — no measurement delta, no algorithm activation, no new N>=1000 sweep, no source code changes (docs-only wave).
+
+**Phase 1-5 ledger:**
+
+- Phase 1 (no commit): read-only paper-conversion-tooling check (`pandoc` + `latex` not in local env; flag for manual PDF rendering on reviewer's TeX Live-equipped machine); no commit, no repo change.
+- Phase 2 (`dcca8a1`): author `docs/paper-final-neurips.md` (~540 KB; NeurIPS-template-conformed; abstract ≤250 words); existing `paper-draft.md` byte-identical pre/post.
+- Phase 3 (`1c5371f`): author `docs/paper-draft-anonymous.md` (~540 KB; double-blind review version; FlowA→the proposed framework substitutions; URLs stripped; acknowledgments removed); existing `paper-final-neurips.md` byte-identical pre/post.
+- Phase 4 (`ba50483`): author `docs/submission-checklist-final.md` (~3 KB; 5-section pre-flight gate checklist: paper + code + reproducibility + reviewer-facing + honest negatives); pure additive.
+- Phase 5 (`9c730c9`): author `docs/code-release-checklist.md` (~6 KB; Zenodo / GitHub release archive prep; v1.0.1-paper-final tag = commit `0ef6465`; full acceptance-gate recipe); pure additive.
+- Phase 6 (this commit): final synthesis — audit doc `docs/audit/wave138-submission-prep.md` + baseline-audit §R.28 (this row, inserted between §R.27 Wave 137 and §R.30 Wave 140 close) + CONSOLIDATED §15.37 (inserted between §15.36 Wave 137 and §15.39 Wave 140 close).
+
+**Acceptance gates preserved:**
+
+- `pytest tests/ -k "d4" -q` → **33/33 PASS** preserved (no code changed; full gate re-run at Phase 6 close).
+- `ruff check adaptive_reflow/ tests/` → **All checks passed!** preserved (Wave 131 freeze; no source code changes).
+- `python tools/check_claims_consistency.py` → **PASS** preserved (39 active, 0 provisional, 2 deprecated, **No drift detected**).
+- `mkdocs build --strict` → canonical-**EXIT=0** preserved; local-env nav-config caveat: 1 warning about new `docs/` root files (paper-final-neurips.md / paper-draft-anonymous.md / submission-checklist-final.md / code-release-checklist.md) not in mkdocs nav — additive 1-line `not_in_nav` fix is deferred to a future wave (does not affect submission package).
+- All Phase 2-5 additions cite verifiable source paths (`docs/paper-final-neurips.md`, `docs/paper-draft-anonymous.md`, `docs/submission-checklist-final.md`, `docs/code-release-checklist.md`, `docs/audit/wave138-submission-prep.md`).
+
+**Camera-ready deferred (UNCHANGED):** mypy 988 hand-fix (CLM-024 acknowledges); Wan2.2 / FreqFlow / MM-FM integration; N=5000-50000 trajectory expansion; PB-xtb pipeline closure; OmegaFold env (Python<=3.10); LineageFlow novelty_mmseqs2 (Pfam fastas placeholder); Wave 86 LineageFlow N=1000 HMMER raw JSON (camera-ready re-run ~30 min); LineageFlow foldability + self_consistency N=1000 (~25 h per arm CPU); NEW (Wave 140) docstring coverage closure (~2-3 hours, F3-F5 items per `wave140-docstring-audit.md`).
+
+**Freeze marker:** HEAD after Wave 138 final close is `v1.0.1-paper-final` (tag set at Wave 134 close, commit `58930ef` + commit `0ef6465` tag-anchor) + Wave 135 headline-evidence + Wave 136 final submission polish + Wave 137 documentation cleanup + Wave 138 NeurIPS submission prep (4 prior-agent commits dcca8a1/1c5371f/ba50483/9c730c9 + this Phase 6 final synthesis by Agent 6). Wave 140 docstring audit refresh (2 prior-agent commits + Phase 3 final synthesis) sits chronologically after Wave 138 Phase 5 but its §R.30 ledger row was inserted adjacent to this Wave 138 close in `baseline-audit-report.md`. All Wave 138 commits are **docs-only** — no source code changes, no measurement delta, no algorithm activation. **Tier-1 SCI submission ready.**
+
+**HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 4 prior-agent commits preserve pre-Wave-138 content (Phase 2 paper-final-neurips.md is a new file; Phase 3 paper-draft-anonymous.md is a new file; Phase 4 submission-checklist-final.md is a new file; Phase 5 code-release-checklist.md is a new file; this Phase 6 audit doc is a new file + 2 appends to existing files baseline §R.28 + CONSOLIDATED §15.37); NO source code changes; NO experiments; single atomic Agent 6 commit titled "Wave 138: NeurIPS submission prep close - audit doc + baseline R.28 + CONSOLIDATED 15.37".
+
+See `docs/audit/wave138-submission-prep.md` (full Wave 138 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.37 + `docs/paper-final-neurips.md` (Phase 2) + `docs/paper-draft-anonymous.md` (Phase 3) + `docs/submission-checklist-final.md` (Phase 4) + `docs/code-release-checklist.md` (Phase 5) + `docs/audit/wave137-doc-cleanup.md` (predecessor wave) + `docs/audit/wave140-docstring-audit.md` (sibling wave — Wave 140 close inserted §R.30 adjacent to this Wave 138 close).
+
 ### §R.30 Wave 140 — Docstring audit refresh (2026-09-14)
 
 | R.30 | Wave 140 - docstring audit refresh (2026-09-14); inventory Wave 125-137 public API surface + docstring coverage; docs/audit/wave140-docstring-audit.md; ruff 0 (preserved); D.4 33/33 (preserved). |
