@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-12
 **Author:** Wave 123 Agent 6 (READ-ONLY synthesis)
-**Status:** READ-ONLY synthesis (Wave 123 Agent 6); no further code in 7-day scope
+**Status:** READ-ONLY synthesis (Wave 123 Agent 6). CLOSED — no further code in 7-day scope.
 **Wave:** Wave 123 (this doc)
 **Scope:** High-level synthesis of *why* the framework does not consistently
 improve Tier 3 paper metrics, distilled from 4 prior audits + 5 hypothesis

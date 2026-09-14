@@ -2,6 +2,7 @@
 
 **Date:** 2026-09-14
 **Author:** Wave 142 (post-Wave 141 reference integration)
+**Status:** EXECUTED (Wave 143 — 8 numbered tables + 17 figures added to paper; Kim2025-aligned count achieved). Phase 0 honest finding (3 Kanzi baseline JSONs untracked) CLOSED via Wave 144 Phase 2 git add -f.
 **Goal:** Align FlowA paper's **table + figure + experiment-axis count** with Kim et al. NeurIPS 2025 ("Inference-Time Scaling for Flow Models via Stochastic Generation and Rollover Budget Forcing", [arXiv:2503.19385](https://arxiv.org/abs/2503.19385)).
 **Constraint:** Per user directive "在指标的量上和别人论文里指标的数量、表的数量对齐就行，写个计划，不是要求形式和指标类型相同，只是要求表格和做到数据的数量相同" — alignment is on **count**, not on **content type**.
 

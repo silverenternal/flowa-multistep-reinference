@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-12
 **Author:** Wave 123 Agent 6 (READ-ONLY synthesis; no implementation in Wave 123)
-**Status:** SHIPPED (Wave 122 P2 + Wave 127/128 N=1000 byte-reproducible); Kanzi framework_inv_proj N=1000 framework 0.8798 vs baseline 0.9020 (TIES, byte-reproducible on ruff-frozen code, Wave 131 Phase 3)
+**Status:** SHIPPED (Wave 122 P2 + Wave 127/128 N=1000 byte-reproducible). Kanzi framework_inv_proj N=1000 framework 0.8798 vs baseline 0.9020 (TIES, byte-reproducible on ruff-frozen code, Wave 131 Phase 3). Camera-ready: Kanzi N=1000 sweep at full Stage-4 protocol fidelity deferred.
 **Wave:** Wave 123+ candidate (this plan is detailed enough that a future
 wave can pick it up and ship)
 **Closes:** Wave 92c §5 (Kanzi framework arm NOT_MEASURABLE due to lossy
