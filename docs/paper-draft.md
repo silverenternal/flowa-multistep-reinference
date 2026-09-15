@@ -6547,6 +6547,84 @@ R1 +116% and R6 +1.12 / −3.92 headline numbers; this §10.6 table is the per-c
 metric inventory that surfaces them in a single self-contained form for reviewer
 convenience without requiring cross-references to §7.6 / §10.4 / §10.5.
 
+## §10.7 Limitations and Future Work (Wave 165 P1 ADDITIVE — does not delete or rewrite any §10.1–§10.6 paragraph above)
+
+This subsection makes the framework's honest negative surface explicit
+for Tier-1 SCI reviewer scrutiny. ADDITIVE — preserves every K1-K8
+disclosure, every R1-R6 verdict, every Wave 158 P2 sha256, every Wave
+161 P1 foldability number, every Wave 162 P4 metric-inventory row, and
+every Wave 163 P5 novelty_mmseqs2 disclosure verbatim above. No
+headline number in §7.6 or §10.4 changes as a result of this §10.7
+insertion.
+
+### §10.7.1 Limitations (Honest Negative Surface)
+
+The empirical evaluation of FlowA has the following acknowledged
+limitations:
+
+(a) **Sample-size ceiling.** All headline N=1000 results are bounded
+by single-GPU compute; we have not yet run N=5000–50000 trajectory
+expansions. Effect-size estimates are tight under Bonferroni correction
+at alpha=0.05/6=0.0083, but smaller effects (<0.5 sigma) may be
+undetectable at N=1000.
+
+(b) **Surrogate novelty DB.** The novelty_mmseqs2 metric was first run
+against a 200-sequence Pfam holdout (Wave 163); the canonical Pfam-A
+target DB (6.27 GB compressed, ~20 GB decompressed, downloaded from EBI
+in Wave 164) enables the canonical novelty sweep but is itself limited
+to Pfam-curated families — sequences outside Pfam coverage cannot be
+scored.
+
+(c) **Adapter coverage.** Five adapters are evaluated (twodim_fm /
+lineageflow / kanzi / flowmol3 / esm2); Wan2.2 / FreqFlow / MM-FM
+integration is deferred to PHASE-4 (post-submission). Cross-domain
+generalization beyond protein / 2D-manifold / molecular families is
+not directly tested.
+
+(d) **Theory is asymptotic.** JMAA Theorem 1 BL-convergence rate bound
+is derived under F-side hypotheses regime d in (0,inf), c in (0,1],
+rho in (0,d/4), eta in (0,inf) (§2.8). Finite-sample refinements are
+out of scope.
+
+(e) **Single-checkpoint Kanzi.** The Kanzi adapter was evaluated with
+one cleaned checkpoint (data/kanzi_ckpt/cleaned_model.pt). Cross-
+checkpoint variance is not measured.
+
+### §10.7.2 When FlowA does NOT improve (Failure Modes)
+
+Empirically observed failure modes of FlowA (relative to baseline):
+
+(i) **Very low NFE budget (NFE <= 50).** Framework_improves gain
+shrinks when NFE is so low that the paper-quantity-driven reflow
+budget itself cannot be exercised. Baseline and framework converge to
+similar quality at the lowest NFE regime.
+
+(ii) **Already-converged models.** When baseline sampling is already at
+the quality ceiling for a given task, framework improvements are
+marginal or zero. Framework value-add is largest when there is
+headroom.
+
+(iii) **Distribution-shifted targets.** Targets outside the model's
+training distribution may see baseline outperform framework if the
+paper-quantity estimator itself is mis-calibrated.
+
+(iv) **Per-family heterogeneity.** Not all Pfam families show
+framework_improves uniformly; some families show null or negative
+delta. Per-family breakdown is in §Ablations Appendix.
+
+### §10.7.3 Future Work
+
+- **PHASE-4 model integration:** Wan2.2 (video) / FreqFlow (frequency-
+  domain) / MM-FM (multimodal) adapters.
+- **N-trajectory expansion:** N=5000–50000 for tighter effect-size
+  estimates; compute-blocked.
+- **Beyond BL distance:** Wasserstein / total-variation bounds;
+  finite-sample theory refinements.
+- **Downstream functional evaluation:** binding affinity / activity
+  prediction / wet-lab validation.
+- **Independent replication:** third-party lab re-running the headline
+  R1–R6 with their own ckpts.
+
 ## §11. Broader Impact (camera-ready)
 
 **Positive.** FlowA is a **training-free, inference-time re-inference
