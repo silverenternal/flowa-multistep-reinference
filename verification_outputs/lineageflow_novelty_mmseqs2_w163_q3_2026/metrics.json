@@ -1,0 +1,18 @@
+{
+  "n_total": 1000,
+  "baseline": {
+    "n_with_hits": 77,
+    "n_novel_with_nohit": 1000,
+    "avg_min_e_hits_only": 2.7113003896103898,
+    "raw_m8_lines": 82
+  },
+  "framework": {
+    "n_with_hits": 25,
+    "n_novel_with_nohit": 1000,
+    "avg_min_e_hits_only": 4.95928,
+    "raw_m8_lines": 25
+  },
+  "delta_novel_count": 0,
+  "delta_novel_pct": 0.0,
+  "novelty_threshold_e_value": 0.001
+}

@@ -1,0 +1,53 @@
+{
+  "query_fasta": "/tmp/w158/lineageflow_real_fastas/framework.fasta",
+  "n_total": 1000,
+  "missing_family_headers": 0,
+  "n_with_family": 1000,
+  "ref_split": "train",
+  "scope": "all",
+  "coverage_thresholds": {
+    "min_qcov": 0.5,
+    "min_tcov": 0.3
+  },
+  "mmseqs": {
+    "binary": "/home/hugo/bin/mmseqs",
+    "threads": 8,
+    "sensitivity": 7.5,
+    "max_hits": 10,
+    "target_db": "data/lineageflow_upstream/databases/pfam35/pfam_holdout_targetDB",
+    "target_db_preexisted": true
+  },
+  "plddt_filter": null,
+  "ref_stats": null,
+  "hits": {
+    "hits_kept": 0,
+    "nohit_all": 1000,
+    "nohit_fam": 1000
+  },
+  "nnid_all": {
+    "mean": null,
+    "median": null,
+    "p10": null,
+    "p90": null
+  },
+  "nnid_fam": {
+    "mean": null,
+    "median": null,
+    "p10": null,
+    "p90": null
+  },
+  "novelty_all": {
+    "0.95": 1.0,
+    "0.8": 1.0,
+    "0.5": 1.0
+  },
+  "novelty_fam": {
+    "0.95": 1.0,
+    "0.8": 1.0,
+    "0.5": 1.0
+  },
+  "duplicates": {
+    "duplicate_all_rate": 0.0,
+    "duplicate_fam_rate": 0.0
+  }
+}
