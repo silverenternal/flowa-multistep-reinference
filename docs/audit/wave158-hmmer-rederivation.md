@@ -208,7 +208,7 @@ number.
 |---|---|
 | Wave | 158 P2 |
 | Date | 2026-09-15 |
-| Commit | (filled in after commit) |
+| Commit | `2ae8473` |
 | Author | Claude Code |
 | Headline | R1 +116% LineageFlow N=1000 HMMER re-derivation |
 | baseline_hits | 158 |
