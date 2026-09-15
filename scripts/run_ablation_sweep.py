@@ -333,7 +333,18 @@ def _make_adapter(model_spec: dict[str, Any],
     any user request to run the real-ckpt path. The kanzi
     re-instantiation below also now inherits the same ``force_mode``
     (was ``"auto"``).
+
+    Wave 156 P2 alias bridge: the CLI's literal ``"real"`` is mapped
+    to the adapter's ``"torch"`` vocabulary here at the CLI boundary
+    so ``--force-mode real`` actually exercises the real-ckpt path.
+    Per Wave 155 P2 audit (`docs/audit/wave155-real-ckpt-validation.md`),
+    the adapter's ``_resolve_mode`` only accepts ``{auto, torch,
+    synthetic}``; before this bridge, ``"real"`` was propagated all
+    the way to the resolver and raised ``unknown_force_mode:real``.
+    Backward-compat preserved: ``"synthetic"`` passes through verbatim.
     """
+    if str(force_mode) == "real":
+        force_mode = "torch"
     module_path, attr = model_spec["adapter_factory_path"].rsplit(":", 1)
     mod = importlib.import_module(module_path)
     factory = getattr(mod, attr)
