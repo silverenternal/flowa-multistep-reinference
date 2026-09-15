@@ -82,6 +82,7 @@ Per-arm, per-model metric value plus a 5x3 ablation table written to
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime
 import importlib
 import json
@@ -352,17 +353,15 @@ def _make_adapter(model_spec: dict[str, Any],
             KanziAdapter,
             kanzi_resolve_weights_path,
         )
-        try:
+        with contextlib.suppress(Exception):
+            # Fall back to the original adapter if constructor fails
+            # in this env (e.g. missing torch). The flag is a no-op
+            # in synthetic mode anyway.
             adapter = KanziAdapter(
                 weights_path=kanzi_resolve_weights_path(),
                 force_mode=str(force_mode),
                 gpt_prior_restart_policy=None,
             )
-        except Exception:
-            # Fall back to the original adapter if constructor fails
-            # in this env (e.g. missing torch). The flag is a no-op
-            # in synthetic mode anyway.
-            pass
     return adapter
 
 
@@ -395,10 +394,10 @@ def _solve_framework(adapter: Any, *, nfe: int, seed: int,
     schedule-independent. Otherwise build the default schedule-driven
     policy via the shared :func:`_make_framework_policy`.
     """
-    from adaptive_reflow.universal.state import ODEConditionDelta  # type: ignore
     from adaptive_reflow.universal.adapter import (  # type: ignore
         CapabilityMissingError,
     )
+    from adaptive_reflow.universal.state import ODEConditionDelta  # type: ignore
     bundle = adapter.build_initial_state(batch_id="ablation", sample_id="s0")
     nfe_per_round = max(1, int(round(nfe / max(1, int(n_rounds)))))
     t0 = time.monotonic()
@@ -455,7 +454,7 @@ def _make_framework_policy(adapter: Any, *, target_round: int,
     if caps is not None and getattr(caps, "channel_domains", None):
         channel_names = sorted(
             ChannelName(ch)
-            for ch in caps.channel_domains.keys()
+            for ch in caps.channel_domains
             if isinstance(ch, str)
         ) or [ChannelName("latent")]
     else:
@@ -515,7 +514,7 @@ def _make_uniform_policy(adapter: Any, *, target_round: int,
     if caps is not None and getattr(caps, "channel_domains", None):
         channel_names = sorted(
             ChannelName(ch)
-            for ch in caps.channel_domains.keys()
+            for ch in caps.channel_domains
             if isinstance(ch, str)
         ) or [ChannelName("latent")]
     else:
@@ -681,10 +680,7 @@ def _compute_cell_metric(
         # Also compute baseline_endpoint_l2 for context.
         try:
             base = _np.asarray(baseline_endpoint, dtype=_np.float64).reshape(-1)
-            if base.shape[0] == 2:
-                base_xy = base
-            else:
-                base_xy = base.reshape(-1, 2)[-1]
+            base_xy = base if base.shape[0] == 2 else base.reshape(-1, 2)[-1]
             baseline_l2 = float(
                 _np.linalg.norm(base_xy - target_centroid),
             )
@@ -705,10 +701,11 @@ def _compute_cell_metric(
         out["framework_endpoint_shape"] = list(fwk.shape)
         return out
     # kanzi + lineageflow: per-position entropy reduction.
+    import numpy as _np
+
     from adaptive_reflow.adapters._adapter_common import (  # type: ignore
         per_position_entropy_reduction,
     )
-    import numpy as _np
 
     if baseline_endpoint is None or framework_endpoint is None:
         out["per_position_entropy_reduction"] = None
@@ -1086,7 +1083,7 @@ def main(argv: list[str] | None = None) -> int:
         "schema": "ablation_q4_2026.v1",
         "tool": "scripts/run_ablation_sweep.py",
         "wave": "Wave 52 Agent B",
-        "timestamp": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
+        "timestamp": datetime.datetime.now(tz=datetime.UTC).isoformat(),
         "arms": ARMS,
         "models": MODELS,
         "cells": cells,
