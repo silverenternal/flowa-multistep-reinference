@@ -70,8 +70,8 @@ def load_lineageflow_model(device: str = "cpu"):
     t_load = time.time() - t_load0
 
     incompatible = model.load_state_dict(state, strict=False)
-    n_missing = len(incompatible.missing_keys)
     n_unexpected = len(incompatible.unexpected_keys)
+    _n_missing = len(incompatible.missing_keys)
 
     model.eval()
     n_params = sum(p.numel() for p in model.parameters())

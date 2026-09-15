@@ -35,8 +35,8 @@ from _lineageflow_helpers import (  # noqa: E402
     DEFAULT_AA_VOCAB,
     DEFAULT_BATCH_SIZE,
     DEFAULT_NFE_LIST,
-    DEFAULT_SEQ_LEN,
     DEFAULT_SEED,
+    DEFAULT_SEQ_LEN,
     DEFAULT_T0,
     DEFAULT_T1,
     LINEAGEFLOW_VOCAB_SIZE,
@@ -116,7 +116,7 @@ def heun_step(
         x_new = x + 0.5 * dt * (v0 + v1)
 
     # Renormalise to the simplex (mirrors upstream Euler loop).
-    eps = 1e-6
+    _eps = 1e-6
     K = x_new.size(-1)
     uniform = torch.full_like(x_new, 1.0 / K)
     x_new = torch.where(gap_mask[:, :, None], uniform, x_new)

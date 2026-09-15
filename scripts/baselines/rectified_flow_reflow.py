@@ -56,8 +56,8 @@ import json
 import math
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import numpy as np
 from numpy.typing import NDArray

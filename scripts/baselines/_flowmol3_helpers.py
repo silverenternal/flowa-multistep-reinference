@@ -387,10 +387,7 @@ def euler_step_categorical(
     """
     K = int(p.shape[-1])
     uniform = np.full(p.shape, 1.0 / K, dtype=np.float64)
-    if target_p is None:
-        new = p.copy()
-    else:
-        new = (1.0 - dt) * p + dt * np.asarray(target_p)
+    new = p.copy() if target_p is None else (1.0 - dt) * p + dt * np.asarray(target_p)
     if re_mask_prob > 0.0:
         new = (1.0 - float(re_mask_prob)) * new + float(re_mask_prob) * uniform
     # Renormalise to simplex.

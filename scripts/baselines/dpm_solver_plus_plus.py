@@ -124,7 +124,7 @@ def dpm_solver_plus_plus_sample(
     for i in range(int(n_steps)):
         t_hi = float(t_grid[i])
         t_lo = float(t_grid[i + 1])
-        h = float(t_hi - t_lo)
+        _h = float(t_hi - t_lo)
         if i < int(n_steps) - 1:
             t_next = float(t_mid[i])
             # 1) Predictor: Euler step to t_next using v_prev.

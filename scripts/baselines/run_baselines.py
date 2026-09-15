@@ -76,16 +76,6 @@ _REPO_ROOT: Path = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from adaptive_reflow.adapters.twodim_fm import (  # noqa: E402
-    TWODIM_FM_CHANNEL_DOMAINS,
-    TWODIM_FM_CLAMP,
-    TwoDimFMAdapter,
-    _batched_integrate_rk4 as twodim_integrate_rk4,
-    _velocity_field as twodim_velocity_field,
-)
-from adaptive_reflow.adapters.twodim_fm_train import (  # noqa: E402
-    sample_two_moons,
-)
 from adaptive_reflow.adapters.mnist_fm import (  # noqa: E402
     MNIST_FLAT_DIM,
     MnistFmAdapter,
@@ -95,16 +85,28 @@ from adaptive_reflow.adapters.rectified_flow_cifar import (  # noqa: E402
     RectifiedFlowCIFARAdapter,
     torch_is_available,
 )
-from adaptive_reflow.eval.twodim_fm_evaluator import analytic_samples  # noqa: E402
-
-from scripts.baselines.consistency_model import consistency_model_sample  # noqa: E402
-from scripts.baselines.rectified_flow_reflow import (  # noqa: E402
-    rectified_flow_reflow_sample,
+from adaptive_reflow.adapters.twodim_fm import (  # noqa: E402
+    TWODIM_FM_CHANNEL_DOMAINS,
+    TWODIM_FM_CLAMP,
+    TwoDimFMAdapter,
 )
+from adaptive_reflow.adapters.twodim_fm import (  # noqa: E402
+    _batched_integrate_rk4 as twodim_integrate_rk4,
+)
+from adaptive_reflow.adapters.twodim_fm import (  # noqa: E402
+    _velocity_field as twodim_velocity_field,
+)
+from adaptive_reflow.adapters.twodim_fm_train import (  # noqa: E402
+    sample_two_moons,
+)
+from adaptive_reflow.eval.twodim_fm_evaluator import analytic_samples  # noqa: E402
+from scripts.baselines.consistency_model import consistency_model_sample  # noqa: E402
 from scripts.baselines.dpm_solver_plus_plus import (  # noqa: E402
     dpm_solver_plus_plus_sample,
 )
-
+from scripts.baselines.rectified_flow_reflow import (  # noqa: E402
+    rectified_flow_reflow_sample,
+)
 
 # ---------------------------------------------------------------------------
 # Adapter-specific sample-fn shims
@@ -190,7 +192,7 @@ def _mnist_reflow_sample_fn(*, rng, x0, n_inner_steps) -> NDArray[np.float64]:
 
 
 def _mnist_velocity_batch_fn(*, rng, x_t_batch, t_batch) -> NDArray[np.float64]:
-    adapter = _make_mnist_adapter()
+    _adapter = _make_mnist_adapter()
     # Flatten to (N, 784), feed through ``_batched_integrate_rk4``-like
     # Euler call. The MNIST adapter doesn't expose a public
     # ``velocity_field`` (it's private). For the DPM-Solver baseline we
@@ -227,7 +229,7 @@ def _rf_cifar_reflow_sample_fn(*, rng, x0, n_inner_steps) -> NDArray[np.float64]
 
 
 def _rf_cifar_velocity_batch_fn(*, rng, x_t_batch, t_batch) -> NDArray[np.float64]:
-    adapter = RectifiedFlowCIFARAdapter(force_mode="synthetic")
+    _adapter = RectifiedFlowCIFARAdapter(force_mode="synthetic")
     # Approximate one Euler step on the (x_t, t) sample. Since the
     # synthetic RF-CIFAR velocity field is not directly exposed (the
     # batched_inference path uses Euler internally), we approximate
@@ -348,7 +350,7 @@ def _run_twodim(args, n_samples: int, seed: int, nfe_budget: int) -> dict:
     t0 = time.time()
     flat_dim = int(np.prod(state_shape))
     rng = np.random.default_rng(int(seed))
-    x0 = rng.standard_normal((int(n_samples), flat_dim)).astype(np.float64)
+    _x0 = rng.standard_normal((int(n_samples), flat_dim)).astype(np.float64)
     rf_samples = rectified_flow_reflow_sample(
         n_samples=int(n_samples),
         state_shape=state_shape,
@@ -427,7 +429,7 @@ def _run_mnist(args, n_samples: int, seed: int, nfe_budget: int) -> dict:
     t0 = time.time()
     flat_dim = int(np.prod(state_shape))
     rng = np.random.default_rng(int(seed))
-    x0 = rng.standard_normal((int(n_samples), flat_dim)).astype(np.float64)
+    _x0 = rng.standard_normal((int(n_samples), flat_dim)).astype(np.float64)
     rf_samples = rectified_flow_reflow_sample(
         n_samples=int(n_samples),
         state_shape=state_shape,
@@ -510,7 +512,7 @@ def _run_rf_cifar(args, n_samples: int, seed: int, nfe_budget: int) -> dict:
     t0 = time.time()
     flat_dim = int(np.prod(state_shape))
     rng = np.random.default_rng(int(seed))
-    x0 = rng.standard_normal((int(n_samples), flat_dim)).astype(np.float64)
+    _x0 = rng.standard_normal((int(n_samples), flat_dim)).astype(np.float64)
     rf_samples = rectified_flow_reflow_sample(
         n_samples=int(n_samples),
         state_shape=state_shape,
@@ -572,10 +574,7 @@ def main() -> int:
     parser.add_argument("--quick", action="store_true", help="Use 100 samples (smoke)")
     args = parser.parse_args()
 
-    if args.quick:
-        n_samples = 100
-    else:
-        n_samples = int(args.n_samples)
+    n_samples = 100 if args.quick else int(args.n_samples)
 
     print(f"Wave 52 — baselines on {args.models} | n_samples={n_samples} | seed={args.seed}", flush=True)
 

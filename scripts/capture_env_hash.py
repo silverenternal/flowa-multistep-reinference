@@ -27,7 +27,12 @@ Usage:
     python scripts/capture_env_hash.py verify   # compares to committed env_hash.txt
     python scripts/capture_env_hash.py show     # prints to stdout
 """
-import hashlib, json, sys, subprocess, pathlib, platform
+import hashlib
+import json
+import pathlib
+import platform
+import subprocess
+import sys
 from typing import Optional
 
 from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
@@ -130,4 +135,5 @@ if __name__ == "__main__":
         for k, v in capture().items():
             print(f"{k}={v}")
     else:
-        print(f"unknown command: {cmd}"); sys.exit(2)
+        print(f"unknown command: {cmd}")
+        sys.exit(2)

@@ -56,7 +56,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
-from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
+from adaptive_reflow.util.host_fingerprint import with_host_fingerprint  # noqa: E402
 
 PACKAGE_ROOT = REPO_ROOT / "adaptive_reflow"
 SKIP_DIRS = {"__pycache__", "legacy"}
@@ -116,9 +116,7 @@ def _is_public(name: str) -> bool:
     """``True`` for names that count toward the public surface."""
     if name.startswith("__") and name.endswith("__"):
         return False
-    if name.startswith("_"):
-        return False
-    return True
+    return not name.startswith("_")
 
 
 def _has_isinstance_call(func: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:

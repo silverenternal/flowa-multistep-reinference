@@ -169,7 +169,7 @@ def main() -> int:
         # composite-axis baseline arm does too. dt is the fraction of
         # the [0, 1] interval covered by one reverse step.
         dt = 1.0 / float(nfe)
-        for s in range(nfe):
+        for _s in range(nfe):
             target_x = _target_mean_from_prior(x_start, contraction=args.contract_rate)
             x = euler_step_coordinate(x, target_mean=target_x, dt=dt)
             # Categorical channels: MolDiff-style CTMC re-mask with the
@@ -192,8 +192,8 @@ def main() -> int:
 
         # --- (3) Compute the chemistry + composite on the endpoint.
         a_idx = np.argmax(a, axis=-1).astype(np.int64)
-        e_end = e_flat.reshape(args.batch_size, args.n_atoms, args.n_atoms, -1)
-        e_idx = np.argmax(e_end, axis=-1).astype(np.int64)
+        _e_end = e_flat.reshape(args.batch_size, args.n_atoms, args.n_atoms, -1)
+        _e_idx = np.argmax(_e_end, axis=-1).astype(np.int64)
 
         chem = chem_validity(coords=x, atom_types=a_idx)
         # When RDKit is missing, the composite falls back to NaN. We

@@ -112,7 +112,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
-from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
+from adaptive_reflow.util.host_fingerprint import with_host_fingerprint  # noqa: E402
 
 SCHEMA_VERSION = "1.0"
 # rev 3 §2 J.1 target: stability_rate >= 0.95 (≤ 5% churn).
