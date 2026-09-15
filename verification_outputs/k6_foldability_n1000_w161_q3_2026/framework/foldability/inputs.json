@@ -1,0 +1,6 @@
+{
+  "input_fasta": "/tmp/w158/lineageflow_real_fastas/framework.fasta",
+  "n_input": 1000,
+  "n_used": 1000,
+  "skipped": {}
+}

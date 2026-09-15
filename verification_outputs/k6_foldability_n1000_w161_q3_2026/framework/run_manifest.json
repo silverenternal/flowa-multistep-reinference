@@ -1,0 +1,11 @@
+{
+  "outdir": "/tmp/w160/foldability_n1000/framework",
+  "paths": {
+    "foldability_dir": "/tmp/w160/foldability_n1000/framework/foldability",
+    "foldability_log": "/tmp/w160/foldability_n1000/framework/foldability.log"
+  },
+  "metrics": [
+    "foldability",
+    "self_consistency"
+  ]
+}
