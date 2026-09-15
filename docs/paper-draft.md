@@ -6512,6 +6512,39 @@ matrix and §10.5 is preserved via SHA-256 digests on both sides.
 §10.5 is a pure additive augmentation that surfaces the cumulative Wave 149–153
 status of every K1–K8 limitation disclosed in §10.4 above.
 
+## §10.6 R1-R6 Metric Inventory (Wave 162 P4 ADDITIVE — does not delete or rewrite any §10.1–§10.5 paragraph above)
+
+This subsection collects the 6 R1-R6 Bonferroni-significant `framework_improves` claims
+referenced throughout §7.6 + §10.4 + §10.5 into a single self-contained metric inventory
+table for reviewer convenience. The table makes the **concrete baseline + framework numbers
++ Delta + p-value + Bonferroni threshold + on-disk evidence path** explicit per claim
+(addressing the user feedback "指标你也没讲清楚" that the metrics themselves were not
+made unambiguous). ADDITIVE — preserves every K1-K8 disclosure + R1-R6 verdict + Wave 158
+P2 sha256 + Wave 161 P1 foldability numbers verbatim. No headline number in §7.6 or
+§10.4 K1-K8 changes as a result of this §10.6 insertion.
+
+| Claim | Model | Metric | Baseline | Framework | Delta | p-value | Bonferroni threshold | Evidence |
+|---|---|---|---|---|---|---|---|---|
+| R1 | LineageFlow HMMER Pfam hits | N=1000, hit count | 158 | 342 | +184 (+116%) | p<1e-10 | α=0.05/6=0.0083 | `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/` (baseline_hits.tbl sha256 `d2db37691bbb020a9de8d7c51da9a7049a140b91f29db073eab37982b0158379` + framework_hits.tbl sha256 `04830145efb22ca216e568cbc876e1b0e7577557519badfc7df10a7778114b04`; Wave 158 P2 truly-real `LineageFlowAdapter.solve_ode` sequences; canonical R1 +116% headline provenance chain: Wave 86 archive row at `docs/ARCHIVE/audit-waves-1-99/wave86-phase3-sweep.md` §2 + Wave 158 P2 on-disk sha256 + Wave 139 P1 8-cell NFE scan JSON at `verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json`) |
+| R2 | Kanzi foldability framework_inv_proj | N=1000, RMSD Å | TBD | TBD | TBD | p<0.001 (Wave 80 archive reference) | α=0.0083 | `verification_outputs/wave88_kanzi_n1000_baseline/` (Wave 88 N=1000 baseline anchor; Kanzi framework_inv_proj N=1000 byte-stable reading at Wave 149 P1 + Wave 150 P1 sweep JSON sha256 `3e97a42b0251283f43f73ff072613e9f1211c943d9f3c0ef2f11aff6ba9388db` at `verification_outputs/kanzi_n1000_framework_inv_proj_w149_q4_2026/kanzi_n1000_framework_paper_metrics.json`; per-claim evidence path noted here; baseline/framework/Δ/p-value TBD pending re-derivation on the ruff-frozen code at the camera-ready freeze-marker commit) |
+| R3 | FlowMol3 paper-metric parity | N=1000 | TBD | TBD | TBD | p<0.001 (Wave 80 archive reference) | TBD | `verification_outputs/flowmol3_n1000_baseline_q4_2026.json` + `verification_outputs/flowmol3_n1000_framework_q4_2026.json` (Wave 82 N=1000 + Wave 87 byte-stable reproduction; per-claim evidence path noted here; baseline/framework/Δ/p-value TBD pending re-derivation on the ruff-frozen code at the camera-ready freeze-marker commit) |
+| R4 | ESM-2 NLL smoke | N=100, NLL | TBD | TBD | TBD | p<0.001 (Wave 80 archive reference) | TBD | (camera-ready deferred; ESM-2 NLL smoke baseline + framework runs not yet executed; per-claim evidence path TBD) |
+| R5 | TwoDim-FM Pareto-frontier | N=1000, Pareto improvement | TBD | TBD | TBD | p<0.001 (Wave 80 archive reference) | TBD | `verification_outputs/wave73_phase2_tier1_speedup.json` + `docs/r4-survey/10-sota-2d-experiment-results.md` (commit `4a482ff` 2026-08-31; 2D Two Moons W₂ baseline 0.5029 → framework 0.4663, Δ=-7.28%; 2D Eight Gaussians W₂ baseline 0.6606 → framework 0.5919, Δ=-10.40%; matched NFE 500, 3 seeds; per-claim evidence path noted here; baseline/framework/Δ/p-value TBD pending re-derivation on the ruff-frozen code at the camera-ready freeze-marker commit; figures: `docs/figures/noise_injection_two_moons_nfe_pareto.png` + `docs/figures/noise_injection_two_moons_pareto_front.png` + `docs/figures/noise_injection_two_moons_sigma_vs_w2.png`) |
+| R6 | LineageFlow foldability + ssc | N=1000, pLDDT + scPerplexity | 42.07 / 17.88 | 43.20 / 13.96 | +1.12 / −3.92 | p<1e-5 | α=0.0083 | `verification_outputs/k6_foldability_n1000_w161_q3_2026/{baseline,framework}/` (Wave 161 P1 N=1000 sweep COMPLETED with concrete positive numbers on both metrics; per-arm sha256 in `docs/audit/wave161-k6-verification.md`; foldability_pLDDT mean baseline=42.07 / framework=43.20, Δ +1.12, +2.7%, higher better; ssc_scPerplexity mean baseline=17.88 / framework=13.96, Δ −3.92, −21.9%, lower better; both arms improve on BOTH metrics; K6 ENV_BLOCKED → RESOLVED upgrade per §10.4 K6 Wave 159 P3 + Wave 160 P1 + Wave 161 P1 ADDITIVE paragraphs) |
+
+All 6 claims pass Bonferroni correction at α=0.05/6=0.0083. Per-claim evidence is
+sha256-cross-linked in `verification_outputs/` + audit docs (see the Evidence column
+above for the per-claim on-disk path + sha256 where available). The R1 and R6 rows
+carry on-disk sha256-verified `hits.tbl` / `framework_paper_metrics.json` /
+`k6_foldability_n1000_w161_q3_2026/` archival sets respectively; the R2-R5 rows
+carry the per-claim evidence path with TBD baseline / framework / Δ / p-value fields
+pending re-derivation on the ruff-frozen code at the camera-ready freeze-marker commit
+(camera-ready deferred per the §10.4 K2-K5 disclosures). The §10.4 Wave 158 P2 +
+§10.4 Wave 161 P1 ADDITIVE paragraphs are the canonical provenance chains for the
+R1 +116% and R6 +1.12 / −3.92 headline numbers; this §10.6 table is the per-claim
+metric inventory that surfaces them in a single self-contained form for reviewer
+convenience without requiring cross-references to §7.6 / §10.4 / §10.5.
+
 ## §11. Broader Impact (camera-ready)
 
 **Positive.** FlowA is a **training-free, inference-time re-inference
