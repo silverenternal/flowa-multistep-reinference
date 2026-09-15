@@ -4913,3 +4913,16 @@ All engineering gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PA
 | 162 P4 | 2026-09-15 | §10 R1-R6 Metric Inventory | ADDITIVE only; 6 Bonferroni-significant claims |
 
 All gates preserved. User feedback addressed in full.
+
+### §R.51 Wave 163 — novelty_mmseqs2 sub-component PARTIAL resolution (2026-09-15)
+
+| Wave | Date | Action | Outcome |
+|---|---|---|---|
+| 163 P1 | 2026-09-15 | Commit+push 3 noise_injection PNGs | committed; pushed |
+| 163 P2 | 2026-09-15 | Investigate mmseqs2 + target DB | documented in wave163-novelty-investigation.md (READ-ONLY) |
+| 163 P3 | 2026-09-15 | Install mmseqs2 + acquire target DB | installed at /home/hugo/bin/mmseqs (sha256 9760ae...); target DB at data/lineageflow_upstream/databases/pfam35/pfam_holdout_targetDB |
+| 163 P4 | 2026-09-15 | Run novelty_mmseqs2 N=1000 sweep | baseline_novel=1000 / framework_novel=1000 / delta_pct=0.00% (saturated); secondary avg-min-e 2.711 vs 4.959 (directional novelty signal) |
+| 163 P5 | 2026-09-15 | Paper §10.4 + §15.60 + §R.51 ADDITIVE disclosure | ADDITIVE only; K7+K8 novelty_mmseqs2 sub-component: DEFERRED -> PARTIAL |
+
+K7+K8 novelty_mmseqs2 sub-component: DEFERRED -> **PARTIAL** (pipeline works end-to-end; strict novelty count saturated at 100% for both arms due to small/diverse holdout target DB; secondary avg-min-e-value signal shows directional novelty improvement but not Bonferroni-significant).
+All gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PASS, no drift).

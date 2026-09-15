@@ -4618,3 +4618,18 @@ Per user feedback ("JMAA paper not retrievable, need concrete theory; innovation
 - §10 R1-R6 Metric Inventory: 6 Bonferroni-significant framework_improves claims with baseline + framework + Delta + p-value + Bonferroni alpha=0.0083 + evidence sha256. R1 +116% HMMER, R6 +1.12 pLDDT / -3.92 scPerplexity concrete; R2/R3/R4/R5 use Wave 80 archive numbers (no fabrication).
 
 ADDITIVE only — no existing content removed; all gates pass (D.4 72/72, ruff 0, claims PASS 39 active).
+
+### §15.60 Wave 163 — novelty_mmseqs2 sweep (2026-09-15)
+
+Camera-ready-blocked novelty_mmseqs2 sub-component (per Wave 79 Phase 3 §4 + Wave 154b supplementary POC) now partially addressed. Wave 163 P2 audited mmseqs2 availability + target DB candidates + internet reachability + disk space (READ-ONLY); Wave 163 P3 installed the mmseqs2 binary + acquired the 200-sequence holdout target DB; Wave 163 P4 ran the novelty_mmseqs2 sweep end-to-end on the Wave 158 P2 truly-real `LineageFlowAdapter.solve_ode` N=1000 baseline + framework FASTAs against the holdout target DB.
+
+**Concrete N=1000 numbers:**
+- baseline_n_with_hits=77 (raw m8 lines=82, avg min e-value hits-only=2.711)
+- framework_n_with_hits=25 (raw m8 lines=25, avg min e-value hits-only=4.959)
+- baseline_novel=1000 / framework_novel=1000 / **delta_pct=0.00%** (strict e>1e-3 OR no-hit saturated at 100% for both arms)
+- secondary signal: framework avg min e-value 4.959 vs baseline 2.711 → +83% farther from homolog at -e 10 permissive threshold (directional novelty signal, not Bonferroni-significant)
+
+**K7+K8 novelty_mmseqs2 sub-component status:** DEFERRED → **PARTIAL** (pipeline works end-to-end; strict novelty count saturated; secondary avg-min-e signal directional but not significant). No R7 framework_improves claim added (PARTIAL outcome by design; adoption of full per-family training DB or Pfam-A subset would yield non-saturated counts at camera-ready scope).
+
+**Outputs:** `verification_outputs/lineageflow_novelty_mmseqs2_w163_q3_2026/` (per-arm summary.json + per_seq.jsonl + easy_search.m8 + sweep.log).
+**Per-arm sha256:** `docs/audit/wave163-novelty-sweep.md` §6.
