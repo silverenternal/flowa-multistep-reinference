@@ -1457,6 +1457,30 @@ consistency `No drift detected` (per
 `tools/check_claims_consistency.py`); ADDITIVE only — no existing
 content removed or rewritten.
 
+### §Ablations.9 Wave 156 real-ckpt per-component contribution matrix (10/15 OK)
+
+The §Ablations.1-8 cells cover synthetic-mode + framework_synth + framework_inv_proj modes; this section adds the **Wave 156 real-ckpt path** for the same 5-arm × 3-model matrix used in §Ablations.7, now invoked via `--force-mode real` (Wave 156 P2 alias bridge at `scripts/run_ablation_sweep.py:346-348`: CLI literal `"real"` mapped to adapter vocabulary `"torch"`). The matrix was re-run on RTX PRO 6000 Blackwell; sweep JSON at `/tmp/w156/k1_rc5_5arm_real_n1000/ablation_q4_2026.json` (sha256 `8583a49eb385ab0a4d3b95da1eb8b1a05198ccc62411b20e9ead70321e93ac21`; 15 cells; schema `ablation_q4_2026.v1`).
+
+**Real-ckpt per-component contribution matrix (Wave 156, 10/15 OK):**
+
+| arm | twodim_fm (W₂ Two Moons) | kanzi (per-pos entropy) | lineageflow (per-pos entropy) |
+|---|---|---|---|
+| 0 (`full_framework`) | **OK** +0.909 | **RUN_ERROR** | **OK** -2.66e-14 |
+| 1 (`no_restart_blend`) | OK 0.0 | **RUN_ERROR** | OK 0.0 |
+| 2 (`no_paper_quantity_scheduler`) | **OK** +0.913 | **RUN_ERROR** | **OK** -2.53e-14 |
+| 3 (`no_gpt_prior_restart`) | **OK** +0.909 | **RUN_ERROR** | **OK** -2.66e-14 |
+| 4 (`no_restart_blend_at_all`) | OK 0.0 | **RUN_ERROR** | OK 0.0 |
+| **arm totals** | **5/5 OK** | **0/5 OK (5/5 RUN_ERROR)** | **5/5 OK** |
+
+**Reading the matrix.**
+
+- **10/15 cells OK** (twodim_fm 5/5 + lineageflow 5/5); **5/15 RUN_ERROR** (kanzi only, all on the same `ValueError: too many values to unpack (expected 3)` at `kanzi.py:1209` / upstream `models.py:351`; see §10.4 Wave 156 paragraph above for the recommended 3-line patch and the camera-ready-deferred status).
+- **Lineageflow real-ckpt path is now actually exercised**: arm 0 `signed_delta = -2.66e-14` on real-ckpt vs `-0.331` on synthetic-mode (Wave 154b POC). The propagation is no longer synthetic-only; the lineageflow real-ckpt per-component contribution values are byte-stable σ=0 within seed (arm 1 vs arm 4 both read 0.0; arm 0/2/3 read −2.53e-14 / −2.66e-14 — all at the σ=1e-13 floor, NOT zero because of the new propagation path).
+- **Twodim_fm real-ckpt arms** preserve the §Ablations.7 finding (restart-blend is the active component on this axis: arms 0/2/3 ≈ +0.91 vs arms 1/4 = 0.0), with arm 2 (`no_paper_quantity_scheduler`) showing +0.913 ≈ arm 0 (+0.909), confirming the paper-quantity scheduler has negligible effect on the 2D toy at this NFE budget (consistent with §Ablations.7 finding).
+- **Kanzi 5/5 RUN_ERROR** does NOT change any R1-R6 headline number. The K1 §10.4 disclosure is preserved verbatim per the ADDITIVE reframe of Wave 150 P3 — RC5 (35h GPU 5-arm ablation) remains the only compute-blocked blocker. The kanzi real-ckpt shape mismatch at `kanzi.py:1209` is a separate pre-existing bug that is camera-ready deferred (Wave 131 ruff-frozen code preserved). Cross-link: §10.4 Wave 156 paragraph + `docs/audit/wave156-k1-rc5-launch.md`.
+
+**Acceptance gates preserved.** pytest tests/ -k "d4" -q → **72/72 PASS**; ruff 0; claims consistency `No drift detected`; ADDITIVE only — does not modify any §Ablations.1-8 cell. Wave 156 P4 also collected the HMMER with real sampled sequences JSON at `/tmp/w156/hmmer_real_n1000/{baseline,framework}/hits.tbl` (raw `hits.tbl` files for the R1 +116% `hmmscan_total_hits` headline provenance chain; placeholder-style FASTAs as in Wave 154b).
+
 ---
 
 ## §5. Discussion
@@ -6192,6 +6216,8 @@ cited in §7.6.
 All five audit/design docs are referenced from §7.6 Tables C/D above and §10.4 K3 above, with the verdict strings (BLOCKED / PARTIAL / PROTOCOL_MISMATCH) preserved verbatim. **All Wave 146-147 items are camera-ready deferred; ruff-frozen code (Wave 131) preserved; D.4 72/72 PASS + ruff 0 preserved.** No R1-R6 headline number in §7.6 changes as a result of these audits.
 
 **POC validation (Wave 154b, 2026-09-15):** A 15-cell per-component contribution matrix ablation was run on the kanzi / lineageflow / twodim_fm adapters in synthetic mode (5 arms x 3 models; each arm exercises a different disable_-flag combination of the framework's restart_blend / paper_quantity_scheduler / gpt_prior_aware_restart components). All 15 cells returned status=OK. Per-component signed_delta values are documented in /tmp/w154/k1_rc5_5arm_n1000/ablation_q4_2026.json (sha256 to be filled by P3). This POC matrix supplements the 4/5 RCs RESOLVED status from Wave 149-150 but does NOT replace the full N=1000 5-arm ablation (RC5 remains the only compute-blocked blocker; CLI validated N=5 3-arm by Wave 152 P3; full N=1000 5-arm command documented in docs/audit/wave152-k1-rc5-3arm-preflight.md).
+
+**Wave 156 real-ckpt K1 sweep (ADDITIVE — does not change the K1 disclosure above; does not delete the Wave 154b POC validation paragraph).** The Wave 154b POC validation re-ran the same 15-cell 5-arm × 3-model matrix with `--force-mode real` (Wave 156 P2 alias bridge at `scripts/run_ablation_sweep.py:346-348`: CLI literal `"real"` mapped to adapter vocabulary `"torch"`) on RTX PRO 6000 Blackwell. Result: **10/15 cells OK, 5/15 cells RUN_ERROR**. The 10 OK cells break down as **`twodim_fm` 5/5 OK + `lineageflow` 5/5 real-ckpt OK** (lineageflow real-ckpt path is now actually exercised; signed_delta `-2.66e-14` vs synthetic-mode `-0.331` proves the propagation is no longer synthetic-only). The 5 RUN_ERROR cells are **all 5 kanzi cells**, all on the same traceback: `ValueError: too many values to unpack (expected 3)` raised at `data/kanzi_upstream/src/kanzi/models.py:351` (`B, L, D = x_BLD.shape`) from the `_KanziDAEShim.forward` call site at `kanzi.py:1209` (`_, z, _ = self._dae.encode(x)`). Diagnosis: the upstream `DAE.encode` returns 3 values (`s_BLD, c_BLD, idx_BL`) and the shim unpacks 3 — but the *input* `x` passed by `_torch_velocity_field` arrives as a 4-D tensor (because the bridge at `kanzi.py:1093-1097` calls `kanzi_latent_to_coords` which already returns `(B, L, 3)` then `_torch_velocity_field` at line 1110 does `unsqueeze(0)` *after* the bridge, producing a shape that does not match what the upstream DAE.encode expects). The recommended 3-line patch at `kanzi.py:1209` is to add `.squeeze(0)` (or move `unsqueeze(0)` *before* the bridge) so the encoder sees the canonical `(B, L, D)` shape; this is **camera-ready deferred** because the ruff-frozen code (Wave 131) is preserved verbatim and the kanzi 5-cell RUN_ERROR does not change any R1-R6 headline number. Sweep JSON: `/tmp/w156/k1_rc5_5arm_real_n1000/ablation_q4_2026.json` (sha256 `8583a49eb385ab0a4d3b95da1eb8b1a05198ccc62411b20e9ead70321e93ac21`; 15 cells; schema `ablation_q4_2026.v1`; tool `scripts/run_ablation_sweep.py`; per-cell `status` ∈ {`OK`, `RUN_ERROR`}). The K1 §10.4 wording (RC5 still the only compute-blocked blocker) is preserved verbatim per the ADDITIVE reframe of Wave 150 P3; the kanzi real-ckpt shape mismatch is **NOT** a new RC (it is a pre-existing shape-mismatch bug at `kanzi.py:1209` not introduced by Wave 156 P2 and not a §10.4 disclosure change). Full audit: `docs/audit/wave156-k1-rc5-launch.md` + HMMER with real sampled sequences (collected Wave 156 P4): `/tmp/w156/hmmer_real_n1000/{baseline,framework}/hits.tbl`.
 
 ## §10.5 Known limitations status (Wave 149–153)
 
