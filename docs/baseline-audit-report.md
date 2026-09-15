@@ -4887,6 +4887,18 @@ See `docs/audit/wave159-close.md` (full Wave 159 audit trail + 4-phase ledger + 
 
 See `docs/audit/wave160-close.md` (full Wave 160 audit trail + 3-phase ledger + acceptance gates + camera-ready deferred list + push confirmation + final drift check + final gates verification) + `docs/CONSOLIDATED_RESULTS.md` §15.57 (Wave 160 close section) + `docs/audit/wave160-k6-sweep-launch.md` (Wave 160 P1 — K6 sweep launch audit + sanity N=5 PASS + N=1000 sweep launch) + `docs/paper-draft.md` §10.4 + K6 ledger table (Wave 160 P2 ADDITIVE disclosure rows) + `docs/audit/wave159-close.md` (predecessor wave — paper §15.7+§10.4+§Ablations ADDITIVE + README update + OmegaFold Python 3.10 sidecar provisioning + close).
 
+### §R.49 Wave 161 — K6 RESOLVED with N=1000 evidence (2026-09-15)
+
+| Wave | Date | Action | Outcome |
+|---|---|---|---|
+| 80 | 2026-08-xx | K6 sweep requested | ENV_BLOCKED (OmegaFold unavailable) |
+| 159 | 2026-09-14 | OmegaFold venv provisioned | UNBLOCKED-WITH-NOTE |
+| 160 | 2026-09-15 | N=1000 sweep launched | UNBLOCKED-SWEEP-LAUNCHED (misreported; actually completed at ~19:25-19:29) |
+| 161 | 2026-09-15 | Sweep completion discovered; sha256 verified | **RESOLVED** (n=1000/1000 both arms; pLDDT +1.12; scPerplexity −3.92) |
+
+Net K6 status: ENV_BLOCKED → UNBLOCKED-WITH-NOTE → UNBLOCKED-SWEEP-LAUNCHED → **RESOLVED**.
+All engineering gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PASS 39 active).
+
 ---
 
 **Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.
