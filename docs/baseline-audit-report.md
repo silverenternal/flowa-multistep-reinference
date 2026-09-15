@@ -4902,3 +4902,14 @@ All engineering gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PA
 ---
 
 **Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS" wording used in this document referred to the Wave 38-39 first-batch regression subset ONLY. The current authoritative D.4 count is **72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in `tests/test_adapters/test_regression_vectors.py` = 72 total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions (commit `40d979c` and subsequent). This drift fix is the Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for the Wave 149 audit trail.
+
+### §R.50 Wave 162 — paper §2/§7/§10 ADDITIVE rewrite (2026-09-15)
+
+| Wave | Date | Action | Outcome |
+|---|---|---|---|
+| 162 P1 | 2026-09-15 | Audit §2/§7/§10 for user-feedback gaps | identified gaps; produced docs/audit/wave162-audit.md |
+| 162 P2 | 2026-09-15 | §2 JMAA Theorem 1 self-contained math | ADDITIVE only; 4 quantities explained |
+| 162 P3 | 2026-09-15 | §7 Innovation Inventory | ADDITIVE only; 14 innovations in 4 tiers |
+| 162 P4 | 2026-09-15 | §10 R1-R6 Metric Inventory | ADDITIVE only; 6 Bonferroni-significant claims |
+
+All gates preserved. User feedback addressed in full.

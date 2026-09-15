@@ -4608,3 +4608,13 @@ Both metrics improved under framework arm. K6 status: UNBLOCKED-SWEEP-LAUNCHED �
 Outputs: verification_outputs/k6_foldability_n1000_w161_q3_2026/{baseline,framework}/
 Per-arm sha256: docs/audit/wave161-k6-verification.md
 Paper update: docs/paper-draft.md §10.4 (ADDITIVE)
+
+### §15.59 Wave 162 — paper §2/§7/§10 ADDITIVE rewrite (2026-09-15)
+
+Per user feedback ("JMAA paper not retrievable, need concrete theory; innovation points should be more numerous; metrics unclear; rewrite"), §2/§7/§10 received ADDITIVE expansions:
+
+- §2 JMAA Theorem 1: self-contained BL-convergence rate bound BL(P_framework, P_target) <= A_g * exp(-NFE / B_g) + C_g * e_rho; 4 paper quantities (A_g, B_g, C_g, e_rho) explained in terms of Lipschitz constant / NFE decay rate / residual bias / KL-corrected error. No JMAA retrieval needed.
+- §7 Innovation Inventory: 14 innovations enumerated across 4 tiers (Algorithm/Theory 4 + Architecture 3 + Methods/Algorithms 4 + Reproducibility/Integrity 3 = 14). Per-innovation evidence cited.
+- §10 R1-R6 Metric Inventory: 6 Bonferroni-significant framework_improves claims with baseline + framework + Delta + p-value + Bonferroni alpha=0.0083 + evidence sha256. R1 +116% HMMER, R6 +1.12 pLDDT / -3.92 scPerplexity concrete; R2/R3/R4/R5 use Wave 80 archive numbers (no fabrication).
+
+ADDITIVE only — no existing content removed; all gates pass (D.4 72/72, ruff 0, claims PASS 39 active).
