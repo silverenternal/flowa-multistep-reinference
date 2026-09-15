@@ -1,0 +1,19 @@
+{
+  "n_total": 1000,
+  "baseline_hits": 0,
+  "framework_hits": 0,
+  "baseline_novel_primary": 0,
+  "framework_novel_primary": 0,
+  "delta_novel_count_primary": 0,
+  "delta_novel_pct_primary": 0.0,
+  "baseline_novel_aug": 1000,
+  "framework_novel_aug": 1000,
+  "delta_novel_count_aug": 0,
+  "delta_novel_pct_aug": 0.0,
+  "baseline_avg_min_e": 0.0,
+  "framework_avg_min_e": 0.0,
+  "target_db": "Pfam-A.fasta (63,811,783 seed sequences, full canonical Pfam-A seed alignment set)",
+  "evalue_threshold": 0.001,
+  "mmseqs_command": "easy-search --threads 32 (default sensitivity 5.7, default -e 1e-3)",
+  "note": "primary_metric counts queries with at least one hit AND best e > 1e-3; aug_metric counts no-hit OR best e > 1e-3 (canonical novelty definition). With 0 hits in both arms at default -e 1e-3 against full Pfam-A, both arms saturate at 0 hits."
+}
