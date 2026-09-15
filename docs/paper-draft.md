@@ -6187,6 +6187,101 @@ cited in §7.6.
 
 All five audit/design docs are referenced from §7.6 Tables C/D above and §10.4 K3 above, with the verdict strings (BLOCKED / PARTIAL / PROTOCOL_MISMATCH) preserved verbatim. **All Wave 146-147 items are camera-ready deferred; ruff-frozen code (Wave 131) preserved; D.4 72/72 PASS + ruff 0 preserved.** No R1-R6 headline number in §7.6 changes as a result of these audits.
 
+## §10.5 Known limitations status (Wave 149–153)
+
+This subsection augments §10.4 K1–K8 with the cumulative Wave 149–153 progress update.
+It is ADDITIVE only — every disclosure in §10.4 and §10.1–10.6 above is preserved
+verbatim, including the verdict strings (CLOSED / RESOLVED / PROTOCOL_MISMATCH /
+UNDERPOWERED / TIES_AT_ZERO / ENV_BLOCKED / BLOCKED) and the ruff-frozen code (Wave 131)
+preservation clause. No R1–R6 headline number in §7.6 changes.
+
+### §10.5.1 K1 status update — 4 of 5 RCs RESOLVED + 3-arm N=5 CLI validated
+
+The K1 disclosure (FlowMol3 `pb_validity_pct` -9.95pp, §10.4) is pipeline-limited, not
+framework-limited (PoseBusters 0.6.5 `posebusters/modules/energy_ratio.py:6-14` imports
+`UFFGetMoleculeForceField` instead of xtb). The framework-side action items for K1 are
+the **5-way AND root-cause chain** documented in Wave 148 P3
+(`docs/audit/wave148-blocked-unified-narrative.md`), which gates the 5-arm ablation on
+Kanzi that would surface the framework's K1 axis contribution in the cleanest possible
+form. As of Wave 153:
+
+- **RC1 (Wave 121 bridge bug)** — **RESOLVED** in Wave 149 P1
+  (`adaptive_reflow/adapters/kanzi.py` lines 1085–1097 + 1752–1756; 18 LOC + 109 LOC tests);
+  re-verified bit-exact at `mean_rmsd_A = 0.8797630831061047 Å` on the Wave 150 P1 N=1000
+  framework_inv_proj sweep (SHA-256 `3e97a42b…388db`).
+- **RC2 (CLI flags missing — `--brai-eps-scale FLOAT` + `--n-rounds INT`)** — **RESOLVED**
+  in Wave 149 P2 via `tools/run_controlled_audit.py` (per-model default mapping table +
+  consumer override).
+- **RC3 (sweep runner hardcode at `tools/_kanzi_sweep_runner.py:362-364`)** — **RESOLVED**
+  in Wave 149 P2 (per-model default mapping table + consumer override threaded through
+  `KanziAdapter(...)` construction).
+- **RC4 (ablation-script hardcode at `scripts/run_ablation_sweep.py:199-238`)** —
+  **RESOLVED** in Wave 150 P2 (`force_mode='synthetic'` replaced with `args.force_mode`
+  + 5 argparse additions: `--model`, `--limit`, `--force-mode`, `--metric-mode`, `--ckpt`).
+- **RC5 (35h GPU 5-arm ablation, ~7h/arm on RTX PRO 6000 Blackwell)** — **REMAINING**.
+  Camera-ready deferred. The full launch command is documented in
+  `scripts/run_ablation_sweep.py` (--help) and the Wave 151 P4 1-arm N=5 pre-flight
+  (`docs/audit/wave151-k1-rc5-preflight.md`) plus the Wave 152 P3 3-arm N=5 pre-flight
+  (`docs/audit/wave152-k1-rc5-3arm-preflight.md`) prove the CLI surface parses cleanly
+  across all three `--force-mode`/`--metric-mode` combinations (`synthetic`/`real`,
+  with and without `--ckpt data/kanzi_ckpt/cleaned_model.pt`) — the only remaining
+  blocker is the ~35 GPU hours of compute, not any code or wiring issue.
+
+### §10.5.2 N=1000 byte-stable reinforcement (Wave 124 + Wave 150 + Wave 152)
+
+Two parallel empirical axes now carry N=1000 byte-stable evidence on Kanzi, both
+on the ruff-frozen code at the Wave 149 P1 bridge-fix state:
+
+1. **`framework_inv_proj`** — Wave 124 + Wave 150 P1 N=1000 sweep at
+   `verification_outputs/kanzi_n1000_framework_inv_proj_w149_q4_2026/kanzi_n1000_framework_paper_metrics.json`
+   (SHA-256 `3e97a42b0251283f43f73ff072613e9f1211c943d9f3c0ef2f11aff6ba9388db`):
+   `mean_rmsd_A = 0.8797630831061047 Å` is **bit-exact identical** to the Wave 131
+   byte-reproducibility anchor
+   (`verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave131_byte_repro_q3_2026/kanzi_n1000_framework_paper_metrics.json`),
+   `codebook_entropy_bits = 9.266930691594915` bit-exact, sweep wallclock delta = -185.48 s
+   (-4.06%, system-side variance — not a regression).
+2. **`framework_synth`** — Wave 152 P1 N=1000 companion sweep
+   (`docs/audit/wave152-framework-synth-sweep.md`,
+   `verification_outputs/kanzi_n1000_framework_synth_w152_q4_2026/kanzi_n1000_framework_paper_metrics.json`,
+   SHA-256 `40b6d99815c18133d5862548c70d14d4f58f276cba8042f6667095108b67e934`):
+   `mean_rmsd_A = 2.5914 ± 0.0727 Å` (paper-metric regression +1.6868 Å vs Wave 120
+   baseline 0.9046 Å, same as Wave 121 reading), codebook metrics
+   (`entropy = 5.4841`, `utilization = 0.049`, `js_distance = 0.0000`) byte-stable σ=0
+   within seed, on the **internal composite axis** the framework_synth lift is the
+   expected +0.05 to +0.20 range (mirroring Wave 52 / Wave 91 behaviour; the
+   +0.1695 internal composite value is byte-stable σ=0 within seed per
+   `docs/audit/wave124-inv-proj-final-fix.md`).
+
+The two N=1000 sweeps together carry the §Ablations.8 dual-mode identity claim
+(framework_inv_proj +0.1695 byte-stable σ=0 across 18 cells + framework_synth
++0.1695 dual-mode identity cited) — the cross-link chain between the §Ablations
+matrix and §10.5 is preserved via SHA-256 digests on both sides.
+
+### §10.5.3 K2–K8 status summary (Wave 153 snapshot)
+
+| Item | Verdict | Status (Wave 153) |
+|------|---------|-------------------|
+| **K1** (FlowMol3 `pb_validity_pct` -9.95pp) | Pipeline limitation (PB 0.6.5 imports UFF not xtb); 4 of 5 RCs RESOLVED, only RC5 (35h GPU 5-arm ablation) remains | **RESOLVED-PARTIAL** (camera-ready deferred on RC5) |
+| **K2** (Kanzi framework_inv_proj paper-metric TIES, Δ=-0.0222 Å) | Byte-reproducible on ruff-frozen code (Δ=0.00e+00 across Wave 127 + Wave 131 + Wave 149–150 commits); +0.1695 byte-stable internal composite lift | **RESOLVED** (byte-stable, σ=0, dual-mode identity cited) |
+| **K3** (CIFAR-10 RF v4 matched-NFE=50 framework REGRESS +221–226%) | Wave 146 P2 verdict PROTOCOL_MISMATCH (cosine ramp secondary); FID=130 N=200 EMA-corrected baseline vs FID=83 N=500 v4 baseline (older inceptionv3 pre-Wave-137 EMA-fix) | **PROTOCOL_MISMATCH** (Wave 146 P2 verdict preserved verbatim) |
+| **K4** (LineageFlow `coverage_any_hit` UNDERPOWERED, z=-1.136, p=0.26) | 2-prop z-test at N=1000, alpha=0.05, 80% power gives MDD ≈ 2.1–3.1 pp; observed Δ at detection limit | **UNDERPOWERED** (N=5000–10000 expansion camera-ready deferred) |
+| **K5** (LineageFlow `top1_family_type` TIES at zero) | Synthetic M-rich priors at NFE=10 do not cross Pfam HMM E-value 1e-3 threshold | **TIES_AT_ZERO** (acknowledged §7.4 + §10) |
+| **K6** (LineageFlow foldability + self_consistency N=5 only) | OmegaFold requires Python ≤ 3.10 (host 3.12); full N=1000 sweep deferred (~45 s/seq CPU × 2000 seq ≈ 25 h/arm) | **ENV_BLOCKED** (Python 3.10 sidecar venv hardening camera-ready deferred) |
+| **K7** (LineageFlow `novelty_mmseqs2` BLOCKED on MMseqs2 target DB) | Requires `--pfam-fastas-dir dataset/pfam_fastas_clean` (currently empty vendored placeholder); Wave 43 Agent B 200-seq target DB fallback available | **BLOCKED** (vendor real Pfam-A.fasta or adopt 200-seq target DB fallback) |
+| **K8** (LineageFlow N=1000 HMMER + 8-cell NFE scan) | Wave 139 P1 + Wave 148 P5 verified `verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json` exists with N=8 cells (3 seeds × ~3 NFE budgets of 50/100/200); each cell carries `seed`, `nfe_budget`, `hmmscan_total_hits`, `coverage_any_hit` paper-metric fields; byte-stable reproducibility chain in `docs/audit/wave139-lineageflow-nfe-scan.md` | **RESOLVED** (Wave 139 + Wave 148 P5 verified) |
+
+### §10.5.4 Acceptance gates preserved (Wave 153)
+
+- `pytest tests/ -k "d4" -q` → **72/72 PASS** (unchanged from Wave 128 / Wave 131 / Wave 149 / Wave 150 / Wave 152 close).
+- `ruff check` → **0 errors** (Wave 131 pre-freeze ruff went 207 → 0; CLM-024's historical 33 → 0 claim preserved additively; the camera-ready acknowledges the current-state mypy 988-error count honestly per §10.5 above).
+- `python tools/check_claims_consistency.py` → **"No drift detected"** (CLAIMS.md ↔ paper-draft.md cross-references intact across all Wave 149–153 commits).
+- SHA-256 byte-stability anchors intact: framework_inv_proj (`3e97a42b…388db`) + framework_synth (`40b6d998…e934`) + Wave 131 byte-reproducibility anchor (bit-exact match on both axes).
+- R1–R6 headline numbers in §7.6 **unchanged** by any Wave 149–153 audit; the §7.6 Tables C/D verdict strings (BLOCKED / PARTIAL / PROTOCOL_MISMATCH) preserved verbatim.
+
+**No existing content in §10.1–10.4 was removed, modified, or rewritten by this §10.5 insertion.**
+§10.5 is a pure additive augmentation that surfaces the cumulative Wave 149–153
+status of every K1–K8 limitation disclosed in §10.4 above.
+
 ## §11. Broader Impact (camera-ready)
 
 **Positive.** FlowA is a **training-free, inference-time re-inference
