@@ -318,11 +318,20 @@ def _w2_two_moons(sample: Any, *, seed: int) -> float:
 
 
 def _make_adapter(model_spec: dict[str, Any],
-                  *, disable_gpt_prior: bool = False) -> Any:
+                  *, disable_gpt_prior: bool = False,
+                  force_mode: str = "synthetic") -> Any:
     """Instantiate the adapter for ``model_spec``.
 
     Honors ``disable_gpt_prior`` for kanzi via the existing
     ``gpt_prior_restart_policy=None`` constructor flag.
+
+    Wave 155 P1 fix: ``force_mode`` is now threaded in from the
+    CLI flag ``--force-mode {synthetic,real}`` (default ``"synthetic"``
+    preserves Wave 52 Agent B backward compat). Previously this was
+    hardcoded to ``"synthetic"`` at line 333, which silently dropped
+    any user request to run the real-ckpt path. The kanzi
+    re-instantiation below also now inherits the same ``force_mode``
+    (was ``"auto"``).
     """
     module_path, attr = model_spec["adapter_factory_path"].rsplit(":", 1)
     mod = importlib.import_module(module_path)
@@ -330,7 +339,7 @@ def _make_adapter(model_spec: dict[str, Any],
     # ``default_twodim_fm_adapter`` does not accept ``force_mode``.
     # The kanzi + lineageflow factories do.
     try:
-        adapter = factory(force_mode="synthetic")
+        adapter = factory(force_mode=str(force_mode))
     except TypeError:
         adapter = factory()
     # For kanzi, re-instantiate with the GPT-prior policy disabled
@@ -346,7 +355,7 @@ def _make_adapter(model_spec: dict[str, Any],
         try:
             adapter = KanziAdapter(
                 weights_path=kanzi_resolve_weights_path(),
-                force_mode="auto",
+                force_mode=str(force_mode),
                 gpt_prior_restart_policy=None,
             )
         except Exception:
@@ -753,6 +762,7 @@ def run_arm_cell(
         adapter = _make_adapter(
             model_spec,
             disable_gpt_prior=bool(arm["disable_gpt_prior_restart"]),
+            force_mode=str(model_spec.get("force_mode", "synthetic")),
         )
     except Exception as exc:  # noqa: BLE001
         cell["status"] = "BLOCKED"
