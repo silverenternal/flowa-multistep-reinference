@@ -6317,7 +6317,7 @@ The xtb pipeline closure is on the camera-ready deferred list (`todo/STATUS.md`)
 
 **Item K2 (Kanzi N=1000 framework_inv_proj paper-metric TIES, delta = -0.0222 A).**
 Framework 0.8798 A vs baseline 0.9020 A, byte-reproducible on the ruff-frozen code
-(delta = 0.00e+00 across Wave 127 + Wave 131 commits per §15.32). Framework`s
+(delta = 0.00e+00 across Wave 127 + Wave 131 commits per §15.32). Framework's
 value-add on Kanzi lives on the **internal composite axis** (+0.1695 byte-stable sigma=0
 across 18 cells), not the paper-metric axis. The 0.86-1.65 A historical framework-arm
 numbers were a Wave 95 P3.C / Wave 122 P8 **sigma=1e-3 noise-collapse artifact**,
