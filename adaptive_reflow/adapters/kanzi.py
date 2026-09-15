@@ -1087,13 +1087,32 @@ def _torch_velocity_field(
     # When state_shape[-1] != 3 (post-project_out latents), apply Wave 95.P3.B bridge
     # to project (L, n_channels_decoder) -> (L, 3) backbone coords BEFORE model forward.
     # Closes Wave 121 P4 NEW DEEPER bug at kanzi.py:_torch_velocity_field.
+    #
+    # Wave 157 P3 (deeper fix): ``kanzi_latent_to_coords`` returns a 3-D
+    # ``(B, L, 3)`` array (the bridge adds the batch dim internally
+    # because ``DAE.decode`` consumes ``(B, L)`` indices). Without the
+    # squeeze below, the trailing ``x_t = as_tensor(x).unsqueeze(0)``
+    # would produce a 4-D ``(1, 1, L, 3)`` and the upstream
+    # ``DAE.encode`` would raise ``ValueError: too many values to
+    # unpack (expected 3)`` at ``B, L, D = x_BLD.shape``. Squeeze the
+    # bridge output back to ``(L, 3)`` so it matches the freshly
+    # updated ``state_shape = (L, 3)``; the subsequent
+    # ``.unsqueeze(0)`` then correctly adds the single batch dim
+    # expected by ``_KanziDAEShim.forward``.
     if state_shape[-1] != 3:
         bridge_decoder = cache.get("latent_to_coord_decoder")
         if bridge_decoder is None:
             from adaptive_reflow.universal.adapter import CapabilityMissingError
             raise CapabilityMissingError("latent_to_coord_decoder")
         from tools.kanzi_latent_to_coord import kanzi_latent_to_coords
-        x = kanzi_latent_to_coords(x, decoder=bridge_decoder, fsq_quantizer=bridge_decoder.quantize, n_steps=cache.get("decoder_steps", 50), seed=cache.get("bridge_seed", 0))
+        _bridge_out = kanzi_latent_to_coords(
+            x, decoder=bridge_decoder,
+            fsq_quantizer=bridge_decoder.quantize,
+            n_steps=cache.get("decoder_steps", 50),
+            seed=cache.get("bridge_seed", 0),
+        )
+        # Strip the bridge-added batch dim to match ``state_shape = (L, 3)``.
+        x = _bridge_out[0] if _bridge_out.ndim == 3 and _bridge_out.shape[0] == 1 else _bridge_out
         state_shape = (*state_shape[:-1], 3)
 
     import torch  # local import — torch is optional at the framework level.

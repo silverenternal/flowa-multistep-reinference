@@ -342,6 +342,23 @@ def _make_adapter(model_spec: dict[str, Any],
     synthetic}``; before this bridge, ``"real"`` was propagated all
     the way to the resolver and raised ``unknown_force_mode:real``.
     Backward-compat preserved: ``"synthetic"`` passes through verbatim.
+
+    Wave 157 P2: When ``force_mode == "torch"`` and the adapter is
+    kanzi, the post-Wave-149-P1 bridge at
+    :func:`_torch_velocity_field` projects the latent ``(L, 512)``
+    trajectory to backbone coords ``(L, 3)`` BEFORE the model call
+    (because ``DAE.net`` consumes ``(B, L, 3)`` raw coords). The
+    resulting velocity ``v`` has shape ``(L, 3)``, which cannot
+    broadcast against ``x_cur.shape == (L, 512)`` in the Euler/Heun
+    integration loop (``operands could not be broadcast together
+    with shapes (64,512) (64,3)``). The established fix is the
+    ``framework_inv_proj`` arm pattern at
+    ``tools/_kanzi_sweep_runner.py:421-449``: inverse-project x0 to
+    backbone coords via ``kanzi_latent_to_coords`` BEFORE
+    :meth:`solve_ode`, then call :meth:`set_traj_shape` with the
+    coord shape so the integration loop and the model both operate
+    on ``(L, 3)``. This wires the same invariant into the K1 RC5
+    sweep's baseline + framework arms.
     """
     if str(force_mode) == "real":
         force_mode = "torch"
@@ -372,6 +389,96 @@ def _make_adapter(model_spec: dict[str, Any],
                 weights_path=kanzi_resolve_weights_path(),
                 force_mode=str(force_mode),
                 gpt_prior_restart_policy=None,
+            )
+    # Wave 157 P2 — pre-warm the kanzi native-state cache with an
+    # inverse-projected (L, 3) x0 and call set_traj_shape so
+    # ``solve_ode`` integrates in backbone coord space. See the
+    # long-form rationale in the docstring above.
+    #
+    # Implementation note: the prior approach (warm the cache once
+    # with batch_id="warm" then override the entry in place) did NOT
+    # take effect because :meth:`solve_ode`'s call site
+    # (``_solve_single_pass`` / ``_solve_framework``) invokes
+    # :meth:`build_initial_state` with ``batch_id="ablation"``,
+    # producing a fresh native-state digest whose ``x0`` is again the
+    # canonical ``(64, 512)`` latent. The override must therefore
+    # patch :meth:`build_initial_state` itself so EVERY call it makes
+    # — under any ``batch_id`` — produces a ``(64, 3)`` backbone-coord
+    # x0 once :meth:`set_traj_shape` has been called.
+    if (
+        str(force_mode) == "torch"
+        and model_spec["model_id"] == "kanzi"
+        and getattr(adapter, "_mode", None) == "torch"
+        and getattr(adapter, "_model", None) is not None
+    ):
+        try:
+            import numpy as _np
+
+            from tools.kanzi_latent_to_coord import (  # type: ignore
+                kanzi_latent_to_coords,
+            )
+
+            # Pre-compute a canonical ``(L, 3)`` x0 from a one-time
+            # ``(64, 512)`` latent sample (the standard
+            # ``_real_state_shape`` value) so :meth:`build_initial_state`
+            # below can use it as a deterministic template across
+            # per-record digest keys.
+            _template_rng = _np.random.default_rng(0)
+            _template_latent = _np.random.standard_normal(
+                (int(getattr(adapter, "_real_state_shape", (64, 512))[0]),
+                 int(getattr(adapter, "_real_state_shape", (64, 512))[1])),
+            ).astype(_np.float64)
+            _template_coords_A = kanzi_latent_to_coords(
+                _template_latent,
+                decoder=adapter._model._dae,
+                fsq_quantizer=adapter._model._dae.quantize,
+                n_steps=int(getattr(adapter, "_num_steps", 50)),
+                seed=0,
+            )
+            _template_coords_nm = _np.asarray(
+                _template_coords_A, dtype=_np.float64,
+            ).reshape(-1, 3) / 10.0
+            adapter.set_traj_shape(_template_coords_nm.shape)  # type: ignore[attr-defined]
+
+            # Patch :meth:`build_initial_state` so its emitted ``x0``
+            # is the canonical ``(64, 3)`` backbone-coord template
+            # above (rather than the synthetic ``(64, 512)`` latent).
+            # The wrapper preserves the digest key contract (it still
+            # calls the original ``seed_from_ids`` + state digest) so
+            # the framework's :func:`native_state_digest` lookups
+            # remain stable; only the ``x0`` payload is reshaped.
+            _orig_build_initial_state = adapter.build_initial_state
+
+            def _patched_build_initial_state(
+                *, batch_id: str, sample_id: str,
+            ) -> Any:
+                bundle = _orig_build_initial_state(
+                    batch_id=batch_id, sample_id=sample_id,
+                )
+                entry = adapter._native_states.get(  # type: ignore[attr-defined]
+                    bundle.native_state_digest,
+                )
+                if entry is not None:
+                    # Replace the ``(L, 512)`` synthetic latent with
+                    # the canonical ``(L, 3)`` backbone-coord x0; the
+                    # :meth:`solve_ode` reshape to
+                    # ``self._effective_traj_shape()`` (now ``(L, 3)``)
+                    # then succeeds and the integration loop matches
+                    # the velocity field's output shape.
+                    entry["x0"] = _template_coords_nm.copy()
+                return bundle
+
+            adapter.build_initial_state = _patched_build_initial_state  # type: ignore[method-assign]
+        except Exception as exc:  # noqa: BLE001
+            # If the bridge is unavailable (e.g. synthetic-only env),
+            # leave the adapter in its default ``(L, 512)`` shape; the
+            # cell will surface the error via RUN_ERROR and the sweep
+            # log records it for post-mortem.
+            import sys as _sys
+            print(
+                f"[W157 P2] kanzi inverse-projection skipped: "
+                f"{type(exc).__name__}:{exc}",
+                file=_sys.stderr,
             )
     return adapter
 
