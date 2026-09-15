@@ -235,11 +235,12 @@ K1_RC5_PHRASES: tuple[str, ...] = (
 # the Wave-149 exclusion; if any surviving occurrence is OUTSIDE the
 # known-safe list, that's a drift FAIL.
 DRIFT_SAFE_PATHS: tuple[str, ...] = (
-    # Wave 150/151/152 close audit docs reference Wave 149 drift-fix
+    # Wave 150/151/152/153 close audit docs reference Wave 149 drift-fix
     # in the historical-caveat context.
     "docs/audit/wave150-close.md",
     "docs/audit/wave151-close.md",
     "docs/audit/wave152-close.md",
+    "docs/audit/wave153-close.md",
     # Wave 102-148 audit-trail ledger rows that document prior wave
     # states at the time they ran (the 33/33 figure was correct at
     # those waves per Wave 106.C.3 F-06b).
