@@ -155,4 +155,4 @@ model referenced in the `--model` choices is not yet a MODELS entry
 
 ## Commit hash
 
-To be filled at end of P1 commit.
+`d25208ba2ce17f7c1b9edf5c11cfd951ec134012` — Wave 155 P1.
