@@ -1158,6 +1158,64 @@ def build_argparser() -> argparse.ArgumentParser:
             "= real and --model selects a real-ckpt adapter)."
         ),
     )
+    # Wave 165b P2 — per-component ablation toggles. When any of these
+    # is set, the script runs a SINGLE custom arm reflecting the
+    # combined 3-toggle (BRAI / beta-scheduler / restart) state. All
+    # default to None (= use the canonical 5-arm sweep).
+    p.add_argument(
+        "--disable-brai", dest="disable_brai",
+        action="store_true", default=None,
+        help=(
+            "Wave 165b P2 toggle: disable the BRAI (GPT-prior-aware "
+            "restart) component. Maps internally to "
+            "disable_gpt_prior_restart. Combined with "
+            "--enable-brai / --disable-X / --enable-X below to "
+            "specify a 3-toggle cell (Wave 165b P2 8-cell matrix)."
+        ),
+    )
+    p.add_argument(
+        "--enable-brai", dest="enable_brai",
+        action="store_true", default=None,
+        help=(
+            "Wave 165b P2 toggle: explicitly enable the BRAI "
+            "component. Tri-state: passing neither flag leaves the "
+            "custom arm's BRAI field at its default (enabled)."
+        ),
+    )
+    p.add_argument(
+        "--disable-beta-scheduler", dest="disable_beta_scheduler",
+        action="store_true", default=None,
+        help=(
+            "Wave 165b P2 toggle: disable the paper-quantity-driven "
+            "beta scheduler (uniform n_cap fallback). Maps to "
+            "disable_paper_quantity_scheduler."
+        ),
+    )
+    p.add_argument(
+        "--enable-beta-scheduler", dest="enable_beta_scheduler",
+        action="store_true", default=None,
+        help=(
+            "Wave 165b P2 toggle: explicitly enable the beta "
+            "scheduler."
+        ),
+    )
+    p.add_argument(
+        "--disable-restart", dest="disable_restart",
+        action="store_true", default=None,
+        help=(
+            "Wave 165b P2 toggle: disable the restart-blend as a "
+            "whole (n_rounds collapses to 1, framework degenerates "
+            "to single-pass solve). Maps to disable_restart_blend."
+        ),
+    )
+    p.add_argument(
+        "--enable-restart", dest="enable_restart",
+        action="store_true", default=None,
+        help=(
+            "Wave 165b P2 toggle: explicitly enable the restart-"
+            "blend component."
+        ),
+    )
     return p
 
 
@@ -1177,8 +1235,72 @@ def main(argv: list[str] | None = None) -> int:
         for m in MODELS:
             if nfe_list:
                 m["nfe_budget"] = nfe_list[0]
+    # Wave 165b P2: when any of the --disable-X / --enable-X flags is
+    # set, run a single custom arm that mirrors the 3-toggle
+    # combination. Tri-state resolution: --disable-X wins over
+    # --enable-X; absence = component enabled (so the default
+    # "all-on" cell is reachable without specifying any toggle).
+    toggle_flags = (
+        args.disable_brai,
+        args.enable_brai,
+        args.disable_beta_scheduler,
+        args.enable_beta_scheduler,
+        args.disable_restart,
+        args.enable_restart,
+    )
+    custom_arm_set = any(t is not None for t in toggle_flags)
+    if custom_arm_set:
+        # Resolve tri-state per component: disable-X wins; enable-X
+        # wins over absence; absence = enabled (default-on).
+        if args.disable_brai is True:
+            disable_brai = True
+        elif args.enable_brai is True:
+            disable_brai = False
+        else:
+            disable_brai = False  # default-on
+        if args.disable_beta_scheduler is True:
+            disable_beta = True
+        elif args.enable_beta_scheduler is True:
+            disable_beta = False
+        else:
+            disable_beta = False  # default-on
+        if args.disable_restart is True:
+            disable_restart = True
+        elif args.enable_restart is True:
+            disable_restart = False
+        else:
+            disable_restart = False  # default-on
+        # Naming convention: cells are referenced by their toggle bitstring
+        # (BRAI, beta-scheduler, restart) where 1 = disabled.
+        bits = (
+            ("B" if disable_brai else "b"),
+            ("S" if disable_beta else "s"),
+            ("R" if disable_restart else "r"),
+        )
+        custom_label = "custom_" + "".join(bits)
+        custom_arm: dict[str, Any] = {
+            "arm_id": 99,
+            "label": custom_label,
+            "description": (
+                f"Custom 3-toggle arm (Wave 165b P2). "
+                f"disable_brai={disable_brai} "
+                f"disable_beta_scheduler={disable_beta} "
+                f"disable_restart={disable_restart}."
+            ),
+            "n_rounds": 1 if disable_restart else 3,
+            "disable_restart_blend": disable_restart,
+            "disable_paper_quantity_scheduler": disable_beta,
+            "disable_gpt_prior_restart": disable_brai,
+            "expected_component_active": (
+                "none" if (disable_brai and disable_beta and disable_restart)
+                else "subset"
+            ),
+        }
+        arms_to_run = [custom_arm]
+    else:
+        arms_to_run = list(ARMS)
     cells: list[dict[str, Any]] = []
-    for arm in ARMS:
+    for arm in arms_to_run:
         for model_spec in MODELS:
             model_spec = dict(model_spec)
             model_spec["seed"] = args.seed
@@ -1200,9 +1322,9 @@ def main(argv: list[str] | None = None) -> int:
     report = {
         "schema": "ablation_q4_2026.v1",
         "tool": "scripts/run_ablation_sweep.py",
-        "wave": "Wave 52 Agent B",
+        "wave": "Wave 52 Agent B + Wave 165b P2 toggle extensions",
         "timestamp": datetime.datetime.now(tz=datetime.UTC).isoformat(),
-        "arms": ARMS,
+        "arms": arms_to_run,
         "models": MODELS,
         "cells": cells,
         "ablation_table": table,
@@ -1213,7 +1335,11 @@ def main(argv: list[str] | None = None) -> int:
             "1-D sliced W2 for twodim_fm) so per-arm deltas are "
             "non-saturating. Each cell uses synthetic-mode adapter "
             "(zero upstream deps, CI-friendly). Disjoint file scope "
-            "honoured: no framework file is modified."
+            "honoured: no framework file is modified. Wave 165b P2 "
+            "extended the CLI with --disable-brai / "
+            "--disable-beta-scheduler / --disable-restart so each of "
+            "the 2^3=8 toggle combinations can be run as a single "
+            "explicit cell without bash loops."
         ),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
