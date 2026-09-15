@@ -6144,6 +6144,8 @@ dataset/pfam_fastas_clean` which is currently an empty vendored placeholder.
 Future work: vendor real Pfam-A.fasta or restrict novelty to the 200-seq target DB
 (Wave 43 Agent B did the latter for Kanzi novelty).
 
+**Wave 154b placeholder-sequence HMMER POC (ADDITIVE — does not change the K7 BLOCKED status above).** A fast HMMER full-scan POC was executed at `/tmp/w154/hmmer_full_n1000/` (158 baseline + 172 framework hits, +8.86% lift on placeholder sequences; raw `hits.tbl` files at `/tmp/w154/hmmer_full_n1000/{baseline,framework}/hits.tbl`). The FASTAs in this POC contain random placeholder sequences, NOT real Pfam-seeded LineageFlow samples; the fast completion is a placeholder-sequence artifact, not a Pfam real-sample result. This POC does NOT replace the real K7 novelty_mmseqs2 run that requires the Pfam-A.fasta reference target DB. The +8.86% placeholder lift is supplementary; the K7 BLOCKED verdict is preserved verbatim.
+
 **Item K8 (RESOLVED by Wave 139).** LineageFlow N=1000 HMMER + 8-cell NFE scan
 paper-metric axis now at `verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json`
 (8 cells: 3 seeds x ~3 NFE budgets [50/100/200]; deterministic per-record seed;
@@ -6155,6 +6157,8 @@ headline (R1 in §7.6.1) remains sourced from the audit doc
 "raw sweep output was never archived to the repo" honest-negative surface item.
 
 **Wave 148 P5 verification (ADDITIVE — does not delete the K8 RESOLVED claim above).** Verified on-disk that `verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json` exists with N=8 cells (3 seeds × ~3 NFE budgets of 50/100/200). Cell contents inspected: each cell carries `seed`, `nfe_budget`, `hmmscan_total_hits`, `coverage_any_hit` paper-metric fields. Full byte-stable reproducibility chain documented in `docs/audit/wave139-lineageflow-nfe-scan.md`.
+
+**Wave 154b placeholder HMMER POC disclosure (ADDITIVE — does not change the K8 RESOLVED status above; does not change the R1 +116% headline).** Wave 154b placeholder HMMER POC JSON at `/tmp/w154/hmmer_full_n1000/{baseline,framework}/hits.tbl` (158 + 172 hits on placeholder sequences) is supplementary evidence only. The REAL N=1000 HMMER raw JSON (`hits.tbl`) for the LineageFlow samples used in the +116% R1 headline remains camera-ready deferred pending the original Wave 86 / Wave 81 LineageFlow sampled-sequence regeneration. The placeholder POC was executed on random placeholder FASTAs (not real Pfam-seeded samples) and is NOT a substitute for the K8 raw-JSON archival on real LineageFlow samples. The R1 +116% `hmmscan_total_hits` headline number is unchanged and remains sourced from `docs/ARCHIVE/audit-waves-1-99/wave86-phase3-sweep.md` §2 (already cited above).
 
 **Provenance discipline.** Every R1-R6 number in §7.6 cites a source path on disk
 (see `docs/headline-evidence/` for the single-source-of-truth collection). The
@@ -6186,6 +6190,8 @@ cited in §7.6.
 - **Wave 147 P4 paper.pdf cosmetic warning fixes** (`docs/audit/wave147-pdf-warning-fixes.md`): `\textbackslash\{` → `\{` (2107 occurrences; eliminated the ~166 "textbackslash invalid in math mode" warnings), wrapped 3 display equations in `\resizebox`, added `\sloppy`. PDF size 1209393 → 1207801 bytes; PDF pages 117 → 117 (preserved). Only `docs/build_pdf/paper.tex` modified (no source code). This is a build-pipeline item, not a §7.6/§10.4 disclosure update.
 
 All five audit/design docs are referenced from §7.6 Tables C/D above and §10.4 K3 above, with the verdict strings (BLOCKED / PARTIAL / PROTOCOL_MISMATCH) preserved verbatim. **All Wave 146-147 items are camera-ready deferred; ruff-frozen code (Wave 131) preserved; D.4 72/72 PASS + ruff 0 preserved.** No R1-R6 headline number in §7.6 changes as a result of these audits.
+
+**POC validation (Wave 154b, 2026-09-15):** A 15-cell per-component contribution matrix ablation was run on the kanzi / lineageflow / twodim_fm adapters in synthetic mode (5 arms x 3 models; each arm exercises a different disable_-flag combination of the framework's restart_blend / paper_quantity_scheduler / gpt_prior_aware_restart components). All 15 cells returned status=OK. Per-component signed_delta values are documented in /tmp/w154/k1_rc5_5arm_n1000/ablation_q4_2026.json (sha256 to be filled by P3). This POC matrix supplements the 4/5 RCs RESOLVED status from Wave 149-150 but does NOT replace the full N=1000 5-arm ablation (RC5 remains the only compute-blocked blocker; CLI validated N=5 3-arm by Wave 152 P3; full N=1000 5-arm command documented in docs/audit/wave152-k1-rc5-3arm-preflight.md).
 
 ## §10.5 Known limitations status (Wave 149–153)
 
