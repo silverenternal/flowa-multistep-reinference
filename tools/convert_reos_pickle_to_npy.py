@@ -48,7 +48,6 @@ from pathlib import Path
 
 import numpy as np
 
-
 DEFAULT_PKL = Path(
     "/home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/repo/data/"
     "geom_full_kekulized/train_reos_ring_counts.pkl"

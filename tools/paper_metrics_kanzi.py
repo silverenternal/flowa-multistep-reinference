@@ -90,8 +90,9 @@ import math
 import pathlib
 import subprocess
 import sys
-from dataclasses import dataclass, asdict
-from typing import Any, Callable, Sequence
+from collections.abc import Callable, Sequence
+from dataclasses import asdict, dataclass
+from typing import Any
 
 import numpy as np
 
@@ -841,7 +842,7 @@ def _smoke_main(argv: Sequence[str] | None = None) -> int:
     # utilization is ~0.5 (deterministic + non-trivial).
     half = max(1, int(args.vocab_size) // 2)
     idx_per_row = []
-    for r in range(int(args.n_per_dim)):
+    for _r in range(int(args.n_per_dim)):
         codes = rng.choice(int(args.vocab_size), size=half, replace=False)
         idx_per_row.append(codes)
     idx = np.stack(idx_per_row, axis=0).astype(np.int64)

@@ -48,6 +48,7 @@ import sys
 import tempfile
 import time
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -55,6 +56,13 @@ import numpy as np
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
+# P0-1: import the canonical InceptionV3 feature-extractor surface
+# directly from ``tools.run_image_eval``. Loaded via spec_from_file_location
+# so this module remains self-contained when invoked as
+# ``python tools/eval_rf_cifar.py`` (the ``tools/`` directory is not a
+# package, so a plain ``import`` would fail).
+import importlib.util as _importlib_util  # noqa: E402
 
 from adaptive_reflow.adapters.rectified_flow_cifar import (  # noqa: E402
     RF_CIFAR_CONFIG_HASH,
@@ -65,13 +73,6 @@ from adaptive_reflow.adapters.rectified_flow_cifar import (  # noqa: E402
 from adaptive_reflow.eval.fid import (  # noqa: E402
     InceptionV3FIDEvaluator,
 )
-
-# P0-1: import the canonical InceptionV3 feature-extractor surface
-# directly from ``tools.run_image_eval``. Loaded via spec_from_file_location
-# so this module remains self-contained when invoked as
-# ``python tools/eval_rf_cifar.py`` (the ``tools/`` directory is not a
-# package, so a plain ``import`` would fail).
-import importlib.util as _importlib_util  # noqa: E402
 
 _RUN_IMAGE_EVAL_PATH = Path(__file__).resolve().parent / "run_image_eval.py"
 _RUN_IMAGE_EVAL_SPEC = _importlib_util.spec_from_file_location(

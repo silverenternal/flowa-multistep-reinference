@@ -212,10 +212,9 @@ def _load_model(
     """
     # Local imports keep the module loadable from lightweight tests
     # (e.g., an ``import flowmol3_sidecar_server`` smoke check).
+    import dgl  # noqa: F401, PLC0415  -- sidecar-only import
     import torch  # noqa: PLC0415
     import yaml  # noqa: PLC0415
-
-    import dgl  # noqa: F401, PLC0415  -- sidecar-only import
     from flowmol.model_utils.load import model_from_config  # noqa: PLC0415
 
     weights_abs = str(Path(weights_path).resolve())
@@ -234,7 +233,7 @@ def _load_model(
             "config_yaml_not_found: expected --config-yaml or "
             "config.yaml next to checkpoints/"
         )
-    with open(cfg_path, "r") as f:
+    with open(cfg_path) as f:
         config = yaml.safe_load(f)
 
     # Stub the two ``.pt`` files the FlowMol constructor requires (only

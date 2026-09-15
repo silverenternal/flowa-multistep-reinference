@@ -70,20 +70,17 @@ sys.path.insert(0, str(_REPO_ROOT))
 
 from kanzi import DAE, kabsch_rmsd  # noqa: E402
 
-# Wave 96.B — reuse the diverse-endpoint helper + parser from the Wave 95
-# Phase 3.C driver (this is the production version of the Wave 96.D
-# debug script, not a re-implementation).
-from tools.sweep_kanzi_n1000_framework_paper_metrics_inv_proj import (  # noqa: E402
-    parse_record,
-    real_framework_x_final_512d,
-)
-from tools.kanzi_latent_to_coord import kanzi_latent_to_coords  # noqa: E402
-from tools.paper_metrics_kanzi import (  # noqa: E402
-    compute_codebook_entropy,
-    compute_codebook_js_distance,
-    compute_codebook_perplexity,
-    compute_codebook_utilization,
-)
+from adaptive_reflow.adapters.kanzi import default_kanzi_adapter  # noqa: E402
+
+# Wave 98.A — GPU utilization watchdog. Wraps the sweep loop so a
+# stuck-process scenario (util.gpu==0 while memory.used>100 MiB for
+# >30s) emits a WARNING to stderr. The diagnostic that should have
+# caught the Wave 96.E stuck sweep earlier.
+from tools._gpu_watchdog import gpu_watchdog  # noqa: E402
+
+# Wave 112.D-1: --config support.
+from tools._kanzi_sweep_runner import apply_kanzi_profile_defaults  # noqa: E402
+
 # Wave 97.D — hard N-record assertion + summary JSON contract (closes
 # the Wave 96 reality-check gap: agents silently wrote N<=10 sweeps and
 # claimed N=1000). No default change — agents can still pass
@@ -93,17 +90,22 @@ from tools._sweep_assertion import (  # noqa: E402
     assert_n_records_match,
     write_summary_with_n_keys,
 )
-from adaptive_reflow.adapters.kanzi import default_kanzi_adapter  # noqa: E402
-
-# Wave 112.D-1: --config support.
-from tools._kanzi_sweep_runner import apply_kanzi_profile_defaults  # noqa: E402
 from tools.eval.config import load_run_profile  # noqa: E402
+from tools.kanzi_latent_to_coord import kanzi_latent_to_coords  # noqa: E402
+from tools.paper_metrics_kanzi import (  # noqa: E402
+    compute_codebook_entropy,
+    compute_codebook_js_distance,
+    compute_codebook_perplexity,
+    compute_codebook_utilization,
+)
 
-# Wave 98.A — GPU utilization watchdog. Wraps the sweep loop so a
-# stuck-process scenario (util.gpu==0 while memory.used>100 MiB for
-# >30s) emits a WARNING to stderr. The diagnostic that should have
-# caught the Wave 96.E stuck sweep earlier.
-from tools._gpu_watchdog import gpu_watchdog  # noqa: E402
+# Wave 96.B — reuse the diverse-endpoint helper + parser from the Wave 95
+# Phase 3.C driver (this is the production version of the Wave 96.D
+# debug script, not a re-implementation).
+from tools.sweep_kanzi_n1000_framework_paper_metrics_inv_proj import (  # noqa: E402
+    parse_record,
+    real_framework_x_final_512d,
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -140,10 +142,9 @@ def main(argv: list[str] | None = None) -> int:
         args = apply_kanzi_profile_defaults(args, p, profile)
         # this driver uses --max-records (not --limit like the shared runner's
         # 3 drivers) — mirror the same CLI > YAML > default resolution.
-        if "max_records" in profile:
-            if args.max_records == p.get_default("max_records"):
-                n = int(profile["max_records"])
-                args.max_records = n if n > 0 else 0
+        if "max_records" in profile and args.max_records == p.get_default("max_records"):
+            n = int(profile["max_records"])
+            args.max_records = n if n > 0 else 0
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     jsonl_path = args.output_dir / "per_metric.jsonl"
@@ -430,9 +431,7 @@ def main(argv: list[str] | None = None) -> int:
         "codebook_metrics_notes": {
             "entropy": "computed across all N record indices concatenated",
             "perplexity": "2 ** entropy",
-            "js_distance": "pair=records_0_1_L={}".format(
-                all_idx[0].shape[0] if all_idx else 0
-            ),
+            "js_distance": f"pair=records_0_1_L={all_idx[0].shape[0] if all_idx else 0}",
             "utilization": "computed across all N record indices concatenated",
             "hamming_rotation_invariance": (
                 "skipped in sweep loop (encoder-only; would 2x runtime)"

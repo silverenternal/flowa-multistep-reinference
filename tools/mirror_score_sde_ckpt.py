@@ -194,7 +194,7 @@ def extract_ema_clean_ckpt() -> str:
     # Pair shadow_params with the ``module.*`` keys from the live model,
     # skipping the non-trainable ``module.sigmas`` buffer. Documented in
     # ``docs/r4-survey/13-weights-acquisition.md``.
-    trainable_keys = [k for k in model_state.keys() if k != "module.sigmas"]
+    trainable_keys = [k for k in model_state if k != "module.sigmas"]
     if len(shadow_params) != len(trainable_keys):
         print(
             "[mirror_score_sde_ckpt] ERROR: shadow_params length "
@@ -205,7 +205,7 @@ def extract_ema_clean_ckpt() -> str:
         )
         sys.exit(2)
 
-    clean_state = dict(zip(trainable_keys, shadow_params))
+    clean_state = dict(zip(trainable_keys, shadow_params, strict=False))
     # Add the non-trainable ``sigmas`` buffer (NCSNpp log-schedule,
     # length 1000) so the adapter's ``NCSNppDDPMpp.load_state_dict``
     # call succeeds. Without this, ``load_state_dict(strict=True)`` raises

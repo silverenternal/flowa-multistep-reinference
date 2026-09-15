@@ -118,7 +118,6 @@ from typing import Any, Optional
 
 import yaml
 
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MODELS_DIR = REPO_ROOT / "docs" / "models"
 
@@ -282,7 +281,7 @@ def render_readme(
     model_name: str,
     card_path: Path,
     *,
-    inline_overrides: Optional[dict[str, Any]] = None,
+    inline_overrides: dict[str, Any] | None = None,
 ) -> str:
     """Return the full README.md text (YAML front matter + Markdown body).
 
@@ -372,8 +371,8 @@ def upload_to_hub(
     repo_id: str,
     readme_text: str,
     *,
-    commit_message: Optional[str] = None,
-    token: Optional[str] = None,
+    commit_message: str | None = None,
+    token: str | None = None,
 ) -> str:
     """Upload the README.md to the given HF Hub model repo.
 
@@ -457,7 +456,7 @@ def _build_argparser() -> argparse.ArgumentParser:
     return p
 
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     """CLI entry point. Returns 0 on success, 1 on validation/upload error."""
     args = _build_argparser().parse_args(argv)
 

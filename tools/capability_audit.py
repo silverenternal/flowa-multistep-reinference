@@ -67,7 +67,7 @@ from typing import Any
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
+from adaptive_reflow.util.host_fingerprint import with_host_fingerprint  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Paths (anchored to repo root)
@@ -791,7 +791,7 @@ def g5_saturation_point(integrated_models: list[str]) -> dict[str, Any]:
         nfe_full, metric_full, _ = sweep[-1]
         threshold = metric_full / 0.95
         n_min = nfe_full  # default: full NFE (no earlier point qualifies)
-        for nfe, metric, note in sweep:
+        for nfe, metric, _note in sweep:
             if metric <= threshold:
                 n_min = nfe
                 break
@@ -912,7 +912,7 @@ def g6_honest_negative_surface(consolidated_text: str, conditions_text: str) -> 
                     continue
                 # Data row
                 if len(cols) >= len(headers):
-                    row_dict = dict(zip(headers, cols))
+                    row_dict = dict(zip(headers, cols, strict=False))
                     if current_kind == "pareto":
                         row_dict["__family"] = current_kind_family
                         pareto_cells.append(row_dict)
@@ -1223,7 +1223,7 @@ def main(argv: list[str] | None = None) -> int:
         # We just check the file is non-empty and well-formed; full match
         # requires running scripts/capture_env_hash.py verify.
         if not committed:
-            print(f"WARN: --cold-clone requested but env_hash.txt is empty", file=sys.stderr)
+            print("WARN: --cold-clone requested but env_hash.txt is empty", file=sys.stderr)
 
     # Compute 7 metrics
     g1 = g1_mean_value_score(integrated_models, robust=args.robust, literal=args.literal)
@@ -1247,7 +1247,7 @@ def main(argv: list[str] | None = None) -> int:
         "g5": g5,
         "g6": g6,
         "g7": g7,
-        "timestamp": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
+        "timestamp": datetime.datetime.now(tz=datetime.UTC).isoformat(),
         "env_hash": env_hash,
         "cold_clone": args.cold_clone,
         "g1_robust_mode": args.robust,

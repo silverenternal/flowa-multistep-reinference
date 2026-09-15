@@ -307,7 +307,7 @@ def main(argv: list[str] | None = None) -> int:
     payload = {
         "tool": "tools/g1_deep_dive.py",
         "input": str(args.input),
-        "timestamp": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
+        "timestamp": datetime.datetime.now(tz=datetime.UTC).isoformat(),
         "spec_target_g1": "+0.05",
         "spec_mean_from_input": g1.get("value"),
         "analysis": result,

@@ -99,14 +99,13 @@ from adaptive_reflow.contracts import (  # noqa: E402
     RunId,
     hash_policy_hash,
 )
-from adaptive_reflow.frame.engine import Engine  # noqa: E402
-from adaptive_reflow.frame.phase import build_phase_state  # noqa: E402
-from adaptive_reflow.eval.fid import (  # noqa: E402  P0-1 dedup
+from adaptive_reflow.eval.fid import (  # noqa: E402  (P0-1 dedup)
     FID_EIGENCLIP_EPS_DEFAULT,
     compute_frechet_distance,
 )
+from adaptive_reflow.frame.engine import Engine  # noqa: E402
+from adaptive_reflow.frame.phase import build_phase_state  # noqa: E402
 from adaptive_reflow.universal.state import ODEConditionDelta  # noqa: E402
-
 from tools._sota_common import add_sota_common_args  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -1358,9 +1357,13 @@ def main(argv: list[str] | None = None) -> int:
     # carries `eval_report.v1.0.0` per row so subprocess consumers can
     # opt into the typed shape later.
     from adaptive_reflow.eval.result import (
-        EvalResult as _EvalResult,
-        MetricResult as _MetricResult,
         SCHEMA_VERSION as _SCHEMA_VERSION,
+    )
+    from adaptive_reflow.eval.result import (
+        EvalResult as _EvalResult,
+    )
+    from adaptive_reflow.eval.result import (
+        MetricResult as _MetricResult,
     )
 
     _per_row_reports: list[dict[str, Any]] = []

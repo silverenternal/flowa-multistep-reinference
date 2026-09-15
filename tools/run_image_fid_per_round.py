@@ -53,8 +53,9 @@ import json
 import math
 import os
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -69,7 +70,6 @@ from tools.run_image_eval import (  # noqa: E402  — path setup above
     load_images_as_tensor,
     select_device,
 )
-
 
 # ---------------------------------------------------------------------------
 # InceptionV3 feature extraction glue
@@ -184,7 +184,7 @@ def run_image_fid_per_round(
     device = select_device(device_arg)
 
     features_per_round: list[np.ndarray] = []
-    for round_idx, round_dir in enumerate(per_round_dirs):
+    for _round_idx, round_dir in enumerate(per_round_dirs):
         feats = _load_features_for_round(
             round_dir,
             device=device,

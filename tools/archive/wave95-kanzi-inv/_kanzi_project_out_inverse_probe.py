@@ -49,7 +49,6 @@ from pathlib import Path
 
 import torch
 
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CKPT_PATH = REPO_ROOT / "data" / "kanzi_ckpt" / "cleaned_model.pt"
 
@@ -92,9 +91,9 @@ def main() -> int:
     print(f"[probe] W.shape = {tuple(W.shape)} (expected (512, 4))")
     if tuple(W.shape) != (512, 4):
         print(
-            f"[probe] WARNING: shape mismatch — downstream pinv will"
-            f" still run but results may not match the Wave 92c"
-            f" (1000, 512) codebook layout."
+            "[probe] WARNING: shape mismatch — downstream pinv will"
+            " still run but results may not match the Wave 92c"
+            " (1000, 512) codebook layout."
         )
 
     W = W.float()

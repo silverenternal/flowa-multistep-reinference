@@ -15,7 +15,15 @@ Cap strategy:
   - If systemd-run --user --scope is available AND user has linger=yes, prefer that —
     it gives cleaner cgroup accounting. (Detected at startup, printed to stderr.)
 """
-import os, sys, resource, subprocess, signal, argparse, time
+import argparse
+import contextlib
+import os
+import resource
+import signal
+import subprocess
+import sys
+import time
+
 
 def parse_args():
     p = argparse.ArgumentParser()
@@ -65,17 +73,13 @@ def main():
         return_code = proc.wait()
     except subprocess.TimeoutExpired:
         print(f"[run_mol_eval_safe] timeout — killing process group {proc.pid}", file=sys.stderr)
-        try:
+        with contextlib.suppress(ProcessLookupError):
             os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
-        except ProcessLookupError:
-            pass
         try:
             proc.wait(timeout=10)
         except subprocess.TimeoutExpired:
-            try:
+            with contextlib.suppress(ProcessLookupError):
                 os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
-            except ProcessLookupError:
-                pass
             proc.wait()
         return_code = 124  # conventional timeout exit code
     print(f"[run_mol_eval_safe] done. max_rss={max_rss_kb/1024/1024:.2f} GB, return_code={return_code}", file=sys.stderr)

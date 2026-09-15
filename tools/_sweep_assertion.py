@@ -46,7 +46,8 @@ of which venv the sweep was launched from.
 from __future__ import annotations
 
 import json
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 __all__ = [
     "assert_n_records_match",

@@ -101,7 +101,7 @@ import tempfile
 import time
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
@@ -400,11 +400,10 @@ def _pos_replace(root: ast.AST, key: tuple, patch: object) -> ast.AST:
 
     if isinstance(patch, ConstantPatch):
         for node in ast.walk(new_tree):
-            if isinstance(node, ast.Constant) and node.lineno == target_lineno:
-                if isinstance(node.value, (int, float)):
-                    node.value = patch.value
-                    node.kind = None
-                    break
+            if isinstance(node, ast.Constant) and node.lineno == target_lineno and isinstance(node.value, (int, float)):
+                node.value = patch.value
+                node.kind = None
+                break
     elif isinstance(patch, AttrPatch):
         for node in ast.walk(new_tree):
             if isinstance(node, ast.Attribute) and node.lineno == target_lineno:
@@ -781,7 +780,7 @@ def _run_audit(
             "tool": "tools.run_mutation_audit",
             "framework_internals_metric": "F.6",
             "quarter": _current_quarter(),
-            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "timestamp_utc": datetime.now(UTC).isoformat(),
             "python_version": sys.version.split()[0],
             "operators": [op.__name__.removeprefix("_op_") for op in OPERATORS],
             "subsystem_targets": {
@@ -821,7 +820,7 @@ def _run_audit(
 
 
 def _current_quarter() -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     quarter = (now.month - 1) // 3 + 1
     return f"{now.year}Q{quarter}"
 

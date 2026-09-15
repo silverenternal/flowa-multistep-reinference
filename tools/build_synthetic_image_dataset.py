@@ -741,8 +741,9 @@ class GeometricShapeImageOracle:
         """
         if int(n) <= 0:
             raise ValueError(f"n must be a positive int; got {n}")
-        import numpy as _np
         import random as _random_mod
+
+        import numpy as _np
 
         rng = _random_mod.Random(int(seed))
         out_imgs: list[_np.ndarray] = []

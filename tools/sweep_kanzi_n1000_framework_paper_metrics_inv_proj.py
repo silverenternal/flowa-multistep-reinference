@@ -49,12 +49,11 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from tools._kanzi_sweep_runner import (  # noqa: E402
+    _run_kanzi_dry_run,
     apply_kanzi_profile_defaults,
     run_kanzi_sweep,
-    _run_kanzi_dry_run,
 )
 from tools.eval.config import load_run_profile  # noqa: E402
-
 
 # Wave 113.A.5 Fix 2 — env-no-config gate exit code (matches the
 # Autotools / sysexits.h convention: 78 = "configuration error").

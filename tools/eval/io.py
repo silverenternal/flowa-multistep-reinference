@@ -14,15 +14,6 @@ matches the pre-Wave-97 contract.
 """
 from __future__ import annotations
 
-import datetime
-import hashlib
-import json
-import os
-import pathlib
-import subprocess
-import sys
-from typing import Any
-
 # Wave 61 Agent 1: bypass argparse's %-formatting check in _HelpAction.
 # Pre-existing literals like "100%" in --composite-metric's help text
 # trip Python 3.14's stricter help formatter, raising
@@ -34,6 +25,14 @@ from typing import Any
 # formatter API. This is call-site infrastructure (parser import
 # block), not an evaluation-path change.
 import argparse  # noqa: E402
+import datetime
+import hashlib
+import json
+import os
+import pathlib
+import subprocess
+import sys
+from typing import Any
 
 argparse.ArgumentParser._check_help = lambda self, action: None  # type: ignore[assignment]
 
@@ -44,6 +43,8 @@ argparse.ArgumentParser._check_help = lambda self, action: None  # type: ignore[
 REPO_ROOT: pathlib.Path = pathlib.Path(__file__).resolve().parent.parent.parent
 ENV_HASH_FILE: pathlib.Path = REPO_ROOT / "env_hash.txt"
 CAPABILITY_AUDIT: pathlib.Path = REPO_ROOT / "tools" / "capability_audit.py"
+#: Canonical model id used in two separate ADAPTER_REGISTRY blocks
+FREQFLOW_MODEL_KEY: str = "freqflow"
 
 #: Published FlowMol3 PyTorch Lightning checkpoint (65 MB, Wave 70
 #: Phase 2 install). Threaded into the flowmol3 v2 adapter factory by
@@ -172,7 +173,7 @@ DOWNSTREAM_METRICS: dict[str, dict[str, Any]] = {
         "channel_name": "amino_acid_categorical",
         "nfe_paper_default": 50,
     },
-    "freqflow": {
+    FREQFLOW_MODEL_KEY: {
         "domain": "image_sota",
         "axis": "image_sota",
         "paper": "CVPR 2026 (arXiv:2503.00317) - Yang et al. SiT-XL/2 freq. domain",
@@ -308,7 +309,7 @@ DOWNSTREAM_METRICS: dict[str, dict[str, Any]] = {
         "nfe_paper_default": 250,
         "deferred_reason": "no_adapter_shipped",
     },
-    "freqflow": {
+    FREQFLOW_MODEL_KEY: {  # noqa: F602  (reused key in the two registry dicts)
         "domain": "image_sota",
         "axis": "image_sota",
         "paper": "CVPR 2026 (arXiv:2503.00317) - Yang et al. SiT-XL/2 freq. domain",
@@ -592,10 +593,7 @@ def build_report(
         c["signed_delta_pct"] for c in cells
         if c.get("signed_delta_pct") is not None
     ]
-    if signed_deltas:
-        g1_value = round(sum(signed_deltas) / len(signed_deltas), 6)
-    else:
-        g1_value = None
+    g1_value = round(sum(signed_deltas) / len(signed_deltas), 6) if signed_deltas else None
     # Per-cell real-vs-synthetic marker tallies (Wave 43 Agent A).
     n_real_computed = sum(
         1 for c in cells if c.get("baseline_marker") == "computed"
@@ -664,7 +662,7 @@ def build_report(
             "verdict_overall": _overall_verdict(n_cells, n_supported, n_regression, n_blocked, n_run_error),
         },
         "env_hash": env_hash,
-        "timestamp": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
+        "timestamp": datetime.datetime.now(tz=datetime.UTC).isoformat(),
         "tool": "tools/run_real_ckpt_eval.py",
         "spec_source": "docs/audit/phase-4-eval-pipeline.md",
         "data_sources": {

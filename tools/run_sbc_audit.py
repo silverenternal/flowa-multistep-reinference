@@ -92,7 +92,7 @@ import sys
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
@@ -113,7 +113,7 @@ if str(_REPO_ROOT) not in sys.path:
 # Import the test modules by hand to avoid pytest's collection path.
 # Each module is in tests/test_sbc/ and defines simulator/re_inference
 # callables.
-import importlib.util
+import importlib.util  # noqa: E402
 
 _TEST_SBC_DIR = _REPO_ROOT / "tests" / "test_sbc"
 
@@ -202,7 +202,7 @@ def _build_algorithms() -> list[_SBCAlgorithm]:
     scheduler_mod = _load_module("test_scheduler_sbc")
     policy_mod = _load_module("test_policy_driver_sbc")
     noise_mod = _load_module("test_noise_schedule_sbc")
-    bias_mod = _load_module("test_dynamic_noise_bias_sbc")
+    _bias_mod = _load_module("test_dynamic_noise_bias_sbc")
 
     algorithms: list[_SBCAlgorithm] = []
 
@@ -292,7 +292,7 @@ def _build_algorithms() -> list[_SBCAlgorithm]:
         scheduler = default_cosine_scheduler(
             cycle_length=10, n_min=0.0, n_max=1.0, schedule_family="cosine_no_restart"
         )
-        sample = scheduler.sample(0, 0, 0)
+        _sample = scheduler.sample(0, 0, 0)
         rng = __import__("numpy").random.default_rng(int(seed))
         n_cap = float(max(0.05, min(0.95, float(theta))))
         return float(0.0 + n_cap**0.5 * float(rng.standard_normal()))
@@ -392,7 +392,7 @@ def _run_audit(
         "n": int(n),
         "n_posterior_draws": int(n_posterior_draws),
         "pass_label": _pass_label(n),
-        "timestamp": datetime.now(tz=timezone.utc).isoformat(),
+        "timestamp": datetime.now(tz=UTC).isoformat(),
         "algorithms": [],
         "fourth_pass": {
             "enabled": bool(fourth_pass),

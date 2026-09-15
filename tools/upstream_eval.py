@@ -70,6 +70,13 @@ import subprocess
 import sys
 from typing import Any
 
+# Wave 98.A — GPU utilization watchdog. Fires a WARNING to stderr if
+# util.gpu stays at 0% for >30s while memory.used > 100 MiB. The
+# diagnostic that should have caught the Wave 96.E stuck-process
+# scenario (a sweep that held VRAM but never advanced). Stdlib-only +
+# no-op when nvidia-smi is missing (legacy non-GPU callers unaffected).
+from tools._gpu_watchdog import gpu_watchdog  # noqa: E402
+
 # Wave 97.D — hard N-record assertion + summary JSON contract (closes
 # the Wave 96 reality-check gap: agents silently wrote N<=10 sweeps and
 # claimed N=1000). Imported lazily inside the upstream-eval wrappers so
@@ -78,14 +85,6 @@ from tools._sweep_assertion import (  # noqa: E402
     assert_n_records_match_with_file_count,
     write_summary_with_n_keys,
 )
-
-# Wave 98.A — GPU utilization watchdog. Fires a WARNING to stderr if
-# util.gpu stays at 0% for >30s while memory.used > 100 MiB. The
-# diagnostic that should have caught the Wave 96.E stuck-process
-# scenario (a sweep that held VRAM but never advanced). Stdlib-only +
-# no-op when nvidia-smi is missing (legacy non-GPU callers unaffected).
-from tools._gpu_watchdog import gpu_watchdog  # noqa: E402
-
 
 # Repo root (one level above ``tools/``). Used to anchor absolute paths
 # for vendored upstream packages + reference data.
@@ -720,7 +719,7 @@ def _run_kanzi_upstream_eval_impl(
     flat["n_samples_file"] = float(file_record_count)
     flat["n_samples_effective"] = float(effective_n)
     if jsonl_path is not None:
-        flat["output_jsonl"] = float(1.0)
+        flat["output_jsonl"] = 1.0
     flat["upstream_orchestrator"] = "kanzi.DAE.encode+decode+kabsch_rmsd"
     # Wave 97.D — hard N-record assertion (file-aware variant: only
     # fires when the file had >= n_samples records but the driver

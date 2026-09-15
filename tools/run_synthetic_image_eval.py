@@ -76,8 +76,9 @@ import re
 import sys
 import time
 import warnings
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 # Make the project importable when running as ``python tools/run_synthetic_image_eval.py``.
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -313,18 +314,15 @@ def parse_g_profile_source(source: str) -> Callable[[float], float]:
                 f"g_profile_source_disallowed_name: {node.id!r}; only the "
                 "variable 'x' and 'math.<symbol>' references are allowed."
             )
-        if isinstance(node, ast.Attribute):
-            # Only ``math.<symbol>`` is permitted. Detect by checking the
-            # value is a ``Name`` node with id=='math'.
-            if not (
-                isinstance(node.value, ast.Name)
-                and node.value.id == "math"
-                and node.attr in allowed_math_names
-            ):
-                raise ValueError(
-                    f"g_profile_source_disallowed_attribute: {ast.dump(node)}; "
-                    "only 'math.<symbol>' references are allowed."
-                )
+        if isinstance(node, ast.Attribute) and not (
+            isinstance(node.value, ast.Name)
+            and node.value.id == "math"
+            and node.attr in allowed_math_names
+        ):
+            raise ValueError(
+                f"g_profile_source_disallowed_attribute: {ast.dump(node)}; "
+                "only 'math.<symbol>' references are allowed."
+            )
 
     code = compile(tree, "<g_profile_source>", "eval")
 
@@ -573,7 +571,7 @@ def run_synthetic_image_eval(
     framework_features_per_round: list[Any] = []
     framework_n_per_round: list[int] = []
     framework_round_dirs: list[str] = []
-    for r_idx, r_dir in framework_rounds:
+    for _r_idx, r_dir in framework_rounds:
         paths = sorted(
             p for p in r_dir.iterdir()
             if p.is_file() and p.suffix.lower() in _SUPPORTED_EXTS
@@ -600,7 +598,7 @@ def run_synthetic_image_eval(
         baseline_features_per_round: list[Any] = []
         baseline_round_dirs = []
         baseline_n_per_round = []
-        for r_idx, r_dir in baseline_rounds:
+        for _r_idx, r_dir in baseline_rounds:
             paths = sorted(
                 p for p in r_dir.iterdir()
                 if p.is_file() and p.suffix.lower() in _SUPPORTED_EXTS
@@ -783,9 +781,9 @@ def _build_synthetic_eval_report(
     a stable list-typed field.
     """
     from adaptive_reflow.eval.result import (
+        SCHEMA_VERSION,
         EvalResult,
         MetricResult,
-        SCHEMA_VERSION,
     )
 
     def _finite_or_nan(x: Any) -> float:

@@ -40,8 +40,8 @@ import subprocess
 import sys
 import threading
 import time
-from typing import Any, Iterator
-
+from collections.abc import Iterator
+from typing import Any
 
 _NVSMI_QUERY = (
     "--query-gpu=utilization.gpu,memory.used,name"

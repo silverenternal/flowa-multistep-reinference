@@ -46,9 +46,12 @@ Wave 91 Phase 3 wires this into ``tools/run_real_ckpt_eval.py:_run_cell``
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
+
+if TYPE_CHECKING:
+    import torch
 
 # Upstream-side paths (resolved at call time, not import time).
 KANZI_UPSTREAM_SRC: str = "data/kanzi_upstream/src"
@@ -70,7 +73,7 @@ _PROJECT_OUT_INV_CACHE: dict[str, Any] | None = None
 
 
 def kanzi_latent_to_coords(
-    latent: "np.ndarray | Any",
+    latent: np.ndarray | Any,
     decoder: Any,
     fsq_quantizer: Any,
     *,
@@ -79,7 +82,7 @@ def kanzi_latent_to_coords(
     cfg_weight: float = 1.0,
     score_weight: float = 1.0,
     seed: int = 0,
-) -> "np.ndarray":
+) -> np.ndarray:
     """Snap the ODE endpoint ``latent`` → coords ``(B, n_atoms, 3)`` Å.
 
     Pipeline (mirrors ``tools/upstream_eval.py:347-358``):
@@ -260,8 +263,9 @@ def _load_project_out_inv() -> dict[str, Any]:
     global _PROJECT_OUT_INV_CACHE
     if _PROJECT_OUT_INV_CACHE is not None:
         return _PROJECT_OUT_INV_CACHE
-    import torch  # local import — keep module-load cheap
     from pathlib import Path as _Path  # noqa: WPS433 — local import by design
+
+    import torch  # local import — keep module-load cheap
 
     # Resolve relative to this module file (works under spec_from_file_location
     # and direct ``python -m tools.kanzi_latent_to_coord`` alike).
@@ -286,7 +290,7 @@ def _load_project_out_inv() -> dict[str, Any]:
     return blob
 
 
-def _apply_project_out_inv(x_t: "torch.Tensor") -> "torch.Tensor":
+def _apply_project_out_inv(x_t: torch.Tensor) -> torch.Tensor:
     """Apply the trained ``Linear(512 → 4)`` inverse to ``x_t``.
 
     Mirrors the structure of the original Wave 92c NN step but replaces
@@ -297,6 +301,7 @@ def _apply_project_out_inv(x_t: "torch.Tensor") -> "torch.Tensor":
     justification and Wave 95 Phase 3.B commit for the training recipe.
     """
     import torch  # local import — keep module-load cheap
+    import torch.nn as nn  # local import — keep module-load cheap
 
     inv_blob = _load_project_out_inv()
     state = inv_blob["state_dict"]

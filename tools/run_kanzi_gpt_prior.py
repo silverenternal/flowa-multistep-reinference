@@ -62,7 +62,6 @@ EXPECTED_SHA256 = "c2f2ab8df7d6e1234e2e95f9ff625c769810ee4b1b50290e3da0af8bf53dd
 # they are missing rather than silently degrading.
 from kanzi import DAE, DAEConfig  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # Inlined GPT-prior monkey-patch (mirrors
 # ``adaptive_reflow.adapters.kanzi._install_gpt_prior_patch``)

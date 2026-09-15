@@ -4,14 +4,17 @@ Renders 8 paper appendix figures with matplotlib.
 Data sourced from existing verification_outputs/, docs/headline-evidence/,
 and the 2D FM model checkpoints in data/.
 """
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-import numpy as np
+import csv
 import json
 import os
 import sys
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import numpy as np
 
 sys.path.insert(0, '.')
 
@@ -23,8 +26,9 @@ os.makedirs(OUT, exist_ok=True)
 # Figure A1: Kanzi N=20 RMSD trajectory (line plot)
 # ---------------------------------------------------------------------------
 print("Building Figure A1...")
-ks = json.load(open("verification_outputs/kanzi_inv_proj_n20_20260913_corrected/initial_summary.json"))
-seqs = sorted([k for k in ks["per_seq_rmsd_A"].keys()], key=lambda x: int(x.split("_")[1]))
+with open("verification_outputs/kanzi_inv_proj_n20_20260913_corrected/initial_summary.json") as f:
+    ks = json.load(f)
+seqs = sorted([k for k in ks["per_seq_rmsd_A"]], key=lambda x: int(x.split("_")[1]))
 rmsds = [ks["per_seq_rmsd_A"][k] for k in seqs]
 mean_rmsd = ks["reconstruction_kabsch_rmsd_A"]["mean_rmsd_A"]
 min_rmsd = ks["reconstruction_kabsch_rmsd_A"]["min_rmsd_A"]
@@ -49,11 +53,15 @@ print("  Figure A1 written")
 # ---------------------------------------------------------------------------
 # Load 2D FM samples generated earlier
 # ---------------------------------------------------------------------------
+from adaptive_reflow.data.target_distributions import (  # noqa: E402
+    sample_eight_gaussians,
+    sample_two_moons,
+)
+
 tm = np.load("/tmp/figdata/two_moons_samples.npz")
 eg = np.load("/tmp/figdata/eight_gaussians_samples.npz")
 
 # Generate ground truth
-from adaptive_reflow.data.target_distributions import sample_two_moons, sample_eight_gaussians
 gt_rng = np.random.default_rng(42)
 gt_tm = sample_two_moons(512, gt_rng)
 gt_eg = sample_eight_gaussians(512, gt_rng)
@@ -68,7 +76,7 @@ titles = ["(a) Ground truth target", "(b) Baseline (Euler, NFE=2)", "(c) Framewo
 data_sets = [gt_tm, tm["baseline"], tm["framework"]]
 colors = ["#222", "#888", "#357"]
 
-for ax, d, t, c in zip(axes, data_sets, titles, colors):
+for ax, d, t, c in zip(axes, data_sets, titles, colors, strict=False):
     ax.scatter(d[:, 0], d[:, 1], s=8, alpha=0.55, color=c, edgecolors="none")
     ax.set_xlim(-1.6, 2.6)
     ax.set_ylim(-1.6, 1.6)
@@ -94,7 +102,7 @@ titles = ["(a) Ground truth target", "(b) Baseline (Euler, NFE=2)", "(c) Framewo
 data_sets = [gt_eg, eg["baseline"], eg["framework"]]
 colors = ["#222", "#888", "#357"]
 
-for ax, d, t, c in zip(axes, data_sets, titles, colors):
+for ax, d, t, c in zip(axes, data_sets, titles, colors, strict=False):
     ax.scatter(d[:, 0], d[:, 1], s=8, alpha=0.55, color=c, edgecolors="none")
     ax.set_xlim(-2.8, 2.8)
     ax.set_ylim(-2.8, 2.8)
@@ -124,7 +132,7 @@ bars = ax.bar(labels, values, color=colors_bar, edgecolor="#222", linewidth=0.8)
 
 # Annotate values + verdict
 annotations = ["—", "−44.17%\nframework_better", "+1.5%\nparity", "+24 to +31%\nregression"]
-for bar, ann in zip(bars, annotations):
+for bar, ann in zip(bars, annotations, strict=False):
     h = bar.get_height()
     ax.text(bar.get_x() + bar.get_width()/2, h + 5, ann, ha="center", va="bottom", fontsize=8, fontweight="bold")
 
@@ -161,7 +169,7 @@ colors_r = ["#357" if r['verdict'].startswith("framework_better") or r['verdict'
 bars = ax.bar(labels_short, ratios, color=colors_r, edgecolor="#222", linewidth=0.8)
 ax.axhline(1.0, color="#222", linestyle="--", linewidth=0.8, label="baseline (= 1.0)")
 
-for bar, r in zip(bars, r_data):
+for bar, r in zip(bars, r_data, strict=False):
     h = bar.get_height()
     delta_str = f"{r['delta_pct']:+.2f}%"
     if r['p_bonf'] == 0.0:
@@ -191,7 +199,7 @@ print("  Figure A5 written")
 # Figure A6: Per-cell p-value distribution (12 rows)
 # ---------------------------------------------------------------------------
 print("Building Figure A6...")
-import csv
+
 with open("verification_outputs/power_analysis/per_cell.csv") as f:
     rows = list(csv.DictReader(f))
 
@@ -240,7 +248,7 @@ values_hmmer = [158, 342]
 colors_hmmer = ["#888", "#357"]
 bars = ax.bar(labels_hmmer, values_hmmer, color=colors_hmmer, edgecolor="#222", linewidth=0.8)
 
-for bar, v in zip(bars, values_hmmer):
+for bar, v in zip(bars, values_hmmer, strict=False):
     ax.text(bar.get_x() + bar.get_width()/2, v + 6, f"{v}", ha="center", va="bottom", fontsize=10, fontweight="bold")
 
 # Delta annotation
@@ -271,7 +279,7 @@ composite_data = [
 ]
 
 fig, axes = plt.subplots(1, 3, figsize=(12, 4.5))
-for ax, cd in zip(axes, composite_data):
+for ax, cd in zip(axes, composite_data, strict=False):
     label = f"{cd['model']}\n(n={cd['n_cells']} cells)"
     ax.bar(["Framework\ncomposite\n(signed Δ%)"], [cd["composite"]], color="#357", edgecolor="#222", linewidth=0.8)
     ax.text(0, cd["composite"] + 0.01, f"+{cd['composite']*100:.2f}pp", ha="center", va="bottom", fontsize=10, fontweight="bold")
@@ -293,7 +301,8 @@ print("  Figure A8 written")
 # Figure A1b: 3D trajectory plot (Kanzi record 0, codebook indices over 64 positions)
 # ---------------------------------------------------------------------------
 print("Building Figure A1b (3D trajectory)...")
-ck = json.load(open("verification_outputs/kanzi_inv_proj_n20_20260913_corrected/checkpoint.json"))
+with open("verification_outputs/kanzi_inv_proj_n20_20260913_corrected/checkpoint.json") as f:
+    ck = json.load(f)
 rec0 = ck["records"][0]
 indices = np.array(rec0["codebook_indices"])
 

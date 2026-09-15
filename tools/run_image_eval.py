@@ -170,6 +170,7 @@ auto-downloaded from the ``xswu/HPSv2`` HF repo on first run.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import math
 import os
@@ -198,7 +199,7 @@ if str(REPO_ROOT) not in sys.path:
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
-import numpy as np
+import numpy as np  # noqa: E402
 
 from adaptive_reflow.eval.clip_score import (  # noqa: E402
     CLIPSCORE_PAPER_SCALE,
@@ -207,7 +208,6 @@ from adaptive_reflow.eval.clip_score import (  # noqa: E402
 from adaptive_reflow.eval.fid import (  # noqa: E402
     InceptionV3FIDEvaluator,
 )
-
 
 # ---------------------------------------------------------------------------
 # Image loading
@@ -1182,17 +1182,13 @@ def _parse_geneval_summary(stdout_text: str) -> dict[str, Any]:
         if m:
             tag, pct = m.group(1), m.group(2)
             if tag in sub_scores:
-                try:
+                with contextlib.suppress(ValueError):
                     sub_scores[tag] = float(pct) / 100.0
-                except ValueError:
-                    pass
             continue
         m2 = re.match(r"^Overall score \(avg\. over tasks\):\s*([0-9.]+)\s*$", line)
         if m2:
-            try:
+            with contextlib.suppress(ValueError):
                 overall_value = float(m2.group(1))
-            except ValueError:
-                pass
     return {"value": overall_value, "sub_scores": sub_scores, "raw_text": stdout_text}
 
 
@@ -2658,12 +2654,17 @@ def main(argv: list[str] | None = None) -> int:
     # ``img_eval_report.v1`` shape) are unaffected.
     if bool(getattr(args, "emit_eval_report", False)):
         from adaptive_reflow.eval.result import (
-            EvalResult as _ImgEvalResult,
-            MetricResult as _ImgMetricResult,
             SCHEMA_VERSION as _IMG_SCH,
         )
+        from adaptive_reflow.eval.result import (
+            EvalResult as _ImgEvalResult,
+        )
+        from adaptive_reflow.eval.result import (
+            MetricResult as _ImgMetricResult,
+        )
 
-        _fid_v = fid_value if fid_value is not None else float("nan")
+        _fid_v = report["metrics"]["fid"].get("value")
+        _fid_v = _fid_v if _fid_v is not None else float("nan")
         try:
             _fid_v_float = float(_fid_v)
         except (TypeError, ValueError):

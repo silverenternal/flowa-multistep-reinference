@@ -196,9 +196,7 @@ def _is_public_name(name: str) -> bool:
     dunder ``__foo__`` which is special -- we treat it as public because
     framework callers commonly hook dunder methods via Protocols).
     """
-    if name.startswith("_") and not (name.startswith("__") and name.endswith("__")):
-        return False
-    return True
+    return not (name.startswith("_") and not (name.startswith("__") and name.endswith("__")))
 
 
 def _extract_functions(source: str, module_path: str) -> list[tuple[str, str | None]]:
@@ -388,7 +386,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             for q in regressed:
                 base_doc = base_index[q]
-                head_doc = head_index[q]
+                _head_doc = head_index[q]
                 base_cits = _citations_in_doc(base_doc)
                 example = base_cits[0] if base_cits else "(no match)"
                 print(f"  - {q}  (base anchor: {example!r})")

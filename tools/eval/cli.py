@@ -18,18 +18,17 @@ import pathlib
 import sys
 from typing import Any
 
+# Wave 112.B Agent — Commit C-4. Optional YAML profile loader. The profile is
+# additive (CLI flags still work without --config); resolution order is
+# **CLI flag > YAML value > module-level default** (see
+# docs/audit/wave111-data-linkage-plan.md §3 C-4 + tools/eval/config.py).
+from tools.eval.config import load_run_profile as _load_run_profile  # type: ignore
 from tools.eval.io import (  # type: ignore
     VALID_MODELS,
     _capture_env_hash_lightweight,
     build_report,
 )
 from tools.eval.sweep import _run_cell  # type: ignore
-
-# Wave 112.B Agent — Commit C-4. Optional YAML profile loader. The profile is
-# additive (CLI flags still work without --config); resolution order is
-# **CLI flag > YAML value > module-level default** (see
-# docs/audit/wave111-data-linkage-plan.md §3 C-4 + tools/eval/config.py).
-from tools.eval.config import load_run_profile as _load_run_profile  # type: ignore
 
 
 def build_argparser() -> argparse.ArgumentParser:

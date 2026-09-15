@@ -33,22 +33,6 @@ same public surface as pre-Wave-97.
 """
 from __future__ import annotations
 
-from tools.eval.io import (  # type: ignore  # noqa: F401
-    AMINO_ACID_ALPHABET,
-    ArrayF64,
-    CAPABILITY_AUDIT,
-    DOWNSTREAM_METRICS,
-    ENV_HASH_FILE,
-    FLOWMOL3_REAL_CKPT,
-    KANZI_PFAM_HOLDOUT_PATH,
-    PHASE4_ACTIVE_MODELS,
-    REPO_ROOT,
-    TIE_AT_SATURATION,
-    VALID_MODELS,
-    _capture_env_hash_lightweight,
-    _overall_verdict,
-    build_report,
-)
 from tools.eval.baseline import (  # type: ignore  # noqa: F401
     _ADAPTER_FORCE_MODE_ALIAS,
     _PAPER_QUANTITIES_CACHE,
@@ -58,17 +42,34 @@ from tools.eval.baseline import (  # type: ignore  # noqa: F401
     _parse_g_profile_source,
     _solve_baseline,
 )
+from tools.eval.cli import build_argparser, main  # type: ignore  # noqa: F401
 from tools.eval.framework import (  # type: ignore  # noqa: F401
     _compute_paper_quantities,
     _make_framework_policy,
     _resolve_adapter,
     _solve_framework,
 )
+from tools.eval.io import (  # type: ignore  # noqa: F401
+    AMINO_ACID_ALPHABET,
+    CAPABILITY_AUDIT,
+    DOWNSTREAM_METRICS,
+    ENV_HASH_FILE,
+    FLOWMOL3_REAL_CKPT,
+    KANZI_PFAM_HOLDOUT_PATH,
+    PHASE4_ACTIVE_MODELS,
+    REPO_ROOT,
+    TIE_AT_SATURATION,
+    VALID_MODELS,
+    ArrayF64,
+    _capture_env_hash_lightweight,
+    _overall_verdict,
+    build_report,
+)
 from tools.eval.metrics import (  # type: ignore  # noqa: F401
+    _MODEL_OBSERVATION_KIND,
     DEFAULT_KANZI_COMPOSITE_WEIGHTS,
     KANZI_BRIDGE_DEFAULT_CKPT,
     KanziGlue,
-    _MODEL_OBSERVATION_KIND,
     _compute_flowmol3_composite,
     _compute_flowmol3_real_atom_type_marginal,
     _compute_flowmol3_real_metric_via_trace,
@@ -98,7 +99,6 @@ from tools.eval.sweep import (  # type: ignore  # noqa: F401
     _extract_ca_coords_for_kanzi,
     _run_cell,
 )
-from tools.eval.cli import build_argparser, main  # type: ignore  # noqa: F401
 
 __all__ = [
     # io module

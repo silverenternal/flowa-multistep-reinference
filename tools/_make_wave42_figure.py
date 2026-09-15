@@ -213,17 +213,17 @@ def _aggregate_tier3_kanzi_composite(kc: dict) -> tuple[float, list[float], int,
 
 
 def main() -> str:
-    with open(AUDIT_JSON, "r", encoding="utf-8") as f:
+    with open(AUDIT_JSON, encoding="utf-8") as f:
         audit = json.load(f)
-    with open(KANZI_JSON, "r", encoding="utf-8") as f:
+    with open(KANZI_JSON, encoding="utf-8") as f:
         kanzi = json.load(f)
-    with open(LINEAGEFLOW_JSON, "r", encoding="utf-8") as f:
+    with open(LINEAGEFLOW_JSON, encoding="utf-8") as f:
         lf = json.load(f)
     # Wave 52 Agent A Kanzi composite (9 cells, landed — Wave 54 update)
     kc = None
     if os.path.exists(KANZI_COMPOSITE_JSON):
         try:
-            with open(KANZI_COMPOSITE_JSON, "r", encoding="utf-8") as f:
+            with open(KANZI_COMPOSITE_JSON, encoding="utf-8") as f:
                 kc = json.load(f)
         except (json.JSONDecodeError, OSError):
             kc = None
@@ -231,7 +231,7 @@ def main() -> str:
     fm3 = None
     if os.path.exists(FLOWMOL3_JSON):
         try:
-            with open(FLOWMOL3_JSON, "r", encoding="utf-8") as f:
+            with open(FLOWMOL3_JSON, encoding="utf-8") as f:
                 fm3 = json.load(f)
         except (json.JSONDecodeError, OSError):
             fm3 = None
@@ -240,14 +240,14 @@ def main() -> str:
     tier3_kanzi_sm, tier3_kanzi_deltas, k_n_real, k_n_run = _aggregate_tier3_kanzi(kanzi)
     tier3_lf_sm, tier3_lf_deltas, l_n_real, l_n_run = _aggregate_tier3_lineageflow(lf)
     if fm3 is not None:
-        tier3_fm3_sm, tier3_fm3_comps, fm3_n_comp, fm3_n_blocked = _aggregate_tier3_flowmol3_composite(fm3)
+        tier3_fm3_sm, tier3_fm3_comps, _fm3_n_comp, _fm3_n_blocked = _aggregate_tier3_flowmol3_composite(fm3)
     else:
-        tier3_fm3_sm, tier3_fm3_comps, fm3_n_comp, fm3_n_blocked = 0.0, [], 0, 9
+        tier3_fm3_sm, tier3_fm3_comps, _fm3_n_comp, _fm3_n_blocked = 0.0, [], 0, 9
     # Wave 52 Agent A Kanzi composite — read from the real JSON when present
     if kc is not None:
-        tier3_kc_sm, tier3_kc_comps, kc_n_comp, kc_n_blocked = _aggregate_tier3_kanzi_composite(kc)
+        tier3_kc_sm, tier3_kc_comps, _kc_n_comp, _kc_n_blocked = _aggregate_tier3_kanzi_composite(kc)
     else:
-        tier3_kc_sm, tier3_kc_comps, kc_n_comp, kc_n_blocked = 0.0, [], 0, 0
+        tier3_kc_sm, tier3_kc_comps, _kc_n_comp, _kc_n_blocked = 0.0, [], 0, 0
 
     # Order: x-axis ascending (Tier 1 toy -> Tier 2 -> Tier 3 decision -> Tier 3 composite).
     # Brief says X-axis is model families; Y-axis is signed_mean.
@@ -316,7 +316,7 @@ def main() -> str:
         LINEAGEFLOW_COMPOSITE_SINGLE_CELL,
         tier3_kc_sm if kc is not None else 0.0,
     ) * 1.4
-    for bar, sm, deltas, tier in zip(bars, means, deltas_list, tiers):
+    for bar, sm, deltas, _tier in zip(bars, means, deltas_list, tiers, strict=False):
         ax.text(
             bar.get_width() + 0.01,
             bar.get_y() + bar.get_height() / 2,
@@ -380,7 +380,7 @@ def main() -> str:
         Patch(facecolor=PALETTE["tier3"], edgecolor=PALETTE["ink"], label="Tier 3 SOTA 2026 (decision-metric axis, light orange)"),
         Patch(facecolor="#B85C00", edgecolor=PALETTE["ink"], label="Tier 3 SOTA 2026 (composite axis, dark orange)"),
     ]
-    legend = ax.legend(
+    ax.legend(
         handles=legend_patches + [
             plt.Line2D([0], [0], color=PALETTE["target"], linestyle="--", linewidth=2.0,
                        label="G.1 robust target = +0.05"),

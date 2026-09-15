@@ -136,7 +136,7 @@ def fig6_ablation() -> str:
         f'<text x="450" y="56" text-anchor="middle" font-size="12" fill="{PALETTE["ink"]}">Same checkpoint, same evaluator; only the inference strategy varies. Lower is better.</text>',
     ]
     # Two side-by-side panels
-    for panel_idx, (title, data, x0) in enumerate([
+    for _panel_idx, (title, data, x0) in enumerate([
         ("two_moons", two_moons, 60),
         ("eight_gaussians", eight_gauss, 490),
     ]):

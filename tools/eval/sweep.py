@@ -19,6 +19,15 @@ from __future__ import annotations
 
 from typing import Any
 
+# Wave 98.A — GPU utilization watchdog. Wraps each per-cell run so a
+# stuck-process scenario (util.gpu==0 while memory.used>100 MiB for
+# >30s) emits a WARNING to stderr. See tools/_gpu_watchdog.py.
+from tools._gpu_watchdog import gpu_watchdog  # type: ignore  # noqa: E402
+from tools.eval.baseline import _solve_baseline  # type: ignore  # noqa: F401
+from tools.eval.framework import (  # type: ignore  # noqa: F401
+    _resolve_adapter,
+    _solve_framework,
+)
 from tools.eval.io import (  # type: ignore
     DOWNSTREAM_METRICS,
     REPO_ROOT,
@@ -34,24 +43,14 @@ from tools.eval.io import (  # type: ignore
 # helpers here directly would break that contract — they MUST go
 # through the shim.
 from tools.eval.metrics import (  # type: ignore  # noqa: F401
+    _compute_flowmol3_composite,
     _compute_kanzi_composite,
     _compute_kanzi_framework_paper_metric,
     _compute_lineageflow_composite,
-    _compute_flowmol3_composite,
     _compute_metric,
     _decode_kanzi_idx_to_aa,
     _decode_lineageflow_idx_to_aa,
 )
-from tools.eval.baseline import _solve_baseline  # type: ignore  # noqa: F401
-from tools.eval.framework import (  # type: ignore  # noqa: F401
-    _resolve_adapter,
-    _solve_framework,
-)
-
-# Wave 98.A — GPU utilization watchdog. Wraps each per-cell run so a
-# stuck-process scenario (util.gpu==0 while memory.used>100 MiB for
-# >30s) emits a WARNING to stderr. See tools/_gpu_watchdog.py.
-from tools._gpu_watchdog import gpu_watchdog  # type: ignore  # noqa: E402
 
 
 def _resolve_metric(name: str) -> Any:
@@ -379,7 +378,11 @@ def _run_cell_impl(
                 try:
                     from tools.paper_metrics import (  # type: ignore  # noqa: PLC0415
                         REFERENCE_GEOM_DRUGS as _REF_GEOM,  # noqa: PLC0415
+                    )
+                    from tools.paper_metrics import (
                         REFERENCE_NCI_FIRST_5K_PROXY as _REF_NCI,  # noqa: PLC0415
+                    )
+                    from tools.paper_metrics import (
                         compute_all_paper_metrics as _compute_paper,  # noqa: PLC0415
                     )
                     ref_label_fw = paper_reference or _REF_GEOM
@@ -434,7 +437,7 @@ def _run_cell_impl(
     ):
         cell["upstream_eval_metrics"] = {}
         cell["upstream_eval_debug"] = {
-            "n_samples": len(n_samples) if False else int(upstream_n_samples),
+            "n_samples": int(upstream_n_samples),
             "lineageflow_flag": bool(lineageflow_upstream_eval),
             "kanzi_flag": bool(kanzi_upstream_eval),
             "flowmol3_flag": bool(flowmol3_upstream_eval),

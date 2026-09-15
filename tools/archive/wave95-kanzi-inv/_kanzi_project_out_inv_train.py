@@ -51,7 +51,6 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CKPT_PATH = REPO_ROOT / "data" / "kanzi_ckpt" / "cleaned_model.pt"
 OUT_PATH = REPO_ROOT / "tools" / "_kanzi_project_out_inv.pt"
@@ -126,7 +125,7 @@ def _train_inverse(
     inputs = inputs.detach()
     targets = targets.detach()
     final_loss = float("nan")
-    for step in range(N_STEPS):
+    for _step in range(N_STEPS):
         opt.zero_grad()
         pred = inv(inputs)
         loss = nn.functional.mse_loss(pred, targets)

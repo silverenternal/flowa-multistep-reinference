@@ -113,7 +113,7 @@ class Cell:
 
 
 def compute_power_table(
-    cells: List[Tuple[str, str, float, float, int]],
+    cells: list[tuple[str, str, float, float, int]],
     alpha: float = 0.05,
     min_effect_size_pp: float = 1.0,
 ) -> pd.DataFrame:
@@ -337,10 +337,7 @@ def _per_arm_se(mean: float, n: int) -> float:
     """
     if n <= 0:
         return float("nan")
-    if 0.0 <= mean <= 1.0:
-        var = mean * (1.0 - mean)
-    else:
-        var = (DEFAULT_CV_FLOOR * mean) ** 2
+    var = mean * (1.0 - mean) if 0.0 <= mean <= 1.0 else (DEFAULT_CV_FLOOR * mean) ** 2
     return float(math.sqrt(var / n))
 
 
@@ -626,9 +623,6 @@ if __name__ == "__main__":
 # ---------------------------------------------------------------------------
 # Type alias for the legacy List import above
 # ---------------------------------------------------------------------------
-
-
-from typing import List  # noqa: E402  (placed at end to keep header compact)
 
 
 __all__ = [

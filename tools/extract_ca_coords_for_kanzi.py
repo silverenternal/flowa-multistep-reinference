@@ -66,7 +66,6 @@ from pathlib import Path
 
 import numpy as np
 
-
 # ---------------------------------------------------------------------------
 # PDB Cα extraction (no biotite / no torch — stdlib only)
 # ---------------------------------------------------------------------------

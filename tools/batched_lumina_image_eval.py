@@ -46,6 +46,7 @@ Tasks satisfied
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import math
 import os
@@ -158,7 +159,7 @@ def _build_pipeline(
         "fp16": torch.float16,
         "fp32": torch.float32,
     }
-    dtype_obj = dtype_map.get(str(torch_dtype), torch.bfloat16)
+    _dtype_obj = dtype_map.get(str(torch_dtype), torch.bfloat16)
 
     adapter = LuminaImage20Adapter(
         weights_path=weights,
@@ -171,17 +172,13 @@ def _build_pipeline(
             target_device = torch.device(device) if device else (
                 torch.device("cuda" if torch.cuda.is_available() else "cpu")
             )
-            try:
+            with contextlib.suppress(Exception):
                 pipeline.to(target_device)
-            except Exception:  # noqa: BLE001
-                pass
             for comp_name in ("transformer", "text_encoder", "vae"):
                 comp = getattr(pipeline, comp_name, None)
                 if comp is not None and hasattr(comp, "to"):
-                    try:
+                    with contextlib.suppress(Exception):
                         comp.to(target_device)
-                    except Exception:  # noqa: BLE001
-                        pass
         except Exception as exc:  # noqa: BLE001
             print(
                 f"[batched_lumina_image_eval] pipeline device placement note: {exc!r}",

@@ -52,6 +52,7 @@ import json
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import torch
@@ -63,6 +64,7 @@ sys.path.insert(0, str(_KANZI_SRC))
 sys.path.insert(0, str(_REPO_ROOT))
 
 from kanzi import DAE  # noqa: E402
+
 from tools.kanzi_latent_to_coord import (  # noqa: E402
     _apply_project_out_inv,
     _load_project_out_inv,
@@ -117,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
           f"output_dim={inv_blob['output_dim']}", file=sys.stderr)
 
     n_records = 10
-    sweep_records: list[dict[str, Any]] = []  # type: ignore[name-defined]
+    sweep_records: list[dict[str, Any]] = []
     x_finals: list[np.ndarray] = []
     idx_sequences: list[np.ndarray] = []
     min_dists: list[np.ndarray] = []

@@ -472,8 +472,8 @@ def main(argv: list[str] | None = None) -> int:
         "c4_inception_w2_improves": bool(
             not args.no_inception
             and "inception_w2" in treat_final
-            and not (
-                treat_final["inception_w2"] != treat_final["inception_w2"]
+            and (
+                treat_final["inception_w2"] == treat_final["inception_w2"]
             )  # not NaN
             and treat_final.get("inception_w2", float("inf"))
             < base_final.get("inception_w2", float("inf"))

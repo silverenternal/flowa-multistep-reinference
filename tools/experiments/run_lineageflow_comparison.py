@@ -98,7 +98,6 @@ from adaptive_reflow.algorithm.scheduler import (  # noqa: E402
     default_cosine_scheduler,
 )
 
-
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -330,7 +329,7 @@ def _run_baseline(
             synthetic_seed=int(seed),
         )
         bundle = adapter.build_initial_state(
-            batch_id=f"lineageflow-baseline",
+            batch_id="lineageflow-baseline",
             sample_id=f"sample-{i}",
         )
         cond = _build_condition_delta(

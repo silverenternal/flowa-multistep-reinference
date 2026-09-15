@@ -150,13 +150,13 @@ def apply_kanzi_profile_defaults(
         cli_value = getattr(args, "n_steps_decoder", None)
         parser_default = defaults.get("n_steps_decoder")
         if (cli_value == parser_default):
-            setattr(args, "n_steps_decoder", int(profile["nfe_budgets"][0]))
+            args.n_steps_decoder = int(profile["nfe_budgets"][0])
     if "max_records" in profile:
         cli_value = getattr(args, "limit", None)
         parser_default = defaults.get("limit")
         if cli_value == parser_default:
             n = int(profile["max_records"])
-            setattr(args, "limit", n if n > 0 else None)
+            args.limit = n if n > 0 else None
     return args
 
 
@@ -628,22 +628,23 @@ def run_kanzi_sweep(
         raise RuntimeError("Kanzi execution requires PyTorch; install the Kanzi sidecar dependencies")
     _ensure_sys_path()
     from kanzi import DAE, kabsch_rmsd  # noqa: E402
+
+    from adaptive_reflow.adapters.kanzi import (  # noqa: E402
+        KANZI_AR_SEQ_LENGTH,
+        KANZI_LATENT_DIM,
+        KANZI_STATE_SHAPE,
+        default_kanzi_adapter,
+    )
+    from tools._sweep_assertion import (  # noqa: E402
+        assert_n_records_match,
+        write_summary_with_n_keys,
+    )
     from tools.kanzi_latent_to_coord import kanzi_latent_to_coords  # noqa: E402
     from tools.paper_metrics_kanzi import (  # noqa: E402
         compute_codebook_entropy,
         compute_codebook_js_distance,
         compute_codebook_perplexity,
         compute_codebook_utilization,
-    )
-    from tools._sweep_assertion import (  # noqa: E402
-        assert_n_records_match,
-        write_summary_with_n_keys,
-    )
-    from adaptive_reflow.adapters.kanzi import (  # noqa: E402
-        KANZI_AR_SEQ_LENGTH,
-        KANZI_LATENT_DIM,
-        KANZI_STATE_SHAPE,
-        default_kanzi_adapter,
     )
 
     out_dir = Path(output_dir)
@@ -1020,9 +1021,7 @@ def run_kanzi_sweep(
         "codebook_metrics_notes": {
             "entropy": "computed across all N record indices concatenated",
             "perplexity": "2 ** entropy",
-            "js_distance": "pair=records_0_1_L={}".format(
-                all_idx[0].shape[0] if all_idx else 0
-            ),
+            "js_distance": f"pair=records_0_1_L={all_idx[0].shape[0] if all_idx else 0}",
             "utilization": "computed across all N record indices concatenated",
             "hamming_rotation_invariance": (
                 "skipped in sweep loop (encoder-only; would 2x runtime)"

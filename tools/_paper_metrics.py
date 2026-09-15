@@ -178,7 +178,7 @@ def parse_main(argv: list[str] | None = None) -> int:
     s_rmsd_arr = np.asarray(
         [r["rmsd_A"] for r in synth_records], dtype=np.float64,
     )
-    s_rmsd_mean = float(np.mean(s_rmsd_arr))
+    _s_rmsd_mean = float(np.mean(s_rmsd_arr))
     s_rmsd_std = float(np.std(s_rmsd_arr, ddof=1))
     s_rmsd_n = int(s_rmsd_arr.shape[0])
 

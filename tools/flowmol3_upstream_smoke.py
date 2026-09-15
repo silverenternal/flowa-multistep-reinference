@@ -177,8 +177,10 @@ def _compute_validity(sampled: list[Any]) -> dict[str, Any]:
     if not sampled:
         return out
     try:
-        from rdkit import Chem  # noqa: PLC0415 — validity-only import.
-        from rdkit import RDLogger  # noqa: PLC0415
+        from rdkit import (
+            Chem,  # noqa: PLC0415 — validity-only import.
+            RDLogger,  # noqa: PLC0415
+        )
 
         RDLogger.DisableLog("rdApp.*")
     except Exception:
@@ -446,9 +448,8 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     # Allow GPU runs even when CUDA_VISIBLE_DEVICES is unset; we still
     # respect an explicit "" (CPU-only) when the operator pinned it.
-    if "CUDA_VISIBLE_DEVICES" not in os.environ:
-        if str(args.device).startswith("cuda"):
-            os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    if "CUDA_VISIBLE_DEVICES" not in os.environ and str(args.device).startswith("cuda"):
+        os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     warnings.filterwarnings("ignore")
 
     report: dict[str, Any] = {

@@ -75,7 +75,7 @@ WAVE_47_REFERENCE_LINEAGEFLOW_COMPOSITE_NFE10: float = 0.2109374578356829
 
 
 def _now() -> str:
-    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+    return datetime.datetime.now(datetime.UTC).isoformat()
 
 
 def _run_eval_subprocess(model: str, seeds: str, nfe_budgets: str,
@@ -366,18 +366,18 @@ def _ab_new_path(model: str, seeds: str, nfe_budgets: str) -> list[dict[str, Any
     will land in Wave 59+ as the next agent). The BRAI
     attractor-inversion is the visible signal here.
     """
-    from adaptive_reflow.algorithm.perturbation import (  # type: ignore
-        default_brai_perturbation,
-    )
-    # Lazy import adapter factory + eval helpers.
-    from adaptive_reflow.adapters.kanzi import default_kanzi_adapter  # type: ignore
-    from adaptive_reflow.adapters.lineageflow import default_lineageflow_adapter  # type: ignore
-
     # We reuse the eval tool's internal helpers so the "new" arm
     # is computed with the exact same restart-blend pipeline as the
     # "old" arm (only the perturbation policy differs). The helpers
     # live in tools/run_real_ckpt_eval.py and are imported below.
     import importlib.util
+
+    # Lazy import adapter factory + eval helpers.
+    from adaptive_reflow.adapters.kanzi import default_kanzi_adapter  # type: ignore
+    from adaptive_reflow.adapters.lineageflow import default_lineageflow_adapter  # type: ignore
+    from adaptive_reflow.algorithm.perturbation import (  # type: ignore
+        default_brai_perturbation,
+    )
     spec = importlib.util.spec_from_file_location(
         "_wave59_eval", str(REPO_ROOT / "tools" / "run_real_ckpt_eval.py"),
     )

@@ -41,20 +41,21 @@ Public surface:
 """
 from __future__ import annotations
 
+import contextlib
 import math
 import pathlib
 from dataclasses import dataclass
 from typing import Any
 
+from tools.eval.baseline import (  # type: ignore
+    _compute_paper_quantities_for_model,
+)
 from tools.eval.io import (  # type: ignore
     AMINO_ACID_ALPHABET,
-    ArrayF64,
     DOWNSTREAM_METRICS,
     KANZI_PFAM_HOLDOUT_PATH,
     REPO_ROOT,
-)
-from tools.eval.baseline import (  # type: ignore
-    _compute_paper_quantities_for_model,
+    ArrayF64,
 )
 
 # Wave 68 Phase 4 — protocol + observation imports (defensive).
@@ -75,7 +76,6 @@ except ImportError:  # pragma: no cover — defensive only
 from adaptive_reflow.adapters._adapter_common import (  # type: ignore
     per_position_entropy_reduction,
 )
-
 
 # ---------------------------------------------------------------------------
 # Real downstream-metric layer (Wave 43 Agent A).
@@ -141,7 +141,7 @@ def _decode_kanzi_idx_to_aa(idx_BL: Any) -> list[str]:
     K = len(alphabet)
     out: list[str] = []
     for b in range(B):
-        chars = [alphabet[int(idx[b, l]) % K] for l in range(L)]
+        chars = [alphabet[int(idx[b, li]) % K] for li in range(L)]
         out.append("".join(chars))
     return out
 
@@ -191,7 +191,7 @@ def _compute_kanzi_real_metric(
     try:
         with torch.no_grad():
             idx_BL, _ = dae(x)
-    except Exception as exc:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         # Wave 40 monkey-patch path: the upstream ``DAE.forward`` has a
         # positional/kwarg binding bug. The Wave 40 agent patches it to
         # skip the GPT-prior loss; we re-apply the same minimal patch
@@ -320,9 +320,7 @@ def _is_valid_protein_string(seq: str, alphabet: str) -> bool:
     s = seq.upper()
     if not all((c in alphabet) for c in s):
         return False
-    if len(set(s)) < 4:
-        return False
-    return True
+    return not len(set(s)) < 4
 
 
 def _decode_lineageflow_idx_to_aa(idx_1d: Any) -> str:
@@ -595,12 +593,7 @@ def _extract_observation_legacy(
             dbg["observation_surface"] = "legacy_observe_entropy_reduction"
             dbg["reason"] = "observe_entropy_reduction returned empty dict"
             return None, "blocked", dbg
-        if model in ("flowmol3", "flowmol3_v2"):
-            from adaptive_reflow.adapters.flowmol3 import (  # type: ignore
-                PER_POSITION_ENTROPY_REDUCTION as _FM_ENTROPY_KEY,
-            )
-            channel = str(_FM_ENTROPY_KEY)
-        elif model == "lineageflow":
+        if model in ("flowmol3", "flowmol3_v2") or model == "lineageflow":
             from adaptive_reflow.adapters.flowmol3 import (  # type: ignore
                 PER_POSITION_ENTROPY_REDUCTION as _FM_ENTROPY_KEY,
             )
@@ -821,7 +814,8 @@ def _metric_via_discrete_tokens(
         try:
             import torch  # type: ignore
             from transformers import (  # type: ignore
-                AutoModelForMaskedLM, AutoTokenizer,
+                AutoModelForMaskedLM,
+                AutoTokenizer,
             )
         except ImportError as exc:  # noqa: BLE001
             return None, "blocked", {
@@ -1062,11 +1056,11 @@ def _compute_flowmol3_real_atom_type_marginal(
         return None, debug
     try:
         from adaptive_reflow.adapters.flowmol3_v2_adapter import (  # type: ignore
+            FLOWMOL3ADAPTER_N_ATOM_TYPES,
+            FLOWMOL3ADAPTER_N_BOND_TYPES,
             _build_flowmol3_velocity_module,
             _ctmc_real_velocity_field_ex,
             _load_flowmol3_state_dict,
-            FLOWMOL3ADAPTER_N_ATOM_TYPES,
-            FLOWMOL3ADAPTER_N_BOND_TYPES,
         )
     except Exception as exc:  # noqa: BLE001
         debug["theta_after_source"] = (
@@ -1269,7 +1263,7 @@ KANZI_BRIDGE_DEFAULT_CKPT: pathlib.Path = pathlib.Path(
 
 
 def load_kanzi_dae_for_bridge(
-    ckpt_path: "pathlib.Path | str | None" = None,
+    ckpt_path: pathlib.Path | str | None = None,
     *,
     device: str = "cpu",
 ) -> tuple[Any, Any]:
@@ -1310,7 +1304,7 @@ class KanziGlue:
     adapter: Any  # KanziAdapter (forward-declared as Any to avoid circular import)
     bridge: Any = None
 
-    def with_bridge(self, ckpt_path: Any) -> "KanziGlue":
+    def with_bridge(self, ckpt_path: Any) -> KanziGlue:
         """Return a copy with ``bridge`` populated via :func:`load_kanzi_dae_for_bridge`."""
         if self.bridge is not None:
             return self
@@ -1349,7 +1343,7 @@ class KanziGlue:
         theta_b = self._extract_endpoint(baseline_trace)
         theta_f = self._extract_endpoint(framework_trace)
 
-        raw_reduction = per_position_per_step(theta_b, theta_f)
+        raw_reduction = per_position_per_step(theta_b, theta_f)  # noqa: F821  (Wave 68 generic path helper)
         log_k = math.log(float(K_lf))
         if log_k <= 0.0 or not math.isfinite(raw_reduction):
             phi1 = float("nan")
@@ -1472,7 +1466,7 @@ def _compute_kanzi_framework_paper_metric(
     framework_trace: Any,
     seed: int,
     nfe: int,
-    ckpt_path: "str | pathlib.Path | None" = None,
+    ckpt_path: str | pathlib.Path | None = None,
     n_steps: int = 20,
 ) -> tuple[dict[str, float | None] | None, str, dict[str, Any]]:
     """Framework-arm paper-metric sweep via the Kanzi latent→coord bridge."""
@@ -1552,11 +1546,12 @@ def _compute_kanzi_framework_paper_metric(
         )
         return None, "blocked", debug
     try:
+        from kanzi.utils import kabsch_rmsd  # type: ignore  # noqa: PLC0415
+
         from tools.paper_metrics_kanzi import (  # type: ignore  # noqa: PLC0415
             compute_all_codebook_metrics,
             compute_codebook_hamming_rotation_invariance,
         )
-        from kanzi.utils import kabsch_rmsd  # type: ignore  # noqa: PLC0415
         codebook = compute_all_codebook_metrics(
             idx_arr, vocab_size=int(idx_arr.max()) + 1,
         )
@@ -1569,7 +1564,7 @@ def _compute_kanzi_framework_paper_metric(
             pred_angstrom.astype(_np.float32),
             recon_angstrom.astype(_np.float32),
         ))
-        def _enc(coens_for_aa: "_np.ndarray") -> "_np.ndarray":
+        def _enc(coens_for_aa: _np.ndarray) -> _np.ndarray:
             coords_nm_r = coens_for_aa.astype(_np.float32) / 10.0
             coords_BLD_r = coords_nm_r.reshape(1, -1, 3)
             coords_BLD_r = coords_BLD_r - coords_BLD_r.mean(axis=1, keepdims=True)
@@ -1639,10 +1634,10 @@ def _compute_xtb_geometry_metrics(
 ) -> dict[str, float] | None:
     """Wave 82 — full upstream xtb pipeline (geometry + chemistry axes)."""
     import os as _os
+    import pathlib as _pathlib
     import shutil as _shutil
     import subprocess as _subprocess
     import tempfile as _tempfile
-    import pathlib as _pathlib
 
     if xtb_binary is None:
         xtb_binary = "/home/hugo/xtb_prefix/bin/xtb"
@@ -1765,10 +1760,8 @@ def _compute_xtb_geometry_metrics(
         out: dict[str, float] = {}
         for key in ("med_rmsd", "med_energy_gain", "med_mmff_drop", "n"):
             if key in result_dict:
-                try:
+                with contextlib.suppress(TypeError, ValueError):
                     out[key] = float(result_dict[key])
-                except (TypeError, ValueError):
-                    pass
         if "med_rmsd" not in out:
             return None
         if "n" not in out:
@@ -1793,8 +1786,8 @@ def _compute_flowmol3_composite(
     try:
         from adaptive_reflow.adapters.flowmol3_glue import (  # type: ignore
             DEFAULT_COMPOSITE_WEIGHTS,
-            FlowMol3Glue,
             FlowMol3CompositeWeights,
+            FlowMol3Glue,
         )
     except ImportError as exc:
         debug["reason"] = (
@@ -1875,10 +1868,8 @@ def _compute_flowmol3_composite(
                 "reos_cum_dev",
             ):
                 if key in chem_metrics:
-                    try:
+                    with contextlib.suppress(TypeError, ValueError):
                         chemistry[key] = float(chem_metrics[key])
-                    except (TypeError, ValueError):
-                        pass
             chemistry_source = "compute_chemistry_metrics"
             debug["chemistry_input"] = dict(chemistry)
             debug["chemistry_input_source"] = chemistry_source
@@ -1899,6 +1890,7 @@ def _compute_flowmol3_composite(
                  "neg_energy_js_div", "neg_reos_cum_dev",
                  "neg_med_rmsd_after_xtb"),
                 DEFAULT_COMPOSITE_WEIGHTS,
+                strict=False,
             )}
         )
         result = glue.composite_score(
@@ -1949,7 +1941,7 @@ def _compute_lineageflow_real_metric(
     """Real ``family_validity_rate`` via upstream ``LineageFlowClassifier``."""
     try:
         import torch  # noqa: F401
-        from transformers import AutoTokenizer, AutoModelForMaskedLM  # noqa: F401
+        from transformers import AutoModelForMaskedLM, AutoTokenizer  # noqa: F401
     except ImportError as exc:
         return None, "blocked", {
             "reason": f"missing dep: {type(exc).__name__}:{exc}",
@@ -1983,7 +1975,7 @@ def _compute_lineageflow_real_metric(
     K = len(alphabet)
     idx_BL = torch.randint(0, K, (B, L), dtype=torch.long)
     aa_strings = [
-        "".join(alphabet[int(idx_BL[b, l].item())] for l in range(L))
+        "".join(alphabet[int(idx_BL[b, li].item())] for li in range(L))
         for b in range(B)
     ]
 

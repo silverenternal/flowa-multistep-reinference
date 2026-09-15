@@ -62,15 +62,13 @@ from adaptive_reflow.universal.state import (  # noqa: E402
     ODEConditionDelta,
 )
 
+# Wave 112.D-2: --config support.
+from tools.eval.config import load_run_profile  # noqa: E402
 from tools.paper_metrics import (  # noqa: E402
     PB_CONFIG_WITH_ENERGY_RATIO_PATH,
     REFERENCE_GEOM_DRUGS,
     compute_all_paper_metrics,
 )
-
-# Wave 112.D-2: --config support.
-from tools.eval.config import load_run_profile  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Constants (DEFAULTS — overridden via CLI flags / --config; see main())
@@ -221,7 +219,7 @@ def _generate_arm(
             delta_spec={"num_steps": nfe},
             source=f"wave82_agent_c_{arm_name}",
             target_round=0,
-            calibration_artifact_hash=f"wave82_q4_2026",
+            calibration_artifact_hash="wave82_q4_2026",
         )
         t_batch = time.perf_counter()
         try:
@@ -404,9 +402,12 @@ def main(argv: list[str] | None = None) -> int:
             if key in profile:
                 pass  # not 1:1 with these flags
         # NFE / N_BATCHES: profile.nfe_budgets[0] maps to --nfe.
-        if "nfe_budgets" in profile and profile["nfe_budgets"]:
-            if args.nfe == p.get_default("nfe"):
-                args.nfe = int(profile["nfe_budgets"][0])
+        if (
+            "nfe_budgets" in profile
+            and profile["nfe_budgets"]
+            and args.nfe == p.get_default("nfe")
+        ):
+            args.nfe = int(profile["nfe_budgets"][0])
         # max_records maps to --n-total.
         if "max_records" in profile and args.n_total == p.get_default("n_total"):
             args.n_total = int(profile["max_records"])

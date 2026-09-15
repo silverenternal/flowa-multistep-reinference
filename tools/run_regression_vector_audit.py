@@ -92,7 +92,7 @@ import sys
 import time
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -325,7 +325,7 @@ def _summarise_state_bundle(bundle: Any) -> dict[str, Any]:
         "source_round": int(bundle.source_round),
         "detach_proof": bool(bundle.detach_proof),
         "native_state_digest": str(bundle.native_state_digest),
-        "channels": sorted(str(k) for k in bundle.channels.keys()),
+        "channels": sorted(str(k) for k in bundle.channels),
         "provenance": [str(p) for p in bundle.provenance],
     }
     return summary
@@ -746,7 +746,7 @@ def _build_vector_file(spec: AdapterSpec) -> VectorFile:
         adapter_version = str(getattr(mod, spec.version_constant, ""))
     except Exception:  # noqa: BLE001
         adapter_version = ""
-    captured_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    captured_at = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     conditions: list[dict[str, Any]] = []
     for seed in SEEDS:
         for nfe in NFES:

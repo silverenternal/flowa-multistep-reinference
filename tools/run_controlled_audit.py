@@ -79,8 +79,7 @@ _REPO_ROOT = _HERE.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
-
+from adaptive_reflow.util.host_fingerprint import with_host_fingerprint  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Configuration / defaults
@@ -218,9 +217,16 @@ class CellResult:
 def _twodim_restart_policy(*, sample_id: str, round_index: int, beta: float) -> Any:
     """Build the actual single-channel restart policy consumed by TwoDimFM."""
     from dataclasses import replace
+
     from adaptive_reflow.contracts import (
-        ArtifactHash, ChannelName, FactorValue, FinalRestartPolicy, LedgerRowId,
-        PolicyId, RunId, hash_policy_hash,
+        ArtifactHash,
+        ChannelName,
+        FactorValue,
+        FinalRestartPolicy,
+        LedgerRowId,
+        PolicyId,
+        RunId,
+        hash_policy_hash,
     )
     channel = ChannelName("xy")
     policy = FinalRestartPolicy(
@@ -551,7 +557,6 @@ def _run_lineageflow(
         LINEAGEFLOW_STATE_SHAPE,
         LineageFlowAdapter,
     )
-    from adaptive_reflow.universal.state import ODEConditionDelta
     from adaptive_reflow.algorithm.batched_runner import BatchedRunnerConfig
     from adaptive_reflow.algorithm.merge_operator import (
         default_bounded_merge_operator,
@@ -560,6 +565,7 @@ def _run_lineageflow(
         nfe_steps_for_evidence,
     )
     from adaptive_reflow.algorithm.scheduler import CodimensionSheetScheduler
+    from adaptive_reflow.universal.state import ODEConditionDelta
 
     result = CellResult(
         model=spec.model,
@@ -738,9 +744,8 @@ def _run_lineageflow(
             # makes this a no-op for the current scheduler while
             # staying wire-ready for adaptive schedulers that do
             # advertise the hook.
-            if hasattr(scheduler, "should_terminate_round"):
-                if bool(scheduler.should_terminate_round(r)):
-                    break
+            if hasattr(scheduler, "should_terminate_round") and bool(scheduler.should_terminate_round(r)):
+                break
         result.framework_metric = float(_per_position_entropy(last_round_state))
         result.framework_family_validity = float(_family_validity(last_round_state))
         result.framework_runtime_s = float(time.perf_counter() - t0)

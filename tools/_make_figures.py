@@ -17,7 +17,7 @@ import os
 
 import matplotlib.patches as mpatches
 
-from tools._figures_common import OUT_DIR, _FIGURE_DPI, plt, save_figure
+from tools._figures_common import _FIGURE_DPI, OUT_DIR, plt, save_figure
 
 # Brand-neutral palette (dataviz skill). All figures share this.
 PALETTE = {

@@ -157,11 +157,11 @@ def _framework_emit_sequence(
     command-line ``--min-len`` / ``--max-len`` flags.
     """
     try:
-        from tools.run_real_ckpt_eval import _solve_framework  # type: ignore
         from adaptive_reflow.adapters.lineageflow import (  # type: ignore
             AMINO_ACID_CATEGORICAL,
             LINEAGEFLOW_VOCAB_SIZE,
         )
+        from tools.run_real_ckpt_eval import _solve_framework  # type: ignore
     except Exception:
         return None
     try:
@@ -180,7 +180,6 @@ def _framework_emit_sequence(
             return None
     except Exception:
         return None
-    K = LINEAGEFLOW_VOCAB_SIZE
     K_aa = len(AA_SET)
     flat = idx_arr.reshape(-1)
     aa_str = "".join(AA_SET[int(v) % K_aa] for v in flat[: int(length)])

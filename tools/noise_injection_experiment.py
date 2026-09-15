@@ -97,6 +97,8 @@ NOISE_SEED: int = 0xC0FFEE
 
 def _import_runtime_deps() -> tuple[Any, Any, Any, Any, Any]:
     """Import the heavy runtime deps only when actually running."""
+    from scipy.stats import wasserstein_distance
+
     from adaptive_reflow.adapters.twodim_fm import (
         TwoDimFMAdapter,
         default_twodim_fm_adapter,
@@ -113,7 +115,6 @@ def _import_runtime_deps() -> tuple[Any, Any, Any, Any, Any]:
         CosineScheduleConfig,
         FactorValue,
     )
-    from scipy.stats import wasserstein_distance
 
     return (
         TwoDimFMAdapter,
@@ -192,7 +193,7 @@ def _build_codim_scheduler(rounds: int) -> Any:
             repr(("codim_no_restart", int(rounds))).encode("utf-8")
         ).hexdigest()
     )
-    config = CosineScheduleConfig(
+    _config = CosineScheduleConfig(
         schedule_family="codim_no_restart",
         cycle_length=int(rounds),
         n_min=FactorValue(0.0),
@@ -769,10 +770,7 @@ def _write_conditions_md(
             fw_cell = _summarise(sweep["framework_rows"], sigma)
             f_sigma = fw_cell["mean"]
             f_std = fw_cell["std"]
-            if m_sigma > 1e-12:
-                uplift = (f_sigma - m_sigma) / m_sigma
-            else:
-                uplift = 0.0
+            uplift = (f_sigma - m_sigma) / m_sigma if m_sigma > 1e-12 else 0.0
             if uplift < -0.10:
                 verdict = "strongly_helps"
             elif uplift < -0.02:

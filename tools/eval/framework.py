@@ -270,9 +270,9 @@ def _compute_paper_quantities(
     except Exception:
         return None
     if (
-        not (sheet_A == sheet_A)  # NaN guard
-        or not (packing_B == packing_B)
-        or not (exterior_gap == exterior_gap)
+        sheet_A != sheet_A  # NaN guard
+        or packing_B != packing_B
+        or exterior_gap != exterior_gap
     ):
         return None
     return {
@@ -348,7 +348,7 @@ def _make_framework_policy(
         # adapters with the same channel set.
         channel_names = sorted(
             ChannelName(ch)
-            for ch in caps.channel_domains.keys()
+            for ch in caps.channel_domains
             if isinstance(ch, str)
         ) or [ChannelName("latent")]
     else:
@@ -465,15 +465,15 @@ def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3, n_
     ``n_molecules`` independent trajectories. Currently only
     consumed by the FlowMol3 v2 adapter; others ignore it.
     """
-    from adaptive_reflow.universal.state import ODEConditionDelta  # type: ignore
-
     # NB: legacy tests monkey-patch ``tools._compute_paper_quantities``
     # and ``tools._make_framework_policy``. Look them up via the shim so
     # the patches take effect.
     import importlib as _il
+
+    from adaptive_reflow.universal.state import ODEConditionDelta  # type: ignore
     _shim = _il.import_module("tools.run_real_ckpt_eval")
-    _compute_paper_quantities = getattr(_shim, "_compute_paper_quantities")
-    _make_framework_policy = getattr(_shim, "_make_framework_policy")
+    _compute_paper_quantities = _shim._compute_paper_quantities
+    _make_framework_policy = _shim._make_framework_policy
 
     bundle, _ = _build_initial_state_and_condition(adapter, seed=seed, nfe=nfe)
     # Wave 64 Agent 1 fix (Bug A.3): distribute the total NFE across

@@ -8,6 +8,7 @@ Run: ``.venvs/flowmol3_venv/bin/python tools/wave74_smoke_env_axes.py``
 """
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 import shutil
@@ -42,6 +43,7 @@ if xtb_bin:
 from adaptive_reflow.adapters.flowmol3_metrics_upstream import (  # noqa: E402
     FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR,
 )
+
 npz_path = Path(FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR) / "energy_dist.npz"
 results["energy_dist_path"] = str(npz_path)
 results["energy_dist_exists"] = npz_path.is_file()
@@ -50,7 +52,6 @@ results["energy_dist_size_bytes"] = (
 )
 
 # 3. _compute_xtb_med_rmsd on a tiny fake molecule
-import dataclasses
 
 
 @dataclasses.dataclass

@@ -89,7 +89,6 @@ from adaptive_reflow.eval.posterior_selection_evaluator import (  # noqa: E402
     EvidenceScaleGapMetric,
 )
 from adaptive_reflow.eval.twodim_fm_evaluator import analytic_samples  # noqa: E402
-
 from tools._sota_common import add_sota_common_args  # noqa: E402
 
 # ---------------------------------------------------------------------------

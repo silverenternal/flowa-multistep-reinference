@@ -32,24 +32,24 @@ from tools.eval import *  # type: ignore  # noqa: F401,F403
 # that was previously at module-level in run_real_ckpt_eval.py but is
 # not in __all__ for some reason.
 from tools.eval import (  # type: ignore  # noqa: F401
-    AMINO_ACID_ALPHABET,  # noqa: F811
-    ArrayF64,  # noqa: F811
-    CAPABILITY_AUDIT,  # noqa: F811
-    DOWNSTREAM_METRICS,  # noqa: F811
-    DEFAULT_KANZI_COMPOSITE_WEIGHTS,  # noqa: F811
-    ENV_HASH_FILE,  # noqa: F811
-    FLOWMOL3_REAL_CKPT,  # noqa: F811
-    KANZI_BRIDGE_DEFAULT_CKPT,  # noqa: F811
-    KANZI_PFAM_HOLDOUT_PATH,  # noqa: F811
-    KanziGlue,  # noqa: F811
-    PHASE4_ACTIVE_MODELS,  # noqa: F811
-    REPO_ROOT,  # noqa: F811
-    TIE_AT_SATURATION,  # noqa: F811
-    VALID_MODELS,  # noqa: F811
     _ADAPTER_FORCE_MODE_ALIAS,  # noqa: F811
     _MODEL_OBSERVATION_KIND,  # noqa: F811
     _PAPER_QUANTITIES_CACHE,  # noqa: F811
     _PAPER_QUANTITY_PROFILES,  # noqa: F811
+    AMINO_ACID_ALPHABET,  # noqa: F811
+    CAPABILITY_AUDIT,  # noqa: F811
+    DEFAULT_KANZI_COMPOSITE_WEIGHTS,  # noqa: F811
+    DOWNSTREAM_METRICS,  # noqa: F811
+    ENV_HASH_FILE,  # noqa: F811
+    FLOWMOL3_REAL_CKPT,  # noqa: F811
+    KANZI_BRIDGE_DEFAULT_CKPT,  # noqa: F811
+    KANZI_PFAM_HOLDOUT_PATH,  # noqa: F811
+    PHASE4_ACTIVE_MODELS,  # noqa: F811
+    REPO_ROOT,  # noqa: F811
+    TIE_AT_SATURATION,  # noqa: F811
+    VALID_MODELS,  # noqa: F811
+    ArrayF64,  # noqa: F811
+    KanziGlue,  # noqa: F811
     _build_initial_state_and_condition,  # noqa: F811
     _capture_env_hash_lightweight,  # noqa: F811
     _compute_flowmol3_composite,  # noqa: F811
@@ -90,7 +90,6 @@ from tools.eval import (  # type: ignore  # noqa: F401
     load_kanzi_dae_for_bridge,  # noqa: F811
     main,  # noqa: F811
 )
-
 
 if __name__ == "__main__":  # pragma: no cover
     os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")

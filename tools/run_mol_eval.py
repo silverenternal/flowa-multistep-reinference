@@ -205,7 +205,7 @@ import json
 import math
 import pickle
 import sys
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -394,10 +394,7 @@ def _load_mols_from_pkl(path: Path) -> list[Any]:
     """
     with path.open("rb") as fh:
         payload = pickle.load(fh)
-    if isinstance(payload, tuple) and len(payload) >= 1:
-        candidate = payload[0]
-    else:
-        candidate = payload
+    candidate = payload[0] if isinstance(payload, tuple) and len(payload) >= 1 else payload
     if not isinstance(candidate, list):
         raise ValueError(
             f"pkl_unexpected_payload_type:{type(payload).__name__}:{path}"
@@ -729,9 +726,8 @@ def compute_sa(mols: Sequence[Any | None]) -> float:
     """
     import os
 
-    from rdkit.Chem import RDConfig
-
     from rdkit import Chem  # noqa: F401 - sentinel for missing rdkit
+    from rdkit.Chem import RDConfig
 
     sa_path = os.path.join(RDConfig.RDContribDir, "SA_Score")
     if sa_path not in sys.path:
@@ -1559,7 +1555,7 @@ def compute_fg_deviation(
 
     # L1 distance between the two occurrence-rate vectors.
     deviation = 0.0
-    for p_g, p_r in zip(gen_rates, ref_rates):
+    for p_g, p_r in zip(gen_rates, ref_rates, strict=False):
         deviation += abs(p_g - p_r)
     return float(deviation), None
 
@@ -1910,9 +1906,9 @@ def _build_eval_report_block(
     consumers that ignore unknown keys see no change.
     """
     from adaptive_reflow.eval.result import (
+        SCHEMA_VERSION,
         EvalResult,
         MetricResult,
-        SCHEMA_VERSION,
     )
 
     metric_results: dict[str, MetricResult] = {}

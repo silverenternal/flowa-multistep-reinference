@@ -49,7 +49,7 @@ def aggregate_per_family(audit: dict) -> list[tuple[str, int, float, list[float]
 
 
 def fig8_per_family_signed_mean() -> str:
-    with open(AUDIT_JSON, "r", encoding="utf-8") as f:
+    with open(AUDIT_JSON, encoding="utf-8") as f:
         audit = json.load(f)
 
     families = aggregate_per_family(audit)
@@ -77,7 +77,7 @@ def fig8_per_family_signed_mean() -> str:
 
     # Annotate each bar with its value
     x_max = max(max(means), abs(min(means)) if min(means) < 0 else 0, g1_target) * 1.4
-    for bar, sm, deltas in zip(bars, means, [d for *_, d in families]):
+    for bar, sm, deltas in zip(bars, means, [d for *_, d in families], strict=False):
         # Display value
         ax.text(
             bar.get_width() + (0.01 if sm >= 0 else -0.01),

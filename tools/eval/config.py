@@ -35,7 +35,6 @@ from typing import Any
 
 import yaml
 
-
 # Schema: required vs optional keys, plus per-key type validators.
 # Wave 111.B design — see docs/audit/wave111-b-config-scattering-audit.md §2.
 REQUIRED_KEYS: tuple[str, ...] = (

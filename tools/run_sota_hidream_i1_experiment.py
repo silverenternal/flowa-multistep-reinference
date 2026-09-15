@@ -225,7 +225,7 @@ def _build_pipeline_and_adapter(
         "fp16": torch.float16,
         "fp32": torch.float32,
     }
-    dtype_obj = dtype_map.get(str(torch_dtype), torch.bfloat16)
+    _dtype_obj = dtype_map.get(str(torch_dtype), torch.bfloat16)
 
     adapter = HiDreamI1Adapter(
         weights_path=weights,
@@ -246,7 +246,7 @@ def _build_pipeline_and_adapter(
             try:
                 free_mem, total_mem = torch.cuda.mem_get_info(target_device)
             except Exception:  # noqa: BLE001
-                free_mem, total_mem = 0, 0
+                _free_mem, _total_mem = 0, 0
             transformer_footprint_gb = 0.0
             try:
                 transformer = getattr(pipeline, "transformer", None)
@@ -369,9 +369,6 @@ def _generate_pngs_baseline(
     out_dir.mkdir(parents=True, exist_ok=True)
     paths: list[Path] = []
     started = time.perf_counter()
-    target_device = torch.device(device) if device else (
-        torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    )
     # Use a CPU generator (the diffusers pipeline transposes the
     # latent seed via ``torch.Generator(device=...).manual_seed``,
     # but ``prepare_latents`` is happy with a CPU generator as long
@@ -389,10 +386,7 @@ def _generate_pngs_baseline(
             generator=generator,
         )
         images = getattr(result, "images", None) or result
-        if isinstance(images, list) and images:
-            arr = np.asarray(images[0])
-        else:
-            arr = np.asarray(images)
+        arr = np.asarray(images[0]) if isinstance(images, list) and images else np.asarray(images)
         img = _to_pil(arr)
         path = out_dir / f"sample_{i:04d}.png"
         img.save(path)
@@ -542,9 +536,6 @@ def _generate_pngs_framework(
     endpoint_paths: list[Path] = []
     per_round_paths: list[Path] = []
     started = time.perf_counter()
-    target_device = torch.device(device) if device else (
-        torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    )
     total_nfe = int(n_rounds) * int(per_round_nfe)
     for i in range(int(n_mols)):
         prompt = prompts[i % len(prompts)]

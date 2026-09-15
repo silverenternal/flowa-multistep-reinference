@@ -140,7 +140,7 @@ def _parse_g_profile_source(source: str) -> Any:
     import ast as _ast
     import math as _math
 
-    allowed_math_names = set(dir(_math))
+    _allowed_math_names = set(dir(_math))
     try:
         tree = _ast.parse(source, mode="eval")
     except SyntaxError as exc:

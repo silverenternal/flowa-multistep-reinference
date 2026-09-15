@@ -102,9 +102,10 @@ from __future__ import annotations
 import logging
 import math
 import tempfile
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from adaptive_reflow.adapters.flowmol3_metrics_upstream import (
     FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR,
@@ -640,12 +641,13 @@ def _recompute_pb_validity_xtb(
     # Lazy-import the bridge so cold-import paths do not pay the
     # RDKit / xtb CLI discovery cost.
     try:
+        from rdkit import Chem  # noqa: PLC0415
+
         from tools.flowmol3_xtb_bridge import (  # noqa: PLC0415
             XtbBridgeError,
             xtb_energy_ratio,
             xtb_optimize_sdf,
         )
-        from rdkit import Chem  # noqa: PLC0415
     except ImportError as exc:
         _LOGGER.debug(
             "_recompute_pb_validity_xtb: xtb_bridge / rdkit import "
@@ -999,8 +1001,8 @@ def compute_all_paper_metrics(
     # for the rationale.
     if full_pb:
         try:
-            import yaml as _yaml  # noqa: PLC0415
             import posebusters as _pb  # noqa: PLC0415
+            import yaml as _yaml  # noqa: PLC0415
         except ImportError as exc:
             _LOGGER.warning(
                 "compute_all_paper_metrics: missing deps for vendored YAML "
