@@ -35,8 +35,21 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import sys
 from pathlib import Path
 from typing import Any
+
+# Ensure the repo root (parent of this `tools/` script) is on
+# ``sys.path`` so the inner ``from tools.run_real_ckpt_eval import
+# _solve_framework`` resolves when the gen script is invoked as
+# ``python tools/gen_lineageflow_n1000_fastas.py`` (Python prepends
+# the SCRIPT'S directory, i.e. ``tools/``, to sys.path — leaving the
+# repo root absent, which would silently force every framework record
+# into the bare-RNG fallback and break the Wave 86 Agent B
+# ``framework_fallback_per_family_count == {}`` invariant).
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 AA_SET = "ACDEFGHIKLMNPQRSTVWY"
 
