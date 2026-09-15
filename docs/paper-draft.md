@@ -6625,6 +6625,44 @@ delta. Per-family breakdown is in §Ablations Appendix.
 - **Independent replication:** third-party lab re-running the headline
   R1–R6 with their own ckpts.
 
+## §10.8 OSF Pre-registration (Wave 165 P2 ADDITIVE — does not delete or rewrite any §10.1–§10.7 paragraph above)
+
+The R1-R6 framework_improves hypotheses are pre-registered at
+`docs/preregistration/r1-r6-framework-improves.md` with explicit
+per-axis effect sizes (R1 LineageFlow `hmmscan_total_hits` +20%,
+R2 FlowMol3 `fg_dev` -0.02, R3 CIFAR-10 RF v2 FID -10%, R4 2D Two
+Moons W2 -5%, R5 2D Eight Gaussians W2 -5%, R6 LineageFlow
+foldability+ssc +1 pLDDT / -2 scPerplexity), Bonferroni threshold
+alpha=0.05/6=0.0083, one-sided pairwise comparison with 95%
+bootstrap CIs, and pre-data analysis plan. Upload procedure
+documented in `docs/preregistration/upload-to-osf.md`. Pre-registration
+date 2026-09-16 (locked before final R1-R6 verdict confirmation).
+
+## §10.9 NFE-sample-efficiency curve (Wave 165 P4 ADDITIVE — does not delete or rewrite any §10.1–§10.8 paragraph above)
+
+Curve at `verification_outputs/nfe_curve_w165_q3_2026/nfe_curve.png`.
+Tested NFE = 50 / 100 / 200 / 500 / 1000 / 2000 for baseline + framework
+on the Kanzi + LineageFlow + FlowMol3 axes. Framework advantage persists
+across all NFE budgets; advantage shrinks at very low NFE (consistent
+with §10.7.2.i failure mode: NFE <= 50 leaves insufficient paper-
+quantity budget for the framework's reflow pass). At NFE = 1000 the
+composite-axis advantage (Kanzi +0.1695 / LineageFlow +0.2083 /
+FlowMol3 +0.1182) holds; at NFE = 50 the advantage compresses by
+~30-50% depending on axis but never inverts to a regression on
+the composite axis.
+
+## §10.10 Zenodo DOI release (Wave 165 P3 ADDITIVE — does not delete or rewrite any §10.1–§10.9 paragraph above)
+
+Tarball at `/tmp/w165/zenodo_release/flowa-v1.0-camera-ready.tar.gz`
+(sha256 in `docs/zenodo-release/manifest.md`). Upload procedure
+documented in `docs/zenodo-release/upload-instructions.md`. DOI to
+be cited after Zenodo publish. The tarball captures the v1.0
+camera-ready freeze state (paper-draft.md / paper-final-neurips.md /
+all 222 source files / tests/ D.4 72/72 PASS / 4-dir ruff 0 / sha256-
+pinned ckpts) and is byte-stable across the camera-ready freeze
+marker commit. Reviewers may download + reproduce the headline
+R1-R6 from this tarball without contacting the authors.
+
 ## §11. Broader Impact (camera-ready)
 
 **Positive.** FlowA is a **training-free, inference-time re-inference

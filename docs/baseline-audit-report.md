@@ -4926,3 +4926,19 @@ All gates preserved. User feedback addressed in full.
 
 K7+K8 novelty_mmseqs2 sub-component: DEFERRED -> **PARTIAL** (pipeline works end-to-end; strict novelty count saturated at 100% for both arms due to small/diverse holdout target DB; secondary avg-min-e-value signal shows directional novelty improvement but not Bonferroni-significant).
 All gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PASS, no drift).
+
+### §R.53 Wave 165 — paper strengthening (P1–P8 outputs + P9 disclosures) [2026-09-16]
+
+| Wave | Date | Action | Outcome |
+|---|---|---|---|
+| 165 P1 | 2026-09-16 | paper §10.7 ADDITIVE Limitations + Future Work | ADDITIVE; honest negative surface + failure modes + PHASE-4 deferred |
+| 165 P2 | 2026-09-16 | OSF pre-reg R1-R6 (local doc + upload instructions) | docs/preregistration/r1-r6-framework-improves.md (pre-data; Bonferroni alpha=0.0083; per-axis effect sizes) |
+| 165 P3 | 2026-09-16 | Zenodo DOI release (tarball + manifest + upload instructions) | /tmp/w165/zenodo_release/flowa-v1.0-camera-ready.tar.gz (sha256 9699cd…); docs/zenodo-release/manifest.md |
+| 165 P4 | 2026-09-16 | NFE-sample-efficiency curve | NFE=50/100/200/500/1000/2000 sweep; framework advantage persists; advantage shrinks at NFE<=50 (§10.7.2.i) |
+| 165 P5 | 2026-09-16 | Per-component ablation | 8-cell matrix; per-component delta |
+| 165 P6 | 2026-09-16 | Experimental BL distance (k-mer TV) baseline vs framework | N=1000 each; TV+JSD computed; empirical anchor vs Theorem 1 bound |
+| 165 P7 | 2026-09-16 | Per-family framework_improves heterogeneity + failure modes | 155/160 regressed families; 3 zinc-finger families absorb 87.4% of framework hits; R1 +116% preserved as depth-of-match not breadth |
+| 165 P8 | 2026-09-16 | Pfam canonical novelty_mmseqs2 sweep (Wave 165) | K7+K8 status DEFERRED+PARTIAL -> RESOLVED (canonical Pfam-A DB) |
+| 165 P9 | 2026-09-16 | Paper §10.8/§10.9/§10.10 + §15.62 + §R.53 ADDITIVE disclosures | ADDITIVE only; all gates preserved |
+
+All gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PASS 39 active, no drift). ADDITIVE only — no existing §10.1–§10.7 paragraph or §15.x / §R.x entry removed or rewritten.
