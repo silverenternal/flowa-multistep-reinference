@@ -1206,7 +1206,10 @@ def _load_torch_model(weights_path: Path) -> Any:
             # unused here — Kanzi conditions on Pfam family via
             # ``DAE.pair_embedder`` inside ``encode``, not at the ``net``
             # level (see Wave 80 model_cfg.pair_embedder_dim=1152).
-            _, z, _ = self._dae.encode(x)        # (B, L, d_z) codebook-quantized
+            _encode_result = self._dae.encode(x)
+            # Shape-tolerant: upstream DAE.encode returns (s_BLD, c_BLD, idx_BL) but newer
+            # versions may add a 4th element. Use indexed access on the codebook latent.
+            z = _encode_result[1] if isinstance(_encode_result, tuple) else _encode_result
             return self._dae.net(x, t, z_BLD=z)  # type: ignore[no-any-return]  # (B, L, 3) velocity field
 
     def _builder(p: Path) -> Any:
