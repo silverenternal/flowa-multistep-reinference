@@ -1,0 +1,102 @@
+{
+  "total_families": 160,
+  "improved": 5,
+  "regressed": 155,
+  "unchanged": 0,
+  "baseline_total_hits": 158,
+  "framework_total_hits": 342,
+  "top_regressed": [
+    {
+      "fam": "PF25387",
+      "baseline": 2,
+      "framework": 0,
+      "delta": -2
+    },
+    {
+      "fam": "PF05283",
+      "baseline": 2,
+      "framework": 0,
+      "delta": -2
+    },
+    {
+      "fam": "PF03912",
+      "baseline": 1,
+      "framework": 0,
+      "delta": -1
+    },
+    {
+      "fam": "PF13978",
+      "baseline": 1,
+      "framework": 0,
+      "delta": -1
+    },
+    {
+      "fam": "PF18927",
+      "baseline": 1,
+      "framework": 0,
+      "delta": -1
+    },
+    {
+      "fam": "PF20562",
+      "baseline": 1,
+      "framework": 0,
+      "delta": -1
+    },
+    {
+      "fam": "PF00209",
+      "baseline": 1,
+      "framework": 0,
+      "delta": -1
+    },
+    {
+      "fam": "PF08440",
+      "baseline": 1,
+      "framework": 0,
+      "delta": -1
+    },
+    {
+      "fam": "PF14311",
+      "baseline": 1,
+      "framework": 0,
+      "delta": -1
+    },
+    {
+      "fam": "PF25095",
+      "baseline": 1,
+      "framework": 0,
+      "delta": -1
+    }
+  ],
+  "top_improved": [
+    {
+      "fam": "PF18044",
+      "baseline": 0,
+      "framework": 10,
+      "delta": 10
+    },
+    {
+      "fam": "PF10283",
+      "baseline": 0,
+      "framework": 33,
+      "delta": 33
+    },
+    {
+      "fam": "PF25542",
+      "baseline": 1,
+      "framework": 88,
+      "delta": 87
+    },
+    {
+      "fam": "PF18345",
+      "baseline": 0,
+      "framework": 88,
+      "delta": 88
+    },
+    {
+      "fam": "PF14608",
+      "baseline": 0,
+      "framework": 123,
+      "delta": 123
+    }
+  ]
+}
