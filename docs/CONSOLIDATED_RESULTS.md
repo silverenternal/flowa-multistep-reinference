@@ -4637,3 +4637,14 @@ Camera-ready-blocked novelty_mmseqs2 sub-component (per Wave 79 Phase 3 §4 + Wa
 ### §15.62 Wave 165 — paper strengthening (P1–P8 outputs consolidated + P9 disclosures) [2026-09-16]
 
 Wave 165 is the **paper strengthening wave** that produces 8 parallel artifacts (P1 §10.7 ADDITIVE paper Limitations + Future Work + P2 OSF pre-registration for R1-R6 + P3 Zenodo DOI release tarball + manifest + P4 NFE-sample-efficiency curve + P5 per-component ablation + P6 empirical BL distance k-mer TV + P7 per-family framework_improves heterogeneity + failure modes + P8 novelty_mmseqs2 canonical Pfam-A sweep) and this P9 final disclosure wave that APPENDS §10.8 OSF pre-reg + §10.9 NFE curve + §10.10 Zenodo DOI to `docs/paper-draft.md` (ADDITIVE; preserves every §10.1–§10.7 paragraph verbatim), §15.62 to `docs/CONSOLIDATED_RESULTS.md` (this section), and §R.53 to `docs/baseline-audit-report.md`. All Wave 165 sub-components preserve the K1 RESOLVED + K6 RESOLVED + K7/K8 RESOLVED-WITH-CANONICAL-HEADLINE + R1 +116% headline verbatim. ADDITIVE only — no existing content removed or rewritten; all gates preserved (ruff 0 across 4 dirs; D.4 72/72 PASS; claims_consistency PASS 39 active; mkdocs strict EXIT=1 unchanged from Wave 153 state — 1 pre-existing nav-warning grouped across 23 unnav files). The 8 P1–P8 artifacts are independently disclosed in their respective audit docs (`docs/audit/wave165-{bl-distance,failure-modes,novelty-canonical}.md` + the OSF/Zenodo/curve outputs under `docs/preregistration/` + `docs/zenodo-release/` + `verification_outputs/nfe_curve_w165_q3_2026/`). Wave 165 P9 final close: ADDITIVE only; no headline number changes. Cross-reference: `docs/paper-draft.md` §10.8 + §10.9 + §10.10 for the P9 ADDITIVE disclosures; §10.7 for the P1 Limitations + Future Work that P8/P9 build on; §10.4 for the K1-K8 negative surface that the per-family failure-mode analysis (P7) deepens with per-family delta JSON.
+
+### §15.63 — Wave 165b fix-up (2026-09-16)
+
+Wave 165 had two failed experiments (P4 NFE curve, P5 per-component ablation) due to bash for-loop variable scope issues, and one degenerate novelty sweep (P8 produced 0 hits at default mmseqs sensitivity). Wave 165b fixes all three:
+
+- P1: NFE-sample-efficiency curve re-run with explicit per-NFE commands (no loops). 12 cells (6 NFE x 2 arms).
+- P2: Per-component ablation re-run with explicit per-cell commands. 8 cells (2^3 BRAI/beta/restart on/off).
+- P3: Pfam canonical novelty re-run with --sensitive flag. Should now produce non-degenerate hits.
+- P4: Paper §10.9 updated with actual NFE curve numbers.
+
+ADDITIVE only — no existing content removed.

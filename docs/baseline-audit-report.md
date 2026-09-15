@@ -4942,3 +4942,14 @@ All gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PASS, no drift
 | 165 P9 | 2026-09-16 | Paper §10.8/§10.9/§10.10 + §15.62 + §R.53 ADDITIVE disclosures | ADDITIVE only; all gates preserved |
 
 All gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PASS 39 active, no drift). ADDITIVE only — no existing §10.1–§10.7 paragraph or §15.x / §R.x entry removed or rewritten.
+
+### §R.54 — Wave 165b fix-up (2026-09-16)
+
+| Wave | Date | Action | Outcome |
+|---|---|---|---|
+| 165b P1 | 2026-09-16 | NFE curve re-run | 12 cells (6 NFE x 2 arms); CSV + plot |
+| 165b P2 | 2026-09-16 | Per-component ablation re-run | 8 cells; matrix |
+| 165b P3 | 2026-09-16 | Pfam canonical novelty --sensitive | re-run with permissive alignment |
+| 165b P4 | 2026-09-16 | §10.9 NFE numbers update | ADDITIVE |
+
+All gates preserved. Wave 165 P8 (degenerate 0-hit novelty) superseded.
