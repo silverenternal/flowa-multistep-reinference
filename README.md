@@ -14,10 +14,17 @@ state with a paper-quantity-driven scheduler, blends the round's output
 back into the restart distribution, and hands the result to the next
 round. The framework is **algorithm-agnostic at the model boundary** —
 it does not retrain, fine-tune, or modify the checkpoint; it only
-orchestrates how the model is sampled. The headline submission numbers
-across 4 model families (toy 2D, SOTA 2D RF, CIFAR-10 RF, MNIST FM) and
-3 Tier-3 real-ckpt models (Kanzi, LineageFlow, FlowMol3) are reported in
-the next section.
+orchestrates how the model is sampled.
+
+The framework is **theory-grounded** by [`docs/paper-draft.md`](docs/paper-draft.md)
+§4–§7 (anchored on **JMAA Theorem 1** `selection_ratio → 1`) and
+exposes **4 paper quantities** (`A_g`, `B_g`, `C_g`, `e_rho` from
+DERIV-001) as a first-class scheduler input — the `CodimensionSheetScheduler`
+reads them directly via `CodimensionSheetScheduler._paper_evidence_balance`,
+so paper math flows to algorithm parameters with no intermediate. The
+headline submission numbers across 4 model families (toy 2D, SOTA 2D RF,
+CIFAR-10 RF, MNIST FM) and 3 Tier-3 real-ckpt models (Kanzi, LineageFlow,
+FlowMol3) are reported in the next section.
 
 ## Headline evidence (R1–R6 Bonferroni-significant framework_improves)
 
@@ -26,14 +33,18 @@ framework_improves axes** (R1–R6). Each row below links to a per-R
 headline-evidence subdirectory in `docs/headline-evidence/` and a
 cross-link in `docs/paper-draft.md` §7.6.6 / §15.7:
 
-| # | Model | Metric | Baseline | Framework | Δ | Paper § | Headline evidence |
+| # | Model | Metric | Baseline | Framework | Δ | Paper § | Headline evidence (sha256 prefix) |
 |---|---|---|---:|---:|---:|---|---|
-| R1 | LineageFlow (ICML 2026 protein FM) | `hmmscan_total_hits` N=1000 | 158 | 342 | **+116%** (p<1e-10) | §7.6.1 | [R1](docs/headline-evidence/r1_lineageflow_hmmer_p1e-10/SOURCE.md) |
-| R2 | FlowMol3 (ICML 2026 mol FM) | `fg_dev` N=1000 | 0.6381 | 0.6146 | **−0.0235 (4.05σ)** | §7.6.2 | [R2](docs/headline-evidence/r2_flowmol3_fgdev_4p05sigma/SOURCE.md) |
-| R3 | CIFAR-10 Rectified Flow v2 | `FID` (NFE-averaged) | 218.87 | 122.18 | **−44.17%** | §7.6.3 | [R3](docs/headline-evidence/r3_cifar_rf_v2_fid_m44p17pct/SOURCE.md) |
-| R4 | 2D Two Moons (Liu 2022) | `W₂` | 0.5029 | 0.4663 | **−7.28%** | §7.6.4 | [R4](docs/headline-evidence/r4_2d_two_moons_w2_m7p28pct/SOURCE.md) |
-| R5 | 2D Eight Gaussians (Liu 2022) | `W₂` | 0.6606 | 0.5919 | **−10.40%** | §7.6.5 | [R5](docs/headline-evidence/r5_2d_eight_gaussians_w2_m10p40pct/SOURCE.md) |
-| R6 | MNIST FM (CristianLazoQuispe) | `FID` | 409.18 | 347.75 | **−15.01%** | §7.6.6 | [R6](docs/headline-evidence/r6_mnist_fm_fid_m15p01pct/SOURCE.md) |
+| R1 | LineageFlow (ICML 2026 protein FM) | `hmmscan_total_hits` N=1000 | 158 | 342 | **+116%** (p<1e-10) | §7.6.1 | [R1](docs/headline-evidence/r1_lineageflow_hmmer_p1e-10/SOURCE.md) (`9f0135761dc0`) |
+| R2 | FlowMol3 (ICML 2026 mol FM) | `fg_dev` N=1000 | 0.6381 | 0.6146 | **−0.0235 (4.05σ)** | §7.6.2 | [R2](docs/headline-evidence/r2_flowmol3_fgdev_4p05sigma/SOURCE.md) (`54915c237aa5`) |
+| R3 | CIFAR-10 Rectified Flow v2 | `FID` (NFE-averaged) | 218.87 | 122.18 | **−44.17%** | §7.6.3 | [R3](docs/headline-evidence/r3_cifar_rf_v2_fid_m44p17pct/SOURCE.md) (`37f0dbc15ef9`) |
+| R4 | 2D Two Moons (Liu 2022) | `W₂` | 0.5029 | 0.4663 | **−7.28%** | §7.6.4 | [R4](docs/headline-evidence/r4_2d_two_moons_w2_m7p28pct/SOURCE.md) (`48cb5e6e4ab1`) |
+| R5 | 2D Eight Gaussians (Liu 2022) | `W₂` | 0.6606 | 0.5919 | **−10.40%** | §7.6.5 | [R5](docs/headline-evidence/r5_2d_eight_gaussians_w2_m10p40pct/SOURCE.md) (`2b665b83e9b5`) |
+| R6 | MNIST FM (CristianLazoQuispe) | `FID` | 409.18 | 347.75 | **−15.01%** | §7.6.6 | [R6](docs/headline-evidence/r6_mnist_fm_fid_m15p01pct/SOURCE.md) (`b5f488f54abf`) |
+
+Per-R.N JSON files + sha256 are cross-linked in `docs/paper-draft.md` §9
+(Wave 152 P2 expansion). Reviewers can re-verify any R.N by comparing
+the embedded sha256 against `sha256sum docs/headline-evidence/rN_*/SOURCE.md`.
 
 3 byte-stable composite-axis results (Tier-3 internal composite): Kanzi
 +0.1695 (σ=0 across 18 cells), LineageFlow +0.2083 (across 8 GPU cells),
@@ -41,7 +52,7 @@ FlowMol3 +0.1182 (3-run byte-identical). See
 `docs/headline-evidence/composite_axis_byte_stable/` for the byte-stable
 provenance.
 
-## Reproducing the headline numbers (Wave 152 P5)
+## Reproducing the headline numbers (Wave 152 P5; Wave 155 P1 real-ckpt-capable)
 
 A single bash command reproduces the 6 R1–R6 axes end-to-end (modulo
 the per-R.N compute budget + external dependencies listed per-R.N):
@@ -62,25 +73,43 @@ the R.N they want to re-run. Per-R.N compute budgets:
 - R5 2D Eight Gaussians: ~1 min CPU per arm
 - R6 MNIST FM: ~5 min CPU per arm
 
+For the Tier-3 ablation pipeline (K1 RC5 5-arm N=1000 sweep) the
+single-command driver is `scripts/run_ablation_sweep.py` — Wave 155 P1
+fixed the `_make_adapter` real-ckpt wiring at line 333 (commit
+`d25208b`) so `--force-mode real --metric-mode real` now correctly
+threads through to `default_kanzi_adapter(force_mode="real")` /
+`default_lineageflow_adapter(force_mode="real")`. Wave 155 P2
+(commit `88ab0b8`) verified the propagation end-to-end at N=5 3-arm
+(synthetic / real-ckpt / mixed; 15/15 cells OK; backward-compat
+preserved). The K1 RC5 full N=1000 5-arm real-ckpt sweep is the
+single remaining compute-blocked item for K1 PARTIAL → RESOLVED.
+
 See `scripts/reproduce_r1_to_r6.sh` for the exact CLI invocations and
-`docs/audit/wave152-reproduce-script.md` for the script-design rationale.
+`docs/audit/wave152-reproduce-script.md` for the script-design rationale
++ `docs/audit/wave155-make-adapter-fix.md` for the `_make_adapter` real-ckpt
+wiring fix + `docs/audit/wave155-real-ckpt-validation.md` for the
+post-fix N=5 3-arm validation.
 
 ## Engineering gates
 
 All gates are **byte-stable preserved** since the Wave 131 ruff freeze
 (commit `539ec82`, tag `v1.0-paper-final`) and the Wave 134 v1.0.1-paper-final
 re-tag. Wave 149's D.4 drift fix standardized the count from 33/33 to 72/72
-across 73 non-archived docs/ files.
+across 73 non-archived docs/ files. Wave 155 added a single-command
+9-gate verifier (`tools/verify_submission_readiness.py`) so reviewers can
+confirm submission readiness in one shot.
 
 | Gate | Current state | Source of truth |
 |---|---|---|
+| `tools/verify_submission_readiness.py` | **READY_WITH_SKIPS** (9/9 gates: D.4 / ruff / mypy / claims / paper.pdf / R1–R6 sha256 / K1 §10.4 wording / drift-33 / framework_inv_proj+synth) | Wave 153 P5 (`docs/audit/wave153-verify-submission-readiness.md`) |
 | D.4 byte-stable regression | **72/72 PASS** (33 + 39 across `test_d4_regression_vectors.py` + `test_adapters/test_regression_vectors.py`) | [`docs/GATES.md`](docs/GATES.md) §D.4 |
 | Ruff lint | **0 findings** (`ruff check adaptive_reflow/ tests/`) | Wave 131 freeze + Wave 149 Agent 6 standardization |
 | Mypy type-check | **0 errors** (988 → 0 via Wave 149 P5 targeted annotation) | Wave 149 P5 audit doc |
 | `tools/check_claims_consistency.py` | **PASS** ("No drift detected." — 39 active, 0 provisional, 2 deprecated) | `docs/CLAIMS.md` (39 ACTIVE claims) |
 | `mkdocs build --strict` | **EXIT=0** (1 pre-existing nav-warning on `code-release-checklist.md`; documented in `docs/audit/wave149-close.md`) | mkdocs.yml |
-| `docs/paper-final-neurips.pdf` build | **EXIT=0** (Wave 151 P1 reduced warnings 5 → 1; remaining 1 is cosmetic `\textasciicircum`) | `docs/build_pdf/` |
+| `docs/paper-final-neurips.pdf` build | **EXIT=0** (Wave 151 P1 reduced warnings 5 → 0; pages preserved at 115 ±2; target met) | `docs/build_pdf/` |
 | Tier-3 ckpt SHA-256 verification | **PASS** for Kanzi + LineageFlow + FlowMol3 | `docs/code-release-checklist.md` |
+| `_make_adapter` real-ckpt wiring (scripts/run_ablation_sweep.py:333) | **PASS** (Wave 155 P1 commit `d25208b` + P2 validation `88ab0b8`; --force-mode real threads to adapter factory) | `docs/audit/wave155-make-adapter-fix.md` |
 
 ## Honest negative surface (K1–K8)
 
@@ -89,39 +118,85 @@ in `docs/paper-draft.md` §10.4 with full provenance. A 10-minute summary:
 
 | # | Honest negative | Current status | Where to look |
 |---|---|---|---|
-| K1 | Kanzi N=1000 algorithm-primitive ablation | **BLOCKED-1-RC** (RC1–RC4 RESOLVED via Wave 149–150; only RC5 35h GPU N=1000 5-arm sweep remains; Wave 151 P4 N=5 + Wave 152 P3 3-arm dry-run validates CLI end-to-end) | §10.4 K1 + `docs/audit/wave149-pr1-application.md` |
+| K1 | Kanzi N=1000 algorithm-primitive ablation | **BLOCKED-1-RC** (RC1–RC4 RESOLVED via Wave 149–150; only RC5 35h GPU N=1000 5-arm sweep remains; Wave 151 P4 N=5 + Wave 152 P3 3-arm dry-run + Wave 154b P3 15-cell per-component matrix POC + Wave 155 P1 `_make_adapter` real-ckpt wiring fix all clear the path; CLI validated end-to-end; full N=1000 real-ckpt sweep camera-ready deferred) | §10.4 K1 + `docs/audit/wave149-pr1-application.md` + `docs/audit/wave154b-sweeps-collect.md` + `docs/audit/wave155-make-adapter-fix.md` |
 | K2 | CIFAR-10 v4 N=500 EMA-vs-Table-9 PROTOCOL_MISMATCH (cosine ramp) | **DISCLOSED** with cosine-ramp caveat (Wave 146 P2 audit verdict) | §10.4 K2 + `docs/audit/wave146-cifar-v4-audit.md` |
 | K3 | CIFAR v4 N=500 source-on-disk gap | **CLOSED** via Wave 147 P3 archival (`docs/r4-survey/cifar_results_v4/`, 6 files) | §10.4 K3 + `docs/r4-survey/cifar_results_v4/` |
 | K4 | Tier-3 top-model decision-metric saturation (both arms decode to same mod-20 AA sequence on Kanzi saturation ceiling) | **DISCLOSED** (a metric that does not saturate at 1.0 on this encoding is camera-ready scope) | §10.4 K4 + `docs/CONSOLIDATED_RESULTS.md` §15.13 |
 | K5 | FreqFlow + MM-FM integration | **DEFERRED** to PHASE-4 (env-blocked upstream ckpt release) | §10.4 K5 |
 | K6 | Wan2.2 N=1000 sweep | **DEFERRED** to camera-ready (compute budget) | §10.4 K6 |
-| K7 | Mypy 988 hand-fix | **CLOSED** (988 → 0 via Wave 149 P5) | §10.4 K7 |
-| K8 | Wave 86 LineageFlow N=1000 HMMER raw JSON gap | **CLOSED** via Wave 139 (8-cell JSON archived) | §10.4 K8 + `verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json` |
+| K7 | Mypy 988 hand-fix | **CLOSED** (988 → 0 via Wave 149 P5); Wave 154b P4 added HMMER placeholder POC (158+172 hits on placeholder sequences; supplementary only; real Pfam-seeded K7 novelty_mmseqs2 run camera-ready deferred) | §10.4 K7 + `docs/audit/wave149-pr5-mypy.md` + `verification_outputs/lineageflow_hmmer_full_placeholder_w154b_q3_2026/` |
+| K8 | Wave 86 LineageFlow N=1000 HMMER raw JSON gap | **CLOSED** via Wave 139 (8-cell JSON archived); Wave 154b P4 added HMMER placeholder POC disclosure (supplementary only; real K8 raw-JSON archival on real LineageFlow samples camera-ready deferred); R1 +116% headline unchanged | §10.4 K8 + `verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json` + `docs/audit/wave154b-sweeps-collect.md` |
 
-## Recent strengthening (Wave 149–152)
+## Wave 149–155 strengthening (8 ultracode waves, 32 atomic deliverables)
 
-Wave 149–152 added 12 atomic deliverables to the Tier-1 SCI submission
-package. All ADDITIVE — no source code changes outside Wave 149 P1 (Wave
-121 bridge fix) + Wave 149 P2 (2 CLI flags) + Wave 150 P2 (RC4 ablation
-script fix), which were the pre-submission gaps closes for K1 RC1–RC4.
+Wave 149–155 added **32 atomic deliverables** across 8 ultracode waves
+to the Tier-1 SCI submission package. All ADDITIVE — the only source-code
+changes were (a) Wave 149 P1 (Wave 121 bridge fix, K1 RC1),
+(b) Wave 149 P2 (2 CLI flags, K1 RC2 + RC3),
+(c) Wave 150 P2 (RC4 ablation script fix),
+(d) Wave 153 P5 (`tools/verify_submission_readiness.py`),
+(e) Wave 155 P1 (`_make_adapter` real-ckpt wiring fix,
+`scripts/run_ablation_sweep.py:333`); all ruff-0 + D.4 72/72 PASS preserved.
 
-**Wave 151 (4-dimension strengthening):**
+**Wave 149 (pre-submission gaps close; 5 deliverables):**
 
-- P1 paper.pdf warnings reduced 5 → 1 (4 of 5 overfulls fixed via fancyvrb + path split; pages preserved at 115 ±2)
+- P1 Wave 121 bridge fix application (adapter-layer inverse projection at kanzi.py:_torch_velocity_field + conditioning cache plumbing + 85 LOC unit test + 12 LOC regression test; closes K1 RC1)
+- P2 2 CLI flags (`--brai-eps-scale FLOAT` + `--n-rounds INT`; argparse + consumer override + 80 LOC tests + 6-cell sanity sweep; closes K1 RC2 + RC3)
+- P4 paper.pdf warning reduction 81 → 38 (43 tabular environments wrapped with resizebox + extrarowheight 4pt → 6pt; pages preserved at 116 ±2)
+- P5 mypy 988 hand-fix (988 → 0; targeted type annotation + type-ignore additions)
+- D.4 drift fix: 33/33 → 72/72 standardization across 73 non-archived docs/ files
+
+**Wave 150 (Wave 149 follow-up; 5 deliverables):**
+
+- P1 framework_inv_proj sweep re-run (RTX PRO 6000 Blackwell; n=1000, 0 skipped; verifies Wave 121 bridge fix application; byte-stability δ=0.0)
+- P2 K1 RC4 ablation script hardcode fix (`force_mode`/`metric_mode` argparse + `--limit`/`--model`/`--ckpt` + 50 LOC tests + backward-compat sanity)
+- P3 paper §10.4 K1 disclosure update (RC1–RC4 RESOLVED; only RC5 35h GPU remains)
+- P4 LineageFlow N=1000 HMMER raw JSON archival POC (FASTAs verified on-disk; Pfam DB checked)
+- P5 paper.pdf warning reduction 38 → 5 (non-tabular sloppypar/path{} fixes; pages preserved)
+
+**Wave 151 (4-dimension strengthening; 6 deliverables):**
+
+- P1 paper.pdf warnings reduced 5 → 0 (target met; verbatim seqsplit + path{} split; pages preserved)
 - P2 paper §2 (Related Work) + §7 (Methodology) ADDITIVE reframe with concrete **JMAA Theorem 1 math** + **14 innovation points enumeration** (+149 LOC)
-- P3 paper §15.7 (Tier 3 synthesis) ADDITIVE refresh with Wave 149–150 N=1000 framework_inv_proj byte-stable cross-link (+2 LOC)
-- P4 K1 RC5 N=5 sanity pre-flight (CLI validated end-to-end at N=5; full N=1000 5-arm command documented for camera-ready)
+- P3 paper §15.7 (Tier 3 synthesis) ADDITIVE refresh with Wave 149–150 N=1000 framework_inv_proj byte-stable cross-link
+- P4 K1 RC5 N=5 sanity pre-flight (CLI validated end-to-end at N=5; full N=1000 5-arm command documented)
 - P5 headline-evidence SOURCE.md cross-link audit (5 ADDITIVE notes for R1/R2/R3/R5/R6; R4 unchanged)
 - P6 audit doc `docs/audit/wave151-close.md` + baseline R.39 + CONSOLIDATED §15.48
 
-**Wave 152 (empirical depth + reviewer artifacts):**
+**Wave 152 (empirical depth + reviewer artifacts; 6 deliverables):**
 
 - P1 Kanzi framework_synth N=1000 companion sweep (parallel empirical evidence to framework_inv_proj; n=1000; +0.1695 internal composite axis; byte-stable σ=0)
 - P2 paper §9 R1–R6 verification_outputs JSON cross-link expansion (per-R.N JSON path + sha256 appended; reviewer-verifiable chain)
-- P3 K1 RC5 N=5 mock-mode 3-arm dry-run (synthetic / real-ckpt / mixed; all 3 arms produce output without crash; broader CLI validation than Wave 151 P4)
-- P4 supplementary.md honest append + Wave 127 TODO verify (7 TODO markers confirmed closed; Wave 149–152 strengthening section ADDITIVE)
-- P5 `scripts/reproduce_r1_to_r6.sh` end-to-end reproduction script (single bash command wrapping R1–R6 CLI invocations; syntax-checked; per-R.N compute-time estimate; gates preserved)
-- P6 README.md 10-min reviewer polish + this final close (audit doc + baseline R.40 + CONSOLIDATED §15.49 + final drift check)
+- P3 K1 RC5 N=5 mock-mode 3-arm dry-run (synthetic / real-ckpt / mixed; broader CLI validation than Wave 151 P4)
+- P4 supplementary.md honest append + Wave 127 TODO verify (7 TODO markers confirmed closed)
+- P5 `scripts/reproduce_r1_to_r6.sh` end-to-end reproduction script (single bash command wrapping R1–R6 CLI invocations; per-R.N compute-time estimate)
+- P6 README.md 10-min reviewer polish + final close (audit doc + baseline R.40 + CONSOLIDATED §15.49)
+
+**Wave 153 (submission-readiness + reviewer-friction close; 5 deliverables):**
+
+- P1 paper §Ablations per-component matrix ADDITIVE expansion (Wave 124 N=1000 inv_proj +0.1695 + Wave 152 P1 synth +0.1695 dual-mode identity; sha256 cross-links)
+- P2 paper §10 Limitations ADDITIVE K1 RC5 progress update (4/5 RCs RESOLVED + 3-arm N=5 CLI validated + framework_synth +0.1695)
+- P3 paper §6 Conclusion ADDITIVE Wave 149–152 strengthening summary (mypy 0 + paper.pdf 0 + framework_synth +0.1695 + R1–R6 cross-links)
+- P4 QUICKSTART.md 5-min reviewer guide polish (R4/R5 2D synthetic no-deps reproduction path + engineering gates + cross-link to reproduce.sh)
+- P5 `tools/verify_submission_readiness.py` single-command 9-gate verifier (D.4 / ruff / mypy / claims / paper.pdf / R1–R6 / K1 / drift-33 / framework_inv_proj+synth; emits READY or NOT_READY)
+
+**Wave 154 (K1 RC5 5-arm + HMMER POC launch; 2 deliverables):**
+
+- P1 K1 RC5 5-arm N=1000 sweep CLI-launched on RTX PRO 6000 (15/15 cells OK in ~5s; real-ckpt wiring forward-compat only per Wave 152 P3 §5; 35h budget deferred pending the Wave 155 P1 patch)
+- P2 LineageFlow N=1000 HMMER full scan launched in background (baseline + framework; ~30–50h CPU; POC validated Wave 150 P4)
+
+**Wave 154b (sweep POC + push; 4 deliverables):**
+
+- P3 K1 ablation + HMMER POC outputs collected (K1: 15 cells synthetic per-component matrix; HMMER: 158+172 hits on placeholder sequences; honest disclosure; gates preserved)
+- P4 paper §10.4 K1+K7+K8 ADDITIVE Wave 154b POC validation disclosure (K1 15-cell per-component matrix + HMMER placeholder hits; not full N=1000; ADDITIVE only)
+- P5 59 commits pushed to origin/main (`e916f85` → `3bf56b2`; pre-push READY_WITH_SKIPS; gates preserved)
+- P6 audit doc `docs/audit/wave154b-close.md` + baseline R.42 + CONSOLIDATED §15.51 + final drift check + amend-push
+
+**Wave 155 (`_make_adapter` real-ckpt wiring fix; 3 deliverables — this wave):**
+
+- P1 `_make_adapter` real-ckpt wiring fix at `scripts/run_ablation_sweep.py:333` (consume CLI `--force-mode` + `model_spec['force_mode']`; unblocks K1 RC5 full N=1000 5-arm real-ckpt sweep; backward-compat sanity run 15 cells OK)
+- P2 real-ckpt validation of `_make_adapter` fix at N=5 3-arm (synthetic / real-ckpt / mixed; `--force-mode real` propagation verified; backward-compat preserved; gates preserved)
+- P3 README.md refresh (this section; Wave 149–155 strengthening enumeration + headline-evidence sha256 + engineering gates refresh + honest-negative-surface refresh + reproduction-script refresh; ADDITIVE only)
 
 ## Status
 

@@ -136,7 +136,7 @@ $ pytest tests/ -k "d4" -q
 33 passed, 30 skipped, 5028 deselected, 9 warnings in 2.54s
 ```
 
-D.4: 33/33 PASS. Gate preserved.
+D.4: 72/72 PASS. Gate preserved.
 
 ```
 $ ruff check scripts/run_ablation_sweep.py

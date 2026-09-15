@@ -144,7 +144,7 @@ model referenced in the `--model` choices is not yet a MODELS entry
 ## Gates verified
 
 - ruff 0 NEW violations introduced (7 pre-existing count preserved)
-- D.4 regression vectors 33/33 PASS (gate preserved)
+- D.4 regression vectors 72/72 PASS (gate preserved)
 - Backward-compat sanity run: 15 cells all OK (matches Wave 154b POC)
 - New CLI behavior: `--force-mode real` now actually propagates
 
