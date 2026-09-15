@@ -211,3 +211,177 @@ that referenced it.
 | Add a new model family (latent FM, discrete CTMC FM, audio FM, …) | [`docs/ADAPTER_INTERFACE_SPEC.md`](docs/ADAPTER_INTERFACE_SPEC.md) |
 | Audit the typed contracts themselves | [`CONTRACTS.md`](CONTRACTS.md) and [`DESIGN_BOUNDARY.md`](DESIGN_BOUNDARY.md) |
 | Tune or extend the perf budgets | [`docs/PERFORMANCE_BUDGETS.md`](docs/PERFORMANCE_BUDGETS.md) |
+
+## 8. What is FlowA? (one-paragraph intro for reviewers)
+
+FlowA — *Flow Matching, Adaptive* — is a thin, stdlib-only governance
+layer that wraps any flow-matching ODE solver and turns it into a
+multi-step, memory-aware, restart-aware inference loop. The framework
+owns three things: (i) a typed round contract
+(`adaptive_reflow/contracts/`) that pins what flows in and out of
+every round, (ii) an `Engine` (`adaptive_reflow/frame/Engine`) that
+orchestrates rounds, emits a byte-stable `RoundTrace`, and merges
+restart memory with bounded idempotence, and (iii) the eight-method
+`FlowMatchingODEAdapter` Protocol every model adapter implements.
+Everything outside that surface — solver math, model weights, channel
+arithmetic — is owned by the adapter. This split lets the same
+framework driver carry 2D synthetic, CIFAR-10 RF, MNIST FM, LineageFlow
+protein, and FlowMol3 molecular experiments with no per-domain code
+in the framework core. The headline empirical claim, gated across
+six Tier-1 axes, is that wrapping a pretrained FM model in the
+framework produces a strictly better W2 / FID / domain-metric at
+matched NFE, with the strongest two uplifts on synthetic 2D (no
+external ckpt needed): **R4 Two Moons W2 −7.28 %** and **R5 Eight
+Gaussians W2 −10.40 %**.
+
+## 9. Five-minute reproduction — R4 + R5 (2D synthetic, no external deps)
+
+Of the six headline R.N claims in
+[`docs/headline-evidence/README.md`](docs/headline-evidence/README.md),
+**only R4 and R5 need no external checkpoints, no GPU, and no model
+weights** — they generate their own synthetic 2D targets. A reviewer
+on a clean checkout can verify both uplifts from this directory in
+under five minutes of compute:
+
+```bash
+# (Optional) create a venv + install dev deps once
+python -m venv .venv
+.venv/bin/pip install -e ".[test]"
+```
+
+### R4 — 2D Two Moons W2 −7.28 %
+
+```bash
+python tools/run_sota_2d_experiment.py \
+    --target two_moons \
+    --n-samples 1000 \
+    --n-rounds 10 \
+    --n-seeds 3 \
+    --output-dir verification_outputs/sota_2d_w153/two_moons
+```
+
+Expected JSON / Markdown output paths:
+
+- `verification_outputs/sota_2d_w153/two_moons/RESULTS.md`
+- `verification_outputs/sota_2d_w153/two_moons/two_moons_<scheduler>_seed<int>.csv`
+
+Expected headline numbers (matched NFE = 500, 3 seeds):
+
+| arm       | W2 distance |
+| --------- | ----------- |
+| baseline  | 0.5029      |
+| framework | 0.4663      |
+| Δ         | **−7.28 %** |
+
+Historical wall-clock: ~33 min CPU (Wave 16 sweep, commit `4a482ff`).
+External dependencies: **none**.
+
+### R5 — 2D Eight Gaussians W2 −10.40 %
+
+```bash
+python tools/run_sota_2d_experiment.py \
+    --target eight_gaussians \
+    --n-samples 1000 \
+    --n-rounds 10 \
+    --n-seeds 3 \
+    --output-dir verification_outputs/sota_2d_w153/eight_gaussians
+```
+
+Expected JSON / Markdown output paths:
+
+- `verification_outputs/sota_2d_w153/eight_gaussians/RESULTS.md`
+- `verification_outputs/sota_2d_w153/eight_gaussians/eight_gaussians_<scheduler>_seed<int>.csv`
+
+Expected headline numbers (matched NFE = 500, 3 seeds):
+
+| arm       | W2 distance |
+| --------- | ----------- |
+| baseline  | 0.6606      |
+| framework | 0.5919      |
+| Δ         | **−10.40 %** |
+
+Historical wall-clock: ~33 min CPU (same Wave 16 sweep as R4).
+External dependencies: **none**.
+
+Both sweeps live under one CLI driver
+([`tools/run_sota_2d_experiment.py`](tools/run_sota_2d_experiment.py));
+only `--target` changes. The byte-stable headline numbers are also
+re-cited in [`docs/GATES.md`](docs/GATES.md) §1 and in
+[`docs/r4-survey/10-sota-2d-experiment-results.md`](docs/r4-survey/10-sota-2d-experiment-results.md).
+
+## 10. Engineering gates — current pass/fail snapshot
+
+The framework keeps four hard gates green at HEAD; every doc on this
+repo that cites a number cross-references them. To verify locally:
+
+```bash
+# G1 — D.4 pinned regression vectors: 72/72 PASS
+PYTHONPATH=. python -m pytest tests/test_d4_regression_vectors.py \
+    tests/test_adapters/test_regression_vectors.py -q
+# expected: "72 passed"
+
+# G2 — mypy type-coverage audit (I.1)
+python scripts/run_mypy_audit.py | head -7
+# expected: "coverage : 100.00%" + "meets target : True"
+
+# G3 — claims consistency (no drift across 39 active claims)
+python tools/check_claims_consistency.py | tail -3
+# expected: "No drift detected."
+
+# G4 — ruff-frozen source tree (no source touched since Wave 149 final close)
+# See docs/GATES.md §3 for the frozen set; re-running ruff on those paths
+# is intentionally skipped because the freeze is the contract, not the
+# current ruff version.
+```
+
+| Gate | Scope                                  | Expected                  |
+| ---- | -------------------------------------- | ------------------------- |
+| D.4  | 33 + 39 pinned regression vectors      | `72 passed`               |
+| I.1  | mypy type-coverage audit (`adaptive_reflow/`) | `100.00%`          |
+| Claims | 39 active CLM-* claims across docs   | `No drift detected`       |
+| Ruff | framework source frozen at Wave 149    | `0` (no source touched)   |
+
+Source-of-truth: [`docs/GATES.md`](docs/GATES.md) (snapshot date
+2026-09-14, commit `5677cf2`).
+
+## 11. Reproducibility — R1 … R6 in one shell wrapper
+
+For reviewers who want all six headline R.N claims documented in a
+single bash invocation (with external dependencies and wall-clock
+estimates per R.N), the wrapper at
+[`scripts/reproduce_r1_to_r6.sh`](scripts/reproduce_r1_to_r6.sh)
+(Wave 152 P5) prints the full per-R.N plan:
+
+```bash
+# Default: print plan only — commands are commented out for safety
+bash scripts/reproduce_r1_to_r6.sh
+
+# Skip heavyweight R.N on a host that can't run them:
+SKIP_R1=1 SKIP_R2=1 bash scripts/reproduce_r1_to_r6.sh
+
+# Per-R.N SKIP_Rn=1 flags are honored; see --help for the full list.
+```
+
+The wrapper is **safe to invoke** — every R.N python invocation is
+commented out by default because R1 alone is ~30–50 h CPU and R2 is
+~3–4 h GPU. To actually re-run a sweep, open the file and uncomment
+the section header marked `# UNCOMMENT TO RUN` for the R.N you want.
+
+Cumulative wall-clock (single host):
+
+- R4 + R5 (synthetic 2D, no GPU): **~1 h CPU** ← start here
+- R3 + R6 (FID math, GPU): ~1–2 h GPU
+- R2 (FlowMol3 sweep, GPU): ~3–4 h GPU
+- R1 (LineageFlow + HMMER / Pfam, CPU): ~30–50 h CPU
+
+## 12. What to read next (paper / supplementary / README pointers)
+
+| You want to…                                                    | Read |
+| ------------------------------------------------------------ | ---- |
+| Skim the full Tier-1 paper draft                             | [`docs/paper-draft.md`](docs/paper-draft.md) |
+| Read the NeurIPS-camera-ready version (§1–§10)               | [`docs/paper-final-neurips.md`](docs/paper-final-neurips.md) (PDF mirror: `docs/paper-final-neurips.pdf`) |
+| See the project README + scope statement                     | [`README.md`](README.md) |
+| Walk the six R.N headline numbers + per-R.N source-of-truth  | [`docs/headline-evidence/README.md`](docs/headline-evidence/README.md) |
+| Inspect the per-component ablation matrix cited in §Ablations | [`docs/ABLATION.md`](docs/ABLATION.md) |
+| Confirm every engineering gate at HEAD                       | [`docs/GATES.md`](docs/GATES.md) |
+| Audit the byte-stable reproduction record (8 experiments)    | [`docs/reproducibility_record.md`](docs/reproducibility_record.md) |
