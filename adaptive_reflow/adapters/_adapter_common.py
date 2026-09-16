@@ -31,6 +31,142 @@ def seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:
     return int(hashlib.sha256(blob).hexdigest()[:8], 16)
 
 
+def decode_with_temperature(
+    theta: NDArray[np.float64],
+    temperature: float = 1.0,
+    *,
+    rng: np.random.Generator | None = None,
+) -> NDArray[np.int64]:
+    """Decode a per-position categorical into token indices with controlled noise.
+
+    Wave 171 P1 — adds a sampling-temperature knob to the abstract
+    evaluation layer so framework-vs-baseline distributional
+    advantage is visible (Wave 170 P5 showed restart-blend is INERT
+    under argmax in synthetic mode because argmax collapses all
+    diversity to a single deterministic sequence per seed).
+
+    Contract
+    --------
+
+    ``theta`` is a ``(L, K)`` per-position categorical (rows may
+    already be softmax-normalised — see :func:`_theta_to_logits` in
+    ``lineageflow.py`` for the lineageflow-specific log-domain
+    re-mix). The function returns a ``(L,)`` ``int64`` token-index
+    array.
+
+    Three regimes (matches the standard softmax-temperature ladder):
+
+    * ``temperature == 1.0`` — **byte-stable argmax**. Identical to
+      the prior ``np.argmax(theta, axis=-1)`` call used everywhere
+      in the adapter stack. This is the **only regime that
+      guarantees byte-identical output to the pre-Wave-171 path**;
+      every existing test, regression vector, D.4 sha256, and
+      claim depends on it.
+    * ``temperature > 1.0`` — **stochastic sampling** from
+      ``softmax(log(theta + eps) / temperature)``. The ``+ eps``
+      guard avoids ``log(0)`` on rows whose probability mass is
+      zero (Pfam prior rows for tokens outside the family's
+      vocabulary are sometimes ``0.0``). The caller must supply
+      ``rng`` (a :class:`numpy.random.Generator`) so the
+      sampling is reproducible per-seed.
+    * ``temperature < 1.0`` — **deterministic argmax** (sharper than
+      argmax over the raw distribution would be, but identical at
+      the index level because argmax is invariant to monotone
+      re-scaling). Documented as the "make-argmax-explicit"
+      regime; same output as ``temperature == 1.0``.
+
+    Why not torch.distributions.Categorical?
+    ----------------------------------------
+
+    The LineageFlow adapter carries ``theta`` as a NumPy array
+    across the protocol boundary (the framework's adapter
+    protocol has been NumPy-only by design since Wave 7; the
+    torch velocity field is wrapped by
+    :func:`adaptive_reflow.adapters.lineageflow._torch_velocity_field`
+    and emits NumPy output). Pulling in ``torch.distributions``
+    would force every decode-path through a torch round-trip and
+    break the cold-clone synthetic-mode path. The NumPy
+    ``Generator.choice`` sampler is sufficient: it draws from
+    each row's distribution independently and is keyed by the
+    caller's seeded ``Generator`` so the decode is reproducible
+    given the same ``rng`` + ``temperature`` + ``theta``.
+
+    Parameters
+    ----------
+    theta
+        Per-position categorical with shape ``(L, K)``. Rows must be
+        non-negative; rows whose sum is zero are silently treated as
+        uniform (matches the synthetic-velocity-field convention).
+    temperature
+        Sampling temperature. ``1.0`` = argmax (byte-stable).
+        ``> 1.0`` = stochastic sampling (requires ``rng``). ``< 1.0``
+        = argmax (explicit). Negative or zero raises ``ValueError``.
+    rng
+        Required when ``temperature > 1.0``. A :class:`numpy.random.Generator`
+        whose state is updated in-place. Ignored when
+        ``temperature <= 1.0``.
+
+    Returns
+    -------
+    numpy.ndarray
+        ``(L,)`` ``int64`` token-index array. Bounded in
+        ``[0, K)`` for every ``L``.
+
+    Raises
+    ------
+    ValueError
+        If ``temperature`` is non-positive, or if ``temperature > 1.0``
+        and ``rng`` is ``None``.
+    """
+    T = float(temperature)
+    if T <= 0.0:
+        raise ValueError(
+            f"decode_with_temperature: temperature must be > 0, got {T}"
+        )
+    theta_arr = np.asarray(theta, dtype=np.float64)
+    if theta_arr.ndim != 2:
+        raise ValueError(
+            f"decode_with_temperature: theta must be 2-D (L, K), got "
+            f"shape {theta_arr.shape}"
+        )
+    L, K = theta_arr.shape
+    # Regime 1 + 3: argmax (byte-stable when T == 1.0; explicit at T < 1.0).
+    if T <= 1.0:
+        return np.argmax(theta_arr, axis=-1).astype(np.int64)
+    # Regime 2: stochastic sampling with controlled noise.
+    if rng is None:
+        raise ValueError(
+            "decode_with_temperature: rng is required when temperature > 1.0"
+        )
+    # Robust log: add eps before log to avoid -inf on zero-mass rows.
+    # The eps is 32-bit small enough that argmax-equality is preserved
+    # when T == 1.0 (which is the byte-stable regime above; we are
+    # here ONLY at T > 1.0, so the eps perturbs the sampling, not the
+    # argmax, and is the correct noise-floor for softmax-T sampling).
+    eps = float(np.finfo(np.float64).tiny)
+    safe = np.maximum(theta_arr, eps)
+    log_p = np.log(safe) / T  # shape (L, K)
+    # Subtract per-row max for numerical stability before exp.
+    log_p -= log_p.max(axis=-1, keepdims=True)
+    p = np.exp(log_p)
+    p /= p.sum(axis=-1, keepdims=True)
+    # Per-row categorical draw. ``numpy.random.Generator.choice``
+    # does not support per-row probability vectors in one call, so
+    # we loop over rows — L is bounded by
+    # ``LINEAGEFLOW_MAX_LENGTH = 256`` so this is at most 256 cheap
+    # CPU iterations, and the loop is the only way to keep
+    # reproducibility under a single seeded ``Generator`` (a
+    # vectorised multinomial would either need its own seed per row
+    # or a separate global-key scheme that we cannot guarantee
+    # matches the caller's RNG sequence).
+    out = np.empty(int(L), dtype=np.int64)
+    for i in range(int(L)):
+        out[i] = int(
+            rng.choice(int(K), replace=True, p=p[i].astype(np.float64))
+        )
+    return out.astype(np.int64)
+
+
 def digest_state(payload: Mapping[str, Any]) -> str:
     """SHA-256 hex digest of a payload (sorted keys, repr'd)."""
     blob = repr((sorted(payload.items(), key=lambda kv: str(kv[0])),)).encode("utf-8")
@@ -860,6 +996,7 @@ def _resolve_mode(
 __all__ = [
     "NativeStateCache",
     "coerce_nfe_budget",
+    "decode_with_temperature",
     "digest_state",
     "kaiming_uniform",
     "low_nfe_restart_gate",

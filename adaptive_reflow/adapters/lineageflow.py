@@ -97,6 +97,7 @@ from adaptive_reflow.adapters._adapter_common import (
     NativeStateCache,
     _resolve_mode,
     _run_construction_shape_guard,
+    decode_with_temperature,
     digest_state,
     kaiming_uniform,
     load_real_weights,
@@ -2210,6 +2211,9 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         self,
         trace: ODEIntegratorTrace,
         paper_quantities: Any,
+        *,
+        temperature: float = 1.0,
+        rng: np.random.Generator | None = None,
     ) -> dict[str, ArrayF64]:
         """Decode the trajectory's ``(L,)`` per-position amino-acid token indices.
 
@@ -2241,6 +2245,21 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         conditions, e.g. swap to a temperature-1.0 sampling when
         ``e_rho < floor``).
 
+        Wave 171 P1 addition: ``temperature`` + ``rng`` keyword-only
+        knobs delegate to :func:`decode_with_temperature` so the
+        **same** LineageFlow surface can run under argmax decoding
+        (the historical default, ``temperature=1.0``) or under
+        temperature-controlled stochastic sampling
+        (``temperature>1.0``, ``rng`` required). The default
+        ``temperature=1.0`` path is **byte-stable** with every
+        pre-Wave-171 result: D.4 sha256, Wave 158 / Wave 161 K6
+        FASTA sha256, Wave 161 R6 / Wave 167 R1 / R6 paper
+        headlines. The stochastic path is the Wave 171 fix for
+        Wave 170 P5's "framework restart-blend is INERT in
+        synthetic mode" finding: argmax collapses all decoder
+        diversity, so the framework's distributional advantage
+        is invisible at the default argmax decoding.
+
         Parameters
         ----------
         trace
@@ -2251,6 +2270,16 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
             The :class:`adaptive_reflow.theory.paper_quantities`
             carrier. Reserved for future Tier-3 decoding bias; not
             consumed in Wave 44.
+        temperature
+            Sampling temperature passed through to
+            :func:`decode_with_temperature`. ``1.0`` = argmax
+            (byte-stable). ``> 1.0`` = stochastic sampling (requires
+            ``rng``). ``< 1.0`` = argmax (explicit).
+            Default ``1.0`` preserves every prior byte-stable result.
+        rng
+            Required when ``temperature > 1.0``; a
+            :class:`numpy.random.Generator` whose state is updated
+            in-place by the decode. Ignored when ``temperature <= 1.0``.
 
         Returns
         -------
@@ -2267,6 +2296,10 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         CapabilityMissingError
             If ``trace.native_state_digest`` is not in the adapter's
             native-state cache (e.g. evicted by LRU pressure).
+        ValueError
+            Forwarded from :func:`decode_with_temperature` when
+            ``temperature`` is non-positive or when ``temperature > 1.0``
+            is requested without a ``rng``.
         """
         traj_entry = self._native_states.get(trace.native_state_digest)
         if traj_entry is None:
@@ -2284,7 +2317,13 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         theta_final = np.asarray(
             trajectory_arr[-1], dtype=np.float64
         ).reshape(LINEAGEFLOW_STATE_SHAPE)
-        token_indices = np.argmax(theta_final, axis=-1).astype(np.float64)
+        # Wave 171 P1: route through the shared decoder so the
+        # temperature knob is exposed at the abstract evaluation
+        # layer. ``temperature=1.0`` (the default for every existing
+        # call site) is byte-stable with the prior inline argmax.
+        token_indices = decode_with_temperature(
+            theta_final, temperature=float(temperature), rng=rng
+        ).astype(np.float64)
         return {str(AMINO_ACID_CATEGORICAL): token_indices}
 
     # ------------------------------------------------------------------

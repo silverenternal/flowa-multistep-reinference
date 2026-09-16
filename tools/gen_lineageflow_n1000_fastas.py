@@ -156,6 +156,7 @@ def _framework_emit_sequence(
     family_id: str,
     length: int,
     seed: int,
+    temperature: float = 1.0,
 ) -> str | None:
     """Drive one framework multi-round pass and return a length-``length`` AA string.
 
@@ -165,9 +166,18 @@ def _framework_emit_sequence(
     (the canonical Wave 45 multi-round path). The returned trace
     carries the per-position categorical at the integrated endpoint,
     which :meth:`LineageFlowAdapter.observe_token_indices` decodes
-    to a ``(L,)`` int64 array via argmax. We then apply the
-    canonical mod-20 AA-alphabet mapping (matches
+    to a ``(L,)`` int64 array. We then apply the canonical mod-20
+    AA-alphabet mapping (matches
     ``tools/run_real_ckpt_eval._decode_lineageflow_idx_to_aa``).
+
+    Wave 171 P1 addition: ``temperature`` is forwarded to
+    :meth:`LineageFlowAdapter.observe_token_indices` so the same
+    gen-script surface can run under the byte-stable argmax path
+    (``temperature=1.0``, the default and the path used by every
+    pre-Wave-171 Wave 158 / 161 K6 / 167 P5 result) or under
+    temperature-controlled stochastic sampling (``temperature>1.0``,
+    e.g. ``1.5``). When ``temperature>1.0`` the caller MUST have
+    supplied an ``rng`` so the per-record decode is reproducible.
 
     Returns ``None`` when the framework glue path raises — the
     caller falls back to the bare-RNG draw and surfaces the failure
@@ -198,8 +208,22 @@ def _framework_emit_sequence(
         )
     except Exception:
         return None
+    # Wave 171 P1: build a seeded Generator once per record so the
+    # stochastic decode (T > 1.0) is reproducible from ``seed``.
+    # For T == 1.0 the rng is unused — the abstract decoder returns
+    # argmax without consulting it.
+    decode_rng = None
+    if float(temperature) > 1.0:
+        try:
+            import numpy as _np  # type: ignore
+            decode_rng = _np.random.default_rng(int(seed))
+        except Exception:
+            return None
     try:
-        obs_dict = adapter.observe_token_indices(trace, paper_quantities=None)
+        obs_dict = adapter.observe_token_indices(
+            trace, paper_quantities=None,
+            temperature=float(temperature), rng=decode_rng,
+        )
         idx_arr = obs_dict.get(str(AMINO_ACID_CATEGORICAL))
         if idx_arr is None:
             return None
@@ -243,6 +267,7 @@ def _write_framework_arm(
     min_len: int,
     max_len: int,
     framework_rng: random.Random,
+    temperature: float = 1.0,
 ) -> tuple[dict[str, int], dict[str, int]]:
     """Write the framework arm: drives :class:`LineageFlowAdapter` for each record.
 
@@ -250,6 +275,12 @@ def _write_framework_arm(
     tallies the records where the real framework path raised and we
     fell back to bare RNG — surfaced in the manifest so the auditor
     can detect failed cells.
+
+    Wave 171 P1: ``temperature`` is forwarded to
+    :func:`_framework_emit_sequence` so the framework arm's decode
+    can be switched from the byte-stable argmax path (``1.0``) to
+    stochastic sampling (``> 1.0``). Default ``1.0`` preserves
+    Wave 158 / Wave 161 K6 / Wave 167 P5 manifest bytes.
     """
     per_family_count: dict[str, int] = {}
     fallback_count: dict[str, int] = {}
@@ -274,6 +305,7 @@ def _write_framework_arm(
                     family_id=family_id,
                     length=length,
                     seed=int(seed) + int(i),
+                    temperature=float(temperature),
                 )
             if seq is None:
                 # Defensive fallback: bare-RNG draw. The auditor
@@ -321,6 +353,20 @@ def main() -> None:
             "Default 3 preserves backward compatibility with Wave 81/86/158 manifest bytes."
         ),
     )
+    p.add_argument(
+        "--temperature",
+        type=float,
+        default=1.0,
+        help=(
+            "Sampling temperature for the framework-arm decoder "
+            "(Wave 171 P1). 1.0 = argmax (byte-stable with Wave 158 / "
+            "Wave 161 K6 / Wave 167 P5 manifest bytes; default). "
+            "> 1.0 = stochastic sampling from softmax(log(theta) / T). "
+            "Used to expose framework-vs-baseline distributional "
+            "advantage that is invisible under argmax decoding "
+            "(Wave 170 P5 finding)."
+        ),
+    )
     args = p.parse_args()
 
     # Wire the CLI --nfe flag through to the module-level NFE_PER_RECORD
@@ -339,6 +385,12 @@ def main() -> None:
     # Wave 158 backward compat.
     global N_ROUNDS
     N_ROUNDS = int(args.n_rounds)
+    # Wave 171 P1: --temperature is forwarded through
+    # ``_write_framework_arm`` rather than being captured in a module
+    # global, because it has no need to be read by the helper before
+    # the call (the decode happens at decode-time inside
+    # ``_framework_emit_sequence``). Default 1.0 keeps the byte-stable
+    # argmax path live for every existing invocation.
     args.outdir.mkdir(parents=True, exist_ok=True)
 
     # Distinct RNG sub-streams per arm so the framework arm cannot
@@ -357,6 +409,7 @@ def main() -> None:
         "family_ids": family_ids,
         "nfe_per_record": int(NFE_PER_RECORD),
         "n_rounds": int(N_ROUNDS),
+        "temperature": float(args.temperature),
     }
 
     # ---- Baseline arm (bare RNG, preserved byte-shape) -----------------
@@ -381,6 +434,7 @@ def main() -> None:
         min_len=int(args.min_len),
         max_len=int(args.max_len),
         framework_rng=framework_rng,
+        temperature=float(args.temperature),
     )
     manifest["framework_per_family_count"] = dict(framework_counts)
     manifest["framework_fallback_per_family_count"] = dict(fallback_counts)

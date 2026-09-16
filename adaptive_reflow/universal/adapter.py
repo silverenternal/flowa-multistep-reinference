@@ -331,6 +331,9 @@ class FlowMatchingODEAdapter(Protocol):
         self,
         trace: Any,
         paper_quantities: Any,
+        *,
+        temperature: float = 1.0,
+        rng: Any = None,
     ) -> dict[str, Any]:
         """Decode per-channel token indices from the native ODE trajectory.
 
@@ -344,6 +347,19 @@ class FlowMatchingODEAdapter(Protocol):
         implement this to surface the decoded token-index arrays to
         the metric layer without re-running forward.
 
+        Wave 171 P1 addition: ``temperature`` + ``rng`` keyword-only
+        knobs expose a sampling-temperature ladder at the abstract
+        evaluation layer so framework-vs-baseline **distributional**
+        advantage is measurable (argmax decoding collapses all
+        decoder diversity to a single sequence per seed, making the
+        restart-blend glue INERT in synthetic mode — see
+        ``docs/audit/wave170-p5-fair-baseline.md``). The default
+        ``temperature=1.0`` is byte-stable with every pre-Wave-171
+        result (D.4 sha256, Wave 161 K6 FASTA sha256, R1 / R6
+        headlines). ``temperature>1.0`` activates stochastic sampling
+        from ``softmax(log(theta) / T)`` and requires ``rng`` to be
+        supplied so the decode is reproducible.
+
         Parameters
         ----------
         trace
@@ -356,6 +372,16 @@ class FlowMatchingODEAdapter(Protocol):
             consume these signals to bias the decoding (e.g. select a
             non-argmax index when the scheduler-driven restart-blend
             indicates the boundary layer is unstable).
+        temperature
+            Sampling temperature. ``1.0`` = argmax (byte-stable with
+            every pre-Wave-171 call site). ``> 1.0`` = stochastic
+            sampling (requires ``rng``). ``< 1.0`` = argmax (explicit).
+            Default ``1.0``.
+        rng
+            Optional :class:`numpy.random.Generator` (or duck-typed
+            equivalent). Required when ``temperature > 1.0``; ignored
+            otherwise. Implementations MUST update the generator in
+            place so the decode is reproducible per-seed.
 
         Returns
         -------
