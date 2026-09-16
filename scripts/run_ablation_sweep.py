@@ -1323,7 +1323,7 @@ def main(argv: list[str] | None = None) -> int:
         "schema": "ablation_q4_2026.v1",
         "tool": "scripts/run_ablation_sweep.py",
         "wave": "Wave 52 Agent B + Wave 165b P2 toggle extensions",
-        "timestamp": datetime.datetime.now(tz=datetime.UTC).isoformat(),
+        "timestamp": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),  # noqa: UP017 (Wave 166 P4: 3.10 back-compat)
         "arms": arms_to_run,
         "models": MODELS,
         "cells": cells,
