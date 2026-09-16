@@ -4953,3 +4953,25 @@ All gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PASS 39 active
 | 165b P4 | 2026-09-16 | §10.9 NFE numbers update | ADDITIVE |
 
 All gates preserved. Wave 165 P8 (degenerate 0-hit novelty) superseded.
+
+### §R.55 — Wave 166 novelty_mmseqs2 fix + real-ckpt NFE (2026-09-16)
+
+| Wave | Date | Action | Outcome |
+|---|---|---|---|
+| 166 P1 | 2026-09-16 | Diagnose novelty_mmseqs2 structural failure | pctid-based metric recommended (Rost 1999 twilight-zone); root cause is short fragments vs full-length seeds at strict e-value |
+| 166 P2 | 2026-09-16 | Implement pctid-based novelty fix | sanity N=5 PASS (baseline 3/5 vs framework 0/5 novel) |
+| 166 P3 | 2026-09-16 | Full N=1000 novelty sweep with pctid fix | baseline 466/1000 (46.6%) vs framework 37/1000 (3.7%) novel; +42.9pp delta; threshold-robust at 20%/30%/50% |
+| 166 P4 | 2026-09-16 | Real-ckpt NFE curve (LineageFlow) | 4 NFE x 2 arms (NFE=50/100/200/500); baseline=0.0, framework=−2.66e-14 (float64 noise floor); saturation disclosure |
+| 166 P5 | 2026-09-16 | ADDITIVE paper §10.4 + §10.11 + §15.64 + §R.55 disclosure | ADDITIVE only; K7 BLOCKED + K8 RESOLVED + R1 +116% provenance preserved |
+
+**Concrete novelty N=1000 numbers:** baseline_n_novel=466 (46.6%, mean_max_pctid=48.72%); framework_n_novel=37 (3.7%, mean_max_pctid=50.86%); delta_pct=+42.9pp baseline-over-framework; framework produces 963/1000 recognizable Pfam homologs (≥30% identity) vs baseline 538/1000.
+
+**Concrete real-ckpt NFE numbers:** baseline @ NFE=50/100/200/500: 0.0 each; framework @ NFE=50/100/200/500: −2.6645e-14 each. NFE=1000 not measured (interrupted at ~17% wall for budget; extrapolated ~80 min full sweep).
+
+**K7+K8 novelty_mmseqs2 sub-component status upgrade:** PARTIAL (Wave 163 P4 surrogate DB) → RESOLVED-WITH-PCTID-METRIC (canonical 63.8M Pfam-A target DB + percent-identity < 30% threshold).
+
+**Real-ckpt NFE curve status:** Wave 165b P1 synthetic-mode curve (metric ~1e-6 to 1e-8) → Wave 166 P4 real-ckpt curve (baseline 0.0 / framework −2.66e-14 / saturation at numerical floor) — synthetic-mode curve preserved verbatim for reproducibility, real-ckpt curve is camera-ready canonical reference.
+
+**Cross-links:** `docs/paper-draft.md` §10.4 (Wave 166 P1-P3 K7+K8 pctid-fix paragraph) + §10.11 (Wave 166 P4 real-ckpt NFE curve section); `docs/audit/wave166-novelty-diagnosis.md` (P1) + `docs/audit/wave166-novelty-fix.md` (P2) + `docs/audit/wave166-novelty-sweep-fixed.md` (P3) + `docs/audit/wave166-nfe-real.md` (P4); `verification_outputs/novelty_pctid_w166_q3_2026/` + `verification_outputs/nfe_curve_real_w166_q3_2026/`.
+
+**All gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PASS, no drift).** ADDITIVE only — does not modify any §R.x entry above.
