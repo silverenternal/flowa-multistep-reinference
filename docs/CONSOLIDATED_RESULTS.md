@@ -4661,3 +4661,20 @@ Wave 166 has 4 sub-components:
 **Cross-links:** `docs/paper-draft.md` §10.4 (new Wave 166 P1-P3 K7+K8 pctid-fix paragraph ADDITIVELY appended) + §10.11 (new Wave 166 P4 real-ckpt NFE curve section ADDITIVELY appended) + `docs/baseline-audit-report.md` §R.55 (Wave 166 ledger row). Wave 166 P2's one-line `datetime.UTC` → `datetime.timezone.utc` patch is camera-ready scope (preserved for OmegaFold Python 3.10 venv back-compat in any future foldability re-runs).
 
 **ADDITIVE only.** Does not modify any §15.x paragraph above; K7 BLOCKED + K8 RESOLVED + R1 +116% provenance chain + Wave 165b §15.63 fix-up ledger all preserved verbatim. All gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PASS, no drift).
+
+### §15.65 — Wave 166b NFE-curve metric correction (2026-09-16)
+
+Wave 166 P4 used `scripts/run_ablation_sweep.py`'s `per_position_entropy_reduction` metric for the LineageFlow real-ckpt NFE curve, which is a degenerate proxy for LineageFlow (saturates at the float64 noise floor `−2.6645e-14` across all NFE levels — the categorical-entropy axis on the 33-dim Pfam head is unchanged to ~14 decimal places). Wave 166b P1-P3 re-ran the same NFE = 50/100/200/500 sweep on the same `lineageflow-rp55.ckpt` with the **CORRECT** metric (foldability_pLDDT + scPerplexity, same as Wave 161 K6 R6) at N = 1-3 records per cell × 4 NFE × 2 arms = 8 cells target (only 2/8 cells measured due to wallclock budget; see `docs/audit/wave166b-nfe-curve.md` §3.2 time-budget disclosure).
+
+**Concrete numbers (real ckpt, OmegaFold + ESM-IF, NFE=50 only — the one cell that completed):**
+- baseline pLDDT = **26.667** (N=3 records, FASTA sha256 `696da2d91c2f`)
+- framework pLDDT = **25.437** (N=1 record, FASTA sha256 `55a09cff76f5`)
+- baseline scPerplexity = **15.101** (N=3 records)
+- framework scPerplexity = **13.766** (N=1 record)
+- Δ at NFE=50: pLDDT `−1.230` (framework slightly *worse* on OmegaFold-confidence axis — both arms far below the 70-pLDDT "high-confidence" cutoff); scPerplexity `−1.335` (framework slightly *better*, directionally consistent with framework sharpening toward ESM-IF's training distribution).
+
+**§10.11 corrected** with the Wave 166b foldability + scPerplexity numbers via the §10.11 ADDITIVE paragraph already shipped in commit `85c2d5e` (Wave 166b P4). Wave 166 P4's `per_position_entropy_reduction` disclosure stands verbatim alongside this correction; the Wave 166b curve is the paper-parity reference but is partial (1 NFE point, N=3-vs-N=1 sample-size asymmetry) and explicitly does not earn a new paper-quality claim.
+
+`docs/paper-draft.md` §10.11 (Wave 166b ADDITIVE correction paragraph at line 6674) + `docs/baseline-audit-report.md` §R.56 (Wave 166b ledger row) + `docs/audit/wave166b-fasta-generation.md` (P1) + `docs/audit/wave166b-eval.md` (P2) + `docs/audit/wave166b-nfe-curve.md` (P3). Wide-format CSV at `verification_outputs/nfe_curve_real_w166b_q3_2026/curve.csv` (sha256 `5b4fc0dcd6ab822c742fdc4b28e017e6b4d02ab8bc21ac895873d2c9c3081740`); 2-subplot PNG at `verification_outputs/nfe_curve_real_w166b_q3_2026/nfe_curve_real.png` (sha256 `58b77ac8cb2a901eeec42f5980370eccd96b70d1698efd151a97e31c5d20e54f`) with `axvspan(80, 600)` "not measured" shading.
+
+**ADDITIVE only.** Does not modify any §15.x paragraph above; §15.63 (Wave 165b fix-up) + §15.64 (Wave 166 novelty + NFE) + §10.11 P1 paragraph (Wave 166 P4) all preserved verbatim. All gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PASS, no drift).

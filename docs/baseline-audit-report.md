@@ -4975,3 +4975,19 @@ All gates preserved. Wave 165 P8 (degenerate 0-hit novelty) superseded.
 **Cross-links:** `docs/paper-draft.md` §10.4 (Wave 166 P1-P3 K7+K8 pctid-fix paragraph) + §10.11 (Wave 166 P4 real-ckpt NFE curve section); `docs/audit/wave166-novelty-diagnosis.md` (P1) + `docs/audit/wave166-novelty-fix.md` (P2) + `docs/audit/wave166-novelty-sweep-fixed.md` (P3) + `docs/audit/wave166-nfe-real.md` (P4); `verification_outputs/novelty_pctid_w166_q3_2026/` + `verification_outputs/nfe_curve_real_w166_q3_2026/`.
 
 **All gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PASS, no drift).** ADDITIVE only — does not modify any §R.x entry above.
+
+### §R.56 — Wave 166b metric correction (2026-09-16)
+
+| Wave | Date | Action | Outcome |
+|---|---|---|---|
+| 166b P1 | 2026-09-16 | Regenerate FASTAs NFE=50/100/200/500 on `lineageflow-rp55.ckpt` | N=100 spec → 3-record smoke (time-budget); full N=100 sweep estimated ~32 h (out of budget) |
+| 166b P2 | 2026-09-16 | Evaluate foldability + scPerplexity at each NFE | 2/8 cells measured (baseline/NFE=50 + framework/NFE=50); parallel re-launch killed by CPU contention (load avg 44) |
+| 166b P3 | 2026-09-16 | Aggregate NFE curve + plot (wide-format CSV + 2-subplot PNG) | CSV sha256 `5b4fc0dc...`; PNG sha256 `58b77ac8...`; time-budget disclosure baked into figure |
+| 166b P4 | 2026-09-16 | Update §10.11 disclosure with foldability + scPerplexity numbers | ADDITIVE correction paragraph; Wave 166 P4 categorical-entropy disclosure stands verbatim |
+| 166b P5 | 2026-09-16 | §15.65 + §R.56 + push | done |
+
+**Concrete real-ckpt foldability + scPerplexity numbers (NFE=50 only):** baseline pLDDT = 26.667 (N=3); framework pLDDT = 25.437 (N=1); baseline scPerplexity = 15.101 (N=3); framework scPerplexity = 13.766 (N=1). Δ at NFE=50: pLDDT `−1.230` (framework slightly worse on OmegaFold axis); scPerplexity `−1.335` (framework slightly better on ESM-IF axis).
+
+**Cross-links:** `docs/paper-draft.md` §10.11 (Wave 166b ADDITIVE correction paragraph) + `docs/CONSOLIDATED_RESULTS.md` §15.65 (Wave 166b disclosure row); `docs/audit/wave166b-fasta-generation.md` (P1) + `docs/audit/wave166b-eval.md` (P2) + `docs/audit/wave166b-nfe-curve.md` (P3); `verification_outputs/nfe_curve_real_w166b_q3_2026/`.
+
+**All gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PASS, no drift).** ADDITIVE only — does not modify any §R.x entry above; Wave 166 §R.55 + §15.64 + §10.11 P1 paragraph all preserved verbatim. Wave 166 P4 §10.11 disclosure superseded as the **metric axis** (per_position_entropy_reduction → foldability_pLDDT + scPerplexity) but the categorical-entropy finding itself stands as a valid Wave 166 P4 measurement on a separate metric axis.
