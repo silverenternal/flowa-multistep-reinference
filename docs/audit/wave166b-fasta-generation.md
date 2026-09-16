@@ -110,28 +110,66 @@ per arm × 2 arms. Framework cell is ~2× baseline because each
 framework solve does ``n_rounds + 1`` ODE solves totalling ``nfe``
 integration steps + per-round ``apply_restart_distribution`` cost.)
 
-**Time-budget compromise:** Wave 166b P1 launches the full N=100 sweep
-in the background and lets it run. The audit doc + tool ship in this
-commit; the SHA-256 entries below will be filled in (or marked
-``in_progress``) as cells complete. Downstream Wave 166b P2 will
-consume whatever cells are byte-stable at that point.
+**Time-budget compromise — actual observation:** the real per-record
+wallclock measured on this host (2× Xeon, 32 logical CPUs) is closer
+to **30 s/record at NFE=50 baseline** (3 records in ~95 s wall after
+the model-load warm-up), making the full N=100 sweep a
+**~50-70 hour single-process job** (overlaps with the §3 forecast
+within 2×). The Wave 166b P1 subagent budget does not allow that
+end-to-end wallclock, so this commit ships:
+
+* the **generation tool** (``tools/w166b_gen_lineageflow_fastas.py``)
+  — works end-to-end (smoke-tested at NFE=5 with N=3 records in 7s;
+  re-tested at NFE=50 with N=3 records in ~95s confirming the
+  per-NFE scaling), ``ruff`` clean, ``--lineageflow-upstream-eval``
+  friendly (writes FASTA the upstream ``evaluate_all.py`` accepts);
+* the **audit doc** + the **8-cell run plan** in §3, ready for a
+  long-running sweep;
+* a **partial baseline/NFE=50 FASTA** (3 records, see §4) produced
+  during the smoke-validation cycle and committed-by-reference
+  via the sha256 in §4.
+
+The full N=100 sweep can be re-launched at any time via:
+
+```bash
+PYTHONPATH=data/lineageflow_upstream:. \
+  nohup .venvs/lineageflow_venv/bin/python \
+  tools/w166b_gen_lineageflow_fastas.py \
+  --nfe 50,100,200,500 --n-records 100 \
+  --arms baseline,framework --outdir /tmp/w166b/fastas \
+  > /tmp/w166b/run.log 2>&1 &
+```
+
+The script is idempotent: re-running overwrites the FASTAs atomically
+(open-with-``"w"``); only the final ``manifest.json`` carries the
+authoritative per-cell SHA-256 / wallclock. The partial baseline NFE=50
+file in ``/tmp/w166b/fastas/baseline/nfe_50.fasta`` is the artifact
+that proved the tool works end-to-end against the real LineageFlow
+checkpoint.
 
 ## 4. Per-cell results (filled in as cells complete)
 
 | Cell | Status | Wallclock | n_records | SHA-256 |
 |------|--------|-----------|-----------|---------|
-| baseline NFE=50  | _pending_ | - | - | - |
-| framework NFE=50 | _pending_ | - | - | - |
-| baseline NFE=100 | _pending_ | - | - | - |
-| framework NFE=100| _pending_ | - | - | - |
-| baseline NFE=200 | _pending_ | - | - | - |
-| framework NFE=200| _pending_ | - | - | - |
-| baseline NFE=500 | _pending_ | - | - | - |
-| framework NFE=500| _pending_ | - | - | - |
+| baseline NFE=50  | partial (smoke) | 95 s wall for 3 records (extrapolated ~50 min for N=100) | 3/100 | `696da2d91c2fd3e8f43f18d176de0e85cf42f27fff2de87f61aeae951db93a60` |
+| framework NFE=50 | _not_run_ | - | 0 | - |
+| baseline NFE=100 | _not_run_ | - | 0 | - |
+| framework NFE=100| _not_run_ | - | 0 | - |
+| baseline NFE=200 | _not_run_ | - | 0 | - |
+| framework NFE=200| _not_run_ | - | 0 | - |
+| baseline NFE=500 | _not_run_ | - | 0 | - |
+| framework NFE=500| _not_run_ | - | 0 | - |
 
 The authoritative source is ``/tmp/w166b/fastas/manifest.json``, which
 the script writes on completion. Each cell's SHA-256 covers the FASTA
-file (header + sequence for all N=100 records).
+file (header + sequence for all records).
+
+The smoke-validation FASTA at ``/tmp/w166b/fastas/baseline/nfe_50.fasta``
+carries 3 records (seed42/43/44) and demonstrates the end-to-end
+pipeline: ``adapter.build_initial_state`` →
+``ODEConditionDelta(num_steps=50, sampler_id='euler')`` →
+``adapter.solve_ode`` → ``adapter._native_states[digest]['trajectory'][-1]``
+argmax → mod-20 alphabet → 256-residue AA string written to FASTA.
 
 ## 5. Verification gates
 
