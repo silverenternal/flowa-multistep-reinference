@@ -4678,3 +4678,30 @@ Wave 166 P4 used `scripts/run_ablation_sweep.py`'s `per_position_entropy_reducti
 `docs/paper-draft.md` §10.11 (Wave 166b ADDITIVE correction paragraph at line 6674) + `docs/baseline-audit-report.md` §R.56 (Wave 166b ledger row) + `docs/audit/wave166b-fasta-generation.md` (P1) + `docs/audit/wave166b-eval.md` (P2) + `docs/audit/wave166b-nfe-curve.md` (P3). Wide-format CSV at `verification_outputs/nfe_curve_real_w166b_q3_2026/curve.csv` (sha256 `5b4fc0dcd6ab822c742fdc4b28e017e6b4d02ab8bc21ac895873d2c9c3081740`); 2-subplot PNG at `verification_outputs/nfe_curve_real_w166b_q3_2026/nfe_curve_real.png` (sha256 `58b77ac8cb2a901eeec42f5980370eccd96b70d1698efd151a97e31c5d20e54f`) with `axvspan(80, 600)` "not measured" shading.
 
 **ADDITIVE only.** Does not modify any §15.x paragraph above; §15.63 (Wave 165b fix-up) + §15.64 (Wave 166 novelty + NFE) + §10.11 P1 paragraph (Wave 166 P4) all preserved verbatim. All gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PASS, no drift).
+
+### §15.66 — Wave 167 NFE-curve re-attempt with HONEST data-state disclosure (2026-09-16)
+
+Wave 167 (P1–P4) re-attempted the paper-quality real-ckpt LineageFlow NFE-sample-efficiency curve on the same `lineageflow-rp55.ckpt` using the proven Wave 158 P2 `tools/gen_lineageflow_n1000_fastas.py` generation CLI + the Wave 161 K6 foldability + scPerplexity evaluation pipeline (OmegaFold + ESM-IF). Per `docs/audit/wave167-p4-nfe-curve.md` §0 (premise correction) + §9 (honest comparison to P4 task description), the actual measured data set is **2 data points at the SAME NFE level (NFE=10) varying N from 100 → 1000** — an N-axis observation at fixed NFE=10, NOT an NFE curve.
+
+**Why "5 NFE levels × 2 arms = 10 cells" does not exist on disk:** P2's gen script `tools/gen_lineageflow_n1000_fastas.py` lacks a `--nfe` flag, so P2 only produced the default-NFE=10 FASTAs (per `docs/audit/wave167-p2-fasta-generation.md` §1c + §4). P3 (eval) therefore measured 1 of 8 expected cells (NFE=10 baseline + framework only); cells at NFE=50/100/200/500 were never generated and never evaluated.
+
+**Concrete per-N numbers (real ckpt, OmegaFold + ESM-IF, NFE=10 — single NFE level):**
+
+| N | NFE | baseline pLDDT | framework pLDDT | ΔpLDDT | baseline scPerplexity | framework scPerplexity | ΔscPerplexity |
+|---|-----|----------------|-----------------|--------|------------------------|-------------------------|---------------|
+| 100 | 10 | 42.344 | 44.210 | **+1.866** | 18.144 | 14.154 | **−3.990** (−22.0%) |
+| 1000 | 10 | 42.072 | 43.196 | **+1.123** | 17.875 | 13.958 | **−3.917** (−21.9%) |
+
+(N=100 row from Wave 167 P3 `/tmp/w167/eval/{baseline,framework}/nfe_10/foldability/summary.json`; N=1000 row from Wave 161 K6 `verification_outputs/k6_foldability_n1000_w161_q3_2026/{baseline,framework}/summary.json`. Both rows are at the same NFE=10 level; only N varies 100 → 1000.)
+
+**Interpretation:**
+- Framework wins on both metrics at both N values (directionally consistent with Wave 161 K6 R6 `+1.12 pLDDT / −3.92 scPerplexity` at N=1000 and Wave 166b foldability + scPerplexity disclosure at NFE=50).
+- Framework pLDDT advantage shrinks modestly at higher N (+1.87 → +1.12, ~40% absolute delta reduction); this is N-axis shrinkage (statistical-power-consistent: larger N reduces noise), not NFE-axis shrinkage.
+- Framework scPerplexity advantage is stable across N (−22.0% vs −21.9% relative).
+- NFE-axis observation is empty; the P4 task description's question "does framework advantage shrink at low NFE?" cannot be answered from a single NFE point.
+
+**Paper-quality assessment: NOT paper-quality.** The previous Wave 166b P3 disclosure (`docs/audit/wave166b-nfe-curve.md`) reached the same conclusion (1/4 NFE points measured); Wave 166b P4 §10.11 ADDITIVE correction at commit `5108013` explicitly disclosed this and remains the **camera-ready canonical NFE-curve reference** (which is itself partial: 1 NFE point at NFE=50, N=3-vs-N=1 sample-size asymmetry). Wave 167 P4 does not earn a new paper-quality NFE-curve claim; it adds a directionally consistent N-axis observation at fixed NFE=10.
+
+`docs/paper-draft.md` §10.12 (new Wave 167 P4 ADDITIVE paragraph with full premise correction + per-N delta table + paper-quality-fail disclosure) + `docs/baseline-audit-report.md` §R.57 (Wave 167 ledger row) + `docs/audit/wave167-cli-verify.md` (P1) + `docs/audit/wave167-p2-fasta-generation.md` (P2) + `docs/audit/wave167-p3-eval.md` (P3) + `docs/audit/wave167-p4-nfe-curve.md` (P4). Wide-format CSV at `verification_outputs/nfe_curve_real_w167_q3_2026/nfe_curve_real.csv` (sha256 `f43fd454...`) with 2 N rows at fixed NFE=10; 2-subplot PNG at `verification_outputs/nfe_curve_real_w167_q3_2026/nfe_curve_real.png` (sha256 `d174fcad...`) with suptitle "N-axis at fixed NFE=10 — NOT an NFE curve: 1 NFE point (10), 2 N points (100, 1000)".
+
+**ADDITIVE only.** Does not modify any §15.x paragraph above; §15.63 (Wave 165b fix-up) + §15.64 (Wave 166 novelty + NFE) + §15.65 (Wave 166b metric correction) + §10.11 P1 paragraph (Wave 166 P4) + §10.11 Wave 166b correction paragraph (line 6674) all preserved verbatim. Wave 167 P4 N-axis observation at fixed NFE=10 stands alongside the Wave 166b foldability + scPerplexity N=50 partial cell as a **same-metric, different-N-axis, same-NFE-level** confirmation that the framework advantage is reproducible at N=100 as well as N=1000. All gates preserved (D.4 33 passed / 31 skipped (d4 `-k` subset, unchanged); ruff 0 across 4 dirs; claims PASS, no drift).

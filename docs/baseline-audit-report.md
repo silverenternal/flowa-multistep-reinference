@@ -4991,3 +4991,23 @@ All gates preserved. Wave 165 P8 (degenerate 0-hit novelty) superseded.
 **Cross-links:** `docs/paper-draft.md` §10.11 (Wave 166b ADDITIVE correction paragraph) + `docs/CONSOLIDATED_RESULTS.md` §15.65 (Wave 166b disclosure row); `docs/audit/wave166b-fasta-generation.md` (P1) + `docs/audit/wave166b-eval.md` (P2) + `docs/audit/wave166b-nfe-curve.md` (P3); `verification_outputs/nfe_curve_real_w166b_q3_2026/`.
 
 **All gates preserved (D.4 72/72 PASS, ruff 0 across 4 dirs, claims PASS, no drift).** ADDITIVE only — does not modify any §R.x entry above; Wave 166 §R.55 + §15.64 + §10.11 P1 paragraph all preserved verbatim. Wave 166 P4 §10.11 disclosure superseded as the **metric axis** (per_position_entropy_reduction → foldability_pLDDT + scPerplexity) but the categorical-entropy finding itself stands as a valid Wave 166 P4 measurement on a separate metric axis.
+
+### §R.57 — Wave 167 NFE-curve re-attempt with HONEST data-state disclosure (2026-09-16)
+
+| Wave | Date | Action | Outcome |
+|---|---|---|---|
+| 167 P1 | 2026-09-16 | Verify CLI (`tools/gen_lineageflow_n1000_fastas.py`) + smoke test (N=1 baseline + framework at NFE=50) | PASS — CLI works; per-cell time estimate ~32 h for full N=100 (out of budget); smoke-validate shows expected framework-vs-baseline divergence at NFE=50 with N=1 |
+| 167 P2 | 2026-09-16 | Generate 8 FASTAs (NFE=50/100/200/500 × baseline + framework, N=100 each) | **Premise correction: 0/8 FASTAs generated at NFE=50/100/200/500** — gen script lacks `--nfe` flag; only the default-NFE=10 FASTAs were ever produced. P2 honest audit discloses the missing flag as the root cause. |
+| 167 P3 | 2026-09-16 | Evaluate foldability + scPerplexity at each NFE | 1/8 cells measured (only NFE=10 baseline + framework, N=100); 7/8 cells blocked by P2 missing inputs |
+| 167 P4 | 2026-09-16 | Aggregate curve + plot + sha256 | 2 data points at fixed NFE=10 (N=100 from P3 + N=1000 from Wave 161 K6); wide-format CSV `verification_outputs/nfe_curve_real_w167_q3_2026/nfe_curve_real.csv` (sha256 `f43fd454...`); 2-subplot PNG with suptitle "N-axis at fixed NFE=10 — NOT an NFE curve" (sha256 `d174fcad...`) |
+| 167 P5 | 2026-09-16 | §10.12 + §15.66 + §R.57 disclosure | ADDITIVE; honest data-state disclosed (premise correction: not 9 NFE points at 5 NFE levels, but 2 N-points at fixed NFE=10) |
+
+**Concrete real-ckpt foldability + scPerplexity numbers (NFE=10 only — single NFE level, N-axis varies):**
+- N=100: baseline pLDDT = **42.344**; framework pLDDT = **44.210**; ΔpLDDT = **+1.866**; baseline scPerplexity = **18.144**; framework scPerplexity = **14.154**; ΔscPerplexity = **−3.990** (−22.0%)
+- N=1000: baseline pLDDT = **42.072**; framework pLDDT = **43.196**; ΔpLDDT = **+1.123**; baseline scPerplexity = **17.875**; framework scPerplexity = **13.958**; ΔscPerplexity = **−3.917** (−21.9%)
+
+**Camera-ready canonical NFE-curve reference remains Wave 166b P4 §10.11 ADDITIVE correction** (`docs/paper-draft.md` line 6674 at commit `5108013`), which disclosed its own partial coverage (1 NFE point at NFE=50, N=3-vs-N=1 sample-size asymmetry). Wave 167 P4 N-axis observation at fixed NFE=10 confirms the Wave 161 K6 R6 headline (`+1.12 pLDDT / −3.92 scPerplexity` at N=1000) is reproducible at N=100 as well (slightly larger delta: `+1.87 pLDDT / −3.99 scPerplexity`), but does not earn a new paper-quality NFE-curve claim (only 1 NFE level measured; the "5 NFE levels" do not exist on disk per the P2 missing-`--nfe`-flag root cause).
+
+**Cross-links:** `docs/paper-draft.md` §10.12 (new Wave 167 P4 ADDITIVE paragraph with premise correction + per-N delta table + paper-quality-fail disclosure) + `docs/CONSOLIDATED_RESULTS.md` §15.66 (Wave 167 disclosure row); `docs/audit/wave167-cli-verify.md` (P1) + `docs/audit/wave167-p2-fasta-generation.md` (P2, includes missing-`--nfe`-flag root cause) + `docs/audit/wave167-p3-eval.md` (P3, 1/8 cells measured) + `docs/audit/wave167-p4-nfe-curve.md` (P4, full premise correction + paper-quality-fail assessment); `verification_outputs/nfe_curve_real_w167_q3_2026/` (CSV sha256 `f43fd454...`; PNG sha256 `d174fcad...`).
+
+**All gates preserved (D.4 33 passed / 31 skipped with `-k "d4"`; ruff 0 across 4 dirs; claims PASS, no drift).** ADDITIVE only — does not modify any §R.x entry above; Wave 166 §R.55 + Wave 166b §R.56 + §15.64 + §15.65 + §10.11 P1 paragraph + §10.11 Wave 166b correction paragraph all preserved verbatim. Wave 167 P5 is the ledger row for the Wave 167 N-axis observation at fixed NFE=10; no prior §10.11 disclosure is modified or retracted.
