@@ -71,8 +71,13 @@ FAMILY_PROFILES = {
 
 # Per-record NFE budget for the framework arm (matches the Wave 81
 # upstream-eval default). The framework arm splits this across
-# ``n_rounds=3`` rounds.
-NFE_PER_RECORD: int = 10
+# ``n_rounds=3`` rounds. ``NFE_PER_RECORD`` is a module-level binding
+# kept here for backward compatibility with Wave 81/86 manifest
+# (default 10) — the value actually used at runtime is the one
+# supplied to ``--nfe`` on the CLI and assigned in ``main()`` below.
+# Wave 168 P1: ``--nfe`` was being silently ignored because this
+# module-level constant was hardcoded (Wave 167 P2 discovery).
+NFE_PER_RECORD: int = 10  # legacy default; overridden by --nfe in main()
 N_ROUNDS: int = 3
 
 
@@ -288,7 +293,27 @@ def main() -> None:
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--min-len", type=int, default=30)
     p.add_argument("--max-len", type=int, default=150)
+    p.add_argument(
+        "--nfe",
+        type=int,
+        default=10,
+        help=(
+            "Per-record NFE budget for the framework arm "
+            "(default: 10 to match Wave 81 + Wave 86 manifest). "
+            "Wired into NFE_PER_RECORD via global reassignment in main()."
+        ),
+    )
     args = p.parse_args()
+
+    # Wire the CLI --nfe flag through to the module-level NFE_PER_RECORD
+    # constant that ``_build_lineageflow_adapter`` and
+    # ``_framework_emit_sequence`` read. Using ``global`` keeps the
+    # change minimal — the alternative (passing ``nfe`` through every
+    # call site) would touch every function signature in this file
+    # without buying anything. The default value (10) preserves
+    # backward compatibility with the Wave 81/86 manifest bytes.
+    global NFE_PER_RECORD
+    NFE_PER_RECORD = int(args.nfe)
     args.outdir.mkdir(parents=True, exist_ok=True)
 
     # Distinct RNG sub-streams per arm so the framework arm cannot
