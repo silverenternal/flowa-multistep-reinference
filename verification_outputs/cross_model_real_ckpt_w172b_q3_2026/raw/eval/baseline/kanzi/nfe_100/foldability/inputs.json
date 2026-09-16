@@ -1,0 +1,6 @@
+{
+  "input_fasta": "/tmp/w172b/fastas/kanzi_nfe_100/baseline.fasta",
+  "n_input": 32,
+  "n_used": 30,
+  "skipped": {}
+}

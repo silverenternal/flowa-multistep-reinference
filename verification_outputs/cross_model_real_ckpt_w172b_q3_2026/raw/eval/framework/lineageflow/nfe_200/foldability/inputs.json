@@ -1,0 +1,6 @@
+{
+  "input_fasta": "/tmp/w172b/fastas/lineageflow_nfe_200/framework.fasta",
+  "n_input": 32,
+  "n_used": 30,
+  "skipped": {}
+}

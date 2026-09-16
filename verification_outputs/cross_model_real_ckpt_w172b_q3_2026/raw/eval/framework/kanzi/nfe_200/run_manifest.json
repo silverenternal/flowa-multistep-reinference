@@ -1,0 +1,11 @@
+{
+  "outdir": "/tmp/w172b/eval/framework/kanzi/nfe_200",
+  "paths": {
+    "foldability_dir": "/tmp/w172b/eval/framework/kanzi/nfe_200/foldability",
+    "foldability_log": "/tmp/w172b/eval/framework/kanzi/nfe_200/foldability.log"
+  },
+  "metrics": [
+    "foldability",
+    "self_consistency"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "n_total": 30,
+  "n_with_plddt": 30,
+  "n_with_sc": 30,
+  "n_with_both": 30,
+  "plddt_mean_mean": 57.421546183855966,
+  "plddt_mean_median": 54.91792890716804,
+  "sc_perplexity_mean": 19.48916121527282,
+  "sc_perplexity_median": 19.32460401221724,
+  "corr_plddt_vs_sc": 0.0007355090335988628
+}

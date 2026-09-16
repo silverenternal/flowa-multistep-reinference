@@ -1,0 +1,13 @@
+{
+  "foldability": {
+    "n_total": 30,
+    "n_with_plddt": 30,
+    "n_with_sc": 30,
+    "n_with_both": 30,
+    "plddt_mean_mean": 42.547771580878624,
+    "plddt_mean_median": 40.666580416032474,
+    "sc_perplexity_mean": 14.893343736740292,
+    "sc_perplexity_median": 14.330749666036272,
+    "corr_plddt_vs_sc": 0.2779423850901734
+  }
+}

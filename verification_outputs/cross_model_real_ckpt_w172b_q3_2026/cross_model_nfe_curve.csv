@@ -1,0 +1,13 @@
+model,nfe,arm,plddt,scperp
+lineageflow,50,baseline,41.1804,18.9373
+lineageflow,50,framework,42.5478,14.8933
+lineageflow,100,baseline,41.1804,18.9373
+lineageflow,100,framework,41.9950,14.9283
+lineageflow,200,baseline,41.1804,18.9373
+lineageflow,200,framework,41.9997,15.0939
+kanzi,50,baseline,57.4215,19.4892
+kanzi,50,framework,57.1460,16.8426
+kanzi,100,baseline,57.4215,19.4892
+kanzi,100,framework,57.1460,16.8426
+kanzi,200,baseline,57.4215,19.4892
+kanzi,200,framework,57.1460,16.8426

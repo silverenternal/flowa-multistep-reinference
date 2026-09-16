@@ -1,0 +1,11 @@
+{
+  "outdir": "/tmp/w172b/eval/baseline/lineageflow/nfe_50",
+  "paths": {
+    "foldability_dir": "/tmp/w172b/eval/baseline/lineageflow/nfe_50/foldability",
+    "foldability_log": "/tmp/w172b/eval/baseline/lineageflow/nfe_50/foldability.log"
+  },
+  "metrics": [
+    "foldability",
+    "self_consistency"
+  ]
+}

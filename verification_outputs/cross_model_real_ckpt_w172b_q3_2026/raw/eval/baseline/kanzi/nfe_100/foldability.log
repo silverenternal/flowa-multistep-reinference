@@ -1,0 +1,178 @@
+$ /home/hugo/.conda/envs/omegafold_py310/bin/python /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/run_foldability.py --fasta /tmp/w172b/fastas/kanzi_nfe_100/baseline.fasta --outdir /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability --omegafold-bin /home/hugo/.conda/envs/omegafold_py310/bin/omegafold --fold-gpus 1 --sc-gpus 1 --min-len 10 --max-len 1024 --chain A --log-every 30 --max-seqs 30 --no-plots
+/home/hugo/OmegaFold/omegafold/utils/protein_utils/residue_constants.py:482: UserWarning: Using torch.cross without specifying the dim arg is deprecated.
+Please either pass the dim explicitly or simply use torch.linalg.cross.
+The default value of dim will change to agree with that of linalg.cross in a future release. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/native/Cross.cpp:63.)
+  eznorm = torch.cross(ex_normalized, ey_normalized)
+INFO:root:Loading weights from /home/hugo/.cache/omegafold_ckpt/model.pt
+INFO:root:Constructing OmegaFold
+INFO:root:Reading /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:Predicting 1th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:31 residues in this chain.
+INFO:root:Finished prediction in 2.22 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q25.pdb
+INFO:root:Saved
+INFO:root:Predicting 2th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:33 residues in this chain.
+INFO:root:Finished prediction in 1.71 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q24.pdb
+INFO:root:Saved
+INFO:root:Predicting 3th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:35 residues in this chain.
+INFO:root:Finished prediction in 1.68 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q15.pdb
+INFO:root:Saved
+INFO:root:Predicting 4th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:37 residues in this chain.
+INFO:root:Finished prediction in 1.75 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q0.pdb
+INFO:root:Saved
+INFO:root:Predicting 5th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:37 residues in this chain.
+INFO:root:Finished prediction in 1.78 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q21.pdb
+INFO:root:Saved
+INFO:root:Predicting 6th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:38 residues in this chain.
+INFO:root:Finished prediction in 1.68 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q8.pdb
+INFO:root:Saved
+INFO:root:Predicting 7th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:38 residues in this chain.
+INFO:root:Finished prediction in 1.74 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q19.pdb
+INFO:root:Saved
+INFO:root:Predicting 8th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:38 residues in this chain.
+INFO:root:Finished prediction in 2.03 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q28.pdb
+INFO:root:Saved
+INFO:root:Predicting 9th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:39 residues in this chain.
+INFO:root:Finished prediction in 1.73 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q6.pdb
+INFO:root:Saved
+INFO:root:Predicting 10th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:39 residues in this chain.
+INFO:root:Finished prediction in 2.13 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q26.pdb
+INFO:root:Saved
+INFO:root:Predicting 11th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:42 residues in this chain.
+INFO:root:Finished prediction in 1.91 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q27.pdb
+INFO:root:Saved
+INFO:root:Predicting 12th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:43 residues in this chain.
+INFO:root:Finished prediction in 1.75 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q4.pdb
+INFO:root:Saved
+INFO:root:Predicting 13th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:43 residues in this chain.
+INFO:root:Finished prediction in 1.92 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q13.pdb
+INFO:root:Saved
+INFO:root:Predicting 14th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:44 residues in this chain.
+INFO:root:Finished prediction in 1.82 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q7.pdb
+INFO:root:Saved
+INFO:root:Predicting 15th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:45 residues in this chain.
+INFO:root:Finished prediction in 1.93 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q12.pdb
+INFO:root:Saved
+INFO:root:Predicting 16th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:45 residues in this chain.
+INFO:root:Finished prediction in 1.92 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q18.pdb
+INFO:root:Saved
+INFO:root:Predicting 17th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:46 residues in this chain.
+INFO:root:Finished prediction in 2.04 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q11.pdb
+INFO:root:Saved
+INFO:root:Predicting 18th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:46 residues in this chain.
+INFO:root:Finished prediction in 2.05 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q20.pdb
+INFO:root:Saved
+INFO:root:Predicting 19th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:49 residues in this chain.
+INFO:root:Finished prediction in 1.97 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q5.pdb
+INFO:root:Saved
+INFO:root:Predicting 20th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:49 residues in this chain.
+INFO:root:Finished prediction in 2.06 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q14.pdb
+INFO:root:Saved
+INFO:root:Predicting 21th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:51 residues in this chain.
+INFO:root:Finished prediction in 1.97 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q23.pdb
+INFO:root:Saved
+INFO:root:Predicting 22th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:53 residues in this chain.
+INFO:root:Finished prediction in 2.09 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q1.pdb
+INFO:root:Saved
+INFO:root:Predicting 23th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:53 residues in this chain.
+INFO:root:Finished prediction in 2.02 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q3.pdb
+INFO:root:Saved
+INFO:root:Predicting 24th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:53 residues in this chain.
+INFO:root:Finished prediction in 2.13 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q22.pdb
+INFO:root:Saved
+INFO:root:Predicting 25th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:54 residues in this chain.
+INFO:root:Finished prediction in 2.05 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q10.pdb
+INFO:root:Saved
+INFO:root:Predicting 26th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:54 residues in this chain.
+INFO:root:Finished prediction in 2.19 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q17.pdb
+INFO:root:Saved
+INFO:root:Predicting 27th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:55 residues in this chain.
+INFO:root:Finished prediction in 2.09 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q9.pdb
+INFO:root:Saved
+INFO:root:Predicting 28th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:57 residues in this chain.
+INFO:root:Finished prediction in 2.21 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q2.pdb
+INFO:root:Saved
+INFO:root:Predicting 29th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:58 residues in this chain.
+INFO:root:Finished prediction in 2.18 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q29.pdb
+INFO:root:Saved
+INFO:root:Predicting 30th chain in /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/queries.fasta
+INFO:root:64 residues in this chain.
+INFO:root:Finished prediction in 2.12 seconds.
+INFO:root:Saving prediction to /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/omegafold_shards/shard_00/pdb/q16.pdb
+INFO:root:Saved
+INFO:root:Done!
+[omegafold] gpu=1 shard=0 n=30
+[omegafold] progress 0/30 folded
+[omegafold] progress 12/30 folded
+[omegafold] progress 26/30 folded
+[omegafold] consolidated 30 structures into /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/pdb
+wrote_jsonl: /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/foldability.jsonl
+wrote_summary: /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/summary.json
+missing_pdb: 0
+/home/hugo/.conda/envs/omegafold_py310/lib/python3.10/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/hugo/.conda/envs/omegafold_py310/lib/python3.10/site-packages/esm/pretrained.py:215: UserWarning: Regression weights not found, predicting contacts will not produce correct results.
+  warnings.warn(
+[esmif] progress 0/30 scored
+wrote_jsonl: /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/self_consistency.jsonl
+wrote_summary: /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/self_consistency_summary.json
+[run] fold stage: /home/hugo/.conda/envs/omegafold_py310/bin/python /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/foldability_omegafold.py --fasta /tmp/w172b/fastas/kanzi_nfe_100/baseline.fasta --outdir /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability --omegafold-bin /home/hugo/.conda/envs/omegafold_py310/bin/omegafold --gpus 1 --max-seqs 30 --min-len 10 --skip-invalid --chain A --log-every 30 --no-skip-fold --max-len 1024
+[run] self-consistency stage: /home/hugo/.conda/envs/omegafold_py310/bin/python /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/self_consistency_esmif.py --queries-fasta /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/queries.fasta --pdb-dir /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/pdb --outdir /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability --gpus 1 --chain A --log-every 30
+wrote_metrics: /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/metrics.jsonl
+wrote_summary: /tmp/w172b/eval/baseline/kanzi/nfe_100/foldability/metrics_summary.json
