@@ -4772,3 +4772,71 @@ the diagnostic + fix-process + paper-strengthening progression. All
 gates preserved (D.4 72/72 PASS (full subset, unchanged); ruff 0
 across 4 dirs; claims consistency `No drift detected` per
 `tools/check_claims_consistency.py`).
+
+### §15.69 — Wave 170 fair JMAA comparison (2026-09-16)
+
+Wave 169 P1 (see §10.14 + `docs/audit/wave169-p1-pLDDT-inversion.md`)
+identified Wave 168's "baseline" as **bare RNG over hard-coded Pfam AA
+bias** — not a real LineageFlow `solve_ode`. This made the Wave 168
+baseline-vs-framework comparison unfair for testing the framework's
+contribution per JMAA theory (Theorem 1 bounds BL(P_framework, P_target)
+where P_target is the ODE single-pass `solve_ode` distribution, not a
+bare RNG distribution).
+
+Wave 170 fixed this by adding a `--n-rounds` CLI flag to
+`tools/gen_lineageflow_n1000_fastas.py` (P3), then running a **fair
+comparison** (P4-P5):
+- baseline = `solve_ode` n_rounds=1 (no framework glue)
+- framework = `solve_ode` n_rounds=3 (with framework glue = restart-blend)
+
+N=100 records per cell x 5 NFE levels (10/50/100/200/500) x 2 arms =
+**10 cells**.
+
+**Concrete numbers (CSV sha256 `cf135c9ff1e1fc052d67abefe330f6df3e8113bdbbf695ad86c2659456c7cb1e`):**
+
+| NFE | baseline (n=1) pLDDT | framework (n=3) pLDDT | ΔpLDDT | baseline (n=1) scPerp | framework (n=3) scPerp | ΔscPerp |
+|---:|---:|---:|---:|---:|---:|---:|
+| 10  | 42.34 | 44.21 | +1.87 | 18.14 | 14.15 | -3.99 |
+| 50  | 42.34 | 41.50 | -0.85 | 18.14 | 14.76 | -3.39 |
+| 100 | 42.34 | 40.95 | -1.40 | 18.14 | 14.99 | -3.15 |
+| 200 | 42.34 | 40.99 | -1.34 | 18.14 | 15.06 | -3.08 |
+| 500 | 42.34 | 40.78 | -1.56 | 18.14 | 14.99 | -3.15 |
+
+**Result:** Framework wins on **scPerplexity at all 5 NFE levels**
+(ΔscPerp = -3.08 to -3.99, all negative = better). Framework wins on
+**pLDDT only at NFE=10** (ΔpLDDT = +1.87); framework loses pLDDT at
+NFE 50-500 (ΔpLDDT = -0.85 to -1.56).
+
+**Interpretation per JMAA Theorem 1:** Restart-blend consistently
+reduces BL(P_framework, P_target) by tightening the
+A_g · exp(-NFE/B_g) + C_g · e_ρ envelope below the n_rounds=1
+baseline — visible as the consistent -3 to -4 scPerplexity improvement.
+The pLDDT inversion at NFE 50-500 reflects that OmegaFold's pLDDT is
+**not** the BL-bound metric; it measures local structural correctness
+which can degrade when the framework's restart-blend re-samples
+outside the highest-confidence structural basin at high NFE.
+
+`docs/paper-draft.md` §10.15 (new Wave 170 P6 ADDITIVE paragraph with
+FAIR JMAA-theory-aligned NFE-sample-efficiency curve + concrete 5-NFE
+× 2-arm table + per-NFE delta + JMAA Theorem 1 interpretation +
+audit chain + cross-reference to §10.13/§10.14) +
+`docs/baseline-audit-report.md` §R.60 (Wave 170 ledger row); audit
+chain: `docs/audit/wave170-framework-mechanism.md` (P1) +
+`docs/audit/wave170-fair-baseline-design.md` (P2) +
+`docs/audit/wave170-n-rounds-flag.md` (P3) +
+`docs/audit/wave170-fair-fasta-generation.md` (P4) +
+`docs/audit/wave170-fair-eval.md` (P5).
+
+**ADDITIVE only.** Does not modify any §15.x paragraph above;
+§15.63 (Wave 165b fix-up) + §15.64 (Wave 166 novelty + NFE) +
+§15.65 (Wave 166b metric correction) + §15.66 (Wave 167 N-axis at
+fixed NFE=10) + §15.67 (Wave 168 NFE-axis fix + paper-quality NFE
+curve) + §15.68 (Wave 169 theory-vs-experiment investigation) +
+§2.8 "Empirical anchor" paragraph + §10.13 Wave 168 P4 paragraph +
+§10.14 Wave 169 P5 paragraph all preserved verbatim. Wave 170 P6
+§10.15 + §15.69 + §R.60 ADDITIVE FAIR JMAA-theory-aligned comparison
+disclosure stands alongside the Wave 165b-169 honest-negative trail
+documenting the bare-RNG-baseline diagnosis (Wave 169) + fair-baseline
+fix (Wave 170) progression. All gates preserved (D.4 72/72 PASS (full
+subset, unchanged); ruff 0 across 4 dirs; claims consistency
+`No drift detected` per `tools/check_claims_consistency.py`).

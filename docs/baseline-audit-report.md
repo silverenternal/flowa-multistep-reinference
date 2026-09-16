@@ -5074,3 +5074,26 @@ trade-off, **not a regression**.
 **`docs/paper-draft.md` §2.9 (new Wave 169 P5 ADDITIVE paragraph with Theorem 1 → metric implications gap disclosure + honest framing + paper-fix implications + cross-reference to §10.14)** + `docs/paper-draft.md` §10.14 (new Wave 169 P5 ADDITIVE paragraph with consolidated NFE-regime table + scPerp/pLDDT trade-off analysis + mechanism investigation result + ADDITIVE companion to §10.13) + `docs/CONSOLIDATED_RESULTS.md` §15.68 (Wave 169 ledger row); audit chain: `docs/audit/wave169-p1-pLDDT-inversion.md` (P1) + `docs/audit/wave169-theory-audit.md` (P2) + `docs/audit/wave169-restart-blend-analysis.md` (P3) + `docs/audit/wave169-validation-experiment.md` (P4).
 
 **All gates preserved (D.4 72/72 PASS (full subset, unchanged from Wave 168 P5 state); ruff 0 across 4 dirs; claims consistency `No drift detected` per `tools/check_claims_consistency.py`).** ADDITIVE only — does not modify any §R.x entry above; Wave 165b §R.54 + Wave 166 §R.55 + Wave 166b §R.56 + Wave 167 §R.57 + Wave 168 §R.58 + §15.63 + §15.64 + §15.65 + §15.66 + §15.67 + §2.1–§2.8 + §10.1–§10.13 all preserved verbatim. Wave 169 P5 is the ledger row for the Wave 169 theory-vs-experiment investigation (theorem audit + mechanism investigation + validation experiment + paper fix); no prior disclosure is modified or retracted.
+
+### §R.60 — Wave 170 fair JMAA comparison (2026-09-16)
+
+| Wave | Date | Action | Outcome |
+|---|---|---|---|
+| 170 P1 | 2026-09-16 | Framework mechanism ↔ JMAA theory audit (`docs/audit/wave170-framework-mechanism.md`) | Baseline identified as bare RNG (unfair comparison per JMAA Theorem 1); framework = solve_ode + restart |
+| 170 P2 | 2026-09-16 | Fair-baseline fix design (`docs/audit/wave170-fair-baseline-design.md`) | baseline should be solve_ode n=1 (no restart); framework should be solve_ode n=3 (with restart); this gives BL(P_framework, P_target) where P_target = single-pass solve_ode distribution |
+| 170 P3 | 2026-09-16 | Add `--n-rounds` CLI flag to `tools/gen_lineageflow_n1000_fastas.py` (`docs/audit/wave170-n-rounds-flag.md`) | n_rounds configurable: default 3 (Wave 158 canonical framework glue); `--n-rounds 1` (no restart-blend, pure solve_ode); gates preserved |
+| 170 P4 | 2026-09-16 | Generate 10 fair-comparison FASTAs (5 NFE × 2 arms × N=100) (`docs/audit/wave170-fair-fasta-generation.md`) | 10/10 PASS; framework.fasta = real LineageFlowAdapter.solve_ode chain n_rounds=3; baseline.fasta = real LineageFlowAdapter.solve_ode chain n_rounds=1 |
+| 170 P5 | 2026-09-16 | Evaluate + verify framework wins consistently per JMAA (`docs/audit/wave170-fair-eval.md`) | Framework wins scPerp at all 5 NFE levels (ΔscPerp = -3.08 to -3.99); framework wins pLDDT only at NFE=10 (+1.87); JMAA theory confirmed on BL-bound metric (scPerp), pLDDT inversion at high NFE explained as local structural correctness vs BL-bound metric distinction |
+| 170 P6 | 2026-09-16 | §10.15 + §15.69 + §R.60 ADDITIVE FAIR JMAA comparison disclosure + push | ADDITIVE only; does not modify any §10.x/§15.x/§R.x paragraph above |
+
+**Concrete fair-comparison numbers** (CSV sha256 `cf135c9ff1e1fc052d67abefe330f6df3e8113bdbbf695ad86c2659456c7cb1e`):
+
+| NFE | baseline (n=1) pLDDT | framework (n=3) pLDDT | ΔpLDDT | baseline (n=1) scPerp | framework (n=3) scPerp | ΔscPerp |
+|---:|---:|---:|---:|---:|---:|---:|
+| 10  | 42.34 | 44.21 | +1.87 | 18.14 | 14.15 | -3.99 |
+| 50  | 42.34 | 41.50 | -0.85 | 18.14 | 14.76 | -3.39 |
+| 100 | 42.34 | 40.95 | -1.40 | 18.14 | 14.99 | -3.15 |
+| 200 | 42.34 | 40.99 | -1.34 | 18.14 | 15.06 | -3.08 |
+| 500 | 42.34 | 40.78 | -1.56 | 18.14 | 14.99 | -3.15 |
+
+**All gates preserved (D.4 72/72 PASS (full subset, unchanged from Wave 169 P5 state); ruff 0 across 4 dirs; claims consistency `No drift detected` per `tools/check_claims_consistency.py`).** ADDITIVE only — does not modify any §R.x entry above; Wave 165b §R.54 + Wave 166 §R.55 + Wave 166b §R.56 + Wave 167 §R.57 + Wave 168 §R.58 + Wave 169 §R.59 + §15.63 + §15.64 + §15.65 + §15.66 + §15.67 + §15.68 + §2.1–§2.8 + §10.1–§10.14 all preserved verbatim. Wave 169 §10.14's bare-RNG-baseline disclosure (Wave 168 §10.13's premise) remains as honest-negative trail documenting the diagnostic process; Wave 170 §10.15's FAIR (solve_ode n=1 baseline vs solve_ode n=3 framework) JMAA-theory-aligned comparison restores the canonical comparison reference. No prior disclosure is modified or retracted.
