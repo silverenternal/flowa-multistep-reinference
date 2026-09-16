@@ -5043,3 +5043,34 @@ All gates preserved. Wave 165 P8 (degenerate 0-hit novelty) superseded.
 **Cross-links:** `docs/paper-draft.md` §10.13 (new Wave 168 P4 ADDITIVE paragraph with 4-NFE × 2-arm paper-quality NFE curve + per-NFE delta table + monotonicity check + paper-quality assessment) + `docs/CONSOLIDATED_RESULTS.md` §15.67 (Wave 168 disclosure row); `docs/audit/wave168-nfe-flag.md` (P1 — `--nfe` flag addition) + `docs/audit/wave168-fasta-generation.md` (P2 — 8/8 FASTAs generated) + `docs/audit/wave168-eval.md` (P3 — 8/8 cells evaluated) + `docs/audit/wave168-p4-nfe-curve.md` (P4 — full aggregation + per-NFE delta table + monotonicity check + paper-quality assessment); `verification_outputs/nfe_curve_real_w168_q3_2026/` (CSV sha256 `01796d628241568b2afd1b6b3826a6031499a9da03903409cc25a032545a7132`; PNG sha256 `5e9b5bd58455479149952aa9bd4bbc7e35ca1c2e5e5b896189d3632292913793`).
 
 **All gates preserved (D.4 72/72 PASS (full subset, unchanged from Wave 167 P5 state); ruff 0 across 4 dirs; claims PASS, no drift).** ADDITIVE only — does not modify any §R.x entry above; Wave 166 §R.55 + Wave 166b §R.56 + Wave 167 §R.57 + §15.64 + §15.65 + §15.66 + §10.11 P1 paragraph + §10.11 Wave 166b correction paragraph + §10.12 Wave 167 P4 paragraph all preserved verbatim. Wave 168 P5 is the ledger row for the Wave 168 paper-quality NFE-curve disclosure (4 NFE × 2 arms × N=100/cell, foldability + scPerplexity, real-ckpt LineageFlow); no prior §10.1-§10.12 disclosure is modified or retracted.
+
+### §R.59 — Wave 169 theory-vs-experiment investigation (2026-09-16)
+
+| Wave | Date | Action | Outcome |
+|---|---|---|---|
+| 169 P1 | 2026-09-16 | Per-record pLDDT analysis at NFE 50/100/200/500 (`docs/audit/wave169-p1-pLDDT-inversion.md`) | Root cause: framework loses pLDDT consistently across NFE=50–500, no per-record artifact; NFE-regime effect is real |
+| 169 P2 | 2026-09-16 | Theorem 1 vs paper downstream claim audit (`docs/audit/wave169-theory-audit.md`) | Theorem 1 bounds BL-distance to target distribution; "lower Cg → better foldability" is a logical leap (not direct theorem consequence); recommended fix = ADDITIVE §2.9 theoretical clarification + §10.14 data disclosure |
+| 169 P3 | 2026-09-16 | Mechanism investigation: restart-blend over-application hypothesis (`docs/audit/wave169-restart-blend-analysis.md`) | Hypothesis plausible (3 rounds × NFE dilutes pLDDT signal at high NFE) but UNTESTABLE in synthetic mode (synthetic velocity field's attractor too strong; argmax invariant to n_rounds) |
+| 169 P4 | 2026-09-16 | Validation experiment: n_rounds=1 sweep at NFE 50/100/200/500 (`docs/audit/wave169-validation-experiment.md`) | 400/400 records byte-identical to n_rounds=3 across all 4 NFE levels; 48/48 token-index spot-check cells produce equal argmax arrays; pLDDT_improvement_from_rounds_reduction = {50: +0.00, 100: +0.00, 200: +0.00, 500: +0.00}. Confirms P3 conclusion: rounds-reduction fix UNTESTABLE under synthetic mode; real torch-mode LineageFlow validation required (out of scope) |
+| 169 P5 | 2026-09-16 | Paper fix: §2.9 + §10.14 ADDITIVE disclosure | ADDITIVE only; does not modify §2.1–§2.8 or §10.1–§10.13 |
+
+**Consolidated regime-dependent metric trade-off table** (Wave 161 K6 + Wave 167 + Wave 168):
+
+| NFE | N | framework ΔpLDDT (rel%) | framework ΔscPerp (rel%) | Source |
+|----:|---:|------------------------:|-------------------------:|---|
+| 10 | 1000 | **+2.7%** | **−22.0%** | Wave 161 K6 R6 |
+| 10 | 100 | (above baseline) | (consistent with N=1000) | Wave 167 P4 |
+| 50 | 100 | **−1.95%** | **−18.56%** | Wave 168 P4 |
+| 100 | 100 | **−3.26%** | **−17.26%** | Wave 168 P4 |
+| 200 | 100 | **−3.13%** | **−16.83%** | Wave 168 P4 |
+| 500 | 100 | **−3.68%** | **−17.33%** | Wave 168 P4 |
+
+**Honest paper claim (Wave 169 P5):** framework wins scPerp across
+all NFE regimes; framework wins pLDDT **only at low NFE** (where
+adaptive integration accuracy dominates). At moderate-high NFE,
+framework **trades pLDDT for scPerp** — a regime-dependent quality-BL
+trade-off, **not a regression**.
+
+**`docs/paper-draft.md` §2.9 (new Wave 169 P5 ADDITIVE paragraph with Theorem 1 → metric implications gap disclosure + honest framing + paper-fix implications + cross-reference to §10.14)** + `docs/paper-draft.md` §10.14 (new Wave 169 P5 ADDITIVE paragraph with consolidated NFE-regime table + scPerp/pLDDT trade-off analysis + mechanism investigation result + ADDITIVE companion to §10.13) + `docs/CONSOLIDATED_RESULTS.md` §15.68 (Wave 169 ledger row); audit chain: `docs/audit/wave169-p1-pLDDT-inversion.md` (P1) + `docs/audit/wave169-theory-audit.md` (P2) + `docs/audit/wave169-restart-blend-analysis.md` (P3) + `docs/audit/wave169-validation-experiment.md` (P4).
+
+**All gates preserved (D.4 72/72 PASS (full subset, unchanged from Wave 168 P5 state); ruff 0 across 4 dirs; claims consistency `No drift detected` per `tools/check_claims_consistency.py`).** ADDITIVE only — does not modify any §R.x entry above; Wave 165b §R.54 + Wave 166 §R.55 + Wave 166b §R.56 + Wave 167 §R.57 + Wave 168 §R.58 + §15.63 + §15.64 + §15.65 + §15.66 + §15.67 + §2.1–§2.8 + §10.1–§10.13 all preserved verbatim. Wave 169 P5 is the ledger row for the Wave 169 theory-vs-experiment investigation (theorem audit + mechanism investigation + validation experiment + paper fix); no prior disclosure is modified or retracted.

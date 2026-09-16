@@ -4729,3 +4729,46 @@ Wave 167 P2 (`docs/audit/wave167-p2-fasta-generation.md`) discovered that `tools
 **`docs/paper-draft.md` §10.13 (new Wave 168 P4 ADDITIVE paragraph with full 4-NFE × 2-arm paper-quality NFE curve + per-NFE delta table + pLDDT/scPerplexity trade-off disclosure + monotonicity check + paper-quality assessment)** + `docs/baseline-audit-report.md` §R.58 (Wave 168 ledger row); audit chain: `docs/audit/wave168-nfe-flag.md` (P1) + `docs/audit/wave168-fasta-generation.md` (P2) + `docs/audit/wave168-eval.md` (P3) + `docs/audit/wave168-p4-nfe-curve.md` (P4). Wide-format CSV at `verification_outputs/nfe_curve_real_w168_q3_2026/nfe_curve_real.csv` (sha256 `01796d628241568b2afd1b6b3826a6031499a9da03903409cc25a032545a7132`); 2-subplot PNG at `verification_outputs/nfe_curve_real_w168_q3_2026/nfe_curve_real.png` (sha256 `5e9b5bd58455479149952aa9bd4bbc7e35ca1c2e5e5b896189d3632292913793`). **This §15.67 row is the camera-ready canonical NFE-curve reference** — supersedes Wave 167 P4 §15.66 honest-negative N-axis disclosure's premise (Wave 167 had no NFE-axis data; Wave 168 does).
 
 **ADDITIVE only.** Does not modify any §15.x paragraph above; §15.63 (Wave 165b fix-up) + §15.64 (Wave 166 novelty + NFE) + §15.65 (Wave 166b metric correction) + §15.66 (Wave 167 N-axis at fixed NFE=10) + §10.11 P1 paragraph (Wave 166 P4) + §10.11 Wave 166b correction paragraph + §10.12 Wave 167 P4 paragraph all preserved verbatim. Wave 168 P5 §10.13 + §15.67 + §R.58 ADDITIVE NFE-axis paper-quality disclosure stands alongside the Wave 165b-167 honest-negative trail documenting the diagnostic + fix process. All gates preserved (D.4 72/72 PASS (full subset, unchanged); ruff 0 across 4 dirs; claims PASS, no drift).
+
+### §15.68 — Wave 169 theory-vs-experiment investigation (2026-09-16)
+
+Wave 168 §10.13 NFE curve revealed that framework loses pLDDT at NFE=50–500 (−1.95% to −3.68% relative, sha256-verified) but wins scPerplexity (~−17% relative across the same range). Wave 167 P4 §15.66 + Wave 161 K6 §15.58 at NFE=10 reported framework winning **both** metrics (K6 R6: +1.12 pLDDT abs, −3.92 scPerp abs, N=1000/1000). Wave 169 P1–P4 investigated the apparent direction discrepancy with the headline question: **is the pLDDT trade-off an NFE-regime effect, a measurement artifact, or a regression?**
+
+| Wave | Date | Audit | Outcome |
+|---|---|---|---|
+| 169 P1 | 2026-09-16 | Per-record pLDDT analysis (`docs/audit/wave169-p1-pLDDT-inversion.md`) | Confirmed: framework loses pLDDT consistently across NFE=50–500, no per-record artifact; NFE-regime effect is real |
+| 169 P2 | 2026-09-16 | Theory audit: Theorem 1 vs downstream claim (`docs/audit/wave169-theory-audit.md`) | Theorem 1 reduces BL-distance to target distribution; per-metric prediction requires metric-sensitivity analysis — "lower Cg → better foldability" is a logical leap; §2.8 "Empirical anchor" paragraph preserves the NFE=10 / K6 N=1000 anchor without contradiction; paper-fix recommendation = ADDITIVE §2.9 + §10.14 |
+| 169 P3 | 2026-09-16 | Mechanism investigation: restart-blend over-application hypothesis (`docs/audit/wave169-restart-blend-analysis.md`) | Hypothesis: framework's 3 rounds × NFE restart-blend over-applies at high NFE → dilution of pLDDT signal; mechanism plausible but UNTESTABLE in synthetic mode (synthetic velocity attractor too strong) |
+| 169 P4 | 2026-09-16 | Validation experiment: n_rounds=1 sweep (`docs/audit/wave169-validation-experiment.md`) | Generated n_rounds=1 FASTAs at NFE 50/100/200/500; **400/400 records byte-identical** to n_rounds=3; **48/48 token-index spot-check cells produce equal argmax arrays**; pLDDT_improvement_from_rounds_reduction = {50: +0.00, 100: +0.00, 200: +0.00, 500: +0.00}. Confirms P3 conclusion: rounds-reduction fix UNTESTABLE in synthetic mode. Real torch-mode LineageFlow validation required (out of scope) |
+| 169 P5 | 2026-09-16 | Paper fix: §2.9 + §10.14 ADDITIVE disclosure | ADDITIVE only; does not modify §2.1–§2.8 or §10.1–§10.13 |
+
+**§2.9 Theorem 1 → Metric Implications** (Wave 169 P2 audit
+clarification) — explicitly records the logical gap between
+Theorem 1's BL-distance bound and downstream metric predictions.
+"Framework is a *directed-search* mechanism toward target distribution;
+metric improvements are *side-effects* of distribution-closeness, not
+direct consequences of the BL bound." Cross-references §10.14 for
+regime-dependent data disclosure.
+
+**§10.14 NFE-regime-dependent metric trade-off** (Wave 169 P1–P4 data
+disclosure) — consolidated regime-dependent table (Wave 161 K6 + Wave
+167 + Wave 168) showing NFE=10 wins both metrics, NFE=50–500 wins
+scPerp but loses pLDDT; mechanism investigation result (rounds-
+reduction fix UNTESTABLE under synthetic mode); honest paper claim
+reformulated as "framework trades pLDDT for scPerp at moderate-high
+NFE — regime-dependent quality-BL trade-off, not a regression."
+
+**`docs/paper-draft.md` §2.9 (new Wave 169 P5 ADDITIVE paragraph with Theorem 1 → metric implications gap disclosure + honest framing + paper-fix implications + cross-reference to §10.14)** + `docs/paper-draft.md` §10.14 (new Wave 169 P5 ADDITIVE paragraph with consolidated NFE-regime table + scPerp/pLDDT trade-off analysis + mechanism investigation result + ADDITIVE companion to §10.13) + `docs/baseline-audit-report.md` §R.59 (Wave 169 ledger row); audit chain: `docs/audit/wave169-p1-pLDDT-inversion.md` (P1) + `docs/audit/wave169-theory-audit.md` (P2) + `docs/audit/wave169-restart-blend-analysis.md` (P3) + `docs/audit/wave169-validation-experiment.md` (P4).
+
+**ADDITIVE only.** Does not modify any §15.x paragraph above;
+§15.63 (Wave 165b fix-up) + §15.64 (Wave 166 novelty + NFE) +
+§15.65 (Wave 166b metric correction) + §15.66 (Wave 167 N-axis at
+fixed NFE=10) + §15.67 (Wave 168 NFE-axis fix + paper-quality NFE
+curve) + §2.8 "Empirical anchor" paragraph + §10.13 Wave 168 P4
+paragraph all preserved verbatim. Wave 169 P5 §2.9 + §10.14 +
+§15.68 + §R.59 ADDITIVE theory-vs-experiment investigation disclosure
+stands alongside the Wave 165b-168 honest-negative trail documenting
+the diagnostic + fix-process + paper-strengthening progression. All
+gates preserved (D.4 72/72 PASS (full subset, unchanged); ruff 0
+across 4 dirs; claims consistency `No drift detected` per
+`tools/check_claims_consistency.py`).
