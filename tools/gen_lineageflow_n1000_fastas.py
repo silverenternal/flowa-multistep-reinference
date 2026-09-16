@@ -78,7 +78,14 @@ FAMILY_PROFILES = {
 # Wave 168 P1: ``--nfe`` was being silently ignored because this
 # module-level constant was hardcoded (Wave 167 P2 discovery).
 NFE_PER_RECORD: int = 10  # legacy default; overridden by --nfe in main()
-N_ROUNDS: int = 3
+# Wave 170 P3: ``--n-rounds`` flag now allows overriding the
+# module-level ``N_ROUNDS`` constant via CLI (was hardcoded
+# ``n_rounds=3`` in Wave 158). Default 3 preserves backward compat
+# with the Wave 81/86/158 manifest bytes. The baseline arm in the
+# Wave 170 fair-baseline comparison uses ``--n-rounds 1`` to disable
+# the framework's restart-blend glue (so the baseline arm exercises
+# only ``solve_ode`` with no ``apply_restart_distribution`` chain).
+N_ROUNDS: int = 3  # legacy default; overridden by --n-rounds in main()
 
 
 def _biased_aa(rng: random.Random, profile: dict, n: int) -> str:
@@ -303,6 +310,17 @@ def main() -> None:
             "Wired into NFE_PER_RECORD via global reassignment in main()."
         ),
     )
+    p.add_argument(
+        "--n-rounds",
+        type=int,
+        default=3,
+        help=(
+            "Number of restart-blend rounds for the framework arm. "
+            "Baseline arm: use 1 (no restart-blend glue, pure solve_ode). "
+            "Framework arm: use 3 (Wave 158 canonical Wave 45 multi-round path). "
+            "Default 3 preserves backward compatibility with Wave 81/86/158 manifest bytes."
+        ),
+    )
     args = p.parse_args()
 
     # Wire the CLI --nfe flag through to the module-level NFE_PER_RECORD
@@ -314,6 +332,13 @@ def main() -> None:
     # backward compatibility with the Wave 81/86 manifest bytes.
     global NFE_PER_RECORD
     NFE_PER_RECORD = int(args.nfe)
+    # Wave 170 P3: same minimal ``global`` wire-through pattern for
+    # ``--n-rounds`` — keeps the constant readable from the call sites
+    # in ``_build_lineageflow_adapter`` + ``_framework_emit_sequence``
+    # without churning every function signature. Default 3 preserves
+    # Wave 158 backward compat.
+    global N_ROUNDS
+    N_ROUNDS = int(args.n_rounds)
     args.outdir.mkdir(parents=True, exist_ok=True)
 
     # Distinct RNG sub-streams per arm so the framework arm cannot
