@@ -456,12 +456,20 @@ def test_observe_token_indices_chain_walk_through_restart() -> None:
     assert "src_digest" in traj2_entry
     assert traj2_entry["src_digest"] == str(restarted.native_state_digest)
 
-    # The discrete_idx carried through restart equals the original
-    # prior's discrete_idx (apply_restart_distribution preserves it
-    # untouched at 1183-1187). observe_token_indices must surface it.
+    # Wave 173 P4 — solve_ode now applies an NFE-aware perturbation to
+    # the prior_entry's ``discrete_idx`` (the fix for the kanzi
+    # framework FASTA NFE-invariance bug, see
+    # ``docs/audit/wave173-kanzi-nfe-bug.md``). The chain-walk still
+    # terminates at the LATEST prior entry that carries ``discrete_idx``,
+    # but that discrete_idx is the post-perturbation value (the prior
+    # round's solve_ode mutated prior_entry_0["discrete_idx"], and the
+    # current round's solve_ode mutated prior_entry_1["discrete_idx"]).
+    # The F-1 invariant under Wave 173 P4 therefore reads as: the
+    # chain-walk terminates at the LATEST prior entry's discrete_idx,
+    # which equals whatever that entry currently carries.
+    restarted_prior = adapter._native_states[restarted.native_state_digest]
     expected = np.asarray(
-        adapter._native_states[bundle.native_state_digest]["discrete_idx"],
-        dtype=np.float64,
+        restarted_prior["discrete_idx"], dtype=np.float64,
     )
     result = adapter.observe_token_indices(trace2, paper_quantities=None)
     observed = np.asarray(result[str(DISCRETE_TOKEN_INDEX)], dtype=np.float64)

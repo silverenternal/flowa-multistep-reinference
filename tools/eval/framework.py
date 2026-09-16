@@ -288,6 +288,7 @@ def _make_framework_policy(
     target_round: int,
     seed: int,
     paper_quantities: dict[str, float] | None = None,
+    nfe: int = 0,
 ) -> Any:
     """Build a fresh ``FinalRestartPolicy`` for one framework round.
 
@@ -312,6 +313,19 @@ def _make_framework_policy(
     :class:`FinalRestartPolicy` constructor so the only
     output-byte-impacting change is the ``beta_by_channel`` payload.
 
+    Wave 173 P4 addition: ``nfe`` kwarg (default ``0``) makes the
+    per-round β NFE-adaptive. When ``nfe > 0``, β is scaled by
+    ``min(1.0, NFE_ref / max(nfe, 1))`` with ``NFE_ref = 50`` (the
+    Wave 172b ladder's anchor cell). The cap at ``1.0`` prevents the
+    framework from amplifying the perturbation at sub-anchor NFE
+    (e.g. NFE=10 should NOT receive 5× strength — the empirical
+    +1.37 at NFE=50 is already the calibrated full-strength regime;
+    below it the framework should saturate at base strength, not
+    extrapolate). When ``nfe == 0`` (legacy default; D.4 vector suite
+    and Wave 161 K6 R6 are both measured under ``nfe == 0``) the
+    pre-Wave-173 byte-stable path is preserved verbatim — see
+    ``docs/audit/wave173-fix-design.md`` §4.1 + §6.
+
     Sign convention
     ---------------
 
@@ -323,6 +337,12 @@ def _make_framework_policy(
     (cell-dominant, high codimension) → low β → more memory →
     exploitation. This matches the Wave 45 restart-blend convention
     that the framework-side metric layer already keys off.
+
+    The Wave 173 P4 NFE-aware scaling attenuates β at high NFE so
+    the framework does not over-perturb an already-saturated baseline
+    (paper Theorem 1 + ``docs/theory/operating-regime.md`` §9.1 map
+    ``eps → 0`` as ``NFE → ∞``, so the framework's restart-blend
+    perturbation should scale the same way the bound scales).
     """
     from dataclasses import replace as _dc_replace
 
@@ -407,6 +427,16 @@ def _make_framework_policy(
                     # per-round β in production only via this entry
                     # point, so byte-stability of the legacy path is
                     # load-bearing for the D.4 vector suite.
+    # Wave 173 P4 — NFE-adaptive restart-blend strength. The
+    # ``nfe == 0`` sentinel preserves the legacy byte-stable contract
+    # (D.4 vector suite + Wave 161 K6 R6 sha256 are both measured
+    # under ``nfe == 0``); only ``nfe > 0`` exercises the new
+    # ``min(1.0, NFE_ref / max(nfe, 1))`` scaling. See
+    # ``docs/audit/wave173-fix-design.md`` §4.1 + §6.
+    if int(nfe) > 0:
+        _NFE_REF = 50  # Wave 172b ladder anchor; preserves +1.37
+        _scale = min(1.0, float(_NFE_REF) / float(max(1, int(nfe))))
+        beta = float(beta) * float(_scale)
     policy_id = PolicyId(
         f"run_real_ckpt_eval:framework:r{target_round}:s{seed}"
     )
@@ -556,6 +586,11 @@ def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3, n_
                 target_round=int(r),
                 seed=int(seed),
                 paper_quantities=pq,
+                nfe=int(nfe),  # Wave 173 P4 — threads NFE into
+                # _make_framework_policy so the per-round β scales
+                # by ``min(1.0, NFE_ref / max(nfe, 1))``. Pre-Wave-173
+                # callers that pass ``nfe=0`` (legacy D.4 vector suite,
+                # Wave 161 K6 R6) get the byte-stable constant-β path.
             )
             cur_bundle = adapter.apply_restart_distribution(endpoint, policy)
         except CapabilityMissingError:

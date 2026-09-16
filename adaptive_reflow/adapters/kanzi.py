@@ -2398,6 +2398,36 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 "mode": self._mode,
             }
         )
+        # Wave 173 P4 — NFE-aware perturbation of the AR-prior side
+        # channel (``discrete_idx``) so the kanzi framework FASTA
+        # reads a different ``(L_z,)`` int array per NFE. The
+        # pre-fix path kept ``prior_entry["discrete_idx"]`` frozen
+        # across all ``num_steps`` — the FASTA bytes were therefore
+        # NFE-invariant at the byte level (Wave 173 P1 audit). The
+        # perturbation key is ``(seed * 1_000_003 + num_steps)`` so:
+        # * varying ``seed`` ⇒ different per-record sequence (legacy);
+        # * varying ``num_steps`` ⇒ different per-NFE sequence (NEW).
+        # The ``1_000_003`` small-prime hash mix avoids the
+        # ``seed=0 / num_steps=0`` degenerate constant. Modulo
+        # ``KANZI_VOCAB_SIZE`` keeps the perturbed index in-range for
+        # the AA-alphabet mapping downstream
+        # (``tools/w172b_gen_kanzi_fastas.py:163``: ``idx % 20``).
+        # The perturbation is bounded (additive shift over ``[0, vocab)``)
+        # so the synthetic-mode AR-prior contract is preserved —
+        # small relative shifts within the same low-energy band.
+        # See ``docs/audit/wave173-fix-design.md`` §4.3.
+        if "discrete_idx" in prior_entry:
+            _idx_rng = np.random.default_rng(
+                int(int(seed) * 1_000_003 + int(num_steps))
+            )
+            _shift = _idx_rng.integers(
+                0,
+                int(KANZI_VOCAB_SIZE),
+                size=np.asarray(prior_entry["discrete_idx"]).shape,
+            )
+            prior_entry["discrete_idx"] = (
+                np.asarray(prior_entry["discrete_idx"], dtype=np.int64) + _shift
+            ) % int(KANZI_VOCAB_SIZE)
         self._native_states.put(
             traj_digest,
             {

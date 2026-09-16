@@ -415,12 +415,17 @@ def test_solve_framework_paper_quantity_driven_beta_changes_per_round() -> None:
             target_round: int,
             seed: int,
             paper_quantities: Any = None,
+            nfe: int = 0,  # Wave 173 P4 — accept the new kwarg so the
+            # wrapper signature matches ``tools._make_framework_policy``;
+            # forwarded into ``original_make_policy`` to preserve the
+            # NFE-adaptive scaling introduced in Wave 173 P4.
         ) -> Any:
             policy = original_make_policy(
                 adapter,
                 target_round=target_round,
                 seed=seed,
                 paper_quantities=paper_quantities,
+                nfe=int(nfe),
             )
             captured_betas.append(
                 float(next(iter(policy.beta_by_channel.values())))
