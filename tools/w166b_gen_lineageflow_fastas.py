@@ -58,6 +58,8 @@ _UPSTREAM = _REPO_ROOT / "data" / "lineageflow_upstream"
 if str(_UPSTREAM) not in sys.path:
     sys.path.insert(0, str(_UPSTREAM))
 
+from typing import Any  # noqa: E402
+
 import numpy as np  # noqa: E402
 
 from adaptive_reflow.adapters.lineageflow import (  # noqa: E402
@@ -66,7 +68,6 @@ from adaptive_reflow.adapters.lineageflow import (  # noqa: E402
 )
 from adaptive_reflow.universal.state import ODEConditionDelta  # noqa: E402
 from tools.eval.metrics import _decode_lineageflow_idx_to_aa  # noqa: E402
-
 
 NFE_LEVELS = (50, 100, 200, 500)
 DEFAULT_N_RECORDS = 100
