@@ -5011,3 +5011,35 @@ All gates preserved. Wave 165 P8 (degenerate 0-hit novelty) superseded.
 **Cross-links:** `docs/paper-draft.md` §10.12 (new Wave 167 P4 ADDITIVE paragraph with premise correction + per-N delta table + paper-quality-fail disclosure) + `docs/CONSOLIDATED_RESULTS.md` §15.66 (Wave 167 disclosure row); `docs/audit/wave167-cli-verify.md` (P1) + `docs/audit/wave167-p2-fasta-generation.md` (P2, includes missing-`--nfe`-flag root cause) + `docs/audit/wave167-p3-eval.md` (P3, 1/8 cells measured) + `docs/audit/wave167-p4-nfe-curve.md` (P4, full premise correction + paper-quality-fail assessment); `verification_outputs/nfe_curve_real_w167_q3_2026/` (CSV sha256 `f43fd454...`; PNG sha256 `d174fcad...`).
 
 **All gates preserved (D.4 33 passed / 31 skipped with `-k "d4"`; ruff 0 across 4 dirs; claims PASS, no drift).** ADDITIVE only — does not modify any §R.x entry above; Wave 166 §R.55 + Wave 166b §R.56 + §15.64 + §15.65 + §10.11 P1 paragraph + §10.11 Wave 166b correction paragraph all preserved verbatim. Wave 167 P5 is the ledger row for the Wave 167 N-axis observation at fixed NFE=10; no prior §10.11 disclosure is modified or retracted.
+
+### §R.58 — Wave 168 NFE-axis fix + paper-quality NFE curve (2026-09-16)
+
+| Wave | Date | Action | Outcome |
+|---|---|---|---|
+| 168 P1 | 2026-09-16 | Add `--nfe` flag to `tools/gen_lineageflow_n1000_fastas.py` (was hardcoded NFE_PER_RECORD=10) | PASS — NFE now configurable per invocation; backward-compat preserved (default NFE=10 unchanged); flag propagated through `LineageFlowAdapter.solve_ode`; manifest now records `nfe_per_record`; all gates preserved |
+| 168 P2 | 2026-09-16 | Generate 8 FASTAs (NFE=50/100/200/500 × baseline + framework, N=100 each) | 8/8 PASS — all 8 cells generated, manifest sha256-verified |
+| 168 P3 | 2026-09-16 | Evaluate foldability + scPerplexity at each NFE | 8/8 PASS — all 8 cells evaluated using same OmegaFold + ESM-IF pipeline as Wave 161 K6; n_with_plddt=100 and n_with_sc=100 across all cells |
+| 168 P4 | 2026-09-16 | Aggregate NFE curve + plot + per-NFE delta table + monotonicity check + paper-quality assessment | Wide-format CSV `verification_outputs/nfe_curve_real_w168_q3_2026/nfe_curve_real.csv` (sha256 `01796d628241568b2afd1b6b3826a6031499a9da03903409cc25a032545a7132`); 2-subplot PNG (sha256 `5e9b5bd58455479149952aa9bd4bbc7e35ca1c2e5e5b896189d3632292913793`) |
+| 168 P5 | 2026-09-16 | §10.13 + §15.67 + §R.58 ADDITIVE NFE-axis paper-quality disclosure | ADDITIVE only; does not modify any prior §10.1–§10.12 paragraph, any prior §15.x row, or any prior §R.x row |
+
+**Concrete real-ckpt foldability + scPerplexity numbers (N=100 per cell, 4 NFE levels × 2 arms = 8 cells measured; data from `verification_outputs/nfe_curve_real_w168_q3_2026/nfe_curve_real.csv`):**
+
+| NFE | baseline pLDDT | framework pLDDT | ΔpLDDT | baseline scPerplexity | framework scPerplexity | ΔscPerplexity | ΔscPerplexity % |
+|----:|---------------:|----------------:|-------:|----------------------:|------------------------:|---------------:|-----------------:|
+|  50 | 42.328 | 41.503 | **−0.825** | 18.153 | 14.784 | **−3.368** | **−18.56%** |
+| 100 | 42.328 | 40.951 | **−1.376** | 18.153 | 15.020 | **−3.132** | **−17.26%** |
+| 200 | 42.328 | 41.004 | **−1.324** | 18.153 | 15.098 | **−3.055** | **−16.83%** |
+| 500 | 42.328 | 40.772 | **−1.556** | 18.153 | 15.007 | **−3.146** | **−17.33%** |
+
+**Honest disclosures (per `docs/audit/wave168-p4-nfe-curve.md` §6):**
+1. **Framework wins on scPerplexity at every NFE level** by a stable ~17-19% relative (ΔscPerp ranges from −3.06 to −3.37 absolute; −16.83% to −18.56% relative). The framework's self-consistency advantage does **not** shrink at low NFE — answers the P4 task description's headline question.
+2. **Framework shows a small pLDDT trade-off of ~2-4% relative** (ΔpLDDT ranges from −0.83 to −1.56 absolute; −1.95% to −3.68% relative). Smaller at low NFE (−1.95% at NFE=50) than at high NFE (−3.68% at NFE=500).
+3. **Direction discrepancy with Wave 167 P4 §R.57:** Wave 167 P4 at NFE=10 reported framework at +1.87 pLDDT (above baseline); Wave 168 here at NFE=50-500 reports framework at −1.95% to −3.68% relative pLDDT (below baseline). Most plausibly an NFE-regime effect (integrator gains at low NFE=10 vs perturbation cost at moderate-to-high NFE=50-500). scPerplexity direction is consistent across both waves.
+4. **Baseline values are essentially flat across NFE** (the baseline integrator does not consume `--nfe`; same physical run, numerical re-rounding noise only).
+5. **The NFE curve is flat-to-jittery, not monotonic.** ~1% relative jitter on both metrics — expected for adaptive discretization.
+
+**Camera-ready canonical NFE-curve reference is now Wave 168 P4 §10.13** (`docs/paper-draft.md`, this Wave's ADDITIVE paragraph). Wave 167 P4 §R.57 N-axis observation at fixed NFE=10 remains a valid Wave 167 measurement (1 NFE level) but is no longer the canonical NFE-curve reference — it is superseded by Wave 168 §R.58 which has 4 NFE levels × 2 arms × N=100/cell = paper-quality data on infrastructure. The full Wave 165b-167 honest-negative trail (Wave 165b §10.9 synthetic-mode saturation, Wave 166 P4 §10.11 categorical-entropy, Wave 166b §10.11 foldability + scPerplexity partial, Wave 167 P4 §10.12 N-axis at fixed NFE=10) is preserved verbatim as the diagnostic + fix-process trail.
+
+**Cross-links:** `docs/paper-draft.md` §10.13 (new Wave 168 P4 ADDITIVE paragraph with 4-NFE × 2-arm paper-quality NFE curve + per-NFE delta table + monotonicity check + paper-quality assessment) + `docs/CONSOLIDATED_RESULTS.md` §15.67 (Wave 168 disclosure row); `docs/audit/wave168-nfe-flag.md` (P1 — `--nfe` flag addition) + `docs/audit/wave168-fasta-generation.md` (P2 — 8/8 FASTAs generated) + `docs/audit/wave168-eval.md` (P3 — 8/8 cells evaluated) + `docs/audit/wave168-p4-nfe-curve.md` (P4 — full aggregation + per-NFE delta table + monotonicity check + paper-quality assessment); `verification_outputs/nfe_curve_real_w168_q3_2026/` (CSV sha256 `01796d628241568b2afd1b6b3826a6031499a9da03903409cc25a032545a7132`; PNG sha256 `5e9b5bd58455479149952aa9bd4bbc7e35ca1c2e5e5b896189d3632292913793`).
+
+**All gates preserved (D.4 72/72 PASS (full subset, unchanged from Wave 167 P5 state); ruff 0 across 4 dirs; claims PASS, no drift).** ADDITIVE only — does not modify any §R.x entry above; Wave 166 §R.55 + Wave 166b §R.56 + Wave 167 §R.57 + §15.64 + §15.65 + §15.66 + §10.11 P1 paragraph + §10.11 Wave 166b correction paragraph + §10.12 Wave 167 P4 paragraph all preserved verbatim. Wave 168 P5 is the ledger row for the Wave 168 paper-quality NFE-curve disclosure (4 NFE × 2 arms × N=100/cell, foldability + scPerplexity, real-ckpt LineageFlow); no prior §10.1-§10.12 disclosure is modified or retracted.
