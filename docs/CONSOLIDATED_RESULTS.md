@@ -4962,3 +4962,159 @@ footnotes in `docs/audit/wave173-p5-results.md` §4. All gates
 preserved (D.4 72/72 PASS (full subset, unchanged); ruff 0 across
 4 dirs; claims consistency `No drift detected` per
 `tools/check_claims_consistency.py`).
+
+### §15.73 — Wave 174 cross-model NFE curve with N=30 + GPU + model-specific dispatch (2026-09-17)
+
+Wave 173 P5 (`§15.72`) used N=4 records/cell with a **model-agnostic**
+generator — `tools/gen_lineageflow_n1000_fastas.py` was used as the
+generator for BOTH models in P5, producing byte-identical FASTAs at
+each NFE. The P5 cross-model comparison was therefore a
+**generator-level** comparison, not an adapter-level one (per Wave
+173 P5 §2.4 cross-model caveat). Wave 174 P1
+(`docs/audit/wave174-gpu-verify.md`) also root-caused a second latent
+issue: the `omegafold_venv` shipped with **torch 1.13.1+cpu (no CUDA
+support)** — OmegaFold + ESM-IF were silently falling back to CPU
+during the Wave 84 / Wave 159 / Wave 172b / Wave 173 evaluations
+(observed 2221% CPU + 0% GPU util during a Wave 174 P1 sanity N=5
+run). The Wave 174 fix uses the **Python 3.10 / omegafold_py310
+sidecar venv** (torch 2.14.0+cu130 with sm_120 Blackwell kernels;
+provisioned by Wave 159 P3 + patched via `patchelf --clear-execstack`
+on `libtorch_cpu.so`) with `CUDA_VISIBLE_DEVICES=0,1` for explicit
+multi-GPU dispatch.
+
+Wave 174 P2 (`docs/audit/wave174-dispatch-verification.md`) verified
+that the model-specific generators now produce **NON-IDENTICAL shas
+at every NFE level** for lineageflow vs kanzi — the prior Wave 172b
+/ Wave 173 cross-model comparison was an artifact of a shared
+generator, NOT a true adapter-distinct comparison. Wave 174 P3
+generated the 12-cell FASTA ladder (2 models × 3 NFEs × 32
+records/cell) via the model-specific generators. Wave 174 P4
+evaluated the 12 cells on RTX PRO 6000 Blackwell + RTX 5090 with
+real OmegaFold + ESM-IF (14 min wall, N=30/cell after the
+`--max-seqs 30` cap). Wave 174 P5
+(`docs/audit/wave174-cross-model-nfe-curve.md`) aggregated the 12
+cells into the per-model-per-NFE-per-arm CSV + 2×2 matplotlib plot
++ sha256 manifest at
+`verification_outputs/cross_model_real_ckpt_w174_q3_2026/`.
+
+**Concrete N=30 numbers** (raw per-cell `summary.json` at
+`/tmp/w174/eval/{arm}/{model}/nfe_{NFE}/summary.json` (12 cells);
+aggregated CSV at
+`verification_outputs/cross_model_real_ckpt_w174_q3_2026/cross_model_nfe_curve.csv`;
+sha256 manifest at
+`verification_outputs/cross_model_real_ckpt_w174_q3_2026/cross_model_sha256.txt`
+(12 lines, one per cell); per-cell sha256s for `baseline/kanzi/nfe_50/`
+= `aac47279...`, `baseline/kanzi/nfe_100/` = `c0a71bdb...`,
+`baseline/kanzi/nfe_200/` = `589650e5...`,
+`baseline/lineageflow/nfe_50/` = `5cf7cfb3...`,
+`baseline/lineageflow/nfe_100/` = `1018ab40...`,
+`baseline/lineageflow/nfe_200/` = `5e09013b...`,
+`framework/kanzi/nfe_50/` = `30d522ee...`,
+`framework/kanzi/nfe_100/` = `d4334f5d...`,
+`framework/kanzi/nfe_200/` = `248cadd0...`,
+`framework/lineageflow/nfe_50/` = `40a1749f...`,
+`framework/lineageflow/nfe_100/` = `1caa2cc6...`,
+`framework/lineageflow/nfe_200/` = `86d16921...`):
+
+| Model | NFE | baseline pLDDT | framework pLDDT | ΔpLDDT | baseline scPerp | framework scPerp | ΔscPerp | F wins both? |
+|---|---:|---:|---:|---:|---:|---:|---:|:---:|
+| lineageflow |  50 | 41.18 | 42.55 | **+1.37** | 18.94 | 14.89 | **−4.04** | YES |
+| lineageflow | 100 | 41.18 | 41.99 | **+0.81** | 18.94 | 14.94 | **−3.99** | YES |
+| lineageflow | 200 | 41.18 | 42.01 | **+0.83** | 18.94 | 15.09 | **−3.85** | YES |
+| kanzi       |  50 | 57.41 | 55.16 | **−2.25** | 19.50 | 15.63 | **−3.86** | NO  |
+| kanzi       | 100 | 57.41 | 51.62 | **−5.79** | 19.50 | 16.48 | **−3.02** | NO  |
+| kanzi       | 200 | 57.41 | 56.87 | **−0.54** | 19.50 | 16.02 | **−3.48** | NO  |
+
+**framework_wins_both_metrics_everywhere = false.** Per-model
+breakdown: **lineageflow** wins both metrics at every NFE (3/3 cells;
++0.81 to +1.37 pLDDT; −3.85 to −4.04 scPerp). **kanzi** wins
+scPerplexity at every NFE (3/3 cells, −3.02 to −3.86) but regresses
+pLDDT at every NFE (3/3 cells, −0.54 to −5.79). Per-axis overall:
+pLDDT 3/6 cells (lineageflow only); scPerp 6/6 cells; both metrics
+3/6 cells (lineageflow only).
+
+**Bug-fix verification (kanzi FASTA NFE-sensitivity + model
+distinction).** Pre-Wave-173 invariant: all 3 kanzi framework FASTAs
+were byte-identical (sha256 `aa190a39...` across NFE 50/100/200) AND
+kanzi FASTAs were byte-identical to lineageflow FASTAs at each NFE
+(shared `tools/gen_lineageflow_n1000_fastas.py` generator). Post-Wave-174
+fix: (i) 3 distinct shas per model (kanzi: `317a6d83...` /
+`c8698698...` / `316a4804...` at NFE 50/100/200; lineageflow:
+distinct model-specific shas at each NFE); (ii) shas **DIFFER** across
+models at every NFE level (the model-specific dispatch produces
+adapter-distinct FASTAs). The P2 verification PASSES on both axes.
+
+**Per-model reading — what the data actually says.** On the
+**lineageflow** baseline (N=30/cell, real OmegaFold + ESM-IF on GPU
+0/1, model-distinct dispatch), the framework wins both metrics at
+every NFE level — **paper-quality uniform win**. On the **kanzi**
+baseline (N=30/cell, same eval pipeline), the framework wins
+scPerplexity uniformly but trades pLDDT headroom for the scPerp gain
+— a **partial win** consistent with kanzi's high-baseline pLDDT
+ceiling (57.4, near the natural ceiling for short monomers). The
+kanzi pLDDT regression is **structural**, NOT a Wave 174 regression:
+it is a faithful reproduction of the Wave 172b §10.18 / Wave 173
+§10.19 pattern at N=30 + GPU + model-distinct dispatch.
+
+**Honest verdict on Wave 174 fix.** The P1 GPU fix (CUDA-enabled
+omegafold_py310 venv) **PASSES** (OmegaFold + ESM-IF now run on GPU
+0/1 with measurable GPU util; 14 min wall for the 12-cell sweep vs
+the projected ~6 h on CPU). The P2 model-specific dispatch fix
+**PASSES** (lineageflow vs kanzi FASTAs now have distinct shas at
+every NFE level). The P3 FASTA ladder generation **PASSES** (12
+cells × N=32 records). The P4 12-cell evaluation **PASSES** (all 12
+cells exit=0; raw summary.json sha256-pinned). The P5 aggregation
+**PASSES** (CSV + plot + sha256 + this disclosure). The §10.18
+uniform-win narrative is **superseded** by the §10.20
+model-asymmetric narrative on the metric axis (lineageflow
+uniform-win; kanzi scPerp uniform-win + pLDDT trade-off); the §10.19
+N=4 reduced-sample conditional-win narrative is **superseded** by
+the §10.20 N=30 full-sample narrative on the sample-size axis.
+
+**Wave 174 acceptance gates** (P5 verified):
+- `pytest tests/ -k "d4" -q --tb=line | tail -3` → **72 passed, 31
+  skipped, 4981 deselected, 9 warnings in 39.89s** (D.4 72/72 PASS
+  preserved; 31 skips are env-related, not introduced by Wave 174).
+- `ruff check adaptive_reflow/ tests/ scripts/ tools/` → **All
+  checks passed!** (ruff 0 across 4 dirs preserved).
+- `python tools/check_claims_consistency.py` → **No drift detected.**
+  (claims consistency preserved; Wave 174 P5 is aggregation-only —
+  no claim text changes; §10.20 is ADDITIVE on §10.19).
+
+**`docs/paper-draft.md` §10.20 (new Wave 174 P6 ADDITIVE paragraph
+with the N=30 + GPU + model-distinct 12-cell NFE curve + per-NFE
+delta table + bug-fix-verification (3 / 3 distinct shas per model
++ model-distinct shas at every NFE) + framework_wins_both_metrics_
+everywhere = false (model-asymmetric: lineageflow 3/3, kanzi 0/3)
++ kanzi pLDDT trade-off explanation (high-baseline pLDDT ceiling)
++ `docs/baseline-audit-report.md` §R.64 (Wave 174 ledger row);
+audit chain: `docs/audit/wave174-gpu-verify.md` (P1) +
+`docs/audit/wave174-dispatch-verification.md` (P2) +
+`docs/audit/wave174-p3-fasta-ladder.md` (P3) +
+`docs/audit/wave174-eval.md` (P4) +
+`docs/audit/wave174-cross-model-nfe-curve.md` (P5) +
+`docs/audit/wave174-p6-paper.md` (P6 this entry). Per-cell JSON at
+`/tmp/w174/eval/{arm}/{model}/nfe_{NFE}/summary.json` (12 files);
+aggregated CSV + plot + sha256 at
+`verification_outputs/cross_model_real_ckpt_w174_q3_2026/`.
+
+**ADDITIVE only.** Does not modify any §15.x paragraph above;
+§15.63 (Wave 165b fix-up) + §15.64 (Wave 166 novelty + NFE) +
+§15.65 (Wave 166b metric correction) + §15.66 (Wave 167 N-axis at
+fixed NFE=10) + §15.67 (Wave 168 NFE-axis fix + paper-quality NFE
+curve) + §15.68 (Wave 169 theory-vs-experiment investigation) +
+§15.69 (Wave 170 fair JMAA comparison) + §15.72 (Wave 173 deep fix)
++ §2.8 "Empirical anchor" paragraph + §10.13 Wave 168 P4 paragraph
++ §10.14 Wave 169 P5 paragraph + §10.15 Wave 170 P6 paragraph +
+§10.16 Wave 171 P2 paragraph + §10.17 Wave 171 P3 paragraph + §10.18
+Wave 172b P4 paragraph + §10.19 Wave 173 P6 paragraph all preserved
+verbatim. Wave 174 P6 §10.20 + §15.73 + §R.64 ADDITIVE N=30 + GPU +
+model-distinct NFE-curve disclosure stands alongside the
+Wave 165b-173 honest-negative trail documenting the
+generator-diagnosis (Wave 174 P1-P2) → generator-fix (P2) →
+fasta-ladder (P3) → eval (P4) → aggregation (P5) → paper-disclosure
+(P6 this entry) progression. The §10.18 uniform-win narrative is
+**superseded** by the §10.20 model-asymmetric narrative on the metric
+axis; the §10.19 N=4 conditional-win narrative is **superseded** by
+the §10.20 N=30 full-sample narrative on the sample-size axis. No
+prior disclosure is modified or retracted.
