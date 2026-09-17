@@ -37,23 +37,35 @@
 
 ## 1. Venue decision
 
-**Target: JMLR (Journal of Machine Learning Research).** Rationale:
+**Target: EAAI (Engineering Applications of Artificial Intelligence, Elsevier, IF 8.0-9.0, CAS 1区 TOP).** Rationale (verified 2026-09-17 via web search of 中科院 2025 升级版分区表):
 
-* **Best fit for our paper profile:** math theory + cross-model + reproducibility + mathematical rigor. JMLR's accepted papers frequently have this exact profile (e.g. Wan2.2 / FreqFlow / MM-FM-class follow-ups).
-* **Rolling submission** — no deadline pressure; review cycle ~6 months.
-* **Long-form friendly** — 35-50 page papers OK; accommodates our 8020-line draft + 5263-line CONSOLIDATED_RESULTS + 5315-line baseline-audit-report + supplementary.
-* **D.4 + Zenodo DOI + OSF prereg** — all JMLR看重 reproducibility items.
+* **分区准确**: CAS 大类 1区 TOP ✓ — meets user requirement.
+* **学术定位**: AI 工程应用导向 — **perfect fit for training-free inference framework** (the framework is an engineering artifact for deployed flow-matching models).
+* **IF 适中**: 8.0-9.0 — well-regarded but not "灌水 IF" concern.
+* **录用率 75%**: friendly compared to TPAMI 10-15% / Nature MI <10%.
+* **审稿周期**: 9 个月（中位 84 天 first decision）— manageable.
+* **明确要求公共数据集验证** — we have LineageFlow 蛋白、CIFAR-10、FlowMol3 分子等。
+* **国内作者占比 68%**: friendly to Chinese-affiliated submissions.
+* **CCF-C 类**: lower CCF rank, but CAS 1区 TOP meets user's requirement.
+
+**Framing strategy for EAAI**: position as "AI engineering application" — FlowA in production-quality flow-matching deployment (蛋白生成、分子生成、图像生成三个 AI 工程应用上的稳定提升), with mathematical theory + reproducibility as supporting assets.
+
+**Why NOT JMLR (rejected as primary)**: CAS 4区 in 2025 升级版 — does NOT meet user requirement.
+
+**Why NOT TPAMI**: heavy training+inference 双向改进 preference; inference-only framework unlikely to pass.
+
+**Why NOT Nature Machine Intelligence**: 偏生命科学 / 突破性算法; our cross-model framework not breakthrough.
 
 **Backup venue (in priority order):**
 
 | Backup | If | Trade-off |
 |---|---|---|
-| **AI (Artificial Intelligence, Elsevier, IF 14+, Q1)** | User wants faster decision than JMLR | Elsevier 8-12 month review |
-| **PR (Pattern Recognition, Elsevier, IF 8+, Q1)** | User wants CV-flavored framing | Less ML theory depth |
-| **TPAMI (IF 24+, Q1 TOP)** | User wants max-impact (CAS 一区-TOP) | TPAMI 重 training+inference 双向改进, ours是 inference-only; likely reject |
-| **NeurIPS 2027 / ICLR 2027** | User wants fast turnaround | Conference ≠ SCI 期刊; 9-page compression压力 |
+| **PR (Pattern Recognition, Elsevier, IF 7.6-8.0, CAS 1区 TOP)** | EAAI 拒稿 | CV/pattern 偏向 (R3 CIFAR + R4/R5 2D manifold framing) |
+| **Neural Networks (Elsevier, IF 6-7, CAS 1区 TOP)** | EAAI + PR 都拒 | 应用+方法 framing |
+| **TPAMI (IF 20.4, CAS 1区 TOP)** | 长期备份（高难度） | paper 质量极高时尝试 |
+| **NeurIPS 2027 / ICLR 2027** | User wants fast turnaround | Conference ≠ SCI 期刊; 9-page compression 压力 |
 
-**Recommendation: JMLR primary; AI secondary; defer TPAMI / NeurIPS / ICLR.**
+**Final recommendation: EAAI primary; PR secondary; Neural Networks tertiary; defer TPAMI / NeurIPS / ICLR.**
 
 ---
 
@@ -241,7 +253,7 @@
 * Weeks 1-2: Wave 178 (kanzi real architecture)
 * Weeks 2-3: Wave 179 (multi-seed) + start Wave 180-182 (head-to-head) in parallel
 * Weeks 3-5: Wave 183 + 184 + 185 + 186 (analysis-heavy)
-* Weeks 5-6: Wave 187 (paper finalization + JMLR submission)
+* Weeks 5-6: Wave 187 (paper finalization + **EAAI submission**)
 
 ---
 
@@ -313,9 +325,33 @@ Camera-ready tag: `v1.1-paper-final-camera-ready` after Wave 187 final commit.
 
 ## 9. Open questions for user (must resolve before Wave 178)
 
-1. **Venue:** Confirm JMLR primary; or pick AI / PR / other?
+1. **Venue:** ✅ **EAAI primary confirmed** (user feedback 2026-09-17; JMLR rejected as CAS 4区 not meeting 1区 requirement). Backup: PR → Neural Networks.
 2. **Scope:** All 10 waves OK? Or skip any (e.g. AB-Cache)?
 3. **Wall budget:** 5-9 weeks realistic? User's submission deadline target?
 4. **External repos:** Fast-DLLM / AB-Cache / LeDiFlow — internet access available? Model checkpoints downloadable?
 5. **Mypy:** Defer to P2 (cosmetic), or fix in Wave 186 alongside sensitivity?
 6. **Head-to-head count:** All 3 competitors (Wave 180-182) or just 1-2?
+
+## 10. EAAI-specific framing guidance (verified 2026-09-17)
+
+**Title candidates (EAAI-friendly):**
+
+* "FlowA: A Training-Free Inference-Time Re-Inference Framework for Flow Matching Models in Protein, Molecule, and Image Generation"
+* "Engineering Flow Matching Inference: A Training-Free Re-Inference Framework with Provable Convergence Bounds"
+* "FlowA: Production-Quality Re-Inference for Deployed Flow-Matching Checkpoints across 5 Domains"
+
+**Pitch** (300 words for EAAI):
+
+> FlowA is a training-free, inference-time re-inference framework that accelerates and improves deployed flow-matching checkpoints across **three production AI domains** (protein design, molecular generation, image generation) without retraining, distillation, or checkpoint modification. We address the engineering problem: deployed FM checkpoints often run at suboptimal NFE budget for latency reasons, leaving quality on the table. FlowA applies an inference-time paper-quantity-driven multi-round ODE solver with restart-blend perturbation, driven by a JMAA Theorem 1 BL-convergence bound with 4 paper quantities (A_g, B_g, C_g, e_ρ) that guide the per-round schedule. Across 6 Bonferroni-significant experiments on 5 model families (LineageFlow protein, FlowMol3 molecule, CIFAR-10 RF v2 image, 2D two moons + eight gaussians), FlowA delivers +116% HMMER hits (LineageFlow, p<1e-10), −44.17% FID (CIFAR-10 RF v2), and stable −7% to −10% W₂ (2D manifold) at matched NFE. The framework is reproducible (D.4 72/72 byte-stable regression, SHA-256 ckpt pinning, Zenodo DOI, OSF prereg) and drop-in via an 8-method FlowMatchingODEAdapter Protocol. FlowA requires no model knowledge — it operates on any FM checkpoint exposing the standard ODE solver contract.
+
+**Cover letter hook (EAAI):**
+
+> "FlowA is the first training-free re-inference framework with a provable BL-convergence bound (JMAA Theorem 1) and cross-domain validation on 3 production AI engineering tasks (protein design, molecular generation, image generation). All 6 experiments are Bonferroni-significant with byte-level reproducibility."
+
+**Required EAAI compliance items** (per EAAI author guidelines):
+
+* ✅ Public dataset validation (LineageFlow Pfam-A, CIFAR-10, FlowMol3 GEOM-DRUGS)
+* ✅ Engineering application value (production deployment scenario)
+* ✅ Open code (already public on github)
+* ⚠️ Limit 35 pages (EAAI typical) — may need to compress our 8020-line draft
+* ⚠️ Strong application scenario narrative (not just algorithm)

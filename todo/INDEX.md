@@ -37,7 +37,7 @@ Start with [STATUS.md](STATUS.md). **New plan: `paper-finish-line-tier1-shortboa
 * **Wave 184 — n_rounds ablation** (P1-2): isolate restart-blend from multi-round averaging. QUEUED.
 * **Wave 185 — Theory bound tightness** (P1-4): empirical BL distance vs Theorem 1 bound. QUEUED.
 * **Wave 186 — Sensitivity analysis** (P1-5): β base, restart_min_nfe, NFE_REF, seed. QUEUED.
-* **Wave 187 — Camera-ready + JMLR submission** (final): §10.24-10.30 + §15.75-15.81 + §R.66-72 + CLM updates + JMLR submit + tag `v1.1-paper-final-camera-ready`. QUEUED.
+* **Wave 187 — Camera-ready + EAAI submission** (final): §10.24-10.30 + §15.75-15.81 + §R.66-72 + CLM updates + EAAI submit + tag `v1.1-paper-final-camera-ready`. QUEUED.
 
 **Critical short boards (must close before JMLR submission):**
 

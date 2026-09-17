@@ -55,9 +55,11 @@ This file replaces the stale 2026-09-14 snapshot that was preserved below for pr
 
 ## Venue decision
 
-**Primary: JMLR (Journal of Machine Learning Research)** — best fit for math theory + cross-model + reproducibility profile; rolling submission; 35-50 page papers OK.
+**Primary: EAAI (Engineering Applications of AI, Elsevier, IF 8.0-9.0, CAS 1区 TOP)** — AI engineering application oriented; perfect fit for training-free inference framework; 75% acceptance rate; 9-month review cycle; framing as "AI 工程应用" production deployment scenario.
 
-**Backups:** AI (Elsevier Q1) / PR (Elsevier Q1). Defer TPAMI / NeurIPS / ICLR (not good fit).
+**Backups:** PR (Pattern Recognition, CAS 1区 TOP) → Neural Networks (CAS 1区 TOP) → TPAMI (CAS 1区 TOP, hard mode). Defer JMLR (CAS 4区, fails 1区 requirement) / NeurIPS / ICLR.
+
+**EAAI framing:** "FlowA in production-quality flow-matching deployment across 蛋白生成、分子生成、图像生成 three AI engineering applications." See `paper-finish-line-tier1-shortboard-closure.md` §10 for full pitch + cover letter hook + title candidates.
 
 ## Next-wave execution path (10 waves, 5-9 weeks)
 
