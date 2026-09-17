@@ -1678,20 +1678,16 @@ class KanziAdapter(FlowMatchingODEAdapter):
 
     @property
     def _real_state_shape(self) -> tuple[int, ...]:
-        """Per-record state shape for the real ckpt.
-
-        Returns ``(L_abstract, n_channels_decoder)`` when in real
-        mode. The ``L_abstract = 64`` is a placeholder matching the
-        abstract default; per-record ``solve_ode`` overrides ``L``
-        from the prior entry if the per-record backbone length is
-        stashed there (a Wave 92+ follow-up — currently all real-mode
-        integrations run with ``L = L_abstract``).
-        """
+        # Wave 178 — trajectory lives in (L, 3) coord space throughout
+        # (model natively takes (B, L, 3) input). Real-mode velocity field
+        # returns (L, 3) directly without the Wave 121 P4 bridge (which was
+        # CPU-bound at 12 min/cell). D.4 vector suite is unaffected (uses
+        # abstract/synthetic mode where _real_state_shape is not consulted).
         if self._abstract_mode or self._real_latent_dim is None:
-            return KANZI_ABSTRACT_STATE_SHAPE
+            return KANZI_ABSTRACT_STATE_SHAPE  # (64, 64) for synthetic
         return (
-            int(KANZI_ABSTRACT_AR_SEQ_LENGTH),
-            int(self._real_latent_dim),
+            int(KANZI_ABSTRACT_AR_SEQ_LENGTH),  # 64
+            3,  # coord-space, matches model input/output
         )
 
     # ------------------------------------------------------------------
