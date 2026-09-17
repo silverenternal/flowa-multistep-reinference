@@ -24,7 +24,39 @@ important ones, and links to related artifacts outside `todo/`.
 
 ---
 
-## Current execution (2026-09-14, v1.0-paper-final)
+## Current execution (2026-09-17, post-Wave 177 — Q1 submission path)
+
+Start with [STATUS.md](STATUS.md). **New plan: `paper-finish-line-tier1-shortboard-closure.md`** — 10 waves (Wave 178-187) over 5-9 weeks closing all P0 + P1 short boards for **JMLR** Q1 submission. The previous v1.0-paper-final snapshot (Wave 131-144) is preserved at the bottom of STATUS.md for traceability.
+
+**Active waves / next actions (post-Wave 177 push `cec3328`):**
+
+* **Wave 178 — Kanzi real ckpt architecture redesign** (P0-2 + P1-3): trajectory in `(L, 3)` coord space throughout; eliminates bridge CPU cost; enables end-to-end kanzi real primary metric eval; fixes kanzi pLDDT trade-off at the mechanism level. READY to launch.
+* **Wave 179 — Multi-seed R6 + Wave 174 ladder** (P0-3): seeds {42, 43, 44}; 36 cells × N=30 = 1080 records; error bars + significance tests. QUEUED.
+* **Wave 180-182 — Head-to-head with related work** (P0-1): Fast-DLLM, AB-Cache, LeDiFlow / FlowCast / PFDiff. Three sequential competitor comparisons. QUEUED.
+* **Wave 183 — Finer NFE curve** (P1-1): 9 NFE points × 2 models × 2 arms × N=30 = 108 cells. QUEUED.
+* **Wave 184 — n_rounds ablation** (P1-2): isolate restart-blend from multi-round averaging. QUEUED.
+* **Wave 185 — Theory bound tightness** (P1-4): empirical BL distance vs Theorem 1 bound. QUEUED.
+* **Wave 186 — Sensitivity analysis** (P1-5): β base, restart_min_nfe, NFE_REF, seed. QUEUED.
+* **Wave 187 — Camera-ready + JMLR submission** (final): §10.24-10.30 + §15.75-15.81 + §R.66-72 + CLM updates + JMLR submit + tag `v1.1-paper-final-camera-ready`. QUEUED.
+
+**Critical short boards (must close before JMLR submission):**
+
+| # | Short board | Severity | Closes via |
+|---|---|---|---|
+| P0-1 | No head-to-head with Fast-DLLM / FlowCast / AB-Cache / PFDiff / LeDiFlow | CRITICAL | Wave 180-182 |
+| P0-2 | Kanzi pLDDT regression at NFE=50-200 (Wave 175 fix didn't work) | CRITICAL | Wave 178 |
+| P0-3 | Single seed (seed=42) | CRITICAL | Wave 179 |
+| P1-1 | NFE curve too sparse (3 points) | HIGH | Wave 183 |
+| P1-2 | No n_rounds ablation | HIGH | Wave 184 |
+| P1-3 | Kanzi real ckpt end-to-end eval NOT done | HIGH | Wave 178 |
+| P1-4 | Theory ↔ empirical gap (BL bound tightness) | HIGH | Wave 185 |
+| P1-5 | Sensitivity analysis | MEDIUM | Wave 186 |
+
+**Open questions (must resolve before Wave 178 launches):** see §9 of the new plan.
+
+---
+
+## Historical execution (2026-09-14, v1.0-paper-final)
 
 Start with [STATUS.md](STATUS.md). Wave 134 final pass: 3 unpushed
 commits ahead of `origin/main` (the Wave 11-127 backlog was pushed
