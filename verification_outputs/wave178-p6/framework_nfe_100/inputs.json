@@ -1,0 +1,54 @@
+{
+  "fasta": "/tmp/w178/cells/kanzi_nfe_100/framework.fasta",
+  "metrics": [
+    "foldability",
+    "self_consistency"
+  ],
+  "threads": 32,
+  "temperature": 1.0,
+  "family_validity": {
+    "hmmdb": null,
+    "hmmscan": "hmmscan",
+    "evalue": 0.001,
+    "topk_family": 10,
+    "cut_ga": false
+  },
+  "foldability": {
+    "omegafold_bin": "/home/hugo/.conda/envs/omegafold_py310/bin/omegafold",
+    "fold_gpus": "0,1",
+    "sc_gpus": "0,1",
+    "min_len": 10,
+    "max_len": 1024,
+    "max_seqs": 10,
+    "chain": "A",
+    "plots": false,
+    "log_every": 30
+  },
+  "novelty": {
+    "mmseqs": "mmseqs",
+    "target_db": "results/mmseqs/pfam_train_gap060_gt80_020",
+    "ref_split": "train",
+    "scope": "all",
+    "sensitivity": 7.5,
+    "max_hits": 500,
+    "min_qcov": 0.8,
+    "min_tcov": 0.8,
+    "pi_file": "dataset/pfam_pi_smooth_tau0.5_gap060_gt80_020.csv",
+    "keep_file": "dataset/pfam_priors_keep_ids_gap060_gt80_020.txt",
+    "prior_dir": "dataset/pfam_priors_asr_mad",
+    "pfam_fastas_dir": "dataset/pfam_fastas_clean",
+    "val_frac_per_family": 0.05,
+    "val_split_seed": 1337,
+    "min_plddt": null,
+    "fold_metrics_jsonl": null
+  },
+  "defaults": {
+    "pi_file": "dataset/pfam_pi_smooth_tau0.5_gap060_gt80_020.csv",
+    "keep_file": "dataset/pfam_priors_keep_ids_gap060_gt80_020.txt",
+    "prior_dir": "dataset/pfam_priors_asr_mad",
+    "pfam_fastas_dir": "dataset/pfam_fastas_clean",
+    "target_db": "results/mmseqs/pfam_train_gap060_gt80_020",
+    "val_frac_per_family": 0.05,
+    "val_split_seed": 1337
+  }
+}
