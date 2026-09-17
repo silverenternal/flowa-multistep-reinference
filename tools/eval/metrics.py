@@ -1196,6 +1196,25 @@ def _compute_lineageflow_composite(
         "seed": int(seed),
         "nfe_budget": int(nfe),
     }
+    # Wave 177 P2 — synthetic-mode lineageflow composite is
+    # meaningless because synthetic trajectories have near-zero
+    # entropy + near-zero turnover (deterministic NumPy field), so
+    # phi1/phi3 collapse and the composite degenerates to a
+    # hard-coded −0.25 fallback (Wave 176 §2.3). Return ``None``
+    # instead so the eval pipeline doesn't report a misleading
+    # negative composite for synthetic lineageflow. Real ckpt
+    # lineageflow gives meaningful +composite (Wave 176: +0.20 /
+    # +0.14 / +0.05 at NFE=50/100/200).
+    try:
+        adapter_mode = getattr(adapter, "_mode", None)
+    except Exception:
+        adapter_mode = None
+    if adapter_mode == "synthetic":
+        debug["reason"] = (
+            "synthetic_mode_composite_not_meaningful "
+            "(deterministic NumPy field; use real ckpt)"
+        )
+        return None, "blocked_synthetic_mode", debug
     try:
         from adaptive_reflow.adapters.lineageflow_glue import (  # type: ignore
             DEFAULT_COMPOSITE_WEIGHTS,

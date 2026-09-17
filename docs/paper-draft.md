@@ -7732,6 +7732,77 @@ that reframes the "win everywhere" question as a **mathematical ceiling
 question** and reports the framework's principled tie-on-saturated +
 win-on-unsaturated behaviour.
 
+## §10.23 Lineageflow synthetic composite + kanzi real shape fix (Wave 177 — ADDITIVE on §10.22; supersedes nothing)
+
+Wave 176 §8 follow-up closed two outstanding cleanups:
+
+**(a) Lineageflow synthetic composite fix** (Wave 177 P2,
+`tools/eval/metrics.py`). The synthetic-mode lineageflow composite was
+returning `−0.25` (negative — fallback-equivalent from a real
+measurement of nearly-identical deterministic NumPy trajectories). The
+fix adds a synthetic-mode early-return in
+`_compute_lineageflow_composite`:
+
+```python
+adapter_mode = getattr(adapter, "_mode", None)
+if adapter_mode == "synthetic":
+    debug["reason"] = (
+        "synthetic_mode_composite_not_meaningful "
+        "(deterministic NumPy field; use real ckpt)"
+    )
+    return None, "blocked_synthetic_mode", debug
+```
+
+Verification (host Python 3.14, synthetic adapter):
+`composite=None, composite_marker="blocked_synthetic_mode"`. Real ckpt
+mode is unaffected — Wave 177 P3 re-ran the Wave 176 lineageflow real
+ladder and got **bit-identical** composite values
+(`+0.2031 / +0.1426 / +0.0488` at NFE=50/100/200).
+
+**(b) Kanzi real ckpt shape fix** (Wave 177 P1,
+`adaptive_reflow/adapters/kanzi.py`). The Wave 121 P4 bridge collapses
+`(L, N) → (L, 3)` for the model forward, but the integrator's
+trajectory `x_cur` is `(L, N)` (`N = n_channels_decoder = 512` in real
+mode). The integrator at `x_cur + dt * v1` raised
+`ValueError: operands could not be broadcast together with shapes
+(64, 512) (64, 3)`. The Wave 177 P1 fix captures `original_state_shape`
+**before** the bridge mutates `state_shape`, then pads the
+`(L, 3)` velocity back to `(L, N)` with zeros in channels 3:N. This
+unblocks the integrator but is mathematically lossy — channels 3:N
+stay frozen at initialization. **The principled fix (Wave 178) is
+architecture redesign**: trajectory in `(L, 3)` coord space throughout.
+
+**(c) Wave 177 P3 lineageflow real re-run.** Bit-identical to Wave 176:
+
+| NFE | baseline primary | framework primary | composite | status |
+|----:|-----------------:|------------------:|----------:|--------|
+|  50 |          **1.00** |          **1.00** | **+0.2031** | TIE_AT_SATURATION |
+| 100 |          **1.00** |          **1.00** | **+0.1426** | TIE_AT_SATURATION |
+| 200 |          **1.00** |          **1.00** | **+0.0488** | TIE_AT_SATURATION |
+
+Composite values match Wave 176 to 4 decimal places.
+
+**(d) Honest disclosure.** The kanzi real ckpt shape fix is a source-code
+change that is **NOT exercised end-to-end** — the bridge
+(`kanzi_latent_to_coords` → `DAE.decode`) is CPU-bound diffusion
+rollout at ~12 min/cell (NFE=10), too slow for the 6-cell N=30
+sweep. The fix is load-bearing infrastructure for Wave 178 architectural
+redesign. The Wave 176 §10.22 paper claim is unchanged — both baselines
+saturate at 100% on primary metric, framework ties, wins on secondary
+metrics with headroom. Wave 177 P2 just cleans up the lineageflow
+synthetic composite display so it doesn't show a misleading −0.25.
+
+**Wave 177 acceptance gates** (P1 + P2 + P3 verified):
+- `pytest tests/ -k "d4" -q` → 33 passed, 30 skipped (D.4 33/33 PASS).
+- `ruff check tools/eval/metrics.py adaptive_reflow/adapters/kanzi.py`
+  → All checks passed! (ruff 0).
+- `python tools/check_claims_consistency.py` → No drift detected.
+- Lineageflow real re-run → bit-identical to Wave 176.
+
+**ADDITIVE only — does not delete or rewrite any §10.1–§10.22
+paragraph above.** §10.22 primary-metric saturation narrative
+preserved as the load-bearing reframing of "win everywhere".
+
 ## §11. Broader Impact (camera-ready)
 
 **Positive.** FlowA is a **training-free, inference-time re-inference

@@ -1099,6 +1099,14 @@ def _torch_velocity_field(
     # updated ``state_shape = (L, 3)``; the subsequent
     # ``.unsqueeze(0)`` then correctly adds the single batch dim
     # expected by ``_KanziDAEShim.forward``.
+    # Wave 177 P1 — preserve the ORIGINAL state shape (e.g. ``(L, 512)``
+    # in real mode via ``KanziAdapter._real_state_shape``) so the
+    # velocity field output can be reshaped back to the integrator's
+    # trajectory shape after the Wave 121 P4 bridge collapses
+    # ``(L, N) → (L, 3)``. Without this, the integrator raises
+    # ``ValueError: operands could not be broadcast together with
+    # shapes (64, 512) (64, 3)`` at ``x_cur + dt * v1`` (kanzi.py:2380).
+    original_state_shape = state_shape
     if state_shape[-1] != 3:
         bridge_decoder = cache.get("latent_to_coord_decoder")
         if bridge_decoder is None:
@@ -1114,6 +1122,22 @@ def _torch_velocity_field(
         # Strip the bridge-added batch dim to match ``state_shape = (L, 3)``.
         x = _bridge_out[0] if _bridge_out.ndim == 3 and _bridge_out.shape[0] == 1 else _bridge_out
         state_shape = (*state_shape[:-1], 3)
+    # Wave 177 P1 — preserve the ORIGINAL state shape (e.g. ``(L, 512)``
+    # in real mode via ``KanziAdapter._real_state_shape``) so the
+    # velocity field output can be reshaped back to the integrator's
+    # trajectory shape after the Wave 121 P4 bridge collapses
+    # ``(L, N) → (L, 3)``. Without this, the integrator raises
+    # ``ValueError: operands could not be broadcast together with
+    # shapes (64, 512) (64, 3)`` at ``x_cur + dt * v1`` (kanzi.py:2380).
+    # The pad is mathematically lossy — the model velocity lives in
+    # coord space (first 3 channels); the remaining N-3 channels are
+    # held at zero velocity, so the trajectory's N-3 latent channels
+    # stay frozen at their initialization. This is a temporary
+    # workaround that unblocks the kanzi real ckpt full ODE integration
+    # path; Wave 178 will fix the architecture properly (trajectory
+    # lives in (L, 3) coord space throughout).
+    # (original_state_shape was captured at line 1109, BEFORE the
+    # bridge mutated state_shape; do not re-capture here.)
 
     import torch  # local import — torch is optional at the framework level.
 
@@ -1138,6 +1162,22 @@ def _torch_velocity_field(
         v = model(x_t, t_t, family=family_t)
         out = np.asarray(v.squeeze(0).detach().cpu().numpy(), dtype=np.float64)
 
+    # Wave 177 P1 — if the original state_shape was (L, N) with N > 3
+    # (real mode via KanziAdapter._real_state_shape), the bridge has
+    # collapsed the trajectory to (L, 3) for the model forward and the
+    # velocity field output is (L, 3). Pad the velocity back to the
+    # original (L, N) shape with zeros in channels 3:N so the
+    # integrator's ``x_cur + dt * v1`` broadcast works without crashing.
+    # The model velocity lives in coord space (first 3 channels); the
+    # remaining N-3 channels are held at zero, so the trajectory's
+    # N-3 latent channels stay frozen at their initialization. This
+    # is a temporary workaround — Wave 178 will fix the architecture
+    # so the trajectory lives in (L, 3) coord space throughout.
+    if state_shape != original_state_shape and original_state_shape[-1] > 3:
+        v_3d = out.reshape(state_shape)
+        v_padded = np.zeros(original_state_shape, dtype=np.float64)
+        v_padded[..., :3] = v_3d[..., :3]
+        return v_padded
     return out.reshape(state_shape)
 
 
