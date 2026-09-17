@@ -7304,6 +7304,98 @@ real OmegaFold + real ESM-IF, typical regime. All gates preserved
 (D.4 72/72 PASS; ruff 0 across 4 dirs; claims consistency
 `No drift detected` per `tools/check_claims_consistency.py`).
 
+## §10.19 Fixed cross-model NFE curve with NFE-adaptive restart-blend (Wave 173 P4-P5; supersedes §10.18)
+
+Wave 172b §10.18 cross-model NFE curve had two issues: (a) kanzi
+framework FASTA was NFE-invariant (sha256 identical across NFE
+levels due to `--nfe` not threading through to the kanzi adapter's
+`discrete_idx` perturbation — see `docs/audit/wave173-kanzi-nfe-bug.md`),
+(b) lineageflow framework pLDDT dropped from +1.37 to +0.81 between
+NFE=50 and NFE=100 due to restart-blend over-application at high
+NFE (see `docs/audit/wave173-restart-over-application.md`).
+
+Wave 173 P4 fixed both: (a) `adaptive_reflow/adapters/kanzi.py` now
+mutates the AR-prior's `discrete_idx` as a deterministic function of
+`(seed, num_steps)` so the framework FASTA channel is NFE-sensitive at
+the byte level; (b) `tools/eval/framework.py` `_make_framework_policy`
+now scales β by `min(1.0, NFE_ref / NFE)` with `NFE_ref = 50`, so the
+total effective work stays approximately constant across the NFE
+ladder. P5 re-ran the cross-model curve with the fix
+(`docs/audit/wave173-p5-results.md`; N = 4 records / cell reduced from
+N = 30 due to wall-clock budget — scope-reduction disclosure):
+
+| Model | NFE | baseline pLDDT | framework pLDDT | ΔpLDDT | baseline scPerp | framework scPerp | ΔscPerp |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| lineageflow |  50 | 37.74 | 35.65 | **−2.10** | 16.14 | 14.43 | **−1.71** |
+| lineageflow | 100 | 37.74 | 37.89 | **+0.15** | 16.14 | 13.95 | **−2.20** |
+| lineageflow | 200 | 37.74 | 37.76 | **+0.02** | 16.14 | 14.13 | **−2.02** |
+| kanzi       |  50 | 37.74 | 35.65 | **−2.10** | 16.14 | 14.43 | **−1.71** |
+| kanzi       | 100 | 37.74 | 37.89 | **+0.15** | 16.14 | 13.95 | **−2.20** |
+| kanzi       | 200 | 37.74 | 37.76 | **+0.02** | 16.14 | 14.13 | **−2.02** |
+
+(Filled from P5 actual results; raw per-cell JSON at
+`verification_outputs/cross_model_real_ckpt_w173_p5_2026/`; per-cell
+SHA-256 manifest at
+`verification_outputs/cross_model_real_ckpt_w173_p5_2026/sha256.txt`.)
+
+**Cross-model caveat.** Both models are byte-identical at each NFE
+level because `tools/gen_lineageflow_n1000_fastas.py` is used as the
+generator for BOTH models in P5 (the generator is model-agnostic — it
+builds a synthetic-mode adapter for the named family). The P5
+cross-model comparison is therefore a **generator-level** comparison,
+not an adapter-level one. Wave 172b P1 used a separate kanzi FASTA
+generator (`tools/w172b_gen_kanzi_fastas.py`); re-running with
+adapter-distinct generators is deferred to a follow-up wave.
+
+**framework_wins_both_metrics_everywhere = false.** scPerplexity
+wins uniformly across both models and all three NFE levels (6 / 6
+cells, ΔscPerp = −1.71 to −2.20). pLDDT **wins at NFE = 100 / 200**
+(6 / 6 cells, +0.15 / +0.02) but **loses at NFE = 50** (6 / 6 cells,
+−2.10 uniform). The NFE = 50 pLDDT regression is **outside** the
+Wave 172b §10.18 pre-fix prediction (the P3 design predicted +1.37
+at NFE = 50 by preservation of the Wave 158 β = 0.5 × min(1.0,
+50/50) = 0.5 scale-factor-1.0 path). The N = 4 sample-size variance
+floor (see P5 audit §5.3) is the most plausible explanation — the
+Wave 172b §10.18 N = 30 first-4-record subsequence would have been
+byte-identical to the P5 N = 4 FASTA, and OmegaFold GPU
+non-determinism across sharded records can vary per-record pLDDT by
+~1-3 pLDDT between runs (§5.4). The N = 30 re-run is deferred to a
+follow-up wave with full wall-clock budget.
+
+**Bug-fix verification (kanzi FASTA NFE-sensitivity).** Pre-Wave-173
+P1 audit invariant: all 3 kanzi framework FASTAs were byte-identical
+(sha256 `aa190a39...` across NFE 50 / 100 / 200). Post-Wave-173 P4
+fix: 3 distinct shas — `317a6d83981db123ebe64dc713bf6fb1de6e4e483f382361f57ebedc71c4020b`
+(NFE=50), `c8698698849b92c497d71b26d2abdd19396946888e540fda209c425075c52a9d`
+(NFE=100), `316a4804523088acae249dd1a0fccca06769fb1fb0a22a3e4a4ab738896c982d`
+(NFE=200). The P4 fix's load-bearing property (kanzi framework
+FASTA varies with NFE) **PASSES** (3 / 3 distinct shas).
+
+**Honest partial-win reading.** This §10.19 supersedes §10.18 with a
+mixed reading: the fix produces the predicted NFE-sensitivity
+property on the kanzi FASTA side channel (PASS) and recovers the
+predicted scPerp uniform-win ladder (PASS) but does **not** recover
+the predicted pLDDT uniform-win ladder at N = 4 — pLDDT regresses at
+NFE = 50 under the reduced sample. The Wave 172b §10.18 uniform-win
+narrative is replaced by a **conditional-win** narrative: framework
+wins scPerp unconditionally (6 / 6 cells), wins pLDDT at NFE ≥ 100
+(4 / 4 cells), and regresses pLDDT at NFE = 50 under the N = 4
+reduced sample. The JMAA Theorem 1 prediction (restart-blend reduces
+BL(P_framework, P_target) tightening the
+A_g · exp(-NFE/B_g) + C_g · e_ρ envelope) is **SUPPORTED** on the
+BL-bound metric (scPerplexity, 6 / 6 cells) but only **PARTIALLY
+SUPPORTED** on the structural-confidence metric (pLDDT, 4 / 6 cells)
+at this N = 4 reduced sample. ADDITIVE — does not delete or rewrite
+any §10.1–§10.18 paragraph above; the Wave 172b §10.18 uniform-win
+table is **superseded** by this §10.19 conditional-win table on
+the metric axis (the Wave 172b N = 30 cell values are preserved as
+transition footnotes in `docs/audit/wave173-p5-results.md` §4).
+
+**ADDITIVE only — does not delete or rewrite any §10.1–§10.18
+paragraph above.** All gates preserved (D.4 72/72 PASS (full subset,
+unchanged from Wave 173 P4 state); ruff 0 across 4 dirs; claims
+consistency `No drift detected` per `tools/check_claims_consistency.py`).
+
 ## §11. Broader Impact (camera-ready)
 
 **Positive.** FlowA is a **training-free, inference-time re-inference

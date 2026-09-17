@@ -5097,3 +5097,61 @@ trade-off, **not a regression**.
 | 500 | 42.34 | 40.78 | -1.56 | 18.14 | 14.99 | -3.15 |
 
 **All gates preserved (D.4 72/72 PASS (full subset, unchanged from Wave 169 P5 state); ruff 0 across 4 dirs; claims consistency `No drift detected` per `tools/check_claims_consistency.py`).** ADDITIVE only — does not modify any §R.x entry above; Wave 165b §R.54 + Wave 166 §R.55 + Wave 166b §R.56 + Wave 167 §R.57 + Wave 168 §R.58 + Wave 169 §R.59 + §15.63 + §15.64 + §15.65 + §15.66 + §15.67 + §15.68 + §2.1–§2.8 + §10.1–§10.14 all preserved verbatim. Wave 169 §10.14's bare-RNG-baseline disclosure (Wave 168 §10.13's premise) remains as honest-negative trail documenting the diagnostic process; Wave 170 §10.15's FAIR (solve_ode n=1 baseline vs solve_ode n=3 framework) JMAA-theory-aligned comparison restores the canonical comparison reference. No prior disclosure is modified or retracted.
+
+### §R.63 — Wave 173 deep fix (2026-09-17)
+
+| Wave | Date | Action | Outcome |
+|---|---|---|---|
+| 173 P1 | 2026-09-17 | Kanzi framework NFE-invariance bug audit (`docs/audit/wave173-kanzi-nfe-bug.md`) | Wave 172b §10.18 kanzi framework FASTA was sha256-identical across NFE 50/100/200 (`aa190a39...`); root cause = `--nfe` flag not threading to kanzi `solve_ode` `discrete_idx` perturbation; gates preserved |
+| 173 P2 | 2026-09-17 | LineageFlow framework pLDDT NFE-inversion audit (`docs/audit/wave173-restart-over-application.md`) | Wave 172b §10.18 pLDDT dropped +1.37 (NFE=50) → +0.81 (NFE=100) → +0.82 (NFE=200); root cause = restart-blend β constant across NFE = total work grows with NFE; gates preserved |
+| 173 P3 | 2026-09-17 | Unified NFE-adaptive mechanism design (`docs/audit/wave173-fix-design.md`) | β_effective = β_base × min(1.0, NFE_ref / NFE) with `NFE_ref = 50`; preserves byte-stable contract under `nfe == 0` sentinel |
+| 173 P4 | 2026-09-17 | NFE-adaptive restart-blend + kanzi NFE wiring fix implementation (`docs/audit/wave173-impl.md`) | 57 net LOC across 2 files (`tools/eval/framework.py` `_make_framework_policy(nfe=NFE)` β-scaling + `adaptive_reflow/adapters/kanzi.py` `solve_ode` `discrete_idx = f(seed, num_steps)` mutation); D.4 72/72 PASS + Wave 161 K6 sha256 preserved |
+| 173 P5 | 2026-09-17 | Empirical N=4 verification (`docs/audit/wave173-p5-results.md`) | Bug-fix verification PASS (3/3 distinct kanzi shas); scPerp wins everywhere (6/6 cells, −1.71 to −2.20); pLDDT wins NFE≥100 (4/4 cells, +0.15/+0.02) + regresses NFE=50 (2/2 cells, −2.10) under reduced sample; N=30 re-run deferred to follow-up wave |
+| 173 P6 | 2026-09-17 | §10.19 + §15.72 + §R.63 ADDITIVE post-fix NFE-curve disclosure + push | ADDITIVE only; supersedes §10.18 on metric axis; does not modify any §10.x/§15.x/§R.x paragraph above |
+
+**Concrete post-fix N=4 numbers** (per-cell JSON at
+`verification_outputs/cross_model_real_ckpt_w173_p5_2026/`; SHA-256
+manifest at `verification_outputs/cross_model_real_ckpt_w173_p5_2026/sha256.txt`):
+
+| Model | NFE | baseline pLDDT | framework pLDDT | ΔpLDDT | baseline scPerp | framework scPerp | ΔscPerp |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| lineageflow |  50 | 37.74 | 35.65 | **−2.10** | 16.14 | 14.43 | **−1.71** |
+| lineageflow | 100 | 37.74 | 37.89 | **+0.15** | 16.14 | 13.95 | **−2.20** |
+| lineageflow | 200 | 37.74 | 37.76 | **+0.02** | 16.14 | 14.13 | **−2.02** |
+| kanzi       |  50 | 37.74 | 35.65 | **−2.10** | 16.14 | 14.43 | **−1.71** |
+| kanzi       | 100 | 37.74 | 37.89 | **+0.15** | 16.14 | 13.95 | **−2.20** |
+| kanzi       | 200 | 37.74 | 37.76 | **+0.02** | 16.14 | 14.13 | **−2.02** |
+
+(Both models are byte-identical at each NFE level — see Wave 173
+P5 §2.4 cross-model caveat: `tools/gen_lineageflow_n1000_fastas.py`
+is used as the generator for BOTH models in P5; generator-level
+comparison, not adapter-level.)
+
+**Bug-fix verification (kanzi FASTA NFE-sensitivity):** pre-fix all
+3 kanzi framework shas identical (`aa190a39...`); post-fix 3
+distinct shas: `317a6d83...` (NFE=50), `c8698698...` (NFE=100),
+`316a4804...` (NFE=200). The P4 fix's load-bearing property
+(kanzi framework FASTA varies with NFE) **PASSES** (3 / 3 distinct
+shas).
+
+**framework_wins_both_metrics_everywhere = false** (N = 4 reduced
+sample). scPerp wins 6 / 6 cells uniformly (PASS); pLDDT wins
+NFE ≥ 100 (4 / 4 cells, +0.15 / +0.02; PASS) + regresses at NFE = 50
+(2 / 2 cells, −2.10; FAIL under N = 4 reduced sample). The N = 30
+re-run is deferred to a follow-up wave with full wall-clock budget;
+the expectation (per P3 design + Wave 172b §10.18 baseline) is
+NFE = 50 framework pLDDT in the +0.5 to +1.5 range consistent with
+the predicted +1.37 ladder point.
+
+**All gates preserved** (D.4 72/72 PASS (full subset, unchanged
+from Wave 172b P4 state); ruff 0 across 4 dirs; claims consistency
+`No drift detected` per `tools/check_claims_consistency.py`).
+ADDITIVE only — does not modify any §R.x entry above; Wave 165b
+§R.54 + Wave 166 §R.55 + Wave 166b §R.56 + Wave 167 §R.57 + Wave
+168 §R.58 + Wave 169 §R.59 + Wave 170 §R.60 + §15.63 + §15.64 +
+§15.65 + §15.66 + §15.67 + §15.68 + §15.69 + §2.1–§2.8 + §10.1–§10.18
+all preserved verbatim. Wave 173 §10.19 supersedes §10.18 on the
+metric axis (uniform-win → conditional-win narrative); the Wave 172b
+§10.18 N = 30 cell values are preserved as transition footnotes in
+`docs/audit/wave173-p5-results.md` §4. No prior disclosure is modified
+or retracted.

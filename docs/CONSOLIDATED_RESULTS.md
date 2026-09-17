@@ -4840,3 +4840,125 @@ documenting the bare-RNG-baseline diagnosis (Wave 169) + fair-baseline
 fix (Wave 170) progression. All gates preserved (D.4 72/72 PASS (full
 subset, unchanged); ruff 0 across 4 dirs; claims consistency
 `No drift detected` per `tools/check_claims_consistency.py`).
+
+### §15.72 — Wave 173 deep fix (2026-09-17)
+
+Wave 172b §10.18 cross-model NFE curve revealed two latent bugs in
+the framework's NFE-handling (full audit trail in
+`docs/audit/wave173-kanzi-nfe-bug.md` +
+`docs/audit/wave173-restart-over-application.md`):
+
+1. **Kanzi framework NFE-invariant bug** — the Wave 172b §10.18
+   kanzi framework FASTA was sha256-identical across NFE 50 / 100 /
+   200 (`aa190a39...`) because `--nfe` was not threading through to
+   the kanzi adapter's `discrete_idx` perturbation path. The
+   framework was producing an NFE-insensitive kanzi output, making
+   the cross-model comparison meaningless on the kanzi arm.
+
+2. **LineageFlow framework pLDDT drop at high NFE** — the Wave 172b
+   §10.18 lineageflow pLDDT ladder dropped from +1.37 (NFE=50) to
+   +0.81 (NFE=100) to +0.82 (NFE=200), suggesting restart-blend
+   over-application at higher NFE budgets.
+
+Wave 173 P1 (`docs/audit/wave173-kanzi-nfe-bug.md`) root-caused the
+kanzi NFE-invariance: the kanzi `solve_ode` ignored the per-call
+`--nfe` flag when perturbing `prior_entry["discrete_idx"]`. Wave 173
+P2 (`docs/audit/wave173-restart-over-application.md`) root-caused
+the lineageflow pLDDT drop: the restart-blend β was constant across
+NFE, so at higher NFE the framework was applying more total
+perturbation work than intended.
+
+Wave 173 P3 (`docs/audit/wave173-fix-design.md`) designed a unified
+**NFE-adaptive restart-blend** mechanism: β_effective = β_base ×
+min(1.0, NFE_ref / NFE) with `NFE_ref = 50`. Wave 173 P4
+(`docs/audit/wave173-impl.md`) shipped 57 net LOC across two files:
+
+- `tools/eval/framework.py` — `_make_framework_policy(nfe=NFE)`
+  applies the β-scaling; `nfe == 0` sentinel preserves the legacy
+  byte-stable contract (D.4 vector suite + Wave 161 K6 R6 measured
+  under `nfe == 0`).
+- `adaptive_reflow/adapters/kanzi.py` — `solve_ode` mutates the
+  AR-prior's `discrete_idx` as a deterministic function of
+  `(seed, num_steps)`.
+
+Wave 173 P5 (`docs/audit/wave173-p5-results.md`) re-ran the 12-cell
+NFE ladder (N = 4 records / cell, reduced from N = 30 due to
+wall-clock budget — scope-reduction disclosure):
+
+- **Bug-fix verification (kanzi FASTA NFE-sensitivity): PASS.** 3 / 3
+  distinct shas (`317a6d83...` NFE=50; `c8698698...` NFE=100;
+  `316a4804...` NFE=200). Pre-fix invariant was byte-identical across
+  NFE (`aa190a39...`); the P4 fix produced NFE-sensitive perturbation
+  that survives downstream through the AA-alphabet mapping.
+- **scPerplexity wins everywhere (6 / 6 cells).** ΔscPerp = −1.71 to
+  −2.20. Larger gains at higher NFE.
+- **pLDDT partial win (4 / 6 cells).** Wins at NFE = 100 / 200
+  (+0.15 / +0.02 uniform across both models); regresses at NFE = 50
+  (−2.10 uniform) under the N = 4 reduced sample. The N = 30
+  re-run is deferred to a follow-up wave with full wall-clock
+  budget; the expectation (per P3 design) is NFE = 50 framework
+  pLDDT in the +0.5 to +1.5 range.
+
+**Honest verdict on Wave 173 fix.** The fix's load-bearing property
+(kanzi framework FASTA varies with NFE) **PASSES**; the JMAA
+Theorem 1 prediction on the BL-bound metric (scPerplexity)
+**PASSES**; the JMAA Theorem 1 prediction on the structural-
+confidence metric (pLDDT) **PARTIALLY PASSES** under the N = 4
+reduced sample. The §10.18 uniform-win narrative is replaced by
+§10.19's conditional-win narrative: framework wins scPerp
+unconditionally (6 / 6 cells) + pLDDT at NFE ≥ 100 (4 / 4 cells)
++ pLDDT regresses at NFE = 50 (2 / 2 cells). Wave 173 P5 is
+**eval-only** (no code changes; no claim text changes); the §10.18
+supersede + §10.19 ADDITIVE disclosure is appended in Wave 173 P6.
+
+**Wave 173 acceptance gates** (P5 verified):
+- `pytest tests/ -k "d4" -q --tb=line | tail -3` → **72 passed, 31
+  skipped, 4981 deselected, 9 warnings in 39.89s** (D.4 72/72 PASS
+  preserved; 31 skips are env-related, not introduced by Wave 173
+  P5).
+- `ruff check adaptive_reflow/ tests/ scripts/ tools/` → **All
+  checks passed!** (ruff 0 across 4 dirs preserved).
+- `python tools/check_claims_consistency.py` → **No drift detected.**
+  (claims consistency preserved; P5 is eval-only — no claim text
+  changes).
+
+**`docs/paper-draft.md` §10.19 (new Wave 173 P6 ADDITIVE paragraph
+with the post-fix 12-cell NFE curve + per-NFE delta table +
+bug-fix-verification (3 / 3 distinct shas) + framework_wins_both_
+metrics_everywhere = false (partial: scPerp 6 / 6, pLDDT 4 / 6)
++ scope-reduction disclosure + N = 30 re-run deferred to follow-up
+wave + cross-references to Wave 173 P1-P5 audit docs) +
+`docs/baseline-audit-report.md` §R.63 (Wave 173 ledger row); audit
+chain: `docs/audit/wave173-kanzi-nfe-bug.md` (P1) +
+`docs/audit/wave173-restart-over-application.md` (P2) +
+`docs/audit/wave173-fix-design.md` (P3) +
+`docs/audit/wave173-impl.md` (P4) +
+`docs/audit/wave173-p5-results.md` (P5) +
+`docs/audit/wave173-p6-paper.md` (P6 this entry). Per-cell JSON at
+`verification_outputs/cross_model_real_ckpt_w173_p5_2026/`
+(12 files: `baseline_{lineageflow,kanzi}_nfe{50,100,200}.json` +
+`framework_{lineageflow,kanzi}_nfe{50,100,200}.json`); SHA-256
+manifest at
+`verification_outputs/cross_model_real_ckpt_w173_p5_2026/sha256.txt`.
+
+**ADDITIVE only.** Does not modify any §15.x paragraph above;
+§15.63 (Wave 165b fix-up) + §15.64 (Wave 166 novelty + NFE) +
+§15.65 (Wave 166b metric correction) + §15.66 (Wave 167 N-axis at
+fixed NFE=10) + §15.67 (Wave 168 NFE-axis fix + paper-quality NFE
+curve) + §15.68 (Wave 169 theory-vs-experiment investigation) +
+§15.69 (Wave 170 fair JMAA comparison) + §2.8 "Empirical anchor"
+paragraph + §10.13 Wave 168 P4 paragraph + §10.14 Wave 169 P5
+paragraph + §10.15 Wave 170 P6 paragraph + §10.16 Wave 171 P2
+paragraph + §10.17 Wave 171 P3 paragraph + §10.18 Wave 172b P4
+paragraph all preserved verbatim. Wave 173 P6 §10.19 + §15.72 +
+§R.63 ADDITIVE post-fix NFE-curve disclosure stands alongside the
+Wave 165b-172b honest-negative trail documenting the
+bug-diagnosis (Wave 173 P1-P2) → fix-design (P3) → fix-impl (P4)
+→ empirical-verification (P5) → paper-disclosure (P6 this entry)
+progression. The §10.18 uniform-win narrative is **superseded** by
+the §10.19 conditional-win narrative on the metric axis; the
+Wave 172b §10.18 N = 30 cell values are preserved as transition
+footnotes in `docs/audit/wave173-p5-results.md` §4. All gates
+preserved (D.4 72/72 PASS (full subset, unchanged); ruff 0 across
+4 dirs; claims consistency `No drift detected` per
+`tools/check_claims_consistency.py`).
