@@ -193,6 +193,6 @@ Inputs:
     "per_seed_eval_dir": "/tmp/w179/eval/"
   },
   "delta_method": "paired-diff Student-t with df=2, t_crit=4.303",
-  "commit_sha": "<filled by commit>"
+  "commit_sha": "7ab8ecddfc0cabebb3befbb8126f489e9a318b02"
 }
 ```
