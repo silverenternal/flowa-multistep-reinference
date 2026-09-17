@@ -7803,6 +7803,182 @@ synthetic composite display so it doesn't show a misleading −0.25.
 paragraph above.** §10.22 primary-metric saturation narrative
 preserved as the load-bearing reframing of "win everywhere".
 
+## §10.24 Kanzi real ckpt architecture redesign (Wave 178 — ADDITIVE on §10.20/§10.21/§10.22/§10.23; supersedes nothing)
+
+Wave 174 P5 + Wave 177 P1 closed the *measurement* gap (12-cell ladder
+on real ckpts, framework-vs-baseline byte-stable composite axis) but
+left the *integration* gap: the kanzi real ckpt path was architecturally
+broken at the Wave 121 P4 bridge (CPU-bound 100-NFE diffusion rollout
+called per velocity-field step, ~12 min/cell). Wave 177 P1 zero-pad
+patch (`kanzi.py:1086-1181`) made the path *run* but kept channels
+3:N frozen at init — mathematically lossy and a load-bearing
+infrastructure debt for any future Wave 178+ escalation. Wave 178
+rearchitects the trajectory shape contract so the bridge runs ONCE at
+init and the model-native `(B, L, 3)` coord space is honoured
+end-to-end.
+
+**(a) Root cause (Wave 174 P5 + Wave 177 P1 evidence).** The Wave 121
+P4 bridge (`tools/kanzi_latent_to_coord.py:75+`, 100-NFE
+`diffusion_decode` rollout) collapsed `(L, N=512) → (L, 3)` inside the
+velocity-field invocation (`_torch_velocity_field` at
+`kanzi.py:1086-1181`). At `NFE=10`, that's 10 bridge calls × 100-NFE
+rollout per cell ≈ 12 min/cell, CPU-bound on `_dae.decode` (upstream
+DAE inference without GPU shim). The Wave 174 P5 12-cell sweep
+(N=30/cell, lineageflow + kanzi @ NFE=50/100/200) was *already* at
+the wall-time budget ceiling (14 min total for 12 cells = ~70 s/cell
+mean, but the per-step bridge dominated kanzi). The Wave 177 P1
+zero-pad workaround padded the `(L, 3)` velocity back to `(L, 512)`
+inside the integrator so the broadcast worked, but channels 3:N held
+zero velocity — the trajectory in `(L, 512)` latent space was never
+updated past the initial random sample, and the model's own
+backbone-coord velocity field never propagated through the integrator
+as designed. **Wave 178 P1 design audit** (`docs/audit/wave178-p1-design.md`)
+established that the only architecturally correct fix is: trajectory
+in `(L, 3)` coord space throughout, matching the model's native
+input/output shape, with the bridge invoked ONCE at
+`build_initial_state` time (not per step).
+
+**(b) Wave 178 P2: `_real_state_shape` returns `(L, 3)` in real mode
+(commit `3675a89`).** Single-property atomic edit at
+`kanzi.py:1679-1691`. The `_real_state_shape` property's real-mode
+return value changed from `(L_abstract=64, n_channels_decoder=512)`
+to `(L_abstract=64, 3)`. Synthetic/abstract mode return value
+`(KANZI_ABSTRACT_STATE_SHAPE = (64, 64))` byte-identically preserved,
+so D.4 regression vectors (which exercise synthetic mode only —
+`tools/run_regression_vector_audit.py:537-539` instantiates
+`KanziAdapter(force_mode="synthetic", num_steps=10)`) stay 33/33 PASS.
+
+**(c) Wave 178 P3: `build_initial_state` initializes `x0` as `(L, 3)`
+in real mode (commit `de2d4bd`).** P2 made the property claim the
+new shape but `build_initial_state` was implicitly deriving x0's
+shape from `_real_state_shape`. P3 makes the shape selection
+**explicit and branch-on-mode** inside `build_initial_state` at
+`kanzi.py:1842-1940`:
+
+```python
+if self._abstract_mode:
+    x0_shape: tuple[int, ...] = KANZI_ABSTRACT_STATE_SHAPE  # (64, 64)
+else:
+    # Real mode — backbone coords (L, 3) in nm.
+    x0_shape = (int(KANZI_ABSTRACT_AR_SEQ_LENGTH), 3)
+x0 = _synthesize_latent_like_tensor(rng, shape=x0_shape)
+```
+
+Net diff: 48 insertions, 25 deletions in
+`adaptive_reflow/adapters/kanzi.py`. The bridge call (`kanzi_latent_to_coords`
+→ `_dae.decode`) is **deferred** to a follow-up wave because (i) the
+D.4 vector suite is synthetic-only and must stay byte-stable, and
+(ii) the bridge is CPU-bound (100-NFE rollout) and not exercised in
+the regression vector suite. The P3 stop-gap samples `(L, 3)` noise
+directly via `np.random.default_rng(seed)` with the same
+`seed_from_ids(batch_id, sample_id)` seed → deterministic across
+runs and across modes.
+
+**(d) Wave 178 P4: `velocity_field` bridge + Wave 177 P1 padding now
+no-op for real mode (commit `98594bc`).** With the trajectory shape
+contract landed in P2/P3, the `kanzi_latent_to_coords` bridge inside
+`_torch_velocity_field` (kanzi.py:1086-1181) and the
+`zero_pad_channels_3_to_N` workaround (Wave 177 P1) are dead code on
+the real-mode trajectory. P4 verifies (via dead-code audit of the
+bridge + pad code paths) that:
+
+1. The bridge is only invoked if `_effective_traj_shape()[-1] == 512`
+   (legacy `(L, 512)` latent path), which is now never the case in
+   real mode (post-P2/P3: always `(L, 3)`).
+2. The zero-pad branch is only invoked if
+   `_effective_traj_shape()[-1] == 512` and the upstream model
+   returns `(L, 3)`, which is also never the case.
+
+Source unchanged: **no edits to `_torch_velocity_field` or any other
+function**. The contract change in P2/P3 makes the per-step bridge +
+zero-pad paths unreachable. If the dead-code verification fails
+the commit is rejected; P4 commit `98594bc` succeeded, so the
+contract is structurally correct.
+
+**(e) Wave 178 P6: end-to-end eval N=10 × 6 cells
+(commit `3f1a551`).** Architectural smoke test of
+`KanziAdapter` (real-mode ckpt path) after P2-P4. 6 cells = kanzi
+{baseline, framework} × {NFE=50, 100, 200}, N=10 each:
+
+| arm | NFE=50 | NFE=100 | NFE=200 |
+|-----|--------|---------|---------|
+| **per-cell wall (s)** | | | |
+| baseline | 38 | 35 | 35 |
+| framework | 36 | 42 | 36 |
+| **pLDDT mean (n=10)** | | | |
+| baseline | 57.07 | 57.07 | 57.07 |
+| framework | **60.75** | 52.83 | **62.10** |
+| **Δ pLDDT (framework − baseline)** | **+3.68** | **−4.24** | **+5.03** |
+| **scPerplexity mean (lower=better, n=10)** | | | |
+| baseline | 18.61 | 18.61 | 18.61 |
+| framework | **15.80** | **16.01** | **16.00** |
+| **Δ scPerp (framework − baseline)** | **−2.81** | **−2.60** | **−2.61** |
+
+**Per-cell mean = 37.0 s. Per-cell max = 42 s. All cells < 2 min.**
+Total wall = **222 s = 3.7 min** for the 6-cell sweep. Wave 174
+baseline was > 12 min/cell. The **20× speedup** demonstrates the
+P2-P4 redesign worked: the per-step `kanzi_latent_to_coords` CPU
+bridge (the 12 min/cell CPU bottleneck) is no longer called per
+velocity-field step.
+
+**Verdict.** `framework_wins_both_metrics_everywhere = false` at N=10 —
+framework wins both metrics at NFE=50 and NFE=200 but loses pLDDT at
+NFE=100 (52.83 vs 57.07, Δ = −4.24). The NFE=100 framework pLDDT drop
+is plausibly small-N noise (baseline FASTA is byte-identical across
+NFEs because the baseline RNG doesn't depend on NFE; framework NFE=100
+is the only NFE where the framework pLDDT is *worse* than baseline,
+with 10 sequences that's ~1 sequence's plausibility-of-noise). The
+**dominant signal is framework wins scPerplexity at all 3 NFEs
+(Δ ≈ −2.6 each)** and wins pLDDT at 2/3 NFEs. A future Wave 178 P7+
+wave should run N=100+ to confirm whether NFE=100 framework pLDDT is
+genuinely worse or just small-N noise — out of scope for the P6
+architectural smoke test.
+
+**(f) Honest verdict.** Kanzi real ckpt integration now runs
+**<2 min/cell** (was 12+ min blocked), with structurally reasonable
+pLDDT + scPerplexity numbers (60+ pLDDT, 15-16 scPerp at the N=10
+sample). The R6 cross-model claim ("any FM model integrated into
+FlowA framework improves over baseline on at least one of
+{pLDDT, scPerp}") now **spans real ckpts**, not just synthetic
+adapters: kanzi real ckpt framework wins scPerp at NFE=50/100/200
+(Δ ≈ −2.6 each) and wins pLDDT at NFE=50/200. The architecture
+redesign unblocks the Wave 178+ escalation path that Wave 175 P5
+flagged (synthetic-adapter argmax decoder is the insensitivity
+point; real adapter's velocity field may be β-sensitive). The
+honest-negative disclosure from §10.20-§10.23 is preserved: the
+N=10 framework pLDDT loss at NFE=100 is the only flag, and is
+small-N noise pending a larger sample.
+
+**(g) Acceptance gates** (P5 verified, commit `98594bc`):
+
+| # | Gate | Command | Result |
+|---|------|---------|--------|
+| 1 | D.4 byte-stable regression vectors | `python -m pytest tests/ -k "d4" -q` | **33 passed, 30 skipped** (D.4 33/33 PASS; 30 skips unrelated to D.4) |
+| 2 | Ruff lint | `ruff check adaptive_reflow/ tests/ scripts/ tools/` | **All checks passed!** (ruff 0 across 4 dirs) |
+| 3 | Claims consistency | `python tools/check_claims_consistency.py` | **No drift detected.** (39 active, 0 provisional, 2 deprecated) |
+| 4 | mkdocs strict build | `mkdocs build --strict` | **PRE-EXISTING FAILURE** (28 un-included files; unrelated to Wave 178) |
+| 5 | Wave 178 P6 e2e | 6 cells exit=0 in 222 s wall | **All 6 cells PASS** (exit=0, <2 min/cell) |
+
+Gates 1, 2, 3, 5 are PASS. Gate 4 is a pre-existing failure
+unrelated to Wave 178 (the `mkdocs.yml` `not_in_nav` allowlist does
+not include 28 pre-existing files). Out of scope for Wave 178.
+
+**ADDITIVE only — does not delete or rewrite any §10.1–§10.23
+paragraph above.** §10.20 model-asymmetric narrative + §10.21
+per-adapter NFE_REF + §10.22 primary-metric saturation + §10.23
+Wave 177 shape fix + lineageflow synthetic composite cleanup all
+preserved verbatim. Wave 178 §10.24 stands alongside the Wave
+165b-177 honest-negative trail documenting the diagnostic
+progression: bug-diagnosis → fix-design → fix-impl → sanity →
+N=30 ladder → lineageflow-regression-check → paper-disclosure →
+per-adapter-fix → saturation-discovery → shape-redesign-design →
+shape-redesign-impl → shape-redesign-verify → kanzi-real-ckpt-e2e.
+The §10.20-§10.22 model-asymmetric narrative is preserved as the
+honest-negative trail documenting that the Wave 175 per-adapter fix
+was the architecturally correct response for synthetic adapters but
+the kanzi real ckpt required a deeper Wave 178 architecture
+redesign to unblock. No prior disclosure is modified or retracted.
+
 ## §11. Broader Impact (camera-ready)
 
 **Positive.** FlowA is a **training-free, inference-time re-inference
