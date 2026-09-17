@@ -5226,3 +5226,90 @@ P1-P2) → fix-design (P3) → fix-impl (P4) → empirical-verification
 (P5) → paper-disclosure (Wave 173 P6) → expanded-verification
 (Wave 174 P1-P5) → expanded-paper-disclosure (Wave 174 P6 this
 entry). No prior disclosure is modified or retracted.
+
+### §R.65 — Wave 175 per-adapter NFE_REF mechanism + verification (2026-09-17)
+
+| Wave | Date | Action | Outcome |
+|---|---|---|---|
+| 175 P1 | 2026-09-17 | Per-adapter NFE_REF design audit (`docs/audit/wave175-p1-design.md`) | Root cause: hardcoded `_NFE_REF = 50` at `tools/eval/framework.py:436–439` over-applies restart-blend to kanzi's saturated pLDDT=57.4 ceiling; recommended Option A (per-adapter lookup table via `type(adapter).__name__`); audit-only (no source changes) |
+| 175 P2 | 2026-09-17 | Per-adapter NFE_REF implementation (`docs/audit/wave175-p2-impl.md`) | `ADAPTER_NFE_REF = {"KanziAdapter": 10, "LineageFlowAdapter": 50}` at `tools/eval/io.py:108`; consumed at `tools/eval/framework.py:449–453` inside `if int(nfe) > 0:` gate; `nfe == 0` byte-stable preserved; D.4 33 passed + ruff 0 + claims PASS |
+| 175 P3 | 2026-09-17 | N=10 kanzi NFE=100 sanity check (`docs/audit/wave175-p3-sanity.md`) | `ΔpLDDT = −4.24` (FAIL target ≥ −2); mechanism finding: framework FASTAs byte-identical between NFE_REF=50 and NFE_REF=10 (argmax decoder non-responsive to β in [0.05, 0.25]); gates preserved |
+| 175 P4 | 2026-09-17 | Full N=30 kanzi eval at NFE=50/100/200 (`docs/audit/wave175-p4-kanzi-full.md`) | Per-adapter fix does NOT close kanzi pLDDT regression (deltas identical to Wave 174 P5 within rounding — framework FASTAs byte-identical first 30 records); kanzi regression is structural, not driven by β magnitude; gates preserved |
+| 175 P5 | 2026-09-17 | Lineageflow regression check (`docs/audit/wave175-p5-lineageflow-regression.md`) | 6 cells (3 NFE × 2 arms × N=30) on RTX PRO 6000 + RTX 5090; framework wins BOTH metrics at every NFE (3/3 cells; ΔpLDDT within ±0.01 of Wave 174 P5; ΔscPerp within ±0.01 of Wave 174 P5); gates preserved (D.4 33/33 PASS + ruff 0 + claims PASS) |
+| 175 P6 | 2026-09-17 | §10.21 + §15.74 + §R.65 ADDITIVE per-adapter NFE_REF mechanism disclosure + push | ADDITIVE only; does not modify any §10.x/§15.x/§R.x paragraph above; opens 3 escalation paths (disable restart-blend for kanzi synthetic / bypass framework arm at saturation / use kanzi real ckpt) for Wave 176+ follow-up |
+
+**Concrete N=30 numbers** (kanzi NFE_REF=10, lineageflow NFE_REF=50):
+
+**Kanzi (post-Wave-175-P2 fix; framework FASTAs byte-identical to Wave 174 P3 for first 30 records):**
+
+| Model | NFE | baseline pLDDT | framework pLDDT | ΔpLDDT | baseline scPerp | framework scPerp | ΔscPerp | F wins both? |
+|---|---:|---:|---:|---:|---:|---:|---:|:---:|
+| kanzi |  50 | 57.41 | 55.16 | **−2.25** | 19.50 | 15.63 | **−3.86** | NO  |
+| kanzi | 100 | 57.41 | 51.62 | **−5.79** | 19.50 | 16.48 | **−3.02** | NO  |
+| kanzi | 200 | 57.41 | 56.87 | **−0.54** | 19.50 | 16.02 | **−3.48** | NO  |
+
+**Lineageflow (Wave 175 P5 regression check; NFE_REF=50 preserved):**
+
+| Model | NFE | baseline pLDDT | framework pLDDT | ΔpLDDT | baseline scPerp | framework scPerp | ΔscPerp | F wins both? |
+|---|---:|---:|---:|---:|---:|---:|---:|:---:|
+| lineageflow |  50 | 41.18 | 42.55 | **+1.37** | 18.94 | 14.89 | **−4.04** | YES |
+| lineageflow | 100 | 41.18 | 41.99 | **+0.81** | 18.94 | 14.94 | **−3.99** | YES |
+| lineageflow | 200 | 41.18 | 42.01 | **+0.83** | 18.94 | 15.09 | **−3.85** | YES |
+
+**Honest verdict.** `framework_wins_both_metrics_everywhere_final` on
+**lineageflow** = TRUE at NFE=50/100/200 (3/3 cells; ΔpLDDT +0.81 to
++1.37; ΔscPerp −3.85 to −4.04). `framework_wins_both_metrics_everywhere_final`
+on **kanzi** = FALSE at NFE=50/100/200 (3/3 cells; ΔpLDDT −0.54 to
+−5.79; ΔscPerp −3.02 to −3.86). **On the full lineageflow + kanzi @
+NFE=50/100/200 axis: FALSE.** Per task spec §6(d) verdict:
+**lineageflow wins BOTH metrics at every NFE; kanzi pLDDT trade-off
+NOT resolved to within baseline-pL1-pp** (only NFE=200 falls within ±1
+of baseline pLDDT=57.4). The framework is a **partial win on kanzi**
+(scPerp wins uniformly + pLDDT trade-off persists structurally) and a
+**paper-quality uniform win on lineageflow** (both metrics win at every
+NFE).
+
+**Mechanism finding.** The per-adapter NFE_REF mechanism is the
+architecturally correct response (per-adapter β attenuation matches
+the per-adapter saturation profile), but the kanzi synthetic adapter's
+argmax decoder is non-responsive to β in [0.05, 0.25] for these
+seed/family combinations. The framework FASTAs are byte-identical
+between Wave 174 P3 (NFE_REF=50) and Wave 175 P4 (NFE_REF=10) for the
+first 30 records at every NFE level. The kanzi pLDDT regression is
+**structural** — not driven by β magnitude.
+
+**Follow-up escalation paths (3 options for Wave 176+).**
+1. Disable restart-blend entirely for kanzi synthetic mode
+   (`KanziAdapter` NFE_REF=0 → memory-only multi-round pass; preserves
+   baseline pLDDT; relies on per-round paper-quantity-driven scheduler
+   for scPerplexity).
+2. Bypass framework arm for kanzi when baseline is near saturation
+   (per Wave 175 P1 §4 Option C; uses `saturation_threshold` field in
+   `DOWNSTREAM_METRICS`).
+3. Use the kanzi real ckpt instead of synthetic mode (the synthetic
+   adapter's argmax decoder is the insensitivity point; the real
+   adapter's velocity field may be β-sensitive).
+
+**All gates preserved** (D.4 33/33 PASS (full subset, unchanged from
+Wave 174 P6 state); ruff 0 across 4 dirs; claims consistency
+`No drift detected` per `tools/check_claims_consistency.py`).
+ADDITIVE only — does not modify any §R.x entry above; Wave 165b
+§R.54 + Wave 166 §R.55 + Wave 166b §R.56 + Wave 167 §R.57 + Wave
+168 §R.58 + Wave 169 §R.59 + Wave 170 §R.60 + Wave 173 §R.63 +
+Wave 174 §R.64 + §15.63 + §15.64 + §15.65 + §15.66 + §15.67 +
+§15.68 + §15.69 + §15.72 + §15.73 + §2.1–§2.8 + §10.1–§10.20 all
+preserved verbatim. Wave 175 §10.21 + §15.74 + §R.65 ADDITIVE
+per-adapter NFE_REF mechanism disclosure stands alongside the
+Wave 165b-174 honest-negative trail documenting the diagnostic
+progression: bug-diagnosis (Wave 173 P1-P2) → fix-design (P3) →
+fix-impl (P4) → empirical-verification (P5) → paper-disclosure
+(Wave 173 P6) → expanded-verification (Wave 174 P1-P5) →
+expanded-paper-disclosure (Wave 174 P6) → per-adapter-fix-design
+(Wave 175 P1) → per-adapter-fix-impl (P2) → sanity-check (P3) →
+kanzi-N=30-eval (P4) → lineageflow-regression-check (P5) →
+final-paper-disclosure (Wave 175 P6 this entry). The §10.20
+model-asymmetric narrative is preserved as honest-negative trail
+documenting that the Wave 175 per-adapter fix is the **architecturally
+correct response** but the kanzi synthetic adapter's argmax decoder
+is the insensitivity point that requires a Wave 176+ escalation.
+No prior disclosure is modified or retracted.
