@@ -1,7 +1,7 @@
 # Wave 179 P4 — multi-seed aggregation: 36 cells × 3 seeds (mean ± std + 95% CI + paired t-test)
 
 **Date:** 2026-09-17
-**Branch:** main (HEAD of P3 is `1e5c29b`; aggregation commit follows)
+**Branch:** main (HEAD `c925a19`, this commit)
 **Scope:** Aggregate the 36-cell Wave 179 P3 eval ladder
 (2 models × 3 NFE × 2 arms × 3 seeds = 36 cells, N=30 records each).
 Per-(model, nfe, arm) compute mean ± std + 95% CI across the 3 seeds.
@@ -264,7 +264,7 @@ Wave 178 N=10 floor" (kanzi_nfe100 framework pLDDT 51.66 vs Wave 178
   "framework_wins_both_metrics_everywhere": false,
   "wave178_kanzi_nfe100_verdict": "noise_rejected",
   "wall_min": 32,
-  "commit_sha": "<filled by commit>"
+  "commit_sha": "c925a19c81489fac082cabb0012a4ec7626f48b0"
 }
 ```
 
