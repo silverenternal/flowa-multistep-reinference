@@ -1840,24 +1840,46 @@ class KanziAdapter(FlowMatchingODEAdapter):
             int(self._seed_offset) + 0,
         )
         rng = np.random.default_rng(seed)
-        # Wave 92 — in real mode the latent has shape
-        # ``(L_abstract, n_channels_decoder)`` instead of the
-        # abstract ``(64, 64)``. This ensures the trajectory the
-        # solver produces matches the upstream DAE decoder input.
-        # Wave 124 Agent 5 — ``build_initial_state`` always produces the
-        # canonical ``_real_state_shape`` latent (``(64, 512)`` in real
-        # mode). The per-call ``_traj_shape_override`` (set by the
-        # framework_inv_proj arm in ``tools/_kanzi_sweep_runner.py:432``)
-        # is meant to describe the trajectory shape AFTER the bridge's
-        # ``kanzi_latent_to_coords`` overwrite of ``prior_entry["x0"]``,
-        # NOT the initial-state shape. Honouring the override here would
-        # make record N+1's ``build_initial_state`` emit a ``(64, 3)``
-        # ``x0`` (the carry-over from record N's framework_inv_proj
-        # overwrite) which crashes ``kanzi_latent_to_coords`` (expects
-        # ``(64, 512)``) on the ``_apply_project_out_inv`` Linear matmul.
-        x0 = _synthesize_latent_like_tensor(
-            rng, shape=self._real_state_shape,
-        )
+        # Wave 178 P3 — initialize ``x0`` in the trajectory's NATIVE
+        # shape so the integrator's ``x_cur + dt * v1`` broadcast is
+        # shape-safe end-to-end:
+        #
+        # * real mode (``torch`` ckpt loaded) — ``(L_abstract, 3)``
+        #   backbone coords in nm. The Kanzi encoder shim's
+        #   ``_KanziDAEShim.forward`` consumes ``(B, L, 3)`` input
+        #   (the upstream ``DAE.up`` is ``nn.Linear(3, 256)``); the
+        #   velocity field returns ``(L, 3)`` output; the trajectory
+        #   lives in coord space throughout (post-Wave 178 P2).
+        #   Sampling small ``N(0, I)`` noise keyed on the seed is a
+        #   deterministic placeholder; the Wave 95.P3.B bridge runs
+        #   ONCE at init time in a follow-up wave to project an
+        #   arbitrary ``(L, 512)`` latent into ``(L, 3)`` coords
+        #   (this P3 stop-gap keeps the framework loop byte-stable
+        #   while the bridge integration is staged separately).
+        # * synthetic / abstract mode — ``(L_abstract, d) = (64, 64)``
+        #   — the canonical abstract latent shape the D.4 vector
+        #   suite exercises (``force_mode="synthetic"`` is the
+        #   default per ``_resolve_adapter``). Byte-stable preserved
+        #   so the 18+ existing synthetic-mode tests at
+        #   ``tests/test_adapters/test_kanzi_smoke.py`` keep passing.
+        #
+        # Wave 124 Agent 5 — the per-call ``_traj_shape_override``
+        # (set by the framework_inv_proj arm in
+        # ``tools/_kanzi_sweep_runner.py:432``) describes the
+        # trajectory shape AFTER the bridge overwrites
+        # ``prior_entry["x0"]``, NOT the initial-state shape.
+        # Honouring the override here would make record N+1's
+        # ``build_initial_state`` emit a ``(64, 3)`` ``x0`` (the
+        # carry-over from record N's framework_inv_proj overwrite)
+        # which crashes ``kanzi_latent_to_coords`` (expects
+        # ``(64, 512)``) on the ``_apply_project_out_inv`` Linear
+        # matmul.
+        if self._abstract_mode:
+            x0_shape: tuple[int, ...] = KANZI_ABSTRACT_STATE_SHAPE
+        else:
+            # Real mode — backbone coords (L, 3) in nm.
+            x0_shape = (int(KANZI_ABSTRACT_AR_SEQ_LENGTH), 3)
+        x0 = _synthesize_latent_like_tensor(rng, shape=x0_shape)
         # Sample the discrete-token-index side channel as a fresh
         # AR prior state. The real Kanzi AR prior would condition
         # on this; here we sample uniformly. Wave 92 — vocab_size
@@ -1899,15 +1921,16 @@ class KanziAdapter(FlowMatchingODEAdapter):
         self._native_states.put(
             digest,
             {
-                # Wave 124 Agent 5 — always store ``x0`` in the canonical
-                # ``_real_state_shape`` (``(64, 512)`` in real mode). The
-                # framework_inv_proj arm in ``tools/_kanzi_sweep_runner.py``
-                # overwrites this entry with ``(64, 3)`` backbone coords
-                # AFTER the bridge's ``kanzi_latent_to_coords`` call, then
-                # calls ``adapter.set_traj_shape((64, 3))`` to tell
+                # Wave 178 P3 — store ``x0`` in the same shape we sampled
+                # it in (``x0_shape``: ``(64, 3)`` in real mode,
+                # ``(64, 64)`` in synthetic mode). The framework_inv_proj
+                # arm in ``tools/_kanzi_sweep_runner.py`` may overwrite
+                # this entry with ``(64, 3)`` backbone coords AFTER the
+                # bridge's ``kanzi_latent_to_coords`` call, then call
+                # ``adapter.set_traj_shape((64, 3))`` to tell
                 # ``solve_ode`` to honor the new shape.
                 "x0": np.asarray(x0, dtype=np.float64).reshape(
-                    self._real_state_shape,
+                    x0_shape,
                 ),
                 "discrete_idx": np.asarray(discrete_idx, dtype=np.float64),
                 "source_round": 0,
