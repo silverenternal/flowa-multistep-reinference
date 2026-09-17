@@ -1865,3 +1865,77 @@ How it works:
   [`docs/paper-draft.md` §10.26 (c) results table](paper-draft.md),
   [`docs/audit/wave180-p3-comparison.md` §3 Win analysis](audit/wave180-p3-comparison.md).
 
+
+## CLM-049: Wave 184 — n_rounds ablation isolates the kanzi NFE=100 pLDDT regression mechanism (both paper-quantity scheduler primary + multi-round averaging secondary, on kanzi; restart-blend glue path only, on lineageflow) {#CLM-049}
+
+- Status: ACTIVE
+- Date: 2026-09-18
+- Source:
+  [`docs/paper-draft.md`](paper-draft.md) §10.28 (Wave 184 P5
+  ADDITIVE on §10.20-§10.26),
+  [`docs/audit/wave184-p1-setup.md`](audit/wave184-p1-setup.md)
+  (n_rounds ladder setup + byte-stability prediction),
+  [`docs/audit/wave184-p2-generate.md`](audit/wave184-p2-generate.md)
+  (12-cell FASTA ladder),
+  [`docs/audit/wave184-p3-eval.md`](audit/wave184-p3-eval.md)
+  (12-cell GPU eval: 360/360 records scored),
+  [`docs/audit/wave184-p4-aggregate.md`](audit/wave184-p4-aggregate.md)
+  (per-model Δ-vs-baseline aggregation).
+- Asserted by:
+  [`verification_outputs/wave184-p4-ablation-table.csv`](../verification_outputs/wave184-p4-ablation-table.csv)
+  (12 rows × 7 cols per-model Δ-vs-baseline table),
+  [`verification_outputs/wave184-p3-eval-summary.csv`](../verification_outputs/wave184-p3-eval-summary.csv)
+  (12 rows × 15 cols per-cell eval summary),
+  [`docs/paper-draft.md` §10.28 (c) per-model ablation table](paper-draft.md).
+- Disputed by: —
+- Statement: The Wave 184 n_rounds ablation (2 models × 6 variants
+  × N=30 = 360 records, NFE=100 fixed, n_rounds ∈ {1, 2, 3, 5, 7})
+  isolates the two candidate gain-mechanisms of the framework —
+  (1) restart-blend + classifier-aware refinement (the *glue path*)
+  and (2) multi-round averaging (the *iteration path*) — by
+  exploiting the `n_rounds=1` control cell where the paper-quantity
+  scheduler is active but multi-round averaging is null.
+  **(lineageflow)**: All 5 framework-arm cells (n_rounds ∈ {1, 2,
+  3, 5, 7}) collapse to **identical aggregate metrics** to 4dp
+  (pLDDT 41.99, scPPL 14.94; FASTA SHA256
+  `67d871ba9ec2a9e1e95695079f3679d85a2cdf6d9d8a9a932b97fc9a53b416a3`).
+  The synthetic lineageflow adapter does not expose
+  `profile_residual_fn` → `_compute_paper_quantities` returns
+  `None` → constant-β path → `n_rounds` has no effect on the
+  integrated trace. The **+0.81 pLDDT / -4.00 scPPL framework gain
+  is attributable to the restart-blend glue path alone, not to
+  multi-round averaging** (the averaging contribution is null
+  because the integrated trace does not depend on `n_rounds`).
+  **(kanzi)**: The 5 framework-arm cells show real, non-monotonic
+  variation: pLDDT range 51.62 (n=3) → 56.72 (n=5); scPPL range
+  15.13 (n=5) → 17.66 (n=1). The kanzi synthetic adapter *does*
+  expose `profile_residual_fn` → real per-round β → `n_rounds`
+  influences the integrated trace. The `n_rounds=1` cell
+  regresses pLDDT by **-1.63** vs baseline; since `n_rounds=1`
+  means there is *no* multi-round averaging, the **entire -1.63
+  pLDDT regression at NFE=100 is attributable to the
+  paper-quantity scheduler alone**. Multi-round averaging adds
+  additional non-monotonic variation at n ≥ 2 (largest single
+  regression at n=3 = -4.16 vs framework n=1; range -4.16 to
+  +0.94 ΔpLDDT vs framework n_rounds=1 across n ∈ {2, 3, 5, 7}),
+  but it is **neither necessary nor sufficient** for the
+  regression. **Categorical verdict**:
+  `kanzi_nfe100_pLDDT_loss_source = both` (paper-quantity
+  scheduler primary + sufficient at n_rounds=1; multi-round
+  averaging secondary non-monotonic modulator). The §10.22
+  saturation disclosure + §10.24 kanzi NFE=100 trade-off
+  disclosure remain valid; §10.28 strengthens them with explicit
+  mechanism attribution. Three remediation options identified for
+  kanzi at NFE=100: (1) disable scheduler at NFE ≤ 100, accepting
+  framework ≈ baseline at this NFE; (2) re-tune the
+  `profile_residual` scale; (3) increase NFE budget above the
+  scheduler's minimum-effective budget (≥ 200 — this is the choice
+  for the Wave 172b / 173 / 174 cross-model headline numbers).
+  The framework is a **strict win** on scPerplexity (the
+  framework's primary native-likeness metric) on both models at
+  all n_rounds.
+- Evidence:
+  [`verification_outputs/wave184-p4-ablation-table.csv`](../verification_outputs/wave184-p4-ablation-table.csv),
+  [`verification_outputs/wave184-p3-eval-summary.csv`](../verification_outputs/wave184-p3-eval-summary.csv),
+  [`docs/paper-draft.md` §10.28 (c) per-model ablation table](paper-draft.md),
+  [`docs/audit/wave184-p4-aggregate.md` §3 Critical isolation question](audit/wave184-p4-aggregate.md).
