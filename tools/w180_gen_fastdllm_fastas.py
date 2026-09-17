@@ -158,14 +158,13 @@ def _fastdllm_emit_sequence(
     try:
         # Build initial state via the canonical Wave 81 path so the
         # Fast-DLLM arm starts from the same (L, K) prior as the
-        # baseline / framework arms.
-        native_state = adapter._native_states  # type: ignore[attr-defined]
-        # Use a fresh per-record seed for the initial-state RNG.
-        rng = random.Random(int(seed))
+        # baseline / framework arms. Use a fresh per-record seed for
+        # the initial-state RNG (passed directly into _synthesize_*).
+        import numpy as _np
+
         from adaptive_reflow.adapters.lineageflow import (  # type: ignore
             _synthesize_latent_like_tensor,  # type: ignore
         )
-        import numpy as _np
 
         x0 = _synthesize_latent_like_tensor(_np.random.default_rng(int(seed)))
         from adaptive_reflow.adapters.lineageflow import (  # type: ignore

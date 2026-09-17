@@ -108,7 +108,6 @@ from adaptive_reflow.adapters.lineageflow import (  # type: ignore
     LINEAGEFLOW_T_END,
 )
 
-
 # Default Fast-DLLM confidence threshold (mirrors the paper's reported
 # ``threshold=0.9`` for high-confidence parallel decoding, conservative
 # calibration per Wave 180 P1 design — for continuous FM the L2-relative
