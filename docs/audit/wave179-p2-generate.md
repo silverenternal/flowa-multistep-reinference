@@ -1,7 +1,7 @@
 # Wave 179 P2 — 36-cell FASTA ladder (3 seeds × 12 cells × N=30)
 
 **Date:** 2026-09-17
-**Branch:** main (HEAD `2ad0d65`, this commit)
+**Branch:** main (HEAD `962269b`, this commit)
 **Scope:** Generate 36 FASTA files = 2 models × 3 NFE × 2 arms × 3 seeds,
 N=30 records each. These are the inputs for downstream Wave 179 P3
 multi-seed evaluation across both adapters, exercising the dispatch
@@ -150,7 +150,7 @@ Per-cell manifest with full path, byte size, record count, and per-cell wall tim
   "cells_failed": [],
   "total_records": 1080,
   "wall_min": 1.83,
-  "commit_sha": "2ad0d65"
+  "commit_sha": "962269b"
 }
 ```
 
