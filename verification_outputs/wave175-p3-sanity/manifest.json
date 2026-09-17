@@ -1,0 +1,29 @@
+{
+  "baseline_per_family_count": {
+    "PF00005.27": 3,
+    "PF00072.24": 3,
+    "PF00183.19": 2,
+    "PF02517.18": 2
+  },
+  "family_ids": [
+    "PF00005.27",
+    "PF00072.24",
+    "PF00183.19",
+    "PF02517.18"
+  ],
+  "framework_fallback_per_family_count": {},
+  "framework_per_family_count": {
+    "PF00005.27": 3,
+    "PF00072.24": 3,
+    "PF00183.19": 2,
+    "PF02517.18": 2
+  },
+  "max_len": 64,
+  "min_len": 30,
+  "model": "kanzi",
+  "n": 10,
+  "n_rounds": 3,
+  "nfe_per_record": 100,
+  "scope_note": "Kanzi natively emits continuous latents / CA coordinates, not AA sequences. This script exercises kanzi's discrete_token_index AR-prior channel and emits those as a 64-residue FASTA via mod-20 AA-alphabet mapping.",
+  "seed": 42
+}
