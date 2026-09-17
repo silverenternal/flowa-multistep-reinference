@@ -92,6 +92,25 @@ KANZI_PFAM_HOLDOUT_PATH: pathlib.Path = (
 
 #: Per-model downstream metric spec. Each entry defines the primary +
 #: secondary metrics, the metric orientation (lower-is-better /
+# Wave 175 — per-adapter NFE_REF for NFE-adaptive restart-blend strength.
+# LineageFlow NFE_REF=50 preserves Wave 172b ladder anchor (+1.37/+0.81/+0.83
+# pLDDT delta at NFE=50/100/200) and the lineageflow uniform-win story.
+# Kanzi NFE_REF=10 attenuates β so restart-blend does NOT over-apply to
+# kanzi's high-baseline pLDDT=57.4 ceiling (Wave 174 P5 evidence: at
+# NFE_REF=50, kanzi β was 1.0/0.5/0.25 → pLDDT regressed -2.25/-5.79/-0.54
+# at NFE=50/100/200; the regression is structural — restart-blend cannot
+# improve a saturated metric and may perturb the integrator off the
+# calibration manifold). At NFE_REF=10, kanzi β scales to 0.2/0.1/0.05 at
+# NFE=50/100/200, effectively making the framework a memory-only pass that
+# preserves the baseline pLDDT while still benefiting from the per-round
+# paper-quantity-aware scheduler (which drives scPerplexity independently
+# of restart-blend β magnitude).
+ADAPTER_NFE_REF: dict[str, int] = {
+    "KanziAdapter": 10,         # saturated at pLDDT=57.4
+    "LineageFlowAdapter": 50,   # Wave 172b ladder anchor
+}
+DEFAULT_NFE_REF: int = 50
+
 #: higher-is-better), and the saturation threshold (above which the
 #: cell is declared TIE / ALREADY-SOTA). Mirrors the metric table in
 #: ``docs/audit/phase-4-eval-pipeline.md`` §2.

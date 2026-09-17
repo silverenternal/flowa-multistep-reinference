@@ -30,7 +30,12 @@ from tools.eval.baseline import (  # type: ignore
     _ADAPTER_FORCE_MODE_ALIAS,
     _build_initial_state_and_condition,
 )
-from tools.eval.io import DOWNSTREAM_METRICS, FLOWMOL3_REAL_CKPT  # type: ignore
+from tools.eval.io import (  # type: ignore
+    ADAPTER_NFE_REF,
+    DEFAULT_NFE_REF,
+    DOWNSTREAM_METRICS,
+    FLOWMOL3_REAL_CKPT,
+)
 
 # Wave 53 Agent C: per-model force_mode token translation table.
 # Default identity: CLI token = adapter token. Legacy adapters that
@@ -433,8 +438,17 @@ def _make_framework_policy(
     # under ``nfe == 0``); only ``nfe > 0`` exercises the new
     # ``min(1.0, NFE_ref / max(nfe, 1))`` scaling. See
     # ``docs/audit/wave173-fix-design.md`` §4.1 + §6.
+    #
+    # Wave 175 — per-adapter NFE_REF (replaces the hardcoded
+    # ``_NFE_REF = 50``). LineageFlow keeps 50 (Wave 172b anchor cell
+    # +1.37/+0.81/+0.83); Kanzi gets 10 (saturated pLDDT=57.4 ceiling
+    # — restart-blend perturbation cannot improve a saturated metric;
+    # see ``docs/audit/wave175-p1-design.md`` §4 Option A and
+    # ``docs/audit/wave175-p2-impl.md`` for the byte-stability
+    # argument and β attenuation table).
     if int(nfe) > 0:
-        _NFE_REF = 50  # Wave 172b ladder anchor; preserves +1.37
+        _adapter_name = type(adapter).__name__
+        _NFE_REF = int(ADAPTER_NFE_REF.get(_adapter_name, DEFAULT_NFE_REF))
         _scale = min(1.0, float(_NFE_REF) / float(max(1, int(nfe))))
         beta = float(beta) * float(_scale)
     policy_id = PolicyId(
