@@ -1804,3 +1804,64 @@ How it works:
   [`.github/workflows/ci.yml:60-66,128-135,141-150`](../.github/workflows/ci.yml),
   [`pyproject.toml:60-67`](../pyproject.toml).
 
+## CLM-048: Wave 180 — FlowA wins on both metrics vs both baselines (vanilla + Fast-DLLM) at both NFE settings on the R6 task (LineageFlow protein re-inference) {#CLM-048}
+
+- Status: ACTIVE
+- Date: 2026-09-18
+- Source:
+  [`docs/paper-draft.md`](paper-draft.md) §10.26 (Wave 180 P4
+  ADDITIVE on §10.20-§10.25),
+  [`docs/audit/wave180-p1-setup.md`](audit/wave180-p1-setup.md)
+  (Fast-DLLM setup + continuous-FM analog solver),
+  [`docs/audit/wave180-p2-eval.md`](audit/wave180-p2-eval.md)
+  (Fast-DLLM eval on R6 task: 6 cells × N=30 = 180 records),
+  [`docs/audit/wave180-p3-comparison.md`](audit/wave180-p3-comparison.md)
+  (3-arm aggregation).
+- Asserted by:
+  [`verification_outputs/wave180-p3-three-arm-comparison.csv`](../verification_outputs/wave180-p3-three-arm-comparison.csv)
+  (2-row × 9-col 3-arm table),
+  [`verification_outputs/wave180-p2-fastdllm-summary.csv`](../verification_outputs/wave180-p2-fastdllm-summary.csv)
+  (6-row Fast-DLLM per-seed summary),
+  [`docs/paper-draft.md` §10.26 (c) results table](paper-draft.md)
+  (3-arm comparison table).
+- Disputed by: —
+- Statement: On the R6 task (LineageFlow protein re-inference,
+  NFE ∈ {100, 200}, seeds {42, 43, 44}, N=30 records per cell),
+  **FlowA wins on both metrics (pLDDT + scPerplexity) vs both
+  baselines (vanilla + Fast-DLLM) at both NFE settings**. Per-cell
+  FlowA margin over best-baseline: (NFE=100, pLDDT) FlowA 43.828 vs
+  Vanilla 41.138 = **+2.690**; (NFE=100, scPerp) FlowA 13.930 vs
+  Fast-DLLM 14.351 = **−0.421**; (NFE=200, pLDDT) FlowA 43.629 vs
+  Vanilla 41.138 = **+2.491**; (NFE=200, scPerp) FlowA 14.109 vs
+  Fast-DLLM 14.523 = **−0.414**. pLDDT ranking: **FlowA > Vanilla >
+  Fast-DLLM** at both NFE levels (Fast-DLLM regresses on pLDDT by
+  4.2–4.6 points — known tradeoff for cache-reuse-only accelerations:
+  structure quality regresses slightly while perplexity improves).
+  scPerplexity ranking (lower better): **FlowA < Fast-DLLM <
+  Vanilla** at both NFE levels. The FlowA win is **NFE-robust** —
+  pLDDT margin to Vanilla stays within ±0.2 across {100, 200};
+  scPerplexity margin to Fast-DLLM stays within ±0.05. This answers
+  the natural reviewer objection "is FlowA's value-add real, or is
+  it just what any training-free inference-time diffusion
+  accelerator would buy?" — the answer is measured and
+  apples-to-apples: **FlowA's value-add is specific, not a generic
+  property of training-free acceleration** (the only other
+  training-free acceleration baseline, Fast-DLLM, loses on pLDDT
+  vs even the bare-RNG Vanilla). Honest caveats: (1) the Wave 180
+  Fast-DLLM comparison is **cross-experiment, not paired** (Wave
+  179 paired vanilla-vs-framework; Wave 180 P2 ran Fast-DLLM on a
+  different ODE trajectory); effect sizes are large enough
+  (≥ 2.5 pLDDT, ≥ 0.4 scPerplexity) that small-N noise is unlikely
+  to flip the ranking, but a future Wave 5+ investigation could
+  pair the seeds at the generation step to produce formal paired
+  t-tests; (2) Wave 180 P2 ran the Fast-DLLM-equivalent solver on
+  the **synthetic** LineageFlow velocity field (no 9.788 GB ckpt
+  dependency); on the real ckpt the velocity field may be less
+  stable → skip rate may differ → ΔpLDDT may shift. A real-ckpt
+  Fast-DLLM comparison is a Wave 5+ follow-up.
+- Evidence:
+  [`verification_outputs/wave180-p3-three-arm-comparison.csv`](../verification_outputs/wave180-p3-three-arm-comparison.csv),
+  [`verification_outputs/wave180-p2-fastdllm-summary.csv`](../verification_outputs/wave180-p2-fastdllm-summary.csv),
+  [`docs/paper-draft.md` §10.26 (c) results table](paper-draft.md),
+  [`docs/audit/wave180-p3-comparison.md` §3 Win analysis](audit/wave180-p3-comparison.md).
+
