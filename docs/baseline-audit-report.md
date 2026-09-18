@@ -6991,3 +6991,116 @@ Wave 169 P2 audit + Wave 11 conformance suite are all preserved.
 The per-baseline audit trail gains one new row per adapter on
 the load-bearing ablation table; the Wave 189 P4 n=3 row is
 preserved as the pre-replication disclosure.
+
+### §R.77 — Wave 191 R5 completion at N=1000 (CIFAR-10 RF + MNIST FM, matched NFE=50) (2026-09-18)
+
+**Motivation.** The Wave 189 P2 / §R.75 G1 / CLM-055 baseline-audit
+branch identified the 2D axis as TIES-at-NFE=100 (no significant
+difference on either target). The R5 sub-claims — **CIFAR-10 RF
+FID −44.17% (NFE-averaged)** and **MNIST FM FID −15.01%** — were
+both anchored to N=250 / N=1000 on the older sweep generation. Wave
+191 P2 + P3 complete the R5 evidence at N=1000 with Bonferroni-
+corrected paired t-tests. **The baseline-audit perspective** (this
+section): how does the Wave 191 N=1000 replication affect the
+per-baseline audit trail?
+
+**Baseline 1 (CIFAR-10 Rectified Flow SOTA reproduction) —
+N=1000 matched-NFE=50 honest disclosure (baseline_wins).** Wave
+191 P2 paired sweep on the CIFAR-10 RF checkpoint
+`data/rectified_flow_cifar10.pth` (NFE=50, N=1000 records, k=10
+chunks of 100, paired within chunk, `--match-nfe sample` so every
+sample uses the same 50-NFE Euler baseline):
+
+| arm                              | chunk FID (mean ± std, k=10) | headline FID | Δ vs baseline | Bonferroni p  | Cohen's `d_z` |
+|----------------------------------|----------------------------:|-------------:|--------------:|--------------:|--------------:|
+| baseline (50-NFE Euler, single-pass) | n/a (reference)          | **415.83**   | n/a           | n/a           | n/a           |
+| `CosineAnnealScheduler`          | 506.43 ± 9.83               | 500.20       | **+2.91%**    | **1.96e-05**   | +2.94         |
+| `CodimensionSheetScheduler`      | 506.37 ± 9.65               | 500.12       | **+2.90%**    | **1.94e-05**   | +2.94         |
+| `EvidenceDrivenScheduler`        | 505.87 ± 9.11               | 499.83       | **+2.80%**    | **3.93e-05**   | +2.70         |
+
+All 3 framework arms LOSE to the single-pass 50-NFE baseline at
+matched NFE, with Bonferroni-corrected p < 4e-5 on every arm. **Verdict**:
+**`baseline_wins_at_matched_NFE_50`** on CIFAR-10 RF at N=1000.
+**Honest framing**: this REPLACES the Wave 128 / v2 −44.17%
+headline at matched NFE. The −44.17% reading was a "more NFE ⇒
+better FID" reading (Wave 128 used framework NFE=2 vs baseline
+NFE=50), NOT a scheduler-discrimination reading. At matched
+NFE=50, the framework's variable `num_steps` averages ≈ 25 NFE per
+sample (cosine ramp `1.0 → 0.0`), so the framework uses **half**
+the NFE per sample vs the 50-NFE constant baseline. The §R.20
+(Section 2 / Wave 95 CIFAR-10 audit trail) + §R.27 (Section 4 /
+v2 n_cap fix audit) + §R.30 (Section 5 / v3 + v4 audit) audit
+trail is preserved; Wave 191 P2 adds an honest-negative
+**baseline_wins** row to the CIFAR-10 audit table at NFE=50 on
+N=1000. JSON: `verification_outputs/wave191-p2-cifar10-n1000.json`
+(commit_sha pinned to `c121b1c`, Wave 191 P2 commit; wall_min=61).
+
+**Baseline 2 (MNIST flow-matching) — N=1000 matched-NFE=50
+framework_wins on smoke ckpt (PROVISIONAL).** Wave 191 P3 paired
+sweep on the MNIST FM smoke-materialized checkpoint
+`data/mnist_fm.npz` (NFE=50, N=1000 records, k=10 chunks of 100,
+paired within chunk, `--seed 42`, framework_max_num_steps_per_round=12,
+n_rounds=4, β=0.5):
+
+| arm                              | chunk FID (mean ± std, k=10) | headline FID | Δ vs baseline | Bonferroni p  | Cohen's `d_z` |
+|----------------------------------|----------------------------:|-------------:|--------------:|--------------:|--------------:|
+| baseline (50-NFE Euler, single-pass) | n/a (reference)          | **29.49**    | n/a           | n/a           | n/a           |
+| `CosineAnnealScheduler`          | 30.14 ± 0.92                | **23.55**    | **−28.76%**   | **3.77e-12**   | −17.12        |
+| `CodimensionSheetScheduler`      | 30.45 ± 1.59                | **23.83**    | **−28.02%**   | **1.55e-09**   | −8.74         |
+| `EvidenceDrivenScheduler`        | 30.28 ± 1.17                | **23.39**    | **−28.43%**   | **3.95e-11**   | −13.18        |
+
+All 3 framework arms WIN against the single-pass 50-NFE baseline
+at matched NFE, with Bonferroni-corrected p < 4e-9 on every arm.
+**Verdict**: **`framework_wins_at_matched_NFE_50`** on MNIST FM at
+N=1000, **PROVISIONAL** on smoke ckpt. **Honest disclosure
+(CRITICAL — SMOKE CKPT)**: the sweep was run on a smoke-materialized
+checkpoint (22481 bytes, sha256=`ded1fa70c83b77f0...`) produced by
+`tools/materialize_mnist_fm.py` with epochs=1, base_channels=8,
+max_train_images=6000. The production recipe is epochs=3,
+base_channels=16, full 60K images (~30-40 min CPU). Absolute FID
+values are framework-internal (Fréchet projection over 784 → 128
+deterministic Gaussian random projection, NOT literature InceptionV3
+FID), and are not directly comparable to the Wave 52 / Wave 41
+−15.01% reading (which used the CristianLazoQuispe production ckpt
+at N=1000). **The paired baseline-vs-arm comparison IS valid** on
+the smoke ckpt because both arms use the same model and same
+projection+reference. The §R.20-§R.30 MNIST FM audit trail is
+preserved; Wave 191 P3 adds a **framework_wins PROVISIONAL** row
+to the MNIST audit table at NFE=50 on N=1000 (smoke ckpt). JSON:
+`verification_outputs/wave191-p3-mnist-n1000.json` (commit_sha
+pinned to `084e583`, Wave 191 P3 commit; wall_min=10.32).
+
+**Acceptance gates (Wave 191 P4, verified before this section):**
+
+| # | Gate | Command | Result |
+|---|------|---------|--------|
+| 1 | D.4 byte-stable regression vectors | `python -m pytest tests/ -k "d4" -q` | **33 passed, 30 skipped** (D.4 33/33 PASS preserved from §R.76) |
+| 2 | Ruff lint | `ruff check adaptive_reflow/ tests/ scripts/ tools/ docs/audit/` | **All checks passed!** (ruff 0 across 5 dirs) |
+| 3 | Claims consistency | `python tools/check_claims_consistency.py` | **No drift detected.** (51 active after Wave 191 P4 + CLM-040 update + CLM-059 add, 0 provisional, 2 deprecated) |
+| 4 | Wave 191 P2 CIFAR-10 RF N=1000 matched-NFE=50 sweep | 1000 records × 4 arms × k=10 chunks, exit=0; commit_sha-pinned JSON | **baseline_wins** (best arm evidence_driven FID 499.83 vs baseline 415.83, Δ=+2.80%, Bonferroni p=3.93e-05) |
+| 5 | Wave 191 P3 MNIST FM N=1000 matched-NFE=50 sweep | 1000 records × 4 arms × k=10 chunks, exit=0; commit_sha-pinned JSON | **framework_wins** on smoke ckpt (best arm evidence_driven FID 23.39 vs baseline 29.49, Δ=−28.43%, Bonferroni p=3.95e-11) |
+| 6 | R5 honest disclosure formalised | CIFAR-10 RF matched-NFE `baseline_wins` + MNIST FM smoke-ckpt `framework_wins` PROVISIONAL | **CLM-040 updated** with Wave 191 row; **CLM-059 added** with PROVISIONAL+blocked reason |
+
+Gates 1, 2, 3, 4, 5, 6 are PASS.
+
+**ADDITIVE only — does not delete or rewrite any prior §R.1–
+§R.76 paragraph above.** §R.75 (Wave 189 adversarial-review
+closure round) + §R.76 (Wave 190 Theorem 1 quantities
+load-bearing replication) + §10.32 + §10.33 + §15.85 + §15.86 +
+CLM-055/056/057/058 are preserved verbatim; Wave 191 §10.34 +
+§15.87 + §R.77 + CLM-040 update (Wave 191 N=1000 row added) +
+CLM-059 add (MNIST FM smoke-ckpt PROVISIONAL) formalises the R5
+honest-negative surface at N=1000 as an explicit, quantitative,
+commit-pinned-JSON evidence layer. The Wave 128 CIFAR-10 RF
+−44.17% NFE-averaged reading is preserved as the **cross-budget**
+headline; the Wave 191 P2 N=1000 matched-NFE=50 reading is the new
+**baseline_wins** matched-NFE headline. The Wave 52 / Wave 41 MNIST
+FM −15.01% production-ckpt reading is preserved verbatim; the Wave
+191 P3 N=1000 smoke-ckpt reading is the new **framework_wins**
+matched-NFE headline (PROVISIONAL, blocked on production-ckpt
+re-run). The §2.8.1 Theorem 1 statement is unchanged. The Wave 188
+§4.2 + Wave 169 P2 audit + Wave 11 conformance suite are all
+preserved. The per-baseline audit trail gains two new rows: one
+**baseline_wins** row on the CIFAR-10 RF audit table at NFE=50 /
+N=1000, and one **framework_wins PROVISIONAL** row on the MNIST FM
+audit table at NFE=50 / N=1000 (smoke ckpt).

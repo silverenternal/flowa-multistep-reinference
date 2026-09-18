@@ -146,7 +146,7 @@ def main() -> int:
         raise RuntimeError(f"baseline samples npz missing at {baseline_npz_path}")
 
     inception = _load_inception()
-    print(f"[wave191-p2-postprocess] inception loaded, feature_dim=2048")
+    print("[wave191-p2-postprocess] inception loaded, feature_dim=2048")
 
     # Load reference features from cifar10_inception_features.npz if available,
     # otherwise extract from cifar10_test_ref.npz (cached for FID). The sweep
@@ -178,7 +178,6 @@ def main() -> int:
     # For each chunk i in [0, K_CHUNKS): take arm samples [i*CS : (i+1)*CS]
     # and ref_imgs [i*CS : (i+1)*CS]; FID is per-chunk (with chunk of
     # reference too — strictly held-out pairing).
-    rng = np.random.default_rng(0)  # deterministic chunk ordering
     n_total = K_CHUNKS * CHUNK_SIZE
     if arm_data["baseline"]["imgs_shape"][0] < n_total:
         raise RuntimeError(

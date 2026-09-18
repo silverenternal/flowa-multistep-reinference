@@ -119,7 +119,7 @@ def _cohens_dz(diff: np.ndarray) -> float:
 
 def main() -> int:
     inception = _load_inception()
-    print(f"[wave191-p2-fastfid] inception loaded")
+    print("[wave191-p2-fastfid] inception loaded")
 
     ref_npz = np.load(REF_FEATURES_PATH, allow_pickle=False)
     ref_feats = ref_npz["features"].astype(np.float64)  # (10000, 2048)

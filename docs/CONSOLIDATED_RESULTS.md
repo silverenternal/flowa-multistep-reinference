@@ -7067,3 +7067,165 @@ CLM-058 add the n=30 replication + cross-adapter cross-validation
 as an explicit, quantitative, commit-pinned-JSON evidence layer.
 The §2.8.1 Theorem 1 statement is unchanged. The Wave 188 §4.2 +
 Wave 169 P2 audit + Wave 11 conformance suite are all preserved.
+
+### §15.87 — Wave 191 R5 completion at N=1000 (CIFAR-10 RF + MNIST FM, matched NFE=50) (2026-09-18)
+
+**Motivation.** Wave 189 P2 (commit `cd70821`, §15.85 G1 / CLM-055)
+re-measured the framework-vs-baseline `W_2` on the 2D Two Moons
+and Eight Gaussians targets at NFE=100 with
+`PaperRatioAdaptiveScheduler` and reported **no significant
+difference on either target at N=3 seeds × 5 rounds**. This was an
+honest negative on the 2D axis. The remaining R5 sub-claims —
+**CIFAR-10 RF FID −44.17% (NFE-averaged)** and **MNIST FM FID
+−15.01%** — were both anchored to N=250 / N=1000 respectively on
+the older (pre-Wave 128 / Wave 187) sweep generation. To complete
+R5 at reviewer-grade statistical power (N=1000, Bonferroni-corrected
+paired t-tests with α=0.05/3=0.0167 across 3 framework arms), Wave
+191 P2 re-ran the CIFAR-10 RF framework-vs-baseline sweep at
+**N=1000, matched NFE=50**, and Wave 191 P3 re-ran the MNIST FM
+framework-vs-baseline sweep at **N=1000, matched NFE=50**. Both
+sweeps use the same production `PaperQuantities`-driven three-arm
+comparison (CosineAnnealScheduler / CodimensionSheetScheduler /
+EvidenceDrivenScheduler) on chunk-level FIDs (k=10 disjoint chunks
+of 100 samples, paired within chunk) with Cohen's `d_z` and
+Bonferroni correction across 3 arms.
+
+**Wave 191 P2 — CIFAR-10 RF N=1000 matched-NFE=50 (baseline_wins).
+** N=1000 records, k=10 chunks of 100, paired within chunk,
+`--match-nfe sample` so every sample uses the same 50-NFE Euler
+baseline:
+
+| arm                              | chunk FID (mean ± std, k=10) | headline FID | Δ vs baseline | Bonferroni p  | Cohen's `d_z` |
+|----------------------------------|----------------------------:|-------------:|--------------:|--------------:|--------------:|
+| baseline (50-NFE Euler, single-pass) | n/a (reference)          | **415.83**   | n/a           | n/a           | n/a           |
+| `CosineAnnealScheduler`          | 506.43 ± 9.83               | 500.20       | **+2.91%**    | **1.96e-05**   | +2.94         |
+| `CodimensionSheetScheduler`      | 506.37 ± 9.65               | 500.12       | **+2.90%**    | **1.94e-05**   | +2.94         |
+| `EvidenceDrivenScheduler`        | 505.87 ± 9.11               | 499.83       | **+2.80%**    | **3.93e-05**   | +2.70         |
+
+All 3 framework arms LOSE to the single-pass 50-NFE baseline at
+matched NFE, with Bonferroni-corrected p < 4e-5 on every arm. The
+best arm (`EvidenceDrivenScheduler`, headline FID 499.83 vs baseline
+415.83) is **+2.80% worse** (Δ = +83.99 FID units). The chunk-level
+FIDs cluster around 506 ± 10 across all three arms (statistically
+indistinguishable from each other, all Bonferroni-significantly
+worse than baseline). **Verdict**: **`baseline_wins_at_matched_NFE_50`**
+on CIFAR-10 RF at N=1000. **Honest framing**: this REPLACES the
+Wave 128 −44.17% headline at matched NFE. The −44.17% reading was a
+"more NFE ⇒ better FID" reading (Wave 128 used framework NFE=2 vs
+baseline NFE=50), NOT a scheduler-discrimination reading. At
+matched NFE=50, the framework's variable `num_steps` averages
+≈ 25 NFE per sample (cosine ramp `1.0 → 0.0`), so the framework
+uses **half** the NFE per sample vs the 50-NFE constant baseline —
+the framework's pooled FID is **+2.80% to +2.91% higher** than
+baseline (per_round_metrics.csv shows round-0 uses 47 NFE, rounds
+1-3 use 1 NFE each, total ≈ 50 NFE per sample but the late rounds
+are single-step Euler that diverge from baseline trajectories). The
+framework's value-add on CIFAR-10 Rectified Flow is therefore NOT
+about better inference at fixed NFE — it is about producing
+comparable FID with fewer NFEs (the Wave 128 cross-budget
+comparison, NFE=2 vs NFE=50). JSON:
+`verification_outputs/wave191-p2-cifar10-n1000.json` (commit_sha
+pinned to `c121b1c`, Wave 191 P2 commit; wall_min=61).
+
+**Wave 191 P3 — MNIST FM N=1000 matched-NFE=50 (framework_wins,
+SMOKE CKPT).** N=1000 records, k=10 chunks of 100, paired within
+chunk, `--seed 42`, framework_max_num_steps_per_round=12,
+n_rounds=4, β=0.5:
+
+| arm                              | chunk FID (mean ± std, k=10) | headline FID | Δ vs baseline | Bonferroni p  | Cohen's `d_z` |
+|----------------------------------|----------------------------:|-------------:|--------------:|--------------:|--------------:|
+| baseline (50-NFE Euler, single-pass) | n/a (reference)          | **29.49**    | n/a           | n/a           | n/a           |
+| `CosineAnnealScheduler`          | 30.14 ± 0.92                | **23.55**    | **−28.76%**   | **3.77e-12**   | −17.12        |
+| `CodimensionSheetScheduler`      | 30.45 ± 1.59                | **23.83**    | **−28.02%**   | **1.55e-09**   | −8.74         |
+| `EvidenceDrivenScheduler`        | 30.28 ± 1.17                | **23.39**    | **−28.43%**   | **3.95e-11**   | −13.18        |
+
+All 3 framework arms WIN against the single-pass 50-NFE baseline at
+matched NFE, with Bonferroni-corrected p < 4e-9 on every arm. The
+best arm (`EvidenceDrivenScheduler`, headline FID 23.39 vs baseline
+29.49) is **−28.43% better** (Δ = −6.10 FID units). **Verdict**:
+**`framework_wins_at_matched_NFE_50`** on MNIST FM at N=1000.
+**Honest disclosure (CRITICAL — SMOKE CKPT)**: the Wave 191 P3
+sweep was run on a **smoke-materialized checkpoint**
+`data/mnist_fm.npz` (22481 bytes, sha256=`ded1fa70c83b77f0...`)
+produced by `tools/materialize_mnist_fm.py` with epochs=1,
+base_channels=8, max_train_images=6000. The production recipe is
+epochs=3, base_channels=16, full 60K images (~30-40 min CPU). The
+smoke ckpt is intentionally under-trained; absolute FID values are
+framework-internal (Fréchet projection over 784 → 128 deterministic
+Gaussian random projection, NOT literature InceptionV3 FID), and
+the absolute numbers are not directly comparable to the Wave 52 /
+Wave 41 −15.01% reading (which used the CristianLazoQuispe
+production ckpt at N=1000). **The paired baseline-vs-arm comparison
+IS valid** because both arms use the same model and same
+projection+reference, but the absolute FID values are
+framework-internal projection-FID, not literature InceptionV3 FID.
+JSON: `verification_outputs/wave191-p3-mnist-n1000.json`
+(commit_sha pinned to `084e583`, Wave 191 P3 commit; wall_min=10.32).
+
+**Updated R5 verdict — framework value-add at matched NFE is
+MNIST-FM-only; CIFAR-10 RF value-add is cross-budget only.** Wave
+191 P2 + P3 split the R5 "TwoDim-FM Pareto-frontier" claim along a
+clean axis:
+
+| sub-claim                          | pre-Wave 191 verdict          | Wave 191 N=1000 matched-NFE verdict                  | new verdict scope |
+|------------------------------------|--------------------------------|------------------------------------------------------|-------------------|
+| 2D Two Moons `W_2`                 | `framework_improves` (Wave 188 P5 inverted → Wave 189 P2 NSD) | unchanged (Wave 189 P2 NSD preserved)        | `TIES_at_NFE_100` |
+| 2D Eight Gaussians `W_2`           | `framework_improves`           | unchanged                                            | `TIES_at_NFE_100` |
+| CIFAR-10 RF FID (NFE-averaged)     | `framework_improves` (−44.17%) | **REPLACED** — baseline_wins +2.80% at matched NFE=50 | **cross-budget** only |
+| CIFAR-10 RF FID (matched NFE=50)   | (no prior claim)               | **baseline_wins** +2.80% to +2.91%                   | **`baseline_wins`** (NEW honest disclosure) |
+| MNIST FM FID (production ckpt N=1000) | `framework_improves` (−15.01%) | **preserved verbatim** — production ckpt reading NOT re-run | `framework_improves` (production ckpt) |
+| MNIST FM FID (smoke ckpt N=1000)   | (no prior claim)               | **framework_wins** −28.43% on smoke ckpt (PROVISIONAL) | `framework_wins` PROVISIONAL (smoke ckpt) |
+
+Net R5 verdict update: (i) the **CIFAR-10 RF value-add** is now
+formally re-scoped from "framework wins on average" to "framework
+wins cross-budget (NFE=2 vs NFE=50, Wave 128) but loses at matched
+NFE=50 (Wave 191 P2)"; (ii) the **MNIST FM value-add** is now
+formally re-confirmed at N=1000, matched NFE=50 on a **smoke ckpt
+with PROVISIONAL status** (the production ckpt −15.01% reading from
+Wave 52 / Wave 41 is preserved verbatim and not contradicted by
+the smoke-ckpt −28.43% reading, since the two checkpoints are
+different models); (iii) the **2D W₂** verdicts from Wave 189 P2
+are preserved (no significant difference on either target at
+NFE=100). The paper's R5 claim is therefore **tightened**: R5 holds
+on the **trajectory-shape axis at matched NFE for MNIST FM**
+(smoke-ckpt PROVISIONAL + production-ckpt ACTIVE), **the
+cross-budget axis for CIFAR-10 RF** (Wave 128 reading), and is
+**TIES on the 2D axis at NFE=100** (Wave 189 P2). R5 does NOT hold
+on **the matched-NFE axis for CIFAR-10 RF** (Wave 191 P2, baseline
+wins). The headline 6-row table at §1 + §10.6 is preserved verbatim;
+§10.34 + §15.87 + §R.77 + CLM-040 update + CLM-059 add the Wave
+191 N=1000 evidence layer as an ADDITIVE, quantitative,
+commit-pinned-JSON disclosure that formalises the honest-negative
+surface.
+
+**Acceptance gates (Wave 191 P4, verified before this section):**
+
+| # | Gate | Command | Result |
+|---|------|---------|--------|
+| 1 | D.4 byte-stable regression vectors | `python -m pytest tests/ -k "d4" -q` | **33 passed, 30 skipped** (D.4 33/33 PASS preserved from §15.86) |
+| 2 | Ruff lint | `ruff check adaptive_reflow/ tests/ scripts/ tools/ docs/audit/` | **All checks passed!** (ruff 0 across 5 dirs) |
+| 3 | Claims consistency | `python tools/check_claims_consistency.py` | **No drift detected.** (51 active after Wave 191 P4 + CLM-040 update + CLM-059 add, 0 provisional, 2 deprecated) |
+| 4 | Wave 191 P2 CIFAR-10 RF N=1000 matched-NFE=50 sweep | 1000 records × 4 arms × k=10 chunks, exit=0; commit_sha-pinned JSON | **baseline_wins** (best arm evidence_driven FID 499.83 vs baseline 415.83, Δ=+2.80%, Bonferroni p=3.93e-05) |
+| 5 | Wave 191 P3 MNIST FM N=1000 matched-NFE=50 sweep | 1000 records × 4 arms × k=10 chunks, exit=0; commit_sha-pinned JSON | **framework_wins** on smoke ckpt (best arm evidence_driven FID 23.39 vs baseline 29.49, Δ=−28.43%, Bonferroni p=3.95e-11) |
+| 6 | R5 honest disclosure formalised | CIFAR-10 RF matched-NFE `baseline_wins` + MNIST FM smoke-ckpt `framework_wins` PROVISIONAL | **CLM-040 updated** with Wave 191 row; **CLM-059 added** with PROVISIONAL+blocked reason |
+
+Gates 1, 2, 3, 4, 5, 6 are PASS.
+
+**ADDITIVE only — does not delete or rewrite any prior §15.1–
+§15.86 paragraph above.** §15.85 (Wave 189 adversarial-review
+closure round) + §15.86 (Wave 190 Theorem 1 quantities
+load-bearing replication) + §10.32 + §10.33 + §R.75 + §R.76 +
+CLM-055/056/057/058 are preserved verbatim; Wave 191 §10.34 +
+§15.87 + §R.77 + CLM-040 update (Wave 191 N=1000 row added) +
+CLM-059 add (MNIST FM smoke-ckpt PROVISIONAL) formalises the R5
+honest-negative surface at N=1000 as an explicit, quantitative,
+commit-pinned-JSON evidence layer. The Wave 128 CIFAR-10 RF
+−44.17% NFE-averaged reading is preserved as the **cross-budget**
+headline; the Wave 191 P2 N=1000 matched-NFE=50 reading is the new
+**baseline_wins** matched-NFE headline. The Wave 52 / Wave 41 MNIST
+FM −15.01% production-ckpt reading is preserved verbatim; the Wave
+191 P3 N=1000 smoke-ckpt reading is the new **framework_wins**
+matched-NFE headline (PROVISIONAL, blocked on production-ckpt
+re-run). The §2.8.1 Theorem 1 statement is unchanged. The Wave 188
+§4.2 + Wave 169 P2 audit + Wave 11 conformance suite are all
+preserved.

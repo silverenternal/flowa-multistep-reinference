@@ -87,7 +87,6 @@ from adaptive_reflow.universal.state import (  # noqa: E402
     StateBundle,
 )
 
-
 SCHEMA_VERSION: str = "wave191_p3_mnist_n1000_v1"
 
 # ---------------------------------------------------------------------------
@@ -480,7 +479,7 @@ def main(argv: list[str] | None = None) -> int:
     # 4. FID scoring (headline + chunk-level)
     # ------------------------------------------------------------------
     if not args.quiet:
-        print(f"[wave191-p3] computing FID ...")
+        print("[wave191-p3] computing FID ...")
     headline_fid: dict[str, float] = {}
     headline_fid["baseline"] = float(score_population(baseline_samples, ref_features, projection))
     for name in ARM_LABELS:

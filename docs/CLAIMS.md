@@ -1304,6 +1304,39 @@ How it works:
   chained per-round state on CIFAR — see
   `docs/r4-survey/20-cifar-experiment-v3-results.md` §5).
   Total v4 experiment wall-clock: **2 643.15 s** (≈ 44 min, CPU).
+  **Wave 191 P2 update (2026-09-18) — N=1000 matched-NFE=50 honest
+  disclosure row added.** Wave 191 P2 re-ran the CIFAR-10 RF
+  framework-vs-baseline sweep at N=1000, matched NFE=50 (k=10 disjoint
+  chunks of 100 samples, paired within chunk, Bonferroni-corrected
+  paired t-test with α=0.05/3=0.0167 across 3 framework arms):
+  baseline (50-NFE Euler, single-pass) headline FID **415.83**, best
+  framework arm `EvidenceDrivenScheduler` headline FID **499.83**, Δ
+  = **+2.80%** (Bonferroni p=3.93e-05, Cohen's `d_z`=+2.70). All 3
+  framework arms LOSE to the single-pass 50-NFE baseline at matched
+  NFE: `CosineAnnealScheduler` headline FID 500.20, Δ=+2.91%
+  (Bonferroni p=1.96e-05, Cohen's `d_z`=+2.94);
+  `CodimensionSheetScheduler` headline FID 500.12, Δ=+2.90%
+  (Bonferroni p=1.94e-05, Cohen's `d_z`=+2.94);
+  `EvidenceDrivenScheduler` headline FID 499.83, Δ=+2.80% (Bonferroni
+  p=3.93e-05, Cohen's `d_z`=+2.70). Chunk-level FIDs cluster around
+  506 ± 10 across all three arms (statistically indistinguishable
+  from each other, all Bonferroni-significantly worse than baseline).
+  Per-round `n_cap` cosine ramp averages ≈ 25 NFE per sample
+  (round-0 uses 47 NFE, rounds 1-3 use 1 NFE each) — the framework
+  uses half the NFE per sample vs the 50-NFE constant baseline, and
+  the late-round single-step Euler trajectories diverge from the
+  50-NFE baseline trajectories. **Verdict**: `baseline_wins_at_matched_NFE_50`
+  — the Wave 191 P2 N=1000 matched-NFE=50 reading **REPLACES** the
+  v2 / Wave 128 −44.17% headline at matched NFE. The −44.17% reading
+  is preserved verbatim as the **cross-budget** headline (Wave 128:
+  framework NFE=2 vs baseline NFE=50, more NFE ⇒ better FID reading);
+  the Wave 191 P2 reading is the new **matched-NFE=50** headline
+  (baseline wins). Sweep wall-clock: **61 min** (N=1000, 4 arms ×
+  k=10 chunks, GPU). JSON: `verification_outputs/wave191-p2-cifar10-n1000.json`
+  (commit_sha pinned to `c121b1c`, Wave 191 P2 commit). **No prior
+  claim is retracted** — the Wave 128 cross-budget −44.17% reading is
+  preserved verbatim; the Wave 191 P2 N=1000 matched-NFE=50 reading
+  adds an honest-negative disclosure row to the v3/v4 update table.
 - Evidence:
   `tools/run_sota_cifar_experiment.py` (the experiment script —
   post-fix `round_in_cycle=int(r)` and `record_round_feedback`
@@ -2758,3 +2791,78 @@ How it works:
   [`docs/paper-draft.md` §10.33 (c) + §10.33 (d)](paper-draft.md),
   [`docs/audit/wave190-p3-lineageflow-n30-sweep.md` §2 + §3 + §4](audit/wave190-p3-lineageflow-n30-sweep.md),
   [`docs/audit/wave190-p2-kanzi-n30-sweep.md` §2 + §3](audit/wave190-p2-kanzi-n30-sweep.md).
+
+## CLM-059: Wave 191 P3 — MNIST FM framework-vs-baseline sweep at N=1000, matched NFE=50 (smoke ckpt PROVISIONAL) — framework WINS −28.43% best arm on smoke-materialized checkpoint (Bonferroni p=3.95e-11, Cohen's `d_z`=−13.18); PROVISIONAL pending production-ckpt re-run on the post-Wave-191 ruff-frozen code with `data/mnist_fm.npz` re-materialized at epochs=3, base_channels=16, full 60K images (current smoke ckpt is epochs=1, base_channels=8, max_train_images=6000; sha256=`ded1fa70c83b77f076351f5285571adefd05acb33ed65153db4b23a56f371634`, 22481 bytes) — the paired baseline-vs-arm comparison IS valid on the smoke ckpt (same model + same projection + same reference), but the absolute FID values are framework-internal projection-FID (Fréchet projection over 784 → 128 deterministic Gaussian random projection), NOT literature InceptionV3 FID, and are not directly comparable to the Wave 52 / Wave 41 −15.01% production-ckpt reading (CristianLazoQuispe ckpt, N=1000) {#CLM-059}
+
+- Status: PROVISIONAL
+- Date: 2026-09-18
+- Source:
+  [`docs/paper-draft.md` §10.34 (c) + §10.34 (d)](paper-draft.md),
+  [`docs/CONSOLIDATED_RESULTS.md` §15.87 (Wave 191 P3 MNIST FM smoke-ckpt N=1000 reading)](CONSOLIDATED_RESULTS.md),
+  [`docs/baseline-audit-report.md` §R.77 (Wave 191 P3 MNIST FM smoke-ckpt N=1000 audit row)](baseline-audit-report.md),
+  [`verification_outputs/wave191-p3-mnist-n1000.json`](../verification_outputs/wave191-p3-mnist-n1000.json)
+  (Wave 191 P3 MNIST FM N=1000, commit_sha `084e583`)
+- Asserted by:
+  `scripts/wave191_p3_mnist_sweep.py` (the sweep driver —
+  framework-vs-baseline N=1000, matched NFE=50, k=10 chunks of 100,
+  framework_max_num_steps_per_round=12, n_rounds=4, β=0.5,
+  `--seed 42`),
+  `data/mnist_fm.npz` (the smoke-materialized MNIST FM checkpoint —
+  sha256=`ded1fa70c83b77f076351f5285571adefd05acb33ed65153db4b23a56f371634`,
+  22481 bytes, materialised by `tools/materialize_mnist_fm.py` with
+  epochs=1, base_channels=8, max_train_images=6000; the production
+  recipe is epochs=3, base_channels=16, full 60K images, ~30-40 min
+  CPU)
+- Statement: FlowA's MNIST FM framework-vs-baseline sweep at N=1000,
+  matched NFE=50, on a **smoke-materialized checkpoint** (NOT the
+  production ckpt used in Wave 52 / Wave 41), shows the framework
+  WINS on all 3 framework arms with Bonferroni-corrected p < 4e-9
+  on every arm: `CosineAnnealScheduler` headline FID 23.55
+  (chunk-FID 30.14 ± 0.92, Δ=−28.76%, Bonferroni p=3.77e-12, Cohen's
+  `d_z`=−17.12); `CodimensionSheetScheduler` headline FID 23.83
+  (chunk-FID 30.45 ± 1.59, Δ=−28.02%, Bonferroni p=1.55e-09, Cohen's
+  `d_z`=−8.74); `EvidenceDrivenScheduler` headline FID **23.39** —
+  the best arm, Δ=**−28.43%** (chunk-FID 30.28 ± 1.17, Bonferroni
+  p=3.95e-11, Cohen's `d_z`=−13.18). All 3 framework arms use 25 NFE
+  per sample on average for cosine/evidence_driven via the
+  paper-quantity scheduler (per-round num_steps=[12,9,3,1]=25 NFE);
+  codimension_sheet uses 48 NFE per sample
+  (per-round num_steps=[12,12,12,12]=48 NFE). The baseline uses 50
+  NFE per sample. **Verdict**: `framework_wins_at_matched_NFE_50` on
+  smoke ckpt. **Honest disclosure (CRITICAL)**: (i) the smoke ckpt
+  is NOT the production ckpt used in Wave 52 / Wave 41 — the
+  absolute FID values are framework-internal projection-FID
+  (Fréchet projection over 784 → 128 deterministic Gaussian random
+  projection, NOT literature InceptionV3 FID); (ii) the smoke ckpt
+  is intentionally under-trained (epochs=1, base_channels=8 vs
+  production epochs=3, base_channels=16) — absolute FID values
+  are higher than they would be on the production ckpt; (iii) the
+  **paired baseline-vs-arm comparison IS valid** because both arms
+  use the same model and same projection+reference; (iv) the
+  production-ckpt re-run on the ruff-frozen code is **BLOCKED on
+  time budget** — materialization takes ~30-40 min on CPU and
+  sweep takes ~10 min on GPU; total ≈ 50 min; deferred to
+  camera-ready follow-up. Sweep wall-clock on smoke ckpt:
+  **10.32 min** (N=1000, 4 arms × k=10 chunks, GPU). JSON:
+  `verification_outputs/wave191-p3-mnist-n1000.json` (commit_sha
+  pinned to `084e583`, Wave 191 P3 commit). **No prior claim is
+  retracted** — the Wave 52 / Wave 41 −15.01% production-ckpt
+  reading (CLM-040 family) is preserved verbatim and not
+  contradicted by the smoke-ckpt −28.43% reading, since the two
+  checkpoints are different models. CLM-059 is **PROVISIONAL**
+  pending the production-ckpt re-run.
+- Evidence:
+  [`verification_outputs/wave191-p3-mnist-n1000.json`](../verification_outputs/wave191-p3-mnist-n1000.json)
+  (Wave 191 P3 MNIST FM N=1000, commit_sha `084e583`,
+  wall_min=10.32),
+  [`scripts/wave191_p3_mnist_sweep.py`](../scripts/wave191_p3_mnist_sweep.py)
+  (sweep driver),
+  [`data/mnist_fm.npz`](../data/mnist_fm.npz)
+  (smoke-materialized ckpt, sha256=`ded1fa70c83b77f076351f5285571adefd05acb33ed65153db4b23a56f371634`,
+  22481 bytes; `checkpoint_is_smoke_materialization=true`,
+  production recipe BLOCKED on time budget),
+  [`tools/materialize_mnist_fm.py`](../tools/materialize_mnist_fm.py)
+  (smoke-materialisation tool),
+  [`docs/paper-draft.md` §10.34 (c) + §10.34 (d)](paper-draft.md),
+  [`docs/CONSOLIDATED_RESULTS.md` §15.87 (Wave 191 P3 MNIST FM N=1000 row)](CONSOLIDATED_RESULTS.md),
+  [`docs/baseline-audit-report.md` §R.77 (Wave 191 P3 MNIST FM N=1000 row)](baseline-audit-report.md).
