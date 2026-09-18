@@ -306,6 +306,17 @@ def main() -> int:
     report["sweep_script"] = (
         "scripts/wave189_p3_freqflow_synth_sweep.py"
     )
+    # Pin commit_sha (Wave 186 P2 / Wave 188 pattern) so future
+    # readers can resolve this output back to the exact commit.
+    try:
+        import subprocess as _sp
+        _sha = _sp.check_output(
+            ["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"],
+            stderr=_sp.DEVNULL,
+        ).decode("utf-8").strip()
+        report["commit_sha"] = _sha
+    except Exception:  # noqa: BLE001
+        report["commit_sha"] = None
 
     out_path.write_text(json.dumps(report, indent=2, default=str) + "\n")
     print(f"[wave189-p3] wrote {out_path}", flush=True)
