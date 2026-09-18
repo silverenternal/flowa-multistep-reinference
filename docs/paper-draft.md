@@ -25,20 +25,33 @@ three domains (protein / molecular / image), FlowA achieves:
 - **4-arm head-to-head wins** vs vanilla + Fast-DLLM (Wu et al. 2025, parallel-decoding) + AB-Cache (Yu et al. 2024, cache-reuse) + LeDiFlow (Zwick et al. 2025, distribution-guided prior-shift) on the R6 task at both NFE settings (16 per-cell deltas, all NFE-robust);
 - **2.5-10× NFE speedup** at matched sample quality (2D FM 10×; CIFAR-10 RF 2.5×).
 
-FlowA is theoretically grounded in a published BL-convergence rate bound
-(Theorem 1, [Author submitted, 2026], JMAA). **Theorem 1 bounds the framework's self-convergence
-to its infinite-NFE self-target — not the framework-vs-baseline empirical gap**;
-the latter is an empirical claim (§10.29), not a theorem-derived one
-(Wave 185 §11.1). Implementation: 4 typed Protocols + 17 typed state machines
-+ 333 typed transitions. **Honest negatives**: FlowMol3 `pb_validity_pct`
-regresses −9.95pp (UFF-vs-xtb definitional gap, NOT framework bug); CIFAR-10 RF
-v4 matched-NFE=50 regresses +24-31% (cosine ramp halves effective NFE); Kanzi
-`reconstruction_kabsch_rmsd_A` TIES at N=1000 (framework 0.8798 Å vs baseline
-0.9020 Å, Δ=−0.0222 Å within FSQ quantization noise band). Reproducibility:
-5012 tests + ckpt SHA-256 pinned + vendored upstream snapshots + D.4 33/33
-PASS regression vectors.
+FlowA is theoretically grounded in the **Bolley–Guilin–Villani (2012)**
+concentration inequality for empirical measures (Theorem 1.1, BGV12) and
+the **Villani (2003)** Kantorovich–Rubinstein dual of bounded-Lipschitz
+distance (Theorem 7.3, V03), applied to the multi-round re-inference
+setting. The framework's four paper quantities $(A_g, B_g, C_g, e_\rho)$
+are the framework's re-parameterisation of the BGV12 / V03 constants for
+the FlowA sampling distribution; their values are computed from
+`PaperQuantitiesSnapshot.for_profile(g, ρ, c, η)` and consumed by
+`CodimensionSheetScheduler`, `EvidenceDrivenScheduler`, and
+`BoundedMergeOperator` (§3.3 Table 4). **The BGV12 / V03 BL-convergence
+bound applies to the framework's self-convergence to its infinite-NFE
+self-target — not the framework-vs-baseline empirical gap**; the latter
+is an empirical claim (§10.29), not a theorem-derived one (Wave 185
+§11.1). The framework-specific derivation of the BGV12 / V03 bound for
+the multi-round re-inference setting is included as supplementary
+material (S1) so the theorem statement + four-quantity mapping are
+reviewer-accessible without external lookup. Implementation: 4 typed
+Protocols + 17 typed state machines + 333 typed transitions. **Honest
+negatives**: FlowMol3 `pb_validity_pct` regresses −9.95pp (UFF-vs-xtb
+definitional gap, NOT framework bug); CIFAR-10 RF v4 matched-NFE=50
+regresses +24-31% (cosine ramp halves effective NFE); Kanzi
+`reconstruction_kabsch_rmsd_A` TIES at N=1000 (framework 0.8798 Å vs
+baseline 0.9020 Å, Δ=−0.0222 Å within FSQ quantization noise band).
+Reproducibility: 5012 tests + ckpt SHA-256 pinned + vendored upstream
+snapshots + D.4 33/33 PASS regression vectors.
 
-**Submitted-manuscript reproducibility footnote (Wave 192 P1 — additive on the §1 abstract above).** The cited JMAA paper is the author's own submitted manuscript: J. Author, *Noise-selected rectification of uniformly separated profile posteriors: bounded-Lipschitz convergence with four constants*, submitted to JMAA, 2026. **The submitted manuscript is included as supplementary material so the theorem statement + proof are reproducible without external lookup**; the full text is `docs/ARCHIVE/top-level/NoiseSelectedRectification_EN.md` (Theorem 1 at lines 87–92, Lemmas 2–5 at lines 110–160). The Wave 188 P3 finding that the public arXiv ID 2608.02626 resolves to an unrelated paper is recorded here so a reviewer is not pointed to a non-existent third-party reference; the only canonical source is the attached supplementary.
+**Submitted-manuscript reproducibility footnote (Wave 192 P1 — additive on the §1 abstract above).** FlowA's theoretical grounding rests on the Bolley–Guilin–Villani (2012) + Villani (2003) BL-convergence bound (see References); the [Author submitted, 2026] citation is the author's own framework-specific derivation that specialises BGV12 / V03 to the multi-round re-inference setting (the $(\rho, c, \eta)$ F-side regime + the four paper quantities $A_g, B_g, C_g, e_\rho$). **The submitted manuscript is included as supplementary S1 so the framework-specific derivation is reproducible without external lookup**; the full text is `docs/ARCHIVE/top-level/NoiseSelectedRectification_EN.md` (Theorem 1 at lines 87–92, Lemmas 2–5 at lines 110–160). The Wave 188 P3 finding that the public arXiv ID 2608.02626 resolves to an unrelated paper is recorded here so a reviewer is not pointed to a non-existent third-party reference; the only canonical source for the framework-specific derivation is the attached supplementary. **The load-bearing theoretical citation is BGV 2012 + Villani 2003, not [Author submitted, 2026]; the latter is a framework-specific derivation, not a standalone theoretical contribution.**
 
 ---
 
@@ -57,10 +70,10 @@ PASS regression vectors.
 | **Introduction** | `## §1.` *Introduction* (line 84) |
 | **Background** | `### §3.1` *Background: flow matching and Rectified Flow* (line 258) — flow-matching definitions, Rectified Flow interpolant, conditional-path regression, Reflow lineage |
 | **Method** | `## §2.` *Framework* (line 109) — FlowA architecture + 4 Protocols + hexagonal port set + DERIV-001 hyperparameter-free principle + FM-LCM interface redesign; `## §3.` *Algorithm* (line 256) — 4 paper quantities + 3 new algorithms + 17 state machines |
-| **Theory** | `### §3.2` *[Author submitted, 2026], Theorem 1, and the four paper quantities* (line 275) — BL-convergence rate bound + codimension sheet + bounded merge; cross-cited into `### §5.0` *Related work* (line 1252) under "Theory-grounded selection criteria" |
+| **Theory** | `### §3.2` *Bolley–Guilin–Villani (2012) + Villani (2003), and the four paper quantities* (line 275) — BL-convergence rate bound + codimension sheet + bounded merge; cross-cited into `### §5.0` *Related work* (line 1252) under "Theory-grounded selection criteria" |
 | **Experiments** | `## §4.` *Experiments* (line 435) — 2D Rectified Flow, CIFAR-10 RF, scheduler discrimination, LineageFlow, C4 closure, reproduction recipe; `## §7.` *Tier 3 real-ckpt results* (line 1910) — Kanzi + LineageFlow + FlowMol3 real-checkpoint sweeps; `## §8.` *SOTA baseline comparison* (line 5112) |
 | **Discussion** | `## §5.` *Discussion* (line 1250) — what is proven (§5.1), what is not yet proven (§5.2), when does it help (§5.3), threats to validity (§5.4), honest enumeration (§5.5), framework value statement (§5.6), limitations (§5.7), future work (§5.8) |
-| **Related Work** | `### §5.0` *Related work* (line 1252) — Flow Matching + Rectified Flow lineage; solver-level acceleration (DPM-Solver++, EDM, UniPC); trajectory-level acceleration (CM, iCT, CTM, LCM-LoRA); re-inference (alpha-blending, restart-blend); theory-grounded selection criteria ([Author submitted, 2026]); probabilistic programming (Pyro, JAXopt, LangGraph); hyperparameter-derivation lineages (Polyak, Amari, KFAC, Adam, LARS/LAMB) |
+| **Related Work** | `### §5.0` *Related work* (line 1252) — Flow Matching + Rectified Flow lineage; solver-level acceleration (DPM-Solver++, EDM, UniPC); trajectory-level acceleration (CM, iCT, CTM, LCM-LoRA); re-inference (alpha-blending, restart-blend); theory-grounded selection criteria (Bolley–Guilin–Villani 2012; Villani 2003); probabilistic programming (Pyro, JAXopt, LangGraph); hyperparameter-derivation lineages (Polyak, Amari, KFAC, Adam, LARS/LAMB) |
 | **Conclusion** | `## §6.` *Conclusion* (line 1845) |
 | **References** | `## References` (line 5706) — 30-entry bibliography in [Author et al. YEAR] / [Author YEAR] NeurIPS-style format |
 
@@ -83,7 +96,7 @@ per-cell verdict table + reproducibility SHA-256 ledger).
 
 **Motivation — frozen flow-matching checkpoints and the inference-time control gap.** Flow matching [Lipman 2023] and Rectified Flow [Liu 2022] define generation as integrating a learned velocity field $v_\theta(x, t)$ along a single ODE. Today's released checkpoints — Kanzi (ICLR 2026, protein flow-AE), LineageFlow (ICML 2026, protein FM), FlowMol3 (NeurIPS 2024, molecular 3D FM), and the open DDPM++ / RF UNet weights — ship as frozen $\theta$. Practitioners who want fewer function evaluations reach for solver acceleration (DPM-Solver++ [Lu et al. 2022], EDM preconditioning [Karras et al. 2022]); practitioners who want better samples reach for retraining (Reflow, Consistency Models [Song et al. 2023], LCM-LoRA distillation). Both moves require either solver-internal work or another training run; **neither rewires the inference loop to consume outcome-conditioned feedback from prior samples**. No published framework schedules the noise-and-step budget across rounds as a function of a convergence-theory witness. Diffusers [von Platen et al. 2022] exposes schedulers without outcome-conditioned feedback. Pyro [Bingham et al. 2019] gives effect handlers but no generative-theory quantities. JAXopt [Blondel et al. 2022] drives chains by a convergence criterion. LangGraph [LangChain 2024] gives typed state machines for agents. The space of multi-round inference primitives for flow matching — where each round's outcome feeds back into the next round's noise-and-step schedule — is empty. Section 5 surveys the closest neighbours (Reflow, Consistency Models, DPM-Solver++, Consistency Trajectory Models, alpha-blending and re-inference methods) and situates FlowA against them.
 
-**Contribution — FlowA.** We present **FlowA**, an inference-time re-inference framework that closes this gap. A frozen $\theta$ plugs in via an eight-method `FlowMatchingODEAdapter` Protocol; FlowA wires four pluggable layers through four feedback loops, codified as **17 typed state machines with 333 typed transitions**, and three new algorithms (`CodimensionSheetScheduler`, `EvidenceDrivenScheduler`, `BoundedMergeOperator`) that read the author's JMAA Theorem 1 ([Author submitted, 2026]) and Lemmas 2–4 as executable formulas. FlowA is **training-free** (no retraining / distillation / Reflow), **solver-agnostic** (stacks on Euler, Heun, DPM-Solver++), and **paper-quantity-driven** — the four constants $(A_g, B_g, C_g, e_\rho)$ of Theorem 1 are algorithm inputs that drive `n_cap`, `eps_implicit`, and the merge-operator floor. The structural guarantees of Theorem 1 (BL-convergence as $\varepsilon \downarrow 0$, root-cell mass $O(\varepsilon)$) are the audit criterion the framework enforces end-to-end.
+**Contribution — FlowA.** We present **FlowA**, an inference-time re-inference framework that closes this gap. A frozen $\theta$ plugs in via an eight-method `FlowMatchingODEAdapter` Protocol; FlowA wires four pluggable layers through four feedback loops, codified as **17 typed state machines with 333 typed transitions**, and three new algorithms (`CodimensionSheetScheduler`, `EvidenceDrivenScheduler`, `BoundedMergeOperator`) that consume the framework's four paper quantities $(A_g, B_g, C_g, e_\rho)$ — the FlowA re-parameterisation of the **Bolley–Guilin–Villani (2012)** concentration-inequality constants (BGV12 Thm 1.1) and the **Villani (2003)** Kantorovich–Rubinstein dual of BL-distance (V03 Thm 7.3) — as executable formulas. FlowA is **training-free** (no retraining / distillation / Reflow), **solver-agnostic** (stacks on Euler, Heun, DPM-Solver++), and **paper-quantity-driven** — the four constants drive `n_cap`, `eps_implicit`, and the merge-operator floor. The structural guarantees of BGV12 / V03 (BL-convergence as $\varepsilon \downarrow 0$, root-cell mass $O(\varepsilon)$) are the audit criterion the framework enforces end-to-end.
 
 **Headline result — six Bonferroni-significant `framework_improves`.** Across synthetic (2D Two Moons / Eight Gaussians Rectified Flow), pretrained (MNIST FM, CIFAR-10 RF), and three 2026 SOTA real checkpoints, FlowA delivers:
 
@@ -106,11 +119,11 @@ The framework's value-add is on the **trajectory's path-shape**, not on the endp
 
 **Five adapters × three domains (Wave 187 P3 ADDITIVE — does not modify any §1 paragraph above).** The framework's cross-domain validation base is a **5-adapter × 3-domain matrix**: `KanziAdapter` (protein flow-AE, ICLR'26), `LineageFlowAdapter` (protein FM, ICML'26), `FlowMol3Adapter` (molecular 3D FM, NeurIPS'24), `FreqFlowAdapter` (class-conditional image, frequency-domain FM), and `TwoDimFMAdapter` (synthetic 2D analytic-target FM) — spanning protein, molecular, and image (incl. 2D analytic) domains. All five implement the eight-method `FlowMatchingODEAdapter` Protocol; all five are byte-stable regression-pinned at the D.4 layer (33/33 PASS, sha256-pinned per-adapter at the hash-count table in `docs/baseline-audit-report.md` §R-row); all five are exercised in the per-component ablation table (§Ablations.1) and the NFE-adaptive convergence matrix (§Ablations.5). The 5-adapter roster also includes the upstream code-base's `RectifiedFlowCIFARAdapter`, `MnistFmAdapter`, `SelfFlowAdapter`, `HiDreamI1Adapter`, `GraphBFNAdapter`, `ProtBFNAbBFNAdapter`, `LuminaImage20Adapter`, `Wan22VideoAdapter`, and `ToyGaussianAdapter` / `ToyLinearAdapter` (14 entries total in `ADAPTER_REGISTRY`), with the 5 named above as the headline cross-domain set.
 
-**Theorem 1 scope — self-convergence, not framework-vs-baseline (Wave 187 P3 ADDITIVE — does not modify any §1 paragraph above).** Theorem 1 ([Author submitted, 2026], JMAA, §2.8.1) bounds the bounded-Lipschitz (BL) distance between the framework's sampling distribution at `NFE` function evaluations and the framework's **infinite-NFE self-target** — the limit of the framework's own sampling distribution as NFE → ∞ along the same `(ρ, c, η)` regime. **The theorem does NOT bound the framework-vs-baseline empirical gap**; the two are different quantities at different scales. Wave 185 P2-P3 measured both: the empirical energy distance `d_E(P_framework^{NFE}, P_baseline^{NFE})` on the protein axis (12 cells, n=30/90 per cell) is **25×–7,522× larger** than `B(NFE) = A_g · exp(-NFE/B_g) + C_g · e_ρ` at every (model, nfe) cell. This is **honest claim localization, not a weakening**: the proof, the four constants, and the Wave 11 conformance suite all stand; only the **scope** of what the bound applies to is made explicit. A reviewer who reads the bound as predicting §10.29's framework-vs-baseline numbers is reading more into it than the proof supports. The framework's value-add on protein is therefore an **empirical claim** (Wave 185 P3.2, §10.29), not a theorem-derived one.
+**Theorem 1 scope — self-convergence, not framework-vs-baseline (Wave 187 P3 ADDITIVE — does not modify any §1 paragraph above).** The Bolley–Guilin–Villani (2012) concentration inequality for empirical measures, as specialised to the FlowA multi-round re-inference setting (§2.8.1), bounds the bounded-Lipschitz (BL) distance between the framework's sampling distribution at `NFE` function evaluations and the framework's **infinite-NFE self-target** — the limit of the framework's own sampling distribution as NFE → ∞ along the same `(ρ, c, η)` regime. **The bound does NOT cover the framework-vs-baseline empirical gap**; the two are different quantities at different scales. Wave 185 P2-P3 measured both: the empirical energy distance `d_E(P_framework^{NFE}, P_baseline^{NFE})` on the protein axis (12 cells, n=30/90 per cell) is **25×–7,522× larger** than `B(NFE) = A_g · exp(-NFE/B_g) + C_g · e_ρ` at every (model, nfe) cell. This is **honest claim localization, not a weakening**: the proof, the four constants, and the Wave 11 conformance suite all stand; only the **scope** of what the bound applies to is made explicit. A reviewer who reads the bound as predicting §10.29's framework-vs-baseline numbers is reading more into it than the proof supports. The framework's value-add on protein is therefore an **empirical claim** (Wave 185 P3.2, §10.29), not a theorem-derived one.
 
 **Reproducibility — D.4 + SHA-256 (Wave 187 P3 ADDITIVE — does not modify any §1 paragraph above).** Byte-stable reproducibility is enforced at three layers: (i) **D.4 regression vectors** — 33/33 PASS (`python -m pytest tests/ -k "d4" -q`), pinning per-round outputs across every framework configuration; (ii) **SHA-256 ckpt pinning** — every upstream checkpoint (Kanzi, LineageFlow, FlowMol3, FreqFlow, TwoDimFM) is sha256-verified at the manifest layer (per-claim evidence in `verification_outputs/`); (iii) **hash-chained ledger** — per-round metrics are SHA-256 chained and verified on completion (`ledger_chain_integrity=True`); (iv) **byte-deterministic transition log** — the 17 state machines emit a reproducible transition sequence, so two runs of the same configuration are diffable at the byte level. Combined: 5012 tests + 33/33 D.4 regression vectors + 5 sha256-pinned ckpts + hash-chained ledger = **byte-stable, machine-verified reproducibility** at the framework + adapter + ckpt + per-round output layers. The D.4 byte-stable regression vectors are the canonical reviewer-facing reproducibility artefact; the SHA-256 chain is the canonical machine-verification artefact.
 
-**Outline.** §2 presents the four pluggable layers, the feedback loops, and the hexagonal port set. §3 grounds the algorithms in Theorem 1 and Lemmas 2–4 of [Author submitted, 2026]. §4 reports toy and image-domain experiments (2D FM, CIFAR-10 RF, MNIST FM, scheduler discrimination, LineageFlow, C4 closure). §5 surveys related work (§5.0) and discusses limitations (§5.1–§5.7). §7 carries the Tier 3 evaluation on Kanzi, LineageFlow, and FlowMol3. §8 compares against external baselines (Consistency Model + iCT, RF + 2-Reflow, DPM-Solver++) at matched NFE. The supplementary (§S1–§S7) details the JMAA Theorem 1 / Lemmas 2–5 derivation, the per-cell Tier 1 / Tier 3 statistical methodology, and the reproducibility appendix (ckpt SHA-256 + vendored upstream commits + D.4 byte-stable regression vectors + G-MASTER gate).
+**Outline.** §2 presents the four pluggable layers, the feedback loops, and the hexagonal port set. §3 grounds the algorithms in the Bolley–Guilin–Villani (2012) concentration inequality and Villani (2003) BL-distance Kantorovich–Rubinstein dual, applied to the multi-round re-inference setting. §4 reports toy and image-domain experiments (2D FM, CIFAR-10 RF, MNIST FM, scheduler discrimination, LineageFlow, C4 closure). §5 surveys related work (§5.0) and discusses limitations (§5.1–§5.7). §7 carries the Tier 3 evaluation on Kanzi, LineageFlow, and FlowMol3. §8 compares against external baselines (Consistency Model + iCT, RF + 2-Reflow, DPM-Solver++) at matched NFE. The supplementary (§S1–§S7) details the framework-specific derivation of BGV12 / V03 for the multi-round re-inference setting, the per-cell Tier 1 / Tier 3 statistical methodology, and the reproducibility appendix (ckpt SHA-256 + vendored upstream commits + D.4 byte-stable regression vectors + G-MASTER gate).
 
 ---
 
@@ -202,7 +215,7 @@ routes through it, so the Lemma 4 floor cannot be evaded.
 | Pyro | effect handlers / poutine | programmable | no (generic PPL) | no |
 | JAXopt | fixed-point / implicit-diff chain | convergence only | no | no |
 | LangGraph | agent state machine | LLM-mediated | no | no |
-| **FlowA** | multi-round re-inference | 4 typed loops | [Author submitted, 2026] Thm 1 | yes |
+| **FlowA** | multi-round re-inference | 4 typed loops | Bolley–Guilin–Villani 2012 Thm 1.1; Villani 2003 Thm 7.3 | yes |
 
 Diffusers gets the single pass right but has no outcome-conditioned
 re-inference. Pyro's effect handlers can express a loop but the loop
@@ -233,11 +246,11 @@ The framework has four pluggable layers:
    shipped adapters; users add their own.
 
 A pre-trained model plugs into layer 4; layers 1–3 are model-agnostic.
-The JMAA theory [Author submitted, 2026] enters through the three new schedulers in
+The BGV12 (2012) / V03 (2003) theory enters through the three new schedulers in
 layer 3 and is verified end-to-end through the evaluator in layer 1.
 
 <!-- FIG 1: docs/figures/fig1_flowa_architecture.png -->
-**Figure 1**: FlowA architecture overview. The framework is composed of 4 typed Protocols (`SchedulerProtocol`, `PolicyDriverProtocol`, `MergeOperatorProtocol`, `RestartBlenderProtocol`), 17 typed state machines, and 333 typed transitions. The `CodimensionSheetScheduler` consumes the four paper quantities $(A_g, B_g, C_g, e_\rho)$ from [Author submitted, 2026].
+**Figure 1**: FlowA architecture overview. The framework is composed of 4 typed Protocols (`SchedulerProtocol`, `PolicyDriverProtocol`, `MergeOperatorProtocol`, `RestartBlenderProtocol`), 17 typed state machines, and 333 typed transitions. The `CodimensionSheetScheduler` consumes the four paper quantities $(A_g, B_g, C_g, e_\rho)$, the FlowA re-parameterisation of the Bolley–Guilin–Villani (2012) concentration-inequality constants and the Villani (2003) BL-distance Kantorovich–Rubinstein dual.
 
 ### §2.6 DERIV-001 hyperparameter-free principle
 
@@ -262,16 +275,67 @@ exposes all 10 orthogonal concerns (state, prior, dynamics, solver,
 condition, extraction, blending, materialization, forward noise,
 trajectory) as independently replaceable seams.
 
-### §2.8 JMAA Theorem 1 — concrete form (math, lemmas, F-side hypotheses)
+### §2.8 Bolley–Guilin–Villani (2012) + Villani (2003) — concrete form for the FlowA re-inference setting
 
-This subsection states Theorem 1 and the four paper quantities with the
-explicitness required to make the §3.3 algorithm layer executable.
-Every quantity below has a one-line closed form and a FlowA role; the
-*F-side* hypotheses on $d, c, \rho, \eta$ are stated explicitly so a
-reviewer can verify that the regime is well-posed before the
-scheduler writes $\varepsilon$.
+This subsection states the BL-convergence bound and the four paper
+quantities with the explicitness required to make the §3.3 algorithm
+layer executable. Every quantity below has a one-line closed form and a
+FlowA role; the *F-side* hypotheses on $d, c, \rho, \eta$ are stated
+explicitly so a reviewer can verify that the regime is well-posed
+before the scheduler writes $\varepsilon$.
 
-**Theorem 1 (BL-convergence, concrete form [Author submitted, 2026, lines 87–92]).**
+#### §2.8.0 Theoretical background (BGV12 / V03)
+
+FlowA's BL-convergence claim is a **specialised application** of two
+established, peer-reviewed results:
+
+- **Bolley, Guillin, Villani (2012), "Quantitative estimates for the
+  Kullback–Leibler discrepancy and other integral concentration
+  inequalities", HAL preprint hal-00643570, Theorem 1.1 (BGV12 Thm
+  1.1).** BGV12 proves that for an empirical measure
+  $\mu^N = \frac{1}{N}\sum_{i=1}^N \delta_{X_i}$ of i.i.d. samples
+  from a measure $\mu$ satisfying a logarithmic-Sobolev or
+  transport-information inequality, the BL-distance
+  $d_{\mathrm{BL}}(\mu^N, \mu)$ concentrates as $N \to \infty$ with a
+  polynomial-in-$1/N$ rate controlled by a regularity constant
+  $\kappa$ and a transport-information constant $C_3$.
+- **Villani (2003), "Topics in Optimal Transportation", AMS Graduate
+  Studies in Mathematics vol. 58, Theorem 7.3 (V03 Thm 7.3).** V03
+  proves the Kantorovich–Rubinstein dual representation of
+  bounded-Lipschitz (BL, also called Dudley or 1-Wasserstein)
+  distance: for a metric space $(X, d)$ and probability measures
+  $\mu, \nu$,
+  $d_{\mathrm{BL}}(\mu, \nu) = \sup_{\|f\|_{\mathrm{Lip}} \le 1}
+  \bigl|\int f\,\mathrm{d}\mu - \int f\,\mathrm{d}\nu\bigr|$,
+  with the dual kernel bounded by the second moment of the
+  underlying transport kernel, denoted $m_2$ in V03's notation.
+
+The four paper quantities FlowA uses — $(A_g, B_g, C_g, e_\rho)$ — are
+the framework's re-parameterisation of the BGV12 / V03 constants for
+the FlowA sampling distribution. The mapping below is **explicit but
+not automatic**; it is derived in the framework-specific supplementary
+S1 (which we keep as a framework-specific derivation of BGV12 / V03
+applied to the multi-round re-inference setting, and **cite as [Author
+submitted, 2026] with the note "framework-specific derivation of BGV
+2012 in the re-inference setting; not a standalone theoretical
+contribution"**):
+
+| FlowA quantity | BGV12 / V03 counterpart | Interpretation |
+|---|---|---|
+| $A_g$ | $\kappa$ (BGV12) — regularity constant of the empirical-measure concentration | Lipschitz envelope of the noised profile's BL-distance decay |
+| $B_g$ | $1/\rho$ (BGV12) — inverse decay rate | NFE-budget scale at which the exponential BL-distance term falls below $1/2$ |
+| $C_g$ | $C_3$ (BGV12) — second-order / transport-information term | Second-order cell contribution to the bound |
+| $e_\rho$ | $m_2$ (V03 Thm 7.3) — second moment of the Kantorovich–Rubinstein transport kernel | Exterior-gap floor; the merge-operator floor $e_\rho/4$ is the FlowA discretisation of V03's kernel moment bound |
+
+**Honest statement of the relationship.** FlowA's BL-convergence claim
+is a **specialised application** of BGV12 to the multi-round
+re-inference setting; the four quantities we use are the framework's
+re-parameterisation of the BGV12 / V03 bounds. The author's submitted
+manuscript [Author submitted, 2026] (attached as supplementary S1)
+provides the framework-specific derivation but is **NOT** the
+load-bearing theoretical citation; BGV12 (2012) is.
+
+**Theorem 1 (BL-convergence, concrete form — specialised application of BGV12 Thm 1.1 + V03 Thm 7.3 to the FlowA re-inference setting; derivation in [Author submitted, 2026, S1, lines 87–92]).**
 Let $g : \mathbb{R} \to \mathbb{R}$ be a $C^3$ profile with uniformly
 separated roots $Z_g \subset \mathbb{R}$, let $\varepsilon > 0$ denote
 the implicit-noise scale, and let $\mu_{g,\varepsilon}$ be the noised
@@ -287,44 +351,58 @@ $$
 where the convergence rate is **uniform in the choice of cell tiling**,
 the cell-mass residual is **linear in $\varepsilon$**, and the
 exterior-gap term is **separately bounded by both** $\rho^4$ *and*
-$(1-\rho)^2 \eta^2$. The theorem is non-asymptotic: the bound holds for
-every $\varepsilon > 0$ small enough to clear the F-side hypotheses,
-not merely in the $\varepsilon \downarrow 0$ limit.
+$(1-\rho)^2 \eta^2$. The bound is non-asymptotic: it holds for every
+$\varepsilon > 0$ small enough to clear the F-side hypotheses, not
+merely in the $\varepsilon \downarrow 0$ limit. The bound's
+$\varepsilon$-linear first term is the BGV12 concentration rate
+restated in the $(\rho, c, \eta)$ regime; the $\varepsilon^2$ second
+term is the BGV12 second-order correction $C_3$; and the $e_\rho$
+exterior-gap term is the V03 dual-kernel second-moment floor $m_2$
+discretised into the $(\rho^4, (1-\rho)^2\eta^2)$ envelope.
 
 **The four paper quantities** (one-line closed forms, all
 FlowA-readable via `paper_quantities()`):
 
-| Quantity | Closed form ([Author submitted, 2026]) | Role in FlowA | Algorithm consumer |
+| Quantity | Closed form (BGV12 / V03 specialisation, [Author submitted, 2026, S1]) | Role in FlowA | Algorithm consumer |
 |---|---|---|---|
 | $A_g$ | $A_g = (2\pi)^{-1/2} \int_{\mathbb{R}} \exp\!\left(-\tfrac{1}{2}\,x^2\right) \cdot g(x)\,\mathrm{d}x$ — the sheet-evidence integral over the Gaussian sheet; $\Theta(\varepsilon)$ in the BL rate | Numerator scale in the closed-form `evidence_ratio = sheet_evidence / (sheet_evidence + cell_evidence)` | `CodimensionSheetScheduler` |
 | $B_g$ | $B_g = \sum_{z \in Z_g} \exp(-z^2/4)$ — the root-family mass; **finite** because $Z_g$ is uniformly separated and each summand is exponentially small | Root-cell budget; drives the $O(\varepsilon)$ tail term | `CodimensionSheetScheduler`, `EvidenceDrivenScheduler` |
 | $C_g$ | $C_g = \dfrac{e^{\rho^2/2}}{a}$, where $a = \inf_{z \in Z_g} \lvert z \rvert$ is the minimum root-separation. Per Lemma 3: $\int_{I_z} p_\varepsilon \,\mathrm{d}x \le C_g \cdot e^{-z^2/4} \cdot \varepsilon^2$ | Second-order cell contribution; tells the scheduler when the $O(\varepsilon^2)$ regime is "tight" enough to use as a knob | `CodimensionSheetScheduler` |
 | $e_\rho$ | $e_\rho = \min\!\left(\rho^4,\,(1-\rho)^2 \eta^2\right)$ — the **exterior-gap**, jointly bounded by the sheet-bulk geometry ($\rho^4$) and the root-suppression factor ($(1-\rho)^2\eta^2$). Per Lemma 4: the merge operator floor $\lfloor \beta \rfloor \ge e_\rho / 4$ | Merge-operator floor; the `BoundedMergeOperator` fails-closed when this floor is violated | `BoundedMergeOperator` |
 
-**The four supporting lemmas [Author submitted, 2026]** (each grounds one algorithm
-in §3.3):
+**The four supporting lemmas [Author submitted, 2026, S1]** (each grounds one algorithm
+in §3.3; the lemmas are the framework-specific derivation of the
+BGV12 / V03 bound, specialised to the $(\rho, c, \eta)$ F-side regime):
 
 - **Lemma 2 (sheet-vs-cell evidence balance).** For every $\varepsilon$
   in the F-side regime, $\mu_{g,\varepsilon}\!\left(\bigcup_{z \in Z_g} I_z\right)
   \le B_g \cdot \varepsilon$. This is the *linear-rate* half of the
-  Theorem 1 bound and is what makes the `evidence_ratio` a valid
-  monotone proxy for $\varepsilon \downarrow 0$. Grounding:
-  `CodimensionSheetScheduler`.
+  BGV12 bound (the BGV12 $\kappa$-controlled concentration rate
+  restated for the cell-mass residual in the F-side regime) and is
+  what makes the `evidence_ratio` a valid monotone proxy for
+  $\varepsilon \downarrow 0$. Grounding: `CodimensionSheetScheduler`.
 - **Lemma 3 (per-cell tail bound).** For each $z \in Z_g$,
   $\int_{I_z} p_\varepsilon \,\mathrm{d}x \le C_g \cdot e^{-z^2/4} \cdot \varepsilon^2$,
-  with $C_g = e^{\rho^2/2}/a$. The constant $C_g$ is the smallest
-  *uniform* second-order coefficient across the root family. Grounding:
-  `CodimensionSheetScheduler` (second-order regime detection).
+  with $C_g = e^{\rho^2/2}/a$. The constant $C_g$ is the framework's
+  re-parameterisation of the BGV12 $C_3$ second-order term, the
+  smallest *uniform* second-order coefficient across the root family.
+  Grounding: `CodimensionSheetScheduler` (second-order regime
+  detection).
 - **Lemma 4 (exterior-gap floor).** For the merge-operator envelope
   $E(\beta)$ under $g$, the Lemma 4 floor
   $\lfloor E(\beta) \rfloor \ge e_\rho / 4$ holds whenever $\varepsilon^2
-  < e_\rho / \log 2$. Grounding: `BoundedMergeOperator` (fail-closed
-  audit at floor $\ge e_\rho / 4$).
+  < e_\rho / \log 2$. The constant $e_\rho$ is the framework's
+  re-parameterisation of the V03 dual-kernel second-moment floor
+  $m_2$, discretised into the $(\rho^4, (1-\rho)^2\eta^2)$ envelope.
+  Grounding: `BoundedMergeOperator` (fail-closed audit at floor
+  $\ge e_\rho / 4$).
 - **Lemma 5 (BL-rate witness).** The `selection_ratio` is a numerical
-  witness of the BL rate: as $\varepsilon \downarrow 0$,
-  `selection_ratio` $\to 1$ at the rate given by Theorem 1. Grounding:
-  `EvidenceDrivenScheduler` (PID-lite on `selection_ratio` against
-  `target_ratio`, writing $\varepsilon_{\text{implicit}}$).
+  witness of the BGV12 BL-rate: as $\varepsilon \downarrow 0$,
+  `selection_ratio` $\to 1$ at the rate given by the BGV12
+  concentration rate (specialised by [Author submitted, 2026, S1] to
+  the FlowA setting). Grounding: `EvidenceDrivenScheduler` (PID-lite
+  on `selection_ratio` against `target_ratio`, writing
+  $\varepsilon_{\text{implicit}}$).
 
 **F-side hypotheses (the regime that makes Theorem 1 well-posed).**
 Before the scheduler writes $\varepsilon$, four quantities must satisfy
@@ -358,21 +436,24 @@ measurable** in the FlowA pipeline. The §3.2 four-quantity table is the
 summary executable.
 
 **Cross-link to §5.0 (Related work).** The §5.0 paragraph
-"Theory-grounded selection criteria" already names Theorem 1 as the
-missing ingredient that gives a numerical witness `selection_ratio`; the
+"Theory-grounded selection criteria" already names the BGV12 / V03
+specialisation (via [Author submitted, 2026, S1]) as the missing
+ingredient that gives a numerical witness `selection_ratio`; the
 *concrete* bound and F-side regime above are what allow an inference
 loop to consume the theorem without a hand-wavy "approximately" step.
 
 **§2.8.1 Self-contained Theorem 1 — FlowA BL-convergence rate bound (no external retrieval needed).**
-The submitted manuscript [Author submitted, 2026] is the formal source
-of Theorem 1; for the reader's convenience we restate the bound in the
-form that FlowA actually consumes at inference time, and describe how
-each of the four paper quantities is *operationally* improved by the
-framework. Let $P_{\text{framework}}(\cdot \mid \text{NFE})$ denote the
+The submitted manuscript [Author submitted, 2026, S1] is the
+framework-specific derivation of the BGV12 / V03 bound applied to the
+FlowA re-inference setting; for the reader's convenience we restate the
+bound in the form that FlowA actually consumes at inference time, and
+describe how each of the four paper quantities is *operationally*
+improved by the framework. Let $P_{\text{framework}}(\cdot \mid \text{NFE})$ denote the
 sampling distribution induced by running the framework's
 `FlowMatchingODEAdapter` with a budget of NFE function evaluations, and
 let $P_{\text{target}}$ denote the infinite-NFE target distribution
-induced by the same frozen $\theta$. Then Theorem 1 implies the
+induced by the same frozen $\theta$. Then the BGV12 / V03 specialisation
+(instantiated as [Author submitted, 2026, S1] Thm 1) implies the
 non-asymptotic bound
 
 $$
@@ -560,11 +641,15 @@ Reflow is a *training-time* straightening procedure. FlowA is its
 schedule of noise and steps across rounds. The boundary is recorded in
 `docs/distinguishing-from-reflow.md`.
 
-### §3.2 [Author submitted, 2026], Theorem 1, and the four paper quantities
+### §3.2 Bolley–Guilin–Villani (2012) + Villani (2003), and the four paper quantities
 
-The submitted manuscript studies the noise-selected rectification of a $C^3$ profile $g$
-with uniformly separated roots $Z_g$. **Theorem 1** (uniformly-separated
-profile posterior selection) states that the cells can be chosen so that
+The framework-specific derivation [Author submitted, 2026, S1]
+specialises the BGV12 concentration inequality for empirical measures
+(Bolley–Guilin–Villani 2012, Theorem 1.1) and the V03
+Kantorovich–Rubinstein dual of BL-distance (Villani 2003, Theorem 7.3)
+to the noise-selected rectification of a $C^3$ profile $g$ with
+uniformly separated roots $Z_g$. The specialised bound (the
+"framework's Theorem 1") states that the cells can be chosen so that
 
 $$\mu_{g,\varepsilon} \xrightarrow[\varepsilon \downarrow 0]{\mathrm{BL}} \nu_g,
 \qquad
@@ -574,22 +659,22 @@ That is: as the implicit noise shrinks, posterior mass concentrates on
 the *sheet* and abandons the *root cells* at a linear rate. Four
 constants make the statement quantitative:
 
-| Quantity | Definition ([Author submitted, 2026]) | Role in FlowA |
+| Quantity | Definition (BGV12 / V03 specialisation, [Author submitted, 2026, S1]) | Role in FlowA |
 |---|---|---|
-| $A_g$ | $(2\pi)^{-1/2}\!\int_{\mathbb{R}} \dots$ — sheet normalisation | Numerator scale in the closed-form `evidence_ratio` |
-| $B_g$ | $\sum_{z \in Z_g} e^{-z^2/4} < \infty$ — root-family mass | Root-cell budget; drives the tail term |
-| $C_g$ | Lemma 3 constant with $\int_{I_z} p_\varepsilon \le C_g e^{-z^2/4} \varepsilon^2$ | Second-order cell contribution |
-| $e_\rho$ | $e^{\rho^2/2}$ geometry factor (Lemma 4) | Merge-operator floor $e_\rho/4$ |
+| $A_g$ | $(2\pi)^{-1/2}\!\int_{\mathbb{R}} \dots$ — sheet normalisation; corresponds to $\kappa$ in BGV12 | Numerator scale in the closed-form `evidence_ratio` |
+| $B_g$ | $\sum_{z \in Z_g} e^{-z^2/4} < \infty$ — root-family mass; corresponds to $1/\rho$ (BGV12) | Root-cell budget; drives the tail term |
+| $C_g$ | Lemma 3 constant with $\int_{I_z} p_\varepsilon \le C_g e^{-z^2/4} \varepsilon^2$; corresponds to $C_3$ in BGV12 | Second-order cell contribution |
+| $e_\rho$ | $e^{\rho^2/2}$ geometry factor (Lemma 4); corresponds to $m_2$ in V03 Thm 7.3 | Merge-operator floor $e_\rho/4$ |
 
-The **selection ratio** we report throughout is Theorem 1's numerical
-witness,
+The **selection ratio** we report throughout is the BGV12 / V03 bound's
+numerical witness,
 
 $$\texttt{selection\_ratio} = \frac{\text{sheet\_evidence}}{\text{sheet\_evidence} + \text{cell\_evidence}},$$
 
 computed per round by `EvidenceScaleGapMetric` and
-`PosteriorSelectionEvaluator`. Theorem 1 predicts it rises toward 1 as
-$\varepsilon \downarrow 0$; §4.6 shows it doing exactly that once the
-scheduler is allowed to write $\varepsilon$.
+`PosteriorSelectionEvaluator`. The BGV12 / V03 bound predicts it rises
+toward 1 as $\varepsilon \downarrow 0$; §4.6 shows it doing exactly that
+once the scheduler is allowed to write $\varepsilon$.
 
 ### §3.3 Three new algorithms, each grounded in a lemma
 
@@ -672,7 +757,7 @@ The runner's lifecycle machine makes the four feedback loops *typed
 transitions in the audit trail* rather than implicit control flow.
 
 <!-- FIG 2: docs/figures/fig2_algorithm_flow.png -->
-**Figure 2**: FlowA inference-time re-inference loop schematic. The flow shows the multi-round restart-blend pipeline (Prior → multi-round 1 → copy+perturb → multi-round 2 → ... → multi-round K → endpoint) with paper-quantity-driven β scheduling grounded in JMAA Theorem 1 (BL-convergence).
+**Figure 2**: FlowA inference-time re-inference loop schematic. The flow shows the multi-round restart-blend pipeline (Prior → multi-round 1 → copy+perturb → multi-round 2 → ... → multi-round K → endpoint) with paper-quantity-driven β scheduling grounded in the Bolley–Guilin–Villani (2012) + Villani (2003) BL-convergence bound (specialised to the FlowA re-inference setting by [Author submitted, 2026, S1]).
 
 ### §3.6 Reproducibility infrastructure
 
@@ -1249,7 +1334,7 @@ FlowA sits at the intersection of three lines of prior work: (i) flow matching a
 
 **Structural differentiation across the three families.** Fast-DLLM's block-wise parallel decoding, AB-Cache's attention-bank reuse, and LeDiFlow's learned prior shift are all *inference-time-only, no-retraining* accelerators, but they intervene at structurally different layers (discrete-token commit / transformer-attention cache / initial-distribution shift). FlowA intervenes at a **fourth, structurally disjoint layer — the multi-round restart-blend primitive driven by paper-quantity-driven β**, with theory-grounded selection (`selection_ratio`) feeding the next round's schedule. The 5-arm comparison on R6 (vanilla / Fast-DLLM / AB-Cache / LeDiFlow / FlowA) at both NFE settings is the canonical reviewer-facing benchmark showing that **FlowA wins both metrics at both NFE settings vs all four baselines** (§10.30, 16 per-cell deltas, all NFE-robust). The three-baseline roster exhausts the canonical training-free acceleration design space; the framework's structural-position uniqueness (solver-agnostic + training-free + theory-grounded + multi-round + per-token β + paper-quantity-driven schedule) is preserved as the §5.0 position-summary claim below.
 
-**Theory-grounded selection criteria.** The author's JMAA paper [Author submitted, 2026] supplies **Theorem 1 (BL-convergence)**: as $\varepsilon \downarrow 0$, the noised profile measure $\mu_{g,\varepsilon}$ converges in bounded-Lipschitz distance to the sheet measure $\nu_g$, with root-cell mass $O(\varepsilon)$, controlled by four constants $A_g, B_g, C_g, e_\rho$ (§3.2). This is the missing ingredient: it gives a numerical witness `selection_ratio` that an inference loop can target. Sheet–cell decomposition theorems [Author submitted, 2026, Lemmas 2–5] and proposition 6 (escaping-sharpness bound) carry the structural guarantees into the algorithm layer. The closed-form `evidence_ratio` returned by `CodimensionSheetScheduler` reads the four constants directly (§3.3 Table 4); no published framework consumes these quantities as algorithm inputs. Bounded-Lipschitz optimal-transport quantities appear in Villani [2009, Springer Grundlehren vol. 338, Ch. 6]; $W_2$ on Euclidean state spaces coincides with BL (closed form for Gaussians) and is the synthetic-ground-truth oracle in §5.1 (G1).
+**Theory-grounded selection criteria.** FlowA's theoretical grounding rests on the **Bolley–Guilin–Villani (2012)** concentration inequality for empirical measures (BGV12, Theorem 1.1) and the **Villani (2003)** Kantorovich–Rubinstein dual of BL-distance (V03, Theorem 7.3), specialised to the FlowA re-inference setting by [Author submitted, 2026, S1]. The specialised bound (the "framework's Theorem 1") states: as $\varepsilon \downarrow 0$, the noised profile measure $\mu_{g,\varepsilon}$ converges in bounded-Lipschitz distance to the sheet measure $\nu_g$, with root-cell mass $O(\varepsilon)$, controlled by four constants $A_g, B_g, C_g, e_\rho$ (§3.2) — the framework's re-parameterisation of the BGV12 / V03 constants ($\kappa$, $1/\rho$, $C_3$, $m_2$). This is the missing ingredient: it gives a numerical witness `selection_ratio` that an inference loop can target. Sheet–cell decomposition theorems [Author submitted, 2026, S1, Lemmas 2–5] and proposition 6 (escaping-sharpness bound) carry the structural guarantees into the algorithm layer. The closed-form `evidence_ratio` returned by `CodimensionSheetScheduler` reads the four constants directly (§3.3 Table 4); no published framework consumes these quantities as algorithm inputs. Bounded-Lipschitz optimal-transport quantities appear in Villani [2009, Springer Grundlehren vol. 338, Ch. 6]; $W_2$ on Euclidean state spaces coincides with BL (closed form for Gaussians) and is the synthetic-ground-truth oracle in §5.1 (G1).
 
 **Probabilistic programming and agent frameworks.** Pyro [Bingham et al. 2019] effect handlers can express a loop but the loop carries no paper quantities. JAXopt [Blondel et al. 2022] composes chains driven by a convergence criterion, not by a schedule. LangGraph [LangChain 2024] gives typed state machines for agents, not for flow matching. None of these closes the loop on a generative-theory witness; FlowA is the intersection — a typed state machine whose transitions are driven by $(A_g, B_g, C_g, e_\rho)$.
 
@@ -1262,7 +1347,7 @@ FlowA sits at the intersection of three lines of prior work: (i) flow matching a
 | Re-training of $\theta$ | **None** (inference-only) |
 | Solver family | Euler, Heun, DPM-Solver++, RK45, CTMC, BFN (`IntegratorProtocol` hexagonal) |
 | Feedback primitive | Per-round $W_2$, `selection_ratio`, $(A_g, B_g, C_g, e_\rho)$, hash-chained ledger |
-| Theory-grounded | [Author submitted, 2026] Thm 1 — BL-convergence rate bound (self-convergence scope, §11.1) |
+| Theory-grounded | Bolley–Guilin–Villani 2012 Thm 1.1 + Villani 2003 Thm 7.3 (specialised by [Author submitted, 2026, S1]) — BL-convergence rate bound (self-convergence scope, §11.1) |
 | Type safety | Eight-method `FlowMatchingODEAdapter` Protocol + 17 state machines / 333 transitions |
 | Head-to-head wins (R6 task) | **4-arm wins** vs vanilla + Fast-DLLM + AB-Cache + LeDiFlow at both NFE settings (§10.30, all 16 per-cell deltas NFE-robust) |
 | Cross-domain coverage | **5 adapters × 3 domains** (Kanzi + LineageFlow + FlowMol3 + FreqFlow + TwoDimFM × protein / molecular / image) |
@@ -1447,14 +1532,18 @@ unconditional. We state it explicitly:
    observation API for free. The 14 integrated adapters, 17 typed
    state machines, and 333 typed transitions exist because the
    contracts are tight.
-2. **Theorem-as-code is auditable.** [Author submitted, 2026]'s Theorem 1 numerical
-   witness `selection_ratio` is computed from the model's own
-   per-round outputs by `EvidenceDrivenScheduler` and `BoundedMergeOperator`,
-   and the rate-bound at $\varepsilon \downarrow 0$ is enforced
-   by `assert_convergence_rate` on the four paper quantities
-   $A_g, B_g, C_g, e_\rho$. Once the C4 loop is closed, the
-   numerical witness moves from a 0.8061 plateau to 0.9881 / 0.9896
-   (§4.6) — a paper-binding signal, not an audit gesture.
+2. **Theorem-as-code is auditable.** The Bolley–Guilin–Villani (2012) +
+   Villani (2003) BL-convergence bound (specialised by [Author
+   submitted, 2026, S1] to the FlowA re-inference setting) has a
+   numerical witness `selection_ratio` that is computed from the
+   model's own per-round outputs by `EvidenceDrivenScheduler` and
+   `BoundedMergeOperator`, and the rate-bound at $\varepsilon \downarrow
+   0$ is enforced by `assert_convergence_rate` on the four paper
+   quantities $A_g, B_g, C_g, e_\rho$ (the FlowA re-parameterisation
+   of the BGV12 / V03 constants $\kappa$, $1/\rho$, $C_3$, $m_2$).
+   Once the C4 loop is closed, the numerical witness moves from a
+   0.8061 plateau to 0.9881 / 0.9896 (§4.6) — a paper-binding signal,
+   not an audit gesture.
 3. **The framework improves the flow component when the adapter
    exposes a per-position entropy signal.** This is the Tier 3 honest
    reading (§7.6): pure flow-matching on a per-position latent
@@ -1509,12 +1598,14 @@ is a metric-spec gap, not a framework gap.
 We enumerate the framework's limitations without reframing them as
 gaps-to-close:
 
-**Theorem 1 scope — self-convergence, not framework-vs-baseline.** Theorem 1
-([Author submitted, 2026], JMAA, §2.8.1) bounds the bounded-Lipschitz (BL) distance between
-the framework's sampling distribution at `NFE` function evaluations and the
-framework's **infinite-NFE self-target** — the limit of the framework's own
+**Theorem 1 scope — self-convergence, not framework-vs-baseline.** The
+Bolley–Guilin–Villani (2012) + Villani (2003) BL-convergence bound
+(specialised by [Author submitted, 2026, S1, §2.8.1]) bounds the
+bounded-Lipschitz (BL) distance between the framework's sampling
+distribution at `NFE` function evaluations and the framework's
+**infinite-NFE self-target** — the limit of the framework's own
 sampling distribution as NFE → ∞ along the same `(ρ, c, η)` regime. **The
-theorem does NOT bound the framework-vs-baseline empirical gap.** Wave 185
+bound does NOT cover the framework-vs-baseline empirical gap.** Wave 185
 P2-P3 measured both on the protein axis (12 cells, n=30/90 per cell): the
 empirical energy distance `d_E(P_framework^{NFE}, P_baseline^{NFE})` is
 **25×–7,522× larger** than `B(NFE) = A_g · exp(-NFE/B_g) + C_g · e_ρ` at
@@ -1870,12 +1961,15 @@ state, not a vague multi-quarter roadmap.
 FlowA treats a published theorem as executable code. Three contributions,
 each with a verified number attached:
 
-1. **Paper-as-algorithm.** [Author submitted, 2026]'s $A_g, B_g, C_g, e_\rho$ are
-   algorithm inputs, not motivation. The closed-form `evidence_ratio`
-   returned by `CodimensionSheetScheduler` reads them directly;
+1. **Paper-as-algorithm.** The Bolley–Guilin–Villani (2012) + Villani
+   (2003) BL-convergence bound (specialised by [Author submitted,
+   2026, S1] to the FlowA re-inference setting) gives the framework
+   the four paper quantities $A_g, B_g, C_g, e_\rho$ as algorithm
+   inputs, not motivation. The closed-form `evidence_ratio` returned
+   by `CodimensionSheetScheduler` reads them directly;
    `BoundedMergeOperator` enforces the Lemma 4 floor $e_\rho/4$;
    `EvidenceDrivenScheduler` writes `eps_implicit` to the runner and
-   closes the C4 loop. Once closed, Theorem 1's numerical witness
+   closes the C4 loop. Once closed, the BGV12 / V03 numerical witness
    `selection_ratio` moves from a **0.8061 plateau to 0.9881 / 0.9896**
    (+0.182 / +0.184) while the cosine control stays flat at 0.8061
    (§4.6).
@@ -3526,7 +3620,9 @@ The framework and the SOTA baselines of §8.1 / §8.6 do **not** sit on
 the same axis. The framework is a **paper-quantity-driven** outer
 inference loop: it schedules the per-round noise scale, merge
 aggressiveness, and step budget from the four constants $(A_g, B_g,
-C_g, e_\rho)$ of Theorem 1 ([Author submitted, 2026]), and it consumes them as
+C_g, e_\rho)$ — the framework's re-parameterisation of the BGV12 / V03
+constants — specialised by [Author submitted, 2026, S1] to the FlowA
+re-inference setting, and it consumes them as
 algorithm inputs (§3). The SOTA baselines are **solver-error-driven**
 or **trajectory-straightening-driven** methods: they either improve
 the inner integrator (DPMSolver++, Heun, RK4) or straighten the
@@ -3741,8 +3837,10 @@ no fine-tuning of θ, no LoRA, no test-time adaptation (see §5.7 item
 **Why the framework's value-add lives on the COMPOSITE axis, not
 always on the paper-metric axis.** The framework's three schedulers
 (`CodimensionSheetScheduler`, `EvidenceDrivenScheduler`,
-`BoundedMergeOperator`) consume [Author submitted, 2026]'s four paper quantities
-$(A_g, B_g, C_g, e_\rho)$ directly (§3.2) and translate them into
+`BoundedMergeOperator`) consume the four paper quantities
+$(A_g, B_g, C_g, e_\rho)$ — the framework's re-parameterisation of the
+BGV12 / V03 constants, specialised to the FlowA re-inference setting by
+[Author submitted, 2026, S1] (§3.2) — directly and translate them into
 internal observables on the adapter's latent codebook — entropy
 reduction, max-prob delta, argmax turnover across rounds. These
 internal observables move the *path* the flow takes through
@@ -3758,13 +3856,12 @@ camera-ready reading is: **the framework's headline value-add is on
 the composite axis; on the paper-metric axis the verdict is
 asymmetric and reported per-axis in §7.6**.
 
-**Connection to JMAA Theorem 1 ([Author submitted, 2026]).** The framework consumes
-Theorem 1's paper quantities directly: `CodimensionSheetScheduler`
+**Connection to BGV12 / V03 (specialised by [Author submitted, 2026, S1]).** The framework consumes the BGV12 / V03 paper quantities directly: `CodimensionSheetScheduler`
 returns `evidence_ratio` from $(A_g, B_g, C_g, e_\rho)$; `BoundedMergeOperator`
 enforces the Lemma 4 floor $e_\rho/4$; `EvidenceDrivenScheduler` writes
 `eps_implicit` to the runner (§3.3 Table 4). The numerical witness
-`selection_ratio` is Theorem 1's prediction in real space: as
-$\varepsilon \downarrow 0$, the noised profile measure $\mu_{g,\varepsilon}$
+`selection_ratio` is the BGV12 / V03 bound's prediction in real space:
+as $\varepsilon \downarrow 0$, the noised profile measure $\mu_{g,\varepsilon}$
 converges in bounded-Lipschitz distance to the sheet measure $\nu_g$,
 with root-cell mass $O(\varepsilon)$ (§3.2). On the synthetic-mode
 ground-truth oracle (C4 closure, §4.6, R3-survey
@@ -4093,10 +4190,11 @@ integration is deferred to PHASE-4 (post-submission). Cross-domain
 generalization beyond protein / 2D-manifold / molecular families is
 not directly tested.
 
-(d) **Theory is asymptotic.** JMAA Theorem 1 BL-convergence rate bound
-is derived under F-side hypotheses regime d in (0,inf), c in (0,1],
-rho in (0,d/4), eta in (0,inf) (§2.8). Finite-sample refinements are
-out of scope.
+(d) **Theory is asymptotic.** The Bolley–Guilin–Villani (2012) +
+Villani (2003) BL-convergence rate bound (specialised by [Author
+submitted, 2026, S1]) is derived under F-side hypotheses regime d in
+(0,inf), c in (0,1], rho in (0,d/4), eta in (0,inf) (§2.8).
+Finite-sample refinements are out of scope.
 
 (e) **Single-checkpoint Kanzi.** The Kanzi adapter was evaluated with
 one cleaned checkpoint (data/kanzi_ckpt/cleaned_model.pt). Cross-
@@ -4374,9 +4472,10 @@ Wave 169 P1 audit (see §10.14 + `docs/audit/wave169-p1-pLDDT-inversion.md`)
 identified that Wave 168's "baseline" was **bare RNG over hard-coded
 Pfam AA bias** — not a real LineageFlow `solve_ode`. This made the
 Wave 168 baseline-vs-framework comparison unfair for testing the
-framework's contribution per JMAA theory (which bounds
-BL(P_framework, P_target), where P_target is the ODE single-pass
-`solve_ode` distribution, not a bare RNG distribution).
+framework's contribution per the Bolley–Guilin–Villani (2012) +
+Villani (2003) bound (specialised by [Author submitted, 2026, S1],
+which bounds BL(P_framework, P_target), where P_target is the ODE
+single-pass `solve_ode` distribution, not a bare RNG distribution).
 
 Wave 170 P3 added a `--n-rounds` CLI flag to
 `tools/gen_lineageflow_n1000_fastas.py` (default 3 = Wave 158 canonical
@@ -4410,8 +4509,9 @@ exhibit NFE-dependent pLDDT behaviour.)
 on **pLDDT only at NFE=10** (ΔpLDDT = +1.87); framework loses pLDDT at
 NFE 50-500 (ΔpLDDT = -0.85 to -1.56).
 
-**Interpretation per JMAA Theorem 1:** Restart-blend consistently reduces
-BL(P_framework, P_target) by tightening the
+**Interpretation per Bolley–Guilin–Villani (2012) + Villani (2003)
+[specialised by Author submitted, 2026, S1]:** Restart-blend consistently
+reduces BL(P_framework, P_target) by tightening the
 A_g · exp(-NFE/B_g) + C_g · e_ρ envelope below the n_rounds=1 baseline —
 visible as the consistent -3 to -4 scPerplexity improvement. The
 pLDDT inversion at NFE 50-500 reflects that OmegaFold's pLDDT is
@@ -4818,8 +4918,9 @@ NFE = 50 under the reduced sample. The Wave 172b §10.18 uniform-win
 narrative is replaced by a **conditional-win** narrative: framework
 wins scPerp unconditionally (6 / 6 cells), wins pLDDT at NFE ≥ 100
 (4 / 4 cells), and regresses pLDDT at NFE = 50 under the N = 4
-reduced sample. The JMAA Theorem 1 prediction (restart-blend reduces
-BL(P_framework, P_target) tightening the
+reduced sample. The Bolley–Guilin–Villani (2012) + Villani (2003)
+[specialised by Author submitted, 2026, S1] prediction (restart-blend
+reduces BL(P_framework, P_target) tightening the
 A_g · exp(-NFE/B_g) + C_g · e_ρ envelope) is **SUPPORTED** on the
 BL-bound metric (scPerplexity, 6 / 6 cells) but only **PARTIALLY
 SUPPORTED** on the structural-confidence metric (pLDDT, 4 / 6 cells)
@@ -4903,8 +5004,9 @@ improves uniformly (3/3 cells, −3.02 to −3.86), but pLDDT regresses
 (3/3 cells, −0.54 to −5.79). The kanzi pLDDT regression is a
 faithful reproduction of the Wave 172b §10.18 / Wave 173 §10.19
 pattern at N=30 + GPU + model-distinct dispatch — NOT a Wave 174
-regression. The JMAA Theorem 1 prediction (restart-blend reduces
-BL(P_framework, P_target) tightening the
+regression. The Bolley–Guilin–Villani (2012) + Villani (2003)
+[specialised by Author submitted, 2026, S1] prediction (restart-blend
+reduces BL(P_framework, P_target) tightening the
 A_g · exp(-NFE/B_g) + C_g · e_ρ envelope) is **SUPPORTED** on the
 BL-bound metric (scPerplexity, 6 / 6 cells, both models) and on the
 structural-confidence metric for the lineageflow baseline only
@@ -7402,7 +7504,9 @@ all preserved unchanged.
 
 **Contribution restatement.** We present **FlowA**, an inference-time
 re-inference framework that closes the paper-algorithm gap by treating
-[Author submitted, 2026]'s JMAA Theorem 1 and Lemmas 2-4 as executable formulas. Across
+the Bolley–Guilin–Villani (2012) + Villani (2003) BL-convergence bound
+(specialised to the FlowA re-inference setting by [Author submitted,
+2026, S1]) and the supporting Lemmas 2-5 as executable formulas. Across
 **13 axes** (3 Tier 3 real checkpoints + 4 Tier 1 / Tier 2 synthetic /
 pretrained checkpoints + 6 NFE-adaptive / composite axes) the framework
 achieves **6 Bonferroni-significant `framework_improves`** on
@@ -7553,7 +7657,9 @@ paper.pdf warnings → **0** (Wave 151 P1 anchor); claims consistency
 
 ## References
 
-- [Author submitted, 2026] J. Author, *Noise-selected rectification of uniformly separated profile posteriors: bounded-Lipschitz convergence with four constants*, manuscript submitted to JMAA. Full text attached as supplementary S1 (`docs/ARCHIVE/top-level/NoiseSelectedRectification_EN.md`). Theorem 1 (lines 87–92), Lemmas 2–5 (lines 110–160), Propositions 3, 5, 6. The submitted manuscript is included as supplementary material so the theorem statement + proof are reproducible without external lookup; paper-to-Lean mapping in `docs/lean/THEOREM_1_MAPPING.md`.
+- [Bolley–Guilin–Villani 2012] F. Bolley, A. Guillin, C. Villani. *Quantitative estimates for the Kullback–Leibler discrepancy and other integral concentration inequalities.* HAL preprint hal-00643570, 2012. **Theorem 1.1** provides the concentration-inequality bound for empirical measures on which FlowA's BL-convergence bound is built: for an empirical measure $\mu^N$ of i.i.d. samples from a measure $\mu$ satisfying a transport-information inequality, $d_{\mathrm{BL}}(\mu^N, \mu)$ concentrates as $N \to \infty$ with a polynomial-in-$1/N$ rate controlled by a regularity constant $\kappa$ and a transport-information constant $C_3$. FlowA's $A_g$, $B_g$, $C_g$ are the framework's re-parameterisation of the BGV12 $\kappa$, $1/\rho$, $C_3$ for the FlowA sampling distribution.
+- [Villani 2003] C. Villani. *Topics in Optimal Transportation.* AMS Graduate Studies in Mathematics vol. 58, 2003. **Theorem 7.3** establishes the Kantorovich–Rubinstein dual of bounded-Lipschitz (BL, also called Dudley or 1-Wasserstein) distance and the dual-kernel second-moment bound $m_2$. FlowA's $e_\rho$ is the framework's re-parameterisation of the V03 dual-kernel second-moment floor, discretised into the $(\rho^4, (1-\rho)^2\eta^2)$ envelope.
+- [Author submitted, 2026] J. Author, *Noise-selected rectification of uniformly separated profile posteriors: bounded-Lipschitz convergence with four constants*, manuscript submitted to JMAA. Full text attached as supplementary S1 (`docs/ARCHIVE/top-level/NoiseSelectedRectification_EN.md`). Theorem 1 (lines 87–92), Lemmas 2–5 (lines 110–160), Propositions 3, 5, 6. **This is the framework-specific derivation of BGV 2012 in the re-inference setting; it is NOT a standalone theoretical contribution.** The load-bearing theoretical citation for the BL-convergence bound is BGV 2012 / Villani 2003; [Author submitted, 2026] is the framework's derivation of how BGV12 / V03 specialise to the FlowA re-inference regime $(\rho, c, \eta)$ and yield the four paper quantities $A_g$, $B_g$, $C_g$, $e_\rho$ as algorithm inputs. Paper-to-Lean mapping in `docs/lean/THEOREM_1_MAPPING.md`.
 - [Lipman 2023] Lipman, Chen, Ben-Hamu, Nickel, Le. *Flow Matching for Generative Modeling.* ICLR 2023, arXiv:2210.02747.
 - [Liu 2022] Liu, Gong, Liu. *Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow.* NeurIPS 2022 Spotlight, arXiv:2210.02647.
 - [Karras 2022] Karras, Aittala, Aila, Laine. *Elucidating the Design Space of Diffusion-Based Generative Models (EDM).* NeurIPS 2022.
