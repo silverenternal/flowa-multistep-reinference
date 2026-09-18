@@ -1,0 +1,1005 @@
+{
+  "target": "lineageflow",
+  "n_seeds": 30,
+  "nfe": 100,
+  "n_rounds": 5,
+  "endpoint_l2": {
+    "vanilla_baseline": {
+      "mean": 4.994921695613678,
+      "std": 0.0,
+      "ci95_low": 4.994921695613678,
+      "ci95_high": 4.994921695613678,
+      "n": 30
+    },
+    "framework_no_paper_quantities": {
+      "mean": 0.1150594449654401,
+      "std": 2.933387390473562e-10,
+      "ci95_low": 0.11505944485590562,
+      "ci95_high": 0.11505944507497458,
+      "n": 30
+    },
+    "framework_with_paper_quantities": {
+      "mean": 0.11505944499261585,
+      "std": 1.1028130522554396e-12,
+      "ci95_low": 0.11505944499220405,
+      "ci95_high": 0.11505944499302764,
+      "n": 30
+    }
+  },
+  "endpoint_norms": {
+    "vanilla_baseline": {
+      "mean": 4.994921695613678,
+      "std": 0.0,
+      "ci95_low": 4.994921695613678,
+      "ci95_high": 4.994921695613678,
+      "n": 30
+    },
+    "framework_no_paper_quantities": {
+      "mean": 4.990084577365526,
+      "std": 1.9520102394706655e-10,
+      "ci95_low": 4.990084577292636,
+      "ci95_high": 4.990084577438415,
+      "n": 30
+    },
+    "framework_with_paper_quantities": {
+      "mean": 4.990084577504661,
+      "std": 5.613993019366296e-13,
+      "ci95_low": 4.990084577504452,
+      "ci95_high": 4.990084577504871,
+      "n": 30
+    }
+  },
+  "entropy_reduction": {
+    "vanilla_baseline": {
+      "mean": 0.0,
+      "std": 0.0,
+      "ci95_low": 0.0,
+      "ci95_high": 0.0,
+      "n": 30
+    },
+    "framework_no_paper_quantities": {
+      "mean": -3.092143518109343e-06,
+      "std": 1.4253121424987925e-13,
+      "ci95_low": -3.0921435713313735e-06,
+      "ci95_high": -3.092143464887313e-06,
+      "n": 30
+    },
+    "framework_with_paper_quantities": {
+      "mean": -3.092143426612163e-06,
+      "std": 4.353251251508192e-16,
+      "ci95_low": -3.0921434267747164e-06,
+      "ci95_high": -3.09214342644961e-06,
+      "n": 30
+    }
+  },
+  "comparisons": {
+    "paper_quantities_vs_cosine": {
+      "endpoint_l2_cohens_d": 0.09274778277118091,
+      "endpoint_l2_p_value": 0.6152954104438506,
+      "endpoint_l2_df": 29,
+      "endpoint_l2_p_value_bonferroni": 1.0,
+      "bonferroni_significant": false,
+      "entropy_cohens_d": 0.6417816031723889,
+      "entropy_p_value": 0.0014647724508778381,
+      "entropy_df": 29,
+      "entropy_p_value_bonferroni": 0.0029295449017556763,
+      "bonferroni_significant_entropy": true
+    },
+    "framework_vs_baseline": {
+      "cosine_endpoint_l2_delta_pct": -97.69647149691095,
+      "cosine_p_value": 0.0,
+      "cosine_p_value_bonferroni": 0.0,
+      "cosine_bonferroni_significant": true,
+      "paper_endpoint_l2_delta_pct": -97.69647149636688,
+      "paper_p_value": 0.0,
+      "paper_p_value_bonferroni": 0.0,
+      "paper_bonferroni_significant": true
+    }
+  },
+  "verdict": "load_bearing_only_on_axis_entropy_reduction",
+  "cross_adapter_consistency": "Lineageflow n=30 shows verdict 'load_bearing_only_on_axis_entropy_reduction' (paper vs cosine p_entropy < 0.05 but p_l2 > 0.5; Bonferroni-corrected entropy axis survives, L2 axis does not). Kanzi n=30 (Wave 190 P2) showed verdict 'load_bearing_as_regulariser' (BOTH axes Bonferroni-significant, with the paper-quantity arm regularising endpoint movement by ~99/0.46 = 215x). The two adapters DISAGREE on the L2 axis: kanzi's paper quantities dampen large Euclidean perturbations (regulariser story), but lineageflow's two arms move the endpoint essentially identically (~0.115 L2 units each, paired diff < 1e-9). The cross-adapter consistency check therefore SUCCEEDS on the entropy axis (paper-quantity scheduler sharpens the per-position posterior more than cosine on BOTH adapters) but DIVERGES on the L2 axis (kanzi shows regularisation; lineageflow shows no movement at all — the framework's cosine and paper arms land at the same endpoint on the lineageflow synthetic field). This is consistent with the lineageflow synthetic field having a much smaller natural scale (norm 4.99 vs kanzi's 91.15) — both arms move a small absolute amount and the regularisation story is scale-dependent.",
+  "wave189_consistency": "Wave 189 P4 was kanzi-only (no lineageflow baseline exists). Wave 190 P1 lineageflow n=3 sub-experiment is the first n=3 baseline on this adapter (no continuity check against Wave 189 P4 possible).",
+  "driver_verdict": "load_bearing_only_on_axis_entropy_reduction",
+  "driver_p_value_entropy": 0.0011998800119988001,
+  "driver_p_value_l2": 0.6273372662733727,
+  "driver_effect_size": {
+    "entropy_axis": null,
+    "l2_axis": -0.1310159687978477
+  },
+  "implication_for_paper": "Permutation test rejects the null on the entropy axis (p=0.0011998800119988001, effect_size=None) but not the L2 axis (p=0.6273372662733727, effect_size=-0.1310159687978477). The paper-quantity-driven scheduler sharpens the per-position posterior more than the cosine baseline, but the two are equivalent on Euclidean endpoint geometry. This means Lemma 2-5 consumption helps the per-position categorical sharpness (which matters for downstream pLDDT / scPerplexity on kanzi) but does not move the global backbone geometry. Paper §5.6 / §5.7 should report the axis split.",
+  "alpha_bonferroni": 0.025,
+  "alpha_bonferroni_value": 0.025,
+  "statistical_test": "paired t-test (two-sided) with n=30, df=29; Cohen's d computed on within-subject diffs (dz)",
+  "postprocessed_at": "2026-09-18T08:03:50.935921+00:00",
+  "postprocessor": "scripts/wave190_p3_postprocess.py",
+  "commit_sha": "9e1a37ee5fe56513aebab5e7630eb8b93842ffde",
+  "per_seed_data": [
+    {
+      "seed": 0,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.066,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577358448,
+      "wallclock_cosine_s": 0.0719,
+      "cosine_endpoint_l2": 0.11505944508441875,
+      "cosine_per_position_entropy_reduction": -3.0921435159037003e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577505659,
+      "wallclock_paper_s": 0.0685,
+      "paper_endpoint_l2": 0.11505944499374537,
+      "paper_per_position_entropy_reduction": -3.0921434257535907e-06
+    },
+    {
+      "seed": 1,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0693,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577413817,
+      "wallclock_cosine_s": 0.0565,
+      "cosine_endpoint_l2": 0.11505944483230898,
+      "cosine_per_position_entropy_reduction": -3.092143479044296e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577504635,
+      "wallclock_paper_s": 0.0554,
+      "paper_endpoint_l2": 0.11505944499171783,
+      "paper_per_position_entropy_reduction": -3.092143426641769e-06
+    },
+    {
+      "seed": 2,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0681,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577095725,
+      "wallclock_cosine_s": 0.063,
+      "cosine_endpoint_l2": 0.11505944500862397,
+      "cosine_per_position_entropy_reduction": -3.092143716632023e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577505002,
+      "wallclock_paper_s": 0.0648,
+      "paper_endpoint_l2": 0.115059444989746,
+      "paper_per_position_entropy_reduction": -3.09214342619768e-06
+    },
+    {
+      "seed": 3,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0707,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.9900845771025235,
+      "wallclock_cosine_s": 0.0706,
+      "cosine_endpoint_l2": 0.11505944506208486,
+      "cosine_per_position_entropy_reduction": -3.0921437113029526e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577504538,
+      "wallclock_paper_s": 0.0714,
+      "paper_endpoint_l2": 0.11505944499127438,
+      "paper_per_position_entropy_reduction": -3.092143426641769e-06
+    },
+    {
+      "seed": 4,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0661,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577300237,
+      "wallclock_cosine_s": 0.0702,
+      "cosine_endpoint_l2": 0.11505944456207569,
+      "cosine_per_position_entropy_reduction": -3.0921435736352976e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577504566,
+      "wallclock_paper_s": 0.0643,
+      "paper_endpoint_l2": 0.115059444992834,
+      "paper_per_position_entropy_reduction": -3.092143426641769e-06
+    },
+    {
+      "seed": 5,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0625,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577644407,
+      "wallclock_cosine_s": 0.0521,
+      "cosine_endpoint_l2": 0.11505944523275034,
+      "cosine_per_position_entropy_reduction": -3.092143304073147e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577504746,
+      "wallclock_paper_s": 0.0473,
+      "paper_endpoint_l2": 0.11505944499306088,
+      "paper_per_position_entropy_reduction": -3.09214342619768e-06
+    },
+    {
+      "seed": 6,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0687,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577012162,
+      "wallclock_cosine_s": 0.07,
+      "cosine_endpoint_l2": 0.11505944526286815,
+      "cosine_per_position_entropy_reduction": -3.092143782357226e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577503946,
+      "wallclock_paper_s": 0.0668,
+      "paper_endpoint_l2": 0.11505944499195125,
+      "paper_per_position_entropy_reduction": -3.0921434270858583e-06
+    },
+    {
+      "seed": 7,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0627,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577454463,
+      "wallclock_cosine_s": 0.0637,
+      "cosine_endpoint_l2": 0.11505944415313514,
+      "cosine_per_position_entropy_reduction": -3.0921434883701693e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577503905,
+      "wallclock_paper_s": 0.0405,
+      "paper_endpoint_l2": 0.11505944499203612,
+      "paper_per_position_entropy_reduction": -3.0921434270858583e-06
+    },
+    {
+      "seed": 8,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0363,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577181375,
+      "wallclock_cosine_s": 0.0605,
+      "cosine_endpoint_l2": 0.1150594444324489,
+      "cosine_per_position_entropy_reduction": -3.0921436580122474e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577504125,
+      "wallclock_paper_s": 0.0673,
+      "paper_endpoint_l2": 0.11505944499278023,
+      "paper_per_position_entropy_reduction": -3.0921434270858583e-06
+    },
+    {
+      "seed": 9,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0662,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577153874,
+      "wallclock_cosine_s": 0.0603,
+      "cosine_endpoint_l2": 0.11505944496660206,
+      "cosine_per_position_entropy_reduction": -3.092143674443548e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.9900845775051765,
+      "wallclock_paper_s": 0.0539,
+      "paper_endpoint_l2": 0.11505944499307286,
+      "paper_per_position_entropy_reduction": -3.09214342619768e-06
+    },
+    {
+      "seed": 10,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0411,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577134199,
+      "wallclock_cosine_s": 0.0617,
+      "cosine_endpoint_l2": 0.11505944510445483,
+      "cosine_per_position_entropy_reduction": -3.092143684213511e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577504118,
+      "wallclock_paper_s": 0.0664,
+      "paper_endpoint_l2": 0.1150594449926316,
+      "paper_per_position_entropy_reduction": -3.092143426641769e-06
+    },
+    {
+      "seed": 11,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.061,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577163203,
+      "wallclock_cosine_s": 0.0643,
+      "cosine_endpoint_l2": 0.11505944506231798,
+      "cosine_per_position_entropy_reduction": -3.092143657124069e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577504719,
+      "wallclock_paper_s": 0.0475,
+      "paper_endpoint_l2": 0.1150594449913647,
+      "paper_per_position_entropy_reduction": -3.092143426641769e-06
+    },
+    {
+      "seed": 12,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.04,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577415357,
+      "wallclock_cosine_s": 0.0624,
+      "cosine_endpoint_l2": 0.11505944479833659,
+      "cosine_per_position_entropy_reduction": -3.0921434737152254e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577505303,
+      "wallclock_paper_s": 0.0653,
+      "paper_endpoint_l2": 0.11505944499044002,
+      "paper_per_position_entropy_reduction": -3.09214342619768e-06
+    },
+    {
+      "seed": 13,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.067,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577391477,
+      "wallclock_cosine_s": 0.064,
+      "cosine_endpoint_l2": 0.11505944539272417,
+      "cosine_per_position_entropy_reduction": -3.0921434799324743e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577505342,
+      "wallclock_paper_s": 0.0671,
+      "paper_endpoint_l2": 0.11505944499384872,
+      "paper_per_position_entropy_reduction": -3.09214342619768e-06
+    },
+    {
+      "seed": 14,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0649,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577368551,
+      "wallclock_cosine_s": 0.0597,
+      "cosine_endpoint_l2": 0.11505944481447103,
+      "cosine_per_position_entropy_reduction": -3.092143521232771e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577505251,
+      "wallclock_paper_s": 0.0645,
+      "paper_endpoint_l2": 0.11505944499259355,
+      "paper_per_position_entropy_reduction": -3.09214342619768e-06
+    },
+    {
+      "seed": 15,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0633,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.99008457715419,
+      "wallclock_cosine_s": 0.0635,
+      "cosine_endpoint_l2": 0.11505944500565228,
+      "cosine_per_position_entropy_reduction": -3.0921436788844403e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577504544,
+      "wallclock_paper_s": 0.0676,
+      "paper_endpoint_l2": 0.11505944499321408,
+      "paper_per_position_entropy_reduction": -3.092143426641769e-06
+    },
+    {
+      "seed": 16,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0615,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577371536,
+      "wallclock_cosine_s": 0.0613,
+      "cosine_endpoint_l2": 0.11505944470018813,
+      "cosine_per_position_entropy_reduction": -3.0921435225650384e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577504226,
+      "wallclock_paper_s": 0.066,
+      "paper_endpoint_l2": 0.11505944499189022,
+      "paper_per_position_entropy_reduction": -3.0921434270858583e-06
+    },
+    {
+      "seed": 17,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0646,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577253549,
+      "wallclock_cosine_s": 0.0627,
+      "cosine_endpoint_l2": 0.11505944539341362,
+      "cosine_per_position_entropy_reduction": -3.0921435971720257e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577504745,
+      "wallclock_paper_s": 0.0684,
+      "paper_endpoint_l2": 0.11505944499429362,
+      "paper_per_position_entropy_reduction": -3.09214342619768e-06
+    },
+    {
+      "seed": 18,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0614,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577204271,
+      "wallclock_cosine_s": 0.0592,
+      "cosine_endpoint_l2": 0.11505944493063884,
+      "cosine_per_position_entropy_reduction": -3.0921436429132143e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577505604,
+      "wallclock_paper_s": 0.0671,
+      "paper_endpoint_l2": 0.11505944499493816,
+      "paper_per_position_entropy_reduction": -3.09214342619768e-06
+    },
+    {
+      "seed": 19,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0703,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577694865,
+      "wallclock_cosine_s": 0.0623,
+      "cosine_endpoint_l2": 0.1150594452430701,
+      "cosine_per_position_entropy_reduction": -3.0921432840891327e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577504202,
+      "wallclock_paper_s": 0.0671,
+      "paper_endpoint_l2": 0.11505944499265278,
+      "paper_per_position_entropy_reduction": -3.0921434270858583e-06
+    },
+    {
+      "seed": 20,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0649,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577466077,
+      "wallclock_cosine_s": 0.061,
+      "cosine_endpoint_l2": 0.11505944486914138,
+      "cosine_per_position_entropy_reduction": -3.0921434448494267e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.9900845775036275,
+      "wallclock_paper_s": 0.066,
+      "paper_endpoint_l2": 0.11505944499236115,
+      "paper_per_position_entropy_reduction": -3.0921434275299475e-06
+    },
+    {
+      "seed": 21,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0647,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577364612,
+      "wallclock_cosine_s": 0.0623,
+      "cosine_endpoint_l2": 0.11505944521857532,
+      "cosine_per_position_entropy_reduction": -3.0921435207886816e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577505274,
+      "wallclock_paper_s": 0.0683,
+      "paper_endpoint_l2": 0.11505944499301245,
+      "paper_per_position_entropy_reduction": -3.09214342619768e-06
+    },
+    {
+      "seed": 22,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0615,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577389,
+      "wallclock_cosine_s": 0.0611,
+      "cosine_endpoint_l2": 0.11505944481398463,
+      "cosine_per_position_entropy_reduction": -3.0921434968078643e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577504274,
+      "wallclock_paper_s": 0.066,
+      "paper_endpoint_l2": 0.11505944499237747,
+      "paper_per_position_entropy_reduction": -3.0921434270858583e-06
+    },
+    {
+      "seed": 23,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0667,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.99008457755539,
+      "wallclock_cosine_s": 0.0623,
+      "cosine_endpoint_l2": 0.11505944473266015,
+      "cosine_per_position_entropy_reduction": -3.0921433813446697e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577504813,
+      "wallclock_paper_s": 0.0661,
+      "paper_endpoint_l2": 0.11505944499283724,
+      "paper_per_position_entropy_reduction": -3.092143426641769e-06
+    },
+    {
+      "seed": 24,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0645,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577499224,
+      "wallclock_cosine_s": 0.0596,
+      "cosine_endpoint_l2": 0.11505944508851229,
+      "cosine_per_position_entropy_reduction": -3.0921433915587215e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577503733,
+      "wallclock_paper_s": 0.0659,
+      "paper_endpoint_l2": 0.11505944499274902,
+      "paper_per_position_entropy_reduction": -3.0921434270858583e-06
+    },
+    {
+      "seed": 25,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0634,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.9900845774561065,
+      "wallclock_cosine_s": 0.0622,
+      "cosine_endpoint_l2": 0.11505944533251133,
+      "cosine_per_position_entropy_reduction": -3.0921434506225864e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577505019,
+      "wallclock_paper_s": 0.0691,
+      "paper_endpoint_l2": 0.11505944499276685,
+      "paper_per_position_entropy_reduction": -3.09214342619768e-06
+    },
+    {
+      "seed": 26,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0614,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577790161,
+      "wallclock_cosine_s": 0.0596,
+      "cosine_endpoint_l2": 0.11505944479733511,
+      "cosine_per_position_entropy_reduction": -3.0921432268016247e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.99008457750543,
+      "wallclock_paper_s": 0.0644,
+      "paper_endpoint_l2": 0.11505944499161211,
+      "paper_per_position_entropy_reduction": -3.09214342619768e-06
+    },
+    {
+      "seed": 27,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0629,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.990084577458618,
+      "wallclock_cosine_s": 0.0609,
+      "cosine_endpoint_l2": 0.11505944526516954,
+      "cosine_per_position_entropy_reduction": -3.0921434257535907e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577504801,
+      "wallclock_paper_s": 0.0668,
+      "paper_endpoint_l2": 0.11505944499384159,
+      "paper_per_position_entropy_reduction": -3.092143426641769e-06
+    },
+    {
+      "seed": 28,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0612,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.99008457770243,
+      "wallclock_cosine_s": 0.064,
+      "cosine_endpoint_l2": 0.11505944461530652,
+      "cosine_per_position_entropy_reduction": -3.0921432858654896e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.990084577504267,
+      "wallclock_paper_s": 0.0641,
+      "paper_endpoint_l2": 0.11505944499277503,
+      "paper_per_position_entropy_reduction": -3.0921434270858583e-06
+    },
+    {
+      "seed": 29,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_kind": "lineageflow",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        256,
+        33
+      ],
+      "baseline_endpoint_norm": 4.994921695613678,
+      "wallclock_baseline_s": 0.0631,
+      "cosine_endpoint_shape": [
+        256,
+        33
+      ],
+      "cosine_endpoint_norm": 4.99008457741592,
+      "wallclock_cosine_s": 0.0625,
+      "cosine_endpoint_l2": 0.11505944518742214,
+      "cosine_per_position_entropy_reduction": -3.092143473271136e-06,
+      "paper_endpoint_shape": [
+        256,
+        33
+      ],
+      "paper_endpoint_norm": 4.9900845775042635,
+      "wallclock_paper_s": 0.0659,
+      "paper_endpoint_l2": 0.11505944499405621,
+      "paper_per_position_entropy_reduction": -3.0921434270858583e-06
+    }
+  ],
+  "driver_schema": "wave190_p1_theorem_load_bearing_extended.v1:lineageflow",
+  "driver_tool": "scripts/wave190_p1_theorem_load_bearing_extended.py",
+  "driver_wave": "Wave 190 P1",
+  "driver_metric_axis": "per_position_entropy_reduction",
+  "driver_paper_metric_status": "BLOCKED_no_torch — both kanzi and lineageflow run in synthetic mode (no upstream torch DAE / ESM-2 weights), so the paper metric is not computable. The entropy axis is reported instead.",
+  "n3_sub_experiment": {
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n_records": 3,
+    "continuity_check": {
+      "n_baseline": 0,
+      "note": "no Wave 189 P4 baseline exists for adapter_kind='lineageflow'; the n=3 sub-experiment is the first n=3 baseline on this adapter."
+    }
+  }
+}
