@@ -3747,8 +3747,8 @@ The framework improves **2 of 12 Tier 3 paper-metric cells (Bonferroni-significa
 
 | Task | N | Δ | p | Source on disk |
 |---|---:|---:|---:|---|
-| 2D Two Moons W₂ | 1000 | −7.28% | matched NFE 500, 3 seeds | `docs/r4-survey/10-sota-2d-experiment-results.md` (commit `4a482ff`); `baseline W2=0.5029` → `CosineAnnealScheduler W2=0.4663`. CLM-039 in `docs/CLAIMS.md`. Driver: `tools/run_sota_2d_experiment.py` |
-| 2D Eight Gaussians W₂ | 1000 | −10.40% | matched NFE 500, 3 seeds | same source as R4. `baseline W2=0.6606` → `CosineAnnealScheduler W2=0.5919` |
+| 2D Two Moons W₂ | 1000 | −7.28% | matched NFE 500, 3 seeds | `docs/r4-survey/10-sota-2d-experiment-results.md` (commit `4a482ff`); `baseline W2=0.5029` → `CosineAnnealScheduler W2=0.4663`. CLM-039 in `docs/CLAIMS.md`. Driver: `tools/run_sota_2d_experiment.py`. **Wave 188 P5 ADDITIVE inversion note**: these are pre-cd70821 (tanh vs ReLU) numbers; post-cd70821 baseline W₂=0.0709 beats every framework scheduler (CosineAnneal +22.06%, EvidenceDriven +13.50%, FreeTraj +14.39%). See §4.2 Wave 188 P5 honest reframe for the full inversion disclosure. |
+| 2D Eight Gaussians W₂ | 1000 | −10.40% | matched NFE 500, 3 seeds | same source as R4. `baseline W2=0.6606` → `CosineAnnealScheduler W2=0.5919`. **Wave 188 P5 ADDITIVE inversion note**: post-cd70821 baseline W₂=0.1764 beats CosineAnneal W₂=0.1831 (+3.78%); 6/15 runs only. |
 | CIFAR-10 RF v2 FID | 250 | −44.17% | NFE-averaged | `docs/CONSOLIDATED_RESULTS.md §4.3` v2 row (`218.87 → 122.18`, framework NFE=2 → ~5-NFE avg, baseline NFE=50). Honest negative: v3 matched-NFE=2 shows `+1.5%` (within NFE noise); v4 matched-NFE=50 shows `+24-31%` (cosine ramp halves effective NFE) |
 | MNIST FM FID | 1000 | −15.01% | CristianLazoQuispe ckpt | `verification_outputs/baseline_comparison_q4_2026.json` (Wave 52) + Wave 28 Agent A re-measurement at `docs/audit/wave41-paper-audit.md:204`. `baseline FID=409.18` → `framework FID=347.75` |
 
