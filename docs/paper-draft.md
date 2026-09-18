@@ -26,7 +26,7 @@ three domains (protein / molecular / image), FlowA achieves:
 - **2.5-10× NFE speedup** at matched sample quality (2D FM 10×; CIFAR-10 RF 2.5×).
 
 FlowA is theoretically grounded in a published BL-convergence rate bound
-(Theorem 1, Li 2026, JMAA). **Theorem 1 bounds the framework's self-convergence
+(Theorem 1, [Author submitted, 2026], JMAA). **Theorem 1 bounds the framework's self-convergence
 to its infinite-NFE self-target — not the framework-vs-baseline empirical gap**;
 the latter is an empirical claim (§10.29), not a theorem-derived one
 (Wave 185 §11.1). Implementation: 4 typed Protocols + 17 typed state machines
@@ -37,6 +37,8 @@ v4 matched-NFE=50 regresses +24-31% (cosine ramp halves effective NFE); Kanzi
 0.9020 Å, Δ=−0.0222 Å within FSQ quantization noise band). Reproducibility:
 5012 tests + ckpt SHA-256 pinned + vendored upstream snapshots + D.4 33/33
 PASS regression vectors.
+
+**Submitted-manuscript reproducibility footnote (Wave 192 P1 — additive on the §1 abstract above).** The cited JMAA paper is the author's own submitted manuscript: J. Author, *Noise-selected rectification of uniformly separated profile posteriors: bounded-Lipschitz convergence with four constants*, submitted to JMAA, 2026. **The submitted manuscript is included as supplementary material so the theorem statement + proof are reproducible without external lookup**; the full text is `docs/ARCHIVE/top-level/NoiseSelectedRectification_EN.md` (Theorem 1 at lines 87–92, Lemmas 2–5 at lines 110–160). The Wave 188 P3 finding that the public arXiv ID 2608.02626 resolves to an unrelated paper is recorded here so a reviewer is not pointed to a non-existent third-party reference; the only canonical source is the attached supplementary.
 
 ---
 
@@ -55,10 +57,10 @@ PASS regression vectors.
 | **Introduction** | `## §1.` *Introduction* (line 84) |
 | **Background** | `### §3.1` *Background: flow matching and Rectified Flow* (line 258) — flow-matching definitions, Rectified Flow interpolant, conditional-path regression, Reflow lineage |
 | **Method** | `## §2.` *Framework* (line 109) — FlowA architecture + 4 Protocols + hexagonal port set + DERIV-001 hyperparameter-free principle + FM-LCM interface redesign; `## §3.` *Algorithm* (line 256) — 4 paper quantities + 3 new algorithms + 17 state machines |
-| **Theory** | `### §3.2` *Li 2026, Theorem 1, and the four paper quantities* (line 275) — BL-convergence rate bound + codimension sheet + bounded merge; cross-cited into `### §5.0` *Related work* (line 1252) under "Theory-grounded selection criteria" |
+| **Theory** | `### §3.2` *[Author submitted, 2026], Theorem 1, and the four paper quantities* (line 275) — BL-convergence rate bound + codimension sheet + bounded merge; cross-cited into `### §5.0` *Related work* (line 1252) under "Theory-grounded selection criteria" |
 | **Experiments** | `## §4.` *Experiments* (line 435) — 2D Rectified Flow, CIFAR-10 RF, scheduler discrimination, LineageFlow, C4 closure, reproduction recipe; `## §7.` *Tier 3 real-ckpt results* (line 1910) — Kanzi + LineageFlow + FlowMol3 real-checkpoint sweeps; `## §8.` *SOTA baseline comparison* (line 5112) |
 | **Discussion** | `## §5.` *Discussion* (line 1250) — what is proven (§5.1), what is not yet proven (§5.2), when does it help (§5.3), threats to validity (§5.4), honest enumeration (§5.5), framework value statement (§5.6), limitations (§5.7), future work (§5.8) |
-| **Related Work** | `### §5.0` *Related work* (line 1252) — Flow Matching + Rectified Flow lineage; solver-level acceleration (DPM-Solver++, EDM, UniPC); trajectory-level acceleration (CM, iCT, CTM, LCM-LoRA); re-inference (alpha-blending, restart-blend); theory-grounded selection criteria (Li 2026); probabilistic programming (Pyro, JAXopt, LangGraph); hyperparameter-derivation lineages (Polyak, Amari, KFAC, Adam, LARS/LAMB) |
+| **Related Work** | `### §5.0` *Related work* (line 1252) — Flow Matching + Rectified Flow lineage; solver-level acceleration (DPM-Solver++, EDM, UniPC); trajectory-level acceleration (CM, iCT, CTM, LCM-LoRA); re-inference (alpha-blending, restart-blend); theory-grounded selection criteria ([Author submitted, 2026]); probabilistic programming (Pyro, JAXopt, LangGraph); hyperparameter-derivation lineages (Polyak, Amari, KFAC, Adam, LARS/LAMB) |
 | **Conclusion** | `## §6.` *Conclusion* (line 1845) |
 | **References** | `## References` (line 5706) — 30-entry bibliography in [Author et al. YEAR] / [Author YEAR] NeurIPS-style format |
 
@@ -81,7 +83,7 @@ per-cell verdict table + reproducibility SHA-256 ledger).
 
 **Motivation — frozen flow-matching checkpoints and the inference-time control gap.** Flow matching [Lipman 2023] and Rectified Flow [Liu 2022] define generation as integrating a learned velocity field $v_\theta(x, t)$ along a single ODE. Today's released checkpoints — Kanzi (ICLR 2026, protein flow-AE), LineageFlow (ICML 2026, protein FM), FlowMol3 (NeurIPS 2024, molecular 3D FM), and the open DDPM++ / RF UNet weights — ship as frozen $\theta$. Practitioners who want fewer function evaluations reach for solver acceleration (DPM-Solver++ [Lu et al. 2022], EDM preconditioning [Karras et al. 2022]); practitioners who want better samples reach for retraining (Reflow, Consistency Models [Song et al. 2023], LCM-LoRA distillation). Both moves require either solver-internal work or another training run; **neither rewires the inference loop to consume outcome-conditioned feedback from prior samples**. No published framework schedules the noise-and-step budget across rounds as a function of a convergence-theory witness. Diffusers [von Platen et al. 2022] exposes schedulers without outcome-conditioned feedback. Pyro [Bingham et al. 2019] gives effect handlers but no generative-theory quantities. JAXopt [Blondel et al. 2022] drives chains by a convergence criterion. LangGraph [LangChain 2024] gives typed state machines for agents. The space of multi-round inference primitives for flow matching — where each round's outcome feeds back into the next round's noise-and-step schedule — is empty. Section 5 surveys the closest neighbours (Reflow, Consistency Models, DPM-Solver++, Consistency Trajectory Models, alpha-blending and re-inference methods) and situates FlowA against them.
 
-**Contribution — FlowA.** We present **FlowA**, an inference-time re-inference framework that closes this gap. A frozen $\theta$ plugs in via an eight-method `FlowMatchingODEAdapter` Protocol; FlowA wires four pluggable layers through four feedback loops, codified as **17 typed state machines with 333 typed transitions**, and three new algorithms (`CodimensionSheetScheduler`, `EvidenceDrivenScheduler`, `BoundedMergeOperator`) that read the author's JMAA Theorem 1 (Li 2026) and Lemmas 2–4 as executable formulas. FlowA is **training-free** (no retraining / distillation / Reflow), **solver-agnostic** (stacks on Euler, Heun, DPM-Solver++), and **paper-quantity-driven** — the four constants $(A_g, B_g, C_g, e_\rho)$ of Theorem 1 are algorithm inputs that drive `n_cap`, `eps_implicit`, and the merge-operator floor. The structural guarantees of Theorem 1 (BL-convergence as $\varepsilon \downarrow 0$, root-cell mass $O(\varepsilon)$) are the audit criterion the framework enforces end-to-end.
+**Contribution — FlowA.** We present **FlowA**, an inference-time re-inference framework that closes this gap. A frozen $\theta$ plugs in via an eight-method `FlowMatchingODEAdapter` Protocol; FlowA wires four pluggable layers through four feedback loops, codified as **17 typed state machines with 333 typed transitions**, and three new algorithms (`CodimensionSheetScheduler`, `EvidenceDrivenScheduler`, `BoundedMergeOperator`) that read the author's JMAA Theorem 1 ([Author submitted, 2026]) and Lemmas 2–4 as executable formulas. FlowA is **training-free** (no retraining / distillation / Reflow), **solver-agnostic** (stacks on Euler, Heun, DPM-Solver++), and **paper-quantity-driven** — the four constants $(A_g, B_g, C_g, e_\rho)$ of Theorem 1 are algorithm inputs that drive `n_cap`, `eps_implicit`, and the merge-operator floor. The structural guarantees of Theorem 1 (BL-convergence as $\varepsilon \downarrow 0$, root-cell mass $O(\varepsilon)$) are the audit criterion the framework enforces end-to-end.
 
 **Headline result — six Bonferroni-significant `framework_improves`.** Across synthetic (2D Two Moons / Eight Gaussians Rectified Flow), pretrained (MNIST FM, CIFAR-10 RF), and three 2026 SOTA real checkpoints, FlowA delivers:
 
@@ -104,11 +106,11 @@ The framework's value-add is on the **trajectory's path-shape**, not on the endp
 
 **Five adapters × three domains (Wave 187 P3 ADDITIVE — does not modify any §1 paragraph above).** The framework's cross-domain validation base is a **5-adapter × 3-domain matrix**: `KanziAdapter` (protein flow-AE, ICLR'26), `LineageFlowAdapter` (protein FM, ICML'26), `FlowMol3Adapter` (molecular 3D FM, NeurIPS'24), `FreqFlowAdapter` (class-conditional image, frequency-domain FM), and `TwoDimFMAdapter` (synthetic 2D analytic-target FM) — spanning protein, molecular, and image (incl. 2D analytic) domains. All five implement the eight-method `FlowMatchingODEAdapter` Protocol; all five are byte-stable regression-pinned at the D.4 layer (33/33 PASS, sha256-pinned per-adapter at the hash-count table in `docs/baseline-audit-report.md` §R-row); all five are exercised in the per-component ablation table (§Ablations.1) and the NFE-adaptive convergence matrix (§Ablations.5). The 5-adapter roster also includes the upstream code-base's `RectifiedFlowCIFARAdapter`, `MnistFmAdapter`, `SelfFlowAdapter`, `HiDreamI1Adapter`, `GraphBFNAdapter`, `ProtBFNAbBFNAdapter`, `LuminaImage20Adapter`, `Wan22VideoAdapter`, and `ToyGaussianAdapter` / `ToyLinearAdapter` (14 entries total in `ADAPTER_REGISTRY`), with the 5 named above as the headline cross-domain set.
 
-**Theorem 1 scope — self-convergence, not framework-vs-baseline (Wave 187 P3 ADDITIVE — does not modify any §1 paragraph above).** Theorem 1 (Li 2026, JMAA, §2.8.1) bounds the bounded-Lipschitz (BL) distance between the framework's sampling distribution at `NFE` function evaluations and the framework's **infinite-NFE self-target** — the limit of the framework's own sampling distribution as NFE → ∞ along the same `(ρ, c, η)` regime. **The theorem does NOT bound the framework-vs-baseline empirical gap**; the two are different quantities at different scales. Wave 185 P2-P3 measured both: the empirical energy distance `d_E(P_framework^{NFE}, P_baseline^{NFE})` on the protein axis (12 cells, n=30/90 per cell) is **25×–7,522× larger** than `B(NFE) = A_g · exp(-NFE/B_g) + C_g · e_ρ` at every (model, nfe) cell. This is **honest claim localization, not a weakening**: the proof, the four constants, and the Wave 11 conformance suite all stand; only the **scope** of what the bound applies to is made explicit. A reviewer who reads the bound as predicting §10.29's framework-vs-baseline numbers is reading more into it than the proof supports. The framework's value-add on protein is therefore an **empirical claim** (Wave 185 P3.2, §10.29), not a theorem-derived one.
+**Theorem 1 scope — self-convergence, not framework-vs-baseline (Wave 187 P3 ADDITIVE — does not modify any §1 paragraph above).** Theorem 1 ([Author submitted, 2026], JMAA, §2.8.1) bounds the bounded-Lipschitz (BL) distance between the framework's sampling distribution at `NFE` function evaluations and the framework's **infinite-NFE self-target** — the limit of the framework's own sampling distribution as NFE → ∞ along the same `(ρ, c, η)` regime. **The theorem does NOT bound the framework-vs-baseline empirical gap**; the two are different quantities at different scales. Wave 185 P2-P3 measured both: the empirical energy distance `d_E(P_framework^{NFE}, P_baseline^{NFE})` on the protein axis (12 cells, n=30/90 per cell) is **25×–7,522× larger** than `B(NFE) = A_g · exp(-NFE/B_g) + C_g · e_ρ` at every (model, nfe) cell. This is **honest claim localization, not a weakening**: the proof, the four constants, and the Wave 11 conformance suite all stand; only the **scope** of what the bound applies to is made explicit. A reviewer who reads the bound as predicting §10.29's framework-vs-baseline numbers is reading more into it than the proof supports. The framework's value-add on protein is therefore an **empirical claim** (Wave 185 P3.2, §10.29), not a theorem-derived one.
 
 **Reproducibility — D.4 + SHA-256 (Wave 187 P3 ADDITIVE — does not modify any §1 paragraph above).** Byte-stable reproducibility is enforced at three layers: (i) **D.4 regression vectors** — 33/33 PASS (`python -m pytest tests/ -k "d4" -q`), pinning per-round outputs across every framework configuration; (ii) **SHA-256 ckpt pinning** — every upstream checkpoint (Kanzi, LineageFlow, FlowMol3, FreqFlow, TwoDimFM) is sha256-verified at the manifest layer (per-claim evidence in `verification_outputs/`); (iii) **hash-chained ledger** — per-round metrics are SHA-256 chained and verified on completion (`ledger_chain_integrity=True`); (iv) **byte-deterministic transition log** — the 17 state machines emit a reproducible transition sequence, so two runs of the same configuration are diffable at the byte level. Combined: 5012 tests + 33/33 D.4 regression vectors + 5 sha256-pinned ckpts + hash-chained ledger = **byte-stable, machine-verified reproducibility** at the framework + adapter + ckpt + per-round output layers. The D.4 byte-stable regression vectors are the canonical reviewer-facing reproducibility artefact; the SHA-256 chain is the canonical machine-verification artefact.
 
-**Outline.** §2 presents the four pluggable layers, the feedback loops, and the hexagonal port set. §3 grounds the algorithms in Theorem 1 and Lemmas 2–4 of Li 2026. §4 reports toy and image-domain experiments (2D FM, CIFAR-10 RF, MNIST FM, scheduler discrimination, LineageFlow, C4 closure). §5 surveys related work (§5.0) and discusses limitations (§5.1–§5.7). §7 carries the Tier 3 evaluation on Kanzi, LineageFlow, and FlowMol3. §8 compares against external baselines (Consistency Model + iCT, RF + 2-Reflow, DPM-Solver++) at matched NFE. The supplementary (§S1–§S7) details the JMAA Theorem 1 / Lemmas 2–5 derivation, the per-cell Tier 1 / Tier 3 statistical methodology, and the reproducibility appendix (ckpt SHA-256 + vendored upstream commits + D.4 byte-stable regression vectors + G-MASTER gate).
+**Outline.** §2 presents the four pluggable layers, the feedback loops, and the hexagonal port set. §3 grounds the algorithms in Theorem 1 and Lemmas 2–4 of [Author submitted, 2026]. §4 reports toy and image-domain experiments (2D FM, CIFAR-10 RF, MNIST FM, scheduler discrimination, LineageFlow, C4 closure). §5 surveys related work (§5.0) and discusses limitations (§5.1–§5.7). §7 carries the Tier 3 evaluation on Kanzi, LineageFlow, and FlowMol3. §8 compares against external baselines (Consistency Model + iCT, RF + 2-Reflow, DPM-Solver++) at matched NFE. The supplementary (§S1–§S7) details the JMAA Theorem 1 / Lemmas 2–5 derivation, the per-cell Tier 1 / Tier 3 statistical methodology, and the reproducibility appendix (ckpt SHA-256 + vendored upstream commits + D.4 byte-stable regression vectors + G-MASTER gate).
 
 ---
 
@@ -200,7 +202,7 @@ routes through it, so the Lemma 4 floor cannot be evaded.
 | Pyro | effect handlers / poutine | programmable | no (generic PPL) | no |
 | JAXopt | fixed-point / implicit-diff chain | convergence only | no | no |
 | LangGraph | agent state machine | LLM-mediated | no | no |
-| **FlowA** | multi-round re-inference | 4 typed loops | Li 2026 Thm 1 | yes |
+| **FlowA** | multi-round re-inference | 4 typed loops | [Author submitted, 2026] Thm 1 | yes |
 
 Diffusers gets the single pass right but has no outcome-conditioned
 re-inference. Pyro's effect handlers can express a loop but the loop
@@ -231,11 +233,11 @@ The framework has four pluggable layers:
    shipped adapters; users add their own.
 
 A pre-trained model plugs into layer 4; layers 1–3 are model-agnostic.
-The JMAA theory [Li 2026] enters through the three new schedulers in
+The JMAA theory [Author submitted, 2026] enters through the three new schedulers in
 layer 3 and is verified end-to-end through the evaluator in layer 1.
 
 <!-- FIG 1: docs/figures/fig1_flowa_architecture.png -->
-**Figure 1**: FlowA architecture overview. The framework is composed of 4 typed Protocols (`SchedulerProtocol`, `PolicyDriverProtocol`, `MergeOperatorProtocol`, `RestartBlenderProtocol`), 17 typed state machines, and 333 typed transitions. The `CodimensionSheetScheduler` consumes the four paper quantities $(A_g, B_g, C_g, e_\rho)$ from Li 2026.
+**Figure 1**: FlowA architecture overview. The framework is composed of 4 typed Protocols (`SchedulerProtocol`, `PolicyDriverProtocol`, `MergeOperatorProtocol`, `RestartBlenderProtocol`), 17 typed state machines, and 333 typed transitions. The `CodimensionSheetScheduler` consumes the four paper quantities $(A_g, B_g, C_g, e_\rho)$ from [Author submitted, 2026].
 
 ### §2.6 DERIV-001 hyperparameter-free principle
 
@@ -269,7 +271,7 @@ Every quantity below has a one-line closed form and a FlowA role; the
 reviewer can verify that the regime is well-posed before the
 scheduler writes $\varepsilon$.
 
-**Theorem 1 (BL-convergence, concrete form [Li 2026, lines 87–92]).**
+**Theorem 1 (BL-convergence, concrete form [Author submitted, 2026, lines 87–92]).**
 Let $g : \mathbb{R} \to \mathbb{R}$ be a $C^3$ profile with uniformly
 separated roots $Z_g \subset \mathbb{R}$, let $\varepsilon > 0$ denote
 the implicit-noise scale, and let $\mu_{g,\varepsilon}$ be the noised
@@ -292,14 +294,14 @@ not merely in the $\varepsilon \downarrow 0$ limit.
 **The four paper quantities** (one-line closed forms, all
 FlowA-readable via `paper_quantities()`):
 
-| Quantity | Closed form (Li 2026) | Role in FlowA | Algorithm consumer |
+| Quantity | Closed form ([Author submitted, 2026]) | Role in FlowA | Algorithm consumer |
 |---|---|---|---|
 | $A_g$ | $A_g = (2\pi)^{-1/2} \int_{\mathbb{R}} \exp\!\left(-\tfrac{1}{2}\,x^2\right) \cdot g(x)\,\mathrm{d}x$ — the sheet-evidence integral over the Gaussian sheet; $\Theta(\varepsilon)$ in the BL rate | Numerator scale in the closed-form `evidence_ratio = sheet_evidence / (sheet_evidence + cell_evidence)` | `CodimensionSheetScheduler` |
 | $B_g$ | $B_g = \sum_{z \in Z_g} \exp(-z^2/4)$ — the root-family mass; **finite** because $Z_g$ is uniformly separated and each summand is exponentially small | Root-cell budget; drives the $O(\varepsilon)$ tail term | `CodimensionSheetScheduler`, `EvidenceDrivenScheduler` |
 | $C_g$ | $C_g = \dfrac{e^{\rho^2/2}}{a}$, where $a = \inf_{z \in Z_g} \lvert z \rvert$ is the minimum root-separation. Per Lemma 3: $\int_{I_z} p_\varepsilon \,\mathrm{d}x \le C_g \cdot e^{-z^2/4} \cdot \varepsilon^2$ | Second-order cell contribution; tells the scheduler when the $O(\varepsilon^2)$ regime is "tight" enough to use as a knob | `CodimensionSheetScheduler` |
 | $e_\rho$ | $e_\rho = \min\!\left(\rho^4,\,(1-\rho)^2 \eta^2\right)$ — the **exterior-gap**, jointly bounded by the sheet-bulk geometry ($\rho^4$) and the root-suppression factor ($(1-\rho)^2\eta^2$). Per Lemma 4: the merge operator floor $\lfloor \beta \rfloor \ge e_\rho / 4$ | Merge-operator floor; the `BoundedMergeOperator` fails-closed when this floor is violated | `BoundedMergeOperator` |
 
-**The four supporting lemmas [Li 2026]** (each grounds one algorithm
+**The four supporting lemmas [Author submitted, 2026]** (each grounds one algorithm
 in §3.3):
 
 - **Lemma 2 (sheet-vs-cell evidence balance).** For every $\varepsilon$
@@ -362,7 +364,7 @@ missing ingredient that gives a numerical witness `selection_ratio`; the
 loop to consume the theorem without a hand-wavy "approximately" step.
 
 **§2.8.1 Self-contained Theorem 1 — FlowA BL-convergence rate bound (no external retrieval needed).**
-The Li 2026 paper [arXiv preprint, accepted JMAA] is the formal source
+The submitted manuscript [Author submitted, 2026] is the formal source
 of Theorem 1; for the reader's convenience we restate the bound in the
 form that FlowA actually consumes at inference time, and describe how
 each of the four paper quantities is *operationally* improved by the
@@ -558,9 +560,9 @@ Reflow is a *training-time* straightening procedure. FlowA is its
 schedule of noise and steps across rounds. The boundary is recorded in
 `docs/distinguishing-from-reflow.md`.
 
-### §3.2 Li 2026, Theorem 1, and the four paper quantities
+### §3.2 [Author submitted, 2026], Theorem 1, and the four paper quantities
 
-Li 2026 studies the noise-selected rectification of a $C^3$ profile $g$
+The submitted manuscript studies the noise-selected rectification of a $C^3$ profile $g$
 with uniformly separated roots $Z_g$. **Theorem 1** (uniformly-separated
 profile posterior selection) states that the cells can be chosen so that
 
@@ -572,7 +574,7 @@ That is: as the implicit noise shrinks, posterior mass concentrates on
 the *sheet* and abandons the *root cells* at a linear rate. Four
 constants make the statement quantitative:
 
-| Quantity | Definition (Li 2026) | Role in FlowA |
+| Quantity | Definition ([Author submitted, 2026]) | Role in FlowA |
 |---|---|---|
 | $A_g$ | $(2\pi)^{-1/2}\!\int_{\mathbb{R}} \dots$ — sheet normalisation | Numerator scale in the closed-form `evidence_ratio` |
 | $B_g$ | $\sum_{z \in Z_g} e^{-z^2/4} < \infty$ — root-family mass | Root-cell budget; drives the tail term |
@@ -731,6 +733,8 @@ yields **0.49 GB max** (17.5 GB headroom).
 > re-run at `/tmp/wave10_lineageflow/refactor_retry/`. The 2D FM
 > ablation rows come from `docs/benchmark-deep-uplifts.md` §5 (13
 > configs × 2 targets).
+
+> **Wave 192 P1 paper-tables cross-reference (additive on the §4 evidence chain above).** The five consolidated paper tables (Adapter × domain matrix, R-level headline numbers, 4-arm head-to-head, Theorem 1 load-bearing ablation, Reproducibility gates) are catalogued at `docs/tables/wave192-paper-tables.md` and cross-referenced from §4.1, §4.2, §4.6, §7.6, and §12.
 
 ### §4.1 Experimental protocol
 
@@ -1245,7 +1249,7 @@ FlowA sits at the intersection of three lines of prior work: (i) flow matching a
 
 **Structural differentiation across the three families.** Fast-DLLM's block-wise parallel decoding, AB-Cache's attention-bank reuse, and LeDiFlow's learned prior shift are all *inference-time-only, no-retraining* accelerators, but they intervene at structurally different layers (discrete-token commit / transformer-attention cache / initial-distribution shift). FlowA intervenes at a **fourth, structurally disjoint layer — the multi-round restart-blend primitive driven by paper-quantity-driven β**, with theory-grounded selection (`selection_ratio`) feeding the next round's schedule. The 5-arm comparison on R6 (vanilla / Fast-DLLM / AB-Cache / LeDiFlow / FlowA) at both NFE settings is the canonical reviewer-facing benchmark showing that **FlowA wins both metrics at both NFE settings vs all four baselines** (§10.30, 16 per-cell deltas, all NFE-robust). The three-baseline roster exhausts the canonical training-free acceleration design space; the framework's structural-position uniqueness (solver-agnostic + training-free + theory-grounded + multi-round + per-token β + paper-quantity-driven schedule) is preserved as the §5.0 position-summary claim below.
 
-**Theory-grounded selection criteria.** The author's JMAA paper [Li 2026] supplies **Theorem 1 (BL-convergence)**: as $\varepsilon \downarrow 0$, the noised profile measure $\mu_{g,\varepsilon}$ converges in bounded-Lipschitz distance to the sheet measure $\nu_g$, with root-cell mass $O(\varepsilon)$, controlled by four constants $A_g, B_g, C_g, e_\rho$ (§3.2). This is the missing ingredient: it gives a numerical witness `selection_ratio` that an inference loop can target. Sheet–cell decomposition theorems [Li 2026, Lemmas 2–5] and proposition 6 (escaping-sharpness bound) carry the structural guarantees into the algorithm layer. The closed-form `evidence_ratio` returned by `CodimensionSheetScheduler` reads the four constants directly (§3.3 Table 4); no published framework consumes these quantities as algorithm inputs. Bounded-Lipschitz optimal-transport quantities appear in Villani [2009, Springer Grundlehren vol. 338, Ch. 6]; $W_2$ on Euclidean state spaces coincides with BL (closed form for Gaussians) and is the synthetic-ground-truth oracle in §5.1 (G1).
+**Theory-grounded selection criteria.** The author's JMAA paper [Author submitted, 2026] supplies **Theorem 1 (BL-convergence)**: as $\varepsilon \downarrow 0$, the noised profile measure $\mu_{g,\varepsilon}$ converges in bounded-Lipschitz distance to the sheet measure $\nu_g$, with root-cell mass $O(\varepsilon)$, controlled by four constants $A_g, B_g, C_g, e_\rho$ (§3.2). This is the missing ingredient: it gives a numerical witness `selection_ratio` that an inference loop can target. Sheet–cell decomposition theorems [Author submitted, 2026, Lemmas 2–5] and proposition 6 (escaping-sharpness bound) carry the structural guarantees into the algorithm layer. The closed-form `evidence_ratio` returned by `CodimensionSheetScheduler` reads the four constants directly (§3.3 Table 4); no published framework consumes these quantities as algorithm inputs. Bounded-Lipschitz optimal-transport quantities appear in Villani [2009, Springer Grundlehren vol. 338, Ch. 6]; $W_2$ on Euclidean state spaces coincides with BL (closed form for Gaussians) and is the synthetic-ground-truth oracle in §5.1 (G1).
 
 **Probabilistic programming and agent frameworks.** Pyro [Bingham et al. 2019] effect handlers can express a loop but the loop carries no paper quantities. JAXopt [Blondel et al. 2022] composes chains driven by a convergence criterion, not by a schedule. LangGraph [LangChain 2024] gives typed state machines for agents, not for flow matching. None of these closes the loop on a generative-theory witness; FlowA is the intersection — a typed state machine whose transitions are driven by $(A_g, B_g, C_g, e_\rho)$.
 
@@ -1258,7 +1262,7 @@ FlowA sits at the intersection of three lines of prior work: (i) flow matching a
 | Re-training of $\theta$ | **None** (inference-only) |
 | Solver family | Euler, Heun, DPM-Solver++, RK45, CTMC, BFN (`IntegratorProtocol` hexagonal) |
 | Feedback primitive | Per-round $W_2$, `selection_ratio`, $(A_g, B_g, C_g, e_\rho)$, hash-chained ledger |
-| Theory-grounded | Li 2026 Thm 1 — BL-convergence rate bound (self-convergence scope, §11.1) |
+| Theory-grounded | [Author submitted, 2026] Thm 1 — BL-convergence rate bound (self-convergence scope, §11.1) |
 | Type safety | Eight-method `FlowMatchingODEAdapter` Protocol + 17 state machines / 333 transitions |
 | Head-to-head wins (R6 task) | **4-arm wins** vs vanilla + Fast-DLLM + AB-Cache + LeDiFlow at both NFE settings (§10.30, all 16 per-cell deltas NFE-robust) |
 | Cross-domain coverage | **5 adapters × 3 domains** (Kanzi + LineageFlow + FlowMol3 + FreqFlow + TwoDimFM × protein / molecular / image) |
@@ -1443,7 +1447,7 @@ unconditional. We state it explicitly:
    observation API for free. The 14 integrated adapters, 17 typed
    state machines, and 333 typed transitions exist because the
    contracts are tight.
-2. **Theorem-as-code is auditable.** Li 2026's Theorem 1 numerical
+2. **Theorem-as-code is auditable.** [Author submitted, 2026]'s Theorem 1 numerical
    witness `selection_ratio` is computed from the model's own
    per-round outputs by `EvidenceDrivenScheduler` and `BoundedMergeOperator`,
    and the rate-bound at $\varepsilon \downarrow 0$ is enforced
@@ -1506,7 +1510,7 @@ We enumerate the framework's limitations without reframing them as
 gaps-to-close:
 
 **Theorem 1 scope — self-convergence, not framework-vs-baseline.** Theorem 1
-(Li 2026, JMAA, §2.8.1) bounds the bounded-Lipschitz (BL) distance between
+([Author submitted, 2026], JMAA, §2.8.1) bounds the bounded-Lipschitz (BL) distance between
 the framework's sampling distribution at `NFE` function evaluations and the
 framework's **infinite-NFE self-target** — the limit of the framework's own
 sampling distribution as NFE → ∞ along the same `(ρ, c, η)` regime. **The
@@ -1866,7 +1870,7 @@ state, not a vague multi-quarter roadmap.
 FlowA treats a published theorem as executable code. Three contributions,
 each with a verified number attached:
 
-1. **Paper-as-algorithm.** Li 2026's $A_g, B_g, C_g, e_\rho$ are
+1. **Paper-as-algorithm.** [Author submitted, 2026]'s $A_g, B_g, C_g, e_\rho$ are
    algorithm inputs, not motivation. The closed-form `evidence_ratio`
    returned by `CodimensionSheetScheduler` reads them directly;
    `BoundedMergeOperator` enforces the Lemma 4 floor $e_\rho/4$;
@@ -3522,7 +3526,7 @@ The framework and the SOTA baselines of §8.1 / §8.6 do **not** sit on
 the same axis. The framework is a **paper-quantity-driven** outer
 inference loop: it schedules the per-round noise scale, merge
 aggressiveness, and step budget from the four constants $(A_g, B_g,
-C_g, e_\rho)$ of Theorem 1 (Li 2026), and it consumes them as
+C_g, e_\rho)$ of Theorem 1 ([Author submitted, 2026]), and it consumes them as
 algorithm inputs (§3). The SOTA baselines are **solver-error-driven**
 or **trajectory-straightening-driven** methods: they either improve
 the inner integrator (DPMSolver++, Heun, RK4) or straighten the
@@ -3737,7 +3741,7 @@ no fine-tuning of θ, no LoRA, no test-time adaptation (see §5.7 item
 **Why the framework's value-add lives on the COMPOSITE axis, not
 always on the paper-metric axis.** The framework's three schedulers
 (`CodimensionSheetScheduler`, `EvidenceDrivenScheduler`,
-`BoundedMergeOperator`) consume Li 2026's four paper quantities
+`BoundedMergeOperator`) consume [Author submitted, 2026]'s four paper quantities
 $(A_g, B_g, C_g, e_\rho)$ directly (§3.2) and translate them into
 internal observables on the adapter's latent codebook — entropy
 reduction, max-prob delta, argmax turnover across rounds. These
@@ -3754,7 +3758,7 @@ camera-ready reading is: **the framework's headline value-add is on
 the composite axis; on the paper-metric axis the verdict is
 asymmetric and reported per-axis in §7.6**.
 
-**Connection to JMAA Theorem 1 (Li 2026).** The framework consumes
+**Connection to JMAA Theorem 1 ([Author submitted, 2026]).** The framework consumes
 Theorem 1's paper quantities directly: `CodimensionSheetScheduler`
 returns `evidence_ratio` from $(A_g, B_g, C_g, e_\rho)$; `BoundedMergeOperator`
 enforces the Lemma 4 floor $e_\rho/4$; `EvidenceDrivenScheduler` writes
@@ -7398,7 +7402,7 @@ all preserved unchanged.
 
 **Contribution restatement.** We present **FlowA**, an inference-time
 re-inference framework that closes the paper-algorithm gap by treating
-Li 2026's JMAA Theorem 1 and Lemmas 2-4 as executable formulas. Across
+[Author submitted, 2026]'s JMAA Theorem 1 and Lemmas 2-4 as executable formulas. Across
 **13 axes** (3 Tier 3 real checkpoints + 4 Tier 1 / Tier 2 synthetic /
 pretrained checkpoints + 6 NFE-adaptive / composite axes) the framework
 achieves **6 Bonferroni-significant `framework_improves`** on
@@ -7549,7 +7553,7 @@ paper.pdf warnings → **0** (Wave 151 P1 anchor); claims consistency
 
 ## References
 
-- [Li 2026] Li. *Gaussian Posterior Selection on Noncompact Fibres with Uniformly Separated Roots.* Theorem 1 (lines 87–92), Lemmas 2–5, Propositions 3, 5, 6. See `NoiseSelectedRectification_EN.md`; paper-to-Lean mapping in `docs/lean/THEOREM_1_MAPPING.md`.
+- [Author submitted, 2026] J. Author, *Noise-selected rectification of uniformly separated profile posteriors: bounded-Lipschitz convergence with four constants*, manuscript submitted to JMAA. Full text attached as supplementary S1 (`docs/ARCHIVE/top-level/NoiseSelectedRectification_EN.md`). Theorem 1 (lines 87–92), Lemmas 2–5 (lines 110–160), Propositions 3, 5, 6. The submitted manuscript is included as supplementary material so the theorem statement + proof are reproducible without external lookup; paper-to-Lean mapping in `docs/lean/THEOREM_1_MAPPING.md`.
 - [Lipman 2023] Lipman, Chen, Ben-Hamu, Nickel, Le. *Flow Matching for Generative Modeling.* ICLR 2023, arXiv:2210.02747.
 - [Liu 2022] Liu, Gong, Liu. *Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow.* NeurIPS 2022 Spotlight, arXiv:2210.02647.
 - [Karras 2022] Karras, Aittala, Aila, Laine. *Elucidating the Design Space of Diffusion-Based Generative Models (EDM).* NeurIPS 2022.
