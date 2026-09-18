@@ -75,24 +75,24 @@
   "comparisons": {
     "paper_quantities_vs_cosine": {
       "endpoint_l2_cohens_d": 0.09274778277118091,
-      "endpoint_l2_p_value": 0.6152954104438506,
+      "endpoint_l2_p_value": 0.6152954104438505,
       "endpoint_l2_df": 29,
       "endpoint_l2_p_value_bonferroni": 1.0,
       "bonferroni_significant": false,
       "entropy_cohens_d": 0.6417816031723889,
-      "entropy_p_value": 0.0014647724508778381,
+      "entropy_p_value": 0.001464772450877854,
       "entropy_df": 29,
-      "entropy_p_value_bonferroni": 0.0029295449017556763,
+      "entropy_p_value_bonferroni": 0.002929544901755708,
       "bonferroni_significant_entropy": true
     },
     "framework_vs_baseline": {
       "cosine_endpoint_l2_delta_pct": -97.69647149691095,
-      "cosine_p_value": 0.0,
-      "cosine_p_value_bonferroni": 0.0,
+      "cosine_p_value": 3.3456221460759753e-216,
+      "cosine_p_value_bonferroni": 6.691244292151951e-216,
       "cosine_bonferroni_significant": true,
       "paper_endpoint_l2_delta_pct": -97.69647149636688,
-      "paper_p_value": 0.0,
-      "paper_p_value_bonferroni": 0.0,
+      "paper_p_value": 6.751196985994684e-290,
+      "paper_p_value_bonferroni": 1.3502393971989368e-289,
       "paper_bonferroni_significant": true
     }
   },
@@ -110,9 +110,9 @@
   "alpha_bonferroni": 0.025,
   "alpha_bonferroni_value": 0.025,
   "statistical_test": "paired t-test (two-sided) with n=30, df=29; Cohen's d computed on within-subject diffs (dz)",
-  "postprocessed_at": "2026-09-18T08:03:50.935921+00:00",
+  "postprocessed_at": "2026-09-18T15:14:08.511603+00:00",
   "postprocessor": "scripts/wave190_p3_postprocess.py",
-  "commit_sha": "9e1a37ee5fe56513aebab5e7630eb8b93842ffde",
+  "commit_sha": "6a4a502803428d4ba0842438caaf4a9db92f889b",
   "per_seed_data": [
     {
       "seed": 0,

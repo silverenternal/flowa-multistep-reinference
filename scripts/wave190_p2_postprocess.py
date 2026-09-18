@@ -80,6 +80,17 @@ def _paired_ttest(a_vals: list[float], b_vals: list[float]) -> tuple[float, int]
     Returns (p_value, df). Falls back to a normal-approximation p-value
     if scipy is unavailable; the n=30 df=29 case is in the
     well-approximated regime so this is a safe fallback.
+
+    Implementation note (Wave 193 P4 fix): the original Wave 190 P2
+    implementation computed ``2 * (1 - cdf)`` which catastrophically
+    cancels for very large |t| — once ``t.cdf(abs(t), df)`` rounds to
+    1.0 (which happens for |t| ≳ 37 with df=29), the result collapses
+    to 0.0, falsely reporting p = 0.0. The corrected computation uses
+    ``2 * sf`` (which routes through ``logsf`` internally and avoids
+    the 1 - 1 = 0 cancellation). For t = 165.15, df = 29 the corrected
+    p is ≈ 1.11e-44; for t = 56.09, df = 29 it is ≈ 3.96e-31. Both are
+    vanishingly small but non-zero, and that distinction matters for
+    honest reporting.
     """
     if len(a_vals) != len(b_vals):
         raise ValueError("paired lists must have equal length")
@@ -96,7 +107,9 @@ def _paired_ttest(a_vals: list[float], b_vals: list[float]) -> tuple[float, int]
     t_stat = m / (sd / math.sqrt(n))
     try:
         from scipy.stats import t as _t  # type: ignore
-        p = 2.0 * (1.0 - float(_t.cdf(abs(t_stat), df=n - 1)))
+        # Use sf (not 1 - cdf) to avoid catastrophic cancellation when
+        # the tail probability is much smaller than 1.0.
+        p = 2.0 * float(_t.sf(abs(t_stat), df=n - 1))
     except Exception:
         # Normal-approx fallback for the two-sided p-value.
         from math import erf, sqrt
@@ -128,8 +141,32 @@ def _stats_block(vals: list[float]) -> dict[str, float | int]:
     }
 
 
+def _first_existing(paths: list[Path]) -> Path | None:
+    for p in paths:
+        if p.exists():
+            return p
+    return None
+
+
 def main() -> int:
-    raw = json.loads(SRC.read_text(encoding="utf-8"))
+    # Prefer the most recently written driver JSON. The task spec
+    # mentioned /tmp/w190_p2/ as the convenience output dir; the
+    # canonical path lives in verification_outputs/. Try in this order:
+    # 1) /tmp/w190_p2/wave190-p2-kanzi-n30-driver.json (driver output)
+    # 2) /tmp/w190_p2/wave190-p2-kanzi-n30-summary.json (this script's output)
+    # 3) verification_outputs/wave190-p2-kanzi-n30.json (canonical)
+    candidates = [
+        Path("/tmp/w190_p2/wave190-p2-kanzi-n30-driver.json"),
+        DST_TMP,
+        DST_CANON,
+    ]
+    src = _first_existing(candidates)
+    if src is None:
+        raise FileNotFoundError(
+            "no driver JSON found in /tmp/w190_p2/ or "
+            "verification_outputs/ for wave190-p2 kanzi"
+        )
+    raw = json.loads(src.read_text(encoding="utf-8"))
     sweep = raw["sweep"]
     cells = sweep["cells"]
     n_seeds = len(cells)
@@ -325,15 +362,19 @@ def main() -> int:
             "'load_bearing_only_on_axis_endpoint_l2_marginal_n3' with "
             "p_value_entropy ≈ 0.20 (not significant) and p_value_l2 "
             "= 0.103 (marginal). Wave 190 P2 n=30 confirms BOTH axes "
-            "with Bonferroni-corrected p < 1e-4 (paper-vs-cosine "
-            "Cohen's d_l2 = +42.6, d_entropy = -14.5). The axis "
-            "reversal sharpens: Wave 189 P4's 'marginal on L2 only' "
-            "verdict is now 'load_bearing on both axes' under n=30, "
-            "and the load-bearing mechanism is identified as "
-            "REGULARISATION (paper-quantity arm moves the endpoint "
-            "~0.46 L2 units vs cosine's ~99 L2 units; paper arm holds "
-            "the posterior near baseline while cosine makes it less "
-            "confident)."
+            "with Bonferroni-corrected p = 2.23e-44 (L2) and "
+            "p = 7.92e-31 (entropy) — exact values recovered in Wave 193 P4 "
+            "stats-recompute by switching the postprocess `2*(1-cdf)` to "
+            "`2*sf` to avoid catastrophic cancellation in the tail; the "
+            "prior postprocess reported p = 0.0 (double-precision floor for "
+            "1 - cdf when cdf rounds to 1.0). The paper-vs-cosine "
+            "Cohen's d_l2 = -30.15, d_entropy = +10.24. The axis reversal "
+            "sharpens: Wave 189 P4's 'marginal on L2 only' verdict is now "
+            "'load_bearing on both axes' under n=30, and the load-bearing "
+            "mechanism is identified as REGULARISATION (paper-quantity arm "
+            "moves the endpoint ~0.46 L2 units vs cosine's ~99 L2 units; "
+            "paper arm holds the posterior near baseline while cosine makes "
+            "it less confident)."
         ),
         "driver_verdict": sweep.get("verdict"),
         "driver_p_value_entropy": sweep.get("p_value_with_vs_without_quantities"),

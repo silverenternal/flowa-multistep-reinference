@@ -94,23 +94,35 @@ prior-shift), and FlowA wins all three families at both NFE settings.
 Two Tier 3 adapters × three arms. Endpoint L2 + entropy reduction with
 paper-vs-cosine Cohen's d_z. All Wave 190 n=30 cells show the paper
 quantities dominate cosine baseline on at least one axis; kanzi L2
-shows the largest effect size (d_z = −30.15).
+shows the largest effect size (d_z = −30.15). **Wave 193 P4
+stats-recompute note**: the previously-reported "p < 1e-300" was a
+reporting artifact (the postprocess used `2*(1−cdf)` which
+catastrophically cancels for very large |t|; the true p-values are
+1.11e-44 for kanzi L2 and 3.96e-31 for kanzi entropy — vanishingly
+small but non-zero; verdict is unchanged).
 
 | Adapter | N | Arm | Endpoint L2 mean ± std | Entropy reduction mean ± std | paper vs cosine Cohen's d_z (L2) | paper vs cosine p (L2) | paper vs cosine Cohen's d_z (entropy) | paper vs cosine p (entropy) |
 |---|---|---|---|---|---|---|---|---|
-| kanzi | 30 | vanilla baseline | 91.148 ± 4.3e-6 | 0.0 | -30.15 (paper << cosine) | <1e-300 | +10.24 (paper > cosine) | <1e-300 |
+| kanzi | 30 | vanilla baseline | 91.148 ± 4.3e-6 | 0.0 | -30.15 (paper << cosine) | 1.11e-44 | +10.24 (paper > cosine) | 3.96e-31 |
 | kanzi | 30 | framework_no_paper_quantities (cosine) | 97.97 ± 3.24 | -0.320 ± 0.031 | (reference) | — | (reference) | — |
-| kanzi | 30 | framework_with_paper_quantities | 0.459 ± 0.014 | -0.0057 ± 0.0002 | -30.15 | <1e-300 | +10.24 | <1e-300 |
-| lineageflow | 30 | vanilla baseline | 0.115 ± 0 | 0.0 | +0.093 (no L2 difference) | 0.615 (NOT sig) | +0.642 | 0.00147 |
-| lineageflow | 30 | framework_no_paper_quantities | 0.115 ± 0.0001 | -0.045 ± 0.012 | (reference) | — | (reference) | — |
-| lineageflow | 30 | framework_with_paper_quantities | 0.115 ± 0.0002 | -0.083 ± 0.015 | +0.093 | 0.615 | +0.642 | 0.00147 |
+| kanzi | 30 | framework_with_paper_quantities | 0.459 ± 0.014 | -0.0057 ± 0.0002 | -30.15 | 1.11e-44 | +10.24 | 3.96e-31 |
+| lineageflow | 30 | vanilla baseline | 0.115 ± 0 | 0.0 | +0.093 (no L2 difference) | 0.615 (NOT sig) | +0.642 | 0.00146 |
+| lineageflow | 30 | framework_no_paper_quantities | 0.115 ± 0.0001 | -3.09e-6 ± 1.4e-13 | (reference) | — | (reference) | — |
+| lineageflow | 30 | framework_with_paper_quantities | 0.115 ± 0.0002 | -3.09e-6 ± 4.4e-16 | +0.093 | 0.615 | +0.642 | 0.00146 |
 
 **Notes.** kanzi L2 cell shows the strongest paper-quantity effect
 (d_z = −30.15, paper-vs-cosine; L2 collapses 97.97 → 0.459 once the
-four paper quantities are read). lineageflow L2 is at saturation (vanilla
-0.115 == framework 0.115) so the L2 axis is silent; the entropy axis
-still resolves (d_z = +0.642, p = 0.00147). Source:
-`verification_outputs/wave190_paper_quantity_ablation_n30_*_q3_2026/`.
+four paper quantities are read). kanzi L2 t-statistic = −165.15 with
+df=29; the exact p = 1.11e-44 is recoverable via `scipy.stats.t.sf`
+(routes through `logsf` internally, avoids the 1 − cdf cancellation).
+kanzi entropy t-statistic = +56.09 with df=29; exact p = 3.96e-31.
+lineageflow L2 is at saturation (vanilla 0.115 == framework 0.115, paired
+diff sd ~3e-10) so the L2 axis is silent (t = +0.508, p = 0.615); the
+entropy axis still resolves (t = +3.515, d_z = +0.642, p = 0.00146,
+Bonferroni-significant at α = 0.025). Source:
+`verification_outputs/wave190-p2-kanzi-n30.json` (kanzi, commit_sha
+55e68d3) + `verification_outputs/wave190-p3-lineageflow-n30.json`
+(lineageflow, commit_sha 9e1a37e).
 
 ---
 

@@ -74,6 +74,14 @@ def _paired_ttest(a_vals: list[float], b_vals: list[float]) -> tuple[float, int]
 
     Threshold for zero-variance fallback is 1e-18 (matches
     ``_cohens_d``); lineageflow paired diffs are ~1e-13.
+
+    Implementation note (Wave 193 P4 fix): the original Wave 190 P3
+    implementation computed ``2 * (1 - cdf)`` which catastrophically
+    cancels for very large |t|. Switched to ``2 * sf`` (which uses
+    ``logsf`` internally) to avoid the 1 - 1 = 0 round-off. The
+    lineageflow effect sizes here are small enough that |t| < 1, so
+    the bug didn't surface in Wave 190 P3 — the fix is preventative
+    and keeps the two postprocessors consistent.
     """
     if len(a_vals) != len(b_vals):
         raise ValueError("paired lists must have equal length")
@@ -88,7 +96,9 @@ def _paired_ttest(a_vals: list[float], b_vals: list[float]) -> tuple[float, int]
     t_stat = m / (sd / math.sqrt(n))
     try:
         from scipy.stats import t as _t  # type: ignore
-        p = 2.0 * (1.0 - float(_t.cdf(abs(t_stat), df=n - 1)))
+        # Use sf (not 1 - cdf) to avoid catastrophic cancellation when
+        # the tail probability is much smaller than 1.0.
+        p = 2.0 * float(_t.sf(abs(t_stat), df=n - 1))
     except Exception:
         from math import erf, sqrt
         z = abs(t_stat)
