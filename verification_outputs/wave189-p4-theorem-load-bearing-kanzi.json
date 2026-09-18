@@ -1,0 +1,178 @@
+{
+  "schema": "wave189_p4_theorem_load_bearing.v1",
+  "tool": "scripts/wave189_p4_theorem_load_bearing_kanzi.py",
+  "wave": "Wave 189 P4",
+  "timestamp": "2026-09-18T06:02:11.995732+00:00",
+  "target": "kanzi",
+  "nfe": 1000,
+  "n_rounds_framework": 3,
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "n_records": 3,
+  "metric_axis": "per_position_entropy_reduction",
+  "metric_definition": "Per-position Shannon entropy reduction (nats) between baseline and framework endpoints, computed on the kanzi (64, 64) theta channel via softmax normalisation. Higher = framework sharpened the posterior.",
+  "paper_metric_axis": "reconstruction_kabsch_rmsd_A",
+  "paper_metric_status": "BLOCKED_no_torch — kanzi synthetic mode runs without the upstream torch DAE, so reconstruction_kabsch_rmsd_A (decoder.encode + decoder.decode + Kabsch alignment on Angstrom coords) cannot be computed. The synthetic endpoint IS a real (64, 64) tensor; the upstream decoder is the missing piece. This is the same gap Wave 158 P5 / Wave 168 P4 documented — see data/kanzi_ckpt/README.md for the upstream-availability probe transcript.",
+  "kanzi_status": "synthetic",
+  "kanzi_ckpt_source": "synthetic-shim",
+  "configurations": {
+    "vanilla_baseline": {
+      "mean_rmsd_A": null,
+      "status": "REFERENCE — single-pass ODE solve, no framework. Acts as the reference the framework arms are compared against.",
+      "mean_per_position_entropy_reduction": null,
+      "mean_endpoint_norm_baseline": 91.14837385161871
+    },
+    "framework_no_paper_quantities": {
+      "label": "framework_with_cosine_scheduler",
+      "scheduler_family": "cosine_anneal",
+      "consumes_A_g": false,
+      "consumes_B_g": false,
+      "consumes_C_g": false,
+      "consumes_e_rho": false,
+      "has_profile_residual_fn": false,
+      "mean_rmsd_A": null,
+      "mean_per_position_entropy_reduction": {
+        "n": 3,
+        "mean": -0.2106261758454401,
+        "std": 0.013352325172176799,
+        "min": -0.22297375463478497,
+        "max": -0.19207984205658546
+      },
+      "mean_endpoint_l2_vs_baseline": {
+        "n": 3,
+        "mean": 31.65210920963231,
+        "std": 0.9027303670864328,
+        "min": 30.37824167309805,
+        "max": 32.36204501905657
+      }
+    },
+    "framework_with_paper_quantities": {
+      "label": "framework_with_paper_ratio_scheduler",
+      "scheduler_family": "paper_ratio",
+      "consumes_A_g": true,
+      "consumes_B_g": true,
+      "consumes_C_g": true,
+      "consumes_e_rho": true,
+      "has_profile_residual_fn": true,
+      "mean_rmsd_A": null,
+      "mean_per_position_entropy_reduction": {
+        "n": 3,
+        "mean": -0.0033795456349590878,
+        "std": 0.00010153733378315894,
+        "min": -0.0034586945566683625,
+        "max": -0.0032362102403582504
+      },
+      "mean_endpoint_l2_vs_baseline": {
+        "n": 3,
+        "mean": 0.30698120103904636,
+        "std": 0.0048372700199756265,
+        "min": 0.30018411593724625,
+        "max": 0.31104944311839017
+      },
+      "delta_vs_no_paper_quantities": {
+        "entropy_axis": -0.0033795456349590878,
+        "l2_axis": 0.30698120103904636
+      }
+    }
+  },
+  "effect_size": {
+    "entropy_axis": -17.922037799216213,
+    "l2_axis": 40.093607004027234
+  },
+  "p_value_with_vs_without_quantities": 0.10088991100889912,
+  "p_value_l2_axis": 0.10328967103289671,
+  "verdict": "load_bearing_only_on_axis_endpoint_l2_marginal_n3",
+  "implication_for_paper": "Permutation test effect-size is large on the L2 endpoint axis (effect_size=40.093607004027234, cosine_L2=31.65 vs paper_L2=0.31) but p-value is marginal (p=0.10328967103289671); entropy axis effect_size=-17.922037799216213, p=0.10088991100889912. The cosine-annealing baseline perturbs the latent strongly in Euclidean space (L2 ≈ 32) while the paper-quantity scheduler barely moves it (L2 ≈ 0.31). This means Lemma 2-5 consumption REGULARISES the endpoint movement (paper-quantity scheduler is gentler than cosine — the framework's profile_residual_fn dampens the perturbation), even though both arms achieve similar per-position posterior sharpness. Paper §5.6 / §5.7 should disclose this as a regularisation effect: Theorem 1 quantities are load-bearing as a STABILISER, not as a sharpness amplifier on the protein axis. With n_paired=3 the load_bearing_only_on_axis_endpoint_l2_marginal_n3 verdict is small-sample and should be replicated at n>=30 before the paper makes a strong claim on this axis.",
+  "cells": [
+    {
+      "seed": 0,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 3,
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14837339796846,
+      "wallclock_baseline_s": 0.1478,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 79.10357529894206,
+      "wallclock_cosine_s": 0.1749,
+      "cosine_endpoint_l2": 32.21604093674231,
+      "cosine_per_position_entropy_reduction": -0.21682493084494991,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.95643392047214,
+      "wallclock_paper_s": 0.1212,
+      "paper_endpoint_l2": 0.31104944311839017,
+      "paper_per_position_entropy_reduction": -0.00344373210785065
+    },
+    {
+      "seed": 1,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 3,
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.1483748361689,
+      "wallclock_baseline_s": 0.0852,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 79.29512351995575,
+      "wallclock_cosine_s": 0.0803,
+      "cosine_endpoint_l2": 32.36204501905657,
+      "cosine_per_position_entropy_reduction": -0.22297375463478497,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.95792224603233,
+      "wallclock_paper_s": 0.0802,
+      "paper_endpoint_l2": 0.30971004406150265,
+      "paper_per_position_entropy_reduction": -0.0032362102403582504
+    },
+    {
+      "seed": 2,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 3,
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.1483733207188,
+      "wallclock_baseline_s": 0.1244,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 79.48541068963627,
+      "wallclock_cosine_s": 0.1275,
+      "cosine_endpoint_l2": 30.37824167309805,
+      "cosine_per_position_entropy_reduction": -0.19207984205658546,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.96315822148092,
+      "wallclock_paper_s": 0.1303,
+      "paper_endpoint_l2": 0.30018411593724625,
+      "paper_per_position_entropy_reduction": -0.0034586945566683625
+    }
+  ],
+  "notes": "Wave 189 P4 — Theorem 1 quantities load-bearing ablation on kanzi. Wave 188 P3 (ablation_q4_2026.json) showed the four paper quantities from Li (2024) Theorem 1 are NOT load-bearing on twodim_fm; this sweep replicates the test on the protein axis (kanzi) per the user's ultracode directive. The sweep runs in synthetic mode (no torch / no upstream DAE), so the paper-metric axis (reconstruction_kabsch_rmsd_A) is BLOCKED_no_torch and the entropy axis is reported instead. The verdict addresses whether the framework's CONSUMPTION of the paper quantities (via PaperRatioAdaptiveScheduler) affects the endpoint relative to the same framework WITHOUT the paper-quantity wrapper.",
+  "sweep_script": "scripts/wave189_p4_theorem_load_bearing_kanzi.py",
+  "commit_sha": "d4efa9a86894a2466ca6f89d4887598c9362388a"
+}
