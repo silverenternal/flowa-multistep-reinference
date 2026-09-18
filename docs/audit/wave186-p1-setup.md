@@ -128,5 +128,5 @@ choosing the path; this P1 audit establishes the gap.
   "restart_min_nfe_supported": false,
   "nfe_ref_supported": false,
   "cli_pattern": ".venvs/lineageflow_venv/bin/python tools/gen_lineageflow_n1000_fastas.py --outdir <DIR> --n <N> --seed <SEED> --nfe <NFE> --n-rounds <ROUNDS> --temperature <T>",
-  "commit_sha": "<set at end of P2>"
+  "commit_sha": "9aed486b21f807e17196488429bd7a1e2e0af4f8"
 ```
