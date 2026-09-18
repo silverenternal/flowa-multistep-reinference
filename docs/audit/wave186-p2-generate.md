@@ -296,6 +296,6 @@ All 18 cells have exactly 30 records. Sum: 18 × 30 = 540 records.
   "cells_succeeded": 18,
   "total_records": 540,
   "wall_min": 1.59,
-  "commit_sha": "<this commit's hash>"
+  "commit_sha": "0b1a0761efff910401a26f6feb5777d602a30bb6"
 }
 ```
