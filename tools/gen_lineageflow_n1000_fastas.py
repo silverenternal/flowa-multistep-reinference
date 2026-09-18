@@ -87,6 +87,35 @@ NFE_PER_RECORD: int = 10  # legacy default; overridden by --nfe in main()
 # only ``solve_ode`` with no ``apply_restart_distribution`` chain).
 N_ROUNDS: int = 3  # legacy default; overridden by --n-rounds in main()
 
+# Wave 186 P2 — sensitivity-analysis parameter overrides (one-at-a-time
+# axis sweep; see ``docs/audit/wave186-p1-setup.md`` §1 + §4 decision).
+# All three are wired through the framework glue via module-level
+# globals (Wave 168 P1 / Wave 170 P3 minimal-global pattern).
+# Default values (0.5 / 20 / 50) preserve the Wave 172b lineageflow
+# ladder anchor byte-stable path:
+# - ``BETA_BASE`` is the per-round framework restart-blend β used when
+#   paper_quantities is None (legacy constant in
+#   ``tools/eval/framework.py:_make_framework_policy`` line ~428).
+#   Wave 184 P2 §4.1 confirms the lineageflow synthetic adapter takes
+#   the constant-β path (no profile_residual_fn), so varying β is the
+#   load-bearing sensitivity axis.
+# - ``RESTART_MIN_NFE`` is the framework restart-blend gate threshold
+#   (Wave 61 Agent 1). When ``nfe < restart_min_nfe`` the per-round
+#   restart-blend glue degenerates to a no-op (frame degenerates to
+#   baseline). lineageflow's synthetic adapter does not natively
+#   honour restart_min_nfe; we thread it through the gen-script's
+#   framework-call wrapper, which downgrades to ``n_rounds=1`` (pure
+#   ``solve_ode``, no restart-blend) when the gate fires. Mirrors the
+#   Wave 63 byte-stability argument.
+# - ``NFE_REF`` overrides the per-adapter ``ADAPTER_NFE_REF`` table for
+#   the lineageflow adapter. Wave 175 P1 set lineageflow NFE_REF=50
+#   (the Wave 172b ladder anchor). Sensitivity axis exposes how the
+#   ``min(1.0, NFE_REF / max(nfe, 1))`` β-scale factor changes
+#   framework behaviour under different reference points.
+BETA_BASE: float = 0.5  # overridden by --beta-base in main()
+RESTART_MIN_NFE: int = 20  # overridden by --restart-min-nfe in main()
+NFE_REF: int = 50  # overridden by --nfe-ref in main()
+
 
 def _biased_aa(rng: random.Random, profile: dict, n: int) -> str:
     """Sample n AAs from the family's bias (fallback to uniform if bias under-specifies)."""
@@ -105,6 +134,172 @@ def _biased_aa(rng: random.Random, profile: dict, n: int) -> str:
 def _generate_sequence(rng: random.Random, family_id: str, length: int) -> str:
     profile = FAMILY_PROFILES.get(family_id, {"bias": {}})
     return _biased_aa(rng, profile, length)
+
+
+# Wave 186 P2 — sensitivity-analysis glue.
+#
+# ``--nfe-ref`` is plumbed via a runtime override of
+# ``tools.eval.io.ADAPTER_NFE_REF["LineageFlowAdapter"]`` — the
+# framework's ``_make_framework_policy`` reads this dict at call
+# time so the override is sufficient for the β-scale axis.
+#
+# ``--beta-base`` requires a small wrapper around
+# ``_make_framework_policy`` because the legacy β constant
+# (``0.5``, ``tools/eval/framework.py`` line ~428) is hardcoded
+# inline. The wrapper checks whether the inner's ``paper_quantities``
+# argument is ``None`` (legacy path) and substitutes the supplied
+# ``beta_base`` for the inline ``0.5``. The paper-quantity-driven
+# path (which the lineageflow synthetic adapter does NOT take, per
+# Wave 184 P2 §4.1) is preserved byte-identically.
+#
+# Both overrides are installed at most once per process invocation
+# via the ``_PATCHES_APPLIED`` guard so the gen script remains
+# idempotent across multiple invocations within the same Python
+# session (defensive: the Wave 186 P2 driver invokes the script
+# once per cell, so the guard is mainly belt-and-braces).
+_PATCHES_APPLIED: bool = False
+_ORIGINAL_MAKE_FRAMEWORK_POLICY: Any = None
+_ORIGINAL_ADAPTER_NFE_REF: dict[str, int] | None = None
+
+
+def _apply_sensitivity_patches(*, beta_base: float, nfe_ref: int) -> None:
+    """Install framework glue overrides for the Wave 186 P2 sensitivity axis.
+
+    Idempotent: subsequent calls within the same Python process are
+    no-ops (the gen script is invoked once per cell by the driver,
+    so this is defensive belt-and-braces against accidental double
+    invocation).
+    """
+    global _PATCHES_APPLIED, _ORIGINAL_MAKE_FRAMEWORK_POLICY, _ORIGINAL_ADAPTER_NFE_REF
+    if _PATCHES_APPLIED:
+        return
+    try:
+        import importlib as _il
+
+        _io_mod = _il.import_module("tools.eval.io")
+        _framework_mod = _il.import_module("tools.eval.framework")
+        _shim = _il.import_module("tools.run_real_ckpt_eval")
+    except Exception:
+        return
+
+    # Snapshot originals (for idempotency guard).
+    _ORIGINAL_ADAPTER_NFE_REF = dict(_io_mod.ADAPTER_NFE_REF)
+    _ORIGINAL_MAKE_FRAMEWORK_POLICY = _framework_mod._make_framework_policy
+
+    # Override the lineageflow entry in ``ADAPTER_NFE_REF``.
+    _io_mod.ADAPTER_NFE_REF["LineageFlowAdapter"] = int(nfe_ref)
+    # Also patch the shim's re-exported binding (the framework
+    # module imports it under that name; both must agree).
+    if hasattr(_shim, "ADAPTER_NFE_REF"):
+        _shim.ADAPTER_NFE_REF["LineageFlowAdapter"] = int(nfe_ref)
+
+    # Wrap ``_make_framework_policy`` so the legacy ``beta = 0.5``
+    # constant becomes the supplied ``beta_base`` whenever the
+    # inner's ``paper_quantities`` arg is None (legacy
+    # constant-β branch — the lineageflow synthetic adapter's path,
+    # confirmed by Wave 184 P2 §4.1).
+    _orig_policy = _ORIGINAL_MAKE_FRAMEWORK_POLICY
+
+    def _patched_make_framework_policy(  # type: ignore[no-untyped-def]
+        adapter: Any,
+        *,
+        target_round: int,
+        seed: int,
+        paper_quantities: dict[str, float] | None = None,
+        nfe: int = 0,
+    ) -> Any:
+        """Mirror of the original helper with ``beta_base`` override.
+
+        When ``paper_quantities is None`` the legacy branch
+        (``beta = 0.5``) is replaced with the supplied
+        ``beta_base``. The paper-quantity-driven branch (which
+        the lineageflow synthetic adapter does NOT take, per Wave
+        184 P2 §4.1) is preserved verbatim — only the legacy
+        constant is substituted.
+        """
+        # Monkey-patch the legacy constant in-place via the module
+        # globals (``_ORIGINAL_MAKE_FRAMEWORK_POLICY.__globals__``).
+        # This is the same pattern Wave 175 P1 uses for
+        # ``ADAPTER_NFE_REF``: the helper reads ``ADAPTER_NFE_REF``
+        # from its module globals at call time, so we don't need to
+        # re-implement the entire function. The legacy ``beta =
+        # 0.5`` is in the same scope and is read on every call (no
+        # ``global`` keyword), so we can rebind it via
+        # ``_globals[beta_literal] = beta_base`` for the duration of
+        # the call.
+        _globals = _orig_policy.__globals__
+        _original_beta_literal = 0.5
+        # Stash + restore via try/finally so a nested exception
+        # cannot leave the legacy constant pinned to beta_base.
+        _saved_beta = _globals.get("_wave186_p2_legacy_beta", None)
+        try:
+            # The legacy constant is referenced inline as the float
+            # literal ``0.5`` (not a module-global binding) at
+            # ``tools/eval/framework.py`` line ~428, so a direct
+            # globals rebind is insufficient. The robust workaround
+            # is to call the original function with paper_quantities
+            # shimmed via a side-channel dict that the patched
+            # function reads first — but the lineageflow synthetic
+            # adapter doesn't expose ``profile_residual_fn``, so
+            # ``paper_quantities`` is always ``None`` here, and the
+            # constant-β branch is the only path exercised. We
+            # re-implement the legacy branch by calling the
+            # original and replacing the resulting policy's
+            # ``beta_by_channel`` values.
+            _policy = _orig_policy(
+                adapter,
+                target_round=int(target_round),
+                seed=int(seed),
+                paper_quantities=paper_quantities,
+                nfe=int(nfe),
+            )
+            if paper_quantities is None and _policy is not None:
+                # Replace the per-channel β with ``beta_base``
+                # AFTER the legacy 0.5 has been applied. The NFE-
+                # aware ``min(1.0, NFE_REF / max(nfe, 1))`` scaling
+                # is preserved (the scaling multiplies the beta we
+                # patch in here).
+                from dataclasses import replace as _dc_replace  # type: ignore
+
+                # Compute the scale that the inner applied to its
+                # ``beta = 0.5`` legacy constant.
+                if int(nfe) > 0:
+                    _NFE_REF_EFFECTIVE = int(_globals["ADAPTER_NFE_REF"].get(
+                        type(adapter).__name__, _globals["DEFAULT_NFE_REF"],
+                    ))
+                    _scale = min(
+                        1.0,
+                        float(_NFE_REF_EFFECTIVE) / float(max(1, int(nfe))),
+                    )
+                else:
+                    _scale = 1.0
+                _new_beta = float(beta_base) * float(_scale)
+                # Rebuild the policy with the substituted β.
+                _policy = _dc_replace(
+                    _policy,
+                    beta_by_channel={
+                        ch: float(_new_beta)
+                        for ch in _policy.beta_by_channel
+                    },
+                )
+            return _policy
+        finally:
+            # No-op (we don't actually mutate module globals — see
+            # the rationale above). This branch exists to keep the
+            # try/finally structure symmetric in case future
+            # variants of this helper DO mutate globals.
+            if _saved_beta is not None:
+                _globals["_wave186_p2_legacy_beta"] = _saved_beta
+
+    # Install the wrapped helper. Three module paths must agree
+    # because ``tools.run_real_ckpt_eval`` re-exports the symbol
+    # via ``from tools.eval import _make_framework_policy`` and the
+    # framework helper itself looks up ``_compute_paper_quantities``
+    # via the shim's globals.
+    _framework_mod._make_framework_policy = _patched_make_framework_policy
+    if hasattr(_shim, "_make_framework_policy"):
+        _shim._make_framework_policy = _patched_make_framework_policy
+    _PATCHES_APPLIED = True
 
 
 def _build_lineageflow_adapter(family_id: str, seed: int) -> Any | None:
@@ -184,6 +379,15 @@ def _framework_emit_sequence(
     in the per-record manifest so the auditor can detect failed
     cells.
 
+    Wave 186 P2 addition: ``--restart-min-nfe`` is honoured by
+    downgrading ``n_rounds`` to ``1`` when ``nfe < restart_min_nfe``
+    (the framework's restart-blend glue degenerates to a pure
+    ``solve_ode`` pass with no ``apply_restart_distribution`` chain).
+    Mirrors the Wave 63 byte-stability argument: at ``n_rounds=1``
+    the framework returns a trace that is byte-identical to the
+    baseline axis (seed, nfe), so the per-record sequences are
+    sensitive to the gate firing.
+
     Note: the framework-side ``length`` argument is informational
     only — the adapter's per-position categorical has a fixed
     canonical length (``LINEAGEFLOW_MAX_LENGTH = 256``). We trim
@@ -199,12 +403,21 @@ def _framework_emit_sequence(
         from tools.run_real_ckpt_eval import _solve_framework  # type: ignore
     except Exception:
         return None
+    # Wave 186 P2 — restart-blend gate: when nfe < restart_min_nfe,
+    # downgrade to ``n_rounds=1`` (pure solve_ode, no
+    # apply_restart_distribution chain) so the framework degenerates
+    # to the baseline axis. This is the load-bearing sensitivity axis
+    # for ``--restart-min-nfe`` on lineageflow synthetic (which does
+    # not natively accept the kwarg).
+    effective_n_rounds = int(N_ROUNDS)
+    if int(NFE_PER_RECORD) < int(RESTART_MIN_NFE):
+        effective_n_rounds = 1
     try:
         trace, _wall = _solve_framework(
             adapter,
             nfe=NFE_PER_RECORD,
             seed=int(seed),
-            n_rounds=N_ROUNDS,
+            n_rounds=int(effective_n_rounds),
         )
     except Exception:
         return None
@@ -367,6 +580,51 @@ def main() -> None:
             "(Wave 170 P5 finding)."
         ),
     )
+    # Wave 186 P2 — sensitivity-analysis axis flags (one-at-a-time
+    # parameter sweep; see ``docs/audit/wave186-p1-setup.md`` §1).
+    # Default values match the Wave 172b lineageflow ladder anchor
+    # (β=0.5, restart_min_nfe=20, NFE_REF=50) so the baseline cell is
+    # byte-stable against the canonical Wave 158/172b manifest bytes.
+    p.add_argument(
+        "--beta-base",
+        type=float,
+        default=0.5,
+        help=(
+            "Per-round framework restart-blend β (legacy constant in "
+            "``tools/eval/framework.py:_make_framework_policy``). "
+            "Wave 186 P2 sensitivity axis: β ∈ {0.3, 0.7, 0.9}. "
+            "Default 0.5 preserves Wave 158/172b lineageflow ladder "
+            "anchor byte-stability."
+        ),
+    )
+    p.add_argument(
+        "--restart-min-nfe",
+        type=int,
+        default=20,
+        help=(
+            "Framework restart-blend gate threshold (Wave 61 Agent 1). "
+            "When ``nfe < restart_min_nfe`` the framework's per-round "
+            "restart-blend glue degenerates to baseline. Wave 186 P2 "
+            "sensitivity axis: restart_min_nfe ∈ {5, 10, 40, 80}. "
+            "Default 20 preserves Wave 172b lineageflow anchor. "
+            "lineageflow synthetic adapter does not natively accept "
+            "restart_min_nfe; the gen-script wrapper downgrades to "
+            "``n_rounds=1`` when the gate fires."
+        ),
+    )
+    p.add_argument(
+        "--nfe-ref",
+        type=int,
+        default=50,
+        help=(
+            "NFE reference for β scaling "
+            "(``min(1.0, NFE_REF / max(nfe, 1))`` in "
+            "``tools/eval/framework.py:_make_framework_policy``). "
+            "Wave 175 P1 set lineageflow NFE_REF=50; Wave 186 P2 "
+            "sensitivity axis: NFE_REF ∈ {10, 25, 75, 100, 200}. "
+            "Default 50 preserves Wave 172b lineageflow anchor."
+        ),
+    )
     args = p.parse_args()
 
     # Wire the CLI --nfe flag through to the module-level NFE_PER_RECORD
@@ -385,6 +643,31 @@ def main() -> None:
     # Wave 158 backward compat.
     global N_ROUNDS
     N_ROUNDS = int(args.n_rounds)
+    # Wave 186 P2 — sensitivity-analysis axis overrides. Same minimal
+    # ``global`` wire-through pattern as Wave 168 P1 / Wave 170 P3 —
+    # the helpers (``_framework_emit_sequence``) read these module
+    # globals and apply them via the framework glue. Default values
+    # (0.5 / 20 / 50) preserve the Wave 158/172b byte-stable path.
+    global BETA_BASE
+    BETA_BASE = float(args.beta_base)
+    global RESTART_MIN_NFE
+    RESTART_MIN_NFE = int(args.restart_min_nfe)
+    global NFE_REF
+    NFE_REF = int(args.nfe_ref)
+    # Wave 186 P2 — patch the framework glue to honour the
+    # sensitivity-analysis parameters. The framework's
+    # ``_make_framework_policy`` reads ``ADAPTER_NFE_REF`` from
+    # ``tools.eval.io`` at call time, so a runtime override of the
+    # table is sufficient for the ``--nfe-ref`` axis. The
+    # ``--beta-base`` axis requires wrapping
+    # ``_make_framework_policy`` (its β constant is hardcoded inline
+    # at the legacy-constant branch). The ``--restart-min-nfe`` axis
+    # is honoured inside ``_framework_emit_sequence`` by downgrading
+    # ``n_rounds`` to 1 when the gate fires.
+    _apply_sensitivity_patches(
+        beta_base=float(args.beta_base),
+        nfe_ref=int(args.nfe_ref),
+    )
     # Wave 171 P1: --temperature is forwarded through
     # ``_write_framework_arm`` rather than being captured in a module
     # global, because it has no need to be read by the helper before
@@ -410,6 +693,13 @@ def main() -> None:
         "nfe_per_record": int(NFE_PER_RECORD),
         "n_rounds": int(N_ROUNDS),
         "temperature": float(args.temperature),
+        # Wave 186 P2 — sensitivity-analysis axis values captured so
+        # the per-cell audit doc can correlate FASTA bytes to the input
+        # parameter perturbation. Defaults preserve the Wave 158/172b
+        # lineageflow ladder anchor.
+        "beta_base": float(BETA_BASE),
+        "restart_min_nfe": int(RESTART_MIN_NFE),
+        "nfe_ref": int(NFE_REF),
     }
 
     # ---- Baseline arm (bare RNG, preserved byte-shape) -----------------
