@@ -308,6 +308,16 @@ not_in_nav: |
   README.md
   ARCHIVE/README.md
   ARCHIVE/**/*.md
+  code-release-checklist.md
+  paper-draft-anonymous.md
+  paper-final-neurips.md
+  paper-profile.md
+  submission-checklist-final.md
+  headline-evidence/*.md
+  headline-evidence/**/*.md
+  preregistration/*.md
+  references/*.md
+  zenodo-release/*.md
 
 validation:
   nav:
