@@ -798,6 +798,19 @@ ratio regardless of which scheduler drove them
 on the $W_2$ axis; the `selection_ratio` axis only responds once the
 scheduler is allowed to write $\varepsilon$ (§4.6).
 
+**Wave 188 P5 honest reframe (does not delete the pre-cd70821 numbers above — additive disclosure of the Wave 8 FIX-3 inversion).** The −7.28% / −10.40% headline numbers in Tables 6-7 above are the **pre-cd70821** readings (`np.tanh` runtime vs `ReLU` trainer activation mismatch). Commit `cd70821` (2026-08-31) replaced `np.tanh` with `np.maximum(z, 0.0)` (ReLU) at `adaptive_reflow/adapters/twodim_fm.py:_velocity_field`, aligning the runtime activation with the trainer. The Wave 8 FIX-3 re-run (`docs/CLAIMS.md` CLM-018 inversion note, 2026-09-05) measured:
+
+- **`two_moons`** (mean ± std across 3 seeds, last 5 rounds, 1000 samples/round):
+  - `baseline (1-pass)`: W₂ = **0.0709 ± 0.0057**, `selection_ratio` = **0.8338 ± 0.0002**
+  - `CosineAnnealScheduler`: W₂ = 0.0866 ± 0.0057 (**+22.06% vs baseline**), `selection_ratio` = 0.8284 ± 0.0001 (-0.65%)
+  - `EvidenceDrivenScheduler` (best framework): W₂ = 0.0805 ± 0.0027 (+13.50%), `selection_ratio` = 0.8312 ± 0.0002 (-0.31%)
+  - `FreeTrajScheduler`: W₂ = 0.0811 ± 0.0024 (+14.39%), `selection_ratio` = 0.8297 ± 0.0001 (-0.49%)
+- **`eight_gaussians`** (partial — 6/15 runs; `CosineAnnealScheduler` only):
+  - `baseline (1-pass)`: W₂ = **0.1764 ± 0.0091**, `selection_ratio` = **0.5546 ± 0.0002**
+  - `CosineAnnealScheduler`: W₂ = 0.1831 ± 0.0025 (+3.78%), `selection_ratio` = 0.5417 ± 0.0004 (-2.33%)
+
+**Interpretation.** On `two_moons`, baseline (W₂=0.0709) beats every framework scheduler after the cd70821 ReLU fix; the framework's pre-fix improvement (W₂=0.5029 → 0.4663 = −7.28%) was an **artifact of the activation mismatch bug** (pre-fix model output was wrong because tanh vs ReLU, and restart-blend provided corrective value). On `eight_gaussians`, baseline (W₂=0.1764) also beats `CosineAnnealScheduler` (W₂=0.1831) post-fix. **The §4.2 headline numbers are valid as measurements on the buggy runtime (committed in commit `4a482ff`, 2026-08-31); they are NOT the framework's value-add on a correctly-trained adapter**. The Wave 8 inversion reframes the finding as: "framework provides corrective value when the base model is buggy, and stays neutral when the base model is correctly trained". CLM-018 and CLM-022 in `docs/CLAIMS.md` carry the PRE/POST-cd70821 versions of the inversion; CLM-039 retains the pre-cd70821 numbers as the historical reading on the buggy runtime. The `selection_ratio` direction (positive uplift +14.6% pre-fix; −0.31% post-fix) is **inverted** by the cd70821 correction.
+
 ![2D Rectified Flow ablation](figures/fig6-ablation.svg)
 
 The broader 23-cell ablation shows the same effect at larger amplitude:
