@@ -1,0 +1,9 @@
+model,nfe,seed,arm,n_records,plddt_mean,plddt_std,plddt_median,sc_perplexity_mean,sc_perplexity_std,sc_perplexity_median,delta_plddt_vs_baseline,delta_scperp_vs_baseline,baseline_plddt,baseline_scperp,n_with_both,n_seeds,effective_nfe_mean,cache_reuse_rate_mean,wall_s
+lineageflow,100,42,abcache,30,34.5282,,31.6619,15.8251,,15.2733,,,,,30,,19.0,0.81,4.72
+lineageflow,100,43,abcache,30,39.9109,,37.1303,15.4706,,15.4382,,,,,30,,19.0,0.81,9.86
+lineageflow,100,44,abcache,30,45.2323,,44.9004,13.3701,,12.4879,,,,,30,,19.0,0.81,8.75
+lineageflow,200,42,abcache,30,34.9313,,33.2091,15.6663,,14.9608,,,,,30,,35.0,0.825,6.38
+lineageflow,200,43,abcache,30,39.5284,,35.7866,15.1028,,15.2832,,,,,30,,35.0,0.825,14.83
+lineageflow,200,44,abcache,30,47.2476,,43.641,13.1445,,12.595,,,,,30,,35.0,0.825,14.92
+lineageflow,100,AGG,abcache,90,39.8905,4.37,,14.8886,1.0835,,-1.2476,-3.2288,41.1381,18.1174,,3,,,
+lineageflow,200,AGG,abcache,90,40.5691,5.0817,,14.6379,1.0807,,-0.569,-3.4795,41.1381,18.1174,,3,,,
