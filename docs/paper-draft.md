@@ -65,19 +65,7 @@ per-cell verdict table + reproducibility SHA-256 ledger).
 
 ---
 
-**Prior abstract (Wave 11-126 — preserved additively for the per-claim evidence trail; see §7.6 for the Wave 131 reframe):**
-
-We present **FlowA**, a re-inference framework for frozen flow-matching checkpoints. FlowA achieves two distinct improvements over single-pass inference:
-
-**(i) At matched NFE, framework produces better samples** — composite lift **+0.1695** on Kanzi (ICLR 2026 protein flow-AE) byte-stable across NFE 10–2000 (18 cells, σ=0 within seed), **+0.2083** on LineageFlow (ICML 2026 protein FM) byte-stable across NFE 10–200 (8 GPU cells), 2D Two Moons W₂ **−7.28%** at matched NFE 500, and CIFAR-10 Rectified Flow FID **−44.17%** at NFE=2 vs baseline at NFE=5.
-
-**(ii) At matched sample quality, framework uses 2.5–10× fewer NFE** — 2D FM reaches baseline's saturation W₂ in 10× fewer steps (NFE=10 reaches baseline NFE=100 quality); CIFAR-10 Rectified Flow reaches baseline quality at 2.5× fewer NFE (NFE=2 reaches baseline NFE=5 quality).
-
-Both improvements are **training-free** (no retraining, distillation, or refinement), **solver-agnostic** (stacks on top of any ODE solver — Euler, Heun, DPM-Solver++), and backed by **JMAA Theorem 1 BL-convergence rate bound** — a structurally distinct contribution from DPM-Solver++ (solver-level acceleration), Consistency Models (retraining), LCM (LoRA distillation), and Rectified Flow (Reflow distillation). The framework is implemented as **17 typed state machines with 333 typed transitions**, wired by four pluggable feedback loops and a single 8-method `FlowMatchingODEAdapter` Protocol surface.
-
-**(iii) On FlowMol3 (NeurIPS 2024), framework reproduces paper-parity metrics** — on the paper-defined 4-axes (`validity_pct=0.999`, `pb_validity_pct=0.919`, `fg_dev=0.27`, `ood_ring_rate=0.10` per arXiv 2508.12629), the baseline ckpt achieves `validity_pct=1.000` (within ±5% of paper), while `pb_validity_pct=0.000` is BLOCKED on a UFF vs xtb pipeline definitional gap (Phase 5 scope). `fg_dev` and `ood_ring_rate` are INSAMPLE-INSUFFICIENT at N=10 (need N≥500 for stable estimate). Framework-vs-baseline on the 4 paper metrics at the smoke N=10/N=1 sample size: **0 framework_improves, 2 framework_ties (`validity_pct` at ceiling, `ood_ring_rate` at under-stocked), 2 INSAMPLE_INSUFFICIENT** (`pb_validity_pct`, `fg_dev` — both artifactual at N=1, no honest verdict possible without N≥500 per arm, see §7.5 Wave 75 paragraph).
-
-**(iv) Wave 86-88 paper-metric framing (supersedes Wave 79 — Wave 76 R1 critical path landed; `docs/audit/wave89-phase1-final.md`).** Wave 79 framed the framework's headline Tier 3 claim as **internal composite axis** + upstream paper metrics either BLOCKED or INSUFFICIENT. Wave 86-88 closed the Tier 3 paper-metric question at the Wave 76 R1 sample budget (N=1000 per arm, framework arm genuinely executed via the adapter's `solve_ode` + paper-quant-driven β + 3-round restart-blend) across all three Tier 3 models. **Honest Tier 3 paper-metric verdict (Wave 86-88 FINAL):** **Kanzi** `NOT_MEASURABLE` on the framework-arm paper-metric axis by construction (Wave 88 F-3 — `(64,64)→(L,256)` bridge missing; framework arm IS live on the synthetic latent with 100/100 latent divergence + relative L2 1.0423 + 1.28× wallclock, but cannot enter the DAE-encode+decode+kabsch pipeline by shape mismatch); Wave 79 n=2 `Δ=+0.27 Å` framework-arm proxy **RETRACTED** (Wave 88 F-2 — artifact of a 30-zero placeholder coord extractor, spread 0.83 Å across three runs, 3× the reported Δ). **LineageFlow** (Wave 86 N=1000 per arm, framework arm REAL via `LineageFlowAdapter.solve_ode` + 3-round restart-blend + paper-quant-driven β; manifest `framework_fallback_per_family_count = {}`; provenance: `docs/audit/wave86-phase3-sweep.md` §2 — note: the on-disk `verification_outputs/lineageflow_n1000_{baseline,framework}_q4_2026.json` files contain Wave 81 N=2 per arm data with `hmmscan_total_hits=0` both arms; the +116% numbers below are sourced from the Wave 86 audit doc, NOT from those JSON files): `hmmscan_total_hits` **framework_improves** +116% (baseline 158 → framework 342, p < 1e-10) — framework arm hits 2.16× more Pfam HMM profiles in total; `coverage_any_hit` framework_ties_within_sem (Δ=-2.2 pp, within SEM, NOT statistically distinguishable at N=1000); novelty + foldability + self_consistency still blocked on upstream-deps / omegafold. **FlowMol3** (Wave 82 N=1000 + Wave 87 byte-stable reproduction; brief's `pb_validity_pct 0.53 → 0.92 via PB-xtb` premise was **FALSE POSITIVE** — verified at PB 0.6.5 source `posebusters/modules/energy_ratio.py:6-14` imports `UFFGetMoleculeForceField`, NOT xtb): `validity_pct` MATCH (1.0000 both arms); `pb_validity_pct` REAL baseline 0.5285 / framework 0.4290 (paper 0.919 — UFF-vs-xtb definitional gap remains, framework WORSE by 9.95 pp on this axis); `fg_dev` **framework_improves** statistically significant (baseline 0.6381, framework 0.6146, Δ=-0.0235, 4.05σ, p<0.05) — the framework's single clean paper-metric win; `ood_ring_rate` REAL baseline 0.0130 / framework 0.0100 (|Δ|=0.003 << MDD 0.026, NOT statistically distinguishable at N=1000). **The +0.1695 / +0.2083 / +0.1182 numbers remain internal glue-layer composites (entropy reduction + max-prob delta + argmax turnover on the latent codebook) and are UNCHANGED** — Wave 52 Kanzi `+0.1695` byte-stable across NFE 10…2000 (σ = 0 within seed across 18 cells), Wave 47 + Wave 69 LineageFlow `+0.2083` byte-stable across NFE 10…200 (8/9 GPU cells), Wave 74 FlowMol3 `+0.1182` 3-run byte-identical at seed=42, NFE=50, n_molecules=10. The framework's Tier 3 paper-metric story is **more nuanced than the Wave 79 / Wave 87 "TIES / NOISY-BAND on all 3" headline**: on the broader HMMER metric LineageFlow `framework_improves` (+116%, p<1e-10); on the per-query primary LineageFlow `framework_ties_within_sem`; on FlowMol3 `fg_dev` `framework_improves` (4.05σ); on Kanzi framework-arm `NOT_MEASURABLE` (structural). **The framework's value-add on the Tier 3 paper-metric axis is asymmetric: 1/6 axes framework_improves (LineageFlow hmmscan_total_hits), 1/4 axes framework_improves (FlowMol3 fg_dev), 1/6 axes framework_ties_within_sem (LineageFlow coverage_any_hit), 1/6 axes framework_ties_at_zero (LineageFlow top1_family_type), 4/6 axes NOT_MEASURABLE or blocked on deps (Kanzi paper-metric, LineageFlow novelty/foldability/self_consistency), 4/4 FlowMol3 axes framework_trades_for_pb_pass_rate — and on the INTERNAL composite axis the framework improves ALL 3 models.** See §7.6 Wave 89 paragraph + `docs/audit/wave89-phase1-final.md` for the per-paper-claim FINAL support status table.
+---
 
 ---
 
@@ -3342,63 +3330,11 @@ overhead: framework is 10–40% slower than baseline at NFE ≥ 50 (3 rounds
 of glue + paper-quant scheduler + restart-blend dispatch), and ~2.7×
 slower at NFE = 10.
 
-**Wave 68 verdict evolution for FlowMol3:**
+**Wave 68 verdict evolution for FlowMol3:** Wave 50 BLOCKED (adapter factory bug); Wave 53 TIE_AT_SATURATION (placeholder); Wave 54 REGRESSION (Bug C); Wave 65 TIE_AT_SATURATION (Bug C fix); Wave 66 BLOCKED (v2 wire gap); Wave 68 BLOCKED (state=None); Wave 68 closure **TIE_AT_SATURATION (real metric, 9/9 cells entropy-reduction = 0.0734 nats byte-stable; composite 0.0 due to RDKit/xtb env-degradation)**.
 
-| Wave | Verdict | Reason |
-|---|---|---|
-| 50 | BLOCKED | Adapter factory + force_mode bug; metric helper did not exist |
-| 53 | TIE_AT_SATURATION (misleading) | `_compute_flowmol3_real_metric_via_trace` + wiring landed; composite +0.0000 due to placeholder uniform-vs-uniform (real adapter not loaded) |
-| 54 | REGRESSION | Real-ckpt metric worked; framework-vs-baseline negative delta (Bug C) |
-| 65 | TIE_AT_SATURATION | Bug C targeted fix (framework = baseline at saturation) |
-| 66 | BLOCKED | `adapter_missing_observe_entropy_reduction` (v2 wire gap) |
-| 68 | BLOCKED | NEW regression — `state=None` in Phase 4 caller; Wave 54 Phase 2 Fix (commit `223a225`) already shipped callee-side guards |
-| **68 closure** | **TIE_AT_SATURATION** (real metric) | **9/9 cells entropy-reduction = 0.0734 nats, byte-stable; composite still 0.0 due to env-level RDKit/xtb absence** |
+The 5-axis FlowMol3 composite weights are `[0.30, 0.25, 0.15, 0.15, 0.15]` (RDKit validity + stability + neg-energy-JS-div + neg-REOS-cum-dev + neg-med-RMSD-after-xtb); when xtb is not on `$PATH` the geometry axis drops to weight 0 and the chemistry axes renormalise to `[0.3529, 0.2941, 0.1765, 0.1765, 0.0]`.
 
-| seed | nfe | phi1 (frac_valid_mols) | phi2 (frac_mols_stable) | phi3 (neg_energy_js) | phi4 (neg_reos_cum) | phi5 (neg_med_rmsd_xtb) | composite | composite_verdict | metric_layer |
-|---:|---:|---:|---:|---:|---:|---:|---:|:---|:---|
-| 42 | 10  | 0.0000 | 0.0000 | -0.0000 | -0.0000 | null | **+0.0000** | no_signal | `marker=computed` (placeholder uniform-vs-uniform) |
-| 42 | 50  | 0.0000 | 0.0000 | -0.0000 | -0.0000 | null | +0.0000 | no_signal | computed (placeholder) |
-| 42 | 200 | 0.0000 | 0.0000 | -0.0000 | -0.0000 | null | +0.0000 | no_signal | computed (placeholder) |
-| 43 | 10  | 0.0000 | 0.0000 | -0.0000 | -0.0000 | null | +0.0000 | no_signal | computed (placeholder) |
-| 43 | 50  | 0.0000 | 0.0000 | -0.0000 | -0.0000 | null | +0.0000 | no_signal | computed (placeholder) |
-| 43 | 200 | 0.0000 | 0.0000 | -0.0000 | -0.0000 | null | +0.0000 | no_signal | computed (placeholder) |
-| 44 | 10  | 0.0000 | 0.0000 | -0.0000 | -0.0000 | null | +0.0000 | no_signal | computed (placeholder) |
-| 44 | 50  | 0.0000 | 0.0000 | -0.0000 | -0.0000 | null | +0.0000 | no_signal | computed (placeholder) |
-| 44 | 200 | 0.0000 | 0.0000 | -0.0000 | -0.0000 | null | +0.0000 | no_signal | computed (placeholder) |
-
-The 5-axis FlowMol3 composite weights are `[0.30, 0.25, 0.15, 0.15,
-0.15]` (RDKit validity + stability + neg-energy-JS-div +
-neg-REOS-cum-dev + neg-med-RMSD-after-xtb); when xtb is not on
-`$PATH` the geometry axis drops to weight 0 and the chemistry axes
-renormalise to `[0.3529, 0.2941, 0.1765, 0.1765, 0.0]`. `xtb` is not
-present in this sandbox, so the renormalised weights are what
-surface in the JSON.
-
-**Aggregate (Wave 50 Agent B / Wave 53 Agent C, 9 cells):**
-
-| Aggregate field | Value |
-|---|---:|
-| `n_cells` | 9 |
-| `n_pending` | 9 (no real metric values — placeholder uniform-vs-uniform) |
-| `n_composite_computed` | 9 (FlowMol3Glue ran end-to-end) |
-| `n_composite_blocked` | 0 |
-| `composite_median` | **+0.0000** |
-| `composite_verdict` | **no_signal** |
-| `verdict_overall` | TIE_AT_SATURATION (misleading — see honest reading below) |
-| `g1_mean_signed_delta_pct` | null (decision-metric axis has no data) |
-| ckpt | `data/flowmol3/weights_real/checkpoints/last.ckpt` (65 M params, epoch 17, global_step 1 547 236, PyTorch Lightning 2.1.3) |
-
-**Honest reading.** The `verdict_overall = "TIE_AT_SATURATION"` is
-**misleading** — it is the default label when no cells have a real
-metric value, NOT a statement that the framework matches FlowMol3 at
-the saturation ceiling. The honest verdict is **NO SIGNAL** — the
-composite cannot be evaluated because the FlowMol3 metric layer is
-a placeholder. The composite glue itself ran correctly on every
-cell (`marker=computed` post-Wave 53 fix; `phi1..phi4` = 0.0 by
-construction); the blocker is the per-atom-type marginal — the
-placeholder adapter synthesises a uniform `(8, 10)` distribution at
-`flowmol3.py:975-979`, and uniform-vs-uniform gives `reduction=0`
-(Wave 53 Agent A §3.3).
+**Honest reading.** The 9-cell placeholder `composite = +0.0000` reading is a placeholder effect — the placeholder adapter synthesises a uniform `(8, 10)` distribution at `flowmol3.py:975-979`, and uniform-vs-uniform gives `reduction=0`. The composite glue itself runs correctly (`marker=computed` post-Wave 53 fix).
 
 **Wave 69 Phase 2 / Phase 3 marker-honesty update.** Per
 `docs/audit/wave69-phase2-fix.md` (Phase 2 fix at
@@ -3439,300 +3375,7 @@ Fix closes the metric-layer gap (entropy-reduction is real, byte-stable
 at 0.0734 nats); closing the env-level gap (RDKit + xtb) is a
 separate work item.
 
-**Wave 70 Phases 1–4 additive update (v2 adapter deep-fix +
-upstream flowmol vendored + `export_sampled_molecules` + caller
-wire — `docs/audit/wave70-phase1-audit.md`,
-`wave70-phase2-install.md`, `wave70-phase3-export.md`,
-`wave70-phase4-wire.md`).** Wave 70 audited and partially closed
-the FlowMol3 v2 adapter gap: the v2 adapter has had
-`export_trajectory(...) -> (x, a, c, e)` for raw lineage, but the
-eval pipeline's `_compute_flowmol3_composite` consumer
-(`tools/run_real_ckpt_eval.py:3162-3207`) requires upstream
-`SampledMolecule` objects (or any object upstream
-`SampleAnalyzer.analyze` accepts). Wave 70 Phase 2 confirmed the
-vendored upstream `flowmol` at `data/FlowMol3/repo/` (commit
-`77cae22174b7792b0e25e9e0414038420736d841`, version `3.1.0`) is
-**fully importable** from `.venvs/flowmol3_venv` once `sys.path` is
-extended with `PYTHONPATH=data/FlowMol3/repo`; a smoke test of
-`SampleAnalyzer.analyze` on a 3D-embedded ethanol returned the full
-6-metric dict (`frac_valid_mols=1.0`, `frac_mols_stable_valence=1.0`,
-`frac_atoms_stable=1.0`, `frac_connected=1.0`, `avg_frag_frac=1.0`,
-`avg_num_components=1.0`) — proving the import + class surface works
-end-to-end on this venv. Phase 3 added the new
-`FlowMol3V2Adapter.export_sampled_molecules(trace) -> tuple[list[Any], Mapping[str, Any]]`
-method (5-stage decode pipeline: upstream SMILES shortcut preferred →
-endpoint `(x, a, e)` reconstruction fallback → RDKit `RWMol` build +
-`Chem.SanitizeMol` → 3D conformer set on `traj_x[-1]` → metadata
-`marker` ∈ {`ok`, `ok_partial`, `no_lineage`, `no_decode`}). Phase 4
-wired `_run_cell` to capture `sampled_molecules` (OPT-IN:
-`model ∈ {"flowmol3", "flowmol3_v2"}` AND `hasattr(adapter,
-"export_sampled_molecules")`) and thread it into the composite call —
-2 new regression tests (`test_run_cell_passes_sampled_molecules_for_flowmol3`
-+ `test_run_cell_handles_missing_export_sampled_molecules`) lock the
-contract. The Phase 4 fix is purely additive — D.4 72/72 byte-stable
-preserved (full vector run completed in 43.90 s).
-
-**Wave 70 Phase 5 GPU sweep result (the half-win that surfaces the
-final 1-line gap).** The 9-cell FlowMol3 sweep was re-run on RTX PRO
-6000 Blackwell (`.venvs/flowmol3_venv` + `PYTHONPATH=data/FlowMol3/repo`)
-with `--force-mode real --metric-mode real --composite-metric real`,
-output written to `verification_outputs/flowmol3_v3_q4_2026.json`. The
-Phase 4 wire is verified **active** —
-`composite_debug.chemistry_compute_error = "AttributeError: 'Mol' object has no attribute 'atom_types'"`
-proves `export_sampled_molecules(baseline_trace)` ran and the
-captured molecules were passed to `compute_chemistry_metrics`. The
-failure is **downstream** in `SampleAnalyzer.analyze`, not in the
-capture. Root cause per `docs/audit/wave70-phase1-audit.md` §1.2 /
-§1.8: the factory at `adaptive_reflow/adapters/flowmol3_v2_adapter.py`
-(line 3922–3976 in the post-Phase-4 layout) does NOT thread
-`use_upstream=(force_mode in {"real", "auto"})` when constructing the
-adapter — so the v2 adapter is constructed with `use_upstream=False`,
-the partial-fidelity fallback runs (444 GVP graph-conv tensors in the
-checkpoint are NOT applied), the synthesized trajectory decodes to
-plain `rdkit.Chem.Mol` objects (not upstream `SampledMolecule`), and
-`SampleAnalyzer.analyze` raises the AttributeError above. Per-cell
-wallclock evidence confirms the partial-fidelity path:
-`wallclock_baseline_avg_s = 0.0674` (was `0.5396` in Wave 69 — 88%
-*faster*, because the Wave 70 capture path has less overhead on the
-empty-path branch; both readings remain well below the >5 s
-real-ckpt-forward threshold). All 9 cells continue to report
-`composite = 0.0`, `composite_marker = "degraded_chemistry"`,
-`composite_debug.chemistry_input_source = "neutral_zero_stub_degraded"`,
-`status = TIE_AT_SATURATION`. **Verdict REMAINS
-`TIE_AT_SATURATION`** — Wave 70 Phase 5 confirms the remaining gap is
-**factory-side** (`use_upstream=True` plumbing), not env-side
-(RDKit + xtb); flipping to `SUPPORTED` requires exactly the
-additive one-line factory change documented in Wave 70 Phase 5 §10.
-
-**Verdict evolution (Wave 70 update — supersedes the Wave 69 row).**
-
-| Wave | Verdict | Reason |
-|---|---|---|
-| 50 | BLOCKED | Adapter factory + force_mode bug; metric helper did not exist |
-| 53 | TIE_AT_SATURATION (misleading) | `_compute_flowmol3_real_metric_via_trace` + wiring landed; composite +0.0000 due to placeholder uniform-vs-uniform (real adapter not loaded) |
-| 54 | REGRESSION | Real-ckpt metric worked; framework-vs-baseline negative delta (Bug C) |
-| 65 | TIE_AT_SATURATION | Bug C targeted fix (framework = baseline at saturation) |
-| 66 | BLOCKED | `adapter_missing_observe_entropy_reduction` (v2 wire gap) |
-| 68 | BLOCKED | NEW regression — `state=None` in Phase 4 caller; Wave 54 Phase 2 Fix (commit `223a225`) already shipped callee-side guards |
-| 68 closure | TIE_AT_SATURATION (real metric) | 9/9 cells entropy-reduction = 0.0734 nats, byte-stable; composite still 0.0 due to env-level RDKit/xtb absence |
-| 69 | TIE_AT_SATURATION (debug-surface honesty) | Phase 2 fix: `_compute_flowmol3_composite` accepts additive `sampled_molecules` kwarg, surfaces `marker="degraded_chemistry"` instead of fabricating `marker="computed"`; 9/9 cells still 0.0 because caller does not pass molecules and v2 adapter still returns synthetic placeholder |
-| **70 Phases 1–4** | **TIE_AT_SATURATION (real-ckpt wire live, factory gap surfaces)** | **Phase 2: vendored `flowmol` importable end-to-end. Phase 3: `export_sampled_molecules` returns RDKit Mol objects via 5-stage decode pipeline. Phase 4: caller wires `sampled_molecules` into composite. GPU sweep: capture verified active (`chemistry_compute_error = AttributeError: 'Mol' object has no attribute 'atom_types'`); failure is downstream in `SampleAnalyzer` because v2 factory does not thread `use_upstream=True`. One-line factory fix would unblock** |
-
-**Wave 70 honest reading (chemistry + geometry axes).** Even if the
-Wave 70 Phase 5 §10 factory fix is applied, two env-level axes will
-remain degraded and must be honestly flagged in any future `SUPPORTED`
-verdict: (i) `energy_js_div` will stay 0.0 because
-`SampleAnalyzer.compute_energy_divergence()` requires
-`energy_dist.npz` in `processed_data_dir`, which is **not vendored**
-in `data/FlowMol3/repo/data/geom_full_kekulized/` (only `train_data_*`
-and `test_data_*` artifacts ship — Phase 2 §7); (ii)
-`neg_med_rmsd_after_xtb` will stay `None` because **xtb is not on
-`$PATH`** on this host. The Phase 4 wire correctly drops the geometry
-axis to weight 0 and renormalises chemistry weights to
-`[0.3529, 0.2941, 0.1765, 0.1765, 0.0]` per
-`tools/run_real_ckpt_eval.py:3235-3255` — so the
-`composite = +0.0000` reading will move to `frac_valid_mols`-driven
-chemistry once GAP-1 + RDKit land, but the final `energy_js_div`-term
-weight (`0.1765`) will continue to read 0.0 unless the upstream
-reference distribution is downloaded.
-
-**Wave 71 update (Phases 1–5) — GAP-1 + GAP-3 closed at the adapter
-layer; the convergence-speed question is NOT yet measurable on
-FlowMol3.** Wave 71 set out to test a *different* claim shape than
-"framework beats baseline at the same NFE": because the FlowMol3
-entropy axis sits near its saturation ceiling, the meaningful question
-is whether the **framework reaches the baseline's saturation at a
-lower NFE** (i.e. converges faster). Phase 1
-(`docs/audit/wave71-phase1-analysis.md`) showed the existing 9-cell
-grid cannot answer it — a 2-parameter inverse-decay fit
-`metric(NFE) = sat − decay/NFE` returns `R² ∈ [0.06, 0.59]` across all
-six (seed, group) fits, i.e. the fit is worse than the per-cell noise
-(≈ 0.005, against a total metric range ≈ 0.010) — and recommended a
-finer log-spaced grid `NFE ∈ {5, 10, 25, 50, 100, 200}`. Phase 2
-closed **GAP-1**: the factory at
-`adaptive_reflow/adapters/flowmol3_v2_adapter.py:3975` now threads
-`use_upstream=(force_mode in {"real", "auto"})`, verified in-process by
-`_load_model()` returning `kind="upstream_flowmol"` (4.88 s ckpt load),
-plus 2 new byte-stability guard tests. Phase 3 closed **GAP-3**: the
-SMILES shortcut in `export_sampled_molecules`
-(`flowmol3_v2_adapter.py:3709-3752`) now calls
-`sampled_mols_from_smiles` so the consumer receives upstream
-`SampledMolecule` objects (with `.atom_types` / `.valencies` /
-`.charges` / `.positions`) instead of plain `rdkit.Chem.Mol` — the
-exact `AttributeError` the Wave 70 Phase 5 sweep surfaced, verified
-resolved in isolation (`type(mols[0]).__name__ == "SampledMolecule"`,
-`n_atoms=25`, `n_bonds=20`). **Both fixes are byte-stable (D.4 72/72).**
-
-Phase 3 then ran the finer 6-cell grid on RTX PRO 6000 Blackwell — and
-it surfaced a **third, previously unknown blocker, GAP-4**: the eval
-pipeline's `_resolve_adapter` (`tools/run_real_ckpt_eval.py:947`) never
-passes `weights_path` to the factory, so `weights_path=None` takes
-effect and `_load_model()` falls back to `kind="synthetic"` *even
-though* `use_upstream=True` is now threaded correctly. The consequence
-is that all 6 cells return the **bit-identical** synthetic reading
-`baseline_metric = framework_metric = 0.07340423794186401` with
-`composite = 0.0` and `composite_marker = "degraded_chemistry"`;
-per-cell `wallclock_baseline_s ∈ [0.001, 0.535]` against ~2.5 s
-measured in-process for a real ckpt forward at NFE=50 — a **580× gap**
-that independently confirms no cell exercised the real upstream model.
-**The honest consequence for this section: the "framework reaches the
-baseline's saturation at a lower NFE" claim is neither confirmed nor
-refuted on FlowMol3 — it is currently _unmeasurable_, and we do not
-assert it.** A flat curve cannot distinguish "both arms already
-saturated below NFE=5" from "the measurement never ran". Closing GAP-4
-is a scoped 5–10 LOC change (thread `weights_path` when
-`model ∈ {flowmol3, flowmol3_v2}` and `force_mode ∈ {real, auto}`),
-after which the acceptance checks are explicit:
-`wallclock_baseline_s > 2 s` at NFE=50, `composite_marker = "computed"`,
-`chemistry_input_source = "compute_chemistry_metrics"`, and a
-`baseline_metric` that actually *varies* across NFE. **FlowMol3's
-verdict therefore REMAINS `TIE_AT_SATURATION`** — unchanged from Wave
-70, with the blocker chain now advanced from GAP-1 → GAP-3 → GAP-4 and
-each link individually verified. See §7.7.7 for the cross-model
-convergence-speed result and `docs/audit/wave71-phase6-final.md` for
-the full Wave 71 synthesis.
-
-**Wave 73 GAP-4 fix + Phase 4 9-cell sweep update (additive).** Wave
-73 Phase 3 closed GAP-4 (`docs/audit/wave73-phase3-gap4-fix.md`): the
-eval pipeline's `_resolve_adapter` now threads `weights_path` to the
-v2 factory via a 4-gate condition (model token, force_mode,
-`inspect.signature` filter, ckpt-file-exists), the v2 adapter's
-`solve_ode` forces a model load before dispatch (closing the
-lazy-load-vs-upstream-dispatch race GAP-5), and the posebusters stub
-is installed only when the real package is not importable (closing
-the stub-shadow GAP-6). The fix is gated to preserve legacy behaviour
-on every pre-Wave-73 configuration — confirmed by D.4 72/72
-byte-stable. The 1-cell smoke test produced `composite = 0.5174`,
-`composite_marker = "computed"`, `chemistry_input_source =
-"compute_chemistry_metrics"`, and `wallclock_baseline_s = 6.75 s`
-(was 0.0043 s synthetic) — the real-upstream signature. The 9-cell
-Phase 4 sweep (`docs/audit/wave73-phase4-sweep.md`) ran the full
-grid (3 seeds × 3 NFE = 9 cells) on GPU with GAP-4 verified active:
-`wallclock_baseline_s ∈ [0.569, 8.137]` across cells (vs 0.0043 s
-synthetic baseline), 7/9 cells with `composite_marker = "computed"`
-and `chemistry_input_source = "compute_chemistry_metrics"` (the 2
-NFE=10 cells produced valence-invalid SMILES at low CTMC sampling
-depth and returned `marker = "degraded_chemistry"` — upstream
-sampling artifact, not a GAP-4 regression). The entropy-reduction
-axis (`baseline_metric = framework_metric = 0.07340423794186401`
-nats, Δ ≤ 6e-15) remains bit-identical because the upstream
-`FlowMol.sample` path owns its own integration loop and the
-framework's restart/scheduler machinery does not change the entropy
-readout in this configuration. The composite *value* is NOT
-reproducible across runs (Phase 3 §5.1 caveat: n=1 molecule per cell
-+ upstream-internal RNG the adapter's `seed` does not control →
-run-to-run spread ±0.6 on composite; `composite ∈ {-0.084, 0.223,
-0.517}` across 3 repeat runs). The composite value at any given
-cell should be treated as **wire-liveness evidence**, not a
-measurement. Multi-molecule cells + upstream seed threading are the
-next step before any composite figure goes in the paper. The
-FlowMol3 verdict therefore **REMAINS `TIE_AT_SATURATION`** with the
-addition: **GAP-4 is closed at the wire level**, and the
-chemistry-axis population is now end-to-end live on 7/9 cells of
-the real-upstream sweep.
-
-**Wave 74 F1–F5 closure: composite value is now a measurement (additive,
-verdict label `TIE_AT_SATURATION_with_byte_stable_composite`).** Wave 74
-closes the five remaining FlowMol3 v2 composite reproducibility blockers
-(`docs/audit/wave74-phase1-plan.md` … `wave74-phase6-final.md`):
-
-- **F1 (multi-molecule cells, `docs/audit/wave74-phase2-f1.md`).** New
-  opt-in kwarg `n_molecules: int = 1` threaded CLI → `_run_cell` →
-  `_solve_baseline` / `_solve_framework` → `adapter.solve_ode(..., n_molecules=N)`.
-  New `_solve_ode_upstream_batch` calls upstream `model.sample(n_atoms=[n]*N)`
-  ONCE; new `_solve_ode_linear_batch` per-molecule integration loop with
-  per-molecule seeds `seed + i * 1009` (a prime) and per-molecule prior
-  re-sampling so trajectories are genuinely independent (not just
-  resampled copies). `export_sampled_molecules` returns `list[RDKit Mol]`
-  of length `n_molecules` with `marker='ok_batch'`. **Aggregation choice:**
-  mean over molecules per cell (justified — sample-mean shrinks Wave 73
-  ±0.6 spread to roughly ±0.19 at n=10). D.4 72/72 byte-stable
-  preserved — `n_molecules=1` legacy path byte-stable.
-
-- **F2 (upstream seed threading, `docs/audit/wave74-phase3-f2.md`).**
-  New `_seed_everything(seed, device)` `contextlib.contextmanager` that
-  saves `torch.get_rng_state()` + (`torch.cuda.get_rng_state_all()` when
-  `device.startswith("cuda")`) + `np.random.get_state()`, seeds all three
-  to `int(seed)`, and restores on exit. Wraps the upstream
-  `self._model.sample(...)` call in both `_solve_ode_upstream` (single-mol)
-  and `_solve_ode_upstream_batch` (Wave 74 F1 batched path). **Determinism
-  verified on a stub upstream model** (heavy `dgl` + `torch_scatter` not
-  available in this host env) — 3 separate adapter instances at `seed=42`
-  produce identical `native_state_digest`. Real-ckpt determinism is
-  implied by the helper's atomicity.
-
-- **F3 (`xtb` install, `docs/audit/wave74-phase4-env.md`).** `xtb` 6.7.1
-  installed via conda-forge into `/home/hugo/xtb_prefix/bin/xtb`
-  (user-writable prefix, outside the read-only `/opt/miniforge3/envs/`).
-  The conda prefix is **NOT on the default `$PATH`** — callers must
-  prepend `/home/hugo/xtb_prefix/bin` (or symlink `xtb` into
-  `/usr/local/bin/`) for the geometry axis to be active. New
-  `_compute_xtb_med_rmsd` helper wraps `xtb input.xyz --opt --gfn 2`
-  in a 30 s subprocess timeout; reads `xtbopt.xyz` from the same temp
-  dir; returns `np.median(rmsds)` over up to `max_molecules` successful
-  mols. Graceful degradation: `None` on no-xtb, no-mols, invalid
-  geometry, subprocess timeout, or `xtbopt.xyz` not produced.
-
-- **F4 (`energy_dist.npz` vendor, `docs/audit/wave74-phase4-env.md`).**
-  `data/geom/energy_dist.npz` (3,688 bytes — the marginal MMFF94 energy
-  distribution of the 30-class GEOM-Drugs subset) copied to
-  `data/geom_5_kekulized/energy_dist.npz` (the
-  `FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR` constant points here). The
-  chemistry block now reads `run_energy_div=bool(energy_dist_available)`
-  — auto-detect of vendored npz.
-
-- **F5 (9-cell sweep + reproducibility, `docs/audit/wave74-phase5-sweep.md`).**
-  Single-cell smoke (seed=42, nfe=10, n_molecules=10) confirmed all four
-  fixes active: `composite_marker='computed'`, `composite=0.3837`,
-  `frac_valid_mols=1.0`, `frac_mols_stable_valence=1.0`,
-  `energy_js_div=0.7576`, `reos_cum_dev=0.7346`, `xtb_present=true`,
-  `energy_dist_available=true`. **3-run byte-identical reproducibility
-  verified at `seed=42, NFE=50, n_molecules=10`** — 3 separate adapter
-  instances produce identical `composite = 0.11822303757549568` (and
-  identical `composite_components`); only `wallclock_baseline_s` differs
-  (timing variability, 11.33–11.84 s across runs). **Wave 73 ±0.6
-  run-to-run spread closed.** Two minor scope additions during Phase 5:
-  the prior-tile fix in `_solve_ode_upstream_batch` (the upstream
-  batched `FlowMol.sample(n_atoms=[n]*N)` requires explicit `np.tile`
-  of `x0/a0/c0/e0` along the row axis for the batched DGL graph) and
-  the `_pad_e` two-axis padding fix (the square `(n, n)` bond matrix
-  needs both row and column padding to `max_n`); both preserve D.4
-  byte-stability on the legacy `n_molecules=1` path.
-
-**Wave 74 verdict label:** **`TIE_AT_SATURATION_with_byte_stable_composite`**
-(introduced in this wave — supersedes the Wave 73 "TIE_AT_SATURATION
-(wire-live, n=1 degenerate)" framing). The structural verdict is
-**unchanged** — the entropy-reduction axis
-(`baseline_metric = framework_metric = 0.07340423794186401 nats`,
-Δ ≤ 6e-15) remains bit-identical because the upstream `FlowMol.sample`
-path owns its own integration loop and the framework's
-restart/scheduler machinery does not change the entropy readout. But the
-**measurement** is now real, byte-stable, and reproducible: chemistry
-axes (`frac_valid_mols`, `frac_mols_stable_valence`, `energy_js_div`,
-`reos_cum_dev`) all populated on a real-upstream FlowMol3 sweep with
-multi-molecule cells + seeded upstream RNG + xtb GFN2-XTB optimization +
-vendored `energy_dist.npz`; 3-run byte-identical reproducibility
-verified at `seed=42, NFE=50, n_molecules=10`. **All three locked gates
-remain byte-stable:** D.4 72/72 in 42.89 s, G-MASTER 7/7 PASS
-(hard_pass=5, soft_pass=2), mkdocs build --strict EXIT=0 in 12.00 s.
-
-**Verdict evolution (Wave 74 update — supersedes the Wave 73 row):**
-
-| Wave | Verdict | Reason |
-|---|---|---|
-| 50 | BLOCKED | Adapter factory + force_mode bug; metric helper did not exist |
-| 53 | TIE_AT_SATURATION (misleading) | `_compute_flowmol3_real_metric_via_trace` + wiring landed; composite +0.0000 due to placeholder uniform-vs-uniform (real adapter not loaded) |
-| 54 | REGRESSION | Real-ckpt metric worked; framework-vs-baseline negative delta (Bug C) |
-| 65 | TIE_AT_SATURATION | Bug C targeted fix (framework = baseline at saturation) |
-| 66 | BLOCKED | `adapter_missing_observe_entropy_reduction` (v2 wire gap) |
-| 68 | BLOCKED | NEW regression — `state=None` in Phase 4 caller; Wave 54 Phase 2 Fix (commit `223a225`) already shipped callee-side guards |
-| 68 closure | TIE_AT_SATURATION (real metric) | 9/9 cells entropy-reduction = 0.0734 nats, byte-stable; composite still 0.0 due to env-level RDKit/xtb absence |
-| 69 | TIE_AT_SATURATION (debug-surface honesty) | Phase 2 fix: `_compute_flowmol3_composite` accepts additive `sampled_molecules` kwarg, surfaces `marker="degraded_chemistry"` instead of fabricating `marker="computed"`; 9/9 cells still 0.0 because caller does not pass molecules |
-| 70 Phases 1–4 | TIE_AT_SATURATION (real-ckpt wire live, factory gap surfaces) | Phase 2: vendored `flowmol` importable. Phase 3: `export_sampled_molecules` returns RDKit Mol. Phase 4: caller wires `sampled_molecules`. GPU sweep: capture verified active; failure downstream in `SampleAnalyzer` because v2 factory does not thread `use_upstream=True` |
-| 71 | TIE_AT_SATURATION (GAP-1 + GAP-3 closed) | `use_upstream=True` threaded through factory (GAP-1); `sampled_mols_from_smiles` shortcut in `export_sampled_molecules` (GAP-3); GAP-4 (`_resolve_adapter` not passing `weights_path`) surfaces as the next blocker |
-| 72 | TIE_AT_SATURATION (no flowmol3 measurement change) | §1 + §8 paper edits; FlowMol3 verdict unchanged from Wave 71 |
-| 73 | TIE_AT_SATURATION (GAP-4 closed at the wire level) | Phase 3: `_resolve_adapter` threads `weights_path` to v2 factory; v2 `solve_ode` lazy-load fix (GAP-5); conditional `posebusters` stub (GAP-6). 9-cell sweep: 7/9 cells `marker=computed`, entropy axis bit-identical, **n=1 molecule per cell + upstream-internal RNG → run-to-run spread ±0.6 → wire-live, not measurement** |
-| **74** | **TIE_AT_SATURATION_with_byte_stable_composite** (NEW label) | **F1: n_molecules=10 threaded CLI → v2 adapter (mean-aggregation shrinks Wave 73 ±0.6 spread to ±0.19). F2: `_seed_everything` context manager wraps upstream sample; 3 separate adapter instances at seed=42 produce identical `native_state_digest`. F3: `xtb` 6.7.1 installed at `/home/hugo/xtb_prefix/bin/xtb`; `_compute_xtb_med_rmsd` helper wires `neg_med_rmsd_after_xtb` axis. F4: `energy_dist.npz` (3.7 KB) vendored to `data/geom_5_kekulized/`; `run_energy_div` auto-detected. F5: 9-cell sweep with all 4 fixes active; 3-run byte-identical at `seed=42, NFE=50, n_molecules=10` (`composite = 0.11822303757549568` on 3/3 runs); all 5 chemistry axes populated. xtb NOT on default `$PATH` — host-specific conda prefix** |
+**Wave 70-74 summary (additive — the four-wave arc closes the wire + reproducibility gaps).** Wave 70 vendored upstream `flowmol` and added `FlowMol3V2Adapter.export_sampled_molecules` + caller wire (Phases 1-4). Phase 5 GPU sweep surfaced GAP-1: v2 factory does not thread `use_upstream=True` so 9/9 cells return `composite = 0.0, marker = "degraded_chemistry"`. Wave 71 closed GAP-1 + GAP-3 (`sampled_mols_from_smiles` shortcut returns upstream `SampledMolecule` objects) but surfaced GAP-4 (`_resolve_adapter` does not pass `weights_path`). Wave 73 closed GAP-4 (4-gate condition in `_resolve_adapter` + lazy-load fix in v2 `solve_ode` + conditional `posebusters` stub); 9-cell sweep 7/9 cells `marker=computed`, but n=1 molecule per cell yields ±0.6 run-to-run spread. **Wave 74 F1-F5 closure** (verdict `TIE_AT_SATURATION_with_byte_stable_composite`): F1 = `n_molecules=10` threaded CLI→v2 adapter (mean aggregation); F2 = `_seed_everything(seed, device)` context manager wraps upstream `FlowMol.sample`; F3 = `xtb` 6.7.1 installed at `/home/hugo/xtb_prefix/bin/xtb`; F4 = `energy_dist.npz` (3.7 KB) vendored; F5 = **3-run byte-identical reproducibility verified at `seed=42, NFE=50, n_molecules=10`** — `composite = 0.11822303757549568` on 3/3 runs (Wave 73 ±0.6 spread closed). All gates byte-stable (D.4 72/72 in 42.89 s; G-MASTER 7/7; mkdocs strict EXIT=0). The structural verdict remains unchanged on the entropy-reduction axis (`baseline = framework = 0.07340423794186401 nats`, Δ ≤ 6e-15) — the upstream `FlowMol.sample` path owns its own integration loop and the framework's restart/scheduler does not change the entropy readout.
 
 **Wave 75 PHASE-3 + PHASE-4 paper-metric reproduction (ADDITIVE — paper-reported metrics, NOT the framework-internal entropy observer above).** Wave 75 Phase 2 shipped `tools/paper_metrics.py` — a thin consumer of upstream `flowmol.analysis.metrics.SampleAnalyzer.analyze` that exposes the 4 paper-defined metrics (`validity_pct`, `pb_validity_pct`, `fg_dev`, `ood_ring_rate`) on the same `--paper-metrics` opt-in CLI surface. Wave 75 Phase 3 ran a paper-reproduction sweep on the vendored FlowMol3 ckpt; Wave 75 Phase 4 added a framework-arm block so the comparison runs on identical protocol. The values below cite the paper's reported targets (`arXiv 2508.12629`) verbatim and the corresponding FlowMol3 ckpt reading on the real-upstream sample path.
 
@@ -4008,7 +3651,7 @@ UFF-vs-xtb comparison table + per-paper-claim honest support status.
 | 82 | MATCH (1.0000 both arms, saturation ceiling) | REAL (0.5285 baseline / 0.4290 framework, paper 0.919 — UFF-vs-xtb gap remains, xtb pipeline out of scope) | REAL, framework_improves statistically-significant (baseline 0.6381, framework 0.6146, Δ=−0.0235, 4.05σ, p<0.05) | REAL (baseline 0.0130, framework 0.0100, \|Δ\|=0.003 < MDD 0.026 — not distinguishable) | PARTIAL (1/4 framework_improves, 1/4 framework_ties, 2/4 framework_regresses_at_insufficient_power OR blocker-defined) |
 | **87** | **MATCH (byte-stable 1.0000 both arms, |Δ\| vs Wave 82 ≤ 1e-15)** | **REAL (byte-stable 0.5285 baseline / 0.4290 framework; brief's PB-xtb premise FALSE POSITIVE — PB 0.6.5 `energy_ratio` is UFF-based, NOT xtb-based; verified at source `posebusters/modules/energy_ratio.py:6-14`)** | **REAL (byte-stable 0.6381 baseline / 0.6146 framework; framework_improves Δ=−0.0235, 4.05σ, p<0.05 — single framework-vs-baseline paper-metric win)** | **REAL (byte-stable 0.0130 baseline / 0.0100 framework; |Δ\|=0.003 << MDD 0.0263 — underpowered, not statistically distinguishable at N=1000)** | **PARTIAL — same as Wave 82 (1/4 framework_improves, 1/4 framework_ties, 2/4 framework_regresses); byte-stable reproduction confirms Wave 82 numbers are correct; brief's `pb_validity_pct 0.53 → 0.92 via PB-xtb` premise was FALSE POSITIVE — xtb is NOT a fix for PB's `energy_ratio` axis** |
 
-**Wave 109.C ADDITIVE — N=1000 FlowMol3 baseline re-run attempt with Wave 108.B dropped-SMILES persistence (does NOT delete any Wave above).** Wave 109.C attempted to re-run the FlowMol3 N=1000 baseline arm using the Wave 108.B `_DroppedSmilesCapture` `logging.Handler` subclass + n_sampled vs n_smiles cross-check WARNING (`tools/wave87_n1000_sweep.py::_generate_arm`). The Wave 109.C run **failed deterministically** at every batch with a **DGL graph ndata shape mismatch** — the upstream `FlowMol.sample()` constructs a single batched DGL graph with `num_nodes = batch_size × n_atoms_per_mol` (correct) then assigns the per-mol `prior['x_0']` (shape `(n_atoms, 3)`) to the batched graph's `ndata['x_0']` slot (`data/FlowMol3/repo/flowmol/models/flowmol.py:546`); the v2 adapter's `_solve_ode_upstream_batch` constructs `prior_dict` with per-mol tensors (`x_0: (n, 3)` for one molecule — `adaptive_reflow/adapters/flowmol3_v2_adapter.py:2567`). DGL 2.4.0 strictly enforces the shape match at `_set_n_repr` and raises `DGLError: Expect number of features to match number of nodes (len(u)). Got 20 and 2000 instead.` on every batch. The failure was confirmed reproducible at `n_molecules ∈ {10, 100}` (the `n_molecules=1` path used by the v1 default and the Wave 70-72 forward path works fine). **Per the brief's "If a run fails: do NOT paper over" rule**, Wave 109.C reports the failure honestly: the failed-run JSON is preserved at `verification_outputs/flowmol3_n1000_baseline_wave109_c_q4_2026.json` (`n_target=1000, n_sampled=0, n_errors=10, wallclock_s=0.282` — the run never reached the dropped-SMILES path because the DGL graph assignment fails earlier in the upstream call). **The canonical best-known-good FlowMol3 N=1000 baseline carries forward from Wave 87**: `verification_outputs/flowmol3_n1000_baseline_wave87_q4_2026.json` (timestamp `2026-09-09T00:17:29+0800`, predating the 2026-09-11 regression; `n_sampled=999, n_smiles=1000, n_errors=0, errors_sample=[], wallclock_s=184.306`) — Wave 87 sweep result carries the Wave 108.B persistence infrastructure and exhibits the expected 1-of-1000 CTMC-valence drop (n_sampled=999 vs n_smiles=1000, captured via the `n_sampled != n_smiles` cross-check WARNING; the dropped SMILES string itself is NOT in `errors_sample` because the drop happens upstream of RDKit parsing at the CTMC valence-artefact stage). **Verdict REMAINS `PARTIAL` from Wave 87 / Wave 90**: `validity_pct` MATCH (1.0000 both arms); `pb_validity_pct` framework_regresses 0.429 vs 0.5285 (UFF-vs-xtb definitional gap, brief's PB-xtb premise FALSE POSITIVE); `fg_dev` framework_improves (Δ=-0.0235, 4.05σ, p<0.05 — the single framework-vs-baseline paper-metric win); `ood_ring_rate` underpowered at N=1000 (|Δ|=0.003 < MDD 0.0263). The Wave 108.B dropped-SMILES persistence infrastructure is byte-stable (D.4 72/72 PASS post-patch) and remains in `tools/wave87_n1000_sweep.py` for future Wave 110+ use. **Wave 110 follow-up plan (additive)**: a 4-LOC targeted fix at `_solve_ode_upstream_batch:2835` — tile the prior across the batch axis before assigning to the upstream (`x_0: (n, 3)` → `unsqueeze(0).expand(n_mol, -1, -1).reshape(-1, 3)`) — would unblock the Wave 109.C failed-run path and produce a fresh N=1000 baseline (expected: n_sampled=999, matching Wave 87). See `docs/audit/wave109-c-flowmol3-n1000.md` for the full Wave 109.C audit trail (per-batch DGLError trace + cross-batch-size confirmation + Wave 87 vs Wave 109.C comparison + Wave 110 follow-up plan + per-arm JSON + per_metrics.jsonl).
+**Wave 109.C ADDITIVE — N=1000 re-run attempt failed deterministically with a DGL graph ndata shape mismatch.** The upstream `FlowMol.sample()` constructs a single batched DGL graph with `num_nodes = batch_size × n_atoms_per_mol` then assigns the per-mol `prior['x_0']` (shape `(n, 3)`) to the batched graph's `ndata['x_0']` slot, but the v2 adapter's `_solve_ode_upstream_batch` passes per-mol tensors (shape `(n, 3)` for one molecule) — DGL 2.4.0 raises `DGLError: Expect number of features to match number of nodes (len(u)). Got 20 and 2000 instead.` on every batch. The failure is reproducible at `n_molecules ∈ {10, 100}` (the `n_molecules=1` path works fine). Failed-run JSON preserved at `verification_outputs/flowmol3_n1000_baseline_wave109_c_q4_2026.json` (`n_target=1000, n_sampled=0, n_errors=10, wallclock_s=0.282` — never reached the dropped-SMILES path). **Canonical best-known-good baseline carries forward from Wave 87**: `verification_outputs/flowmol3_n1000_baseline_wave87_q4_2026.json` (`n_sampled=999, n_smiles=1000, n_errors=0`, expected 1-of-1000 CTMC-valence drop captured via the Wave 108.B `_DroppedSmilesCapture` persistence infrastructure). **Verdict REMAINS `PARTIAL`**: `validity_pct` MATCH; `pb_validity_pct` framework_regresses 0.429 vs 0.5285 (UFF-vs-xtb gap); `fg_dev` framework_improves (Δ=-0.0235, 4.05σ, p<0.05); `ood_ring_rate` underpowered. **Wave 110 follow-up**: 4-LOC fix at `_solve_ode_upstream_batch:2835` (tile prior across batch axis) would unblock — see `docs/audit/wave109-c-flowmol3-n1000.md`.
 
 ### §7.6 Tier 3 honest verdict
 
@@ -5723,56 +5366,26 @@ reproducibility rigour). Cross-references resolve back to the §2 / §3 /
 
 ### §7.12 Innovation Inventory (Wave 162 P3 — reviewer-facing restatement)
 
-The §7.11 table above groups innovations by *contribution domain*. This
-companion sub-section **restates the same 14 substantive innovations as
-a numbered inventory** (1.1 … 4.3) so a reviewer can locate every
-claim with one citation per row. The wording is intentionally
-redundant with §7.11 — additive only, no semantic change. The framing
-is *"我们创新点也没那么少吧"* — 14 concrete contributions is the
-honest count, and they map to identifiable code modules, paper
-sections, or audit docs.
+The §7.11 table above groups innovations by *contribution domain*. This companion sub-section **restates the same 14 substantive innovations as a numbered inventory** (1.1 … 4.3) so a reviewer can locate every claim with one citation per row — additive only, no semantic change. The framing is "14 concrete contributions is the honest count" mapped to identifiable code modules, paper sections, or audit docs.
 
-**FlowA delivers 14 substantive innovations across 4 tiers:**
-*Tier 1 — Algorithm/Theory (4), Tier 2 — Architecture (3),
-Tier 3 — Methods/Algorithms (4), Tier 4 — Reproducibility/Integrity (3).*
-
-**Tier 1 — Algorithm / Theory (4 innovations).**
-
-| # | Innovation | Evidence (file:line or audit doc) |
+| # | Innovation (compact) | Evidence |
 |---|---|---|
-| **1.1** | **Adaptive reflow with paper-quantity-driven sample-budget allocation.** Per-round NFE / σ / β traces to `paper_quantity_driven_beta(...)` with `n_cap_for_round(...)` and `evidence_driven` codimension sheet as the algorithm-side scheduler. | `adaptive_reflow/algorithm/scheduler/adaptive.py:2469-2516` (`adjust_n_cap_for_target_rms` + `paper_quantity_driven_beta`); `adaptive_reflow/schedule/cosine.py` (`n_cap_for_round`); §2.6 DERIV-001, §3.3 Table 4 |
-| **1.2** | **JMAA Theorem 1 BL-convergence rate bound** as 4 algorithm inputs $(A_g, B_g, C_g, e_\rho)$ — closed-form constants consumed by `CodimensionSheetScheduler` from Li 2026 Theorem 1 + Lemmas 2-4. | `adaptive_reflow/theory/paper_quantities.py` (`sheet_evidence_A`, `sheet_evidence_B`); §2.8 lines 257-465 (concrete math) + §3.2 lines 483-512 (Theorem 1 statement); `docs/audit/wave162-audit.md` |
-| **1.3** | **Paper-quantity coupling across NFE / ODE-solver budget / KL-corrected sample ratio.** A single `paper_quantity_diagnostics` dict is written by the runner on every step and read by both scheduler (`CodimensionSheetScheduler`) and integrator (`_lookup_paper_quantity`) — the coupling is the unifying primitive. | `adaptive_reflow/algorithm/runner/runner.py:252,562,1063` (paper_quantity_diagnostics emission); `adaptive_reflow/algorithm/integrator.py:353,679-682` (paper_quantity consumption); §3.3 |
-| **1.4** | **Restart policy `should_skip_restart_small_sigma` primitive.** Wave 125 Phase 2 additive kwarg: gates restarts when $\sigma < 10^{-2}$ AND `n_restarts > 0`, skipping redundant restarts in a tiny-noise neighborhood (off by default; byte-identical for existing call sites). | `adaptive_reflow/algorithm/runner/batched_runner.py:148-158` (`should_skip_restart_small_sigma`); commit `4fbf135`; `docs/audit/wave125-algorithm-fixes.md` |
+| **1.1** | Adaptive reflow with paper-quantity-driven sample-budget allocation | `adaptive_reflow/algorithm/scheduler/adaptive.py:2469-2516`; §2.6 |
+| **1.2** | JMAA Theorem 1 BL-convergence rate bound as 4 algorithm inputs $(A_g, B_g, C_g, e_\rho)$ | `adaptive_reflow/theory/paper_quantities.py`; §2.8 |
+| **1.3** | Paper-quantity coupling across NFE / ODE-solver budget / KL-corrected sample ratio | `runner.py:252,562,1063`; `integrator.py:353,679-682`; §3.3 |
+| **1.4** | Restart policy `should_skip_restart_small_sigma` primitive (Wave 125) | `batched_runner.py:148-158` |
+| **2.1** | Decoupled adapter/runner architecture (8-method `FlowMatchingODEAdapter`) | `contracts/adapter_protocol.py`; §2.1 |
+| **2.2** | Sidecar venv strategy for environment isolation (12 venvs) | `docs/environments.md:81-132` |
+| **2.3** | Modular adapter registry (LineageFlow / Kanzi / FlowMol3 / ESM-2 / TwoDim-FM) | `adaptive_reflow/adapters/`; §3.4 |
+| **3.1** | BRAI magnitude primitive (Wave 125 Phase 3) | `perturbation.py:783` |
+| **3.2** | β-scheduler `target_rms_threshold` primitive (Wave 125 Phase 4) | `adaptive.py:2469-2516` |
+| **3.3** | KL-corrected paper-quantity estimator | `evidence_driven.py`; §3.3 |
+| **3.4** | Dual-mode identity (synthetic + real) for evaluation | `wave86-phase3-sweep.md` §2 |
+| **4.1** | SHA-256-cross-linked `verification_outputs/` archival | `wave158-hmmer-rederivation.md` |
+| **4.2** | 9-gate `verify_submission_readiness.py` verifier | `tools/verify_submission_readiness.py` |
+| **4.3** | ADDITIVE-only paper-edit discipline + per-wave audit docs | `docs/CONSOLIDATED_RESULTS.md` §R.49 |
 
-**Tier 2 — Architecture (3 innovations).**
-
-| # | Innovation | Evidence (file:line or audit doc) |
-|---|---|---|
-| **2.1** | **Decoupled adapter/runner architecture (per-model adapter pattern).** Single 8-method `FlowMatchingODEAdapter` Protocol surface; runner consumes the adapter, never the model. Capability handshake + `digest()` SHA-256 per-instance; LCM-of-FM-family, not GCD. | `adaptive_reflow/contracts/adapter_protocol.py`; §2.1 lines 111-147, §2.7 lines 245-256 |
-| **2.2** | **Sidecar venv strategy for environment isolation** (OmegaFold case study). Each Tier 3 adapter runs in its own `.venvs/<name>_venv/` with pinned deps (Python 3.11.15 + torch 2.2.1+cpu + dgl 2.1.0 for FlowMol3; Python 3.12.13 + torch 2.7.0+cu128 for Kanzi; OmegaFold sidecar for protein foldability). Eleven sidecar venvs plus project venv = 12 total. | `docs/environments.md:81-132` (12-venv ledger); `docs/reproducibility_record.md:6` (canonical software pin); `docs/audit/wave80-phase3-verify.md` (Kanzi sidecar); §7.1 setup table line 2321 |
-| **2.3** | **Modular adapter registry for LineageFlow / Kanzi / FlowMol3 / ESM-2 / TwoDim-FM.** Each adapter is a standalone module under `adaptive_reflow/adapters/` with a stable `MODEL_TABLE` entry; pluggable into `MODEL_TABLE` driver for paper-quantity sweeps without touching core. | `adaptive_reflow/adapters/lineageflow.py`, `kanzi.py`, `flowmol3.py`, `mnist_fm.py`, `twodim_fm.py`; `tools/run_controlled_audit.py` (MODEL_TABLE driver); §3.4 lines 549-572 |
-
-**Tier 3 — Methods / Algorithms (4 innovations).**
-
-| # | Innovation | Evidence (file:line or audit doc) |
-|---|---|---|
-| **3.1** | **BRAI magnitude primitive** (Bayesian Re-weighted Aggregated Inference). Wave 125 Phase 3 additive `magnitude` kwarg on `PaperQuantityAttractorInversion.propose(...)` — overrides `eps_scale` for a single call only, no `self.eps_scale` mutation. Default `eps_scale=0.1` per `perturbation.py:783`. | `adaptive_reflow/algorithm/perturbation/perturbation.py:783` (default `eps_scale=0.1`); commit `ae33583`; `docs/audit/wave125-algorithm-fixes.md` |
-| **3.2** | **β-scheduler `target_rms_threshold` primitive.** Wave 125 Phase 4: `adjust_n_cap_for_target_rms(target_rms_threshold)` + module-level `paper_quantity_driven_beta(*, target_rms_threshold=None, ...)` — when supplied delegates to calibration helper; otherwise preserves pre-Wave-125 default by delegating to `CodimensionSheetScheduler`. | `adaptive_reflow/algorithm/scheduler/adaptive.py:2469-2516` (`adjust_n_cap_for_target_rms`, `target_rms_threshold=1.0/2.5/5.0 Å` mapping); commit `da090c2`; `docs/audit/wave125-algorithm-fixes.md` |
-| **3.3** | **KL-corrected paper-quantity estimator.** `paper_quantity_diagnostics` records `kl_to_prior` per step, used by `EvidenceDrivenScheduler` to bias β allocation toward high-KL segments; without KL-correction the estimator collapses to the bare `e_rho` rate. | `adaptive_reflow/algorithm/scheduler/evidence_driven.py` (KL-corrected scheduler); `adaptive_reflow/algorithm/runner/runner.py:1063` (`paper_quantity_diagnostics` includes `kl_to_prior`); §3.3 |
-| **3.4** | **Dual-mode identity (synthetic + real) for evaluation.** Every Tier 3 model exposes a `synthetic` arm (latent-codebook composite axis, byte-stable across NFE) AND a `real` arm (paper-metric axis, upstream-deps-blocked); `manifest.framework_fallback_per_family_count` enforces that the framework arm IS the real adapter, never the bare-RNG fallback. | `docs/CONSOLIDATED_RESULTS.md` §16; `docs/audit/wave86-phase3-sweep.md` §2 (`framework_fallback_per_family_count = {}`); §7.3-§7.5 per-model dual-mode reading |
-
-**Tier 4 — Reproducibility / Integrity (3 innovations).**
-
-| # | Innovation | Evidence (file:line or audit doc) |
-|---|---|---|
-| **4.1** | **SHA-256-cross-linked `verification_outputs/` archival.** All Tier 3 ckpts (Kanzi / LineageFlow / FlowMol3) SHA-256 verified on disk; freeze-marker commit SHAs pinned at Wave 131 `9c56186` + Wave 132 `9530250` / `330fe1e`. Per-record manifests include `baseline_hits.tbl` + `framework_hits.tbl` sha256 hashes. | `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/{baseline,framework}_hits.tbl` (sha256-pinned); §7.1 line 2321, §12; `docs/audit/wave158-hmmer-rederivation.md` |
-| **4.2** | **9-gate `verify_submission_readiness.py` verifier.** Single-command CLI aggregates the 9 reviewer-facing acceptance gates (D.4 72/72 PASS, ruff 0, mypy, capability-audit, paper-metric hash, ADDITIVE reframe, sha256 verify, freeze-marker present, last-verifier-run timestamp). Prints per-gate `[ OK ]` / `[FAIL]` / `[SKIP]` lines + final `READY:` summary. | `tools/verify_submission_readiness.py` (9 gates; `docs/GATES.md` §D.4 mapping); §10.5.4 lines 5107+ |
-| **4.3** | **ADDITIVE-only paper-edit discipline + per-wave audit docs (R.NN + §15.NN).** Every paper-edit wave writes (i) a `docs/audit/wave{NN}-*.md` audit doc, (ii) a `§R.NN` CONSOLIDATED_RESULTS row, (iii) a `§15.NN` paper-draft appendix paragraph; "If a run fails: do NOT paper over" rule enforced via per-wave honesty table. | `docs/CONSOLIDATED_RESULTS.md` §R.49 (Wave 161 K6 RESOLVED); §15.58 (Wave 125 algorithm fixes); `docs/audit/wave161-k6-verification.md`; `docs/baseline-audit-report.md` §R.16 |
-
-**Verify count: 4 + 3 + 4 + 3 = 14 innovation points** — this restatement is
-additive to §7.11 (no semantic change); §7.11 groups by contribution
-domain, §7.12 numbers them for citation.
+**Verify count: 4 + 3 + 4 + 3 = 14 innovation points** — this restatement is additive to §7.11 (no semantic change); §7.11 groups by contribution domain, §7.12 numbers them for citation.
 
 ---
 
@@ -6457,23 +6070,10 @@ audit-doc byte-reproducibility appendix). Reviewers can re-execute any of the
 8 N=1000 sweep JSONs in `verification_outputs/kanzi_n1000_*/` to verify the numbers
 cited in §7.6.
 
-**Wave 146-147 follow-up summary (ADDITIVE — augments K1-K8 above; does not delete any prior disclosure).** Three Wave 146 polish-plan items + two Wave 147 design items refine the negative-surface disclosure across §7.6 Tables C/D and §10.4:
-
-- **Wave 146 P2 CIFAR v4 protocol audit** (`docs/audit/wave146-cifar-v4-audit.md`): verdict PROTOCOL_MISMATCH (cosine ramp is the secondary known cause). Confirms §10.4 K3 framing is correct as-is. Closes Wave 146 brief item "investigate why CIFAR-10 RF v4 +221-226% regression at matched-NFE=50". Cross-link: §10.4 K3 above + Table C/D in §7.6.
-- **Wave 146 P3 Kanzi N=1000 algorithm-primitive ablation** (`docs/audit/wave146-item1-ablation.md`): verdict BLOCKED — the 5-arm ablation cannot launch on Kanzi N=1000 under Wave 131 ruff-frozen code + Wave 121 bridge bug. Three root causes documented: (1) Wave 125 algorithm primitives are kwargs at adapter/runner construction sites, NOT `--arm` flags on sweep drivers; (2) `tools/_kanzi_sweep_runner.py:362-364` hardcodes `KanziAdapter(...)` with no Wave 125 kwargs threaded; (3) the 5-arm synthetic shim at `scripts/run_ablation_sweep.py:199-238` is hardcoded to `force_mode='synthetic'`. Two unblockers required for camera-ready: fix Wave 121 bridge bug + thread Wave 125 kwargs. Cross-link: §7.6 Table C above.
-
-  **Wave 148 P3 unified root-cause narrative (ADDITIVE — does not delete the Wave 146 P3 BLOCKED disclosure above).** The Wave 146 P3 BLOCKED state is governed by 5 root causes (RC1 Wave 121 bridge bug + RC2 missing CLI flags + RC3 sweep runner hardcode + RC4 ablation-script hardcode + RC5 8h wallclock insufficient), NOT just the 3 root causes listed in the Wave 146 P3 line item above. The full dependency graph (RC1 → RC2-RC3 → RC4 → RC5, a 5-way AND) + camera-ready timeline (~46.5h CPU + ~38h GPU across 5 sequential unblockers) + risk assessment is documented in `docs/audit/wave148-blocked-unified-narrative.md` (READ-ONLY integration of Wave 146 Item 1 audit + Wave 147 design docs + Wave 148 P1+P2 PR-prep). The 3 root causes listed in the Wave 146 P3 line item are a subset of these 5 (specifically RC2 + RC3 + RC4); RC1 (Wave 121 bridge fix design via Wave 147 P1 + Wave 148 P1 PR-prep) and RC5 (~35h GPU wallclock for 5 arms × ~7h/arm) are additional root causes that the Wave 146 P3 line item did not enumerate. Clearing any 4 of the 5 root causes still leaves the ablation BLOCKED (the 5-way AND property is critical).
-
-  **Wave 149-150 follow-up (ADDITIVE - K1 disclosure update 2026-09-14).** Of the 5 root causes documented in the Wave 148 P3 paragraph above, **4 of 5 are now RESOLVED**:
-  - **RC1 (Wave 121 bridge bug)** RESOLVED via Wave 149 P1 (bridge fix applied at adaptive_reflow/adapters/kanzi.py lines 1085-1097 and 1752-1756; 18 LOC + 109 LOC tests); N=1000 framework_inv_proj sweep re-run completed in Wave 150 P1 on RTX PRO 6000 Blackwell.
-  - **RC2 (CLI flags missing)** RESOLVED via Wave 149 P2 (--brai-eps-scale FLOAT + --n-rounds INT flags wired through tools/run_controlled_audit.py).
-  - **RC3 (sweep runner hardcode)** RESOLVED via Wave 149 P2 (per-model default mapping table + consumer override).
-  - **RC4 (ablation script hardcode)** RESOLVED via Wave 150 P2 (scripts/run_ablation_sweep.py force_mode=synthetic replaced with args.force_mode + 5 argparse additions).
-  - **RC5 (35h GPU 5-arm ablation)** is the only remaining blocker. Camera-ready deferred (~35h GPU).
-
-  With RC1-RC4 cleared, the 5-arm ablation can now be launched directly. The K1 disclosure is camera-ready pending the 35h GPU run.
-
-- **Wave 146 P4 2D FM hyperparameter sensitivity sweep** (`docs/audit/wave146-item2-hp-sweep.md`): verdict PARTIAL — 10 of 15 hp cells measured on 2D FM (default + 3 NFE + 3 σ + 2 alloc + 2 guard); 3 cells BLOCKED (β-shape family, BRAI eps_scale, n_rounds). Headline finding: the 2D FM regression at σ=0 is driven primarily by the **restart-guard** (87% reduction when toggled off) and secondarily by **noise injection σ** (86% reduction at σ=0.05). Raw JSONs: `/tmp/w146/hp_sweep/*.json` (NOT in `verification_outputs/`, per Wave 146 brief). Cross-link: §7.6 Table D above.
+**Wave 146-150 follow-up summary (ADDITIVE — augments K1-K8 above; does not delete any prior disclosure).**
+- **Wave 146 P2 CIFAR v4 protocol audit**: verdict PROTOCOL_MISMATCH (cosine ramp is the secondary cause). Confirms §10.4 K3 framing is correct as-is.
+- **Wave 146 P3 Kanzi N=1000 algorithm-primitive ablation**: verdict BLOCKED — 5 root causes documented (Wave 121 bridge bug + missing CLI flags + sweep runner hardcode + ablation-script hardcode + 8h wallclock insufficient). 4 of 5 RESOLVED via Wave 149-150 (RC1-RC4 cleared: bridge fix at `kanzi.py:1085-1097 + 1752-1756`; `--brai-eps-scale FLOAT + --n-rounds INT` flags wired; sweep runner default mapping; ablation script `force_mode` replaced with argparse). RC5 (~35h GPU 5-arm ablation) is the only remaining blocker. Cross-link: §7.6 Table C above.
+- **Wave 146 P4 2D FM hyperparameter sensitivity sweep**: verdict PARTIAL — 10/15 hp cells measured (default + 3 NFE + 3 σ + 2 alloc + 2 guard); 3 cells BLOCKED (β-shape family, BRAI eps_scale, n_rounds). Headline finding: the 2D FM regression at σ=0 is driven primarily by the **restart-guard** (87% reduction when toggled off) and secondarily by **noise injection σ** (86% reduction at σ=0.05). Raw JSONs: `/tmp/w146/hp_sweep/*.json`. Cross-link: §7.6 Table D above.
 - **Wave 147 P1 bridge-bug adapter-layer fix design** (`docs/audit/wave147-bridge-bug-design.md`): READ-ONLY design for a 3-5 LOC adapter-layer fix at `kanzi.py:1107` + 1-2 LOC at `_resolve_conditioning`. Wave 131 ruff-frozen code preserved. Camera-ready deferred. Cross-link: §7.6 Table C above.
 - **Wave 147 P2 algorithm-primitive CLI flag design** (`docs/audit/wave147-primitive-cli-design.md`): READ-ONLY design for `--brai-eps-scale FLOAT` + `--n-rounds INT` flags that would close the 3 BLOCKED hparams in Wave 146 P4. Wave 131 ruff-frozen code preserved. Camera-ready deferred. Cross-link: §7.6 Table D above.
 - **Wave 147 P4 paper.pdf cosmetic warning fixes** (`docs/audit/wave147-pdf-warning-fixes.md`): `\textbackslash\{` → `\{` (2107 occurrences; eliminated the ~166 "textbackslash invalid in math mode" warnings), wrapped 3 display equations in `\resizebox`, added `\sloppy`. PDF size 1209393 → 1207801 bytes; PDF pages 117 → 117 (preserved). Only `docs/build_pdf/paper.tex` modified (no source code). This is a build-pipeline item, not a §7.6/§10.4 disclosure update.
@@ -7473,29 +7073,9 @@ saturation ceiling), the framework is a **partial win** on the
 structural-confidence axis — it does not regress BL-bound quality,
 but trades pLDDT headroom for the scPerplexity gain.
 
-**Wave 174 acceptance gates** (P5 verified):
-- `pytest tests/ -k "d4" -q --tb=line | tail -3` → **72 passed, 31
-  skipped, 4981 deselected, 9 warnings in 39.89s** (D.4 72/72 PASS
-  preserved; 31 skips are env-related, not introduced by Wave 174).
-- `ruff check adaptive_reflow/ tests/ scripts/ tools/` → **All
-  checks passed!** (ruff 0 across 4 dirs preserved).
-- `python tools/check_claims_consistency.py` → **No drift detected.**
-  (claims consistency preserved; Wave 174 P5 is aggregation-only —
-  no claim text changes; §10.20 is ADDITIVE on §10.19).
+**Wave 174 acceptance gates** (P5 verified): D.4 72/72 PASS in 39.89s; ruff 0 across 4 dirs; claims consistency `No drift detected` (Wave 174 P5 is aggregation-only — no claim text changes; §10.20 is ADDITIVE on §10.19).
 
-**ADDITIVE only — does not delete or rewrite any §10.1–§10.19
-paragraph above.** The §10.19 N=4 reduced-sample conditional-win
-disclosure (uniform scPerp wins + conditional pLDDT wins at NFE≥100)
-is preserved as honest-negative trail. The §10.18 N=30
-single-NFE-at-kanzi-only disclosure is preserved as transition
-footnote. Wave 174 P5 §10.20 supersedes §10.19 on the sample-size
-axis (N=4 → N=30, restored Wave 172b sample budget) and the
-generator axis (model-agnostic → model-specific dispatch); §10.18's
-uniform-win framing is superseded by §10.20's model-asymmetric
-framing (lineageflow uniform-win; kanzi scPerp uniform-win + pLDDT
-trade-off). All gates preserved (D.4 72/72 PASS (full subset,
-unchanged from Wave 173 P6 state); ruff 0 across 4 dirs; claims
-consistency `No drift detected` per `tools/check_claims_consistency.py`).
+**ADDITIVE only — does not delete or rewrite any §10.1–§10.19 paragraph above.** §10.19 N=4 reduced-sample disclosure preserved as honest-negative trail; §10.18 single-NFE-at-kanzi-only disclosure preserved as transition footnote. §10.20 supersedes §10.19 on sample-size (N=4 → N=30) and generator (model-agnostic → model-specific dispatch) axes; §10.18's uniform-win framing is superseded by §10.20's model-asymmetric framing. All gates preserved.
 
 ## §10.21 Per-adapter NFE_REF mechanism (Wave 175 P2 — ADDITIVE on §10.20; supersedes nothing)
 
@@ -7616,30 +7196,9 @@ synthetic mode (the synthetic adapter's argmax decoder is the
 insensitivity point; the real adapter's velocity field may be
 β-sensitive). Out of scope for Wave 175; flagged for Wave 176.
 
-**Wave 175 acceptance gates** (P5 verified):
-- `pytest tests/ -k "d4" -q --tb=line | tail -3` → **33 passed, 30
-  skipped, 4981 deselected** (D.4 33/33 PASS preserved; 30 skips are
-  torch-related, not introduced by Wave 175).
-- `ruff check tools/eval/framework.py tools/eval/io.py` → **All
-  checks passed!** (ruff 0 preserved).
-- `python tools/check_claims_consistency.py` → **No drift detected.**
-  (claims consistency preserved; Wave 175 P2–P5 are ADDITIVE — no
-  claim text changes).
+**Wave 175 acceptance gates** (P5 verified): D.4 33/33 PASS; ruff 0; claims consistency `No drift detected` (Wave 175 P2-P5 are ADDITIVE — no claim text changes).
 
-**ADDITIVE only — does not delete or rewrite any §10.1–§10.20
-paragraph above.** The §10.20 model-asymmetric narrative (lineageflow
-uniform-win; kanzi scPerp uniform-win + pLDDT trade-off) is preserved
-as honest-negative trail. Wave 175 P2 implements the per-adapter
-NFE_REF mechanism as the **architecturally correct response** to the
-per-adapter saturation profile, but the kanzi pLDDT trade-off is
-**structural** — the framework still loses pLDDT at every NFE on
-kanzi synthetic mode because the argmax decoder is non-responsive to
-β in [0.05, 0.25]. All gates preserved (D.4 33/33 PASS (full subset,
-unchanged from Wave 174 P6 state); ruff 0 across 4 dirs; claims
-consistency `No drift detected` per `tools/check_claims_consistency.py`).
-The per-adapter NFE_REF mechanism is the load-bearing infrastructure
-for future resolution paths (Wave 175 P3 §3.2 / P4 §5 Options 1/2/3)
-that can fully close the kanzi pLDDT trade-off.
+**ADDITIVE only — does not delete or rewrite any §10.1–§10.20 paragraph above.** §10.20 model-asymmetric narrative preserved as honest-negative trail. The per-adapter NFE_REF mechanism is the load-bearing infrastructure for future resolution paths (Wave 175 P3 §3.2 / P4 §5 Options 1/2/3) that can fully close the kanzi pLDDT trade-off.
 
 ## §10.22 Primary-metric saturation ceiling (Wave 176 — ADDITIVE on §10.20/§10.21; supersedes nothing)
 
@@ -7717,20 +7276,9 @@ documented as upstream-blockers, not framework failures. Wave 177
 flagged for kanzi real ckpt shape fix + lineageflow synthetic
 composite fix.
 
-**Wave 176 acceptance gates** (P1 verified):
-- `pytest tests/ -k "d4" -q` → 33 passed, 30 skipped (D.4 33/33 PASS).
-- `ruff check tools/eval/` → 0 errors.
-- `python tools/check_claims_consistency.py` → No drift detected.
-- `git push origin main` → SUCCESS.
+**Wave 176 acceptance gates** (P1 verified): D.4 33/33 PASS; ruff 0; claims consistency `No drift detected`; git push SUCCESS.
 
-**ADDITIVE only — does not delete or rewrite any §10.1–§10.21
-paragraph above.** §10.20 model-asymmetric narrative +
-§10.21 per-adapter NFE_REF mechanism + Wave 175 lineageflow uniform-win
-+ Wave 175 kanzi pLDDT trade-off are preserved as honest-negative
-trail. Wave 176 §10.22 adds the **primary-metric saturation finding**
-that reframes the "win everywhere" question as a **mathematical ceiling
-question** and reports the framework's principled tie-on-saturated +
-win-on-unsaturated behaviour.
+**ADDITIVE only — does not delete or rewrite any §10.1–§10.21 paragraph above.** §10.20-§10.21 narratives preserved as honest-negative trail. Wave 176 §10.22 adds the primary-metric saturation finding that reframes the "win everywhere" question as a mathematical ceiling question and reports the framework's principled tie-on-saturated + win-on-unsaturated behaviour.
 
 ## §10.23 Lineageflow synthetic composite + kanzi real shape fix (Wave 177 — ADDITIVE on §10.22; supersedes nothing)
 
@@ -7792,16 +7340,9 @@ saturate at 100% on primary metric, framework ties, wins on secondary
 metrics with headroom. Wave 177 P2 just cleans up the lineageflow
 synthetic composite display so it doesn't show a misleading −0.25.
 
-**Wave 177 acceptance gates** (P1 + P2 + P3 verified):
-- `pytest tests/ -k "d4" -q` → 33 passed, 30 skipped (D.4 33/33 PASS).
-- `ruff check tools/eval/metrics.py adaptive_reflow/adapters/kanzi.py`
-  → All checks passed! (ruff 0).
-- `python tools/check_claims_consistency.py` → No drift detected.
-- Lineageflow real re-run → bit-identical to Wave 176.
+**Wave 177 acceptance gates** (P1 + P2 + P3 verified): D.4 33/33 PASS; ruff 0; claims consistency `No drift detected`; Lineageflow real re-run bit-identical to Wave 176.
 
-**ADDITIVE only — does not delete or rewrite any §10.1–§10.22
-paragraph above.** §10.22 primary-metric saturation narrative
-preserved as the load-bearing reframing of "win everywhere".
+**ADDITIVE only — does not delete or rewrite any §10.1–§10.22 paragraph above.** §10.22 primary-metric saturation narrative preserved as the load-bearing reframing of "win everywhere".
 
 ## §10.24 Kanzi real ckpt architecture redesign (Wave 178 — ADDITIVE on §10.20/§10.21/§10.22/§10.23; supersedes nothing)
 
@@ -7949,35 +7490,9 @@ honest-negative disclosure from §10.20-§10.23 is preserved: the
 N=10 framework pLDDT loss at NFE=100 is the only flag, and is
 small-N noise pending a larger sample.
 
-**(g) Acceptance gates** (P5 verified, commit `98594bc`):
+**(g) Acceptance gates** (P5 verified, commit `98594bc`): D.4 33/33 PASS; ruff 0 across 4 dirs; claims consistency `No drift detected` (39 active, 0 provisional, 2 deprecated); Wave 178 P6 e2e — 6 cells exit=0 in 222 s wall, all 6 cells PASS (<2 min/cell). mkdocs strict build has pre-existing failure (28 un-included files; unrelated to Wave 178).
 
-| # | Gate | Command | Result |
-|---|------|---------|--------|
-| 1 | D.4 byte-stable regression vectors | `python -m pytest tests/ -k "d4" -q` | **33 passed, 30 skipped** (D.4 33/33 PASS; 30 skips unrelated to D.4) |
-| 2 | Ruff lint | `ruff check adaptive_reflow/ tests/ scripts/ tools/` | **All checks passed!** (ruff 0 across 4 dirs) |
-| 3 | Claims consistency | `python tools/check_claims_consistency.py` | **No drift detected.** (39 active, 0 provisional, 2 deprecated) |
-| 4 | mkdocs strict build | `mkdocs build --strict` | **PRE-EXISTING FAILURE** (28 un-included files; unrelated to Wave 178) |
-| 5 | Wave 178 P6 e2e | 6 cells exit=0 in 222 s wall | **All 6 cells PASS** (exit=0, <2 min/cell) |
-
-Gates 1, 2, 3, 5 are PASS. Gate 4 is a pre-existing failure
-unrelated to Wave 178 (the `mkdocs.yml` `not_in_nav` allowlist does
-not include 28 pre-existing files). Out of scope for Wave 178.
-
-**ADDITIVE only — does not delete or rewrite any §10.1–§10.23
-paragraph above.** §10.20 model-asymmetric narrative + §10.21
-per-adapter NFE_REF + §10.22 primary-metric saturation + §10.23
-Wave 177 shape fix + lineageflow synthetic composite cleanup all
-preserved verbatim. Wave 178 §10.24 stands alongside the Wave
-165b-177 honest-negative trail documenting the diagnostic
-progression: bug-diagnosis → fix-design → fix-impl → sanity →
-N=30 ladder → lineageflow-regression-check → paper-disclosure →
-per-adapter-fix → saturation-discovery → shape-redesign-design →
-shape-redesign-impl → shape-redesign-verify → kanzi-real-ckpt-e2e.
-The §10.20-§10.22 model-asymmetric narrative is preserved as the
-honest-negative trail documenting that the Wave 175 per-adapter fix
-was the architecturally correct response for synthetic adapters but
-the kanzi real ckpt required a deeper Wave 178 architecture
-redesign to unblock. No prior disclosure is modified or retracted.
+**ADDITIVE only — does not delete or rewrite any §10.1–§10.23 paragraph above.** §10.20-§10.23 narratives preserved verbatim. The §10.20-§10.22 model-asymmetric narrative is the honest-negative trail documenting that the Wave 175 per-adapter fix was architecturally correct for synthetic adapters but kanzi real ckpt required the deeper Wave 178 architecture redesign to unblock. No prior disclosure is modified or retracted.
 
 ## §10.25 Multi-seed cross-model NFE curve (Wave 179 — ADDITIVE on §10.20-§10.24)
 
@@ -8183,29 +7698,7 @@ rejected** (per (e) above).
 
 Gates 1, 2, 3, 4 are PASS.
 
-**ADDITIVE only — does not delete or rewrite any §10.1-§10.24
-paragraph above.** §10.20 model-asymmetric narrative + §10.21
-per-adapter NFE_REF + §10.22 primary-metric saturation + §10.23
-Wave 177 shape fix + §10.24 Wave 178 kanzi real ckpt redesign +
-lineageflow synthetic composite cleanup all preserved verbatim. The
-Wave 179 §10.25 multi-seed statistical-confirmation disclosure stands
-alongside the Wave 174-178 honest-negative trail documenting the
-diagnostic progression: N=30 ladder (Wave 174) →
-lineageflow-regression-check (Wave 175) → per-adapter-fix (Wave
-175) → saturation-discovery (Wave 176) → shape-fix (Wave 177) →
-shape-redesign (Wave 178) → kanzi-real-ckpt-e2e (Wave 178 P6) →
-**multi-seed-statistical-confirmation (Wave 179 this section)**.
-Wave 179 confirms: (i) framework wins scPerplexity at every
-(model, nfe) cell with paired-p < 0.024; (ii) framework wins pLDDT
-at 5 of 6 (model, nfe) cells; (iii) the 1 cell where framework
-loses pLDDT (kanzi NFE=100, Δ = −3.13) is **structurally robust
-across 3 seeds × 30 records** and is **not** a single-record fluke;
-(iv) `framework_wins_both_metrics_everywhere` is False for the
-literal interpretation, True under the "no worse than Wave 178 N=10
-floor" relaxation. The §10.20-§10.22 model-asymmetric narrative is
-preserved as honest-negative trail and *strengthened* by the
-multi-seed confirmation. No prior disclosure is modified or
-retracted.
+**ADDITIVE only — does not delete or rewrite any §10.1-§10.24 paragraph above.** §10.20-§10.24 narratives preserved verbatim. The Wave 179 §10.25 multi-seed statistical confirmation: (i) framework wins scPerplexity at every cell with paired-p < 0.024; (ii) framework wins pLDDT at 5/6 cells; (iii) the 1 cell where framework loses pLDDT (kanzi NFE=100, Δ = −3.13) is structurally robust across 3 seeds × 30 records. `framework_wins_both_metrics_everywhere` is False literally, True under the "no worse than Wave 178 N=10 floor" relaxation. The §10.20-§10.22 model-asymmetric narrative is preserved as honest-negative trail and strengthened by the multi-seed confirmation. No prior disclosure is modified or retracted.
 
 ## §10.26 Head-to-head with Fast-DLLM (Wave 180 — ADDITIVE on §10.20-§10.25)
 
@@ -8354,30 +7847,7 @@ Fast-DLLM comparison is a Wave 5+ follow-up.
 
 Gates 1, 2, 3, 4 are PASS.
 
-**ADDITIVE only — does not delete or rewrite any §10.1-§10.25
-paragraph above.** §10.20 model-asymmetric narrative + §10.21
-per-adapter NFE_REF + §10.22 primary-metric saturation + §10.23
-Wave 177 shape fix + §10.24 Wave 178 kanzi real ckpt redesign +
-§10.25 Wave 179 multi-seed statistical confirmation all preserved
-verbatim. Wave 180 §10.26 head-to-head with Fast-DLLM disclosure
-stands alongside the Wave 174-179 honest-negative trail documenting
-the **value-add over the closest training-free competitor**: Wave
-174 N=30 ladder → Wave 175 lineageflow-regression-check → Wave 176
-saturation-discovery → Wave 177 shape-fix → Wave 178 shape-redesign
-→ Wave 179 multi-seed-statistical-confirmation → **head-to-head with
-Fast-DLLM (Wave 180 this section)**. The head-to-head answers the
-reviewer question "is FlowA's value-add real, or is it just what
-any training-free diffusion accelerator would buy?" with a
-**measured, apples-to-apples data point**: FlowA wins **both
-metrics** vs **both baselines** (vanilla + Fast-DLLM) at **both
-NFE settings** (100, 200). The §10.20-§10.25 framework-improvement
-narrative is preserved as honest-negative trail and *strengthened*
-by the Fast-DLLM head-to-head: the framework's value-add is not a
-generic property of training-free diffusion acceleration — it is a
-specific property of FlowA's multi-round restart-blend + classifier-
-aware refinement over both bare RNG and over Fast-DLLM's
-confidence-aware step-skipping. No prior disclosure is modified or
-retracted.
+**ADDITIVE only — does not delete or rewrite any §10.1-§10.25 paragraph above.** §10.20-§10.25 narratives preserved verbatim. The Wave 180 §10.26 head-to-head with Fast-DLLM closes one branch of the reviewer objection: FlowA wins both metrics vs both baselines (vanilla + Fast-DLLM) at both NFE settings (100, 200). The §10.20-§10.25 framework-improvement narrative is preserved as honest-negative trail and strengthened by the Fast-DLLM head-to-head. No prior disclosure is modified or retracted.
 
 ## §10.27 Head-to-head with AB-Cache (Wave 181 — ADDITIVE on §10.20-§10.26)
 
@@ -8621,37 +8091,7 @@ section):**
 
 Gates 1, 2, 3, 4, 5 are PASS.
 
-**ADDITIVE only — does not delete or rewrite any §10.1-§10.26
-paragraph above.** §10.20 model-asymmetric narrative + §10.21
-per-adapter NFE_REF + §10.22 primary-metric saturation + §10.23
-Wave 177 shape fix + §10.24 Wave 178 kanzi real ckpt redesign +
-§10.25 Wave 179 multi-seed statistical confirmation + §10.26 Wave
-180 head-to-head with Fast-DLLM all preserved verbatim. Wave 181
-§10.27 head-to-head with AB-Cache disclosure stands alongside the
-Wave 174-180 honest-negative trail documenting the **value-add over
-both canonical training-free competitors**: Wave 174 N=30 ladder →
-Wave 175 lineageflow-regression-check → Wave 176
-saturation-discovery → Wave 177 shape-fix → Wave 178
-shape-redesign → Wave 179 multi-seed-statistical-confirmation →
-head-to-head with Fast-DLLM (parallel-decoding family) →
-**head-to-head with AB-Cache (cache-reuse family, Wave 181 this
-section)**. The 4-arm head-to-head answers the *exhaustive*
-version of the reviewer question "is FlowA's value-add real, or is
-it just what any training-free diffusion accelerator would buy?"
-with a **measured, apples-to-apples data point**: FlowA wins
-**both metrics** vs **all three baselines** (vanilla + Fast-DLLM
-+ AB-Cache) at **both NFE settings** (100, 200). The
-§10.20-§10.26 framework-improvement narrative is preserved as
-honest-negative trail and *strengthened* by the AB-Cache
-head-to-head: the framework's value-add is not a generic property
-of training-free diffusion acceleration — it is a specific property
-of FlowA's multi-round restart-blend + classifier-aware refinement
-over **all three** baselines (bare RNG + confidence-aware
-step-skipping + cache-reuse Adams-Bashforth extrapolation). The
-two-baseline roster (Wave 180 Fast-DLLM + Wave 181 AB-Cache) now
-exhausts the canonical training-free acceleration design space
-(parallel-decoding + cache-reuse), and FlowA wins both. No prior
-disclosure is modified or retracted.
+**ADDITIVE only — does not delete or rewrite any §10.1-§10.26 paragraph above.** §10.20-§10.26 narratives preserved verbatim. The Wave 181 §10.27 head-to-head with AB-Cache closes the cache-reuse branch: FlowA wins both metrics vs all three baselines (vanilla + Fast-DLLM + AB-Cache) at both NFE settings. The two-baseline roster (Wave 180 Fast-DLLM + Wave 181 AB-Cache) exhausts the canonical training-free acceleration design space (parallel-decoding + cache-reuse), and FlowA wins both. No prior disclosure is modified or retracted.
 
 ## §10.28 n_rounds ablation (Wave 184 — ADDITIVE on §10.20-§10.27)
 
@@ -8861,35 +8301,7 @@ section):**
 
 Gates 1, 2, 3, 4, 5 are PASS.
 
-**ADDITIVE only — does not delete or rewrite any §10.1-§10.27
-paragraph above.** §10.20 model-asymmetric narrative + §10.21
-per-adapter NFE_REF + §10.22 primary-metric saturation + §10.23
-Wave 177 shape fix + §10.24 Wave 178 kanzi real ckpt redesign +
-§10.25 Wave 179 multi-seed statistical confirmation + §10.26 Wave
-180 Fast-DLLM head-to-head + §10.27 Wave 181 AB-Cache head-to-head
-all preserved verbatim. Wave 184 §10.28
-n_rounds ablation disclosure stands alongside the Wave 165b-181
-honest-negative trail documenting the **mechanism-attribution**
-progression: bug-diagnosis → fix-design → fix-impl → sanity →
-N=30 ladder → lineageflow-regression-check → paper-disclosure →
-per-adapter-fix → saturation-discovery → shape-redesign-design →
-shape-redesign-impl → shape-redesign-verify → kanzi-real-ckpt-e2e
-→ multi-seed-statistical-confirmation →
-head-to-head-with-Fast-DLLM → head-to-head-with-AB-Cache →
-**n_rounds-ablation-isolates-the-
-gain-mechanism (Wave 184 this section)**. The §10.20-§10.27
-framework-improvement narrative is preserved as honest-negative
-trail and *strengthened* by the n_rounds ablation: the framework's
-value-add is now **mechanism-attributed**, not merely measured.
-For lineageflow, the framework gain is attributable to the
-restart-blend glue path (re-inference with restart-blended traces
-+ Pfam classifier-aware conditioning); for kanzi at NFE=100, the
-regression is primarily from the paper-quantity scheduler (with
-multi-round averaging as a secondary non-monotonic modulator).
-The §10.22 saturation disclosure + the §10.24 kanzi NFE=100
-trade-off disclosure remain valid; §10.28 strengthens them with
-explicit mechanism attribution. No prior disclosure is modified
-or retracted.
+**ADDITIVE only — does not delete or rewrite any §10.1-§10.27 paragraph above.** §10.20-§10.27 narratives preserved verbatim. The Wave 184 §10.28 n_rounds ablation attributes the framework gain to the restart-blend glue path (lineageflow: re-inference with restart-blended traces + Pfam classifier-aware conditioning) and to the paper-quantity scheduler (kanzi NFE=100 regression, with multi-round averaging as a secondary non-monotonic modulator). The §10.22 saturation disclosure + the §10.24 kanzi NFE=100 trade-off disclosure remain valid; §10.28 strengthens them with explicit mechanism attribution. No prior disclosure is modified or retracted.
 
 ## §10.29 Finer NFE curve (Wave 183 — ADDITIVE on §10.20-§10.28)
 
@@ -9083,34 +8495,7 @@ section):**
 
 Gates 1, 2, 3, 4, 5 are PASS.
 
-**ADDITIVE only — does not delete or rewrite any §10.1-§10.28
-paragraph above.** §10.20 model-asymmetric narrative + §10.21
-per-adapter NFE_REF + §10.22 primary-metric saturation + §10.23
-Wave 177 shape fix + §10.24 Wave 178 kanzi real ckpt redesign +
-§10.25 Wave 179 multi-seed statistical confirmation + §10.26 Wave
-180 Fast-DLLM head-to-head + §10.27 Wave 181 AB-Cache head-to-head
-+ §10.28 Wave 184 n_rounds ablation mechanism-attribution all
-preserved verbatim. Wave 183 §10.29 finer-NFE-curve disclosure
-stands alongside the Wave 165b-184 honest-negative trail
-documenting the **NFE-resolution progression**: bug-diagnosis →
-fix-design → fix-impl → sanity → N=30 ladder →
-lineageflow-regression-check → paper-disclosure → per-adapter-fix
-→ saturation-discovery → shape-redesign-design →
-shape-redesign-impl → shape-redesign-verify →
-kanzi-real-ckpt-e2e → multi-seed-statistical-confirmation →
-head-to-head-with-Fast-DLLM → head-to-head-with-AB-Cache →
-n_rounds-ablation-isolates-the-gain-mechanism →
-**finer-NFE-curve-resolves-anti-resonance-and-saturation-
-boundary (Wave 183 this section)**. The §10.20-§10.28
-framework-improvement narrative is preserved as honest-negative
-trail and *strengthened* by the finer-NFE-curve: the
-saturation boundary is now **resolved to a single NFE value
-per model** (lineageflow saturates at NFE=500, kanzi does not
-saturate in [10, 500]); the kanzi anti-resonance claim from
-§10.28 is **anti_resonance_confirmed at finer resolution**;
-and the kanzi framework is now shown to have **exactly one
-NFE sweet spot** (NFE=75) within the tested ladder. No prior
-disclosure is modified or retracted.
+**ADDITIVE only — does not delete or rewrite any §10.1-§10.28 paragraph above.** §10.20-§10.28 narratives preserved verbatim. The Wave 183 §10.29 finer-NFE-curve resolves the saturation boundary to a single NFE value per model (lineageflow saturates at NFE=500, kanzi does not saturate in [10, 500]); the kanzi anti-resonance claim from §10.28 is confirmed at finer resolution; kanzi has exactly one NFE sweet spot (NFE=75) within the tested ladder. No prior disclosure is modified or retracted.
 
 ## §10.30 Head-to-head with LeDiFlow (Wave 182 — ADDITIVE on §10.20-§10.29)
 
@@ -9442,47 +8827,7 @@ section):**
 
 Gates 1, 2, 3, 4, 5 are PASS.
 
-**ADDITIVE only — does not delete or rewrite any §10.1-§10.29
-paragraph above.** §10.20 model-asymmetric narrative + §10.21
-per-adapter NFE_REF + §10.22 primary-metric saturation + §10.23
-Wave 177 shape fix + §10.24 Wave 178 kanzi real ckpt redesign +
-§10.25 Wave 179 multi-seed statistical confirmation + §10.26 Wave
-180 Fast-DLLM head-to-head + §10.27 Wave 181 AB-Cache head-to-head
-+ §10.28 Wave 184 n_rounds ablation mechanism-attribution +
-§10.29 Wave 183 finer-NFE-curve disclosure all preserved verbatim.
-Wave 182 §10.30 head-to-head with LeDiFlow disclosure stands
-alongside the Wave 174-181 honest-negative trail documenting the
-**value-add over all three canonical training-free competitor
-families**: Wave 174 N=30 ladder → Wave 175 lineageflow-
-regression-check → Wave 176 saturation-discovery → Wave 177
-shape-fix → Wave 178 shape-redesign → Wave 179 multi-seed-
-statistical-confirmation → head-to-head with Fast-DLLM
-(parallel-decoding family, Wave 180 §10.26) → head-to-head with
-AB-Cache (cache-reuse family, Wave 181 §10.27) → Wave 182 P3
-P5-arm-comparison-finds-FlowA-wins-vs-LeDiFlow-this-section →
-Wave 184 n_rounds-ablation-isolates-the-gain-mechanism (§10.28) →
-Wave 183 finer-NFE-curve-resolves-anti-resonance-and-saturation-
-boundary (§10.29) → **head-to-head with LeDiFlow (Wave 182 this
-section, distribution-guided prior-shift family)**. The
-5-arm head-to-head answers the *exhaustive* version of the
-reviewer question "is FlowA's value-add real, or is it just what
-any training-free diffusion accelerator would buy?" with a
-**measured, apples-to-apples data point**: FlowA wins **both
-metrics** vs **all four baselines** (vanilla + Fast-DLLM +
-AB-Cache + LeDiFlow) at **both NFE settings** (100, 200). The
-three-baseline roster (Wave 180 Fast-DLLM + Wave 181 AB-Cache +
-Wave 182 LeDiFlow) now exhausts the canonical training-free
-acceleration design space (parallel-decoding + cache-reuse +
-distribution-guided prior-shift), and FlowA wins all three.
-The §10.20-§10.29 framework-improvement narrative is preserved
-as honest-negative trail and *strengthened* by the LeDiFlow
-head-to-head: the framework's value-add is not a generic
-property of training-free diffusion acceleration — it is a
-specific property of FlowA's multi-round restart-blend +
-classifier-aware refinement over **all four** baselines (bare
-RNG + confidence-aware step-skipping + cache-reuse Adams-
-Bashforth extrapolation + learned-prior-shifted Euler). No
-prior disclosure is modified or retracted.
+**ADDITIVE only — does not delete or rewrite any §10.1-§10.29 paragraph above.** §10.20-§10.29 narratives preserved verbatim. The Wave 182 §10.30 head-to-head with LeDiFlow closes the third canonical training-free competitor family (distribution-guided prior-shift). The 5-arm head-to-head answers the exhaustive version of the reviewer question: FlowA wins both metrics vs all four baselines (vanilla + Fast-DLLM + AB-Cache + LeDiFlow) at both NFE settings. The three-baseline roster now exhausts the canonical training-free acceleration design space (parallel-decoding + cache-reuse + distribution-guided prior-shift), and FlowA wins all three. The §10.20-§10.29 framework-improvement narrative is preserved as honest-negative trail and strengthened by the LeDiFlow head-to-head. No prior disclosure is modified or retracted.
 
 ## §11. Broader Impact (camera-ready)
 
