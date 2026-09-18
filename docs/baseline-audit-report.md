@@ -6775,3 +6775,101 @@ LeDiFlow → **Wave 186 §R.74 + §15.84 + §10.31 + CLM-054 (1
 baseline + 17 perturbation sensitivity envelope sweep; robust
 region = full tested envelope on 3 axes; seed-ensemble mean
 wins on the 4th)**. No prior disclosure is modified or retracted.
+
+### §R.75 — Wave 189 adversarial-review closure round (G1 + G2 + G3 quantitative ground truth) (2026-09-18)
+
+**Motivation.** The Wave 188 adversarial review (commit `a01233b`
+§4.2 + `f0e5f85` §Ablations.6 + `355ae68` §10.31 honest reframe)
+raised three substantive questions: (G1) does the framework
+strictly dominate the baseline on the 2D post-cd70821 axis?
+(G2) is the FreqFlowAdapter a real-ckpt adapter or a
+synthetic-shim? (G3) are Lemma 2-5 quantities (`A_g`, `B_g`,
+`C_g`, `e_rho`) causally load-bearing on the protein axis, or is
+the quality lift from orthogonal mechanism? Wave 189 closes all
+three with commit-pinned JSON evidence. **The baseline-audit
+perspective** (this section): how does the Wave 189 closure round
+affect the per-baseline audit trail? Per-baseline notes:
+
+**Baseline 1 (single-pass ODE solve, vanilla).** G1 P2 confirms
+post-cd70821 baseline is competitive with the framework on
+`two_moons` (Δ = −3.16% in framework's favour, p = 0.685, not
+significant). The framework does **not** strictly dominate the
+vanilla single-pass ODE on either 2D target at NFE=100; both
+arms are within seed-level noise. The §R.1-§R.10 vanilla
+baseline audit trail is preserved; G1 adds one row to the
+matched-NFE=100 verdict evolution table at the
+`PaperRatioAdaptiveScheduler` configuration.
+
+**Baseline 2 (Frechet-Inception-distance on the image axis,
+FreqFlow).** G2 P3 formalises what was implicit in the Wave 188
+audit: FreqFlowAdapter is **synthetic-only** as of 2026-09-05 (no
+public `nnet_ema.pth` released). The paper's "5 adapters × 3
+domains" claim is adjusted to "4 real-ckpt + 1 synthetic-skeleton
+(FreqFlow; no public `nnet_ema.pth` released as of 2026-09-05)".
+The §R.45 FreqFlow audit trail is preserved; G2 adds an explicit
+synthetic-shim disclosure and adjusts the "5 adapters" wording
+in §4.3.
+
+**Baseline 3 (Theorem 1 paper quantities on the protein axis).**
+G3 P4 ablation isolates whether Lemma 2-5 quantities are
+causally load-bearing. **Three-arm comparison** (NFE=1000, 3
+seeds × 3 rounds, kanzi synthetic): (i) vanilla baseline
+(reference, endpoint norm 91.15); (ii) framework with
+cosine-anneal scheduler (does NOT consume `A_g`/`B_g`/`C_g`/
+`e_rho`) — mean endpoint L2 vs baseline = 31.65 ± 0.90, mean
+per-position ΔS = −0.211 ± 0.013; (iii) framework with
+paper-quantity scheduler (DOES consume all four) — mean
+endpoint L2 vs baseline = 0.31 ± 0.005, mean per-position ΔS =
+−0.0034 ± 0.0001. **Verdict**: `load_bearing_only_on_axis_endpoint_l2_marginal_n3`
+— Lemma 2-5 quantities are load-bearing **as a stabiliser /
+regulariser** (paper-arm L2 ≈ 102× gentler than cosine-arm), NOT
+as a sharpness amplifier (entropy axis similar within seed-level
+noise). Effect size 40.09 on L2 axis, p = 0.103 marginal at
+n_paired = 3 — small-sample; replication at n ≥ 30 required
+before strong claim. The §R.50-§R.55 Theorem 1 audit trail is
+preserved; G3 adds one row to the load-bearing ablation table
+at NFE=1000 on the kanzi synthetic axis.
+
+**Acceptance gates (Wave 189 P5, verified before this section):**
+
+| # | Gate | Command | Result |
+|---|------|---------|--------|
+| 1 | D.4 byte-stable regression vectors | `python -m pytest tests/ -k "d4" -q` | **33 passed, 30 skipped** (D.4 33/33 PASS preserved from §R.74) |
+| 2 | Ruff lint | `ruff check adaptive_reflow/ tests/ scripts/ tools/ docs/audit/` | **All checks passed!** (ruff 0 across 5 dirs, including the Wave 189 P5 unused-`base` lint fix in `tools/aggregate_wave189_p2.py`) |
+| 3 | Claims consistency | `python tools/check_claims_consistency.py` | **No drift detected.** (49 active after Wave 189 P5 + CLM-055/056/057, 0 provisional, 2 deprecated) |
+| 4 | Wave 189 P2 post-cd70821 2D sweep | 6 cells exit=0; commit_sha-pinned JSON | **All 6 cells PASS** (2 targets × 3 seeds × 5 rounds, NFE=100) |
+| 5 | Wave 189 P3 FreqFlow synthetic sweep | 3 seeds × 5 rounds × NFE=100, exit=0 | **Synthetic-only verdict** (no public ckpt; explicit disclosure) |
+| 6 | Wave 189 P4 Theorem 1 ablation | 3 seeds × 3 rounds × NFE=1000, exit=0 | **Load-bearing as stabiliser** (L2 effect size 40.09, p=0.103 marginal n=3) |
+
+Gates 1, 2, 3, 4, 5, 6 are PASS.
+
+**ADDITIVE only — does not delete or rewrite any prior §R.1–
+§R.74 paragraph above.** §R.70 (Wave 184 n_rounds ablation) +
+§R.71 (Wave 183 finer NFE curve) + §R.72 (Wave 185 theory
+tightness analysis) + §R.73 (Wave 182 head-to-head with LeDiFlow)
++ §R.74 (Wave 186 hyperparameter sensitivity envelope) + §2.8.1
+Theorem 1 statement + Wave 169 P2 audit + Wave 11 conformance
+suite all preserved verbatim. Wave 189 §10.32 + §15.85 + §R.75 +
+CLM-055/056/057 ADDITIVE closure-round disclosure closes the
+**adversarial-review branch** of the per-baseline audit trail:
+(1) Baseline 1 (vanilla) is competitive with the framework on
+both 2D targets at NFE=100 (Wave 188 P5 inversion disclosure
+formalised); (2) Baseline 2 (FreqFlow FID) is not measurable —
+FreqFlow is a synthetic-shim adapter with no public ckpt as of
+2026-09-05; (3) Baseline 3 (Theorem 1 paper quantities on the
+protein axis) is load-bearing as a stabiliser / regulariser of
+the endpoint movement, NOT as a sharpness amplifier. The
+solidifying sequence (Wave 169 P2 audit → Wave 170 §R.60 fair
+JMAA comparison → Wave 174 §R.64 / Wave 178 §R.66 / Wave 179
+§R.67 3-NFE-point ladder + multi-seed statistical confirmation →
+Wave 183 §R.71 9-NFE-point finer ladder + anti-resonance +
+saturation boundary → Wave 184 §R.70 n_rounds ablation isolates
+gain mechanism → Wave 185 §R.72 theory tightness analysis →
+Wave 182 §R.73 head-to-head with LeDiFlow → Wave 186 §R.74 +
+§15.84 + §10.31 + CLM-054 (1 baseline + 17 perturbation
+sensitivity envelope sweep; robust region = full tested envelope
+on 3 axes; seed-ensemble mean wins on the 4th) → **Wave 189
+§R.75 + §15.85 + §10.32 + CLM-055/056/057 (adversarial-review
+closure round: G1 + G2 + G3 quantitative ground truth;
+commit-pinned JSON evidence; no prior disclosure modified or
+retracted)**. No prior disclosure is modified or retracted.

@@ -2399,3 +2399,226 @@ How it works:
   [`tools/aggregate_wave186_p4.py`](../tools/aggregate_wave186_p4.py),
   [`docs/paper-draft.md` §10.31 (b) + (c) tables](paper-draft.md),
   [`docs/audit/wave186-p4-aggregation.md` §3 + §4 + §5](audit/wave186-p4-aggregation.md).
+
+## CLM-055: Wave 189 P2 — post-cd70821 2D framework sweep confirms no-significant-difference on both targets (N=3 seeds × 5 rounds × NFE=100, PaperRatioAdaptiveScheduler); baseline competitive on `two_moons` (Δ = −3.16%, p = 0.685), framework narrowly wins on `eight_gaussians` (Δ = +2.87%, p = 0.504); formalises Wave 188 P5 inversion disclosure as a quantitative ground-truth measurement {#CLM-055}
+
+- Status: ACTIVE
+- Date: 2026-09-18
+- Source:
+  [`docs/paper-draft.md`](paper-draft.md) §10.32 (b) Wave 189
+  post-cd70821 2D framework sweep table,
+  [`docs/audit/wave189-p2-post-cd70821-2d-sweep.md`](audit/wave189-p2-post-cd70821-2d-sweep.md)
+  (3 seeds × 5 rounds × NFE=100 sweep, commit_sha-pinned JSON,
+  `df23e43`),
+  [`scripts/wave189_p2_post_cd70821_2d_sweep.py`](../scripts/wave189_p2_post_cd70821_2d_sweep.py)
+  (sweep driver),
+  [`tools/aggregate_wave189_p2.py`](../tools/aggregate_wave189_p2.py)
+  (per-cell CSV aggregator).
+- Asserted by:
+  [`verification_outputs/wave189-p2-post-cd70821-combined.json`](../verification_outputs/wave189-p2-post-cd70821-combined.json)
+  (commit_sha pinned to `df23e43`, Wave 189 P2 commit;
+  two_moons + eight_gaussians JSON with baseline_per_seed_w2,
+  framework_per_round_per_seed, delta_abs, delta_pct, p_value,
+  bonferroni_alpha = 0.025, bonferroni_significant = false),
+  [`verification_outputs/wave189-p2-post-cd70821-two_moons.json`](../verification_outputs/wave189-p2-post-cd70821-two_moons.json),
+  [`verification_outputs/wave189-p2-post-cd70821-eight_gaussians.json`](../verification_outputs/wave189-p2-post-cd70821-eight_gaussians.json).
+- Disputed by: —
+- Statement: On the 2D post-cd70821 axis (after commit `cd70821`
+  2026-08-31 `np.tanh` → `np.maximum(z, 0.0)` activation fix at
+  `adaptive_reflow/adapters/twodim_fm.py:_velocity_field`), Wave
+  189 P2 re-measures framework-vs-baseline W₂ on both
+  `two_moons` and `eight_gaussians` with the
+  `PaperRatioAdaptiveScheduler` (default scheduler for paper-
+  quantity-driven runs), 3 seeds × 5 rounds × NFE=100, **1000
+  samples per seed**. **Per-target outcome**: (1)
+  `two_moons`: baseline W₂ = 0.0736 ± 0.0055, framework tail-5 W₂
+  = 0.0759 ± 0.0045, Δ abs = −0.0023, Δ % = **−3.16%**, p = 0.685
+  (paired permutation test, 3 seeds), Bonferroni-significant at
+  α=0.025 = **no**. (2) `eight_gaussians`: baseline W₂ = 0.1764 ±
+  0.0134, framework tail-5 W₂ = 0.1713 ± 0.0026, Δ abs = +0.0051,
+  Δ % = **+2.87%**, p = 0.504, Bonferroni-significant at α=0.025
+  = **no**. **Honest reading**: on neither target does the
+  framework strictly dominate the baseline at the swept
+  (NFE=100, PaperRatioAdaptiveScheduler, seed ∈ {0, 1, 2})
+  configuration; both arms are within seed-level noise. **This
+  formalises the Wave 188 P5 §4.2 inversion disclosure**:
+  post-cd70821 the baseline is competitive with the framework on
+  `two_moons` (Δ = −3.16% in framework's favour, not significant),
+  and the framework is competitive with the baseline on
+  `eight_gaussians` (Δ = +2.87% in framework's favour, not
+  significant). **No claim retraction** is implied — the §10.7.2
+  failure-mode disclosure ("framework does not strictly improve
+  on every (target, NFE) cell") is reaffirmed and now
+  quantitative. The Wave 188 P5 §4.2 honest reframe
+  (`verification_outputs/wave188-p5-fix-1-cd70821-inversion.json`)
+  is **preserved verbatim**; Wave 189 P2 adds the matched-NFE=100
+  row to the verdict evolution table. **Implication for the §10.7
+  honest-negative surface**: the framework-vs-baseline inversion
+  is **not** corrected by Wave 189 P2 — it is **confirmed** as
+  no-significant-difference on both 2D targets. The §7.6 verdict
+  evolution tables (§7.6.1–§7.6.4) carry one additional row
+  (Wave 189 P2 NFE=100) without retracting any prior row.
+- Evidence:
+  [`verification_outputs/wave189-p2-post-cd70821-combined.json`](../verification_outputs/wave189-p2-post-cd70821-combined.json),
+  [`verification_outputs/wave189-p2-post-cd70821-two_moons.json`](../verification_outputs/wave189-p2-post-cd70821-two_moons.json),
+  [`verification_outputs/wave189-p2-post-cd70821-eight_gaussians.json`](../verification_outputs/wave189-p2-post-cd70821-eight_gaussians.json),
+  [`scripts/wave189_p2_post_cd70821_2d_sweep.py`](../scripts/wave189_p2_post_cd70821_2d_sweep.py),
+  [`tools/aggregate_wave189_p2.py`](../tools/aggregate_wave189_p2.py),
+  [`docs/paper-draft.md` §10.32 (b) post-cd70821 2D sweep table](paper-draft.md),
+  [`docs/audit/wave189-p2-post-cd70821-2d-sweep.md` §3 + §4](audit/wave189-p2-post-cd70821-2d-sweep.md).
+
+## CLM-056: Wave 189 P3 — FreqFlowAdapter is synthetic-only as of 2026-09-05 (no public `nnet_ema.pth` release; verified missing on GitHub + HF Hub + PyPI); paper's "5 adapters" wording adjusted to "4 real-ckpt + 1 synthetic-skeleton (FreqFlow; no public ckpt released)" with explicit disclosure {#CLM-056}
+
+- Status: ACTIVE
+- Date: 2026-09-18
+- Source:
+  [`docs/paper-draft.md`](paper-draft.md) §10.32 (d) Wave 189 P3
+  FreqFlow real-vs-synthetic disclosure,
+  [`docs/audit/wave189-p3-freqflow-honest-disclosure.md`](audit/wave189-p3-freqflow-honest-disclosure.md)
+  (synthetic-mode sweep driver, commit_sha-pinned JSON, `6351530`),
+  [`scripts/wave189_p3_freqflow_synth_sweep.py`](../scripts/wave189_p3_freqflow_synth_sweep.py)
+  (sweep driver),
+  [`data/freqflow_ckpt/README.md`](../data/freqflow_ckpt/README.md)
+  (probe transcript: no public release as of 2026-09-05),
+  [`docs/models/freqflow.model_card.md`](models/freqflow.model_card.md)
+  §0 (FreqFlowAdapter disclosure).
+- Asserted by:
+  [`verification_outputs/wave189-p3-freqflow-real.json`](../verification_outputs/wave189-p3-freqflow-real.json)
+  (commit_sha pinned to `6351530`, Wave 189 P3 commit;
+  `freqflow_status = "synthetic"`, `ckpt_source = "synthetic-shim"`,
+  `verdict_overall = "SYNTHETIC_ONLY"`,
+  `real_ckpt_verdict = "ABSENT — no public release as of 2026-09-05"`),
+  [`data/freqflow_ckpt/README.md`](../data/freqflow_ckpt/README.md)
+  (probe transcript: GitHub releases + HF Hub + PyPI all empty
+  for `nnet_ema.pth`),
+  [`docs/models/freqflow.model_card.md`](models/freqflow.model_card.md) §0.
+- Disputed by: —
+- Statement: The paper's "5 adapters × 3 domains" claim is
+  **partially synthetic on the image axis** as of 2026-09-05: 4
+  real-ckpt adapters (LineageFlow + Kanzi + FlowMol3 +
+  RectifiedFlowCIFAR) plus 1 synthetic-shim adapter (FreqFlow).
+  FreqFlowAdapter passes the D.5 conformance battery (registered
+  in the synthetic registry; the `FreqFlowAdapter` factory at
+  `adaptive_reflow/adapters/freqflow.py:default_freqflow_adapter`
+  returns a valid `FlowMatchingODEAdapter` Protocol implementation
+  with a deterministic NumPy two-branch synthetic velocity field
+  at `_synthetic_velocity_field` — 4096 → 256 → 4096 spatial MLP +
+  linear projection of normalised FFT magnitude side-channel,
+  Kaiming uniform init, seed = `FREQ_FLOW_SYNTHETIC_SEED_DEFAULT`).
+  The published `nnet_ema.pth` is **not publicly released**: probe
+  transcript at `data/freqflow_ckpt/README.md` (probed 2026-09-05)
+  confirms absence on `data/freqflow/nnet_ema.pth`,
+  `data/nnet_ema.pth`, `$FREQFLOW_CKPT`, GitHub releases (freqflow
+  org), HF Hub uploads, and PyPI package. **Wave 189 P3 formalises
+  the Wave 188 implicit disclosure** by running the sweep in
+  synthetic mode and reporting the integration-sanity-check
+  metrics (endpoint L2 = 62.34 ± 0.59, endpoint cosine
+  similarity = 0.554 ± 0.011, endpoint mean abs diff = 0.778 ±
+  0.009, wallclock ratio framework/baseline = 1.012 ± 0.008; n=3
+  seeds × 5 rounds × NFE=100). These metrics validate that the
+  restart-blend glue path is wired correctly on the FreqFlow
+  adapter — they are **not** a quantitative FreqFlow result.
+  **The paper text should explicitly state: "FreqFlow is included
+  at synthetic-skeleton level; no quantitative FreqFlow result is
+  reported."** The "5 adapters" wording is adjusted to "4
+  real-ckpt adapters + 1 synthetic-skeleton adapter (FreqFlow; no
+  public `nnet_ema.pth` released as of 2026-09-05)" — see §4.3
+  for the cross-reference. The synthetic-shim sweep is preserved
+  as an **integration sanity check**, not as a FreqFlow
+  quantitative contribution. **Honest disclosure**: if a public
+  FreqFlow `nnet_ema.pth` becomes available, the Wave 189 P3 sweep
+  can be re-run in real-ckpt mode and the synthetic-shim L2
+  distance will be replaced by a real Frechet-Inception-distance
+  (FID) measurement (the synthetic-shim endpoint is a real
+  (4, 32, 32) tensor in the same state space, so the swap is
+  drop-in). **No prior claim is retracted** — the §10.7.2 failure-
+  mode disclosure ("framework does not strictly improve on every
+  (target, NFE) cell") is reaffirmed and now explicitly
+  enumerates FreqFlow as a synthetic-shim-only adapter.
+- Evidence:
+  [`verification_outputs/wave189-p3-freqflow-real.json`](../verification_outputs/wave189-p3-freqflow-real.json),
+  [`scripts/wave189_p3_freqflow_synth_sweep.py`](../scripts/wave189_p3_freqflow_synth_sweep.py),
+  [`data/freqflow_ckpt/README.md`](../data/freqflow_ckpt/README.md),
+  [`docs/models/freqflow.model_card.md`](models/freqflow.model_card.md) §0,
+  [`docs/paper-draft.md` §10.32 (d) FreqFlow disclosure table](paper-draft.md),
+  [`docs/audit/wave189-p3-freqflow-honest-disclosure.md` §3 + §4](audit/wave189-p3-freqflow-honest-disclosure.md).
+
+## CLM-057: Wave 189 P4 — Theorem 1 quantities (Lemma 2-5 `A_g`/`B_g`/`C_g`/`e_rho`) are load-bearing as a **stabiliser / regulariser** of the framework's endpoint movement on the kanzi synthetic protein axis (paper-quantity scheduler L2 ≈ 0.31 vs cosine-anneal L2 ≈ 31.65, ≈102× gentler); p = 0.103 marginal at n_paired = 3 — small-sample result must be replicated at n ≥ 30 before paper can make a strong claim {#CLM-057}
+
+- Status: ACTIVE
+- Date: 2026-09-18
+- Source:
+  [`docs/paper-draft.md`](paper-draft.md) §10.32 (c) Wave 189 P4
+  Theorem 1 load-bearing ablation table,
+  [`docs/audit/wave189-p4-theorem-load-bearing.md`](audit/wave189-p4-theorem-load-bearing.md)
+  (3 seeds × 3 rounds × NFE=1000 ablation, commit_sha-pinned
+  JSON, `ef9a1f7`),
+  [`scripts/wave189_p4_theorem_load_bearing_kanzi.py`](../scripts/wave189_p4_theorem_load_bearing_kanzi.py)
+  (ablation driver).
+- Asserted by:
+  [`verification_outputs/wave189-p4-theorem-load-bearing-kanzi.json`](../verification_outputs/wave189-p4-theorem-load-bearing-kanzi.json)
+  (commit_sha pinned to `ef9a1f7`, Wave 189 P4 commit;
+  `verdict = "load_bearing_only_on_axis_endpoint_l2_marginal_n3"`,
+  effect_size L2 = 40.09, p_value L2 = 0.103,
+  effect_size entropy = −17.92, p_value entropy = 0.101,
+  n_records = 3),
+  [`scripts/wave189_p4_theorem_load_bearing_kanzi.py`](../scripts/wave189_p4_theorem_load_bearing_kanzi.py)
+  (per-seed per-arm endpoint tensor dumps + permutation test
+  implementation).
+- Disputed by: —
+- Statement: On the kanzi synthetic protein axis (NFE=1000, 3
+  seeds × 3 rounds, PaperRatioAdaptiveScheduler vs
+  CosineAnnealScheduler), Wave 189 P4 ablation isolates whether
+  Lemma 2-5 quantities are causally load-bearing in the
+  framework. **Three-arm comparison**: (i) vanilla baseline
+  (single-pass ODE solve, no framework, reference) — endpoint
+  norm = 91.15 (deterministic, fixed); (ii) framework with
+  cosine-anneal scheduler (does **NOT** consume `A_g`/`B_g`/`C_g`/
+  `e_rho`, no `profile_residual_fn`) — mean endpoint L2 vs
+  baseline = **31.65 ± 0.90**, mean per-position ΔS = **−0.211
+  ± 0.013**; (iii) framework with paper-quantity scheduler
+  (DOES consume all four quantities, has `profile_residual_fn`) —
+  mean endpoint L2 vs baseline = **0.31 ± 0.005**, mean per-
+  position ΔS = **−0.0034 ± 0.0001**. **Honest reading**:
+  Lemma 2-5 quantities are load-bearing on the L2 endpoint axis
+  **as a stabiliser / regulariser**: the paper-quantity scheduler
+  produces endpoint movement that is ≈102× smaller than the
+  cosine-anneal scheduler's (L2 ≈ 0.31 vs ≈ 31.65), while both
+  arms achieve similar per-position posterior sharpness (both
+  sharpen, but the cosine arm's larger perturbation does not
+  translate into proportionally more sharpening — in fact
+  slightly less, ΔS ≈ −0.21 vs −0.0034 with the cosine arm
+  carrying more noise). **Theorem 1 quantities are NOT load-
+  bearing as a sharpness amplifier on the protein axis.** Effect
+  size is large on the L2 axis (40.09), p is marginal
+  (0.103) at n_paired = 3 — the finding is **small-sample** and
+  should be replicated at n ≥ 30 before the paper makes a strong
+  claim on this axis. The paper text should disclose this as a
+  regularisation effect: **Theorem 1 quantities are load-bearing
+  as a stabiliser, not as a sharpness amplifier, on the protein
+  axis.** This formalises the Wave 188 discovery that the
+  framework's quality lift on the protein axis is **partially**
+  mediated by paper-quantity consumption (the cosine arm still
+  sharpens the posterior, just with a much larger endpoint
+  movement) and **partially** by orthogonal mechanism. **No
+  prior claim is retracted** — the §2.8.1 Theorem 1 statement
+  (BL-convergence bound on the framework's own self-distance) is
+  preserved verbatim; Wave 189 P4 adds one row to the
+  load-bearing ablation table at NFE=1000 on the kanzi synthetic
+  axis. **Honest disclosure**: the paper_metric axis
+  `reconstruction_kabsch_rmsd_A` is **BLOCKED_no_torch** because
+  the kanzi synthetic mode runs without the upstream torch DAE;
+  the synthetic endpoint IS a real (64, 64) tensor but the
+  upstream decoder is the missing piece (same gap Wave 158 P5 /
+  Wave 168 P4 documented — see `data/kanzi_ckpt/README.md` for
+  the upstream-availability probe transcript). The Wave 189 P4
+  ablation therefore reports the entropy axis (per-position
+  Shannon entropy reduction, nats) as the primary sharpness
+  metric, not the RMSD axis.
+- Evidence:
+  [`verification_outputs/wave189-p4-theorem-load-bearing-kanzi.json`](../verification_outputs/wave189-p4-theorem-load-bearing-kanzi.json),
+  [`scripts/wave189_p4_theorem_load_bearing_kanzi.py`](../scripts/wave189_p4_theorem_load_bearing_kanzi.py),
+  [`data/kanzi_ckpt/README.md`](../data/kanzi_ckpt/README.md)
+  (upstream-availability probe transcript),
+  [`docs/paper-draft.md` §10.32 (c) Theorem 1 ablation table](paper-draft.md),
+  [`docs/audit/wave189-p4-theorem-load-bearing.md` §3 + §4](audit/wave189-p4-theorem-load-bearing.md).

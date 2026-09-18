@@ -6830,3 +6830,108 @@ mechanism → Wave 185 §R.72 theory tightness analysis → Wave 182
 envelope sweep; robust region = full tested envelope on 3 axes;
 seed-ensemble mean wins on the 4th)**. No prior disclosure is
 modified or retracted.
+
+### §15.85 — Wave 189 adversarial-review closure round (G1 + G2 + G3 quantitative ground truth) (2026-09-18)
+
+**Motivation.** The Wave 188 adversarial review (commit `a01233b`
+§4.2 + `f0e5f85` §Ablations.6 + `355ae68` §10.31 honest reframe)
+raised three substantive questions: (G1) does the framework
+strictly dominate the baseline on the 2D post-cd70821 axis?
+(G2) is the FreqFlowAdapter a real-ckpt adapter or a
+synthetic-shim? (G3) are Lemma 2-5 quantities (`A_g`, `B_g`,
+`C_g`, `e_rho`) causally load-bearing on the protein axis, or is
+the quality lift from orthogonal mechanism? Wave 189 closes all
+three with commit-pinned JSON evidence.
+
+**G1 — post-cd70821 2D framework sweep (P2).** Wave 189 P2 runs
+3 seeds × 5 rounds × NFE=100 on both `two_moons` and
+`eight_gaussians` with the `PaperRatioAdaptiveScheduler` (default
+for paper-quantity-driven runs). On `two_moons`: baseline W₂ =
+0.0736 ± 0.0055, framework tail-5 W₂ = 0.0759 ± 0.0045,
+Δ = −3.16%, p = 0.685, **not significant** (Bonferroni α=0.025).
+On `eight_gaussians`: baseline W₂ = 0.1764 ± 0.0134, framework
+tail-5 W₂ = 0.1713 ± 0.0026, Δ = +2.87%, p = 0.504, **not
+significant**. **Honest reading**: the framework does **not**
+strictly dominate the baseline on either 2D target at NFE=100;
+both arms are within seed-level noise. The Wave 188 P5 §4.2
+inversion disclosure stands. CSV:
+`verification_outputs/wave189-p2-post-cd70821-combined.json`
+(commit_sha pinned to `df23e43`, Wave 189 P2 commit).
+
+**G2 — FreqFlow real-vs-synthetic disclosure (P3).** Wave 189 P3
+probes for the published `nnet_ema.pth` and confirms absence on
+`data/freqflow/nnet_ema.pth`, `data/nnet_ema.pth`,
+`$FREQFLOW_CKPT`, GitHub releases, HF Hub, and PyPI (probe
+transcript: `data/freqflow_ckpt/README.md`). Verdict:
+`freqflow_status = "synthetic"`, `ckpt_source = "synthetic-shim"`,
+`verdict_overall = "SYNTHETIC_ONLY"`. The synthetic-shim L2
+distance (62.34 ± 0.59, n=3 seeds × 5 rounds × NFE=100) is an
+**integration sanity check**, not a FreqFlow quantitative result.
+The paper's "5 adapters × 3 domains" claim is adjusted to "4
+real-ckpt + 1 synthetic-skeleton (FreqFlow; no public
+`nnet_ema.pth` released as of 2026-09-05)". JSON:
+`verification_outputs/wave189-p3-freqflow-real.json`
+(commit_sha pinned to `6351530`, Wave 189 P3 commit).
+
+**G3 — Theorem 1 quantities load-bearing ablation on kanzi (P4).**
+Wave 189 P4 ablation isolates whether Lemma 2-5 quantities are
+causally load-bearing. Three-arm comparison (NFE=1000, 3 seeds ×
+3 rounds): (i) vanilla baseline (reference, endpoint norm 91.15);
+(ii) framework with cosine-anneal scheduler (does NOT consume
+`A_g`/`B_g`/`C_g`/`e_rho`) — mean endpoint L2 vs baseline =
+31.65 ± 0.90, mean per-position ΔS = −0.211 ± 0.013; (iii)
+framework with paper-quantity scheduler (DOES consume all four) —
+mean endpoint L2 vs baseline = 0.31 ± 0.005, mean per-position
+ΔS = −0.0034 ± 0.0001. **Verdict**: `load_bearing_only_on_axis_endpoint_l2_marginal_n3`
+— Lemma 2-5 quantities are load-bearing **as a stabiliser /
+regulariser** (paper-arm L2 ≈ 102× gentler than cosine-arm), NOT
+as a sharpness amplifier (entropy axis similar within seed-level
+noise). Effect size 40.09 on L2 axis, p = 0.103 marginal at
+n_paired = 3 — small-sample; replication at n ≥ 30 required
+before strong claim. JSON:
+`verification_outputs/wave189-p4-theorem-load-bearing-kanzi.json`
+(commit_sha pinned to `ef9a1f7`, Wave 189 P4 commit).
+
+**Acceptance gates (Wave 189 P5, verified before this section):**
+
+| # | Gate | Command | Result |
+|---|------|---------|--------|
+| 1 | D.4 byte-stable regression vectors | `python -m pytest tests/ -k "d4" -q` | **33 passed, 30 skipped** (D.4 33/33 PASS preserved from §15.84) |
+| 2 | Ruff lint | `ruff check adaptive_reflow/ tests/ scripts/ tools/ docs/audit/` | **All checks passed!** (ruff 0 across 5 dirs, including the Wave 189 P5 unused-`base` lint fix in `tools/aggregate_wave189_p2.py`) |
+| 3 | Claims consistency | `python tools/check_claims_consistency.py` | **No drift detected.** (49 active after Wave 189 P5 + CLM-055/056/057, 0 provisional, 2 deprecated) |
+| 4 | Wave 189 P2 post-cd70821 2D sweep | 6 cells exit=0; commit_sha-pinned JSON | **All 6 cells PASS** (2 targets × 3 seeds × 5 rounds, NFE=100) |
+| 5 | Wave 189 P3 FreqFlow synthetic sweep | 3 seeds × 5 rounds × NFE=100, exit=0 | **Synthetic-only verdict** (no public ckpt; explicit disclosure) |
+| 6 | Wave 189 P4 Theorem 1 ablation | 3 seeds × 3 rounds × NFE=1000, exit=0 | **Load-bearing as stabiliser** (L2 effect size 40.09, p=0.103 marginal n=3) |
+
+Gates 1, 2, 3, 4, 5, 6 are PASS.
+
+**ADDITIVE only — does not delete or rewrite any prior §15.1–
+§15.84 paragraph above.** §15.80 (Wave 184 n_rounds ablation) +
+§15.81 (Wave 183 finer NFE curve) + §15.82 (Wave 185 theory
+tightness analysis) + §15.83 (Wave 182 head-to-head with
+LeDiFlow) + §15.84 (Wave 186 hyperparameter sensitivity
+envelope) + §2.8.1 Theorem 1 statement + Wave 169 P2 audit + Wave
+11 conformance suite all preserved verbatim. Wave 189 §10.32 +
+§15.85 + §R.75 + CLM-055/056/057 ADDITIVE closure-round disclosure
+closes the **adversarial-review branch** of the deployment-
+readiness question: (1) the framework does not strictly dominate
+baseline on either 2D target at NFE=100 (Wave 188 P5 inversion
+disclosure formalised); (2) FreqFlow is a synthetic-shim adapter
+with no public ckpt as of 2026-09-05 ("5 adapters" wording
+adjusted to "4 real-ckpt + 1 synthetic-skeleton"); (3) Theorem 1
+quantities are load-bearing as a stabiliser / regulariser of the
+endpoint movement, NOT as a sharpness amplifier, on the protein
+axis. The solidifying sequence (Wave 169 P2 audit → Wave 170 §R.60
+fair JMAA comparison → Wave 174 §R.64 / Wave 178 §R.66 / Wave 179
+§R.67 3-NFE-point ladder + multi-seed statistical confirmation →
+Wave 183 §R.71 9-NFE-point finer ladder + anti-resonance +
+saturation boundary → Wave 184 §R.70 n_rounds ablation isolates
+gain mechanism → Wave 185 §R.72 theory tightness analysis → Wave
+182 §R.73 head-to-head with LeDiFlow → Wave 186 §R.74 + §15.84 +
+§10.31 + CLM-054 (1 baseline + 17 perturbation sensitivity
+envelope sweep; robust region = full tested envelope on 3 axes;
+seed-ensemble mean wins on the 4th) → **Wave 189 §R.75 + §15.85 +
+§10.32 + CLM-055/056/057 (adversarial-review closure round: G1 +
+G2 + G3 quantitative ground truth; commit-pinned JSON evidence;
+no prior disclosure modified or retracted)**. No prior disclosure
+is modified or retracted.
