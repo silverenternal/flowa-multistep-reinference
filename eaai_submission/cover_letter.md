@@ -13,7 +13,7 @@ We are pleased to submit the enclosed manuscript for consideration as a regular 
 
 ## What FlowA is, in one sentence
 
-FlowA is a **training-free, inference-time re-inference framework** that improves *frozen* 2026 SOTA flow-matching checkpoints by routing the same model through outcome-conditioned rounds, each scheduled by a published bounded-Lipschitz convergence-rate bound (Li 2026, JMAA Theorem 1). The frozen $\theta$ plugs in via an 8-method `FlowMatchingODEAdapter` Protocol; 17 typed state machines with 333 typed transitions codify four pluggable feedback loops. The four theorem constants $(A_g, B_g, C_g, e_\rho)$ are *algorithm inputs*. FlowA is **solver-agnostic** (Euler, Heun, DPM-Solver++); Wave 185 §11.1 localizes Theorem 1 to the framework's self-convergence — the framework-vs-baseline gap is empirical.
+FlowA is a **training-free, inference-time re-inference framework** that improves *frozen* 2026 SOTA flow-matching checkpoints by routing the same model through outcome-conditioned rounds, each scheduled by a published bounded-Lipschitz convergence-rate bound (Li 2026, JMAA Theorem 1). The frozen $\theta$ plugs in via an 8-method `FlowMatchingODEAdapter` Protocol; 17 typed state machines with 333 typed transitions codify four pluggable feedback loops. The four theorem constants $(A_g, B_g, C_g, e_\rho)$ are *algorithm inputs*. FlowA is **solver-agnostic** (Euler, Heun, DPM-Solver++); Wave 185 §11.1 localizes Theorem 1 to the framework's self-convergence — the framework-vs-baseline gap is empirical. **The submitted manuscript referenced as Theorem 1's source is included as supplementary_paper.pdf so the theorem statement + proof are reproducible without external lookup.**
 
 ## Six R-level Bonferroni-significant claims
 
@@ -31,6 +31,10 @@ FlowA wins both pLDDT and scPerplexity at both NFE settings (100, 200) on the R6
 ## Five adapters × three domains
 
 `KanziAdapter` + `LineageFlowAdapter` + `FlowMol3Adapter` + `FreqFlowAdapter` + `TwoDimFMAdapter` spanning protein / molecular / image. All five implement the eight-method Protocol; all five are D.4 byte-stable (33/33) and SHA-256-pinned.
+
+## Citation of Theorem 1 source (Li 2026)
+
+Theorem 1's source paper (Li 2026, "[Author submitted, 2026]" — currently under JMAA review) is attached as **`supplementary_paper.pdf`** (LaTeX-rendered, 14 pages; LaTeX source mirror at `supplementary_paper.md`). The manuscript can be cited from the attachment without external lookup; the exact theorem statement, hypotheses, and proof are reproduced verbatim from the source LaTeX (`docs/ARCHIVE/top-level/NoiseSelectedRectification_EN.md`).
 
 ## Reproducibility — D.4 33/33 PASS + SHA-256 + Zenodo DOI
 

@@ -15,6 +15,10 @@
 - [x] **Data availability statement** — `eaai_submission/data_availability.md`.
 - [x] **Submission checklist** — this file, `eaai_submission/submission_checklist.md`.
 - [x] **Manuscript (anonymized)** — `docs/paper-draft-anonymous.md` (5-section outline + §6 + §7 + §8 + §10.20-§10.30 + §11 + §R.28-§10.30 + references).
+- [x] **Manuscript PDF (anonymized)** — `eaai_submission/manuscript.pdf` (EAAI elsarticle format, 7591-line markdown → pdflatex, Wave 192 P3 PDF conversion).
+- [x] **Paper tables** — `eaai_submission/tables.md` (5 LaTeX-ready tables: Adapter × Domain, R-level headline numbers, 4-arm H2H, Theorem 1 ablation, Reproducibility gates).
+- [x] **ASCII architecture figures** — `eaai_submission/figures.md` (4 ASCII figures: FlowA architecture, Re-inference dataflow, 3-tier experiment hierarchy, 4-arm H2H schematic).
+- [x] **Supplementary paper (Li 2026, Theorem 1 source)** — `eaai_submission/supplementary_paper.pdf` (LaTeX-rendered, 14 pp) + `eaai_submission/supplementary_paper.md` (markdown source).
 - [x] **Supplementary material** — `supplementary.md` at repository root (theory S1 + Tier 1 toys S2 + 3 model audits S3-S5 + reproducibility S6 + statistical methodology S7).
 - [x] **Submission portal URL** — `https://www.editorialmanager.com/ENGAP/`.
 

@@ -27,6 +27,7 @@ Every Tier-3 model checkpoint used in the manuscript is vendored and SHA-256-ver
 | **Kanzi encoder** | `data/kanzi_ckpt/kanzi_encoder.pt` | (see `ckpt_sha256.json`) | Kanzi public ckpt, Wave 88 vendored |
 | **LineageFlow** (ICML'26 protein FM) | `data/lineageflow/lineageflow-rp55.ckpt` | `f0b4b25e...54a2b` | LineageFlow public ckpt, Wave 80 vendored |
 | **FlowMol3** (NeurIPS'24 molecular 3D FM) | `data/flowmol3/weights_real/checkpoints/last.ckpt` | `0e949b56b54c1d2fcbded4f0c9857bfd33dbde86bcc9db2f82572628f7f9f5b5` | FlowMol3 paper checkpoint, Wave 75 vendored |
+| **Theorem 1 source (Li 2026, JMAA)** — supplementary paper | `eaai_submission/supplementary_paper.pdf` | `a6f3e3650de977e815b4080e21cff64bbbd3274ae07e5698567ea1acdd7a789d` | Li 2026 manuscript attached as EAAI supplementary; markdown source mirror at `eaai_submission/supplementary_paper.md` |
 
 ## Vendored upstream snapshots (immutable git checkouts)
 
