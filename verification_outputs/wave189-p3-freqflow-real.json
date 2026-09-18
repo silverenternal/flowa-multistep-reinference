@@ -1,0 +1,88 @@
+{
+  "schema": "wave189_p3_freqflow_synth_sweep.v1",
+  "model": "freqflow",
+  "axis": "image_sota",
+  "freqflow_status": "synthetic",
+  "ckpt_source": "synthetic-shim",
+  "metric": "synthetic_endpoint_l2",
+  "metric_definition": "L2 distance between baseline and framework endpoint latents in (4, 32, 32) FreqFlow state space. NOT a real FID \u2014 there is no Inception forward pass, no real SiT-XL/2 + FFT graph. The FreqFlowAdapter in synthetic mode is a deterministic NumPy two-branch shim (4096 -> 256 -> 4096 spatial + linear projection of normalised FFT magnitude); the L2 distance reflects the framework arm's restart-blend effect on the latent, NOT any Frechet-Inception distance. See docs/models/freqflow.model_card.md \u00a70 and data/freqflow_ckpt/README.md for the disclosure.",
+  "nfe": 100,
+  "n_rounds": 5,
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "n_records": 3,
+  "cells": [
+    {
+      "seed": 0,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_mode": "synthetic",
+      "wallclock_baseline_s": 0.2435,
+      "wallclock_framework_s": 0.2497,
+      "wallclock_ratio": 1.0252,
+      "endpoint_l2": 62.84255645998149,
+      "endpoint_cosine_sim": 0.5437369999045492,
+      "endpoint_mean_abs_diff": 0.7856419331135986,
+      "endpoint_baseline_norm": 74.8781844046776,
+      "endpoint_framework_norm": 40.99225256208216
+    },
+    {
+      "seed": 1,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_mode": "synthetic",
+      "wallclock_baseline_s": 0.2398,
+      "wallclock_framework_s": 0.2464,
+      "wallclock_ratio": 1.0276,
+      "endpoint_l2": 62.4758879032287,
+      "endpoint_cosine_sim": 0.5516358149030379,
+      "endpoint_mean_abs_diff": 0.7807859103003464,
+      "endpoint_baseline_norm": 74.8781844046776,
+      "endpoint_framework_norm": 39.68147134270868
+    },
+    {
+      "seed": 2,
+      "nfe_budget": 100,
+      "n_rounds_framework": 5,
+      "adapter_mode": "synthetic",
+      "wallclock_baseline_s": 0.242,
+      "wallclock_framework_s": 0.2493,
+      "wallclock_ratio": 1.0303,
+      "endpoint_l2": 61.7004570039593,
+      "endpoint_cosine_sim": 0.5666075798009307,
+      "endpoint_mean_abs_diff": 0.7685592572333193,
+      "endpoint_baseline_norm": 74.8781844046776,
+      "endpoint_framework_norm": 41.962034215531965
+    }
+  ],
+  "baseline_endpoint_norm_mean": 74.8781844046776,
+  "framework_endpoint_norm_mean": 40.8785860401076,
+  "endpoint_l2_mean": 62.3396337890565,
+  "endpoint_cosine_sim_mean": 0.553993464869506,
+  "endpoint_mean_abs_diff_mean": 0.7783290335490881,
+  "wallclock_baseline_mean_s": 0.24176361101369062,
+  "wallclock_framework_mean_s": 0.24846481632751724,
+  "wallclock_framework_over_baseline_ratio": 1.027718006385366,
+  "primary_metric_status": "PENDING \u2014 DOWNSTREAM_METRICS['freqflow'].primary_metric.name = 'DEFERRED_no_upstream_ckpt' (no public ckpt, see Phase-4 deferred registry at tools/eval/io.py).",
+  "adapter_modes": [
+    "synthetic"
+  ],
+  "verdict_overall": "SYNTHETIC_ONLY",
+  "implication_for_paper": "FreqFlowAdapter is registered in the synthetic registry and passes the D.5 conformance battery. The published nnet_ema.pth does NOT exist publicly (probed 2026-09-05: no GitHub releases, no HF Hub uploads, no PyPI package \u2014 see data/freqflow_ckpt/README.md). The paper's '5 adapters' claim is therefore partially synthetic on the image axis: 4 real-ckpt adapters (LineageFlow + Kanzi + FlowMol3 + RectifiedFlowCIFAR) plus 1 synthetic-shim adapter (FreqFlow). The paper text should explicitly say 'FreqFlow is included at synthetic-skeleton level; no quantitative FreqFlow result is reported'. The synthetic-shim L2 distance reported here is a sanity check on the integration, not a FreqFlow result.",
+  "synthetic_source": {
+    "adapter_file": "adaptive_reflow/adapters/freqflow.py",
+    "factory": "adaptive_reflow.adapters.freqflow:default_freqflow_adapter",
+    "synthetic_velocity_field": "_synthetic_velocity_field (two-branch NumPy shim: 4096 -> 256 -> 4096 spatial MLP + linear projection of normalised FFT magnitude side-channel; Kaiming uniform init, seed=FREQ_FLOW_SYNTHETIC_SEED_DEFAULT)",
+    "ckpt_path_attempted": [
+      "data/freqflow/nnet_ema.pth (missing)",
+      "data/nnet_ema.pth (missing)",
+      "$FREQFLOW_CKPT (unset)"
+    ],
+    "real_ckpt_verdict": "ABSENT \u2014 no public release as of 2026-09-05. Probe transcript: data/freqflow_ckpt/README.md."
+  },
+  "timestamp": "2026-09-18T05:52:08.143249+00:00",
+  "sweep_script": "scripts/wave189_p3_freqflow_synth_sweep.py"
+}
