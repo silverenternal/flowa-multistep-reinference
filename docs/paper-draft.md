@@ -103,8 +103,8 @@ codified as **17 typed state machines with 333 typed transitions**
 `CodimensionSheetScheduler`, `EvidenceDrivenScheduler`,
 `BoundedMergeOperator` — that consume the framework's four paper
 quantities $(A_g, B_g, C_g, e_\rho)$ as executable formulas. The
-BGV12 / V03 BL-convergence bound (Theorem 1 of [Author submitted,
-2026, S1], §3.6) gives the framework a numerical witness
+BGV12 (2012) + V03 (2003) BL-convergence bound (Theorem 1, §3.6)
+gives the framework a numerical witness
 `selection_ratio` that an inference loop can target: as
 $\varepsilon \downarrow 0$, the noised profile measure converges in
 bounded-Lipschitz distance to the sheet measure, with root-cell mass
@@ -454,7 +454,8 @@ flow shows the multi-round restart-blend pipeline (Prior → multi-
 round 1 → copy+perturb → multi-round 2 → ... → multi-round K →
 endpoint) with paper-quantity-driven $\beta$ scheduling grounded in
 the BGV12 + V03 BL-convergence bound (specialised to the FlowA
-re-inference setting by [Author submitted, 2026, S1]).
+re-inference setting by the framework-specific derivation in
+supplementary S1).
 
 ### §3.6 Theoretical grounding (BGV 2012 + Villani 2003)
 
@@ -481,7 +482,7 @@ C_3, m_2)$ for the FlowA sampling distribution.
 **Table 4 — the four paper quantities, their BGV12 / V03 maps, and
 their roles in FlowA.**
 
-| Quantity | Definition (BGV12 / V03 specialisation, [Author submitted, 2026, S1]) | Role in FlowA | Maps to |
+| Quantity | Definition (BGV12 / V03 specialisation, supplementary S1) | Role in FlowA | Maps to |
 |---|---|---|---|
 | $A_g$ | $(2\pi)^{-1/2}\!\int_{\mathbb{R}} \dots$ — sheet normalisation | Numerator scale in closed-form `evidence_ratio` | BGV12 $\kappa$ |
 | $B_g$ | $\sum_{z \in Z_g} e^{-z^2/4} < \infty$ — root-family mass | Root-cell budget; drives the tail term | BGV12 $1/\rho$ |
@@ -842,7 +843,8 @@ clarification) are deferred to supplementary
    effective NFE). **Third-largest threat** — a reviewer who reads
    "framework improves" at the cross-budget FID −44.17% headline and
    concludes "framework improves at matched NFE" is reading past the
-   Wave 191 P2 baseline_wins disclosure.
+   the matched-NFE=50 baseline_wins disclosure (CLM-039,
+   supplementary §S5.7-secondary).
 4. **FlowMol3 framework-arm scope (Wave 87 honest disclosure).**
    `fg_dev` −0.0235 (4.1σ, Bonf-sig `framework_improves`) and
    `pb_validity_pct` −9.95pp (REGRESSES, UFF-vs-xtb pipeline gap,
@@ -1163,73 +1165,68 @@ numbers cited in §4.2.
 
 ## §10.5 Known limitations status
 
-This subsection augments §10.4 K1–K8 with the cumulative Wave
-149–153 progress update.
+This subsection augments §10.4 K1–K8 with the cumulative progress
+update through the camera-ready freeze.
 
 ### §10.5.1 K1 status update — 4 of 5 RCs RESOLVED + 3-arm N=5 CLI validated
 
 The K1 disclosure (FlowMol3 `pb_validity_pct` −9.95pp, §10.4) is
 pipeline-limited, not framework-limited. The framework-side action
-items for K1 are the **5-way AND root-cause chain** documented in
-Wave 148 P3, which gates the 5-arm ablation on Kanzi that would
-surface the framework's K1 axis contribution in the cleanest
-possible form. As of Wave 153:
+items for K1 are the **5-way AND root-cause chain** that gates the
+5-arm ablation on Kanzi, which would surface the framework's K1 axis
+contribution in the cleanest possible form. As of the camera-ready
+freeze:
 
-- **RC1 (Wave 121 bridge bug)** — **RESOLVED** in Wave 149 P1
-  (`adaptive_reflow/adapters/kanzi.py` lines 1085–1097 + 1752–1756;
-  18 LOC + 109 LOC tests); re-verified bit-exact at
-  `mean_rmsd_A = 0.8797630831061047 Å` on the Wave 150 P1 N=1000
+- **RC1 (bridge bug)** — **RESOLVED** at `adaptive_reflow/adapters/kanzi.py`
+  lines 1085–1097 + 1752–1756 (18 LOC + 109 LOC tests); re-verified
+  bit-exact at `mean_rmsd_A = 0.8797630831061047 Å` on the N=1000
   framework_inv_proj sweep (SHA-256 `3e97a42b…388db`).
 - **RC2 (CLI flags missing — `--brai-eps-scale FLOAT` +
-  `--n-rounds INT`)** — **RESOLVED** in Wave 149 P2 via
-  `tools/run_controlled_audit.py` (per-model default mapping table
-  + consumer override).
+  `--n-rounds INT`)** — **RESOLVED** via `tools/run_controlled_audit.py`
+  (per-model default mapping table + consumer override).
 - **RC3 (sweep runner hardcode at
-  `tools/_kanzi_sweep_runner.py:362-364`)** — **RESOLVED** in Wave
-  149 P2 (per-model default mapping table + consumer override
-  threaded through `KanziAdapter(...)` construction).
+  `tools/_kanzi_sweep_runner.py:362-364`)** — **RESOLVED** (per-model
+  default mapping table + consumer override threaded through
+  `KanziAdapter(...)` construction).
 - **RC4 (ablation-script hardcode at
-  `scripts/run_ablation_sweep.py:199-238`)** — **RESOLVED** in Wave
-  150 P2 (`force_mode='synthetic'` replaced with `args.force_mode` +
-  5 argparse additions: `--model`, `--limit`, `--force-mode`,
+  `scripts/run_ablation_sweep.py:199-238`)** — **RESOLVED**
+  (`force_mode='synthetic'` replaced with `args.force_mode` + 5
+  argparse additions: `--model`, `--limit`, `--force-mode`,
   `--metric-mode`, `--ckpt`).
 - **RC5 (35h GPU 5-arm ablation, ~7h/arm on RTX PRO 6000
   Blackwell)** — **REMAINING**. Camera-ready deferred. The full
   launch command is documented in `scripts/run_ablation_sweep.py`
-  (`--help`) and the Wave 151 P4 1-arm N=5 pre-flight plus the Wave
-  152 P3 3-arm N=5 pre-flight prove the CLI surface parses cleanly
-  across all three `--force-mode`/`--metric-mode` combinations
-  (`synthetic`/`real`, with and without `--ckpt
+  (`--help`); the 1-arm N=5 and 3-arm N=5 pre-flights prove the CLI
+  surface parses cleanly across all three `--force-mode`/`--metric-mode`
+  combinations (`synthetic`/`real`, with and without `--ckpt
   data/kanzi_ckpt/cleaned_model.pt`) — the only remaining blocker is
   the ~35 GPU hours of compute, not any code or wiring issue.
 
 ### §10.5.2 N=1000 byte-stable reinforcement
 
 Two parallel empirical axes now carry N=1000 byte-stable evidence on
-Kanzi, both on the ruff-frozen code at the Wave 149 P1 bridge-fix
-state:
+Kanzi, both on the ruff-frozen code:
 
-1. **`framework_inv_proj`** — Wave 124 + Wave 150 P1 N=1000 sweep at
+1. **`framework_inv_proj`** — N=1000 sweep at
    `verification_outputs/kanzi_n1000_framework_inv_proj_w149_q4_2026/kanzi_n1000_framework_paper_metrics.json`
    (SHA-256 `3e97a42b0251283f43f73ff072613e9f1211c943d9f3c0ef2f11aff6ba9388db`):
    `mean_rmsd_A = 0.8797630831061047 Å` is **bit-exact identical** to
-   the Wave 131 byte-reproducibility anchor, `codebook_entropy_bits
+   the byte-reproducibility anchor, `codebook_entropy_bits
    = 9.266930691594915` bit-exact.
-2. **`framework_synth`** — Wave 152 P1 N=1000 companion sweep
-   (`docs/audit/wave152-framework-synth-sweep.md`,
-   `verification_outputs/kanzi_n1000_framework_synth_w152_q4_2026/`,
+2. **`framework_synth`** — N=1000 companion sweep
+   (`verification_outputs/kanzi_n1000_framework_synth_w152_q4_2026/`,
    SHA-256 `40b6d99815c18133d5862548c70d14d4f58f276cba8042f6667095108b67e934`).
 
 ### §10.5.3 K2–K8 status summary
 
-K2 (framework_inv_proj paper-metric TIES) — **RESOLVED-WITH-CANONICAL-HEADLINE-ON-DISK**: the Wave 149 P1 byte-stable N=1000 anchor above supersedes the Wave 95 P3.C / Wave 122 P8 σ=1e-3 noise-collapse artifact as the canonical headline reading. K3 (CIFAR-10 v4 +24-31%) — **PROTOCOL_MISMATCH** (cosine ramp is the secondary cause); the §4.3 v4 honest negative reading is the canonical verdict. K4 (LineageFlow `coverage_any_hit` UNDERPOWERED) — **DETECTION_LIMIT** at N=1000. K5 (LineageFlow `top1_family_type` TIES) — **TIES_AT_ZERO** by metric property. K6 (foldability + scPerplexity N=5 only) — **ENV_BLOCKED**. K7 (novelty_mmseqs2) — **BLOCKED** pending Pfam-A.fasta vendor. K8 (HMMER N=1000) — **RESOLVED**.
+K2 (framework_inv_proj paper-metric TIES) — **RESOLVED-WITH-CANONICAL-HEADLINE-ON-DISK**: the N=1000 byte-stable anchor above is the canonical headline reading. K3 (CIFAR-10 v4 +24-31%) — **PROTOCOL_MISMATCH** (cosine ramp is the secondary cause); the §4.3 v4 honest negative reading is the canonical verdict. K4 (LineageFlow `coverage_any_hit` UNDERPOWERED) — **DETECTION_LIMIT** at N=1000. K5 (LineageFlow `top1_family_type` TIES) — **TIES_AT_ZERO** by metric property. K6 (foldability + scPerplexity N=5 only) — **ENV_BLOCKED**. K7 (novelty_mmseqs2) — **BLOCKED** pending Pfam-A.fasta vendor. K8 (HMMER N=1000) — **RESOLVED**.
 
 ### §10.5.4 Acceptance gates preserved
 
-- pytest tests/ -k "d4" -q → **72/72 PASS** (Wave 131 + Wave 149 P1
-  freeze-marker anchor).
-- ruff check adaptive_reflow/ tests/ → **0 findings** (Wave 131
-  pre-freeze close `9c56186`).
+- pytest tests/ -k "d4" -q → **72/72 PASS** at the freeze-marker
+  anchor.
+- ruff check adaptive_reflow/ tests/ → **0 findings** at the pre-
+  freeze close `9c56186`.
 - claims consistency `tools/check_claims_consistency.py` → **No drift
   detected**.
 - docs build `mkdocs build --strict` → **green**.
@@ -1245,31 +1242,27 @@ K2 (framework_inv_proj paper-metric TIES) — **RESOLVED-WITH-CANONICAL-HEADLINE
 | R5 | 2D Two Moons $W_2$ | matched NFE=500 | baseline 0.5029 → framework 0.4663 (−7.28%) | 3000 (3 seeds × 1000/round) | <0.05 | `docs/r4-survey/10-sota-2d-experiment-results.md` |
 | R5 | 2D Eight Gaussians $W_2$ | matched NFE=500 | baseline 0.6606 → framework 0.5919 (−10.40%) | 3000 | <0.05 | same R4-survey |
 | R5 | CIFAR-10 RF v2 FID | NFE-averaged | baseline 218.87 (2-NFE) → framework 122.18 (−44.17%) | 1000 | <0.05 | `docs/headline-evidence/r3_cifar_rf_v2_fid_m44p17pct/` |
-| R5 | CIFAR-10 RF v4 matched-NFE=50 | matched NFE=50 | baseline 83.09 → framework 103.41–108.55 (+24-31% framework REGRESS) | 500 | 3.93e-05 | Wave 191 P2 N=1000 (bonf baseline_wins) |
-| R5 | MNIST FM FID | production ckpt, Wave 52 | baseline → framework (−15.01%) | 1000 | <0.05 | `verification_outputs/baseline_comparison_q4_2026.json` |
-| R6 | `foldability_pLDDT` + `scPerplexity` | LineageFlow NFE 10 | +1.12 pLDDT, −3.92 scPerp | 1000 | <1e-5 | Wave 161 K6 sweep |
+| R5 | CIFAR-10 RF v4 matched-NFE=50 | matched NFE=50 | baseline 83.09 → framework 103.41–108.55 (+24-31% framework REGRESS) | 500 | 3.93e-05 | N=1000 matched-NFE=50 sweep |
+| R5 | MNIST FM FID | production ckpt | baseline → framework (−15.01%) | 1000 | <0.05 | `verification_outputs/baseline_comparison_q4_2026.json` |
+| R6 | `foldability_pLDDT` + `scPerplexity` | LineageFlow NFE 10 | +1.12 pLDDT, −3.92 scPerp | 1000 | <1e-5 | K6 sweep (`verification_outputs/lineageflow_k6_sweep_q4_2026/`) |
 
 ---
 
-**Wave 149 D.4 drift fix (2026-09-14):** The historical "33/33 PASS"
-wording used in this document referred to the Wave 38-39 first-batch
-regression subset ONLY. The current authoritative D.4 count is
-**72/72 PASS** (33 tests in `tests/test_d4_regression_vectors.py` +
-39 tests in `tests/test_adapters/test_regression_vectors.py` = 72
-total, per `docs/GATES.md` §D.4 + Wave 106.C.3 standardization). The
-72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3
-additions (commit `40d979c` and subsequent). This drift fix is the
-Wave 149 Agent 6 contribution; see `docs/audit/wave149-close.md` for
-the Wave 149 audit trail.
+**D.4 byte-stable regression count.** The current authoritative
+D.4 count is **72/72 PASS** (33 tests in
+`tests/test_d4_regression_vectors.py` + 39 tests in
+`tests/test_adapters/test_regression_vectors.py` = 72 total, per
+`docs/GATES.md` §D.4). This count is the camera-ready standard
+preserved end-to-end across the freeze-marker commit.
 
 **Per-Wave audit trail and §10.7–§10.34 detail:** Every line of
 §10.7–§10.34 of the pre-cut paper-draft.md (K1 status addenda, K8
-POC + Wave 154b disclosure, Wave 146–150 follow-up summary, §10.7.1
-limitations, §10.7.2 failure modes, §10.7.3 future work, §10.7.4
-mode-collapse honest disclosure, §10.8 per-Wave ADDITIVE companion
-sections, §10.16–§10.34 per-Wave audit trail, §11 Broader Impact,
-§11.1 theory tightness analysis, §12 Conclusion (camera-ready),
-§12.1 post-review strengthening) is preserved verbatim in
+POC disclosure, follow-up summary, §10.7.1 limitations, §10.7.2
+failure modes, §10.7.3 future work, §10.7.4 mode-collapse honest
+disclosure, §10.8 per-Wave companion sections, §10.16–
+§10.34 per-Wave audit trail, §11 Broader Impact, §11.1 theory
+tightness analysis, §12 Conclusion (camera-ready), §12.1
+post-review strengthening) is preserved verbatim in
 **`docs/supplementary/wave193-audit-trail.md`** under §10.7–§12.1
 headers. The §7 per-Wave evolution of Kanzi / LineageFlow / FlowMol3
 verdicts is in supplementary §S1–S6. No content has been deleted;
