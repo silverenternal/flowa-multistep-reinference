@@ -283,7 +283,8 @@ def robust_regions(rows: list[dict], stats: dict) -> dict:
     tested envelope.
     """
     out: dict = {}
-    base = get_baseline(rows)
+    # baseline row is included via `_axis_cells` (it appears first in every
+    # axis list); see Wave 186 P3 CSV format `baseline,perturb_axis=none`.
     for axis in AXIS_ORDER:
         if axis not in stats:
             continue
