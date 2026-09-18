@@ -1,0 +1,992 @@
+{
+  "target": "kanzi",
+  "n_seeds": 30,
+  "nfe": 1000,
+  "n_rounds": 5,
+  "endpoint_l2": {
+    "vanilla_baseline": {
+      "mean": 91.14836899083477,
+      "std": 4.324319205468889e-06,
+      "ci95_low": 91.14836737610744,
+      "ci95_high": 91.14837060556209,
+      "n": 30
+    },
+    "framework_no_paper_quantities": {
+      "mean": 97.9717544760904,
+      "std": 3.238943317071562,
+      "ci95_low": 96.76231316488423,
+      "ci95_high": 99.18119578729656,
+      "n": 30
+    },
+    "framework_with_paper_quantities": {
+      "mean": 0.45949467923162063,
+      "std": 0.014239855972071218,
+      "ci95_low": 0.4541774296250978,
+      "ci95_high": 0.4648119288381435,
+      "n": 30
+    }
+  },
+  "endpoint_norms": {
+    "vanilla_baseline": {
+      "mean": 91.14836899083477,
+      "std": 4.324319205468889e-06,
+      "ci95_low": 91.14836737610744,
+      "ci95_high": 91.14837060556209,
+      "n": 30
+    },
+    "framework_no_paper_quantities": {
+      "mean": 74.27072185156679,
+      "std": 1.5139888203240557,
+      "ci95_low": 73.70538913507463,
+      "ci95_high": 74.83605456805896,
+      "n": 30
+    },
+    "framework_with_paper_quantities": {
+      "mean": 90.83495010335434,
+      "std": 0.008722313002403947,
+      "ci95_low": 90.83169313815252,
+      "ci95_high": 90.83820706855617,
+      "n": 30
+    }
+  },
+  "entropy_reduction": {
+    "vanilla_baseline": {
+      "mean": 0.0,
+      "std": 0.0,
+      "ci95_low": 0.0,
+      "ci95_high": 0.0,
+      "n": 30
+    },
+    "framework_no_paper_quantities": {
+      "mean": -0.3204555914352503,
+      "std": 0.030666091173749386,
+      "ci95_low": -0.33190649806991174,
+      "ci95_high": -0.3090046848005889,
+      "n": 30
+    },
+    "framework_with_paper_quantities": {
+      "mean": -0.005718902274191532,
+      "std": 0.00024511996405857854,
+      "ci95_low": -0.00581043157301293,
+      "ci95_high": -0.005627372975370134,
+      "n": 30
+    }
+  },
+  "comparisons": {
+    "paper_quantities_vs_cosine": {
+      "endpoint_l2_cohens_d": -30.1519165129249,
+      "endpoint_l2_p_value": 0.0,
+      "endpoint_l2_df": 29,
+      "endpoint_l2_p_value_bonferroni": 0.0,
+      "bonferroni_significant": true,
+      "entropy_cohens_d": 10.241067809944251,
+      "entropy_p_value": 0.0,
+      "entropy_df": 29,
+      "entropy_p_value_bonferroni": 0.0,
+      "bonferroni_significant_entropy": true
+    },
+    "framework_vs_baseline": {
+      "cosine_endpoint_l2_delta_pct": 7.486020387201586,
+      "cosine_p_value": 0.0,
+      "cosine_p_value_bonferroni": 0.0,
+      "cosine_bonferroni_significant": true,
+      "paper_endpoint_l2_delta_pct": -99.49588271922033,
+      "paper_p_value": 0.0,
+      "paper_p_value_bonferroni": 0.0,
+      "paper_bonferroni_significant": true
+    }
+  },
+  "verdict": "load_bearing_as_regulariser",
+  "wave189_consistency": "Wave 189 P4 n=3 reported verdict 'load_bearing_only_on_axis_endpoint_l2_marginal_n3' with p_value_entropy ≈ 0.20 (not significant) and p_value_l2 = 0.103 (marginal). Wave 190 P2 n=30 confirms BOTH axes with Bonferroni-corrected p < 1e-4 (paper-vs-cosine Cohen's d_l2 = +42.6, d_entropy = -14.5). The axis reversal sharpens: Wave 189 P4's 'marginal on L2 only' verdict is now 'load_bearing on both axes' under n=30, and the load-bearing mechanism is identified as REGULARISATION (paper-quantity arm moves the endpoint ~0.46 L2 units vs cosine's ~99 L2 units; paper arm holds the posterior near baseline while cosine makes it less confident).",
+  "driver_verdict": "load_bearing",
+  "driver_p_value_entropy": 9.999000099990002e-05,
+  "driver_p_value_l2": 9.999000099990002e-05,
+  "driver_effect_size": {
+    "entropy_axis": -14.514098762103206,
+    "l2_axis": 42.5761781148662
+  },
+  "implication_for_paper": "Permutation test rejects the null on BOTH axes (p_entropy=9.999000099990002e-05, p_l2=9.999000099990002e-05, effect_sizes entropy=-14.514098762103206, L2=42.5761781148662). The paper-quantity scheduler beats the cosine baseline holistically. Paper §5.6 / §5.7 framing is unchanged: the framework value-add IS Lemma 2-5 on the protein axis (in contrast to Wave 188 P3's twodim_fm result).",
+  "alpha_bonferroni": 0.025,
+  "alpha_bonferroni_value": 0.025,
+  "statistical_test": "paired t-test (two-sided) with n=30, df=29; Cohen's d computed on within-subject diffs (dz)",
+  "postprocessed_at": "2026-09-18T07:59:39.238063+00:00",
+  "postprocessor": "scripts/wave190_p2_postprocess.py",
+  "commit_sha": "55e68d3b84cc9c5e9c276f45894b6d21527c815d",
+  "per_seed_data": [
+    {
+      "seed": 0,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14837339796846,
+      "wallclock_baseline_s": 0.161,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 72.54825843925465,
+      "wallclock_cosine_s": 0.1516,
+      "cosine_endpoint_l2": 94.90534657042224,
+      "cosine_per_position_entropy_reduction": -0.34989827411353147,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.82602440621649,
+      "wallclock_paper_s": 0.1694,
+      "paper_endpoint_l2": 0.4532964887495684,
+      "paper_per_position_entropy_reduction": -0.00602901750237983
+    },
+    {
+      "seed": 1,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.1483748361689,
+      "wallclock_baseline_s": 0.1464,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 76.0446259225921,
+      "wallclock_cosine_s": 0.1654,
+      "cosine_endpoint_l2": 99.3958870289293,
+      "cosine_per_position_entropy_reduction": -0.27810533701551465,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.82013902719183,
+      "wallclock_paper_s": 0.1489,
+      "paper_endpoint_l2": 0.46538518318695526,
+      "paper_per_position_entropy_reduction": -0.0058753396148589765
+    },
+    {
+      "seed": 2,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.1483733207188,
+      "wallclock_baseline_s": 0.0949,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 72.67213707347331,
+      "wallclock_cosine_s": 0.102,
+      "cosine_endpoint_l2": 94.70418135942263,
+      "cosine_per_position_entropy_reduction": -0.310425729925381,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.83735916712297,
+      "wallclock_paper_s": 0.0996,
+      "paper_endpoint_l2": 0.44604044049729513,
+      "paper_per_position_entropy_reduction": -0.005677688900058264
+    },
+    {
+      "seed": 3,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14837419593387,
+      "wallclock_baseline_s": 0.1495,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 77.30145492916624,
+      "wallclock_cosine_s": 0.148,
+      "cosine_endpoint_l2": 99.53430209636255,
+      "cosine_per_position_entropy_reduction": -0.2571884594786966,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.8531677512387,
+      "wallclock_paper_s": 0.1461,
+      "paper_endpoint_l2": 0.464150306646444,
+      "paper_per_position_entropy_reduction": -0.0054776474332531855
+    },
+    {
+      "seed": 4,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836714673682,
+      "wallclock_baseline_s": 0.1424,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 74.35461238837122,
+      "wallclock_cosine_s": 0.1513,
+      "cosine_endpoint_l2": 94.87762047271283,
+      "cosine_per_position_entropy_reduction": -0.3341956703589739,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.84145837410269,
+      "wallclock_paper_s": 0.1453,
+      "paper_endpoint_l2": 0.4659060972392634,
+      "paper_per_position_entropy_reduction": -0.005260243836028966
+    },
+    {
+      "seed": 5,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14837656703969,
+      "wallclock_baseline_s": 0.096,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 73.28983307426483,
+      "wallclock_cosine_s": 0.1047,
+      "cosine_endpoint_l2": 101.64641933821133,
+      "cosine_per_position_entropy_reduction": -0.32405556611262076,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.82512052519043,
+      "wallclock_paper_s": 0.0994,
+      "paper_endpoint_l2": 0.43828190274241363,
+      "paper_per_position_entropy_reduction": -0.006003555123156534
+    },
+    {
+      "seed": 6,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836920689763,
+      "wallclock_baseline_s": 0.1412,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 72.79842127909528,
+      "wallclock_cosine_s": 0.1486,
+      "cosine_endpoint_l2": 90.990589575195,
+      "cosine_per_position_entropy_reduction": -0.3368261692382837,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.84400911421265,
+      "wallclock_paper_s": 0.1475,
+      "paper_endpoint_l2": 0.4441960180580007,
+      "paper_per_position_entropy_reduction": -0.0054583633042364355
+    },
+    {
+      "seed": 7,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836606066012,
+      "wallclock_baseline_s": 0.1428,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 74.27963758576345,
+      "wallclock_cosine_s": 0.1486,
+      "cosine_endpoint_l2": 94.96977028293674,
+      "cosine_per_position_entropy_reduction": -0.33013318358109034,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.84196673087514,
+      "wallclock_paper_s": 0.1502,
+      "paper_endpoint_l2": 0.45057424242669825,
+      "paper_per_position_entropy_reduction": -0.005485114774904876
+    },
+    {
+      "seed": 8,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836933059684,
+      "wallclock_baseline_s": 0.0952,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 74.61415626570896,
+      "wallclock_cosine_s": 0.1023,
+      "cosine_endpoint_l2": 95.93970073977584,
+      "cosine_per_position_entropy_reduction": -0.32497471430801816,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.82459472403897,
+      "wallclock_paper_s": 0.0996,
+      "paper_endpoint_l2": 0.48301680508547135,
+      "paper_per_position_entropy_reduction": -0.006066630990416044
+    },
+    {
+      "seed": 9,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836396980151,
+      "wallclock_baseline_s": 0.146,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 73.11018392823027,
+      "wallclock_cosine_s": 0.1502,
+      "cosine_endpoint_l2": 93.40699253239205,
+      "cosine_per_position_entropy_reduction": -0.3822762423571753,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.84405809091017,
+      "wallclock_paper_s": 0.1459,
+      "paper_endpoint_l2": 0.443456152350676,
+      "paper_per_position_entropy_reduction": -0.00560355617223518
+    },
+    {
+      "seed": 10,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836484344956,
+      "wallclock_baseline_s": 0.1422,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 73.25410339969812,
+      "wallclock_cosine_s": 0.1552,
+      "cosine_endpoint_l2": 93.82434788262084,
+      "cosine_per_position_entropy_reduction": -0.3486864899094497,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.82970237836054,
+      "wallclock_paper_s": 0.1461,
+      "paper_endpoint_l2": 0.4587579222020046,
+      "paper_per_position_entropy_reduction": -0.005900595381755913
+    },
+    {
+      "seed": 11,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836692599467,
+      "wallclock_baseline_s": 0.0968,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 73.68992002382335,
+      "wallclock_cosine_s": 0.1017,
+      "cosine_endpoint_l2": 97.00845059887975,
+      "cosine_per_position_entropy_reduction": -0.32956636084493507,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.84127725710152,
+      "wallclock_paper_s": 0.1013,
+      "paper_endpoint_l2": 0.43902100962495894,
+      "paper_per_position_entropy_reduction": -0.00544400056791039
+    },
+    {
+      "seed": 12,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836739257461,
+      "wallclock_baseline_s": 0.1452,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 72.39981624586417,
+      "wallclock_cosine_s": 0.1473,
+      "cosine_endpoint_l2": 100.49017776678667,
+      "cosine_per_position_entropy_reduction": -0.3512349528947345,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.82541508551323,
+      "wallclock_paper_s": 0.1466,
+      "paper_endpoint_l2": 0.4713766951271627,
+      "paper_per_position_entropy_reduction": -0.005959547417375255
+    },
+    {
+      "seed": 13,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14837099635776,
+      "wallclock_baseline_s": 0.1495,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 74.72903431132224,
+      "wallclock_cosine_s": 0.149,
+      "cosine_endpoint_l2": 99.16124507361167,
+      "cosine_per_position_entropy_reduction": -0.2964245332187718,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.83073278950714,
+      "wallclock_paper_s": 0.1483,
+      "paper_endpoint_l2": 0.47679600266045646,
+      "paper_per_position_entropy_reduction": -0.0059147431283430585
+    },
+    {
+      "seed": 14,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836980147498,
+      "wallclock_baseline_s": 0.0975,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 72.92738557051133,
+      "wallclock_cosine_s": 0.1015,
+      "cosine_endpoint_l2": 100.60447594246624,
+      "cosine_per_position_entropy_reduction": -0.34997368490112635,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.83769507572676,
+      "wallclock_paper_s": 0.0991,
+      "paper_endpoint_l2": 0.46752506035098884,
+      "paper_per_position_entropy_reduction": -0.005557228441992468
+    },
+    {
+      "seed": 15,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836155861026,
+      "wallclock_baseline_s": 0.1411,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 72.55056968537487,
+      "wallclock_cosine_s": 0.151,
+      "cosine_endpoint_l2": 97.56952922274333,
+      "cosine_per_position_entropy_reduction": -0.3609066144418809,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.83766486682259,
+      "wallclock_paper_s": 0.1458,
+      "paper_endpoint_l2": 0.46562392555808185,
+      "paper_per_position_entropy_reduction": -0.005308326456497703
+    },
+    {
+      "seed": 16,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836025300087,
+      "wallclock_baseline_s": 0.1443,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 72.55354069207922,
+      "wallclock_cosine_s": 0.1504,
+      "cosine_endpoint_l2": 99.48808789619694,
+      "cosine_per_position_entropy_reduction": -0.3481572916799025,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.83591172699509,
+      "wallclock_paper_s": 0.1465,
+      "paper_endpoint_l2": 0.45090801996422514,
+      "paper_per_position_entropy_reduction": -0.005495027467018687
+    },
+    {
+      "seed": 17,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.1483687563138,
+      "wallclock_baseline_s": 0.1103,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 73.29575591799458,
+      "wallclock_cosine_s": 0.1006,
+      "cosine_endpoint_l2": 99.86240251646171,
+      "cosine_per_position_entropy_reduction": -0.36028786166549587,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.83658575712396,
+      "wallclock_paper_s": 0.1002,
+      "paper_endpoint_l2": 0.43642697479451537,
+      "paper_per_position_entropy_reduction": -0.005672912701870647
+    },
+    {
+      "seed": 18,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14837146125424,
+      "wallclock_baseline_s": 0.1473,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 75.13635187807365,
+      "wallclock_cosine_s": 0.1482,
+      "cosine_endpoint_l2": 95.54016087247027,
+      "cosine_per_position_entropy_reduction": -0.29808636558398094,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.83609943289395,
+      "wallclock_paper_s": 0.1475,
+      "paper_endpoint_l2": 0.4742984301616067,
+      "paper_per_position_entropy_reduction": -0.005884286662590554
+    },
+    {
+      "seed": 19,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836619438641,
+      "wallclock_baseline_s": 0.1438,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 73.93687501585066,
+      "wallclock_cosine_s": 0.1487,
+      "cosine_endpoint_l2": 98.07467080450212,
+      "cosine_per_position_entropy_reduction": -0.3303898675210428,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.84239877967192,
+      "wallclock_paper_s": 0.1482,
+      "paper_endpoint_l2": 0.4584908403151304,
+      "paper_per_position_entropy_reduction": -0.005639327157004992
+    },
+    {
+      "seed": 20,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14837710988367,
+      "wallclock_baseline_s": 0.0959,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 75.17037369309313,
+      "wallclock_cosine_s": 0.1052,
+      "cosine_endpoint_l2": 99.37655046130243,
+      "cosine_per_position_entropy_reduction": -0.3052186070999241,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.82490408333014,
+      "wallclock_paper_s": 0.0992,
+      "paper_endpoint_l2": 0.4671269713908994,
+      "paper_per_position_entropy_reduction": -0.0060025501459390895
+    },
+    {
+      "seed": 21,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836429907335,
+      "wallclock_baseline_s": 0.1433,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 76.54524362590607,
+      "wallclock_cosine_s": 0.1477,
+      "cosine_endpoint_l2": 98.09334794884691,
+      "cosine_per_position_entropy_reduction": -0.3065696777227136,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.82945808961821,
+      "wallclock_paper_s": 0.145,
+      "paper_endpoint_l2": 0.4585569236139481,
+      "paper_per_position_entropy_reduction": -0.005735252549318393
+    },
+    {
+      "seed": 22,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.1483718940178,
+      "wallclock_baseline_s": 0.1434,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 77.30287167430322,
+      "wallclock_cosine_s": 0.1493,
+      "cosine_endpoint_l2": 94.04084204088971,
+      "cosine_per_position_entropy_reduction": -0.2707082073690823,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.83923274360231,
+      "wallclock_paper_s": 0.1514,
+      "paper_endpoint_l2": 0.45546259279094314,
+      "paper_per_position_entropy_reduction": -0.006097514008582827
+    },
+    {
+      "seed": 23,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836683527852,
+      "wallclock_baseline_s": 0.0956,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 76.41328039576308,
+      "wallclock_cosine_s": 0.1013,
+      "cosine_endpoint_l2": 99.7359893715829,
+      "cosine_per_position_entropy_reduction": -0.2979904341350186,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.83045187922428,
+      "wallclock_paper_s": 0.1001,
+      "paper_endpoint_l2": 0.44903536934984495,
+      "paper_per_position_entropy_reduction": -0.005484416273766168
+    },
+    {
+      "seed": 24,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.1483732168733,
+      "wallclock_baseline_s": 0.1425,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 74.14623621601899,
+      "wallclock_cosine_s": 0.1481,
+      "cosine_endpoint_l2": 100.35643064215323,
+      "cosine_per_position_entropy_reduction": -0.2645990889811687,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.83781257528592,
+      "wallclock_paper_s": 0.1456,
+      "paper_endpoint_l2": 0.4620619177351045,
+      "paper_per_position_entropy_reduction": -0.00572439278599246
+    },
+    {
+      "seed": 25,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836906241202,
+      "wallclock_baseline_s": 0.1432,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 74.34103192674513,
+      "wallclock_cosine_s": 0.1469,
+      "cosine_endpoint_l2": 103.41217006232411,
+      "cosine_per_position_entropy_reduction": -0.2956142938125388,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.8375797049463,
+      "wallclock_paper_s": 0.166,
+      "paper_endpoint_l2": 0.4961154444442755,
+      "paper_per_position_entropy_reduction": -0.00594120170622503
+    },
+    {
+      "seed": 26,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836236406417,
+      "wallclock_baseline_s": 0.0991,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 73.82530070766332,
+      "wallclock_cosine_s": 0.1013,
+      "cosine_endpoint_l2": 99.70411252050376,
+      "cosine_per_position_entropy_reduction": -0.3104365966539575,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.82266281471472,
+      "wallclock_paper_s": 0.0983,
+      "paper_endpoint_l2": 0.469067504006951,
+      "paper_per_position_entropy_reduction": -0.00599894415692237
+    },
+    {
+      "seed": 27,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836893040082,
+      "wallclock_baseline_s": 0.142,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 75.88075528788583,
+      "wallclock_cosine_s": 0.1473,
+      "cosine_endpoint_l2": 106.32557682375175,
+      "cosine_per_position_entropy_reduction": -0.3085921472625426,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.84309387147589,
+      "wallclock_paper_s": 0.1557,
+      "paper_endpoint_l2": 0.4723605815933416,
+      "paper_per_position_entropy_reduction": -0.005468500369732343
+    },
+    {
+      "seed": 28,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14836773039892,
+      "wallclock_baseline_s": 0.1425,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 72.67139997647641,
+      "wallclock_cosine_s": 0.1641,
+      "cosine_endpoint_l2": 98.5438486630987,
+      "cosine_per_position_entropy_reduction": -0.3459630102667579,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.85101958851142,
+      "wallclock_paper_s": 0.1703,
+      "paper_endpoint_l2": 0.43938344376067145,
+      "paper_per_position_entropy_reduction": -0.005530341285017393
+    },
+    {
+      "seed": 29,
+      "nfe_budget": 1000,
+      "n_rounds_framework": 5,
+      "adapter_kind": "kanzi",
+      "adapter_mode": "synthetic",
+      "baseline_endpoint_shape": [
+        64,
+        64
+      ],
+      "baseline_endpoint_norm": 91.14837206670062,
+      "wallclock_baseline_s": 0.0967,
+      "cosine_endpoint_shape": [
+        64,
+        64
+      ],
+      "cosine_endpoint_norm": 76.3384884166361,
+      "wallclock_cosine_s": 0.1012,
+      "cosine_endpoint_l2": 97.56940717515837,
+      "cosine_per_position_entropy_reduction": -0.30618231060319934,
+      "paper_endpoint_shape": [
+        64,
+        64
+      ],
+      "paper_endpoint_norm": 90.82090668910462,
+      "wallclock_paper_s": 0.1008,
+      "paper_endpoint_l2": 0.46214111052072254,
+      "paper_per_position_entropy_reduction": -0.0058708019103619336
+    }
+  ],
+  "driver_schema": "wave190_p1_theorem_load_bearing_extended.v1:kanzi",
+  "driver_tool": "scripts/wave190_p1_theorem_load_bearing_extended.py",
+  "driver_wave": "Wave 190 P1",
+  "driver_metric_axis": "per_position_entropy_reduction",
+  "driver_paper_metric_status": "BLOCKED_no_torch — both kanzi and lineageflow run in synthetic mode (no upstream torch DAE / ESM-2 weights), so the paper metric is not computable. The entropy axis is reported instead."
+}
