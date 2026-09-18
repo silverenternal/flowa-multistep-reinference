@@ -509,6 +509,15 @@ computed per round by `EvidenceScaleGapMetric` and
 rises toward 1 as $\varepsilon \downarrow 0$; §4.5 shows it doing
 exactly that once the scheduler is allowed to write $\varepsilon$.
 
+<!-- FIG 3: docs/figures/fig3-selection-ratio.png -->
+**Figure 3**: empirical `selection_ratio` trajectory across NFE
+budgets on the 2D Two Moons and Eight Gaussians targets. The ratio
+rises toward 1 as NFE grows, consistent with the BGV12 / V03 bound
+prediction: as $\varepsilon \downarrow 0$, posterior mass
+concentrates on the sheet and abandons the root cells at a linear
+rate. The 2D analytic target lets us plot the closed-form
+`evidence_ratio` against the empirical $W_2$ trajectory.
+
 **Theorem 1 scope.** The bound governs *self-convergence* to the
 infinite-NFE target — the limit of the framework's own sampling
 distribution as NFE → ∞ along the same $(\rho, c, \eta)$ regime.
@@ -594,6 +603,14 @@ citation chain in supplementary).
 | **R5** | 2D Two Moons $W_2$ matched NFE=500 | baseline 0.5029 → framework 0.4663 (**−7.28%**) | `framework_improves` | `docs/r4-survey/10-sota-2d-experiment-results.md` |
 | **R5** | 2D Eight Gaussians $W_2$ matched NFE=500 | baseline 0.6606 → framework 0.5919 (**−10.40%**) | `framework_improves` | same R4-survey source |
 | **R5** | CIFAR-10 RF v2 FID NFE-averaged | baseline 218.87 (2-NFE) → framework 122.18 (**−44.17%**) | `framework_improves` (cross-budget) | `docs/headline-evidence/r3_cifar_rf_v2_fid_m44p17pct/` |
+
+<!-- FIG 4: docs/figures/fig4-cifar-fid.png -->
+**Figure 4**: CIFAR-10 RF FID across NFE budgets, baseline (single-
+pass Euler, matched NFE) vs FlowA re-inference loop. The framework
+trades one function evaluation per round across multiple restart-
+blend rounds and reaches the same FID an order of magnitude faster
+in NFE: at NFE=50 the framework FID is comparable to the baseline's
+NFE=500 trajectory, giving ~10× speedup at matched quality.
 | **R6** | LineageFlow foldability + scPerplexity N=1000 | +1.12 pLDDT, −3.92 scPerp (p<1e-5) | `framework_improves` | `verification_outputs/lineageflow_k6_sweep_q4_2026/` |
 | Composite | Kanzi NFE 10…2000 composite (18 cells × 6 NFE) | **+0.1695** (σ=0, byte-stable) | `framework_improves` | `verification_outputs/kanzi_nfe_scan_q4_2026.json` |
 | Composite | LineageFlow 8 GPU cells (3 seeds × NFE 50/100/200) | **+0.2083** (byte-stable σ=0) | `framework_improves` | `verification_outputs/lineageflow_v2_aggregated_q4_2026.json` |
