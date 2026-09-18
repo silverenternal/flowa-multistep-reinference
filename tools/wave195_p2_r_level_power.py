@@ -35,9 +35,10 @@ import math
 import os
 import statistics
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import numpy as np
 from scipy import stats
@@ -162,10 +163,7 @@ def _paired_result(
     pwr_min = _post_hoc_power(min_effect_size, delta_se, ALPHA_FAMILY)
     # Direction: if metric is "lower better" (e.g. FID, W2, fg_dev), framework winning
     # means delta < 0. We invert sign of verdict so SUPPORTED always means framework wins.
-    if higher_better:
-        signed_delta = delta
-    else:
-        signed_delta = -delta
+    signed_delta = delta if higher_better else -delta
     verdict = _verdict(signed_delta, p_bonf, pwr_min, ALPHA_FAMILY, min_effect_size)
     return CellResult(
         cell=cell,
@@ -225,10 +223,7 @@ def _unpaired_result(
     d_s = delta / pooled_sd if (pooled_sd and pooled_sd > 0.0) else float("nan")
     pwr_obs = _post_hoc_power(abs(delta), delta_se, ALPHA_FAMILY)
     pwr_min = _post_hoc_power(min_effect_size, delta_se, ALPHA_FAMILY)
-    if higher_better:
-        signed_delta = delta
-    else:
-        signed_delta = -delta
+    signed_delta = delta if higher_better else -delta
     verdict = _verdict(signed_delta, p_bonf, pwr_min, ALPHA_FAMILY, min_effect_size)
     return CellResult(
         cell=cell,
@@ -456,7 +451,6 @@ def cell_R5b_cifar10rf_fid() -> CellResult:
     w = json.loads((REPO_ROOT / "verification_outputs/wave191-p2-cifar10-n1000.json").read_text())
     arm = w["framework_arms"]["evidence_driven"]
     n_chunks = int(arm["n_chunks"])
-    fw_chunks = np.array(arm["chunk_fids"], dtype=np.float64)
     fw_std = float(arm["fid_chunks_std"])
     fw_mean = float(arm["fid_chunks_mean"])
     fw_headline = float(arm["fid_headline"])
@@ -517,7 +511,6 @@ def cell_R5c_mnist_fm_fid() -> CellResult:
     w = json.loads((REPO_ROOT / "verification_outputs/wave191-p3-mnist-n1000.json").read_text())
     arm = w["framework_arms"]["evidence_driven"]
     n_chunks = int(arm["n_chunks"])
-    fw_chunks = np.array(arm["chunk_fids"], dtype=np.float64)
     fw_std = float(arm["fid_chunks_std"])
     fw_mean = float(arm["fid_chunks_mean"])
     fw_headline = float(arm["fid_headline"])

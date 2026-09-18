@@ -321,6 +321,7 @@ not_in_nav: |
   headline-evidence/**/*.md
   preregistration/*.md
   references/*.md
+  refs/*.md
   zenodo-release/*.md
 
 validation:
