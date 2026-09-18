@@ -121,7 +121,7 @@
   "verdict": "framework_wins",
   "r5_implication": "Wave 191 P3 MNIST FM (N=1000, smoke model 1-epoch base_channels=8) at matched NFE=50 confirms the framework BEATS the single-pass baseline (best arm evidence_driven FID=23.3879 vs baseline 29.4925, \u0394=-28.43% Bonferroni p=0.0000). This MATCHES the Wave 128 CIFAR-10 RF -44.17% claim at matched NFE and STRENGTHENS the R5 MNIST FID -15.01% headline: the framework's MNIST value-add is robust to (1) the smoke-trained model and (2) the integer-NFE matched protocol. The paper's R5 claim stands.",
   "wall_min": 10.32,
-  "commit_sha": "PENDING",
+  "commit_sha": "084e5836223b987c9a4bda75b2a35785b076200a",
   "alpha_bonferroni": 0.016666666666666666,
   "n_chunks": 10,
   "chunk_size": 100,
