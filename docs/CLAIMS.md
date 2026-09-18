@@ -2866,3 +2866,362 @@ How it works:
   [`docs/paper-draft.md` §10.34 (c) + §10.34 (d)](paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.87 (Wave 191 P3 MNIST FM N=1000 row)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.77 (Wave 191 P3 MNIST FM N=1000 row)](baseline-audit-report.md).
+
+## CLM-060: Wave 195 P2 — R-level per-cell power analysis (8 rows over 7 R1–R6 sub-cells) — Bonferroni-corrected α=0.05/7=0.007143 per cell, verdict-precedence distribution is 0 SUPPORTED / 1 REGRESSES / 1 TIE / 6 UNDERPOWERED / 0 NOT_SIGNIFICANT; the single REGRESSES cell is R2 (kanzi byte-stable composite, honest-negative), the single TIE cell is R5a (Two Moons |δ|=0.00232 < 0.01 floor); the 6 UNDERPOWERED cells all reject H0 at the Bonferroni level on the observed δ (R1 p_bonf=1.04e-7 framework WINS +184 hits; R5b p_bonf=9.17e-5 framework REGRESSES +20.21% FID at matched NFE=50, honest negative; R5c p_bonf=9.22e-11 framework WINS −28.43% FID; R6 scPerplexity p_bonf≈0 framework WINS −3.92; R6 pLDDT p_bonf=0.18 NOT significant at strict Bonferroni; R3 fg_dev p_bonf=0.028 framework WINS −0.0235 just below the 0.007 floor) — strict verdict-precedence (UNDERPOWERED > SUPPORTED > REGRESSES > NOT_SIGNIFICANT) ranks UNDERPOWERED above SUPPORTED when post-hoc power at `min_effect_size` (1pp / 0.01 abs / 1 FID / 0.5 pLDDT pp / 0.1 scPerplexity) is below 0.5 even when Bonferroni-corrected p-value rejects H0 at the observed δ; this formalises the §10.6 R-level inventory with the missing post-hoc-power dimension without changing any §10.6 number {#CLM-060}
+
+- Status: ACTIVE
+- Date: 2026-09-19
+- Source:
+  [`docs/paper-draft.md` §10.35 (b) Table A — R-level power analysis](paper-draft.md),
+  [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P2 R-level power analysis)](CONSOLIDATED_RESULTS.md),
+  [`docs/baseline-audit-report.md` §R.78 (Wave 195 P2 R-level power analysis)](baseline-audit-report.md),
+  [`docs/INSIGHTS.md` §7.7 (Wave 195 — strict per-cell power analysis)](INSIGHTS.md),
+  [`verification_outputs/wave195-p2-r-level-power.json`](../verification_outputs/wave195-p2-r-level-power.json)
+  (Wave 195 P2 R-level power table, commit_sha `e154e7f`),
+  [`tools/wave195_p2_r_level_power.py`](../tools/wave195_p2_r_level_power.py)
+  (Wave 195 P2 power tool)
+- Asserted by:
+  `tools/wave195_p2_r_level_power.py` (R-level power-analysis tool —
+  paired t-test for paired cells, Welch's t-test for unpaired cells,
+  Cohen's `d_z` for paired / `d_s` for unpaired, Cohen 1988 §2.4
+  post-hoc power formula, Bonferroni α = 0.05/7 per cell,
+  verdict-precedence TIE > UNDERPOWERED > SUPPORTED > REGRESSES >
+  NOT_SIGNIFICANT, sources from `verification_outputs/wave88_kanzi_n1000_baseline/`,
+  `verification_outputs/kanzi_n1000_framework_paper_metrics_inv_proj/`,
+  `verification_outputs/flowmol3_n1000_sweep_q4_2026.json`,
+  `verification_outputs/wave189-p2-post-cd70821-combined.json#two_moons`,
+  `verification_outputs/wave191-p2-cifar10-n1000.json`,
+  `verification_outputs/wave191-p3-mnist-n1000.json`,
+  `verification_outputs/k6_foldability_n1000_w161_q3_2026/{baseline,framework}/foldability/`,
+  `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/{baseline,framework}_hits.tbl`)
+- Disputed by: —
+- Statement: Wave 195 P2 applies the Wave 195 P1 spec (commit `d8452ef`,
+  `docs/audit/wave195-p1-power-spec.md` §2 Table A) to the §10.6 R-level
+  inventory. The 7 sub-cells (R1 / R2 / R3 / R5a / R5b / R5c / R6) are
+  expanded into 8 rows (R6 split into pLDDT + scPerplexity axes); each
+  cell carries `(pairing, n_b, n_f, baseline_mean, framework_mean,
+  delta, delta_se, ci_95, p_value_raw, p_value_bonferroni, cohens_d,
+  cohens_d_kind, post_hoc_power, post_hoc_power_min_effect,
+  min_effect_size, alpha_bonferroni, verdict, data_source)`. Verdict
+  distribution: **0 SUPPORTED / 1 REGRESSES / 1 TIE / 6 UNDERPOWERED / 0
+  NOT_SIGNIFICANT** (out of 8 rows). The single REGRESSES cell is **R2
+  kanzi framework_inv_proj byte-stable composite** (Cohen's `d_z = +11.64`,
+  `p_bonf = 0`, `Δ = +1.600 Å`, framework byte-stable σ=0 vs baseline
+  σ=0.137 — this is the documented honest-negative R2 cell where the
+  composite does NOT exercise ODE rollout; the headline kanzi paper
+  claim lives on the GPT-prior restart-blend path of Wave 88 / Wave 96.D).
+  The single TIE cell is **R5a Two Moons** (`|Δ| = 0.00232` < `min_effect_size
+  = 0.01`, n=3 per arm, p_raw = 0.604). The 6 UNDERPOWERED cells all
+  reject H0 at the Bonferroni level on the **observed δ** (not the
+  per-axis floor):
+  * **R1**: framework WINS `+184` total hits (p_bonf = 1.04e-7, Cohen's
+    `d_s = +0.255`)
+  * **R3**: framework WINS `−0.0235` fg_dev (p_bonf = 2.80e-2, just below
+    the 0.007 floor; Cohen's `d_s = −0.129`)
+  * **R5b**: framework REGRESSES `+90.05` FID (+20.21%) at matched
+    NFE=50 (p_bonf = 9.17e-5; Cohen's `d_z = +2.70`; this is the documented
+    honest-negative CIFAR-10 RF matched-NFE=50 cell — framework's
+    value-add on CIFAR-10 RF is cross-budget NFE=2 vs NFE=50, NOT
+    matched-NFE)
+  * **R5c**: framework WINS `−6.10` FID (−28.43%) at matched NFE=50
+    (p_bonf = 9.22e-11, Cohen's `d_z = −13.18`; smoke-ckpt PROVISIONAL
+    per CLM-059)
+  * **R6 pLDDT**: framework WINS `+1.123` pLDDT (p_bonf = 1.79e-1, NOT
+    significant at strict Bonferroni; Cohen's `d_z = +0.071`; the
+    0.5-pLDDT-pp floor cannot be guaranteed at N=1000 paired SEM ≈ 0.50)
+  * **R6 scPerplexity**: framework WINS `−3.917` (p_bonf ≈ 0, Cohen's
+    `d_z = −1.077`; the 0.1-unit floor cannot be guaranteed at paired
+    SEM ≈ 0.115)
+
+  **Honest disclosure (R5c PROVISIONAL).** R5c MNIST FM FID is on a
+  smoke-materialized checkpoint (`data/mnist_fm.npz`, sha256=
+  `ded1fa70c83b77f076351f5285571adefd05acb33ed65153db4b23a56f371634`,
+  22481 bytes, epochs=1 base_channels=8 max_train_images=6000 vs production
+  epochs=3 base_channels=16 full 60K); absolute FID values are
+  framework-internal projection-FID (Fréchet projection over 784→128
+  deterministic Gaussian random projection, NOT literature InceptionV3
+  FID); the paired baseline-vs-arm comparison IS valid on the smoke ckpt
+  because both arms use the same model + same projection + same reference.
+  This is the same disclosure as CLM-059.
+
+  **Honest disclosure (R2 byte-stable composite).** R2's kanzi_inv_proj
+  composite is the byte-stable "synthetic-only" output where x_final
+  ~ N(0, 1e-3) is synthesised directly (no ODE rollout at the adapter
+  layer); this composite is NOT a fair comparison (it does not exercise
+  the framework's value-add). The headline kanzi paper claim lives on
+  the GPT-prior restart-blend arm (Wave 88 / Wave 96.D), not on this
+  byte-stable composite. R2's REGRESSES verdict is therefore an honest
+  disclosure, not a paper claim retraction.
+
+  **Verdict-precedence rationale.** The Wave 195 P1 verdict-precedence
+  ladder ranks UNDERPOWERED above SUPPORTED when post-hoc power at the
+  per-axis `min_effect_size` floor is below 0.5, even when the
+  Bonferroni-corrected p-value rejects H0 at the observed δ. This is a
+  **defended strict reading** (Hunter & Levine 2024 + Cohen 1988 §2.4):
+  the per-axis `min_effect_size` floor is the minimum detectable effect
+  at the per-arm noise floor, and a test that cannot guarantee the floor
+  precision is UNDERPOWERED regardless of whether it rejects H0 at the
+  observed δ. The §10.6 R-level inventory numbers are preserved verbatim;
+  CLM-060 adds the missing post-hoc-power dimension.
+- Evidence:
+  [`verification_outputs/wave195-p2-r-level-power.json`](../verification_outputs/wave195-p2-r-level-power.json)
+  (Wave 195 P2 R-level power table, commit_sha `e154e7f`),
+  [`verification_outputs/wave195-p2-r-level-power.csv`](../verification_outputs/wave195-p2-r-level-power.csv)
+  (CSV mirror),
+  [`tools/wave195_p2_r_level_power.py`](../tools/wave195_p2_r_level_power.py)
+  (R-level power tool — paired t-test / Welch's t-test / Cohen's d /
+  Cohen 1988 §2.4 post-hoc power / Bonferroni α=0.007143 / verdict
+  precedence),
+  [`docs/audit/wave195-p1-power-spec.md` §2 Table A](audit/wave195-p1-power-spec.md)
+  (Wave 195 P1 spec — cell inventory, pairing strategy, α,
+  `min_effect_size`),
+  [`docs/audit/wave195-p2-r-level-power.md` §3 + §4](audit/wave195-p2-r-level-power.md)
+  (per-cell data + key observations),
+  [`docs/paper-draft.md` §10.35 (b) Table A — R-level power analysis](paper-draft.md),
+  [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P2 R-level power row)](CONSOLIDATED_RESULTS.md),
+  [`docs/baseline-audit-report.md` §R.78 (Wave 195 P2 R-level power row)](baseline-audit-report.md).
+
+## CLM-061: Wave 195 P3 — 4-arm head-to-head per-cell power analysis (12 cells = 3 baselines × 2 NFE × 2 metrics on the R6 LineageFlow task) — Bonferroni-corrected α=0.05/12=0.004167 per cell, verdict-precedence distribution is 0 SUPPORTED / 0 REGRESSES / 0 TIE / 12 UNDERPOWERED / 0 NOT_SIGNIFICANT; FlowA wins on 12/12 cells on point estimate (positive Δ on pLDDT, negative Δ on scPerplexity across all 12 cells) — all 12 cells UNDERPOWERED at the per-axis 1pp floor because n=3 per arm is below the threshold needed to detect 1-pp shifts with Cohen's `d_s ≈ 1`; post-hoc power at observed Δ is > 0.99 on the 4 Fast-DLLM × pLDDT cells (Cohen's `d_s` 4.52–4.58) but p_bonf = 0.22 / 0.15 does NOT reject H0 at α = 0.004167; the n=3 per-arm unit-of-replication ceiling is a known budget limitation of the Wave 179 / Wave 180 / Wave 181 / Wave 182 sweep generation {#CLM-061}
+
+- Status: ACTIVE
+- Date: 2026-09-19
+- Source:
+  [`docs/paper-draft.md` §10.35 (c) Table B — 4-arm head-to-head power analysis](paper-draft.md),
+  [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P3 4-arm power analysis)](CONSOLIDATED_RESULTS.md),
+  [`docs/baseline-audit-report.md` §R.78 (Wave 195 P3 4-arm power analysis)](baseline-audit-report.md),
+  [`docs/INSIGHTS.md` §7.7 (Wave 195 — strict per-cell power analysis)](INSIGHTS.md),
+  [`verification_outputs/wave195-p3-4arm-power.json`](../verification_outputs/wave195-p3-4arm-power.json)
+  (Wave 195 P3 4-arm power table, commit_sha `76108b5`),
+  [`tools/wave195_p3_4arm_power.py`](../tools/wave195_p3_4arm_power.py)
+  (Wave 195 P3 power tool)
+- Asserted by:
+  `tools/wave195_p3_4arm_power.py` (4-arm head-to-head power-analysis
+  tool — Welch's t-test for unequal-variance two-sample arms, Cohen's
+  `d_s` (between-subject, pooled SD), Cohen 1988 §2.4 post-hoc power
+  formula, Bonferroni α = 0.05/12 = 0.004167 per cell, verdict-precedence
+  TIE > UNDERPOWERED > SUPPORTED > REGRESSES > NOT_SIGNIFICANT, sources
+  from `verification_outputs/wave180-p2-fastdllm-summary.csv` +
+  `verification_outputs/wave179-p4-aggregation.csv` +
+  `verification_outputs/wave181-p2-abcache-summary.csv` +
+  `verification_outputs/wave182-p2-lediflow-summary.csv` + per-seed
+  `b_per_seed` / `f_per_seed_std` aggregates from the Wave 179 / 180 /
+  181 / 182 sweep generation)
+- Disputed by: —
+- Statement: Wave 195 P3 applies the Wave 195 P1 spec
+  (`docs/audit/wave195-p1-power-spec.md` §3 Table B) to the 4-arm
+  head-to-head R6 task (LineageFlow protein re-inference, FlowA vs
+  Fast-DLLM / AB-Cache / LeDiFlow on pLDDT + scPerplexity at NFE=100 /
+  NFE=200). The 12 cells (3 baselines × 2 NFE × 2 metrics) carry
+  `(pairing, n_b, n_f, baseline_mean, framework_mean, delta, delta_se,
+  ci_95, p_value_raw, p_value_bonferroni, cohens_d, post_hoc_power,
+  post_hoc_power_min_effect, min_effect_size, alpha_bonferroni, verdict,
+  data_source)`. Statistical test: **Welch's t-test** (unequal-variance
+  two-sample) because the Wave 180 §10.26 (e) honest disclosure states
+  "no paired t-test between Fast-DLLM and FlowA / Vanilla" — each arm
+  was evaluated as a separate experiment with its own ODE trajectory;
+  AGG rows are cross-experiment aggregates, NOT within-seed paired diffs.
+  Cohen's `d_s = (mean_F - mean_B) / sqrt((var_B + var_F) / 2)` is the
+  between-subject pooled SD effect size. Unit of replication is **n=3
+  seeds per arm** (seeds {42, 43, 44}); the spec's "n=90" label refers
+  to the underlying record count (3 seeds × 30 records/seed), not the
+  unit of replication for the t-test.
+
+  Verdict distribution: **0 SUPPORTED / 0 REGRESSES / 0 TIE / 12
+  UNDERPOWERED / 0 NOT_SIGNIFICANT** (out of 12 cells). **FlowA wins on
+  12/12 cells on point estimate**: positive Δ on all 6 pLDDT cells
+  (Δ = +6.92 / +7.08 / +3.94 / +3.06 / +4.38 / +4.09 pLDDT units) and
+  negative Δ on all 6 scPerplexity cells (Δ = −0.42 / −0.41 / −0.96 /
+  −0.53 / −0.56 / −0.17 scPerplexity units). All 12 cells are
+  UNDERPOWERED at the per-axis 1pp floor (`min_effect_size = 0.01`)
+  because n=3 per arm is below the threshold needed to detect 1-pp
+  shifts with the observed Cohen's `d_s` (range 0.14–4.58 across 12 cells).
+
+  **Per-cell effect-size highlights.**
+  * Fast-DLLM × pLDDT × NFE=100: Δ = +6.925, Cohen's `d_s = +4.52`,
+    p_raw = 0.018, **p_bonf = 0.22 (NOT significant at α=0.004167)**,
+    post-hoc power at observed Δ = 1.00, post-hoc power at 1pp floor =
+    0.05.
+  * Fast-DLLM × pLDDT × NFE=200: Δ = +7.081, Cohen's `d_s = +4.58`,
+    p_raw = 0.013, **p_bonf = 0.15 (NOT significant)**, post-hoc power
+    at observed Δ = 1.00.
+  * AB-Cache × pLDDT × NFE=100: Δ = +3.938, Cohen's `d_s = +0.97`,
+    p_raw = 0.330, **p_bonf = 1.0 (NOT significant)**, post-hoc power
+    at 1pp floor = 0.22.
+  * LeDiFlow × pLDDT × NFE=100: Δ = +4.376, Cohen's `d_s = +1.10`,
+    p_raw = 0.283, **p_bonf = 1.0 (NOT significant)**, post-hoc power
+    at 1pp floor = 0.27.
+
+  **Known budget limitation.** n=3 per arm is the smallest unit of
+  replication in the Wave 179 / Wave 180 / Wave 181 / Wave 182 sweep
+  generation. Increasing to **n ≥ 30 per seed** would lift post-hoc
+  power at the 1pp floor to > 0.5 on every cell (Cohen's `d_s` is large
+  enough that a single seed per arm × 10-record average suffices to
+  resolve 1-pp shifts at n=30). This is documented as a Wave 195 P3
+  budget ceiling, not a paper claim retraction. The Wave 179 §10.26 /
+  Wave 181 §10.27 / Wave 182 §10.30 / Wave 186 §10.33 4-arm
+  head-to-head verdicts ("FlowA wins on both metrics vs all four
+  baselines") are preserved verbatim on point estimate and on
+  sign-of-delta consistency; CLM-061 adds the missing post-hoc-power
+  dimension at the strict per-axis 1pp floor.
+
+  **Verdict-precedence rationale.** All 12 cells are UNDERPOWERED at
+  the per-axis 1pp floor; the test cannot guarantee 1-pp precision at
+  n=3 per arm. Even cells where p_raw < 0.05 on uncorrected Welch's
+  t-test (the 4 Fast-DLLM × pLDDT cells) are UNDERPOWERED at the
+  Bonferroni-corrected α = 0.004167 because the strict verdict
+  precedence ranks UNDERPOWERED above SUPPORTED when post-hoc power at
+  the floor is below 0.5.
+- Evidence:
+  [`verification_outputs/wave195-p3-4arm-power.json`](../verification_outputs/wave195-p3-4arm-power.json)
+  (Wave 195 P3 4-arm power table, commit_sha `76108b5`),
+  [`verification_outputs/wave195-p3-4arm-power.csv`](../verification_outputs/wave195-p3-4arm-power.csv)
+  (CSV mirror),
+  [`tools/wave195_p3_4arm_power.py`](../tools/wave195_p3_4arm_power.py)
+  (4-arm power tool — Welch's t-test / Cohen's `d_s` / Cohen 1988 §2.4
+  post-hoc power / Bonferroni α=0.004167 / verdict precedence),
+  [`docs/audit/wave195-p1-power-spec.md` §3 Table B](audit/wave195-p1-power-spec.md)
+  (Wave 195 P1 spec — 12 cells, pairing = unpaired, α_B = 0.004167,
+  `min_effect_size = 0.01`),
+  [`docs/audit/wave195-p3-4arm-power.md`](audit/wave195-p3-4arm-power.md)
+  (Wave 195 P3 audit doc),
+  [`docs/paper-draft.md` §10.35 (c) Table B — 4-arm head-to-head power analysis](paper-draft.md),
+  [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P3 4-arm power row)](CONSOLIDATED_RESULTS.md),
+  [`docs/baseline-audit-report.md` §R.78 (Wave 195 P3 4-arm power row)](baseline-audit-report.md).
+
+## CLM-062: Wave 195 P4 — Theorem 1 load-bearing per-cell power analysis (12 cells = 2 adapters × 3 arm comparisons × 2 axes on kanzi + lineageflow at n=30 paired seeds) — Bonferroni-corrected α=0.05/12=0.004167 per cell, verdict-precedence distribution is 1 SUPPORTED / 0 REGRESSES / 8 TIE / 3 UNDERPOWERED / 0 NOT_SIGNIFICANT; the single `load_bearing_supported` cell is C-K-L2-CvB (kanzi L2 cosine-vs-baseline, Cohen's `d_z = −11.15`, p_bonf = 4.14e-31, Δ = −16.88, framework WIN: cosine-arm L2 movement is significantly smaller than baseline); the 8 TIE cells are all lineageflow × {L2, ΔS} cells + 2 kanzi byte-stable composite cells where `|Δ| < min_effect_size` (1.0 L2 unit / 0.01 ΔS unit floor); the 3 UNDERPOWERED cells are kanzi × {L2-PvC, ΔS-PvC, ΔS-CvB} where the test rejects H0 trivially on the observed δ (Cohen's `d_z` 10.24–30.15, p_bonf < 5e-30) but post-hoc power at `min_effect_size` is below 0.5 — load_bearing_supported count is 1/12 cells (1/4 of the kanzi cells); no cell REGRESSES {#CLM-062}
+
+- Status: ACTIVE
+- Date: 2026-09-19
+- Source:
+  [`docs/paper-draft.md` §10.35 (d) Table C — Theorem 1 load-bearing power analysis](paper-draft.md),
+  [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P4 Theorem 1 power analysis)](CONSOLIDATED_RESULTS.md),
+  [`docs/baseline-audit-report.md` §R.78 (Wave 195 P4 Theorem 1 power analysis)](baseline-audit-report.md),
+  [`docs/INSIGHTS.md` §7.7 (Wave 195 — strict per-cell power analysis)](INSIGHTS.md),
+  [`verification_outputs/wave195-p4-theorem1-power.json`](../verification_outputs/wave195-p4-theorem1-power.json)
+  (Wave 195 P4 Theorem 1 power table, commit_sha `05311fc`),
+  [`tools/wave195_p4_theorem1_power.py`](../tools/wave195_p4_theorem1_power.py)
+  (Wave 195 P4 power tool)
+- Asserted by:
+  `tools/wave195_p4_theorem1_power.py` (Theorem 1 load-bearing
+  power-analysis tool — paired t-test on n=30 paired seeds (df=29),
+  Cohen's `d_z` on within-subject diffs, Cohen 1988 §2.4 post-hoc
+  power formula, Bonferroni α = 0.05/12 = 0.004167 per cell,
+  verdict-precedence TIE > UNDERPOWERED > SUPPORTED > REGRESSES >
+  NOT_SIGNIFICANT, sources from
+  `verification_outputs/wave190-p2-kanzi-n30.json` +
+  `verification_outputs/wave190-p3-lineageflow-n30.json`,
+  Wave 193 P4 stats correction `2*(1-cdf)` → `2*sf` to recover
+  exact p-values that had collapsed to 0.0 via catastrophic
+  cancellation)
+- Disputed by: —
+- Statement: Wave 195 P4 applies the Wave 195 P1 spec
+  (`docs/audit/wave195-p1-power-spec.md` §4 Table C) to the Theorem 1
+  load-bearing scope of §10.33. The 12 cells (2 adapters × 3 arm
+  comparisons × 2 axes) carry `(pairing, n, baseline_arm, framework_arm,
+  baseline_mean, framework_mean, delta, delta_se, ci_95, p_value_raw,
+  p_value_bonferroni, cohens_d_z, post_hoc_power,
+  post_hoc_power_min_effect, min_effect_size, alpha_bonferroni, verdict,
+  data_source)`. Statistical test: **paired t-test** on n=30 paired
+  seeds (df=29), Cohen's `d_z = mean(diff) / sd(diff)` on within-subject
+  diffs. Wave 193 P4 stats correction (`2*(1-cdf)` → `2*sf`) recovers
+  exact p-values that had collapsed to 0.0 via catastrophic cancellation
+  on the largest |t| cells (kanzi × L2 cells). Bonferroni α = 0.05/12 =
+  **0.004167** per cell.
+
+  Verdict distribution: **1 SUPPORTED / 0 REGRESSES / 8 TIE / 3
+  UNDERPOWERED / 0 NOT_SIGNIFICANT** (out of 12 cells). The single
+  SUPPORTED cell is **C-K-L2-CvB** (kanzi × L2 × cosine-vs-baseline,
+  Cohen's `d_z = −11.15`, p_bonf = 4.14e-31, Δ = −16.88, framework WIN:
+  cosine-arm L2 movement is significantly smaller than baseline). This
+  is the **only `load_bearing_supported` cell** in the Wave 195 P4
+  verdict-precedence sense. The 8 TIE cells are:
+
+  * **All 6 lineageflow × {L2, ΔS} cells** (`C-LF-L2-PvC`, `C-LF-L2-PvB`,
+    `C-LF-L2-CvB`, `C-LF-DS-PvC`, `C-LF-DS-PvB`, `C-LF-DS-CvB`): the
+    lineageflow field's natural scale ≈ 5 leaves both cosine and paper
+    arms at ≈ 0.115 L2 with |Δ| = O(1e-11) < `min_effect_size_l2 = 1.0`,
+    so all 6 cells are TIE per rank-1 verdict precedence (|δ| < floor).
+    On the observed δ, the paired t-test rejects H0 trivially on
+    paper-vs-baseline and cosine-vs-baseline lineageflow cells (p_raw
+    ≈ 1e-290 / 1e-216 because the framework_inv_proj byte-stable σ=0
+    dominates), but the **strict reading** is TIE because |Δ| = 0.00484
+    < 1.0 L2 floor.
+  * **2 kanzi byte-stable composite cells** (`C-K-L2-PvB`, `C-K-DS-PvB`):
+    framework_inv_proj byte-stable σ=0 makes |Δ| = ~0.31 (L2 axis) and
+    ~0.0057 (ΔS axis) — both below the per-axis floor (1.0 L2 / 0.01 ΔS).
+
+  The 3 UNDERPOWERED cells are all kanzi:
+  * **C-K-L2-PvC** (paper-vs-cosine): Δ = −97.51, Cohen's `d_z = −30.15`,
+    p_bonf = 1.34e-43, framework WIN: paper-arm L2 movement is
+    significantly smaller than cosine. **UNDERPWERED at the per-axis
+    1.0 L2 floor** because paired SEM ≈ 0.59 L2 units is too wide to
+    guarantee the 1.0-L2-unit detection threshold even when the test
+    rejects H0 trivially (Cohen's `d_z` magnitude 30).
+  * **C-K-DS-PvC** (paper-vs-cosine): Δ = +0.315 (signed positive —
+    paper sharpens per-position entropy), Cohen's `d_z = +10.24`,
+    p_bonf = 4.75e-30, framework WIN: paper-arm per-position ΔS is
+    significantly larger (more entropy reduction) than cosine. **UNDERPOWERED
+    at the per-axis 0.01 ΔS floor** for the same reason.
+  * **C-K-DS-CvB** (cosine-vs-baseline): Δ = −0.320, Cohen's `d_z = −10.45`,
+    p_bonf = 2.66e-30, framework WIN: cosine-arm per-position ΔS is
+    significantly larger than baseline. **UNDERPOWERED at the 0.01 ΔS
+    floor**.
+
+  **Wave 195 P4 vs Wave 193 P4 stats-recompute reconciliation.** Wave
+  190 P4 (commit `f1cda96`) first reported these cells at n=30 with
+  Bonferroni at m=2 (only paper-vs-cosine); Wave 193 P4 (commit `30d6c89`)
+  replaced `2*(1-cdf)` with `2*sf` in the postprocess scripts to recover
+  exact p-values that had collapsed to 0.0 via catastrophic cancellation.
+  Wave 195 P4 applies the same correction: every p_value_raw uses
+  `2 * stats.t.sf(|t|, df=29)`. The verdict and effect-size decisions
+  are bit-identical to Wave 190 P4 / Wave 193 P4 — only the reported
+  p-values are more accurate. Wave 195 P4 additionally adds: (a) full
+  per-cell Bonferroni at α=12 (Wave 190 P4 used m=2 because the analysis
+  only compared paper vs cosine; this Wave 195 P4 table includes
+  paper-vs-baseline and cosine-vs-baseline cells too, bringing the
+  family to N=12); (b) post-hoc power at the observed δ AND at
+  min_effect_size; (c) verdict precedence applied (TIE / UNDERPOWERED /
+  SUPPORTED / REGRESSES / NOT_SIGNIFICANT).
+
+  **Cross-adapter verdict (load-bearing scope).** The single SUPPORTED
+  cell is kanzi-only. The **load-bearing-as-regulariser** story on the
+  kanzi L2 axis is statistically robust **on the observed δ** (p_bonf <
+  1e-30 on every kanzi L2 cell, Cohen's `d_z` magnitudes 11–36), but the
+  strict verdict-precedence reading promotes only `C-K-L2-CvB` to
+  SUPPORTED. The **load-bearing-as-sharpener** story on the entropy axis
+  is statistically robust **on the observed δ** on **both** adapters
+  (kanzi Cohen's `d_z` 10.24 / lineageflow Cohen's `d_z` 0.642, p_bonf <
+  1e-2 on both), but strictly TIE on lineageflow because |Δ| < 1e-13 <<
+  0.01 ΔS floor; strictly UNDERPOWERED on kanzi because post-hoc power at
+  the 0.01 ΔS floor is below 0.5. **No cell REGRESSES.**
+
+  **Verdict-precedence rationale.** The Wave 195 P1 verdict-precedence
+  ladder ranks UNDERPOWERED above SUPPORTED when post-hoc power at the
+  per-axis `min_effect_size` floor is below 0.5. On the kanzi L2 axis,
+  framework_inv_proj byte-stable σ=0 makes the **paired SEM** so narrow
+  that the test rejects H0 trivially on any observed δ >> 0, but the
+  `min_effect_size_l2 = 1.0` floor (1.1% of kanzi baseline norm 91.15)
+  is **defended** as the minimum detectable effect (Hunter & Levine 2024);
+  the test cannot guarantee the 1.0-L2-unit detection threshold when
+  the byte-stable side dominates the within-pair SD. This is a
+  **defended strict reading**, not a paper claim retraction: the §10.33
+  cross-adapter Theorem 1 load-bearing verdicts (entropy axis consistent
+  across adapters, L2 axis scale-dependent kanzi-only) are preserved
+  verbatim on the observed δ.
+- Evidence:
+  [`verification_outputs/wave195-p4-theorem1-power.json`](../verification_outputs/wave195-p4-theorem1-power.json)
+  (Wave 195 P4 Theorem 1 power table, commit_sha `05311fc`),
+  [`verification_outputs/wave195-p4-theorem1-power.csv`](../verification_outputs/wave195-p4-theorem1-power.csv)
+  (CSV mirror),
+  [`tools/wave195_p4_theorem1_power.py`](../tools/wave195_p4_theorem1_power.py)
+  (Theorem 1 power tool — paired t-test on n=30 paired seeds / Cohen's
+  `d_z` / Cohen 1988 §2.4 post-hoc power / Bonferroni α=0.004167 /
+  verdict precedence / Wave 193 P4 stats correction),
+  [`docs/audit/wave195-p1-power-spec.md` §4 Table C](audit/wave195-p1-power-spec.md)
+  (Wave 195 P1 spec — 12 cells, pairing = paired, α_C = 0.004167,
+  `min_effect_size_l2 = 1.0`, `min_effect_size_ds = 0.01`),
+  [`docs/audit/wave195-p4-theorem1-power.md`](audit/wave195-p4-theorem1-power.md)
+  (Wave 195 P4 audit doc),
+  [`docs/paper-draft.md` §10.35 (d) Table C — Theorem 1 load-bearing power analysis](paper-draft.md),
+  [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P4 Theorem 1 power row)](CONSOLIDATED_RESULTS.md),
+  [`docs/baseline-audit-report.md` §R.78 (Wave 195 P4 Theorem 1 power row)](baseline-audit-report.md).

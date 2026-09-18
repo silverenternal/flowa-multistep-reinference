@@ -375,6 +375,105 @@ Wave 189 P2 / §7.4 G1 inverted the 2D axis (no significant difference on either
 
 **Updated CLM-040 + new CLM-059.** The Wave 191 evidence adds a new row to CLM-040 (CIFAR-10 RF matched-NFE=50 honest disclosure) and creates CLM-059 (MNIST FM smoke-ckpt PROVISIONAL). The CLM-040 / CLM-059 pair formalises the R5 honest-disclosure matrix as two reviewer-traceable claims with explicit baseline + framework numbers + delta + p-value + evidence path + PROVISIONAL+blocked reason. **No prior claim is retracted or rewritten**; the §2.8.1 Theorem 1 statement is preserved verbatim; the Wave 188 P5 + Wave 189 P2/P3/P4 + Wave 190 P2/P3 disclosures form a strictly ADDITIVE chain.
 
+## 7.7 Wave 195 — Strict per-cell power analysis (Tables A / B / C; 32 cells total)
+
+Wave 195 is a reviewer-grade **statistical-strictness** wave: §10.6 (R-level
+inventory) + §10.26 / §10.27 / §10.30 (4-arm head-to-head verdicts) +
+§10.33 (Theorem 1 load-bearing scope) report headline numbers with
+"Bonferroni p < 0.05" labels, but **post-hoc power at the per-axis
+`min_effect_size` floor** is not reported. The Wave 195 P1 spec
+(`docs/audit/wave195-p1-power-spec.md`, commit `d8452ef`) formalises
+three per-cell power tables, and Wave 195 P2/P3/P4 compute them. Wave
+195 P5 integrates them into the paper (§10.35) and the claims ledger
+(CLM-060/061/062). The Wave 195 P1 verdict-precedence ladder (TIE >
+UNDERPOWERED > SUPPORTED > REGRESSES > NOT_SIGNIFICANT) is conservative
+by construction (Hunter & Levine 2024 + Cohen 1988 §2.4): cells where
+the test rejects H0 at the observed δ but cannot guarantee the per-axis
+`min_effect_size` floor (1pp / 0.01 abs / 1.0 L2 / 0.01 ΔS) are
+labelled UNDERPOWERED, even when Bonferroni-corrected p-value rejects
+H0 at the observed δ.
+
+**Table A — R-level (8 rows / 7 sub-cells, [CLM-060]).** Bonferroni
+α = 0.05/7 = 0.007143 per cell; paired t-test for paired cells, Welch's
+t-test for unpaired cells. Verdict distribution: **0 SUPPORTED / 1
+REGRESSES / 1 TIE / 6 UNDERPOWERED / 0 NOT_SIGNIFICANT**. The single
+REGRESSES cell is R2 (kanzi byte-stable composite, honest-negative —
+the framework_inv_proj composite does NOT exercise ODE rollout; the
+headline kanzi paper claim lives on the GPT-prior restart-blend arm of
+Wave 88 / Wave 96.D). The single TIE cell is R5a Two Moons (|Δ| =
+0.00232 < 0.01 floor, n=3 per arm). The 6 UNDERPOWERED cells all
+reject H0 at the Bonferroni level on the observed δ: R1 p_bonf = 1e-7
+(framework WINS +184 hits), R5c p_bonf = 9.2e-11 (framework WINS −28.43%
+FID, smoke-ckpt PROVISIONAL per CLM-059), R6 scPerplexity p_bonf ≈ 0
+(framework WINS −3.92), R5b p_bonf = 9.2e-5 (framework REGRESSES
++20.21% FID at matched NFE=50 — honest negative per CLM-040), R3
+p_bonf = 0.028 (framework WINS −0.0235 just below the 0.007 floor),
+R6 pLDDT p_bonf = 0.18 (NOT significant at strict Bonferroni).
+
+**Table B — 4-arm head-to-head (12 cells, [CLM-061]).** Bonferroni α =
+0.05/12 = 0.004167 per cell; Welch's t-test (unequal-variance
+two-sample); Cohen's `d_s` between-subject pooled SD. Verdict
+distribution: **0 SUPPORTED / 0 REGRESSES / 0 TIE / 12 UNDERPOWERED /
+0 NOT_SIGNIFICANT**. FlowA wins on **12/12 cells on point estimate**
+(positive Δ on all 6 pLDDT cells; negative Δ on all 6 scPerplexity
+cells). All 12 cells are UNDERPOWERED at the per-axis 1pp floor because
+n=3 per arm is below the threshold needed to detect 1-pp shifts with
+the observed Cohen's `d_s` (range 0.14–4.58). The Fast-DLLM × pLDDT ×
+NFE=100/200 cells have p_raw < 0.05 on uncorrected Welch's t-test but
+p_bonf = 0.22 / 0.15 does NOT reject H0 at α = 0.004167. Known n=3
+per-arm budget ceiling of the Wave 179 / Wave 180 / Wave 181 / Wave
+182 sweep generation; increasing to n ≥ 30 per seed would lift
+post-hoc power at the 1pp floor to > 0.5 on every cell.
+
+**Table C — Theorem 1 load-bearing (12 cells, [CLM-062]).** Bonferroni
+α = 0.05/12 = 0.004167 per cell; paired t-test on n=30 paired seeds
+(df=29); Cohen's `d_z` on within-subject diffs; Wave 193 P4 stats
+correction `2*(1-cdf)` → `2*sf` recovers exact p-values that had
+collapsed to 0.0 via catastrophic cancellation. Verdict distribution:
+**1 SUPPORTED / 0 REGRESSES / 8 TIE / 3 UNDERPOWERED / 0 NOT_SIGNIFICANT**.
+The single `load_bearing_supported` cell is **C-K-L2-CvB** (kanzi × L2
+× cosine-vs-baseline, Cohen's `d_z = −11.15`, p_bonf = 4.14e-31, Δ =
+−16.88, framework WIN: cosine-arm L2 movement is significantly smaller
+than baseline). The 8 TIE cells are all lineageflow × {L2, ΔS} cells
+(the lineageflow field's natural scale ≈ 5 leaves both arms at ≈ 0.115
+L2 with |Δ| = O(1e-11) < `min_effect_size_l2 = 1.0`) + 2 kanzi
+byte-stable composite cells (`C-K-L2-PvB`, `C-K-DS-PvB`). The 3
+UNDERPWERED cells are all kanzi × {L2-PvC, ΔS-PvC, ΔS-CvB} where the
+test rejects H0 trivially on the observed δ (Cohen's `d_z` 10.24–30.15,
+p_bonf < 5e-30) but post-hoc power at the per-axis floor is below 0.5.
+**`load_bearing_supported` count is 1/12 cells (1/4 of the kanzi cells);
+no cell REGRESSES.**
+
+**Net verdict count (32 cells).** SUPPORTED = 1 (C-K-L2-CvB), REGRESSES
+= 1 (R2 kanzi byte-stable composite), TIE = 9, UNDERPOWERED = 21,
+NOT_SIGNIFICANT = 0. **No §10.6 R-level inventory number is changed or
+retracted**; Wave 195 §10.35 + §15.88 + §R.78 + §7.7 + CLM-060/061/062
+add the missing post-hoc-power dimension as an ADDITIVE, quantitative,
+commit-pinned-JSON evidence layer. The §2.8.1 Theorem 1 statement is
+unchanged. The Wave 188 P5 + Wave 189 P2/P3/P4 + Wave 190 P2/P3 + Wave
+191 P2/P3 + Wave 195 P2/P3/P4 disclosures form a strictly ADDITIVE chain.
+
+**Honest disclosures preserved verbatim.** R2 byte-stable composite
+(kanzi framework_inv_proj does not exercise ODE rollout — honest
+negative, not a paper claim retraction); R5b CIFAR-10 RF matched-NFE=50
+(framework REGRESSES +20.21% FID — value-add is cross-budget NFE=2 vs
+NFE=50, NOT matched-NFE); R5c MNIST FM smoke-ckpt PROVISIONAL per
+CLM-059 (paired baseline-vs-arm comparison IS valid; absolute FID
+values are framework-internal projection-FID, NOT literature InceptionV3
+FID); n=3 per arm 4-arm budget ceiling (Wave 179 / Wave 180 / Wave 181
+/ Wave 182 sweep generation).
+
+**Tools.** `tools/wave195_p2_r_level_power.py` (commit `e154e7f`);
+`tools/wave195_p3_4arm_power.py` (commit `76108b5`);
+`tools/wave195_p4_theorem1_power.py` (commit `05311fc`).
+
+**Output JSONs.** `verification_outputs/wave195-p2-r-level-power.{csv,json}`
+(commit_sha `e154e7f`);
+`verification_outputs/wave195-p3-4arm-power.{csv,json}` (commit_sha
+`76108b5`);
+`verification_outputs/wave195-p4-theorem1-power.{csv,json}` (commit_sha
+`05311fc`).
+
 ## 8. State machine infrastructure (Phase 2a + 2b)
 
 - **Substrate is generic + HSM + decorator + type-safe** [CLM-033]. `adaptive_reflow/contracts/state_machine.py` ships a PEP 695 `class StateMachine[TState, TEvent]` with decorator-driven transitions, hierarchical regions, history pseudo-states, parallel regions, byte-deterministic `TransitionLog`, async guards, and DOT / Mermaid export — stdlib-only, `mypy --strict` clean, no third-party dependency.

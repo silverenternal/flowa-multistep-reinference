@@ -7104,3 +7104,112 @@ preserved. The per-baseline audit trail gains two new rows: one
 **baseline_wins** row on the CIFAR-10 RF audit table at NFE=50 /
 N=1000, and one **framework_wins PROVISIONAL** row on the MNIST FM
 audit table at NFE=50 / N=1000 (smoke ckpt).
+
+### §R.78 — Wave 195 strict per-cell power analysis (Tables A / B / C; 32 cells total) (2026-09-19)
+
+**Motivation.** §10.6 (R-level inventory) + §10.26 / §10.27 / §10.30
+(4-arm head-to-head verdicts) + §10.33 (Theorem 1 load-bearing scope)
+report headline numbers with "Bonferroni p < 0.05" labels, but
+**post-hoc power at the per-axis `min_effect_size` floor** is not
+reported. Wave 195 P1 spec (`docs/audit/wave195-p1-power-spec.md`,
+commit `d8452ef`) formalises three per-cell power tables (A / B / C)
+and Wave 195 P2/P3/P4 compute them. Wave 195 P5 (this section) audits
+the three tables together.
+
+**Tools.**
+
+* `tools/wave195_p2_r_level_power.py` (R-level: paired t-test for
+  paired cells, Welch's t-test for unpaired cells, Cohen's `d_z` /
+  `d_s`, Cohen 1988 §2.4 post-hoc power, Bonferroni α = 0.05/7 =
+  0.007143 per cell, verdict-precedence TIE > UNDERPOWERED > SUPPORTED >
+  REGRESSES > NOT_SIGNIFICANT). Commit `e154e7f`.
+* `tools/wave195_p3_4arm_power.py` (4-arm: Welch's t-test, Cohen's
+  `d_s` between-subject, Cohen 1988 §2.4 post-hoc power, Bonferroni
+  α = 0.05/12 = 0.004167 per cell, verdict precedence). Commit
+  `76108b5`.
+* `tools/wave195_p4_theorem1_power.py` (Theorem 1: paired t-test on
+  n=30 paired seeds (df=29), Cohen's `d_z` on within-subject diffs,
+  Wave 193 P4 stats correction `2*(1-cdf)` → `2*sf`, Cohen 1988 §2.4
+  post-hoc power, Bonferroni α = 0.05/12 = 0.004167 per cell, verdict
+  precedence). Commit `05311fc`.
+
+**Output JSONs.**
+
+* `verification_outputs/wave195-p2-r-level-power.json` (8 rows over 7
+  sub-cells; commit_sha `e154e7f`).
+* `verification_outputs/wave195-p3-4arm-power.json` (12 cells; commit_sha
+  `76108b5`).
+* `verification_outputs/wave195-p4-theorem1-power.json` (12 cells;
+  commit_sha `05311fc`).
+
+**Audit table (per-baseline, post-hoc-power dimension).**
+
+| table | row | baseline | metric | NFE | n_b / n_f | δ | p_bonf | Cohen's d | verdict |
+|-------|-----|----------|--------|----:|----------:|---:|-------:|----------:|---------|
+| A | R1_lineageflow_hmmer | LineageFlow HMMER | hits | n/a | 1000 / 1000 | +184 | 1.04e-07 | +0.255 (`d_s`) | UNDERPOWERED |
+| A | R2_kanzi_inv_proj | Kanzi (byte-stable composite) | RMSD Å | n/a | 1000 / 1000 | +1.600 | 0.0 | +11.64 (`d_z`) | REGRESSES |
+| A | R3_flowmol3_fg_dev | FlowMol3 | fg_dev | 50 | 999 / 1000 | −0.0235 | 2.80e-02 | −0.129 (`d_s`) | UNDERPOWERED |
+| A | R5a_2D_two_moons_W2 | 2D Two Moons | W2 | 100 | 3 / 3 | +0.00232 | 1.00 | +0.460 (`d_s`) | TIE |
+| A | R5b_cifar10rf_matched_NFE50_FID | CIFAR-10 RF | FID | 50 | 1000 / 1000 | +90.05 | 9.17e-05 | +2.700 (`d_z`) | UNDERPOWERED |
+| A | R5c_mnist_fm_matched_NFE50_FID | MNIST FM (smoke ckpt) | FID | 50 | 1000 / 1000 | −6.10 | 9.22e-11 | −13.18 (`d_z`) | UNDERPOWERED |
+| A | R6_lineageflow_foldability_pLDDT | LineageFlow | pLDDT | 10 | 1000 / 1000 | +1.123 | 1.79e-01 | +0.071 (`d_z`) | UNDERPOWERED |
+| A | R6_lineageflow_scPerplexity | LineageFlow | scPerplexity | 10 | 1000 / 1000 | −3.917 | 0.0 | −1.077 (`d_z`) | UNDERPOWERED |
+| B | fastdllm_pLDDT_NFE100 | FastDLLM | pLDDT | 100 | 3 / 3 | +6.925 | 2.16e-01 | +4.520 (`d_s`) | UNDERPOWERED |
+| B | fastdllm_pLDDT_NFE200 | FastDLLM | pLDDT | 200 | 3 / 3 | +7.081 | 1.51e-01 | +4.580 (`d_s`) | UNDERPOWERED |
+| B | fastdllm_scPerplexity_NFE100 | FastDLLM | scPerplexity | 100 | 3 / 3 | −0.422 | 1.00 | −0.299 (`d_s`) | UNDERPOWERED |
+| B | fastdllm_scPerplexity_NFE200 | FastDLLM | scPerplexity | 200 | 3 / 3 | −0.414 | 1.00 | −0.281 (`d_s`) | UNDERPOWERED |
+| B | abcache_pLDDT_NFE100 | AB-Cache | pLDDT | 100 | 3 / 3 | +3.938 | 1.00 | +0.970 (`d_s`) | UNDERPOWERED |
+| B | abcache_pLDDT_NFE200 | AB-Cache | pLDDT | 200 | 3 / 3 | +3.060 | 1.00 | +0.661 (`d_s`) | UNDERPOWERED |
+| B | abcache_scPerplexity_NFE100 | AB-Cache | scPerplexity | 100 | 3 / 3 | −0.959 | 1.00 | −0.850 (`d_s`) | UNDERPOWERED |
+| B | abcache_scPerplexity_NFE200 | AB-Cache | scPerplexity | 200 | 3 / 3 | −0.529 | 1.00 | −0.474 (`d_s`) | UNDERPOWERED |
+| B | lediflow_pLDDT_NFE100 | LeDiFlow | pLDDT | 100 | 3 / 3 | +4.376 | 1.00 | +1.096 (`d_s`) | UNDERPOWERED |
+| B | lediflow_pLDDT_NFE200 | LeDiFlow | pLDDT | 200 | 3 / 3 | +4.095 | 1.00 | +1.026 (`d_s`) | UNDERPOWERED |
+| B | lediflow_scPerplexity_NFE100 | LeDiFlow | scPerplexity | 100 | 3 / 3 | −0.559 | 1.00 | −0.408 (`d_s`) | UNDERPOWERED |
+| B | lediflow_scPerplexity_NFE200 | LeDiFlow | scPerplexity | 200 | 3 / 3 | −0.174 | 1.00 | −0.139 (`d_s`) | UNDERPOWERED |
+| C | C-K-L2-PvC | Kanzi paper-vs-cosine | L2 | 1000 | n=30 | −97.51 | 1.34e-43 | −30.15 (`d_z`) | UNDERPOWERED |
+| C | C-K-L2-PvB | Kanzi paper-vs-baseline | L2 | 1000 | n=30 | −0.313 | 8.32e-46 | −35.93 (`d_z`) | TIE |
+| C | C-K-L2-CvB | Kanzi cosine-vs-baseline | L2 | 1000 | n=30 | −16.88 | 4.14e-31 | −11.15 (`d_z`) | **SUPPORTED** |
+| C | C-K-DS-PvC | Kanzi paper-vs-cosine | ΔS | 1000 | n=30 | +0.315 | 4.75e-30 | +10.24 (`d_z`) | UNDERPOWERED |
+| C | C-K-DS-PvB | Kanzi paper-vs-baseline | ΔS | 1000 | n=30 | −0.00572 | 2.25e-40 | −23.33 (`d_z`) | TIE |
+| C | C-K-DS-CvB | Kanzi cosine-vs-baseline | ΔS | 1000 | n=30 | −0.320 | 2.66e-30 | −10.45 (`d_z`) | UNDERPOWERED |
+| C | C-LF-L2-PvC | LineageFlow paper-vs-cosine | L2 | 100 | n=30 | +2.72e-11 | 1.00 | +0.093 (`d_z`) | TIE |
+| C | C-LF-L2-PvB | LineageFlow paper-vs-baseline | L2 | 100 | n=30 | −0.00484 | 8.10e-289 | −8.62e+09 (`d_z`) | TIE |
+| C | C-LF-L2-CvB | LineageFlow cosine-vs-baseline | L2 | 100 | n=30 | −0.00484 | 4.01e-215 | −2.48e+07 (`d_z`) | TIE |
+| C | C-LF-DS-PvC | LineageFlow paper-vs-cosine | ΔS | 100 | n=30 | +9.15e-14 | 1.76e-02 | +0.642 (`d_z`) | TIE |
+| C | C-LF-DS-PvB | LineageFlow paper-vs-baseline | ΔS | 100 | n=30 | −3.09e-06 | 2.19e-286 | −7.10e+09 (`d_z`) | TIE |
+| C | C-LF-DS-CvB | LineageFlow cosine-vs-baseline | ΔS | 100 | n=30 | −3.09e-06 | 1.90e-213 | −2.17e+07 (`d_z`) | TIE |
+
+**Verdict distribution summary (32 cells).** SUPPORTED = 1 (C-K-L2-CvB);
+REGRESSES = 1 (R2_kanzi_inv_proj); TIE = 9; UNDERPOWERED = 21; NOT_SIG =
+0. See §10.35 (b)/(c)/(d) for per-cell detail and §15.88 for the
+combined Wave 195 P5 audit summary.
+
+**Per-baseline audit trail gains three new rows.**
+
+* **R-level (Table A, 8 rows over 7 sub-cells).** Each of the 7 §10.6
+  R-claims gains a post-hoc-power dimension with explicit pairing
+  strategy, Bonferroni-corrected α, Cohen's `d_z` / `d_s`, and verdict
+  precedence. The §10.6 inventory numbers are preserved verbatim;
+  CLM-060 adds the missing post-hoc-power dimension. R2 (kanzi
+  byte-stable composite) gains the explicit honest-negative disclosure.
+* **4-arm head-to-head (Table B, 12 cells).** Each of the 3 baselines ×
+  2 NFE × 2 metrics cells gains a post-hoc-power dimension. The §10.26 /
+  §10.27 / §10.30 / §10.33 4-arm verdicts ("FlowA wins on both metrics
+  vs all four baselines") are preserved verbatim on point estimate and
+  on sign-of-delta consistency; CLM-061 adds the missing post-hoc-power
+  dimension at the strict per-axis 1pp floor.
+* **Theorem 1 load-bearing (Table C, 12 cells).** Each of the 2 adapters
+  × 3 arm comparisons × 2 axes cells gains a post-hoc-power dimension.
+  The §10.33 cross-adapter Theorem 1 load-bearing verdicts (entropy axis
+  consistent across adapters, L2 axis scale-dependent kanzi-only) are
+  preserved verbatim on the observed δ; CLM-062 adds the missing
+  post-hoc-power dimension with **C-K-L2-CvB** as the single
+  `load_bearing_supported` cell.
+
+**ADDITIVE only — does not delete or rewrite any prior §R.1–§R.77
+paragraph above.** §R.68 / §R.69 / §R.70 / §R.71 / §R.72 / §R.73 / §R.74
+/ §R.75 / §R.76 / §R.77 are preserved verbatim; Wave 195 §10.35 +
+§15.88 + §R.78 + §7.7 + CLM-060/061/062 formalise the post-hoc-power
+dimension of the headline R-level / 4-arm / Theorem 1 inventories as
+an ADDITIVE, quantitative, commit-pinned-JSON evidence layer. No §10.6
+R-level inventory number is changed or retracted.
