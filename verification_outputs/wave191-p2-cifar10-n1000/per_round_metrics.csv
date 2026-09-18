@@ -1,0 +1,17 @@
+scheduler,round_index,n_cap,num_steps,evidence_ratio
+CosineAnnealScheduler,0,1.0,47,
+CosineAnnealScheduler,1,0.75,1,
+CosineAnnealScheduler,2,0.2500000000000001,1,
+CosineAnnealScheduler,3,0.0,1,
+CodimensionSheetScheduler,0,1.0,47,1.0
+CodimensionSheetScheduler,1,0.9999074159800019,1,0.9999074159800019
+CodimensionSheetScheduler,2,0.9993753903810118,1,0.9993753903810118
+CodimensionSheetScheduler,3,0.999999999,1,0.999999999
+EvidenceDrivenScheduler,0,1.0,47,
+EvidenceDrivenScheduler,1,0.72,1,
+EvidenceDrivenScheduler,2,0.21505555041199895,1,
+EvidenceDrivenScheduler,3,0.0,1,
+FreeTrajScheduler,0,1.0,47,
+FreeTrajScheduler,1,0.8,1,
+FreeTrajScheduler,2,0.2500000000000001,1,
+FreeTrajScheduler,3,0.0,1,

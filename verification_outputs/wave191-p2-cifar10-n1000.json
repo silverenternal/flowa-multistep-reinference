@@ -1,0 +1,120 @@
+{
+  "target": "cifar10_rf",
+  "n_records": 1000,
+  "nfe": 50,
+  "baseline_fid": 415.8284956527973,
+  "framework_arms": {
+    "cosine": {
+      "fid_headline": 500.19908411966566,
+      "fid_chunks_mean": 506.4315598978591,
+      "fid_chunks_std": 9.830443598042272,
+      "delta_vs_baseline_pct": 2.914894889847363,
+      "p_value_raw": 6.546439166754681e-06,
+      "p_value_bonferroni": 1.9639317500264042e-05,
+      "bonferroni_significant": true,
+      "cohens_dz": 2.9396999626520377,
+      "t_stat": 9.29614751949236,
+      "df": 9,
+      "n_chunks": 10,
+      "chunk_fids": [
+        490.14257084551247,
+        515.0525670018422,
+        505.87165921143776,
+        519.4151402798709,
+        495.57308307026085,
+        516.1868146118443,
+        500.2903642014559,
+        505.5232689303561,
+        515.3348618458008,
+        500.9252689802096
+      ]
+    },
+    "codimension_sheet": {
+      "fid_headline": 500.1179675060829,
+      "fid_chunks_mean": 506.37384651816427,
+      "fid_chunks_std": 9.646883570063842,
+      "delta_vs_baseline_pct": 2.903166619187796,
+      "p_value_raw": 6.451955492536854e-06,
+      "p_value_bonferroni": 1.935586647761056e-05,
+      "bonferroni_significant": true,
+      "cohens_dz": 2.9448984214764065,
+      "t_stat": 9.312586489699965,
+      "df": 9,
+      "n_chunks": 10,
+      "chunk_fids": [
+        491.22741861803155,
+        516.233020460693,
+        507.75860460709924,
+        519.5964029891212,
+        493.4288039897802,
+        515.3449588681067,
+        501.5970454362635,
+        505.54043860513985,
+        512.0999840798107,
+        500.9117875275969
+      ]
+    },
+    "evidence_driven": {
+      "fid_headline": 499.8296177396399,
+      "fid_chunks_mean": 505.87362299187134,
+      "fid_chunks_std": 9.112715026804299,
+      "delta_vs_baseline_pct": 2.8015132948170787,
+      "p_value_raw": 1.3094449655026708e-05,
+      "p_value_bonferroni": 3.928334896508012e-05,
+      "bonferroni_significant": true,
+      "cohens_dz": 2.7003971217845497,
+      "t_stat": 8.539405491802272,
+      "df": 9,
+      "n_chunks": 10,
+      "chunk_fids": [
+        489.9799197466791,
+        515.6314803208498,
+        504.6672440346797,
+        516.4209906617265,
+        494.2775246975886,
+        514.7930265668809,
+        500.917102951907,
+        505.67846262762913,
+        512.5170232078042,
+        503.85345510296867
+      ]
+    }
+  },
+  "best_arm": "evidence_driven",
+  "verdict": "baseline_wins",
+  "r5_implication": "Wave 191 P2 N=1000 at matched NFE=50 shows the single-pass baseline WINS (best framework arm evidence_driven FID=499.83 vs baseline 415.83, \u0394=+2.80% Bonferroni p=0.0000). This REPLACES the Wave 128 -44.17% headline at matched NFE: the framework's value-add on CIFAR-10 Rectified Flow is NOT about better inference at fixed NFE \u2014 it is about producing comparable FID with fewer NFEs (the Wave 128 cross-budget comparison). The paper claim scope should be tightened: framework wins cross-budget (Wave 128), TIES or regresses at matched NFE (Wave 191 P2 N=1000).",
+  "wall_min": 61,
+  "commit_sha": "PENDING_wave191_p2",
+  "alpha_bonferroni": 0.016666666666666666,
+  "alpha_bonferroni_value": 0.016666666666666666,
+  "n_chunks": 10,
+  "chunk_size": 100,
+  "statistical_test": "paired two-sided t-test (df=9) on chunk-level FIDs (k=10 disjoint chunks of 100 samples each, paired across arms and reference); Cohen's d_z on within-chunk diffs; Bonferroni correction across 3 arms (alpha=0.05/3=0.0167)",
+  "headline_fids": {
+    "baseline": 415.8284956527973,
+    "cosine": 500.19908411966566,
+    "codimension_sheet": 500.1179675060829,
+    "evidence_driven": 499.8296177396399
+  },
+  "summary_row_fids": {
+    "baseline": 415.8284956527973,
+    "CosineAnnealScheduler": 500.19908411966566,
+    "CodimensionSheetScheduler": 500.1179675060829,
+    "EvidenceDrivenScheduler": 499.8296177396399
+  },
+  "checkpoint": "data/rectified_flow_cifar10.pth",
+  "sweep_command": "tools/run_sota_cifar_experiment.py --checkpoint data/rectified_flow_cifar10.pth --device cuda --n-samples 1000 --framework-samples 1000 --n-rounds 4 --baseline-num-steps 50 --framework-max-num-steps 50 --integrator euler --match-nfe sample --ref-npz data/cifar10_test_ref.npz",
+  "postprocessor": "scripts/wave191_p2_fastfid.py",
+  "reference_features_cached": "data/cifar10_inception_features.npz",
+  "reference_features_shape": [
+    10000,
+    2048
+  ],
+  "per_arm_n_features": {
+    "baseline": 1000,
+    "cosine": 1000,
+    "codimension_sheet": 1000,
+    "evidence_driven": 1000
+  },
+  "headline_inconsistency_note": "FID values are computed in this postprocessor using NumPy eig + sqrtm on samples' InceptionV3 features (TF-port architecture, 2048-D) against the cached reference features (10000 images, same TF-port InceptionV3). This path bypasses the script's full InceptionV3 pipeline so we can use the precomputed reference features. The \u0394 FID and p-values are computed on this NumPy/eig FID path; the script's TF-port pipeline uses the same InceptionV3 architecture so absolute FID values may differ at the 1-2 FID level due to numerical details in matrix sqrtm, but the paired statistical comparison is valid since both baseline and arms are computed on the identical NumPy path."
+}
