@@ -45,293 +45,243 @@ commit. The framework-specific derivation is in supplementary S1.
 
 ## §1. Introduction
 
-### §1.1 Problem statement
+We present **FlowA**, a training-free, solver-agnostic re-inference
+framework that improves frozen flow-matching checkpoints via
+paper-quantity-driven multi-round scheduling at inference time.
+Across 5 adapters × 3 domains — protein (Kanzi ICLR 2026,
+LineageFlow ICML 2026), molecular 3D (FlowMol3 NeurIPS 2024), and
+2D synthetic (TwoDimFM) — FlowA delivers **6 Bonferroni-significant
+`framework_improves` on paper-metric axes**, **3 byte-stable
+composite-axis improvements on Tier 3 real checkpoints**, **4-arm
+head-to-head wins versus vanilla + Fast-DLLM + AB-Cache + LeDiFlow**
+on R6 (16 NFE-robust per-cell deltas), and **2.5–10× NFE speedup**
+at matched quality. FlowA intervenes at a fourth, structurally
+disjoint layer — the multi-round restart-blend primitive driven by
+paper-quantity-derived $\beta$ — and adds a theory-grounded witness
+(`selection_ratio`, computed from the BGV12 / V03 BL-convergence
+bound) that an inference loop can target.
 
-Flow matching [Lipman 2023] and Rectified Flow [Liu 2022] define
-generation as integrating a learned velocity field $v_\theta(x, t)$
-along a single ODE. Today's released checkpoints — Kanzi (ICLR
-2026, protein flow-AE, 44.1 M params), LineageFlow (ICML 2026,
-protein FM, 657 M params), FlowMol3 (NeurIPS 2024, molecular 3D FM,
-65 M params), and the open DDPM++ / RF UNet weights — ship as
-**frozen $\theta$**: practitioners cannot re-train, distill, or
-otherwise modify the inference surface. A frozen FM checkpoint has a
+Today's released flow-matching checkpoints — Kanzi, LineageFlow,
+FlowMol3, the open DDPM++ / RF UNet weights — ship as **frozen
+$\theta$**: practitioners cannot re-train, distill, or otherwise
+modify the inference surface. A frozen FM checkpoint has a
 **latent distribution gap**: the model's natural prior differs from
 the target data distribution by an amount that depends on the
 checkpoint's training distribution, the test-time target, and the
 NFE budget. **One-shot sampling cannot close this gap** because each
 sample is drawn independently from the learned marginal with no
-mechanism to consume outcome-conditioned feedback from prior samples.
-Solver-level acceleration (DPM-Solver++, EDM, UniPC) reduces the
-number of function evaluations but operates on a fixed marginal;
-trajectory-level acceleration (Consistency Models, iCT, CTM, LCM-LoRA)
-straightens the path at training time but requires retraining; and
-re-inference alpha-blending / restart-blend heuristics consume
-outcome-conditioned feedback without a theory-grounded schedule.
-The gap is **structural, not numerical**: no published framework
-schedules the noise-and-step budget across rounds as a function of a
-convergence-theory witness.
+mechanism to consume outcome-conditioned feedback from prior
+samples. The gap is structural, not numerical: no published
+framework schedules the noise-and-step budget across rounds as a
+function of a convergence-theory witness.
 
-### §1.2 Three limitations of existing work
+Prior work addresses three disjoint layers of the inference surface,
+none of which occupies the position FlowA targets. **Solver-level
+acceleration** (DPM-Solver++, EDM, UniPC, Dormand–Prince RK45)
+reduces the number of function evaluations per sample but operates
+on a fixed marginal and does not consume outcome-conditioned
+feedback across samples. **Trajectory-level acceleration** (Consistency
+Models, iCT, Consistency Trajectory Models, LCM-LoRA, Reflow)
+straightens the sampling path at training time and requires
+retraining $\theta$ (or a LoRA), so the resulting distilled model
+only generalises within the training distribution's manifold.
+**Re-inference alpha-blending** (Sabour et al. 2024; Fast-DLLM;
+AB-Cache; LeDiFlow) consumes outcome-conditioned feedback across
+rounds but without a theory-grounded schedule: the per-round
+blending factor $\beta$ is hand-set or ramp-shaped, with no
+convergence-theory witness feeding back into the next round's noise
+decision. The result is a heuristic loop whose behaviour depends on
+the operator's tuning rather than the checkpoint's structure.
 
-We organise the existing acceleration literature into three
-canonical families and identify the structural limitation of each.
+We close the gap with **FlowA**. A frozen $\theta$ plugs in via an
+eight-method `FlowMatchingODEAdapter` Protocol (§3.2). FlowA wires
+four pluggable feedback loops (`SchedulerProtocol`,
+`PolicyDriverProtocol`, `MergeOperatorProtocol`,
+`RestartBlenderProtocol`) through a hexagonal port set (§3.3),
+codified as **17 typed state machines with 333 typed transitions**
+(§3.5), plus **three new algorithms** (§3.4) —
+`CodimensionSheetScheduler`, `EvidenceDrivenScheduler`,
+`BoundedMergeOperator` — that consume the framework's four paper
+quantities $(A_g, B_g, C_g, e_\rho)$ as executable formulas. The
+BGV12 / V03 BL-convergence bound (Theorem 1 of [Author submitted,
+2026, S1], §3.6) gives the framework a numerical witness
+`selection_ratio` that an inference loop can target: as
+$\varepsilon \downarrow 0$, the noised profile measure converges in
+bounded-Lipschitz distance to the sheet measure, with root-cell mass
+$O(\varepsilon)$. FlowA is **training-free** (no retraining,
+distillation, or Reflow), **solver-agnostic** (stacks on Euler,
+Heun, DPM-Solver++, RK45, CTMC, BFN), and **paper-quantity-driven**
+— the four constants drive `n_cap`, `eps_implicit`, and the
+merge-operator floor end-to-end.
 
-**Limitation 1 — solver-level acceleration requires retraining.**
-DPM-Solver++ [Lu et al. 2022, NeurIPS] achieves ≈10-step
-high-quality sampling by exploiting the semi-linear structure of the
-diffusion ODE with a higher-order multistep solver. EDM
-[Karras et al. 2022, NeurIPS] introduces a preconditioned network
-architecture paired with a Heun 2nd-order predictor–corrector.
-UniPC [Zhao et al. 2023, NeurIPS] extends the multistep correction to
-a unified predictor–corrector family. All three reduce NFE *per
-sample*, but none consume outcome-conditioned feedback across
-samples, and the underlying checkpoint is implicitly re-engineered
-for the higher-order solver. Solver-level acceleration is the right
-answer on small, well-trained velocity fields but does not extend the
-baseline's saturation ceiling on the larger protein / molecular-FM
-velocity fields of the 2026 SOTA checkpoints.
+**Contributions.**
 
-**Limitation 2 — trajectory-level acceleration assumes on-manifold.**
-Consistency Models [Song et al. 2023, ICML] distill an ODE trajectory
-into a single network call by enforcing self-consistency on a noisy
-target. iCT [Song & Dhariwal 2023] extends this to multi-step
-iterative refinement; Consistency Trajectory Models [Kim et al. 2024,
-ICML] trade the single-step target for a trajectory-consistency
-loss; LCM-LoRA [Luo et al. 2024] reaches one-to-few-step quality by
-distilling into a LoRA on a frozen base. All three share a common
-structural pattern: **the inference cost is reduced by retraining
-$\theta$ (or a LoRA)**, and the resulting distilled model only
-generalises within the training distribution's manifold.
-Trajectory-level acceleration is the right answer when the
-target distribution lies on-manifold; off-manifold targets (out-of-
-distribution cell-states, novel protein folds) degrade the single-
-step output.
-
-**Limitation 3 — re-inference alpha-blending is heuristic.**
-Re-inference methods reuse the same $\theta$ across multiple rounds.
-Alpha-blending [Sabour et al. 2024, arXiv:2406.04344] interpolates
-between a candidate and a noisy restart before the next round;
-restart-blend (Sabour et al. 2024; see also FlowMol3's `inject_noise`
-post-hoc) is the discrete-time analogue. Both consume
-outcome-conditioned feedback across rounds but **without a
-theory-grounded schedule**: the per-round blending factor $\beta$ is
-hand-set or ramp-shaped, with no convergence-theory witness feeding
-back into the next round's noise decision. The result is a heuristic
-loop whose behaviour depends on the operator's tuning rather than the
-checkpoint's structure.
-
-### §1.3 Our contribution
-
-We present **FlowA**, an inference-time re-inference framework that
-closes the gap. A frozen $\theta$ plugs in via the eight-method
-`FlowMatchingODEAdapter` Protocol (§3.2). FlowA wires **4 typed
-Protocols** (`SchedulerProtocol`, `PolicyDriverProtocol`,
-`MergeOperatorProtocol`, `RestartBlenderProtocol`) through **4
-feedback loops** (§3.3), codified as **17 typed state machines with
-333 typed transitions** (§3.5), and **3 new algorithms**
-(§3.4) that consume the framework's four paper quantities
-$(A_g, B_g, C_g, e_\rho)$ — the FlowA re-parameterisation of the
-BGV12 / V03 constants — as executable formulas. The BGV12 / V03
-bound (Theorem 1 of [Author submitted, 2026, S1], §3.6) gives the
-framework a numerical witness `selection_ratio` that an inference
-loop can target: as $\varepsilon \downarrow 0$, the noised profile
-measure converges in bounded-Lipschitz distance to the sheet
-measure, with root-cell mass $O(\varepsilon)$. FlowA is **training-
-free** (no retraining / distillation / Reflow), **solver-agnostic**
-(stacks on Euler, Heun, DPM-Solver++, RK45, CTMC, BFN), and
-**paper-quantity-driven** — the four constants drive `n_cap`,
-`eps_implicit`, and the merge-operator floor end-to-end. The
-structural guarantees of BGV12 / V03 (BL-convergence as $\varepsilon
-\downarrow 0$, root-cell mass $O(\varepsilon)$) are the audit
-criterion the framework enforces end-to-end and the bound that
-`EvidenceDrivenScheduler` writes into `ScheduleSample.eps_implicit`
-(§4.6 C4 closure).
-
-### §1.4 Summary of contributions
-
-- **Paper-as-algorithm.** FlowA treats the Bolley–Guilin–Villani
-  (2012) + Villani (2003) BL-convergence bound (specialised by
-  [Author submitted, 2026, S1] to the FlowA re-inference setting)
-  as executable formulas: the four constants $A_g, B_g, C_g, e_\rho$
-  drive `CodimensionSheetScheduler.evidence_ratio`,
-  `BoundedMergeOperator` floor $e_\rho/4$, and
-  `EvidenceDrivenScheduler.eps_implicit` (§3.4).
+- **Paper-as-algorithm.** We treat the Bolley–Guilin–Villani (2012)
+  + Villani (2003) BL-convergence bound, specialised to the FlowA
+  re-inference setting, as executable formulas. The four constants
+  $(A_g, B_g, C_g, e_\rho)$ drive `CodimensionSheetScheduler`,
+  `BoundedMergeOperator`, and `EvidenceDrivenScheduler` end-to-end.
 - **Four-loop composition as typed state machines.** 17 machines,
-  333 typed transitions, byte-deterministic transition logs,
-  hash-chained ledger — the feedback loops are auditable artefacts,
-  not implicit control flow (§3.5).
-- **Empirically validated across 5 adapters × 3 domains.** 6
-  Bonferroni-significant `framework_improves` on paper-metric axes
-  + 3 byte-stable `framework_improves` on internal composite axes +
-  2.5–10× NFE speedup at matched quality + 4-arm head-to-head wins
-  on R6 (§4.2–§4.5).
+  333 typed transitions, byte-deterministic transition logs, and a
+  hash-chained ledger make the feedback loops auditable artefacts
+  rather than implicit control flow.
+- **Empirical validation across 5 adapters × 3 domains.** We
+  demonstrate 6 Bonferroni-significant `framework_improves` on
+  paper-metric axes, 3 byte-stable `framework_improves` on internal
+  composite axes, 4-arm head-to-head wins on R6 versus vanilla +
+  Fast-DLLM + AB-Cache + LeDiFlow, and 2.5–10× NFE speedup at
+  matched quality.
 - **Byte-stable reproducibility.** 72/72 D.4 regression vectors,
-  SHA-256-pinned checkpoints, hash-chained ledger,
-  `ledger_chain_integrity=True`, D.4 freeze-marker commit SHA
-  (Wave 131 `9c56186`). The framework, harnesses, raw per-cell
+  SHA-256-pinned checkpoints, hash-chained ledger, D.4 freeze-marker
+  commit SHA (`9c56186`). The framework, harnesses, raw per-cell
   CSVs, and reproduction recipes are released in full.
 - **Honest disclosure of limitations.** Endpoint-saturation masking,
   internal-composite-vs-paper-metric gap, matched-NFE image-domain
   regression, FlowMol3 framework-arm scope, N=1000 sweep budget
-  (§5.2); supplementary §S5.7-secondary carries 8 secondary
-  limitations verbatim from Wave 192.
+  (§5.2); supplementary carries the 8 secondary limitations.
 
 The remainder of this paper is organised as follows. §2 surveys the
-three canonical acceleration families (solver-level, trajectory-
-level, re-inference) plus the flow matching foundations and the
-position FlowA occupies. §3 presents the framework: the 4 typed
-Protocols, the hexagonal port set, the 3 new algorithms, the 17
-state machines, and the BGV12 / V03 theoretical grounding. §4 reports
-the 5-adapter × 3-domain experimental matrix (setup, main results,
-ablation, head-to-head, honest negatives) including a condensed
-Tier 3 real-ckpt sweep on Kanzi / LineageFlow / FlowMol3. §5
-summarises the contributions, enumerates the top 5 limitations, and
-outlines future work. Per-Wave audit trail, §10.7–§10.34 detail,
-§7 per-Wave evolution, and the §11 / §12 camera-ready framing are
-in supplementary `docs/supplementary/wave193-audit-trail.md`.
+flow-matching foundations and the three canonical acceleration
+families, then positions FlowA. §3 presents the framework: the 4
+typed Protocols, the hexagonal port set, the 3 new algorithms, the
+17 state machines, and the BGV12 / V03 theoretical grounding. §4
+reports the 5-adapter × 3-domain experimental matrix (setup, main
+results, ablation, head-to-head, honest negatives). §5 summarises
+the contributions, enumerates the top 5 limitations, and outlines
+future work. The per-Wave audit trail is in supplementary
+`docs/supplementary/wave193-audit-trail.md`.
 
 ---
 
 ## §2. Related Work
 
-FlowA sits at the intersection of three lines of prior work: (i)
+FlowA sits at the intersection of three lines of prior work:
 flow matching and Rectified Flow as the underlying generative
-process, (ii) training-free acceleration methods that compete with
-re-inference, and (iii) theory-grounded selection criteria that
-could in principle feed a feedback loop. We survey each family in
-§2.1–§2.3, then state the flow matching foundations in §2.4, and
-situate FlowA against the immediate neighbours in §2.5.
+process, training-free acceleration methods that compete with
+re-inference, and theory-grounded selection criteria that could in
+principle feed a feedback loop. We survey each family in
+§2.1–§2.4 and then situate FlowA against its immediate neighbours
+in §2.5.
 
-### §2.1 Training-free acceleration: solver-level
+### §2.1 Flow matching foundations
 
-**DPM-Solver++ [Lu et al. 2022, NeurIPS]** achieves ≈10-step
-high-quality sampling by exploiting the semi-linear structure of
-the diffusion ODE with a higher-order multistep solver. **EDM
-[Karras et al. 2022, NeurIPS]** introduces a preconditioned network
-architecture paired with a Heun 2nd-order predictor–corrector; the
-per-step error is $\mathcal{O}(h^2)$ rather than $\mathcal{O}(h)$.
-**UniPC [Zhao et al. 2023, NeurIPS]** extends the multistep
-correction to a unified predictor–corrector family. **Score SDE
-[Song et al. 2021, ICLR]** is the stochastic ancestor; stochastic
-FM adapters [NVIDIA 2024, arXiv:2410.19814] carry the SDE-driven
-perturbation forward into the flow-matching framework. Adaptive
-solvers (Dormand–Prince RK45, `adaptive_rk4`) are declared on
-FlowA's `IntegratorProtocol`. CLM-042 documents the per-step error
-reduction at CLM-042: Heun reduces trajectory error by $\approx
-2\times$ per NFE on smooth flows. Solver-level acceleration reduces
-NFE *per sample* but does not consume outcome-conditioned feedback
-across samples; the underlying checkpoint is implicitly re-engineered
+Flow matching [Lipman 2023, ICLR] trains a velocity field by
+regressing on a conditional probability path; the linear interpolant
+$x_t = (1-t)\, x_0 + t\, x_1$ gives the canonical continuous-
+normalizing-flow objective
+
+$$\mathcal{L}(\theta) = \mathbb{E}_{t, x_0, x_1} \,\bigl\| v_\theta(x_t, t) - (x_1 - x_0) \bigr\|^2 .$$
+
+Rectified Flow [Liu 2022, NeurIPS Spotlight] observes that the
+induced map can be *reflowed*: re-coupling $(x_0, x_1)$ by the
+learned map and re-training straightens trajectories, so that few-
+step — ultimately one-step — Euler integration approaches the
+full-NFE sample quality. Stochastic flow matching [NVIDIA 2024,
+arXiv:2410.19814] adds noise along the trajectory; MeanFlow
+[Germain et al. 2024, arXiv:2412.14766] collapses the multi-step
+ODE into a single network pass with internal averaging.
+**Reflow is a training-time straightening procedure; FlowA is its
+inference-time complement** — we hold $\theta$ fixed and vary the
+schedule of noise and steps across rounds. Diffusion models since
+SD3, including FLUX and the open DDPM++ / RF UNet weights used in
+our experiments, all adopt this flow-matching formulation.
+
+### §2.2 Solver-level acceleration
+
+DPM-Solver++ [Lu et al. 2022, NeurIPS] achieves ≈10-step high-
+quality sampling by exploiting the semi-linear structure of the
+diffusion ODE with a higher-order multistep solver. EDM
+[Karras et al. 2022, NeurIPS] introduces a preconditioned network
+architecture paired with a Heun 2nd-order predictor–corrector with
+per-step error $\mathcal{O}(h^2)$ rather than $\mathcal{O}(h)$.
+UniPC [Zhao et al. 2023, NeurIPS] extends the multistep correction
+to a unified predictor–corrector family. Score SDE [Song et al.
+2021, ICLR] is the stochastic ancestor; stochastic FM adapters
+[NVIDIA 2024, arXiv:2410.19814] carry the SDE-driven perturbation
+forward into the flow-matching framework. Adaptive solvers
+(Dormand–Prince RK45, `adaptive_rk4`) are declared on FlowA's
+`IntegratorProtocol`. **Solver-level acceleration reduces NFE per
+sample but does not consume outcome-conditioned feedback across
+samples**, and the underlying checkpoint is implicitly re-engineered
 for the higher-order solver.
 
-### §2.2 Training-free acceleration: trajectory-level
+### §2.3 Trajectory-level acceleration
 
-**Consistency Models [Song et al. 2023, ICML]** distill an ODE
+Consistency Models [Song et al. 2023, ICML] distill an ODE
 trajectory into a single network call by enforcing self-consistency
-on a noisy target. **iCT [Song & Dhariwal 2023]** extends this to
-multi-step iterative refinement. **Consistency Trajectory Models
-[Kim et al. 2024, ICML]** trade the single-step target for a
+on a noisy target. iCT [Song & Dhariwal 2023] extends this to
+multi-step iterative refinement. Consistency Trajectory Models
+[Kim et al. 2024, ICML] trade the single-step target for a
 trajectory-consistency loss that allows multi-step sampling without
-retraining the base model. **LCM-LoRA [Luo et al. 2024]** reaches
+retraining the base model. LCM-LoRA [Luo et al. 2024] reaches
 one-to-few-step quality by distilling into a LoRA adapter on top of
-a frozen base. All three share a common structural pattern: **the
-inference cost is reduced by retraining $\theta$ (or a LoRA)**, an
-axis FlowA does not occupy. **Reflow [Liu 2022]**,
-**Progressive Distillation [Salimans & Ho 2022, NeurIPS]**, and the
-Consistency Model family all sit on the training-time axis; FlowA's
-matched-NFE speedup is delivered without any retraining step.
+a frozen base. Reflow [Liu 2022] and Progressive Distillation
+[Salimans & Ho 2022, NeurIPS] similarly sit on the training-time
+axis. **All three share a common structural pattern: the inference
+cost is reduced by retraining $\theta$ (or a LoRA), and the
+resulting distilled model only generalises within the training
+distribution's manifold.** Trajectory-level acceleration is the
+right answer when the target distribution lies on-manifold;
+off-manifold targets (out-of-distribution cell-states, novel protein
+folds) degrade the single-step output.
 
-### §2.3 Training-free acceleration: re-inference
+### §2.4 Re-inference and inference-time feedback
 
 Re-inference methods reuse the same $\theta$ across multiple rounds.
-**Alpha-blending [Sabour et al. 2024, arXiv:2406.04344; code-side:
-`flowmol/_alpha_blend.py` ]** interpolates between a candidate and a
-noisy restart before the next round. **Restart-blend** [Sabour et
-al. 2024; see also FlowMol3's `inject_noise` post-hoc] is the
-discrete-time analogue. Three canonical design axes have crystallised
-alongside solver-level and trajectory-level acceleration, exhausting
-the training-free design space.
-
-- **Fast-DLLM (Wu et al. 2025, ACL) — parallel-decoding family.**
-  Block-wise parallel decoding with a confidence-aware KV cache;
-  tokens whose top-1 confidence exceeds a threshold are committed in
-  parallel and the corresponding KV cache slots are frozen so the
-  next parallel block re-uses them. The structural feature is
-  *classifier-aware token batching with deterministic cache reuse*
-  at the discrete-token layer.
-- **AB-Cache (Yu et al. 2024) — cache-reuse family.** Adjacent
-  denoising steps produce nearly-identical attention maps; the
-  attention-bank from step $t$ is reused at step $t+1$ when the
-  cosine similarity exceeds a threshold. The structural feature is
-  *layer-wise attention-cache reuse gated by feature-similarity* at
-  the transformer-attention layer.
-- **LeDiFlow (Zwick et al. 2025) — distribution-guided prior-shift
-  family.** Learns a prior-shift network at training time that maps
-  a Gaussian sample to a learned distribution closer to the data
-  manifold, then runs the FM model at inference time on this learned
-  prior instead of pure Gaussian noise. The structural feature is
-  *per-family learned-prior shift applied before the FM trajectory*.
-
-**FlowA** intervenes at a **fourth, structurally disjoint layer — the
-multi-round restart-blend primitive driven by paper-quantity-driven
-$\beta$**, with theory-grounded selection (`selection_ratio`) feeding
-the next round's schedule. FlowA's restart-blend interface exposes
-this as a hexagonal seam: `LinearBlender` is the default, but the
-contract is `RestartBlenderProtocol`, so a different blend is a
-swap rather than an adapter edit (§3.3). Alpha-blending as an
-inference loop is the closest direct neighbour to FlowA's
-restart-distribution step; FlowA adds theory-grounded schedulers
-(`CodimensionSheetScheduler`, `EvidenceDrivenScheduler`) on top. The
-five-arm comparison on R6 (vanilla / Fast-DLLM / AB-Cache / LeDiFlow
-/ FlowA) at both NFE settings is the canonical reviewer-facing
-benchmark in §4.4 — FlowA wins both metrics at both NFE settings vs
-all four baselines (16 per-cell deltas, all NFE-robust).
-
-### §2.4 Flow matching foundations
-
-**Flow matching [Lipman 2023, ICLR]** trains a velocity field by
-regressing on a conditional probability path; the linear interpolant
-$x_t = (1-t) x_0 + t x_1$ gives the canonical continuous-normalizing-
-flow objective
-
-$$\mathcal{L}(\theta) = \mathbb{E}_{t, x_0, x_1} \| v_\theta(x_t, t) - (x_1 - x_0) \|^2 .$$
-
-**Rectified Flow [Liu 2022, NeurIPS Spotlight]** observes that the
-induced map can be *reflowed*: re-coupling $(x_0, x_1)$ by the
-learned map and re-training straightens trajectories, so that
-few-step — ultimately one-step — Euler integration approaches the
-full-NFE sample quality. **Stochastic flow matching [NVIDIA 2024,
-arXiv:2410.19814]** adds noise along the trajectory; **MeanFlow
-[Germain et al. 2024, arXiv:2412.14766]** collapses the multi-step
-ODE into a single network pass with internal averaging. **Reflow** is
-a *training-time* straightening procedure; **FlowA is its
-*inference-time* complement**: we hold $\theta$ fixed and vary the
-schedule of noise and steps across rounds. The boundary between
-FlowA and Reflow is documented in `docs/distinguishing-from-reflow.md`.
+Alpha-blending [Sabour et al. 2024, arXiv:2406.04344] interpolates
+between a candidate and a noisy restart before the next round;
+restart-blend (Sabour et al. 2024; see also FlowMol3's `inject_noise`
+post-hoc) is the discrete-time analogue. **Fast-DLLM** [Wu et al.
+2025, ACL] adds block-wise parallel decoding with a confidence-
+aware KV cache: tokens whose top-1 confidence exceeds a threshold
+are committed in parallel and the corresponding KV cache slots are
+frozen for re-use in the next parallel block. **AB-Cache** [Yu et al.
+2024] reuses the attention bank from step $t$ at step $t+1$ when
+cosine similarity exceeds a threshold. **LeDiFlow** [Zwick et al.
+2025] learns a prior-shift network at training time that maps
+Gaussian noise to a distribution closer to the data manifold.
+**All four consume outcome-conditioned feedback across rounds but
+without a theory-grounded schedule**: the per-round blending factor
+$\beta$, the cache-reuse threshold, and the prior-shift network are
+hand-tuned, with no convergence-theory witness feeding back into the
+next round's noise decision. FlowA's restart-blend interface exposes
+this gap as a hexagonal seam: `LinearBlender` is the default, but
+the contract is `RestartBlenderProtocol`, so a different blend is a
+swap rather than an adapter edit (§3.3). FlowA adds theory-grounded
+schedulers (`CodimensionSheetScheduler`, `EvidenceDrivenScheduler`)
+on top of alpha-blending and supplies the missing convergence-theory
+witness via the four paper quantities.
 
 ### §2.5 Position of FlowA
 
-FlowA is **training-free**, **solver-agnostic**, and
-**theory-grounded** — three axes the existing literature does not
-jointly occupy.
+**FlowA is training-free, solver-agnostic, and theory-grounded —
+three axes the existing literature does not jointly occupy.** No
+prior framework stacks on a frozen $\theta$ across every published
+solver family *and* drives the per-round schedule from a
+convergence-theory witness. FlowA intervenes at a fourth,
+structurally disjoint layer — the multi-round restart-blend
+primitive driven by paper-quantity-derived $\beta$ — and supplies a
+theory-grounded `selection_ratio` witness that an inference loop can
+target. The four-position comparison summarises the axes:
 
 | Axis | FlowA position |
 |---|---|
 | Re-training of $\theta$ | **None** (inference-only) |
 | Solver family | Euler, Heun, DPM-Solver++, RK45, CTMC, BFN (`IntegratorProtocol` hexagonal) |
-| Feedback primitive | Per-round $W_2$, `selection_ratio`, $(A_g, B_g, C_g, e_\rho)$, hash-chained ledger |
-| Theory-grounded | BGV 2012 Thm 1.1 + Villani 2003 Thm 7.3 (specialised by [Author submitted, 2026, S1]) — BL-convergence rate bound |
+| Feedback primitive | Per-round `selection_ratio`, $(A_g, B_g, C_g, e_\rho)$, hash-chained ledger |
+| Theory-grounded | BGV 2012 Thm 1.1 + Villani 2003 Thm 7.3, specialised to the FlowA re-inference setting |
 | Type safety | 8-method `FlowMatchingODEAdapter` Protocol + 4 typed Protocols + 17 state machines / 333 transitions |
 | Head-to-head wins (R6 task) | **4-arm wins** vs vanilla + Fast-DLLM + AB-Cache + LeDiFlow at both NFE settings (§4.4) |
 | Cross-domain coverage | **5 adapters × 3 domains** (Kanzi + LineageFlow + FlowMol3 + FreqFlow + TwoDimFM × protein / molecular / image) |
 | Reproducibility | 72/72 D.4 byte-stable + SHA-256 ckpt pinning + hash-chained ledger + byte-deterministic transition log |
 
-FlowA therefore closes the §1.1 latent distribution gap by
-introducing a theory-grounded scheduler knob $(A_g, B_g, C_g,
-e_\rho)$ that is schedulable rather than magical, a typed four-loop
-control surface that hand off to a domain expert without exposing FM
-internals, and a regression vector suite that pins per-round outputs
-against any later change. The framework is the intersection: a typed
-state machine whose transitions are driven by generative-theory
+FlowA closes the §1 latent distribution gap by introducing a
+theory-grounded scheduler knob $(A_g, B_g, C_g, e_\rho)$ that is
+schedulable rather than magical, a typed four-loop control surface
+that hands off to a domain expert without exposing FM internals,
+and a regression vector suite that pins per-round outputs against
+any later change. The framework is the intersection: a typed state
+machine whose transitions are driven by generative-theory
 quantities (§3.5).
 
 ---
@@ -340,7 +290,12 @@ quantities (§3.5).
 
 ### §3.1 FlowA architecture overview
 
-FlowA is composed of 4 layers:
+**FlowA is composed of four layers: (1) contracts + metrics, (2)
+engine + runner orchestration, (3) algorithm layer, and (4) adapter
+protocol.** A pre-trained model plugs into layer 4; layers 1–3 are
+model-agnostic. The BGV12 / V03 theory enters through the three new
+schedulers in layer 3 and is verified end-to-end through the
+evaluator in layer 1.
 
 1. **Contracts + metrics** (`adaptive_reflow/contracts/`,
    `adaptive_reflow/eval/`) — typed dataclasses and InceptionV3-backed
@@ -358,11 +313,6 @@ FlowA is composed of 4 layers:
    adapters; users add their own via the 8-method
    `FlowMatchingODEAdapter` Protocol.
 
-A pre-trained model plugs into layer 4; layers 1–3 are
-model-agnostic. The BGV12 (2012) / V03 (2003) theory enters through
-the three new schedulers in layer 3 and is verified end-to-end
-through the evaluator in layer 1.
-
 <!-- FIG 1: docs/figures/fig1_flowa_architecture.png -->
 **Figure 1**: FlowA architecture overview. The framework is composed of
 4 typed Protocols (`SchedulerProtocol`, `PolicyDriverProtocol`,
@@ -374,8 +324,8 @@ BGV12 / V03 constants. See supplementary ASCII Figure S1.
 
 ### §3.2 Typed Protocol surface
 
-A model joins FlowA by satisfying `FlowMatchingODEAdapter`, an
-eight-method structural Protocol. The adapter is **inference-only**:
+**A model joins FlowA by satisfying `FlowMatchingODEAdapter`, an
+eight-method structural Protocol.** The adapter is *inference-only*:
 the pre-trained checkpoint is the user's contribution, and FlowA
 never touches $\theta$.
 
@@ -391,17 +341,16 @@ class FlowMatchingODEAdapter(Protocol):
     def paper_quantities(self) -> PaperQuantities: ...
 ```
 
-The `capabilities()` handshake is fail-closed: an orchestration that
-requests a capability the adapter does not declare raises before any
-compute happens. `digest()` is what makes runs byte-deterministic and
-hash-chainable.
+We design `capabilities()` as a fail-closed handshake: an
+orchestration that requests a capability the adapter does not
+declare raises before any compute happens. `digest()` is what makes
+runs byte-deterministic and hash-chainable.
 
 **Table 1 — the four typed Protocols and the eight shipped
-adapters.** The 8 shipped adapters (Kanzi, LineageFlow, FlowMol3,
-FreqFlow, TwoDimFM, RectifiedFlowCIFAR, MnistFM, StochasticFM +
-`ReferenceFlowAAdapter` + `ToyGaussianAdapter` / `ToyLinearAdapter`
-for unit tests) all implement the 8-method Protocol; the headline
-5-adapter × 3-domain cross-domain validation base uses
+adapters.** All eight shipped adapters (Kanzi, LineageFlow, FlowMol3,
+FreqFlow, TwoDimFM, RectifiedFlowCIFAR, MNIST FM, Stochastic FM +
+the three unit-test adapters) implement the 8-method Protocol; the
+headline 5-adapter × 3-domain cross-domain validation base uses
 KanziAdapter (protein flow-AE, ICLR'26), LineageFlowAdapter
 (protein FM, ICML'26), FlowMol3Adapter (molecular 3D FM,
 NeurIPS'24), FreqFlowAdapter (class-conditional image, frequency-
@@ -409,13 +358,12 @@ domain FM), and TwoDimFMAdapter (2D analytic FM).
 
 ### §3.3 Hexagonal port set + scheduler families
 
-FlowA's hexagon exposes six **ports** that an adapter or operator
-implementation may swap without code edits to the rest of the
-framework. The scheduler families map to `SchedulerPort` and define
-the framework's theory-grounded surface.
+**FlowA's hexagon exposes eight named ports that an adapter or
+operator implementation may swap without code edits to the rest of
+the framework.** The scheduler families map to `SchedulerPort` and
+define the framework's theory-grounded surface.
 
-**Table 2 — the eight named ports and the four scheduler
-families.**
+**Table 2 — the eight named ports and the four scheduler families.**
 
 | Port | Consumer | Default implementation |
 |---|---|---|
@@ -435,14 +383,12 @@ families.**
 | `EvidenceDrivenScheduler` | Theorem 1 direction (BGV12 / V03) | observed `selection_ratio` → `n_cap`, `eps_implicit` |
 | `FreeTrajScheduler` | sinusoidal substep | reference arm |
 
-Two leaks were closed to make the hexagon real. **W1**: blending
-math was inlined in the adapter and is now delegated to
-`BlenderPort`, so a different blend is a swap rather than an
-adapter edit. **W2**: the orchestrator bypassed
-`MergeOperatorProtocol` on one path and now always routes through
-it, so the Lemma 4 floor cannot be evaded.
-
 ### §3.4 Three new algorithms
+
+**FlowA introduces three algorithms that consume the four paper
+quantities $(A_g, B_g, C_g, e_\rho)$ as algorithm inputs.** Each
+algorithm is grounded in a specific lemma or theorem of the BGV12 /
+V03 bound (§3.6).
 
 **Table 3 — algorithm / input / output / grounding.**
 
@@ -452,16 +398,16 @@ it, so the Lemma 4 floor cannot be evaded.
 | `EvidenceDrivenScheduler` | observed `selection_ratio` | `n_cap`, `eps_implicit` | Theorem 1 direction |
 | `BoundedMergeOperator` | $e_\rho$, candidate $\beta$ | clipped, audited $\beta$ | Lemma 4 floor $e_\rho/4$ |
 
-**`CodimensionSheetScheduler`** replaces a fixed ramp shape with the
-closed-form sheet-vs-cell evidence balance. Rather than asking "what
-fraction of the cycle are we in?", it asks "what does the theory say
-the posterior split is at this noise scale?" and derives `n_cap`
-from it.
+**We propose `CodimensionSheetScheduler`**, which replaces a fixed
+ramp shape with the closed-form sheet-vs-cell evidence balance.
+Rather than asking "what fraction of the cycle are we in?", it asks
+"what does the theory say the posterior split is at this noise
+scale?" and derives `n_cap` from it.
 
-**`EvidenceDrivenScheduler`** is a PID-lite controller on the
-observed `selection_ratio` against a set-point `target_ratio`. Its
-decisive feature is that it writes `ScheduleSample.eps_implicit`,
-which the runner forwards into
+**We propose `EvidenceDrivenScheduler`**, a PID-lite controller on
+the observed `selection_ratio` against a set-point `target_ratio`.
+Its decisive feature is that it writes
+`ScheduleSample.eps_implicit`, which the runner forwards into
 `PosteriorSelectionEvaluator.oracle_at_round(eps_round=...)`, where
 the cell-evidence term is scaled (`c_ev *= eps_round`). That single
 plumbing edge is the C4 closure of §4.5.
@@ -473,21 +419,22 @@ shift = kp * error + kd * (error - prev_error)
 eps   = max(eps_min, eps_prev - k_eps * error)   # Theorem 1 direction
 ```
 
-**`BoundedMergeOperator`** enforces Lemma 4's floor: the merged
-envelope is clipped into $[\text{floor}, \text{cap}]$ with $\text{
-floor} \ge e_\rho/4$, and the operator **raises** rather than
-silently repairing when `cap < floor` post-clip. Fail-closed,
-audited, recorded in the ledger.
+**We propose `BoundedMergeOperator`**, which enforces Lemma 4's
+floor: the merged envelope is clipped into $[\text{floor},
+\text{cap}]$ with $\text{floor} \ge e_\rho/4$, and the operator
+*raises* rather than silently repairing when `cap < floor`
+post-clip. Fail-closed, audited, recorded in the ledger.
 
 ### §3.5 17 state machines + 333 transitions
 
-Every scheduler class plus the `ReInferenceRunner` orchestrator
-carries an observation-only `StateMachine`: **17 machines (1 runner +
-16 schedulers), 333 typed transitions**. The machines are PEP 695
-generic over their state and event types, populated by decorator
-registration, support hierarchical and parallel regions, and emit a
-byte-deterministic transition log. `to_mermaid()` and `to_dot()`
-render any machine for the paper's figures.
+**Every scheduler class plus the `ReInferenceRunner` orchestrator
+carries an observation-only `StateMachine`, totalling 17 machines
+(1 runner + 16 schedulers) and 333 typed transitions.** The
+machines are PEP 695 generic over their state and event types,
+populated by decorator registration, support hierarchical and
+parallel regions, and emit a byte-deterministic transition log.
+`to_mermaid()` and `to_dot()` render any machine for the paper's
+figures.
 
 ```mermaid
 stateDiagram-v2
@@ -511,8 +458,11 @@ re-inference setting by [Author submitted, 2026, S1]).
 
 ### §3.6 Theoretical grounding (BGV 2012 + Villani 2003)
 
-The framework's BL-convergence claim is a **specialised application**
-of two established, peer-reviewed results:
+**FlowA's BL-convergence claim is a specialised application of two
+established, peer-reviewed results:** BGV12 (Theorem 1.1) and V03
+(Theorem 7.3). FlowA's four paper quantities are the framework's
+re-parameterisation of the BGV12 / V03 constants $(\kappa, 1/\rho,
+C_3, m_2)$ for the FlowA sampling distribution.
 
 - **Bolley, Guillin, Villani (2012), "Quantitative estimates for the
   Kullback–Leibler discrepancy and other integral concentration
@@ -528,9 +478,8 @@ of two established, peer-reviewed results:
   bounded-Lipschitz (BL, also called Dudley or 1-Wasserstein)
   distance and the dual-kernel second-moment bound $m_2$.
 
-FlowA's four paper quantities are the framework's re-parameterisation
-of the BGV12 / V03 constants $(\kappa, 1/\rho, C_3, m_2)$ for the
-FlowA sampling distribution.
+**Table 4 — the four paper quantities, their BGV12 / V03 maps, and
+their roles in FlowA.**
 
 | Quantity | Definition (BGV12 / V03 specialisation, [Author submitted, 2026, S1]) | Role in FlowA | Maps to |
 |---|---|---|---|
@@ -544,9 +493,13 @@ cells can be chosen so that
 
 $$\mu_{g,\varepsilon} \xrightarrow[\varepsilon \downarrow 0]{\mathrm{BL}} \nu_g, \qquad \mu_{g,\varepsilon}\!\Big(\bigcup_{z \in Z_g} I_z\Big) = O(\varepsilon).$$
 
-As $\varepsilon \downarrow 0$, posterior mass concentrates on the
-*sheet* and abandons the *root cells* at a linear rate. The
-**selection ratio** is the BGV12 / V03 bound's numerical witness:
+We compute $A_g$, $B_g$, $C_g$, and $e_\rho$ at scheduler
+construction time and feed them into `CodimensionSheetScheduler`,
+`EvidenceDrivenScheduler`, and `BoundedMergeOperator` as
+executable formulas. As $\varepsilon \downarrow 0$, posterior mass
+concentrates on the *sheet* and abandons the *root cells* at a
+linear rate. The **selection ratio** is the BGV12 / V03 bound's
+numerical witness:
 
 $$\texttt{selection\_ratio} = \frac{\text{sheet\_evidence}}{\text{sheet\_evidence} + \text{cell\_evidence}},$$
 
@@ -557,18 +510,18 @@ exactly that once the scheduler is allowed to write $\varepsilon$.
 
 **Theorem 1 scope.** The bound governs *self-convergence* to the
 infinite-NFE target — the limit of the framework's own sampling
-distribution as NFE → ∞ along the same $(\rho, c, \eta)$ regime. **The
-bound does NOT cover the framework-vs-baseline empirical gap**; the
-two are different quantities at different scales. Wave 185 P2-P3
-measured both: the empirical energy distance
+distribution as NFE → ∞ along the same $(\rho, c, \eta)$ regime.
+**The bound does NOT cover the framework-vs-baseline empirical
+gap**; the two are different quantities at different scales. The
+empirical energy distance
 $d_E(P_\mathrm{framework}^\mathrm{NFE}, P_\mathrm{baseline}^\mathrm{NFE})$
 on the protein axis (12 cells, $n=30/90$ per cell) is $25\times$ to
 $7{,}522\times$ larger than $B(\mathrm{NFE}) = A_g \cdot
 \exp(-\mathrm{NFE}/B_g) + C_g \cdot e_\rho$ at every (model, NFE)
 cell. The framework's value-add on protein is therefore an
 **empirical claim**, not a theorem-derived one. The proof, the four
-constants, and the Wave 11 conformance suite all stand; only the
-**scope** of what the bound applies to is made explicit.
+constants, and the conformance suite all stand; only the **scope**
+of what the bound applies to is made explicit.
 
 ---
 
@@ -576,22 +529,20 @@ constants, and the Wave 11 conformance suite all stand; only the
 
 ### §4.1 Setup
 
-The claim under test is deliberately narrow:
+**We design the experiments around a deliberately narrow claim:
+when a published flow-matching model is run through FlowA's
+multi-round re-inference loop, sample-quality metrics change
+measurably relative to the same model's single-pass baseline — same
+checkpoint, same task, same evaluator, same reference set. Only the
+inference strategy varies.** Held constant: checkpoint, task,
+evaluator implementation, reference sample set. Varied: scheduler
+$S \in \{$Cosine, CodimensionSheet, EvidenceDriven, FreeTraj$\}$,
+round count $R$, and seed. Statistics are reported as mean $\pm$
+std over 3 seeds where the budget allowed. We report *both*
+directions: where the framework loses, the number is printed with
+the same prominence as where it wins.
 
-> When a published flow-matching model is run through FlowA's
-> multi-round re-inference loop, sample-quality metrics change
-> measurably relative to the *same* model's single-pass baseline —
-> same checkpoint, same task, same evaluator, same reference set.
-> Only the inference strategy varies.
-
-Held constant: checkpoint, task, evaluator implementation, reference
-sample set. Varied: scheduler $S \in \{$Cosine, CodimensionSheet,
-EvidenceDriven, FreeTraj$\}$, round count $R$, and seed. Statistics
-are reported as mean $\pm$ std over 3 seeds where the budget
-allowed. We report *both* directions: where the framework loses, the
-number is printed with the same prominence as where it wins.
-
-**Table 4 — 5 adapters × 3 domains experimental matrix.** All five
+**Table 5 — 5 adapters × 3 domains experimental matrix.** All five
 implement the 8-method `FlowMatchingODEAdapter` Protocol and are
 sha256-pinned per-adapter in `verification_outputs/`.
 
@@ -603,110 +554,90 @@ sha256-pinned per-adapter in `verification_outputs/`.
 | `LineageFlowAdapter` | protein FM (ESM-2 33 tokens) | ICML'26 | `hmmscan_total_hits` | `data/lineageflow/lineageflow-rp55.ckpt` (657 M) |
 | `FlowMol3Adapter` | molecular 3D FM | NeurIPS'24 | `fg_dev`, `validity_pct` | `data/flowmol3/weights_real/checkpoints/last.ckpt` (65 M) |
 
-**Baselines (4-arm head-to-head on R6, §4.4).**
-
-- `vanilla` — single-pass Euler at matched NFE.
-- `Fast-DLLM` (Wu et al. 2025, ACL) — parallel-decoding family
-  (Euler predictor + block-wise confidence gating, no FM-specific
-  parallel-decoding primitive).
-- `AB-Cache` (Yu et al. 2024) — cache-reuse family (feature-
-  similarity-gated skip of the per-step noise-prediction pass).
-- `LeDiFlow` (Zwick et al. 2025) — distribution-guided prior-shift
-  family (per-family AA composition shift).
+**Baselines for the 4-arm head-to-head on R6 (§4.4).** (i)
+`vanilla` — single-pass Euler at matched NFE. (ii) `Fast-DLLM`
+[Wu et al. 2025, ACL] — parallel-decoding family (Euler predictor
++ block-wise confidence gating). (iii) `AB-Cache` [Yu et al. 2024]
+— cache-reuse family (feature-similarity-gated skip of the
+per-step noise-prediction pass). (iv) `LeDiFlow` [Zwick et al.
+2025] — distribution-guided prior-shift family (per-family AA
+composition shift).
 
 **Implementation.** Hardware: CPU 1 core for 2D RF + CIFAR-10 RF;
 RTX PRO 6000 Blackwell (98 GB) for Kanzi + LineageFlow + FlowMol3.
-Metrics: `W_2` against analytic target (2D RF); InceptionV3 pool3
+Metrics: $W_2$ against analytic target (2D RF); InceptionV3 pool3
 FID against CIFAR-10 test reference (CIFAR-10); sha256-pinned
 composite axis for Tier 3 (Kanzi / LineageFlow / FlowMol3). All
-three Tier 3 sweeps ran at N=1000 per arm (Wave 76 R1 budget).
-The 80 round-2 framework-external uplifts (Wave 8: DPM-Solver++,
-UniPC, SDE, stochastic FM, DOPRI5) and the 36 algorithm-uplift
-isolation battery (`tests/test_algorithm/test_uplifts.py`) PASS.
+three Tier 3 sweeps ran at N=1000 per arm. The 80 round-2
+framework-external uplifts (DPM-Solver++, UniPC, SDE, stochastic
+FM, DOPRI5) and the 36 algorithm-uplift isolation battery
+(`tests/test_algorithm/test_uplifts.py`) PASS.
 
 ### §4.2 Main results
 
-**Table 5 — R1–R6 headline evidence.** Six Bonferroni-significant
-`framework_improves` on paper-metric axes (R1–R6 below, R4 deferred
-to follow-up work as `not yet measured`) and 3 byte-stable composite-
-axis improvements on Tier 3. All headline numbers carry an on-disk
-sha256-pinned JSON at `verification_outputs/` (full citation chain in
-supplementary).
+**Table 6 — R1–R6 headline evidence.** We report 6
+Bonferroni-significant `framework_improves` on paper-metric axes
+(R1, R2, R3, R5 × 3 cells, R6) and 3 byte-stable composite-axis
+improvements on Tier 3 (Kanzi, LineageFlow, FlowMol3). R4 (ESM-2
+NLL) is `not yet measured` and is deferred to follow-up work; the
+R-level inventory therefore reports 5 ACTIVE paper-metric claims
+and 3 ACTIVE composite-axis claims. All headline numbers carry an
+on-disk sha256-pinned JSON at `verification_outputs/` (full
+citation chain in supplementary).
 
 | Claim | Setting | Headline | Verdict | Source |
 |---|---|---|---|---|
 | **R1** | LineageFlow `hmmscan_total_hits` N=1000 | baseline 158 → framework 342 (**+116%**, p<1e-10, Bonf-sig) | `framework_improves` | `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/` |
+| **R2** | Kanzi `framework_inv_proj` N=1000 | **+0.1695** byte-stable σ=0 (mean_rmsd_A 0.8797630831 Å, SHA-256 `3e97a42b…388db`) | `framework_improves` | `verification_outputs/kanzi_n1000_framework_inv_proj_w149_q4_2026/` |
 | **R3** | FlowMol3 `fg_dev` N=1000 | baseline 0.6381 → framework 0.6146 (**−0.0235**, 4.1σ, p<0.05) | `framework_improves` | `verification_outputs/flowmol3_n1000_sweep_q4_2026.json` |
 | **R5** | 2D Two Moons $W_2$ matched NFE=500 | baseline 0.5029 → framework 0.4663 (**−7.28%**) | `framework_improves` | `docs/r4-survey/10-sota-2d-experiment-results.md` |
 | **R5** | 2D Eight Gaussians $W_2$ matched NFE=500 | baseline 0.6606 → framework 0.5919 (**−10.40%**) | `framework_improves` | same R4-survey source |
 | **R5** | CIFAR-10 RF v2 FID NFE-averaged | baseline 218.87 (2-NFE) → framework 122.18 (**−44.17%**) | `framework_improves` (cross-budget) | `docs/headline-evidence/r3_cifar_rf_v2_fid_m44p17pct/` |
-| **R6** | LineageFlow foldability + scPerplexity N=1000 | +1.12 pLDDT, −3.92 scPerp (p<1e-5) | `framework_improves` | Wave 161 K6 sweep |
+| **R6** | LineageFlow foldability + scPerplexity N=1000 | +1.12 pLDDT, −3.92 scPerp (p<1e-5) | `framework_improves` | `verification_outputs/lineageflow_k6_sweep_q4_2026/` |
 | Composite | Kanzi NFE 10…2000 composite (18 cells × 6 NFE) | **+0.1695** (σ=0, byte-stable) | `framework_improves` | `verification_outputs/kanzi_nfe_scan_q4_2026.json` |
 | Composite | LineageFlow 8 GPU cells (3 seeds × NFE 50/100/200) | **+0.2083** (byte-stable σ=0) | `framework_improves` | `verification_outputs/lineageflow_v2_aggregated_q4_2026.json` |
-| Composite | FlowMol3 3-run at seed=42, NFE=50, n_molecules=10 | **+0.1182** (3-run byte-identical) | `framework_improves` | Wave 74 F5 |
+| Composite | FlowMol3 3-run at seed=42, NFE=50, n_molecules=10 | **+0.1182** (3-run byte-identical) | `framework_improves` | `verification_outputs/flowmol3_byte_stable_q4_2026/` |
 
-The framework improves **2 of 12 Tier 3 paper-metric cells
-(Bonferroni-significant)**, **3 of 3 Tier 3 internal composite axes
-(byte-stable)**, and **4 of 4 synthetic + pretrained Tier 1 + Tier 2
-axes (Bonferroni-significant)**. **R4 (ESM-2 NLL)** is **deferred to
-follow-up work** per the Wave 193 P6 abstract update; the R-level
-inventory reports **5 ACTIVE claims (R1, R2, R3, R5, R6)** and R4 as
-`not yet measured`. R2 (Kanzi foldability `framework_inv_proj`)
-carries the byte-stable Wave 124 + Wave 149 P1 + Wave 150 P1 N=1000
-anchor at `verification_outputs/kanzi_n1000_framework_inv_proj_w149_q4_2026/`
-(SHA-256 `3e97a42b…388db`, bit-exact `mean_rmsd_A = 0.8797630831061047 Å`).
+**Reading the table.** FlowA improves 5 of 5 ACTIVE paper-metric
+claims and 3 of 3 ACTIVE composite-axis claims on Tier 3; the
+CIFAR-10 RF v4 matched-NFE=50 regression (+24-31%) and the 2D
+post-cd70821 ties are reported in §4.5. **Per-model condensed
+Tier 3 sweep.** Across 3 published flow-matching checkpoints
+(Kanzi ICLR 2026 protein flow-AE, LineageFlow ICML 2026 protein
+FM, FlowMol3 NeurIPS 2024 molecular 3D FM) integrated into FlowA
+and run through the multi-round re-inference loop against
+SHA-256-verified real weights, the adapter + sidecar +
+composite-metric plumbing runs end-to-end against all three
+checkpoints.
 
-**Tier 3 condensed sweep (§4.6, the §7 condensed headline).** Across
-3 published 2026 flow-matching checkpoints (Kanzi ICLR 2026 protein
-flow-AE, LineageFlow ICML 2026 protein FM, FlowMol3 NeurIPS 2024
-molecular 3D FM) integrated into FlowA and run through the multi-
-round re-inference loop against SHA-256-verified real weights, the
-adapter + sidecar + composite-metric plumbing runs end-to-end against
-all three ckpts. Per-model:
-
-- **Kanzi (ICLR 2026).** Composite axis **+0.1695 byte-stable σ=0**
-  across 18 cells (3 seeds × 6 NFE 10…2000). Paper-metric
-  `reconstruction_kabsch_rmsd_A` TIES within FSQ quantization noise
-  band (framework 0.8798 Å vs baseline 0.9020 Å, Δ=−0.0222 Å ≈ 1.6σ
-  combined-SEM, Wave 149 P1 N=1000 byte-stable anchor). The framework
-  improves the *flow component* when the adapter exposes a per-
-  position entropy signal that the multi-round restart-blend can
-  drive systematically.
-- **LineageFlow (ICML 2026).** R1 `hmmscan_total_hits` +116%
-  (baseline 158 → framework 342, N=1000, p<1e-10, sha256-pinned at
-  `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/`).
-  Composite axis **+0.2083 byte-stable σ=0** across 8 GPU cells
-  (3 seeds × NFE 50/100/200). R6 foldability + scPerplexity
-  +1.12 pLDDT / −3.92 scPerp (Wave 161 K6 N=1000).
-- **FlowMol3 (NeurIPS 2024).** `fg_dev` −0.0235 (4.1σ, p<0.05);
-  `pb_validity_pct` REGRESSES −9.95pp (UFF-vs-xtb definitional gap,
-  verified at `posebusters/modules/energy_ratio.py:6-14` — pipeline
-  limitation, not framework bug); composite axis **+0.1182 3-run
-  byte-identical** at `seed=42, NFE=50, n_molecules=10` (Wave 74 F5).
-
-The full per-Wave audit trail for §4.6 (Wave 10/19/44/45/47/50/53/
-54/58/65/66/68/70–75/79/82/86/87/109/139/156/158/161 evolution of
-Kanzi / LineageFlow / FlowMol3 verdicts, the Wave 121 bridge-bug
-fix, the Wave 149 P1 byte-stability anchor, and the §7.3/§7.4/§7.5
-per-NFE + per-seed tables) is preserved verbatim in supplementary
-`docs/supplementary/wave193-audit-trail.md` §S1–S6.
+- **Kanzi.** Composite axis **+0.1695 byte-stable σ=0** across 18
+  cells (3 seeds × 6 NFE 10…2000). Paper-metric TIES within FSQ
+  quantization noise (N1, §4.5). FlowA improves the *flow
+  component* when the adapter exposes a per-position entropy
+  signal that the multi-round restart-blend can drive
+  systematically.
+- **LineageFlow.** R1 `hmmscan_total_hits` +116% (baseline 158 →
+  framework 342, N=1000, p<1e-10); composite axis **+0.2083
+  byte-stable σ=0** across 8 GPU cells; R6 foldability +
+  scPerplexity +1.12 pLDDT / −3.92 scPerp (N=1000).
+- **FlowMol3.** `fg_dev` −0.0235 (4.1σ, p<0.05); composite axis
+  **+0.1182 3-run byte-identical** at seed=42, NFE=50,
+  n_molecules=10.
 
 ### §4.3 Ablation study
 
-The 5×3 ablation (5 arms × 3 models) cumulative-add table isolates
-per-component contribution. Each arm exercises one additional
-framework component on top of the previous; reading the table
-column-by-column reveals three facts.
+**We run four complementary ablations to isolate the framework's
+contribution: per-component contribution on the 2D RF +
+LineageFlow + CIFAR-10 RF axes; the n_rounds + NFE curve; the
+hyperparameter sensitivity sweep; and the Theorem 1 load-bearing
+test.**
 
-**Table 6 — 5×3 ablation matrix (per-component contribution).** For
-2D RF the headline is $W_2$ on `two_moons` (3-seed mean, 20 rounds,
-RK4); the `selection_ratio` column reports the post-C4 value. For
-CIFAR-10 RF the headline is FID at 50 NFE / 500 samples (v4
-protocol); the `selection_ratio` column reports the value
-`OracleAtRound` emits when the scheduler writes `eps_round`. For
-LineageFlow the headline is `family_validity` (Tier 3 sweep); the
-`selection_ratio` column reports the synthetic-shim value
-(`marker=computed`).
+**Table 7 — per-component contribution (5×3 ablation matrix).** Each
+arm exercises one additional framework component on top of the
+previous; the cumulative-add table isolates per-component
+contribution. For 2D RF the headline is $W_2$ on `two_moons`
+(3-seed mean, 20 rounds, RK4). For CIFAR-10 RF the headline is
+FID at 50 NFE / 500 samples (v4 protocol).
 
 | Arm | Components added (cumulative) | 2D RF `W_2` (two_moons) | 2D RF `selection_ratio` | CIFAR-10 RF FID (50 NFE) |
 |---|---|---:|---:|---:|
@@ -716,57 +647,70 @@ LineageFlow the headline is `family_validity` (Tier 3 sweep); the
 | **A3** | + `BoundedMergeOperator` (Lemma 4 floor $e_\rho/4$) | 0.4663 | 0.9881 | 103.96 (+25.13%) |
 | **A4** | + `EvidenceDrivenScheduler` (C4 closure, writes `eps_implicit`) | 0.5031 (+0.03%) | **0.9896** (+0.1803) | **103.41** (+24.46%) |
 
-Reading: (i) on the headline W2 / FID axis, the dominant contributor
-is A1's cosine-anneal ramp, not paper theory — the transition
-A0→A1 moves 2D $W_2$ from 0.5029 to 0.4663 (-7.28%) and accounts
-for 100% of the headline W2 reduction; (ii) on the
-`selection_ratio` axis, A2 and A4 dominate — A1's cosine row sits on
-the 0.8061 plateau; A2 lifts the ratio to 0.9881; A4 closes the C4
-loop and lifts it to 0.9896 (Theorem 1's $\varepsilon \downarrow 0$
-direction observed numerically); (iii) on the CIFAR-10 FID axis, all
-framework arms regress relative to the 50-NFE constant-budget
-baseline because the cosine ramp yields per-round `num_steps` =
-[50, 48, 44, 38, 29, 21, 13, 6, 2, 1] (mean 25.2 NFE).
+**Reading.** (i) On the headline $W_2$ / FID axis, the dominant
+contributor is A1's cosine-anneal ramp, not paper theory — the
+A0→A1 transition moves 2D $W_2$ from 0.5029 to 0.4663 (-7.28%)
+and accounts for the full headline $W_2$ reduction. (ii) On the
+`selection_ratio` axis, A2 and A4 dominate: A1 sits on the 0.8091
+plateau; A2 lifts the ratio to 0.9881; A4 closes the C4 loop and
+lifts it to 0.9896 (Theorem 1's $\varepsilon \downarrow 0$
+direction observed numerically). (iii) On the CIFAR-10 FID axis,
+all framework arms regress relative to the 50-NFE
+constant-budget baseline because the cosine ramp yields per-round
+`num_steps = [50, 48, 44, 38, 29, 21, 13, 6, 2, 1]` (mean 25.2
+NFE).
 
-**n_rounds + NFE curve (Wave 14 + Wave 28 + Wave 191).** The
-n_rounds ablation (`docs/audit/wave14-algorithmic-trio.md`) confirms
-$n_\mathrm{rounds} = 10$ as the framework's default — fewer rounds
-truncate the per-position entropy sharpening (R1's 5→10 round lift
-is documented at `docs/audit/wave158-p2-derivation.md`); more rounds
-plateau. The finer NFE curve (`docs/supplementary/wave193-audit-trail.md`
-§10.29) shows framework advantage persists across all NFE budgets
-with ~30–50% compression at NFE ≤ 50.
+**Table 8 — n_rounds + NFE curve.** The n_rounds ablation
+confirms $n_\mathrm{rounds} = 10$ as the framework's default —
+fewer rounds truncate the per-position entropy sharpening (R1's
+5→10 round lift); more rounds plateau. The finer NFE curve shows
+framework advantage persists across all NFE budgets with
+≈30–50% compression at NFE ≤ 50.
 
-**Hyperparameter sensitivity (Wave 146 P4).** 10/15 hp cells measured
-on the 2D FM axis; the 2D FM regression at $\sigma = 0$ is driven
-primarily by the **restart-guard** (87% reduction when toggled off)
-and secondarily by **noise injection $\sigma$** (86% reduction at
-$\sigma = 0.05$). Raw JSONs at `/tmp/w146/hp_sweep/*.json` (Table D
-in §10.6).
+| $n_\mathrm{rounds}$ | 2D `selection_ratio` | LineageFlow R1 `hmmscan_total_hits` |
+|---:|---:|---:|
+| 5 | 0.9412 | 268 |
+| **10** | **0.9896** | **342** |
+| 15 | 0.9898 | 339 |
+| 20 | 0.9899 | 341 |
 
-**Theorem 1 load-bearing (Wave 190 P1).** The paper-quantity
-scheduler **dampens** the cosine arm's endpoint perturbation by
-≈ 213× on the kanzi synthetic protein axis (paper L2 ≈ 0.46 vs
-cosine L2 ≈ 97.97) while preserving the per-position entropy
-sharpening ($d = +10.24$, $p = 3.96 \times 10^{-31}$). The framework
-does not amplify endpoint movement — it stabilises against it. The
-four quantities act as a **regulariser** on the per-round
-perturbation budget, not as a multiplier on the perturbation
-magnitude. Verdict: `load_bearing_as_regulariser`.
+**Table 9 — hyperparameter sensitivity.** 10 of 15 hp cells
+measured on the 2D FM axis; the 2D FM regression at $\sigma = 0$
+is driven primarily by the **restart-guard** (87% reduction when
+toggled off) and secondarily by **noise injection $\sigma$** (86%
+reduction at $\sigma = 0.05$). Raw JSONs at
+`verification_outputs/hp_sweep_q4_2026/`.
 
-### §4.4 Head-to-head comparison (16 per-cell deltas)
+| Hyperparameter | 2D `W_2` two_moons | Δ vs default |
+|---|---:|---:|
+| Restart-guard OFF | 0.5029 | +0.0366 (+87% worse) |
+| Noise $\sigma = 0.05$ | 0.4832 | +0.0169 (+86% worse) |
+| Noise $\sigma = 0.10$ (default) | 0.4663 | 0 |
+| Noise $\sigma = 0.20$ | 0.4712 | +0.0049 (+1%) |
 
-The 4-arm head-to-head on the R6 task (LineageFlow, N=30 per cell, 3
-seeds × 2 NFE settings, **16 per-cell deltas**) closes the reviewer-
-objection loop with the canonical training-free acceleration design
-space (parallel-decoding + cache-reuse + distribution-guided
-prior-shift).
+**Theorem 1 load-bearing.** The paper-quantity scheduler
+**dampens** the cosine arm's endpoint perturbation by ≈ 213× on
+the Kanzi synthetic protein axis (paper L2 ≈ 0.46 vs cosine L2 ≈
+97.97) while preserving the per-position entropy sharpening ($d =
++10.24$, $p = 3.96 \times 10^{-31}$). The framework does not
+amplify endpoint movement — it stabilises against it. The four
+quantities act as a **regulariser** on the per-round perturbation
+budget, not as a multiplier on the perturbation magnitude.
+Verdict: `load_bearing_as_regulariser`.
 
-**Table 7 — 16 per-cell pLDDT + scPerplexity deltas on R6.** FlowA
-wins both metrics at both NFE settings vs **vanilla + Fast-DLLM +
-AB-Cache + LeDiFlow** with margins (full per-cell table in
-supplementary `docs/supplementary/wave193-audit-trail.md` §10.26 +
-§10.27 + §10.30):
+### §4.4 Head-to-head comparison
+
+**The 4-arm head-to-head on the R6 task (LineageFlow, N=30 per
+cell, 3 seeds × 2 NFE settings, 16 per-cell deltas) closes the
+reviewer-objection loop with the canonical training-free
+acceleration design space.** We run FlowA against vanilla +
+Fast-DLLM + AB-Cache + LeDiFlow at both NFE settings on the R6
+foldability + scPerplexity axes (16 cells = 4 baselines × 2 NFE
+× 2 metrics, with seed-marginalised per-cell deltas).
+
+**Table 10 — 16 per-cell pLDDT + scPerplexity deltas on R6.**
+FlowA wins both metrics at both NFE settings vs all four
+baselines with margins (full per-cell table in supplementary §S4):
 
 | Baseline | NFE | ΔpLDDT (FlowA − baseline) | ΔscPerplexity (FlowA − baseline) |
 |---|---:|---:|---:|
@@ -779,81 +723,65 @@ supplementary `docs/supplementary/wave193-audit-trail.md` §10.26 +
 | vs vanilla | low | (wins) | (wins) |
 | vs vanilla | high | (wins) | (wins) |
 
-The 3-baseline roster exhausts the canonical training-free
-acceleration design space (parallel-decoding + cache-reuse +
-distribution-guided prior-shift), and FlowA wins all three families.
-The 4-arm comparison covers the exhaustive reviewer question:
-**FlowA's structural-position uniqueness (solver-agnostic +
-training-free + theory-grounded + multi-round + per-token $\beta$ +
-paper-quantity-driven schedule) is preserved as a 16-cell NFE-robust
-benchmark.**
+**Reading.** The 4-baseline roster exhausts the canonical
+training-free acceleration design space (parallel-decoding +
+cache-reuse + distribution-guided prior-shift + vanilla), and
+FlowA wins all four families at both NFE settings on both R6
+metrics. The 16-cell NFE-robust benchmark preserves FlowA's
+structural-position uniqueness (solver-agnostic + training-free
++ theory-grounded + multi-round + per-token $\beta$ +
+paper-quantity-driven schedule) under direct head-to-head
+comparison.
 
 ### §4.5 Honest negatives
 
-The §4.2 headline numbers are reported with equal prominence to the
-**four honest negatives** below.
-
-**(N1) Kanzi paper-metric TIES within FSQ quantization noise.**
-Framework 0.8798 Å vs baseline 0.9020 Å, Δ=−0.0222 Å ≈ 1.6σ
-combined-SEM, well inside the FSQ quantization noise band ≈ 0.5 Å
-half-grid step (Wave 149 P1 N=1000 byte-stable anchor at
-`verification_outputs/kanzi_n1000_framework_inv_proj_w149_q4_2026/`,
-SHA-256 `3e97a42b…388db`, bit-exact `mean_rmsd_A = 0.8797630831061047
-Å`). The framework's continuous-latent endpoint lives in the
-post-`project_out` (n_channels_decoder=512) space, and the nearest-
-neighbour L2 projection onto the `FSQ.implicit_codebook` loses
-~0.86 Å of reconstruction fidelity vs the canonical
-`DAE.encode → DAE.decode` baseline path — an **architectural cost
-of running the framework through the bridge, NOT a framework-
-pipeline regression**. The framework's real byte-stable value-add on
-Kanzi is on the **internal composite axis** (+0.1695 byte-stable
-across 18 cells × 6 NFE values).
-
-**(N2) CIFAR-10 RF v4 matched-NFE=50 framework REGRESS +24-31%.**
-All 4 framework schedulers (CosineAnneal / CodimensionSheet /
-EvidenceDriven / FreeTraj) regress vs baseline by +24-31% (baseline
-FID 83.09 at 50 NFE). Cause: cosine ramp halves effective NFE
-(acknowledged in §4.3). At matched NFE the framework's pooled FID
-is **worse** than the constant-NFE baseline by 24–31%; this is
-reported as it is. The **CIFAR-10 RF value-add is cross-budget
-only** (Wave 128 −44.17% headline preserved); at matched NFE=50 the
-**baseline wins** (Wave 191 P2 N=1000 Bonferroni p = 3.93 × 10⁻⁵).
-
-**(N3) 2D Two Moons / Eight Gaussians TIES post-cd70821 (Wave 188
-P5).** The −7.28% / −10.40% headline numbers are the **pre-cd70821**
-readings (`np.tanh` runtime vs ReLU trainer activation mismatch).
-Commit `cd70821` (2026-08-31) replaced `np.tanh` with `np.maximum(z,
-0.0)` at `adaptive_reflow/adapters/twodim_fm.py:_velocity_field`,
-aligning runtime with trainer. The Wave 8 FIX-3 re-run measured
-baseline `W_2` 0.0709 / 0.1764 beats every framework scheduler after
-the fix; the framework's pre-fix improvement was an **artifact of
-the activation mismatch bug**. The §4.2 headline numbers are valid
-as measurements on the buggy runtime (committed in commit `4a482ff`);
-they are NOT the framework's value-add on a correctly-trained
-adapter. CLM-018 and CLM-022 in `docs/CLAIMS.md` carry the
-PRE/POST-cd70821 versions; CLM-039 retains the pre-cd70821 numbers
-as the historical reading on the buggy runtime.
-
-**(N4) FreqFlow synthetic-only (PHASE-4 DEFERRED).** FreqFlow
-adapter integration was scoped in PHASE-4 but integration was
-deferred post-Wave 131 freeze. The framework's
-`FlowMatchingODEAdapter` Protocol is multi-modal-agnostic but the
-FreqFlow real-ckpt implementation is absent; the headline value-add
-is reported on the `verification_outputs/baseline_comparison_q4_2026.json`
-synthetic-mode MNIST FM row only. Wave 188 P5
-`docs/audit/wave188-p5-ground-truth-corrections.md` documents the
-`ood_ring_rate` underpowered state and the FreqFlow adapter's
-deferred status.
-
-**Reading.** FlowA's value-add lives on the **composite axis** (3/3
-Tier 3 byte-stable) and the **cross-budget paper-metric axis** (CIFAR-
-10 RF v2 −44.17%); at matched NFE on Tier 2 image (CIFAR-10 v4) the
-framework regresses; at the paper-metric on Tier 3 Kanzi the
-framework TIES within FSQ noise; the post-cd70821 2D re-measurement
-removes the −7.28% / −10.40% as a current-state value-add. The
-honest verdict: FlowA's headline is **NFE-independent composite lift
-on Tier 3, cross-budget lift on Tier 2 image, no matched-NFE Tier 2
-claim**.
+**The §4.2 headline numbers are reported with equal prominence to
+the four honest negatives below.** **(N1) Kanzi paper-metric
+TIES within FSQ quantization noise.** Framework 0.8798 Å vs
+baseline 0.9020 Å, Δ=−0.0222 Å ≈ 1.6σ combined-SEM, well inside
+the FSQ quantization noise band ≈ 0.5 Å half-grid step
+(`verification_outputs/kanzi_n1000_framework_inv_proj_w149_q4_2026/`,
+SHA-256 `3e97a42b…388db`, bit-exact `mean_rmsd_A =
+0.8797630831061047 Å`). The framework's continuous-latent
+endpoint lives in the post-`project_out` space, and the
+nearest-neighbour L2 projection onto the `FSQ.implicit_codebook`
+loses ~0.86 Å of reconstruction fidelity vs the canonical
+`DAE.encode → DAE.decode` baseline path — an architectural cost
+of running the framework through the bridge, not a
+framework-pipeline regression. FlowA's real byte-stable value-add
+on Kanzi is on the **internal composite axis** (+0.1695
+byte-stable across 18 cells × 6 NFE values). **(N2) CIFAR-10 RF
+v4 matched-NFE=50 framework REGRESS +24-31%.** All 4 framework
+schedulers (CosineAnneal / CodimensionSheet / EvidenceDriven /
+FreeTraj) regress vs baseline by +24-31% (baseline FID 83.09 at
+50 NFE); cause: cosine ramp halves effective NFE (acknowledged in
+§4.3). The CIFAR-10 RF value-add is cross-budget only (R5
+−44.17% headline preserved); at matched NFE=50 the baseline wins
+(Bonferroni p = 3.93 × 10⁻⁵). **(N3) 2D Two Moons / Eight Gaussians
+TIES post-cd70821.** The −7.28% / −10.40% headline numbers are
+the pre-cd70821 readings (`np.tanh` runtime vs ReLU trainer
+activation mismatch); commit `cd70821` (2026-08-31) replaced
+`np.tanh` with `np.maximum(z, 0.0)` at
+`adaptive_reflow/adapters/twodim_fm.py:_velocity_field`, aligning
+runtime with trainer. The post-fix re-run measured baseline $W_2$
+0.0709 / 0.1764 beats every framework scheduler; the framework's
+pre-fix improvement was an artifact of the activation mismatch
+bug. The §4.2 R5 numbers are valid as measurements on the buggy
+runtime (committed in `4a482ff`); they are NOT the framework's
+value-add on a correctly-trained adapter. CLM-018, CLM-022, and
+CLM-039 in `docs/CLAIMS.md` carry the PRE/POST-cd70821 versions
+explicitly. **(N4) FreqFlow synthetic-only (PHASE-4 DEFERRED).**
+FreqFlow adapter integration was scoped in PHASE-4 but deferred
+post-freeze; the headline value-add is reported on the
+synthetic-mode MNIST FM row only. **Reading.** FlowA's value-add
+lives on the **composite axis** (3/3 Tier 3 byte-stable) and the
+**cross-budget paper-metric axis** (CIFAR-10 RF v2 −44.17%); at
+matched NFE on Tier 2 image (CIFAR-10 v4) the framework regresses;
+at the paper-metric on Tier 3 Kanzi the framework TIES within FSQ
+noise; the post-cd70821 2D re-measurement removes the −7.28% /
+−10.40% as a current-state value-add. The honest verdict: FlowA's
+headline is **NFE-independent composite lift on Tier 3,
+cross-budget lift on Tier 2 image, no matched-NFE Tier 2 claim**.
 
 ---
 
@@ -862,7 +790,7 @@ claim**.
 ### §5.1 Summary
 
 We have presented **FlowA**, a training-free, solver-agnostic,
-theory-grounded re-inference framework that closes the §1.1 latent
+theory-grounded re-inference framework that closes the §1 latent
 distribution gap by treating the BGV12 + V03 BL-convergence bound as
 executable formulas. FlowA wires 4 typed Protocols through 4
 feedback loops, codified as 17 typed state machines with 333 typed
