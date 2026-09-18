@@ -84,7 +84,7 @@
   "verdict": "baseline_wins",
   "r5_implication": "Wave 191 P2 N=1000 at matched NFE=50 shows the single-pass baseline WINS (best framework arm evidence_driven FID=499.83 vs baseline 415.83, \u0394=+2.80% Bonferroni p=0.0000). This REPLACES the Wave 128 -44.17% headline at matched NFE: the framework's value-add on CIFAR-10 Rectified Flow is NOT about better inference at fixed NFE \u2014 it is about producing comparable FID with fewer NFEs (the Wave 128 cross-budget comparison). The paper claim scope should be tightened: framework wins cross-budget (Wave 128), TIES or regresses at matched NFE (Wave 191 P2 N=1000).",
   "wall_min": 61,
-  "commit_sha": "PENDING_wave191_p2",
+  "commit_sha": "c121b1cf4eee0097b5a3e1334b4b1ed2d2f3d614",
   "alpha_bonferroni": 0.016666666666666666,
   "alpha_bonferroni_value": 0.016666666666666666,
   "n_chunks": 10,
