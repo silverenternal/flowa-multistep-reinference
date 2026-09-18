@@ -19,7 +19,7 @@ FlowA is a **training-free, inference-time re-inference framework** that improve
 
 - **R1** LineageFlow HMMER hits **+116%** (158 → 342, N=1000, p < 1e-10).
 - **R2** Kanzi foldability via `framework_inv_proj`.
-- **R3** FlowMol3 paper-metric parity (`fg_dev` Δ = −0.024 at 4.05σ).
+- **R3** FlowMol3 paper-metric parity (`fg_dev` Δ = −0.024 at 4.1σ).
 - **R4** ESM-2 NLL smoke (deferred to camera-ready).
 - **R5** TwoDim-FM Pareto-frontier: CIFAR-10 RF FID **−44.17%** NFE-averaged, 2D Two Moons $W_2$ **−7.28%**, 2D Eight Gaussians $W_2$ **−10.40%**, MNIST FM FID **−15.01%**.
 - **R6** LineageFlow foldability + scPerplexity **+1.12 pLDDT / −3.92 scPerp**, N=1000, p < 1e-5. All six pass Bonferroni (α = 0.0083).
@@ -36,9 +36,11 @@ FlowA wins both pLDDT and scPerplexity at both NFE settings (100, 200) on the R6
 
 Theorem 1's source paper (Li 2026, "[Author submitted, 2026]" — currently under JMAA review) is attached as **`supplementary_paper.pdf`** (LaTeX-rendered, 14 pages; LaTeX source mirror at `supplementary_paper.md`). The manuscript can be cited from the attachment without external lookup; the exact theorem statement, hypotheses, and proof are reproduced verbatim from the source LaTeX (`docs/ARCHIVE/top-level/NoiseSelectedRectification_EN.md`).
 
-## Reproducibility — D.4 33/33 PASS + SHA-256 + Zenodo DOI
+**Contingency disclosure for the in-review citation.** The `supplementary_paper.pdf` represents a framework-specific derivation of Bolley-Guilin-Villani (2012) applied to the multi-round re-inference setting; it is currently under JMAA review (submission X, ID Y). If accepted before EAAI acceptance, the citation will be updated to the published JMAA article (DOI to be added in the camera-ready). If rejected, the framework's load-bearing claim is grounded on BGV 2012 + Villani 2003 only, and the `supplementary_paper.pdf` is preserved as a framework-specific application without a venue-locked citation. In both cases the §3.2 Theorem 1 statement, the four paper quantities $(A_g, B_g, C_g, e_\rho)$, and the Wave 11 conformance suite remain unchanged.
 
-(i) **D.4 regression vectors**: 33/33 PASS (`pytest -k "d4"`). (ii) **SHA-256 ckpt pinning**: every checkpoint re-hashed at ship time. (iii) **Hash-chained ledger**: per-round metrics SHA-256 chained. Release on Zenodo (tarball SHA-256 `9699cd42...430d7`, ≈ 3.00 GiB).
+## Reproducibility — byte-stable regression suite 33/33 PASS + SHA-256 + Zenodo DOI
+
+(i) **byte-stable regression suite**: 33/33 PASS (`pytest -k "d4"`). (ii) **SHA-256 ckpt pinning**: every checkpoint re-hashed at ship time. (iii) **Hash-chained ledger**: per-round metrics SHA-256 chained. Release on Zenodo (tarball SHA-256 `9699cd42...430d7`, ≈ 3.00 GiB).
 
 ## Why FlowA fits EAAI
 

@@ -2547,7 +2547,7 @@ reached the dropped-SMILES path because DGL fails first).
 **Verdict REMAINS** the Wave 87 N=1000 reading (canonical best-known-good):
 `validity_pct` MATCH (1.0000 both arms); `pb_validity_pct` framework_regresses
 (0.429 vs 0.5285, UFF-vs-xtb definitional gap, brief's PB-xtb premise
-FALSE POSITIVE); `fg_dev` framework_improves (Δ=-0.0235, 4.05σ, p<0.05
+FALSE POSITIVE); `fg_dev` framework_improves (Δ=-0.0235, 4.1σ, p<0.05
 — single framework-vs-baseline paper-metric win); `ood_ring_rate`
 underpowered at N=1000 (|Δ|=0.003 < MDD 0.0263).
 
