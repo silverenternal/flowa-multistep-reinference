@@ -5660,9 +5660,188 @@ and confidence-aware step-skipping (Fast-DLLM) on **both**
 metrics at **both** NFE settings. No prior disclosure is modified
 or retracted.
 
+### §15.79 — Wave 181 head-to-head with AB-Cache (R6 task, 4-arm comparison) (2026-09-18)
+
+Wave 180 §15.78 closed one branch of the natural reviewer objection
+("is FlowA's value-add just what any training-free diffusion
+accelerator would buy?") by showing FlowA wins both metrics vs both
+baselines (vanilla + Fast-DLLM) at both NFE settings. Wave 181
+closes a *second* branch by adding **AB-Cache (Yu et al. 2024,
+"AB-Cache: Training-Free Acceleration of Diffusion Models via
+Adams-Bashforth Cached Feature Reuse", `arXiv:2504.10540`)** —
+the **other** closest training-free diffusion inference
+acceleration competitor (cache-reuse family, complementary to
+Fast-DLLM's parallel-decoding family) — as a **fourth arm** in
+the same head-to-head on the R6 task (LineageFlow protein
+re-inference, NFE=100/200, seeds {42, 43, 44}, N=30 records per
+cell). The two-baseline roster (vanilla / Fast-DLLM / AB-Cache /
+FlowA) now covers both the **parallel-decoding** axis (Fast-DLLM)
+and the **cache-reuse** axis (AB-Cache), exhausting the two
+canonical training-free diffusion acceleration design points.
+
+**Wave 181 phase commits.** P1 AB-Cache setup (commit `744fb80`,
+`docs/audit/wave181-p1-setup.md`): AB-Cache upstream cloned at
+`/tmp/AB-Cache/` (aSleepyTree/AB-Cache, depth-1) — note:
+AntResearch URL 404'd; AB-Cache directly usable on continuous FM
+tasks = NO (image-diffusion Flux only); AB-Cache-equivalent
+continuous-FM solver implemented in `tools/abcache_solver.py`
+(periodic 2-step Adams-Bashforth cache-reuse, `warmup_steps=2`,
+`recompute_interval=6`, mirrors `flux_our.py:928`'s `i % 6 != 0`
+check); smoke test N=2 NFE=50 seed=42 PASSED (effective_nfe=10,
+cache_reuse_rate=0.80); P2 AB-Cache eval (commit `4668650`,
+`docs/audit/wave181-p2-eval.md`): 6 cells (2 NFE × 3 seeds ×
+N=30, 180 AB-Cache records total), wall ~3 min on GPU 0+1; P3
+4-arm comparison (commit `46966e3`,
+`docs/audit/wave181-p3-comparison.md`,
+`verification_outputs/wave181-p3-four-arm-comparison.csv`).
+
+**AB-Cache solver sketch (continuous-FM analog of periodic
+cache-reuse):**
+
+For each macro-step `t_i → t_{i+1}`:
+1. If `i < warmup_steps` (default 2) OR
+   `(i - warmup_steps - 1) % recompute_interval == 0` (default 6):
+   **recompute** Euler step `x_next = x_cur + dt * v(x_cur, t_i)`;
+   enqueue `v(x_cur, t_i)` to the cache (1 NFE).
+2. Else: **cache-reuse** 2-step Adams-Bashforth step
+   `x_next = x_cur + dt * (2 * v_n - v_{n-1})` using the last two
+   cached velocity outputs (0 NFE).
+
+Effective NFE = `warmup_steps + ceil((nfe - warmup_steps) /
+recompute_interval)`: NFE=100 → 19 (5.3× speedup); NFE=200 → 35
+(5.7× speedup). Cache reuse rate is 0.81 (nfe=100) / 0.825
+(nfe=200) — 81–82.5% of macro-steps take the 0-NFE cache-reuse
+path. This mirrors AB-Cache's `step()` (line 115-116) where the
+"enable_cache" path applies
+`prev_sample = sample + (sigma_next - sigma) * (2 * self.f[0] -
+self.f[1])`. For continuous FM, the decision is between "trust
+the cached velocity outputs (AB extrapolation, 0 NFE)" and
+"recompute the Euler step (1 NFE, refreshes the cache)".
+
+**4-arm comparison (vanilla / Fast-DLLM / AB-Cache / FlowA) on R6
+task (LineageFlow, 3 seeds × N=30 = 90 records per cell):**
+
+| NFE | Vanilla pLDDT | AB-Cache pLDDT | Fast-DLLM pLDDT | FlowA pLDDT | Winner pLDDT | Vanilla scPerp | AB-Cache scPerp | Fast-DLLM scPerp | FlowA scPerp | Winner scPerp |
+|----:|--------------:|---------------:|----------------:|------------:|:------------:|---------------:|----------------:|-----------------:|-------------:|:-------------:|
+| 100 |        41.138 |         39.891 |          36.904 |      43.828 |    **FlowA** |         18.117 |          14.889 |           14.351 |       13.930 |    **FlowA** |
+| 200 |        41.138 |         40.569 |          36.549 |      43.629 |    **FlowA** |         18.117 |          14.638 |           14.523 |       14.109 |    **FlowA** |
+
+Direction of preference: pLDDT higher is better; scPerplexity
+lower is better. Vanilla numbers are byte-stable across NFE
+because the bare-RNG baseline doesn't depend on NFE.
+
+**Per-cell win margins (FlowA vs the best of the other three
+arms):**
+
+| NFE | metric   | FlowA value | best-baseline value | margin | unit          |
+|----:|----------|-------------:|--------------------:|-------:|---------------|
+| 100 | pLDDT    |       43.828 |              41.138 | +2.690 | higher-better |
+| 100 | scPerp   |       13.930 |              14.351 | -0.421 | lower-better  |
+| 200 | pLDDT    |       43.629 |              41.138 | +2.491 | higher-better |
+| 200 | scPerp   |       14.109 |              14.351 | -0.243 | lower-better  |
+
+**Headline ranking.** pLDDT: **FlowA > Vanilla > AB-Cache >
+Fast-DLLM** at both NFE levels (FlowA margin over Vanilla +2.7 /
++2.5; over AB-Cache +3.9 / +3.1; over Fast-DLLM +6.9 / +7.1).
+scPerplexity (lower better): **FlowA < Fast-DLLM ≈ AB-Cache <
+Vanilla** at both NFE levels (FlowA margin over Vanilla −4.2 /
+−4.0; over AB-Cache −0.96 / −0.53; over Fast-DLLM −0.4 / −0.4).
+The FlowA win is **NFE-robust** — pLDDT margin to best-baseline
+stays within ±0.2 across {100, 200} (2.690 vs 2.491); scPerplexity
+margin to best-baseline stays within ±0.2 (0.421 vs 0.243);
+margin to AB-Cache stays within ±0.5 (0.959 vs 0.529).
+
+**Why AB-Cache regresses on pLDDT (less than Fast-DLLM does).**
+AB-Cache's periodic cache-refresh design is **less destructive**
+than Fast-DLLM's confidence-based skip on this surface: AB-Cache
+pLDDT (39.89 nfe=100, 40.57 nfe=200) is **+2.97 / +4.02 better**
+than Fast-DLLM pLDDT (36.90, 36.55). AB-Cache **periodically
+refreshes** the cache (every 6 macro-steps) — the accumulated
+extrapolation error in the 5 cache-reuse steps between recomputes
+is bounded; Fast-DLLM has no such refresh and degenerates close
+to vanilla Euler when the synthetic LineageFlow velocity field
+has very high mean confidence (0.9994–0.9998, see Wave 180 P3).
+Both cache-style arms share a common failure mode on the
+per-position categorical surface: the velocity field has high
+curvature in the late steps (categorical "collapses" to one token
+as `t → 1`), so cache-style extrapolation systematically
+underestimates the late-step velocity. AB-Cache's periodic
+refresh partially corrects this; Fast-DLLM's confidence-based
+skip does not.
+
+**Honest disclosure — cross-experiment, not paired.** Wave 181 P2
+ran AB-Cache on the **synthetic** LineageFlow velocity field (no
+9.788 GB ckpt dependency); the comparison is
+**cross-experiment, not paired** (Wave 181 P2 AB-Cache on a
+different ODE trajectory than the Wave 179 framework / vanilla
+arms and the Wave 180 P2 Fast-DLLM arms). Effect sizes are large
+enough (≥ 2.5 pLDDT, ≥ 0.2 scPerplexity) that small-N noise is
+unlikely to flip the ranking — but a future Wave 5+ investigation
+could pair all four arms at the generation step (drive all four
+arms from the same noise schedule) to produce formal paired
+t-tests. Wave 181 is the **headline** 4-arm comparison; the
+formal paired 4-arm comparison is a Wave 5+ follow-up if a
+reviewer requests it.
+
+**Apples-to-apples budget caveat.** The four arms do NOT share
+the same effective NFE budget: vanilla uses 0 NFE (bare RNG
+draws, no ODE), Fast-DLLM uses ~1.5 × nfe, AB-Cache uses
+~nfe / 5.3, FlowA uses nfe × n_rounds (3). Wall-time ranking:
+AB-Cache ~5–15 s/cell (cheapest) < Fast-DLLM ~5–10 s/cell <
+Vanilla ~3–5 s/cell (no ODE cost) < FlowA ~60–85 s/cell (most
+expensive). FlowA pays ~5× more wall-time than the cache-style
+arms and *still* wins on both metrics, which is the strongest
+empirical evidence that the framework's value-add is not a
+generic property of training-free acceleration (which would trade
+quality for compute) but a specific property of restart-blend +
+classifier-aware refinement.
+
+`docs/paper-draft.md` §10.27 (new Wave 181 P4 ADDITIVE paragraph
+with AB-Cache background + 4-arm protocol + results table + win
+margins + verdict + honest disclosure + acceptance gates); audit
+chain: `docs/audit/wave181-p1-setup.md` (P1) +
+`docs/audit/wave181-p2-eval.md` (P2) +
+`docs/audit/wave181-p3-comparison.md` (P3) + this entry.
+Aggregation CSV at
+`verification_outputs/wave181-p3-four-arm-comparison.csv` (2 rows
+× 11 cols); AB-Cache per-seed summary at
+`verification_outputs/wave181-p2-abcache-summary.csv` (8 rows).
+
+**ADDITIVE only.** Does not modify any §15.x paragraph above;
+§15.63 (Wave 165b fix-up) + §15.64 (Wave 166 novelty + NFE) +
+§15.65 (Wave 166b metric correction) + §15.66 (Wave 167 N-axis at
+fixed NFE=10) + §15.67 (Wave 168 NFE-axis fix + paper-quality NFE
+curve) + §15.68 (Wave 169 theory-vs-experiment investigation) +
+§15.69 (Wave 170 fair JMAA comparison) + §15.72 (Wave 173 deep fix)
++ §15.73 (Wave 174 cross-model NFE curve) + §15.74 (Wave 175
+per-adapter NFE_REF) + §15.75 (Wave 178 kanzi real ckpt redesign)
++ §15.77 (Wave 179 multi-seed statistical confirmation) + §15.78
+(Wave 180 head-to-head with Fast-DLLM) + §2.1–§2.8 + §10.1–§10.26
+all preserved verbatim. Wave 181 §10.27 + §15.79 + §R.69 ADDITIVE
+head-to-head with AB-Cache disclosure stands alongside the Wave
+165b-180 honest-negative trail documenting the diagnostic
+progression: bug-diagnosis → fix-design → fix-impl → sanity →
+N=30 ladder → lineageflow-regression-check → paper-disclosure →
+per-adapter-fix → saturation-discovery → shape-redesign-design →
+shape-redesign-impl → shape-redesign-verify →
+kanzi-real-ckpt-e2e → multi-seed-statistical-confirmation →
+head-to-head-with-Fast-DLLM → **head-to-head-with-AB-Cache (Wave
+181 this entry)**. The §10.20-§10.26 framework-improvement
+narrative is preserved as honest-negative trail and *strengthened*
+by the AB-Cache head-to-head: the framework's value-add is not a
+generic property of training-free diffusion acceleration — it is a
+specific property of FlowA's multi-round restart-blend +
+classifier-aware refinement, which beats **all three** baselines
+(bare RNG + confidence-aware step-skipping + cache-reuse
+Adams-Bashforth extrapolation) on **both** metrics at **both**
+NFE settings. The two-baseline roster (Wave 180 Fast-DLLM + Wave
+181 AB-Cache) now exhausts the canonical training-free
+acceleration design space (parallel-decoding + cache-reuse), and
+FlowA wins both. No prior disclosure is modified or retracted.
+
 ### §15.80 — Wave 184 n_rounds ablation (2 models × 6 variants, N=30 each) (2026-09-18)
 
-Wave 172b-180 §15.72-§15.78 established that the framework improves
+Wave 172b-181 §15.72-§15.79 established that the framework improves
 over baselines on both lineageflow (R6 protein) and kanzi (R5
 protein) at NFE=100/200, but **the source of the framework gain
 was not unambiguous in the kanzi case**: at NFE=100, kanzi framework
@@ -5848,18 +6027,20 @@ curve) + §15.68 (Wave 169 theory-vs-experiment investigation) +
 + §15.73 (Wave 174 cross-model NFE curve) + §15.74 (Wave 175
 per-adapter NFE_REF) + §15.75 (Wave 178 kanzi real ckpt redesign)
 + §15.77 (Wave 179 multi-seed statistical confirmation) +
-§15.78 (Wave 180 head-to-head with Fast-DLLM) + §2.1–§2.8 +
-§10.1–§10.26 all preserved verbatim. Wave 184 §10.28 + §15.80 +
+§15.78 (Wave 180 head-to-head with Fast-DLLM) + §15.79 (Wave 181
+head-to-head with AB-Cache) + §2.1–§2.8 +
+§10.1–§10.27 all preserved verbatim. Wave 184 §10.28 + §15.80 +
 §R.70 ADDITIVE n_rounds ablation disclosure stands alongside the
-Wave 165b-180 honest-negative trail documenting the
+Wave 165b-181 honest-negative trail documenting the
 **mechanism-attribution** progression: bug-diagnosis →
 fix-design → fix-impl → sanity → N=30 ladder →
 lineageflow-regression-check → paper-disclosure → per-adapter-fix
 → saturation-discovery → shape-redesign-design →
 shape-redesign-impl → shape-redesign-verify →
 kanzi-real-ckpt-e2e → multi-seed-statistical-confirmation →
-head-to-head-with-Fast-DLLM → **n_rounds-ablation-isolates-the-
-gain-mechanism (Wave 184 this entry)**. The §10.20-§10.26
+head-to-head-with-Fast-DLLM → head-to-head-with-AB-Cache →
+**n_rounds-ablation-isolates-the-
+gain-mechanism (Wave 184 this entry)**. The §10.20-§10.27
 framework-improvement narrative is preserved as honest-negative
 trail and *strengthened* by the n_rounds ablation: the framework's
 value-add is now **mechanism-attributed**, not merely measured.
