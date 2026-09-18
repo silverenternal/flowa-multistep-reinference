@@ -2,7 +2,7 @@
   "schema": "wave189_p4_theorem_load_bearing.v1",
   "tool": "scripts/wave189_p4_theorem_load_bearing_kanzi.py",
   "wave": "Wave 189 P4",
-  "timestamp": "2026-09-18T06:02:11.995732+00:00",
+  "timestamp": "2026-09-18T06:02:25.734801+00:00",
   "target": "kanzi",
   "nfe": 1000,
   "n_rounds_framework": 3,
@@ -97,13 +97,13 @@
         64
       ],
       "baseline_endpoint_norm": 91.14837339796846,
-      "wallclock_baseline_s": 0.1478,
+      "wallclock_baseline_s": 0.1502,
       "cosine_endpoint_shape": [
         64,
         64
       ],
       "cosine_endpoint_norm": 79.10357529894206,
-      "wallclock_cosine_s": 0.1749,
+      "wallclock_cosine_s": 0.1549,
       "cosine_endpoint_l2": 32.21604093674231,
       "cosine_per_position_entropy_reduction": -0.21682493084494991,
       "paper_endpoint_shape": [
@@ -111,7 +111,7 @@
         64
       ],
       "paper_endpoint_norm": 90.95643392047214,
-      "wallclock_paper_s": 0.1212,
+      "wallclock_paper_s": 1.6613,
       "paper_endpoint_l2": 0.31104944311839017,
       "paper_per_position_entropy_reduction": -0.00344373210785065
     },
@@ -125,13 +125,13 @@
         64
       ],
       "baseline_endpoint_norm": 91.1483748361689,
-      "wallclock_baseline_s": 0.0852,
+      "wallclock_baseline_s": 0.0974,
       "cosine_endpoint_shape": [
         64,
         64
       ],
       "cosine_endpoint_norm": 79.29512351995575,
-      "wallclock_cosine_s": 0.0803,
+      "wallclock_cosine_s": 0.0988,
       "cosine_endpoint_l2": 32.36204501905657,
       "cosine_per_position_entropy_reduction": -0.22297375463478497,
       "paper_endpoint_shape": [
@@ -139,7 +139,7 @@
         64
       ],
       "paper_endpoint_norm": 90.95792224603233,
-      "wallclock_paper_s": 0.0802,
+      "wallclock_paper_s": 0.0977,
       "paper_endpoint_l2": 0.30971004406150265,
       "paper_per_position_entropy_reduction": -0.0032362102403582504
     },
@@ -153,13 +153,13 @@
         64
       ],
       "baseline_endpoint_norm": 91.1483733207188,
-      "wallclock_baseline_s": 0.1244,
+      "wallclock_baseline_s": 0.141,
       "cosine_endpoint_shape": [
         64,
         64
       ],
       "cosine_endpoint_norm": 79.48541068963627,
-      "wallclock_cosine_s": 0.1275,
+      "wallclock_cosine_s": 0.1496,
       "cosine_endpoint_l2": 30.37824167309805,
       "cosine_per_position_entropy_reduction": -0.19207984205658546,
       "paper_endpoint_shape": [
@@ -167,12 +167,12 @@
         64
       ],
       "paper_endpoint_norm": 90.96315822148092,
-      "wallclock_paper_s": 0.1303,
+      "wallclock_paper_s": 0.15,
       "paper_endpoint_l2": 0.30018411593724625,
       "paper_per_position_entropy_reduction": -0.0034586945566683625
     }
   ],
   "notes": "Wave 189 P4 — Theorem 1 quantities load-bearing ablation on kanzi. Wave 188 P3 (ablation_q4_2026.json) showed the four paper quantities from Li (2024) Theorem 1 are NOT load-bearing on twodim_fm; this sweep replicates the test on the protein axis (kanzi) per the user's ultracode directive. The sweep runs in synthetic mode (no torch / no upstream DAE), so the paper-metric axis (reconstruction_kabsch_rmsd_A) is BLOCKED_no_torch and the entropy axis is reported instead. The verdict addresses whether the framework's CONSUMPTION of the paper quantities (via PaperRatioAdaptiveScheduler) affects the endpoint relative to the same framework WITHOUT the paper-quantity wrapper.",
   "sweep_script": "scripts/wave189_p4_theorem_load_bearing_kanzi.py",
-  "commit_sha": "d4efa9a86894a2466ca6f89d4887598c9362388a"
+  "commit_sha": "ef9a1f78a0756e35a3cca9abd0e4f0bc3f6740c6"
 }
