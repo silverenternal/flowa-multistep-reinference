@@ -170,8 +170,8 @@ def _solve_framework(
     the paper-quantity story end-to-end when ``paper_ratio`` is
     selected and bypasses it entirely when ``cosine`` is selected.
     """
-    from adaptive_reflow.universal.state import ODEConditionDelta
-    from adaptive_reflow.universal.adapter import CapabilityMissingError
+    from dataclasses import replace as _dc_replace
+
     from adaptive_reflow.contracts import (
         ArtifactHash,
         ChannelName,
@@ -183,7 +183,8 @@ def _solve_framework(
         RunId,
         hash_policy_hash,
     )
-    from dataclasses import replace as _dc_replace
+    from adaptive_reflow.universal.adapter import CapabilityMissingError
+    from adaptive_reflow.universal.state import ODEConditionDelta
 
     bundle = adapter.build_initial_state(batch_id="wave189p4", sample_id="s0")
     n_rounds_int = max(1, int(n_rounds))
@@ -226,7 +227,8 @@ def _solve_framework(
         # the paper-quantity functions read it literally, so the
         # verdict on "load-bearing on the consumption side" is sound
         # even when the latent is synthetic.
-        profile_residual_fn = lambda x: float(np.exp(-0.5 * x * x)) - 0.6
+        def profile_residual_fn(x: float) -> float:
+            return float(np.exp(-0.5 * x * x)) - 0.6
         base = CodimensionSheetScheduler(
             cycle_length=int(n_rounds_int),
             n_min=0.0,
@@ -493,7 +495,7 @@ def _aggregate(cells: list[dict]) -> dict:
         "paper_endpoint_l2": [],
     }
     for c in cells:
-        for k in by_config.keys():
+        for k in by_config:
             v = c.get(k)
             if v is not None:
                 by_config[k].append(float(v))
@@ -695,7 +697,6 @@ def main(argv: list[str] | None = None) -> int:
     # the paper-quantity arm moves more than the cosine arm.
     p_val_e = agg["p_value_paired_permutation"]
     p_val_l2 = agg["p_value_paired_permutation_l2_axis"]
-    es_e = agg["effect_size"]["entropy_axis"]
     es_l2 = agg["effect_size"]["l2_axis"]
     e_significant = p_val_e is not None and p_val_e < 0.05
     l2_significant = p_val_l2 is not None and p_val_l2 < 0.05
@@ -730,7 +731,7 @@ def main(argv: list[str] | None = None) -> int:
         "schema": "wave189_p4_theorem_load_bearing.v1",
         "tool": "scripts/wave189_p4_theorem_load_bearing_kanzi.py",
         "wave": "Wave 189 P4",
-        "timestamp": datetime.now(tz=timezone.utc).isoformat(),
+        "timestamp": datetime.now(tz=timezone.UTC).isoformat(),
         "target": "kanzi",
         "nfe": int(args.nfe),
         "n_rounds_framework": int(args.n_rounds),

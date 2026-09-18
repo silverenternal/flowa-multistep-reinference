@@ -302,7 +302,7 @@ def main() -> int:
         nfe=int(args.nfe),
         n_rounds=int(args.n_rounds),
     )
-    report["timestamp"] = datetime.now(timezone.utc).isoformat()
+    report["timestamp"] = datetime.now(timezone.UTC).isoformat()
     report["sweep_script"] = (
         "scripts/wave189_p3_freqflow_synth_sweep.py"
     )
