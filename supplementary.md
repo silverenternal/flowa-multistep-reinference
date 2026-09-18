@@ -101,6 +101,12 @@ The Wave 93 per-cell power analysis at `verification_outputs/power_analysis/per_
 
 **Audit trail:** `docs/audit/wave17-phase3-operating-regime.md`.
 
+### S1.6 Abstract supplement — framework-specific derivation of BGV12 / V03
+
+This supplement is the canonical location for the framework-specific derivation referenced from the §1 abstract. The load-bearing theoretical citations in the main paper are **Bolley–Guilin–Villani (2012, HAL hal-00643570) Theorem 1.1** (concentration inequality for empirical measures) and **Villani (2003, AMS GSM 58) Theorem 7.3** (Kantorovich–Rubinstein dual of bounded-Lipschitz distance). The framework-specific derivation that specialises BGV12 / V03 to the multi-round re-inference setting (the $(\rho, c, \eta)$ F-side regime + the four paper quantities $A_g, B_g, C_g, e_\rho$) is the author's own submitted manuscript [Author submitted, 2026], attached in full at `docs/ARCHIVE/top-level/NoiseSelectedRectification_EN.md` (Theorem 1 at lines 87–92, Lemmas 2–5 at lines 110–160).
+
+**Audit context.** The arXiv ID 2608.02626 resolves to an unrelated paper; the only canonical source for the framework-specific derivation is the attached supplementary. **The load-bearing theoretical citation is BGV 2012 + Villani 2003, not [Author submitted, 2026]**; the latter is a framework-specific derivation, not a standalone theoretical contribution. Reviewers seeking the framework's Theorem 1 statement can read the full text in `docs/ARCHIVE/top-level/NoiseSelectedRectification_EN.md`; the four-quantity mapping $(A_g \leftrightarrow \kappa, B_g \leftrightarrow 1/\rho, C_g \leftrightarrow C_3, e_\rho \leftrightarrow m_2)$ is documented in §2.8.0 of the main paper.
+
 ---
 
 ## S2. Tier 1 toy benchmarks — 2D Two Moons + CIFAR-10 + MNIST FM

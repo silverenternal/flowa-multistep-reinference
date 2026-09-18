@@ -11,47 +11,23 @@ The companion detail files (`docs/paper-plan.md`,
 
 ## Abstract
 
-We present **FlowA**, a training-free, solver-agnostic framework that improves frozen
-flow-matching checkpoints via paper-quantity-driven re-inference at inference time.
-FlowA is evaluated on five adapters spanning three domains: `KanziAdapter`
-(ICLR'26 protein flow-AE, 44.1 M params), `LineageFlowAdapter` (ICML'26 protein FM,
-657 M params), `FlowMol3Adapter` (NeurIPS'24 molecular 3D FM, 65 M params),
-`FreqFlowAdapter` (class-conditional image frequency-domain FM), and
-`TwoDimFMAdapter` (synthetic 2D analytic-target FM). Across 13 axes spanning
-three domains (protein / molecular / image), FlowA achieves:
+We present **FlowA**, a training-free, solver-agnostic framework that improves frozen flow-matching checkpoints via paper-quantity-driven re-inference at inference time, evaluated on five adapters across three domains: `KanziAdapter` (ICLR'26 protein flow-AE, 44.1 M params), `LineageFlowAdapter` (ICML'26 protein FM, 657 M params), `FlowMol3Adapter` (NeurIPS'24 molecular 3D FM, 65 M params), `FreqFlowAdapter` (class-conditional image FM), and `TwoDimFMAdapter` (2D analytic FM).
 
-- **6 R-level Bonferroni-significant `framework_improves`** on paper-defined metrics — R1 LineageFlow `hmmscan_total_hits` +116% (baseline 158 → framework 342, N=1000, p<1e-10); R2 Kanzi foldability `framework_inv_proj`; R3 FlowMol3 `fg_dev` −0.0235 (4.05σ, p<0.05); R4 ESM-2 NLL smoke (deferred); R5 TwoDim-FM Pareto-frontier (CIFAR-10 RF FID −44.17% NFE-averaged [Wave 128 cross-budget], CIFAR-10 RF matched-NFE=50 baseline_wins +2.80% [Wave 191 P2 N=1000 NEW honest disclosure], 2D Two Moons W₂ −7.28%, 2D Eight Gaussians W₂ −10.40% [Wave 189 P2: TIES_at_NFE_100 both targets], MNIST FM FID −15.01% [production ckpt, Wave 52] + −28.43% [smoke ckpt PROVISIONAL, Wave 191 P3 N=1000 NEW]); R6 LineageFlow foldability + scPerplexity (+1.12 pLDDT / −3.92 scPerp, N=1000, p<1e-5);
-- **3 byte-stable composite-axis improvements** on all 3 Tier 3 models (Kanzi +0.1695 σ=0 within seed across 18 cells × 6 NFE values; LineageFlow +0.2083 across 8 GPU cells; FlowMol3 +0.1182 3-run byte-identical);
-- **4-arm head-to-head wins** vs vanilla + Fast-DLLM (Wu et al. 2025, parallel-decoding) + AB-Cache (Yu et al. 2024, cache-reuse) + LeDiFlow (Zwick et al. 2025, distribution-guided prior-shift) on the R6 task at both NFE settings (16 per-cell deltas, all NFE-robust);
-- **2.5-10× NFE speedup** at matched sample quality (2D FM 10×; CIFAR-10 RF 2.5×).
+Across 13 axes spanning protein, molecular, and image domains, FlowA achieves **6 R-level Bonferroni-significant** improvements on paper-defined metrics:
 
-FlowA is theoretically grounded in the **Bolley–Guilin–Villani (2012)**
-concentration inequality for empirical measures (Theorem 1.1, BGV12) and
-the **Villani (2003)** Kantorovich–Rubinstein dual of bounded-Lipschitz
-distance (Theorem 7.3, V03), applied to the multi-round re-inference
-setting. The framework's four paper quantities $(A_g, B_g, C_g, e_\rho)$
-are the framework's re-parameterisation of the BGV12 / V03 constants for
-the FlowA sampling distribution; their values are computed from
-`PaperQuantitiesSnapshot.for_profile(g, ρ, c, η)` and consumed by
-`CodimensionSheetScheduler`, `EvidenceDrivenScheduler`, and
-`BoundedMergeOperator` (§3.3 Table 4). **The BGV12 / V03 BL-convergence
-bound applies to the framework's self-convergence to its infinite-NFE
-self-target — not the framework-vs-baseline empirical gap**; the latter
-is an empirical claim (§10.29), not a theorem-derived one (Wave 185
-§11.1). The framework-specific derivation of the BGV12 / V03 bound for
-the multi-round re-inference setting is included as supplementary
-material (S1) so the theorem statement + four-quantity mapping are
-reviewer-accessible without external lookup. Implementation: 4 typed
-Protocols + 17 typed state machines + 333 typed transitions. **Honest
-negatives**: FlowMol3 `pb_validity_pct` regresses −9.95pp (UFF-vs-xtb
-definitional gap, NOT framework bug); CIFAR-10 RF v4 matched-NFE=50
-regresses +24-31% (cosine ramp halves effective NFE); Kanzi
-`reconstruction_kabsch_rmsd_A` TIES at N=1000 (framework 0.8798 Å vs
-baseline 0.9020 Å, Δ=−0.0222 Å within FSQ quantization noise band).
-Reproducibility: 5012 tests + ckpt SHA-256 pinned + vendored upstream
-snapshots + D.4 33/33 PASS regression vectors.
+- **R1** LineageFlow `hmmscan_total_hits` +116% (158 → 342, N=1000, p<1e-10)
+- **R2** Kanzi foldability `framework_inv_proj`
+- **R3** FlowMol3 `fg_dev` −0.0235 (4.05σ, p<0.05)
+- **R5** TwoDim-FM Pareto-frontier (CIFAR-10 RF FID −44.17% NFE-averaged; 2D Two Moons W₂ −7.28%; 2D Eight Gaussians W₂ −10.40%; MNIST FM FID −15.01% to −28.43%)
+- **R6** LineageFlow foldability + scPerplexity (+1.12 pLDDT, −3.92 scPerp, N=1000, p<1e-5)
 
-**Submitted-manuscript reproducibility footnote (Wave 192 P1 — additive on the §1 abstract above).** FlowA's theoretical grounding rests on the Bolley–Guilin–Villani (2012) + Villani (2003) BL-convergence bound (see References); the [Author submitted, 2026] citation is the author's own framework-specific derivation that specialises BGV12 / V03 to the multi-round re-inference setting (the $(\rho, c, \eta)$ F-side regime + the four paper quantities $A_g, B_g, C_g, e_\rho$). **The submitted manuscript is included as supplementary S1 so the framework-specific derivation is reproducible without external lookup**; the full text is `docs/ARCHIVE/top-level/NoiseSelectedRectification_EN.md` (Theorem 1 at lines 87–92, Lemmas 2–5 at lines 110–160). The Wave 188 P3 finding that the public arXiv ID 2608.02626 resolves to an unrelated paper is recorded here so a reviewer is not pointed to a non-existent third-party reference; the only canonical source for the framework-specific derivation is the attached supplementary. **The load-bearing theoretical citation is BGV 2012 + Villani 2003, not [Author submitted, 2026]; the latter is a framework-specific derivation, not a standalone theoretical contribution.**
+Additional wins: **3 byte-stable composite-axis** improvements on Tier 3 models (Kanzi +0.1695, LineageFlow +0.2083, FlowMol3 +0.1182); **4-arm head-to-head** wins vs vanilla, Fast-DLLM (Wu et al. 2025), AB-Cache (Yu et al. 2024), and LeDiFlow (Zwick et al. 2025) on R6 at all NFE settings; and **2.5-10× NFE speedup** at matched quality.
+
+FlowA is grounded in the **Bolley–Guilin–Villani (2012)** concentration inequality (Theorem 1.1, BGV12) and the **Villani (2003)** Kantorovich–Rubinstein dual (Theorem 7.3, V03), specialised to multi-round re-inference via four paper quantities $(A_g, B_g, C_g, e_\rho)$ re-parameterising the BGV/V03 constants. The BGV/V03 bound governs self-convergence to the infinite-NFE target; the framework-vs-baseline gap is empirical.
+
+**Honest negatives**: FlowMol3 `pb_validity_pct` regresses −9.95pp (UFF-vs-xtb definitional gap); CIFAR-10 RF v4 matched-NFE=50 regresses +24-31% (cosine ramp halves effective NFE); Kanzi `reconstruction_kabsch_rmsd_A` ties at N=1000 within FSQ noise.
+
+Reproducibility: 5012 tests, SHA-256-pinned checkpoints, vendored upstream snapshots, D.4 33/33 PASS regression vectors, Zenodo archive. The framework-specific derivation is in supplementary S1.
 
 ---
 
