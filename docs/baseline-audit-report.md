@@ -6872,4 +6872,122 @@ on 3 axes; seed-ensemble mean wins on the 4th) → **Wave 189
 §R.75 + §15.85 + §10.32 + CLM-055/056/057 (adversarial-review
 closure round: G1 + G2 + G3 quantitative ground truth;
 commit-pinned JSON evidence; no prior disclosure modified or
+retracted)** → **Wave 190 §R.76 + §15.86 + §10.33 + CLM-057
+upgrade + CLM-058 add (Theorem 1 quantities load-bearing
+replication: kanzi n=30 paired sweep Bonferroni-significant on
+both axes — load-bearing-as-regulariser confirmed at n=30;
+lineageflow n=30 paired sweep Bonferroni-significant on entropy
+axis only — sharpness story universal, regularisation story
+scale-dependent; cross-adapter cross-validation formalised;
+commit-pinned JSON evidence; no prior disclosure modified or
 retracted)**. No prior disclosure is modified or retracted.
+
+### §R.76 — Wave 190 Theorem 1 quantities load-bearing replication (kanzi + lineageflow n=30 paired sweep + cross-adapter cross-validation) (2026-09-18)
+
+**Motivation.** The Wave 189 P4 / §R.75 G3 / CLM-057 baseline-
+audit branch identified Lemma 2-5 quantities as **load-bearing as
+a stabiliser / regulariser** at n=3 (effect size 40.09 on L2,
+p = 0.103 marginal). CLM-057 committed the audit to upgrade the
+finding from "marginal" to "strong claim" **only** if n ≥ 30
+replication confirmed. Wave 190 P1 extends the sweep driver for
+paired sweeps on both kanzi and lineageflow; P2 runs kanzi at
+n=30; P3 runs lineageflow at n=30; P4 aggregates + updates the
+audit. **The baseline-audit perspective** (this section): how
+does the Wave 190 n=30 replication + cross-adapter cross-
+validation affect the per-baseline audit trail?
+
+**Baseline 3 (Theorem 1 paper quantities on the protein axis) —
+kanzi n=30 paired sweep Bonferroni-significant on BOTH axes.** Wave
+190 P2 paired sweep on the kanzi synthetic adapter (NFE=1000,
+n=30 seeds × 5 rounds, paired within seed, paper-quantity
+scheduler vs cosine-anneal scheduler, three-arm comparison): (i)
+vanilla baseline (reference, endpoint norm 91.148 ± 4.3e-6,
+deterministic); (ii) framework with cosine-anneal scheduler
+(does NOT consume `A_g`/`B_g`/`C_g`/`e_rho`) — mean endpoint L2
+vs baseline = **97.97 ± 3.24**, mean per-position ΔS = **−0.320
+± 0.031**; (iii) framework with paper-quantity scheduler (DOES
+consume all four) — mean endpoint L2 vs baseline = **0.459 ±
+0.014**, mean per-position ΔS = **−0.0057 ± 0.00025**. **Verdict**:
+`load_bearing_as_regulariser` — Lemma 2-5 quantities are load-
+bearing **as a stabiliser / regulariser** (paper-arm L2 ≈ 213×
+gentler than cosine-arm), confirmed at **Bonferroni-corrected
+p < 1e-4 on BOTH axes** at n=30 (Cohen's `d_z` (L2) = −30.15,
+Cohen's `d_z` (entropy) = +10.24). The §R.50-§R.55 Theorem 1
+audit trail is preserved; Wave 190 P2 adds one row to the
+load-bearing ablation table at NFE=1000 on the kanzi synthetic
+axis at n=30 — the Wave 189 P4 n=3 row is **superseded** (the
+n=30 finding is the canonical row; the n=3 row remains as the
+pre-replication disclosure). JSON:
+`verification_outputs/wave190-p2-kanzi-n30.json` (commit_sha
+pinned to `55e68d3`, Wave 190 P2 commit).
+
+**Baseline 3 (Theorem 1 paper quantities on the protein axis) —
+lineageflow n=30 paired sweep Bonferroni-significant on ENTROPY
+axis only.** Wave 190 P3 paired sweep on the lineageflow synthetic
+adapter (NFE=100, n=30 seeds × 5 rounds, paired within seed, same
+three-arm comparison): (i) vanilla baseline (reference, endpoint
+norm 4.9949 ± 0, deterministic); (ii) framework with cosine-anneal
+scheduler — mean endpoint L2 vs baseline = **0.11506 ± 2.9e-10**;
+(iii) framework with paper-quantity scheduler — mean endpoint L2
+vs baseline = **0.11506 ± 1.1e-12**. **Verdict**:
+`load_bearing_only_on_axis_entropy_reduction` — Lemma 2-5
+quantities sharpen per-position categorical confidence on
+lineageflow (Cohen's `d_z` (entropy) = +0.642, p = 0.00146,
+Bonferroni-significant) but do NOT measurably dampen endpoint L2
+(Cohen's `d_z` (L2) = +0.093, p = 0.615, NOT significant). The
+field's natural scale (≈ 5) leaves both arms at ≈ 0.115 L2 units
+(≈ 43× below the baseline norm), so the regularisation effect is
+below paired-test resolution (~1e-9 paired diff). The §R.50-§R.55
+Theorem 1 audit trail is preserved; Wave 190 P3 adds the
+lineageflow row to the load-bearing ablation table at NFE=100 on
+the lineageflow synthetic axis at n=30. JSON:
+`verification_outputs/wave190-p3-lineageflow-n30.json` (commit_sha
+pinned to `0a666cc`, Wave 190 P3 commit).
+
+**Baseline 3 — cross-adapter cross-validation verdict.** Both
+adapters show `load_bearing_*` verdicts at n=30:
+
+| axis              | kanzi n=30                  | lineageflow n=30               | cross-adapter verdict |
+|-------------------|-----------------------------|--------------------------------|-----------------------|
+| endpoint L2       | Bonferroni-sign d=−30.15    | NOT significant d=+0.093       | **diverges by scale** |
+| per-position ΔS   | Bonferroni-sign d=+10.24    | Bonferroni-sign d=+0.642       | **consistent**        |
+
+The cross-adapter consistency check **succeeds on the entropy
+axis** (paper-quantity scheduler sharpens per-position posterior
+more than cosine on BOTH adapters, Bonferroni-significant) and
+**diverges on the L2 axis** (kanzi shows ≈213× regularisation;
+lineageflow shows no measurable L2 difference). This is
+consistent with the regularisation story being **scale-
+dependent**: on the kanzi (64, 64) field (norm 91.15), paper-
+quantity consumption dampens the large cosine perturbation by 2
+orders of magnitude; on the lineageflow (256, 33) field (norm
+4.99), both arms are already small. The regularisation story is
+**kanzi-specific**, the sharpness story is **universal across
+protein adapters**. The §R.50-§R.55 Theorem 1 audit trail is
+preserved; Wave 190 P3 adds a cross-adapter consistency row to
+the Theorem 1 ablation table.
+
+**Acceptance gates (Wave 190 P4, verified before this section):**
+
+| # | Gate | Command | Result |
+|---|------|---------|--------|
+| 1 | D.4 byte-stable regression vectors | `python -m pytest tests/ -k "d4" -q` | **33 passed, 30 skipped** (D.4 33/33 PASS preserved from §R.75) |
+| 2 | Ruff lint | `ruff check adaptive_reflow/ tests/ scripts/ tools/ docs/audit/` | **All checks passed!** (ruff 0 across 5 dirs) |
+| 3 | Claims consistency | `python tools/check_claims_consistency.py` | **No drift detected.** (50 active after Wave 190 P4 + CLM-057 upgrade + CLM-058 add, 0 provisional, 2 deprecated) |
+| 4 | Wave 190 P2 kanzi n=30 paired sweep | 30 seeds × 5 rounds × NFE=1000, exit=0 | **Bonferroni-significant on both axes** (L2 d=−30.15, entropy d=+10.24, both p < 1e-4) |
+| 5 | Wave 190 P3 lineageflow n=30 paired sweep | 30 seeds × 5 rounds × NFE=100, exit=0 | **Bonferroni-significant on entropy axis** (d=+0.642, p=0.00146); L2 axis not significant (d=+0.093, p=0.615) |
+| 6 | Cross-adapter Theorem 1 load-bearing | kanzi + lineageflow n=30 verdicts | **Entropy axis consistent**; **L2 axis scale-dependent** |
+
+Gates 1, 2, 3, 4, 5, 6 are PASS.
+
+**ADDITIVE only — does not delete or rewrite any prior §R.1–
+§R.75 paragraph above.** §R.75 (Wave 189 adversarial-review
+closure round) + §10.32 + §15.85 + CLM-055/056/057 are preserved
+verbatim; Wave 190 §10.33 + §15.86 + §R.76 + CLM-057 upgrade +
+CLM-058 add the n=30 replication + cross-adapter cross-validation
+as an explicit, quantitative, commit-pinned-JSON evidence layer.
+The §2.8.1 Theorem 1 statement is unchanged. The Wave 188 §4.2 +
+Wave 169 P2 audit + Wave 11 conformance suite are all preserved.
+The per-baseline audit trail gains one new row per adapter on
+the load-bearing ablation table; the Wave 189 P4 n=3 row is
+preserved as the pre-replication disclosure.

@@ -45,12 +45,8 @@ def _ci95(vals: list[float]) -> tuple[float, float]:
     """
     n = len(vals)
     m = float(statistics.mean(vals))
-    s = float(statistics.pstdev(vals)) if n > 1 else 0.0
     # Sample standard deviation (ddof=1) — the proper σ̂
-    if n > 1:
-        sd = float(statistics.stdev(vals))
-    else:
-        sd = 0.0
+    sd = float(statistics.stdev(vals)) if n > 1 else 0.0
     sem = sd / math.sqrt(max(1, n))
     try:
         from scipy.stats import t as _t  # type: ignore
@@ -70,7 +66,7 @@ def _cohens_d(a_vals: list[float], b_vals: list[float]) -> float:
     """
     if len(a_vals) != len(b_vals):
         raise ValueError("paired lists must have equal length")
-    diffs = [float(a) - float(b) for a, b in zip(a_vals, b_vals)]
+    diffs = [float(a) - float(b) for a, b in zip(a_vals, b_vals, strict=True)]
     m = float(statistics.mean(diffs))
     sd = float(statistics.stdev(diffs)) if len(diffs) > 1 else 0.0
     if sd <= 1e-12:
@@ -87,7 +83,7 @@ def _paired_ttest(a_vals: list[float], b_vals: list[float]) -> tuple[float, int]
     """
     if len(a_vals) != len(b_vals):
         raise ValueError("paired lists must have equal length")
-    diffs = [float(a) - float(b) for a, b in zip(a_vals, b_vals)]
+    diffs = [float(a) - float(b) for a, b in zip(a_vals, b_vals, strict=True)]
     n = len(diffs)
     if n < 2:
         return (float("nan"), 0)
