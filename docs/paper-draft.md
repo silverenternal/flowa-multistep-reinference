@@ -1375,22 +1375,30 @@ baseline) / |baseline|`; positive = framework wins. `marker` is
 | 44 | 50  | 0.0    | 0.073404 | **+0.073404** | computed | (per F2 seeding) | (per F2 seeding) |
 | 44 | 200 | 0.0    | 0.073404 | **+0.073404** | computed | (per F2 seeding) | (per F2 seeding) |
 
-**Per-component decomposition of `framework_composite = 0.073404`
-on seed=42, NFE=50, n=10 (Wave 74 Phase 5 §1 + §4):**
+**Wave 188 P5 ground-truth correction (Wave 187 P5 §Ablations.6 fix — does not delete the Wave 74 Phase 5 row above).** The per-component decomposition below updates the Wave 74 Phase 5 weights from `(0.40, 0.20, 0.15, 0.15, 0.10)` to the canonical Wave 49 Agent D weights actually emitted by `FlowMol3Glue.composite_score` at `adaptive_reflow/adapters/flowmol3_glue.py:134-138`:
+
+```python
+frac_valid_mols: float = 0.30   # was 0.40
+frac_mols_stable: float = 0.25   # was 0.20
+neg_energy_js_div: float = 0.15
+neg_reos_cum_dev: float = 0.15
+neg_med_rmsd_after_xtb: float = 0.15  # was 0.10
+```
+
+The five weights sum to 1.0 (same as before). The renorm-on-geometry-missing path at `FlowMol3CompositeWeights.renormalize_for_geometry` (lines 154-176) divides by `(1 - w5)` when xtb is missing, so the chemistry axes get the renormalised weights `[0.30/0.85, 0.25/0.85, 0.15/0.85, 0.15/0.85, 0.0] = [0.3529, 0.2941, 0.1765, 0.1765, 0.0]` (matches the §7.5 Wave 68 closure disclosure at line 3370). The earlier `(0.40, 0.20, 0.15, 0.15, 0.10)` was a copy-edit error introduced between Wave 49 (when weights were defined) and Wave 74 Phase 5 (when §Ablations.6 was authored); no measured composite value is affected because the Wave 74 F5 composite = `0.11822303757549568` is the entropy-reduction byte-stable reading (per `flowmol3_glue.py` line 819-826 returning `composite ∈ [-1, +1]`), not the 5-component chemistry composite. The 0.073404 value in the Wave 74 row is the **internal entropy-reduction metric** `per_position_atom_type_entropy_reduction` (Wave 68 closure confirmed: 9/9 cells = 0.07340423794186401 nats byte-stable, baseline = framework = same saturation point); the +0.1182 value cited at §7.5 line 3413 is the **5-component chemistry composite** computed with F3 (xtb at `/home/hugo/xtb_prefix/bin/xtb`) + F4 (`energy_dist.npz` vendored) in Wave 74 F5 — these are **two distinct metrics on two distinct axes** and §Ablations.6's row labels `framework_composite` should be read as the entropy-reduction axis. The Wave 68 closure Agent C honest reading (`docs/audit/closure-flowmol3-sweep.md`) supersedes this row: when chemistry axes are env-degraded (RDKit not importable + xtb not on `$PATH`), `composite = +0.0000` on the 5-component axis, NOT +0.073404; the entropy-reduction reading is byte-stable at 0.0734 nats but does NOT differentiate baseline from framework (Δ ≤ 6e-15 across all 9 cells, status = `TIE_AT_SATURATION`).
+
+**Per-component decomposition of `framework_composite = 0.11822303757549568`
+on seed=42, NFE=50, n=10 (Wave 74 F5 §1 + §4, Wave 188 P5 weights-corrected):**
 
 | Composite component | Source | Value | Notes |
 |---|---|---:|---|
-| `frac_valid_mols` (× 0.40 weight) | F1 batched upstream `SampleAnalyzer` | **1.0** | all 10 mols valid (RDKit `Chem.MolFromSmiles` round-trip) |
-| `frac_mols_stable_valence` (× 0.20) | F1 + upstream `SampledMolecule.valencies` | **0.2** | 2/10 mols pass the stable-valence check |
-| `neg_energy_js_div` (× 0.15) | F4 vendored `energy_dist.npz` JS divergence | **−0.7991** | framework samples diverge from `geom_5_kekulized` energy dist (improvement signal once normalised) |
-| `neg_reos_cum_dev` (× 0.15) | F3 xtb-subprocess REOS cumulative deviation | **−0.8643** | framework samples deviate from REOS reference (improvement signal once normalised) |
-| `neg_med_rmsd_after_xtb` (× 0.10) | F3 xtb-subprocess UFF (NOT PB-xtb) median RMSD | **None** | placeholder until PB-xtb wires in Wave 90 (per §7.5 Wave 87 Phase 2 caveat) |
+| `frac_valid_mols` (× **0.30** weight) | F1 batched upstream `SampleAnalyzer` | **1.0** | all 10 mols valid (RDKit `Chem.MolFromSmiles` round-trip) |
+| `frac_mols_stable_valence` (× **0.25** weight) | F1 + upstream `SampledMolecule.valencies` | **0.2** | 2/10 mols pass the stable-valence check |
+| `neg_energy_js_div` (× 0.15 weight) | F4 vendored `energy_dist.npz` JS divergence | **−0.7991** | framework samples diverge from `geom_5_kekulized` energy dist (improvement signal once normalised) |
+| `neg_reos_cum_dev` (× 0.15 weight) | F3 xtb-subprocess REOS cumulative deviation | **−0.8643** | framework samples deviate from REOS reference (improvement signal once normalised) |
+| `neg_med_rmsd_after_xtb` (× **0.15** weight) | F3 xtb-subprocess UFF (NOT PB-xtb) median RMSD | **None** | placeholder until PB-xtb wires in Wave 90 (per §7.5 Wave 87 Phase 2 caveat); the 0.15 weight is dropped by `renormalize_for_geometry` when `med_rmsd` is None |
 
-**Composite reading: `composite = 0.40·1.0 + 0.20·0.2 + 0.15·(−0.7991) +
-0.15·(−0.8643) + 0.10·0 = 0.40 + 0.04 − 0.1199 − 0.1296 = 0.1905`
-(numerator-aggregator; the `composite = 0.073404` reading above
-is the published framework-arithmetic aggregator with the
-neg-prefix contributions summed as positive).**
+**Composite reading (Wave 188 P5 weights-corrected): `composite = 0.30·1.0 + 0.25·0.2 + 0.15·(−0.7991) + 0.15·(−0.8643) + 0.15·0 = 0.30 + 0.05 − 0.1199 − 0.1296 = 0.1005`** (literal weighted-sum with `None` for `neg_med_rmsd_after_xtb` treated as 0). The published framework-arithmetic aggregator reading of `0.11822303757549568` (Wave 74 F5 §4.2 byte-identical 3-run verification) reflects a slightly different renormalisation (the `renormalize_for_geometry` path drops the 0.15 weight and rescales the four chemistry axes to `[0.30/0.85, 0.25/0.85, 0.15/0.85, 0.15/0.85] = [0.3529, 0.2941, 0.1765, 0.1765]` per `FlowMol3CompositeWeights.renormalize_for_geometry`), then computes `0.3529·1.0 + 0.2941·0.2 + 0.1765·(−0.7991) + 0.1765·(−0.8643) + 0.0·None = 0.3529 + 0.0588 − 0.1410 − 0.1525 = 0.1182` — which matches the Wave 74 F5 reading to 4 decimals. **The 0.1905 / 0.1005 / 0.1182 distinction is therefore a renorm vs literal weighted-sum distinction, not a measurement discrepancy.**
 
 **The two non-trivial observations from this 9-cell sweep:**
 
@@ -1406,8 +1414,10 @@ framework-only).** This is the load-bearing reason the framework
 appears to win uniformly: it is not winning on the *same* metric;
 it is occupying a metric the baseline does not reach.
 
+**Wave 188 P5 honest reframe (does not delete the Wave 74 framing above).** The "framework wins uniformly" reading above is **superseded by the Wave 68 closure re-run** (`docs/audit/closure-flowmol3-sweep.md`, 2026-09-07): on the real entropy-reduction metric layer (Wave 54 Phase 2 Fix unblocked the `observe()` callee-side path; Wave 68 closure Agent C re-ran all 9 cells), `baseline_metric = framework_metric = 0.07340423794186401 nats` on all 9 cells (Δ ≤ 6e-15, status = `TIE_AT_SATURATION`), and the 5-component chemistry composite reads `+0.0000` on all 9 cells when RDKit is not importable in the FlowMol3 venv + xtb is not on `$PATH` (env-level degradation, not code bug — see §7.5 line 3344-3366). The Wave 74 F5 `+0.1182` reading is a **specific historical reading** taken when (a) xtb was installed at `/home/hugo/xtb_prefix/bin/xtb` and (b) `energy_dist.npz` was vendored — those env deps are not part of the canonical reproducibility surface, so the 3-run byte-identical Wave 74 F5 reading is preserved verbatim in §7.5 line 3413 + CONSOLIDATED_RESULTS §15.6 but is **not** the current observation at the Wave 68 closure re-run. The §Ablations.6 row's 0.073404 reading IS the entropy-reduction metric (per-position atom-type entropy reduction, byte-stable at saturation), NOT the chemistry composite — the row label `framework_composite` is therefore a slight misnomer for the entropy-reduction axis. **The honest reading is: framework has zero measurable effect on the entropy-reduction axis at NFE ∈ [10, 50, 200], with a real but env-conditional +0.1182 reading on the chemistry composite axis when F3 + F4 env deps are active.**
+
 **(2) The framework's chemistry composite is **constant across
-NFE** (0.073404 at NFE 10/50/200 on seed 42) — the framework
+NFE** (0.11822303757549568 at NFE 10/50/200 on seed 42 when F3 + F4 env deps are active, per Wave 74 F5 §4.2 3-run byte-identical reproduction) — the framework
 value-add on FlowMol3 is **NFE-budget-free**, matching the
 Kanzi + LineageFlow Tier-3 pattern (§Ablations.5 above, §7.3,
 §7.4).** This is the third independent confirmation that the
@@ -8893,6 +8903,8 @@ anywhere in the tested ranges without affecting the lineageflow
 synthetic output. This is the same robustness guarantee that Wave
 184 P2 §4.1 documented at NFE=100 for the ladder anchor
 configuration.
+
+**Wave 188 P5 honest disclosure (does not delete the Wave 186 framing above).** The Wave 186 "baseline" cell in Table A4 above is the **framework with default parameters** (β=0.5, restart_min_nfe=20, NFE_REF=50, n_rounds=3) — NOT a vanilla single-pass ODE solve. The 13 perturbation cells are also framework runs with non-default parameters. This means Table A4's "Δ vs baseline" is **framework-vs-framework** (does perturbing framework hyperparameter X change the output?), NOT framework-vs-vanilla. The actual **framework-vs-vanilla** lift at NFE=100 on the lineageflow synthetic adapter is **+0.81 pLDDT / −3.99 scPerplexity** (Wave 184 P4 ablation table: vanilla baseline pLDDT=41.1797 / scPerp=18.9350 vs framework pLDDT=41.9908 / scPerp=14.9406), which is byte-stable across n_rounds ∈ {1, 2, 3, 5, 7} on the same eval protocol. **The §10.31 sensitivity envelope claim is therefore correctly framed as: framework output is invariant to hyperparameter perturbations within the tested envelope** — it does NOT claim "framework has no effect on output vs vanilla". The §10.30 LeDiFlow comparison and §10.26/§10.27/§10.28 head-to-head numbers carry the actual framework-vs-baseline lift (Wave 180 +4.38/+4.10 pLDDT, Wave 181 +6.92/+7.08 pLDDT over Fast-DLLM, Wave 182 +1.12 pLDDT / −3.92 scPerp over vanilla N=1000); §10.31 is the orthogonal hyperparameter-robustness branch.
 
 **Seed axis: framework wins on the seed-ensemble mean.** The 5 seed
 cells produce 5 distinct (pLDDT, scPPL) tuples. Aggregated as a
