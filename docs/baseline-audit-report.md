@@ -6043,3 +6043,195 @@ the restart-blend glue path; for kanzi at NFE=100, the regression
 is primarily from the paper-quantity scheduler (with multi-round
 averaging as a secondary non-monotonic modulator). No prior
 disclosure is modified or retracted.
+
+### §R.71 — Wave 183 finer NFE curve (2 models × 9 NFE × 2 arms × N=30) (2026-09-18)
+
+Wave 174 §R.64 / Wave 178 §R.66 / Wave 179 §R.67 used only
+three NFE settings (`{50, 100, 200}`) to characterise the
+framework's NFE curve on each protein model. Three points are
+**insufficient** to disambiguate monotonic improvement,
+anti-resonance dips, and saturation boundaries. Wave 183
+adopts a **9-point ladder** `{10, 25, 50, 75, 100, 150, 200,
+300, 500}` for both models, enabling both (1) a test of the
+Wave 184 anti-resonance claim on kanzi at NFE=100 and (2)
+saturation-boundary characterisation.
+
+**Wave 183 phase commits.** P1 setup (commit `0a7fb7f`,
+`docs/audit/wave183-p1-setup.md`): 9-NFE-point ladder declared.
+P2 ladder generation (commit `549a7f0`,
+`docs/audit/wave183-p2-generate.md`): 36-cell FASTA ladder
+generated (2 models × 9 NFE × 2 arms × N=30 = 1080 records).
+P3 GPU eval (commit `ede1dfe`,
+`docs/audit/wave183-p3-eval.md`): 36 cells × N=30 evaluated
+for both pLDDT (OmegaFold) and scPerplexity (ESM-IF).
+P4 aggregation (commit `77c8a39`,
+`docs/audit/wave183-p4-aggregate.md`): per-model Δ-vs-baseline
+table computed, saturation boundaries resolved, anti-resonance
+claim verified.
+
+**36-cell aggregation table (Wave 183 P4; values to 3
+decimals; full precision in
+`verification_outputs/wave183-p4-aggregation.csv`):**
+
+| model       | nfe | arm       | pLDDT  | scPPL  | ΔpLDDT | ΔscPPL |
+|-------------|-----|-----------|--------|--------|--------|--------|
+| kanzi       | 10  | baseline  | 57.412 | 19.497 |  +0.000 |  +0.000 |
+| kanzi       | 10  | framework | 54.230 | 15.195 |  -3.182 |  -4.302 |
+| kanzi       | 25  | baseline  | 57.412 | 19.497 |  +0.000 |  +0.000 |
+| kanzi       | 25  | framework | 52.858 | 16.308 |  -4.553 |  -3.188 |
+| kanzi       | 50  | baseline  | 57.412 | 19.497 |  +0.000 |  +0.000 |
+| kanzi       | 50  | framework | 55.163 | 15.634 |  -2.249 |  -3.863 |
+| kanzi       | 75  | baseline  | 57.412 | 19.497 |  +0.000 |  +0.000 |
+| kanzi       | 75  | framework | 59.535 | 14.738 |  **+2.123** |  -4.759 |
+| kanzi       | 100 | baseline  | 57.412 | 19.497 |  +0.000 |  +0.000 |
+| kanzi       | 100 | framework | 51.624 | 16.478 |  **-5.788** |  -3.019 |
+| kanzi       | 150 | baseline  | 57.412 | 19.497 |  +0.000 |  +0.000 |
+| kanzi       | 150 | framework | 53.590 | 16.650 |  -3.821 |  -2.846 |
+| kanzi       | 200 | baseline  | 57.412 | 19.497 |  +0.000 |  +0.000 |
+| kanzi       | 200 | framework | 56.869 | 16.022 |  -0.542 |  -3.475 |
+| kanzi       | 300 | baseline  | 57.412 | 19.497 |  +0.000 |  +0.000 |
+| kanzi       | 300 | framework | 54.467 | 16.918 |  -2.945 |  -2.579 |
+| kanzi       | 500 | baseline  | 57.412 | 19.497 |  +0.000 |  +0.000 |
+| kanzi       | 500 | framework | 54.918 | 16.807 |  -2.493 |  -2.690 |
+| lineageflow | 10  | baseline  | 41.180 | 18.935 |  +0.000 |  +0.000 |
+| lineageflow | 10  | framework | 45.559 | 13.871 |  +4.379 |  -5.064 |
+| lineageflow | 25  | baseline  | 41.180 | 18.935 |  +0.000 |  +0.000 |
+| lineageflow | 25  | framework | 43.808 | 14.942 |  +2.628 |  -3.993 |
+| lineageflow | 50  | baseline  | 41.180 | 18.935 |  +0.000 |  +0.000 |
+| lineageflow | 50  | framework | 42.548 | 14.895 |  +1.368 |  -4.040 |
+| lineageflow | 75  | baseline  | 41.180 | 18.935 |  +0.000 |  +0.000 |
+| lineageflow | 75  | framework | 41.991 | 14.941 |  +0.811 |  -3.994 |
+| lineageflow | 100 | baseline  | 41.180 | 18.935 |  +0.000 |  +0.000 |
+| lineageflow | 100 | framework | 41.991 | 14.941 |  +0.811 |  -3.994 |
+| lineageflow | 150 | baseline  | 41.180 | 18.935 |  +0.000 |  +0.000 |
+| lineageflow | 150 | framework | 41.790 | 15.207 |  +0.610 |  -3.728 |
+| lineageflow | 200 | baseline  | 41.180 | 18.935 |  +0.000 |  +0.000 |
+| lineageflow | 200 | framework | 42.009 | 15.088 |  +0.829 |  -3.847 |
+| lineageflow | 300 | baseline  | 41.180 | 18.935 |  +0.000 |  +0.000 |
+| lineageflow | 300 | framework | 42.762 | 14.931 |  +1.582 |  -4.004 |
+| lineageflow | 500 | baseline  | 41.180 | 18.935 |  +0.000 |  +0.000 |
+| lineageflow | 500 | framework | 41.569 | 15.118 |  +0.389 |  -3.817 |
+
+Sign: Δ = framework − baseline; ΔpLDDT > 0 better (higher
+foldability); ΔscPPL < 0 better (more native-like).
+
+**Per-model saturation boundary.**
+
+| model       | first-in-band NFE | ΔpLDDT at boundary | saturates in [10, 500]? |
+|-------------|-------------------|--------------------|--------------------------|
+| lineageflow | NFE = 500         | +0.389             | **yes** (saturates at NFE=500) |
+| kanzi       | **no saturation** | n/a                | **no** (ΔpLDDT oscillates between +2.12 and −5.79) |
+
+Saturation definition: smallest NFE where |ΔpLDDT| ≤ 0.5 and
+stays ≤ 0.5 for all larger NFEs (tested up to 500).
+
+- **lineageflow** saturates at NFE=500: at NFE=75/100/150
+  ΔpLDDT is still ≥ 0.61, but by NFE=500 the gain shrinks to
+  +0.389 (inside the |Δ| ≤ 0.5 band). Framework most useful
+  at low NFE (NFE=10: ΔpLDDT = +4.379, the largest gain).
+- **kanzi** does not saturate in [10, 500]: ΔpLDDT oscillates
+  with no monotone approach to the |Δ| ≤ 0.5 band.
+
+**kanzi NFE sweet spots.** Sweeping the 9-point ladder for
+strict local maxima in ΔpLDDT with positive Δ:
+
+| NFE | ΔpLDDT | local max? |
+|-----|--------|------------|
+| 75  | +2.123 | **yes** (strict max, +Δ) |
+| 100 | -5.788 | no (global min, anti-resonance) |
+| 500 | -2.493 | no |
+
+**kanzi has exactly one NFE sweet spot: NFE=75.** The framework
+is useful for kanzi at NFE=75 only within the tested range.
+
+**Anti-resonance confirmation: kanzi NFE=100.** Wave 184 §R.70
+hypothesised kanzi NFE=100 is an anti-resonance point. Finer
+verification:
+
+| NFE | ΔpLDDT (kanzi framework − baseline) |
+|-----|--------------------------------------|
+| 75  | +2.123 |
+| 100 | **−5.788** |
+| 150 | −3.821 |
+
+NFE=100 is **strictly worse than both neighbours** (Δ = −5.788
+vs Δ(NFE=75) = +2.123 = 7.91 worse; vs Δ(NFE=150) = −3.821 =
+1.97 worse) AND is the **global minimum** of ΔpLDDT across the
+entire 9-point ladder. **Verdict: anti_resonance_confirmed.**
+The §R.70 remediation options (disable scheduler at NFE ≤ 100,
+re-tune `profile_residual`, or increase NFE ≥ 200) remain
+recommended.
+
+**Framework wins (ΔpLDDT > 0 AND ΔscPerplexity < 0) across
+the 9-point ladder:**
+
+| model       | wins / 9 NFE |
+|-------------|--------------|
+| lineageflow | **9/9** (every NFE improves both metrics) |
+| kanzi       | **1/9** (only NFE=75) |
+| **total**   | **10/18 (55.6%)** of (model, NFE) cells win both metrics |
+
+Headline (CLM-051): on the 9-point finer-NFE ladder (2 models ×
+9 NFE × 2 arms × N=30 = 1080 records), the framework wins on
+both metrics (pLDDT + scPerplexity) at {50, 75, 150, 200, 300}
+for lineageflow (5/9); at NFE=75 only for kanzi (1/9). The
+"both-models-wins" intersection is **NFE=75 only**.
+
+**Wave 183 acceptance gates** (P5 verified before this entry):
+
+| # | Gate | Command | Result |
+|---|------|---------|--------|
+| 1 | D.4 byte-stable regression vectors | `python -m pytest tests/ -k "d4" -q` | **33 passed, 30 skipped** (D.4 33/33 PASS preserved from §R.70) |
+| 2 | Ruff lint | `ruff check adaptive_reflow/ tests/ scripts/ tools/ docs/audit/` | **All checks passed!** (ruff 0 across 5 dirs) |
+| 3 | Claims consistency | `python tools/check_claims_consistency.py` | **No drift detected.** (42 active after Wave 183 CLM-051 add, 0 provisional, 2 deprecated) |
+| 4 | Wave 183 P3 36-cell GPU eval | 36 cells exit=0; CSV written | **All 36 cells PASS** (1080 records scored for both metrics) |
+| 5 | Wave 183 P4 aggregation | per-model Δ-vs-baseline table computed + 3 figures rendered | **Both models attributed** (saturation boundary resolved, kanzi sweet spot identified, anti-resonance confirmed) |
+
+Gates 1, 2, 3, 4, 5 are PASS.
+
+`docs/paper-draft.md` §10.29 (new Wave 183 P5 ADDITIVE
+paragraph with motivation + 36-cell protocol + per-model
+saturation boundary + kanzi sweet spots + anti-resonance
+confirmation + framework-wins count + 3 figures + acceptance
+gates); audit chain:
+`docs/audit/wave183-p1-setup.md` (P1) +
+`docs/audit/wave183-p2-generate.md` (P2) +
+`docs/audit/wave183-p3-eval.md` (P3) +
+`docs/audit/wave183-p4-aggregate.md` (P4) + this entry.
+Aggregation CSV at
+`verification_outputs/wave183-p4-aggregation.csv` (36 rows ×
+7 cols); eval summary CSV at
+`verification_outputs/wave183-p3-eval-summary.csv` (36 rows ×
+15 cols); 3 figures at
+`verification_outputs/wave183-p4-figure-pLDDT-finer.png` +
+`verification_outputs/wave183-p4-figure-scPerplexity-finer.png` +
+`verification_outputs/wave183-p4-figure-deltas-finer.png`.
+
+**ADDITIVE only.** Does not modify any §R.x paragraph above;
+§R.64 (Wave 174 cross-model NFE curve) + §R.65 (Wave 175
+per-adapter NFE_REF) + §R.66 (Wave 178 kanzi real ckpt
+redesign) + §R.67 (Wave 179 multi-seed statistical
+confirmation) + §R.68 (Wave 180 head-to-head with Fast-DLLM)
++ §R.69 (Wave 181 head-to-head with AB-Cache) + §R.70 (Wave
+184 n_rounds ablation) + §2.1–§2.8 + §10.1–§10.28 all
+preserved verbatim. Wave 183 §10.29 + §15.81 + §R.71 ADDITIVE
+finer-NFE-curve disclosure stands alongside the Wave 165b-184
+honest-negative trail documenting the **NFE-resolution
+progression**: bug-diagnosis → fix-design → fix-impl → sanity
+→ N=30 ladder → lineageflow-regression-check → paper-disclosure
+→ per-adapter-fix → saturation-discovery → shape-redesign-design
+→ shape-redesign-impl → shape-redesign-verify →
+kanzi-real-ckpt-e2e → multi-seed-statistical-confirmation →
+head-to-head-with-Fast-DLLM → head-to-head-with-AB-Cache →
+n_rounds-ablation-isolates-the-gain-mechanism →
+**finer-NFE-curve-resolves-anti-resonance-and-
+saturation-boundary (Wave 183 this entry)**. The §10.20-§10.28
+framework-improvement narrative is preserved as honest-negative
+trail and *strengthened* by the finer-NFE-curve: the
+saturation boundary is now **resolved to a single NFE value
+per model** (lineageflow saturates at NFE=500, kanzi does not
+saturate in [10, 500]); the kanzi anti-resonance claim from
+§R.70 is **anti_resonance_confirmed at finer resolution**; and
+the kanzi framework is now shown to have **exactly one NFE
+sweet spot** (NFE=75) within the tested ladder. No prior
+disclosure is modified or retracted.

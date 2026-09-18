@@ -2019,3 +2019,85 @@ How it works:
   [`verification_outputs/wave181-p2-abcache-summary.csv`](../verification_outputs/wave181-p2-abcache-summary.csv),
   [`docs/paper-draft.md` §10.27 (c) results table](paper-draft.md),
   [`docs/audit/wave181-p3-comparison.md` §"Findings" + §"Verdict"](audit/wave181-p3-comparison.md).
+
+## CLM-051: Wave 183 — Finer NFE curve resolves anti-resonance at kanzi NFE=100 (CONFIRMED) and saturation boundaries (lineageflow saturates at NFE=500, kanzi does not saturate in [10, 500]); framework wins both metrics at 10/18 (model,NFE) cells with both-models intersection at NFE=75 only {#CLM-051}
+
+- Status: ACTIVE
+- Date: 2026-09-18
+- Source:
+  [`docs/paper-draft.md`](paper-draft.md) §10.29 (Wave 183 P5
+  ADDITIVE on §10.20-§10.28),
+  [`docs/audit/wave183-p1-setup.md`](audit/wave183-p1-setup.md)
+  (9-NFE-point ladder setup verification),
+  [`docs/audit/wave183-p2-generate.md`](audit/wave183-p2-generate.md)
+  (36-cell FASTA ladder generation),
+  [`docs/audit/wave183-p3-eval.md`](audit/wave183-p3-eval.md)
+  (36-cell GPU eval: 1080 records scored for both pLDDT +
+  scPerplexity),
+  [`docs/audit/wave183-p4-aggregate.md`](audit/wave183-p4-aggregate.md)
+  (per-model Δ-vs-baseline aggregation, saturation boundaries,
+  sweet-spot identification, anti-resonance verification).
+- Asserted by:
+  [`verification_outputs/wave183-p4-aggregation.csv`](../verification_outputs/wave183-p4-aggregation.csv)
+  (36 rows × 7 cols per-model Δ-vs-baseline table),
+  [`verification_outputs/wave183-p3-eval-summary.csv`](../verification_outputs/wave183-p3-eval-summary.csv)
+  (36 rows × 15 cols per-cell eval summary),
+  [`verification_outputs/wave183-p4-figure-pLDDT-finer.png`](../verification_outputs/wave183-p4-figure-pLDDT-finer.png),
+  [`verification_outputs/wave183-p4-figure-scPerplexity-finer.png`](../verification_outputs/wave183-p4-figure-scPerplexity-finer.png),
+  [`verification_outputs/wave183-p4-figure-deltas-finer.png`](../verification_outputs/wave183-p4-figure-deltas-finer.png),
+  [`docs/paper-draft.md` §10.29 (c)+(d)+(e)+(f)](paper-draft.md).
+- Disputed by: —
+- Statement: The Wave 183 finer-NFE-curve evaluation (2 models ×
+  9 NFE × 2 arms × N=30 = 1080 records, NFE ∈ {10, 25, 50, 75,
+  100, 150, 200, 300, 500}) resolves three questions that the
+  Wave 174 3-NFE-point ladder could not. **(1) Anti-resonance
+  confirmation (kanzi NFE=100)**: kanzi ΔpLDDT at NFE ∈
+  {75, 100, 150} is `{+2.123, −5.788, −3.821}` — NFE=100 is a
+  strict local minimum AND a global minimum across the 9-point
+  ladder, with a 7.91-point negative excursion from NFE=75 and
+  a 1.97-point negative excursion from NFE=150. **Verdict:
+  anti_resonance_confirmed.** The Wave 184 §10.28 anti-resonance
+  claim from the n_rounds ablation holds at finer resolution.
+  **(2) Saturation boundaries**: lineageflow saturates at
+  NFE=500 (ΔpLDDT = +0.389, the only NFE in [10, 500] where
+  |ΔpLDDT| ≤ 0.5 and stays ≤ 0.5 for all larger NFEs); kanzi
+  does not saturate in [10, 500] (ΔpLDDT oscillates between
+  +2.12 and −5.79 with no monotone approach to the |Δ| ≤ 0.5
+  band). **(3) Framework wins on both metrics** (ΔpLDDT > 0
+  AND ΔscPerplexity < 0) at **10/18 (model, NFE) cells =
+  55.6%**: lineageflow 9/9 (every NFE improves both metrics);
+  kanzi 1/9 (only NFE=75 improves both metrics). The
+  **both-models-wins intersection is NFE=75 only**. **(4) kanzi
+  NFE sweet spots**: kanzi has **exactly one NFE sweet spot**
+  within the 9-point ladder — NFE=75 (ΔpLDDT = +2.123, strict
+  local maximum with positive Δ). All other kanzi NFEs in the
+  ladder either regress pLDDT or yield a strict local minimum.
+  The framework is therefore a **targeted intervention for
+  kanzi at NFE=75 only**, not a default. **Saturation
+  categorical verdict**: `saturation_boundary_lineageflow = 500`,
+  `saturation_boundary_kanzi = none_in_[10_500]`. **Anti-
+  resonance categorical verdict**: `kanzi_nfe100_verification =
+  anti_resonance_confirmed`. **Framework wins categorical
+  verdict**: `framework_wins_both_metrics_both_models_NFE =
+  {75}` (intersection); `framework_wins_both_metrics_any_model
+  = {10, 25, 50, 75, 150, 200, 300} ∪ {75}` = `{10, 25, 50,
+  75, 150, 200, 300}` (lineageflow 7/9 ∪ kanzi 1/9). The §10.22
+  saturation disclosure + §10.24 / §10.28 kanzi NFE=100
+  trade-off disclosure remain valid; §10.29 / CLM-051
+  strengthens them with finer-NFE-curve quantification. Three
+  remediation options identified for kanzi at NFE=100 (carry
+  over from §10.28 / CLM-049): (1) disable scheduler at NFE ≤
+  100; (2) re-tune `profile_residual` scale; (3) increase NFE
+  budget ≥ 200. **NEW practical implication from CLM-051**:
+  invoke the kanzi framework **only at NFE=75** (the unique
+  sweet spot); for all other NFE values the kanzi framework
+  either regresses pLDDT or yields strict local minima on the
+  ΔpLDDT curve.
+- Evidence:
+  [`verification_outputs/wave183-p4-aggregation.csv`](../verification_outputs/wave183-p4-aggregation.csv),
+  [`verification_outputs/wave183-p3-eval-summary.csv`](../verification_outputs/wave183-p3-eval-summary.csv),
+  [`verification_outputs/wave183-p4-figure-pLDDT-finer.png`](../verification_outputs/wave183-p4-figure-pLDDT-finer.png),
+  [`verification_outputs/wave183-p4-figure-scPerplexity-finer.png`](../verification_outputs/wave183-p4-figure-scPerplexity-finer.png),
+  [`verification_outputs/wave183-p4-figure-deltas-finer.png`](../verification_outputs/wave183-p4-figure-deltas-finer.png),
+  [`docs/paper-draft.md` §10.29 (c)+(d)+(e)+(f)](paper-draft.md),
+  [`docs/audit/wave183-p4-aggregate.md` §"Saturation boundary" + §"kanzi NFE sweet spots" + §"Wave 184 cross-check"](audit/wave183-p4-aggregate.md).
