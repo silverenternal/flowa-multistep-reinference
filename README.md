@@ -463,8 +463,8 @@ Tier 3 real-checkpoint experiments (N=1000 per arm):
 Tier 1 + Tier 2 pretrained + synthetic (matched-NFE / matched-quality):
 
 - CIFAR-10 RF v2 FID: 218.87 → 122.18 (-44.17%)
-- 2D Two Moons W₂: 0.5029 → 0.4663 (-7.28%)
-- 2D Eight Gaussians W₂: 0.6606 → 0.5919 (-10.40%)
+- 2D Two Moons W₂: 0.5029 → 0.4663 (-7.28%, pre-cd70821 reading — see Wave 188 P5 honest reframe in paper §4.2; post-cd70821 baseline W₂=0.0709 beats every framework scheduler)
+- 2D Eight Gaussians W₂: 0.6606 → 0.5919 (-10.40%, pre-cd70821 reading — post-cd70821 baseline W₂=0.1764 beats CosineAnneal +3.78%)
 - MNIST FM FID: 409.18 → 347.75 (-15.01%)
 
 Internal composite axis (3/3 Tier 3 models byte-stable):
