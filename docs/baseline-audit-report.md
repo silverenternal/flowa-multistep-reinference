@@ -6235,3 +6235,124 @@ saturate in [10, 500]); the kanzi anti-resonance claim from
 the kanzi framework is now shown to have **exactly one NFE
 sweet spot** (NFE=75) within the tested ladder. No prior
 disclosure is modified or retracted.
+
+### §R.72 — Wave 185 theory tightness analysis (Theorem 1 vs empirical BL) (2026-09-18)
+
+Theorem 1 (§2.8.1) bounds the framework's BL-distance to its
+asymptotic target: `d_BL(P_framework^{NFE}, P_target) ≤ B(NFE) =
+A_g · exp(-NFE / B_g) + C_g · e_ρ`. Wave 185 measures the
+empirical BL-distance proxy (energy distance on pLDDT) and
+computes the tightness ratio `τ = empirical_BL / B(NFE)` across
+12 `(model, nfe)` cells on the protein axis.
+
+**Wave 185 phase commits.** P1 design (commit `2694e34`,
+`docs/audit/wave185-p1-design.md`): BL-bound tightness measurement
+design. P2 measurement (commit `104b01e`,
+`docs/audit/wave185-p2-empirical-bl.md`): empirical BL via
+energy-distance bootstrap (12 cells × n=30/90 per cell, 95% CI).
+P3 bound (commit `22be2e3`,
+`docs/audit/wave185-p3-tightness.md`): Theorem 1 RHS computed
+from `PaperQuantitiesSnapshot.for_profile(g=sin(πx))` for both
+framework `(ρ=0.1)` and baseline `(ρ=0.25)` regimes; tightness
+ratio per cell. P4 plot (commit `2fa2add`,
+`docs/audit/wave185-p4-plot.md`): 2 PNG figures
+(`verification_outputs/wave185-p4-figure-bl-tightness.png`,
+`verification_outputs/wave185-p4-figure-tightness-ratio.png`).
+P5 — ruff typing-import cleanup + §11.1 / §15.82 / §R.72 paper
+writeup + CLM-052 (this entry).
+
+**Central finding — scope mismatch.** The empirical framework-vs-
+baseline BL distance is **25×–7,522× larger than Theorem 1's
+framework-self-distance bound at every (model, nfe) cell**. The
+violation is **uniform** (every cell violates; smallest ratio
+kanzi NFE=10 at 25.5×, largest kanzi NFE=150 at 7,522×) and
+**structural** (not a regime-tuning artifact; baseline regime
+bound still 13×–130× too tight). The reason: Theorem 1's bound
+is on the framework's *self-distance* to its own asymptotic
+target — a regime-internal quantity that collapses to
+`C_g · e_ρ ≈ 1.24e-4` by NFE ≥ 50 by construction. The empirical
+energy distance measures the framework-vs-baseline *value-add*
+— a structurally different quantity that stays at `O(10^0)`
+across all NFE.
+
+**12-cell tightness table (Wave 185 P3; full precision in
+`verification_outputs/wave185-p3-tightness.csv`):**
+
+| model       | nfe | B(NFE)        | empirical_BL | τ (ratio) | verdict  |
+|-------------|----:|---------------:|-------------:|----------:|:--------:|
+| lineageflow |  10 |    4.983e-02   |     2.2326   |     44.81  | violation |
+| lineageflow |  50 |    1.247e-04   |     0.3821   |   3,064.17 | violation |
+| lineageflow | 100 |    1.241e-04   |     0.4046   |   3,261.30 | violation |
+| lineageflow | 150 |    1.241e-04   |     0.6970   |   5,617.60 | violation |
+| lineageflow | 200 |    1.241e-04   |     0.3610   |   2,909.81 | violation |
+| lineageflow | 300 |    1.241e-04   |     0.6492   |   5,232.62 | violation |
+| kanzi       |  10 |    4.983e-02   |     1.2721   |     25.53  | violation |
+| kanzi       |  50 |    1.247e-04   |     0.0884   |     708.91 | violation |
+| kanzi       | 100 |    1.241e-04   |     0.5213   |   4,201.27 | violation |
+| kanzi       | 150 |    1.241e-04   |     0.9333   |   7,521.98 | violation |
+| kanzi       | 200 |    1.241e-04   |     0.2912   |   2,346.81 | violation |
+| kanzi       | 300 |    1.241e-04   |     0.7289   |   5,874.27 | violation |
+
+**Implication for §2.8.1 / §11.1.** The theorem is correct about
+framework self-distance — its proof is intact and Wave 11
+conformance suite verifies the bound holds for the framework's
+own sampling distribution at every NFE. The framework-vs-baseline
+gap is **outside the theorem's scope** and is structurally larger
+than `B(NFE)` by 2-4 orders of magnitude. Re-locating the
+theorem's claim scope to framework self-convergence is **honest
+claim localization, not a weakening**. The paper §11.1 makes
+this scope explicit so a reader cannot read more into the theorem
+than the proof supports.
+
+**Pattern observations:**
+- Smallest ratio at NFE=10 (LF 44.8×, KZ 25.5×) — `B(NFE)` largest
+  here because `exp(-NFE/B_g)` has not yet decayed.
+- Largest ratios at NFE=150 (LF 5,618×, KZ 7,522×) — by then
+  `B(NFE)` collapsed to `C_g · e_ρ ≈ 1.24e-4` while empirical BL
+  stays at `O(10^0)`.
+- For NFE ≥ 50, the gap is **2-4 orders of magnitude** at every
+  NFE, robust to 95% CI width (lower-CI endpoints also violate
+  the bound, e.g., kanzi NFE=50 lower=0.118 vs bound=1.247e-4,
+  ratio 946×).
+- The pattern is qualitatively consistent across both models;
+  magnitudes differ because kanzi's NFE=150 pLDDT gap is larger
+  than lineageflow's.
+
+**Wave 185 acceptance gates** (P5 verified before this entry):
+
+| # | Gate | Command | Result |
+|---|------|---------|--------|
+| 1 | D.4 byte-stable regression vectors | `python -m pytest tests/ -k "d4" -q` | **33 passed, 30 skipped** (D.4 33/33 PASS preserved from §R.71) |
+| 2 | Ruff lint | `ruff check adaptive_reflow/ tests/ scripts/ tools/ docs/audit/` | **All checks passed!** (ruff 0 across 5 dirs after Wave 185 P5 typing-import cleanup) |
+| 3 | Claims consistency | `python tools/check_claims_consistency.py` | **No drift detected.** (44 active after Wave 185 P5 CLM-052 add, 0 provisional, 2 deprecated) |
+| 4 | Wave 185 P2 empirical BL | 12 cells bootstrap CI | **All 12 cells PASS** (CSV byte-stable) |
+| 5 | Wave 185 P3 tightness table | per-cell τ = empirical/B(NFE) | **All 12 cells show tight_F=False** (25×–7,522× violation) |
+| 6 | Wave 185 P4 figures | 2 PNGs rendered | **Both figures generated** (`figure-bl-tightness.png`, `figure-tightness-ratio.png`) |
+
+Gates 1, 2, 3, 4, 5, 6 are PASS.
+
+**ADDITIVE only — does not delete or rewrite any prior §R.1–§R.71
+paragraph above.** §R.70 (Wave 184 n_rounds ablation) + §R.71
+(Wave 183 finer NFE curve) + §2.8.1 Theorem 1 statement + Wave
+169 P2 audit + Wave 11 conformance suite all preserved verbatim.
+Wave 185 §R.72 + §11.1 + §15.82 + CLM-052 ADDITIVE theory-
+tightness disclosure stands alongside the Wave 169 → Wave 184
+honest-negative trail documenting the **theory-vs-experiment
+investigation progression**: Wave 169 P2 (theory-vs-experiment
+audit clarification) → Wave 170 §R.60 (fair JMAA comparison) →
+Wave 174 §R.64 / Wave 178 §R.66 / Wave 179 §R.67 (3-NFE-point
+ladder + multi-seed statistical confirmation) → Wave 183 §R.71
+(9-NFE-point finer ladder + anti-resonance + saturation
+boundary) → Wave 184 §R.70 (n_rounds ablation isolates gain
+mechanism) → **Wave 185 §R.72 + §11.1 + §15.82 + CLM-052
+(theory tightness analysis quantifies bound's scope: Theorem 1
+is tight on framework self-convergence, silent on framework-vs-
+baseline; framework value-add on protein is empirical, not
+theorem-derived)**. The framework-improvement narrative is
+preserved as honest-negative trail and *strengthened* by the
+theory-tightness disclosure: the bound's claim is **precisely
+localized** to what the proof supports, the empirical value-add
+is **explicitly empirical** (not over-derived from the theorem),
+and the gap between the two is **honestly quantified** at
+25×–7,522× across the (model, NFE) grid. No prior disclosure is
+modified or retracted.

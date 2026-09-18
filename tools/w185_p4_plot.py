@@ -151,7 +151,7 @@ def plot_tightness_ratio(rows: list[dict]) -> None:
             label=f"{meta['label']}",
             zorder=3,
         )
-        for x, y in zip(nfe, ratio):
+        for x, y in zip(nfe, ratio, strict=False):
             ax.annotate(
                 f"{y:.0f}×",
                 xy=(x, y),

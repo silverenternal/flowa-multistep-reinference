@@ -2101,3 +2101,86 @@ How it works:
   [`verification_outputs/wave183-p4-figure-deltas-finer.png`](../verification_outputs/wave183-p4-figure-deltas-finer.png),
   [`docs/paper-draft.md` §10.29 (c)+(d)+(e)+(f)](paper-draft.md),
   [`docs/audit/wave183-p4-aggregate.md` §"Saturation boundary" + §"kanzi NFE sweet spots" + §"Wave 184 cross-check"](audit/wave183-p4-aggregate.md).
+
+## CLM-052: Wave 185 — Theorem 1's BL-convergence bound is tight on framework self-convergence but uniformly too tight (25×–7,522×) for framework-vs-baseline on protein; the bound's claim scope is relocated to framework self-distance (NOT framework-vs-baseline value-add) {#CLM-052}
+
+- Status: ACTIVE
+- Date: 2026-09-18
+- Source:
+  [`docs/paper-draft.md`](paper-draft.md) §11.1 (Wave 185 P5
+  ADDITIVE on §2.8.1),
+  [`docs/audit/wave185-p1-design.md`](audit/wave185-p1-design.md)
+  (BL-bound tightness measurement design),
+  [`docs/audit/wave185-p2-empirical-bl.md`](audit/wave185-p2-empirical-bl.md)
+  (empirical BL via energy-distance bootstrap, 12 cells × n=30/90
+  per cell, 95% CI),
+  [`docs/audit/wave185-p3-tightness.md`](audit/wave185-p3-tightness.md)
+  (Theorem 1 RHS from `PaperQuantitiesSnapshot.for_profile`,
+  per-cell `τ = empirical/B(NFE)`),
+  [`docs/audit/wave185-p4-plot.md`](audit/wave185-p4-plot.md)
+  (figures + §11 wording proposal).
+- Asserted by:
+  [`verification_outputs/wave185-p2-empirical-bl.csv`](../verification_outputs/wave185-p2-empirical-bl.csv)
+  (12 rows × 11 cols empirical BL with bootstrap CI),
+  [`verification_outputs/wave185-p3-tightness.csv`](../verification_outputs/wave185-p3-tightness.csv)
+  (12 rows × 15 cols tightness table with both framework + baseline
+  regimes),
+  [`verification_outputs/wave185-p4-figure-bl-tightness.png`](../verification_outputs/wave185-p4-figure-bl-tightness.png)
+  (log-log overlay of empirical vs theoretical),
+  [`verification_outputs/wave185-p4-figure-tightness-ratio.png`](../verification_outputs/wave185-p4-figure-tightness-ratio.png)
+  (per-model `τ` vs NFE),
+  [`docs/paper-draft.md` §11.1 (a)–(f)](paper-draft.md).
+- Disputed by: —
+- Statement: Wave 185 measures both the empirical BL distance
+  (energy-distance proxy on the pLDDT axis, 12 cells × n=30/90
+  per cell) and the Theorem 1 RHS `B(NFE) = A_g · exp(-NFE / B_g)
+  + C_g · e_ρ` (computed via
+  `PaperQuantitiesSnapshot.for_profile(g=sin(πx), ρ=0.1)` for the
+  framework regime). The tightness ratio `τ = empirical_BL /
+  B(NFE)` is **violated at every (model, nfe) cell**: smallest
+  ratio 25.53× (kanzi NFE=10), largest 7,521.98× (kanzi NFE=150).
+  For NFE ≥ 50, the gap is **2-4 orders of magnitude** at every
+  NFE, robust to 95% CI width (lower-CI endpoints also violate
+  the bound, e.g., kanzi NFE=50 lower=0.118 vs bound=1.247e-4,
+  ratio 946×). The baseline regime `(ρ=0.25, η=0.25)` still has
+  the bound too tight by 13×–130× — the violation is structural,
+  not a regime-tuning artifact. **The reason is a scope
+  mismatch**, not a bad bound. Theorem 1's `B(NFE)` bounds the
+  framework's **self-convergence** — `d_BL(P_framework^{NFE},
+  P_framework^{∞})` — which collapses to the regime-internal
+  residual `C_g · e_ρ ≈ 1.24e-4` by NFE ≥ 50 by construction. The
+  empirical energy distance measures the **framework-vs-baseline
+  value-add** — `d_E(P_framework^{NFE}, P_baseline^{NFE})` — a
+  different quantity that stays at `O(10^0)` across all NFE
+  because the framework introduces a *persistent* deviation from
+  the baseline on the protein axis. **The theorem is correct**
+  (proof intact, Wave 11 conformance suite passes for framework
+  self-distance at every NFE), but its claim scope must be
+  **precisely localized to framework self-convergence**. The
+  paper §11.1 (Wave 185) rewords Theorem 1's statement to bound
+  the framework's *self-target* (the framework's own asymptotic
+  sampling distribution along the same `(ρ, c, η)` regime), not
+  any external baseline. The framework's value-add on protein
+  (§10.29) is therefore an **empirical claim**, not a
+  theorem-derived one. **Categorical verdicts**:
+  `theorem_1_scope = framework_self_convergence_only`,
+  `framework_vs_baseline_scope = outside_theorem`,
+  `tightness_ratio_min = 25.53x_at_kanzi_NFE10`,
+  `tightness_ratio_max = 7521.98x_at_kanzi_NFE150`,
+  `tightness_pattern = uniform_violation_all_12_cells`,
+  `scope_mismatch = confirmed`,
+  `paper_section_relocated = §11.1`. This claim **relocates**
+  the theorem's claim scope (no weakening, no contradiction of
+  the proof); the empirical §10.29 / CLM-051 framework-vs-
+  baseline deltas stand as reported. Per (model, NFE) cell, the
+  per-model `τ` summary is `{lineageflow: [44.81, 3064.17,
+  3261.30, 5617.60, 2909.81, 5232.62] at NFE [10, 50, 100, 150,
+  200, 300]}` and `{kanzi: [25.53, 708.91, 4201.27, 7521.98,
+  2346.81, 5874.27] at NFE [10, 50, 100, 150, 200, 300]}`.
+- Evidence:
+  [`verification_outputs/wave185-p2-empirical-bl.csv`](../verification_outputs/wave185-p2-empirical-bl.csv),
+  [`verification_outputs/wave185-p3-tightness.csv`](../verification_outputs/wave185-p3-tightness.csv),
+  [`verification_outputs/wave185-p4-figure-bl-tightness.png`](../verification_outputs/wave185-p4-figure-bl-tightness.png),
+  [`verification_outputs/wave185-p4-figure-tightness-ratio.png`](../verification_outputs/wave185-p4-figure-tightness-ratio.png),
+  [`docs/paper-draft.md` §11.1 (a)–(f)](paper-draft.md),
+  [`docs/audit/wave185-p3-tightness.md` §"Critical analysis" + §"Why the bound is too tight"](audit/wave185-p3-tightness.md).

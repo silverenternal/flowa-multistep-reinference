@@ -32,7 +32,6 @@ import json
 import os
 import sys
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
 
 import numpy as np
 
@@ -44,18 +43,17 @@ if _REPO_ROOT not in sys.path:
 
 from adaptive_reflow.eval.coverage import energy_distance_with_ci  # noqa: E402
 
-
 # Per Wave 185 P1 §4: (model, nfe) cell layout.
-MODELS: Tuple[str, ...] = ("lineageflow", "kanzi")
-NFE_POINTS: Tuple[int, ...] = (10, 50, 100, 150, 200, 300)
+MODELS: tuple[str, ...] = ("lineageflow", "kanzi")
+NFE_POINTS: tuple[int, ...] = (10, 50, 100, 150, 200, 300)
 
 # Wave 179 covers NFE in {50, 100, 200} with 3 seeds.
-WAVE179_NFE: Tuple[int, ...] = (50, 100, 200)
-WAVE179_SEEDS: Tuple[int, ...] = (42, 43, 44)
+WAVE179_NFE: tuple[int, ...] = (50, 100, 200)
+WAVE179_SEEDS: tuple[int, ...] = (42, 43, 44)
 W179_ROOT = "/tmp/w179/eval"
 
 # Wave 183 covers the remaining NFE {10, 150, 300} with 1 seed.
-WAVE183_NFE: Tuple[int, ...] = (10, 150, 300)
+WAVE183_NFE: tuple[int, ...] = (10, 150, 300)
 W183_ROOT = "/tmp/w183/eval"
 
 
@@ -69,10 +67,10 @@ def _cell_name(model: str, nfe: int) -> str:
     return f"{model}_nfe{nfe}"
 
 
-def _load_records(metrics_jsonl: str) -> List[Tuple[float, float]]:
+def _load_records(metrics_jsonl: str) -> list[tuple[float, float]]:
     """Return list of (pLDDT, scPerplexity) for the records in the file."""
-    out: List[Tuple[float, float]] = []
-    with open(metrics_jsonl, "r") as f:
+    out: list[tuple[float, float]] = []
+    with open(metrics_jsonl) as f:
         for line in f:
             line = line.strip()
             if not line:
@@ -87,7 +85,7 @@ def _load_records(metrics_jsonl: str) -> List[Tuple[float, float]]:
     return out
 
 
-def _load_arm_records(cell: Cell, arm: str) -> Tuple[np.ndarray, List[float]]:
+def _load_arm_records(cell: Cell, arm: str) -> tuple[np.ndarray, list[float]]:
     """Load all available per-seed records for one (cell, arm).
 
     Returns ``(records, per_seed_means_plddt)`` where ``records`` is
@@ -96,7 +94,7 @@ def _load_arm_records(cell: Cell, arm: str) -> Tuple[np.ndarray, List[float]]:
     data is available, length 1 when only Wave 183 data exists).
     """
     name = _cell_name(cell.model, cell.nfe)
-    per_seed_records: List[List[Tuple[float, float]]] = []
+    per_seed_records: list[list[tuple[float, float]]] = []
 
     if cell.nfe in WAVE179_NFE:
         for seed in WAVE179_SEEDS:
@@ -111,8 +109,8 @@ def _load_arm_records(cell: Cell, arm: str) -> Tuple[np.ndarray, List[float]]:
     if not per_seed_records:
         return np.empty((0, 2), dtype=np.float64), []
 
-    all_records: List[Tuple[float, float]] = []
-    per_seed_means: List[float] = []
+    all_records: list[tuple[float, float]] = []
+    per_seed_means: list[float] = []
     for recs in per_seed_records:
         if not recs:
             continue
@@ -123,7 +121,7 @@ def _load_arm_records(cell: Cell, arm: str) -> Tuple[np.ndarray, List[float]]:
     return arr, per_seed_means
 
 
-def _energy_distance_1d(baseline: np.ndarray, framework: np.ndarray, *, n_boot: int, seed: int) -> Dict[str, float]:
+def _energy_distance_1d(baseline: np.ndarray, framework: np.ndarray, *, n_boot: int, seed: int) -> dict[str, float]:
     """Compute 1-D (pLDDT only) energy distance with bootstrap CI."""
     est = energy_distance_with_ci(
         baseline[:, 0].reshape(-1, 1),
@@ -139,7 +137,7 @@ def _energy_distance_1d(baseline: np.ndarray, framework: np.ndarray, *, n_boot: 
     }
 
 
-def _energy_distance_2d(baseline: np.ndarray, framework: np.ndarray, *, n_boot: int, seed: int) -> Dict[str, float]:
+def _energy_distance_2d(baseline: np.ndarray, framework: np.ndarray, *, n_boot: int, seed: int) -> dict[str, float]:
     """Compute 2-D (pLDDT, scPerplexity) energy distance with bootstrap CI."""
     est = energy_distance_with_ci(
         baseline,
@@ -161,8 +159,8 @@ def main() -> int:
     )
     os.makedirs(os.path.dirname(out_csv), exist_ok=True)
 
-    rows: List[Dict[str, object]] = []
-    summary: Dict[str, Dict[str, float]] = {m: {} for m in MODELS}
+    rows: list[dict[str, object]] = []
+    summary: dict[str, dict[str, float]] = {m: {} for m in MODELS}
 
     for model in MODELS:
         for nfe in NFE_POINTS:

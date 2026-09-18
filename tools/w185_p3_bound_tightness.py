@@ -36,7 +36,6 @@ import math
 import os
 import sys
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
 
 # Ensure the framework package is importable when this script is run
 # directly from the repo root.
@@ -48,16 +47,15 @@ from adaptive_reflow.eval.fid_theorem_aligned import (  # noqa: E402
     PaperQuantitiesSnapshot,
 )
 
-
-MODELS: Tuple[str, ...] = ("lineageflow", "kanzi")
-NFE_POINTS: Tuple[int, ...] = (10, 50, 100, 150, 200, 300)
+MODELS: tuple[str, ...] = ("lineageflow", "kanzi")
+NFE_POINTS: tuple[int, ...] = (10, 50, 100, 150, 200, 300)
 
 
 def _sin_pi(x: float) -> float:
     return math.sin(math.pi * x)
 
 
-def _build_snapshots() -> Tuple[Dict[str, float], Dict[str, float]]:
+def _build_snapshots() -> tuple[dict[str, float], dict[str, float]]:
     """Return (framework_snap_dict, baseline_snap_dict) of paper quantities."""
     framework = PaperQuantitiesSnapshot.for_profile(
         g=_sin_pi, rho=0.1, c=1.0, eta=0.1, K=8.0, h=0.01,
@@ -85,10 +83,10 @@ def _theorem1_bound(A: float, B: float, C: float, e: float, nfe: int) -> float:
     return A * math.exp(-float(nfe) / B) + C * e
 
 
-def _load_empirical_bl(csv_path: str) -> Dict[Tuple[str, int], Dict[str, float]]:
+def _load_empirical_bl(csv_path: str) -> dict[tuple[str, int], dict[str, float]]:
     """Load (model, nfe) -> {empirical_BL, ci_low, ci_high} from P2 CSV."""
-    out: Dict[Tuple[str, int], Dict[str, float]] = {}
-    with open(csv_path, "r") as f:
+    out: dict[tuple[str, int], dict[str, float]] = {}
+    with open(csv_path) as f:
         reader = csv.DictReader(f)
         for row in reader:
             model = row["model"]
@@ -113,9 +111,9 @@ def main() -> int:
     framework, baseline = _build_snapshots()
     empirical = _load_empirical_bl(in_csv)
 
-    rows: List[Dict[str, object]] = []
+    rows: list[dict[str, object]] = []
     # For JSON output.
-    tightness_table: Dict[str, Dict[str, Dict[str, float]]] = {
+    tightness_table: dict[str, dict[str, dict[str, float]]] = {
         m: {} for m in MODELS
     }
 
