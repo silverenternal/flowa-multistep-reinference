@@ -137,6 +137,6 @@ pdfimages -list ../paper-eaai.pdf | head -10               # embedded PNGs
     "129 pages (vs brief ~35-40) because paper-draft.md is 7591 lines vs Wave 144's shorter paper-final-neurips.md",
     "{}textbf{} pdftotext-extraction artifact (visual PDF is correct; matches Wave 144 paper.tex convention)"
   ],
-  "commit_sha": "<TBD after commit>"
+  "commit_sha": "dd46d6235bc237bfabbcc3c64871fdeaa4fc6603"
 }
 ```
