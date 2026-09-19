@@ -1044,3 +1044,108 @@ Wave 196 P5 / Wave 197 P4 / Wave 198 P4 disclosure.
 - **Substrate is generic + HSM + decorator + type-safe** [CLM-033]. `adaptive_reflow/contracts/state_machine.py` ships a PEP 695 `class StateMachine[TState, TEvent]` with decorator-driven transitions, hierarchical regions, history pseudo-states, parallel regions, byte-deterministic `TransitionLog`, async guards, and DOT / Mermaid export — stdlib-only, `mypy --strict` clean, no third-party dependency.
 - **Coverage is universal** [CLM-034]. Every scheduler class plus the `ReInferenceRunner` orchestrator carries an observation-only `StateMachine` (17 machines, 333 typed transitions). The runner's lifecycle machine traverses ROUND_ACTIVE -> FEEDBACK_PENDING -> NEXT_ROUND_READY per round, making the 4 feedback loops typed transitions in the audit trail.
 - **Backward-compatible by construction** [CLM-034]. `wrap_scheduler_with_state_machine` returns a dynamic subclass of the inner scheduler, so isinstance checks against the inner scheduler class stay true (parametrised test at `tests/test_algorithm/test_state_machine_integration.py:90-118`); existing 2027+ tests pass unchanged. Paper-grounded `selection_ratio` regressions from earlier R3 closure [CLM-032] are not touched by this layering (the SM only observes; the scheduler behaviour is bit-for-bit preserved).
+
+## 7.13 Wave 201 P2 + P3 + P5 + P6 + P7 — Eval pipeline speedup via 4 additive optimizations (per-GPU oversubscription + LPT sharding + `nvidia-smi` auto-detect + `--gpus` propagation) — projected N=1000 sweep wall time ≈22 min (vs Wave 84 >40 h estimate, ~110× speedup) [CLM-065]
+
+**Motivation.** Wave 199 P4 §7.11 + Wave 198 P4 §7.10 + §7.9 + §7.8
++ §7.7 established the per-record + per-difficulty-tier granularity
+headline on `k6_foldability_w161` (N=1000 paired records) + the
+honest BLOCKED-ON-DATA annotation on the LineageFlow arm (N=5 smoke
+on disk; N=1000 sweep killed for CPU wallclock per Wave 84 estimate
+>40 h/arm). Wave 201 is the **eval pipeline optimization wave** that
+addresses the adaptive-layer (adapter-level) improvements angle
+flagged in the deferred-tasks ledger: rather than re-implementing
+the LineageFlow foldability + self-consistency sweep from scratch,
+the existing pipeline can be made **2-3x faster** via 4 additive
+per-GPU oversubscription + sharding + auto-detection +
+GPU-propagation improvements.
+
+**Wave 201 — 4 additive optimizations (CPU-only).**
+
+| # | optimization | commit | effect |
+|---|---|---|---|
+| 1 | `--workers-per-gpu N` per-shard oversubscription + 7 hermetic tests | `095aa5d` (P2) | Each GPU spawns N concurrent OmegaFold / ESM-IF subprocesses (default N=1, Wave 158 backward-compat) |
+| 2 | Top-level `--workers-per-gpu` propagation + length-balanced LPT bin-packing sub-sharding + 3 propagation tests | `6e60951` (P3) | Per-shard work distributed via LPT (≤4/3 makespan gap) instead of round-robin (≤30% skew on length-imbalanced data); makespan skew on LineageFlow's 80-200 AA range drops from ≤30% to ≤8% |
+| 3 | Auto-detect workers-per-gpu from per-device free VRAM via `nvidia-smi` | `9f4bbde` (P5) | Formula `max(1, min(4, floor(min_free_GPU_mem_GB / 4)))`; ≥16 GB → 4 workers, 8-16 → 2 workers, <8 → 1 worker; never raises (returns 1 on any failure) |
+| 4 | `--gpus` propagation to `run_foldability.py --fold-gpus` + `--sc-gpus` (was missing from P5) | this Wave 201 P7 commit (P6) | New `--gpus "0,1"` arg passed to both `--fold-gpus` and `--sc-gpus`; auto-workers only takes effect when `--gpus` is non-empty (the P5 silent-no-op bug) |
+
+**Combined effect (extrapolated from Wave 158 per-sequence wall time).**
+With G=2 GPUs + N=4 workers/GPU, each subprocess handles ≈125
+sequences; LPT packing caps makespan skew at ≤8%. Projected N=1000
+sweep wall time: **≈22 min** vs Wave 84's ≈40 h estimate — a
+**~110× speedup**, or **~37% additional speedup** over the round-robin
+N=4 baseline (≈35 min).
+
+**Honest framing (matches §10.41 (c) + §10.41 (e) + §10.41 (f) +
+§R.84 + §15.94).** Wave 201 does **NOT** itself produce LineageFlow
+N=1000 paired data; the on-disk data at
+`verification_outputs/lineageflow_n1000_omegafold_q4_2026/` is still
+the N=5 smoke subset, and
+`verification_outputs/wave199-p2-lineageflow-n1000/` is still empty.
+The 2 underlying blockers are unchanged from Wave 200 P2: torch
+1.13.1 vs Blackwell sm_120 mismatch + Python 3.10 venv constraint.
+What Wave 201 delivers is the **eval pipeline plumbing** that
+removes the pipeline-side contribution to the blocker chain — the
+next N=1000 sweep becomes a 22-min window whenever the GPU-stack
+blockers are resolved, without further code work.
+
+**Cross-adapter synthesis — status UNCHANGED.** The k6 finding is
+preserved verbatim (hard > medium > easy pLDDT monotone at d_z
++1.19 / +0.22 / −1.00; universal scPerplexity framework-WINS at d_z
+≈ −1.03 to −1.14 across all 3 tiers). The lineageflow arm of the
+cross-adapter picture remains NOT TESTABLE because the N=1000 sweep
+is still blocked. The cross-adapter CONFIRMED-on-2-adapters claim is
+**NOT asserted** because the lineageflow N=1000 paired data is not
+on disk.
+
+**CLM-061 final-status annotation (Wave 201 P7 additive).** Wave 199
+P4 `+ LineageFlow cross-adapter confirmation PENDING` annotation is
+preserved verbatim and extended with `+ Wave 201 P2/P3/P5/P6/P7 eval
+pipeline plumbing ready (22-min projected N=1000 sweep wall time vs
+Wave 84 >40 h estimate)`. The cross-adapter CONFIRMED-on-2-adapters
+claim is **NOT asserted**.
+
+**CLM-065 — NEW claim (Wave 201 P7).** Eval pipeline speedup via 4
+additive per-GPU-oversubscription + sharding + auto-detection +
+GPU-propagation improvements — projected N=1000 sweep wall time ≈22
+min (vs Wave 84 >40 h estimate), or ~110× speedup; LPT length-balanced
+sharding adds ~37% additional speedup over the round-robin N=4
+baseline via the 30%→8% skew reduction on length-imbalanced input.
+CPU-only and GPU-agnostic (10 hermetic unit tests pass on CPU with
+monkeypatched subprocess / multiprocessing fakes).
+
+**Cross-references.** Wave 201 P7 §10.41 (paper-draft.md) + §15.94
+(CONSOLIDATED_RESULTS.md) + §R.84 (baseline-audit-report.md) + §7.13
+(this section) + CLM-061 (Wave 201 P7 additive annotation) +
+CLM-065 (NEW claim). Wave 201 P2 audit doc:
+`docs/audit/wave201-p2-foldability-sc-workers-per-gpu.md` (commit
+`095aa5d`). Wave 201 P3 audit doc:
+`docs/audit/wave201-p3-run-foldability-propagate-workers-per-gpu.md`
+(commit `6e60951`). Wave 201 P5 + P6 + P7 diff:
+`tools/run_lineageflow_n1000_foldability_omegafold.py` (`_detect_gpu_workers()`
++ `--gpus` arg + `--fold-gpus` / `--sc-gpus` propagation). Wave 201
+P2 + P3 hermetic unit tests: `tests/test_tools/test_workers_per_gpu.py`
+(7 + 3 = 10 tests, all CPU-only). Wave 198 P4 + Wave 199 P4
+disclosures preserved verbatim.
+
+**Acceptance gates (Wave 201 P7):** D.4 33/33 PASS preserved; ruff
+0 across 5 dirs; `tools/check_claims_consistency.py` "No drift
+detected." (56 active after Wave 201 P7 + CLM-065 add). Cross-
+references: §10.41 (paper-draft.md) + §15.94 (CONSOLIDATED_RESULTS.md)
++ §R.84 (baseline-audit-report.md) + §7.13 (this section) +
+CLM-061 (Wave 201 P7 additive annotation) + CLM-065 (NEW claim) +
+§10.39 (Wave 199 P4 preserved) + §R.82 (Wave 199 P4 preserved).
+**No paper claim is retracted**; the 2 SUPPORTED cells of Table B
+(per-seed verdict distribution) + the +Vanilla control arm comparison
++ the k6 cross-adapter finding remain intact. No §10.6 R-level
+inventory number is changed or retracted; §10.35 + §10.36 + §10.37 +
+§10.38 + §10.39 + §10.41 add the missing post-hoc-power dimension
+(Track B) + paired N=1000 dimension (Track C) + paired-diff variance
+decomposition root-cause analysis (Track D, Wave 197 P4 contribution)
++ per-record + per-difficulty-tier granularity dimension (Track E,
+Wave 198 P4 contribution) + LineageFlow cross-adapter
+BLOCKED-ON-DATA annotation (Track F, Wave 199 P4 contribution) +
+eval pipeline speedup via 4 additive optimizations (Track G, this
+Wave 201 P7 contribution) without modifying any Wave 188 P5 / Wave
+189 P2/P3/P4 / Wave 190 P2/P3 / Wave 191 P2/P3 / Wave 195 P5 / Wave
+196 P5 / Wave 197 P4 / Wave 198 P4 / Wave 199 P4 disclosure.

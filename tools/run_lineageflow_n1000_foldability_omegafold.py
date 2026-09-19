@@ -156,6 +156,17 @@ def main() -> None:
         "(formula: max(1, min(4, floor(min_free_GPU_mem_GB / 4)))). "
         "Set --no-auto-workers to use --workers-per-gpu as-is.",
     )
+    p.add_argument(
+        "--gpus",
+        type=str,
+        default="all",
+        help="Comma-separated GPU ids (e.g. 0,1) or 'all' to use "
+        "CUDA_VISIBLE_DEVICES/torch device_count. Passed to "
+        "run_foldability.py as both --fold-gpus and --sc-gpus. "
+        "Auto-workers only takes effect when this is non-empty "
+        "(Wave 201 P6: was missing from P5 — added here so the "
+        "auto-workers optimization actually shards across GPUs).",
+    )
     args = p.parse_args()
 
     # Resolve effective workers_per_gpu (--workers-per-gpu wins if given).
@@ -200,6 +211,10 @@ def main() -> None:
             str(arm_outdir),
             "--omegafold-bin",
             args.omegafold_bin,
+            "--fold-gpus",
+            str(args.gpus),
+            "--sc-gpus",
+            str(args.gpus),
             "--log-every",
             "60",
             "--workers-per-gpu",

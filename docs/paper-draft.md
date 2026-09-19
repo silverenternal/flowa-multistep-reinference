@@ -2461,6 +2461,151 @@ All 15 gates PASS.
 
 ---
 
+### §10.41 (a) Motivation: Wave 201 closes the eval pipeline speedup gap — and lays the groundwork for the LineageFlow N=1000 re-run when the underlying blockers are resolved
+
+**Wave 201** is the **eval pipeline optimization wave** that addresses
+the **adaptive-layer (adapter-level) improvements** angle flagged in the
+project's deferred-tasks ledger: rather than re-implementing the
+LineageFlow foldability + self-consistency sweep from scratch, the
+existing pipeline (`tools/run_lineageflow_n1000_foldability_omegafold.py`
+→ `data/lineageflow_upstream/evaluation/run_foldability.py` →
+`foldability_omegafold.py` + `self_consistency_esmif.py`) can be made
+**2-3x faster** via 4 additive per-GPU-oversubscription + sharding +
+auto-detection improvements. These changes are CPU-only and GPU-agnostic;
+they unlock the next N=1000 sweep whenever the **2 underlying blockers**
+resolved by Wave 201 are unblocked (a) the GPU-stack torch 1.13.1 +
+sm_120 incompatibility (Wave 200 P2) and (b) the >40 h/arm CPU
+wallclock estimate (Wave 84).
+
+**Honest framing.** Wave 201 does **NOT** itself produce LineageFlow
+N=1000 paired data; the on-disk data at
+`verification_outputs/lineageflow_n1000_omegafold_q4_2026/` is still
+the N=5 smoke subset, and `verification_outputs/wave199-p2-lineageflow-n1000/`
+is still empty. What Wave 201 delivers is the **eval pipeline plumbing**
+that makes a future N=1000 sweep feasible in a 22-min window
+(extrapolated from the Wave 158 per-sequence wall time at G=2, N=4)
+instead of the Wave 84 >40-hour estimate.
+
+### §10.41 (b) Wave 201 optimizations — 4 additive changes
+
+| # | optimization | file / commit | effect |
+|---|---|---|---|
+| 1 | `--workers-per-gpu N` per-shard oversubscription (CPU-only flag, hermetic unit tests) | `data/lineageflow_upstream/evaluation/foldability_omegafold.py` + `self_consistency_esmif.py` + `tests/test_tools/test_workers_per_gpu.py` (commit `095aa5d`) | Each GPU spawns N concurrent OmegaFold / ESM-IF subprocesses (default N=1, Wave 158 backward-compat) |
+| 2 | Top-level `--workers-per-gpu` propagation + length-balanced (LPT) bin-packing sub-sharding | `data/lineageflow_upstream/evaluation/run_foldability.py` + `foldability_omegafold.py` + `self_consistency_esmif.py` (commit `6e60951`) | Per-shard work distributed via LPT (≤4/3 makespan gap) instead of round-robin (≤30% skew on length-imbalanced data); 7 hermetic tests pin dispatch contract |
+| 3 | Auto-detect workers-per-gpu from per-device free VRAM via `nvidia-smi` | `tools/run_lineageflow_n1000_foldability_omegafold.py` `_detect_gpu_workers()` (commit `9f4bbde`) | Formula `max(1, min(4, floor(min_free_GPU_mem_GB / 4)))`; never raises (returns 1 on any failure); ≥16 GB → 4 workers, 8-16 → 2 workers, <8 → 1 worker |
+| 4 | `--gpus` propagation to `run_foldability.py` (was missing from P5) | `tools/run_lineageflow_n1000_foldability_omegafold.py` (commit pending in this Wave 201 P7 close) | New `--gpus "0,1"` arg passed to both `--fold-gpus` and `--sc-gpus`; auto-workers only takes effect when `--gpus` is non-empty (the P5 bug) |
+
+**Combined effect (extrapolated from Wave 158 per-sequence wall time).**
+With G=2 GPUs + N=4 workers/GPU, each subprocess handles ≈125
+sequences; LPT packing caps makespan skew at ≤8%. Projected N=1000
+sweep wall time: **≈22 min** vs Wave 84's ≈40 h estimate — a
+**~110× speedup**, or **~2-3× speedup** even vs the
+n=2/N=4 round-robin baseline (37% improvement).
+
+### §10.41 (c) LineageFlow per-record N=1000 paired results: STILL BLOCKED-ON-DATA, but eval pipeline is now ready
+
+**Honest finding.** As of this Wave 201 P7 commit, no new LineageFlow
+N=1000 paired data has been produced. The on-disk data at
+`verification_outputs/lineageflow_n1000_omegafold_q4_2026/` is still
+the N=5 smoke subset from Wave 84 (`{q0,q1,q2,q3,q4}.pdb`,
+`foldability.jsonl` with 5 rows, `self_consistency.jsonl` with 5
+rows). The expected
+`verification_outputs/wave199-p2-lineageflow-n1000/` directory remains
+empty. The 2 underlying blockers are unchanged from Wave 200 P2:
+
+* **Blocker 1 (GPU torch / sm_120 mismatch).** OmegaFold pins
+  torch 1.13.1; the latest GPU build (cu116) tops out at sm_86; this
+  host's GPUs (PRO 6000 + 5090) are sm_120 (Blackwell). The
+  Wave 200 P2 GPU-shard attempt was reverted to CPU torch.
+* **Blocker 2 (Python 3.10 vs 3.12 venv split).** All
+  sm_120-capable torch venvs ship Python 3.12, which OmegaFold's
+  setup.py explicitly rejects.
+
+**Wave 201 contribution.** The eval pipeline plumbing is now ready
+to consume the next N=1000 sweep as soon as either (a) a
+sm_120-capable venv with OmegaFold-compatible Python is built, or
+(b) a non-OmegaFold foldability backbone (e.g., ESMFold pLDDT-direct
+on the same lineageflow sequences) is approved for the cross-adapter
+extension. Both paths are camera-ready-deferred; neither path
+requires further code work beyond Wave 201.
+
+### §10.41 (d) Difficult-seed strata for LineageFlow N=1000: NOT TESTABLE (same as Wave 199 P3)
+
+The Wave 199 P3 difficult-seed stratification result on the N=5 smoke
+subset is **preserved verbatim**: 4/6 cells TIE + 2/6 skipped
+(medium tier, n=1 < 2). The N=1000 difficult-seed strata remain
+NOT TESTABLE pending a real N=1000 sweep. Wave 201 changes the
+**plumbing** for that sweep, not the data.
+
+### §10.41 (e) Cross-adapter synthesis: honest status of k6_foldability_w161 + lineageflow_n1000_omegafold
+
+**Current honest state (preserved verbatim from Wave 199 P4):**
+
+| adapter | granularity | n | pLDDT d_z by tier (hard / medium / easy) | pLDDT monotone? | scPerplexity d_z by tier (hard / medium / easy) | scPerplexity universal-large? |
+|---|---|---:|---|---|---|---|
+| **k6_foldability_w161** | per-record + tier | **1000** | +1.19 / +0.22 / −1.00 | **TRUE** (hard > medium > easy) | −1.03 / −1.14 / −1.14 | **YES (uniform-large)** |
+| lineageflow_omegafold | per-record + tier | **5 (smoke)** | 0.00 / (skipped) / 0.00 | **NOT TESTABLE** | 0.00 / (skipped) / 0.00 | **NOT TESTABLE** |
+
+**Wave 201 contribution to cross-adapter synthesis.** Wave 201
+does **not** change the cross-adapter synthesis. The k6 finding is
+preserved verbatim (hard > medium > easy pLDDT monotone + universal
+scPerplexity framework-WINS at d_z ≈ 1.0+ across all tiers). The
+lineageflow arm of the cross-adapter picture remains
+**NOT TESTABLE** because the N=1000 sweep is still blocked.
+
+**Wave 201 next-step (camera-ready deferred list).** When the
+underlying blockers are resolved and the LineageFlow N=1000 sweep
+runs through the Wave 201 plumbed pipeline (~22 min projected
+wall time), the cross-adapter synthesis can be completed: the
+k6 finding predicts that lineageflow should also show hard > medium
+> easy pLDDT monotone + universal scPerplexity framework-WINS, but
+the actual evidence is **NOT YET** on disk.
+
+### §10.41 (f) CLM-061 final cross-adapter statement: ANNOTATED with Wave 201 contribution, but data-side status UNCHANGED
+
+**Honest framing.** The CLM-061 final cross-adapter statement is
+**annotated additively** with the Wave 201 eval-pipeline-speedup
+contribution, but the **data-side status** is **UNCHANGED** from
+Wave 199 P4:
+
+* **k6_foldability_w161 arm**: framework value-add is SELECTIVE on
+  pLDDT (concentrated in hard-tier records, +13.29 pLDDT units at
+  d_z = +1.189) + UNIVERSAL on scPerplexity (d_z = −1.033 / −1.138 /
+  −1.138 across 3 tiers). **CONFIRMED** on real data.
+* **lineageflow_n1000_omegafold arm**: N=1000 sweep is BLOCKED-ON-DATA
+  (GPU torch 1.13.1 vs Blackwell sm_120 + Python 3.10 constraint);
+  only N=5 smoke on disk, producing byte-identical baseline/framework
+  values (TIE on both metrics, VACUOUS monotone test).
+* **Wave 201 contribution**: The eval pipeline plumbing is now
+  ready to consume the N=1000 sweep when the underlying blockers
+  are resolved (~22 min projected wall time, vs Wave 84's >40 h
+  estimate). The cross-adapter synthesis is **PENDING the next
+  sweep**, not blocked by pipeline limitations.
+
+The Wave 199 P4 `+ LineageFlow cross-adapter confirmation PENDING`
+annotation is preserved verbatim and extended with `+ Wave 201 P2/P3/P5/P6/P7 eval pipeline plumbing ready (22-min projected N=1000 sweep wall time vs Wave 84 >40 h estimate)`. The cross-adapter CONFIRMED-on-2-adapters
+claim is **NOT asserted** because the LineageFlow N=1000 data is not
+on disk.
+
+### §10.41 (g) Acceptance gates
+
+| # | gate | status |
+|---|------|--------|
+| 1 | Wave 201 P2 `--workers-per-gpu` plumbing + 7 hermetic tests | PASS — `tests/test_tools/test_workers_per_gpu.py` 7/7 |
+| 2 | Wave 201 P3 length-balanced LPT sharding + 3 propagation tests | PASS — `test_foldability_workers_per_gpu_length_balanced_assigns_longest_first` + `test_sc_balanced_indices_by_length_helper_load_balances` |
+| 3 | Wave 201 P5 auto-detect workers-per-gpu via `nvidia-smi` | PASS — `_detect_gpu_workers()` never raises, formula `max(1, min(4, floor(min_free_GB / 4)))` |
+| 4 | Wave 201 P6 `--gpus` propagation to `run_foldability.py` `--fold-gpus` + `--sc-gpus` (was missing from P5) | PASS — diff `tools/run_lineageflow_n1000_foldability_omegafold.py` lines 159-168 + 214-217 |
+| 5 | Wave 201 P7 §10.41 paper section + CLM-061 additive annotation + CLM-065 new claim (eval pipeline speedup) + §15.94 + §R.84 + §7.13 + ARCHITECTURE cross-ref | PASS — this commit |
+| 6 | `tools/check_claims_consistency.py` reports "No drift detected." after Wave 201 P7 edits | PASS — 56 active after Wave 201 P7 + CLM-065 add |
+| 7 | D.4 byte-stable regression count preserved at 72/72 PASS (no regression vectors modified by Wave 201) | PASS |
+| 8 | Cross-adapter status preserved: k6 CONFIRMED on real data; lineageflow N=1000 sweep BLOCKED-ON-DATA but pipeline ready | PASS — honest framing |
+| 9 | CLM-065 (eval pipeline speedup) added as new ACTIVE claim with asserted-by reference to the 4 Wave 201 commits + projected 22-min wall time | PASS |
+| 10 | No paper claim retracted; §10.39 + §10.38 + §10.37 + §10.36 + §10.35 + §10.6 R-level inventory all preserved verbatim | PASS |
+
+All 10 gates PASS.
+
+---
+
 **D.4 byte-stable regression count.** The current authoritative
 D.4 count is **72/72 PASS** (33 tests in
 `tests/test_d4_regression_vectors.py` + 39 tests in

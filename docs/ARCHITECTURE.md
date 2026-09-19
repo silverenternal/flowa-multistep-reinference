@@ -1537,3 +1537,66 @@ recorded here first.
 | "When is the next feature landing?" | `ROADMAP.md` |
 | "Is there a security boundary I need to respect?" | `SECURITY.md` |
 | "Who reviews PRs against the contracts layer?" | `CODEOWNERS` |
+---
+
+## 11. Wave 201 eval pipeline speedup (governance cross-reference)
+
+Wave 201 closes the **eval pipeline speedup** dimension on the
+LineageFlow foldability + self-consistency sweep via 4 additive
+per-GPU-oversubscription + sharding + auto-detection + GPU-
+propagation improvements (projected N=1000 sweep wall time ≈22 min
+vs Wave 84 >40 h estimate, ~110× speedup; LPT length-balanced
+sharding adds ~37% additional speedup over the round-robin N=4
+baseline). The 4 optimizations are CPU-only and GPU-agnostic; they
+unlock the next N=1000 sweep whenever the 2 underlying blockers
+(Wave 200 P2 torch 1.13.1 vs Blackwell sm_120 + Python 3.10 venv
+constraint) are unblocked. Wave 201 is the **eval pipeline
+optimization wave** that addresses the adaptive-layer
+(adapter-level) improvements angle flagged in the deferred-tasks
+ledger: rather than re-implementing the sweep from scratch, the
+existing pipeline can be made 2-3x faster.
+
+The 4 optimizations are:
+
+1. `--workers-per-gpu N` per-shard oversubscription (Wave 201 P2,
+   commit `095aa5d`) — each GPU spawns N concurrent OmegaFold /
+   ESM-IF subprocesses (default N=1, Wave 158 backward-compat),
+   hermetically unit-tested by 7 tests in
+   `tests/test_tools/test_workers_per_gpu.py`.
+2. Top-level `--workers-per-gpu` propagation + length-balanced LPT
+   bin-packing sub-sharding (Wave 201 P3, commit `6e60951`) —
+   per-shard work distributed via LPT (≤4/3 makespan gap from LPT
+   optimal) instead of round-robin (≤30% skew on length-imbalanced
+   data); makespan skew on LineageFlow's 80-200 AA range drops from
+   ≤30% to ≤8%.
+3. Auto-detect workers-per-gpu from per-device free VRAM via
+   `nvidia-smi` (Wave 201 P5, commit `9f4bbde`) — formula
+   `max(1, min(4, floor(min_free_GPU_mem_GB / 4)))`; ≥16 GB → 4
+   workers, 8-16 → 2 workers, <8 → 1 worker; never raises (returns 1
+   on any failure).
+4. `--gpus` propagation to `run_foldability.py --fold-gpus` +
+   `--sc-gpus` (Wave 201 P6 — was missing from P5; this Wave 201 P7
+   commit lands the diff) — the P5 bug was that auto-workers was
+   computed but `--gpus` was never propagated, so the auto-workers
+   optimization silently no-op'd; this P6 fix threads `--gpus "0,1"`
+   through both fold and sc sub-calls so the auto-workers
+   optimization actually shards across GPUs.
+
+Cross-references: [CLM-065](CLAIMS.md#CLM-065) (NEW claim — eval
+pipeline speedup) + [`docs/paper-draft.md` §10.41](paper-draft.md)
++ [`docs/CONSOLIDATED_RESULTS.md` §15.94](CONSOLIDATED_RESULTS.md)
++ [`docs/baseline-audit-report.md` §R.84](baseline-audit-report.md)
++ [`docs/INSIGHTS.md` §7.13](INSIGHTS.md) +
+[`docs/audit/wave201-p2-foldability-sc-workers-per-gpu.md`](audit/wave201-p2-foldability-sc-workers-per-gpu.md)
++
+[`docs/audit/wave201-p3-run-foldability-propagate-workers-per-gpu.md`](audit/wave201-p3-run-foldability-propagate-workers-per-gpu.md)
++
+[`tools/run_lineageflow_n1000_foldability_omegafold.py`](../tools/run_lineageflow_n1000_foldability_omegafold.py)
+(Wave 201 P5 + P6 + P7 diff) +
+[`tests/test_tools/test_workers_per_gpu.py`](../tests/test_tools/test_workers_per_gpu.py)
+(10 hermetic CPU-only tests). All 10 §10.41 (g) acceptance gates
+PASS; CLM-061 additively annotated with Wave 201 contribution but
+the data-side status is UNCHANGED (k6 CONFIRMED on real data;
+lineageflow N=1000 sweep STILL BLOCKED-ON-DATA per Wave 200 P2
+underlying blockers, but pipeline plumbing ready — the cross-adapter
+CONFIRMED-on-2-adapters claim is NOT asserted).

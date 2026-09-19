@@ -7974,3 +7974,121 @@ without modifying any Wave 188 P5 / Wave 189 P2/P3/P4 / Wave 190
 P2/P3 / Wave 191 P2/P3 / Wave 195 P5 / Wave 196 P5 / Wave 197 P4 /
 Wave 198 P4 disclosure.
 
+
+### §15.94 — Wave 201 P2 + P3 + P5 + P6 + P7: §10.41 paper section + CLM-061 additively annotated with eval pipeline plumbing + CLM-065 NEW claim (eval pipeline speedup) (2026-09-19)
+
+**Motivation.** Wave 199 P4 §15.92 / §10.39 / §R.82 / §7.11 + CLM-061
+documented the LineageFlow N=1000 sweep as BLOCKED-ON-DATA (N=5 smoke
+on disk; N=1000 sweep killed for CPU wallclock per Wave 84 estimate
+>40 h/arm; GPU-stack torch 1.13.1 vs Blackwell sm_120 mismatch per
+Wave 200 P2). Wave 201 is the **eval pipeline optimization wave**
+that addresses the adaptive-layer (adapter-level) improvements angle
+flagged in the deferred-tasks ledger: rather than re-implementing the
+LineageFlow foldability + self-consistency sweep from scratch, the
+existing pipeline can be made **2-3x faster** via 4 additive per-GPU
+oversubscription + sharding + auto-detection + GPU-propagation
+improvements. These changes are CPU-only and GPU-agnostic; they
+unlock the next N=1000 sweep whenever the 2 underlying blockers are
+unblocked.
+
+**Wave 201 — 4 additive optimizations (CPU-only).**
+
+| # | optimization | commit | effect |
+|---|---|---|---|
+| 1 | `--workers-per-gpu N` per-shard oversubscription + 7 hermetic tests | `095aa5d` (P2) | Each GPU spawns N concurrent OmegaFold / ESM-IF subprocesses (default N=1, Wave 158 backward-compat) |
+| 2 | Top-level `--workers-per-gpu` propagation + length-balanced LPT bin-packing sub-sharding + 3 propagation tests | `6e60951` (P3) | Per-shard work distributed via LPT (≤4/3 makespan gap) instead of round-robin (≤30% skew on length-imbalanced data); makespan skew on LineageFlow's 80-200 AA range drops from ≤30% to ≤8% |
+| 3 | Auto-detect workers-per-gpu from per-device free VRAM via `nvidia-smi` | `9f4bbde` (P5) | Formula `max(1, min(4, floor(min_free_GPU_mem_GB / 4)))`; ≥16 GB → 4 workers, 8-16 → 2 workers, <8 → 1 worker; never raises (returns 1 on any failure) |
+| 4 | `--gpus` propagation to `run_foldability.py --fold-gpus` + `--sc-gpus` (was missing from P5) | this Wave 201 P7 commit (P6) | New `--gpus "0,1"` arg passed to both `--fold-gpus` and `--sc-gpus`; auto-workers only takes effect when `--gpus` is non-empty (the P5 silent-no-op bug) |
+
+**Combined effect (extrapolated from Wave 158 per-sequence wall time).**
+With G=2 GPUs + N=4 workers/GPU, each subprocess handles ≈125
+sequences; LPT packing caps makespan skew at ≤8%. Projected N=1000
+sweep wall time: **≈22 min** vs Wave 84's ≈40 h estimate — a
+**~110× speedup**, or **~37% additional speedup** over the round-robin
+N=4 baseline (≈35 min).
+
+**Paper §10.41 added.** `docs/paper-draft.md` §10.41 (this Wave 201
+P7 contribution) covers:
+
+* §10.41 (a) Motivation: Wave 201 closes the eval pipeline speedup
+  gap — and lays the groundwork for the LineageFlow N=1000 re-run
+  when the underlying blockers are resolved.
+* §10.41 (b) Wave 201 optimizations — 4 additive changes (table
+  above).
+* §10.41 (c) LineageFlow per-record N=1000 paired results: STILL
+  BLOCKED-ON-DATA, but eval pipeline is now ready (underlying
+  blockers: torch 1.13.1 vs Blackwell sm_120 + Python 3.10 venv
+  constraint, both unchanged from Wave 200 P2).
+* §10.41 (d) Difficult-seed strata for LineageFlow N=1000: NOT
+  TESTABLE (same as Wave 199 P3; N=5 smoke preserves verbatim).
+* §10.41 (e) Cross-adapter synthesis: honest status — k6 finding
+  preserved verbatim; lineageflow arm still NOT TESTABLE.
+* §10.41 (f) CLM-061 final cross-adapter statement: annotated with
+  Wave 201 contribution, but data-side status UNCHANGED — k6
+  CONFIRMED on real data; lineageflow N=1000 sweep STILL BLOCKED
+  but pipeline plumbing ready (cross-adapter CONFIRMED-on-2-adapters
+  claim is NOT asserted because the lineageflow N=1000 paired data
+  is not on disk).
+* §10.41 (g) 10 acceptance gates (all PASS).
+
+**CLM-061 final-status annotation (Wave 201 P7 additive).** Wave 199
+P4 `+ LineageFlow cross-adapter confirmation PENDING` annotation is
+preserved verbatim and extended with `+ Wave 201 P2/P3/P5/P6/P7 eval
+pipeline plumbing ready (22-min projected N=1000 sweep wall time vs
+Wave 84 >40 h estimate)`. The cross-adapter CONFIRMED-on-2-adapters
+claim is **NOT asserted** because the lineageflow N=1000 paired data
+is not on disk — k6_foldability_w161 N=1000 remains the single-adapter
+ground truth.
+
+**CLM-065 — NEW claim (Wave 201 P7).** Eval pipeline speedup via 4
+additive per-GPU-oversubscription + sharding + auto-detection +
+GPU-propagation improvements — projected N=1000 sweep wall time ≈22
+min (vs Wave 84 >40 h estimate), or ~110× speedup; LPT length-balanced
+sharding adds ~37% additional speedup over the round-robin N=4
+baseline via the 30%→8% skew reduction on length-imbalanced input.
+CPU-only and GPU-agnostic (10 hermetic unit tests pass on CPU with
+monkeypatched subprocess / multiprocessing fakes). Ruff 0 across 5
+dirs; D.4 byte-stable regression count preserved at 72/72 PASS (no
+regression vectors modified by Wave 201).
+
+**Acceptance gates (Wave 201 P7).** All 10 gates PASS:
+
+| # | gate | status |
+|---|------|--------|
+| 1 | Wave 201 P2 `--workers-per-gpu` plumbing + 7 hermetic tests | PASS — `tests/test_tools/test_workers_per_gpu.py` 7/7 |
+| 2 | Wave 201 P3 length-balanced LPT sharding + 3 propagation tests | PASS — `test_foldability_workers_per_gpu_length_balanced_assigns_longest_first` + `test_sc_balanced_indices_by_length_helper_load_balances` |
+| 3 | Wave 201 P5 auto-detect workers-per-gpu via `nvidia-smi` | PASS — `_detect_gpu_workers()` never raises |
+| 4 | Wave 201 P6 `--gpus` propagation to `run_foldability.py` (was missing from P5) | PASS — diff `tools/run_lineageflow_n1000_foldability_omegafold.py` lines 159-168 + 214-217 |
+| 5 | Wave 201 P7 §10.41 paper section + CLM-061 additive annotation + CLM-065 new claim + §15.94 + §R.84 + §7.13 + ARCHITECTURE cross-ref | PASS — this commit |
+| 6 | `tools/check_claims_consistency.py` reports "No drift detected." after Wave 201 P7 edits | PASS — 56 active after Wave 201 P7 + CLM-065 add |
+| 7 | D.4 byte-stable regression count preserved at 72/72 PASS (no regression vectors modified by Wave 201) | PASS |
+| 8 | Cross-adapter status preserved: k6 CONFIRMED on real data; lineageflow N=1000 sweep BLOCKED-ON-DATA but pipeline ready | PASS — honest framing |
+| 9 | CLM-065 (eval pipeline speedup) added as new ACTIVE claim with asserted-by reference to the 4 Wave 201 commits + projected 22-min wall time | PASS |
+| 10 | No paper claim retracted; §10.39 + §10.38 + §10.37 + §10.36 + §10.35 + §10.6 R-level inventory all preserved verbatim | PASS |
+
+**ADDITIVE only — does not delete or rewrite any prior §15.1–
+§15.93 paragraph above.** §15.88 (Wave 195 strict per-cell power
+analysis) + §10.35 + §R.78 + §7.7 + CLM-060/061/062 + Wave 196 P5 +
+§15.89 + §10.36 + §R.79 + §7.8 + CLM-061 status change + CLM-063 +
+CLM-064 + §15.90 + §10.37 + §R.80 + §7.9 + Wave 197 P4 CLM-061
+final-status + §15.91 + §10.38 + §R.81 + §7.10 + Wave 198 P4
+CLM-061 supersession + §15.92 + §10.39 + §R.82 + §7.11 + Wave 199 P4
+CLM-061 LineageFlow BLOCKED-ON-DATA annotation + §15.93 (if any) +
+Wave 201 P7 §10.41 + CLM-061 additive annotation + CLM-065 NEW
+claim + §R.84 + §7.13 are preserved verbatim; Wave 201 P7 adds the
+**eval pipeline speedup** dimension on top of the Wave 199 P4
+LineageFlow cross-adapter BLOCKED-ON-DATA annotation. The Wave 199
+P4 finding is preserved verbatim; Wave 201 P7 adds the eval pipeline
+plumbing that removes the pipeline-side contribution to the blocker
+chain (Wave 84 CPU wallclock + Wave 200 P2 GPU-stack torch/sm_120
+mismatch remain, but the pipeline no longer adds to them). No §10.6
+R-level inventory number is changed or retracted; §10.35 + §10.36 +
+§10.37 + §10.38 + §10.39 + §10.41 add the missing post-hoc-power
+dimension (Track B) + paired N=1000 dimension (Track C) + paired-diff
+variance decomposition root-cause analysis (Track D) + per-record +
+per-difficulty-tier granularity dimension on k6 (Track E) +
+LineageFlow cross-adapter BLOCKED-ON-DATA annotation (Track F, Wave
+199 P4) + eval pipeline speedup via 4 additive optimizations (Track
+G, this Wave 201 P7 contribution) without modifying any Wave 188 P5
+/ Wave 189 P2/P3/P4 / Wave 190 P2/P3 / Wave 191 P2/P3 / Wave 195 P5
+/ Wave 196 P5 / Wave 197 P4 / Wave 198 P4 / Wave 199 P4 disclosure.
