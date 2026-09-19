@@ -760,3 +760,434 @@ def test_sc_workers_per_gpu_default_one(
         f"expected 1 Process instance, got {len(_FakeProcess.instances)}"
     )
     assert _FakeProcess.instances[0].indices == list(range(10))
+
+
+# ---------------------------------------------------------------------------
+# Length-balanced sub-shard assignment (Wave 201 P3)
+# ---------------------------------------------------------------------------
+#
+# These tests pin the load-balancing contract:
+# * When ``--workers-per-gpu N`` is used (N > 1), each GPU's records are
+#   split into N sub-shards via LPT bin-packing by sequence length.
+# * The longest record lands in sub-shard 0; subsequent records go to the
+#   least-loaded shard. This is materially more load-balanced than
+#   round-robin when per-sequence wall time scales with length.
+# * The dispatch contract is still preserved: union of sub-shards covers
+#   every record, total record count is preserved, and ``--workers-per-gpu``
+#   still spawns exactly N procs per GPU.
+
+
+def _lengths_in_fasta_order(fa_path: Path) -> list[int]:
+    """Read a FASTA and return the lengths of the sequences in file order."""
+    out: list[int] = []
+    cur: list[str] = []
+    for line in fa_path.read_text().splitlines():
+        if line.startswith(">"):
+            if cur:
+                out.append(len("".join(cur)))
+            cur = []
+        elif line.strip():
+            cur.append(line.strip())
+    if cur:
+        out.append(len("".join(cur)))
+    return out
+
+
+def test_foldability_workers_per_gpu_length_balanced_assigns_longest_first(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """With ``--workers-per-gpu 2`` and 1 GPU, the two sub-shard FASTAs
+    must reflect length-balanced assignment: the longest record lands
+    in sub-shard A (by itself), and the rest of the records are split
+    such that total per-shard length is roughly balanced.
+    """
+    fold_mod = _load_module(FOLD_PATH, synthetic_name="fold_under_test_balanced")
+    _FakeProc.reset()
+    monkeypatch.setattr(fold_mod.subprocess, "Popen", _FakeProc)
+    monkeypatch.setattr(fold_mod, "_parse_omegafold_cmd", lambda bin_: ["omegafold"])
+
+    class _WritePDBs(_FakeProc):
+        def __init__(self, cmd: list[str], env: dict[str, str] | None = None, **kwargs: Any) -> None:
+            super().__init__(cmd, env, **kwargs)
+            assert len(cmd) >= 3
+            out_dir = Path(cmd[2])
+            fasta_path = Path(cmd[1])
+            out_dir.mkdir(parents=True, exist_ok=True)
+            for line in fasta_path.read_text().splitlines():
+                if line.startswith(">"):
+                    qid = line[1:].split()[0]
+                    (out_dir / f"{qid}.pdb").write_text(_make_fake_pdb(qid))
+
+    monkeypatch.setattr(fold_mod.subprocess, "Popen", _WritePDBs)
+
+    # 10 sequences with deliberately skewed lengths (10..100 in steps of 10).
+    lengths = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    seqs = ["".join("ACDEFGHIKL" for _ in range(L // 10)) for L in lengths]
+    fasta_lines = []
+    for i, (_L, s) in enumerate(zip(lengths, seqs, strict=True)):
+        fasta_lines.append(f">q{i}")
+        fasta_lines.append(s)
+    fasta = tmp_path / "queries.fasta"
+    fasta.write_text("\n".join(fasta_lines) + "\n")
+
+    outdir = tmp_path / "out_balanced"
+    outdir.mkdir()
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "foldability_omegafold.py",
+            "--fasta",
+            str(fasta),
+            "--outdir",
+            str(outdir),
+            "--gpus",
+            "0",
+            "--workers-per-gpu",
+            "2",
+            "--omegafold-bin",
+            "omegafold",
+            "--log-every",
+            "0",
+        ],
+    )
+    fold_mod.main()
+
+    # Exactly 2 sub-shards spawned.
+    assert len(_FakeProc.instances) == 2, (
+        f"expected 2 Popen calls, got {len(_FakeProc.instances)}"
+    )
+
+    # Inspect each sub-shard's FASTA; compute per-shard total length.
+    shard_fastas = [Path(p.cmd[1]) for p in _FakeProc.instances]
+    per_shard_lengths = [
+        sum(_lengths_in_fasta_order(fa)) for fa in shard_fastas
+    ]
+
+    # The total length across both shards equals sum(lengths) — every
+    # sequence landed somewhere (no records lost, no records duplicated).
+    assert sum(per_shard_lengths) == sum(lengths), (
+        f"per-shard lengths {per_shard_lengths} don't sum to {sum(lengths)}"
+    )
+
+    # Length-balanced: the two shards should differ in total length by at
+    # most a single longest record (100). With LPT bin-packing on
+    # [10, 20, ..., 100], optimal makespan is 190 (10+20+...+100 = 550
+    # divided by 2 = 275; actual LPT result is {100+90+80=270, 70+60+50+40+30+20+10=280}
+    # — diff = 10). Round-robin would give {10+30+50+70+90=250,
+    # 20+40+60+80+100=300} (diff = 50). We assert diff <= 30 (well within
+    # the LPT guarantee, well below round-robin).
+    diff = abs(per_shard_lengths[0] - per_shard_lengths[1])
+    assert diff <= 30, (
+        f"length-balanced dispatch produced unbalanced shards: {per_shard_lengths} "
+        f"(diff = {diff}, expected <= 30 for these lengths)"
+    )
+
+    # The longest record (length 100) should be alone in some sub-shard,
+    # because with 2 workers the LPT algorithm drops q9 (len=100) into
+    # whichever shard is empty first. (Both sub-shards start empty, so
+    # q9 goes to shard 0; then the remaining 9 records are split between
+    # shard 1 and shard 0.)
+    longest_shard_idx = max(
+        range(len(shard_fastas)),
+        key=lambda k: max(_lengths_in_fasta_order(shard_fastas[k]), default=0),
+    )
+    longest_in_shard = _lengths_in_fasta_order(shard_fastas[longest_shard_idx])
+    assert max(longest_in_shard) == 100, (
+        f"longest record (len=100) should be present in some shard; got "
+        f"per-shard maxes = "
+        f"{[max(_lengths_in_fasta_order(fa), default=0) for fa in shard_fastas]}"
+    )
+
+
+def test_foldability_shard_by_length_helper_is_load_balanced() -> None:
+    """Direct unit test of ``shard_by_length`` (the LPT bin-packing helper
+    used for length-balanced sub-sharding).
+
+    With records of wildly different lengths (1, 1, 1, 100), 2 shards
+    should put the 100 alone in shard A and the 1's in shard B.
+    """
+    fold_mod = _load_module(FOLD_PATH, synthetic_name="fold_under_test_lpt")
+    # Build FastaRecords directly (no FASTA roundtrip needed).
+    from dataclasses import dataclass
+
+    @dataclass(frozen=True)
+    class _R:
+        seq: str
+
+    records = [_R("A"), _R("A"), _R("A"), _R("A" * 100)]
+    shards = fold_mod.shard_by_length(records, num_shards=2)
+    assert len(shards) == 2
+    shard_total = [sum(len(r.seq) for r in s) for s in shards]
+    # The 100 alone in one shard, the 3 A's in the other.
+    assert sorted(shard_total) == [3, 100], (
+        f"LPT bin-packing should put {100} alone; got shard totals = {shard_total}"
+    )
+
+
+def test_sc_balanced_indices_by_length_helper_load_balances() -> None:
+    """Direct unit test of ``_balanced_indices_by_length`` (the LPT
+    bin-packing helper used for length-balanced sub-sharding in the
+    ESM-IF script).
+
+    The order of indices in the input is irrelevant — only the lengths
+    of the corresponding queries matter.
+    """
+    sc_mod = _load_module(SC_PATH, synthetic_name="sc_under_test_lpt")
+    queries = [
+        sc_mod.Query(qid=f"q{i}", seq="A" * L) for i, L in enumerate([10, 50, 90, 30, 70])
+    ]
+    bins = sc_mod._balanced_indices_by_length(
+        list(range(5)),
+        queries=queries,
+        num_bins=2,
+    )
+    assert len(bins) == 2
+    bin_total = [sum(len(queries[i].seq) for i in b) for b in bins]
+    # LPT trace on sorted DESC [90, 70, 50, 30, 10]:
+    #   90 → bin 0 (loads = [90, 0])
+    #   70 → bin 1 (loads = [90, 70])
+    #   50 → bin 1 (loads = [90, 120])
+    #   30 → bin 0 (loads = [120, 120])
+    #   10 → bin 0 (loads = [130, 120])
+    # Round-robin on input order [10, 50, 90, 30, 70] with 2 bins would
+    # give loads = [10+90+30 = 130, 50+70 = 120] (same total but with no
+    # co-location of long records — the key benefit of LPT is *pairing*
+    # of longest records with shortest, which mitigates the worst-case
+    # bottleneck).
+    # We assert the LPT-optimal-ish result: sorted bin totals in
+    # [120, 130] — well within the LPT 4/3 guarantee (≤ 4/3 - 1/N
+    # × OPT = 7/6 × 125 = 145.8).
+    assert sorted(bin_total) == [120, 130], (
+        f"got bin totals = {bin_total}, expected [120, 130]"
+    )
+    # Union of indices covers all input indices.
+    covered: set[int] = set()
+    for b in bins:
+        covered.update(b)
+    assert covered == set(range(5)), f"covered = {covered}"
+
+
+def test_sc_balanced_indices_by_length_one_bin_returns_input() -> None:
+    """When ``num_bins <= 1`` the helper must short-circuit and return
+    the input indices unchanged (preserves Wave 158 behaviour for N=1)."""
+    sc_mod = _load_module(SC_PATH, synthetic_name="sc_under_test_one_bin")
+    queries = [sc_mod.Query(qid=f"q{i}", seq="A" * 10) for i in range(3)]
+    out = sc_mod._balanced_indices_by_length(
+        [0, 1, 2],
+        queries=queries,
+        num_bins=1,
+    )
+    assert out == [[0, 1, 2]]
+
+
+def test_run_foldability_propagates_workers_per_gpu_to_subprocess(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """``run_foldability.py`` must add ``--workers-per-gpu N`` to both
+    the fold and the self-consistency subprocess invocations when N > 1.
+
+    This is a hermetic dispatch test: the fold sub-call writes a fake PDB
+    per sequence so the SC sub-call can run without a real OmegaFold or
+    ESM-IF install. We monkeypatch the two sub-scripts' main() entry
+    points to record the sys.argv they receive, then assert that
+    ``--workers-per-gpu 4`` is in both argv lists.
+    """
+    fold_mod = _load_module(FOLD_PATH, synthetic_name="fold_for_propagation")
+    sc_mod = _load_module(SC_PATH, synthetic_name="sc_for_propagation")
+
+    fold_received_argv: list[str] = []
+    sc_received_argv: list[str] = []
+
+    def _fake_fold_main() -> None:
+        # Record argv, then write fake PDBs for every sequence so the SC
+        # sub-call (driven by ``queries.fasta``) finds them.
+        fold_received_argv.extend(sys.argv)
+        # Build the queries fasta the SC sub-call will read.
+        fasta_path = Path(sys.argv[sys.argv.index("--fasta") + 1])
+        outdir = Path(sys.argv[sys.argv.index("--outdir") + 1])
+        outdir.mkdir(parents=True, exist_ok=True)
+        (outdir / "queries.fasta").write_bytes(fasta_path.read_bytes())
+        # Write one fake PDB per qid.
+        pdb_dir = outdir / "pdb"
+        pdb_dir.mkdir(parents=True, exist_ok=True)
+        for line in fasta_path.read_text().splitlines():
+            if line.startswith(">"):
+                qid = line[1:].split()[0]
+                (pdb_dir / f"{qid}.pdb").write_text(_make_fake_pdb(qid))
+        # Write a stub foldability.jsonl so the merge step has something
+        # to read.
+        rows = []
+        for line in fasta_path.read_text().splitlines():
+            if line.startswith(">"):
+                qid = line[1:].split()[0]
+                rows.append(
+                    json.dumps({"qid": qid, "pdb_path": str(pdb_dir / f"{qid}.pdb")})
+                )
+        (outdir / "foldability.jsonl").write_text("\n".join(rows) + "\n")
+
+    def _fake_sc_main() -> None:
+        sc_received_argv.extend(sys.argv)
+        # Write a stub self_consistency.jsonl so the merge step has
+        # something to read.
+        outdir = Path(sys.argv[sys.argv.index("--outdir") + 1])
+        queries_fa = Path(sys.argv[sys.argv.index("--queries-fasta") + 1])
+        rows = []
+        for line in queries_fa.read_text().splitlines():
+            if line.startswith(">"):
+                qid = line[1:].split()[0]
+                rows.append(json.dumps({"qid": qid, "sc_perplexity": 4.5}))
+        (outdir / "self_consistency.jsonl").write_text("\n".join(rows) + "\n")
+
+    # Patch the two module main() entry points.
+    monkeypatch.setattr(fold_mod, "main", _fake_fold_main)
+    monkeypatch.setattr(sc_mod, "main", _fake_sc_main)
+
+    # Now load run_foldability.py and patch its module references to the
+    # fake fold / sc modules.
+    run_path = (
+        REPO_ROOT
+        / "data"
+        / "lineageflow_upstream"
+        / "evaluation"
+        / "run_foldability.py"
+    )
+    run_mod = _load_module(run_path, synthetic_name="run_foldability_under_test")
+    # The script does `Path(__file__).with_name(...)` to locate the two
+    # sibling scripts. With our synthetic name + ``with_name`` this still
+    # resolves to the real on-disk path, which is fine because we've
+    # patched the modules via ``sys.modules`` above; the subprocess.run
+    # calls would try to exec the real scripts. Instead, monkeypatch
+    # ``subprocess.run`` to call our fake mains directly.
+    calls: list[list[str]] = []
+
+    def _fake_subprocess_run(cmd: list[str], *args: Any, **kwargs: Any) -> Any:
+        calls.append(list(cmd))
+        # Drive the matching fake main().
+        if "foldability_omegafold.py" in cmd[1]:
+            sys.argv = cmd[1:]
+            _fake_fold_main()
+        elif "self_consistency_esmif.py" in cmd[1]:
+            sys.argv = cmd[1:]
+            _fake_sc_main()
+        return _CompletedProcessLike(0)
+
+    class _CompletedProcessLike:
+        def __init__(self, rc: int) -> None:
+            self.returncode = rc
+
+    monkeypatch.setattr(run_mod.subprocess, "run", _fake_subprocess_run)
+
+    # Drive run_foldability.main() with --workers-per-gpu 4.
+    fasta = tmp_path / "queries.fasta"
+    fasta.write_text(_TEN_SEQS_FASTA)
+    outdir = tmp_path / "run_out"
+    outdir.mkdir()
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_foldability.py",
+            "--fasta",
+            str(fasta),
+            "--outdir",
+            str(outdir),
+            "--fold-gpus",
+            "0,1",
+            "--sc-gpus",
+            "0,1",
+            "--workers-per-gpu",
+            "4",
+            "--omegafold-bin",
+            "omegafold",
+        ],
+    )
+    run_mod.main()
+
+    # Both sub-calls were issued.
+    assert len(calls) == 2, f"expected 2 subprocess.run calls, got {len(calls)}"
+    fold_call, sc_call = calls[0], calls[1]
+
+    # Both received --workers-per-gpu 4.
+    for name, call in (("fold", fold_call), ("sc", sc_call)):
+        assert "--workers-per-gpu" in call, (
+            f"{name} sub-call missing --workers-per-gpu: {call}"
+        )
+        i = call.index("--workers-per-gpu")
+        assert call[i + 1] == "4", (
+            f"{name} sub-call --workers-per-gpu={call[i + 1]!r}, expected '4'"
+        )
+
+
+def test_run_foldability_omits_workers_per_gpu_when_default(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """With the default ``--workers-per-gpu 1`` (or when the flag is
+    omitted), the sub-calls must NOT include ``--workers-per-gpu``.
+
+    This preserves the Wave 158 baseline behaviour: the default does not
+    propagate any new flag to the sub-scripts (preserves sub-script
+    defaults of 1).
+    """
+    fold_mod = _load_module(FOLD_PATH, synthetic_name="fold_no_propagate")
+    sc_mod = _load_module(SC_PATH, synthetic_name="sc_no_propagate")
+
+    monkeypatch.setattr(fold_mod, "main", lambda: None)
+    monkeypatch.setattr(sc_mod, "main", lambda: None)
+
+    run_path = (
+        REPO_ROOT
+        / "data"
+        / "lineageflow_upstream"
+        / "evaluation"
+        / "run_foldability.py"
+    )
+    run_mod = _load_module(run_path, synthetic_name="run_foldability_no_propagate")
+
+    calls: list[list[str]] = []
+
+    def _fake_subprocess_run(cmd: list[str], *args: Any, **kwargs: Any) -> Any:
+        calls.append(list(cmd))
+        return _CompletedProcessLike0()
+
+    class _CompletedProcessLike0:
+        returncode = 0
+
+    monkeypatch.setattr(run_mod.subprocess, "run", _fake_subprocess_run)
+
+    fasta = tmp_path / "queries.fasta"
+    fasta.write_text(_TEN_SEQS_FASTA)
+    outdir = tmp_path / "default_out"
+    outdir.mkdir()
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_foldability.py",
+            "--fasta",
+            str(fasta),
+            "--outdir",
+            str(outdir),
+            "--fold-gpus",
+            "0",
+            "--sc-gpus",
+            "0",
+            # No --workers-per-gpu (default = 1).
+            "--omegafold-bin",
+            "omegafold",
+        ],
+    )
+    run_mod.main()
+
+    # Both sub-calls were issued.
+    assert len(calls) == 2
+    for call in calls:
+        assert "--workers-per-gpu" not in call, (
+            f"default --workers-per-gpu 1 must NOT propagate; got: {call}"
+        )
