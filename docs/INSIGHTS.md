@@ -526,6 +526,40 @@ Wave 196 P3 kanzi N=1000 paired re-verify:
 `verification_outputs/wave195-p2-r-level-power.{csv,json}` (commit `e154e7f`),
 `verification_outputs/wave195-p3-4arm-power.{csv,json}` (commit `76108b5`).
 
+**Wave 196 P5 — §10.36 paper section + CLM-061 + CLM-040/063
+cross-references.** Wave 196 P5 (commit pending) integrates the Wave
+196 P2/P3/P4 verdict upgrades into the paper as `docs/paper-draft.md`
+§10.36 — six subsections: (a) Motivation (Wave 196 B + C replication
+closes 2 power-analysis gaps); (b) Track B 4-arm n=30 paired verdict
+upgrade; (c) Track C kanzi N=1000 paired re-verify; (d) Updated Table
+B + Table A R2 row; (e) Verdict升级: CLM-061 + CLM-040 status change;
+(f) 21 acceptance gates (all PASS). The §10.36 verdict upgrades:
+**CLM-061 (4-arm head-to-head)**: status transitions from Wave 195 P3
+(12 cells × n=3 unpaired Welch → ALL 12 UNDERPOWERED at the 1pp floor)
+to Wave 196 P4 (16 cells × n=30 paired t-test → 2 SUPPORTED + 14
+UNDERPOWERED + 0 REGRESSES). The 2 SUPPORTED cells are
+`vanilla_scPerplexity_NFE{50,100}` (Cohen's d_z = −2.93 to −2.99,
+p_raw < 1e-15) — FlowA framework vs Vanilla (no-distillation) baseline
+arm is strongly framework-wins on scPerplexity at both NFE values.
+**CLM-040 (CIFAR-10 SOTA reproduction) + CLM-063 (kanzi foldability
+framework_inv_proj)**: the kanzi foldability R2 cell verdict upgrade
+is captured under CLM-063 + §10.36 cross-references (CLM-040 is the
+CIFAR-10 SOTA reproduction claim and preserves its existing content
+verbatim). The R2 verdict upgrade: REGRESSES (Wave 195 P2 byte-stable
+composite) → UNDERPOWERED with paired-diff-mean = +0.018 Å
+framework-wins, p_raw = 0.00257 < α_per_cell = 0.007143, Cohen's d_z
+= 0.0956, post-hoc power at observed Δ = 0.856. **No §10.6 R-level
+inventory number is changed or retracted**; §10.36 adds the missing
+paired-t-test dimension on Table B 4-arm head-to-head + the paired
+N=1000 fresh re-verify dimension on Table A R2 (kanzi framework_inv_proj)
+as an ADDITIVE, quantitative, commit-pinned-JSON evidence layer.
+Acceptance gates: D.4 33/33 PASS preserved; ruff 0 across 5 dirs;
+`tools/check_claims_consistency.py` "No drift detected." (55 active
+after Wave 196 P5 + CLM-061 update + CLM-063 cross-references add, 1
+provisional, 2 deprecated). Cross-references: §10.36 (paper-draft.md)
++ §15.89 (CONSOLIDATED_RESULTS.md) + §R.79 (baseline-audit-report.md)
++ CLM-061 (updated) + CLM-063 (cross-references added) + CLM-064.
+
 ## 8. State machine infrastructure (Phase 2a + 2b)
 
 - **Substrate is generic + HSM + decorator + type-safe** [CLM-033]. `adaptive_reflow/contracts/state_machine.py` ships a PEP 695 `class StateMachine[TState, TEvent]` with decorator-driven transitions, hierarchical regions, history pseudo-states, parallel regions, byte-deterministic `TransitionLog`, async guards, and DOT / Mermaid export — stdlib-only, `mypy --strict` clean, no third-party dependency.

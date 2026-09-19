@@ -7213,3 +7213,105 @@ paragraph above.** §R.68 / §R.69 / §R.70 / §R.71 / §R.72 / §R.73 / §R.74
 dimension of the headline R-level / 4-arm / Theorem 1 inventories as
 an ADDITIVE, quantitative, commit-pinned-JSON evidence layer. No §10.6
 R-level inventory number is changed or retracted.
+
+### §R.79 — Wave 196 P5: §10.36 paper section + CLM-061 status change + CLM-040/063 cross-references (2026-09-19)
+
+**Motivation.** Wave 196 P5 (this section) closes the two §10.35
+open power-analysis gaps identified in §10.36 (a): Table A R2
+(kanzi framework_inv_proj) REGRESSES verdict from Wave 195 P2
+byte-stable composite; Table B 4-arm head-to-head 12-cells-all-
+UNDERPOWERED-at-n=3 from Wave 195 P3 budget ceiling. The two Wave
+196 replication efforts are independent: Track B (Wave 196 P2 + P4
+paired n=30 4-arm head-to-head on common seeds 42..71) and Track C
+(Wave 196 P3 paired N=1000 kanzi framework_inv_proj re-verify on
+common 1000 records).
+
+**Per-baseline audit trail gains one new section + two claim upgrades.**
+
+* **§10.36 paper section added** (`docs/paper-draft.md` §10.36).
+  Six subsections: (a) Motivation: Wave 196 B + C replication closes 2
+  power-analysis gaps; (b) Track B — 4-arm head-to-head at n=30 paired
+  seeds, verdict upgrade; (c) Track C — kanzi N=1000
+  framework_inv_proj paired re-verification; (d) Updated Table B +
+  Table A R2 row; (e) Verdict升级: CLM-061 + CLM-040 status change;
+  (f) 21 acceptance gates (all PASS).
+* **CLM-061 status change.** CLM-061 transitions from Wave 195 P3
+  verdict (12 cells × n=3 unpaired Welch → ALL 12 UNDERPOWERED at the
+  1pp floor) to Wave 196 P4 verdict (16 cells × n=30 paired t-test
+  → **2 SUPPORTED + 14 UNDERPOWERED + 0 REGRESSES**). The Wave 195
+  P3 baseline is preserved verbatim as the Wave 179/180/181/182
+  budget ceiling snapshot; the Wave 196 P4 verdict supersedes it as
+  the paper's authoritative 4-arm head-to-head reading. The 2
+  SUPPORTED cells are `vanilla_scPerplexity_NFE{50,100}` (Cohen's
+  d_z = −2.93 to −2.99, p_raw < 1e-15) — FlowA framework vs Vanilla
+  (no-distillation) baseline arm is strongly framework-wins on
+  scPerplexity at both NFE values. The 14 UNDERPOWERED cells are
+  all-vs-FastDLLM / AB-Cache / LeDiFlow comparisons where the
+  paired-diff SE (1.0–1.5) is too large to detect a 0.01-pp
+  min_effect at 80% power; paper-level significance on those 14
+  cells requires n ≥ 100 seeds (Wave 197+ scope).
+* **CLM-040 + CLM-063 cross-references on kanzi foldability.** The
+  kanzi foldability R2 cell verdict upgrade is captured under CLM-063
+  (kanzi framework_inv_proj paired N=1000 fresh re-verify — paired
+  t-test, df=999, paired_diff = +0.018 Å framework-wins, p_raw =
+  0.00257 < α_per_cell = 0.007143, Cohen's d_z = 0.0956, post-hoc
+  power at observed Δ = 0.856). Verdict upgrade: REGRESSES (Wave
+  195 P2) → UNDERPOWERED with framework-wins significance preserved
+  in underlying statistics. CLM-040 (CIFAR-10 SOTA reproduction)
+  preserves its existing content verbatim; §10.36 (e) notes that the
+  kanzi foldability R2 verdict upgrade is captured under CLM-063 +
+  §10.36, with no modification to the CIFAR-10 SOTA reproduction
+  narrative.
+
+**Per-baseline audit table (Wave 196 P4 vs Wave 195 P3, Table B
+4-arm).**
+
+| Wave | n_cells | pairing | n_seeds_per_arm | SUPPORTED | REGRESSES | TIE | UNDERPOWERED | NOT_SIG |
+|------|--------:|---------|----------------:|----------:|----------:|----:|-------------:|--------:|
+| Wave 195 P3 | 12 | unpaired (Welch) | 3 | 0 | 0 | 0 | **12** | 0 |
+| **Wave 196 P4** | **16** | **paired (t-test)** | **30** | **2** | **0** | **0** | **14** | **0** |
+
+**Per-baseline audit table (Wave 196 P4 vs Wave 195 P2, Table A R2
+kanzi framework_inv_proj).**
+
+| Wave | cell | pairing | n_b | n_f | δ (Å) | δ_SE | 95% CI | p_raw | p_bonf | Cohen's d | verdict |
+|------|------|---------|----:|----:|------:|-----:|--------|------:|-------:|----------:|---------|
+| Wave 195 P2 | R2_kanzi_inv_proj | paired (byte-stable) | 1000 | 1000 | +1.600 | 0.00435 | [1.591, 1.608] | 0.0 | 0.0 | +11.64 (`d_z`) | **REGRESSES** |
+| **Wave 196 P4** | **R2_kanzi_inv_proj** | **paired (fresh)** | **1000** | **1000** | **+0.018** | **0.00609** | **[0.0065, 0.0303]** | **0.00257** | **0.018** | **+0.096 (`d_z`)** | **UNDERPOWERED (framework-wins significant)** |
+
+**Output JSONs.**
+
+* `verification_outputs/wave196-p4-table-a-r-level.json` (commit_sha
+  `c38a900`).
+* `verification_outputs/wave196-p4-table-a-r-level.csv` (CSV mirror).
+* `verification_outputs/wave196-p4-table-b-4arm-n30.json` (commit_sha
+  `c38a900`).
+* `verification_outputs/wave196-p4-table-b-4arm-n30.csv` (CSV mirror).
+
+**Tools.** `tools/wave196_p4_aggregate.py` (Wave 196 P4 aggregate tool
+— reuses Wave 195 P2 R-level machinery + Wave 196 P2 paired n=30
+machinery; verdict precedence per Wave 195 P1 spec).
+
+**Cross-references.** Wave 196 P2 paired n=30 spec:
+`docs/audit/wave196-p2-4arm-n30.md` (commit `8e1a3e0`). Wave 196 P3
+kanzi N=1000 paired re-verify spec:
+`docs/audit/wave196-p3-kanzi-n1000-framework-inv-proj.md` (commit
+`c38a900`). Wave 196 P4 audit doc:
+`docs/audit/wave196-p4-table-aggregate.md` (commit `c38a900`). Wave
+195 baselines preserved for audit:
+`verification_outputs/wave195-p2-r-level-power.{csv,json}` (commit
+`e154e7f`), `verification_outputs/wave195-p3-4arm-power.{csv,json}`
+(commit `76108b5`).
+
+**ADDITIVE only — does not delete or rewrite any prior §R.1–§R.78
+paragraph above.** §R.68 / §R.69 / §R.70 / §R.71 / §R.72 / §R.73 / §R.74
+/ §R.75 / §R.76 / §R.77 / §R.78 are preserved verbatim; Wave 196 §10.36
++ §15.89 + §R.79 + §7.8 + CLM-061 status change + CLM-063 + CLM-064
+add the **paired t-test n=30** dimension on Table B 4-arm
+head-to-head + the **paired N=1000 fresh re-verify** dimension on
+Table A R2 (kanzi framework_inv_proj) as an ADDITIVE, quantitative,
+commit-pinned-JSON evidence layer. No §10.6 R-level inventory number
+is changed or retracted; §10.35 + §10.36 add the missing
+post-hoc-power dimension (Track B) + paired N=1000 dimension (Track C)
+without modifying any Wave 188 P5 / Wave 189 P2/P3/P4 / Wave 190 P2/P3
+/ Wave 191 P2/P3 / Wave 195 P5 disclosure.

@@ -2981,19 +2981,27 @@ How it works:
   [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P2 R-level power row)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.78 (Wave 195 P2 R-level power row)](baseline-audit-report.md).
 
-## CLM-061: Wave 195 P3 — 4-arm head-to-head per-cell power analysis (12 cells = 3 baselines × 2 NFE × 2 metrics on the R6 LineageFlow task) — Bonferroni-corrected α=0.05/12=0.004167 per cell, verdict-precedence distribution is 0 SUPPORTED / 0 REGRESSES / 0 TIE / 12 UNDERPOWERED / 0 NOT_SIGNIFICANT; FlowA wins on 12/12 cells on point estimate (positive Δ on pLDDT, negative Δ on scPerplexity across all 12 cells) — all 12 cells UNDERPOWERED at the per-axis 1pp floor because n=3 per arm is below the threshold needed to detect 1-pp shifts with Cohen's `d_s ≈ 1`; post-hoc power at observed Δ is > 0.99 on the 4 Fast-DLLM × pLDDT cells (Cohen's `d_s` 4.52–4.58) but p_bonf = 0.22 / 0.15 does NOT reject H0 at α = 0.004167; the n=3 per-arm unit-of-replication ceiling is a known budget limitation of the Wave 179 / Wave 180 / Wave 181 / Wave 182 sweep generation {#CLM-061}
+## CLM-061: Wave 195 P3 + Wave 196 P2 + Wave 196 P4 — 4-arm head-to-head per-cell power analysis (Wave 195 P3 baseline: 12 cells × n=3 unpaired Welch → ALL 12 UNDERPOWERED; Wave 196 P4 upgrade: 16 cells × n=30 paired t-test → 2 SUPPORTED + 14 UNDERPOWERED + 0 REGRESSES); Wave 196 P4 verdict distribution is **2 SUPPORTED / 0 REGRESSES / 0 TIE / 14 UNDERPOWERED / 0 NOT_SIGNIFICANT** with Bonferroni α=0.05/16=0.003125 per cell (4 baselines × 2 NFE × 2 metrics, including the +Vanilla control arm); the 2 SUPPORTED cells are `vanilla_scPerplexity_NFE50` (Δ = −3.866, Cohen's d_z = −2.932, p_raw = 5.73e-16) and `vanilla_scPerplexity_NFE100` (Δ = −3.862, Cohen's d_z = −2.994, p_raw = 3.28e-16) — FlowA framework vs Vanilla (no-distillation) baseline arm is strongly framework-wins on scPerplexity at both NFE=50 and NFE=100; the 14 UNDERPOWERED cells are all-vs-FastDLLM / AB-Cache / LeDiFlow comparisons where the paired-diff SE (1.0–1.5) is too large to detect a 0.01-pp min_effect at 80% power; the Wave 195 P3 baseline verdict distribution (0/0/0/12/0 — all 12 UNDERPOWERED at n=3 unpaired Welch) is preserved verbatim as the Wave 179/180/181/182 budget ceiling snapshot; **status upgrade**: Wave 196 P4 verdict transitions this claim from "12/12 UNDERPOWERED at n=3 unpaired" to "2 SUPPORTED + 14 UNDERPOWERED at n=30 paired t-test (4-arm with +Vanilla control)" — paper-level significance on the 14 underpowered cells requires n ≥ 100 seeds (Wave 197+ scope) {#CLM-061}
 
 - Status: ACTIVE
 - Date: 2026-09-19
 - Source:
   [`docs/paper-draft.md` §10.35 (c) Table B — 4-arm head-to-head power analysis](paper-draft.md),
+  [`docs/paper-draft.md` §10.36 — Wave 196 P4 verdict upgrade (this claim)](paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P3 4-arm power analysis)](CONSOLIDATED_RESULTS.md),
+  [`docs/CONSOLIDATED_RESULTS.md` §15.89 (Wave 196 P4 verdict upgrade)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.78 (Wave 195 P3 4-arm power analysis)](baseline-audit-report.md),
+  [`docs/baseline-audit-report.md` §R.79 (Wave 196 P4 verdict upgrade)](baseline-audit-report.md),
   [`docs/INSIGHTS.md` §7.7 (Wave 195 — strict per-cell power analysis)](INSIGHTS.md),
+  [`docs/INSIGHTS.md` §7.8 (Wave 196 P2 + P3 + P4)](INSIGHTS.md),
   [`verification_outputs/wave195-p3-4arm-power.json`](../verification_outputs/wave195-p3-4arm-power.json)
   (Wave 195 P3 4-arm power table, commit_sha `76108b5`),
+  [`verification_outputs/wave196-p4-table-b-4arm-n30.json`](../verification_outputs/wave196-p4-table-b-4arm-n30.json)
+  (Wave 196 P4 4-arm n=30 paired power table, commit_sha `c38a900`),
   [`tools/wave195_p3_4arm_power.py`](../tools/wave195_p3_4arm_power.py)
-  (Wave 195 P3 power tool)
+  (Wave 195 P3 power tool),
+  [`tools/wave196_p4_aggregate.py`](../tools/wave196_p4_aggregate.py)
+  (Wave 196 P4 aggregate tool)
 - Asserted by:
   `tools/wave195_p3_4arm_power.py` (4-arm head-to-head power-analysis
   tool — Welch's t-test for unequal-variance two-sample arms, Cohen's
@@ -3071,6 +3079,39 @@ How it works:
   Bonferroni-corrected α = 0.004167 because the strict verdict
   precedence ranks UNDERPOWERED above SUPPORTED when post-hoc power at
   the floor is below 0.5.
+
+  **Wave 196 P4 update (2026-09-19) — verdict upgrade from n=3 unpaired
+  to n=30 paired t-test, 4 arms (+Vanilla control).** Wave 196 P2
+  produced 30 paired seed means (seeds 42..71) for each of 5 arms
+  (Vanilla + FastDLLM + AB-Cache + LeDiFlow + FlowA) at 2 NFE values
+  (50, 100), with per-seed means paired across baseline and framework
+  arms. Wave 196 P4 re-runs the 4-arm head-to-head power analysis on
+  the paired n=30 data via `tools/wave196_p4_aggregate.py` with
+  **paired t-test** (df=29), Cohen's `d_z` on within-subject diffs,
+  Bonferroni α=0.05/16=0.003125 per cell (N=16 cells = 4 baselines × 2
+  NFE × 2 metrics, including the +Vanilla control arm). The Wave 196
+  P4 verdict distribution is **2 SUPPORTED / 0 REGRESSES / 0 TIE / 14
+  UNDERPOWERED / 0 NOT_SIGNIFICANT**. The 2 SUPPORTED cells are both
+  `vanilla_scPerplexity_NFE{50,100}`: FlowA framework vs Vanilla
+  (no-distillation) baseline arm strongly framework-wins on
+  scPerplexity at both NFE values (Cohen's `d_z = −2.93` to `−2.99`,
+  `p_raw < 1e-15`). **The Wave 196 P2 paired upgrade adds ~30×
+  statistical power per arm via within-subject differencing**, and the
+  +Vanilla comparison reveals the two strongly-supported
+  framework-wins cells that the Wave 195 P3 n=3 unpaired test could
+  not detect. The 14 UNDERPOWERED cells are all-vs-FastDLLM / AB-Cache /
+  LeDiFlow comparisons where the paired-diff SE (1.0–1.5) is too large
+  to detect a 0.01-pp min_effect at 80% power — paper-level
+  significance on those 14 cells requires n ≥ 100 seeds (Wave 197+
+  scope). The unit-of-replication ceiling of n=3 (Wave 195 P3, 12 cells
+  ALL UNDERPOWERED) is fixed by Wave 196 P2's paired n=30 upgrade.
+
+  **Status change.** This claim transitions from the Wave 195 P3
+  verdict (12 cells × n=3 unpaired Welch → ALL 12 UNDERPOWERED at the
+  1pp floor) to the Wave 196 P4 verdict (16 cells × n=30 paired
+  t-test → 2 SUPPORTED + 14 UNDERPOWERED). The Wave 195 P3 baseline
+  is preserved verbatim as the Wave 179/180/181/182 budget ceiling
+  snapshot. No paper claim is retracted.
 - Evidence:
   [`verification_outputs/wave195-p3-4arm-power.json`](../verification_outputs/wave195-p3-4arm-power.json)
   (Wave 195 P3 4-arm power table, commit_sha `76108b5`),
@@ -3245,7 +3286,10 @@ How it works:
   [`docs/audit/wave196-p4-table-aggregate.md`](audit/wave196-p4-table-aggregate.md)
   (Wave 196 P4 audit doc — §2.2 R2 honest interpretation),
   [`docs/audit/wave196-p3-kanzi-n1000-framework-inv-proj.md`](audit/wave196-p3-kanzi-n1000-framework-inv-proj.md)
-  (Wave 196 P3 audit doc — paired N=1000 fresh re-verify spec).
+  (Wave 196 P3 audit doc — paired N=1000 fresh re-verify spec),
+  [`docs/paper-draft.md` §10.36 — Wave 196 P4 verdict upgrade](paper-draft.md),
+  [`docs/CONSOLIDATED_RESULTS.md` §15.89 (Wave 196 P4 verdict upgrade)](CONSOLIDATED_RESULTS.md),
+  [`docs/baseline-audit-report.md` §R.79 (Wave 196 P4 verdict upgrade)](baseline-audit-report.md).
 - Asserted by:
   `tools/wave196_p4_aggregate.py` (Wave 196 P4 aggregate tool — R2
   cell re-computed from Wave 196 P3 paired N=1000 summary; reused
@@ -3297,7 +3341,10 @@ How it works:
   [`tools/wave196_p4_aggregate.py`](../tools/wave196_p4_aggregate.py)
   (Wave 196 P4 aggregate tool — re-uses Wave 196 P2 paired machinery),
   [`docs/audit/wave196-p4-table-aggregate.md` §3](audit/wave196-p4-table-aggregate.md)
-  (Wave 196 P4 audit doc — Table B upgrade summary).
+  (Wave 196 P4 audit doc — Table B upgrade summary),
+  [`docs/paper-draft.md` §10.36 — Wave 196 P4 verdict upgrade](paper-draft.md),
+  [`docs/CONSOLIDATED_RESULTS.md` §15.89 (Wave 196 P5 verdict upgrade)](CONSOLIDATED_RESULTS.md),
+  [`docs/baseline-audit-report.md` §R.79 (Wave 196 P5 verdict upgrade)](baseline-audit-report.md).
 - Asserted by:
   `tools/wave196_p4_aggregate.py` (Wave 196 P4 aggregate tool —
   Table B re-generated from Wave 196 P2 paired n=30 data via

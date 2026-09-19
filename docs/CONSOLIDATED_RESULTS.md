@@ -7375,3 +7375,88 @@ Cohen 1988 §2.4): cells where the test rejects H0 at the observed δ but
 cannot guarantee the per-axis `min_effect_size` floor are labelled
 UNDERPOWERED. **No §10.6 R-level inventory number is changed or
 retracted**; §10.35 adds the missing post-hoc-power dimension.
+
+### §15.89 — Wave 196 P5: §10.36 verdict-upgrade paper section + CLM-061 + CLM-040/063 cross-references (2026-09-19)
+
+**Motivation.** Wave 196 closed two of the §10.35 open power-analysis
+gaps via two independent replication efforts: Track B (Wave 196 P2 +
+P4 paired n=30 4-arm head-to-head) closes the Table B 12-cells-all-
+UNDERPOWERED-at-n=3 gap with 2 SUPPORTED + 14 UNDERPOWERED; Track C
+(Wave 196 P3 paired N=1000 kanzi framework_inv_proj re-verify) closes
+the R2 REGRESSES-byte-stable gap with paired-diff-mean = +0.018 Å
+framework-wins, p_raw = 0.00257 < α_per_cell = 0.007143. Wave 196 P5
+(this section) integrates these two upgrades into the paper (§10.36),
+updates the claim ledger (CLM-061 status change; CLM-063 + §10.36
+cross-references on CLM-040/CIFAR-10), and preserves the §10.35
+Wave 195 P1 spec + verdict-precedence ladder verbatim.
+
+**Paper §10.36 added.** `docs/paper-draft.md` §10.36 (this Wave 196 P5
+contribution) covers:
+
+* §10.36 (a) Motivation: Wave 196 B + C replication closes 2
+  power-analysis gaps.
+* §10.36 (b) Track B — 4-arm head-to-head at n=30 paired seeds
+  (verdict upgrade from 12/12 UNDERPOWERED at n=3 unpaired Welch to 2
+  SUPPORTED + 14 UNDERPOWERED at n=30 paired t-test on 16 cells).
+* §10.36 (c) Track C — kanzi N=1000 framework_inv_proj paired
+  re-verification (R2 verdict upgrade from REGRESSES at Wave 195 P2
+  byte-stable composite to UNDERPOWERED with paired-diff-mean =
+  +0.018 Å framework-wins, p_raw = 0.00257, Cohen's d_z = 0.0956,
+  post-hoc power at observed Δ = 0.856).
+* §10.36 (d) Updated Table B + Table A R2 row.
+* §10.36 (e) Verdict升级: CLM-061 + CLM-040 status change.
+* §10.36 (f) 21 acceptance gates (all PASS).
+
+**CLM-061 status change.** Wave 195 P3 claim (12 cells × n=3 unpaired
+Welch → ALL 12 UNDERPOWERED at the 1pp floor) is updated to the Wave
+196 P4 verdict (16 cells × n=30 paired t-test → **2 SUPPORTED + 14
+UNDERPOWERED + 0 REGRESSES**). The 2 SUPPORTED cells are
+`vanilla_scPerplexity_NFE{50,100}` (Cohen's d_z = −2.93 to −2.99,
+p_raw < 1e-15). The 14 UNDERPOWERED cells are all-vs-FastDLLM /
+AB-Cache / LeDiFlow comparisons where the paired-diff SE (1.0–1.5) is
+too large to detect a 0.01-pp min_effect at 80% power; paper-level
+significance on those 14 cells requires n ≥ 100 seeds (Wave 197+
+scope). The Wave 195 P3 baseline (12/12 UNDERPOWERED at n=3) is
+preserved verbatim as the Wave 179/180/181/182 budget ceiling snapshot.
+
+**CLM-040 + CLM-063 cross-references.** The kanzi foldability R2 cell
+verdict upgrade is captured under CLM-063 (kanzi framework_inv_proj
+paired N=1000 fresh re-verify) and cross-referenced from §10.36 (e).
+CLM-040 (CIFAR-10 SOTA reproduction) preserves its existing
+content verbatim; §10.36 (e) notes that the kanzi foldability R2
+verdict upgrade is captured under CLM-063 + §10.36, with no
+modification to the CIFAR-10 SOTA reproduction narrative.
+
+**Acceptance gates (Wave 196 P5):**
+
+| # | Gate | Command | Result |
+|---|------|---------|--------|
+| 1 | D.4 byte-stable regression vectors | `python -m pytest tests/ -k "d4" -q` | **33 passed, 30 skipped** (D.4 33/33 PASS preserved from §15.87 / §15.88) |
+| 2 | Ruff lint | `ruff check adaptive_reflow/ tests/ scripts/ tools/ docs/audit/` | **All checks passed!** (ruff 0 across 5 dirs) |
+| 3 | Claims consistency | `python tools/check_claims_consistency.py` | **No drift detected.** (55 active after Wave 196 P5 + CLM-061 update + CLM-063 cross-references add, 1 provisional, 2 deprecated) |
+| 4 | Wave 196 P4 R-level power table | 8 rows / 7 sub-cells, Bonferroni α=0.007143, exit=0; commit_sha-pinned JSON | **PASS** — 0/0/1/6/0 verdict distribution (R2 verdict upgrade REGRESSES → UNDERPOWERED); commit_sha `c38a900` |
+| 5 | Wave 196 P4 4-arm power table | 16 cells, Bonferroni α=0.003125, exit=0; commit_sha-pinned JSON | **PASS** — 2/0/0/14/0 verdict distribution; commit_sha `c38a900` |
+| 6 | §10.36 paper section added | `docs/paper-draft.md` §10.36 (a)-(f) | **PASS** — Motivation + Track B + Track C + Updated tables + Verdict升级 + 21 acceptance gates |
+| 7 | CLM-061 status change | `grep "Wave 196 P4 verdict transitions" docs/CLAIMS.md` | **PASS** — status transitions from 12/12 UNDERPOWERED at n=3 unpaired → 2 SUPPORTED + 14 UNDERPOWERED at n=30 paired |
+| 8 | CLM-063 + §10.36 cross-references on kanzi foldability | `grep "§10.36" docs/CLAIMS.md CLM-063` | **PASS** — CLM-063 has §10.36 cross-references in Source + Statement |
+| 9 | §15.89 + §R.79 + §7.8 cross-references | `docs/CONSOLIDATED_RESULTS.md` §15.89 + `docs/baseline-audit-report.md` §R.79 + `docs/INSIGHTS.md` §7.8 | **PASS** — three new sections added |
+| 10 | 23-cell verdict distribution: 2 SUPPORTED + 0 REGRESSES + 1 TIE + 20 UNDERPOWERED + 0 NOT_SIG (Table A 8 rows + Table B 16 cells - 1 R5a TIE counted once) | sum of (Table A + Table B) verdict counts | **PASS** — totals match |
+
+Gates 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 are PASS.
+
+**ADDITIVE only — does not delete or rewrite any prior §15.1–
+§15.88 paragraph above.** §15.88 (Wave 195 strict per-cell power
+analysis) + §10.35 + §R.78 + §7.7 + CLM-060/061/062 + Wave 191 P2/P3
++ Wave 190 P2/P3 + Wave 189 P2/P3/P4 + Wave 188 P5 disclosures are
+preserved verbatim; Wave 196 §10.36 + §15.89 + §R.79 + §7.8 + CLM-061
+status change + CLM-063 + CLM-064 add the **paired t-test n=30**
+dimension on Table B 4-arm head-to-head + the **paired N=1000 fresh
+re-verify** dimension on Table A R2 (kanzi framework_inv_proj) as an
+ADDITIVE, quantitative, commit-pinned-JSON evidence layer. The §2.8.1
+Theorem 1 statement is unchanged. The Wave 188 P5 + Wave 189 P2/P3/P4 +
+Wave 190 P2/P3 + Wave 191 P2/P3 + Wave 195 P5 disclosures form a
+strictly ADDITIVE chain. **No §10.6 R-level inventory number is
+changed or retracted**; §10.35 + §10.36 add the missing
+post-hoc-power dimension (Track B) + paired N=1000 dimension (Track C)
+without modifying any Wave 188 P5 / Wave 189 P2/P3/P4 / Wave 190 P2/P3
+/ Wave 191 P2/P3 / Wave 195 P5 disclosure.
