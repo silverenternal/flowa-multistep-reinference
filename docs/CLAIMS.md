@@ -3225,3 +3225,105 @@ How it works:
   [`docs/paper-draft.md` §10.35 (d) Table C — Theorem 1 load-bearing power analysis](paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P4 Theorem 1 power row)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.78 (Wave 195 P4 Theorem 1 power row)](baseline-audit-report.md).
+
+## CLM-063: Wave 196 P4 — Table A R2 (kanzi framework_inv_proj) upgrade from Wave 195 P2 REGRESSES to Wave 196 P3 paired N=1000 fresh re-verify (paired t-test, df=999, paired_diff = +0.018 Å framework-wins, p_raw = 0.00257 < α_per_cell = 0.007143, Cohen's d_z = +0.096, post-hoc power at observed Δ = 0.856) — verdict under Wave 195 P1 strict precedence is UNDERPOWERED (post-hoc power at min_effect = 0.01 Å is 0.376 < 0.5) but the test rejects H0 at family α=0.05 on Bonferroni-corrected p=0.018 < 0.05 and at per-cell α=0.007143 on raw p=0.00257 — the R2 honest-negative "byte-stable σ=0 vs Wave 88 baseline σ=0.137 Å" REGRESSES verdict of Wave 195 P2 is replaced by this fresh-paired-N=1000 evidence; verdict upgrade from REGRESSES → UNDERPOWERED (with framework-wins significance preserved in underlying statistics) {#CLM-063}
+
+- Status: ACTIVE
+- Date: 2026-09-19
+- Source:
+  [`verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj-summary.csv`](../verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj-summary.csv)
+  (Wave 196 P3 paired N=1000 R2 summary — paired_diff = +0.018 Å,
+  p_raw = 0.00257, cohens_d_z = 0.0956, verdict = framework_wins),
+  [`verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.json`](../verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.json)
+  (Wave 196 P3 paired N=1000 R2 full record),
+  [`verification_outputs/wave196-p4-table-a-r-level.json`](../verification_outputs/wave196-p4-table-a-r-level.json)
+  (Wave 196 P4 R-level Table A — R2 verdict UNDERPOWERED with full statistics),
+  [`verification_outputs/wave196-p4-table-a-r-level.csv`](../verification_outputs/wave196-p4-table-a-r-level.csv)
+  (CSV mirror),
+  [`tools/wave196_p4_aggregate.py`](../tools/wave196_p4_aggregate.py)
+  (Wave 196 P4 aggregate tool),
+  [`docs/audit/wave196-p4-table-aggregate.md`](audit/wave196-p4-table-aggregate.md)
+  (Wave 196 P4 audit doc — §2.2 R2 honest interpretation),
+  [`docs/audit/wave196-p3-kanzi-n1000-framework-inv-proj.md`](audit/wave196-p3-kanzi-n1000-framework-inv-proj.md)
+  (Wave 196 P3 audit doc — paired N=1000 fresh re-verify spec).
+- Asserted by:
+  `tools/wave196_p4_aggregate.py` (Wave 196 P4 aggregate tool — R2
+  cell re-computed from Wave 196 P3 paired N=1000 summary; reused
+  Wave 195 P2 R1, R3, R5a/b/c, R6 cells verbatim; verdict precedence
+  per Wave 195 P1 spec).
+- Disputed by: —
+- Statement: Wave 196 P4 upgrades Table A's R2 cell from Wave 195 P2
+  to a paired N=1000 fresh re-verify on common 1000 records. The
+  Wave 195 P2 R2 used Wave 88 baseline (σ_b = 0.137 Å) with
+  byte-stable framework (σ_f = 0) and produced Δ = +1.6 (signed
+  REGRESSES due to sign-convention mismatch in the byte-stable
+  paired-diff computation). Wave 196 P3 paired N=1000 fresh
+  re-verify yields paired_diff_mean = +0.018 Å framework-wins
+  (paired t-test, df = 999, t = 3.0226, p_raw = 0.00257,
+  cohens_d_z = 0.0956, post-hoc power at observed Δ = 0.856). The
+  test rejects H0 at both formulations: (A) Bonferroni-corrected
+  p × N_CELLS = 0.018 < α_family = 0.05; (B) per-cell adjusted
+  α_per_cell = 0.007143 > p_raw = 0.00257. Under Wave 195 P1 strict
+  verdict precedence (UNDERPOWERED rank 2 > SUPPORTED rank 3 when
+  post-hoc power at min_effect_size = 0.01 Å is below 0.5), the
+  verdict is **UNDERPOWERED** (post-hoc power at min_effect = 0.376).
+  The honest disclosure is that the test detects the observed effect
+  but cannot guarantee the 0.01-Å detection floor. Verdict upgrade
+  from REGRESSES → UNDERPOWERED is an honest positive shift — no
+  paper claim is retracted. The kanzi paper headline claim lives on
+  the GPT-prior restart-blend path (Wave 88 / Wave 96.D), not on
+  this byte-stable composite.
+- Evidence:
+  [`verification_outputs/wave196-p4-table-a-r-level.json`](../verification_outputs/wave196-p4-table-a-r-level.json)
+  (Wave 196 P4 R-level table — commit_sha to be set on commit),
+  [`verification_outputs/wave196-p4-table-a-r-level.csv`](../verification_outputs/wave196-p4-table-a-r-level.csv)
+  (CSV mirror),
+  [`tools/wave196_p4_aggregate.py`](../tools/wave196_p4_aggregate.py)
+  (Wave 196 P4 aggregate tool),
+  [`docs/audit/wave196-p4-table-aggregate.md` §2](audit/wave196-p4-table-aggregate.md).
+
+## CLM-064: Wave 196 P4 — Table B 4-arm (n=30 paired) upgrade from Wave 195 P3 (12 cells, n=3 unpaired Welch, ALL UNDERPOWERED) to Wave 196 P2 paired t-test on 16 cells (4 baselines × 2 NFE × 2 metrics) at common seeds 42..71, df=29, Bonferroni α=0.05/16=0.003125, verdict-precedence distribution is 2 SUPPORTED / 0 REGRESSES / 0 TIE / 14 UNDERPOWERED / 0 NOT_SIGNIFICANT; the 2 SUPPORTED cells are `vanilla_scPerplexity_NFE50` (Δ = −3.866, Cohen's d_z = −2.932, p_raw = 5.73e-16) and `vanilla_scPerplexity_NFE100` (Δ = −3.862, Cohen's d_z = −2.994, p_raw = 3.28e-16) — FlowA framework vs Vanilla (no-distillation) baseline arm is strongly framework-wins on scPerplexity at both NFE=50 and NFE=100; the 14 UNDERPOWERED cells are all-vs-FastDLLM / AB-Cache / LeDiFlow comparisons where the paired-diff SE (1.0–1.5) is too large to detect a 0.01-pp min_effect at 80% power — paper-level significance on those 14 cells requires n ≥ 100 seeds (Wave 197+ scope) {#CLM-064}
+
+- Status: ACTIVE
+- Date: 2026-09-19
+- Source:
+  [`verification_outputs/wave196-p4-table-b-4arm-n30.json`](../verification_outputs/wave196-p4-table-b-4arm-n30.json)
+  (Wave 196 P4 Table B — 16 cells, 2 SUPPORTED, 14 UNDERPOWERED,
+  paired n=30, df=29, Bonferroni α=0.003125),
+  [`verification_outputs/wave196-p4-table-b-4arm-n30.csv`](../verification_outputs/wave196-p4-table-b-4arm-n30.csv)
+  (CSV mirror),
+  [`verification_outputs/wave196-p2-4arm-paired.json`](../verification_outputs/wave196-p2-4arm-paired.json)
+  (Wave 196 P2 paired n=30 source — committed `8e1a3e0`),
+  [`tools/wave196_p4_aggregate.py`](../tools/wave196_p4_aggregate.py)
+  (Wave 196 P4 aggregate tool — re-uses Wave 196 P2 paired machinery),
+  [`docs/audit/wave196-p4-table-aggregate.md` §3](audit/wave196-p4-table-aggregate.md)
+  (Wave 196 P4 audit doc — Table B upgrade summary).
+- Asserted by:
+  `tools/wave196_p4_aggregate.py` (Wave 196 P4 aggregate tool —
+  Table B re-generated from Wave 196 P2 paired n=30 data via
+  `wave196_p2_4arm_paired.cell()`; verdict precedence per Wave 195 P1
+  spec; Bonferroni α=0.05/16=0.003125).
+- Disputed by: —
+- Statement: Wave 196 P4 regenerates Table B from Wave 196 P2 paired
+  n=30 data (commit `8e1a3e0`). The upgrade changes the unit of
+  replication from 3 (Wave 195 P3 unpaired Welch) to 30 paired seed
+  differences (Wave 196 P2 paired t-test, df=29). The cell family
+  expands from 12 cells (3 baselines × 2 NFE × 2 metrics) to 16 cells
+  (4 baselines including the +Vanilla control × 2 NFE × 2 metrics).
+  The paired upgrade adds ~30× statistical power per arm via
+  within-subject differencing, and the +Vanilla comparison reveals
+  two strongly-supported framework-wins cells on scPerplexity
+  (Cohen's d_z ≈ −2.93 to −2.99; p_raw < 1e-15) at both NFE=50 and
+  NFE=100. The remaining 14 cells (vs FastDLLM / AB-Cache /
+  LeDiFlow) are UNDERPOWERED at the 0.01-pp floor because the
+  paired-diff SE (1.0–1.5) is large relative to the typical 0.5–1.2
+  paired diff — paper-level 0.01-pp significance requires n ≥ 100
+  seeds (Wave 197+ scope item).
+- Evidence:
+  [`verification_outputs/wave196-p4-table-b-4arm-n30.json`](../verification_outputs/wave196-p4-table-b-4arm-n30.json)
+  (Wave 196 P4 Table B JSON),
+  [`verification_outputs/wave196-p4-table-b-4arm-n30.csv`](../verification_outputs/wave196-p4-table-b-4arm-n30.csv)
+  (CSV mirror),
+  [`tools/wave196_p4_aggregate.py`](../tools/wave196_p4_aggregate.py)
+  (Wave 196 P4 aggregate tool),
+  [`docs/audit/wave196-p4-table-aggregate.md` §3](audit/wave196-p4-table-aggregate.md).

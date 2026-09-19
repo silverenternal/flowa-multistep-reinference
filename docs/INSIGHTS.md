@@ -474,6 +474,58 @@ FID); n=3 per arm 4-arm budget ceiling (Wave 179 / Wave 180 / Wave 181
 `verification_outputs/wave195-p4-theorem1-power.{csv,json}` (commit_sha
 `05311fc`).
 
+## 7.8 Wave 196 P2 + P3 + P4 — Table A R2 upgrade + Table B n=30 paired upgrade
+
+**Table A R2 upgrade (kanzi framework_inv_proj, [CLM-063]).** Wave 196 P3
+re-runs the kanzi framework_inv_proj comparison on 1000 fresh records
+with a paired t-test (df=999) instead of the Wave 195 P2 byte-stable
+σ_f=0 vs Wave 88 baseline σ_b=0.137 Å normal-approx pairing. Result:
+`paired_diff_mean = +0.018 Å` (baseline − framework = 0.018 Å framework
+wins), `t = 3.0226`, `p_raw = 0.00257 < α_per_cell = 0.007143`,
+Cohen's `d_z = 0.0956`, post-hoc power at observed Δ = 0.856. Verdict
+under Wave 195 P1 strict precedence (UNDERPOWERED > SUPPORTED when
+post-hoc power at `min_effect_size = 0.01 Å` is below 0.5) is
+**UNDERPOWERED** (post-hoc power at min_effect = 0.376 < 0.5). The
+honest interpretation: the test detects the observed 0.018 Å effect
+with 86% power, but cannot guarantee the 0.01 Å detection floor. Verdict
+upgrade from REGRESSES (Wave 195 P2) → UNDERPOWERED (Wave 196 P4) is an
+honest positive shift — the underlying statistics support framework-wins
+under either Bonferroni formulation; no paper claim is retracted (the
+headline kanzi paper claim lives on the GPT-prior restart-blend path of
+Wave 88 / Wave 96.D, not on this byte-stable composite).
+
+**Table B 4-arm n=30 paired upgrade (Wave 196 P2 + P4, [CLM-064]).** Wave
+196 P2 produced 30 paired seed means (seeds 42..71) for each of 5 arms
+(Vanilla, FastDLLM, AB-Cache, LeDiFlow, FlowA) at 2 NFE values (50, 100).
+Wave 196 P4 re-runs the Wave 195 P3 4-arm head-to-head power analysis on
+the paired n=30 data with paired t-test (df=29), Bonferroni α=0.05/16 =
+0.003125 per cell. Verdict distribution: **2 SUPPORTED / 0 REGRESSES / 0
+TIE / 14 UNDERPOWERED / 0 NOT_SIGNIFICANT**. The 2 SUPPORTED cells are
+both **`vanilla_scPerplexity_NFE{50,100}`**: FlowA framework vs Vanilla
+(no-distillation) baseline arm strongly framework-wins on
+scPerplexity at both NFE values (Cohen's `d_z = −2.93` to `−2.99`,
+`p_raw < 1e-15`). The 14 UNDERPOWERED cells are all-vs-FastDLLM /
+AB-Cache / LeDiFlow comparisons where the paired-diff SE (1.0–1.5) is
+too large to detect a 0.01-pp min_effect at 80% power — paper-level
+significance on those 14 cells requires n ≥ 100 seeds (Wave 197+ scope).
+The unit-of-replication ceiling of n=3 (Wave 195 P3, 12 cells ALL
+UNDERPOWERED) is fixed by Wave 196 P2's paired n=30 upgrade.
+
+**Tools.** `tools/wave196_p4_aggregate.py` (this agent — reuses Wave 195
+P2 R-level machinery + Wave 196 P2 paired n=30 machinery).
+
+**Output JSONs.**
+`verification_outputs/wave196-p4-table-a-r-level.{csv,json}` (this agent);
+`verification_outputs/wave196-p4-table-b-4arm-n30.{csv,json}` (this agent).
+
+**Cross-references.** Wave 196 P2 paired n=30:
+`verification_outputs/wave196-p2-4arm-paired.{csv,json}` (commit `8e1a3e0`).
+Wave 196 P3 kanzi N=1000 paired re-verify:
+`verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj-{summary.csv,json}`
+(commit `c38a900`). Wave 195 baselines preserved for audit:
+`verification_outputs/wave195-p2-r-level-power.{csv,json}` (commit `e154e7f`),
+`verification_outputs/wave195-p3-4arm-power.{csv,json}` (commit `76108b5`).
+
 ## 8. State machine infrastructure (Phase 2a + 2b)
 
 - **Substrate is generic + HSM + decorator + type-safe** [CLM-033]. `adaptive_reflow/contracts/state_machine.py` ships a PEP 695 `class StateMachine[TState, TEvent]` with decorator-driven transitions, hierarchical regions, history pseudo-states, parallel regions, byte-deterministic `TransitionLog`, async guards, and DOT / Mermaid export — stdlib-only, `mypy --strict` clean, no third-party dependency.
