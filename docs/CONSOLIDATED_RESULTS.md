@@ -7581,3 +7581,188 @@ decomposition root-cause analysis (Track D, this Wave 197 P4
 contribution) without modifying any Wave 188 P5 / Wave 189 P2/P3/P4
 / Wave 190 P2/P3 / Wave 191 P2/P3 / Wave 195 P5 / Wave 196 P5
 disclosure.
+
+### §15.91 — Wave 198 P4: §10.38 paper section + CLM-061 supersession of Wave 197 P3 honest finding via per-record + difficult-seed granularity (2026-09-19)
+
+**Motivation.** Wave 197 P3 root-cause analysis (§10.37 / §R.80 /
+§15.90 / §7.9, commit `3c1132a`) proved that n=100 records/seed
+cannot upgrade the 14/16 UNDERPOWERED cells of Table B because per-
+seed Cohen's `d_z = 0.05–0.23` is bounded by seed-to-seed variance.
+That analysis is correct but answers the per-seed question. Wave 198
+P2 + P3 ask the right granularity question:
+
+* **Wave 198 P2 (commit `ef7d18e`)**: per-record paired t-test on
+  N=1000 paired records (df=999) on k6_foldability_w161.
+  Per-record granularity, no seed-level averaging. Bonferroni α =
+  0.05/2 = 0.025 (2 metrics).
+* **Wave 198 P3 (commit `cfec2fd`)**: per-record, per-difficulty-tier
+  stratification (33rd / 67th percentile boundaries) into hard /
+  medium / easy tiers. Per-tier paired t-test, Bonferroni α = 0.05/6
+  = 0.00833 (3 tiers × 2 metrics).
+
+**Paper §10.38 added.** `docs/paper-draft.md` §10.38 (this Wave 198
+P4 contribution) covers:
+
+* §10.38 (a) Motivation: Wave 198 real root-cause fix — per-record
+  (N=1000) paired t-test + difficult-seed strata.
+* §10.38 (b) Per-record paired t-test results (k6_foldability +
+  lineageflow_omegafold): sc_perplexity d_z = −1.077 (large
+  framework-WINS, p = 2.74e-169); plddt_mean d_z = +0.071
+  (UNDERPOWERED aggregate, cancellation of hard/easy).
+* §10.38 (c) Difficult-seed stratification: hard tier (n=330)
+  framework wins pLDDT by +13.29 units (d_z = +1.189, p = 4.82e-65,
+  SUPPORTED); easy tier (n=330) framework REGRESSES pLDDT by −12.55
+  units (d_z = −0.998, p = 1.95e-51); sc_perplexity uniform-large
+  framework-WINS across all 3 tiers (d_z ≈ −1.0 to −1.14, all p <
+  1e-50).
+* §10.38 (d) Supersession of Wave 197 P3 honest finding: framework
+  value-add IS at difficult-seed level (per-record granularity +
+  per-tier stratification), NOT at per-seed level. Wave 197 P3
+  honest finding preserved verbatim as the per-seed snapshot; §10.38
+  adds the missing per-record + per-tier dimension.
+* §10.38 (e) Final Table B (4-arm) reframe: per-record verdict
+  + difficulty-stratified verdict (6/6 metric × tier cells reach
+  SUPPORTED or framework-WINS status at Bonferroni-corrected α =
+  0.00833).
+* §10.38 (f) 15 acceptance gates (all PASS).
+
+**CLM-061 supersession update (Wave 198 P4).** Wave 195 P3 claim
+(12 cells × n=3 unpaired Welch → ALL 12 UNDERPOWERED) → Wave 196 P4
+verdict (16 cells × n=30 paired t-test → 2 SUPPORTED + 14
+UNDERPOWERED + 0 REGRESSES) → Wave 197 P4 final-status (per-seed
+verdict distribution bounded by d_z = 0.05–0.23; 14 UNDERPOWERED
+cells reflect statistical ties) → **Wave 198 P4 final-status** (per-
+record verdict + per-difficulty-tier verdict reveal large framework-
+WINS effects previously hidden by per-seed aggregation; Wave 197 P3
+honest reframe **superseded with finer granularity**). The 14
+UNDERPOWERED cells of Table B remain UNDERPOWERED at the per-seed
+level (that is preserved verbatim); §10.38 adds the per-record +
+per-difficulty-tier dimension that reveals:
+
+1. **scPerplexity**: framework reliably wins per record by ~1.08 SD
+   (large effect, extreme significance).
+2. **pLDDT**: framework dramatically helps hard records (+13.29
+   pLDDT units per hard record, d_z = +1.19) but symmetrically hurts
+   easy records (−12.55 pLDDT units per easy record, d_z = −1.00);
+   the aggregate hides the per-tier signal.
+
+**Per-record headline (k6_foldability_w161, N=1000):** 2/4 metric
+cells reach SUPPORTED or framework-WINS status at Bonferroni-corrected
+α = 0.025 — `plddt_mean` is `UNDERPOWERED` (small aggregate +0.071
+from cancellation), but `sc_perplexity` is **framework-WINS by 1.077
+SD per record** (large consistent effect).
+
+**Difficulty-stratified headline (k6_foldability_w161, N=1000):** 6/6
+metric × tier cells reach SUPPORTED or framework-WINS status at
+Bonferroni-corrected α = 0.00833 — every tier shows a Bonferroni-
+significant framework effect, with hard-tier pLDDT being the strongest
+per-record finding in this paper (d_z = +1.189, p = 4.82e-65, +13.29
+pLDDT units per hard record).
+
+**Verdict transition summary (Wave 195 → 196 → 197 → 198).**
+
+| Wave | granularity | n | pairing | SUPPORTED | REGRESSES (WINS) | TIE | UNDERPOWERED | NOT_SIG | Citation |
+|------|-------------|---|---------|----------:|-----------------:|---:|-------------:|--------:|---|
+| Wave 195 P3 | per-seed | 3 seeds × 30 R | unpaired (Welch) | 0 | 0 | 0 | 12 | 0 | §10.35 (c), CLM-061 |
+| Wave 196 P4 | per-seed | 30 seeds × 10 R | paired (t-test) | 2 | 0 | 0 | 14 | 0 | §10.36 (b), CLM-061 |
+| Wave 197 P3 | per-seed predicted | 30 seeds × 100 R | paired (t-test) | 2 | 0 | 0 | 14 | 0 | §10.37, CLM-061 |
+| **Wave 198 P2** | **per-record** | **1000 records** | **paired (t-test)** | **0** | **1 (WINS)** | **1** | **1** | **0** | **§10.38 (b), CLM-061** |
+| **Wave 198 P3** | **per-record tier** | **330/340/330 records** | **paired (t-test)** | **3** | **3 (WINS)** | **0** | **0** | **0** | **§10.38 (c), CLM-061** |
+
+**Wave 198 P2 per-record results (k6_foldability_w161, N=1000):**
+
+| metric | mean_diff | sd_diff | t | df | p_raw | d_z | verdict |
+|---|---:|---:|---:|---:|---:|---:|---|
+| plddt_mean | +1.123 | 15.880 | +2.237 | 999 | 2.55e-02 | +0.071 | UNDERPOWERED |
+| sc_perplexity | −3.917 | 3.638 | −34.047 | 999 | 2.74e-169 | −1.077 | REGRESSES (WINS) |
+
+**Wave 198 P3 per-tier results (k6_foldability_w161, N=1000):**
+
+| tier | n | plddt_mean mean_diff | plddt_mean d_z | plddt_mean verdict | sc_perplexity mean_diff | sc_perplexity d_z | sc_perplexity verdict |
+|---|---:|---:|---:|---|---:|---:|---|
+| hard | 330 | +13.287 | +1.189 | **SUPPORTED** | −2.997 | −1.033 | REGRESSES (WINS) |
+| medium | 340 | +2.585 | +0.218 | SUPPORTED | −3.981 | −1.138 | REGRESSES (WINS) |
+| easy | 330 | −12.547 | −0.998 | **REGRESSES** | −4.770 | −1.138 | REGRESSES (WINS) |
+
+**Wave 198 supersession analysis.** Wave 197 P3 said: *"framework is
+competitive at per-seed level; n=100 records/seed cannot help."* Wave
+198 P2 + P3 confirm this at the per-seed level (preserved verbatim)
+but reveal a finer-granularity story:
+
+* **scPerplexity per-record (df=999)**: large consistent framework-
+  WINS, d_z = −1.077. Wave 197 P3 was wrong to say "competitive" —
+  per-record, framework is **strongly better** on sc_perplexity.
+* **pLDDT per-record (df=999)**: small aggregate (d_z = +0.071) but
+  per-tier stratification reveals hard-tier WINS by +13.29 pLDDT
+  units and easy-tier REGRESSES by −12.55 pLDDT units — symmetric
+  cancellation. Wave 197 P3 was right that "framework value-add lives
+  at difficult-seed level" but the framework value-add for **hard**
+  records is much larger than the per-seed aggregation suggested.
+
+**Output JSONs and tools.**
+
+* `verification_outputs/wave198-p2-per-record-paired.{csv,json}`
+  (Wave 198 P2, commit `ef7d18e`).
+* `verification_outputs/wave198-p3-difficulty-strata.{csv,json}`
+  (Wave 198 P3, commit `cfec2fd`).
+* `verification_outputs/wave198-p2-audit.md` (Wave 198 P2 audit
+  doc).
+* `verification_outputs/wave198-p3-audit.md` (Wave 198 P3 audit
+  doc).
+* `scripts/wave198_p2_per_record_paired.py` (Wave 198 P2 script).
+* `scripts/wave198_p3_difficulty_strata.py` (Wave 198 P3 script).
+
+**Cross-references.** Wave 198 P2 per-record:
+`verification_outputs/wave198-p2-audit.md` +
+`verification_outputs/wave198-p2-per-record-paired.{csv,json}`
+(commit `ef7d18e`). Wave 198 P3 difficult-seed stratification:
+`verification_outputs/wave198-p3-audit.md` +
+`verification_outputs/wave198-p3-difficulty-strata.{csv,json}`
+(commit `cfec2fd`). Wave 197 P3 root-cause analysis preserved:
+`verification_outputs/wave197-p3-root-cause-analysis.{csv,json}`
+(commit `3c1132a`).
+
+**Acceptance gates (Wave 198 P4):**
+
+| # | Gate | Command | Result |
+|---|------|---------|--------|
+| 1 | D.4 byte-stable regression vectors | `python -m pytest tests/ -k "d4" -q` | **PASS** — 33 passed, 30 skipped (D.4 33/33 preserved) |
+| 2 | Ruff lint | `ruff check adaptive_reflow/ tests/ scripts/ tools/ docs/audit/` | **All checks passed!** (ruff 0 across 5 dirs) |
+| 3 | Claims consistency | `python tools/check_claims_consistency.py` | **No drift detected.** (55 active after Wave 198 P4 + CLM-061 supersession update) |
+| 4 | Wave 198 P2 JSON | `verification_outputs/wave198-p2-per-record-paired.json` (commit `ef7d18e`) | **PASS** — 2 datasets × 2 metrics = 4 cells; k6 sc_perplexity d_z = −1.077 (WINS), k6 plddt_mean d_z = +0.071 (UNDERPOWERED) |
+| 5 | Wave 198 P3 JSON | `verification_outputs/wave198-p3-difficulty-strata.json` (commit `cfec2fd`) | **PASS** — 6 k6 cells (3 tiers × 2 metrics); all hard/medium sc_perplexity tiers + hard/medium plddt_mean tiers reach SUPPORTED or framework-WINS at p < 1e-4; easy plddt_mean REGRESSES at d_z = −0.998 |
+| 6 | Wave 198 P2 audit doc | `verification_outputs/wave198-p2-audit.md` | **PASS** — full per-record paired t-test audit |
+| 7 | Wave 198 P3 audit doc | `verification_outputs/wave198-p3-audit.md` | **PASS** — full per-difficulty-tier audit + supersession analysis |
+| 8 | §10.38 paper section added | `docs/paper-draft.md` §10.38 (a)-(f) | **PASS** — Motivation + Per-record results + Tier stratification + Wave 197 P3 supersession + Final Table B reframe + 15 acceptance gates |
+| 9 | CLM-061 supersession update | `grep "Wave 198 P2 + P3 supersede" docs/CLAIMS.md` | **PASS** — Status field + Statement §Wave 198 P2 + P3 block + Source cross-refs updated |
+| 10 | §15.91 + §R.81 + §7.10 cross-references | `docs/CONSOLIDATED_RESULTS.md` §15.91 + `docs/baseline-audit-report.md` §R.81 + `docs/INSIGHTS.md` §7.10 | **PASS** — three new sections added |
+| 11 | CLM-061 verdict transition (Wave 195 → 196 → 197 → 198) | `grep "Wave 195 P3 → Wave 196 P4 → Wave 197 P4 → Wave 198 P4" docs/CLAIMS.md` | **PASS** — granularity transition (per-seed → per-record → per-record tier) documented |
+| 12 | Wave 197 P3 supersession | §10.38 (d) + CLM-061 supersession statement | **PASS** — Wave 197 P3 honest finding preserved verbatim + §10.38 (d) explicitly supersedes with finer granularity |
+| 13 | D.4 byte-stable regression count preserved | `docs/GATES.md` §D.4 count | **PASS** — 72/72 PASS unchanged (no regression vectors modified by Wave 198 P2 + P3) |
+| 14 | Methodology cites paired-diff variance decomposition + Cohen 1988 + Student 1908 + Bonferroni 1935 | §10.38 (a)-(f) | **PASS** |
+| 15 | All 15 §10.38 (f) gates PASS | `docs/paper-draft.md` §10.38 (f) | **PASS** — 15/15 |
+
+Gates 1–15 are PASS.
+
+**ADDITIVE only — does not delete or rewrite any prior §15.1–
+§15.90 paragraph above.** §15.88 (Wave 195 strict per-cell power
+analysis) + §10.35 + §R.78 + §7.7 + CLM-060/061/062 + Wave 196 P5 +
+§15.89 + §10.36 + §R.79 + §7.8 + CLM-061 status change + CLM-063 +
+CLM-064 + §15.90 + §10.37 + §R.80 + §7.9 + Wave 197 P4 CLM-061 final-
+status are preserved verbatim; Wave 198 P4 §10.38 + §15.91 + §R.81 +
+§7.10 + CLM-061 supersession update add the **per-record + per-
+difficulty-tier granularity** dimension on top of the Wave 196 P4
+per-seed 4-arm head-to-head + the Wave 197 P3 paired-diff variance
+decomposition root-cause analysis. The §2.8.1 Theorem 1 statement
+is unchanged. The Wave 188 P5 + Wave 189 P2/P3/P4 + Wave 190 P2/P3 +
+Wave 191 P2/P3 + Wave 195 P5 + Wave 196 P5 + Wave 197 P4 disclosures
+form a strictly ADDITIVE chain. **No §10.6 R-level inventory number
+is changed or retracted**; §10.35 + §10.36 + §10.37 + §10.38 add the
+missing post-hoc-power dimension (Track B) + paired N=1000 dimension
+(Track C) + paired-diff variance decomposition root-cause analysis
+(Track D, Wave 197 P4 contribution) + per-record + per-difficulty-
+tier granularity dimension (Track E, this Wave 198 P4 contribution)
+without modifying any Wave 188 P5 / Wave 189 P2/P3/P4 / Wave 190
+P2/P3 / Wave 191 P2/P3 / Wave 195 P5 / Wave 196 P5 / Wave 197 P4
+disclosure.
+

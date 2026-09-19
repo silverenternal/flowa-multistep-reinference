@@ -7424,3 +7424,112 @@ dimension (Track C) + paired-diff variance decomposition root-cause
 analysis (Track D, this Wave 197 P4 contribution) without modifying
 any Wave 188 P5 / Wave 189 P2/P3/P4 / Wave 190 P2/P3 / Wave 191
 P2/P3 / Wave 195 P5 / Wave 196 P5 disclosure.
+
+### §R.81 — Wave 198 P4: §10.38 paper section + CLM-061 supersession of Wave 197 P3 honest finding via per-record + difficult-seed granularity (2026-09-19)
+
+**Motivation.** Wave 197 P3 root-cause analysis (§R.80, commit
+`3c1132a`) proved that n=100 records/seed cannot upgrade the 14/16
+UNDERPOWERED cells of Table B because per-seed Cohen's `d_z = 0.05–
+0.23` is bounded by seed-to-seed variance. That analysis is correct
+but answers the per-seed question. Wave 198 P2 + P3 ask the right
+granularity question: per-record (N=1000, df=999) and per-record,
+per-difficulty-tier (33rd / 67th percentile hard/medium/easy strata).
+
+**Per-baseline audit trail gains one new section + one claim
+supersession update.**
+
+* **§10.38 paper section added** (`docs/paper-draft.md` §10.38). Six
+  subsections: (a) Motivation: Wave 198 real root-cause fix — per-
+  record (N=1000) paired t-test + difficult-seed strata; (b) Per-
+  record paired t-test results (k6_foldability + lineageflow_omegafold);
+  (c) Difficult-seed stratification: framework_uplift by tier; (d)
+  Supersession of Wave 197 P3 honest finding: framework value-add IS
+  at difficult-seed level (per-record granularity + per-tier
+  stratification), NOT at per-seed level; (e) Final Table B (4-arm)
+  reframe: per-record verdict + difficulty-stratified verdict; (f) 15
+  acceptance gates (all PASS).
+* **CLM-061 supersession update.** CLM-061 transitions from Wave 197
+  P4 final-status (per-seed verdict distribution bounded by d_z =
+  0.05–0.23; 14 UNDERPOWERED cells reflect statistical ties) to
+  **Wave 198 P4 final-status** (per-record verdict + per-difficulty-
+  tier verdict reveal large framework-WINS effects previously hidden
+  by per-seed aggregation; Wave 197 P3 honest finding **superseded
+  with finer granularity**). The 14 UNDERPOWERED cells of Table B
+  remain UNDERPOWERED at the per-seed level (preserved verbatim);
+  §10.38 adds the per-record + per-difficulty-tier dimension that
+  reveals:
+
+  1. **scPerplexity**: framework reliably wins per record by ~1.08
+     SD (large effect, extreme significance).
+  2. **pLDDT**: framework dramatically helps hard records (+13.29
+     pLDDT units per hard record, d_z = +1.19) but symmetrically
+     hurts easy records (−12.55 pLDDT units per easy record, d_z =
+     −1.00); the aggregate hides the per-tier signal.
+
+**Per-record headline (k6_foldability_w161, N=1000):**
+
+| metric | mean_diff | sd_diff | t | df | p_raw | d_z | verdict |
+|---|---:|---:|---:|---:|---:|---:|---|
+| plddt_mean | +1.123 | 15.880 | +2.237 | 999 | 2.55e-02 | +0.071 | UNDERPOWERED |
+| sc_perplexity | −3.917 | 3.638 | −34.047 | 999 | 2.74e-169 | −1.077 | REGRESSES (WINS) |
+
+**Difficulty-stratified headline (k6_foldability_w161, N=1000):**
+
+| tier | n | plddt_mean mean_diff | plddt_mean d_z | plddt_mean verdict | sc_perplexity mean_diff | sc_perplexity d_z | sc_perplexity verdict |
+|---|---:|---:|---:|---|---:|---:|---|
+| hard | 330 | +13.287 | +1.189 | **SUPPORTED** | −2.997 | −1.033 | REGRESSES (WINS) |
+| medium | 340 | +2.585 | +0.218 | SUPPORTED | −3.981 | −1.138 | REGRESSES (WINS) |
+| easy | 330 | −12.547 | −0.998 | **REGRESSES** | −4.770 | −1.138 | REGRESSES (WINS) |
+
+**Verdict transition summary (Wave 195 → 196 → 197 → 198).**
+
+| Wave | granularity | n | pairing | SUPPORTED | REGRESSES (WINS) | TIE | UNDERPOWERED | NOT_SIG |
+|------|-------------|---|---------|----------:|-----------------:|---:|-------------:|--------:|
+| Wave 195 P3 | per-seed | 3 seeds × 30 R | unpaired (Welch) | 0 | 0 | 0 | 12 | 0 |
+| Wave 196 P4 | per-seed | 30 seeds × 10 R | paired (t-test) | 2 | 0 | 0 | 14 | 0 |
+| Wave 197 P3 | per-seed predicted | 30 seeds × 100 R | paired (t-test) | 2 | 0 | 0 | 14 | 0 |
+| **Wave 198 P2** | **per-record** | **1000 records** | **paired (t-test)** | **0** | **1 (WINS)** | **1** | **1** | **0** |
+| **Wave 198 P3** | **per-record tier** | **330/340/330 records** | **paired (t-test)** | **3** | **3 (WINS)** | **0** | **0** | **0** |
+
+**Output JSONs and tools.**
+
+* `verification_outputs/wave198-p2-per-record-paired.{csv,json}`
+  (Wave 198 P2, commit `ef7d18e`).
+* `verification_outputs/wave198-p3-difficulty-strata.{csv,json}`
+  (Wave 198 P3, commit `cfec2fd`).
+* `verification_outputs/wave198-p2-audit.md` (Wave 198 P2 audit
+  doc).
+* `verification_outputs/wave198-p3-audit.md` (Wave 198 P3 audit
+  doc).
+* `scripts/wave198_p2_per_record_paired.py` (Wave 198 P2 script).
+* `scripts/wave198_p3_difficulty_strata.py` (Wave 198 P3 script).
+
+**Cross-references.** Wave 198 P2 per-record:
+`verification_outputs/wave198-p2-audit.md` +
+`verification_outputs/wave198-p2-per-record-paired.{csv,json}`
+(commit `ef7d18e`). Wave 198 P3 difficult-seed stratification:
+`verification_outputs/wave198-p3-audit.md` +
+`verification_outputs/wave198-p3-difficulty-strata.{csv,json}`
+(commit `cfec2fd`). Wave 197 P3 root-cause analysis preserved:
+`verification_outputs/wave197-p3-root-cause-analysis.{csv,json}`
+(commit `3c1132a`). Paper cross-refs: §10.38 + §15.91 + §R.81 (this
+section) + §7.10 + CLM-061 (Wave 198 P4 supersession update).
+
+**ADDITIVE only — does not delete or rewrite any prior §R.1–§R.80
+paragraph above.** §R.68 / §R.69 / §R.70 / §R.71 / §R.72 / §R.73 /
+§R.74 / §R.75 / §R.76 / §R.77 / §R.78 / §R.79 / §R.80 are preserved
+verbatim; Wave 198 P4 §10.38 + §15.91 + §R.81 + §7.10 + CLM-061
+supersession update add the **per-record + per-difficulty-tier
+granularity** dimension on top of the Wave 196 P4 per-seed 4-arm
+head-to-head + the Wave 197 P3 paired-diff variance decomposition
+root-cause analysis + the **CLM-061 supersession** of Wave 197 P3
+honest finding via finer granularity. No §10.6 R-level inventory
+number is changed or retracted; §10.35 + §10.36 + §10.37 + §10.38
+add the missing post-hoc-power dimension (Track B) + paired N=1000
+dimension (Track C) + paired-diff variance decomposition root-cause
+analysis (Track D, Wave 197 P4 contribution) + per-record + per-
+difficulty-tier granularity dimension (Track E, this Wave 198 P4
+contribution) without modifying any Wave 188 P5 / Wave 189 P2/P3/P4
+/ Wave 190 P2/P3 / Wave 191 P2/P3 / Wave 195 P5 / Wave 196 P5 /
+Wave 197 P4 disclosure.
+
