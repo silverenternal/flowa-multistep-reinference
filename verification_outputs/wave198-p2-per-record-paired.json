@@ -1,0 +1,93 @@
+{
+  "per_record_results": [
+    {
+      "n_paired": 1000,
+      "mean_diff": 1.123135502048454,
+      "sd_diff": 15.880109247185699,
+      "t_statistic": 2.2365502983546888,
+      "df": 999,
+      "p_value_raw": 0.025535792830358627,
+      "p_value_bonferroni_alpha_0.025": 0.025,
+      "cohens_d_z": 0.07072593044329957,
+      "ci_95": [
+        0.13887613366564466,
+        2.1073948704312633
+      ],
+      "dataset": "k6_foldability_w161",
+      "metric": "plddt_mean",
+      "verdict": "UNDERPOWERED",
+      "supersedes_wave197": "NO (confirms Wave 197 UNDERPOWERED)"
+    },
+    {
+      "n_paired": 1000,
+      "mean_diff": -3.9166497585365487,
+      "sd_diff": 3.637727585033731,
+      "t_statistic": -34.04744787674682,
+      "df": 999,
+      "p_value_raw": 2.7410526926543806e-169,
+      "p_value_bonferroni_alpha_0.025": 0.025,
+      "cohens_d_z": -1.076674838063838,
+      "ci_95": [
+        -4.142118450184785,
+        -3.691181066888312
+      ],
+      "dataset": "k6_foldability_w161",
+      "metric": "sc_perplexity",
+      "verdict": "REGRESSES",
+      "supersedes_wave197": "YES (per-record d_z > 0.10 with extreme significance)"
+    },
+    {
+      "n_paired": 5,
+      "mean_diff": 0.0,
+      "sd_diff": 0.0,
+      "t_statistic": 0.0,
+      "df": 4,
+      "p_value_raw": 1.0,
+      "p_value_bonferroni_alpha_0.025": 0.025,
+      "cohens_d_z": 0.0,
+      "ci_95": [
+        0.0,
+        0.0
+      ],
+      "dataset": "lineageflow_omegafold",
+      "metric": "plddt_mean",
+      "verdict": "TIE",
+      "supersedes_wave197": "NO (confirms Wave 197 UNDERPOWERED)"
+    },
+    {
+      "n_paired": 5,
+      "mean_diff": 0.0,
+      "sd_diff": 0.0,
+      "t_statistic": 0.0,
+      "df": 4,
+      "p_value_raw": 1.0,
+      "p_value_bonferroni_alpha_0.025": 0.025,
+      "cohens_d_z": 0.0,
+      "ci_95": [
+        0.0,
+        0.0
+      ],
+      "dataset": "lineageflow_omegafold",
+      "metric": "sc_perplexity",
+      "verdict": "TIE",
+      "supersedes_wave197": "NO (confirms Wave 197 UNDERPOWERED)"
+    }
+  ],
+  "comparison_to_wave196_p4": "per-record N=1000 vs per-seed N=30 paired; df 999 vs df 29; effect size on per-record metric should be smaller absolute but Cohen d_z tighter (smaller variance because records share no seed heterogeneity).",
+  "wave197_honest_finding_supersession": "Wave 197 P3 root-cause finding (per-seed d_z 0.05-0.23 bounded by seed heterogeneity) is now superseded by per-record paired t-test: with df=999 we can detect per-record Cohen d_z much tighter than per-seed d_z, since records don't share seed-level variance. If per-record d_z > 0.10 with p < 1e-15, the framework consistently moves individual records by a small but reliable amount that aggregates to large per-seed shifts. If per-record d_z < 0.10 with p > bonferroni_alpha, the Wave 197 UNDERPOWERED verdict is confirmed at the per-record level.",
+  "csv_path": "verification_outputs/wave198-p2-per-record-paired.csv",
+  "json_path": "verification_outputs/wave198-p2-per-record-paired.json",
+  "bonferroni_M": 2,
+  "bonferroni_alpha": 0.025,
+  "wave196_p4_context": {
+    "n_paired_per_seed": 30,
+    "df_per_seed": 29,
+    "bonferroni_M_cells": 16,
+    "alpha": 0.003125,
+    "verdict_summary": "2 SUPPORTED, 14 UNDERPOWERED, 0 REGRESSES, 0 TIE"
+  },
+  "wave197_p3_context": {
+    "honest_finding": "Wave 197 P3: per-seed d_z=0.05-0.23 bounded by seed-to-seed variance. n=100 records/seed cannot upgrade the 14/16 UNDERPOWERED cells without n_seeds increase."
+  },
+  "note_on_lineageflow": "lineageflow_n1000_omegafold_q4_2026 dataset only contains N=5 records (smoke subset) because OmegaFold CPU wallclock at N=1000 was estimated >40 hours per arm (see lineageflow_n1000_omegafold_q4_2026_baseline.json 'kill_reason'). Per-record paired test runs at N=5, df=4 \u2014 purely a smoke confirmation."
+}
