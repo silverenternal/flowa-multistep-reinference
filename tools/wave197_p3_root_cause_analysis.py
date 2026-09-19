@@ -359,7 +359,7 @@ def main() -> int:
             ])
 
     # Print summary
-    print(f"[wave197-p3-root-cause] Verdict distribution under scenarios:", file=sys.stderr)
+    print("[wave197-p3-root-cause] Verdict distribution under scenarios:", file=sys.stderr)
     print(f"  Wave 196 P4 baseline: {summary['wave196_p4_baseline']['SUPPORTED']} SUPPORTED + "
           f"{summary['wave196_p4_baseline']['UNDERPOWERED']} UNDERPOWERED + "
           f"{summary['wave196_p4_baseline']['REGRESSES']} REGRESSES", file=sys.stderr)

@@ -271,12 +271,12 @@ def write_paired_csv(path: Path, paired_results: list[dict]) -> None:
 
 
 def main() -> None:
+    global EVAL_DIR, OUT_DIR
     p = argparse.ArgumentParser()
     p.add_argument("--eval-dir", type=Path, default=EVAL_DIR)
     p.add_argument("--out-dir", type=Path, default=OUT_DIR)
     args = p.parse_args()
 
-    global EVAL_DIR
     EVAL_DIR = args.eval_dir
     OUT_DIR = args.out_dir
     OUT_DIR.mkdir(parents=True, exist_ok=True)
