@@ -57,14 +57,16 @@ def _is_number(s: str) -> bool:
         return False
 
 # Make `tools` importable when invoked from any cwd.
-import sys as _sys
+import sys as _sys  # noqa: E402
+
 if str(REPO_ROOT) not in _sys.path:
     _sys.path.insert(0, str(REPO_ROOT))
 
 # Reuse Wave 195 P2 machinery (R1, R3, R5a/b/c, R6) + helpers.
 # Direct module imports (no tools/__init__.py). Python 3.14 requires the
 # module to be registered in sys.modules for dataclass introspection.
-import importlib.util as _ilu
+import importlib.util as _ilu  # noqa: E402
+
 _TOOLS = REPO_ROOT / "tools"
 
 def _load(name: str):
