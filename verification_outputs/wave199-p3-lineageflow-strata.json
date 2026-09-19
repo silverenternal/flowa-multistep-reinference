@@ -1,0 +1,140 @@
+{
+  "difficulty_stratified_results": [
+    {
+      "dataset": "lineageflow_n1000_omegafold",
+      "metric": "plddt_mean",
+      "tier": "hard",
+      "n_records": 2,
+      "mean_baseline": 36.80137158389656,
+      "mean_framework": 36.80137158389656,
+      "mean_diff": 0.0,
+      "sd_diff": 0.0,
+      "t_statistic": 0.0,
+      "df": 1,
+      "cohens_d_z": 0.0,
+      "p_value_raw": 1.0,
+      "ci_95_low": 0.0,
+      "ci_95_high": 0.0,
+      "verdict": "TIE",
+      "tier_boundary_low": 43.798043373493975,
+      "tier_boundary_high": 51.81545119012636,
+      "metric_direction": "higher_is_better",
+      "source": "lineageflow_n1000_omegafold_q4_2026_smoke_N5"
+    },
+    {
+      "dataset": "lineageflow_n1000_omegafold",
+      "metric": "sc_perplexity",
+      "tier": "hard",
+      "n_records": 2,
+      "mean_baseline": 19.254188901042582,
+      "mean_framework": 19.254188901042582,
+      "mean_diff": 0.0,
+      "sd_diff": 0.0,
+      "t_statistic": 0.0,
+      "df": 1,
+      "cohens_d_z": 0.0,
+      "p_value_raw": 1.0,
+      "ci_95_low": 0.0,
+      "ci_95_high": 0.0,
+      "verdict": "TIE",
+      "tier_boundary_low": 43.798043373493975,
+      "tier_boundary_high": 51.81545119012636,
+      "metric_direction": "lower_is_better",
+      "source": "lineageflow_n1000_omegafold_q4_2026_smoke_N5"
+    },
+    {
+      "dataset": "lineageflow_n1000_omegafold",
+      "metric": "plddt_mean",
+      "tier": "easy",
+      "n_records": 2,
+      "mean_baseline": 55.992743902439024,
+      "mean_framework": 55.992743902439024,
+      "mean_diff": 0.0,
+      "sd_diff": 0.0,
+      "t_statistic": 0.0,
+      "df": 1,
+      "cohens_d_z": 0.0,
+      "p_value_raw": 1.0,
+      "ci_95_low": 0.0,
+      "ci_95_high": 0.0,
+      "verdict": "TIE",
+      "tier_boundary_low": 43.798043373493975,
+      "tier_boundary_high": 51.81545119012636,
+      "metric_direction": "higher_is_better",
+      "source": "lineageflow_n1000_omegafold_q4_2026_smoke_N5"
+    },
+    {
+      "dataset": "lineageflow_n1000_omegafold",
+      "metric": "sc_perplexity",
+      "tier": "easy",
+      "n_records": 2,
+      "mean_baseline": 12.702366169829585,
+      "mean_framework": 12.702366169829585,
+      "mean_diff": 0.0,
+      "sd_diff": 0.0,
+      "t_statistic": 0.0,
+      "df": 1,
+      "cohens_d_z": 0.0,
+      "p_value_raw": 1.0,
+      "ci_95_low": 0.0,
+      "ci_95_high": 0.0,
+      "verdict": "TIE",
+      "tier_boundary_low": 43.798043373493975,
+      "tier_boundary_high": 51.81545119012636,
+      "metric_direction": "lower_is_better",
+      "source": "lineageflow_n1000_omegafold_q4_2026_smoke_N5"
+    }
+  ],
+  "tier_boundaries_percentiles": [
+    33.0,
+    67.0
+  ],
+  "tier_boundaries_values": [
+    43.798043373493975,
+    51.81545119012636
+  ],
+  "bonferroni_M": 6,
+  "bonferroni_alpha": 0.008333333333333333,
+  "source": "lineageflow_n1000_omegafold_q4_2026_smoke_N5",
+  "n_paired_actual": 5,
+  "monotone_pattern_per_metric": {
+    "plddt_mean": {
+      "hard_d_z": 0.0,
+      "medium_d_z": null,
+      "easy_d_z": 0.0,
+      "abs_hard": 0.0,
+      "abs_medium": null,
+      "abs_easy": 0.0,
+      "monotone_decrease_in_abs_dz_with_ease": false
+    },
+    "sc_perplexity": {
+      "hard_d_z": 0.0,
+      "medium_d_z": null,
+      "easy_d_z": 0.0,
+      "abs_hard": 0.0,
+      "abs_medium": null,
+      "abs_easy": 0.0,
+      "monotone_decrease_in_abs_dz_with_ease": false
+    }
+  },
+  "monotone_pattern_global": {
+    "plddt_hard_d_z": 0.0,
+    "plddt_medium_d_z": null,
+    "plddt_easy_d_z": 0.0,
+    "plddt_monotone_increase": false,
+    "sc_hard_d_z": 0.0,
+    "sc_medium_d_z": null,
+    "sc_easy_d_z": 0.0,
+    "sc_monotone_increase": false,
+    "both_metrics_monotone": false
+  },
+  "difficulty_uplift_pattern": {
+    "hard_d_z": 0.0,
+    "medium_d_z": null,
+    "easy_d_z": 0.0,
+    "monotone_increase": false
+  },
+  "cross_adapter_consistency_vs_k6_w161": "Wave 198 P3 found k6_foldability_w161 shows hard > medium > easy monotone (plddt hard d_z=+1.19, medium +0.22, easy -1.00; sc hard -1.03, medium -1.14, easy -1.14). LineageFlow N=5 smoke data is TIE on both metrics because the framework adapter produced no observable per-record difference on the identical N=5 smoke run (same pdb_path, same plddt_mean, same sc_perplexity for each qid). Cross-adapter comparison is therefore VACUOUS for LineageFlow N=5 \u2014 same-data-source comparison only meaningful at N=1000. Wave 199 P3 documents this honestly as BLOCKED-ON-DATA: N=1000 sweep was killed; no N=1000 lineageflow per-record data exists on disk.",
+  "csv_path": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave199-p3-lineageflow-strata.csv",
+  "json_path": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave199-p3-lineageflow-strata.json"
+}

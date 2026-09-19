@@ -1,0 +1,5 @@
+dataset,metric,tier,n_records,mean_baseline,mean_framework,mean_diff,sd_diff,t_statistic,df,cohens_d_z,p_value_raw,ci_95_low,ci_95_high,verdict,tier_boundary_low,tier_boundary_high,metric_direction
+lineageflow_n1000_omegafold,plddt_mean,hard,2,36.80137158389656,36.80137158389656,0.0,0.0,0.0,1,0.0,1.0,0.0,0.0,TIE,43.798043373493975,51.81545119012636,higher_is_better
+lineageflow_n1000_omegafold,sc_perplexity,hard,2,19.254188901042582,19.254188901042582,0.0,0.0,0.0,1,0.0,1.0,0.0,0.0,TIE,43.798043373493975,51.81545119012636,lower_is_better
+lineageflow_n1000_omegafold,plddt_mean,easy,2,55.992743902439024,55.992743902439024,0.0,0.0,0.0,1,0.0,1.0,0.0,0.0,TIE,43.798043373493975,51.81545119012636,higher_is_better
+lineageflow_n1000_omegafold,sc_perplexity,easy,2,12.702366169829585,12.702366169829585,0.0,0.0,0.0,1,0.0,1.0,0.0,0.0,TIE,43.798043373493975,51.81545119012636,lower_is_better

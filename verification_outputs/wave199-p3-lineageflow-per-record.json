@@ -1,0 +1,49 @@
+{
+  "per_record_results": [
+    {
+      "dataset": "lineageflow_n1000_omegafold",
+      "metric": "plddt_mean",
+      "n_paired": 5,
+      "mean_diff": 0.0,
+      "sd_diff": 0.0,
+      "t_statistic": 0.0,
+      "df": 4,
+      "p_value_raw": 1.0,
+      "p_value_bonferroni_alpha_0.025": 0.025,
+      "cohens_d_z": 0.0,
+      "ci_95": [
+        0.0,
+        0.0
+      ],
+      "verdict": "TIE",
+      "source": "lineageflow_n1000_omegafold_q4_2026_smoke_N5",
+      "supersedes_wave198_p2": "YES (this IS Wave 199 \u2014 same dataset label as Wave 198 P2 lineageflow entry)"
+    },
+    {
+      "dataset": "lineageflow_n1000_omegafold",
+      "metric": "sc_perplexity",
+      "n_paired": 5,
+      "mean_diff": 0.0,
+      "sd_diff": 0.0,
+      "t_statistic": 0.0,
+      "df": 4,
+      "p_value_raw": 1.0,
+      "p_value_bonferroni_alpha_0.025": 0.025,
+      "cohens_d_z": 0.0,
+      "ci_95": [
+        0.0,
+        0.0
+      ],
+      "verdict": "TIE",
+      "source": "lineageflow_n1000_omegafold_q4_2026_smoke_N5",
+      "supersedes_wave198_p2": "YES (this IS Wave 199 \u2014 same dataset label as Wave 198 P2 lineageflow entry)"
+    }
+  ],
+  "bonferroni_M": 2,
+  "bonferroni_alpha": 0.025,
+  "source": "lineageflow_n1000_omegafold_q4_2026_smoke_N5",
+  "n_paired_actual": 5,
+  "wave198_p2_comparison": "Wave 198 P2 lineageflow_omegafold was N=5 with identical baseline/framework values (smoke test, framework adapter not active). This Wave 199 P3 result operates on the SAME actual data file at lineageflow_n1000_omegafold_q4_2026 \u2014 Wave 199 P2's expected wave199-p2-lineageflow-n1000/ directory is empty (N=1000 sweep was killed for CPU wallclock per Wave 84 lineageflow_n1000_omegafold notes: >40 hours per arm).",
+  "csv_path": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave199-p3-lineageflow-per-record.csv",
+  "json_path": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave199-p3-lineageflow-per-record.json"
+}

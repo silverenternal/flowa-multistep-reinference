@@ -1,0 +1,3 @@
+dataset,metric,n_paired,mean_diff,sd_diff,t_statistic,df,p_value_raw,cohens_d_z,ci_95_low,ci_95_high,verdict
+lineageflow_n1000_omegafold,plddt_mean,5,0.0,0.0,0.0,4,1.0,0.0,0.0,0.0,TIE
+lineageflow_n1000_omegafold,sc_perplexity,5,0.0,0.0,0.0,4,1.0,0.0,0.0,0.0,TIE
