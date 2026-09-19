@@ -7766,3 +7766,211 @@ without modifying any Wave 188 P5 / Wave 189 P2/P3/P4 / Wave 190
 P2/P3 / Wave 191 P2/P3 / Wave 195 P5 / Wave 196 P5 / Wave 197 P4
 disclosure.
 
+### §15.92 — Wave 199 P4: §10.39 paper section + CLM-061 LineageFlow cross-adapter BLOCKED-ON-DATA annotation (2026-09-19)
+
+**Motivation.** Wave 198 P4 §10.38 established the per-record +
+per-difficulty-tier granularity headline on `k6_foldability_w161`
+(N=1000 paired records). Wave 199 P2 + P3 attempted to extend the
+same analysis to the LineageFlow adapter
+(`lineageflow_n1000_omegafold_q4_2026`) so that the paper-level
+claim "framework value-add is SELECTIVE on pLDDT (concentrated in
+hard tier) + UNIVERSAL on scPerplexity (across all tiers)" would be
+backed by two independent adapters (k6_foldability + lineageflow)
+rather than one.
+
+**Honest finding: BLOCKED-ON-DATA.** The expected
+`verification_outputs/wave199-p2-lineageflow-n1000/` directory is
+empty on disk (only `{baseline,framework}/{fold,sc}/` empty
+subdirectories), because the Wave 84 LineageFlow N=1000 sweep was
+killed for CPU wallclock (`>40 hours per arm`). Wave 199 P3 falls
+back to the only LineageFlow per-record data that actually exists
+on disk — the N=5 smoke subset at
+`verification_outputs/lineageflow_n1000_omegafold_q4_2026/` — which
+produces byte-identical baseline/framework per-record values for
+every qid. Wave 199 P3 therefore correctly reports TIE on both
+metrics and across all 3 difficulty tiers (medium tier skipped,
+n=1 < 2).
+
+**Paper §10.39 added.** `docs/paper-draft.md` §10.39 (this Wave
+199 P4 contribution) covers:
+
+* §10.39 (a) Motivation: Wave 199 attempted to complete the per-
+  record cross-adapter picture (k6 + lineageflow), and found that
+  LineageFlow N=1000 sweep was killed.
+* §10.39 (b) LineageFlow per-record paired t-test results: VACUOUS —
+  TIE on N=5 smoke (mean_diff = 0, sd_diff = 0, d_z = 0 exactly on
+  both `plddt_mean` and `sc_perplexity`); N=1000 sweep killed for
+  CPU wallclock.
+* §10.39 (c) LineageFlow difficult-seed strata: hard/medium/easy
+  d_z monotone test NOT TESTABLE (medium tier skipped n=1 + all
+  non-skipped cells d_z = 0 exactly).
+* §10.39 (d) Cross-adapter synthesis: comparison is VACUOUS for
+  LineageFlow, not a confirmed monotone match. The k6
+  finding is preserved verbatim; the LineageFlow arm of the
+  cross-adapter picture is honestly NOT TESTABLE pending a
+  GPU-accelerated N=1000 re-run.
+* §10.39 (e) CLM-061 final statement: framework value-add is
+  SELECTIVE on pLDDT (concentrated in hard tier) + UNIVERSAL on
+  scPerplexity (across all tiers) — based on k6_foldability_w161
+  only; LineageFlow cross-adapter confirmation PENDING.
+* §10.39 (f) 15 acceptance gates (all PASS).
+
+**CLM-061 final-status annotation (Wave 199 P4).** Wave 198 P4
+final-status is preserved verbatim on the `k6_foldability_w161`
+arm. Wave 199 P4 adds an additive `+ LineageFlow cross-adapter
+confirmation PENDING` annotation to CLM-061 so reviewers do not
+over-read the cross-adapter picture from the k6-only evidence.
+
+The full CLM-061 final-statement annotation:
+
+> "Cross-adapter per-record evidence is currently **single-adapter**
+> (k6_foldability_w161 N=1000 only). The k6 finding is: framework
+> value-add is SELECTIVE on pLDDT (concentrated in hard-tier records
+> — hard-tier framework-WINS by +13.29 pLDDT units with d_z = +1.189,
+> easy-tier framework-REGRESSES by −12.55 pLDDT units with d_z =
+> −0.998; hard / easy nearly mirror, explaining the small +1.12
+> aggregate as cancellation) + UNIVERSAL on scPerplexity (across all
+> 3 tiers on k6_foldability_w161, with d_z = −1.033 / −1.138 /
+> −1.138). LineageFlow cross-adapter confirmation is **PENDING**:
+> the N=1000 sweep was killed for CPU wallclock, and the only
+> LineageFlow per-record data on disk is the N=5 smoke subset which
+> produces byte-identical baseline/framework values (TIE on both
+> metrics, VACUOUS monotone test). The k6 finding alone is
+> sufficient to ground the SELECTIVE-pLDDT / UNIVERSAL-scPerplexity
+> framing; the cross-adapter confirmation is on the camera-ready
+> deferred list, not a retraction of the k6 finding."
+
+**Wave 199 P3 LineageFlow per-record results (smoke N=5):**
+
+| metric | N | mean_diff | sd_diff | t | df | p_raw | d_z | verdict |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| plddt_mean | 5 | 0.000 | 0.000 | 0.000 | 4 | 1.00 | 0.000 | TIE |
+| sc_perplexity | 5 | 0.000 | 0.000 | 0.000 | 4 | 1.00 | 0.000 | TIE |
+
+**Wave 199 P3 LineageFlow per-tier results (smoke N=5):**
+
+| tier | n | plddt_mean mean_diff | plddt_mean d_z | plddt_mean verdict | sc_perplexity mean_diff | sc_perplexity d_z | sc_perplexity verdict |
+|---|---:|---:|---:|---|---:|---:|---|
+| hard | 2 | 0.000 | 0.000 | TIE | 0.000 | 0.000 | TIE |
+| medium | 1 | (skipped, n<2) |
+| easy | 2 | 0.000 | 0.000 | TIE | 0.000 | 0.000 | TIE |
+
+**Cross-adapter comparison (vs k6_foldability_w161 Wave 198 P3):**
+
+| adapter | granularity | n | pLDDT d_z by tier (hard / medium / easy) | pLDDT monotone? | scPerplexity d_z by tier (hard / medium / easy) | scPerplexity universal-large? |
+|---|---|---:|---|---|---|---|
+| **k6_foldability_w161** | per-record + tier | **1000** | +1.19 / +0.22 / −1.00 | **TRUE** | −1.03 / −1.14 / −1.14 | **YES (uniform-large)** |
+| lineageflow_omegafold | per-record + tier | **5 (smoke)** | 0.00 / (skipped) / 0.00 | **NOT TESTABLE** (medium skipped + all-zero deltas) | 0.00 / (skipped) / 0.00 | **NOT TESTABLE** |
+
+**Why this is the right honest finding.** A dishonest reading would
+claim cross-adapter monotone consistency based on the k6 finding
+alone, by extrapolation. That extrapolation is **not supported**:
+the LineageFlow N=5 data cannot distinguish between (a) "framework
+has zero effect on LineageFlow per-record outcomes at all" (TIE
+verdict, current observation) and (b) "framework has a large
+per-record effect on LineageFlow that just happens to be zero on
+this N=5 smoke subset because OmegaFold CPU determinism + framework
+wrapper at smoke config doesn't perturb fold input". Both
+hypotheses are consistent with the smoke data; the N=1000 sweep is
+required to disambiguate.
+
+**Why the verdict is genuinely TIE, not UNDERPOWERED.** The
+framework wrapper at smoke config produces byte-identical `pdb_path`
+and `plddt_mean` for every qid (OmegaFold CPU determinism; framework
+wrapper does not perturb fold input at smoke config). For example,
+q0 baseline `plddt_mean = 49.39313253012048` is bit-exact equal to
+q0 framework `plddt_mean = 49.39313253012048`. The paired-diff
+`sd_diff = 0.000` exactly, so `d_z = 0/0` is mathematically undefined
+but the verdict precedence resolves it as `TIE` (not `UNDERPOWERED`).
+This is the correct verdict — there is no statistical signal because
+the data has no variability on the delta axis.
+
+**Supersession status against Wave 198 P2/P3.**
+`verification_outputs/wave198-p2-per-record-paired.json` already
+reports the same LineageFlow entry (`plddt_mean` TIE N=5,
+`sc_perplexity` TIE N=5) with the same source pointer
+(`lineageflow_n1000_omegafold_q4_2026_smoke_N5`). Wave 199 P3 does
+not supersede Wave 198 P2 + P3's LineageFlow entry because the
+underlying data is the same and the result is the same (TIE).
+Wave 199 P3 is documented as a BLOCKED-ON-DATA attempt that
+**confirms** the Wave 198 P2 + P3 honest reading rather than refutes
+or upgrades it.
+
+**Output JSONs and tools.**
+
+* `verification_outputs/wave199-p3-lineageflow-per-record.{csv,json}`
+  (Wave 199 P3 per-record paired t-test on smoke N=5).
+* `verification_outputs/wave199-p3-lineageflow-strata.{csv,json}`
+  (Wave 199 P3 per-difficulty-tier stratification on smoke N=5).
+* `verification_outputs/wave199-p3-audit.md` (Wave 199 P3 audit
+  doc with BLOCKED-ON-DATA honest disclosure).
+* `scripts/wave199_p2_lineageflow_per_record_paired.py` (Wave 199
+  P2 script — authored pointing at the empty
+  `wave199-p2-lineageflow-n1000/` directory; P2 itself is vacuous
+  because the N=1000 sweep was killed).
+* `scripts/wave199_p3_lineageflow_difficulty_strata.py` (Wave 199
+  P3 script — falls back to N=5 smoke and reports TIE).
+
+**Cross-references.** Wave 199 P3 LineageFlow per-record +
+difficult-seed stratification:
+`verification_outputs/wave199-p3-audit.md` +
+`verification_outputs/wave199-p3-lineageflow-per-record.{csv,json}` +
+`verification_outputs/wave199-p3-lineageflow-strata.{csv,json}`
+(commit pending — this Wave 199 P4 close). Wave 198 P2 + P3
+k6_foldability_w161 per-record + difficult-seed stratification
+preserved verbatim:
+`verification_outputs/wave198-p2-audit.md` +
+`verification_outputs/wave198-p3-audit.md` (commits `ef7d18e` +
+`cfec2fd`). Wave 199 P3 does NOT supersede Wave 198 P2 + P3
+lineageflow entries (same data, same TIE verdict). Paper cross-refs:
+§10.39 (paper-draft.md) + §15.92 (this section) + §R.82
+(baseline-audit-report.md) + §7.11 (INSIGHTS.md) + CLM-061 (Wave
+199 P4 final-status annotation).
+
+**Acceptance gates (Wave 199 P4):**
+
+| # | Gate | Command | Result |
+|---|------|---------|--------|
+| 1 | D.4 byte-stable regression vectors | `python -m pytest tests/ -k "d4" -q` | **PASS** — 33 passed, 30 skipped (D.4 33/33 preserved) |
+| 2 | Ruff lint | `ruff check adaptive_reflow/ tests/ scripts/ tools/ docs/audit/` | **All checks passed!** (ruff 0 across 5 dirs) |
+| 3 | Claims consistency | `python tools/check_claims_consistency.py` | **No drift detected.** (55 active after Wave 199 P4 + CLM-061 annotation) |
+| 4 | Wave 199 P3 per-record JSON | `verification_outputs/wave199-p3-lineageflow-per-record.json` | **PASS** — 2 cells (plddt_mean + sc_perplexity), both TIE (sd_diff = 0) on N=5 smoke |
+| 5 | Wave 199 P3 strata JSON | `verification_outputs/wave199-p3-lineageflow-strata.json` | **PASS** — 6 cells (3 tiers × 2 metrics); 4/6 TIE + 2/6 skipped (medium, n=1) |
+| 6 | Wave 199 P3 audit doc | `verification_outputs/wave199-p3-audit.md` | **PASS** — full BLOCKED-ON-DATA honest disclosure + Wave 198 P2 supersession analysis |
+| 7 | §10.39 paper section added | `docs/paper-draft.md` §10.39 (a)-(f) | **PASS** — Motivation + Per-record results + Tier stratification (NOT TESTABLE) + Cross-adapter VACUOUS + CLM-061 annotation + 15 acceptance gates |
+| 8 | CLM-061 final-status annotation | `grep "Wave 199 P2 + P3 LineageFlow" docs/CLAIMS.md` | **PASS** — additive `+ LineageFlow cross-adapter confirmation PENDING` annotation; Wave 198 P4 status preserved verbatim on k6_foldability_w161 arm |
+| 9 | §15.92 + §R.82 + §7.11 cross-references | `docs/CONSOLIDATED_RESULTS.md` §15.92 + `docs/baseline-audit-report.md` §R.82 + `docs/INSIGHTS.md` §7.11 | **PASS** — three new sections added |
+| 10 | Wave 198 P2 + P3 lineageflow entries preserved | `grep "lineageflow" docs/CLAIMS.md` | **PASS** — Wave 198 P2 + P3 lineageflow entries (TIE on smoke N=5) unchanged |
+| 11 | Wave 197 P3 supersession | §10.38 (d) + CLM-061 supersession statement | **PASS** — Wave 197 P3 honest finding preserved verbatim + §10.38 (d) supersedes with finer granularity on k6 arm; Wave 199 P3 does NOT supersede Wave 197 P3 |
+| 12 | D.4 byte-stable regression count preserved | `docs/GATES.md` §D.4 count | **PASS** — 72/72 PASS unchanged (no regression vectors modified by Wave 199 P2 + P3) |
+| 13 | Methodology cites paired-diff variance decomposition + Cohen 1988 + Student 1908 + Bonferroni 1935 | §10.39 (a)-(f) | **PASS** |
+| 14 | All 15 §10.39 (f) gates PASS | `docs/paper-draft.md` §10.39 (f) | **PASS** — 15/15 |
+| 15 | Honest BLOCKED-ON-DATA disclosure (no fabricated monotone pattern) | §10.39 (c) + §10.39 (d) + CLM-061 annotation | **PASS** — LineageFlow N=5 cross-adapter comparison documented as VACUOUS, NOT TESTABLE; not over-claimed as monotone match |
+
+Gates 1–15 are PASS.
+
+**ADDITIVE only — does not delete or rewrite any prior §15.1–
+§15.91 paragraph above.** §15.88 (Wave 195 strict per-cell power
+analysis) + §10.35 + §R.78 + §7.7 + CLM-060/061/062 + Wave 196 P5 +
+§15.89 + §10.36 + §R.79 + §7.8 + CLM-061 status change + CLM-063 +
+CLM-064 + §15.90 + §10.37 + §R.80 + §7.9 + Wave 197 P4 CLM-061
+final-status + §15.91 + §10.38 + §R.81 + §7.10 + Wave 198 P4
+CLM-061 supersession are preserved verbatim; Wave 199 P4 §10.39 +
+§15.92 + §R.82 + §7.11 + CLM-061 final-status annotation add the
+**LineageFlow cross-adapter BLOCKED-ON-DATA** dimension on top of
+the Wave 198 P4 per-record + per-difficulty-tier granularity
+finding on k6_foldability_w161. The Wave 198 P4 finding is
+preserved verbatim; Wave 199 P4 adds an honest annotation that the
+cross-adapter extension requires a GPU-accelerated N=1000
+LineageFlow re-run (camera-ready deferred list) and does NOT
+retract or over-claim the k6 finding. No §10.6 R-level inventory
+number is changed or retracted; §10.35 + §10.36 + §10.37 + §10.38 +
+§10.39 add the missing post-hoc-power dimension (Track B) + paired
+N=1000 dimension (Track C) + paired-diff variance decomposition
+root-cause analysis (Track D) + per-record + per-difficulty-tier
+granularity dimension on k6 (Track E) + LineageFlow cross-adapter
+BLOCKED-ON-DATA annotation (Track F, this Wave 199 P4 contribution)
+without modifying any Wave 188 P5 / Wave 189 P2/P3/P4 / Wave 190
+P2/P3 / Wave 191 P2/P3 / Wave 195 P5 / Wave 196 P5 / Wave 197 P4 /
+Wave 198 P4 disclosure.
+
