@@ -91,5 +91,5 @@
   "foldability_omegafold_q4_2026_baseline_json_source": "verification_outputs/lineageflow_n1000_omegafold_q4_2026_baseline.json (Wave 84 wave-aggregated baseline summary, smoke5 N=5)",
   "cline_decision": "B (GPU sharded direct invocation) attempted and BLOCKED-ON-DATA due to torch-version/CUDA-arch mismatch on Blackwell. Wave 199 P5 BLOCKED-ON-DATA annotation preserved; Wave 200 P2 adds the new GPU-arch blocker detail.",
   "audit_doc": "docs/audit/wave200-p2-lineageflow-n1000-baseline-gpu-blocked.md",
-  "commit_sha": "PENDING"
+  "commit_sha": "2bdd905"
 }
