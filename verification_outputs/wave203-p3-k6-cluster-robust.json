@@ -541,6 +541,6 @@
     "monotone_pattern_holds_with_cluster_robust": false,
     "csv_path": "verification_outputs/wave203-p3-k6-cluster-robust.csv",
     "json_path": "verification_outputs/wave203-p3-k6-cluster-robust.json",
-    "commit_sha": "PENDING"
+    "commit_sha": "PENDING_NEXT_AMEND"
   }
 }
