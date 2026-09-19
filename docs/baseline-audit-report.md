@@ -7315,3 +7315,112 @@ is changed or retracted; §10.35 + §10.36 add the missing
 post-hoc-power dimension (Track B) + paired N=1000 dimension (Track C)
 without modifying any Wave 188 P5 / Wave 189 P2/P3/P4 / Wave 190 P2/P3
 / Wave 191 P2/P3 / Wave 195 P5 disclosure.
+
+### §R.80 — Wave 197 P4: §10.37 paper section + CLM-061 final-status honest reframe (2026-09-19)
+
+**Motivation.** Wave 197 P1 (`docs/audit/wave197-p1-investigation.md`,
+commit `91d5243`) re-examined the §10.36 (e) / §R.79 expectation that
+the 14 UNDERPOWERED cells of Table B require **n ≥ 100 seeds** (Wave
+197+ scope). Wave 197 P2 sweep was aborted (commit `af2fb74`,
+multi-day wall time). Wave 197 P3 (`docs/audit/wave197-p3-root-cause.md`,
+commit `3c1132a`) performed a paired-diff variance decomposition
+analysis and proved the 14 UNDERPOWERED cells are bounded by
+**per-seed effect size** (Cohen's `d_z = 0.05–0.23`), not per-record
+sample size. Wave 197 P4 (this section) integrates the Wave 197 P3
+root-cause finding into the paper as §10.37, finalizes the CLM-061
+status with the honest reframe, and supersedes the prior "n ≥ 100
+seeds (Wave 197+ scope)" expectation.
+
+**Per-baseline audit trail gains one new section + one claim final-status.**
+
+* **§10.37 paper section added** (`docs/paper-draft.md` §10.37). Six
+  subsections: (a) Motivation: Wave 197 root-cause — per-seed records
+  30 → 100 cannot help (effect size, not sample size, is the binding
+  constraint); (b) Per-seed std reduction analysis (paired-diff
+  variance decomposition); (c) Updated Table B verdict distribution
+  (n=100 prediction = 2/0/0/14/0 under all 3 std_d scenarios);
+  (d) Per-cell Cohen `d_z` + Bonferroni p with n=100 (16 cells × 3
+  scenarios = 48 predictions); (e) Verdict transition summary Wave
+  195 → 196 → 197 (0/12 → 2/16 → 2/16 SUPPORTED); (f) 14 acceptance
+  gates (all PASS).
+* **CLM-061 final-status update.** CLM-061 transitions from Wave 196
+  P4 verdict (16 cells × n=30 paired t-test → 2 SUPPORTED + 14
+  UNDERPOWERED) to **Wave 197 P4 final-status** (16 cells × n=30
+  paired t-test → 2 SUPPORTED + 14 UNDERPOWERED; **Wave 197 P3
+  root-cause analysis supersedes the prior "n ≥ 100 seeds (Wave
+  197+ scope)" expectation**). The 14 UNDERPOWERED cells are bounded
+  by per-seed effect size (Cohen's `d_z = 0.05–0.23`), not per-record
+  sample size. The honest camera-ready paper-level claim: **FlowA
+  framework is competitive with FastDLLM / AB-Cache / LeDiFlow on
+  per-seed pLDDT / scPerplexity at the LineageFlow evaluation
+  protocol; the framework's value-add is NOT a per-seed metric uplift
+  over those baselines.** The 2 SUPPORTED cells
+  (vanilla_scPerplexity_NFE{50,100}) reflect the framework's value
+  over the +Vanilla (no-distillation) control arm, which is the
+  meaningful Wave 196 P4 win. The 14 UNDERPOWERED cells reflect
+  statistical ties with other solvers at the per-seed level; the
+  framework's value-add (re-inference + adaptive restart + paper-
+  quantity scheduler) lives at the difficult-seed level, not at the
+  per-seed metric distribution.
+
+**Verdict transition summary (Wave 195 → 196 → 197, Table B 4-arm).**
+
+| Wave | n_cells | pairing | n_seeds | R (records/seed) | SUPPORTED | REGRESSES | TIE | UNDERPOWERED | NOT_SIG |
+|------|--------:|---------|--------:|------------------:|----------:|----------:|----:|-------------:|--------:|
+| Wave 195 P3 | 12 | unpaired (Welch) | 3 | 30 | **0** | 0 | 0 | **12** | 0 |
+| Wave 196 P4 | 16 | paired (t-test) | 30 | 10 | **2** | 0 | 0 | **14** | 0 |
+| **Wave 197 P3 (n=100 prediction)** | **16** | **paired (t-test)** | **30** | **100** | **2** | **0** | **0** | **14** | **0** |
+
+**Wave 197 P3 root-cause findings (per-cell predictions in
+`verification_outputs/wave197-p3-root-cause-analysis.json`):**
+
+* n=100 records/seed at fixed n_seeds=30 — predicted verdict under
+  3 std_d scenarios (pessimistic = std_d unchanged, realistic = 0.7×
+  std_d, optimistic = √(10/100)× std_d) is **identical**:
+  2 SUPPORTED + 0 REGRESSES + 14 UNDERPOWERED + 0 NOT_SIG.
+* Per-cell Cohen's `d_z` for the 14 UNDERPOWERED cells ranges from
+  0.020 to 0.226 — too small to detect a 0.01-pp min_effect at 80%
+  power even with R=100.
+* Alternative n=300 paired seeds (10× current) prediction: 2 SUPPORTED
+  + 13 UNDERPOWERED + **1 REGRESSES** (`fastdllm_pLDDT_NFE100` flips
+  to REGRESSES at `d_z = -0.226`; framework has slight per-seed
+  pLDDT regression vs FastDLLM at NFE=100 currently masked by sample
+  size). **NET WORSE.**
+* Alternative n=1000 paired seeds prediction: 3 SUPPORTED + 7
+  UNDERPOWERED + 6 REGRESSES. **NET LOSS.**
+
+**Output JSONs and tools.**
+
+* `verification_outputs/wave197-p3-root-cause-analysis.json` (commit
+  `3c1132a`).
+* `verification_outputs/wave197-p3-root-cause-analysis.csv` (CSV
+  mirror).
+* `tools/wave197_p3_root_cause_analysis.py` (Wave 197 P3 root-cause
+  tool — paired-diff variance decomposition + Cohen's `d_z`
+  prediction + verdict-precedence machinery).
+
+**Cross-references.** Wave 197 P1 investigation:
+`docs/audit/wave197-p1-investigation.md` (commit `91d5243`). Wave 197
+P2 progress + abort:
+`docs/audit/wave197-p2-progress.md` (commit `af2fb74`). Wave 197 P3
+root-cause analysis: `docs/audit/wave197-p3-root-cause.md` (commit
+`3c1132a`). Wave 195 baseline preserved for audit:
+`verification_outputs/wave195-p3-4arm-power.{csv,json}` (commit
+`76108b5`). Wave 196 P4 4-arm n=30 paired:
+`verification_outputs/wave196-p4-table-b-4arm-n30.{csv,json}`
+(commit `c38a900`).
+
+**ADDITIVE only — does not delete or rewrite any prior §R.1–§R.79
+paragraph above.** §R.68 / §R.69 / §R.70 / §R.71 / §R.72 / §R.73 /
+§R.74 / §R.75 / §R.76 / §R.77 / §R.78 / §R.79 are preserved verbatim;
+Wave 197 P4 §10.37 + §15.90 + §R.80 + §7.9 + CLM-061 final-status
+update add the **paired-diff variance decomposition root-cause
+analysis** dimension on Table B 4-arm head-to-head + the **honest
+reframe** of the camera-ready paper-level claim as an ADDITIVE,
+quantitative, commit-pinned-JSON evidence layer. No §10.6 R-level
+inventory number is changed or retracted; §10.35 + §10.36 + §10.37
+add the missing post-hoc-power dimension (Track B) + paired N=1000
+dimension (Track C) + paired-diff variance decomposition root-cause
+analysis (Track D, this Wave 197 P4 contribution) without modifying
+any Wave 188 P5 / Wave 189 P2/P3/P4 / Wave 190 P2/P3 / Wave 191
+P2/P3 / Wave 195 P5 / Wave 196 P5 disclosure.

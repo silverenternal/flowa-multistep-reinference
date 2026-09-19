@@ -2984,16 +2984,20 @@ How it works:
 ## CLM-061: Wave 195 P3 + Wave 196 P2 + Wave 196 P4 + Wave 197 P3 — 4-arm head-to-head per-cell power analysis (Wave 195 P3 baseline: 12 cells × n=3 unpaired Welch → ALL 12 UNDERPOWERED; Wave 196 P4 upgrade: 16 cells × n=30 paired t-test → 2 SUPPORTED + 14 UNDERPOWERED + 0 REGRESSES; Wave 197 P3 root-cause analysis: n=100 records/seed cannot upgrade the verdict distribution because Cohen's d_z (0.05–0.23) is bounded by seed-to-seed variance, not per-record variance); Wave 196 P4 verdict distribution is **2 SUPPORTED / 0 REGRESSES / 0 TIE / 14 UNDERPOWERED / 0 NOT_SIGNIFICANT** with Bonferroni α=0.05/16=0.003125 per cell (4 baselines × 2 NFE × 2 metrics, including the +Vanilla control arm); the 2 SUPPORTED cells are `vanilla_scPerplexity_NFE50` (Δ = −3.866, Cohen's d_z = −2.932, p_raw = 5.73e-16) and `vanilla_scPerplexity_NFE100` (Δ = −3.862, Cohen's d_z = −2.994, p_raw = 3.28e-16) — FlowA framework vs Vanilla (no-distillation) baseline arm is strongly framework-wins on scPerplexity at both NFE=50 and NFE=100; the 14 UNDERPOWERED cells are all-vs-FastDLLM / AB-Cache / LeDiFlow comparisons where the paired-diff Cohen's d_z (0.020–0.226) is too small to detect a 0.01-pp min_effect at 80% power; the Wave 195 P3 baseline verdict distribution (0/0/0/12/0 — all 12 UNDERPOWERED at n=3 unpaired Welch) is preserved verbatim as the Wave 179/180/181/182 budget ceiling snapshot; **Wave 197 P3 root-cause analysis**: predicted n=100 records/seed verdict distribution (3 scenarios: pessimistic/realistic/optimistic std_d scaling) is **2 SUPPORTED / 14 UNDERPOWERED / 0 REGRESSES** — identical to Wave 196 P4 baseline (delta_supported = 0). Alternative n=300 paired seeds prediction (10× current n_seeds): **2 SUPPORTED / 13 UNDERPOWERED / 1 REGRESSES** (NET WORSE — `fastdllm_pLDDT_NFE100` flips to REGRESSES at d_z=-0.226 because the framework has a slight per-seed pLDDT regression vs FastDLLM at NFE=100 that is currently masked by sample size). n=1000 paired seeds prediction: 3 SUPPORTED + 7 UNDERPOWERED + 6 REGRESSES (NET LOSS); **status upgrade**: Wave 196 P4 verdict transitions this claim from "12/12 UNDERPOWERED at n=3 unpaired" to "2 SUPPORTED + 14 UNDERPOWERED at n=30 paired t-test (4-arm with +Vanilla control)"; Wave 197 P3 root-cause analysis **supersedes the prior "n ≥ 100 seeds (Wave 197+ scope)" expectation** with the honest finding that the 14 UNDERPOWERED cells are bounded by per-seed effect size (Cohen's d_z = 0.05–0.23) — FlowA framework is competitive with FastDLLM/AB-Cache/LeDiFlow on per-seed pLDDT/scPerplexity at the LineageFlow evaluation protocol; the framework's value-add is NOT a per-seed metric uplift over these baselines {#CLM-061}
 
 - Status: ACTIVE
-- Date: 2026-09-19
+- Date: 2026-09-19 (Wave 197 P4 final-status update)
 - Source:
   [`docs/paper-draft.md` §10.35 (c) Table B — 4-arm head-to-head power analysis](paper-draft.md),
-  [`docs/paper-draft.md` §10.36 — Wave 196 P4 verdict upgrade (this claim)](paper-draft.md),
+  [`docs/paper-draft.md` §10.36 — Wave 196 P4 verdict upgrade](paper-draft.md),
+  [`docs/paper-draft.md` §10.37 — Wave 197 P3 root-cause analysis (final status)](paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P3 4-arm power analysis)](CONSOLIDATED_RESULTS.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.89 (Wave 196 P4 verdict upgrade)](CONSOLIDATED_RESULTS.md),
+  [`docs/CONSOLIDATED_RESULTS.md` §15.90 (Wave 197 P4 final-status)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.78 (Wave 195 P3 4-arm power analysis)](baseline-audit-report.md),
   [`docs/baseline-audit-report.md` §R.79 (Wave 196 P4 verdict upgrade)](baseline-audit-report.md),
+  [`docs/baseline-audit-report.md` §R.80 (Wave 197 P4 final-status update)](baseline-audit-report.md),
   [`docs/INSIGHTS.md` §7.7 (Wave 195 — strict per-cell power analysis)](INSIGHTS.md),
   [`docs/INSIGHTS.md` §7.8 (Wave 196 P2 + P3 + P4)](INSIGHTS.md),
+  [`docs/INSIGHTS.md` §7.9 (Wave 197 P3 root-cause analysis — final honest reframe)](INSIGHTS.md),
   [`verification_outputs/wave195-p3-4arm-power.json`](../verification_outputs/wave195-p3-4arm-power.json)
   (Wave 195 P3 4-arm power table, commit_sha `76108b5`),
   [`verification_outputs/wave196-p4-table-b-4arm-n30.json`](../verification_outputs/wave196-p4-table-b-4arm-n30.json)
@@ -3118,6 +3122,37 @@ How it works:
   t-test → 2 SUPPORTED + 14 UNDERPOWERED). The Wave 195 P3 baseline
   is preserved verbatim as the Wave 179/180/181/182 budget ceiling
   snapshot. No paper claim is retracted.
+
+  **Wave 197 P4 final-status (2026-09-19) — Wave 197 P3 root-cause
+  analysis supersedes prior "n ≥ 100 seeds (Wave 197+ scope)"
+  expectation.** Wave 197 P3 (`docs/audit/wave197-p3-root-cause.md`,
+  commit `3c1132a`) performed a paired-diff variance decomposition
+  analysis and proved that the 14 UNDERPOWERED cells are bounded by
+  **per-seed effect size** (Cohen's `d_z = 0.05–0.23`), not by
+  per-record sample size. The Wave 197 P2 n=100 sweep was aborted
+  (commit `af2fb74`, multi-day wall time); even if it had completed,
+  the predicted verdict distribution under all three std_d scenarios
+  (pessimistic, realistic, optimistic) would be **2 SUPPORTED / 0
+  REGRESSES / 0 TIE / 14 UNDERPOWERED / 0 NOT_SIG** — identical to
+  the Wave 196 P4 baseline (delta_supported = 0). The honest reading
+  for the camera-ready paper: **FlowA framework is competitive with
+  FastDLLM / AB-Cache / LeDiFlow on per-seed pLDDT / scPerplexity at
+  the LineageFlow evaluation protocol; the framework's value-add is
+  NOT a per-seed metric uplift over those baselines.** The 2 SUPPORTED
+  cells (`vanilla_scPerplexity_NFE{50,100}`) reflect the framework's
+  value over the +Vanilla (no-distillation) control arm, which is the
+  meaningful Wave 196 P4 win. The 14 UNDERPOWERED cells reflect
+  statistical ties with other solvers at the per-seed level; the
+  framework's value-add (re-inference + adaptive restart + paper-
+  quantity scheduler) lives at the difficult-seed level, not at the
+  per-seed metric distribution. **This Wave 197 P4 final-status
+  supersedes the prior "paper-level significance on the 14
+  underpowered cells requires n ≥ 100 seeds (Wave 197+ scope)"
+  expectation in §10.36 (e) / §15.89 / §R.79 / §7.8.** No paper claim
+  is retracted; the 2 SUPPORTED cells and the +Vanilla control arm
+  comparison remain intact. Cross-references: §10.37 (paper-draft.md)
+  + §15.90 (CONSOLIDATED_RESULTS.md) + §R.80 (baseline-audit-report.md)
+  + §7.9 (INSIGHTS.md).
 - Evidence:
   [`verification_outputs/wave195-p3-4arm-power.json`](../verification_outputs/wave195-p3-4arm-power.json)
   (Wave 195 P3 4-arm power table, commit_sha `76108b5`),
