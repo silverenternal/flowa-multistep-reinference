@@ -1,0 +1,95 @@
+{
+  "wave": "200",
+  "agent": "P2",
+  "date": "2026-09-19",
+  "model": "lineageflow",
+  "sweep_target_n_per_arm": 1000,
+  "sweep_actual_n_per_arm": 5,
+  "verdict": "BLOCKED-ON-DATA",
+  "verdict_reason": "Wave 199 P5 baseline BLOCKED-ON-DATA was confirmed; Wave 200 P2 attempt to upgrade to GPU-sharded (option B per task spec) is ALSO blocked. Two compounding structural blockers.",
+  "blocker_1": {
+    "id": "torch-cuda-arch-mismatch",
+    "summary": "OmegaFold pins torch 1.13.1; the latest GPU build (cu116) tops out at sm_86; this host's GPUs (PRO 6000 + 5090) are sm_120 (Blackwell).",
+    "evidence": "After installing torch==1.13.1+cu116 into /home/hugo/.venvs/omegafold_venv (2 GB wheel, ~50 s download), torch.cuda.is_available() returned False with UserWarning: 'NVIDIA RTX PRO 6000 Blackwell Workstation Edition with CUDA capability sm_120 is not compatible with the current PyTorch installation. The current PyTorch install supports CUDA capabilities sm_37 sm_50 sm_60 sm_70 sm_75 sm_80 sm_86.' Same warning for the 5090. Reverted to torch==1.13.1+cpu to leave the venv in pre-wave state.",
+    "attempted": true,
+    "reverted": true
+  },
+  "blocker_2": {
+    "id": "no-sm120-capable-venv-with-omegafold-compatible-python",
+    "summary": "All other project venvs with sm_120-capable torch (lineageflow_venv, flowmol3_venv, etc.) ship Python 3.12, which OmegaFold's setup.py explicitly rejects (Python 3.8/3.9/3.10 only).",
+    "evidence": "Inventory of .venvs/*/bin/python (Python 3.10.x venv: omegafold_venv; Python 3.12.x venvs: lineageflow_venv, flowmol3_venv, geva_venv, hidream_venv, hpsv2_venv, image_reward_venv, kanzi_venv, lumina_venv, protbfn_venv, wan2_2_venv; Python 3.14.x venvs: dpg_venv, hpsv2_venv, image_reward_venv, kanzi_venv). No sm_120-capable torch exists for Python 3.10 (no later torch build is compatible with OmegaFold's code).",
+    "attempted": false
+  },
+  "blocker_3": {
+    "id": "cpu-wallclock-continues-to-block",
+    "summary": "Even if option A (CPU wrapper) were attempted, Wave 84's estimate of >40 h/arm at N=1000 still applies; the venv has CPU torch 1.13.1 and OmegaFold is a heavy model.",
+    "evidence": "Wave 84 lineageflow_n1000_omegafold_q4_2026 notes; verified by inspection of /home/hugo/codes/flowa-multistep-reinference/verification_outputs/lineageflow_n1000_omegafold_q4_2026_baseline.json which records the N=5 smoke subset as the only data ever produced.",
+    "attempted": false
+  },
+  "arm_basis": "Synthetic Pfam-family AA sequences (4 families × 250 seqs each at full N=1000; N=5 subset per family at smoke5); folded by upstream OmegaFold; ESM-IF scored. Real LineageFlow ckpt not used in foldability path — foldability is a downstream metric, not a LineageFlow-eval. The Wave 199 P5 + Wave 200 P2 finding is therefore that the *foldability-N=1000 sweep* is blocked, not the LineageFlow upstream eval (which has its own Wave 109.B GPU-accelerated path via run_real_ckpt_eval.py that runs fine on the lineageflow_venv GPU stack).",
+  "foldability_baseline": {
+    "source": "verification_outputs/lineageflow_n1000_omegafold_q4_2026/baseline/fold/foldability.jsonl",
+    "n_total": 5,
+    "n_with_plddt": 5,
+    "plddt_mean_mean": 46.99627270055833,
+    "plddt_mean_median": 49.39313253012048,
+    "plddt_mean_p10": 35.9286338524831,
+    "plddt_mean_p90": 56.600219512195125,
+    "plddt_per_record": {
+      "q0": 49.39313253012048,
+      "q1": 52.95536585365854,
+      "q2": 41.165060240963854,
+      "q3": 59.030121951219506,
+      "q4": 32.43768292682927
+    },
+    "per_record_baseline_plddt_summary": {
+      "min": 32.43768292682927,
+      "p33": 43.798043373493975,
+      "p50": 49.39313253012048,
+      "p67": 51.81545119012636,
+      "max": 59.030121951219506
+    },
+    "thresholds": [70.0, 80.0],
+    "thresholds_pass_fraction_ge_70": [0.0, 0.21951219512195122, 0.0, 0.0, 0.0],
+    "thresholds_pass_fraction_ge_80": [0.0, 0.0, 0.0, 0.0, 0.0],
+    "n_1000_sweep_attempted": false
+  },
+  "self_consistency_baseline": {
+    "source": "verification_outputs/lineageflow_n1000_omegafold_q4_2026/baseline/sc/self_consistency.jsonl",
+    "n_total": 5,
+    "n_scored": 5,
+    "sc_perplexity_mean": 15.42326174694819,
+    "sc_perplexity_median": 13.203198592996623,
+    "sc_perplexity_p10": 12.60687142038311,
+    "sc_perplexity_p90": 17.84069168726828,
+    "sc_perplexity_per_record": {
+      "q0": 13.203198592996623,
+      "q1": 13.17983991706196,
+      "q2": 21.89074840410913,
+      "q3": 12.22489242259721,
+      "q4": 16.61762939797604
+    },
+    "per_record_baseline_sc_perplexity_summary": {
+      "min": 12.22489242259721,
+      "p33": 13.187314693361053,
+      "p50": 13.203198592996623,
+      "p67": 15.525011540382627,
+      "max": 21.89074840410913
+    },
+    "n_errors": 0,
+    "n_1000_sweep_attempted": false
+  },
+  "qid_pairing_verified": true,
+  "qid_pairing_method": "set(qids_base) == set(qids_fw) and len equal; qids are q0..q4 in both baseline and framework jsonls (smoke5 subset).",
+  "wall_min_actual": 0,
+  "wall_min_actual_note": "Sweep did not execute. 50-min budget unused. GPU torch install attempt was 50 s (download 2 GB) + 30 s (revert), within budget.",
+  "output_paths_committed": [
+    "verification_outputs/lineageflow_n1000_omegafold_q4_2026/baseline/fold/foldability.jsonl",
+    "verification_outputs/lineageflow_n1000_omegafold_q4_2026/baseline/sc/self_consistency.jsonl"
+  ],
+  "output_paths_committed_note": "These are the Wave 87 N=5 smoke5 paths. They were NOT overwritten by Wave 200 P2 because the N=1000 sweep did not run (BLOCKED-ON-DATA). They remain the only honest per-record LineageFlow foldability data on disk. The task spec's expected output paths (verification_outputs/lineageflow_n1000_omegafold_q4_2026/baseline/{foldability,self_consistency}.jsonl) are NOT created because no N=1000 sweep ran; copying smoke5 into those paths would be a byte-identical rewrite of the existing data, which would not add new evidence.",
+  "foldability_omegafold_q4_2026_baseline_json_source": "verification_outputs/lineageflow_n1000_omegafold_q4_2026_baseline.json (Wave 84 wave-aggregated baseline summary, smoke5 N=5)",
+  "cline_decision": "B (GPU sharded direct invocation) attempted and BLOCKED-ON-DATA due to torch-version/CUDA-arch mismatch on Blackwell. Wave 199 P5 BLOCKED-ON-DATA annotation preserved; Wave 200 P2 adds the new GPU-arch blocker detail.",
+  "audit_doc": "docs/audit/wave200-p2-lineageflow-n1000-baseline-gpu-blocked.md",
+  "commit_sha": "PENDING"
+}
