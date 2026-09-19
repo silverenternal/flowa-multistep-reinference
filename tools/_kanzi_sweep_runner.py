@@ -418,26 +418,36 @@ def _synthesize_x_final_real(
             raise RuntimeError("Kanzi initial state is missing from the native cache")
         if prior_entry is not None:
             x0_latent = np.asarray(prior_entry["x0"], dtype=np.float64)
-            # Wave 122 Phase 4 — per-record torch seed before DAE
-            # forward pass so FSQ stochasticity is reproducible per
-            # (seed, record_idx) pair. Mirrors the
-            # ``np.random.default_rng(int(seed)*1_000_003+int(record_idx))``
-            # pattern at line 331. Closes the Wave 121 P2 max-outlier
-            # RMSD drift across --seed values.
-            torch.manual_seed(int(seed) * 1_000_003 + int(record_idx))
-            x0_coords_A = kanzi_latent_to_coords(
-                x0_latent,
-                decoder=decoder,
-                fsq_quantizer=decoder.quantize,
-                n_steps=decoder_steps,
-                seed=int(seed) + int(record_idx),
-            )
-            # kanzi_latent_to_coords returns (B, L, 3) Angstrom; reshape
-            # to (L, 3) and convert to nm so DAE.encode sees the
-            # canonical backbone coord scale.
-            x0_coords_nm = np.asarray(
-                x0_coords_A, dtype=np.float64,
-            ).reshape(-1, 3) / 10.0
+            # Wave 196 P3 — Wave 178 changed ``build_initial_state`` to store
+            # x0 in real coord space ``(L, 3)`` instead of latent ``(L, 512)``.
+            # Detect the (L, 3) shape and skip the bridge (the bridge expects
+            # (B, L, 512) and would crash on ``_apply_project_out_inv`` Linear
+            # matmul). x0 is already in target coord space, just convert to nm.
+            if x0_latent.ndim == 2 and x0_latent.shape[-1] == 3:
+                x0_coords_A = x0_latent  # already (L, 3) Angstrom (Wave 178+)
+            else:
+                # Legacy (B, L, 512) latent path (pre-Wave 178); apply bridge.
+                # Wave 122 Phase 4 — per-record torch seed before DAE
+                # forward pass so FSQ stochasticity is reproducible per
+                # (seed, record_idx) pair. Mirrors the
+                # ``np.random.default_rng(int(seed)*1_000_003+int(record_idx))``
+                # pattern at line 331. Closes the Wave 121 P2 max-outlier
+                # RMSD drift across --seed values.
+                torch.manual_seed(int(seed) * 1_000_003 + int(record_idx))
+                x0_coords_A = kanzi_latent_to_coords(
+                    x0_latent,
+                    decoder=decoder,
+                    fsq_quantizer=decoder.quantize,
+                    n_steps=decoder_steps,
+                    seed=int(seed) + int(record_idx),
+                )
+                # kanzi_latent_to_coords returns (B, L, 3) Angstrom; reshape
+                # to (L, 3).
+                x0_coords_A = np.asarray(
+                    x0_coords_A, dtype=np.float64,
+                ).reshape(-1, 3)
+            # Convert to nm so DAE.encode sees the canonical backbone coord scale.
+            x0_coords_nm = x0_coords_A / 10.0
             prior_entry["x0"] = x0_coords_nm
 
             # Wave 124 Agent 1 — the inverse-projected ``(L, 3)`` x0

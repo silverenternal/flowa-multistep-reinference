@@ -1,0 +1,17 @@
+metric,value
+n_paired_records,1000
+baseline_rmsd_mean_A,0.898162
+baseline_rmsd_std_A,0.135899
+framework_rmsd_mean_A,0.879763
+framework_rmsd_std_A,0.136362
+paired_diff_mean_A,0.018399
+paired_diff_std_A,0.192493
+paired_diff_se_A,0.006087
+t_statistic,3.022558
+df,999
+p_value_two_sided,2.570406e-03
+alpha_bonferroni,0.007143
+bonferroni_significant,True
+cohens_d_z,0.095582
+min_effect_size_A,0.010000
+verdict,framework_wins

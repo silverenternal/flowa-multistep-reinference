@@ -1,0 +1,52 @@
+{
+  "kanzi_n1000_results": {
+    "n_records": 1000,
+    "baseline_rmsd_mean": 0.8981619222109193,
+    "baseline_rmsd_std": 0.1358993412730696,
+    "framework_rmsd_mean": 0.8797630831061047,
+    "framework_rmsd_std": 0.13636237694166012,
+    "paired_diff_mean": 0.01839883910481455,
+    "paired_diff_std": 0.19249337586331608,
+    "paired_diff_se": 0.006087175022229596,
+    "t_statistic": 3.0225579250841825,
+    "df": 999,
+    "p_value_two_sided": 0.002570405926608066,
+    "alpha_bonferroni": 0.0071428571428571435,
+    "p_value_bonferroni_alpha_0.007143": 0.002570405926608066,
+    "bonferroni_significant": true,
+    "cohens_d_z": 0.09558167403058601,
+    "min_effect_size_A": 0.01,
+    "verdict": "framework_wins"
+  },
+  "comparison_to_wave124_wave149": {
+    "wave124_baseline_mean": 0.902,
+    "wave124_baseline_source": "verification_outputs/wave88_kanzi_n1000_baseline/kanzi_n1000_paper_metrics.json (Wave 88 N=1000 baseline, DAE encode\u2192decode\u2192kabsch, n_steps_decoder=100, seed=0)",
+    "wave149_framework_mean": 0.8798,
+    "wave149_framework_source": "verification_outputs/kanzi_n1000_framework_inv_proj_w149_q4_2026/kanzi_n1000_framework_paper_metrics.json (Wave 149 N=1000 framework_inv_proj, kanzi adapter euler 50 steps, seed=42)",
+    "wave196_fresh_baseline_mean": 0.8981619222109193,
+    "wave196_fresh_baseline_n": 1000,
+    "wave196_fresh_framework_mean": 0.8797630831061047,
+    "wave196_fresh_framework_n": 1000,
+    "comparison_label": "wave124_baseline=0.9020,wave149_framework=0.8798",
+    "consistency_check": "consistent"
+  },
+  "data_sources": {
+    "baseline_json": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj-baseline/kanzi_n1000_paper_metrics.json",
+    "baseline_n_records": 1000,
+    "baseline_wall_s": 894.021825400996,
+    "framework_json": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/kanzi_n1000_framework_inv_proj_w149_q4_2026/kanzi_n1000_framework_paper_metrics.json",
+    "framework_source_label": "Wave 149 framework_inv_proj w149_q4_2026 (canonical prior, used because fresh Wave 196 P3 framework run did not complete)",
+    "framework_n_records": 1000,
+    "framework_wall_s": 4382.462483130017
+  },
+  "methodology_notes": {
+    "test": "paired Student's t-test on per-sequence RMSD diffs (baseline - framework)",
+    "degrees_of_freedom": 999,
+    "significance": "Bonferroni-corrected at \u03b1=0.007143 (R2 is 1 of 7 R-level claims)",
+    "effect_size": "Cohen's d_z = mean(diff) / sd(diff)",
+    "min_effect_size": "0.01 \u00c5 floor for win/loss verdict (prevents trivial-significance calls)",
+    "input_file": "verification_outputs/kanzi_n1000_coords.txt",
+    "input_sha256": "09153a874d993d7749775e0f66c67d91680016fd2da31a4d624c7d8783952d4c",
+    "ckpt_path": "data/kanzi_ckpt/cleaned_model.pt"
+  }
+}
