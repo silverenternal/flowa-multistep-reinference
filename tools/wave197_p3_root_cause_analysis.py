@@ -267,14 +267,20 @@ def main() -> int:
                     "predicted_outcome": (
                         f"{summary['n300_seeds_std_unchanged']['SUPPORTED']} SUPPORTED + "
                         f"{summary['n300_seeds_std_unchanged']['UNDERPOWERED']} UNDERPOWERED + "
-                        f"{summary['n300_seeds_std_unchanged']['REGRESSES']} REGRESSES"
+                        f"{summary['n300_seeds_std_unchanged']['REGRESSES']} REGRESSES "
+                        "(1 REGRESSES cell: fastdllm_pLDDT_NFE100, framework slight regression vs FastDLLM at NFE=100)"
                     ),
                     "wall_time_estimate_min": "~10-15h (300 seeds × ~10s/seed × 5 arms × 2 NFE / 4 cores parallel)",
                     "delta_supported_vs_baseline": (
                         summary["n300_seeds_std_unchanged"]["SUPPORTED"]
                         - summary["wave196_p4_baseline"]["SUPPORTED"]
                     ),
-                    "verdict": "RECOMMENDED — matches user's '8-10 SUPPORTED' expectation",
+                    "verdict": (
+                        "NOT RECOMMENDED — also NET WORSE (1 cell flips to REGRESSES). "
+                        "The framework's per-seed effect on FastDLLM-pLDDT-NFE100 is "
+                        "slightly negative (d_z = -0.226); more samples expose this "
+                        "rather than upgrade SUPPORTED count."
+                    ),
                 },
                 {
                     "fix": "n=100 sweep at R=100 (the Wave 197 P2 aborted approach)",
