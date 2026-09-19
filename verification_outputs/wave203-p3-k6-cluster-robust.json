@@ -1,0 +1,546 @@
+{
+  "k6_dataset": {
+    "n_records": 1000,
+    "n_clusters": 4,
+    "family_distribution": {
+      "PF00005.27": 250,
+      "PF00072.24": 250,
+      "PF00183.19": 250,
+      "PF02517.18": 250
+    },
+    "tier_boundaries_percentiles": [
+      34.560125471956226,
+      46.129279241102346
+    ]
+  },
+  "naive_verdict_by_metric_overall": {
+    "plddt_mean": "SUPPORTED",
+    "sc_perplexity": "REGRESSES"
+  },
+  "cluster_robust_verdict_by_metric_overall": {
+    "plddt_mean": "UNDERPOWERED",
+    "sc_perplexity": "REGRESSES"
+  },
+  "results": [
+    {
+      "tier": "overall",
+      "metric": "plddt_mean",
+      "metric_direction": "higher_is_better",
+      "n_records": 1000,
+      "n_clusters": 4,
+      "naive": {
+        "n_paired": 1000,
+        "mean_diff": 1.123135502048454,
+        "sd_diff": 15.880109247185699,
+        "t_statistic": 2.2365502983546888,
+        "df": 999,
+        "p_value_raw": 0.025535792830358627,
+        "cohens_d_z": 0.07072593044329957,
+        "ci_95": [
+          0.13887613366564466,
+          2.1073948704312633
+        ]
+      },
+      "cluster": {
+        "n_clusters": 4,
+        "n_records": 1000,
+        "n_records_per_cluster_mean": 250.0,
+        "n_records_per_cluster_min": 250,
+        "n_records_per_cluster_max": 250,
+        "cluster_mean_diffs": {
+          "PF00005.27": 0.030908854560701228,
+          "PF00072.24": 5.535535796961422,
+          "PF00183.19": -2.5299871276407795,
+          "PF02517.18": 1.4560844843124707
+        },
+        "cluster_sizes": {
+          "PF00005.27": 250,
+          "PF00072.24": 250,
+          "PF00183.19": 250,
+          "PF02517.18": 250
+        },
+        "mean_of_cluster_means": 1.1231355020484535,
+        "sd_of_cluster_means": 3.372357997226303,
+        "t_statistic_cluster_level": 0.6660831993354264,
+        "df_cluster_level": 3,
+        "p_value_cluster_level": 0.55299975176992,
+        "cohens_d_z_cluster_level": 0.3330415996677132,
+        "ci_95_cluster_level": [
+          -2.1817753352333233,
+          4.42804633933023
+        ],
+        "wilcoxon_stat": 3.0,
+        "wilcoxon_p": 0.625,
+        "icc_one_way_anova": 0.04080287845592325,
+        "icc_clamped": 0.04080287845592325,
+        "n_eff_design_effect": 89.6064033181128,
+        "bonferroni_alpha_one_metric_one_family": 0.0125,
+        "bonferroni_alpha_full_6x4_family": 0.0020833333333333333
+      },
+      "verdict_naive": "SUPPORTED",
+      "verdict_cluster_robust": "UNDERPOWERED",
+      "naive_p_matches_d_z": "CONSISTENT (expected_p=2.554e-02, observed=2.554e-02, ratio=1.00)",
+      "cluster_p_matches_d_z": "CONSISTENT (expected_p=5.530e-01, observed=5.530e-01, ratio=1.00)"
+    },
+    {
+      "tier": "overall",
+      "metric": "sc_perplexity",
+      "metric_direction": "lower_is_better",
+      "n_records": 1000,
+      "n_clusters": 4,
+      "naive": {
+        "n_paired": 1000,
+        "mean_diff": -3.9166497585365487,
+        "sd_diff": 3.637727585033731,
+        "t_statistic": -34.04744787674682,
+        "df": 999,
+        "p_value_raw": 2.7410526926543806e-169,
+        "cohens_d_z": -1.076674838063838,
+        "ci_95": [
+          -4.142118450184785,
+          -3.691181066888312
+        ]
+      },
+      "cluster": {
+        "n_clusters": 4,
+        "n_records": 1000,
+        "n_records_per_cluster_mean": 250.0,
+        "n_records_per_cluster_min": 250,
+        "n_records_per_cluster_max": 250,
+        "cluster_mean_diffs": {
+          "PF00005.27": -2.9225510942427237,
+          "PF00072.24": -4.410841885597334,
+          "PF00183.19": -3.3029803277827585,
+          "PF02517.18": -5.030225726523379
+        },
+        "cluster_sizes": {
+          "PF00005.27": 250,
+          "PF00072.24": 250,
+          "PF00183.19": 250,
+          "PF02517.18": 250
+        },
+        "mean_of_cluster_means": -3.9166497585365487,
+        "sd_of_cluster_means": 0.9745254605052855,
+        "t_statistic_cluster_level": -8.038065535005703,
+        "df_cluster_level": 3,
+        "p_value_cluster_level": 0.00402098228231571,
+        "cohens_d_z_cluster_level": -4.019032767502852,
+        "ci_95_cluster_level": [
+          -4.871684709831729,
+          -2.961614807241369
+        ],
+        "wilcoxon_stat": 0.0,
+        "wilcoxon_p": 0.125,
+        "icc_one_way_anova": 0.06683895094425359,
+        "icc_clamped": 0.06683895094425359,
+        "n_eff_design_effect": 56.680028162007446,
+        "bonferroni_alpha_one_metric_one_family": 0.0125,
+        "bonferroni_alpha_full_6x4_family": 0.0020833333333333333
+      },
+      "verdict_naive": "REGRESSES",
+      "verdict_cluster_robust": "REGRESSES",
+      "naive_p_matches_d_z": "CONSISTENT (expected_p=2.741e-169, observed=2.741e-169, ratio=1.00)",
+      "cluster_p_matches_d_z": "CONSISTENT (expected_p=4.021e-03, observed=4.021e-03, ratio=1.00)"
+    },
+    {
+      "tier": "hard",
+      "metric": "plddt_mean",
+      "metric_direction": "higher_is_better",
+      "n_records": 330,
+      "n_clusters": 4,
+      "naive": {
+        "n_paired": 330,
+        "mean_diff": 13.287245237742134,
+        "sd_diff": 11.175754202508434,
+        "t_statistic": 21.598076704300073,
+        "df": 329,
+        "p_value_raw": 4.824788011685385e-65,
+        "cohens_d_z": 1.1889349923927075,
+        "ci_95": [
+          12.081443396099932,
+          14.493047079384336
+        ]
+      },
+      "cluster": {
+        "n_clusters": 4,
+        "n_records": 330,
+        "n_records_per_cluster_mean": 82.5,
+        "n_records_per_cluster_min": 71,
+        "n_records_per_cluster_max": 87,
+        "cluster_mean_diffs": {
+          "PF00005.27": 11.383545169861916,
+          "PF00072.24": 19.815480077985086,
+          "PF00183.19": 8.008654897750166,
+          "PF02517.18": 14.272587548505928
+        },
+        "cluster_sizes": {
+          "PF00005.27": 87,
+          "PF00072.24": 85,
+          "PF00183.19": 87,
+          "PF02517.18": 71
+        },
+        "mean_of_cluster_means": 13.370066923525773,
+        "sd_of_cluster_means": 5.001629794313807,
+        "t_statistic_cluster_level": 5.346284100724837,
+        "df_cluster_level": 3,
+        "p_value_cluster_level": 0.012798258989263052,
+        "cohens_d_z_cluster_level": 2.6731420503624186,
+        "ci_95_cluster_level": [
+          8.468469725098242,
+          18.271664121953304
+        ],
+        "wilcoxon_stat": 0.0,
+        "wilcoxon_p": 0.125,
+        "icc_one_way_anova": 0.1884869664987335,
+        "icc_clamped": 0.1884869664987335,
+        "n_eff_design_effect": 20.16906841433536,
+        "bonferroni_alpha_one_metric_one_family": 0.0125,
+        "bonferroni_alpha_full_6x4_family": 0.0020833333333333333
+      },
+      "verdict_naive": "SUPPORTED",
+      "verdict_cluster_robust": "UNDERPOWERED",
+      "naive_p_matches_d_z": "CONSISTENT (expected_p=4.825e-65, observed=4.825e-65, ratio=1.00)",
+      "cluster_p_matches_d_z": "CONSISTENT (expected_p=1.280e-02, observed=1.280e-02, ratio=1.00)"
+    },
+    {
+      "tier": "hard",
+      "metric": "sc_perplexity",
+      "metric_direction": "lower_is_better",
+      "n_records": 330,
+      "n_clusters": 4,
+      "naive": {
+        "n_paired": 330,
+        "mean_diff": -2.99678487922889,
+        "sd_diff": 2.900322389914765,
+        "t_statistic": -18.77008604071357,
+        "df": 329,
+        "p_value_raw": 5.996146806129552e-54,
+        "cohens_d_z": -1.0332592299564876,
+        "ci_95": [
+          -3.309713565360013,
+          -2.683856193097767
+        ]
+      },
+      "cluster": {
+        "n_clusters": 4,
+        "n_records": 330,
+        "n_records_per_cluster_mean": 82.5,
+        "n_records_per_cluster_min": 71,
+        "n_records_per_cluster_max": 87,
+        "cluster_mean_diffs": {
+          "PF00005.27": -2.607432881583056,
+          "PF00072.24": -3.116657346509624,
+          "PF00183.19": -2.0610982442298016,
+          "PF02517.18": -4.476914475302776
+        },
+        "cluster_sizes": {
+          "PF00005.27": 87,
+          "PF00072.24": 85,
+          "PF00183.19": 87,
+          "PF02517.18": 71
+        },
+        "mean_of_cluster_means": -3.0655257369063142,
+        "sd_of_cluster_means": 1.0349486725623356,
+        "t_statistic_cluster_level": -5.924015012873357,
+        "df_cluster_level": 3,
+        "p_value_cluster_level": 0.009611107463870684,
+        "cohens_d_z_cluster_level": -2.9620075064366786,
+        "ci_95_cluster_level": [
+          -4.079775436017403,
+          -2.0512760377952253
+        ],
+        "wilcoxon_stat": 0.0,
+        "wilcoxon_p": 0.125,
+        "icc_one_way_anova": 0.10430768867231989,
+        "icc_clamped": 0.10430768867231989,
+        "n_eff_design_effect": 34.732905855044265,
+        "bonferroni_alpha_one_metric_one_family": 0.0125,
+        "bonferroni_alpha_full_6x4_family": 0.0020833333333333333
+      },
+      "verdict_naive": "REGRESSES",
+      "verdict_cluster_robust": "REGRESSES",
+      "naive_p_matches_d_z": "CONSISTENT (expected_p=5.996e-54, observed=5.996e-54, ratio=1.00)",
+      "cluster_p_matches_d_z": "CONSISTENT (expected_p=9.611e-03, observed=9.611e-03, ratio=1.00)"
+    },
+    {
+      "tier": "medium",
+      "metric": "plddt_mean",
+      "metric_direction": "higher_is_better",
+      "n_records": 340,
+      "n_clusters": 4,
+      "naive": {
+        "n_paired": 340,
+        "mean_diff": 2.585295682039977,
+        "sd_diff": 11.852942501679001,
+        "t_statistic": 4.021828077279304,
+        "df": 339,
+        "p_value_raw": 7.123102571186228e-05,
+        "cohens_d_z": 0.2181142515180313,
+        "ci_95": [
+          1.3253762027801343,
+          3.8452151612998193
+        ]
+      },
+      "cluster": {
+        "n_clusters": 4,
+        "n_records": 340,
+        "n_records_per_cluster_mean": 85.0,
+        "n_records_per_cluster_min": 79,
+        "n_records_per_cluster_max": 94,
+        "cluster_mean_diffs": {
+          "PF00005.27": 1.7229887552110412,
+          "PF00072.24": 7.304593046102412,
+          "PF00183.19": -2.251244896640758,
+          "PF02517.18": 4.545683497904655
+        },
+        "cluster_sizes": {
+          "PF00005.27": 87,
+          "PF00072.24": 79,
+          "PF00183.19": 94,
+          "PF02517.18": 80
+        },
+        "mean_of_cluster_means": 2.8305051006443374,
+        "sd_of_cluster_means": 4.082894209113217,
+        "t_statistic_cluster_level": 1.3865189523287247,
+        "df_cluster_level": 3,
+        "p_value_cluster_level": 0.2596604099024473,
+        "cohens_d_z_cluster_level": 0.6932594761643623,
+        "ci_95_cluster_level": [
+          -1.1707312242866155,
+          6.83174142557529
+        ],
+        "wilcoxon_stat": 2.0,
+        "wilcoxon_p": 0.375,
+        "icc_one_way_anova": 0.10716298668621516,
+        "icc_clamped": 0.10716298668621516,
+        "n_eff_design_effect": 33.99425197434006,
+        "bonferroni_alpha_one_metric_one_family": 0.0125,
+        "bonferroni_alpha_full_6x4_family": 0.0020833333333333333
+      },
+      "verdict_naive": "SUPPORTED",
+      "verdict_cluster_robust": "UNDERPOWERED",
+      "naive_p_matches_d_z": "CONSISTENT (expected_p=7.123e-05, observed=7.123e-05, ratio=1.00)",
+      "cluster_p_matches_d_z": "CONSISTENT (expected_p=2.597e-01, observed=2.597e-01, ratio=1.00)"
+    },
+    {
+      "tier": "medium",
+      "metric": "sc_perplexity",
+      "metric_direction": "lower_is_better",
+      "n_records": 340,
+      "n_clusters": 4,
+      "naive": {
+        "n_paired": 340,
+        "mean_diff": -3.9807800917434553,
+        "sd_diff": 3.49807581349314,
+        "t_statistic": -20.98352407856252,
+        "df": 339,
+        "p_value_raw": 3.0454036947607346e-63,
+        "cohens_d_z": -1.1379913712528409,
+        "ci_95": [
+          -4.352611293719119,
+          -3.608948889767792
+        ]
+      },
+      "cluster": {
+        "n_clusters": 4,
+        "n_records": 340,
+        "n_records_per_cluster_mean": 85.0,
+        "n_records_per_cluster_min": 79,
+        "n_records_per_cluster_max": 94,
+        "cluster_mean_diffs": {
+          "PF00005.27": -3.2262999878494836,
+          "PF00072.24": -4.483882833146678,
+          "PF00183.19": -3.499113716221058,
+          "PF02517.18": -4.870421238831284
+        },
+        "cluster_sizes": {
+          "PF00005.27": 87,
+          "PF00072.24": 79,
+          "PF00183.19": 94,
+          "PF02517.18": 80
+        },
+        "mean_of_cluster_means": -4.019929444012126,
+        "sd_of_cluster_means": 0.783089134208808,
+        "t_statistic_cluster_level": -10.266850268772153,
+        "df_cluster_level": 3,
+        "p_value_cluster_level": 0.0019702532179525227,
+        "cohens_d_z_cluster_level": -5.133425134386076,
+        "ci_95_cluster_level": [
+          -4.787356795536758,
+          -3.2525020924874943
+        ],
+        "wilcoxon_stat": 0.0,
+        "wilcoxon_p": 0.125,
+        "icc_one_way_anova": 0.037776464593772714,
+        "icc_clamped": 0.037776464593772714,
+        "n_eff_design_effect": 81.47180198416468,
+        "bonferroni_alpha_one_metric_one_family": 0.0125,
+        "bonferroni_alpha_full_6x4_family": 0.0020833333333333333
+      },
+      "verdict_naive": "REGRESSES",
+      "verdict_cluster_robust": "REGRESSES",
+      "naive_p_matches_d_z": "CONSISTENT (expected_p=3.045e-63, observed=3.045e-63, ratio=1.00)",
+      "cluster_p_matches_d_z": "CONSISTENT (expected_p=1.970e-03, observed=1.970e-03, ratio=1.00)"
+    },
+    {
+      "tier": "easy",
+      "metric": "plddt_mean",
+      "metric_direction": "higher_is_better",
+      "n_records": 330,
+      "n_clusters": 4,
+      "naive": {
+        "n_paired": 330,
+        "mean_diff": -12.54744229787892,
+        "sd_diff": 12.569571965557943,
+        "t_statistic": -18.133919700823164,
+        "df": 329,
+        "p_value_raw": 1.9512849290126757e-51,
+        "cohens_d_z": -0.998239425515868,
+        "ci_95": [
+          -13.903629339047207,
+          -11.191255256710633
+        ]
+      },
+      "cluster": {
+        "n_clusters": 4,
+        "n_records": 330,
+        "n_records_per_cluster_mean": 82.5,
+        "n_records_per_cluster_min": 69,
+        "n_records_per_cluster_max": 99,
+        "cluster_mean_diffs": {
+          "PF00005.27": -14.901858392647004,
+          "PF00072.24": -10.203426837563573,
+          "PF00183.19": -16.19757590913374,
+          "PF02517.18": -10.232194693920967
+        },
+        "cluster_sizes": {
+          "PF00005.27": 76,
+          "PF00072.24": 86,
+          "PF00183.19": 69,
+          "PF02517.18": 99
+        },
+        "mean_of_cluster_means": -12.88376395831632,
+        "sd_of_cluster_means": 3.123517324856071,
+        "t_statistic_cluster_level": -8.249522969372352,
+        "df_cluster_level": 3,
+        "p_value_cluster_level": 0.0037297082073422475,
+        "cohens_d_z_cluster_level": -4.124761484686176,
+        "ci_95_cluster_level": [
+          -15.944810936675271,
+          -9.82271697995737
+        ],
+        "wilcoxon_stat": 0.0,
+        "wilcoxon_p": 0.125,
+        "icc_one_way_anova": 0.04768716763661717,
+        "icc_clamped": 0.04768716763661717,
+        "n_eff_design_effect": 67.53294155365688,
+        "bonferroni_alpha_one_metric_one_family": 0.0125,
+        "bonferroni_alpha_full_6x4_family": 0.0020833333333333333
+      },
+      "verdict_naive": "REGRESSES",
+      "verdict_cluster_robust": "REGRESSES",
+      "naive_p_matches_d_z": "CONSISTENT (expected_p=1.951e-51, observed=1.951e-51, ratio=1.00)",
+      "cluster_p_matches_d_z": "CONSISTENT (expected_p=3.730e-03, observed=3.730e-03, ratio=1.00)"
+    },
+    {
+      "tier": "easy",
+      "metric": "sc_perplexity",
+      "metric_direction": "lower_is_better",
+      "n_records": 330,
+      "n_clusters": 4,
+      "naive": {
+        "n_paired": 330,
+        "mean_diff": -4.770440961206789,
+        "sd_diff": 4.19253702825808,
+        "t_statistic": -20.669910130382032,
+        "df": 329,
+        "p_value_raw": 2.0170843648690516e-61,
+        "cohens_d_z": -1.1378411040984453,
+        "ci_95": [
+          -5.222792433708933,
+          -4.318089488704644
+        ]
+      },
+      "cluster": {
+        "n_clusters": 4,
+        "n_records": 330,
+        "n_records_per_cluster_mean": 82.5,
+        "n_records_per_cluster_min": 69,
+        "n_records_per_cluster_max": 99,
+        "cluster_mean_diffs": {
+          "PF00005.27": -2.935565972632236,
+          "PF00072.24": -5.622882013109625,
+          "PF00183.19": -4.60163544018721,
+          "PF02517.18": -5.556179846240862
+        },
+        "cluster_sizes": {
+          "PF00005.27": 76,
+          "PF00072.24": 86,
+          "PF00183.19": 69,
+          "PF02517.18": 99
+        },
+        "mean_of_cluster_means": -4.679065818042483,
+        "sd_of_cluster_means": 1.2524516228706226,
+        "t_statistic_cluster_level": -7.471850780660176,
+        "df_cluster_level": 3,
+        "p_value_cluster_level": 0.004964404753211462,
+        "cohens_d_z_cluster_level": -3.735925390330088,
+        "ci_95_cluster_level": [
+          -5.9064684084556935,
+          -3.4516632276292727
+        ],
+        "wilcoxon_stat": 0.0,
+        "wilcoxon_p": 0.125,
+        "icc_one_way_anova": 0.07484287244222207,
+        "icc_clamped": 0.07484287244222207,
+        "n_eff_design_effect": 46.48087581860269,
+        "bonferroni_alpha_one_metric_one_family": 0.0125,
+        "bonferroni_alpha_full_6x4_family": 0.0020833333333333333
+      },
+      "verdict_naive": "REGRESSES",
+      "verdict_cluster_robust": "REGRESSES",
+      "naive_p_matches_d_z": "CONSISTENT (expected_p=2.017e-61, observed=2.017e-61, ratio=1.00)",
+      "cluster_p_matches_d_z": "CONSISTENT (expected_p=4.964e-03, observed=4.964e-03, ratio=1.00)"
+    }
+  ],
+  "monotone_pattern_cluster_robust": {
+    "plddt_mean": {
+      "hard_abs_d_z": 2.6731420503624186,
+      "medium_abs_d_z": 0.6932594761643623,
+      "easy_abs_d_z": 4.124761484686176,
+      "monotone_decrease_in_abs_dz_with_ease": false
+    },
+    "sc_perplexity": {
+      "hard_abs_d_z": 2.9620075064366786,
+      "medium_abs_d_z": 5.133425134386076,
+      "easy_abs_d_z": 3.735925390330088,
+      "monotone_decrease_in_abs_dz_with_ease": false
+    }
+  },
+  "deepseek_audit_response": {
+    "claim_1_per_record_naive_pLDDT_hard_d_z": "RECONCILED. Wave 198 P2/3 reported naive d_z=1.189 and p=4.8e-65 for k6 hard tier pLDDT. DeepSeek flagged that t(999) with d_z=1.189 should give p ~1e-191 (treating 999 as independent df). Wave 203 P3 cross-checks: with N=330 records (not 1000) in the hard tier and df=329, expected t = d_z * sqrt(330) = 21.60 which matches reported t=21.60; expected p = 4.77e-65 which matches reported p=4.825e-65 (ratio 1.01). The d_z / p pair is internally CONSISTENT within the naive per-record analysis. The real issue is the per-record INDEPENDENCE assumption (see claim_2), not arithmetic error.",
+    "claim_2_per_record_independence_broken": "CONFIRMED. k6 N=1000 dataset is actually only 4 unique Pfam families (PF00005.27, PF00072.24, PF00183.19, PF02517.18), each with exactly 250 records. Per-record paired t-test at df=999 (overall) or df=329 (per tier) overstates precision because within-family records share evolutionary / structural context. Cluster-robust analysis uses df=3 (K=4 clusters). This is the headline finding of Wave 203 P3.",
+    "claim_3_k6_cluster_robust_verdict": "APPLIED. With K=4 clusters and Bonferroni alpha = 0.05/K = 0.0125 per metric: overall pLDDT UNDERPOWERED (cluster d_z=0.33, p=0.55 vs naive d_z=0.07, p=0.026 -> verdict flips from SUPPORTED to UNDERPOWERED because cluster-level variance is real); overall sc_perplexity REMAINS REGRESSES (cluster d_z=-4.02, p=0.004 vs naive d_z=-1.08, p=2.7e-169 -> both significant; cluster-robust verdict survives). Hard-tier pLDDT: cluster p=0.0128 JUST above alpha=0.0125, so verdict becomes UNDERPOWERED (was SUPPORTED). Easy-tier pLDDT: cluster p=0.0037 < 0.0125 -> still REGRESSES (framework loses on easy).",
+    "claim_4_p_d_z_consistency_check": "APPLIED. Wave 203 P3 includes a p/d_z consistency check (naive_p_matches_d_z and cluster_p_matches_d_z in results). For ALL 8 cells (4 tiers x 2 metrics), both naive and cluster p are CONSISTENT with reported d_z. So no arithmetic bug. The real audit risk is structural (per-record independence), not arithmetic.",
+    "claim_5_bonferroni_recomputation": "APPLIED. Wave 198 P2 used alpha=0.025 (M=2 metrics). Wave 198 P3 used alpha=0.00833 (M=3 tiers x 2 metrics). Wave 203 P3 cluster-robust uses alpha=0.05/K per metric (K=4 here -> 0.0125) and alpha=0.05/(K*M_cells)=0.05/24=0.00208 for the full family x tier x metric family. The strict alpha=0.00208 would force additional cells (medium sc_perplexity cluster p=0.002) to UNDERPOWERED \u2014 apply when pre-registering the family.",
+    "claim_6_limitations": "DOCUMENTED. Cluster-robust paired t-test on K=4 means has df=3, which is very small. The p-values should be read as sanity checks, not as confirmatory significance. A mixed-effects model with family as random intercept would be a more rigorous next step; this script reports the design-effect N_eff as a guide for what an independent-records analysis with df=999 should be discounted to. N_eff ranges from 20 (hard pLDDT) to 89 (overall pLDDT), vs the naive N=330-1000. ICC is small (0.04-0.19) because within-family variance still dominates, but cluster-level effects are coherent across families.",
+    "claim_7_monotone_pattern": "FAILS. With cluster-robust d_z, the monotone_decrease_in_abs_dz_with_easy pattern does NOT hold for either metric. pLDDT: hard=2.67, medium=0.69, easy=4.12 (easy jumps back up because framework REGRESSES on easy records). sc_perplexity: hard=2.96, medium=5.13, easy=3.74 (medium is largest). The naive monotone pattern (|d_z_hard|>|d_z_medium|>|d_z_easy|) was already inconsistent with Wave 198 P3; cluster-robust makes the inconsistency more honest by showing easy-tier pLDDT is the worst cluster-level effect (REGRESSES)."
+  },
+  "csv_path": "verification_outputs/wave203-p3-k6-cluster-robust.csv",
+  "json_path": "verification_outputs/wave203-p3-k6-cluster-robust.json",
+  "compact_summary": {
+    "k6_per_record_naive_pLDDT_hard_d_z": 1.1889349923927075,
+    "k6_cluster_robust_pLDDT_hard_d_z": 2.6731420503624186,
+    "k6_cluster_robust_pLDDT_hard_p": 0.012798258989263052,
+    "k6_cluster_robust_pLDDT_hard_verdict": "UNDERPOWERED",
+    "k6_per_record_naive_scPerp_hard_d_z": -1.0332592299564876,
+    "k6_cluster_robust_scPerp_hard_d_z": -2.9620075064366786,
+    "k6_n_clusters": 4,
+    "k6_n_records_per_cluster_mean": 250.0,
+    "k6_icc_estimate": 0.04080287845592325,
+    "monotone_pattern_holds_with_cluster_robust": false,
+    "csv_path": "verification_outputs/wave203-p3-k6-cluster-robust.csv",
+    "json_path": "verification_outputs/wave203-p3-k6-cluster-robust.json",
+    "commit_sha": "PENDING"
+  }
+}
