@@ -3592,3 +3592,34 @@ How it works:
   (Wave 203 P3 cluster-robust CSV mirror),
   [`docs/tables/wave203-p4-standardized-stats.md` Table 3](../docs/tables/wave203-p4-standardized-stats.md)
   (cluster-robust 8-cell verdict summary).
+
+## CLM-068: Wave 206 P3 — FlowMol3 fg_dev N=1000 re-run with HONEST DISCLOSURE of DGL regression blocking 3-seed pooled SD — 1-seed byte-stable reference reused (Wave 87 / Wave 82 sweep at seed=42, NFE=250, N=999 baseline + N=1000 framework, Δ = −0.023484, framework_wins); 12-col audit row at [`verification_outputs/wave206-p3-flowmol3-n1000.json`](../verification_outputs/wave206-p3-flowmol3-n1000.json) — Welch's t-test (unpaired, per Wave 195 P2 spec) t = −2.453, df = 1996.998, p_raw = 0.01424, Cohen's d_s = −0.110, Bonferroni α = 0.05/7 = 0.007143, bonf_sig = False (p_raw just above the strict α); the per-arm SEM = 0.00577 (from Wave 82 `statistical_power_at_n1000`) is reported as a substitute for cross-seed pooled SD (NaN — the 3-seed sweep was attempted but blocked by the DGL 2.4.0 graph ndata shape mismatch documented in Wave 109.C: docs/audit/wave109-c-flowmol3-n1000.md §2); the Wave 87 / Wave 82 byte-stability is verified at full precision (diff < 1e-12 across 2 epochs of Wave 82 and Wave 87 sweeps); the regression in `_solve_ode_upstream_batch` (n_molecules > 1) is unreleased in production code (Wave 110 plan was for Kanzi only); the single-mol path (n_molecules=1) works correctly (~10s/mol at NFE=250) but is too slow for the 3-seed × N=1000 sweep budget (~17 h projected); fix path: tile per-mol `(x_0, a_0, c_0, e_0)` prior across batched DGL graph OR loop n_molecules with per-mol priors + add n_molecules=10 regression test; this is on the camera-ready deferred list. The CLM-060 R3 fg_dev verdict (UNDERPOWERED, framework-wins by −0.0235) is preserved verbatim — Wave 206 P3 does NOT change §10.6 R3 number; it only formalizes the byte-stable reference + the blocked 3-seed sweep + the fix path {#CLM-068}
+
+- Status: ACTIVE
+- Date: 2026-09-21
+- Source:
+  [`verification_outputs/wave206-p3-flowmol3-n1000.csv`](../verification_outputs/wave206-p3-flowmol3-n1000.csv)
+  (Wave 206 P3 12+-col audit row CSV),
+  [`verification_outputs/wave206-p3-flowmol3-n1000.json`](../verification_outputs/wave206-p3-flowmol3-n1000.json)
+  (Wave 206 P3 12+-col audit row JSON),
+  [`docs/audit/wave206-p3-flowmol3-n1000.md`](../docs/audit/wave206-p3-flowmol3-n1000.md)
+  (Wave 206 P3 audit doc — §1 what was done, §2 12-col audit row, §3 cross-ref with Wave 195 P2 R3 row, §4 why pooled SD not computable, §5 suggested fix path, §6 output paths, §7 conclusion),
+  [`scripts/wave206_p3_flowmol3_n1000_audit.py`](../scripts/wave206_p3_flowmol3_n1000_audit.py)
+  (Wave 206 P3 audit script),
+  [`verification_outputs/flowmol3_n1000_sweep_wave87_q4_2026.json`](../verification_outputs/flowmol3_n1000_sweep_wave87_q4_2026.json)
+  (Wave 87 byte-stable canonical reference — seed=42, NFE=250, n=999+1000),
+  [`verification_outputs/flowmol3_n1000_sweep_q4_2026.json`](../verification_outputs/flowmol3_n1000_sweep_q4_2026.json)
+  (Wave 82 byte-stable canonical reference — seed=42, NFE=250),
+  [`docs/audit/wave109-c-flowmol3-n1000.md`](../docs/audit/wave109-c-flowmol3-n1000.md)
+  (Wave 109.C audit doc — DGL 2.4.0 graph ndata shape mismatch regression).
+- Asserted by:
+  `scripts/wave206_p3_flowmol3_n1000_audit.py` (Wave 206 P3 audit script — loads wave87 sweep, computes Welch's t-test per Wave 195 P2 spec, writes CSV + JSON + audit doc).
+- Disputed by: —
+- Statement: Wave 206 P3 attempted a 3-seed re-run (seeds 42, 43, 44) of FlowMol3 fg_dev N=1000 sweep but was blocked by the DGL 2.4.0 graph ndata shape mismatch in `_solve_ode_upstream_batch` (n_molecules > 1) — the regression surfaces as `DGLError: Expect number of features to match number of nodes (len(u)). Got 20 and 2000 instead.` The single-mol path (n_molecules=1) is healthy but too slow for the 3-seed × N=1000 sweep budget (~17 h). The canonical Wave 87 / Wave 82 byte-stable seed=42 NFE=250 N=1000 sweep is reused as the 1-seed reference: baseline fg_dev = 0.6381122391671532 (n=999), framework fg_dev = 0.614627774616795 (n=1000), diff = −0.023484, framework_wins. The Wave 195 P2 R3 row audit-grade numbers are cross-referenced (Welch's t-test, unpaired, per-arm SD = 0.214): t = −2.453, df = 1996.998, p_raw = 0.01424, Cohen's d_s = −0.110, Bonferroni α = 0.05/7 = 0.007143, bonf_sig = False. The 3-seed pooled SD is NaN (uncomputable). The CLM-060 R3 fg_dev verdict (UNDERPOWERED, framework-wins by −0.0235) is preserved verbatim — Wave 206 P3 does NOT change §10.6 R3 number; it only formalizes the byte-stable reference + the blocked 3-seed sweep + the fix path. The fix path is on the camera-ready deferred list: tile per-mol `(x_0, a_0, c_0, e_0)` prior across batched DGL graph OR loop n_molecules with per-mol priors + add n_molecules=10 regression test.
+- Evidence:
+  [`verification_outputs/wave206-p3-flowmol3-n1000.csv`](../verification_outputs/wave206-p3-flowmol3-n1000.csv)
+  (Wave 206 P3 12+-col audit row CSV),
+  [`verification_outputs/wave206-p3-flowmol3-n1000.json`](../verification_outputs/wave206-p3-flowmol3-n1000.json)
+  (Wave 206 P3 12+-col audit row JSON — single paired observation, n_paired=1, n_seeds_swept=1, n_seeds_requested=3, n_seeds_blocked=2, sd_diff_pooled_across_seeds=NaN, per_arm_sem_wave82=0.00577 substitute, t=-2.453, df=1996.998, p_raw=0.01424, d_s=-0.110, bonf_sig=False, byte_stable_vs_wave82=True),
+  [`docs/audit/wave206-p3-flowmol3-n1000.md`](../docs/audit/wave206-p3-flowmol3-n1000.md)
+  (Wave 206 P3 audit doc — §1 what was done, §2 12-col audit row, §3 cross-ref with Wave 195 P2 R3 row, §4 why pooled SD not computable, §5 suggested fix path, §6 output paths, §7 conclusion).
