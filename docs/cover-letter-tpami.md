@@ -13,9 +13,9 @@ submission]
 **Date:** 2026-09-21
 
 **Suggested Associate Editor:** [to be filled at submission — see
-§7 below]
+§9 below]
 
-**Suggested Reviewers:** [to be filled at submission — see §7 below]
+**Suggested Reviewers:** [to be filled at submission — see §9 below]
 
 ---
 
@@ -43,7 +43,52 @@ re-inference framework that drives the inference loop from a
 closed-form upper bound on the bounded-Lipschitz (BL) distance
 between the framework's sampling distribution and the ODE target.
 
-## §2 Insight — Paper-Quantity-Driven Scheduling
+## §2 Suitability for TPAMI
+
+We argue FlowA is in scope for IEEE TPAMI along three independent
+axes that align with the journal's stated mission.
+
+**Mathematical foundations of flow matching.** FlowA's central
+contribution is a self-contained four-lemma derivation (Theorem 1)
+of a closed-form upper bound on the bounded-Lipschitz distance
+between the framework's sampling distribution and the ODE target,
+parameterised by four paper quantities computable from the
+checkpoint's posterior geometry. The bound is restated in §2 of
+the manuscript with full proof sketch and explicit computation of
+the four quantities, and is supported by S1 (Theorem 1 derivation
+appendix). TPAMI's history of publishing methodological work at
+the intersection of probability theory, optimisation, and
+generative modelling (e.g., recent issues on diffusion-model
+theory and rectified-flow analysis) makes FlowA's mathematical
+core a natural fit for the journal's readership.
+
+**Cross-domain empirical validation.** Beyond the theory, FlowA is
+validated across three generative domains (protein, molecular 3D,
+image) on six R-level cells with audit-grade statistical reporting
+(12-column per-row tables under four pre-registered Bonferroni
+families). TPAMI's expectation of reproducible, statistically
+disciplined cross-domain validation is met: the
+verification-output corpus (319 files under
+`verification_outputs/`) sources every headline number from a
+byte-addressable artifact, and §5 of the manuscript discloses a
+matched-NFE = 50 image-domain regression as a first-class
+boundary statement rather than as a hidden caveat.
+
+**Reproducible artifact release.** The submission ships with a
+SHA-256-pinned source-code archive (`5b21cca`), a Docker recipe
+(`flowa:tpami-v3.0`), Zenodo deposits for code + per-record CSVs,
+33 D.4 byte-stable regression vectors, and a hash-changed
+transition log spanning 5155 pytest tests. TPAMI's reproducibility
+standards — increasingly emphasised in recent editorial guidance —
+are met at every layer of the release stack.
+
+In short: FlowA contributes a new *training-free re-inference*
+methodological primitive, validated by a closed-form convergence
+bound and by cross-domain empirical evidence with first-class
+reproducibility. We respectfully submit it as a regular research
+paper in IEEE TPAMI.
+
+## §3 Insight — Paper-Quantity-Driven Scheduling
 
 FlowA's theoretical contribution is a self-contained four-lemma
 derivation of the effective BL bound
@@ -65,7 +110,77 @@ Dormand–Prince RK45, CTMC, and BFN solvers; and exposes the
 inference loop as a typed four-port control surface that a domain
 expert can drive without manipulating the FM internals.
 
-## §3 Validation Scope — Six R-Level Cells, Four Adapters Confirmed Monotone
+## §4 Distinction from Prior Work
+
+FlowA occupies a clearly delineated position in the literature on
+fast sampling for flow matching and rectified flow. We articulate
+the distinction along four comparison axes.
+
+**Consistency models (CM, sCM, CTM).** Consistency models
+distil a multi-step ODE trajectory into a single forward pass at
+training time, paying distillation cost to win wall-clock at
+inference time. FlowA requires *no retraining and no distillation*:
+the FM checkpoint ships frozen, and the framework installs a
+training-free re-inference loop on top. The two approaches are
+complementary — a user who has budget for distillation can apply
+CM, and a user with a frozen checkpoint can apply FlowA — but the
+deployment economics differ: FlowA leaves the FM weights
+untouched and adds only a scheduler layer, whereas CM requires a
+separate training run per source checkpoint.
+
+**Reflow and trajectory distillation (Rectified Flow, Progressive
+Distillation, Diff-Instruct).** Reflow straightens the ODE
+trajectory by retraining on its own samples; trajectory
+distillation trains a student to mimic the teacher's multi-step
+trajectory in fewer steps. Both share with CM the requirement of a
+training-side investment. FlowA's training-free property puts it in
+a distinct cost class: a frozen FM checkpoint can be re-inferenced
+under FlowA without any gradient updates, distillation losses, or
+Retrain/Fine-tune cycles. The trade-off is that FlowA does not
+accelerate the *per-sample* trajectory the way Reflow does; it
+optimises *allocation* across restart rounds rather than the
+shape of the trajectory itself.
+
+**Solver-only methods (DPM-Solver++, EDM, UniPC, DEIS).** These
+methods optimise the per-sample step count: given a fixed NFE
+budget per sample, they pick the step locations and order to
+minimise local truncation error. FlowA optimises a different
+quantity: *noise-and-step allocation across restart rounds*, with
+paper-quantity-driven stopping criteria derived from the four
+quantities $(A_g, B_g, C_g, e_\rho)$. Concretely, FlowA's
+`CodimensionSheetScheduler` consumes $A_g, B_g, C_g$ to set
+`n_cap` per restart round; `BoundedMergeOperator` consumes $e_\rho$
+to set the merge-envelope noise floor; and
+`EvidenceDrivenScheduler` consumes the full quadruple to set
+per-cell restart probability. Solver methods have no analogue of
+the four-quadruple coupling: they operate on the per-sample
+trajectory, not on the cross-round allocation. FlowA and solver
+methods are *composable* (the manuscript validates FlowA on top
+of Euler, Heun, DPM-Solver++, Dormand–Prince RK45, CTMC, and BFN
+solvers), but their optimisation targets do not overlap.
+
+**Knowledge distillation and step-count compression (DDIM,
+progressive-distillation, latent-consistency models).** These
+methods compress the *step count* of a single trajectory. FlowA
+instead compresses the *aggregate NFE budget* across restart
+rounds, with the paper quantities serving as a regulariser (not a
+multiplier) on perturbation magnitude. Empirically, this yields
+the 2.5–10× cross-budget NFE compression on CIFAR-10 Rectified
+Flow at matched quality (CLM-046, §6 of the manuscript) and the
+d_z = −30.15 paper-quantity dampening of the cosine-ramp endpoint
+perturbation on the Kanzi L2 axis (CLM-057, §6).
+
+To our knowledge, FlowA is the **first training-free re-inference
+framework that consumes convergence-theory paper quantities as
+scheduler inputs**. The closest prior works either require
+retraining/distillation (CM, Reflow, trajectory distillation,
+DDIM) or operate purely on per-sample step count without a
+convergence-bound-derived stopping criterion (DPM-Solver++, EDM,
+UniPC). The combination of *training-free*, *cross-round
+allocation*, and *paper-quantity-driven stopping* is, we believe,
+new to the flow-matching re-inference literature.
+
+## §5 Validation Scope — Six R-Level Cells, Four Adapters Confirmed Monotone
 
 FlowA is validated across **six R-level cells** spanning three
 generative domains (protein, molecular 3D, image) at paired sample
@@ -93,7 +208,7 @@ the easy tier with same sign). The cluster-robust re-analysis at
 the Pfam-family unit (df_cluster=3, ICC=0.041, N_eff=89.6)
 pre-empts the per-record-independence objection.
 
-## §4 Headline Numbers
+## §6 Headline Numbers
 
 - **2.5–10× cross-budget NFE compression at matched quality.** On
   CIFAR-10 Rectified Flow, the framework FID at NFE=50 is comparable
@@ -125,7 +240,7 @@ pre-empts the per-record-independence objection.
   framework-WINS on every tier of every adapter at the per-record
   audit-grade sample size N=1000.
 
-## §5 Boundary Disclosure — Matched-NFE = 50 First-Class Honest Negative
+## §7 Boundary Disclosure — Matched-NFE = 50 First-Class Honest Negative
 
 We disclose the matched-NFE = 50 image-domain regression as a
 **first-class boundary, not a footnote**: at matched NFE=50 on
@@ -147,7 +262,7 @@ structural scope statements (K1–K8) that re-frame every negative
 finding as a scope articulation rather than an enumerated
 shortcoming.
 
-## §6 Reproducibility — GitHub + Zenodo + Docker
+## §8 Reproducibility — GitHub + Zenodo + Docker
 
 The submission is accompanied by:
 
@@ -189,7 +304,7 @@ The submission is accompanied by:
 - **Per-record CSVs** (N=1000+ rows per cell) available on Zenodo
   behind a reviewer-token gate for full re-analysis.
 
-### §6.1 Code Availability
+### §8.1 Code Availability
 
 The implementation of **FlowA** is available at
 `https://github.com/silverenternal/flowa-multistep-reinference`
@@ -204,7 +319,7 @@ about the method's *behaviour* (paper-quantity-driven multi-step
 re-inference) rather than its *identity* (**FlowA**). The audit
 record for this naming decision is `docs/audit/wave213-p6-repo-naming.md`.
 
-## §7 Suggested Associate Editor and Reviewers
+## §9 Suggested Associate Editor and Reviewers
 
 **Suggested Associate Editor** (one of):
 
@@ -212,27 +327,90 @@ record for this naming decision is `docs/audit/wave213-p6-repo-naming.md`.
   flow matching — to be selected based on Editorial Manager
   rotation]
 
-**Suggested Reviewers** (four, excluding obvious conflicts):
+**Suggested Reviewers** (five, excluding obvious conflicts; the
+corresponding author will confirm institutional COI at submission
+time):
 
-1. Prof. [reviewer specializing in ODE solvers for SDE/CTMC flow
-   matching, with publications in flow matching theory]
+1. **Reviewer 1 — ProbFlow / Flow-Matching Theory.** A senior
+   researcher from the Y. Lipman group or an equivalent lab
+   working on probability-flow ODEs, rectified flow, and
+   stochastic interpolants. This reviewer is best placed to
+   audit Theorem 1 (Lemma 2–5 derivation, g-independent rate
+   corollary, the four paper quantities $(A_g, B_g, C_g, e_\rho)$
+   and their typed evaluators in
+   `adaptive_reflow/theory/paper_quantities.py`).
+   - *Affiliation:* e.g., Meta AI Research (ProbFlow team) /
+     Weizmann Institute — *to be confirmed at submission.*
+   - *Email placeholder:* `reviewer1.theory@[institution].edu`
 
-2. Prof. [reviewer specializing in protein structure prediction
-   (ESM-2, OmegaFold, LineageFlow, Kanzi) — protein-axis expertise]
+2. **Reviewer 2 — Convergence Bound / BL-Distance Expert.** A
+   researcher in the F.-X. Vialard or S. Chewi group working on
+   bounded-Lipschitz / Wasserstein convergence theory for
+   sampling-based methods. This reviewer is best placed to audit
+   the BL upper bound `BL(μ_{g,ε}, ν_g) ≤ A_g · exp(−NFE / B_g)
+   + C_g · e_ρ`, the g-independent rate corollary
+   `BL(μ_{g,ε}, ν_g) ≤ ε · √(2/π)`, and the assumptions under
+   which the bound is tight.
+   - *Affiliation:* e.g., Université Gustave Eiffel / LIGM
+     (Vialard) or Yale University (Chewi) — *to be confirmed at
+     submission.*
+   - *Email placeholder:* `reviewer2.convergence@[institution].edu`
 
-3. Prof. [reviewer specializing in molecular 3D generation
-   (FlowMol, RDKit, DiffDock) — molecular-axis expertise]
+3. **Reviewer 3 — ODE Solver / NFE-Efficiency Expert.** A
+   researcher in the C. Lu DPM-Solver group or an equivalent lab
+   working on high-order ODE solvers, exponential integrators,
+   and NFE-efficient sampling for diffusion / rectified-flow
+   models. This reviewer is best placed to audit FlowA's
+   solver-agnostic stack (Euler, Heun, DPM-Solver++,
+   Dormand–Prince RK45, CTMC, BFN), the 2.5–10× cross-budget NFE
+   compression claim (CLM-046), and the matched-NFE = 50
+   regression disclosed in §7.
+   - *Affiliation:* e.g., Stanford University (Lu group) or
+     Peking University — *to be confirmed at submission.*
+   - *Email placeholder:* `reviewer3.solver@[institution].edu`
 
-4. Prof. [reviewer specializing in image-domain rectified flow /
-   diffusion (CIFAR-10, ImageNet RF) — image-axis expertise]
+4. **Reviewer 4 — Protein Generation Expert.** A researcher from
+   the ESM-IF / LineageFlow / Kanzi author lists working on
+   protein-structure generative models (sequence → fold, fold →
+   sequence, or sequence → fold → side-chain). This reviewer is
+   best placed to audit the protein-axis R-cells (R1 LineageFlow
+   HMMER, R2 Kanzi inv-proj, R6 k6 foldability pLDDT +
+   scPerplexity), the cluster-robust Pfam-family re-analysis
+   (df_cluster=3, ICC=0.041, N_eff=89.6), and the cross-adapter
+   monotone `hard > medium > easy` pLDDT pattern (k6 hard d_z =
+   +1.189, LineageFlow hard d_z = +1.840).
+   - *Affiliation:* e.g., Meta AI (ESM-IF / EvolutionaryScale
+     LineageFlow) or Westlake University / Microsoft Research
+     (Kanzi) — *to be confirmed at submission.*
+   - *Email placeholder:* `reviewer4.protein@[institution].edu`
+
+5. **Reviewer 5 — Statistical Rigor Expert.** A senior researcher
+   in applied statistics / pre-registration / multiple-testing
+   discipline, with experience auditing empirical AI papers.
+   This reviewer is best placed to audit the 12-column audit-grade
+   per-row reporting (`n_paired, mean_diff, sd_diff, t, df, p_raw,
+   CI95_low, CI95_high, d_z, test_type, family, α_bonferroni,
+   bonf_sig`), the four pre-registered Bonferroni families, the
+   cluster-robust re-analysis, and the effect-size sign
+   consistency across adapters (k6 d_z range [−1.077, −1.138];
+   LineageFlow d_z range [−1.002, −1.044]).
+   - *Affiliation:* e.g., a statistics department with a
+     computational-statistics / causal-inference / meta-analysis
+     focus — *to be confirmed at submission.*
+   - *Email placeholder:* `reviewer5.stats@[institution].edu`
 
 **Conflicts of interest to declare:** the corresponding author has
 no financial or personal relationships with any of the suggested
 reviewers; institutional conflicts (same university, recent
 collaboration, advisor-student lineage) are to be confirmed at
-submission time.
+submission time. The corresponding author explicitly flags that
+Reviewer 1 (Lipman group) and Reviewer 4 (ESM-IF / LineageFlow /
+Kanzi authors) overlap with co-author networks in the
+flow-matching / protein-generation community, and a final COI
+sweep will be run against the TPAMI Editorial Manager database
+prior to submission.
 
-## §8 Statement of Significance
+## §10 Statement of Significance
 
 We believe FlowA will be of interest to the TPAMI readership
 because it (i) names and rejects a standard-assumption failure
@@ -252,6 +430,26 @@ reproducibility in flow matching re-inference research.
 We respectfully submit FlowA for consideration as a regular
 research paper in IEEE TPAMI and look forward to the reviewers'
 feedback.
+
+## §11 Companion Paper Status
+
+The corresponding author is preparing an extended mathematical
+exposition of the bounded-Lipschitz distance bound introduced in
+Theorem 1 of the present manuscript, intended for a separate
+theoretical venue (currently in JMAA / QTDS submission
+deliberation). The companion paper is **not** a prerequisite for
+the present submission: the present manuscript is self-contained,
+and Theorem 1 is restated in §2 of the manuscript with a full
+proof sketch (Lemmas 2–5) and explicit computation of the four
+paper quantities $(A_g, B_g, C_g, e_\rho)$. The companion paper
+will contain only additional theoretical depth — sharper rates
+under weaker assumptions, an information-theoretic lower bound,
+and the connection to log-Sobolev and transport-cost inequalities
+— and will not introduce new empirical claims that would alter the
+present paper's headline numbers. The corresponding author will
+declare the companion-paper status in the submission cover sheet
+and on the title page footnote to keep the editorial record
+transparent.
 
 Sincerely,
 
