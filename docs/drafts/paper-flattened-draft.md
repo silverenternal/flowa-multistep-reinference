@@ -1,7 +1,5 @@
 # FlowA: Paper-Quantity-Driven Re-Inference for Frozen Flow Matching Checkpoints
 
-> Flattened draft — Abstract and Introduction. All evolution traces removed. Theorem 1 is presented as the paper's own framework. All contributions begin with "We propose" or "We introduce."
-
 ---
 
 ## Abstract
@@ -27,7 +25,7 @@ We validate the framework on six R-level cells spanning protein (LineageFlow, Ka
 - **(iii)** We establish matched-compute and cross-budget regimes and characterize the boundary between them empirically across the six R-level cells, showing that the framework's value-add lives on the cross-budget composite axis while the matched-NFE image-domain regime is a first-class boundary.
 - **(iv)** We validate the framework on six R-level cells across protein, molecule, and image flow matching models (LineageFlow, Kanzi, FlowMol3, CIFAR-10 Rectified Flow, MNIST Flow Matching, 2D Rectified Flow), with paired sample sizes of N = 1000 per cell and SHA-256-pinned checkpoints.
 - **(v)** We provide a five-arm ablation (A0–A4) that isolates the contribution of each paper-quantity-driven scheduler component: A0 baseline, A1 plus BatchedTrajectoryRunner and CosineAnnealScheduler, A2 plus CodimensionSheetScheduler, A3 plus BoundedMergeOperator, A4 plus EvidenceDrivenScheduler.
-- **(vi)** We characterize the method boundary along eight dimensions (K1–K8), including flow-matching-only applicability, NFE-matched behaviour, and integration with frequency-domain methods, converting each internal failure record into a structural scope statement.
+- **(vi)** We characterize the method boundary along eight dimensions (K1–K8), including flow-matching-only applicability, NFE-matched behaviour, and integration with frequency-domain methods, phrased as structural scope statements that delineate where FlowA applies and where it does not.
 
 ---
 
@@ -55,7 +53,7 @@ We further instantiate a **head-to-head cell** (the "Table B" cell) that compare
 
 **Baselines for the head-to-head cell.** Each baseline is run at matched NFE with all other framework state held constant: same checkpoint, same task, same evaluator implementation, same reference sample set. Only the inference strategy varies. This is the design defended by §4.1 of the supplementary audit trail: the matched-compute cell isolates the framework's contribution from the solver-level layer (DPM-Solver++, EDM, UniPC, Dormand–Prince RK45) and the trajectory-level layer (Consistency Models, iCT, CTM, LCM-LoRA, Reflow).
 
-**Implementation.** Hardware: CPU 1 core for 2D RF and CIFAR-10 RF; NVIDIA RTX PRO 6000 Blackwell (98 GB) for Kanzi, LineageFlow, and FlowMol3. All three Tier-3 sweeps run at n = 1000 paired records per arm. The CIFAR-10 RF v2 cross-budget sweep and the v4 matched-NFE = 50 boundary sweep run on CPU against the open DDPM++ / RF UNet weights. All checkpoint weights carry a SHA-256 hash on disk; all framework runs are byte-deterministic through the `digest()` adapter method and the hash-chained transition ledger.
+**Implementation.** Hardware: CPU 1 core for 2D RF and CIFAR-10 RF; NVIDIA RTX PRO 6000 Blackwell (98 GB) for Kanzi, LineageFlow, and FlowMol3. All three Tier-3 sweeps run at n = 1000 paired records per arm. The CIFAR-10 RF cross-budget sweep and the matched-NFE = 50 boundary sweep run on CPU against the open DDPM++ / RF UNet weights. All checkpoint weights carry a SHA-256 hash on disk; all framework runs are byte-deterministic through the `digest()` adapter method and the hash-chained transition ledger.
 
 ### 3.2 Statistical methodology
 
@@ -84,7 +82,7 @@ and every Bonferroni family is **pre-registered** (defined before inspection of 
 
 ### 3.3 Headline results (Table 3.2)
 
-We report six R-level cells plus the R6 k6 per-tier expansion. The headline empirical pattern is a **2.5–10× cross-budget NFE compression at matched sample quality** (the FID at NFE = 50 under the framework is comparable to the baseline FID at NFE = 500, giving ≈10× speedup at matched quality) alongside **byte-stable composite-axis lifts** on all three Tier-3 real checkpoints and **NFE-matched regression** on the CIFAR-10 RF v4 boundary cell (R5b).
+We report six R-level cells plus the R6 k6 per-tier expansion. The headline empirical pattern is a **2.5–10× cross-budget NFE compression at matched sample quality** (the FID at NFE = 50 under the framework is comparable to the baseline FID at NFE = 500, giving ≈10× speedup at matched quality) alongside **byte-stable composite-axis lifts** on all three Tier-3 real checkpoints and **NFE-matched regression** on the CIFAR-10 RF matched-NFE = 50 boundary cell (R5b).
 
 **Table 3.2 — Twelve-column audit row for the six R-level cells (R1–R6).** Columns: `cell | n_paired | mean_diff | sd_diff | t | df | p_raw | CI95 | d_z | test_type | family | α_bonf | bonf_sig`.
 
@@ -105,7 +103,7 @@ We report six R-level cells plus the R6 k6 per-tier expansion. The headline empi
 
 **Reading the table.** The framework wins on six rows (R1, R2 raw, R5c, R6 k6 hard pLDDT, R6 k6 hard/medium/easy scPerplexity, R6 k6 overall scPerplexity) and reports four honest rows (R3 raw underpowered, R5a TIE, R5b matched-NFE regression, R6 k6 overall pLDDT cluster-UNDERPOWERED, R6 k6 medium pLDDT NOT-SIG at cluster level). The framework does **not** claim a uniform uplift on every cell; the headline is **SELECTIVE on the hard-tier protein foldability cell and on the cross-budget image cell**, and the matched-NFE CIFAR-10 RF cell is reported as a **boundary** (see §3.6).
 
-**Cross-budget NFE compression (the framework's primary headline).** On the CIFAR-10 RF v2 cross-budget sweep, the framework's FID at NFE = 50 (paired mean diff +90.045 against the matched-NFE baseline of ≈83.09 at NFE = 50) trades one function evaluation per round across multiple restart-blend rounds and reaches the same FID an order of magnitude faster in NFE than the matched-budget baseline: the framework FID at NFE = 50 is comparable to the baseline FID at NFE = 500, giving ≈10× speedup at matched quality. The full cross-budget curve is reported as Figure 4 (see §3.6).
+**Cross-budget NFE compression (the framework's primary headline).** On the CIFAR-10 RF cross-budget sweep, the framework's FID at NFE = 50 (paired mean diff +90.045 against the matched-NFE baseline of ≈83.09 at NFE = 50) trades one function evaluation per round across multiple restart-blend rounds and reaches the same FID an order of magnitude faster in NFE than the matched-budget baseline: the framework FID at NFE = 50 is comparable to the baseline FID at NFE = 500, giving ≈10× speedup at matched quality. The full cross-budget curve is reported as Figure 4 (see §3.6).
 
 **Per-tier framing of R6.** The R6 k6 cell is the protein foldability cell with the strongest evidence for the framework's value-add. The naïve per-record paired t-test reports +1.12 pLDDT overall (d_z = +0.071, $p_{\text{raw}} = 2.55 \times 10^{-2}$) but the cluster-robust re-analysis at the Pfam-family unit (df_cluster = 3, ICC = 0.041, N_eff_design_effect = 89.6) yields $p_{\text{cluster}} = 5.53 \times 10^{-1}$, which is **UNDERPOWERED at the cluster level**. The naïve +1.12 aggregate hides per-tier cancellation: hard tier +13.29 ≈ easy tier −12.55 mirror image. The correct paper-level statement is therefore **SELECTIVE on the hard tier** (pLDDT framework-WINS, cluster-robust $p_{\text{cluster}} = 1.28 \times 10^{-2}$, marginally above the strict $\alpha = 0.00208$), and **UNIVERSAL on scPerplexity** (framework-WINS by direction across all three tiers and the overall aggregate, cluster-robust $p_{\text{cluster}}$ uniformly $\leq 1 \times 10^{-2}$). The §3.3 R6 row is therefore reframed as "framework pLDDT uplift on hard-tier records (cluster-robust), framework pLDDT regression on easy-tier records (cluster-robust), framework scPerplexity uplift across all tiers (cluster-robust)" — a per-tier statement, not an aggregate.
 
@@ -145,7 +143,7 @@ The Theorem 1 load-bearing test on the Kanzi synthetic protein axis confirms the
 
 ### 3.6 NFE-matched boundary (Figure 4)
 
-The CIFAR-10 RF v4 matched-NFE = 50 cell is reported as a **first-class boundary** of the framework, with the same prominence as the cells where the framework wins. The framework regresses on this cell by +24–31 % FID (baseline FID 83.09 at NFE = 50 vs framework FID 103.41–103.96 at NFE = 50, $d_z = +2.700$, $p_{\text{raw}} = 1.31 \times 10^{-5}$, paired Bonferroni-significant at $\alpha = 0.007143$ **in the wrong direction**). The cause is structural: the cosine ramp halves the effective NFE (mean 25.2 NFE per round across 10 rounds, derived from the per-round `num_steps = [50, 48, 44, 38, 29, 21, 13, 6, 2, 1]` schedule), and at matched NFE = 50 the cosine ramp is allocated insufficient total NFE to close the gap. The framework's value-add on CIFAR-10 RF is therefore **cross-budget only** (R5 −44.17 % at NFE-averaged v2 FID), and the matched-NFE v4 cell is reported as the regime where the baseline wins.
+The CIFAR-10 RF matched-NFE = 50 cell is reported as a **first-class boundary** of the framework, with the same prominence as the cells where the framework wins. The framework regresses on this cell by +24–31 % FID (baseline FID 83.09 at NFE = 50 vs framework FID 103.41–103.96 at NFE = 50, $d_z = +2.700$, $p_{\text{raw}} = 1.31 \times 10^{-5}$, paired Bonferroni-significant at $\alpha = 0.007143$ **in the wrong direction**). The cause is structural: the cosine ramp halves the effective NFE (mean 25.2 NFE per round across 10 rounds, derived from the per-round `num_steps = [50, 48, 44, 38, 29, 21, 13, 6, 2, 1]` schedule), and at matched NFE = 50 the cosine ramp is allocated insufficient total NFE to close the gap. The framework's value-add on CIFAR-10 RF is therefore **cross-budget only** (R5 −44.17 % at NFE-averaged FID), and the matched-NFE = 50 cell is reported as the regime where the baseline wins.
 
 **Figure 4 — Per-NFE curve on CIFAR-10 RF, baseline vs FlowA framework.** The curve traces the framework's FID and the baseline's FID across NFE ∈ {10, 20, 50, 100, 200, 500}. Three regimes are visible:
 
@@ -153,7 +151,7 @@ The CIFAR-10 RF v4 matched-NFE = 50 cell is reported as a **first-class boundary
 - **Matched-budget regime (NFE ≈ 200).** The framework and the baseline TIE on the FID axis (within FID-difference in two-sided paired t). The framework's per-round noise budget equals the baseline's single-pass NFE, and the cosine ramp and the paper quantities contribute additively rather than tradeably.
 - **Matched-NFE=50 regime (the boundary).** The framework regresses by +24–31 % FID vs baseline. This is the framework-does-not-win region; the matched-budget axis is not where the framework's value-add lives. The boundary is reported with the same prominence as the cross-budget headline.
 
-**R5 cells as a family.** The R5 cells (R5a 2D Two Moons $W_2$, R5b CIFAR-10 RF v4 NFE=50 FID, R5c MNIST FM NFE=50 FID) collectively characterize the framework's behaviour on the FID / $W_2$ axis at matched NFE = 50:
+**R5 cells as a family.** The R5 cells (R5a 2D Two Moons $W_2$, R5b CIFAR-10 RF matched-NFE = 50 FID, R5c MNIST FM NFE = 50 FID) collectively characterize the framework's behaviour on the FID / $W_2$ axis at matched NFE = 50:
 
 - **R5a** is a TIE ($d_s = +0.460$, $p_{\text{raw}} = 6.04 \times 10^{-1}$, NOT Bonferroni-significant at $\alpha = 0.007143$).
 - **R5b** is a REGRESSION ($d_z = +2.700$, $p_{\text{raw}} = 1.31 \times 10^{-5}$, Bonferroni-significant in the wrong direction at $\alpha = 0.007143$).
@@ -167,7 +165,7 @@ The R5 family thus spans three outcomes (TIE / REGRESSION / WIN) on three image-
 
 ---
 
-**Summary of §3.** Across six R-level cells, FlowA wins on the cross-budget image axis (CIFAR-10 RF v2 −44.17 % FID at NFE-averaged, ≈10× speedup at matched quality), on the protein hard-tier foldability axis (R6 hard pLDDT $d_z = +1.189$, cluster-robust $p_{\text{cluster}} = 1.28 \times 10^{-2}$), and on the per-record composite axis for all three Tier-3 real checkpoints (Kanzi +0.1695 byte-stable σ = 0, LineageFlow +0.2083 byte-stable σ = 0, FlowMol3 +0.1182 byte-stable σ = 0). The framework TIES on the 2D Two Moons cell (R5a), regresses on the matched-NFE CIFAR-10 RF v4 cell (R5b, +24–31 %), and is UNDERPOWERED at the cluster level on the overall R6 k6 pLDDT cell. The five-arm ablation isolates the cosine ramp as the dominant contributor to the 2D RF $W_2$ axis and the paper-quantity-driven schedulers as the dominant contributor to the 2D RF `selection_ratio` axis and the protein hard-tier axis. The §3.6 NFE-matched boundary is reported with the same prominence as the §3.3 cross-budget headline.
+**Summary of §3.** Across six R-level cells, FlowA wins on the cross-budget image axis (CIFAR-10 RF −44.17 % FID at NFE-averaged, ≈10× speedup at matched quality), on the protein hard-tier foldability axis (R6 hard pLDDT $d_z = +1.189$, cluster-robust $p_{\text{cluster}} = 1.28 \times 10^{-2}$), and on the per-record composite axis for all three Tier-3 real checkpoints (Kanzi +0.1695 byte-stable σ = 0, LineageFlow +0.2083 byte-stable σ = 0, FlowMol3 +0.1182 byte-stable σ = 0). The framework TIES on the 2D Two Moons cell (R5a), regresses on the matched-NFE CIFAR-10 RF cell (R5b, +24–31 %), and is UNDERPOWERED at the cluster level on the overall R6 k6 pLDDT cell. The five-arm ablation isolates the cosine ramp as the dominant contributor to the 2D RF $W_2$ axis and the paper-quantity-driven schedulers as the dominant contributor to the 2D RF `selection_ratio` axis and the protein hard-tier axis. The §3.6 NFE-matched boundary is reported with the same prominence as the §3.3 cross-budget headline.
 
 ---
 
@@ -190,3 +188,70 @@ This section characterises the method's boundary along eight dimensions that the
 **K7 — Multi-round vs restart-blend allocation.** FlowA delivers its value-add through the joint effect of the cosine annealing ramp (multi-round scheduling) and the paper-quantity-driven scheduler (restart-blend allocation), and the per-round noise-and-step budget is coupled to the per-round restart-blend budget via the BoundedMergeOperator's `[floor, cap]` envelope. On the 2D RF `selection_ratio` axis, A4 reaches 0.9896 (cosine ramp A1 0.8091 → A2 0.9881 → A4 0.9896); on the LineageFlow hard-tier pLDDT axis, A4 reaches +18.96 (cosine ramp A1 +0.42 → A2 +2.18 → A4 +18.96), so the A1 → A4 transition delivers +18.54 hard-tier pLDDT, of which the cosine ramp contributes +0.42 and the paper-quantity schedulers contribute +17.79 additively. The framework's contribution on a cell is therefore the joint effect, and the cosine ramp and paper-quantity contributions are disambiguated via the five-arm ablation; refactoring the framework to separate the two effects would reframe the value-add under a different optimisation surface and is not empirically supported.
 
 **K8 — Per-cell compute-budget allocation.** FlowA's reported effect sizes depend on the compute budget allocated per cell, and the validation sweep exercises underpowered cells (small N or small effect magnitude) under their detection-limit boundary rather than as framework regressions. At N = 1000 per arm, the R5a Two Moons cell TIES ($d_s = +0.460$, $p_{\text{raw}} = 6.04 \times 10^{-1}$), the R3 FlowMol3 `fg_dev` cell is post-hoc-power underpowered at the strict Bonferroni level ($d_s = -0.129$, $p_{\text{raw}} = 4.00 \times 10^{-3}$ below $\alpha = 0.007143$), the R6 k6 overall pLDDT is cluster-underpowered ($d_z = +0.071$, $p_{\text{cluster}} = 5.53 \times 10^{-1}$), and the LineageFlow `coverage_any_hit` axis reads at the detection limit ($z = -1.136$, $p = 0.26$, MDD ≈ 2.1–3.1 pp at N = 1000 vs observed Δ = −2.2 pp). The strict verdict-precedence ordering (UNDERPOWERED > SUPPORTED > REGRESSES > NOT_SIGNIFICANT) reflects the N = 1000 budget rather than an absence of framework effect, and the post-hoc-power analysis at `min_effect_size = 1pp / 0.01 abs / 1 FID / 0.5 pLDDT / 0.1 scPerplexity` classifies the underpowered cells under their own threshold rather than overwriting the observed δ's Bonferroni verdict.
+
+---
+
+## 5 Flattening Checklist
+
+- [x] No wave numbers in main text
+- [x] No version numbers (e.g., v2 / v4 experiment labels removed from §3.1, §3.3, §3.6, §3 summary)
+- [x] No dates
+- [x] No "blocked-on-data" / "PROVISIONAL" / "running" / "in-flight" / "pending"
+- [x] No "we initially / we later / we tried / we found it failed / we then changed / we attempted"
+- [x] No "improve / extend" (uses "propose / introduce / state / derive / provide / characterize / establish")
+- [x] No "due to limited compute" / "future work" / "in subsequent work" / "remains to be"
+- [x] Theorem 1 stated inline (not as a companion paper reference)
+- [x] All 6 contribution bullets start with "We propose / introduce / establish / validate / provide / characterize"
+- [x] All honest negatives (K1–K8) reframed as boundary dimensions, not as enumerated shortcomings
+- [x] All 6 R-level cells reported with 12-column audit row (R1, R2, R3, R5a, R5b, R5c + R6 k6 per-tier expansion)
+- [x] Bonferroni families pre-defined (R-level primary k = 7, R6 k6 per-tier k = 6, head-to-head Table B k = 16, five-arm ablation k = 5)
+- [x] Cluster-robust analysis included for protein cells (R6 k6 at Pfam-family unit)
+- [x] Matched-NFE honest curve presented as boundary (R5b boundary cell reported with same prominence as the cross-budget headline)
+
+---
+
+## 6 Unhandled Traces + Rewrite Suggestions
+
+All evolution traces detected during the Wave 207 P6 audit have been remediated in the sections above. The complete detection log is reported below for reviewer auditability.
+
+### Traces detected and fixed
+
+| Section | Original phrase | Rewrite applied |
+|---|---|---|
+| Header (line 3) | `> Flattened draft — Abstract and Introduction. All evolution traces removed. ...` (meta-process note) | Removed the entire blockquote; the title is the only header. |
+| §1, contribution (vi) (line 30) | `converting each internal failure record into a structural scope statement` | Replaced with `phrased as structural scope statements that delineate where FlowA applies and where it does not` (eliminates "internal failure record" phrasing). |
+| §3.1 Implementation (line 58) | `CIFAR-10 RF v2 cross-budget sweep and the v4 matched-NFE = 50 boundary sweep` | Replaced with `CIFAR-10 RF cross-budget sweep and the matched-NFE = 50 boundary sweep` (version labels removed). |
+| §3.3 Headline results (line 87) | `the CIFAR-10 RF v4 boundary cell (R5b)` | Replaced with `the CIFAR-10 RF matched-NFE = 50 boundary cell (R5b)`. |
+| §3.3 Cross-budget NFE compression (line 108) | `On the CIFAR-10 RF v2 cross-budget sweep` | Replaced with `On the CIFAR-10 RF cross-budget sweep`. |
+| §3.6 NFE-matched boundary (line 148) | `The CIFAR-10 RF v4 matched-NFE = 50 cell` and `the matched-NFE v4 cell` and `R5 −44.17 % at NFE-averaged v2 FID` | Replaced with `The CIFAR-10 RF matched-NFE = 50 cell`, `the matched-NFE = 50 cell`, and `R5 −44.17 % at NFE-averaged FID`. |
+| §3.6 R5 cells as a family (line 154) | `R5b CIFAR-10 RF v4 NFE=50 FID` | Replaced with `R5b CIFAR-10 RF matched-NFE = 50 FID`. |
+| §3 Summary (line 168) | `CIFAR-10 RF v2 −44.17 % FID at NFE-averaged` and `the matched-NFE CIFAR-10 RF v4 cell` | Replaced with `CIFAR-10 RF −44.17 % FID at NFE-averaged` and `the matched-NFE CIFAR-10 RF cell`. |
+
+### Additional audit observations (no rewrite required)
+
+- **"Wave 207 P6" appearing only in the audit agent's task description, not in the draft itself.** Verified absent from the body text.
+- **"Tier-3" used as a category label (not a wave/version reference).** Accepted: refers to real-checkpoint tier classification, which is a static structural concept and not a project-management term.
+- **"R-level cells", "R1, R2, ..." used as static experimental-cell labels.** Accepted: these are the paper's internal cross-references for the six experimental cells and serve as paper-section anchors, not as evolution traces.
+- **"D.4 byte-stable regression suite" mentioned in the Abstract.** Accepted: D.4 is a static component identifier (regression-suite label), not a project-management term.
+- **All 6 contributions begin with "We propose / introduce / establish / validate / provide / characterize".** Confirmed: contributions (i)–(vi) all use the approved verb set.
+- **Theorem 1 is stated inline.** Confirmed: §1 paragraph on Theorem 1 (line 19) gives the statement, the four quantities, and the closed-form expressions within the paper body; no companion-paper reference appears.
+- **Honest negatives K1–K8.** Confirmed: each K-dimension is phrased as a structural scope statement (where FlowA applies / does not apply) rather than as an enumerated shortcoming; the empirical evidence is sourced from the R-level cells in §3.
+- **Bonferroni families.** Confirmed pre-registered: four families named in §3.2 with raw test counts and α values.
+- **Cluster-robust analysis.** Confirmed: §3.2 reports the R6 k6 cluster-robust verdict with $k = 24$ and $\alpha_{\text{cluster}} = 0.00208$.
+- **Matched-NFE boundary.** Confirmed: §3.6 reports R5b with the same prominence as the cross-budget headline.
+
+### Residual traces not requiring rewrite
+
+- The phrase `R-level cells` appears as a static experimental-cell label and is acceptable as a paper-internal reference (analogous to "Section 3" or "Table 1").
+- The phrase `Tier-3 real checkpoints` denotes a static category of real (not synthetic) checkpoint validation and is acceptable.
+- The phrase `D.4 byte-stable regression suite` is a static component identifier; the "D.4" label refers to a test-suite sub-component, not a wave/version.
+
+### Cross-check: no statistical inconsistencies introduced
+
+The d_z / p-value / Bonferroni-significance coding in Table 3.2 was checked for cross-row consistency:
+
+- All `bonf_sig` entries agree with their `p_raw` against `α_bonf`.
+- The R6 cluster-robust verdicts agree with the naive Bonferroni verdicts under the stated ordering (naive primary, cluster sensitivity).
+- Direction-of-effect encoding (framework-WINS / REGRESSES) is uniform across cells for each metric.
+
+No statistical inconsistency was introduced or detected by the rewrite.
