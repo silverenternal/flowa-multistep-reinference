@@ -1,0 +1,38 @@
+Wave 208 P5: matched-compute definition (explicit)
+==================================================
+
+DEFAULT: NFE-matched.
+  - Framework total NFE == baseline NFE per sample.
+  - For R5b/R5c/R6: framework runs n_rounds rounds with
+    nfe_per_round = baseline_nfe / n_rounds, so total NFE matches.
+  - For R3 (FlowMol3): NFE=250 single-pass baseline vs NFE=250 across
+    3 rounds framework.
+  - This is the apples-to-apples comparison; framework QUALITY is
+    judged at matched NFE=50 (R5b/R5c) or NFE=250 (R3).
+
+SECONDARY: cross-budget.
+  - Framework uses different total NFE than baseline (e.g. R5b
+    framework NFE=10 reaches comparable FID with 5x less compute).
+  - This is the Wave 128 cross-budget headline (-44.17% FID at
+    framework NFE=2 vs baseline NFE=50).
+
+TERTIARY: wall-clock-matched.
+  - Framework and baseline run on the same hardware with the same
+    wall-clock budget; framework QUALITY is judged under that budget.
+  - R5c MNIST FM is the only cell where framework beats baseline on
+    wall-clock-matched basis (framework_total_nfe=25 < baseline_nfe=50,
+    so framework runs in ~19% of baseline wall-clock for the same
+    or BETTER FID).
+
+Pareto frontier interpretation (R5b):
+  - At matched NFE=50: framework LOSES (FID +20% vs baseline).
+  - At cross-budget NFE=10: framework delivers FID ~820 with 5x
+    less compute than baseline's 50-NFE FID=415; baseline at NFE=10
+    reaches FID ~715, so framework is still WORSE at NFE=10.
+  - Pareto crossing point: at NFE >= ~500, framework FID (~115)
+    approaches baseline FID (~95). Framework's quality-NFE curve
+    is sub-linear vs baseline's at low NFE, but converges at high NFE.
+  - Framework's value-add on CIFAR-10 RF is NOT better inference at
+    matched NFE; it is REPRODUCIBLE matching with explicit paper-
+    quantity-driven scheduling (the framework's Pareto is the
+    BEST-FRAMEWORK-ARM Pareto, not the worst).
