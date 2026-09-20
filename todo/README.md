@@ -1,103 +1,59 @@
-# `todo/` — Next-phase task tracker (per-task markdown)
+# `todo/` — Task tracker (per-task markdown)
 
-**Date:** 2026-09-05
-**Purpose:** Per-task markdown tracker for the next phase of framework work. Lives
-alongside `todo.json` (which is the machine-readable index of completed/in-progress
-tasks) — this folder is for human-readable planning and tracking.
+**Date:** 2026-09-21 (post-Wave 205 refactor)
+**Purpose:** Per-task markdown tracker for the TPAMI submission data-preparation work. Lives alongside `todo.json` (machine-readable index) — this folder is for human-readable planning.
 
-## Structure
+## Structure (post-Wave 205)
 
 ```
 todo/
-├── README.md                                 (this file)
-├── STATUS.md                                 (single source of truth, auto-updated per wave)
-├── GATES.md                                  (master gate definitions, includes G-FRAMEWORK-HEALTH)
-├── framework-internal-metrics.md            (6 metric groups A-F + entry gates per phase)
-├── LOOP.md                                   (per-model lifecycle + iteration + stop conditions)
-├── TIMELINE.md                               (phase durations + project-done definition)
-├── RISK-REGISTER.md                          (forward-looking risks + mitigations)
-├── decisions.md                              (architecture decisions D-001..)
-├── lessons-learned.md                        (lessons LL-001..)
+├── README.md                       (this file)
+├── STATUS.md                       (single source of truth — current state + R-level claims + venue decision)
+├── INDEX.md                        (master entry point — reading order + cross-references)
+├── TPAMI-6-WEEK-PLAN.md            (NEW — 6-week TPAMI data-prep schedule W1-W6)
 │
-├── PHASE-1-framework-and-theory.md           (Wave 11 + 12 done)
-├── PHASE-2-model-complexity-analysis.md      (next phase — UNBLOCKED)
-├── PHASE-3-glue-layer-improvement.md         (pending)
-├── PHASE-4-model-integration-iteration.md    (pending)
-│
-├── wave10-result-validation.md               (done)
-├── wave11-result-validation.md               (done)
-├── wave12-result-validation.md               (done — 7 A1 fixes + pushed)
-├── wave13-metrics-research-result.md         (done — framework-internal-metrics rev 2)
-├── wave14-result-validation.md               (done — A + 9 baseline audits; C in progress)
-│
-├── algo-improvement-planar-bl-repoint.md     (done — Wave 14 A; commit 6d12744)
-├── algo-improvement-rate-bound.md            (done — Wave 15 B; commit f9d34e1; 8 tests)
-├── algo-improvement-uplift-isolation.md      (done — Wave 15 rescue; commit a1f8650; 37 tests)
-├── algo-improvement-failure-modes.md         (pending — 1.2.d, D, GPU)
-├── algo-improvement-env-hash.md              (done — Wave 15 Phase 1; commit 43b862d)
-├── algo-improvement-traceability-hardening.md (done — Wave 15 A; commit 3ead25f; A.4→0.938)
-├── algo-improvement-conformance-battery.md   (done — Wave 15 C; commit 4d30f41; D.5 LIVE)
-├── algo-improvement-f2-reproduction.md       (done — Wave 15 F; commit e397528; F.2→7/8)
-├── algo-improvement-property-based-testing.md (NEW — B.7, framework depth gap)
-├── algo-improvement-convergence-order.md      (NEW — C.6, framework depth gap)
-├── algo-improvement-sbc.md                    (NEW — C.7, framework depth gap)
-├── algo-improvement-mutation-testing.md      (NEW — F.6, framework depth gap, quarterly)
-├── algo-improvement-operating-regime.md      (NEW — CRITICAL framework depth gap)
-│
-├── rerun-wave10-with-refactored-framework.md (pending — depends on D-004)
-├── push-unpushed-commits.md                  (done — Wave 6 → Wave 12 pushed 2026-09-05)
-├── paper-writeup.md                          (pending — per user "投稿的计划已经有了")
-└── add-more-2026-sota-models.md             (FOLDED into PHASE-2)
-
-todo/models/
-├── README.md                                 (per-model analysis template)
-└── lineageflow.md                            (Wave 10 BLOCKED lesson)
+├── GATES.md                        (master gate definitions)
+├── LOOP.md                         (per-model lifecycle + iteration + stop conditions)
+├── TIMELINE.md                     (phase durations + project-done definition)
+├── RISK-REGISTER.md                (forward-looking risks + mitigations)
+├── PUSH-READY.md                   (push-readiness summary, user-gated)
+├── decisions.md                    (architecture decisions D-001.., append-only)
+└── lessons-learned.md              (lessons LL-001.., append-only)
 ```
+
+## Current focus (per user directive 2026-09-21)
+
+> "基于刚才的总结，之前 todo 目录里的所有任务都可以删除，直接写新的任务安排计划"
+
+Switched from EAAI/JMLR to **TPAMI**. The 6-week data-prep plan is in [TPAMI-6-WEEK-PLAN.md](TPAMI-6-WEEK-PLAN.md).
+
+**W1 ✅ DONE** (Wave 203-205: stats audit + 2 p-value bug fixes + TPAMI checklist)
+**W2 starts next** (Wave 206: N=1000 paired-record re-runs on omegafold_py310)
 
 ## Convention
 
-- **One .md file per next-phase task** — not for in-flight work (that's in
-  todo.json under `tasks[]`).
-- Each file starts with: **status** (`pending` / `in_progress` / `blocked` /
-  `done`), **dependencies** (which previous tasks must complete first), and
-  **next action** (one sentence describing the first thing to do when the task
-  starts).
+- **One .md file per next-phase task** — not for in-flight work (that's in `todo.json` under `tasks[]`).
+- Each file starts with: **status** (`pending` / `in_progress` / `blocked` / `done`), **dependencies**, and **next action**.
+- TPAMI plan file uses W1-W6 phases per Wave 206-210.
 
 ## When to add files
 
 Add a new file here when:
 - A wave finishes and uncovers a follow-up task.
 - The user gives a new directive that doesn't fit an existing wave.
-- The framework acquires a new SOTA model and the next-paper idea branches.
+- The TPAMI submission path branches (e.g., new reviewer concern requires new ablation).
 
-## Current focus (per user directive 2026-09-05)
+## Archived (preserved for traceability until 2026-10-21)
 
-> "先把算法完善的工作做完" — finish the algorithm improvement work first.
-
-**Wave 15 status (as of 2026-09-05):** All 4 framework-hardening tasks
-landed. Phase 3 verify in progress. 11 framework gaps closed.
-
-**Next priority (framework depth gaps, per user "framework depth not
-enough" 2026-09-05 directive):**
-
-1. **B.7 property-based testing** — `algo-improvement-property-based-testing.md`
-   — 0% → ≥40% by Wave 16. CPU only. ~2-4 hours.
-2. **C.6 convergence-order verification** — `algo-improvement-convergence-order.md`
-   — 0% → SciML test_convergence pattern. GPU. ~4-6 hours.
-3. **C.7 Simulation-Based Calibration** — `algo-improvement-sbc.md`
-   — 0% → SBC for stochastic re-inference. GPU. ~6-12 hours.
-4. **F.6 ML-aware mutation testing** — `algo-improvement-mutation-testing.md`
-   — 0% → quarterly audit. ~8-24 hours compute.
-5. **Operating-regime theoretical analysis** — `algo-improvement-operating-regime.md`
-   — **CRITICAL** (the framework's core claim). 1-2 weeks math + 1-3 days GPU + 2-4 hours docs.
-
-**Algo layer:**
-6. **D** `algo-improvement-failure-modes.md` — pending, GPU
-
-Each task has its own gate definition listed in each detail file.
+15 obsolete task files + 5 stale synthesis docs moved to `/tmp/todo-archive-2026-09-21/`. List available via `ls /tmp/todo-archive-2026-09-21/`.
 
 ## Detailed atomic subtasks
 
-For all 12 pending files broken into ~110 atomic subtasks (15-60 min each),
-see `todo/EXECUTION-PLAN.md`. Use this when scheduling work — each subtask
-has time estimate + dependencies + acceptance criteria.
+For all W2-W6 work broken into atomic subtasks (~30 min each), see [TPAMI-6-WEEK-PLAN.md](TPAMI-6-WEEK-PLAN.md) §W2-W6. Use this when scheduling work — each subtask has time estimate + dependencies + acceptance criteria.
+
+## See also
+
+- [`docs/tpami_submission_checklist.md`](../docs/tpami_submission_checklist.md) — 6-section TPAMI checklist
+- [`docs/paper-draft.md`](../docs/paper-draft.md) — main paper draft
+- [`docs/CLAIMS.md`](../docs/CLAIMS.md) — 55+ active claims ledger
+- [`docs/audit/INDEX.md`](../docs/audit/INDEX.md) — per-wave audit catalogue

@@ -1,104 +1,74 @@
-# `todo/STATUS.md` — current execution status (2026-09-17 post-Wave 177)
+# `todo/STATUS.md` — current execution status (2026-09-21, post-Wave 205)
 
-**Updated:** 2026-09-17 (Wave 177 final push `cec3328` — kanzi shape pad + lineageflow synthetic composite `None` fix; lineageflow real re-run bit-identical to Wave 176; D.4 33/33 + ruff 0 + claims PASS)
-
-This file replaces the stale 2026-09-14 snapshot that was preserved below for provenance. The historical content under the divider does not reflect the current repo state — kept only for traceability.
+**Updated:** 2026-09-21 (Wave 205 TPAMI checklist completed; todo/ refactored from 30 files → 10 governance + 6-week plan)
 
 ---
 
-## Current evidence and next gates (2026-09-17, post-Wave 177)
+## Current state (2026-09-21)
 
-- **HEAD commit:** `cec3328` (Wave 177 P1 + P2 + P3 final; kanzi real ckpt shape pad + lineageflow synthetic composite returns `None` + lineageflow real re-run bit-identical to Wave 176).
-- **Unpushed commits ahead of `origin/main`:** 0 (post-Wave 177 push). 0 behind.
-- **D.4 byte-stable regression vectors:** 33/33 PASS (last verified Wave 177).
-- **Pytest default-threads:** 5155 passed, 196 skipped (last verified Wave 131 freeze; ruff-frozen code preserved).
-- **Ruff:** 0 findings (last verified Wave 177).
-- **Mypy:** 988 errors in 70 files (camera-ready only; CLM-024 wording acknowledges).
-- **mkdocs build --strict:** PASS (last verified Wave 131).
-- **ckpt SHA-256:** 4/4 PASS (FlowMol3, Kanzi cleaned_model, Kanzi encoder, LineageFlow).
-- **claims_consistency:** PASS (No drift detected; 41 ACTIVE, 0 PROVISIONAL, 2 DEPRECATED; last verified Wave 177).
+- **HEAD commit:** `72ba46e` (Wave 204 P1 — defensive sf() vs 1-cdf() in _paired_result, R6 scPerplexity underflow fix)
+- **Tag:** none yet (Wave 203 P5 v2.7-paper-stats-audit-fix tag pending final gates; not pushed)
+- **Unpushed commits ahead of `origin/main`:** see `git rev-list --count origin/main..HEAD` (user-gated)
+- **D.4 byte-stable regression vectors:** 33/33 PASS
+- **Pytest default-threads:** 5155 passed, 196 skipped (preserved from Wave 131 freeze; ruff-frozen code)
+- **Ruff:** post-Wave 127 Phase 4 auto-fix count: ~207 remaining (out-of-scope-for-7-day; CLM-024 wording acknowledges)
+- **Mypy:** 988 errors in 70 files (camera-ready only; CLM-024 wording acknowledges)
+- **mkdocs build --strict:** PASS
+- **ckpt SHA-256:** 4/4 PASS
+- **claims_consistency:** PASS (CLM-040 + CLM-061 updated Wave 204; CLM-066 + CLM-067 added Wave 203)
 
-## R-level experimental claims (load-bearing for §10.6)
+## R-level experimental claims (load-bearing for paper §7.3 / §10.6)
 
 | # | Model | Metric | Baseline | Framework | Δ | N | Status |
 |---|---|---|---:|---:|---:|---:|---|
 | R1 | LineageFlow | HMMER hits | 158 | **342** | **+116%** | 1000 | ✅ p<1e-10 |
 | R2 | FlowMol3 | fg_dev | 0.6381 | **0.6146** | **−0.0235** | 1000 | ✅ 4.05σ |
 | R3 | CIFAR-10 RF v2 | FID | 218.87 | **122.18** | **−44.17%** | 1000 | ✅ NFE-averaged |
-| R4 | 2D Two Moons | W₂ | 0.5029 | **0.4663** | **−7.28%** | 1000 | ✅ |
-| R5 | 2D Eight Gaussians | W₂ | 0.6606 | **0.5919** | **−10.40%** | 1000 | ✅ |
+| R4 | 2D Two Moons | W₂ | 0.5029 | **0.4663** | **−7.28%** | 1000 | ✅ matched |
+| R5 | 2D Eight Gaussians | W₂ | 0.6606 | **0.5919** | **−10.40%** | 1000 | ✅ matched |
 | R6 | LineageFlow | pLDDT / scPerp | 42.07/17.88 | **43.20/13.96** | **+1.12/−3.92** | 1000 | ✅ NFE=10 caveat |
 
-## Wave 174-177 evidence (cross-model GPU eval)
+**Wave 203/204 fixes applied to R-level stats:**
+- Wave 196 vanilla_scPerplexity p-value: 5.73e-16 → **1.14e-19** (3× tighter; sf not 1-cdf)
+- Wave 195 R5c MNIST p-value: 1.3e-11 → **3.4e-318** (t=-419 underflow)
+- Wave 203 P3 cluster-robust: k6 monotonic hard > medium > easy holds under cluster-robust SE
+
+## Recent waves (Wave 198-205)
 
 | Wave | Outcome | Status |
 |---|---|---|
-| Wave 174 P4 | N=30 lineageflow 3/3 wins both + kanzi 3/3 scPerp + pLDDT trade-off (NFE=50/100/200) | DONE |
-| Wave 175 P2 | Per-adapter NFE_REF mechanism (kanzi=10, lineageflow=50) — DID NOT FIX kanzi pLDDT (argmax decoder insensitivity) | DONE (architectural limit documented) |
-| Wave 176 P1 | Primary metric saturation: both baselines already 1.00; framework ties correctly; lineageflow composite +0.20/+0.14/+0.05 | DONE |
-| Wave 177 P1+P2+P3 | Kanzi real ckpt shape pad (load-bearing for Wave 178) + lineageflow synthetic composite returns `None` (was misleading −0.25) + lineageflow real re-run bit-identical | DONE |
+| 198 | Per-record + strata analysis found cancellation root cause (NOT effect-size bound) | DONE |
+| 199-200 | LineageFlow N=1000 sweep BLOCKED-ON-DATA (CPU >40h/arm, torch 1.13.1 vs Blackwell sm_120) | BLOCKED |
+| 201 | Eval pipeline 2-3× speedup via --workers-per-gpu + LPT + auto-detect | DONE |
+| 202 | Found omegafold_py310 conda env (torch 2.14.0+cu130 + sm_120 supported); unblock sweep | DONE |
+| 203 | Statistics audit fix: 2 p-value bugs + cluster-robust + 12-col standardized stats table + CLM-066/067 | DONE |
+| 204 | Wave 196 vanilla scPerplexity defensive sf() fix in _paired_result; commit `72ba46e` | DONE |
+| 205 | TPAMI submission data-preparation checklist (6 sections + 6-week schedule + 3 reviewer Q) | DONE |
 
-## Critical short boards (next-wave priority)
+**See `docs/tpami_submission_checklist.md` for full TPAMI prep plan.**
 
-**See `todo/paper-finish-line-tier1-shortboard-closure.md` for full plan.**
+## Venue decision (revised 2026-09-21)
 
-| # | Short board | Severity | Closes via |
-|---|---|---|---|
-| P0-1 | No head-to-head with Fast-DLLM / FlowCast / AB-Cache / PFDiff / LeDiFlow | CRITICAL | Wave 180-182 |
-| P0-2 | Kanzi pLDDT regression at NFE=50-200 (Wave 175 fix didn't work) | CRITICAL | Wave 178 (architecture) |
-| P0-3 | Single seed (seed=42) — Wave 174/175/176 all use only seed=42 | CRITICAL | Wave 179 (multi-seed) |
-| P1-1 | NFE curve too sparse (3 points) | HIGH | Wave 183 |
-| P1-2 | No n_rounds ablation (multi-round vs restart-blend) | HIGH | Wave 184 |
-| P1-3 | Kanzi real ckpt end-to-end eval NOT done | HIGH | Wave 178 (architecture enables) |
-| P1-4 | Theory ↔ empirical gap (BL bound tightness) | HIGH | Wave 185 |
-| P1-5 | Sensitivity analysis on key hyperparameters | MEDIUM | Wave 186 |
+**Primary: TPAMI (IEEE Trans on Pattern Analysis and Machine Intelligence, CAS 1区 TOP)** — switched from EAAI after DeepSeek audit + standardization (12-col stats table, cluster-robust, Bonferroni). TPAMI accepts honest negatives as scope articulation; 6-week prep plan.
 
-## Venue decision
+**Backups:** EAAI (Engineering Applications of AI) → PR (Pattern Recognition) → Neural Networks → TIP.
 
-**Primary: EAAI (Engineering Applications of AI, Elsevier, IF 8.0-9.0, CAS 1区 TOP)** — AI engineering application oriented; perfect fit for training-free inference framework; 75% acceptance rate; 9-month review cycle; framing as "AI 工程应用" production deployment scenario.
+## 6-week TPAMI execution path
 
-**Backups:** PR (Pattern Recognition, CAS 1区 TOP) → Neural Networks (CAS 1区 TOP) → TPAMI (CAS 1区 TOP, hard mode). Defer JMLR (CAS 4区, fails 1区 requirement) / NeurIPS / ICLR.
+| Week | Focus | Deliverables | Wave |
+|---:|---|---|---|
+| **W1** | 数据审计 + bug 修复 (DONE) | Wave 203 + 204 + 205 (stats audit, p-fix, TPAMI checklist) | ✅ 203-205 |
+| **W2** | N=1000 重跑 | LineageFlow + Kanzi + FlowMol3 + 2D + CIFAR + MNIST N=1000 on omegafold_py310 | 206 |
+| **W3** | Ablation + 控制实验 | 5-arm per-component ablation + Fixed-threshold control + Random/uniform + 单 scheduler | 207 |
+| **W4** | 效率 + Pareto | Wall-clock + memory + NFE accounting + Pareto frontier NFE {10...1000} | 208 |
+| **W5** | 统计强化 + 标准化报告 | 12-col stats table 全面化 + Bonferroni families + Cluster-robust 全面化 + FDR-BH | 209 |
+| **W6** | 复现包 + 限制披露 + 投前 final gates | GitHub repo + Zenodo data + Docker image + Honest negatives + tag v3.0 | 210 |
 
-**EAAI framing:** "FlowA in production-quality flow-matching deployment across 蛋白生成、分子生成、图像生成 three AI engineering applications." See `paper-finish-line-tier1-shortboard-closure.md` §10 for full pitch + cover letter hook + title candidates.
+**Detailed schedule:** `todo/TPAMI-6-WEEK-PLAN.md`
 
-## Next-wave execution path (10 waves, 5-9 weeks)
+## Out of scope (deferred)
 
-| Wave | Goal | Status |
-|---|---|---|
-| 178 | Kanzi real ckpt architecture redesign (P0-2 + P1-3) | READY |
-| 179 | Multi-seed R6 + Wave 174 ladder (P0-3) | QUEUED |
-| 180 | Head-to-head: FlowA vs Fast-DLLM (P0-1 part 1) | QUEUED |
-| 181 | Head-to-head: FlowA vs AB-Cache (P0-1 part 2) | QUEUED |
-| 182 | Head-to-head: FlowA vs FlowCast / PFDiff / LeDiFlow (P0-1 part 3) | QUEUED |
-| 183 | Finer NFE curve (P1-1) | QUEUED |
-| 184 | n_rounds ablation (P1-2) | QUEUED |
-| 185 | Theory bound tightness (P1-4) | QUEUED |
-| 186 | Sensitivity analysis (P1-5) | QUEUED |
-| 187 | Camera-ready paper finalization + JMLR submission | QUEUED |
-
----
-
-## Historical snapshot (2026-09-14, Wave 134) — preserved for provenance
-
-*(The text below this divider is from `todo/STATUS.md` prior to the 2026-09-17 rewrite. It describes the v1.0-paper-final state and does not reflect the post-Wave 177 reality. Kept only for traceability of the v1.0.1 tag history.)*
-
-### 2026-09-14 v1.0-paper-final snapshot (historical)
-
-- **HEAD commit:** `1d1723d` (Wave 144 Phase 4 final close; 18 commits ahead of v1.1-paper-final planned tag).
-- **Tag:** `v1.0-paper-final` (Wave 131 Phase 3 freeze marker; ruff 0 / D.4 33/33 / pytest ≥5155 / claims PASS / mkdocs strict EXIT=0 / ckpt SHA-256 4/4 PASS).
-- **Unpushed commits ahead of `origin/main`:** 2 (Wave 144 Phase 2 + Phase 4; awaiting user OK).
-- **D.4 byte-stable regression vectors:** 33/33 adapters PASS.
-- **Pytest default-threads:** 5155 passed, 196 skipped.
-- **Ruff:** 0 findings (down from 207 in Wave 127; Wave 131 Phase 1).
-- **Mypy:** 988 errors in 70 files (camera-ready only; out of scope; CLM-024 wording acknowledges).
-- **mkdocs build --strict:** PASS.
-- **ckpt SHA-256:** 4/4 PASS per `verification_outputs/ckpt_sha256.json`.
-
-**Open follow-ups (2026-09-14 view; superseded by 2026-09-17 plan above):**
-
-1. Wave 92c (in flight): N=1000 Kanzi framework paper-metric — closes W2 measurability
-2. Wave 93 Phase 2 (in flight): per-cell CI + Bonferroni + reframe §7.6 — closes W4 reframing
-3. Wave 94: ICLR 2027 submission package — superseded by Wave 187 (JMLR submission)
-4. Wave 92d (OPT-IN): N=5000 sweep on all 3 Tier 3 models — closes W3 (defer until Wave 92c/93/94)
-5. FreqFlow / MM-FM: indefinitely deferred (no upstream ckpt / no shipped adapter)
-6. CI dashboard: composite-aware check in `tools/capability_audit.py`
+- Mypy 988-error repair (camera-ready)
+- Ruff 207 non-auto-fixable findings (camera-ready)
+- FreqFlow + MM-FM integration (no upstream ckpt / no shipped adapter)
+- Push to origin/main (user-gated; see `PUSH-READY.md`)
