@@ -1066,7 +1066,7 @@ How it works:
 ## CLM-039: FlowA's 2D Rectified Flow experiment verifies the ONE paper claim: framework multi-round re-inference improves over single-pass baseline {#CLM-039}
 
 - Status: ACTIVE
-- Date: 2026-08-30
+- Date: 2026-08-30 (Wave 206 P4 refresh 2026-09-21: paired-t p-values refreshed with `2*stats.t.sf` per Wave 195 P2 / Wave 204 P1)
 - Source:
   [`docs/r4-survey/10-sota-2d-experiment-results.md`](r4-survey/10-sota-2d-experiment-results.md)
   (the canonical experiment record),
@@ -1148,6 +1148,25 @@ How it works:
   `docs/r4-survey/10-sota-2d-experiment-results.md` (canonical
   experiment record).
 - Tested by: tests/test_claims/test_claim_039.py
+
+  **Wave 206 P4 refresh (2026-09-21)**: Paired-t p-values for the R4
+  (two_moons) and R5 (eight_gaussians) sub-cells of this claim were
+  refreshed using `2*stats.t.sf(abs(t), df)` per Wave 195 P2 spec /
+  Wave 204 P1 commit `72ba46e`.  Audit at
+  [`docs/audit/wave206-p4-r-level-refresh.md`](audit/wave206-p4-r-level-refresh.md)
+  with raw data at
+  `verification_outputs/wave206-p4-r-level-refresh.{csv,json}`.
+  Note: the wave189 N=1000 sweep produced 12 paired observations per
+  cell (3 seeds × 4 framework rounds 1-4 paired with baseline[seed,
+  round 0]); t=+0.669 df=11 p_sf=5.17e-01 for `two_moons` and
+  t=-1.089 df=11 p_sf=3.00e-01 for `eight_gaussians`.  These are
+  **NOT** the canonical R4/R5 numbers (baseline=0.5029→framework=
+  0.4663 for two_moons, baseline=0.6606→framework=0.5919 for
+  eight_gaussians) because the canonical per-round raw CSVs are not
+  preserved in the repository — see
+  `docs/reproducibility_record.md` §R3 for the W2 magnitude
+  divergence.  The canonical headline numbers (-7.28% and -10.40%)
+  remain the load-bearing claim.
 
 ## CLM-040: CIFAR-10 SOTA reproduction — FlowA framework improves over baseline on published Rectified Flow; n_cap fix landed; v4 scheduler discrimination verified at 50-NFE budget {#CLM-040}
 
@@ -1367,6 +1386,26 @@ How it works:
   `docs/r4-survey/16-harness-fix-plan.md` (Phase 2 fix plan,
   executed).
 - Tested by: tests/test_claims/test_claim_040.py
+
+  **Wave 206 P4 refresh (2026-09-21) — R3 (CIFAR-10) + R5c (MNIST FM)
+  paired-t p-values refreshed with `2*stats.t.sf` per Wave 195 P2 /
+  Wave 204 P1.** Audit at
+  [`docs/audit/wave206-p4-r-level-refresh.md`](audit/wave206-p4-r-level-refresh.md)
+  with raw data at
+  `verification_outputs/wave206-p4-r-level-refresh.{csv,json}`.
+
+  - R3 CIFAR-10 RF cosine arm: t=+9.296, df=9, p_sf=6.546e-06,
+    cohens_d_z=+9.217, **framework_loses_d_z** (FID=500.20 >
+    baseline=415.83, +20.21%; honest negative at matched NFE=50;
+    framework's value-add on CIFAR-10 RF lives on the cross-budget
+    axis at Wave 128, NOT on matched-NFE).
+  - R5c MNIST FM evidence_driven arm: t=-41.664, df=9, p_sf=1.318e-11,
+    cohens_d_z=-13.176, **framework_wins_d_z** (FID=23.39 <
+    baseline=29.49, -20.7%; framework wins at matched NFE=50 with
+    p << 1e-10).  Smoke ckpt `data/mnist_fm.npz`
+    (sha256=ded1fa70c83b77f0, 1 epoch, base_channels=8); paired
+    comparison still valid because both arms use the same projection
+    and reference.
 
 ## CLM-041: Comprehensive bug review (R3/R11) + CIFAR-10 v3 verification + scheduler-discrimination verified at v4 (4 distinct FIDs); all 6 gates green {#CLM-041}
 
@@ -3631,3 +3670,27 @@ How it works:
   (Wave 206 P3 12+-col audit row JSON — single paired observation, n_paired=1, n_seeds_swept=1, n_seeds_requested=3, n_seeds_blocked=2, sd_diff_pooled_across_seeds=NaN, per_arm_sem_wave82=0.00577 substitute, t=-2.453, df=1996.998, p_raw=0.01424, d_s=-0.110, bonf_sig=False, byte_stable_vs_wave82=True),
   [`docs/audit/wave206-p3-flowmol3-n1000.md`](../docs/audit/wave206-p3-flowmol3-n1000.md)
   (Wave 206 P3 audit doc — §1 what was done, §2 12-col audit row, §3 cross-ref with Wave 195 P2 R3 row, §4 why pooled SD not computable, §5 suggested fix path, §6 output paths, §7 conclusion).
+
+## CLM-069: Wave 206 P4 — R-level N=1000 paired-t refresh (Wave 195 P2 / Wave 204 P1 sf fix) on 4 cells (R4, R5, R3, R5c) — per-cell paired t-statistics + sf-based p-values (defensive: `2*stats.t.sf(abs(t), df)` instead of buggy `2*(1-stats.t.cdf(...))`); 1-cdf underflow-safe down to p ≈ 1e-300 floor for future extreme-|t| cells {#CLM-069}
+
+- Status: ACTIVE
+- Date: 2026-09-21
+- Source:
+  [`verification_outputs/wave206-p4-r-level-refresh.csv`](../verification_outputs/wave206-p4-r-level-refresh.csv) (Wave 206 P4 4-row audit CSV),
+  [`verification_outputs/wave206-p4-r-level-refresh.json`](../verification_outputs/wave206-p4-r-level-refresh.json) (Wave 206 P4 4-row audit JSON with full chunk_fids and t-stat breakdowns),
+  [`docs/audit/wave206-p4-r-level-refresh.md`](../docs/audit/wave206-p4-r-level-refresh.md) (Wave 206 P4 audit doc — §1 what was done, §2 per-cell data and re-computation, §3 honest disclosures, §4 underflow-safe formula ready for future extreme-|t| cells, §5 output artifacts, §6 files touched),
+  [`tools/wave206_p4_r_level_refresh.py`](../tools/wave206_p4_r_level_refresh.py) (Wave 206 P4 refresh script — CPU-only, numpy + scipy.stats only, no torch).
+- Asserted by:
+  `tools/wave206_p4_r_level_refresh.py::_paired_stats_sf` (the canonical reusable Wave 195/204 sf-based paired-t helper).
+- Disputed by: —
+- Statement: Wave 206 P4 refreshes paired-t p-values for 4 R-level headline cells using the defensive `2*stats.t.sf(abs(t), df)` formula from Wave 195 P2 / Wave 204 P1 commit 72ba46e (replacing the buggy `2*(1-stats.t.cdf(...))` form that truncates to 0.0 below ~1e-16 due to 1-cdf floating-point precision loss). The 4 cells are:
+  - **R4 two_moons W2** (2D RF, baseline 0.0736 vs framework 0.0765 on wave189 N=1000 re-measurement, t=+0.669 df=11 p_sf=5.17e-01 cohens_d_z=+0.19, not_significant; 12 paired obs from 3 seeds × 4 framework rounds 1-4 paired with baseline[seed, round 0])
+  - **R5 eight_gaussians W2** (2D RF, baseline 0.1764 vs framework 0.1701, t=-1.089 df=11 p_sf=3.00e-01 cohens_d_z=-0.31, not_significant; 12 paired obs same protocol)
+  - **R3 CIFAR-10 RF cosine arm FID** (baseline 415.83 vs framework cosine 500.20, t=+9.296 df=9 p_sf=6.546e-06 cohens_d_z=+9.22, framework_loses_d_z; honest negative at matched NFE=50; framework value-add on CIFAR-10 RF lives on cross-budget axis at Wave 128)
+  - **R5c MNIST FM evidence_driven arm FID** (baseline 29.49 vs framework evidence_driven 23.39, t=-41.664 df=9 p_sf=1.318e-11 cohens_d_z=-13.18, framework_wins_d_z; smoke ckpt `data/mnist_fm.npz` sha256=ded1fa70c83b77f0, 1 epoch base_channels=8)
+
+  At all 4 cells, |t| is below the sf-vs-1-cdf underflow threshold (~|t|>180 at df=9), so the sf-based p-values numerically match the 1-cdf p-values to ≥5 significant figures. The audit documents both `p_value_sf` and `p_value_buggy_1_minus_cdf` for traceability. The defensive `2*stats.t.sf(...)` formula is now the canonical reusable form (exposed via `_paired_stats_sf` in `tools/wave206_p4_r_level_refresh.py`); future R-level refreshes should reuse this helper. The R4/R5 cells use wave189 N=1000 data (not canonical) because per-round raw CSV files from the canonical experiment (3 seeds × 5 schedulers × 20 rounds × 1000 samples/round; baseline 0.5029→framework 0.4663 for two_moons, baseline 0.6606→framework 0.5919 for eight_gaussians) are NOT preserved in the repository — `docs/reproducibility_record.md` §R3 documents the W2 magnitude divergence since Wave 15 F.2.
+- Evidence:
+  [`verification_outputs/wave206-p4-r-level-refresh.csv`](../verification_outputs/wave206-p4-r-level-refresh.csv) (Wave 206 P4 4-row audit CSV — schema: cell, wave, model, metric, n_pairs, n_total_per_arm, framework_arm, baseline_mean, framework_mean, mean_diff, sd_diff, delta_se, t_stat, df, ci_95_lower, ci_95_upper, p_value_sf, p_value_buggy_1_minus_cdf, p_value_bonferroni, cohens_d_z, test_type, alpha_bonf, verdict, source),
+  [`verification_outputs/wave206-p4-r-level-refresh.json`](../verification_outputs/wave206-p4-r-level-refresh.json) (Wave 206 P4 4-row audit JSON with full chunk_fids arrays and honest_disclosure strings),
+  [`docs/audit/wave206-p4-r-level-refresh.md`](../docs/audit/wave206-p4-r-level-refresh.md) (Wave 206 P4 audit doc).
