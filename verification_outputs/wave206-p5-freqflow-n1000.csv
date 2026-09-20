@@ -1,0 +1,2 @@
+dataset,model,cell,metric,n_paired,mean_diff,sd_diff,t_statistic,df,p_value_raw,CI95_low,CI95_high,cohens_d_z,test_type,family,alpha_bonferroni,bonf_sig,higher_better,freqflow_mode,ckpt_source
+freqflow_n1000,freqflow,R_freqflow_synth_endpoint_l2,synthetic_endpoint_l2,1000,77.12424944926853,0.9779803671999767,2493.795369215272,999,0.0,77.06363359810985,77.18486530042722,78.86073385100809,one_sample_t_test_vs_zero,FreqFlow_synth+real_k2,0.025,True,False,synthetic,synthetic-shim

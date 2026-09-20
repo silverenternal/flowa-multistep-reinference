@@ -2624,6 +2624,40 @@ How it works:
   [`docs/paper-draft.md` §10.32 (d) FreqFlow disclosure table](paper-draft.md),
   [`docs/audit/wave189-p3-freqflow-honest-disclosure.md` §3 + §4](audit/wave189-p3-freqflow-honest-disclosure.md).
 
+  **Wave 206 P5 additively extends** (per TPAMI-6-WEEK-PLAN §W2.6
+  [MEDIUM]): N=1000 paired-record re-run of the FreqFlow
+  synthetic-mode sweep at NFE=50 / n_rounds=3 (Wave 189 P3 was
+  N=3 seeds × 5 rounds × NFE=100). Re-probed 2026-09-21: the
+  published `nnet_ema.pth` is still **NOT publicly released**
+  (GitHub releases empty, full git tree lacks `.pth`/`.safetensors`/
+  LFS pointer, HF Hub empty for `FreqFlow` and `OliverRensu`, no
+  PyPI package, `$FREQFLOW_CKPT` unset, `data/freqflow_ckpt/
+  nnet_ema.pth` missing). The synthetic-only disclosure posture is
+  preserved verbatim. 12-col audit row at
+  [`verification_outputs/wave206-p5-freqflow-n1000.json`](../verification_outputs/wave206-p5-freqflow-n1000.json)
+  — one-sample t-test of `mean(endpoint_l2)` vs 0 (df=999),
+  endpoint_l2 = 77.1242 ± 0.9780 (NOT a real FID — diagnostic that
+  the restart-blend glue path is wired correctly on the FreqFlow
+  adapter), t = +2493.80, p_raw = 0.0, Cohen's `d_z` = +78.86,
+  Bonferroni α = 0.05/2 = 0.025 (family = FreqFlow synthetic +
+  FreqFlow real, k=2 — the real cell is CKPT_ABSENT and contributes
+  no p-value), bonf_sig = TRUE (rejection is trivial by
+  construction; baseline vs framework arms follow different
+  trajectories deterministically per seed). Auxiliary cosine
+  similarity (NOT in Bonferroni family; diagnostic only): cosine =
+  0.2854 ± 0.0284. Wallclock 2075 s on 32-core host (~25 NumPy/BLAS
+  threads; CPU-only, no GPU contention). Audit at
+  [`docs/audit/wave206-p5-freqflow-n1000.md`](audit/wave206-p5-freqflow-n1000.md).
+  Driver at
+  [`scripts/wave206_p5_freqflow_n1000_audit.py`](../scripts/wave206_p5_freqflow_n1000_audit.py).
+  The Wave 189 P3 12-record sample (n=3 seeds × 4 framework rounds)
+  is preserved verbatim — Wave 206 P5 is **additive** (same
+  disclosure posture; same SYNTHETIC_ONLY verdict; larger sample
+  size; different point value because NFE/rounds changed the
+  restart-blend effect on the latent). The paper's "5 adapters"
+  wording remains "4 real-ckpt + 1 synthetic-skeleton (FreqFlow; no
+  public ckpt released)" per the CLM-056 primary assertion.
+
 ## CLM-057: Wave 190 P2 — Theorem 1 quantities (Lemma 2-5 `A_g`/`B_g`/`C_g`/`e_rho`) are load-bearing as a **stabiliser / regulariser** of the framework's endpoint movement on the kanzi synthetic protein axis at n=30 paired seeds (paper-quantity scheduler L2 = 0.459 ± 0.014 vs cosine-anneal L2 = 97.97 ± 3.24, **≈213× gentler**, Bonferroni-corrected paired-t p < 1e-4 on both axes — Cohen's `d_z` (L2) = −30.15, Cohen's `d_z` (entropy) = +10.24) — **upgraded from "marginal n=3 p=0.103" (Wave 189 P4) to "Bonferroni-significant n=30" (Wave 190 P2)** {#CLM-057}
 
 - Status: ACTIVE
