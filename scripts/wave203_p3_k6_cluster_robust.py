@@ -166,7 +166,6 @@ def cluster_robust_test(paired: list[dict]) -> dict:
          This is the "design effect" adjusted effective sample size.
     """
     families = sorted({r["family"] for r in paired})
-    K = len(families)
     cluster_mean_diffs = []
     cluster_sizes = []
     for fam in families:
@@ -216,7 +215,7 @@ def cluster_robust_test(paired: list[dict]) -> dict:
             wres = scipy.stats.wilcoxon(cluster_means, alternative="two-sided")
             wilcoxon_stat = float(wres.statistic)
             wilcoxon_p = float(wres.pvalue)
-        except ValueError as e:
+        except ValueError:
             # All cluster means identical -> wilcoxon undefined
             wilcoxon_stat = float("nan")
             wilcoxon_p = float("nan")
@@ -265,8 +264,8 @@ def cluster_robust_test(paired: list[dict]) -> dict:
         "n_records_per_cluster_mean": float(n_bar),
         "n_records_per_cluster_min": int(min(cluster_sizes)) if cluster_sizes else 0,
         "n_records_per_cluster_max": int(max(cluster_sizes)) if cluster_sizes else 0,
-        "cluster_mean_diffs": dict(zip(families, cluster_means.tolist())),
-        "cluster_sizes": dict(zip(families, [int(s) for s in cluster_sizes])),
+        "cluster_mean_diffs": dict(zip(families, cluster_means.tolist(), strict=True)),
+        "cluster_sizes": dict(zip(families, [int(s) for s in cluster_sizes], strict=True)),
         "mean_of_cluster_means": float(np.mean(cluster_means)) if K_actual else float("nan"),
         "sd_of_cluster_means": float(np.std(cluster_means, ddof=1)) if K_actual > 1 else float("nan"),
         "t_statistic_cluster_level": float(t_stat),

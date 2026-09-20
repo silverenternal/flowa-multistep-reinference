@@ -264,6 +264,9 @@ not_in_nav: |
   tables/*.md
   figures/*.md
   adr/*.md
+  tpami_submission_checklist.md
+  drafts/*.md
+  drafts/**/*.md
   INSIGHTS.md
   audit/wave*.md
   audit/paper-p6-wave-history-supplementary.md

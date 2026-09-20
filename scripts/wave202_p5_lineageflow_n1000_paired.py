@@ -202,7 +202,6 @@ def main() -> int:
 
     strata_results: list[dict] = []
     strata_rows_csv: list[dict] = []
-    monotone_pattern = None  # filled in below
 
     # tier counts and stats
     hard_mask = b_plddt <= b_p33
