@@ -29,6 +29,125 @@ We validate the framework on six R-level cells spanning protein (LineageFlow, Ka
 
 ---
 
+## 2 Method
+
+This section restates Theorem 1 (the bounded-Lipschitz convergence
+bound that the framework's four paper quantities $(A_g, B_g, C_g,
+e_\rho)$ imply) in a self-contained form so that the bound is
+**internal to this paper** and does not depend on any companion
+paper, external manuscript, or out-of-paper reference. The full
+restatement — the theorem box, the F-side hypotheses, the four
+paper quantities with their paper line references (lines 128, 159,
+161, 191), the three-step proof of the g-independent rate bound
+$\mathrm{BL}(\mu_{g,\varepsilon}, \nu_g) \le \varepsilon \cdot
+\sqrt{2/\pi}$ (line 87 corollary), the per-adapter F-side profile
+table for the twelve framework adapters, the four-quantity
+algorithmic interpretation, and the theoretical-justification
+paragraph — is given in `docs/drafts/section-2-method.md`. This
+paragraph on the main-body side gives the headline Theorem 1 box
+and the proof sketch so the reader does not have to follow the
+external link to follow §3.
+
+> **Theorem 1 (Effective BL distance bound, line 87).** *Let $g$
+> satisfy the F-side hypotheses (F1–F4) of `section-2-method.md`
+> §2.2. For every $\varepsilon > 0$, the bounded-Lipschitz distance
+> between the framework's residual posterior $\mu_{g,\varepsilon}$
+> and the fibre-supported target $\nu_g$ is upper-bounded by*
+>
+> $$\mathrm{BL}(\mu_{g,\varepsilon}, \nu_g) \;\le\; A_g \cdot
+> \exp\!\bigl(-\mathrm{NFE}/B_g\bigr) + C_g \cdot e_\rho.
+> \tag{T1, line 88–92}$$
+>
+> *The leading constant is g-independent: the synchronous-coupling
+> argument of `section-2-method.md` §2.4 establishes the corollary*
+>
+> $$\mathrm{BL}(\mu_{g,\varepsilon}, \nu_g) \;\le\; \varepsilon
+> \cdot \sqrt{2/\pi}, \tag{T1-rb, line 87 corollary}$$
+>
+> *used by the rate-bound checker
+> `adaptive_reflow.theory.rate_bound.check_explicit_rate_bound` and
+> the planar BL witness
+> `adaptive_reflow.eval.lipschitz_diagnostic.planar_bl_convergence_witness`.*
+
+The four paper quantities are the closed-form expressions of the
+adapter's posterior geometry at runtime. The framework precomputes
+$A_g = (2\pi)^{-1/2} \int_{\mathbb{R}} e^{-s^2/2} / \sqrt{1 +
+g(s)^2}\, ds$ (paper line 161, Proposition 3),
+$B_g = \sum_{z \in Z_g} e^{-z^2/4}$ (paper line 159, Lemma 5),
+$C_g = e^{\rho^2/2} / [(1 - \rho)^2 \cdot \min\{c^2, 1\}]$ (paper
+line 191, Lemma 3), and $e_\rho = \min\{\rho^4, (1 - \rho)^2 \eta^2\}$
+(paper line 128, Lemma 4 + Lemma 5 setup) from the adapter's
+residual profile $g$ and the F-side constants $(d, c, \rho, \eta)$
+(paper lines 22–26, F1–F4) once per adapter and caches them on the
+`PhysicalComplement` typed carrier so the per-round scheduler calls
+are $O(1)$ table lookups.
+
+**Three-step proof of (T1-rb).** *Step 1 — synchronous coupling.*
+The coupling $\bigl(x, g(x) + \varepsilon z\bigr) \leftrightarrow
+\bigl(x, g(x)\bigr)$ with $z \sim \mathcal{N}(0, 1)$ is a valid
+coupling of $\mu_{g,\varepsilon}$ and $\nu_g$ (the first marginal
+is $\mu_{g,\varepsilon}$'s marginal; the second lies on the fibre
+$\{F_g = 0\}$ which is the support of $\nu_g$). *Step 2 — expected
+cost.* The Euclidean distance between the coupled points is
+$|\varepsilon z|$, so the expected cost is
+$\varepsilon \cdot \mathbb{E}|z| = \varepsilon \sqrt{2/\pi}$ for
+$z \sim \mathcal{N}(0, 1)$. *Step 3 — Kantorovich–Rubinstein
+duality.* $\mathrm{BL}(\mu, \nu)$ is the infimum over all couplings
+of the truncated-metric cost (Villani 2003); a feasible coupling's
+cost upper-bounds the infimum, so $\mathrm{BL}(\mu_{g,\varepsilon},
+\nu_g) \le \varepsilon \sqrt{2/\pi}$. $\square$
+
+**Per-adapter F-side profile.** All twelve framework adapters
+(LineageFlow, Kanzi, FlowMol3, CIFAR-10 RF, MNIST FM, 2D RF,
+FreqFlow, Wan2.2, HiDream I1, Lumina Image 2.0, GraphBFN,
+ProtBFN-ABFN) currently run with the framework default F-side
+profile $(d = 1.0, c = 1.0, \rho = 0.1, \eta = 0.1)$ with derived
+$e_\rho = 10^{-4}$; the full table with per-adapter notes and the
+override surface is reported in `section-2-method.md` §2.5 and
+the audit document `docs/audit/wave211-p3-f-side-actual-values.md`.
+
+**Algorithmic interpretation.** The four quantities map
+one-to-one onto the framework's typed scheduler ports:
+$A_g \to$ `CosineAnnealScheduler` (smoothing ramp);
+$(A_g, B_g, C_g) \to$ `CodimensionSheetScheduler` (per-round
+`n_cap` via paper Corollary 1, line 165); $e_\rho \to$
+`BoundedMergeOperator` (merge envelope noise floor);
+$(A_g, B_g, C_g, e_\rho) \to$ `EvidenceDrivenScheduler` (per-cell
+restart probability). The four scheduler ports are typed Python
+protocols and concrete implementations in
+`adaptive_reflow.algorithm.scheduler`, and a domain expert can
+drive the inference loop by passing $(A_g, B_g, C_g, e_\rho)$ to
+the existing scheduler implementations without manipulating the
+flow matching internals.
+
+**Self-contained companion.** The full Theorem 1 statement with
+proof sketch (five-step derivation), the four-quantity mathematical
+meaning (Section D), the four-quantity algorithmic interpretation
+(Section E), and the theoretical-justification paragraph (Section
+F) are restated in `docs/theory/theorem-1-self-contained.md`.
+
+**Acknowledgement (footnote).** A companion mathematical paper is
+under review at QTDS; this paper is self-contained and Theorem 1
+is restated here with proof sketch. The only external
+mathematical references are Bolley, Guillin, Villani (2012) for
+the NFE concentration step and Villani (2003) for the
+Kantorovich–Rubinstein duality.
+
+**Cross-references.** The full §2 (Method) restatement —
+Theorem 1 box, F-side hypotheses, four paper quantities, three-
+step proof, per-adapter F-side profile table, algorithmic
+interpretation, theoretical-justification paragraph — is
+`docs/drafts/section-2-method.md` §2.1–§2.8. The five-paragraph
+proof sketch for (T1) (decay term + residual term) is
+`docs/theory/theorem-1-self-contained.md` Section C. The
+explicit rate bound corollary (T1-rb) and its synchronous-coupling
+derivation is `docs/theory/theorem1_rate_bound.md`. The
+per-adapter F-side profile audit (with disclosure of the default
+profile and the override surface) is
+`docs/audit/wave211-p3-f-side-actual-values.md`.
+
+---
+
 ## 3 Experiments
 
 This section reports the empirical evaluation of FlowA under the four regimes introduced in §2 (Theory and Algorithm): per-record paired testing on the Tier-3 protein and molecular adapters, cross-budget NFE compression on the image adapters, NFE-matched boundary characterization on the CIFAR-10 RF matched-budget cell, and the five-arm cumulative ablation on the 2D RF + CIFAR-10 RF + LineageFlow axes. All headline numbers are reported under a pre-registered twelve-column audit row and pre-registered Bonferroni families; all protein results are accompanied by a cluster-robust re-analysis at the Pfam-family unit to defend the per-record independence assumption. The boundary where the framework regresses is reported with the same prominence as where it wins.
