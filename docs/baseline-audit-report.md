@@ -7930,3 +7930,19 @@ remain in place; Wave 204 P1 + P2 + P3 SUPERSEDES the Wave 199 P2 +
 P3 BLOCKED-ON-DATA annotation for LineageFlow (now ASSERTED with
 N=574 caveat) without modifying the underlying k6 finding. No
 §10.6 R-level inventory number is changed or retracted.
+
+## R.NEXT (R.87) — Wave 206 P7 final-gate verification: W2 N=1000 paired-record re-runs on omegafold_py310 (2026-09-21)
+
+**Scope:** Wave 206 P7 final-gate verification (TPAMI 6-week plan §W2). The Wave 206 W2 N=1000 paired-record re-runs are complete on the `omegafold_py310` conda env (torch 2.14.0+cu130, sm_120-capable, resolves the Wave 200 P2 torch 1.13.1 vs Blackwell sm_120 blocker). All 6 P1-P6 outputs exist:
+- `verification_outputs/wave206-p1-lineageflow-n1000.{csv,json}` — R1 HMMER (+116%, p=1.25e-8, Bonf-sig) + R6 foldability N=1000 sweep on real ckpt
+- `verification_outputs/wave206-p2-kanzi-framework-n1000.{csv,json}` — R2 Kanzi framework_inv_proj byte-stable reference (mean_diff = +0.656 Å, d_z = +3.532; baseline_wins direction preserved from Wave 196)
+- `verification_outputs/wave206-p3-flowmol3-n1000.{csv,json}` — R3 FlowMol3 fg_dev N=999+1000 (1-seed byte-stable; 3-seed blocked by DGL 2.4.0, see CLM-068)
+- `verification_outputs/wave206-p4-r-level-refresh.{csv,json}` — R4/R5/R3/R5c paired-t sf-based p-value refresh (Wave 195 P2 / Wave 204 P1 sf() defensive fix; see CLM-069)
+- `verification_outputs/wave206-p5-freqflow-n1000.{csv,json}` — FreqFlow synthetic N=1000 (SYNTHETIC_ONLY, no public ckpt)
+- `verification_outputs/wave206-p6-honest-negative-curve.{csv,json}` — CIFAR-10 RF v4 matched-NFE=50 honest-negative curve (R5b REGRESSES +24-31%, see CLM-070)
+
+**Acceptance gates (all 12 PASS):** (1) all 6 P1-P6 outputs exist ✅; (2) standardized-stats table refreshed (`docs/tables/wave203-p4-standardized-stats.md` Wave 206 W2 annotation) ✅; (3) paper-draft §10.6 R-level table refreshed ✅; (4) `tools/check_claims_consistency.py` "No drift detected." (after §7.17 cross-reference added for CLM-068 + CLM-069) ✅; (5) `pytest -k d4` 33/33 PASS ✅; (6) `ruff check adaptive_reflow/ tests/` 0 errors ✅; (7) `mkdocs build --strict` EXIT=0 ✅; (8) docs/CLAIMS.md R-level entries (CLM-037..062 + CLM-068/069/070) all updated with W2 numbers ✅; (9) Wave 206 W2 audit doc authored at `docs/audit/wave206-w2-n1000-reruns.md` ✅; (10) baseline §R.87 (this row) ✅; (11) CONSOLIDATED §15.NEXT ✅; (12) final commit + tag `v3.0-paper-n1000-reruns` (DO NOT PUSH — user-gated).
+
+**New claims:** CLM-068 (FlowMol3 N=1000 byte-stable reference with HONEST DISCLOSURE of DGL 2.4.0 blocking 3-seed pooled SD), CLM-069 (R-level N=1000 paired-t sf-based p-value canonical form for 4 cells: R4 two_moons W₂, R5 eight_gaussians W₂, R3 CIFAR-10 RF matched-NFE=50, R5c MNIST FM matched-NFE=50), CLM-070 (CIFAR-10 RF v4 honest-negative multi-NFE curve first-class disclosure with single-source-of-truth audit doc + script + 3-source reconciliation).
+
+**ADDITIVE only — does not delete or rewrite any prior §R.1–§R.86 paragraph above.** §R.85 (Wave 203 P3 + P4) + §R.86 (Wave 204 P1 + P2 + P3) disclosures all remain in place; Wave 206 W2 N=1000 refresh is **purely additive** at the audit level (CLM-066 standardized stats table + CLM-067 cluster-robust replication + Wave 204 P1 sf-based p-value form + Wave 204 P2 LineageFlow N=574 cross-adapter replication). The Wave 206 W2 refresh does NOT change any §10.6 R-level inventory number or any §R.85 / §R.86 paragraph. The FlowMol3 3-seed sweep remains blocked on the Wave 109.C §5 code fix path (camera-ready deferred list). The CIFAR-10 RF v4 matched-NFE=50 honest negative is **the load-bearing honest negative for TPAMI §10.4 K3**. No §10.6 number is changed or retracted.

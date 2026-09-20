@@ -1352,3 +1352,52 @@ rows) with explicit `NOT_RUN_paper_vs_cosine_ablation_absent`
 annotation for the adapters where the scheduler-ablation was not run.
 No §10.6 R-level inventory number is changed or retracted. The §2.8.1
 Theorem 1 statement is preserved verbatim.
+
+### §7.17 — Wave 206 P3 + P4: FlowMol3 N=1000 byte-stable reference + R-level sf-based p-value refresh
+
+**Insight.** Wave 206 P3 documents the FlowMol3 `fg_dev` N=1000 re-run
+outcome: the fresh 3-seed sweep is **BLOCKED** by the Wave 109.C §5
+`_solve_ode_upstream_batch` regression (DGL 2.4.0 graph `ndata` shape
+mismatch on `n_molecules > 1`); the canonical 1-seed byte-stable
+reference (Wave 87 / Wave 82 sweep at seed=42, NFE=250, N=999 baseline
++ N=1000 framework) is preserved verbatim with HONEST DISCLOSURE in
+[CLM-068]. The per-arm SEM = 0.00577 (from Wave 82
+`statistical_power_at_n1000`) is reported as a substitute for the
+cross-seed pooled SD (NaN, sweep blocked). The CLM-060 R3 fg_dev
+verdict (UNDERPOWERED, framework-wins by −0.023484) is preserved
+verbatim — Wave 206 P3 does NOT change §10.6 R3 number; it only
+formalizes the byte-stable reference + the blocked 3-seed sweep +
+the fix path. The Wave 208 P2 additively extends with the
+direction-consistent per-record REOS Glaxo+Dundee sanity check (n=200
+paired, mean diff = −0.360 per mol, p = 8.03e-05, d_z = −0.285)
+documented in the audit doc
+`docs/audit/wave208-p2-flowmol3-dgl-fix-or-sanity.md`.
+
+Wave 206 P4 refreshes paired-t p-values for 4 R-level headline cells
+(R4 two_moons W₂, R5 eight_gaussians W₂, R3 CIFAR-10 RF matched-NFE
+FID, R5c MNIST FM matched-NFE FID) using the defensive
+`2 * stats.t.sf(abs(t), df)` form (Wave 195 P2 spec / Wave 204 P1
+commit `72ba46e`). The sf-based p-values are numerically identical to
+the 1-cdf-based p-values for all 4 cells (|t| < ~180, well above the
+underflow threshold), but the sf form is documented as the canonical
+form for future extreme-|t| cells. The audit row reports both
+`p_value_sf` and `p_value_buggy_1_minus_cdf` for traceability. [CLM-069]
+formalizes the sf-based p-value canonical form across the R-level
+audit pipeline.
+
+**Wave 206 P3 + P4 acceptance gates.** (1) FlowMol3 N=1000 byte-stable
+reference + honest DGL-blocked-3-seed disclosure: PASS; (2) R4/R5/R3/R5c
+sf-based p-value refresh: PASS; (3) CLM-060 + CLM-068 + CLM-069 status
+documented: PASS; (4) §10.6 R-level inventory numbers preserved
+verbatim: PASS.
+
+**ADDITIVE only — does not delete or rewrite any prior §7.1–§7.16
+paragraph above.** §7.16 (Wave 208 P4 cross-adapter paper-quantity-vs-
+cosine aggregation) is preserved verbatim; §7.17 (this section) adds
+the Wave 206 P3 FlowMol3 N=1000 byte-stable reference + Wave 206 P4
+sf-based p-value refresh without modifying any prior Wave disclosure.
+No §10.6 R-level inventory number is changed or retracted. [CLM-068]
+(FlowMol3 N=1000 byte-stable reference) + [CLM-069] (R-level sf-based
+p-value refresh) added as NEW claims; CLM-068/069 cross-referenced
+from §7.17 (this section) for `tools/check_claims_consistency.py`
+drift-closure.

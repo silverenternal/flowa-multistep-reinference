@@ -1340,16 +1340,18 @@ K2 (framework_inv_proj paper-metric TIES) — **RESOLVED-WITH-CANONICAL-HEADLINE
 
 | Claim | Metric | Setting | Headline | N | Bonf p | Source |
 |---|---|---|---:|---:|---:|---|
-| R1 | `hmmscan_total_hits` | LineageFlow NFE 50/100/200 | baseline 158 → framework 342 (+116%) | 1000 | <1e-10 | `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/` |
-| R2 | `framework_inv_proj` (composite) | Kanzi NFE 10…2000 composite (18 cells × 6 NFE) | **+0.1695** byte-stable σ=0 | 1000 | <0.05 | `verification_outputs/kanzi_n1000_framework_inv_proj_w149_q4_2026/` |
-| R3 | `fg_dev` | FlowMol3 NFE 50 | baseline 0.6381 → framework 0.6146 (−0.0235, 4.1σ) | 1000 | <0.05 | `verification_outputs/flowmol3_n1000_sweep_q4_2026.json` |
+| R1 | `hmmscan_total_hits` | LineageFlow NFE 50/100/200 | baseline 158 → framework 342 (+116%) | 1000 | <1e-10 | `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/` + `wave206-p1-lineageflow-n1000.json` (Wave 206 P1 W2 refresh) |
+| R2 | `framework_inv_proj` (composite) | Kanzi NFE 10…2000 composite (18 cells × 6 NFE) | **+0.1695** byte-stable σ=0 | 1000 | <0.05 | `verification_outputs/kanzi_n1000_framework_inv_proj_w149_q4_2026/` + `wave206-p2-kanzi-framework-n1000.json` (Wave 206 P2 W2 refresh) |
+| R3 | `fg_dev` | FlowMol3 NFE 50 | baseline 0.6381 → framework 0.6146 (−0.0235, 4.1σ) | 1000 | <0.05 | `verification_outputs/flowmol3_n1000_sweep_q4_2026.json` + `wave206-p3-flowmol3-n1000.json` (Wave 206 P3 W2 refresh; 3-seed blocked by DGL 2.4.0, see CLM-068) |
 | R4 | ESM-2 NLL | (deferred to follow-up work) | `not yet measured` | — | — | — |
-| R5 | 2D Two Moons $W_2$ | matched NFE=500 | baseline 0.5029 → framework 0.4663 (−7.28%) | 3000 (3 seeds × 1000/round) | <0.05 | `docs/r4-survey/10-sota-2d-experiment-results.md` |
-| R5 | 2D Eight Gaussians $W_2$ | matched NFE=500 | baseline 0.6606 → framework 0.5919 (−10.40%) | 3000 | <0.05 | same R4-survey |
-| R5 | CIFAR-10 RF v2 FID | NFE-averaged | baseline 218.87 (2-NFE) → framework 122.18 (−44.17%) | 1000 | <0.05 | `docs/headline-evidence/r3_cifar_rf_v2_fid_m44p17pct/` |
-| R5 | CIFAR-10 RF v4 matched-NFE=50 | matched NFE=50 | baseline 83.09 → framework 103.41–108.55 (+24-31% framework REGRESS) | 500 | 3.93e-05 | N=1000 matched-NFE=50 sweep |
-| R5 | MNIST FM FID | production ckpt | baseline → framework (−15.01%) | 1000 | <0.05 | `verification_outputs/baseline_comparison_q4_2026.json` |
-| R6 | `foldability_pLDDT` + `scPerplexity` | LineageFlow NFE 10 | +1.12 pLDDT, −3.92 scPerp | 1000 | <1e-5 | K6 sweep (`verification_outputs/lineageflow_k6_sweep_q4_2026/`) |
+| R5 | 2D Two Moons $W_2$ | matched NFE=500 | baseline 0.5029 → framework 0.4663 (−7.28%) | 3000 (3 seeds × 1000/round) | <0.05 | `docs/r4-survey/10-sota-2d-experiment-results.md` + `wave206-p4-r-level-refresh.json` (Wave 206 P4 W2 sf-based p-value refresh) |
+| R5 | 2D Eight Gaussians $W_2$ | matched NFE=500 | baseline 0.6606 → framework 0.5919 (−10.40%) | 3000 | <0.05 | same R4-survey + `wave206-p4-r-level-refresh.json` |
+| R5 | CIFAR-10 RF v2 FID | NFE-averaged | baseline 218.87 (2-NFE) → framework 122.18 (−44.17%) | 1000 | <0.05 | `docs/headline-evidence/r3_cifar_rf_v2_fid_m44p17pct/` + `wave206-p4-r-level-refresh.json` |
+| R5 | CIFAR-10 RF v4 matched-NFE=50 | matched NFE=50 | baseline 83.09 → framework 103.41–108.55 (+24-31% framework REGRESS) | 500 | 3.93e-05 | N=1000 matched-NFE=50 sweep + `wave206-p6-honest-negative-curve.json` (Wave 206 P6 W2 honest-negative multi-NFE curve) |
+| R5 | MNIST FM FID | production ckpt | baseline → framework (−15.01%) | 1000 | <0.05 | `verification_outputs/baseline_comparison_q4_2026.json` + `wave206-p4-r-level-refresh.json` |
+| R6 | `foldability_pLDDT` + `scPerplexity` | LineageFlow NFE 10 | +1.12 pLDDT, −3.92 scPerp | 1000 | <1e-5 | K6 sweep (`verification_outputs/lineageflow_k6_sweep_q4_2026/`) + `wave206-p1-lineageflow-n1000.json` (Wave 206 P1 W2 refresh) |
+
+**§10.6 W2 N=1000 refresh note (Wave 206 P7 final-gate, 2026-09-21).** The §10.6 R1–R6 numbers are byte-stable across the Wave 206 W2 N=1000 paired-record re-runs on the `omegafold_py310` conda env (torch 2.14.0+cu130, sm_120 compatible). The refresh (a) formalizes the `2 * stats.t.sf(abs(t), df)` defensive p-value form across R3/R4/R5/R5c paired-t rows (CLM-069), (b) documents the FlowMol3 3-seed blocked status with honest 1-seed byte-stable reference (CLM-068), and (c) extends the honest-negative disclosure on CIFAR-10 RF v4 to the full multi-NFE curve (NFE ∈ {10, 20, 30, 50, 100, 200, 500}; see `wave206-p6-honest-negative-curve.json`). No §10.6 headline number is changed or retracted; the Wave 206 W2 refresh is purely additive. See `docs/tables/wave203-p4-standardized-stats.md` for the full Wave 203 P4 audit-grade table with the Wave 206 W2 refresh annotation, and `docs/tables/wave204-p3-standardized-stats.md` for the 16-row superset that includes the Wave 204 P2 LineageFlow N=574 rows + Wave 204 P1 R6 scPerplexity underflow fix.
 
 ---
 

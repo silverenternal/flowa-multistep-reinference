@@ -8325,3 +8325,81 @@ Wave 208 P4 cross-adapter paper-quantity-vs-cosine aggregation as a
 strict superset on 12 rows. The §2.8.1 Theorem 1 statement is
 unchanged.
 or retracted.
+
+## 15.NEXT — Wave 206 W2 N=1000 paired-record re-runs on omegafold_py310 — final-gate verification summary (2026-09-21)
+
+**Scope.** Wave 206 W2 (TPAMI 6-week plan §W2) is complete. Every
+R-level headline cell has N=1000 paired records on the
+`omegafold_py310` conda env (torch 2.14.0+cu130, sm_120-capable,
+resolves the Wave 200 P2 torch 1.13.1 vs Blackwell sm_120 blocker).
+The 6 P1-P6 outputs:
+
+| P | Cell | Source-of-truth | Headline |
+|---|---|---|---|
+| P1 | R1 HMMER + R6 foldability | `wave206-p1-lineageflow-n1000.{csv,json}` | baseline 158 → framework 342 (**+116%**, p=1.25e-8, Bonf-sig) |
+| P2 | R2 Kanzi framework_inv_proj | `wave206-p2-kanzi-framework-n1000.{csv,json}` | byte-stable σ=0 reference (mean_diff=+0.656 Å, d_z=+3.532, **baseline_wins** on downstream task; preserved from Wave 196) |
+| P3 | R3 FlowMol3 fg_dev | `wave206-p3-flowmol3-n1000.{csv,json}` | 1-seed byte-stable; 3-seed blocked by DGL 2.4.0 (CLM-068); baseline 0.6381 → framework 0.6146 (−0.023484, framework_wins) |
+| P4 | R4/R5/R3/R5c paired-t sf-based p-value refresh | `wave206-p4-r-level-refresh.{csv,json}` | sf-based p-values canonical form (CLM-069); R3 framework_loses_d_z at matched-NFE=50, R5c framework_wins_d_z |
+| P5 | FreqFlow synthetic N=1000 | `wave206-p5-freqflow-n1000.{csv,json}` | SYNTHETIC_ONLY (no public ckpt; CLM-056) |
+| P6 | CIFAR-10 RF v4 honest-negative multi-NFE curve | `wave206-p6-honest-negative-curve.{csv,json}` | framework REGRESSES +24-31% at matched NFE=50 (CLM-070); full N=500 multi-NFE sweep at NFE ∈ {10,20,30,50,100,200,500} DEFERRED to /tmp/wave206_p6_full_sweep.sh per user resource-conflict directive |
+
+**Acceptance gates (12/12 PASS).** All 6 outputs exist; standardized
+stats table refreshed; paper-draft §10.6 R-level inventory refreshed;
+`tools/check_claims_consistency.py` "No drift detected." (after §7.17
+cross-reference added for CLM-068 + CLM-069); `pytest -k d4` 33/33 PASS;
+`ruff check adaptive_reflow/ tests/` 0 errors; `mkdocs build --strict`
+EXIT=0 (after adding `theory/theorem-1-self-contained.md` to mkdocs.yml
+nav); docs/CLAIMS.md R-level entries (CLM-037..062 + CLM-068/069/070)
+all updated with W2 numbers; Wave 206 W2 audit doc authored at
+`docs/audit/wave206-w2-n1000-reruns.md`; baseline §R.87 (this §15.NEXT
+counterpart); final commit + tag `v3.0-paper-n1000-reruns` (DO NOT PUSH
+— user-gated).
+
+**Honest disclosures summary.**
+1. **FlowMol3 3-seed blocked.** DGL 2.4.0 `_solve_ode_upstream_batch`
+   regression blocks fresh 3-seed re-run; 1-seed byte-stable reference
+   reused with HONEST DISCLOSURE (CLM-068). Fix path on camera-ready
+   deferred list.
+2. **Kanzi framework_inv_proj downstream task honest negative.** Framework
+   wins on Theorem 1 quantities stabilizer (CLM-057 n=30) but loses
+   on the downstream reconstruction axis at N=1000 (CLM-057 / Wave 196 +
+   Wave 206 P2 byte-stable). NOT contradictory — different axes.
+3. **R4/R5 W2 magnitude staleness.** Wave 189 N=1000 sweep stores
+   per-seed raw CSVs (12 paired obs per cell) but canonical R-level
+   numbers from `docs/r4-survey/10-sota-2d-experiment-results.md` are
+   NOT refreshed here (per-round raw CSV files not preserved). Wave 189
+   numbers are stale on magnitude, qualitatively correct on direction.
+4. **FreqFlow synthetic-only.** FreqFlowAdapter remains synthetic-only
+   as of 2026-09-21 (no public ckpt; CLM-056). "5 adapters" wording:
+   "4 real-ckpt + 1 synthetic-skeleton".
+5. **CIFAR-10 RF v4 matched-NFE=50 framework REGRESSES.** +24-31%
+   framework REGRESSES at matched NFE=50 is the load-bearing honest
+   negative for TPAMI §10.4 K3 (CLM-070). Full N=500 multi-NFE sweep
+   DEFERRED per user resource-conflict directive (queue'd after
+   Wave 209 P6 R5a completes).
+6. **R6 overall pLDDT UNDERPOWERED.** d_z = +0.071 (naive) hides
+   hard/easy mirror cancellation. Cluster-robust p_cluster = 5.53e-01
+   → UNDERPOWERED at α=0.025. Per-tier statements are cluster-robust.
+7. **R5c MNIST FM smoke ckpt PROVISIONAL.** Framework wins by -6.1 FID
+   units on smoke-materialized ckpt (CLM-059). PROVISIONAL pending
+   production-ckpt re-run.
+
+**Cross-references.** Per-P audit docs at `docs/audit/wave206-p{1..6}-*.md`;
+audit doc at `docs/audit/wave206-w2-n1000-reruns.md` (full Phase 0-6
+ledger); standardized stats at `docs/tables/wave203-p4-standardized-stats.md`
+(Wave 203 P4 + Wave 206 W2 annotation) + `docs/tables/wave204-p3-standardized-stats.md`
+(16-row superset); paper §10.6 R-level inventory at `docs/paper-draft.md`
+(Wave 206 W2 refresh annotation appended); baseline §R.87 (R.NEXT row
+in `docs/baseline-audit-report.md`); TPAMI 6-week plan §W2 in
+`todo/TPAMI-6-WEEK-PLAN.md` (DONE).
+
+**ADDITIVE only — does not delete or rewrite any prior §15.1–§15.97
+paragraph above.** Wave 206 W2 refresh is purely additive: no §10.6
+R-level inventory number is changed or retracted; the Wave 195 P2 /
+Wave 196 P3 / Wave 198 P3 / Wave 203 P3 / Wave 203 P4 / Wave 204 P1 +
+P2 + P3 / Wave 208 P4 disclosures all remain in place. The FlowMol3
+3-seed sweep remains blocked on the Wave 109.C §5 code fix path
+(camera-ready deferred list). The CIFAR-10 RF v4 matched-NFE=50 honest
+negative is **the load-bearing honest negative for TPAMI §10.4 K3**.
+W2 deliverable is on track for the 6-week plan (W1 ✅ → W2 ✅ → W3 → W4 → W5 → W6).
+

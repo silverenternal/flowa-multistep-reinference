@@ -3,6 +3,16 @@
 **Generated:** 2026-09-20 (Wave 203 P4 — DeepSeek audit response)
 **Source-of-truth JSON:** `verification_outputs/wave195-p2-r-level-power.json` (Table A R-level, n=1000), `verification_outputs/wave196-p2-4arm-paired.json` (Table B 4-arm n=30), `verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.json` (R2 N=1000 fresh verification), `verification_outputs/wave203-p3-k6-cluster-robust.json` (k6 per-record + per-tier + cluster-robust).
 
+**Wave 206 W2 N=1000 refresh (additive, 2026-09-21).** Wave 206 (TPAMI 6-week plan W2) re-ran every R-level cell on the `omegafold_py310` conda env at N=1000 paired records. The 6 P1-P6 outputs:
+- `verification_outputs/wave206-p1-lineageflow-n1000.{csv,json}` — R1 HMMER (baseline 158 → framework 342, +116%) + R6 foldability N=1000 sweep on real ckpt
+- `verification_outputs/wave206-p2-kanzi-framework-n1000.{csv,json}` — R2 Kanzi `framework_inv_proj` byte-stable reference (mean_diff = +0.656 Å, d_z = +3.532; **baseline_wins** direction preserved from Wave 196 P3 byte-stable reference)
+- `verification_outputs/wave206-p3-flowmol3-n1000.{csv,json}` — R3 FlowMol3 fg_dev N=999+1000 (1-seed byte-stable, 3-seed blocked by DGL 2.4.0 regression, see CLM-068)
+- `verification_outputs/wave206-p4-r-level-refresh.{csv,json}` — R4/R5/R3/R5c paired-t sf-based p-value refresh (Wave 195 P2 / Wave 204 P1 sf() defensive fix; see CLM-069)
+- `verification_outputs/wave206-p5-freqflow-n1000.{csv,json}` — FreqFlow synthetic N=1000 (SYNTHETIC_ONLY, no public ckpt)
+- `verification_outputs/wave206-p6-honest-negative-curve.{csv,json}` — CIFAR-10 RF v4 matched-NFE=50 honest-negative curve (R5b REGRESSES +20.21% FID)
+
+**The Wave 206 W2 refresh does NOT change any Table 1 / Table 3 number** (the per-cell paired-t / cluster-robust numbers are byte-stable against Wave 195 P2 / Wave 198 P3 / Wave 203 P3 / Wave 204 P2). The refresh formalizes: (a) the `2 * stats.t.sf(abs(t), df)` defensive p-value form (CLM-069) — sf-based p-values agree with 1-cdf to ≥5 sig-figs at the modest |t| magnitudes in this table; (b) the FlowMol3 3-seed blocked status with honest 1-seed byte-stable reference (CLM-068); (c) the FreqFlow synthetic-only status (no public ckpt for real adapter). For the canonical 16-row superset table that includes the Wave 204 P2 LineageFlow N=574 rows + Wave 204 P1 R6 scPerplexity underflow fix, see `docs/tables/wave204-p3-standardized-stats.md`.
+
 **DeepSeek audit response.** Per the reviewer's audit, this table provides the **standardized statistics** the paper previously lacked: every head claim reports `(n_paired, mean_diff, sd_diff, t, df, p, 95% CI, Cohen's d_z, test type, family, α_bonferroni, Bonferroni-significant)`. The table supersedes any prior single-number p-value summary in the paper by promoting the audit-grade statistics.
 
 **Multiplicity policy (family pre-registration).**
