@@ -10,7 +10,7 @@ Standard ODE solvers for flow matching treat the entire trajectory with uniform 
 
 ## 1 Introduction
 
-Flow matching [Lipman et al. 2023] and Rectified Flow [Liu et al. 2022] define generation as the integration of a learned velocity field $v_\theta(x,t)$ along a single ordinary differential equation, and the released checkpoints of 2024–2026 — LineageFlow (ICML 2026), Kanzi (ICLR 2026), FlowMol3 (NeurIPS 2024), the open DDPM++/RF UNet weights, and the MNIST flow matching recipe — ship as frozen parameters $\theta$. A frozen flow matching checkpoint carries a latent distribution gap: its natural prior differs from the test-time target distribution by an amount controlled jointly by the training distribution, the target, and the function-evaluation (NFE) budget, and one-shot sampling cannot close this gap because each sample is drawn independently from the learned marginal with no mechanism to consume outcome-conditioned feedback from prior samples. The gap is structural rather than numerical, and no published framework schedules the noise-and-step budget across inference rounds as a function of a convergence-theory witness.
+Flow matching [Lipman et al. 2023] and Rectified Flow [Liu et al. 2022] define generation as the integration of a learned velocity field $v_\theta(x,t)$ along a single ordinary differential equation — standard ODE solvers treat this trajectory with uniform boundary conditions, ignoring the local geometric structure of the velocity field — and the released checkpoints of 2024–2026 — LineageFlow (ICML 2026), Kanzi (ICLR 2026), FlowMol3 (NeurIPS 2024), the open DDPM++/RF UNet weights, and the MNIST flow matching recipe — ship as frozen parameters $\theta$. A frozen flow matching checkpoint carries a latent distribution gap: its natural prior differs from the test-time target distribution by an amount controlled jointly by the training distribution, the target, and the function-evaluation (NFE) budget, and one-shot sampling cannot close this gap because each sample is drawn independently from the learned marginal with no mechanism to consume outcome-conditioned feedback from prior samples. The gap is structural rather than numerical, and no published framework schedules the noise-and-step budget across inference rounds as a function of a convergence-theory witness.
 
 Prior work addresses three disjoint layers of the inference surface. Solver-level acceleration (DPM-Solver++ [Lu et al. 2022], EDM [Karras et al. 2022], UniPC [Zhao et al. 2023], Dormand–Prince RK45) reduces the number of function evaluations per sample but operates on a fixed marginal and does not consume outcome-conditioned feedback across samples. Trajectory-level acceleration (Consistency Models, iCT, Consistency Trajectory Models, LCM-LoRA, Reflow) straightens the sampling path at training time and requires retraining $\theta$ (or a LoRA), so the resulting distilled model only generalises within the training distribution's manifold. Re-inference alpha-blending (Sabour et al. 2024; Fast-DLLM; AB-Cache; LeDiFlow) consumes outcome-conditioned feedback across rounds but with a hand-set or ramp-shaped per-round blending factor $\beta$ and no convergence-theory witness feeding back into the next round's noise decision, leaving the loop's behaviour dependent on operator tuning rather than on the checkpoint's structure. None of these layers occupies the position at which FlowA intervenes.
 
@@ -30,6 +30,12 @@ We validate the framework on six R-level cells spanning protein (LineageFlow, Ka
 ---
 
 ## 2 Method
+
+Standard ODE solvers for flow matching treat the entire trajectory with
+uniform boundary conditions, ignoring the local geometric structure of
+the velocity field; the restatement below packages that assumption into
+Theorem 1's bounded-Lipschitz convergence bound so the paper-quantity
+schedulers can replace it.
 
 This section restates Theorem 1 (the bounded-Lipschitz convergence
 bound that the framework's four paper quantities $(A_g, B_g, C_g,

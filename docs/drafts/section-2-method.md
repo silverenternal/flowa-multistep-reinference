@@ -1,5 +1,11 @@
 # §2 Method — Theorem 1 Restatement, Proof Sketch, Algorithmic Interpretation
 
+Standard ODE solvers for flow matching treat the entire trajectory with
+uniform boundary conditions, ignoring the local geometric structure of
+the velocity field; the restatement below packages that assumption into
+Theorem 1's bounded-Lipschitz convergence bound so the paper-quantity
+schedulers can replace it.
+
 **Scope.** This section restates Theorem 1 (the bounded-Lipschitz
 convergence bound that the framework's four paper quantities
 $(A_g, B_g, C_g, e_\rho)$ imply) in a self-contained form so that the
