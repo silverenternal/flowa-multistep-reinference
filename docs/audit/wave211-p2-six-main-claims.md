@@ -21,7 +21,7 @@ evidence stream in §3 of the paper.
 | # | Claim | Evidence | Approval verb |
 |---|---|---|---|
 | (i) | **FlowA framework**: training-free re-inference framework that schedules multi-round ODE solver boundary conditions via a Bolley–Guilin–Villani-type concentration bound, replacing the uniform-boundary assumption of standard ODE solvers with per-record posterior-geometry-driven scheduling. | Theorem 1 (4 quantities), §1 paragraph on Theorem 1 | "propose" |
-| (ii) | **CodimensionSheetScheduler**: per-record adaptive controller that consumes the four paper quantities $(A_g, B_g, C_g, e_\rho)$ directly as scheduler inputs to close the gap between heuristic alpha-blending and convergence-theory-driven re-inference. | §3.4 A2 (CodimensionSheetScheduler) | "introduce" |
+| (ii) | **CodimensionSheetScheduler**: per-record adaptive controller on $(A_g, B_g, C_g)$; $e_\rho$ is consumed by `BoundedMergeOperator` (merge floor), `EvidenceDrivenScheduler` (`eps_implicit` uplift + Lemma 4 regime gate), and `PaperQuantityAttractorInversion` (BRAI attractor inversion). | §3.4 A2 (CodimensionSheetScheduler) | "introduce" |
 | (iii) | **Cross-budget NFE compression**: 2.5–10× NFE compression at matched sample quality across six R-level cells; matched-NFE image-domain regime is a first-class boundary where the framework does not win. | §3.5 efficiency table, §3.6 R5b boundary | "establish" |
 
 > **Wave 213 P1 correction.** The original claim (iii) used the word
