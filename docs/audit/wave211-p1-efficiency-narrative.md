@@ -22,6 +22,33 @@ engineering-optimisation breakdown.
   adds only constant-overhead Python work (scheduler state, paper
   quantities) that is GPU-portable and can be amortised.
 
+> **Additive clarification (Wave 213 P1, speedup semantics).** The
+> "speedup" reported in the paper headline (§1, §3.3, §3.6, claim
+> iii) refers to **NFE compression at cross-budget**, NOT to
+> wall-clock speedup and NOT to FLOPs reduction. Specifically:
+> (a) on the cross-budget regime (R5b CIFAR-10 RF, framework NFE=50
+> vs baseline NFE=500) the framework achieves matched quality
+> (FID ~155) with **≈10× fewer function evaluations**, and total
+> FLOPs are reduced 10× (300 → 30 GFLOPs/sample) because NFE is
+> halved 10×; (b) on the matched-NFE regime the framework runs
+> identical FLOPs (the model parameters are unchanged; the
+> framework only re-allocates the per-round NFE budget across
+> restart rounds) and is **1.08× to 26.4× slower wall-clock** per
+> record; (c) on the cross-budget R6 cell the framework uses
+> **3× MORE FLOPs** (45 vs 15 GFLOPs/sample) because the framework
+> runs 150 NFE (3 rounds × 50) to expose quality uplift on the
+> hard-tier foldability records — the framework's value-add on R6
+> is in **quality** not in compute. The "2.5× speedup" wording in
+> §3.6 cross-budget row and §5.5 reviewer-question paragraph is
+> therefore a **wall-clock-ratio reading of the cross-budget
+> speedup** (baseline wall = 343 ms at NFE=500 vs framework wall =
+> 930 ms at NFE=50, giving 0.37× net wall-clock or equivalently
+> ≈2.7× slowdown per step that is amortised by the 10× NFE
+> saving). The headline "2.5–10× speedup at matched quality" is
+> the **NFE-compression reading** of this same regime. Both
+> readings are correct, but they refer to different units (NFE
+> vs wall-clock) and must not be conflated.
+
 ## Para 1 — Matched-compute definition
 
 Per §5.4 (Wave 209 P4 matched-compute definition), the **default

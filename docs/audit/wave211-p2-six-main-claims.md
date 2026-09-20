@@ -22,7 +22,21 @@ evidence stream in §3 of the paper.
 |---|---|---|---|
 | (i) | **FlowA framework**: training-free re-inference framework that schedules multi-round ODE solver boundary conditions via a Bolley–Guilin–Villani-type concentration bound, replacing the uniform-boundary assumption of standard ODE solvers with per-record posterior-geometry-driven scheduling. | Theorem 1 (4 quantities), §1 paragraph on Theorem 1 | "propose" |
 | (ii) | **CodimensionSheetScheduler**: per-record adaptive controller that consumes the four paper quantities $(A_g, B_g, C_g, e_\rho)$ directly as scheduler inputs to close the gap between heuristic alpha-blending and convergence-theory-driven re-inference. | §3.4 A2 (CodimensionSheetScheduler) | "introduce" |
-| (iii) | **Cross-budget NFE compression**: 2.5–10× speedup at matched sample quality across six R-level cells; matched-NFE image-domain regime is a first-class boundary where the framework does not win. | §3.5 efficiency table, §3.6 R5b boundary | "establish" |
+| (iii) | **Cross-budget NFE compression**: 2.5–10× NFE compression at matched sample quality across six R-level cells; matched-NFE image-domain regime is a first-class boundary where the framework does not win. | §3.5 efficiency table, §3.6 R5b boundary | "establish" |
+
+> **Wave 213 P1 correction.** The original claim (iii) used the word
+> "speedup" which conflates two different units. The "2.5–10×"
+> headline is the **NFE-compression reading** (the framework reaches
+> matched FID ~155 with 10× fewer function evaluations on R5b
+> CIFAR-10 RF). The "2.5× speedup" mentioned in §3.6 cross-budget
+> row and §5.5 reviewer-question paragraph is the **wall-clock-ratio
+> reading** (baseline wall = 343 ms at NFE=500 vs framework wall =
+> 930 ms at NFE=50, giving 0.37× net wall-clock or ≈2.7× slowdown
+> per step that is amortised by the 10× NFE saving). Both readings
+> are correct but refer to different units; the claim (iii) wording
+> has been corrected to "NFE compression" to be unambiguous.
+> See `docs/audit/wave213-p1-speedup-semantics.md` for the full
+> per-cell breakdown.
 | (iv) | **Cluster-robust per-record validation**: scPerplexity framework-WINS uniformly across all tiers + hard-tier pLDDT framework-WINS selectively, with monotone `hard > medium > easy` pattern in Cohen's d_z replicated on two protein adapters. | §3.2 Tables 3.1 and 3.2, §3.4 cross-adapter replication | "validate" |
 | (v) | **Five-arm cumulative-add ablation** (A0–A4): isolates cosine annealing ramp from paper-quantity-driven schedulers (CodimensionSheetScheduler, BoundedMergeOperator, EvidenceDrivenScheduler); attributes protein hard-tier uplift to paper-quantity schedulers and 2D-quality reduction to cosine ramp. | §3.4 Table 3.3 (paper) | "provide" |
 | (vi) | **Eight-dimension boundary characterization** (K1–K8): structural scope statements delineating where FlowA applies and where it does not, including flow-matching-only applicability, NFE-regime applicability, and protein-family cluster dependence. | §4 Limitations draft (8 dimensions) | "characterize" |
