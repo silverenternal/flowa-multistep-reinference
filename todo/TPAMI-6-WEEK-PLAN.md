@@ -224,6 +224,37 @@ The 6-week plan executes the data prep in priority order: statistical rigor (W1 
 
 **Deliverable:** submission package ready for TPAMI upload
 
+### W6.9 — Performance optimization (Wave 210 P4 actionable wins) [MEDIUM]
+
+**Goal:** Reduce CPU load average by ~60 % and raise GPU 1 utilisation by ~55-70 pp during W4 sweep reruns, without breaking byte-stability or paper claims.
+
+**Source**: `docs/audit/wave210-p4-recommendations.md` (Wave 210 P4 synthesis of P1-P3).
+
+**DO NOW items** (≤2 h cumulative, additive to W6.7 final-gates):
+
+* **DO-1**: Cap `OMP_NUM_THREADS` / `OPENBLAS_NUM_THREADS` / `MKL_NUM_THREADS` to `8` in `scripts/wave206_p5_freqflow_n1000_audit.py:1-40` (15 min, 1-file edit, low risk).
+* **DO-2**: Same OMP pin in 4-arm power scripts: `tools/wave195_p2_r_level_power.py`, `tools/wave195_p3_4arm_power.py`, `tools/wave196_p2_4arm_paired.py`, `tools/wave208_p1_4arm_power.py`, `tools/wave195_p4_theorem1_power.py` (30 min, 5 files, low risk).
+* **DO-3**: Lower `--nfe` default to `25` in `scripts/wave206_p5_freqflow_n1000_audit.py:170` (5 min, 1-line edit, medium risk on per-record L2 magnitudes).
+* **DO-4**: Re-profile PID 3119617 after DO-1 to confirm load average drops from 36.99 → ≤ 15 (10 min, monitoring only).
+
+**DO NEXT items** (11 h cumulative, requires D.4 regression verify):
+
+* **DO-5**: Port `ProjectionFreeExactW2.estimate` to torch (`adaptive_reflow/eval/w2.py:375`, 3 h, low risk).
+* **DO-6**: Port `KernelizedW2.estimate` + bandwidth median to torch (`adaptive_reflow/eval/w2.py:483`, 4 h, medium risk).
+* **DO-7**: Port `energy_distance` to torch on the bootstrap resample loop (`adaptive_reflow/eval/twodim_fm_evaluator.py:313` + `eval/coverage.py`, 2 h, low risk).
+* **DO-8**: Port `_fit_nu_g_grid_gaussian` to torch with `--force-cpu` escape for byte-stable path (`adaptive_reflow/eval/fid_theorem_aligned.py:395`, 2 h, medium risk).
+
+**DEFER** (8 items, ≥10 h or external block): FreqFlow torch port (24 h, blocked on ckpt release), `_frechet_distance_closed_form`, `_sqrtm_with_eigenclip`, `coverage_score`, `lipschitz_diagnostic`, `_generate_endpoints`, `transition_probability_matrix`, `per_position_freq_l1`. None block TPAMI submission.
+
+**NEVER** (would break CLM-066 byte-stability): port `adaptive_reflow/theory/paper_quantities.py` to torch; modify `adapters/freqflow.py:_synthetic_velocity_field` away from CPython `math`. Cache-on-GPU for paper quantities is allowed as a separate DEFER affordance.
+
+**Acceptance**:
+- D.4 byte-stable regression suite: 33/33 PASS after each DO NEXT port (paper quantities are CPU-only; W2 + energy_distance + nu_g grid accept O(ε) noise).
+- W4.4 + W5.5 + W5.6 sweep reruns: ≥ 3× wallclock improvement; GPU 1 sustained 60-75 % util during bootstrap and W2 calls.
+- Load average (currently 36.99): drops to ≤ 15 after DO-1 + DO-2.
+
+**Total effort**: 12.5 h (1.5 h DO NOW + 11 h DO NEXT) + 1 h D.4 regression verify = **13.5 h end-to-end**. Recommended as the first half-day of post-W6 work to unblock GPU 1 for future waves.
+
 ---
 
 ## Critical risks (per `RISK-REGISTER.md`)
