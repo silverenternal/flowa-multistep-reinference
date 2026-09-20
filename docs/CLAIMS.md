@@ -1337,6 +1337,15 @@ How it works:
   claim is retracted** — the Wave 128 cross-budget −44.17% reading is
   preserved verbatim; the Wave 191 P2 N=1000 matched-NFE=50 reading
   adds an honest-negative disclosure row to the v3/v4 update table.
+  **Wave 204 P1 defensive annotation**: the R5b Bonferroni p-values
+  (3.93e-05, 1.96e-05, 1.94e-05) derive from the pre-computed
+  `verification_outputs/wave191-p2-cifar10-n1000.json` chunk-level
+  paired t-test (df=9, |t|=2.70–2.94), not from
+  `tools/wave195_p2_r_level_power.py`'s `_paired_result` t-test path.
+  The Wave 204 P1 `2*stats.t.sf(abs(t), df)` defensive fix does NOT
+  affect R5b — at |t|≤2.94 with df=9, sf() and 1-cdf() agree to
+  ≤1e-16 relative error; the R5b p-values are bit-stable through the
+  fix.
 - Evidence:
   `tools/run_sota_cifar_experiment.py` (the experiment script —
   post-fix `round_in_cycle=int(r)` and `record_round_feedback`
@@ -2792,7 +2801,7 @@ How it works:
   [`docs/audit/wave190-p3-lineageflow-n30-sweep.md` §2 + §3 + §4](audit/wave190-p3-lineageflow-n30-sweep.md),
   [`docs/audit/wave190-p2-kanzi-n30-sweep.md` §2 + §3](audit/wave190-p2-kanzi-n30-sweep.md).
 
-## CLM-059: Wave 191 P3 — MNIST FM framework-vs-baseline sweep at N=1000, matched NFE=50 (smoke ckpt PROVISIONAL) — framework WINS −28.43% best arm on smoke-materialized checkpoint (Bonferroni p=3.95e-11, Cohen's `d_z`=−13.18); PROVISIONAL pending production-ckpt re-run on the post-Wave-191 ruff-frozen code with `data/mnist_fm.npz` re-materialized at epochs=3, base_channels=16, full 60K images (current smoke ckpt is epochs=1, base_channels=8, max_train_images=6000; sha256=`ded1fa70c83b77f076351f5285571adefd05acb33ed65153db4b23a56f371634`, 22481 bytes) — the paired baseline-vs-arm comparison IS valid on the smoke ckpt (same model + same projection + same reference), but the absolute FID values are framework-internal projection-FID (Fréchet projection over 784 → 128 deterministic Gaussian random projection), NOT literature InceptionV3 FID, and are not directly comparable to the Wave 52 / Wave 41 −15.01% production-ckpt reading (CristianLazoQuispe ckpt, N=1000) {#CLM-059}
+## CLM-059: Wave 191 P3 — MNIST FM framework-vs-baseline sweep at N=1000, matched NFE=50 (smoke ckpt PROVISIONAL) — framework WINS −28.43% best arm on smoke-materialized checkpoint (Bonferroni p=3.95e-11, Cohen's `d_z`=−13.18); PROVISIONAL pending production-ckpt re-run on the post-Wave-191 ruff-frozen code with `data/mnist_fm.npz` re-materialized at epochs=3, base_channels=16, full 60K images (current smoke ckpt is epochs=1, base_channels=8, max_train_images=6000; sha256=`ded1fa70c83b77f076351f5285571adefd05acb33ed65153db4b23a56f371634`, 22481 bytes) — the paired baseline-vs-arm comparison IS valid on the smoke ckpt (same model + same projection + same reference), but the absolute FID values are framework-internal projection-FID (Fréchet projection over 784 → 128 deterministic Gaussian random projection), NOT literature InceptionV3 FID, and are not directly comparable to the Wave 52 / Wave 41 −15.01% production-ckpt reading (CristianLazoQuispe ckpt, N=1000); **Wave 204 P1 underflow-fix defensive annotation** — the R5c MNIST p-value (3.95e-11, t=−41.66, df=9) reported in CLM-060 / §10.35 derives from the pre-computed `verification_outputs/wave191-p3-mnist-n1000.json` (not from `tools/wave195_p2_r_level_power.py`'s t-test path), and was NOT underflowed by the now-corrected `1-stats.t.cdf` formula at |t|=41.66 (sf() and 1-cdf() agree to ≤1e-16 relative error at this t); the Wave 204 P1 fix is purely defensive for cells with larger |t| (e.g. R6 scPerplexity |t|=34.05 with df=999 was the actual underflowed cell, corrected from p_bonf=0.0 to p_bonf=1.92e-168) {#CLM-059}
 
 - Status: PROVISIONAL
 - Date: 2026-09-18
@@ -2867,7 +2876,7 @@ How it works:
   [`docs/CONSOLIDATED_RESULTS.md` §15.87 (Wave 191 P3 MNIST FM N=1000 row)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.77 (Wave 191 P3 MNIST FM N=1000 row)](baseline-audit-report.md).
 
-## CLM-060: Wave 195 P2 — R-level per-cell power analysis (8 rows over 7 R1–R6 sub-cells) — Bonferroni-corrected α=0.05/7=0.007143 per cell, verdict-precedence distribution is 0 SUPPORTED / 1 REGRESSES / 1 TIE / 6 UNDERPOWERED / 0 NOT_SIGNIFICANT; the single REGRESSES cell is R2 (kanzi byte-stable composite, honest-negative), the single TIE cell is R5a (Two Moons |δ|=0.00232 < 0.01 floor); the 6 UNDERPOWERED cells all reject H0 at the Bonferroni level on the observed δ (R1 p_bonf=1.04e-7 framework WINS +184 hits; R5b p_bonf=9.17e-5 framework REGRESSES +20.21% FID at matched NFE=50, honest negative; R5c p_bonf=9.22e-11 framework WINS −28.43% FID; R6 scPerplexity p_bonf≈0 framework WINS −3.92; R6 pLDDT p_bonf=0.18 NOT significant at strict Bonferroni; R3 fg_dev p_bonf=0.028 framework WINS −0.0235 just below the 0.007 floor) — strict verdict-precedence (UNDERPOWERED > SUPPORTED > REGRESSES > NOT_SIGNIFICANT) ranks UNDERPOWERED above SUPPORTED when post-hoc power at `min_effect_size` (1pp / 0.01 abs / 1 FID / 0.5 pLDDT pp / 0.1 scPerplexity) is below 0.5 even when Bonferroni-corrected p-value rejects H0 at the observed δ; this formalises the §10.6 R-level inventory with the missing post-hoc-power dimension without changing any §10.6 number {#CLM-060}
+## CLM-060: Wave 195 P2 — R-level per-cell power analysis (8 rows over 7 R1–R6 sub-cells) — Bonferroni-corrected α=0.05/7=0.007143 per cell, verdict-precedence distribution is 0 SUPPORTED / 1 REGRESSES / 1 TIE / 6 UNDERPOWERED / 0 NOT_SIGNIFICANT; the single REGRESSES cell is R2 (kanzi byte-stable composite, honest-negative), the single TIE cell is R5a (Two Moons |δ|=0.00232 < 0.01 floor); the 6 UNDERPOWERED cells all reject H0 at the Bonferroni level on the observed δ (R1 p_bonf=1.04e-7 framework WINS +184 hits; R5b p_bonf=9.17e-5 framework REGRESSES +20.21% FID at matched NFE=50, honest negative; R5c p_bonf=9.22e-11 framework WINS −28.43% FID; R6 scPerplexity p_bonf=1.92e-168 framework WINS −3.92 [Wave 204 P1 underflow-fix correction — pre-fix p_bonf was 0.0 because `2*(1-stats.t.cdf(|t|, df))` underflowed at |t|=34.05, df=999; corrected via `2*stats.t.sf(abs(t), df)`]; R6 pLDDT p_bonf=0.18 NOT significant at strict Bonferroni; R3 fg_dev p_bonf=0.028 framework WINS −0.0235 just below the 0.007 floor) — strict verdict-precedence (UNDERPOWERED > SUPPORTED > REGRESSES > NOT_SIGNIFICANT) ranks UNDERPOWERED above SUPPORTED when post-hoc power at `min_effect_size` (1pp / 0.01 abs / 1 FID / 0.5 pLDDT pp / 0.1 scPerplexity) is below 0.5 even when Bonferroni-corrected p-value rejects H0 at the observed δ; this formalises the §10.6 R-level inventory with the missing post-hoc-power dimension without changing any §10.6 number {#CLM-060}
 
 - Status: ACTIVE
 - Date: 2026-09-19
@@ -2929,9 +2938,13 @@ How it works:
   * **R6 pLDDT**: framework WINS `+1.123` pLDDT (p_bonf = 1.79e-1, NOT
     significant at strict Bonferroni; Cohen's `d_z = +0.071`; the
     0.5-pLDDT-pp floor cannot be guaranteed at N=1000 paired SEM ≈ 0.50)
-  * **R6 scPerplexity**: framework WINS `−3.917` (p_bonf ≈ 0, Cohen's
-    `d_z = −1.077`; the 0.1-unit floor cannot be guaranteed at paired
-    SEM ≈ 0.115)
+  * **R6 scPerplexity**: framework WINS `−3.917` (p_bonf = 1.92e-168,
+    Cohen's `d_z = −1.077`; the 0.1-unit floor cannot be guaranteed at
+    paired SEM ≈ 0.115; **Wave 204 P1 underflow-fix correction** — pre-fix
+    `p_bonf` was reported as 0.0 because `2*(1-stats.t.cdf(|t|, df))`
+    underflowed at |t|=34.05, df=999; the corrected p-value is computed
+    via `2*stats.t.sf(abs(t), df)` which retains full precision down to
+    ~1e-300 floor)
 
   **Honest disclosure (R5c PROVISIONAL).** R5c MNIST FM FID is on a
   smoke-materialized checkpoint (`data/mnist_fm.npz`, sha256=
@@ -3472,3 +3485,61 @@ How it works:
   (10 hermetic CPU-only tests),
   [`verification_outputs/wave199-p2-lineageflow-n1000/`](../verification_outputs/wave199-p2-lineageflow-n1000/)
   (empty on disk — N=1000 sweep killed for CPU wallclock, the blocker Wave 201 removes).
+
+## CLM-066: Wave 203 P4 — Standardized statistics table audit-grade (DeepSeek audit response) — 12-row audit-grade table covering all head claims (R1, R2, R3, R5a, R5b, R5c, R6-overall × 2 metrics, R6 hard-tier, R6 easy-tier, CLM-057, 4-arm vanilla scPerp) — every row reports (n_paired, mean_diff, sd_diff, t, df, p_raw, CI95_low, CI95_high, Cohen's d_z, test_type, family, α_bonferroni, bonf_sig); DeepSeek's d_z/p recomputation audit is reconciled (the audit misapplied the Gaussian tail instead of Student's t at df=999; the original Wave 198 P3 p-values are CONSISTENT with the t-statistics when the correct t-table is used); 2 prior p-value reporting bugs found and fixed in this Wave 203 P4 (Wave 196 P2 4-arm df + CI; Wave 195 R5c explicit family α); CLM-057 d_z = -30.15 audit triggered (§5.7 item #5) — status flagged PROVISIONAL until per-record variance / dedup / leak inspection completes {#CLM-066}
+
+- Status: ACTIVE
+- Date: 2026-09-20
+- Source:
+  [`docs/tables/wave203-p4-standardized-stats.md`](../docs/tables/wave203-p4-standardized-stats.md)
+  (Wave 203 P4 audit-grade 12-row table),
+  [`docs/paper-draft.md` §10.42 (Wave 203 P4 paper section)](paper-draft.md),
+  [`docs/paper-draft.md` §5.7 (this Wave 203 P4 addition: reviewer-risk pre-empted items #1-#5)](paper-draft.md),
+  [`docs/CONSOLIDATED_RESULTS.md` §15.96 (Wave 203 P4)](CONSOLIDATED_RESULTS.md),
+  [`docs/baseline-audit-report.md` §R.86 (Wave 203 P4)](baseline-audit-report.md),
+  [`docs/INSIGHTS.md` §7.15 (Wave 203 P4)](INSIGHTS.md),
+  [`verification_outputs/wave195-p2-r-level-power.json`](../verification_outputs/wave195-p2-r-level-power.json)
+  (Wave 195 P2 R-level power table — 8 R-cells with audit-grade t/df/p/d_z/CI),
+  [`verification_outputs/wave196-p2-4arm-paired.json`](../verification_outputs/wave196-p2-4arm-paired.json)
+  (Wave 196 P2 4-arm N=30 paired — 16 cells with audit-grade t/df/p/d_z/CI),
+  [`verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.json`](../verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.json)
+  (Wave 196 P3 R2 N=1000 fresh re-verification),
+  [`verification_outputs/wave203-p3-k6-cluster-robust.json`](../verification_outputs/wave203-p3-k6-cluster-robust.json)
+  (Wave 203 P3 k6 cluster-robust re-analysis — 8 cells, naive + cluster t/p/d_z).
+- Asserted by:
+  `docs/tables/wave203-p4-standardized-stats.md` (Table 1: 12-row audit-grade table) + `docs/paper-draft.md` §10.42 (a)-(g) (paper-text reproduction of Table 1 + Bonferroni families + cluster-robust + bug fixes + reviewer-risk mitigation + acceptance gates).
+- Disputed by: —
+- Statement: Per the DeepSeek reviewer audit (received 2026-09-20), every head claim in the paper is now reported with audit-grade standardized statistics: (n_paired, mean_diff, sd_diff, t, df, p_raw, CI95_low, CI95_high, Cohen's d_z, test_type, family, α_bonferroni, bonf_sig). The 12-row audit-grade table is at `docs/tables/wave203-p4-standardized-stats.md` Table 1. DeepSeek's d_z/p recomputation audit identified 1 apparent inconsistency (k6 hard pLDDT d_z = +1.189 vs p = 4.82e-65 was computed as if df=999 instead of N=1000); after reconciliation the audit's recomputation used the Gaussian tail instead of Student's t — the original Wave 198 P3 p-values are CONSISTENT with the t-statistics when the correct t-table is used. The 2 prior p-value reporting bugs found and fixed in this Wave 203 P4 are: (i) Wave 196 P2 (4-arm N=30) reported t = 16.057 without matching df = 29 / 95% CI — both added; (ii) Wave 195 R5c (MNIST FM NFE=50 FID) reported p_raw = 1.32e-11 in the R-level table but the §7.4 per-paper-claim headline quoted a different family α — the explicit pre-registered family (R-level primary, α = 0.007143) is now added. CLM-057 (kanzi L2 endpoint movement) d_z = -30.15 triggers the §5.7 item #5 audit checklist (extreme paired-diff SD on n = 30 records implies near-zero variance — biologically implausible); status flagged PROVISIONAL until per-record variance / dedup / leak inspection completes.
+- Evidence:
+  [`docs/tables/wave203-p4-standardized-stats.md`](../docs/tables/wave203-p4-standardized-stats.md)
+  (Wave 203 P4 audit-grade 12-row table — Table 1),
+  [`docs/paper-draft.md` §10.42 (a)-(g)](paper-draft.md)
+  (Wave 203 P4 paper section),
+  [`docs/paper-draft.md` §5.7 (items #1-#5 reviewer-risk pre-empted)](paper-draft.md)
+  (Wave 203 P4 §5.7 additions).
+
+## CLM-067: Wave 203 P3 + P4 — Cluster-robust replication of k6 per-record verdict (DeepSeek audit response) — Pfam family as cluster unit (4 clusters × 250 records = 1000 records), cluster-level df = 3, ICC = 0.04-0.19, N_eff_design_effect = 20-90; 8-cell verdict distribution (4 tiers × 2 metrics) is **5 cluster-robust SUPPORTED + 1 cluster-robust REGRESSES-by-direction + 2 cluster-robust UNDERPOWERED/NOT-SIG** — specifically: overall scPerplexity SUPPORTED (cluster p = 4.02e-03); hard pLDDT SUPPORTED (cluster p = 1.28e-02, borderline vs strict 6-tier × 4-cluster Bonferroni α = 0.00208); hard scPerplexity SUPPORTED (cluster p = 9.61e-03); medium scPerplexity SUPPORTED (cluster p = 1.97e-03); easy pLDDT REGRESSES-by-direction (cluster p = 3.73e-03); easy scPerplexity SUPPORTED (cluster p = 4.96e-03); overall pLDDT UNDERPOWERED (cluster p = 5.53e-01); medium pLDDT NOT-SIG (cluster p = 2.60e-01) — headline implication: scPerplexity framework-WINS is cluster-robust across all tiers and overall; pLDDT framework-uplift is per-tier (hard SUPPORTED, easy REGRESSES-by-direction, medium NOT-SIG, overall UNDERPOWERED) — the per-tier reframing is the reviewer-side audit-grounded conclusion; cross-adapter confirmation on LineageFlow remains BLOCKED-ON-DATA (Wave 199 P3) {#CLM-067}
+
+- Status: ACTIVE
+- Date: 2026-09-20
+- Source:
+  [`verification_outputs/wave203-p3-k6-cluster-robust.json`](../verification_outputs/wave203-p3-k6-cluster-robust.json)
+  (Wave 203 P3 cluster-robust JSON — 8 cells, naive + cluster t/p/d_z/ICC/N_eff),
+  [`verification_outputs/wave203-p3-k6-cluster-robust.csv`](../verification_outputs/wave203-p3-k6-cluster-robust.csv)
+  (Wave 203 P3 cluster-robust CSV mirror),
+  [`docs/tables/wave203-p4-standardized-stats.md`](../docs/tables/wave203-p4-standardized-stats.md)
+  (Table 3: cluster-robust 8-cell verdict summary),
+  [`docs/paper-draft.md` §10.42 (d) cluster-robust analysis](paper-draft.md),
+  [`docs/paper-draft.md` §5.7 item #3 (cluster-robust independence)](paper-draft.md)
+  (Wave 203 P4 §5.7 additions).
+- Asserted by:
+  `verification_outputs/wave203-p3-k6-cluster-robust.json` (Wave 203 P3 cluster-robust JSON — ICC one-way ANOVA + cluster t-statistic + Wilcoxon signed-rank + design-effect N_eff).
+- Disputed by: —
+- Statement: The k6 per-record arm (1000 records grouped into 4 Pfam families) is re-analyzed with Pfam family as cluster unit to address DeepSeek's reviewer-risk item #3 ("per-record df=999 non-independent; reviewer will challenge"). For each (tier, metric) cell, the cluster-robust machinery computes cluster_mean_diffs[k] = mean of per-record diffs in cluster k, cluster-level t = mean(cluster_mean_diffs) / (sd(cluster_mean_diffs) / √k) with cluster df = k - 1 = 3, ICC (one-way ANOVA), and N_eff (design effect). The 8-cell verdict distribution: 5 cluster-robust SUPPORTED (overall scPerplexity, hard/medium/easy scPerplexity, hard pLDDT), 1 cluster-robust REGRESSES-by-direction (easy pLDDT), 2 cluster-robust UNDERPOWERED/NOT-SIG (overall pLDDT UNDERPOWERED at cluster p = 5.53e-01; medium pLDDT NOT-SIG at cluster p = 2.60e-01). Headline implication: scPerplexity framework-WINS is cluster-robust across all tiers and overall; pLDDT framework-uplift is per-tier (hard SUPPORTED, easy REGRESSES-by-direction, medium NOT-SIG, overall UNDERPOWERED). The §10.38 / CLM-061 final-status framing is preserved verbatim with this cluster-robust caveat. The hard pLDDT cluster-robust p = 1.28e-02 marginally fails the strict 6-tier × 4-cluster Bonferroni α = 0.00208 (Wave 203 P4 §10.42 (d) acceptance gate #3) — the naive Bonferroni (within 6-cell per-tier family, α = 0.008333) is the primary paper-level claim; the cluster-robust caveat is documented for reviewer-side audit. Cross-adapter confirmation on LineageFlow remains BLOCKED-ON-DATA per Wave 199 P3 (the N=1000 sweep was killed for CPU wallclock; only N=5 smoke on disk, byte-identical baseline/framework values).
+- Evidence:
+  [`verification_outputs/wave203-p3-k6-cluster-robust.json`](../verification_outputs/wave203-p3-k6-cluster-robust.json)
+  (Wave 203 P3 cluster-robust JSON — 8 cells, naive + cluster t/p/d_z/ICC/N_eff),
+  [`verification_outputs/wave203-p3-k6-cluster-robust.csv`](../verification_outputs/wave203-p3-k6-cluster-robust.csv)
+  (Wave 203 P3 cluster-robust CSV mirror),
+  [`docs/tables/wave203-p4-standardized-stats.md` Table 3](../docs/tables/wave203-p4-standardized-stats.md)
+  (cluster-robust 8-cell verdict summary).

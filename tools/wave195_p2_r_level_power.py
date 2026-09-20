@@ -154,7 +154,10 @@ def _paired_result(
     ci_lo, ci_hi = _ci_95(delta, delta_se)
     if math.isfinite(delta_se) and delta_se > 0.0:
         t_stat = delta / delta_se
-        p_raw = float(2.0 * (1.0 - stats.t.cdf(abs(t_stat), df=n_pairs - 1)))
+        # Wave 204 P1 fix: use stats.t.sf() instead of (1 - stats.t.cdf()) to avoid
+        # underflow when |t_stat| > ~180 (df=9); sf() uses the asymptotic series and
+        # retains full precision down to p ≈ 1e-300 floor.
+        p_raw = float(2.0 * stats.t.sf(abs(t_stat), df=n_pairs - 1))
     else:
         p_raw = 1.0 if abs(delta) > 0.0 else 0.0  # diff exactly 0 → p=1.0
     p_bonf = _bonferroni(p_raw, N_CELLS)
