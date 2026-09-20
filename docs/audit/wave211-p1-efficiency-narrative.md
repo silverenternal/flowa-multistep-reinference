@@ -8,10 +8,16 @@ engineering-optimisation breakdown.
 ## TL;DR
 
 - **At matched NFE** the framework runs slower per sample on most
-  cells (R5b CIFAR 24.6x, R3 FlowMol3 1.08x, R1 HMMER 1.12x, R5a 2D toy
-  ~1.05x). The slowdown comes from per-round scheduler overhead,
-  paper-quantity computation, the merge operator's `e_rho` floor
-  check, and restart-blend `LinearBlender` setup.
+  cells (R5b CIFAR 24.6x, R3 FlowMol3 1.08x, R5a 2D toy ~1.05x,
+  R7 FreqFlow 26.4x). The slowdown comes from per-round scheduler
+  overhead, paper-quantity computation, the merge operator's `e_rho`
+  floor check, and restart-blend `LinearBlender` setup. (R1
+  LineageFlow+HMMER pipeline is a two-stage cell where Stage A is
+  framework-orchestrated FM forward and Stage B is external `hmmscan`
+  post-processing; the 1.12x pipeline-level ratio is NOT direct
+  evidence of framework overhead and is excluded from this list —
+  see `docs/audit/wave213-p3-hmmer-mechanism.md` for the
+  Stage A/B decomposition.)
 - **At cross-budget NFE** the framework reaches the same target
   quality with substantially fewer total forward passes, and the
   NFE savings dominate the per-step overhead: e.g. R5b CIFAR at
@@ -76,7 +82,7 @@ and delivers equal-or-better quality at lower NFE.
 | R2   | kanzi_inv_proj | 50 | 50 (single-pass) | 8.82 ms | 3.17 ms | **0.36x** | 0.6 GiB | 1.7 GiB | 25.0 GFLOPs |
 | R5a  | twodim_fm (two_moons) | 50 | 50 (3 rounds x 16.67) | 4.50 ms | 5.10 ms | **1.13x** | n/a | n/a | <0.1 GFLOPs |
 | R7   | freqflow | 50 | 50 (3 rounds) | 34.30 ms | 907.00 ms | **26.4x** | 4.0 GiB | 12.0 GiB | 35.0 GFLOPs |
-| R1   | hmmer_profile_hmm | 50 | 50 (3 rounds) | 850.00 ms | 950.00 ms | **1.12x** | 0.5 GiB | 1.0 GiB | 2.5 GFLOPs |
+| R1   | lineageflow_hmmer_pipeline (Stage A: framework-orchestrated FM forward, Stage B: external `hmmscan` post-processing) | 50 | 50 (3 rounds) | 850.00 ms | 950.00 ms | **1.12x** (pipeline-level) | 0.5 GiB | 1.0 GiB | Stage A: 2.5 GFLOPs/sample (50 NFE x 0.05 GFLOPs); Stage B: ~1 GFLOP/sample external HMMER scan |
 
 Notes:
 
@@ -97,13 +103,38 @@ Notes:
   adapter; this is a known quirk of the synthetic adapter and does
   not generalise to full Kanzi inv-proj.
 - R5a 2D toy is sub-millisecond and overhead is within noise.
+- R1 LineageFlow+HMMER pipeline is a **two-stage cell**: Stage A is
+  the framework-orchestrated LineageFlow FM forward (`solve_ode` x 3
+  rounds with restart-blend + paper-quantity-driven β, totalling 50
+  NFE per sample), Stage B is the external `hmmscan --cpu 4 --noali`
+  post-processing scan against Pfam-A.hmm. HMMER is **not** a neural
+  network and is **not** part of the framework's scheduling; the
+  framework's `adaptive_reflow/` package has zero references to
+  HMMER/`hmmscan`. The 0.85s/0.95s wall-clock is the full
+  pipeline: Stage A is ~100-150ms in both arms (framework overhead
+  ~30-40ms/round × 3 rounds ≈ 100ms, applied to the LineageFlow FM
+  forward only) and Stage B is the external HMMER scan at ~750ms in
+  **both** arms (the same `hmmscan` binary + same Pfam-A.hmm
+  database + same FASTA length distribution). The pipeline-level
+  1.12x ratio therefore reflects framework overhead on Stage A only,
+  **diluted** by the Stage B scan time that is identical in both
+  arms. R1 is NOT direct evidence of "framework overhead at varying
+  model scale" and is excluded from the §5.5 model-scale overhead
+  comparison (which is supported by R5a, R5b, R3, R7, R2). See
+  `docs/audit/wave213-p3-hmmer-mechanism.md` for the full Stage A/B
+  decomposition + HMMER mechanism analysis.
 
 ## Para 3 — Reviewer question: why not baseline at 3x NFE?
 
-The reviewer's premise is correct at matched NFE: the framework runs
-~25x slower per sample on R5b CIFAR-10 at NFE=50, ~1.08x on R3
-FlowMol3 at NFE=250, ~1.12x on R1 HMMER. The framework overhead
-breaks down as:
+The reviewer's premise is correct at matched NFE on the
+**neural-network forward-pass cells** (R5b CIFAR-10, R3 FlowMol3, R5a
+2D toy, R7 FreqFlow, R2 Kanzi inv-proj): the framework runs ~25x
+slower per sample on R5b CIFAR-10 at NFE=50, ~1.08x on R3 FlowMol3
+at NFE=250, ~1.05x on R5a 2D toy. (R1 LineageFlow+HMMER pipeline is
+excluded from this list because its 1.12x ratio is dominated by
+external HMMER scan time identical in both arms — see the
+Stage A/B decomposition above and `docs/audit/wave213-p3-hmmer-mechanism.md`.)
+The framework overhead breaks down as:
 
 | Source | Magnitude per round | Notes |
 |--------|---------------------|-------|
@@ -119,11 +150,20 @@ Versus baseline single-pass at 50 NFE:
   overhead = 400 ms of pure overhead + 200 ms of forward calls =
   ~600 ms expected; observed 930 ms reflects torch.compile-disabled
   cold paths.
-- R1 HMMER baseline: ~850 ms per sample (50 NFE at ~17 ms/NFE on
-  CPU, profile-HMM forward is heavy). Framework adds 100 ms
-  per round x 3 rounds = 300 ms, but rounds 2 and 3 are
-  shorter (paper-quantity-driven early termination), so observed
-  framework wall = 950 ms, **only 100 ms overhead**.
+- R1 LineageFlow+HMMER pipeline: ~850 ms per sample at baseline
+  (Stage A LineageFlow FM forward ~100ms + Stage B external HMMER
+  `hmmscan` scan ~750ms). Framework arm adds ~30-40ms per round × 3
+  rounds ≈ 100ms to Stage A only; Stage B HMMER scan time is
+  identical (~750ms) in both arms because the same `hmmscan --cpu 4
+  --noali` runs against the same Pfam-A.hmm database with the same
+  FASTA length distribution. Observed framework wall = 950 ms
+  = 850 + 100 ms framework overhead on Stage A. **The HMMER
+  `hmmscan` is not a profile-HMM forward repeated 50 times; it is a
+  single profile-HMM Viterbi/Forward scan against the full Pfam-A
+  database, dominated by database size and CPU count, and is
+  identical in both arms.** See
+  `docs/audit/wave213-p3-hmmer-mechanism.md` §2-§3 for the
+  Stage A/B decomposition.
 
 **Cross-budget regime: framework wins.** The framework's value-add
 lives in the cross-budget regime, where it uses substantially fewer
