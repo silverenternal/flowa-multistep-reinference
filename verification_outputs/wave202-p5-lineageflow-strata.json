@@ -1,0 +1,113 @@
+{
+  "wave": "202 P5",
+  "agent": "Wave 204 P2 resume",
+  "dataset": "lineageflow_n1000",
+  "tier_boundaries_baseline_plddt": {
+    "p33": 34.581361209073044,
+    "p67": 45.98582465336463
+  },
+  "tier_n": {
+    "hard": 191,
+    "medium": 192,
+    "easy": 191
+  },
+  "bonferroni_M": 6,
+  "bonferroni_alpha": 0.008333333333333333,
+  "strata_results": [
+    {
+      "dataset": "lineageflow_n1000",
+      "metric": "plddt_mean",
+      "tier": "hard",
+      "n_records": 191,
+      "mean_diff": 18.95527674380806,
+      "sd_diff": 10.300674197834796,
+      "t_statistic": 25.432037896893945,
+      "df": 190,
+      "p_value_raw": 4.4704815536392766e-63,
+      "cohens_d_z": 1.8401976783026943,
+      "verdict": "SUPPORTED"
+    },
+    {
+      "dataset": "lineageflow_n1000",
+      "metric": "sc_perplexity",
+      "tier": "hard",
+      "n_records": 191,
+      "mean_diff": -3.074881529629101,
+      "sd_diff": 3.069240686166583,
+      "t_statistic": -13.845674731137764,
+      "df": 190,
+      "p_value_raw": 1.339739780929264e-30,
+      "cohens_d_z": -1.0018378628590263,
+      "verdict": "SUPPORTED"
+    },
+    {
+      "dataset": "lineageflow_n1000",
+      "metric": "plddt_mean",
+      "tier": "medium",
+      "n_records": 192,
+      "mean_diff": 9.624770379242968,
+      "sd_diff": 9.860445184494438,
+      "t_statistic": 13.525224061280573,
+      "df": 191,
+      "p_value_raw": 1.124120147201549e-29,
+      "cohens_d_z": 0.9760989690787928,
+      "verdict": "SUPPORTED"
+    },
+    {
+      "dataset": "lineageflow_n1000",
+      "metric": "sc_perplexity",
+      "tier": "medium",
+      "n_records": 192,
+      "mean_diff": -3.773018908357343,
+      "sd_diff": 3.6395333490560646,
+      "t_statistic": -14.364611768457378,
+      "df": 191,
+      "p_value_raw": 3.30793090727882e-32,
+      "cohens_d_z": -1.0366765589154168,
+      "verdict": "SUPPORTED"
+    },
+    {
+      "dataset": "lineageflow_n1000",
+      "metric": "plddt_mean",
+      "tier": "easy",
+      "n_records": 191,
+      "mean_diff": -7.032896952669206,
+      "sd_diff": 11.929780338944965,
+      "t_statistic": -8.14738971693948,
+      "df": 190,
+      "p_value_raw": 4.8614829586683374e-14,
+      "cohens_d_z": -0.5895244298598019,
+      "verdict": "REGRESSES"
+    },
+    {
+      "dataset": "lineageflow_n1000",
+      "metric": "sc_perplexity",
+      "tier": "easy",
+      "n_records": 191,
+      "mean_diff": -4.296250894954525,
+      "sd_diff": 4.114451746740992,
+      "t_statistic": -14.430930856610646,
+      "df": 190,
+      "p_value_raw": 2.3299466464217725e-32,
+      "cohens_d_z": -1.0441855098574275,
+      "verdict": "SUPPORTED"
+    }
+  ],
+  "monotone_pattern_test": {
+    "k6_monotone_pattern": "hard > medium > easy in plddt d_z",
+    "lineageflow_hard_d_z": 1.8401976783026943,
+    "lineageflow_medium_d_z": 0.9760989690787928,
+    "lineageflow_easy_d_z": -0.5895244298598019,
+    "monotone_increase": true,
+    "confirmed": true
+  },
+  "cross_adapter_consistency_vs_k6_w161": {
+    "k6_hard_d_z": 1.189,
+    "k6_medium_d_z": 0.218,
+    "k6_easy_d_z": -0.998,
+    "lineageflow_hard_d_z": 1.8401976783026943,
+    "lineageflow_medium_d_z": 0.9760989690787928,
+    "lineageflow_easy_d_z": -0.5895244298598019,
+    "monotone_pattern_confirmed": true
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "wave": "84",
+  "agent": "B",
+  "model": "lineageflow",
+  "sweep_target_n_per_arm": 1000,
+  "omegafold_bin": "omegafold",
+  "workers_per_gpu": 4,
+  "workers_per_gpu_auto_detected": false,
+  "timestamp": "2026-09-21T00:48:59+0800",
+  "per_arm": {
+    "baseline": {
+      "arm": "baseline",
+      "outdir": "/tmp/w202-lineageflow/baseline/baseline",
+      "foldability_pLDDT_mean": NaN,
+      "foldability_pLDDT_median": NaN,
+      "foldability_pLDDT_p10": NaN,
+      "foldability_pLDDT_p90": NaN,
+      "foldability_n_total": 0,
+      "foldability_n_with_plddt": 0,
+      "self_consistency_scPerplexity_mean": NaN,
+      "self_consistency_scPerplexity_median": NaN,
+      "self_consistency_n_total": 0,
+      "self_consistency_n_scored": 0,
+      "wallclock_s": 0.16243958473205566,
+      "run_foldability_returncode": 1
+    },
+    "framework": {
+      "arm": "framework",
+      "outdir": "/tmp/w202-lineageflow/baseline/framework",
+      "foldability_pLDDT_mean": NaN,
+      "foldability_pLDDT_median": NaN,
+      "foldability_pLDDT_p10": NaN,
+      "foldability_pLDDT_p90": NaN,
+      "foldability_n_total": 0,
+      "foldability_n_with_plddt": 0,
+      "self_consistency_scPerplexity_mean": NaN,
+      "self_consistency_scPerplexity_median": NaN,
+      "self_consistency_n_total": 0,
+      "self_consistency_n_scored": 0,
+      "wallclock_s": 0.23511934280395508,
+      "run_foldability_returncode": 1
+    }
+  },
+  "delta": {
+    "foldability_pLDDT_baseline_minus_framework": NaN,
+    "self_consistency_scPerplexity_framework_minus_baseline": NaN
+  },
+  "verdict": "skipped_or_incomplete"
+}

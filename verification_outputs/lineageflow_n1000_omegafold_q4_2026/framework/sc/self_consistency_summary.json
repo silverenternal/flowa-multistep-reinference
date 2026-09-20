@@ -1,0 +1,15 @@
+{
+  "n_total": 1000,
+  "n_scored": 574,
+  "n_errors": 426,
+  "top_errors": [
+    [
+      "missing_pdb",
+      426
+    ]
+  ],
+  "sc_perplexity_mean": 14.058751964609465,
+  "sc_perplexity_median": 13.84849510344321,
+  "sc_perplexity_p10": 11.895072344640646,
+  "sc_perplexity_p90": 16.577743774836335
+}

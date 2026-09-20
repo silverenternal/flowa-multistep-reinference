@@ -1,0 +1,6 @@
+{
+  "input_fasta": "data/lineageflow_n1000/smoke5/framework.fasta",
+  "n_input": 5,
+  "n_used": 5,
+  "skipped": {}
+}
