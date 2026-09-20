@@ -273,6 +273,71 @@ table. Key takeaways:
   trade is **fewer total NFE to reach target quality**, which
   matters more than FLOPs on memory-bound protein UNet inference.
 
+## Wave 212 P6 — Root-cause addition to the efficiency narrative
+
+The Wave 212 P1–P5 instrumentation chain (cProfile + per-component
+`_time()` + tracemalloc + R6 control comparison at matched NFE=50)
+attributes the R5b CIFAR-10 178 s overhead to the following
+category split (see `docs/audit/wave212-p6-root-cause.md` for the
+full synthesis):
+
+* **Dominant (~70 % of 178 s) — memory_swap**: the framework's
+  4 separate `batched_inference` calls keep 4 rounds' worth of
+  UNet activations alive in GPU memory (+8 704 MiB framework peak
+  per Wave 209 P4 / Wave 212 P5 tracemalloc), preventing the CUDA
+  stream from overlapping the per-round kernel launches. This is
+  a structural artefact of running 4 calls in series vs the
+  baseline's 1 integrated call.
+* **Modest (~17 %) — per-round `inject_forward_noise` +
+  `observe_endpoint` I/O**: numpy float64 operations on
+  `(BATCH=64, 3, 32, 32)` arrays per round.
+* **Minor (~12 % combined) — per-round CUDA launch overhead +
+  state-bundle SHA-256 hashing + per-round state-bundle I/O**:
+  `apply_restart_distribution` LRU cache + hash on 3 072-element
+  image state per round.
+* **Negligible (~1 %) — framework orchestration components**:
+  scheduler (0.078 ms/batch) + merge (0.035 ms/batch) + blender
+  (0.78 ms/batch) + paper_quantities (0.004 ms/batch) at BATCH=64.
+  Extrapolated to N=1000 = 3.6 s, two orders of magnitude smaller
+  than the observed 178 s.
+
+**Cross-cell consistency (P3 R6 control)**: R6 LineageFlow
+(synthetic NumPy velocity field) does **not** pay the memory_swap
+category because it has no CUDA kernel launches and no UNet
+activation footprint. The framework's per-component cost at R6 is
+~2.5 ms/batch (vs R5b's ~4.6 ms/batch), and at N=1000 R6 framework
+overhead would extrapolate to ~10 s — confirming that the 178 s
+gap is a **torch CIFAR-10 cell property**, not a universal
+framework overhead.
+
+**Updated per-cell wall-clock re-attribution** (replacing the
+"per-round scheduler overhead (~50 ms), paper-quantity
+computation (~4 ms), merge operator with `e_rho` floor check
+(~10 ms), and restart blending via `LinearBlender` (~30 ms) ≈
+100 ms per round" approximation above with the Wave 212 P6
+diagnostic):
+
+The previous paragraph's "per-round scheduler overhead ~50 ms,
+merge ~10 ms, blender ~30 ms, paper-quantity ~4 ms = ~100 ms
+total" accounted for ~10–20 % of the actual framework overhead at
+N=1000. The remaining ~80 % lives in (a) GPU-side activation
+retention across the 4-round sequence (~125 s, the dominant
+driver), (b) per-round `inject_forward_noise` + `observe_endpoint`
+I/O (~30 s), and (c) per-round CUDA launch + state-bundle hashing
+(~22 s combined). The 100 ms-per-round estimate above should
+therefore be read as **the orchestration-layer floor**, not the
+total framework overhead per round.
+
+**Recommended fix path (Wave 212 P6 §3)**: Path D — cache
+intermediate forward outputs across rounds by adding a fused
+`_fused_batched_inference` method to the CIFAR adapter. Expected
+impact: ~125 s of the 178 s gap closed (~70 %), R5b framework
+per-sample wall drops from 930 ms toward ~400-500 ms. Effort:
+~20 engineer-hours. Mathematically equivalent to the current
+4-call sequence (byte-identical outputs per paired seed), so
+all head-finding `d_z` values and Bonferroni verdicts remain
+unchanged.
+
 ## References
 
 - Wave 209 P1 — paper-quantity compute overhead micro-benchmark
