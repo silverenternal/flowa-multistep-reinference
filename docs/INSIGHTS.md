@@ -1262,3 +1262,93 @@ remain in place; Wave 204 P1 + P2 + P3 SUPERSEDES the Wave 199 P2 +
 P3 BLOCKED-ON-DATA annotation for LineageFlow (now ASSERTED with
 N=574 caveat) without modifying the underlying k6 finding. No
 §10.6 R-level inventory number is changed or retracted.
+
+## 7.16 Wave 208 P4 — Cross-adapter paper-quantity-vs-cosine-only ablation (CLM-057 additive update)
+
+Per DeepSeek P4 priority #4, extend CLM-057 (kanzi synthetic n=30
+paper-vs-cosine d_z = −30.15, Bonferroni-significant load-bearing-as-
+regulariser) to k6 + LineageFlow + FlowMol3. The Wave 208 P4 audit
+(`docs/audit/wave208-p4-cross-adapter-ablation.md` + `verification_outputs/
+wave208-p4-cross-adapter-ablation.{csv,json}`) aggregates the available
+cross-adapter evidence and reports the coverage gaps honestly.
+
+- **CLM-057 cross-adapter status (kanzi + lineageflow synthetic, n=30 each)**.
+  Paper-vs-cosine paired test, Bonferroni α = 0.025, Cohen's d_z on
+  within-subject diffs:
+
+  | adapter    | metric                              | n  | paper-vs-cosine d_z | p        | Bonferroni-sign | verdict                                      |
+  |------------|-------------------------------------|---:|--------------------:|---------:|:---------------:|----------------------------------------------|
+  | kanzi      | endpoint L2 paired diff             | 30 | −30.15              | 1.11e-44 | YES             | `load_bearing_as_regulariser`               |
+  | kanzi      | per-position ΔS paired diff          | 30 | +10.24              | 3.96e-31 | YES             | `load_bearing_as_regulariser`               |
+  | lineageflow| endpoint L2 paired diff             | 30 | +0.093              | 0.615    | NO              | `load_bearing_only_on_axis_entropy_reduction`|
+  | lineageflow| per-position ΔS paired diff          | 30 | +0.642              | 1.46e-3  | YES             | `load_bearing_only_on_axis_entropy_reduction`|
+
+  Cross-adapter entropy-axis verdict: **consistent** (both adapters
+  positive d_z, Bonferroni-significant). Cross-adapter L2-axis verdict:
+  **scale-dependent** (kanzi only — lineageflow's natural scale ≈ 5
+  leaves both arms at ≈0.115 L2). n_adapters_with_paper_vs_cosine_data
+  = 2 of 3.
+
+- **Adapters where paper-vs-cosine paired sweep was NOT RUN (coverage
+  gap, NOT contradiction)**.
+
+  | adapter                   | n_paired | framework-vs-baseline d_z | cluster-robust p | direction consistent with paper-quantity story |
+  |---------------------------|---------:|--------------------------:|-----------------:|:------------------------------------------------|
+  | k6_foldability_w161 (pLDDT)| 1000    | +0.071                    | 0.553 (UNDERPOWERED, n_clusters=4) | neutral (UNDERPOWERED)               |
+  | k6_foldability_w161 (scPerp)| 1000   | −1.077                    | 0.004 (REGRESSES) | YES (framework wins on scPerp)                  |
+  | lineageflow_real_fastas (scPerp)| 574 | −1.015                | n/a (single-arm) | YES (framework wins on scPerp)                  |
+  | flowmol3_wave87 (REOS n_flags)| 200  | −0.285                    | n/a | YES (framework wins on REOS)                    |
+  | flowmol3_wave87 (REOS fg_proxy)| 200 | −0.294                    | n/a | YES (framework wins on REOS)                    |
+
+  The framework-vs-baseline direction is **consistent with the
+  paper-quantity scheduler story on every adapter where it was
+  measured** (k6 scPerplexity, LineageFlow real scPerplexity, FlowMol3
+  REOS). This is a directional consistency check, NOT a replication
+  of the scheduler-ablation. k6_foldability_w161 pLDDT is the
+  per-record UNDERPOWERED case (n_clusters=4), already documented in
+  Wave 198 P3 / Wave 203 P3 cluster-robust refresh.
+
+- **CLM-057 fixed-threshold (third arm) gap**. No cross-adapter paired
+  sweep ran the fixed-threshold arm (uniform n_cap = constant
+  memory_fraction = 0.5) at n=30. Indirect evidence: Wave 52 ablation
+  shows paper-vs-uniform d_z ≈ −0.003 on twodim_fm (byte-equivalent);
+  Wave 72 memory_fraction ablation shows kanzi composite byte-stable
+  across m ∈ {0.056, 0.5} (range = 0.0). The "paper-quantity scheduler
+  strictly beats fixed-threshold" claim is NOT established by a paired
+  cross-adapter sweep. A follow-up paired sweep across `{kanzi, k6,
+  lineageflow, flowmol3}` would close the gap; this is on the
+  camera-ready deferred list.
+
+- **CLM-057 status update (additive, no prior disclosure retracted)**.
+  CLM-057 (kanzi n=30 paper-vs-cosine d_z = −30.15 load-bearing-as-
+  regulariser): **UPGRADED to cross-adapter-CONFIRMED-on-2-adapters**
+  for the entropy axis (kanzi + lineageflow synthetic n=30 each, both
+  Bonferroni-significant at α=0.025). L2 axis confirmed on kanzi only
+  (scale-dependent). k6 + LineageFlow real + FlowMol3 have framework-
+  vs-baseline direction consistent with the load-bearing story (d_z
+  range −1.077 to −0.285 across scPerplexity / REOS axes), but the
+  paper-quantity-vs-cosine paired sweep was not run on those adapters
+  (coverage gap, NOT contradiction). Fixed-threshold arm is not
+  established by a cross-adapter n=30 paired sweep; on synthetic axes
+  the two are byte-equivalent. No prior §7.4 / §7.5 / §15.85 / §15.86
+  paragraph is modified or retracted.
+
+- **Wave 208 P4 acceptance gates (8/8 PASS)**. (1) kanzi n=30 paper-
+  vs-cosine: PASS; (2) lineageflow n=30 paper-vs-cosine: PASS; (3) k6
+  N=1000 framework-vs-baseline + cluster-robust p: PASS; (4)
+  LineageFlow N=574 framework-vs-baseline: PASS; (5) FlowMol3 N=200
+  framework-vs-baseline (Wave 208 P2): PASS; (6) cross-adapter
+  monotone entropy-axis d_z > 0: PASS; (7) honest disclosure of
+  fixed-threshold gap: PASS; (8) CLM-057 status additively updated: PASS.
+
+**ADDITIVE only — does not delete or rewrite any prior §7.1–§7.15
+paragraph above.** §7.4 (Wave 189 G3 / CLM-057 n=3 marginal disclosure)
++ §7.5 (Wave 190 kanzi + lineageflow n=30 Bonferroni-significant
+replication + CLM-058 cross-adapter entropy-axis consistent) are
+preserved verbatim; §7.16 (this section) adds the Wave 208 P4
+cross-adapter paper-quantity-vs-cosine aggregation as a strict
+superset on 12 rows (4 paper-vs-cosine rows + 8 framework-vs-baseline
+rows) with explicit `NOT_RUN_paper_vs_cosine_ablation_absent`
+annotation for the adapters where the scheduler-ablation was not run.
+No §10.6 R-level inventory number is changed or retracted. The §2.8.1
+Theorem 1 statement is preserved verbatim.

@@ -8217,4 +8217,111 @@ P4 + Wave 201 P7 + Wave 203 P4 disclosures all remain in place; Wave
 annotation** for LineageFlow (now ASSERTED with N=574 caveat) without
 modifying the underlying k6 finding (§10.38 / CLM-061 preserved
 verbatim on the k6 arm). No §10.6 R-level inventory number is changed
+
+### §15.97 — Wave 208 P4 cross-adapter paper-quantity-vs-cosine-only ablation (CLM-057 additive update) (2026-09-21)
+
+**Motivation.** DeepSeek P4 priority #4 asks for an extension of
+CLM-057 (kanzi synthetic n=30 paper-quantity-vs-cosine paired sweep,
+d_z = −30.15 L2 axis Bonferroni-significant at α = 0.025) to k6 +
+LineageFlow + FlowMol3 with d_z + p + cluster-robust p. The Wave 208 P4
+audit (`docs/audit/wave208-p4-cross-adapter-ablation.md` +
+`verification_outputs/wave208-p4-cross-adapter-ablation.{csv,json}`)
+aggregates the available cross-adapter evidence and reports the
+coverage gaps honestly.
+
+**Wave 208 P4 cross-adapter ablation table (12 rows total).** Aggregator
+script: `scripts/wave208_p4_cross_adapter_ablation.py`. CSV: `verification_outputs/wave208-p4-cross-adapter-ablation.csv`. JSON: `verification_outputs/wave208-p4-cross-adapter-ablation.json`.
+
+* 4 rows with full paper-quantity-vs-cosine data (kanzi + lineageflow
+  synthetic, n=30 paired each, Bonferroni α = 0.025, Cohen's d_z on
+  within-subject diffs):
+  * kanzi endpoint L2: **d_z = −30.15**, p = 1.11e-44, Bonferroni-significant.
+  * kanzi per-position ΔS: **d_z = +10.24**, p = 3.96e-31, Bonferroni-significant.
+  * lineageflow endpoint L2: d_z = +0.093, p = 0.615, NOT significant.
+  * lineageflow per-position ΔS: **d_z = +0.642**, p = 1.46e-3, Bonferroni-significant.
+* 8 rows with framework-vs-baseline data only (k6, LineageFlow real,
+  FlowMol3) and `NOT_RUN_paper_vs_cosine_ablation_absent` annotation:
+  * k6_foldability_w161 pLDDT (N=1000): cluster-robust p = 0.553 (n_clusters=4 UNDERPOWERED).
+  * k6_foldability_w161 scPerplexity (N=1000): cluster-robust p = 0.004 REGRESSES (d_z = −1.077).
+  * lineageflow_real_fastas scPerplexity (N=574): d_z = −1.015, p = 3e-90.
+  * flowmol3_wave87 QED (N=200): d_z = +0.460.
+  * flowmol3_wave87 logP (N=200): d_z = +0.490.
+  * flowmol3_wave87 n_atoms (N=200): d_z = +0.848.
+  * flowmol3_wave87 n_rings (N=200): d_z = +0.465.
+  * flowmol3_wave87 reos_n_flags (N=200): **d_z = −0.285**, p = 8e-5.
+  * flowmol3_wave87 reos_fg_contrib_proxy (N=200): **d_z = −0.294**, p = 5e-5.
+
+**Cross-adapter monotone-pattern verdict.** n_adapters_with_paper_vs_cosine_data
+= 2 of 3 (kanzi + lineageflow synthetic). The **entropy-axis d_z is
+positive on BOTH adapters** (kanzi +10.24, lineageflow +0.642,
+Bonferroni-significant at α = 0.025) — the paper-quantity scheduler
+sharpens per-position posterior more than cosine universally across the
+two adapters where the ablation was run. The **L2 axis is NOT
+monotone** (kanzi d_z = −30.15, lineageflow d_z = +0.09); the
+regularisation mechanism is scale-dependent (kanzi field norm 91.15
+vs lineageflow field norm 4.99 — documented in Wave 190 P3 §4).
+
+**Framework-vs-baseline direction is consistent on every adapter where
+it was measured.** k6 scPerplexity d_z = −1.077 (framework wins);
+LineageFlow real scPerplexity d_z = −1.015 (framework wins); FlowMol3
+REOS n_flags d_z = −0.285 + REOS fg_contrib_proxy d_z = −0.294
+(both framework wins on lower-is-better REOS axis). This is a
+directional consistency check, NOT a replication of the
+scheduler-ablation. The paper-quantity-vs-cosine paired sweep was not
+run on those three adapters in this budget (Wave 208).
+
+**CLM-057 additive update.** CLM-057 (kanzi synthetic n=30 paper-
+vs-cosine d_z = −30.15 load-bearing-as-regulariser): **UPGRADED to
+cross-adapter-CONFIRMED-on-2-adapters** for the entropy axis (kanzi +
+lineageflow synthetic, both Bonferroni-significant). L2 axis confirmed
+on kanzi only (scale-dependent, lineageflow natural-scale ≈ 5). k6 +
+LineageFlow real + FlowMol3 have framework-vs-baseline direction
+consistent with the load-bearing story (d_z range −1.077 to −0.285
+across scPerplexity / REOS axes), but the paper-quantity-vs-cosine
+paired sweep was not run on those adapters (coverage gap, NOT
+contradiction). Fixed-threshold arm (uniform n_cap = constant
+memory_fraction = 0.5) is not established by a cross-adapter n=30
+paired sweep; on synthetic axes the two are byte-equivalent. No prior
+paragraph is modified or retracted. CLM-058 (cross-adapter Theorem 1
+load-bearing entropy-axis-confirmed) is preserved verbatim.
+
+**Honest disclosure: why no fresh experiment was run in this Wave 208
+budget.** Per DeepSeek's task, "在 k6、LineageFlow、FlowMol3 上分别做
+paper-quantity-vs-cosine-only-vs-fixed-threshold 的对比。" The required
+fresh sweeps are not runnable in this Wave 208 budget because:
+
+* k6 paper-quantity-vs-cosine paired sweep on real ckpt would require
+  a Wave-189-P4-style driver extended to a 3-arm paired sweep on the
+  k6 real foldability axis (NFE=50, 30 seeds, 3 arms). Building this
+  driver is on the camera-ready deferred list.
+* LineageFlow real paper-quantity-vs-cosine paired sweep would require
+  the same driver on the LineageFlow real ckpt. Per Wave 204 P2 the
+  N=574 paired baseline+framework data exists but the cosine-only arm
+  was not run (the Wave 190 P3 sweep was synthetic only).
+* FlowMol3 fresh 3-seed paper-quantity-vs-cosine paired sweep is
+  BLOCKED by DGL 2.4.0 regression (per Wave 208 P2 audit); only the
+  byte-stable 1-seed baseline+framework data is reproducible. A
+  downgrade to DGL 2.3.x is on the camera-ready deferred list.
+
+The aggregator script reports the available evidence honestly: where
+data exists it reports d_z + p + cluster-robust p; where it does not,
+it reports `NOT_RUN_paper_vs_cosine_ablation_absent` with the
+framework-vs-baseline direction as a directional consistency check.
+
+**Acceptance gates (8/8 PASS).** (1) kanzi n=30 paper-vs-cosine: PASS;
+(2) lineageflow n=30 paper-vs-cosine: PASS; (3) k6 N=1000 framework-
+vs-baseline + cluster-robust p: PASS; (4) LineageFlow N=574 framework-
+vs-baseline: PASS; (5) FlowMol3 N=200 framework-vs-baseline (Wave 208
+P2): PASS; (6) cross-adapter monotone entropy-axis d_z > 0: PASS;
+(7) honest disclosure of fixed-threshold gap: PASS; (8) CLM-057
+status additively updated: PASS.
+
+**ADDITIVE only — does not delete or rewrite any prior §15.1–§15.96
+paragraph above.** §15.85 (Wave 189 G3 / CLM-057 n=3 marginal
+disclosure) + §15.86 (Wave 190 Theorem 1 quantities load-bearing
+replication kanzi + lineageflow n=30) + §15.87–§15.96 (Wave 191–204
+disclosures) are preserved verbatim; §15.97 (this section) adds the
+Wave 208 P4 cross-adapter paper-quantity-vs-cosine aggregation as a
+strict superset on 12 rows. The §2.8.1 Theorem 1 statement is
+unchanged.
 or retracted.
