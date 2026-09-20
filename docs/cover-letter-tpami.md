@@ -189,6 +189,21 @@ The submission is accompanied by:
 - **Per-record CSVs** (N=1000+ rows per cell) available on Zenodo
   behind a reviewer-token gate for full re-analysis.
 
+### §6.1 Code Availability
+
+The implementation of **FlowA** is available at
+`https://github.com/silverenternal/flowa-multistep-reinference`
+(repository name: `flowa-multistep-reinference`; method name in this
+paper: **FlowA**). The name discrepancy reflects the historical
+evolution of the project — the repository predates the finalisation
+of the method name in the paper draft. The canonical name for
+citation purposes is **FlowA**. Reviewers following the link above
+will land on the canonical source tree; the descriptive repository
+name is preserved intentionally to keep the URL self-documenting
+about the method's *behaviour* (paper-quantity-driven multi-step
+re-inference) rather than its *identity* (**FlowA**). The audit
+record for this naming decision is `docs/audit/wave213-p6-repo-naming.md`.
+
 ## §7 Suggested Associate Editor and Reviewers
 
 **Suggested Associate Editor** (one of):

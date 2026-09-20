@@ -277,6 +277,11 @@ point as `python -m adaptive_reflow.framework.engine`.
 ## Quick reference
 
 - **Paper draft:** `docs/drafts/paper-flattened-draft.md`
+  (method name in paper: **FlowA**; canonical repo URL:
+  `https://github.com/silverenternal/flowa-multistep-reinference`,
+  descriptive repo name `flowa-multistep-reinference` predates the
+  method-name finalisation; see `docs/audit/wave213-p6-repo-naming.md`
+  for the full audit)
 - **Self-contained Theorem 1:** `docs/theory/theorem-1-self-contained.md`
 - **Method section draft:** `docs/drafts/section-2-method.md`
 - **Claims ledger:** `docs/CLAIMS.md` (64 entries)
