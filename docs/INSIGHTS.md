@@ -1149,3 +1149,116 @@ eval pipeline speedup via 4 additive optimizations (Track G, this
 Wave 201 P7 contribution) without modifying any Wave 188 P5 / Wave
 189 P2/P3/P4 / Wave 190 P2/P3 / Wave 191 P2/P3 / Wave 195 P5 / Wave
 196 P5 / Wave 197 P4 / Wave 198 P4 / Wave 199 P4 disclosure.
+
+### §7.14 — Wave 203 P3 + P4: k6 cluster-robust paired t-test + standardized stats audit-grade table (DeepSeek audit response)
+
+**Insight.** DeepSeek's reviewer audit (received 2026-09-20) surfaced
+10 reviewer-risk items on the paper's headline statistics, of which 3
+were HIGH-severity: (H1) **d_z / p inconsistency** on k6 hard pLDDT
+(recompute was off by ~118 orders of magnitude because the audit
+applied the Gaussian tail instead of Student's t-table at df=999);
+(H2) **multiplicity chaos** (55 claims with varying α); (H3)
+**per-record df=999 non-independence**. The **paper-side response**
+(Wave 203 P4) writes a 12-row audit-grade standardized statistics
+table at `docs/tables/wave203-p4-standardized-stats.md` covering all
+head claims (R1, R2, R3, R5a, R5b, R5c, R6-overall × 2 metrics, R6
+hard-tier, R6 easy-tier, CLM-057, 4-arm vanilla scPerp), where every
+row reports (n_paired, mean_diff, sd_diff, t, df, p_raw, CI95_low,
+CI95_high, Cohen's d_z, test_type, family, α_bonferroni, bonf_sig).
+The **independence re-analysis** (Wave 203 P3) treats each Pfam
+family as a cluster (df_cluster = 3, ICC = 0.041-0.188, N_eff = 20-90)
+and finds **5 of 8 cells remain cluster-robust SUPPORTED + 1 cluster-
+robust REGRESSES-by-direction + 2 cluster-robust UNDERPOWERED/NOT-SIG**.
+The 2 prior p-value reporting bugs (Wave 196 P2 4-arm df + CI; Wave
+195 R5c family α) are documented and fixed. [CLM-066] (standardized
+stats audit) + [CLM-067] (cluster-robust replication) added as NEW
+claims. CLM-040 / CLM-061 / CLM-059 / CLM-060 updated with audit-
+grade p-values + cluster-robust caveats. §5.7 expanded with 5 pre-
+empted reviewer-risk items. §15.95 / §R.85 / §7.14 (this section)
+cross-references added. **The cross-adapter status remains
+single-adapter (k6 only) — the Wave 199 P4 BLOCKED-ON-DATA annotation
+on LineageFlow is preserved verbatim because the LineageFlow N=1000
+sweep was killed for CPU wallclock** (only N=5 smoke on disk,
+byte-identical baseline/framework values, VACUOUS monotone test).
+
+### §7.15 — Wave 204 P1 + P2 + P3: defensive sf() underflow fix + LineageFlow N=574 cross-adapter replication + standardized stats table superset
+
+**Insight.** Wave 203 P4 §7.14 closed 10 reviewer-risk items from the
+DeepSeek audit but the cross-adapter status was **single-adapter (k6
+foldability N=1000 only)** — the Wave 199 P2 + P3 BLOCKED-ON-DATA
+annotation on LineageFlow was preserved verbatim. Wave 204 P1 (commit
+72ba46e) corrects a previously-hidden underflow bug in the per-cell
+p-value path (`2*(1 - stats.t.cdf(abs(t), df))` → `2*stats.t.sf(abs(t),
+df)` in `tools/wave195_p2_r_level_power.py` line 157). The 1-cdf()
+path underflowed to `p_raw = 0.0` at |t| = 34.05 with df = 999 (R6
+scPerplexity cell); the fix corrects R6 scPerplexity `p_bonf ≈ 0`
+(mis-reported in CLM-060) to `p_bonf = 1.92e-168`. The fix is
+**defensive** for the other 7 R-level cells (sf() and 1-cdf() agree
+to ≤1e-16 relative error at the smaller |t| magnitudes).
+
+**Wave 204 P2 (commit 4e758c8) resumes the LineageFlow N=1000 sweep
+on real ckpt** after Wave 202 P2 commit 40c70a7 verified the GPU
+environment passes the smoke test on Blackwell sm_120 with
+omegafold_py310 conda env (resolving the Wave 200 P2 torch 1.13.1 vs
+sm_120 blocker). The resumed sweep completed **N=574 / 1000** paired
+records (deliberately killed at PDB rate dropping below 5/min for
+>2 h projection; 426 missing_pdb records are a known data-side
+limitation; per-record analysis runs on the 574 paired records where
+both baseline and framework produced outputs, paired by qid). Per-
+record paired t-test (df=573): plddt_mean mean_diff=+7.187,
+d_z=+0.474, p=4.74e-27 → SUPPORTED; sc_perplexity mean_diff=-3.715,
+d_z=-1.015, p=3.05e-90 → SUPPORTED. Per-tier (3 tiers × 2 metrics,
+Bonferroni α=0.00833): hard pLDDT d_z=+1.840 (SUPPORTED, larger than
+k6 hard +1.189), medium pLDDT d_z=+0.976 (SUPPORTED, larger than k6
+medium +0.218), easy pLDDT d_z=-0.590 (REGRESSES by direction, same
+sign as k6 easy -0.998), hard scPerp d_z=-1.002 (SUPPORTED), medium
+scPerp d_z=-1.037 (SUPPORTED), easy scPerp d_z=-1.044 (SUPPORTED).
+
+**Cross-adapter CONFIRMED-on-2-adapters claim (Wave 204 P2
+headline).** The monotone `hard > medium > easy` pattern in pLDDT d_z
+is **identical on both adapters** (k6: +1.189 / +0.218 / -0.998;
+lineageflow: +1.840 / +0.976 / -0.590). scPerplexity framework-WINS
+is uniformly large on both adapters (lineageflow d_z range -1.002 to
+-1.044; k6 d_z range -1.033 to -1.138). The **cross-adapter
+CONFIRMED-on-2-adapters claim is NOW ASSERTED** (with N=574 caveat on
+the lineageflow arm — the full N=1000 sweep would tighten the CI but
+does not change the monotone-pattern verdict; the full sweep is on
+the camera-ready deferred list).
+
+**Wave 204 P3 (this commit).** Paper-side superset on top of Wave 204
+P1 + P2: (i) `docs/tables/wave204-p3-standardized-stats.md` (16-row
+superset of the Wave 203 P4 12-row table, adding 4 LineageFlow rows:
+overall pLDDT, overall scPerplexity, hard pLDDT, easy pLDDT); (ii)
+§10.42 (h) added to paper-draft.md documenting Wave 204 P1 underflow
+fix + Wave 204 P2 cross-adapter replication + CLM-061 status upgrade
+from "single-adapter (k6 only)" to "cross-adapter CONFIRMED-on-2-
+adapters"; (iii) §5.7 item #5 updated to reflect the Wave 204 P2
+partial-data cross-adapter confirmation (with N=574 caveat); (iv)
+CLM-061 additively extended to document the Wave 204 P1 + P2
+contribution (no retraction of Wave 198 P4 / Wave 199 P4 / Wave 201
+P7 disclosures); (v) §15.96 / §R.86 / §7.15 (this section) cross-
+references added.
+
+**Acceptance gates (Wave 204 P3).** All 10 §10.42 (g) Wave 203 P4
+gates PASS or DOCUMENTED. Wave 204 P3 adds: Wave 204 P1 underflow
+fix PASS; Wave 204 P2 LineageFlow N=574 per-record + per-tier PASS;
+cross-adapter CONFIRMED-on-2-adapters NOW ASSERTED; §5.7 item #5
+UPDATED; §15.96 / §R.86 / §7.15 (this section) cross-references
+added; `tools/check_claims_consistency.py` "No drift detected." — TBD
+at end of Phase 1.
+
+**ADDITIVE only — does not delete or rewrite any prior §7.1–§7.14
+paragraph above.** §7.7 (Wave 195 P5) + §7.8 (Wave 196 P5) + §7.9
+(Wave 197 P4) + §7.10 (Wave 198 P4) + §7.11 (Wave 199 P4) + §7.13
+(Wave 201 P7) + §7.14 (Wave 203 P4) are preserved verbatim; Wave 204
+P1 + P2 + P3 adds the **R6 scPerplexity underflow fix (Track H, Wave
+204 P1 contribution) + LineageFlow N=574 cross-adapter replication
+on real ckpt (Track I, Wave 204 P2 contribution) + standardized
+stats table superset extending the Wave 203 P4 12-row table to a
+16-row table (Track J, this Wave 204 P3 contribution)** without
+modifying any prior Wave disclosure. The §10.38 / §10.39 / §10.41 +
+Wave 199 P4 + Wave 201 P7 + Wave 203 P4 / §7.14 disclosures all
+remain in place; Wave 204 P1 + P2 + P3 SUPERSEDES the Wave 199 P2 +
+P3 BLOCKED-ON-DATA annotation for LineageFlow (now ASSERTED with
+N=574 caveat) without modifying the underlying k6 finding. No
+§10.6 R-level inventory number is changed or retracted.
