@@ -34,6 +34,15 @@ CPU-only: numpy + scipy.stats only, no torch.
 """
 from __future__ import annotations
 
+# Wave 210 P4 DO-2: pin OpenBLAS/MKL thread count to 8 (host = 24c/32t;
+# OpenBLAS oversubscription thrashes L2 cache on small matmuls and
+# OMP scheduling overhead exceeds matmul compute for n<=100 paired seeds).
+import os
+for _k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_k, "8")
+del _k
+
+
 import csv
 import json
 import math
