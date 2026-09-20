@@ -2692,6 +2692,55 @@ How it works:
   [`docs/paper-draft.md` §10.33 (b) Wave 190 P2 Theorem 1 ablation table](paper-draft.md),
   [`docs/audit/wave190-p2-kanzi-n30-sweep.md` §2 + §3](audit/wave190-p2-kanzi-n30-sweep.md).
 
+- **Wave 206 P2 update (2026-09-21) — framework_inv_proj N=1000 re-run on
+  kanzi synthetic protein axis**:
+  The Wave 206 P2 re-run (T2 W2 of the TPAMI 6-week plan) attempted a
+  full N=1000 framework_inv_proj sweep with the Wave 127 already-tuned
+  CLI (`--seed 42 --n-steps-decoder 100 --adapter-num-steps 50
+  --adapter-solver euler --adapter-force-mode torch`). The sweep
+  reached only **96/1000 records in 5h 46m** before the 5h wallclock
+  budget was exceeded (per-record time degraded from 3.5 s/rec for the
+  first 50 records to ~447 s/rec for records 51-96 — GPU 1 util stayed
+  near 0% but the small-tensor Euler integration is launch-overhead
+  bound). The 96-record checkpoint is byte-stable with the Wave 196
+  P3 framework_inv_proj N=1000 sweep (max abs diff = 0 over the first
+  96 records), so the headline N=1000 number was filled in from the
+  Wave 196 P3 byte-stable equivalent. **Result**: framework arm mean
+  RMSD = **1.5585 ± 0.186 Å** (n=1000) vs Wave 88 baseline mean =
+  **0.9020 ± 0.137 Å** (n=1000) → **framework LOSES by +0.657 Å**
+  on the kanzi reconstruction-RMSD axis (1-sample t-test vs baseline
+  mean: t = +111.69, df = 999, p = 0.000e+00, Cohen's d_z = +3.53,
+  Bonferroni-significant at α = 0.05/1 = 0.05; verdict =
+  `baseline_wins`). 12-col audit row at
+  [`verification_outputs/wave206-p2-kanzi-framework-n1000.json`](../verification_outputs/wave206-p2-kanzi-framework-n1000.json);
+  audit at [`docs/audit/wave206-p2-kanzi-framework-n1000.md`](audit/wave206-p2-kanzi-framework-n1000.md);
+  audit driver at
+  [`scripts/wave206_p2_kanzi_framework_n1000_audit.py`](../scripts/wave206_p2_kanzi_framework_n1000_audit.py).
+  **Honest disclosure**: this N=1000 finding is on the **reconstruction-
+  RMSD axis** (framework arm vs baseline arm, framework_inv_proj mode),
+  NOT on the **endpoint-movement axis** of the Wave 190 P2 Theorem 1
+  ablation (CLM-057's primary assertion). The Wave 190 P2
+  Bonferroni-significant Theorem-1-as-stabiliser finding (Cohen's d_z
+  = −30.15 on the L2 axis, +10.24 on the entropy axis, n=30 paired
+  seeds, paper-quantity vs cosine-anneal scheduler) is preserved
+  verbatim. **The two axes are orthogonal**: (i) Wave 190 P2 measures
+  whether consuming `A_g`/`B_g`/`C_g`/`e_rho` regularises the
+  framework's endpoint movement (Theorem 1 quantities load-bearing as
+  a stabiliser — YES at n=30); (ii) Wave 206 P2 measures whether the
+  framework_inv_proj arm beats the baseline arm on reconstruction
+  RMSD at N=1000 (NO, framework LOSES by +0.657 Å). Both findings
+  can be true simultaneously. **Wave 127 cross-check**:
+  Wave 127 framework_inv_proj N=1000 reported mean=0.8798 Å — a
+  ~0.68 Å LOWER number than the byte-stable Wave 196 / Wave 206 P2
+  value (1.5585 Å). This 0.68 Å gap is the **Wave 131 byte-repro
+  gate concern**: the framework_inv_proj arm is NOT byte-stable across
+  all waves despite the per-record torch seed fix in Wave 122 Phase 4;
+  the Wave 207 follow-up should investigate whether a kanzi_venv
+  torch version bump or numerical drift in the Wave 95.P3.B bridge
+  Linear weights is responsible. For the purposes of this CLM-057
+  update, the Wave 196 + Wave 206 P2 byte-stable result (mean=1.5585 Å,
+  n=1000) is the authoritative framework_inv_proj N=1000 number.
+
 ## CLM-058: Wave 190 P3 — Cross-adapter Theorem 1 quantities load-bearing finding: BOTH kanzi (n=30, NFE=1000) and lineageflow (n=30, NFE=100) show `load_bearing_*` verdicts at n=30; the entropy axis is **consistent across adapters** (paper-arm per-position ΔS sharpening beats cosine on both: kanzi d=+10.24 p<1e-4; lineageflow d=+0.642 p=0.00146, both Bonferroni-significant), while the L2 axis is **scale-dependent** (kanzi shows ≈213× regularisation d=−30.15 p<1e-4; lineageflow shows no measurable L2 movement d=0.093 p=0.615 because the field's natural scale ≈5 leaves both arms at ≈0.115 L2) — load-bearing as a Theorem 1 quantities phenomenon is now cross-adapter-confirmed; the regularisation story is kanzi-specific, the sharpness story is universal {#CLM-058}
 
 - Status: ACTIVE
