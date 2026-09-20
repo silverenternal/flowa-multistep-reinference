@@ -1,0 +1,24 @@
+wave,cell,scheduler,seed,n_samples,w2,source_csv
+209 P6,R5a_two_moons,baseline,0,1000,0.078995,two_moons_baseline_seed0.csv
+209 P6,R5a_two_moons,CosineAnnealScheduler,0,1000,0.074679,two_moons_CosineAnnealScheduler_seed0.csv
+209 P6,R5a_two_moons,CodimensionSheetScheduler,0,1000,0.082093,two_moons_CodimensionSheetScheduler_seed0.csv
+209 P6,R5a_two_moons,EvidenceDrivenScheduler,0,1000,0.079717,two_moons_EvidenceDrivenScheduler_seed0.csv
+209 P6,R5a_two_moons,baseline,1,1000,0.066503,two_moons_baseline_seed1.csv
+209 P6,R5a_two_moons,CosineAnnealScheduler,1,1000,0.071267,two_moons_CosineAnnealScheduler_seed1.csv
+209 P6,R5a_two_moons,CodimensionSheetScheduler,1,1000,0.074331,two_moons_CodimensionSheetScheduler_seed1.csv
+209 P6,R5a_two_moons,baseline,2,1000,0.067280,two_moons_baseline_seed2.csv
+209 P6,R5a_two_moons,CosineAnnealScheduler,2,1000,0.073442,two_moons_CosineAnnealScheduler_seed2.csv
+209 P6,R5a_two_moons,CodimensionSheetScheduler,2,1000,0.072598,two_moons_CodimensionSheetScheduler_seed2.csv
+209 P6,R5a_two_moons,baseline,3,1000,0.067920,two_moons_baseline_seed3.csv
+209 P6,R5a_two_moons,CosineAnnealScheduler,3,1000,0.077280,two_moons_CosineAnnealScheduler_seed3.csv
+209 P6,R5a_two_moons,CodimensionSheetScheduler,3,1000,0.073318,two_moons_CodimensionSheetScheduler_seed3.csv
+209 P6,R5a_two_moons,baseline,4,1000,0.081613,two_moons_baseline_seed4.csv
+209 P6,R5a_two_moons,CosineAnnealScheduler,4,1000,0.082968,two_moons_CosineAnnealScheduler_seed4.csv
+209 P6,R5a_two_moons,CodimensionSheetScheduler,4,1000,0.082310,two_moons_CodimensionSheetScheduler_seed4.csv
+209 P6,R5a_two_moons,baseline,5,1000,0.059151,two_moons_baseline_seed5.csv
+209 P6,R5a_two_moons,CosineAnnealScheduler,5,1000,0.083770,two_moons_CosineAnnealScheduler_seed5.csv
+209 P6,R5a_two_moons,CodimensionSheetScheduler,5,1000,0.072477,two_moons_CodimensionSheetScheduler_seed5.csv
+209 P6,R5a_two_moons,baseline,6,1000,0.064610,two_moons_baseline_seed6.csv
+209 P6,R5a_two_moons,CosineAnnealScheduler,6,1000,0.086952,two_moons_CosineAnnealScheduler_seed6.csv
+209 P6,R5a_two_moons,CodimensionSheetScheduler,6,1000,0.072537,two_moons_CodimensionSheetScheduler_seed6.csv
+209 P6,R5a_two_moons_summary,CosineAnnealScheduler_vs_baseline,7_vs_7,1000,0.009184,"d_s=1.302, p=3.294e-02, bonf_sig=False, ci=[0.00179, 0.01658], tie=True"
