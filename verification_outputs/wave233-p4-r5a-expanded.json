@@ -1,0 +1,264 @@
+{
+  "wave": "233 P4",
+  "cell": "R5a_two_moons_W2",
+  "n_seeds_baseline": 30,
+  "n_seeds_per_arm": {
+    "CosineAnnealScheduler": 30,
+    "CodimensionSheetScheduler": 19,
+    "EvidenceDrivenScheduler": 4,
+    "FreeTrajScheduler": 3
+  },
+  "all_seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    43,
+    44,
+    45,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29
+  ],
+  "existing_seeds_pre": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    43,
+    44,
+    45
+  ],
+  "new_seeds_added": [
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29
+  ],
+  "primary_headline": {
+    "arm": "CosineAnnealScheduler",
+    "welch": {
+      "n_b": 30,
+      "n_f": 30,
+      "baseline_mean": 0.08142097063693002,
+      "baseline_std": 0.016222946347021386,
+      "framework_mean": 0.08025292602503326,
+      "framework_std": 0.0090580782027851,
+      "delta": -0.0011680446118967625,
+      "delta_se": 0.0033923087954278036,
+      "ci_95": [
+        -0.00810609511557319,
+        0.005770005891779665
+      ],
+      "t_stat": -0.344321428954542,
+      "df": 45.480048606253746,
+      "p_value_raw": 0.7321916334106445,
+      "p_value_bonferroni": 1.0,
+      "cohens_d_s": -0.08890341067221876,
+      "min_effect_size": 0.01,
+      "alpha_per_cell": 0.0071428571428571435,
+      "verdict": "TIE",
+      "bonferroni_significant": false
+    }
+  },
+  "best_arm": {
+    "name": "CodimensionSheetScheduler",
+    "mean_w2": 0.07591526832910382,
+    "welch": {
+      "n_b": 30,
+      "n_f": 19,
+      "baseline_mean": 0.08142097063693002,
+      "baseline_std": 0.016222946347021386,
+      "framework_mean": 0.07591526832910382,
+      "framework_std": 0.00579324265771814,
+      "delta": -0.005505702307826196,
+      "delta_se": 0.0032464138352483844,
+      "ci_95": [
+        -0.012326164686042966,
+        0.0013147600703905735
+      ],
+      "t_stat": -1.6959336015782327,
+      "df": 39.287834335383465,
+      "p_value_raw": 0.09781019095922386,
+      "p_value_bonferroni": 0.684671336714567,
+      "cohens_d_s": -0.45199699094355694,
+      "min_effect_size": 0.01,
+      "alpha_per_cell": 0.0071428571428571435,
+      "verdict": "TIE",
+      "bonferroni_significant": false
+    }
+  },
+  "per_arm_welch": {
+    "CosineAnnealScheduler": {
+      "n_b": 30,
+      "n_f": 30,
+      "baseline_mean": 0.08142097063693002,
+      "baseline_std": 0.016222946347021386,
+      "framework_mean": 0.08025292602503326,
+      "framework_std": 0.0090580782027851,
+      "delta": -0.0011680446118967625,
+      "delta_se": 0.0033923087954278036,
+      "ci_95": [
+        -0.00810609511557319,
+        0.005770005891779665
+      ],
+      "t_stat": -0.344321428954542,
+      "df": 45.480048606253746,
+      "p_value_raw": 0.7321916334106445,
+      "p_value_bonferroni": 1.0,
+      "cohens_d_s": -0.08890341067221876,
+      "min_effect_size": 0.01,
+      "alpha_per_cell": 0.0071428571428571435,
+      "verdict": "TIE",
+      "bonferroni_significant": false
+    },
+    "CodimensionSheetScheduler": {
+      "n_b": 30,
+      "n_f": 19,
+      "baseline_mean": 0.08142097063693002,
+      "baseline_std": 0.016222946347021386,
+      "framework_mean": 0.07591526832910382,
+      "framework_std": 0.00579324265771814,
+      "delta": -0.005505702307826196,
+      "delta_se": 0.0032464138352483844,
+      "ci_95": [
+        -0.012326164686042966,
+        0.0013147600703905735
+      ],
+      "t_stat": -1.6959336015782327,
+      "df": 39.287834335383465,
+      "p_value_raw": 0.09781019095922386,
+      "p_value_bonferroni": 0.684671336714567,
+      "cohens_d_s": -0.45199699094355694,
+      "min_effect_size": 0.01,
+      "alpha_per_cell": 0.0071428571428571435,
+      "verdict": "TIE",
+      "bonferroni_significant": false
+    },
+    "EvidenceDrivenScheduler": {
+      "n_b": 30,
+      "n_f": 4,
+      "baseline_mean": 0.08142097063693002,
+      "baseline_std": 0.016222946347021386,
+      "framework_mean": 0.08451838549536927,
+      "framework_std": 0.0047439043653411846,
+      "delta": 0.003097414858439257,
+      "delta_se": 0.0037945957311445277,
+      "ci_95": [
+        -0.008978682306186975,
+        0.015173512023065489
+      ],
+      "t_stat": 0.816270052964249,
+      "df": 15.700775630321377,
+      "p_value_raw": 0.42655729678261395,
+      "p_value_bonferroni": 1.0,
+      "cohens_d_s": 0.25915996164469424,
+      "min_effect_size": 0.01,
+      "alpha_per_cell": 0.0071428571428571435,
+      "verdict": "TIE",
+      "bonferroni_significant": false
+    },
+    "FreeTrajScheduler": {
+      "n_b": 30,
+      "n_f": 3,
+      "baseline_mean": 0.08142097063693002,
+      "baseline_std": 0.016222946347021386,
+      "framework_mean": 0.08994130023925796,
+      "framework_std": 0.005744299454781526,
+      "delta": 0.008520329602327945,
+      "delta_se": 0.004446548288430657,
+      "ci_95": [
+        -0.010611623528851019,
+        0.027652282733506908
+      ],
+      "t_stat": 1.9161671142752996,
+      "df": 6.19110802487429,
+      "p_value_raw": 0.1023185127575408,
+      "p_value_bonferroni": 0.7162295893027856,
+      "cohens_d_s": 0.7001527868817755,
+      "min_effect_size": 0.01,
+      "alpha_per_cell": 0.0071428571428571435,
+      "verdict": "TIE",
+      "bonferroni_significant": false
+    }
+  },
+  "direction_consistency": {
+    "CosineAnnealScheduler": {
+      "n_paired": 30,
+      "n_positive": 13,
+      "n_negative": 17,
+      "n_zero": 0,
+      "frac_positive": 0.43333333333333335,
+      "frac_negative": 0.5666666666666667
+    },
+    "CodimensionSheetScheduler": {
+      "n_paired": 19,
+      "n_positive": 11,
+      "n_negative": 8,
+      "n_zero": 0,
+      "frac_positive": 0.5789473684210527,
+      "frac_negative": 0.42105263157894735
+    },
+    "EvidenceDrivenScheduler": {
+      "n_paired": 4,
+      "n_positive": 3,
+      "n_negative": 1,
+      "n_zero": 0,
+      "frac_positive": 0.75,
+      "frac_negative": 0.25
+    },
+    "FreeTrajScheduler": {
+      "n_paired": 3,
+      "n_positive": 2,
+      "n_negative": 1,
+      "n_zero": 0,
+      "frac_positive": 0.6666666666666666,
+      "frac_negative": 0.3333333333333333
+    }
+  },
+  "pre_expansion": {
+    "n_seeds": 10,
+    "primary_d_s": 1.011,
+    "primary_verdict": "TIE",
+    "primary_p_value_raw": 0.03684
+  }
+}
