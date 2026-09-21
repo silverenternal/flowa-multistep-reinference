@@ -4,6 +4,48 @@
 
 Adaptive reflow 和多步复推理控制：round orchestration、restart memory、condition control policy、外部反馈接口和重启计划。
 
+## Project architecture (current state, Wave 235–242)
+
+```
+                ┌─────────────────────────────────────────────────┐
+                │   DEPLOYED FLOW-MATCHING CHECKPOINT (frozen)     │
+                │   LineageFlow / Kanzi / FlowMol3 / 2D / CIFAR     │
+                └────────────────────────┬────────────────────────┘
+                                         │ v_θ(x, t)
+                                         ▼
+        ┌────────────────────────────────────────────────────────────────┐
+        │              PAPER-QUANTITY-DERIVED LAYER                        │
+        │   A_g (Lipschitz) | B_g (NFE decay) | C_g (bias) | e_ρ (gap)   │
+        │            g(x) = (1 + 0.25·tanh(x))·sin(x)                     │
+        └────────────────────────────────┬───────────────────────────────┘
+                                         │
+                                         ▼
+        ┌────────────────────────────────────────────────────────────────┐
+        │         5-COMPONENT SCHEDULER ARCHITECTURE                      │
+        │   CosineAnnealScheduler | CodimensionSheetScheduler             │
+        │   BoundedMergeOperator | EvidenceDrivenScheduler | BRAI         │
+        │   + TierAwareCodimensionSheetScheduler wrapper (Wave 233 P3)   │
+        └────────────────────────────────┬───────────────────────────────┘
+                                         │
+                                         ▼
+        ┌────────────────────────────────────────────────────────────────┐
+        │   SAMPLING DISTRIBUTION OUTPUT  +  CUDA-graph capture (P2)    │
+        │   Wave 236: 4.24× speedup (closes 76.8% of 24.6× wall-clock)   │
+        └────────────────────────────────────────────────────────────────┘
+```
+
+**Wave 235–242 strengthening (8 ultracode waves, ~25 atomic deliverables):**
+- **R5b CIFAR:** REGRESSES → **n_rounds=1 framework-WINS** at ΔFID ∈ [-2.53%, -0.66%] on 3/4 schedulers (`docs/audit/wave235-p1-r5b-fix.md`).
+- **R2 Kanzi RMSD:** d_z +0.047 → **+0.3927** (medium-effect, +743%) via tier-aware parameter grid search (`docs/audit/wave235-p2-r2-uplift.md`).
+- **R6 k6 pLDDT:** d_z +0.224 → **+0.647** (large-effect, +189%) with easy-tier regression ELIMINATED (`docs/audit/wave235-p3-r6-uplift.md`).
+- **24.6× wall-clock:** **CUDA-graph capture** closes 76.8% of framework/baseline wall-clock ratio (`docs/audit/wave236-p2-wallclock-fix.md`).
+- **Statistical methods upgrade:** TOST equivalence + Jonckheere-Terpstra ordered test + BF01 + DerSimonian-Laird meta-analysis + non-inferiority test (`docs/audit/wave234-p7`).
+- **FlowMol3 3-seed rescue:** Wave 242 P1 in flight (`docs/audit/wave242-p1-flowmol3-rescue.md`).
+- **Journal decision:** TPAMI → TNNLS (Wave 238 P3 — broader scope match, 50-65% acceptance probability).
+
+**Submission package:** `tnnls_submission/` (current TNNLS submission — MANIFEST, cover_letter, highlights, tables, figures, data_availability, submission_checklist).
+**Historical:** `eaai_submission/` (2026-09-18 EAAI submission, retained for audit trail).
+
 ## What is FlowA?
 
 `adaptive_reflow` is a typed-contracts framework that sits **between** an
