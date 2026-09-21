@@ -214,11 +214,11 @@
 | tier | metric | n_paired | mean_diff | sd_diff | t | df | p_raw | d_z | cluster p | verdict |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
 | **hard** | **pLDDT** | 330 | **+13.287** | 11.176 | 21.598 | 329 | 4.82e-65 | **+1.189** | 1.28e-02 (borderline at α_cluster=0.00208) | framework_WINS (cluster-robust borderline) |
-| **hard** | scPerplexity | 330 | ≈-3.4 | ≈3.3 | -18.770 | 329 | 6.00e-54 | -1.033 | 9.61e-03 | framework_WINS (cluster-robust) |
-| medium | pLDDT | 340 | +0.890 | 11.747 | 4.022 | 339 | 7.12e-05 | +0.218 | 2.60e-01 | UNDERPOWERED (cluster) |
-| medium | scPerplexity | 340 | ≈-3.4 | ≈3.3 | -20.984 | 339 | 3.05e-63 | -1.138 | 1.97e-03 | framework_WINS (cluster-robust) |
+| **hard** | scPerplexity | 330 | -2.997 | ≈3.3 | -18.770 | 329 | 6.00e-54 | -1.033 | 9.61e-03 | framework_WINS (cluster-robust) |
+| medium | pLDDT | 340 | +2.585 | 11.747 | 4.022 | 339 | 7.12e-05 | +0.218 | 2.60e-01 | UNDERPOWERED (cluster) |
+| medium | scPerplexity | 340 | -3.981 | ≈3.3 | -20.984 | 339 | 3.05e-63 | -1.138 | 1.97e-03 | framework_WINS (cluster-robust) |
 | **easy** | **pLDDT** | 330 | **-12.547** | 12.570 | -18.134 | 329 | 1.95e-51 | **-0.998** | 3.73e-03 | **REGRESSES** (cluster-robust) |
-| easy | scPerplexity | 330 | ≈-3.4 | ≈3.3 | -20.670 | 329 | 2.02e-61 | -1.138 | 4.96e-03 | framework_WINS (cluster-robust) |
+| easy | scPerplexity | 330 | -4.770 | ≈3.3 | -20.670 | 329 | 2.02e-61 | -1.138 | 4.96e-03 | framework_WINS (cluster-robust) |
 
 **Tier-aware counterfactual (ease_tier n_cap *= 0.5):**
 
