@@ -204,4 +204,29 @@ per_record_d_z ≈ per_seed_d_z * sqrt(10)).
 
 The real per-record sweep (--mode sweep) is available as a launcher for
 follow-up waves to close the remaining coverage gap (eval pipeline patch
-+ full GPU sweep).
++ full GPU sweep). A test launch was attempted at the time of this audit:
+
+```bash
+# Test launch (vanilla baseline, GPU 1):
+CUDA_VISIBLE_DEVICES=1 nohup python3 tools/wave229_p1_4arm_per_record.py \
+    --mode sweep --baseline vanilla --gpu 1
+```
+
+The launcher correctly delegated to `tools/lineageflow_n1000_gpu_sweep.sh`
+which started the `tools/run_real_ckpt_eval.py` pipeline with ESM-2
+(family_validity_rate metric). **Important note:** this launcher invokes
+the LineageFlow N=1000 wrapper which evaluates **family_validity_rate**
+(per-sequence ESM-2 pseudo-log-likelihood), NOT pLDDT / scPerplexity. The
+4-arm trackb sweep (which DOES emit pLDDT / scPerplexity per-seed aggregates)
+is a different infrastructure path that does not currently expose per-record
+JSONL output.
+
+To close the full real per-record pLDDT / scPerplexity gap for all 16 cells
+requires:
+1. A patch to the 4-arm trackb sweep runner to emit per-record output
+   (currently emits per-seed aggregates only).
+2. A full GPU sweep across all 4 baselines × 2 NFE × 2 metrics = 16 cells
+   × 2 arms × 1000 records × per-record eval (~12-20 GPU hours estimated).
+
+The bootstrap projection provided here is the **best-available per-record
+estimate** without that infrastructure change.
