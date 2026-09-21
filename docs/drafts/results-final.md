@@ -414,7 +414,7 @@ R-level cells at their appropriate granularities:
 | R-cell | Wave 195 P2 verdict | Wave 216 final verdict | mechanism |
 |---|---|---|---|
 | **R1** LineageFlow HMMER | WINS | **WINS** (unchanged) | d_z = +0.255, p = 1.49e-08 |
-| **R2** Kanzi `framework_inv_proj` | REGRESSES (initial) | **framework_wins** (Wave 214 P3 correction) | d_z = -0.161, p = 3.49e-07 |
+| **R2** Kanzi `framework_inv_proj` | REGRESSES (initial) | **framework_wins** (Wave 218 P3 N=1000 paired sweep) | d_z = -0.099, p_raw = 1.7943e-03, Bonferroni-significant at α = 0.007143 |
 | **R3** FlowMol3 `fg_dev` | UNDERPOWERED (per-arm) | **framework_wins** (Wave 216 P1 per-record proxy uplift) | ACTUAL n=200 per-record: d_z = -0.285, p = 8.03e-05; PROJECTED n=1000: d_z = -0.285, p = 1.07e-18, post-hoc power = 1.000 |
 | **R5a** 2D Two Moons W₂ | TIE (n=3) | **TIE** (Wave 216 P2 n=10 extension confirmed) | best arm = CosineAnnealScheduler, d_s = +1.011, p_raw = 0.037, Bonferroni p = 0.258 |
 | **R5b** CIFAR-10 RF NFE=50 FID | REGRESSES | **REGRESSES (boundary)** (unchanged, first-class honest-negative) | d_z = +2.700, p = 1.31e-05, Bonferroni-significant in wrong direction |
@@ -438,7 +438,10 @@ confirmed at n=10; no false-positive uplift). R5c remains PROVISIONAL
 pending production-ckpt re-run per CLM-059 (MNIST smoke subset 29%
 noise per Wave 191 P1 audit). The R-level primary family is closed
 for TPAMI submission pending Wave 218 P3 N=1000 sweep verdict on
-the R2 row.
+the R2 row — the R2 row is now **CLOSED** at framework_wins (Wave
+218 P3 d_z = -0.099, p_raw = 1.7943e-03, Bonferroni-significant at
+α = 0.007143; reproducible from commit `e3d1c01` which contains the
+Wave 218 P1 bridge restore, see `docs/audit/wave218-p1-fix-applied.md`).
 
 ---
 

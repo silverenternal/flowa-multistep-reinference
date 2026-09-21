@@ -3028,22 +3028,31 @@ How it works:
   cohens_d_kind, post_hoc_power, post_hoc_power_min_effect,
   min_effect_size, alpha_bonferroni, verdict, data_source)`. Verdict
   distribution: **1 SUPPORTED / 1 REGRESSES / 1 TIE / 5 UNDERPOWERED / 0
-  NOT_SIGNIFICANT** (out of 8 rows) **— Wave 214 P3 UPDATE**: the R2
+  NOT_SIGNIFICANT** (out of 8 rows) **— Wave 218 P3 UPDATE**: the R2
   cell is no longer REGRESSES; per user directive
   "这个baseline win肯定是错的", the Wave 214 P1+P2 audit identified
   the Wave 178 P2+P3 + Wave 196 P3 source-code regression that
   bypassed the Wave 95.P3.B trained-inverse bridge (causing the
-  byte-stable σ=0 reading) as the root cause; Wave 214 P2 restored
-  the bridge in `tools/_kanzi_sweep_runner.py:_synthesize_x_final_real`
-  lines 414-491, and the N=10 smoke test confirms framework mean
-  returns to 0.8758 Å (matching Wave 127 byte-stable 0.8798 Å). The
-  R2 verdict is now **SUPPORTED framework_wins** (Cohen's d_z = −0.16
-  on the byte-stable framework 0.8798 vs baseline 0.9020; full N=1000
-  paired t-test t = −5.094, p = 3.49e-7, p_bonf = 2.44e-6, post-hoc
-  power at observed Δ = 0.856). The 8-row distribution becomes
-  **1 SUPPORTED (R2) / 1 REGRESSES (R5b) / 1 TIE (R5a) / 5 UNDERPOWERED
-  / 0 NOT_SIGNIFICANT**. The R5b REGRESSES cell remains the
-  documented honest-negative CIFAR-10 RF matched-NFE=50 finding.
+  byte-stable σ=0 reading) as the root cause. The bridge restore was
+  attempted as an uncommitted Wave 214 P2 patch, but Wave 215 P1
+  ruff cleanup discarded it; Wave 218 P1 re-applied the bridge
+  restore in commit `e3d1c01` (lines 414-473 of
+  `tools/_kanzi_sweep_runner.py:_synthesize_x_final_real`, marked
+  "Wave 218 P1 — restore the Wave 95.P3.B trained-inverse bridge").
+  Wave 218 P2 N=10 smoke test on the Wave 218 P1 fixed HEAD
+  confirms framework mean returns to 0.8758 Å (matching Wave 127
+  byte-stable 0.8798 Å within 0.004 Å). Wave 218 P3 N=1000 paired
+  sweep (`verification_outputs/wave218-p3-kanzi-framework-wins.csv`)
+  confirms framework_wins at full N=1000: Cohen's d_z = −0.0990,
+  paired t = −3.1307, df = 999, p_raw = 1.7943e-3,
+  CI95 = [−0.0309, −0.0071], Bonferroni-significant at
+  α_bonf = 0.007143. The R2 verdict is **SUPPORTED framework_wins**
+  with the byte-stable Wave 127 framework 0.8798 vs Wave 88 baseline
+  0.9020 (Δ = 0.022 Å) direction confirmed by the Wave 218 P3 N=1000
+  paired test. The 8-row distribution becomes **1 SUPPORTED (R2) / 1
+  REGRESSES (R5b) / 1 TIE (R5a) / 5 UNDERPOWERED / 0 NOT_SIGNIFICANT**.
+  The R5b REGRESSES cell remains the documented honest-negative
+  CIFAR-10 RF matched-NFE=50 finding.
   The single TIE cell is **R5a Two Moons** (`|Δ| = 0.00232` < `min_effect_size
   = 0.01`, n=3 per arm, p_raw = 0.604). The 5 UNDERPOWERED cells all
   reject H0 at the Bonferroni level on the **observed δ** (not the

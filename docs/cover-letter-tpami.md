@@ -301,6 +301,26 @@ The submission is accompanied by:
   freeze-marker commit hash is referenced from the deposit
   metadata.
 
+- **R2 reproducibility provenance note.** All Kanzi `framework_inv_proj`
+  results in this submission are reproducible from commit `e3d1c01`
+  (Wave 218 P1 bridge restore, landed in the Wave 217 P5 bulk window;
+  provenance annotated in commit `f59523b` Wave 218 P4) onward. The
+  fix restores the Wave 95.P3.B trained-inverse bridge in
+  `tools/_kanzi_sweep_runner.py:_synthesize_x_final_real` lines
+  414-473, which had been bypassed by a Wave 196 P3 shape-detection
+  skip-bridge branch (combined with the Wave 178 P2+P3 `(L, 3)`
+  random-Gaussian change in `build_initial_state`) and produced a
+  spurious +0.66 Å regression in framework_inv_proj. The Wave 218
+  P1 fix is verified at Wave 218 P2 N=10 smoke (mean = 0.8758 Å,
+  matching Wave 127 byte-stable 0.8798 Å within 0.004 Å) and Wave
+  218 P3 N=1000 paired sweep (Cohen's d_z = −0.0990,
+  p_raw = 1.7943 × 10⁻³, Bonferroni-significant at α = 0.007143,
+  framework_wins). D.4 byte-stable regression suite is **30/30 PASS**
+  (was 33/33 in pre-Wave-178; 3 pre-Wave-196 shape-contract tests
+  retired in Wave 196 P3 because Wave 178 changed the
+  synthetic-mode latent shape to `(L, 3)` — see
+  `docs/audit/wave218-p1-fix-applied.md` §Incident context).
+
 - **Per-record CSVs** (N=1000+ rows per cell) available on Zenodo
   behind a reviewer-token gate for full re-analysis.
 
