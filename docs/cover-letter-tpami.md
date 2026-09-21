@@ -1,5 +1,46 @@
 # Cover Letter — FlowA for IEEE TPAMI
 
+## §0 USER ACTION REQUIRED — Fill These Placeholders Before Submitting
+
+This cover letter contains placeholders that **must be replaced by the
+corresponding author** before the TPAMI Editorial Manager submission.
+All placeholders are marked with the `[USER TO FILL: ...]` convention
+below, and they are also tagged inline so they can be located with
+`grep -n 'USER TO FILL' docs/cover-letter-tpami.md`.
+
+- `[USER TO FILL: Authors block]` — line 11 (§opening header). Replace
+  `[corresponding author and affiliations to be filled at submission]`
+  with the full author list, affiliations, and corresponding-author
+  email.
+- `[USER TO FILL: Suggested Associate Editor]` — line 16 (§opening
+  header) and line 433 (§9). Insert a TPAMI Associate Editor who
+  specialises in generative models / diffusion / flow matching.
+- `[USER TO FILL: Suggested Reviewers]` — line 19 (§opening header)
+  and §9 (lines 437–507). Five reviewers; replace both the
+  `reviewerN.<role>@[institution].edu` email placeholders and the
+  "to be confirmed at submission" affiliation hints with real names,
+  affiliations, and emails.
+- `[USER TO FILL: Reviewer 1 affiliation]` — line 449 (§9).
+- `[USER TO FILL: Reviewer 2 affiliation]` — line 462 (§9).
+- `[USER TO FILL: Reviewer 3 affiliation]` — line 475 (§9).
+- `[USER TO FILL: Reviewer 4 affiliation]` — line 490 (§9).
+- `[USER TO FILL: Reviewer 5 affiliation]` — line 505 (§9).
+- `[USER TO FILL: Corresponding author name]` — line 565 (§11 closing).
+- `[USER TO FILL: Corresponding author affiliation]` — line 566 (§11
+  closing).
+- `[USER TO FILL: Corresponding author email]` — line 567 (§11 closing).
+
+After filling, run:
+
+```bash
+grep -n 'USER TO FILL' docs/cover-letter-tpami.md
+```
+
+The output must be empty before the cover letter is uploaded to the
+TPAMI Editorial Manager.
+
+---
+
 **To:** Editor-in-Chief, IEEE Transactions on Pattern Analysis and
 Machine Intelligence (TPAMI)
 
@@ -7,15 +48,17 @@ Machine Intelligence (TPAMI)
 re-inference for Flow Matching checkpoints" for consideration as a
 regular research paper in IEEE TPAMI.
 
-**Authors:** [corresponding author and affiliations to be filled at
-submission]
+**Authors:** `[USER TO FILL: Authors block — full author list,
+affiliations, and corresponding-author email]` (line 11)
 
 **Date:** 2026-09-21
 
-**Suggested Associate Editor:** [to be filled at submission — see
-§9 below]
+**Suggested Associate Editor:** `[USER TO FILL: Suggested Associate
+Editor — TPAMI AE specialising in generative models / diffusion /
+flow matching]` (see §9 below)
 
-**Suggested Reviewers:** [to be filled at submission — see §9 below]
+**Suggested Reviewers:** `[USER TO FILL: Suggested Reviewers — five
+reviewers with affiliations and emails]` (see §9 below)
 
 ---
 
@@ -430,9 +473,10 @@ record for this naming decision is `docs/audit/wave213-p6-repo-naming.md`.
 
 **Suggested Associate Editor** (one of):
 
-- Prof. [TPAMI AE specializing in generative models / diffusion /
-  flow matching — to be selected based on Editorial Manager
-  rotation]
+- Prof. `[USER TO FILL: Suggested Associate Editor — name and
+  affiliation]` (TPAMI AE specializing in generative models /
+  diffusion / flow matching — to be selected based on Editorial
+  Manager rotation)
 
 **Suggested Reviewers** (five, excluding obvious conflicts; the
 corresponding author will confirm institutional COI at submission
@@ -446,9 +490,11 @@ time):
    corollary, the four paper quantities $(A_g, B_g, C_g, e_\rho)$
    and their typed evaluators in
    `adaptive_reflow/theory/paper_quantities.py`).
-   - *Affiliation:* e.g., Meta AI Research (ProbFlow team) /
-     Weizmann Institute — *to be confirmed at submission.*
-   - *Email placeholder:* `reviewer1.theory@[institution].edu`
+   - *Affiliation:* `[USER TO FILL: Reviewer 1 affiliation]` (e.g.,
+     Meta AI Research (ProbFlow team) / Weizmann Institute — *to
+     be confirmed at submission.*)
+   - *Email:* `[USER TO FILL: Reviewer 1 email —
+     reviewer1.theory@[institution].edu]`
 
 2. **Reviewer 2 — Convergence Bound / BL-Distance Expert.** A
    researcher in the F.-X. Vialard or S. Chewi group working on
@@ -458,10 +504,11 @@ time):
    + C_g · e_ρ`, the g-independent rate corollary
    `BL(μ_{g,ε}, ν_g) ≤ ε · √(2/π)`, and the assumptions under
    which the bound is tight.
-   - *Affiliation:* e.g., Université Gustave Eiffel / LIGM
-     (Vialard) or Yale University (Chewi) — *to be confirmed at
-     submission.*
-   - *Email placeholder:* `reviewer2.convergence@[institution].edu`
+   - *Affiliation:* `[USER TO FILL: Reviewer 2 affiliation]` (e.g.,
+     Université Gustave Eiffel / LIGM (Vialard) or Yale
+     University (Chewi) — *to be confirmed at submission.*)
+   - *Email:* `[USER TO FILL: Reviewer 2 email —
+     reviewer2.convergence@[institution].edu]`
 
 3. **Reviewer 3 — ODE Solver / NFE-Efficiency Expert.** A
    researcher in the C. Lu DPM-Solver group or an equivalent lab
@@ -472,9 +519,11 @@ time):
    Dormand–Prince RK45, CTMC, BFN), the 2.5–10× cross-budget NFE
    compression claim (CLM-046), and the matched-NFE = 50
    regression disclosed in §7.
-   - *Affiliation:* e.g., Stanford University (Lu group) or
-     Peking University — *to be confirmed at submission.*
-   - *Email placeholder:* `reviewer3.solver@[institution].edu`
+   - *Affiliation:* `[USER TO FILL: Reviewer 3 affiliation]` (e.g.,
+     Stanford University (Lu group) or Peking University — *to
+     be confirmed at submission.*)
+   - *Email:* `[USER TO FILL: Reviewer 3 email —
+     reviewer3.solver@[institution].edu]`
 
 4. **Reviewer 4 — Protein Generation Expert.** A researcher from
    the ESM-IF / LineageFlow / Kanzi author lists working on
@@ -486,10 +535,12 @@ time):
    (df_cluster=3, ICC=0.041, N_eff=89.6), and the cross-adapter
    monotone `hard > medium > easy` pLDDT pattern (k6 hard d_z =
    +1.189, LineageFlow hard d_z = +1.840).
-   - *Affiliation:* e.g., Meta AI (ESM-IF / EvolutionaryScale
-     LineageFlow) or Westlake University / Microsoft Research
-     (Kanzi) — *to be confirmed at submission.*
-   - *Email placeholder:* `reviewer4.protein@[institution].edu`
+   - *Affiliation:* `[USER TO FILL: Reviewer 4 affiliation]` (e.g.,
+     Meta AI (ESM-IF / EvolutionaryScale LineageFlow) or
+     Westlake University / Microsoft Research (Kanzi) — *to
+     be confirmed at submission.*)
+   - *Email:* `[USER TO FILL: Reviewer 4 email —
+     reviewer4.protein@[institution].edu]`
 
 5. **Reviewer 5 — Statistical Rigor Expert.** A senior researcher
    in applied statistics / pre-registration / multiple-testing
@@ -501,10 +552,12 @@ time):
    cluster-robust re-analysis, and the effect-size sign
    consistency across adapters (k6 d_z range [−1.077, −1.138];
    LineageFlow d_z range [−1.002, −1.044]).
-   - *Affiliation:* e.g., a statistics department with a
+   - *Affiliation:* `[USER TO FILL: Reviewer 5 affiliation]` (e.g.,
+     a statistics department with a
      computational-statistics / causal-inference / meta-analysis
-     focus — *to be confirmed at submission.*
-   - *Email placeholder:* `reviewer5.stats@[institution].edu`
+     focus — *to be confirmed at submission.*)
+   - *Email:* `[USER TO FILL: Reviewer 5 email —
+     reviewer5.stats@[institution].edu]`
 
 **Conflicts of interest to declare:** the corresponding author has
 no financial or personal relationships with any of the suggested
@@ -560,10 +613,10 @@ title page footnote to keep the editorial record transparent.
 
 Sincerely,
 
-`[Corresponding author]`
-`[Affiliation]`
-`[Email]`
-`[Date]`
+`[USER TO FILL: Corresponding author name]`
+`[USER TO FILL: Corresponding author affiliation]`
+`[USER TO FILL: Corresponding author email]`
+2026-09-21
 
 ---
 
