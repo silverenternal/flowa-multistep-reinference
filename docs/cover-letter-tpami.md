@@ -52,15 +52,18 @@ axes that align with the journal's stated mission.
 contribution is a self-contained four-lemma derivation (Theorem 1)
 of a closed-form upper bound on the bounded-Lipschitz distance
 between the framework's sampling distribution and the ODE target,
-parameterised by four paper quantities computable from the
-checkpoint's posterior geometry. The bound is restated in §2 of
-the manuscript with full proof sketch and explicit computation of
-the four quantities, and is supported by S1 (Theorem 1 derivation
-appendix). TPAMI's history of publishing methodological work at
-the intersection of probability theory, optimisation, and
-generative modelling (e.g., recent issues on diffusion-model
-theory and rectified-flow analysis) makes FlowA's mathematical
-core a natural fit for the journal's readership.
+parameterised by four paper quantities derived from a canonical
+F-side witness $g(x) = (1 + 0.25\cdot\tanh(x))\cdot\sin(x)$
+(Proposition 2 family) under the framework default F-side profile
+$(d, c, \rho, \eta) = (1.0, 1.0, 0.1, 0.1)$ — shared across all 12
+adapters. The bound is restated in §2 of the manuscript with full
+proof sketch and explicit computation of the four quantities, and
+is supported by S1 (Theorem 1 derivation appendix). TPAMI's
+history of publishing methodological work at the intersection of
+probability theory, optimisation, and generative modelling
+(e.g., recent issues on diffusion-model theory and rectified-flow
+analysis) makes FlowA's mathematical core a natural fit for the
+journal's readership.
 
 **Cross-domain empirical validation.** Beyond the theory, FlowA is
 validated across three generative domains (protein, molecular 3D,
@@ -97,18 +100,30 @@ g-independent rate corollary `BL(μ_{g,ε}, ν_g) ≤ ε · √(2/π)`)
 from four closed-form paper quantities $(A_g, B_g, C_g, e_ρ)$ —
 a Lipschitz aggregate, an effective NFE decay rate, a residual
 bias coefficient, and an exterior-gap constant. These four quantities
-are **computable from the adapter's posterior geometry at runtime**
-through typed evaluators in `adaptive_reflow/theory/paper_quantities.py`
-and are consumed directly as scheduler inputs by the framework's
-three scheduler/operator components: `CodimensionSheetScheduler`
-(consumes $A_g, B_g, C_g$ → `n_cap`), `BoundedMergeOperator`
-(consumes $e_\rho$ → merge envelope noise floor), and
-`EvidenceDrivenScheduler` (consumes the full quadruple → per-cell
-restart probability). The framework operates without retraining,
-distillation, or Reflow; stacks on Euler, Heun, DPM-Solver++,
-Dormand–Prince RK45, CTMC, and BFN solvers; and exposes the
-inference loop as a typed four-port control surface that a domain
-expert can drive without manipulating the FM internals.
+are **derived from the canonical F-side witness** $g(x) = (1 + 0.25
+\cdot\tanh(x))\cdot\sin(x)$ (Proposition 2 family) under the
+framework default F-side profile $(d, c, \rho, \eta) = (1.0, 1.0,
+0.1, 0.1)$, through typed evaluators in
+`adaptive_reflow/theory/paper_quantities.py`, and are **shared
+across all 12 adapters** at that canonical witness. The framework's
+value-add is the **scheduler architecture** —
+`CosineAnnealScheduler` (consumes $A_g$ → smoothing-ramp
+aggressiveness), `CodimensionSheetScheduler` (consumes
+$A_g, B_g, C_g$ → `n_cap`), `BoundedMergeOperator` (consumes $e_\rho$
+→ merge envelope noise floor), `EvidenceDrivenScheduler` (consumes
+the full quadruple → per-cell restart probability), and BRAI
+(Bayesian Re-inference Aggregator) — which adapts per-record to
+local velocity-field geometry rather than depending on
+per-adapter paper-quantity overrides. Per-adapter $g(s)$ from each
+adapter's posterior geometry is **not currently implemented** (the
+framework exposes `AdapterCapabilities.profile_residual_fn` in
+`adaptive_reflow/universal/adapter.py` as the future-extension
+point, but no adapter declares that hook today). The framework
+operates without retraining, distillation, or Reflow; stacks on
+Euler, Heun, DPM-Solver++, Dormand–Prince RK45, CTMC, and BFN
+solvers; and exposes the inference loop as a typed five-port
+control surface (four scheduler/operator ports plus BRAI) that a
+domain expert can drive without manipulating the FM internals.
 
 ## §4 Distinction from Prior Work
 

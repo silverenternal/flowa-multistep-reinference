@@ -344,6 +344,56 @@ from each adapter's posterior geometry and (b) wiring it into the
 in any of the 12 adapter classes today (Wave 227 P1 diagnostic,
 `docs/audit/wave227-p1-a-g-diagnostic.md`).
 
+### §MS.10.5.2 Framework value-add — scheduler architecture, not per-adapter paper quantities
+
+The framework's **value-add is the scheduler architecture**, not the
+per-adapter paper-quantity values. The four closed-form quantities
+$(A_g, B_g, C_g, e_\rho)$ are **derived once** from the canonical
+F-side witness and **shared across all 12 adapters** under the
+framework default F-side profile — the value-add is what the
+framework does **with** those quantities in the scheduler loop:
+
+- **`CosineAnnealScheduler`** consumes $A_g$ as the smoothing-ramp
+  aggressiveness (`docs/drafts/section-2-method.md` §2.6.1), driving
+  the per-round perturbation amplitude from the Lipschitz aggregate.
+- **`CodimensionSheetScheduler`** consumes $(A_g, B_g, C_g)$ to
+  set the per-round `n_cap` (§2.6.2), modulating the NFE budget
+  per restart round as a function of the sheet-vs-cell evidence
+  balance.
+- **`BoundedMergeOperator`** consumes $e_\rho$ as the merge-envelope
+  noise floor (§2.6.3), enforcing the paper-derived non-zero noise
+  floor that keeps samples on the fibre.
+- **`EvidenceDrivenScheduler`** consumes the full quadruple to
+  derive the per-cell restart probability (§2.6.4), allocating
+  restart-budget mass to cells whose evidence warrants it.
+- **BRAI** (Bayesian Re-inference Aggregator) is the framework
+  surface that drives the per-record decision of how to combine
+  the per-round outputs from the schedulers above, adapting to
+  local velocity-field geometry **per record** rather than
+  per-adapter.
+
+The architectural separation is: **paper quantities are the
+canonical closed-form coefficients** (computed once for the shared
+canonical witness), and **scheduler architecture is the per-record
+adaptation layer** that uses those coefficients to drive
+inference-time decisions. Per-adapter $g(s)$ from each adapter's
+posterior geometry is **not currently implemented** — the framework
+exposes the `AdapterCapabilities.profile_residual_fn` hook (see
+`adaptive_reflow/universal/adapter.py`) as the future-extension
+point for per-adapter $g(s)$, but no adapter declares that hook
+today. Adapter-specificity in the published numbers is carried by
+the **per-record BL-distance witness** (R6 R-level headline
+observable), not by per-adapter $A_g$ values.
+
+This reframe closes the Wave 228 P3 Path A vs Path B decision
+(`docs/audit/wave228-p3-path-a-vs-path-b-decision.md`): Path B
+selected **reframe not refactor** — the closed-form coefficients
+stay canonical-witness-derived (no source-code change), and the
+narrative now honestly delineates that the framework's per-record
+adaptation comes from the **scheduler architecture** (the listed
+five scheduler components + BRAI) rather than from per-adapter
+paper-quantity overrides that are not implemented.
+
 ---
 
 ## §MS.10.5 Cross-references

@@ -13,16 +13,22 @@ Standard ODE solvers for flow matching treat the entire trajectory with
 uniform boundary conditions, ignoring the local geometric structure of
 the velocity field. Deployed flow matching checkpoints ship as frozen
 weights, leaving practitioners without a mechanism to schedule the
-inference loop as a function of the checkpoint's own posterior
-geometry. We introduce FlowA, a training-free, solver-agnostic
-re-inference framework that derives a closed-form upper bound on the
+inference loop as a function of local velocity-field geometry. We
+introduce FlowA, a training-free, solver-agnostic re-inference
+framework that derives a closed-form upper bound on the
 bounded-Lipschitz distance between the framework's sampling
 distribution and the ODE target through four paper quantities
 $(A_g, B_g, C_g, e_\rho)$ — a Lipschitz aggregate, an effective NFE
 decay rate, a residual bias coefficient, and an exterior-gap constant
-— and consumes those quantities directly as scheduler inputs via the
-CodimensionSheetScheduler, EvidenceDrivenScheduler, and
-BoundedMergeOperator algorithms. We validate the framework across six
+— derived from a canonical F-side witness $g(x) = (1 + 0.25
+\cdot\tanh(x))\cdot\sin(x)$ (Proposition 2 family), which is shared
+across adapters under the framework default F-side profile. The
+framework value-add is the scheduler architecture
+(CosineAnnealScheduler + CodimensionSheetScheduler +
+BoundedMergeOperator + EvidenceDrivenScheduler + BRAI), which adapts
+per-record to local velocity-field geometry rather than depending on
+per-adapter paper-quantity values, and consumes those quantities
+directly as scheduler inputs. We validate the framework across six
 R-level cells spanning protein (LineageFlow, Kanzi), molecular 3D
 (FlowMol3), and image (CIFAR-10 Rectified Flow, MNIST Flow Matching,
 2D Rectified Flow) flow matching models at paired sample sizes of

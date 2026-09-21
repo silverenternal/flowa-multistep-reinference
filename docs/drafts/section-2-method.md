@@ -340,19 +340,33 @@ and the human-readable audit is
 
 **Disclosure.** All twelve adapters currently run with the
 framework's **default F-side profile** $(d = 1.0, c = 1.0, \rho =
-0.1, \eta = 0.1)$ because the F-side constants are computed from
-the adapter's posterior geometry at runtime (via
-`sheet_evidence_A`, `root_cell_packing_B`, `per_cell_coefficient_C`,
-`exterior_gap_e_rho` on the adapter's residual profile $g$ derived
-from the velocity field) but the framework currently exposes them
-through the rate-bound checker's default-argument path
-(`f_side_d=1.0, f_side_c=1.0, f_side_rho=0.1, f_side_eta=0.1` in
-`check_explicit_rate_bound`). Per-adapter profiles are a
-**future-work** enhancement: the framework's audit-trail
-(`paper_quantities.py`) exposes each lemma's quantitative
-conclusion as a typed, byte-stable evaluator that can be called per
-adapter with adapter-specific $(d, c, \rho, \eta)$, but no adapter
-in the current codebase overrides the defaults. The defaults are
+0.1, \eta = 0.1)$. The four paper quantities $(A_g, B_g, C_g, e_\rho)$
+are derived from the canonical F-side witness (Proposition 2 family
+$g(x) = (1 + 0.25\cdot\tanh(x))\cdot\sin(x)$; see
+`adaptive_reflow/theory/paper_quantities.py`), which is **shared
+across adapters** under the framework default F-side profile.
+The framework value-add is the **scheduler architecture**
+(`CosineAnnealScheduler` + `CodimensionSheetScheduler` +
+`BoundedMergeOperator` + `EvidenceDrivenScheduler` + BRAI), which
+adapts per-record to local velocity-field geometry rather than
+depending on per-adapter paper-quantity values. Per-adapter
+profiles are a **future-work** enhancement: the framework's
+audit-trail (`paper_quantities.py`) exposes each lemma's
+quantitative conclusion as a typed, byte-stable evaluator that can
+be called per adapter with adapter-specific $(d, c, \rho, \eta)$,
+but no adapter in the current codebase overrides the defaults.
+
+**Explicit caveat (per-adapter $g(s)$).** Per-adapter $g(s)$ from
+each adapter's posterior geometry is **not currently implemented**;
+the framework exposes the `AdapterCapabilities.profile_residual_fn`
+hook (see `adaptive_reflow/universal/adapter.py`) for future
+per-adapter $g(s)$ extension, but no adapter declares that hook
+and the runner/scheduler fall back to legacy closed forms that do
+not compute a per-adapter $g(s)$. The canonical witness $g(x) =
+(1 + 0.25\cdot\tanh(x))\cdot\sin(x)$ is therefore **shared across
+all 12 adapters** at the framework default F-side profile.
+
+The defaults are
 F-side-consistent (`rho < d/4`, `rho <= 1/4`, `c > 0`, `eta > 0`)
 and the rate-bound checker passes at all default values for the
 canonical $g(x) = \sin(x)$ and $g_a(x) = (1 + 0.25 \tanh x) \sin x$
@@ -439,25 +453,32 @@ expert can drive without manipulating the flow matching internals.
 ## 2.7 Theoretical-Justification Paragraph (Self-Contained)
 
 The four paper quantities $(A_g, B_g, C_g, e_\rho)$ are
-**computable from the adapter's posterior geometry at runtime**
-through the closed-form evaluators in
-`adaptive_reflow/theory/paper_quantities.py` (re-exported from the
-`contracts/paper_quantities.py` shim for backward compatibility).
-The framework precomputes these values once per adapter and
-**caches** them on the `PhysicalComplement` typed carrier, so the
-per-round scheduler calls are $O(1)$ table lookups rather than
-re-integration of the integrals (D1)–(D4).
+**derived from the canonical F-side witness** $g(x) = (1 + 0.25
+\cdot\tanh(x))\cdot\sin(x)$ (Proposition 2 family) with default
+$(d, c, \rho, \eta) = (1.0, 1.0, 0.1, 0.1)$, through the closed-form
+evaluators in `adaptive_reflow/theory/paper_quantities.py`
+(re-exported from the `contracts/paper_quantities.py` shim for
+backward compatibility). The framework precomputes these values
+once for the canonical witness and **caches** them on the
+`PhysicalComplement` typed carrier, so the per-round scheduler
+calls are $O(1)$ table lookups rather than re-integration of the
+integrals (D1)–(D4). Per-adapter $g(s)$ from each adapter's
+posterior geometry is **not currently implemented** (see §2.5.1
+caveat and `AdapterCapabilities.profile_residual_fn` in
+`adaptive_reflow/universal/adapter.py`).
 
 Even **without** the framework serving as the runtime host, an
 outside caller can compute $(A_g, B_g, C_g, e_\rho)$ from a single
 call to each of `sheet_evidence_A`, `root_cell_packing_B`,
-`per_cell_coefficient_C`, and `exterior_gap_e_rho` on the residual
-profile $g$ derived from the adapter's velocity field. The
+`per_cell_coefficient_C`, and `exterior_gap_e_rho` on the canonical
+witness $g(x) = (1 + 0.25\cdot\tanh(x))\cdot\sin(x)$. The
 framework's value-add is therefore **not** the existence of these
 quantities (they exist mathematically in any flow-matching residual
-geometry) but the **runtime packaging**: the framework exposes them
-as scheduler inputs without requiring the domain expert to implement
-the BL-bound derivation themselves.
+geometry) but the **scheduler architecture** that consumes them:
+`CosineAnnealScheduler`, `CodimensionSheetScheduler`,
+`BoundedMergeOperator`, `EvidenceDrivenScheduler`, and BRAI
+adapt per-record to local velocity-field geometry rather than
+depending on per-adapter paper-quantity values.
 
 The Theorem 1 bound (T1) is **derived within this paper** by way of
 the five-step proof sketch in `docs/theory/theorem-1-self-contained.md`
