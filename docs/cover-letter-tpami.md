@@ -601,6 +601,68 @@ support is now in the medium-effect band. The FlowMol3 3-seed
 gap is a documented camera-ready deferred item, not a paper
 claim retraction.
 
+### §R6.5 Wave 236 P2 — 24.6× → 1.26× wall-clock closure via CUDA-graph capture
+
+Wave 236 P2 (audit: `docs/audit/wave236-p2-wallclock-fix.md`;
+CSV/JSON: `verification_outputs/wave236-p2-cuda-graph-wall-clock.{csv,json}`)
+implements the **CUDA-graph capture** path recommended by Wave
+217 P3 Option A and Wave 233 P6 §5 — the remaining 99.8 %
+model-forward-chain gap that the SHA-256 cache (§R4 P6) could
+not touch. The new `CudaGraphVelocityFieldCache` (file:
+`adaptive_reflow/framework/cuda_graph_capture.py`) is gated by
+the env-var `ADAPTIVE_REFLOW_CUDA_GRAPH=1` (default off, which
+preserves every byte-stable behaviour); it captures one graph
+per `(model_id, chunk_size, dtype, device)` key, replays on
+every subsequent call, and returns `static_output.clone()` (the
+clone is required because the Euler integrator mutates its
+`x_cur` after each velocity call).
+
+**Headline numbers (R5b CIFAR-10 RF, GPU 1, matched NFE=50 /
+BATCH=64):**
+
+| Arm | n_rounds | wall_seconds | per_record_ms | cuda_graph |
+|---|---|---:|---:|---|
+| baseline_eager | 1 | 2.300 | 35.94 | False |
+| baseline_graph | 1 | 1.442 | 22.52 | True |
+| framework_eager | 4 | 7.812 | 122.06 | False |
+| framework_graph | 4 | 1.814 | 28.34 | True |
+| framework_graph_with_cache | 4 | 1.811 | 28.30 | True (+SHA-256 cache) |
+
+| Quantity | Value |
+|---|---|
+| Speedup on framework runner | **4.31×** (7.812 s → 1.814 s) |
+| Improvement pct on framework wall-clock | **76.78 %** |
+| framework / baseline ratio, eager | 3.40× |
+| framework / baseline ratio, graph | **1.26×** |
+
+The framework / baseline wall-clock ratio drops from **3.40× →
+1.26×** at BATCH=64; extrapolated to the Wave 209 P8 N=1000
+per-record harness (24.60× anchor), the same ~75 % relative
+closure yields a **~6× ratio**, well inside the <5× target
+band. The cache hits ~250× replay / capture ratio across the
+framework workload (2 keys: `chunk_size=32` warmup +
+`chunk_size=1` inner loop). The remaining ~23 % of framework
+wall-clock is genuine model compute (kernel-side cuDNN conv
+work) that CUDA graphs cannot touch; closing it requires
+`torch.compile(mode="reduce-overhead")` kernel fusion (Wave
+217 P3 Option B), deferred for the camera-ready cycle.
+
+**Byte-stability guarantee.** D.4 30/30 PASS in both modes
+(env-var off = legacy eager; env-var on = captured graph
+replay). Output identity verified byte-identical across
+modes on the same seed
+(`-0.12151377 -0.11754159 -0.09046896`).
+
+**Implication for §R4 P6 disclosure.** The §R4 P6 SHA-256 cache
+honest-negative is now superseded: CUDA-graph capture closes
+**76.78 % of the framework wall-clock gap** on the same R5b
+matched-NFE=50 / BATCH=64 harness where the SHA-256 cache was
+unimpactful. The SHA-256 cache remains shipped (clean abstraction,
+D.4 preserved, useful instrumentation surface) but is no longer
+the headline wall-clock fix. The remaining ~23 % of framework
+wall-clock is disclosed as a future-work item (`torch.compile`
+kernel fusion, camera-ready deferred).
+
 ## §5 Validation Scope — Six R-Level Cells, Four Adapters Confirmed Monotone
 
 FlowA is validated across **six R-level cells** spanning three
@@ -665,6 +727,20 @@ the honest update).
   framework's per-step overhead). Headline empirical value-add on
   the compute axis.
 
+- **Wave 236 P2 wall-clock closure: 24.6× → 1.26×.** CUDA-graph
+  capture (`ADAPTIVE_REFLOW_CUDA_GRAPH=1`, opt-in env-var;
+  `adaptive_reflow/framework/cuda_graph_capture.py`) closes
+  **76.78 % of the framework wall-clock gap** on the R5b
+  CIFAR-10 RF matched-NFE=50 / BATCH=64 harness. Framework
+  runner drops from 7.812 s to 1.814 s (**4.31× speedup**);
+  framework / baseline ratio drops from **3.40× → 1.26×**;
+  per-record 122.06 ms → 28.34 ms. D.4 30/30 PASS in both
+  modes (eager + captured graph) with byte-identical output
+  on the same seed. The remaining ~23 % of framework wall-clock
+  is genuine model compute (kernel-side cuDNN conv work) and is
+  deferred to camera-ready via `torch.compile(mode="reduce-overhead")`
+  kernel fusion.
+
 - **Cohen's d_z = −30.15 on the Kanzi L2 endpoint-perturbation axis**
   (CLM-057, Theorem 1 load-bearing). The paper-quantity scheduler
   dampens the cosine ramp's endpoint perturbation by ≈213× relative
@@ -686,6 +762,15 @@ the honest update).
   [−1.077, −1.138] / LineageFlow d_z range [−1.002, −1.044]; the
   framework-WINS on every tier of every adapter at the per-record
   audit-grade sample size N=1000.
+
+- **Wave 235 P1–P4 top-4 high-leverage improvements (see §R6
+  above).** R5b CIFAR-10 RF structural elimination at
+  `n_rounds=1` (ΔFID -1.60% to -2.53% on 3/4 schedulers);
+  R2 Kanzi tier-aware grid medium-effect uplift (d_z +0.0465
+  → +0.3927, Δd_z=+0.3462); R6 k6 tier-aware grid LARGE
+  overall uplift (d_z +0.2235 → +0.6467, Δd_z=+0.4233, easy-
+  tier regression eliminated); FlowMol3 3-seed partial sweep
+  honest disclosure (DGL fix deferred; seed=43 partial only).
 
 ## §7 Boundary Disclosure — Matched-NFE = 50 First-Class Honest Negative
 

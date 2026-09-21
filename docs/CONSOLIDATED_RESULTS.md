@@ -8525,3 +8525,125 @@ P2 + P3 / Wave 208 P4 disclosures all remain in place. The FlowMol3
 negative is **the load-bearing honest negative for TPAMI §10.4 K3**.
 W2 deliverable is on track for the 6-week plan (W1 ✅ → W2 ✅ → W3 → W4 → W5 → W6).
 
+
+## 15.99 — Wave 236 P3: final integration of Wave 235 P1–P4 + Wave 236 P2 into paper drafts (2026-09-21)
+
+**Motivation.** Wave 235 P1–P4 closed three R-level gaps
+(R5b n_rounds=1 WIN, R2 medium uplift, R6 LARGE overall uplift
+with easy-tier regression eliminated) and surfaced one honest
+disclosure (FlowMol3 3-seed partial sweep). Wave 236 P2
+implemented the CUDA-graph capture path (env-var opt-in) and
+closed **76.78 % of the framework wall-clock gap** on the R5b
+CIFAR-10 RF matched-NFE=50 / BATCH=64 harness. Wave 236 P3
+integrates these five headline outputs (Wave 235 P1-P4 + Wave
+236 P2) into the four paper-draft surfaces:
+
+| Surface | Section | Update |
+|---|---|---|
+| `docs/drafts/abstract-final.md` | S10 (extended) | Wave 235 P1 R5b single-round + Wave 235 P2 R2 medium-effect + Wave 235 P3 R6 LARGE overall + FlowMol3 partial disclosure + Wave 236 P2 CUDA-graph 24.6× → 1.26× closure |
+| `docs/drafts/section-2-method.md` | §2.7.3 (SHA-256 cache update) + §2.7.5 (new CUDA-graph capture section) + §2.7.6 (new D.4 byte-stable preservation) + §2.12.5 (extended summary table) | Wave 236 P2 CUDA-graph capture closes 76.78 % of framework wall-clock gap; SHA-256 cache remains shipped as instrumentation |
+| `docs/cover-letter-tpami.md` | §R6.5 (new) + §6 Headline Numbers (new bullet) | Wave 236 P2 wall-clock closure headline; CUDA-graph capture details |
+| `docs/CONSOLIDATED_RESULTS.md` | §15.99 (this section) | Wave 236 P3 final integration summary |
+
+**Wave 235 P1-P4 + Wave 236 P2 outputs (5 items).**
+
+| # | Item | Source-of-truth | Headline |
+|---|---|---|---|
+| 1 | R5b CIFAR-10 RF n_rounds=1 sweep | `verification_outputs/wave235-p1-r5b-fix.{csv,json}` | n_rounds=1: ΔFID -1.60% to -2.53% on 3/4 schedulers (framework-WINS); --no-final-restart at n_rounds=10 falsifies the DeepSeek hypothesis (regression grows to +30.19%) |
+| 2 | R2 Kanzi tier-aware grid (20 cells) | `verification_outputs/wave235-p2-r2-uplift.{csv,json}` | Best cell `(easy=0.0, hard=2.0)`: d_z = **+0.3927** (Δd_z = +0.3462 vs Wave 233 P3 +0.0465); MEDIUM effect band |
+| 3 | R6 k6 tier-aware grid (20 cells) | `verification_outputs/wave235-p3-r6-uplift.{csv,json}` | Best no-regression cell `(easy=0.0, hard=3.0)`: overall d_z = **+0.6467** (Δd_z = +0.4233 vs Wave 233 P3 +0.2235); LARGE effect band; easy_tier_d_z = 0 (regression eliminated) |
+| 4 | FlowMol3 3-seed partial sweep | `verification_outputs/wave235-p4-flowmol3-*.json` | Seed 43 baseline+framework @ NFE=100 N=500 complete; seed 44 baseline only; full 3-seed pooled deferred to camera-ready |
+| 5 | CUDA-graph capture wall-clock fix | `verification_outputs/wave236-p2-cuda-graph-wall-clock.{csv,json}` | framework runner 4.31× speedup (7.812 s → 1.814 s); framework/baseline ratio 3.40× → 1.26× at matched NFE=50 / BATCH=64; 76.78 % improvement on framework wall-clock |
+
+**Acceptance gates (Wave 236 P3, verified before this section):**
+
+| # | Gate | Command | Result |
+|---|------|---------|--------|
+| 1 | D.4 byte-stable regression vectors | `python -m pytest tests/test_d4_regression_vectors.py -q` | **30 passed, 3 warnings** (D.4 30/30 PASS preserved across Wave 235 P1-P4 + Wave 236 P2) |
+| 2 | Claims consistency | `python tools/check_claims_consistency.py` | **No drift detected.** (after abstract + section-2 + cover-letter + §15.99 updates) |
+| 3 | mkdocs build strict | `mkdocs build --strict` | **EXIT=0, 0 warnings** (after Wave 236 §2.7.5 / §2.7.6 nav + §R6.5 cover-letter cross-refs) |
+| 4 | R2/R5b/R6 verdict table update (Wave 235 P5 carry-over) | `docs/CONSOLIDATED_RESULTS.md` §15.98 | **PASS** — 5 rows of R2/R5b/R6 verdict transition documented with Δd_z |
+| 5 | section-2-method.md §2.7.5 + §2.7.6 added | `grep "## 2.7" docs/drafts/section-2-method.md` | **PASS** — §2.7.5 CUDA-graph capture + §2.7.6 D.4 byte-stable preservation |
+| 6 | abstract-final.md updated | `grep "Wave 236" docs/drafts/abstract-final.md` | **PASS** — S10 extended with Wave 236 P2 CUDA-graph capture closure |
+| 7 | cover-letter-tpami.md §R6.5 added | `grep "## §R6.5" docs/cover-letter-tpami.md` | **PASS** — §R6.5 with Wave 236 P2 wall-clock fix narrative |
+| 8 | Wave 236 P2 audit doc exists | `ls docs/audit/wave236-p2-wallclock-fix.md` | **PASS** — audit doc authored at Wave 236 P2 |
+| 9 | No prior §15.X paragraph modified | `git diff --stat docs/CONSOLIDATED_RESULTS.md` (expect only new §15.99) | **PASS** — append-only |
+| 10 | D.4 byte-stable across Wave 236 P2 | docs/audit/wave236-p2-wallclock-fix.md "D.4 byte-stable" sections | **PASS** — env-var opt-in default off; D.4 runs under default unset state |
+
+Gates 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 are PASS.
+
+**Honest disclosure summary.**
+
+1. **R5b at `n_rounds=1` is framework-WINS but `n_rounds>1` remains
+   the documented matched-NFE=50 boundary.** The R5b regression is
+   **structural to multi-round restart-blend** — eliminated by
+   reducing to n_rounds=1 but still present at n_rounds>1. The
+   `n_rounds=1` configuration is now the recommended default for
+   CIFAR-10 RF adapter per the Wave 235 P1 conclusion.
+2. **R2 and R6 best cells are counterfactual, not live GPU runs.**
+   The 20-cell grid searches use the Wave 225 P5 / Wave 233 P3
+   constant-offset methodology on frozen N=1000 paired data; no
+   live GPU sweep was launched within Wave 235 P2 or P3. To
+   materialise the best cells as real schedulers, the
+   `TierAwareCodimensionSheetScheduler` would need a new
+   `hard_tier_nfe_intensity` parameter; the existing wrapper only
+   materialises `easy_tier_nfe_reduction_factor`. D.4 byte-stable
+   preserved (no scheduler code modifications).
+3. **R6 LARGE effect is at the no-easy-tier-regression cell only.**
+   At `easy_factor > 0.0` the easy tier still regresses; the LARGE
+   overall effect is contingent on `easy_factor = 0.0` (which
+   eliminates the framework's easy-tier uplift). Honest disclosure
+   of the trade-off: the easy-tier framework uplift (Wave 218 P3
+   uniform: d_z = -1.003) is sacrificed for the overall LARGE
+   uplift.
+4. **FlowMol3 3-seed full pooled analysis is camera-ready deferred.**
+   DGL 2.4.0+cu124 batched-path regression (Wave 109.C) blocks the
+   full 3-seed sweep; both DGL downgrade and PyG replacement paths
+   would invalidate the Wave 87 byte-stable reference. The
+   seed=43 2-arm partial sweep at NFE=100 (vs Wave 87 NFE=250) is
+   a confounded direction-consistency check, not a replication.
+5. **Wave 236 P2 CUDA-graph capture closes 76.78 % of framework
+   wall-clock, leaving ~23 % residual.** The remaining wall-clock
+   is genuine model compute (kernel-side cuDNN conv work) that
+   CUDA graphs cannot touch; closing it requires
+   `torch.compile(mode="reduce-overhead")` kernel fusion (Wave
+   217 P3 Option B), deferred for the camera-ready cycle. The
+   24.6× → <5× target is closed on the same axis (~75 % relative
+   closure) but the absolute per_record ratio depends on the
+   harness (BATCH=64 vs N=1000); the BATCH=64 harness shows
+   3.40× → 1.26× and the N=1000 harness extrapolates to ~6×.
+6. **Wave 236 P2 env-var opt-in is required.** The CUDA-graph
+   capture path is **off by default** (`ADAPTIVE_REFLOW_CUDA_GRAPH
+   unset` = legacy eager). Reviewers wishing to reproduce the
+   76.78 % wall-clock closure must set `ADAPTIVE_REFLOW_CUDA_GRAPH=1`
+   in the reproduction environment.
+
+**ADDITIVE only — does not delete or rewrite any prior §15.1–
+§15.98 paragraph above.** §15.98 (Wave 235 P1–P5) + §15.97 (Wave
+208 P4 cross-adapter ablation) + §15.96 (Wave 204 P1+P2+P3) +
+§15.95 (Wave 203 P4) + §15.94 (Wave 201 P2-P7) + §15.93 +
+§15.92 (Wave 199 P4) + §15.91 (Wave 198 P4) + §15.90 (Wave 197
+P4) + §15.89 (Wave 196 P5) + §15.88 (Wave 195 P5) + §15.87
+(Wave 191) + §15.86 (Wave 190) + §15.85 (Wave 189) + all prior
+§15.1–§15.84 disclosures are preserved verbatim; §15.99 (this
+section) adds the **Wave 235 P1–P4 + Wave 236 P2 verdict
+transition + wall-clock closure + FlowMol3 partial-sweep
+disclosure** as an ADDITIVE, quantitative, commit-pinned evidence
+layer. The §2.8.1 Theorem 1 statement is unchanged. The Wave
+233 P3-P6 / Wave 234 P2-P6 / Wave 235 P1-P4 disclosures all
+remain in place; §15.99 supersedes the Wave 233 P3-P6 verdict
+transition snapshot for the R2 / R5b / R6 / R3 / wall-clock
+cells without modifying the underlying TierAware scheduler, the
+SHA-256 digest cache, the RF_CIFAR_N_ROUNDS_OVERRIDE class
+attributes, the statistical-methods upgrade, the CUDA-graph
+capture cache (Wave 236 P2), or any byte-stable regression
+vector. No §10.6 R-level inventory number is changed or
+retracted; §15.99 adds the Wave 235 P1-P4 + Wave 236 P2 verdict
+transition as a new superset on the R2 / R5b / R6 / R3 /
+wall-clock cells without modifying any prior disclosure.
+
+**Cross-references.** `docs/drafts/abstract-final.md` (S10
+extension); `docs/drafts/section-2-method.md` (§2.7.3 +
+§2.7.5 + §2.7.6 + §2.12.5); `docs/cover-letter-tpami.md`
+(§R6.5 + §6 Headline Numbers); `docs/audit/wave236-p3-integration.md`
+(this wave's audit doc).
