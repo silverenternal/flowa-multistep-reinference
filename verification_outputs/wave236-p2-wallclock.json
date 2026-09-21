@@ -1,0 +1,20 @@
+{
+  "adapter": "RectifiedFlowCIFARAdapter",
+  "workload": "ReInferenceRunner.run() 4-round restart-blend, matched-NFE=50, BATCH=64, WARMUP=4, seed=0, cuda:1 (RTX 5090)",
+  "wallclock_before_seconds": 7.8122,
+  "wallclock_after_seconds": 1.8137,
+  "speedup_factor": 4.31,
+  "framework_baseline_ratio_before": 3.40,
+  "framework_baseline_ratio_after": 1.26,
+  "wallclock_gap_closure_pct": 76.78,
+  "env_var": "ADAPTIVE_REFLOW_CUDA_GRAPH",
+  "d4_pass_post_graph": true,
+  "d4_total": 30,
+  "source_audit_doc": "docs/audit/wave236-p2-wallclock-fix.md",
+  "re_measurement_wave238_p2": {
+    "wallclock_before_seconds": 7.9422,
+    "wallclock_after_seconds": 1.8737,
+    "speedup_factor": 4.24,
+    "framework_baseline_ratio_after": 1.30
+  }
+}

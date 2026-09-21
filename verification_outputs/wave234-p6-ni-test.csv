@@ -1,0 +1,3 @@
+cell,baseline_metric,framework_metric,diff,margin_pct,p_NI,verdict,n_records,n_rounds,source_audit_doc
+R5b_CIFAR10_RF_NFE50_evidence_driven,415.8285,499.8296,+84.0011,10.0,0.998497,NOT_NON_INFERIOR,1000,4,docs/audit/wave234-p6-non-inferiority.md
+R5b_CIFAR10_RF_NFE50_codimensionsheet,454.3854,442.8887,-11.4967,10.0,0.000000,NON_INFERIOR,200,1,docs/audit/wave235-p1-r5b-fix.md
