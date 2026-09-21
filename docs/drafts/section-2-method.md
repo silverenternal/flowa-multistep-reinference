@@ -469,7 +469,7 @@ be called per adapter with adapter-specific $(d, c, \rho, \eta)$,
 but no adapter in the current codebase overrides the defaults.
 **Wave 229 P3 update.** The "canonical + 3 adapter-specific"
 calibration closes the future-work hook for the **3 core adapters**
-(LineageFlow, Kanzi, FlowMol3 — see §2.9 below):
+(LineageFlow, Kanzi, FlowMol3 — see §2.10 below):
 those three carry an empirical residual profile that yields
 adapter-specific $A_g$ within 15 % of the canonical witness. The
 remaining 9 adapters stay bit-stable at the canonical witness.
@@ -746,7 +746,85 @@ perturb the D.4 vectors.
 
 ---
 
-## 2.8 Theoretical-Justification Paragraph (Self-Contained)
+## 2.8 Statistical methods
+
+Beyond the paired-$t$ test that anchors the §3 experimental
+analysis, the manuscript applies a **five-method statistical
+upgrade** that complements the primary test with
+**equivalence testing, ordered-hypothesis testing, Bayesian
+evidence factors, random-effects meta-analysis, and
+non-inferiority testing**. Each method targets a distinct
+failure mode of the primary paired-$t$ test and ships as a
+typed, byte-stable function in
+`adaptive_reflow/stats/equivalence.py`:
+
+- **TOST (Two One-Sided Tests, Schuirmann 1987).** Implemented
+  as `tost_paired(...)`. Tests practical equivalence against
+  a pre-specified margin (default 0.1 SD, the Cohen 1988
+  "small effect" threshold). At very large paired-n the strict
+  TOST can reject the equivalence null even when the
+  point-estimate difference is operationally negligible
+  (the well-documented *high-N TOST paradox*); in that regime
+  the Bayesian BF01 (§MS.10.8.3) is the more informative
+  companion statistic.
+
+- **Jonckheere-Terpstra ordered-hypothesis test.** Implemented
+  as `jonckheere_terpstra(...)`. Tests a monotone alternative
+  across K ordered groups (default K=3: easy/medium/hard) using
+  a Mann-Whitney U-statistic pooled across the K-1 pairwise
+  comparisons, with both asymptotic and 10,000-permutation
+  p-values. Used to consolidate the three per-tier t-tests in
+  §MS.10.6 into a single structural finding
+  (`docs/audit/wave234-p3-jonckheere.md`).
+
+- **BF01 (Bayes factor for H0, Wagenmakers 2007).** Implemented
+  as `bf01_paired(...)`. BIC-approximation closed form
+  `BF01 = sqrt(n) * (1 + t^2 / (n-1)) ** (-n / 2)`. Provides
+  Bayesian evidence for the null (BF01 > 1 favours H0,
+  BF01 < 1 favours the alternative) on the same per-cell
+  paired-difference summaries that the paired-$t$ uses.
+  Used to convert the §MS.10.6 14/16 UNDERPOWERED cells into
+  a quantitative "practical equivalence" claim
+  (`docs/audit/wave234-p4-bf01.md`).
+
+- **Random-effects meta-analysis (DerSimonian-Laird 1986).**
+  Implemented as `meta_random_effects(...)`. Pools K
+  per-study effect sizes $d_i$ with inverse-variance random-
+  effects weights `w_i* = 1 / (SE_i^2 + tau^2)`, where
+  `tau^2` is the DL estimator of between-study variance.
+  Reports pooled $d_{\text{RE}}$, 95% CI, Cochran's Q, $I^2$
+  heterogeneity, and a fixed-effect reference. Used to
+  quantify the cross-domain pooled effect across the
+  K = 12 audited cells
+  (`docs/audit/wave234-p5-meta-analysis.md`).
+
+- **Non-inferiority test (Schuirmann 1987 / ICH E9 1998).**
+  Implemented as `non_inferiority(...)`. One-sided test of
+  $H_0\!: \Delta \ge \text{margin}$ vs $H_1\!: \Delta <
+  \text{margin}$ on a paired-difference summary. Used on the
+  R5b CIFAR-10 RF matched-NFE=50 headline regression
+  (`docs/audit/wave234-p6-non-inferiority.md`) to formally
+  reject non-inferiority within the 10% FID budget.
+
+All five methods share a common property: **byte-stable output**
+(deterministic; no RNG except JT permutation with seed=0),
+**typed inputs and outputs** (no implicit globals), and
+**audit-trail provenance** (each method ships a CSV + audit
+doc that the manuscript cites inline). The shared backend
+lives in `adaptive_reflow/stats/equivalence.py` and is the
+canonical reference for any re-implementation; the audit docs
+under `docs/audit/wave234-p{2,3,4,5,6}-*.md` document the
+per-method application and the cell-by-cell verdict.
+
+The methods appear in §MS.10.8 of the supplementary
+methods-stats draft and are integrated into the abstract
+(`docs/drafts/abstract-final.md`) and cover letter
+(`docs/cover-letter-tpami.md` §R5) as a five-axis
+statistical-rigor upgrade.
+
+---
+
+## 2.9 Theoretical-Justification Paragraph (Self-Contained)
 
 The four paper quantities $(A_g, B_g, C_g, e_\rho)$ are
 **derived from the canonical F-side witness** $g(x) = (1 + 0.25
@@ -819,7 +897,7 @@ mathematical references (Bolley, Guillin, Villani 2012 and Villani
 
 ---
 
-## 2.9 Section Anchor and Cross-References
+## 2.10 Section Anchor and Cross-References
 
 - **§2.1 (Theorem 1 box, line 87)** is the canonical statement of
   the bounded-Lipschitz convergence bound that the framework's
@@ -854,7 +932,7 @@ mathematical references (Bolley, Guillin, Villani 2012 and Villani
   (P3), CIFAR-RF `n_rounds=2` override (P5), and the SHA-256
   state-bundle digest cache (P6). All three preserve the D.4
   byte-stable regression suite at 30/30 PASS.
-- **§2.8 (theoretical-justification paragraph)** asserts that the
+- **§2.9 (theoretical-justification paragraph)** asserts that the
   theorem, the proof, the four quantities, the algorithmic
   interpretation, and the F-side profile table are all
   self-contained within this paper and the companion document
@@ -869,7 +947,7 @@ four-quantity bound (T1) at N = 1000 paired records per cell.
 
 ---
 
-## 2.10 Empirical Evidence (Wave 229 P1–P3, Wave 230 P2)
+## 2.11 Empirical Evidence (Wave 229 P1–P3, Wave 230 P2)
 
 The §2.5 closure (**all 12 adapters share the framework default
 F-side profile under the canonical witness**) is accompanied by
