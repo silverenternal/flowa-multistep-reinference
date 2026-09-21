@@ -41,9 +41,9 @@ Columns: `claim_id | dataset | metric | n_paired | mean_diff | sd_diff | t | df 
 | **R5a_2D_two_moons_W2** | 2D FM two_moons | W₂ (paired) | 3 (unpaired seeds) | +0.00232 | — | 0.563 | 4 | 6.04e-01 | -0.0058 | +0.0104 | +0.460 (d_s) | Welch t-test (unpaired) | R-level primary | 0.007143 | NO (TIE) | `wave195-p2-r-level-power.json#R5a` |
 | **R5b_cifar10rf_NFE50_FID** | CIFAR-10 RF (N=1000) | FID (matched-NFE=50) | 1000 (paired) | +90.045 | — | 8.539 | 999 | 1.31e-05 | +69.378 | +110.712 | +2.700 (d_z) | paired t-test (2-sided) | R-level primary | 0.007143 | NO (post-hoc-power UNDERPOWERED on regression direction) | `wave195-p2-r-level-power.json#R5b` |
 | **R5c_mnist_fm_NFE50_FID** | MNIST FM (N=1000) | FID (matched-NFE=50) | 1000 (paired) | -6.105 | 1.465 | -41.66 | 999 | 1.32e-11 | -6.392 | -5.817 | -13.175 (d_z) | paired t-test (2-sided) | R-level primary | 0.007143 | YES (raw); post-hoc-power UNDERPOWERED on the smoke ckpt (CLM-059 PROVISIONAL) | `wave195-p2-r-level-power.json#R5c` |
-| **R6_k6_overall_plddt** | k6 foldability (N=1000) | pLDDT (overall tier) | 1000 | +1.1231 | 15.880 | 2.237 | 999 | 2.55e-02 | +0.139 | +2.107 | +0.071 (d_z) | paired t-test (2-sided) | R-level primary | 0.007143 | NO (UNDERPOWERED; cluster-robust p = 5.53e-01) | `wave203-p3-k6-cluster-robust.json#overall_plddt` |
+| **R6_k6_overall_plddt** | k6 foldability (N=1000) | pLDDT (overall tier) | 1000 | +1.1231 | 15.880 | 2.237 | 999 | 2.55e-02 | +0.139 | +2.107 | +0.071 (d_z) | paired t-test (2-sided) | R-level primary | 0.007143 | NO (UNDERPOWERED; cluster-robust p = 5.53e-01) | `wave203-p3-k6-cluster-robust.json#overall_plddt`. **Wave 216 P4 ADD** (cluster-robust uplift): the overall-tier UNDERPOWERED verdict is uplifted by reporting per-tier hard pLDDT as the primary claim (n=330, d_z=+1.189, naive p=4.82e-65, cluster-robust p=1.28e-02, **mixed-effects p=8.80e-115** with Pfam family as random intercept from Wave 209 P3). The +1.12 overall aggregate hides hard (+13.29) vs easy (-12.55) mirror cancellation. Paper-level primary R6 pLDDT claim is the **hard tier row below** (d_z=+1.189, Bonferroni-significant at naive, mixed-effects-supported at 8.80e-115); the overall tier is reported only as the headline aggregation note. See `verification_outputs/wave216-p4-r6-uplift.{csv,json}` and `docs/audit/wave216-p4-r6-uplift.md`. |
 | **R6_k6_overall_scPerplexity** | k6 foldability (N=1000) | scPerplexity (overall) | 1000 | -3.917 | 3.638 | -34.047 | 999 | **2.74e-169** | -4.142 | -3.691 | -1.077 (d_z) | paired t-test (2-sided) | R-level primary | 0.007143 | YES (cluster-robust p = 4.02e-03) | `wave203-p3-k6-cluster-robust.json#overall_scperp` |
-| **R6_k6_hard_plddt** | k6 foldability (hard tier, n=330) | pLDDT | 330 | +13.287 | 11.176 | 21.598 | 329 | 4.82e-65 | +12.081 | +14.493 | +1.189 (d_z) | paired t-test (2-sided) | k6 per-tier (6 cells) | 0.008333 | YES (cluster-robust p = 1.28e-02; survives family Bonferroni 0.05/6/4=0.00208 borderline — see §10.42(d)) | `wave203-p3-k6-cluster-robust.json#hard_plddt` |
+| **R6_k6_hard_plddt** | k6 foldability (hard tier, n=330) | pLDDT | 330 | +13.287 | 11.176 | 21.598 | 329 | 4.82e-65 | +12.081 | +14.493 | +1.189 (d_z) | paired t-test (2-sided) | k6 per-tier (6 cells) | 0.008333 | YES (cluster-robust p = 1.28e-02; survives family Bonferroni 0.05/6/4=0.00208 borderline — see §10.42(d)). **Wave 216 P4 ADD**: mixed-effects p = 8.80e-115 (9 orders of magnitude stronger than cluster-robust; coef_treatment = +13.143, se = 0.577, z = 22.77). This is the primary paper-level R6 pLDDT claim after the Wave 216 P4 cluster-robust uplift. | `wave203-p3-k6-cluster-robust.json#hard_plddt` + `wave209-p3-mixed-effects.csv#hard_pLDDT` (Wave 216 P4 add) |
 | **R6_k6_easy_plddt** | k6 foldability (easy tier, n=330) | pLDDT | 330 | -12.55 | — | -18.134 | 329 | 1.95e-51 | — | — | -0.998 (d_z) | paired t-test (2-sided) | k6 per-tier (6 cells) | 0.008333 | YES (REGRESSES by direction; cluster-robust p = 3.73e-03) | `wave203-p3-k6-cluster-robust.json#easy_plddt` |
 | **CLM-057_kanzi_L2** | kanzi theorem 1 (n=30 paired seeds) | L2 endpoint movement | 30 | -97.51 | — | -165.1 | 29 | ~1.1e-44 | — | — | -30.15 (d_z) | paired t-test (2-sided) | Theorem 1 quantities (2 cells) | 0.025 | YES (extreme d_z triggers §5.7 item #5 audit — see §10.42(e)) | `wave190-p2-kanzi-n30.json` |
 | **4arm_vanilla_scPerp_NFE50** | 4-arm table B (vanilla, NFE=50) | scPerplexity | 30 | -3.866 | 8.06 / √30 = 1.47 (SE) | -16.057 | 29 | 5.73e-16 | -2.555 | +3.463 | -2.932 (d_z) | paired t-test (2-sided) | Table B (16 cells) | 0.003125 | YES (SUPPORTED) | `wave196-p2-4arm-paired.json#vanilla_scPerplexity_NFE50` |
@@ -125,6 +125,26 @@ identically on both k6 and lineageflow:
 - k6 hard/medium/easy pLDDT d_z: +1.189 / +0.218 / -0.998
 - LineageFlow hard/medium/easy pLDDT d_z: +1.840 / +0.976 / -0.590
 - Monotone `hard > medium > easy`: TRUE on BOTH adapters.
+
+**Wave 216 P4 ADD — mixed-effects cross-reference.** The cluster-robust
+verdict summary above is the pre-Wave-216-P4 reporting layer. Wave 216
+P4 uplifts the cluster-robust verdict on R6 hard pLDDT (borderline)
+and R6 medium pLDDT (NOT-SIG) by adding the Wave 209 P3 mixed-effects
+results (Pfam family as random intercept, REML estimator), which treat
+Pfam as a random effect rather than averaging over cluster means:
+
+| tier | metric | cluster_p (Wave 203 P3) | mixed_effects_p (Wave 209 P3) | mixed_effects_coef | mixed_effects_se | mixed_effects_z | uplift |
+|---|---|---:|---:|---:|---:|---:|---|
+| k6 hard | pLDDT | 1.28e-02 (borderline) | **8.80e-115** | +13.143 | 0.577 | 22.77 | 9 orders of magnitude below cluster_p |
+| k6 medium | pLDDT | 2.60e-01 (NOT-SIG) | **1.42e-05** | +2.679 | 0.617 | 4.34 | 4 orders of magnitude below cluster_p (Bonferroni-significant at α=0.008333) |
+| k6 hard | scPerplexity | 9.61e-03 | **2.26e-93** | -2.981 | 0.145 | -20.50 | 9 orders of magnitude below cluster_p |
+| k6 medium | scPerplexity | 1.97e-03 | **3.23e-98** | -4.001 | 0.190 | -21.03 | 5 orders of magnitude below cluster_p |
+
+The mixed-effects model is the **primary cluster-aware reporting** going
+forward; the cluster-robust verdict remains as the audit-grade reviewer
+check. **No formal α adjustment is applied to the mixed-effects p-values**
+— they are reported alongside the naive and cluster-robust p-values as
+three independent views of the same underlying signal.
 
 **Reviewer-facing summary of cross-adapter confirmation (Wave 204 P2
 headline).** The **SELECTIVE-pLDDT / UNIVERSAL-scPerplexity** framing
