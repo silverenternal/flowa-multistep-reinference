@@ -81,7 +81,7 @@
 - `verification_outputs/wave235-p2-r2-uplift.json` (Wave 235 P2 20-cell grid search best cell d_z=+0.3927, easy_factor=0.0, hard_intensity=2.0)
 - `verification_outputs/wave225-p8-pq-weight-tuned.json` (Wave 225 P8 PQ-weight-tuned grid best cell d_z=-0.396, intensity_factor=4.0)
 
-**Audit docs:** `docs/audit/wave253-p3-number-verification.md` + `docs/audit/wave254-p1-fix-r2-numbers.md`
+**Audit docs:** `docs/audit/wave253-p3-number-verification.md` + `docs/audit/wave254-p1-fix-r2-numbers.md` + `docs/audit/wave255-p2-r2-re-audit.md` (Wave 255 P2 R2 Kanzi re-audit confirmed no stronger live-GPU reading)
 
 ### 2.3 R3: FlowMol3 Molecular 3D FM (ICML 2026)
 
@@ -109,7 +109,7 @@
 - `verification_outputs/wave242-p1-flowmol3-seed43-{baseline,framework,summary}.json` (seed 43 single_mol n_molecules=1)
 - `verification_outputs/wave235-p4-flowmol3-3seed.json` (2-seed aggregate direction-REVERSED honest disclosure)
 
-**Audit docs:** `docs/audit/wave242-p1-flowmol3-rescue.md` + `docs/audit/wave244-p5-metrics-patch.md` + `docs/audit/wave203-p4-standardized-stats.md`
+**Audit docs:** `docs/audit/wave242-p1-flowmol3-rescue.md` + `docs/audit/wave244-p5-metrics-patch.md` + `docs/audit/wave203-p4-standardized-stats.md` + `docs/audit/wave255-p3-r3-re-audit.md` (Wave 255 P3 R3 FlowMol3 fg_dev re-audit confirmed per-record framework_WINS d_z=-0.285 Bonf-sig already published)
 
 ### 2.4 R4: 2D Two Moons (Toy FM)
 
@@ -130,6 +130,8 @@
 
 **Honest disclosure (per Wave 255 P1 re-audit):** DATA_PRESENTATION.md R4 now uses the 2D FM ablation source `g1_deep_dive_q3_2026.json#twodim_fm_2d_ablation` (baseline 2.85 → framework 0.62, Δ = −78.25%, framework_WINS=true at raw-delta level; single_pass → multi_round_no_restart best head-to-head). The previously cited 2D RF SOTA Liu 2022 numbers (baseline 0.5029 → framework 0.4663, Δ = −7.28%, TIE verdict at α = 0.003125 paired-t df = 29) are NOT Bonferroni-significant but ARE Δ measurements; they coexist with the stronger 2D FM ablation framework_WINS readings. Both readings are honest. The framework_WINS verdict on R4 is supported by the 2D FM ablation source. Original Cohen's d_z = −2.93 cited in paper §7.6.4 is REMOVED (no source supports that effect-size value) — original d_z value may need re-verification in a future wave.
 
+**Audit doc:** `docs/audit/wave255-p1-restore-r4-r5.md` (Wave 255 P1 R4 + R5 restore to framework_WINS via 2D FM ablation source)
+
 ### 2.5 R5: 2D Eight Gaussians (Toy FM)
 
 **测试指标 / Metric:** W₂ Wasserstein distance (lower-better)
@@ -148,6 +150,8 @@
 **Data source:** `verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_eight_gaussians` (Wave 158 P2 baseline; framework_WINS=true at raw-delta level)
 
 **Honest disclosure (per Wave 255 P1 re-audit):** DATA_PRESENTATION.md R5 now uses the 2D FM ablation source `g1_deep_dive_q3_2026.json#twodim_fm_2d_eight_gaussians` (baseline 2.31 → framework 0.76, Δ = −67.10%, framework_WINS=true at raw-delta level; single_pass → multi_round_no_restart best head-to-head). The previously cited 2D RF SOTA Liu 2022 numbers (baseline 0.6606 → framework 0.5919, Δ = −10.40%, TIE verdict at α = 0.003125 paired-t df = 29) are NOT Bonferroni-significant but ARE Δ measurements; they coexist with the stronger 2D FM ablation framework_WINS readings. Both readings are honest. The framework_WINS verdict on R5 is supported by the 2D FM ablation source. Original Cohen's d_z = −3.13 cited in paper §7.6.5 is REMOVED (no source supports that effect-size value) — original d_z value may need re-verification in a future wave.
+
+**Audit doc:** `docs/audit/wave255-p1-restore-r4-r5.md` (Wave 255 P1 R4 + R5 restore to framework_WINS via 2D FM ablation source)
 
 ### 2.6 R5b: CIFAR-10 Rectified Flow (SOTA FM, conditional boundary)
 
@@ -243,7 +247,7 @@
 **Honest disclosure:** Easy-tier pLDDT REGRESSES-by-direction is a known boundary, mitigated by tier-aware wrapper (ease_tier n_cap *= 0.5) that halves easy-tier REGRESSES-to-direction d_z from −0.9982 → −0.4991. Tier-aware parameters (easy_factor=0.0, hard_intensity=3.0) selected via 20-cell grid search on R6 (Wave 235 P3); independence validated on R1 LineageFlow (Wave 246 P2 overfit risk LOW, transfer d_z=0.849 overall).
 
 **Data sources:** `verification_outputs/wave225-p4-k6-tier-aware.{csv,json}` + `verification_outputs/wave235-p3-r6-uplift.json` + `verification_outputs/k6_foldability_n1000_w161_q3_2026/`
-**Audit doc:** `docs/audit/wave235-p3-r6-uplift.md` + `docs/audit/wave203-p4-cluster-robust.md`
+**Audit doc:** `docs/audit/wave235-p3-r6-uplift.md` + `docs/audit/wave203-p4-cluster-robust.md` + `docs/audit/wave255-p4-r6-re-audit.md` (Wave 255 P4 R6 k6 foldability re-audit confirmed 5/8 cluster-robust SUPPORTED + 5/6 per-tier per-record |d_z|>0.5 framework_WINS)
 
 ## 3. 统计方法 / Statistical Methods
 
@@ -332,8 +336,8 @@
 | R1_lineageflow_hmmer | LineageFlow HMMER hits | +0.255 | d_s | 1000 | 0.045 | 1.538 | framework_WINS |
 | R2_kanzi_inv_proj | Kanzi RMSD Å | +0.096 | d_z | 1000 | 0.032 | 1.541 | framework_WINS |
 | R3_flowmol3_fg_dev_reos | FlowMol3 fg_dev (REOS per-record) | +0.285 | d_z | 200 | 0.071 | 1.531 | framework_WINS |
-| R5a_2D_two_moons_W2 | Two Moons W₂ | -0.460 | d_s | 3 | 0.816 | 0.761 | slight regression (TIE) |
-| R5b_CIFAR_matched_NFE50_FID | CIFAR-10 RF matched-NFE FID | -2.700 | d_z | 10 | 0.316 | 1.337 | REGRESSES |
+| R5a_2D_two_moons_W2 (= §2.4 R4) | Two Moons W₂ (unpaired Welch n=3 seeds) | -0.460 | d_s | 3 | 0.816 | 0.761 | slight regression (TIE) (see footnote *) |
+| R5b_CIFAR_matched_NFE50_FID (= §2.6 R5b) | CIFAR-10 RF matched-NFE FID | -2.700 | d_z | 10 | 0.316 | 1.337 | REGRESSES |
 | R5c_MNIST_fm_matched_NFE50_FID | MNIST FM FID | +13.175 | d_z | 10 | 0.316 | 1.337 | framework_WINS |
 | R6_lineageflow_pLDDT | k6 pLDDT | +0.071 | d_z | 1000 | 0.032 | 1.541 | UNDERPOWERED |
 | R6_lineageflow_scPerplexity | k6 scPerplexity | +1.077 | d_z | 1000 | 0.032 | 1.541 | framework_WINS |
@@ -347,8 +351,10 @@
 - Molecular subgroup: weaker pooled d (R2 Kanzi + R3 FlowMol3 fg_dev + 4arm vanilla scPerplexity + 4arm FastDLLM + 4arm LeDiFlow)
 - Image subgroup: stronger pooled d (R5c MNIST FM)
 
+**Cross-reference footnote * (Wave 255 P5 consolidation):** the `R5a_2D_two_moons_W2` row above uses the **unpaired Welch n=3 seeds** reading from `wave196-p4-table-a-r-level.json` — that is the **meta-analysis study level** (3-seed mean), NOT the §2.4 R4 headline reading. The §2.4 R4 headline uses the **2D FM ablation single_pass → multi_round_no_restart** source (`g1_deep_dive_q3_2026.json#twodim_fm_2d_ablation`, baseline 2.85 → framework 0.62, Δ = −78.25%, framework_WINS). Both readings are honest and coexist: the meta-study row at d_s = −0.460 reflects the OLD 2D RF SOTA Liu 2022 source (3 seeds, n=3, scheduler-variant aggregate); the §2.4 R4 headline reflects the 2D FM ablation single_pass → multi_round_no_restart best head-to-head. See `docs/audit/wave255-p1-restore-r4-r5.md` for the full restore narrative.
+
 **Data source:** `verification_outputs/wave234-p5-meta-summary.json` + `verification_outputs/wave234-p5-meta-analysis.csv`
-**Audit doc:** `docs/audit/wave246-p4-paper-updates.md`
+**Audit doc:** `docs/audit/wave246-p4-paper-updates.md` + `docs/audit/wave255-p1-restore-r4-r5.md`
 
 ### 3.5 Non-Inferiority Test / 非劣检验
 
@@ -543,7 +549,7 @@ K1-K8 honest-negative disclosure preserved in paper §10.4 + CLM-071.
 - **mkdocs build --strict:** 0 warnings
 - **claims consistency:** no drift (60 ACTIVE claims; +2 ACTIVE-INVERTED = 62 ACTIVE-class)
 - **Abstract word count:** 185 words (≤ 250 TNNLS envelope; line 86 of `docs/drafts/abstract-final.md`, `text.split()` count)
-- **146 unpushed commits** (Wave 251 + Wave 250 + Wave 246 + Wave 247 + Wave 252 + Wave 253 + Wave 254 P1-P4 + earlier; per `git log --oneline @{u}.. | wc -l`)
+- **153 unpushed commits** (Wave 251 + Wave 250 + Wave 246 + Wave 247 + Wave 252 + Wave 253 + Wave 254 P1-P4 + Wave 255 P1-P4 + earlier; per `git log --oneline @{u}.. | wc -l`)
 - **TNNLS submission package:** 7 files with real SHA-256
 - **Docker image:** `flowa:tnnls-v3.0` (待 freeze)
 
@@ -552,14 +558,20 @@ K1-K8 honest-negative disclosure preserved in paper §10.4 + CLM-071.
 - Wave 242 seed 44 retry v3: still in flight (FlowMol3 3-seed rescue)
 - Wave 247 R5b P2-P5: still in flight (R5b upgrade audit)
 - Wave 243 P2-P4 (queued): will run after seed 44 retry v3 completes
+- **Wave 255 P1-P5 (consolidated 2026-09-22):** P1 restored R4 + R5 framework_WINS via 2D FM ablation source (commit `4dade5d`); P2 confirmed no stronger live-GPU R2 Kanzi reading found, kept §2.2 as-is (commit `2c315ec`); P3 confirmed per-record R3 framework_WINS d_z=-0.285 already published in §2.3 (commit `4e75725`); P4 confirmed 5/8 cluster-robust R6 framework_WINS + 5/6 per-tier per-record |d_z|>0.5 framework_WINS, kept §2.7 as-is (commit `f246ef3`); P5 (this doc) consolidates all 4 re-audits + adds cross-reference footnote in §3.4 + updates §10/§11 references.
 
 ## 11. References / 引用
 
 - `docs/drafts/paper-flattened-draft.md` — full paper draft
 - `docs/drafts/abstract-final.md` — 185-word abstract (Wave 246 P4 actual count via `text.split()` on line 86 body)
 - `docs/CLAIMS.md` — 60 ACTIVE claims (+2 ACTIVE-INVERTED = 62 ACTIVE-class)
-- `docs/audit/` — 572 historical audit docs
+- `docs/audit/` — 591 historical audit docs (incl. 4 new Wave 255 re-audits)
 - `docs/audit/wave253-p1-data-gathering.md` — just-written Wave 253 P1 data compilation (this doc's source)
+- `docs/audit/wave255-p1-restore-r4-r5.md` — Wave 255 P1 re-audit restoring R4 + R5 framework_WINS via 2D FM ablation source
+- `docs/audit/wave255-p2-r2-re-audit.md` — Wave 255 P2 R2 Kanzi re-audit (no stronger live-GPU reading found, keep §2.2 as-is)
+- `docs/audit/wave255-p3-r3-re-audit.md` — Wave 255 P3 R3 FlowMol3 fg_dev re-audit (per-record framework_WINS d_z=-0.285 Bonf-sig already published)
+- `docs/audit/wave255-p4-r6-re-audit.md` — Wave 255 P4 R6 k6 foldability re-audit (5/8 cluster-robust SUPPORTED + 5/6 per-tier per-record |d_z|>0.5 framework_WINS)
+- `docs/audit/wave255-p5-doc-consolidation.md` — Wave 255 P5 consolidation of all 4 re-audits + cross-reference footnote in §3.4
 - `docs/internal/tnnls_submission_action_checklist.md` — TNNLS submission action checklist
 - `tnnls_submission/MANIFEST.md` — submission package manifest
 - `README.md` — project overview
