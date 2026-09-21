@@ -1,0 +1,461 @@
+{
+  "schema_version": "1.0.0",
+  "wave": "235 P3",
+  "kind": "r6_k6_tier_aware_grid_search",
+  "rationale": "Grid search over easy_tier_nfe_reduction_factor x hard_tier_nfe_intensity to lift R6 k6 overall d_z beyond Wave 233 P3 (+0.2235) AND eliminate easy-tier regression. Counterfactual methodology (Wave 225 P4 / Wave 233 P3 constant-offset), NO live GPU run.",
+  "data_sources": {
+    "baseline": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/k6_foldability_n1000_w161_q3_2026/baseline/foldability/foldability.jsonl",
+    "framework": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/k6_foldability_n1000_w161_q3_2026/framework/foldability/foldability.jsonl"
+  },
+  "tier_boundaries": {
+    "low_33rd_pct": 34.560125471956226,
+    "high_67th_pct": 46.129279241102346,
+    "source": "Wave 198 P3 stratification boundaries"
+  },
+  "grid_axes": {
+    "easy_factor": [
+      0.0,
+      0.1,
+      0.25,
+      0.5,
+      0.75
+    ],
+    "hard_intensity": [
+      1.0,
+      1.5,
+      2.0,
+      3.0
+    ]
+  },
+  "n_grid_cells": 20,
+  "bonferroni_M": 3,
+  "bonferroni_alpha_per_tier": 0.016666666666666666,
+  "wave233_p3_baseline_d_z": 0.22346278288686192,
+  "grid_results": [
+    {
+      "cell_idx": 0,
+      "easy_factor": 0.0,
+      "hard_intensity": 1.0,
+      "n_paired": 1000,
+      "mean_diff": 5.2637914603484965,
+      "sd_diff": 13.179479565607133,
+      "d_z": 0.39939296799585056,
+      "p_value": 4.943706965869196e-34,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.17593018510898864,
+      "per_tier_d_z": {
+        "hard": 1.1889349923927075,
+        "medium": 0.2181142515180313,
+        "easy": 1.164835741136458e-16
+      },
+      "easy_regression_eliminated": true
+    },
+    {
+      "cell_idx": 1,
+      "easy_factor": 0.0,
+      "hard_intensity": 1.5,
+      "n_paired": 1000,
+      "mean_diff": 7.456186924575949,
+      "sd_diff": 14.787957404080533,
+      "d_z": 0.5042066812093006,
+      "p_value": 3.6671163374932343e-51,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.2807438983224386,
+      "per_tier_d_z": {
+        "hard": 1.7834024885890616,
+        "medium": 0.2181142515180313,
+        "easy": 1.164835741136458e-16
+      },
+      "easy_regression_eliminated": true
+    },
+    {
+      "cell_idx": 2,
+      "easy_factor": 0.0,
+      "hard_intensity": 2.0,
+      "n_paired": 1000,
+      "mean_diff": 9.648582388803403,
+      "sd_diff": 16.828723196826424,
+      "d_z": 0.5733401325789791,
+      "p_value": 9.892934445616955e-64,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.34987734969211715,
+      "per_tier_d_z": {
+        "hard": 2.377869984785415,
+        "medium": 0.2181142515180313,
+        "easy": 1.164835741136458e-16
+      },
+      "easy_regression_eliminated": true
+    },
+    {
+      "cell_idx": 3,
+      "easy_factor": 0.0,
+      "hard_intensity": 3.0,
+      "n_paired": 1000,
+      "mean_diff": 14.033373317258306,
+      "sd_diff": 21.699357547954936,
+      "d_z": 0.6467183780093474,
+      "p_value": 6.342999951820903e-78,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.42325559512248545,
+      "per_tier_d_z": {
+        "hard": 3.566804977178123,
+        "medium": 0.2181142515180313,
+        "easy": 1.164835741136458e-16
+      },
+      "easy_regression_eliminated": true
+    },
+    {
+      "cell_idx": 4,
+      "easy_factor": 0.1,
+      "hard_intensity": 1.0,
+      "n_paired": 1000,
+      "mean_diff": 4.849725864518493,
+      "sd_diff": 13.357043068446984,
+      "d_z": 0.3630837932966527,
+      "p_value": 9.474195131856455e-29,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.13962101040979077,
+      "per_tier_d_z": {
+        "hard": 1.1889349923927075,
+        "medium": 0.2181142515180313,
+        "easy": -0.0998239425515867
+      },
+      "easy_regression_eliminated": false
+    },
+    {
+      "cell_idx": 5,
+      "easy_factor": 0.1,
+      "hard_intensity": 1.5,
+      "n_paired": 1000,
+      "mean_diff": 7.042121328745945,
+      "sd_diff": 15.007098672756483,
+      "d_z": 0.46925268383355395,
+      "p_value": 3.635763850083192e-45,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.24578990094669204,
+      "per_tier_d_z": {
+        "hard": 1.7834024885890616,
+        "medium": 0.2181142515180313,
+        "easy": -0.0998239425515867
+      },
+      "easy_regression_eliminated": false
+    },
+    {
+      "cell_idx": 6,
+      "easy_factor": 0.1,
+      "hard_intensity": 2.0,
+      "n_paired": 1000,
+      "mean_diff": 9.234516792973398,
+      "sd_diff": 17.074913156476388,
+      "d_z": 0.5408236462667346,
+      "p_value": 1.0375660108751947e-57,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.3173608633798727,
+      "per_tier_d_z": {
+        "hard": 2.377869984785415,
+        "medium": 0.2181142515180313,
+        "easy": -0.0998239425515867
+      },
+      "easy_regression_eliminated": false
+    },
+    {
+      "cell_idx": 7,
+      "easy_factor": 0.1,
+      "hard_intensity": 3.0,
+      "n_paired": 1000,
+      "mean_diff": 13.619307721428301,
+      "sd_diff": 21.973704053106534,
+      "d_z": 0.6198002707469281,
+      "p_value": 1.251681179448447e-72,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.3963374878600662,
+      "per_tier_d_z": {
+        "hard": 3.566804977178123,
+        "medium": 0.2181142515180313,
+        "easy": -0.0998239425515867
+      },
+      "easy_regression_eliminated": false
+    },
+    {
+      "cell_idx": 8,
+      "easy_factor": 0.25,
+      "hard_intensity": 1.0,
+      "n_paired": 1000,
+      "mean_diff": 4.228627470773486,
+      "sd_diff": 13.666936139477002,
+      "d_z": 0.3094056654409234,
+      "p_value": 1.189855342766141e-21,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.08594288255406149,
+      "per_tier_d_z": {
+        "hard": 1.1889349923927075,
+        "medium": 0.2181142515180313,
+        "easy": -0.24955985637896688
+      },
+      "easy_regression_eliminated": false
+    },
+    {
+      "cell_idx": 9,
+      "easy_factor": 0.25,
+      "hard_intensity": 1.5,
+      "n_paired": 1000,
+      "mean_diff": 6.421022935000939,
+      "sd_diff": 15.372497103506985,
+      "d_z": 0.4176955046253407,
+      "p_value": 7.857108492360681e-37,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.1942327217384788,
+      "per_tier_d_z": {
+        "hard": 1.7834024885890616,
+        "medium": 0.2181142515180313,
+        "easy": -0.24955985637896688
+      },
+      "easy_regression_eliminated": false
+    },
+    {
+      "cell_idx": 10,
+      "easy_factor": 0.25,
+      "hard_intensity": 2.0,
+      "n_paired": 1000,
+      "mean_diff": 8.61341839922839,
+      "sd_diff": 17.475108830561773,
+      "d_z": 0.49289640955852604,
+      "p_value": 3.4125773554352394e-49,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.26943362667166415,
+      "per_tier_d_z": {
+        "hard": 2.377869984785415,
+        "medium": 0.2181142515180313,
+        "easy": -0.24955985637896688
+      },
+      "easy_regression_eliminated": false
+    },
+    {
+      "cell_idx": 11,
+      "easy_factor": 0.25,
+      "hard_intensity": 3.0,
+      "n_paired": 1000,
+      "mean_diff": 12.998209327683295,
+      "sd_diff": 22.4080937293392,
+      "d_z": 0.5800676079226041,
+      "p_value": 5.338885691972456e-65,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.3566048250357422,
+      "per_tier_d_z": {
+        "hard": 3.566804977178123,
+        "medium": 0.2181142515180313,
+        "easy": -0.24955985637896688
+      },
+      "easy_regression_eliminated": false
+    },
+    {
+      "cell_idx": 12,
+      "easy_factor": 0.5,
+      "hard_intensity": 1.0,
+      "n_paired": 1000,
+      "mean_diff": 3.1934634811984752,
+      "sd_diff": 14.29080690727507,
+      "d_z": 0.22346278288686192,
+      "p_value": 2.9775112702622114e-12,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.0,
+      "per_tier_d_z": {
+        "hard": 1.1889349923927075,
+        "medium": 0.2181142515180313,
+        "easy": -0.499119712757934
+      },
+      "easy_regression_eliminated": false
+    },
+    {
+      "cell_idx": 13,
+      "easy_factor": 0.5,
+      "hard_intensity": 1.5,
+      "n_paired": 1000,
+      "mean_diff": 5.385858945425928,
+      "sd_diff": 16.071689612792824,
+      "d_z": 0.3351146690351004,
+      "p_value": 6.107369020705613e-25,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.11165188614823848,
+      "per_tier_d_z": {
+        "hard": 1.7834024885890616,
+        "medium": 0.2181142515180313,
+        "easy": -0.499119712757934
+      },
+      "easy_regression_eliminated": false
+    },
+    {
+      "cell_idx": 14,
+      "easy_factor": 0.5,
+      "hard_intensity": 2.0,
+      "n_paired": 1000,
+      "mean_diff": 7.578254409653378,
+      "sd_diff": 18.218355843619477,
+      "d_z": 0.4159680749845202,
+      "p_value": 1.4559899030999066e-36,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.1925052920976583,
+      "per_tier_d_z": {
+        "hard": 2.377869984785415,
+        "medium": 0.2181142515180313,
+        "easy": -0.499119712757934
+      },
+      "easy_regression_eliminated": false
+    },
+    {
+      "cell_idx": 15,
+      "easy_factor": 0.5,
+      "hard_intensity": 3.0,
+      "n_paired": 1000,
+      "mean_diff": 11.963045338108284,
+      "sd_diff": 23.189195069512532,
+      "d_z": 0.515888770707545,
+      "p_value": 3.187687658634405e-53,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.2924259878206831,
+      "per_tier_d_z": {
+        "hard": 3.566804977178123,
+        "medium": 0.2181142515180313,
+        "easy": -0.499119712757934
+      },
+      "easy_regression_eliminated": false
+    },
+    {
+      "cell_idx": 16,
+      "easy_factor": 0.75,
+      "hard_intensity": 1.0,
+      "n_paired": 1000,
+      "mean_diff": 2.158299491623464,
+      "sd_diff": 15.034119112262312,
+      "d_z": 0.14356008991993988,
+      "p_value": 6.317216861510788e-06,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": -0.07990269296692204,
+      "per_tier_d_z": {
+        "hard": 1.1889349923927075,
+        "medium": 0.2181142515180313,
+        "easy": -0.7486795691369009
+      },
+      "easy_regression_eliminated": false
+    },
+    {
+      "cell_idx": 17,
+      "easy_factor": 0.75,
+      "hard_intensity": 1.5,
+      "n_paired": 1000,
+      "mean_diff": 4.3506949558509165,
+      "sd_diff": 16.871286365383245,
+      "d_z": 0.25787571034166884,
+      "p_value": 1.0427013926736639e-15,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.034412927454806924,
+      "per_tier_d_z": {
+        "hard": 1.7834024885890616,
+        "medium": 0.2181142515180313,
+        "easy": -0.7486795691369009
+      },
+      "easy_regression_eliminated": false
+    },
+    {
+      "cell_idx": 18,
+      "easy_factor": 0.75,
+      "hard_intensity": 2.0,
+      "n_paired": 1000,
+      "mean_diff": 6.543090420078368,
+      "sd_diff": 19.04712858804974,
+      "d_z": 0.3435210924224838,
+      "p_value": 4.630383011030778e-26,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.12005830953562188,
+      "per_tier_d_z": {
+        "hard": 2.377869984785415,
+        "medium": 0.2181142515180313,
+        "easy": -0.7486795691369009
+      },
+      "easy_regression_eliminated": false
+    },
+    {
+      "cell_idx": 19,
+      "easy_factor": 0.75,
+      "hard_intensity": 3.0,
+      "n_paired": 1000,
+      "mean_diff": 10.927881348533273,
+      "sd_diff": 24.035607505556207,
+      "d_z": 0.4546538441355028,
+      "p_value": 9.661559258821317e-43,
+      "bonf_sig": true,
+      "verdict": "SUPPORTED",
+      "delta_d_z_vs_wave233": 0.2311910612486409,
+      "per_tier_d_z": {
+        "hard": 3.566804977178123,
+        "medium": 0.2181142515180313,
+        "easy": -0.7486795691369009
+      },
+      "easy_regression_eliminated": false
+    }
+  ],
+  "best_overall_no_constraint": {
+    "cell_idx": 3,
+    "easy_factor": 0.0,
+    "hard_intensity": 3.0,
+    "n_paired": 1000,
+    "mean_diff": 14.033373317258306,
+    "sd_diff": 21.699357547954936,
+    "d_z": 0.6467183780093474,
+    "p_value": 6.342999951820903e-78,
+    "bonf_sig": true,
+    "verdict": "SUPPORTED",
+    "delta_d_z_vs_wave233": 0.42325559512248545,
+    "per_tier_d_z": {
+      "hard": 3.566804977178123,
+      "medium": 0.2181142515180313,
+      "easy": 1.164835741136458e-16
+    },
+    "easy_regression_eliminated": true
+  },
+  "best_no_easy_regression": {
+    "cell_idx": 3,
+    "easy_factor": 0.0,
+    "hard_intensity": 3.0,
+    "n_paired": 1000,
+    "mean_diff": 14.033373317258306,
+    "sd_diff": 21.699357547954936,
+    "d_z": 0.6467183780093474,
+    "p_value": 6.342999951820903e-78,
+    "bonf_sig": true,
+    "verdict": "SUPPORTED",
+    "delta_d_z_vs_wave233": 0.42325559512248545,
+    "per_tier_d_z": {
+      "hard": 3.566804977178123,
+      "medium": 0.2181142515180313,
+      "easy": 1.164835741136458e-16
+    },
+    "easy_regression_eliminated": true
+  },
+  "n_paired": 1000,
+  "tier_sizes": {
+    "hard": 330,
+    "medium": 340,
+    "easy": 330
+  },
+  "honest_disclosure": "Counterfactual grid search (Wave 209 P1 A3 / Wave 225 P4 / Wave 233 P3 constant-offset methodology). The k6 N=1000 paired foldability sweep is FROZEN at Wave 161. The TierAwareCodimensionSheetScheduler only materialises easy_tier_nfe_reduction_factor in code; the hard_intensity axis is simulated via the constant-offset counterfactual (ratio=hard_intensity on hard tier, ratio=1.0 on medium)."
+}
