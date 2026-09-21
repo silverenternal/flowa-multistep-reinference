@@ -186,6 +186,41 @@ Reviewers re-verify any headline by comparing the embedded `verification_outputs
 
 ---
 
+## Numerical Stability
+
+The framework's R3 (FlowMol3) headline number `fg_dev` is computed by
+`data/FlowMol3/repo/flowmol/analysis/metrics.py` — a vendored upstream file.
+For the Wave 242 seed 44 rescue (N=200 single_mol NFE=250), some sampled
+molecules were plain rdkit `Mol` objects or partial `SampledMolecule`
+objects, both of which crashed the upstream `check_stability()` /
+`check_stability_midi()` / `analyze()` paths with `AttributeError`.
+
+We added a defensive 3-place fallback to `metrics.py`:
+1. `analyze()` line 111 — 3-tier chain for `num_atoms` (`.num_atoms` →
+   `.GetNumAtoms()` → `len(.GetAtoms())` → 0).
+2. `check_stability()` lines 349–358 + 363 — try/except for
+   `atom_types / valencies / atom_charges` and `getattr(molecule,
+   'fake_atoms', False)`.
+3. `check_stability_midi()` lines 394–401 — same try/except for
+   `atom_types / valencies / atom_charges`.
+
+The patch is **committed to git** (force-added via `git add -f`, since the
+parent `data/FlowMol3/` directory is in `.gitignore` — see
+`docs/audit/wave246-p1-metrics-py-commit.md`). Reviewers can inspect the
+exact diff with `git log -p -- data/FlowMol3/repo/flowmol/analysis/metrics.py`.
+
+Pre-patch seed 43 metrics (`verification_outputs/wave242-p1-flowmol3-seed43-summary.json`)
+exercised the original code path; post-patch seed 44 metrics (in flight)
+will be cross-checked against the expected numerical-variation envelope
+(`|Δ fg_dev| ≤ 0.04`, `|Δ validity_pct| = 0`, `|Δ pb_validity_pct| ≤ 0.10`,
+`|Δ ood_ring_rate| ≤ 0.02`) per `docs/audit/wave245-p1-metrics-patch-validation.md`.
+
+D.4 30/30 PASS is unaffected (the regression suite does not exercise the
+FlowMol3 metrics path). See `docs/audit/wave244-p5-metrics-patch.md` for
+the original Wave 244 P5 patch narrative.
+
+---
+
 ## TNNLS Submission Package
 
 This work is being submitted to **IEEE Transactions on Neural Networks and Learning Systems (TNNLS)** (decision rationale at [`docs/audit/wave238-p3-journal-decision.md`](docs/audit/wave238-p3-journal-decision.md)).

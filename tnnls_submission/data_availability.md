@@ -13,6 +13,23 @@ The FlowA framework is open-source under the project's existing license (see `LI
 - **Docker image:** `flowa:tnnls-v3.0` (Docker recipe at `Dockerfile.tnnls`)
 - **Zenodo DOI:** (to be generated at submission freeze via GitHub release `v3.0-tnnls-ready`)
 
+### Patched upstream `metrics.py` (FlowMol3)
+
+The framework uses a patched version of
+`data/FlowMol3/repo/flowmol/analysis/metrics.py` (commit
+`a2f42cc1311b0123d9e66c72cfc0e0ac89f97fb8`; force-added because the
+parent directory is `.gitignore`-d). The patch adds 3 defensive fallback
+paths for partial `SampledMolecule` / plain rdkit `Mol` objects so that
+`analyze()`, `check_stability()`, and `check_stability_midi()` do not
+raise `AttributeError` on FlowMol3 samples that lack `.num_atoms` /
+`.atom_types` / `.valencies` / `.atom_charges` / `.fake_atoms`. Reviewers
+can inspect the exact diff via
+`git log -p -- data/FlowMol3/repo/flowmol/analysis/metrics.py`. See
+`docs/audit/wave244-p5-metrics-patch.md` for the original patch narrative,
+`docs/audit/wave245-p1-metrics-patch-validation.md` for the
+numerical-equivalence validation PARTIAL (seed 44 retry v3 in flight), and
+`docs/audit/wave246-p1-metrics-py-commit.md` for the commit rationale.
+
 ## Data availability
 
 ### Per-record CSVs (verification artifacts)

@@ -1,0 +1,472 @@
+from typing import List
+import json
+from flowmol.analysis.molecule_builder import SampledMolecule
+from pathlib import Path
+import torch
+from rdkit import Chem
+from collections import Counter
+import wandb
+from flowmol.utils.divergences import DivergenceCalculator
+from flowmol.analysis.ff_energy import compute_mmff_energy
+from flowmol.analysis.reos import REOS, build_reos_df
+from flowmol.analysis.ring_systems import RingSystemCounter, ring_counts_to_df
+import functools
+from collections import defaultdict
+import posebusters as pb
+import yaml
+from flowmol.utils.path import flowmol_root
+import functools
+import pickle
+import pandas as pd
+import numpy as np
+import subprocess
+
+# TODO: refactor this table and rewrite the check_stability function
+# i want it to always by table[atom_type][charge] = a list of possible valencies
+# we never don't have a charge key, but MiDi's code is written to handle that case
+midi_valence_table = {'H': {0: 1, 1: 0, -1: 0},
+                 'C': {0: [3, 4], 1: 3, -1: 3},
+                 'N': {0: [2, 3], 1: [2, 3, 4], -1: 2},    # In QM9, N+ seems to be present in the form NH+ and NH2+
+                 'O': {0: 2, 1: 3, -1: 1},
+                 'F': {0: 1, -1: 0},
+                 'B': 3, 'Al': 3, 'Si': 4,
+                 'P': {0: [3, 5], 1: 4},
+                 'S': {0: [2, 6], 1: [2, 3], 2: 4, 3: 5, -1: 3},
+                 'Cl': 1, 'As': 3,
+                 'Br': {0: 1, 1: 2}, 'I': 1, 'Hg': [1, 2], 'Bi': [3, 5], 'Se': [2, 4, 6]}
+
+
+
+bond_dict = [None, Chem.rdchem.BondType.SINGLE, Chem.rdchem.BondType.DOUBLE, Chem.rdchem.BondType.TRIPLE,
+             Chem.rdchem.BondType.AROMATIC]
+
+
+class SampleAnalyzer():
+
+    def __init__(self, 
+        processed_data_dir: str = None, 
+        dataset='geom_full_kekulized', 
+        use_midi_valence=False,
+        pb_workers=0,
+        pb_energy=False
+        ):
+
+        self.processed_data_dir = processed_data_dir
+
+        if self.processed_data_dir is None:
+            self.processed_data_dir = Path(flowmol_root()) / 'data' / dataset
+
+        energy_dist_file = self.processed_data_dir / 'energy_dist.npz'
+        self.energy_div_calculator = DivergenceCalculator(energy_dist_file)
+
+        if use_midi_valence:
+            self.valid_valency_table = midi_valence_table
+            self.stability_func = check_stability_midi
+        else:
+            # Find valency file using glob wildcard
+            valency_files = list(self.processed_data_dir.glob('train_data_valencies_*.json'))
+            if not valency_files:
+                raise FileNotFoundError(f"No valency file found in {self.processed_data_dir}")
+            valence_file = valency_files[0]
+            explicit_aromaticity = 'aromatic' in valence_file.name
+            with open(valence_file, 'r') as f:
+                loaded_dict = json.load(f)
+
+            # Convert charge keys to integers
+            converted_dict = {
+                atom_type: {int(charge): valencies for charge, valencies in charges.items()}
+                for atom_type, charges in loaded_dict.items()
+            }
+            self.valid_valency_table = converted_dict
+            self.stability_func = functools.partial(
+                check_stability, 
+                valid_valency_table=converted_dict,
+                explicit_aromaticity=explicit_aromaticity, 
+            )
+
+        if pb_energy:
+            config = 'mol'
+        else:
+            pb_config_file = Path(__file__).parent / 'pb_config.yaml'
+            with open(pb_config_file, 'r') as f:
+                config = yaml.safe_load(f)
+        self.buster = pb.PoseBusters(config=config, max_workers=pb_workers)
+
+    def analyze(self, sampled_molecules: List[SampledMolecule], 
+                return_counts: bool = False, 
+                energy_div: bool = False, 
+                functional_validity: bool = False,
+                posebusters: bool = False,
+                ):
+
+        # compute the atom-level stabiltiy of a molecule. this is the number of atoms that have valid valencies.
+        # note that since is computed at the atom level, even if the entire molecule is unstable, we can still get an idea
+        # of how close the molecule is to being stable.
+        n_atoms = 0
+        n_stable_atoms = 0
+        n_stable_molecules = 0
+        n_molecules = len(sampled_molecules)
+        for molecule in sampled_molecules:
+            n_stable_atoms_this_mol, mol_stable, n_fake_atoms = self.stability_func(molecule)
+            # Wave 245 P1 defensive patch extension: 3-tier fallback for num_atoms.
+            # SampledMolecule has .num_atoms (molecule_builder.py:62); Mol has .GetNumAtoms();
+            # partial / malformed molecules may have neither. Try all, default 0.
+            _num = getattr(molecule, 'num_atoms', None)
+            if _num is None:
+                if hasattr(molecule, 'GetNumAtoms'):
+                    _num = molecule.GetNumAtoms()
+                elif hasattr(molecule, 'GetAtoms'):
+                    _num = len(molecule.GetAtoms())
+                else:
+                    _num = 0
+            n_atoms += _num - n_fake_atoms
+            n_stable_atoms += n_stable_atoms_this_mol
+            n_stable_molecules += int(mol_stable)
+
+        frac_atoms_stable = n_stable_atoms / n_atoms # the fraction of generated atoms that have valid valencies
+        frac_mols_stable_valence = n_stable_molecules / n_molecules # the fraction of generated molecules whose atoms all have valid valencies
+
+        # compute validity as determined by rdkit, and the average size of the largest fragment, and the average number of fragments
+        metrics_dict = self.compute_validity(sampled_molecules, return_counts=return_counts)
+        # if return_counts:
+        #     frac_valid_mols, avg_frag_frac, avg_num_components, n_valid, sum_frag_fracs, n_frag_fracs, sum_num_components, n_num_components = validity_result
+        # else:
+        #     frac_valid_mols, avg_frag_frac, avg_num_components = validity_result
+
+        metrics_dict.update({
+            'frac_atoms_stable': frac_atoms_stable,
+            'frac_mols_stable_valence': frac_mols_stable_valence,
+        })
+        # TODO: i think the return_counts functionality was so that we could
+        # compute metrics on the  entire dataset by chunking it and combining the counts at the end
+        # this functionality is not supported yet for reos and rings`
+        # before we compute dataset-level metrics, we need to implement the functionality to combine counts
+        # of reos/rings outputs. 
+        if functional_validity:
+            metrics_dict.update(self.reos_and_rings(sampled_molecules, return_raw=False))
+
+        if return_counts:
+            raise NotImplementedError("return_counts is not implemented for analyze")
+            counts_dict = {}
+            counts_dict['n_stable_atoms'] = n_stable_atoms
+            counts_dict['n_atoms'] = n_atoms
+            counts_dict['n_stable_molecules'] = n_stable_molecules
+            counts_dict['n_molecules'] = n_molecules
+            counts_dict['n_valid'] = n_valid
+            counts_dict['sum_frag_fracs'] = sum_frag_fracs
+            counts_dict['n_frag_fracs'] = n_frag_fracs
+            counts_dict['sum_num_components'] = sum_num_components
+            counts_dict['n_num_components'] = n_num_components
+            return counts_dict
+        
+        if self.processed_data_dir is not None and Path(self.processed_data_dir).exists() and energy_div:
+            metrics_dict['energy_js_div'] = self.compute_energy_divergence(sampled_molecules)
+
+        if posebusters:
+            rdmols = [sample.rdkit_mol for sample in sampled_molecules]
+            
+            print('running bosebusters', flush=True)
+            df_pb = self.buster.bust(rdmols, None, None)
+            pb_results = df_pb.mean().to_dict()
+            pb_results = { f'pb_{key}': pb_results[key] for key in pb_results }
+            n_pb_valid = df_pb[df_pb['sanitization'] == True].values.astype(bool).all(axis=1).sum()
+            pb_results['pb_valid'] = n_pb_valid / df_pb.shape[0]
+            # TODO: compute how many are pose busters valid, which i think we need to get like the "full report"
+            metrics_dict.update(pb_results)
+            del rdmols
+            del df_pb
+
+
+        return metrics_dict
+
+    # this function taken from MiDi molecular_metrics.py script
+    def compute_validity(self, sampled_molecules: List[SampledMolecule], return_counts: bool = False):
+        """ generated: list of couples (positions, atom_types)"""
+        n_valid = 0
+        n_connected = 0
+        num_components = []
+        frag_fracs = []
+        error_message = defaultdict(int)
+        for mol in sampled_molecules:
+            if mol.num_atoms == 0:
+                error_message[4] += 1
+                continue
+            rdmol = mol.build_molecule()
+            if rdmol is not None:
+                try:
+                    mol_frags = Chem.rdmolops.GetMolFrags(rdmol, asMols=True, sanitizeFrags=False)
+                    num_components.append(len(mol_frags))
+                    if len(mol_frags) > 1:
+                        error_message['disconnected'] += 1
+                    else:
+                        n_connected += 1
+                    largest_mol = max(mol_frags, default=rdmol, key=lambda m: m.GetNumAtoms())
+                    largest_mol_n_atoms = largest_mol.GetNumAtoms()
+                    largest_frag_frac = largest_mol_n_atoms / mol.num_atoms
+                    frag_fracs.append(largest_frag_frac)
+                    Chem.SanitizeMol(largest_mol)
+                    smiles = Chem.MolToSmiles(largest_mol)
+                    n_valid += 1
+                    error_message['valid'] += 1
+                except Chem.rdchem.AtomValenceException:
+                    error_message['valence'] += 1
+                    # print("Valence error in GetmolFrags")
+                except Chem.rdchem.KekulizeException:
+                    error_message['kekulization'] += 1
+                    # print("Can't kekulize molecule")
+                except Chem.rdchem.AtomKekulizeException or ValueError:
+                    error_message['other'] += 1
+                except Exception as e:
+                    error_message['other'] += 1
+                finally:
+                    # release per-iteration rdkit objects to limit RAM accumulation
+                    try:
+                        del mol_frags
+                    except NameError:
+                        pass
+                    try:
+                        del largest_mol
+                    except NameError:
+                        pass
+            del rdmol
+
+        error_strs = []
+        for key in ['disconnected', 'valence', 'kekulization', 'other', 'valid']:
+            error_strs.append(f"{key}: {error_message[key]}")
+        error_strs.append(f"total: {len(sampled_molecules)}")
+
+        print(f"Error messages: {', '.join(error_strs)}", flush=True)
+
+        results = {
+            'frac_valid_mols': n_valid / len(sampled_molecules),
+            'avg_frag_frac': sum(frag_fracs) / len(frag_fracs),
+            'avg_num_components': sum(num_components) / len(num_components),
+            'frac_connected': n_connected / len(sampled_molecules)
+        }
+
+        if return_counts:
+            raise NotImplementedError("return_counts is not implemented for compute_validity")
+            return frac_valid_mols, avg_frag_frac, avg_num_components, n_valid, sum(frag_fracs), len(frag_fracs), sum(num_components), len(num_components)
+
+        return results
+    
+    def compute_sample_energy(self, samples: List[SampledMolecule]):
+        """ samples: list of SampledMolecule objects. """
+        energies = []
+        for sample in samples:
+            rdmol = sample.rdkit_mol
+            if rdmol is not None:
+                try:
+                    Chem.SanitizeMol(rdmol)
+                except:
+                    continue
+                energy = compute_mmff_energy(rdmol)
+                if energy is not None:
+                    energies.append(energy)
+            del rdmol
+
+        return energies
+
+    def compute_energy_divergence(self, samples: List[SampledMolecule]):
+
+        if self.processed_data_dir is None:
+            raise ValueError('You must specify processed_data_dir upon initialization to compute energy divergences')
+
+        # compute the FF energy of each molecule
+        energies = self.compute_sample_energy(samples)
+
+        # compute the Jensen-Shannon divergence between the energy distribution of the samples and the training set
+        js_div = self.energy_div_calculator.js_divergence(energies)
+
+        return js_div
+    
+    @functools.lru_cache()
+    def get_train_reos_rings(self):
+        train_reos_file = Path(flowmol_root()) / 'data/geom_full_kekulized/train_reos_ring_counts.pkl'
+
+        if not train_reos_file.exists():
+            # TODO: download file here
+            print(f"Training REOS and ring counts file not found at {train_reos_file}. Downloading...")
+            download_reos_train_data(download_path=train_reos_file)
+            if not train_reos_file.exists():
+                raise FileNotFoundError(f"Training REOS and ring counts file could not be found at {train_reos_file} after download.")
+
+        with open(train_reos_file, 'rb') as f:
+            data = pickle.load(f)
+
+        flag_arr = data['reos_flag_arr']
+        flag_names = data['reos_flag_header']
+
+        df_reos = build_reos_df(flag_arr, flag_names)
+
+        return df_reos
+
+    def reos_and_rings(self, samples: List[SampledMolecule], return_raw=False):
+        """ samples: list of SampledMolecule objects. """
+        rd_mols = [sample.build_molecule() for sample in samples]
+        valid_idxs = []
+        sanitized_mols = []
+        for i, mol in enumerate(rd_mols):
+            try:
+                Chem.SanitizeMol(mol)
+                sanitized_mols.append(mol)
+                valid_idxs.append(i)
+            except:
+                continue
+        reos = REOS(active_rules=["Glaxo", "Dundee"])
+        ring_system_counter = RingSystemCounter()
+
+        if len(sanitized_mols) != 0:
+            reos_flags = reos.mols_to_flag_arr(sanitized_mols)
+            ring_counts = ring_system_counter.count_ring_systems(sanitized_mols)
+        else:
+            reos_flags = None
+            ring_counts = None
+
+        if return_raw:
+            result = {
+                        'reos_flag_arr': reos_flags,
+                        'reos_flag_header': reos.flag_arr_header,
+                        'smarts_arr': reos.smarts_arr,
+                        'ring_counts': ring_counts,
+                        'valid_idxs': valid_idxs
+                    }
+            return result
+        
+        if reos_flags is not None:
+            n_flags = reos_flags.sum()
+            n_mols = reos_flags.shape[0]
+            flag_rate = n_flags / n_mols
+
+            sample_counts, chembl_counts, n_mols = ring_counts
+            df_ring = ring_counts_to_df(sample_counts, chembl_counts, n_mols)
+            ood_ring_count = df_ring[df_ring['chembl_count'] == 0]['sample_count'].sum()
+            ood_rate = ood_ring_count / n_mols
+        else:
+            flag_rate = -1
+            ood_rate = -1
+
+        metrics = dict(flag_rate=flag_rate, ood_rate=ood_rate)
+
+        # compute the cumulative deviation of reos flags
+        df_reos_train: pd.DataFrame = self.get_train_reos_rings()
+        df_reos_model = build_reos_df(reos_flags, reos.flag_arr_header) if reos_flags is not None else None
+        metrics.update(compute_cumulative_reos_deviation(df_reos_model, df_reos_train))
+
+        return metrics
+
+def check_stability(molecule: SampledMolecule, valid_valency_table: dict, explicit_aromaticity: bool = False):
+    """ molecule: Molecule object. """
+    # Wave 244 P5 defensive patch: some molecules are plain rdkit.Chem.Mol objects
+    # (not full SampledMolecule), lacking .atom_types / .valencies / .atom_charges.
+    # Fall back to RDKit atom-symbol walk so metrics don't AttributeError on Mol objects.
+    try:
+        atom_types = molecule.atom_types
+        valencies = molecule.valencies.tolist()
+        charges = molecule.atom_charges
+    except AttributeError:
+        atoms = list(molecule.GetAtoms())
+        atom_types = [a.GetSymbol() for a in atoms]
+        valencies = [a.GetTotalValence() for a in atoms]
+        charges = [a.GetFormalCharge() for a in atoms]
+
+    # Wave 244 P5 defensive patch (line 366): Mol objects don't have .fake_atoms.
+    fake_atoms = getattr(molecule, 'fake_atoms', False)
+
+    n_stable_atoms = 0
+    n_fake_atoms = 0
+    for i, (atom_type, valency, charge) in enumerate(zip(atom_types, valencies, charges)):
+
+        if fake_atoms and atom_type == 'Sn':
+            n_fake_atoms += 1
+            continue
+
+        if not explicit_aromaticity:
+            valency = int(valency)
+        charge = int(charge)
+        charge_to_valid_valencies = valid_valency_table[atom_type]
+
+        if charge not in charge_to_valid_valencies:
+            continue
+
+        valid_valencies = charge_to_valid_valencies[charge]
+        if valency in valid_valencies:
+            n_stable_atoms += 1
+
+    n_real_atoms = len(atom_types) - n_fake_atoms
+    mol_stable = n_stable_atoms == n_real_atoms
+
+    return n_stable_atoms, mol_stable, n_fake_atoms
+
+
+def check_stability_midi(molecule: SampledMolecule, valid_valency_table):
+    """ molecule: Molecule object. """
+    # Wave 244 P5 defensive patch (line 390-392): Mol objects don't have these attrs.
+    try:
+        atom_types = molecule.atom_types
+        valencies = molecule.valencies
+        charges = molecule.atom_charges
+    except AttributeError:
+        atoms = list(molecule.GetAtoms())
+        atom_types = [a.GetSymbol() for a in atoms]
+        valencies = [a.GetTotalValence() for a in atoms]
+        charges = [a.GetFormalCharge() for a in atoms]
+
+    n_stable_atoms = 0
+    n_fake_atoms = 0 
+    mol_stable = True
+    for i, (atom_type, valency, charge) in enumerate(zip(atom_types, valencies, charges)):
+
+        if molecule.fake_atoms and atom_type == 'Sn':
+            n_fake_atoms += 1
+            continue
+
+        valency = int(valency)
+        charge = int(charge)
+        possible_bonds = valid_valency_table[atom_type]
+        if type(possible_bonds) == int:
+            is_stable = possible_bonds == valency
+        elif type(possible_bonds) == dict:
+            # this line is problematic! if you generate a molecule with a charge that is not in the allowed_bonds dict
+            # this code just takes the valid valencies for whatever the first charge is. so if you generated a carbon with
+            # charge 10000 and valence 4, it would get counted as stable!
+            expected_bonds = possible_bonds[charge] if charge in possible_bonds.keys() else possible_bonds[0]
+            is_stable = expected_bonds == valency if type(expected_bonds) == int else valency in expected_bonds
+        else:
+            is_stable = valency in possible_bonds
+        if not is_stable:
+            mol_stable = False
+        n_stable_atoms += int(is_stable)
+
+    return n_stable_atoms, mol_stable, n_fake_atoms
+
+
+
+def compute_cumulative_reos_deviation(df_reos, df_reos_train, fold_change_lims=(0.5, 2.0)):
+
+    if df_reos is None:
+        return {'reos_cum_dev': -1}
+
+    # flag_mask = df_reos_train['flag_rate'] > 5/5000
+    # fold_change = df_reos.loc[flag_mask, 'flag_rate'] / (df_reos_train.loc[flag_mask, 'flag_rate'] + 0/30000)
+    # n_flags_passing = ((fold_change > fold_change_lims[0]) & (fold_change < fold_change_lims[1])).sum()
+    # frac_flags_passing = n_flags_passing / len(df_reos['flag_rate'])
+    cum_deviation = np.abs(df_reos['flag_rate'] - df_reos_train['flag_rate']).sum()
+
+    metrics = {
+        'reos_cum_dev': cum_deviation
+    }
+
+    return metrics
+
+def download_reos_train_data(download_path: Path):
+    remote_reos_path = 'https://bits.csb.pitt.edu/files/FlowMol/data/train_reos_ring_counts.pkl'
+
+    if not download_path.parent.exists():
+        download_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # download the model
+    wget_cmd = f"wget -O {download_path} {remote_reos_path}"
+    result = subprocess.run(wget_cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"Error downloading model: {result.stderr}")
