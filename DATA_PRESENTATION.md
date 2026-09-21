@@ -1,8 +1,16 @@
 # FlowA 项目数据完整说明文档 / FlowA Project Data Presentation
 
+## Status: Internal Data Index (NOT for external presentation)
+
+> **External presentation version:** [`DATA_PRESENTATION_BRIEF.md`](DATA_PRESENTATION_BRIEF.md) (3-5 pages for teacher + grad student meeting)
+> **This document contains counterfactual and projected numbers in addition to actual measurements. Each number is labeled.**
+> **Internal use only.** Do not present directly to reviewers.
+
+---
+
 > **作者/Author:** [Corresponding author — to be filled]
 > **日期/Date:** 2026-09-22
-> **目标读者/Intended audience:** 老师 + 研究生师兄 (讲解 + 画图用) / Teacher + Grad student (presentation + figure-making)
+> **目标读者/Intended audience:** Internal — researchers reproducing / auditing numbers; not for direct presentation
 > **目的/Purpose:** 把项目里所有优秀的实验数据 + 规格 + 样本规模 + 显著性分析 一次性说清楚 / One-stop presentation of all headline experimental data + specs + sample sizes + significance analyses
 > **数据校验/Data integrity:** 所有 **ACTUAL MEASUREMENTS (实测)** 数字直接读取自 verification_outputs/ 下的字节级 artifact,不可更改 (immutable);counterfactual (反事实) 和 projected (投影) 数字明确标注,例如 Wave 235 P2 grid search uplift d_z=+0.3927、Wave 216 P1 projected N=1000 paired-t p=1.07e-18. / All **ACTUAL MEASUREMENTS** are read directly from byte-addressable verification_outputs/ artifacts (immutable). Counterfactual and projected numbers are explicitly labeled as such (e.g., Wave 235 P2 grid search uplift d_z=+0.3927, Wave 216 P1 projected N=1000 paired-t p=1.07e-18).
 
