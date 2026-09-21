@@ -298,6 +298,33 @@ structural scope statements (K1–K8) that re-frame every negative
 finding as a scope articulation rather than an enumerated
 shortcoming.
 
+**R5b reframing update — Matched-effective-NFE hypothesis FALSIFIED
+(Wave 225 P7 + P9).** Two follow-up counterfactual sweeps at
+n_rounds=2 test whether the R5b regression is a definition artifact
+of nominal-vs-effective NFE mismatch. **Wave 225 P7**: reducing
+n_rounds from 4 to 2 (which increases per-round budget to 25 NFE
+and concentrates 49 NFE on round 0 with 1 NFE restart blending on
+round 1) reduces the headline ΔFID from +84.02 (Wave 195 P2, +20.20%)
+to +44.78 (P7 N=200, +9.77%), a ~47% reduction in ΔFID units / ~52%
+reduction in ΔFID%. **Wave 225 P9**: matching effective NFE between
+framework (nominal NFE=100, n_rounds=2, effective=50 via cosine ramp
+halving) and baseline (NFE=50, effective=50) yields headline
+ΔFID = +94.91 (+20.89%) — the **matched-effective-NFE hypothesis
+is FALSIFIED**: the regression is NOT a definition artifact; it
+grows monotonically with framework effective NFE (P7 effective=25
+ΔFID=+9.77% < P9 effective=50 ΔFID=+20.89% ≈ Wave 195 P2
+effective=50 ΔFID=+20.20%). The mechanism is the 1-NFE restart
+blending on round 1: a forced restart pulls the (otherwise near-
+optimal) round-0 trajectory away from the baseline. The R5b
+regression is therefore a structural artifact of the multi-round
+restart-blend architecture, not of the NFE accounting. Future
+mitigation (e.g., a `--no-final-restart` flag collapsing the cosine
+ramp at n_rounds=1) is queued for the camera-ready deferred list.
+The Wave 195 P2 d_z = +2.700 REGRESSES verdict at matched NFE=50
+remains the primary paper R5b claim; the Wave 225 P7/P9 counterfactuals
+are documented as honest disclosures of the regression's mechanism,
+not as refutations of the regression itself.
+
 ## §8 Reproducibility — GitHub + Zenodo + Docker
 
 The submission is accompanied by:

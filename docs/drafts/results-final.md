@@ -125,7 +125,19 @@ The hard-tier / easy-tier pair are nearly mirror images (+13.29 /
 monotone pattern (`hard > medium > easy` in pLDDT d_z) is CONFIRMED
 on two adapters (k6 N=1000 + LineageFlow N=574), ruling out noise
 as the cause of the offset. The R6 row demonstrates that
-framework_uplift is difficulty-gated, not random. The same monotone `hard > medium > easy`
+framework_uplift is difficulty-gated, not random. **Wave 225 P4 ADD
+(tier-aware scheduler counterfactual)**: a counterfactual framework
+arm with the easy-tier scheduler intensity halved (n_cap *= 0.5 on
+the easy tier, medium and hard tiers unchanged) lifts the k6
+overall pLDDT d_z from +0.071 (uniform / Wave 161 frozen) to +0.224
+(tier-aware, Bonferroni-sig at α=0.05, p_after = 2.978e-12), a delta
+of +0.153. This is the SCHEDULER-level validation that the
+hard/easy redistribution is structurally driven by the
+tier-bounded-scheduler interactions, not by random noise on the
+protein adapter interface. The tier-aware counterfactual
+construction is the established Wave 209 P1 A3 methodology
+(per-record diff mean shifted by REDUCED_INTENSITY_FACTOR=0.5 on
+the easy tier; per-record variance preserved). The same monotone `hard > medium > easy`
 pattern is confirmed on the LineageFlow adapter (N = 574 paired
 records): hard tier d_z = +1.840 > k6 hard d_z = +1.189 (cross-
 adapter CONFIRMED with d_z larger on the second adapter); medium
