@@ -52,18 +52,27 @@ axes that align with the journal's stated mission.
 contribution is a self-contained four-lemma derivation (Theorem 1)
 of a closed-form upper bound on the bounded-Lipschitz distance
 between the framework's sampling distribution and the ODE target,
-parameterised by four paper quantities derived from a canonical
-F-side witness $g(x) = (1 + 0.25\cdot\tanh(x))\cdot\sin(x)$
+parameterised by four paper quantities derived from a **mixed:
+canonical + 3 adapter-specific** F-side witness scheme — the
+canonical witness $g(x) = (1 + 0.25\cdot\tanh(x))\cdot\sin(x)$
 (Proposition 2 family) under the framework default F-side profile
-$(d, c, \rho, \eta) = (1.0, 1.0, 0.1, 0.1)$ — shared across all 12
-adapters. The bound is restated in §2 of the manuscript with full
-proof sketch and explicit computation of the four quantities, and
-is supported by S1 (Theorem 1 derivation appendix). TPAMI's
-history of publishing methodological work at the intersection of
+$(d, c, \rho, \eta) = (1.0, 1.0, 0.1, 0.1)$ for the 9
+non-core adapters, and **adapter-specific empirical residual
+profiles** for the 3 core adapters (LineageFlow, Kanzi,
+FlowMol3) where the empirical $A_g$ is within 15 % of the
+canonical $A_g = 0.8549$ across all three. The bound is
+restated in §2 of the manuscript with full proof sketch and
+explicit computation of the four quantities, and is supported
+by S1 (Theorem 1 derivation appendix). Empirical Lipschitz
+constants $L_{\text{emp}}$ measured for the 12 adapters (Wave
+229 P2) span $L_{\text{emp}}^{\max} \in [0.684, 35.628]$ — a
+52× range across the FM family — confirming varying
+velocity-field geometry per adapter. TPAMI's history of
+publishing methodological work at the intersection of
 probability theory, optimisation, and generative modelling
-(e.g., recent issues on diffusion-model theory and rectified-flow
-analysis) makes FlowA's mathematical core a natural fit for the
-journal's readership.
+(e.g., recent issues on diffusion-model theory and rectified-
+flow analysis) makes FlowA's mathematical core a natural fit
+for the journal's readership.
 
 **Cross-domain empirical validation.** Beyond the theory, FlowA is
 validated across three generative domains (protein, molecular 3D,
@@ -100,13 +109,24 @@ g-independent rate corollary `BL(μ_{g,ε}, ν_g) ≤ ε · √(2/π)`)
 from four closed-form paper quantities $(A_g, B_g, C_g, e_ρ)$ —
 a Lipschitz aggregate, an effective NFE decay rate, a residual
 bias coefficient, and an exterior-gap constant. These four quantities
-are **derived from the canonical F-side witness** $g(x) = (1 + 0.25
-\cdot\tanh(x))\cdot\sin(x)$ (Proposition 2 family) under the
-framework default F-side profile $(d, c, \rho, \eta) = (1.0, 1.0,
-0.1, 0.1)$, through typed evaluators in
-`adaptive_reflow/theory/paper_quantities.py`, and are **shared
-across all 12 adapters** at that canonical witness. The framework's
-value-add is the **scheduler architecture** —
+are **derived from a mixed canonical + 3-adapter-specific F-side
+witness**: for the 9 non-core adapters, the canonical witness
+$g(x) = (1 + 0.25\cdot\tanh(x))\cdot\sin(x)$ (Proposition 2
+family) under the framework default F-side profile $(d, c,
+\rho, \eta) = (1.0, 1.0, 0.1, 0.1)$ applies; for the **3 core
+adapters** (LineageFlow, Kanzi, FlowMol3 — Wave 229 P3,
+`docs/audit/wave229-p3-core-adapter-paper-quantities.md`), the
+framework carries an **empirical residual profile** built from
+each adapter's documented residual distribution, yielding
+adapter-specific $A_g$ within 15 % of the canonical witness
+(LineageFlow $A_g^{\text{emp}} = 0.860$, Kanzi $A_g^{\text{emp}} =
+0.746$, FlowMol3 $A_g^{\text{emp}} = 0.848$). $C_g$ and $e_\rho$
+match the canonical because (ρ, c, η) are framework defaults
+for all 12 adapters; $B_g^{\text{emp}} = 0$ for all three core
+adapters (the sorted empirical residuals are monotone and never
+cross zero). The paper quantities are computed via typed
+evaluators in `adaptive_reflow/theory/paper_quantities.py`. The
+framework's value-add is the **scheduler architecture** —
 `CosineAnnealScheduler` (consumes $A_g$ → smoothing-ramp
 aggressiveness), `CodimensionSheetScheduler` (consumes
 $A_g, B_g, C_g$ → `n_cap`), `BoundedMergeOperator` (consumes $e_\rho$
@@ -114,16 +134,17 @@ $A_g, B_g, C_g$ → `n_cap`), `BoundedMergeOperator` (consumes $e_\rho$
 the full quadruple → per-cell restart probability), and BRAI
 (Bayesian Re-inference Aggregator) — which adapts per-record to
 local velocity-field geometry rather than depending on
-per-adapter paper-quantity overrides. Per-adapter $g(s)$ from each
-adapter's posterior geometry is **not currently implemented** (the
-framework exposes `AdapterCapabilities.profile_residual_fn` in
-`adaptive_reflow/universal/adapter.py` as the future-extension
-point, but no adapter declares that hook today). The framework
-operates without retraining, distillation, or Reflow; stacks on
-Euler, Heun, DPM-Solver++, Dormand–Prince RK45, CTMC, and BFN
-solvers; and exposes the inference loop as a typed five-port
-control surface (four scheduler/operator ports plus BRAI) that a
-domain expert can drive without manipulating the FM internals.
+per-adapter paper-quantity overrides. The framework exposes
+`AdapterCapabilities.profile_residual_fn` in
+`adaptive_reflow/profile_residual.py` as the future-extension
+point; the **3 core adapters exercise this hook today** (Wave
+229 P3) while the remaining 9 fall back to the canonical-witness
+closed forms. The framework operates without retraining,
+distillation, or Reflow; stacks on Euler, Heun, DPM-Solver++,
+Dormand–Prince RK45, CTMC, and BFN solvers; and exposes the
+inference loop as a typed five-port control surface (four
+scheduler/operator ports plus BRAI) that a domain expert can
+drive without manipulating the FM internals.
 
 ## §4 Distinction from Prior Work
 
