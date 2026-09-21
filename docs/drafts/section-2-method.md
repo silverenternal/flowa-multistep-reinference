@@ -231,6 +231,94 @@ returns $e_\rho = 10^{-4}$ at default parameters; the
 `lemma4_floor_value()` method to enforce the paper-derived
 non-zero noise floor.
 
+### 2.3.5 $A_g$ vs $L_{\text{emp}}$ — distinct quantities in the bound
+
+A reviewer reading §2.3.1 alongside the Wave 229 P2 empirical
+Lipschitz constants (`docs/audit/wave229-p2-adapter-lipschitz.md`)
+may ask: **"if the per-seed variance bound uses $A_g = 0.8549$
+but the empirical Lipschitz constant can be 35.63, is the bound
+meaningful?"** The answer is **yes**, because $A_g$ and
+$L_{\text{emp}}$ are **different quantities appearing in different
+parts of the bound**.
+
+**Definitions.**
+
+- $A_g$ is the **F-side family Lipschitz constant** of the
+  canonical witness $g(x) = (1 + 0.25 \cdot \tanh x) \cdot \sin
+  x$ (Proposition 2 family), closed-form (D1). It is **bit-
+  identical across all 12 adapters** by construction because
+  all 12 share the same canonical witness at the framework
+  default F-side profile.
+
+- $L_{\text{emp}}$ is the **per-adapter velocity-field
+  Jacobian norm** $\sup \|\partial v_\theta / \partial x\|_{\text{op}}$,
+  measured empirically as the maximum over $N = 1000$ random
+  $(x, t)$ pairs of the finite-difference ratio
+  $\|(x + \delta, t) - v(x, t)\| / \|\delta\|$ with
+  $\delta = 10^{-3}$. It **varies by 50x across adapters** (Wave
+  229 P2 range $[0.6839, 35.6278]$) because each adapter has
+  different network architecture, hidden widths, and weight
+  initialisation.
+
+**Where each appears in the bound.**
+
+| Quantity | Where it appears | Bound |
+|---|---|---|
+| $A_g$ | Picard–Lindelöf continuity factor (§2.1, Theorem 1 box) | $\\|\Phi_t(x_0) - \Phi_t(x_0')\\| \le e^{A_g \cdot t} \cdot \\|x_0 - x_0'\\|$ |
+| $A_g$ | Per-seed variance floor (§MS.10.2) | $\sigma_{\text{seed}} \le e^{A_g} \cdot \sqrt{2d / n_{\text{seed}}} = 13.72$ |
+| $A_g$ | Theorem 1 first term | $A_g \cdot \exp(-\text{NFE}/B_g)$ |
+| $L_{\text{emp}}$ | Single-step ODE integration error | $e_{\text{step}} \le L_{\text{emp}} \cdot \text{dt}$ |
+| $L_{\text{emp}}$ | Local truncation of RK45 / DPM-Solver++ / Heun | Order-$p$ global error: $O(L_{\text{emp}} \cdot \text{dt}^p)$ |
+
+**Where they do NOT appear.**
+
+- $A_g$ does **not** appear in the single-step error bound.
+- $L_{\text{emp}}$ does **not** appear in the Picard–Lindelöf
+  bound, the per-seed variance floor, or Theorem 1's first
+  term.
+
+**Why the gap is expected.** $A_g$ is a property of the F-side
+admissible witness $g$ (the **family** constant that bounds the
+asymptotic flow-map continuity); $L_{\text{emp}}$ is a property
+of each adapter's velocity field $v_\theta$ (the **instance**
+constant that bounds local truncation error). They bound
+**different mathematical objects**: the cumulative effect of all
+integration steps (Picard–Lindelöf) versus the local error of one
+step (single-step truncation). The Picard–Lindelöf bound uses the
+**family** Lipschitz constant because Theorem 1 holds **for all
+adapters** sharing the F-side profile; the single-step error
+bound uses the **instance** Lipschitz constant because each
+adapter has a different velocity field. Substituting
+$L_{\text{emp}}$ for $A_g$ in the §MS.10.2 floor is a **category
+error** — it conflates the family-level F-side bound with the
+adapter-level velocity-field bound.
+
+**Vanishing of $L_{\text{emp}}$ as $\text{dt} \to 0$.** The
+single-step error bound $e_{\text{step}} \le L_{\text{emp}} \cdot
+\text{dt}$ is dominated by $\text{dt} \to 0$ (FM integration is
+asymptotically exact). For NFE = 100, $\text{dt} = 0.01$ and
+$e_{\text{step}} \le 0.3563$ even for the worst-case adapter
+(ProtBFN-ABFN, $L_{\text{emp}} = 35.63$); for higher-order
+integrators (RK45, DPM-Solver++, Heun), the global error scales
+as $L_{\text{emp}} \cdot \text{dt}^p$ with $p \in \{2, 3, 4, 5\}$,
+which vanishes faster. The framework supports all of these
+integrators via the typed scheduler ports (§2.6.5).
+
+**Per-adapter diagnostic, not family bound.** $L_{\text{emp}}$ is
+the **per-adapter empirical diagnostic** that informs the
+scheduler's per-record adaptation decisions; it is **not**
+promoted to the family bound. The framework's value-add is the
+scheduler architecture that adapts **per record** to local
+velocity-field geometry, not per-adapter paper-quantity overrides
+that are not implemented. The per-record BL-distance witness (R6
+R-level headline observable) is the **empirical** signal that
+captures per-adapter geometry; the closed-form $A_g$ is the
+**family** coefficient that controls the asymptotic bound.
+
+Full mathematical decomposition is in
+`docs/audit/wave230-p3-l-emp-vs-a-g.md` (Wave 230 P3 audit,
+closes the DeepSeek flag).
+
 ---
 
 ## 2.4 Proof Sketch — Three Steps to $\mathrm{BL}(\mu_{g,\varepsilon}, \nu_g) \le \varepsilon \sqrt{2/\pi}$

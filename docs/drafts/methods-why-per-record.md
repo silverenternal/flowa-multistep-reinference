@@ -531,6 +531,103 @@ Table B.
 
 ---
 
+## §MS.10.7 $A_g$ vs $L_{\text{emp}}$ — distinct quantities in the bound
+
+The Wave 229 P2 empirical measurement
+(`docs/audit/wave229-p2-adapter-lipschitz.md`) reports
+$L_{\text{emp,max}}$ in the range $[0.6839, 35.6278]$ across
+the 12 framework adapters, while $A_g = 0.8549457422$ is
+identical across adapters. A reviewer reading §MS.10.2 alongside
+the Wave 229 P2 table may ask: **"if the per-seed variance
+floor uses $A_g = 0.8549$ but the empirical Lipschitz can be
+35.63, is the bound meaningful?"** The answer is **yes**,
+because $A_g$ and $L_{\text{emp}}$ are **different quantities
+appearing in different parts of the bound**.
+
+**$A_g$ — F-side family Lipschitz constant of the canonical
+witness $g$.** Defined by the closed-form (D1):
+
+$$A_g = \frac{1}{\sqrt{2\pi}} \int_{\mathbb{R}}
+\frac{e^{-s^2/2}}{\sqrt{1 + g(s)^2}} \, ds,$$
+
+where $g(x) = (1 + 0.25 \cdot \tanh x) \cdot \sin x$ is the
+canonical F-side admissible witness (Proposition 2 family).
+$A_g$ is a property of the witness $g$, not of the velocity
+field $v_\theta$; it is **bit-identical across all 12 adapters**
+by construction (shared canonical witness at the framework
+default F-side profile). It enters the **Picard–Lindelöf
+continuity bound** `$\|\Phi_t(x_0) - \Phi_t(x_0')\| \le
+e^{A_g \cdot t} \cdot \|x_0 - x_0'\|$` (MS.10.1) and the
+**per-seed variance floor** `$\sigma_{\text{seed}} \le e^{A_g}
+\cdot \sqrt{2d/n_{\text{seed}}} = 13.72$` (MS.10.2). It does
+**not** depend on the per-adapter velocity-field Jacobian.
+
+**$L_{\text{emp}}$ — per-adapter velocity-field Jacobian norm.**
+Empirically measured as the maximum over $N = 1000$ random
+$(x, t)$ pairs of the finite-difference estimate
+`$\|v(x + \delta, t) - v(x, t)\| / \|\delta\|$` with
+$\delta = 10^{-3}$. $L_{\text{emp}}$ is a property of the
+neural-network weights of each adapter's velocity field; it
+**varies by 50x across adapters** (range $[0.6839, 35.6278]$)
+because each adapter has different architecture, hidden
+widths, and weight initialisation. It enters the
+**single-step ODE integration error bound** `$e_{\text{step}}
+\le L_{\text{emp}} \cdot \text{dt}$`, which vanishes as
+$\text{dt} \to 0$ (FM integration is asymptotically exact).
+For higher-order integrators (RK45, DPM-Solver++, Heun), the
+global error scales as $L_{\text{emp}} \cdot \text{dt}^p$ with
+$p \in \{2, 3, 4, 5\}$. It does **not** enter the Picard–
+Lindelöf bound or the per-seed variance floor.
+
+**Where each appears in §MS.10.**
+
+| Quantity | Where it appears | Bound | Reference |
+|---|---|---|---|
+| $A_g$ | Picard–Lindelöf continuity factor | $e^{A_g \cdot t} = 2.35$ at $t = 1$ | §MS.10.1 |
+| $A_g$ | Per-seed variance floor | $e^{A_g} \cdot \sqrt{2d/n_{\text{seed}}} = 13.72$ | §MS.10.2 |
+| $A_g$ | Per-record floor at $N = 1000$ | $d_z^{\text{floor}} = 13.72 / 3.661 = 3.75$ | §MS.10.2, §MS.10.6 |
+| $L_{\text{emp}}$ | Single-step ODE truncation | $e_{\text{step}} \le L_{\text{emp}} \cdot \text{dt}$ | §MS.10.7 (this paragraph) |
+| $L_{\text{emp}}$ | Higher-order integrator global error | $O(L_{\text{emp}} \cdot \text{dt}^p)$ | §MS.10.7 (this paragraph) |
+
+**Why the gap is expected.** $A_g$ is the **family** Lipschitz
+constant of the residual flow (controls asymptotic flow-map
+continuity for all adapters sharing the F-side profile);
+$L_{\text{emp}}$ is the **instance** Lipschitz constant of one
+specific adapter's velocity field (controls local truncation
+error). They bound **different mathematical objects**: the
+cumulative effect of all integration steps (Picard–Lindelöf)
+versus the local error of one step (single-step truncation).
+Substituting $L_{\text{emp}}$ for $A_g$ in §MS.10.2 is a
+**category error** — it conflates the family-level F-side
+bound with the adapter-level velocity-field bound.
+
+**The 41x ratio $L_{\text{emp,max}} / A_g$ is not a contradiction.**
+It is the expected gap between a family-level F-side bound
+and an instance-level per-adapter velocity-field bound. The
+framework's value-add is the scheduler architecture
+(CosineAnnealScheduler + CodimensionSheetScheduler +
+BoundedMergeOperator + EvidenceDrivenScheduler + BRAI) which
+adapts **per record** to local velocity-field geometry, not
+per-adapter paper-quantity overrides that are not implemented.
+
+**Why the per-seed variance floor is still meaningful.** The
+§MS.10.2 floor `$\sigma_{\text{seed}} \le e^{A_g} \cdot
+\sqrt{2d/n_{\text{seed}}} = 13.72$` does **not** depend on
+$L_{\text{emp}}$; it depends only on $A_g$, $d$ (state
+dimension), and $n_{\text{seed}}$ (sample size). The bound is
+an upper bound on the **cumulative** flow-map continuity error
+after $n_{\text{seed}}$ independent seeds, which is bounded by
+the **family** Lipschitz constant $A_g$ via Picard–Lindelöf.
+The 14/16 UNDERPOWERED-or-REGRESS verdict distribution at
+$n_{\text{seed}} = 30$ (Wave 226 P3, Wave 229 P1) is the
+operational confirmation of this floor.
+
+Full mathematical decomposition is in
+`docs/audit/wave230-p3-l-emp-vs-a-g.md` (Wave 230 P3 audit,
+closes the DeepSeek flag).
+
+---
+
 ## §MS.10.5 Cross-references
 
 - `docs/theory/theorem-1-self-contained.md` §B.3 (Theorem 1
