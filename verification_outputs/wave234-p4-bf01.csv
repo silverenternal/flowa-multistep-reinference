@@ -1,0 +1,17 @@
+cell,baseline,framework,metric,nfe,mean_diff,sd_diff,n_pairs,t,bf01,evidence_class
+vanilla_pLDDT_NFE50,Vanilla,FlowA,pLDDT,50,0.453961,18.2232,300,0.4314738995647171,15.776541440763884,strong evidence for null
+vanilla_pLDDT_NFE100,Vanilla,FlowA,pLDDT,100,0.425175,18.182,300,0.40502953586409507,15.95249134603412,strong evidence for null
+vanilla_scPerplexity_NFE50,Vanilla,FlowA,scPerplexity,50,-3.86607,3.90463,300,-17.149460168102507,4.1649776630754843e-44,evidence for alternative (framework wins/loses)
+vanilla_scPerplexity_NFE100,Vanilla,FlowA,scPerplexity,100,-3.86187,3.9625,300,-16.880643664923713,4.28751402611078e-43,evidence for alternative (framework wins/loses)
+fastdllm_pLDDT_NFE50,FastDLLM,FlowA,pLDDT,50,-0.948331,12.2209,300,-1.3440560632953389,7.017126085942305,moderate evidence for null
+fastdllm_pLDDT_NFE100,FastDLLM,FlowA,pLDDT,100,-1.19589,12.7206,300,-1.6283369025545535,4.607014490503725,moderate evidence for null
+fastdllm_scPerplexity_NFE50,FastDLLM,FlowA,scPerplexity,50,0.0265447,3.14251,300,0.14630587992297106,17.135513477107505,strong evidence for null
+fastdllm_scPerplexity_NFE100,FastDLLM,FlowA,scPerplexity,100,0.0297657,3.14209,300,0.16408092932682686,17.08815526069007,strong evidence for null
+abcache_pLDDT_NFE50,AB-Cache,FlowA,pLDDT,50,-0.513652,16.5129,300,-0.5387735415398685,14.97433898612235,strong evidence for null
+abcache_pLDDT_NFE100,AB-Cache,FlowA,pLDDT,100,-0.733799,17.2396,300,-0.7372428307752121,13.190097619795091,strong evidence for null
+abcache_scPerplexity_NFE50,AB-Cache,FlowA,scPerplexity,50,-0.217889,3.18723,300,-1.1840840429161847,8.58625890603415,moderate evidence for null
+abcache_scPerplexity_NFE100,AB-Cache,FlowA,scPerplexity,100,-0.0919037,3.21169,300,-0.495632759710831,15.31304575228793,strong evidence for null
+lediflow_pLDDT_NFE50,LeDiFlow,FlowA,pLDDT,50,-1.17267,17.0819,300,-1.1890504103828003,8.53587779434658,moderate evidence for null
+lediflow_pLDDT_NFE100,LeDiFlow,FlowA,pLDDT,100,-0.971146,17.4388,290,-0.9483462423861712,10.852601721032878,strong evidence for null
+lediflow_scPerplexity_NFE50,LeDiFlow,FlowA,scPerplexity,50,0.237682,3.17105,300,1.298236546394998,7.453903726988607,moderate evidence for null
+lediflow_scPerplexity_NFE100,LeDiFlow,FlowA,scPerplexity,100,0.165863,3.19603,290,0.8837667702780173,11.514370955323683,strong evidence for null
