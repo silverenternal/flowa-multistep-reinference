@@ -13,7 +13,17 @@ Root cause: Some molecules returned by the upstream FlowMol3 sampler are plain `
 
 ## Patch (Wave 244 P5 — USER ACTION approved option B)
 
-Wrapped lines 349–351 in `try/except AttributeError` with a fallback to RDKit atom-symbol walk:
+**3 places** in `data/FlowMol3/repo/flowmol/analysis/metrics.py` patched with defensive fallbacks. All patches are local-only (`data/FlowMol3/` is `.gitignore`-d).
+
+### Patch 1 — line 111 (`analyze()` function, `molecule.num_atoms`)
+
+```python
+n_stable_atoms_this_mol, mol_stable, n_fake_atoms = self.stability_func(molecule)
+# Wave 244 P5 defensive patch (line 111): Mol objects don't have .num_atoms.
+n_atoms += getattr(molecule, 'num_atoms', len(molecule.GetAtoms())) - n_fake_atoms
+```
+
+### Patch 2 — line 349–358 (`check_stability()` function, `molecule.atom_types/valencies/atom_charges`)
 
 ```python
 def check_stability(molecule: SampledMolecule, valid_valency_table: dict, explicit_aromaticity: bool = False):
@@ -30,8 +40,39 @@ def check_stability(molecule: SampledMolecule, valid_valency_table: dict, explic
         atom_types = [a.GetSymbol() for a in atoms]
         valencies = [a.GetTotalValence() for a in atoms]
         charges = [a.GetFormalCharge() for a in atoms]
+
+    # Wave 244 P5 defensive patch (line 366): Mol objects don't have .fake_atoms.
+    fake_atoms = getattr(molecule, 'fake_atoms', False)
     # ...rest of function unchanged...
 ```
+
+### Patch 3 — line 390–401 (`check_stability_midi()` function, same pattern)
+
+```python
+def check_stability_midi(molecule: SampledMolecule, valid_valency_table):
+    """ molecule: Molecule object. """
+    # Wave 244 P5 defensive patch (line 390-392): Mol objects don't have these attrs.
+    try:
+        atom_types = molecule.atom_types
+        valencies = molecule.valencies
+        charges = molecule.atom_charges
+    except AttributeError:
+        atoms = list(molecule.GetAtoms())
+        atom_types = [a.GetSymbol() for a in atoms]
+        valencies = [a.GetTotalValence() for a in atoms]
+        charges = [a.GetFormalCharge() for a in atoms]
+    # ...rest of function unchanged...
+```
+
+## Why 3 patches (not just line 349)
+
+The first attempt patched ONLY line 349 (the original crash site at `check_stability.atom_types`). After patching, the seed 44 retry still failed because:
+
+1. **`analyze()` line 111** accesses `molecule.num_atoms` (which Mol objects don't have)
+2. **`check_stability()` line 366** accesses `molecule.fake_atoms` (which Mol objects don't have)
+3. **`check_stability_midi()` lines 390–392** mirror the same `atom_types/valencies/charges` pattern
+
+All 3 patches preserve original code paths when `molecule` IS a full `SampledMolecule` (which sets `self.fake_atoms`, `self.num_atoms`, etc. in `__init__` per `data/FlowMol3/repo/flowmol/analysis/molecule_builder.py:37,62`).
 
 ## Trade-off acknowledged
 
