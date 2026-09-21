@@ -1,0 +1,4 @@
+quantity,formula_inputs,formula_output,shared_across_adapters,dependency
+B_g,"g(x) = (1 + 0.25 * tanh(x)) * sin(x), K=8.0, h=0.01, separation_d=1.0",1.169713,True,"B_g depends on g callable (and grid params K,h; separation_d is documentation only since the literal B_g is independent of d). g is the canonical F-side admissible witness shared by all 12 adapters."
+C_g,"rho=0.1, c=1.0",1.240756,True,"C_g = exp(rho^2/2) / ((1-rho)^2 * min(c^2, 1)). Depends ONLY on (rho, c) — both are framework defaults shared by all 12 adapters."
+e_rho,"rho=0.1, eta=0.1",0.000100,True,"e_rho = min(rho^4, (1-rho)^2 * eta^2). Depends ONLY on (rho, eta) — both are framework defaults shared by all 12 adapters."
