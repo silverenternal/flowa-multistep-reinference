@@ -5,7 +5,7 @@
 **Author:** Wave 231 P5 agent
 **Branch:** `main`
 **Status:** READY (six USER action items pending — see
-`docs/tpami_submission_action_checklist.md`)
+`docs/internal/tpami_submission_action_checklist.md`)
 
 ---
 
@@ -30,7 +30,7 @@ submission bundle.
 | `docs/cover-letter-tpami.md` | Updated cover letter | UPDATED (this wave) |
 | `scripts/wave231_push_to_github.sh` | GitHub push helper with pre-flight + confirmation prompt | CREATED (this wave) |
 | `verification_outputs/wave231-submission-bundle-manifest.md` | SHA-256-pinned manifest of every submission deliverable | CREATED (this wave) |
-| `docs/tpami_submission_action_checklist.md` | 6-step operational checklist for the corresponding author | CREATED (this wave) |
+| `docs/internal/tpami_submission_action_checklist.md` | 6-step operational checklist for the corresponding author | CREATED (this wave) |
 | `docs/audit/wave231-p5-submission-package.md` | This audit document | CREATED (this wave) |
 
 ## §3 Cover Letter Updates (§0 USER ACTION REQUIRED section + 11 [USER TO FILL] placeholders)
@@ -129,7 +129,7 @@ that reviewers can run to confirm byte-stability.
 
 ## §6 User Action Checklist
 
-`docs/tpami_submission_action_checklist.md` enumerates the six
+`docs/internal/tpami_submission_action_checklist.md` enumerates the six
 operational steps the corresponding author must execute:
 
 1. **STEP 1** — Fill cover letter placeholders (`[USER TO FILL: …]`).
@@ -187,14 +187,14 @@ experiment:
   `35c1cfb38be026306e3a634bd2a35212c4e71098a508517de168d5ed7c586568`)
 - `scripts/wave231_push_to_github.sh` (created; executable)
 - `verification_outputs/wave231-submission-bundle-manifest.md` (created)
-- `docs/tpami_submission_action_checklist.md` (created)
+- `docs/internal/tpami_submission_action_checklist.md` (created)
 - `docs/audit/wave231-p5-submission-package.md` (this file; created)
 
 ## §10 Conclusion
 
 The Wave 231 P5 submission package is ready. The audit chain (Wave
 229 P1 → Wave 231 P4) is byte-stable on `main`. The six USER action
-items are documented in `docs/tpami_submission_action_checklist.md`
+items are documented in `docs/internal/tpami_submission_action_checklist.md`
 and the SHA-256-pinned editorial reference is in
 `verification_outputs/wave231-submission-bundle-manifest.md`. The
 freeze-marker commit `5b21cca` is the single point of provenance

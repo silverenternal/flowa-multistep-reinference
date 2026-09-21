@@ -113,5 +113,5 @@ echo "    - cover-letter-tpami.pdf (after filling the"
 echo "      [USER TO FILL] placeholders listed in §0 of"
 echo "      docs/cover-letter-tpami.md)"
 echo
-echo " Detailed action list: docs/tpami_submission_action_checklist.md"
+echo " Detailed action list: docs/internal/tpami_submission_action_checklist.md"
 echo " Submission manifest:  verification_outputs/wave231-submission-bundle-manifest.md"

@@ -36,7 +36,7 @@ submission package — cover letter placeholders + push script + bundle
 manifest + action checklist"). It is intentionally NOT part of the
 public mkdocs nav: it is an internal-only action checklist for the
 submission workflow and lives alongside the other internal artefacts
-under `docs/`. The same P5 commit added `docs/tpami_submission_checklist.md`
+under `docs/internal/`. The same P5 commit added `docs/tpami_submission_checklist.md`
 to the root + `docs/audit/wave224-p4-READY-FOR-TPAMI.md`; neither file
 needs to be in the public nav.
 
@@ -65,5 +65,6 @@ reports no drift.
 
 The only non-green gate is `mkdocs build --strict`, which aborts due
 to a single nav-mismatch warning for the new internal-only
-`tpami_submission_action_checklist.md`. This is a deliberate P5
+`tpami_submission_action_checklist.md` (now at `docs/internal/tpami_submission_action_checklist.md`
+per Wave 232 P1). This is a deliberate P5
 artefact choice (not a regression) and does not block the push.
