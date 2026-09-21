@@ -969,3 +969,56 @@ audience expects.
 - Cohen 1988 — small-effect threshold (0.1 SD) for TOST margin.
 - ICH E9 (1998) — non-inferiority framework.
 - Higgins & Thompson 2002 — $I^2$ heterogeneity bands.
+
+### §MS.10.8.8 Honest disclosure: post-hoc status of the three key parameters
+
+The TOST equivalence margin (§MS.10.8.1, 0.1 SD), the BF01
+evidence-thresholds and implicit BIC unit-information prior
+(§MS.10.8.3, Wagenmakers 2007), and the JT ordered-hypothesis
+direction (§MS.10.8.2, hard > medium > easy for framework uplift)
+were **chosen during Wave 234 script writing**, not pre-registered
+before data inspection. None of the three appear in the Wave 165
+P2 OSF pre-registration (`docs/preregistration/r1-r6-framework-
+improves.md`), which pre-registers only the R1-R6 directional
+framework-improves hypotheses, Bonferroni alpha, and minimum
+detectable effect sizes. Concretely:
+
+- **TOST margin (0.1 SD):** the value was chosen by appeal to
+  Cohen (1988) "small effect" convention while writing
+  `scripts/wave234_p2_tost.py` (declared at module-level line 41:
+  `MARGIN_FRACTION = 0.10  # 0.1 SD == small effect size (Cohen)`),
+  after the Wave 230 P2 per-cell summary statistics were already
+  on disk. It is not pre-registered.
+
+- **BF01 prior:** the BIC unit-information prior on the
+  standardized effect size is intrinsic to the Wagenmakers (2007,
+  eq. 12) approximation `BF01 = sqrt(n) * (1 + t^2/(n-1))^(-n/2)`
+  and is the only prior supported by
+  `adaptive_reflow/stats/equivalence.py::bf01_paired`. The
+  Wagenmakers evidence thresholds (3 / 10 / 30 / 100) are
+  declared at module-level in `scripts/wave234_p4_bf01.py`
+  (lines 38-45) and were not pre-registered.
+
+- **JT ordered hypothesis:** the `hard > medium > easy`
+  direction was taken from the Wave 233 P3 already-observed
+  per-tier paired-t p-value pattern (R2: framework regresses
+  on hard, UNDERPOWERED on medium, SUPPORTS on easy; R6: SUPPORTS
+  on hard, SUPPORTS on medium, REGRESSES on easy). The JT test
+  is confirmatory in the sense that it pools the three per-tier
+  tests into a single ordered-hypothesis test with greater power,
+  but the *direction* of the ordered alternative was not
+  pre-registered.
+
+Full pre-registration audit at `docs/audit/wave245-p5-
+preregistration-audit.md` (Wave 245 P5). The audit does NOT
+claim the Wave 234 methods are invalid — all three are
+well-established techniques with appropriate citations — it
+ONLY distinguishes between pre-registered (declared before
+data inspection) and post-hoc (chosen during analysis). TPAMI
+statistical-rigor standards require this distinction be
+disclosed; the Wave 234 methods remain methodologically
+appropriate, but their parameters are post-hoc and should be
+labelled as such. Future-work: a follow-up OSF pre-registration
+(Wave 245 P5 recommendation) could lock the three values
+before any camera-ready re-run so the paper can claim full
+pre-registration.
