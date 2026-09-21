@@ -62,6 +62,7 @@ import csv
 import hashlib
 import json
 import math
+import os
 import subprocess
 import sys
 import time
@@ -1345,7 +1346,7 @@ def main(argv: list[str] | None = None) -> int:
         adapter=adapter,
         n_samples=int(n_samples),
         num_steps=int(args.baseline_num_steps),
-        seed=0,
+        seed=int(os.environ.get('WAVE247_SEED', '0')),
         output_dir=output_dir,
     )
     print(
@@ -1370,7 +1371,7 @@ def main(argv: list[str] | None = None) -> int:
             scheduler_name=str(scheduler_name),
             n_rounds=int(n_rounds),
             framework_samples=int(framework_samples),
-            seed_base=0,
+            seed_base=int(os.environ.get('WAVE247_SEED', '0')),
             output_dir=output_dir,
             max_num_steps=int(args.framework_max_num_steps),
             target_ratio=float(args.target_ratio),
