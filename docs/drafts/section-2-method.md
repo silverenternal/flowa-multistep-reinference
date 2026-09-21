@@ -1395,3 +1395,88 @@ and `docs/audit/wave236-p2-wallclock-fix.md` for per-item
 method, results, and honest disclosures.
 
 ---
+
+## 2.13 Limitations — Wave 87 FlowMol3 sweep DGL 2.4.0 batched-path bug (Wave 242 P2 honest disclosure)
+
+The Wave 87 FlowMol3 fg_dev sweep that anchors the **R3 fg_dev**
+evidence in this paper was executed on the **batched DGL path**
+(`n_molecules=100` per call), the canonical Wave 87 paper-parity
+configuration. Wave 109.C subsequently identified a **batched-
+path regression in DGL 2.4.0+cu124** that produces a measurable
+shift in the framework's restart-blend prior-perturbation under
+certain graph-traversal positions. The DGL 2.4.0+cu124 batched-
+path bug was **NOT fixed** in the budget of any follow-up wave
+that re-ran FlowMol3 (Wave 235 P4 used the single_mol fallback
+path to bypass the bug; Wave 242 P1 rescue script was authored
+to extend Wave 235 P4's single_mol path to NFE=250/N=200 but
+was never executed before Wave 242 P2 verification).
+
+**Consequence for the R3 fg_dev evidence.** The Wave 87 1-seed
+framework-WINS direction (seed 42, NFE=250, N=1000, batched DGL
+path, per-record d_z = -0.294, framework reduces fg_dev by
+-0.0235, Bonferroni-significant) is best read as a **conditional
+boundary at NFE=250 / N=1000 / batched-DGL path**, not as a
+generalisable framework-WINS claim across seeds. The Wave 235
+P4 2-seed expansion (seeds 43, 44, NFE=100, N=500, single_mol
+path) reversed the sign of mean_diff (+0.0188 / +0.0126,
+framework WORSE); the per-record REOS test on the pooled 3-seed
+data was degenerate (sd=0 → NaN); the per-seed pooled paired-t
+on n=2 new seeds (df=1) had p_raw=0.123 (not Bonferroni-
+significant at α = 0.05/7 = 0.00714).
+
+**Wave 242 P2 verdict — direction-inconsistent; NFE was not
+the main confound.** Wave 242 P2 (`verification_outputs/wave242-p2-flowmol3-direction.csv`;
+audit `docs/audit/wave242-p2-flowmol3-direction.md`) attempted to
+disambiguate the NFE confound by re-running seeds 43/44 at
+NFE=250 / N=200 / single_mol path. The Wave 242 P1 rescue
+script (`scripts/wave242_p1_flowmol3_rescue_single_mol.py`,
+~4.4 KB, written 2026-09-21) targets the same Wave 87 NFE=250
+configuration under the single_mol path to bypass the DGL bug,
+but the script was **never executed** before Wave 242 P2 was
+launched. Consequently the Wave 242 P1 per-seed inputs are
+**MISSING on disk** and the pooled 3-seed per-record paired-t
+at NFE=250 is **NOT COMPUTABLE**. The Wave 242 P2 verdict is
+**TIE / inconsistent**: seed 42 framework_better at NFE=250 /
+N=1000 / batched; seeds 43/44 evidence is absent (not
+direction_worse — just unknown). The NFE confound hypothesis
+(whether NFE=250 at single_mol resolves the sign reversal) is
+**NOT TESTABLE** in Wave 242.
+
+**Protocol mismatch disclosure.** The Wave 242 P2 CSV preserves
+the protocol mismatch explicitly:
+
+- **Seed 42**: Wave 87 (NFE=250, N=1000, batched DGL, n_molecules=100)
+- **Seeds 43/44 (intended for Wave 242 P1)**: NFE=250, N=200,
+  single_mol, n_molecules=1
+
+Even if Wave 242 P1 had been executed, pooling would have been
+blocked by two non-trivial confounds: (i) N confound (1000 vs
+200, seed 42 weighted ~5x more), and (ii) graph-traversal-path
+confound (batched DGL vs single_mol, which is the workaround
+for the DGL 2.4.0+cu124 batched-path bug). The honest claim
+boundary is: **R3 fg_dev framework-WINS at NFE=250 / N=1000 /
+batched-DGL** (Wave 87 seed 42 only); direction across seeds at
+NFE=250 is **UNKNOWN** (seeds 43/44 missing); direction at
+NFE=100 / N=500 / single_mol is **framework-WORSE** (Wave 235
+P4 2-seed evidence). The DGL 2.4.0+cu124 batched-path fix is
+**deferred to camera-ready**.
+
+**Honest disclosure — what this paragraph does NOT claim.** The
+above does **NOT** retract the Wave 87 1-seed framework-WINS
+finding (the Wave 87 evidence is byte-stable and reproducible
+under the batched-DGL path configuration); it **does** retract
+any narrative of "framework wins on R3 fg_dev across seeds" and
+replaces it with the conditional-boundary reading above. The
+D.4 byte-stable regression suite remains **30/30 PASS** (the
+DGL fix was not applied; the regression vectors run under the
+existing batched path which has been byte-stable since Wave 87).
+
+**Pointer to companion disclosure.** The §7 boundary disclosure
+in the cover letter reproduces the same Wave 242 P2 verdict
+in the FlowMol3 R3 fg_dev paragraph (with the protocol-mismatch
+caveat), and §2.12.4 above reproduces the Wave 235 P4 per-seed
+fg_dev table. Both are kept in sync with this paragraph and
+with the `verification_outputs/wave242-p2-flowmol3-direction.csv`
++ `docs/audit/wave242-p2-flowmol3-direction.md` provenance pair.
+
+---

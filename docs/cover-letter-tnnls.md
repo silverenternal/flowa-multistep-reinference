@@ -852,34 +852,55 @@ remains the primary paper R5b claim; the Wave 225 P7/P9 counterfactuals
 are documented as honest disclosures of the regression's mechanism,
 not as refutations of the regression itself.
 
-**R3 FlowMol3 fg_dev 3-seed direction inconsistency (Wave 238 P1,
-honest disclosure).** The R3 fg_dev evidence is reported with an
-explicit per-seed direction diagnostic rather than as a pooled
-"framework wins" claim. The Wave 87 (seed 42) baseline + framework
-arms at NFE=250, N=1000, batched DGL path showed mean_diff = -0.0235
-(framework reduces fg_dev); the Wave 235 P4 partial-sweep expansion
-to seeds 43 and 44 at NFE=100, N=500, single-mol graph path showed
-seeds 43/44 mean_diff = +0.0188 / +0.0126 (framework increases fg_dev,
-i.e. **framework WORSE** at the lower NFE / lower N / different
-graph-path settings). The 3-seed pooled per-record REOS test is
-degenerate (sd=0 → NaN) and the per-seed pooled paired-t on n=2
-seeds (df=1) cannot reject the null (p_raw = 0.123). The honest
+**R3 FlowMol3 fg_dev 3-seed direction inconsistency (Wave 242 P2
+update — supersedes Wave 238 P1 wording, honest disclosure).**
+The R3 fg_dev evidence is reported with an explicit per-seed
+direction diagnostic rather than as a pooled "framework wins"
+claim. The Wave 87 (seed 42) baseline + framework arms at
+NFE=250, N=1000, batched DGL path showed mean_diff = -0.0235
+(framework reduces fg_dev); the Wave 235 P4 partial-sweep
+expansion to seeds 43 and 44 at NFE=100, N=500, single-mol
+graph path showed seeds 43/44 mean_diff = +0.0188 / +0.0126
+(framework increases fg_dev, i.e. **framework WORSE** at the
+lower NFE / lower N / different graph-path settings).
+
+**Wave 242 P2 verdict (this update) — direction-inconsistent at
+NFE=250; NFE was not the main confound.** Wave 242 P2 attempted
+to lift the NFE confound by re-running seeds 43/44 at the Wave 87
+NFE=250 / N=200 / single_mol path configuration via the
+`scripts/wave242_p1_flowmol3_rescue_single_mol.py` rescue script.
+The script was **NEVER EXECUTED** before Wave 242 P2 verification
+was launched, so the per-seed inputs for seeds 43/44 are
+**MISSING on disk** and the NFE=250 pooled 3-seed per-record
+paired-t is **NOT COMPUTABLE**. The Wave 242 P2 verdict is
+**TIE / inconsistent**: seed 42 framework_better at NFE=250 /
+N=1000 / batched-DGL; seeds 43/44 evidence is **absent (unknown
+direction, not "framework-worse" at NFE=250)**. The honest
 scientific reading is that the Wave 87 1-seed framework-WINS
-direction **does not reproduce** at the conditions the new seeds
-were swept under; the per-seed direction reversal is **confounded**
-by three factors that prevent a clean seed-dependent attribution:
-(i) NFE confound (seed 42 NFE=250 vs seeds 43/44 NFE=100); (ii) N
-confound (seed 42 N=1000 vs seeds 43/44 N=500); (iii) graph path
-confound (seed 42 batched DGL vs seeds 43/44 single_mol fallback
-used because the DGL 2.4.0+cu124 batched-path bug — Wave 109.C —
-remained unfixed during Wave 235). We disclose this directly rather
-than papering over the sign reversal as "direction-consistent": the
-R3 fg_dev evidence is best read as a **conditional boundary** that
-holds on the Wave 87 NFE≥250 / N=1000 / batched-DGL path, not as a
-generalisable framework-WINS claim. The full per-seed diagnostic,
-including the per-seed fg_dev table and the confound analysis, is
-reproduced verbatim in §10 Limitations paragraph K9 below and audited
-in `docs/audit/wave238-p1-flowmol3-direction.md`.
+direction **does not generalise** across seeds at the matched
+NFE=250 protocol because the matched-protocol evidence at
+NFE=250 exists only for seed 42; the per-seed direction
+reversal at NFE=100 / N=500 / single_mol (Wave 235 P4) is
+**confounded** by three factors that prevent a clean
+seed-dependent attribution: (i) NFE confound (seed 42 NFE=250
+vs seeds 43/44 NFE=100); (ii) N confound (seed 42 N=1000 vs
+seeds 43/44 N=500); (iii) graph path confound (seed 42 batched
+DGL vs seeds 43/44 single_mol fallback used because the
+**DGL 2.4.0+cu124 batched-path bug — Wave 109.C — remained
+unfixed** during Wave 235 and Wave 242). The NFE confound
+hypothesis (whether NFE=250 at single_mol resolves the sign
+reversal) is **NOT TESTABLE** in Wave 242. We disclose this
+directly rather than papering over the missing seeds 43/44 as
+"direction-consistent": the R3 fg_dev evidence is best read as
+a **conditional boundary** that holds on the Wave 87 NFE=250
+/ N=1000 / batched-DGL path, not as a generalisable
+framework-WINS claim across seeds. The full per-seed diagnostic,
+the protocol-mismatch disclosure (seed 42 N=1000 batched vs
+seeds 43/44 N=200 single_mol), and the confound analysis are
+reproduced in `docs/drafts/section-2-method.md` §2.13
+Limitations and audited in
+`docs/audit/wave242-p2-flowmol3-direction.md`
+(`verification_outputs/wave242-p2-flowmol3-direction.csv`).
 
 ## §8 Reproducibility — GitHub + Zenodo + Docker
 
