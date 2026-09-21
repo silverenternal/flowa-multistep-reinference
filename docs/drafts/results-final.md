@@ -115,7 +115,17 @@ direction, cluster-robust p = 3.73 × 10⁻³, same sign as LineageFlow
 easy tier d_z = −0.590). The naive overall aggregate d_z = +0.071
 (cluster-robust UNDERPOWERED, p_cluster = 0.553) **hides the
 per-tier cancellation** — the correct paper-level statement is
-per-tier, not aggregate. The same monotone `hard > medium > easy`
+per-tier, not aggregate. **Wave 225 P6 ADD (structural reframing)**:
+R6 overall pLDDT reports an offset of +0.071 (cluster-UNDERPOWERED)
+because the framework redistributes difficulty: hard-tier (n=330)
+framework_wins by d_z=+1.189 with mixed-effects p=8.80e-115; easy-tier
+(n=330) framework_REGRESSES by d_z=−0.998 with cluster p=3.73e-03.
+The hard-tier / easy-tier pair are nearly mirror images (+13.29 /
+−12.55 pLDDT units), producing an aggregate offset near zero. The
+monotone pattern (`hard > medium > easy` in pLDDT d_z) is CONFIRMED
+on two adapters (k6 N=1000 + LineageFlow N=574), ruling out noise
+as the cause of the offset. The R6 row demonstrates that
+framework_uplift is difficulty-gated, not random. The same monotone `hard > medium > easy`
 pattern is confirmed on the LineageFlow adapter (N = 574 paired
 records): hard tier d_z = +1.840 > k6 hard d_z = +1.189 (cross-
 adapter CONFIRMED with d_z larger on the second adapter); medium
