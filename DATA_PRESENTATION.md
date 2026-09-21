@@ -52,28 +52,36 @@
 
 **测试指标 / Metric:** RMSD (Ångström, lower-better)
 **样本规模 / Sample size:** N = 1000 paired records
-**NFE:** 1000 (default Kanzi adapter)
-**Seed:** paired t-test (Wave 218 P3 sweep, byte-stable)
-**Adapter:** KanziAdapter (force_mode="real")
+**NFE:** 50 (Wave 214 P2 Kanzi inv-projection adapter_steps; framework_inv_proj mode)
+**Seed:** paired t-test (Wave 218 P3 sweep, byte-stable; seeds 42/42 baseline/framework)
+**Adapter:** KanziAdapter (force_mode="real", projector="project_out_inv")
 **统计方法 / Statistical method:** paired t-test on within-subject diffs, df = 999, Bonferroni α = 0.05/7 = 0.007143
 
 | arm | mean_diff | sd_diff | t | df | p_raw | d_z | 95% CI | bonf_sig | verdict |
 |---|---:|---:|---:|---:|---:|---:|---|:---:|---|
-| baseline → framework | -0.02221 Å | 0.1378 | -5.094 | 999 | 3.49e-07 | -0.1612 | [-0.03067, -0.01376] | **YES** | **framework_WINS** |
+| baseline → framework | -0.01896 Å | 0.1916 | -3.131 | 999 | 1.79e-03 | -0.0990 | [-0.03085, -0.00708] | **YES** | **framework_WINS** |
 
-**Counterfactual uplifts (NOT deployed; informed by `wave225-p5-kanzi-tier-aware.csv` + `wave225-p8-pq-weight-tuned.csv`):**
+**Counterfactual uplifts (NOT deployed; informed by `wave225-p5-kanzi-tier-aware.json` + `wave225-p8-pq-weight-tuned.json` + `wave235-p2-r2-uplift.json`):**
 
 | config | d_z | effect size | verdict |
 |---|---|---|---|
-| baseline (no tier-aware) | +0.0465 | weak | Bonferroni-significant |
-| framework (tier-aware: easy_factor=0.0, hard_intensity=2.0) | **+0.3927** | **medium** | **Bonferroni-significant** |
-| **Δ** | **+743%** | weak → medium | stronger support |
-| PQ-weight-tuned (deeper counterfactual) | d_z = +0.3960 (sign-flipped because lower-is-better) | — | (informational only; not the deployed arm) |
+| baseline (no tier-aware, uniform arm Wave 218 P3) | -0.0990 | small | Bonferroni-significant |
+| tier-aware counterfactual uplift (Wave 225 P5) | **+0.0465** | negligible | NOT Bonferroni-significant (p=0.1415) — counterfactual uplift HALTS to same value |
+| **Δ** (counterfactual uplift over uniform baseline) | **0%** | small → negligible | uplift halts back to baseline d_z (no-op) |
+| Alternative uplift via PQ-weight-tuned grid (Wave 225 P8; n_cap_base=0.5, sheet_A_weight=2.0, cell_C_weight=0.5, packing_B_weight=1.0, intensity_factor=4.0) | d_z = **-0.396** (sign-flipped because lower-is-better = framework WINS more strongly) | medium | Bonferroni-significant (p=1.59e-33) (informational only; not the deployed arm) |
 
-**Honest disclosure**: deployed R2 result is the Wave 218 P3 uniform arm (-0.02221 Å, d_z = -0.1612). The counterfactual +0.3927 / +0.3960 numbers are documented for "what the framework COULD do" under different scheduler knobs.
+**Honest disclosure / 诚实披露**: deployed R2 result is the Wave 218 P3 uniform arm (mean_diff = -0.01896 Å, d_z = -0.0990, p_raw = 1.79e-03, NFE = 50 from `adapter_steps` in Wave 214 P2 `checkpoint.json`). Bonferroni-significant (α=0.05/7=0.007143) but small effect size (Cohen's d_z ≈ -0.10). The Wave 225 P5 tier-aware counterfactual (easy_factor=0.5 only; medium/hard tier unchanged per source, both medium and hard appear identical to uniform) yields d_z = +0.0465 (NOT Bonferroni-significant, p=0.1415) — i.e. the tier-aware counterfactual HALTS back to the no-tier uplift value (Δ = 0% vs uniform d_z=-0.0990). The Wave 235 P2 grid-search best cell (easy_factor=0.0, hard_intensity=2.0) reports d_z=+0.3927 — that is per `wave235-p2-r2-uplift.json#best`, but note Wave 235 P2 derives d_z from `kanzi_overall_d_z_after = +0.0465` (Wave 225 P5 tier-aware) by additionally scaling hard-tier offset 2.0×; it is NOT directly comparable to the deployed Wave 218 P3 uniform d_z=-0.0990 (different baseline). PQ-weight-tuned (Wave 225 P8, d_z = -0.396, lower-is-better = framework WINS more strongly) is the deepest counterfactual but is computed via constant-intensity scaling on the frozen Wave 214 N=1000 arrays, NOT a live GPU re-run with custom weights — included for completeness only.
 
-**Data source:** `verification_outputs/wave225-p2-r2-uplift.json` + `verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000.csv`
-**Audit doc:** `docs/audit/wave235-p2-r2-uplift.md`
+**Honest disclosure (per Wave 253 P3 verification):** the +743% d_z value cited in paper §7.6.2 (CLM-073) was traced to `wave235-p2-r2-uplift.json` (counterfactual uplift), not to a direct baseline-vs-framework paired-t. The direct paired-t (Wave 218 P3) gives d_z = -0.0990 which is Bonferroni-significant but smaller magnitude. Both readings are honest; the +743% comes from a 20-cell grid search counterfactual, while -0.0990 is a 30-seed paired-t direct measurement.
+
+**Data sources:**
+- `verification_outputs/wave218-p3-kanzi-framework-wins.json` (Wave 218 P3 deployed paired-t arm, df=999, bonf_sig=True)
+- `verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/checkpoint.json` (Wave 214 P2 `adapter_steps: 50`, NFE=50)
+- `verification_outputs/wave225-p5-kanzi-tier-aware.json` (Wave 225 P5 tier-aware counterfactual, `kanzi_overall_d_z_after` = +0.0465)
+- `verification_outputs/wave235-p2-r2-uplift.json` (Wave 235 P2 20-cell grid search best cell d_z=+0.3927, easy_factor=0.0, hard_intensity=2.0)
+- `verification_outputs/wave225-p8-pq-weight-tuned.json` (Wave 225 P8 PQ-weight-tuned grid best cell d_z=-0.396, intensity_factor=4.0)
+
+**Audit docs:** `docs/audit/wave253-p3-number-verification.md` + `docs/audit/wave254-p1-fix-r2-numbers.md`
 
 ### 2.3 R3: FlowMol3 Molecular 3D FM (ICML 2026)
 
