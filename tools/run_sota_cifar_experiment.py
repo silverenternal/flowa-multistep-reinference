@@ -533,6 +533,7 @@ def _run_framework(
     max_num_steps: int,
     target_ratio: float = 0.95,
     exact_total_steps: int | None = None,
+    no_final_restart: bool = False,
 ) -> tuple[Path, list[dict[str, float]], float, int]:
     """Drive the framework multi-round run for one scheduler.
 
@@ -577,6 +578,7 @@ def _run_framework(
             max_num_steps=max_num_steps,
             target_ratio=target_ratio,
             exact_total_steps=exact_total_steps,
+            no_final_restart=bool(no_final_restart),
         )
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -675,8 +677,54 @@ def _run_framework_state_chains(
     max_num_steps: int,
     target_ratio: float,
     exact_total_steps: int | None,
+    no_final_restart: bool = False,
 ) -> tuple[Path, list[dict[str, float]], float, int]:
-    """Drive final CIFAR samples through Engine-managed endpoint chains."""
+    """Drive final CIFAR samples through Engine-managed endpoint chains.
+
+    When ``no_final_restart`` is True, the LAST round (r == n_rounds - 1)
+    is short-circuited: no engine.run_round / apply_restart_distribution /
+    solve_ode happens. The previous round's ``trajectory[-1]`` is reused
+    as the final sample, and the last round's ``num_steps`` is discarded.
+    This isolates whether the "1-NFE forced restart blending" step in the
+    last round is the structural cause of the R5b regression (per DeepSeek
+    suggestion C in Wave 233 P5).
+
+    Edge case: ``no_final_restart=True`` with ``n_rounds=1`` would skip
+    the ONLY round, leaving zero framework contribution. This is the
+    framework-neutral configuration: framework samples equal baseline
+    samples, delta_FID = 0%. We detect this and short-circuit by
+    cloning the baseline samples into the framework NPZ (no engine call
+    at all).
+    """
+    if no_final_restart and int(n_rounds) < 2:
+        # Framework contribution is zero — clone baseline into all
+        # framework NPZ files so downstream FID computation produces
+        # delta = 0% (the regression is by definition eliminated).
+        baseline_npz = output_dir / "baseline_samples.npz"
+        if not baseline_npz.exists():
+            raise RuntimeError(
+                f"no_final_restart_with_n_rounds_1_requires_existing_baseline_npz:{baseline_npz}"
+            )
+        baseline_samples = np.load(baseline_npz)["samples"]
+        # Build per-round metrics for the zero-contribution run.
+        per_round_metrics_out: list[dict[str, float]] = []
+        for r in range(int(n_rounds)):
+            row: dict[str, float] = {
+                "round_index": int(r),
+                "n_cap": 1.0,
+                "num_steps": 0,
+            }
+            per_round_metrics_out.append(row)
+        safe_name = str(scheduler_name).lower().replace("scheduler", "")
+        out_path = output_dir / f"{safe_name}_samples.npz"
+        np.savez(out_path, samples=np.asarray(baseline_samples, dtype=np.float64))
+        return (
+            out_path,
+            per_round_metrics_out,
+            0.0,
+            0,  # total_nfe_per_sample = 0 (no framework contribution)
+        )
+
     output_dir.mkdir(parents=True, exist_ok=True)
     scheduler = build_scheduler(
         scheduler_name, rounds=int(n_rounds), target_ratio=float(target_ratio)
@@ -734,9 +782,27 @@ def _run_framework_state_chains(
             batch_id=f"sota-cifar-{scheduler_name}",
             sample_id=f"sample-{sample_index}",
         )
+        previous_trajectory: NDArray[np.float64] | None = None
         for r, (schedule_sample, row) in enumerate(
             zip(schedule_samples, per_round_metrics, strict=True)
         ):
+            # Wave 235 P1 — ``--no-final-restart`` short-circuit.
+            # When set, the LAST round skips the engine entirely
+            # (no apply_restart_distribution, no solve_ode). The previous
+            # round's ``trajectory[-1]`` is reused as the final sample.
+            # The last round's ``num_steps`` is discarded (treated as 0
+            # for that round). The previous trajectory is required —
+            # if absent, raise loudly rather than silently fall back.
+            if no_final_restart and r == int(n_rounds) - 1:
+                if previous_trajectory is None:
+                    raise RuntimeError(
+                        f"no_final_restart_requires_previous_trajectory:"
+                        f"scheduler={scheduler_name} sample={sample_index} r={r}"
+                    )
+                samples[sample_index] = np.asarray(
+                    previous_trajectory[-1], dtype=np.float64
+                )
+                continue
             policy = FinalRestartPolicy(
                 policy_id=PolicyId(f"sota-cifar-{scheduler_name}-{sample_index}-{r}"),
                 writer_id=MechanismId("inference.adaptive_reflow"),
@@ -793,6 +859,7 @@ def _run_framework_state_chains(
             # The returned endpoint, rather than a fresh initial state, is
             # explicitly carried into the following Engine round.
             bundle = adapter.observe_endpoint(trace, bundle)
+            previous_trajectory = trajectory
 
     safe_name = scheduler_name.lower().replace("scheduler", "")
     out_path = output_dir / f"{safe_name}_samples.npz"
@@ -1131,6 +1198,20 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--no-final-restart",
+        dest="no_final_restart",
+        action="store_true",
+        default=False,
+        help=(
+            "Wave 235 P1 — skip the LAST round's engine.run_round (which "
+            "contains the 1-NFE forced restart blending step). The previous "
+            "round's trajectory[-1] is reused as the final sample; the last "
+            "round's num_steps is discarded. Tests whether the 1-NFE restart "
+            "blending on round N-1 is the structural cause of the R5b "
+            "regression (DeepSeek suggestion C, Wave 233 P5)."
+        ),
+    )
+    parser.add_argument(
         "--paper-uplift-27-e-rho",
         dest="paper_uplift_27_e_rho",
         type=float,
@@ -1294,6 +1375,7 @@ def main(argv: list[str] | None = None) -> int:
             max_num_steps=int(args.framework_max_num_steps),
             target_ratio=float(args.target_ratio),
             exact_total_steps=exact_total_steps,
+            no_final_restart=bool(getattr(args, "no_final_restart", False)),
         )
         sel_last = float(per_round[-1].get("evidence_ratio", float("nan")))
         rows.append(
