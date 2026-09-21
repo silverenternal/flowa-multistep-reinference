@@ -78,6 +78,10 @@ from .regime_selector import (
     regime_ceiling,
     regime_holds,
 )
+from .tier_aware import (  # Wave 233 P3: tier-aware CodimensionSheetScheduler wrapper
+    DEFAULT_TIER_QUANTILES,
+    TierAwareCodimensionSheetScheduler,
+)
 
 __all__ = [
     "DEFAULT_REGIME_SLACK",
@@ -112,6 +116,8 @@ __all__ = [
     "RegimeSelection",
     "SigmoidScheduler",
     "ScheduleSample",
+    "TierAwareCodimensionSheetScheduler",
+    "DEFAULT_TIER_QUANTILES",
     "ScheduleSampleProtocol",
     "SchedulerProtocol",
     "_coerce_int_nonneg",
