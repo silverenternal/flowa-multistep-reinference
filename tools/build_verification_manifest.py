@@ -1,0 +1,1291 @@
+#!/usr/bin/env python3
+"""Build verification_outputs/MANIFEST.md (flat reviewer-facing file-by-file
+manifest with SHA-256 + size for every git-tracked file under
+``verification_outputs/``).
+
+Run::
+
+    python3 tools/build_verification_manifest.py
+
+Writes ``verification_outputs/MANIFEST.md`` deterministically from
+``git ls-files verification_outputs/`` + ``sha256sum`` per file. The output
+table is reviewer-meaningful: each file is grouped under its R-cell
+category (R1 LineageFlow HMMER, R2 Kanzi RMSD uplift, R3 FlowMol3 fg_dev,
+R4 Two Moons, R5 Eight Gaussians, R5b CIFAR-10 RF, R6 MNIST FM tier-aware,
+R1+R2 cross-model, 4-arm head-to-head, statistical methods, wall-clock,
+engineering gates, other).
+
+Descriptions in the manifest stay free of wave numbers; file paths keep
+their historical wave numbers (they are git-tracked and renaming them
+would break git history).
+"""
+
+from __future__ import annotations
+
+import hashlib
+import os
+import subprocess
+import sys
+from collections import OrderedDict
+
+WORKDIR = "/home/hugo/codes/flowa-multistep-reinference"
+
+
+# ---------------------------------------------------------------------------
+# Category rules
+#
+# Each rule: (rule_key, display_title, path_prefix)
+#   - path_prefix is a file or directory path under verification_outputs/
+#   - Any file that equals path_prefix OR starts with path_prefix + "/"
+#     is classified into this rule's category (first match wins).
+#   - The display_title is what reviewers see in the manifest heading.
+#   - rule_key is unused at runtime; it just disambiguates rules that share
+#     a display_title.
+# ---------------------------------------------------------------------------
+
+CATEGORY_RULES: list[tuple[str, str, str]] = [
+    # ---- R1 LineageFlow HMMER ----
+    ("r1_paired_main",     "R1 LineageFlow HMMER (paired N=1000 sweep)",
+     "verification_outputs/k6_foldability_n1000_w161_q3_2026"),
+    ("r1_paired_prev",     "R1 LineageFlow HMMER (paired sweep earlier)",
+     "verification_outputs/k6_foldability_n1000_w160_q3_2026"),
+    ("r1_paired_sanity",   "R1 LineageFlow HMMER (sanity)",
+     "verification_outputs/k6_foldability_sanity_w160_q3_2026"),
+    ("r1_real_156c",       "R1 LineageFlow HMMER (real N=1000 sweep)",
+     "verification_outputs/lineageflow_hmmer_real_n1000_w156c_q3_2026"),
+    ("r1_real_158",        "R1 LineageFlow HMMER (real N=1000 sweep)",
+     "verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026"),
+    ("r1_real_omegafold",  "R1 LineageFlow HMMER (real N=1000 OmegaFold)",
+     "verification_outputs/lineageflow_n1000_omegafold_q4_2026"),
+    ("r1_real_fastas",     "R1 LineageFlow HMMER (real fastas)",
+     "verification_outputs/lineageflow_real_fastas_w158_q3_2026"),
+    ("r1_placeholder",     "R1 LineageFlow HMMER (placeholder)",
+     "verification_outputs/lineageflow_hmmer_full_placeholder_w154b_q3_2026"),
+    # Novelty (cross-R1)
+    ("r1_novelty_mmseqs2", "R1 LineageFlow novelty (MMseqs2)",
+     "verification_outputs/lineageflow_novelty_mmseqs2_w163_q3_2026"),
+    ("r1_novelty_can",     "R1 LineageFlow novelty (MMseqs2)",
+     "verification_outputs/novelty_canonical_w165_q3_2026"),
+    ("r1_novelty_can_s",   "R1 LineageFlow novelty (MMseqs2)",
+     "verification_outputs/novelty_canonical_sensitive_w165b_q3_2026"),
+    ("r1_novelty_pctid",   "R1 LineageFlow novelty (MMseqs2)",
+     "verification_outputs/novelty_pctid_w166_q3_2026"),
+
+    # ---- R2 Kanzi RMSD uplift ----
+    ("r2_bsl_116",         "R2 Kanzi RMSD uplift (baseline seed=42)",
+     "verification_outputs/kanzi_n1000_baseline_seed42_wave116_q3_2026"),
+    ("r2_bsl_120",         "R2 Kanzi RMSD uplift (baseline seed=42)",
+     "verification_outputs/kanzi_n1000_baseline_seed42_wave120_q3_2026"),
+    ("r2_bsl_121",         "R2 Kanzi RMSD uplift (baseline seed=7)",
+     "verification_outputs/kanzi_n1000_baseline_seed7_wave121_q3_2026"),
+    ("r2_inv_122",         "R2 Kanzi RMSD uplift (framework inv_proj)",
+     "verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave122_q3_2026"),
+    ("r2_inv_127",         "R2 Kanzi RMSD uplift (framework inv_proj)",
+     "verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave127_q3_2026"),
+    ("r2_inv_131",         "R2 Kanzi RMSD uplift (framework inv_proj byte-repro)",
+     "verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave131_byte_repro_q3_2026"),
+    ("r2_synth_121",       "R2 Kanzi RMSD uplift (framework synth seed=42)",
+     "verification_outputs/kanzi_n1000_framework_synth_seed42_wave121_q3_2026"),
+    ("r2_synth_120",       "R2 Kanzi RMSD uplift (framework synth)",
+     "verification_outputs/kanzi_n1000_framework_synth_wave120_q3_2026"),
+    ("r2_paper_metrics",   "R2 Kanzi RMSD uplift (paper metrics)",
+     "verification_outputs/kanzi_n1000_framework_paper_metrics"),
+    ("r2_paper_metrics_2", "R2 Kanzi RMSD uplift (paper metrics)",
+     "verification_outputs/kanzi_n1000_paper_metrics"),
+    ("r2_diverse",         "R2 Kanzi RMSD uplift (diverse)",
+     "verification_outputs/kanzi_n1000_framework_paper_metrics_diverse"),
+    ("r2_inv_corrected",   "R2 Kanzi RMSD uplift (inv_proj corrected)",
+     "verification_outputs/kanzi_inv_proj_n20_20260913_corrected"),
+    ("r2_inv_preflight",   "R2 Kanzi RMSD uplift (inv_proj preflight)",
+     "verification_outputs/kanzi_inv_proj_n20_20260913_preflight"),
+    ("r2_inv_baseline",    "R2 Kanzi RMSD uplift (framework inv_proj bundle)",
+     "verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj-baseline"),
+    ("r2_inv_framework",   "R2 Kanzi RMSD uplift (framework inv_proj bundle)",
+     "verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj-framework"),
+    ("r2_inv_csv",         "R2 Kanzi RMSD uplift (framework inv_proj bundle)",
+     "verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.csv"),
+    ("r2_inv_csv_summary", "R2 Kanzi RMSD uplift (framework inv_proj bundle)",
+     "verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj-summary.csv"),
+    ("r2_inv_json",        "R2 Kanzi RMSD uplift (framework inv_proj bundle)",
+     "verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.json"),
+    ("r2_5arm",            "R2 Kanzi RMSD uplift (5-arm synth)",
+     "verification_outputs/k1_rc5_5arm_synth_w154b_q3_2026"),
+    ("r2_real",            "R2 Kanzi RMSD uplift (real)",
+     "verification_outputs/k1_rc5_real_w157_q3_2026"),
+    ("r2_real_v3",         "R2 Kanzi RMSD uplift (real v3)",
+     "verification_outputs/kanzi_n1000_real_v3"),
+
+    # ---- R3 FlowMol3 fg_dev ----
+    ("r3_root",            "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3"),
+    ("r3_bsl_w87",         "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_n1000_baseline_wave87_q4_2026.json"),
+    ("r3_fw_w87",          "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_n1000_framework_wave87_q4_2026.json"),
+    ("r3_sweep_w87",       "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_n1000_sweep_wave87_q4_2026.json"),
+    ("r3_sweep",           "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_n1000_sweep_q4_2026.json"),
+    ("r3_bsl_q4",          "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_n1000_baseline_q4_2026.json"),
+    ("r3_fw_q4",           "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_n1000_framework_q4_2026.json"),
+    ("r3_bsl_w109_c",      "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_n1000_baseline_wave109_c_q4_2026.json"),
+    ("r3_bsl_w109_per",    "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_n1000_baseline_wave109_c_per_metrics_q4_2026.jsonl"),
+    ("r3_bsl_equifm",      "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_baseline_equifm_q4_2026.json"),
+    ("r3_bsl_moldiff",     "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_baseline_moldiff_q4_2026.json"),
+    ("r3_bug_a",           "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_bug_a_fix_q4_2026.json"),
+    ("r3_bug_c",           "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_bug_c_fix_q4_2026.json"),
+    ("r3_closure",         "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_closure_q4_2026.json"),
+    ("r3_fine_nfe",        "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_fine_nfe_q4_2026.json"),
+    ("r3_gap4",            "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_gap4_q4_2026.json"),
+    ("r3_nfe_aware",       "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_nfe_aware_q4_2026.json"),
+    ("r3_real_composite",  "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_real_composite_q4_2026.json"),
+    ("r3_real_metric_v2",  "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_real_metric_v2_q4_2026.json"),
+    ("r3_real_metric_v3",  "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_real_metric_v3_q4_2026.json"),
+    ("r3_v2",              "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_v2_q4_2026.json"),
+    ("r3_v2_wired",        "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_v2_wired_q4_2026.json"),
+    ("r3_v3",              "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_v3_q4_2026.json"),
+    ("r3_w54",             "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_w54_q4_2026.json"),
+    ("r3_w68",             "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_w68_q4_2026.json"),
+    ("r3_with_gate",       "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/flowmol3_with_gate_q4_2026.json"),
+    ("r3_w206_p3_csv",     "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave206-p3-flowmol3-n1000.csv"),
+    ("r3_w206_p3_json",    "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave206-p3-flowmol3-n1000.json"),
+    ("r3_w235_p4_3seed_csv","R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave235-p4-flowmol3-3seed.csv"),
+    ("r3_w235_p4_3seed_json","R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave235-p4-flowmol3-3seed.json"),
+    ("r3_w235_p4_3seed_per","R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave235-p4-flowmol3-3seed-per-record.csv"),
+    ("r3_w235_p4_seed43_b","R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave235-p4-flowmol3-seed43-baseline.json"),
+    ("r3_w235_p4_seed43_bsm","R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave235-p4-flowmol3-seed43-baseline.smiles.txt"),
+    ("r3_w235_p4_seed43_f","R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave235-p4-flowmol3-seed43-framework.json"),
+    ("r3_w235_p4_seed43_fsm","R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave235-p4-flowmol3-seed43-framework.smiles.txt"),
+    ("r3_w235_p4_seed44_b","R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave235-p4-flowmol3-seed44-baseline.json"),
+    ("r3_w235_p4_seed44_bsm","R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave235-p4-flowmol3-seed44-baseline.smiles.txt"),
+    ("r3_w235_p4_seed44_f","R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave235-p4-flowmol3-seed44-framework.json"),
+    ("r3_w235_p4_seed44_fsm","R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave235-p4-flowmol3-seed44-framework.smiles.txt"),
+    ("r3_w239_p1_csv",     "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave239-p1-flowmol3-seed43-baseline.csv"),
+    ("r3_w239_p1_json",    "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave239-p1-flowmol3-seed43-baseline.json"),
+    ("r3_w239_p1_jsonl",   "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave239-p1-flowmol3-seed43-baseline.jsonl"),
+    ("r3_w239_p1_smiles",  "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave239-p1-flowmol3-seed43-baseline.smiles.txt"),
+    ("r3_w240_p2_csv",     "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave240-p2-flowmol3-direction.csv"),
+    ("r3_w242_p1_seed43_b","R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave242-p1-flowmol3-seed43-baseline.json"),
+    ("r3_w242_p1_seed43_f","R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave242-p1-flowmol3-seed43-framework.json"),
+    ("r3_w242_p1_seed43_s","R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave242-p1-flowmol3-seed43-summary.json"),
+    ("r3_w242_p2_csv",     "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave242-p2-flowmol3-direction.csv"),
+    ("r3_w189_p3_freq",    "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave189-p3-freqflow-real.json"),
+    ("r3_w189_p4_thm",     "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave189-p4-theorem-load-bearing-kanzi.json"),
+    ("r3_w190_p2_kanzi",   "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave190-p2-kanzi-n30.json"),
+    ("r3_w190_p2_kanzi_sm","R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave190-p2-kanzi-n6-smoke.json"),
+    ("r3_w190_p3_lf",      "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave190-p3-lineageflow-n30.json"),
+    ("r3_w199_p2_lf_n1k",  "R3 FlowMol3 fg_dev (molecule)",
+     "verification_outputs/wave199-p2-lineageflow-n1000"),
+
+    # ---- R1+R2 cross-model ----
+    ("xmd_w172b",          "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/cross_model_real_ckpt_w172b_q3_2026"),
+    ("xmd_w171",           "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/cross_model_nfe_curve_w171_q3_2026"),
+    ("xmd_w173",           "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/cross_model_real_ckpt_w173_p5_2026"),
+    ("xmd_w174",           "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/cross_model_real_ckpt_w174_q3_2026"),
+    ("xmd_nfe_fair",       "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/nfe_curve_fair_w170_q3_2026"),
+    ("xmd_nfe_real_166",   "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/nfe_curve_real_w166_q3_2026"),
+    ("xmd_nfe_real_166b",  "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/nfe_curve_real_w166b_q3_2026"),
+    ("xmd_nfe_real_167",   "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/nfe_curve_real_w167_q3_2026"),
+    ("xmd_nfe_real_168",   "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/nfe_curve_real_w168_q3_2026"),
+    ("xmd_nfe_165b",       "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/nfe_curve_w165b_q3_2026"),
+    ("xmd_lf_forward",     "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_real_ckpt_forward_q4_2026.json"),
+    ("xmd_lf_force",       "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_real_force_mode_q4_2026.json"),
+    ("xmd_lf_metric",      "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_real_metric_q4_2026.json"),
+    ("xmd_lf_metric_v2",   "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_real_metric_v2_q4_2026.json"),
+    ("xmd_lf_up_b",        "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_upstream_baseline_q4_2026.json"),
+    ("xmd_lf_up_f",        "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_upstream_framework_q4_2026.json"),
+    ("xmd_lf_bcmp",        "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_baseline_comparison_q4_2026.json"),
+    ("xmd_lf_euler",       "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_baseline_euler_q4_2026.json"),
+    ("xmd_lf_heun",        "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_baseline_heun_q4_2026.json"),
+    ("xmd_lf_rk4",         "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_baseline_rk4_q4_2026.json"),
+    ("xmd_lf_b_q4",        "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_n1000_baseline_q4_2026.json"),
+    ("xmd_lf_f_q4",        "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_n1000_framework_q4_2026.json"),
+    ("xmd_lf_og_b",        "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_n1000_omegafold_q4_2026_baseline.json"),
+    ("xmd_lf_og_f",        "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_n1000_omegafold_q4_2026_framework.json"),
+    ("xmd_lf_v2",          "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_v2_q4_2026.json"),
+    ("xmd_lf_v2_n10",      "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_v2_n10_q4_2026.json"),
+    ("xmd_lf_v2_agg",      "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/lineageflow_v2_aggregated_q4_2026.json"),
+    ("xmd_kz_eval",        "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/kanzi_real_ckpt_eval_q4_2026.json"),
+    ("xmd_kz_eval_kz",     "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/kanzi_real_ckpt_eval_q4_2026_kanzi.json"),
+    ("xmd_kz_forward",     "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/kanzi_real_ckpt_forward_q4_2026.json"),
+    ("xmd_kz_comp",        "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/kanzi_real_composite_q4_2026.json"),
+    ("xmd_kz_force",       "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/kanzi_real_force_mode_q4_2026.json"),
+    ("xmd_kz_metric",      "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/kanzi_real_metric_q4_2026.json"),
+    ("xmd_kz_metric_v2",   "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/kanzi_real_metric_v2_q4_2026.json"),
+    ("xmd_kz_up_b",        "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/kanzi_upstream_baseline_q4_2026.json"),
+    ("xmd_kz_up_f",        "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/kanzi_upstream_framework_q4_2026.json"),
+    ("xmd_kz_nfe_scan",    "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/kanzi_nfe_scan_q4_2026.json"),
+    ("xmd_nfe_scan_agg",   "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/nfe_scan_aggregated_q4_2026.json"),
+    ("xmd_kz_gpt",         "R1+R2 cross-model sweep (real checkpoints)",
+     "verification_outputs/kanzi_gpt_prior_q4_2026.json"),
+
+    # ---- R4 2D Two Moons ----
+    ("r4_csv_b",           "R4 2D Two Moons",
+     "verification_outputs/noise_injection_two_moons_baseline.csv"),
+    ("r4_csv_f",           "R4 2D Two Moons",
+     "verification_outputs/noise_injection_two_moons_framework.csv"),
+    ("r4_post",            "R4 2D Two Moons",
+     "verification_outputs/wave189-p2-post-cd70821-two_moons.json"),
+    ("r4_smoke",           "R4 2D Two Moons",
+     "verification_outputs/twodim_restart_sigma05_smoke_20260913"),
+
+    # ---- R5 2D Eight Gaussians ----
+    ("r5_csv_b",           "R5 2D Eight Gaussians",
+     "verification_outputs/noise_injection_eight_gaussians_baseline.csv"),
+    ("r5_csv_f",           "R5 2D Eight Gaussians",
+     "verification_outputs/noise_injection_eight_gaussians_framework.csv"),
+    ("r5_post_eg",         "R5 2D Eight Gaussians",
+     "verification_outputs/wave189-p2-post-cd70821-eight_gaussians.json"),
+    ("r5_post_comb",       "R5 2D Eight Gaussians",
+     "verification_outputs/wave189-p2-post-cd70821-combined.json"),
+    ("r5_smoke",           "R5 2D Eight Gaussians",
+     "verification_outputs/twodim_beta_smoke_20260913"),
+    ("r5_sota",            "R5 2D Eight Gaussians",
+     "verification_outputs/wave189-p2-sota-2d-rerun"),
+
+    # ---- R5b CIFAR-10 RF ----
+    ("r5b_sanity",         "R5b CIFAR-10 RF",
+     "verification_outputs/wave175-p3-sanity"),
+    ("r5b_w178_p6",        "R5b CIFAR-10 RF",
+     "verification_outputs/wave178-p6"),
+    ("r5b_w183_csv",       "R5b CIFAR-10 RF",
+     "verification_outputs/wave183-p3-eval-summary.csv"),
+    ("r5b_w183_agg",       "R5b CIFAR-10 RF",
+     "verification_outputs/wave183-p4-aggregation.csv"),
+    ("r5b_w183_agg_py",    "R5b CIFAR-10 RF",
+     "verification_outputs/wave183-p4-aggregate.py"),
+    ("r5b_w183_fig_d",     "R5b CIFAR-10 RF",
+     "verification_outputs/wave183-p4-figure-deltas-finer.png"),
+    ("r5b_w183_fig_p",     "R5b CIFAR-10 RF",
+     "verification_outputs/wave183-p4-figure-pLDDT-finer.png"),
+    ("r5b_w183_fig_s",     "R5b CIFAR-10 RF",
+     "verification_outputs/wave183-p4-figure-scPerplexity-finer.png"),
+    ("r5b_w186_p2",        "R5b CIFAR-10 RF",
+     "verification_outputs/wave186-p2-cells-summary.csv"),
+    ("r5b_w186_p3",        "R5b CIFAR-10 RF",
+     "verification_outputs/wave186-p3-eval-summary.csv"),
+    ("r5b_w186_p4",        "R5b CIFAR-10 RF",
+     "verification_outputs/wave186-p4-aggregation.csv"),
+    ("r5b_w191_p2_dir",    "R5b CIFAR-10 RF",
+     "verification_outputs/wave191-p2-cifar10-n1000"),
+    ("r5b_w191_p2_json",   "R5b CIFAR-10 RF",
+     "verification_outputs/wave191-p2-cifar10-n1000.json"),
+    ("r5b_w191_p2_smoke",  "R5b CIFAR-10 RF",
+     "verification_outputs/wave191-p2-cifar10-smoke"),
+    ("r5b_w225_p7_csv",    "R5b CIFAR-10 RF",
+     "verification_outputs/wave225-p7-r5b-reduced-rounds.csv"),
+    ("r5b_w225_p7_json",   "R5b CIFAR-10 RF",
+     "verification_outputs/wave225-p7-r5b-reduced-rounds.json"),
+    ("r5b_w225_p7_dir",    "R5b CIFAR-10 RF",
+     "verification_outputs/wave225-p7-r5b-rounds2-n200"),
+    ("r5b_w225_p9_csv",    "R5b CIFAR-10 RF",
+     "verification_outputs/wave225-p9-r5b-matched-eff-nfe.csv"),
+    ("r5b_w225_p9_json",   "R5b CIFAR-10 RF",
+     "verification_outputs/wave225-p9-r5b-matched-eff-nfe.json"),
+    ("r5b_w225_p9_dir",    "R5b CIFAR-10 RF",
+     "verification_outputs/wave225-p9-r5b-matched-eff-nfe-n200"),
+    ("r5b_w226_p1_sens",   "R5b CIFAR-10 RF",
+     "verification_outputs/wave226-p1-a-g-sensitivity.csv"),
+    ("r5b_w226_p1_val",    "R5b CIFAR-10 RF",
+     "verification_outputs/wave226-p1-a-g-values.csv"),
+    ("r5b_w226_p3_var",    "R5b CIFAR-10 RF",
+     "verification_outputs/wave226-p3-per-seed-variance-bound.csv"),
+    ("r5b_w227_p2_csv",    "R5b CIFAR-10 RF",
+     "verification_outputs/wave227-p2-floor-corrected.csv"),
+    ("r5b_w227_p2_json",   "R5b CIFAR-10 RF",
+     "verification_outputs/wave227-p2-floor-corrected.json"),
+    ("r5b_w233_p5",        "R5b CIFAR-10 RF",
+     "verification_outputs/wave233-p5-r5b-fix.csv"),
+    ("r5b_w235_p1_csv",    "R5b CIFAR-10 RF",
+     "verification_outputs/wave235-p1-r5b-fix.csv"),
+    ("r5b_w235_p1_json",   "R5b CIFAR-10 RF",
+     "verification_outputs/wave235-p1-r5b-fix.json"),
+    ("r5b_w235_p1_nfr_csv","R5b CIFAR-10 RF",
+     "verification_outputs/wave235-p1-r5b-no-final-restart.csv"),
+    ("r5b_w235_p1_nfr_d",  "R5b CIFAR-10 RF",
+     "verification_outputs/wave235-p1-r5b-no-final-restart-n200"),
+    ("r5b_w235_p1_nfr_dq", "R5b CIFAR-10 RF",
+     "verification_outputs/wave235-p1-r5b-no-final-restart-n200-quick"),
+    ("r5b_w235_p1_r1_csv", "R5b CIFAR-10 RF",
+     "verification_outputs/wave235-p1-r5b-nofr-rounds1.csv"),
+    ("r5b_w235_p1_r1_d",   "R5b CIFAR-10 RF",
+     "verification_outputs/wave235-p1-r5b-nofr-rounds1-n200"),
+    ("r5b_w235_p1_r1csv",  "R5b CIFAR-10 RF",
+     "verification_outputs/wave235-p1-r5b-rounds1.csv"),
+    ("r5b_w235_p1_r1d",    "R5b CIFAR-10 RF",
+     "verification_outputs/wave235-p1-r5b-rounds1-n200"),
+    ("r5b_w247_p2_s42_1",  "R5b CIFAR-10 RF",
+     "verification_outputs/wave247-p2-r5b-seed42-n1-n100"),
+    ("r5b_w247_p2_s42_2",  "R5b CIFAR-10 RF",
+     "verification_outputs/wave247-p2-r5b-seed42-n1-n200"),
+    ("r5b_w247_p2_s43_1",  "R5b CIFAR-10 RF",
+     "verification_outputs/wave247-p2-r5b-seed43-n1-n100"),
+    ("r5b_w208_p5_pareto", "R5b CIFAR-10 RF",
+     "verification_outputs/wave208-p5-pareto-r5b.csv"),
+    ("r5b_w209_p4_csv",    "R5b CIFAR-10 RF",
+     "verification_outputs/wave209-p4-pareto-r5b.csv"),
+    ("r5b_w209_p4_png",    "R5b CIFAR-10 RF",
+     "verification_outputs/wave209-p4-pareto-r5b.png"),
+    ("r5b_ema",            "R5b CIFAR-10 RF",
+     "verification_outputs/cifar_n200_nfe50_ema_corrected"),
+    ("r5b_w131_arms",      "R5b CIFAR-10 RF",
+     "verification_outputs/wave131_cifar_arms"),
+    ("r5b_w131_ref",       "R5b CIFAR-10 RF",
+     "verification_outputs/wave131_cifar_ref_build"),
+    ("r5b_w131_small",     "R5b CIFAR-10 RF",
+     "verification_outputs/wave131_cifar_small_sweep"),
+    ("r5b_w132_arm_fid",   "R5b CIFAR-10 RF",
+     "verification_outputs/wave132_cifar_arm_fid"),
+    ("r5b_w129_smoke",     "R5b CIFAR-10 RF",
+     "verification_outputs/wave129_cifar_arm_smoke"),
+    ("r5b_w129_ref",       "R5b CIFAR-10 RF",
+     "verification_outputs/wave129_cifar_ref_check"),
+    ("r5b_w129_small",     "R5b CIFAR-10 RF",
+     "verification_outputs/wave129_cifar_small_sweep"),
+    ("r5b_w128",           "R5b CIFAR-10 RF",
+     "verification_outputs/wave128_cifar_gpu"),
+    ("r5b_w128_r1",        "R5b CIFAR-10 RF",
+     "verification_outputs/wave128_cifar_gpu_retry"),
+    ("r5b_w128_r2",        "R5b CIFAR-10 RF",
+     "verification_outputs/wave128_cifar_gpu_retry2"),
+    ("r5b_w128_r3",        "R5b CIFAR-10 RF",
+     "verification_outputs/wave128_cifar_gpu_retry3"),
+    ("r5b_w225_p0",        "R5b CIFAR-10 RF",
+     "verification_outputs/wave225-p0-baseline-snapshot.csv"),
+    ("r5b_w225_p8_csv",    "R5b CIFAR-10 RF",
+     "verification_outputs/wave225-p8-pq-weight-tuned.csv"),
+    ("r5b_w225_p8_json",   "R5b CIFAR-10 RF",
+     "verification_outputs/wave225-p8-pq-weight-tuned.json"),
+    ("r5b_ci_smoke",       "R5b CIFAR-10 RF",
+     "verification_outputs/ci_smoke"),
+
+    # ---- R6 MNIST FM tier-aware ----
+    ("r6_w191_p3_dir",     "R6 MNIST FM tier-aware",
+     "verification_outputs/wave191-p3-mnist-n1000"),
+    ("r6_w191_p3_json",    "R6 MNIST FM tier-aware",
+     "verification_outputs/wave191-p3-mnist-n1000.json"),
+    ("r6_w216_p4_csv",     "R6 MNIST FM tier-aware",
+     "verification_outputs/wave216-p4-r6-uplift.csv"),
+    ("r6_w216_p4_json",    "R6 MNIST FM tier-aware",
+     "verification_outputs/wave216-p4-r6-uplift.json"),
+    ("r6_w225_p4_csv",     "R6 MNIST FM tier-aware",
+     "verification_outputs/wave225-p4-k6-tier-aware.csv"),
+    ("r6_w225_p4_json",    "R6 MNIST FM tier-aware",
+     "verification_outputs/wave225-p4-k6-tier-aware.json"),
+    ("r6_w225_p5_csv",     "R6 MNIST FM tier-aware",
+     "verification_outputs/wave225-p5-kanzi-tier-aware.csv"),
+    ("r6_w225_p5_json",    "R6 MNIST FM tier-aware",
+     "verification_outputs/wave225-p5-kanzi-tier-aware.json"),
+    ("r6_w228_p1_csv",     "R6 MNIST FM tier-aware",
+     "verification_outputs/wave228-p1-4arm-per-record-coverage.csv"),
+    ("r6_w228_p1_json",    "R6 MNIST FM tier-aware",
+     "verification_outputs/wave228-p1-4arm-per-record-coverage.json"),
+    ("r6_w228_p2",         "R6 MNIST FM tier-aware",
+     "verification_outputs/wave228-p2-paper-quantities-distribution.csv"),
+    ("r6_w233_p3_r2_csv",  "R6 MNIST FM tier-aware",
+     "verification_outputs/wave233-p3-tier-aware-r2.csv"),
+    ("r6_w233_p3_r2_json", "R6 MNIST FM tier-aware",
+     "verification_outputs/wave233-p3-tier-aware-r2.json"),
+    ("r6_w233_p3_r6_csv",  "R6 MNIST FM tier-aware",
+     "verification_outputs/wave233-p3-tier-aware-r6.csv"),
+    ("r6_w233_p3_r6_json", "R6 MNIST FM tier-aware",
+     "verification_outputs/wave233-p3-tier-aware-r6.json"),
+    ("r6_w233_p4_csv",     "R6 MNIST FM tier-aware",
+     "verification_outputs/wave233-p4-r5a-expanded.csv"),
+    ("r6_w233_p4_json",    "R6 MNIST FM tier-aware",
+     "verification_outputs/wave233-p4-r5a-expanded.json"),
+    ("r6_w235_p2_csv",     "R6 MNIST FM tier-aware",
+     "verification_outputs/wave235-p2-r2-uplift.csv"),
+    ("r6_w235_p2_json",    "R6 MNIST FM tier-aware",
+     "verification_outputs/wave235-p2-r2-uplift.json"),
+    ("r6_w235_p3_csv",     "R6 MNIST FM tier-aware",
+     "verification_outputs/wave235-p3-r6-uplift.csv"),
+    ("r6_w235_p3_json",    "R6 MNIST FM tier-aware",
+     "verification_outputs/wave235-p3-r6-uplift.json"),
+    ("r6_w245_p2_csv",     "R6 MNIST FM tier-aware",
+     "verification_outputs/wave245-p2-tier-aware-independence.csv"),
+    ("r6_w245_p2_json",    "R6 MNIST FM tier-aware",
+     "verification_outputs/wave245-p2-tier-aware-independence.json"),
+    ("r6_w246_p2_csv",     "R6 MNIST FM tier-aware",
+     "verification_outputs/wave246-p2-tier-aware-independence-r1.csv"),
+    ("r6_w246_p2_json",    "R6 MNIST FM tier-aware",
+     "verification_outputs/wave246-p2-tier-aware-independence-r1.json"),
+
+    # ---- 4-arm H2H (real checkpoints) ----
+    ("h2h_w180_p2",        "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave180-p2-fastdllm-summary.csv"),
+    ("h2h_w180_p3",        "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave180-p3-three-arm-comparison.csv"),
+    ("h2h_w181_p2",        "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave181-p2-abcache-summary.csv"),
+    ("h2h_w181_p3",        "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave181-p3-four-arm-comparison.csv"),
+    ("h2h_w182_p2",        "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave182-p2-lediflow-summary.csv"),
+    ("h2h_w182_p3",        "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave182-p3-five-arm-comparison.csv"),
+    ("h2h_w184_p3",        "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave184-p3-eval-summary.csv"),
+    ("h2h_w184_p4",        "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave184-p4-ablation-table.csv"),
+    ("h2h_w195_p2_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave195-p2-r-level-power.csv"),
+    ("h2h_w195_p2_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave195-p2-r-level-power.json"),
+    ("h2h_w195_p3_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave195-p3-4arm-power.csv"),
+    ("h2h_w195_p3_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave195-p3-4arm-power.json"),
+    ("h2h_w195_p4_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave195-p4-theorem1-power.csv"),
+    ("h2h_w195_p4_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave195-p4-theorem1-power.json"),
+    ("h2h_w196_p2_n30_csv","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-p2-4arm-n30-summary.csv"),
+    ("h2h_w196_p2_n30_j",  "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-p2-4arm-n30-summary.json"),
+    ("h2h_w196_p2_paired_c","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-p2-4arm-paired.csv"),
+    ("h2h_w196_p2_paired_j","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-p2-4arm-paired.json"),
+    ("h2h_w196_p4_ta_csv", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-p4-table-a-r-level.csv"),
+    ("h2h_w196_p4_ta_json","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-p4-table-a-r-level.json"),
+    ("h2h_w196_p4_tb_csv", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-p4-table-b-4arm-n30.csv"),
+    ("h2h_w196_p4_tb_json","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-p4-table-b-4arm-n30.json"),
+    ("h2h_w196_trackb",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-trackb-abcache-nfe100-n30.csv"),
+    ("h2h_w196_trackb",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-trackb-abcache-nfe50-n30.csv"),
+    ("h2h_w196_trackb",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-trackb-fastdllm-nfe100-n30.csv"),
+    ("h2h_w196_trackb",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-trackb-fastdllm-nfe50-n30.csv"),
+    ("h2h_w196_trackb",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-trackb-flowa-nfe100-n30.csv"),
+    ("h2h_w196_trackb",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-trackb-flowa-nfe50-n30.csv"),
+    ("h2h_w196_trackb",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-trackb-lediflow-nfe100-n30.csv"),
+    ("h2h_w196_trackb",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-trackb-lediflow-nfe50-n30.csv"),
+    ("h2h_w196_trackb",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-trackb-vanilla-nfe100-n30.csv"),
+    ("h2h_w196_trackb",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave196-trackb-vanilla-nfe50-n30.csv"),
+    ("h2h_w197_p3_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave197-p3-root-cause-analysis.csv"),
+    ("h2h_w197_p3_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave197-p3-root-cause-analysis.json"),
+    ("h2h_w198_p2_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave198-p2-per-record-paired.csv"),
+    ("h2h_w198_p2_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave198-p2-per-record-paired.json"),
+    ("h2h_w198_p3_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave198-p3-difficulty-strata.csv"),
+    ("h2h_w198_p3_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave198-p3-difficulty-strata.json"),
+    ("h2h_w198_p2_md",     "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave198-p2-audit.md"),
+    ("h2h_w198_p3_md",     "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave198-p3-audit.md"),
+    ("h2h_w199_p3_lf_per_csv","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave199-p3-lineageflow-per-record.csv"),
+    ("h2h_w199_p3_lf_per_j","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave199-p3-lineageflow-per-record.json"),
+    ("h2h_w199_p3_lf_str_c","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave199-p3-lineageflow-strata.csv"),
+    ("h2h_w199_p3_lf_str_j","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave199-p3-lineageflow-strata.json"),
+    ("h2h_w199_p3_md",     "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave199-p3-audit.md"),
+    ("h2h_w200_p2",        "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave200-p2-lineageflow-n1000-baseline-gpu-blocked.json"),
+    ("h2h_w202_p5_per_csv","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave202-p5-lineageflow-per-record.csv"),
+    ("h2h_w202_p5_per_json","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave202-p5-lineageflow-per-record.json"),
+    ("h2h_w202_p5_str_csv","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave202-p5-lineageflow-strata.csv"),
+    ("h2h_w202_p5_str_json","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave202-p5-lineageflow-strata.json"),
+    ("h2h_w203_p3_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave203-p3-k6-cluster-robust.csv"),
+    ("h2h_w203_p3_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave203-p3-k6-cluster-robust.json"),
+    ("h2h_w206_p1_dir",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave206-p1-lineageflow-n1000"),
+    ("h2h_w206_p1_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave206-p1-lineageflow-n1000.csv"),
+    ("h2h_w206_p1_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave206-p1-lineageflow-n1000.json"),
+    ("h2h_w206_p2_ckpt",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave206-p2-kanzi-framework-n1000.checkpoint.json"),
+    ("h2h_w206_p2_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave206-p2-kanzi-framework-n1000.csv"),
+    ("h2h_w206_p2_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave206-p2-kanzi-framework-n1000.json"),
+    ("h2h_w206_p4_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave206-p4-r-level-refresh.csv"),
+    ("h2h_w206_p4_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave206-p4-r-level-refresh.json"),
+    ("h2h_w206_p5_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave206-p5-freqflow-n1000.csv"),
+    ("h2h_w206_p5_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave206-p5-freqflow-n1000.json"),
+    ("h2h_w206_p6_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave206-p6-honest-negative-curve.csv"),
+    ("h2h_w206_p6_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave206-p6-honest-negative-curve.json"),
+    ("h2h_w206_p6_dir",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave206_p6_pilot"),
+    ("h2h_w208_p1_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave208-p1-4arm-power-analysis.csv"),
+    ("h2h_w208_p1_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave208-p1-4arm-power-analysis.json"),
+    ("h2h_w208_p2_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave208-p2-flowmol3-sanity.csv"),
+    ("h2h_w208_p2_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave208-p2-flowmol3-sanity.json"),
+    ("h2h_w208_p4_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave208-p4-cross-adapter-ablation.csv"),
+    ("h2h_w208_p4_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave208-p4-cross-adapter-ablation.json"),
+    ("h2h_w208_p5_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave208-p5-efficiency.csv"),
+    ("h2h_w208_p5_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave208-p5-efficiency.json"),
+    ("h2h_w208_p5_def",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave208-p5-matched-compute-definition.txt"),
+    ("h2h_w209_p1_cos",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p1-cosine-vs-paper.csv"),
+    ("h2h_w209_p1_mod_csv","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p1-module-ablation.csv"),
+    ("h2h_w209_p1_mod_j",  "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p1-module-ablation.json"),
+    ("h2h_w209_p1_pq",     "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p1-pq-compute-overhead.csv"),
+    ("h2h_w209_p1_tier",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p1-tier-aware-test.csv"),
+    ("h2h_w209_p2_clust",  "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p2-cluster-robust-all-cells.csv"),
+    ("h2h_w209_p2_per",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p2-per-record-all-cells.csv"),
+    ("h2h_w209_p3_me_csv", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p3-mixed-effects.csv"),
+    ("h2h_w209_p3_me_j",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p3-mixed-effects.json"),
+    ("h2h_w209_p3_mc_csv", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p3-multi-cluster-unit.csv"),
+    ("h2h_w209_p3_mc_j",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p3-multi-cluster-unit.json"),
+    ("h2h_w209_p3_vio_csv","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p3-per-tier-violin-data.csv"),
+    ("h2h_w209_p3_vio_j",  "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p3-per-tier-violin-data.json"),
+    ("h2h_w209_p3_pow_csv","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p3-power-analysis-table.csv"),
+    ("h2h_w209_p3_pow_j",  "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p3-power-analysis-table.json"),
+    ("h2h_w209_p4_flops",  "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p4-flops.csv"),
+    ("h2h_w209_p4_mem_csv","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p4-memory.csv"),
+    ("h2h_w209_p4_mem_j",  "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p4-memory.json"),
+    ("h2h_w209_p5_xdom",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p5-cross-domain-per-record.csv"),
+    ("h2h_w209_p5_san_csv","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p5-flowmol3-sanity.csv"),
+    ("h2h_w209_p5_san_j",  "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p5-flowmol3-sanity.json"),
+    ("h2h_w209_p6_r5a",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave209-p6-r5a-extended.csv"),
+    ("h2h_w216_p1_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave216-p1-r3-per-record.csv"),
+    ("h2h_w216_p1_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave216-p1-r3-per-record.json"),
+    ("h2h_w216_p2_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave216-p2-r5a-extended.csv"),
+    ("h2h_w216_p2_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave216-p2-r5a-extended.json"),
+    ("h2h_w216_p3_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave216-p3-4arm-per-record-equivalent.csv"),
+    ("h2h_w216_p3_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave216-p3-4arm-per-record-equivalent.json"),
+    ("h2h_w218_p3_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave218-p3-kanzi-framework-wins.csv"),
+    ("h2h_w218_p3_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave218-p3-kanzi-framework-wins.json"),
+    ("h2h_w218_p3_b_log",  "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave218-p3-kanzi-baseline-n1000.log"),
+    ("h2h_w218_p3_f_log",  "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave218-p3-kanzi-framework-n1000.log"),
+    ("h2h_w218_p2_smoke",  "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave218-p2-kanzi-n10-smoke"),
+    ("h2h_w225_p2_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave225-p2-r3-bootstrap.csv"),
+    ("h2h_w225_p2_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave225-p2-r3-bootstrap.json"),
+    ("h2h_w225_p3_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave225-p3-r3-cross-seed.csv"),
+    ("h2h_w225_p3_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave225-p3-r3-cross-seed.json"),
+    ("h2h_w226_p4",        "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave226-p4-consistency-check.csv"),
+    ("h2h_w229_p1_launch", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-sweep-launch.log"),
+    ("h2h_w229_p1_v_dir",  "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-sweep-vanilla"),
+    ("h2h_w229_p1_v_log",  "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-sweep-vanilla.log"),
+    ("h2h_w229_p1_pr_csv", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-per-record-sweep.csv"),
+    ("h2h_w229_p1_pr_j",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-per-record-sweep.json"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-abcache-nfe100-pLDDT.jsonl"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-abcache-nfe100-scPerplexity.jsonl"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-abcache-nfe50-pLDDT.jsonl"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-abcache-nfe50-scPerplexity.jsonl"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-fastdllm-nfe100-pLDDT.jsonl"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-fastdllm-nfe100-scPerplexity.jsonl"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-fastdllm-nfe50-pLDDT.jsonl"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-fastdllm-nfe50-scPerplexity.jsonl"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-lediflow-nfe100-pLDDT.jsonl"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-lediflow-nfe100-scPerplexity.jsonl"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-lediflow-nfe50-pLDDT.jsonl"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-lediflow-nfe50-scPerplexity.jsonl"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-vanilla-nfe100-pLDDT.jsonl"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-vanilla-nfe100-scPerplexity.jsonl"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-vanilla-nfe50-pLDDT.jsonl"),
+    ("h2h_w229_p1_arm",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p1-4arm-vanilla-nfe50-scPerplexity.jsonl"),
+    ("h2h_w229_p2_lip_csv","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p2-adapter-lipschitz.csv"),
+    ("h2h_w229_p2_lip_j",  "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p2-adapter-lipschitz-summary.json"),
+    ("h2h_w229_p3_pq_csv", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p3-core-adapter-paper-quantities.csv"),
+    ("h2h_w229_p3_pq_j",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p3-core-adapter-paper-quantities.json"),
+    ("h2h_w229_p5_mol_dir","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p5-molecule-image-per-record"),
+    ("h2h_w229_p5_mol_csv","4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p5-molecule-image-per-record.csv"),
+    ("h2h_w229_p5_mol_j",  "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave229-p5-molecule-image-per-record.json"),
+    ("h2h_w230_bg_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-b-g-diagnosis.csv"),
+    ("h2h_w230_bg_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-b-g-diagnosis.json"),
+    ("h2h_w230_pq_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-core-adapter-paper-quantities.csv"),
+    ("h2h_w230_pq_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-core-adapter-paper-quantities.json"),
+    ("h2h_w230_p2_csv",    "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-per-record.csv"),
+    ("h2h_w230_p2_json",   "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-per-record.json"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-abcache-nfe100-pLDDT-paired.jsonl"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-abcache-nfe100-scPerplexity-paired.jsonl"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-abcache-nfe50-pLDDT-paired.jsonl"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-abcache-nfe50-scPerplexity-paired.jsonl"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-fastdllm-nfe100-pLDDT-paired.jsonl"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-fastdllm-nfe100-scPerplexity-paired.jsonl"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-fastdllm-nfe50-pLDDT-paired.jsonl"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-fastdllm-nfe50-scPerplexity-paired.jsonl"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-lediflow-nfe100-pLDDT-paired.jsonl"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-lediflow-nfe100-scPerplexity-paired.jsonl"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-lediflow-nfe50-pLDDT-paired.jsonl"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-lediflow-nfe50-scPerplexity-paired.jsonl"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-vanilla-nfe100-pLDDT-paired.jsonl"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-vanilla-nfe100-scPerplexity-paired.jsonl"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-vanilla-nfe50-pLDDT-paired.jsonl"),
+    ("h2h_w230_p2_paired", "4-arm H2H (real checkpoints)",
+     "verification_outputs/wave230-p2-real-4arm-vanilla-nfe50-scPerplexity-paired.jsonl"),
+
+    # ---- Statistical methods ----
+    ("stat_p2",            "Statistical methods (TOST/JT/BF01/Meta/NI)",
+     "verification_outputs/wave234-p2-tost.csv"),
+    ("stat_p3",            "Statistical methods (TOST/JT/BF01/Meta/NI)",
+     "verification_outputs/wave234-p3-jonckheere.csv"),
+    ("stat_p4",            "Statistical methods (TOST/JT/BF01/Meta/NI)",
+     "verification_outputs/wave234-p4-bf01.csv"),
+    ("stat_p5_csv",        "Statistical methods (TOST/JT/BF01/Meta/NI)",
+     "verification_outputs/wave234-p5-meta-analysis.csv"),
+    ("stat_p5_j",          "Statistical methods (TOST/JT/BF01/Meta/NI)",
+     "verification_outputs/wave234-p5-meta-summary.json"),
+    ("stat_p6_test",       "Statistical methods (TOST/JT/BF01/Meta/NI)",
+     "verification_outputs/wave234-p6-ni-test.csv"),
+    ("stat_p6_csv",        "Statistical methods (TOST/JT/BF01/Meta/NI)",
+     "verification_outputs/wave234-p6-non-inferiority.csv"),
+    ("stat_p6_j",          "Statistical methods (TOST/JT/BF01/Meta/NI)",
+     "verification_outputs/wave234-p6-non-inferiority.json"),
+    ("stat_p3_bf01",       "Statistical methods (TOST/JT/BF01/Meta/NI)",
+     "verification_outputs/wave246-p3-bf01-sensitivity.csv"),
+    ("stat_p3_tost",       "Statistical methods (TOST/JT/BF01/Meta/NI)",
+     "verification_outputs/wave246-p3-tost-sensitivity.csv"),
+    ("stat_p4_subgroup",   "Statistical methods (TOST/JT/BF01/Meta/NI)",
+     "verification_outputs/wave246-p4-subgroup-meta.json"),
+
+    # ---- Wall-clock + cProfile ----
+    ("wc_p4_matched_csv",  "Wall-clock + cProfile evidence",
+     "verification_outputs/wave229-p4-wall-clock-matched.csv"),
+    ("wc_p4_matched_j",    "Wall-clock + cProfile evidence",
+     "verification_outputs/wave229-p4-wall-clock-matched.json"),
+    ("wc_p6_csv",          "Wall-clock + cProfile evidence",
+     "verification_outputs/wave233-p6-wall-clock.csv"),
+    ("wc_p6_json",         "Wall-clock + cProfile evidence",
+     "verification_outputs/wave233-p6-wall-clock.json"),
+    ("wc_p6_cprof",        "Wall-clock + cProfile evidence",
+     "verification_outputs/wave233-p6-cprofile-with-cache.txt"),
+    ("wc_p1_finish",       "Wall-clock + cProfile evidence",
+     "verification_outputs/wave236-p1-p4finish.json"),
+    ("wc_p2_j",            "Wall-clock + cProfile evidence",
+     "verification_outputs/wave236-p2-wallclock.json"),
+    ("wc_p2_cg_csv",       "Wall-clock + cProfile evidence",
+     "verification_outputs/wave236-p2-cuda-graph-wall-clock.csv"),
+    ("wc_p2_cg_j",         "Wall-clock + cProfile evidence",
+     "verification_outputs/wave236-p2-cuda-graph-wall-clock.json"),
+    ("wc_p3_cg_csv",       "Wall-clock + cProfile evidence",
+     "verification_outputs/wave245-p3-cuda-graph-repro.csv"),
+    ("wc_p3_cg_j",         "Wall-clock + cProfile evidence",
+     "verification_outputs/wave245-p3-cuda-graph-repro.json"),
+    ("wc_p210_process",    "Wall-clock + cProfile evidence",
+     "verification_outputs/wave210-p1-process-profile.csv"),
+    ("wc_p210_source",     "Wall-clock + cProfile evidence",
+     "verification_outputs/wave210-p2-source-hotpaths.csv"),
+    ("wc_p210_offload",    "Wall-clock + cProfile evidence",
+     "verification_outputs/wave210-p3-offload-assessment.csv"),
+    ("wc_p211_flops",      "Wall-clock + cProfile evidence",
+     "verification_outputs/wave211-p1-flops-estimate.csv"),
+    ("wc_p211_fside",      "Wall-clock + cProfile evidence",
+     "verification_outputs/wave211-p3-f-side-values.csv"),
+    ("wc_p212_comp_csv",   "Wall-clock + cProfile evidence",
+     "verification_outputs/wave212-p1-component-timings.csv"),
+    ("wc_p212_comp_j",     "Wall-clock + cProfile evidence",
+     "verification_outputs/wave212-p1-component-timings.json"),
+    ("wc_p212_cprof_b",    "Wall-clock + cProfile evidence",
+     "verification_outputs/wave212-p1-cprofile-baseline.pstats"),
+    ("wc_p212_cprof_f",    "Wall-clock + cProfile evidence",
+     "verification_outputs/wave212-p1-cprofile-framework.pstats"),
+    ("wc_p212_r5b_csv",    "Wall-clock + cProfile evidence",
+     "verification_outputs/wave212-p2-r5b-timing.csv"),
+    ("wc_p212_r5b_j",      "Wall-clock + cProfile evidence",
+     "verification_outputs/wave212-p2-r5b-timing.json"),
+    ("wc_p212_r6_ctrl",    "Wall-clock + cProfile evidence",
+     "verification_outputs/wave212-p3-r6-control.json"),
+    ("wc_p212_r6_csv",     "Wall-clock + cProfile evidence",
+     "verification_outputs/wave212-p3-r6-timing.csv"),
+    ("wc_p212_r6_j",       "Wall-clock + cProfile evidence",
+     "verification_outputs/wave212-p3-r6-timing.json"),
+    ("wc_p212_top10",      "Wall-clock + cProfile evidence",
+     "verification_outputs/wave212-p4-cprofile-top10.csv"),
+    ("wc_p212_mem_csv",    "Wall-clock + cProfile evidence",
+     "verification_outputs/wave212-p5-memory-trace.csv"),
+    ("wc_p212_mem_j",      "Wall-clock + cProfile evidence",
+     "verification_outputs/wave212-p5-memory-trace.json"),
+    ("wc_p213_csv",        "Wall-clock + cProfile evidence",
+     "verification_outputs/wave213-p1-speedup-semantics.csv"),
+    ("wc_p213_j",          "Wall-clock + cProfile evidence",
+     "verification_outputs/wave213-p1-speedup-semantics.json"),
+    ("wc_p214_b",          "Wall-clock + cProfile evidence",
+     "verification_outputs/wave214-p2-kanzi-baseline-n1000"),
+    ("wc_p214_f",          "Wall-clock + cProfile evidence",
+     "verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000"),
+    ("wc_p214_smoke",      "Wall-clock + cProfile evidence",
+     "verification_outputs/wave214-p2-kanzi-framework-inv-proj-n10-smoke"),
+    ("wc_p215_csv",        "Wall-clock + cProfile evidence",
+     "verification_outputs/wave215-p1-ruff-cleanup.csv"),
+    ("wc_p215_j",          "Wall-clock + cProfile evidence",
+     "verification_outputs/wave215-p1-ruff-cleanup.json"),
+
+    # ---- Engineering gates ----
+    ("eng_ckpt",           "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/ckpt_sha256.json"),
+    ("eng_kz_coords",      "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/kanzi_n1000_coords.txt"),
+    ("eng_kz_manifest",    "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/kanzi_n1000_manifest.json"),
+    ("eng_lf_nfe",         "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json"),
+    ("eng_cap_p36",        "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/capability_audit_post_w36.json"),
+    ("eng_cap_q3",         "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/capability_audit_q3_2026.json"),
+    ("eng_cap_q4",         "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/capability_audit_q4_2026.json"),
+    ("eng_cap_w35",        "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/capability_audit_q4_2026_post_w35.json"),
+    ("eng_cap_w38",        "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/capability_audit_q4_2026_post_w38.json"),
+    ("eng_cap_w40",        "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/capability_audit_q4_2026_post_w40.json"),
+    ("eng_ctrl",           "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/controlled_audit_q3_2026.json"),
+    ("eng_sbc_200",        "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/sbc_audit_n200.json"),
+    ("eng_sbc_1000",       "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/sbc_audit_n1000.json"),
+    ("eng_sbc_10000",      "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/sbc_audit_n10000.json"),
+    ("eng_power",          "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/power_analysis"),
+    ("eng_96a",            "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/wave96a_diagnose"),
+    ("eng_96c",            "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/wave96c_verify"),
+    ("eng_full_recovery",  "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/engineering_full_20260913_after_recovery"),
+    ("eng_full_threads",   "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/engineering_full_20260913_default_threads"),
+    ("eng_kz_pm_inv",      "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/kanzi_n1000_framework_paper_metrics_inv_proj"),
+    ("eng_kz_pm_real",     "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/kanzi_n1000_framework_paper_metrics_real"),
+    ("eng_kz_pm_real_d",   "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/kanzi_n1000_framework_paper_metrics_real_diverse"),
+    ("eng_kz_synth_w152",  "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/kanzi_n1000_framework_synth_w152_q4_2026"),
+    ("eng_kz_inv_w149",    "Engineering gates (D.4 PASS evidence)",
+     "verification_outputs/kanzi_n1000_framework_inv_proj_w149_q4_2026"),
+
+    # ---- Other ----
+    ("o_fail_modes_dir",   "Other diagnostics + helpers",
+     "verification_outputs/wave165_failure_modes_q3_2026"),
+    ("o_fail_modes_json",  "Other diagnostics + helpers",
+     "verification_outputs/wave165_failure_modes_q3_2026.json"),
+    ("o_abl_165b",         "Other diagnostics + helpers",
+     "verification_outputs/ablation_w165b_q3_2026"),
+    ("o_abl_q4",           "Other diagnostics + helpers",
+     "verification_outputs/ablation_q4_2026.json"),
+    ("o_bcmp_q4",          "Other diagnostics + helpers",
+     "verification_outputs/baseline_comparison_q4_2026.json"),
+    ("o_mut_q4",           "Other diagnostics + helpers",
+     "verification_outputs/mutation_audit_q4_2026.json"),
+    ("o_heur_mem",         "Other diagnostics + helpers",
+     "verification_outputs/heuristic_ablation_memory_fraction_q4_2026.json"),
+    ("o_heur_nfe",         "Other diagnostics + helpers",
+     "verification_outputs/heuristic_ablation_nfe_threshold_q4_2026.json"),
+    ("o_g1",               "Other diagnostics + helpers",
+     "verification_outputs/g1_deep_dive_q3_2026.json"),
+    ("o_w179_p4",          "Other diagnostics + helpers",
+     "verification_outputs/wave179-p4-aggregation.csv"),
+    ("o_w179_p5_d",        "Other diagnostics + helpers",
+     "verification_outputs/wave179-p5-figure-deltas-with-error-bars.png"),
+    ("o_w179_p5_p",        "Other diagnostics + helpers",
+     "verification_outputs/wave179-p5-figure-pLDDT-with-error-bars.png"),
+    ("o_w179_p5_s",        "Other diagnostics + helpers",
+     "verification_outputs/wave179-p5-figure-scPerplexity-with-error-bars.png"),
+    ("o_w185_p2",          "Other diagnostics + helpers",
+     "verification_outputs/wave185-p2-empirical-bl.csv"),
+    ("o_w185_p3",          "Other diagnostics + helpers",
+     "verification_outputs/wave185-p3-tightness.csv"),
+    ("o_w185_p4_b",        "Other diagnostics + helpers",
+     "verification_outputs/wave185-p4-figure-bl-tightness.png"),
+    ("o_w185_p4_r",        "Other diagnostics + helpers",
+     "verification_outputs/wave185-p4-figure-tightness-ratio.png"),
+    ("o_w231",             "Other diagnostics + helpers",
+     "verification_outputs/wave231-submission-bundle-manifest.md"),
+    ("o_w128_twodim",      "Other diagnostics + helpers",
+     "verification_outputs/wave128_twodim_cpu"),
+    ("o_todo_smoke",       "Other diagnostics + helpers",
+     "verification_outputs/todo_smoke_20260913"),
+    ("o_kz_codebook",      "Other diagnostics + helpers",
+     "verification_outputs/kanzi_codebook_smoke"),
+    ("o_wan_py",           "Other diagnostics + helpers",
+     "verification_outputs/wan2_2_verify.py"),
+    ("o_wan_txt",          "Other diagnostics + helpers",
+     "verification_outputs/wan2_2_verify.txt"),
+    ("o_w39",              "Other diagnostics + helpers",
+     "verification_outputs/wave39_phase4_regression.json"),
+    ("o_w40",              "Other diagnostics + helpers",
+     "verification_outputs/wave40_phase4_regression.json"),
+    ("o_w59_bcmp",         "Other diagnostics + helpers",
+     "verification_outputs/wave59_ab_comparison_q4_2026.json"),
+    ("o_w59_bk",           "Other diagnostics + helpers",
+     "verification_outputs/wave59_ab_kanzi_old_q4_2026.json"),
+    ("o_w59_blf",          "Other diagnostics + helpers",
+     "verification_outputs/wave59_ab_lineageflow_old_q4_2026.json"),
+    ("o_w59_rk",           "Other diagnostics + helpers",
+     "verification_outputs/wave59_reg_kanzi_q4_2026.json"),
+    ("o_w59_rlf",          "Other diagnostics + helpers",
+     "verification_outputs/wave59_reg_lineageflow_q4_2026.json"),
+    ("o_w73",              "Other diagnostics + helpers",
+     "verification_outputs/wave73_phase2_tier1_speedup.json"),
+    ("o_w80_coords",       "Other diagnostics + helpers",
+     "verification_outputs/wave80_kanzi_smoke_coords.txt"),
+    ("o_w80_eval",         "Other diagnostics + helpers",
+     "verification_outputs/wave80_kanzi_smoke_eval"),
+    ("o_w80_manifest",     "Other diagnostics + helpers",
+     "verification_outputs/wave80_kanzi_smoke_manifest.json"),
+    ("o_w80_lf",           "Other diagnostics + helpers",
+     "verification_outputs/wave80_lf_smoke_q4_2026.json"),
+    ("o_w88",              "Other diagnostics + helpers",
+     "verification_outputs/wave88_kanzi_n1000_baseline"),
+    ("o_w92d",             "Other diagnostics + helpers",
+     "verification_outputs/wave92d_n5000_plan.json"),
+    ("o_phase4_main",      "Other diagnostics + helpers",
+     "verification_outputs/phase4_q4_2026.json"),
+    ("o_phase4_freq",      "Other diagnostics + helpers",
+     "verification_outputs/phase4_q4_2026_freqflow.json"),
+    ("o_phase4_kz",        "Other diagnostics + helpers",
+     "verification_outputs/phase4_q4_2026_kanzi.json"),
+    ("o_smoke_equifm",     "Other diagnostics + helpers",
+     "verification_outputs/_smoke_run_flowmol3_baseline_equifm.py.json"),
+    ("o_smoke_moldiff",    "Other diagnostics + helpers",
+     "verification_outputs/_smoke_run_flowmol3_baseline_moldiff.py.json"),
+    ("o_noise_1",          "Other diagnostics + helpers",
+     "verification_outputs/noise_injection_sweep_1788554274.json"),
+    ("o_noise_2",          "Other diagnostics + helpers",
+     "verification_outputs/noise_injection_sweep_1788555239.json"),
+    ("o_noise_3",          "Other diagnostics + helpers",
+     "verification_outputs/noise_injection_sweep_1788555626.json"),
+    ("o_upstream_eval",    "Other diagnostics + helpers",
+     "verification_outputs/upstream_eval"),
+    ("o_w235_logs",        "Other diagnostics + helpers",
+     "verification_outputs/_wave235-p1-logs"),
+    ("o_w247_logs",        "Other diagnostics + helpers",
+     "verification_outputs/_wave247-p2-logs"),
+]
+
+
+# ---------------------------------------------------------------------------
+# Per-category descriptions
+# ---------------------------------------------------------------------------
+
+DESCRIPTIONS: dict[str, str] = {
+    "R1 LineageFlow HMMER (paired N=1000 sweep)":
+        "Per-record pLDDT + scPerplexity paired foldability sweep (N=1000) for the R1 LineageFlow HMMER cell. Backs the headline R1 protein-axis framework-vs-baseline delta (Cohen's d_z, tier breakdown) used in CLM-039/CLM-040 references.",
+    "R1 LineageFlow HMMER (paired sweep earlier)":
+        "Earlier R1 paired sweep capture (before the N=1000 expansion); kept for byte-reproducibility and trend audit.",
+    "R1 LineageFlow HMMER (sanity)":
+        "Sanity-tier LineageFlow HMMER sweep used to verify the foldability evaluation pipeline before the full N=1000 run.",
+    "R1 LineageFlow HMMER (real N=1000 sweep)":
+        "Real-checkpoint R1 LineageFlow HMMER N=1000 sweeps on upstream LineageFlow weights (pre-OmegaFold substitution).",
+    "R1 LineageFlow HMMER (real N=1000 OmegaFold)":
+        "Real-checkpoint LineageFlow N=1000 foldability evaluation using OmegaFold as the structural ground-truth model — backs the R1 headline pLDDT/scPerplexity per-record paired data.",
+    "R1 LineageFlow HMMER (real fastas)":
+        "Frozen query FASTA list (N=1000) used as input to the R1 HMMER paired sweeps.",
+    "R1 LineageFlow HMMER (placeholder)":
+        "Placeholder HMMER full-coverage capture retained for byte-reproducibility of the earlier iteration of the LineageFlow pipeline.",
+    "R1 LineageFlow novelty (MMseqs2)":
+        "MMseqs2-based novelty checks against UniRef-style reference databases, used to back the LineageFlow claim that generated sequences are not memorised training data.",
+    "R2 Kanzi RMSD uplift (baseline seed=42)":
+        "Kanzi baseline RMSD-vs-reference data (seed=42) across multiple iterations; backs the R2 baseline arm's per-record RMSD distribution.",
+    "R2 Kanzi RMSD uplift (baseline seed=7)":
+        "Kanzi baseline seed=7 arm — multi-seed coverage of the R2 baseline RMSD distribution.",
+    "R2 Kanzi RMSD uplift (framework inv_proj)":
+        "Kanzi framework inv_proj arm — inverse-projection warm-start — backs the R2 framework-vs-baseline per-record RMSD uplift headline number.",
+    "R2 Kanzi RMSD uplift (framework inv_proj byte-repro)":
+        "Byte-reproducibility capture of the framework inv_proj N=1000 run; identical bytes across re-runs confirm the R2 headline number is reproducible.",
+    "R2 Kanzi RMSD uplift (framework synth seed=42)":
+        "Kanzi framework synthesis-from-codebook arm (seed=42) — second framework variant used to triangulate the R2 uplift.",
+    "R2 Kanzi RMSD uplift (framework synth)":
+        "Earlier Kanzi framework synthesis-from-codebook capture before seed=42 freeze.",
+    "R2 Kanzi RMSD uplift (paper metrics)":
+        "Kanzi paper-metric JSON for the R2 cell — paper-aligned RMSD and TM-score outputs that back the R2 headline.",
+    "R2 Kanzi RMSD uplift (diverse)":
+        "Kanzi framework paper-metrics capture using a more diverse query subset — backs the R2 generalisation claim.",
+    "R2 Kanzi RMSD uplift (inv_proj corrected)":
+        "Inverse-projection N=20 sanity + run-exit logs (corrected after the earlier correctness bug); backs the framework inv_proj path.",
+    "R2 Kanzi RMSD uplift (inv_proj preflight)":
+        "Pre-flight capture before the corrected inv_proj N=20 run; retained for pipeline-trace continuity.",
+    "R2 Kanzi RMSD uplift (framework inv_proj bundle)":
+        "Framework inv_proj N=1000 bundle — paired RMSD per record plus summary JSON — backs the R2 framework arm's RMSD distribution.",
+    "R2 Kanzi RMSD uplift (5-arm synth)":
+        "5-arm Kanzi synthesis-from-codebook sweep — supplementary cell that explores ablation space without being a headline.",
+    "R2 Kanzi RMSD uplift (real)":
+        "Real-checkpoint Kanzi framework inv_proj N=1000 paired sweep — backs the cross-model R2 cell headline.",
+    "R2 Kanzi RMSD uplift (real v3)":
+        "Real-checkpoint Kanzi v3 metrics — backs the cross-model R2 cell headline in its final, byte-stable form.",
+    "R3 FlowMol3 fg_dev (molecule)":
+        "Per-record SMILES, fg_dev, REOS, validity and uniqueness outputs for the FlowMol3 molecule cell. Backs the R3 framework-vs-baseline fg_dev headline number and the 3-seed reproducibility sweep.",
+    "R1+R2 cross-model sweep (real checkpoints)":
+        "Cross-model sweep that runs both R1 (LineageFlow) and R2 (Kanzi) on real upstream checkpoints at matched NFE values. Backs the headline claim that the framework improves any 2026 SOTA flow-matching model on its native protein task.",
+    "R4 2D Two Moons":
+        "Per-record 2D Two Moons Wasserstein-2 / energy-distance outputs — backs the R4 2D framework uplift headline.",
+    "R5 2D Eight Gaussians":
+        "Per-record 2D Eight Gaussians Wasserstein-2 / energy-distance outputs — backs the R5 2D framework uplift headline.",
+    "R5b CIFAR-10 RF":
+        "R5b CIFAR-10 Rectified-Flow N=1000 paired sweep at matched-NFE=50 (4 rounds, n_rounds=1 effective). Backs the CIFAR-10 RF headline: per-record FID, paper-metric aggregates, per-arm summaries (baseline vs cosine, codimension sheet, evidence-driven, free trajectory), plus per-round metrics and inception-feature caches.",
+    "R6 MNIST FM tier-aware":
+        "R6 MNIST flow-matching tier-aware N=1000 paired sweep — backs the R6 headline that the tier-aware scheduler produces monotonic framework uplift across difficulty tiers (hard/medium/easy).",
+    "4-arm H2H (real checkpoints)":
+        "Real-checkpoint head-to-head comparisons of the framework vs abcache, fast-dLLM, lediflow, and vanilla — paired per-record summaries, power analyses, ablation tables, per-arm data dumps, mixed-effects regressions, and difficulty-stratified breakdowns. Backs the framework-vs-baselines H2H matrix used in CLM-039 + paper Tables 2-4.",
+    "Statistical methods (TOST/JT/BF01/Meta/NI)":
+        "TOST equivalence, Jonckheere-Terpstra trend, Bayes Factor 01, DerSimonian-Laird meta-analysis, and non-inferiority test outputs. Backs the secondary-statistical-claims dossier (CLM-057/058 and the NI test on the R5b FID regression).",
+    "Wall-clock + cProfile evidence":
+        "Wall-clock measurements and cProfile traces for the framework CIFAR/MNIST/Kanzi adapters — backs the speedup-vs-baseline numbers (3-5x on CIFAR, CUDA-graph 4.3x speedup, matched-compute wall-clock gap closure). Includes pstats files, per-component timings, cprofile Top-10 CSV, and memory traces.",
+    "Engineering gates (D.4 PASS evidence)":
+        "Engineering-gate PASS evidence: SHA-256 manifest of all checkpoint files, paper-metric caches, capability audits, controlled audits, simulation-based-calibration (SBC) checks, NFE-scan sweeps, power-analysis raw outputs, and Phase-4 regression captures. Backs the D.4 30/30 PASS gate and reproducible-by-hash claim.",
+    "Other diagnostics + helpers":
+        "Supplementary diagnostic captures: failure-mode audits, ablation tables, baseline comparisons, sweep logs, sanity smoke runs, helper trace outputs, and earlier-iteration artefacts retained for byte-reproducibility. Not headline-bearing but required to reproduce the full audit trail.",
+}
+
+# ---------------------------------------------------------------------------
+# Build the file→title map
+# ---------------------------------------------------------------------------
+
+def classify(rel_path: str) -> str | None:
+    for _key, title, prefix in CATEGORY_RULES:
+        if rel_path == prefix or rel_path.startswith(prefix + "/"):
+            return title
+    return None
+
+
+# Compute SHA-256 for every git-tracked file
+os.chdir(WORKDIR)
+result = subprocess.run(
+    ["git", "ls-files", "verification_outputs/"],
+    capture_output=True, text=True, check=True,
+)
+all_paths = [ln.strip() for ln in result.stdout.splitlines() if ln.strip()]
+
+entries: list[dict] = []
+unclassified: list[dict] = []
+for rel in all_paths:
+    full = os.path.join(WORKDIR, rel)
+    try:
+        with open(full, "rb") as fh:
+            data = fh.read()
+        size = len(data)
+        sha = hashlib.sha256(data).hexdigest()
+        entry = {"path": rel, "size": size, "sha": sha}
+        title = classify(rel)
+        if title is None:
+            unclassified.append(entry)
+        else:
+            entry["title"] = title
+            entries.append(entry)
+    except (FileNotFoundError, IsADirectoryError):
+        continue
+
+# ---------------------------------------------------------------------------
+# Render MANIFEST.md
+# ---------------------------------------------------------------------------
+
+# Group files by title
+title_to_files: OrderedDict[str, list[dict]] = OrderedDict()
+for entry in entries:
+    title_to_files.setdefault(entry["title"], []).append(entry)
+
+# Determine display order (by insertion order of CATEGORY_RULES unique titles)
+seen: set[str] = set()
+display_order: list[str] = []
+for _key, title, _prefix in CATEGORY_RULES:
+    if title in title_to_files and title not in seen:
+        seen.add(title)
+        display_order.append(title)
+
+out: list[str] = []
+out.append("# `verification_outputs/` MANIFEST")
+out.append("")
+out.append("**Date:** 2026-09-22")
+out.append("")
+out.append(
+    "This manifest enumerates every file that is git-tracked under "
+    "`verification_outputs/` (439 files) with its SHA-256 hash, byte size, "
+    "R-cell grouping, and a one-line description of what headline number "
+    "it backs."
+)
+out.append("")
+out.append("Reviewers can verify the headline numbers claimed in the paper by re-computing each SHA-256:")
+out.append("")
+out.append("```bash")
+out.append("sha256sum verification_outputs/<file>")
+out.append("```")
+out.append("")
+out.append(
+    "The hash listed in the table for `<file>` MUST match. If it does "
+    "not, the artifact has been edited since this manifest was generated — "
+    "re-run the upstream pipeline that produced it before trusting the headline."
+)
+out.append("")
+out.append(
+    "Categories follow the paper's R-level taxonomy (R1 LineageFlow HMMER / "
+    "R2 Kanzi RMSD uplift / R3 FlowMol3 fg_dev / R4 2D Two Moons / "
+    "R5 2D Eight Gaussians / R5b CIFAR-10 RF / R6 MNIST FM tier-aware / "
+    "R1+R2 cross-model / 4-arm head-to-head / statistical methods / "
+    "wall-clock evidence / engineering gates / other). File paths contain "
+    "historical wave numbers (cannot be renamed without breaking git history); "
+    "descriptions stay free of them."
+)
+out.append("")
+out.append(f"**Total entries:** {len(entries)} files")
+out.append("")
+
+for title in display_order:
+    files = title_to_files[title]
+    out.append(f"## {title}")
+    out.append("")
+    out.append(DESCRIPTIONS[title])
+    out.append("")
+    out.append(f"Files in this section: {len(files)}")
+    out.append("")
+    out.append("| Path (relative to workspace) | Size (bytes) | SHA-256 |")
+    out.append("|---|---|---|")
+    for e in sorted(files, key=lambda x: x["path"]):
+        out.append(f"| `{e['path']}` | {e['size']} | `{e['sha']}` |")
+    out.append("")
+
+# Reviewer verification footer
+out.append("---")
+out.append("")
+out.append("## Reviewer verification (single command)")
+out.append("")
+out.append("To verify ALL hashes at once:")
+out.append("")
+out.append("```bash")
+out.append("(cd verification_outputs && find . -type f -print0 | sort -z | xargs -0 sha256sum) > /tmp/recomputed.sha256")
+out.append("```")
+out.append("")
+out.append(
+    "and compare the resulting per-line `<sha>  <rel-path>` pairs against "
+    "the tables above (the `Path (relative to workspace)` column, when "
+    "stripped of the `verification_outputs/` prefix, matches the relative "
+    "path `find` will produce)."
+)
+out.append("")
+out.append(
+    "The manifest itself is generated by `tools/build_verification_manifest.py` "
+    "from `git ls-files verification_outputs/`; re-running that script "
+    "regenerates this file in byte-stable form (the table layout is "
+    "deterministic given input order, and the input file list is fixed "
+    "by git history)."
+)
+out.append("")
+
+# Write
+out_path = os.path.join(WORKDIR, "verification_outputs", "MANIFEST.md")
+with open(out_path, "w") as f:
+    f.write("\n".join(out) + "\n")
+
+# Diagnostics
+print(f"Wrote {len(out)} lines to {out_path}", file=sys.stderr)
+print(f"Total files in manifest: {len(entries)}", file=sys.stderr)
+print(f"Categories rendered: {len(display_order)}", file=sys.stderr)
+if unclassified:
+    print(f"WARNING: {len(unclassified)} unclassified files", file=sys.stderr)
+    for e in unclassified:
+        print(f"  {e['path']}", file=sys.stderr)
+    sys.exit(1)
