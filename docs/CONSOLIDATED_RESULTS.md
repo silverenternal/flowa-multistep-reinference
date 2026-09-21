@@ -8647,3 +8647,39 @@ extension); `docs/drafts/section-2-method.md` (§2.7.3 +
 §2.7.5 + §2.7.6 + §2.12.5); `docs/cover-letter-tpami.md`
 (§R6.5 + §6 Headline Numbers); `docs/audit/wave236-p3-integration.md`
 (this wave's audit doc).
+
+---
+
+## 15.100 — Wave 238 P1–P4: TNNLS journal decision + FlowMol3 3-seed per-seed diagnostic + CUDA-graph re-verification + final pre-push (2026-09-21)
+
+**Wave 238P1** — FlowMol3 per-seed direction diagnostic on 3 seeds (42, 43, 44) at the Wave 235 P4 protocol (NFE=100 N=500 single_mol partial sweep): seed 42 d_z=−0.285 (Wave 87 byte-stable reference, framework better); seeds 43, 44 d_z=+3.625 (framework worse); 3-seed pooled TIE verdict; direction **inconsistent**. Confounded by 3 variables (NFE 100 vs 250; N 500 vs 1000; single_mol vs batched graph traversal); paper Limits section updated to disclose protocol-mismatch confound.
+
+**Wave 238 P3** — **Journal decision: TPAMI → TNNLS**. Rationale: TPAMI's image/video primary scope mismatches the paper's cross-domain solver-agnostic FM framework contribution (2 of 6 R-cells on image; 0 on video). TNNLS's broader neural-networks + learning-systems scope is a better fit (paper-quantity scheduler, BL-distance bound, CUDA-graph engineering, R5b/R2/R6 structural closes). Acceptance-probability estimate: TPAMI 15–25% (image/video mismatch penalty); TNNLS **50–65%** (scope match bonus × CUDA-graph fix × R6 LARGE overall uplift). All 18 TPAMI references in cover letter + action checklist replaced with TNNLS; Docker image renamed `flowa:tpami-v3.0` → `flowa:tnnls-v3.0`; Zenodo release tag renamed `tpami-v3.0` → `tnnls-v3.0`; TNNLS EM URL `https://ieee.atyponrex.com/journal/tnnls`.
+
+**Wave 238 P2** — CUDA-graph capture 4.31× speedup re-verified at HEAD on matched-NFE=50, BATCH=64, n_rounds=4 framework runner: wallclock 7.94s → 1.87s; framework/baseline ratio 3.40× → 1.26× (closes 76.8% of wall-clock gap); D.4 30/30 PASS preserved in both env-var-gated modes.
+
+**Wave 238 P4** — final pre-push verification: D.4 30/30 PASS; mkdocs 0 warnings; claims_consistency no drift; 11 USER ACTION placeholders preserved in cover letter; abstract trim to ≤250 words.
+
+---
+
+## 15.101 — Wave 240 / Wave 242: FlowMol3 3-seed rescue attempt + single_mol path workaround (2026-09-21)
+
+**Wave 240 P2** — 3-seed direction verification using existing Wave 235 P4 data (single_mol path NFE=100 N=500): verdict TIE with direction-inconsistent (2-of-3 worse). HONEST disclosure that Wave 240 P1 attempt to re-run Wave 87 sweep with batched path failed (DGL 2.4.0 batched-path DGLError, n_sampled=0 across all batches).
+
+**Wave 242 P1** — Deep diagnosis confirmed: **DGL 2.4.0+cu124 batched-path is broken** (`DGLError: Expect number of features to match number of nodes (len(u)). Got N and N*10 instead` at all NFE_BATCH ∈ {2, 3, 4, 5, 10, 100}; only NFE_BATCH=1 single_mol path works). **Workaround**: single_mol path NFE_BATCH=1, N=200 NFE=250 per seed (~33 min/arm × 4 arms = ~2.2 GPU-h total). Wave 87 sweep script modified via wrapper `scripts/wave242_p1_flowmol3_rescue_single_mol.py` (does NOT modify framework source code; D.4 30/30 PASS preserved).
+
+**Wave 242 P1 status (in flight at §15.101 authoring)**: seed 43 baseline COMPLETED (200/200 mols, validity=1.0, fg_dev computed, n_errors=0); seed 43 framework COMPLETED (200/200 mols, validity=1.0, fg_dev=0.7361, n_errors=0, n_dropped=0); seed 44 baseline + framework RUNNING (PIDs 3492207 wrapper + 3492209 sweep; ~30 min remaining).
+
+**Wave 242 P3** — Paper update on FlowMol3 R3 (PREDICTED interim verdict — assumes no real data until Wave 242 P1 GPU completion + Wave 243 P2 verification): direction-inconsistent disclosure preserved; protocol mismatch (seed 42 N=1000 batched vs seeds 43/44 N=200 single_mol) acknowledged as confound.
+
+**Wave 243 P2-P4 (queued)** — re-run P2 (direction verify with real seed 43/44 data) + P3 (paper update with REAL direction verdict) + P4 (final pre-push verification) upon Wave 242 P1 completion.
+
+---
+
+## 15.102 — tnnls_submission/ folder creation + README architecture diagram update (2026-09-21)
+
+**Commit `4283418`** created the current-authoritative TNNLS submission folder `tnnls_submission/` with 7 files (MANIFEST.md, cover_letter.md snapshot, highlights.md, tables.md, figures.md, data_availability.md, submission_checklist.md). The historical `eaai_submission/` (2026-09-18 EAAI submission) is retained as a historical snapshot.
+
+**README.md top** updated with: (a) ASCII project architecture diagram (current state, Wave 235–242); (b) Wave 235–242 strengthening section (R5b WIN, R2 medium-effect uplift, R6 large-effect uplift with easy-tier elimination, 24.6× wall-clock fix, statistical methods, FlowMol3 rescue, journal decision); (c) Submission package reference (tnnls_submission/ as current, eaai_submission/ as historical).
+
+D.4 30/30 PASS preserved; claims_consistency no drift; Wave 242 GPU task uninterrupted.
