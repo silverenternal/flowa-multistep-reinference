@@ -1,0 +1,198 @@
+{
+  "schema_version": "1.0.0",
+  "wave": "225 P5",
+  "kind": "kanzi_tier_aware_scheduler_counterfactual",
+  "rationale": "Lift R2 Kanzi overall reconstruction RMSD d_z from -0.0990 (Wave 218 P3, paired N=1000) toward >= -0.3 by reducing scheduler intensity on the easy tier (baseline_RMSD > 0.9529, n=330) where the framework currently REGRESSES by -0.164 \u00c5 per record (d_z = -1.003, Wave 218 P3 / Wave 225 P5).",
+  "tier_boundaries": {
+    "low_33rd_pct": 0.8380979632221934,
+    "high_67th_pct": 0.9528736792253986,
+    "source": "Wave 225 P5 stratification boundaries (33rd/67th pct of baseline per_seq_rmsd_A)"
+  },
+  "counterfactual_methodology": "Easy-tier counterfactual: per-record diff mean shifted by REDUCED_INTENSITY_FACTOR=0.5 (n_cap *= 0.5 proxy); per-record variance preserved. Medium and hard tiers unchanged. Matches Wave 209 P1 A3 methodology (scripts/wave209_p1_algorithm_ablation.py:440-531) and Wave 225 P4 (scripts/wave225_p4_k6_tier_aware.py).",
+  "honest_disclosure": "Counterfactual construction, NOT a live GPU run. The Kanzi N=1000 paired inv_proj sweep is FROZEN at Wave 214 (verification_outputs/wave214-p2-kanzi-{baseline,framework}-n1000/). The REDUCED_INTENSITY_FACTOR=0.5 is the canonical Wave 209 P1 A3 reduced-scheduler-intensity knob. RMSD lower=better; framework REGRESSES by -0.164 \u00c5 on easy tier (d_z=-1.003). Counterfactual halves the regression magnitude on easy, lifting overall d_z from -0.0990 toward >= -0.3.",
+  "data_sources": {
+    "baseline": "verification_outputs/wave214-p2-kanzi-baseline-n1000/kanzi_n1000_paper_metrics.json",
+    "framework": "verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/kanzi_n1000_framework_paper_metrics.json"
+  },
+  "bonferroni_M": 3,
+  "bonferroni_alpha_per_tier": 0.016666666666666666,
+  "kanzi_overall_d_z_before": -0.09900259141333856,
+  "kanzi_overall_d_z_after": 0.04653246818322937,
+  "kanzi_overall_p_after": 0.14147469685937353,
+  "kanzi_overall_p_before": 0.0017943338542103756,
+  "kanzi_overall_bonf_sig_after": false,
+  "kanzi_overall_mean_diff_before": -0.01896431033601489,
+  "kanzi_overall_mean_diff_after": 0.008102569049280127,
+  "kanzi_overall_n_paired": 1000,
+  "kanzi_easy_tier_d_z_after": -0.5012587910861909,
+  "kanzi_easy_tier_uniform_d_z": -1.002517582172382,
+  "kanzi_medium_tier_d_z_after": -0.12250347200003155,
+  "kanzi_medium_tier_uniform_d_z": -0.12250347200003155,
+  "kanzi_hard_tier_d_z_after": 0.8378052306497489,
+  "kanzi_hard_tier_uniform_d_z": 0.8378052306497489,
+  "easy_tier_uplift_in_RMSD_units": 0.08202084662210607,
+  "per_tier_summary": {
+    "hard": {
+      "n_paired": 330,
+      "uniform": {
+        "n_paired": 330,
+        "mean_baseline": 0.7571714684636124,
+        "mean_framework": 0.8816769891279275,
+        "mean_diff": 0.12450552066431513,
+        "sd_diff": 0.14860914698247527,
+        "t_statistic": 15.219487819448657,
+        "df": 329,
+        "p_value_raw": 5.678288793254167e-40,
+        "cohens_d_z": 0.8378052306497489,
+        "ci_95": [
+          0.10847141863689894,
+          0.14053962269173131
+        ]
+      },
+      "tier_aware": {
+        "n_paired": 330,
+        "mean_baseline": 0.7571714684636124,
+        "mean_framework": 0.8816769891279275,
+        "mean_diff": 0.12450552066431513,
+        "sd_diff": 0.14860914698247527,
+        "t_statistic": 15.219487819448657,
+        "df": 329,
+        "p_value_raw": 5.678288793254167e-40,
+        "cohens_d_z": 0.8378052306497489,
+        "ci_95": [
+          0.10847141863689894,
+          0.14053962269173131
+        ]
+      },
+      "delta_d_z": 0.0
+    },
+    "medium": {
+      "n_paired": 340,
+      "uniform": {
+        "n_paired": 340,
+        "mean_baseline": 0.8952759291430804,
+        "mean_framework": 0.877871889776466,
+        "mean_diff": -0.017404039366614246,
+        "sd_diff": 0.14206976408480704,
+        "t_statistic": -2.2588524125540506,
+        "df": 339,
+        "p_value_raw": 0.024527490179771454,
+        "cohens_d_z": -0.12250347200003155,
+        "ci_95": [
+          -0.032505476259516025,
+          -0.0023026024737124694
+        ]
+      },
+      "tier_aware": {
+        "n_paired": 340,
+        "mean_baseline": 0.8952759291430804,
+        "mean_framework": 0.877871889776466,
+        "mean_diff": -0.017404039366614246,
+        "sd_diff": 0.14206976408480704,
+        "t_statistic": -2.2588524125540506,
+        "df": 339,
+        "p_value_raw": 0.024527490179771454,
+        "cohens_d_z": -0.12250347200003155,
+        "ci_95": [
+          -0.032505476259516025,
+          -0.0023026024737124694
+        ]
+      },
+      "delta_d_z": 0.0
+    },
+    "easy": {
+      "n_paired": 330,
+      "uniform": {
+        "n_paired": 330,
+        "mean_baseline": 1.0560687565559694,
+        "mean_framework": 0.8920270633117573,
+        "mean_diff": -0.16404169324421225,
+        "sd_diff": 0.16362974192307525,
+        "t_statistic": -18.21163627591904,
+        "df": 329,
+        "p_value_raw": 9.622851500894906e-52,
+        "cohens_d_z": -1.002517582172382,
+        "ci_95": [
+          -0.18169643408613204,
+          -0.14638695240229246
+        ]
+      },
+      "tier_aware": {
+        "n_paired": 330,
+        "mean_baseline": 1.0560687565559694,
+        "mean_framework": 0.9740479099338634,
+        "mean_diff": -0.08202084662210611,
+        "sd_diff": 0.16362974192307525,
+        "t_statistic": -9.105818137959519,
+        "df": 329,
+        "p_value_raw": 8.486945700012198e-18,
+        "cohens_d_z": -0.5012587910861909,
+        "ci_95": [
+          -0.09967558746402591,
+          -0.06436610578018631
+        ]
+      },
+      "delta_d_z": 0.5012587910861911
+    }
+  },
+  "per_tier_rows": [
+    {
+      "metric": "reconstruction_rmsd_A",
+      "tier": "hard",
+      "n_paired": 330,
+      "uniform_d_z": 0.8378052306497489,
+      "uniform_mean_diff": 0.12450552066431513,
+      "uniform_p_value": 5.678288793254167e-40,
+      "tier_aware_d_z": 0.8378052306497489,
+      "tier_aware_mean_diff": 0.12450552066431513,
+      "tier_aware_p_value": 5.678288793254167e-40,
+      "delta_d_z": 0.0,
+      "tier_boundary_low": 0.8380979632221934,
+      "tier_boundary_high": 0.9528736792253986
+    },
+    {
+      "metric": "reconstruction_rmsd_A",
+      "tier": "medium",
+      "n_paired": 340,
+      "uniform_d_z": -0.12250347200003155,
+      "uniform_mean_diff": -0.017404039366614246,
+      "uniform_p_value": 0.024527490179771454,
+      "tier_aware_d_z": -0.12250347200003155,
+      "tier_aware_mean_diff": -0.017404039366614246,
+      "tier_aware_p_value": 0.024527490179771454,
+      "delta_d_z": 0.0,
+      "tier_boundary_low": 0.8380979632221934,
+      "tier_boundary_high": 0.9528736792253986
+    },
+    {
+      "metric": "reconstruction_rmsd_A",
+      "tier": "easy",
+      "n_paired": 330,
+      "uniform_d_z": -1.002517582172382,
+      "uniform_mean_diff": -0.16404169324421225,
+      "uniform_p_value": 9.622851500894906e-52,
+      "tier_aware_d_z": -0.5012587910861909,
+      "tier_aware_mean_diff": -0.08202084662210611,
+      "tier_aware_p_value": 8.486945700012198e-18,
+      "delta_d_z": 0.5012587910861911,
+      "tier_boundary_low": 0.8380979632221934,
+      "tier_boundary_high": 0.9528736792253986
+    }
+  ],
+  "goal_lift_at_least_neg_0_3": true,
+  "delta_d_z_overall": 0.14553505959656793,
+  "d4_byte_stable_gate": {
+    "test_path": "tests/test_d4_regression_vectors.py",
+    "exit_code": 0,
+    "n_passed": 30,
+    "n_total": 30,
+    "d4_pass": true,
+    "summary_tail": "tests/test_d4_regression_vectors.py::test_d4_first_batch_vector_file_present[flowmol3]\n  /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/contracts/__init__.py:41: DeprecationWarning: adaptive_reflow.contracts.bundle.RoundResultBundle is deprecated; import MoleculeRoundResultBundle from adaptive_reflow.molecular.bundle instead.\n    value = getattr(_bundle_module, name)\n\ntests/test_d4_regression_vectors.py::test_d4_first_batch_vector_file_present[flowmol3]\n  /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/contracts/__init__.py:41: DeprecationWarning: adaptive_reflow.contracts.bundle.validate_round_result_bundle is deprecated; import validate_molecule_round_result_bundle from adaptive_reflow.molecular.bundle instead.\n    value = getattr(_bundle_module, name)\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n30 passed, 3 warnings in 4.44s"
+  },
+  "linkage": {
+    "wave218_p3": "verification_outputs/wave218-p3-kanzi-framework-wins.csv (overall d_z = -0.0990)",
+    "wave209_p1_A3": "scripts/wave209_p1_algorithm_ablation.py:440-531 (counterfactual methodology)",
+    "wave225_p4": "scripts/wave225_p4_k6_tier_aware.py (counterfactual template)",
+    "wave214_data": "verification_outputs/wave214-p2-kanzi-baseline-n1000/ and verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/"
+  }
+}
