@@ -433,23 +433,23 @@ feedback.
 
 ## §11 Companion Paper Status
 
-The corresponding author is preparing an extended mathematical
+The corresponding author has prepared an extended mathematical
 exposition of the bounded-Lipschitz distance bound introduced in
 Theorem 1 of the present manuscript, intended for a separate
-theoretical venue (currently in JMAA / QTDS submission
-deliberation). The companion paper is **not** a prerequisite for
-the present submission: the present manuscript is self-contained,
-and Theorem 1 is restated in §2 of the manuscript with a full
-proof sketch (Lemmas 2–5) and explicit computation of the four
-paper quantities $(A_g, B_g, C_g, e_\rho)$. The companion paper
-will contain only additional theoretical depth — sharper rates
-under weaker assumptions, an information-theoretic lower bound,
-and the connection to log-Sobolev and transport-cost inequalities
-— and will not introduce new empirical claims that would alter the
-present paper's headline numbers. The corresponding author will
-declare the companion-paper status in the submission cover sheet
-and on the title page footnote to keep the editorial record
-transparent.
+theoretical venue. The companion paper is currently under review
+at QTDS (a prior submission to JMAA was rejected). The companion
+paper is **not** a prerequisite for the present submission: the
+present manuscript is self-contained, and Theorem 1 is restated
+in §2 of the manuscript with a full proof sketch (Lemmas 2–5) and
+explicit computation of the four paper quantities $(A_g, B_g, C_g,
+e_\rho)$. The companion paper contains only additional theoretical
+depth — sharper rates under weaker assumptions, an
+information-theoretic lower bound, and the connection to
+log-Sobolev and transport-cost inequalities — and does not
+introduce new empirical claims that would alter the present
+paper's headline numbers. The corresponding author declares this
+companion-paper status on the submission cover sheet and on the
+title page footnote to keep the editorial record transparent.
 
 Sincerely,
 
