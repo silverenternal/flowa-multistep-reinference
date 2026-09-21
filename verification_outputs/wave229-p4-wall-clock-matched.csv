@@ -1,0 +1,10 @@
+arm,NFE,wall_clock_seconds,FID,mean_diff_vs_framework_NFE50
+framework_cosineanneal_NFE50,50,0.934008,424.4348,0.0
+framework_best_arm_NFE50_n1000_anchor,50,0.907,499.83,0.0
+baseline_NFE50,50,0.037832,130.1393,-294.2955
+baseline_NFE10_extrapolated_fid,10,0.00686,880.0,380.17
+baseline_NFE20_extrapolated_fid,20,0.01372,605.0,105.17
+baseline_NFE100_extrapolated_fid,100,0.0686,295.0,-204.83
+baseline_NFE200_extrapolated_fid,200,0.1372,208.0,-291.83
+baseline_NFE500_extrapolated_fid,500,0.343,132.0,-367.83
+baseline_NFE1234_wallclock_equivalent,1234,0.933693,83.7031,-340.7317

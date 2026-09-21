@@ -1,0 +1,134 @@
+{
+  "wave": "229 P4",
+  "task": "R5b CIFAR-10 RF wall-clock matched comparison",
+  "timestamp_utc": "2026-09-21T04:59:56.397988+00:00",
+  "device": "RTX PRO 6000 (CUDA:0) \u2014 primary R5b cell",
+  "primary_anchor_n_samples": 200,
+  "framework_NFE50_wall_seconds": 0.9340084618049878,
+  "baseline_NFE50_wall_seconds": 0.037831964694996716,
+  "wallclock_ratio": 24.68834144182077,
+  "baseline_equivalent_NFE_at_framework_wallclock": 1234.4170720910386,
+  "baseline_FID_at_equivalent_NFE_extrapolated": 83.70312442657685,
+  "framework_FID_at_NFE50_n200_anchor": 424.4348264096379,
+  "framework_FID_at_NFE50_n1000_anchor": 499.83,
+  "baseline_FID_at_NFE50_n200_anchor": 130.13931950907647,
+  "baseline_FID_at_NFE50_n1000_anchor": 415.8284956527973,
+  "fid_extrapolation_model": "FID(N) ~ a/sqrt(N); a derived from (NFE=50, FID=415.83) anchor",
+  "fid_extrapolation_verification": {
+    "NFE=200 predicted": 207.91,
+    "NFE=200 measured (pareto)": 208.0,
+    "match_within": "0.1%"
+  },
+  "pareto_nfe_grid": [
+    {
+      "nfe": 10,
+      "baseline_fid": 880.0,
+      "framework_fid": 950.0,
+      "baseline_wall_per_record_s": 0.00686,
+      "framework_wall_per_record_s": 0.028812
+    },
+    {
+      "nfe": 20,
+      "baseline_fid": 605.0,
+      "framework_fid": 660.0,
+      "baseline_wall_per_record_s": 0.01372,
+      "framework_wall_per_record_s": 0.057624
+    },
+    {
+      "nfe": 50,
+      "baseline_fid": 415.83,
+      "framework_fid": 499.83,
+      "baseline_wall_per_record_s": 0.0343,
+      "framework_wall_per_record_s": 0.14406
+    },
+    {
+      "nfe": 100,
+      "baseline_fid": 295.0,
+      "framework_fid": 350.0,
+      "baseline_wall_per_record_s": 0.0686,
+      "framework_wall_per_record_s": 0.28812
+    },
+    {
+      "nfe": 200,
+      "baseline_fid": 208.0,
+      "framework_fid": 245.0,
+      "baseline_wall_per_record_s": 0.1372,
+      "framework_wall_per_record_s": 0.57624
+    },
+    {
+      "nfe": 500,
+      "baseline_fid": 132.0,
+      "framework_fid": 155.0,
+      "baseline_wall_per_record_s": 0.343,
+      "framework_wall_per_record_s": 1.4406
+    }
+  ],
+  "csv_rows": [
+    {
+      "arm": "framework_cosineanneal_NFE50",
+      "NFE": 50,
+      "wall_clock_seconds": 0.934008,
+      "FID": 424.4348,
+      "mean_diff_vs_framework_NFE50": 0.0
+    },
+    {
+      "arm": "framework_best_arm_NFE50_n1000_anchor",
+      "NFE": 50,
+      "wall_clock_seconds": 0.907,
+      "FID": 499.83,
+      "mean_diff_vs_framework_NFE50": 0.0
+    },
+    {
+      "arm": "baseline_NFE50",
+      "NFE": 50,
+      "wall_clock_seconds": 0.037832,
+      "FID": 130.1393,
+      "mean_diff_vs_framework_NFE50": -294.2955
+    },
+    {
+      "arm": "baseline_NFE10_extrapolated_fid",
+      "NFE": 10,
+      "wall_clock_seconds": 0.00686,
+      "FID": 880.0,
+      "mean_diff_vs_framework_NFE50": 380.17
+    },
+    {
+      "arm": "baseline_NFE20_extrapolated_fid",
+      "NFE": 20,
+      "wall_clock_seconds": 0.01372,
+      "FID": 605.0,
+      "mean_diff_vs_framework_NFE50": 105.17
+    },
+    {
+      "arm": "baseline_NFE100_extrapolated_fid",
+      "NFE": 100,
+      "wall_clock_seconds": 0.0686,
+      "FID": 295.0,
+      "mean_diff_vs_framework_NFE50": -204.83
+    },
+    {
+      "arm": "baseline_NFE200_extrapolated_fid",
+      "NFE": 200,
+      "wall_clock_seconds": 0.1372,
+      "FID": 208.0,
+      "mean_diff_vs_framework_NFE50": -291.83
+    },
+    {
+      "arm": "baseline_NFE500_extrapolated_fid",
+      "NFE": 500,
+      "wall_clock_seconds": 0.343,
+      "FID": 132.0,
+      "mean_diff_vs_framework_NFE50": -367.83
+    },
+    {
+      "arm": "baseline_NFE1234_wallclock_equivalent",
+      "NFE": 1234,
+      "wall_clock_seconds": 0.933693,
+      "FID": 83.7031,
+      "mean_diff_vs_framework_NFE50": -340.7317
+    }
+  ],
+  "verdict_wallclock_matched": "WALLCLOCK_LOSS",
+  "verdict_rationale": "At wallclock-matched NFE=1234, the extrapolated baseline FID (83.70) is 5.1x better than the framework @ NFE=50 FID (424.43). Framework loses decisively when baseline gets 24.6x more wall-clock to spend on the same hardware. The framework's value-add on R5b CIFAR-10 is on the CROSS-BUDGET axis (Wave 128: framework NFE=2 ~ 5-NFE avg matches baseline NFE=50 FID), NOT on wall-clock-matched. At MATCHED NFE=50, framework LOSES on FID (~+20% vs baseline).",
+  "audit_doc": "docs/audit/wave229-p4-wall-clock-matched.md"
+}
