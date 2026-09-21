@@ -1,0 +1,3 @@
+wave,model,cell,metric,n_paired,n_eff,point_d_z,ci_95_low,ci_95_high,ci_excludes_zero,n_resamples,rng_seed,method,alpha_bonferroni,data_truncation_disclosed
+225 P2,flowmol3,R3_fg_dev_per_record,reos_n_flags,200,200,-0.292826219855078,-0.4163311034995471,-0.1623489169391138,True,10000,42,percentile_bootstrap,0.0071428571428571435,yes_200_record_cap_at_wave87_sweep
+225 P2,flowmol3,R3_fg_dev_per_record,reos_fg_contrib_proxy,200,200,-0.2942906194433835,-0.4183285115243419,-0.1656794316206793,True,10000,42,percentile_bootstrap,0.0071428571428571435,yes_200_record_cap_at_wave87_sweep

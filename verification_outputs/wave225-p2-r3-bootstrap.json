@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "wave": "225 P2",
+  "kind": "r3_flowmol3_d_z_bootstrap_ci",
+  "rationale": "Wave 225 P1 R5a audit (commit 7537559) reconciled the d_z vs TIE false contradiction \u2014 the TIE was driven by data-integrity noise, not a real null effect. This P2 bootstrap substantiates the direction-consistent claim (framework reduces per-record REOS flag count, contributing to reduced fg_dev) with a percentile bootstrap 95% CI on d_z at N=200 paired records.",
+  "data_sources": {
+    "baseline": "verification_outputs/flowmol3_n1000_baseline_wave87_q4_2026.json",
+    "framework": "verification_outputs/flowmol3_n1000_framework_wave87_q4_2026.json",
+    "sweep": "verification_outputs/flowmol3_n1000_sweep_wave87_q4_2026.json"
+  },
+  "data_truncation_disclosure": "tools/wave87_n1000_sweep.py:298 caps smiles_list at 200 of the full N=1000. Bootstrap uses the same 200 paired SMILES (filtered to records valid in BOTH arms).",
+  "alpha_bonferroni_r_family": 0.0071428571428571435,
+  "n_resamples": 10000,
+  "rng_seed": 42,
+  "method": "percentile_bootstrap",
+  "statistic": "cohens_d_paired = mean(diff) / std(diff, ddof=1)",
+  "results": {
+    "reos_n_flags": {
+      "n_paired": 200,
+      "point_d_z": -0.292826219855078,
+      "ci_95_low": -0.4163311034995471,
+      "ci_95_high": -0.1623489169391138,
+      "ci_excludes_zero": true,
+      "n_resamples_kept": 10000,
+      "boot_mean": -0.2932833115468165,
+      "boot_sd": 0.0650084219159024,
+      "boot_min": -0.5452970127670993,
+      "boot_max": -0.04697029301293128
+    },
+    "reos_fg_contrib_proxy": {
+      "n_paired": 200,
+      "point_d_z": -0.2942906194433835,
+      "ci_95_low": -0.4183285115243419,
+      "ci_95_high": -0.1656794316206793,
+      "ci_excludes_zero": true,
+      "n_resamples_kept": 10000,
+      "boot_mean": -0.29480299376633334,
+      "boot_sd": 0.06439443982062906,
+      "boot_min": -0.5455533275347227,
+      "boot_max": 0.007550042731633136
+    }
+  },
+  "direction": "Framework WINS direction = mean(diff) < 0 (framework carries fewer REOS flags than baseline). The CI lower bound is the most stringent direction-consistency test: a CI entirely below 0 implies a >97.5% bootstrap probability that d_z < 0.",
+  "linkage": {
+    "wave225_p1_r5a_audit": "commit 7537559 (R5a d_z vs TIE reconciliation)",
+    "wave216_p1_per_record_uplift": "verification_outputs/wave216-p1-r3-per-record.csv",
+    "wave87_q4_sweep": "verification_outputs/flowmol3_n1000_sweep_wave87_q4_2026.json"
+  }
+}
