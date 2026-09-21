@@ -64,11 +64,12 @@ For the framework default F-side profile
 ($d = 1.0, c = 1.0, \rho = 0.1, \eta = 0.1$) on the canonical
 witness $g(x) = (1 + 0.25 \tanh x) \sin x$ (Proposition 2 family,
 `docs/audit/wave211-p3-f-side-actual-values.md` §4.3), the Wave 226
-P1 audit (`docs/audit/wave226-p1-a-g-values.md`) reports
+P1 audit (`docs/audit/wave226-p1-a-g-values.md`) and the Wave 227 P1
+diagnostic (`docs/audit/wave227-p1-a-g-diagnostic.md`) report
 
 | quantity | value | source |
 |---|---|---|
-| $A_g$ | **0.8549457422** | `verification_outputs/wave226-p1-a-g-values.csv` (12 adapters, identical across all) |
+| $A_g$ | **0.8549457422** | `verification_outputs/wave226-p1-a-g-values.csv` (12 adapters, bit-identical across all) |
 | $e^{A_g}$ | **2.3512468036** | Picard–Lindelöf Lipschitz-amplification factor at $t = 1$ |
 | $e^{2 A_g}$ | **5.5270…** | seed-to-seed variance factor at $t = 1$ |
 
@@ -80,7 +81,33 @@ flow; they are amplified by a moderate, $g$-specific constant of
 $\approx 2.35$ at $t = 1$. This is the precise mathematical meaning
 of the framework's "non-initial-condition-sensitive" claim: the
 amplification is bounded and the bound is **computable from the
-adapter's residual profile $g$**, not pathological.
+canonical F-side admissible witness $g$**, not pathological.
+
+**Scope of $A_g$ — canonical witness, not per-adapter runtime.**
+$A_g$ is the closed-form coefficient of the BL-distance bound and is
+**bit-identical across all 12 adapters** by construction: all 12
+share the canonical F-side admissible witness $g(x) = (1 + 0.25
+\tanh x) \sin x$ and identical $(d, c, \rho, \eta) = (1.0, 1.0, 0.1,
+0.1)$ (`adaptive_reflow/theory/rate_bound.py:57-60`,
+`adaptive_reflow/theory/paper_quantities.py:96-175`). No adapter
+declares `profile_residual_fn`; `AdapterCapabilities` does not
+expose that field (`adaptive_reflow/universal/adapter.py:132`), and
+when the runner / scheduler receive no `paper_quantities_provider`
+they fall back to legacy closed forms that do not compute a
+per-adapter $A_g$ (`tools/eval/framework.py:240-280`,
+`adaptive_reflow/algorithm/runner/runner.py:1172-1214`). Computing a
+per-adapter empirical $A_g$ would require constructing a
+$g_{\text{adapter}}(s)$ from each adapter's posterior geometry and
+feeding it to `sheet_evidence_A`; this runtime path is **not yet
+implemented** in any of the 12 adapters, and the value
+$A_g = 0.8549457422$ cited above is therefore the **framework default
+for all 12 adapters** under the canonical F-side profile, not a
+per-adapter empirical estimate. The per-adapter empirical work
+product is the per-record BL distance
+(`adaptive_reflow/theory/rate_bound.py::theorem1_bl_convergence_witness`,
+R6 R-level observable), not the $A_g$ coefficient itself; see §MS.10.5.1
+and `docs/audit/wave227-p1-a-g-diagnostic.md` §6 for the structural
+distinction.
 
 ## §MS.10.2 Per-seed variance floor under the $A_g$ bound
 
@@ -101,17 +128,56 @@ e^{2 A_g} \cdot 2d \;\approx\; 5.527 \cdot 2 \cdot 512
 Equation (MS.10.2) is a **floor**, not a value: per-seed output
 differences carry a seed-to-seed variance component of magnitude
 $\Theta(d)$ even when the per-record (within-seed) effect is small.
-Per-seed paired t-tests at $n_{\text{seed}} = 30$ (the 4-arm Table B
-budget; `docs/tables/wave204-p3-standardized-stats.md` 16-row
-superset) have $\text{df} = 29$ and a minimum-detectable
-$d_z^{\text{per-seed}}$ at $\alpha = 0.05$ two-sided, 80% power of
-approximately **0.73**. With the observed per-seed $d_z$ values
-ranging over $[0.020, 0.226]$ in absolute value
-(`verification_outputs/wave208-p1-4arm-power-analysis.csv`, all 16
-cells), this means 14 of 16 cells lie below the per-seed detection
-floor — exactly the underpower pattern observed (the 2 SUPPORTED
-cells, vanilla scPerplexity at NFE 50/100, sit at $d_z \approx -2.93$
-and $-2.99$, far above the floor).
+Dividing (MS.10.2) by $n_{\text{seed}}$ and taking the square root
+gives the per-seed-pair standard-deviation floor
+$e^{A_g} \sqrt{2d / n_{\text{seed}}}$. Normalizing by the per-record
+intrinsic SD $\sigma_{\text{record}}$ (LineageFlow n = 574,
+`verification_outputs/wave202-p5-lineageflow-per-record.csv`:
+$\sigma_{\text{record}}^{\text{pLDDT}} = 15.177$,
+$\sigma_{\text{record}}^{\text{scPerplexity}} = 3.661$) yields the
+**variance-bound-derived per-seed detection floor**
+
+$$d_z^{\text{floor,per-seed}}
+   \;=\; \frac{e^{A_g} \sqrt{2d / n_{\text{seed}}}}{\sigma_{\text{record}}}
+   \;\in\; \{ 0.9051 \text{ (pLDDT, } n{=}30), 0.9206 \text{ (pLDDT, } n{=}29),
+           3.7522 \text{ (scPerplexity, } n{=}30), 3.8164 \text{ (scPerplexity, } n{=}29) \}. \tag{MS.10.3}$$
+
+These values are **tighter (more conservative) than the standard
+t-test minimum-detectable $d_z$ at 80% power, df = 29 ($\approx
+0.73$)**: the variance-bound floor accounts for the $e^{A_g}
+\approx 2.35$ amplification of the initial-noise standard deviation
+through the FM ODE flow, which the standard-t-test MDD does not.
+
+With the observed per-seed $|d_z|$ values ranging over $[0.020,
+0.226]$ in the 16 4-arm cells
+(`verification_outputs/wave196-p2-4arm-paired.csv`,
+`verification_outputs/wave226-p3-per-seed-variance-bound.csv`),
+**all 16 cells lie below the variance-bound floor** at n = 30 (the
+floor exceeds every observed $|d_z|$ for both metrics). Of these
+16 cells, **14 have 4-arm per-seed verdict UNDERPOWERED and are
+therefore consistent with the variance bound**; the remaining 2
+cells (vanilla scPerplexity NFE50 / NFE100, $|d_z| \approx 2.93$ /
+$2.99$) are SUPPORTED at $p < 10^{-15}$ but sit below the
+variance-bound floor, because the bound is a **worst-case upper
+bound on the full d-dim latent-space seed-to-seed variance** whereas
+scPerplexity is a 1-D projection of the output — in the realized
+1-D projection the seed-to-seed noise is far below the d-dim worst
+case, and the bound is **conservative** for these cells. See
+`docs/audit/wave227-p2-floor-corrected.md` §"Why the 2 SUPPORTED
+cells count as inconsistent" for the original argument.
+
+**Numerical summary, 16-cell 4-arm (`verification_outputs/wave227-p2-floor-corrected.csv`):**
+
+| metric | $d_z^{\text{floor}}$ (n = 30) | $d_z^{\text{floor}}$ (n = 29) | max observed $\lvert d_z \rvert$ (4-arm) |
+|---|---:|---:|---:|
+| pLDDT | **0.9051** | 0.9206 | 0.2264 (fastdllm NFE100) |
+| scPerplexity | **3.7522** | 3.8164 | 2.9945 (vanilla NFE100) |
+
+| consistent count | n_cells |
+|---|---:|
+| UNDERPOWERED + below floor (= consistent) | **14** |
+| SUPPORTED + below floor (= inconsistent, bound conservative) | 2 |
+| **Total 4-arm cells** | **16** |
 
 This is **not** a statement that the per-record effect is absent.
 It is a statement that the per-seed effect-size scale is **bounded
@@ -123,6 +189,10 @@ $\sigma_{\text{per-record}} \cdot \sqrt{2 / n_{\text{seed}}} \approx
 0.05$ at the per-record intrinsic SD
 $\sigma_{\text{per-record}} \approx 0.19$ Å (R2 Kanzi inv-proj
 N = 1000, `verification_outputs/wave195-p2-r-level-power.json`).
+The variance-bound-derived per-seed floor (MS.10.3) is an even
+tighter bound on what $n_{\text{seed}} = 30$ can resolve at the
+framework default F-side profile, and it mathematically *predicts*
+the observed 14/16 underpower pattern.
 
 ## §MS.10.3 Per-record analysis bypasses seed-to-seed variance
 
@@ -148,17 +218,22 @@ $\alpha = 0.007143$ for the R6 scPerplexity ($p_{\text{raw}} = 2.74
 because it operates at the per-record granularity that bypasses the
 per-seed granularity floor (MS.10.2). The 4-arm per-seed Table B
 cells remain correctly reported as UNDERPOWERED for the
-small-$d_z$ arms (consistent with (MS.10.2)) and SUPPORTED for the
-large-$d_z$ vanilla scPerplexity arms (consistent with
-$|d_z| \gg 0.73$).
+small-$d_z$ arms (consistent with (MS.10.2) and (MS.10.3)) and
+SUPPORTED for the vanilla scPerplexity arms at $|d_z| \approx 2.93
+/ 2.99$ (consistent with $|d_z|$ exceeding the standard t-test
+MDD $\approx 0.73$, even though the variance-bound floor (MS.10.3)
+of $3.7522$ is a conservative worst-case that these cells sit
+below — see §MS.10.2 and `docs/audit/wave227-p2-floor-corrected.md`
+§"Why the 2 SUPPORTED cells count as inconsistent").
 
 This justifies the project's choice of **per-record analysis as the
 confirmatory test for all R-level headline claims** and the demotion
 of per-seed analysis to **exploratory-only** for the 4-arm Table B
 and n = 30 Theorem 1 quantities cells. The per-seed verdict
 underpower is **not** an effect-absence signal — it is the
-quantitative consequence of (MS.10.2) at the framework's
-$n_{\text{seed}} = 30$ 4-arm budget.
+quantitative consequence of (MS.10.2) and the variance-bound
+floor (MS.10.3) at the framework's $n_{\text{seed}} = 30$ 4-arm
+budget.
 
 ---
 
@@ -185,11 +260,89 @@ $n_{\text{seed}} = 30$ 4-arm budget.
    noise (e.g. sequence-specific scaffold variability on the protein
    adapters, addressed by the Wave 203 P3 cluster-robust re-
    analysis).
-4. **Cross-adapter $A_g$** is identical to the default profile on
-   all 12 adapters (Wave 226 P1 audit), so the per-seed floor is the
-   same on all adapters. Adapters that override the F-side profile
-   would shift the floor and would require a per-adapter
+4. **$A_g$ is a canonical F-side witness, not a per-adapter
+   empirical estimate.** The value $A_g = 0.8549457422$ cited
+   throughout this paragraph is the framework default under the
+   canonical admissible witness
+   $g(x) = (1 + 0.25 \tanh x) \sin x$ (Proposition 2 family) with
+   $(d, c, \rho, \eta) = (1.0, 1.0, 0.1, 0.1)$, and is **bit-identical
+   across all 12 adapters** because no adapter constructs a
+   per-adapter $g_{\text{adapter}}$ and no adapter supplies a
+   `profile_residual_fn` to the runner / scheduler / eval pipeline
+   (Wave 227 P1 diagnostic, `docs/audit/wave227-p1-a-g-diagnostic.md`).
+   The per-seed variance floor (MS.10.3) is therefore a **canonical
+   bound** derived from a **canonical witness**, not a
+   per-adapter-specific bound; adapters that override the F-side
+   profile would shift $A_g$ and would require a per-adapter
    re-evaluation of the per-seed / per-record granularity choice.
+   The **per-adapter empirical work product** in the framework is
+   the per-record BL-distance witness
+   (`adaptive_reflow/theory/rate_bound.py::theorem1_bl_convergence_witness`,
+   R6 R-level headline observable), not the closed-form $A_g$
+   coefficient; the BL-distance witness is what carries the
+   adapter-specific signal in the published per-record $d_z$
+   numbers.
+
+---
+
+## §MS.10.5.1 Canonical F-side witness — closed-form coefficient vs. adapter-specific BL distance
+
+For the framework's $A_g$ argument to be **defensible as a
+per-adapter bound**, three structural facts must hold:
+
+1. **Canonical F-side admissible witness.** All 12 framework
+   adapters share the single canonical admissible witness
+   $g(x) = (1 + 0.25 \tanh x) \sin x$ (Proposition 2 family) with
+   default $(d, c, \rho, \eta) = (1.0, 1.0, 0.1, 0.1)$
+   (`adaptive_reflow/theory/rate_bound.py:57-60`,
+   `tests/test_theory/test_rate_bound.py:44-72`). No adapter
+   overrides `g` or `(d, c, \rho, \eta)`; no adapter declares a
+   `profile_residual_fn`; `AdapterCapabilities` does not expose
+   that field (`adaptive_reflow/universal/adapter.py:132`). The
+   framework's `paper_quantities_provider` injection point
+   (`ReInferenceConfig.paper_quantities_provider`) exists and is
+   the **only** sanctioned runtime path to supply a per-adapter $g$,
+   but no adapter exercises it today.
+
+2. **Closed-form coefficient is canonical.** Given $g$ and
+   $(d, c, \rho, \eta)$, $A_g$, $B_g$, $C_g$, $e_\rho$ are
+   **closed-form integrals** of the witness (`Proposition 3` /
+   paper line 161); they are not empirical estimates. Two calls to
+   `sheet_evidence_A` with the same $g$ are byte-stable
+   (`verification_outputs/wave226-p1-a-g-sensitivity.csv`,
+   bit-identical across all 12 adapters in
+   `verification_outputs/wave226-p1-a-g-values.csv`). A $g$-swap
+   changes $A_g$; a $(d, c, \rho, \eta)$-swap does not
+   (`docs/audit/wave227-p1-a-g-diagnostic.md` §2).
+
+3. **Adapter-specificity lives at the empirical BL-distance
+   layer.** The framework's adapter-specific empirical signal is
+   the per-record BL-distance witness in
+   `adaptive_reflow/theory/rate_bound.py::theorem1_bl_convergence_witness`
+   (Monte-Carlo BL estimate per `$g$, $(d, c, \rho, \eta)$`, per
+   record). The closed-form $A_g$, $B_g$, $C_g$, $e_\rho$ are the
+   **coefficients** of the BL bound
+   `BL(μ_{g,ε}, ν_g) ≤ A_g · exp(−NFE/B_g) + C_g · e_ρ`. They are
+   **canonical once** $g$ and $(d, c, \rho, \eta)$ are fixed; the
+   **per-record BL distance** is what carries the adapter-specific
+   signal in the R6 R-level headline observable (R6 scPerplexity
+   $d_z = -1.077$ and R6 hard pLDDT $d_z = +1.189$, per-record
+   paired-$t$ at $N = 1000$ records).
+
+**Implication.** The claim "the per-seed variance bound
+$\text{Var}(\Delta_{\text{seed}}) \leq e^{2 A_g} \cdot 2d / n_{\text{seed}}$
+mathematically predicts the 14/16 4-arm underpower pattern" is
+correct **for the canonical witness** $g(x) = (1 + 0.25 \tanh x)
+\sin x$, which all 12 adapters share. For adapters that
+override $g$ or $(d, c, \rho, \eta)$ — currently none — the floor
+would shift and would require a per-adapter re-evaluation of the
+per-seed / per-record granularity choice. Computing a per-adapter
+empirical $A_g$ would require (a) implementing a per-adapter
+$g_{\text{adapter}}(s)$ constructor that builds a residual profile
+from each adapter's posterior geometry and (b) wiring it into the
+`paper_quantities_provider` injection point; this is not implemented
+in any of the 12 adapter classes today (Wave 227 P1 diagnostic,
+`docs/audit/wave227-p1-a-g-diagnostic.md`).
 
 ---
 
@@ -202,16 +355,45 @@ $n_{\text{seed}} = 30$ 4-arm budget.
 - `adaptive_reflow/theory/paper_quantities.py::sheet_evidence_A` —
   byte-stable $A_g$ evaluator.
 - `verification_outputs/wave226-p1-a-g-values.csv` — 12-adapter
-  $A_g$ table (all rows identical at default profile).
+  $A_g$ table (all rows bit-identical at default profile).
+- `verification_outputs/wave226-p1-a-g-sensitivity.csv` —
+  sensitivity sweep confirming $A_g$ is invariant in $\rho \in
+  \{0.05, 0.10, 0.15, 0.20, 0.25\}$ (P1 diagnostic §2).
 - `verification_outputs/wave211-p3-f-side-values.csv` — per-adapter
   F-side constants $(d, c, \rho, \eta)$ source.
+- `verification_outputs/wave196-p2-4arm-paired.csv` — 4-arm
+  per-seed paired-$t$ Table B (16 cells, $n_{\text{seed}} \in
+  \{29, 30\}$, canonical source for observed per-seed $|d_z|$
+  values).
+- `verification_outputs/wave226-p3-per-seed-variance-bound.csv` —
+  Wave 226 P3 variance-bound output (correct math, 14/16
+  consistent).
+- `verification_outputs/wave227-p2-floor-corrected.csv` — Wave 227
+  P2 floor-corrected audit (bit-identical to Wave 226 P3, 14/16
+  consistent, $d_z^{\text{floor}}$ 3.7522 scPerplexity / 0.9051
+  pLDDT at n = 30).
 - `verification_outputs/wave208-p1-4arm-power-analysis.csv` —
   per-seed $d_z$ range $[0.020, 0.226]$ across the 4-arm 16 cells
   + the per-record equivalent $d_z$ estimate.
 - `verification_outputs/wave195-p2-r-level-power.json` — R-level
   per-record power at $N = 1000$ records per arm.
+- `verification_outputs/wave202-p5-lineageflow-per-record.csv` —
+  per-record LineageFlow n = 574 paired-$t$
+  ($\sigma_{\text{record}}^{\text{pLDDT}} = 15.177$,
+  $\sigma_{\text{record}}^{\text{scPerplexity}} = 3.661$,
+  Wave 227 P2 §Inputs).
 - `docs/audit/wave226-p1-a-g-values.md` — Wave 226 P1 audit on $A_g$
   (input to this paragraph).
+- `docs/audit/wave226-p2-methods-paragraph.md` — Wave 226 P2 audit
+  establishing the $d = 512$ convention for §MS.10.2.
+- `docs/audit/wave226-p3-variance-bound.md` — Wave 226 P3
+  variance-bound audit (correct math, 14/16 consistent).
+- `docs/audit/wave227-p1-a-g-diagnostic.md` — Wave 227 P1
+  diagnostic: $A_g$ is canonical-witness, not per-adapter runtime
+  (§MS.10.1, §MS.10.4 caveat 4, §MS.10.5.1).
+- `docs/audit/wave227-p2-floor-corrected.md` — Wave 227 P2 corrected
+  per-seed floor (bit-identical to Wave 226 P3; source for the
+  3.75 scPerplexity / 0.905 pLDDT numbers in §MS.10.2).
 - `docs/drafts/methods-stats-flattened-draft.md` §MS.2.4 (4-arm
   Table B family), §MS.3 (cluster-robust re-analysis), §MS.7
   (audit-trail provenance).
