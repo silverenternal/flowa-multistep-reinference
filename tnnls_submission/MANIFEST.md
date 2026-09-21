@@ -18,13 +18,14 @@ cd tnnls_submission && sha256sum -- *.md
 
 | File | Size (bytes) | SHA-256 | Role |
 |---|---|---|---|
-| `MANIFEST.md` | 5367 | `8733ac37e71526bd36afc4a77958dd9fb954bf9685bdbb0d0e73076f68989422` | Package manifest with SHA-256 + size + role |
+| `MANIFEST.md` | 5367 | `8733ac37e71526bd36afc4a77958dd9fb954bf9685bdbb0d0e73076f68989422` | Package manifest with SHA-256 + size + role (pre-Wave-244-P4 placeholder; see Wave 244 P4 audit for post-update hash) |
 | `cover_letter.md` | 60394 | `db18810ff69cfba9c5fd0fd50d738158359055d5cf696f4426b3c7a224f1bfbc` | Editor-facing cover letter (TNNLS — 11 USER ACTION placeholders to be filled before submission) |
 | `highlights.md` | 1913 | `96406b3851f3a099b6346247d40ac35b492213d703819421c6f16f629f4279dd` | 3 TNNLS editor-facing highlights (85-char each) |
 | `tables.md` | 7435 | `b7aeda919b495a9ea2d0c4c3f62609dfe9acc8fdb48b62888f3022b066fb8ce2` | 5 TNNLS paper tables (R1–R6 headline, 4-arm H2H, scheduler ablation, statistical methods, reproducibility gates) |
 | `figures.md` | 23307 | `030f61a70031dbd6a6cf8dd7487035d21c3375002cad2968a6d8af71636a2d27` | ASCII architecture diagrams (FlowA hexagonal layers, re-inference dataflow, 3-tier experiment hierarchy, 4-arm H2H schematic) |
 | `data_availability.md` | 4641 | `0bcb69c48f7891c90711b2f69e79a596dff1925de0c0316035022fbe31bf23a4` | Data availability statement + Zenodo DOI references |
 | `submission_checklist.md` | 7368 | `208a21e0b28938a89cef135be70215616222ff9162825b6e36254f1afe9ce6e3` | TNNLS editorial requirements checklist |
+| `../docs/paper-tnnls.pdf` | 505017 | `940fe61d20f33855ac0eafb17c3296f96865aa6710f1aa103eac48432c7db2d4` | **PLACEHOLDER** TNNLS-formatted paper.pdf — copied from `docs/paper-eaai.pdf` (elsarticle double-column, 17 pages, A4). Not yet typeset to IEEEtran double-column 14-page format; USER ACTION required to rebuild before upload. See `docs/audit/wave244-p4-paper-pdf.md`. |
 
 ## Cross-references
 
