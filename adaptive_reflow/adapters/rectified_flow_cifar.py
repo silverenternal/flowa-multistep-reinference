@@ -103,6 +103,53 @@ RF_CIFAR_NUM_STEPS_DEFAULT: int = 2
 RF_CIFAR_T_END: float = 1.0
 RF_CIFAR_NATIVE_STATES_MAXSIZE: int = 8
 
+# ---------------------------------------------------------------------------
+# Wave 233 P5 R5b adapter-specific scheduler overrides
+# ---------------------------------------------------------------------------
+#
+# Background: the R5b (CIFAR-10 Rectified Flow NFE=50 FID) primary arm shows
+# a structural regression at matched NFE=50 (Wave 195 P2 d_z = +2.700,
+# REGRESSES verdict; Wave 225 P7/P9 confirm the regression is structural,
+# not a definition artifact). Wave 225 P9 falsified the
+# "matched-effective-NFE" hypothesis (the framework regression gets
+# *larger* under matched effective NFE, not smaller).
+#
+# Per DeepSeek suggestion C ("adapter-specific params"), the Wave 233 P5
+# fix proposal documents two candidate overrides here:
+#
+# 1. ``RF_CIFAR_N_ROUNDS_OVERRIDE = 2`` — reduce ``n_rounds`` from the
+#    runner default (4) to 2 for CIFAR only. Concentrates the cosine
+#    ramp on round 0 (49 NFE) with 1 forced restart-blending step on
+#    round 1. Wave 225 P7 showed this reduces headline DeltaFID by
+#    ~47% (+84.02 -> +44.78 units) and DeltaFID% by ~52% (+20.20% ->
+#    +9.77%) at NFE=50 nominal (eff=25). At matched effective NFE=50
+#    (Wave 225 P9, n_rounds=2, nominal NFE=100), the DeltaFID grew
+#    *back* to +20.89%, confirming the residual regression is the
+#    1-NFE restart on round 1, not the cycle_length.
+#
+# 2. ``RF_CIFAR_COSINE_RAMP_STRENGTH_OVERRIDE = 0.5`` — halve the cosine
+#    ramp amplitude by raising ``n_min`` from 0.0 to 0.5, forcing every
+#    round to deliver >= 50% NFE. Equivalent to ``cosine_ramp_strength``
+#    in the task brief. NOT YET EVALUATED (would require a new experiment
+#    run; the Wave 225 P9 hypothesis was falsified by n_rounds=2 so
+#    cosine_ramp_strength=0.5 may or may not help).
+#
+# Both are ADAPTER-LEVEL CONSTANTS only — they do not change the runtime
+# solve_ode/observe_endpoint paths. D.4 regression vectors for this
+# adapter are byte-stable because the regression-vector audit path
+# (``tools/run_regression_vector_audit.py``) does not consume these
+# attributes (it integrates via ``batched_inference`` with a single
+# round of fixed num_steps).
+#
+# To activate the override, pass ``--n-rounds 2`` to
+# ``tools/run_sota_cifar_experiment.py`` — the runner remains the
+# source of truth. This constant documents the recommended override
+# for any future sweep that should produce CIFAR RF results with the
+# reduced-rounds protocol.
+# ---------------------------------------------------------------------------
+RF_CIFAR_N_ROUNDS_OVERRIDE: int | None = 2
+RF_CIFAR_COSINE_RAMP_STRENGTH_OVERRIDE: float | None = None  # not yet wired
+
 #: Available ODE integrators. ``"euler"`` is the 1st-order baseline
 #: (single velocity evaluation per step). ``"heun"`` is the 2nd-order
 #: predictor-corrector (two evaluations per step: Euler trial + trapezoidal
@@ -645,6 +692,17 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
     # class attribute and an instance attribute so the runner's fallback
     # is never exercised for this adapter.
     state_shape: tuple[int, ...] = RF_CIFAR_STATE_SHAPE
+    # Wave 233 P5 R5b — adapter-specific scheduler override hooks (READ
+    # ONLY at the adapter surface; the actual ``--n-rounds`` CLI flag
+    # passed to ``tools/run_sota_cifar_experiment.py`` is the source of
+    # truth for the runtime). These class attributes document the
+    # recommended override values for any CIFAR RF sweep that wants
+    # to reproduce the Wave 225 P7 reduced-rounds counterfactual or
+    # evaluate the Wave 233 P5 cosine_ramp_strength=0.5 proposal.
+    n_rounds_override: int | None = RF_CIFAR_N_ROUNDS_OVERRIDE
+    cosine_ramp_strength_override: float | None = (
+        RF_CIFAR_COSINE_RAMP_STRENGTH_OVERRIDE
+    )
 
     def __init__(
         self,
@@ -1386,11 +1444,13 @@ __all__ = [
     "RF_CIFAR_CLAMP",
     "RF_CIFAR_CONFIG_HASH",
     "RF_CIFAR_CONFIG_VERSION",
+    "RF_CIFAR_COSINE_RAMP_STRENGTH_OVERRIDE",
     "RF_CIFAR_FORMAT_GNOBITAB",
     "RF_CIFAR_HEIGHT",
     "RF_CIFAR_INTEGRATOR_EULER",
     "RF_CIFAR_INTEGRATOR_HEUN",
     "RF_CIFAR_INTEGRATORS",
+    "RF_CIFAR_N_ROUNDS_OVERRIDE",
     "RF_CIFAR_NATIVE_STATES_MAXSIZE",
     "RF_CIFAR_NUM_STEPS_DEFAULT",
     "RF_CIFAR_STATE_SHAPE",
