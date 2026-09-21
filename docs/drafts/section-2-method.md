@@ -1321,37 +1321,60 @@ paths would invalidate the Wave 87 byte-stable reference and were
 out of scope for the 1-2 hour fix budget. Fallback: single-mol
 partial sweep (`n_molecules=1`, NFE=100, N=500 per arm).
 
-**Data generated:**
+**Data generated (per Wave 235 P4 + Wave 238 P1 audit):**
 
-| Seed | Arm | N | NFE | Notes |
-|---|---|---:|---:|---|
-| 42 | Wave 87 reference | 1000 | 250 | byte-stable |
-| 43 | baseline + framework | 500 + 500 | 100 | complete |
-| 44 | baseline only | 499 | 100 | framework arm NOT RUN in this budget |
+| Seed | baseline fg_dev | framework fg_dev | mean_diff (f-b) | Direction | N | NFE | Notes |
+|---|---:|---:|---:|---|---:|---:|---|
+| 42 | 0.6381 | 0.6146 | -0.0235 | framework_better | 1000 | 250 | Wave 87 byte-stable (batched path) |
+| 43 | 0.6583 | 0.6771 | +0.0188 | framework_worse  | 500  | 100 | Wave 235 P4 single_mol |
+| 44 | 0.6612 | 0.6738 | +0.0126 | framework_worse  | 500  | 100 | Wave 235 P4 single_mol |
 
-**Honest verdict.** Only seed=43 has both arms; seed=44 baseline
-only. The 3-seed pooled per-record REOS paired-t test could not
-be computed end-to-end at this budget. The seed=42 (Wave 87)
-1-seed d_z = -0.285 (framework wins on REOS flags, direction
-correct) is the strongest available evidence; the seed=43
-2-arm partial sweep at NFE=100 (vs Wave 87's NFE=250) is a
-**confounded** direction-consistency check (NFE mismatch
-acknowledged). Full 3-seed pooled analysis is queued for the
-camera-ready deferred list once the DGL fix lands.
+**Honest verdict (Wave 238 P1 direction diagnostic).** The 3-seed
+expansion **DISCONFIRMS** the Wave 87 1-seed framework-WINS
+direction. The sign of mean_diff is reversed between seed=42
+(NFE=250, batched) and seeds 43+44 (NFE=100, single_mol): seed=42
+is the only seed in the framework_better direction; the two new
+seeds both show framework_worse on aggregate fg_dev.
 
-**NFE mismatch confound.** Seed=42 used NFE=250 (Wave 87
-canonical), seeds 43/44 used NFE=100 (reduced for budget). The
-per-record REOS diff is invariant to NFE under the canonical
-framework re-inference semantics (framework applies the same
-per-record perturbation regardless of NFE), so direction
-consistency remains interpretable. Magnitudes are not directly
-comparable across the NFE mismatch.
+- Per-record REOS pooled paired-t (n=999 records, df=998):
+  mean=0.000, sd=0.000, **d_z=NaN** (degenerate: all per-record
+  REOS flags are 0 in both arms of the new seeds at NFE=100).
+- Per-seed pooled paired-t (n=2 new seeds, df=1): mean=+0.0157,
+  d_z=+3.625, p_raw=0.123. **Not Bonferroni-sig** at p<0.05/7=0.00714.
+- Wave 87 1-seed per-record REOS d_z=-0.285 (200 records,
+  NFE=250). **NOT reproduced** at the 3-seed pooled level.
+- Direction consistency verdict: **INCONSISTENT** (sign reversal
+  between seed=42 and seeds 43+44).
+
+**Confound structure.** The direction inconsistency is confounded
+by three factors and cannot be cleanly attributed to seed-dependent
+framework behavior:
+1. **NFE confound**: seed=42 used NFE=250 (Wave 87 canonical);
+   seeds 43+44 used NFE=100 (reduced for budget).
+2. **N record confound**: seed=42 used N=1000 (Wave 87 canonical);
+   seeds 43+44 used N=500 (reduced for budget; SEM doubles, mdd
+   increases √2× to ~0.023).
+3. **Graph traversal path confound**: seed=42 used the batched
+   DGL path (`n_molecules` per batch); seeds 43+44 used the
+   single_mol path (`n_molecules=1`, Wave 109.C bug workaround).
+   The framework's restart-blend prior-perturbation is applied at
+   a different graph-traversal position.
+
+The honest scientific reading is that the Wave 87 1-seed
+framework-WINS result is best interpreted as a **conditional
+boundary at NFE≥250**, not a reproducible framework improvement
+across seed/NFE/N/graph-path conditions.
 
 **D.4 byte-stable check.** The FlowMol3 v2 adapter and Wave 87
 byte-stable data are unchanged from Wave 87. No code
 modifications were made. Per Wave 125 Phase 2 HARD RULE, the
 D.4 byte-stable regression vector gate is unchanged from the
 Wave 87 PASS.
+
+**Paper impact.** Replace any narrative of "framework wins on R3
+fg_dev across seeds" with "framework wins on R3 fg_dev at
+NFE≥250 (Wave 87 N=1000, 1 seed); effect reverses at NFE=100
+(Wave 235 P4 N=500, 2 seeds); 3-seed pooled effect is TIE".
 
 ### 2.12.5 Summary — Wave 235 P5 + Wave 236 P3 final integration
 
