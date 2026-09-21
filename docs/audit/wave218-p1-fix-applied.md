@@ -104,3 +104,19 @@ as Wave 214 P2).
 - `docs/audit/wave206-p2-kanzi-framework-n1000.md` — Wave 206 P2 audit
   (also affected by the same regression, both torch-upgrade and
   bridge-weight-drift hypotheses disproven in Wave 214 P1).
+
+## Incident context
+
+Wave 214 P2 (attempted) applied this same fix as an uncommitted patch
+that was discarded by Wave 215 P1 ruff test-and-revert cycle. This commit
+(Wave 218 P1) is the FIRST commit that actually persists the fix to git
+history. Future R2 framework_wins reproducibility requires git checkout
+of this commit or later.
+
+**Note on commit attribution:** the `_kanzi_sweep_runner.py` diff and
+this audit doc were both added in commit `e3d1c01` ("Wave 217 P5: E3
+reviewer template") because that commit was the bulk-operation window
+in which Wave 218 P1 work landed. `e3d1c01` is already pushed to
+`origin/main`, so this annotation is delivered as a NEW commit (Wave
+218 P4) rather than via `git commit --amend`. The fix byte-content is
+unchanged from the bulk commit — only this annotation paragraph is new.
