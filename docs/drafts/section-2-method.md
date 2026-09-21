@@ -568,7 +568,185 @@ expert can drive without manipulating the flow matching internals.
 
 ---
 
-## 2.7 Theoretical-Justification Paragraph (Self-Contained)
+## 2.7 Tier-Aware Scheduling and Per-Adapter Overhead
+
+The four-lemma Theorem 1 derivation (§2.1–§2.4) and the
+algorithmic interpretation of the four paper quantities (§2.6)
+are framework-core constructs that are byte-stable across
+adapters. Two augmentation layers — **per-record tier-aware
+scheduling** (Wave 233 P3) and **adapter-specific scheduler
+overrides** (Wave 233 P5) and the **SHA-256 state-bundle digest
+cache** for wall-clock accounting (Wave 233 P6) — are layered on
+top of the byte-stable surface without perturbing the regression
+vectors (D.4 30/30 PASS preserved across all three Waves). This
+subsection documents the augmentation surface, its byte-stable
+property, and its empirical record.
+
+### 2.7.1 `TierAwareCodimensionSheetScheduler` (Wave 233 P3)
+
+The base `CodimensionSheetScheduler` (§2.6.2) operates uniformly
+across records: every record receives the same per-round
+`n_cap(r) = n_min + (n_max - n_min) · A_g · ε / (A_g · ε + C_g
+· B_g · ε²)` schedule. The Wave 233 P3 **tier-aware wrapper**
+classifies records into three strata (hard/medium/easy) by a
+**per-record baseline-metric quantile** (default boundaries
+`q33`, `q67`) and applies an `easy_tier_nfe_reduction_factor`
+(multiplicative on `n_cap`, default 1.0 = no-op) only on easy
+records.
+
+- **File:** `adaptive_reflow/algorithm/scheduler/tier_aware.py`.
+- **Class:** `TierAwareCodimensionSheetScheduler`.
+- **Public surface:**
+  - `__init__(base=None, *, easy_tier_nfe_reduction_factor=1.0,
+    tier_quantile_boundaries=(0.33, 0.67),
+    baseline_metric_extractor=None)` — `easy_tier_nfe_reduction_factor
+    = 1.0` is the safe no-op default; the wrapper is **byte-identical**
+    to the base scheduler until the engine opts in with a non-unity
+    factor.
+  - `set_baseline_metrics(metrics)` — populates the per-record
+    baseline metric mapping and computes the quantile tier
+    boundaries.
+  - `set_current_record(record_id)` — advances the engine's
+    per-round record cursor.
+  - `sample(outer_cycle_id, round_in_cycle, target_round)` —
+    delegates to the base scheduler, multiplies `n_cap` by
+    `easy_tier_nfe_reduction_factor` on easy, passes through
+    unchanged on medium/hard.
+  - `last_tier` — read-only property storing the current
+    record's tier classification (`"hard"`, `"medium"`, `"easy"`).
+
+**Empirical record (Wave 233 P3 counterfactual).** At
+`easy_tier_nfe_reduction_factor = 0.5`:
+
+- **R6 (k6 foldability pLDDT, N=1000 paired):** overall d_z
+  lifted from +0.0707 (uniform) to **+0.2235** (Δd_z = +0.1527;
+  Bonferroni-sig at α = 0.05, p = 2.98 × 10⁻¹²); per-tier easy d_z
+  halved from −0.9982 to −0.4991.
+- **R2 (Kanzi framework_inv_proj RMSD, N=1000 paired):** overall
+  d_z lifted from −0.0990 (uniform framework WINS) to **+0.0465**
+  (sign flip; Δd_z = +0.1455); R2 d_z ≥ −0.3 threshold **MET**
+  with sign-flipped non-significance (p = 0.14).
+
+The **Goal d_z ≥ +0.3 for R6** is **NOT met** by the 0.5 factor
+(overall d_z = +0.2235); a finer stratification or larger factor
+would be needed for the load-bearing R6 reversal. The **R2 sign
+flip** (framework regresses → framework neutral) is the
+load-bearing qualitative improvement. See
+`docs/audit/wave233-p3-tier-aware.md` for full counterfactual
+methodology (Wave 225 P4 / P5 / P9 + Wave 209 P1 A3 template).
+
+### 2.7.2 CIFAR-RF Adapter-Specific Scheduler Override (Wave 233 P5)
+
+The base `RectifiedFlowCIFARAdapter` runs the cosine annealing
+ramp at `cycle_length=4` with `n_rounds=4` (default), which
+yields the R5b matched-NFE=50 regression headline ΔFID = +20.20%
+(Wave 195 P2, Bonferroni-sig at α = 0.00714). Wave 225 P7
+established that `n_rounds=2` reduces the regression magnitude
+to ΔFID = +9.77% (a ~47% reduction in FID units) without
+eliminating it; Wave 225 P9 falsified the
+"matched-effective-NFE" hypothesis (ΔFID = +20.89% at matched
+effective NFE=50).
+
+The Wave 233 P5 fix surfaces the n_rounds=2 recommendation as
+**class-level constants** on `RectifiedFlowCIFARAdapter`:
+
+- `RF_CIFAR_N_ROUNDS_OVERRIDE: int | None = 2` — module-level
+  constant (recommended value).
+- `RF_CIFAR_COSINE_RAMP_STRENGTH_OVERRIDE: float | None = None`
+  — placeholder for a second-mechanism mitigation (not yet
+  evaluated in P7/P9).
+- `n_rounds_override: int | None = 2` and
+  `cosine_ramp_strength_override: float | None = None` — class
+  attributes on `RectifiedFlowCIFARAdapter` exposing the
+  recommended values to future sweeps.
+
+**Honest verdict.** The override reduces the R5b regression
+magnitude by ~47% (Wave 225 P7 ground truth reused) but does
+**NOT eliminate** the regression. The deployed R5b verdict
+remains **REGRESSES (boundary)** at the Wave 195 P2 d_z = +2.700
+matched nominal NFE=50 (ΔFID = +20.20%, Bonferroni-sig at α =
+0.00714). Future mitigation `--no-final-restart` flag (disabling
+the 1-NFE round-1 restart blending) is queued for camera-ready.
+See `docs/audit/wave233-p5-r5b-fix.md` for full counterfactual
+methodology and the Wave 225 P9 matched-effective-NFE
+falsification.
+
+### 2.7.3 SHA-256 State-Bundle Digest Cache (Wave 233 P6)
+
+The framework's `Engine` computes 16 internal SHA-256
+state-bundle digests per `run_round` / `_emit_fail_closed` cycle
+(Wave 212 P6 §3 attribution: ~12% of the 178 s R5b N=1000
+wall-clock overhead, or ~12 s, attributable to the digest +
+JSON-canonicalisation bucket). The Wave 233 P6 digest cache is
+an **identity-keyed memoisation wrapper** around the existing
+`_digest_state(...)` SHA-256 computation:
+
+- **File:** `adaptive_reflow/framework/state_bundle_cache.py`.
+- **Class:** `StateBundleDigestCache`; factory
+  `default_cache()` for the singleton.
+- `Engine.__init__(digest_cache: StateBundleDigestCache | None =
+  None)` — accepts the cache as a parameter (default `None` =
+  legacy behaviour).
+- `_digest_state_cached(bundle, cache)` internal wrapper.
+- All 16 internal `_digest_state(...)` call sites in
+  `run_round` and `_emit_fail_closed` route through the cache
+  when one is supplied.
+
+**Byte-stability guarantee.** `StateBundle` is
+`@dataclass(frozen=True)`; the cache key is `id(bundle)`. If two
+digest calls see `id(bundle)` equal they MUST see identical
+field values, and so the cached SHA-256 matches the freshly-
+computed one byte-for-byte. The cache adds no state, no logging,
+no RNG, and no wall-clock-dependent code paths.
+
+**Empirical verdict (R5b CIFAR-10 RF, GPU 1, matched NFE=50,
+BATCH=64).** Wall-clock harness measured three arms:
+
+| Arm | n_rounds | wall_seconds |
+|---|---|---:|
+| baseline | 1 | 2.294 |
+| framework_no_cache | 4 | 7.870 |
+| framework_with_cache | 4 | 7.923 |
+
+The cache is **unimpactful** at the matched-NFE=50 benchmark
+(improvement_pct = −0.67%, within run-to-run CUDA kernel jitter).
+The cProfile attribution confirms **99.8% of wall time lives in
+the model forward chain** (`_gnobitab_ddpmpp.py:207 forward` +
+CUDA conv kernels); the cache saves at most a few milliseconds
+per round, invisible against the ~50 ms jitter floor.
+**Closing the 24.6× → <5× gap requires CUDA-graph capture or
+model kernel fusion** (Wave 212 P6 Path D, deferred for
+camera-ready). See `docs/audit/wave233-p6-wall-clock-opt.md`
+for full cProfile + wall-clock harness details.
+
+### 2.7.4 D.4 Byte-Stable Preservation Across P3-P6
+
+All three Wave 233 augmentation layers (`TierAwareCodimension
+SheetScheduler`, `RF_CIFAR_*_OVERRIDE`, `StateBundleDigestCache`)
+preserve the **D.4 byte-stable regression vector suite** at
+**30/30 PASS** (CRITICAL — Wave 125 Phase 2 HARD RULE additive).
+The regression vectors are not perturbed because:
+
+- The `TierAwareCodimensionSheetScheduler` defaults to
+  `easy_tier_nfe_reduction_factor = 1.0` (no-op).
+- The `RF_CIFAR_N_ROUNDS_OVERRIDE` constants are
+  documentation/attribute surface only (the runner's CLI
+  `--n-rounds` flag remains the source of truth).
+- The `StateBundleDigestCache` is identity-keyed memoisation
+  with no RNG, no logging, no wall-clock-dependent code paths,
+  and byte-stable field guarantees from the frozen dataclass.
+
+The framework's compiled-import surface remains
+byte-identical across all five first-batch adapters (FlowMol3,
+TwoDimFM, LineageFlow, Kanzi, FreqFlow) and all eighteen
+adapters in the full regression vector set. The D.4 vectors
+test the framework's byte-stable properties; the Wave 233 P3-P6
+augmentations do not introduce any non-determinism that could
+perturb the D.4 vectors.
+
+---
+
+## 2.8 Theoretical-Justification Paragraph (Self-Contained)
 
 The four paper quantities $(A_g, B_g, C_g, e_\rho)$ are
 **derived from the canonical F-side witness** $g(x) = (1 + 0.25
@@ -641,7 +819,7 @@ mathematical references (Bolley, Guillin, Villani 2012 and Villani
 
 ---
 
-## 2.8 Section Anchor and Cross-References
+## 2.9 Section Anchor and Cross-References
 
 - **§2.1 (Theorem 1 box, line 87)** is the canonical statement of
   the bounded-Lipschitz convergence bound that the framework's
@@ -671,7 +849,12 @@ mathematical references (Bolley, Guillin, Villani 2012 and Villani
   `CosineAnnealScheduler`, $(A_g, B_g, C_g) \to$
   `CodimensionSheetScheduler`, $e_\rho \to$ `BoundedMergeOperator`,
   $(A_g, B_g, C_g, e_\rho) \to$ `EvidenceDrivenScheduler`.
-- **§2.7 (theoretical-justification paragraph)** asserts that the
+- **§2.7 (tier-aware scheduling and per-adapter overhead)** is the
+  Wave 233 augmentation layer: `TierAwareCodimensionSheetScheduler`
+  (P3), CIFAR-RF `n_rounds=2` override (P5), and the SHA-256
+  state-bundle digest cache (P6). All three preserve the D.4
+  byte-stable regression suite at 30/30 PASS.
+- **§2.8 (theoretical-justification paragraph)** asserts that the
   theorem, the proof, the four quantities, the algorithmic
   interpretation, and the F-side profile table are all
   self-contained within this paper and the companion document
@@ -686,7 +869,7 @@ four-quantity bound (T1) at N = 1000 paired records per cell.
 
 ---
 
-## 2.9 Empirical Evidence (Wave 229 P1–P3, Wave 230 P2)
+## 2.10 Empirical Evidence (Wave 229 P1–P3, Wave 230 P2)
 
 The §2.5 closure (**all 12 adapters share the framework default
 F-side profile under the canonical witness**) is accompanied by

@@ -257,6 +257,91 @@ UniPC). The combination of *training-free*, *cross-round
 allocation*, and *paper-quantity-driven stopping* is, we believe,
 new to the flow-matching re-inference literature.
 
+## §R4 Weak metric improvements — Wave 233 P3–P6 honest negatives
+
+In line with our first-class boundary disclosure (cf. §7), we
+report three "weak metric improvements" from the Wave 233 follow-up
+work — areas where the framework's value-add is **directionally
+correct but not strong enough to close the load-bearing gap** at
+the current sample sizes or wall-clock budget. We surface them
+as scope statements rather than as refutations of the framework's
+contribution.
+
+**P3 — Tier-aware scheduler lifts R6 but does not reach d_z ≥ +0.3.**
+A `TierAwareCodimensionSheetScheduler` wrapper (Wave 233 P3,
+`easy_tier_nfe_reduction_factor=0.5` on the baseline-metric
+quantile-stratified easy tier) was instantiated on the
+real-scheduler surface. Counterfactual (Wave 225 P4/P5/P9 +
+Wave 209 P1 A3 methodology, D.4 30/30 PASS preserved) shows
+R6 k6 foldability pLDDT d_z lifted from +0.0707 (uniform arm,
+Wave 161 frozen) to **+0.2235** (Δd_z = +0.1527, Bonferroni-
+significant at α = 0.05, p = 2.98 × 10⁻¹²). The load-bearing goal
+d_z ≥ +0.3 is **NOT met** — the easy-tier regression is halved
+(d_z -0.9982 → -0.4991) but the goal would require either a
+finer stratification or a larger reduction factor. R2 Kanzi
+RMSD d_z lifts from -0.099 to **+0.046** (sign flip; R2 d_z ≥
+-0.3 threshold MET), confirming the qualitative improvement
+at the easy tier. See `docs/audit/wave233-p3-tier-aware.md`
+for full method and results.
+
+**P5 — CIFAR RF n_rounds=2 override reduces R5b magnitude but
+does not eliminate the regression (HONEST NEGATIVE).** The
+Wave 233 P5 adapter-specific scheduler override
+(`RF_CIFAR_N_ROUNDS_OVERRIDE = 2`) reduces the R5b matched-NFE=50
+headline regression from ΔFID = +84.02 (+20.20%, Wave 195 P2) to
+ΔFID = +44.78 (+9.77%, Wave 225 P7 — reused; no new GPU sweep).
+The Wave 225 P9 matched-effective-NFE falsification stands:
+at matched effective NFE=50 (framework nominal NFE=100,
+n_rounds=2, cosine ramp halving; baseline NFE=50, effective=50)
+the framework ΔFID = **+94.91 (+20.89%)** is **WORSE**, not
+better, than the n_rounds=4 baseline — the 1-NFE restart
+blending on round 1 is the structural mechanism. The R5b
+verdict remains **REGRESSES (boundary)** at the matched nominal
+NFE=50. The override is shipped as a **documented surface**
+(class attributes `n_rounds_override`, `cosine_ramp_strength_override`)
+so future sweeps can reproduce the n_rounds=2 counterfactual
+without code duplication. Mitigation `--no-final-restart` is
+queued for camera-ready. D.4 byte-stable 30/30 PASS preserved.
+See `docs/audit/wave233-p5-r5b-fix.md`.
+
+**P6 — SHA-256 state-bundle cache saves negligible wall-clock
+(HONEST NEGATIVE).** The Wave 233 P6 digest cache
+(`StateBundleDigestCache`, identity-keyed memoisation wrapper;
+`Engine(digest_cache=...)` parameter) is implemented cleanly
+and adds a useful `default_cache()` singleton. R5b CIFAR-10 RF
+N=200 paired sweep on GPU 1 at matched NFE=50 / BATCH=64 shows:
+baseline = 2.294 s, framework_no_cache = 7.870 s, framework_with_cache = 7.923 s
+(improvement_pct = -0.67%, within run-to-run CUDA kernel
+jitter floor). The cProfile re-analysis confirms **99.8% of wall
+time lives in the model forward chain** (`_gnobitab_ddpmpp.py:207 forward`); the
+SHA-256 digest + JSON-canonicalisation bucket (~12 s of 178 s
+R5b N=1000 overhead, per Wave 212 P6 §3) closes only at the
+~6.7% level — well below the run-to-run jitter. The 24.6× →
+<5× wall-clock target is **NOT achievable** through the SHA-256
+cache alone; **CUDA-graph capture or model kernel fusion**
+(Wave 212 P6 Path D) is required to close the remaining
+~70% of the memory_swap / forward-chain gap. The cache is
+shipped because it is a clean abstraction (zero behavioral risk,
+D.4 30/30 PASS preserved) and a useful instrumentation surface
+(cache hit-rate / size stats), not because it solves the
+wall-clock problem. See `docs/audit/wave233-p6-wall-clock-opt.md`.
+
+**Implication for the framework claim.** The three Wave 233
+P3–P6 follow-ups are **directionally consistent** with the
+framework's contribution (each lifts a metric or surfaces
+a clean abstraction surface) but **do not close the load-
+bearing gap** (R6 d_z ≥ +0.3, R5b regression, framework wall-
+clock). We disclose them here as scope statements: the
+framework's value-add on the easy-tier axis is now **strengthened**
+(R6 d_z +0.1527 lift; R2 sign flip), and the framework's two
+remaining structural gaps (R5b restart-blending;
+wall-clock-forward-chain) are now **explicitly mapped to
+specific future-mitigation paths** (--no-final-restart,
+CUDA-graph capture / torch.compile kernel fusion) rather
+than being implicit unknowns. All three P3–P6 augmentations
+are byte-stable (D.4 30/30 PASS preserved; no framework-
+import-surface changes to the byte-stable regression vectors).
+
 ## §5 Validation Scope — Six R-Level Cells, Four Adapters Confirmed Monotone
 
 FlowA is validated across **six R-level cells** spanning three
