@@ -4,7 +4,7 @@
 [![D.4 byte-stable](https://img.shields.io/badge/D.4-30%2F30%20PASS-brightgreen)]() [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Zenodo](https://zenodo.org/badge/DOI/)](https://doi.org/10.5281/zenodo.TBD)
 
-**TL;DR.** FlowA is a *training-free, solver-agnostic* re-inference framework that wraps a deployed flow-matching checkpoint and adapts the inference loop to local velocity-field geometry. The framework exposes four paper-quantity invariants derived from a canonical F-side witness as a first-class scheduler input. Validated across **six R-level cells** spanning protein (LineageFlow), molecular 3D (FlowMol3), and image (CIFAR-10 RF, MNIST FM, 2D), with three core weaknesses reversed after the Wave 235-238 strengthening cycle: R5b REGRESSES → n_rounds=1 framework-WINS, R2 d_z +0.05 → +0.39 (medium-effect, +743%), R6 d_z +0.22 → +0.65 (large-effect, +189%, easy-tier regression eliminated), and the 24.6× wall-clock gap closed 76.8% via CUDA-graph capture.
+**TL;DR.** FlowA is a *training-free, solver-agnostic* re-inference framework that wraps a deployed flow-matching checkpoint and adapts the inference loop to local velocity-field geometry. The framework exposes four paper-quantity invariants derived from a canonical F-side witness as a first-class scheduler input. Validated across **six R-level cells** spanning protein (LineageFlow), molecular 3D (FlowMol3), and image (CIFAR-10 RF, MNIST FM, 2D), with three core weaknesses reversed after the structural reversal cycle: R5b REGRESSES → n_rounds=1 framework-WINS, R2 d_z +0.05 → +0.39 (medium-effect, +743%), R6 d_z +0.22 → +0.65 (large-effect, +189%, easy-tier regression eliminated), and the 24.6× wall-clock gap closed 76.8% via CUDA-graph capture.
 
 ---
 
@@ -14,17 +14,17 @@
 |---|---|---|---:|---:|---:|---|---|---|
 | R1 | LineageFlow (ICML 2026 protein FM) | `hmmscan_total_hits` N=1000 | 158 | 342 | **+116.46%** | p < 1e-10 | §7.6.1 | [ver.](verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/SOURCE.md) |
 | R2 | Kanzi (mol. DAE inv-proj) | RMSD d_z (N=1000 tier-aware) | +0.0465 | **+0.3927** | +743% | medium | §7.6.2 | [ver.](verification_outputs/wave235-p2-r2-uplift.json) |
-| R3 | FlowMol3 (ICML 2026 mol FM) | `fg_dev` 3-seed d_z | (Wave 242 P1 in flight) | TBD | TBD | TBD | §7.6.3 | [ver.](verification_outputs/wave242-p1-flowmol3-seed{43,44}-*.json) |
+| R3 | FlowMol3 (ICML 2026 mol FM) | `fg_dev` 3-seed d_z | (FlowMol3 seed-44 rescue in flight) | TBD | TBD | TBD | §7.6.3 | [ver.](verification_outputs/wave242-p1-flowmol3-seed{43,44}-*.json) |
 | R4 | 2D Two Moons | W₂ | 0.5029 | 0.4663 | **−7.28%** | Cohen's d_z = −2.93 | §7.6.4 | [ver.](verification_outputs/r4_2d_two_moons_w2_m7p28pct/) |
 | R5 | 2D Eight Gaussians | W₂ | 0.6606 | 0.5919 | **−10.40%** | Cohen's d_z = −3.13 | §7.6.5 | [ver.](verification_outputs/r5_2d_eight_gaussians_w2_m10p40pct/) |
 | R5b | CIFAR-10 Rectified Flow (n_rounds=1) | FID | 218.87 | 122.18 | **−2.53% to −0.66%** on 3/4 schedulers | framework-WINS | §7.6.7 | [ver.](verification_outputs/wave235-p1-r5b-fix.json) |
 | R6 | MNIST FM (tier-aware k6 pLDDT) | FID d_z | +0.224 | **+0.647** | +189% | large | §7.6.6 | [ver.](verification_outputs/wave235-p3-r6-uplift.json) |
 
-**Three core weaknesses reversed** (Wave 235 strengthening): R5b REGRESSES → n_rounds=1 framework-WINS, R2 d_z +743% uplift, R6 d_z +189% uplift with easy-tier regression eliminated.
+**Three core weaknesses reversed** (structural reversal phase): R5b REGRESSES → n_rounds=1 framework-WINS, R2 d_z +743% uplift, R6 d_z +189% uplift with easy-tier regression eliminated.
 
-**24.6× wall-clock gap → 1.26×** (Wave 236 P2): CUDA-graph capture closes 76.8% of framework/baseline wall-clock ratio (4.24× measured speedup on framework runner at matched-NFE=50, BATCH=64, n_rounds=4).
+**24.6× wall-clock gap → 1.26×** (wall-clock fix phase): CUDA-graph capture closes 76.8% of framework/baseline wall-clock ratio (4.24× measured speedup on framework runner at matched-NFE=50, BATCH=64, n_rounds=4).
 
-**Statistical methods** (Wave 234 upgrade): TOST equivalence, Jonckheere-Terpstra ordered test, BF01 Bayes factor, DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z = +1.117), non-inferiority test.
+**Statistical methods** (statistical methods upgrade): TOST equivalence, Jonckheere-Terpstra ordered test, BF01 Bayes factor, DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z = +1.117), non-inferiority test.
 
 ---
 
@@ -134,14 +134,14 @@ flowa-multistep-reinference/
 │   ├── adapters/            # 12 concrete FlowMatchingODEAdapter implementations
 │   ├── algorithm/           # 5-component scheduler architecture
 │   │   └── scheduler/       # CosineAnneal + CodimensionSheet + TierAware wrapper
-│   ├── framework/           # CUDA-graph capture (Wave 236 P2)
-│   ├── stats/               # TOST / JT / BF01 / meta / NI (Wave 234)
+│   ├── framework/           # CUDA-graph capture (wall-clock fix phase)
+│   ├── stats/               # TOST / JT / BF01 / meta / NI (statistical methods upgrade)
 │   └── contracts/           # frozen typed dataclasses (paper quantities)
 ├── docs/                    # paper drafts + audit trail
 │   ├── drafts/              # abstract + section-2 + paper-flattened-draft
 │   ├── audit/               # per-wave audit docs (wave127, wave149-244)
 │   ├── ARCHITECTURE.md      # governance doc
-│   ├── CLAIMS.md            # 76 ACTIVE claims (Wave 235-242)
+│   ├── CLAIMS.md            # 76 ACTIVE claims (structural reversal + statistical upgrade)
 │   ├── CONSOLIDATED_RESULTS.md  # §15.1-15.102 (full results ledger)
 │   ├── GATES.md             # engineering gates
 │   └── cover-letter-tnnls.md  # TNNLS cover letter (canonical source)
@@ -157,14 +157,14 @@ flowa-multistep-reinference/
 
 ---
 
-## Submission Gates (verified at Wave 244 P5)
+## Submission Gates (verified at final pre-push)
 
 | Gate | State | Verification |
 |---|---|---|
 | D.4 byte-stable regression | **30/30 PASS** | `tests/test_d4_regression_vectors.py` |
 | mkdocs build --strict | **0 warnings** | `mkdocs.yml` |
 | claims consistency | **no drift** (76 ACTIVE claims) | `tools/check_claims_consistency.py` |
-| Abstract word count | **183 words** (Wave 244 P3 trim from 328) | `docs/drafts/abstract-final.md` |
+| Abstract word count | **183 words** (abstract trim phase from 328) | `docs/drafts/abstract-final.md` |
 | Pytest | **5155 passed / 196 skipped** | `pytest tests/` |
 | Ruff lint (4-directory scope) | **0 findings** | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
 | Mypy type-check | **0 errors** | `mypy adaptive_reflow/` |
@@ -190,7 +190,7 @@ Reviewers re-verify any headline by comparing the embedded `verification_outputs
 
 The framework's R3 (FlowMol3) headline number `fg_dev` is computed by
 `data/FlowMol3/repo/flowmol/analysis/metrics.py` — a vendored upstream file.
-For the Wave 242 seed 44 rescue (N=200 single_mol NFE=250), some sampled
+For the FlowMol3 seed-44 rescue (N=200 single_mol NFE=250), some sampled
 molecules were plain rdkit `Mol` objects or partial `SampledMolecule`
 objects, both of which crashed the upstream `check_stability()` /
 `check_stability_midi()` / `analyze()` paths with `AttributeError`.
@@ -217,7 +217,7 @@ will be cross-checked against the expected numerical-variation envelope
 
 D.4 30/30 PASS is unaffected (the regression suite does not exercise the
 FlowMol3 metrics path). See `docs/audit/wave244-p5-metrics-patch.md` for
-the original Wave 244 P5 patch narrative.
+the original patch narrative.
 
 ---
 
@@ -278,4 +278,4 @@ For paper issues: open a GitHub issue or PR.
 
 ---
 
-**See [CHANGELOG.md](CHANGELOG.md) for the per-wave development history (Wave 149 → Wave 244).**
+**See [CHANGELOG.md](CHANGELOG.md) for the per-wave development history (waves 149 through 244).**
