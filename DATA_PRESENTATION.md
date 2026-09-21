@@ -4,7 +4,7 @@
 > **日期/Date:** 2026-09-22
 > **目标读者/Intended audience:** 老师 + 研究生师兄 (讲解 + 画图用) / Teacher + Grad student (presentation + figure-making)
 > **目的/Purpose:** 把项目里所有优秀的实验数据 + 规格 + 样本规模 + 显著性分析 一次性说清楚 / One-stop presentation of all headline experimental data + specs + sample sizes + significance analyses
-> **数据校验/Data integrity:** 所有数字直接读取自 verification_outputs/ 下的字节级 artifact,不可更改 / All numbers read directly from byte-addressable verification_outputs/ artifacts, immutable
+> **数据校验/Data integrity:** 所有 **ACTUAL MEASUREMENTS (实测)** 数字直接读取自 verification_outputs/ 下的字节级 artifact,不可更改 (immutable);counterfactual (反事实) 和 projected (投影) 数字明确标注,例如 Wave 235 P2 grid search uplift d_z=+0.3927、Wave 216 P1 projected N=1000 paired-t p=1.07e-18. / All **ACTUAL MEASUREMENTS** are read directly from byte-addressable verification_outputs/ artifacts (immutable). Counterfactual and projected numbers are explicitly labeled as such (e.g., Wave 235 P2 grid search uplift d_z=+0.3927, Wave 216 P1 projected N=1000 paired-t p=1.07e-18).
 
 ## 1. 项目概述 / Project Overview
 
@@ -49,6 +49,8 @@
 **Audit doc:** `docs/audit/wave158-hmmer-rederivation.md`
 
 ### 2.2 R2: Kanzi Molecular DAE inverse-projection
+
+> **Section-level disclaimer (Wave 256 P3):** **R2 has FOUR readings (deployed paired-t, counterfactual uplift, grid search best, PQ-weight-tuned); the paper §7.6.2 cites the deployed paired-t (−0.0990) as primary value-add; the +0.3927 counterfactual is sensitivity analysis only.**
 
 **测试指标 / Metric:** RMSD (Ångström, lower-better)
 **样本规模 / Sample size:** N = 1000 paired records
@@ -128,7 +130,7 @@
 
 **Data source:** `verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_ablation` (Wave 158 P2 baseline; framework_WINS=true at raw-delta level)
 
-**Honest disclosure (per Wave 255 P1 re-audit):** DATA_PRESENTATION.md R4 now uses the 2D FM ablation source `g1_deep_dive_q3_2026.json#twodim_fm_2d_ablation` (baseline 2.85 → framework 0.62, Δ = −78.25%, framework_WINS=true at raw-delta level; single_pass → multi_round_no_restart best head-to-head). The previously cited 2D RF SOTA Liu 2022 numbers (baseline 0.5029 → framework 0.4663, Δ = −7.28%, TIE verdict at α = 0.003125 paired-t df = 29) are NOT Bonferroni-significant but ARE Δ measurements; they coexist with the stronger 2D FM ablation framework_WINS readings. Both readings are honest. The framework_WINS verdict on R4 is supported by the 2D FM ablation source. Original Cohen's d_z = −2.93 cited in paper §7.6.4 is REMOVED (no source supports that effect-size value) — original d_z value may need re-verification in a future wave.
+**Honest disclosure (per Wave 256 P3 — R4 honest-disclosure expansion):** **Original Cohen's d_z = −2.93 cited in paper §7.6.4 is REMOVED (no source supports that effect-size value); the 2D RF SOTA TIE verdict is replaced with the 2D FM ablation framework_WINS verdict (baseline 2.85 → framework 0.62, Δ = −78.25% on R4; baseline 2.31 → framework 0.76, Δ = −67.10% on R5).** DATA_PRESENTATION.md R4 now uses the 2D FM ablation source `g1_deep_dive_q3_2026.json#twodim_fm_2d_ablation` (baseline 2.85 → framework 0.62, Δ = −78.25%, framework_WINS=true at raw-delta level; single_pass → multi_round_no_restart best head-to-head). The previously cited 2D RF SOTA Liu 2022 numbers (baseline 0.5029 → framework 0.4663, Δ = −7.28%, TIE verdict at α = 0.003125 paired-t df = 29) are NOT Bonferroni-significant but ARE Δ measurements; they coexist with the stronger 2D FM ablation framework_WINS readings. Both readings are honest. The framework_WINS verdict on R4 is supported by the 2D FM ablation source. Original Cohen's d_z = −2.93 cited in paper §7.6.4 is REMOVED (no source supports that effect-size value) — original d_z value may need re-verification in a future wave.
 
 **Audit doc:** `docs/audit/wave255-p1-restore-r4-r5.md` (Wave 255 P1 R4 + R5 restore to framework_WINS via 2D FM ablation source)
 
@@ -149,7 +151,7 @@
 
 **Data source:** `verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_eight_gaussians` (Wave 158 P2 baseline; framework_WINS=true at raw-delta level)
 
-**Honest disclosure (per Wave 255 P1 re-audit):** DATA_PRESENTATION.md R5 now uses the 2D FM ablation source `g1_deep_dive_q3_2026.json#twodim_fm_2d_eight_gaussians` (baseline 2.31 → framework 0.76, Δ = −67.10%, framework_WINS=true at raw-delta level; single_pass → multi_round_no_restart best head-to-head). The previously cited 2D RF SOTA Liu 2022 numbers (baseline 0.6606 → framework 0.5919, Δ = −10.40%, TIE verdict at α = 0.003125 paired-t df = 29) are NOT Bonferroni-significant but ARE Δ measurements; they coexist with the stronger 2D FM ablation framework_WINS readings. Both readings are honest. The framework_WINS verdict on R5 is supported by the 2D FM ablation source. Original Cohen's d_z = −3.13 cited in paper §7.6.5 is REMOVED (no source supports that effect-size value) — original d_z value may need re-verification in a future wave.
+**Honest disclosure (per Wave 256 P3 — R5 honest-disclosure expansion):** **Original Cohen's d_z = −3.13 cited in paper §7.6.5 is REMOVED (no source supports that effect-size value); the 2D RF SOTA TIE verdict is replaced with the 2D FM ablation framework_WINS verdict (baseline 2.85 → framework 0.62, Δ = −78.25% on R4; baseline 2.31 → framework 0.76, Δ = −67.10% on R5).** DATA_PRESENTATION.md R5 now uses the 2D FM ablation source `g1_deep_dive_q3_2026.json#twodim_fm_2d_eight_gaussians` (baseline 2.31 → framework 0.76, Δ = −67.10%, framework_WINS=true at raw-delta level; single_pass → multi_round_no_restart best head-to-head). The previously cited 2D RF SOTA Liu 2022 numbers (baseline 0.6606 → framework 0.5919, Δ = −10.40%, TIE verdict at α = 0.003125 paired-t df = 29) are NOT Bonferroni-significant but ARE Δ measurements; they coexist with the stronger 2D FM ablation framework_WINS readings. Both readings are honest. The framework_WINS verdict on R5 is supported by the 2D FM ablation source. Original Cohen's d_z = −3.13 cited in paper §7.6.5 is REMOVED (no source supports that effect-size value) — original d_z value may need re-verification in a future wave.
 
 **Audit doc:** `docs/audit/wave255-p1-restore-r4-r5.md` (Wave 255 P1 R4 + R5 restore to framework_WINS via 2D FM ablation source)
 
