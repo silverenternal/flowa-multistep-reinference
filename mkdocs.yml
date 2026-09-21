@@ -266,7 +266,7 @@ not_in_nav: |
   figures/*.md
   adr/*.md
   tpami_submission_checklist.md
-  cover-letter-tpami.md
+  cover-letter-tnnls.md
   internal/*.md
   internal/**/*.md
   drafts/*.md
