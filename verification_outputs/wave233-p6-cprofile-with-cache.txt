@@ -1,0 +1,23 @@
+         2275444 function calls (1857393 primitive calls) in 9.707 seconds
+
+   Ordered by: cumulative time
+   List reduced from 313 to 15 due to restriction <15>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    9.707    9.707 /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/algorithm/runner/runner.py:541(run)
+        4    0.000    0.000    9.703    2.426 /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/frame/engine.py:1191(run_round)
+       28    0.000    0.000    9.701    0.346 /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/frame/engine.py:842(_safe_adapter_call)
+        4    0.013    0.003    9.700    2.425 /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/rectified_flow_cifar.py:1042(solve_ode)
+      400    0.003    0.000    9.681    0.024 /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/rectified_flow_cifar.py:1021(_velocity_field)
+      400    0.007    0.000    9.679    0.024 /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/rectified_flow_cifar.py:334(_torch_velocity_field)
+187200/400    0.223    0.000    9.604    0.024 /home/hugo/codes/flowa-multistep-reinference/.venvs/lineageflow_venv/lib/python3.12/site-packages/torch/nn/modules/module.py:1747(_wrapped_call_impl)
+187200/400    0.336    0.000    9.603    0.024 /home/hugo/codes/flowa-multistep-reinference/.venvs/lineageflow_venv/lib/python3.12/site-packages/torch/nn/modules/module.py:1755(_call_impl)
+      400    0.009    0.000    9.602    0.024 /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/_gnobitab_ddpmpp.py:370(forward)
+      400    0.101    0.000    9.590    0.024 /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/_gnobitab_ddpmpp.py:302(forward)
+    17600    1.411    0.000    7.347    0.000 /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/_gnobitab_ddpmpp.py:207(forward)
+    46800    0.052    0.000    2.396    0.000 /home/hugo/codes/flowa-multistep-reinference/.venvs/lineageflow_venv/lib/python3.12/site-packages/torch/nn/modules/conv.py:553(forward)
+    46800    0.040    0.000    2.317    0.000 /home/hugo/codes/flowa-multistep-reinference/.venvs/lineageflow_venv/lib/python3.12/site-packages/torch/nn/modules/conv.py:536(_conv_forward)
+    46800    2.278    0.000    2.278    0.000 {built-in method torch.conv2d}
+    38000    0.039    0.000    1.780    0.000 /home/hugo/codes/flowa-multistep-reinference/.venvs/lineageflow_venv/lib/python3.12/site-packages/torch/nn/modules/normalization.py:312(forward)
+
+

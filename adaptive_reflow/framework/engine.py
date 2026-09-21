@@ -30,10 +30,19 @@ from adaptive_reflow.algorithm.runner.runner import (
     ReInferenceResult,
     ReInferenceRunner,
 )
+from adaptive_reflow.framework.state_bundle_cache import (
+    StateBundleDigestCache,
+    compute_state_bundle_digest,
+    default_cache,
+)
 
 __all__ = [
     "FORWARD_NOISE_INJECTED",
     "ReInferenceConfig",
     "ReInferenceResult",
     "ReInferenceRunner",
+    # Wave 233 P6 wall-clock optimisation: SHA-256 cache for StateBundle.
+    "StateBundleDigestCache",
+    "compute_state_bundle_digest",
+    "default_cache",
 ]

@@ -67,6 +67,18 @@ from adaptive_reflow.frame.adapter import (
 )
 from adaptive_reflow.schedule.cosine import memory_fraction_from_schedule
 
+# Wave 233 P6 — SHA-256 digest cache for StateBundle (identity-keyed
+# memoization). When ``digest_cache`` is supplied to ``Engine.__init__``
+# the engine routes its :func:`_digest_state` calls through the cache so
+# repeated calls on the same :class:`StateBundle` instance within a
+# single round return the cached value instead of recomputing the
+# JSON-canonical + SHA-256 path. See
+# :mod:`adaptive_reflow.framework.state_bundle_cache` for the
+# soundness argument (frozen dataclass + per-round fresh instance).
+from adaptive_reflow.framework.state_bundle_cache import (  # noqa: E402
+    StateBundleDigestCache as _StateBundleDigestCache,
+)
+
 # ---------------------------------------------------------------------------
 # Module-level constants
 # ---------------------------------------------------------------------------
@@ -360,6 +372,32 @@ def _digest_state(bundle: StateBundle | None) -> str:
         "provenance": list(bundle.provenance),
     }
     return _digest(payload)
+
+
+def _digest_state_cached(
+    bundle: StateBundle | None,
+    cache: _StateBundleDigestCache | None,
+) -> str:
+    """Return the SHA-256 digest of ``bundle`` (cached when ``cache`` is set).
+
+    Wave 233 P6 wrapper around :func:`_digest_state`. When ``cache`` is
+    ``None`` the wrapper is byte-equivalent to :func:`_digest_state` —
+    no caching is performed, every call recomputes the SHA-256. When
+    ``cache`` is supplied the wrapper uses ``cache.get_or_compute(bundle)``
+    which memoises the digest by ``id(bundle)``. Within a single round
+    the engine calls :func:`_digest_state` 2-4 times on the same bundle
+    reference; the cache reduces the SHA-256 cost to one computation
+    per (round, bundle) pair.
+
+    Soundness: a :class:`StateBundle` is a ``@dataclass(frozen=True)``
+    so its fields cannot mutate in place; if two digest calls see
+    ``id(bundle)`` equal they MUST see identical field values, so the
+    cached SHA-256 is guaranteed to match the freshly-computed one
+    byte-for-byte (D.4 byte-stability preserved).
+    """
+    if cache is None:
+        return _digest_state(bundle)
+    return cache.get_or_compute(bundle)
 
 
 def _digest_condition(delta: ODEConditionDelta | None) -> str:
@@ -946,6 +984,7 @@ class Engine:
         *,
         operation_steps: tuple[str, ...] = DEFAULT_OPERATION_STEPS,
         feature_flag: bool | None = None,
+        digest_cache: _StateBundleDigestCache | None = None,
     ) -> None:
         self._operation_steps = tuple(operation_steps)
         if not self._operation_steps:
@@ -954,6 +993,29 @@ class Engine:
         # engine emits a disabled-feature round trace and never calls
         # the adapter. ``None`` defaults to enabled.
         self._feature_flag = True if feature_flag is None else bool(feature_flag)
+        # Wave 233 P6 — SHA-256 digest cache for ``StateBundle``. When
+        # supplied (or when the caller explicitly constructs a cache
+        # via ``state_bundle_cache.default_cache()``), repeated calls to
+        # :func:`_digest_state` on the same ``StateBundle`` instance
+        # within a single round return the cached value instead of
+        # recomputing the JSON canonical form + SHA-256. ``None``
+        # disables the cache (default — preserves byte-stable behaviour
+        # for every existing call site and the D.4 byte-stability gate).
+        self._digest_cache: _StateBundleDigestCache | None = (
+            digest_cache if digest_cache is not None else None
+        )
+
+    @property
+    def digest_cache(self) -> _StateBundleDigestCache | None:
+        """Return the SHA-256 digest cache (or ``None`` if disabled).
+
+        Wave 233 P6 surface: callers (e.g. benchmark scripts) can read
+        the cache's hit / miss counters after a run via
+        ``engine.digest_cache.stats()`` to quantify the cache
+        effectiveness. Returns ``None`` when the cache is disabled so
+        callers can detect the disabled state without a sentinel.
+        """
+        return self._digest_cache
 
     # -- public properties -------------------------------------------------
 
@@ -1052,6 +1114,7 @@ class Engine:
         detached: StateBundle | None,
         condition_delta: ODEConditionDelta | None,
         prev_ledger_row_hash: str | None = None,
+        digest_cache: _StateBundleDigestCache | None = None,
     ) -> EngineRoundResult:
         """Build a fail-closed :class:`EngineRoundResult` for the happy path.
 
@@ -1068,6 +1131,11 @@ class Engine:
         source_round coercion through ``_safe_source_round`` so the
         RoundTrace and the LedgerRow see the exact same audit code
         sequence and the exact same int value).
+
+        Wave 233 P6 — accepts ``digest_cache`` so repeated digest calls
+        on the same ``bundle`` / ``initial_state`` / ``detached``
+        references inside the fail-closed path use the cache. Pass
+        ``None`` to disable caching (legacy behaviour preserved).
         """
         # Coerce source_round via ``_safe_source_round`` BEFORE freezing
         # the audit_codes tuple so a malformed bundle surfaces
@@ -1082,17 +1150,21 @@ class Engine:
         trace = RoundTrace(
             round_index=int(round_index),
             operation_steps=DEFAULT_OPERATION_STEPS,
-            source_bundle_digest=_digest_state(bundle),
+            source_bundle_digest=_digest_state_cached(bundle, digest_cache),
             applied_policy_hash=applied_policy_hash,
             initial_state_digest=(
-                _digest_state(initial_state) if initial_state is not None else ""
+                _digest_state_cached(initial_state, digest_cache)
+                if initial_state is not None
+                else ""
             ),
             condition_digest=_digest_condition(composed)
             if composed is not None
             else _digest_condition(condition_delta),
             integrator_trace=integrator_trace,
             endpoint_digest=(
-                _digest_state(detached) if detached is not None else ""
+                _digest_state_cached(detached, digest_cache)
+                if detached is not None
+                else ""
             ),
             detached=bool(detached.detach_proof) if detached is not None else False,
             audit_codes=codes,
@@ -1101,7 +1173,7 @@ class Engine:
         ledger = build_ledger_row(
             round_index=int(round_index),
             policy_hash=str(applied_policy_hash),
-            bundle_digest=_digest_state(bundle),
+            bundle_digest=_digest_state_cached(bundle, digest_cache),
             source_round=_safe_source_round(bundle, audit_codes),
             applied_policy_hash=str(applied_policy_hash),
             audit_codes=codes,
@@ -1235,7 +1307,7 @@ class Engine:
             trace = RoundTrace(
                 round_index=int(round_index),
                 operation_steps=self._operation_steps,
-                source_bundle_digest=_digest_state(bundle),
+                source_bundle_digest=_digest_state_cached(bundle, self._digest_cache),
                 applied_policy_hash="",
                 initial_state_digest="",
                 condition_digest="",
@@ -1248,7 +1320,7 @@ class Engine:
             ledger = build_ledger_row(
                 round_index=int(round_index),
                 policy_hash="",
-                bundle_digest=_digest_state(bundle),
+                bundle_digest=_digest_state_cached(bundle, self._digest_cache),
                 source_round=_safe_source_round(bundle, audit_codes),
                 applied_policy_hash="",
                 audit_codes=tuple(audit_codes),
@@ -1279,7 +1351,7 @@ class Engine:
             trace = RoundTrace(
                 round_index=int(round_index),
                 operation_steps=self._operation_steps,
-                source_bundle_digest=_digest_state(bundle),
+                source_bundle_digest=_digest_state_cached(bundle, self._digest_cache),
                 applied_policy_hash="",
                 initial_state_digest="",
                 condition_digest="",
@@ -1292,7 +1364,7 @@ class Engine:
             ledger = build_ledger_row(
                 round_index=int(round_index),
                 policy_hash="",
-                bundle_digest=_digest_state(bundle),
+                bundle_digest=_digest_state_cached(bundle, self._digest_cache),
                 source_round=_safe_source_round(bundle, audit_codes),
                 applied_policy_hash="",
                 audit_codes=tuple(audit_codes),
@@ -1419,7 +1491,7 @@ class Engine:
             trace = RoundTrace(
                 round_index=int(round_index),
                 operation_steps=self._operation_steps,
-                source_bundle_digest=_digest_state(bundle),
+                source_bundle_digest=_digest_state_cached(bundle, self._digest_cache),
                 applied_policy_hash=applied_policy_hash,
                 initial_state_digest="",
                 condition_digest=_digest_condition(condition_delta),
@@ -1432,7 +1504,7 @@ class Engine:
             ledger = build_ledger_row(
                 round_index=int(round_index),
                 policy_hash=str(applied_policy_hash),
-                bundle_digest=_digest_state(bundle),
+                bundle_digest=_digest_state_cached(bundle, self._digest_cache),
                 source_round=_safe_source_round(bundle, audit_codes),
                 applied_policy_hash=str(applied_policy_hash),
                 audit_codes=tuple(audit_codes),
@@ -1475,6 +1547,7 @@ class Engine:
                 detached=None,
                 condition_delta=condition_delta,
                 prev_ledger_row_hash=prev_ledger_row_hash,
+                digest_cache=self._digest_cache,
             )
 
         # 2. Apply restart distribution (beta=0 preserves the prior).
@@ -1527,6 +1600,7 @@ class Engine:
                 detached=None,
                 condition_delta=condition_delta,
                 prev_ledger_row_hash=prev_ledger_row_hash,
+                digest_cache=self._digest_cache,
             )
         applied_policy: FinalRestartPolicy = policy
         # F19 — precondition assert (closes the dead-code path on the
@@ -1577,6 +1651,7 @@ class Engine:
                 detached=None,
                 condition_delta=condition_delta,
                 prev_ledger_row_hash=prev_ledger_row_hash,
+                digest_cache=self._digest_cache,
             )
 
         # 3. Compose condition.
@@ -1600,6 +1675,7 @@ class Engine:
                 detached=None,
                 condition_delta=condition_delta,
                 prev_ledger_row_hash=prev_ledger_row_hash,
+                digest_cache=self._digest_cache,
             )
 
         # 4. Shape / frame / normalization mismatch gate.
@@ -1618,9 +1694,9 @@ class Engine:
             trace = RoundTrace(
                 round_index=int(round_index),
                 operation_steps=self._operation_steps,
-                source_bundle_digest=_digest_state(bundle),
+                source_bundle_digest=_digest_state_cached(bundle, self._digest_cache),
                 applied_policy_hash=applied_policy_hash,
-                initial_state_digest=_digest_state(initial_state),
+                initial_state_digest=_digest_state_cached(initial_state, self._digest_cache),
                 condition_digest=_digest_condition(composed),
                 integrator_trace=None,
                 endpoint_digest="",
@@ -1631,7 +1707,7 @@ class Engine:
             ledger = build_ledger_row(
                 round_index=int(round_index),
                 policy_hash=str(applied_policy_hash),
-                bundle_digest=_digest_state(bundle),
+                bundle_digest=_digest_state_cached(bundle, self._digest_cache),
                 source_round=_safe_source_round(bundle, audit_codes),
                 applied_policy_hash=str(applied_policy_hash),
                 audit_codes=tuple(audit_codes),
@@ -1669,6 +1745,7 @@ class Engine:
                 detached=None,
                 condition_delta=condition_delta,
                 prev_ledger_row_hash=prev_ledger_row_hash,
+                digest_cache=self._digest_cache,
             )
 
         ok, errors = validate_integrator_trace(integrator_trace)
@@ -1698,6 +1775,7 @@ class Engine:
                 detached=None,
                 condition_delta=condition_delta,
                 prev_ledger_row_hash=prev_ledger_row_hash,
+                digest_cache=self._digest_cache,
             )
 
         # 7. Export endpoint. Wrapped separately so a raised exception
@@ -1721,6 +1799,7 @@ class Engine:
                 detached=None,
                 condition_delta=condition_delta,
                 prev_ledger_row_hash=prev_ledger_row_hash,
+                digest_cache=self._digest_cache,
             )
 
         detached = _safe_adapter_call(
@@ -1742,6 +1821,7 @@ class Engine:
                 detached=None,
                 condition_delta=condition_delta,
                 prev_ledger_row_hash=prev_ledger_row_hash,
+                digest_cache=self._digest_cache,
             )
 
         if not detached.detach_proof:
@@ -1786,12 +1866,12 @@ class Engine:
         trace = RoundTrace(
             round_index=int(round_index),
             operation_steps=self._operation_steps,
-            source_bundle_digest=_digest_state(bundle),
+            source_bundle_digest=_digest_state_cached(bundle, self._digest_cache),
             applied_policy_hash=applied_policy_hash,
-            initial_state_digest=_digest_state(initial_state),
+            initial_state_digest=_digest_state_cached(initial_state, self._digest_cache),
             condition_digest=_digest_condition(composed),
             integrator_trace=integrator_trace,
-            endpoint_digest=_digest_state(detached),
+            endpoint_digest=_digest_state_cached(detached, self._digest_cache),
             detached=bool(detached.detach_proof),
             audit_codes=tuple(audit_codes),
             extras=extras,
@@ -1799,7 +1879,7 @@ class Engine:
         ledger = build_ledger_row(
             round_index=int(round_index),
             policy_hash=str(applied_policy_hash),
-            bundle_digest=_digest_state(bundle),
+            bundle_digest=_digest_state_cached(bundle, self._digest_cache),
             source_round=_safe_source_round(bundle, audit_codes),
             applied_policy_hash=str(applied_policy_hash),
             audit_codes=tuple(audit_codes),

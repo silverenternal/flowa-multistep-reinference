@@ -1,0 +1,53 @@
+{
+  "schema": "wave233_p6_wall_clock_v1",
+  "wave": "Wave 233 P6",
+  "approach": "ReInferenceRunner.run() via ReInferenceConfig with StateBundleDigestCache (Wave 233 P6 fix) toggled on/off; cuda:1 pin; matched NFE=50; 4 rounds",
+  "config": {
+    "device": "cuda:1",
+    "nfe_total": 50,
+    "n_rounds": 4,
+    "nfe_per_round": 12.5,
+    "batch": 64,
+    "warmup": 4,
+    "seed": 0
+  },
+  "arms": {
+    "baseline": {
+      "arm": "baseline",
+      "n_rounds": 1,
+      "wall_seconds": 2.294176324037835,
+      "FID": NaN,
+      "sha_cache_used": false
+    },
+    "framework_no_cache": {
+      "arm": "framework_no_cache",
+      "n_rounds": 4,
+      "wall_seconds": 7.870179392048158,
+      "FID": NaN,
+      "sha_cache_used": false
+    },
+    "framework_with_cache": {
+      "arm": "framework_with_cache",
+      "n_rounds": 4,
+      "wall_seconds": 7.922949945903383,
+      "FID": NaN,
+      "sha_cache_used": true
+    }
+  },
+  "ratios": {
+    "ratio_no_cache_baseline": 3.430503274567995,
+    "ratio_with_cache_baseline": 3.4535052353598954,
+    "improvement_pct_on_framework": -0.670512719297651,
+    "delta_seconds": -0.052770553855225444
+  },
+  "cache_stats_with_cache": {
+    "hits": 4,
+    "misses": 12,
+    "size": 12,
+    "hit_rate": 0.25
+  },
+  "cache_stats_no_cache": null,
+  "anchor": {
+    "wallclock_ratio_anchor_24_6x": "Wave 191 P2 / Wave 209 P8 anchor at N=1000: baseline 37.83 ms vs framework 930.52 ms = 24.60x at matched NFE=50 (cited in wave209-p8-experiment-setup.md and wave217-p3-24x-fix.md)"
+  }
+}

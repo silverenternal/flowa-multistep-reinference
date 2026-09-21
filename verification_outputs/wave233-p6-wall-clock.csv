@@ -1,0 +1,4 @@
+arm,n_rounds,wall_seconds,FID,sha_cache_used
+baseline,1,2.294176324037835,nan,False
+framework_no_cache,4,7.870179392048158,nan,False
+framework_with_cache,4,7.922949945903383,nan,True
