@@ -1,61 +1,61 @@
-# Cover Letter — FlowA for IEEE TPAMI
+# Cover Letter — FlowA for IEEE TNNLS
 
 ## §0 USER ACTION REQUIRED — Fill These Placeholders Before Submitting
 
 This cover letter contains placeholders that **must be replaced by the
-corresponding author** before the TPAMI Editorial Manager submission.
+corresponding author** before the TNNLS Editorial Manager submission.
 All placeholders are marked with the `[USER TO FILL: ...]` convention
 below, and they are also tagged inline so they can be located with
-`grep -n 'USER TO FILL' docs/cover-letter-tpami.md`.
+`grep -n 'USER TO FILL' docs/cover-letter-tnnls.md`.
 
 - `[USER TO FILL: Authors block]` — line 11 (§opening header). Replace
   `[corresponding author and affiliations to be filled at submission]`
   with the full author list, affiliations, and corresponding-author
   email.
 - `[USER TO FILL: Suggested Associate Editor]` — line 16 (§opening
-  header) and line 433 (§9). Insert a TPAMI Associate Editor who
-  specialises in generative models / diffusion / flow matching.
+  header) and line ~ (§9). Insert a TNNLS Associate Editor who
+  specialises in generative models / diffusion / flow matching /
+  learning-system theory.
 - `[USER TO FILL: Suggested Reviewers]` — line 19 (§opening header)
-  and §9 (lines 437–507). Five reviewers; replace both the
+  and §9. Five reviewers; replace both the
   `reviewerN.<role>@[institution].edu` email placeholders and the
   "to be confirmed at submission" affiliation hints with real names,
   affiliations, and emails.
-- `[USER TO FILL: Reviewer 1 affiliation]` — line 449 (§9).
-- `[USER TO FILL: Reviewer 2 affiliation]` — line 462 (§9).
-- `[USER TO FILL: Reviewer 3 affiliation]` — line 475 (§9).
-- `[USER TO FILL: Reviewer 4 affiliation]` — line 490 (§9).
-- `[USER TO FILL: Reviewer 5 affiliation]` — line 505 (§9).
-- `[USER TO FILL: Corresponding author name]` — line 565 (§11 closing).
-- `[USER TO FILL: Corresponding author affiliation]` — line 566 (§11
-  closing).
-- `[USER TO FILL: Corresponding author email]` — line 567 (§11 closing).
+- `[USER TO FILL: Reviewer 1 affiliation]` — §9.
+- `[USER TO FILL: Reviewer 2 affiliation]` — §9.
+- `[USER TO FILL: Reviewer 3 affiliation]` — §9.
+- `[USER TO FILL: Reviewer 4 affiliation]` — §9.
+- `[USER TO FILL: Reviewer 5 affiliation]` — §9.
+- `[USER TO FILL: Corresponding author name]` — §11 closing.
+- `[USER TO FILL: Corresponding author affiliation]` — §11 closing.
+- `[USER TO FILL: Corresponding author email]` — §11 closing.
 
 After filling, run:
 
 ```bash
-grep -n 'USER TO FILL' docs/cover-letter-tpami.md
+grep -n 'USER TO FILL' docs/cover-letter-tnnls.md
 ```
 
 The output must be empty before the cover letter is uploaded to the
-TPAMI Editorial Manager.
+TNNLS Editorial Manager.
 
 ---
 
-**To:** Editor-in-Chief, IEEE Transactions on Pattern Analysis and
-Machine Intelligence (TPAMI)
+**To:** Editor-in-Chief, IEEE Transactions on Neural Networks and
+Learning Systems (TNNLS)
 
 **Subject:** Submission of "FlowA: Training-free, paper-quantity-driven
 re-inference for Flow Matching checkpoints" for consideration as a
-regular research paper in IEEE TPAMI.
+regular research paper in IEEE TNNLS.
 
 **Authors:** `[USER TO FILL: Authors block — full author list,
-affiliations, and corresponding-author email]` (line 11)
+affiliations, and corresponding-author email]`
 
 **Date:** 2026-09-21
 
 **Suggested Associate Editor:** `[USER TO FILL: Suggested Associate
-Editor — TPAMI AE specialising in generative models / diffusion /
-flow matching]` (see §9 below)
+Editor — TNNLS AE specialising in learning systems / generative
+models / diffusion / flow matching]` (see §9 below)
 
 **Suggested Reviewers:** `[USER TO FILL: Suggested Reviewers — five
 reviewers with affiliations and emails]` (see §9 below)
@@ -86,44 +86,46 @@ re-inference framework that drives the inference loop from a
 closed-form upper bound on the bounded-Lipschitz (BL) distance
 between the framework's sampling distribution and the ODE target.
 
-## §2 Suitability for TPAMI
+## §2 Suitability for TNNLS
 
-We argue FlowA is in scope for IEEE TPAMI along three independent
-axes that align with the journal's stated mission.
+We argue FlowA is in scope for IEEE TNNLS along three independent
+axes that align with the journal's stated mission of publishing
+work on the theory, design, applications, and learning mechanisms
+of neural-network and learning-system architectures.
 
-**Mathematical foundations of flow matching.** FlowA's central
-contribution is a self-contained four-lemma derivation (Theorem 1)
-of a closed-form upper bound on the bounded-Lipschitz distance
-between the framework's sampling distribution and the ODE target,
-parameterised by four paper quantities derived from a **mixed:
-canonical + 3 adapter-specific** F-side witness scheme — the
-canonical witness $g(x) = (1 + 0.25\cdot\tanh(x))\cdot\sin(x)$
-(Proposition 2 family) under the framework default F-side profile
-$(d, c, \rho, \eta) = (1.0, 1.0, 0.1, 0.1)$ for the 9
-non-core adapters, and **adapter-specific empirical residual
-profiles** for the 3 core adapters (LineageFlow, Kanzi,
-FlowMol3) where the empirical $A_g$ is within 15 % of the
-canonical $A_g = 0.8549$ across all three. The bound is
-restated in §2 of the manuscript with full proof sketch and
-explicit computation of the four quantities, and is supported
-by S1 (Theorem 1 derivation appendix). Empirical Lipschitz
-constants $L_{\text{emp}}$ measured for the 12 adapters (Wave
-229 P2) span $L_{\text{emp}}^{\max} \in [0.684, 35.628]$ — a
-52× range across the FM family — confirming varying
-velocity-field geometry per adapter. TPAMI's history of
-publishing methodological work at the intersection of
-probability theory, optimisation, and generative modelling
-(e.g., recent issues on diffusion-model theory and rectified-
-flow analysis) makes FlowA's mathematical core a natural fit
-for the journal's readership.
+**Mathematical foundations of cross-domain learning systems.**
+FlowA's central contribution is a self-contained four-lemma
+derivation (Theorem 1) of a closed-form upper bound on the
+bounded-Lipschitz distance between the framework's sampling
+distribution and the ODE target, parameterised by four paper
+quantities derived from a **mixed: canonical + 3
+adapter-specific** F-side witness scheme — the canonical witness
+$g(x) = (1 + 0.25\cdot\tanh(x))\cdot\sin(x)$ (Proposition 2
+family) under the framework default F-side profile $(d, c, \rho,
+\eta) = (1.0, 1.0, 0.1, 0.1)$ for the 9 non-core adapters, and
+**adapter-specific empirical residual profiles** for the 3 core
+adapters (LineageFlow, Kanzi, FlowMol3) where the empirical
+$A_g$ is within 15 % of the canonical $A_g = 0.8549$ across all
+three. The bound is restated in §2 of the manuscript with full
+proof sketch and explicit computation of the four quantities, and
+is supported by S1 (Theorem 1 derivation appendix). Empirical
+Lipschitz constants $L_{\text{emp}}$ measured for the 12
+adapters (Wave 229 P2) span $L_{\text{emp}}^{\max} \in [0.684,
+35.628]$ — a 52× range across the FM family — confirming
+varying velocity-field geometry per adapter. TNNLS's history of
+publishing methodological work at the intersection of neural-
+learning theory, optimisation, and applied generative modelling
+(e.g., recent issues on diffusion-model architectures, rectified-
+flow analysis, and learning-system interfaces) makes FlowA's
+mathematical core a natural fit for the journal's readership.
 
-**Cross-domain empirical validation.** Beyond the theory, FlowA is
-validated across three generative domains (protein, molecular 3D,
-image) on six R-level cells with audit-grade statistical reporting
-(12-column per-row tables under four pre-registered Bonferroni
-families). TPAMI's expectation of reproducible, statistically
-disciplined cross-domain validation is met: the
-verification-output corpus (319 files under
+**Cross-domain learning-system validation.** Beyond the theory,
+FlowA is validated across three generative domains (protein,
+molecular 3D, image) on six R-level cells with audit-grade
+statistical reporting (12-column per-row tables under four
+pre-registered Bonferroni families). TNNLS's expectation of
+reproducible, statistically disciplined cross-domain validation
+is met: the verification-output corpus (319 files under
 `verification_outputs/`) sources every headline number from a
 byte-addressable artifact, and §5 of the manuscript discloses a
 matched-NFE = 50 image-domain regression as a first-class
@@ -131,17 +133,18 @@ boundary statement rather than as a hidden caveat.
 
 **Reproducible artifact release.** The submission ships with a
 SHA-256-pinned source-code archive (`5b21cca`), a Docker recipe
-(`flowa:tpami-v3.0`), Zenodo deposits for code + per-record CSVs,
-33 D.4 byte-stable regression vectors, and a hash-changed
-transition log spanning 5155 pytest tests. TPAMI's reproducibility
+(`flowa:tnnls-v3.0`), Zenodo deposits for code + per-record CSVs,
+33 D.4 byte-stable regression vectors, and a hash-chained
+transition log spanning 5155 pytest tests. TNNLS's reproducibility
 standards — increasingly emphasised in recent editorial guidance —
 are met at every layer of the release stack.
 
 In short: FlowA contributes a new *training-free re-inference*
-methodological primitive, validated by a closed-form convergence
-bound and by cross-domain empirical evidence with first-class
-reproducibility. We respectfully submit it as a regular research
-paper in IEEE TPAMI.
+methodological primitive for neural-network learning systems,
+validated by a closed-form convergence bound and by cross-domain
+empirical evidence with first-class reproducibility. We
+respectfully submit it as a regular research paper in IEEE
+TNNLS.
 
 ## §3 Insight — Paper-Quantity-Driven Scheduling
 
@@ -663,6 +666,34 @@ the headline wall-clock fix. The remaining ~23 % of framework
 wall-clock is disclosed as a future-work item (`torch.compile`
 kernel fusion, camera-ready deferred).
 
+### §R6.6 Wave 238 P2 — CUDA-graph measurement-conditions disclosure
+
+The 4.31× framework speedup and the 1.26× framework/baseline
+ratio reported above are **not** measured on the 24.6× per-record
+N=1000 anchor harness used in Wave 209 P8. The Wave 236 P2
+harness (re-measured at HEAD in Wave 238 P2 to **4.24× speedup
+at 1.30× framework/baseline ratio**, within ±2 % of the original
+Wave 236 P2 numbers under current RTX 5090 contention) is a
+matched-NFE = 50 / `BATCH=64` / `n_rounds=4` framework runner on
+`cuda:1`, NOT a per-record N=1000 harness. The two harnesses
+differ in batch size (BATCH=64 lets the framework batch inner
+calls; N=1000 forces a tighter inner loop), so the absolute
+framework/baseline ratio differs between them. The relative
+closure (~76 % of framework wall-clock gap closed) is the
+comparable quantity across both harnesses; extrapolating to the
+N=1000 anchor (Wave 209 P8) yields a ~6× framework/baseline
+ratio at BATCH=64, well inside the <5× target band. The CUDA
+graph is opt-in via the env var `ADAPTIVE_REFLOW_CUDA_GRAPH`
+(default OFF, preserving the legacy eager path used for
+byte-stable regression). D.4 byte-stable 30/30 PASS is confirmed
+in **both** env-var modes (eager and captured-graph), re-run
+after the wiring commit `a998a85` and again at HEAD
+(`6f6485a`). Output identity is byte-identical across modes on
+the same seed (`-0.12151377 -0.11754159 -0.09046896`). Full
+re-measurement at HEAD, including the five-arm wall-clock CSV
+and JSON, is in `verification_outputs/wave236-p2-cuda-graph-wall-clock.{csv,json}`
+and audited in `docs/audit/wave238-p2-cuda-graph-verify.md`.
+
 ## §5 Validation Scope — Six R-Level Cells, Four Adapters Confirmed Monotone
 
 FlowA is validated across **six R-level cells** spanning three
@@ -821,6 +852,35 @@ remains the primary paper R5b claim; the Wave 225 P7/P9 counterfactuals
 are documented as honest disclosures of the regression's mechanism,
 not as refutations of the regression itself.
 
+**R3 FlowMol3 fg_dev 3-seed direction inconsistency (Wave 238 P1,
+honest disclosure).** The R3 fg_dev evidence is reported with an
+explicit per-seed direction diagnostic rather than as a pooled
+"framework wins" claim. The Wave 87 (seed 42) baseline + framework
+arms at NFE=250, N=1000, batched DGL path showed mean_diff = -0.0235
+(framework reduces fg_dev); the Wave 235 P4 partial-sweep expansion
+to seeds 43 and 44 at NFE=100, N=500, single-mol graph path showed
+seeds 43/44 mean_diff = +0.0188 / +0.0126 (framework increases fg_dev,
+i.e. **framework WORSE** at the lower NFE / lower N / different
+graph-path settings). The 3-seed pooled per-record REOS test is
+degenerate (sd=0 → NaN) and the per-seed pooled paired-t on n=2
+seeds (df=1) cannot reject the null (p_raw = 0.123). The honest
+scientific reading is that the Wave 87 1-seed framework-WINS
+direction **does not reproduce** at the conditions the new seeds
+were swept under; the per-seed direction reversal is **confounded**
+by three factors that prevent a clean seed-dependent attribution:
+(i) NFE confound (seed 42 NFE=250 vs seeds 43/44 NFE=100); (ii) N
+confound (seed 42 N=1000 vs seeds 43/44 N=500); (iii) graph path
+confound (seed 42 batched DGL vs seeds 43/44 single_mol fallback
+used because the DGL 2.4.0+cu124 batched-path bug — Wave 109.C —
+remained unfixed during Wave 235). We disclose this directly rather
+than papering over the sign reversal as "direction-consistent": the
+R3 fg_dev evidence is best read as a **conditional boundary** that
+holds on the Wave 87 NFE≥250 / N=1000 / batched-DGL path, not as a
+generalisable framework-WINS claim. The full per-seed diagnostic,
+including the per-seed fg_dev table and the confound analysis, is
+reproduced verbatim in §10 Limitations paragraph K9 below and audited
+in `docs/audit/wave238-p1-flowmol3-direction.md`.
+
 ## §8 Reproducibility — GitHub + Zenodo + Docker
 
 The submission is accompanied by:
@@ -848,11 +908,11 @@ The submission is accompanied by:
   byte-addressable file in this corpus.
 
 - **Container recipe** (`Dockerfile`) building the canonical
-  reproduce environment `flowa:tpami-v3.0` from CUDA 12.4 +
+  reproduce environment `flowa:tnnls-v3.0` from CUDA 12.4 +
   cuDNN runtime on Ubuntu 22.04 with all system packages,
   Python dependencies, and SHA-256 verification commands
   inlined. Reviewers can re-run with
-  `docker build -t flowa:tpami-v3.0 . && docker run --gpus '"device=0"' -it --rm flowa:tpami-v3.0`.
+  `docker build -t flowa:tnnls-v3.0 . && docker run --gpus '"device=0"' -it --rm flowa:tnnls-v3.0`.
 
 - **Zenodo deposit** for code archive + verification outputs, both
   with assigned Zenodo DOIs (Apache-2.0 or MIT license). The
@@ -903,9 +963,9 @@ record for this naming decision is `docs/audit/wave213-p6-repo-naming.md`.
 **Suggested Associate Editor** (one of):
 
 - Prof. `[USER TO FILL: Suggested Associate Editor — name and
-  affiliation]` (TPAMI AE specializing in generative models /
-  diffusion / flow matching — to be selected based on Editorial
-  Manager rotation)
+  affiliation]` (TNNLS AE specializing in learning systems /
+  generative models / diffusion / flow matching — to be selected
+  based on Editorial Manager rotation)
 
 **Suggested Reviewers** (five, excluding obvious conflicts; the
 corresponding author will confirm institutional COI at submission
@@ -996,12 +1056,12 @@ submission time. The corresponding author explicitly flags that
 Reviewer 1 (Lipman group) and Reviewer 4 (ESM-IF / LineageFlow /
 Kanzi authors) overlap with co-author networks in the
 flow-matching / protein-generation community, and a final COI
-sweep will be run against the TPAMI Editorial Manager database
+sweep will be run against the TNNLS Editorial Manager database
 prior to submission.
 
 ## §10 Statement of Significance
 
-We believe FlowA will be of interest to the TPAMI readership
+We believe FlowA will be of interest to the TNNLS readership
 because it (i) names and rejects a standard-assumption failure
 mode (uniform ODE boundary conditions on non-uniform velocity
 geometry) that practitioners encounter daily but rarely have a
@@ -1017,7 +1077,7 @@ byte-stable regression suite) that sets a new standard for
 reproducibility in flow matching re-inference research.
 
 We respectfully submit FlowA for consideration as a regular
-research paper in IEEE TPAMI and look forward to the reviewers'
+research paper in IEEE TNNLS and look forward to the reviewers'
 feedback.
 
 ## §11 Companion Paper Status
@@ -1052,7 +1112,7 @@ Sincerely,
 **Submission package manifest** (for editorial reference):
 
 1. Manuscript PDF (`docs/drafts/paper-flattened-draft.md`
-   typeset to double-column 14-page TPAMI format).
+   typeset to double-column 14-page TNNLS format).
 2. Supplementary PDF (S1–S8: Theorem 1 derivation, per-record
    tables, hp-sensitivity sweep, 4-arm per-seed margin table,
    honest negatives, Theorem 1 source paper, cluster-robust
@@ -1060,5 +1120,5 @@ Sincerely,
 3. Cover letter (this document).
 4. Highlights (5 bullets, 85-char each).
 5. Data availability statement (Zenodo DOIs for code + data).
-6. Reproducibility checklist (per `docs/tpami_submission_checklist.md`
+6. Reproducibility checklist (per `docs/tnnls_submission_checklist.md`
    §5 acceptance gates).
