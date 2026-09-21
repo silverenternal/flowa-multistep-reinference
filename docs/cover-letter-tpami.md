@@ -453,10 +453,10 @@ transparent.
 
 Sincerely,
 
-[Corresponding author]
-[Affiliation]
-[Email]
-[Date]
+`[Corresponding author]`
+`[Affiliation]`
+`[Email]`
+`[Date]`
 
 ---
 
