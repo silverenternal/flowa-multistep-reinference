@@ -23,8 +23,8 @@
 | DGL version | 2.4.0+cu124 (FlowMol3) |
 | D.4 byte-stable regression | 30/30 PASS |
 | mkdocs build | 0 warnings |
-| claims consistency | no drift (76 ACTIVE claims) |
-| Abstract word count | 183 words (TPAMI/TNNLS envelope ≤ 250) |
+| claims consistency | no drift (60 ACTIVE claims; +2 ACTIVE-INVERTED = 62 ACTIVE-class) |
+| Abstract word count | 185 words (TPAMI/TNNLS envelope ≤ 250) |
 | TEE (Trusted Execution Environment) | Docker recipe `flowa:tnnls-v3.0` |
 
 ## 2. R-level 实验数据 / R-level Experimental Data (7 R-level cells)
@@ -535,13 +535,13 @@ K1-K8 honest-negative disclosure preserved in paper §10.4 + CLM-071.
 | TNNLS submission package | `tnnls_submission/` (7 files) |
 | Audit-doc data compilation | `docs/audit/wave253-p1-data-gathering.md` (the just-written source) |
 
-## 9. Acceptance gates (verified at Wave 251 P3 + Wave 252 P5) / 验收门
+## 9. Acceptance gates (verified at Wave 251 P3 + Wave 252 P5 + Wave 254 P5) / 验收门
 
 - **D.4 byte-stable regression:** 30/30 PASS
 - **mkdocs build --strict:** 0 warnings
-- **claims consistency:** no drift (76 ACTIVE claims)
-- **Abstract word count:** 183 words (≤ 250 TNNLS envelope)
-- **131 unpushed commits** (Wave 251 + Wave 250 + Wave 246 + earlier)
+- **claims consistency:** no drift (60 ACTIVE claims; +2 ACTIVE-INVERTED = 62 ACTIVE-class)
+- **Abstract word count:** 185 words (≤ 250 TNNLS envelope; line 86 of `docs/drafts/abstract-final.md`, `text.split()` count)
+- **146 unpushed commits** (Wave 251 + Wave 250 + Wave 246 + Wave 247 + Wave 252 + Wave 253 + Wave 254 P1-P4 + earlier; per `git log --oneline @{u}.. | wc -l`)
 - **TNNLS submission package:** 7 files with real SHA-256
 - **Docker image:** `flowa:tnnls-v3.0` (待 freeze)
 
@@ -554,8 +554,8 @@ K1-K8 honest-negative disclosure preserved in paper §10.4 + CLM-071.
 ## 11. References / 引用
 
 - `docs/drafts/paper-flattened-draft.md` — full paper draft
-- `docs/drafts/abstract-final.md` — 183-word abstract
-- `docs/CLAIMS.md` — 76 ACTIVE claims
+- `docs/drafts/abstract-final.md` — 185-word abstract (Wave 246 P4 actual count via `text.split()` on line 86 body)
+- `docs/CLAIMS.md` — 60 ACTIVE claims (+2 ACTIVE-INVERTED = 62 ACTIVE-class)
 - `docs/audit/` — 572 historical audit docs
 - `docs/audit/wave253-p1-data-gathering.md` — just-written Wave 253 P1 data compilation (this doc's source)
 - `docs/internal/tnnls_submission_action_checklist.md` — TNNLS submission action checklist
