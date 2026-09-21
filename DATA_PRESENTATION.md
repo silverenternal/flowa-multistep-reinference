@@ -94,7 +94,7 @@
 
 | granularity | seed | N | NFE | path | d | type | p_raw | verdict |
 |---|---|---:|---:|---|---:|---|---|---|
-| per-arm aggregate | 42 | 999 vs 1000 | 250 | batched (NFE_BATCH=100) | -0.110 | d_s (Welch) | 1.42e-02 | **UNDERPOWERED** (R-level α=0.007143) |
+| per-arm aggregate | 42 | 999 vs 1000 | 250 | batched (NFE_BATCH=100) | -0.129 | d_s (Welch) | 0.00400 | **UNDERPOWERED** (R-level α=0.007143) |
 | per-record ACTUAL | 42 | 200 | 250 | batched | -0.285 | d_z paired-t (df=199) | **8.03e-05** | **framework_WINS** (Bonferroni-significant) |
 | per-record PROJECTED | 42 | 1000 | 250 | batched | -0.285 | d_z paired-t (df=999) | **1.07e-18** | **framework_WINS** (post-hoc power 1.0000) |
 | per-seed single_mol | 43 | 200 | 250 | single_mol (NFE_BATCH=1) | mixed (fg_dev Δ=+0.0025 framework slightly worse) | per-metric | n/a | per-metric mixed |
@@ -440,7 +440,7 @@
 ### 6.1 FlowMol3 R3 Confound / FlowMol3 R3 混淆变量
 
 - **DGL 2.4.0+cu124 batched path 有 graph ndata shape mismatch bug** (`DGLError: Expect number of features to match number of nodes (len(u)). Got N and N*10 instead` at all NFE_BATCH ∈ {2, 3, 4, 5, 10, 100}; only NFE_BATCH=1 single_mol path works)。修复路径:**用 single_mol path NFE_BATCH=1 + N=200** (约 2.2 GPU-h)
-- **R3 verdict 改为 conditional boundary**: only at NFE≥250 + N=1000 + batched path + Wave 87 seed 42 does framework show improvement (-0.285 at per-record granularity; aggregate fg_dev UNDERPOWERED d_s=−0.110 at the same condition)
+- **R3 verdict 改为 conditional boundary**: only at NFE≥250 + N=1000 + batched path + Wave 87 seed 42 does framework show improvement (-0.285 at per-record granularity; aggregate fg_dev UNDERPOWERED d_s=−0.129 at the same condition)
 - **Defense patch (Layer 5 修复):** Wave 244 P5 在 vendored upstream `data/FlowMol3/repo/flowmol/analysis/metrics.py` 上加了 defensive fallback (line 111 / 349-358 / 363 / 394-401 + Wave 245 P1 line 111 三层 fallback) **commit 进 repo (不是 .gitignore)**,Wave 249 P5 + Wave 251 P1 完整 audit trail
 
 ### 6.2 R5b CIFAR Conditional Boundary / R5b CIFAR 条件边界
