@@ -267,6 +267,8 @@ not_in_nav: |
   adr/*.md
   tpami_submission_checklist.md
   cover-letter-tnnls.md
+  RELEASE-NOTES.md
+  reproduce.md
   internal/*.md
   internal/**/*.md
   drafts/*.md
