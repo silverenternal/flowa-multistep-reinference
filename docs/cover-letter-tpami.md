@@ -122,9 +122,7 @@ adapter-specific $A_g$ within 15 % of the canonical witness
 (LineageFlow $A_g^{\text{emp}} = 0.860$, Kanzi $A_g^{\text{emp}} =
 0.746$, FlowMol3 $A_g^{\text{emp}} = 0.848$). $C_g$ and $e_\rho$
 match the canonical because (ρ, c, η) are framework defaults
-for all 12 adapters; $B_g^{\text{emp}} = 0$ for all three core
-adapters (the sorted empirical residuals are monotone and never
-cross zero). The paper quantities are computed via typed
+for all 12 adapters; $B_g^{\text{emp}} = 1.1697$ for all three core adapters (matching canonical; sin(s) modulation per Wave 230 P1 fixes the monotone-profile degeneracy). The paper quantities are computed via typed
 evaluators in `adaptive_reflow/theory/paper_quantities.py`. The
 framework's value-add is the **scheduler architecture** —
 `CosineAnnealScheduler` (consumes $A_g$ → smoothing-ramp

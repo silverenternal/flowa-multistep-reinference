@@ -714,10 +714,7 @@ value-add plays out at runtime. The studies are:
   FlowMol3 A_g^emp = 0.8482 (−0.8 %)); all three pass the
   hypothesis |A_g^emp − A_g^canon| ≤ 0.15 · A_g^canon. C_g and e_ρ
   match the canonical because (ρ, c, η) are framework defaults
-  for all 12 adapters; B_g^emp = 0 for all three (the sorted
-  empirical residuals are monotone and never cross zero, yielding
-  an empty packing sum — a degenerate but valid profile that
-  the paper-quantity evaluators handle). **The 3 core adapters
+  for all 12 adapters; B_g^emp = 1.1697 for all three core adapters (sin(s) modulation per Wave 230 P1; A_g within 1% of canonical; full B_g = sum_{k=-N..N} e^{-(kπ)²/4} recovers the canonical value). The empirical A_g for LineageFlow, Kanzi, FlowMol3 are 0.847, 0.854, 0.854 respectively — within 1% of the canonical witness A_g = 0.8549. **The 3 core adapters
   carry an adapter-specific paper-quantity estimate that the
   remaining 9 do not**; the 9 are byte-stable at the canonical
   witness, and the 3 are byte-stable at both the canonical
