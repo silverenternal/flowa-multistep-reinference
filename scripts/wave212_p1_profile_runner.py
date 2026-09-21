@@ -440,9 +440,7 @@ def _write_outputs(baseline_payload: dict[str, Any], framework_payload: dict[str
         "matched_compute_definition": (
             "NFE-matched: framework_total_nfe == baseline_nfe = 50; "
             "framework runs N_ROUNDS=4 rounds with nfe_per_round=12.5; "
-            "BATCH={batch}, WARMUP={warmup}, SEED={seed}.".format(
-                batch=BATCH, warmup=WARMUP, seed=SEED
-            )
+            f"BATCH={BATCH}, WARMUP={WARMUP}, SEED={SEED}."
         ),
         "sub_sweeps": {
             "baseline": {

@@ -162,7 +162,7 @@ def main() -> int:
         sorted_partial = sorted(f_partial.items(), key=lambda x: int(x[0].split("_")[1]))
         sorted_w196 = sorted(f_w196.items(), key=lambda x: int(x[0].split("_")[1]))
         n_check = min(len(sorted_partial), len(sorted_w196))
-        diffs = [abs(p[1] - w[1]) for p, w in zip(sorted_partial[:n_check], sorted_w196[:n_check])]
+        diffs = [abs(p[1] - w[1]) for p, w in zip(sorted_partial[:n_check], sorted_w196[:n_check], strict=False)]
         max_diff = max(diffs) if diffs else 0.0
         mean_diff = float(np.mean(diffs)) if diffs else 0.0
         byte_stable = max_diff < 1e-3

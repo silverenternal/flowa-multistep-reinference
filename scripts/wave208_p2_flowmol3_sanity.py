@@ -22,15 +22,16 @@ Per-record metrics:
 Paired tests on records where both arms valid: paired t-test, Wilcoxon signed-rank.
 Validity: McNemar (full 200 records).
 """
-import sys
-import json
 import csv
+import json
 import os
 import pickle
-import numpy as np
+import sys
 from pathlib import Path
+
+import numpy as np
 from rdkit import Chem
-from rdkit.Chem import QED, Crippen, AllChem, Descriptors
+from rdkit.Chem import QED, AllChem, Crippen, Descriptors
 from scipy import stats
 
 REPO = Path("/home/hugo/codes/flowa-multistep-reinference")
@@ -103,10 +104,10 @@ def main():
     print(f"Framework: persisted SMILES={len(fw_smiles)}, n_sampled={fw_meta['n_sampled']}/{fw_meta['n_target']}", flush=True)
 
     n_paired = min(len(bl_smiles), len(fw_smiles))
-    print(f"\nData truncation note (transparent): The canonical Wave 87 sweep output", flush=True)
-    print(f"caps the persisted smiles_list at 200 records (see tools/wave87_n1000_sweep.py:298: ", flush=True)
-    print(f"'smiles_list': smiles_list[:200],  # cap for the JSON dump).", flush=True)
-    print(f"The headline fg_dev aggregate at N=999/1000 is the Wave 87 canonical;", flush=True)
+    print("\nData truncation note (transparent): The canonical Wave 87 sweep output", flush=True)
+    print("caps the persisted smiles_list at 200 records (see tools/wave87_n1000_sweep.py:298: ", flush=True)
+    print("'smiles_list': smiles_list[:200],  # cap for the JSON dump).", flush=True)
+    print("The headline fg_dev aggregate at N=999/1000 is the Wave 87 canonical;", flush=True)
     print(f"the per-record analysis uses n_paired={n_paired} records.", flush=True)
 
     bl_m = per_record_metrics(bl_smiles[:n_paired])
@@ -132,7 +133,7 @@ def main():
 
     bl_reos = per_record_reos(bl_smiles[:n_paired], reos_obj, train_rate_lookup)
     fw_reos = per_record_reos(fw_smiles[:n_paired], reos_obj, train_rate_lookup)
-    print(f"\nPer-record REOS flag count:", flush=True)
+    print("\nPer-record REOS flag count:", flush=True)
     print(f"  Baseline: mean={np.mean(bl_reos['n_flags']):.3f} ± {np.std(bl_reos['n_flags']):.3f}", flush=True)
     print(f"  Framework: mean={np.mean(fw_reos['n_flags']):.3f} ± {np.std(fw_reos['n_flags']):.3f}", flush=True)
 
@@ -259,7 +260,7 @@ def main():
     print("\n" + "=" * 70, flush=True)
     print("Direction consistency vs k6/LineageFlow:", flush=True)
     print(f"  Per-record REOS flag count diff (framework - baseline): {reos_diff:+.4f}", flush=True)
-    print(f"  Negative = framework has fewer REOS flags per mol (closer to training = lower fg_dev)", flush=True)
+    print("  Negative = framework has fewer REOS flags per mol (closer to training = lower fg_dev)", flush=True)
     print(f"  Direction consistent with framework_wins on headline fg_dev: {direction_consistent}", flush=True)
     print(f"  Validity no-regression: {no_validity_regression}", flush=True)
     print("=" * 70, flush=True)

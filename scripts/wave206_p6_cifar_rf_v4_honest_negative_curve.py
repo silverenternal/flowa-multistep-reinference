@@ -57,7 +57,7 @@ import math
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
@@ -260,7 +260,7 @@ def build_pilot_report() -> dict:
     return {
         "wave": "206 P6",
         "task": "CIFAR-10 RF v4 honest-negative multi-NFE curve — pilot",
-        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "timestamp_utc": datetime.now(UTC).isoformat(),
         "mode": "pilot",
         "n_records": n_records,
         "nfe_pilot": nfe,
@@ -415,9 +415,9 @@ def main() -> int:
     if args.full:
         n = args.n_records or DEFAULT_N_RECORDS_FULL
         print(f"[full] Would run N={n} paired across {len(DEFAULT_NFE_POINTS)} NFE points × {len(DEFAULT_SCHEDULERS)} schedulers")
-        print(f"[full] Estimated wall-clock: ~21 GPU-hours on RTX 5090")
-        print(f"[full] MUST be queued to avoid GPU 0 contention with Wave 209 P6 R5a")
-        print(f"[full] See /tmp/wave206_p6_full_sweep.sh for the queued launch script")
+        print("[full] Estimated wall-clock: ~21 GPU-hours on RTX 5090")
+        print("[full] MUST be queued to avoid GPU 0 contention with Wave 209 P6 R5a")
+        print("[full] See /tmp/wave206_p6_full_sweep.sh for the queued launch script")
         return 0
 
     return 1

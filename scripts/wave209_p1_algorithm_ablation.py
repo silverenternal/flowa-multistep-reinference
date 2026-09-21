@@ -548,10 +548,10 @@ def a4_pq_compute_overhead() -> list[dict[str, Any]]:
 
     # Local import (the functions live in adaptive_reflow.theory.paper_quantities)
     from adaptive_reflow.theory.paper_quantities import (
-        sheet_evidence_A,
-        root_cell_packing_B,
-        per_cell_coefficient_C,
         exterior_gap_e_rho,
+        per_cell_coefficient_C,
+        root_cell_packing_B,
+        sheet_evidence_A,
     )
 
     # Define fixed inputs

@@ -19,9 +19,9 @@ The single-seed limit on FlowMol3 (DGL HTTP 403 blocks 3-seed re-run, see
 Wave 208 P2 dgl_downgrade_status) means the per-record d_z is read as
 DIRECTIONAL consistency only, not as a power upgrade.
 """
-import sys
-import json
 import csv
+import json
+import sys
 from pathlib import Path
 
 REPO = Path("/home/hugo/codes/flowa-multistep-reinference")
@@ -76,7 +76,7 @@ def main():
 
     with open(SANITY_JSON) as f:
         sanity = json.load(f)
-    print(f"Re-using Wave 208 P2 sanity data (byte-stable Wave 87 source).", flush=True)
+    print("Re-using Wave 208 P2 sanity data (byte-stable Wave 87 source).", flush=True)
     print(f"  n_paired={sanity['n_paired']}, n_both_valid={sanity['n_both_valid']}", flush=True)
 
     # Per-record d_z values (negative = framework closer to QM9 finger print distribution)
@@ -111,17 +111,17 @@ def main():
         and fm_per_record_fg_proxy_direction_consistent
     )
 
-    print(f"\nFlowMol3 aggregate (N=999/1000, unpaired, 1 seed):", flush=True)
+    print("\nFlowMol3 aggregate (N=999/1000, unpaired, 1 seed):", flush=True)
     print(f"  baseline fg_dev={FLOWMOL3_HEADLINE['aggregate_fg_dev']['baseline']:.4f}", flush=True)
     print(f"  framework fg_dev={FLOWMOL3_HEADLINE['aggregate_fg_dev']['framework']:.4f}", flush=True)
     print(f"  delta={FLOWMOL3_HEADLINE['aggregate_fg_dev']['delta']:+.4f}", flush=True)
     print(f"  Welch p={FLOWMOL3_HEADLINE['aggregate_fg_dev']['p_value_unpaired_welch']:.4g}", flush=True)
 
-    print(f"\nFlowMol3 per-record (N=200):", flush=True)
+    print("\nFlowMol3 per-record (N=200):", flush=True)
     print(f"  REOS n_flags: d_z={reos_d_z:+.4f} (mean_diff={reos_mean_diff:+.4f})", flush=True)
     print(f"  fg_contrib_proxy: d_z={fg_proxy_d_z:+.4f} (mean_diff={fg_proxy_mean_diff:+.4f})", flush=True)
 
-    print(f"\nDirection consistency (framework moves toward the better side):", flush=True)
+    print("\nDirection consistency (framework moves toward the better side):", flush=True)
     print(f"  k6 R6 hard pLDDT: framework > baseline (delta={K6_HEADLINE['mean_diff']:+.3f}, higher_is_better) → {direction_k6_consistent}", flush=True)
     print(f"  LineageFlow R1:   framework > baseline (delta={LINEAGEFLOW_HEADLINE['mean_diff']:+.3f}, higher_is_better) → {direction_lf_consistent}", flush=True)
     print(f"  FlowMol3 R3:      framework < baseline (delta={FLOWMOL3_HEADLINE['aggregate_fg_dev']['delta']:+.4f}, lower_is_better) → {framework_improves_flowmol3}", flush=True)
@@ -170,7 +170,7 @@ def main():
             "n=1000 unpaired Welch_t (1 seed; DGL HTTP 403 blocks 3-seed re-run; under-powered at this n)",
         ])
         # Per-record REOS proxy (N=200)
-        for key, d_z, mean_diff, label in [
+        for key, _d_z, _mean_diff, label in [
             ("reos_n_flags", reos_d_z, reos_mean_diff, "reos_flag_count"),
             ("reos_fg_contrib_proxy", fg_proxy_d_z, fg_proxy_mean_diff, "fg_contrib_marginal_proxy"),
         ]:

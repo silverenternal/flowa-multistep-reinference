@@ -26,7 +26,7 @@ import csv
 import json
 import math
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
@@ -198,7 +198,7 @@ def build_report() -> dict:
     return {
         "wave": "206 P6",
         "task": "CIFAR-10 RF v4 honest-negative multi-NFE curve",
-        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "timestamp_utc": datetime.now(UTC).isoformat(),
         "schema": "wave206_p6_cifar_rf_v4_honest_negative_curve.v1",
         "protocol": "v4 (--match-nfe sample, n_rounds=20, framework_samples=N)",
         "nfe_points": NFE_POINTS,

@@ -486,12 +486,12 @@ def load_r5b_nfe_curve():
     # Wall-clock from Wave 191 P2 (RTX PRO 6000 N=1000 NFE=50 anchor):
     # baseline 0.0343s/record, framework 0.907s/record. Linear NFE scaling
     # for baseline; framework overhead is fixed 4 rounds x NFE/4 each.
-    wc_b = {w: 0.0343 * (nfe / 50.0) for nfe, w in zip(fid_b.keys(), fid_b.keys())}
-    wc_f = {nfe: 0.907 * (nfe / 50.0) for nfe in fid_b.keys()}
+    wc_b = {w: 0.0343 * (nfe / 50.0) for nfe, w in zip(fid_b.keys(), fid_b.keys(), strict=False)}
+    wc_f = {nfe: 0.907 * (nfe / 50.0) for nfe in fid_b}
     # Actually round overhead: framework_total_NFE_per_record = NFE (matched)
     # but it does it in 4 rounds, so each round does NFE/4 calls.
     # Wall-clock is roughly 4 * (NFE/50 * baseline_per_record_time), so:
-    wc_f = {nfe: 4.0 * (nfe / 50.0) * 0.0343 * 1.05 for nfe in fid_b.keys()}  # +5% scheduler overhead
+    wc_f = {nfe: 4.0 * (nfe / 50.0) * 0.0343 * 1.05 for nfe in fid_b}  # +5% scheduler overhead
 
     return fid_b, fid_f, wc_b, wc_f
 

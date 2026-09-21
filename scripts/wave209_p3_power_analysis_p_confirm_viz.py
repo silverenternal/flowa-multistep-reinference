@@ -33,7 +33,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import scipy.stats
-from scipy.stats import nct, t as tdist
+from scipy.stats import nct
+from scipy.stats import t as tdist
 
 try:
     from statsmodels.regression.mixed_linear_model import MixedLM
@@ -216,7 +217,7 @@ def run_b2() -> dict[str, Any]:
         "",
         f"- **{len(rows_out)}** 4-arm cells (4 baselines × 2 NFE × 2 metrics).",
         f"- **Bonferroni alpha** = 0.05 / 16 = **{ALPHA_BONFERRONI_16:.6f}** (per-cell, two-sided).",
-        f"- **Target power** = 0.80.",
+        "- **Target power** = 0.80.",
         f"- **Maximum required N_seeds for d_z = 0.2** at alpha = 0.003125 = **{max_d02}** (paired t-test).",
         "- Per-record power at N = 1000 (k6_foldability_w161 R6 proxy d_z) is the confirmatory evidence.",
         "",
@@ -406,7 +407,7 @@ def run_b4() -> dict[str, Any]:
             tier_idx.append("medium")
         else:
             tier_idx.append("easy")
-    tier_map = dict(zip(qids, tier_idx))
+    tier_map = dict(zip(qids, tier_idx, strict=False))
 
     rows = []
     for label, diffs, metric, higher_better in [
@@ -426,7 +427,7 @@ def run_b4() -> dict[str, Any]:
             mask = np.array([tier_map[q] == label for q in qids])
             tier_name = label
         sub_diffs = diffs[mask] if metric == "pLDDT" else diffs[mask]
-        sub_cids = [cid_map[q] for q, m in zip(qids, mask) if m]
+        sub_cids = [cid_map[q] for q, m in zip(qids, mask, strict=False) if m]
         sub_diffs = np.array(sub_diffs)
         cr = cluster_robust_paired(sub_diffs, sub_cids)
         # Naive per-record
@@ -851,10 +852,7 @@ def run_b8() -> dict[str, Any]:
         return ranges
 
     def in_any_range(line_no: int, ranges: list[tuple[int, int]]) -> bool:
-        for s, e in ranges:
-            if s <= line_no <= e:
-                return True
-        return False
+        return any(s <= line_no <= e for s, e in ranges)
 
     # Excluded paths (this audit itself + any audit template files)
     excluded = {str(audit_md.relative_to(ROOT))}
@@ -901,7 +899,7 @@ def run_b8() -> dict[str, Any]:
                 })
                 n_violations += 1
         for pat in good_patterns:
-            for m in pat.finditer(text):
+            for _m in pat.finditer(text):
                 n_good += 1
 
     # Scope 2: docs/ (.md) — only count occurrences inside fenced code blocks
@@ -937,7 +935,7 @@ def run_b8() -> dict[str, Any]:
                         "context": text[max(0, m.start() - 30):m.end() + 30].replace("\n", "\\n"),
                     })
         for pat in good_patterns:
-            for m in pat.finditer(text):
+            for _m in pat.finditer(text):
                 n_good += 1
 
     # Scope 3: verification_outputs/ — JSON/CSV/JSONL treated as documentation

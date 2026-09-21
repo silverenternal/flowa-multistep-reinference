@@ -60,7 +60,7 @@ import json
 import math
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -197,7 +197,8 @@ def main() -> int:
     # ----- ckpt probe (always re-verify) -----
     if args.ckpt_probe:
         from adaptive_reflow.adapters.freqflow import (
-            freqflow_resolve_weights_path, FREQ_FLOW_CKPT_ENV_VAR,
+            FREQ_FLOW_CKPT_ENV_VAR,
+            freqflow_resolve_weights_path,
         )
         ckpt_path = freqflow_resolve_weights_path()
         env = __import__("os").environ.get(FREQ_FLOW_CKPT_ENV_VAR, "<unset>")
@@ -225,7 +226,7 @@ def main() -> int:
             "freqflow_mode": "synthetic",
             "n_records": 0,
             "verdict_overall": "BLOCKED_adapter_resolution_returned_none",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }, indent=2) + "\n")
         return 1
     print(f"[adapter] model=freqflow mode={mode}", flush=True)
@@ -431,7 +432,7 @@ def main() -> int:
                 "transcript: data/freqflow_ckpt/README.md."
             ),
         },
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "sweep_script": "scripts/wave206_p5_freqflow_n1000_audit.py",
     }
 
