@@ -35,7 +35,11 @@ pairs with $\delta = 10^{-3}$ finite-difference perturbation)
 span $L_{\text{emp}}^{\max} \in [0.684, 35.628]$ — a 52× range
 across the FM family — confirming varying velocity-field geometry
 per adapter while preserving the g-independent rate-bound constant
-$e^{A_g} \approx 2.35$ as the Theorem 1 family bound. The paper
+$e^{A_g} \approx 2.35$ as the Theorem 1 family bound. $A_g$ is the
+F-side family Lipschitz constant of the canonical witness, distinct
+from the per-adapter velocity-field Jacobian $L_{\text{emp}}$
+measured empirically ($L_{\text{emp}}^{\max} \in [0.68, 35.63]$
+across 12 adapters); see `wave230-p3-l-emp-vs-a-g.md`. The paper
 quantities are mixed: **canonical-witness + 3 adapter-specific**
 for the 3 core adapters (LineageFlow, Kanzi, FlowMol3), where the
 empirical $A_g$ is within 15 % of the canonical $A_g = 0.8549$

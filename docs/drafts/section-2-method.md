@@ -270,6 +270,30 @@ parts of the bound**.
 | $L_{\text{emp}}$ | Single-step ODE integration error | $e_{\text{step}} \le L_{\text{emp}} \cdot \text{dt}$ |
 | $L_{\text{emp}}$ | Local truncation of RK45 / DPM-Solver++ / Heun | Order-$p$ global error: $O(L_{\text{emp}} \cdot \text{dt}^p)$ |
 
+**Theoretical justification.** See
+`docs/audit/wave230-p3-l-emp-vs-a-g.md` for the full distinction:
+$A_g$ is the F-side family Lipschitz constant of the canonical
+witness $g(x) = (1 + 0.25\cdot\tanh(x))\cdot\sin(x)$, controlling
+the asymptotic BL-distance growth ($e^{A_g\cdot t}$ factor in
+Picard–Lindelöf continuity). $L_{\text{emp}}$ is the per-adapter
+velocity-field Jacobian norm $\sup \|\partial v_\theta / \partial
+x\|_{\text{op}}$, controlling single-step ODE integration error
+($L_{\text{emp}} \cdot \text{dt}$).
+
+The per-seed variance bound uses **only** $A_g$, not $L_{\text{emp}}$:
+$\sigma_{\text{seed}} \le e^{A_g} \cdot \sqrt{2d / n_{\text{seed}}} =
+13.72$ metric units. $L_{\text{emp}}$ appears only in the
+single-step error bound (Order-$p$ global error =
+$O(L_{\text{emp}} \cdot \text{dt}^p)$), which vanishes as
+$\text{dt} \to 0$.
+
+The 41× ratio between $\max L_{\text{emp}}$ (35.6 for GraphBFN) and
+$A_g$ (0.8549) is therefore **not** a contradiction: $L_{\text{emp}}$
+is per-adapter implementation detail (depends on weights), $A_g$
+is the F-side family constant (depends on witness $g$). The
+framework bound is governed by $A_g$, not $L_{\text{emp}}$;
+$L_{\text{emp}}$ informs single-step integration fidelity only.
+
 **Where they do NOT appear.**
 
 - $A_g$ does **not** appear in the single-step error bound.
