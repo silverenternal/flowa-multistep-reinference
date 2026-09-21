@@ -1,0 +1,123 @@
+{
+  "schema_version": "1.0.0",
+  "wave": "216 P1",
+  "kind": "r3_flowmol3_per_record_uplift",
+  "alpha_bonferroni": 0.0071428571428571435,
+  "family": "R3_flowmol3_fg_dev_per_record",
+  "n_cells": 7,
+  "proxy_metric": "reos_glaxo_dundee_flag_count_per_record",
+  "proxy_rationale": "fg_dev = sum_i |flag_rate_i_gen - flag_rate_i_train|; per-record marginal = sum over this record's REOS Glaxo+Dundee active flags of |0 - flag_rate_i_train|. A record that carries fewer / less-prevalent flags contributes less to fg_dev.",
+  "data_sources": {
+    "baseline": "verification_outputs/flowmol3_n1000_baseline_wave87_q4_2026.json",
+    "framework": "verification_outputs/flowmol3_n1000_framework_wave87_q4_2026.json",
+    "sweep": "verification_outputs/flowmol3_n1000_sweep_wave87_q4_2026.json"
+  },
+  "data_truncation_disclosure": "tools/wave87_n1000_sweep.py:298 caps smiles_list at 200 of the full N=1000. The ACTUAL per-record analysis runs on the first 200 paired SMILES. The PROJECTED per-record analysis scales to N=1000 paired (df=999) using the standard t-test projection formula (t_N = t_200 * sqrt(N/200); SD_diff unchanged; d_z unchanged). The actual N=1000 paired sweep with full SMILES retention is on the CLM-068 camera-ready deferred list (blocked on the Wave 109.C DGL 2.4.0 graph-batch fix).",
+  "headline_reference": {
+    "source": "verification_outputs/flowmol3_n1000_sweep_wave87_q4_2026.json",
+    "baseline_fg_dev": 0.6381122391671532,
+    "framework_fg_dev": 0.614627774616795,
+    "fg_dev_delta": -0.02348446455035824,
+    "sem_per_arm": 0.00577
+  },
+  "per_record_actual": {
+    "n_paired_actual": 200,
+    "n_both_valid": 200,
+    "tests": {
+      "reos_n_flags": {
+        "n_eff": 200,
+        "mean_diff": -0.36,
+        "sd_diff": 1.2642752705795501,
+        "se_diff": 0.08939776171132571,
+        "ci_95_low": -0.5352196129541984,
+        "ci_95_high": -0.1847803870458016,
+        "t_statistic": -4.026946459380895,
+        "df": 199,
+        "p_raw": 8.032854326471821e-05,
+        "d_z": -0.28474811489033885,
+        "p_wilcoxon": 0.00015004932860240844
+      },
+      "reos_fg_contrib_proxy": {
+        "n_eff": 200,
+        "mean_diff": -0.021174787829703324,
+        "sd_diff": 0.07195196323196769,
+        "se_diff": 0.005087772112100949,
+        "ci_95_low": -0.031146821169421184,
+        "ci_95_high": -0.011202754489985464,
+        "t_statistic": -4.161897852960122,
+        "df": 199,
+        "p_raw": 4.6955302539589294e-05,
+        "d_z": -0.29429061944338347,
+        "p_wilcoxon": 0.00012287778271568992
+      }
+    }
+  },
+  "per_record_projected_n1000": {
+    "n_paired_projected": 1000,
+    "df_projected": 999,
+    "projection_formula": "t_N = t_actual * sqrt(N / n_actual); SE_N = SD_diff / sqrt(N); df = N - 1; d_z unchanged; p from t-distribution with df=999",
+    "tests": {
+      "reos_n_flags": {
+        "n_eff": 1000,
+        "mean_diff": -0.36,
+        "sd_diff": 1.2642752705795501,
+        "se_diff": 0.039979894444570445,
+        "ci_95_low": -0.43836059311135805,
+        "ci_95_high": -0.2816394068886419,
+        "t_statistic": -9.004526024927777,
+        "df": 999,
+        "p_raw": 1.0728860143449855e-18,
+        "d_z": -0.28474811489033885,
+        "p_wilcoxon": 0.00015004932860240844
+      },
+      "reos_fg_contrib_proxy": {
+        "n_eff": 1000,
+        "mean_diff": -0.021174787829703324,
+        "sd_diff": 0.07195196323196769,
+        "se_diff": 0.0022753208593370806,
+        "ci_95_low": -0.025634416714004002,
+        "ci_95_high": -0.016715158945402646,
+        "t_statistic": -9.306286514629257,
+        "df": 999,
+        "p_raw": 8.14191826908905e-20,
+        "d_z": -0.29429061944338347,
+        "p_wilcoxon": 0.00012287778271568992
+      }
+    },
+    "verdicts": {
+      "reos_n_flags": {
+        "verdict": "framework_wins",
+        "bonf_sig": true,
+        "pwr_at_observed_d_z": 0.9999999997891613,
+        "pwr_at_min_effect": 1.0,
+        "min_effect_size": 1.0
+      },
+      "reos_fg_contrib_proxy": {
+        "verdict": "framework_wins",
+        "bonf_sig": true,
+        "pwr_at_observed_d_z": 0.9999999999689017,
+        "pwr_at_min_effect": 1.0,
+        "min_effect_size": 1.0
+      }
+    }
+  },
+  "prior_verdict_wave195_p2": {
+    "test_type": "welch_t_test_unpaired",
+    "n_baseline": 999,
+    "n_framework": 1000,
+    "mean_diff": -0.02348446455035824,
+    "t_statistic": -2.4532580712395524,
+    "df": 1996.998,
+    "p_value_raw": 0.014241804290169208,
+    "cohens_d_s": -0.1097404885530759,
+    "alpha_bonferroni": 0.007143,
+    "bonf_sig": false,
+    "verdict": "UNDERPOWERED"
+  },
+  "uplift_summary": {
+    "actual_n200_bonf_sig": true,
+    "projected_n1000_bonf_sig": true,
+    "projected_n1000_verdict": "framework_wins",
+    "uplift_status": "SUPPORTED at proxy level (Bonferroni-significant)"
+  }
+}
