@@ -348,6 +348,14 @@ def _torch_velocity_field(
     ``torch.no_grad()`` (inference-only determinism), and the result is
     cast back to a NumPy ``(3, 32, 32)`` float64 array.
 
+    When the ``ADAPTIVE_REFLOW_CUDA_GRAPH`` env var is set, the inner
+    ``unet(x_t, t_t)`` call is wrapped in a CUDA graph cache (Wave 236
+    P2 fix). The cache is keyed on ``(model_id, chunk_size=1)`` so the
+    single-record ``solve_ode`` path replays the captured graph on
+    subsequent calls. See
+    :mod:`adaptive_reflow.framework.cuda_graph_capture` for the
+    contract. Default behaviour is unchanged when the env var is unset.
+
     Returns a copy that the caller may mutate (Euler integrator).
     """
     import torch  # local import — torch is optional at the framework level.
@@ -355,9 +363,40 @@ def _torch_velocity_field(
     with torch.no_grad():
         x_t = torch.as_tensor(x, dtype=dtype, device=device).unsqueeze(0)
         t_t = torch.tensor([float(t)], dtype=dtype, device=device)
-        v = unet(x_t, t_t)
+        # Wave 236 P2 — opt-in CUDA graph capture. The wrapper returns
+        # ``None`` when the env var is off or capture failed, so the
+        # eager ``unet(x_t, t_t)`` call below is the canonical path.
+        captured_v = _captured_unet_forward(unet, x_t, t_t)
+        if captured_v is not None:
+            v = captured_v
+        else:
+            v = unet(x_t, t_t)
         out = np.asarray(v.squeeze(0).detach().cpu().numpy(), dtype=np.float64)
     return out.reshape(RF_CIFAR_STATE_SHAPE)
+
+
+def _captured_unet_forward(
+    unet: Any,
+    x_t: Any,
+    t_t: Any,
+) -> Any | None:
+    """Wrap ``unet(x_t, t_t)`` in the CUDA-graph cache (Wave 236 P2).
+
+    Returns the captured-graph output clone on a cache hit / fresh
+    capture; returns ``None`` when the env-var opt-in is inactive or
+    capture failed (eager fallthrough). The capture cache lives in
+    :mod:`adaptive_reflow.framework.cuda_graph_capture`; this helper
+    is the single boundary between the adapter's velocity-field
+    functions and the capture cache.
+    """
+    # Local import — the cache module itself imports ``torch`` lazily,
+    # but we keep the boundary here so the import graph stays
+    # ``rectified_flow_cifar -> framework -> torch``.
+    from adaptive_reflow.framework.cuda_graph_capture import (
+        captured_velocity_field,
+    )
+
+    return captured_velocity_field(unet, x_t, t_t)
 
 
 def _load_torch_unet(weights_path: Path, *, device: Any) -> Any:
@@ -1381,12 +1420,27 @@ def _batched_torch_velocity_field(
     published DDPM++ self-attention block (which materialises a
     ``(B, 16, 16, 16, 16)`` attention tensor) stays within CPU memory
     for large ``B``.
+
+    When the ``ADAPTIVE_REFLOW_CUDA_GRAPH`` env var is set, each
+    chunk's ``unet(x_t, t_t)`` call is routed through the CUDA-graph
+    cache (Wave 236 P2 fix). The cache captures once per
+    ``chunk_size`` and replays thereafter; the eager fallthrough path
+    below stays byte-stable when the env var is unset. See
+    :mod:`adaptive_reflow.framework.cuda_graph_capture` for the
+    capture / replay contract.
     """
     import torch  # local import.
 
     n = int(x_batch.shape[0])
     step = max(1, int(chunk_size))
     out = np.empty(x_batch.shape, dtype=np.float64)
+    # Wave 236 P2 — opt-in CUDA graph capture. The wrapper returns
+    # ``None`` when the env var is off or capture failed, so the eager
+    # ``unet(x_t, t_t)`` call below is the canonical path.
+    from adaptive_reflow.framework.cuda_graph_capture import (
+        captured_velocity_field,
+    )
+
     with torch.no_grad():
         for start in range(0, n, step):
             stop = min(start + step, n)
@@ -1394,7 +1448,12 @@ def _batched_torch_velocity_field(
                 np.ascontiguousarray(x_batch[start:stop]), dtype=dtype, device=device
             )
             t_t = torch.full((stop - start,), float(t), dtype=dtype, device=device)
-            out[start:stop] = unet(x_t, t_t).detach().cpu().numpy().astype(np.float64)
+            captured_v = captured_velocity_field(unet, x_t, t_t)
+            if captured_v is not None:
+                v_t = captured_v
+            else:
+                v_t = unet(x_t, t_t)
+            out[start:stop] = v_t.detach().cpu().numpy().astype(np.float64)
     return out.reshape(x_batch.shape)
 
 
