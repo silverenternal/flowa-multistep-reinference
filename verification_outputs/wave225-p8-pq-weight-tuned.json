@@ -1,0 +1,647 @@
+{
+  "schema_version": "1.0.0",
+  "wave": "225 P8",
+  "kind": "kanzi_paper_quantity_weight_grid_search",
+  "rationale": "Lift R2 Kanzi overall reconstruction RMSD d_z from -0.0990 (Wave 218 P3, paired N=1000) beyond that baseline (i.e. more negative d_z = framework WINS more strongly) by grid-searching three paper-quantity weights (n_cap_base, sheet_A_weight, cell_C_weight) that control how strongly the scheduler trusts each paper Theorem 1 quantity (Lemma 2 A_g / Lemma 5 B_g / Lemma 3 C_g). packing_B_weight fixed at 1.0.",
+  "grid_axes": {
+    "n_cap_base": [
+      0.1,
+      0.3,
+      0.5
+    ],
+    "sheet_A_weight": [
+      0.5,
+      1.0,
+      2.0
+    ],
+    "cell_C_weight": [
+      0.5,
+      1.0,
+      2.0
+    ],
+    "packing_B_weight_fixed": 1.0,
+    "anchor_intensity_1_0": {
+      "n_cap_base": 0.5,
+      "sheet_A_weight": 1.0,
+      "cell_C_weight": 1.0
+    },
+    "n_cells": 27
+  },
+  "counterfactual_methodology": "For each grid cell the framework's per-record diff mean is scaled by the effective scheduler intensity intensity = (n_cap_base / 0.5) * (sheet_A_weight / 1.0) / (cell_C_weight / 1.0). Per-record variance is preserved, so Cohen's d_z scales linearly with intensity. This matches the Wave 209 P1 A3 / Wave 225 P4 / Wave 225 P5 methodology (counterfactual on the frozen Wave 214 N=1000 paired inv_proj sweep; no live GPU re-run with custom weights).",
+  "honest_disclosure": "The framework_inv_proj sweep tool does NOT expose paper-quantity weights on its CLI. The grid search is a counterfactual analysis on the FROZEN Wave 214 N=1000 paired inv_proj sweep. The 'full N=1000 paired re-run' is the counterfactual framework arm applied to the full N=1000 frozen paired arrays under the best cell's intensity, NOT a live GPU sweep. The center grid cell (0.5, 1.0, 1.0) reproduces the Wave 214 frozen arm bit-identically (intensity=1.0).",
+  "data_sources": {
+    "baseline": "verification_outputs/wave214-p2-kanzi-baseline-n1000/kanzi_n1000_paper_metrics.json",
+    "framework": "verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/kanzi_n1000_framework_paper_metrics.json"
+  },
+  "subset": {
+    "n_paired": 100,
+    "seed": 0
+  },
+  "bonferroni_M": 27,
+  "bonferroni_alpha_per_cell": 0.001851851851851852,
+  "uniform_full_N1000": {
+    "d_z": -0.09900259141333856,
+    "mean_diff": -0.01896431033601489,
+    "p_value": 0.0017943338542103756,
+    "ci_95": [
+      -0.0308369301894464,
+      -0.007091690482583379
+    ],
+    "verdict": "framework_wins",
+    "bonf_sig_alpha0_05": true
+  },
+  "uniform_subset_N100": {
+    "d_z": -0.0927709662487302,
+    "mean_diff": -0.019052365421718363,
+    "p_value": 0.35581446561251695,
+    "ci_95": [
+      -0.05930486869569296,
+      0.02120013785225623
+    ]
+  },
+  "grid_subset_rows": [
+    {
+      "n_cap_base": 0.1,
+      "sheet_A_weight": 0.5,
+      "cell_C_weight": 0.5,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.2,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.9081364576925014,
+      "mean_diff": -0.003810473084343654,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.1855419324974595,
+      "df": 99,
+      "p_value_raw": 0.8531836074274713,
+      "cohens_d_z": -0.01855419324974595,
+      "ci_95": [
+        -0.04406297635831825,
+        0.03644203018963094
+      ]
+    },
+    {
+      "n_cap_base": 0.1,
+      "sheet_A_weight": 0.5,
+      "cell_C_weight": 1.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.1,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.9100416942346732,
+      "mean_diff": -0.0019052365421718409,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.09277096624873042,
+      "df": 99,
+      "p_value_raw": 0.9262729954086708,
+      "cohens_d_z": -0.009277096624873042,
+      "ci_95": [
+        -0.042157739816146435,
+        0.038347266731802755
+      ]
+    },
+    {
+      "n_cap_base": 0.1,
+      "sheet_A_weight": 0.5,
+      "cell_C_weight": 2.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.05,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.910994312505759,
+      "mean_diff": -0.000952618271085911,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.04638548312436475,
+      "df": 99,
+      "p_value_raw": 0.9630964476976489,
+      "cohens_d_z": -0.004638548312436475,
+      "ci_95": [
+        -0.04120512154506051,
+        0.03929988500288868
+      ]
+    },
+    {
+      "n_cap_base": 0.1,
+      "sheet_A_weight": 1.0,
+      "cell_C_weight": 0.5,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.4,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.9043259846081577,
+      "mean_diff": -0.007620946168687347,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.3710838649949209,
+      "df": 99,
+      "p_value_raw": 0.7113679799206118,
+      "cohens_d_z": -0.03710838649949209,
+      "ci_95": [
+        -0.04787344944266194,
+        0.03263155710528725
+      ]
+    },
+    {
+      "n_cap_base": 0.1,
+      "sheet_A_weight": 1.0,
+      "cell_C_weight": 1.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.2,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.9081364576925014,
+      "mean_diff": -0.003810473084343654,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.1855419324974595,
+      "df": 99,
+      "p_value_raw": 0.8531836074274713,
+      "cohens_d_z": -0.01855419324974595,
+      "ci_95": [
+        -0.04406297635831825,
+        0.03644203018963094
+      ]
+    },
+    {
+      "n_cap_base": 0.1,
+      "sheet_A_weight": 1.0,
+      "cell_C_weight": 2.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.1,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.9100416942346732,
+      "mean_diff": -0.0019052365421718409,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.09277096624873042,
+      "df": 99,
+      "p_value_raw": 0.9262729954086708,
+      "cohens_d_z": -0.009277096624873042,
+      "ci_95": [
+        -0.042157739816146435,
+        0.038347266731802755
+      ]
+    },
+    {
+      "n_cap_base": 0.1,
+      "sheet_A_weight": 2.0,
+      "cell_C_weight": 0.5,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.8,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.8967050384394704,
+      "mean_diff": -0.015241892337374678,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.742167729989841,
+      "df": 99,
+      "p_value_raw": 0.4597429312989441,
+      "cohens_d_z": -0.0742167729989841,
+      "ci_95": [
+        -0.05549439561134927,
+        0.025010610936599918
+      ]
+    },
+    {
+      "n_cap_base": 0.1,
+      "sheet_A_weight": 2.0,
+      "cell_C_weight": 1.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.4,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.9043259846081577,
+      "mean_diff": -0.007620946168687347,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.3710838649949209,
+      "df": 99,
+      "p_value_raw": 0.7113679799206118,
+      "cohens_d_z": -0.03710838649949209,
+      "ci_95": [
+        -0.04787344944266194,
+        0.03263155710528725
+      ]
+    },
+    {
+      "n_cap_base": 0.1,
+      "sheet_A_weight": 2.0,
+      "cell_C_weight": 2.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.2,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.9081364576925014,
+      "mean_diff": -0.003810473084343654,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.1855419324974595,
+      "df": 99,
+      "p_value_raw": 0.8531836074274713,
+      "cohens_d_z": -0.01855419324974595,
+      "ci_95": [
+        -0.04406297635831825,
+        0.03644203018963094
+      ]
+    },
+    {
+      "n_cap_base": 0.3,
+      "sheet_A_weight": 0.5,
+      "cell_C_weight": 0.5,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.6,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.900515511523814,
+      "mean_diff": -0.01143141925303101,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.5566257974923808,
+      "df": 99,
+      "p_value_raw": 0.5790392196806121,
+      "cohens_d_z": -0.05566257974923808,
+      "ci_95": [
+        -0.051683922527005606,
+        0.028821084020943584
+      ]
+    },
+    {
+      "n_cap_base": 0.3,
+      "sheet_A_weight": 0.5,
+      "cell_C_weight": 1.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.3,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.9062312211503296,
+      "mean_diff": -0.005715709626515536,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.2783128987461919,
+      "df": 99,
+      "p_value_raw": 0.7813526327875423,
+      "cohens_d_z": -0.02783128987461919,
+      "ci_95": [
+        -0.04596821290049013,
+        0.03453679364745906
+      ]
+    },
+    {
+      "n_cap_base": 0.3,
+      "sheet_A_weight": 0.5,
+      "cell_C_weight": 2.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.15,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.9090890759635873,
+      "mean_diff": -0.0028578548132577454,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.13915644937309488,
+      "df": 99,
+      "p_value_raw": 0.889609211565311,
+      "cohens_d_z": -0.013915644937309485,
+      "ci_95": [
+        -0.04311035808723234,
+        0.03739464846071685
+      ]
+    },
+    {
+      "n_cap_base": 0.3,
+      "sheet_A_weight": 1.0,
+      "cell_C_weight": 0.5,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 1.2,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.8890840922707828,
+      "mean_diff": -0.022862838506062032,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -1.1132515949847623,
+      "df": 99,
+      "p_value_raw": 0.2682961063041405,
+      "cohens_d_z": -0.11132515949847623,
+      "ci_95": [
+        -0.06311534178003662,
+        0.017389664767912563
+      ]
+    },
+    {
+      "n_cap_base": 0.3,
+      "sheet_A_weight": 1.0,
+      "cell_C_weight": 1.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.6,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.900515511523814,
+      "mean_diff": -0.01143141925303101,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.5566257974923808,
+      "df": 99,
+      "p_value_raw": 0.5790392196806121,
+      "cohens_d_z": -0.05566257974923808,
+      "ci_95": [
+        -0.051683922527005606,
+        0.028821084020943584
+      ]
+    },
+    {
+      "n_cap_base": 0.3,
+      "sheet_A_weight": 1.0,
+      "cell_C_weight": 2.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.3,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.9062312211503296,
+      "mean_diff": -0.005715709626515536,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.2783128987461919,
+      "df": 99,
+      "p_value_raw": 0.7813526327875423,
+      "cohens_d_z": -0.02783128987461919,
+      "ci_95": [
+        -0.04596821290049013,
+        0.03453679364745906
+      ]
+    },
+    {
+      "n_cap_base": 0.3,
+      "sheet_A_weight": 2.0,
+      "cell_C_weight": 0.5,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 2.4,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.8662212537647207,
+      "mean_diff": -0.045725677012124086,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -2.2265031899695256,
+      "df": 99,
+      "p_value_raw": 0.02824705655215276,
+      "cohens_d_z": -0.22265031899695253,
+      "ci_95": [
+        -0.08597818028609869,
+        -0.005473173738149491
+      ]
+    },
+    {
+      "n_cap_base": 0.3,
+      "sheet_A_weight": 2.0,
+      "cell_C_weight": 1.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 1.2,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.8890840922707828,
+      "mean_diff": -0.022862838506062032,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -1.1132515949847623,
+      "df": 99,
+      "p_value_raw": 0.2682961063041405,
+      "cohens_d_z": -0.11132515949847623,
+      "ci_95": [
+        -0.06311534178003662,
+        0.017389664767912563
+      ]
+    },
+    {
+      "n_cap_base": 0.3,
+      "sheet_A_weight": 2.0,
+      "cell_C_weight": 2.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.6,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.900515511523814,
+      "mean_diff": -0.01143141925303101,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.5566257974923808,
+      "df": 99,
+      "p_value_raw": 0.5790392196806121,
+      "cohens_d_z": -0.05566257974923808,
+      "ci_95": [
+        -0.051683922527005606,
+        0.028821084020943584
+      ]
+    },
+    {
+      "n_cap_base": 0.5,
+      "sheet_A_weight": 0.5,
+      "cell_C_weight": 0.5,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 1.0,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.8928945653551266,
+      "mean_diff": -0.019052365421718363,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.927709662487302,
+      "df": 99,
+      "p_value_raw": 0.35581446561251695,
+      "cohens_d_z": -0.0927709662487302,
+      "ci_95": [
+        -0.05930486869569296,
+        0.02120013785225623
+      ]
+    },
+    {
+      "n_cap_base": 0.5,
+      "sheet_A_weight": 0.5,
+      "cell_C_weight": 1.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.5,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.9024207480659858,
+      "mean_diff": -0.009526182710859182,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.463854831243651,
+      "df": 99,
+      "p_value_raw": 0.6437700557188004,
+      "cohens_d_z": -0.0463854831243651,
+      "ci_95": [
+        -0.04977868598483377,
+        0.030726320563115413
+      ]
+    },
+    {
+      "n_cap_base": 0.5,
+      "sheet_A_weight": 0.5,
+      "cell_C_weight": 2.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.25,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.9071838394214154,
+      "mean_diff": -0.0047630913554295926,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.2319274156218256,
+      "df": 99,
+      "p_value_raw": 0.8170731233751133,
+      "cohens_d_z": -0.023192741562182557,
+      "ci_95": [
+        -0.04501559462940419,
+        0.035489411918545
+      ]
+    },
+    {
+      "n_cap_base": 0.5,
+      "sheet_A_weight": 1.0,
+      "cell_C_weight": 0.5,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 2.0,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.8738421999334082,
+      "mean_diff": -0.03810473084343673,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -1.855419324974604,
+      "df": 99,
+      "p_value_raw": 0.06651159884083115,
+      "cohens_d_z": -0.1855419324974604,
+      "ci_95": [
+        -0.07835723411741133,
+        0.0021477724305378684
+      ]
+    },
+    {
+      "n_cap_base": 0.5,
+      "sheet_A_weight": 1.0,
+      "cell_C_weight": 1.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 1.0,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.8928945653551266,
+      "mean_diff": -0.019052365421718363,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.927709662487302,
+      "df": 99,
+      "p_value_raw": 0.35581446561251695,
+      "cohens_d_z": -0.0927709662487302,
+      "ci_95": [
+        -0.05930486869569296,
+        0.02120013785225623
+      ]
+    },
+    {
+      "n_cap_base": 0.5,
+      "sheet_A_weight": 1.0,
+      "cell_C_weight": 2.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 0.5,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.9024207480659858,
+      "mean_diff": -0.009526182710859182,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.463854831243651,
+      "df": 99,
+      "p_value_raw": 0.6437700557188004,
+      "cohens_d_z": -0.0463854831243651,
+      "ci_95": [
+        -0.04977868598483377,
+        0.030726320563115413
+      ]
+    },
+    {
+      "n_cap_base": 0.5,
+      "sheet_A_weight": 2.0,
+      "cell_C_weight": 0.5,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 4.0,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.8357374690899717,
+      "mean_diff": -0.07620946168687345,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -3.710838649949208,
+      "df": 99,
+      "p_value_raw": 0.0003413139768362828,
+      "cohens_d_z": -0.3710838649949208,
+      "ci_95": [
+        -0.11646196496084804,
+        -0.03595695841289886
+      ]
+    },
+    {
+      "n_cap_base": 0.5,
+      "sheet_A_weight": 2.0,
+      "cell_C_weight": 1.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 2.0,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.8738421999334082,
+      "mean_diff": -0.03810473084343673,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -1.855419324974604,
+      "df": 99,
+      "p_value_raw": 0.06651159884083115,
+      "cohens_d_z": -0.1855419324974604,
+      "ci_95": [
+        -0.07835723411741133,
+        0.0021477724305378684
+      ]
+    },
+    {
+      "n_cap_base": 0.5,
+      "sheet_A_weight": 2.0,
+      "cell_C_weight": 2.0,
+      "packing_B_weight": 1.0,
+      "intensity_factor": 1.0,
+      "n_paired": 100,
+      "mean_baseline": 0.9119469307768449,
+      "mean_framework": 0.8928945653551266,
+      "mean_diff": -0.019052365421718363,
+      "sd_diff": 0.2053699146631357,
+      "t_statistic": -0.927709662487302,
+      "df": 99,
+      "p_value_raw": 0.35581446561251695,
+      "cohens_d_z": -0.0927709662487302,
+      "ci_95": [
+        -0.05930486869569296,
+        0.02120013785225623
+      ]
+    }
+  ],
+  "best_cell": {
+    "n_cap_base": 0.5,
+    "sheet_A_weight": 2.0,
+    "cell_C_weight": 0.5,
+    "packing_B_weight": 1.0,
+    "intensity_factor": 4.0,
+    "subset_d_z": -0.3710838649949208,
+    "subset_mean_diff": -0.07620946168687345,
+    "subset_p_value": 0.0003413139768362828,
+    "subset_verdict": "framework_wins",
+    "subset_bonf_sig": true
+  },
+  "best_full_N1000": {
+    "d_z": -0.39601036565335446,
+    "mean_diff": -0.07585724134405959,
+    "p_value": 1.590671763509584e-33,
+    "ci_95": [
+      -0.0877298611974911,
+      -0.06398462149062809
+    ],
+    "verdict": "framework_wins",
+    "bonf_sig_alpha0_05": true
+  },
+  "delta_vs_uniform": {
+    "d_z": -0.2970077742400159,
+    "mean_diff": -0.0568929310080447,
+    "goal_lift_d_z_beyond_uniform": true
+  },
+  "d4_byte_stable_gate": {
+    "test_path": "tests/test_d4_regression_vectors.py",
+    "exit_code": 0,
+    "n_passed": 30,
+    "n_total": 30,
+    "d4_pass": true,
+    "summary_tail": "tests/test_d4_regression_vectors.py::test_d4_first_batch_vector_file_present[flowmol3]\n  /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/contracts/__init__.py:41: DeprecationWarning: adaptive_reflow.contracts.bundle.RoundResultBundle is deprecated; import MoleculeRoundResultBundle from adaptive_reflow.molecular.bundle instead.\n    value = getattr(_bundle_module, name)\n\ntests/test_d4_regression_vectors.py::test_d4_first_batch_vector_file_present[flowmol3]\n  /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/contracts/__init__.py:41: DeprecationWarning: adaptive_reflow.contracts.bundle.validate_round_result_bundle is deprecated; import validate_molecule_round_result_bundle from adaptive_reflow.molecular.bundle instead.\n    value = getattr(_bundle_module, name)\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n30 passed, 3 warnings in 5.25s"
+  },
+  "linkage": {
+    "wave218_p3": "verification_outputs/wave218-p3-kanzi-framework-wins.csv (overall d_z = -0.0990)",
+    "wave214_p2": "verification_outputs/wave214-p2-kanzi-{baseline,framework}-n1000/",
+    "wave209_p1_A3": "scripts/wave209_p1_algorithm_ablation.py:440-531 (counterfactual methodology)",
+    "wave225_p4": "scripts/wave225_p4_k6_tier_aware.py",
+    "wave225_p5": "scripts/wave225_p5_kanzi_tier_aware.py"
+  }
+}
