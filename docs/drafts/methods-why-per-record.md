@@ -558,8 +558,10 @@ improvement is the largest because there is no distillation
 control). The **0 REGRESSES** is the **honest update** versus
 the Wave 229 P1 bootstrap projection — it confirms that the
 framework's per-record effect against the three distillation
-baselines (FastDLLM, AB-Cache, LeDiFlow) is statistically
-indistinguishable from zero, not a framework loss. Reading the
+baselines (FastDLLM, AB-Cache, LeDiFlow) does not regress
+against FastDLLM, AB-Cache, or LeDiFlow on per-record metrics
+(0 of 16 cells regress per Wave 230 P2 real paired data, df=299),
+not a framework loss. Reading the
 verdict distribution as "0/16 wins against distillation
 baselines + 2/16 wins against vanilla" is more accurate than
 "3/16 wins"; reading it as "14/16 UNDERPOWERED at the
