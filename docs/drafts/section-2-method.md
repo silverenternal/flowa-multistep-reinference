@@ -847,6 +847,113 @@ default `ADAPTIVE_REFLOW_CUDA_GRAPH` unset state.
 
 ---
 
+### 2.7.7 Exploratory Statistical Analyses (Wave 246 P3)
+
+The §2.8 statistical methods section below describes the **five-method
+statistical upgrade** applied to the 16-cell Wave 230 P2 per-record
+4-arm grid (TOST, Jonckheere-Terpstra, BF01, DerSimonian-Laird random
+effects, non-inferiority). This subsection (Wave 246 P3) explicitly
+labels TOST, BF01, and the JT trend test as **exploratory /
+post-hoc statistical methods**, documents the data observation that
+motivated each choice, and includes a Limitations sentence on
+pre-registration in future work.
+
+**Honest disclosure — post-hoc choice.** The TOST margin (0.1 SD),
+the BF01 Cauchy prior scale (default r = 1 in the Wagenmakers BIC
+approximation), and the JT ordered alternative (`hard > medium >
+easy` in framework uplift) were **NOT pre-registered** before the
+Wave 230 P2 data collection. Each was chosen after observing
+specific data patterns:
+
+- **TOST margin (0.1 SD).** Selected post-hoc because the
+  Wave 230 P2 paired-difference SDs were already computed (the CSV
+  was available); the 0.1 SD threshold is the Cohen 1988 "small
+  effect" convention and was chosen because it is the standard
+  equivalence margin in bioequivalence / pharmacokinetic literature
+  (Schuirmann 1987). The 0.1 SD margin was NOT chosen from a
+  pre-registered theoretical prediction of the framework's effect
+  size; it was chosen as a literature-standard default.
+
+- **BF01 (Wagenmakers BIC approximation).** Selected post-hoc to
+  complement TOST because the high-N TOST paradox (TOST rejecting
+  the equivalence null even at operationally negligible effect
+  sizes when n is large; Wave 234 P2 §4) made BF01 the more
+  informative companion statistic. The Cauchy prior scale
+  sensitivity (Wave 246 P3 §2.7.7 below) confirms the BF01
+  verdict is robust across prior scales for the well-separated
+  cells but flips for 0-3 cells in the moderate evidence band.
+
+- **JT ordered alternative (`hard > medium > easy`).** The JT
+  ordering was chosen after observing the Wave 198 P2 R6 k6
+  per-tier pattern (hard d_z = +1.189, medium = +0.218, easy =
+  −0.998; `docs/CONSOLIDATED_RESULTS.md` §15.91). The pattern was
+  cross-adapter confirmed on LineageFlow in Wave 204 P2
+  (`docs/CONSOLIDATED_RESULTS.md` §15.96), strengthening the
+  empirical observation. **No §15.X section pre-registered the
+  ordering before Wave 234 P3 ran the JT test**; the ordering is
+  therefore exploratory. The audit doc
+  `docs/audit/wave246-p3-jt-hypothesis-justification.md` documents
+  the pre-registration search and the data observation that
+  motivated the ordering in detail.
+
+**Sensitivity analyses (Wave 246 P3).** The robustness of the
+TOST and BF01 verdicts to the chosen threshold parameters was
+quantified in a post-hoc sensitivity sweep:
+
+- **TOST margin sweep** (`verification_outputs/
+  wave246-p3-tost-sensitivity.csv`). For each of the 16 cells,
+  TOST p-value was computed at margin ∈ {0.05 SD, 0.10 SD,
+  0.20 SD}. Verdict counts at α = 0.05: 0/16 EQUIVALENT at
+  0.05 SD; 0/16 EQUIVALENT at 0.10 SD; **14/16 EQUIVALENT at
+  0.20 SD**. All 14 in-band cells (|mean_diff| ≤ 0.1 SD) flip
+  EQUIVALENT → INEQUIVALENT as margin tightens from 0.20 SD to
+  0.10 SD (the high-N TOST paradox dominates); 14/16 cells also
+  flip from 0.20 SD to 0.05 SD. **The 2/16 decisive framework-wins
+  (vanilla scPerplexity at NFE 50 / 100, d_z < −0.97) remain
+  INEQUIVALENT at every scale** because their mean difference is
+  far above the margin. The 14/16 cells where verdict flips are
+  the cells where the operationally negligible point estimate
+  fails the strict TOST at the conventional 0.1 SD margin; these
+  cells are jointly supported by BF01 (BF01 > 3 for 10/14 cells
+  at the default r = 1).
+
+- **BF01 Cauchy prior scale sweep**
+ `verification_outputs/wave246-p3-bf01-sensitivity.csv`). For
+ each of the 16 cells, the JZS BF10 (Rouder et al. 2009, eq. 1,
+ validated against pingouin and the BayesFactor R package) was
+ computed at Cauchy prior scale r ∈ {0.707, 1.0, 1.414}. STRONG_H0
+ counts (Wagenmakers' BF01 > 10 threshold): 8/16 at r = 0.707,
+ **11/16 at r = 1.0**, 13/16 at r = 1.414. **3 cells** flip verdict
+ (STRONG_H0) as the prior tightens from r = 1.0 to r = 0.707;
+ 0 cells flip as the prior widens from r = 1.0 to r = 1.414. The
+ 8/16 / 11/16 / 13/16 monotone non-decreasing pattern in
+ STRONG_H0 as r widens is the expected direction (a wider prior
+ on effect size shrinks the BF10 / inflates the BF01 because the
+ marginal likelihood under H1 grows faster than the marginal
+ likelihood under H0 as the prior variance increases).
+
+**Limitations sentence (paper-ready).**
+
+> These post-hoc analyses should be interpreted as exploratory;
+> future work should pre-register the TOST margin, the BF01
+> Cauchy prior scale, and the JT ordered alternative **before**
+> data collection, in line with conventional pre-registration
+> practice for confirmatory statistical inference (Nosek et al.
+> 2018, "Preregistration of psychological research"). The
+> sensitivity analyses above quantify the robustness of each
+> conclusion to the chosen threshold parameters and confirm that
+> the headline framework-wins on vanilla scPerplexity (R6 4-arm)
+> are not affected by the sensitivity analysis.
+
+The §2.8 statistical methods section below describes the
+**specific implementations** (TOST with 0.1 SD margin; BF01 with
+Wagenmakers BIC approximation; JT with `hard > medium > easy`
+ordering); the reader should treat those implementations as the
+**exploratory analysis choice** and consult this subsection for
+the sensitivity robustness check.
+
+---
+
 ## 2.8 Statistical methods
 
 Beyond the paired-$t$ test that anchors the §3 experimental
