@@ -1,0 +1,81 @@
+{
+  "wave": "216 P2",
+  "cell": "R5a_two_moons_W2",
+  "n_seeds_baseline": 10,
+  "n_seeds_per_arm": {
+    "CosineAnnealScheduler": 10,
+    "CodimensionSheetScheduler": 10,
+    "EvidenceDrivenScheduler": 4,
+    "FreeTrajScheduler": 3
+  },
+  "all_seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    43,
+    44,
+    45
+  ],
+  "primary_headline": {
+    "arm": "CosineAnnealScheduler",
+    "welch": {
+      "n_b": 10,
+      "n_f": 10,
+      "baseline_mean": 0.07296711284434718,
+      "baseline_std": 0.009788008532937915,
+      "framework_mean": 0.08202318897943711,
+      "framework_std": 0.008033743857304054,
+      "delta": 0.009056076135089935,
+      "delta_se": 0.004004324554848621,
+      "ci_95": [
+        -2.3353388296058764e-06,
+        0.018114487609009477
+      ],
+      "t_stat": 2.2615739586154224,
+      "df": 17.340762130116136,
+      "p_value_raw": 0.03684414905161244,
+      "p_value_bonferroni": 0.2579090433612871,
+      "cohens_d_s": 1.0114066215214763,
+      "min_effect_size": 0.01,
+      "alpha_per_cell": 0.0071428571428571435,
+      "verdict": "TIE",
+      "bonferroni_significant": false
+    }
+  },
+  "best_arm": {
+    "name": "CodimensionSheetScheduler",
+    "mean_w2": 0.07735574400754554,
+    "welch": {
+      "n_b": 10,
+      "n_f": 10,
+      "baseline_mean": 0.07296711284434718,
+      "baseline_std": 0.009788008532937915,
+      "framework_mean": 0.07735574400754554,
+      "framework_std": 0.0052890693119286725,
+      "delta": 0.0043886311631983616,
+      "delta_se": 0.003518229174275762,
+      "ci_95": [
+        -0.003570156163755167,
+        0.01234741849015189
+      ],
+      "t_stat": 1.247397752052856,
+      "df": 13.84293891265285,
+      "p_value_raw": 0.2329428433837417,
+      "p_value_bonferroni": 1.0,
+      "cohens_d_s": 0.5578532337141229,
+      "min_effect_size": 0.01,
+      "alpha_per_cell": 0.0071428571428571435,
+      "verdict": "TIE",
+      "bonferroni_significant": false
+    }
+  },
+  "old_verdict": "TIE",
+  "old_d_s": 0.46,
+  "old_p_value_raw": 0.604,
+  "old_n_seeds": 3,
+  "tie_persists_at_extended_seeds": true
+}
