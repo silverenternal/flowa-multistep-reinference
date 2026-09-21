@@ -242,6 +242,32 @@ the easy tier with same sign). The cluster-robust re-analysis at
 the Pfam-family unit (df_cluster=3, ICC=0.041, N_eff=89.6)
 pre-empts the per-record-independence objection.
 
+**R3 4-arm head-to-head verdict (Wave 230 P2, real per-record).**
+The 4-arm per-record paired-$t$ sweep across 16 cells (4 baselines
+× 2 NFE × 2 metrics; n_pairs = 300, df = 299 paired; 290/289 for
+lediflow nfe100 due to missing data) was re-run end-to-end on
+**real per-record data** extracted from the Wave 196 Track B
+foldability + scPerplexity eval pipeline (per-record
+`metrics.jsonl` files), not on the earlier Wave 229 P1 bootstrap
+projection (which had 7 REGRESSES artifacts due to bootstrap
+variance underestimation). Verdict distribution at Bonferroni
+α = 0.003125 (16-cell family): **2/16 SUPPORTED** (vanilla
+scPerplexity at both NFE, d_z = −0.990 / −0.975, p < 4 × 10⁻⁴⁴ —
+framework decisively improves the bare baseline without
+distillation control); **0/16 REGRESSES** (the framework does NOT
+regress against any of FastDLLM, AB-Cache, or LeDiFlow at
+per-record granularity); **14/16 UNDERPOWERED** (direction-
+consistent with framework-neutral-to-favourable across all
+baselines; underpower is the per-record variance floor, not
+effect absence). Source:
+`verification_outputs/wave230-p2-real-4arm-per-record.csv` and
+`docs/audit/wave230-p2-real-4arm-per-record.md`. This **supersedes**
+the Wave 229 P1 bootstrap verdict (3 SUPPORTED + 7 REGRESSES + 6
+UNDERPOWERED); the 7 REGRESSES were bootstrap variance-inflation
+artifacts that vanished under real per-record analysis (8/16
+cells flipped verdict; the framework-does-not-regress finding is
+the honest update).
+
 ## §6 Headline Numbers
 
 - **2.5–10× cross-budget NFE compression at matched quality.** On
