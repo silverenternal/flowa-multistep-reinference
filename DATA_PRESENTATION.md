@@ -114,40 +114,40 @@
 ### 2.4 R4: 2D Two Moons (Toy FM)
 
 **测试指标 / Metric:** W₂ Wasserstein distance (lower-better)
-**样本规模 / Sample size:** N = 1000 records
+**样本规模 / Sample size:** 3 seeds × 1000 samples/round (per source note); paired-sample count and df not specified in source
 **NFE:** 100
-**Seed:** 30 (paired seeds)
-**Adapter:** 2D Two Moons synthetic (baseline vs framework PaperRatioAdaptiveScheduler)
-**统计方法 / Statistical method:** paired t-test, df = 29
+**Adapter:** 2D Two Moons synthetic (baseline vs framework EvidenceDrivenScheduler)
+**统计方法 / Statistical method:** raw delta_pct comparison; no Bonferroni-significance test reported in source
 
 | arm | W₂ |
 |---|---:|
 | baseline | 0.5029 |
 | framework | 0.4663 |
 | **Δ** | **−7.28%** |
-| Cohen's d_z | **−2.93** |
-| verdict | framework_WINS |
+| verdict | **TIE** (raw delta only; NOT Bonferroni-significant) |
 
-**Data source:** `verification_outputs/r4_2d_two_moons_w2_m7p28pct/`
+**Data source:** `verification_outputs/g1_deep_dive_q3_2026.json#rectified_flow_2d_sota_two_moons` (Wave 158 P2 baseline; closest verified source)
+
+**Honest disclosure (per Wave 254 P3 audit):** the originally cited source path `verification_outputs/r4_2d_two_moons_w2_m7p28pct/` does NOT exist on disk. The closest verified source is `verification_outputs/g1_deep_dive_q3_2026.json` (Wave 158 P2 baseline; cross-referenced via Wave 158 G.1 deep dive). The actual verdict on that source is TIE (raw delta_pct = −7.28% framework-favorable, framework_wins=true at raw-delta level, but no paired t-test / no Bonferroni significance test is reported in the source) — so the headline ΔW₂ = −7.28% is a Δ measurement only, NOT a "framework_WINS (Bonferroni-significant)" claim. The original Cohen's d_z = −2.93 cited in paper §7.6.4 / doc §2.4 is REMOVED (no source supports that effect-size value). Original d_z value may need re-verification in a future wave.
 
 ### 2.5 R5: 2D Eight Gaussians (Toy FM)
 
 **测试指标 / Metric:** W₂ Wasserstein distance (lower-better)
-**样本规模 / Sample size:** N = 1000 records
+**样本规模 / Sample size:** 3 seeds × 1000 samples/round (per source note); paired-sample count and df not specified in source
 **NFE:** 100
-**Seed:** 30 (paired seeds)
-**Adapter:** 2D Eight Gaussians synthetic
-**统计方法 / Statistical method:** paired t-test, df = 29
+**Adapter:** 2D Eight Gaussians synthetic (baseline vs framework CosineAnnealScheduler)
+**统计方法 / Statistical method:** raw delta_pct comparison; no Bonferroni-significance test reported in source
 
 | arm | W₂ |
 |---|---:|
 | baseline | 0.6606 |
 | framework | 0.5919 |
 | **Δ** | **−10.40%** |
-| Cohen's d_z | **−3.13** |
-| verdict | framework_WINS |
+| verdict | **TIE** (raw delta only; NOT Bonferroni-significant) |
 
-**Data source:** `verification_outputs/r5_2d_eight_gaussians_w2_m10p40pct/`
+**Data source:** `verification_outputs/g1_deep_dive_q3_2026.json#rectified_flow_2d_sota_eight_gaussians` (Wave 158 P2 baseline; closest verified source)
+
+**Honest disclosure (per Wave 254 P3 audit):** the originally cited source path `verification_outputs/r5_2d_eight_gaussians_w2_m10p40pct/` does NOT exist on disk. The closest verified source is `verification_outputs/g1_deep_dive_q3_2026.json` (Wave 158 P2 baseline; cross-referenced via Wave 158 G.1 deep dive). The actual verdict on that source is TIE (raw delta_pct = −10.40% framework-favorable, framework_wins=true at raw-delta level, but no paired t-test / no Bonferroni significance test is reported in the source) — so the headline ΔW₂ = −10.40% is a Δ measurement only, NOT a "framework_WINS (Bonferroni-significant)" claim. The original Cohen's d_z = −3.13 cited in paper §7.6.5 / doc §2.5 is REMOVED (no source supports that effect-size value). Original d_z value may need re-verification in a future wave.
 
 ### 2.6 R5b: CIFAR-10 Rectified Flow (SOTA FM, conditional boundary)
 
@@ -518,8 +518,8 @@ K1-K8 honest-negative disclosure preserved in paper §10.4 + CLM-071.
 | R3 FlowMol3 per-record PROJECTED (n=1000) | `verification_outputs/wave216-p1-r3-per-record.json` |
 | R3 FlowMol3 seed 43 single_mol | `verification_outputs/wave242-p1-flowmol3-seed43-{baseline,framework,summary}.json` |
 | R3 FlowMol3 2-seed direction-reversed (honest) | `verification_outputs/wave235-p4-flowmol3-3seed.json` |
-| R4 2D Two Moons W₂ | `verification_outputs/r4_2d_two_moons_w2_m7p28pct/` |
-| R5 2D Eight Gaussians W₂ | `verification_outputs/r5_2d_eight_gaussians_w2_m10p40pct/` |
+| R4 2D Two Moons W₂ | `verification_outputs/g1_deep_dive_q3_2026.json#rectified_flow_2d_sota_two_moons` |
+| R5 2D Eight Gaussians W₂ | `verification_outputs/g1_deep_dive_q3_2026.json#rectified_flow_2d_sota_eight_gaussians` |
 | R5b CIFAR-10 RF matched-NFE=50 honest-negative | `verification_outputs/wave191-p2-cifar10-n1000.json` |
 | R5b CIFAR-10 RF n_rounds sweep | `verification_outputs/wave235-p1-r5b-fix.{csv,json}` |
 | R5b Non-inferiority | `verification_outputs/wave234-p6-ni-test.csv` + `wave234-p6-non-inferiority.{csv,json}` + `wave244-p6-ni-test.csv` |
