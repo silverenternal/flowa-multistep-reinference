@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0.0",
+  "source": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave234-p5-meta-analysis.csv",
+  "method": "Per-domain DerSimonian-Laird random-effects meta-analysis. Subgroups defined a priori by cell type: protein (R1, R2, R6 foldability pLDDT, R6 foldability scPerplexity, 4\u00d7 4-arm foldability cells = 8 rows); molecule (R3 FlowMol3 fg_dev REOS = 1 row); image (R5a 2D W2, R5b CIFAR-10 RF matched-NFE=50 FID, R5c MNIST FM matched-NFE=50 FID = 3 rows). Total = 12 rows.",
+  "alpha": 0.05,
+  "sign_convention": "POSITIVE d means the FRAMEWORK improves over the baseline on the per-metric direction (per Wave 234 P5).",
+  "subgroups": {
+    "protein": {
+      "k_studies": 8,
+      "pooled_d_z": 0.42224827375963836,
+      "se_pooled": 0.17759715967938497,
+      "ci_95_lower": 0.07416423703143477,
+      "ci_95_upper": 0.7703323104878419,
+      "I_squared_pct": 99.29301964361295,
+      "tau_squared": 0.250039018165185,
+      "cochran_q": 990.1265200313173,
+      "cochran_q_p": 0.0,
+      "fixed_effect_pooled_d_z": 0.4116533810794401,
+      "heterogeneity_class": "high",
+      "studies": [
+        "R1_lineageflow_hmmer",
+        "R2_kanzi_inv_proj",
+        "R6_lineageflow_pLDDT",
+        "R6_lineageflow_scPerplexity",
+        "4arm_vanilla_scPerplexity_NFE50",
+        "4arm_vanilla_scPerplexity_NFE100",
+        "4arm_fastdllm_scPerplexity_NFE50",
+        "4arm_lediflow_scPerplexity_NFE50"
+      ],
+      "d_range": [
+        -0.074954,
+        1.076675
+      ],
+      "n_pairs_sum": 5200
+    },
+    "molecule": {
+      "k_studies": 1,
+      "pooled_d_z": 0.284748,
+      "se_pooled": 0.070711,
+      "ci_95_lower": 0.14615698668918825,
+      "ci_95_upper": 0.42333901331081175,
+      "I_squared_pct": null,
+      "tau_squared": null,
+      "cochran_q": null,
+      "cochran_q_p": null,
+      "fixed_effect_pooled_d_z": 0.284748,
+      "heterogeneity_class": "single_study",
+      "studies": [
+        "R3_flowmol3_fg_dev_reos"
+      ],
+      "d_range": [
+        0.284748,
+        0.284748
+      ],
+      "n_pairs_sum": 200
+    },
+    "image": {
+      "k_studies": 3,
+      "pooled_d_z": 3.345013007549497,
+      "se_pooled": 6.002177566164589,
+      "ci_95_lower": -8.419038850947373,
+      "ci_95_upper": 15.109064866046367,
+      "I_squared_pct": 99.84680284552103,
+      "tau_squared": 107.79017648011126,
+      "cochran_q": 1305.507277078374,
+      "cochran_q_p": 0.0,
+      "fixed_effect_pooled_d_z": 4.84003780912066,
+      "heterogeneity_class": "high",
+      "studies": [
+        "R5a_2D_two_moons_W2",
+        "R5b_CIFAR_matched_NFE50_FID",
+        "R5c_MNIST_fm_matched_NFE50_FID"
+      ],
+      "d_range": [
+        -2.700397,
+        13.175465
+      ],
+      "n_pairs_sum": 23
+    }
+  }
+}

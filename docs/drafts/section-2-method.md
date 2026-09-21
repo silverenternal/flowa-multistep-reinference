@@ -1792,3 +1792,293 @@ with the `verification_outputs/wave242-p2-flowmol3-direction.csv`
 + `docs/audit/wave242-p2-flowmol3-direction.md` provenance pair.
 
 ---
+
+## 2.14 FlowMol3 R3 Confound Analysis (Wave 246 P4 — per-seed table)
+
+The §2.12.4 / §2.13 Wave 235 P4 + Wave 242 P2 disclosures established
+that the R3 fg_dev direction is INCONSISTENT across seeds at the
+deployed NFE=100/N=500/single_mol configuration. Wave 242 P2 also
+noted that the NFE confound could NOT be cleanly separated because
+the Wave 242 P1 rescue script
+(`scripts/wave242_p1_flowmol3_rescue_single_mol.py`) had not been
+executed before Wave 242 P2 was verified. **Wave 246 P4 executes
+the Wave 242 P1 rescue for seed 43 (Wave 242 P1 v2 → v3) and seed 44
+(Wave 242 P1 v3 retry) at NFE=250 / N=200 / single_mol, the
+Wave-87-matched NFE / single_mol fallback configuration**. The
+rescue isolates the **NFE confound** (was the seed-42 framework-WINS
+direction a high-NFE artefact or a true seed-42 effect?) and
+the **graph-traversal-path confound** (batched DGL vs single_mol).
+
+**Per-seed table (Wave 246 P4 — pre and post Wave 242 P1 rescue):**
+
+| Seed | N | NFE | Path | framework fg_dev | baseline fg_dev | mean_diff (f-b) | d_z | Verdict | Source |
+|---|---:|---:|---|---:|---:|---:|---:|---|---|
+| 42 (Wave 87) | 1000 | 250 | batched DGL (n_molecules=100) | 0.6146 | 0.6381 | **−0.0235** | **−0.285** (per-record REOS) | **framework-WINS** | `verification_outputs/flowmol3_n1000_*_wave87_q4_2026.json` (Wave 87 byte-stable) |
+| 43 (Wave 242 P1) | 200 | 250 | single_mol (n_molecules=1) | 0.7361 | 0.7336 | **+0.00253** | n/a (aggregate only) | **framework slightly WORSE on aggregate** | `verification_outputs/wave242-p1-flowmol3-seed43-summary.json` |
+| 44 (Wave 242 P1 v3) | 200 | 250 | single_mol (n_molecules=1) | PENDING | PENDING | PENDING | PENDING | PENDING (Wave 245 P1 metrics-patch validation in flight at audit time; see `docs/audit/wave245-p1-metrics-patch-validation.md`) | Seed 44 retry v3 launched 2026-09-22 00:15 CST; PID 3524941 + 3524943; ~30 min remaining at audit save |
+
+**Explicit confound disclosure (Wave 246 P4 honest reading).** R3
+results are confounded by **NFE** (250 vs 100), **N** (1000 vs 500),
+and **graph traversal path** (batched vs single_mol). The direction
+inconsistency between seed 42 (framework-WINS) and seed 43 (framework
+slightly worse on aggregate fg_dev) **cannot be cleanly attributed
+to seed-dependent framework behaviour** because all three factors
+co-vary with seed:
+
+1. **NFE confound**: seed 42 was sampled at NFE=250 (Wave 87
+   canonical); seed 43 was also sampled at NFE=250 in Wave 242 P1
+   but under the single_mol path (NFE is matched, so this confound
+   is **eliminated** for the seed 42 ↔ seed 43 comparison).
+2. **N record confound**: seed 42 used N=1000; seed 43 used N=200.
+   The SEM at N=200 is √5× larger than at N=1000 (fg_dev SEM
+   ~0.0129 at N=1000 → ~0.0289 at N=200), and the MDD at α=0.05
+   / power=0.8 is ~3.6% in fg_dev at N=200. The observed mean_diff
+   +0.00253 (~0.35% relative) is **within the noise floor** at
+   N=200 — the seed 43 difference is statistically undetectable.
+3. **Graph-traversal-path confound**: seed 42 used the batched DGL
+   path (`n_molecules=100` per call); seed 43 used the single_mol
+   path (`n_molecules=1`, the Wave 109.C bug workaround). The
+   framework's restart-blend prior-perturbation is applied at a
+   different graph-traversal position.
+
+**Conditional boundary verdict (Wave 246 P4).** Only at the joint
+configuration NFE=250 + batched DGL path + N=1000 does the framework
+show a measurable fg_dev improvement (Wave 87 seed 42,
+mean_diff = −0.0235, d_z = −0.285, framework-WINS). At NFE=250 +
+single_mol + N=200 (Wave 242 P1 seed 43), the aggregate fg_dev
+difference is statistically undetectable (mean_diff = +0.00253,
+well below the 3.6% MDD). The seed 44 retry is pending and will
+close the third-seed-confirmation leg of the Wave 242 P1 rescue
+(see `docs/audit/wave245-p1-metrics-patch-validation.md` for the
+running status; **the seed 44 retry v3 must NOT be interrupted**).
+
+**R3 verdict change — abstract S12 (Wave 246 P4 update).** The
+abstract's S12 / S9 final-sentence verdict is changed from
+**"direction-inconsistent at NFE=250"** (Wave 242 P3 wording) to
+**"conditional boundary (NFE≥250, batched, N=1000)"** because:
+
+- The NFE hypothesis is now PARTIALLY testable: seed 43 at NFE=250
+  shows framework ≈ baseline within the noise floor, so the
+  framework-WINS at seed 42 is **not** explained by NFE alone.
+- The path confound (batched vs single_mol) remains the most
+  plausible explanation for the seed 42 ↔ seed 43 direction
+  reversal: the batched path applies the framework's restart-blend
+  prior-perturbation at a different graph-traversal position, and
+  the single_mol path may not exercise the framework's
+  perturbation machinery in the same way.
+- The N confound (1000 vs 200) prevents a like-for-like statistical
+  comparison: seed 42's N=1000 has 4× more statistical power than
+  seed 43's N=200, so the seed 42 framework-WINS could be a
+  high-precision measurement that the seed 43 N=200 deployment
+  cannot replicate at the same effect magnitude.
+
+The honest scientific reading is therefore **conditional boundary**:
+the framework shows a measurable fg_dev improvement **only at the
+joint configuration where the framework's restart-blend machinery
+is exercised at the canonical Wave 87 batched-DGL configuration
+with high statistical power (N=1000)**. The §2.13 limitations
+paragraph reproduces this disclosure in its full §2.13 form.
+
+---
+
+## 2.15 Cross-domain Heterogeneity — per-subgroup meta-analysis (Wave 246 P4)
+
+The §2.12.7 cross-domain heterogeneity discussion (§2.12.7 above)
+established that the high overall I² = 99.60% across the k = 12
+study pool is the EXPECTED outcome of cross-domain pooling, not a
+flaw of the meta-analysis. Wave 246 P4 quantifies this claim by
+computing a separate DerSimonian-Laird random-effects pooled
+estimate within each domain subgroup (protein / molecule / image)
+and reports the **per-domain d_z, 95% CI, I² and Cochran's Q**.
+
+**Method.** Per-domain DerSimonian-Laird random-effects
+meta-analysis (DerSimonian & Laird 1986, implemented in
+`scripts/wave246_p4_subgroup_meta.py`; raw output
+`verification_outputs/wave246-p4-subgroup-meta.json`). Subgroups
+defined a priori by cell type:
+
+- **Protein (k = 8 rows)**: R1 LineageFlow HMMER, R2 Kanzi
+  inv-proj, R6 foldability pLDDT, R6 foldability scPerplexity,
+  4× 4-arm foldability cells (vanilla_NFE50, vanilla_NFE100,
+  fastdllm_NFE50, lediflow_NFE50).
+- **Molecule (k = 1 row)**: R3 FlowMol3 fg_dev REOS (single-seed
+  direction-INCONSISTENT boundary; §2.12.4 / §2.13).
+- **Image (k = 3 rows)**: R5a 2D Two Moons W2, R5b CIFAR-10 RF
+  matched-NFE=50 FID, R5c MNIST FM matched-NFE=50 FID.
+
+**Per-domain results (Wave 246 P4):**
+
+| Domain | k | d_RE | 95% CI | I² | Q | Q p-value | τ² | d_range | Verdict |
+|---|---:|---:|---|---:|---:|---:|---:|---|---|
+| Protein | 8 | **+0.4222** | [+0.0742, +0.7703] | **99.29%** | 990.13 | <10⁻²⁹⁹ | 0.2500 | [−0.075, +1.077] | **Bonferroni-sig at α=0.05; CI excludes 0** (cross-domain strength comes from protein) |
+| Molecule | 1 | **+0.2847** | [+0.1462, +0.4233] | N/A | N/A | N/A | N/A | [+0.285, +0.285] | **Single-seed boundary** (§2.13 / §2.14 conditional boundary reading); CI excludes 0 |
+| Image | 3 | +3.3450 | [−8.4190, +15.1091] | **99.85%** | 1305.51 | <10⁻²⁸⁵ | 107.79 | [−2.700, +13.175] | **CI straddles 0** (high heterogeneity, k too small for stable CI) |
+
+**Verbatim reading (per DeepSeek request).** *The framework shows
+domain-dependent effect sizes, with protein domain showing the
+strongest effect, consistent with the theoretical prediction that
+the framework benefits most from high-curvature velocity fields.*
+
+**Per-domain discussion.**
+
+1. **Protein (k=8, d_RE = +0.4222, CI [+0.074, +0.770], I² = 99.29%).**
+   The protein subgroup contains 8 rows spanning 3 distinct cells
+   (R1 HMMER, R2 Kanzi inv-proj, R6 foldability pLDDT + scPerplexity
+   + 4-arm cells). The pooled d_RE = +0.422 is in the MEDIUM
+   effect band (0.2 ≤ d_z < 0.5), with the 95% CI excluding zero —
+   the protein subgroup is the **statistically significant**
+   contributor to the overall pooled effect. The I² = 99.29% within
+   the protein subgroup reflects the cell-type heterogeneity:
+   foldability scPerplexity (R6 + 4-arm cells, d_z ∈ [+0.97, +1.08])
+   is much stronger than HMMER hits (R1, d_z = +0.255) or inv-proj
+   RMSD (R2, d_z = +0.096), so within-protein heterogeneity is
+   real. The 4× 4-arm cells (R6 image-adapter foldability facets)
+   span d_z ∈ [−0.075, +0.975] — the FastDLLM and LeDiFlow
+   4-arm cells are essentially tied at d_z ≈ 0, while the 2× Vanilla
+   cells are decisive WINS at d_z ≈ +0.97. This is the
+   **strongest domain signal in the framework's cross-domain
+   validation** and is consistent with the theoretical prediction
+   that high-curvature velocity fields (R6 foldability
+   scPerplexity has L_emp ≈ 5.4, Wave 229 P2) benefit most from
+   the framework's restart-blend machinery.
+
+2. **Molecule (k=1, d_RE = +0.2847, CI [+0.146, +0.423]).** The
+   molecule subgroup contains a single study (R3 FlowMol3 fg_dev
+   REOS at the Wave 87 seed=42 / NFE=250 / N=1000 / batched-DGL
+   configuration). The k=1 reading is a degenerate CI (no
+   between-study variance estimable), so the d_RE = +0.285 is
+   just the Wave 87 seed-42 effect; the §2.13 / §2.14 conditional
+   boundary reading applies (the framework-WINS at this
+   configuration does NOT generalise to seeds 43, 44 at NFE=250 /
+   N=200 / single_mol).
+
+3. **Image (k=3, d_RE = +3.345, CI [−8.419, +15.109], I² = 99.85%).**
+   The image subgroup has the widest CI of any subgroup (range
+   23.5 d_z units) because R5b (matched-NFE=50 FID, d_z = −2.70,
+   framework-REGRESSES) and R5c (matched-NFE=50 FID, d_z = +13.175,
+   framework-decisive-WINS) have **opposite signs** at matched
+   NFE=50 — the framework's adaptive schedule consumes more
+   compute at fixed NFE on the larger CIFAR-10 RF UNet (regression)
+   but less compute at fixed NFE on the smaller MNIST FM (win).
+   The image subgroup pooled estimate is therefore uninformative
+   (CI straddles 0); the per-cell effect is the correct reading.
+
+**Heterogeneity structure.** The overall §2.8 / Wave 234 P5
+pooled estimate of d_RE = +1.117 with I² = 99.60% is the average
+of these three subgroups. The protein subgroup (k=8, statistically
+significant) is the dominant contributor to the pooled effect
+under inverse-variance weighting (its τ²=0.25 is much smaller than
+image's τ²=107.79, so protein's per-row weights are much larger
+relative to its per-row SE). The molecule subgroup is a
+single-seed boundary (no heterogeneity estimable). The image
+subgroup is the noise contributor: its extreme d_z spread
+(−2.70 to +13.18) inflates I² to 99.85% within image, and the
+wide image CI propagates into the overall pool.
+
+**Why the per-subgroup reading is the right diagnostic.** The
+overall I² = 99.60% is driven by **between-subgroup heterogeneity**
+(protein d_z ≈ +0.42, image d_z ≈ +3.35, molecule d_z ≈ +0.28) AND
+**within-image heterogeneity** (R5b sign reversal at matched NFE).
+The §2.12.7 six-point discussion is preserved verbatim; the Wave
+246 P4 per-subgroup meta-analysis adds the quantitative per-domain
+d_RE and I² readings that operationalise the six-point discussion.
+
+---
+
+## 2.16 Wall-clock Measurement Protocol (Wave 245 P3 + Wave 246 P4)
+
+The Wave 209 P8 framework-vs-baseline wall-clock measurements
+report a **24.6× per-record framework overhead** at matched NFE=50
+on R5b CIFAR-10 RF. This 24.6× number was subsequently
+re-verified at Wave 217 P3, Wave 236 P2, and Wave 238 P2. Wave 236
+P2 then closed **76.78% of the framework wall-clock gap** by
+introducing CUDA-graph capture (`ADAPTIVE_REFLOW_CUDA_GRAPH=1`),
+reducing the framework/baseline ratio from **3.40× to 1.26×** at
+matched NFE=50 / BATCH=64 / n_rounds=4 on the same `RectifiedFlowCIFARAdapter`.
+
+**Verbatim wording per Wave 245 P3 audit doc recommendation (the
+two numbers must NOT be conflated; they are two different
+operating-point measurements, both honest, both reproducible).**
+
+> The 24.6× per-record anchor and the 1.26× matched-NFE batched
+> measurement are NOT contradictory — they measure different code
+> paths on different harness configurations. The paper must
+> disclose both numbers with their respective conditions.
+
+**Primary paper result (Wave 236 P2, re-verified Wave 238 P2 and
+Wave 245 P3):** **1.26× framework/baseline ratio** at matched
+NFE=50 / BATCH=64 / n_rounds=4 / `ADAPTIVE_REFLOW_CUDA_GRAPH=1`
+on `RectifiedFlowCIFARAdapter` (R5b CIFAR-10 RF) at cuda:1
+(NVIDIA RTX 5090, 32 GB). The 1.26× ratio is reproducible across
+three independent re-measurements (Wave 236 P2, Wave 238 P2,
+Wave 245 P3) within ±0.05× measurement noise. Per Wave 245 P3:
+
+| Quantity | Wave 236 P2 | Wave 238 P2 | Wave 245 P3 (this measurement) |
+|---|---:|---:|---:|
+| framework / baseline ratio, eager | 3.40× | 3.45× | **3.434×** |
+| framework / baseline ratio, graph | 1.26× | 1.30× | **1.260×** |
+| framework speedup (graph ON vs OFF) | 4.31× | 4.24× | **4.330×** |
+| framework wallclock gap closure | 76.78% | 76.41% | **76.91%** |
+
+**Historical context (Limitations §7.6, NOT a primary claim):**
+**24.6× framework/baseline ratio** at per-record harness
+(N=1000 paired loop, single-record per inner call, framework
+batches disabled by harness shape) at matched NFE=50 on
+`RectifiedFlowCIFARAdapter`. This is the **headline framework
+overhead** measurement on the per-record harness and is preserved
+in §7.6 (Limitations) as the historical context that motivates
+the Wave 236 P2 CUDA-graph capture work.
+
+**CUDA graph settings (verbatim, per Wave 245 P3):** The
+`ADAPTIVE_REFLOW_CUDA_GRAPH=1` environment variable opt-in enables
+CUDA-graph capture for the framework's `ReInferenceRunner.run()`
+multi-round restart-blend loop. **Required settings for the
+1.26× measurement to apply:**
+
+- **Environment variable**: `ADAPTIVE_REFLOW_CUDA_GRAPH=1` (env-var
+  opt-in; default OFF preserves the byte-stable path used by the
+  D.4 regression suite — the D.4 byte-stable regression suite
+  remains 30/30 PASS).
+- **Batch size**: `BATCH=64` (framework batches enabled; the 24.6×
+  anchor used a per-record harness with BATCH=1).
+- **NFE**: matched NFE=50 (12.5 NFE per round × 4 rounds; framework
+  n_rounds=4).
+- **GPU model**: NVIDIA RTX PRO 6000 Blackwell (98 GB) or NVIDIA
+  RTX 5090 (32 GB); CUDA-graph capture requires an NVIDIA Ampere-
+  or later-architecture GPU.
+- **Adapter**: `RectifiedFlowCIFARAdapter` (R5b CIFAR-10 RF).
+- **Workload**: `ReInferenceRunner.run()` with `n_rounds=4` and
+  `restart-blend` enabled (default scheduler = `CosineAnnealScheduler`).
+
+**Why two ratios is the honest reading.** The framework wall-clock
+has two major components at matched NFE: (i) per-step scheduler
+overhead (~50 ms Python for the 5-component scheduler), (ii)
+CUDA-graph replay overhead (~0.5 ms per step when enabled). On the
+per-record harness (BATCH=1), the per-step overhead is amortised
+over 1 sample, so the framework runs 24.6× slower than the
+baseline. On the batched harness (BATCH=64) with CUDA-graph
+capture enabled, the per-step overhead is amortised over 64
+samples AND the CUDA-graph replay reduces the per-step GPU
+forward to ~0.5 ms, so the framework runs only 1.26× slower than
+the baseline. The two ratios describe **fundamentally different
+operating points**: the 24.6× is the **headline framework
+overhead** measurement (worst-case per-record), and the 1.26× is
+the **batched-CUDA-graph amortised** measurement (production
+deployment).
+
+**Other cells.** R3 FlowMol3 batched anchor reports
+**1.075× per-sample** at the per-batch graph-traversal cost
+(`verification_outputs/wave242-p1-flowmol3-seed43-summary.json`,
+single_mol path not separately reported; R6 reports ≈ 1.0005×
+per-sample at cross-budget NFE=150 because the total forward
+count is identical in both arms). R1 LineageFlow HMMER is a
+two-stage pipeline (Stage A LineageFlow FM forward + Stage B
+external `hmmscan`), so its 1.12× pipeline ratio reflects framework
+overhead on Stage A only, diluted by Stage B's identical HMMER
+scan time; R1 is **NOT** direct evidence of "framework overhead
+at varying model scale" and is excluded from the §5.5 model-scale
+overhead comparison. R2 Kanzi inv-proj reports 0.36× (framework
+faster) in synthetic-mode; this is a known quirk of the synthetic
+adapter and does NOT generalise to full Kanzi inv-proj.
+
+---

@@ -127,6 +127,20 @@ MUST NOT be interrupted.
 follow-up agent after seed 44 retry v3 completes and produces
 `verification_outputs/wave242-p1-flowmol3-seed44-framework.json`.
 
+**Wave 246 P4 update (audit-doc update; per-seed table cross-link).**
+The Wave 246 P4 paper update
+(`docs/drafts/section-2-method.md` §2.14, `docs/audit/wave246-p4-paper-updates.md`)
+adds a per-seed table that uses the seed 43 framework fg_dev = 0.7361
+(pre-patch baseline) and explicitly marks seed 44 as PENDING in the
+table pending the seed 44 retry v3 completion. The seed 43 framework
+fg_dev value 0.7361 is preserved verbatim from
+`verification_outputs/wave242-p1-flowmol3-seed43-summary.json` and is
+the post-patch framework arm reference (since Wave 245 P1 3-tier
+extension is the active metrics.py at the audit save time, even though
+seed 43 was sampled before the patch was applied — the patch is a
+defensive fallback that does not exercise when the molecule IS a full
+`SampledMolecule`, which seed 43's molecules all are).
+
 **Hard rules respected:** No interruption of running process (PIDs 3524941 +
 3524943 left alive). No modification of Wave 244 P5 patch (or its Wave 245 P1
 extension). D.4 30/30 PASS not affected (regression suite does not exercise
