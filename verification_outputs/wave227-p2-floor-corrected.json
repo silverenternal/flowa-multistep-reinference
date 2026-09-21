@@ -1,0 +1,19 @@
+{
+  "n_cells_total": 16,
+  "n_cells_floor_calculated": 16,
+  "n_cells_consistent_with_bound_corrected": 14,
+  "scPerplexity_floor_mean": 3.7602610132307164,
+  "pLDDT_floor_mean": 0.9070454006045644,
+  "scPerplexity_floor_n30": 3.7522428195506965,
+  "scPerplexity_floor_n29": 3.816388368990861,
+  "pLDDT_floor_n30": 0.9051112620772045,
+  "pLDDT_floor_n29": 0.9205843702960843,
+  "A_g": 0.8549457422,
+  "exp_A_g": 2.3512468036,
+  "d": 512,
+  "sigma_record": {
+    "pLDDT": 15.176988336372894,
+    "scPerplexity": 3.660973910347937
+  },
+  "correct_formula": "d_z_floor = e^{A_g} \u00b7 sqrt(2\u00b7d/n_seed) / sigma_record"
+}
