@@ -15,13 +15,33 @@ Root cause: Some molecules returned by the upstream FlowMol3 sampler are plain `
 
 **3 places** in `data/FlowMol3/repo/flowmol/analysis/metrics.py` patched with defensive fallbacks. All patches are local-only (`data/FlowMol3/` is `.gitignore`-d).
 
-### Patch 1 — line 111 (`analyze()` function, `molecule.num_atoms`)
+### Patch 1 — line 111 (`analyze()` function, `molecule.num_atoms`) — EXTENDED in Wave 245 P1
 
+Original Wave 244 P5 patch:
 ```python
 n_stable_atoms_this_mol, mol_stable, n_fake_atoms = self.stability_func(molecule)
 # Wave 244 P5 defensive patch (line 111): Mol objects don't have .num_atoms.
 n_atoms += getattr(molecule, 'num_atoms', len(molecule.GetAtoms())) - n_fake_atoms
 ```
+
+**Wave 245 P1 extension** (after seed 44 retry v2 failed at this line for some SampledMolecule objects missing both `num_atoms` AND `GetAtoms`):
+```python
+n_stable_atoms_this_mol, mol_stable, n_fake_atoms = self.stability_func(molecule)
+# Wave 245 P1 defensive patch extension: 3-tier fallback for num_atoms.
+# SampledMolecule has .num_atoms (molecule_builder.py:62); Mol has .GetNumAtoms();
+# partial / malformed molecules may have neither. Try all, default 0.
+_num = getattr(molecule, 'num_atoms', None)
+if _num is None:
+    if hasattr(molecule, 'GetNumAtoms'):
+        _num = molecule.GetNumAtoms()
+    elif hasattr(molecule, 'GetAtoms'):
+        _num = len(molecule.GetAtoms())
+    else:
+        _num = 0
+n_atoms += _num - n_fake_atoms
+```
+
+**Why the extension**: First patch (line 111) only handled `Mol` (RDKit) objects. After Wave 242 seed 44 retry v2 ran, some molecules in the 200 were partial `SampledMolecule` objects that lack both `.num_atoms` AND `.GetAtoms()`. The fallback `len(molecule.GetAtoms())` triggered another AttributeError. Wave 245 P1 adds a 3-tier fallback that tries `.num_atoms` → `.GetNumAtoms()` → `.GetAtoms()` → 0.
 
 ### Patch 2 — line 349–358 (`check_stability()` function, `molecule.atom_types/valencies/atom_charges`)
 
