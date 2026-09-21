@@ -2,7 +2,7 @@
 
 **Date.** 2026-09-19
 **Agent.** Wave 195 P3 4-arm power analysis agent
-**Working directory.** `/home/hugo/codes/flowa-multistep-reinference`
+**Working directory.** `<repo_root>`
 **Commit SHA (analysis-frozen).** `ff6ae12` (HEAD at start of Wave 195 P3).
 **Scope.** 12 per-cell power analyses for the 4-arm head-to-head
 (FlowA vs each of Fast-DLLM, AB-Cache, LeDiFlow; 2 metrics × 2 NFE per

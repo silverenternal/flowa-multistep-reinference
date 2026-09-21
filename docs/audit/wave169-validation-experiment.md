@@ -342,7 +342,7 @@ for nfe in [50, 100, 200, 500]:
 # Per-position token-index spot-check (48 cells)
 python -c "
 import sys, numpy as np
-sys.path.insert(0, '/home/hugo/codes/flowa-multistep-reinference')
+sys.path.insert(0, '<repo_root>')
 from adaptive_reflow.adapters.lineageflow import LineageFlowAdapter, AMINO_ACID_CATEGORICAL
 from tools.run_real_ckpt_eval import _solve_framework
 for fam in ['PF00005.27', 'PF00072.24', 'PF00183.19', 'PF02517.18']:

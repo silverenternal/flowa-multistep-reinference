@@ -70,7 +70,7 @@ to RESOLVED by running the novelty sweep against the **canonical Pfam-A DB**
 ```
 $MMSEQS easy-search \
   /tmp/w158/lineageflow_real_fastas/{arm}.fasta \
-  /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam_canonical/mmseqs_db/pfam_a_targetDB \
+  <repo_root>/data/lineageflow_upstream/databases/pfam_canonical/mmseqs_db/pfam_a_targetDB \
   /tmp/w165/novelty_n1000/{arm}/full.m8 \
   /tmp/w165/novelty_n1000/{arm}/tmp/ \
   --threads 32 \
@@ -161,7 +161,7 @@ The loose sweep confirms that the DB **does** contain homologs to the LineageFlo
 mkdir -p /tmp/w165/novelty_n1000/baseline/ /tmp/w165/novelty_n1000/framework/
 nohup /home/hugo/bin/mmseqs easy-search \
   /tmp/w158/lineageflow_real_fastas/baseline.fasta \
-  /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam_canonical/mmseqs_db/pfam_a_targetDB \
+  <repo_root>/data/lineageflow_upstream/databases/pfam_canonical/mmseqs_db/pfam_a_targetDB \
   /tmp/w165/novelty_n1000/baseline/full.m8 \
   /tmp/w165/novelty_n1000/baseline/tmp/ \
   > /tmp/w165/novelty_n1000/baseline/sweep.log 2>&1 &
@@ -169,7 +169,7 @@ echo "BASELINE_PID: $!"
 
 nohup /home/hugo/bin/mmseqs easy-search \
   /tmp/w158/lineageflow_real_fastas/framework.fasta \
-  /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam_canonical/mmseqs_db/pfam_a_targetDB \
+  <repo_root>/data/lineageflow_upstream/databases/pfam_canonical/mmseqs_db/pfam_a_targetDB \
   /tmp/w165/novelty_n1000/framework/full.m8 \
   /tmp/w165/novelty_n1000/framework/tmp/ \
   > /tmp/w165/novelty_n1000/framework/sweep.log 2>&1 &

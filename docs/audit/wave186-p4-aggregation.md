@@ -29,11 +29,11 @@ Three concrete deliverables:
 
 Outputs land at:
 
-- `/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave186-p4-aggregation.csv`
-- `/home/hugo/codes/flowa-multistep-reinference/plots/wave186-p4-beta_base.png`
-- `/home/hugo/codes/flowa-multistep-reinference/plots/wave186-p4-restart_min_nfe.png`
-- `/home/hugo/codes/flowa-multistep-reinference/plots/wave186-p4-nfe_ref.png`
-- `/home/hugo/codes/flowa-multistep-reinference/plots/wave186-p4-seed.png`
+- `<repo_root>/verification_outputs/wave186-p4-aggregation.csv`
+- `<repo_root>/plots/wave186-p4-beta_base.png`
+- `<repo_root>/plots/wave186-p4-restart_min_nfe.png`
+- `<repo_root>/plots/wave186-p4-nfe_ref.png`
+- `<repo_root>/plots/wave186-p4-seed.png`
 
 Driver script: `tools/aggregate_wave186_p4.py` (deterministic; no RNG;
 no time-of-day inputs; safe to re-run from CI).

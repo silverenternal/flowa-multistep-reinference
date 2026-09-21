@@ -23,9 +23,9 @@ PDF size jumped 6861 bytes between passes 1 and 2 due to hyperref/destination fi
 
 ## Converter invocation
 ```bash
-cd /home/hugo/codes/flowa-multistep-reinference/docs/build_pdf
+cd <repo_root>/docs/build_pdf
 python md_to_tex.py
-# → Wrote /home/hugo/codes/flowa-multistep-reinference/docs/build_pdf/paper.tex (631522 chars)
+# → Wrote <repo_root>/docs/build_pdf/paper.tex (631522 chars)
 ```
 
 The converter performs these transformations on the source markdown:
@@ -72,7 +72,7 @@ The converter performs these transformations on the source markdown:
 ## Reproducibility
 To regenerate from scratch:
 ```bash
-cd /home/hugo/codes/flowa-multistep-reinference/docs/build_pdf
+cd <repo_root>/docs/build_pdf
 python md_to_tex.py
 rm -f paper.aux paper.bbl paper.blg paper.log paper.out paper.pdf
 pdflatex -interaction=nonstopmode paper.tex

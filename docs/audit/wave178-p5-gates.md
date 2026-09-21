@@ -22,7 +22,7 @@
 ```
 $ mkdocs build --strict
 INFO    -  Cleaning site directory
-INFO    -  Building documentation to directory: /home/hugo/codes/flowa-multistep-reinference/site
+INFO    -  Building documentation to directory: <repo_root>/site
 WARNING -  The following pages exist in the docs directory, but are not included in the "nav" configuration:
   - code-release-checklist.md
   - paper-draft-anonymous.md

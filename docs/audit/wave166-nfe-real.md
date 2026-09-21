@@ -53,7 +53,7 @@ reflect genuine forward-pass output.
      but the same Wave 166 P4 path on a Python 3.10 venv would still
      fail at this import; we already routed around that by using
      `.venvs/lineageflow_venv`.
-- **ckpt:** `/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/lineageflow-rp55.ckpt`
+- **ckpt:** `<repo_root>/data/lineageflow_upstream/lineageflow-rp55.ckpt`
   (10.5 GB, sha256 in `verification_outputs/ckpt_sha256.json`).
 - **mmseqs:** `/home/hugo/bin/mmseqs` (used by the kanzi arm; not
   relevant here — kanzi arm is BLOCKED on

@@ -2,7 +2,7 @@
 
 **Date authored:** 2026-09-18
 **Wave:** 188 P6
-**Working directory:** `/home/hugo/codes/flowa-multistep-reinference`
+**Working directory:** `<repo_root>`
 **Paper draft:** `docs/paper-draft.md`
 **Supplementary audit trail:** `docs/audit/paper-p6-wave-history-supplementary.md`
 
@@ -94,9 +94,9 @@ Confirmed MeanFlow (Germain et al. 2024, arXiv:2412.14766), Reflow (Liu 2022), a
 
 ## File references
 
-- Main paper: `/home/hugo/codes/flowa-multistep-reinference/docs/paper-draft.md` (7,271 lines)
-- Wave history supplementary: `/home/hugo/codes/flowa-multistep-reinference/docs/audit/paper-p6-wave-history-supplementary.md` (1,300+ lines preserved)
-- This audit doc: `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave188-p6-paper-polish-audit.md`
+- Main paper: `<repo_root>/docs/paper-draft.md` (7,271 lines)
+- Wave history supplementary: `<repo_root>/docs/audit/paper-p6-wave-history-supplementary.md` (1,300+ lines preserved)
+- This audit doc: `<repo_root>/docs/audit/wave188-p6-paper-polish-audit.md`
 
 ## Acceptance gates preserved
 

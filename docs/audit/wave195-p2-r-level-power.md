@@ -2,7 +2,7 @@
 
 **Date.** 2026-09-19
 **Agent.** Wave 195 P2 R-level power analysis agent
-**Working directory.** `/home/hugo/codes/flowa-multistep-reinference`
+**Working directory.** `<repo_root>`
 **Spec reference.** `docs/audit/wave195-p1-power-spec.md` (P1; commit `d8452ef`)
 **Spec-frozen inputs.** P1 Table A inventory (7 cells, R1–R6).
 **Output CSV.** `verification_outputs/wave195-p2-r-level-power.csv`

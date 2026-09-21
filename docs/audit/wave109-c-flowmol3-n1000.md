@@ -85,7 +85,7 @@ reproduces with a 5-line script calling
 `FlowMol3V2Adapter.solve_ode(..., n_molecules=100)`:
 
 ```python
-File "/home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/repo/flowmol/models/flowmol.py", line 546, in sample
+File "<repo_root>/data/FlowMol3/repo/flowmol/models/flowmol.py", line 546, in sample
     g.ndata['x_0'] = prior['x_0'].to(g.device)
   File ".../dgl/view.py", line 99, in __setitem__
     self._graph._set_n_repr(self._ntid, self._nodes, {key: val})

@@ -46,8 +46,8 @@ Means (rounded to 4 decimals): nfe=100 pLDDT 36.9037, scPerp 14.3514; nfe=200 pL
 
 ## 5. Outputs
 
-- `/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave180-p3-three-arm-comparison.csv` — 2-row comparison table.
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave180-p3-comparison.md` — this audit document.
+- `<repo_root>/verification_outputs/wave180-p3-three-arm-comparison.csv` — 2-row comparison table.
+- `<repo_root>/docs/audit/wave180-p3-comparison.md` — this audit document.
 
 ## 6. JSON summary (for downstream aggregators)
 

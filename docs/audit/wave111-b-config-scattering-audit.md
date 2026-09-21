@@ -272,7 +272,7 @@ All file:line citations use SHAs from the current HEAD `70501280ac0e9e197064d3b2
 
 ```json
 {
-  "audit_doc_path": "/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave111-b-config-scattering-audit.md",
+  "audit_doc_path": "<repo_root>/docs/audit/wave111-b-config-scattering-audit.md",
   "settings_audited": 12,
   "top_priority_settings": [
     "--seed",

@@ -132,11 +132,11 @@ The ruff gap is **non-blocking for the Wave 215 P3 audit** because:
 
 ## Files Referenced
 
-* `/home/hugo/codes/flowa-multistep-reinference/tests/test_d4_regression_vectors.py`
-* `/home/hugo/codes/flowa-multistep-reinference/docs/CLAIMS.md`
-* `/home/hugo/codes/flowa-multistep-reinference/tools/check_claims_consistency.py`
-* `/home/hugo/codes/flowa-multistep-reinference/pyproject.toml` (ruff config)
-* `/home/hugo/codes/flowa-multistep-reinference/mkdocs.yml` (mkdocs config)
+* `<repo_root>/tests/test_d4_regression_vectors.py`
+* `<repo_root>/docs/CLAIMS.md`
+* `<repo_root>/tools/check_claims_consistency.py`
+* `<repo_root>/pyproject.toml` (ruff config)
+* `<repo_root>/mkdocs.yml` (mkdocs config)
 
 ## Commit
 

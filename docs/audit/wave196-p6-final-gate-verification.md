@@ -1,7 +1,7 @@
 # Wave 196 P6 — Final Gate Verification (Track B + Track C Replication)
 
 **Date**: 2026-09-19
-**Working directory**: `/home/hugo/codes/flowa-multistep-reinference`
+**Working directory**: `<repo_root>`
 **Tag**: `v2.0-paper-bc-replication`
 **Final commit SHA**: see `git log --oneline -1` after this commit lands
 

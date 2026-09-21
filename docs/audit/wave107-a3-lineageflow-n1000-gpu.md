@@ -411,7 +411,7 @@ detection is automatic.
 
 ```bash
 # Phase A: baseline arm upstream eval (2 unblocked metrics)
-cd /home/hugo/codes/flowa-multistep-reinference
+cd <repo_root>
 CUDA_VISIBLE_DEVICES=0 timeout 3600 \
     .venvs/lineageflow_venv/bin/python tools/run_real_ckpt_eval.py \
     --model lineageflow --seeds 42 --nfe-budgets 250 \

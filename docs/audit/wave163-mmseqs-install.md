@@ -102,7 +102,7 @@ the alignment pipeline produces non-trivial results.
 ### 2.5 — Secondary vendored binary
 
 ```
-$ sha256sum /home/hugo/codes/flowa-multistep-reinference/.venvs/protbfn_venv/bin/mmseqs
+$ sha256sum <repo_root>/.venvs/protbfn_venv/bin/mmseqs
 b7ef6e0e33df5dd4fa9cf988cbd8b4988c11a3a1255d2c377f13e1bb40c157fb
 ```
 
@@ -257,7 +257,7 @@ claims-drift surface is touched.
 The novelty sweep (next agent) can run the vendored upstream script directly:
 
 ```bash
-cd /home/hugo/codes/flowa-multistep-reinference
+cd <repo_root>
 
 # baseline pass
 python data/lineageflow_upstream/evaluation/novelty_mmseqs2.py \

@@ -296,9 +296,9 @@ audit-trail references.
 {
   "commit_sha": "c73d034fc3a93f02895f68021b4a54d6d30572d2",
   "files_changed": [
-    "/home/hugo/codes/flowa-multistep-reinference/INSTALL_REPORT.md",
-    "/home/hugo/codes/flowa-multistep-reinference/supplementary.md",
-    "/home/hugo/codes/flowa-multistep-reinference/cover_letter.md"
+    "<repo_root>/INSTALL_REPORT.md",
+    "<repo_root>/supplementary.md",
+    "<repo_root>/cover_letter.md"
   ],
   "fixes_applied_count": 5,
   "fixes_applied": {
@@ -326,8 +326,8 @@ audit-trail references.
     "#39 (MEDIUM) — NOT INSTALLED list — TRIAGE (UNVERIFIED per audit doc)",
     "#40 (MEDIUM) — CONSOLIDATED_RESULTS.md 33/33 historical — ACCEPT (historical records, preserved per Wave 106.C.3 F-06b)"
   ],
-  "output_audit_doc": "/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave106-c4-fix-summary.md",
-  "audit_source": "/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave106-a-4-path-consistency.md",
+  "output_audit_doc": "<repo_root>/docs/audit/wave106-c4-fix-summary.md",
+  "audit_source": "<repo_root>/docs/audit/wave106-a-4-path-consistency.md",
   "verification": {
     "d4_regression_vectors": "72/72 PASS (single source of truth: docs/GATES.md 'D.4 byte-stable regression vectors' section)",
     "mkdocs_build_strict": "mkdocs not installed in env; last-green invariant preserved by no source code edits (only doc edits + 1 new doc file)",

@@ -255,7 +255,7 @@ The **72 passed** matches the Wave 106.C.3 F-06 standardized "D.4 72/72 PASS" cl
 ```
 $ .venv/bin/mkdocs build --strict
 INFO    -  Cleaning site directory
-INFO    -  Building documentation to directory: /home/hugo/codes/flowa-multistep-reinference/site
+INFO    -  Building documentation to directory: <repo_root>/site
 INFO    -  mkdocstrings_handlers: Formatting signatures requires either Black or Ruff to be installed.
 INFO    -  Documentation built in 14.24 seconds
 EXIT=0

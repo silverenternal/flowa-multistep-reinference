@@ -182,9 +182,9 @@ Inputs:
 {
   "figures_generated": 3,
   "figure_paths": [
-    "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave179-p5-figure-pLDDT-with-error-bars.png",
-    "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave179-p5-figure-scPerplexity-with-error-bars.png",
-    "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave179-p5-figure-deltas-with-error-bars.png"
+    "<repo_root>/verification_outputs/wave179-p5-figure-pLDDT-with-error-bars.png",
+    "<repo_root>/verification_outputs/wave179-p5-figure-scPerplexity-with-error-bars.png",
+    "<repo_root>/verification_outputs/wave179-p5-figure-deltas-with-error-bars.png"
   ],
   "dpi": 300,
   "style": "serif, dataviz/palette.md slots 1-2 (blue + orange), 95% CI error bars",

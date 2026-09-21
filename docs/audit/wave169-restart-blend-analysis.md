@@ -267,7 +267,7 @@ md5sum /tmp/w169/n_rounds_test/nfe_200_n_rounds_1/framework.fasta \
 # Per-cell spot-check (12 cells: 4 families × 3 seeds)
 python -c "
 import sys, numpy as np
-sys.path.insert(0, '/home/hugo/codes/flowa-multistep-reinference')
+sys.path.insert(0, '<repo_root>')
 from adaptive_reflow.adapters.lineageflow import LineageFlowAdapter, AMINO_ACID_CATEGORICAL
 from tools.run_real_ckpt_eval import _solve_framework
 for fam in ['PF00005.27', 'PF00072.24', 'PF00183.19', 'PF02517.18']:

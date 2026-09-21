@@ -61,7 +61,7 @@ sweep with `--seed 42` deterministic seeding (per the Wave 108.A
 ### Phase 2 — baseline_seed42 sweep (✅ DONE)
 
 ```
-$ /home/hugo/codes/flowa-multistep-reinference/.venvs/kanzi_venv/bin/python \
+$ <repo_root>/.venvs/kanzi_venv/bin/python \
     tools/sweep_kanzi_n1000_paper_metrics.py \
     --config configs/runs/kanzi_n1000_baseline.yaml \
     --input verification_outputs/kanzi_n1000_coords.txt \
@@ -69,7 +69,7 @@ $ /home/hugo/codes/flowa-multistep-reinference/.venvs/kanzi_venv/bin/python \
     --seed 42 --limit 1000 \
     --output-dir /tmp/w120/
 [PROFILE] configs/runs/kanzi_n1000_baseline.yaml v=2026-09-11 (Wave 111) seed=42 force_mode=synthetic nfe=[100] N=1000
-[wave83] loading DAE from /home/hugo/codes/flowa-multistep-reinference/data/kanzi_ckpt/cleaned_model.pt ...
+[wave83] loading DAE from <repo_root>/data/kanzi_ckpt/cleaned_model.pt ...
 [wave83] DAE loaded in 0.8 s
 [wave83] vocab_size=1000, n_decoder=512
 [wave83] processed 1000 records in 1538.6 s (1.539 s/rec)
@@ -102,7 +102,7 @@ see §"Determinism assertion outcome" below).
 ### Phase 3 — framework_inv_proj_seed42 sweep (❌ FAILED at record 0)
 
 ```
-$ /home/hugo/codes/flowa-multistep-reinference/.venvs/kanzi_venv/bin/python \
+$ <repo_root>/.venvs/kanzi_venv/bin/python \
     tools/sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py \
     --config configs/kanzi_framework_inv_proj.yaml \
     --input verification_outputs/kanzi_n1000_coords.txt \
@@ -168,7 +168,7 @@ shape contract drift.
 ### Phase 4 — framework_synth_seed42 sweep (⚠️ IN_PROGRESS at 550/1000)
 
 ```
-$ /home/hugo/codes/flowa-multistep-reinference/.venvs/kanzi_venv/bin/python \
+$ <repo_root>/.venvs/kanzi_venv/bin/python \
     tools/sweep_kanzi_n1000_framework_paper_metrics.py \
     --config configs/runs/kanzi_n1000_framework.yaml \
     --input verification_outputs/kanzi_n1000_coords.txt \

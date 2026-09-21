@@ -74,9 +74,9 @@ The 14/16 UNDERPOWERED cells from Wave 196 P2 are **statistically indistinguisha
 - **Audit doc:** this file
 
 **Files written:**
-- `/home/hugo/codes/flowa-multistep-reinference/tools/wave197_p2_gen_all_n100.py` — Parallelized FASTA gen driver (ThreadPoolExecutor + subprocess)
-- `/home/hugo/codes/flowa-multistep-reinference/tools/wave197_p2_eval_all_n100.py` — Parallelized eval driver (2-GPU split)
-- `/home/hugo/codes/flowa-multistep-reinference/tools/wave197_p2_aggregate_n100.py` — Aggregation + paired t-test script
+- `<repo_root>/tools/wave197_p2_gen_all_n100.py` — Parallelized FASTA gen driver (ThreadPoolExecutor + subprocess)
+- `<repo_root>/tools/wave197_p2_eval_all_n100.py` — Parallelized eval driver (2-GPU split)
+- `<repo_root>/tools/wave197_p2_aggregate_n100.py` — Aggregation + paired t-test script
 - `/tmp/w197/track_b/fastas/*.fasta` — 113 FASTA files (vanilla + fastdllm + abcache partial)
 
 **Files NOT written (eval aborted):**

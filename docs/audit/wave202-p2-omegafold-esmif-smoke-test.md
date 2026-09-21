@@ -56,14 +56,14 @@ within 0.2s on both arms:
 
 ```
 [run] fold stage: /home/hugo/.conda/envs/omegafold_py310/bin/python
-  /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/foldability_omegafold.py
+  <repo_root>/data/lineageflow_upstream/evaluation/foldability_omegafold.py
   --fasta verification_outputs/lineageflow_real_fastas_w158_q3_2026/baseline.fasta
   --outdir /tmp/w202-lineageflow/smoke/baseline --omegafold-bin omegafold --gpus 0,1 ...
 Traceback (most recent call last):
-  File "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/run_foldability.py",
+  File "<repo_root>/data/lineageflow_upstream/evaluation/run_foldability.py",
     line 252, in <module>
     main()
-  File "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/run_foldability.py",
+  File "<repo_root>/data/lineageflow_upstream/evaluation/run_foldability.py",
     line 192, in main
     subprocess.run(fold_cmd, check=True)
   File "/home/hugo/.conda/envs/omegafold_py310/lib/python3.10/subprocess.py",

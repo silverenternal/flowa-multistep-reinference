@@ -62,7 +62,7 @@ All checks passed!
 ### Gate 4 — mkdocs build --strict
 **PASS — EXIT=0.**
 ```
-INFO    -  Building documentation to directory: /home/hugo/codes/flowa-multistep-reinference/site
+INFO    -  Building documentation to directory: <repo_root>/site
 INFO    -  mkdocstrings_handlers: Formatting signatures requires either Black or Ruff to be installed.
 INFO    -  Documentation built in 22.82 seconds
 ```

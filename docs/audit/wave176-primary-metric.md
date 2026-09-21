@@ -169,9 +169,9 @@ its limits** rather than over-claiming wins on saturated metrics.
 * `/tmp/w176/{kanzi,lineageflow}_seed42_nfe{50,100,200}.json` — per-cell
   raw output.
 * `/tmp/w176/{all_cells,lineageflow_real_all}.json` — aggregated output.
-* `/home/hugo/codes/flowa-multistep-reinference/docs/paper-draft.md` —
+* `<repo_root>/docs/paper-draft.md` —
   §10.22 added (primary-metric saturation disclosure).
-* `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave176-primary-metric.md`
+* `<repo_root>/docs/audit/wave176-primary-metric.md`
   — this audit document.
 
 ## 6. Verification

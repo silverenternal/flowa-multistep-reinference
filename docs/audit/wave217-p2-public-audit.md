@@ -141,7 +141,7 @@ the markers:
 - `BLOCKED-ON-DATA` (external dependency)
 
 **109 of those 425 docs** also embed `/home/<user>/`-prefixed paths
-(e.g. `/home/hugo/codes/flowa-multistep-reinference/...`) as hard-coded
+(e.g. `<repo_root>/...`) as hard-coded
 links in the markdown.
 
 These docs ARE tracked in git, so they will be visible after `git push`

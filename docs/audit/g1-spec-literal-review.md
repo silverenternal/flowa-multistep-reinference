@@ -6,10 +6,10 @@ median (`+0.0884 PASS`); 3 candidate spec fixes; recommended change + migration 
 **Author:** Wave 37 Agent A (G.1 spec-literal code review)
 **Status:** analysis complete; spec-change recommended
 **Files analyzed:**
-- `/home/hugo/codes/flowa-multistep-reinference/tools/capability_audit.py:416-502` (`g1_mean_value_score` + `_sign_normalize`)
-- `/home/hugo/codes/flowa-multistep-reinference/todo/framework-capability-metrics.md` §G.1 (spec)
-- `/home/hugo/codes/flowa-multistep-reinference/todo/framework-internal-metrics.md` §G row (additive history)
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/metric-methodology.md` (Wave 29 Agent D analysis)
+- `<repo_root>/tools/capability_audit.py:416-502` (`g1_mean_value_score` + `_sign_normalize`)
+- `<repo_root>/todo/framework-capability-metrics.md` §G.1 (spec)
+- `<repo_root>/todo/framework-internal-metrics.md` §G row (additive history)
+- `<repo_root>/docs/audit/metric-methodology.md` (Wave 29 Agent D analysis)
 
 ---
 

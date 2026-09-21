@@ -172,11 +172,11 @@ return is a pure addition that doesn't perturb real-ckpt behavior.
 
 ## 6. File paths (absolute)
 
-* `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/kanzi.py`
+* `<repo_root>/adaptive_reflow/adapters/kanzi.py`
   — Wave 177 P1 shape pad (lines ~1102-1179).
-* `/home/hugo/codes/flowa-multistep-reinference/tools/eval/metrics.py`
+* `<repo_root>/tools/eval/metrics.py`
   — Wave 177 P2 synthetic-mode early return (lines ~1543-1554).
-* `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave177-shape-composite-fixes.md`
+* `<repo_root>/docs/audit/wave177-shape-composite-fixes.md`
   — this audit document.
 
 ## 7. Wall-clock timing

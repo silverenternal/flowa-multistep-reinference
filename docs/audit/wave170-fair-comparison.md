@@ -143,7 +143,7 @@ that do not directly reflect sequence quality.
 # Prereq: P4 FASTAs already exist at /tmp/w170/fastas/nfe_{10,50,100,200,500}_{baseline_n1,framework}/
 # CUDA-enabled env with OmegaFold + ESM-IF1
 export PATH=/home/hugo/.conda/envs/omegafold_py310/bin:$PATH
-cd /home/hugo/codes/flowa-multistep-reinference
+cd <repo_root>
 
 # Eval baseline_n1 (bare RNG) at all 5 NFE levels
 for nfe in 10 50 100 200 500; do

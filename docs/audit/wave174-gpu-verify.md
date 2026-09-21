@@ -230,8 +230,8 @@ and should be tracked as a separate wave.
 
 ## Files referenced
 
-- `/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/evaluate_all.py` (lines 167-168, 232-233, 300-336)
-- `/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/run_foldability.py` (lines 130-220)
-- `/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/foldability_omegafold.py` (lines 40-78, 180-310)
-- `/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/self_consistency_esmif.py` (lines 42-60, 90-200, 252-280)
+- `<repo_root>/data/lineageflow_upstream/evaluation/evaluate_all.py` (lines 167-168, 232-233, 300-336)
+- `<repo_root>/data/lineageflow_upstream/evaluation/run_foldability.py` (lines 130-220)
+- `<repo_root>/data/lineageflow_upstream/evaluation/foldability_omegafold.py` (lines 40-78, 180-310)
+- `<repo_root>/data/lineageflow_upstream/evaluation/self_consistency_esmif.py` (lines 42-60, 90-200, 252-280)
 - `/home/hugo/OmegaFold/omegafold/__main__.py` (line 55: `model.to(args.device)`)

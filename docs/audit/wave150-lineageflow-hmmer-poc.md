@@ -40,7 +40,7 @@ Balanced 4 families x 250 sequences each = 1 000 sequences per condition
 |----------|---------------|
 | `hmmscan` binary | `/home/hugo/hmmer_build/bin/hmmscan` (HMMER 3.4, Aug 2023) |
 | `hmmsearch` binary | `/home/hugo/hmmer_build/bin/hmmsearch` |
-| Pfam DB | `/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm` |
+| Pfam DB | `<repo_root>/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm` |
 | Pfam DB size | 2 246 909 846 bytes (~2.1 GB; pre-pressed with `.h3f/.h3i/.h3m/.h3p`) |
 
 Both required resources are available on the host; `PATH` extension needed at

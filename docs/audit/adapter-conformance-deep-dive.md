@@ -3,7 +3,7 @@
 **Author**: Wave 29 Agent C (deep audit, beyond the D.5 conformance battery)
 **Date**: 2026-09-05
 **Scope**: Per-adapter conformance to
-[`adaptive_reflow.universal.FlowMatchingODEAdapter`](/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/universal/adapter.py)
+[`adaptive_reflow.universal.FlowMatchingODEAdapter`](<repo_root>/adaptive_reflow/universal/adapter.py)
 + per-method signature, per-method behavior contract, per-method
 deterministic-seed handling, StateBundle field completeness, and restart
 blend invariants.
@@ -65,7 +65,7 @@ inventory because they are test shims, not production adapters.)
 > at audit time.
 
 **File**:
-[`adaptive_reflow/adapters/flowmol3_v2_adapter.py`](/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/flowmol3_v2_adapter.py)
+[`adaptive_reflow/adapters/flowmol3_v2_adapter.py`](<repo_root>/adaptive_reflow/adapters/flowmol3_v2_adapter.py)
 lines 1175–1200 (``_channel_aware_blend`` — ``elif n_fresh > n_prior`` branch).
 
 **Symptom**: ``ValueError: all the input array dimensions except for
@@ -113,7 +113,7 @@ the first audit to construct a valid policy and call the method.
 ### NONCONFORMANCE_BUG #5 — `StochasticFMAdapter` emits non-canonical enumeration strings
 
 **File**:
-[`adaptive_reflow/adapters/stochastic_fm.py`](/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/stochastic_fm.py)
+[`adaptive_reflow/adapters/stochastic_fm.py`](<repo_root>/adaptive_reflow/adapters/stochastic_fm.py)
 lines 232–233 (``build_initial_state``).
 
 **Symptom**: ``StochasticFMAdapter`` builds its initial :class:`StateBundle`
@@ -170,7 +170,7 @@ preferred fix if deletion is undesirable.
 ### NONCONFORMANCE_DESIGN #2 — `ReferenceFlowAAdapter` is an orphan (not registered)
 
 **File**:
-[`adaptive_reflow/adapters/reference_flowa.py`](/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/reference_flowa.py).
+[`adaptive_reflow/adapters/reference_flowa.py`](<repo_root>/adaptive_reflow/adapters/reference_flowa.py).
 
 **Rationale**: ``ReferenceFlowAAdapter`` is a stdlib-only *reference*
 adapter demonstrating the Protocol surface; it is imported by
@@ -188,7 +188,7 @@ in any published paper — it is internal documentation.
 ### NONCONFORMANCE_DESIGN #3 — `FreqFlowAdapter` is a Wave 21 design skeleton (not registered)
 
 **File**:
-[`adaptive_reflow/adapters/freqflow.py`](/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/freqflow.py).
+[`adaptive_reflow/adapters/freqflow.py`](<repo_root>/adaptive_reflow/adapters/freqflow.py).
 
 **Rationale**: ``FreqFlowAdapter`` is the Wave 21 PHASE-3
 CVPR 2026 (Ren et al.) image SiT-XL/2 + FFT-branch integration. The
@@ -208,7 +208,7 @@ choice — the Protocol surface is fully conformant.
 ### NONCONFORMANCE_DESIGN #4 — `KanziAdapter` is a Wave 21 design skeleton (not registered)
 
 **File**:
-[`adaptive_reflow/adapters/kanzi.py`](/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/kanzi.py).
+[`adaptive_reflow/adapters/kanzi.py`](<repo_root>/adaptive_reflow/adapters/kanzi.py).
 
 **Rationale**: same as FreqFlow — Wave 21 PHASE-3 ICLR 2026 protein
 flow-AE integration, design-skeleton release with heavy torch
@@ -304,7 +304,7 @@ the finding and its fix can be read side by side.
 ### 2026-09-05 — NONCONFORMANCE_BUG #1 FIXED (Wave 30 Agent B)
 
 **Fix**:
-[`adaptive_reflow/adapters/flowmol3_v2_adapter.py`](/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/flowmol3_v2_adapter.py)
+[`adaptive_reflow/adapters/flowmol3_v2_adapter.py`](<repo_root>/adaptive_reflow/adapters/flowmol3_v2_adapter.py)
 — `_channel_aware_blend`, the `n_fresh > n_prior` branch. The fresh
 bond matrix is now trimmed to `n_prior` rows **before** the axis-1
 concatenation, which is what removes the mismatch:
@@ -343,7 +343,7 @@ The one remaining failure in the deep-audit file is
 still open.
 
 **Regression coverage added** (section K of
-[`tests/test_adapters/test_protocol_deep_audit.py`](/home/hugo/codes/flowa-multistep-reinference/tests/test_adapters/test_protocol_deep_audit.py)):
+[`tests/test_adapters/test_protocol_deep_audit.py`](<repo_root>/tests/test_adapters/test_protocol_deep_audit.py)):
 
 * **K.1** `test_flowmol3_v2_restart_blend_shape` — drives
   `_channel_aware_blend` over `RESTART_BLEND_SIZE_PAIRS`, covering all
@@ -374,14 +374,14 @@ reported it.
 ### 2026-09-05 — NONCONFORMANCE_BUG #5 FIXED (Wave 32 Phase 3 Agent StochFM)
 
 **Fix**:
-[`adaptive_reflow/adapters/stochastic_fm.py`](/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/stochastic_fm.py)
+[`adaptive_reflow/adapters/stochastic_fm.py`](<repo_root>/adaptive_reflow/adapters/stochastic_fm.py)
 — `StochasticFMAdapter.build_initial_state` (lines 232–233). The
 adapter previously emitted `reference_frame="stochastic_fm"` and
 `normalization="per_channel_std"`, neither of which is in the
 canonical enums
-[`REFERENCE_FRAMES = ("pocket_centered", "world", "lattice")`](/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/universal/state.py)
+[`REFERENCE_FRAMES = ("pocket_centered", "world", "lattice")`](<repo_root>/adaptive_reflow/universal/state.py)
 or
-[`NORMALIZATION_KINDS = ("none", "per_atom_std", "per_pocket_std")`](/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/universal/state.py).
+[`NORMALIZATION_KINDS = ("none", "per_atom_std", "per_pocket_std")`](<repo_root>/adaptive_reflow/universal/state.py).
 The universal `validate_state_bundle` rejected it; every downstream
 method that called `validate_state_bundle` (`compose_condition`,
 `detach_and_validate_endpoint`) would crash.
@@ -401,7 +401,7 @@ normalization="per_atom_std",
 ```
 
 **Regression coverage added**:
-[`tests/test_adapters/test_exp2_stochastic_fm_repro.py`](/home/hugo/codes/flowa-multistep-reinference/tests/test_adapters/test_exp2_stochastic_fm_repro.py)
+[`tests/test_adapters/test_exp2_stochastic_fm_repro.py`](<repo_root>/tests/test_adapters/test_exp2_stochastic_fm_repro.py)
 — new `test_exp2_stochastic_fm_emits_canonical_enums`. The test
 asserts the adapter's emitted `reference_frame` is in
 `REFERENCE_FRAMES`, that `normalization` is in `NORMALIZATION_KINDS`,

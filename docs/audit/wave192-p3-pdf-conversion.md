@@ -1,8 +1,8 @@
 # Wave 192 P3 — paper-draft.md → EAAI PDF
 
 **Date:** 2026-09-18
-**Source:** `/home/hugo/codes/flowa-multistep-reinference/docs/paper-draft.md` (7591 lines)
-**Output:** `/home/hugo/codes/flowa-multistep-reinference/docs/paper-eaai.pdf`
+**Source:** `<repo_root>/docs/paper-draft.md` (7591 lines)
+**Output:** `<repo_root>/docs/paper-eaai.pdf`
 **Template:** Elsevier `elsarticle` LaTeX class (manually installed; not in the system TeX Live tree)
 
 ## Toolchain
@@ -32,7 +32,7 @@
 
 ## Final PDF properties
 
-- **Path:** `/home/hugo/codes/flowa-multistep-reinference/docs/paper-eaai.pdf`
+- **Path:** `<repo_root>/docs/paper-eaai.pdf`
 - **Pages:** 129 (2-column elsarticle, A4, times font)
 - **File size:** 1,305,168 bytes (≈ 1.27 MB)
 - **Title metadata:** "FlowA: A Typed-Contracts Framework for Flow-Matching Re-Inference"
@@ -102,7 +102,7 @@ which pdflatex                # /usr/bin/pdflatex
 kpsewhich elsarticle.cls      # ~/texmf/tex/latex/elsarticle/elsarticle.cls
 
 # Build
-cd /home/hugo/codes/flowa-multistep-reinference
+cd <repo_root>
 python3 docs/build_pdf/md_to_tex_eaai.py
 cd docs/build_pdf
 pdflatex -interaction=nonstopmode paper-eaai.tex     # pass 1
@@ -120,7 +120,7 @@ pdfimages -list ../paper-eaai.pdf | head -10               # embedded PNGs
 
 ```json
 {
-  "pdf_path": "/home/hugo/codes/flowa-multistep-reinference/docs/paper-eaai.pdf",
+  "pdf_path": "<repo_root>/docs/paper-eaai.pdf",
   "pdf_pages": 129,
   "pdf_size_bytes": 1305168,
   "title_present": true,

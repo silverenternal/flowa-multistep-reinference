@@ -261,11 +261,11 @@ print(a.model.encoder.embeddings.word_embeddings.weight.shape)
 
 ## 5. Files audited
 
-- `/home/hugo/codes/flowa-multistep-reinference/todo/models/lineageflow.md`
+- `<repo_root>/todo/models/lineageflow.md`
   (113 lines)
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/lineageflow.py`
+- `<repo_root>/adaptive_reflow/adapters/lineageflow.py`
   (1608 lines — examined lines 29, 47, 519–536, 538, 566, 617, 657, 719)
-- `/home/hugo/codes/flowa-multistep-reinference/todo/PHASE-4-model-integration-iteration.md`
+- `<repo_root>/todo/PHASE-4-model-integration-iteration.md`
   §"LineageFlow (BLOCKED)" (lines 273–285)
 - `https://arxiv.org/abs/2605.22252` (paper — confirms GitHub URL)
 - `https://github.com/Jinx-byebye/LineageFlow` (REACHABLE — major finding)

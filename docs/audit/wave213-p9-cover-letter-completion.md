@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-21
 **Agent:** Wave 213 P9 cover-letter-completion
-**Working dir:** /home/hugo/codes/flowa-multistep-reinference
+**Working dir:** <repo_root>
 **Cover letter path:** docs/cover-letter-tpami.md
 **Prior state:** §1 Opening · §2 Insight · §3 Validation Scope ·
 §4 Headline Numbers · §5 Boundary Disclosure · §6 Reproducibility ·

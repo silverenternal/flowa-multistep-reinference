@@ -31,9 +31,9 @@ This document investigates workarounds for the DEFERRED items (MM-FM + LineageFl
 and documents the no-upstream-ckpt DEFER status for FreqFlow. Detailed per-model
 investigations:
 
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/mm-fm-unblock-investigation.md`
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/lineageflow-upstream-investigation.md`
-- `/home/hugo/codes/flowa-multistep-reinference/docs/models/freqflow.model_card.md` §0
+- `<repo_root>/docs/audit/mm-fm-unblock-investigation.md`
+- `<repo_root>/docs/audit/lineageflow-upstream-investigation.md`
+- `<repo_root>/docs/models/freqflow.model_card.md` §0
 
 ## 2. Per-blocker status + proposed workaround
 
@@ -224,11 +224,11 @@ synthetic-shim `partially_supported` verdict:
 
 ## 5. Files audited
 
-- `/home/hugo/codes/flowa-multistep-reinference/todo/PHASE-4-model-integration-iteration.md`
+- `<repo_root>/todo/PHASE-4-model-integration-iteration.md`
   (336 lines, §"Wave 33 Phase 3 Agent I" lines 145-309 most relevant)
-- `/home/hugo/codes/flowa-multistep-reinference/todo/models/mm-fm.md` (143 lines)
-- `/home/hugo/codes/flowa-multistep-reinference/todo/models/lineageflow.md` (113 lines)
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/lineageflow.py`
+- `<repo_root>/todo/models/mm-fm.md` (143 lines)
+- `<repo_root>/todo/models/lineageflow.md` (113 lines)
+- `<repo_root>/adaptive_reflow/adapters/lineageflow.py`
   (1608 lines, lines 29, 47, 519–536, 538, 566, 617, 657, 719 examined)
 - `docs/audit/mm-fm-unblock-investigation.md` (Wave 36 Agent C, this wave)
 - `docs/audit/lineageflow-upstream-investigation.md` (Wave 36 Agent C, this wave)

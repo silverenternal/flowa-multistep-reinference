@@ -1,7 +1,7 @@
 # Wave 195 P6 — Final Gate Verification (Strict Per-Cell Power Analysis)
 
 **Date**: 2026-09-19
-**Working directory**: `/home/hugo/codes/flowa-multistep-reinference`
+**Working directory**: `<repo_root>`
 **Tag**: `v1.9-paper-r-level-power`
 **Final commit SHA**: see `git log --oneline -1` after this commit lands
 

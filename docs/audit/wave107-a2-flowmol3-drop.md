@@ -24,7 +24,7 @@ to either (a) recover the dropped mol, (b) explain the root cause cheaply, or
 
 ## 1. JSON file evidence — `verification_outputs/flowmol3_n1000_baseline_q4_2026.json`
 
-`/home/hugo/codes/flowa-multistep-reinference/verification_outputs/flowmol3_n1000_baseline_q4_2026.json:1-8`:
+`<repo_root>/verification_outputs/flowmol3_n1000_baseline_q4_2026.json:1-8`:
 
 ```json
 {
@@ -45,7 +45,7 @@ the downstream decode produced only 999 valid `SampledMolecule` objects.
 
 ### 2a. Upstream `FlowMol.sample()` has NO error-handling parameter
 
-`/home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/repo/flowmol/models/flowmol.py:490-493`:
+`<repo_root>/data/FlowMol3/repo/flowmol/models/flowmol.py:490-493`:
 
 ```python
 @torch.no_grad()
@@ -65,7 +65,7 @@ parameterization.
 
 ### 2b. Framework decode path — `sampled_mols_from_smiles`
 
-`/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/flowmol3_metrics_upstream.py:205-254`:
+`<repo_root>/adaptive_reflow/adapters/flowmol3_metrics_upstream.py:205-254`:
 
 ```python
 def sampled_mols_from_smiles(smiles_list: Sequence[str]) -> list[Any]:
@@ -100,7 +100,7 @@ infrastructure that records the dropped mol.
 
 ### 2c. Caller — `FlowMol3V2Adapter.export_sampled_molecules`
 
-`/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/flowmol3_v2_adapter.py:4541-4549`:
+`<repo_root>/adaptive_reflow/adapters/flowmol3_v2_adapter.py:4541-4549`:
 
 ```python
 try:
@@ -121,7 +121,7 @@ record which SMILES was dropped.
 
 ### 2d. Driver — `_generate_arm` in `tools/wave87_n1000_sweep.py`
 
-`/home/hugo/codes/flowa-multistep-reinference/tools/wave87_n1000_sweep.py:184-251`:
+`<repo_root>/tools/wave87_n1000_sweep.py:184-251`:
 
 ```python
 sampled_mols: list[Any] = []
@@ -301,18 +301,18 @@ that recovers the dropped mol.
 
 **Yes — 7+ places (full list in REUSE-1 above).** Key documents:
 
-1. `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave87-phase3-sweep.md:155`
+1. `<repo_root>/docs/audit/wave87-phase3-sweep.md:155`
    states: "SMILES failed RDKit parsing — same CTMC valence artifact as
    Wave 82".
 
-2. `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave87-phase4-final.md:370`
+2. `<repo_root>/docs/audit/wave87-phase4-final.md:370`
    states: "1 mol dropped from baseline due to a CTMC valence artifact
    (`Explicit valence for atom # 5 Cl, 2, is greater than permitted`).
    Framework arm produced 1000/1000 valid mols because the Gaussian prior
    perturbation shifts samples away from this CTMC failure mode. This is a
    **single-mol drop**, well within statistical noise."
 
-3. `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave106-a-2-audit.md:125-158`
+3. `<repo_root>/docs/audit/wave106-a-2-audit.md:125-158`
    is the canonical Wave 106.A.2 audit that established the disclosure.
 
 **Conclusion:** Root cause is documented as a CTMC valence artifact with
@@ -366,22 +366,22 @@ disclosing the drop), the cheapest path is:
 
 ## Files audited
 
-- `/home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/repo/flowmol/models/flowmol.py` (upstream sample signature)
-- `/home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/repo/flowmol/analysis/molecule_builder.py` (SampledMolecule)
-- `/home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/repo/flowmol/analysis/metrics.py` (SampleAnalyzer.analyze)
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/flowmol3_v2_adapter.py:4437-4747` (export_sampled_molecules)
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/flowmol3.py` (v1 adapter)
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/flowmol3_metrics_upstream.py:205-254` (sampled_mols_from_smiles)
-- `/home/hugo/codes/flowa-multistep-reinference/tools/upstream_eval.py:813-855` (run_flowmol3_upstream_eval)
-- `/home/hugo/codes/flowa-multistep-reinference/tools/wave87_n1000_sweep.py:146-279` (_generate_arm)
-- `/home/hugo/codes/flowa-multistep-reinference/verification_outputs/flowmol3_n1000_baseline_q4_2026.json` (JSON evidence)
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave82-phase3-sweep.md:269,446`
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave87-phase3-sweep.md:155,345`
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave87-phase4-final.md:370`
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave106-a-2-audit.md:125-158`
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave106-c2-fix-summary.md`
-- `/home/hugo/codes/flowa-multistep-reinference/docs/paper-draft.md:1275,3192,3241-3243`
-- `/home/hugo/codes/flowa-multistep-reinference/docs/push-ready-summary.md:1375`
+- `<repo_root>/data/FlowMol3/repo/flowmol/models/flowmol.py` (upstream sample signature)
+- `<repo_root>/data/FlowMol3/repo/flowmol/analysis/molecule_builder.py` (SampledMolecule)
+- `<repo_root>/data/FlowMol3/repo/flowmol/analysis/metrics.py` (SampleAnalyzer.analyze)
+- `<repo_root>/adaptive_reflow/adapters/flowmol3_v2_adapter.py:4437-4747` (export_sampled_molecules)
+- `<repo_root>/adaptive_reflow/adapters/flowmol3.py` (v1 adapter)
+- `<repo_root>/adaptive_reflow/adapters/flowmol3_metrics_upstream.py:205-254` (sampled_mols_from_smiles)
+- `<repo_root>/tools/upstream_eval.py:813-855` (run_flowmol3_upstream_eval)
+- `<repo_root>/tools/wave87_n1000_sweep.py:146-279` (_generate_arm)
+- `<repo_root>/verification_outputs/flowmol3_n1000_baseline_q4_2026.json` (JSON evidence)
+- `<repo_root>/docs/audit/wave82-phase3-sweep.md:269,446`
+- `<repo_root>/docs/audit/wave87-phase3-sweep.md:155,345`
+- `<repo_root>/docs/audit/wave87-phase4-final.md:370`
+- `<repo_root>/docs/audit/wave106-a-2-audit.md:125-158`
+- `<repo_root>/docs/audit/wave106-c2-fix-summary.md`
+- `<repo_root>/docs/paper-draft.md:1275,3192,3241-3243`
+- `<repo_root>/docs/push-ready-summary.md:1375`
 
 ## External libs audited (in pyproject.toml)
 

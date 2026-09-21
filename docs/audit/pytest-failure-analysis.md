@@ -434,17 +434,17 @@ temporarily unblocked.
 
 ## Files audited
 
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/framework/interfaces.py`
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/theory/checkers.py`
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/eval/__init__.py`
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/eval/posterior_selection_evaluator.py`
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/twodim_fm.py`
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/__init__.py`
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/core/diffusers_wrapper.py`
-- `/home/hugo/codes/flowa-multistep-reinference/tests/test_adapters/test_regression_vectors.py`
-- `/home/hugo/codes/flowa-multistep-reinference/tests/test_adapters/test_kanzi_real_ckpt.py`
-- `/home/hugo/codes/flowa-multistep-reinference/tests/test_core/test_diffusers_wrapper.py`
-- `/home/hugo/codes/flowa-multistep-reinference/tests/test_tools/test_run_sota_cifar_experiment.py`
-- `/home/hugo/codes/flowa-multistep-reinference/tests/test_tools/test_check_docs_against_code.py`
+- `<repo_root>/adaptive_reflow/framework/interfaces.py`
+- `<repo_root>/adaptive_reflow/theory/checkers.py`
+- `<repo_root>/adaptive_reflow/eval/__init__.py`
+- `<repo_root>/adaptive_reflow/eval/posterior_selection_evaluator.py`
+- `<repo_root>/adaptive_reflow/adapters/twodim_fm.py`
+- `<repo_root>/adaptive_reflow/adapters/__init__.py`
+- `<repo_root>/adaptive_reflow/core/diffusers_wrapper.py`
+- `<repo_root>/tests/test_adapters/test_regression_vectors.py`
+- `<repo_root>/tests/test_adapters/test_kanzi_real_ckpt.py`
+- `<repo_root>/tests/test_core/test_diffusers_wrapper.py`
+- `<repo_root>/tests/test_tools/test_run_sota_cifar_experiment.py`
+- `<repo_root>/tests/test_tools/test_check_docs_against_code.py`
 
 No code changes were made; this is analysis only.

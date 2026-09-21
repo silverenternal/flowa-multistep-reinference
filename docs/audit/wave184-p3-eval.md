@@ -94,7 +94,7 @@ All 12 cells reported `n_total=30`, `n_with_plddt=30`,
 `n_with_sc=30`, `n_with_both=30` — no record was lost to
 length filtering or OmegaFold/ESM-IF errors.
 
-Source: `/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave184-p3-eval-summary.csv`.
+Source: `<repo_root>/verification_outputs/wave184-p3-eval-summary.csv`.
 
 ---
 
@@ -215,4 +215,4 @@ and scPPL-by-n_rounds tables per model) and Wave 184 P5
 
 **Output paths:**
 - Per-cell summaries: `/tmp/w184/eval/{model}_{arm}_n{n_rounds}/summary.json`
-- Aggregated CSV: `/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave184-p3-eval-summary.csv`
+- Aggregated CSV: `<repo_root>/verification_outputs/wave184-p3-eval-summary.csv`

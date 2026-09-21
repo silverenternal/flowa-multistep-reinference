@@ -145,27 +145,27 @@ Three open escalation paths for Wave 176+:
 
 ## 6. File paths (absolute)
 
-- `/home/hugo/codes/flowa-multistep-reinference/docs/paper-draft.md` —
+- `<repo_root>/docs/paper-draft.md` —
   §10.21 inserted after §10.20.
-- `/home/hugo/codes/flowa-multistep-reinference/docs/CONSOLIDATED_RESULTS.md` —
+- `<repo_root>/docs/CONSOLIDATED_RESULTS.md` —
   §15.74 appended after §15.73.
-- `/home/hugo/codes/flowa-multistep-reinference/docs/baseline-audit-report.md` —
+- `<repo_root>/docs/baseline-audit-report.md` —
   §R.65 appended after §R.64.
-- `/home/hugo/codes/flowa-multistep-reinference/tools/eval/io.py` —
+- `<repo_root>/tools/eval/io.py` —
   `ADAPTER_NFE_REF` table at line 108 (Wave 175 P2 implementation).
-- `/home/hugo/codes/flowa-multistep-reinference/tools/eval/framework.py` —
+- `<repo_root>/tools/eval/framework.py` —
   per-adapter `_NFE_REF` lookup at lines 449–453 (Wave 175 P2 implementation).
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave175-p1-design.md` —
+- `<repo_root>/docs/audit/wave175-p1-design.md` —
   Wave 175 P1 design audit.
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave175-p2-impl.md` —
+- `<repo_root>/docs/audit/wave175-p2-impl.md` —
   Wave 175 P2 implementation audit.
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave175-p3-sanity.md` —
+- `<repo_root>/docs/audit/wave175-p3-sanity.md` —
   Wave 175 P3 N=10 sanity audit.
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave175-p4-kanzi-full.md` —
+- `<repo_root>/docs/audit/wave175-p4-kanzi-full.md` —
   Wave 175 P4 N=30 full kanzi eval audit.
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave175-p5-lineageflow-regression.md` —
+- `<repo_root>/docs/audit/wave175-p5-lineageflow-regression.md` —
   Wave 175 P5 lineageflow regression check audit.
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave175-finish.md` —
+- `<repo_root>/docs/audit/wave175-finish.md` —
   this finish-line audit document.
 
 ---

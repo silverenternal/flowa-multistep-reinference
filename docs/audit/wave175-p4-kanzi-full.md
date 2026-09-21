@@ -339,17 +339,17 @@ over 30 records).
 
 ## 12. File paths (absolute)
 
-- `/home/hugo/codes/flowa-multistep-reinference/tools/w172b_gen_kanzi_fastas.py`
+- `<repo_root>/tools/w172b_gen_kanzi_fastas.py`
   — generator (kanzi-only; sibling of `gen_lineageflow_n1000_fastas.py`).
-- `/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/evaluate_all.py`
+- `<repo_root>/data/lineageflow_upstream/evaluation/evaluate_all.py`
   — eval runner (foldability + self_consistency).
-- `/home/hugo/codes/flowa-multistep-reinference/tools/eval/io.py`
+- `<repo_root>/tools/eval/io.py`
   — `ADAPTER_NFE_REF` registry (`KanziAdapter=10`, `LineageFlowAdapter=50`).
-- `/home/hugo/codes/flowa-multistep-reinference/tools/eval/framework.py`
+- `<repo_root>/tools/eval/framework.py`
   — `_make_framework_policy` per-adapter `_NFE_REF` resolution (lines
   437–442).
 - `/tmp/w175/p4/fastas/kanzi_nfe_{50,100,200}/` — generated FASTAs.
 - `/tmp/w175/p4/eval/{baseline,framework}/nfe_{50,100,200}/` — per-arm
   eval output.
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave175-p4-kanzi-full.md`
+- `<repo_root>/docs/audit/wave175-p4-kanzi-full.md`
   — this audit document.

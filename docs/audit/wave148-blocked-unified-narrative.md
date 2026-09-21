@@ -424,7 +424,7 @@ All 3 acceptance gates PASS at HEAD with no source modifications. The ruff-froze
 |---|---|
 | `root_causes_count` | **5** (RC1 = Wave 121 bridge bug; RC2 = kwargs not flags; RC3 = sweep runner hardcode; RC4 = ablation script hardcode; RC5 = wallclock insufficient) |
 | `camera_ready_total_hours` | **~46.5h CPU + ~38h GPU** (per brief; optimistic case with parallel GPU orchestration) |
-| `audit_doc_path` | `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave148-blocked-unified-narrative.md` |
+| `audit_doc_path` | `<repo_root>/docs/audit/wave148-blocked-unified-narrative.md` |
 | `d4_pass` | **72/72 PASS** |
 | `ruff_count` | **0** (All checks passed!) |
 | `claims_pass` | **No drift detected** |

@@ -88,7 +88,7 @@ to bring figure count from 2 → 4. Markdown insertions:
 ```bash
 # Re-run converter
 python3 docs/build_pdf/md_to_tex_eaai.py
-# -> Wrote /home/hugo/codes/flowa-multistep-reinference/docs/build_pdf/paper-eaai.tex (88591 chars)
+# -> Wrote <repo_root>/docs/build_pdf/paper-eaai.tex (88591 chars)
 
 # Compile
 cd docs/build_pdf && pdflatex -interaction=nonstopmode paper-eaai.tex

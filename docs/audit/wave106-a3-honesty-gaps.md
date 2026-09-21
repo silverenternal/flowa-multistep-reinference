@@ -4,10 +4,10 @@
 **Date:** 2026-09-11
 **Commit SHA audited:** `d692583` (HEAD of `main`)
 **Files audited:**
-- `/home/hugo/codes/flowa-multistep-reinference/cover_letter.md` (44 lines)
-- `/home/hugo/codes/flowa-multistep-reinference/submission_checklist.md` (90 lines)
-- `/home/hugo/codes/flowa-multistep-reinference/supplementary.md` (322 lines)
-- `/home/hugo/codes/flowa-multistep-reinference/docs/paper-draft.md` §7 (lines 1815-4860)
+- `<repo_root>/cover_letter.md` (44 lines)
+- `<repo_root>/submission_checklist.md` (90 lines)
+- `<repo_root>/supplementary.md` (322 lines)
+- `<repo_root>/docs/paper-draft.md` §7 (lines 1815-4860)
 
 **Auxiliary evidence sources:**
 - `verification_outputs/kanzi_real_ckpt_forward_q4_2026.json` — Kanzi SHA `c2f2ab8d…d270` (matches `cover_letter.md:19`)
@@ -34,7 +34,7 @@
 | 7 | `supplementary.md:165` (S4.1) | "Phase 4 final (`docs/audit/wave81-phase4-final.md`): `hmmscan_total_hits` baseline 158 → framework 342 (+116%, p<1e-10) → `framework_improves` (cited in cover letter)." | `docs/audit/wave81-phase4-final.md` reports `hmmscan_total_hits=0` on both arms at N=2 per arm (see audit trail §2 + `verification_outputs/lineageflow_n1000_baseline_q4_2026.json` per-cell data). The +116% numbers are NOT in Wave 81 audit doc — they are in Wave 86 audit doc (`docs/audit/wave86-phase3-sweep.md` §2 + `verification_outputs/lineageflow_n1000_baseline_q4_2026.json` Wave 86 + `verification_outputs/lineageflow_n1000_framework_q4_2026.json` Wave 86). | high (factual misattribution — same root cause as finding 5) |
 | 8 | `supplementary.md:166` (S4.1) | "Single commit Wave 81 N=1000 reproduction; D.4 + G-MASTER + mkdocs verified green." | Wave 81 Agent C killed the N=1000 sweep at N=2 per arm (`kill_reason: "per-cell wallclock ~3 min"`); it was NOT an N=1000 reproduction. The actual N=1000 reproduction was Wave 86 (commit `1392bea` per Wave 86 / commit history). | high (misleading — Wave 81 was a partial N=2 sweep, not N=1000 reproduction) |
 | 9 | `submission_checklist.md:21` (G1) | "**G1 SHA-256 ckpt verification** — Kanzi `c2f2ab8d…d270` (cited in `verification_outputs/kanzi_real_ckpt_forward_q4_2026.json`); LineageFlow `f0b4b25e…54a2b` (cited in `verification_outputs/lineageflow_real_ckpt_forward_q4_2026.json`)" | SHAs match the corresponding verification_outputs JSON files (see finding 3). Note: the G1 entry also cites "Re-verify against `verification_outputs/kanzi_n1000_manifest.json`" — that file DOES exist per `verification_outputs/kanzi_n1000_manifest.json` (line in earlier dir listing). | none (honest) |
-| 10 | `submission_checklist.md:63` | "**ckpt SHA-256 verified** — every entry in `verification_outputs/ckpt_sha256.json` re-hashed at ship time (placeholder path; confirm `verification_outputs/` artifact exists post-Wave 92c)" | `find /home/hugo/codes/flowa-multistep-reinference -name "ckpt_sha256*"` returns NO FILE — the file `verification_outputs/ckpt_sha256.json` does NOT exist on disk. The check-list entry itself acknowledges "placeholder path; confirm ... artifact exists". The supplementary §S6.2 (line 244) TODO also confirms: "currently no such file at the top level — consider generating as part of Wave 94 Phase 2". | high (placeholder reference to non-existent file — both submission_checklist.md and supplementary.md reference `verification_outputs/ckpt_sha256.json` but no such file exists) |
+| 10 | `submission_checklist.md:63` | "**ckpt SHA-256 verified** — every entry in `verification_outputs/ckpt_sha256.json` re-hashed at ship time (placeholder path; confirm `verification_outputs/` artifact exists post-Wave 92c)" | `find <repo_root> -name "ckpt_sha256*"` returns NO FILE — the file `verification_outputs/ckpt_sha256.json` does NOT exist on disk. The check-list entry itself acknowledges "placeholder path; confirm ... artifact exists". The supplementary §S6.2 (line 244) TODO also confirms: "currently no such file at the top level — consider generating as part of Wave 94 Phase 2". | high (placeholder reference to non-existent file — both submission_checklist.md and supplementary.md reference `verification_outputs/ckpt_sha256.json` but no such file exists) |
 | 11 | `supplementary.md:244` (S6.2 TODO) | "re-hash every ckpt listed in the table above at ship time; assert equality against the values in `verification_outputs/ckpt_sha256.json` if that consolidated file exists (currently no such file at the top level — consider generating as part of Wave 94 Phase 2)" | The TODO itself acknowledges the file doesn't exist. The substantive SHA values in S6.2 are individually correct (Kanzi + LineageFlow match per finding 3), but FlowMol3 cites a relative path `data/flowmol3/weights_real/checkpoints/last.ckpt` not a SHA-256. The table at S6.2 makes no SHA claim for FlowMol3, only a path. | medium (consolidated ckpt_sha256.json does not exist; FlowMol3 SHA not provided) |
 | 12 | `submission_checklist.md:28-31` (HONEST DISCLOSURE) | "**LineageFlow**: N=1000 sweep **was killed** due to CPU wallclock budget (`kill_reason: CPU wallclock for N=1000 OmegaFold + ESM-IF was estimated >40 hours per arm; smoke test N=5 used`). Available data is N=5 smoke (`lineageflow_n1000_omegafold_q4_2026_baseline.json`)." | `verification_outputs/lineageflow_n1000_omegafold_q4_2026_baseline.json:3-4` confirms `sweep_target_n_per_arm: 1000`, `sweep_actual_n_per_arm: 5`, `kill_reason: "CPU wallclock for N=1000 OmegaFold + ESM-IF was estimated >40 hours per arm; smoke test N=5 used as proof-of-pipeline."` ✓ MATCH. However, the disclosure is INCONSISTENT with the cover letter TL;DR claim of `+116% framework_improves` on `hmmscan_total_hits` at N=1000 — which the submission_checklist elsewhere (line 39) wrongly attributes to Wave 81 N=200. | medium (line 28-31 disclosure is honest; cross-doc inconsistency with line 39) |
 | 13 | `submission_checklist.md:35-42` (Tier 3 cells) | FlowMol3 4/4 REPORTED at N=1000; LineageFlow 4/4 DEFERRED; Kanzi 1 REPORTED + 3 TIED_BY_DESIGN at N=10 framework arm | FlowMol3 N=1000 verified: `flowmol3_n1000_baseline_q4_2026.json` + `flowmol3_n1000_framework_q4_2026.json` exist with N=1000 baseline + N=1000 framework per commit d692583. LineageFlow DEFERRED is honest — only N=5 smoke per `lineageflow_n1000_omegafold_q4_2026_baseline.json`. Kanzi `reconstruction_kabsch_rmsd_A` at N=10 framework arm is honestly disclosed in `cover_letter.md:31` and in `submission_checklist.md:43`. The 5 Kanzi codebook metrics `TIED_BY_DESIGN` is honest per Wave 91 §1 cited at `submission_checklist.md:44-46`. | none (honest, matches the data state I established in commit d692583) |
@@ -95,10 +95,10 @@
 {
   "commit_sha": "d692583",
   "files_audited": [
-    "/home/hugo/codes/flowa-multistep-reinference/cover_letter.md",
-    "/home/hugo/codes/flowa-multistep-reinference/submission_checklist.md",
-    "/home/hugo/codes/flowa-multistep-reinference/supplementary.md",
-    "/home/hugo/codes/flowa-multistep-reinference/docs/paper-draft.md §7 (lines 1815-4860)"
+    "<repo_root>/cover_letter.md",
+    "<repo_root>/submission_checklist.md",
+    "<repo_root>/supplementary.md",
+    "<repo_root>/docs/paper-draft.md §7 (lines 1815-4860)"
   ],
   "issues_found_count": 30,
   "output_file": "docs/audit/wave106-a3-honesty-gaps.md",

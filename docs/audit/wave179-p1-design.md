@@ -141,7 +141,7 @@ OMEGAFOLD=/home/hugo/.conda/envs/omegafold_py310/bin/omegafold
 PATH=/home/hugo/.conda/envs/omegafold_py310/bin:$PATH
 export PATH
 export LD_LIBRARY_PATH=/home/hugo/.conda/envs/omegafold_py310/lib:${LD_LIBRARY_PATH:-}
-cd /home/hugo/codes/flowa-multistep-reinference
+cd <repo_root>
 
 # Per (model, arm, nfe, seed) cell:
 $PY data/lineageflow_upstream/evaluation/evaluate_all.py \

@@ -57,7 +57,7 @@ The Wave 121 baseline_seed7 sweep was run on the kanzi sidecar (`tools/sweep_kan
 
 ```
 [PROFILE] configs/runs/kanzi_n1000_baseline.yaml v=2026-09-11 (Wave 111) seed=42 force_mode=synthetic nfe=[100] N=1000
-[wave83] loading DAE from /home/hugo/codes/flowa-multistep-reinference/data/kanzi_ckpt/cleaned_model.pt ...
+[wave83] loading DAE from <repo_root>/data/kanzi_ckpt/cleaned_model.pt ...
 [wave83] DAE loaded in 0.9 s
 [wave83] vocab_size=1000, n_decoder=512
 [wave83] processed 1000 records in 1457.3 s (1.457 s/rec)
@@ -87,10 +87,10 @@ The Wave 121 framework_synth sweep was run on the kanzi sidecar (`tools/sweep_ka
 
 ```
 [PROFILE] configs/runs/kanzi_n1000_framework.yaml v=2026-09-11 (Wave 111) seed=42 force_mode=real nfe=[100] N=1000
-[wave91-rerun] loading DAE from /home/hugo/codes/flowa-multistep-reinference/data/kanzi_ckpt/cleaned_model.pt ...
+[wave91-rerun] loading DAE from <repo_root>/data/kanzi_ckpt/cleaned_model.pt ...
 [wave91-rerun] DAE loaded in 0.9 s
 [wave91-rerun] vocab_size=1000, n_decoder=512
-[wave91-rerun] constructing real KanziAdapter from /home/hugo/codes/flowa-multistep-reinference/data/kanzi_ckpt/cleaned_model.pt ...
+[wave91-rerun] constructing real KanziAdapter from <repo_root>/data/kanzi_ckpt/cleaned_model.pt ...
 [wave91-rerun] KanziAdapter constructed in 0.9 s
 [wave91-rerun] processed 1000 records (skipped 0) in 2641.8 s (2.642 s/rec)
 [wave91-rerun] framework-arm reconstruction RMSD: mean=2.5538 Å, std=0.0000 Å, n=1000
@@ -120,10 +120,10 @@ The Wave 121 framework_inv_proj sweep was run on the kanzi sidecar (`tools/sweep
 
 ```
 [PROFILE] configs/kanzi_framework_inv_proj.yaml v=2026-09-12 (Wave 120) seed=42 force_mode=real nfe=[100] N=1000
-[wave95-p3c] loading DAE from /home/hugo/codes/flowa-multistep-reinference/data/kanzi_ckpt/cleaned_model.pt ...
+[wave95-p3c] loading DAE from <repo_root>/data/kanzi_ckpt/cleaned_model.pt ...
 [wave95-p3c] DAE loaded in 0.9 s
 [wave95-p3c] vocab_size=1000, n_decoder=512
-[wave95-p3c] constructing real KanziAdapter from /home/hugo/codes/flowa-multistep-reinference/data/kanzi_ckpt/cleaned_model.pt ...
+[wave95-p3c] constructing real KanziAdapter from <repo_root>/data/kanzi_ckpt/cleaned_model.pt ...
 [wave95-p3c] KanziAdapter constructed in 1.0 s
 Traceback (most recent call last):
   File "tools/sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py", line 171, in <module>

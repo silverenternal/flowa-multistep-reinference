@@ -125,13 +125,13 @@ For each `grep` hit that was not obviously narrative, the surrounding
 
 All `/home/hugo/...` references are the user's own path (the dev
 environment). They appear in:
-- `Dockerfile` (2×): `-v /home/hugo/codes/flowa-multistep-reinference:/workspace/flowa`
+- `Dockerfile` (2×): `-v <repo_root>:/workspace/flowa`
 - `RELEASE-NOTES-v3.0.md` (3×): conda env location + working dir
 - `adaptive_reflow/framework/engine.py` (1×): not present (engine is clean)
-- Scripts (`scripts/wave212_p1_profile_runner.py` et al.): `REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")` — these are dev-environment paths that the Dockerfile or local venv will remap
+- Scripts (`scripts/wave212_p1_profile_runner.py` et al.): `REPO_ROOT = Path("<repo_root>")` — these are dev-environment paths that the Dockerfile or local venv will remap
 
 **Verdict:** NOT a leak. The user's home is the canonical dev env
-(`/home/hugo/codes/flowa-multistep-reinference`). The README / docs
+(`<repo_root>`). The README / docs
 explicitly document this. Anyone cloning the public repo will be
 expected to substitute their own path. **Recommendation:** consider
 parameterizing to `$(pwd)` or `$REPO_ROOT` in the Dockerfile COPY/ENTRYPOINT
@@ -218,8 +218,8 @@ None of these block E4 / F1.
 
 ## 5. Files referenced
 
-- `/home/hugo/codes/flowa-multistep-reinference/Dockerfile` (new, 127 lines)
-- `/home/hugo/codes/flowa-multistep-reinference/RELEASE-NOTES-v3.0.md` (new, 299 lines)
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/framework/engine.py` (new, 38 lines)
-- `/home/hugo/codes/flowa-multistep-reinference/docs/cover-letter-tpami.md` (new, 475 lines)
+- `<repo_root>/Dockerfile` (new, 127 lines)
+- `<repo_root>/RELEASE-NOTES-v3.0.md` (new, 299 lines)
+- `<repo_root>/adaptive_reflow/framework/engine.py` (new, 38 lines)
+- `<repo_root>/docs/cover-letter-tpami.md` (new, 475 lines)
 - 89 other files (paper drafts, audit docs, scripts, verification outputs) — all clean.

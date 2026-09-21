@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-05
 **Wave:** Wave 29 Agent A (theory layer)
-**Repo:** `/home/hugo/codes/flowa-multistep-reinference`
+**Repo:** `<repo_root>`
 **Paper:** Li 2024, "Gaussian Posterior Selection on Noncompact Fibres with
 Uniformly Separated Roots" (`docs/ARCHIVE/top-level/NoiseSelectedRectification_EN.md`,
 JMAA-style paper; hereafter "the paper"). Key anchors: **Theorem 1

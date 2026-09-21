@@ -103,7 +103,7 @@ All 18 cells reported `n_with_plddt=30`, `n_with_sc=30`,
 OmegaFold/ESM-IF errors.
 
 Source:
-`/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave186-p3-eval-summary.csv`.
+`<repo_root>/verification_outputs/wave186-p3-eval-summary.csv`.
 
 ---
 
@@ -229,7 +229,7 @@ curves vs the seed-axis scatter band).
 **Output paths:**
 - Per-cell summaries: `/tmp/w186/eval/<cell>/summary.json`
 - Per-cell foldability: `/tmp/w186/eval/<cell>/foldability/metrics_summary.json`
-- Aggregated CSV: `/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave186-p3-eval-summary.csv`
+- Aggregated CSV: `<repo_root>/verification_outputs/wave186-p3-eval-summary.csv`
 
 **Output JSON:**
 ```json

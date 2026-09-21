@@ -262,7 +262,7 @@ Per the prompt brief: "Wave 80 Agent B + 7-test suite all PASS ... emits exactly
 
 > **The task brief expected `verification_outputs/kanzi_n1000_real_v2/per_metric.jsonl` with 1000 records from Wave 99.A.** That directory **does not exist** on the working tree as of 2026-09-10...
 
-**What the JSON says:** no `verification_outputs/kanzi_n1000_real_v2/` directory exists. Confirmed by `find /home/hugo/codes/flowa-multistep-reinference/verification_outputs -type d -name "*real_v2*"` returning no results.
+**What the JSON says:** no `verification_outputs/kanzi_n1000_real_v2/` directory exists. Confirmed by `find <repo_root>/verification_outputs -type d -name "*real_v2*"` returning no results.
 
 **Gap severity: LOW** — this is a transparent self-disclosure in the audit doc. It is NOT a hidden misalignment. The risk is that downstream readers of `submission_checklist.md` may not realize the N=1000 framework arm for Kanzi has **never been run**. The submission_checklist.md line 43 ("Kanzi / `reconstruction_kabsch_rmsd_A` — REPORTED (at N=10 framework arm, NOT N=1000)") correctly flags this.
 

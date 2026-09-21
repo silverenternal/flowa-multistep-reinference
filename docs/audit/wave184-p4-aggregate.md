@@ -8,11 +8,11 @@ per-model Δ-vs-baseline table and answer the critical question:
 paper-quantity scheduler, multi-round averaging, or both?*
 
 **Inputs:**
-- `/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave184-p3-eval-summary.csv`
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave184-p3-eval.md`
+- `<repo_root>/verification_outputs/wave184-p3-eval-summary.csv`
+- `<repo_root>/docs/audit/wave184-p3-eval.md`
 
 **Outputs:**
-- `/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave184-p4-ablation-table.csv`
+- `<repo_root>/verification_outputs/wave184-p4-ablation-table.csv`
 
 No source code modified. No claims text touched. Pure
 arithmetic + write-up.

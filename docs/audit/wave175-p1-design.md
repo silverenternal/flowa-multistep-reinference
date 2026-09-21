@@ -241,13 +241,13 @@ granularity.
 
 ## 9. File paths (absolute)
 
-* `/home/hugo/codes/flowa-multistep-reinference/tools/eval/framework.py`
+* `<repo_root>/tools/eval/framework.py`
   — hardcode site (line 437); call site (`_solve_framework` line 584)
-* `/home/hugo/codes/flowa-multistep-reinference/tools/eval/io.py`
+* `<repo_root>/tools/eval/io.py`
   — `DOWNSTREAM_METRICS` registry at line 98
-* `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/kanzi.py`
+* `<repo_root>/adaptive_reflow/adapters/kanzi.py`
   — `KanziAdapter` class at line 1331
-* `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/lineageflow.py`
+* `<repo_root>/adaptive_reflow/adapters/lineageflow.py`
   — `LineageFlowAdapter` class at line 1237
-* `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave175-p1-design.md`
+* `<repo_root>/docs/audit/wave175-p1-design.md`
   — this audit document

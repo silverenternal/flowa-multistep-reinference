@@ -77,7 +77,7 @@ The legacy `72/72 PASS` figure cited in older docs refers to the **Wave 38-39 fi
 
 ```
 $ .venv/bin/python tools/capability_audit.py
-Wrote /home/hugo/codes/flowa-multistep-reinference/verification_outputs/capability_audit_q3_2026.json
+Wrote <repo_root>/verification_outputs/capability_audit_q3_2026.json
 ```
 
 From the JSON output:
@@ -101,7 +101,7 @@ From the JSON output:
 ```
 $ .venv/bin/python -m mkdocs build --strict
 INFO    -  Cleaning site directory
-INFO    -  Building documentation to directory: /home/hugo/codes/flowa-multistep-reinference/site
+INFO    -  Building documentation to directory: <repo_root>/site
 INFO    -  mkdocstrings_handlers: Formatting signatures requires either Black or Ruff to be installed.
 INFO    -  Documentation built in 14.44 seconds
 EXIT=0
@@ -191,7 +191,7 @@ The remaining "next-step" work (not in Wave 108 scope) is:
 ```json
 {
   "commit_sha": "b7bc012",
-  "output_file": "/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave108-final-synthesis.md",
+  "output_file": "<repo_root>/docs/audit/wave108-final-synthesis.md",
   "plan_reference": "docs/audit/wave108-implementation-plan.md",
   "commits_actual": 8,
   "commits_planned": 9,

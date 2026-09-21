@@ -38,7 +38,7 @@ $ which mmseqs       → not in PATH
 $ which mmseqs2      → not in PATH
 $ find / -name "mmseqs*" -type f -executable
   /home/hugo/bin/mmseqs
-  /home/hugo/codes/flowa-multistep-reinference/.venvs/protbfn_venv/bin/mmseqs
+  <repo_root>/.venvs/protbfn_venv/bin/mmseqs
 ```
 
 **Two binaries vendored:**
@@ -46,7 +46,7 @@ $ find / -name "mmseqs*" -type f -executable
 | Path | Size (bytes) | mtime | Notes |
 |---|---:|---|---|
 | `/home/hugo/bin/mmseqs` | 23 698 800 | Sep 8 07:34 | global binary |
-| `/home/hugo/codes/flowa-multistep-reinference/.venvs/protbfn_venv/bin/mmseqs` | 17 431 368 | Sep 3 21:27 | venv-bundled |
+| `<repo_root>/.venvs/protbfn_venv/bin/mmseqs` | 17 431 368 | Sep 3 21:27 | venv-bundled |
 
 Both respond to `--version` with the standard MMseqs2 banner (Steinegger & Soding 2017).
 No install needed; can be invoked by absolute path or symlinked to `PATH`.
@@ -124,7 +124,7 @@ e-value). Default `sensitivity = 7.5`, `--max-seqs 200`.
 | UniRef30 / ColabFoldDB | not on disk | n/a | Would require 30–60 GB download + index | **YES — but heavy** |
 
 `data/lineageflow_upstream/databases/pfam35/pfam_holdout_targetDB.source` ASCII content
-confirms the pre-built DB was built from `/home/hugo/codes/flowa-multistep-reinference/data/pfam_holdout/random_clan.fasta` (200 protein sequences, full SwissProt-style headers
+confirms the pre-built DB was built from `<repo_root>/data/pfam_holdout/random_clan.fasta` (200 protein sequences, full SwissProt-style headers
 e.g. `>sp|O00254|PAR3_HUMAN ...`). This is a proper holdout set (distinct from any
 training corpus the LineageFlow adapter would have seen).
 
@@ -255,7 +255,7 @@ is the right choice.
 - `data/pfam_holdout/random_clan.fasta` — source FASTA for the pre-built holdout target DB (200 proteins)
 - `/tmp/w158/lineageflow_real_fastas/{baseline,framework}.fasta` — query FASTAs (1 000 seqs each, sha256-pinned)
 - `/home/hugo/bin/mmseqs` — vendored mmseqs2 binary (23.7 MB, Sep 8)
-- `/home/hugo/codes/flowa-multistep-reinference/.venvs/protbfn_venv/bin/mmseqs` — secondary vendored copy (17.4 MB, Sep 3)
+- `<repo_root>/.venvs/protbfn_venv/bin/mmseqs` — secondary vendored copy (17.4 MB, Sep 3)
 
 ## 5. Open items for P3
 
@@ -265,7 +265,7 @@ is the right choice.
 | 2 | Target DB strategy | **Adopt surrogate** (pre-built holdout) — see §3 RECOMMENDED PATH. Document the deviation in baseline-audit-report §R.50 + paper §15 (ADDITIVE note: novelty reference is the 200-seq Pfam holdout, not the canonical training-set DB which is not vendored) |
 | 3 | Novelty sweep command | run upstream script directly against `/tmp/w158/lineageflow_real_fastas/{baseline,framework}.fasta` per §3 (no wrapper changes) |
 | 4 | Sweep compute budget | ~30 min total CPU for N=1000 baseline + framework (search sensitivity 7.5; 200 random-clan target DB is tiny → fast) |
-| 5 | Output paths | `/home/hugo/codes/flowa-multistep-reinference/results/novelty/{baseline,framework}/{novelty.json,novelty_per_seq.jsonl}` |
+| 5 | Output paths | `<repo_root>/results/novelty/{baseline,framework}/{novelty.json,novelty_per_seq.jsonl}` |
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Date.** 2026-09-19
 **Agent.** Wave 195 P4 Theorem 1 load-bearing power analysis agent
-**Working directory.** `/home/hugo/codes/flowa-multistep-reinference`
+**Working directory.** `<repo_root>`
 **Commit SHA (analysis-frozen).** `76108b5` (HEAD at start of Wave 195 P4).
 **Scope.** 12 per-cell power analyses for the Theorem 1 load-bearing
 ablation (Wave 190 P2 n=30 kanzi + Wave 190 P3 n=30 lineageflow;

@@ -2,7 +2,7 @@
 
 **Date.** 2026-09-19
 **Agent.** Wave 196 P4 aggregate agent
-**Working directory.** `/home/hugo/codes/flowa-multistep-reinference`
+**Working directory.** `<repo_root>`
 **Upstream agents.** Wave 196 P2 (Track B 4-arm n=30 paired, commit `8e1a3e0`) + Wave 196 P3 (kanzi N=1000 framework_inv_proj paired re-verify, commit `c38a900`)
 **Goal.** Regenerate the §10.35 paper Table A (R-level) and Table B (4-arm) per-cell power tables with the upgraded Wave 196 data.
 

@@ -109,7 +109,7 @@ delta of −473 reflects:
 ```
 $ .venv/bin/python -m mkdocs build --strict
 INFO    -  Cleaning site directory
-INFO    -  Building documentation to directory: /home/hugo/codes/flowa-multistep-reinference/site
+INFO    -  Building documentation to directory: <repo_root>/site
 INFO    -  mkdocstrings_handlers: Formatting signatures requires either Black or Ruff to be installed.
 INFO    -  Documentation built in 14.12 seconds
 EXIT=0

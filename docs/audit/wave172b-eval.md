@@ -161,7 +161,7 @@ pipeline with `--max-seqs 30` (n=30 records per cell to match P1's generation
 budget) and `--temperature 1.0` (Wave 171 P1 argmax byte-stable default).
 
 K6 reference values (Wave 161 R6 +1.12 pLDDT / -3.92 scPerplexity):
-- `/home/hugo/codes/flowa-multistep-reinference/verification_outputs/k6_foldability_n1000_w161_q3_2026/framework/summary.json` → `plddt_mean_mean=43.20`, `sc_perplexity_mean=13.96`
+- `<repo_root>/verification_outputs/k6_foldability_n1000_w161_q3_2026/framework/summary.json` → `plddt_mean_mean=43.20`, `sc_perplexity_mean=13.96`
 - baseline at `plddt_mean_mean=42.07`, `sc_perplexity_mean=17.88`
 - Delta: +1.12 pLDDT, -3.92 scPerplexity
 

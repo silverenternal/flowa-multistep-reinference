@@ -270,15 +270,15 @@ references.
 {
   "commit_sha": "9e3aea5c045bd743e069aefcb9ea4b7b2facaf29",
   "files_changed": [
-    "/home/hugo/codes/flowa-multistep-reinference/cover_letter.md",
-    "/home/hugo/codes/flowa-multistep-reinference/submission_checklist.md",
-    "/home/hugo/codes/flowa-multistep-reinference/supplementary.md",
-    "/home/hugo/codes/flowa-multistep-reinference/README.md",
-    "/home/hugo/codes/flowa-multistep-reinference/docs/GATES.md"
+    "<repo_root>/cover_letter.md",
+    "<repo_root>/submission_checklist.md",
+    "<repo_root>/supplementary.md",
+    "<repo_root>/README.md",
+    "<repo_root>/docs/GATES.md"
   ],
   "fixes_applied_count": 9,
-  "output_audit_doc": "/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave106-c3-fix-summary.md",
-  "audit_source": "/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave106-a3-honesty-gaps.md",
+  "output_audit_doc": "<repo_root>/docs/audit/wave106-c3-fix-summary.md",
+  "audit_source": "<repo_root>/docs/audit/wave106-a3-honesty-gaps.md",
   "high_priority_count": 6,
   "medium_priority_count": 1,
   "low_priority_count": 1,

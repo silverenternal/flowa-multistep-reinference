@@ -53,7 +53,7 @@ All 7 commits honor the Layer-4 docs/config-only constraint:
 ```
 $ .venv/bin/mkdocs build --strict
 INFO    -  Cleaning site directory
-INFO    -  Building documentation to directory: /home/hugo/codes/flowa-multistep-reinference/site
+INFO    -  Building documentation to directory: <repo_root>/site
 INFO    -  mkdocstrings_handlers: Formatting signatures requires either Black or Ruff to be installed.
 INFO    -  Documentation built in 14.06 seconds
 ```
@@ -78,7 +78,7 @@ not installed in the project `.venv`; they were already broken before this wave)
 
 ```
 $ .venv/bin/python tools/capability_audit.py
-Wrote /home/hugo/codes/flowa-multistep-reinference/verification_outputs/capability_audit_q3_2026.json
+Wrote <repo_root>/verification_outputs/capability_audit_q3_2026.json
 ```
 
 G-MASTER capability verdict (post-Wave-102):

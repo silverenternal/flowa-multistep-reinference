@@ -90,7 +90,7 @@ and are unrelated to the Layer-1 hygiene fixes.
 ```
 $ .venv/bin/mkdocs build --strict
 INFO    -  Cleaning site directory
-INFO    -  Building documentation to directory: /home/hugo/codes/flowa-multistep-reinference/site
+INFO    -  Building documentation to directory: <repo_root>/site
 INFO    -  mkdocstrings_handlers: Formatting signatures requires either Black or Ruff to be installed.
 INFO    -  Documentation built in 18.26 seconds
 ```
@@ -101,7 +101,7 @@ INFO    -  Documentation built in 18.26 seconds
 
 ```
 $ .venv/bin/python tools/capability_audit.py
-Wrote /home/hugo/codes/flowa-multistep-reinference/verification_outputs/capability_audit_q3_2026.json
+Wrote <repo_root>/verification_outputs/capability_audit_q3_2026.json
 EXIT=0
 ```
 

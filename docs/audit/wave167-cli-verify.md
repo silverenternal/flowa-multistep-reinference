@@ -266,8 +266,8 @@ No drift detected.
 
 ## 8. Files
 
-- `/home/hugo/codes/flowa-multistep-reinference/tools/gen_lineageflow_n1000_fastas.py` — CLI (unchanged from Wave 158 P2)
-- `/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/evaluate_all.py` — evaluator (unchanged)
+- `<repo_root>/tools/gen_lineageflow_n1000_fastas.py` — CLI (unchanged from Wave 158 P2)
+- `<repo_root>/data/lineageflow_upstream/evaluation/evaluate_all.py` — evaluator (unchanged)
 - `/tmp/w167/sanity/baseline/` — N=4 generation output (1.77 s)
 - `/tmp/w167/sanity/eval/baseline/summary.json` — baseline metrics
 - `/tmp/w167/sanity/eval/framework/summary.json` — framework metrics (TBD)

@@ -144,10 +144,10 @@ keep only paper-quantity-driven scheduler).
 
 ## 6. File paths (absolute)
 
-* `/home/hugo/codes/flowa-multistep-reinference/tools/eval/io.py` — new
+* `<repo_root>/tools/eval/io.py` — new
   `ADAPTER_NFE_REF` + `DEFAULT_NFE_REF` block near line 98.
-* `/home/hugo/codes/flowa-multistep-reinference/tools/eval/framework.py` —
+* `<repo_root>/tools/eval/framework.py` —
   new imports at top of module; per-adapter `_NFE_REF` lookup at line 437
   (inside `_make_framework_policy`).
-* `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave175-p2-impl.md` —
+* `<repo_root>/docs/audit/wave175-p2-impl.md` —
   this audit document.

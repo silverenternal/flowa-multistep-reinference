@@ -81,7 +81,7 @@ via a custom Python markdown→LaTeX converter (`docs/build_pdf/md_to_tex.py`).
 ### Build steps
 
 ```bash
-cd /home/hugo/codes/flowa-multistep-reinference/docs/build_pdf
+cd <repo_root>/docs/build_pdf
 
 # 1. Convert markdown -> .tex
 python3 md_to_tex.py
@@ -184,7 +184,7 @@ artifact for the orchestrator; commit decision deferred to the next wave).
 ```json
 {
   "pdf_generated": true,
-  "pdf_path": "/home/hugo/codes/flowa-multistep-reinference/docs/paper-final-neurips.pdf",
+  "pdf_path": "<repo_root>/docs/paper-final-neurips.pdf",
   "pdf_size": 1209393,
   "neurips_sty_found": true,
   "xelatex_present": true,

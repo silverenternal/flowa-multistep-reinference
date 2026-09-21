@@ -304,20 +304,20 @@ All 5 fixes are ≤ 3 LOC of drop-in text per fix. **Total honesty-gap remediati
 {
   "commit_sha": "c0dd9e49251a6de845e034e68bd086e85aeec485",
   "files_audited": [
-    "/home/hugo/codes/flowa-multistep-reinference/cover_letter.md",
-    "/home/hugo/codes/flowa-multistep-reinference/submission_checklist.md",
-    "/home/hugo/codes/flowa-multistep-reinference/supplementary.md",
-    "/home/hugo/codes/flowa-multistep-reinference/docs/paper-draft.md (lines 1815–2414, §7.1–§7.4)",
-    "/home/hugo/codes/flowa-multistep-reinference/docs/CONSOLIDATED_RESULTS.md (lines 1–2900, §1–§15.16)",
-    "/home/hugo/codes/flowa-multistep-reinference/docs/baseline-audit-report.md (lines 1–2945, esp. §C.7 lines 482–611)",
-    "/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave88-phase3-final.md (esp. §1.5 lines 72–94)",
-    "/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave91-phase5-final.md (line 92)",
-    "/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave96e-final-synthesis.md (esp. §5 lines 139–164)",
-    "/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave99b-n1000-verdict.md (cited)",
-    "/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave93-phase2-final.md (cited)",
-    "/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave106-a3-honesty-gaps.md (lines 24–60)",
-    "/home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/repo/flowmol/model_utils/load.py (seed_ckpt param at line 13)",
-    "/home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/repo/flowmol/models/flowmol.py (sample signature at line 490)"
+    "<repo_root>/cover_letter.md",
+    "<repo_root>/submission_checklist.md",
+    "<repo_root>/supplementary.md",
+    "<repo_root>/docs/paper-draft.md (lines 1815–2414, §7.1–§7.4)",
+    "<repo_root>/docs/CONSOLIDATED_RESULTS.md (lines 1–2900, §1–§15.16)",
+    "<repo_root>/docs/baseline-audit-report.md (lines 1–2945, esp. §C.7 lines 482–611)",
+    "<repo_root>/docs/audit/wave88-phase3-final.md (esp. §1.5 lines 72–94)",
+    "<repo_root>/docs/audit/wave91-phase5-final.md (line 92)",
+    "<repo_root>/docs/audit/wave96e-final-synthesis.md (esp. §5 lines 139–164)",
+    "<repo_root>/docs/audit/wave99b-n1000-verdict.md (cited)",
+    "<repo_root>/docs/audit/wave93-phase2-final.md (cited)",
+    "<repo_root>/docs/audit/wave106-a3-honesty-gaps.md (lines 24–60)",
+    "<repo_root>/data/FlowMol3/repo/flowmol/model_utils/load.py (seed_ckpt param at line 13)",
+    "<repo_root>/data/FlowMol3/repo/flowmol/models/flowmol.py (sample signature at line 490)"
   ],
   "external_libs_audited": [
     "torchdiffeq (already in pyproject.toml — for ODE solvers; no stochasticity disclosure)",
@@ -329,7 +329,7 @@ All 5 fixes are ≤ 3 LOC of drop-in text per fix. **Total honesty-gap remediati
     "torch.randn_like (Kanzi DAE.decode — UNSEEDED, σ=0.0947 Å run-to-run per Wave 88 F-4)"
   ],
   "reuse_opportunities_count": 11,
-  "output_file": "/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave107-a4-paper-presentation.md"
+  "output_file": "<repo_root>/docs/audit/wave107-a4-paper-presentation.md"
 }
 ```
 

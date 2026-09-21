@@ -41,7 +41,7 @@ CLM-061 status: ACTIVE, status-field unchanged from Wave 196 P5 (Wave 197 P4 add
 **PASS — EXIT=0.**
 ```
 INFO    -  Cleaning site directory
-INFO    -  Building documentation to directory: /home/hugo/codes/flowa-multistep-reinference/site
+INFO    -  Building documentation to directory: <repo_root>/site
 INFO    -  mkdocstrings_handlers: Formatting signatures requires either Black or Ruff to be installed.
 INFO    -  Documentation built in 19.80 seconds
 ```

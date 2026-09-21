@@ -7,8 +7,8 @@ reinventing the decoder wrapper.
 
 ## 0. Wave 88 F-4 context (the target bug)
 
-- **File**: `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave88-phase2-sweep.md:192` — *"F-4 — `DAE.decode` is stochastic, and nothing seeds it"*.
-- **File**: `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave88-phase3-final.md:122` — *"F-4 — `DAE.decode` is stochastic and unseeded. Run-to-run σ 0.0947 Å; sweep script's `"deterministic": true` is incorrect; Wave 83's 'byte-stable' claim is incorrect."*
+- **File**: `<repo_root>/docs/audit/wave88-phase2-sweep.md:192` — *"F-4 — `DAE.decode` is stochastic, and nothing seeds it"*.
+- **File**: `<repo_root>/docs/audit/wave88-phase3-final.md:122` — *"F-4 — `DAE.decode` is stochastic and unseeded. Run-to-run σ 0.0947 Å; sweep script's `"deterministic": true` is incorrect; Wave 83's 'byte-stable' claim is incorrect."*
 - **Evidence file**: `/tmp/wave88/probe_determinism.py` — *"F-4 determinism probe (torch.manual_seed(1234) drives spread to 0)"*.
 - **Fix recommendation** (wave88-phase3-final.md:178): *"thread `--seed` into `dae.decode` in the sweep script to drive the run-to-run σ to 0 (Wave 88 F-4 fix)."*
 
@@ -21,7 +21,7 @@ BEFORE calling `DAE.decode`, so the per-record spread drops from
 ## 1. Does Kanzi upstream `DAE.decode` have a seed parameter?
 
 **Answer: NO.** `DAE.decode` signature
-(`/home/hugo/codes/flowa-multistep-reinference/data/kanzi_upstream/src/kanzi/models.py:364-372`):
+(`<repo_root>/data/kanzi_upstream/src/kanzi/models.py:364-372`):
 
 ```python
 def decode(
@@ -47,7 +47,7 @@ generator** (no Generator argument is accepted).
 
 `DAE` has **no `sample()` method** — `sample()` is defined on the
 **`RnFlowMatcher`** class (different module), not on `DAE`. From
-`/home/hugo/codes/flowa-multistep-reinference/data/kanzi_upstream/src/kanzi/models.py:608`:
+`<repo_root>/data/kanzi_upstream/src/kanzi/models.py:608`:
 
 ```python
 def sample(self, x_BLD, n_steps):
@@ -85,7 +85,7 @@ integration surface — not a decode wrapper.
 But there is a *better* existing pattern already in the codebase.
 
 The bridge function `kanzi_latent_to_coords(latent, decoder, fsq_quantizer, *, ..., seed=0)`
-(`/home/hugo/codes/flowa-multistep-reinference/tools/kanzi_latent_to_coord.py:72-238`)
+(`<repo_root>/tools/kanzi_latent_to_coord.py:72-238`)
 calls the upstream `DAE.decode` at **line 229-235**:
 
 ```python
@@ -126,7 +126,7 @@ asks for — it just does it via `torch.manual_seed` (global) rather than
 ## 4. Does `paper_quantities.py` have a seeded wrapper or stochasticity-acknowledgment helper?
 
 **Answer: NO.** Searched
-`/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/theory/paper_quantities.py`
+`<repo_root>/adaptive_reflow/theory/paper_quantities.py`
 for `seed`, `generator`, `Generator`, `stochastic`, `noise` — no
 seed-wrapping or stochasticity-acknowledgment helper exists.
 
@@ -143,7 +143,7 @@ a helper.
 **Answer: NO seed support anywhere in the vendored Kanzi upstream.**
 
 Searched
-`/home/hugo/codes/flowa-multistep-reinference/data/kanzi_upstream/src/kanzi/`
+`<repo_root>/data/kanzi_upstream/src/kanzi/`
 for `seed`, `Generator`, `manual_seed`, `fork_rng`:
 
 - `models.py:1137` — *only* `torch.manual_seed(1137 + rank)` in **`train_cb.py:220`** — TRAINING-SIDE seed for DDP rank init. NOT in the inference path.
@@ -166,7 +166,7 @@ appears in 5+ existing call sites in `adaptive_reflow/`:
 
 ### Hidream I1 image generation (Wave 105 forward)
 
-- File: `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/_hidream_i1_upstream_shim.py:416` —
+- File: `<repo_root>/adaptive_reflow/adapters/_hidream_i1_upstream_shim.py:416` —
   ```python
   generator = torch.Generator(device="cpu").manual_seed(int(seed))
   ```
@@ -174,7 +174,7 @@ appears in 5+ existing call sites in `adaptive_reflow/`:
 
 ### HiDream I1 adapter
 
-- File: `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/hidream_i1.py:1116` —
+- File: `<repo_root>/adaptive_reflow/adapters/hidream_i1.py:1116` —
   ```python
   generator = torch.Generator(device="cpu").manual_seed(int(seed) + i)
   ```
@@ -182,14 +182,14 @@ appears in 5+ existing call sites in `adaptive_reflow/`:
 
 ### Wan2.2 video shim
 
-- File: `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/wan2_2_upstream_shim.py:135` —
+- File: `<repo_root>/adaptive_reflow/adapters/wan2_2_upstream_shim.py:135` —
   ```python
   generator = torch.Generator(device=getattr(self.pipeline, "device", "cpu")).manual_seed(...)
   ```
 
 ### FlowMol3 v2 adapter (Wave 74 F2 — the closest analog)
 
-- File: `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/flowmol3_v2_adapter.py:627-629` —
+- File: `<repo_root>/adaptive_reflow/adapters/flowmol3_v2_adapter.py:627-629` —
   ```python
   _torch.manual_seed(int(seed))
   if _torch.cuda.is_available():
@@ -200,13 +200,13 @@ appears in 5+ existing call sites in `adaptive_reflow/`:
 
 ### Global-RNG pattern (KANZI CURRENT PATTERN)
 
-- File: `/home/hugo/codes/flowa-multistep-reinference/tools/kanzi_latent_to_coord.py:165` —
+- File: `<repo_root>/tools/kanzi_latent_to_coord.py:165` —
   `torch.manual_seed(int(seed))` — REUSE this.
 
 ### Conclusion on existing helpers
 
 There is **NO shared `_adapter_common.seed_context()` context manager**
-in `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/_adapter_common.py`. Each call site inlines its own pattern. The two reuse options are:
+in `<repo_root>/adaptive_reflow/adapters/_adapter_common.py`. Each call site inlines its own pattern. The two reuse options are:
 
 - **(A) `torch.manual_seed(int(seed))`** (global, simple, already done in the bridge) — REUSE.
 - **(B) `torch.Generator(device=...).manual_seed(int(seed))` + pass to a function that accepts Generator** — does NOT work for `DAE.decode` because the upstream doesn't accept a Generator.
@@ -255,23 +255,23 @@ F-4 caveat can be closed by:
 
 ## 8. Files audited (READ-ONLY)
 
-- `/home/hugo/codes/flowa-multistep-reinference/data/kanzi_upstream/src/kanzi/models.py` (lines 364-429 DAE.decode, 608-664 sample/euler_sample/euler_maruyama_sample, 1137)
-- `/home/hugo/codes/flowa-multistep-reinference/data/kanzi_upstream/src/kanzi/cfm.py` (lines 41, 98, 150 sample_noise_like, 153)
-- `/home/hugo/codes/flowa-multistep-reinference/data/kanzi_upstream/src/kanzi/fsq.py` (line 96 jitter noise)
-- `/home/hugo/codes/flowa-multistep-reinference/data/kanzi_upstream/src/kanzi/utils.py` (kabsch_rmsd, no RNG)
-- `/home/hugo/codes/flowa-multistep-reinference/data/kanzi_upstream/src/kanzi/train_cb.py` (line 220 train-side seed)
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/kanzi.py` (lines 2098-2235 solve_ode — no DAE.decode call; line 165 bridge uses torch.manual_seed)
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/_adapter_common.py` (full file — no seed_context helper exists)
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/_hidream_i1_upstream_shim.py` (line 416 — pattern A)
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/hidream_i1.py` (line 1116 — pattern A)
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/wan2_2_upstream_shim.py` (line 135 — pattern A)
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/flowmol3_upstream_shim.py` (lines 168-170 — pattern B)
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/flowmol3_v2_adapter.py` (lines 627-629 — pattern B, Wave 74 F2)
-- `/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/theory/paper_quantities.py` (full file — no seed helper)
-- `/home/hugo/codes/flowa-multistep-reinference/tools/kanzi_latent_to_coord.py` (lines 72-238 — bridge, line 165 torch.manual_seed, line 229 DAE.decode call)
-- `/home/hugo/codes/flowa-multistep-reinference/tools/upstream_eval.py` (lines 396, 470, 544 — DAE.encode→decode→kabsch_rmsd path; no seed currently)
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave88-phase2-sweep.md` (line 192 F-4 finding)
-- `/home/hugo/codes/flowa-multistep-reinference/docs/audit/wave88-phase3-final.md` (lines 72-94, 122-178 — F-4 evidence + fix path)
+- `<repo_root>/data/kanzi_upstream/src/kanzi/models.py` (lines 364-429 DAE.decode, 608-664 sample/euler_sample/euler_maruyama_sample, 1137)
+- `<repo_root>/data/kanzi_upstream/src/kanzi/cfm.py` (lines 41, 98, 150 sample_noise_like, 153)
+- `<repo_root>/data/kanzi_upstream/src/kanzi/fsq.py` (line 96 jitter noise)
+- `<repo_root>/data/kanzi_upstream/src/kanzi/utils.py` (kabsch_rmsd, no RNG)
+- `<repo_root>/data/kanzi_upstream/src/kanzi/train_cb.py` (line 220 train-side seed)
+- `<repo_root>/adaptive_reflow/adapters/kanzi.py` (lines 2098-2235 solve_ode — no DAE.decode call; line 165 bridge uses torch.manual_seed)
+- `<repo_root>/adaptive_reflow/adapters/_adapter_common.py` (full file — no seed_context helper exists)
+- `<repo_root>/adaptive_reflow/adapters/_hidream_i1_upstream_shim.py` (line 416 — pattern A)
+- `<repo_root>/adaptive_reflow/adapters/hidream_i1.py` (line 1116 — pattern A)
+- `<repo_root>/adaptive_reflow/adapters/wan2_2_upstream_shim.py` (line 135 — pattern A)
+- `<repo_root>/adaptive_reflow/adapters/flowmol3_upstream_shim.py` (lines 168-170 — pattern B)
+- `<repo_root>/adaptive_reflow/adapters/flowmol3_v2_adapter.py` (lines 627-629 — pattern B, Wave 74 F2)
+- `<repo_root>/adaptive_reflow/theory/paper_quantities.py` (full file — no seed helper)
+- `<repo_root>/tools/kanzi_latent_to_coord.py` (lines 72-238 — bridge, line 165 torch.manual_seed, line 229 DAE.decode call)
+- `<repo_root>/tools/upstream_eval.py` (lines 396, 470, 544 — DAE.encode→decode→kabsch_rmsd path; no seed currently)
+- `<repo_root>/docs/audit/wave88-phase2-sweep.md` (line 192 F-4 finding)
+- `<repo_root>/docs/audit/wave88-phase3-final.md` (lines 72-94, 122-178 — F-4 evidence + fix path)
 
 ## 9. External libraries audited
 

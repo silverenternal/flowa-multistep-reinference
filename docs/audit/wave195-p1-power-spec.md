@@ -2,7 +2,7 @@
 
 **Date.** 2026-09-19
 **Agent.** Wave 195 P1 power analysis spec agent
-**Working directory.** `/home/hugo/codes/flowa-multistep-reinference`
+**Working directory.** `<repo_root>`
 **Commit SHA (spec-frozen).** `d8452ef` (HEAD at start of Wave 195).
 **Scope.** Three tables of headline statistical claims are formalised below
 with explicit pairing strategy, Bonferroni-corrected α, per-cell

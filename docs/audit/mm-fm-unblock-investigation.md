@@ -189,9 +189,9 @@ hf download luo00042/mm-fm --repo-type model --include "checkpoints/dinov2-b/*.p
 
 ## 6. Files audited
 
-- `/home/hugo/codes/flowa-multistep-reinference/todo/models/mm-fm.md`
+- `<repo_root>/todo/models/mm-fm.md`
   (143 lines)
-- `/home/hugo/codes/flowa-multistep-reinference/todo/PHASE-4-model-integration-iteration.md`
+- `<repo_root>/todo/PHASE-4-model-integration-iteration.md`
   §"MM-FM (BLOCKED)" (lines 262–271)
 - `https://github.com/GaoxiangLuo/MM-FM` (public source — reachable)
 - `https://github.com/GaoxiangLuo/MM-FM/tree/main/src` (8 files)
