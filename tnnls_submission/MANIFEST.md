@@ -18,8 +18,8 @@ cd tnnls_submission && sha256sum -- *.md
 
 | File | Size (bytes) | SHA-256 | Role |
 |---|---|---|---|
-| `MANIFEST.md` | 6066 | `50b7fe75da8bce83e2cd69f96c474878800ba57a55d059fc9282a0f40729845a` | Package manifest with SHA-256 + size + role (pre-Wave-244-P4 placeholder; see Wave 244 P4 audit for post-update hash) |
-| `cover_letter.md` | 60394 | `acc18453978a5b0b1e3fc0548efedf21b3bb0e45ba2e1d4f60d9a8a5b4a18c7f` | Editor-facing cover letter (TNNLS — 11 USER ACTION placeholders to be filled before submission) |
+| `MANIFEST.md` | <see-bottom> | <see-bottom> | Package manifest with SHA-256 + size + role (Wave 274 P6 — added cross-references for FILL_GUIDE.md + wave274-p4 BLOCKED + wave274-p5 final-verify; cover_letter row updated 11→17 USER TO FILL). Self-referencing SHA is impossible (each edit rehashes itself); the on-disk SHA is recorded at `docs/audit/wave274-p5-final-verify.md` §3 SHA-256 ledger and at `docs/audit/wave274-p7-manifest-sha.md` once the post-commit hash is captured. |
+| `cover_letter.md` | 60394 | `acc18453978a5b0b1e3fc0548efedf21b3bb0e45ba2e1d4f60d9a8a5b4a18c7f` | Editor-facing cover letter (TNNLS — 17 USER TO FILL placeholders enumerated in `FILL_GUIDE.md`; 31 grep hits → 17 distinct fields = 1 authors + 1 editor + 5 reviewer×{affiliation,email} + 3 corresponding-author) |
 | `highlights.md` | 1913 | `96406b3851f3a099b6346247d40ac35b492213d703819421c6f16f629f4279dd` | 3 TNNLS editor-facing highlights (85-char each) |
 | `tables.md` | 7435 | `b7aeda919b495a9ea2d0c4c3f62609dfe9acc8fdb48b62888f3022b066fb8ce2` | 5 TNNLS paper tables (R1–R6 headline, 4-arm H2H, scheduler ablation, statistical methods, reproducibility gates) |
 | `figures.md` | 23307 | `030f61a70031dbd6a6cf8dd7487035d21c3375002cad2968a6d8af71636a2d27` | ASCII architecture diagrams (FlowA hexagonal layers, re-inference dataflow, 3-tier experiment hierarchy, 4-arm H2H schematic) |
@@ -33,6 +33,10 @@ cd tnnls_submission && sha256sum -- *.md
 - **`docs/drafts/section-2-method.md`** — paper §2 methodology
 - **`docs/drafts/paper-flattened-draft.md`** — full paper draft (flattened for TNNLS)
 - **`docs/cover-letter-tnnls.md`** — full cover letter (canonical; tnnls_submission/cover_letter.md is a frozen snapshot)
+- **`tnnls_submission/FILL_GUIDE.md`** — Wave 274 P3 fill-guide for the 17 `[USER TO FILL: ...]` placeholders in `cover_letter.md`
+- **`docs/audit/wave274-p4-paper-pdf-blocked.md`** — Wave 274 P4 IEEEtran rebuild BLOCKED disclosure (network restore + `tlmgr install ieeetran` unblock procedure)
+- **`docs/audit/wave274-p5-final-verify.md`** — Wave 274 P5 final pre-submission audit (READYNESS verdict + 4 blockers)
+- **`docs/audit/wave274-p7-manifest-sha.md`** — Wave 274 P7 self-referencing-SHA sidecar (captures the current MANIFEST.md SHA + size post-`Wave 274 P6` ruff auto-fix)
 - **`docs/internal/tnnls_submission_action_checklist.md`** — TNNLS submission action checklist (canonical)
 - **`docs/audit/wave238-p3-journal-decision.md`** — Wave 238 P3 journal decision (TPAMI → TNNLS) with full rationale
 
