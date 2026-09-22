@@ -40,8 +40,9 @@ Refs:
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Literal, Sequence
+from typing import Literal
 
 import numpy as np
 from scipy import stats as _scipy_stats
@@ -314,10 +315,7 @@ def bf01_paired(
         sd = float("inf")  # marks the zero-variance case
 
     mean = float(diff_arr.mean())
-    if math.isinf(sd):
-        t = 0.0
-    else:
-        t = mean / (sd / math.sqrt(n))
+    t = 0.0 if math.isinf(sd) else mean / (sd / math.sqrt(n))
     # BIC approximation (Wagenmakers 2007, eq. 12) using df = n - 1
     # — paired design has n - 1 degrees of freedom.
     bf01 = math.sqrt(n) * (1.0 + (t * t) / max(n - 1, 1)) ** (-n / 2.0)
@@ -421,7 +419,7 @@ def _jonckheere_terpstra_statistic(groups: Sequence[Sequence[float]]) -> float:
 
     # rankdata with average ties (default for scipy.rankdata)
     values = np.array([t[0] for t in pooled], dtype=float)
-    ranks = _scipy_stats.rankdata(values, method="average")
+    _scipy_stats.rankdata(values, method="average")
 
     # cumulative count per group (in rank order)
     counts = np.zeros(len(groups), dtype=float)
@@ -477,7 +475,7 @@ def jonckheere_terpstra(
     if any(s == 0 for s in sizes):
         raise ValueError("all groups must be non-empty")
     n_total = int(sum(sizes))
-    n_str = str(n_total)
+    str(n_total)
     n = n_total
 
     # (a) U statistic
@@ -490,7 +488,7 @@ def jonckheere_terpstra(
 
     # variance: build tie-correction sums on the pooled ranks
     pooled = np.concatenate([np.asarray(g, dtype=float) for g in groups])
-    ranks = _scipy_stats.rankdata(pooled, method="average")
+    _scipy_stats.rankdata(pooled, method="average")
 
     # Tie correction term 1: over all ties
     _, counts = np.unique(pooled, return_counts=True)

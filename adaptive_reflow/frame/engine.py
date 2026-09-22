@@ -65,7 +65,6 @@ from adaptive_reflow.frame.adapter import (
     validate_integrator_trace,
     validate_state_bundle,
 )
-from adaptive_reflow.schedule.cosine import memory_fraction_from_schedule
 
 # Wave 233 P6 — SHA-256 digest cache for StateBundle (identity-keyed
 # memoization). When ``digest_cache`` is supplied to ``Engine.__init__``
@@ -78,6 +77,7 @@ from adaptive_reflow.schedule.cosine import memory_fraction_from_schedule
 from adaptive_reflow.framework.state_bundle_cache import (  # noqa: E402
     StateBundleDigestCache as _StateBundleDigestCache,
 )
+from adaptive_reflow.schedule.cosine import memory_fraction_from_schedule
 
 # ---------------------------------------------------------------------------
 # Module-level constants

@@ -98,7 +98,6 @@ from adaptive_reflow.contracts import (
 from .adaptive import CodimensionSheetScheduler
 from .protocols import ScheduleSample
 
-
 # Default tier quantile boundaries (Wave 198 P3 / Wave 225 P4 / Wave 225 P5).
 DEFAULT_TIER_QUANTILES: tuple[float, float] = (0.33, 0.67)
 
@@ -467,10 +466,7 @@ class TierAwareCodimensionSheetScheduler:
                     metric_val = float(self._baseline_metrics[self._current_record_id])
             except (KeyError, TypeError, ValueError):
                 metric_val = float("nan")
-            if math.isfinite(metric_val):
-                tier = self._classify_tier(metric_val)
-            else:
-                tier = "medium"
+            tier = self._classify_tier(metric_val) if math.isfinite(metric_val) else "medium"
 
         if tier == "easy":
             effective_n_cap = float(base_n_cap) * float(self._easy_tier_nfe_reduction_factor)
