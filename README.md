@@ -133,6 +133,17 @@ bash scripts/verify_all_headlines.sh
 
 ---
 
+### Environment Setup (Docker Recommended)
+
+To build the exact environment used in this work:
+
+```bash
+docker build -f Dockerfile.tnnls -t flowa:tnnls-v3.0 .
+docker run --gpus all -it flowa:tnnls-v3.0
+```
+
+---
+
 ## Repository Structure
 
 ```
@@ -181,11 +192,17 @@ flowa-multistep-reinference/
 
 ## Data and Model Availability
 
-| Checkpoint | SHA-256 (prefix) | Path |
-|---|---|---|
-| Kanzi | `c2f2ab8d...d270` | `data/kanzi_upstream/` (vendored at commit `cfed9cf`) |
-| LineageFlow | `f0b4b25e...54a2b` | `data/lineageflow_upstream/` (vendored at commit `ccef84a`) |
-| FlowMol3 | epoch 17, global_step 1,547,236 | `data/flowmol3/weights_real/checkpoints/last.ckpt` |
+| Checkpoint | SHA-256 (prefix) | Path | Access |
+|---|---|---|---|
+| Kanzi | `c2f2ab8d...d270` | `data/kanzi_upstream/` (vendored at commit `cfed9cf`) | already in repo |
+| LineageFlow | `f0b4b25e...54a2b` | `data/lineageflow_upstream/` (vendored at commit `ccef84a`) | already in repo |
+| FlowMol3 | epoch 17, global_step 1,547,236 | `data/flowmol3/weights_real/checkpoints/last.ckpt` (sha256 `d6cda2d7...`) | already in repo |
+| HiDream-I1 | (uploaded to Zenodo at submission freeze) | https://doi.org/10.5281/zenodo.TBD | `wget https://zenodo.org/record/TBD/...` |
+| GraphBFN | (uploaded to Zenodo) | https://doi.org/10.5281/zenodo.TBD | `wget https://zenodo.org/record/TBD/...` |
+| Lumina-Image-2.0 | (uploaded to Zenodo) | https://doi.org/10.5281/zenodo.TBD | `wget https://zenodo.org/record/TBD/...` |
+| ProtBFN-AbBFN | (uploaded to Zenodo) | https://doi.org/10.5281/zenodo.TBD | `wget https://zenodo.org/record/TBD/...` |
+| Wan2.2 | (uploaded to Zenodo) | https://doi.org/10.5281/zenodo.TBD | `wget https://zenodo.org/record/TBD/...` |
+| FreqFlow | (uploaded to Zenodo) | https://doi.org/10.5281/zenodo.TBD | `wget https://zenodo.org/record/TBD/...` |
 
 **Source code:** frozen at `v3.0-tnnls-ready` tag (TNNLS submission). **Docker image:** `flowa:tnnls-v3.0` (`Dockerfile.tnnls`). **Zenodo DOI:** to be generated at submission freeze via GitHub release.
 
