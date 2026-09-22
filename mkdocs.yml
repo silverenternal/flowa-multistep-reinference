@@ -232,6 +232,22 @@ not_in_nav: |
   INSIGHTS.md
   audit/wave*.md
   audit/*/wave*.md
+  audit/algorithm_4arm/*.md
+  audit/cifar/*.md
+  audit/data_packaging/*.md
+  audit/engineering/*.md
+  audit/final_verify/*.md
+  audit/flowmol3/*.md
+  audit/freqflow/*.md
+  audit/governance/*.md
+  audit/kanzi/*.md
+  audit/lineageflow/*.md
+  audit/mnist/*.md
+  audit/paper_claims/*.md
+  audit/push_state/*.md
+  audit/reproducibility/*.md
+  audit/stats_method/*.md
+  audit/sweep_eval/*.md
   audit/paper-p6-wave-history-supplementary.md
   audit/wave188-p5-ground-truth-corrections.md
   audit/wave188-p6-paper-polish-audit.md

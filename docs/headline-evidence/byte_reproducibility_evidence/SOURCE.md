@@ -14,7 +14,7 @@ ruff-frozen code change boundary (Wave 127 Phase 4 ruff --fix + Wave 131 Phase 1
 - n_steps_decoder: 100 vs 100 (exact match)
 - sweep_wallclock_s: 4835.03 vs 4567.94 (wall-clock variance, acceptable)
 
-**Source:** docs/audit/wave131-pre-freeze-hygiene.md (byte-repro appendix, lines after the main audit).
+**Source:** docs/audit/final_verify/pre-freeze-hygiene.md (byte-repro appendix, lines after the main audit).
 **Source data:** verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave127_q3_2026/ (baseline)
 + verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave131_byte_repro_q3_2026/ (byte-repro re-run).
 

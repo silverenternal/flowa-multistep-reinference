@@ -17,7 +17,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "23",
       "section_ref": "docs/CLAIMS.md:23",
       "notes": "Paper Lemma 2 proves the sheet tube's unnormalised"
@@ -38,7 +38,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "41",
       "section_ref": "docs/CLAIMS.md:41",
       "notes": "Paper Lemma 3 proves each isolated root cell contributes at"
@@ -59,7 +59,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "57",
       "section_ref": "docs/CLAIMS.md:57",
       "notes": "The shipped `selection_ratio = sheet_evidence /"
@@ -80,7 +80,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "77",
       "section_ref": "docs/CLAIMS.md:77",
       "notes": "The shipped `selection_ratio` is a fixed-noise replay"
@@ -101,7 +101,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "96",
       "section_ref": "docs/CLAIMS.md:96",
       "notes": "`CosineAnnealScheduler`'s monotonic decrease in fresh-noise"
@@ -122,7 +122,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "113",
       "section_ref": "docs/CLAIMS.md:113",
       "notes": "`CodimensionSheetScheduler` instantiates paper Lemma 2 +"
@@ -143,7 +143,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "132",
       "section_ref": "docs/CLAIMS.md:132",
       "notes": "Paper Lemma 4 proves the \"physical\" complement"
@@ -164,7 +164,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "148",
       "section_ref": "docs/CLAIMS.md:148",
       "notes": "The `selection_ratio` emitted by `EvidenceScaleGapMetric`"
@@ -185,7 +185,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "166",
       "section_ref": "docs/CLAIMS.md:166",
       "notes": "The framework's heuristic `selection_ratio` is"
@@ -206,7 +206,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "184",
       "section_ref": "docs/CLAIMS.md:184",
       "notes": "`SchedulerProtocol.config.n_min > 0` and the"
@@ -227,7 +227,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "201",
       "section_ref": "docs/CLAIMS.md:201",
       "notes": "The four paper quantities `A_g`, `B_g`, `C_g`, `e_rho`"
@@ -248,7 +248,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "224",
       "section_ref": "docs/CLAIMS.md:224",
       "notes": "Paper Theorem 1 proves `mu_{g,eps} --BL--> nu_g` as"
@@ -269,7 +269,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "241",
       "section_ref": "docs/CLAIMS.md:241",
       "notes": "Paper Corollary 1 deduces the normalisation lower bound"
@@ -290,7 +290,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "259",
       "section_ref": "docs/CLAIMS.md:259",
       "notes": "Paper Corollary 1 proves"
@@ -311,7 +311,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "275",
       "section_ref": "docs/CLAIMS.md:275",
       "notes": "The framework's `n_cap` ramp is a convex mixing weight on"
@@ -332,7 +332,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "293",
       "section_ref": "docs/CLAIMS.md:293",
       "notes": "The prototype `_paper_evidence_balance` helper historically"
@@ -353,7 +353,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "323",
       "section_ref": "docs/CLAIMS.md:323",
       "notes": "The shipped `selection_ratio` does NOT converge to 1 over"
@@ -374,7 +374,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "357",
       "section_ref": "docs/CLAIMS.md:357",
       "notes": ""
@@ -395,7 +395,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "392",
       "section_ref": "docs/CLAIMS.md:392",
       "notes": "`SchedulerProtocol` is the canonical first-class"
@@ -416,7 +416,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "417",
       "section_ref": "docs/CLAIMS.md:417",
       "notes": "`BoundedMergeOperator` enforces a hard `[floor, cap]`"
@@ -437,7 +437,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "442",
       "section_ref": "docs/CLAIMS.md:442",
       "notes": "`SequentialScheduler` is the `adaptive_reflow` analog"
@@ -458,7 +458,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "469",
       "section_ref": "docs/CLAIMS.md:469",
       "notes": ""
@@ -479,7 +479,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "514",
       "section_ref": "docs/CLAIMS.md:514",
       "notes": "The `KDE-support-coverage` uplift"
@@ -500,7 +500,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "549",
       "section_ref": "docs/CLAIMS.md:549",
       "notes": "The Round-2 type-checker and lint-cleanup reduced the"
@@ -521,7 +521,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "600",
       "section_ref": "docs/CLAIMS.md:600",
       "notes": "`BoundedMergeOperator.merge` raises"
@@ -542,7 +542,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "630",
       "section_ref": "docs/CLAIMS.md:630",
       "notes": "`ConvergenceAdaptiveScheduler.record_round_feedback`"
@@ -563,7 +563,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "660",
       "section_ref": "docs/CLAIMS.md:660",
       "notes": "`EvidenceDrivenScheduler` (registered under the family"
@@ -584,7 +584,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "695",
       "section_ref": "docs/CLAIMS.md:695",
       "notes": "The eight plug-in families (scheduler, policy driver,"
@@ -605,7 +605,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "732",
       "section_ref": "docs/CLAIMS.md:732",
       "notes": "`FreeTrajScheduler` (arXiv:2507.10532, training-free"
@@ -626,7 +626,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "764",
       "section_ref": "docs/CLAIMS.md:764",
       "notes": "`MeanFlowMergeOperator` (arXiv:2505.13447, MeanFlow"
@@ -647,7 +647,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "796",
       "section_ref": "docs/CLAIMS.md:796",
       "notes": "The R3 adversarial survey"
@@ -668,7 +668,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "858",
       "section_ref": "docs/CLAIMS.md:858",
       "notes": "The C4 fix (Option F = Option A + Option B + minimal"
@@ -689,7 +689,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "949",
       "section_ref": "docs/CLAIMS.md:949",
       "notes": "The framework ships a modern, stdlib-only state"
@@ -710,7 +710,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "992",
       "section_ref": "docs/CLAIMS.md:992",
       "notes": "Every scheduler class that `SchedulerProtocol`"
@@ -731,7 +731,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "1066",
       "section_ref": "docs/CLAIMS.md:1066",
       "notes": "FlowA's 2D Rectified Flow experiment"
@@ -752,7 +752,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "1171",
       "section_ref": "docs/CLAIMS.md:1171",
       "notes": "FlowA's CIFAR-10 Rectified Flow experiment"
@@ -773,7 +773,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "1410",
       "section_ref": "docs/CLAIMS.md:1410",
       "notes": ""
@@ -794,7 +794,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "1545",
       "section_ref": "docs/CLAIMS.md:1545",
       "notes": "The fix-v2 capability set lands **four research-grade"
@@ -815,7 +815,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "1622",
       "section_ref": "docs/CLAIMS.md:1622",
       "notes": "The Phase-4 docstring audit"
@@ -836,7 +836,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "1696",
       "section_ref": "docs/CLAIMS.md:1696",
       "notes": "[`ARCHITECTURE.md`](../ARCHITECTURE.md) §1 / §4 / §7.1"
@@ -857,7 +857,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "1745",
       "section_ref": "docs/CLAIMS.md:1745",
       "notes": "The framework's `e_rho / 4` paper-quantity floor used"
@@ -878,7 +878,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "1787",
       "section_ref": "docs/CLAIMS.md:1787",
       "notes": "[`EvidenceScaleGapMetric`](../adaptive_reflow/eval/posterior_selection_evaluator.py)"
@@ -899,7 +899,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "1836",
       "section_ref": "docs/CLAIMS.md:1836",
       "notes": "The four CI-gate issues closed by the test/CI agent"
@@ -920,7 +920,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "1888",
       "section_ref": "docs/CLAIMS.md:1888",
       "notes": "On the R6 task (LineageFlow protein re-inference,"
@@ -941,7 +941,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "1950",
       "section_ref": "docs/CLAIMS.md:1950",
       "notes": "The Wave 184 n_rounds ablation (2 models × 6 variants"
@@ -962,7 +962,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "2025",
       "section_ref": "docs/CLAIMS.md:2025",
       "notes": "On the R6 task (LineageFlow protein re-inference,"
@@ -983,7 +983,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "2104",
       "section_ref": "docs/CLAIMS.md:2104",
       "notes": "The Wave 183 finer-NFE-curve evaluation (2 models ×"
@@ -1004,7 +1004,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "2186",
       "section_ref": "docs/CLAIMS.md:2186",
       "notes": "Wave 185 measures both the empirical BL distance"
@@ -1025,7 +1025,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "2269",
       "section_ref": "docs/CLAIMS.md:2269",
       "notes": "On the R6 task (LineageFlow protein re-inference,"
@@ -1046,7 +1046,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "2375",
       "section_ref": "docs/CLAIMS.md:2375",
       "notes": "On the R6 task (lineageflow synthetic protein re-"
@@ -1067,7 +1067,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "2484",
       "section_ref": "docs/CLAIMS.md:2484",
       "notes": "On the 2D post-cd70821 axis (after commit `cd70821`"
@@ -1088,7 +1088,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "2551",
       "section_ref": "docs/CLAIMS.md:2551",
       "notes": "The paper's \"5 adapters × 3 domains\" claim is"
@@ -1109,7 +1109,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "2661",
       "section_ref": "docs/CLAIMS.md:2661",
       "notes": "**Upgraded claim** (Wave 190 P2 supersedes the Wave 189 P4"
@@ -1130,7 +1130,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "2810",
       "section_ref": "docs/CLAIMS.md:2810",
       "notes": "**Cross-adapter Theorem 1 load-bearing cross-validation.**"
@@ -1151,7 +1151,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "2919",
       "section_ref": "docs/CLAIMS.md:2919",
       "notes": "FlowA's MNIST FM framework-vs-baseline sweep at N=1000,"
@@ -1172,7 +1172,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "2994",
       "section_ref": "docs/CLAIMS.md:2994",
       "notes": "Wave 195 P2 applies the Wave 195 P1 spec (commit `d8452ef`,"
@@ -1180,7 +1180,7 @@
     {
       "metric_id": "CLM-061",
       "kind": "CLAIM",
-      "title": "Wave 195 P3 + Wave 196 P2 + Wave 196 P4 + Wave 197 P3 + Wave 198 P2 + Wave 198 P3 + Wave 199 P2 + Wave 199 P3 — 4-arm head-to-head per-cell power analysis (Wave 195 P3 baseline: 12 cells × n=3 unpaired Welch → ALL 12 UNDERPOWERED; Wave 196 P4 upgrade: 16 cells × n=30 paired t-test → 2 SUPPORTED + 14 UNDERPOWERED + 0 REGRESSES; Wave 197 P3 root-cause analysis: n=100 records/seed cannot upgrade the verdict distribution because Cohen's d_z (0.05–0.23) is bounded by seed-to-seed variance, not per-record variance); Wave 196 P4 verdict distribution is **2 SUPPORTED / 0 REGRESSES / 0 TIE / 14 UNDERPOWERED / 0 NOT_SIGNIFICANT** with Bonferroni α=0.05/16=0.003125 per cell (4 baselines × 2 NFE × 2 metrics, including the +Vanilla control arm); the 2 SUPPORTED cells are `vanilla_scPerplexity_NFE50` (Δ = −3.866, Cohen's d_z = −2.932, p_raw = 5.73e-16) and `vanilla_scPerplexity_NFE100` (Δ = −3.862, Cohen's d_z = −2.994, p_raw = 3.28e-16) — FlowA framework vs Vanilla (no-distillation) baseline arm is strongly framework-wins on scPerplexity at both NFE=50 and NFE=100; the 14 UNDERPOWERED cells are all-vs-FastDLLM / AB-Cache / LeDiFlow comparisons where the paired-diff Cohen's d_z (0.020–0.226) is too small to detect a 0.01-pp min_effect at 80% power; the Wave 195 P3 baseline verdict distribution (0/0/0/12/0 — all 12 UNDERPOWERED at n=3 unpaired Welch) is preserved verbatim as the Wave 179/180/181/182 budget ceiling snapshot; **Wave 197 P3 root-cause analysis**: predicted n=100 records/seed verdict distribution (3 scenarios: pessimistic/realistic/optimistic std_d scaling) is **2 SUPPORTED / 14 UNDERPOWERED / 0 REGRESSES** — identical to Wave 196 P4 baseline (delta_supported = 0). Alternative n=300 paired seeds prediction (10× current n_seeds): **2 SUPPORTED / 13 UNDERPOWERED / 1 REGRESSES** (NET WORSE — `fastdllm_pLDDT_NFE100` flips to REGRESSES at d_z=-0.226 because the framework has a slight per-seed pLDDT regression vs FastDLLM at NFE=100 that is currently masked by sample size). n=1000 paired seeds prediction: 3 SUPPORTED + 7 UNDERPOWERED + 6 REGRESSES (NET LOSS); **Wave 198 P2 per-record paired t-test (N=1000, df=999)**: per-record granularity reveals large consistent framework-WINS on sc_perplexity for k6_foldability_w161 (Cohen's d_z = −1.077, p = 2.74e-169, ~1 SD per record framework-WINS; \"REGRESSES\" verdict under t-sign convention is framework-WINS because lower perplexity is better); per-record plddt_mean shows small real but UNDERPOWERED aggregate (Cohen's d_z = +0.071, p = 0.0255 just above Bonferroni α=0.025) — the aggregate hides per-tier cancellation revealed by Wave 198 P3 stratification; **Wave 198 P3 difficult-seed stratification (k6_foldability_w161 N=1000)**: 33rd/67th percentile tier boundaries; hard tier (n=330, baseline_pLDDT ≤ 34.56) framework WINS by +13.29 pLDDT units per record (Cohen's d_z = +1.189, p = 4.82e-65, SUPPORTED); medium tier (n=340, 34.56 < baseline_pLDDT ≤ 46.13) framework marginally wins by +2.59 pLDDT units (Cohen's d_z = +0.218, p = 7.12e-05, SUPPORTED); easy tier (n=330, baseline_pLDDT > 46.13) framework REGRESSES by −12.55 pLDDT units (Cohen's d_z = −0.998, p = 1.95e-51); the hard-tier SUPPORTED verdict is one of the strongest per-record findings in this paper; sc_perplexity is uniformly large framework-WINS across all 3 tiers (hard: d_z = −1.033; medium: −1.138; easy: −1.138; all p < 1e-50); per-tier Bonferroni α = 0.05/6 = 0.00833 (3 tiers × 2 metrics); hard / easy pLDDT d_z are nearly mirror images (~13 pLDDT units each), explaining the small overall +1.12 pLDDT aggregate as cancellation; **Wave 199 P2 + P3 LineageFlow per-record + difficult-seed stratification: BLOCKED-ON-DATA**, honest status of cross-adapter consistency claim — the LineageFlow N=1000 sweep was killed for CPU wallclock (Wave 84 estimate >40 h/arm); only the N=5 smoke subset exists on disk at `verification_outputs/lineageflow_n1000_omegafold_q4_2026/`, and that smoke subset produces byte-identical baseline/framework per-record values for every qid (TIE on both `plddt_mean` and `sc_perplexity`, both d_z = 0 exactly). Wave 199 P3 stratification reports 4/6 cells TIE + 2/6 cells skipped (medium tier, n=1 < 2). Cross-adapter comparison vs k6_foldability_w161 is **VACUOUS** for LineageFlow N=5 (TIE on smoke, monotone pattern NOT TESTABLE because medium tier skipped + all-zero deltas); the cross-adapter monotone-in-hard-monotone confirmation is **PENDING** a GPU-accelerated LineageFlow N=1000 re-run (e.g., RTX 5090) which is on the camera-ready deferred list. Wave 198 P2 + P3 lineageflow entries (TIE on smoke N=5) remain the only honest reading on actual LineageFlow per-record data and are NOT superseded by Wave 199 P3 (same data, same verdict); **Wave 199 P4 CLM-061 final-statement annotation** (additive, not retraction): \"Cross-adapter per-record evidence is currently **single-adapter** (k6_foldability_w161 N=1000 only). The k6 finding is: framework value-add is SELECTIVE on pLDDT (concentrated in hard-tier records — hard-tier framework-WINS by +13.29 pLDDT units with d_z = +1.189, easy-tier framework-REGRESSES by −12.55 pLDDT units with d_z = −0.998; hard / easy nearly mirror, explaining the small +1.12 aggregate as cancellation) + UNIVERSAL on scPerplexity (across all 3 tiers on k6_foldability_w161, with d_z = −1.033 / −1.138 / −1.138). LineageFlow cross-adapter confirmation is **PENDING**: the N=1000 sweep was killed for CPU wallclock, and the only LineageFlow per-record data on disk is the N=5 smoke subset which produces byte-identical baseline/framework values (TIE on both metrics, VACUOUS monotone test). The k6 finding alone is sufficient to ground the SELECTIVE-pLDDT / UNIVERSAL-scPerplexity framing; the cross-adapter confirmation is on the camera-ready deferred list, not a retraction of the k6 finding.\" **Wave 201 P7 additively extends** the annotation to acknowledge that the eval pipeline plumbing is now ready (per-GPU oversubscription + length-balanced LPT sharding + `nvidia-smi` auto-detect + `--gpus` propagation, projected ≈22 min wall time vs Wave 84 >40 h estimate), but the **N=1000 sweep itself is STILL BLOCKED-ON-DATA per Wave 200 P2 underlying blockers** (torch 1.13.1 vs Blackwell sm_120 + Python 3.10 venv constraint); the cross-adapter CONFIRMED-on-2-adapters claim is therefore NOT asserted — k6_foldability_w161 N=1000 is the single-adapter ground truth, and the lineageflow arm is PENDING the next sweep whenever the underlying blockers are resolved (the Wave 201 plumbing removes the pipeline-side blocker; the GPU-stack blocker requires an sm_120-capable OmegaFold-compatible Python venv). The Wave 198 P4 final-status (per-record + per-difficulty-tier granularity supersedes Wave 197 P3 honest finding) is preserved verbatim on the k6_foldability_w161 arm; Wave 199 P4 adds the `+ LineageFlow cross-adapter confirmation PENDING` annotation so reviewers do not over-read the cross-adapter picture from the k6-only evidence; **status upgrade**: Wave 196 P4 verdict transitions this claim from \"12/12 UNDERPOWERED at n=3 unpaired\" to \"2 SUPPORTED + 14 UNDERPOWERED at n=30 paired t-test (4-arm with +Vanilla control)\"; Wave 197 P3 root-cause analysis **supersedes the prior \"n ≥ 100 seeds (Wave 197+ scope)\" expectation** with the honest finding that the 14 UNDERPOWERED cells are bounded by per-seed effect size (Cohen's d_z = 0.05–0.23) — FlowA framework is competitive with FastDLLM/AB-Cache/LeDiFlow on per-seed pLDDT/scPerplexity at the LineageFlow evaluation protocol; the framework's value-add is NOT a per-seed metric uplift over those baselines; Wave 198 P2 + P3 supersede the Wave 197 P3 honest finding with finer granularity (per-record + difficult-seed tier) on k6_foldability_w161: scPerplexity Cohen d_z = −1.077 (large framework-WINS, p = 2.74e-169) per record; pLDDT hard-tier Cohen d_z = +1.189 (large framework-WINS, p = 4.82e-65, +13.29 pLDDT units per hard record); hard / easy pLDDT d_z nearly mirror (~13 units each), explaining the small +0.071 aggregate as cancellation; Wave 197 P3 per-seed honest finding is SUPERSEDED: framework value-add IS detectable at the right granularity (per-record, not per-seed); Wave 199 P2 + P3 add the LineageFlow cross-adapter extension as **BLOCKED-ON-DATA** (N=1000 sweep killed, only N=5 smoke on disk, byte-identical baseline/framework values) — does NOT supersede the k6 finding, only annotates that the cross-adapter extension requires GPU-accelerated N=1000 re-run; **Wave 204 P1 additively extends** the annotation: the R5b CIFAR-10 + R5c MNIST + R6 scPerplexity p-values in this CLM are derived from the Wave 195 P2 / Wave 191 P2 / Wave 191 P3 / Wave 198 P3 pre-computed JSON files (not from the now-defensive `tools/wave195_p2_r_level_power.py` line 157 path), and were NOT underflowed by the previous `1 - stats.t.cdf` formula except for R6 scPerplexity (where Wave 204 P1 corrects `p_bonf ≈ 0` to `p_bonf = 1.92e-168`); **Wave 204 P2 RESUMES the LineageFlow N=1000 sweep on real ckpt after Wave 202 P2 commit 40c70a7 verified the GPU environment passes the smoke test on Blackwell sm_120 with omegafold_py310 conda env (resolving the Wave 200 P2 torch 1.13.1 vs sm_120 blocker)**; the resumed sweep completed N=574 / 1000 paired records (deliberately killed at PDB rate dropping below 5/min for >2 h projection; 426 missing_pdb records are a known data-side limitation; per-record analysis runs on the 574 paired records where both baseline and framework produced outputs, paired by qid) with per-record paired t-test (df=573): plddt_mean mean_diff=+7.187, d_z=+0.474, p=4.74e-27 → SUPPORTED (Wave 197 P3 UNDERPOWERED verdict SUPERSEDED); sc_perplexity mean_diff=-3.715, d_z=-1.015, p=3.05e-90 → SUPPORTED (Wave 197 P3 UNDERPOWERED verdict SUPERSEDED); per-tier (3 tiers × 2 metrics, Bonferroni α=0.00833): hard pLDDT d_z=+1.840 (SUPPORTED, larger than k6 hard +1.189), medium pLDDT d_z=+0.976 (SUPPORTED, larger than k6 medium +0.218), easy pLDDT d_z=-0.590 (REGRESSES by direction, same sign as k6 easy -0.998), hard scPerp d_z=-1.002 (SUPPORTED), medium scPerp d_z=-1.037 (SUPPORTED), easy scPerp d_z=-1.044 (SUPPORTED); **Wave 204 P2 SUPERSEDES the Wave 199 P2 + P3 BLOCKED-ON-DATA annotation** for LineageFlow — the cross-adapter CONFIRMED-on-2-adapters claim is **NOW ASSERTED** with the monotone-pattern `hard > medium > easy` in pLDDT d_z identical on both k6 (+1.189 / +0.218 / -0.998) and lineageflow (+1.840 / +0.976 / -0.590), and scPerplexity framework-WINS uniformly large on both adapters (lineageflow d_z range -1.002 to -1.044; k6 d_z range -1.033 to -1.138); **status upgrade (Wave 204 P2)**: cross-adapter CONFIRMED-on-2-adapters claim transitions from `PENDING (Wave 199 P4)` to **ASSERTED (with N=574 caveat on the lineageflow arm — the full N=1000 sweep would tighten the CI but does not change the monotone-pattern verdict; the full N=1000 sweep is on the camera-ready deferred list)**; §10.42 (h) in paper-draft.md documents the Wave 204 P2 cross-adapter replication; the standardized stats rows for the Wave 204 P2 LineageFlow per-record + per-tier are added in `docs/tables/wave204-p3-standardized-stats.md` Table 1 rows 13-16; **Wave 208 P1 additively extends** the annotation: per DeepSeek P1 reviewer feedback (\"16 cells 里 14 个 underpowered，第一反应是'你的框架是不是其实没效果'\"), the 14/16 UNDERPOWERED cells are reframed from \"failure\" into \"methodological turning point\" by computing (a) per-seed power analysis showing the per-seed d_z (0.05–0.23) is bounded by seed-to-seed variance (detecting d=0.2 at 80% power with Bonferroni α=0.003125 requires ~365 paired seeds, vs current n=30), and (b) per-record power analysis using the k6_foldability_w161 R6 per-record d_z (Wave 198 P2) as proxy for each 4-arm cell — at N=1000 records per seed (df=999, α=0.003125), the scPerplexity axis reaches power=1.000 with d_z=-1.077 (large framework-WINS, all 8 cells SUPPORTED per-record) while the pLDDT axis has power=0.235 with d_z=+0.071 (small effect, all 8 cells UNDERPOWERED per-record but consistent with the Wave 198 P3 per-tier hard-tier-SUPPORTED + easy-tier-REGRESSES cancellation pattern); the reframing explicitly separates **EXPLORATORY** (per-seed 4-arm n=30, bounded by seed-to-seed variance) from **CONFIRMATORY** (per-record R6 n=1000, framework value-add detectable on the universal scPerplexity axis) per DeepSeek P1's \"4-arm 是 per-seed 探索性分析，R6 是 per-record 确认性分析\" framing; the 14/16 UNDERPOWERED verdict is preserved verbatim as the correct statistical conclusion at per-seed granularity, but is now accompanied by an explicit per-seed sample-size sensitivity table (required N_seeds for d=0.2 = 365, required N_seeds for d=0.5 = 63 at Bonferroni α=0.003125) and a per-record power table that quantifies the granularity issue. The Wave 196 P4 verdict distribution (2 SUPPORTED + 14 UNDERPOWERED + 0 REGRESSES) is preserved verbatim — this additive annotation does NOT change the Wave 196 P4 verdicts, only contextualizes them with the per-seed vs per-record granularity reframing requested by DeepSeek P1. The Wave 198 P4 final-status (per-record + per-difficulty-tier granularity supersedes Wave 197 P3 honest finding) is preserved verbatim on the k6_foldability_w161 arm; Wave 208 P1 adds the explicit per-seed sample-size sensitivity table + per-record power table as new artifacts in `verification_outputs/wave208-p1-4arm-power-analysis.{csv,json}` (commit_sha to be set on commit); the audit doc is at `docs/audit/algorithm_4arm/wave208-p1-4arm-power-analysis.md`; the per-record verdict distribution (8 SUPPORTED + 0 REGRESSES + 8 UNDERPOWERED + 0 TIE) confirms the SELECTIVE-pLDDT / UNIVERSAL-scPerplexity framing from Wave 198 P2 + P3 — the per-record power analysis is the paper's primary evidence because it operates at the granularity where framework value-add is detectable",
+      "title": "Wave 195 P3 + Wave 196 P2 + Wave 196 P4 + Wave 197 P3 + Wave 198 P2 + Wave 198 P3 + Wave 199 P2 + Wave 199 P3 — 4-arm head-to-head per-cell power analysis (Wave 195 P3 baseline: 12 cells × n=3 unpaired Welch → ALL 12 UNDERPOWERED; Wave 196 P4 upgrade: 16 cells × n=30 paired t-test → 2 SUPPORTED + 14 UNDERPOWERED + 0 REGRESSES; Wave 197 P3 root-cause analysis: n=100 records/seed cannot upgrade the verdict distribution because Cohen's d_z (0.05–0.23) is bounded by seed-to-seed variance, not per-record variance); Wave 196 P4 verdict distribution is **2 SUPPORTED / 0 REGRESSES / 0 TIE / 14 UNDERPOWERED / 0 NOT_SIGNIFICANT** with Bonferroni α=0.05/16=0.003125 per cell (4 baselines × 2 NFE × 2 metrics, including the +Vanilla control arm); the 2 SUPPORTED cells are `vanilla_scPerplexity_NFE50` (Δ = −3.866, Cohen's d_z = −2.932, p_raw = 5.73e-16) and `vanilla_scPerplexity_NFE100` (Δ = −3.862, Cohen's d_z = −2.994, p_raw = 3.28e-16) — FlowA framework vs Vanilla (no-distillation) baseline arm is strongly framework-wins on scPerplexity at both NFE=50 and NFE=100; the 14 UNDERPOWERED cells are all-vs-FastDLLM / AB-Cache / LeDiFlow comparisons where the paired-diff Cohen's d_z (0.020–0.226) is too small to detect a 0.01-pp min_effect at 80% power; the Wave 195 P3 baseline verdict distribution (0/0/0/12/0 — all 12 UNDERPOWERED at n=3 unpaired Welch) is preserved verbatim as the Wave 179/180/181/182 budget ceiling snapshot; **Wave 197 P3 root-cause analysis**: predicted n=100 records/seed verdict distribution (3 scenarios: pessimistic/realistic/optimistic std_d scaling) is **2 SUPPORTED / 14 UNDERPOWERED / 0 REGRESSES** — identical to Wave 196 P4 baseline (delta_supported = 0). Alternative n=300 paired seeds prediction (10× current n_seeds): **2 SUPPORTED / 13 UNDERPOWERED / 1 REGRESSES** (NET WORSE — `fastdllm_pLDDT_NFE100` flips to REGRESSES at d_z=-0.226 because the framework has a slight per-seed pLDDT regression vs FastDLLM at NFE=100 that is currently masked by sample size). n=1000 paired seeds prediction: 3 SUPPORTED + 7 UNDERPOWERED + 6 REGRESSES (NET LOSS); **Wave 198 P2 per-record paired t-test (N=1000, df=999)**: per-record granularity reveals large consistent framework-WINS on sc_perplexity for k6_foldability_w161 (Cohen's d_z = −1.077, p = 2.74e-169, ~1 SD per record framework-WINS; \"REGRESSES\" verdict under t-sign convention is framework-WINS because lower perplexity is better); per-record plddt_mean shows small real but UNDERPOWERED aggregate (Cohen's d_z = +0.071, p = 0.0255 just above Bonferroni α=0.025) — the aggregate hides per-tier cancellation revealed by Wave 198 P3 stratification; **Wave 198 P3 difficult-seed stratification (k6_foldability_w161 N=1000)**: 33rd/67th percentile tier boundaries; hard tier (n=330, baseline_pLDDT ≤ 34.56) framework WINS by +13.29 pLDDT units per record (Cohen's d_z = +1.189, p = 4.82e-65, SUPPORTED); medium tier (n=340, 34.56 < baseline_pLDDT ≤ 46.13) framework marginally wins by +2.59 pLDDT units (Cohen's d_z = +0.218, p = 7.12e-05, SUPPORTED); easy tier (n=330, baseline_pLDDT > 46.13) framework REGRESSES by −12.55 pLDDT units (Cohen's d_z = −0.998, p = 1.95e-51); the hard-tier SUPPORTED verdict is one of the strongest per-record findings in this paper; sc_perplexity is uniformly large framework-WINS across all 3 tiers (hard: d_z = −1.033; medium: −1.138; easy: −1.138; all p < 1e-50); per-tier Bonferroni α = 0.05/6 = 0.00833 (3 tiers × 2 metrics); hard / easy pLDDT d_z are nearly mirror images (~13 pLDDT units each), explaining the small overall +1.12 pLDDT aggregate as cancellation; **Wave 199 P2 + P3 LineageFlow per-record + difficult-seed stratification: BLOCKED-ON-DATA**, honest status of cross-adapter consistency claim — the LineageFlow N=1000 sweep was killed for CPU wallclock (Wave 84 estimate >40 h/arm); only the N=5 smoke subset exists on disk at `verification_outputs/lineageflow_n1000_omegafold_q4_2026/`, and that smoke subset produces byte-identical baseline/framework per-record values for every qid (TIE on both `plddt_mean` and `sc_perplexity`, both d_z = 0 exactly). Wave 199 P3 stratification reports 4/6 cells TIE + 2/6 cells skipped (medium tier, n=1 < 2). Cross-adapter comparison vs k6_foldability_w161 is **VACUOUS** for LineageFlow N=5 (TIE on smoke, monotone pattern NOT TESTABLE because medium tier skipped + all-zero deltas); the cross-adapter monotone-in-hard-monotone confirmation is **PENDING** a GPU-accelerated LineageFlow N=1000 re-run (e.g., RTX 5090) which is on the camera-ready deferred list. Wave 198 P2 + P3 lineageflow entries (TIE on smoke N=5) remain the only honest reading on actual LineageFlow per-record data and are NOT superseded by Wave 199 P3 (same data, same verdict); **Wave 199 P4 CLM-061 final-statement annotation** (additive, not retraction): \"Cross-adapter per-record evidence is currently **single-adapter** (k6_foldability_w161 N=1000 only). The k6 finding is: framework value-add is SELECTIVE on pLDDT (concentrated in hard-tier records — hard-tier framework-WINS by +13.29 pLDDT units with d_z = +1.189, easy-tier framework-REGRESSES by −12.55 pLDDT units with d_z = −0.998; hard / easy nearly mirror, explaining the small +1.12 aggregate as cancellation) + UNIVERSAL on scPerplexity (across all 3 tiers on k6_foldability_w161, with d_z = −1.033 / −1.138 / −1.138). LineageFlow cross-adapter confirmation is **PENDING**: the N=1000 sweep was killed for CPU wallclock, and the only LineageFlow per-record data on disk is the N=5 smoke subset which produces byte-identical baseline/framework values (TIE on both metrics, VACUOUS monotone test). The k6 finding alone is sufficient to ground the SELECTIVE-pLDDT / UNIVERSAL-scPerplexity framing; the cross-adapter confirmation is on the camera-ready deferred list, not a retraction of the k6 finding.\" **Wave 201 P7 additively extends** the annotation to acknowledge that the eval pipeline plumbing is now ready (per-GPU oversubscription + length-balanced LPT sharding + `nvidia-smi` auto-detect + `--gpus` propagation, projected ≈22 min wall time vs Wave 84 >40 h estimate), but the **N=1000 sweep itself is STILL BLOCKED-ON-DATA per Wave 200 P2 underlying blockers** (torch 1.13.1 vs Blackwell sm_120 + Python 3.10 venv constraint); the cross-adapter CONFIRMED-on-2-adapters claim is therefore NOT asserted — k6_foldability_w161 N=1000 is the single-adapter ground truth, and the lineageflow arm is PENDING the next sweep whenever the underlying blockers are resolved (the Wave 201 plumbing removes the pipeline-side blocker; the GPU-stack blocker requires an sm_120-capable OmegaFold-compatible Python venv). The Wave 198 P4 final-status (per-record + per-difficulty-tier granularity supersedes Wave 197 P3 honest finding) is preserved verbatim on the k6_foldability_w161 arm; Wave 199 P4 adds the `+ LineageFlow cross-adapter confirmation PENDING` annotation so reviewers do not over-read the cross-adapter picture from the k6-only evidence; **status upgrade**: Wave 196 P4 verdict transitions this claim from \"12/12 UNDERPOWERED at n=3 unpaired\" to \"2 SUPPORTED + 14 UNDERPOWERED at n=30 paired t-test (4-arm with +Vanilla control)\"; Wave 197 P3 root-cause analysis **supersedes the prior \"n ≥ 100 seeds (Wave 197+ scope)\" expectation** with the honest finding that the 14 UNDERPOWERED cells are bounded by per-seed effect size (Cohen's d_z = 0.05–0.23) — FlowA framework is competitive with FastDLLM/AB-Cache/LeDiFlow on per-seed pLDDT/scPerplexity at the LineageFlow evaluation protocol; the framework's value-add is NOT a per-seed metric uplift over those baselines; Wave 198 P2 + P3 supersede the Wave 197 P3 honest finding with finer granularity (per-record + difficult-seed tier) on k6_foldability_w161: scPerplexity Cohen d_z = −1.077 (large framework-WINS, p = 2.74e-169) per record; pLDDT hard-tier Cohen d_z = +1.189 (large framework-WINS, p = 4.82e-65, +13.29 pLDDT units per hard record); hard / easy pLDDT d_z nearly mirror (~13 units each), explaining the small +0.071 aggregate as cancellation; Wave 197 P3 per-seed honest finding is SUPERSEDED: framework value-add IS detectable at the right granularity (per-record, not per-seed); Wave 199 P2 + P3 add the LineageFlow cross-adapter extension as **BLOCKED-ON-DATA** (N=1000 sweep killed, only N=5 smoke on disk, byte-identical baseline/framework values) — does NOT supersede the k6 finding, only annotates that the cross-adapter extension requires GPU-accelerated N=1000 re-run; **Wave 204 P1 additively extends** the annotation: the R5b CIFAR-10 + R5c MNIST + R6 scPerplexity p-values in this CLM are derived from the Wave 195 P2 / Wave 191 P2 / Wave 191 P3 / Wave 198 P3 pre-computed JSON files (not from the now-defensive `tools/wave195_p2_r_level_power.py` line 157 path), and were NOT underflowed by the previous `1 - stats.t.cdf` formula except for R6 scPerplexity (where Wave 204 P1 corrects `p_bonf ≈ 0` to `p_bonf = 1.92e-168`); **Wave 204 P2 RESUMES the LineageFlow N=1000 sweep on real ckpt after Wave 202 P2 commit 40c70a7 verified the GPU environment passes the smoke test on Blackwell sm_120 with omegafold_py310 conda env (resolving the Wave 200 P2 torch 1.13.1 vs sm_120 blocker)**; the resumed sweep completed N=574 / 1000 paired records (deliberately killed at PDB rate dropping below 5/min for >2 h projection; 426 missing_pdb records are a known data-side limitation; per-record analysis runs on the 574 paired records where both baseline and framework produced outputs, paired by qid) with per-record paired t-test (df=573): plddt_mean mean_diff=+7.187, d_z=+0.474, p=4.74e-27 → SUPPORTED (Wave 197 P3 UNDERPOWERED verdict SUPERSEDED); sc_perplexity mean_diff=-3.715, d_z=-1.015, p=3.05e-90 → SUPPORTED (Wave 197 P3 UNDERPOWERED verdict SUPERSEDED); per-tier (3 tiers × 2 metrics, Bonferroni α=0.00833): hard pLDDT d_z=+1.840 (SUPPORTED, larger than k6 hard +1.189), medium pLDDT d_z=+0.976 (SUPPORTED, larger than k6 medium +0.218), easy pLDDT d_z=-0.590 (REGRESSES by direction, same sign as k6 easy -0.998), hard scPerp d_z=-1.002 (SUPPORTED), medium scPerp d_z=-1.037 (SUPPORTED), easy scPerp d_z=-1.044 (SUPPORTED); **Wave 204 P2 SUPERSEDES the Wave 199 P2 + P3 BLOCKED-ON-DATA annotation** for LineageFlow — the cross-adapter CONFIRMED-on-2-adapters claim is **NOW ASSERTED** with the monotone-pattern `hard > medium > easy` in pLDDT d_z identical on both k6 (+1.189 / +0.218 / -0.998) and lineageflow (+1.840 / +0.976 / -0.590), and scPerplexity framework-WINS uniformly large on both adapters (lineageflow d_z range -1.002 to -1.044; k6 d_z range -1.033 to -1.138); **status upgrade (Wave 204 P2)**: cross-adapter CONFIRMED-on-2-adapters claim transitions from `PENDING (Wave 199 P4)` to **ASSERTED (with N=574 caveat on the lineageflow arm — the full N=1000 sweep would tighten the CI but does not change the monotone-pattern verdict; the full N=1000 sweep is on the camera-ready deferred list)**; §10.42 (h) in paper-draft.md documents the Wave 204 P2 cross-adapter replication; the standardized stats rows for the Wave 204 P2 LineageFlow per-record + per-tier are added in `docs/tables/wave204-p3-standardized-stats.md` Table 1 rows 13-16; **Wave 208 P1 additively extends** the annotation: per DeepSeek P1 reviewer feedback (\"16 cells 里 14 个 underpowered，第一反应是'你的框架是不是其实没效果'\"), the 14/16 UNDERPOWERED cells are reframed from \"failure\" into \"methodological turning point\" by computing (a) per-seed power analysis showing the per-seed d_z (0.05–0.23) is bounded by seed-to-seed variance (detecting d=0.2 at 80% power with Bonferroni α=0.003125 requires ~365 paired seeds, vs current n=30), and (b) per-record power analysis using the k6_foldability_w161 R6 per-record d_z (Wave 198 P2) as proxy for each 4-arm cell — at N=1000 records per seed (df=999, α=0.003125), the scPerplexity axis reaches power=1.000 with d_z=-1.077 (large framework-WINS, all 8 cells SUPPORTED per-record) while the pLDDT axis has power=0.235 with d_z=+0.071 (small effect, all 8 cells UNDERPOWERED per-record but consistent with the Wave 198 P3 per-tier hard-tier-SUPPORTED + easy-tier-REGRESSES cancellation pattern); the reframing explicitly separates **EXPLORATORY** (per-seed 4-arm n=30, bounded by seed-to-seed variance) from **CONFIRMATORY** (per-record R6 n=1000, framework value-add detectable on the universal scPerplexity axis) per DeepSeek P1's \"4-arm 是 per-seed 探索性分析，R6 是 per-record 确认性分析\" framing; the 14/16 UNDERPOWERED verdict is preserved verbatim as the correct statistical conclusion at per-seed granularity, but is now accompanied by an explicit per-seed sample-size sensitivity table (required N_seeds for d=0.2 = 365, required N_seeds for d=0.5 = 63 at Bonferroni α=0.003125) and a per-record power table that quantifies the granularity issue. The Wave 196 P4 verdict distribution (2 SUPPORTED + 14 UNDERPOWERED + 0 REGRESSES) is preserved verbatim — this additive annotation does NOT change the Wave 196 P4 verdicts, only contextualizes them with the per-seed vs per-record granularity reframing requested by DeepSeek P1. The Wave 198 P4 final-status (per-record + per-difficulty-tier granularity supersedes Wave 197 P3 honest finding) is preserved verbatim on the k6_foldability_w161 arm; Wave 208 P1 adds the explicit per-seed sample-size sensitivity table + per-record power table as new artifacts in `verification_outputs/wave208-p1-4arm-power-analysis.{csv,json}` (commit_sha to be set on commit); the audit doc is at `docs/audit/algorithm_4arm/p1-4arm-power-analysis.md`; the per-record verdict distribution (8 SUPPORTED + 0 REGRESSES + 8 UNDERPOWERED + 0 TIE) confirms the SELECTIVE-pLDDT / UNIVERSAL-scPerplexity framing from Wave 198 P2 + P3 — the per-record power analysis is the paper's primary evidence because it operates at the granularity where framework value-add is detectable",
       "status": "ACTIVE",
       "claim_id": "CLM-061",
       "baseline": "",
@@ -1193,7 +1193,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3133",
       "section_ref": "docs/CLAIMS.md:3133",
       "notes": "Wave 195 P3 applies the Wave 195 P1 spec"
@@ -1214,7 +1214,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3354",
       "section_ref": "docs/CLAIMS.md:3354",
       "notes": "Wave 195 P4 applies the Wave 195 P1 spec"
@@ -1235,7 +1235,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3492",
       "section_ref": "docs/CLAIMS.md:3492",
       "notes": "Wave 196 P4 upgrades Table A's R2 cell from Wave 195 P2"
@@ -1256,7 +1256,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3551",
       "section_ref": "docs/CLAIMS.md:3551",
       "notes": "Wave 196 P4 regenerates Table B from Wave 196 P2 paired"
@@ -1277,7 +1277,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3600",
       "section_ref": "docs/CLAIMS.md:3600",
       "notes": "Wave 201 delivers 4 additive eval-pipeline optimizations that project the LineageFlow N=1000 sweep wall time from Wave 84's >40 h estimate to ≈22 min at G=2 / N=4 — a ~110× speedup, of which the LPT length-balanced sharding component adds the 37% additional speedup over the round-robin N=4 baseline (round-robin baseline projection: ≈35 min; LPT projection: ≈22 min). The speedup is projected from the Wave 158 per-sequence wall time of ≈2.5 s/seq on a single GPU; the real-GPU measurement remains pending the resolution of the Wave 200 P2 underlying blockers (torch 1.13.1 vs Blackwell sm_120 + Python 3.10 venv constraint). The Wave 200 P2 blockers are GPU-stack-side, NOT pipeline-side; Wave 201 removes the pipeline-side contribution to the blocker chain. When the GPU-stack blockers are resolved, the Wave 201 plumbed pipeline can consume the next N=1000 sweep directly without further code changes. The 4 optimizations are CPU-only and GPU-agnostic (hermetically unit-tested on CPU with monkeypatched subprocess / multiprocessing fakes; no GPU / torch / OmegaFold / ESM-IF required for the test suite)."
@@ -1298,10 +1298,10 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3633",
       "section_ref": "docs/CLAIMS.md:3633",
-      "notes": "Per the DeepSeek reviewer audit (received 2026-09-20), every head claim in the paper is now reported with audit-grade standardized statistics: (n_paired, mean_diff, sd_diff, t, df, p_raw, CI95_low, CI95_high, Cohen's d_z, test_type, family, α_bonferroni, bonf_sig). The 12-row audit-grade table is at `docs/tables/wave203-p4-standardized-stats.md` Table 1. DeepSeek's d_z/p recomputation audit identified 1 apparent inconsistency (k6 hard pLDDT d_z = +1.189 vs p = 4.82e-65 was computed as if df=999 instead of N=1000); after reconciliation the audit's recomputation used the Gaussian tail instead of Student's t — the original Wave 198 P3 p-values are CONSISTENT with the t-statistics when the correct t-table is used. The 2 prior p-value reporting bugs found and fixed in this Wave 203 P4 are: (i) Wave 196 P2 (4-arm N=30) reported t = 16.057 without matching df = 29 / 95% CI — both added; (ii) Wave 195 R5c (MNIST FM NFE=50 FID) reported p_raw = 1.32e-11 in the R-level table but the §7.4 per-paper-claim headline quoted a different family α — the explicit pre-registered family (R-level primary, α = 0.007143) is now added. CLM-057 (kanzi L2 endpoint movement) d_z = -30.15 triggers the §5.7 item #5 audit checklist (extreme paired-diff SD on n = 30 records implies near-zero variance — biologically implausible); the §5.7 item #5 audit checklist was **completed in Wave 214 P1+P2+P3**: the byte-stability concern was traced to a source-code regression (Wave 178 P2+P3 + Wave 196 P3 patch) that bypassed the Wave 95.P3.B trained-inverse bridge; the regression was fixed by Wave 214 P2 (bridge restored in `tools/_kanzi_sweep_runner.py:_synthesize_x_final_real` lines 414-491); the framework_inv_proj arm is now byte-stable against Wave 127 (0.8798 Å) per the N=10 smoke test (0.8758 Å, Δ = −0.004, well inside σ = 0.136 / √10 ≈ 0.043 SEM); CLM-057 status: **ACTIVE** (PROVISIONAL flag removed in Wave 214 P3); see `docs/audit/kanzi/wave214-p1-kanzi-byte-stability-regression.md`, `docs/audit/kanzi/wave214-p2-kanzi-rerun.md`, `docs/audit/paper_claims/wave214-p3-clm057-update.md`."
+      "notes": "Per the DeepSeek reviewer audit (received 2026-09-20), every head claim in the paper is now reported with audit-grade standardized statistics: (n_paired, mean_diff, sd_diff, t, df, p_raw, CI95_low, CI95_high, Cohen's d_z, test_type, family, α_bonferroni, bonf_sig). The 12-row audit-grade table is at `docs/tables/wave203-p4-standardized-stats.md` Table 1. DeepSeek's d_z/p recomputation audit identified 1 apparent inconsistency (k6 hard pLDDT d_z = +1.189 vs p = 4.82e-65 was computed as if df=999 instead of N=1000); after reconciliation the audit's recomputation used the Gaussian tail instead of Student's t — the original Wave 198 P3 p-values are CONSISTENT with the t-statistics when the correct t-table is used. The 2 prior p-value reporting bugs found and fixed in this Wave 203 P4 are: (i) Wave 196 P2 (4-arm N=30) reported t = 16.057 without matching df = 29 / 95% CI — both added; (ii) Wave 195 R5c (MNIST FM NFE=50 FID) reported p_raw = 1.32e-11 in the R-level table but the §7.4 per-paper-claim headline quoted a different family α — the explicit pre-registered family (R-level primary, α = 0.007143) is now added. CLM-057 (kanzi L2 endpoint movement) d_z = -30.15 triggers the §5.7 item #5 audit checklist (extreme paired-diff SD on n = 30 records implies near-zero variance — biologically implausible); the §5.7 item #5 audit checklist was **completed in Wave 214 P1+P2+P3**: the byte-stability concern was traced to a source-code regression (Wave 178 P2+P3 + Wave 196 P3 patch) that bypassed the Wave 95.P3.B trained-inverse bridge; the regression was fixed by Wave 214 P2 (bridge restored in `tools/_kanzi_sweep_runner.py:_synthesize_x_final_real` lines 414-491); the framework_inv_proj arm is now byte-stable against Wave 127 (0.8798 Å) per the N=10 smoke test (0.8758 Å, Δ = −0.004, well inside σ = 0.136 / √10 ≈ 0.043 SEM); CLM-057 status: **ACTIVE** (PROVISIONAL flag removed in Wave 214 P3); see `docs/audit/kanzi/p1-kanzi-byte-stability-regression.md`, `docs/audit/kanzi/p2-kanzi-rerun.md`, `docs/audit/paper_claims/p3-clm057-update.md`."
     },
     {
       "metric_id": "CLM-067",
@@ -1319,7 +1319,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3667",
       "section_ref": "docs/CLAIMS.md:3667",
       "notes": "The k6 per-record arm (1000 records grouped into 4 Pfam families) is re-analyzed with Pfam family as cluster unit to address DeepSeek's reviewer-risk item #3 (\"per-record df=999 non-independent; reviewer will challenge\"). For each (tier, metric) cell, the cluster-robust machinery computes cluster_mean_diffs[k] = mean of per-record diffs in cluster k, cluster-level t = mean(cluster_mean_diffs) / (sd(cluster_mean_diffs) / √k) with cluster df = k - 1 = 3, ICC (one-way ANOVA), and N_eff (design effect). The 8-cell verdict distribution: 5 cluster-robust SUPPORTED (overall scPerplexity, hard/medium/easy scPerplexity, hard pLDDT), 1 cluster-robust REGRESSES-by-direction (easy pLDDT), 2 cluster-robust UNDERPOWERED/NOT-SIG (overall pLDDT UNDERPOWERED at cluster p = 5.53e-01; medium pLDDT NOT-SIG at cluster p = 2.60e-01). Headline implication: scPerplexity framework-WINS is cluster-robust across all tiers and overall; pLDDT framework-uplift is per-tier (hard SUPPORTED, easy REGRESSES-by-direction, medium NOT-SIG, overall UNDERPOWERED). The §10.38 / CLM-061 final-status framing is preserved verbatim with this cluster-robust caveat. The hard pLDDT cluster-robust p = 1.28e-02 marginally fails the strict 6-tier × 4-cluster Bonferroni α = 0.00208 (Wave 203 P4 §10.42 (d) acceptance gate #3) — the naive Bonferroni (within 6-cell per-tier family, α = 0.008333) is the primary paper-level claim; the cluster-robust caveat is documented for reviewer-side audit. Cross-adapter confirmation on LineageFlow remains BLOCKED-ON-DATA per Wave 199 P3 (the N=1000 sweep was killed for CPU wallclock; only N=5 smoke on disk, byte-identical baseline/framework values)."
@@ -1327,7 +1327,7 @@
     {
       "metric_id": "CLM-068",
       "kind": "CLAIM",
-      "title": "Wave 206 P3 — FlowMol3 fg_dev N=1000 re-run with HONEST DISCLOSURE of DGL regression blocking 3-seed pooled SD — 1-seed byte-stable reference reused (Wave 87 / Wave 82 sweep at seed=42, NFE=250, N=999 baseline + N=1000 framework, Δ = −0.023484, framework_wins); 12-col audit row at [`verification_outputs/wave206-p3-flowmol3-n1000.json`](../verification_outputs/wave206-p3-flowmol3-n1000.json) — Welch's t-test (unpaired, per Wave 195 P2 spec) t = −2.453, df = 1996.998, p_raw = 0.01424, Cohen's d_s = −0.110, Bonferroni α = 0.05/7 = 0.007143, bonf_sig = False (p_raw just above the strict α); the per-arm SEM = 0.00577 (from Wave 82 `statistical_power_at_n1000`) is reported as a substitute for cross-seed pooled SD (NaN — the 3-seed sweep was attempted but blocked by the DGL 2.4.0 graph ndata shape mismatch documented in Wave 109.C: docs/audit/flowmol3/wave109-c-flowmol3-n1000.md §2); the Wave 87 / Wave 82 byte-stability is verified at full precision (diff < 1e-12 across 2 epochs of Wave 82 and Wave 87 sweeps); the regression in `_solve_ode_upstream_batch` (n_molecules > 1) is unreleased in production code (Wave 110 plan was for Kanzi only); the single-mol path (n_molecules=1) works correctly (~10s/mol at NFE=250) but is too slow for the 3-seed × N=1000 sweep budget (~17 h projected); fix path: tile per-mol `(x_0, a_0, c_0, e_0)` prior across batched DGL graph OR loop n_molecules with per-mol priors + add n_molecules=10 regression test; this is on the camera-ready deferred list. The CLM-060 R3 fg_dev verdict (UNDERPOWERED, framework-wins by −0.0235) is preserved verbatim — Wave 206 P3 does NOT change §10.6 R3 number; it only formalizes the byte-stable reference + the blocked 3-seed sweep + the fix path; **Wave 208 P2 additively extends** (per DeepSeek P2 reviewer feedback \"由于 DGL 2.4.0 的 regression，FlowMol3 的结果基于 byte-stable 历史数据\"): the DGL downgrade attempt to 2.3.x is **BLOCKED at the network level** (data.dgl.ai S3 returns HTTP 403 for all pre-2.4.0 wheels; PyPI dgl==2.1.0 is CPU-only; torch cannot be downgraded to 2.2.x because RTX 5090/Blackwell sm_120 needs torch ≥ 2.5), so the fresh 3-seed sweep remains blocked on the Wave 109.C §5 code fix path. As a directional consistency check, Wave 208 P2 ran a 1-seed per-record paired analysis on the 200 SMILES recoverable from the canonical Wave 87 byte-stable output (`tools/wave87_n1000_sweep.py:298` caps `smiles_list` at 200 of the full N=1000, so this is a directional proxy only, not a power upgrade): per-record REOS Glaxo+Dundee flag count diff = **−0.360 ± 1.264** per record (95% CI [−0.535, −0.185], paired t = −4.027, df = 199, **p = 8.03e-05**, Cohen's d_z = −0.285, Wilcoxon p = 1.5e-04) — framework has fewer REOS flags per mol, which is direction-consistent with the headline `fg_dev` framework-wins by −0.023484 (smaller cum_deviation since flag rates are closer to QM9 training rates); per-record fg_contrib_proxy diff = −0.0212 (p = 4.7e-05, d_z = −0.294), QED +0.071 (p = 6e-10, d_z = +0.46), validity 100% in both arms (McNemar chi2 = 0). The audit doc at [`docs/audit/flowmol3/wave208-p2-flowmol3-dgl-fix-or-sanity.md`](../audit/wave208-p2-flowmol3-dgl-fix-or-sanity.md) §3 documents the Wave 208 P2 outcome as **direction-consistent per-record sanity check on the canonical 1-seed reference; cross-seed pooled-SD upgrade still pending the Wave 109.C §5 code fix**; the per-record CSV/JSON at [`verification_outputs/wave208-p2-flowmol3-sanity.{csv,json}`](../verification_outputs/wave208-p2-flowmol3-sanity.csv) records the t-statistics + CIs + data-truncation disclosure. The Wave 206 P3 1-seed byte-stable `−0.023484` headline + CLM-060 R3 fg_dev UNDERPOWERED verdict are preserved verbatim — Wave 208 P2 does NOT change §10.6 R3 number; it only formalizes the DGL downgrade investigation result (BLOCKED at S3 level) + the per-record direction-consistent sanity check; **Wave 216 P1 additively extends** (R3 per-record uplift via REOS Glaxo+Dundee flag-count proxy, projected from N=200 actual to N=1000 paired): the Wave 208 P2 N=200 ACTUAL measurement is ALREADY Bonferroni-significant at α=0.05/7=0.007143 (paired t=−4.027, df=199, p=8.03e-05, Cohen's d_z=−0.285, framework WINS by −0.360 REOS flags per record); the Wave 216 P1 PROJECTION to N=1000 paired records (df=999) under standard paired-test scaling (`t_N = t_actual * sqrt(N / n_actual)`, `SE_N = SD_diff / sqrt(N)`, `d_z` unchanged, p from t-distribution with df=999) gives t=−9.005, p=1.07e-18, post-hoc power at observed d_z = 1.0000, post-hoc power at min_effect_size (1.0 REOS flag/record) = 1.0000; the strict-verdict-precedence verdict at PROJECTED N=1000 paired is **framework_wins** (Bonferroni-significant, post-hoc power ≥ 0.5 at min_effect_size); direction-consistency check: headline fg_dev framework-WINS by −0.023484 → ACTUAL per-record proxy framework-WINS by −0.360 REOS flags/record → PROJECTED N=1000 per-record proxy framework-WINS by −0.360 REOS flags/record (same d_z, larger |t|, smaller p); the per-record granularity reveals the framework-WINS direction IS statistically detectable when the analysis is at the right granularity (per-record paired, not per-arm unpaired), consistent with the Wave 208 P1 per-record vs per-seed granularity reframing; **honest disclosure**: the per-record analysis uses REOS Glaxo+Dundee flag count as a proxy for fg_dev contribution (a record that carries fewer / less-prevalent flags contributes less to `cum_deviation = sum_i |flag_rate_i_gen - flag_rate_i_train|`); the headline fg_dev itself remains one number per arm; the full N=1000 paired sweep with full SMILES retention (i.e., the gold-standard N=1000 paired fg_dev measurement) remains on the camera-ready deferred list — Wave 109.C §5 `_solve_ode_upstream_batch` per-mol prior tiling fix OR Wave 109.C §5 alternative loop-with-per-mol-priors + n_molecules=10 regression test; the projection assumes SD_diff remains unchanged from N=200 → N=1000 (standard paired-test scaling assumption); the standardized stats table R3 row at `docs/tables/wave203-p4-standardized-stats.md` Table 1 (line 40) and `docs/tables/wave204-p3-standardized-stats.md` Table 1 (line 39) is preserved verbatim for the Wave 195 P2 unpaired analysis; a **new R3 per-record proxy row** is added immediately below it with the Wave 216 P1 projected values (mean_diff=−0.3600, sd_diff=1.2643, t=−9.005, df=999, p=1.07e-18, CI95=[−0.4384, −0.2816], d_z=−0.285, paired t-test projected, R-level primary family, α=0.007143, **YES** bonf_sig, post-hoc power 1.0000, framework_wins direction-consistent with headline); the Wave 216 P1 verdict (framework_wins at PROJECTED N=1000 per-record paired granularity) is the **R-level R3 uplift** that resolves the Wave 195 P2 UNDERPOWERED verdict at the per-record granularity; the per-arm aggregate UNDERPOWERED verdict (Wave 195 P2 / Wave 206 P3) is preserved verbatim because the per-arm aggregate measurement is at a different granularity (1 paired observation across n=999/1000 mols per arm) than the per-record paired measurement (1000 paired observations across n=1000 records); both readings are honest and the per-record paired verdict is the appropriate granularity to claim framework-WINS statistical significance because the per-record measurement operates at the granularity where the framework value-add is detectable (consistent with Wave 198 P2 R6 scPerplexity d_z=−1.077 framework-WINS at the same per-record granularity); **Wave 225 P3 additively extends** (R3 cross-wave 1-seed direction-consistency check): the canonical seed_base=42 byte-stable FlowMol3 fg_dev sweep has been re-analyzed across **7 historical waves** (Wave 82 sweep, Wave 87 sweep, Wave 195 P2 R-level power, Wave 206 P3 audit, Wave 208 P2 per-record sanity, Wave 216 P1 projected N=1000, Wave 225 P2 bootstrap) and **all 7 are direction-consistent framework-WINS** (100% direction-consistency across waves on the 1 available seed); the cross-seed pooled-SD upgrade (3 seeds = 42/43/44) remains **BLOCKED** by the DGL 2.4.0 `_solve_ode_upstream_batch` regression (Wave 109.C §5 + Wave 208 P2 S3-blocked downgrade); n_seeds_available = 1/3, n_seeds_blocked = 2/3; the 1-seed cross-wave check validates the framework-WINS direction is reproducible across independent re-runs of the analysis pipeline on the same underlying byte-stable data; the full N=1000 paired sweep at seeds 43 and 44 with full SMILES retention remains on the camera-ready deferred list pending Wave 109.C §5 code fix; artifacts: [`verification_outputs/wave225-p3-r3-cross-seed.csv`](../verification_outputs/wave225-p3-r3-cross-seed.csv), [`verification_outputs/wave225-p3-r3-cross-seed.json`](../verification_outputs/wave225-p3-r3-cross-seed.json), [`docs/audit/stats_method/wave225-p3-r3-cross-seed.md`](../audit/wave225-p3-r3-cross-seed.md), [`scripts/wave225_p3_r3_cross_seed.py`](../scripts/wave225_p3_r3_cross_seed.py); the CLM-068 R3 direction-consistent addendum is appended: the 1-seed claim (Wave 87 / Wave 82 byte-stable seed=42 sweep) IS validated by the 7-wave cross-wave consistency check",
+      "title": "Wave 206 P3 — FlowMol3 fg_dev N=1000 re-run with HONEST DISCLOSURE of DGL regression blocking 3-seed pooled SD — 1-seed byte-stable reference reused (Wave 87 / Wave 82 sweep at seed=42, NFE=250, N=999 baseline + N=1000 framework, Δ = −0.023484, framework_wins); 12-col audit row at [`verification_outputs/wave206-p3-flowmol3-n1000.json`](../verification_outputs/wave206-p3-flowmol3-n1000.json) — Welch's t-test (unpaired, per Wave 195 P2 spec) t = −2.453, df = 1996.998, p_raw = 0.01424, Cohen's d_s = −0.110, Bonferroni α = 0.05/7 = 0.007143, bonf_sig = False (p_raw just above the strict α); the per-arm SEM = 0.00577 (from Wave 82 `statistical_power_at_n1000`) is reported as a substitute for cross-seed pooled SD (NaN — the 3-seed sweep was attempted but blocked by the DGL 2.4.0 graph ndata shape mismatch documented in Wave 109.C: docs/audit/flowmol3/c-flowmol3-n1000.md §2); the Wave 87 / Wave 82 byte-stability is verified at full precision (diff < 1e-12 across 2 epochs of Wave 82 and Wave 87 sweeps); the regression in `_solve_ode_upstream_batch` (n_molecules > 1) is unreleased in production code (Wave 110 plan was for Kanzi only); the single-mol path (n_molecules=1) works correctly (~10s/mol at NFE=250) but is too slow for the 3-seed × N=1000 sweep budget (~17 h projected); fix path: tile per-mol `(x_0, a_0, c_0, e_0)` prior across batched DGL graph OR loop n_molecules with per-mol priors + add n_molecules=10 regression test; this is on the camera-ready deferred list. The CLM-060 R3 fg_dev verdict (UNDERPOWERED, framework-wins by −0.0235) is preserved verbatim — Wave 206 P3 does NOT change §10.6 R3 number; it only formalizes the byte-stable reference + the blocked 3-seed sweep + the fix path; **Wave 208 P2 additively extends** (per DeepSeek P2 reviewer feedback \"由于 DGL 2.4.0 的 regression，FlowMol3 的结果基于 byte-stable 历史数据\"): the DGL downgrade attempt to 2.3.x is **BLOCKED at the network level** (data.dgl.ai S3 returns HTTP 403 for all pre-2.4.0 wheels; PyPI dgl==2.1.0 is CPU-only; torch cannot be downgraded to 2.2.x because RTX 5090/Blackwell sm_120 needs torch ≥ 2.5), so the fresh 3-seed sweep remains blocked on the Wave 109.C §5 code fix path. As a directional consistency check, Wave 208 P2 ran a 1-seed per-record paired analysis on the 200 SMILES recoverable from the canonical Wave 87 byte-stable output (`tools/wave87_n1000_sweep.py:298` caps `smiles_list` at 200 of the full N=1000, so this is a directional proxy only, not a power upgrade): per-record REOS Glaxo+Dundee flag count diff = **−0.360 ± 1.264** per record (95% CI [−0.535, −0.185], paired t = −4.027, df = 199, **p = 8.03e-05**, Cohen's d_z = −0.285, Wilcoxon p = 1.5e-04) — framework has fewer REOS flags per mol, which is direction-consistent with the headline `fg_dev` framework-wins by −0.023484 (smaller cum_deviation since flag rates are closer to QM9 training rates); per-record fg_contrib_proxy diff = −0.0212 (p = 4.7e-05, d_z = −0.294), QED +0.071 (p = 6e-10, d_z = +0.46), validity 100% in both arms (McNemar chi2 = 0). The audit doc at [`docs/audit/flowmol3/p2-flowmol3-dgl-fix-or-sanity.md`](../audit/p2-flowmol3-dgl-fix-or-sanity.md) §3 documents the Wave 208 P2 outcome as **direction-consistent per-record sanity check on the canonical 1-seed reference; cross-seed pooled-SD upgrade still pending the Wave 109.C §5 code fix**; the per-record CSV/JSON at [`verification_outputs/wave208-p2-flowmol3-sanity.{csv,json}`](../verification_outputs/wave208-p2-flowmol3-sanity.csv) records the t-statistics + CIs + data-truncation disclosure. The Wave 206 P3 1-seed byte-stable `−0.023484` headline + CLM-060 R3 fg_dev UNDERPOWERED verdict are preserved verbatim — Wave 208 P2 does NOT change §10.6 R3 number; it only formalizes the DGL downgrade investigation result (BLOCKED at S3 level) + the per-record direction-consistent sanity check; **Wave 216 P1 additively extends** (R3 per-record uplift via REOS Glaxo+Dundee flag-count proxy, projected from N=200 actual to N=1000 paired): the Wave 208 P2 N=200 ACTUAL measurement is ALREADY Bonferroni-significant at α=0.05/7=0.007143 (paired t=−4.027, df=199, p=8.03e-05, Cohen's d_z=−0.285, framework WINS by −0.360 REOS flags per record); the Wave 216 P1 PROJECTION to N=1000 paired records (df=999) under standard paired-test scaling (`t_N = t_actual * sqrt(N / n_actual)`, `SE_N = SD_diff / sqrt(N)`, `d_z` unchanged, p from t-distribution with df=999) gives t=−9.005, p=1.07e-18, post-hoc power at observed d_z = 1.0000, post-hoc power at min_effect_size (1.0 REOS flag/record) = 1.0000; the strict-verdict-precedence verdict at PROJECTED N=1000 paired is **framework_wins** (Bonferroni-significant, post-hoc power ≥ 0.5 at min_effect_size); direction-consistency check: headline fg_dev framework-WINS by −0.023484 → ACTUAL per-record proxy framework-WINS by −0.360 REOS flags/record → PROJECTED N=1000 per-record proxy framework-WINS by −0.360 REOS flags/record (same d_z, larger |t|, smaller p); the per-record granularity reveals the framework-WINS direction IS statistically detectable when the analysis is at the right granularity (per-record paired, not per-arm unpaired), consistent with the Wave 208 P1 per-record vs per-seed granularity reframing; **honest disclosure**: the per-record analysis uses REOS Glaxo+Dundee flag count as a proxy for fg_dev contribution (a record that carries fewer / less-prevalent flags contributes less to `cum_deviation = sum_i |flag_rate_i_gen - flag_rate_i_train|`); the headline fg_dev itself remains one number per arm; the full N=1000 paired sweep with full SMILES retention (i.e., the gold-standard N=1000 paired fg_dev measurement) remains on the camera-ready deferred list — Wave 109.C §5 `_solve_ode_upstream_batch` per-mol prior tiling fix OR Wave 109.C §5 alternative loop-with-per-mol-priors + n_molecules=10 regression test; the projection assumes SD_diff remains unchanged from N=200 → N=1000 (standard paired-test scaling assumption); the standardized stats table R3 row at `docs/tables/wave203-p4-standardized-stats.md` Table 1 (line 40) and `docs/tables/wave204-p3-standardized-stats.md` Table 1 (line 39) is preserved verbatim for the Wave 195 P2 unpaired analysis; a **new R3 per-record proxy row** is added immediately below it with the Wave 216 P1 projected values (mean_diff=−0.3600, sd_diff=1.2643, t=−9.005, df=999, p=1.07e-18, CI95=[−0.4384, −0.2816], d_z=−0.285, paired t-test projected, R-level primary family, α=0.007143, **YES** bonf_sig, post-hoc power 1.0000, framework_wins direction-consistent with headline); the Wave 216 P1 verdict (framework_wins at PROJECTED N=1000 per-record paired granularity) is the **R-level R3 uplift** that resolves the Wave 195 P2 UNDERPOWERED verdict at the per-record granularity; the per-arm aggregate UNDERPOWERED verdict (Wave 195 P2 / Wave 206 P3) is preserved verbatim because the per-arm aggregate measurement is at a different granularity (1 paired observation across n=999/1000 mols per arm) than the per-record paired measurement (1000 paired observations across n=1000 records); both readings are honest and the per-record paired verdict is the appropriate granularity to claim framework-WINS statistical significance because the per-record measurement operates at the granularity where the framework value-add is detectable (consistent with Wave 198 P2 R6 scPerplexity d_z=−1.077 framework-WINS at the same per-record granularity); **Wave 225 P3 additively extends** (R3 cross-wave 1-seed direction-consistency check): the canonical seed_base=42 byte-stable FlowMol3 fg_dev sweep has been re-analyzed across **7 historical waves** (Wave 82 sweep, Wave 87 sweep, Wave 195 P2 R-level power, Wave 206 P3 audit, Wave 208 P2 per-record sanity, Wave 216 P1 projected N=1000, Wave 225 P2 bootstrap) and **all 7 are direction-consistent framework-WINS** (100% direction-consistency across waves on the 1 available seed); the cross-seed pooled-SD upgrade (3 seeds = 42/43/44) remains **BLOCKED** by the DGL 2.4.0 `_solve_ode_upstream_batch` regression (Wave 109.C §5 + Wave 208 P2 S3-blocked downgrade); n_seeds_available = 1/3, n_seeds_blocked = 2/3; the 1-seed cross-wave check validates the framework-WINS direction is reproducible across independent re-runs of the analysis pipeline on the same underlying byte-stable data; the full N=1000 paired sweep at seeds 43 and 44 with full SMILES retention remains on the camera-ready deferred list pending Wave 109.C §5 code fix; artifacts: [`verification_outputs/wave225-p3-r3-cross-seed.csv`](../verification_outputs/wave225-p3-r3-cross-seed.csv), [`verification_outputs/wave225-p3-r3-cross-seed.json`](../verification_outputs/wave225-p3-r3-cross-seed.json), [`docs/audit/stats_method/p3-r3-cross-seed.md`](../audit/p3-r3-cross-seed.md), [`scripts/wave225_p3_r3_cross_seed.py`](../scripts/wave225_p3_r3_cross_seed.py); the CLM-068 R3 direction-consistent addendum is appended: the 1-seed claim (Wave 87 / Wave 82 byte-stable seed=42 sweep) IS validated by the 7-wave cross-wave consistency check",
       "status": "ACTIVE",
       "claim_id": "CLM-068",
       "baseline": "",
@@ -1340,7 +1340,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3693",
       "section_ref": "docs/CLAIMS.md:3693",
       "notes": "Wave 206 P3 attempted a 3-seed re-run (seeds 42, 43, 44) of FlowMol3 fg_dev N=1000 sweep but was blocked by the DGL 2.4.0 graph ndata shape mismatch in `_solve_ode_upstream_batch` (n_molecules > 1) — the regression surfaces as `DGLError: Expect number of features to match number of nodes (len(u)). Got 20 and 2000 instead.` The single-mol path (n_molecules=1) is healthy but too slow for the 3-seed × N=1000 sweep budget (~17 h). The canonical Wave 87 / Wave 82 byte-stable seed=42 NFE=250 N=1000 sweep is reused as the 1-seed reference: baseline fg_dev = 0.6381122391671532 (n=999), framework fg_dev = 0.614627774616795 (n=1000), diff = −0.023484, framework_wins. The Wave 195 P2 R3 row audit-grade numbers are cross-referenced (Welch's t-test, unpaired, per-arm SD = 0.214): t = −2.453, df = 1996.998, p_raw = 0.01424, Cohen's d_s = −0.110, Bonferroni α = 0.05/7 = 0.007143, bonf_sig = False. The 3-seed pooled SD is NaN (uncomputable). The CLM-060 R3 fg_dev verdict (UNDERPOWERED, framework-wins by −0.0235) is preserved verbatim — Wave 206 P3 does NOT change §10.6 R3 number; it only formalizes the byte-stable reference + the blocked 3-seed sweep + the fix path. The fix path is on the camera-ready deferred list: tile per-mol `(x_0, a_0, c_0, e_0)` prior across batched DGL graph OR loop n_molecules with per-mol priors + add n_molecules=10 regression test."
@@ -1361,7 +1361,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3748",
       "section_ref": "docs/CLAIMS.md:3748",
       "notes": "Wave 206 P4 refreshes paired-t p-values for 4 R-level headline cells using the defensive `2*stats.t.sf(abs(t), df)` formula from Wave 195 P2 / Wave 204 P1 commit 72ba46e (replacing the buggy `2*(1-stats.t.cdf(...))` form that truncates to 0.0 below ~1e-16 due to 1-cdf floating-point precision loss). The 4 cells are:"
@@ -1369,7 +1369,7 @@
     {
       "metric_id": "CLM-070",
       "kind": "CLAIM",
-      "title": "Wave 206 P6 — CIFAR-10 RF v4 honest-negative multi-NFE curve FIRST-CLASS disclosure (TPAMI §W2.6 / §10.4 K3 / §R5b) — single-source-of-truth audit doc + script + pilot at [`docs/audit/cifar/wave206-p6-cifar-rf-v4-honest-negative-curve.md`](../audit/wave206-p6-cifar-rf-v4-honest-negative-curve.md) + [`scripts/wave206_p6_cifar_rf_v4_honest_negative_curve.py`](../scripts/wave206_p6_cifar_rf_v4_honest_negative_curve.py) + [`verification_outputs/wave206-p6-honest-negative-curve.{csv,json}`](../verification_outputs/wave206-p6-honest-negative-curve.{csv,json}) — load-bearing NFE=50 anchor from Source A (docs/r4-survey/cifar_results_v4/summary.json N=500 v4 Table 9: baseline FID=83.0866; framework 4-scheduler FID range 103.41-108.55; Δ%=+24.46% to +30.65%, framework REGRESSES, honest negative; pre-EMA-fix inception features) cross-checked against Source B (verification_outputs/cifar_n200_nfe50_ema_corrected/summary.json N=200 EMA-corrected: Δ%=+221.22% to +226.14%, larger honest negative at smaller N with current inception features) and Source C (verification_outputs/wave191-p2-cifar10-n1000.json N=1000 chunked FID: Δ%=+2.80% to +2.91%, smaller honest negative at chunked-FID granularity); 3-source spread is expected and reflects 3 independent FID pre-processing paths; the +24-31% at Source A is the load-bearing number for TPAMI §10.4 K3 because it is the only reading computed against the Table 9 reference statistics (pre-EMA-fix inception features) that the paper §4.3 / §7.7.7 / §7.7.9 are written against; cosine-ramp halving confirmed: per pilot per_round_metrics.csv at NFE=50 / n_rounds=20, round 0 num_steps=31 (full budget), rounds 1-19 num_steps=1 each (cosine trapezoidal average effective-NFE = NFE/2 = 25.0); CLM-060 R5b row carries the paired-t-statistic evidence: t=−2.453 / df=1996.998 / p_bonf=9.17e-5 / bonf_sig=True at the Bonferroni-corrected α=0.05/7=0.007143 per-cell threshold (R5b is the only REGRESSES cell in CLM-060 verdict distribution: 0 SUPPORTED / 1 REGRESSES / 1 TIE / 6 UNDERPOWERED); multi-NFE curve at NFE ∈ {10, 20, 30, 50, 100, 200, 500} with N=500 paired per NFE point is **DEFERRED** to [`/tmp/wave206_p6_full_sweep.sh`](/tmp/wave206_p6_full_sweep.sh) (queue'd to run after Wave 209 P6 R5a completes per user resource-conflict directive \"不要和进行中的workflow发生资源冲突导致服务器资源不够用\"; estimated ~7.5 GPU-hours on RTX 5090; pilot run completed at N=30 / NFE=50 / all 4 schedulers in ~3 min on GPU 1 for validation only); CosineAnnealScheduler: +24.89%, CodimensionSheetScheduler: +25.13%, EvidenceDrivenScheduler: +24.46%, FreeTrajScheduler: +30.65% — scheduler discrimination IS present (FID window 5.1438 across 4 schedulers at NFE=50), contrary to the Wave 78 v2 byte-identity finding which was based on a narrower 2-NFE budget; the v2 byte-identity finding is broken by SCHEDULER_SEED_OFFSETS + the 50-NFE widened budget per docs/r4-survey/cifar_results_v4/summary.json `key_findings`; **CLM-059 cross-link**: CLM-059 anchors MNIST FM (not CIFAR-10 RF v4); this Wave 206 P6 audit doc IS the single-source-of-truth for the CIFAR-10 RF v4 honest-negative multi-NFE curve and CLM-059 is NOT modified (no content rewrite); CLM-059 stays MNIST FM-only, the CIFAR honest-negative lives in CLM-070 + R5b row of CLM-060 + the Wave 206 P6 audit doc; **status upgrade**: the CIFAR-10 RF v4 honest negative transitions from \"embedded in CLM-018 / CLM-022 / CLM-039 / CLM-040 prose cross-refs\" to \"first-class disclosure with single-source-of-truth multi-NFE curve audit doc + script + per-NFE per-scheduler CSV/JSON + cosine-ramp halving explicit reporting\" — TPAMI accepts honest negatives as scope articulation per §10.4 K3; the +24-31% headline is preserved verbatim and the 3-source reconciliation explicitly documents why the headline uses Source A's pre-EMA-fix inception features (the Table 9 reference) rather than Source B's current inception features or Source C's chunked FID statistics; **additive, no source code changes, no measurement delta, no protocol mutation**; the audit doc inherits the Wave 146 P2 K2+K3 provenance audit + the Wave 147-followup CIFAR v4 N=500 source-data archival at `docs/r4-survey/cifar_results_v4/`; the full-sweep deferred status is **USER-DIRECTED resource-conflict mitigation** (Wave 209 P6 R5a is at GPU 0 100% this session; queue'd, not deferred on technical grounds); the audit doc adds the cosine-ramp effective-NFE = NFE/2 formula (Wave 146 P2 secondary cause, now formally documented in CLM-070 as a primary-cause explicit-disclosure requirement for cosine-ramped scheduler honesty in TPAMI §10.4 K3)",
+      "title": "Wave 206 P6 — CIFAR-10 RF v4 honest-negative multi-NFE curve FIRST-CLASS disclosure (TPAMI §W2.6 / §10.4 K3 / §R5b) — single-source-of-truth audit doc + script + pilot at [`docs/audit/cifar/p6-cifar-rf-v4-honest-negative-curve.md`](../audit/p6-cifar-rf-v4-honest-negative-curve.md) + [`scripts/wave206_p6_cifar_rf_v4_honest_negative_curve.py`](../scripts/wave206_p6_cifar_rf_v4_honest_negative_curve.py) + [`verification_outputs/wave206-p6-honest-negative-curve.{csv,json}`](../verification_outputs/wave206-p6-honest-negative-curve.{csv,json}) — load-bearing NFE=50 anchor from Source A (docs/r4-survey/cifar_results_v4/summary.json N=500 v4 Table 9: baseline FID=83.0866; framework 4-scheduler FID range 103.41-108.55; Δ%=+24.46% to +30.65%, framework REGRESSES, honest negative; pre-EMA-fix inception features) cross-checked against Source B (verification_outputs/cifar_n200_nfe50_ema_corrected/summary.json N=200 EMA-corrected: Δ%=+221.22% to +226.14%, larger honest negative at smaller N with current inception features) and Source C (verification_outputs/wave191-p2-cifar10-n1000.json N=1000 chunked FID: Δ%=+2.80% to +2.91%, smaller honest negative at chunked-FID granularity); 3-source spread is expected and reflects 3 independent FID pre-processing paths; the +24-31% at Source A is the load-bearing number for TPAMI §10.4 K3 because it is the only reading computed against the Table 9 reference statistics (pre-EMA-fix inception features) that the paper §4.3 / §7.7.7 / §7.7.9 are written against; cosine-ramp halving confirmed: per pilot per_round_metrics.csv at NFE=50 / n_rounds=20, round 0 num_steps=31 (full budget), rounds 1-19 num_steps=1 each (cosine trapezoidal average effective-NFE = NFE/2 = 25.0); CLM-060 R5b row carries the paired-t-statistic evidence: t=−2.453 / df=1996.998 / p_bonf=9.17e-5 / bonf_sig=True at the Bonferroni-corrected α=0.05/7=0.007143 per-cell threshold (R5b is the only REGRESSES cell in CLM-060 verdict distribution: 0 SUPPORTED / 1 REGRESSES / 1 TIE / 6 UNDERPOWERED); multi-NFE curve at NFE ∈ {10, 20, 30, 50, 100, 200, 500} with N=500 paired per NFE point is **DEFERRED** to [`/tmp/wave206_p6_full_sweep.sh`](/tmp/wave206_p6_full_sweep.sh) (queue'd to run after Wave 209 P6 R5a completes per user resource-conflict directive \"不要和进行中的workflow发生资源冲突导致服务器资源不够用\"; estimated ~7.5 GPU-hours on RTX 5090; pilot run completed at N=30 / NFE=50 / all 4 schedulers in ~3 min on GPU 1 for validation only); CosineAnnealScheduler: +24.89%, CodimensionSheetScheduler: +25.13%, EvidenceDrivenScheduler: +24.46%, FreeTrajScheduler: +30.65% — scheduler discrimination IS present (FID window 5.1438 across 4 schedulers at NFE=50), contrary to the Wave 78 v2 byte-identity finding which was based on a narrower 2-NFE budget; the v2 byte-identity finding is broken by SCHEDULER_SEED_OFFSETS + the 50-NFE widened budget per docs/r4-survey/cifar_results_v4/summary.json `key_findings`; **CLM-059 cross-link**: CLM-059 anchors MNIST FM (not CIFAR-10 RF v4); this Wave 206 P6 audit doc IS the single-source-of-truth for the CIFAR-10 RF v4 honest-negative multi-NFE curve and CLM-059 is NOT modified (no content rewrite); CLM-059 stays MNIST FM-only, the CIFAR honest-negative lives in CLM-070 + R5b row of CLM-060 + the Wave 206 P6 audit doc; **status upgrade**: the CIFAR-10 RF v4 honest negative transitions from \"embedded in CLM-018 / CLM-022 / CLM-039 / CLM-040 prose cross-refs\" to \"first-class disclosure with single-source-of-truth multi-NFE curve audit doc + script + per-NFE per-scheduler CSV/JSON + cosine-ramp halving explicit reporting\" — TPAMI accepts honest negatives as scope articulation per §10.4 K3; the +24-31% headline is preserved verbatim and the 3-source reconciliation explicitly documents why the headline uses Source A's pre-EMA-fix inception features (the Table 9 reference) rather than Source B's current inception features or Source C's chunked FID statistics; **additive, no source code changes, no measurement delta, no protocol mutation**; the audit doc inherits the Wave 146 P2 K2+K3 provenance audit + the Wave 147-followup CIFAR v4 N=500 source-data archival at `docs/r4-survey/cifar_results_v4/`; the full-sweep deferred status is **USER-DIRECTED resource-conflict mitigation** (Wave 209 P6 R5a is at GPU 0 100% this session; queue'd, not deferred on technical grounds); the audit doc adds the cosine-ramp effective-NFE = NFE/2 formula (Wave 146 P2 secondary cause, now formally documented in CLM-070 as a primary-cause explicit-disclosure requirement for cosine-ramped scheduler honesty in TPAMI §10.4 K3)",
       "status": "UNKNOWN",
       "claim_id": "CLM-070",
       "baseline": "",
@@ -1382,7 +1382,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3772",
       "section_ref": "docs/CLAIMS.md:3772",
       "notes": ""
@@ -1403,7 +1403,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3775",
       "section_ref": "docs/CLAIMS.md:3775",
       "notes": ""
@@ -1424,7 +1424,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3833",
       "section_ref": "docs/CLAIMS.md:3833",
       "notes": ""
@@ -1445,7 +1445,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3840",
       "section_ref": "docs/CLAIMS.md:3840",
       "notes": ""
@@ -1466,7 +1466,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3848",
       "section_ref": "docs/CLAIMS.md:3848",
       "notes": ""
@@ -1487,7 +1487,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3852",
       "section_ref": "docs/CLAIMS.md:3852",
       "notes": ""
@@ -1508,7 +1508,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3861",
       "section_ref": "docs/CLAIMS.md:3861",
       "notes": ""
@@ -1529,7 +1529,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "3865",
       "section_ref": "docs/CLAIMS.md:3865",
       "notes": ""
@@ -1550,7 +1550,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "f2fe0fed576f4bb4aa1e10aa3ce26ba75303775bdd00872f259b53ab6b3c0433",
+      "source_artifact_sha256": "e654ca5526f6599eab67a2d26301bbb1857e93e5e71a830ef6b595351db77d1d",
       "source_line": "",
       "section_ref": "docs/GATES.md + AGENTS.md §4.1",
       "notes": "Live value: `**No drift detected.**`. verification command: `python3 tools/check_claims_consistency.py`. Source-of-truth surface: docs/CLAIMS.md."
@@ -1592,7 +1592,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "mkdocs.yml",
-      "source_artifact_sha256": "98f91bb31f1a379e99ae41339721bde3f4464835921a9d8319f92d38c830295d",
+      "source_artifact_sha256": "9519b97cd1dfc9eace84e240b8c1c070bc36ab6c22d2d42db56a92136493dd72",
       "source_line": "",
       "section_ref": "docs/GATES.md + AGENTS.md §4.1",
       "notes": "Live value: `0 errors`. verification command: `mkdocs build --strict`. Source-of-truth surface: mkdocs.yml."
@@ -1802,7 +1802,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "15",
       "section_ref": "docs/INSIGHTS.md:15",
       "notes": "The flowa-multistep-reinference framework exposes an algorithm layer organised as four `Protocol`s — `SchedulerProtocol`, `PolicyDriverProtocol`, `MergeOperatorProtocol`, and `RestartBlenderProtocol` [CLM-019] — wired together by `ReInferenceRunner`. Up to and including ADR-0012..."
@@ -1823,7 +1823,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "37",
       "section_ref": "docs/INSIGHTS.md:37",
       "notes": "The mapping below mirrors ADR-0013's framework-mapping table; the right-hand column adds the empirical handle (which test, which metric, which ablation row) that lets a reviewer verify each paper claim from a run's audit trail.  | Paper Theorem 1 (Li 2026) | Paper symbol | Framew..."
@@ -1844,7 +1844,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "62",
       "section_ref": "docs/INSIGHTS.md:62",
       "notes": "The 18-row ablation in `tools/run_ablation.py` (8 canonical configs x 2 targets, plus 2 paper-grounded rows on `two_moons`) measures the sheet-vs-cell `selection_ratio` directly. The empirical finding is **sheet-dominant from round 0** on both targets — exactly the qualitative cl..."
@@ -1865,7 +1865,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "83",
       "section_ref": "docs/INSIGHTS.md:83",
       "notes": "Before this work the framework was a \"general flow matching restart framework\" — any schedule that conformed to `SchedulerProtocol` worked, none was theory-backed, and the audit question \"why cosine?\" was answered with \"cosine is the default.\" After this work the framework has th..."
@@ -1886,7 +1886,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "91",
       "section_ref": "docs/INSIGHTS.md:91",
       "notes": "ADR-0013 closed the *algorithm-layer* half of the paper-grounding gap: the `n_cap` envelope the framework produces per round is the canonical implementation of paper Lemma 2, and the per-round `selection_ratio` the new evaluator emits is the empirical handle on paper Proposition..."
@@ -1907,7 +1907,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "218",
       "section_ref": "docs/INSIGHTS.md:218",
       "notes": "The \"next question\" above is the algorithm-level gap. A separate, narrower gap surfaced in the post-ADR-0013 code-review pass (B5): the shipped `selection_ratio` metric was claimed to converge toward 1 as rounds progress, but `docs/review/B5-VERIFICATION.md` shows that the metric..."
@@ -1928,7 +1928,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "222",
       "section_ref": "docs/INSIGHTS.md:222",
       "notes": "This section mirrors the disclaimer in `docs/adr/0013-posterior-selection-drives-algorithm.md` §\"What the paper does NOT claim\". The framework has historically over-claimed certain things as \"paper Theorem 1 predictions\" that are not in the paper; recording the negative space exp..."
@@ -1949,7 +1949,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "694",
       "section_ref": "docs/INSIGHTS.md:694",
       "notes": "**Wave 198 P2 (commit `ef7d18e`) — Per-record paired t-test on N=1000 paired records.** Wave 197 P3 root-cause analysis (§10.37 / §R.80 / §15.90 / §7.9) proved that n=100 records/seed cannot upgrade the 14/16 UNDERPOWERED cells of Table B because per-seed Cohen's `d_z = 0.05–0.23..."
@@ -1970,7 +1970,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "870",
       "section_ref": "docs/INSIGHTS.md:870",
       "notes": "**Wave 199 P2 + P3 attempted to complete the per-record cross-adapter picture (k6 + lineageflow) and found that the LineageFlow N=1000 sweep was killed for CPU wallclock.** The expected `verification_outputs/wave199-p2-lineageflow-n1000/` directory is empty on disk (only `{baseli..."
@@ -1991,7 +1991,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "1048",
       "section_ref": "docs/INSIGHTS.md:1048",
       "notes": "**Motivation.** Wave 199 P4 §7.11 + Wave 198 P4 §7.10 + §7.9 + §7.8 + §7.7 established the per-record + per-difficulty-tier granularity headline on `k6_foldability_w161` (N=1000 paired records) + the honest BLOCKED-ON-DATA annotation on the LineageFlow arm (N=5 smoke on disk; N=1..."
@@ -2012,10 +2012,10 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "1266",
       "section_ref": "docs/INSIGHTS.md:1266",
-      "notes": "Per DeepSeek P4 priority #4, extend CLM-057 (kanzi synthetic n=30 paper-vs-cosine d_z = −30.15, Bonferroni-significant load-bearing-as- regulariser) to k6 + LineageFlow + FlowMol3. The Wave 208 P4 audit (`docs/audit/sweep_eval/wave208-p4-cross-adapter-ablation.md` + `verification..."
+      "notes": "Per DeepSeek P4 priority #4, extend CLM-057 (kanzi synthetic n=30 paper-vs-cosine d_z = −30.15, Bonferroni-significant load-bearing-as- regulariser) to k6 + LineageFlow + FlowMol3. The Wave 208 P4 audit (`docs/audit/sweep_eval/p4-cross-adapter-ablation.md` + `verification_outputs..."
     },
     {
       "metric_id": "INSIGHT-7.4",
@@ -2033,7 +2033,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "303",
       "section_ref": "docs/INSIGHTS.md:303",
       "notes": "The Wave 188 adversarial review raised three substantive questions about the post-cd70821 disclosure, the FreqFlow adapter's status, and the Theorem 1 quantities' role on the protein axis. Wave 189 closes all three with quantitative ground-truth measurements:  - **G1 — Post-cd708..."
@@ -2054,7 +2054,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "318",
       "section_ref": "docs/INSIGHTS.md:318",
       "notes": "The Wave 189 P4 ablation (commit `ef9a1f7`, G3 / CLM-057) isolated whether Lemma 2-5 quantities (`A_g`, `B_g`, `C_g`, `e_rho`) are causally load-bearing on the protein axis. The n=3 verdict was `load_bearing_only_on_axis_endpoint_l2_marginal_n3` with p = 0.103 on the L2 axis and..."
@@ -2075,7 +2075,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "337",
       "section_ref": "docs/INSIGHTS.md:337",
       "notes": "Wave 189 P2 / §7.4 G1 inverted the 2D axis (no significant difference on either target at NFE=100 with `PaperRatioAdaptiveScheduler`). The remaining R5 sub-claims — **CIFAR-10 RF FID −44.17% (NFE-averaged, Wave 128)** and **MNIST FM FID −15.01% (production ckpt, Wave 52)** — were..."
@@ -2096,7 +2096,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "378",
       "section_ref": "docs/INSIGHTS.md:378",
       "notes": "Wave 195 is a reviewer-grade **statistical-strictness** wave: §10.6 (R-level inventory) + §10.26 / §10.27 / §10.30 (4-arm head-to-head verdicts) + §10.33 (Theorem 1 load-bearing scope) report headline numbers with \"Bonferroni p < 0.05\" labels, but **post-hoc power at the per-axis..."
@@ -2117,7 +2117,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "477",
       "section_ref": "docs/INSIGHTS.md:477",
       "notes": "**Table A R2 upgrade (kanzi framework_inv_proj, [CLM-063]).** Wave 196 P3 re-runs the kanzi framework_inv_proj comparison on 1000 fresh records with a paired t-test (df=999) instead of the Wave 195 P2 byte-stable σ_f=0 vs Wave 88 baseline σ_b=0.137 Å normal-approx pairing. Result..."
@@ -2138,7 +2138,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "563",
       "section_ref": "docs/INSIGHTS.md:563",
       "notes": "**Wave 197 P1 (commit `91d5243`) — Investigation.** Re-examined the §10.36 (e) / §15.89 / §R.79 / §7.8 expectation that the 14 UNDERPOWERED cells of Table B require **n ≥ 100 seeds** (Wave 197+ scope). The honest reframe question: is `n_records_per_seed` the binding constraint, o..."
@@ -2159,7 +2159,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/INSIGHTS.md",
-      "source_artifact_sha256": "67fcb88dafa0f68e21d18ee5848432e631680d6894fd4f24111f93ea1ac8d471",
+      "source_artifact_sha256": "3648388988b0a667fe5a32b629859e812e0d53c539a57d136ebdffc621c4f1a9",
       "source_line": "1042",
       "section_ref": "docs/INSIGHTS.md:1042",
       "notes": "- **Substrate is generic + HSM + decorator + type-safe** [CLM-033]. `adaptive_reflow/contracts/state_machine.py` ships a PEP 695 `class StateMachine[TState, TEvent]` with decorator-driven transitions, hierarchical regions, history pseudo-states, parallel regions, byte-determinist..."
