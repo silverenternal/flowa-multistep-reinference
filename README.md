@@ -14,7 +14,7 @@
 |---|---|---|---:|---:|---:|---|---|---|
 | R1 | LineageFlow (ICML 2026 protein FM) | `hmmscan_total_hits` N=1000 | 158 | 342 | **+116.46%** | p < 1e-10 | §7.6.1 | [ver.](verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/SOURCE.md) |
 | R2 | Kanzi (mol. DAE inv-proj) | RMSD d_z (N=1000 paired-t) | -0.0990 | -0.0990 | weak Bonf-sig | **framework_WINS** (deployed paired-t d_z=-0.0990, p=0.0018, Bonf-sig; counterfactual grid search d_z=+0.3927 medium-effect reported separately as sensitivity analysis) | §7.6.2 | [ver.](verification_outputs/wave218-p3-kanzi-framework-wins.json) |
-| R3 | FlowMol3 (ICML 2026 mol FM) | `fg_dev` per-record d_z | -0.360/molecule | (Wave 87 seed 42 N=1000 batched) | d_z=-0.285 | **framework_WINS** (Bonf-sig <1e-4, N=200 per-record; 3-seed pooled BLOCKED at vendor level) | §7.6.3 | [ver.](verification_outputs/wave216-p1-r3-per-record.json) |
+| R3 | FlowMol3 (ICML 2026 mol FM) | `fg_dev` per-record d_z | -0.360/molecule | (seed 42 N=1000 batched) | d_z=-0.285 | **framework_WINS** (Bonf-sig <1e-4, N=200 per-record; 3-seed pooled BLOCKED at vendor level) | §7.6.3 | [ver.](verification_outputs/wave216-p1-r3-per-record.json) |
 | R4 | 2D Two Moons (2D FM ablation) | W₂ | 2.85 | 0.62 | **−78.25%** | framework_WINS (raw Δ%) | §7.6.4 | [ver.](verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_ablation) |
 | R5 | 2D Eight Gaussians (2D FM ablation) | W₂ | 2.31 | 0.76 | **−67.10%** | framework_WINS (raw Δ%) | §7.6.5 | [ver.](verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_eight_gaussians) |
 | R5b | CIFAR-10 Rectified Flow (n_rounds=1) | FID | 218.87 | 122.18 | **−2.53% to −0.66%** on 3/4 schedulers | framework-WINS | §7.6.7 | [ver.](verification_outputs/wave235-p1-r5b-fix.json) |
@@ -137,7 +137,7 @@ flowa-multistep-reinference/
 │   └── contracts/           # frozen typed dataclasses (paper quantities)
 ├── docs/                    # paper drafts + audit trail
 │   ├── drafts/              # abstract + section-2 + paper-flattened-draft
-│   ├── audit/               # per-wave audit docs (wave127, wave149-244)
+│   ├── audit/               # per-wave audit docs
 │   ├── ARCHITECTURE.md      # governance doc
 │   ├── CLAIMS.md            # 76 ACTIVE claims (structural reversal + statistical upgrade)
 │   ├── CONSOLIDATED_RESULTS.md  # §15.1-15.102 (full results ledger)
@@ -188,7 +188,7 @@ Reviewers re-verify any headline by comparing the embedded `verification_outputs
 All vendored upstream repositories (FlowMol3 commit `77cae22`, LineageFlow
 commit `ccef84a`, Kanzi, HiDream-I1, GraphBFN, Lumina-Image-2.0,
 ProtBFN-AbBFN, Wan2.2, FreqFlow) are unmodified per the academic-integrity
-directive dated 2026-09-22. Verified at Wave 262 (`docs/audit/wave262-p1-revert-all.md`,
+directive dated 2026-09-22. Verified (`docs/audit/wave262-p1-revert-all.md`,
 `docs/audit/wave262-p2-verify.md`, `docs/audit/wave262-p5-final-verify.md`).
 
 ---
@@ -244,10 +244,10 @@ Theoretical foundation: Theorem 1 is self-contained in paper §2 (mathematical f
 
 ## Contact
 
-For TNNLS review correspondence: see [`tnnls_submission/cover_letter.md`](tnnls_submission/cover_letter.md) (11 USER ACTION placeholders to be filled before upload).
+For TNNLS review correspondence: see [`tnnls_submission/cover_letter.md`](tnnls_submission/cover_letter.md).
 
 For paper issues: open a GitHub issue or PR.
 
 ---
 
-**See [CHANGELOG.md](CHANGELOG.md) for the per-wave development history (waves 149 through 244).**
+**See [CHANGELOG.md](CHANGELOG.md) for the development history.**
