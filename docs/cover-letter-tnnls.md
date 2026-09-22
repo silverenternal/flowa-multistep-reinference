@@ -180,7 +180,7 @@ the full quadruple → per-cell restart probability), and BRAI
 local velocity-field geometry rather than depending on
 per-adapter paper-quantity overrides. The framework exposes
 `AdapterCapabilities.profile_residual_fn` in
-`adaptive_reflow/profile_residual.py` as the future-extension
+`adaptive_reflow/adapters/profile_residual.py` as the future-extension
 point; the **3 core adapters exercise this hook today** (Wave
 229 P3) while the remaining 9 fall back to the canonical-witness
 closed forms. The framework operates without retraining,

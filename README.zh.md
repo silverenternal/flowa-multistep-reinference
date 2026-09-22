@@ -4,8 +4,31 @@
 
 [![CI](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml/badge.svg)](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml)
 [![D.4 byte-stable](https://img.shields.io/badge/D.4-30%2F30%20PASS-brightgreen)]() [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)]()
+[![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)]()
+[![Adapters](https://img.shields.io/badge/adapters-12-orange.svg)]()
 
 **TL;DR / 概述.** FlowA 是一个 *训练无关 (training-free)、与求解器无关 (solver-agnostic)* 的再推理 (re-inference) 框架，包裹已部署的 flow-matching 检查点并依据局部速度场几何自适应推理循环。该框架将由规范 F 侧 (canonical F-side) 见证函数导出的四个论文量 (paper-quantity invariants) 作为一等调度器输入。在覆盖蛋白 (LineageFlow)、分子三维 (FlowMol3) 与图像 (CIFAR-10 RF、MNIST FM、2D) 的 **七个 R-level 单元** 上完成验证。24.6× 的壁钟差距通过 CUDA-graph capture 缩小 76.8%。
+
+---
+
+## Contents / 目录
+
+- [Headline Results / 头条结果](#headline-results--头条结果)
+- [Architecture / 架构](#architecture--架构)
+- [Installation / 安装](#installation--安装)
+- [Quick Start / 快速开始](#quick-start--快速开始)
+- [Reproducing the Paper / 复现论文](#reproducing-the-paper--复现论文)
+- [Environment Setup (Docker) / 环境搭建](#environment-setup-docker-recommended--推荐-docker)
+- [Repository Structure / 仓库结构](#repository-structure--仓库结构)
+- [Submission Gates / 提交门禁](#submission-gates-verified-at-final-pre-push--终版前推送时验证)
+- [Data and Model Availability / 数据与模型可用性](#data-and-model-availability--数据与模型可用性)
+- [Numerical Stability / 数值稳定性](#numerical-stability--数值稳定性)
+- [TNNLS Submission Package / TNNLS 投稿材料](#tnnls-submission-package--tnnls-投稿材料)
+- [Citation / 引用](#citation--引用)
+- [License / 许可](#license--许可)
+- [Acknowledgements / 致谢](#acknowledgements--致谢)
+- [Contact / 联系](#contact--联系)
 
 ---
 

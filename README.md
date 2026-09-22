@@ -4,8 +4,31 @@
 
 [![CI](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml/badge.svg)](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml)
 [![D.4 byte-stable](https://img.shields.io/badge/D.4-30%2F30%20PASS-brightgreen)]() [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)]()
+[![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)]()
+[![Adapters](https://img.shields.io/badge/adapters-12-orange.svg)]()
 
 **TL;DR.** FlowA is a *training-free, solver-agnostic* re-inference framework that wraps a deployed flow-matching checkpoint and adapts the inference loop to local velocity-field geometry. The framework exposes four paper-quantity invariants derived from a canonical F-side witness as a first-class scheduler input. Validated across **seven R-level cells** spanning protein (LineageFlow), molecular 3D (FlowMol3), and image (CIFAR-10 RF, MNIST FM, 2D). The 24.6× wall-clock gap is closed 76.8% via CUDA-graph capture.
+
+---
+
+## Contents
+
+- [Headline Results](#headline-results)
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Reproducing the Paper](#reproducing-the-paper)
+- [Environment Setup (Docker)](#environment-setup-docker-recommended)
+- [Repository Structure](#repository-structure)
+- [Submission Gates](#submission-gates-verified-at-final-pre-push)
+- [Data and Model Availability](#data-and-model-availability)
+- [Numerical Stability](#numerical-stability)
+- [TNNLS Submission Package](#tnnls-submission-package)
+- [Citation](#citation)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
+- [Contact](#contact)
 
 ---
 
