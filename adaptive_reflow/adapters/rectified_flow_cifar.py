@@ -367,10 +367,7 @@ def _torch_velocity_field(
         # ``None`` when the env var is off or capture failed, so the
         # eager ``unet(x_t, t_t)`` call below is the canonical path.
         captured_v = _captured_unet_forward(unet, x_t, t_t)
-        if captured_v is not None:
-            v = captured_v
-        else:
-            v = unet(x_t, t_t)
+        v = captured_v if captured_v is not None else unet(x_t, t_t)
         out = np.asarray(v.squeeze(0).detach().cpu().numpy(), dtype=np.float64)
     return out.reshape(RF_CIFAR_STATE_SHAPE)
 
@@ -1449,10 +1446,7 @@ def _batched_torch_velocity_field(
             )
             t_t = torch.full((stop - start,), float(t), dtype=dtype, device=device)
             captured_v = captured_velocity_field(unet, x_t, t_t)
-            if captured_v is not None:
-                v_t = captured_v
-            else:
-                v_t = unet(x_t, t_t)
+            v_t = captured_v if captured_v is not None else unet(x_t, t_t)
             out[start:stop] = v_t.detach().cpu().numpy().astype(np.float64)
     return out.reshape(x_batch.shape)
 
