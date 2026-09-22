@@ -176,6 +176,14 @@ DEFAULT_REF_NPZ: Path = REPO_ROOT / "data" / "cifar10_test_ref.npz"
 #: cross-paper-comparable scores vs within-paper scores.
 FID_EXTRACTOR_FAMILY: str = "inceptionv3_tfport"
 
+#: Batch size for the inline InceptionV3 activation loop
+#: (:func:`_compute_fid_tfport_inline`). Wave 286 P: doubled from 32 to
+#: 64 so the GPU path amortises the per-batch InceptionV3 forward
+#: launch (memory cost is modest — ~64 MB of activations on a 32 GB
+#: GPU). The math result is byte-equivalent to the legacy CPU batch=32
+#: path within 1e-3 (validated in ``docs/audit/wave286-p-fid-gpu-fix.md``).
+FID_INLINE_BATCH_SIZE: int = 64
+
 
 # ---------------------------------------------------------------------------
 # Scheduler factory
@@ -367,19 +375,42 @@ def _compute_fid_tfport_inline(
     model = InceptionV3([block_idx])
     model.eval()
 
+    # Wave 286 P: route the activation forward pass through the same
+    # device as the inputs. Previously the model stayed on CPU and
+    # ``torch.from_numpy`` produced CPU tensors, so the entire FID
+    # compute ran on CPU — the user's report ("GPU 上没有算力占用只有显存
+    # 占用" / "FID 100% on CPU; GPU memory stays at 0 MB") was a direct
+    # consequence of this omission. With ``device = cuda`` when
+    # available, InceptionV3's 2048-dim activations are produced on GPU
+    # and only materialised to NumPy at the very end. Public signature
+    # (``_compute_fid_tfport_inline(gen, ref) -> float``) is unchanged.
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if device.type == "cuda":
+        model = model.to(device)
+
     def _activations(samples: NDArray[np.float64]) -> NDArray[np.float64]:
         n = int(samples.shape[0])
         out: NDArray[np.float64] = np.empty((n, 2048), dtype=np.float32)
+        batch_size = FID_INLINE_BATCH_SIZE
         with torch.no_grad():
-            for i in range(0, n, 32):
-                batch = torch.from_numpy(
-                    np.asarray(samples[i : i + 32], dtype=np.float32)
+            for i in range(0, n, batch_size):
+                batch_np = np.asarray(
+                    samples[i : i + batch_size], dtype=np.float32
                 )
+                batch = torch.from_numpy(batch_np)
+                if device.type == "cuda":
+                    batch = batch.to(device, non_blocking=True)
                 # pytorch_fid's InceptionV3 owns resize and input scaling;
                 # provide [0, 1] pixels and avoid a second normalization.
                 x = (batch + 1.0) / 2.0
                 pred = model(x)[0].squeeze(3).squeeze(2)
-                out[i : i + int(batch.shape[0])] = pred.cpu().numpy()
+                # Predictions stay on the device for as long as possible;
+                # materialise to NumPy at the very end so GPU compute
+                # actually happens.
+                if pred.device.type == "cuda":
+                    out[i : i + int(batch.shape[0])] = pred.cpu().numpy()
+                else:
+                    out[i : i + int(batch.shape[0])] = pred.numpy()
         return out
 
     a_gen = _activations(gen)

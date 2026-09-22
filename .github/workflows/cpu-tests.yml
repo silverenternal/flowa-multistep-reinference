@@ -54,5 +54,22 @@ jobs:
         # P0-3: include the safe-wrapper test so the RLIMIT_AS wrapper's
         # argparse + cap-banner path is exercised in CI (no GPU needed).
         run: PYTHONPATH=. python -m pytest tests/test_tools/test_run_mol_eval.py tests/test_tools/test_run_mol_eval_safe.py tests/test_tools/test_run_image_eval.py --no-header -q
+      - name: Run paper-grounded scheduler tests (Wave 287 P CI hardening)
+        # Wave 287 P CI hardening: explicit wire-in of the edge-case
+        # tests for the seven paper-grounded controllers
+        # (CodimensionSheet, PaperRatioAdaptive, ConvergenceAdaptive,
+        # EvidenceDriven, NFEAwareMemory, FreeTraj,
+        # TierAwareCodimensionSheet) plus the cross-cutting
+        # ``TestSchedulerDeterminism`` class that extends the D.4
+        # byte-stable contract to paper-grounded controllers.
+        # The Phase 2 audit
+        # (``docs/audit/wave287-p-scheduler-codepath-audit.md``)
+        # enumerated 24 latent bugs; these tests are the regression
+        # net that catches them on every PR. The D.4 file is
+        # included on the same invocation because the new
+        # ``TestSchedulerDeterminism`` class explicitly extends the
+        # D.4 contract -- running them together keeps the
+        # ``paper_quantities`` cache contract honest.
+        run: PYTHONPATH=. python -m pytest tests/test_paper_grounded_schedulers.py tests/test_d4_regression_vectors.py --no-header -q
       - name: Check docs against code
         run: PYTHONPATH=. python tools/check_docs_against_code.py
