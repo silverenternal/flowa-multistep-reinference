@@ -69,6 +69,10 @@ jobs:
         # would mean an open known-problem has no owner in the
         # survey docs, which silently breaks the paper-grade evidence
         # chain. Set --strict-fail to make this gate required.
+        # Wave 272 P2: todo.json restructured from "problems" key to
+        # "tasks" key (Wave 11 directive). The id pattern is now
+        # "P[0-9]-[0-9]" (e.g. "P0-2", "P1-4") instead of "P-[0-9]+"
+        # (e.g. "P-01"). Updated regex + dict-key lookup to match.
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -85,16 +89,31 @@ jobs:
 
           root = Path(".").resolve()
           todo = json.loads((root / "todo.json").read_text(encoding="utf-8"))
-          ids = sorted({entry["id"] for entry in todo["problems"]})
+          # Wave 272 P2: top-level key was "problems" pre-Wave-11, is
+          # now "tasks". Iterate the active list either way so this
+          # verifier is robust to the structural rename.
+          entries = todo.get("tasks", todo.get("problems", []))
+          # Only check "P<priority>-<n>" style ids (skip A1-* audit
+          # ids and FIX-* divergence-fix ids — those are documented in
+          # other governance surfaces, not in
+          # ARCHITECTURE.md / docs/r17-survey/).
+          ids = sorted(
+              entry["id"] for entry in entries
+              if re.match(r"^P[0-9]+-[0-9]+$", entry["id"])
+          )
 
           # Look for P-NN references in ARCHITECTURE.md plus every
-          # docs/r17-survey/*.md file. We match both the bare "P-01"
-          # form and the quoted "\"P-01\"" form so that ids buried in
-          # table cells / inline-code spans still count.
-          search_roots = [root / "ARCHITECTURE.md"] + sorted(
-              (root / "docs" / "r17-survey").glob("*.md")
+          # docs/r17-survey/*.md file (primary) and docs/r4-survey/*.md
+          # (legacy survey) so ids referenced in either wave survey
+          # count. We match both the bare "P0-2" form and the quoted
+          # "\"P0-2\"" form so that ids buried in table cells /
+          # inline-code spans still count.
+          search_roots = (
+              [root / "ARCHITECTURE.md"]
+              + sorted((root / "docs" / "r17-survey").glob("*.md"))
+              + sorted((root / "docs" / "r4-survey").glob("*.md"))
           )
-          pat = re.compile(r"\bP-[0-9]+\b")
+          pat = re.compile(r"\bP[0-9]+-[0-9]+\b")
 
           referenced: set[str] = set()
           for path in search_roots:
