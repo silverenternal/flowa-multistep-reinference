@@ -14,7 +14,7 @@ FlowA 是一个 training-free, solver-agnostic 的 re-inference framework,围绕
 |---|---|---:|---:|---:|---|
 | R1 LineageFlow | HMMER hits N=1000 | 158 | 342 | +116.46% | **framework_WINS** (p<1e-10) |
 | R2 Kanzi | RMSD d_z | -0.0990 | (deployed arm) | weak Bonf-sig | **framework_WINS** (p=0.0018) |
-| R3 FlowMol3 | fg_dev per-record | -0.360/molecule | (deployed arm) | d_z=-0.285 | **framework_WINS** (p<1e-4, N=200) |
+| R3 FlowMol3 | fg_dev per-record | -0.360/molecule | (Wave 87 seed 42 + Wave 208 N=200 + Wave 216 N=1000 projected) | d_z=-0.285 | **framework_WINS** (p<1e-4, N=200). **3-seed pooled: BLOCKED at vendor level** — vendored upstream metrics.py (commit 77cae22) does not handle partial rdkit.Chem.Mol objects; framework ships unmodified vendored code per academic-integrity directive 2026-09-22. |
 | R4 2D two_moons | W₂ | 2.85 | 0.62 | -78.25% | **framework_WINS** (2D FM ablation) |
 | R5 2D eight_gaussians | W₂ | 2.31 | 0.76 | -67.10% | **framework_WINS** (2D FM ablation) |
 | R5b CIFAR n_rounds=1 | FID | 454.39 | 442.89 | -0.9% to -3.54% (N=1000) | **framework_WINS on 4/4 schedulers at seed 42 NFE=50** (conditional: multi-seed seeds 43+44 UNDERPOWERED; NFE>50 WIN does not extend; tier-aware does not help) |
@@ -42,7 +42,7 @@ FlowA 是一个 training-free, solver-agnostic 的 re-inference framework,围绕
 
 - **R2 Kanzi:** 论文 §7.6.2 引用 deployed paired-t d_z=-0.0990 (weak but Bonf-sig),不是 +0.3927 counterfactual uplift
 - **R5b CIFAR:** 是 conditional boundary — Wave 247 完整验证显示只在 seed 42 + n_rounds=1 + NFE=50 时 framework_WINS(ΔFID -0.9% to -3.54%);seed 43/44 UNDERPOWERED;NFE>50 WIN 不 extends;tier-aware wrapper 无效(只有 no-op params best)— **honest disclosure**:R5b 是 conditional WIN,不是 unconditional strength
-- **R3 FlowMol3:** DGL 2.4.0 batched path 有 bug(只有 single_mol 能用),所以 3-seed 在 background 跑
+- **R3 FlowMol3:** **3-seed pooled analysis BLOCKED at vendor level** — vendored upstream metrics.py (commit 77cae22) lacks `.num_atoms` / `.atom_types` / `.valencies` / `.atom_charges` / `.fake_atoms` / `.rdkit_mol` / `.build_molecule` for partial rdkit.Chem.Mol objects. Framework ships unmodified vendored code per academic-integrity directive 2026-09-22. R3 verdict rests on Wave 87 seed 42 N=1000 framework_WINS + Wave 208 P2 per-record framework_WINS (d_z=-0.285 N=200 Bonf-sig) + Wave 216 P1 projected N=1000 framework_WINS.
 - **Tier-aware 参数:** 经验选择(not theorem-derived),overfit risk LOW
 - **Post-hoc 统计:** TOST margin / BF01 prior / JT hypothesis 都是 post-hoc 选(已在 §2.12.X 标 exploratory)
 
