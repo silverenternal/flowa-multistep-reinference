@@ -180,6 +180,25 @@ jobs:
             -m "not slow and not benchmark" \
             --no-header -q
 
+      - name: Strip untracked symlink targets from docs/
+        # Wave 273 P2: the docs/ tree contains tracked symlinks whose
+        # targets live under verification_outputs/ (a gitignored artifact
+        # tree). On CI runners those targets are absent; ``mkdocs build``
+        # fails when ``shutil.copyfile`` cannot resolve them. Strip the
+        # dangling symlinks locally before the strict build so the gate
+        # succeeds without altering the source tree. Targets:
+        #   docs/headline-evidence/composite_axis_byte_stable/kanzi_nfe_scan_q4_2026.json
+        #   docs/headline-evidence/composite_axis_byte_stable/lineageflow_v2_aggregated_q4_2026.json
+        run: |
+          for path in \
+              docs/headline-evidence/composite_axis_byte_stable/kanzi_nfe_scan_q4_2026.json \
+              docs/headline-evidence/composite_axis_byte_stable/lineageflow_v2_aggregated_q4_2026.json; do
+            if [ -L "$path" ] && [ ! -e "$path" ]; then
+              echo "Removing dangling symlink: $path"
+              rm "$path"
+            fi
+          done
+
       - name: Gate 6 -- mkdocs build --strict
         # Strict mode rejects broken internal links, unresolved
         # mkdocstrings directives, and any docs/ markdown file that

@@ -51,6 +51,24 @@ jobs:
       - name: Install package + doc toolchain
         run: pip install -e '.[dev]' mkdocs-material mkdocstrings
 
+      # Wave 273 P2: mkdocs --strict copies every file under docs/, including
+      # tracked symlinks whose targets live under verification_outputs/ (a
+      # gitignored artifact tree). On the CI runner those targets are absent
+      # and ``shutil.copyfile`` raises FileNotFoundError. Remove the dangling
+      # symlinks from the checkout before building so the strict build
+      # succeeds without altering the source tree. Files removed:
+      # docs/headline-evidence/composite_axis_byte_stable/{kanzi_nfe_scan,lineageflow_v2_aggregated}_q4_2026.json
+      - name: Strip untracked symlink targets from docs/
+        run: |
+          for path in \
+              docs/headline-evidence/composite_axis_byte_stable/kanzi_nfe_scan_q4_2026.json \
+              docs/headline-evidence/composite_axis_byte_stable/lineageflow_v2_aggregated_q4_2026.json; do
+            if [ -L "$path" ] && [ ! -e "$path" ]; then
+              echo "Removing dangling symlink: $path"
+              rm "$path"
+            fi
+          done
+
       - name: Build mkdocs site (strict)
         run: mkdocs build --strict
 
