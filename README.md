@@ -27,8 +27,8 @@
 - **R1 (Protein)**: HMMER hits: 158 → 342 (+116.46%) — framework_uplift on LineageFlow protein FM
 - **R2 (Protein)**: RMSD d_z = -0.0990 (Bonf-sig) — deployed paired-t framework_uplift on Kanzi
 - **R3 (Molecular)**: per-record d_z = -0.285 (Bonf-sig) — Wave 87 + Wave 208 framework_WINS (3-seed-pooled BLOCKED at vendor level)
-- **R4 (Toy FM)**: 2D FM ablation ΔFID=-78.25% framework_WINS on two_moons
-- **R5 (Toy FM)**: 2D FM ablation ΔFID=-67.10% framework_WINS on eight_gaussians
+- **R4 (Toy FM)**: 2D FM ablation ΔW₂=-78.25% framework_WINS on two_moons
+- **R5 (Toy FM)**: 2D FM ablation ΔW₂=-67.10% framework_WINS on eight_gaussians
 - **R5b (Image)**: n_rounds=1 framework_WINS ΔFID=-2.53% to -0.66% (4 schedulers at seed 42 NFE=50)
 - **R6 (Image)**: tier-aware pLDDT d_z: +0.224 → +0.647 (+189%) framework_uplift (cluster-robust 5/8 SUPPORTED)
 
@@ -126,8 +126,8 @@ Per-cell standalone scripts (each handles env activation → data check → run 
 | R1 | `bash reproduce/01_R1_LineageFlow.sh` | `framework hits = 342` |
 | R2 | `bash reproduce/02_R2_Kanzi.sh` | `d_z = -0.0990 (Bonf-sig)` |
 | R3 | `bash reproduce/03_R3_FlowMol3.sh` | `d_z = -0.285 (Bonf-sig)` |
-| R4 | `bash reproduce/04_R4_2D_TwoMoons.sh` | `ΔFID = -78.25%` |
-| R5 | `bash reproduce/05_R5_2D_EightGaussians.sh` | `ΔFID = -67.10%` |
+| R4 | `bash reproduce/04_R4_2D_TwoMoons.sh` | `ΔW₂ = -78.25%` |
+| R5 | `bash reproduce/05_R5_2D_EightGaussians.sh` | `ΔW₂ = -67.10%` |
 | R5b | `bash reproduce/06_R5b_CIFAR_n_rounds1.sh` | `ΔFID ∈ [-2.53%, -0.66%]` |
 | R6 | `bash reproduce/07_R6_MNIST_TierAware.sh` | `pLDDT d_z = +0.647 (+189%)` |
 
