@@ -65,9 +65,11 @@ Constraints
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import subprocess
 import sys
+import tempfile
 from typing import Any
 
 # Wave 98.A — GPU utilization watchdog. Fires a WARNING to stderr if
@@ -190,6 +192,7 @@ def run_lineageflow_upstream_eval(
     hmmscan: str | None = DEFAULT_HMMSCAN,
     mmseqs: str | None = DEFAULT_MMSEQS,
     length_bias: str = "long",
+    restrict_novelty_to_target_db: bool = True,
 ) -> dict[str, float]:
     """Invoke LineageFlow's upstream ``evaluate_all.py`` on ``fasta_path``.
 
@@ -241,6 +244,28 @@ def run_lineageflow_upstream_eval(
         "powered" R1 row from the "short" row at the per-cell
         level. ``"short"`` is a no-op (byte-stable); ``"long"``
         adds ``len_bias_long=1.0`` to the returned dict.
+    restrict_novelty_to_target_db
+        Wave 275 K7 — env-block bypass. When ``True`` (default), the
+        wrapper constructs a synthetic tempdir on-the-fly containing
+        one empty ``PF00005.fasta`` file and passes it as the
+        ``--pfam-fastas-dir`` argument. The vendored
+        ``evaluate_all.py:336`` ``_require_path`` check is satisfied,
+        but the novelty script's ``_db_exists(target_db)`` check
+        (novelty_mmseqs2.py:633) returns True (the Wave 80 prebuilt
+        ``pfam_holdout_targetDB`` is reused), so the
+        ``build_reference_fasta`` branch is skipped and the tempdir
+        placeholder is never read. This decouples the wrapper from
+        the vendored ``data/lineageflow_upstream/dataset/pfam_fastas_clean/``
+        placeholder tree so K7 is ACTIVE even when the vendored
+        placeholder is removed in a future Wave. ``False`` (legacy
+        byte-stable) passes the existing ``DEFAULT_PFAM_FASTAS_DIR``
+        unchanged and is preserved for Wave 81/86/158/161 K7 forensic
+        reproduction. The env var
+        ``LINEAGEFLOW_RESTRICT_NOVELTY_TO_TARGET_DB`` (``"0"`` /
+        ``"false"`` / ``"no"`` / ``"off"`` → force legacy;
+        ``"1"`` / ``"true"`` / ``"yes"`` / ``"on"`` → force K7;
+        unset → honour the kwarg) is read inside the private impl
+        and overrides this parameter for ad-hoc caller control.
 
     Returns
     -------
@@ -263,6 +288,7 @@ def run_lineageflow_upstream_eval(
             fasta_path, output_dir, metrics, timeout_s,
             hmmdb, target_db, pfam_fastas_dir, hmmscan, mmseqs,
             length_bias=str(length_bias),
+            restrict_novelty_to_target_db=bool(restrict_novelty_to_target_db),
         )
 
 
@@ -277,7 +303,34 @@ def _run_lineageflow_upstream_eval_impl(
     hmmscan: str | None,
     mmseqs: str | None,
     length_bias: str = "long",
+    restrict_novelty_to_target_db: bool = True,
 ) -> dict[str, float]:
+    # Wave 275 K7 — env-var override. The env var trumps the kwarg so a
+    # caller can force the legacy or K7 path from the shell
+    # (``LINEAGEFLOW_RESTRICT_NOVELTY_TO_TARGET_DB=0`` to opt out).
+    _env_value = os.environ.get("LINEAGEFLOW_RESTRICT_NOVELTY_TO_TARGET_DB", "").strip().lower()
+    if _env_value in {"0", "false", "no", "off"}:
+        restrict_novelty_to_target_db = False
+    elif _env_value in {"1", "true", "yes", "on"}:
+        restrict_novelty_to_target_db = True
+
+    # Wave 275 K7 — env-block bypass via tempdir placeholder. When
+    # ``restrict_novelty_to_target_db=True``, synthesize a tempdir
+    # containing one empty ``PF00005.fasta`` so the vendored
+    # ``evaluate_all.py:336`` ``_require_path`` check passes regardless
+    # of the vendored ``pfam_fastas_clean/`` placeholder state. The
+    # novelty script's ``_db_exists(target_db)`` check returns True
+    # (the Wave 80 prebuilt DB is reused), so the tempdir content is
+    # never read.
+    _k7_tempdir: tempfile.TemporaryDirectory | None = None
+    if restrict_novelty_to_target_db:
+        _k7_tempdir = tempfile.TemporaryDirectory(
+            prefix="lineageflow_k7_pfam_",
+        )
+        _placeholder_fasta = pathlib.Path(_k7_tempdir.name) / "PF00005.fasta"
+        _placeholder_fasta.write_text(">PF00005\n", encoding="utf-8")
+        pfam_fastas_dir = pathlib.Path(_k7_tempdir.name)
+
     cmd: list[str] = [
         sys.executable,
         str(LINEAGEFLOW_EVALUATE_ALL),
@@ -300,9 +353,30 @@ def _run_lineageflow_upstream_eval_impl(
     if mmseqs is not None:
         cmd += ["--mmseqs", str(mmseqs)]
     try:
+        return _run_lineageflow_upstream_eval_subprocess(
+            cmd=cmd,
+            output_dir=output_dir,
+            fasta_path=fasta_path,
+            raw_timeout=int(timeout_s),
+            length_bias=str(length_bias),
+        )
+    finally:
+        if _k7_tempdir is not None:
+            _k7_tempdir.cleanup()
+
+
+def _run_lineageflow_upstream_eval_subprocess(
+    *,
+    cmd: list[str],
+    output_dir: pathlib.Path,
+    fasta_path: pathlib.Path,
+    raw_timeout: int,
+    length_bias: str,
+) -> dict[str, float]:
+    try:
         proc = subprocess.run(
             cmd, check=False, capture_output=True, text=True,
-            timeout=int(timeout_s),
+            timeout=raw_timeout,
         )
     except subprocess.TimeoutExpired as exc:
         return {

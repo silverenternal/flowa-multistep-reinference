@@ -210,7 +210,13 @@ def _build_cosine_schedule_config(rounds: int) -> CosineScheduleConfig:
     )
 
 
-def build_scheduler(name: str, *, rounds: int, target_ratio: float = 0.95) -> Any:
+def build_scheduler(
+    name: str,
+    *,
+    rounds: int,
+    target_ratio: float = 0.95,
+    cosine_ramp_strength: float | None = None,
+) -> Any:
     """Return the named scheduler configured for ``rounds`` rounds.
 
     Mirrors the 2D experiment's ``_build_scheduler`` exactly so the CIFAR
@@ -222,9 +228,19 @@ def build_scheduler(name: str, *, rounds: int, target_ratio: float = 0.95) -> An
     toward 1" with the natural asymptote below 1.0 because of the
     cell-evidence contribution). Per
     ``docs/r4-survey/21-fix-v2-plan.md`` §2.4 / §3.4.
+
+    The ``cosine_ramp_strength`` argument (Wave 275 P3.2 K3+R5b fix):
+    when not None, passes through to ``default_cosine_scheduler(n_min=...)``
+    to raise the cosine ramp's ``n_min`` from 0.0 to the supplied value.
+    Forcing every round to deliver >=50% NFE is the Wave 233 P5 hypothesis
+    for closing the residual R5b regression at n_rounds=2. Default None
+    preserves Wave 70-72 / Wave 235 P1 byte-stability.
     """
     if name == "CosineAnnealScheduler":
-        return default_cosine_scheduler(cycle_length=int(rounds))
+        return default_cosine_scheduler(
+            cycle_length=int(rounds),
+            **({"n_min": float(cosine_ramp_strength)} if cosine_ramp_strength is not None else {}),
+        )
     if name == "CodimensionSheetScheduler":
         return CodimensionSheetScheduler(
             cycle_length=int(rounds),
@@ -535,6 +551,7 @@ def _run_framework(
     target_ratio: float = 0.95,
     exact_total_steps: int | None = None,
     no_final_restart: bool = False,
+    cosine_ramp_strength: float | None = None,
 ) -> tuple[Path, list[dict[str, float]], float, int]:
     """Drive the framework multi-round run for one scheduler.
 
@@ -580,11 +597,18 @@ def _run_framework(
             target_ratio=target_ratio,
             exact_total_steps=exact_total_steps,
             no_final_restart=bool(no_final_restart),
+            cosine_ramp_strength=cosine_ramp_strength,
         )
 
     output_dir.mkdir(parents=True, exist_ok=True)
     scheduler = build_scheduler(
-        scheduler_name, rounds=int(n_rounds), target_ratio=float(target_ratio),
+        scheduler_name,
+        rounds=int(n_rounds),
+        target_ratio=float(target_ratio),
+        # Wave 275 P3.2 K3+R5b: --cosine-ramp-strength plumbs through to
+        # CosineAnnealScheduler only; other schedulers ignore it (matches
+        # the audit document §2.2.1 docstring contract).
+        cosine_ramp_strength=cosine_ramp_strength,
     )
 
     # For the EvidenceDrivenScheduler row we proxy the per-round
@@ -679,6 +703,7 @@ def _run_framework_state_chains(
     target_ratio: float,
     exact_total_steps: int | None,
     no_final_restart: bool = False,
+    cosine_ramp_strength: float | None = None,
 ) -> tuple[Path, list[dict[str, float]], float, int]:
     """Drive final CIFAR samples through Engine-managed endpoint chains.
 
@@ -728,7 +753,10 @@ def _run_framework_state_chains(
 
     output_dir.mkdir(parents=True, exist_ok=True)
     scheduler = build_scheduler(
-        scheduler_name, rounds=int(n_rounds), target_ratio=float(target_ratio)
+        scheduler_name,
+        rounds=int(n_rounds),
+        target_ratio=float(target_ratio),
+        cosine_ramp_strength=cosine_ramp_strength,
     )
     evidence_proxy_scheduler = (
         CodimensionSheetScheduler(
@@ -1096,6 +1124,21 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--cosine-ramp-strength",
+        dest="cosine_ramp_strength",
+        type=float,
+        default=None,
+        help=(
+            "Cosine ramp n_min floor override (Wave 275 P3.2 K3+R5b fix). "
+            "Default None uses the framework default (n_min=0.0, full "
+            "[0, 1] amplitude); 0.5 raises n_min to 0.5, halving the cosine "
+            "ramp amplitude and forcing every round to deliver >=50% NFE. "
+            "Per docs/audit/wave275-p4-cifar10-proposal.md §2 + Wave 233 P5 "
+            "plan. Only effective for the CosineAnnealScheduler; other "
+            "schedulers ignore this flag."
+        ),
+    )
+    parser.add_argument(
         "--target-ratio",
         type=float,
         default=0.95,
@@ -1377,6 +1420,7 @@ def main(argv: list[str] | None = None) -> int:
             target_ratio=float(args.target_ratio),
             exact_total_steps=exact_total_steps,
             no_final_restart=bool(getattr(args, "no_final_restart", False)),
+            cosine_ramp_strength=getattr(args, "cosine_ramp_strength", None),
         )
         sel_last = float(per_round[-1].get("evidence_ratio", float("nan")))
         rows.append(

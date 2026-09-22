@@ -148,7 +148,12 @@ RF_CIFAR_NATIVE_STATES_MAXSIZE: int = 8
 # reduced-rounds protocol.
 # ---------------------------------------------------------------------------
 RF_CIFAR_N_ROUNDS_OVERRIDE: int | None = 2
-RF_CIFAR_COSINE_RAMP_STRENGTH_OVERRIDE: float | None = None  # not yet wired
+# K3 + R5b fix — Wave 275 P3.2: cosine_ramp_strength=0.5 raises the cosine
+# ramp's `n_min` from 0.0 to 0.5, forcing every round to deliver >=50% NFE.
+# Per Wave 233 P5 plan (rectified_flow_cifar.py:130-135) + Wave 225 P7/P9
+# counterfactual (n_rounds=2 baseline). NOT yet empirically validated; the
+# verify phase re-runs N=500 to confirm.
+RF_CIFAR_COSINE_RAMP_STRENGTH_OVERRIDE: float | None = 0.5
 
 #: Available ODE integrators. ``"euler"`` is the 1st-order baseline
 #: (single velocity evaluation per step). ``"heun"`` is the 2nd-order

@@ -7,7 +7,7 @@
 `docs/audit/wave275-p4-lineageflow-proposal.md` §2.3. K4 + K5 are
 explicitly **out of scope** for this commit (left for a parallel
 branch per the proposal §5 sequencing).
-**Status:** CODE-ONLY FIX, no commit, no vendored code modified.
+**Status:** IMPLEMENTED (code), no commit, no vendored code modified — Wave 276 P5 final closure.
 
 ## 1. K7 — STATISTICAL env-blocked → ACTIVE
 

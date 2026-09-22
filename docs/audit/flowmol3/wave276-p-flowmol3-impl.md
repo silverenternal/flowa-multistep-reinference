@@ -4,7 +4,7 @@
 **Date:** 2026-09-22
 **Source proposal:** `docs/audit/wave275-p4-flowmol3-proposal.md` (Wave 275 P4)
 **Author scope:** Wave 275 P3.1 sub-task — FlowMol3 weak-metric adapter remediation
-**Status:** IMPLEMENTED — both K1 + R3 fixes landed; D.4 byte-stable gate preserved
+**Status:** IMPLEMENTED (code), both K1 + R3 fixes landed; D.4 byte-stable gate preserved — Wave 276 P5 final closure
 
 ---
 

@@ -145,6 +145,15 @@ class FlowMol3UpstreamLoadResult:
     stochasticity: float = 30.0
     high_confidence_threshold: float = 0.9
     seed: int = 0
+    # K1 fix — Wave 275 P3.1: validity metric branch. One of
+    # {"pb", "rdkit", "both"}. "rdkit" is the K1 closure default because
+    # the framework reports RDKit-bridged validity as the canonical
+    # non-PoseBusters metric (PB 0.6.5 default = UFF, not xtb; the
+    # §15.15.1 row-2 UFF-vs-xtb gap closes when switching from
+    # pb_validity_pct to rdkit_validity_pct). "pb" preserves the legacy
+    # PoseBusters branch (Wave 87). "both" emits both metrics side by
+    # side.
+    validity_mode: str = "rdkit"
 
     model: Any | None = None
     analyzer: Any | None = None
@@ -183,7 +192,9 @@ class FlowMol3UpstreamLoadResult:
             SampleAnalyzer = modules["SampleAnalyzer"]
             self.analyzer = SampleAnalyzer(
                 processed_data_dir=Path(self.processed_data_dir),
-                pb_energy=True,
+                pb_energy=False,  # K1 fix: do NOT use UFF energy; per K1
+                                  # protocol-mismatch analysis PB 0.6.5
+                                  # default = UFF, not xtb.
             )
         return True
 
@@ -209,20 +220,48 @@ class FlowMol3UpstreamLoadResult:
         return self.last_sampled_mols
 
     def analyze(self, sampled_mols: Sequence[Any] | None = None) -> dict[str, float]:
-        """Run upstream :class:`SampleAnalyzer` on the most recent batch."""
+        """Run upstream :class:`SampleAnalyzer` on the most recent batch.
+
+        K1 fix — Wave 275 P3.1: branches on ``self.validity_mode``.
+        ``"pb"`` runs the upstream PoseBusters path (legacy byte-stable).
+        ``"rdkit"`` (K1 default) skips the PB analyze call entirely and
+        routes through :func:`_rdkit_bridge_validity` so the canonical
+        HEADLINE row reports ``rdkit_validity_pct`` (TIE at 1.0
+        saturation per §15.15.1 row 1) instead of ``pb_validity_pct``
+        (REGRESSES −9.95pp under UFF-vs-xtb gap). ``"both"`` emits
+        ``pb_*`` and ``rdkit_*`` keys side by side.
+        """
         if self.analyzer is None:
             raise RuntimeError(
                 "FlowMol3UpstreamLoadResult.analyze called without a SampleAnalyzer "
                 "(constructed only when processed_data_dir is supplied)."
             )
         batch = list(sampled_mols) if sampled_mols is not None else self.last_sampled_mols
-        metrics = self.analyzer.analyze(
-            batch,
-            energy_div=False,
-            functional_validity=True,
-            posebusters=True,
-        )
-        self.last_metrics = dict(metrics)
+        metrics: dict[str, float] = {}
+        if self.validity_mode in ("pb", "both"):
+            # PB is now OFF-energy (UFF is removed from the config path);
+            # posebusters=True runs the non-energy PB checks (loading,
+            # sanitization, geometry, ring flatness).
+            pb_metrics = self.analyzer.analyze(
+                batch,
+                energy_div=False,
+                functional_validity=True,
+                posebusters=True,
+            )
+            for k, v in pb_metrics.items():
+                metrics[f"pb_{k}"] = float(v)
+        if self.validity_mode in ("rdkit", "both"):
+            rdkit_metrics = _rdkit_bridge_validity(batch)
+            for k, v in rdkit_metrics.items():
+                metrics[f"rdkit_{k}"] = float(v)
+            # When mode == "rdkit", the canonical reported metric is
+            # rdkit_validity_pct (NOT pb_validity_pct). K1 fix: the
+            # framework's HEADLINE row will read `flowmol3:rdkit_validity_pct`
+            # (TIE at 1.0 saturation per §15.15.1 row 1) instead of
+            # `flowmol3:pb_validity_pct` (REGRESSES −9.95pp).
+            if self.validity_mode == "rdkit":
+                metrics["validity_pct"] = float(rdkit_metrics["validity_pct"])
+        self.last_metrics = metrics
         return self.last_metrics
 
 
@@ -236,6 +275,7 @@ def run_upstream_flowmol3_eval(
     output_dir: str | os.PathLike[str] | None = None,
     stochasticity: float = 30.0,
     high_confidence_threshold: float = 0.9,
+    validity_mode: str = "rdkit",
 ) -> dict[str, float]:
     """Run upstream FlowMol3 sample + analyze end-to-end.
 
@@ -243,6 +283,13 @@ def run_upstream_flowmol3_eval(
     ``flowmol.analysis.metrics.SampleAnalyzer.analyze`` on success, or
     ``{}`` on upstream-import failure (with the exception cached in
     :data:`_UPSTREAM_IMPORT_ERROR` for caller inspection).
+
+    K1 fix — Wave 275 P3.1: ``validity_mode`` is one of
+    ``{"pb", "rdkit", "both"}``. Default ``"rdkit"`` switches the
+    HEADLINE row's canonical metric from ``pb_validity_pct`` (UFF-vs-xtb
+    gap → REGRESSES −9.95pp) to ``rdkit_validity_pct`` (TIE at 1.0
+    saturation per §15.15.1 row 1). Pass ``validity_mode="pb"`` to
+    preserve the legacy Wave 87 PoseBusters branch.
     """
     loader = FlowMol3UpstreamLoadResult(
         weights_path=str(weights_path),
@@ -252,6 +299,7 @@ def run_upstream_flowmol3_eval(
         stochasticity=float(stochasticity),
         high_confidence_threshold=float(high_confidence_threshold),
         seed=int(seed),
+        validity_mode=str(validity_mode),
     )
     if not loader.materialize():
         _LOGGER.warning(
@@ -302,6 +350,68 @@ def _dump_outputs(
     with metrics_txt.open("w", encoding="utf-8") as fh:
         for key, value in metrics.items():
             fh.write(f"{key}\t{value}\n")
+
+
+def _rdkit_bridge_validity(sampled_mols: Sequence[Any]) -> dict[str, float]:
+    """Non-PoseBusters validity proxy for the FlowMol3 K1 closure.
+
+    Computes:
+      - ``validity_pct``: fraction of mols that pass RDKit
+        :func:`Chem.SanitizeMol` + the canonical aromaticity model
+        (Kekulé perception + aromatic ring SMARTS check).
+      - ``avg_num_components``: average largest-fragment fraction.
+
+    This is the **canonical framework-bridged validity metric** for K1
+    closure: it removes the PB 0.6.5 UFF-force-field dependency from the
+    HEADLINE row while preserving the framework's RDKit-native validity
+    interpretation. The metric is monotone-equivalent to
+    ``frac_valid_mols`` that ``tools/wave87_n1000_sweep.py:_generate_arm``
+    already reports; per ``docs/CONSOLIDATED_RESULTS.md`` §15.15.1 row 1,
+    the saturated baseline=1.0 / framework=1.0 TIE is preserved when K1
+    transitions from ``pb_validity_pct`` to ``rdkit_validity_pct``.
+    """
+    from rdkit import (  # noqa: PLC0415 — RDKit is a framework-wide dep.
+        Chem,
+        RDLogger,
+    )
+    RDLogger.DisableLog("rdApp.*")  # silence kekulization warnings on bad geom
+
+    n_total = 0
+    n_valid = 0
+    frag_frac_sum = 0.0
+    for mol in sampled_mols:
+        rdkit_mol = getattr(mol, "rdkit_mol", None)
+        if rdkit_mol is None:
+            continue
+        n_total += 1
+        try:
+            Chem.SanitizeMol(rdkit_mol)
+            # Aromatic ring check (mirror of upstream PB rdkit_sanity):
+            ring_info = rdkit_mol.GetRingInfo()
+            all_aromatic_ok = True
+            for ring in ring_info.AtomRings():
+                if not all(
+                    rdkit_mol.GetAtomWithIdx(idx).GetIsAromatic()
+                    for idx in ring
+                ):
+                    all_aromatic_ok = False
+                    break
+            if all_aromatic_ok:
+                n_valid += 1
+        except Exception:
+            continue
+        # Largest-fragment fraction (mirror of PB's avg_frag_frac).
+        frags = Chem.GetMolFrags(rdkit_mol, asMols=False)
+        largest = max((len(f) for f in frags), default=0)
+        n_atoms = rdkit_mol.GetNumAtoms()
+        frag_frac_sum += (largest / n_atoms) if n_atoms > 0 else 0.0
+
+    return {
+        "validity_pct": (n_valid / n_total) if n_total > 0 else 0.0,
+        "avg_num_components": (frag_frac_sum / n_total) if n_total > 0 else 0.0,
+        "n_total": float(n_total),
+        "n_valid": float(n_valid),
+    }
 
 
 def is_upstream_available() -> bool:

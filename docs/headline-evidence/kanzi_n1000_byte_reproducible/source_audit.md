@@ -1,1 +1,1 @@
-../../../docs/audit/wave131-pre-freeze-hygiene.md
+../../../docs/audit/final_verify/wave131-pre-freeze-hygiene.md

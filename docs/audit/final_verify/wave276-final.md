@@ -290,22 +290,64 @@ gated on GPU 0 / CPU / LineageFlow torch sm_120 availability).
 
 ---
 
-## 4. Audit ledger
+## 5. Wave 276 P5 addendum — 4 deferred weak claims closed (code-only)
 
-- **Per-branch audit docs:** `docs/audit/wave276-p-{r6,k7,mnist,
-  cifar10,flowmol3,lineageflow}-impl.md`.
-- **Final audit (this doc):** `docs/audit/wave276-final.md`.
-- **Wave 275 P4 baseline:** `docs/audit/wave275-p4-overview.md` + the
-  5 per-proposal docs at `docs/audit/wave275-p4-{mnist,r6,
-  lineageflow,flowmol3,cifar10}-proposal.md`.
-- **Metric ledger:** `docs/METRIC_LEDGER.md` + `.json` (regenerated
-  byte-stable from this commit).
-- **Headline ledger:** `docs/headline-evidence/ledger.json` (pending
-  the deferred sweep re-runs).
+**Branch:** main
+**Date:** 2026-09-22
+**Author scope:** Wave 276 P5 sub-task — implement the 4 audit-doc-only
+deferred weak claims from Wave 276 final §3 (R5c, K3+R5b, K1+R3, K7)
+as code-only fixes (no GPU sweep re-runs; sweeps deferred per the
+Wave 275 P4 "proposal-only" directive).
+
+| Weak claim | Topic | Code change (file:lines) | Audit doc | Status |
+|---|---|---|---|---|
+| **R5c** | MNIST FM STATISTICAL | `tools/materialize_mnist_fm.py` — `PRODUCTION_RECIPE` constants block + module docstring update | `docs/audit/mnist/wave276-p-mnist-impl.md` | **IMPLEMENTED (code), run-pending (CPU)** |
+| **K3 + R5b** | CIFAR-10 RF HEADLINE | `adaptive_reflow/adapters/rectified_flow_cifar.py:151` (constant flip) + `tools/run_sota_cifar_experiment.py` (`--cosine-ramp-strength` flag + `build_scheduler` plumbing + `_run_framework` / `_run_framework_state_chains` thread) | `docs/audit/cifar/wave276-p-cifar10-impl.md` | **IMPLEMENTED (code), N=500 verify PENDING (GPU)** |
+| **K1 + R3** | FlowMol3 HEADLINE + STATISTICAL | `adaptive_reflow/adapters/flowmol3_upstream_shim.py` (`validity_mode` field, `pb_energy=False`, `_rdkit_bridge_validity` helper, `analyze()` rewrite, `validity_mode` kwarg on `run_upstream_flowmol3_eval`) + `adaptive_reflow/adapters/flowmol3_v2_adapter.py` (`repeat_interleave` tile in `_solve_ode_upstream_batch` prior_dict) | `docs/audit/flowmol3/wave276-p-flowmol3-impl.md` | **IMPLEMENTED (code), run-pending (GPU)** |
+| **K7** | LineageFlow STATISTICAL env-blocked | `tools/upstream_eval.py` — `restrict_novelty_to_target_db` kwarg + env-var override + tempdir placeholder (`_run_lineageflow_upstream_eval_subprocess` extracted for tempdir cleanup) | `docs/audit/lineageflow/wave276-p-k7-impl.md` | **IMPLEMENTED (code), run-pending (GPU)** |
+
+**Invariants preserved (verified post-impl):**
+
+```
+$ python3 -m py_compile tools/materialize_mnist_fm.py \
+    adaptive_reflow/adapters/rectified_flow_cifar.py \
+    tools/run_sota_cifar_experiment.py \
+    adaptive_reflow/adapters/flowmol3_upstream_shim.py \
+    adaptive_reflow/adapters/flowmol3_v2_adapter.py \
+    tools/upstream_eval.py
+PY_COMPILE_OK
+
+$ ruff check <same 6 files>
+All checks passed!
+
+$ PYTHONPATH=. python3 -m pytest tests/test_d4_regression_vectors.py -q
+30 passed, 3 warnings in 1.19s
+
+$ PYTHONPATH=. python3 tools/check_claims_consistency.py
+**No drift detected.** (60 active, 1 provisional [CLM-040], 2 deprecated)
+
+$ mkdocs build --strict
+Documentation built in 18.57 seconds (0 warnings)
+```
+
+**Adaptation summary by file:**
+
+| File | LOC delta | Touch type |
+|---|---:|---|
+| `tools/materialize_mnist_fm.py` | +50 | additive `PRODUCTION_RECIPE` constants + docstring (R5c) |
+| `adaptive_reflow/adapters/rectified_flow_cifar.py` | +5 | constant flip None → 0.5 + comment block (K3 + R5b) |
+| `tools/run_sota_cifar_experiment.py` | +38 | `--cosine-ramp-strength` flag + factory + call-site plumbing (K3 + R5b) |
+| `adaptive_reflow/adapters/flowmol3_upstream_shim.py` | +85 | `validity_mode` field, `pb_energy` flip, `analyze()` rewrite, `_rdkit_bridge_validity` helper (K1) |
+| `adaptive_reflow/adapters/flowmol3_v2_adapter.py` | +14 | `repeat_interleave` tile in `_solve_ode_upstream_batch` (R3) |
+| `tools/upstream_eval.py` | +50 | `restrict_novelty_to_target_db` kwarg + env-var + tempdir + subprocess helper split (K7) |
+
+**Total project-owned code change:** +242 LOC additive.
+**Vendored code change:** **ZERO** (per Wave 262 P1 / CLM-077 directive preserved).
+**Generated artifacts (deferred to verify phase):** `data/mnist_fm.npz` re-materialization (CPU 30-40 min); K1+R3+R5b+K7 sweep re-runs (GPU 0, 4 sweeps @ 10-30 min each).
 
 ---
 
-## 5. Recommended push
+## 6. Recommended push
 
 ```
 git push origin main

@@ -2859,10 +2859,28 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         e0_ut = e0_one_hot_full[upper_idx[0], upper_idx[1]]
         e0_full = np.concatenate([e0_ut, e0_ut], axis=0)
         prior_dict: dict[str, Any] = {
-            "x_0": torch.as_tensor(x0_np, dtype=torch.float32).to(dev),
-            "a_0": torch.as_tensor(a0_one_hot, dtype=torch.float32).to(dev),
-            "c_0": torch.as_tensor(c0_one_hot, dtype=torch.float32).to(dev),
-            "e_0": torch.as_tensor(e0_full, dtype=torch.float32).to(dev),
+            # R3 fix — Wave 109.C §6.2 documented plan: tile the per-mol
+            # prior across the batched DGL graph's per-node dimension.
+            # The upstream `FlowMol.sample()` constructs `g = dgl.batch(g)`
+            # with num_nodes = sum(n_atoms) = batch_size * n_atoms (when
+            # all molecules share n), then assigns `g.ndata['x_0'] =
+            # prior['x_0']` at vendored flowmol.py:546 with NO
+            # broadcasting — DGL 2.4.0 `_set_n_repr` is strict-shape.
+            #
+            # The fix tiles each prior tensor along axis 0
+            # (`repeat_interleave` is preferred over `expand + reshape`
+            # for memory: the resulting tensor is contiguous and
+            # DGL-friendly). The single-molecule path (n_mol == 1,
+            # Wave 70-72) is byte-stable because `repeat_interleave(1,
+            # 1, dim=0)` is a no-op view.
+            "x_0": torch.as_tensor(x0_np, dtype=torch.float32).to(dev)
+                      .repeat_interleave(int(n_mol), dim=0),  # (n_mol * n, 3)
+            "a_0": torch.as_tensor(a0_one_hot, dtype=torch.float32).to(dev)
+                      .repeat_interleave(int(n_mol), dim=0),  # (n_mol * n, n_atom_types_upstream+1)
+            "c_0": torch.as_tensor(c0_one_hot, dtype=torch.float32).to(dev)
+                      .repeat_interleave(int(n_mol), dim=0),  # (n_mol * n, n_charge_classes+1)
+            "e_0": torch.as_tensor(e0_full, dtype=torch.float32).to(dev)
+                      .repeat_interleave(int(n_mol), dim=0),  # (n_mol * 2 * n_ut, n_bond_types_upstream+1)
             "fake_atoms": bool(getattr(self._model, "fake_atoms", False)),
         }
         n_atoms_tensor = torch.as_tensor(

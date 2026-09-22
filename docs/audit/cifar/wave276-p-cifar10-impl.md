@@ -3,7 +3,7 @@
 **Branch:** main
 **Date:** 2026-09-22
 **HEAD commit (impl baseline):** `84a3f63` (Wave 275 P4: 5 weak-metric adapter improvement proposals — PROPOSAL-ONLY)
-**Status:** CODE-READY — code change applied, N=500 verify re-run PENDING (GPU-gated)
+**Status:** IMPLEMENTED (code), N=500 verify re-run PENDING (GPU-gated) — Wave 276 P5 final closure
 **Proposal source:** `docs/audit/wave275-p4-cifar10-proposal.md`
 
 ---
