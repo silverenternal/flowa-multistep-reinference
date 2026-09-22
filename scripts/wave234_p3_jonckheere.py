@@ -532,9 +532,9 @@ def _write_audit_doc(rows: list[dict]) -> None:
     lines.append("## 3. Summary narrative")
     lines.append("")
     lines.append(
-        f"The monotone pattern **hard > medium > easy** in framework "
-        f"uplift is confirmed by the Jonckheere-Terpstra trend test on "
-        f"BOTH cells."
+        "The monotone pattern **hard > medium > easy** in framework "
+        "uplift is confirmed by the Jonckheere-Terpstra trend test on "
+        "BOTH cells."
     )
     lines.append("")
     lines.append(

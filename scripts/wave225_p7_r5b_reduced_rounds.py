@@ -223,17 +223,17 @@ def main():
 
     print()
     print("=" * 78)
-    print(f"PRIMARY RESULT")
+    print("PRIMARY RESULT")
     print("=" * 78)
     print(f"  R5b baseline d_z (Wave 195 P2, n_rounds=4, N=1000, chunk-FID) = {R5B_BASELINE_D_Z:+.4f}")
     print(f"  P7 n_rounds=2, N=200  d_z (CosineAnnealScheduler, per-sample) = {primary_d_z:+.4f}")
-    print(f"  Note: different metric (per-sample L2 vs chunk-FID); comparable via reduction%")
-    print(f"  Headline FID comparison:")
+    print("  Note: different metric (per-sample L2 vs chunk-FID); comparable via reduction%")
+    print("  Headline FID comparison:")
     print(f"    baseline FID                          = {baseline_fid:.4f}")
     print(f"    cosine FID  (n_rounds=2)              = {headline_fids['cosineannealscheduler']:.4f}")
     print(f"    cosine ΔFID (units, headline)         = {headline_fids['cosineannealscheduler'] - baseline_fid:+.4f}")
     print(f"    cosine Δ%                             = {(headline_fids['cosineannealscheduler'] - baseline_fid) / baseline_fid * 100:+.2f}%")
-    print(f"  Reference: Wave 191 N=1000 (n_rounds=4) cosine ΔFID = +84 FID (+20.20%)")
+    print("  Reference: Wave 191 N=1000 (n_rounds=4) cosine ΔFID = +84 FID (+20.20%)")
     print(f"  regression_eliminated (per-sample d_z <= 0.5)       = {eliminated}")
 
 

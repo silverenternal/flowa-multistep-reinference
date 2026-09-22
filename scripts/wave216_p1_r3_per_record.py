@@ -287,14 +287,14 @@ def main() -> int:
         "fg_dev_delta": sweep["framework"]["metrics"]["fg_dev"] - sweep["baseline"]["metrics"]["fg_dev"],  # framework - baseline (negative = framework WINS)
         "sem_per_arm": sweep["statistical_power_at_n1000"]["fg_dev_sem"],
     }
-    print(f"\nHeadline fg_dev (N=999/1000 aggregate):", flush=True)
+    print("\nHeadline fg_dev (N=999/1000 aggregate):", flush=True)
     print(f"  baseline = {headline['baseline_fg_dev']:.6f}", flush=True)
     print(f"  framework = {headline['framework_fg_dev']:.6f}", flush=True)
     print(f"  delta = {headline['fg_dev_delta']:+.6f} (framework WINS, lower = closer to QM9)", flush=True)
     print(f"  SEM per arm = {headline['sem_per_arm']:.5f}", flush=True)
 
     # Load REOS training reference
-    print(f"\nLoading REOS training reference (geom_full_kekulized/train_reos_ring_counts.pkl)...", flush=True)
+    print("\nLoading REOS training reference (geom_full_kekulized/train_reos_ring_counts.pkl)...", flush=True)
     with open(REPO / "data/FlowMol3/repo/data/geom_full_kekulized/train_reos_ring_counts.pkl", "rb") as f:
         train_data = pickle.load(f)
     train_flag_arr = train_data["reos_flag_arr"]
@@ -495,12 +495,12 @@ def main() -> int:
     print("\n" + "=" * 72, flush=True)
     print("VERDICT SUMMARY", flush=True)
     print("=" * 72, flush=True)
-    print(f"Prior verdict (Wave 195 P2 / 206 P3, per-arm unpaired): UNDERPOWERED (d_s=-0.110, p=0.01424)", flush=True)
+    print("Prior verdict (Wave 195 P2 / 206 P3, per-arm unpaired): UNDERPOWERED (d_s=-0.110, p=0.01424)", flush=True)
     print(f"Per-record proxy (ACTUAL n=200, df=199):  d_z={actual_results['reos_n_flags']['d_z']:+.3f}, p={actual_results['reos_n_flags']['p_raw']:.4g}, bonf_sig={bool(actual_results['reos_n_flags']['p_raw'] < ALPHA_BONF)}", flush=True)
     print(f"Per-record proxy (PROJECTED n=1000, df=999): d_z={projected_results['reos_n_flags']['d_z']:+.3f}, p={projected_results['reos_n_flags']['p_raw']:.4g}, bonf_sig={projected_verdicts['reos_n_flags'][1]}", flush=True)
     print(f"  → verdict (strict precedence): {projected_verdicts['reos_n_flags'][0]}", flush=True)
-    print(f"\nHonest disclosure: this is a per-record PROXY (REOS flag count), not fg_dev itself.", flush=True)
-    print(f"The full N=1000 paired re-run remains pending — see CLM-068 §camera-ready fix path.", flush=True)
+    print("\nHonest disclosure: this is a per-record PROXY (REOS flag count), not fg_dev itself.", flush=True)
+    print("The full N=1000 paired re-run remains pending — see CLM-068 §camera-ready fix path.", flush=True)
 
     return 0
 

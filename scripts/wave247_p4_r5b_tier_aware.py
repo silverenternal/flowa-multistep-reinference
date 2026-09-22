@@ -267,7 +267,7 @@ def main() -> int:
 
     # ---- 1. Load pooled per-sample data ----
     data = _load_pooled_per_sample()
-    print(f"\nPooled baseline L2²-to-ref stats:")
+    print("\nPooled baseline L2²-to-ref stats:")
     print(f"  n = {data['n_pooled']}")
     print(f"  mean = {data['baseline_l2sq_to_ref_pooled'].mean():.2f}")
     print(f"  std  = {data['baseline_l2sq_to_ref_pooled'].std(ddof=1):.2f}")
@@ -277,10 +277,10 @@ def main() -> int:
     # ---- 2. Compute tier boundaries + tier mask ----
     tier_low, tier_high = _compute_tier_boundaries(data['baseline_l2sq_to_ref_pooled'])
     tier = _tier_mask(data['baseline_l2sq_to_ref_pooled'], tier_low, tier_high)
-    print(f"\nTier boundaries (33rd/67th pct of baseline L2²-to-ref):")
+    print("\nTier boundaries (33rd/67th pct of baseline L2²-to-ref):")
     print(f"  low (hard/medium) = {tier_low:.4f}")
     print(f"  high (medium/easy) = {tier_high:.4f}")
-    print(f"Tier sizes:")
+    print("Tier sizes:")
     for t, label in enumerate(TIER_LABELS):
         n_t = int(np.sum(tier == t))
         r_min = float(np.min(data['baseline_l2sq_to_ref_pooled'][tier == t])) if n_t > 0 else float("nan")
@@ -504,7 +504,7 @@ def main() -> int:
     print("=" * 78)
     print(f"  Pooled N: {data['n_pooled']} (3 seeds × 100 samples)")
     print(f"  Tier boundaries: low={tier_low:.4f}, high={tier_high:.4f}")
-    print(f"  Uniform baseline d_z (per scheduler):")
+    print("  Uniform baseline d_z (per scheduler):")
     for sch in SCHEDULERS:
         u = uniform_d_z_per_sched[sch]
         print(f"    {sch:30s} d_z = {u['d_z']:+.4f}  p = {u['p']:.3e}")

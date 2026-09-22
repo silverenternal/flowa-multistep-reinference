@@ -317,7 +317,7 @@ def main() -> int:
     parser.add_argument("--n-samples", type=int, default=N_SAMPLES)
     args = parser.parse_args()
 
-    print(f"=== Wave 247 P3 — R5b CIFAR-10 RF n_rounds=1 N=1000 replication ===", flush=True)
+    print("=== Wave 247 P3 — R5b CIFAR-10 RF n_rounds=1 N=1000 replication ===", flush=True)
     print(f"[w247-p3] seed={SEED}  n_rounds={N_ROUNDS}  NFE={NFE}  n_samples={args.n_samples}  device={DEVICE}", flush=True)
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)

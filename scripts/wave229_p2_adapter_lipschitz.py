@@ -102,6 +102,7 @@ ADAPTER_FACTORIES: list[tuple[str, str, str]] = [
 def _resolve_factories() -> dict[str, Callable[..., Any]]:
     """Resolve default_*_adapter factories by name."""
     from adaptive_reflow.adapters import (
+        default_flowmol3adapter,
         default_freqflow_adapter,
         default_graphbfn_adapter,
         default_hidream_i1_adapter,
@@ -114,7 +115,6 @@ def _resolve_factories() -> dict[str, Callable[..., Any]]:
         default_self_flow_adapter,
         default_twodim_fm_adapter,
         default_wan22_video_flowmatchingodeadapter,
-        default_flowmol3adapter,
     )
     return {
         "lineageflow": default_lineageflow_adapter,
@@ -254,8 +254,8 @@ def _make_v_theta_rf_cifar(adapter: Any) -> Callable[[np.ndarray, float], np.nda
 def _make_v_theta_wan2_2(adapter: Any) -> Callable[[np.ndarray, float], np.ndarray]:
     """Wan2.2Adapter: synthetic-mode _velocity_field(x, t, text_emb, moe_route)."""
     from adaptive_reflow.adapters.wan2_2_video import (
-        WAN22_TEXT_SEQ_LEN,
         WAN22_TEXT_DIM,
+        WAN22_TEXT_SEQ_LEN,
     )
     text_emb = np.zeros((int(WAN22_TEXT_SEQ_LEN), int(WAN22_TEXT_DIM)), dtype=np.float64)
 
@@ -316,10 +316,10 @@ def _make_v_theta_flowmol3(adapter: Any) -> Callable[[np.ndarray, float], np.nda
 
 def _make_v_theta_graphbfn(adapter: Any) -> Callable[[np.ndarray, float], np.ndarray]:
     """GraphBFNAdapter: BFN Bayesian-update step (not a velocity field)."""
-    from adaptive_reflow.adapters.graphbfn import _synthetic_bfn_step
     from adaptive_reflow.adapters.graphbfn import (
         GRAPHBFN_ATOM_VOCAB_QM9,
         GRAPHBFN_BOND_VOCAB,
+        _synthetic_bfn_step,
     )
 
     n_nodes = 8
@@ -370,9 +370,9 @@ def _make_v_theta_graphbfn(adapter: Any) -> Callable[[np.ndarray, float], np.nda
 def _make_v_theta_protbfn(adapter: Any) -> Callable[[np.ndarray, float], np.ndarray]:
     """ProtBFNAbBFNAdapter: BFN Bayesian-update step (discrete)."""
     from adaptive_reflow.adapters.protbfn_abbfn_adapter import (
-        _synthetic_bfn_step,
-        PROTBFN_VOCAB_SIZE,
         PROTBFN_MAX_LENGTH,
+        PROTBFN_VOCAB_SIZE,
+        _synthetic_bfn_step,
     )
 
     L = int(PROTBFN_MAX_LENGTH)  # use natural state shape (512, 22)

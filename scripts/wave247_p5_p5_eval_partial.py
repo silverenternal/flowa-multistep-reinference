@@ -347,7 +347,7 @@ def main() -> int:
     md.append(f"**Date:** {datetime.now(UTC).date().isoformat()}  ")
     md.append("**Status:** PARTIAL — NFE=50 + NFE=100 evaluated; NFE=200 NOT run  \n")
     md.append("## TL;DR\n")
-    md.append(f"| NFE | Best scheduler | Best ΔFID% | Verdict |")
+    md.append("| NFE | Best scheduler | Best ΔFID% | Verdict |")
     md.append("|---:|---|---:|---|")
     for nfe in nfe_completed:
         ev = eval_data[nfe]
@@ -355,7 +355,7 @@ def main() -> int:
         a = ev["framework_arms"][sch]
         v = ("framework_WINS" if a["delta_vs_baseline_pct"] < 0 else "REGRESSES" if a["delta_vs_baseline_pct"] > 0 else "TIE")
         md.append(f"| {nfe} | {sch} | {a['delta_vs_baseline_pct']:+.2f}% | {v} |")
-    md.append(f"| 200 | (not run) | — | — |")
+    md.append("| 200 | (not run) | — | — |")
     md.append("")
     md.append(f"**WIN extends to higher NFE:** {win_extends_to_higher_nfe}  ")
     md.append(f"**Best ΔFID% across completed cells:** {best_delta_pct:+.2f}%  ")
@@ -425,7 +425,7 @@ def main() -> int:
             print(f"    {sch:30s} FID={a['fid_headline']:.2f}  "
                   f"ΔFID%={a['delta_vs_baseline_pct']:+.2f}%  "
                   f"d_z={a['cohens_d_z']:+.4f}  {v}")
-    print(f"\n  Best NFE per scheduler (most negative ΔFID%):")
+    print("\n  Best NFE per scheduler (most negative ΔFID%):")
     for sch in SCHEDULER_ARMS:
         print(f"    {sch:30s} best NFE = {best_nfe_per_sched[sch]}")
     print(f"  Best delta_pct overall (across completed NFEs) = {best_delta_pct:+.2f}%")

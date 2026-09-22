@@ -77,8 +77,8 @@ def compute_empirical_quantities(
         profile_residual_fn_registry,
     )
     from adaptive_reflow.theory.paper_quantities import (
-        per_cell_coefficient_C,
         exterior_gap_e_rho,
+        per_cell_coefficient_C,
         root_cell_packing_B,
         sheet_evidence_A,
     )
@@ -395,7 +395,7 @@ def main() -> int:
     if not d4_pass:
         print("[Wave 229 P3] D.4 FAIL — should rollback profile_residual.py")
         return 1
-    print(f"[Wave 229 P3] DONE")
+    print("[Wave 229 P3] DONE")
     return 0
 
 

@@ -311,7 +311,7 @@ def main() -> int:
     print("=" * 72)
     print("Wave 225 P8 — Paper-quantity weight grid search (Kanzi agent)")
     print("=" * 72)
-    print(f"\nGrid axes:")
+    print("\nGrid axes:")
     print(f"  n_cap_base     ∈ {GRID_N_CAP_BASE}")
     print(f"  sheet_A_weight ∈ {GRID_SHEET_A_WEIGHT}")
     print(f"  cell_C_weight  ∈ {GRID_CELL_C_WEIGHT}")
@@ -373,7 +373,7 @@ def main() -> int:
                     best_cell = row
 
     assert best_cell is not None
-    print(f"\nBest grid cell (most negative mean_diff):")
+    print("\nBest grid cell (most negative mean_diff):")
     print(f"  n_cap_base={best_cell['n_cap_base']:.2f}, "
           f"sheet_A_weight={best_cell['sheet_A_weight']:.2f}, "
           f"cell_C_weight={best_cell['cell_C_weight']:.2f}")
@@ -394,7 +394,7 @@ def main() -> int:
     print(f"  CI95 = [{full_stats['ci_95'][0]:+.6f}, {full_stats['ci_95'][1]:+.6f}]")
     delta_d_z = full_stats["cohens_d_z"] - uniform["cohens_d_z"]
     delta_mean = full_stats["mean_diff"] - uniform["mean_diff"]
-    print(f"  Delta vs uniform (Wave 214):")
+    print("  Delta vs uniform (Wave 214):")
     print(f"    d_z delta = {delta_d_z:+.6f}")
     print(f"    mean_diff delta = {delta_mean:+.6f}")
     goal_lift = full_stats["cohens_d_z"] < uniform["cohens_d_z"]
@@ -759,7 +759,7 @@ full N={len(common)} paired arrays:
     print(f"Wrote {AUDIT_DOC}")
 
     # ---- 9. Final summary ----
-    print(f"\n" + "=" * 72)
+    print("\n" + "=" * 72)
     print("Wave 225 P8 — final summary")
     print("=" * 72)
     print(f"Best cell (n_cap_base, sheet_A_weight, cell_C_weight): "

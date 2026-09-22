@@ -162,8 +162,8 @@ def _per_record_reos_flags(smiles_list: list[str]) -> list[int]:
     used by Wave 208 P2 via ``flowmol.analysis.reos.REOS``).
     """
     try:
-        from useful_rdkit_utils.reos import REOS
         from rdkit import Chem
+        from useful_rdkit_utils.reos import REOS
         reos_obj = REOS(active_rules=["Glaxo", "Dundee"])
     except Exception as exc:
         print(f"  WARNING: reos init failed ({type(exc).__name__}:{exc}); returning zeros", flush=True)
@@ -238,7 +238,7 @@ def main() -> int:
     n_mols = int(args.n_mols_per_record)
 
     print("=" * 78, flush=True)
-    print(f"Wave 235 P4: FlowMol3 3-seed expansion (partial sweep)", flush=True)
+    print("Wave 235 P4: FlowMol3 3-seed expansion (partial sweep)", flush=True)
     print(f"  n_total_per_arm = {n_total}, nfe = {nfe}, seeds = {seeds}", flush=True)
     print(f"  n_molecules per record = {n_mols} (DGL 2.4.0 regression forces single-mol path)", flush=True)
     print("=" * 78, flush=True)
@@ -458,7 +458,7 @@ def main() -> int:
     print("WAVE 235 P4 SUMMARY", flush=True)
     print("=" * 78, flush=True)
     print(f"New seeds: {seeds}, nfe={nfe}, n_per_arm={n_total}", flush=True)
-    print(f"Fallback: single-mol partial sweep (DGL 2.4.0 batched path broken)", flush=True)
+    print("Fallback: single-mol partial sweep (DGL 2.4.0 batched path broken)", flush=True)
     for s in per_seed_summaries:
         print(
             f"  Seed {s['seed']}: baseline fg_dev={s['baseline_fg_dev']:.4f} "

@@ -281,7 +281,7 @@ def main():
     seeds = [int(s) for s in args.seeds.split(",")]
     n_samples = args.n_samples
 
-    print(f"=== Wave 247 P2 — R5b CIFAR-10 RF n_rounds=1 multi-seed ===", flush=True)
+    print("=== Wave 247 P2 — R5b CIFAR-10 RF n_rounds=1 multi-seed ===", flush=True)
     print(f"[wave247-p2] seeds={seeds}  n_rounds={N_ROUNDS}  NFE={NFE}  n_samples={n_samples}", flush=True)
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)

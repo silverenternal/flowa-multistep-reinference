@@ -421,7 +421,7 @@ def main() -> int:
                         help="run only the D.4 gate (no runner invocations)")
     args = parser.parse_args()
 
-    print(f"=== Wave 247 P5 — R5b CIFAR-10 RF n_rounds=1 NFE sweep ===", flush=True)
+    print("=== Wave 247 P5 — R5b CIFAR-10 RF n_rounds=1 NFE sweep ===", flush=True)
     print(f"[w247-p5] NFE_VALUES={NFE_VALUES}  n_samples={N_SAMPLES}  "
           f"n_rounds={N_ROUNDS}  seed={SEED}", flush=True)
 
@@ -601,7 +601,7 @@ def main() -> int:
             print(f"    {sch:30s} FID={a['fid_headline']:.2f}  "
                   f"ΔFID%={a['delta_vs_baseline_pct']:+.2f}%  "
                   f"d_z={a['cohens_d_z']:+.4f}  {v}")
-    print(f"\n  Best NFE per scheduler (most negative ΔFID%):")
+    print("\n  Best NFE per scheduler (most negative ΔFID%):")
     for sch in SCHEDULER_ARMS:
         print(f"    {sch:30s} best NFE = {best_nfe_per_sched[sch]}")
     print(f"  Best delta_pct overall = {best_delta_pct:+.2f}%")
@@ -638,7 +638,7 @@ def main() -> int:
     md_lines.append(f"\n**WIN extends to higher NFE:** {win_extends}  ")
     md_lines.append(f"**Best NFE for overall WIN:** {best_nfe_overall}  ")
     md_lines.append(f"**Best ΔFID% across all cells:** {best_delta_pct:+.2f}%  ")
-    md_lines.append(f"\n## 3-NFE × 4-scheduler table\n")
+    md_lines.append("\n## 3-NFE × 4-scheduler table\n")
     md_lines.append("| NFE | CosineAnneal | CodimensionSheet | EvidenceDriven | FreeTraj |")
     md_lines.append("|---:|---:|---:|---:|---:|")
     for nfe in NFE_VALUES:
@@ -674,10 +674,10 @@ def main() -> int:
             md_lines.append(f"| {nfe} | {', '.join(winners) or '(none)'} | "
                             f"{', '.join(regressers) or '(none)'} |")
         md_lines.append("")
-    md_lines.append(f"\n## D.4 byte-stable gate\n")
+    md_lines.append("\n## D.4 byte-stable gate\n")
     md_lines.append(f"D.4 = {d4['n_passed']}/{d4['n_total']} "
                     f"{'PASS' if d4['d4_pass'] else 'FAIL'}  ")
-    md_lines.append(f"\n## Files\n")
+    md_lines.append("\n## Files\n")
     md_lines.append("* `scripts/wave247_p5_r5b_nfe_sweep.py` — driver (this script)")
     md_lines.append("* `verification_outputs/wave247-p5-r5b-nfe{50,100,200}.csv` — per-NFE CSV")
     md_lines.append("* `verification_outputs/wave247-p5-r5b-nfe-sweep-aggregate.csv` — aggregate")

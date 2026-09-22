@@ -204,7 +204,7 @@ def main() -> int:
     diff_fg_contrib = (np.array(fw_reos["fg_contrib_proxy"])[both_valid_mask]
                        - np.array(bl_reos["fg_contrib_proxy"])[both_valid_mask])
 
-    print(f"\nPer-record diff (REOS flag count, fw - bl):")
+    print("\nPer-record diff (REOS flag count, fw - bl):")
     print(f"  n = {len(diff_reos_n_flags)}")
     print(f"  mean = {np.mean(diff_reos_n_flags):+.4f}")
     print(f"  sd   = {np.std(diff_reos_n_flags, ddof=1):.4f}")
@@ -217,7 +217,7 @@ def main() -> int:
 
     # Print headline bootstrap results
     point_d_z = cohens_d_paired(diff_reos_n_flags)
-    print(f"\nHeadline (REOS flag count) bootstrap d_z CI:")
+    print("\nHeadline (REOS flag count) bootstrap d_z CI:")
     print(f"  point d_z = {point_d_z:+.4f}")
     print(f"  95% CI = [{boot_n_flags['ci_95_low']:+.4f}, {boot_n_flags['ci_95_high']:+.4f}]")
     print(f"  CI excludes 0? {bool(boot_n_flags['ci_95_low'] > 0 or boot_n_flags['ci_95_high'] < 0)}")
@@ -407,7 +407,7 @@ that Wave 225 P1 (commit 7537559) reconciled.
     print(f"  point = {point_d_z:+.4f}")
     print(f"  bootstrap 95% CI = [{boot_n_flags['ci_95_low']:+.4f}, {boot_n_flags['ci_95_high']:+.4f}]")
     print(f"  CI excludes 0: {bool(boot_n_flags['ci_95_low'] > 0 or boot_n_flags['ci_95_high'] < 0)}")
-    print(f"  → direction-consistent with framework-wins (d_z < 0).", flush=True)
+    print("  → direction-consistent with framework-wins (d_z < 0).", flush=True)
 
     return 0
 

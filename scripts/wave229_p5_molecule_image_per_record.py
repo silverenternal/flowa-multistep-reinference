@@ -537,7 +537,7 @@ def write_audit_doc(rows: list[dict], consistency: dict) -> None:
         "||cosineanneal_samples[i] - baseline_samples[i]||²_2` in image "
         "space (paired by index). Then `mean_d, sd_d, t, df, p, d_z, "
         "CI95` on the per-record diff_sq array. Bonferroni p = "
-        f"p_raw × 3 (capped at 1.0)."
+        "p_raw × 3 (capped at 1.0)."
     )
     lines.append("")
     lines.append("### MNIST — per-chunk FID paired-t (n_pairs=10)")

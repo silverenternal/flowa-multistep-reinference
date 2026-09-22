@@ -37,9 +37,10 @@ import csv
 import json
 import math
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional
 
 PROJECT_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
 if str(PROJECT_ROOT) not in sys.path:

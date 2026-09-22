@@ -366,13 +366,13 @@ def main() -> int:
     print("\n" + "=" * 72)
     print("BEST CELLS")
     print("=" * 72)
-    print(f"  Highest overall d_z (no easy-tier constraint):")
+    print("  Highest overall d_z (no easy-tier constraint):")
     print(f"    easy={best_overall['easy_factor']} hard={best_overall['hard_intensity']} -> d_z={best_overall['d_z']:+.4f}")
-    print(f"  Highest overall d_z WITH no easy-tier regression:")
+    print("  Highest overall d_z WITH no easy-tier regression:")
     if best_no_regression:
         print(f"    easy={best_no_regression['easy_factor']} hard={best_no_regression['hard_intensity']} -> d_z={best_no_regression['d_z']:+.4f}")
     else:
-        print(f"    NONE FOUND (all cells still regress on easy tier)")
+        print("    NONE FOUND (all cells still regress on easy tier)")
 
     # ---- 4. Write CSV ----
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -473,7 +473,7 @@ def main() -> int:
         pt = best_no_regression["per_tier_d_z"]
         print(f"    per_tier: hard={pt['hard']:+.4f}, medium={pt['medium']:+.4f}, easy={pt['easy']:+.4f}")
     else:
-        print(f"  best_easy_factor (no regression) : NONE")
+        print("  best_easy_factor (no regression) : NONE")
     print(f"  Wave 233 P3 baseline d_z     : {WAVE233_P3_D_Z:+.4f}")
     if best_no_regression:
         print(f"  delta_d_z vs Wave 233 P3     : {best_no_regression['delta_d_z_vs_wave233']:+.4f}")

@@ -136,7 +136,7 @@ def main():
     print("=== Wave 234 P6 non-inferiority test on R5b ===", flush=True)
 
     fids = load_headline_fids()
-    print(f"headline FIDs (Wave 191 P2 N=1000, matched NFE=50):")
+    print("headline FIDs (Wave 191 P2 N=1000, matched NFE=50):")
     for k, v in fids.items():
         print(f"  {k}: {v:.4f}")
     print(flush=True)
@@ -318,13 +318,13 @@ def main():
         f"* chunk SD_diff_FID (per pair) = {R5B_CHUNK_SD_DIFF_FID:.4f}",
         f"* chunk SE_diff_FID = {R5B_CHUNK_SE_DIFF_FID:.4f}",
         "",
-        f"The chunk-level SD (per pair) is propagated as the matched-NFE paired "
-        f"uncertainty for the non-inferiority test on the headline FID delta.",
+        "The chunk-level SD (per pair) is propagated as the matched-NFE paired "
+        "uncertainty for the non-inferiority test on the headline FID delta.",
         "",
         "## Results (primary arm: `evidence_driven`)",
         "",
-        f"| Quantity | Value |",
-        f"|---|---:|",
+        "| Quantity | Value |",
+        "|---|---:|",
         f"| baseline FID | {baseline_fid:.4f} |",
         f"| framework FID | {p['mean_FID']:.4f} |",
         f"| mean_diff_FID | {p['mean_diff']:.4f} ({p['delta_pct_vs_baseline']:+.2f}%) |",
@@ -367,12 +367,12 @@ def main():
         "",
         "## Reproducibility",
         "",
-        f"* Script: `scripts/wave234_p6_non_inferiority.py`",
-        f"* Input: `verification_outputs/wave191-p2-cifar10-n1000.json`",
+        "* Script: `scripts/wave234_p6_non_inferiority.py`",
+        "* Input: `verification_outputs/wave191-p2-cifar10-n1000.json`",
         f"* Output CSV: `{OUT_PATH_CSV.relative_to(REPO_ROOT)}`",
         f"* Output JSON: `{OUT_PATH_JSON.relative_to(REPO_ROOT)}`",
-        f"* Backend: `adaptive_reflow.stats.equivalence.non_inferiority`",
-        f"* Alpha: 0.05 (one-sided, upper-tail test)",
+        "* Backend: `adaptive_reflow.stats.equivalence.non_inferiority`",
+        "* Alpha: 0.05 (one-sided, upper-tail test)",
         "",
     ])
     DOC_PATH.write_text("\n".join(md_lines) + "\n")

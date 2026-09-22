@@ -256,7 +256,7 @@ def main() -> int:
     f_scp = np.array([f_sc_idx[q] for q in common], dtype=float)
 
     tier, boundaries = _tier_assignment(b_plddt)
-    print(f"\nTier sizes:")
+    print("\nTier sizes:")
     for t, label in enumerate(TIER_LABELS):
         n_t = int(np.sum(tier == t))
         pl_min = float(np.min(b_plddt[tier == t])) if n_t > 0 else float("nan")

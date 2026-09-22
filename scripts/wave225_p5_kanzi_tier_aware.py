@@ -231,7 +231,7 @@ def main() -> int:
     print("=" * 72)
     print("Wave 225 P5 — Kanzi tier-aware scheduler counterfactual")
     print("=" * 72)
-    print(f"\nTier boundaries (33rd/67th pct of baseline per_seq_rmsd_A):")
+    print("\nTier boundaries (33rd/67th pct of baseline per_seq_rmsd_A):")
     print(f"  low (hard/medium) = {TIER_BOUNDARY_LOW:.4f} Å")
     print(f"  high (medium/easy) = {TIER_BOUNDARY_HIGH:.4f} Å")
     print(f"Reduced intensity factor on easy tier: {REDUCED_INTENSITY_FACTOR}")
@@ -244,7 +244,7 @@ def main() -> int:
     print(f"  framework mean={f_rmsd.mean():.4f} std={f_rmsd.std(ddof=1):.4f}")
 
     tier, boundaries = _tier_assignment(b_rmsd)
-    print(f"\nTier sizes:")
+    print("\nTier sizes:")
     for t, label in enumerate(TIER_LABELS):
         n_t = int(np.sum(tier == t))
         r_min = float(np.min(b_rmsd[tier == t])) if n_t > 0 else float("nan")
@@ -255,7 +255,7 @@ def main() -> int:
     counter_rmsd = _build_counterfactual(b_rmsd, f_rmsd, tier)
     easy_mask = tier == 2
     uplift_easy_units = float(np.mean(counter_rmsd[easy_mask]) - np.mean(f_rmsd[easy_mask]))
-    print(f"\nEasy-tier counterfactual uplift (RMSD units; negative = better):")
+    print("\nEasy-tier counterfactual uplift (RMSD units; negative = better):")
     print(f"  baseline_RMSD_easy mean = {np.mean(b_rmsd[easy_mask]):.4f}")
     print(f"  framework_RMSD_easy mean (uniform) = {np.mean(f_rmsd[easy_mask]):.4f}")
     print(f"  counterfactual_RMSD_easy mean (tier-aware) = {np.mean(counter_rmsd[easy_mask]):.4f}")
