@@ -203,6 +203,14 @@
 
 **Honest disclosure:** R5b regression is **conditional on n_rounds > 1**. The structural fix is `n_rounds=1`. The `--no-final-restart` hypothesis (DeepSeek initial guess) is **FALSIFIED** (it makes regression WORSE, +30.19% > +20.20%). The true root cause is the multi-round structure overhead in matched-NFE=50 image domain, not the last-round restart blending itself.
 
+**Wave 247 P1-P6 (2026-09-22) comprehensive R5b upgrade validation:**
+- **Multi-seed (P2, 3 seeds at N=200 single_mol):** seed 42 framework_WINS (per-record d_z=-0.285); seeds 43+44 UNDERPOWERED; 3-seed pooled d_z=0.000 (UNDERPOWERED verdict); but `n_rounds_1_win_seed_robust: TRUE` (seed 42 confirmed).
+- **N=1000 confirm at n_rounds=1 (P3, seed 42):** 4 schedulers all framework_WINS (CosineAnneal ΔFID=-1.64%, CodimensionSheet ΔFID=-3.54% best, EvidenceDriven ΔFID=-1.82%, FreeTraj ΔFID=-0.9%); all d_z=4-5 (huge effect size).
+- **Tier-aware wrapper on CIFAR (P4):** **DOES NOT help** (best_easy_factor=1.0, best_hard_intensity=1.0, best_overall d_z=-0.139 with no improvement vs baseline); tier-aware wrapper is a no-op for R5b.
+- **NFE sweep (P5, 50/100/200):** best NFE=50; WIN does NOT extend to NFE>50; best ΔFID=-1.11% at NFE=50.
+
+**Cumulative honest R5b verdict:** R5b is a **conditional WIN only** (seed 42 + n_rounds=1 + NFE=50 + 4/4 schedulers ΔFID -0.9% to -3.54%); NOT a universal framework strength. Wave 247 disproves overgeneralization claims. Paper §7.6.7 + §10.4 K3 disclosure preserved verbatim.
+
 **Data sources:** `verification_outputs/wave235-p1-r5b-fix.{csv,json}` + `verification_outputs/wave234-p6-ni-test.csv` + `verification_outputs/wave191-p2-cifar10-n1000.json` (matched-NFE=50 honest-negative curve)
 **Audit doc:** `docs/audit/wave235-p1-r5b-fix.md` + `docs/audit/wave234-p6-non-inferiority.md`
 

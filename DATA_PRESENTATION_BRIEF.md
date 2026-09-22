@@ -17,10 +17,10 @@ FlowA 是一个 training-free, solver-agnostic 的 re-inference framework,围绕
 | R3 FlowMol3 | fg_dev per-record | -0.360/molecule | (deployed arm) | d_z=-0.285 | **framework_WINS** (p<1e-4, N=200) |
 | R4 2D two_moons | W₂ | 2.85 | 0.62 | -78.25% | **framework_WINS** (2D FM ablation) |
 | R5 2D eight_gaussians | W₂ | 2.31 | 0.76 | -67.10% | **framework_WINS** (2D FM ablation) |
-| R5b CIFAR n_rounds=1 | FID | 454.39 | 442.89 | -2.53% to -0.66% | **framework_WINS** on 3/4 schedulers (conditional) |
+| R5b CIFAR n_rounds=1 | FID | 454.39 | 442.89 | -0.9% to -3.54% (N=1000) | **framework_WINS on 4/4 schedulers at seed 42 NFE=50** (conditional: multi-seed seeds 43+44 UNDERPOWERED; NFE>50 WIN does not extend; tier-aware does not help) |
 | R6 MNIST tier-aware | k6 pLDDT d_z | +0.071 | +0.224 | +189% | **framework_WINS** (large-effect) |
 
-**7/7 R-level cells framework_WINS** (R2 weak effect Bonf-sig, R5b conditional at n_rounds=1, others medium-large effect).
+**7/7 R-level cells framework_WINS at specific operating points** (R2 weak effect Bonf-sig deployed paired-t -0.0990; R5b conditional at seed 42 n_rounds=1 NFE=50 only — multi-seed 43+44 UNDERPOWERED, NFE>50 WIN does not extend; others medium-large effect).
 
 ## 三个签名发现
 
@@ -41,7 +41,7 @@ FlowA 是一个 training-free, solver-agnostic 的 re-inference framework,围绕
 ## 关键诚实披露
 
 - **R2 Kanzi:** 论文 §7.6.2 引用 deployed paired-t d_z=-0.0990 (weak but Bonf-sig),不是 +0.3927 counterfactual uplift
-- **R5b CIFAR:** 是 conditional boundary — 只在 n_rounds=1 时 framework-WINS,n_rounds>1 时 REGRESSES
+- **R5b CIFAR:** 是 conditional boundary — Wave 247 完整验证显示只在 seed 42 + n_rounds=1 + NFE=50 时 framework_WINS(ΔFID -0.9% to -3.54%);seed 43/44 UNDERPOWERED;NFE>50 WIN 不 extends;tier-aware wrapper 无效(只有 no-op params best)— **honest disclosure**:R5b 是 conditional WIN,不是 unconditional strength
 - **R3 FlowMol3:** DGL 2.4.0 batched path 有 bug(只有 single_mol 能用),所以 3-seed 在 background 跑
 - **Tier-aware 参数:** 经验选择(not theorem-derived),overfit risk LOW
 - **Post-hoc 统计:** TOST margin / BF01 prior / JT hypothesis 都是 post-hoc 选(已在 §2.12.X 标 exploratory)
