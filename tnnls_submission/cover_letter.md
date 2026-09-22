@@ -44,8 +44,8 @@ TNNLS Editorial Manager.
 **To:** Editor-in-Chief, IEEE Transactions on Neural Networks and
 Learning Systems (TNNLS)
 
-**Subject:** Submission of "FlowA: Training-free, paper-quantity-driven
-re-inference for Flow Matching checkpoints" for consideration as a
+**Subject:** Submission of "FlowA: Training-Free, Paper-Quantity-Driven
+Re-Inference for Flow-Matching Checkpoints" for consideration as a
 regular research paper in IEEE TNNLS.
 
 **Authors:** `[USER TO FILL: Authors block — full author list,

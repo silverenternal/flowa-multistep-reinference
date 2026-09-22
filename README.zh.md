@@ -3,10 +3,10 @@
 [English](README.md) | [中文](README.zh.md)
 
 [![CI](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml/badge.svg)](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml)
-[![D.4 byte-stable](https://img.shields.io/badge/D.4-30%2F30%20PASS-brightgreen)]() [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)]()
-[![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)]()
-[![Adapters](https://img.shields.io/badge/adapters-12-orange.svg)]()
+[![D.4 byte-stable](https://img.shields.io/badge/D.4-30%2F30%20PASS-brightgreen)](#submission-gates-verified-at-final-pre-push) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](#installation--安装)
+[![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)](#tnnls-submission-package--tnnls-投稿材料)
+[![Adapters](https://img.shields.io/badge/adapters-16-orange.svg)](#repository-structure--仓库结构)
 
 **Last updated / 最近更新:** 2026-09-22 (Wave 273 README polish). 源码冻结于 `v3.0-tnnls-ready` 标签。
 
@@ -114,16 +114,16 @@ git clone https://github.com/silverenternal/flowa-multistep-reinference
 cd flowa-multistep-reinference
 
 # Primary: FlowMol3 (protein + molecular + CIFAR + 2D evaluation pipeline)
-python3.11 -m venv .venvs/flowmol3_venv
-.venvs/flowmol3_venv/bin/pip install -r requirements_flowmol3.txt
+python3.12 -m venv .venvs/flowmol3_venv
+.venvs/flowmol3_venv/bin/pip install -r requirements-lock.txt
 
 # Optional: LineageFlow (real-ckpt protein FM)
-python3.10 -m venv .venvs/lineageflow_venv
-.venvs/lineageflow_venv/bin/pip install -r requirements_lineageflow.txt
+python3.12 -m venv .venvs/lineageflow_venv
+.venvs/lineageflow_venv/bin/pip install -r requirements-lineageflow.txt
 
 # Optional: Kanzi (molecular DAE inverse projection)
-python3.11 -m venv .venvs/kanzi_venv
-.venvs/kanzi_venv/bin/pip install -r requirements_kanzi.txt
+python3.12 -m venv .venvs/kanzi_venv
+.venvs/kanzi_venv/bin/pip install -r requirements-kanzi.txt
 ```
 
 ---
@@ -177,7 +177,7 @@ Per-cell full audit trail at `docs/audit/wave*.md` (cited per cell above).
 To build the exact environment used in this work:
 
 ```bash
-docker build -f Dockerfile.tnnls -t flowa:tnnls-v3.0 .
+docker build -f Dockerfile -t flowa:tnnls-v3.0 .
 docker run --gpus all -it flowa:tnnls-v3.0
 ```
 
@@ -193,7 +193,7 @@ adaptive_reflow/         # core framework
 ├── algorithm/            # 5-component scheduler (CosineAnneal, CodimensionSheet, BoundedMerge, EvidenceDriven, BRAI) + TierAware wrapper
 ├── framework/            # CUDA-graph capture
 ├── stats/                # TOST / JT / BF01 / meta / NI
-├── adapters/             # 12 concrete FM adapter implementations
+├── adapters/             # 16 concrete FM adapter families in ADAPTER_REGISTRY
 └── contracts/            # frozen typed dataclasses (paper quantities)
 configs/                  # configuration presets
 ```
@@ -239,7 +239,7 @@ data/                     # vendored upstream checkpoints (8 repos, all unmodifi
 
 Additional checkpoints (HiDream-I1, GraphBFN, Lumina-Image-2.0, ProtBFN-AbBFN, Wan2.2, FreqFlow) will be uploaded to Zenodo at submission freeze.
 
-**Source code:** frozen at `v3.0-tnnls-ready` tag (TNNLS submission). **Docker image:** `flowa:tnnls-v3.0` (`Dockerfile.tnnls`). **Zenodo DOI:** to be generated at submission freeze via GitHub release.
+**Source code:** frozen at `v3.0-tnnls-ready` tag (TNNLS submission). **Docker image:** `flowa:tnnls-v3.0` (`Dockerfile`). **Zenodo DOI:** to be generated at submission freeze via GitHub release.
 
 Reviewers re-verify any headline by comparing the embedded `verification_outputs/` SHA-256 against `sha256sum docs/headline-evidence/rN_*/SOURCE.md`.
 

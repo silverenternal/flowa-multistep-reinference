@@ -1,7 +1,7 @@
 # TNNLS Submission Package — MANIFEST
 
 **Venue:** *IEEE Transactions on Neural Networks and Learning Systems* (TNNLS)
-**Manuscript:** FlowA: Training-Free, Paper-Quantity-Driven Re-Inference Control for Deployed Flow-Matching Checkpoints
+**Manuscript:** FlowA: Training-Free, Paper-Quantity-Driven Re-Inference for Flow-Matching Checkpoints
 **Submitted:** pending (cover-letter USER ACTION placeholders to be filled)
 **Freeze-marker commit:** `93f435b` (Wave 238 P4 — base) + Wave 242 (rescue in flight)
 **Final tag (to push):** `v3.0-tnnls-ready`
