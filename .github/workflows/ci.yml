@@ -155,14 +155,16 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Install test + docs toolchain
-        # ``.[test,dev]`` brings mkdocs + mkdocstrings[python] + griffe
-        # plus pytest + hypothesis + pytest-benchmark. The rest of the
-        # suite is stdlib-only. Closes T-04.4: the workflows historically
-        # called ``pip install -e .[test]`` but the extra was never
-        # declared; ``[test]`` is now an explicit optional-dependency.
+        # ``.[test,dev,flow_matching]`` brings mkdocs + mkdocstrings[python]
+        # + griffe plus pytest + hypothesis + pytest-benchmark plus
+        # numpy + scipy. The rest of the suite is stdlib-only.
+        # ``[flow_matching]`` is added so ``tests/test_algo_uplifts/
+        # conftest.py``'s ``import numpy as np`` (line 24) resolves
+        # under the broad ``pytest tests/`` discovery step (Wave 272
+        # P2 install parity with cpu-tests.yml).
         run: |
           python -m pip install --upgrade pip
-          python -m pip install '.[test,dev]'
+          python -m pip install '.[test,dev,flow_matching]'
 
       - name: Gate 1 -- pytest
         # ``-m "not slow and not benchmark"`` matches the cpu-tests.yml
