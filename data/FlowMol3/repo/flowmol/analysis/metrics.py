@@ -108,18 +108,7 @@ class SampleAnalyzer():
         n_molecules = len(sampled_molecules)
         for molecule in sampled_molecules:
             n_stable_atoms_this_mol, mol_stable, n_fake_atoms = self.stability_func(molecule)
-            # Wave 245 P1 defensive patch extension: 3-tier fallback for num_atoms.
-            # SampledMolecule has .num_atoms (molecule_builder.py:62); Mol has .GetNumAtoms();
-            # partial / malformed molecules may have neither. Try all, default 0.
-            _num = getattr(molecule, 'num_atoms', None)
-            if _num is None:
-                if hasattr(molecule, 'GetNumAtoms'):
-                    _num = molecule.GetNumAtoms()
-                elif hasattr(molecule, 'GetAtoms'):
-                    _num = len(molecule.GetAtoms())
-                else:
-                    _num = 0
-            n_atoms += _num - n_fake_atoms
+            n_atoms += molecule.num_atoms - n_fake_atoms
             n_stable_atoms += n_stable_atoms_this_mol
             n_stable_molecules += int(mol_stable)
 
@@ -163,10 +152,7 @@ class SampleAnalyzer():
             metrics_dict['energy_js_div'] = self.compute_energy_divergence(sampled_molecules)
 
         if posebusters:
-            # Wave 259 P1 defensive patch: getattr fallback for sample.rdkit_mol
-            # Some sampled_molecule objects may be partial (Mol not SampledMolecule)
-            rdmols = [getattr(sample, 'rdkit_mol', None) for sample in sampled_molecules]
-            rdmols = [m for m in rdmols if m is not None]
+            rdmols = [sample.rdkit_mol for sample in sampled_molecules]
             
             print('running bosebusters', flush=True)
             df_pb = self.buster.bust(rdmols, None, None)
@@ -176,8 +162,6 @@ class SampleAnalyzer():
             pb_results['pb_valid'] = n_pb_valid / df_pb.shape[0]
             # TODO: compute how many are pose busters valid, which i think we need to get like the "full report"
             metrics_dict.update(pb_results)
-            del rdmols
-            del df_pb
 
 
         return metrics_dict
@@ -191,19 +175,10 @@ class SampleAnalyzer():
         frag_fracs = []
         error_message = defaultdict(int)
         for mol in sampled_molecules:
-            # Wave 258 P1: use getattr to safely access mol attributes (some sampled_molecule objects may lack fields)
-            if getattr(mol, 'num_atoms', 0) == 0:
+            if mol.num_atoms == 0:
                 error_message[4] += 1
                 continue
-            _build_fn = getattr(mol, 'build_molecule', None)
-            if _build_fn is None:
-                error_message['other'] += 1
-                continue
-            try:
-                rdmol = _build_fn()
-            except Exception:
-                error_message['other'] += 1
-                continue
+            rdmol = mol.build_molecule()
             if rdmol is not None:
                 try:
                     mol_frags = Chem.rdmolops.GetMolFrags(rdmol, asMols=True, sanitizeFrags=False)
@@ -214,11 +189,7 @@ class SampleAnalyzer():
                         n_connected += 1
                     largest_mol = max(mol_frags, default=rdmol, key=lambda m: m.GetNumAtoms())
                     largest_mol_n_atoms = largest_mol.GetNumAtoms()
-                    # Wave 258 P1: getattr to avoid ZeroDivisionError when num_atoms is missing
-                    _n_atoms = getattr(mol, 'num_atoms', 1)
-                    if _n_atoms <= 0:
-                        _n_atoms = 1
-                    largest_frag_frac = largest_mol_n_atoms / _n_atoms
+                    largest_frag_frac = largest_mol_n_atoms / mol.num_atoms
                     frag_fracs.append(largest_frag_frac)
                     Chem.SanitizeMol(largest_mol)
                     smiles = Chem.MolToSmiles(largest_mol)
@@ -234,17 +205,6 @@ class SampleAnalyzer():
                     error_message['other'] += 1
                 except Exception as e:
                     error_message['other'] += 1
-                finally:
-                    # release per-iteration rdkit objects to limit RAM accumulation
-                    try:
-                        del mol_frags
-                    except NameError:
-                        pass
-                    try:
-                        del largest_mol
-                    except NameError:
-                        pass
-            del rdmol
 
         error_strs = []
         for key in ['disconnected', 'valence', 'kekulization', 'other', 'valid']:
@@ -270,8 +230,7 @@ class SampleAnalyzer():
         """ samples: list of SampledMolecule objects. """
         energies = []
         for sample in samples:
-            # Wave 259 P1 defensive patch: getattr fallback for sample.rdkit_mol
-            rdmol = getattr(sample, 'rdkit_mol', None)
+            rdmol = sample.rdkit_mol
             if rdmol is not None:
                 try:
                     Chem.SanitizeMol(rdmol)
@@ -280,7 +239,6 @@ class SampleAnalyzer():
                 energy = compute_mmff_energy(rdmol)
                 if energy is not None:
                     energies.append(energy)
-            del rdmol
 
         return energies
 
@@ -374,27 +332,15 @@ class SampleAnalyzer():
 
 def check_stability(molecule: SampledMolecule, valid_valency_table: dict, explicit_aromaticity: bool = False):
     """ molecule: Molecule object. """
-    # Wave 244 P5 defensive patch: some molecules are plain rdkit.Chem.Mol objects
-    # (not full SampledMolecule), lacking .atom_types / .valencies / .atom_charges.
-    # Fall back to RDKit atom-symbol walk so metrics don't AttributeError on Mol objects.
-    try:
-        atom_types = molecule.atom_types
-        valencies = molecule.valencies.tolist()
-        charges = molecule.atom_charges
-    except AttributeError:
-        atoms = list(molecule.GetAtoms())
-        atom_types = [a.GetSymbol() for a in atoms]
-        valencies = [a.GetTotalValence() for a in atoms]
-        charges = [a.GetFormalCharge() for a in atoms]
-
-    # Wave 244 P5 defensive patch (line 366): Mol objects don't have .fake_atoms.
-    fake_atoms = getattr(molecule, 'fake_atoms', False)
+    atom_types = molecule.atom_types
+    valencies = molecule.valencies.tolist()
+    charges = molecule.atom_charges
 
     n_stable_atoms = 0
-    n_fake_atoms = 0
+    n_fake_atoms = 0 
     for i, (atom_type, valency, charge) in enumerate(zip(atom_types, valencies, charges)):
 
-        if fake_atoms and atom_type == 'Sn':
+        if molecule.fake_atoms and atom_type == 'Sn':
             n_fake_atoms += 1
             continue
 
@@ -418,23 +364,16 @@ def check_stability(molecule: SampledMolecule, valid_valency_table: dict, explic
 
 def check_stability_midi(molecule: SampledMolecule, valid_valency_table):
     """ molecule: Molecule object. """
-    # Wave 244 P5 defensive patch (line 390-392): Mol objects don't have these attrs.
-    try:
-        atom_types = molecule.atom_types
-        valencies = molecule.valencies
-        charges = molecule.atom_charges
-    except AttributeError:
-        atoms = list(molecule.GetAtoms())
-        atom_types = [a.GetSymbol() for a in atoms]
-        valencies = [a.GetTotalValence() for a in atoms]
-        charges = [a.GetFormalCharge() for a in atoms]
+    atom_types = molecule.atom_types
+    valencies = molecule.valencies
+    charges = molecule.atom_charges
 
     n_stable_atoms = 0
     n_fake_atoms = 0 
     mol_stable = True
     for i, (atom_type, valency, charge) in enumerate(zip(atom_types, valencies, charges)):
 
-        if getattr(molecule, 'fake_atoms', False) and atom_type == 'Sn':
+        if molecule.fake_atoms and atom_type == 'Sn':
             n_fake_atoms += 1
             continue
 
