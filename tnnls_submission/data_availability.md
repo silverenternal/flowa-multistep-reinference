@@ -13,22 +13,49 @@ The FlowA framework is open-source under the project's existing license (see `LI
 - **Docker image:** `flowa:tnnls-v3.0` (Docker recipe at `Dockerfile.tnnls`)
 - **Zenodo DOI:** (to be generated at submission freeze via GitHub release `v3.0-tnnls-ready`)
 
-### Patched upstream `metrics.py` (FlowMol3)
+### Unmodified vendored upstream code (Wave 262 P1 — 2026-09-22)
 
-The framework uses a patched version of
-`data/FlowMol3/repo/flowmol/analysis/metrics.py` (commit
-`a2f42cc1311b0123d9e66c72cfc0e0ac89f97fb8`; force-added because the
-parent directory is `.gitignore`-d). The patch adds 3 defensive fallback
-paths for partial `SampledMolecule` / plain rdkit `Mol` objects so that
-`analyze()`, `check_stability()`, and `check_stability_midi()` do not
-raise `AttributeError` on FlowMol3 samples that lack `.num_atoms` /
-`.atom_types` / `.valencies` / `.atom_charges` / `.fake_atoms`. Reviewers
-can inspect the exact diff via
-`git log -p -- data/FlowMol3/repo/flowmol/analysis/metrics.py`. See
-`docs/audit/wave244-p5-metrics-patch.md` for the original patch narrative,
-`docs/audit/wave245-p1-metrics-patch-validation.md` for the
-numerical-equivalence validation PARTIAL (seed 44 retry v3 in flight), and
-`docs/audit/wave246-p1-metrics-py-commit.md` for the commit rationale.
+All vendored upstream repositories (FlowMol3, LineageFlow, Kanzi,
+ProtBFN-AbBFN, GraphBFN, Lumina-Image-2.0, HiDream-I1, Wan2.2, FreqFlow
+— total 9) were initially inspected for modifications. 8 files had been
+silently patched during internal development (Wave 68 / Wave 166 / Wave 168
+etc.). Per user academic-integrity directive (2026-09-22), ALL 8 files were
+reverted to their upstream commit-hash versions (FlowMol3 commit `77cae22`,
+LineageFlow commit `ccef84a`). The framework now ships unmodified vendored
+code.
+
+The 8 reverted files and their upstream commits are:
+
+| # | Repository | File | Upstream commit |
+|---|------------|------|------------------|
+| 1 | FlowMol3 | `flowmol/analysis/molecule_builder.py` | `77cae22` |
+| 2 | FlowMol3 | `flowmol/models/flowmol.py` | `77cae22` |
+| 3 | FlowMol3 | `flowmol/utils/ctmc_utils.py` | `77cae22` |
+| 4 | FlowMol3 | `flowmol/analysis/metrics.py` | `77cae22` |
+| 5 | LineageFlow | `evaluation/evaluate_all.py` | `ccef84a` |
+| 6 | LineageFlow | `evaluation/foldability_omegafold.py` | `ccef84a` |
+| 7 | LineageFlow | `evaluation/novelty_mmseqs2.py` | `ccef84a` |
+| 8 | LineageFlow | `evaluation/run_foldability.py` | `ccef84a` |
+| 9 | LineageFlow | `evaluation/self_consistency_esmif.py` | `ccef84a` |
+
+(File 4 = `metrics.py` was reverted at Wave 260 P1 commit `4af95da`; files
+1–3 and 5–9 were reverted at Wave 262 P1 commit `8f0255d`. All 9 files are
+bytewise identical to their upstream commit hash.)
+
+Previously defensively patched papers' evaluation scripts (which added
+`--workers-per-gpu` / `--pctid-novelty` / `--temperature` flags with
+defaults=OFF to preserve prior behavior) were reverted. R1 LineageFlow HMMER
+N=1000 reading (158 baseline / 342 framework / +116.46% Δ / p<1e-10) and
+R6 k6 foldability per-tier d_z values were generated with default flags;
+since the new flags were default=OFF (preserves prior behavior), the
+numbers are stable. Future work: full rerun with `--workers-per-gpu` flag
+explicitly set to 1 to verify byte-stable reproduction.
+
+Reviewers can verify byte-identity via the Wave 262 P2 verify audit
+(`docs/audit/wave262-p2-verify.md`): md5 of every vendored file matches
+its upstream reference. The full upstream-modifications audit trail is in
+`docs/audit/wave261-p1-inventory.md` + `wave261-p5-final-audit.md` +
+`wave262-p1-revert-all.md` + `wave262-p3-rerun.md`.
 
 ## Data availability
 

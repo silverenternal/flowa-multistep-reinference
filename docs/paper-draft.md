@@ -1203,6 +1203,21 @@ items, and apply to the camera-ready framing:
    preserved at the documented `OMP_NUM_THREADS=1` setting;
    non-default thread configurations may yield different SHA-256
    digests.
+7. **The 3-seed FlowMol3 pooled analysis is BLOCKED at vendor level**
+   (Wave 109.C §5 code fix required); see `docs/audit/wave260-p1-gates-verify.md`.
+   Per the 2026-09-22 user academic-integrity directive ("所有对于别人官方仓库里做的所有更改都要撤回"), all defensively patched vendored upstream `metrics.py` modifications were reverted at Wave 260 P1 commit `4af95da`. The framework ships the unmodified upstream `metrics.py` (commit `77cae22`), which does **not** add the partial-Mol fallback paths. As a result, partial `rdkit.Chem.Mol` objects from the Wave 242 single_mol path trigger `AttributeError` (CRASH). The 3-seed pooled analysis therefore cannot run end-to-end until a vendor-side framework fix (Wave 109.C §5) lands. R3 verdict falls back to Wave 87 seed 42 N=1000 framework_WINS lineage (CLM-076, CLM-077).
+8. **The vendored upstream FlowMol3 `metrics.py` (commit 77cae22) is
+   unmodified and used as-is; any partial `rdkit.Chem.Mol` objects
+   trigger `AttributeError` (CRASH).** The framework ships the unmodified
+   upstream; partial-Mol handling is deferred to a future vendor-side
+   fix. The canonical evaluation path for FlowMol3 is the upstream
+   `metrics.py` bytewise identical to `77cae22`; any analysis that
+   encounters a FlowMol3 sample lacking `.num_atoms` / `.atom_types` /
+   `.valencies` / `.atom_charges` / `.fake_atoms` raises `AttributeError`
+   immediately. Reviewers reproducing the manuscript results will
+   encounter this CRASH if they run the FlowMol3 single_mol path against
+   the unmodified upstream; the framework cannot patch the upstream to
+   recover, per the user academic-integrity directive.
 
 ## §10.4 Known negative surface & provenance discipline
 
