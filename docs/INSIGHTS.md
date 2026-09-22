@@ -458,7 +458,7 @@ unchanged. The Wave 188 P5 + Wave 189 P2/P3/P4 + Wave 190 P2/P3 + Wave
 negative, not a paper claim retraction); R5b CIFAR-10 RF matched-NFE=50
 (framework REGRESSES +20.21% FID — value-add is cross-budget NFE=2 vs
 NFE=50, NOT matched-NFE); R5c MNIST FM smoke-ckpt PROVISIONAL per
-CLM-059 (paired baseline-vs-arm comparison IS valid; absolute FID
+[CLM-059] (paired baseline-vs-arm comparison IS valid; absolute FID
 values are framework-internal projection-FID, NOT literature InceptionV3
 FID); n=3 per arm 4-arm budget ceiling (Wave 179 / Wave 180 / Wave 181
 / Wave 182 sweep generation).

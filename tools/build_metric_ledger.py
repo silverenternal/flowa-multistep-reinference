@@ -264,6 +264,7 @@ class BuildResult:
     statistical_rows: int = 0
     insight_rows: int = 0
     engineering_gate_rows: int = 0
+    sweep280_rows: int = 0
 
 
 # ---------------------------------------------------------------------------
@@ -743,6 +744,132 @@ def _parse_statistical() -> tuple[list[Metric], list[str]]:
 
 
 # ---------------------------------------------------------------------------
+# Wave 280 sweep-result rows (R1, R3, R5c, R6, K1, K4+K5, K7, K3+R5b)
+# Per Wave 280 P task spec: these docs are additive, byte-stable
+# sources of per-cell d_z / Bonferroni p-value / 3-seed-pooled statistics
+# on the weak-metric remediation vectors from Wave 275 P4. The metric
+# ledger treats each sweep-result doc as one ``SWEEP280`` row; the
+# verifier stays decoupled from the per-cell semantics (it only
+# records the source path + SHA-256 + status + headline scalar).
+# ---------------------------------------------------------------------------
+
+# Each entry: (metric_id, relative_path, title, claim_id_alias)
+SWEEP280_FILES: tuple[tuple[str, str, str, str], ...] = (
+    (
+        "SWEEP280-R1",
+        "docs/audit/wave280-p-r1-sweep-result.md",
+        "Wave 280 P — R1 LineageFlow HMMER 3-seed pooled sweep",
+        "CLM-060",
+    ),
+    (
+        "SWEEP280-R3",
+        "docs/audit/wave280-p-r3-sweep-result.md",
+        "Wave 280 P — R3 FlowMol3 fg_dev 3-seed sweep (Wave 109.C §5 DGL fix path)",
+        "CLM-068",
+    ),
+    (
+        "SWEEP280-R5C",
+        "docs/audit/mnist/wave280-p-r5c-sweep-result.md",
+        "Wave 280 P — R5c MNIST FM production-ckpt 3-seed N=200 sweep",
+        "CLM-059",
+    ),
+    (
+        "SWEEP280-R6",
+        "docs/audit/wave280-p-r6-sweep-result.md",
+        "Wave 280 P — R6 k6 foldability tier-aware 3-seed N=200 sweep",
+        "CLM-061",
+    ),
+    (
+        "SWEEP280-K1",
+        "docs/audit/wave280-p-k1-sweep-result.md",
+        "Wave 280 P — K1 FlowMol3 RDKit-validity 3-seed N=200 sweep",
+        "CLM-060",
+    ),
+    (
+        "SWEEP280-K4K5",
+        "docs/audit/wave280-p-k4k5-sweep-result.md",
+        "Wave 280 P — K4 + K5 LineageFlow 3-seed N=100 hmmer sweep",
+        "CLM-060",
+    ),
+    (
+        "SWEEP280-K7",
+        "docs/audit/wave280-p-k7-sweep-result.md",
+        "Wave 280 P — K7 LineageFlow novelty 3-seed N=300 sweep",
+        "CLM-060",
+    ),
+    (
+        "SWEEP280-K3R5B",
+        "docs/audit/wave280-p-cifar-sweep-result.md",
+        "Wave 280 P — CIFAR-10 K3+R5b 3-seed N=100 FID sweep (PARTIAL)",
+        "CLM-070",
+    ),
+)
+
+# Pull ``**Status:**`` from the sweep-result doc body. The format is
+# ``**Status:** <FREE TEXT>``. We use this as the SWEEP280 row's
+# `status` field verbatim (with the leading ``**Status:** `` stripped).
+_SWEEP280_STATUS_RE: re.Pattern[str] = re.compile(
+    r"^\*\*Status:\*\*\s*(?P<status>.+?)\s*$",
+    re.MULTILINE,
+)
+
+
+def _parse_sweep280() -> tuple[list[Metric], list[str]]:
+    """Emit one SWEEP280 row per Wave 280 P sweep-result doc.
+
+    Each doc's ``**Status:**`` headline line is captured verbatim so
+    the ledger surfaces PASS / PARTIAL_SUPPORTED / etc. without
+    requiring a separate manifest. Vendored purity + sweep drivers are
+    preserved per the user's
+    "claude相关的确实不要commit" + "vendored SOTA 评分脚本依旧不能动"
+    directives: this parser does NOT touch the sweep drivers under
+    /tmp/ or any vendored upstream file.
+    """
+    metrics: list[Metric] = []
+    errors: list[str] = []
+    for metric_id, rel_path, title, claim_id_alias in SWEEP280_FILES:
+        source_path = REPO_ROOT / rel_path
+        if not source_path.is_file():
+            errors.append(f"SWEEP280 {metric_id}: file not found at {rel_path}")
+            metrics.append(
+                Metric(
+                    metric_id=metric_id,
+                    kind="SWEEP280",
+                    title=title,
+                    status="MISSING_SOURCE",
+                    source_artifact_path=rel_path,
+                    source_artifact_sha256="",
+                    notes="SOURCE FILE NOT FOUND at build time.",
+                )
+            )
+            continue
+        sha = _sha256_of_path(source_path)
+        text = source_path.read_text(encoding="utf-8")
+        m = _SWEEP280_STATUS_RE.search(text)
+        status = m.group("status") if m else "UNKNOWN"
+        metrics.append(
+            Metric(
+                metric_id=metric_id,
+                kind="SWEEP280",
+                title=title,
+                status=status,
+                claim_id=claim_id_alias,
+                source_artifact_path=rel_path,
+                source_artifact_sha256=sha,
+                section_ref=rel_path,
+                notes=(
+                    f"Wave 280 P 3-seed sweep result (per the user's "
+                    f"'3 seed 够了' + 'sweep 改进也应该做' directives). "
+                    f"Vendored purity preserved per the user's "
+                    f"'clone下来的原sota项目里的打分脚本依旧不能动' "
+                    f"directive. Claim alias: {claim_id_alias}."
+                ),
+            )
+        )
+    return metrics, errors
+
+
+# ---------------------------------------------------------------------------
 # Engineering-gate rows (no source artifact to hash — these are
 # authoritative by construction per AGENTS.md §4.1).
 # ---------------------------------------------------------------------------
@@ -818,6 +945,12 @@ def build() -> BuildResult:
     metrics.extend(gate_metrics)
     errors.extend(gate_errors)
 
+    # 6. WAVE 280 SWEEP RESULTS (additive — does not touch any
+    # existing row; per the Wave 280 P task spec).
+    sweep280_metrics, sweep280_errors = _parse_sweep280()
+    metrics.extend(sweep280_metrics)
+    errors.extend(sweep280_errors)
+
     # Tally kind counts for the report.
     counts = {
         "CLAIM": 0,
@@ -825,6 +958,7 @@ def build() -> BuildResult:
         "STATISTICAL": 0,
         "INSIGHT": 0,
         "ENGINEERING_GATE": 0,
+        "SWEEP280": 0,
     }
     for m in metrics:
         counts[m.kind] = counts.get(m.kind, 0) + 1
@@ -836,6 +970,7 @@ def build() -> BuildResult:
         statistical_rows=counts["STATISTICAL"],
         insight_rows=counts["INSIGHT"],
         engineering_gate_rows=counts["ENGINEERING_GATE"],
+        sweep280_rows=counts["SWEEP280"],
     )
 
 
@@ -892,6 +1027,7 @@ def _render_markdown(result: BuildResult) -> str:
         "STATISTICAL",
         "INSIGHT",
         "ENGINEERING_GATE",
+        "SWEEP280",
     ):
         count = sum(1 for m in result.metrics if m.kind == kind)
         out.append(f"| {kind} | {count} |")
@@ -909,6 +1045,7 @@ def _render_markdown(result: BuildResult) -> str:
         "STATISTICAL",
         "INSIGHT",
         "ENGINEERING_GATE",
+        "SWEEP280",
     ):
         rows = [m for m in result.metrics if m.kind == kind]
         if not rows:
@@ -957,6 +1094,7 @@ def _render_json(result: BuildResult) -> str:
             "STATISTICAL": result.statistical_rows,
             "INSIGHT": result.insight_rows,
             "ENGINEERING_GATE": result.engineering_gate_rows,
+            "SWEEP280": result.sweep280_rows,
         },
     }
     return json.dumps(payload, indent=2, sort_keys=False, ensure_ascii=False) + "\n"
@@ -1010,6 +1148,7 @@ def main(argv: list[str] | None = None) -> int:
             f"STATISTICAL={result.statistical_rows} "
             f"INSIGHT={result.insight_rows} "
             f"ENGINEERING_GATE={result.engineering_gate_rows} "
+            f"SWEEP280={result.sweep280_rows} "
             f"errors={len(result.errors)}"
         )
     else:
@@ -1026,7 +1165,8 @@ def main(argv: list[str] | None = None) -> int:
             f"CLAIM={result.claim_rows} HEADLINE={result.headline_rows} "
             f"STATISTICAL={result.statistical_rows} "
             f"INSIGHT={result.insight_rows} "
-            f"ENGINEERING_GATE={result.engineering_gate_rows}"
+            f"ENGINEERING_GATE={result.engineering_gate_rows} "
+            f"SWEEP280={result.sweep280_rows}"
         )
         if result.errors:
             print(f"Non-fatal build errors: {len(result.errors)}")

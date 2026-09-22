@@ -265,6 +265,7 @@ def run_framework_arm(
     num_steps_per_round: list[int],
     seed_offset: int,
     beta: float,
+    weights_path: Path,
     verbose: bool = True,
 ) -> tuple[np.ndarray, dict[str, int]]:
     """Generate ``n_samples`` framework-arm endpoints (4 rounds × num_steps_per_round[r], beta=beta).
@@ -279,8 +280,11 @@ def run_framework_arm(
     """
     from dataclasses import replace as _replace
 
+    # Wave 280 R5c sweep: weights_path is forwarded from the caller so the
+    # production ckpt at data/mnist_fm/production.ckpt is consumed by every
+    # framework arm (not the hardcoded smoke ckpt at data/mnist_fm.npz).
     adapter = MnistFmAdapter(
-        weights_path="data/mnist_fm.npz",
+        weights_path=str(weights_path),
         num_steps=int(BASELINE_NUM_STEPS),  # default; overridden per round via condition
     )
 
@@ -370,13 +374,21 @@ def cohens_dz(diff: np.ndarray) -> float:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--n-samples", type=int, default=DEFAULT_N_SAMPLES)
+    parser.add_argument("--n-samples", "--n-records", type=int, default=DEFAULT_N_SAMPLES,
+                        dest="n_samples",
+                        help="Number of samples per arm (alias --n-records, "
+                             "Wave 280 R5c sweep)")
     parser.add_argument("--output-dir", type=Path,
                         default=REPO_ROOT / "verification_outputs" / "wave191-p3-mnist-n1000")
     parser.add_argument("--output-json", type=Path,
                         default=REPO_ROOT / "verification_outputs" / "wave191-p3-mnist-n1000.json")
     parser.add_argument("--cache-dir", type=Path, default=REPO_ROOT / "data" / "mnist_fm_train_cache")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--ckpt", type=Path, default=None,
+                        help="Path to MNIST FM ckpt (.npz). Defaults to "
+                             "data/mnist_fm.npz (the smoke ckpt). Wave 280 "
+                             "R5c sweep passes data/mnist_fm/production.ckpt "
+                             "for the production-ckpt re-materialization.")
     parser.add_argument("--k-chunks", type=int, default=K_CHUNKS)
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
@@ -384,11 +396,23 @@ def main(argv: list[str] | None = None) -> int:
     n_samples = int(args.n_samples)
     output_dir = Path(args.output_dir)
     output_json = Path(args.output_json)
+    # Wave 280 R5c sweep: if --output-json was not explicitly given AND the
+    # --output-dir differs from the default, derive --output-json from
+    # --output-dir so per-seed outputs land under the same dir without
+    # overwriting the canonical Wave 191 P3 JSON.
+    if args.output_json == REPO_ROOT / "verification_outputs" / "wave191-p3-mnist-n1000.json" \
+            and output_dir != REPO_ROOT / "verification_outputs" / "wave191-p3-mnist-n1000":
+        output_json = output_dir / "sweep_summary.json"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Resolve checkpoint path; surface a smoke disclosure if the ckpt is the
     # smoke 1-epoch / base_channels=8 / 6000-image materialization.
-    ckpt_path = REPO_ROOT / "data" / "mnist_fm.npz"
+    if args.ckpt is not None:
+        ckpt_path = Path(args.ckpt)
+        if not ckpt_path.is_absolute():
+            ckpt_path = (REPO_ROOT / ckpt_path).resolve()
+    else:
+        ckpt_path = REPO_ROOT / "data" / "mnist_fm.npz"
     if not ckpt_path.exists():
         raise SystemExit(f"checkpoint_not_found:{ckpt_path}")
     ckpt_size = int(ckpt_path.stat().st_size)
@@ -460,6 +484,7 @@ def main(argv: list[str] | None = None) -> int:
             num_steps_per_round=arm_num_steps[name],
             seed_offset=ARM_SEED_OFFSETS[name],
             beta=float(BETA_FRAMEWORK),
+            weights_path=ckpt_path,
             verbose=not args.quiet,
         )
         arm_samples[name] = s
