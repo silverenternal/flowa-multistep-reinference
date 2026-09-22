@@ -88,7 +88,7 @@ def per_record_reos(smiles_list: list[str], reos_obj, train_rate_lookup: dict) -
     rules = reos_obj.active_rule_df
     patterns = [(row["rule_id"], row["rule_set_name"], row["description"], row["pat"])
                 for _, row in rules.iterrows()]
-    train_header_set = set(train_rate_lookup.keys())
+    _train_header_set = set(train_rate_lookup.keys())
     n_flags_out: list[int] = []
     fg_proxy_out: list[float] = []
     for smi in smiles_list:
@@ -99,7 +99,7 @@ def per_record_reos(smiles_list: list[str], reos_obj, train_rate_lookup: dict) -
             continue
         n_flags = 0
         proxy = 0.0
-        for rule_id, rule_set_name, descr, pat in patterns:
+        for _rule_id, rule_set_name, descr, pat in patterns:
             if pat is None:
                 continue
             if mol.HasSubstructMatch(pat):
@@ -166,7 +166,7 @@ def main() -> int:
     bl_smiles = load_smiles(BASELINE_FILE)
     fw_smiles = load_smiles(FRAMEWORK_FILE)
     with open(SWEEP_FILE) as f:
-        sweep = json.load(f)
+        _sweep = json.load(f)
     print(f"Baseline SMILES: {len(bl_smiles)} / Framework SMILES: {len(fw_smiles)}", flush=True)
 
     n_paired = min(len(bl_smiles), len(fw_smiles))

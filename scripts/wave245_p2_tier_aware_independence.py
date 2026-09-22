@@ -250,7 +250,7 @@ def _load_r2_kanzi() -> tuple[list[str], np.ndarray, np.ndarray, list[str]]:
     # Map seq_i -> PDB by parsing coords file.
     pdbs: list[str] = []
     seq_to_pdb: dict[str, str] = {}
-    current_pdb = None
+    _current_pdb = None
     with R2_COORDS.open() as fh:
         for line in fh:
             if line.startswith(">"):
@@ -661,7 +661,7 @@ def main() -> int:
             ("R6_k6", "Pfam family", r6_result),
             ("R2_kanzi", "PDB id (length bin)", r2_result),
         ):
-            for bin_label in res["per_bin_results"].keys():
+            for bin_label in res["per_bin_results"]:
                 bin_res = res["per_bin_results"][bin_label]
                 best_for_bin = res["best_combo_per_bin"][bin_label]
                 for combo_name, _, _ in (

@@ -189,6 +189,7 @@ def run_lineageflow_upstream_eval(
     pfam_fastas_dir: str | pathlib.Path | None = DEFAULT_PFAM_FASTAS_DIR,
     hmmscan: str | None = DEFAULT_HMMSCAN,
     mmseqs: str | None = DEFAULT_MMSEQS,
+    length_bias: str = "long",
 ) -> dict[str, float]:
     """Invoke LineageFlow's upstream ``evaluate_all.py`` on ``fasta_path``.
 
@@ -224,6 +225,22 @@ def run_lineageflow_upstream_eval(
         Wave 80-installed ``/home/hugo/hmmer_build/bin/hmmscan`` +
         ``/home/hugo/bin/mmseqs``. Passing ``None`` skips the arg
         (lets the orchestrator fall back to its own defaults).
+    length_bias
+        Wave 276 P — K4 length-distribution marker. One of
+        ``{"short", "long"}``. ``short`` = legacy 30-150 AA FASTA
+        range (Wave 81/86/158 byte-stable); ``long`` = 200-300 AA
+        range (K4 powered path; each record spans 2-3 Pfam domains
+        and lifts ``hmmscan_total_hits`` per record by 2-3x). The
+        kwarg does NOT modify the FASTA input — callers wanting the
+        powered FASTA MUST also pass
+        ``--upstream-eval-len-bias long`` to
+        :func:`tools.gen_lineageflow_n1000_fastas.main`. The kwarg
+        only embeds a ``len_bias_*`` marker in the returned dict so
+        downstream consumers (the headline-ledger ingest at
+        ``docs/headline-evidence/ledger.json``) can distinguish the
+        "powered" R1 row from the "short" row at the per-cell
+        level. ``"short"`` is a no-op (byte-stable); ``"long"``
+        adds ``len_bias_long=1.0`` to the returned dict.
 
     Returns
     -------
@@ -245,6 +262,7 @@ def run_lineageflow_upstream_eval(
         return _run_lineageflow_upstream_eval_impl(
             fasta_path, output_dir, metrics, timeout_s,
             hmmdb, target_db, pfam_fastas_dir, hmmscan, mmseqs,
+            length_bias=str(length_bias),
         )
 
 
@@ -258,6 +276,7 @@ def _run_lineageflow_upstream_eval_impl(
     pfam_fastas_dir: str | pathlib.Path | None,
     hmmscan: str | None,
     mmseqs: str | None,
+    length_bias: str = "long",
 ) -> dict[str, float]:
     cmd: list[str] = [
         sys.executable,
@@ -335,6 +354,19 @@ def _run_lineageflow_upstream_eval_impl(
                 continue
     flat["metric_kind"] = "family_validity+foldability+self_consistency+novelty"
     flat["upstream_orchestrator"] = str(LINEAGEFLOW_EVALUATE_ALL)
+    # Wave 276 P — K4 length-distribution marker. Embed a
+    # ``len_bias_long=1.0`` key into the returned dict when
+    # ``length_bias="long"`` so the headline-ledger ingest at
+    # ``docs/headline-evidence/ledger.json`` can key on the length
+    # distribution at the per-cell level. ``"short"`` is a no-op
+    # (byte-stable with Wave 81/86/158/161/167 R1 entries — no
+    # ``len_bias_*`` key is added).
+    if str(length_bias) == "long":
+        flat["len_bias_long"] = 1.0
+    # Surface the chosen length_bias as a string for human-readable
+    # debugging / log greps (always set, regardless of short/long,
+    # so audit consumers can branch deterministically).
+    flat["length_bias"] = str(length_bias)
     # Wave 97.D — hard N-record assertion (file-aware variant). The
     # orchestrator writes per-family ``n_records`` into summary.json;
     # we use the minimum across all reported metrics as the actual

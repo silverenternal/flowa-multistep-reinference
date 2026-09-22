@@ -271,7 +271,7 @@ def _reconstruct_mnist_chunk_fids() -> dict[str, list[float]]:
         _frechet_distance,
     )
 
-    mnist_test = _load_mnist_offline(split="test", cache_dir=cache_dir)  # (10000, 784)
+    _mnist_test = _load_mnist_offline(split="test", cache_dir=cache_dir)  # (10000, 784)
     # Use the canonical MnistFrechetProjectionEvaluator to byte-match the original
     # Wave 191 P3 reference features and projection matrix (seed=42, dim=128).
     evaluator = MnistFrechetProjectionEvaluator(cache_dir=cache_dir)
@@ -375,7 +375,7 @@ def main() -> None:
     base_chunk = np.asarray(mnist_chunk_fids["baseline"], dtype=np.float64)
     ed_chunk = np.asarray(mnist_chunk_fids["evidence_driven"], dtype=np.float64)
     s = _paired_stats_sf(base_chunk, ed_chunk)
-    mnist_baseline_fid = cifar_json_baseline_fid = json.loads(
+    mnist_baseline_fid = _cifar_json_baseline_fid = json.loads(
         (REPO_ROOT / "verification_outputs" / "wave191-p3-mnist-n1000.json").read_text()
     )["baseline_fid"]
     ed_fid = json.loads(

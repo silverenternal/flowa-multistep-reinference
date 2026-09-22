@@ -227,9 +227,9 @@ def verdict_for_proxy(proxy_stats: dict, alpha_bonf: float) -> tuple[str, bool, 
     p_raw = proxy_stats["p_raw"]
     bonf_sig = bool(p_raw < alpha_bonf)
     # Post-hoc power at observed d_z
-    d_z = proxy_stats["d_z"]
+    _d_z = proxy_stats["d_z"]
     # SE for the proxy paired test at df=999 (under projection)
-    se_diff = proxy_stats["se_diff"]
+    _se_diff = proxy_stats["se_diff"]
     # Observed power at d_z: power = Phi(|t_obs| - t_{alpha/2, df})
     t_obs = proxy_stats["t_statistic"]
     df = proxy_stats["df"]

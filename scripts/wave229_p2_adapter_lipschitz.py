@@ -329,7 +329,7 @@ def _make_v_theta_graphbfn(adapter: Any) -> Callable[[np.ndarray, float], np.nda
 
     # Synthesize a small uniform-categorical prior and an adjacency_logits
     # array so the BFN step has the right shape. Adjacency is (n_nodes, n_nodes).
-    theta_node_init = np.full((n_nodes, vocab_atom), 1.0 / vocab_atom, dtype=np.float64)
+    _theta_node_init = np.full((n_nodes, vocab_atom), 1.0 / vocab_atom, dtype=np.float64)
     theta_edge_init = np.full((n_edges, vocab_bond), 1.0 / vocab_bond, dtype=np.float64)
     adjacency_init = np.zeros((n_nodes, n_nodes), dtype=np.float64)
     rng = np.random.default_rng(int(RNG_SEED))
@@ -345,7 +345,7 @@ def _make_v_theta_graphbfn(adapter: Any) -> Callable[[np.ndarray, float], np.nda
         theta = theta - theta.max(axis=1, keepdims=True)
         exp_theta = np.exp(theta)
         theta = exp_theta / exp_theta.sum(axis=1, keepdims=True)
-        step_rng = np.random.default_rng(int(round(float(t) * 1000.0)) + 1)
+        _step_rng = np.random.default_rng(int(round(float(t) * 1000.0)) + 1)
         new_theta_node, new_theta_edge, _ = _synthetic_bfn_step(
             theta_node=theta,
             theta_edge=theta_edge_init,
@@ -613,14 +613,14 @@ def main() -> None:
     # Correlation analysis
     finite_max = [r["L_emp_max"] for r in rows if r["L_emp_max"] == r["L_emp_max"] and r["L_emp_max"] != float("inf")]
     finite_mean = [r["L_emp_mean"] for r in rows if r["L_emp_mean"] == r["L_emp_mean"] and r["L_emp_mean"] != float("inf")]
-    a_g_list = [A_G_CANON] * len(finite_max)
+    _a_g_list = [A_G_CANON] * len(finite_max)
 
     def _pearson(xs: list[float], ys: list[float]) -> float:
         if len(xs) < 2:
             return float("nan")
         xm = sum(xs) / len(xs)
         ym = sum(ys) / len(ys)
-        num = sum((x - xm) * (y - ym) for x, y in zip(xs, ys))
+        num = sum((x - xm) * (y - ym) for x, y in zip(xs, ys, strict=True))
         den_x = math.sqrt(sum((x - xm) ** 2 for x in xs))
         den_y = math.sqrt(sum((y - ym) ** 2 for y in ys))
         if den_x * den_y < 1e-30:

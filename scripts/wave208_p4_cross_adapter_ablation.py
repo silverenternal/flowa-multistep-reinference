@@ -298,7 +298,7 @@ def main() -> None:
             writer.writerow(r)
 
     # Aggregate summary
-    n_paper_vs_cosine_present = sum(
+    _n_paper_vs_cosine_present = sum(
         1 for r in rows if r["paper_vs_cosine_d_z"] is not None
     )
     paper_vs_cosine_per_adapter: dict[str, list[float]] = {}

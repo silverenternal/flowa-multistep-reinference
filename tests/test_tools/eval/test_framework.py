@@ -419,6 +419,11 @@ def test_solve_framework_paper_quantity_driven_beta_changes_per_round() -> None:
             # wrapper signature matches ``tools._make_framework_policy``;
             # forwarded into ``original_make_policy`` to preserve the
             # NFE-adaptive scaling introduced in Wave 173 P4.
+            tier_aware_n_cap: Any = None,  # Wave 275 P4 — R6
+            # tier-aware n_cap (additive kwargs; defaults to ``None``
+            # so pre-Wave-275 callers see byte-stable behaviour).
+            tier_aware_baseline_metrics: Any = None,
+            current_record_id: Any = None,
         ) -> Any:
             policy = original_make_policy(
                 adapter,
@@ -426,6 +431,9 @@ def test_solve_framework_paper_quantity_driven_beta_changes_per_round() -> None:
                 seed=seed,
                 paper_quantities=paper_quantities,
                 nfe=int(nfe),
+                tier_aware_n_cap=tier_aware_n_cap,
+                tier_aware_baseline_metrics=tier_aware_baseline_metrics,
+                current_record_id=current_record_id,
             )
             captured_betas.append(
                 float(next(iter(policy.beta_by_channel.values())))

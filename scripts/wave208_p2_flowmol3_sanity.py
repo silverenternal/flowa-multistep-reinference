@@ -61,14 +61,22 @@ def per_record_metrics(smiles_list):
                 out[k].append(np.nan)
         else:
             out["validity"].append(1)
-            try: out["qed"].append(QED.qed(mol))
-            except: out["qed"].append(np.nan)
-            try: out["logp"].append(Crippen.MolLogP(mol))
-            except: out["logp"].append(np.nan)
-            try: out["n_rings"].append(sum(1 for _ in mol.GetRingInfo().AtomRings()))
-            except: out["n_rings"].append(np.nan)
-            try: out["n_atoms"].append(mol.GetNumHeavyAtoms())
-            except: out["n_atoms"].append(np.nan)
+            try:
+                out["qed"].append(QED.qed(mol))
+            except Exception:
+                out["qed"].append(np.nan)
+            try:
+                out["logp"].append(Crippen.MolLogP(mol))
+            except Exception:
+                out["logp"].append(np.nan)
+            try:
+                out["n_rings"].append(sum(1 for _ in mol.GetRingInfo().AtomRings()))
+            except Exception:
+                out["n_rings"].append(np.nan)
+            try:
+                out["n_atoms"].append(mol.GetNumHeavyAtoms())
+            except Exception:
+                out["n_atoms"].append(np.nan)
     return out
 
 

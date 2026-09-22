@@ -207,8 +207,14 @@ class TierAwareCodimensionSheetScheduler:
     ) -> None:
         """Construct the tier-aware scheduler.
 
-        :param base: the wrapped :class:`CodimensionSheetScheduler`.
-            Defaults to a fresh one with the canonical
+        :param base: the wrapped :class:`CodimensionSheetScheduler`
+            (or any object exposing the
+            :class:`SchedulerProtocol` surface — Wave 275 P4 R6
+            relaxed the type guard so the tier-aware wrapper can sit
+            on top of :class:`PaperRatioAdaptiveScheduler` without
+            breaking the framework's paper-quantity-driven
+            ``n_cap_base(r)`` derivation). Defaults to a fresh
+            :class:`CodimensionSheetScheduler` with the canonical
             ``eps_implicit=0.05`` and the paper-aligned
             ``eps_direction="decreasing"`` (Wave 233 P3 default;
             matches the framework default since Wave 34).
@@ -241,10 +247,28 @@ class TierAwareCodimensionSheetScheduler:
                 eps_implicit=0.05,
                 eps_direction="decreasing",
             )
-        if not isinstance(base, CodimensionSheetScheduler):
+        # Wave 275 P4 R6 — relax the type guard to accept any
+        # ``SchedulerProtocol`` consumer (e.g.
+        # :class:`PaperRatioAdaptiveScheduler`). The wrapper only
+        # forwards ``sample`` + ``record_round_feedback`` + the
+        # ``cycle_length`` accessor, all of which are part of the
+        # protocol surface — the strict ``CodimensionSheetScheduler``
+        # check from Wave 233 P3 prevented the framework-side wiring
+        # in :func:`_make_framework_policy` from nesting the wrapper
+        # on top of :class:`PaperRatioAdaptiveScheduler`.
+        # ``SchedulerProtocol`` is a ``typing.Protocol`` (not
+        # ``@runtime_checkable``), so a duck-type check on the
+        # ``sample`` method is the structural guard. Pre-Wave-275
+        # callers still pass a bare
+        # :class:`CodimensionSheetScheduler` so the relaxed guard is
+        # backward compatible.
+        if not hasattr(base, "sample") or not callable(
+            getattr(base, "sample", None),
+        ):
             raise TypeError(
-                "base must be a CodimensionSheetScheduler, got "
-                f"{type(base).__name__}"
+                "base must be a CodimensionSheetScheduler or any "
+                f"object exposing SchedulerProtocol.sample(); "
+                f"got {type(base).__name__}"
             )
         # Validate easy_tier_nfe_reduction_factor.
         if isinstance(easy_tier_nfe_reduction_factor, bool) or not isinstance(
@@ -528,15 +552,54 @@ class TierAwareCodimensionSheetScheduler:
         self,
         round_in_cycle: int,
         metrics: Mapping[str, float] | None = None,
+        paper_quantities: Mapping[str, float] | None = None,
     ) -> None:
-        """Delegate to the wrapped :class:`CodimensionSheetScheduler`.
+        """Delegate to the wrapped base scheduler.
 
         The tier-aware wrapper is a stateless modifier (it does not
         consume per-round oracle feedback); per-round feedback is
         forwarded to the base scheduler so its own convergence
         detection / paper-quantity shift logic continues to work.
+
+        Accepts both ``metrics`` (the protocol-conformant generic
+        feedback name) AND ``paper_quantities`` (the
+        :class:`PaperRatioAdaptiveScheduler` keyword) so the wrapper
+        is forward-compatible with either consumer. When the inner
+        base is :class:`PaperRatioAdaptiveScheduler` (Wave 275 P4
+        R6 framework wiring), the framework calls with
+        ``paper_quantities=``; the wrapper forwards both kwargs and
+        the inner scheduler consumes the one it expects.
         """
-        self._base.record_round_feedback(round_in_cycle, metrics)
+        # Forward to the inner scheduler. Different inner schedulers
+        # accept different kwargs — pass whichever is supplied.
+        kwargs: dict[str, Any] = {"round_in_cycle": round_in_cycle}
+        if metrics is not None:
+            kwargs["metrics"] = metrics
+        if paper_quantities is not None:
+            kwargs["paper_quantities"] = paper_quantities
+        try:
+            self._base.record_round_feedback(**kwargs)
+        except TypeError:
+            # Fallback for legacy inner schedulers that only accept
+            # the ``metrics`` kwarg (or only ``paper_quantities``).
+            # Retry with the alternative name when possible.
+            if "metrics" not in kwargs and isinstance(
+                self._base, CodimensionSheetScheduler,
+            ):
+                self._base.record_round_feedback(
+                    round_in_cycle=round_in_cycle,
+                    metrics=paper_quantities,
+                )
+            elif (
+                "paper_quantities" not in kwargs
+                and not isinstance(self._base, CodimensionSheetScheduler)
+            ):
+                self._base.record_round_feedback(
+                    round_in_cycle=round_in_cycle,
+                    paper_quantities=metrics,
+                )
+            else:
+                raise
 
     def inject_noise(
         self,

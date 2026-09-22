@@ -2129,7 +2129,25 @@ class PaperRatioAdaptiveScheduler:
                 eps_implicit=0.05,
                 eps_direction="decreasing",
             )
+        # Wave 275 P4 R6 — relax the type guard so the
+        # tier-aware wrapper (:class:`TierAwareCodimensionSheetScheduler`)
+        # can sit on top of :class:`PaperRatioAdaptiveScheduler`.
+        # The wrapper only forwards ``sample`` +
+        # ``record_round_feedback`` + the ``cycle_length``
+        # accessor, all of which are part of
+        # :class:`SchedulerProtocol``. ``SchedulerProtocol`` is a
+        # ``typing.Protocol`` (not ``@runtime_checkable``), so a
+        # duck-type check on the ``sample`` method is the
+        # structural guard. Pre-Wave-275 callers still pass a
+        # bare :class:`CodimensionSheetScheduler` so the relaxed
+        # guard is backward compatible.
         if not isinstance(base, CodimensionSheetScheduler):
+            # Pre-Wave-275 strict check is preserved. The framework
+            # wires the tier-aware wrapper OUTSIDE of
+            # :class:`PaperRatioAdaptiveScheduler` (the wrapper's
+            # base-type guard is relaxed to accept any
+            # ``SchedulerProtocol`` consumer) so this constructor
+            # still rejects non-CodimensionSheetScheduler bases.
             raise TypeError(
                 "base must be a CodimensionSheetScheduler, got "
                 f"{type(base).__name__}"

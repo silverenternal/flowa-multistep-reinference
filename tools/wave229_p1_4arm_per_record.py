@@ -52,8 +52,8 @@ for _k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(_k, "8")
 del _k
 
-import numpy as np
-from scipy import stats
+import numpy as np  # noqa: E402
+from scipy import stats  # noqa: E402
 
 REPO_ROOT: Path = Path(__file__).resolve().parent.parent
 OUT_DIR: Path = REPO_ROOT / "verification_outputs"
@@ -646,9 +646,9 @@ def cmd_sweep(args: argparse.Namespace) -> int:
     # we launch it under the lineageflow_n1000 wrapper and emit a
     # JSONL stub. The per-record computation is delegated to the
     # bootstrap path on the resulting JSON.
-    nfe_budgets = ",".join(str(n) for n in NFES)
+    _nfe_budgets = ",".join(str(n) for n in NFES)
     log_path = OUT_DIR / f"wave229-p1-sweep-{arm}.log"
-    out_json = OUT_DIR / f"lineageflow_n1000_{arm}_q4_2026_v2.json"
+    _out_json = OUT_DIR / f"lineageflow_n1000_{arm}_q4_2026_v2.json"
     cmd = [
         "bash",
         "tools/lineageflow_n1000_gpu_sweep.sh",
@@ -670,7 +670,7 @@ def cmd_sweep(args: argparse.Namespace) -> int:
         )
         return 0
     # Launch in background; do not wait for completion (subagent boundary).
-    log_fh = open(log_path, "w")
+    log_fh = open(log_path, "w")  # noqa: SIM115
     subprocess.Popen(cmd, stdout=log_fh, stderr=log_fh, env=env)
     print(
         f"[wave229-p1-sweep] launched in background; log_path={log_path}",

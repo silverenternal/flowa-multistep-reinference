@@ -390,8 +390,8 @@ def run_b4() -> dict[str, Any]:
     diffs_plddt = np.array([records[i]["f_plddt"] - records[i]["b_plddt"] for i in range(len(records))])
     diffs_sc = np.array([records[i]["f_sc_perplexity"] - records[i]["b_sc_perplexity"] for i in range(len(records))])
 
-    cr_plddt = cluster_robust_paired(diffs_plddt, cluster_ids)
-    cr_sc = cluster_robust_paired(diffs_sc, cluster_ids)
+    _cr_plddt = cluster_robust_paired(diffs_plddt, cluster_ids)
+    _cr_sc = cluster_robust_paired(diffs_sc, cluster_ids)
 
     # Compute hard/medium/easy tier for k6
     # Difficulty by baseline pLDDT percentile (Wave 198 P3): hard = lowest
@@ -616,7 +616,7 @@ def run_b5() -> dict[str, Any]:
             qid_to_tier[r["qid"]] = "easy"
     df_long["tier"] = df_long["qid"].map(qid_to_tier)
 
-    metric_label = {"plddt": "pLDDT", "sc_perplexity": "scPerplexity"}
+    _metric_label = {"plddt": "pLDDT", "sc_perplexity": "scPerplexity"}
 
     for tier_name in ["hard", "medium", "easy", "overall"]:
         for m_key, m_label in [("plddt", "pLDDT"), ("sc_perplexity", "scPerplexity")]:

@@ -17,6 +17,7 @@ subprocess invocations consume.
 """
 from __future__ import annotations
 
+import pathlib
 from typing import Any
 
 # Wave 98.A — GPU utilization watchdog. Wraps each per-cell run so a
@@ -87,11 +88,24 @@ def _run_cell(
     flowmol3_upstream_eval: bool = False,
     kanzi_framework_paper_metrics: bool = False,
     upstream_n_samples: int = 1000,
+    tier_aware_n_cap: float | None = None,
+    tier_aware_baseline_metrics_jsonl: str | pathlib.Path | None = None,
 ) -> dict[str, Any]:
     """Run one (model, seed, nfe_budget) cell.
 
     Returns a single dict ready to drop into the ``evidence[]`` list of
     a capability_audit-style report.
+
+    Wave 275 P4 — R6 tier-aware ``n_cap``: ``tier_aware_n_cap`` and
+    ``tier_aware_baseline_metrics_jsonl`` are additive kwargs that
+    activate the
+    :class:`TierAwareCodimensionSheetScheduler` wrapper on the
+    framework arm's :class:`CodimensionSheetScheduler`. When
+    ``tier_aware_n_cap`` is ``None`` or ``>= 1.0`` (the legacy
+    default), the framework runs with the byte-stable legacy
+    scheduler. Both kwargs default to ``None`` so pre-Wave-275
+    callers are byte-stable. See
+    ``docs/audit/wave275-p4-r6-proposal.md`` §2.1.
     """
     # Wave 98.A — watchdog: detect 0% GPU compute + memory-occupied
     # scenarios that should not be silent (the Wave 96.E failure mode).
@@ -110,6 +124,10 @@ def _run_cell(
             flowmol3_upstream_eval=flowmol3_upstream_eval,
             kanzi_framework_paper_metrics=kanzi_framework_paper_metrics,
             upstream_n_samples=upstream_n_samples,
+            tier_aware_n_cap=tier_aware_n_cap,
+            tier_aware_baseline_metrics_jsonl=(
+                tier_aware_baseline_metrics_jsonl
+            ),
         )
 
 
@@ -131,6 +149,8 @@ def _run_cell_impl(
     flowmol3_upstream_eval: bool = False,
     kanzi_framework_paper_metrics: bool = False,
     upstream_n_samples: int = 1000,
+    tier_aware_n_cap: float | None = None,
+    tier_aware_baseline_metrics_jsonl: str | pathlib.Path | None = None,
 ) -> dict[str, Any]:
     """Inner implementation of :func:`_run_cell` — split for Wave 98.A
     watchdog wrapping without changing the public signature."""
@@ -147,6 +167,17 @@ def _run_cell_impl(
         "force_mode_requested": force_mode,
         "metric_mode_requested": metric_mode,
         "restart_min_nfe_requested": restart_min_nfe,
+        # Wave 275 P4 — R6 tier-aware n_cap audit trail (informational).
+        # Both flags default to ``None`` when the user did not pass
+        # them; the value the framework arm ACTUALLY receives is the
+        # ``tier_aware_n_cap`` value below (gated to ``None`` unless
+        # ``0 < factor < 1.0``).
+        "tier_aware_n_cap_requested": tier_aware_n_cap,
+        "tier_aware_baseline_metrics_jsonl_requested": (
+            str(tier_aware_baseline_metrics_jsonl)
+            if tier_aware_baseline_metrics_jsonl is not None
+            else None
+        ),
     }
     adapter, mode = _resolve_metric("_resolve_adapter")(
         model,
@@ -168,6 +199,25 @@ def _run_cell_impl(
         return cell
     cell["adapter_mode"] = mode
     primary = spec["primary_metric"]
+    # Wave 275 P4 — R6 tier-aware n_cap. When both flags are set,
+    # load the JSONL mapping once per cell and forward it (along with
+    # ``tier_aware_n_cap``) to :func:`_solve_framework` so the
+    # framework arm wraps its
+    # :class:`CodimensionSheetScheduler` in
+    # :class:`TierAwareCodimensionSheetScheduler`. The wrapper is
+    # gated by ``0 < tier_aware_n_cap < 1.0`` (default safe no-op).
+    tier_aware_baseline_metrics: dict[Any, float] | None = None
+    if (
+        tier_aware_n_cap is not None
+        and 0.0 < float(tier_aware_n_cap) < 1.0
+        and tier_aware_baseline_metrics_jsonl is not None
+    ):
+        try:
+            tier_aware_baseline_metrics = _resolve_metric(
+                "_load_baseline_metrics_jsonl",
+            )(str(tier_aware_baseline_metrics_jsonl))
+        except Exception:  # noqa: BLE001
+            tier_aware_baseline_metrics = None
     try:
         baseline_trace, baseline_wall = _resolve_metric("_solve_baseline")(
             adapter, nfe=int(nfe), seed=int(seed), n_molecules=int(n_molecules),
@@ -175,6 +225,14 @@ def _run_cell_impl(
         framework_trace, framework_wall = _resolve_metric("_solve_framework")(
             adapter, nfe=int(nfe), seed=int(seed), n_rounds=int(n_rounds),
             n_molecules=int(n_molecules),
+            tier_aware_n_cap=(
+                float(tier_aware_n_cap)
+                if tier_aware_n_cap is not None
+                and 0.0 < float(tier_aware_n_cap) < 1.0
+                else None
+            ),
+            tier_aware_baseline_metrics=tier_aware_baseline_metrics,
+            current_record_id=None,
         )
     except Exception as exc:  # noqa: BLE001
         cell["status"] = "RUN_ERROR"

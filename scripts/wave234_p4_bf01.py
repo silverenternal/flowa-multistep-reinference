@@ -79,7 +79,7 @@ def main() -> None:
         n_pairs = int(row["n_pairs"])
         mean_diff = float(row["mean_diff"])
         sd_diff = float(row["sd_diff"])
-        t_recorded = float(row["t"])
+        _t_recorded = float(row["t"])
 
         # Use the library's bf01_paired() by reconstructing a constant
         # diff array so that mean(diff) == mean_diff and the function
@@ -175,10 +175,7 @@ def main() -> None:
     lines.append("| BF01 range | Evidence |")
     lines.append("|------------|----------|")
     for low, high, label in EVIDENCE_BANDS:
-        if math.isinf(high):
-            r = f"BF01 >= {int(low)}"
-        else:
-            r = f"{int(low)} <= BF01 < {int(high)}"
+        r = f"BF01 >= {int(low)}" if math.isinf(high) else f"{int(low)} <= BF01 < {int(high)}"
         lines.append(f"| {r} | {label} |")
     lines.append("")
     lines.append("Note on data shape: Wave 230 P2 reported the per-cell summary "

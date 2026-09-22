@@ -257,7 +257,7 @@ def mnist_per_record() -> dict:
     # Reconstruct mean_diff and CI95 from cosine's chunk_fids (chunk
     # diffs are stored in cosine.fid_chunks_std which gives the SD of
     # the diffs across 10 chunks).
-    fid_chunks_std = cosine["fid_chunks_std"]  # SD of cosine chunk FIDs
+    _fid_chunks_std = cosine["fid_chunks_std"]  # SD of cosine chunk FIDs
     # d_z = mean_d / sd_d, so sd_d = mean_d / d_z
     # We don't have mean_d directly but fid_chunks_std ≈ sd_d (since
     # cosine chunk FIDs dominate the variance). Use a conservative
@@ -362,7 +362,7 @@ def direction_consistency_check(rows: list[dict]) -> dict:
                 "consistency": c,
                 "verdict": row["verdict"],
             }
-            for row, c in zip(rows, consistency)
+            for row, c in zip(rows, consistency, strict=True)
         ],
     }
 

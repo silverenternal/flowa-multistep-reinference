@@ -18,7 +18,7 @@ sys.path.insert(0, str(REPO_ROOT))
 OUT_DIR = REPO_ROOT / "verification_outputs"
 
 # Limit threads to avoid contention / hang in numpy BLAS
-import os
+import os  # noqa: E402
 
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("OMP_NUM_THREADS", "1")

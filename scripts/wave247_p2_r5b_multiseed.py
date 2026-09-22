@@ -224,7 +224,7 @@ def _per_seed_verdict(framework_arms):
 
 def _three_seed_pooled_d_z(per_seed_arms):
     pooled = {}
-    for arm_name in next(iter(per_seed_arms)).keys():
+    for arm_name in next(iter(per_seed_arms)):
         all_means, all_sds, all_ns = [], [], []
         for arms in per_seed_arms:
             a = arms[arm_name]
@@ -235,7 +235,7 @@ def _three_seed_pooled_d_z(per_seed_arms):
         if total_n == 0:
             pooled[arm_name] = float("nan")
             continue
-        pooled_mean = sum(m * n for m, n in zip(all_means, all_ns)) / total_n
+        pooled_mean = sum(m * n for m, n in zip(all_means, all_ns, strict=True)) / total_n
         pooled_sd = max(all_sds) if all_sds else float("nan")
         pooled[arm_name] = float(pooled_mean / pooled_sd) if pooled_sd > 0 else float("nan")
     return pooled

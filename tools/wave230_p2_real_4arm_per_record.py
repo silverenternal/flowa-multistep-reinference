@@ -48,8 +48,8 @@ for _k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(_k, "8")
 del _k
 
-import numpy as np
-from scipy import stats
+import numpy as np  # noqa: E402
+from scipy import stats  # noqa: E402
 
 REPO_ROOT: Path = Path(__file__).resolve().parent.parent
 OUT_DIR: Path = REPO_ROOT / "verification_outputs"
@@ -507,7 +507,7 @@ def main() -> int:
     rows: list[RealPerRecordRow] = []
     per_cell_n_records: dict[str, int] = {}
     for baseline_arm in ARMS:
-        arm_label = {
+        _arm_label = {
             "vanilla": "Vanilla", "fastdllm": "FastDLLM",
             "abcache": "AB-Cache", "lediflow": "LeDiFlow",
         }[baseline_arm]

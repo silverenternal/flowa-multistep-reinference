@@ -161,7 +161,7 @@ def _cluster_robust_t_test(
       df = n_clusters - 1
     """
     families = sorted(set(family))
-    n_clusters = len(families)
+    _n_clusters = len(families)
     cluster_means = []
     cluster_sizes = []
     for fam in families:
@@ -460,7 +460,7 @@ def a3_tier_aware_test(
     n_easy = int(np.sum(easy_mask))
     easy_baseline_mean = float(np.mean(b_plddt[easy_mask]))
     easy_framework_mean = float(np.mean(f_plddt[easy_mask]))
-    easy_a4_diff = float(np.mean(f_plddt[easy_mask] - b_plddt[easy_mask]))
+    _easy_a4_diff = float(np.mean(f_plddt[easy_mask] - b_plddt[easy_mask]))
 
     # A4 vs baseline (the "regression" we want to close)
     naive_a4_vs_base = _paired_t_test(b_plddt[easy_mask], f_plddt[easy_mask])

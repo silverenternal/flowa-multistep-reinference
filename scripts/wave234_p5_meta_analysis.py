@@ -329,7 +329,7 @@ def main() -> None:
     # function does not expose them directly).
     w_fixed = [1.0 / (se ** 2) for se in se_values]
     sum_w = sum(w_fixed)
-    d_fe = sum(wi * di for wi, di in zip(w_fixed, d_values)) / sum_w
+    d_fe = sum(wi * di for wi, di in zip(w_fixed, d_values, strict=True)) / sum_w
 
     # tau^2 from framework
     tau2 = result.tau2
@@ -352,7 +352,7 @@ def main() -> None:
     with open(OUTPUT_CSV, "w", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=fieldnames)
         writer.writeheader()
-        for s, wf, wr in zip(STUDIES, w_fixed, w_random):
+        for s, wf, wr in zip(STUDIES, w_fixed, w_random, strict=True):
             writer.writerow(
                 {
                     "study": s.study,
@@ -551,7 +551,7 @@ def main() -> None:
     lines.append("")
     n_pos = sum(1 for s in STUDIES if s.d > 0)
     n_neg = sum(1 for s in STUDIES if s.d < 0)
-    n_zero = sum(1 for s in STUDIES if s.d == 0)
+    _n_zero = sum(1 for s in STUDIES if s.d == 0)
     lines.append(
         f"- **Framework improves baseline (positive d):** {n_pos}/{k} "
         f"studies.\n"

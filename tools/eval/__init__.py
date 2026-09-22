@@ -45,6 +45,7 @@ from tools.eval.baseline import (  # type: ignore  # noqa: F401
 from tools.eval.cli import build_argparser, main  # type: ignore  # noqa: F401
 from tools.eval.framework import (  # type: ignore  # noqa: F401
     _compute_paper_quantities,
+    _load_baseline_metrics_jsonl,
     _make_framework_policy,
     _resolve_adapter,
     _solve_framework,
@@ -126,6 +127,7 @@ __all__ = [
     "_solve_baseline",
     # framework module
     "_compute_paper_quantities",
+    "_load_baseline_metrics_jsonl",
     "_make_framework_policy",
     "_resolve_adapter",
     "_solve_framework",

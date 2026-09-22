@@ -33,8 +33,8 @@ OUT_DIR = REPO / "verification_outputs"
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")
 sys.path.insert(0, str(REPO))
 
-import numpy as np
-import scipy.stats
+import numpy as np  # noqa: E402
+import scipy.stats  # noqa: E402
 
 sys.path.insert(0, str(REPO / "scripts"))
 import wave235_p4_flowmol3_3seed as w  # noqa: E402

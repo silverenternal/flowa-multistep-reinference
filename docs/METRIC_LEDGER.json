@@ -1592,7 +1592,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "mkdocs.yml",
-      "source_artifact_sha256": "9d32657e99a6d6fd46870b5870741034cf80d08ddc547f68079721817fefc045",
+      "source_artifact_sha256": "4fccf66198bc749d1b1bf44c87ef2a4a11cebb931d0bc17818dcf4a452aaa4c2",
       "source_line": "",
       "section_ref": "docs/GATES.md + AGENTS.md §4.1",
       "notes": "Live value: `0 errors`. verification command: `mkdocs build --strict`. Source-of-truth surface: mkdocs.yml."
@@ -1622,7 +1622,7 @@
       "metric_id": "G-RUFF",
       "kind": "ENGINEERING_GATE",
       "title": "Ruff lint — auto-computed at build time (4-dir scope)",
-      "status": "FAIL",
+      "status": "PASS",
       "claim_id": "",
       "baseline": "",
       "framework": "",
@@ -1637,7 +1637,7 @@
       "source_artifact_sha256": "",
       "source_line": "",
       "section_ref": "docs/GATES.md + AGENTS.md §4.1",
-      "notes": "Live value: `[*] 2 fixable with the `--fix` option (41 hidden fixes can be enabled with the `--unsafe-fixes` option).`. verification command: `ruff check adaptive_reflow/ tests/ scripts/ tools/`. Source-of-truth surface: adaptive_reflow/."
+      "notes": "Live value: `All checks passed!`. verification command: `ruff check adaptive_reflow/ tests/ scripts/ tools/`. Source-of-truth surface: adaptive_reflow/."
     },
     {
       "metric_id": "R1",

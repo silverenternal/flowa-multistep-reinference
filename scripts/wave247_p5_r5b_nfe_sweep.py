@@ -175,7 +175,7 @@ def _patch_runner_seed() -> tuple[str, str]:
 
     patched = original.replace(
         "        seed=0,\n        output_dir=output_dir,\n    )\n    print(\n        f\"[run_sota_cifar_experiment] baseline: {baseline_path} \"",
-        f"        seed=int(os.environ.get({ENV_VAR!r}, '0')),\n        output_dir=output_dir,\n    )\n    print(\n        f\"[run_sota_cifar_experiment] baseline: {baseline_path} \"",
+        f"        seed=int(os.environ.get({ENV_VAR!r}, '0')),\n        output_dir=output_dir,\n    )\n    print(\n        f\"[run_sota_cifar_experiment] baseline: {{baseline_path}} \"",  # noqa: F821
     )
     patched = patched.replace(
         "            seed_base=0,\n            output_dir=output_dir,",

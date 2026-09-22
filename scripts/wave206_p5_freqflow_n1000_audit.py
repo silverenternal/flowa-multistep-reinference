@@ -135,7 +135,7 @@ def one_sample_t_test(values: np.ndarray, mu0: float, alpha: float) -> dict:
     }
     if n < 2:
         return res
-    mean_v = float(np.mean(values))
+    _mean_v = float(np.mean(values))
     sd_v = float(np.std(values, ddof=1))
     se = sd_v / math.sqrt(n)
     df = n - 1
@@ -239,7 +239,7 @@ def main() -> int:
     n_skipped = 0
 
     for i, seed in enumerate(seeds):
-        t0 = time.monotonic()
+        _t0 = time.monotonic()
         try:
             baseline_trace, base_w = _solve_baseline(adapter, nfe=int(args.nfe), seed=int(seed))
             framework_trace, fw_w = _solve_framework(

@@ -294,7 +294,7 @@ def main() -> int:
             data['baseline_l2sq_to_ref_pooled'],
             data['arm_l2sq_to_ref_pooled'][sch],
         )
-        uniform_d_z_per_sch = u
+        _uniform_d_z_per_sch = u
         uniform_d_z_per_sched[sch] = u
         print(f"\n[uniform / sch={sch}]")
         print(f"  overall: d_z = {u['d_z']:+.4f}  mean_diff = {u['mean_diff']:+.4f}  p = {u['p']:.3e}")
@@ -313,7 +313,7 @@ def main() -> int:
         "hard_intensity": None,
         "overall_d_z": float("inf"),  # we minimize d_z
     }
-    baseline_uniform_best_d_z = None  # reference for improvement_pct_vs_baseline
+    _baseline_uniform_best_d_z = None  # reference for improvement_pct_vs_baseline
 
     # Baseline = uniform (easy_factor=1.0, hard_intensity=1.0).
     # Per Wave 225 P5 / Wave 209 P1 A3 methodology.
@@ -321,7 +321,7 @@ def main() -> int:
     print("9-cell grid (3 easy_factor × 3 hard_intensity) — best per cell across schedulers:")
     print(f"{'='*78}")
     for sch in SCHEDULERS:
-        baseline_uniform_best_d_z = uniform_d_z_per_sched[sch]['d_z']
+        _baseline_uniform_best_d_z = uniform_d_z_per_sched[sch]['d_z']
         for ef in EASY_FACTORS:
             for hi in HARD_INTENSITIES:
                 # Build the counterfactual L2² vector
@@ -409,7 +409,7 @@ def main() -> int:
                 uniform_d_z_sch,
             ])
             # Per-tier rows
-            for t, label in enumerate(TIER_LABELS):
+            for _t, label in enumerate(TIER_LABELS):
                 csv_rows.append([
                     sch, row["easy_factor"], row["hard_intensity"],
                     "per_tier", label,

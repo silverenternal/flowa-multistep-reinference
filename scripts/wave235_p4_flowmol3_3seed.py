@@ -40,8 +40,8 @@ os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")
 sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "data" / "FlowMol3" / "repo"))
 
-import numpy as np
-import scipy.stats
+import numpy as np  # noqa: E402
+import scipy.stats  # noqa: E402
 
 
 def _apply_perturbation(adapter, bundle, *, perturbation_sigma: float, seed: int) -> None:

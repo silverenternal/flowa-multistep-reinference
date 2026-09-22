@@ -117,23 +117,59 @@ RESTART_MIN_NFE: int = 20  # overridden by --restart-min-nfe in main()
 NFE_REF: int = 50  # overridden by --nfe-ref in main()
 
 
-def _biased_aa(rng: random.Random, profile: dict, n: int) -> str:
-    """Sample n AAs from the family's bias (fallback to uniform if bias under-specifies)."""
+def _biased_aa(
+    rng: random.Random,
+    profile: dict,
+    n: int,
+    *,
+    prior_mix: float = 0.0,
+) -> str:
+    """Sample n AAs from the family's bias (fallback to uniform if bias under-specifies).
+
+    Wave 276 P — K5 weak-metric remediation. ``prior_mix`` interpolates
+    between the FAMILY_PROFILES-biased prior (``prior_mix=0.0``, the
+    legacy Wave 81/86/158 byte-stable path) and a uniform AA prior
+    (``prior_mix=1.0``, the K5 powered path). The interpolation is
+    applied to the bias dict before ``rng.choices`` consumes it; the
+    final weights are renormalized so ``sum(weights) == 1.0``.
+
+    See ``docs/audit/wave275-p4-lineageflow-proposal.md`` §2.2 for the
+    full K5 vector (ties-at-zero -> SUPPORTS). When ``prior_mix=0.0``
+    the mixed dict equals the FAMILY_PROFILES bias (legacy
+    byte-stable); when ``prior_mix=1.0`` every AA has weight
+    ``1/20 = 0.05`` (uniform).
+
+    Byte-stability note: the legacy Wave 81/86/158 path uses
+    ``bias.get(aa, 1.0)`` for unlisted AAs (a uniform fallback weight).
+    We preserve this exact behaviour at ``prior_mix=0.0`` so the legacy
+    manifest bytes are reproduced bit-for-bit.
+    """
     bias = profile["bias"]
-    # Build (aa, weight) pairs and renormalise.
-    pairs = []
+    mean_p = max(0.0, min(1.0, float(prior_mix)))
+    uniform_w = 1.0 / float(len(AA_SET))
+    # Legacy fallback weight for unlisted AAs (matches Wave 81/86/158
+    # ``bias.get(aa, 1.0)`` byte-stability).
+    _LEGACY_FALLBACK_W = 1.0
+    pairs: list[tuple[str, float]] = []
     for aa in AA_SET:
-        w = bias.get(aa, 1.0)
-        pairs.append((aa, float(w)))
+        fam_w = float(bias[aa]) if aa in bias else _LEGACY_FALLBACK_W
+        mixed_w = (1.0 - mean_p) * fam_w + mean_p * uniform_w
+        pairs.append((aa, float(mixed_w)))
     total = sum(w for _, w in pairs)
     weights = [w / total for _, w in pairs]
     aas = [aa for aa, _ in pairs]
     return "".join(rng.choices(aas, weights=weights, k=n))
 
 
-def _generate_sequence(rng: random.Random, family_id: str, length: int) -> str:
+def _generate_sequence(
+    rng: random.Random,
+    family_id: str,
+    length: int,
+    *,
+    prior_mix: float = 0.0,
+) -> str:
     profile = FAMILY_PROFILES.get(family_id, {"bias": {}})
-    return _biased_aa(rng, profile, length)
+    return _biased_aa(rng, profile, length, prior_mix=float(prior_mix))
 
 
 # Wave 186 P2 — sensitivity-analysis glue.
@@ -456,15 +492,24 @@ def _write_baseline_arm(
     family_ids: list[str],
     min_len: int,
     max_len: int,
+    prior_mix: float = 0.0,
 ) -> dict[str, int]:
-    """Write the baseline arm: bare RNG draws over each family's AA bias."""
+    """Write the baseline arm: bare RNG draws over each family's AA bias.
+
+    Wave 276 P — ``prior_mix`` is plumbed through to
+    :func:`_generate_sequence` so the K5 prior-composition flag
+    (default ``0.0``, byte-stable) is honoured uniformly across both
+    arms. ``prior_mix=1.0`` activates the K5 uniform-AA prior path.
+    """
     baseline_rng = random.Random(int(seed))
     counts: dict[str, int] = {}
     with out_path.open("w") as f:
         for i in range(int(n)):
             family_id = family_ids[i % len(family_ids)]
             length = baseline_rng.randint(int(min_len), int(max_len))
-            seq = _generate_sequence(baseline_rng, family_id, length)
+            seq = _generate_sequence(
+                baseline_rng, family_id, length, prior_mix=float(prior_mix),
+            )
             f.write(f">baseline_seed{i}|family={family_id}\n")
             f.write(f"{seq}\n")
             counts[family_id] = counts.get(family_id, 0) + 1
@@ -481,6 +526,7 @@ def _write_framework_arm(
     max_len: int,
     framework_rng: random.Random,
     temperature: float = 1.0,
+    prior_mix: float = 0.0,
 ) -> tuple[dict[str, int], dict[str, int]]:
     """Write the framework arm: drives :class:`LineageFlowAdapter` for each record.
 
@@ -494,6 +540,13 @@ def _write_framework_arm(
     can be switched from the byte-stable argmax path (``1.0``) to
     stochastic sampling (``> 1.0``). Default ``1.0`` preserves
     Wave 158 / Wave 161 K6 / Wave 167 P5 manifest bytes.
+
+    Wave 276 P — ``prior_mix`` is forwarded to the bare-RNG
+    fallback path so the K5 prior-composition flag is honoured
+    uniformly across both arms. The framework-side categorical decode
+    (per-position ``int(v) % 20`` argmax) is independent of
+    ``prior_mix``; the flag only affects the bare-RNG fallback path
+    (and the baseline arm via :func:`_write_baseline_arm`).
     """
     per_family_count: dict[str, int] = {}
     fallback_count: dict[str, int] = {}
@@ -525,8 +578,12 @@ def _write_framework_arm(
                 # surfaces this via ``fallback_count`` so failed
                 # cells are detectable (Pitfall #2 not closed for
                 # that record only — the framework-side surface
-                # remains exercised for every other record).
-                seq = _generate_sequence(framework_rng, family_id, length)
+                # remains exercised for every other record). The
+                # K5 ``prior_mix`` is forwarded so the fallback
+                # distribution matches the baseline arm's.
+                seq = _generate_sequence(
+                    framework_rng, family_id, length, prior_mix=float(prior_mix),
+                )
                 fallback_count[family_id] = (
                     fallback_count.get(family_id, 0) + 1
                 )
@@ -543,8 +600,53 @@ def main() -> None:
     p.add_argument("--outdir", type=Path, default=Path("data/lineageflow_n1000"))
     p.add_argument("--n", type=int, default=1000)
     p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--min-len", type=int, default=30)
-    p.add_argument("--max-len", type=int, default=150)
+    p.add_argument(
+        "--min-len",
+        type=int,
+        default=None,
+        help=(
+            "Lower bound (inclusive) of the per-record synthetic "
+            "FASTA length distribution (AA). When ``None`` (the "
+            "default) the value is derived from "
+            "``--upstream-eval-len-bias``: ``short`` -> 30 "
+            "(Wave 81/86/158 byte-stable) and ``long`` -> 200 "
+            "(K4 powered path; see "
+            "``docs/audit/wave275-p4-lineageflow-proposal.md`` §2.1). "
+            "Pass an explicit value to override the bias default."
+        ),
+    )
+    p.add_argument(
+        "--max-len",
+        type=int,
+        default=None,
+        help=(
+            "Upper bound (inclusive) of the per-record synthetic "
+            "FASTA length distribution (AA). When ``None`` (the "
+            "default) the value is derived from "
+            "``--upstream-eval-len-bias``: ``short`` -> 150 "
+            "(Wave 81/86/158 byte-stable) and ``long`` -> 300 "
+            "(K4 powered path). Pass an explicit value to override "
+            "the bias default."
+        ),
+    )
+    p.add_argument(
+        "--upstream-eval-len-bias",
+        type=str,
+        choices=("short", "long"),
+        default="long",
+        help=(
+            "Wave 276 P — K4 length-distribution knob. ``short`` "
+            "= legacy 30-150 AA range (Wave 81/86/158 byte-stable). "
+            "``long`` = 200-300 AA range (K4 powered path; each "
+            "record spans 2-3 Pfam domains, lifting "
+            "``hmmscan_total_hits`` per record by 2-3x). Default "
+            "``long`` activates the K4 power-up; pass "
+            "``--upstream-eval-len-bias short`` to reproduce the "
+            "legacy byte-stable path. See "
+            "``docs/audit/wave275-p4-lineageflow-proposal.md`` §2.1 "
+            "for the K4 vector."
+        ),
+    )
     p.add_argument(
         "--nfe",
         type=int,
@@ -625,7 +727,61 @@ def main() -> None:
             "Default 50 preserves Wave 172b lineageflow anchor."
         ),
     )
+    # Wave 276 P — K5 prior-composition knob. ``prior_mix=0.0`` is
+    # the legacy Wave 81/86/158 byte-stable path
+    # (FAMILY_PROFILES-biased AA composition); ``prior_mix=1.0``
+    # activates the K5 uniform-AA prior (the SUPPORTS path). Range
+    # [0.0, 1.0]. See ``docs/audit/wave275-p4-lineageflow-proposal.md``
+    # §2.2 for the K5 vector (ties-at-zero -> SUPPORTS).
+    p.add_argument(
+        "--lineageflow-prior-mix",
+        type=float,
+        default=0.0,
+        help=(
+            "Wave 276 P — K5 prior-composition knob. "
+            "``0.0`` = FAMILY_PROFILES-biased prior "
+            "(Wave 81/86/158 byte-stable; the framework-vs-baseline "
+            "comparison ties at 0.0 because both arms consume the "
+            "same family-AA bias). ``1.0`` = uniform AA prior over "
+            "the 20 AAs (the K5 SUPPORTS path; the framework's "
+            "restart-blend glue can then produce a visible "
+            "distributional delta). Range [0.0, 1.0]. Default "
+            "``0.0`` preserves Wave 158 byte-stability. See "
+            "``docs/audit/wave275-p4-lineageflow-proposal.md`` §2.2."
+        ),
+    )
     args = p.parse_args()
+
+    # Wave 276 P — resolve effective min/max len via
+    # ``--upstream-eval-len-bias`` when the caller did not pass an
+    # explicit override. ``short`` -> 30/150 (Wave 81/86/158
+    # byte-stable); ``long`` -> 200/300 (K4 powered path). An
+    # explicit ``--min-len`` or ``--max-len`` always wins.
+    if args.upstream_eval_len_bias == "short":
+        _bias_default_min_len = 30
+        _bias_default_max_len = 150
+    else:  # "long" — K4 powered path
+        _bias_default_min_len = 200
+        _bias_default_max_len = 300
+    effective_min_len = (
+        int(args.min_len) if args.min_len is not None
+        else _bias_default_min_len
+    )
+    effective_max_len = (
+        int(args.max_len) if args.max_len is not None
+        else _bias_default_max_len
+    )
+    # Clamp to ensure min <= max (defensive: explicit override could
+    # fall outside the bias range).
+    if int(effective_min_len) > int(effective_max_len):
+        effective_min_len, effective_max_len = (
+            effective_max_len, effective_min_len,
+        )
+    # Wave 276 P — K5 prior-composition clamp. The interpolation in
+    # :func:`_biased_aa` also clamps via ``max(0.0, min(1.0, ...))``
+    # but we clamp here so the manifest captures the effective value
+    # (rather than the out-of-range caller input).
+    effective_prior_mix = max(0.0, min(1.0, float(args.lineageflow_prior_mix)))
 
     # Wire the CLI --nfe flag through to the module-level NFE_PER_RECORD
     # constant that ``_build_lineageflow_adapter`` and
@@ -687,8 +843,8 @@ def main() -> None:
     manifest: dict[str, Any] = {
         "n": int(args.n),
         "seed": int(args.seed),
-        "min_len": int(args.min_len),
-        "max_len": int(args.max_len),
+        "min_len": int(effective_min_len),
+        "max_len": int(effective_max_len),
         "family_ids": family_ids,
         "nfe_per_record": int(NFE_PER_RECORD),
         "n_rounds": int(N_ROUNDS),
@@ -700,6 +856,13 @@ def main() -> None:
         "beta_base": float(BETA_BASE),
         "restart_min_nfe": int(RESTART_MIN_NFE),
         "nfe_ref": int(NFE_REF),
+        # Wave 276 P — K4 + K5 weak-metric remediation axis values.
+        # ``upstream_eval_len_bias`` keys the K4 length distribution
+        # (short=30-150 AA byte-stable, long=200-300 AA powered);
+        # ``lineageflow_prior_mix`` keys the K5 prior-composition
+        # interpolation (0.0=byte-stable, 1.0=uniform-AA SUPPORTS).
+        "upstream_eval_len_bias": str(args.upstream_eval_len_bias),
+        "lineageflow_prior_mix": float(effective_prior_mix),
     }
 
     # ---- Baseline arm (bare RNG, preserved byte-shape) -----------------
@@ -708,8 +871,9 @@ def main() -> None:
         n=int(args.n),
         seed=baseline_seed,
         family_ids=family_ids,
-        min_len=int(args.min_len),
-        max_len=int(args.max_len),
+        min_len=int(effective_min_len),
+        max_len=int(effective_max_len),
+        prior_mix=float(effective_prior_mix),
     )
     manifest["baseline_per_family_count"] = dict(baseline_counts)
     print(f"wrote {args.outdir / 'baseline.fasta'} (n={int(args.n)})")
@@ -721,10 +885,11 @@ def main() -> None:
         n=int(args.n),
         seed=int(args.seed),
         family_ids=family_ids,
-        min_len=int(args.min_len),
-        max_len=int(args.max_len),
+        min_len=int(effective_min_len),
+        max_len=int(effective_max_len),
         framework_rng=framework_rng,
         temperature=float(args.temperature),
+        prior_mix=float(effective_prior_mix),
     )
     manifest["framework_per_family_count"] = dict(framework_counts)
     manifest["framework_fallback_per_family_count"] = dict(fallback_counts)

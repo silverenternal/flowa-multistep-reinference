@@ -176,7 +176,7 @@ def load_c1_rows():
     })
 
     # --- R5c MNIST FM (image_28x28, NFE=50) ---
-    d_cifar = json.loads((OUT_DIR / "wave191-p2-cifar10-n1000.json").read_text())
+    _d_cifar = json.loads((OUT_DIR / "wave191-p2-cifar10-n1000.json").read_text())
     cifar_b = 34.3  # per docs/audit/wave191-p2-cifar10-n1000.md
     cifar_f = 907.0  # avg of 4 arms (910.9+912.2+899.6+897.3)/4
     rows.append({

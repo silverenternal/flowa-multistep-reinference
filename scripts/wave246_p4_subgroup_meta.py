@@ -101,10 +101,10 @@ def dl_random_effects(d_values: list[float], se_values: list[float]) -> dict:
     # Fixed-effect weights (inverse-variance).
     w_fixed = [1.0 / (se * se) for se in se_values]
     sum_w = sum(w_fixed)
-    d_FE = sum(w * d for w, d in zip(w_fixed, d_values)) / sum_w
+    d_FE = sum(w * d for w, d in zip(w_fixed, d_values, strict=True)) / sum_w
 
     # Cochran's Q and tau^2.
-    Q = sum(w * (d - d_FE) ** 2 for w, d in zip(w_fixed, d_values))
+    Q = sum(w * (d - d_FE) ** 2 for w, d in zip(w_fixed, d_values, strict=True))
     df = k - 1
     c = sum_w - (sum(w * w for w in w_fixed) / sum_w)
     tau_sq = max(0.0, (Q - df) / c) if c > 0 else 0.0
@@ -112,7 +112,7 @@ def dl_random_effects(d_values: list[float], se_values: list[float]) -> dict:
     # Random-effects weights.
     w_RE = [1.0 / (se * se + tau_sq) for se in se_values]
     sum_w_RE = sum(w_RE)
-    d_RE = sum(w * d for w, d in zip(w_RE, d_values)) / sum_w_RE
+    d_RE = sum(w * d for w, d in zip(w_RE, d_values, strict=True)) / sum_w_RE
     var_d_RE = 1.0 / sum_w_RE
     se_RE = math.sqrt(var_d_RE)
 

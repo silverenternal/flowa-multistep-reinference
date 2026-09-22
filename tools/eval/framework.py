@@ -23,6 +23,8 @@ Public surface:
 from __future__ import annotations
 
 import inspect
+import json
+import pathlib
 import time
 from typing import Any
 
@@ -36,6 +38,67 @@ from tools.eval.io import (  # type: ignore
     DOWNSTREAM_METRICS,
     FLOWMOL3_REAL_CKPT,
 )
+
+
+def _load_baseline_metrics_jsonl(
+    jsonl_path: str | pathlib.Path,
+) -> dict[Any, float]:
+    """Load a per-record baseline-metrics JSONL file into a ``{record_id: float}`` dict.
+
+    Wave 275 P4 — R6 (k6 foldability + LineageFlow) tier-aware n_cap wiring.
+
+    The tier-aware :class:`TierAwareCodimensionSheetScheduler` consumes
+    a ``record_id -> baseline_metric`` mapping (see
+    ``adaptive_reflow.algorithm.scheduler.tier_aware``). The k6
+    foldability.jsonl produced by the vendored OmegaFold foldability
+    script (``data/lineageflow_upstream/evaluation/foldability_omegafold.py``)
+    carries one row per record with keys ``qid`` (record id) and
+    ``plddt_mean`` (the baseline metric the tier-aware scheduler uses
+    to classify hard / medium / easy). This loader reads that file
+    and returns the dict the scheduler expects.
+
+    :param jsonl_path: filesystem path to the JSONL file.
+    :returns: ``{record_id: baseline_metric}`` mapping (e.g.
+        ``{"q0": 32.62, "q1": 38.65, ...}``). Each value is
+        ``float(row["plddt_mean"])`` when present; rows missing the
+        key are skipped (defensive).
+    :raises ValueError: when no rows were loaded (empty file or
+        every row missing ``qid`` / ``plddt_mean``).
+    """
+    path = pathlib.Path(jsonl_path)
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"baseline metrics JSONL not found at {path!s}",
+        )
+    mapping: dict[Any, float] = {}
+    with path.open("r", encoding="utf-8") as fh:
+        for line_no, line in enumerate(fh, start=1):
+            stripped = line.strip()
+            if not stripped:
+                continue
+            try:
+                row = json.loads(stripped)
+            except json.JSONDecodeError as exc:
+                raise ValueError(
+                    f"baseline metrics JSONL at {path!s} has invalid "
+                    f"JSON on line {line_no}: {exc}",
+                ) from exc
+            if not isinstance(row, dict):
+                continue
+            qid = row.get("qid")
+            metric = row.get("plddt_mean")
+            if qid is None or metric is None:
+                continue
+            try:
+                mapping[qid] = float(metric)
+            except (TypeError, ValueError):
+                continue
+    if not mapping:
+        raise ValueError(
+            f"baseline metrics JSONL at {path!s} yielded no usable "
+            f"(qid, plddt_mean) rows",
+        )
+    return mapping
 
 # Wave 53 Agent C: per-model force_mode token translation table.
 # Default identity: CLI token = adapter token. Legacy adapters that
@@ -294,6 +357,9 @@ def _make_framework_policy(
     seed: int,
     paper_quantities: dict[str, float] | None = None,
     nfe: int = 0,
+    tier_aware_n_cap: float | None = None,
+    tier_aware_baseline_metrics: dict[Any, float] | None = None,
+    current_record_id: Any = None,
 ) -> Any:
     """Build a fresh ``FinalRestartPolicy`` for one framework round.
 
@@ -330,6 +396,28 @@ def _make_framework_policy(
     and Wave 161 K6 R6 are both measured under ``nfe == 0``) the
     pre-Wave-173 byte-stable path is preserved verbatim — see
     ``docs/audit/wave173-fix-design.md`` §4.1 + §6.
+
+    Wave 275 P4 — R6 tier-aware ``n_cap`` (k6 foldability +
+    LineageFlow): when ``tier_aware_n_cap`` is supplied AND lies in
+    ``(0, 1)`` AND ``tier_aware_baseline_metrics`` is a non-empty
+    mapping, the per-round ``n_cap`` is wrapped in a
+    :class:`TierAwareCodimensionSheetScheduler` with
+    ``easy_tier_nfe_reduction_factor=tier_aware_n_cap``. Records are
+    stratified into hard / medium / easy via the 33rd / 67th
+    percentiles of the supplied baseline-metric distribution; on the
+    easy tier ``n_cap`` is multiplied by ``tier_aware_n_cap`` (the
+    Wave 225 P4 counterfactual that lifts k6 overall pLDDT ``d_z``
+    from ``+0.071`` to ``+0.224`` and halves the easy-tier regression).
+    When ``current_record_id`` is supplied AND the record is in the
+    ``tier_aware_baseline_metrics`` mapping, the wrapper classifies
+    the record before each :meth:`sample` call and reduces
+    ``n_cap`` on the easy tier only. When the record is missing or
+    ``current_record_id`` is ``None``, the wrapper falls through with
+    the full ``n_cap`` (matches the legacy byte-stable path). When
+    ``tier_aware_n_cap`` is ``None``, ``>= 1.0``, or the mapping is
+    empty / missing, the legacy :class:`PaperRatioAdaptiveScheduler`
+    path is preserved byte-identically — see
+    ``docs/audit/wave275-p4-r6-proposal.md`` §2.1 for the design.
 
     Sign convention
     ---------------
@@ -397,17 +485,63 @@ def _make_framework_policy(
         from adaptive_reflow.algorithm.scheduler import (  # type: ignore
             CodimensionSheetScheduler,
             PaperRatioAdaptiveScheduler,
+            TierAwareCodimensionSheetScheduler,
         )
-        scheduler = PaperRatioAdaptiveScheduler(
-            base=CodimensionSheetScheduler(
-                cycle_length=20,
-                n_min=0.0,
-                n_max=1.0,
-                eps_implicit=0.05,
-                eps_direction="decreasing",
-                seed=int(seed),
-            ),
+        base_sched = CodimensionSheetScheduler(
+            cycle_length=20,
+            n_min=0.0,
+            n_max=1.0,
+            eps_implicit=0.05,
+            eps_direction="decreasing",
+            seed=int(seed),
         )
+        # Wave 275 P4 — R6 tier-aware n_cap wrapper. Active ONLY when
+        # both flags are set and the reduction is in (0, 1). When the
+        # wrapper is active, ``record_round_feedback`` is delegated to
+        # the base :class:`CodimensionSheetScheduler` (the wrapper
+        # does not consume paper-quantity feedback), so the EMA / PID
+        # shift behaviour is unchanged on every tier. The wrapper
+        # only modulates the per-round ``n_cap`` on the easy tier
+        # (records with baseline_pLDDT above the 67th percentile).
+        _tier_active = bool(
+            tier_aware_n_cap is not None
+            and 0.0 < float(tier_aware_n_cap) < 1.0
+            and isinstance(tier_aware_baseline_metrics, dict)
+            and len(tier_aware_baseline_metrics) > 0,
+        )
+        if _tier_active:
+            # Wave 275 P4 R6 — paper-quantity-driven + tier-aware
+            # composition. The tier-aware wrapper sits OUTSIDE
+            # :class:`PaperRatioAdaptiveScheduler` (which preserves its
+            # strict ``CodimensionSheetScheduler`` base-type guard from
+            # Wave 31 — see
+            # ``tests/test_algorithm/test_paper_ratio_adaptive_scheduler.py``)
+            # so the EMA / PID shift drives ``n_cap_base(r)`` on every
+            # tier, and the wrapper multiplies the easy-tier ``n_cap``
+            # by ``easy_tier_nfe_reduction_factor``.
+            inner = PaperRatioAdaptiveScheduler(base=base_sched)
+            tier_sched = TierAwareCodimensionSheetScheduler(
+                base=inner,
+                easy_tier_nfe_reduction_factor=float(tier_aware_n_cap),
+                tier_quantile_boundaries=(0.33, 0.67),
+                baseline_metric_extractor=(
+                    lambda qid, _m=tier_aware_baseline_metrics: float(_m[qid])
+                ),
+            )
+            # Bind the per-record mapping → tier boundaries. The
+            # wrapper computes (low, high) once here so the per-round
+            # ``sample`` is just a dict lookup + classification.
+            tier_sched.set_baseline_metrics(
+                dict(tier_aware_baseline_metrics),
+            )
+            # Advance the per-round cursor to the current record id
+            # so the wrapper classifies that record's tier before
+            # sampling. ``None`` falls through with the full ``n_cap``
+            # (matches the legacy byte-stable path).
+            tier_sched.set_current_record(current_record_id)
+            scheduler = tier_sched
+        else:
+            scheduler = PaperRatioAdaptiveScheduler(base=base_sched)
         # Push the per-round paper quantities into the EMA, then sample
         # the per-round capacity. For round 0 (no prior history) the
         # PID shift is zero and ``n_cap = n_cap_base(r=0)`` — the
@@ -475,7 +609,17 @@ def _make_framework_policy(
     return _dc_replace(draft, policy_hash=hash_policy_hash(draft))
 
 
-def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3, n_molecules: int = 1) -> tuple[Any, float]:
+def _solve_framework(
+    adapter: Any,
+    *,
+    nfe: int,
+    seed: int,
+    n_rounds: int = 3,
+    n_molecules: int = 1,
+    tier_aware_n_cap: float | None = None,
+    tier_aware_baseline_metrics: dict[Any, float] | None = None,
+    current_record_id: Any = None,
+) -> tuple[Any, float]:
     """Framework multi-round ODE solve with the same total NFE budget.
 
     Splits the total NFE across ``n_rounds`` and chains the adapter's
@@ -508,6 +652,18 @@ def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3, n_
     per-round :meth:`solve_ode` call so each round generates
     ``n_molecules`` independent trajectories. Currently only
     consumed by the FlowMol3 v2 adapter; others ignore it.
+
+    Wave 275 P4 — R6 tier-aware ``n_cap``: ``tier_aware_n_cap`` (in
+    ``(0, 1)``) + ``tier_aware_baseline_metrics`` (non-empty mapping)
+    enable the :class:`TierAwareCodimensionSheetScheduler` wrapper on
+    the :class:`CodimensionSheetScheduler` base. The wrapper reduces
+    ``n_cap`` by ``tier_aware_n_cap`` on the easy tier (records with
+    baseline metric above the 67th percentile). ``current_record_id``
+    is the per-round record cursor for the wrapper; when ``None``,
+    the wrapper falls through with the full ``n_cap`` (legacy
+    byte-stable path). All three kwargs default to ``None`` so
+    pre-Wave-275 callers (D.4 vector suite + Wave 161 K6 R6) are
+    byte-identical. See ``docs/audit/wave275-p4-r6-proposal.md`` §2.1.
     """
     # NB: legacy tests monkey-patch ``tools._compute_paper_quantities``
     # and ``tools._make_framework_policy``. Look them up via the shim so
@@ -605,6 +761,15 @@ def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3, n_
                 # by ``min(1.0, NFE_ref / max(nfe, 1))``. Pre-Wave-173
                 # callers that pass ``nfe=0`` (legacy D.4 vector suite,
                 # Wave 161 K6 R6) get the byte-stable constant-β path.
+                # Wave 275 P4 — R6 tier-aware n_cap (additive): when
+                # ``tier_aware_n_cap < 1.0`` AND a non-None mapping,
+                # wraps the base scheduler in
+                # :class:`TierAwareCodimensionSheetScheduler` so the
+                # easy-tier ``n_cap`` is reduced by the supplied
+                # factor (default safe no-op when both flags are None).
+                tier_aware_n_cap=tier_aware_n_cap,
+                tier_aware_baseline_metrics=tier_aware_baseline_metrics,
+                current_record_id=current_record_id,
             )
             cur_bundle = adapter.apply_restart_distribution(endpoint, policy)
         except CapabilityMissingError:
@@ -647,6 +812,7 @@ def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3, n_
 
 __all__ = [
     "_compute_paper_quantities",
+    "_load_baseline_metrics_jsonl",
     "_make_framework_policy",
     "_resolve_adapter",
     "_solve_framework",

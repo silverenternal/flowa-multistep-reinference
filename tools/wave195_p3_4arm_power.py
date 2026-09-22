@@ -58,18 +58,18 @@ for _k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
 del _k
 
 
-import csv
-import json
-import math
-import subprocess
-import sys
-from collections import Counter
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any
+import csv  # noqa: E402
+import json  # noqa: E402
+import math  # noqa: E402
+import subprocess  # noqa: E402
+import sys  # noqa: E402
+from collections import Counter  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from pathlib import Path  # noqa: E402
+from typing import Any  # noqa: E402
 
-import numpy as np
-from scipy import stats
+import numpy as np  # noqa: E402
+from scipy import stats  # noqa: E402
 
 REPO_ROOT: Path = Path(__file__).resolve().parent.parent
 OUT_DIR: Path = REPO_ROOT / "verification_outputs"

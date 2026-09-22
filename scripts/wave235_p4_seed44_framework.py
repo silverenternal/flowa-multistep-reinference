@@ -24,7 +24,7 @@ os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")
 sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "data" / "FlowMol3" / "repo"))
 
-import numpy as np
+import numpy as np  # noqa: E402
 
 # Re-use helpers from the main script
 sys.path.insert(0, str(REPO / "scripts"))

@@ -49,7 +49,7 @@ REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
 sys.path.insert(0, str(REPO_ROOT))
 
 # Use the project's equivalence/non-inferiority helper.
-from adaptive_reflow.stats.equivalence import non_inferiority
+from adaptive_reflow.stats.equivalence import non_inferiority  # noqa: E402
 
 OUT_DIR = REPO_ROOT / "verification_outputs"
 WAVE191_JSON = OUT_DIR / "wave191-p2-cifar10-n1000.json"

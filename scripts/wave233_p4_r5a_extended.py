@@ -279,7 +279,7 @@ def main() -> int:
     def direction_consistency(b: list[float | None], f: list[float | None]) -> dict[str, float]:
         paired = [
             (float(bi), float(fi))
-            for bi, fi in zip(b, f)
+            for bi, fi in zip(b, f, strict=True)
             if bi is not None and fi is not None
         ]
         if not paired:
@@ -296,7 +296,7 @@ def main() -> int:
             "frac_negative": n_neg / len(paired),
         }
 
-    dir_cos = direction_consistency(baseline_per_seed, cosine_per_seed)
+    _dir_cos = direction_consistency(baseline_per_seed, cosine_per_seed)
     print()
     print("Direction-consistency (paired (framework - baseline) sign):")
     for arm_name, f_list in [

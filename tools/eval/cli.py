@@ -275,6 +275,45 @@ def build_argparser() -> argparse.ArgumentParser:
             "for LineageFlow)."
         ),
     )
+    # ------------------------------------------------------------------
+    # Wave 275 P4 — R6 (k6 foldability + LineageFlow) tier-aware n_cap.
+    # ------------------------------------------------------------------
+    p.add_argument(
+        "--tier-aware-n-cap", type=float, default=1.0,
+        help=(
+            "Wave 275 P4: multiplicative reduction applied to "
+            "``n_cap`` on the *easy* tier (records with baseline "
+            "metric above the 67th percentile). Must lie in "
+            "(0, 1]. Default 1.0 is a safe no-op (matches the "
+            "legacy :class:`CodimensionSheetScheduler` byte-stable "
+            "behaviour — no :class:`TierAwareCodimensionSheetScheduler` "
+            "is instantiated). 0.5 mirrors the Wave 225 P4 offline "
+            "counterfactual that lifts k6 overall pLDDT d_z from "
+            "+0.071 to +0.224 and halves the easy-tier regression. "
+            "Only effective when "
+            "``--tier-aware-baseline-metrics-jsonl`` is also set "
+            "AND points at a valid per-record JSONL file. See "
+            "docs/audit/wave275-p4-r6-proposal.md §2.1."
+        ),
+    )
+    p.add_argument(
+        "--tier-aware-baseline-metrics-jsonl", type=pathlib.Path, default=None,
+        help=(
+            "Wave 275 P4: optional path to a per-record baseline "
+            "metrics JSONL (one row per record with ``qid`` and "
+            "``plddt_mean`` — the format emitted by the vendored "
+            "OmegaFold ``foldability.jsonl``). When set AND "
+            "``--tier-aware-n-cap < 1.0``, the engine wraps the "
+            "framework's :class:`CodimensionSheetScheduler` in "
+            ":class:`TierAwareCodimensionSheetScheduler` and "
+            "pre-populates the ``{qid: plddt_mean}`` mapping so the "
+            "33rd / 67th percentile tier boundaries are computed "
+            "from this distribution. When unset, the framework "
+            "runs with the legacy byte-stable scheduler "
+            "(``tier_aware_n_cap`` is ignored). See "
+            "docs/audit/wave275-p4-r6-proposal.md §2.1."
+        ),
+    )
     return p
 
 
@@ -316,6 +355,8 @@ def main(argv: list[str] | None = None) -> int:
             ("flowmol3_upstream_eval", "flowmol3_upstream_eval"),
             ("lineageflow_upstream_eval", "lineageflow_upstream_eval"),
             ("kanzi_framework_paper_metrics", "kanzi_framework_paper_metrics"),
+            ("tier_aware_n_cap", "tier_aware_n_cap"),
+            ("tier_aware_baseline_metrics_jsonl", "tier_aware_baseline_metrics_jsonl"),
         )
         for yaml_key, arg_dest in _yaml_to_arg:
             if yaml_key not in _profile:
@@ -338,6 +379,18 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     if int(args.n_molecules) < 1:
         print("[ERROR] --n-molecules must be >= 1", file=sys.stderr)
+        return 2
+    # Wave 275 P4 — R6 tier-aware n_cap validation. ``tier_aware_n_cap``
+    # must lie in (0, 1] (matches
+    # :class:`TierAwareCodimensionSheetScheduler` validation; the
+    # wrapper clips ``0`` defensively so the engine surfaces the
+    # misconfiguration loudly here instead).
+    if not (0.0 < float(args.tier_aware_n_cap) <= 1.0):
+        print(
+            f"[ERROR] --tier-aware-n-cap must lie in (0, 1], "
+            f"got {args.tier_aware_n_cap!r}",
+            file=sys.stderr,
+        )
         return 2
     try:
         seeds = [int(s.strip()) for s in args.seeds.split(",") if s.strip()]
@@ -378,6 +431,17 @@ def main(argv: list[str] | None = None) -> int:
                 ),
                 upstream_n_samples=int(
                     getattr(args, "upstream_n_samples", 1000),
+                ),
+                # Wave 275 P4 — R6 tier-aware n_cap flags (additive).
+                # Both default to ``None`` in :func:`_run_cell` so
+                # pre-Wave-275 callers are byte-stable.
+                tier_aware_n_cap=(
+                    float(args.tier_aware_n_cap)
+                    if getattr(args, "tier_aware_n_cap", 1.0) < 1.0
+                    else None
+                ),
+                tier_aware_baseline_metrics_jsonl=(
+                    getattr(args, "tier_aware_baseline_metrics_jsonl", None)
                 ),
             )
             cells.append(cell)
