@@ -13,6 +13,8 @@ signature (`_compute_fid_tfport_inline(gen, ref) -> float`) is
 unchanged; `FID_INLINE_BATCH_SIZE` was bumped from 32 to 64 to amortise
 the per-batch InceptionV3 launch cost on GPU.
 
+**Status:** PASS — fix landed; structural guarantees verified; GPU timing live-verified in `docs/audit/wave286-p-fid-gpu-verify.md` (1.19x end-to-end speedup; InceptionV3 forward pass now on `cuda:0`, +2.2 GB GPU memory growth). Public signature unchanged. Vendored purity preserved.
+
 ---
 
 ## Root cause

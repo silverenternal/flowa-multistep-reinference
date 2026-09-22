@@ -6,6 +6,8 @@ The Wave 286 P fix in `tools/run_sota_cifar_experiment.py` (model +
 input batch moved to CUDA when available) is **confirmed live** by
 `nvidia-smi` sampling during a real codim/seed42 N=50 sweep:
 
+**Status:** PASS — live GPU verification confirms the fix; InceptionV3 forward pass now runs on `cuda:0` (2.2 GB GPU memory growth); end-to-end wall 44.32s → 37.16s = 1.19x speedup; FID GPU vs FID CPU abs_diff=1.22e-02 (relative 3.51e-05) is within float32 cuDNN vs CPU conv precision tolerance. Vendored purity preserved.
+
 | Metric | Value |
 | --- | --- |
 | `before_total_wall_s` (pre-fix, original Wave 281 codim/seed42 N=50) | 44.32 |

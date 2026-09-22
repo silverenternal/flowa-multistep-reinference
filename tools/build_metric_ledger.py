@@ -265,6 +265,7 @@ class BuildResult:
     insight_rows: int = 0
     engineering_gate_rows: int = 0
     sweep280_rows: int = 0
+    sweep286_rows: int = 0
 
 
 # ---------------------------------------------------------------------------
@@ -805,6 +806,110 @@ SWEEP280_FILES: tuple[tuple[str, str, str, str], ...] = (
     ),
 )
 
+
+# ---------------------------------------------------------------------------
+# Wave 286 sweep-result rows (FID GPU fix + verify + CIFAR paper-grounded
+# re-sweep + paper-quantity ablation). Per Wave 286 P task spec: these
+# docs are additive evidence rows for the Wave 280/281 promoted claims
+# (CLM-005, CLM-006, CLM-011, CLM-070); the ledger treats each doc as
+# one ``SWEEP286`` row. The verifier stays decoupled from the per-cell
+# semantics (it only records the source path + SHA-256 + status +
+# headline scalar).
+# ---------------------------------------------------------------------------
+
+# Each entry: (metric_id, relative_path, title, claim_id_alias)
+SWEEP286_FILES: tuple[tuple[str, str, str, str], ...] = (
+    (
+        "SWEEP286-FID-GPU-FIX",
+        "docs/audit/wave286-p-fid-gpu-fix.md",
+        "Wave 286 P — FID GPU compute bug fix (paper-grounded controller rollout blocker; 26x speedup on N=100)",
+        "CLM-005",
+    ),
+    (
+        "SWEEP286-FID-GPU-VERIFY",
+        "docs/audit/wave286-p-fid-gpu-verify.md",
+        "Wave 286 P — FID GPU compute live verification (1.19x end-to-end speedup; InceptionV3 forward pass now on CUDA, 2.2 GB GPU memory growth)",
+        "CLM-005",
+    ),
+    (
+        "SWEEP286-CIFAR-RESWEEP",
+        "docs/audit/wave286-p-cifar-resweep-aggregated.md",
+        "Wave 286 P — CIFAR-10 paper-grounded controller 17-cell re-sweep (5 schedulers x 3 seeds x N=200 + 2 N=500 cross-scale; cos vs codim direction-flip 71.57pp at N=200, 98.71pp at N=500)",
+        "CLM-006",
+    ),
+    (
+        "SWEEP286-PAPER-QUANTITY-ABLATION",
+        "docs/audit/wave286-p-paper-quantity-ablation.md",
+        "Wave 286 P — paper-quantity ablation (3 modes x 3 seeds x N=200; scheduler_structure is the lever, paper quantities not the lever at trivial profile)",
+        "CLM-011",
+    ),
+)
+
+# Pull ``**Status:**`` (or ``## TL;DR`` headline) from the sweep-result
+# doc body. The format is ``**Status:** <FREE TEXT>`` or
+# ``## TL;DR ...``. We use ``**Status:**`` as the SWEEP286 row's
+# `status` field verbatim (with the leading ``**Status:** `` stripped);
+# if absent, fall back to a stable token derived from the file.
+_SWEEP286_STATUS_RE: re.Pattern[str] = re.compile(
+    r"^\*\*Status:\*\*\s*(?P<status>.+?)\s*$",
+    re.MULTILINE,
+)
+
+
+def _parse_sweep286() -> tuple[list[Metric], list[str]]:
+    """Emit one SWEEP286 row per Wave 286 P sweep-result doc.
+
+    Each doc's ``**Status:**`` headline line is captured verbatim so
+    the ledger surfaces PASS / PARTIAL / etc. without requiring a
+    separate manifest. Vendored purity + sweep drivers are preserved
+    per the user's "claude相关的确实不要commit" + "vendored SOTA 评分脚本
+    依旧不能动" directives: this parser does NOT touch the sweep drivers
+    under /tmp/ or any vendored upstream file.
+    """
+    metrics: list[Metric] = []
+    errors: list[str] = []
+    for metric_id, rel_path, title, claim_id_alias in SWEEP286_FILES:
+        source_path = REPO_ROOT / rel_path
+        if not source_path.is_file():
+            errors.append(f"SWEEP286 {metric_id}: file not found at {rel_path}")
+            metrics.append(
+                Metric(
+                    metric_id=metric_id,
+                    kind="SWEEP286",
+                    title=title,
+                    status="MISSING_SOURCE",
+                    source_artifact_path=rel_path,
+                    source_artifact_sha256="",
+                    notes="SOURCE FILE NOT FOUND at build time.",
+                )
+            )
+            continue
+        sha = _sha256_of_path(source_path)
+        text = source_path.read_text(encoding="utf-8")
+        m = _SWEEP286_STATUS_RE.search(text)
+        status = m.group("status") if m else "PENDING_GPU_RUN"
+        metrics.append(
+            Metric(
+                metric_id=metric_id,
+                kind="SWEEP286",
+                title=title,
+                status=status,
+                claim_id=claim_id_alias,
+                source_artifact_path=rel_path,
+                source_artifact_sha256=sha,
+                section_ref=rel_path,
+                notes=(
+                    f"Wave 286 P sweep result (per the user's 'paper-grounded "
+                    f"控制器的工作流加强' + 'GPU上没有算力占用只有显存占用' "
+                    f"directives; CLM-005/006/011/070 additive evidence rows "
+                    f"per Wave 268 strict-clean rule). Vendored purity "
+                    f"preserved per the user's 'clone下来的原sota项目里的打分"
+                    f"脚本依旧不能动' directive. Claim alias: {claim_id_alias}."
+                ),
+            )
+        )
+    return metrics, errors
+
 # Pull ``**Status:**`` from the sweep-result doc body. The format is
 # ``**Status:** <FREE TEXT>``. We use this as the SWEEP280 row's
 # `status` field verbatim (with the leading ``**Status:** `` stripped).
@@ -951,6 +1056,13 @@ def build() -> BuildResult:
     metrics.extend(sweep280_metrics)
     errors.extend(sweep280_errors)
 
+    # 7. WAVE 286 SWEEP RESULTS (additive — does not touch any
+    # existing row; per the Wave 286 P task spec; CLM-005/006/011/070
+    # additive evidence rows).
+    sweep286_metrics, sweep286_errors = _parse_sweep286()
+    metrics.extend(sweep286_metrics)
+    errors.extend(sweep286_errors)
+
     # Tally kind counts for the report.
     counts = {
         "CLAIM": 0,
@@ -959,6 +1071,7 @@ def build() -> BuildResult:
         "INSIGHT": 0,
         "ENGINEERING_GATE": 0,
         "SWEEP280": 0,
+        "SWEEP286": 0,
     }
     for m in metrics:
         counts[m.kind] = counts.get(m.kind, 0) + 1
@@ -971,6 +1084,7 @@ def build() -> BuildResult:
         insight_rows=counts["INSIGHT"],
         engineering_gate_rows=counts["ENGINEERING_GATE"],
         sweep280_rows=counts["SWEEP280"],
+        sweep286_rows=counts["SWEEP286"],
     )
 
 
@@ -1028,6 +1142,7 @@ def _render_markdown(result: BuildResult) -> str:
         "INSIGHT",
         "ENGINEERING_GATE",
         "SWEEP280",
+        "SWEEP286",
     ):
         count = sum(1 for m in result.metrics if m.kind == kind)
         out.append(f"| {kind} | {count} |")
@@ -1046,6 +1161,7 @@ def _render_markdown(result: BuildResult) -> str:
         "INSIGHT",
         "ENGINEERING_GATE",
         "SWEEP280",
+        "SWEEP286",
     ):
         rows = [m for m in result.metrics if m.kind == kind]
         if not rows:
@@ -1095,6 +1211,7 @@ def _render_json(result: BuildResult) -> str:
             "INSIGHT": result.insight_rows,
             "ENGINEERING_GATE": result.engineering_gate_rows,
             "SWEEP280": result.sweep280_rows,
+            "SWEEP286": result.sweep286_rows,
         },
     }
     return json.dumps(payload, indent=2, sort_keys=False, ensure_ascii=False) + "\n"
@@ -1149,6 +1266,7 @@ def main(argv: list[str] | None = None) -> int:
             f"INSIGHT={result.insight_rows} "
             f"ENGINEERING_GATE={result.engineering_gate_rows} "
             f"SWEEP280={result.sweep280_rows} "
+            f"SWEEP286={result.sweep286_rows} "
             f"errors={len(result.errors)}"
         )
     else:
@@ -1166,7 +1284,8 @@ def main(argv: list[str] | None = None) -> int:
             f"STATISTICAL={result.statistical_rows} "
             f"INSIGHT={result.insight_rows} "
             f"ENGINEERING_GATE={result.engineering_gate_rows} "
-            f"SWEEP280={result.sweep280_rows}"
+            f"SWEEP280={result.sweep280_rows} "
+            f"SWEEP286={result.sweep286_rows}"
         )
         if result.errors:
             print(f"Non-fatal build errors: {len(result.errors)}")
