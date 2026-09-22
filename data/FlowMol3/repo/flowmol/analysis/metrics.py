@@ -163,7 +163,10 @@ class SampleAnalyzer():
             metrics_dict['energy_js_div'] = self.compute_energy_divergence(sampled_molecules)
 
         if posebusters:
-            rdmols = [sample.rdkit_mol for sample in sampled_molecules]
+            # Wave 259 P1 defensive patch: getattr fallback for sample.rdkit_mol
+            # Some sampled_molecule objects may be partial (Mol not SampledMolecule)
+            rdmols = [getattr(sample, 'rdkit_mol', None) for sample in sampled_molecules]
+            rdmols = [m for m in rdmols if m is not None]
             
             print('running bosebusters', flush=True)
             df_pb = self.buster.bust(rdmols, None, None)
@@ -267,7 +270,8 @@ class SampleAnalyzer():
         """ samples: list of SampledMolecule objects. """
         energies = []
         for sample in samples:
-            rdmol = sample.rdkit_mol
+            # Wave 259 P1 defensive patch: getattr fallback for sample.rdkit_mol
+            rdmol = getattr(sample, 'rdkit_mol', None)
             if rdmol is not None:
                 try:
                     Chem.SanitizeMol(rdmol)
@@ -430,7 +434,7 @@ def check_stability_midi(molecule: SampledMolecule, valid_valency_table):
     mol_stable = True
     for i, (atom_type, valency, charge) in enumerate(zip(atom_types, valencies, charges)):
 
-        if molecule.fake_atoms and atom_type == 'Sn':
+        if getattr(molecule, 'fake_atoms', False) and atom_type == 'Sn':
             n_fake_atoms += 1
             continue
 
