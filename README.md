@@ -14,7 +14,7 @@
 |---|---|---|---:|---:|---:|---|---|---|
 | R1 | LineageFlow (ICML 2026 protein FM) | `hmmscan_total_hits` N=1000 | 158 | 342 | **+116.46%** | p ≈ 1.5e-08 | §7.6.1 | [ver.](verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/SOURCE.md) |
 | R2 | Kanzi | RMSD (N=1000 paired-t) | reference | d_z = −0.0990 | Bonf-sig p=0.0018 | framework_WINS | §7.6.2 | [ver.](verification_outputs/wave218-p3-kanzi-framework-wins.json) |
-| R3 | FlowMol3 (ICML 2026 mol FM) | `fg_dev` per-record d_z | -0.360/molecule | (seed 42 N=1000 batched) | d_z=-0.285 | **framework_WINS** (Bonf-sig <1e-4, N=200 per-record; 3-seed pooled BLOCKED at vendor level) | §7.6.3 | [ver.](verification_outputs/wave216-p1-r3-per-record.json) |
+| R3 | FlowMol3 (ICML 2026 mol FM) | `fg_dev` per-record d_z | reference | d_z = −0.285 | Bonf-sig <1e-4 | framework_WINS (N=200 per-record; 3-seed pooled BLOCKED at vendor level) | §7.6.3 | [ver.](verification_outputs/wave216-p1-r3-per-record.json) |
 | R4 | 2D Two Moons (2D FM ablation) | W₂ | 2.85 | 0.62 | **−78.25%** | framework_WINS (raw Δ%) | §7.6.4 | [ver.](verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_ablation) |
 | R5 | 2D Eight Gaussians (2D FM ablation) | W₂ | 2.31 | 0.76 | **−67.10%** | framework_WINS (raw Δ%) | §7.6.5 | [ver.](verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_eight_gaussians) |
 | R5b | CIFAR-10 Rectified Flow (n_rounds=1) | FID | 218.87 | 122.18 | **−2.53% to −0.66%** on 3/4 schedulers | framework-WINS | §7.6.7 | [ver.](verification_outputs/wave235-p1-r5b-fix.json) |
@@ -87,7 +87,7 @@ python3.11 -m venv .venvs/kanzi_venv
 # Verify all submission gates (D.4 byte-stable + ruff + claims + abstract + paper.pdf)
 python3 tools/verify_submission_readiness.py
 
-# Reproduce all 6 R-level cells (prints plan; uncomment to run)
+# Reproduce all 7 R-level cells (prints plan; uncomment to run)
 bash scripts/reproduce_r1_to_r6.sh
 
 # Run D.4 byte-stable regression suite
