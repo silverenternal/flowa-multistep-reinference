@@ -2,7 +2,6 @@
 
 [![CI](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml/badge.svg)](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml)
 [![D.4 byte-stable](https://img.shields.io/badge/D.4-30%2F30%20PASS-brightgreen)]() [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Zenodo](https://zenodo.org/badge/DOI/)](https://doi.org/10.5281/zenodo.TBD)
 
 **TL;DR.** FlowA is a *training-free, solver-agnostic* re-inference framework that wraps a deployed flow-matching checkpoint and adapts the inference loop to local velocity-field geometry. The framework exposes four paper-quantity invariants derived from a canonical F-side witness as a first-class scheduler input. Validated across **seven R-level cells** spanning protein (LineageFlow), molecular 3D (FlowMol3), and image (CIFAR-10 RF, MNIST FM, 2D). The 24.6× wall-clock gap is closed 76.8% via CUDA-graph capture.
 
@@ -32,7 +31,7 @@
 - **R5b (Image)**: n_rounds=1 framework_WINS ΔFID=-2.53% to -0.66% (4 schedulers at seed 42 NFE=50)
 - **R6 (Image)**: tier-aware pLDDT d_z: +0.224 → +0.647 (+189%) framework_WINS (cluster-robust 5/8 SUPPORTED)
 
-**Statistical methods** (statistical methods upgrade): TOST equivalence testing (16 cells), Jonckheere-Terpstra ordered test (R2 + R6), BF01 Bayes factor (16 cells), DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z=+1.117, I²=99.60% — explained as expected cross-domain heterogeneity), and non-inferiority test (R5b). Full details in [DATA_PRESENTATION.md §3](DATA_PRESENTATION.md).
+**Statistical methods** (statistical methods upgrade): TOST equivalence testing (16 cells), Jonckheere-Terpstra ordered test (R2 + R6), BF01 Bayes factor (16 cells), DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z=+1.117, I²=99.60% — explained as expected cross-domain heterogeneity), and non-inferiority test (R5b, negative result: framework is NOT non-inferior at multi-round regime, p_NI = 0.9985). Full details in [DATA_PRESENTATION.md §3](DATA_PRESENTATION.md).
 
 ---
 
@@ -194,17 +193,13 @@ data/                     # vendored upstream checkpoints (8 repos, all unmodifi
 
 ## Data and Model Availability
 
-| Checkpoint | SHA-256 (prefix) | Path | Access |
-|---|---|---|---|
-| Kanzi | `c2f2ab8d...d270` | `data/kanzi_upstream/` (vendored at commit `cfed9cf`) | already in repo |
-| LineageFlow | `f0b4b25e...54a2b` | `data/lineageflow_upstream/` (vendored at commit `ccef84a`) | already in repo |
-| FlowMol3 | epoch 17, global_step 1,547,236 | `data/flowmol3/weights_real/checkpoints/last.ckpt` (sha256 `d6cda2d7...`) | already in repo |
-| HiDream-I1 | (uploaded to Zenodo at submission freeze) | https://doi.org/10.5281/zenodo.TBD | `wget https://zenodo.org/record/TBD/...` |
-| GraphBFN | (uploaded to Zenodo) | https://doi.org/10.5281/zenodo.TBD | `wget https://zenodo.org/record/TBD/...` |
-| Lumina-Image-2.0 | (uploaded to Zenodo) | https://doi.org/10.5281/zenodo.TBD | `wget https://zenodo.org/record/TBD/...` |
-| ProtBFN-AbBFN | (uploaded to Zenodo) | https://doi.org/10.5281/zenodo.TBD | `wget https://zenodo.org/record/TBD/...` |
-| Wan2.2 | (uploaded to Zenodo) | https://doi.org/10.5281/zenodo.TBD | `wget https://zenodo.org/record/TBD/...` |
-| FreqFlow | (uploaded to Zenodo) | https://doi.org/10.5281/zenodo.TBD | `wget https://zenodo.org/record/TBD/...` |
+| Checkpoint | SHA-256 (prefix) | Path |
+|---|---|---|
+| Kanzi | `c2f2ab8d...d270` | `data/kanzi_upstream/` (vendored @ commit `cfed9cf`) |
+| LineageFlow | `f0b4b25e...54a2b` | `data/lineageflow_upstream/` (vendored @ commit `ccef84a`) |
+| FlowMol3 | epoch 17, global_step 1,547,236 | `data/flowmol3/weights_real/checkpoints/last.ckpt` (sha256 `d6cda2d7...`) |
+
+Additional checkpoints (HiDream-I1, GraphBFN, Lumina-Image-2.0, ProtBFN-AbBFN, Wan2.2, FreqFlow) will be uploaded to Zenodo at submission freeze.
 
 **Source code:** frozen at `v3.0-tnnls-ready` tag (TNNLS submission). **Docker image:** `flowa:tnnls-v3.0` (`Dockerfile.tnnls`). **Zenodo DOI:** to be generated at submission freeze via GitHub release.
 
