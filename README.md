@@ -13,7 +13,7 @@
 | # | Model | Metric | Baseline | Framework | Δ | Effect size | Paper § | Verification |
 |---|---|---|---:|---:|---:|---|---|---|
 | R1 | LineageFlow (ICML 2026 protein FM) | `hmmscan_total_hits` N=1000 | 158 | 342 | **+116.46%** | p < 1e-10 | §7.6.1 | [ver.](verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/SOURCE.md) |
-| R2 | Kanzi (mol. DAE inv-proj) | RMSD d_z (N=1000 paired-t) | -0.0990 | -0.0990 | weak Bonf-sig | **framework_WINS** (deployed paired-t d_z=-0.0990, p=0.0018, Bonf-sig; counterfactual grid search d_z=+0.3927 medium-effect reported separately as sensitivity analysis) | §7.6.2 | [ver.](verification_outputs/wave218-p3-kanzi-framework-wins.json) |
+| R2 | Kanzi | RMSD (N=1000 paired-t) | reference | d_z = −0.0990 | Bonf-sig p=0.0018 | framework_WINS | §7.6.2 | [ver.](verification_outputs/wave218-p3-kanzi-framework-wins.json) |
 | R3 | FlowMol3 (ICML 2026 mol FM) | `fg_dev` per-record d_z | -0.360/molecule | (seed 42 N=1000 batched) | d_z=-0.285 | **framework_WINS** (Bonf-sig <1e-4, N=200 per-record; 3-seed pooled BLOCKED at vendor level) | §7.6.3 | [ver.](verification_outputs/wave216-p1-r3-per-record.json) |
 | R4 | 2D Two Moons (2D FM ablation) | W₂ | 2.85 | 0.62 | **−78.25%** | framework_WINS (raw Δ%) | §7.6.4 | [ver.](verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_ablation) |
 | R5 | 2D Eight Gaussians (2D FM ablation) | W₂ | 2.31 | 0.76 | **−67.10%** | framework_WINS (raw Δ%) | §7.6.5 | [ver.](verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_eight_gaussians) |
