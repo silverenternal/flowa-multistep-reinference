@@ -188,10 +188,19 @@ class SampleAnalyzer():
         frag_fracs = []
         error_message = defaultdict(int)
         for mol in sampled_molecules:
-            if mol.num_atoms == 0:
+            # Wave 258 P1: use getattr to safely access mol attributes (some sampled_molecule objects may lack fields)
+            if getattr(mol, 'num_atoms', 0) == 0:
                 error_message[4] += 1
                 continue
-            rdmol = mol.build_molecule()
+            _build_fn = getattr(mol, 'build_molecule', None)
+            if _build_fn is None:
+                error_message['other'] += 1
+                continue
+            try:
+                rdmol = _build_fn()
+            except Exception:
+                error_message['other'] += 1
+                continue
             if rdmol is not None:
                 try:
                     mol_frags = Chem.rdmolops.GetMolFrags(rdmol, asMols=True, sanitizeFrags=False)
@@ -202,7 +211,11 @@ class SampleAnalyzer():
                         n_connected += 1
                     largest_mol = max(mol_frags, default=rdmol, key=lambda m: m.GetNumAtoms())
                     largest_mol_n_atoms = largest_mol.GetNumAtoms()
-                    largest_frag_frac = largest_mol_n_atoms / mol.num_atoms
+                    # Wave 258 P1: getattr to avoid ZeroDivisionError when num_atoms is missing
+                    _n_atoms = getattr(mol, 'num_atoms', 1)
+                    if _n_atoms <= 0:
+                        _n_atoms = 1
+                    largest_frag_frac = largest_mol_n_atoms / _n_atoms
                     frag_fracs.append(largest_frag_frac)
                     Chem.SanitizeMol(largest_mol)
                     smiles = Chem.MolToSmiles(largest_mol)
