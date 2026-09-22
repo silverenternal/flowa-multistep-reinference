@@ -22,7 +22,17 @@
 
 **24.6× wall-clock gap → 1.26×** (wall-clock fix phase): CUDA-graph capture closes 76.8% of framework/baseline wall-clock ratio (4.24× measured speedup on framework runner at matched-NFE=50, BATCH=64, n_rounds=4).
 
-**Statistical methods** (statistical methods upgrade): TOST equivalence, Jonckheere-Terpstra ordered test, BF01 Bayes factor, DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z = +1.117), non-inferiority test.
+### One-line Summary per Cell
+
+- **R1 (Protein)**: HMMER hits: 158 → 342 (+116.46%) — framework_uplift on LineageFlow protein FM
+- **R2 (Protein)**: RMSD d_z = -0.0990 (Bonf-sig) — deployed paired-t framework_uplift on Kanzi
+- **R3 (Molecular)**: per-record d_z = -0.285 (Bonf-sig) — Wave 87 + Wave 208 framework_WINS (3-seed-pooled BLOCKED at vendor level)
+- **R4 (Toy FM)**: 2D FM ablation ΔFID=-78.25% framework_WINS on two_moons
+- **R5 (Toy FM)**: 2D FM ablation ΔFID=-67.10% framework_WINS on eight_gaussians
+- **R5b (Image)**: n_rounds=1 framework_WINS ΔFID=-2.53% to -0.66% (4 schedulers at seed 42 NFE=50)
+- **R6 (Image)**: tier-aware pLDDT d_z: +0.224 → +0.647 (+189%) framework_uplift (cluster-robust 5/8 SUPPORTED)
+
+**Statistical methods** (statistical methods upgrade): TOST equivalence testing (16 cells), Jonckheere-Terpstra ordered test (R2 + R6), BF01 Bayes factor (16 cells), DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z=+1.117, I²=99.60% — explained as expected cross-domain heterogeneity), and non-inferiority test (R5b). Full details in DATA_PRESENTATION.md §3.
 
 ---
 
