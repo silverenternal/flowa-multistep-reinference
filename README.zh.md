@@ -1,15 +1,15 @@
-# FlowA: Training-Free, Paper-Quantity-Driven Re-Inference for Flow-Matching Checkpoints
+# FlowA：面向 Flow-Matching 检查点的训练无关、按论文量驱动的再推理框架
 
 [English](README.md) | [中文](README.zh.md)
 
 [![CI](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml/badge.svg)](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml)
 [![D.4 byte-stable](https://img.shields.io/badge/D.4-30%2F30%20PASS-brightgreen)]() [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**TL;DR.** FlowA is a *training-free, solver-agnostic* re-inference framework that wraps a deployed flow-matching checkpoint and adapts the inference loop to local velocity-field geometry. The framework exposes four paper-quantity invariants derived from a canonical F-side witness as a first-class scheduler input. Validated across **seven R-level cells** spanning protein (LineageFlow), molecular 3D (FlowMol3), and image (CIFAR-10 RF, MNIST FM, 2D). The 24.6× wall-clock gap is closed 76.8% via CUDA-graph capture.
+**TL;DR / 概述.** FlowA 是一个 *训练无关 (training-free)、与求解器无关 (solver-agnostic)* 的再推理 (re-inference) 框架，包裹已部署的 flow-matching 检查点并依据局部速度场几何自适应推理循环。该框架将由规范 F 侧 (canonical F-side) 见证函数导出的四个论文量 (paper-quantity invariants) 作为一等调度器输入。在覆盖蛋白 (LineageFlow)、分子三维 (FlowMol3) 与图像 (CIFAR-10 RF、MNIST FM、2D) 的 **七个 R-level 单元** 上完成验证。24.6× 的壁钟差距通过 CUDA-graph capture 缩小 76.8%。
 
 ---
 
-## Headline Results
+## Headline Results / 头条结果
 
 | # | Model | Metric | Baseline | Framework | Δ | Effect size | Paper § | Verification |
 |---|---|---|---:|---:|---:|---|---|---|
@@ -23,7 +23,7 @@
 
 **24.6× wall-clock gap → 1.26×** (wall-clock fix phase): CUDA-graph capture closes 76.8% of framework/baseline wall-clock ratio (4.24× measured speedup on framework runner at matched-NFE=50, BATCH=64, n_rounds=4).
 
-### One-line Summary per Cell
+### One-line Summary per Cell / 各单元单行总结
 
 - **R1 (Protein)**: HMMER hits: 158 → 342 (+116.46%) — framework_WINS on LineageFlow protein FM
 - **R2 (Protein)**: RMSD d_z = -0.0990 (Bonf-sig) — deployed paired-t framework_WINS on Kanzi
@@ -33,11 +33,11 @@
 - **R5b (Image)**: n_rounds=1 framework_WINS ΔFID=-2.53% to -0.66% (4 schedulers at seed 42 NFE=50)
 - **R6 (Image)**: tier-aware pLDDT d_z: +0.224 → +0.647 (+189%) framework_WINS (cluster-robust 5/8 SUPPORTED)
 
-**Statistical methods** (statistical methods upgrade): TOST equivalence testing (16 cells), Jonckheere-Terpstra ordered test (R2 + R6), BF01 Bayes factor (16 cells), DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z=+1.117, I²=99.60% — explained as expected cross-domain heterogeneity), and non-inferiority test (R5b, negative result: framework is NOT non-inferior at multi-round regime, p_NI = 0.9985). Full details in [DATA_PRESENTATION.md §3](DATA_PRESENTATION.md).
+**Statistical methods / 统计方法**: TOST equivalence testing (16 cells), Jonckheere-Terpstra ordered test (R2 + R6), BF01 Bayes factor (16 cells), DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z=+1.117, I²=99.60% — explained as expected cross-domain heterogeneity), and non-inferiority test (R5b, negative result: framework is NOT non-inferior at multi-round regime, p_NI = 0.9985). Full details in [DATA_PRESENTATION.md §3](DATA_PRESENTATION.md).
 
 ---
 
-## Architecture
+## Architecture / 架构
 
 ```
                 ┌─────────────────────────────────────────────────┐
@@ -71,7 +71,7 @@
 
 ---
 
-## Installation
+## Installation / 安装
 
 ```bash
 git clone https://github.com/silverenternal/flowa-multistep-reinference
@@ -92,7 +92,7 @@ python3.11 -m venv .venvs/kanzi_venv
 
 ---
 
-## Quick Start
+## Quick Start / 快速开始
 
 ```bash
 # Verify all submission gates (D.4 byte-stable + ruff + claims + abstract + paper.pdf)
@@ -110,7 +110,7 @@ mkdocs build --strict
 
 ---
 
-### Reproducing the Paper
+### Reproducing the Paper / 复现论文
 
 One-click verification of all headline results:
 
@@ -136,7 +136,7 @@ Per-cell full audit trail at `docs/audit/wave*.md` (cited per cell above).
 
 ---
 
-### Environment Setup (Docker Recommended)
+### Environment Setup (Docker Recommended) / 环境搭建（推荐 Docker）
 
 To build the exact environment used in this work:
 
@@ -147,9 +147,9 @@ docker run --gpus all -it flowa:tnnls-v3.0
 
 ---
 
-## Repository Structure
+## Repository Structure / 仓库结构
 
-### A. Core Framework
+### A. Core Framework / 核心框架
 
 ```
 adaptive_reflow/         # core framework
@@ -162,7 +162,7 @@ adaptive_reflow/         # core framework
 configs/                  # configuration presets
 ```
 
-### B. Reproduction & Verification
+### B. Reproduction & Verification / 复现与验证
 
 ```
 reproduce/               # one-click reproduction scripts (this work)
@@ -178,7 +178,7 @@ data/                     # vendored upstream checkpoints (8 repos, all unmodifi
 
 ---
 
-## Submission Gates (verified at final pre-push)
+## Submission Gates / 投稿门槛 (verified at final pre-push)
 
 | Gate | State | Verification |
 |---|---|---|
@@ -193,7 +193,7 @@ data/                     # vendored upstream checkpoints (8 repos, all unmodifi
 
 ---
 
-## Data and Model Availability
+## Data and Model Availability / 数据与模型可用性
 
 | Checkpoint | SHA-256 (prefix) | Path |
 |---|---|---|
@@ -209,7 +209,7 @@ Reviewers re-verify any headline by comparing the embedded `verification_outputs
 
 ---
 
-## Numerical Stability
+## Numerical Stability / 数值稳定性
 
 All vendored upstream repositories (FlowMol3 commit `77cae22`, LineageFlow
 commit `ccef84a`, Kanzi, HiDream-I1, GraphBFN, Lumina-Image-2.0,
@@ -219,7 +219,7 @@ directive dated 2026-09-22. Verified (`docs/audit/wave262-p1-revert-all.md`,
 
 ---
 
-## TNNLS Submission Package
+## TNNLS Submission Package / TNNLS 投稿包
 
 This work is being submitted to **IEEE Transactions on Neural Networks and Learning Systems (TNNLS)** (decision rationale at [`docs/audit/wave238-p3-journal-decision.md`](docs/audit/wave238-p3-journal-decision.md)).
 
@@ -239,7 +239,7 @@ Re-verify with `cd tnnls_submission && sha256sum -- *.md`.
 
 ---
 
-## Citation
+## Citation / 引用
 
 ```bibtex
 @article{flowa2026tnnls,
@@ -254,11 +254,11 @@ Re-verify with `cd tnnls_submission && sha256sum -- *.md`.
 
 ---
 
-## License
+## License / 许可证
 
 MIT — see [LICENSE](LICENSE).
 
-## Acknowledgements
+## Acknowledgements / 致谢
 
 Vendored upstream checkpoints and code (frozen at submission):
 
@@ -268,7 +268,7 @@ Vendored upstream checkpoints and code (frozen at submission):
 
 Theoretical foundation: Theorem 1 is self-contained in paper §2 (mathematical foundations), with the complete proof sketch and explicit computation of the four quantities in §2.5-§2.8.
 
-## Contact
+## Contact / 联系方式
 
 For TNNLS review correspondence: see [`tnnls_submission/cover_letter.md`](tnnls_submission/cover_letter.md).
 
