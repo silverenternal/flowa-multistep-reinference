@@ -79,6 +79,7 @@ nav:
   - Testing: TESTING_STRATEGY.md
   - Acceptance gates: GATES.md
   - Results & records:
+      - Metric ledger (single source of truth): METRIC_LEDGER.md
       - Consolidated experimental results: CONSOLIDATED_RESULTS.md
       - Wave-6 reproducibility record: reproducibility_record.md
       - Wave-14 baseline audit report: baseline-audit-report.md
