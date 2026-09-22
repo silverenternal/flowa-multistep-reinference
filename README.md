@@ -109,27 +109,29 @@ mkdocs build --strict
 
 ---
 
-## Reproducing the Paper
+### Reproducing the Paper
 
-| Cell | Command | Time | GPU |
-|---|---|---|---|
-| R1 | `.venvs/lineageflow_venv/bin/python tools/run_lineageflow_n1000_foldability_omegafold.py` | ~30-50 h CPU | (CPU only) |
-| R2 | `.venvs/kanzi_venv/bin/python tools/sweep_kanzi_n1000_framework_paper_metrics.py` | ~2 h/arm CPU | (CPU only) |
-| R3 | `.venvs/flowmol3_venv/bin/python tools/wave87_n1000_sweep.py --nfe 250 --n-total 1000 --nfe-batch 100` | ~30 min GPU | required |
-| R4 / R5 | `.venvs/flowmol3_venv/bin/python tools/sweep_2d_toy_target.py --target {two_moons,eight_gaussians}` | ~1 min/arm CPU | (CPU only) |
-| R5b | `.venvs/flowmol3_venv/bin/python tools/run_sota_cifar_experiment.py --n-rounds 1` | ~30 min GPU | required |
-| R6 | `.venvs/flowmol3_venv/bin/python tools/sweep_mnist_fm_foldability.py --tier-aware` | ~5 min/arm CPU | (CPU only) |
-
-Per-cell full audit trail at `docs/audit/wave*.md` (cited per cell above).
-
-**One-shot reproduction verification**:
+One-click verification of all headline results:
 
 ```bash
-# Run all acceptance gates + verify each headline against its verification_output byte-stable artifact
-bash scripts/verify_all_headlines.sh
-
-# Expected output: "All 7/7 R-level headlines verified" or per-cell failure disclosure
+bash reproduce/verify_all_headlines.sh
 ```
+
+Expected output: `All 7/7 R-level headlines verified`
+
+Per-cell standalone scripts (each handles env activation → data check → run → result verification):
+
+| Cell | Script | Expected Output |
+| :--- | :--- | :--- |
+| R1 | `bash reproduce/01_R1_LineageFlow.sh` | `framework hits = 342` |
+| R2 | `bash reproduce/02_R2_Kanzi.sh` | `d_z = -0.0990 (Bonf-sig)` |
+| R3 | `bash reproduce/03_R3_FlowMol3.sh` | `d_z = -0.285 (Bonf-sig)` |
+| R4 | `bash reproduce/04_R4_2D_TwoMoons.sh` | `ΔFID = -78.25%` |
+| R5 | `bash reproduce/05_R5_2D_EightGaussians.sh` | `ΔFID = -67.10%` |
+| R5b | `bash reproduce/06_R5b_CIFAR_n_rounds1.sh` | `ΔFID ∈ [-2.53%, -0.66%]` |
+| R6 | `bash reproduce/07_R6_MNIST_TierAware.sh` | `pLDDT d_z = +0.647 (+189%)` |
+
+Per-cell full audit trail at `docs/audit/wave*.md` (cited per cell above).
 
 ---
 
@@ -146,31 +148,31 @@ docker run --gpus all -it flowa:tnnls-v3.0
 
 ## Repository Structure
 
+### A. Core Framework
+
 ```
-flowa-multistep-reinference/
-├── adaptive_reflow/         # framework package
-│   ├── universal/           # model-family-agnostic kernel (Protocols, validators)
-│   ├── adapters/            # 12 concrete FlowMatchingODEAdapter implementations
-│   ├── algorithm/           # 5-component scheduler architecture
-│   │   └── scheduler/       # CosineAnneal + CodimensionSheet + TierAware wrapper
-│   ├── framework/           # CUDA-graph capture (wall-clock fix phase)
-│   ├── stats/               # TOST / JT / BF01 / meta / NI (statistical methods upgrade)
-│   └── contracts/           # frozen typed dataclasses (paper quantities)
-├── docs/                    # paper drafts + audit trail
-│   ├── drafts/              # abstract + section-2 + paper-flattened-draft
-│   ├── audit/               # per-wave audit docs
-│   ├── ARCHITECTURE.md      # governance doc
-│   ├── CLAIMS.md            # 76 ACTIVE claims (structural reversal + statistical upgrade)
-│   ├── CONSOLIDATED_RESULTS.md  # §15.1-15.102 (full results ledger)
-│   ├── GATES.md             # engineering gates
-│   └── cover-letter-tnnls.md  # TNNLS cover letter (canonical source)
-├── verification_outputs/    # 485+ byte-addressable artifacts
-├── scripts/                 # wave driver + reproduction scripts
-├── tools/                   # paper-metric + sweep scripts
-├── tests/                   # 5155 pytest tests + D.4 byte-stable suite
-├── data/                    # vendored upstream + checkpoints (SHA-256-pinned)
-├── tnnls_submission/        # TNNLS submission package (current)
-└── CHANGELOG.md             # per-wave development changelog
+adaptive_reflow/         # core framework
+├── universal/           # model-family-agnostic kernel
+├── algorithm/            # 5-component scheduler (CosineAnneal, CodimensionSheet, BoundedMerge, EvidenceDriven, BRAI) + TierAware wrapper
+├── framework/            # CUDA-graph capture (Wave 236 P2)
+├── stats/                # TOST / JT / BF01 / meta / NI (Wave 234)
+├── adapters/             # 12 concrete FM adapter implementations
+└── contracts/            # frozen typed dataclasses (paper quantities)
+configs/                  # configuration presets
+```
+
+### B. Reproduction & Verification
+
+```
+reproduce/               # one-click reproduction scripts (this work)
+scripts/                  # wave driver + reproduction scripts
+tests/                    # 5155 pytest + D.4 byte-stable regression
+tools/                    # paper-metric + sweep scripts
+verification_outputs/     # 487+ byte-addressable headline evidence
+tnnls_submission/         # TNNLS submission package (7 files)
+docs/                     # paper drafts + audit trail
+eaai_submission/          # historical EAAI submission (rejection)
+data/                     # vendored upstream checkpoints (8 repos, all unmodified)
 ```
 
 ---
