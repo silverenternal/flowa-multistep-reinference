@@ -8,7 +8,20 @@
 [![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)]()
 [![Adapters](https://img.shields.io/badge/adapters-12-orange.svg)]()
 
+**Last updated:** 2026-09-22 (Wave 273 README polish). Source tree frozen at `v3.0-tnnls-ready`.
+
 **TL;DR.** FlowA is a *training-free, solver-agnostic* re-inference framework that wraps a deployed flow-matching checkpoint and adapts the inference loop to local velocity-field geometry. The framework exposes four paper-quantity invariants derived from a canonical F-side witness as a first-class scheduler input. Validated across **seven R-level cells** spanning protein (LineageFlow), molecular 3D (FlowMol3), and image (CIFAR-10 RF, MNIST FM, 2D). The 24.6× wall-clock gap is closed 76.8% via CUDA-graph capture.
+
+### Quick Navigation
+
+- [Headline Results](#headline-results) — seven R-level cells at a glance
+- [Architecture](#architecture) — 4 paper-quantity + 5-component scheduler
+- [Installation](#installation) — three venvs (FlowMol3 / LineageFlow / Kanzi)
+- [Quick Start](#quick-start) — verify submission gates in one command
+- [Reproducing the Paper](#reproducing-the-paper) — per-cell scripts with expected output
+- [Submission Gates](#submission-gates-verified-at-final-pre-push) — D.4, mkdocs, claims, pytest, ruff, mypy
+- [Citation](#citation) — BibTeX entry for TNNLS submission
+- [中文 README](README.zh.md) — 双语 README
 
 ---
 
