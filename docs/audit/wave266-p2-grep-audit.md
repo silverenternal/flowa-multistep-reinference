@@ -221,7 +221,7 @@ must_update_references_list = [
   "requirements/",
 ]
 audit_doc_path  = "docs/audit/wave266-p2-grep-audit.md"
-commit_sha      = (filled at end of P2)
+commit_sha      = 7a50fd8d11afe5be6900ef54e09b003a5948bc61
 ```
 
 **Note on `n_safe_to_move`:** The task JSON requires reporting the
