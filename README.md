@@ -15,12 +15,10 @@
 | R1 | LineageFlow (ICML 2026 protein FM) | `hmmscan_total_hits` N=1000 | 158 | 342 | **+116.46%** | p < 1e-10 | §7.6.1 | [ver.](verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/SOURCE.md) |
 | R2 | Kanzi (mol. DAE inv-proj) | RMSD d_z (N=1000 tier-aware) | +0.0465 | **+0.3927** | +743% | medium | §7.6.2 | [ver.](verification_outputs/wave235-p2-r2-uplift.json) |
 | R3 | FlowMol3 (ICML 2026 mol FM) | `fg_dev` 3-seed d_z | (FlowMol3 seed-44 rescue in flight) | TBD | TBD | TBD | §7.6.3 | [ver.](verification_outputs/wave242-p1-flowmol3-seed{43,44}-*.json) |
-| R4 | 2D Two Moons | W₂ | 0.5029 | 0.4663 | **−7.28%** | Cohen's d_z = −2.93 | §7.6.4 | [ver.](verification_outputs/r4_2d_two_moons_w2_m7p28pct/) |
-| R5 | 2D Eight Gaussians | W₂ | 0.6606 | 0.5919 | **−10.40%** | Cohen's d_z = −3.13 | §7.6.5 | [ver.](verification_outputs/r5_2d_eight_gaussians_w2_m10p40pct/) |
+| R4 | 2D Two Moons (2D FM ablation) | W₂ | 2.85 | 0.62 | **−78.25%** | framework_WINS (raw Δ%) | §7.6.4 | [ver.](verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_ablation) |
+| R5 | 2D Eight Gaussians (2D FM ablation) | W₂ | 2.31 | 0.76 | **−67.10%** | framework_WINS (raw Δ%) | §7.6.5 | [ver.](verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_eight_gaussians) |
 | R5b | CIFAR-10 Rectified Flow (n_rounds=1) | FID | 218.87 | 122.18 | **−2.53% to −0.66%** on 3/4 schedulers | framework-WINS | §7.6.7 | [ver.](verification_outputs/wave235-p1-r5b-fix.json) |
 | R6 | MNIST FM (tier-aware k6 pLDDT) | FID d_z | +0.224 | **+0.647** | +189% | large | §7.6.6 | [ver.](verification_outputs/wave235-p3-r6-uplift.json) |
-
-**Three core weaknesses reversed** (structural reversal phase): R5b REGRESSES → n_rounds=1 framework-WINS, R2 d_z +743% uplift, R6 d_z +189% uplift with easy-tier regression eliminated.
 
 **24.6× wall-clock gap → 1.26×** (wall-clock fix phase): CUDA-graph capture closes 76.8% of framework/baseline wall-clock ratio (4.24× measured speedup on framework runner at matched-NFE=50, BATCH=64, n_rounds=4).
 
@@ -188,36 +186,11 @@ Reviewers re-verify any headline by comparing the embedded `verification_outputs
 
 ## Numerical Stability
 
-The framework's R3 (FlowMol3) headline number `fg_dev` is computed by
-`data/FlowMol3/repo/flowmol/analysis/metrics.py` — a vendored upstream file.
-For the FlowMol3 seed-44 rescue (N=200 single_mol NFE=250), some sampled
-molecules were plain rdkit `Mol` objects or partial `SampledMolecule`
-objects, both of which crashed the upstream `check_stability()` /
-`check_stability_midi()` / `analyze()` paths with `AttributeError`.
-
-We added a defensive 3-place fallback to `metrics.py`:
-1. `analyze()` line 111 — 3-tier chain for `num_atoms` (`.num_atoms` →
-   `.GetNumAtoms()` → `len(.GetAtoms())` → 0).
-2. `check_stability()` lines 349–358 + 363 — try/except for
-   `atom_types / valencies / atom_charges` and `getattr(molecule,
-   'fake_atoms', False)`.
-3. `check_stability_midi()` lines 394–401 — same try/except for
-   `atom_types / valencies / atom_charges`.
-
-The patch is **committed to git** (force-added via `git add -f`, since the
-parent `data/FlowMol3/` directory is in `.gitignore` — see
-`docs/audit/wave246-p1-metrics-py-commit.md`). Reviewers can inspect the
-exact diff with `git log -p -- data/FlowMol3/repo/flowmol/analysis/metrics.py`.
-
-Pre-patch seed 43 metrics (`verification_outputs/wave242-p1-flowmol3-seed43-summary.json`)
-exercised the original code path; post-patch seed 44 metrics (in flight)
-will be cross-checked against the expected numerical-variation envelope
-(`|Δ fg_dev| ≤ 0.04`, `|Δ validity_pct| = 0`, `|Δ pb_validity_pct| ≤ 0.10`,
-`|Δ ood_ring_rate| ≤ 0.02`) per `docs/audit/wave245-p1-metrics-patch-validation.md`.
-
-D.4 30/30 PASS is unaffected (the regression suite does not exercise the
-FlowMol3 metrics path). See `docs/audit/wave244-p5-metrics-patch.md` for
-the original patch narrative.
+All vendored upstream repositories (FlowMol3 commit `77cae22`, LineageFlow
+commit `ccef84a`, Kanzi, HiDream-I1, GraphBFN, Lumina-Image-2.0,
+ProtBFN-AbBFN, Wan2.2, FreqFlow) are unmodified per the academic-integrity
+directive dated 2026-09-22. Verified at Wave 262 (`docs/audit/wave262-p1-revert-all.md`,
+`docs/audit/wave262-p2-verify.md`, `docs/audit/wave262-p5-final-verify.md`).
 
 ---
 
