@@ -1,0 +1,3369 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.6.8)  23 SEP 2026 20:36
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**paper-A-final.tex
+(./paper-A-final.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+(/home/hugo/texmf/tex/latex/IEEEtran/IEEEtran.cls
+Document Class: IEEEtran 2015/08/26 V1.8b by Michael Shell
+-- See the "IEEEtran_HOWTO" manual for usage information.
+-- http://www.michaelshell.org/tex/ieeetran/
+\@IEEEtrantmpdimenA=\dimen148
+\@IEEEtrantmpdimenB=\dimen149
+\@IEEEtrantmpdimenC=\dimen150
+\@IEEEtrantmpcountA=\count275
+\@IEEEtrantmpcountB=\count276
+\@IEEEtrantmpcountC=\count277
+\@IEEEtrantmptoksA=\toks17
+LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 5
+03.
+(/usr/share/texmf-dist/tex/latex/psnfss/ot1ptm.fd
+File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
+)
+-- Using 8.5in x 11in (letter) paper.
+-- Using PDF output.
+\@IEEEnormalsizeunitybaselineskip=\dimen151
+-- This is a 10 point document.
+LaTeX Encoding Info:    Redeclaring text command \textunderscore (encoding ?) o
+n input line 937.
+\CLASSINFOnormalsizebaselineskip=\dimen152
+\CLASSINFOnormalsizeunitybaselineskip=\dimen153
+\IEEEnormaljot=\dimen154
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <5> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <5> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <7> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <7> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <8> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <8> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <9> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <9> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <10> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <11> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <11> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <12> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <12> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <17> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <17> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <20> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <20> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <24> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <24> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+\IEEEquantizedlength=\dimen155
+\IEEEquantizedlengthdiff=\dimen156
+\IEEEquantizedtextheightdiff=\dimen157
+\IEEEilabelindentA=\dimen158
+\IEEEilabelindentB=\dimen159
+\IEEEilabelindent=\dimen160
+\IEEEelabelindent=\dimen161
+\IEEEdlabelindent=\dimen162
+\IEEElabelindent=\dimen163
+\IEEEiednormlabelsep=\dimen164
+\IEEEiedmathlabelsep=\dimen165
+\IEEEiedtopsep=\skip49
+\c@section=\count278
+\c@subsection=\count279
+\c@subsubsection=\count280
+\c@paragraph=\count281
+\c@IEEEsubequation=\count282
+\abovecaptionskip=\skip50
+\belowcaptionskip=\skip51
+\c@figure=\count283
+\c@table=\count284
+\@IEEEeqnnumcols=\count285
+\@IEEEeqncolcnt=\count286
+\@IEEEsubeqnnumrollback=\count287
+\@IEEEquantizeheightA=\dimen166
+\@IEEEquantizeheightB=\dimen167
+\@IEEEquantizeheightC=\dimen168
+\@IEEEquantizeprevdepth=\dimen169
+\@IEEEquantizemultiple=\count288
+\@IEEEquantizeboxA=\box53
+\@IEEEtmpitemindent=\dimen170
+\IEEEPARstartletwidth=\dimen171
+\c@IEEEbiography=\count289
+\@IEEEtranrubishbin=\box54
+) (/usr/share/texmf-dist/tex/latex/amsmath/amsmath.sty
+Package: amsmath 2025/07/09 v2.17z AMS math features
+\@mathmargin=\skip52
+
+For additional information on amsmath, use the `?' option.
+(/usr/share/texmf-dist/tex/latex/amsmath/amstext.sty
+Package: amstext 2024/11/17 v2.01 AMS text
+
+(/usr/share/texmf-dist/tex/latex/amsmath/amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0 generic functions
+\@emptytoks=\toks18
+\ex@=\dimen172
+))
+(/usr/share/texmf-dist/tex/latex/amsmath/amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d Bold Symbols
+\pmbraise@=\dimen173
+)
+(/usr/share/texmf-dist/tex/latex/amsmath/amsopn.sty
+Package: amsopn 2022/04/08 v2.04 operator names
+)
+\inf@bad=\count290
+LaTeX Info: Redefining \frac on input line 233.
+\uproot@=\count291
+\leftroot@=\count292
+LaTeX Info: Redefining \overline on input line 398.
+LaTeX Info: Redefining \colon on input line 409.
+\classnum@=\count293
+\DOTSCASE@=\count294
+LaTeX Info: Redefining \ldots on input line 495.
+LaTeX Info: Redefining \dots on input line 498.
+LaTeX Info: Redefining \cdots on input line 619.
+\Mathstrutbox@=\box55
+\strutbox@=\box56
+LaTeX Info: Redefining \big on input line 721.
+LaTeX Info: Redefining \Big on input line 722.
+LaTeX Info: Redefining \bigg on input line 723.
+LaTeX Info: Redefining \Bigg on input line 724.
+\big@size=\dimen174
+LaTeX Font Info:    Redeclaring font encoding OML on input line 742.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 743.
+\macc@depth=\count295
+LaTeX Info: Redefining \bmod on input line 904.
+LaTeX Info: Redefining \pmod on input line 909.
+LaTeX Info: Redefining \smash on input line 939.
+LaTeX Info: Redefining \relbar on input line 969.
+LaTeX Info: Redefining \Relbar on input line 970.
+\c@MaxMatrixCols=\count296
+\dotsspace@=\muskip17
+\c@parentequation=\count297
+\dspbrk@lvl=\count298
+\tag@help=\toks19
+\row@=\count299
+\column@=\count300
+\maxfields@=\count301
+\andhelp@=\toks20
+\eqnshift@=\dimen175
+\alignsep@=\dimen176
+\tagshift@=\dimen177
+\tagwidth@=\dimen178
+\totwidth@=\dimen179
+\lineht@=\dimen180
+\@envbody=\toks21
+\multlinegap=\skip53
+\multlinetaggap=\skip54
+\mathdisplay@stack=\toks22
+LaTeX Info: Redefining \[ on input line 2950.
+LaTeX Info: Redefining \] on input line 2951.
+)
+(/usr/share/texmf-dist/tex/latex/amsfonts/amssymb.sty
+Package: amssymb 2013/01/14 v3.01 AMS font symbols
+
+(/usr/share/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
+))
+(/usr/share/texmf-dist/tex/latex/graphics/graphicx.sty
+Package: graphicx 2024/12/31 v1.2e Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
+\KV@toks@=\toks23
+)
+(/usr/share/texmf-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2024/08/06 v1.4g Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf-dist/tex/latex/graphics/trig.sty
+Package: trig 2023/12/02 v1.11 sin cos tan (DPC)
+)
+(/usr/share/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
+)
+Package graphics Info: Driver file: pdftex.def on input line 106.
+
+(/usr/share/texmf-dist/tex/latex/graphics-def/pdftex.def
+File: pdftex.def 2025/09/29 v1.2d Graphics/color driver for pdftex
+))
+\Gin@req@height=\dimen181
+\Gin@req@width=\dimen182
+)
+(/usr/share/texmf-dist/tex/latex/booktabs/booktabs.sty
+Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
+\heavyrulewidth=\dimen183
+\lightrulewidth=\dimen184
+\cmidrulewidth=\dimen185
+\belowrulesep=\dimen186
+\belowbottomsep=\dimen187
+\aboverulesep=\dimen188
+\abovetopsep=\dimen189
+\cmidrulesep=\dimen190
+\cmidrulekern=\dimen191
+\defaultaddspace=\dimen192
+\@cmidla=\count302
+\@cmidlb=\count303
+\@aboverulesep=\dimen193
+\@belowrulesep=\dimen194
+\@thisruleclass=\count304
+\@lastruleclass=\count305
+\@thisrulewidth=\dimen195
+)
+(/usr/share/texmf-dist/tex/latex/multirow/multirow.sty
+Package: multirow 2024/11/12 v2.9 Span multiple rows of a table
+\multirow@colwidth=\skip55
+\multirow@cntb=\count306
+\multirow@dima=\skip56
+\bigstrutjot=\dimen196
+)
+(/usr/share/texmf-dist/tex/latex/tools/array.sty
+Package: array 2025/09/25 v2.6n Tabular extension package (FMi)
+\col@sep=\dimen197
+\ar@mcellbox=\box57
+\extrarowheight=\dimen198
+\NC@list=\toks24
+\extratabsurround=\skip57
+\backup@length=\skip58
+\ar@cellbox=\box58
+)
+(/usr/share/texmf-dist/tex/latex/xcolor/xcolor.sty
+Package: xcolor 2024/09/29 v3.02 LaTeX color extensions (UK)
+
+(/usr/share/texmf-dist/tex/latex/graphics-cfg/color.cfg
+File: color.cfg 2016/01/02 v1.6 sample color configuration
+)
+Package xcolor Info: Driver file: pdftex.def on input line 274.
+
+(/usr/share/texmf-dist/tex/latex/graphics/mathcolor.ltx)
+Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1349.
+Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1353.
+Package xcolor Info: Model `RGB' extended on input line 1365.
+Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1367.
+Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1368.
+Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1369.
+Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1370.
+Package xcolor Info: Model `Gray' substituted by `gray' on input line 1371.
+Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
+)
+(/usr/share/texmf-dist/tex/latex/url/url.sty
+\Urlmuskip=\muskip18
+Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
+)
+(/usr/share/texmf-dist/tex/latex/cite/cite.sty
+LaTeX Info: Redefining \cite on input line 302.
+LaTeX Info: Redefining \nocite on input line 332.
+Package: cite 2015/02/27  v 5.5
+)
+(/usr/share/texmf-dist/tex/latex/hyperref/hyperref.sty
+Package: hyperref 2026-01-29 v7.01p Hypertext links for LaTeX
+
+(/usr/share/texmf-dist/tex/generic/iftex/iftex.sty
+Package: iftex 2024/12/12 v1.0g TeX engine tests
+)
+(/usr/share/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty
+Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
+)
+(/usr/share/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty
+Package: kvdefinekeys 2019-12-19 v1.6 Define keys (HO)
+)
+(/usr/share/texmf-dist/tex/generic/pdfescape/pdfescape.sty
+Package: pdfescape 2019/12/09 v1.15 Implements pdfTeX's escape features (HO)
+
+(/usr/share/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty
+Package: ltxcmds 2023-12-04 v1.26 LaTeX kernel commands for general use (HO)
+)
+(/usr/share/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
+Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
+)
+
+(/usr/share/texmf-dist/tex/generic/infwarerr/infwarerr.sty
+Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
+)
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode found.
+))
+(/usr/share/texmf-dist/tex/latex/hycolor/hycolor.sty
+Package: hycolor 2020-01-27 v1.10 Color options for hyperref/bookmark (HO)
+)
+(/usr/share/texmf-dist/tex/latex/hyperref/nameref.sty
+Package: nameref 2026-01-29 v2.58 Cross-referencing by name of section
+
+(/usr/share/texmf-dist/tex/latex/refcount/refcount.sty
+Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
+)
+(/usr/share/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty
+Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
+
+(/usr/share/texmf-dist/tex/latex/kvoptions/kvoptions.sty
+Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
+))
+\c@section@level=\count307
+)
+(/usr/share/texmf-dist/tex/latex/etoolbox/etoolbox.sty
+Package: etoolbox 2025/10/02 v2.5m e-TeX tools for LaTeX (JAW)
+\etb@tempcnta=\count308
+)
+(/usr/share/texmf-dist/tex/generic/stringenc/stringenc.sty
+Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
+)
+)
+\@linkdim=\dimen199
+\Hy@linkcounter=\count309
+\Hy@pagecounter=\count310
+
+(/usr/share/texmf-dist/tex/latex/hyperref/pd1enc.def
+File: pd1enc.def 2026-01-29 v7.01p Hyperref: PDFDocEncoding definition (HO)
+Now handling font encoding PD1 ...
+... no UTF-8 mapping file for font encoding PD1
+)
+(/usr/share/texmf-dist/tex/generic/intcalc/intcalc.sty
+Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
+)
+\Hy@SavedSpaceFactor=\count311
+
+(/usr/share/texmf-dist/tex/latex/hyperref/puenc.def
+File: puenc.def 2026-01-29 v7.01p Hyperref: PDF Unicode definition (HO)
+Now handling font encoding PU ...
+... no UTF-8 mapping file for font encoding PU
+)
+Package hyperref Info: Option `final' set `true' on input line 4072.
+Package hyperref Info: Hyper figures OFF on input line 4201.
+Package hyperref Info: Link nesting OFF on input line 4206.
+Package hyperref Info: Hyper index ON on input line 4209.
+Package hyperref Info: Plain pages OFF on input line 4216.
+Package hyperref Info: Backreferencing OFF on input line 4221.
+Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
+Package hyperref Info: Bookmarks ON on input line 4468.
+\c@Hy@tempcnt=\count312
+LaTeX Info: Redefining \url on input line 4807.
+\XeTeXLinkMargin=\dimen256
+
+(/usr/share/texmf-dist/tex/generic/bitset/bitset.sty
+Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
+
+(/usr/share/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty
+Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
+)
+))
+\Fld@menulength=\count313
+\Field@Width=\dimen257
+\Fld@charsize=\dimen258
+Package hyperref Info: Hyper figures OFF on input line 6084.
+Package hyperref Info: Link nesting OFF on input line 6089.
+Package hyperref Info: Hyper index ON on input line 6092.
+Package hyperref Info: backreferencing OFF on input line 6099.
+Package hyperref Info: Link coloring OFF on input line 6104.
+Package hyperref Info: Link coloring with OCG OFF on input line 6109.
+Package hyperref Info: PDF/A mode OFF on input line 6114.
+\Hy@abspage=\count314
+\c@Item=\count315
+\c@Hfootnote=\count316
+)
+Package hyperref Info: Driver (autodetected): hpdftex.
+
+(/usr/share/texmf-dist/tex/latex/hyperref/hpdftex.def
+File: hpdftex.def 2026-01-29 v7.01p Hyperref driver for pdfTeX
+\Fld@listcount=\count317
+\c@bookmark@seq@number=\count318
+
+(/usr/share/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
+Package: rerunfilecheck 2025-06-21 v1.11 Rerun checks for auxiliary files (HO)
+
+(/usr/share/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty
+Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
+)
+Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
+84.
+)
+\Hy@SectionHShift=\skip59
+)
+(/usr/share/texmf-dist/tex/latex/tools/bm.sty
+Package: bm 2025/10/21 v1.2g Bold Symbol Support (DPC/FMi)
+\symboldoperators=\mathgroup6
+\symboldletters=\mathgroup7
+\symboldsymbols=\mathgroup8
+Package bm Info: No bold for \OMX/cmex/m/n, using \pmb.
+Package bm Info: No bold for \U/msa/m/n, using \pmb.
+Package bm Info: No bold for \U/msb/m/n, using \pmb.
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 149.
+)
+(/usr/share/texmf-dist/tex/latex/base/textcomp.sty
+Package: textcomp 2024/04/24 v2.1b Standard LaTeX package
+)
+Package hyperref Info: Option `colorlinks' set `true' on input line 37.
+
+(/usr/share/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
+File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
+\l__color_backend_stack_int=\count319
+)
+(./paper-A-final.aux)
+\openout1 = `paper-A-final.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 43.
+LaTeX Font Info:    ... okay on input line 43.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 43.
+LaTeX Font Info:    ... okay on input line 43.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 43.
+LaTeX Font Info:    ... okay on input line 43.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 43.
+LaTeX Font Info:    ... okay on input line 43.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 43.
+LaTeX Font Info:    ... okay on input line 43.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 43.
+LaTeX Font Info:    ... okay on input line 43.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 43.
+LaTeX Font Info:    ... okay on input line 43.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 43.
+LaTeX Font Info:    ... okay on input line 43.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 43.
+LaTeX Font Info:    ... okay on input line 43.
+
+-- Lines per column: 58 (exact).
+(/usr/share/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count320
+\scratchdimen=\dimen259
+\scratchbox=\box59
+\nofMPsegments=\count321
+\nofMParguments=\count322
+\everyMPshowfont=\toks25
+\MPscratchCnt=\count323
+\MPscratchDim=\dimen260
+\MPnumerator=\count324
+\makeMPintoPDFobject=\count325
+\everyMPtoPDFconversion=\toks26
+) (/usr/share/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
+Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
+Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
+85.
+
+(/usr/share/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
+e
+))
+Package hyperref Info: Link coloring ON on input line 43.
+
+(./paper-A-final.out) (./paper-A-final.out)
+\@outlinefile=\write3
+\openout3 = `paper-A-final.out'.
+
+LaTeX Font Info:    Trying to load font information for U+msa on input line 50.
+
+
+(/usr/share/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 50.
+
+
+(/usr/share/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
+LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 5
+2.
+
+(/usr/share/texmf-dist/tex/latex/psnfss/ot1pcr.fd
+File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
+)
+Underfull \hbox (badness 3482) in paragraph at lines 52--53
+\OT1/ptm/b/n/9 Flow-Mol3 (NeurIPS 2024), the open DDPM++/RF UNet
+ []
+
+
+Underfull \hbox (badness 1983) in paragraph at lines 52--53
+\OT1/ptm/b/n/9 a typed four-port con-trol sur-face (\OT1/pcr/b/n/9 SchedulerPro
+tocol\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 52--53
+\OT1/pcr/b/n/9 PolicyDriverProtocol\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 MergeOperato
+rProtocol\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 1577) in paragraph at lines 62--63
+[]\OT1/ptm/b/n/9 (i) Typed-contracts frame-work ar-chi-tec-ture. We pro-pose
+ []
+
+
+Underfull \hbox (badness 5302) in paragraph at lines 62--63
+\OT1/ptm/b/n/9 match-ing in-fer-ence as a multi-round re-inference layer
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--63
+\OT1/pcr/b/n/9 PolicyDriverProtocol\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 MergeOperato
+rProtocol\OT1/ptm/b/n/9 ,
+ []
+
+LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 6
+6.
+(/usr/share/texmf-dist/tex/latex/psnfss/ts1ptm.fd
+File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
+) [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf-dist/f
+onts/enc/dvips/base/8r.enc}
+
+
+]
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family pcr in TS1 encoding.
+            Default family used instead on input line 88.
+
+
+LaTeX Font Warning: Font shape `OT1/cmtt/b/n' undefined
+(Font)              using `OT1/cmtt/m/n' instead on input line 88.
+
+
+LaTeX Font Warning: Font shape `TS1/cmtt/b/n' undefined
+(Font)              using `TS1/cmtt/m/n' instead
+(Font)              for symbol `textrightarrow' on input line 88.
+
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family pcr in TS1 encoding.
+            Default family used instead on input line 88.
+
+Underfull \hbox (badness 2617) in paragraph at lines 88--89
+\OT1/ptm/b/n/9 ICML 2024's po-si-tion pa-per [13] makes a gen-eral call
+ []
+
+
+Underfull \hbox (badness 5036) in paragraph at lines 88--89
+\OT1/ptm/b/n/9 a struc-tured frame-work for lim-i-ta-tions dis-clo-sure; Mc-
+ []
+
+
+Underfull \hbox (badness 1810) in paragraph at lines 88--89
+\OT1/ptm/b/n/9 sults. FlowA's honest-disclosure pat-tern (\TS1/ptm/b/n/9 �\OT1/
+ptm/b/n/9 3.6) em-beds re-
+ []
+
+
+Underfull \hbox (badness 3118) in paragraph at lines 88--89
+\TS1/cmtt/b/n/9 ^^Y \OT1/pcr/b/n/9 Wave \TS1/cmtt/b/n/9 ^^Y \OT1/pcr/b/n/9 re-a
+nchor \OT1/ptm/b/n/9 chains, with \OT1/pcr/b/n/9 ACTIVE \OT1/ptm/b/n/9 sta-tus 
+pre-
+ []
+
+
+Underfull \hbox (badness 6741) in paragraph at lines 96--97
+[]\OT1/ptm/b/n/9 FlowA is a typed-contracts frame-work that ex-poses
+ []
+
+
+Underfull \hbox (badness 5847) in paragraph at lines 96--97
+\OT1/ptm/b/n/9 the in-fer-ence loop as a four-port con-trol sur-face |
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 96--97
+\OT1/pcr/b/n/9 SchedulerProtocol\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 PolicyDriverPro
+tocol\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--103
+\OT1/ptm/b/n/9 sched-uler con-tract: \OT1/pcr/b/n/9 sample(outer_cycle_id,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--103
+\OT1/pcr/b/n/9 round_in_cycle, target_round) ->
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--103
+\OT1/pcr/b/n/9 ScheduleSample\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 cycle_length()
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--103
+\OT1/pcr/b/n/9 -> int\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 schedule_family() -> str\O
+T1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--103
+\OT1/pcr/b/n/9 config_hash() -> str\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 reset()\OT1/
+ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--103
+\OT1/pcr/b/n/9 record_round_feedback(round_in_cycle,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--103
+\OT1/pcr/b/n/9 metrics)\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 inject_noise(state,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--103
+\OT1/pcr/b/n/9 schedule_sample, *, generator) -> state\OT1/ptm/b/n/9 .
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--103
+\OT1/ptm/b/n/9 The \OT1/pcr/b/n/9 runtime_checkable \OT1/ptm/b/n/9 dec-o-ra-tor
+ makes
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--103
+\OT1/ptm/b/n/9 ev-ery con-crete sched-uler pass \OT1/pcr/b/n/9 isinstance(s,
+ []
+
+
+Underfull \hbox (badness 4543) in paragraph at lines 102--103
+\OT1/pcr/b/n/9 SchedulerProtocol) \OT1/ptm/b/n/9 iff it de-clares the method
+ []
+
+
+! LaTeX Error: \begin{enumerate} on input line 100 ended by \end{itemize}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.103 \end{itemize}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+Underfull \hbox (badness 1694) in paragraph at lines 107--108
+\OT1/ptm/b/n/9 decision con-tract: given a \OT1/pcr/b/n/9 MemoryFractionPolicy
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--108
+\OT1/ptm/b/n/9 and a \OT1/pcr/b/n/9 RestartPolicy\OT1/ptm/b/n/9 , re-turn the p
+er-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--108
+\OT1/ptm/b/n/9 round noise-and-step en-ve-lope. The de-fault
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--108
+\OT1/pcr/b/n/9 ScheduleDerivedPolicyDriver \OT1/ptm/b/n/9 con-sumes
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--108
+\OT1/ptm/b/n/9 only the sched-uler's \OT1/pcr/b/n/9 memory_fraction()\OT1/ptm/b
+/n/9 ;
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--108
+\OT1/pcr/b/n/9 AdaptivePolicyDriver \OT1/ptm/b/n/9 con-sumes paper-quantity
+ []
+
+
+! LaTeX Error: \begin{enumerate} on input line 105 ended by \end{itemize}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.108 \end{itemize}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 110 ended by \end{itemize}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.113 \end{itemize}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 115 ended by \end{itemize}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.118 \end{itemize}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+[2{/usr/share/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}]
+Underfull \hbox (badness 10000) in paragraph at lines 138--139
+[]\OT1/ptm/b/n/9 Adapter layer (\OT1/pcr/b/n/9 adaptive_reflow/adapters/\OT1/pt
+m/b/n/9 ):
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 138--139
+\OT1/ptm/b/n/9 the five ven-dored check-points wrapped as
+ []
+
+
+Underfull \hbox (badness 4001) in paragraph at lines 138--139
+\OT1/pcr/b/n/9 FlowMatchingODEAdapter \OT1/ptm/b/n/9 pro-to-col im-ple-men-ta-t
+ions
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 138--139
+\OT1/ptm/b/n/9 | \OT1/pcr/b/n/9 LineageFlowAdapter\OT1/ptm/b/n/9 , \OT1/pcr/b/n
+/9 KanziAdapter\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 138--139
+\OT1/pcr/b/n/9 FlowMol3Adapter\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 RectifiedFlowCIFA
+RAdapter\OT1/ptm/b/n/9 ,
+ []
+
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 141.
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 141.
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 141.
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 141.
+
+Underfull \hbox (badness 3646) in paragraph at lines 145--146
+\OT1/ptm/b/n/9 car-ry-ing the per-channel trace, the per-round sched-uler
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 145--146
+\OT1/ptm/b/n/9 com-puted via \OT1/pcr/b/n/9 compute_state_bundle_digest\OT1/ptm
+/b/n/9 . The
+ []
+
+
+Underfull \hbox (badness 3158) in paragraph at lines 145--146
+\OT1/ptm/b/n/9 bound-ary: ev-ery method on \OT1/pcr/b/n/9 FlowMatchingODEAdapte
+r
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 145--146
+\OT1/ptm/b/n/9 ei-ther ac-cepts or re-turns a \OT1/pcr/b/n/9 StateBundle \OT1/p
+tm/b/n/9 (or a
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 145--146
+\OT1/ptm/b/n/9 re-lated typed bun-dle | \OT1/pcr/b/n/9 ODEIntegratorTrace\OT1/p
+tm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 145--146
+\OT1/pcr/b/n/9 ODEConditionDelta\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 AdapterCapabili
+ties\OT1/ptm/b/n/9 ). The
+ []
+
+
+Underfull \hbox (badness 3179) in paragraph at lines 145--146
+\OT1/ptm/b/n/9 de-pends on (\OT1/pcr/b/n/9 tests/test_d4_regression_vectors.py\
+OT1/ptm/b/n/9 ,
+ []
+
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 149.
+
+Underfull \hbox (badness 2119) in paragraph at lines 149--150
+[]\OT1/ptm/b/n/9 FlowA in-tro-duces a capability-token hand-shake with a
+ []
+
+
+Underfull \hbox (badness 1917) in paragraph at lines 149--150
+\OT1/ptm/b/n/9 fail-closed au-dit trail that dis-tin-guishes it from hard-fail
+ []
+
+
+Underfull \hbox (badness 3492) in paragraph at lines 149--150
+\OT1/ptm/b/n/9 pat-terns in the lit-er-a-ture. Most ML frame-works check
+ []
+
+
+Underfull \hbox (badness 2894) in paragraph at lines 149--150
+\OT1/ptm/b/n/9 ca-pa-bil-i-ties at con-struc-tion and fail hard on mis-match:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 149--150
+\OT1/ptm/b/n/9 ONNX Run-time's \OT1/pcr/b/n/9 IExecutionProvider::CanHandle
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 149--150
+\OT1/ptm/b/n/9 re-turns a bool at con-struc-tion and mis-match \TS1/cmr/b/n/9 ^
+^Y
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 149--150
+\OT1/ptm/b/n/9 no ex-e-cu-tion (hard fail); Hug-ging-Face Trans-form-ers'
+ []
+
+
+Underfull \hbox (badness 5460) in paragraph at lines 149--150
+\OT1/ptm/b/n/9 Py-Torch Light-ning's \OT1/pcr/b/n/9 self.trainer.use_dp / use_d
+dp
+ []
+
+
+Underfull \hbox (badness 2119) in paragraph at lines 149--150
+\OT1/ptm/b/n/9 is set at \OT1/pcr/b/n/9 __init__\OT1/ptm/b/n/9 . FlowA's pat-te
+rn is novel in three
+ []
+
+
+Underfull \hbox (badness 3815) in paragraph at lines 149--150
+\OT1/ptm/b/n/9 re-spects: (1) fail-closed with au-dit trail, not hard fail
+ []
+
+
+Overfull \hbox (58.79662pt too wide) in paragraph at lines 149--150
+\OT1/pcr/b/n/9 capability_unsupported:foo:continuous_kind_not_advertised\OT1/pt
+m/b/n/9 )
+ []
+
+
+Underfull \hbox (badness 7047) in paragraph at lines 149--150
+\OT1/ptm/b/n/9 with the per-channel ca-pa-bil-ity au-dit string ap-pended
+ []
+
+
+Underfull \hbox (badness 3158) in paragraph at lines 149--150
+\OT1/ptm/b/n/9 to the ledger; (2) per-channel do-main dis-patch | the
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+[]\OT1/ptm/b/n/9 Algorithm sig-na-ture. The ca-pa-bil-ity sur-face is the
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/pcr/b/n/9 @dataclass(frozen=True) AdapterCapabilities
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 adaptive_reflow/universal/adapter.py:131\OT1/ptm
+/b/n/9 )
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 car-ry-ing \OT1/pcr/b/n/9 supported_channels: tuple[str,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/pcr/b/n/9 ...]\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 channel_domains: dict[str, s
+tr]\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 op-tional \OT1/pcr/b/n/9 materializer: type | None\OT1/ptm/b/n/9
+ , plus
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 per-feature booleans (\OT1/pcr/b/n/9 has_continuous_kind\OT1/ptm
+/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/pcr/b/n/9 has_restart_boundary\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 has_conditio
+n_injection\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 etc.). Ev-ery con-crete adapter over-rides \OT1/pcr/b/n/9 def
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/pcr/b/n/9 capabilities() -> AdapterCapabilities
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 adaptive_reflow/adapters/_adapter_common.py\OT1/
+ptm/b/n/9 ),
+ []
+
+
+Underfull \hbox (badness 1596) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 and the en-gine con-sumes the re-turned in-stance ver-ba-tim
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 as \OT1/pcr/b/n/9 capability_token=adapter.capabilities()
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 flowmol3.py:1311\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 
+twodim_fm.py:851\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/pcr/b/n/9 mnist_fm.py:576\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 freqflow.py:876\O
+T1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/pcr/b/n/9 graphbfn.py:816\OT1/ptm/b/n/9 ). The hand-shake is fail-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 closed: an un-known chan-nel or a miss-ing fea-ture
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 raises \OT1/pcr/b/n/9 EngineCapabilityMismatch \OT1/ptm/b/n/9 wi
+th the
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 per-channel \OT1/pcr/b/n/9 audit_codes \OT1/ptm/b/n/9 string ap-
+pended to
+ []
+
+
+Underfull \hbox (badness 5519) in paragraph at lines 153--154
+\OT1/pcr/b/n/9 EngineRoundResult.audit_codes\OT1/ptm/b/n/9 . The \OT1/pcr/b/n/9
+ audit_codes
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 field round-trips through \OT1/pcr/b/n/9 parse_audit_code
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 as a \OT1/pcr/b/n/9 ":"\OT1/ptm/b/n/9 -delimited back-compat str
+ing (e.g.
+ []
+
+
+Overfull \hbox (61.04662pt too wide) in paragraph at lines 153--154
+\OT1/pcr/b/n/9 capability_unsupported:foo:continuous_kind_not_advertised\OT1/pt
+m/b/n/9 ),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 into the typed \OT1/pcr/b/n/9 MaterializationRoute \OT1/ptm/b/n/
+9 in-stance at
+ []
+
+
+Underfull \hbox (badness 2418) in paragraph at lines 153--154
+\OT1/ptm/b/n/9 Kanzi, Fre-qFlow, MM-FM and each adapter's ca-pa-bil-ity
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+\OT1/pcr/b/n/9 tests/test_adapter_capabilities_dataclass.py
+ []
+
+
+! LaTeX Error: Unicode character ∥ (U+2225)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.161 ...HA-256(canonical(fields) ∥ h\_\{i-1\})}
+                                                  ; round monotonicity: \tex...
+
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
+LaTeX Font Info:    Trying to load font information for OMS+pcr on input line 1
+61.
+(/usr/share/texmf-dist/tex/latex/psnfss/omspcr.fd
+File: omspcr.fd 
+)
+LaTeX Font Info:    Font shape `OMS/pcr/b/n' in size <9> not available
+(Font)              Font shape `OMS/cmsy/b/n' tried instead on input line 161.
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--162
+[]\OT1/ptm/b/n/9 Algorithm sig-na-ture. The data prove-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--162
+\OT1/ptm/b/n/9 nance prim-i-tive is \OT1/pcr/b/n/9 class LedgerChain
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--162
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 adaptive_reflow/frame/ledger_chain.py:113\OT1/pt
+m/b/n/9 )
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--162
+\OT1/ptm/b/n/9 with two sur-faces. \OT1/pcr/b/n/9 append(row: LedgerRow) -> str
+
+ []
+
+
+Underfull \hbox (badness 2591) in paragraph at lines 161--162
+\OT1/ptm/b/n/9 in-vari-ants (an-chor: row 0 has \OT1/pcr/b/n/9 prev_ledger_row_
+hash
+ []
+
+
+Underfull \hbox (badness 2932) in paragraph at lines 161--162
+\OT1/pcr/b/n/9 = None\OT1/ptm/b/n/9 ; link-age: row $\OML/cmm/m/it/9 i$\OT1/ptm
+/b/n/9 .\OT1/pcr/b/n/9 prev_ledger_row_hash \OT1/ptm/b/n/9 equals
+ []
+
+
+Underfull \hbox (badness 3098) in paragraph at lines 161--162
+\OT1/ptm/b/n/9 stored head $\OML/cmm/m/it/9 h[]$\OT1/ptm/b/n/9 ; row-hash in-te
+grity: stored \OT1/pcr/b/n/9 row_hash
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--162
+\OT1/ptm/b/n/9 equals \OT1/pcr/b/n/9 SHA-256(canonical(fields)  h_\OMS/cmsy/b/n
+/9 f\OT1/pcr/b/n/9 i-1\OMS/cmsy/b/n/9 g\OT1/pcr/b/n/9 )\OT1/ptm/b/n/9 ;
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--162
+\OT1/ptm/b/n/9 round mono-tonic-ity: \OT1/pcr/b/n/9 round_index \OT1/ptm/b/n/9 
+non-decreasing),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--162
+\OT1/ptm/b/n/9 and raises \OT1/pcr/b/n/9 LedgerChainError \OT1/ptm/b/n/9 on any
+ vi-o-la-tion.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--162
+\OT1/pcr/b/n/9 verify_incremental() -> ChainVerification
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--162
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 ledger_chain.py:228\OT1/ptm/b/n/9 ) re-checks th
+e in-vari-ants on
+ []
+
+
+Underfull \hbox (badness 6141) in paragraph at lines 161--162
+\OT1/ptm/b/n/9 the ac-cu-mu-lated chain with-out re-hashing. Each en-try
+ []
+
+
+Underfull \hbox (badness 2961) in paragraph at lines 161--162
+\OT1/ptm/b/n/9 con-tains \OT1/pcr/b/n/9 prev_ledger_row_hash \OT1/ptm/b/n/9 = t
+he pre-vi-ous row's
+ []
+
+
+Underfull \hbox (badness 1577) in paragraph at lines 161--162
+\OT1/ptm/b/n/9 SHA-256, form-ing a hash chain where any field tam-per
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--162
+\OT1/pcr/b/n/9 round_index\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 source_round\OT1/ptm/
+b/n/9 , \OT1/pcr/b/n/9 target_round\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--162
+\OT1/pcr/b/n/9 applied_policy_hash\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 selected_bund
+le_digest\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--162
+\OT1/pcr/b/n/9 audit_codes\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 per_channel_decision\
+OT1/ptm/b/n/9 ) plus the
+ []
+
+
+Underfull \hbox (badness 1478) in paragraph at lines 161--162
+\OT1/ptm/b/n/9 pre-vi-ous hash, so any single-field mu-ta-tion prop-a-gates to
+ []
+
+
+Underfull \hbox (badness 4168) in paragraph at lines 161--162
+\OT1/pcr/b/n/9 row_hash\OT1/ptm/b/n/9 . The \OT1/pcr/b/n/9 compute_ledger_row_h
+ash \OT1/ptm/b/n/9 helper at
+ []
+
+
+Underfull \hbox (badness 1406) in paragraph at lines 161--162
+\OT1/pcr/b/n/9 ledger_chain.py:65-110 \OT1/ptm/b/n/9 con-structs the canon-i-ca
+l byte
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--162
+\OT1/ptm/b/n/9 par-al-lel coun-ter-part \OT1/pcr/b/n/9 ParallelLedgerChain.fina
+lize
+ []
+
+
+Underfull \hbox (badness 3189) in paragraph at lines 161--162
+\OT1/ptm/b/n/9 ref-er-ence: \OT1/pcr/b/n/9 tests/test_ledger_chain.py \OT1/ptm/
+b/n/9 (50/50 PASS)
+ []
+
+
+Underfull \hbox (badness 1902) in paragraph at lines 161--162
+\OT1/pcr/b/n/9 tests/test_ledger_chain_parallel.py \OT1/ptm/b/n/9 (25/25 PASS)
+ []
+
+[3]
+Underfull \hbox (badness 2073) in paragraph at lines 165--166
+\OT1/pcr/b/n/9 six \OT1/ptm/b/n/9 for Py2/3 com-pat and logs use \OT1/pcr/b/n/9
+ datetime.now()\OT1/ptm/b/n/9 ;
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 165--166
+\OT1/pcr/b/n/9 python-statemachine \OT1/ptm/b/n/9 (~1.3M down-loads/month)
+ []
+
+
+Underfull \hbox (badness 5711) in paragraph at lines 165--166
+\OT1/ptm/b/n/9 sup-ports HSM + par-al-lel re-gions + his-tory but logs
+ []
+
+
+Underfull \hbox (badness 8075) in paragraph at lines 165--166
+\OT1/ptm/b/n/9 use \OT1/pcr/b/n/9 datetime.now()\OT1/ptm/b/n/9 ; \OT1/pcr/b/n/9
+ sismic\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 statesman\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9
+ mp-fsm\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 5316) in paragraph at lines 165--166
+\OT1/pcr/b/n/9 StateMachine[TState, TEvent]\OT1/ptm/b/n/9 ) | \OT1/pcr/b/n/9 my
+py --strict
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 167--168
+[]\OT1/ptm/b/n/9 A test can as-sert \OT1/pcr/b/n/9 log.to_json() ==
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--170
+[]\OT1/ptm/b/n/9 Algorithm sig-na-ture. The state rep-re-sen-ta-tion
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--170
+\OT1/ptm/b/n/9 prim-i-tive is \OT1/pcr/b/n/9 class StateMachine[TState, TEvent]
+
+ []
+
+
+Overfull \hbox (1.64668pt too wide) in paragraph at lines 169--170
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 adaptive_reflow/contracts/state_machine.py:372\O
+T1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 3396) in paragraph at lines 169--170
+\OT1/pcr/b/n/9 adaptive_reflow/contracts/__init__.py\OT1/ptm/b/n/9 . The state
+ []
+
+
+Underfull \hbox (badness 3579) in paragraph at lines 169--170
+\OT1/ptm/b/n/9 Each tran-si-tion ap-pends a \OT1/pcr/b/n/9 @dataclass(frozen=Tr
+ue)
+ []
+
+
+Underfull \hbox (badness 6608) in paragraph at lines 169--170
+\OT1/ptm/b/n/9 de-ter-min-is-tic fields only: \OT1/pcr/b/n/9 counter: int \OT1/
+ptm/b/n/9 (starts at 1,
+ []
+
+
+Underfull \hbox (badness 1609) in paragraph at lines 169--170
+\OT1/pcr/b/n/9 str \OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 str(target_state)\OT1/ptm/b/n
+/9 ), \OT1/pcr/b/n/9 guard_name: str | None\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--170
+\OT1/pcr/b/n/9 guard_result: bool | None\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 effect_
+name: str |
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--170
+\OT1/pcr/b/n/9 None\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 history_restored: tuple[str,
+ ...]\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 kind:
+ []
+
+
+Underfull \hbox (badness 1968) in paragraph at lines 169--170
+\OT1/pcr/b/n/9 str\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 internal_subpath: str\OT1/ptm
+/b/n/9 , plus the async marker.
+ []
+
+
+Underfull \hbox (badness 1675) in paragraph at lines 169--170
+\OT1/ptm/b/n/9 No \OT1/pcr/b/n/9 datetime.now()\OT1/ptm/b/n/9 , no \OT1/pcr/b/n
+/9 id()\OT1/ptm/b/n/9 , no \OT1/pcr/b/n/9 random.random()\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 3078) in paragraph at lines 169--170
+\OT1/ptm/b/n/9 no set-iteration. The dis-patch sur-face cov-ers four cases
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--170
+\OT1/ptm/b/n/9 restora-tion (\OT1/pcr/b/n/9 _update_history\OT1/ptm/b/n/9 /\OT1
+/pcr/b/n/9 _restore_history\OT1/ptm/b/n/9 ),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--170
+\OT1/ptm/b/n/9 parallel-region sync it-er-a-tion (\OT1/pcr/b/n/9 _dispatch_sync
+\OT1/ptm/b/n/9 ),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--170
+\OT1/ptm/b/n/9 and \OT1/pcr/b/n/9 asyncio.gather \OT1/ptm/b/n/9 par-al-lel asyn
+c dis-patch
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--170
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 _dispatch_async\OT1/ptm/b/n/9 ). Ver-i-fi-ca-tio
+n ref-er-ence:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--170
+\OT1/pcr/b/n/9 tests/test_state_machine_byte_deterministic.py
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--170
+\OT1/ptm/b/n/9 (60/60 PASS) re-plays fixed event se-quences and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--170
+\OT1/ptm/b/n/9 as-serts byte-equal \OT1/pcr/b/n/9 log.to_json() \OT1/ptm/b/n/9 
+across ma-chines;
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--170
+\OT1/pcr/b/n/9 tests/test_state_machine_hsm.py \OT1/ptm/b/n/9 (40/40 PASS)
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--170
+\OT1/pcr/b/n/9 tests/test_state_machine_typed_generics.py
+ []
+
+[4]
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/pcr/b/n/9 MergeOperatorProtocol\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 RestartBlen
+derProtocol
+ []
+
+
+Overfull \hbox (37.04361pt too wide) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 adaptive_reflow/algorithm/scheduler/protocols.py
+:157\OT1/ptm/b/n/9 ).
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 is the \OT1/pcr/b/n/9 @dataclass(frozen=True) StateBundle
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 adaptive_reflow/contracts/bundle.py\OT1/ptm/b/n/
+9 ) plus
+ []
+
+
+Overfull \hbox (53.06355pt too wide) in paragraph at lines 177--178
+\OT1/pcr/b/n/9 ODEConditionDelta \OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 adaptive_reflow
+/contracts/condition.py\OT1/ptm/b/n/9 )
+ []
+
+
+Overfull \hbox (7.09146pt too wide) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 and \OT1/pcr/b/n/9 AuditCode \OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 adap
+tive_reflow/contracts/audit.py\OT1/ptm/b/n/9 ).
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 adaptive_reflow/frame/engine.py:445-492\OT1/ptm/
+b/n/9 ):
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 sched-uler -> driver -> en-gine.run[]round -> merge
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 -> restart[]blender, and the typed con-tracts are
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 ver-i-fied at con-struc-tion time via \OT1/pcr/b/n/9 isinstance(
+s,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/pcr/b/n/9 SchedulerProtocol) \OT1/ptm/b/n/9 checks (no in-her-i-tance
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 re-quired). \OT1/pcr/b/n/9 ODEConditionDelta.__post_init__
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 per-forms the auto-wrap from un-typed Map-ping
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 to typed \OT1/pcr/b/n/9 MappingConditionAdapter \OT1/ptm/b/n/9 i
+n-stance
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 condition.py:113-148\OT1/ptm/b/n/9 ); \OT1/pcr/b
+/n/9 parse_audit_code \OT1/ptm/b/n/9 is
+ []
+
+
+Underfull \hbox (badness 1769) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 to-tal over \OT1/pcr/b/n/9 AuditCode\OT1/ptm/b/n/9 , legacy \OT1
+/pcr/b/n/9 ":"\OT1/ptm/b/n/9 -delimited strings, and
+ []
+
+
+Underfull \hbox (badness 1622) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 lit-eral (\OT1/pcr/b/n/9 condition.py:24\OT1/ptm/b/n/9 ) de-fine
+s the per-channel kinds
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 "continuous"\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 "dis
+crete"\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 "latent"\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 "
+graph"\OT1/ptm/b/n/9 )
+ []
+
+
+Underfull \hbox (badness 4096) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 and adding a new kind re-quires a paired ac-cep-tance
+ []
+
+
+Underfull \hbox (badness 5022) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 mypy. The run-time con-for-mance test as-serts struc-tural
+ []
+
+
+Underfull \hbox (badness 7981) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 fam-ily | 13 sched-ulers, 4 pol-icy drivers, 4 merge
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 op-er-a-tors, 4 restart blenders. Ver-i-fi-ca-tion ref-er-ence:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/pcr/b/n/9 tests/test_protocol_conformance.py \OT1/ptm/b/n/9 (80/80 PASS)
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 as-serts struc-tural con-for-mance via \OT1/pcr/b/n/9 isinstance
+(s,
+ []
+
+
+Underfull \hbox (badness 3375) in paragraph at lines 177--178
+\OT1/ptm/b/n/9 break-age; \OT1/pcr/b/n/9 tests/test_state_bundle_byte_stable.py
+
+ []
+
+
+Underfull \hbox (badness 1688) in paragraph at lines 181--182
+\OT1/ptm/b/n/9 i-cal wins (\TS1/ptm/b/n/9 �\OT1/ptm/b/n/9 7) are pro-duced by t
+he typed-contracts loop
+ []
+
+
+Underfull \hbox (badness 3029) in paragraph at lines 181--182
+\OT1/ptm/b/n/9 with site 1 (the co-sine ramp it-self) + site 6 fall-back
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 199--200
+[]\OT1/ptm/b/n/9 Stochastic/variance-preserving + de-ter-min-is-tic (5
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 199--200
+\OT1/ptm/b/n/9 sched-ulers). \OT1/pcr/b/n/9 ConstantScheduler\OT1/ptm/b/n/9 , \
+OT1/pcr/b/n/9 LinearScheduler\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 199--200
+\OT1/pcr/b/n/9 ExponentialScheduler\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 PolynomialSc
+heduler\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 201--202
+[]\OT1/ptm/b/n/9 Trajectory-aware + NFE-aware + sigma pa-ram-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 201--202
+\OT1/ptm/b/n/9 e-ter-i-sa-tion (3 sched-ulers). \OT1/pcr/b/n/9 FreeTrajSchedule
+r\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 201--202
+\OT1/pcr/b/n/9 NFEAwareMemoryScheduler\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 EDMSchedu
+ler \OT1/ptm/b/n/9 (Kar-ras
+ []
+
+
+Underfull \hbox (badness 1377) in paragraph at lines 201--202
+\OT1/ptm/b/n/9 2022 EDM pre-con-di-tion-ing). All three con-sume no pa-per
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 205--206
+\OT1/ptm/b/n/9 im-ple-men-ta-tions in-clude \OT1/pcr/b/n/9 CodimensionSheetSche
+duler\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 205--206
+\OT1/pcr/b/n/9 PaperRatioAdaptiveScheduler\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 205--206
+\OT1/pcr/b/n/9 EvidenceDrivenScheduler\OT1/ptm/b/n/9 , and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 205--206
+\OT1/pcr/b/n/9 ConvergenceAdaptiveScheduler\OT1/ptm/b/n/9 . The closed-form
+ []
+
+
+Underfull \hbox (badness 3019) in paragraph at lines 209--210
+\OT1/ptm/b/n/9 or never: \OT1/pcr/b/n/9 functools.lru_cache \OT1/ptm/b/n/9 / \O
+T1/pcr/b/n/9 functools.cache
+ []
+
+
+Underfull \hbox (badness 2334) in paragraph at lines 209--210
+\OT1/ptm/b/n/9 are always-on af-ter first call with no per-site dis-patch;
+ []
+
+
+Underfull \hbox (badness 1424) in paragraph at lines 215--216
+\OT1/ptm/b/n/9 line (\OT1/pcr/b/n/9 TierAwareCodimensionSheetScheduler \OT1/ptm
+/b/n/9 wrap-ping
+ []
+
+[5]
+Underfull \hbox (badness 4886) in paragraph at lines 223--224
+[]\OT1/ptm/b/n/9 FlowA is in-te-grated into 5 ven-dored flow match-ing
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 223--224
+\OT1/ptm/b/n/9 check-points with zero-line changes to ven-dored code:
+ []
+
+
+Underfull \hbox (badness 6047) in paragraph at lines 223--224
+\OT1/ptm/b/n/9 Lin-eage-Flow (ICML 2026, pro-tein flow), Kanzi (ICLR
+ []
+
+
+Underfull \hbox (badness 4505) in paragraph at lines 223--224
+\OT1/ptm/b/n/9 class pat-tern: each ven-dored check-point is ex-posed as
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 223--224
+\OT1/ptm/b/n/9 a \OT1/pcr/b/n/9 FlowMatchingODEAdapter \OT1/ptm/b/n/9 pro-to-co
+l im-ple-men-ta-tion
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 223--224
+\OT1/ptm/b/n/9 in a new file un-der \OT1/pcr/b/n/9 adaptive_reflow/adapters/\OT
+1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 223--224
+\OT1/ptm/b/n/9 with the ven-dored source it-self kept frozen un-der
+ []
+
+
+Overfull \hbox (149.69943pt too wide) in paragraph at lines 223--224
+\OT1/pcr/b/n/9 data/\OMS/cmsy/b/n/9 f\OT1/pcr/b/n/9 lineageflow_upstream,kanzi/
+upstream,flowmol3/repo,cifar,mnist_fm\OMS/cmsy/b/n/9 g\OT1/pcr/b/n/9 /**\OT1/pt
+m/b/n/9 . 
+ []
+
+
+Underfull \hbox (badness 2158) in paragraph at lines 227--228
+[]\OT1/ptm/b/n/9 To wrap a ven-dored check-point, the adapter sub-class
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 231--232
+[]\OT1/pcr/b/n/9 capabilities() -> AdapterCapabilities \OT1/ptm/b/n/9 |
+ []
+
+
+! LaTeX Error: \begin{enumerate} on input line 229 ended by \end{itemize}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.232 \end{itemize}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 235--236
+[]\OT1/pcr/b/n/9 build_initial_state(*, batch_id,
+ []
+
+
+Underfull \hbox (badness 5637) in paragraph at lines 235--236
+\OT1/pcr/b/n/9 sample_id) -> StateBundle \OT1/ptm/b/n/9 | fresh prior at
+ []
+
+
+! LaTeX Error: \begin{enumerate} on input line 233 ended by \end{itemize}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.236 \end{itemize}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 237 ended by \end{itemize}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.240 \end{itemize}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 243--244
+[]\OT1/pcr/b/n/9 detach_and_validate_endpoint(bundle) ->
+ []
+
+
+! LaTeX Error: \begin{enumerate} on input line 241 ended by \end{itemize}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.244 \end{itemize}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 247--248
+[]\OT1/pcr/b/n/9 apply_restart_distribution(state, policy)
+ []
+
+
+! LaTeX Error: \begin{enumerate} on input line 245 ended by \end{itemize}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.248 \end{itemize}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 251--252
+[]\OT1/pcr/b/n/9 compose_condition(bundle, delta) ->
+ []
+
+
+! LaTeX Error: \begin{enumerate} on input line 249 ended by \end{itemize}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.252 \end{itemize}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 255--256
+[]\OT1/pcr/b/n/9 solve_ode(state, condition, *, seed)
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 255--256
+\OT1/pcr/b/n/9 -> ODEIntegratorTrace \OT1/ptm/b/n/9 | the one method
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 255--256
+\OT1/ptm/b/n/9 that calls ven-dored code (typ-i-cally a sin-gle
+ []
+
+
+! LaTeX Error: \begin{enumerate} on input line 253 ended by \end{itemize}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.256 \end{itemize}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 259--260
+[]\OT1/pcr/b/n/9 observe_endpoint(trace, state) ->
+ []
+
+
+! LaTeX Error: \begin{enumerate} on input line 257 ended by \end{itemize}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.260 \end{itemize}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 263--264
+[]\OT1/pcr/b/n/9 observe_token_indices(trace,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 263--264
+\OT1/pcr/b/n/9 paper_quantities, *, temperature, rng)
+ []
+
+
+! LaTeX Error: \begin{enumerate} on input line 261 ended by \end{itemize}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.264 \end{itemize}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+Underfull \hbox (badness 2452) in paragraph at lines 268--275
+\OT1/ptm/b/n/9 ed-its | |---|---|---|:---:| | \OT1/pcr/b/n/9 LineageFlowAdapter
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 268--275
+\OT1/ptm/b/n/9 | \OT1/pcr/b/n/9 adaptive_reflow/adapters/lineageflow.py \OT1/pt
+m/b/n/9 |
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 268--275
+\OT1/ptm/b/n/9 | \OT1/pcr/b/n/9 adaptive_reflow/adapters/kanzi.py \OT1/ptm/b/n/
+9 |
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 268--275
+\OT1/ptm/b/n/9 | \OT1/pcr/b/n/9 adaptive_reflow/adapters/flowmol3.py
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 268--275
+\OT1/ptm/b/n/9 | \OT1/pcr/b/n/9 data/flowmol3/repo/ \OT1/ptm/b/n/9 (Wave 109.C 
+weights
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 268--275
+\OT1/ptm/b/n/9 + ven-dored \OT1/pcr/b/n/9 flowmol.py\OT1/ptm/b/n/9 ) | YES (ver
+-i-fied)
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 268--275
+\OT1/ptm/b/n/9 | | \OT1/pcr/b/n/9 RectifiedFlowCIFARAdapter \OT1/ptm/b/n/9 |
+ []
+
+
+Overfull \hbox (7.1997pt too wide) in paragraph at lines 268--275
+\OT1/pcr/b/n/9 adaptive_reflow/adapters/rectified_flow_cifar.py
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 268--275
+\OT1/ptm/b/n/9 | \OT1/pcr/b/n/9 data/cifar/ \OT1/ptm/b/n/9 (open DDPM++/RF UNet
+ weights)
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 268--275
+\OT1/ptm/b/n/9 | YES (ver-i-fied) | | \OT1/pcr/b/n/9 MnistFmAdapter \OT1/ptm/b/
+n/9 |
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 268--275
+\OT1/pcr/b/n/9 adaptive_reflow/adapters/mnist_fm.py
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 268--275
+\OT1/ptm/b/n/9 | \OT1/pcr/b/n/9 data/mnist_fm.npz \OT1/ptm/b/n/9 (smoke ckpt) a
+nd
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 268--275
+\OT1/pcr/b/n/9 data/mnist_fm/production.ckpt.npz \OT1/ptm/b/n/9 (3-epoch
+ []
+
+
+Overfull \hbox (20.66026pt too wide) in paragraph at lines 294--297
+[]\OT1/ptm/b/n/9 Let $\OT1/cmr/m/n/9 ^^F = \OMS/cmsy/m/n/9 f[]\OML/cmm/m/it/9 ;
+ []; []; []\OMS/cmsy/m/n/9 g$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 294--297
+\OT1/ptm/b/n/9 de-note the four-protocol com-po-si-tion layer; each
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 294--297
+\OT1/ptm/b/n/9 pro-to-col de-fines a con-tract over a round of
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 294--297
+\OT1/ptm/b/n/9 iden-ti-cal in-puts (adapter-shaped bound-ary, fixed
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 294--297
+\OT1/pcr/b/n/9 ChannelName \OT1/ptm/b/n/9 tu-ple, \OT1/pcr/b/n/9 prior_endpoint
+_digest
+ []
+
+
+Underfull \hbox (badness 3514) in paragraph at lines 294--297
+\OT1/ptm/b/n/9 pay-load). Then any com-po-si-tion \TS1/ptm/b/n/9 $$[] \OT1/cmr/
+m/n/9 :=
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 294--297
+[]\OT1/cmr/m/n/9 ([]\OML/cmm/m/it/9 ; []; []; []\OT1/cmr/m/n/9 )$\TS1/ptm/b/n/9
+ $ \OT1/ptm/b/n/9 is well-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 294--297
+\OT1/ptm/b/n/9 typed iff each com-po-nent sat-is-fies its own pro-to-col
+ []
+
+
+Underfull \hbox (badness 1931) in paragraph at lines 294--297
+\OT1/ptm/b/n/9 con-tract, and the com-po-si-tion is closed un-der se-quen-tial
+ []
+
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 298.
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 298.
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 298.
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 298.
+
+Underfull \hbox (badness 4569) in paragraph at lines 298--299
+[]\OT1/ptm/b/n/9 Proof. The run-ner is well-typed at the con-struc-tion
+ []
+
+
+Underfull \hbox (badness 7326) in paragraph at lines 298--299
+\OT1/ptm/b/n/9 de-faults via the de-fault fac-tory func-tions. The state-
+ []
+
+
+Underfull \hbox (badness 1789) in paragraph at lines 298--299
+\OT1/ptm/b/n/9 machine wrap-per is observation-only | its \OT1/pcr/b/n/9 sample
+() \OT1/ptm/b/n/9 /
+ []
+
+
+Underfull \hbox (badness 7326) in paragraph at lines 298--299
+\OT1/ptm/b/n/9 ping never breaks the \OT1/pcr/b/n/9 SchedulerProtocol \OT1/ptm/
+b/n/9 con-tract.
+ []
+
+
+Underfull \hbox (badness 2753) in paragraph at lines 298--299
+\OT1/ptm/b/n/9 Per-round com-po-si-tion se-quences \OT1/pcr/b/n/9 scheduler.sam
+ple \TS1/cmr/b/n/9 ^^Y
+ []
+
+
+Underfull \hbox (badness 1540) in paragraph at lines 298--299
+\OT1/pcr/b/n/9 engine.run_round \TS1/cmr/b/n/9 ^^Y \OT1/pcr/b/n/9 evaluator.ora
+cle \TS1/cmr/b/n/9 ^^Y \OT1/ptm/b/n/9 op-tional
+ []
+
+[6]
+Underfull \hbox (badness 4316) in paragraph at lines 300--301
+\OT1/pcr/b/n/9 scheduler.sample \OT1/ptm/b/n/9 ma-te-ri-alises the per-round sc
+hed-ule
+ []
+
+
+Underfull \hbox (badness 1371) in paragraph at lines 302--303
+\OT1/ptm/b/n/9 po-tent on its own out-put. \OT1/pcr/b/n/9 SchedulerProtocol.sam
+ple
+ []
+
+
+Underfull \hbox (badness 1365) in paragraph at lines 302--303
+\OT1/ptm/b/n/9 re-turns a \OT1/pcr/b/n/9 Schedule \OT1/ptm/b/n/9 record; re-inv
+oking \OT1/pcr/b/n/9 sample \OT1/ptm/b/n/9 on the
+ []
+
+
+Underfull \hbox (badness 4084) in paragraph at lines 302--303
+\OT1/ptm/b/n/9 same in-put state + same RNG state re-turns a byte-
+ []
+
+
+Underfull \hbox (badness 6493) in paragraph at lines 302--303
+\OT1/ptm/b/n/9 is pure over its \OT1/pcr/b/n/9 prior_endpoint_digest \OT1/ptm/b
+/n/9 ar-gu-ment;
+ []
+
+
+Underfull \hbox (badness 2261) in paragraph at lines 302--303
+\OT1/pcr/b/n/9 MergeOperatorProtocol.apply \OT1/ptm/b/n/9 is bounded and pure;
+ []
+
+
+! LaTeX Error: Unicode character ≤ (U+2264)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.304 ...xttt{noise\_floor ≤ schedule\_envelope}
+                                                  ; \texttt{ScheduleDerivedP...
+
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 304--305
+\OT1/ptm/b/n/9 by the per-round win-dow: \OT1/pcr/b/n/9 BoundedMergeOperator
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 304--305
+\OT1/ptm/b/n/9 en-forces \OT1/pcr/b/n/9 noise_floor  schedule_envelope\OT1/ptm/
+b/n/9 ;
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 304--305
+\OT1/ptm/b/n/9 to $\OML/cmm/m/it/9 ^^L$ \OT1/ptm/b/n/9 via a mono-tone trans-fo
+rm $\OML/cmm/m/it/9 ^^L \OT1/cmr/m/n/9 = \OML/cmm/m/it/9 n[]$\OT1/ptm/b/n/9 ;
+ []
+
+
+Underfull \hbox (badness 1629) in paragraph at lines 304--305
+\OT1/ptm/b/n/9 is mono-tone non-decreasing in the sched-ule en-ve-lope (no
+ []
+
+
+Overfull \hbox (28.79968pt too wide) in paragraph at lines 306--307
+\OT1/pcr/b/n/9 adaptive_reflow/algorithm/scheduler/protocols.py:157
+ []
+
+
+Underfull \hbox (badness 2644) in paragraph at lines 306--307
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 SchedulerProtocol \OT1/ptm/b/n/9 runtime-checkab
+le dec-la-ra-tion) and
+ []
+
+
+Overfull \hbox (34.19968pt too wide) in paragraph at lines 306--307
+\OT1/pcr/b/n/9 adaptive_reflow/algorithm/scheduler/tier_aware.py:158
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 306--307
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 TierAwareCodimensionSheetScheduler \OT1/ptm/b/n/
+9 protocol-
+ []
+
+
+Overfull \hbox (199.35782pt too wide) in paragraph at lines 308--309
+\OMS/cmsy/m/n/9 f[]\OML/cmm/m/it/9 ; []\OT1/cmr/m/n/9 ([]([]))\OMS/cmsy/m/n/9 g
+$\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 310--311
+[]\OT1/ptm/b/n/9 Sub-claim 1.2 | Pol-i-cy-Driver-Pro-to-col clo-sure.
+ []
+
+
+Underfull \hbox (badness 1466) in paragraph at lines 310--311
+\OT1/pcr/b/n/9 ScheduleDerivedPolicyDriver \OT1/ptm/b/n/9 de-rives $\OML/cmm/m/
+it/9 ^^L \OT1/cmr/m/n/9 = \OML/cmm/m/it/9 n[]$ \OT1/ptm/b/n/9 via
+ []
+
+
+! LaTeX Error: Unicode character ≤ (U+2264)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.312 ...xttt{noise\_floor ≤ schedule\_envelope}
+                                                   invariant maintained at t...
+
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 312--313
+[]\OT1/ptm/b/n/9 Sub-claim 1.3 | Mer-ge-Op-er-a-tor-Pro-to-col clo-sure.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 312--313
+\OT1/ptm/b/n/9 fol-lows from the \OT1/pcr/b/n/9 noise_floor  schedule_envelope
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 314--315
+[]\OT1/ptm/b/n/9 Sub-claim 1.4 | Restart-Blender-Pro-to-col clo-sure.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 314--315
+\OT1/pcr/b/n/9 LinearBlender \OT1/ptm/b/n/9 / \OT1/pcr/b/n/9 DistanceDecayBlend
+er \OT1/ptm/b/n/9 /
+ []
+
+
+Underfull \hbox (badness 1478) in paragraph at lines 318--319
+[]\OT1/ptm/b/n/9 Let $\OML/cmm/m/it/9 S$ \OT1/ptm/b/n/9 and $\OML/cmm/m/it/9 S[
+]$ \OT1/ptm/b/n/9 be two \OT1/pcr/b/n/9 StateMachine \OT1/ptm/b/n/9 in-stances 
+from
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 318--319
+\OT1/ptm/b/n/9 695 generic class \OT1/pcr/b/n/9 StateMachine[TState, TEvent]\OT
+1/ptm/b/n/9 )
+ []
+
+
+Underfull \hbox (badness 2698) in paragraph at lines 318--319
+\OT1/ptm/b/n/9 ini-tial-ized iden-ti-cally (same \OT1/pcr/b/n/9 initial\OT1/ptm
+/b/n/9 , same \OT1/pcr/b/n/9 name\OT1/ptm/b/n/9 , same
+ []
+
+
+Underfull \hbox (badness 5939) in paragraph at lines 318--319
+\OT1/pcr/b/n/9 _transitions \OT1/ptm/b/n/9 list, same \OT1/pcr/b/n/9 _regions \
+OT1/ptm/b/n/9 / \OT1/pcr/b/n/9 _parallel \OT1/ptm/b/n/9 /
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 318--319
+\OT1/pcr/b/n/9 _counter = 0\OT1/ptm/b/n/9 ). Then for any fi-nite event se-quen
+ce
+ []
+
+
+Underfull \hbox (badness 4792) in paragraph at lines 318--319
+\OT1/ptm/b/n/9 and dis-patched via ei-ther \OT1/pcr/b/n/9 send(event, payload) 
+\OT1/ptm/b/n/9 or
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 318--319
+\OT1/pcr/b/n/9 asend(event, payload)\OT1/ptm/b/n/9 , the \OT1/pcr/b/n/9 Transit
+ionLog \OT1/ptm/b/n/9 tu-ple
+ []
+
+LaTeX Font Info:    Font shape `OT1/pcr/b/it' in size <9> not available
+(Font)              Font shape `OT1/pcr/b/sl' tried instead on input line 322.
+
+Underfull \hbox (badness 10000) in paragraph at lines 322--323
+[]\OT1/ptm/b/it/9 Case A (pri-or-ity tiebreak, \OT1/pcr/b/sl/9 state_machine.py
+:386\OT1/ptm/b/it/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 322--323
+\OT1/pcr/b/sl/9 _try_pick_sync\OT1/ptm/b/it/9 /\OT1/pcr/b/sl/9 _try_pick_async\
+OT1/ptm/b/it/9 ). \OT1/ptm/b/n/9 Both
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 322--323
+\OT1/ptm/b/n/9 sync and async vari-ants ma-te-ri-alise \OT1/pcr/b/n/9 indexed =
+
+ []
+
+
+Underfull \hbox (badness 2809) in paragraph at lines 322--323
+\OT1/ptm/b/n/9 pair $\OT1/cmr/m/n/9 (\OMS/cmsy/m/n/9 ^^@[]\OML/cmm/m/it/9 ; []\
+OT1/cmr/m/n/9 )$\OT1/ptm/b/n/9 . The sort key has no
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 324--325
+[]\OT1/ptm/b/it/9 Case B (his-tory, \OT1/pcr/b/sl/9 state_machine.py:680{740\OT
+1/ptm/b/it/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 324--325
+\OT1/pcr/b/sl/9 _update_history \OT1/ptm/b/it/9 / \OT1/pcr/b/sl/9 _restore_hist
+ory\OT1/ptm/b/it/9 ). \OT1/ptm/b/n/9 His-tory is
+ []
+
+[7]
+Underfull \hbox (badness 10000) in paragraph at lines 326--327
+[]\OT1/ptm/b/it/9 Case C (par-al-lel re-gions, sync,
+ []
+
+
+Underfull \hbox (badness 2781) in paragraph at lines 326--327
+\OT1/pcr/b/sl/9 state_machine.py:767{775\OT1/ptm/b/it/9 , \OT1/pcr/b/sl/9 _disp
+atch_sync\OT1/ptm/b/it/9 ). \OT1/ptm/b/n/9 When
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 326--327
+\OT1/pcr/b/n/9 Mapping[str, StateMachine].values()\OT1/ptm/b/n/9 , de-ter-min-i
+s-tic
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 328--329
+[]\OT1/ptm/b/it/9 Case D (asyn-cio.gather, async,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 328--329
+\OT1/pcr/b/sl/9 state_machine.py:924{955\OT1/ptm/b/it/9 , \OT1/pcr/b/sl/9 _disp
+atch_async\OT1/ptm/b/it/9 ).
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 328--329
+\OT1/ptm/b/n/9 via \OT1/pcr/b/n/9 coros = [sub._can_async(event, payload)
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 328--329
+\OT1/pcr/b/n/9 for sub in parallel.values()]\OT1/ptm/b/n/9 . The corou-tine
+ []
+
+
+Underfull \hbox (badness 2142) in paragraph at lines 328--329
+\OT1/ptm/b/n/9 list is built de-ter-min-is-ti-cally (same it-er-a-tion or-der, 
+same
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 328--329
+\OT1/ptm/b/n/9 sub-machines). \OT1/pcr/b/n/9 asyncio.gather(\OT1/pcr/b/sl/9 cor
+os) \OT1/pcr/b/n/9 is called
+ []
+
+
+Underfull \hbox (badness 3623) in paragraph at lines 328--329
+\OT1/ptm/b/n/9 with-out* \OT1/pcr/b/n/9 return_exceptions=... \OT1/ptm/b/n/9 (d
+e-fault \OT1/pcr/b/n/9 False\OT1/ptm/b/n/9 ), so
+ []
+
+
+Underfull \hbox (badness 1796) in paragraph at lines 328--329
+\OT1/ptm/b/n/9 passed; there is no \OT1/pcr/b/n/9 asyncio.ensure_future\OT1/ptm
+/b/n/9 , no side-
+ []
+
+
+Underfull \hbox (badness 2707) in paragraph at lines 328--329
+\OT1/ptm/b/n/9 effects, no con-cur-rent schedul-ing. There-fore the re-solved
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 328--329
+\OT1/ptm/b/n/9 log en-try | \OT1/pcr/b/n/9 (event, source, target, priority,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 330--331
+[]\OT1/ptm/b/n/9 The 4 cases cover all dis-patch paths be-cause
+ []
+
+
+Underfull \hbox (badness 2547) in paragraph at lines 330--331
+\OT1/pcr/b/n/9 _dispatch_sync \OT1/ptm/b/n/9 and \OT1/pcr/b/n/9 _dispatch_async
+ \OT1/ptm/b/n/9 are the only
+ []
+
+
+Underfull \hbox (badness 3536) in paragraph at lines 330--331
+\OT1/pcr/b/n/9 ...] | None | bool\OT1/ptm/b/n/9 , no floats) is de-ter-min-is-t
+ic given
+ []
+
+
+Underfull \hbox (badness 1558) in paragraph at lines 334--335
+[]\OT1/ptm/b/n/9 Let $\OML/cmm/m/it/9 L \OT1/cmr/m/n/9 = (\OML/cmm/m/it/9 e[]; 
+[] ; e[]\OT1/cmr/m/n/9 )$ \OT1/ptm/b/n/9 be the append-only hash chain
+ []
+
+
+Underfull \hbox (badness 6001) in paragraph at lines 334--335
+\OT1/ptm/b/n/9 string. The hash func-tion \OT1/pcr/b/n/9 compute_ledger_row_has
+h
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 334--335
+\OT1/ptm/b/n/9 com-mits ev-ery record field | \OT1/pcr/b/n/9 ledger_row_id\OT1/
+ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 334--335
+\OT1/pcr/b/n/9 round_index\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 source_round\OT1/ptm/
+b/n/9 , \OT1/pcr/b/n/9 target_round\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 334--335
+\OT1/pcr/b/n/9 applied_policy_hash\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 selected_bund
+le_digest\OT1/ptm/b/n/9 ,
+ []
+
+
+! LaTeX Error: Unicode character ∥ (U+2225)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.336 ... SHA-256(prev\_row ∥ prev\_prev\_hash)}
+                                                   is broken at the first ta...
+
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
+
+Underfull \hbox (badness 2197) in paragraph at lines 336--337
+\OT1/ptm/b/n/9 tam-per modal-ity | append-only mu-ta-tion (tail), in-place
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 336--337
+\OT1/pcr/b/n/9 prev_ledger_row_hash == SHA-256(prev_row
+ []
+
+
+Underfull \hbox (badness 2401) in paragraph at lines 336--337
+\OT1/ptm/b/n/9 with col-li-sion prob-a-bil-ity $\OMS/cmsy/m/n/9 ^^T \OT1/cmr/m/
+n/9 2[]$ \OT1/ptm/b/n/9 (neg-li-gi-ble per NIST
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 336--337
+\OT1/ptm/b/n/9 SP 800-107 128-bit se-cu-rity rec-om-men-da-tion). Source:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 336--337
+\OT1/pcr/b/n/9 adaptive_reflow/frame/ledger_chain.py:113{218
+ []
+
+
+Underfull \hbox (badness 1983) in paragraph at lines 338--339
+\OML/cmm/m/it/9 e[]$ \OT1/ptm/b/n/9 is the canon-i-cal row se-ri-al-i-sa-tion \
+OT1/pcr/b/n/9 (ledger_row_id,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 338--339
+\OT1/pcr/b/n/9 round_index, source_round, target_round,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 338--339
+\OT1/pcr/b/n/9 applied_policy_hash, selected_bundle_digest,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 338--339
+\OT1/pcr/b/n/9 audit_codes, per_channel_decision, h_\OMS/cmsy/b/n/9 f\OT1/pcr/b
+/n/9 n-1\OMS/cmsy/b/n/9 g\OT1/pcr/b/n/9 )\OT1/ptm/b/n/9 .
+ []
+
+
+Underfull \hbox (badness 3780) in paragraph at lines 338--339
+\OT1/ptm/b/n/9 256 col-li-sion prob-a-bil-ity is at most $\OT1/cmr/m/n/9 2[]$ \
+OT1/ptm/b/n/9 for a 256-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 338--339
+\OT1/ptm/b/n/9 bit hash by the birthday-bound in-ver-sion ar-gu-ment).
+ []
+
+
+Underfull \hbox (badness 6775) in paragraph at lines 338--339
+\OT1/pcr/b/n/9 verify_ledger_chain \OT1/ptm/b/n/9 fails at row $\OML/cmm/m/it/9
+ n$ \OT1/ptm/b/n/9 on the first
+ []
+
+
+Underfull \hbox (badness 1472) in paragraph at lines 338--339
+\OT1/ptm/b/n/9 mis-matched field and \OT1/pcr/b/n/9 LedgerChain.append \OT1/ptm
+/b/n/9 would have
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 340--341
+[]\OT1/ptm/b/it/9 Case 2 | Mid-chain tam-per $\OML/cmm/m/it/9 e[]$\OT1/ptm/b/it
+/9 , $\OML/cmm/m/it/9 j < n$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 340--341
+\OT1/ptm/b/it/9 (\OT1/pcr/b/sl/9 ledger_chain.py:113{218\OT1/ptm/b/it/9 ). \OT1
+/ptm/b/n/9 An ad-ver-sary mod-i-fies
+ []
+
+
+Underfull \hbox (badness 2119) in paragraph at lines 340--341
+\OT1/ptm/b/n/9 hashes still match the re-com-puted hashes). At $\OML/cmm/m/it/9
+ i \OT1/cmr/m/n/9 = \OML/cmm/m/it/9 j$\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 5288) in paragraph at lines 340--341
+\OT1/ptm/b/n/9 mis-match is re-ported at the \OT1/ptm/b/it/9 first \OT1/ptm/b/n
+/9 tam-pered in-dex |
+ []
+
+
+Underfull \hbox (badness 1521) in paragraph at lines 340--341
+\OT1/ptm/b/n/9 specif-i-cally, \OT1/pcr/b/n/9 verify_ledger_chain \OT1/ptm/b/n/
+9 walks rows in or-der
+ []
+
+
+Underfull \hbox (badness 2744) in paragraph at lines 340--341
+\OT1/ptm/b/n/9 and raises \OT1/pcr/b/n/9 LedgerChainError \OT1/ptm/b/n/9 with \
+OT1/pcr/b/n/9 index=j \OT1/ptm/b/n/9 as soon
+ []
+
+
+Underfull \hbox (badness 6445) in paragraph at lines 340--341
+\OT1/ptm/b/n/9 as \OT1/pcr/b/n/9 row.row_hash \OT1/ptm/b/n/9 fails to match \OT
+1/pcr/b/n/9 _recompute(row)\OT1/ptm/b/n/9 .
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 340--341
+\OT1/pcr/b/n/9 LedgerChain.append\OT1/ptm/b/n/9 : the \OT1/pcr/b/n/9 prev_ledge
+r_row_hash
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 340--341
+\OT1/ptm/b/n/9 link-age check at \OT1/pcr/b/n/9 ledger_chain.py:166{174 \OT1/pt
+m/b/n/9 would
+ []
+
+
+Underfull \hbox (badness 4713) in paragraph at lines 340--341
+\OT1/ptm/b/n/9 catch any in-ser-tion at-tempt that does not match the
+ []
+
+
+Underfull \hbox (badness 7777) in paragraph at lines 340--341
+\OT1/ptm/b/n/9 cur-rent head, rais-ing \OT1/pcr/b/n/9 LedgerChainError \OT1/ptm
+/b/n/9 im-me-di-ately.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 342--343
+[]\OT1/ptm/b/it/9 Case 3 | In-sert/delete fake en-try
+ []
+
+
+Underfull \hbox (badness 1354) in paragraph at lines 342--343
+\OT1/pcr/b/n/9 prev_ledger_row_hash \OT1/ptm/b/n/9 field dis-agrees with the \O
+T1/ptm/b/it/9 cur-rent
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 346--347
+[]\OT1/ptm/b/n/9 The in-cre-men-tal \OT1/pcr/b/n/9 LedgerChain.append \OT1/ptm/
+b/n/9 closes the
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 346--347
+\OT1/ptm/b/n/9 ver-i-fi-ca-tion win-dow from $\OML/cmm/m/it/9 O\OT1/cmr/m/n/9 (
+\OML/cmm/m/it/9 R\OT1/cmr/m/n/9 )$ \OT1/ptm/b/n/9 per round (en-gine)
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 346--347
+\OT1/ptm/b/n/9 to $\OML/cmm/m/it/9 O\OT1/cmr/m/n/9 (1)$ \OT1/ptm/b/n/9 amor-tis
+ed | ex-actly one \OT1/pcr/b/n/9 _recompute
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 346--347
+\OT1/ptm/b/n/9 per ap-pended row (\OT1/pcr/b/n/9 hash_computations \OT1/ptm/b/n
+/9 counter,
+ []
+
+[8]
+Underfull \hbox (badness 5302) in paragraph at lines 350--351
+[]\OT1/ptm/b/n/9 These three prop-er-ties | com-po-si-tion clo-sure, byte-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 362--363
+[]\OT1/ptm/b/n/9 R2 | Kanzi inv-proj (STRONG). Kanzi
+ []
+
+
+Underfull \hbox (badness 1460) in paragraph at lines 362--363
+\OT1/ptm/b/n/9 framework-WINS | the frame-work de-liv-ers a small but
+ []
+
+
+Underfull \hbox (badness 2635) in paragraph at lines 366--367
+[]\OT1/ptm/b/n/9 R5b | CIFAR-10 RF matched-NFE = 50 (STRONG
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 366--367
+\OT1/ptm/b/n/9 RE-GRESSES bound-ary). CIFAR-10 RF UNet (im-age
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 366--367
+\OT1/ptm/b/n/9 RF, con-di-tional on \OT1/pcr/b/n/9 n_rounds\OT1/ptm/b/n/9 ). He
+ad-line sched-uler:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 366--367
+\OT1/pcr/b/n/9 CosineAnnealScheduler\OT1/ptm/b/n/9 . Co-hen's $\OML/cmm/m/it/9 
+d[] \OT1/cmr/m/n/9 = +2\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 700$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 366--367
+\OT1/ptm/b/n/9 at \OT1/pcr/b/n/9 n_rounds = 10\OT1/ptm/b/n/9 ; con-di-tional at
+ \OT1/pcr/b/n/9 n_rounds = 1\OT1/ptm/b/n/9 :
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 366--367
+\OML/cmm/m/it/9 d[] \OMS/cmsy/m/n/9 2 \OT1/cmr/m/n/9 [+4\OML/cmm/m/it/9 :\OT1/c
+mr/m/n/9 29\OML/cmm/m/it/9 ; \OT1/cmr/m/n/9 +4\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 4
+9]$ \OT1/ptm/b/n/9 4/4 sched-ulers framework-WINS
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 366--367
+\OT1/ptm/b/n/9 ($\OT1/cmr/m/n/9 ^^A[] \OMS/cmsy/m/n/9 2 \OT1/cmr/m/n/9 [\OMS/cm
+sy/m/n/9 ^^@\OT1/cmr/m/n/9 0\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 06%\OML/cmm/m/it/9 
+; \OMS/cmsy/m/n/9 ^^@\OT1/cmr/m/n/9 0\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 88%]$\OT1/
+ptm/b/n/9 ). Bonferroni-corrected
+ []
+
+
+Underfull \hbox (badness 2922) in paragraph at lines 368--369
+[]\OT1/ptm/b/n/9 R5c | MNIST FM smoke ckpt (STRONG). MNIST
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 368--369
+\OT1/ptm/b/n/9 FM (im-age FM, smoke ckpt). Head-line sched-uler:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 370--371
+[]\OT1/ptm/b/n/9 R6 | Kanzi k6 fold-abil-ity (STRONG via tier-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 370--371
+\OT1/ptm/b/n/9 aware coun-ter-fac-tual). Kanzi k6 fold-abil-ity (pro-tein
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 370--371
+\OT1/ptm/b/n/9 fold-abil-ity, $\OML/cmm/m/it/9 N \OT1/cmr/m/n/9 = 1000$ \OT1/pt
+m/b/n/9 paired). Head-line sched-uler:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 370--371
+\OT1/pcr/b/n/9 TierAwareCodimensionSheetScheduler \OT1/ptm/b/n/9 wrap-ping
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 370--371
+\OT1/pcr/b/n/9 CodimensionSheetScheduler \OT1/ptm/b/n/9 (the only theoretical-
+ []
+
+
+Underfull \hbox (badness 1577) in paragraph at lines 370--371
+\OT1/ptm/b/n/9 tier-aware-arm coun-ter-fac-tual $\OML/cmm/m/it/9 d[] \OT1/cmr/m
+/n/9 = +0\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 2235$ \OT1/ptm/b/n/9 (Bonferroni-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 370--371
+\OT1/ptm/b/n/9 0.5$\OML/cmm/m/it/9 onfrozenWave\OT1/cmr/m/n/9 161\OML/cmm/m/it/
+9 paireddiff\OT1/cmr/m/n/9 )\OML/cmm/m/it/9 :Hard \OMS/cmsy/m/n/9 ^^@ \OML/cmm/
+m/it/9 tierpLDDT$\OT1/ptm/b/n/9 d[]z
+ []
+
+
+Underfull \hbox (badness 1430) in paragraph at lines 370--371
+\OT1/ptm/b/n/9 = +1.189$\OT1/cmr/m/n/9 ; \OML/cmm/m/it/9 scPerplexity$\OT1/ptm/
+b/n/9 d[]z = -1.077$\OT1/cmr/m/n/9 (\OML/cmm/m/it/9 naive\OT1/cmr/m/n/9 )\OML/c
+mm/m/it/9 =$\OT1/ptm/b/n/9 -4.019\TS1/ptm/b/n/9 $ \OT1/ptm/b/n/9 (cluster-
+ []
+
+
+Underfull \hbox (badness 1661) in paragraph at lines 372--373
+[]\OT1/ptm/b/n/9 R1 | Lin-eage-Flow HM-MER (PAR-TIAL / single-seed).
+ []
+
+
+Underfull \hbox (badness 2717) in paragraph at lines 372--373
+\OT1/ptm/b/n/9 Lin-eage-Flow \OT1/pcr/b/n/9 hmmscan_total_hits \OT1/ptm/b/n/9 (
+pro-tein FM, $\OML/cmm/m/it/9 N \OT1/cmr/m/n/9 =
+ []
+
+
+Underfull \hbox (badness 2197) in paragraph at lines 372--373
+\OT1/cmr/m/n/9 1000$ \OT1/ptm/b/n/9 paired, single-seed seed = 42). Head-line s
+ched-uler:
+ []
+
+[9]
+LaTeX Font Info:    Trying to load font information for OMS+ptm on input line 3
+80.
+ (/usr/share/texmf-dist/tex/latex/psnfss/omsptm.fd
+File: omsptm.fd 
+)
+LaTeX Font Info:    Font shape `OMS/ptm/b/n' in size <9> not available
+(Font)              Font shape `OMS/cmsy/b/n' tried instead on input line 380.
+
+Underfull \hbox (badness 10000) in paragraph at lines 380--381
+[]\OT1/ptm/b/n/9 Every head-claim cell is re-ported un-der a 12-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 380--381
+\OT1/ptm/b/n/9 column au-dit row of the form `(n[]\OMS/cmsy/b/n/9 nfg\OT1/ptm/b
+/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 paired\OMS/cmsy/b/n/9 g\OT1/ptm/b/n/9 
+,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 380--381
+\OMS/cmsy/b/n/9 nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 mean\OMS/
+cmsy/b/n/9 nfg[]\OT1/ptm/b/n/9 diff\OMS/cmsy/b/n/9 g\OT1/ptm/b/n/9 , \OMS/cmsy/
+b/n/9 nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 sd\OMS/cmsy/b/n/9 n
+fg[]\OT1/ptm/b/n/9 diff\OMS/cmsy/b/n/9 g\OT1/ptm/b/n/9 , t, df,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 380--381
+\OT1/ptm/b/n/9 p[]\OMS/cmsy/b/n/9 nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/p
+tm/b/n/9 raw\OMS/cmsy/b/n/9 g\OT1/ptm/b/n/9 , \OMS/cmsy/b/n/9 nfg\OT1/ptm/b/n/9
+ text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 CI\OMS/cmsy/b/n/9 g[]f\OT1/ptm/b/n/9 95\OM
+S/cmsy/b/n/9 nfg[]nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 low\OMS
+/cmsy/b/n/9 gg\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 380--381
+\OMS/cmsy/b/n/9 nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 CI\OMS/cm
+sy/b/n/9 g[]f\OT1/ptm/b/n/9 95\OMS/cmsy/b/n/9 nfg[]nfg\OT1/ptm/b/n/9 text\OMS/c
+msy/b/n/9 f\OT1/ptm/b/n/9 high\OMS/cmsy/b/n/9 gg\OT1/ptm/b/n/9 , d[]z,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 380--381
+\OMS/cmsy/b/n/9 nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 test\OMS/
+cmsy/b/n/9 nfg[]\OT1/ptm/b/n/9 type\OMS/cmsy/b/n/9 g\OT1/ptm/b/n/9 , \OMS/cmsy/
+b/n/9 nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 family\OMS/cmsy/b/n
+/9 g\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 380--381
+\OMS/cmsy/b/n/9 nfg\OT1/ptm/b/n/9 alpha[]\OMS/cmsy/b/n/9 nfg\OT1/ptm/b/n/9 text
+\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 bonferroni\OMS/cmsy/b/n/9 g\OT1/ptm/b/n/9 , \OM
+S/cmsy/b/n/9 nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 bonf\OMS/cms
+y/b/n/9 nfg[]\OT1/ptm/b/n/9 sig\OMS/cmsy/b/n/9 g\OT1/ptm/b/n/9 )\TS1/ptm/b/n/9 
+$\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 1466) in paragraph at lines 385--386
+\OT1/cmr/m/n/9 0\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 008333$\OT1/ptm/b/n/9 . Scope: 
+three dif-fi-culty tiers \TS1/ptm/b/n/9 � \OT1/ptm/b/n/9 two met-rics
+ []
+
+
+Underfull \hbox (badness 3333) in paragraph at lines 394--395
+\OT1/ptm/b/n/9 not-theory ver-dict that is struc-turally im-por-tant: 10 of
+ []
+
+
+Underfull \hbox (badness 4084) in paragraph at lines 394--395
+\OT1/ptm/b/n/9 the only con-troller in the frame-work that ig-nores all
+ []
+
+
+Underfull \hbox (badness 3189) in paragraph at lines 394--395
+\OT1/ptm/b/n/9 four pa-per quan-ti-ties | and only 1 of 11 cells (R6
+ []
+
+
+Underfull \hbox (badness 3735) in paragraph at lines 394--395
+\OT1/ptm/b/n/9 k6 fold-abil-ity) in-stan-ti-ates a paper-quantity-driven wrap-
+ []
+
+
+Underfull \hbox (badness 2065) in paragraph at lines 394--395
+\OT1/ptm/b/n/9 per (\OT1/pcr/b/n/9 TierAwareCodimensionSheetScheduler \OT1/ptm/
+b/n/9 wrap-ping
+ []
+
+
+Underfull \hbox (badness 2762) in paragraph at lines 398--399
+[]\OT1/ptm/b/n/9 The R6 k6 fold-abil-ity pat-tern (SELECTIVE-pLDDT /
+ []
+
+
+! LaTeX Error: Unicode character ≈ (U+2248)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.402 ...only (the cross-budget sweep delivers ≈
+                                                  10× NFE compression at ma...
+
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
+
+! LaTeX Error: Unicode character ≈ (U+2248)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.410 ...image axis (CIFAR-10 RF cross-budget, ≈
+                                                  10× speedup at matched qu...
+
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
+
+Underfull \hbox (badness 6876) in paragraph at lines 418--419
+[]\OT1/ptm/b/n/9 The frame-work's re-pro-ducibil-ity con-tract is en-forced
+ []
+
+
+Underfull \hbox (badness 4595) in paragraph at lines 418--419
+\OT1/ptm/b/n/9 by 5 gates on ev-ery com-mit: D.4 30/30 byte-stability
+ []
+
+
+Underfull \hbox (badness 2334) in paragraph at lines 422--423
+[]\OT1/ptm/b/n/9 Reproducibility is en-forced by the D.4 byte-stable re-
+ []
+
+[10]
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 430.
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 430.
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 430.
+LaTeX Info: Symbol \textrightarrow not provided by
+            font family ptm in TS1 encoding.
+            Default family used instead on input line 430.
+
+Underfull \hbox (badness 10000) in paragraph at lines 434--435
+[]\OT1/ptm/b/n/9 The ad-ver-sar-ial claims ver-i-fier
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 434--435
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 tools/check_claims_consistency.py\OT1/ptm/b/n/9 
+) en-forces
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 434--435
+\OT1/ptm/b/n/9 4 guar-an-tees: \OT1/pcr/b/n/9 Disputed by \OT1/ptm/b/n/9 auto-d
+emotes claims to
+ []
+
+
+Underfull \hbox (badness 3364) in paragraph at lines 434--435
+\OT1/ptm/b/n/9 PRO-VI-SIONAL re-gard-less of the \OT1/pcr/b/n/9 Status: \OT1/pt
+m/b/n/9 field; sta-tus
+ []
+
+
+! LaTeX Error: Unicode character ≈ (U+2248)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.438 The batched harness delivers ≈
+                                      30× speedup on the codimension sweep,...
+
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
+
+! LaTeX Error: Unicode character α (U+03B1)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.442 ... was actually \texttt{0.5676} (K-level α
+                                                  =0.0125); R5c's \texttt{p\...
+
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
+
+Underfull \hbox (badness 7704) in paragraph at lines 442--443
+[]\OT1/ptm/b/n/9 The frame-work's re-pro-ducibil-ity pos-ture in-cludes an
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 442--443
+\OT1/ptm/b/n/9 ex-plicit \OT1/ptm/b/it/9 Hon-est Dis-clo-sure Pro-to-col \OT1/p
+tm/b/n/9 for in-con-sis-ten-cies
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 442--443
+\OT1/ptm/b/n/9 sur-faced dur-ing the Wave 306/307 au-dit pass
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 442--443
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 docs/audit/wave306-11-cell-alignment.md\OT1/ptm/
+b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 2035) in paragraph at lines 442--443
+\OT1/ptm/b/n/9 =0.0125); R5c's \OT1/pcr/b/n/9 p_bonf=9.22e-11 \OT1/ptm/b/n/9 wa
+s the R-level k=7
+ []
+
+
+Underfull \hbox (badness 6876) in paragraph at lines 442--443
+\OT1/ptm/b/n/9 as a \OT1/pcr/b/n/9 W286 P -> W291 P4 -> W292 re-anchor \OT1/ptm
+/b/n/9 chain
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 442--443
+\OT1/ptm/b/n/9 (CLM-082, \OT1/pcr/b/n/9 docs/CLAIMS.md:3820\OT1/ptm/b/n/9 ) and
+ the orig-i-nal
+ []
+
+
+Underfull \hbox (badness 2452) in paragraph at lines 442--443
+\OT1/ptm/b/n/9 AC-TIVE sta-tus is pre-served ver-ba-tim as an ad-den-dum,
+ []
+
+
+Underfull \hbox (badness 2961) in paragraph at lines 442--443
+\OT1/ptm/b/n/9 not a sta-tus flip. Wave num-bers are re-tained so \OT1/pcr/b/n/
+9 git
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 442--443
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 tools/check_claims_consistency.py:288-525\OT1/pt
+m/b/n/9 )
+ []
+
+
+Underfull \hbox (badness 1990) in paragraph at lines 442--443
+\OT1/ptm/b/n/9 Ver-i-fi-ca-tion ev-i-dence: D.4 30/30 PASS pre-served; ruff 0;
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 442--443
+\OT1/ptm/b/n/9 side-car chain \OT1/pcr/b/n/9 0a65d20b -> 8e7367a0 -> c99192dc
+ []
+
+
+Underfull \hbox (badness 4254) in paragraph at lines 446--447
+[]\OT1/ptm/b/n/9 The frame-work main-tains a \OT1/ptm/b/it/9 Wave-Based Au-dit 
+Chain
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 446--447
+\OT1/ptm/b/n/9 of self-contained \OT1/pcr/b/n/9 docs/audit/waveNNN-pK-\OT1/pcr/
+b/sl/9 .md
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 446--447
+\OT1/pcr/b/n/9 artefacts (CLM-083), with docs/audit/INDEX.md
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 446--447
+\OT1/pcr/b/n/9 re-clustering 94 audit files across 24 waves
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 446--447
+\OT1/pcr/b/n/9 by topic (cifar / algorithm_4arm / engineering
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 446--447
+\OT1/pcr/b/n/9 / reproducibility / claims / theory / etc.).
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 446--447
+\OT1/pcr/b/n/9 Every Wave N produces a waveNNN-.md \OT1/ptm/b/n/9 doc with
+ []
+
+
+Underfull \hbox (badness 3098) in paragraph at lines 446--447
+\OT1/ptm/b/n/9 TL;DR + Method + Ver-dicts + IN-VARI-ANTS + Edit-
+ []
+
+
+Underfull \hbox (badness 3250) in paragraph at lines 446--447
+\OT1/ptm/b/n/9 ven-dored script NOT mod-i-fied in that wave. Cross-doc
+ []
+
+
+Underfull \hbox (badness 6001) in paragraph at lines 446--447
+\OT1/ptm/b/n/9 prop-a-ga-tion is an-chored by SHA-256 side-cars | the
+ []
+
+
+Underfull \hbox (badness 2818) in paragraph at lines 446--447
+\OT1/ptm/b/n/9 Wave 328 freeze tag (\OT1/pcr/b/n/9 v3.0-tnnls-ready\OT1/ptm/b/n
+/9 ) ships a \TS1/ptm/b/n/9 �\OT1/ptm/b/n/9 7
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 446--447
+\OT1/ptm/b/n/9 SHA-256 chain \OT1/pcr/b/n/9 0a65d20b -> 8e7367a0 -> c99192dc
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 446--447
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 docs/audit/wave328-freeze-manifest.md\OT1/ptm/b/
+n/9 ) that
+ []
+
+
+Underfull \hbox (badness 1975) in paragraph at lines 446--447
+\OT1/ptm/b/n/9 Each wave-doc owns a dis-joint file scope so con-cur-rent
+ []
+
+
+Underfull \hbox (badness 1817) in paragraph at lines 446--447
+\OT1/ptm/b/n/9 that an-chors \TS1/ptm/b/n/9 �\OT1/ptm/b/n/9 8.5. Ver-i-fi-ca-ti
+on ev-i-dence: D.4 30/30 PASS
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 450--451
+[]\OT1/ptm/b/n/9 The frame-work's lazy-memoized cache
+ []
+
+
+Overfull \hbox (71.8466pt too wide) in paragraph at lines 450--451
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 adaptive_reflow/framework/paper_quantities_cache
+.py:138-610\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 4229) in paragraph at lines 450--451
+\OT1/ptm/b/n/9 CLM-084) is the sin-gle dor-mant/active con-struc-tor that
+ []
+
+
+Underfull \hbox (badness 2547) in paragraph at lines 450--451
+\OML/cmm/m/it/9 B[]$ \OT1/ptm/b/n/9 root-cell pack-ing, $\OML/cmm/m/it/9 C[]$ \
+OT1/ptm/b/n/9 per-cell co-ef-fi-cient, $\OML/cmm/m/it/9 e[]$ \OT1/ptm/b/n/9 ex-
+te-rior
+ []
+
+
+Underfull \hbox (badness 7869) in paragraph at lines 450--451
+\OT1/ptm/b/n/9 gap) through the en-gine with-out pol-lut-ing call sites.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 450--451
+\OT1/ptm/b/n/9 When \OT1/pcr/b/n/9 profile_residual_fn is None \OT1/ptm/b/n/9 (
+the de-fault),
+ []
+
+
+Underfull \hbox (badness 2088) in paragraph at lines 450--451
+\OT1/ptm/b/n/9 the cache is a dor-mant car-rier: ev-ery prop-erty re-turns
+ []
+
+
+Underfull \hbox (badness 3189) in paragraph at lines 450--451
+\OT1/ptm/b/n/9 sen-tinel. When \OT1/pcr/b/n/9 profile_residual_fn \OT1/ptm/b/n/
+9 is sup-plied, the
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 450--451
+\OT1/pcr/b/n/9 _LazyMemoCachedEvaluationCost \OT1/ptm/b/n/9 sentinel-memo slot
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 450--451
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 paper_quantities_cache.py:139-187\OT1/ptm/b/n/9 
+); two reads
+ []
+
+
+Underfull \hbox (badness 2941) in paragraph at lines 450--451
+\OT1/ptm/b/n/9 the closed-set \OT1/pcr/b/n/9 PAPER_QUANTITIES_SITE_NAMES \OT1/p
+tm/b/n/9 con-stant
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 450--451
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 paper_quantities_cache.py:112-130\OT1/ptm/b/n/9 
+), and per-site
+ []
+
+
+Underfull \hbox (badness 1521) in paragraph at lines 450--451
+\OT1/pcr/b/n/9 B, C, e_rho) \OT1/ptm/b/n/9 4-tuple / \OT1/pcr/b/n/9 (sheet_A, c
+ell_C) \OT1/ptm/b/n/9 2-tuple /
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 450--451
+\OT1/pcr/b/n/9 PaperQuantitiesSnapshot \OT1/ptm/b/n/9 / \OT1/pcr/b/n/9 profile_
+residual_fn
+ []
+
+
+Underfull \hbox (badness 7238) in paragraph at lines 450--451
+\OT1/ptm/b/n/9 callable). The \OT1/pcr/b/n/9 consume(site_name) \OT1/ptm/b/n/9 
+ac-ti-va-tion log is
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 450--451
+\OT1/ptm/b/n/9 end-point (\OT1/pcr/b/n/9 paper_quantities_cache.py:517-536\OT1/
+ptm/b/n/9 )
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 450--451
+\OT1/ptm/b/n/9 re-ports per-site hit/miss counts. Tests:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 450--451
+\OT1/pcr/b/n/9 tests/test_paper_quantities_cache.py \OT1/ptm/b/n/9 ver-i-fies
+ []
+
+[11]
+
+! LaTeX Error: Unicode character ≈ (U+2248)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.460 ...while the cross-budget sweep delivers ≈
+                                                  10× NFE compression at ma...
+
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
+
+Underfull \hbox (badness 3179) in paragraph at lines 462--463
+[]\OT1/ptm/b/n/9 K3 | Sample-difficulty strat-i-fi-ca-tion. FlowA's op-tional
+ []
+
+
+Underfull \hbox (badness 2932) in paragraph at lines 464--465
+\OT1/ptm/b/n/9 cou-ples the four sched-uler ports (\OT1/pcr/b/n/9 SchedulerProt
+ocol\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 464--465
+\OT1/pcr/b/n/9 MergeOperatorProtocol\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 PolicyDrive
+rProtocol\OT1/ptm/b/n/9 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 464--465
+\OT1/pcr/b/n/9 RestartBlenderProtocol\OT1/ptm/b/n/9 ); iso-lated de-ploy-ment o
+f
+ []
+
+
+Underfull \hbox (badness 2671) in paragraph at lines 464--465
+\OT1/ptm/b/n/9 any sin-gle com-po-nent does not de-liver the frame-work's
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 464--465
+\OT1/ptm/b/n/9 head-line value-add. The five-arm cumulative-add
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 464--465
+\OT1/ptm/b/n/9 struc-ture (A2 iso-lates \OT1/pcr/b/n/9 CodimensionSheetSchedule
+r
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 464--465
+\OT1/ptm/b/n/9 alone, A3 adds \OT1/pcr/b/n/9 BoundedMergeOperator\OT1/ptm/b/n/9
+ , A4 adds
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 464--465
+\OT1/pcr/b/n/9 EvidenceDrivenScheduler\OT1/ptm/b/n/9 ) shows that the pro-tein
+ []
+
+
+Underfull \hbox (badness 3199) in paragraph at lines 468--469
+[]\OT1/ptm/b/n/9 K6 | Frequency-domain and multi-modal in-te-gra-tion.
+ []
+
+[12]
+Underfull \hbox (badness 10000) in paragraph at lines 508--509
+[]\OT1/ptm/b/n/9 The fol-low-ing re-runs are pri-ori-tised: (a) R6
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 508--509
+\OT1/ptm/b/n/9 3-seed re-verification un-der the full theoretical-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 508--509
+\OT1/ptm/b/n/9 perspective stack (\OT1/pcr/b/n/9 CodimensionSheetScheduler \OT1
+/ptm/b/n/9 +
+ []
+
+
+Underfull \hbox (badness 1466) in paragraph at lines 508--509
+\OT1/ptm/b/n/9 base-line + frame-work arms (the cur-rent W280 P driver
+ []
+
+
+! LaTeX Error: Unicode character α (U+03B1)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.518 ...alidity (NOT-SIGNIFICANT at K-level α).}
+                                                   FlowMol3 \texttt{rdkit\_v...
+
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
+
+! LaTeX Error: Unicode character α (U+03B1)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.518 ...s: \textbf{NOT-SIGNIFICANT at K-level α}
+                                                   — the underlying byte-s...
+
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
+
+Underfull \hbox (badness 2393) in paragraph at lines 518--519
+\OT1/ptm/b/n/9 FM, 3-seed \TS1/ptm/b/n/9 � \OT1/ptm/b/n/9 n=200 paired sweep). 
+Head-line sched-uler:
+ []
+
+
+Underfull \hbox (badness 1655) in paragraph at lines 518--519
+\OT1/ptm/b/n/9 sha256 \OT1/pcr/b/n/9 af322f38\OT1/ptm/b/n/9 . Sta-tus: NOT-SIGN
+IFICANT at K-level
+ []
+
+
+! LaTeX Error: Unicode character α (U+03B1)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.520 ... Status: \textbf{SUPPORTED at K-level α}
+                                                   (preserved verbatim from ...
+
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 520--521
+\OT1/ptm/b/n/9 Lin-eage-Flow \OT1/pcr/b/n/9 hmmscan_length_bias \OT1/ptm/b/n/9 
+(pro-tein FM,
+ []
+
+
+! LaTeX Error: Unicode character α (U+03B1)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.522 ... Status: \textbf{SUPPORTED at K-level α}
+                                                   (preserved verbatim from ...
+
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 522--523
+[]\OT1/ptm/b/n/9 K5 | Lin-eage-Flow HM-MER framework-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 522--523
+\OT1/ptm/b/n/9 vs-baseline delta (SUP-PORTED). Lin-eage-Flow
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 522--523
+\OT1/pcr/b/n/9 hmmscan_framework_vs_baseline \OT1/ptm/b/n/9 (pro-tein FM,
+ []
+
+LaTeX Font Info:    Trying to load font information for TS1+pcr on input line 5
+24.
+(/usr/share/texmf-dist/tex/latex/psnfss/ts1pcr.fd
+File: ts1pcr.fd 2001/06/04 font definitions for TS1/pcr.
+)
+Underfull \hbox (badness 10000) in paragraph at lines 524--525
+[]\OT1/ptm/b/n/9 K7 | Lin-eage-Flow nov-elty (PAR-TIAL / di-rec-tion
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 524--525
+\OT1/ptm/b/n/9 IN-VERTED). Lin-eage-Flow \OT1/pcr/b/n/9 novel_pct_pfam_twilight
+
+ []
+
+
+Underfull \hbox (badness 1590) in paragraph at lines 524--525
+\OT1/ptm/b/n/9 (pro-tein FM, $\OML/cmm/m/it/9 N \OT1/cmr/m/n/9 = 1000$ \OT1/ptm
+/b/n/9 per arm). Head-line sched-uler:
+ []
+
+
+Underfull \hbox (badness 3449) in paragraph at lines 524--525
+\OT1/pcr/b/n/9 CosineAnnealScheduler\OT1/ptm/b/n/9 . The W280 P driver \OT1/pcr
+/b/n/9 d_z =
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 524--525
+\OT1/pcr/b/n/9 +\OMS/cmsy/b/n/9 nfg\OT1/pcr/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/pcr
+/b/n/9 Inf\OMS/cmsy/b/n/9 g\TS1/pcr/b/n/9 $ \OT1/pcr/b/n/9 is a numerical artif
+act (driver
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 524--525
+\OT1/pcr/b/n/9 subsamples \OT1/ptm/b/n/9 base-line.fasta \OT1/pcr/b/n/9 only, p
+roducing 0/0
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 524--525
+\OT1/pcr/b/n/9 paired-diff). The W166 P3 canonical evidence
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 524--525
+\OT1/pcr/b/n/9 is the authoritative reading: baseline
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 524--525
+\OT1/pcr/b/n/9 466/1000 = 46.6% vs framework 37/1000 = 3.7%
+ []
+
+
+Underfull \hbox (badness 1867) in paragraph at lines 524--525
+\OT1/ptm/b/n/9 The frame-work is 12.6\TS1/ptm/b/n/9 � \OT1/ptm/b/n/9 LESS Pfam-
+novel than base-line
+ []
+
+
+Underfull \hbox (badness 1881) in paragraph at lines 524--525
+\OT1/ptm/b/n/9 | the structural-correctness sig-nal is pre-served, but the
+ []
+
+[13] [14
+
+] (./paper-A-final.aux)
+ ***********
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+ ***********
+
+
+LaTeX Font Warning: Some font shapes were not available, defaults substituted.
+
+Package rerunfilecheck Info: File `paper-A-final.out' has not changed.
+(rerunfilecheck)             Checksum: C47C3BC18FDAB0473783410972939587;14779.
+ ) 
+Here is how much of TeX's memory you used:
+ 11684 strings out of 469504
+ 178064 string characters out of 5470285
+ 612660 words of memory out of 5000000
+ 40055 multiletter control sequences out of 15000+600000
+ 670244 words of font info for 126 fonts, out of 8000000 for 9000
+ 14 hyphenation exceptions out of 8191
+ 75i,6n,79p,2613b,643s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/share/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmbsy9.pfb></usr/s
+hare/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmex9.pfb></usr/share/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texmf-dist/fonts/typ
+e1/public/amsfonts/cm/cmmi9.pfb></usr/share/texmf-dist/fonts/type1/public/amsfo
+nts/cm/cmr6.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb>
+</usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/share/tex
+mf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/share/texmf-dist/fonts/t
+ype1/public/amsfonts/symbols/msam10.pfb></usr/share/texmf-dist/fonts/type1/publ
+ic/cm-super/sfrb0900.pfb></usr/share/texmf-dist/fonts/type1/public/cm-super/sft
+t0900.pfb></usr/share/texmf-dist/fonts/type1/urw/courier/ucrb8a.pfb></usr/share
+/texmf-dist/fonts/type1/urw/courier/ucrbo8a.pfb></usr/share/texmf-dist/fonts/ty
+pe1/urw/times/utmb8a.pfb></usr/share/texmf-dist/fonts/type1/urw/times/utmbi8a.p
+fb></usr/share/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-di
+st/fonts/type1/urw/times/utmri8a.pfb>
+Output written on paper-A-final.pdf (14 pages, 291752 bytes).
+PDF statistics:
+ 476 PDF objects out of 1000 (max. 8388607)
+ 421 compressed objects within 5 object streams
+ 110 named destinations out of 1000 (max. 500000)
+ 529 words of extra memory for PDF output out of 10000 (max. 10000000)
+

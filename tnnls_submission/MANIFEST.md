@@ -1,10 +1,11 @@
 # TNNLS Submission Package — MANIFEST
 
 **Venue:** *IEEE Transactions on Neural Networks and Learning Systems* (TNNLS)
-**Manuscript:** FlowA: Training-Free, Paper-Quantity-Driven Re-Inference for Flow-Matching Checkpoints
+**Manuscript:** FlowA: A Training-Free Re-Inference Framework for Frozen Flow-Matching Checkpoints
 **Submitted:** pending (cover-letter USER ACTION placeholders to be filled)
-**Freeze-marker commit:** Wave 324 HEAD (`paper-flat-ieeetran.{tex,pdf}` 10 pp., 2026-09-23)
+**Freeze-marker commit:** Wave 331 HEAD (`paper-A-final.{tex,pdf}` 14 pp., 2026-09-23)
 **Final tag (to push):** `v3.0-tnnls-ready`
+**Canonical paper:** `docs/drafts/paper-A-final.md` (replaces `paper-flat-flattened.md`, archived to `paper-flat-flattened.ARCHIVED-2026-09-23.md`)
 
 ---
 
@@ -28,8 +29,10 @@ cd tnnls_submission && sha256sum -- *.md supplementary/README.md
 | `data_availability.md` | 7072 | `8553877d704a702172ac41d44d4215515002ca576d3994b6b52b94d6425b66b4` | Data availability statement + Zenodo DOI references + per-record CSV provenance |
 | `submission_checklist.md` | 7368 | `208a21e0b28938a89cef135be70215616222ff9162825b6e36254f1afe9ce6e3` | TNNLS editorial requirements checklist (D.4 30/30 PASS, mkdocs 0 warnings, claims 0 drift, pytest 5155/196) |
 | `supplementary/README.md` | 11283 | `66986c3bddb015d41d491059dbc4c526b58592d83afdaace43a7f7527afc47c3` | Supplementary bundle index: per-cell SOURCE.md provenance (rows A), cross-doc audit trail (rows B), verification outputs (rows C), source code anchors (rows D), three self-contained Lemma proofs (rows E), Theorem 1 theory package (rows F) |
-| `../docs/drafts/paper-flat-ieeetran.pdf` | 381510 | `255befcaa98f759cdf70f609334ca4700c5e062878dd1f8fdf8e4bb4e450f63a` | **READY TO SUBMIT** TNNLS-formatted manuscript PDF (10 pages, IEEEtran-journal double-column, Wave 324 D+5 review; 9 CRITICAL fixes C1–C9 applied to `.tex`; 0 fatal errors, 0 overfull hboxes) |
-| `../docs/drafts/paper-flat-ieeetran.tex` | 66293 | `c9f4a7d489289d8d15548e0c6af1851791444297ffa3e0475a075c8f49c86a05` | IEEEtran-journal LaTeX source for the manuscript (10-page output; 5 tables; 5 numbered equations; 20 references; 11 R-cells) |
+| `../docs/drafts/paper-A-final.pdf` | 291752 | `37842cc02dd6c5ed767359714f3765d0259df0b51932276e5d89b463dcc320e1` | **READY TO SUBMIT** TNNLS-formatted manuscript PDF (14 pages, IEEEtran-journal double-column, Wave 331 DeepSeek 5-day RESOLUTION pass; Day 1 clean rewrite + Day 2 delete JMAA residue + Day 3 Path A full proofs + Day 4 integrate 7 innovations + Day 5 data fix; 0 fatal errors) |
+| `../docs/drafts/paper-A-final.tex` | 40656 | `fe3d6dd4a0851155c56160a8fd1a9bbe7456f54f7f238db1f0db961db1c19db9` | IEEEtran-journal LaTeX source for the manuscript (14-page output; canonical markdown source `paper-A-final.md` sha256 `e0c83200501028c50de8ad3b7af5911381288119f00414584ebec5c11c9ea6b2`) |
+| `../docs/drafts/paper-flat-ieeetran.pdf` | 381510 | `255befcaa98f759cdf70f609334ca4700c5e062878dd1f8fdf8e4bb4e450f63a` | **SUPERSEDED by paper-A-final.pdf** Wave 324 PRE-RESOLUTION manuscript PDF (10 pages); archived for historical reference; do NOT upload |
+| `../docs/drafts/paper-flat-flattened.md` | — | — | **ARCHIVED to paper-flat-flattened.ARCHIVED-2026-09-23.md** (Wave 331; the legacy 1602-line paper-flat-flattened.md contains the version-control log that the DeepSeek 5-day RESOLUTION pass replaced with paper-A-final.md) |
 
 > SHA-256 rehash command (run after every edit to the .md files):
 > ```bash
@@ -45,13 +48,15 @@ cd tnnls_submission && sha256sum -- *.md supplementary/README.md
 
 ## Cross-references (in-repo)
 
-- **`docs/drafts/paper-flat-ieeetran.{tex,pdf}`** — 10-page IEEEtran-typeset manuscript (the uploadable PDF for Step 3 of ScholarOne)
-- **`docs/drafts/paper-flat-ieeetran.aux` / `.log` / `.out`** — typeset diagnostic logs (compile-clean post Wave 324)
+- **`docs/drafts/paper-A-final.{tex,pdf}`** — 14-page IEEEtran-typeset manuscript (Wave 331 DeepSeek 5-day RESOLUTION pass — the uploadable PDF for Step 3 of ScholarOne)
+- **`docs/drafts/paper-A-final.aux` / `.log` / `.out`** — typeset diagnostic logs (compile-clean post Wave 331)
+- **`docs/drafts/paper-flat-flattened.ARCHIVED-2026-09-23.md`** — ARCHIVED legacy 1602-line paper (DO NOT MODIFY); the version-control-log form of the paper that the DeepSeek 5-day RESOLUTION pass replaced with `paper-A-final.md`
 - **`docs/drafts/abstract-final.md`** — abstract body and keyword list
-- **`docs/drafts/paper-flattened-draft.md`** — full paper draft (markdown source — pre-typesetting)
+- **`docs/drafts/paper-A-final.md`** — canonical Wave 331 markdown source (replaces paper-flat-flattened.md)
 - **`docs/cover-letter-tnnls.md`** — canonical cover letter (the snapshot in `tnnls_submission/cover_letter.md` is frozen at Wave 322; identical content)
 - **`docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md`** — three self-contained Lemma proofs (Lemma 1 Path A Wave 311; Lemmas 2/3 Path A Wave 322) inserted in paper §6 Framework Properties
 - **`docs/theory/theorem-1-self-contained.md` + `theorem1_rate_bound.md` + `operating-regime.md` + `DEVIATIONS.md`** — Theorem 1 theory package (mathematical foundation cross-referenced by §3 cover letter Insight)
+- **`docs/audit/wave331-data-fix.md`** — Wave 331 Day 5 audit (6 data inconsistencies fixed: R3, R5c, K1, R1, K7, R5a)
 - **`docs/audit/wave324-d5-review.md`** — Final D+5 review (9 CRITICAL fixes applied; READY_TO_SUBMIT verdict)
 - **`docs/audit/wave323-typeset-execution.md`** — IEEEtran-journal typeset execution
 - **`docs/audit/wave322-path-a-lemmas-2-3.md` + `wave322-restoration-execution.md`** — Path A Lemmas 2 + 3 (state-machine byte-determinism + ledger tamper-evidence) — completes the 3-lemma structure
@@ -71,7 +76,7 @@ cd tnnls_submission && sha256sum -- *.md supplementary/README.md
 
 1. **Article Type:** Regular Paper (TNNLS treats this as a regular research article, not a survey/correspondence)
 2. **Title / Abstract / Keywords:** verbatim from manuscript PDF page 1 (title + IEEE keywords list)
-3. **Manuscript:** upload **`docs/drafts/paper-flat-ieeetran.pdf`** (10 pages, IEEEtran-typeset)
+3. **Manuscript:** upload **`docs/drafts/paper-A-final.pdf`** (14 pages, IEEEtran-typeset, Wave 331 DeepSeek 5-day RESOLUTION pass)
 4. **Supplementary:** upload **`tnnls_submission/supplementary/README.md`** (optionally as PDF; see `README.md` §2 Step 4 for pandoc conversion)
 5. **Cover Letter:** upload **`tnnls_submission/cover_letter.md`** after filling all 17 USER placeholders (see `FILL_GUIDE.md`)
 6. **Highlights:** paste 3 bullets from **`tnnls_submission/highlights.md`** (each ≤ 85 chars)
