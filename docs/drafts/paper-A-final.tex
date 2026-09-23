@@ -405,9 +405,27 @@ The CIFAR-10 RF matched-NFE = 50 cell (R5b) is reported as a first-class boundar
 
 The head-to-head cell compares FlowA against \texttt{vanilla} + \texttt{Fast-DLLM} + \texttt{AB-Cache} + \texttt{LeDiFlow} on the R6 foldability axes at NFE $\in \{50, 100\}$. FlowA wins both metrics at both NFE settings vs all four baselines. The 16-cell Table B family is Bonferroni-significant at $\alpha = 0.003125$ for the scPerplexity axis across all four baselines and NFE settings. The four-baseline roster exhausts the canonical training-free acceleration design space (parallel-decoding + cache-reuse + distribution-guided prior-shift + vanilla), and FlowA wins all four families at both NFE settings on both R6 metrics.
 
-\subsection{7.8 Summary}
+\subsection{7.8 R5c regime-dependent curve (smoke vs production ckpt)}
 
-Across 11 headline cells, FlowA wins on the protein inv-proj foldability axis (R2), the protein hard-tier foldability axis (R6 hard pLDDT $d_z = +1.189$), the per-record composite axis for all three Tier-3 real checkpoints (Kanzi, LineageFlow, FlowMol3), and the cross-budget image axis (CIFAR-10 RF cross-budget, ≈10× speedup at matched quality). The framework TIES on the 2D Two Moons cell (R5a), regresses on the matched-NFE CIFAR-10 RF cell (R5b), and is UNDERPOWERED at the cluster level on the overall R6 k6 pLDDT cell. The §7.6 NFE-matched boundary is reported with the same prominence as the §7.2 cross-budget headline.
+The R5c smoke-vs-production flip (smoke ckpt framework-WINS $-28.43\%$, production ckpt framework-REGRESSES $+10.37\%$ at matched NFE $= 50$) is characterised across a 3-point regime curve (\texttt{docs/audit/mnist/wf334-r5c-regime-curve.md}, \texttt{data/mnist\_fm/epochs2.ckpt.npz} sha256 \texttt{ca3ae972…}):
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|}
+\hline
+epochs & base\_channels & max\_train\_images & n\_seeds & baseline\_fid & best\_arm\_fid & $\Delta$ FID & $d_z$ & $p_\text{bonf}$ & verdict \\
+\hline
+1 (smoke) & 8 & 6{,}000 & 1 & 29.49 & 23.39 & $-28.43\%$ & $-13.18$ & $3.95 \times 10^{-11}$ & framework\_wins \\
+2 (intermediate) & 16 & 60{,}000 & 1 & 13.45 & 15.44 & $+8.53\%$ & $+1.16$ & $1.58 \times 10^{-2}$ & baseline\_wins \\
+3 (production) & 16 & 60{,}000 & 3 & 11.99 & 13.67 & $+10.37\%$ & $+1.30$ & $1.33 \times 10^{-2}$ & baseline\_wins \\
+\hline
+\end{tabular}
+\end{center}
+
+The epochs $= 1 \to 2$ transition is \textbf{confounded} (smoke uses \texttt{base\_channels=8 / 6K imgs} while epochs $= 2{-}3$ use \texttt{base\_channels=16 / 60K imgs}); the clean epochs-only transition is epochs $= 2 \to 3$ (matched architecture), where the regression deepens from $+8.53\%$ to $+10.37\%$ (small additional $\sim 2$ pp degradation, no flip). The most parsimonious explanation is that the framework's restart-blend glue exploits under-trained velocity fields (smoke: high residual error, framework can correct via re-blending with the previous round trajectory); at well-trained velocity fields (production: on-manifold trajectories), the restart-blend re-blends accurate trajectories and adds noise rather than correction. \textbf{The framework's value-add for production-ckpt models is the cross-budget claim (Wave 128 paradigm: comparable quality at fewer NFEs), not better quality at fixed NFE.} The regime curve is reported here at the same prominence as the §7.2 per-cell status and the §7.6 NFE-matched boundary.
+
+\subsection{7.9 Summary}
+
+Across 11 headline cells, FlowA wins on the protein inv-proj foldability axis (R2), the protein hard-tier foldability axis (R6 hard pLDDT $d_z = +1.189$), the per-record composite axis for all three Tier-3 real checkpoints (Kanzi, LineageFlow, FlowMol3), and the cross-budget image axis (CIFAR-10 RF cross-budget, ≈10× speedup at matched quality). The framework TIES on the 2D Two Moons cell (R5a), regresses on the matched-NFE CIFAR-10 RF cell (R5b), and is UNDERPOWERED at the cluster level on the overall R6 k6 pLDDT cell. The §7.6 NFE-matched boundary is reported with the same prominence as the §7.2 cross-budget headline. The §7.8 R5c regime-dependent curve characterises the framework's restart-blend value-add as monotonically decreasing in checkpoint quality — exploitable for under-trained velocity fields, neutral-to-noise for production-ckpt models at matched NFE.
 
 
 
@@ -522,6 +540,10 @@ The following 4 K-level cells are reported here as supplementary material. They 
 \textbf{K5 — LineageFlow HMMER framework-vs-baseline delta (SUPPORTED).} LineageFlow \texttt{hmmscan\_framework\_vs\_baseline} (protein FM, $N = 1000$ paired per seed, 3 seeds). Headline scheduler: \texttt{CosineAnnealScheduler}. Cluster-robust $d_z = +1.12$ at Pfam-family unit. K-level Bonferroni-corrected $p_\text{b} = 0.003$ at $k = 4$ $\alpha = 0.0125$. Status: \textbf{SUPPORTED at K-level α} (preserved verbatim from §7.1 K5 row).
 
 \textbf{K7 — LineageFlow novelty (PARTIAL / direction INVERTED).} LineageFlow \texttt{novel\_pct\_pfam\_twilight} (protein FM, $N = 1000$ per arm). Headline scheduler: \texttt{CosineAnnealScheduler}. The W280 P driver \texttt{d\_z = +\textbackslash\{\}text\{Inf\}\$ is a numerical artifact (driver subsamples }baseline.fasta\texttt{ only, producing 0/0 paired-diff). The W166 P3 canonical evidence is the authoritative reading: \textbf{baseline 466/1000 = 46.6\% vs framework 37/1000 = 3.7\%} novel at }pctid < 30\%` twilight-zone (W166 P3, W165 P7). The framework is \textbf{12.6× LESS Pfam-novel than baseline} (direction \textbf{INVERTED} from the saturated STRONG claim). Framework sequences recapitulate known Pfam family structure — the structural-correctness signal is preserved, but the novelty-direction is INVERTED. Status: \textbf{PARTIAL / SUPP — direction INVERTED from saturated claim}.
+
+\subsection{10.8 R5c regime-dependent curve (smoke vs production)}
+
+The §7.8 R5c regime curve (\texttt{docs/audit/mnist/wf334-r5c-regime-curve.md}) maps the framework's value-add across 3 ckpts at matched NFE $= 50$: smoke (epochs=1, base\_channels=8, 6K imgs) framework-WINS $-28.43\%$; intermediate (epochs=2, base\_channels=16, 60K imgs) baseline-WINS $+8.53\%$; production (epochs=3, base\_channels=16, 60K imgs, 3-seed) baseline-WINS $+10.37\%$. The framework's restart-blend glue exploits under-trained velocity fields but adds noise rather than correction at well-trained velocity fields. Future-work directions: (i) \textbf{plot the regime curve as a figure} (PDF/SVG/PNG, $\sim 30$ min, data exists); (ii) \textbf{extend the epochs sweep to epochs=4, 5, 10} (matched architecture, only-epochs varies) to map the asymptotic regime — does the $+10.37\%$ regression stabilise, deepen, or saturate? (iii) \textbf{3-seed rigorous re-sweep of the epochs=2 ckpt} (single-seed at present; $\sim 7$ min wall-clock); (iv) \textbf{cross-adapter regime curve on R5b CIFAR-10 RF} at matched architecture — does the matched-NFE regression on CIFAR-10 RF also exhibit a regime curve under more training? Each direction is gated on the regime-curve methodology established in §7.8.
 
 
 
