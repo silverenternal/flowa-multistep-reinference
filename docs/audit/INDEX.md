@@ -330,6 +330,8 @@ Engineering hygiene (CI, ruff, mkdocs, pytest, byte-stability): the Wave-101 fou
 - `wave260-p1-gates-verify.md` (3.4KB, 2026-09-22)
 - `engineering/wave262-p2-verify.md` (5.0KB, 2026-09-22)
 - `wave310-r6-tier-aware-upgrade.md` (14.5KB, 2026-09-23)
+- `wave311-d1-review.md` (20.4KB, 2026-09-23)
+- `wave311-path-a-lemma-1.md` (19.1KB, 2026-09-23)
 
 **Historical (70 files, not cited by reviewer-facing surfaces):**
 

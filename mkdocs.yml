@@ -237,6 +237,7 @@ not_in_nav: |
   internal/**/*.md
   drafts/*.md
   drafts/**/*.md
+  inserted-lemmas/*.md
   INSIGHTS.md
   audit/wave*.md
   audit/*/wave*.md
