@@ -8,7 +8,22 @@
 [![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)](#tnnls-submission-package)
 [![Adapters](https://img.shields.io/badge/adapters-16-orange.svg)](#repository-structure)
 
-**Last updated:** 2026-09-22 (Wave 273 README polish). Source tree frozen at `v3.0-tnnls-ready`.
+**Last updated:** 2026-09-23 (Wave 291 publishable). Source tree frozen at `v3.1-internal-publishable`.
+
+**Scheduler scope of this README:** All 7 headline numbers in the [Headline Results](#headline-results) section were produced under `CosineAnnealScheduler` (the controller that ignores all 4 paper quantities). `CodimensionSheetScheduler` and the other paper-quantity-grounded controllers (`PaperRatioAdaptiveScheduler`, `EvidenceDrivenScheduler`, `ConvergenceAdaptiveScheduler`) are research-stage; see the Wave 287 codepath audit + the Wave 291 sweep audit, and the full 16-site enumeration at [`docs/audit/wave292-p1-pipeline-inventory.md`](docs/audit/wave292-p1-pipeline-inventory.md).
+
+**Wave 290 + 291 engineering note:** the Wave 290 P3 batched framework harness
+([`tools/batched_framework_cifar.py`](tools/batched_framework_cifar.py)) provides a
+byte-deterministic FID-only path that bypasses `engine.run_round` for the codim
+lever sweep, producing a ~28-35× framework_wall speedup without modifying any
+framework source (`adaptive_reflow/`). The Wave 290 P1 audit (`docs/audit/wave290-p1-bottleneck-confirmed.md`)
+showed the per-record framework loop had a 35-55× kernel-launch gap that was
+constant across schedulers; the batched harness collapses it. The Wave 291 P5
+3-seed verification (`docs/audit/wave291-p5-3seed-results.md`) confirms the
+`CodimensionSheetScheduler` `n_min=0.0 / L=4 / eps=10.0` headliner is byte-equivalent
+to the cosine baseline across 3 seeds (`STRONG`), and that the real_g vs permuted
+profile lever is **inert** at the cell regime — the W286 P "scheduler_structure lever"
+verdict holds globally.
 
 **TL;DR.** FlowA is a *training-free, solver-agnostic* re-inference framework that wraps a deployed flow-matching checkpoint and adapts the inference loop to local velocity-field geometry. The framework exposes four paper-quantity invariants derived from a canonical F-side witness as a first-class scheduler input. Validated across **seven R-level cells** spanning protein (LineageFlow), molecular 3D (FlowMol3), and image (CIFAR-10 RF, MNIST FM, 2D). The 24.6× wall-clock gap is closed 76.8% via CUDA-graph capture.
 

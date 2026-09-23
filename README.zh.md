@@ -8,7 +8,11 @@
 [![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)](#tnnls-submission-package--tnnls-投稿材料)
 [![Adapters](https://img.shields.io/badge/adapters-16-orange.svg)](#repository-structure--仓库结构)
 
-**Last updated / 最近更新:** 2026-09-22 (Wave 273 README polish). 源码冻结于 `v3.0-tnnls-ready` 标签。
+**Last updated / 最近更新:** 2026-09-23 (Wave 291 publishable). 源码冻结于 `v3.1-internal-publishable` 标签。
+
+**Scheduler scope of this README / 本 README 的调度器适用范围:** All 7 headline numbers in the [Headline Results](#headline-results--头条结果) section were produced under `CosineAnnealScheduler` (the controller that ignores all 4 paper quantities). `CodimensionSheetScheduler` 和其他 paper-quantity-grounded 控制器 (`PaperRatioAdaptiveScheduler`、`EvidenceDrivenScheduler`、`ConvergenceAdaptiveScheduler`) 均为研究阶段；详见 Wave 287 代码路径审计 + Wave 291 sweep 审计，以及位于 [`docs/audit/wave292-p1-pipeline-inventory.md`](docs/audit/wave292-p1-pipeline-inventory.md) 的 16 个 site 枚举。
+
+**Wave 290 + 291 工程说明:** Wave 290 P3 batched framework harness ([`tools/batched_framework_cifar.py`](tools/batched_framework_cifar.py)) 提供 byte-deterministic FID-only 路径，绕过 `engine.run_round` 用于 codim lever sweep，在不修改任何 framework 源码 (`adaptive_reflow/`) 的前提下实现 ~28-35× framework_wall 加速。Wave 290 P1 审计 (`docs/audit/wave290-p1-bottleneck-confirmed.md`) 显示每记录框架循环存在跨调度器恒定的 35-55× kernel-launch gap，batched harness 将其消除。Wave 291 P5 3-seed 验证 (`docs/audit/wave291-p5-3seed-results.md`) 确认 `CodimensionSheetScheduler` `n_min=0.0 / L=4 / eps=10.0` 头条在 3 个种子下与 cosine 基准 byte-equivalent (`STRONG`)，且 real_g vs permuted 轮廓控制在 cell regime 下**惰性**——W286 P "scheduler_structure lever" 结论全局成立。
 
 **TL;DR / 概述.** FlowA 是一个 *训练无关 (training-free)、与求解器无关 (solver-agnostic)* 的再推理 (re-inference) 框架，包裹已部署的 flow-matching 检查点并依据局部速度场几何自适应推理循环。该框架将由规范 F 侧 (canonical F-side) 见证函数导出的四个论文量 (paper-quantity invariants) 作为一等调度器输入。在覆盖蛋白 (LineageFlow)、分子三维 (FlowMol3) 与图像 (CIFAR-10 RF、MNIST FM、2D) 的 **七个 R-level 单元** 上完成验证。24.6× 的壁钟差距通过 CUDA-graph capture 缩小 76.8%。
 

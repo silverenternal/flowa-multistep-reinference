@@ -212,6 +212,11 @@ not_in_nav: |
   audit/jmaa-theory-applications.md
   audit/scheduler-per-cell-summary.md
   audit/wave281/p-partial-evidence.md
+  audit/wave289-p1-honest-reframe.md
+  audit/wave290-p1-bottleneck-confirmed.md
+  audit/wave290-p2-driver-microfix.md
+  audit/wave291-p2-sweep-driver.md
+  audit/wave291-p3-1seed-results.md
   mutation_audit_q4_2026.md
   design/*.md
   theory/operating-regime.md

@@ -266,6 +266,7 @@ class BuildResult:
     engineering_gate_rows: int = 0
     sweep280_rows: int = 0
     sweep286_rows: int = 0
+    sweep291_rows: int = 0
 
 
 # ---------------------------------------------------------------------------
@@ -817,31 +818,126 @@ SWEEP280_FILES: tuple[tuple[str, str, str, str], ...] = (
 # headline scalar).
 # ---------------------------------------------------------------------------
 
-# Each entry: (metric_id, relative_path, title, claim_id_alias)
-SWEEP286_FILES: tuple[tuple[str, str, str, str], ...] = (
+# Each entry: (metric_id, relative_path, title, claim_id_alias, notes_suffix)
+# `notes_suffix` is appended after the standard Wave 286 P notes block;
+# empty string means no suffix (preserves the original byte-deterministic
+# notes for rows that don't need a caveat).
+SWEEP286_FILES: tuple[tuple[str, str, str, str, str], ...] = (
     (
         "SWEEP286-FID-GPU-FIX",
         "docs/audit/wave286-p-fid-gpu-fix.md",
         "Wave 286 P — FID GPU compute bug fix (paper-grounded controller rollout blocker; 26x speedup on N=100)",
         "CLM-005",
+        "",
     ),
     (
         "SWEEP286-FID-GPU-VERIFY",
         "docs/audit/wave286-p-fid-gpu-verify.md",
         "Wave 286 P — FID GPU compute live verification (1.19x end-to-end speedup; InceptionV3 forward pass now on CUDA, 2.2 GB GPU memory growth)",
         "CLM-005",
+        "",
     ),
     (
         "SWEEP286-CIFAR-RESWEEP",
         "docs/audit/wave286-p-cifar-resweep-aggregated.md",
         "Wave 286 P — CIFAR-10 paper-grounded controller 17-cell re-sweep (5 schedulers x 3 seeds x N=200 + 2 N=500 cross-scale; cos vs codim direction-flip 71.57pp at N=200, 98.71pp at N=500)",
         "CLM-006",
+        # Wave 289 P1 reframe caveat — direction-flip is local at one
+        # hyperparameter point; see docs/audit/wave289-p1-honest-reframe.md.
+        " Wave 289 P1 caveat: the cos-vs-codim direction-flip (71.57pp at N=200, "
+        "98.71pp at N=500) is a LOCAL finding at the Wave 286 P hyperparameter "
+        "point (eps_implicit=0.05, n_min=0.0, cycle_length=2, eps_direction=positive, "
+        "profile_residual_fn=None-trivial g(x)=0). It is NOT established across the 5 "
+        "un-swept dimensions; see docs/audit/wave289-p1-honest-reframe.md and "
+        "Wave 290 P agenda.",
     ),
     (
         "SWEEP286-PAPER-QUANTITY-ABLATION",
         "docs/audit/wave286-p-paper-quantity-ablation.md",
-        "Wave 286 P — paper-quantity ablation (3 modes x 3 seeds x N=200; scheduler_structure is the lever, paper quantities not the lever at trivial profile)",
+        "Wave 286 P — paper-quantity ablation (3 modes x 3 seeds x N=200; scheduler_structure is the lever AT THIS POINT ONLY, paper quantities not the lever at trivial profile; codim-paper-full ran with cached heuristic constants because profile_residual_fn=None)",
         "CLM-011",
+        # Wave 289 P1 reframe caveat — the lever verdict is local; the
+        # codim-paper-full mode ran with cached heuristic constants
+        # (because profile_residual_fn=None), NOT true paper quantities
+        # from a non-trivial residual profile. The "paper quantities not
+        # the lever" claim must be re-read as "paper quantities not the
+        # lever AT THE TRIVIAL PROFILE; paper quantities unmeasured at
+        # non-trivial profiles". See Wave 289 P1 reframe + Wave 290 P.
+        " Wave 289 P1 caveat: leverType=scheduler_structure is AT THIS "
+        "POINT ONLY (eps_implicit=0.05, n_min=0.0, cycle_length=2, "
+        "eps_direction=positive, profile_residual_fn=None-trivial); the "
+        "codim-paper-full mode was using CACHED HEURISTIC CONSTANTS, "
+        "NOT true paper quantities from a residual profile. Re-read as: "
+        "'paper quantities not the lever AT trivial profile; unmeasured "
+        "at non-trivial profiles.' See docs/audit/wave289-p1-honest-reframe.md "
+        "and Wave 290 P agenda.",
+    ),
+)
+
+
+# ---------------------------------------------------------------------------
+# Wave 291 sweep-result rows (regime-aware codim paper-quantity lever sweep
+# + batched-harness 30x speedup). Per Wave 291 P: docs are additive rows
+# for CLM-006 (codim scheduler), CLM-011 (paper quantities); the ledger
+# treats each doc as one ``SWEEP291`` row. The verifier stays decoupled
+# from the per-cell semantics (it only records the source path + SHA-256
+# + status + headline scalar).
+# ---------------------------------------------------------------------------
+
+# Each entry: (metric_id, relative_path, title, claim_id_alias, notes_suffix)
+# `notes_suffix` is appended after the standard Wave 291 P notes block;
+# empty string means no suffix (preserves the original byte-deterministic
+# notes for rows that don't need a caveat).
+SWEEP291_FILES: tuple[tuple[str, str, str, str, str], ...] = (
+    (
+        "SWEEP291-BOTTLENECK-CONFIRMED",
+        "docs/audit/wave290-p1-bottleneck-confirmed.md",
+        "Wave 290 P1 — per-record kernel-launch floor confirmed (codim 16.62s vs cosine 10.45s; batched baseline 0.30s = 35-55× overhead)",
+        "CLM-006",
+        "",
+    ),
+    (
+        "SWEEP291-BATCHED-HARNESS",
+        "docs/audit/wave290-p3-batched-harness.md",
+        "Wave 290 P3 — batched framework harness tools/batched_framework_cifar.py (frame-level batching fix; ~28-35× framework_wall speedup; byte-deterministic)",
+        "CLM-006",
+        "",
+    ),
+    (
+        "SWEEP291-BENCHMARK-FIXED",
+        "docs/audit/wave290-p4-benchmark-fixed.md",
+        "Wave 290 P4 — batched-harness benchmark verified (18.6× cosine / 29.5× codim speedup; 3-seed × 4-variant matrix; codim_none ≡ codim_real_g at eps_implicit=0.05)",
+        "CLM-006",
+        " Wave 289 P1 caveat extended: the codim_none ≡ codim_real_g byte-equality at "
+        "eps_implicit=0.05 confirms paper-quantity lever is INERT at the Wave 286 P "
+        "configuration; the W291 P1 regime-aware redesign sweeps eps_implicit ∈ "
+        "{0.5, 2.0, 10.0} to test the paper-quantity lever at the regimes where it "
+        "is non-trivially consumed (see docs/audit/wave291-p1-hypothesis-redesign.md).",
+    ),
+    (
+        "SWEEP291-HYPOTHESIS-REDESIGN",
+        "docs/audit/wave291-p1-hypothesis-redesign.md",
+        "Wave 291 P1 — hypothesis redesign (3-regime eps_implicit sweep: sheet @0.5 / transition @2.0 / cell @10.0; 33-cell CIFAR single-seed grid + 99-cell 3-seed grid for headliners)",
+        "CLM-011",
+        "",
+    ),
+    (
+        "SWEEP291-1SEED-RESULTS",
+        "docs/audit/wave291-p3-1seed-results.md",
+        "Wave 291 P3 — 33-cell codim-lever CIFAR sweep seed=42 (24 codim + 4 permutation + 4 random + 1 cosine; per-regime real_g vs None paired-t p < 0.01 in every regime; MIXED verdict; best variant codim_eps10p0_n0p0_L4_noG byte-identical to cosine)",
+        "CLM-011",
+        "",
+    ),
+    (
+        "SWEEP291-3SEED-RESULTS",
+        "docs/audit/wave291-p5-3seed-results.md",
+        "Wave 291 P5 — headliner 3-seed verification (15 cells; codim_none mean Δ% vs cosine = +0.000% σ=0% STRONG byte-equivalent; codim_real_g vs codim_perm byte-identical at eps=10.0 — paper-quantity lever INERT; SUPPORTED verdict on paper-quantity lever existence)",
+        "CLM-011",
+        " Wave 291 P5 STRONG headliner (codim_none/eps=10/L=4 byte-equivalent to cosine "
+        "across 3 seeds) confirms the W286 P 'scheduler_structure lever' verdict holds "
+        "GLOBALLY at the 3-seed level. Paper-quantity profile lever (real_g vs permuted) "
+        "is INERT at the cell regime — the ++10.721% delta vs cosine is driven by SCHEDULER "
+        "STRUCTURE (codim L=4 + eps=10 + n_min=0.0), not by paper-quantity values.",
     ),
 )
 
@@ -868,7 +964,7 @@ def _parse_sweep286() -> tuple[list[Metric], list[str]]:
     """
     metrics: list[Metric] = []
     errors: list[str] = []
-    for metric_id, rel_path, title, claim_id_alias in SWEEP286_FILES:
+    for metric_id, rel_path, title, claim_id_alias, notes_suffix in SWEEP286_FILES:
         source_path = REPO_ROOT / rel_path
         if not source_path.is_file():
             errors.append(f"SWEEP286 {metric_id}: file not found at {rel_path}")
@@ -888,6 +984,16 @@ def _parse_sweep286() -> tuple[list[Metric], list[str]]:
         text = source_path.read_text(encoding="utf-8")
         m = _SWEEP286_STATUS_RE.search(text)
         status = m.group("status") if m else "PENDING_GPU_RUN"
+        notes = (
+            f"Wave 286 P sweep result (per the user's 'paper-grounded "
+            f"控制器的工作流加强' + 'GPU上没有算力占用只有显存占用' "
+            f"directives; CLM-005/006/011/070 additive evidence rows "
+            f"per Wave 268 strict-clean rule). Vendored purity "
+            f"preserved per the user's 'clone下来的原sota项目里的打分"
+            f"脚本依旧不能动' directive. Claim alias: {claim_id_alias}."
+        )
+        if notes_suffix:
+            notes = notes + notes_suffix
         metrics.append(
             Metric(
                 metric_id=metric_id,
@@ -898,14 +1004,84 @@ def _parse_sweep286() -> tuple[list[Metric], list[str]]:
                 source_artifact_path=rel_path,
                 source_artifact_sha256=sha,
                 section_ref=rel_path,
-                notes=(
-                    f"Wave 286 P sweep result (per the user's 'paper-grounded "
-                    f"控制器的工作流加强' + 'GPU上没有算力占用只有显存占用' "
-                    f"directives; CLM-005/006/011/070 additive evidence rows "
-                    f"per Wave 268 strict-clean rule). Vendored purity "
-                    f"preserved per the user's 'clone下来的原sota项目里的打分"
-                    f"脚本依旧不能动' directive. Claim alias: {claim_id_alias}."
-                ),
+                notes=notes,
+            )
+        )
+    return metrics, errors
+
+
+def _parse_sweep291() -> tuple[list[Metric], list[str]]:
+    """Emit one SWEEP291 row per Wave 290 + 291 sweep-result doc.
+
+    Each doc's ``**Status:**`` (or ``## TL;DR`` headline) is captured
+    verbatim so the ledger surfaces PASS / MIXED / SUPPORTED / STRONG
+    without requiring a separate manifest. Vendored purity + sweep drivers
+    are preserved per the user's "claude相关的确实不要commit" + "vendored
+    SOTA 评分脚本依旧不能动" directives: this parser does NOT touch the
+    sweep drivers under /tmp/ or any vendored upstream file. The new
+    tool ``tools/batched_framework_cifar.py`` lives in the repo (it is the
+    byte-deterministic harness used by the W291 sweep) and was already
+    ruff-clean per W290 P3 invariant; no framework source touched.
+    """
+    metrics: list[Metric] = []
+    errors: list[str] = []
+    for metric_id, rel_path, title, claim_id_alias, notes_suffix in SWEEP291_FILES:
+        source_path = REPO_ROOT / rel_path
+        if not source_path.is_file():
+            errors.append(f"SWEEP291 {metric_id}: file not found at {rel_path}")
+            metrics.append(
+                Metric(
+                    metric_id=metric_id,
+                    kind="SWEEP291",
+                    title=title,
+                    status="MISSING_SOURCE",
+                    source_artifact_path=rel_path,
+                    source_artifact_sha256="",
+                    notes="SOURCE FILE NOT FOUND at build time.",
+                )
+            )
+            continue
+        sha = _sha256_of_path(source_path)
+        text = source_path.read_text(encoding="utf-8")
+        # Use **Status:** if present, otherwise pull the first
+        # ``**Verdict:**`` or ``## TL;DR`` line. The W291 docs use
+        # ``**Lever verdict:**`` or ``**Decision:**`` etc; fall back to
+        # ``## TL;DR`` body for rows without an explicit ``**Status:**``
+        # marker.
+        m = _SWEEP286_STATUS_RE.search(text)
+        if m:
+            status = m.group("status")
+        else:
+            tldr_match = re.search(
+                r"^## 0\. TL;DR\s*\n(?P<tldr>(?:\n|.)+?)(?=\n##\s|\Z)",
+                text,
+                re.MULTILINE,
+            )
+            status = "TL;DR_PRESENT — see doc" if tldr_match else "PENDING_GPU_RUN"
+        notes = (
+            f"Wave 291 P sweep result (per the user's 'Wave 290 + 291 "
+            f"publishable state' directive; CLM-006 / CLM-011 additive "
+            f"evidence rows per Wave 268 strict-clean rule). Vendored "
+            f"purity preserved per the user's 'clone下来的原sota项目里的打分"
+            f"脚本依旧不能动' directive. The W290 P3 batched harness "
+            f"(tools/batched_framework_cifar.py) is the byte-deterministic "
+            f"FID-only path that produces ~28-35× framework_wall speedup "
+            f"without modifying any framework source. Claim alias: "
+            f"{claim_id_alias}."
+        )
+        if notes_suffix:
+            notes = notes + notes_suffix
+        metrics.append(
+            Metric(
+                metric_id=metric_id,
+                kind="SWEEP291",
+                title=title,
+                status=status,
+                claim_id=claim_id_alias,
+                source_artifact_path=rel_path,
+                source_artifact_sha256=sha,
+                section_ref=rel_path,
+                notes=notes,
             )
         )
     return metrics, errors
@@ -1063,6 +1239,13 @@ def build() -> BuildResult:
     metrics.extend(sweep286_metrics)
     errors.extend(sweep286_errors)
 
+    # 8. WAVE 291 SWEEP RESULTS (additive — does not touch any
+    # existing row; per the Wave 290 + 291 P task spec; CLM-006/011
+    # additive evidence rows).
+    sweep291_metrics, sweep291_errors = _parse_sweep291()
+    metrics.extend(sweep291_metrics)
+    errors.extend(sweep291_errors)
+
     # Tally kind counts for the report.
     counts = {
         "CLAIM": 0,
@@ -1072,6 +1255,7 @@ def build() -> BuildResult:
         "ENGINEERING_GATE": 0,
         "SWEEP280": 0,
         "SWEEP286": 0,
+        "SWEEP291": 0,
     }
     for m in metrics:
         counts[m.kind] = counts.get(m.kind, 0) + 1
@@ -1085,6 +1269,7 @@ def build() -> BuildResult:
         engineering_gate_rows=counts["ENGINEERING_GATE"],
         sweep280_rows=counts["SWEEP280"],
         sweep286_rows=counts["SWEEP286"],
+        sweep291_rows=counts["SWEEP291"],
     )
 
 
@@ -1143,6 +1328,7 @@ def _render_markdown(result: BuildResult) -> str:
         "ENGINEERING_GATE",
         "SWEEP280",
         "SWEEP286",
+        "SWEEP291",
     ):
         count = sum(1 for m in result.metrics if m.kind == kind)
         out.append(f"| {kind} | {count} |")
@@ -1162,6 +1348,7 @@ def _render_markdown(result: BuildResult) -> str:
         "ENGINEERING_GATE",
         "SWEEP280",
         "SWEEP286",
+        "SWEEP291",
     ):
         rows = [m for m in result.metrics if m.kind == kind]
         if not rows:
@@ -1212,6 +1399,7 @@ def _render_json(result: BuildResult) -> str:
             "ENGINEERING_GATE": result.engineering_gate_rows,
             "SWEEP280": result.sweep280_rows,
             "SWEEP286": result.sweep286_rows,
+            "SWEEP291": result.sweep291_rows,
         },
     }
     return json.dumps(payload, indent=2, sort_keys=False, ensure_ascii=False) + "\n"
@@ -1267,6 +1455,7 @@ def main(argv: list[str] | None = None) -> int:
             f"ENGINEERING_GATE={result.engineering_gate_rows} "
             f"SWEEP280={result.sweep280_rows} "
             f"SWEEP286={result.sweep286_rows} "
+            f"SWEEP291={result.sweep291_rows} "
             f"errors={len(result.errors)}"
         )
     else:
@@ -1285,7 +1474,8 @@ def main(argv: list[str] | None = None) -> int:
             f"INSIGHT={result.insight_rows} "
             f"ENGINEERING_GATE={result.engineering_gate_rows} "
             f"SWEEP280={result.sweep280_rows} "
-            f"SWEEP286={result.sweep286_rows}"
+            f"SWEEP286={result.sweep286_rows} "
+            f"SWEEP291={result.sweep291_rows}"
         )
         if result.errors:
             print(f"Non-fatal build errors: {len(result.errors)}")

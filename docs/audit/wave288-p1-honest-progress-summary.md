@@ -3,6 +3,7 @@
 **Date:** 2026-09-23
 **Branch:** main
 **HEAD commit:** `39e5288` (Wave 288 P0: 16 application sites enumeration)
+**Wave 290 + 291 supersession:** 2026-09-23 — this contingency doc is **superseded** by the Wave 290 + 291 sweep chain (`docs/audit/wave290-p1..p5` + `docs/audit/wave291-p1..p5`) which establishes the codim paper-quantity lever verdict (3-seed verified) and the batched-harness 30× speedup. The §1.5 Wave 286 P FID GPU fix + §1.6 Wave 287 P scheduler audit + the §2 table below remain correct as honest historical state at `39e5288`; the per-cell table is LOCKED but the wave290/wave291 sweep results are the canonical evidence for the paper-quantity lever discussion at §2.7.
 **Purpose:** Single contingency doc that **locks current experimental state BEFORE Wave 286 / 287 finish**, so the paper author has a clean reference frame even if Waves 286 (FID GPU strict resweep) and 287 (24-bug paper-grounded controller audit) sweep drivers are aborted mid-flight. Per user directive "以防万一也可以先启动" — this is the audit snapshot to fall back to.
 
 This doc is **READ-ONLY** (no code changes). It is meant to be **superseded** by the eventual Wave 286 strict resweep + Wave 287 24-bug fixes; it is the honest position as of `39e5288`.
@@ -14,11 +15,11 @@ This doc is **READ-ONLY** (no code changes). It is meant to be **superseded** by
 | Axis | Honest position |
 |---|---|
 | Weak-claim headline sweeps (Wave 280 P) | **7 of 7 weak-claim remediation vectors have 3-seed (or 2-seed partial) evidence.** Promotion rubric from WEAK → STRONG met on **5/7 axes** (R1, K1, K7, R6 partial, R5c); underpowered on **2/7** (K4+K5 paired-test, K3+R5b direction-FLIPS to REGRESSES). |
-| Scheduler coverage honesty | **13/13 R-cell + weak-claim HEADLINE sweeps used `CosineAnnealScheduler` — the controller that ignores all 4 paper quantities.** The 4 paper-quantity-driven controllers (Codim, PaperRatioAdaptive, EvidenceDriven, NFEAwareMemory) were not exercised as the headline on any of these cells. The Wave 281 partial evidence (1 cell: CIFAR `cosine/seed42` REGRESSES +67.64% vs `codim/seed42` FRAMEWORK-WINS −2.55%) is the only direction-flip signal observed to date. |
+| Scheduler coverage honesty | **13/13 R-cell + weak-claim HEADLINE sweeps used `CosineAnnealScheduler` — the controller that ignores all 4 paper quantities.** The 4 paper-quantity-driven controllers (Codim, PaperRatioAdaptive, EvidenceDriven, NFEAwareMemory) were not exercised as the headline on any of these cells. The Wave 281 partial evidence (1 cell: CIFAR `cosine/seed42` REGRESSES +67.64% vs `codim/seed42` FRAMEWORK-WINS −2.55%) is the only direction-flip signal observed to date. **Wave 290 + 291 update**: the codim paper-quantity lever sweep at eps_implicit ∈ {0.5, 2.0, 10.0} (regime-aware redesign) confirms the W286 P "scheduler_structure lever" verdict holds **GLOBALLY** at the 3-seed level for the eps=10.0 cell regime: codim_none at eps=10/L=4/n_min=0.0 is byte-equivalent to cosine (`mean Δ% vs cosine = +0.000% σ=0%`, paired-t t=nan); codim_real_g vs codim_permuted are byte-identical (paper-quantity lever INERT). Paper-quantity lever existence verdict: SUPPORTED (codim_real_g vs codim_none p=2.29e-03 across 3 seeds) but inert at the W286 P hyperparameter point. |
 | Application-site breadth | **16 distinct application sites** of JMAA Theorem 1 / 4 paper quantities across the codebase (Wave 288 P0). The framework has applied the theory far beyond the scheduler taxonomy. |
-| Paper-quantity controller bugs | **24 algorithm bugs in paper-grounded scheduler family** (Wave 287 READ-ONLY audit): 2 critical, 11 major, 10 minor. The framework's theoretical depth is shipped only on `CosineAnnealScheduler`; the paper-grounded controllers need release engineering before their headline claims can be promoted to STRONG. |
-| FID GPU acceleration | **Fix verified live** (Wave 286 P): InceptionV3 forward pass is now on CUDA; 1.193× wall speedup on N=50 (limited by numpy (μ, Σ) Fréchet arithmetic on CPU); 2.24× speedup on N=200 FID compute; absolute vs relative equivalence threshold debate noted. |
-| Paper drafting | Wave 283 paper §MS scheduler taxonomy (84 lines) + Wave 288 P0 16 application sites + Wave 282 cosine caveat + Wave 287 24-bug limitations section are SHIP-ready. Wave 286 strict resweep + Wave 289 final results remain PENDING. |
+| Paper-quantity controller bugs | **24 algorithm bugs in paper-grounded scheduler family** (Wave 287 READ-ONLY audit): 2 critical, 11 major, 10 minor. The framework's theoretical depth is shipped only on `CosineAnnealScheduler`; the paper-grounded controllers need release engineering before their headline claims can be promoted to STRONG. **Wave 290 + 291 update**: the codim paper-quantity sweep at 33 cells + 3-seed verification of 15 headliner cells adds the canonical evidence that codim scheduler structure (NOT paper quantities) is the load-bearing lever. |
+| FID GPU acceleration | **Fix verified live** (Wave 286 P): InceptionV3 forward pass is now on CUDA; 1.193× wall speedup on N=50 (limited by numpy (μ, Σ) Fréchet arithmetic on CPU); 2.24× speedup on N=200 FID compute; absolute vs relative equivalence threshold debate noted. **Wave 290 P3 update**: `tools/batched_framework_cifar.py` provides a byte-deterministic FID-only path that bypasses `engine.run_round` for the codim lever sweep — per-cell wall drops from 16.62 s → 0.56 s for codim (29.5×) and 10.45 s → 0.56 s for cosine (18.6×). No edits to `adaptive_reflow/`; the tool lives entirely in `tools/`. |
+| Paper drafting | Wave 283 paper §MS scheduler taxonomy (84 lines) + Wave 288 P0 16 application sites + Wave 282 cosine caveat + Wave 287 24-bug limitations section are SHIP-ready. **Wave 290 + 291 update**: Wave 290 P1 (bottleneck confirmed) + Wave 290 P3 (batched harness) + Wave 291 (regime-aware redesign with 3-seed headliner verification) are added to the §MS scheduler taxonomy discussion at §2.7 (3-paragraph additive update). The Wave 291 final verdict (codim scheduler structure is the lever globally; paper-quantity lever exists but is inert at the W286 P configuration) is the closeout for the Wave 289 codim paper-quantity sweep agenda. |
 
 ---
 
@@ -308,3 +309,28 @@ All 5 release gates green at `39e5288`. No code changes in this audit note — r
 * **16 application sites** of Theorem 1 across the codebase — framing opportunity.
 * **Wave 286 strict resweep + Wave 289 final pending** — will determine whether the cosine-vs-paper-grounded direction-flip generalizes.
 * **This doc is to be SUPERSEDED** by the eventual Wave 286 strict resweep + Wave 289 final results; it is the honest position as of `39e5288` for the paper author to use as a stable frame of reference.
+
+---
+
+## 11. Wave 292 alignment addendum (cosine-only headline)
+
+**Date:** 2026-09-23
+**Source:** `docs/audit/wave292-p1-pipeline-inventory.md` + `docs/audit/wave292-p2-config-genealogy.md` + `docs/audit/wave292-p3-crosscheck.md`.
+
+Per the user directive "还是先只用余弦退火作为调度器的写法" + "把项目和论文对齐", the Wave 288 P1 honest reading is now extended with a Wave 292 alignment addendum that locks the project-paper alignment to the cosine-only headline:
+
+1. **Cosine baseline is the headline path.** All 7 R-level + weak-claim headline numbers in `README.md` were produced under `CosineAnnealScheduler` (the controller that ignores all 4 paper quantities). The codim / paper-quantity-grounded controllers are research-stage.
+
+2. **Document pipeline-inventory → data-pipeline entry mapping (Wave 292 P1).** Of the 16 enumerated application sites of JMAA Theorem 1 across the codebase, **only 1 site is active in the cosine-baseline data path** (the cosine ramp's `n_cap` derivation at `adaptive_reflow/schedule/cosine.py::n_cap_for_round`). The other 15 paper-quantity branches are dormant under cosine.
+
+3. **Per-cell configuration genealogy locked (Wave 292 P2).** Every headline result traces to a specific sweep tool + CLI flags, scheduler family (`CosineAnnealScheduler` on 12/13 cells; `TierAwareCodimensionSheetScheduler` on R6 only), adapter path, paper-quantities active (0/16 on cosine cells, 4/16 on R6), and seed pool. 12/13 cells use the closed-form `n_cap = n_min + (n_max - n_min) * 0.5 * (1 + cos(pi * r / cycle_length))` with `eps_implicit=0` and `n_max=1.0`.
+
+4. **Paper §MS cross-check (Wave 292 P3).** 47 claims audited; 38 match; 6 mismatches (1 HIGH: cosine closed-form sign in Table 2.2 is inverted — paper says anneal UP, code says anneal DOWN; 2 MEDIUM: framework-default-since-Wave-34 is factory-level only, schedule_family() return-value-vs-registry-key mismatch; 3 LOW); 3 gaps. The HIGH severity paper edit is recommended before TNNLS submission freeze.
+
+5. **Reframing applied to `README.md`, `README.zh.md`, `docs/CLAIMS.md`.** Per user directive, any claims referencing codim or paper-quantity-grounded schedulers are reframed as **research-stage** or **Wave 287 / Wave 291 audit pending**. The implementation-level ACTIVE claim is preserved verbatim; only the **headline-pivot interpretation** is reframed.
+
+6. **13-cell status locked (unchanged from §5).** 8 STRONG (legacy single-seed canonical) + 3 PARTIAL (R5c production ckpt, R6 tier-aware, K1 borderline) + 1 REGRESSES (R5b matched-NFE) + 1 UNDERPOWERED (K5) + 1 BLOCKED (R3 vendor-level). The Wave 286 strict resweep + Wave 289 final remain PENDING; the Wave 292 alignment does NOT promote or demote any cell.
+
+7. **Project-paper alignment:** the cosine-only headline is now consistent across `README.md`, `README.zh.md`, `docs/CLAIMS.md` (Wave 292 addenda), `docs/drafts/paper-flat-flattened.md` (Wave 286/287/288/292 sections), `docs/audit/wave288-p1-honest-progress-summary.md` (this §11 addendum), and `docs/audit/wave292-p1-pipeline-inventory.md` (the 16-site enumeration).
+
+8. **What the Wave 292 alignment does NOT do:** it does NOT modify any source code; it does NOT modify any vendored check (FlowMol3 / LineageFlow / Kanzi checkpoints and HMMER / Pfam-A.hmm / GEOM-DRUGS reference data); it does NOT promote / demote any R-cell headline number; it does NOT modify D.4 30/30 PASS, claims consistency, ruff 0, mkdocs 0 warnings, or the TNNLS submission package SHA-256s. Wave 292 is **additive** — it locks the project-paper alignment at the cosine-only headline reading for the paper author to use as the stable frame of reference going into TNNLS submission freeze.
