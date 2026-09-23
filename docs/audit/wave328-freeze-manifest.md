@@ -277,10 +277,16 @@ wc -l docs/drafts/paper-flat-flattened.md docs/drafts/paper-flat-ieeetran.tex
 ```
 $ sha256sum docs/audit/wave328-freeze-manifest.md
 0a65d20b677162c5d98e32f5eb9341a90d36c944953b11c587f26196e00d1ce7  docs/audit/wave328-freeze-manifest.md   (committed at e7f5e22, before §7 fill-in)
-<self-hash-after-§7-fill>                                                                            (recomputed at every Wave 328 follow-up commit)
+8e7367a0c8ea10bdfb88eda1d63f4ccfcad6e416204918e7e8d8de14a0f2a93f  docs/audit/wave328-freeze-manifest.md   (committed at 123fcfc, after §7 fill-in)
+c99192dcff400567cbb2c69d5d09a79e5d2810b8dee6ba63762a593e649a7425  docs/audit/wave328-freeze-manifest.md   (committed at 1e94d7a, after §0/§1 reference updates + tag re-point)
 ```
 
-File size: 11 048 bytes (committed).
-Recorded 2026-09-23 19:51 (Wave 328).
+File size: 11 048 bytes (last committed at 1e94d7a).
+Recorded 2026-09-23 19:53 (Wave 328).
 
-NOTE on self-referential hash: the committed blob SHA-256 = 0a65d20b… corresponds to the file as recorded at commit `e7f5e22` (with §7 in placeholder form). After §7 is filled in (this commit), the file SHA-256 changes — record the new value at the next `git commit` cycle. The `0a65d20b…` value above is the *last committed* hash and is what reviewers should pin to when retrieving the freeze commit `e7f5e22`.
+NOTE on self-referential hash: the committed blob SHA-256 values above correspond to three successive file snapshots:
+- `0a65d20b…` = commit `e7f5e22` (Wave 328 initial freeze manifest, §7 placeholder form)
+- `8e7367a0…` = commit `123fcfc` (after §7 fill-in)
+- `c99192dc…` = commit `1e94d7a` (current HEAD; after §0/§1 references updated to match the actual tag commit `1e94d7a`)
+
+Reviewers retrieving the freeze commit `1e94d7a` should pin to the *last committed* hash `c99192dc…`. The earlier values are kept as an audit trail of manifest evolution.
