@@ -1,0 +1,475 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./paper-flat-ieeetran.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+(/home/hugo/texmf/tex/latex/IEEEtran/IEEEtran.cls
+Document Class: IEEEtran 2015/08/26 V1.8b by Michael Shell
+-- See the "IEEEtran_HOWTO" manual for usage information.
+-- http://www.michaelshell.org/tex/ieeetran/
+(/usr/share/texmf-dist/tex/latex/psnfss/ot1ptm.fd)
+-- Using 8.5in x 11in (letter) paper.
+-- Using PDF output.
+-- This is a 10 point document.
+) (/usr/share/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/usr/share/texmf-dist/tex/latex/amsmath/amstext.sty
+(/usr/share/texmf-dist/tex/latex/amsmath/amsgen.sty))
+(/usr/share/texmf-dist/tex/latex/amsmath/amsbsy.sty)
+(/usr/share/texmf-dist/tex/latex/amsmath/amsopn.sty))
+(/usr/share/texmf-dist/tex/latex/amsfonts/amssymb.sty
+(/usr/share/texmf-dist/tex/latex/amsfonts/amsfonts.sty))
+(/usr/share/texmf-dist/tex/latex/graphics/graphicx.sty
+(/usr/share/texmf-dist/tex/latex/graphics/keyval.sty)
+(/usr/share/texmf-dist/tex/latex/graphics/graphics.sty
+(/usr/share/texmf-dist/tex/latex/graphics/trig.sty)
+(/usr/share/texmf-dist/tex/latex/graphics-cfg/graphics.cfg)
+(/usr/share/texmf-dist/tex/latex/graphics-def/pdftex.def)))
+(/usr/share/texmf-dist/tex/latex/booktabs/booktabs.sty)
+(/usr/share/texmf-dist/tex/latex/multirow/multirow.sty)
+(/usr/share/texmf-dist/tex/latex/tools/array.sty)
+(/usr/share/texmf-dist/tex/latex/xcolor/xcolor.sty
+(/usr/share/texmf-dist/tex/latex/graphics-cfg/color.cfg)
+(/usr/share/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+(/usr/share/texmf-dist/tex/latex/url/url.sty)
+(/usr/share/texmf-dist/tex/latex/cite/cite.sty)
+(/usr/share/texmf-dist/tex/latex/hyperref/hyperref.sty
+(/usr/share/texmf-dist/tex/generic/iftex/iftex.sty)
+(/usr/share/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty)
+(/usr/share/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty)
+(/usr/share/texmf-dist/tex/generic/pdfescape/pdfescape.sty
+(/usr/share/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty)
+(/usr/share/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
+(/usr/share/texmf-dist/tex/generic/infwarerr/infwarerr.sty)))
+(/usr/share/texmf-dist/tex/latex/hycolor/hycolor.sty)
+(/usr/share/texmf-dist/tex/latex/hyperref/nameref.sty
+(/usr/share/texmf-dist/tex/latex/refcount/refcount.sty)
+(/usr/share/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty
+(/usr/share/texmf-dist/tex/latex/kvoptions/kvoptions.sty)))
+(/usr/share/texmf-dist/tex/latex/etoolbox/etoolbox.sty)
+(/usr/share/texmf-dist/tex/generic/stringenc/stringenc.sty)
+(/usr/share/texmf-dist/tex/latex/hyperref/pd1enc.def)
+(/usr/share/texmf-dist/tex/generic/intcalc/intcalc.sty)
+(/usr/share/texmf-dist/tex/latex/hyperref/puenc.def)
+(/usr/share/texmf-dist/tex/generic/bitset/bitset.sty
+(/usr/share/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty)))
+(/usr/share/texmf-dist/tex/latex/hyperref/hpdftex.def
+(/usr/share/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
+(/usr/share/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty)))
+(/usr/share/texmf-dist/tex/latex/tools/bm.sty)
+(/usr/share/texmf-dist/tex/latex/base/textcomp.sty)
+(/usr/share/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def)
+(./paper-flat-ieeetran.aux)
+-- Lines per column: 58 (exact).
+(/usr/share/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+) (/usr/share/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
+(/usr/share/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg))
+(./paper-flat-ieeetran.out) (./paper-flat-ieeetran.out)
+(/usr/share/texmf-dist/tex/latex/amsfonts/umsa.fd)
+(/usr/share/texmf-dist/tex/latex/amsfonts/umsb.fd)
+Underfull \hbox (badness 1762) in paragraph at lines 62--95
+\OT1/ptm/b/n/9 or Re-flow. The frame-work, \OT1/ptm/b/it/9 FlowA\OT1/ptm/b/n/9 
+, runs on top of any
+
+Underfull \hbox (badness 2486) in paragraph at lines 62--95
+\OT1/ptm/b/n/9 frozen flow match-ing check-point --- Lin-eage-Flow (ICML
+
+Underfull \hbox (badness 6559) in paragraph at lines 62--95
+\OT1/ptm/b/n/9 2026), Kanzi (ICLR 2026), Flow-Mol3 (NeurIPS 2024),
+
+Underfull \hbox (badness 4378) in paragraph at lines 62--95
+\OT1/ptm/b/n/9 the open DDPM++/RF UNet weights, and the MNIST
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--95
+\OT1/ptm/b/n/9 flow match-ing recipe --- ex-pos-ing a typed four-port
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--95
+\OT1/ptm/b/n/9 con-trol sur-face ($[]$, $[]$,
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--95
+[]$\OT1/ptm/b/n/9 , $[]$) par-ti-tioned
+
+Underfull \hbox (badness 1430) in paragraph at lines 108--128
+\OT1/ptm/m/n/10 la-tion, or Re-flow. The frame-work, \OT1/ptm/m/it/10 FlowA\OT1
+/ptm/m/n/10 , runs on top
+
+Underfull \hbox (badness 3068) in paragraph at lines 108--128
+\OT1/ptm/m/n/10 2024), the open DDPM++/RF UNet weights, and the
+
+Underfull \hbox (badness 3250) in paragraph at lines 108--128
+\OT1/ptm/m/n/10 con-trol sur-face ($[]$, $[]$,
+
+Underfull \hbox (badness 10000) in paragraph at lines 158--166
+\OT1/ptm/m/n/10 where $\OML/cmm/m/it/10 A[]; B[]; C[]; e[]$ \OT1/ptm/m/n/10 are
+ the four pa-per quan-ti-ties.
+
+Underfull \hbox (badness 10000) in paragraph at lines 158--166
+[]$ \OT1/ptm/m/n/10 con-sumes these quan-ti-ties
+[1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf-dist/fon
+ts/enc/dvips/base/8r.enc}] (/usr/share/texmf-dist/tex/latex/psnfss/ot1pcr.fd)
+Underfull \hbox (badness 10000) in paragraph at lines 271--279
+[]\OT1/ptm/m/n/10 FlowA is a \OT1/ptm/m/it/10 typed-contracts frame-work \OT1/p
+tm/m/n/10 that
+
+Underfull \hbox (badness 10000) in paragraph at lines 271--279
+\OT1/ptm/m/n/10 ex-poses the in-fer-ence loop as a four-port con-trol
+
+Underfull \hbox (badness 10000) in paragraph at lines 271--279
+\OT1/ptm/m/n/10 sur-face --- $[]$, $[]$,
+
+Underfull \hbox (badness 10000) in paragraph at lines 271--279
+[]$\OT1/ptm/m/n/10 , $[]$ ---
+
+Underfull \hbox (badness 3930) in paragraph at lines 287--299
+[]$[]$ \OT1/ptm/m/n/10 de-clares the per-round ca-pac-ity
+
+Underfull \hbox (badness 10000) in paragraph at lines 287--299
+\OT1/ptm/m/n/10 sched-uler con-tract: \OT1/pcr/m/n/10 sample\OT1/ptm/m/n/10 (\O
+T1/pcr/m/n/10 outer_cycle_id\OT1/ptm/m/n/10 ,
+
+Underfull \hbox (badness 10000) in paragraph at lines 287--299
+\OT1/pcr/m/n/10 round_in_cycle\OT1/ptm/m/n/10 , \OT1/pcr/m/n/10 target_round\OT
+1/ptm/m/n/10 ) $\OMS/cmsy/m/n/10 !$
+
+Underfull \hbox (badness 10000) in paragraph at lines 287--299
+\OT1/pcr/m/n/10 ScheduleSample\OT1/ptm/m/n/10 , \OT1/pcr/m/n/10 cycle_length\OT
+1/ptm/m/n/10 ()
+
+Underfull \hbox (badness 10000) in paragraph at lines 287--299
+\OMS/cmsy/m/n/10 ! \U/msb/m/n/10 Z$\OT1/ptm/m/n/10 , \OT1/pcr/m/n/10 schedule_f
+amily\OT1/ptm/m/n/10 () $\OMS/cmsy/m/n/10 !$ \OT1/pcr/m/n/10 str\OT1/ptm/m/n/10
+ ,
+
+Underfull \hbox (badness 10000) in paragraph at lines 287--299
+\OT1/pcr/m/n/10 config_hash\OT1/ptm/m/n/10 () $\OMS/cmsy/m/n/10 !$ \OT1/pcr/m/n
+/10 str\OT1/ptm/m/n/10 , \OT1/pcr/m/n/10 reset\OT1/ptm/m/n/10 (),
+
+Underfull \hbox (badness 10000) in paragraph at lines 287--299
+\OT1/pcr/m/n/10 record_round_feedback\OT1/ptm/m/n/10 (\OT1/pcr/m/n/10 round_in_
+cycle\OT1/ptm/m/n/10 ,
+
+Underfull \hbox (badness 10000) in paragraph at lines 287--299
+\OT1/pcr/m/n/10 metrics\OT1/ptm/m/n/10 ), \OT1/pcr/m/n/10 inject_noise\OT1/ptm/
+m/n/10 (\OT1/pcr/m/n/10 state\OT1/ptm/m/n/10 ,
+
+Underfull \hbox (badness 10000) in paragraph at lines 287--299
+\OT1/ptm/m/n/10 con-crete sched-uler (13 shipped fam-i-lies) pass
+
+Underfull \hbox (badness 4416) in paragraph at lines 287--299
+[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 s; []\OT1/cmr/m/n/10 )$ \OT1/ptm/m/n/10 iff
+ it de-clares the
+[2]
+Underfull \hbox (badness 1609) in paragraph at lines 300--306
+[]$[]$ \OT1/ptm/m/n/10 de-clares the per-round restart-
+
+Underfull \hbox (badness 5231) in paragraph at lines 300--306
+\OT1/ptm/m/n/10 en-ve-lope. The de-fault $[]$
+
+Underfull \hbox (badness 2961) in paragraph at lines 300--306
+\OT1/ptm/m/n/10 con-sumes only the sched-uler's $[]\OT1/cmr/m/n/10 ()$\OT1/ptm/
+m/n/10 ;
+
+Underfull \hbox (badness 10000) in paragraph at lines 324--328
+[]\OT1/ptm/m/it/10 Algorithm layer \OT1/ptm/m/n/10 ($[]$): the
+
+Underfull \hbox (badness 10000) in paragraph at lines 332--338
+[]\OT1/ptm/m/it/10 Adapter layer \OT1/ptm/m/n/10 ($[]$):
+
+Underfull \hbox (badness 10000) in paragraph at lines 332--338
+\OT1/ptm/m/n/10 the five ven-dored check-points wrapped as
+
+Underfull \hbox (badness 10000) in paragraph at lines 332--338
+[]$\OT1/ptm/m/n/10 , $[]$. The
+
+Underfull \hbox (badness 2626) in paragraph at lines 348--360
+\OT1/ptm/m/n/10 car-ry-ing the per-channel trace, the per-round sched-uler
+
+Underfull \hbox (badness 4739) in paragraph at lines 348--360
+\OT1/ptm/m/n/10 sam-ple, the paper-quantities snap-shot (or $[]$ un-der
+
+Underfull \hbox (badness 3803) in paragraph at lines 348--360
+\OT1/ptm/m/n/10 co-sine base-line), the au-dit codes, and the byte-stable
+
+Underfull \hbox (badness 4505) in paragraph at lines 348--360
+\OT1/ptm/m/n/10 di-gest com-puted via $[]$. The
+
+Underfull \hbox (badness 5403) in paragraph at lines 348--360
+\OT1/ptm/m/n/10 bound-ary: ev-ery method on $[]$
+
+Underfull \hbox (badness 10000) in paragraph at lines 348--360
+\OT1/ptm/m/n/10 ei-ther ac-cepts or re-turns a $[]$ (or a
+
+Underfull \hbox (badness 10000) in paragraph at lines 348--360
+\OT1/ptm/m/n/10 re-lated typed bun-dle --- $[]$,
+
+Underfull \hbox (badness 10000) in paragraph at lines 348--360
+[]$\OT1/ptm/m/n/10 , $[]$). The bun-dle
+
+Underfull \hbox (badness 10000) in paragraph at lines 395--399
+[]$[]$\OT1/ptm/m/n/10 , $[]$,
+
+Underfull \hbox (badness 10000) in paragraph at lines 395--399
+[]$\OT1/ptm/m/n/10 , $[]$,
+
+Underfull \hbox (badness 10000) in paragraph at lines 395--399
+[]$\OT1/ptm/m/n/10 : simple-closed-form de-ter-min-is-tic
+[3]
+Underfull \hbox (badness 10000) in paragraph at lines 445--452
+[]\OT1/ptm/m/n/10 Of the 13 fam-i-lies, \OT1/ptm/m/it/10 only $[]$
+
+Underfull \hbox (badness 10000) in paragraph at lines 445--452
+\OT1/ptm/m/it/10 is the head-line sched-uler on 12/13 R-cells\OT1/ptm/m/n/10 . 
+Only
+
+Underfull \hbox (badness 10000) in paragraph at lines 445--452
+\OT1/ptm/m/n/10 R6 (k6 fold-abil-ity) wires a paper-quantity-driven
+
+Underfull \hbox (badness 4441) in paragraph at lines 445--452
+\OT1/ptm/m/n/10 head-line ($[]$ wrap-ping
+
+Underfull \hbox (badness 1796) in paragraph at lines 445--452
+[]$\OT1/ptm/m/n/10 ). The 4 paper-quantity-driven
+
+Underfull \hbox (badness 2913) in paragraph at lines 458--471
+[]\OT1/ptm/m/n/10 FlowA is in-te-grated into \OT1/ptm/m/it/10 5 ven-dored flow 
+match-ing
+
+Underfull \hbox (badness 3240) in paragraph at lines 458--471
+\OT1/ptm/m/n/10 pro-tein flow-AE), Flow-Mol3 (NeurIPS 2024, molec-u-lar
+
+Underfull \hbox (badness 1484) in paragraph at lines 458--471
+\OT1/ptm/m/n/10 3D), CIFAR-10 RF UNet (open DDPM++/RF weights),
+
+Underfull \hbox (badness 4024) in paragraph at lines 458--471
+\OT1/ptm/m/n/10 and MNIST FM (open recipe). The in-te-gra-tion is a
+
+Underfull \hbox (badness 2150) in paragraph at lines 458--471
+\OT1/ptm/m/it/10 wrapper-class \OT1/ptm/m/n/10 pat-tern: each ven-dored check-p
+oint is ex-
+
+Underfull \hbox (badness 4168) in paragraph at lines 458--471
+\OT1/ptm/m/n/10 posed as a $[]$ pro-to-col im-ple-
+
+Underfull \hbox (badness 1688) in paragraph at lines 458--471
+\OT1/ptm/m/n/10 with the ven-dored source it-self kept frozen un-der five
+
+Underfull \hbox (badness 10000) in paragraph at lines 481--483
+[]$[]\OT1/cmr/m/n/10 (\OMS/cmsy/m/n/10 ^^C\OML/cmm/m/it/10 ; []; []\OT1/cmr/m/n
+/10 ) \OMS/cmsy/m/n/10 !
+
+Underfull \hbox (badness 10000) in paragraph at lines 485--487
+[]$[]\OT1/cmr/m/n/10 ([]) \OMS/cmsy/m/n/10 !
+
+Underfull \hbox (badness 10000) in paragraph at lines 487--489
+[]$[]\OT1/cmr/m/n/10 ([]\OML/cmm/m/it/10 ; []\OT1/cmr/m/n/10 ) \OMS/cmsy/m/n/10
+ !
+
+Underfull \hbox (badness 10000) in paragraph at lines 489--491
+[]$[]\OT1/cmr/m/n/10 ([]\OML/cmm/m/it/10 ; []\OT1/cmr/m/n/10 ) \OMS/cmsy/m/n/10
+ !
+
+Underfull \hbox (badness 10000) in paragraph at lines 491--494
+[]$[]\OT1/cmr/m/n/10 ([]\OML/cmm/m/it/10 ; []; \OMS/cmsy/m/n/10 ^^C\OML/cmm/m/i
+t/10 ; []\OT1/cmr/m/n/10 ) \OMS/cmsy/m/n/10 !
+
+Underfull \hbox (badness 10000) in paragraph at lines 491--494
+[]$\OT1/ptm/m/n/10 : the \OT1/ptm/m/it/10 one method that
+
+Underfull \hbox (badness 10000) in paragraph at lines 491--494
+\OT1/ptm/m/it/10 calls ven-dored code \OT1/ptm/m/n/10 (typ-i-cally a sin-gle
+
+Underfull \hbox (badness 10000) in paragraph at lines 494--496
+[]$[]\OT1/cmr/m/n/10 ([]\OML/cmm/m/it/10 ; []\OT1/cmr/m/n/10 ) \OMS/cmsy/m/n/10
+ ! []$\OT1/ptm/m/n/10 :
+
+Underfull \hbox (badness 10000) in paragraph at lines 496--500
+[]\OT1/pcr/m/n/10 observe_token_indices\OT1/ptm/m/n/10 (\OT1/pcr/m/n/10 trace\O
+T1/ptm/m/n/10 ,
+
+Underfull \hbox (badness 10000) in paragraph at lines 496--500
+\OT1/pcr/m/n/10 paper_quantities\OT1/ptm/m/n/10 , *, \OT1/pcr/m/n/10 temperatur
+e\OT1/ptm/m/n/10 , \OT1/pcr/m/n/10 rng\OT1/ptm/m/n/10 )
+
+Underfull \hbox (badness 10000) in paragraph at lines 570--581
+[]\OT1/ptm/m/n/10 Let $\OT1/cmr/m/n/10 ^^F = \OMS/cmsy/m/n/10 f$\OT1/pcr/m/n/10
+ Scheduler\OT1/ptm/m/n/10 , \OT1/pcr/m/n/10 PolicyDriver\OT1/ptm/m/n/10 ,
+
+Underfull \hbox (badness 3954) in paragraph at lines 570--581
+\OT1/ptm/m/n/10 fixed $[]$ tu-ple, \OT1/pcr/m/n/10 prior_endpoint_digest
+
+Underfull \hbox (badness 2119) in paragraph at lines 583--601
+ \OT1/ptm/m/it/10 a) Proof sketch.: [][] \OT1/ptm/m/n/10 The run-ner is well-ty
+ped at the
+
+Underfull \hbox (badness 10000) in paragraph at lines 583--601
+\OT1/ptm/m/n/10 con-struc-tion site: $[]$ ac-cepts
+
+Underfull \hbox (badness 4886) in paragraph at lines 583--601
+\OT1/ptm/m/n/10 conformant de-faults via $[]$,
+
+Underfull \hbox (badness 10000) in paragraph at lines 583--601
+[]$\OT1/ptm/m/n/10 . The state-machine wrap-per
+
+Underfull \hbox (badness 10000) in paragraph at lines 583--601
+[]$ \OT1/ptm/m/n/10 is observation-
+
+Underfull \hbox (badness 10000) in paragraph at lines 583--601
+\OT1/ptm/m/n/10 only --- its $[]$, $[]$,
+
+Underfull \hbox (badness 10000) in paragraph at lines 583--601
+[]$\OT1/ptm/m/n/10 , $[]$ all del-e-gate to the in-ner
+
+Underfull \hbox (badness 4013) in paragraph at lines 583--601
+\OT1/ptm/m/n/10 sched-uler byte-for-byte, so wrap-ping never breaks the
+
+Underfull \hbox (badness 10000) in paragraph at lines 583--601
+[]$ \OT1/ptm/m/n/10 con-tract. Per-round com-po-si-tion
+
+Underfull \hbox (badness 10000) in paragraph at lines 583--601
+\OT1/ptm/m/n/10 se-quences $[] \OMS/cmsy/m/n/10 ! []$
+
+Underfull \hbox (badness 7099) in paragraph at lines 583--601
+\OT1/ptm/m/n/10 (with $[]$ from the pre-vi-ous round)
+[4]
+Underfull \hbox (badness 10000) in paragraph at lines 613--616
+[]\OT1/ptm/m/it/10 (1.2 Pol-i-cy-Driver-Pro-to-col clo-sure):
+
+Underfull \hbox (badness 10000) in paragraph at lines 617--621
+[]\OT1/ptm/m/it/10 (1.3 Mer-ge-Op-er-a-tor-Pro-to-col clo-sure):
+
+Underfull \hbox (badness 10000) in paragraph at lines 622--626
+[]\OT1/ptm/m/it/10 (1.4 Restart-Blender-Pro-to-col clo-sure): $[]$\OT1/ptm/m/n/
+10 ,
+
+Underfull \hbox (badness 10000) in paragraph at lines 622--626
+[]$\OT1/ptm/m/n/10 , $[]$,
+
+Underfull \hbox (badness 10000) in paragraph at lines 644--664
+\OT1/ptm/m/n/10 Both $[]$ and $[]$ ma-te-ri-alise
+
+Underfull \hbox (badness 5133) in paragraph at lines 644--664
+[]$ \OT1/ptm/m/n/10 iden-ti-fiers and the regions-dict it-er-a-tion or-der
+
+Underfull \hbox (badness 10000) in paragraph at lines 644--664
+[]$ \OT1/ptm/m/n/10 it-er-ates $[]\OT1/cmr/m/n/10 ([])\OML/cmm/m/it/10 :[]$
+
+Underfull \hbox (badness 3735) in paragraph at lines 644--664
+\OT1/ptm/m/n/10 in in-ser-tion or-der (CPython 3.11+ dict-ordering); sub-
+
+Underfull \hbox (badness 6461) in paragraph at lines 644--664
+\OT1/ptm/m/n/10 dispatch re-duces to Case A by in-duc-tion. \OT1/ptm/m/it/10 Ca
+se D
+
+Underfull \hbox (badness 10000) in paragraph at lines 644--664
+\OT1/ptm/m/it/10 ($[]$, async). $[]$ \OT1/ptm/m/n/10 builds $[]$
+
+Underfull \hbox (badness 2818) in paragraph at lines 644--664
+\OT1/ptm/m/n/10 re-solve in list or-der on a single-threaded event loop.
+
+Underfull \hbox (badness 1478) in paragraph at lines 644--664
+\OT1/ptm/m/n/10 and the JSON se-ri-al-i-sa-tion of $[]$ (fields are
+
+Underfull \hbox (badness 2343) in paragraph at lines 697--704
+[]\OT1/ptm/m/n/10 These three prop-er-ties --- com-po-si-tion clo-sure, byte-
+
+Underfull \hbox (badness 1708) in paragraph at lines 697--704
+\OT1/ptm/m/n/10 determinism, tamper-evidence --- are the \OT1/ptm/m/it/10 typed
+-contracts
+
+Underfull \hbox (badness 4981) in paragraph at lines 697--704
+\OT1/ptm/m/it/10 ar-chi-tec-ture \OT1/ptm/m/n/10 made for-mal. The frame-work i
+s module-
+
+Underfull \hbox (badness 3354) in paragraph at lines 697--704
+\OT1/ptm/m/n/10 The-o-rem 1, Wasser-stein bounds, total-variation bounds,
+[5]
+
+LaTeX Warning: Command \r invalid in math mode on input line 756.
+
+
+LaTeX Font Warning: Command \scriptsize invalid in math mode on input line 764.
+
+
+
+Underfull \hbox (badness 2856) in paragraph at lines 830--838
+[]$\OT1/ptm/m/n/10 , R6 k6 over-all $[]$) and re-ports
+
+Underfull \hbox (badness 10000) in paragraph at lines 858--859
+[]\OT1/ptm/b/n/10 A1\OT1/ptm/m/n/10 : + $[]$ +
+
+Underfull \hbox (badness 10000) in paragraph at lines 859--861
+[]\OT1/ptm/b/n/10 A2\OT1/ptm/m/n/10 : + $[]$ (con-sumes
+
+Underfull \hbox (badness 1552) in paragraph at lines 862--864
+[]\OT1/ptm/b/n/10 A4\OT1/ptm/m/n/10 : + $[]$ (C4 clo-sure, writes
+[6]
+Underfull \hbox (badness 3907) in paragraph at lines 979--987
+[]\OT1/ptm/m/n/10 The frame-work's re-pro-ducibil-ity con-tract is en-forced
+
+Underfull \hbox (badness 6016) in paragraph at lines 979--987
+\OT1/ptm/m/n/10 by 5 gates on ev-ery com-mit: (i) \OT1/ptm/m/it/10 D.4 30/30 by
+te-
+[7]
+Underfull \hbox (badness 2961) in paragraph at lines 1050--1062
+\OT1/ptm/m/n/10 only); \OT1/ptm/b/n/10 K2 \OT1/ptm/m/n/10 NFE-regime ap-pli-ca-
+bil-ity (cross-budget com-
+
+Underfull \hbox (badness 2253) in paragraph at lines 1050--1062
+\OT1/ptm/m/n/10 pos-ite axis; matched-NFE image-domain bound-ary); \OT1/ptm/b/n
+/10 K3
+
+Underfull \hbox (badness 2818) in paragraph at lines 1050--1062
+\OT1/ptm/m/n/10 sample-difficulty strat-i-fi-ca-tion (pa-per quan-ti-ties dom-i
+-nate
+[8]
+Underfull \hbox (badness 10000) in paragraph at lines 1124--1141
+[]\OT1/ptm/m/n/10 We pre-sented FlowA, a typed-contracts frame-work
+
+Underfull \hbox (badness 3989) in paragraph at lines 1124--1141
+\OT1/ptm/m/n/10 for training-free re-inference on frozen flow match-ing
+
+Underfull \hbox (badness 1354) in paragraph at lines 1124--1141
+\OT1/ptm/m/n/10 check-points. The frame-work ex-poses a four-port con-trol
+
+Underfull \hbox (badness 10000) in paragraph at lines 1124--1141
+\OT1/ptm/m/n/10 sur-face ($[]$, $[]$,
+
+Underfull \hbox (badness 10000) in paragraph at lines 1124--1141
+[]$\OT1/ptm/m/n/10 , $[]$) over
+
+Underfull \hbox (badness 2393) in paragraph at lines 1124--1141
+\OT1/ptm/m/n/10 tamper-evidence) that el-e-vate it from work-ing code to
+
+Underfull \hbox (badness 2197) in paragraph at lines 1124--1141
+\OT1/ptm/m/n/10 a typed-contracts ar-chi-tec-ture. Across 11 head-line cells
+
+Underfull \hbox (badness 2894) in paragraph at lines 1124--1141
+\OT1/ptm/m/n/10 com-pan-ion: The-o-rem 1 is one op-tional plug-in. What
+[9] [10] (./paper-flat-ieeetran.aux) )
+(see the transcript file for additional information)</usr/share/texmf-dist/font
+s/type1/public/amsfonts/cm/cmbx7.pfb></usr/share/texmf-dist/fonts/type1/public/
+amsfonts/cm/cmex10.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cm
+mi10.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/
+share/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texmf-dis
+t/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texmf-dist/fonts/type1/p
+ublic/amsfonts/cm/cmmi9.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/
+cm/cmr10.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></u
+sr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/share/texmf-d
+ist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texmf-dist/fonts/type1/
+public/amsfonts/cm/cmr9.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/
+cm/cmss10.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmss8.pfb><
+/usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmss9.pfb></usr/share/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texmf-dist/fonts/t
+ype1/public/amsfonts/cm/cmsy5.pfb></usr/share/texmf-dist/fonts/type1/public/ams
+fonts/cm/cmsy6.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.
+pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/share
+/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb></usr/share/texmf-di
+st/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/share/texmf-dist/fonts/
+type1/urw/courier/ucrr8a.pfb></usr/share/texmf-dist/fonts/type1/urw/times/utmb8
+a.pfb></usr/share/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/texm
+f-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-dist/fonts/type1/urw/
+times/utmri8a.pfb>
+Output written on paper-flat-ieeetran.pdf (10 pages, 381510 bytes).
+Transcript written on paper-flat-ieeetran.log.

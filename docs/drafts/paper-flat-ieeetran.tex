@@ -63,19 +63,20 @@
 We reconstruct the inference pipeline for flow matching models by inserting
 an adaptive, multi-round re-inference layer that operates without retraining,
 distillation, or Reflow. The framework, \emph{FlowA}, runs on top of any frozen
-frozen flow matching checkpoint --- LineageFlow (ICML 2026), Kanzi
+flow matching checkpoint --- LineageFlow (ICML 2026), Kanzi
 (ICLR 2026), FlowMol3 (NeurIPS 2024), the open DDPM++/RF UNet weights, and
 the MNIST flow matching recipe --- exposing a typed four-port control surface
 ($\mathsf{SchedulerProtocol}$, $\mathsf{PolicyDriverProtocol}$,
 $\mathsf{MergeOperatorProtocol}$, $\mathsf{RestartBlenderProtocol}$) partitioned
 over three domains (algorithm layer, evaluation layer, adapter layer) with a
 per-round state bundle that consumes outcome-conditioned feedback across
-samples. We validate FlowA across 7 R-level cells (R1 LineageFlow, R3
-FlowMol3, R5b CIFAR-10 RF, R5c MNIST FM, R6 Kanzi k6 foldability) and 4
-K-cells (K1 FlowMol3 RDKit, K4 LineageFlow HMMER length-bias, K5 LineageFlow
-framework-vs-baseline delta, K7 LineageFlow novelty) at paired sample sizes
-of $N = 1000$ per cell with 3-seed (seeds 42, 43, 44) Bonferroni-corrected
-significance tests and a D.4 byte-stable 30/30 regression suite. The headline
+samples. We validate FlowA across 7 R-level cells (R1 LineageFlow, R2 Kanzi, R3
+FlowMol3, R5a 2D Two Moons, R5b CIFAR-10 RF, R5c MNIST FM, R6 Kanzi k6
+foldability) and 4 K-cells (K1 FlowMol3 RDKit, K4 LineageFlow HMMER length-bias,
+K5 LineageFlow framework-vs-baseline delta, K7 LineageFlow novelty) at paired
+sample sizes of $N = 1000$ per cell with 3-seed (seeds 42, 43, 44)
+Bonferroni-corrected significance tests and a D.4 byte-stable 30/30 regression
+suite. The headline
 empirical result is a $2.5$--$10\times$ cross-budget NFE compression at matched
 sample quality alongside byte-stable composite-axis lifts on all three Tier-3
 real checkpoints (LineageFlow, Kanzi, FlowMol3); the matched-NFE image-domain
@@ -153,7 +154,7 @@ between the framework's sampling measure $\mu_{g,\varepsilon}$ and the
 fibre-supported ODE target measure $\nu_g$ is bounded above by
 \begin{equation}\label{eq:thm1}
 d_{\mathrm{BL}}(\mu_{g,\varepsilon},\, \nu_g) \;\le\; \sheetA \cdot
-\exp\bigl(-\NFE/\B_g\bigr) \;+\; \sheetC \cdot \egap,
+\exp\bigl(-\NFE/\sheetB\bigr) \;+\; \sheetC \cdot \egap,
 \end{equation}
 where $\sheetA, \sheetB, \sheetC, \egap$ are the four paper quantities.
 $\mathsf{CodimensionSheetScheduler}$ consumes these quantities directly as
@@ -163,12 +164,12 @@ evaluator layers is in-progress. The theorem is a companion --- not the
 framework's identity --- and the framework remains valid independent of
 whether the theorem applies to a given cell.
 
-We validate FlowA across 7 R-level cells (R1 LineageFlow, R3 FlowMol3, R5b
-CIFAR-10 RF, R5c MNIST FM, R6 Kanzi k6 foldability) and 4 K-cells (K1
-FlowMol3 RDKit, K4 LineageFlow HMMER length-bias
+We validate FlowA across 7 R-level cells (R1 LineageFlow, R2 Kanzi, R3
+FlowMol3, R5a 2D Two Moons, R5b CIFAR-10 RF, R5c MNIST FM, R6 Kanzi k6
+foldability) and 4 K-cells (K1 FlowMol3 RDKit, K4 LineageFlow HMMER length-bias
 ($\mathsf{hmmscan\_total\_hits}$), K5 LineageFlow HMMER framework-vs-baseline
 delta on the same $\mathsf{hmmscan\_total\_hits}$, K7 LineageFlow novelty) at
-paired sample sizes of $N = 1000$ per cell, with 3 seeds (seeds 0, 1, 2) per
+paired sample sizes of $N = 1000$ per cell, with 3 seeds (seeds 42, 43, 44) per
 cell. Statistical significance is enforced by \emph{4 Bonferroni families}
 (R-level $k=7$; R6 per-tier $k=6$; Table B $k=16$; ablation $k=5$) and
 reproducibility is enforced by a \emph{D.4 byte-stable 30/30 regression
@@ -198,12 +199,12 @@ vendored code}, validating that the typed-contracts surface is sufficient to
 wrap any frozen checkpoint that conforms to a minimal adapter protocol.
 
 \item \textbf{(iii)} We establish \emph{systematic empirical significance}
-across 7 R-cells + 4 K-cells (R1, R3, R5b, R5c, R6, K1, K4, K5, K7) with 3
-seeds $\times$ 4 Bonferroni families $\times$ D.4 byte-stable regression
-suite, observing $2.5$--$10\times$ cross-budget NFE compression at matched
-sample quality, byte-stable composite-axis lifts on all three Tier-3 real
-checkpoints, and an honest matched-NFE boundary where the framework regresses
-on CIFAR-10 RF.
+across 7 R-cells + 4 K-cells (R1, R2, R3, R5a, R5b, R5c, R6, K1, K4, K5, K7)
+with 3 seeds $\times$ 4 Bonferroni families $\times$ D.4 byte-stable
+regression suite, observing $2.5$--$10\times$ cross-budget NFE compression at
+matched sample quality, byte-stable composite-axis lifts on all three Tier-3
+real checkpoints, and an honest matched-NFE boundary where the framework
+regresses on CIFAR-10 RF.
 
 \item \textbf{(iv)} As a theoretical companion (not the framework's
 identity), we introduce the JMAA 16-site framework: Theorem~1 provides a
@@ -410,7 +411,7 @@ gate).
 \begin{equation}\label{eq:codim}
 n_\mathrm{cap} \;=\; n_\mathrm{min} \;+\; (n_\mathrm{max} - n_\mathrm{min})
 \cdot \frac{\sheetA \cdot \varepsilon}{\sheetA \cdot \varepsilon \;+\;
-\sheetC \cdot \B_g \cdot \varepsilon^2}
+\sheetC \cdot \sheetB \cdot \varepsilon^2}
 \end{equation}
 (paper Corollary 1). The framework's factory default since Wave 34, replacing
 the legacy cosine default.
@@ -434,7 +435,7 @@ optional Lemma~4 regime gate clamps $\varepsilon$ to
 $\sqrt{\egap / \log 2} - \mathsf{slack}$.
 
 \item $\mathsf{ConvergenceAdaptiveScheduler}$ (Wave 31 EMA branch): paper-quantity
-branch consumes $\sheetA$, $\B_g$, $\egap$ via
+branch consumes $\sheetA$, $\sheetB$, $\egap$ via
 $\mathsf{ratio} = \mathsf{sheet\_A\_ema} / (\mathsf{sheet\_A\_ema} +
 \mathsf{packing\_B\_ema})$.
 \end{itemize}
@@ -928,7 +929,7 @@ $+24$--$31\%~\FID$ vs baseline.
 \small
 \begin{tabular}{cllrrrl}
 \toprule
-\# & \textbf{Cell} & \textbf{Task (model + metric)} & \textbf{Scheduler} & $\dz$ & \pbonf & \textbf{Status} \\
+\# & \textbf{Cell} & \textbf{Task (model + metric)} & \textbf{Scheduler} & $\dz$ & $\pbonf$ & \textbf{Status} \\
 \midrule
 1 & R1  & LineageFlow $\mathsf{hmmscan\_total\_hits}$ & $\mathsf{CosineAnnealScheduler}$ & $+0.182$  & $1.25\!\times\!10^{-8}$  & PARTIAL / single-seed \\
 2 & R2  & Kanzi $\mathsf{reconstruction\_kabsch\_rmsd}$ & $\mathsf{CosineAnnealScheduler}$ & $-0.099$  & $1.79\!\times\!10^{-3}$  & STRONG \\
