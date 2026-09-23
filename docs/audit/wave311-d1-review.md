@@ -220,7 +220,19 @@ Total: **1566 lines, 43639 words**. 8 canonical H2 sections (Title + Abstract + 
 
 **No paper edits applied in this D+1 review pass** (per task directive: "If CRITICAL issues found: apply fixes via Edit tool. If MINOR issues found: list them in issuesFound but do not modify (will fix in Phase 3 cross-doc).")
 
-## 8. Status
+## 8. Wave 322 closure note (added 2026-09-23)
+
+Wave 322 closes the 2 remaining lemma placeholders that this D+1 review inherited:
+
+- **Lemma 2 (state-machine byte-determinism)** — Wave 311 PLACEHOLDER → **Wave 322 ACTIVE** as CLM-086. Full formal statement + 4-case proof sketch (priority tiebreak at `state_machine.py:808-856/971-1003`, history at `state_machine.py:680-740`, parallel regions at `state_machine.py:767-775`, asyncio.gather at `state_machine.py:924-955`) + JSON serialisation synthesis. Inserted at `docs/drafts/paper-flat-flattened.md` line 1408 (replacing the Wave 311 `[TO BE ADDED in Wave 312: State machine byte-determinism]` placeholder). Paper-body insertion form at `docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md` §Lemma 2.
+
+- **Lemma 3 (ledger tamper-evidence)** — Wave 311 PLACEHOLDER → **Wave 322 ACTIVE** as CLM-087. Full formal statement + 3-case proof sketch (tail tamper at `engine.py:599-604`, mid-chain tamper at `ledger_chain.py:185-213`, insert/delete at `engine.py:582-587`) + SHA-256 collision-resistance edge case at probability $\leq 2^{-128}$. Inserted at `docs/drafts/paper-flat-flattened.md` line 1410 (replacing the Wave 311 `[TO BE ADDED in Wave 312: Ledger tamper-evidence via hash chain]` placeholder). Paper-body insertion form at `docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md` §Lemma 3.
+
+The Wave 311 PARTIAL-APPLY state is therefore **CLOSED by Wave 322**: all 3 Path A lemmas (Lemma 1 + Lemma 2 + Lemma 3) are ACTIVE simultaneously. Wave 322 also adds **CLM-088** as the meta-claim ("§6 Framework Properties formally verified — all 3 Path A lemmas ACTIVE"). Combined Path A audit doc at `docs/audit/wave322-path-a-lemmas-2-3.md`. §6 final word count 1765 (within target 1500-2000). D.4 30/30 PASS preserved; ruff 0; mkdocs 0 warnings; vendored NOT touched.
+
+Cross-references: `docs/CLAIMS.md` CLM-086 / CLM-087 / CLM-088; `docs/audit/wave322-path-a-lemmas-2-3.md`; `docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md`; `docs/drafts/paper-flat-flattened.md` §6 line 1408 + 1410.
+
+## 9. Status
 
 **ACTIVE — Wave 311 D+1 review PASS_WITH_MINOR_FIXES:**
 
@@ -232,7 +244,7 @@ Total: **1566 lines, 43639 words**. 8 canonical H2 sections (Title + Abstract + 
 - [x] NO paper edits applied (Phase 3 cross-doc fix deferred)
 - [x] NO push per Wave 311 NO PUSH directive
 
-## 9. References
+## 10. References
 
 - `docs/drafts/paper-flat-flattened.md` (paper body, 1566 lines / 43639 words / 1 H1 + 23 ## + 59 ### + 1 ####)
 - `docs/audit/wave310-r6-tier-aware-upgrade.md` (121-line Wave 310 R6 cross-doc-propagation audit)

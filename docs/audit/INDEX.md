@@ -332,6 +332,7 @@ Engineering hygiene (CI, ruff, mkdocs, pytest, byte-stability): the Wave-101 fou
 - `wave310-r6-tier-aware-upgrade.md` (14.5KB, 2026-09-23)
 - `wave311-d1-review.md` (20.4KB, 2026-09-23)
 - `wave311-path-a-lemma-1.md` (19.1KB, 2026-09-23)
+- `wave322-path-a-lemmas-2-3.md` (Wave 322 combined Lemma 2 + Lemma 3 audit doc, ACTIVE — closes Wave 311 PARTIAL-APPLY placeholders for CLM-086 + CLM-087)
 
 **Historical (70 files, not cited by reviewer-facing surfaces):**
 
