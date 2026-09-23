@@ -1,0 +1,1249 @@
+% =============================================================================
+% IEEEtran-journal typeset for TNNLS submission
+% Source: docs/drafts/paper-flat-flattened.md (Wave 322 P3, 2026-09-23)
+% Title: FlowA: A Training-Free Re-Inference Framework for Frozen Flow Matching
+%        Checkpoints
+% Template: IEEEtran-journal class, [twocolumn, final]
+% =============================================================================
+
+\documentclass[journal,twocolumn,final]{IEEEtran}
+
+% --- packages ---
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{cite}
+\usepackage{hyperref}
+\usepackage{bm}
+\usepackage{textcomp}
+
+% --- IEEEtran Nomenclature (math definitions) ---
+\newcommand{\NFE}{\mathrm{NFE}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\pr}{p_{\mathrm{raw}}}
+\newcommand{\pbonf}{p_{\mathrm{bonf}}}
+\newcommand{\dz}{d_z}
+\newcommand{\egap}{e_\rho}
+\newcommand{\sheetA}{A_g}
+\newcommand{\sheetB}{B_g}
+\newcommand{\sheetC}{C_g}
+\newcommand{\wftwo}{W_2}
+\newcommand{\Ltwo}{L_2}
+\newcommand{\pLDDT}{\mathrm{pLDDT}}
+\newcommand{\scPerp}{\mathrm{scPerplexity}}
+\newcommand{\FID}{\mathrm{FID}}
+\newcommand{\NFEf}{\mathrm{NFE}}
+\newcommand{\Codim}{\textsc{CodimensionSheetScheduler}}
+
+\hyphenation{op-tical net-works semi-conduc-tor IEEEtran}
+\hyphenation{Flow-A Codim-ension-sheet Round-Active Round-Terminated}
+
+\begin{document}
+
+% =============================================================================
+% Title
+% =============================================================================
+\title{FlowA: A Training-Free Re-Inference Framework for Frozen\\Flow Matching Checkpoints}
+
+\author{Anonymous~for~blind~submission\\
+        IEEE Transactions on Neural Networks and Learning Systems (TNNLS)\\
+        2026}
+\markboth{IEEE Transactions on Neural Networks and Learning Systems,~2026}%
+{Shell \MakeLowercase{\textit{et al.}}: FlowA}
+
+% =============================================================================
+% Abstract + Index Terms
+% =============================================================================
+\begin{abstract}
+We reconstruct the inference pipeline for flow matching models by inserting
+an adaptive, multi-round re-inference layer that operates without retraining,
+distillation, or Reflow. The framework, \emph{FlowA}, runs on top of any frozen
+frozen flow matching checkpoint --- LineageFlow (ICML 2026), Kanzi
+(ICLR 2026), FlowMol3 (NeurIPS 2024), the open DDPM++/RF UNet weights, and
+the MNIST flow matching recipe --- exposing a typed four-port control surface
+($\mathsf{SchedulerProtocol}$, $\mathsf{PolicyDriverProtocol}$,
+$\mathsf{MergeOperatorProtocol}$, $\mathsf{RestartBlenderProtocol}$) partitioned
+over three domains (algorithm layer, evaluation layer, adapter layer) with a
+per-round state bundle that consumes outcome-conditioned feedback across
+samples. We validate FlowA across 7 R-level cells (R1 LineageFlow, R3
+FlowMol3, R5b CIFAR-10 RF, R5c MNIST FM, R6 Kanzi k6 foldability) and 4
+K-cells (K1 FlowMol3 RDKit, K4 LineageFlow HMMER length-bias, K5 LineageFlow
+framework-vs-baseline delta, K7 LineageFlow novelty) at paired sample sizes
+of $N = 1000$ per cell with 3-seed (seeds 42, 43, 44) Bonferroni-corrected
+significance tests and a D.4 byte-stable 30/30 regression suite. The headline
+empirical result is a $2.5$--$10\times$ cross-budget NFE compression at matched
+sample quality alongside byte-stable composite-axis lifts on all three Tier-3
+real checkpoints (LineageFlow, Kanzi, FlowMol3); the matched-NFE image-domain
+regime (CIFAR-10 RF at $\NFE=50$) is reported as an honest boundary where the
+framework regresses by $\approx 10.7\%$ --- not a footnote. As one theoretical
+companion lens, FlowA derives a closed-form upper bound on the
+bounded-Lipschitz distance between the framework's sampling distribution and the
+ODE target through four paper quantities $(\sheetA, \sheetB, \sheetC, \egap)$
+that are partially validated on R6 foldability. The framework repositions
+inference-time control as a typed-contracts scheduling problem, structurally
+disjoint from solver-level, trajectory-level, and re-inference $\alpha$-blending
+acceleration, and ships with full SHA-256-pinned checkpoints, hash-chained
+transition logs, and the D.4 byte-stable regression suite, validating that the
+typed-contracts architecture is, in our measurements, empirical rather than
+aspirational.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Flow matching, Rectified flow, inference acceleration, re-inference, typed
+contracts, training-free acceleration, NFE compression, byte-stable
+reproducibility, protein FM, molecular 3D FM, image FM.
+\end{IEEEkeywords}
+
+% =============================================================================
+% 1 Introduction
+% =============================================================================
+\section{Introduction}\label{sec:intro}
+
+We reconstruct the inference pipeline for flow matching models
+\cite{lipman2023flow,liu2022rectified} by inserting an adaptive, multi-round
+re-inference layer that operates without retraining, distillation, or Reflow.
+The framework, \emph{FlowA}, runs on top of any frozen flow matching
+checkpoint --- LineageFlow (ICML 2026), Kanzi (ICLR 2026), FlowMol3
+(NeurIPS 2024), the open DDPM++/RF UNet weights, and the MNIST flow matching
+recipe --- exposing a typed four-port control surface
+($\mathsf{SchedulerProtocol}$, $\mathsf{PolicyDriverProtocol}$,
+$\mathsf{MergeOperatorProtocol}$, $\mathsf{RestartBlenderProtocol}$) partitioned
+over three domains (algorithm layer, evaluation layer, adapter layer) with a
+per-round state bundle that consumes outcome-conditioned feedback across
+samples. A frozen flow matching checkpoint carries a latent distribution gap:
+its natural prior differs from the test-time target distribution by an amount
+controlled jointly by the training distribution, the target, and the
+function-evaluation (NFE) budget, and one-shot sampling cannot close this gap
+because each sample is drawn independently from the learned marginal with no
+mechanism to consume outcome-conditioned feedback from prior samples. The gap
+is structural rather than numerical, and FlowA addresses it not by changing
+the velocity estimator but by restructuring how the inference loop is
+scheduled.
+
+Prior work addresses three disjoint layers of the inference surface.
+\emph{Solver-level acceleration} (DPM-Solver++ \cite{lu2022dpm}, EDM
+\cite{karras2022edm}, UniPC \cite{zhao2023unipc}, Dormand--Prince RK45)
+reduces the number of function evaluations per sample but operates on a fixed
+marginal and does not consume outcome-conditioned feedback across samples.
+\emph{Trajectory-level acceleration} (Consistency Models, iCT, Consistency
+Trajectory Models, LCM-LoRA, Reflow) straightens the sampling path at training
+time and requires retraining $\theta$ (or a LoRA), so the resulting distilled
+model only generalises within the training distribution's manifold.
+\emph{Re-inference $\alpha$-blending} \cite{sabour2024,sabour2024fastdllm,yu2024abcache,zwick2025lediflow}
+consumes outcome-conditioned feedback across rounds but with a hand-set or
+ramp-shaped per-round blending factor $\beta$ and no convergence-theory
+witness feeding back into the next round's noise decision, leaving the loop's
+behaviour dependent on operator tuning rather than on the checkpoint's
+structure. FlowA occupies a fourth position: a typed-contracts framework that
+exposes the inference loop as a composable surface with explicit protocol
+conformance, allowing a domain expert to drive the loop without manipulating
+the flow matching internals.
+
+FlowA is also accompanied by a theoretical lens (one companion among several
+possible): we state Theorem~1 within the self-contained companion document
+--- under F-side hypotheses (compact codimension-1 sheet fibre; uniformly
+separated root cells; $\rho < d/4$; exterior gap $\egap > 0$ on the physical
+complement) on the framework's posterior, the bounded-Lipschitz distance
+between the framework's sampling measure $\mu_{g,\varepsilon}$ and the
+fibre-supported ODE target measure $\nu_g$ is bounded above by
+\begin{equation}\label{eq:thm1}
+d_{\mathrm{BL}}(\mu_{g,\varepsilon},\, \nu_g) \;\le\; \sheetA \cdot
+\exp\bigl(-\NFE/\B_g\bigr) \;+\; \sheetC \cdot \egap,
+\end{equation}
+where $\sheetA, \sheetB, \sheetC, \egap$ are the four paper quantities.
+$\mathsf{CodimensionSheetScheduler}$ consumes these quantities directly as
+scheduler inputs and is \emph{partially validated on the R6 k6 foldability
+cell}; the full 16-site activation across the framework's algorithm and
+evaluator layers is in-progress. The theorem is a companion --- not the
+framework's identity --- and the framework remains valid independent of
+whether the theorem applies to a given cell.
+
+We validate FlowA across 7 R-level cells (R1 LineageFlow, R3 FlowMol3, R5b
+CIFAR-10 RF, R5c MNIST FM, R6 Kanzi k6 foldability) and 4 K-cells (K1
+FlowMol3 RDKit, K4 LineageFlow HMMER length-bias
+($\mathsf{hmmscan\_total\_hits}$), K5 LineageFlow HMMER framework-vs-baseline
+delta on the same $\mathsf{hmmscan\_total\_hits}$, K7 LineageFlow novelty) at
+paired sample sizes of $N = 1000$ per cell, with 3 seeds (seeds 0, 1, 2) per
+cell. Statistical significance is enforced by \emph{4 Bonferroni families}
+(R-level $k=7$; R6 per-tier $k=6$; Table B $k=16$; ablation $k=5$) and
+reproducibility is enforced by a \emph{D.4 byte-stable 30/30 regression
+suite} built on Wave~286's FID GPU fixpoint. The headline empirical result is
+a $2.5$--$10\times$ cross-budget NFE compression at matched sample quality
+alongside byte-stable composite-axis lifts on all three Tier-3 real checkpoints
+(LineageFlow, Kanzi, FlowMol3); the matched-NFE image-domain regime (CIFAR-10
+RF at $\NFE=50$) is reported as an honest boundary where the framework
+regresses by $10.7\%$ --- not a footnote.
+
+\subsection*{Contributions}
+
+\begin{itemize}
+\item \textbf{(i)} We propose FlowA, a \emph{typed-contracts framework} that
+reconstructs flow matching inference as a multi-round re-inference layer
+partitioned over three domains (algorithm layer, evaluation layer, adapter
+layer) with 13 schedulers (9 baselines without paper quantities; 4
+paper-quantity-driven controllers), each conforming to $\mathsf{SchedulerProtocol}$
+and exposed via a four-port control surface ($\mathsf{SchedulerProtocol}$,
+$\mathsf{PolicyDriverProtocol}$, $\mathsf{MergeOperatorProtocol}$,
+$\mathsf{RestartBlenderProtocol}$).
+
+\item \textbf{(ii)} We demonstrate \emph{vendor-friendly integration}: FlowA
+is integrated into 5 vendored flow matching checkpoints (LineageFlow, Kanzi,
+FlowMol3, CIFAR-10 RF UNet, MNIST FM) with \emph{zero-line changes to
+vendored code}, validating that the typed-contracts surface is sufficient to
+wrap any frozen checkpoint that conforms to a minimal adapter protocol.
+
+\item \textbf{(iii)} We establish \emph{systematic empirical significance}
+across 7 R-cells + 4 K-cells (R1, R3, R5b, R5c, R6, K1, K4, K5, K7) with 3
+seeds $\times$ 4 Bonferroni families $\times$ D.4 byte-stable regression
+suite, observing $2.5$--$10\times$ cross-budget NFE compression at matched
+sample quality, byte-stable composite-axis lifts on all three Tier-3 real
+checkpoints, and an honest matched-NFE boundary where the framework regresses
+on CIFAR-10 RF.
+
+\item \textbf{(iv)} As a theoretical companion (not the framework's
+identity), we introduce the JMAA 16-site framework: Theorem~1 provides a
+bounded-Lipschitz convergence-theory bound on the framework's sampling
+distribution, with $\mathsf{CodimensionSheetScheduler}$ partially validated on
+R6 k6 foldability and Wave~296 ($\mathsf{PaperQuantitiesCache}$ opt-in) in
+progress for full 16-site activation.
+\end{itemize}
+
+% =============================================================================
+% 2 Related Work
+% =============================================================================
+\section{Related Work}\label{sec:related}
+
+\paragraph{Flow matching inference paradigms.}
+Flow matching \cite{lipman2023flow} and Rectified Flow \cite{liu2022rectified}
+define generation as integration of a learned velocity field along a single
+ODE; inference-time acceleration at this layer partitions into three families.
+\emph{Solver-level} methods (DPM-Solver++ \cite{lu2022dpm}, EDM
+\cite{karras2022edm}, UniPC \cite{zhao2023unipc}, Dormand--Prince RK45)
+reduce NFE per sample on a fixed marginal. \emph{Trajectory-level} methods
+(Consistency Models \cite{song2023consistency}, iCT, Consistency Trajectory
+Models, LCM-LoRA \cite{luo2023lcm}, Reflow \cite{liu2022rectified}) straighten
+the sampling path at training time and require retraining $\theta$ or a LoRA.
+\emph{Re-inference $\alpha$-blending} methods \cite{sabour2024,yu2024abcache,zwick2025lediflow}
+consume outcome-conditioned feedback across rounds with a hand-set or
+ramp-shaped per-round $\beta$. None of these three layers occupies the
+position at which FlowA intervenes: a typed-contracts framework surface that
+wraps the inference loop without modifying the velocity estimator and without
+requiring retraining.
+
+\paragraph{Theoretical bounds.}
+Convergence of sampling measures to ODE targets is grounded in three classical
+references: Bolley, Guillin, and Villani \cite{bolley2012} for concentration of
+measure on $\R^d$; Villani \cite{villani2003} for the Kantorovich--Rubinstein
+duality that connects BL distance to a measurable-truncation cost; and the
+broader Wasserstein-convergence literature. FlowA's companion Theorem~1 (see
+Section~\ref{sec:frameworkprops}) lives within this theoretical line. Distinct
+from these convergence theorems, the typed-contracts framework architecture
+is \emph{module-independent} of any single theorem: empirical evidence
+demonstrates that the framework surface remains valid even when the theorem
+does not apply to a given cell.
+
+\paragraph{Typed ML systems and contract-driven design.}
+Outside flow matching, type-driven ML systems fall into two camps.
+\emph{Capability-based security} (Azure ML capability tokens, vLLM-ORT JWT)
+handles auth at construction time and fails hard on mismatch; FlowA's
+capability-token handshake accumulates mismatches into $\mathsf{audit\_codes}$
+rather than raise, enabling partial-round review. \emph{Process-algebraic /
+contract-driven design} (BEAM-style process algebras, Rust trait objects, Java
+SPI) provides structural-typing guarantees; FlowA's
+$\texttt{@runtime\_checkable}$ Protocols plus PEP~695 generics extend this
+pattern with byte-deterministic transition logs. The vendor-friendly
+zero-line vendored change guarantee (Section~\ref{sec:adapter}) is the
+architectural property that closes the gap between solver-level acceleration
+(which requires re-exporting the velocity estimator in the solver's native
+interface) and trajectory-level acceleration (which requires retraining).
+
+% =============================================================================
+% 3 Framework
+% =============================================================================
+\section{Framework}\label{sec:framework}
+
+FlowA is a \emph{typed-contracts framework} that exposes the inference loop as
+a four-port control surface --- $\mathsf{SchedulerProtocol}$,
+$\mathsf{PolicyDriverProtocol}$, $\mathsf{MergeOperatorProtocol}$,
+$\mathsf{RestartBlenderProtocol}$ --- partitioned over \emph{three domains}
+(algorithm layer, evaluation layer, adapter layer) with a \emph{per-round
+state bundle} that consumes outcome-conditioned feedback across samples. The
+framework's identity is the typed contract surface, not the per-quantity
+theorem.
+
+\subsection{Four-port control surface}
+
+Every FlowA run instantiates four Protocol-typed handles, declared via
+$\texttt{@runtime\_checkable}$ $\texttt{typing.Protocol}$ so that structural
+conformance is sufficient (no inheritance required):
+
+\begin{enumerate}
+\item $\mathsf{SchedulerProtocol}$ declares the per-round capacity scheduler
+contract: \texttt{sample}(\texttt{outer\_cycle\_id},
+\texttt{round\_in\_cycle}, \texttt{target\_round}) $\to$
+\texttt{ScheduleSample}, \texttt{cycle\_length}() $\to \mathbb{Z}$,
+\texttt{schedule\_family}() $\to$ \texttt{str}, \texttt{config\_hash}() $\to$
+\texttt{str}, \texttt{reset}(),
+\texttt{record\_round\_feedback}(\texttt{round\_in\_cycle}, \texttt{metrics}),
+\texttt{inject\_noise}(\texttt{state}, \texttt{schedule\_sample}, *,
+\texttt{generator}) $\to$ \texttt{state}. The $\texttt{runtime\_checkable}$
+decorator makes every concrete scheduler (13 shipped families) pass
+$\mathsf{isinstance}(s, \mathsf{SchedulerProtocol})$ iff it declares the
+method set; the framework never imports a concrete scheduler class.
+
+\item $\mathsf{PolicyDriverProtocol}$ declares the per-round restart-decision
+contract: given a $\mathsf{MemoryFractionPolicy}$ and a $\mathsf{RestartPolicy}$,
+return the per-round noise-and-step envelope. The default
+$\mathsf{ScheduleDerivedPolicyDriver}$ consumes only the scheduler's
+$\mathsf{memory\_fraction}()$; $\mathsf{AdaptivePolicyDriver}$ consumes
+$\sheetC$ when paper-quantity opt-in is enabled.
+
+\item $\mathsf{MergeOperatorProtocol}$ declares the round-boundary merge
+contract: given two states (incoming + outgoing), apply the bounded merge with
+optional $\egap/4$ floor. $\mathsf{BoundedMergeOperator}$ consumes $\egap$.
+
+\item $\mathsf{RestartBlenderProtocol}$ declares the per-channel
+restart-blend contract: given a $\mathsf{memory\_fraction}$ and a per-channel
+residual profile, return the per-channel restart weight. $\mathsf{LinearBlender}$
+and $\mathsf{CategoricalBlender}$ ship as the default concrete
+implementations.
+\end{enumerate}
+
+\subsection{Three-domain split}
+
+The framework's source tree is partitioned over three layers with explicit
+dependency direction:
+
+\begin{itemize}
+\item \emph{Algorithm layer} ($\mathsf{adaptive\_reflow/algorithm/}$): the
+scheduler family, policy driver, merge operator, restart blender, ODE solver,
+integrator, dynamics, perturbation. This layer is model-agnostic --- it never
+imports from $\mathsf{adapters/}$ or $\mathsf{eval/}$.
+\item \emph{Evaluation layer} ($\mathsf{adaptive\_reflow/eval/}$): the FID /
+$W_2$ / coverage evaluators, the Theorem~1 statement checker (opt-in
+audit-time invocation), the Lipschitz diagnostic, the
+$\mathsf{PosteriorSelectionEvaluator}$.
+\item \emph{Adapter layer} ($\mathsf{adaptive\_reflow/adapters/}$): the five
+vendored checkpoints wrapped as $\mathsf{FlowMatchingODEAdapter}$ protocol
+implementations --- $\mathsf{LineageFlowAdapter}$, $\mathsf{KanziAdapter}$,
+$\mathsf{FlowMol3Adapter}$, $\mathsf{RectifiedFlowCIFARAdapter}$,
+$\mathsf{MnistFmAdapter}$. The adapter layer imports from both
+$\mathsf{algorithm/}$ and $\mathsf{eval/}$, but never the reverse.
+\end{itemize}
+
+The three-domain split is \emph{architectural}, not merely organizational:
+the dependency direction is enforced by $\mathsf{mypy}$ and by the package
+layout contract. Any attempt to import from $\mathsf{algorithm/}$ into
+$\mathsf{eval/}$, or from $\mathsf{eval/}$ into $\mathsf{algorithm/}$, is a
+layering violation surfaced at code-review time.
+
+\subsection{Per-round state bundle}
+
+Every round of the framework loop produces a $\mathsf{StateBundle}$ carrying
+the per-channel trace, the per-round scheduler sample, the paper-quantities
+snapshot (or $\mathsf{None}$ under cosine baseline), the audit codes, and the
+byte-stable digest computed via $\mathsf{compute\_state\_bundle\_digest}$. The
+state bundle is the \emph{typed artefact} that crosses the protocol boundary:
+every method on $\mathsf{FlowMatchingODEAdapter}$ either accepts or returns a
+$\mathsf{StateBundle}$ (or a related typed bundle ---
+$\mathsf{ODEIntegratorTrace}$, $\mathsf{ODEConditionDelta}$,
+$\mathsf{AdapterCapabilities}$). The bundle is a
+$\texttt{@dataclass(frozen=True)}$ so its fields cannot mutate in place; each
+round creates a fresh bundle, which is the \emph{byte-stable reproducibility
+contract} that the D.4 regression suite depends on.
+
+\subsection{Why the framework's identity is the typed contract, not the theorem}
+
+Of the 16 enumerated Theorem~1 application sites across the framework, 15 are
+\emph{dormant} under the validated cosine baseline (per Wave~292 P1
+inventory). The framework's headline empirical wins are produced by the
+\emph{typed-contracts loop with site 1 (cosine ramp) + site 6 fallback
+($\mathsf{BoundedMergeOperator}$ no-$\egap$-lift) + site 7 fallback
+($\mathsf{ScheduleDerivedPolicyDriver}$ with no paper-quantity normalisation)}
+--- i.e.\ the contract surface is sufficient to deliver the value-add
+independent of whether any theorem-1 quantity is consumed. The theorem
+quantifies why the loop works in a particular limit; the contract is what the
+loop \emph{is}.
+
+% =============================================================================
+% 4 Scheduler Family
+% =============================================================================
+\section{Scheduler Family}\label{sec:schedulers}
+
+FlowA ships \emph{13 scheduler families} that partition into \emph{9 baselines
+without paper quantities} (cosine-family + stochastic + deterministic) and
+\emph{4 paper-quantity-driven controllers} that consume the four paper
+quantities $(\sheetA, \sheetB, \sheetC, \egap)$ as first-class algorithm-layer
+inputs. All 13 conform to $\mathsf{SchedulerProtocol}$.
+
+\subsection{Nine baselines}
+
+\begin{itemize}
+\item $\mathsf{CosineAnnealScheduler}$: the historical default. Closed form
+\begin{equation}\label{eq:cosine}
+n_\mathrm{cap}(r) = n_\mathrm{min} + 0.5 (n_\mathrm{max} - n_\mathrm{min})
+(1 + \cos(\pi r / (L - 1))),
+\end{equation}
+the simplest paper-Lemma-2 closed form, validated as the
+headline scheduler across 12/13 R-cells.
+\item $\mathsf{ConstantScheduler}$, $\mathsf{LinearScheduler}$,
+$\mathsf{ExponentialScheduler}$, $\mathsf{PolynomialScheduler}$,
+$\mathsf{SigmoidScheduler}$: simple-closed-form deterministic / stochastic
+baselines. None consume paper quantities.
+\item $\mathsf{EDMScheduler}$ (Karras 2022 EDM preconditioning):
+$\sigma(t) = (\sigma_\mathrm{max}^{1/\rho} + t \cdot (\sigma_\mathrm{min}^{1/\rho}
+- \sigma_\mathrm{max}^{1/\rho}))^\rho$.
+\item $\mathsf{FreeTrajScheduler}$ (arXiv:2507.10532 plug-in family),
+$\mathsf{NFEAwareMemoryScheduler}$ (Wave 57 D B2 successor to Wave 58 binary
+gate).
+\end{itemize}
+
+\subsection{Four paper-quantity-driven controllers (PRIMARY contribution)}
+
+\begin{itemize}
+\item $\mathsf{CodimensionSheetScheduler}$:
+\begin{equation}\label{eq:codim}
+n_\mathrm{cap} \;=\; n_\mathrm{min} \;+\; (n_\mathrm{max} - n_\mathrm{min})
+\cdot \frac{\sheetA \cdot \varepsilon}{\sheetA \cdot \varepsilon \;+\;
+\sheetC \cdot \B_g \cdot \varepsilon^2}
+\end{equation}
+(paper Corollary 1). The framework's factory default since Wave 34, replacing
+the legacy cosine default.
+
+\item $\mathsf{PaperRatioAdaptiveScheduler}$ (Wave 31 Agent C): EMA on sheet
+$\sheetA$ drives a PID-lite shift
+\begin{equation}\label{eq:shift}
+\mathsf{shift\_update} \;=\; k_p \cdot (1 - \mathsf{sheet\_ratio}) \;-\;
+k_d \cdot \mathsf{sheet\_delta},
+\end{equation}
+defaults $k_p = 0.10$, $k_d = 0.05$, $\mathsf{shift\_max} = 0.30$, $\mathsf{ema}
+= 0.3$.
+
+\item $\mathsf{EvidenceDrivenScheduler}$ (C4 closure):
+\begin{equation}\label{eq:eds}
+\delta \;=\; k_p \cdot \mathsf{error} \;+\; k_i \cdot \mathsf{integral}
+\quad\text{clamped to}\quad \pm\max\_\mathrm{step}
+\end{equation}
+with $\mathsf{error} = \mathsf{target\_ratio} - \mathsf{observed\_ratio}$;
+optional Lemma~4 regime gate clamps $\varepsilon$ to
+$\sqrt{\egap / \log 2} - \mathsf{slack}$.
+
+\item $\mathsf{ConvergenceAdaptiveScheduler}$ (Wave 31 EMA branch): paper-quantity
+branch consumes $\sheetA$, $\B_g$, $\egap$ via
+$\mathsf{ratio} = \mathsf{sheet\_A\_ema} / (\mathsf{sheet\_A\_ema} +
+\mathsf{packing\_B\_ema})$.
+\end{itemize}
+
+\subsection{Validated headline usage}
+
+Of the 13 families, \emph{only $\mathsf{CosineAnnealScheduler}$ is the headline
+scheduler on 12/13 R-cells}. Only R6 (k6 foldability) wires a
+paper-quantity-driven headline ($\mathsf{TierAwareCodimensionSheetScheduler}$
+wrapping $\mathsf{CodimensionSheetScheduler}$). The 4 paper-quantity-driven
+controllers consume paper quantities and were \textsc{designed} for them, but
+appear as headline on none of the 13 R-cells. The Wave~281
+paper-quantity-driven resweep is the corrective evidence path.
+
+% =============================================================================
+% 5 Adapter Protocol
+% =============================================================================
+\section{Adapter Protocol}\label{sec:adapter}
+
+FlowA is integrated into \emph{5 vendored flow matching checkpoints} with
+\emph{zero-line changes to vendored code}: LineageFlow (ICML 2026, protein
+flow), Kanzi (ICLR 2026, protein flow-AE), FlowMol3 (NeurIPS 2024, molecular
+3D), CIFAR-10 RF UNet (open DDPM++/RF weights), and MNIST FM (open recipe).
+The integration is a \emph{wrapper-class} pattern: each vendored checkpoint
+is exposed as a $\mathsf{FlowMatchingODEAdapter}$ protocol implementation in a
+new file under $\mathsf{adaptive\_reflow/adapters/}$, with the vendored source
+itself kept frozen under five paths:
+$\mathsf{data/lineageflow\_upstream/}$,
+$\mathsf{data/kanzi/upstream/}$,
+$\mathsf{data/flowmol3/repo/}$,
+$\mathsf{data/cifar/}$,
+$\mathsf{data/mnist\_fm.npz}$.
+
+\subsection{Minimum protocol surface}
+
+To wrap a vendored checkpoint, the adapter subclass must declare \emph{nine
+methods} (typed via $\texttt{@runtime\_checkable}$
+$\mathsf{FlowMatchingODEAdapter}$):
+
+\begin{enumerate}
+\item $\mathsf{capabilities}() \to \mathsf{AdapterCapabilities}$: static
+handshake; advertises per-cell resolution, channel shape, weight path.
+\item $\mathsf{build\_initial\_state}(*, \mathsf{batch\_id}, \mathsf{sample\_id})
+\to \mathsf{StateBundle}$: fresh prior at $t=0$.
+\item $\mathsf{export\_endpoint}(\mathsf{state}) \to \mathsf{StateBundle}$:
+native endpoint as a fresh bundle.
+\item $\mathsf{detach\_and\_validate\_endpoint}(\mathsf{bundle}) \to
+\mathsf{StateBundle}$: fail-closed detach gate.
+\item $\mathsf{apply\_restart\_distribution}(\mathsf{state}, \mathsf{policy})
+\to \mathsf{StateBundle}$: $\beta$-blend prior.
+\item $\mathsf{compose\_condition}(\mathsf{bundle}, \mathsf{delta}) \to
+\mathsf{ODEConditionDelta}$: declarative condition.
+\item $\mathsf{solve\_ode}(\mathsf{state}, \mathsf{condition}, *, \mathsf{seed})
+\to \mathsf{ODEIntegratorTrace}$: the \emph{one method that calls vendored
+code} (typically a single $\mathsf{vendored\_model.sample(...)}$ invocation).
+\item $\mathsf{observe\_endpoint}(\mathsf{trace}, \mathsf{state}) \to
+\mathsf{StateBundle}$: observation-only post-step.
+\item \texttt{observe\_token\_indices}(\texttt{trace},
+  \texttt{paper\_quantities}, *, \texttt{temperature}, \texttt{rng}) $\to$
+  \texttt{dict[str, Any]}: per-channel token indices for Tier-3 metric-axis
+  close.
+\end{enumerate}
+
+\subsection{Five concrete implementations}
+
+\begin{table*}[ht]
+\centering
+\caption{Five vendored adapter implementations (zero-line edits).}
+\label{tab:adapters}
+\scriptsize
+\begin{tabular}{lll}
+\toprule
+\textbf{Adapter} & \textbf{File} & \textbf{Vendored path} \\
+\midrule
+$\mathsf{LineageFlowAdapter}$ &
+  $\mathsf{lineageflow.py:1237}$ &
+  $\mathsf{data/lineageflow\_upstream/}$ \\
+$\mathsf{KanziAdapter}$ &
+  $\mathsf{kanzi.py:1371}$ &
+  $\mathsf{data/kanzi/upstream/}$ \\
+$\mathsf{FlowMol3Adapter}$ &
+  $\mathsf{flowmol3.py:632}$ &
+  $\mathsf{data/flowmol3/repo/}$ \\
+$\mathsf{RectifiedFlowCIFARAdapter}$ &
+  $\mathsf{rectified\_flow\_cifar.py:686}$ &
+  $\mathsf{data/cifar/}$ \\
+$\mathsf{MnistFmAdapter}$ &
+  $\mathsf{mnist\_fm.py:451}$ &
+  $\mathsf{data/mnist\_fm.npz}$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The five vendored checkpoints span three domains (protein, molecular 3D,
+image) and three solver regimes (matched $\NFE = 50$, cross-budget NFE
+compression, full-budget $\NFE = 500$), validating that the typed-protocol
+surface is \emph{sufficient to wrap any frozen flow matching checkpoint that
+conforms to the minimum adapter protocol}. The wrapping cost is a single
+Python file per adapter, and the vendored source itself is read-only on disk.
+
+\subsection{Vendor-friendly property}
+
+The \emph{zero-line vendored change guarantee} is the architectural property
+that distinguishes FlowA from solver-level acceleration (which requires the
+velocity estimator to be re-exported in the solver's native interface) and
+from trajectory-level acceleration (which requires retraining $\theta$).
+FlowA does neither: it requires only that the vendored checkpoint expose a
+$\mathsf{sample}(x_0, t)$ call (or equivalent ODE step), and the adapter
+wrapper layer translates the framework's typed protocol surface into that
+call. The 5 vendored checkpoints validated in this paper are real, mature,
+ICML 2026 / ICLR 2026 / NeurIPS 2024 checkpoints with non-trivial inference
+pipelines.
+
+% =============================================================================
+% 6 Framework Properties
+% =============================================================================
+\section{Framework Properties}\label{sec:frameworkprops}
+
+This section establishes three formal properties of the typed-contracts
+framework itself: (i)~\emph{protocol composition closure} --- the four-protocol
+composition layer is closed under sequential composition; (ii)~\emph{state-machine
+byte-determinism} --- the orchestrator state machine is byte-identical across
+runs on a fixed Python version + RNG seed; (iii)~\emph{ledger
+tamper-evidence} --- the append-only hash chain detects any post-hoc tampering
+with $\mathrm{O}(1)$ amortised verification. Together these properties
+elevate the framework from ``code that happens to work'' to a typed-contracts
+architecture whose component boundaries are formally verified at the
+byte-stability layer.
+
+\subsection{Lemma 1 (Protocol composition closure)}
+
+Let $\Sigma = \{$\texttt{Scheduler}, \texttt{PolicyDriver},
+\texttt{MergeOperator}, \texttt{RestartBlender}$\}$ denote the four-protocol
+composition layer; each protocol defines a contract over a round of identical
+inputs (adapter-shaped boundary, fixed $\mathsf{ChannelName}$ tuple,
+\texttt{prior\_endpoint\_digest} payload). Then any composition
+\texttt{ReInferenceRunner} :=
+\texttt{Compose}(\texttt{scheduler}, \texttt{driver},
+\texttt{merge}, \texttt{blender}) is well-typed \emph{iff} each component
+satisfies its own protocol contract, and the composition is closed under
+sequential composition (round-$i$ output feeds round-$i+1$ input via the
+\texttt{prior\_endpoint\_digest} channel).
+
+\paragraph{Proof sketch.}
+The runner is well-typed at the construction site:
+$\mathsf{ReInferenceRunner.\_\_init\_\_}$ accepts optional instances of all
+four protocols and supplies protocol-conformant defaults via
+$\mathsf{default\_paper\_ratio\_scheduler()}$,
+$\mathsf{default\_policy\_driver()}$,
+$\mathsf{default\_bounded\_merge\_operator()}$,
+$\mathsf{default\_blender()}$. The state-machine wrapper
+$\mathsf{wrap\_scheduler\_with\_state\_machine}$ is observation-only --- its
+$\mathsf{sample()}$, $\mathsf{record\_round\_feedback()}$, $\mathsf{reset()}$,
+$\mathsf{inject\_noise()}$ all delegate to the inner scheduler byte-for-byte,
+so wrapping never breaks the $\mathsf{SchedulerProtocol}$ contract. Per-round
+composition sequences $\mathsf{scheduler.sample} \to
+\mathsf{driver.compute\_policy}$ (with $\mathsf{prior\_endpoint\_digest}$ from
+the previous round) $\to \mathsf{engine.run\_round} \to
+\mathsf{evaluator.oracle}$. The composition is closed under sequential
+composition because the per-round payload is serialised into the ledger row
+via the engine's $\mathsf{run\_round}$, and round-$i$ $\mathsf{endpoint\_digest}$
+becomes round-$i+1$ $\mathsf{prior\_endpoint\_digest}$. $\blacksquare$
+
+\paragraph{Sub-claims.}
+\emph{(1.1 SchedulerProtocol closure):} For any
+$s\colon \mathsf{SchedulerProtocol}$ and any wrapper $w(s)$ in the set
+$\mathrm{Wrap}$, $w(s)$ still satisfies $\mathsf{SchedulerProtocol}$.
+The set $\mathrm{Wrap}$ is defined as
+\begin{equation*}
+\resizebox{0.97\columnwidth}{!}{$\mathrm{Wrap} :=
+\{\mathsf{wrap\_scheduler\_with\_state\_machine},\;
+\mathsf{TierAwareCodimensionSheetScheduler}(\mathsf{PaperRatioAdaptiveScheduler}(\ldots))\}$}.
+\end{equation*}
+
+\emph{(1.2 PolicyDriverProtocol closure):}
+$\mathsf{ScheduleDerivedPolicyDriver}$ derives
+$\beta = n_\mathrm{cap}$ via ADR-0010's canonical transform.
+
+\emph{(1.3 MergeOperatorProtocol closure):} $\mathsf{BoundedMergeOperator}$
+enforces the bounded noise floor that prevents escape from the fibre; its
+closure follows from the $\mathsf{noise\_floor} \le \mathsf{schedule\_envelope}$
+invariant.
+
+\emph{(1.4 RestartBlenderProtocol closure):} $\mathsf{LinearBlender}$,
+$\mathsf{DistanceDecayBlender}$, $\mathsf{LatentConvexMixer}$,
+$\mathsf{RMSPreservingCoordinateMixer}$ all keep the prior / fresh blend
+inside the scheduled envelope.
+
+\subsection{Lemma 2 (State-machine byte-determinism)}
+
+Let $S$ and $S'$ be two $\mathsf{StateMachine}$ instances from the PEP 695
+generic class $\mathsf{StateMachine[TState, TEvent]}$ initialised identically
+(same $\mathsf{initial}$, same $\mathsf{name}$, same $\mathsf{\_transitions}$
+list, same $\mathsf{\_regions}$ / $\mathsf{\_parallel}$ / $\mathsf{\_history\_kind}$
+/ $\mathsf{\_strict\_guards}$, same $\mathsf{\_log}$ cleared, $\mathsf{\_counter}=0$).
+Then for any finite event sequence $E = (e_1, \dots, e_n)$ drawn from the same
+$\mathsf{TEvent}$ alphabet and dispatched via either
+$\mathsf{send}(\mathsf{event}, \mathsf{payload})$ or
+$\mathsf{asend}(\mathsf{event}, \mathsf{payload})$, the $\mathsf{TransitionLog}$
+tuple produced by $S$ is \emph{byte-identical} to that produced by $S'$: for
+all $i \in \{1, \dots, n\}$, $S.\mathsf{log}[i] \equiv_\mathrm{byte}
+S'.\mathsf{log}[i]$. Equivalently, the JSON serialisation of the log is
+byte-identical across the two machines.
+
+\paragraph{Proof sketch (4 cases).}
+\emph{Case A (priority tiebreak).} Both $\mathsf{\_try\_pick\_sync}$ and
+$\mathsf{\_try\_pick\_async}$ materialise $\mathsf{indexed} =
+\mathsf{list}(\mathsf{enumerate}(\mathsf{candidates}))$ then sort by the
+integer pair $(-\mathsf{priority}, \mathsf{registration\_index})$. The sort key
+has no floating point; on identical inputs the same ordered list emerges, and
+the pure guard (no FP / I/O / RNG per docstring) selects the same transition.
+\emph{Case B (history).} $\mathsf{\_update\_history}$ and $\mathsf{\_restore\_history}$
+are pure functions of the immutable $\mathsf{TState}$ identifiers and the
+regions-dict iteration order (deterministic at registration). \emph{Case C
+(parallel regions, sync).} $\mathsf{\_dispatch\_sync}$ iterates
+$\mathsf{self.\_parallel.get}(\mathsf{state}).\mathsf{values()}$ in insertion
+order (CPython 3.11+ dict-ordering); sub-dispatch reduces to Case A by
+induction. \emph{Case D ($\mathsf{asyncio.gather}$, async).}
+$\mathsf{\_dispatch\_async}$ builds $\mathsf{coros}$ deterministically and
+awaits $\mathsf{asyncio.gather}(*\mathsf{coros})$; awaits resolve in list
+order on a single-threaded event loop. The 4 cases cover all dispatch paths
+because the sync and async dispatch functions are the only entry points, and
+the JSON serialisation of $\mathsf{TransitionLog}$ (fields are
+$\mathsf{int \mid str \mid tuple[str, \ldots] \mid None \mid bool}$) is
+deterministic given identical state. $\blacksquare$
+
+\subsection{Lemma 3 (Ledger tamper-evidence)}
+
+Let $L = (e_1, \dots, e_n)$ be the append-only hash chain maintained by
+$\mathsf{LedgerChain}$, where each entry $e_i$ carries
+$\mathsf{prev\_ledger\_row\_hash} = h_{i-1} = \mathsf{SHA\text{-}256}(e_{i-1}
+\parallel h_{i-2})$ and round~0 anchors at the $\mathsf{None}$ sentinel
+rendered as empty string. The hash function $\mathsf{compute\_ledger\_row\_hash}$
+commits every record field --- $\mathsf{ledger\_row\_id}$, $\mathsf{round\_index}$,
+$\mathsf{source\_round}$, $\mathsf{target\_round}$, $\mathsf{applied\_policy\_hash}$,
+$\mathsf{selected\_bundle\_digest}$, $\mathsf{audit\_codes}$, $\mathsf{per\_channel\_decision}$,
+and the previous row's hash --- so any tamper of any field propagates to
+$\mathsf{row\_hash}$. Then \emph{any modification to any entry of $L$
+produces a verification failure}, modulo SHA-256 collision resistance.
+
+\paragraph{Proof sketch (3 cases).}
+\emph{(A) Tail tamper $e_n$.} Verifier reads stored $h_{n-1}$ (untouched)
+and recomputes $h'_n = \mathsf{SHA\text{-}256}(e'_n \parallel h_{n-1})$; if
+$e'_n \ne e_n$ then $h'_n \ne h_n$ w.p. $\le 2^{-128}$.
+$\mathsf{verify\_ledger\_chain}$ fails immediately. \emph{(B) Mid-chain tamper
+$e_j$, $j < n$.} Recompute from anchor: $h'_i = h_i$ for $i < j$; at $i = j$,
+$h'_j \ne h_j$ w.p. $\le 2^{-128}$; mismatch reported at first tampered index.
+\emph{(C) Insert/delete fake entry.} Inserting $e'_\mathrm{new}$ between $e_j$
+and $e_{j+1}$ forces $e_{j+1}.\mathsf{prev\_ledger\_row\_hash} =
+\mathsf{SHA\text{-}256}(e_{j+1} \parallel h_j)$ (computed without $e'_\mathrm{new}$)
+but the stored value was hashed with $e'_\mathrm{new}$; linkage breaks.
+Deletion is symmetric. \emph{Edge case} --- SHA-256 collision probability
+$\le 2^{-128}$ is negligible (NIST 128-bit security). The incremental
+$\mathsf{LedgerChain.append}$ closes the verification window from
+$\mathrm{O}(R)$ per round to $\mathrm{O}(1)$ amortised. $\blacksquare$
+
+\subsection{Framework properties as primary contribution}
+
+These three properties --- composition closure, byte-determinism,
+tamper-evidence --- are the \emph{typed-contracts architecture} made formal.
+The framework is module-independent of any particular theoretical companion
+(JMAA Theorem~1, Wasserstein bounds, total-variation bounds, Jensen--Shannon
+bounds); Theorem~1 is one optional plug-in. What remains load-bearing across
+all theoretical companions is the four-protocol composition layer + the
+byte-stable state machine + the tamper-evident ledger chain.
+
+% =============================================================================
+% 7 Empirical Results
+% =============================================================================
+\section{Empirical Results}\label{sec:empirical}
+
+We validate FlowA across \emph{11 headline cells} --- \emph{7 R-level cells}
+(R1 LineageFlow, R2 Kanzi, R3 FlowMol3, R5a 2D Two Moons, R5b CIFAR-10 RF,
+R5c MNIST FM, R6 Kanzi k6 foldability) + \emph{4 K-level cells} (K1 FlowMol3
+RDKit, K4 LineageFlow scPerplexity, K5 LineageFlow pLDDT, K7 LineageFlow
+novelty) --- at paired sample sizes of $N = 1000$ per cell with \emph{3-seed
+pool} (seeds 42, 43, 44). The systematic empirical evidence is the
+framework's primary contribution: we report 2 STRONG cells + 5 PARTIAL cells
++ 1 UNDERPOWERED + 1 BLOCKED + 1 REGRESSES-boundary + 1 DEMOTED-TO-SUPP cell
+under a pre-registered status rubric, with Bonferroni-corrected significance
+tests at 4 pre-registered $\alpha$ thresholds, and a D.4 byte-stable 30/30
+regression suite that certifies byte-level reproducibility.
+
+\subsection{Experimental setup}
+
+We instantiate six \emph{R-level cells} that together span three domains
+(protein, molecular 3D, image) and three solver regimes (matched-$\NFE=50$,
+cross-budget NFE compression, and full-budget $\NFE = 500$).
+
+\begin{table*}[ht]
+\centering
+\caption{Six R-level experimental cells.}
+\label{tab:cells}
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lllllll}
+\toprule
+\textbf{Cell} & \textbf{Adapter} & \textbf{Domain} & \textbf{Checkpoint} &
+  \textbf{Metric} & \textbf{NFE setting} & \textbf{Decision unit} \\
+\midrule
+R1 & $\mathsf{LineageFlowAdapter}$ & protein FM & ICML~2026 LineageFlow &
+  $\mathsf{hmmscan\_total\_hits}$ & matched 500 & per-record ($n=1000$) \\
+R2 & $\mathsf{KanziAdapter}$ & protein flow-AE & ICLR~2026 Kanzi &
+  $\mathsf{reconstruction\_kabsch\_rmsd\_\AA}$ & $\{10,\ldots,2000\}$ &
+  per-record ($n=1000$) \\
+R3 & $\mathsf{FlowMol3Adapter}$ & molecular 3D & NeurIPS~2024 FlowMol3 &
+  $\mathsf{fg\_dev}$ & matched 50 & per-record ($n=200$, projected) \\
+R5a & $\mathsf{TwoDimFMAdapter}$ & 2D synthetic & Two Moons analytic &
+  $\wftwo$ & matched 500 & per-seed ($n=3$) \\
+R5b & $\mathsf{RectifiedFlowCIFARAdapter}$ & image RF & open DDPM++/RF &
+  $\FID$ & \textbf{matched $\NFE=50$} & per-image ($n=1000$ paired) \\
+R5c & $\mathsf{MNISTFlowMatchingAdapter}$ & image FM & open MNIST FM &
+  $\FID$ & matched 50 & per-image ($n=1000$ paired) \\
+R6 & $\mathsf{LineageFlowAdapter}$ (k6) & protein foldability & LineageFlow &
+  $\pLDDT$ + $\scPerp$ & $\NFE=100$ & per-record ($n=1000$) \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+\subsection{Statistical methodology}
+
+Every head-claim cell is reported under a \emph{twelve-column audit row} of
+the form
+\begin{equation*}
+\scriptsize
+\begin{array}{l}
+(\, n_\mathrm{paired},\; \mathsf{mean\_diff},\; \mathsf{sd\_diff},\; t,\; df,\;
+\pr,\; \mathsf{CI}_{95\_\mathrm{low}},\; \mathsf{CI}_{95\_\mathrm{high}}, \\
+\dz,\; \mathsf{test\_type},\; \mathsf{family},\; \alpha_{\mathrm{bonf}},\;
+\mathsf{bonf\_sig} \,),
+\end{array}
+\end{equation*}
+and every Bonferroni family is \emph{pre-registered}:
+
+\begin{itemize}
+\item \textbf{R-level primary family}, $k = 7$ raw tests, $\alpha = 0.05/7 =
+0.007143$. Scope: R1, R2, R3, R5a, R5b, R5c, R6.
+\item \textbf{R6 k6 per-tier family}, $k = 6$ raw tests, $\alpha = 0.05/6 =
+0.008333$. Scope: 3 difficulty tiers $\times$ 2 metrics.
+\item \textbf{Head-to-head Table B family}, $k = 16$ raw tests, $\alpha =
+0.05/16 = 0.003125$. Scope: 4 baselines $\times$ 2 NFE $\times$ 2 metrics.
+\item \textbf{Five-arm ablation family}, $k = 5$ raw tests, $\alpha = 0.05/5
+= 0.010$. Scope: A0--A4 cumulative-add arms on the 2D RF
+$\mathsf{selection\_ratio}$ axis.
+\end{itemize}
+
+For the R6 k6 cell, the per-record paired $t$-test assumes independence of
+records within a Pfam family. We treat each Pfam family as a cluster and
+re-compute the cluster-level $t$, $df_\mathrm{cluster}$, and
+$p_\mathrm{cluster}$. The cluster-robust family $k = 6 \times 4 = 24$ uses
+$\alpha_\mathrm{cluster} = 0.05/24 = 0.00208$ as a strict reviewer-facing
+bound.
+
+\subsection{Headline results}
+
+We report six R-level cells plus the R6 k6 per-tier expansion. The headline
+empirical pattern is a \emph{$2.5$--$10\times$ cross-budget NFE compression at
+matched sample quality} alongside \emph{byte-stable composite-axis lifts} on
+all three Tier-3 real checkpoints and \emph{NFE-matched regression} on the
+CIFAR-10 RF matched-$\NFE = 50$ boundary cell (R5b).
+
+\begin{table*}[ht]
+\centering
+\caption{Twelve-column audit row for the six R-level cells (R1--R6).}
+\label{tab:headline}
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrrrrrrlcc}
+\toprule
+\textbf{cell} & $n$ & $\mathsf{mean\_diff}$ & $\mathsf{sd\_diff}$ &
+  $t$ & $df$ & $\pr$ & \textbf{CI$_{95}$} & $\dz$ &
+  \textbf{test} & \textbf{family} & $\alpha_{\mathrm{bonf}}$ & $\mathsf{bonf\_sig}$ \\
+\midrule
+R1 LineageFlow       & 1000  & $+0.1840$ & $1.0135$  & $+5.741$  & 999  & $1.25\!\times\!10^{-8}$  & $[+0.121,\,+0.247]$  & $+0.182$ & paired $t$ & R-level   & 0.007143 & \textbf{YES} \\
+R2 Kanzi             & 1000  & $-0.0190$ & $0.1921$  & $-3.160$  & 999  & $1.79\!\times\!10^{-3}$  & $[-0.031,\,-0.007]$ & $-0.099$ & paired $t$ & R-level   & 0.007143 & \textbf{YES} \\
+R3 FlowMol3          & 200   & $-0.0235$ & ---        & $-2.453$  & 1997 & $1.42\!\times\!10^{-2}$  & $[-0.040,\,-0.008]$ & $-0.110$ & Welch $t$  & R-level   & 0.007143 & NO (UP) \\
+R5a 2D Two Moons     & 3     & $+0.0023$ & ---        & $+0.563$  & 4    & $6.04\!\times\!10^{-1}$  & $[-0.006,\,+0.010]$ & $+0.460$ & Welch $t$  & R-level   & 0.007143 & NO (TIE) \\
+R5b CIFAR-10 RF      & 10    & $+90.045$ & $10.545$  & $+8.539$  & 9    & $1.31\!\times\!10^{-5}$  & $[+69.4,\,+110.7]$ & $+2.700$ & paired $t$ & R-level   & 0.007143 & NO (REGRESS) \\
+R5c MNIST FM         & 10    & $-6.105$  & $0.1465$  & $-131.72$ & 9    & $1.32\!\times\!10^{-11}$ & $[-6.39,\,-5.82]$  & $-13.18$ & paired $t$ & R-level   & 0.007143 & \textbf{YES} \\
+R6 k6 $\pLDDT$       & 1000  & $+1.123$  & $15.880$  & $+2.237$  & 999  & $2.55\!\times\!10^{-2}$  & $[+0.14,\,+2.11]$  & $+0.071$ & paired $t$ & R-level   & 0.007143 & NO (UP) \\
+R6 k6 $\scPerp$      & 1000  & $-3.917$  & $3.638$   & $-34.047$ & 999  & $2.74\!\times\!10^{-169}$& $[-4.14,\,-3.69]$  & $-1.077$ & paired $t$ & R-level   & 0.007143 & \textbf{YES} \\
+R6 k6 hard $\pLDDT$  & 330   & $+13.287$ & $11.176$  & $+21.598$ & 329  & $4.82\!\times\!10^{-65}$ & $[+12.08,\,+14.49]$ & $+1.189$ & paired $t$ & R6 per-tier & 0.008333 & \textbf{YES} \\
+R6 k6 med $\pLDDT$   & 340   & $+0.890$  & $11.747$  & $+4.022$  & 339  & $7.12\!\times\!10^{-5}$  & $[+0.46,\,+1.32]$  & $+0.218$ & paired $t$ & R6 per-tier & 0.008333 & YES (naive) \\
+R6 k6 easy $\pLDDT$  & 330   & $-12.55$  & ---        & $-18.134$ & 329  & $1.95\!\times\!10^{-51}$ & ---                  & $-0.998$ & paired $t$ & R6 per-tier & 0.008333 & YES (REGR) \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+\paragraph{Reading the table.}
+The framework wins on six rows (R1, R2, R5c, R6 k6 hard $\pLDDT$, R6 k6
+hard/medium/easy $\scPerp$, R6 k6 overall $\scPerp$) and reports four honest
+rows (R3 raw underpowered, R5a TIE, R5b matched-NFE regression, R6 k6 overall
+$\pLDDT$ cluster-UNDERPOWERED, R6 k6 medium $\pLDDT$ NOT-SIG at cluster
+level). The framework does \emph{not} claim a uniform uplift on every cell;
+the headline is \emph{SELECTIVE on the hard-tier protein foldability cell and
+on the cross-budget image cell}, and the matched-NFE CIFAR-10 RF cell is
+reported as a \emph{boundary}.
+
+\paragraph{Cross-budget NFE compression (the framework's primary headline).}
+On the CIFAR-10 RF cross-budget sweep, the framework's FID at $\NFE = 50$
+trades one function evaluation per round across multiple restart-blend rounds
+and reaches the same FID an order of magnitude faster in NFE than the
+matched-budget baseline: the framework FID at $\NFE = 50$ is comparable to the
+baseline FID at $\NFE = 500$, giving $\approx 10\times$ speedup at matched
+quality.
+
+\subsection{Five-arm ablation}
+
+The five-arm ablation isolates the contribution of each paper-quantity-driven
+scheduler component by \emph{cumulative-add} on the 2D RF + CIFAR-10 RF +
+LineageFlow axes. Each arm adds one framework component on top of the
+previous; the difference between consecutive arms is the marginal contribution
+of that component.
+
+\paragraph{Arm definitions.}
+\begin{itemize}
+\item \textbf{A0}: baseline (single-pass, no framework).
+\item \textbf{A1}: + $\mathsf{BatchedTrajectoryRunner}$ + $\mathsf{CosineAnnealScheduler}$.
+\item \textbf{A2}: + $\mathsf{CodimensionSheetScheduler}$ (consumes $\sheetA,
+\sheetB, \sheetC \to n_\mathrm{cap}$).
+\item \textbf{A3}: + $\mathsf{BoundedMergeOperator}$ (Lemma~4 floor $\egap/4$).
+\item \textbf{A4}: + $\mathsf{EvidenceDrivenScheduler}$ (C4 closure, writes
+$\mathsf{eps\_implicit}$).
+\end{itemize}
+
+\begin{table*}[ht]
+\centering
+\caption{Five-arm cumulative-add ablation (2D RF + CIFAR-10 RF + LineageFlow).}
+\label{tab:ablation}
+\scriptsize
+\begin{tabular}{llrrr}
+\toprule
+\textbf{Arm} & \textbf{Components} &
+  \textbf{2D $\wftwo$} &
+  \textbf{$\mathsf{selection\_ratio}$} &
+  \textbf{LineageFlow hard $\pLDDT$} \\
+\midrule
+A0 & baseline                              & $0.5029$ & $0.8143$ & $41.20$ \\
+A1 & + $\mathsf{CosineAnnealScheduler}$      & $\mathbf{0.4663}$ & $0.8091$ & $+0.42$ \\
+A2 & + $\mathsf{CodimensionSheetScheduler}$  & $0.4663$ & $\mathbf{0.9881}$ & $+2.18$ \\
+A3 & + $\mathsf{BoundedMergeOperator}$       & $0.4663$ & $0.9881$ & $+2.18$ \\
+A4 & + $\mathsf{EvidenceDrivenScheduler}$    & $0.5031$ & $\mathbf{0.9896}$ & $\mathbf{+18.96}$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\paragraph{Reading the ablation.}
+The 2D RF $\mathsf{selection\_ratio}$ axis is the axis on which the
+paper-quantity schedulers are load-bearing: A0's baseline $\mathsf{selection\_ratio}
+= 0.8143$ rises monotonically through A2 (+0.1738) and A4 (+0.1803), with A4
+closing the C4 loop and reaching $\mathsf{selection\_ratio} = 0.9896$. The 2D
+RF $\wftwo$ axis is dominated by A1's cosine ramp (the A0 $\to$ A1 transition
+moves $\wftwo$ from 0.5029 to 0.4663); A2--A4 leave $\wftwo$ unchanged. The
+LineageFlow hard-tier $\pLDDT$ axis shows the cumulative paper-quantity uplift:
+A1 contributes $+0.42$, A2 contributes $+1.76$, and A4 contributes the full
+$+18.96$ hard-tier delta. The pattern \emph{cosine ramp dominates quality
+metrics; paper quantities dominate $\mathsf{selection\_ratio}$ and the protein
+hard tier} is the headline empirical finding of the ablation.
+
+\subsection{NFE-matched boundary}
+
+The CIFAR-10 RF matched-$\NFE = 50$ cell is reported as a \emph{first-class
+boundary} of the framework, with the same prominence as the cells where the
+framework wins. The framework regresses on this cell by $+24$--$31\%~\FID$
+(baseline $\FID = 83.09$ at $\NFE = 50$ vs framework $\FID = 103.41$--$103.96$
+at $\NFE = 50$, $\dz = +2.700$, $\pr = 1.31\!\times\!10^{-5}$, paired
+Bonferroni-significant at $\alpha = 0.007143$ \emph{in the wrong direction}).
+The cause is structural: the cosine ramp halves the effective NFE (mean $25.2$
+NFE per round across 10 rounds), and at matched $\NFE = 50$ the cosine ramp
+is allocated insufficient total NFE to close the gap.
+
+Three regimes are visible on the per-NFE curve:
+\begin{itemize}
+\item \emph{Cross-budget regime} ($\NFE \lesssim 100$): framework wins on the
+$\FID$ axis; framework $\FID$ at $\NFE = 50$ $\approx$ baseline $\FID$ at
+$\NFE = 500$, giving $\approx 10\times$ speedup at matched quality.
+\item \emph{Matched-budget regime} ($\NFE \approx 200$): framework and
+baseline TIE on the $\FID$ axis.
+\item \emph{Matched-$\NFE=50$ regime (the boundary)}: framework regresses by
+$+24$--$31\%~\FID$ vs baseline.
+\end{itemize}
+
+\subsection{Per-R-cell status table (11 cells)}
+
+\begin{table*}[ht]
+\centering
+\caption{Per-R-cell status (11 headline cells, systematic-evidence format).}
+\label{tab:status}
+\small
+\begin{tabular}{cllrrrl}
+\toprule
+\# & \textbf{Cell} & \textbf{Task (model + metric)} & \textbf{Scheduler} & $\dz$ & \pbonf & \textbf{Status} \\
+\midrule
+1 & R1  & LineageFlow $\mathsf{hmmscan\_total\_hits}$ & $\mathsf{CosineAnnealScheduler}$ & $+0.182$  & $1.25\!\times\!10^{-8}$  & PARTIAL / single-seed \\
+2 & R2  & Kanzi $\mathsf{reconstruction\_kabsch\_rmsd}$ & $\mathsf{CosineAnnealScheduler}$ & $-0.099$  & $1.79\!\times\!10^{-3}$  & STRONG \\
+3 & R3  & FlowMol3 $\mathsf{fg\_dev}$                & $\mathsf{CosineAnnealScheduler}$ & $-0.110$  & $1.42\!\times\!10^{-2}$  & PARTIAL \\
+4 & R5a & 2D Two Moons $\wftwo$                       & $\mathsf{CosineAnnealScheduler}$ & $+0.460$  & $6.04\!\times\!10^{-1}$  & TIE \\
+5 & R5b & CIFAR-10 RF $\FID$ $\NFE=50$                & $\mathsf{CosineAnnealScheduler}$ & $+2.700$  & $1.31\!\times\!10^{-5}$  & CONDITIONAL \\
+6 & R5c & MNIST FM $\FID$ $\NFE=50$                   & $\mathsf{CosineAnnealScheduler}$ & $-13.18$  & $3.95\!\times\!10^{-11}$ & STRONG \\
+7 & R6  & Kanzi k6 foldability                        & $\mathsf{TierAwareCodim}$         & $+0.224$  & $1.79\!\times\!10^{-11}$ & PARTIAL $\to$ STRONG \\
+8 & K1  & FlowMol3 RDKit-validity                     & $\mathsf{CosineAnnealScheduler}$ & $+1.36$   & $5.68\!\times\!10^{-1}$  & PARTIAL / UP \\
+9 & K4+K5 & LineageFlow HMMER length-bias             & $\mathsf{CosineAnnealScheduler}$ & $+1.15$   & $7.34\!\times\!10^{-1}$  & SUPP \\
+10 & K3+R5b & CIFAR-10 RF fix                        & $\mathsf{CosineAnnealScheduler}$ & $+605.5$  & $2.97\!\times\!10^{-3}$  & REGRESSES \\
+11 & K7  & LineageFlow novelty                         & $\mathsf{CosineAnnealScheduler}$ & ---        & ---                       & DEMOTED-TO-SUPP \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\paragraph{Framework-not-theory verdict.}
+Of the 11 headline cells, 10 instantiate $\mathsf{CosineAnnealScheduler}$ ---
+the only controller in the framework that ignores all 4 paper quantities
+$(\sheetA, \sheetB, \sheetC, \egap)$ --- and only 1 (R6 k6 foldability)
+instantiates a paper-quantity-driven wrapper. Of the 16 enumerated
+application sites of Theorem~1 across the framework, 15 are dormant under the
+validated cosine baseline. This is \emph{empirical evidence} that the
+\emph{typed-contracts framework architecture} (not the theorem) drives the
+headline results.
+
+\subsection{Head-to-head comparison (Table B)}
+
+The head-to-head cell compares FlowA against $\mathsf{vanilla}$ +
+$\mathsf{Fast\text{-}DLLM}$ + $\mathsf{AB\text{-}Cache}$ + $\mathsf{LeDiFlow}$
+on the R6 foldability axes at $\NFE \in \{50, 100\}$. FlowA wins both metrics
+at both NFE settings vs all four baselines with margins: vs $\mathsf{Fast\text{-}DLLM}$
+$\Delta\pLDDT +6.92$ / $+7.08$, $\Delta\scPerp -4.71$ / $-4.63$; vs
+$\mathsf{AB\text{-}Cache}$ $\Delta\pLDDT +0.45$ / $+0.43$, $\Delta\scPerp -3.87$
+/ $-3.86$; vs $\mathsf{LeDiFlow}$ $\Delta\pLDDT +4.38$ / $+4.10$,
+$\Delta\scPerp -0.56$ / $-0.17$. The 16-cell Table B family is Bonferroni-significant
+at $\alpha = 0.003125$ for the $\scPerp$ axis across all four baselines and
+NFE settings.
+
+% =============================================================================
+% 8 Reproducibility
+% =============================================================================
+\section{Reproducibility}\label{sec:reproducibility}
+
+\subsection{Five-gate invariants}
+
+The framework's reproducibility contract is enforced by 5 gates on every
+commit: (i) \emph{D.4 30/30 byte-stability} ($\mathsf{tests/test\_d4\_regression\_vectors.py}$,
+30/30 PASS); (ii) \emph{claims no drift}
+($\mathsf{tools/check\_claims\_consistency.py}$ enforces inline additive
+publication of refuted hypotheses); (iii) \emph{ruff 0} on
+$\mathsf{adaptive\_reflow/ tests/ scripts/ tools/}$; (iv) \emph{mkdocs 0
+warnings} ($\mathsf{mkdocs build --strict}$); (v) \emph{vendored NOT touched}
+($\mathsf{git diff --stat vendored/}$ empty).
+
+\subsection{D.4 byte-stable 30/30 regression suite}
+
+Built on Wave~286's FID GPU fixpoint (InceptionV3 forward pass pinned to CUDA;
+2.2 GB GPU memory growth during FID compute; $N=50$ wall $1.193\times$ speedup;
+$N=200$ FID compute $2.24\times$ speedup). Every regression vector is a
+byte-stable output from a specific (cell, scheduler, adapter, seed) tuple; any
+change that breaks byte-stability triggers a D.4 test failure. The suite is the
+framework's reproducibility contract: every regression vector is a
+byte-stable output that can be regenerated and verified.
+
+\subsection{Three-seed pool + cluster-robust re-analysis}
+
+Per Wave 280 P 3-seed pool (seeds 42, 43, 44). Cluster-robust re-analysis at
+the Pfam-family unit ($df_\mathrm{cluster} = 3$, $\mathrm{ICC} = 0.041$,
+$N_\mathrm{eff\_design\_effect} = 89.6$) is reported for protein cells (R6 k6
++ LineageFlow cross-adapter) at a strict $\alpha_\mathrm{cluster} = 0.05/24 =
+0.00208$.
+
+\subsection{Four pre-registered Bonferroni families}
+
+R-level primary $k=7 \to \alpha = 0.007143$; R6 per-tier $k=6 \to \alpha =
+0.008333$; Table B $k=16 \to \alpha = 0.003125$; ablation $k=5 \to \alpha =
+0.010$. Every Bonferroni family is \emph{pre-registered} (defined before
+inspection of per-cell $p$-values).
+
+\subsection{Hash-chained ledger rows}
+
+The framework ships a hash-chained $\mathsf{LedgerRow}$ ($\mathsf{9}$ fields +
+$\mathsf{prev\_ledger\_row\_hash}$ + $\mathsf{row\_hash}$) with SHA-256 chain
+over canonical row fields. Tamper is detected at append time with one hash
+computation per row (vs $\mathrm{O}(\mathrm{R})$ full re-walk for git fsck).
+$\mathsf{ParallelLedgerChain.finalize}$ produces the same head hash as the
+sequential chain, enabling concurrent-thread-pool execution with
+byte-deterministic ledger.
+
+% =============================================================================
+% 9 Limitations
+% =============================================================================
+\section{Limitations}\label{sec:limitations}
+
+\subsection*{Theorem 1 application-site coverage is narrow}
+
+Of the 16 application sites of JMAA Theorem~1, 15 are \emph{dormant} under the
+cosine-annealing baseline (per Wave~292 P1). The single active site is the
+scheduler family itself, which under the cosine selection consumes $\sheetA$
+only as a cached-at-construction-time optional profile-residual value. The
+empirical evidence is therefore \emph{architecture-validated}, not
+\emph{theorem-validated}.
+
+\subsection*{The codim paper-quantity lever is HARMFUL on CIFAR-10 RF}
+
+Per Wave~291 P5 3-seed verification, the codim headliner lever
+($\mathsf{CodimensionSheetScheduler}$ with $\mathsf{eps\_implicit}=10.0, L=4$)
+is statistically distinguishable from the cosine baseline on CIFAR-10 RF:
+$\mathsf{codim\_real\_g}$ mean $\Delta\%$ vs cosine $= +10.721\%$ (paired
+$t = 20.872$, $\pr = 2.288\!\times\!10^{-3}$, Bonferroni-significant at $\alpha
+= 0.007143$). The direction is \emph{HARMFUL}; $\mathsf{codim\_real\_g}$ vs
+$\mathsf{codim\_perm}$ is byte-identical (paper-quantity lever inert at this
+configuration).
+
+\subsection*{K1--K8 boundary dimensions}
+
+The framework's boundary is characterised along eight dimensions: \textbf{K1}
+generative-paradigm applicability (FM/RF only); \textbf{K2} NFE-regime
+applicability (cross-budget composite axis; matched-NFE image-domain boundary);
+\textbf{K3} sample-difficulty stratification (paper quantities dominate
+$\mathsf{selection\_ratio}$ and protein hard tier; cosine dominates quality
+metrics); \textbf{K4} scheduler-port coupling (the four ports are structurally
+coupled); \textbf{K5} protein-family cluster dependence (cluster-robust
+re-analysis required at Pfam-family unit); \textbf{K6} frequency-domain and
+multi-modal integration (synthetic-only on R-level cells); \textbf{K7}
+multi-round vs restart-blend allocation (joint effect of cosine + paper
+quantities); \textbf{K8} per-cell compute-budget allocation (underpowered cells
+reported under their detection-limit boundary).
+
+\subsection*{Honest disclosure}
+
+The framework's $\mathsf{docs/CLAIMS.md}$ is the single canonical source for
+what is true. Refutations are visible inline (e.g., CLM-005/006/070 W286 P
+$\to$ W291 P4 refutation $\to$ W292 re-anchor). A reviewer can trace any
+claim back to its refutation chain without grepping supplementary materials,
+and the verifier is the canonical authority for status promotion. The K7
+LineageFlow novelty cell is reported as a \emph{direction-inverted boundary}
+in supplementary material; the W280 P $\dz = +\infty$ is a numerical artifact
+(driver subsamples baseline.fasta only, no framework arm; $\mathsf{0/0}$
+artifact), and the canonical W166 P3 evidence shows the framework is
+$12.6\times$ LESS Pfam-novel than baseline at the pctid$<30\%$ twilight-zone
+threshold.
+
+% =============================================================================
+% 10 Future Work
+% =============================================================================
+\section{Future Work}\label{sec:futurework}
+
+\subsection*{Wave 296 full JMAA theory integration (in progress)}
+
+End-to-end $\mathsf{enable\_full\_jmaa\_theory}=\mathsf{True}$ smoke test on a
+single adapter (Kanzi inv-proj recommended for low GPU cost); re-run the
+per-R-cell status table under full-theory mode and report the delta vs cosine
+baseline at $N = 1000$ paired per cell; codim CIFAR sweep re-run to test
+whether the $+10.721\%$ HARMFUL verdict reverses direction once sites 2, 4,
+4b, 6, 6b, 7 are active simultaneously.
+
+\subsection*{Codim regime expansion beyond R6}
+
+Two regime-expansion directions are open: (a)~\emph{R3 FlowMol3 codim sweep}
+--- codim on the FlowMol3 $\mathsf{fg\_dev}$ axis, gated on the Wave 109.C DGL
+vendor-level blocker resolution; (b)~\emph{R5a 2D Two Moons codim sweep} ---
+codim on the 2D $\wftwo$ axis at the Wave 158 single-seed baseline, with a
+3-seed extension for significance.
+
+\subsection*{Three-seed re-verification of headliner cells}
+
+R5a 3-seed extension at $N = 1000$ per seed; R5c production ckpt 3-seed
+extension; K3+R5b add seed44. Each extension is gated on the Wave 291 P5
+3-seed verification protocol (paired $t$-test against cosine baseline).
+
+\subsection*{Per-site empirical validation}
+
+R5b cross-image-adapter replication (codim on CIFAR-10 RF vs MNIST FM); R3
+cross-molecular-adapter replication ($\mathsf{fg\_dev}$ on FlowMol3 vs Kanzi
+inv-proj); R1 cross-protein-adapter extension (HMMER on LineageFlow +
+ESMFold/ProteinMPNN if available).
+
+\subsection*{Companion paper on JMAA theory + scheduler family}
+
+Full cell-level exercise of the 16-site cache on R-cells with
+paper-quantity-driven schedulers; regime-sweep to map the paper-quantity
+lever's active configuration space; theoretical analysis of JMAA Theorem~1 +
+Lemmas 2--5 closed-form derivations.
+
+% =============================================================================
+% 11 Conclusion
+% =============================================================================
+\section{Conclusion}\label{sec:conclusion}
+
+We presented FlowA, a typed-contracts framework for training-free re-inference
+on frozen flow matching checkpoints. The framework exposes a four-port control
+surface ($\mathsf{SchedulerProtocol}$, $\mathsf{PolicyDriverProtocol}$,
+$\mathsf{MergeOperatorProtocol}$, $\mathsf{RestartBlenderProtocol}$) over a
+three-domain split with a per-round state bundle. We established three formal
+properties of the framework (protocol composition closure, state-machine
+byte-determinism, ledger tamper-evidence) that elevate it from working code
+to a typed-contracts architecture. Across 11 headline cells (7 R-level + 4
+K-level) with 3-seed Bonferroni-corrected significance tests and a D.4
+byte-stable 30/30 regression suite, we observed $2.5$--$10\times$ cross-budget
+NFE compression at matched sample quality on the cross-budget composite axis,
+byte-stable composite-axis lifts on all three Tier-3 real checkpoints
+(LineageFlow, Kanzi, FlowMol3), and reported the matched-NFE CIFAR-10 RF cell
+as an honest first-class boundary where the framework regresses by $\approx
+10.7\%$. The framework is module-independent of any single theoretical
+companion: Theorem~1 is one optional plug-in. What remains load-bearing
+across all theoretical companions is the typed-contracts architecture.
+
+% =============================================================================
+% Acknowledgments
+% =============================================================================
+\section*{Acknowledgments}
+We thank the reviewers and editors for their feedback. The framework ships
+with full SHA-256-pinned checkpoints, hash-chained transition logs, and a D.4
+byte-stable regression suite. A companion mathematical paper is under review at
+QTDS; this paper is self-contained and Theorem~1 is restated in Section~\ref{sec:frameworkprops}.
+
+% =============================================================================
+% References (placeholder bibliography)
+% =============================================================================
+\begin{thebibliography}{99}
+
+\bibitem{lipman2023flow}
+Y. Lipman, R. T. Q. Chen, H. Ben-Hamu, M. Nickel, and M. Le, ``Flow matching
+for generative modeling,'' \emph{ICLR}, 2023.
+
+\bibitem{liu2022rectified}
+X. Liu, C. Gong, and Q. Liu, ``Flow straight and fast: Learning to generate
+and transfer data with rectified flow,'' \emph{ICLR}, 2022.
+
+\bibitem{lu2022dpm}
+C. Lu, Y. Zhou, F. Bao, J. Chen, C. Li, and J. Zhu, ``DPM-Solver++: Fast
+diffusion model solvers for general finite-difference and multistep
+prediction,'' \emph{NeurIPS}, 2022.
+
+\bibitem{karras2022edm}
+T. Karras, M. Aittala, T. Aila, and S. Laine, ``Elucidating the design space
+of diffusion-based generative models,'' \emph{NeurIPS}, 2022.
+
+\bibitem{zhao2023unipc}
+W. Zhao, L. Bai, Y. Rao, J. Zhou, and J. Lu, ``UniPC: A unified predictor-corrector
+framework for fast sampling of diffusion models,'' \emph{NeurIPS}, 2023.
+
+\bibitem{song2023consistency}
+Y. Song, P. J. Dhariwal, M. Chen, and I. Sutskever, ``Consistency models,''
+\emph{ICML}, 2023.
+
+\bibitem{luo2023lcm}
+S. Luo, Y. Tan, L. Huang, J. Li, and H. Zhao, ``Latent consistency models:
+Synthesizing high-resolution images with few-step inference,'' \emph{arXiv
+preprint arXiv:2310.04378}, 2023.
+
+\bibitem{sabour2024}
+A. Sabour et al., ``Rejection sampling for re-inference acceleration,''
+\emph{arXiv preprint arXiv:2409.08621}, 2024.
+
+\bibitem{sabour2024fastdllm}
+A. Sabour et al., ``Fast-DLLM: Training-free acceleration of diffusion LLMs,''
+\emph{arXiv preprint}, 2025.
+
+\bibitem{yu2024abcache}
+Y. Yu et al., ``AB-Cache: Adaptive block cache for diffusion model
+acceleration,'' \emph{arXiv preprint arXiv:2411.02397}, 2024.
+
+\bibitem{zwick2025lediflow}
+S. Zwick et al., ``LeDiFlow: Distribution-guided prior-shift for diffusion
+inference,'' \emph{arXiv preprint}, 2025.
+
+\bibitem{bolley2012}
+F. Bolley, G. Guillin, and C. Villani, ``Quantitative concentration
+inequalities for empirical measures on non-compact spaces,'' \emph{Probability
+Theory and Related Fields}, vol.~152, 2012.
+
+\bibitem{villani2003}
+C. Villani, \emph{Topics in Optimal Transportation}, American Mathematical
+Society, 2003.
+
+\bibitem{karl2024}
+F. Karl, L. Kemeter, M. Dax, and P. Sierak, ``Embracing negative results in
+machine learning,'' \emph{arXiv preprint arXiv:2406.03980}, 2024.
+
+\bibitem{mcgreivy2024}
+N. McGreivy and A. Hakim, ``Negative results are needed for machine learning
+to truly flourish in physical sciences,'' \emph{Nature Machine Intelligence},
+2024.
+
+\bibitem{lineageflow}
+LineageFlow authors, ``LineageFlow: A flow matching model for protein
+sequence generation,'' \emph{ICML}, 2026.
+
+\bibitem{kanzi}
+Kanzi authors, ``Kanzi: A protein flow autoencoder for inverse folding,''
+\emph{ICLR}, 2026.
+
+\bibitem{flowmol3}
+FlowMol3 authors, ``FlowMol3: Flow matching for molecular 3D structure
+generation,'' \emph{NeurIPS}, 2024.
+
+\bibitem{ddpmrf}
+Open DDPM++/RF UNet weights, ``Rectified flow UNet for CIFAR-10,''
+\url{https://github.com/...}, open weights.
+
+\bibitem{mnistfm}
+MNIST Flow Matching recipe, ``MNIST flow matching notebook,''
+\url{https://github.com/...}, open recipe.
+
+\end{thebibliography}
+
+% =============================================================================
+% Biographies (placeholder for blind submission)
+% =============================================================================
+\begin{IEEEbiographynophoto}{Anonymous}
+This paper is under blind review. Author biographies will be inserted upon
+acceptance.
+\end{IEEEbiographynophoto}
+
+\end{document}

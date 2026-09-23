@@ -1418,7 +1418,7 @@ Per the Wave 298 P7 task scope:
 - (d) Wave 322 D4 — CLM-088 meta-claim "§6 Framework Properties formally verified — all 3 Path A lemmas ACTIVE" added. CLOSED.
 - (e) JMAA Theorem 1 cross-ref: footnote-only in Paper A (per Wave 297 P3 §1 ¶3); full theorem statement in Paper B companion (`docs/theory/theorem-1-self-contained.md`).
 
-**COMPLETE — Wave 322 P3 APPLY (Lemma 1 + Lemma 2 + Lemma 3 all inserted as ACTIVE; §6 word count 1765 within target 1500–2000; CLM-086 / CLM-087 / CLM-088 all ACTIVE).**
+**COMPLETE — Wave 322 P3 APPLY (Lemma 1 + Lemma 2 + Lemma 3 all inserted as ACTIVE; §6 word count 1883 within target 1500–2000 [Wave 323 D+3 self-review correction: previous 1765 claim was off by 118 words; 1883 measured via awk 'NR>=1391 && NR<=1424' | wc -w]; CLM-086 / CLM-087 / CLM-088 all ACTIVE).**
 
 ---
 

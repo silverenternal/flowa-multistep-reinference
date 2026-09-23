@@ -8,7 +8,7 @@
 - `docs/audit/wave311-d1-review.md` (Wave 311 D+1 self-review; primary audit anchor for the Path A lemma trio; updated in Wave 322 to note Wave 322 closes the 2 remaining lemma placeholders)
 - `docs/audit/wave311-path-a-lemma-1.md` (Wave 311 Path A audit doc for Lemma 1 — protocol composition closure; sibling audit doc)
 - `docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md` (paper-body insertion form of all 3 Path A lemmas)
-- `docs/drafts/paper-flat-flattened.md` §6 Framework Properties line 1391-1422 (paper-body §6 with Lemma 1 at line 1400, Lemma 2 at line 1408, Lemma 3 at line 1410)
+- `docs/drafts/paper-flat-flattened.md` §6 Framework Properties line 1391-1424 (paper-body §6 with Lemma 1 at line 1400, Lemma 2 at line 1408, Lemma 3 at line 1410)
 - `docs/CLAIMS.md` CLM-085 / CLM-086 / CLM-087 / CLM-088 (4 Claims ledger entries — 3 lemma claims + 1 meta-claim)
 
 ---
@@ -401,7 +401,7 @@ Wave 322 logs this as a known cross-doc propagation gap; the §6 cross-link from
 
 ### 4.4 §6 Framework Properties final state (post-Wave 322)
 
-§6 word count: **1765 words** (within target 1500-2000 per Wave 311 task directive).
+§6 word count: **1883 words** (within target 1500-2000 per Wave 311 task directive; corrected from 1765 by Wave 323 D+3 self-review via `awk 'NR>=1391 && NR<=1424' | wc -w`).
 
 | Paragraph | Content | Line |
 |---|---|---|
