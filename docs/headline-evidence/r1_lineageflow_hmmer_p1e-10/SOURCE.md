@@ -69,3 +69,34 @@ edits to historical SOURCE.md text). The headline numbers (158 → 342,
 
 See `docs/audit/wave151-headline-evidence-audit.md` for the per-R
 audit ledger and fix inventory.
+
+---
+
+## Wave 310 data provenance (2026-09-23)
+
+**Wave 310:** R1 stays PARTIAL/single-seed per Wave 308 (N=1000 sweep
+is single-seed; Wave 310 does not change that), but **the +116% headline
+data files are now committed** for full audit-replication provenance:
+
+- `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/baseline_hits.tbl` — sha256 `d2db37691bbb020a9de8d7c51da9a7049a140b91f29db073eab37982b0158379` (31,444 bytes)
+- `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/framework_hits.tbl` — sha256 `04830145efb22ca216e568cbc876e1b0e7577557519badfc7df10a7778114b04` (64,111 bytes)
+
+These two `.tbl` files are the raw HMMER `hmmscan` output that produce the
+158 → 342 totals (delta = +184, +116%). They were Wave 308 migration
+deliverables (commit `868c60b`, migrated from `/tmp/wf280-*` to
+`verification_outputs/`) but `.gitignore`'d so far — they are now
+archived at HEAD with `git add -f` per Wave 310 plan.
+
+Force-add was required because `.gitignore` excludes
+`verification_outputs/` globally (the audit/provenance carve-out uses
+`git add -f` for explicit-data exceptions). The on-disk byte content
+matches the Wave 308 captures verbatim — no regeneration, no edits.
+
+Single-seed disclaimer unchanged (Wave 308): R1 PARTIAL remains flagged
+in `docs/paper-draft.md` §7.4 and `docs/baseline-audit-report.md` §R.16
+pending the deferred N>1 seed re-run (deferred list per `todo/STATUS.md`
+"Camera-ready deferred" section). Wave 310 only addresses data
+provenance, not the single-seed caveat.
+
+See `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/`
+in the working tree for the committed files.
