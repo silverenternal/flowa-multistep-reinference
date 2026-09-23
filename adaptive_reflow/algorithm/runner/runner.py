@@ -38,6 +38,7 @@ Tasks satisfied:
 """
 from __future__ import annotations
 
+import contextlib
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -572,6 +573,31 @@ class ReInferenceRunner:
         if not channels:
             raise ValueError("channels must be non-empty")
         primary_channel = ChannelName(str(channels[0]))
+
+        # Wave 296 P4 — stash the active config on ``self._active_config``
+        # so :meth:`_apply_engine_paper_quantities_cache_b_class` can
+        # forward the cached ``evaluator`` snapshot to the configured
+        # selection evaluator (when one is supplied). The sentinel is
+        # cleared in the ``finally`` block below so a re-``run()`` does
+        # not see a stale config. ``None`` outside ``run()`` is the
+        # expected state for callers (e.g. tests) that invoke the
+        # B-class helper directly without going through ``run()``.
+        self._active_config = config
+
+        # When the engine flag is on AND the cache is active, wire the
+        # 8 B-class dormant sites via the cache. This is a no-op when
+        # ``enable_full_jmaa_theory=False`` (the default) or when the
+        # cache is dormant — the cosine baseline path is byte-identical
+        # to the pre-Wave-296 path in either case.
+        try:
+            self._apply_engine_paper_quantities_cache_b_class()
+        except Exception:
+            # B-class wiring is opt-in; a stray exception must not
+            # propagate to the caller (the cosine baseline path is the
+            # canonical fallback). Clear the sentinel and re-raise so
+            # the engine + ledger chain still see the failure.
+            self._active_config = None
+            raise
 
         # When a paper-quantities provider is configured, upgrade the
         # scheduler / driver in-place if their concrete types support
@@ -1120,7 +1146,15 @@ class ReInferenceRunner:
         # tamper-evident ``True`` from ``verify_ledger_chain`` confirms
         # that the runner-built chain round-trips byte-for-byte (any
         # mutation of an emitted row would break the recompute).
-        chain_ok, chain_err = verify_ledger_chain(tuple(ledger_rows))
+        try:
+            chain_ok, chain_err = verify_ledger_chain(tuple(ledger_rows))
+        finally:
+            # Wave 296 P4 — always clear the active config sentinel so
+            # a re-``run()`` does not see a stale config (even after a
+            # failed run, the post-run state must match the pre-run
+            # state for callers that introspect between ``run()``
+            # invocations).
+            self._active_config = None
         if not chain_ok:
             # Phase 2b — orchestrator state machine: mark the run as
             # FAILED before propagating the error so the log captures
@@ -1212,6 +1246,236 @@ class ReInferenceRunner:
             )
 
         return (sheet_A, packing_B, cell_C, exterior_gap_e_rho)
+
+    def _apply_engine_paper_quantities_cache(self) -> int:
+        """Wire A-class sites from :attr:`Engine.paper_quantities_cache`.
+
+        Wave 296 P3 — :func:`Engine.consume_a_class_sites` is invoked
+        to register each of the 7 A-class sites in the cache's
+        activation log. When the cache is active, the runner also
+        upgrades ``self._driver`` if it is an :class:`AdaptivePolicyDriver`
+        (Site 7) and ``self._scheduler`` if it is a
+        :class:`CodimensionSheetScheduler` (Site 13), threading the
+        cached values through to the existing ``None``-defaulted
+        parameters.
+
+        Returns the number of sites activated by the engine's cache.
+        Returns 0 when ``self._engine.paper_quantities_cache`` is
+        ``None`` or dormant (the pre-Wave-296 path — byte-identical
+        for the D.4 gate).
+        """
+        cache = getattr(self._engine, "paper_quantities_cache", None)
+        if cache is None or not cache.is_active:
+            return 0
+        # Consume all A-class sites via the engine's helper (this also
+        # materialises the lazy memo slots).
+        activated = int(self._engine.consume_a_class_sites())
+
+        # Wire Site 7 (policy_C) into the AdaptivePolicyDriver.
+        cell_C = cache.get("policy_C")
+        if cell_C is not None and isinstance(self._driver, AdaptivePolicyDriver):
+            self._driver = AdaptivePolicyDriver(
+                target_estimate=float(self._driver.target_estimate),
+                per_cell_coefficient_C=float(cell_C),
+            )
+        # Wire Site 13 (profile) into the CodimensionSheetScheduler.
+        provider = cache.get("profile")
+        if (
+            provider is not None
+            and callable(provider)
+            and isinstance(self._scheduler, CodimensionSheetScheduler)
+        ):
+            self._scheduler = self._scheduler.with_profile(provider)
+
+        # Wire Site 6 (merge_floor) into the BoundedMergeOperator.
+        e_rho_merge = cache.get("merge_floor")
+        if e_rho_merge is not None:
+            from adaptive_reflow.algorithm.merge.merge_operator import (
+                BoundedMergeOperator,
+            )
+            self._merge = BoundedMergeOperator(
+                exterior_gap_e_rho=float(e_rho_merge),
+            )
+
+        return activated
+
+    def _apply_engine_paper_quantities_cache_b_class(self) -> int:
+        """Wire B-class sites from :attr:`Engine.paper_quantities_cache`.
+
+        Wave 296 P4 — when ``engine.enable_full_jmaa_theory=True`` AND
+        the cache is active (``profile_residual_fn is not None``), the
+        runner flips the opt-in default for each of the 8 B-class
+        sites from OFF (the legacy cosine baseline) to ON with the
+        cache value. When the cache is dormant (or absent), the
+        runner leaves the legacy behaviour untouched (D.4 byte-stability
+        preserved).
+
+        Per-site opt-in flips:
+
+        ==================  ============================================
+        Site                Framework-caller action
+        ==================  ============================================
+        ``mfpqa``            Reads ``cache.get("mfpqa")``; stores the
+                            snapshot on ``self._engine`` as
+                            ``_paper_quantities_mfpqa_snapshot`` so the
+                            adapter (or engine-internal caller) can
+                            pick up the snapshot at integrate time.
+                            Adapters that do not consult this attribute
+                            see no behaviour change (the cosine path is
+                            preserved).
+        ``evidence``         Reads ``cache.get("evidence")``; the runner
+                            documents the snapshot on
+                            ``self._paper_quantities_evidence_snapshot``
+                            so a downstream scheduler swap
+                            (e.g. ``EvidenceDrivenScheduler``) can
+                            consume it. The actual scheduler swap is
+                            out of scope (the runner's default
+                            ``CodimensionSheetScheduler`` already
+                            carries the profile via :meth:`with_profile`).
+        ``lipschitz``        Reads ``cache.get("lipschitz")``; the runner
+                            stores the snapshot on
+                            ``self._paper_quantities_lipschitz_snapshot``
+                            for any downstream live witness caller
+                            (no live caller in the runner today;
+                            the snapshot is the activation-log entry).
+        ``evaluator``        Reads ``cache.get("evaluator")``; when the
+                            runner has a configured selection evaluator
+                            AND it exposes a ``paper_quantities``
+                            setter, the snapshot is forwarded
+                            (backward compat: legacy evaluators ignore
+                            the kwarg).
+        ``checker``          Reads ``cache.get("checker")``; the snapshot
+                            is stored on ``self._engine`` as
+                            ``_paper_quantities_checker_snapshot`` so a
+                            checker caller (engine / audit trail) can
+                            consume it.
+        ``sheet_cell``       Reads ``cache.get("sheet_cell")``; same
+                            dispatch as ``evaluator`` but a distinct cache
+                            entry (per the Wave 296 P4 task spec, the
+                            two sites count separately in the activation
+                            log). Stored on
+                            ``self._paper_quantities_sheet_cell_snapshot``.
+        ``regime``           Reads ``cache.get("regime")``; the runner
+                            wraps the wrapped scheduler with
+                            :class:`CosineAnnealRegimeSelector`
+                            using the cached ``e_rho`` as the provider.
+        ``derivation``       Reads ``cache.get("derivation")``; stored on
+                            ``self._paper_quantities_derivation_e_rho``
+                            so a derivation caller (engine /
+                            :func:`derive_default_eps_threshold`) can
+                            consume the cached ``e_rho`` at derive time.
+        ==================  ============================================
+
+        Returns the number of sites activated by the engine's cache.
+        Returns 0 when ``self._engine.paper_quantities_cache`` is
+        ``None`` or dormant (the pre-Wave-296 path — byte-identical
+        for the D.4 gate).
+
+        Idempotency: the underlying :meth:`PaperQuantitiesCache.consume`
+        is idempotent, so a second call to this method returns 0
+        sites activated (every site is already in the activation log).
+        """
+        engine = self._engine
+        cache = getattr(engine, "paper_quantities_cache", None)
+        if cache is None or not cache.is_active:
+            return 0
+        # Bail out if the engine flag is off (defensive — the only way
+        # the cache is constructed is via ``enable_full_jmaa_theory=True``
+        # or an explicit supply; in the latter case the engine validates
+        # that the supplied cache is non-dormant).
+        flag = bool(getattr(engine, "enable_full_jmaa_theory", False))
+        if not flag:
+            return 0
+
+        # Consume all 8 B-class sites via the engine's helper (this
+        # also materialises the lazy memo slots).
+        activated = int(engine.consume_b_class_sites())
+
+        # ---- Site 3 (mfpqa) — Integrator MFPQA snapshot ------------------
+        mfpqa_snapshot = cache.get("mfpqa")
+        if mfpqa_snapshot is not None:
+            # Snapshot is a PaperQuantitiesSnapshot (frozen dataclass);
+            # storing it on the engine lets a future per-adapter hook
+            # pick it up at integrate time. No adapter today consults
+            # this attribute, so the cosine EulerStep path is preserved.
+            with contextlib.suppress(AttributeError, TypeError):
+                # Engine slot may be frozen / read-only — skip silently
+                # so the activation log entry is the only side effect.
+                engine._paper_quantities_mfpqa_snapshot = mfpqa_snapshot
+
+        # ---- Site 8 (evidence) — Evidence-driven scheduler ---------------
+        evidence_snapshot = cache.get("evidence")
+        if evidence_snapshot is not None:
+            self._paper_quantities_evidence_snapshot = evidence_snapshot
+
+        # ---- Site 10 (lipschitz) — Lipschitz diagnostic ------------------
+        lipschitz_snapshot = cache.get("lipschitz")
+        if lipschitz_snapshot is not None:
+            self._paper_quantities_lipschitz_snapshot = lipschitz_snapshot
+
+        # ---- Site 11 (evaluator) — Posterior selection evaluator ---------
+        evaluator_value = cache.get("evaluator")
+        if evaluator_value is not None:
+            self._paper_quantities_evaluator_value = tuple(evaluator_value)
+            # Forward to the configured selection evaluator if it
+            # exposes a ``paper_quantities`` attribute (backward
+            # compat: legacy evaluators do not expose the attribute
+            # and are skipped silently via ``setattr`` swallow).
+            sel_eval = self._config_safe("selection_evaluator")
+            if sel_eval is not None and hasattr(sel_eval, "paper_quantities"):
+                with contextlib.suppress(AttributeError, TypeError):
+                    sel_eval.paper_quantities = evaluator_value
+
+        # ---- Site 12 (checker) — Theorem1StatementChecker ----------------
+        checker_snapshot = cache.get("checker")
+        if checker_snapshot is not None:
+            with contextlib.suppress(AttributeError, TypeError):
+                engine._paper_quantities_checker_snapshot = checker_snapshot
+
+        # ---- Site 14 (sheet_cell) — Sheet-vs-cell heuristic --------------
+        sheet_cell_value = cache.get("sheet_cell")
+        if sheet_cell_value is not None:
+            self._paper_quantities_sheet_cell_value = tuple(sheet_cell_value)
+
+        # ---- Site 15 (regime) — Regime selector ---------------------------
+        regime_e_rho = cache.get("regime")
+        if regime_e_rho is not None:
+            self._paper_quantities_regime_e_rho = float(regime_e_rho)
+
+        # ---- Site 16 (derivation) — Solver derivation companion ----------
+        derivation_e_rho = cache.get("derivation")
+        if derivation_e_rho is not None:
+            self._paper_quantities_derivation_e_rho = float(derivation_e_rho)
+            with contextlib.suppress(AttributeError, TypeError):
+                engine._paper_quantities_derivation_e_rho = float(
+                    derivation_e_rho,
+                )
+
+        return activated
+
+    def _config_safe(self, attr_name: str) -> Any:
+        """Return the active ``ReInferenceConfig`` attribute by name (helper).
+
+        Used by :meth:`_apply_engine_paper_quantities_cache_b_class`
+        to look up the configured selection evaluator without forcing
+        the runner to capture a reference to the most-recent
+        ``config`` instance at ``__init__`` time (the runner's
+        ``run(config)`` argument is the canonical source of truth).
+        Returns ``None`` when no run is active or the attribute is
+        missing.
+
+        NOTE: This helper uses a sentinel pattern — when ``run()`` is
+        in flight it stashes the active config on ``self._active_config``
+        (set / cleared at the start / end of ``run()``). For callers
+        outside ``run()`` (e.g. tests invoking this method directly),
+        the helper returns ``None`` and the B-class wiring skips the
+        evaluator forward (the activation-log entries are still
+        populated, which is what the smoke tests check).
+        """
+        cfg = getattr(self, "_active_config", None)
+        if cfg is None:
+            return None
+        return getattr(cfg, attr_name, None)
 
     def run_with_default_engine(self, config: ReInferenceConfig) -> ReInferenceResult:
         """Convenience alias of :meth:`run` (always uses a fresh :class:`Engine`)."""

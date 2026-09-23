@@ -1,4 +1,4 @@
-# FlowA：面向 Flow-Matching 检查点的训练无关、按论文量驱动的再推理框架
+# FlowA：面向冻结 Flow-Matching 检查点的类型化契约再推理框架
 
 [English](README.md) | [中文](README.zh.md)
 
@@ -8,18 +8,21 @@
 [![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)](#tnnls-submission-package--tnnls-投稿材料)
 [![Adapters](https://img.shields.io/badge/adapters-16-orange.svg)](#repository-structure--仓库结构)
 
-**Last updated / 最近更新:** 2026-09-23 (Wave 291 publishable). 源码冻结于 `v3.1-internal-publishable` 标签。
+**Last updated / 最近更新:** 2026-09-23 (Wave 297 narrative reframe). 源码冻结于 `v3.1-internal-publishable` 标签。
 
 **Scheduler scope of this README / 本 README 的调度器适用范围:** All 7 headline numbers in the [Headline Results](#headline-results--头条结果) section were produced under `CosineAnnealScheduler` (the controller that ignores all 4 paper quantities). `CodimensionSheetScheduler` 和其他 paper-quantity-grounded 控制器 (`PaperRatioAdaptiveScheduler`、`EvidenceDrivenScheduler`、`ConvergenceAdaptiveScheduler`) 均为研究阶段；详见 Wave 287 代码路径审计 + Wave 291 sweep 审计，以及位于 [`docs/audit/wave292-p1-pipeline-inventory.md`](docs/audit/wave292-p1-pipeline-inventory.md) 的 16 个 site 枚举。
 
+**Wave 297 narrative reframe / Wave 297 叙事重构:** 论文叙事现在以**类型化契约框架**（将流匹配推理重构为跨三个域的多轮再推理层，具有四端口控制面）和**11 个 R+K 单元上的系统性实证显著性**为引领。JMAA 定理 1 + 引理 2-5 现在定位为**一个理论伴生透镜**（而非框架的本体），置于论文 §6，伴以 CodimensionSheetScheduler 在 R6 上的部分验证及 Wave 296（`PaperQuantitiesCache` opt-in flag）进行中的全 16 站点激活。标题去除 "Paper-Quantity-Driven"；框架重构本身成为头条。详见 [`docs/audit/wave297-p2-paper-design.md`](docs/audit/wave297-p2-paper-design.md) 的章节重构设计。
+
 **Wave 290 + 291 工程说明:** Wave 290 P3 batched framework harness ([`tools/batched_framework_cifar.py`](tools/batched_framework_cifar.py)) 提供 byte-deterministic FID-only 路径，绕过 `engine.run_round` 用于 codim lever sweep，在不修改任何 framework 源码 (`adaptive_reflow/`) 的前提下实现 ~28-35× framework_wall 加速。Wave 290 P1 审计 (`docs/audit/wave290-p1-bottleneck-confirmed.md`) 显示每记录框架循环存在跨调度器恒定的 35-55× kernel-launch gap，batched harness 将其消除。Wave 291 P5 3-seed 验证 (`docs/audit/wave291-p5-3seed-results.md`) 确认 `CodimensionSheetScheduler` `n_min=0.0 / L=4 / eps=10.0` 头条在 3 个种子下与 cosine 基准 byte-equivalent (`STRONG`)，且 real_g vs permuted 轮廓控制在 cell regime 下**惰性**——W286 P "scheduler_structure lever" 结论全局成立。
 
-**TL;DR / 概述.** FlowA 是一个 *训练无关 (training-free)、与求解器无关 (solver-agnostic)* 的再推理 (re-inference) 框架，包裹已部署的 flow-matching 检查点并依据局部速度场几何自适应推理循环。该框架将由规范 F 侧 (canonical F-side) 见证函数导出的四个论文量 (paper-quantity invariants) 作为一等调度器输入。在覆盖蛋白 (LineageFlow)、分子三维 (FlowMol3) 与图像 (CIFAR-10 RF、MNIST FM、2D) 的 **七个 R-level 单元** 上完成验证。24.6× 的壁钟差距通过 CUDA-graph capture 缩小 76.8%。
+**TL;DR / 概述.** FlowA 是一个 *训练无关 (training-free)、与求解器无关 (solver-agnostic)* 的类型化契约 (typed-contracts) 框架，通过在冻结检查点与采样循环之间插入一个自适应的多轮再推理层来重构流匹配推理管道。该框架暴露一个四端口控制面（`SchedulerProtocol`、`PolicyDriverProtocol`、`MergeOperatorProtocol`、`RestartBlenderProtocol`），跨三个域（算法层、评估层、适配层）划分，并以一个每轮状态包 (state bundle) 串联。在 **七个 R-level 单元 + 四个 K-cell** 上以 3 种子 × 4 Bonferroni 族 × D.4 byte-stable 30/30 回归完成验证：在匹配样本质量下实现 2.5–10× 跨预算 NFE 压缩，在全部三个 Tier-3 真实检查点（LineageFlow、Kanzi、FlowMol3）上 byte-stable 综合轴提升，且以一等公民方式披露匹配 NFE 图像域边界（CIFAR-10 RF NFE=50 处 −10.7%）。24.6× 的壁钟差距通过 CUDA-graph capture 缩小 76.8%。
 
 ### Quick Navigation / 快速导航
 
-- [Headline Results / 头条结果](#headline-results--头条结果) — 七个 R-level 单元概览
-- [Architecture / 架构](#architecture--架构) — 4 论文量 + 5-组件调度器
+- [Headline Results / 头条结果](#headline-results--头条结果) — 七个 R-level 单元 + 四个 K-cell 概览
+- [Deep Innovations / 深度创新](#deep-innovations--深度创新) — 七项真正新颖的首要贡献
+- [Architecture / 架构](#architecture--架构) — 类型化四端口控制面 + 13 调度器（9 基线 + 4 论文量驱动控制器）
 - [Installation / 安装](#installation--安装) — 三个 venv (FlowMol3 / LineageFlow / Kanzi)
 - [Quick Start / 快速开始](#quick-start--快速开始) — 一键验证投稿门槛
 - [Reproducing the Paper / 复现论文](#reproducing-the-paper--复现论文) — 每单元脚本与期望输出
@@ -32,6 +35,7 @@
 ## Contents / 目录
 
 - [Headline Results / 头条结果](#headline-results--头条结果)
+- [Deep Innovations / 深度创新](#deep-innovations--深度创新)
 - [Architecture / 架构](#architecture--架构)
 - [Installation / 安装](#installation--安装)
 - [Quick Start / 快速开始](#quick-start--快速开始)
@@ -75,6 +79,37 @@
 
 **Statistical methods / 统计方法**: TOST equivalence testing (16 cells), Jonckheere-Terpstra ordered test (R2 + R6), BF01 Bayes factor (16 cells), DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z=+1.117, I²=99.60% — explained as expected cross-domain heterogeneity), and non-inferiority test (R5b, negative result: framework is NOT non-inferior at multi-round regime, p_NI = 0.9985). Full details in [DATA_PRESENTATION.md §3](DATA_PRESENTATION.md).
 
+**K-cells (Wave 297 expansion) / K-单元（Wave 297 扩展）:** K1 (FlowMol3 RDKit, d_z=+1.36 borderline), K4 (LineageFlow scPerplexity, cluster-robust WINS across all protein tiers, d_z=−1.077), K5 (LineageFlow pLDDT, hard-tier framework_WINS selectively with d_z=+1.840, easy-tier REGRESSES-by-direction), K7 (LineageFlow novelty@0.95=1.0000 d_z=∞).
+
+---
+
+## Deep Innovations / 深度创新
+
+Beyond the empirical results, the framework ships seven **genuinely novel** primary contributions (per the Wave 298 P6 deep-innovation inventory at `docs/audit/wave298-p6-deep-innovations.md`, post-W298 P5 literature re-classification). These are the paper's primary contributions (§3 Framework + §4 Scheduler Family), not just supporting engineering.
+超越实证结果，框架提供七项 **真正新颖的** 主要贡献（依据 Wave 298 P6 deep-innovation 清单 `docs/audit/wave298-p6-deep-innovations.md`，W298 P5 文献重分类之后）。这些是论文的主要贡献（§3 框架 + §4 调度器族），不仅仅是支撑性工程。
+
+| # | Innovation / 创新 | Bucket / 类别 | One-line novelty / 一句话新颖点 | Paper landing / 论文落位 |
+|:---:|---|---|---|---|
+| 1 | **Hash-Chained Ledger Rows w/ O(1) Verification** ([CLM-078](docs/CLAIMS.md#CLM-078)) | Code #2 | SHA-256 chain over canonical row fields; tamper detected at append time with one hash computation per row (vs O(R) full re-walk for `git fsck`); `ParallelLedgerChain.finalize` produces the same head hash as the sequential chain | §3, §8 |
+| 2 | **PEP 695 Generic State Machine w/ Byte-Deterministic Log** ([CLM-079](docs/CLAIMS.md#CLM-079)) | Code #4 | Stdlib-only state machine library with HSM, parallel regions, history pseudo-states, visualization, and wall-clock-free `TransitionLog` (no `datetime.now()`, no `id()`, no `random.random()`); mypy --strict catches invalid literals | §3, §8 |
+| 3 | **Capability-Token Handshake w/ Fail-Closed Audit Trail** ([CLM-080](docs/CLAIMS.md#CLM-080)) | Code #1 | Per-adapter 9-bool-flag `AdapterCapabilities` enforced at every dispatch; mismatches accumulate `":"`-delimited `audit_codes` (e.g. `capability_unsupported:foo:continuous_kind_not_advertised`) rather than crash — partial rounds remain auditable via `LedgerRow` | §3, §5 |
+| 4 | **Typed Four-Port Wire Carrier + Auto-Wrap** ([CLM-081](docs/CLAIMS.md#CLM-081)) | Code #5 | 5 typed `Condition` subclasses + discriminated `condition_kind` literal; `ODEConditionDelta.__post_init__` auto-wraps raw dicts into typed `MappingConditionAdapter` for 2356-test back-compat — closes the gap between Pydantic v2 breaking-change migration and forever-untyped legacy | §3, §5 |
+| 5 | **Honest Disclosure When Hypothesis Is Refuted** ([CLM-082](docs/CLAIMS.md#CLM-082)) | Method #1 | Inline additive publication of refuted lever hypotheses as `W286 P -> W291 P4 -> W292 re-anchor` chains in `docs/CLAIMS.md`; ACTIVE status preserved verbatim (refutations are ADDENDA, not status flips) | §1, §8, §9 |
+| 6 | **Wave-Based Audit Chain + Topic-Cluster Cross-Reference** ([CLM-083](docs/CLAIMS.md#CLM-083)) | Method #2 | 24 waves × multi-phase self-contained `docs/audit/waveNNN-pK-*.md` artefacts (TL;DR + Method + Verdicts + INVARIANTS + Edit discipline); `docs/audit/INDEX.md` re-clusters by topic so reviewers answer questions without grepping wave numbers | §1, §8, §10 |
+| 7 | **Lazy-Memoized Paper-Quantity Cache w/ Site-Aware Dispatch** ([CLM-084](docs/CLAIMS.md#CLM-084)) | Code #3 | Single dormant/active constructor; 15 JMAA theory sites share one cache keyed by `site_name` via `PAPER_QUANTITIES_SITE_NAMES` closed-set; per-site return shape + idempotent `consume()` activation log | §4, §6, §9, §10 |
+
+**Reviewer-resilience ranking / 评审弹性排名** (post-W298 P5 re-classification, defensibility × novelty × reviewer-value):
+1. Hash-chained ledger — strongest claim, Git packfile verifies in O(R), this is O(1) at append
+2. PEP 695 state machine — `transitions`/`python-statemachine` use `datetime.now()`; byte-deterministic log gap is documented in their source
+3. Capability-token handshake — ONNX Runtime's `CanHandle` is hard fail; the accumulation pattern is verified by tests
+4. Typed wire carrier + auto-wrap — incremental migration path closes the "break the world" / "forever untyped" gap
+5. Honest disclosure — closer to lab-notebook best practice (Knuth) than typical ML papers
+6. Wave-based audit chain — Linux kernel `Documentation/` closest prior art; per-wave INVARIANTS + Edit discipline is project-specific
+7. Lazy-memoized paper-quantity cache — closed-set site vocabulary + per-site return shape is unique
+
+**Full inventory / 完整清单:** 24 total innovations documented (7 genuinely novel + 7 incremental + 5 methodology + 5 engineering utilities) at `docs/audit/wave298-p6-deep-innovations.md`. Each novel innovation has ≥4 file:line anchors + ≥2 wave-doc anchors + 4 prior-art poles + concrete reviewer-value statement.
+完整清单 24 项创新（7 真正新颖 + 7 增量 + 5 方法论 + 5 工程工具）见 `docs/audit/wave298-p6-deep-innovations.md`。
+
 ---
 
 ## Architecture / 架构
@@ -87,17 +122,19 @@
                                          │ v_θ(x, t)
                                          ▼
         ┌────────────────────────────────────────────────────────────────┐
-        │              PAPER-QUANTITY-DERIVED LAYER                        │
-        │   A_g (Lipschitz) | B_g (NFE decay) | C_g (bias) | e_ρ (gap)   │
-        │            g(x) = (1 + 0.25·tanh(x))·sin(x)                     │
+        │   TYPED FOUR-PORT SURFACE (three-domain split)                  │
+        │   SchedulerProtocol | PolicyDriverProtocol                      │
+        │   MergeOperatorProtocol | RestartBlenderProtocol                │
+        │   across {algorithm layer, evaluation layer, adapter layer}     │
         └────────────────────────────────┬───────────────────────────────┘
                                          │
                                          ▼
         ┌────────────────────────────────────────────────────────────────┐
-        │         5-COMPONENT SCHEDULER ARCHITECTURE                      │
-        │   CosineAnnealScheduler | CodimensionSheetScheduler             │
-        │   BoundedMergeOperator | EvidenceDrivenScheduler | BRAI         │
-        │   + TierAwareCodimensionSheetScheduler wrapper                  │
+        │   13-SCHEDULER FAMILY (9 baselines + 4 paper-quantity ctrl)     │
+        │   CosineAnneal | Constant | Linear | Exponential | Polynomial    │
+        │   Sigmoid | AdaptivePID | EDM | FreeTraj                       │
+        │   + CodimensionSheet | PaperRatioAdaptive |                    │
+        │     EvidenceDriven | ConvergenceAdaptive                       │
         └────────────────────────────────┬───────────────────────────────┘
                                          │
                                          ▼
@@ -107,7 +144,7 @@
         └────────────────────────────────────────────────────────────────┘
 ```
 
-**4 paper quantities** are derived from a canonical F-side witness g(x)=(1+0.25·tanh(x))·sin(x) under the framework default F-side profile (d=1.0, c=1.0, ρ=0.1, η=0.1); for 3 core adapters (LineageFlow, Kanzi, FlowMol3) the empirical profile is substituted (within 15% of canonical A_g). The 5-component scheduler consumes these quantities directly as inputs and adapts per-record to local velocity-field geometry rather than depending on per-adapter paper-quantity values.
+**Three-domain split** (algorithm / evaluation / adapter) and the **four-port control surface** (`SchedulerProtocol`, `PolicyDriverProtocol`, `MergeOperatorProtocol`, `RestartBlenderProtocol`) are the structural claim: any frozen flow matching checkpoint that conforms to a minimal adapter protocol can be wrapped with zero-line changes. 13 schedulers partition into **9 without paper quantities** (cosine, constant, linear, exponential, polynomial, sigmoid, AdaptivePID, EDM, FreeTraj) and **4 paper-quantity-driven controllers** (CodimensionSheetScheduler, PaperRatioAdaptiveScheduler, EvidenceDrivenScheduler, ConvergenceAdaptiveScheduler). The 4 paper-quantity-driven controllers consume `A_g`/`B_g`/`C_g`/`e_rho` derived from a canonical F-side witness; **15 of 16 application sites are dormant under the validated cosine baseline**, with Wave 296 (`PaperQuantitiesCache` opt-in flag) in-progress for full activation.
 
 ---
 
@@ -194,11 +231,11 @@ docker run --gpus all -it flowa:tnnls-v3.0
 ```
 adaptive_reflow/         # core framework
 ├── universal/           # model-family-agnostic kernel
-├── algorithm/            # 5-component scheduler (CosineAnneal, CodimensionSheet, BoundedMerge, EvidenceDriven, BRAI) + TierAware wrapper
-├── framework/            # CUDA-graph capture
+├── algorithm/            # 13 schedulers (9 baselines + 4 paper-quantity-driven) + TierAware wrapper
+├── framework/            # CUDA-graph capture + typed four-port surface
 ├── stats/                # TOST / JT / BF01 / meta / NI
 ├── adapters/             # 16 concrete FM adapter families in ADAPTER_REGISTRY
-└── contracts/            # frozen typed dataclasses (paper quantities)
+└── contracts/            # frozen typed dataclasses (paper quantities + state bundle)
 configs/                  # configuration presets
 ```
 
@@ -224,7 +261,7 @@ data/                     # vendored upstream checkpoints (8 repos, all unmodifi
 |---|---|---|
 | D.4 byte-stable regression | **30/30 PASS** | `tests/test_d4_regression_vectors.py` |
 | mkdocs build --strict | **0 warnings** | `mkdocs.yml` |
-| claims consistency | **no drift** (76 ACTIVE claims) | `tools/check_claims_consistency.py` |
+| claims consistency | **no drift** (61 ACTIVE + 2 DEPRECATED claims) | `tools/check_claims_consistency.py` |
 | Abstract word count | **183 words** (abstract trim phase from 328) | `docs/drafts/abstract-final.md` |
 | Pytest | **5155 passed / 196 skipped** | `pytest tests/` |
 | Ruff lint (4-directory scope) | **0 findings** | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
@@ -283,8 +320,8 @@ Re-verify with `cd tnnls_submission && sha256sum -- *.md`.
 
 ```bibtex
 @article{flowa2026tnnls,
-  title={FlowA: Training-Free, Paper-Quantity-Driven Re-Inference
-         for Flow-Matching Checkpoints},
+  title={FlowA: A Typed-Contracts Re-Inference Framework
+         for Frozen Flow-Matching Checkpoints},
   author={[Authors block — to be filled at TNNLS submission]},
   journal={IEEE Transactions on Neural Networks and Learning Systems},
   year={2026},
@@ -306,7 +343,7 @@ Vendored upstream checkpoints and code (frozen at submission):
 - **[LineageFlow](https://github.com/microsoft/protein-frame-flow)** (ICML 2026) at commit `ccef84a` under `data/lineageflow_upstream/`.
 - **[Kanzi](https://github.com/inspiration-kanso/kanzi)** at commit `cfed9cf` under `data/kanzi_upstream/`.
 
-Theoretical foundation: Theorem 1 is self-contained in paper §2 (mathematical foundations), with the complete proof sketch and explicit computation of the four quantities in §2.5-§2.8.
+Theoretical companion (not the framework's identity): Theorem 1 + Lemmas 2-5 are stated within the self-contained companion document `docs/theory/theorem-1-self-contained.md` and reframed in §6 of the paper draft as one theoretical lens among several possible (Wasserstein, total-variation, Jensen–Shannon). The framework is valid independent of whether the theorem applies to a given cell.
 
 ## Contact / 联系方式
 

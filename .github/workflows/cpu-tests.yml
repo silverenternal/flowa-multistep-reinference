@@ -71,5 +71,13 @@ jobs:
         # D.4 contract -- running them together keeps the
         # ``paper_quantities`` cache contract honest.
         run: PYTHONPATH=. python -m pytest tests/test_paper_grounded_schedulers.py tests/test_d4_regression_vectors.py --no-header -q
+      - name: Run full JMAA theory integration test (Wave 296 P5)
+        # Wave 296 P5 — end-to-end integration test that verifies ALL
+        # 16 JMAA application sites are active when
+        # ``Engine(enable_full_jmaa_theory=True`` plus an active
+        # ``PaperQuantitiesCache``. Verifies the activation log
+        # contract from ``docs/audit/wave296-p5-activation-log.md``:
+        # 8 A-class + 8 B-class = 16 sites total. CPU only; no torch.
+        run: PYTHONPATH=. python -m pytest tests/test_full_jmaa_integration.py --no-header -q
       - name: Check docs against code
         run: PYTHONPATH=. python tools/check_docs_against_code.py

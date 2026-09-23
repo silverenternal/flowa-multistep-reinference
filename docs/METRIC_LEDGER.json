@@ -17,7 +17,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "23",
       "section_ref": "docs/CLAIMS.md:23",
       "notes": "Paper Lemma 2 proves the sheet tube's unnormalised"
@@ -38,7 +38,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "41",
       "section_ref": "docs/CLAIMS.md:41",
       "notes": "Paper Lemma 3 proves each isolated root cell contributes at"
@@ -59,7 +59,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "57",
       "section_ref": "docs/CLAIMS.md:57",
       "notes": "The shipped `selection_ratio = sheet_evidence /"
@@ -80,7 +80,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "77",
       "section_ref": "docs/CLAIMS.md:77",
       "notes": "The shipped `selection_ratio` is a fixed-noise replay"
@@ -101,7 +101,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "96",
       "section_ref": "docs/CLAIMS.md:96",
       "notes": "`CosineAnnealScheduler`'s monotonic decrease in fresh-noise"
@@ -122,7 +122,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "117",
       "section_ref": "docs/CLAIMS.md:117",
       "notes": "`CodimensionSheetScheduler` instantiates paper Lemma 2 +"
@@ -143,7 +143,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "140",
       "section_ref": "docs/CLAIMS.md:140",
       "notes": "Paper Lemma 4 proves the \"physical\" complement"
@@ -164,7 +164,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "156",
       "section_ref": "docs/CLAIMS.md:156",
       "notes": "The `selection_ratio` emitted by `EvidenceScaleGapMetric`"
@@ -185,7 +185,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "174",
       "section_ref": "docs/CLAIMS.md:174",
       "notes": "The framework's heuristic `selection_ratio` is"
@@ -206,7 +206,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "192",
       "section_ref": "docs/CLAIMS.md:192",
       "notes": "`SchedulerProtocol.config.n_min > 0` and the"
@@ -227,7 +227,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "209",
       "section_ref": "docs/CLAIMS.md:209",
       "notes": "The four paper quantities `A_g`, `B_g`, `C_g`, `e_rho`"
@@ -248,7 +248,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "236",
       "section_ref": "docs/CLAIMS.md:236",
       "notes": "Paper Theorem 1 proves `mu_{g,eps} --BL--> nu_g` as"
@@ -269,7 +269,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "253",
       "section_ref": "docs/CLAIMS.md:253",
       "notes": "Paper Corollary 1 deduces the normalisation lower bound"
@@ -290,7 +290,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "271",
       "section_ref": "docs/CLAIMS.md:271",
       "notes": "Paper Corollary 1 proves"
@@ -311,7 +311,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "287",
       "section_ref": "docs/CLAIMS.md:287",
       "notes": "The framework's `n_cap` ramp is a convex mixing weight on"
@@ -332,7 +332,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "305",
       "section_ref": "docs/CLAIMS.md:305",
       "notes": "The prototype `_paper_evidence_balance` helper historically"
@@ -353,7 +353,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "335",
       "section_ref": "docs/CLAIMS.md:335",
       "notes": "The shipped `selection_ratio` does NOT converge to 1 over"
@@ -374,7 +374,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "369",
       "section_ref": "docs/CLAIMS.md:369",
       "notes": ""
@@ -395,7 +395,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "404",
       "section_ref": "docs/CLAIMS.md:404",
       "notes": "`SchedulerProtocol` is the canonical first-class"
@@ -416,7 +416,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "429",
       "section_ref": "docs/CLAIMS.md:429",
       "notes": "`BoundedMergeOperator` enforces a hard `[floor, cap]`"
@@ -437,7 +437,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "454",
       "section_ref": "docs/CLAIMS.md:454",
       "notes": "`SequentialScheduler` is the `adaptive_reflow` analog"
@@ -458,7 +458,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "481",
       "section_ref": "docs/CLAIMS.md:481",
       "notes": ""
@@ -479,7 +479,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "526",
       "section_ref": "docs/CLAIMS.md:526",
       "notes": "The `KDE-support-coverage` uplift"
@@ -500,7 +500,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "561",
       "section_ref": "docs/CLAIMS.md:561",
       "notes": "The Round-2 type-checker and lint-cleanup reduced the"
@@ -521,7 +521,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "612",
       "section_ref": "docs/CLAIMS.md:612",
       "notes": "`BoundedMergeOperator.merge` raises"
@@ -542,7 +542,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "642",
       "section_ref": "docs/CLAIMS.md:642",
       "notes": "`ConvergenceAdaptiveScheduler.record_round_feedback`"
@@ -563,7 +563,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "672",
       "section_ref": "docs/CLAIMS.md:672",
       "notes": "`EvidenceDrivenScheduler` (registered under the family"
@@ -584,7 +584,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "707",
       "section_ref": "docs/CLAIMS.md:707",
       "notes": "The eight plug-in families (scheduler, policy driver,"
@@ -605,7 +605,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "744",
       "section_ref": "docs/CLAIMS.md:744",
       "notes": "`FreeTrajScheduler` (arXiv:2507.10532, training-free"
@@ -626,7 +626,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "776",
       "section_ref": "docs/CLAIMS.md:776",
       "notes": "`MeanFlowMergeOperator` (arXiv:2505.13447, MeanFlow"
@@ -647,7 +647,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "808",
       "section_ref": "docs/CLAIMS.md:808",
       "notes": "The R3 adversarial survey"
@@ -668,7 +668,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "870",
       "section_ref": "docs/CLAIMS.md:870",
       "notes": "The C4 fix (Option F = Option A + Option B + minimal"
@@ -689,7 +689,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "961",
       "section_ref": "docs/CLAIMS.md:961",
       "notes": "The framework ships a modern, stdlib-only state"
@@ -710,7 +710,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "1004",
       "section_ref": "docs/CLAIMS.md:1004",
       "notes": "Every scheduler class that `SchedulerProtocol`"
@@ -731,7 +731,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "1078",
       "section_ref": "docs/CLAIMS.md:1078",
       "notes": "FlowA's 2D Rectified Flow experiment"
@@ -752,7 +752,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "1183",
       "section_ref": "docs/CLAIMS.md:1183",
       "notes": "FlowA's CIFAR-10 Rectified Flow experiment"
@@ -773,7 +773,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "1422",
       "section_ref": "docs/CLAIMS.md:1422",
       "notes": ""
@@ -794,7 +794,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "1557",
       "section_ref": "docs/CLAIMS.md:1557",
       "notes": "The fix-v2 capability set lands **four research-grade"
@@ -815,7 +815,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "1634",
       "section_ref": "docs/CLAIMS.md:1634",
       "notes": "The Phase-4 docstring audit"
@@ -836,7 +836,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "1708",
       "section_ref": "docs/CLAIMS.md:1708",
       "notes": "[`ARCHITECTURE.md`](../ARCHITECTURE.md) §1 / §4 / §7.1"
@@ -857,7 +857,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "1757",
       "section_ref": "docs/CLAIMS.md:1757",
       "notes": "The framework's `e_rho / 4` paper-quantity floor used"
@@ -878,7 +878,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "1799",
       "section_ref": "docs/CLAIMS.md:1799",
       "notes": "[`EvidenceScaleGapMetric`](../adaptive_reflow/eval/posterior_selection_evaluator.py)"
@@ -899,7 +899,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "1848",
       "section_ref": "docs/CLAIMS.md:1848",
       "notes": "The four CI-gate issues closed by the test/CI agent"
@@ -920,7 +920,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "1900",
       "section_ref": "docs/CLAIMS.md:1900",
       "notes": "On the R6 task (LineageFlow protein re-inference,"
@@ -941,7 +941,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "1962",
       "section_ref": "docs/CLAIMS.md:1962",
       "notes": "The Wave 184 n_rounds ablation (2 models × 6 variants"
@@ -962,7 +962,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "2037",
       "section_ref": "docs/CLAIMS.md:2037",
       "notes": "On the R6 task (LineageFlow protein re-inference,"
@@ -983,7 +983,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "2116",
       "section_ref": "docs/CLAIMS.md:2116",
       "notes": "The Wave 183 finer-NFE-curve evaluation (2 models ×"
@@ -1004,7 +1004,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "2198",
       "section_ref": "docs/CLAIMS.md:2198",
       "notes": "Wave 185 measures both the empirical BL distance"
@@ -1025,7 +1025,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "2281",
       "section_ref": "docs/CLAIMS.md:2281",
       "notes": "On the R6 task (LineageFlow protein re-inference,"
@@ -1046,7 +1046,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "2387",
       "section_ref": "docs/CLAIMS.md:2387",
       "notes": "On the R6 task (lineageflow synthetic protein re-"
@@ -1067,7 +1067,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "2496",
       "section_ref": "docs/CLAIMS.md:2496",
       "notes": "On the 2D post-cd70821 axis (after commit `cd70821`"
@@ -1088,7 +1088,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "2563",
       "section_ref": "docs/CLAIMS.md:2563",
       "notes": "The paper's \"5 adapters × 3 domains\" claim is"
@@ -1109,7 +1109,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "2673",
       "section_ref": "docs/CLAIMS.md:2673",
       "notes": "**Upgraded claim** (Wave 190 P2 supersedes the Wave 189 P4"
@@ -1130,7 +1130,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "2822",
       "section_ref": "docs/CLAIMS.md:2822",
       "notes": "**Cross-adapter Theorem 1 load-bearing cross-validation.**"
@@ -1151,7 +1151,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "2931",
       "section_ref": "docs/CLAIMS.md:2931",
       "notes": "FlowA's MNIST FM framework-vs-baseline sweep at N=1000,"
@@ -1172,7 +1172,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3009",
       "section_ref": "docs/CLAIMS.md:3009",
       "notes": "Wave 195 P2 applies the Wave 195 P1 spec (commit `d8452ef`,"
@@ -1193,7 +1193,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3149",
       "section_ref": "docs/CLAIMS.md:3149",
       "notes": "Wave 195 P3 applies the Wave 195 P1 spec"
@@ -1214,7 +1214,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3371",
       "section_ref": "docs/CLAIMS.md:3371",
       "notes": "Wave 195 P4 applies the Wave 195 P1 spec"
@@ -1235,7 +1235,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3509",
       "section_ref": "docs/CLAIMS.md:3509",
       "notes": "Wave 196 P4 upgrades Table A's R2 cell from Wave 195 P2"
@@ -1256,7 +1256,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3568",
       "section_ref": "docs/CLAIMS.md:3568",
       "notes": "Wave 196 P4 regenerates Table B from Wave 196 P2 paired"
@@ -1277,7 +1277,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3617",
       "section_ref": "docs/CLAIMS.md:3617",
       "notes": "Wave 201 delivers 4 additive eval-pipeline optimizations that project the LineageFlow N=1000 sweep wall time from Wave 84's >40 h estimate to ≈22 min at G=2 / N=4 — a ~110× speedup, of which the LPT length-balanced sharding component adds the 37% additional speedup over the round-robin N=4 baseline (round-robin baseline projection: ≈35 min; LPT projection: ≈22 min). The speedup is projected from the Wave 158 per-sequence wall time of ≈2.5 s/seq on a single GPU; the real-GPU measurement remains pending the resolution of the Wave 200 P2 underlying blockers (torch 1.13.1 vs Blackwell sm_120 + Python 3.10 venv constraint). The Wave 200 P2 blockers are GPU-stack-side, NOT pipeline-side; Wave 201 removes the pipeline-side contribution to the blocker chain. When the GPU-stack blockers are resolved, the Wave 201 plumbed pipeline can consume the next N=1000 sweep directly without further code changes. The 4 optimizations are CPU-only and GPU-agnostic (hermetically unit-tested on CPU with monkeypatched subprocess / multiprocessing fakes; no GPU / torch / OmegaFold / ESM-IF required for the test suite)."
@@ -1298,7 +1298,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3650",
       "section_ref": "docs/CLAIMS.md:3650",
       "notes": "Per the DeepSeek reviewer audit (received 2026-09-20), every head claim in the paper is now reported with audit-grade standardized statistics: (n_paired, mean_diff, sd_diff, t, df, p_raw, CI95_low, CI95_high, Cohen's d_z, test_type, family, α_bonferroni, bonf_sig). The 12-row audit-grade table is at `docs/tables/wave203-p4-standardized-stats.md` Table 1. DeepSeek's d_z/p recomputation audit identified 1 apparent inconsistency (k6 hard pLDDT d_z = +1.189 vs p = 4.82e-65 was computed as if df=999 instead of N=1000); after reconciliation the audit's recomputation used the Gaussian tail instead of Student's t — the original Wave 198 P3 p-values are CONSISTENT with the t-statistics when the correct t-table is used. The 2 prior p-value reporting bugs found and fixed in this Wave 203 P4 are: (i) Wave 196 P2 (4-arm N=30) reported t = 16.057 without matching df = 29 / 95% CI — both added; (ii) Wave 195 R5c (MNIST FM NFE=50 FID) reported p_raw = 1.32e-11 in the R-level table but the §7.4 per-paper-claim headline quoted a different family α — the explicit pre-registered family (R-level primary, α = 0.007143) is now added. CLM-057 (kanzi L2 endpoint movement) d_z = -30.15 triggers the §5.7 item #5 audit checklist (extreme paired-diff SD on n = 30 records implies near-zero variance — biologically implausible); the §5.7 item #5 audit checklist was **completed in Wave 214 P1+P2+P3**: the byte-stability concern was traced to a source-code regression (Wave 178 P2+P3 + Wave 196 P3 patch) that bypassed the Wave 95.P3.B trained-inverse bridge; the regression was fixed by Wave 214 P2 (bridge restored in `tools/_kanzi_sweep_runner.py:_synthesize_x_final_real` lines 414-491); the framework_inv_proj arm is now byte-stable against Wave 127 (0.8798 Å) per the N=10 smoke test (0.8758 Å, Δ = −0.004, well inside σ = 0.136 / √10 ≈ 0.043 SEM); CLM-057 status: **ACTIVE** (PROVISIONAL flag removed in Wave 214 P3); see `docs/audit/kanzi/p1-kanzi-byte-stability-regression.md`, `docs/audit/kanzi/p2-kanzi-rerun.md`, `docs/audit/paper_claims/p3-clm057-update.md`."
@@ -1319,7 +1319,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3684",
       "section_ref": "docs/CLAIMS.md:3684",
       "notes": "The k6 per-record arm (1000 records grouped into 4 Pfam families) is re-analyzed with Pfam family as cluster unit to address DeepSeek's reviewer-risk item #3 (\"per-record df=999 non-independent; reviewer will challenge\"). For each (tier, metric) cell, the cluster-robust machinery computes cluster_mean_diffs[k] = mean of per-record diffs in cluster k, cluster-level t = mean(cluster_mean_diffs) / (sd(cluster_mean_diffs) / √k) with cluster df = k - 1 = 3, ICC (one-way ANOVA), and N_eff (design effect). The 8-cell verdict distribution: 5 cluster-robust SUPPORTED (overall scPerplexity, hard/medium/easy scPerplexity, hard pLDDT), 1 cluster-robust REGRESSES-by-direction (easy pLDDT), 2 cluster-robust UNDERPOWERED/NOT-SIG (overall pLDDT UNDERPOWERED at cluster p = 5.53e-01; medium pLDDT NOT-SIG at cluster p = 2.60e-01). Headline implication: scPerplexity framework-WINS is cluster-robust across all tiers and overall; pLDDT framework-uplift is per-tier (hard SUPPORTED, easy REGRESSES-by-direction, medium NOT-SIG, overall UNDERPOWERED). The §10.38 / CLM-061 final-status framing is preserved verbatim with this cluster-robust caveat. The hard pLDDT cluster-robust p = 1.28e-02 marginally fails the strict 6-tier × 4-cluster Bonferroni α = 0.00208 (Wave 203 P4 §10.42 (d) acceptance gate #3) — the naive Bonferroni (within 6-cell per-tier family, α = 0.008333) is the primary paper-level claim; the cluster-robust caveat is documented for reviewer-side audit. Cross-adapter confirmation on LineageFlow remains BLOCKED-ON-DATA per Wave 199 P3 (the N=1000 sweep was killed for CPU wallclock; only N=5 smoke on disk, byte-identical baseline/framework values)."
@@ -1340,7 +1340,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3710",
       "section_ref": "docs/CLAIMS.md:3710",
       "notes": "Wave 206 P3 attempted a 3-seed re-run (seeds 42, 43, 44) of FlowMol3 fg_dev N=1000 sweep but was blocked by the DGL 2.4.0 graph ndata shape mismatch in `_solve_ode_upstream_batch` (n_molecules > 1) — the regression surfaces as `DGLError: Expect number of features to match number of nodes (len(u)). Got 20 and 2000 instead.` The single-mol path (n_molecules=1) is healthy but too slow for the 3-seed × N=1000 sweep budget (~17 h). The canonical Wave 87 / Wave 82 byte-stable seed=42 NFE=250 N=1000 sweep is reused as the 1-seed reference: baseline fg_dev = 0.6381122391671532 (n=999), framework fg_dev = 0.614627774616795 (n=1000), diff = −0.023484, framework_wins. The Wave 195 P2 R3 row audit-grade numbers are cross-referenced (Welch's t-test, unpaired, per-arm SD = 0.214): t = −2.453, df = 1996.998, p_raw = 0.01424, Cohen's d_s = −0.110, Bonferroni α = 0.05/7 = 0.007143, bonf_sig = False. The 3-seed pooled SD is NaN (uncomputable). The CLM-060 R3 fg_dev verdict (UNDERPOWERED, framework-wins by −0.0235) is preserved verbatim — Wave 206 P3 does NOT change §10.6 R3 number; it only formalizes the byte-stable reference + the blocked 3-seed sweep + the fix path. The fix path is on the camera-ready deferred list: tile per-mol `(x_0, a_0, c_0, e_0)` prior across batched DGL graph OR loop n_molecules with per-mol priors + add n_molecules=10 regression test."
@@ -1361,7 +1361,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3765",
       "section_ref": "docs/CLAIMS.md:3765",
       "notes": "Wave 206 P4 refreshes paired-t p-values for 4 R-level headline cells using the defensive `2*stats.t.sf(abs(t), df)` formula from Wave 195 P2 / Wave 204 P1 commit 72ba46e (replacing the buggy `2*(1-stats.t.cdf(...))` form that truncates to 0.0 below ~1e-16 due to 1-cdf floating-point precision loss). The 4 cells are:"
@@ -1382,7 +1382,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3789",
       "section_ref": "docs/CLAIMS.md:3789",
       "notes": ""
@@ -1403,7 +1403,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3794",
       "section_ref": "docs/CLAIMS.md:3794",
       "notes": ""
@@ -1424,7 +1424,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3852",
       "section_ref": "docs/CLAIMS.md:3852",
       "notes": ""
@@ -1445,7 +1445,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3859",
       "section_ref": "docs/CLAIMS.md:3859",
       "notes": ""
@@ -1466,7 +1466,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3867",
       "section_ref": "docs/CLAIMS.md:3867",
       "notes": ""
@@ -1487,7 +1487,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3871",
       "section_ref": "docs/CLAIMS.md:3871",
       "notes": ""
@@ -1508,7 +1508,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3880",
       "section_ref": "docs/CLAIMS.md:3880",
       "notes": ""
@@ -1529,9 +1529,156 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "3884",
       "section_ref": "docs/CLAIMS.md:3884",
+      "notes": ""
+    },
+    {
+      "metric_id": "CLM-078",
+      "kind": "CLAIM",
+      "title": "Wave 298 P1 + P6 — Hash-Chained Ledger Rows with Incremental O(1) Verification (Code #2 in the deep-innovation inventory). SHA-256 chain over canonical row fields detects tampering at append time with one hash computation per row, closing the gap between Git packfile's O(R) per-check re-walk and MLflow's lack of cryptographic chaining.",
+      "status": "UNKNOWN",
+      "claim_id": "CLM-078",
+      "baseline": "",
+      "framework": "",
+      "delta_abs": "",
+      "delta_pct": "",
+      "p_value": "",
+      "n": "",
+      "seed": "",
+      "arm": "",
+      "nfe": "",
+      "source_artifact_path": "docs/CLAIMS.md",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
+      "source_line": "3901",
+      "section_ref": "docs/CLAIMS.md:3901",
+      "notes": ""
+    },
+    {
+      "metric_id": "CLM-079",
+      "kind": "CLAIM",
+      "title": "Wave 298 P1 + P6 — PEP 695 Generic State Machine with Byte-Deterministic Transition Log (Code #4). Stdlib-only state machine library with PEP 695 generics + HSM + parallel regions + history + visualization + wall-clock-free transition log; closes the gap between `transitions`/`python-statemachine` (use `datetime.now()`) and byte-stable assertion.",
+      "status": "UNKNOWN",
+      "claim_id": "CLM-079",
+      "baseline": "",
+      "framework": "",
+      "delta_abs": "",
+      "delta_pct": "",
+      "p_value": "",
+      "n": "",
+      "seed": "",
+      "arm": "",
+      "nfe": "",
+      "source_artifact_path": "docs/CLAIMS.md",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
+      "source_line": "3905",
+      "section_ref": "docs/CLAIMS.md:3905",
+      "notes": ""
+    },
+    {
+      "metric_id": "CLM-080",
+      "kind": "CLAIM",
+      "title": "Wave 298 P1 + P3 + P6 — Capability-Token Handshake with Fail-Closed Audit Trail (Code #1). Per-adapter bool flags + per-channel domain mapping enforced at every dispatch; mismatches accumulate `\":\"`-delimited `audit_codes` rather than crash, so partial rounds remain auditable via the downstream `LedgerRow`.",
+      "status": "UNKNOWN",
+      "claim_id": "CLM-080",
+      "baseline": "",
+      "framework": "",
+      "delta_abs": "",
+      "delta_pct": "",
+      "p_value": "",
+      "n": "",
+      "seed": "",
+      "arm": "",
+      "nfe": "",
+      "source_artifact_path": "docs/CLAIMS.md",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
+      "source_line": "3909",
+      "section_ref": "docs/CLAIMS.md:3909",
+      "notes": ""
+    },
+    {
+      "metric_id": "CLM-081",
+      "kind": "CLAIM",
+      "title": "Wave 298 P1 + P6 — Typed Four-Port Wire Carrier with `Condition` Discriminated Union + Auto-Wrap (Code #5). Five typed `Condition` subclasses + discriminated `condition_kind` literal; `ODEConditionDelta.__post_init__` auto-wraps raw dicts for 2356-test back-compat — closes the gap between Pydantic v2 strict migration and forever-untyped legacy.",
+      "status": "UNKNOWN",
+      "claim_id": "CLM-081",
+      "baseline": "",
+      "framework": "",
+      "delta_abs": "",
+      "delta_pct": "",
+      "p_value": "",
+      "n": "",
+      "seed": "",
+      "arm": "",
+      "nfe": "",
+      "source_artifact_path": "docs/CLAIMS.md",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
+      "source_line": "3913",
+      "section_ref": "docs/CLAIMS.md:3913",
+      "notes": ""
+    },
+    {
+      "metric_id": "CLM-082",
+      "kind": "CLAIM",
+      "title": "Wave 298 P2 + P6 — Honest Disclosure When Hypothesis Is Refuted (Method #1). Inline additive publication of refuted lever hypotheses as `W286 P -> W291 P4 -> W292 re-anchor` chains in `docs/CLAIMS.md`; ACTIVE status preserved verbatim — refutations are ADDENDA, not status flips.",
+      "status": "UNKNOWN",
+      "claim_id": "CLM-082",
+      "baseline": "",
+      "framework": "",
+      "delta_abs": "",
+      "delta_pct": "",
+      "p_value": "",
+      "n": "",
+      "seed": "",
+      "arm": "",
+      "nfe": "",
+      "source_artifact_path": "docs/CLAIMS.md",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
+      "source_line": "3917",
+      "section_ref": "docs/CLAIMS.md:3917",
+      "notes": ""
+    },
+    {
+      "metric_id": "CLM-083",
+      "kind": "CLAIM",
+      "title": "Wave 298 P2 + P6 — Wave-Based Audit Chain with Topic-Cluster Cross-Reference (Method #2). 24 waves × multi-phase self-contained `docs/audit/waveNNN-pK-*.md` artefacts; `docs/audit/INDEX.md` re-clusters by topic so reviewers answer questions without grepping wave numbers.",
+      "status": "UNKNOWN",
+      "claim_id": "CLM-083",
+      "baseline": "",
+      "framework": "",
+      "delta_abs": "",
+      "delta_pct": "",
+      "p_value": "",
+      "n": "",
+      "seed": "",
+      "arm": "",
+      "nfe": "",
+      "source_artifact_path": "docs/CLAIMS.md",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
+      "source_line": "3921",
+      "section_ref": "docs/CLAIMS.md:3921",
+      "notes": ""
+    },
+    {
+      "metric_id": "CLM-084",
+      "kind": "CLAIM",
+      "title": "Wave 298 P1 + P6 — Lazy-Memoized Paper-Quantity Cache with Site-Aware Dispatch (Code #3). Single dormant/active constructor; 15 JMAA theory sites share one cache keyed by `site_name` via `PAPER_QUANTITIES_SITE_NAMES` closed-set; per-site return shape + idempotent `consume()` activation log.",
+      "status": "UNKNOWN",
+      "claim_id": "CLM-084",
+      "baseline": "",
+      "framework": "",
+      "delta_abs": "",
+      "delta_pct": "",
+      "p_value": "",
+      "n": "",
+      "seed": "",
+      "arm": "",
+      "nfe": "",
+      "source_artifact_path": "docs/CLAIMS.md",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
+      "source_line": "3925",
+      "section_ref": "docs/CLAIMS.md:3925",
       "notes": ""
     },
     {
@@ -1550,7 +1697,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "docs/CLAIMS.md",
-      "source_artifact_sha256": "182ffce55d2ef99fb4b919d64600284046df9df9c2a08d2bbad4a4fa979e14ab",
+      "source_artifact_sha256": "baf1e11ae69e09312c085040869951d6f631897db01c82822f4fcf81463a4aae",
       "source_line": "",
       "section_ref": "docs/GATES.md + AGENTS.md §4.1",
       "notes": "Live value: `**No drift detected.**`. verification command: `python3 tools/check_claims_consistency.py`. Source-of-truth surface: docs/CLAIMS.md."
@@ -1616,7 +1763,7 @@
       "source_artifact_sha256": "",
       "source_line": "",
       "section_ref": "docs/GATES.md + AGENTS.md §4.1",
-      "notes": "Live value: `5147 tests collected`. verification command: `python3 -m pytest tests/ -q --co`. Source-of-truth surface: tests/."
+      "notes": "Live value: `5246 tests collected`. verification command: `python3 -m pytest tests/ -q --co`. Source-of-truth surface: tests/."
     },
     {
       "metric_id": "G-RUFF",
@@ -2658,11 +2805,18 @@
     "CLAIM CLM-074 (line 3867): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED — defaulted to ACTIVE",
     "CLAIM CLM-075 (line 3871): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED — defaulted to ACTIVE",
     "CLAIM CLM-076 (line 3880): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED — defaulted to ACTIVE",
-    "CLAIM CLM-077 (line 3884): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED — defaulted to ACTIVE"
+    "CLAIM CLM-077 (line 3884): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED — defaulted to ACTIVE",
+    "CLAIM CLM-078 (line 3901): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED — defaulted to ACTIVE",
+    "CLAIM CLM-079 (line 3905): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED — defaulted to ACTIVE",
+    "CLAIM CLM-080 (line 3909): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED — defaulted to ACTIVE",
+    "CLAIM CLM-081 (line 3913): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED — defaulted to ACTIVE",
+    "CLAIM CLM-082 (line 3917): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED — defaulted to ACTIVE",
+    "CLAIM CLM-083 (line 3921): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED — defaulted to ACTIVE",
+    "CLAIM CLM-084 (line 3925): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED — defaulted to ACTIVE"
   ],
   "row_counts": {
-    "total": 126,
-    "CLAIM": 73,
+    "total": 133,
+    "CLAIM": 80,
     "HEADLINE": 7,
     "STATISTICAL": 5,
     "INSIGHT": 18,

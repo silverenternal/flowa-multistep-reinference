@@ -66,6 +66,18 @@ from adaptive_reflow.frame.adapter import (
     validate_state_bundle,
 )
 
+# Wave 296 P2 — JMAA theory integration opt-in (15 dormant sites
+# inventory from ``docs/audit/wave292-p1-pipeline-inventory.md``).
+# When ``enable_full_jmaa_theory=True`` the engine constructs a
+# :class:`PaperQuantitiesCache` and exposes it via
+# :attr:`paper_quantities_cache`; per-site wiring reads
+# ``cache.is_active`` and routes through the cache when active. When
+# ``False`` (the default), the property returns ``None`` and the
+# cosine-baseline path is byte-identical to the pre-Wave-296 engine.
+from adaptive_reflow.framework.paper_quantities_cache import (  # noqa: E402
+    PaperQuantitiesCache,
+)
+
 # Wave 233 P6 — SHA-256 digest cache for StateBundle (identity-keyed
 # memoization). When ``digest_cache`` is supplied to ``Engine.__init__``
 # the engine routes its :func:`_digest_state` calls through the cache so
@@ -985,6 +997,8 @@ class Engine:
         operation_steps: tuple[str, ...] = DEFAULT_OPERATION_STEPS,
         feature_flag: bool | None = None,
         digest_cache: _StateBundleDigestCache | None = None,
+        enable_full_jmaa_theory: bool = False,
+        paper_quantities_cache: PaperQuantitiesCache | None = None,
     ) -> None:
         self._operation_steps = tuple(operation_steps)
         if not self._operation_steps:
@@ -1004,6 +1018,35 @@ class Engine:
         self._digest_cache: _StateBundleDigestCache | None = (
             digest_cache if digest_cache is not None else None
         )
+        # Wave 296 P2 — JMAA theory integration opt-in flag. When
+        # ``False`` (the default — byte-identical to the pre-Wave-296
+        # cosine baseline), the engine does NOT instantiate a
+        # ``PaperQuantitiesCache``; per-site wiring sees
+        # ``engine.paper_quantities_cache is None`` and falls back to
+        # the legacy ``None`` / cosine path. When ``True`` and the
+        # caller did NOT supply a cache, the engine constructs a
+        # DORMANT cache (is_active=False); the cache becomes ACTIVE
+        # only when an adapter forwards a profile_residual_fn (Site 13
+        # in ``docs/audit/wave296-p1-architecture.md`` §3.3).
+        self._enable_full_jmaa_theory: bool = bool(enable_full_jmaa_theory)
+        # Validation contract: when the flag is True and the caller
+        # supplied a cache, the cache must be ACTIVE (an active flag
+        # with a dormant cache is a programming error). A dormant
+        # cache with the flag off is the documented default fallback.
+        if self._enable_full_jmaa_theory and paper_quantities_cache is not None:
+            if not paper_quantities_cache.is_active:
+                raise ValueError(
+                    "enable_full_jmaa_theory=True requires "
+                    "paper_quantities_cache with profile_residual_fn set "
+                    "(cache.is_active must be True); got a dormant cache"
+                )
+            self._paper_quantities_cache: PaperQuantitiesCache | None = (
+                paper_quantities_cache
+            )
+        elif self._enable_full_jmaa_theory:
+            self._paper_quantities_cache = PaperQuantitiesCache()  # dormant
+        else:
+            self._paper_quantities_cache = None
 
     @property
     def digest_cache(self) -> _StateBundleDigestCache | None:
@@ -1017,7 +1060,205 @@ class Engine:
         """
         return self._digest_cache
 
+    @property
+    def paper_quantities_cache(self) -> PaperQuantitiesCache | None:
+        """Return the JMAA paper-quantities cache (or ``None`` if disabled).
+
+        Wave 296 P2 surface: when ``enable_full_jmaa_theory=False``
+        (the default), the property returns ``None`` and per-site
+        wiring falls back to the pre-Wave-296 cosine path (byte-stable
+        for the D.4 gate). When ``enable_full_jmaa_theory=True``, the
+        property returns the cache (which may be DORMANT until an
+        adapter supplies a ``profile_residual_fn``); per-site wiring
+        reads ``cache.is_active`` and routes through the cache when
+        active.
+
+        See ``docs/audit/wave296-p1-architecture.md`` §2.3 for the
+        full design.
+        """
+        return self._paper_quantities_cache
+
+    # -- A-class site activation (Wave 296 P3) ------------------------------
+
+    # The 7 A-class sites from Wave 296 P1 §3.2 / Wave 292 P1 §1. Each
+    # site has an existing parameter (default None) that the framework
+    # caller can pass ``cache.get(site_name)`` into. The list below is
+    # the canonical A-class site set, ordered to match the task spec.
+    _A_CLASS_SITE_NAMES: tuple[str, ...] = (
+        "solver_hint",   # Site 2 — solver-level paper-quantity hint
+        "dt_floor",      # Site 4 — Dynamics dt floor
+        "alpha_floor",   # Site 4b — Dynamics alpha floor
+        "noise_bias",    # Site 5 — Theorem1DynamicNoiseBias
+        "merge_floor",   # Site 6 — BoundedMergeOperator exterior_gap
+        "policy_C",      # Site 7 — AdaptivePolicyDriver per_cell_C
+        "profile",       # Site 13 — adapter-level profile_residual_fn
+        "fid",           # Site 9 — InceptionV3TheoremAlignedFIDEvaluator
+    )
+
+    # -- B-class site activation (Wave 296 P4) ------------------------------
+
+    # The 8 B-class sites from Wave 296 P4. Each site has an opt-in
+    # switch whose default is OFF; when
+    # ``enable_full_jmaa_theory=True`` AND ``cache.is_active=True`` the
+    # site's effective default flips to ON with the cache value. When
+    # the cache is dormant (or absent), the site stays off and the
+    # cosine-baseline byte-stability is preserved.
+    #
+    # Sites 10 (Lipschitz diagnostic), 11/14 (Posterior selection
+    # evaluator + sheet-vs-cell heuristic), 12 (Checkers), and 16
+    # (solver derivation companion) were reclassified from A-class to
+    # B-class per the Wave 296 P4 task spec — the
+    # ``enable_full_jmaa_theory`` flag now governs their activation
+    # rather than the per-site ``paper_quantities=...`` parameter.
+    _B_CLASS_SITE_NAMES: tuple[str, ...] = (
+        "mfpqa",        # Site 3  — Integrator MFPQA (EulerStep → MultiFidelityPaperQuantityStep)
+        "evidence",     # Site 8  — Evidence-driven scheduler family
+        "lipschitz",   # Site 10 — Lipschitz diagnostic live caller (planar_bl_convergence_witness)
+        "evaluator",    # Site 11 — Posterior selection evaluator (sheet/cell evidence ratio)
+        "checker",      # Site 12 — Theorem1StatementChecker paper_quantities snapshot
+        "sheet_cell",   # Site 14 — Sheet-vs-cell heuristic (sheet_evidence/cell_evidence helpers)
+        "regime",       # Site 15 — Regime selector (CosineAnnealRegimeSelector)
+        "derivation",   # Site 16 — Solver derivation companion (BLConvergenceEpsilonSchedule)
+    )
+
+    def consume_a_class_sites(self) -> int:
+        """Consume the 7 A-class sites from the cache; return activation count.
+
+        Wave 296 P3 — the framework-caller's hook for wiring the A-class
+        dormant sites from ``docs/audit/wave296-p1-architecture.md`` §3.2
+        to :attr:`paper_quantities_cache`. When
+        ``enable_full_jmaa_theory=True`` and the cache is active
+        (``profile_residual_fn is not None``), this method:
+
+        1. Reads ``cache.get(site_name)`` for each of the 7 A-class
+           sites, materialising the cached paper quantity.
+        3. Calls ``cache.consume(site_name)`` so each site is added to
+           the activation log (``cache.activated_sites``).
+
+        Returns the number of distinct sites that were freshly
+        activated. Returns 0 when the cache is dormant or absent (the
+        pre-Wave-296 path — byte-identical for the D.4 gate).
+
+        Per-site wiring contract (Wave 296 P3):
+
+        =====================  ============================================
+        Site                   How the framework caller consumes it
+        =====================  ============================================
+        ``solver_hint``         solver-level paper-quantity hint (e_rho/4 floor)
+                                — passed into :func:`_floor_dt` via
+                                ``paper_quantities`` arg.
+        ``dt_floor``            Dynamics ``dt`` floor via :func:`_floor_dt`.
+        ``alpha_floor``         Dynamics ``alpha`` floor via ``BFNDynamics.step``
+                                ``paper_quantities`` kwarg.
+        ``noise_bias``          ``Theorem1DynamicNoiseBias`` constructed with
+                                the cached 4-tuple.
+        ``merge_floor``         ``BoundedMergeOperator`` constructed with
+                                ``exterior_gap_e_rho=cache.get("merge_floor")``.
+        ``policy_C``            ``AdaptivePolicyDriver`` constructed with
+                                ``per_cell_coefficient_C=cache.get("policy_C")``.
+        ``profile``             ``profile_residual_fn`` forwarded to
+                                ``CosineAnnealScheduler.__init__``.
+        ``fid``                 ``InceptionV3TheoremAlignedFIDEvaluator`` paper-
+                                quantities snapshot.
+        =====================  ============================================
+        """
+        cache = self._paper_quantities_cache
+        if cache is None or not cache.is_active:
+            return 0
+        activated = 0
+        for site_name in self._A_CLASS_SITE_NAMES:
+            # Touch the cache value (materialises the lazy memo slot).
+            _ = cache.get(site_name)
+            if cache.consume(site_name):
+                activated += 1
+        return activated
+
+    def consume_b_class_sites(self) -> int:
+        """Consume the 8 B-class sites from the cache; return activation count.
+
+        Wave 296 P4 — the framework-caller's hook for wiring the 8
+        B-class dormant sites from
+        ``docs/audit/wave296-p4-b-class-wired.md`` §3.2 to
+        :attr:`paper_quantities_cache`. When
+        ``enable_full_jmaa_theory=True`` AND the cache is active
+        (``profile_residual_fn is not None``), this method:
+
+        1. Reads ``cache.get(site_name)`` for each of the 8 B-class
+           sites, materialising the cached paper quantity.
+        2. Calls ``cache.consume(site_name)`` so each site is added to
+           the activation log (``cache.activated_sites``).
+
+        Returns the number of distinct sites that were freshly
+        activated. Returns 0 when the cache is dormant or absent (the
+        pre-Wave-296 path — byte-identical for the D.4 gate).
+
+        The B-class sites flip their *opt-in* default when the cache
+        is active (vs. the A-class sites which keep their
+        ``paper_quantities=None`` default and only plumb the cache
+        value through when supplied). The engine's
+        :meth:`consume_b_class_sites` is the single activation-log
+        boundary; per-site opt-in flips happen at the framework-caller
+        site (see
+        ``ReInferenceRunner._apply_engine_paper_quantities_cache_b_class``
+        in ``adaptive_reflow/algorithm/runner/runner.py``).
+
+        Per-site wiring contract (Wave 296 P4):
+
+        ====================  ============================================
+        Site                  Opt-in default flip
+        ====================  ============================================
+        ``mfpqa``              :class:`MultiFidelityPaperQuantityStep`
+                                (vs. :class:`EulerStep`)
+        ``evidence``           :class:`EvidenceDrivenScheduler` family
+                                (vs. :class:`CosineAnnealScheduler`)
+        ``lipschitz``          Live :func:`planar_bl_convergence_witness`
+                                call (vs. dormant no-op)
+        ``evaluator``          :class:`PosteriorSelectionEvaluator` paper-
+                                quantities snapshot
+        ``checker``            :class:`Theorem1StatementChecker` paper-
+                                quantities snapshot
+        ``sheet_cell``         Sheet-vs-cell heuristic backed by paper
+                                quantities (vs. closed-form Gaussian proxy)
+        ``regime``             :class:`CosineAnnealRegimeSelector` wrap
+                                (vs. bare :class:`CosineAnnealScheduler`)
+        ``derivation``         :class:`BLConvergenceEpsilonSchedule` (vs.
+                                :class:`OTEpsilonSchedule`)
+        ====================  ============================================
+        """
+        cache = self._paper_quantities_cache
+        if cache is None or not cache.is_active:
+            return 0
+        activated = 0
+        for site_name in self._B_CLASS_SITE_NAMES:
+            # Touch the cache value (materialises the lazy memo slot).
+            _ = cache.get(site_name)
+            if cache.consume(site_name):
+                activated += 1
+        return activated
+
     # -- public properties -------------------------------------------------
+
+    @property
+    def enable_full_jmaa_theory(self) -> bool:
+        """Return ``True`` iff the engine was constructed with the opt-in flag.
+
+        Wave 296 P4 — per-site framework callers (e.g.
+        ``ReInferenceRunner._apply_engine_paper_quantities_cache_b_class``
+        and the per-site adapters) consult this property together with
+        :attr:`paper_quantities_cache` to decide whether to flip their
+        opt-in default. When ``True`` AND ``cache.is_active`` is
+        ``True``, the B-class sites auto-enable. When ``False`` (the
+        default — byte-identical to the pre-Wave-296 cosine baseline),
+        every B-class site stays off.
+
+        Note: ``enable_full_jmaa_theory=True`` does NOT imply the
+        cache is active. The engine may construct a dormant cache
+        internally; :attr:`paper_quantities_cache` is ``None`` when
+        the flag is off, otherwise it is the (possibly dormant)
+        cache. Callers MUST consult both this flag AND
+        ``cache.is_active`` before flipping an opt-in switch.
+        """
+        return self._enable_full_jmaa_theory
 
     @property
     def operation_steps(self) -> tuple[str, ...]:

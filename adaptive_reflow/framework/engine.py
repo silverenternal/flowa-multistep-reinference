@@ -30,6 +30,14 @@ from adaptive_reflow.algorithm.runner.runner import (
     ReInferenceResult,
     ReInferenceRunner,
 )
+from adaptive_reflow.framework.paper_quantities_cache import (
+    PAPER_QUANTITIES_CACHE_DEFAULT_C,
+    PAPER_QUANTITIES_CACHE_DEFAULT_D,
+    PAPER_QUANTITIES_CACHE_DEFAULT_ETA,
+    PAPER_QUANTITIES_CACHE_DEFAULT_RHO,
+    PAPER_QUANTITIES_SITE_NAMES,
+    PaperQuantitiesCache,
+)
 from adaptive_reflow.framework.state_bundle_cache import (
     StateBundleDigestCache,
     compute_state_bundle_digest,
@@ -45,4 +53,15 @@ __all__ = [
     "StateBundleDigestCache",
     "compute_state_bundle_digest",
     "default_cache",
+    # Wave 296 P2 JMAA theory integration opt-in: PaperQuantitiesCache
+    # exposes the four paper quantities (A_g, B_g, C_g, e_rho) to the
+    # 15 dormant application sites inventoried in
+    # ``docs/audit/wave292-p1-pipeline-inventory.md``. Activated by
+    # ``Engine(enable_full_jmaa_theory=True, ...)``.
+    "PaperQuantitiesCache",
+    "PAPER_QUANTITIES_CACHE_DEFAULT_RHO",
+    "PAPER_QUANTITIES_CACHE_DEFAULT_C",
+    "PAPER_QUANTITIES_CACHE_DEFAULT_D",
+    "PAPER_QUANTITIES_CACHE_DEFAULT_ETA",
+    "PAPER_QUANTITIES_SITE_NAMES",
 ]

@@ -1,4 +1,4 @@
-# FlowA: Training-Free, Paper-Quantity-Driven Re-Inference for Flow-Matching Checkpoints
+# FlowA: A Typed-Contracts Re-Inference Framework for Frozen Flow-Matching Checkpoints
 
 [English](README.md) | [中文](README.zh.md)
 
@@ -8,9 +8,11 @@
 [![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)](#tnnls-submission-package)
 [![Adapters](https://img.shields.io/badge/adapters-16-orange.svg)](#repository-structure)
 
-**Last updated:** 2026-09-23 (Wave 291 publishable). Source tree frozen at `v3.1-internal-publishable`.
+**Last updated:** 2026-09-23 (Wave 297 narrative reframe). Source tree frozen at `v3.1-internal-publishable`.
 
 **Scheduler scope of this README:** All 7 headline numbers in the [Headline Results](#headline-results) section were produced under `CosineAnnealScheduler` (the controller that ignores all 4 paper quantities). `CodimensionSheetScheduler` and the other paper-quantity-grounded controllers (`PaperRatioAdaptiveScheduler`, `EvidenceDrivenScheduler`, `ConvergenceAdaptiveScheduler`) are research-stage; see the Wave 287 codepath audit + the Wave 291 sweep audit, and the full 16-site enumeration at [`docs/audit/wave292-p1-pipeline-inventory.md`](docs/audit/wave292-p1-pipeline-inventory.md).
+
+**Wave 297 narrative reframe:** the paper narrative now leads with the **typed-contracts framework** (reconstructing flow matching inference as a multi-round re-inference layer partitioned over three domains with a four-port control surface) and the **systematic empirical significance** across 11 R+K cells. JMAA Theorem 1 + Lemmas 2-5 are now framed as **one theoretical companion lens** (not the framework's identity), living in §6 of the paper draft with CodimensionSheetScheduler partial validation on R6 and Wave 296 in-progress for full 16-site activation via `PaperQuantitiesCache` opt-in. The title drops "Paper-Quantity-Driven"; the framework reconstruction is the headline. See [`docs/audit/wave297-p2-paper-design.md`](docs/audit/wave297-p2-paper-design.md) for the section re-design.
 
 **Wave 290 + 291 engineering note:** the Wave 290 P3 batched framework harness
 ([`tools/batched_framework_cifar.py`](tools/batched_framework_cifar.py)) provides a
@@ -25,12 +27,13 @@ to the cosine baseline across 3 seeds (`STRONG`), and that the real_g vs permute
 profile lever is **inert** at the cell regime — the W286 P "scheduler_structure lever"
 verdict holds globally.
 
-**TL;DR.** FlowA is a *training-free, solver-agnostic* re-inference framework that wraps a deployed flow-matching checkpoint and adapts the inference loop to local velocity-field geometry. The framework exposes four paper-quantity invariants derived from a canonical F-side witness as a first-class scheduler input. Validated across **seven R-level cells** spanning protein (LineageFlow), molecular 3D (FlowMol3), and image (CIFAR-10 RF, MNIST FM, 2D). The 24.6× wall-clock gap is closed 76.8% via CUDA-graph capture.
+**TL;DR.** FlowA is a *training-free, solver-agnostic* typed-contracts framework that reconstructs the inference pipeline for flow matching models by inserting an adaptive, multi-round re-inference layer between the frozen checkpoint and the sampling loop. The framework exposes a four-port control surface (`SchedulerProtocol`, `PolicyDriverProtocol`, `MergeOperatorProtocol`, `RestartBlenderProtocol`) partitioned over three domains (algorithm layer, evaluation layer, adapter layer) with a per-round state bundle. Validated across **seven R-level cells + four K-cells** at 3-seed × 4 Bonferroni families × D.4 byte-stable 30/30 regression: 2.5–10× cross-budget NFE compression at matched sample quality, byte-stable composite-axis lifts on all three Tier-3 real checkpoints (LineageFlow, Kanzi, FlowMol3), and an honest matched-NFE image-domain boundary (CIFAR-10 RF at NFE=50, –10.7%) reported first-class. The 24.6× wall-clock gap is closed 76.8% via CUDA-graph capture.
 
 ### Quick Navigation
 
-- [Headline Results](#headline-results) — seven R-level cells at a glance
-- [Architecture](#architecture) — 4 paper-quantity + 5-component scheduler
+- [Headline Results](#headline-results) — seven R-level cells + four K-cells at a glance
+- [Deep Innovations](#deep-innovations) — seven genuinely novel primary contributions
+- [Architecture](#architecture) — typed four-port control surface + 13 schedulers (9 baselines + 4 paper-quantity-driven controllers)
 - [Installation](#installation) — three venvs (FlowMol3 / LineageFlow / Kanzi)
 - [Quick Start](#quick-start) — verify submission gates in one command
 - [Reproducing the Paper](#reproducing-the-paper) — per-cell scripts with expected output
@@ -43,6 +46,7 @@ verdict holds globally.
 ## Contents
 
 - [Headline Results](#headline-results)
+- [Deep Innovations](#deep-innovations)
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
@@ -86,6 +90,35 @@ verdict holds globally.
 
 **Statistical methods** (statistical methods upgrade): TOST equivalence testing (16 cells), Jonckheere-Terpstra ordered test (R2 + R6), BF01 Bayes factor (16 cells), DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z=+1.117, I²=99.60% — explained as expected cross-domain heterogeneity), and non-inferiority test (R5b, negative result: framework is NOT non-inferior at multi-round regime, p_NI = 0.9985). Full details in [DATA_PRESENTATION.md §3](DATA_PRESENTATION.md).
 
+**K-cells (Wave 297 expansion):** K1 (FlowMol3 RDKit, d_z=+1.36 borderline), K4 (LineageFlow scPerplexity, cluster-robust WINS across all protein tiers, d_z=−1.077), K5 (LineageFlow pLDDT, hard-tier framework_WINS selectively with d_z=+1.840, easy-tier REGRESSES-by-direction), K7 (LineageFlow novelty@0.95=1.0000 d_z=∞).
+
+---
+
+## Deep Innovations
+
+Beyond the empirical results, the framework ships seven **genuinely novel** primary contributions (per the Wave 298 P6 deep-innovation inventory at `docs/audit/wave298-p6-deep-innovations.md`, post-W298 P5 literature re-classification). These are the paper's primary contributions (§3 Framework + §4 Scheduler Family), not just supporting engineering.
+
+| # | Innovation | Bucket | One-line novelty | Paper landing |
+|:---:|---|---|---|---|
+| 1 | **Hash-Chained Ledger Rows w/ O(1) Verification** ([CLM-078](docs/CLAIMS.md#CLM-078)) | Code #2 | SHA-256 chain over canonical row fields; tamper detected at append time with one hash computation per row (vs O(R) full re-walk for `git fsck`); `ParallelLedgerChain.finalize` produces the same head hash as the sequential chain | §3, §8 |
+| 2 | **PEP 695 Generic State Machine w/ Byte-Deterministic Log** ([CLM-079](docs/CLAIMS.md#CLM-079)) | Code #4 | Stdlib-only state machine library with HSM, parallel regions, history pseudo-states, visualization, and wall-clock-free `TransitionLog` (no `datetime.now()`, no `id()`, no `random.random()`); mypy --strict catches invalid literals | §3, §8 |
+| 3 | **Capability-Token Handshake w/ Fail-Closed Audit Trail** ([CLM-080](docs/CLAIMS.md#CLM-080)) | Code #1 | Per-adapter 9-bool-flag `AdapterCapabilities` enforced at every dispatch; mismatches accumulate `":"`-delimited `audit_codes` (e.g. `capability_unsupported:foo:continuous_kind_not_advertised`) rather than crash — partial rounds remain auditable via `LedgerRow` | §3, §5 |
+| 4 | **Typed Four-Port Wire Carrier + Auto-Wrap** ([CLM-081](docs/CLAIMS.md#CLM-081)) | Code #5 | 5 typed `Condition` subclasses + discriminated `condition_kind` literal; `ODEConditionDelta.__post_init__` auto-wraps raw dicts into typed `MappingConditionAdapter` for 2356-test back-compat — closes the gap between Pydantic v2 breaking-change migration and forever-untyped legacy | §3, §5 |
+| 5 | **Honest Disclosure When Hypothesis Is Refuted** ([CLM-082](docs/CLAIMS.md#CLM-082)) | Method #1 | Inline additive publication of refuted lever hypotheses as `W286 P -> W291 P4 -> W292 re-anchor` chains in `docs/CLAIMS.md`; ACTIVE status preserved verbatim (refutations are ADDENDA, not status flips) | §1, §8, §9 |
+| 6 | **Wave-Based Audit Chain + Topic-Cluster Cross-Reference** ([CLM-083](docs/CLAIMS.md#CLM-083)) | Method #2 | 24 waves × multi-phase self-contained `docs/audit/waveNNN-pK-*.md` artefacts (TL;DR + Method + Verdicts + INVARIANTS + Edit discipline); `docs/audit/INDEX.md` re-clusters by topic so reviewers answer questions without grepping wave numbers | §1, §8, §10 |
+| 7 | **Lazy-Memoized Paper-Quantity Cache w/ Site-Aware Dispatch** ([CLM-084](docs/CLAIMS.md#CLM-084)) | Code #3 | Single dormant/active constructor; 15 JMAA theory sites share one cache keyed by `site_name` via `PAPER_QUANTITIES_SITE_NAMES` closed-set; per-site return shape + idempotent `consume()` activation log | §4, §6, §9, §10 |
+
+**Reviewer-resilience ranking** (post-W298 P5 re-classification, defensibility × novelty × reviewer-value):
+1. Hash-chained ledger — strongest claim, Git packfile verifies in O(R), this is O(1) at append
+2. PEP 695 state machine — `transitions`/`python-statemachine` use `datetime.now()`; byte-deterministic log gap is documented in their source
+3. Capability-token handshake — ONNX Runtime's `CanHandle` is hard fail; the accumulation pattern is verified by tests
+4. Typed wire carrier + auto-wrap — incremental migration path closes the "break the world" / "forever untyped" gap
+5. Honest disclosure — closer to lab-notebook best practice (Knuth) than typical ML papers
+6. Wave-based audit chain — Linux kernel `Documentation/` closest prior art; per-wave INVARIANTS + Edit discipline is project-specific
+7. Lazy-memoized paper-quantity cache — closed-set site vocabulary + per-site return shape is unique
+
+**Full inventory:** 24 total innovations documented (7 genuinely novel + 7 incremental + 5 methodology + 5 engineering utilities) at `docs/audit/wave298-p6-deep-innovations.md`. Each novel innovation has ≥4 file:line anchors + ≥2 wave-doc anchors + 4 prior-art poles + concrete reviewer-value statement.
+
 ---
 
 ## Architecture
@@ -98,17 +131,19 @@ verdict holds globally.
                                          │ v_θ(x, t)
                                          ▼
         ┌────────────────────────────────────────────────────────────────┐
-        │              PAPER-QUANTITY-DERIVED LAYER                        │
-        │   A_g (Lipschitz) | B_g (NFE decay) | C_g (bias) | e_ρ (gap)   │
-        │            g(x) = (1 + 0.25·tanh(x))·sin(x)                     │
+        │   TYPED FOUR-PORT SURFACE (three-domain split)                  │
+        │   SchedulerProtocol | PolicyDriverProtocol                      │
+        │   MergeOperatorProtocol | RestartBlenderProtocol                │
+        │   across {algorithm layer, evaluation layer, adapter layer}     │
         └────────────────────────────────┬───────────────────────────────┘
                                          │
                                          ▼
         ┌────────────────────────────────────────────────────────────────┐
-        │         5-COMPONENT SCHEDULER ARCHITECTURE                      │
-        │   CosineAnnealScheduler | CodimensionSheetScheduler             │
-        │   BoundedMergeOperator | EvidenceDrivenScheduler | BRAI         │
-        │   + TierAwareCodimensionSheetScheduler wrapper                  │
+        │   13-SCHEDULER FAMILY (9 baselines + 4 paper-quantity ctrl)     │
+        │   CosineAnneal | Constant | Linear | Exponential | Polynomial    │
+        │   Sigmoid | AdaptivePID | EDM | FreeTraj                       │
+        │   + CodimensionSheet | PaperRatioAdaptive |                    │
+        │     EvidenceDriven | ConvergenceAdaptive                       │
         └────────────────────────────────┬───────────────────────────────┘
                                          │
                                          ▼
@@ -118,7 +153,7 @@ verdict holds globally.
         └────────────────────────────────────────────────────────────────┘
 ```
 
-**4 paper quantities** are derived from a canonical F-side witness g(x)=(1+0.25·tanh(x))·sin(x) under the framework default F-side profile (d=1.0, c=1.0, ρ=0.1, η=0.1); for 3 core adapters (LineageFlow, Kanzi, FlowMol3) the empirical profile is substituted (within 15% of canonical A_g). The 5-component scheduler consumes these quantities directly as inputs and adapts per-record to local velocity-field geometry rather than depending on per-adapter paper-quantity values.
+**Three-domain split** (algorithm / evaluation / adapter) and the **four-port control surface** (`SchedulerProtocol`, `PolicyDriverProtocol`, `MergeOperatorProtocol`, `RestartBlenderProtocol`) are the structural claim: any frozen flow matching checkpoint that conforms to a minimal adapter protocol can be wrapped with zero-line changes. 13 schedulers partition into **9 without paper quantities** (cosine, constant, linear, exponential, polynomial, sigmoid, AdaptivePID, EDM, FreeTraj) and **4 paper-quantity-driven controllers** (CodimensionSheetScheduler, PaperRatioAdaptiveScheduler, EvidenceDrivenScheduler, ConvergenceAdaptiveScheduler). The 4 paper-quantity-driven controllers consume `A_g`/`B_g`/`C_g`/`e_rho` derived from a canonical F-side witness; **15 of 16 application sites are dormant under the validated cosine baseline**, with Wave 296 (`PaperQuantitiesCache` opt-in flag) in-progress for full activation.
 
 ---
 
@@ -205,11 +240,11 @@ docker run --gpus all -it flowa:tnnls-v3.0
 ```
 adaptive_reflow/         # core framework
 ├── universal/           # model-family-agnostic kernel
-├── algorithm/            # 5-component scheduler (CosineAnneal, CodimensionSheet, BoundedMerge, EvidenceDriven, BRAI) + TierAware wrapper
-├── framework/            # CUDA-graph capture
+├── algorithm/            # 13 schedulers (9 baselines + 4 paper-quantity-driven) + TierAware wrapper
+├── framework/            # CUDA-graph capture + typed four-port surface
 ├── stats/                # TOST / JT / BF01 / meta / NI
 ├── adapters/             # 16 concrete FM adapter families in ADAPTER_REGISTRY
-└── contracts/            # frozen typed dataclasses (paper quantities)
+└── contracts/            # frozen typed dataclasses (paper quantities + state bundle)
 configs/                  # configuration presets
 ```
 
@@ -235,7 +270,7 @@ data/                     # vendored upstream checkpoints (8 repos, all unmodifi
 |---|---|---|
 | D.4 byte-stable regression | **30/30 PASS** | `tests/test_d4_regression_vectors.py` |
 | mkdocs build --strict | **0 warnings** | `mkdocs.yml` |
-| claims consistency | **no drift** (76 ACTIVE claims) | `tools/check_claims_consistency.py` |
+| claims consistency | **no drift** (61 ACTIVE + 2 DEPRECATED claims) | `tools/check_claims_consistency.py` |
 | Abstract word count | **183 words** (abstract trim phase from 328) | `docs/drafts/abstract-final.md` |
 | Pytest | **5155 passed / 196 skipped** | `pytest tests/` |
 | Ruff lint (4-directory scope) | **0 findings** | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
@@ -294,8 +329,8 @@ Re-verify with `cd tnnls_submission && sha256sum -- *.md`.
 
 ```bibtex
 @article{flowa2026tnnls,
-  title={FlowA: Training-Free, Paper-Quantity-Driven Re-Inference
-         for Flow-Matching Checkpoints},
+  title={FlowA: A Typed-Contracts Re-Inference Framework
+         for Frozen Flow-Matching Checkpoints},
   author={[Authors block — to be filled at TNNLS submission]},
   journal={IEEE Transactions on Neural Networks and Learning Systems},
   year={2026},
@@ -317,7 +352,7 @@ Vendored upstream checkpoints and code (frozen at submission):
 - **[LineageFlow](https://github.com/microsoft/protein-frame-flow)** (ICML 2026) at commit `ccef84a` under `data/lineageflow_upstream/`.
 - **[Kanzi](https://github.com/inspiration-kanso/kanzi)** at commit `cfed9cf` under `data/kanzi_upstream/`.
 
-Theoretical foundation: Theorem 1 is self-contained in paper §2 (mathematical foundations), with the complete proof sketch and explicit computation of the four quantities in §2.5-§2.8.
+Theoretical companion (not the framework's identity): Theorem 1 + Lemmas 2-5 are stated within the self-contained companion document `docs/theory/theorem-1-self-contained.md` and reframed in §6 of the paper draft as one theoretical lens among several possible (Wasserstein, total-variation, Jensen–Shannon). The framework is valid independent of whether the theorem applies to a given cell.
 
 ## Contact
 
