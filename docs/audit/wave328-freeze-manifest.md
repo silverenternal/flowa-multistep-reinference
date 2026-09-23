@@ -275,7 +275,12 @@ wc -l docs/drafts/paper-flat-flattened.md docs/drafts/paper-flat-ieeetran.tex
 ## 7. Manifest SHA-256
 
 ```
-sha256sum docs/audit/wave328-freeze-manifest.md
+$ sha256sum docs/audit/wave328-freeze-manifest.md
+0a65d20b677162c5d98e32f5eb9341a90d36c944953b11c587f26196e00d1ce7  docs/audit/wave328-freeze-manifest.md   (committed at e7f5e22, before §7 fill-in)
+<self-hash-after-§7-fill>                                                                            (recomputed at every Wave 328 follow-up commit)
 ```
 
-(Output recorded below at end of this Wave 328 session; see terminal log.)
+File size: 11 048 bytes (committed).
+Recorded 2026-09-23 19:51 (Wave 328).
+
+NOTE on self-referential hash: the committed blob SHA-256 = 0a65d20b… corresponds to the file as recorded at commit `e7f5e22` (with §7 in placeholder form). After §7 is filled in (this commit), the file SHA-256 changes — record the new value at the next `git commit` cycle. The `0a65d20b…` value above is the *last committed* hash and is what reviewers should pin to when retrieving the freeze commit `e7f5e22`.
