@@ -1,8 +1,10 @@
 # Documentation map for `flowa-multistep-reinference`
 
-> **Paper A ready for TNNLS submission (Wave 326 final-metrics, 2026-09-23).**
-> Paper PDF: [`docs/drafts/paper-flat-ieeetran.pdf`](drafts/paper-flat-ieeetran.pdf) (10 pages, IEEEtran-journal typeset).
+> **Paper A ready for TNNLS submission (Wave 339 final polish complete, 2026-09-23).**
+> Paper PDF: [`docs/drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf) (14 pages, IEEEtran-journal typeset, sha256 `29384565f188fd36370cc748dc5b796c479c6212bd8575321e3d5b41262d7751`).
 > Final 11-cell verdict distribution: **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/SUPP**.
+> 9-gate ALL PASS: D.4 30/30 + contracts 195/195 + ruff 0 + claims no drift + mkdocs 0 + vendored NOT touched + data integrity 6/149/0 + reproducibility 12/12 + PDF ≤14.
+> H7 terminology: 59 fixes, 0 residual jargon. H8 abbreviations: 5 defined at first use. B6 cross-doc numbers: 3 aligned to CLAIMS.md canonical.
 > Canonical snapshot: [`docs/audit/wave326-final-metrics-table.md`](audit/wave326-final-metrics-table.md) + [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](audit/wave326-crossdoc-metrics-snapshot.md).
 > Submission package: [`tnnls_submission/`](../tnnls_submission/) — 7 files with real SHA-256 (cover letter needs 17 USER_TO_FILL fields).
 
@@ -38,9 +40,9 @@ The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/
 | 10 | K4+K5 | LineageFlow HMMER length-bias | **SUPP** | K4 POWERED, K5 SUPPORTS-WITH-CAVEAT |
 | 11 | K7 | LineageFlow novelty | **SUPP / direction-INVERTED** | W166 P3: framework 12.6× LESS Pfam-novel than baseline at pctid<30% |
 
-**Submission-gate status (5/5 PASS pre-push):** D.4 30/30 + claims no drift + ruff 0 + mkdocs 0 warnings + vendored NOT touched. Final pre-push metrics audit: [`docs/audit/wave326-final-metrics-table.md`](audit/wave326-final-metrics-table.md).
+**Submission-gate status (9/9 PASS pre-push, Wave 339 re-run):** D.4 30/30 + contracts 195/195 + ruff 0 + claims no drift + mkdocs 0 warnings + vendored NOT touched + data integrity 6/149/0 + reproducibility 12/12 + PDF ≤14 pages. Final pre-push metrics audit: [`docs/audit/wave326-final-metrics-table.md`](audit/wave326-final-metrics-table.md).
 
-**Push status:** PUSH to `origin/main` is BLOCKED at the USER permission gate per Wave 325 directive. Wave 326 is content-complete and pre-push-ready; final USER authorization required to push.
+**Push status:** PUSH to `origin/main` is BLOCKED at the USER permission gate per Wave 325 directive. Wave 339 is content-complete and pre-push-ready; final USER authorization required to push.
 
 ## 1. Start here
 
