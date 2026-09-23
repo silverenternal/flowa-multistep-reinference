@@ -44,7 +44,7 @@ The previous waves (286–291) found and fixed FID GPU bugs, paper-grounded sche
 - Config flag that activates the site (and its default under cosine baseline)
 - Status: ACTIVE-under-cosine vs DORMANT-under-cosine
 
-**Finding:** Under pure cosine baseline, only **1 of 16 sites** is ACTIVE (the cosine noise-mass ramp itself, which uses `n_cap(r) = n_min + 0.5 · (n_max − n_min) · (1 − cos(π r / L))` closed form). The other 15 sites are dormant — they are reachable via `default_paper_ratio_scheduler()` factory, per-adapter `--paper-uplift-27` / `--paper-metrics` CLI flags, or audit-time invocation, but they are NOT exercised in a pure cosine deployment.
+**Finding:** Under pure cosine baseline, only **1 of 16 sites** is ACTIVE (the cosine noise-mass ramp itself, which uses `n_cap(r) = n_min + 0.5 · (n_max − n_min) · (1 + cos(π r / (L − 1)))` closed form). The other 15 sites are dormant — they are reachable via `default_paper_ratio_scheduler()` factory, per-adapter `--paper-uplift-27` / `--paper-metrics` CLI flags, or audit-time invocation, but they are NOT exercised in a pure cosine deployment.
 
 This is a substantive correction to earlier documentation that claimed the framework "is paper-quantity-driven by default since Wave 34". The framework IS paper-quantity-driven at the *factory level* (`default_paper_ratio_scheduler()` emits `DeprecationWarning` if you use the cosine factory), but at the *adapter level* 12/13 R-cells still use `default_cosine_scheduler()` per Wave 292 P2 genealogy.
 

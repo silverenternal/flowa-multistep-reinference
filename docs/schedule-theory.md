@@ -12,7 +12,7 @@ For an outer cycle of length `L` with `n_min`, `n_max`, and round index `r ∈ {
 the canonical cosine schedule's fresh-noise capacity is
 
 ```
-n_cap(r) = n_min + (n_max − n_min) · (1 − cos(π · r / (L − 1))) / 2
+n_cap(r) = n_min + (n_max − n_min) · (1 + cos(π · r / (L − 1))) / 2
 ```
 
 with the single-round degenerate edge case (`L == 1`) returning `n_max`
@@ -175,7 +175,7 @@ because its `n_cap(r)` is the dispatch of its sub-scheduler's
 
 | Family | Class | Closed form `n_cap(r)` | Monotone? | `n_min`/`n_max`? | Reference |
 | --- | --- | --- | :---: | --- | --- |
-| `cosine` | `CosineAnnealScheduler` | `n_min + 0.5 * (n_max - n_min) * (1 - cos(pi * r / (L - 1)))` | yes | yes | [§1](#1-the-closed-form), [CLM-005] |
+| `cosine` | `CosineAnnealScheduler` | `n_min + 0.5 * (n_max - n_min) * (1 + cos(pi * r / (L - 1)))` | yes | yes | [§1](#1-the-closed-form), [CLM-005] |
 | `constant` | `ConstantScheduler` | `n_cap` (constant across `r`) | n/a | n/a (config) | [`scheduler.py:478`](../adaptive_reflow/algorithm/scheduler.py) |
 | `linear` | `LinearScheduler` | `n_min + (n_max - n_min) * r / (L - 1)` | yes (slope ≥ 0) | yes | [`scheduler.py:672`](../adaptive_reflow/algorithm/scheduler.py) |
 | `exponential` | `ExponentialScheduler` | `n_max * exp(-alpha * r)` | yes | `n_min = 0` implicit | [`scheduler.py:882`](../adaptive_reflow/algorithm/scheduler.py) |
@@ -204,8 +204,8 @@ geometric progression lacks on small cycles (see [§4](#4-why-cosine-and-not-edm
 
 | Field standard | Closed form (their notation) | Framework analog | Identical? | Reference |
 | --- | --- | --- | :---: | --- |
-| **Nichol-Dhariwal cosine** (arXiv:2102.09672, eq. 8) | `alpha_bar(t) = cos^2((t/T + s) / (1 + s) * pi/2)`; `beta_diff(t) = 1 - alpha_bar(t)/alpha_bar(t-1)` | `n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 - cos(pi * r / (L - 1)))` | **Yes** (functional form: half-cosine scaled into `[0, 1]`; offset `s = 0`) | [§2](#2-analogy-to-nichol-dhariwal-arxiv210209672) |
-| **Karras EDM rho-spacing** (arXiv:2206.00364, §5.2) | `sigma(t) = t` (polynomial); geometric progression `sigma_i = (sigma_max^(1/rho) + i/(N-1) * (sigma_min^(1/rho) - sigma_max^(1/rho)))^rho` | `n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 - cos(pi * r / (L - 1)))` | **No** (different functional form); cosine is the framework's chosen replacement, not a port | [§3](#3-analogy-to-karras-edm-arxiv220600364), [§4](#4-why-cosine-and-not-edms-polynomial) |
+| **Nichol-Dhariwal cosine** (arXiv:2102.09672, eq. 8) | `alpha_bar(t) = cos^2((t/T + s) / (1 + s) * pi/2)`; `beta_diff(t) = 1 - alpha_bar(t)/alpha_bar(t-1)` | `n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 + cos(pi * r / (L - 1)))` | **Yes** (functional form: half-cosine scaled into `[0, 1]`; offset `s = 0`) | [§2](#2-analogy-to-nichol-dhariwal-arxiv210209672) |
+| **Karras EDM rho-spacing** (arXiv:2206.00364, §5.2) | `sigma(t) = t` (polynomial); geometric progression `sigma_i = (sigma_max^(1/rho) + i/(N-1) * (sigma_min^(1/rho) - sigma_max^(1/rho)))^rho` | `n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 + cos(pi * r / (L - 1)))` | **No** (different functional form); cosine is the framework's chosen replacement, not a port | [§3](#3-analogy-to-karras-edm-arxiv220600364), [§4](#4-why-cosine-and-not-edms-polynomial) |
 | **SD3 exponential shift** (Esser et al. 2024, §"Shifted schedules") | `sigma(t) = sigma_max * t` shifted so `log(sigma(t)/sigma_max) = -gamma * log(t)` (rectified flow-style log-shift) | `n_cap(r) = n_max * exp(-alpha * r)` | **No** (different parameterisation); the exponential family is a framework analogue, not a port | [`scheduler.py:882`](../adaptive_reflow/algorithm/scheduler.py) |
 
 The "Identical?" column reflects whether the framework's closed form

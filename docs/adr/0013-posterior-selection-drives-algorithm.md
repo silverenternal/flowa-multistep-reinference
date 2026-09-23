@@ -148,7 +148,7 @@ Paper Lemma 2 says the sheet's contribution scales like
 noise, and `n_cap` is the cosine ramp's per-round capacity
 (`n_cap_for_round`, ADR-0010). The closed-form
 
-    n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 - cos(pi * r / (L - 1)))
+    n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 + cos(pi * r / (L - 1)))
 
 places `n_cap` high when `r` is small (early rounds; lots of fresh
 noise -> large exploration -> the sheet's codimension-1 dominance

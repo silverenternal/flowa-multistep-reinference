@@ -5,7 +5,7 @@
 
 | # | Scheduler (registry key) | States (beyond common 6) | Transitions (key events) | Per-scheduler extensions |
 |---|---|---|---|---|
-| 1 | **CosineAnnealScheduler** (`"cosine"`) | 6 common | `init → sample → emit → terminate` | Canonical implementation of paper Lemma 2's `Θ(ε^{+1})` sheet-tube scaling (CLM-005); `n_cap(r) = n_min + 0.5 · (n_max − n_min) · (1 − cos(π·r/(L−1)))` |
+| 1 | **CosineAnnealScheduler** (`"cosine"`) | 6 common | `init → sample → emit → terminate` | Canonical implementation of paper Lemma 2's `Θ(ε^{+1})` sheet-tube scaling (CLM-005); `n_cap(r) = n_min + 0.5 · (n_max − n_min) · (1 + cos(π·r/(L−1)))` |
 | 2 | **ConstantScheduler** (`"constant"`) | 6 common | `init → sample → emit → terminate` | Constant `n_cap = n_max`; regression coverage in `tests/test_algorithm/test_scheduler.py` |
 | 3 | **LinearScheduler** (`"linear"`) | 6 common | `init → sample → emit → terminate` | Linear `n_cap(r) = n_max − r · (n_max − n_min) / (L−1)` |
 | 4 | **ExponentialScheduler** (`"exponential"`) | 6 common | `init → sample → emit → terminate` | Exponential decay `n_cap(r) = n_min + (n_max − n_min) · exp(−k · r)` |
