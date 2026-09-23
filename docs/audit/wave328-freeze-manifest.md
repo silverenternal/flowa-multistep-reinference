@@ -13,12 +13,12 @@
 
 This Wave 328 freeze-manifest:
 
-1. Records the **immutable snapshot** of the TNNLS pre-submission state at commit `60a3f75` (HEAD on `main`).
-2. **Re-creates** the existing tag `v3.0-tnnls-ready` at the new HEAD (the previous tag pointed at `50d1c963` = Wave 262 followup, 3 commits stale).
+1. Records the **immutable snapshot** of the TNNLS pre-submission state at commit `d83571f` (HEAD on `main`, = Wave 328 freeze + paper-data/ paper-figures/ additions).
+2. **Re-creates** the existing tag `v3.0-tnnls-ready` at the new HEAD (the previous tag pointed at `60a3f75` = Wave 326, 1 commit stale — paper-data/ paper-figures/ were committed in `d83571f`).
 3. Enumerates every artefact that ships inside the freeze (paper source + LaTeX + PDF + data folders + figure folders + submission package + verification outputs).
 4. Lists the **4 actions** still required before the D+8 ScholarOne submission.
 
-**5-gate status:** ALL PASS per Wave 326 (commit `60a3f75`).
+**5-gate status:** ALL PASS (re-verified at Wave 328 commit `d83571f`).
 
 **11-cell verdict distribution:** 4 STRONG + 1 TIE + 6 PARTIAL/SUPP per `docs/headline-evidence/README.md`.
 
@@ -29,13 +29,13 @@ This Wave 328 freeze-manifest:
 | Field | Value |
 |---|---|
 | **Tag** | `v3.0-tnnls-ready` (annotated, local-only, NOT pushed) |
-| **Tag commit (frozen at)** | `60a3f75ab93094adc440669db5dbb0ed17629f24` |
+| **Tag commit (frozen at)** | `d83571fab5153ae4bfb138426d884b9e22872352` (Wave 328 freeze — includes paper-data/ paper-figures/) |
 | **Branch** | `main` |
-| **Commit subject** | `Wave 326: update formal metrics + README + CI redesign (GitHub Actions + pre-commit hooks + data integrity scripts) — ready for push (USER AUTHORIZED, NO PUSH)` |
+| **Commit subject** | `Wave 328: freeze code+data for TNNLS submission (git tag v3.0-tnnls-ready, paper-data/ paper-figures/ folders, NO PUSH per Bash permission directive)` |
 | **Date** | 2026-09-23 |
 | **Target venue** | IEEE TNNLS |
 | **Submission target** | ScholarOne Editorial Manager, D+8 (≈ 2026-09-25) |
-| **Tag replaces** | previous `v3.0-tnnls-ready` at `833fb346` (= `50d1c963` Wave 262 followup, 3 commits stale) |
+| **Tag replaces** | previous `v3.0-tnnls-ready` at `60a3f75` (= Wave 326, 1 commit stale — paper-data/ paper-figures/ were untracked at that point) |
 | **Tag-push** | DEFERRED — requires `git push origin v3.0-tnnls-ready` user action |
 
 ### Previous tags preserved
@@ -43,7 +43,7 @@ This Wave 328 freeze-manifest:
 ```
 v3.0-internal-complete            (pre-paper internal-complete marker)
 v3.0-paper-n1000-reruns           (N=1000 paper reruns marker)
-v3.0-tnnls-ready                  (RE-POINTED to commit 60a3f75 in this Wave 328)
+v3.0-tnnls-ready                  (RE-POINTED to commit d83571f in this Wave 328)
 ```
 
 ---
