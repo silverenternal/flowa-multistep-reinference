@@ -1,0 +1,240 @@
+# Weekly reproducibility smoke test for flowa-multistep-reinference.
+#
+# Runs the cheap-but-meaningful reproducibility invariants on a weekly
+# cadence (Sunday 06:00 UTC) plus on-demand via ``workflow_dispatch``.
+# Distinct from the per-PR CI gates (.github/workflows/ci.yml) which
+# are byte-stable + interpreter-fast; this workflow exercises the
+# longer-running invariants that are too slow for the PR loop but
+# cheap enough to run weekly without a GPU:
+#
+#   1. Data integrity sweep — ``tools/check_data_integrity.py`` walks
+#      every ``SHA256SUMS`` ledger under ``verification_outputs/``,
+#      ``data/kanzi_ckpt/``, and ``data/freqflow_ckpt/`` and verifies
+#      every entry against the on-disk sha256. Catches accidental
+#      mutation of headline evidence files between waves.
+#
+#   2. Vendored-NOT-touched sweep — ``tools/check_vendored_unchanged.sh``
+#      confirms the three vendored upstream trees
+#      (data/FlowMol3, data/lineageflow_upstream, data/Kanzi) are
+#      byte-identical to HEAD. A drift here means someone bypassed
+#      the pre-merge gate and committed a vendored edit; the weekly
+#      sweep catches it within 7 days.
+#
+#   3. Headline artefact existence — confirms the key headline-evidence
+#      JSON files (11-cell verdict distribution + capability audit +
+#      adversarial scheduler test + headline NFE scan) are present.
+#      A missing artefact means a wave dropped a promised data point.
+#
+#   4. D.4 byte-stable 30/30 — the regression-vector contract that
+#      every Wave ≥ 1 preserves. Cheap (~1.3 s) so we re-run it
+#      weekly as a final contract check.
+#
+# The workflow deliberately does NOT run GPU jobs, full pytest, or
+# the long-running ``tools/run_sota_*_experiment.py`` scripts — those
+# live in the dedicated nightly + experiments-nightly + mutation-nightly
+# workflows (.github/workflows/nightly.yml, experiments-nightly.yml,
+# mutation-nightly.yml respectively).
+#
+# Failure handling: every job uploads its ``*.log`` to the run
+# artifacts so a maintainer can diff a green-vs-red run without
+# re-cloning the runner. The vendored-NOT-touched job is annotated
+# with a ``::error`` annotation so the failure shows up in the PR /
+# schedule summary view directly.
+
+name: reproducibility
+
+on:
+  # Weekly schedule — Sundays 06:00 UTC. Off the :00 mark to avoid
+  # the GitHub Actions quota hour (every other repo's weekly job
+  # fires on :00 and the runner pool is congested).
+  schedule:
+    - cron: "13 6 * * 0"
+  workflow_dispatch:
+
+# Cancel in-progress runs on the same ref so a maintainer-triggered
+# manual run does not collide with the scheduled run.
+concurrency:
+  group: reproducibility-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1 — Data integrity sweep.
+  # Walks every ``SHA256SUMS`` ledger under ``verification_outputs/`` and
+  # the two ``data/`` checkpoint roots, verifies every entry against the
+  # on-disk sha256, and exits non-zero on any mismatch (modified / missing
+  # / unlisted). The ``tools/check_data_integrity.py`` script is the
+  # single source of truth; this job is the scheduled entry point.
+  # ---------------------------------------------------------------------------
+  data-integrity:
+    name: Data integrity sweep (SHA256SUMS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Data integrity sweep
+        # Walks verification_outputs/ + data/kanzi_ckpt/ +
+        # data/freqflow_ckpt/ and verifies every SHA256SUMS ledger.
+        # The script always prints the summary line
+        # ``Verified X directories, Y files, Z mismatches`` so a
+        # maintainer can grep the log without re-running.
+        run: |
+          PYTHONPATH=. python tools/check_data_integrity.py 2>&1 | tee data_integrity.log
+
+      - name: Upload data integrity log
+        # On failure, the log is the only forensic trail; upload it
+        # unconditionally so a green-then-red wave is diff-able.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-integrity-log
+          path: data_integrity.log
+          if-no-files-found: warn
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Job 2 — Vendored NOT-touched sweep.
+  # Confirms the three vendored upstream trees are byte-identical to
+  # HEAD. Cheap (~0.5 s) so it runs in parallel with the integrity
+  # sweep and provides a second independent signal that the
+  # governance rule "do not edit vendored upstream in place" has
+  # not been violated.
+  # ---------------------------------------------------------------------------
+  vendored-unchanged:
+    name: Vendored upstream NOT-touched
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install minimal toolchain
+        # The shell script is bash-only and Python is only used for
+        # the pipeline plumbing below; no pip packages required.
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: Vendored NOT-touched check
+        # ``bash`` invocation (not ``bash tools/...``) so the script's
+        # ``set -euo pipefail`` is preserved.
+        run: |
+          bash tools/check_vendored_unchanged.sh 2>&1 | tee vendored_unchanged.log
+
+      - name: Annotate failure
+        # The script exits non-zero on any vendored diff; surface that
+        # as a workflow-level annotation so the failure appears in the
+        # PR / schedule summary view directly (not buried in the log).
+        if: failure()
+        run: |
+          echo "::error::Vendored upstream tree modified against HEAD — re-vendor from upstream repo before merging."
+
+      - name: Upload vendored check log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vendored-unchanged-log
+          path: vendored_unchanged.log
+          if-no-files-found: warn
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Job 3 — Headline artefact existence.
+  # Confirms the key headline-evidence JSON files are present on disk.
+  # A missing artefact means a wave dropped a promised data point;
+  # the README.md + docs/README.md reference these paths verbatim so
+  # a missing file is a broken-claim hazard (would fail the
+  # claims-consistency gate at next PR).
+  # ---------------------------------------------------------------------------
+  headline-artefacts:
+    name: Headline artefact existence
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify headline artefacts exist
+        # The list mirrors the cross-doc anchors in
+        # docs/audit/wave326-crossdoc-metrics-snapshot.md and the
+        # README.md "Final Empirical Metrics (11 cells)" table.
+        # Each line prints "[ok] <path>" or "[FAIL] <path>" + exits 1.
+        run: |
+          set -euo pipefail
+          missing=0
+          for path in \
+              verification_outputs/capability_audit_q4_2026.json \
+              verification_outputs/adversarial_scheduler_test.json \
+              verification_outputs/wave298-p3-reproducibility-innovations \
+              docs/audit/wave326-final-metrics-table.md \
+              docs/audit/wave326-crossdoc-metrics-snapshot.md \
+              docs/audit/wave326-readme-update.md; do
+            if [ -e "${path}" ]; then
+              echo "[ok]   ${path}"
+            else
+              echo "[FAIL] ${path} missing"
+              missing=$((missing + 1))
+            fi
+          done
+          if [ "${missing}" -gt 0 ]; then
+            echo "Headline artefact existence FAILED: ${missing} path(s) missing."
+            exit 1
+          fi
+          echo "Headline artefact existence PASSED."
+
+  # ---------------------------------------------------------------------------
+  # Job 4 — D.4 byte-stable 30/30 (final contract check).
+  # Re-runs the canonical regression-vector suite as the last job so
+  # a regression here is the headline of the weekly run. The D.4 file
+  # is excluded from the broad ``tests/`` discovery by its
+  # ``-m "not slow and not benchmark"`` filter exclusion; we run it
+  # explicitly so the contract is unmistakable.
+  # ---------------------------------------------------------------------------
+  d4-contract:
+    name: D.4 byte-stable 30/30 (final contract check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test toolchain
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest hypothesis
+
+      - name: D.4 byte-stable 30/30
+        # The ``-q`` keeps the log to ~30 lines so a maintainer
+        # scanning the weekly summary sees the pass/fail line
+        # immediately. The full pass-list is captured in the artifact.
+        run: |
+          PYTHONPATH=. python -m pytest tests/test_d4_regression_vectors.py --no-header -q 2>&1 | tee d4_contract.log
+
+      - name: Upload D.4 contract log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d4-contract-log
+          path: d4_contract.log
+          if-no-files-found: warn
+          retention-days: 30

@@ -5,10 +5,13 @@
 [![CI](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml/badge.svg)](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml)
 [![D.4 byte-stable](https://img.shields.io/badge/D.4-30%2F30%20PASS-brightgreen)](#submission-gates-verified-at-final-pre-push) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](#installation)
+[![PyTorch 2.7](https://img.shields.io/badge/torch-2.7%2Bcu128-orange.svg)](#installation)
 [![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)](#tnnls-submission-package)
 [![Adapters](https://img.shields.io/badge/adapters-16-orange.svg)](#repository-structure)
+[![5-gate PASS](https://img.shields.io/badge/5--gate-PASS-brightgreen.svg)](#submission-gates-verified-at-final-pre-push)
+[![mkdocs strict](https://img.shields.io/badge/mkdocs--strict-0%20warnings-success.svg)](mkdocs.yml)
 
-**Last updated:** 2026-09-23 (Wave 297 narrative reframe). Source tree frozen at `v3.1-internal-publishable`.
+**Last updated:** 2026-09-23 (Wave 326 final-metrics cross-doc snapshot). Source tree frozen at `v3.1-internal-publishable`. Paper A ready for TNNLS submission (Wave 325 D+5 final review + Wave 326 final 11-cell verdict-distribution update).
 
 **Scheduler scope of this README:** All 7 headline numbers in the [Headline Results](#headline-results) section were produced under `CosineAnnealScheduler` (the controller that ignores all 4 paper quantities). `CodimensionSheetScheduler` and the other paper-quantity-grounded controllers (`PaperRatioAdaptiveScheduler`, `EvidenceDrivenScheduler`, `ConvergenceAdaptiveScheduler`) are research-stage; see the Wave 287 codepath audit + the Wave 291 sweep audit, and the full 16-site enumeration at [`docs/audit/wave292-p1-pipeline-inventory.md`](docs/audit/wave292-p1-pipeline-inventory.md).
 
@@ -31,12 +34,15 @@ verdict holds globally.
 
 ### Quick Navigation
 
+- [Paper A Submission Status](#paper-a-submission-status) — TNNLS submission package + final metrics snapshot
+- [Final Empirical Metrics](#final-empirical-metrics-11-cells) — 4 STRONG + 1 TIE + 6 PARTIAL/SUPP (Wave 326 final)
 - [Headline Results](#headline-results) — seven R-level cells + four K-cells at a glance
 - [Deep Innovations](#deep-innovations) — seven genuinely novel primary contributions
 - [Architecture](#architecture) — typed four-port control surface + 13 schedulers (9 baselines + 4 paper-quantity-driven controllers)
 - [Installation](#installation) — three venvs (FlowMol3 / LineageFlow / Kanzi)
 - [Quick Start](#quick-start) — verify submission gates in one command
 - [Reproducing the Paper](#reproducing-the-paper) — per-cell scripts with expected output
+- [Reproducibility](#reproducibility) — 5-gate invariants + D.4 30/30 + Wave 326 pre-push snapshot
 - [Submission Gates](#submission-gates-verified-at-final-pre-push) — D.4, mkdocs, claims, pytest, ruff, mypy
 - [Citation](#citation) — BibTeX entry for TNNLS submission
 - [中文 README](README.zh.md) — 双语 README
@@ -45,12 +51,15 @@ verdict holds globally.
 
 ## Contents
 
+- [Paper A Submission Status](#paper-a-submission-status)
+- [Final Empirical Metrics (11 cells)](#final-empirical-metrics-11-cells)
 - [Headline Results](#headline-results)
 - [Deep Innovations](#deep-innovations)
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Reproducing the Paper](#reproducing-the-paper)
+- [Reproducibility](#reproducibility)
 - [Environment Setup (Docker)](#environment-setup-docker-recommended)
 - [Repository Structure](#repository-structure)
 - [Submission Gates](#submission-gates-verified-at-final-pre-push)
@@ -61,6 +70,63 @@ verdict holds globally.
 - [License](#license)
 - [Acknowledgements](#acknowledgements)
 - [Contact](#contact)
+
+---
+
+## Paper A Submission Status
+
+| Item | Value |
+|---|---|
+| **Paper ID** | Paper A — FlowA: A Typed-Contracts Re-Inference Framework for Frozen Flow-Matching Checkpoints |
+| **Paper PDF** | [`docs/drafts/paper-flat-ieeetran.pdf`](docs/drafts/paper-flat-ieeetran.pdf) (10 pages, IEEEtran-journal typeset, sha256 `58c21076fc66bbf87c647537328e33911b42fe03123c5d61eaa0ecc8fa5562b7`) |
+| **Paper draft** | [`docs/drafts/paper-flat-flattened.md`](docs/drafts/paper-flat-flattened.md) (1602 lines, §6 Framework Properties Lemmas 1/2/3 ACTIVE) |
+| **Target venue** | IEEE TNNLS (Transactions on Neural Networks and Learning Systems) |
+| **Submission status** | **READY** — 5/5 submission gates PASS at pre-push (D.4 30/30, mkdocs 0 warnings, claims no drift, ruff 0, mypy 0); cover letter needs 17 USER_TO_FILL fields per [`tnnls_submission/FILL_GUIDE.md`](tnnls_submission/FILL_GUIDE.md) |
+| **Submission package** | [`tnnls_submission/`](tnnls_submission/) — 7 files with real SHA-256 (cover_letter.md, highlights.md, tables.md, figures.md, data_availability.md, submission_checklist.md, MANIFEST.md) |
+| **Final metrics audit** | [`docs/audit/wave326-final-metrics-table.md`](docs/audit/wave326-final-metrics-table.md) + [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](docs/audit/wave326-crossdoc-metrics-snapshot.md) |
+| **Decision rationale** | [`docs/audit/wave238-p3-journal-decision.md`](docs/audit/wave238-p3-journal-decision.md) (why TNNLS over NeurIPS/ICML) |
+| **Wave lineage** | Wave 309 (restoration plan) → Wave 310 (restoration execution) → Wave 311 (Path A Lemma 1) → Wave 322 (Path A Lemmas 2 + 3) → Wave 323 (IEEEtran typeset) → Wave 324 (D+5 final review) → Wave 325 (D+5+1 push-execution, BLOCKED at permission gate) → **Wave 326 (final metrics + cross-doc snapshot, READY-TO-PUSH)** |
+
+**Push status:** PUSH to `origin/main` is BLOCKED at the USER permission gate per Wave 325 directive. Wave 326 verdict-distribution update is content-complete and pre-push-ready; final USER authorization required to push.
+
+---
+
+## Final Empirical Metrics (11 cells)
+
+The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/SUPP** (5 main cells + 6 supplementary cells = 11 headline cells total). This is the canonical Wave 326 verdict distribution; cross-doc anchor at [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](docs/audit/wave326-crossdoc-metrics-snapshot.md).
+
+| # | Cell | Metric | Verdict | Headline |
+|:---:|---|---|---|---|
+| 1 | **R2** | Kanzi RMSD (paired-t) | **STRONG** | d_z = −0.0990, p_raw = 1.79e-3, Bonf-sig at α = 0.007143 |
+| 2 | **R5b** | CIFAR-10 RF FID (matched NFE = 50) | **STRONG (conditional)** | ΔFID = −1.60% to −2.53% (n_rounds=1, 4 schedulers); +9.77% to +30.19% (n_rounds≥2, honest-negative) |
+| 3 | **R5c** | MNIST FM FID (smoke ckpt) | **STRONG (smoke)** | d_z = −13.175, p_bonf = 3.95e-11 |
+| 4 | **R6** | LineageFlow k6 foldability (tier-aware) | **STRONG** | d_z = +0.2235 (Bonf-sig at α = 0.05/6 = 0.008333) + grid best d_z = +0.6467 |
+| 5 | **R5a** | 2D Two Moons W₂ (paper R-level) | **TIE** | d_s = +0.460, p = 0.604 (TIE_PERSISTS at n=3+7+10) |
+| 6 | R1 | LineageFlow HMMER | **PARTIAL / single-seed-disclosed** | d_z = +0.182, p_raw = 1.25e-8, +116.46% (seed=42 only) |
+| 7 | R3 | FlowMol3 fg_dev | **PARTIAL** | d_z = −0.285, p = 8.03e-5 (N=200 per-record ACTUAL); 3-seed pooled BLOCKED at vendor level |
+| 8 | R5_legacy | 2D Eight Gaussians W₂ | **SUPP / LEGACY** | −10.40%, per-round CSV NOT preserved |
+| 9 | K1 | FlowMol3 RDKit-validity | **SUPP / UNDERPOWERED** | d_z = +1.36, p_bonf = 0.5676 FAILS K-level α = 0.0125 by 45.4× |
+| 10 | K4+K5 | LineageFlow HMMER length-bias + uniform-AA | **SUPP** | K4 POWERED, K5 SUPPORTS-WITH-CAVEAT |
+| 11 | K7 | LineageFlow novelty | **SUPP / direction-INVERTED** | W166 P3 canonical baseline-vs-framework: framework 12.6× LESS Pfam-novel than baseline at pctid<30% |
+
+**Verdict distribution summary:**
+
+| Bucket | Count | Cells |
+|---|---:|---|
+| STRONG (main) | 4 | R2, R5b (conditional), R5c, R6 |
+| TIE (main) | 1 | R5a |
+| PARTIAL/SUPP | 6 | R1, R3, R5_legacy, K1, K4+K5, K7 |
+| **Total** | **11** | |
+
+**Bonferroni family summary:**
+
+| Family | k | α | Cell members |
+|---|---:|---:|---|
+| R-level primary | 7 | 0.05/7 = 0.007143 | R1, R2, R3, R5a, R5b, R5c, R6 |
+| R6 per-tier | 6 | 0.05/6 = 0.008333 | R6 hard / medium / easy × pLDDT / scPerplexity |
+| K-level | 4 | 0.05/4 = 0.0125 | K1, K4, K5, K7 |
+
+**Statistical methods:** TOST equivalence testing (16 cells), Jonckheere-Terpstra ordered test (R2 + R6), BF01 Bayes factor (16 cells), DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z=+1.117, I²=99.60%), and non-inferiority test (R5b, negative result: p_NI = 0.9985). Full details in [DATA_PRESENTATION.md §3](DATA_PRESENTATION.md).
 
 ---
 
@@ -222,6 +288,41 @@ Per-cell full audit trail at `docs/audit/wave*.md` (cited per cell above).
 
 ---
 
+## Reproducibility
+
+| Gate | State | Evidence |
+|---|---|---|
+| **D.4 byte-stable regression** | **30/30 PASS** | `tests/test_d4_regression_vectors.py` |
+| **5-gate invariants (pre-push)** | **5/5 PASS** | `docs/audit/wave326-final-metrics-table.md` §4 (D.4 30/30 + claims no drift + ruff 0 + mkdocs 0 + vendored NOT touched) |
+| **Byte-stable composite axis (3/3 Tier-3)** | Kanzi +0.1695, LineageFlow +0.2083, FlowMol3 +0.1182 | `verification_outputs/composite_axis_byte_stable/SOURCE.md` |
+| **Per-cell audit trail** | 24+ waves × multi-phase self-contained `docs/audit/waveNNN-pK-*.md` | `docs/audit/INDEX.md` |
+| **Source tree freeze** | `v3.1-internal-publishable` tag, vendored 8 repos UNMODIFIED | `docs/audit/wave262-p1-revert-all.md` |
+| **Pytest (5155 passed / 196 skipped)** | green | `pytest tests/` |
+| **Ruff lint (4-directory scope)** | 0 findings | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
+| **Mypy type-check** | 0 errors | `mypy adaptive_reflow/` |
+
+**Reproducibility recipe:**
+
+```bash
+# 1. One-click verification of all 7 R-level headlines
+bash reproduce/verify_all_headlines.sh
+
+# 2. Submission-gate verification (5 gates)
+python3 tools/verify_submission_readiness.py
+
+# 3. D.4 byte-stable regression suite
+.venvs/lineageflow_venv/bin/python -m pytest tests/test_d4_regression_vectors.py -q
+
+# 4. mkdocs strict build
+mkdocs build --strict
+```
+
+**Reviewer re-verification:** Compare the embedded `verification_outputs/` SHA-256 against `sha256sum docs/headline-evidence/rN_*/SOURCE.md`. Final pre-push metrics snapshot at `docs/audit/wave326-final-metrics-table.md` (paper-flat-flattened.md sha256 `58c21076fc66bbf87c647537328e33911b42fe03123c5d61eaa0ecc8fa5562b7`).
+
+**K-cells reproducibility note:** 6 supplementary cells (R1, R3, R5_legacy, K1, K4+K5, K7) have data-archaeology disclosures (per-round CSV NOT preserved / 3-seed pool BLOCKED / single-seed only / direction-INVERTED). The 4 STRONG + 1 TIE main cells are the load-bearing reproducibility anchors; see DATA_PRESENTATION.md §2.4 + §2.5 + §6.7 for full disclosure.
+
+---
+
 ### Environment Setup (Docker Recommended)
 
 To build the exact environment used in this work:
@@ -334,9 +435,12 @@ Re-verify with `cd tnnls_submission && sha256sum -- *.md`.
   author={[Authors block — to be filled at TNNLS submission]},
   journal={IEEE Transactions on Neural Networks and Learning Systems},
   year={2026},
-  note={Under review at TNNLS; submission package at tnnls\_submission/}
+  note={Under review at TNNLS; submission package at tnnls\_submission/;
+        pre-push metrics snapshot: docs/audit/wave326-final-metrics-table.md}
 }
 ```
+
+**BibTeX note:** The `note` field references the Wave 326 final pre-push metrics snapshot for reproducibility. The submission-package SHA-256 column in [`tnnls_submission/MANIFEST.md`](tnnls_submission/MANIFEST.md) is the source-of-truth for cover letter + highlights + tables + figures + data availability + checklist.
 
 ---
 

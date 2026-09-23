@@ -605,3 +605,32 @@ K1-K8 honest-negative disclosure preserved in paper §10.4 + CLM-071.
 - `docs/RELEASE-NOTES.md` — flat reviewer-facing final state
 - `docs/reproduce.md` — flat reviewer-facing reproduction guide
 - `verification_outputs/MANIFEST.md` — flat reviewer-facing SHA-256 + size manifest
+
+---
+
+## 12. Wave 326 cross-doc propagation snapshot pointer (2026-09-23)
+
+**Purpose.** ADDITIVE pointer to the Wave 326 canonical cross-doc-snapshot audit doc at `docs/audit/wave326-crossdoc-metrics-snapshot.md`. This section is **internal-use additive** and does not modify any R-level / K-level cell number in §2 or §6.7.
+
+**Final 11-cell verdict distribution (Wave 310 + Wave 322 final).** 4 STRONG (R2 + R5b + R5c + R6) + 1 TIE (R5a) + 6 PARTIAL/SUPP (R1 + R3 + R5_legacy + K1 + K4 + K7) = 11 headline cells.
+
+**STRONG cells (§2 mapping):**
+- §2.2 R2 Kanzi RMSD deployed paired-t d_z=−0.0990 (STRONG)
+- §2.6 R5b CIFAR-10 RF n_rounds=1 framework-WINS conditional (STRONG)
+- §2.6 / CLM-059 / CLM-060 R5c MNIST FM smoke ckpt d_z=−13.175 (STRONG)
+- §2.7 R6 LineageFlow k6 tier-aware d_z=+0.2235 + grid-search d_z=+0.6467 (STRONG)
+
+**TIE cell:**
+- §2.4 R4 / R5a 2D Two Moons W₂ paper R-level d_s=+0.460 (TIE)
+
+**PARTIAL/SUPP cells:**
+- §2.1 R1 LineageFlow HMMER — PARTIAL/single-seed-disclosed (Wave 308 P1 demotion)
+- §2.3 R3 FlowMol3 fg_dev — PARTIAL (3-seed BLOCKED at vendor level per CLM-076/077)
+- §2.5 R5_legacy 2D Eight Gaussians — SUPP/LEGACY (per-round CSV NOT preserved)
+- §6.7 K1 FlowMol3 RDKit-validity — SUPP/UNDERPOWERED (Wave 308 P2 demotion)
+- §6.7 K4+K5 LineageFlow HMMER — SUPP/POWERED+K5 SUPP-WITH-CAVEAT (Wave 306 demotion)
+- §6.7 K7 LineageFlow novelty — SUPP/direction-INVERTED (Wave 306 demotion per W166 P3)
+
+**Cross-reference.** See `docs/audit/wave326-crossdoc-metrics-snapshot.md` (the canonical Wave 326 cross-doc-snapshot audit doc) for the full per-cell d_z + effect-band + Bonferroni-status table + §6 Framework Properties Path A Lemmas 1/2/3 ACTIVE summary + Wave 326 cross-doc propagation ledger.
+
+**Acceptance gates (Wave 326, additive only).** D.4 30/30 PASS preserved; mkdocs 0 warnings; claims consistency no drift (60 ACTIVE + 2 ACTIVE-INVERTED = 62 ACTIVE-class); no source code or vendored modifications.

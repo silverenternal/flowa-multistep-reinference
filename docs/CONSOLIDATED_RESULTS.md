@@ -8683,3 +8683,58 @@ extension); `docs/drafts/section-2-method.md` (§2.7.3 +
 **README.md top** updated with: (a) ASCII project architecture diagram (current state, Wave 235–242); (b) Wave 235–242 strengthening section (R5b WIN, R2 medium-effect uplift, R6 large-effect uplift with easy-tier elimination, 24.6× wall-clock fix, statistical methods, FlowMol3 rescue, journal decision); (c) Submission package reference (tnnls_submission/ as current, eaai_submission/ as historical).
 
 D.4 30/30 PASS preserved; claims_consistency no drift; Wave 242 GPU task uninterrupted.
+
+---
+
+## 15.103 — Wave 326 cross-doc propagation snapshot (2026-09-23)
+
+**Purpose.** Freeze the **final 11-cell verdict distribution** that survived the
+Wave 308 (R1/K1 demotions), Wave 310 (R6 tier-aware paper-body surfacing),
+Wave 322 (Path A Lemmas 2/3 §6 Framework Properties ACTIVE), and Wave 323/324
+(14-page TNNLS typeset + IEEEtran-journal verification) layers. The canonical
+cross-doc-snapshot audit doc is `docs/audit/wave326-crossdoc-metrics-snapshot.md`.
+
+**Final 11-cell verdict distribution (Wave 310 + Wave 322 final, 2026-09-23).**
+The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/SUPP** =
+5 main cells + 6 supplementary cells = 11 headline cells total:
+
+- **STRONG (main)**: R2 (Kanzi RMSD deployed paired-t d_z=−0.0990, CLM-060),
+  R5b (CIFAR-10 RF n_rounds=1 conditional framework-WINS, Wave 235 P1 + CONSOLIDATED_RESULTS §15.98),
+  R5c (MNIST FM smoke ckpt d_z=−13.175, CLM-059 + CLM-060 line 3101-3110),
+  R6 (LineageFlow k6 pLDDT tier-aware d_z=+0.2235 + grid-search d_z=+0.6467, Wave 233 P3 + Wave 235 P3 + CLM-073 + Wave 310 paper-body surfacing)
+- **TIE (main)**: R5a (2D Two Moons W₂ paper R-level d_s=+0.460 at n=3, verified Wave 209 P6 n=7 + Wave 216 P2 n=10)
+- **PARTIAL/SUPP**: R1 (Wave 308 P1 single-seed-disclosed demotion, CLM-060 line 3013),
+  R3 (FlowMol3 fg_dev direction-consistent per-record + 3-seed BLOCKED at vendor level per Wave 109.C DGL + Wave 244-262 vendored revert CLM-076/077),
+  R5_legacy (Wave 256 P2 demotion, per-round raw CSV files NOT preserved per CLAIMS.md line 3783),
+  K1 (Wave 308 P2 demotion to §10 supplementary, p_bonf=0.5676 FAILS K-level α=0.0125 by 45.4×),
+  K4+K5 (Wave 306 demotion, K4 POWERED + K5 SUPP-WITH-CAVEAT),
+  K7 (Wave 306 demotion, W166 P3 direction-INVERTED canonical in-git evidence)
+
+**Cross-doc propagation (ADDITIVE only).** The Wave 326 snapshot audit doc
+`docs/audit/wave326-crossdoc-metrics-snapshot.md` is the canonical anchor for this
+distribution. Per the Wave 268 strict-clean rule (status history additive, no removal),
+every cross-doc file that cites the verdict distribution:
+
+1. Preserves its prior Wave N status-history verbatim (no destructive edits)
+2. Adds a Wave 326 cross-doc-snapshot pointer at the end of the relevant section (additive anchor)
+3. Does NOT change any R-level / K-level cell number
+
+**Acceptance gates (Wave 326, verified before this section):**
+
+| # | Gate | Command | Result |
+|---|------|---------|--------|
+| 1 | D.4 byte-stable regression vectors | `python -m pytest tests/test_d4_regression_vectors.py -q` | **30 passed** (D.4 30/30 PASS preserved) |
+| 2 | Claims consistency | `python tools/check_claims_consistency.py` | **No drift detected.** (60 ACTIVE + 2 ACTIVE-INVERTED = 62 ACTIVE-class) |
+| 3 | mkdocs build strict | `mkdocs build --strict` | **EXIT=0, 0 warnings** |
+| 4 | Cross-doc snapshot doc exists | `ls docs/audit/wave326-crossdoc-metrics-snapshot.md` | **PASS** — snapshot doc authored (243 lines, 9 sections) |
+| 5 | No source code or vendored modifications | `git diff --stat adaptive_reflow/ data/` (expect 0 changes) | **PASS** — 0 source / vendored edits |
+| 6 | No prior §15.X paragraph modified | additive only — this §15.103 is appended at the end of §15.1–§15.102 | **PASS** — append-only |
+
+Gates 1, 2, 3, 4, 5, 6 are PASS.
+
+**ADDITIVE only — does not delete or rewrite any prior §15.1–
+§15.102 paragraph above.** All Wave 235-242 disclosures are preserved verbatim;
+§15.103 (this section) adds the **Wave 326 cross-doc propagation snapshot pointer**
+as an ADDITIVE, qualitative anchor. No §10.6 R-level inventory number is changed or
+retracted. The §6 Framework Properties Path A Lemmas 1/2/3 ACTIVE state (Wave 311 +
+Wave 322) is preserved verbatim.

@@ -181,3 +181,15 @@ Paper §7.1 line 650 + §7 line 718 + §7.2 line 743 + §7 line 652 list K7 as o
 **END WAVE 306 ALIGNMENT TABLE**
 
 Next step: wait for user authorization on the 17 decisions above before applying any paper edits or /tmp/ migrations.
+
+---
+
+## Wave 326 cross-doc-snapshot pointer (2026-09-23, additive per Wave 268 strict-clean)
+
+The Wave 306 11-cell alignment table above is preserved verbatim (frozen Wave 306). The **canonical Wave 310 + Wave 322 final 11-cell verdict distribution** is anchored at `docs/audit/wave326-crossdoc-metrics-snapshot.md` and distributes as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/SUPP** = 11 headline cells:
+
+- **STRONG (main)**: R2 (Kanzi RMSD deployed paired-t d_z=−0.0990), R5b (CIFAR-10 RF n_rounds=1 conditional), R5c (MNIST FM smoke ckpt d_z=−13.175), R6 (LineageFlow k6 tier-aware d_z=+0.2235 + grid-search d_z=+0.6467)
+- **TIE (main)**: R5a (2D Two Moons paper R-level d_s=+0.460 at n=3)
+- **PARTIAL/SUPP**: R1 (Wave 308 P1 single-seed-disclosed demotion), R3 (3-seed BLOCKED at vendor level), R5_legacy (per-round CSV NOT preserved), K1 (Wave 308 P2 demotion to §10 supplementary), K4+K5 (Wave 306 demotion), K7 (Wave 306 direction-INVERTED demotion per W166 P3)
+
+The Wave 306 alignment table's 11-cell evidence audit (rows 15-25 of the original table) is preserved verbatim above; the Wave 326 snapshot doc aggregates the final state into the cross-doc-snapshot pointer without modifying any §10.6 R-level / §10 K-level cell number.

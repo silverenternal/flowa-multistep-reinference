@@ -1,5 +1,11 @@
 # Documentation map for `flowa-multistep-reinference`
 
+> **Paper A ready for TNNLS submission (Wave 326 final-metrics, 2026-09-23).**
+> Paper PDF: [`docs/drafts/paper-flat-ieeetran.pdf`](drafts/paper-flat-ieeetran.pdf) (10 pages, IEEEtran-journal typeset).
+> Final 11-cell verdict distribution: **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/SUPP**.
+> Canonical snapshot: [`docs/audit/wave326-final-metrics-table.md`](audit/wave326-final-metrics-table.md) + [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](audit/wave326-crossdoc-metrics-snapshot.md).
+> Submission package: [`tnnls_submission/`](../tnnls_submission/) — 7 files with real SHA-256 (cover letter needs 17 USER_TO_FILL fields).
+
 This page is the single discoverable entry point for the 150-file `docs/`
 tree. Every entry below is a one-sentence pointer to a hand-authored or
 peer-reviewed doc, grouped into six sections in the order a new reader
@@ -13,6 +19,28 @@ signatures by mkdocstrings) is reachable from the repo root
 directly at [`api/index.md`](api/index.md); the on-disk landing page is
 the doc *map*, not the API *reference* — they are different surfaces for
 different audiences.
+
+## 0. Final paper-A metrics snapshot (Wave 326)
+
+The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/SUPP** (5 main + 6 supplementary = 11 cells). This is the canonical Wave 326 verdict distribution; see [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](audit/wave326-crossdoc-metrics-snapshot.md) for the cross-doc anchor.
+
+| # | Cell | Metric | Verdict | Headline |
+|:---:|---|---|---|---|
+| 1 | **R2** | Kanzi RMSD (paired-t) | **STRONG** | d_z = −0.0990, p_raw = 1.79e-3 |
+| 2 | **R5b** | CIFAR-10 RF FID (matched NFE=50) | **STRONG (conditional)** | ΔFID −1.60% to −2.53% (n_rounds=1) / +9.77% to +30.19% (n_rounds≥2) |
+| 3 | **R5c** | MNIST FM FID (smoke ckpt) | **STRONG (smoke)** | d_z = −13.175, p_bonf = 3.95e-11 |
+| 4 | **R6** | LineageFlow k6 foldability (tier-aware) | **STRONG** | d_z = +0.2235 (Bonf-sig at α=0.05/6) + grid best d_z = +0.6467 |
+| 5 | **R5a** | 2D Two Moons W₂ (paper R-level) | **TIE** | d_s = +0.460, p = 0.604 |
+| 6 | R1 | LineageFlow HMMER | **PARTIAL / single-seed** | d_z = +0.182, +116.46% (seed=42 only) |
+| 7 | R3 | FlowMol3 fg_dev | **PARTIAL** | d_z = −0.285 (N=200 per-record ACTUAL); 3-seed BLOCKED |
+| 8 | R5_legacy | 2D Eight Gaussians W₂ | **SUPP / LEGACY** | −10.40%, per-round CSV NOT preserved |
+| 9 | K1 | FlowMol3 RDKit-validity | **SUPP / UNDERPOWERED** | d_z = +1.36, p_bonf = 0.5676 FAILS K-level α=0.0125 by 45.4× |
+| 10 | K4+K5 | LineageFlow HMMER length-bias | **SUPP** | K4 POWERED, K5 SUPPORTS-WITH-CAVEAT |
+| 11 | K7 | LineageFlow novelty | **SUPP / direction-INVERTED** | W166 P3: framework 12.6× LESS Pfam-novel than baseline at pctid<30% |
+
+**Submission-gate status (5/5 PASS pre-push):** D.4 30/30 + claims no drift + ruff 0 + mkdocs 0 warnings + vendored NOT touched. Final pre-push metrics audit: [`docs/audit/wave326-final-metrics-table.md`](audit/wave326-final-metrics-table.md).
+
+**Push status:** PUSH to `origin/main` is BLOCKED at the USER permission gate per Wave 325 directive. Wave 326 is content-complete and pre-push-ready; final USER authorization required to push.
 
 ## 1. Start here
 

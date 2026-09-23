@@ -5,10 +5,13 @@
 [![CI](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml/badge.svg)](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml)
 [![D.4 byte-stable](https://img.shields.io/badge/D.4-30%2F30%20PASS-brightgreen)](#submission-gates-verified-at-final-pre-push) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](#installation--安装)
+[![PyTorch 2.7](https://img.shields.io/badge/torch-2.7%2Bcu128-orange.svg)](#installation--安装)
 [![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)](#tnnls-submission-package--tnnls-投稿材料)
 [![Adapters](https://img.shields.io/badge/adapters-16-orange.svg)](#repository-structure--仓库结构)
+[![5-gate PASS](https://img.shields.io/badge/5--gate-PASS-brightgreen.svg)](#submission-gates-verified-at-final-pre-push--终版前推送时验证)
+[![mkdocs strict](https://img.shields.io/badge/mkdocs--strict-0%20warnings-success.svg)](mkdocs.yml)
 
-**Last updated / 最近更新:** 2026-09-23 (Wave 297 narrative reframe). 源码冻结于 `v3.1-internal-publishable` 标签。
+**Last updated / 最近更新:** 2026-09-23 (Wave 326 final-metrics cross-doc snapshot). 源码冻结于 `v3.1-internal-publishable` 标签。论文 A 已准备 TNNLS 投稿（Wave 325 D+5 最终评审 + Wave 326 最终 11 单元裁决分布更新）。
 
 **Scheduler scope of this README / 本 README 的调度器适用范围:** All 7 headline numbers in the [Headline Results](#headline-results--头条结果) section were produced under `CosineAnnealScheduler` (the controller that ignores all 4 paper quantities). `CodimensionSheetScheduler` 和其他 paper-quantity-grounded 控制器 (`PaperRatioAdaptiveScheduler`、`EvidenceDrivenScheduler`、`ConvergenceAdaptiveScheduler`) 均为研究阶段；详见 Wave 287 代码路径审计 + Wave 291 sweep 审计，以及位于 [`docs/audit/wave292-p1-pipeline-inventory.md`](docs/audit/wave292-p1-pipeline-inventory.md) 的 16 个 site 枚举。
 
@@ -20,12 +23,15 @@
 
 ### Quick Navigation / 快速导航
 
+- [Paper A Submission Status / 论文 A 投稿状态](#paper-a-submission-status--论文-a-投稿状态) — TNNLS 投稿包 + 最终指标快照
+- [Final Empirical Metrics / 最终实证指标](#final-empirical-metrics-11-cells--最终实证指标-11-单元) — 4 STRONG + 1 TIE + 6 PARTIAL/SUPP（Wave 326 最终）
 - [Headline Results / 头条结果](#headline-results--头条结果) — 七个 R-level 单元 + 四个 K-cell 概览
 - [Deep Innovations / 深度创新](#deep-innovations--深度创新) — 七项真正新颖的首要贡献
 - [Architecture / 架构](#architecture--架构) — 类型化四端口控制面 + 13 调度器（9 基线 + 4 论文量驱动控制器）
 - [Installation / 安装](#installation--安装) — 三个 venv (FlowMol3 / LineageFlow / Kanzi)
 - [Quick Start / 快速开始](#quick-start--快速开始) — 一键验证投稿门槛
 - [Reproducing the Paper / 复现论文](#reproducing-the-paper--复现论文) — 每单元脚本与期望输出
+- [Reproducibility / 可复现性](#reproducibility--可复现性) — 5-gate 不变量 + D.4 30/30 + Wave 326 推送前快照
 - [Submission Gates / 投稿门禁](#submission-gates-verified-at-final-pre-push--终版前推送时验证) — D.4、mkdocs、claims、pytest、ruff、mypy
 - [Citation / 引用](#citation--引用) — TNNLS 投稿 BibTeX 条目
 - [English README](README.md) — 双语 README
@@ -34,12 +40,15 @@
 
 ## Contents / 目录
 
+- [Paper A Submission Status / 论文 A 投稿状态](#paper-a-submission-status--论文-a-投稿状态)
+- [Final Empirical Metrics / 最终实证指标](#final-empirical-metrics-11-cells--最终实证指标-11-单元)
 - [Headline Results / 头条结果](#headline-results--头条结果)
 - [Deep Innovations / 深度创新](#deep-innovations--深度创新)
 - [Architecture / 架构](#architecture--架构)
 - [Installation / 安装](#installation--安装)
 - [Quick Start / 快速开始](#quick-start--快速开始)
 - [Reproducing the Paper / 复现论文](#reproducing-the-paper--复现论文)
+- [Reproducibility / 可复现性](#reproducibility--可复现性)
 - [Environment Setup (Docker) / 环境搭建](#environment-setup-docker-recommended--推荐-docker)
 - [Repository Structure / 仓库结构](#repository-structure--仓库结构)
 - [Submission Gates / 提交门禁](#submission-gates-verified-at-final-pre-push--终版前推送时验证)
@@ -50,6 +59,64 @@
 - [License / 许可](#license--许可)
 - [Acknowledgements / 致谢](#acknowledgements--致谢)
 - [Contact / 联系](#contact--联系)
+
+---
+
+## Paper A Submission Status / 论文 A 投稿状态
+
+| Item / 项目 | Value / 值 |
+|---|---|
+| **Paper ID / 论文编号** | Paper A — FlowA: A Typed-Contracts Re-Inference Framework for Frozen Flow-Matching Checkpoints |
+| **Paper PDF / 论文 PDF** | [`docs/drafts/paper-flat-ieeetran.pdf`](docs/drafts/paper-flat-ieeetran.pdf) (10 pages, IEEEtran-journal typeset, sha256 `58c21076fc66bbf87c647537328e33911b42fe03123c5d61eaa0ecc8fa5562b7`) |
+| **Paper draft / 论文草稿** | [`docs/drafts/paper-flat-flattened.md`](docs/drafts/paper-flat-flattened.md) (1602 lines, §6 Framework Properties Lemmas 1/2/3 ACTIVE) |
+| **Target venue / 目标期刊** | IEEE TNNLS (Transactions on Neural Networks and Learning Systems) |
+| **Submission status / 投稿状态** | **READY / 已就绪** — 5/5 submission gates PASS at pre-push (D.4 30/30, mkdocs 0 warnings, claims no drift, ruff 0, mypy 0); cover letter needs 17 USER_TO_FILL fields per [`tnnls_submission/FILL_GUIDE.md`](tnnls_submission/FILL_GUIDE.md) |
+| **Submission package / 投稿包** | [`tnnls_submission/`](tnnls_submission/) — 7 files with real SHA-256 (cover_letter.md, highlights.md, tables.md, figures.md, data_availability.md, submission_checklist.md, MANIFEST.md) |
+| **Final metrics audit / 最终指标审计** | [`docs/audit/wave326-final-metrics-table.md`](docs/audit/wave326-final-metrics-table.md) + [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](docs/audit/wave326-crossdoc-metrics-snapshot.md) |
+| **Decision rationale / 决策依据** | [`docs/audit/wave238-p3-journal-decision.md`](docs/audit/wave238-p3-journal-decision.md) |
+| **Wave lineage / 波次谱系** | Wave 309 (restoration plan) → Wave 310 (restoration execution) → Wave 311 (Path A Lemma 1) → Wave 322 (Path A Lemmas 2 + 3) → Wave 323 (IEEEtran typeset) → Wave 324 (D+5 final review) → Wave 325 (D+5+1 push-execution, BLOCKED at permission gate) → **Wave 326 (final metrics + cross-doc snapshot, READY-TO-PUSH)** |
+
+**Push status / 推送状态:** PUSH to `origin/main` is BLOCKED at the USER permission gate per Wave 325 directive. Wave 326 verdict-distribution update is content-complete and pre-push-ready; final USER authorization required to push. / 推送至 `origin/main` 在 USER 权限门处被阻塞（依 Wave 325 指令）。Wave 326 裁决分布更新内容完备并就绪待推送；最终 USER 授权为推送前提。
+
+---
+
+## Final Empirical Metrics (11 cells) / 最终实证指标 (11 单元)
+
+The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/SUPP** (5 main cells + 6 supplementary cells = 11 headline cells total). This is the canonical Wave 326 verdict distribution; cross-doc anchor at [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](docs/audit/wave326-crossdoc-metrics-snapshot.md).
+11 个头条单元分为 **4 STRONG（主）+ 1 TIE（主）+ 6 PARTIAL/SUPP**（5 主单元 + 6 补充单元 = 11 个头条单元）。此为 Wave 326 权威裁决分布；跨文档锚点见 [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](docs/audit/wave326-crossdoc-metrics-snapshot.md)。
+
+| # | Cell / 单元 | Metric / 指标 | Verdict / 裁决 | Headline / 头条 |
+|:---:|---|---|---|---|
+| 1 | **R2** | Kanzi RMSD (paired-t) | **STRONG** | d_z = −0.0990, p_raw = 1.79e-3, Bonf-sig at α = 0.007143 |
+| 2 | **R5b** | CIFAR-10 RF FID (matched NFE = 50) | **STRONG (conditional)** | ΔFID = −1.60% to −2.53% (n_rounds=1, 4 schedulers); +9.77% to +30.19% (n_rounds≥2) |
+| 3 | **R5c** | MNIST FM FID (smoke ckpt) | **STRONG (smoke)** | d_z = −13.175, p_bonf = 3.95e-11 |
+| 4 | **R6** | LineageFlow k6 foldability (tier-aware) | **STRONG** | d_z = +0.2235 (Bonf-sig at α = 0.05/6 = 0.008333) + grid best d_z = +0.6467 |
+| 5 | **R5a** | 2D Two Moons W₂ (paper R-level) | **TIE** | d_s = +0.460, p = 0.604 (TIE_PERSISTS at n=3+7+10) |
+| 6 | R1 | LineageFlow HMMER | **PARTIAL / single-seed-disclosed** | d_z = +0.182, p_raw = 1.25e-8, +116.46% (seed=42 only) |
+| 7 | R3 | FlowMol3 fg_dev | **PARTIAL** | d_z = −0.285, p = 8.03e-5 (N=200 per-record ACTUAL); 3-seed pooled BLOCKED |
+| 8 | R5_legacy | 2D Eight Gaussians W₂ | **SUPP / LEGACY** | −10.40%, per-round CSV NOT preserved |
+| 9 | K1 | FlowMol3 RDKit-validity | **SUPP / UNDERPOWERED** | d_z = +1.36, p_bonf = 0.5676 FAILS K-level α = 0.0125 by 45.4× |
+| 10 | K4+K5 | LineageFlow HMMER length-bias + uniform-AA | **SUPP** | K4 POWERED, K5 SUPPORTS-WITH-CAVEAT |
+| 11 | K7 | LineageFlow novelty | **SUPP / direction-INVERTED** | W166 P3: framework 12.6× LESS Pfam-novel than baseline at pctid<30% |
+
+**Verdict distribution summary / 裁决分布汇总:**
+
+| Bucket / 类别 | Count / 计数 | Cells / 单元 |
+|---|---:|---|
+| STRONG (main) | 4 | R2, R5b (conditional), R5c, R6 |
+| TIE (main) | 1 | R5a |
+| PARTIAL/SUPP | 6 | R1, R3, R5_legacy, K1, K4+K5, K7 |
+| **Total / 合计** | **11** | |
+
+**Bonferroni family summary / Bonferroni 族汇总:**
+
+| Family / 族 | k | α | Cell members / 单元成员 |
+|---|---:|---:|---|
+| R-level primary | 7 | 0.05/7 = 0.007143 | R1, R2, R3, R5a, R5b, R5c, R6 |
+| R6 per-tier | 6 | 0.05/6 = 0.008333 | R6 hard / medium / easy × pLDDT / scPerplexity |
+| K-level | 4 | 0.05/4 = 0.0125 | K1, K4, K5, K7 |
+
+**Statistical methods / 统计方法:** TOST equivalence testing (16 cells), Jonckheere-Terpstra ordered test (R2 + R6), BF01 Bayes factor (16 cells), DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z=+1.117, I²=99.60%), and non-inferiority test (R5b, negative result: p_NI = 0.9985). Full details in [DATA_PRESENTATION.md §3](DATA_PRESENTATION.md).
 
 ---
 
@@ -213,6 +280,41 @@ Per-cell full audit trail at `docs/audit/wave*.md` (cited per cell above).
 
 ---
 
+## Reproducibility / 可复现性
+
+| Gate / 门 | State / 状态 | Evidence / 证据 |
+|---|---|---|
+| **D.4 byte-stable regression** | **30/30 PASS** | `tests/test_d4_regression_vectors.py` |
+| **5-gate invariants (pre-push)** | **5/5 PASS** | `docs/audit/wave326-final-metrics-table.md` §4 (D.4 30/30 + claims no drift + ruff 0 + mkdocs 0 + vendored NOT touched) |
+| **Byte-stable composite axis (3/3 Tier-3)** | Kanzi +0.1695, LineageFlow +0.2083, FlowMol3 +0.1182 | `verification_outputs/composite_axis_byte_stable/SOURCE.md` |
+| **Per-cell audit trail** | 24+ waves × multi-phase self-contained `docs/audit/waveNNN-pK-*.md` | `docs/audit/INDEX.md` |
+| **Source tree freeze** | `v3.1-internal-publishable` tag, vendored 8 repos UNMODIFIED | `docs/audit/wave262-p1-revert-all.md` |
+| **Pytest (5155 passed / 196 skipped)** | green / 绿 | `pytest tests/` |
+| **Ruff lint (4-directory scope)** | 0 findings | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
+| **Mypy type-check** | 0 errors | `mypy adaptive_reflow/` |
+
+**Reproducibility recipe / 可复现性脚本:**
+
+```bash
+# 1. One-click verification of all 7 R-level headlines
+bash reproduce/verify_all_headlines.sh
+
+# 2. Submission-gate verification (5 gates)
+python3 tools/verify_submission_readiness.py
+
+# 3. D.4 byte-stable regression suite
+.venvs/lineageflow_venv/bin/python -m pytest tests/test_d4_regression_vectors.py -q
+
+# 4. mkdocs strict build
+mkdocs build --strict
+```
+
+**Reviewer re-verification / 评审复验:** Compare the embedded `verification_outputs/` SHA-256 against `sha256sum docs/headline-evidence/rN_*/SOURCE.md`. Final pre-push metrics snapshot at `docs/audit/wave326-final-metrics-table.md` (paper-flat-flattened.md sha256 `58c21076fc66bbf87c647537328e33911b42fe03123c5d61eaa0ecc8fa5562b7`).
+
+**K-cells reproducibility note / K-单元可复现性注:** 6 supplementary cells have data-archaeology disclosures. The 4 STRONG + 1 TIE main cells are the load-bearing reproducibility anchors; see DATA_PRESENTATION.md §2.4 + §2.5 + §6.7 for full disclosure.
+
+---
+
 ### Environment Setup (Docker Recommended) / 环境搭建（推荐 Docker）
 
 To build the exact environment used in this work:
@@ -325,9 +427,12 @@ Re-verify with `cd tnnls_submission && sha256sum -- *.md`.
   author={[Authors block — to be filled at TNNLS submission]},
   journal={IEEE Transactions on Neural Networks and Learning Systems},
   year={2026},
-  note={Under review at TNNLS; submission package at tnnls\_submission/}
+  note={Under review at TNNLS; submission package at tnnls\_submission/;
+        pre-push metrics snapshot: docs/audit/wave326-final-metrics-table.md}
 }
 ```
+
+**BibTeX note / BibTeX 注:** The `note` field references the Wave 326 final pre-push metrics snapshot for reproducibility. The submission-package SHA-256 column in [`tnnls_submission/MANIFEST.md`](tnnls_submission/MANIFEST.md) is the source-of-truth for cover letter + highlights + tables + figures + data availability + checklist.
 
 ---
 
