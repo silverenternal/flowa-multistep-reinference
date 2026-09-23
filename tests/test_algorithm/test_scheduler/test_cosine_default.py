@@ -222,6 +222,8 @@ def test_all_schedulers_conform_to_protocol() -> None:
         "paper_ratio_adaptive",
         # Wave 61 Agent 2 — smooth NFE-aware memory_fraction scaling.
         "nfe_aware_memory",
+        # Wave 338 Phase 2 — R6 tier-aware LineageFlow sweep wrapper.
+        "tier_aware_codimension",
     }
     from adaptive_reflow.algorithm import (
         AdaptivePIDScheduler,

@@ -3003,12 +3003,20 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             cur_n = int(arr.shape[0])
             if cur_n == max_n:
                 return arr
+            # Pad the (cur_n, cur_n) bond matrix to (max_n, max_n) by
+            # wrapping it in a no-bond-filled (max_n, max_n) shell and
+            # placing ``arr`` in the top-left block. The naive approach of
+            # concatenating ``(cur_n, cur_n)`` with ``(max_n - cur_n,
+            # max_n)`` fails because the columns don't match — the
+            # CTMC drops atoms per-molecule so n_final varies in the
+            # batch and ``arr`` has fewer rows AND columns than max_n.
             pad_e = np.full(  # type: ignore[var-annotated]
-                (max_n - cur_n, max_n),
+                (max_n, max_n),
                 FLOWMOL3ADAPTER_N_BOND_TYPES - 1,
                 dtype=np.int64,
             )
-            return np.concatenate([arr, pad_e], axis=0)  # type: ignore[no-any-return]
+            pad_e[:cur_n, :cur_n] = arr
+            return pad_e  # type: ignore[no-any-return]
 
         x_padded = [_pad_x(x) for x in x_batch]
         c_padded = [_pad_c(c) for c in c_batch]

@@ -23,6 +23,13 @@ metric_mode: real                       # Wave 53 Agent B real→torch wiring
 composite_metric: real                  # Wave 47 Agent A lineageflow_composite
 lineageflow_upstream_eval: true         # Wave 81 wrapper path
 upstream_n_samples: 1000                # N=1000 per arm (Wave 108.C default)
+# --- §2.b Wave 338 Phase 2 — R6 scheduler knob. Default ``cosine``
+# preserves the legacy uniform-with-remainder NFE distribution
+# (Wave 158 / Wave 161 K6 / Wave 172b lineageflow ladder anchor
+# byte-stability). Pass ``tier_aware_codimension`` to activate the
+# live R6 tier-aware sweep (forwarded to ``tools.gen_lineageflow_n1000_fastas
+# .py --scheduler`` and then ``tools.run_real_ckpt_eval._solve_framework``).
+scheduler: cosine                       # Wave 338 Phase 2 R6 scheduler selection
 
 # --- §3. Shell-launcher knobs (Wave 112.D-3 — out-of-schema; the
 # shell uses yaml.safe_load directly so these don't go through the

@@ -115,6 +115,15 @@ N_ROUNDS: int = 3  # legacy default; overridden by --n-rounds in main()
 BETA_BASE: float = 0.5  # overridden by --beta-base in main()
 RESTART_MIN_NFE: int = 20  # overridden by --restart-min-nfe in main()
 NFE_REF: int = 50  # overridden by --nfe-ref in main()
+# Wave 338 Phase 2 — R6 tier-aware LineageFlow sweep knob. The
+# ``scheduler_name`` key resolves via
+# :func:`adaptive_reflow.algorithm.scheduler.build_scheduler`; when
+# ``"cosine"`` (the default) ``_solve_framework`` preserves the
+# legacy uniform-with-remainder NFE distribution (Wave 158 byte-stable
+# anchor). When ``"tier_aware_codimension"`` the framework glue
+# builds a :class:`TierAwareCodimensionSheetScheduler` and uses its
+# ``n_cap`` to redistribute the per-round NFE budget (R6 live sweep).
+SCHEDULER_NAME: str = "cosine"  # overridden by --scheduler in main()
 
 
 def _biased_aa(
@@ -243,6 +252,24 @@ def _apply_sensitivity_patches(*, beta_base: float, nfe_ref: int) -> None:
         seed: int,
         paper_quantities: dict[str, float] | None = None,
         nfe: int = 0,
+        # Wave 338 Phase 2 — pass through the Wave 275 P4 R6
+        # tier-aware kwargs so the wrapper does not silently raise
+        # ``TypeError: unexpected keyword argument 'tier_aware_n_cap'``
+        # when ``_solve_framework`` threads them into the policy
+        # builder. Pre-Wave-338 callers that did not supply these
+        # kwargs continue to work because the original helper
+        # declares them with ``None`` defaults.
+        tier_aware_n_cap: float | None = None,
+        tier_aware_baseline_metrics: dict[Any, float] | None = None,
+        current_record_id: Any = None,
+        # Wave 338 Phase 2 — accept ``scheduler_name`` so
+        # ``_solve_framework`` can thread the R6 scheduler knob
+        # through. The wrapper does not consume the kwarg (the
+        # beta-base override is scheduler-name agnostic); it is
+        # absorbed here so the underlying policy helper never sees
+        # an unexpected kwarg.
+        scheduler_name: str = "cosine",
+        **_extra_kwargs: Any,
     ) -> Any:
         """Mirror of the original helper with ``beta_base`` override.
 
@@ -288,6 +315,14 @@ def _apply_sensitivity_patches(*, beta_base: float, nfe_ref: int) -> None:
                 seed=int(seed),
                 paper_quantities=paper_quantities,
                 nfe=int(nfe),
+                # Wave 338 Phase 2 — pass through the Wave 275 P4 R6
+                # tier-aware kwargs so the wrapper does not silently
+                # raise on unknown kwargs (the original helper
+                # declares these with ``None`` defaults so the call is
+                # safe for pre-Wave-275 callers).
+                tier_aware_n_cap=tier_aware_n_cap,
+                tier_aware_baseline_metrics=tier_aware_baseline_metrics,
+                current_record_id=current_record_id,
             )
             if paper_quantities is None and _policy is not None:
                 # Replace the per-channel β with ``beta_base``
@@ -454,6 +489,11 @@ def _framework_emit_sequence(
             nfe=NFE_PER_RECORD,
             seed=int(seed),
             n_rounds=int(effective_n_rounds),
+            # Wave 338 Phase 2 — R6 tier-aware scheduler knob. Default
+            # ``"cosine"`` preserves the legacy uniform-with-remainder
+            # NFE distribution; ``"tier_aware_codimension"`` activates
+            # the scheduler-driven NFE allocation on LineageFlow.
+            scheduler_name=str(SCHEDULER_NAME),
         )
     except Exception:
         return None
@@ -727,6 +767,30 @@ def main() -> None:
             "Default 50 preserves Wave 172b lineageflow anchor."
         ),
     )
+    # Wave 338 Phase 2 — R6 tier-aware LineageFlow scheduler knob.
+    # The argument forwards ``scheduler_name`` to
+    # ``tools.run_real_ckpt_eval._solve_framework`` which dispatches on
+    # ``adaptive_reflow.algorithm.scheduler.build_scheduler``. Default
+    # ``cosine`` preserves the legacy byte-stable uniform NFE
+    # distribution; ``tier_aware_codimension`` activates the live R6
+    # tier-aware sweep.
+    p.add_argument(
+        "--scheduler",
+        type=str,
+        default="cosine",
+        help=(
+            "Wave 338 Phase 2 — R6 scheduler family name forwarded to "
+            "``tools.run_real_ckpt_eval._solve_framework``. The "
+            "framework's :func:`build_scheduler` looks up the family "
+            "in ``SCHEDULER_REGISTRY`` and uses its ``n_cap`` to "
+            "derive the per-round NFE allocation. Default ``cosine`` "
+            "preserves the legacy uniform-with-remainder distribution "
+            "(Wave 158 / 161 K6 / 172b lineageflow ladder anchor "
+            "byte-stability). Pass ``tier_aware_codimension`` to "
+            "activate the live R6 tier-aware sweep; see "
+            "``docs/audit/wave338-phase2-mechanism.md``."
+        ),
+    )
     # Wave 276 P — K5 prior-composition knob. ``prior_mix=0.0`` is
     # the legacy Wave 81/86/158 byte-stable path
     # (FAMILY_PROFILES-biased AA composition); ``prior_mix=1.0``
@@ -810,6 +874,12 @@ def main() -> None:
     RESTART_MIN_NFE = int(args.restart_min_nfe)
     global NFE_REF
     NFE_REF = int(args.nfe_ref)
+    # Wave 338 Phase 2 — wire ``--scheduler`` through the module-level
+    # ``SCHEDULER_NAME`` global so ``_framework_emit_sequence`` can pass
+    # it to ``_solve_framework``. Default ``"cosine"`` preserves the
+    # legacy byte-stable uniform NFE distribution.
+    global SCHEDULER_NAME
+    SCHEDULER_NAME = str(args.scheduler).strip()
     # Wave 186 P2 — patch the framework glue to honour the
     # sensitivity-analysis parameters. The framework's
     # ``_make_framework_policy`` reads ``ADAPTER_NFE_REF`` from
@@ -856,6 +926,12 @@ def main() -> None:
         "beta_base": float(BETA_BASE),
         "restart_min_nfe": int(RESTART_MIN_NFE),
         "nfe_ref": int(NFE_REF),
+        # Wave 338 Phase 2 — R6 scheduler family forwarded to
+        # ``_solve_framework``. Captured so the per-cell audit doc can
+        # correlate FASTA bytes to the scheduler-driven NFE allocation
+        # (default ``"cosine"`` byte-stable; ``"tier_aware_codimension"``
+        # activates the live R6 sweep).
+        "scheduler_name": str(SCHEDULER_NAME),
         # Wave 276 P — K4 + K5 weak-metric remediation axis values.
         # ``upstream_eval_len_bias`` keys the K4 length distribution
         # (short=30-150 AA byte-stable, long=200-300 AA powered);

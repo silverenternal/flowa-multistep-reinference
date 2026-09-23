@@ -628,4 +628,47 @@ __all__ = [
     "DEFAULT_TIER_QUANTILES",
     "TierAwareCodimensionSheetScheduler",
     "_compute_tier_boundaries",
+    "_tier_aware_codimension_factory",
 ]
+
+
+def _tier_aware_codimension_factory(
+    *,
+    cycle_length: int = 20,
+    n_min: float = 0.0,
+    n_max: float = 1.0,
+    eps_implicit: float = 0.05,
+    eps_direction: str = "decreasing",
+    seed: int = 0,
+    easy_tier_nfe_reduction_factor: float = 1.0,
+    tier_quantile_boundaries: tuple[float, float] = DEFAULT_TIER_QUANTILES,
+    baseline_metric_extractor: Callable[[Any], float] | None = None,
+) -> TierAwareCodimensionSheetScheduler:
+    """Factory for :class:`TierAwareCodimensionSheetScheduler`.
+
+    Registered in :data:`SCHEDULER_REGISTRY` under the key
+    ``"tier_aware_codimension"`` (Wave 338 Phase 2 — R6 tier-aware
+    LineageFlow sweep). The factory mirrors the kwargs of
+    :class:`TierAwareCodimensionSheetScheduler` so that
+    :func:`build_scheduler("tier_aware_codimension", **kwargs)` works
+    directly. The ``easy_tier_nfe_reduction_factor=1.0`` default is a
+    safe no-op so the wrapper is byte-identical to the wrapped
+    :class:`CodimensionSheetScheduler` until the caller opts in.
+    """
+    from adaptive_reflow.algorithm.scheduler.adaptive import (  # type: ignore
+        CodimensionSheetScheduler,
+    )
+    base = CodimensionSheetScheduler(
+        cycle_length=int(cycle_length),
+        n_min=float(n_min),
+        n_max=float(n_max),
+        eps_implicit=float(eps_implicit),
+        eps_direction=str(eps_direction),
+        seed=int(seed),
+    )
+    return TierAwareCodimensionSheetScheduler(
+        base=base,
+        easy_tier_nfe_reduction_factor=float(easy_tier_nfe_reduction_factor),
+        tier_quantile_boundaries=tuple(tier_quantile_boundaries),
+        baseline_metric_extractor=baseline_metric_extractor,
+    )

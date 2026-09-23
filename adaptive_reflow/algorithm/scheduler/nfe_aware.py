@@ -562,6 +562,18 @@ SCHEDULER_REGISTRY: dict[str, Callable[..., SchedulerProtocol]] = {
     # Wave 61 Agent 2 — smooth NFE-aware memory_fraction scaling
     # (Wave 57 Agent D's B2 / successor to Wave 58 Agent 1's binary gate).
     "nfe_aware_memory": NFEAwareMemoryScheduler,
+    # Wave 338 Phase 2 — R6 tier-aware sweep on LineageFlow. The
+    # wrapper is registered here so ``build_scheduler(
+    # "tier_aware_codimension", ...)`` resolves polymorphically
+    # alongside the other Phase-2 families. The factory imports the
+    # wrapper lazily to avoid closing the scheduler package cycle
+    # (same pattern as ``_sequential_factory`` above).
+    "tier_aware_codimension": (
+        __import__(
+            "adaptive_reflow.algorithm.scheduler.tier_aware",
+            fromlist=["TierAwareCodimensionSheetScheduler"],
+        ).__dict__["_tier_aware_codimension_factory"]
+    ),
 }
 """Mapping from schedule family name to its :class:`SchedulerProtocol` factory.
 

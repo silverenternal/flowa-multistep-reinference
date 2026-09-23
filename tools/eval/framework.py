@@ -619,6 +619,7 @@ def _solve_framework(
     tier_aware_n_cap: float | None = None,
     tier_aware_baseline_metrics: dict[Any, float] | None = None,
     current_record_id: Any = None,
+    scheduler_name: str = "cosine",
 ) -> tuple[Any, float]:
     """Framework multi-round ODE solve with the same total NFE budget.
 
@@ -682,12 +683,59 @@ def _solve_framework(
     # 10 / 50 / 200 — a 1-step excess in 2 of 3 cells. The new formula
     # puts the remainder in the LAST round so the per-round NFE list is
     # ``[base, base, ..., base+remainder]`` with sum equal to ``nfe``.
+    #
+    # Wave 338 Phase 2 — scheduler-driven NFE allocation (additive).
+    # ``scheduler_name`` keys :func:`build_scheduler`; when the caller
+    # passes ``"cosine"`` (the default) we preserve the legacy
+    # ``[base, base, ..., base+remainder]`` distribution byte-for-byte
+    # so the Wave 158 / Wave 161 K6 / Wave 172b lineageflow ladder
+    # anchor manifest bytes are unchanged. For any other registered
+    # family (``tier_aware_codimension``, ``codimension_sheet``, etc.)
+    # the per-round NFE is derived from the scheduler's ``n_cap`` via
+    # ``nfe[r] = round(n_cap * nfe)`` (clipped to ``[1, nfe]``) so the
+    # scheduler can adaptively redistribute the budget across rounds.
     n_rounds_int = max(1, int(n_rounds))
-    base_per_round = max(1, int(nfe) // n_rounds_int)
-    remainder_per_round = max(0, int(nfe) - base_per_round * n_rounds_int)
-    nfe_per_round_list: list[int] = [base_per_round] * n_rounds_int
-    if remainder_per_round > 0:
-        nfe_per_round_list[-1] += remainder_per_round
+    nfe_per_round_list: list[int]
+    if str(scheduler_name).strip().lower() == "cosine":
+        # Legacy byte-stable uniform-with-remainder distribution.
+        base_per_round = max(1, int(nfe) // n_rounds_int)
+        remainder_per_round = max(0, int(nfe) - base_per_round * n_rounds_int)
+        nfe_per_round_list = [base_per_round] * n_rounds_int
+        if remainder_per_round > 0:
+            nfe_per_round_list[-1] += remainder_per_round
+    else:
+        # Scheduler-driven NFE allocation. Build the scheduler via
+        # ``build_scheduler`` and use its ``n_cap`` to derive per-round
+        # NFE. The scheduler's ``cycle_length`` is anchored to
+        # ``n_rounds`` so the per-round n_cap varies naturally across
+        # rounds (a short cycle collapses every round to the same
+        # n_cap value, masking the scheduler's per-round signal).
+        from adaptive_reflow.algorithm.scheduler import (  # type: ignore
+            build_scheduler as _build_scheduler,
+        )
+        _sched = _build_scheduler(
+            str(scheduler_name),
+            cycle_length=int(n_rounds_int),
+        )
+        _raw: list[int] = []
+        for _r in range(int(n_rounds_int)):
+            try:
+                _sample = _sched.sample(0, int(_r), int(_r))
+                _n_cap = float(_sample.n_cap)
+            except Exception:
+                # Defensive: a misconfigured scheduler falls back to
+                # the byte-stable uniform distribution for the failing
+                # round so a sweep cannot silently corrupt the manifest.
+                _n_cap = 1.0 / float(n_rounds_int)
+            _ns = int(round(float(_n_cap) * float(nfe)))
+            _ns = max(1, min(int(nfe), int(_ns)))
+            _raw.append(int(_ns))
+        # Reconcile sum to ``nfe`` exactly (distribute the rounding
+        # remainder to the LAST round so the total is preserved).
+        _total = sum(_raw)
+        if _total != int(nfe):
+            _raw[-1] = max(1, _raw[-1] + (int(nfe) - _total))
+        nfe_per_round_list = _raw
     t0 = time.monotonic()
     cur_bundle = bundle
     trace: Any = None

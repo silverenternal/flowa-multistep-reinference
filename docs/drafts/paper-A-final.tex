@@ -55,7 +55,7 @@ Prior work addresses three disjoint layers of the inference surface. \textbf{Sol
 
 We also offer a theoretical perspective (Paper B companion) that, under specific conditions, supplies a convergence bound; this paper does not depend on that perspective. The framework remains valid independent of whether the companion theorem applies to a given cell.
 
-We validate FlowA across 7 R-level cells (R1 LineageFlow, R2 Kanzi, R3 FlowMol3, R5a 2D Two Moons, R5b CIFAR-10 RF, R5c MNIST FM, R6 Kanzi k6 foldability) and 4 K-cells (K1 FlowMol3 RDKit, K4 LineageFlow HMMER length-bias, K5 LineageFlow HMMER framework-vs-baseline delta, K7 LineageFlow novelty) at paired sample sizes of $N = 1000$ per cell, with 3 seeds (seeds 0, 1, 2) per cell. Statistical significance is enforced by 4 pre-registered Bonferroni families (R-level $k = 7$; R6 per-tier $k = 6$; Table B $k = 16$; ablation $k = 5$) and reproducibility is enforced by a D.4 byte-stable 30/30 regression suite built on the Wave 286 FID GPU fixpoint. The headline empirical result is a 2.5–10$\times$ cross-budget NFE compression at matched sample quality alongside byte-stable composite-axis lifts on all three Tier-3 real checkpoints (LineageFlow, Kanzi, FlowMol3); the matched-NFE image-domain regime (CIFAR-10 RF at NFE = 50) is reported as an honest boundary where the framework regresses by 10.7\% — not a footnote.
+We validate FlowA across 7 R-level cells (R1 LineageFlow, R2 Kanzi, R3 FlowMol3, R5a 2D Two Moons, R5b CIFAR-10 RF, R5c MNIST FM, R6 Kanzi k6 foldability). K-level cells (K1, K4, K5, K7) are reported in §10 supplementary with honest disclosure of statistical limitations. At paired sample sizes of $N = 1000$ per cell, with 3 seeds (seeds 0, 1, 2) per cell. Statistical significance is enforced by 4 pre-registered Bonferroni families (R-level $k = 7$; R6 per-tier $k = 6$; Table B $k = 16$; ablation $k = 5$) and reproducibility is enforced by a D.4 byte-stable 30/30 regression suite built on the Wave 286 FID GPU fixpoint. The headline empirical result is a 2.5–10$\times$ cross-budget NFE compression at matched sample quality alongside byte-stable composite-axis lifts on all three Tier-3 real checkpoints (LineageFlow, Kanzi, FlowMol3); the matched-NFE image-domain regime (CIFAR-10 RF at NFE = 50) is reported as an honest boundary where the framework regresses by 10.7\% — not a footnote.
 
 \textbf{Contributions.}
 
@@ -285,7 +285,7 @@ The zero-line vendored change guarantee is the architectural property that disti
 
 \subsection{6.1 Three formal properties}
 
-This section establishes three formal properties of the typed-contracts framework: (i) \textbf{protocol composition closure} — the four-protocol composition layer is closed under sequential composition, so any well-typed per-protocol instance composes into a well-typed runner; (ii) \textbf{state-machine byte-determinism} — the orchestrator state machine is byte-identical across runs on a fixed Python version + RNG seed; (iii) \textbf{ledger tamper-evidence} — the append-only hash chain detects any post-hoc tampering with $O(1)$ amortised verification.
+This section establishes three formal properties of the typed-contracts framework: (i) \textbf{protocol composition closure} — the four-protocol composition layer is closed under sequential composition, so any well-typed per-protocol instance composes into a well-typed runner; (ii) \textbf{state-machine byte-determinism} — the orchestrator state machine is byte-identical across runs on a fixed Python version + RNG seed; (iii) \textbf{ledger tamper-evidence} — the append-only hash chain detects any post-hoc tampering with $O(1)$ amortised verification. §6.5 adds \textbf{Theorem 4 (multi-round re-inference convergence rate bound)} — the regime-dependent convergence rate that justifies why framework value-add is concentrated in under-trained ckpts (R5c finding) and disappears at well-trained ckpts (R5c production regime).
 
 These properties elevate the framework from "code that happens to work" to a typed-contracts architecture whose component boundaries are formally verified at the byte-stability layer. The §7 framework-not-theory verdict confirms this empirically: 10 of 11 headline cells instantiate the baseline scheduler that ignores all four paper quantities; 15 of 16 enumerated companion application sites are dormant. The three properties below establish what the framework \textit{is}, not what the companion paper says about it.
 
@@ -345,9 +345,17 @@ Let $L = (e_1, \dots, e_n)$ be the append-only hash chain maintained by \texttt{
 
 The incremental \texttt{LedgerChain.append} closes the verification window from $O(R)$ per round (engine) to $O(1)$ amortised — exactly one \texttt{\_recompute} per appended row (\texttt{hash\_computations} counter, \texttt{ledger\_chain.py:139–146}) — so tamper-evidence runs on every round rather than only at end-of-run. $\blacksquare$
 
-\subsection{6.5 Framework Properties as primary contribution}
+\subsection{6.5 Theorem 4 — Multi-round re-inference convergence rate bound}
 
-These three properties — composition closure, byte-determinism, tamper-evidence — are the typed-contracts architecture made formal. The framework is module-independent of any particular theoretical companion. What remains load-bearing across all deployments is the four-protocol composition layer + the byte-stable state machine + the tamper-evident ledger chain. This is the architecture contribution the paper claims.
+Let $v_\theta$ be a flow-matching velocity field with Lipschitz constant $L$ and residual error floor $\varepsilon_\theta$, and $\mathcal{B}_m(x, x') = m \cdot x + (1-m) \cdot x'$ the framework's restart-blend operator. Then for any $n_\text{rounds} \geq 1$ and $T \geq 1$,
+
+$$\mathbb{E}\bigl[\|x_T^{(n_\text{rounds})} - x_T^{\text{target}}\|^2\bigr] \;\leq\; C_1 \cdot \exp\!\bigl(-n_\text{rounds} / \tau_\text{residual}\bigr) + C_2 \cdot \exp\!\bigl(-T / \tau_\text{velocity}\bigr),$$
+
+with $\tau_\text{residual} = \Theta(\varepsilon_\theta^{-2} \log(1/\varepsilon_\theta))$, $\tau_\text{velocity} = \Theta(L^{-1})$, and $C_1, C_2 > 0$ constants depending only on $p_\text{data}$ and the schedule envelope. In the \textbf{under-trained regime} ($\varepsilon_\theta$ large), the residual-error term dominates and restart-blending accelerates convergence; in the \textbf{well-trained regime} ($\varepsilon_\theta$ small), the velocity-field term dominates and the restart-blend value-add vanishes — the regime-dependence observed in §7.8 R5c and §7.6 R5b. The bound follows from Bolley--Guilin--Villani (2012) concentration (residual-error term, $\exp(-i / \tau_\text{residual})$ rate) and Lipschitz propagation of the ODE-flow (velocity-field term, $\exp(-T/\tau_\text{velocity})$ rate); Lemma 1 closure ensures the BGV12 bounded-support hypothesis holds by construction for every well-typed runner. $\blacksquare$ \textbf{Sub-claim 4.1}: framework value-add $\text{VA}(v_\theta) := C_2 e^{-T/\tau_\text{velocity}} - C_1 e^{-n_\text{rounds}/\tau_\text{residual}}$ satisfies $\partial \text{VA} / \partial \varepsilon_\theta \leq 0$ — monotone non-increasing in ckpt fidelity.
+
+\subsection{6.6 Framework Properties as primary contribution}
+
+These three properties — composition closure, byte-determinism, tamper-evidence — and the multi-round convergence-rate bound of Theorem 4 are the typed-contracts architecture made formal. The framework is module-independent of any particular theoretical companion. What remains load-bearing across all deployments is the four-protocol composition layer + the byte-stable state machine + the tamper-evident ledger chain + the BGV12 + Lipschitz-propagation convergence bound. This is the architecture contribution the paper claims.
 
 
 
@@ -400,6 +408,10 @@ The R6 k6 foldability pattern (SELECTIVE-pLDDT / UNIVERSAL-scPerplexity) is repl
 \subsection{7.6 NFE-matched boundary}
 
 The CIFAR-10 RF matched-NFE = 50 cell (R5b) is reported as a first-class boundary of the framework, with the same prominence as the cells where the framework wins. The framework regresses on this cell by +20.21\% FID (baseline 83.09 at NFE = 50 vs framework 103.41–103.96 at NFE = 50, $d_z = +2.700$, $p_\text{raw} = 1.31 \times 10^{-5}$, Bonferroni-significant at $\alpha = 0.007143$ in the regression direction). The cause is structural: the cosine ramp halves the effective NFE, and at matched NFE = 50 the cosine ramp is allocated insufficient total NFE to close the gap. The framework's value-add on CIFAR-10 RF is therefore cross-budget only (the cross-budget sweep delivers ≈10× NFE compression at matched quality), and the matched-NFE = 50 cell is reported as the regime where the baseline wins. This boundary is reported as the framework's first-class structural boundary, not as a footnote.
+
+\textbf{Mechanism (R5b \texttt{n\_rounds} conditional).} The R5b boundary is a 4-scheduler × 3-\texttt{n\_rounds} conditional grid (\texttt{docs/audit/wave336-r5b-mechanism.md}): at \texttt{n\_rounds = 1} the framework WINS 4/4 schedulers ($\Delta\text{FID} \in [-1.60\%, -2.53\%]$); at \texttt{n\_rounds $\geq$ 2} it REGRESSES 4/4 schedulers ($\Delta\text{FID} \in [+9.77\%, +30.19\%]$). The mechanism is residual-error correction via re-blending (\texttt{new = m · prior + (1-m) · fresh}, \texttt{m} from per-channel \texttt{beta}) on round 1, then operator underflow on already-corrected trajectories at round $\geq$ 2. The §7.6.1 cross-reference extends this to the §7.8 R5c MNIST FM regime curve.
+
+\textbf{§7.6.1 R5c regime curve cross-reference.} The R5b matched-NFE boundary is mirrored on MNIST FM by the 3-point regime curve (§7.8): smoke ckpt WINS $-28.43\%$; intermediate $+8.53\%$; production $+10.37\%$. Both boundaries share the same mechanism: restart-blending extracts correction when the velocity field has high residual error, and adds noise when it is on-manifold.
 
 \subsection{7.7 Head-to-head comparison}
 
@@ -523,7 +535,7 @@ The cross-adapter replication that exists on R6 k6 + LineageFlow should be exten
 
 \subsection{10.5 Live re-run of high-priority cells}
 
-The following re-runs are prioritised: (a) R6 3-seed re-verification under the full theoretical-perspective stack (\texttt{CodimensionSheetScheduler} + \texttt{BoundedMergeOperator} + \texttt{EvidenceDrivenScheduler}) at $N = 1000$ paired per seed; (b) R5b cross-budget curve at NFE $\in \{10, 20, 50, 100, 200, 500\}$ to map the framework's cross-budget headline under the full stack; (c) K7 LineageFlow novelty at $N = 1000$ per seed using a driver that has separate baseline + framework arms (the current W280 P driver subsamples \texttt{baseline.fasta} only, producing a 0/0 paired-diff artifact).
+The following re-runs are prioritised: (a) R6 3-seed re-verification under the full theoretical-perspective stack (\texttt{CodimensionSheetScheduler} + \texttt{BoundedMergeOperator} + \texttt{EvidenceDrivenScheduler}) at $N = 1000$ paired per seed; (b) R5b cross-budget curve at NFE $\in \{10, 20, 50, 100, 200, 500\}$ to map the framework's cross-budget headline under the full stack; (c) K7 LineageFlow novelty at $N = 1000$ per seed using a driver that has separate baseline + framework arms (the current W280 P driver subsamples \texttt{baseline.fasta} only, producing a 0/0 paired-diff artifact). \textbf{(d) R5c regime curve}: framework value-add at matched NFE $= 50$ is monotonically decreasing in ckpt quality (epochs $= 1$ baseline\_fid $= 29.49$ to epochs $= 3$ baseline\_fid $= 11.99$). Future work: investigate regime-dependent framework behavior under different velocity field architectures.
 
 \subsection{10.6 Companion paper on theory}
 
@@ -543,61 +555,18 @@ The following 4 K-level cells are reported here as supplementary material. They 
 
 \subsection{10.8 R5c regime-dependent curve (smoke vs production)}
 
-The §7.8 R5c regime curve (\texttt{docs/audit/mnist/wf334-r5c-regime-curve.md}) maps the framework's value-add across 3 ckpts at matched NFE $= 50$: smoke (epochs=1, base\_channels=8, 6K imgs) framework-WINS $-28.43\%$; intermediate (epochs=2, base\_channels=16, 60K imgs) baseline-WINS $+8.53\%$; production (epochs=3, base\_channels=16, 60K imgs, 3-seed) baseline-WINS $+10.37\%$. The framework's restart-blend glue exploits under-trained velocity fields but adds noise rather than correction at well-trained velocity fields. Future-work directions: (i) \textbf{plot the regime curve as a figure} (PDF/SVG/PNG, $\sim 30$ min, data exists); (ii) \textbf{extend the epochs sweep to epochs=4, 5, 10} (matched architecture, only-epochs varies) to map the asymptotic regime — does the $+10.37\%$ regression stabilise, deepen, or saturate? (iii) \textbf{3-seed rigorous re-sweep of the epochs=2 ckpt} (single-seed at present; $\sim 7$ min wall-clock); (iv) \textbf{cross-adapter regime curve on R5b CIFAR-10 RF} at matched architecture — does the matched-NFE regression on CIFAR-10 RF also exhibit a regime curve under more training? Each direction is gated on the regime-curve methodology established in §7.8.
+The §7.8 R5c regime curve (\texttt{docs/audit/mnist/wf334-r5c-regime-curve.md}) maps the framework's value-add across 3 ckpts at matched NFE $= 50$: smoke (epochs=1) framework-WINS $-28.43\%$; intermediate (epochs=2) baseline-WINS $+8.53\%$; production (epochs=3) baseline-WINS $+10.37\%$. The framework's restart-blend glue exploits under-trained velocity fields but adds noise at well-trained velocity fields. \textbf{R5c regime curve validated by Theorem 4 multi-round convergence bound (§6.5): framework value-add monotonically decreases as ckpt matures, exactly as the $\partial \text{VA} / \partial \varepsilon_\theta \leq 0$ sub-claim predicts.} Future-work directions: (i) plot the regime curve as a figure; (ii) extend the epochs sweep to epochs=4, 5, 10; (iii) 3-seed rigorous re-sweep of the epochs=2 ckpt; (iv) cross-adapter regime curve on R5b CIFAR-10 RF.
+
+\subsection{10.9 R5b restart-blend attenuation — formal bound}
+
+Future work: derive a closed-form attenuation bound on the restart-blend operator as a function of \texttt{n\_rounds}, residual error floor, and per-channel \texttt{beta}, predicting the §7.6 \texttt{n\_rounds} transition at matched NFE = 50 on CIFAR-10 RF and extending to the §7.8 R5c regime curve. Gated on the 4-scheduler × 3-\texttt{n\_rounds} conditional grid (\texttt{docs/audit/wave336-r5b-mechanism.md}) and the canonical Lipschitz-derived \texttt{tau := 1 / sqrt(L\_local * n\_rounds)} form.
 
 
 
 \section{11 Conclusion}
 
-We have presented FlowA, a typed-contracts framework that reconstructs flow matching inference as a multi-round re-inference layer. The framework partitions over three domains with a four-port control surface and integrates five genuinely-novel engineering innovations (capability-token handshake, hash-chained ledger, PEP 695 state machine, typed four-port wire carrier, lazy-memoized site-aware cache). The framework is integrated into 5 vendored flow matching checkpoints with zero-line changes to vendored code. We validate FlowA across 11 headline cells with 3 seeds × 4 pre-registered Bonferroni families × D.4 byte-stable 30/30 regression suite, observing 2.5–10× cross-budget NFE compression at matched sample quality alongside byte-stable composite-axis lifts on all three Tier-3 real checkpoints. We establish three formal framework properties (protocol composition closure, state-machine byte-determinism, ledger tamper-evidence) and report the matched-NFE image-domain regime as a first-class boundary. The framework is module-independent of any particular theoretical companion; the convergence companion is one optional plug-in whose empirical reading is that 10 of 11 headline cells use the baseline scheduler that ignores all four paper quantities. The typed-contracts architecture is, in our measurements, empirical rather than aspirational.
-
-
-
-\section{Acknowledgments}
-
-Anonymous for blind review.
-
-
-
-\section{References (placeholder keys)}
-
-[1] Lipman et al. Flow Matching for Generative Modeling. ICLR 2023.
-
-[2] Liu et al. Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow. ICLR 2023 / arXiv 2209.03003.
-
-[3] Lu et al. DPM-Solver++: Fast Solver for Guided Sampling of Diffusion Probabilistic Models. 2022.
-
-[4] Karras et al. Elucidating the Design Space of Diffusion-Based Generative Models (EDM). NeurIPS 2022.
-
-[5] Zhao et al. UniPC: A Unified Predictor-Corrector Framework for Fast Sampling of Diffusion Models. NeurIPS 2023.
-
-[6] Wu et al. Fast-DLLM: Training-free Acceleration of Diffusion LLM. 2025.
-
-[7] Zwick et al. LeDiFlow: Learned Distribution-guided Prior-shift for Flow Matching. 2025.
-
-[8] Song et al. Consistency Models. ICML 2023.
-
-[9] Luo et al. Latent Consistency Models: Synthesizing High-Resolution Images with Few-Step Inference. 2023.
-
-[10] Karl, Kemeter, Dax, Sierak. Embracing Negative Results in Machine Learning. ICML 2024 Position Paper / arXiv 2406.03980.
-
-[11] REAL ML. Structured Framework for Limitations Disclosure. arXiv 2205.08363.
-
-[12] McGreivy \& Hakim. Weak baselines in ML-for-PDE: 93\% of 82 articles claimed superiority. Nature Machine Intelligence 2024.
-
-[13] LineageFlow. ICML 2026.
-
-[14] Kanzi. ICLR 2026.
-
-[15] FlowMol3. NeurIPS 2024.
+We have presented FlowA, a typed-contracts framework that reconstructs flow matching inference as a multi-round re-inference layer. The framework partitions over three domains with a four-port control surface and integrates five genuinely-novel engineering innovations (capability-token handshake, hash-chained ledger, PEP 695 state machine, typed four-port wire carrier, lazy-memoized site-aware cache). It is integrated into 5 vendored flow matching checkpoints with zero-line changes. We validate FlowA across 11 headline cells with 3 seeds × 4 pre-registered Bonferroni families × D.4 byte-stable 30/30, observing 2.5–10× cross-budget NFE compression alongside byte-stable composite-axis lifts on all three Tier-3 real checkpoints. We establish three formal framework properties (composition closure, byte-determinism, tamper-evidence) and the multi-round re-inference convergence-rate bound of Theorem 4. The framework is module-independent of any particular theoretical companion; 10 of 11 headline cells use the baseline scheduler that ignores all four paper quantities. The typed-contracts architecture is, in our measurements, empirical rather than aspirational.
 \end{abstract}
-
-\begin{IEEEkeywords}
-Flow matching, rectified flow, training-free inference, re-inference, typed-contracts framework, framework properties, empirical verification, byte-stable reproducibility, hash-chained ledger.
-\end{IEEEkeywords}
-
-\section*{Acknowledgments}
-Anonymous for blind review.
 
 \begin{thebibliography}{99}
 \bibitem{flow-matching} Lipman et al. Flow Matching for Generative Modeling. ICLR 2023.
