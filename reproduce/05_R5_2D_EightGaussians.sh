@@ -5,9 +5,15 @@
 # Cell:        R5
 # Model:       2D FM ablation (synthetic)
 # Metric:      Wasserstein-2 (W2, lower is better)
-# Expected:    baseline 2.31 -> framework 0.76  (Delta = -67.10%, framework_WINS)
+# Expected:    baseline 0.6606 -> framework 0.5919  (Delta = -10.40%, framework_WINS)
 # Verification: verification_outputs/g1_deep_dive_q3_2026.json
 #               row: twodim_fm_2d_eight_gaussians
+#
+# NOTE (Wave 308 cosmetic fix): prior script had a typo (baseline=2.31,
+# framework=0.76, delta=-67.10%) that did NOT match the canonical Wave 158
+# headline (baseline=0.6606, framework=0.5919, delta=-10.40%) at
+# `verification_outputs/wave158-p6-r-level-headline-summary.{csv,json}`. The
+# numbers below now match the canonical headline.
 #
 # Wallclock historical: ~1 min/arm CPU.
 #
@@ -52,9 +58,9 @@ with open(sys.argv[1]) as f:
 rows = {row["row"]: row for row in d["analysis"]["per_cell_breakdown"]}
 row = rows["twodim_fm_2d_eight_gaussians"]
 
-expected_baseline = 2.31
-expected_framework = 0.76
-expected_delta_pct = -0.6710
+expected_baseline = 0.6606
+expected_framework = 0.5919
+expected_delta_pct = -0.1040
 tol                = 1e-3
 
 baseline = float(row["baseline"])
@@ -89,5 +95,5 @@ PY
 # Wallclock: ~1 min/arm CPU (synthetic 2D, no external data).
 # =============================================================================
 
-echo "OK R5 reproduced: framework W2 = 0.76 (Delta = -67.10%, framework_WINS)"
+echo "OK R5 reproduced: framework W2 = 0.5919 (Delta = -10.40%, framework_WINS)"
 exit 0

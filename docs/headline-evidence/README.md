@@ -17,7 +17,7 @@ pointing at the underlying sweep JSON + the audit doc that establishes provenanc
 | R1 | LineageFlow | `hmmscan_total_hits` | 1000 | 158 | 342 | **+184 (+116%)** | < 1e-10 | `r1_lineageflow_hmmer_p1e-10/SOURCE.md` |
 | R2 | FlowMol3 | `fg_dev` | 1000 | 0.6381 | 0.6146 | **-0.0235 (4.05sigma)** | < 0.05 | `r2_flowmol3_fgdev_4p05sigma/SOURCE.md` |
 | R3 | CIFAR-10 RF v2 | `FID` | 250 | 218.87 | 122.18 | **-44.17%** | NFE-averaged | `r3_cifar_rf_v2_fid_m44p17pct/SOURCE.md` |
-| R4 | 2D Two Moons | `W2` | 1000 | 0.5029 | 0.4663 | **-7.28%** | matched NFE 500 | `r4_2d_two_moons_w2_m7p28pct/SOURCE.md` |
+| R4 | 2D Two Moons | `W2` | 1000 | 0.5029 | 0.4663 | **-7.28%** | matched NFE 500 | `r4_2d_two_moons_w2_m7p28pct/SOURCE.md` (R5a post-cd70821 reading is TIE; -78.25% from separate 2D FM ablation) |
 | R5 | 2D Eight Gaussians | `W2` | 1000 | 0.6606 | 0.5919 | **-10.40%** | matched NFE 500 | `r5_2d_eight_gaussians_w2_m10p40pct/SOURCE.md` |
 | R6 | MNIST FM | `FID` | 1000 | 409.18 | 347.75 | **-15.01%** | CristianLazoQuispe ckpt | `r6_mnist_fm_fid_m15p01pct/SOURCE.md` |
 

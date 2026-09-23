@@ -505,7 +505,7 @@ verdict is expected to be preserved with reduced magnitude).
 | `verification_outputs/wave191-p3-mnist-n1000.json` `checkpoint_is_smoke_materialization` | `true` | **preserved verbatim** — the smoke-ckpt evidence remains intact for forensic comparison |
 | NEW `verification_outputs/wave275-p3-mnist-r5c-verify.json` `checkpoint_is_smoke_materialization` | n/a | **`false`** — production-ckpt sweep output |
 | CLM-059 R5c status | `PROVISIONAL pending production-ckpt re-run` | **`ACTIVE`** with additive annotation: production ckpt, framework-WINS at matched NFE=50 |
-| CLM-060 R5c verdict | `framework WINS −28.43% FID` (smoke ckpt, Bonferroni p=9.22e-11) | **preserved + new reading**: smoke ckpt −28.43% (preserved) AND production ckpt −X% (NEW; Bonferroni p_bonf=Y; d_z=Z; expected in −15% to −5% envelope per Wave 41 / Wave 52 prior) |
+| CLM-060 R5c verdict | `framework WINS −28.43% FID` (smoke ckpt, Bonferroni p=3.95e-11) | **preserved + new reading**: smoke ckpt −28.43% (preserved) AND production ckpt −X% (NEW; Bonferroni p_bonf=Y; d_z=Z; expected in −15% to −5% envelope per Wave 41 / Wave 52 prior) |
 | CLM-066 R5c row in `docs/tables/wave203-p4-standardized-stats.md` Table 1 | smoke-ckpt d_z + t + p + CI | **preserved + new row** for the production-ckpt sweep |
 | CLM-069 R5c row in Wave 206 P4 refresh | smoke-ckpt FID (baseline 29.49 vs framework 23.39) | **preserved + new reading** for the production-ckpt sweep |
 | R-level WINS count (per CLM-066 + CLM-060) | 5 of 7 (R1, R2, R3, R5c, R6 — R5c counted at smoke ckpt) | **6 of 7** (R5c transitions from `deferred PROVISIONAL` to `ACTIVE WINS`) — the R5c row's prior PROVISIONAL status was excluded from the "5 of 7" count; the new ACTIVE status adds it to the count |

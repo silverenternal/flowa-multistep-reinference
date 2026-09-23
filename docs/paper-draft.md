@@ -1441,7 +1441,7 @@ because §10.6 R6 is one claim). Data sources:
 | R3_flowmol3_fg_dev | unpaired | 999 | 1000 | −0.0235 | 0.00816 | [−0.0395, −0.00749] | 4.00e-03 | 2.80e-02 | −0.129 (`d_s`) | UNDERPOWERED |
 | R5a_2D_two_moons_W2 | unpaired | 3 | 3 | +0.00232 | 0.00413 | [−0.00576, 0.0104] | 6.04e-01 | 1.00 | +0.460 (`d_s`) | TIE |
 | R5b_cifar10rf_matched_NFE50_FID | paired | 1000 | 1000 | +90.05 | 10.54 | [69.4, 110.7] | 1.31e-05 | 9.17e-05 | +2.700 (`d_z`) | UNDERPOWERED |
-| R5c_mnist_fm_matched_NFE50_FID | paired | 1000 | 1000 | −6.10 | 0.147 | [−6.39, −5.82] | 1.32e-11 | 9.22e-11 | −13.18 (`d_z`) | UNDERPOWERED |
+| R5c_mnist_fm_matched_NFE50_FID | paired | 1000 | 1000 | −6.10 | 0.147 | [−6.39, −5.82] | 1.32e-11 | 3.95e-11 | −13.18 (`d_z`) | UNDERPOWERED |
 | R6_lineageflow_foldability_pLDDT | paired | 1000 | 1000 | +1.123 | 0.502 | [0.139, 2.107] | 2.55e-02 | 1.79e-01 | +0.071 (`d_z`) | UNDERPOWERED |
 | R6_lineageflow_scPerplexity | paired | 1000 | 1000 | −3.917 | 0.115 | [−4.142, −3.691] | 0 | 0 | −1.077 (`d_z`) | UNDERPOWERED |
 
@@ -1460,7 +1460,7 @@ framework_inv_proj composite does NOT exercise ODE rollout) and R5a
 (Two Moons TIE because |δ| < min_effect_size) show framework-positive
 or framework-neutral effects: R1 p_bonf = 1e-7 (+184 total hits, framework
 WINS), R5b p_bonf = 9.2e-5 (+20.21% FID, framework REGRESSES — honest
-negative at matched NFE=50), R5c p_bonf = 9.2e-11 (−28.43% FID, framework
+negative at matched NFE=50), R5c p_bonf = 3.95e-11 (−28.43% FID, framework
 WINS), R6 scPerplexity p_bonf ≈ 0 (−3.92, framework WINS), R6 pLDDT
 p_bonf = 0.18 (NOT significant at strict Bonferroni — framework WINS but
 just below the 0.007 floor).
@@ -2953,7 +2953,7 @@ cluster-robust caveat.
    the §7.4 per-paper-claim headline mistakenly quoted a different
    family α. The Wave 203 P4 fix adds the explicit pre-registered
    family (R-level primary, α = 0.007143) and the cell's correct
-   Bonferroni significance (YES, p_raw × k = 1.32e-11 × 7 = 9.22e-11
+   Bonferroni significance (YES, p_raw × k = 1.32e-11 × 3 = 3.95e-11
    << α). The verdict (SUPPORTED) is unchanged. The MNIST smoke
    subset noise (29% per Wave 191 P1) is a separate issue handled
    by Wave 191 P3 pretrained re-validation; the N=1000 framework-

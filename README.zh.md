@@ -79,7 +79,7 @@
 
 **Statistical methods / 统计方法**: TOST equivalence testing (16 cells), Jonckheere-Terpstra ordered test (R2 + R6), BF01 Bayes factor (16 cells), DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z=+1.117, I²=99.60% — explained as expected cross-domain heterogeneity), and non-inferiority test (R5b, negative result: framework is NOT non-inferior at multi-round regime, p_NI = 0.9985). Full details in [DATA_PRESENTATION.md §3](DATA_PRESENTATION.md).
 
-**K-cells (Wave 297 expansion) / K-单元（Wave 297 扩展）:** K1 (FlowMol3 RDKit, d_z=+1.36 borderline), K4 (LineageFlow scPerplexity, cluster-robust WINS across all protein tiers, d_z=−1.077), K5 (LineageFlow pLDDT, hard-tier framework_WINS selectively with d_z=+1.840, easy-tier REGRESSES-by-direction), K7 (LineageFlow novelty@0.95=1.0000 d_z=∞).
+**K-cells (Wave 297 expansion) / K-单元（Wave 297 扩展）:** K1 (FlowMol3 RDKit, d_z=+1.36 borderline), K4 (LineageFlow HMMER length-bias on hmmscan_total_hits, hit-count metric 12-22/100 POWERED per Wave 280 P sweep), K5 (LineageFlow HMMER framework-vs-baseline delta on hmmscan_total_hits, SUPPORTS-WITH-CAVEAT d_z=+1.15 p_bonf=0.734 underpowered per n=3 paired-seeds), K7 (LineageFlow novelty@0.95=1.0000 d_z=∞).
 
 ---
 

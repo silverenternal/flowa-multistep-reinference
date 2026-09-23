@@ -7151,7 +7151,7 @@ the three tables together.
 | A | R3_flowmol3_fg_dev | FlowMol3 | fg_dev | 50 | 999 / 1000 | −0.0235 | 2.80e-02 | −0.129 (`d_s`) | UNDERPOWERED |
 | A | R5a_2D_two_moons_W2 | 2D Two Moons | W2 | 100 | 3 / 3 | +0.00232 | 1.00 | +0.460 (`d_s`) | TIE |
 | A | R5b_cifar10rf_matched_NFE50_FID | CIFAR-10 RF | FID | 50 | 1000 / 1000 | +90.05 | 9.17e-05 | +2.700 (`d_z`) | UNDERPOWERED |
-| A | R5c_mnist_fm_matched_NFE50_FID | MNIST FM (smoke ckpt) | FID | 50 | 1000 / 1000 | −6.10 | 9.22e-11 | −13.18 (`d_z`) | UNDERPOWERED |
+| A | R5c_mnist_fm_matched_NFE50_FID | MNIST FM (smoke ckpt) | FID | 50 | 1000 / 1000 | −6.10 | 3.95e-11 | −13.18 (`d_z`) | UNDERPOWERED |
 | A | R6_lineageflow_foldability_pLDDT | LineageFlow | pLDDT | 10 | 1000 / 1000 | +1.123 | 1.79e-01 | +0.071 (`d_z`) | UNDERPOWERED |
 | A | R6_lineageflow_scPerplexity | LineageFlow | scPerplexity | 10 | 1000 / 1000 | −3.917 | 0.0 | −1.077 (`d_z`) | UNDERPOWERED |
 | B | fastdllm_pLDDT_NFE100 | FastDLLM | pLDDT | 100 | 3 / 3 | +6.925 | 2.16e-01 | +4.520 (`d_s`) | UNDERPOWERED |
@@ -7935,7 +7935,7 @@ N=574 caveat) without modifying the underlying k6 finding. No
 
 **Scope:** Wave 206 P7 final-gate verification (TPAMI 6-week plan §W2). The Wave 206 W2 N=1000 paired-record re-runs are complete on the `omegafold_py310` conda env (torch 2.14.0+cu130, sm_120-capable, resolves the Wave 200 P2 torch 1.13.1 vs Blackwell sm_120 blocker). All 6 P1-P6 outputs exist:
 - `verification_outputs/wave206-p1-lineageflow-n1000.{csv,json}` — R1 HMMER (+116%, p=1.25e-8, Bonf-sig) + R6 foldability N=1000 sweep on real ckpt
-- `verification_outputs/wave206-p2-kanzi-framework-n1000.{csv,json}` — R2 Kanzi framework_inv_proj byte-stable reference (mean_diff = +0.656 Å, d_z = +3.532; baseline_wins direction preserved from Wave 196)
+- `verification_outputs/wave206-p2-kanzi-framework-n1000.{csv,json}` — R2 Kanzi framework_inv_proj byte-stable reference (mean_diff = +0.656 Å, d_z = +3.532; **legacy Wave 196 byte-stable composite reading — DEPLOYED ARM primary §7.6.2 number is now the Wave 218 P3 paired-t `d_z = -0.0990` (framework-WINS, Bonferroni-significant at α=0.007143, byte-stable Wave 127 framework `mean_rmsd_Å = 0.8798` vs Wave 88 baseline `mean_rmsd_Å = 0.9020`, Δ = −0.022 Å, N=1000 paired; wave218-p3-kanzi-framework-wins.json sha256 9b5c3b68) per CLM-073 §7.6.2 framing — Wave 256 P1 wording update**)
 - `verification_outputs/wave206-p3-flowmol3-n1000.{csv,json}` — R3 FlowMol3 fg_dev N=999+1000 (1-seed byte-stable; 3-seed blocked by DGL 2.4.0, see CLM-068)
 - `verification_outputs/wave206-p4-r-level-refresh.{csv,json}` — R4/R5/R3/R5c paired-t sf-based p-value refresh (Wave 195 P2 / Wave 204 P1 sf() defensive fix; see CLM-069)
 - `verification_outputs/wave206-p5-freqflow-n1000.{csv,json}` — FreqFlow synthetic N=1000 (SYNTHETIC_ONLY, no public ckpt)
