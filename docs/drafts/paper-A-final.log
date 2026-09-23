@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.6.8)  23 SEP 2026 20:36
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.6.8)  23 SEP 2026 21:06
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -2218,42 +2218,19 @@ atch_async\OT1/ptm/b/it/9 ).
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 328--329
-\OT1/ptm/b/n/9 via \OT1/pcr/b/n/9 coros = [sub._can_async(event, payload)
+Underfull \hbox (badness 3049) in paragraph at lines 328--329
+\OT1/ptm/b/n/9 via \OT1/pcr/b/n/9 coros = [sub._can_async(event, payload) for
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 328--329
-\OT1/pcr/b/n/9 for sub in parallel.values()]\OT1/ptm/b/n/9 . The corou-tine
+Underfull \hbox (badness 1688) in paragraph at lines 328--329
+\OT1/ptm/b/n/9 flag (de-fault \OT1/pcr/b/n/9 False\OT1/ptm/b/n/9 ), so it raise
+s on the first ex-cep-tion
  []
 
 
-Underfull \hbox (badness 2142) in paragraph at lines 328--329
-\OT1/ptm/b/n/9 list is built de-ter-min-is-ti-cally (same it-er-a-tion or-der, 
-same
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 328--329
-\OT1/ptm/b/n/9 sub-machines). \OT1/pcr/b/n/9 asyncio.gather(\OT1/pcr/b/sl/9 cor
-os) \OT1/pcr/b/n/9 is called
- []
-
-
-Underfull \hbox (badness 3623) in paragraph at lines 328--329
-\OT1/ptm/b/n/9 with-out* \OT1/pcr/b/n/9 return_exceptions=... \OT1/ptm/b/n/9 (d
-e-fault \OT1/pcr/b/n/9 False\OT1/ptm/b/n/9 ), so
- []
-
-
-Underfull \hbox (badness 1796) in paragraph at lines 328--329
-\OT1/ptm/b/n/9 passed; there is no \OT1/pcr/b/n/9 asyncio.ensure_future\OT1/ptm
-/b/n/9 , no side-
- []
-
-
-Underfull \hbox (badness 2707) in paragraph at lines 328--329
-\OT1/ptm/b/n/9 effects, no con-cur-rent schedul-ing. There-fore the re-solved
+Underfull \hbox (badness 3009) in paragraph at lines 328--329
+\OT1/ptm/b/n/9 on a single-threaded event loop. There-fore the re-solved
  []
 
 
@@ -2625,67 +2602,6 @@ ched-uler:
  []
 
 [9]
-LaTeX Font Info:    Trying to load font information for OMS+ptm on input line 3
-80.
- (/usr/share/texmf-dist/tex/latex/psnfss/omsptm.fd
-File: omsptm.fd 
-)
-LaTeX Font Info:    Font shape `OMS/ptm/b/n' in size <9> not available
-(Font)              Font shape `OMS/cmsy/b/n' tried instead on input line 380.
-
-Underfull \hbox (badness 10000) in paragraph at lines 380--381
-[]\OT1/ptm/b/n/9 Every head-claim cell is re-ported un-der a 12-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 380--381
-\OT1/ptm/b/n/9 column au-dit row of the form `(n[]\OMS/cmsy/b/n/9 nfg\OT1/ptm/b
-/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 paired\OMS/cmsy/b/n/9 g\OT1/ptm/b/n/9 
-,
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 380--381
-\OMS/cmsy/b/n/9 nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 mean\OMS/
-cmsy/b/n/9 nfg[]\OT1/ptm/b/n/9 diff\OMS/cmsy/b/n/9 g\OT1/ptm/b/n/9 , \OMS/cmsy/
-b/n/9 nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 sd\OMS/cmsy/b/n/9 n
-fg[]\OT1/ptm/b/n/9 diff\OMS/cmsy/b/n/9 g\OT1/ptm/b/n/9 , t, df,
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 380--381
-\OT1/ptm/b/n/9 p[]\OMS/cmsy/b/n/9 nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/p
-tm/b/n/9 raw\OMS/cmsy/b/n/9 g\OT1/ptm/b/n/9 , \OMS/cmsy/b/n/9 nfg\OT1/ptm/b/n/9
- text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 CI\OMS/cmsy/b/n/9 g[]f\OT1/ptm/b/n/9 95\OM
-S/cmsy/b/n/9 nfg[]nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 low\OMS
-/cmsy/b/n/9 gg\OT1/ptm/b/n/9 ,
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 380--381
-\OMS/cmsy/b/n/9 nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 CI\OMS/cm
-sy/b/n/9 g[]f\OT1/ptm/b/n/9 95\OMS/cmsy/b/n/9 nfg[]nfg\OT1/ptm/b/n/9 text\OMS/c
-msy/b/n/9 f\OT1/ptm/b/n/9 high\OMS/cmsy/b/n/9 gg\OT1/ptm/b/n/9 , d[]z,
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 380--381
-\OMS/cmsy/b/n/9 nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 test\OMS/
-cmsy/b/n/9 nfg[]\OT1/ptm/b/n/9 type\OMS/cmsy/b/n/9 g\OT1/ptm/b/n/9 , \OMS/cmsy/
-b/n/9 nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 family\OMS/cmsy/b/n
-/9 g\OT1/ptm/b/n/9 ,
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 380--381
-\OMS/cmsy/b/n/9 nfg\OT1/ptm/b/n/9 alpha[]\OMS/cmsy/b/n/9 nfg\OT1/ptm/b/n/9 text
-\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 bonferroni\OMS/cmsy/b/n/9 g\OT1/ptm/b/n/9 , \OM
-S/cmsy/b/n/9 nfg\OT1/ptm/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/ptm/b/n/9 bonf\OMS/cms
-y/b/n/9 nfg[]\OT1/ptm/b/n/9 sig\OMS/cmsy/b/n/9 g\OT1/ptm/b/n/9 )\TS1/ptm/b/n/9 
-$\OT1/ptm/b/n/9 ,
- []
-
-
 Underfull \hbox (badness 1466) in paragraph at lines 385--386
 \OT1/cmr/m/n/9 0\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 008333$\OT1/ptm/b/n/9 . Scope: 
 three dif-fi-culty tiers \TS1/ptm/b/n/9 Ö \OT1/ptm/b/n/9 two met-rics
@@ -3339,10 +3255,10 @@ Package rerunfilecheck Info: File `paper-A-final.out' has not changed.
 (rerunfilecheck)             Checksum: C47C3BC18FDAB0473783410972939587;14779.
  ) 
 Here is how much of TeX's memory you used:
- 11684 strings out of 469504
- 178064 string characters out of 5470285
+ 11667 strings out of 469504
+ 177783 string characters out of 5470285
  612660 words of memory out of 5000000
- 40055 multiletter control sequences out of 15000+600000
+ 40041 multiletter control sequences out of 15000+600000
  670244 words of font info for 126 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  75i,6n,79p,2613b,643s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -3360,7 +3276,7 @@ t0900.pfb></usr/share/texmf-dist/fonts/type1/urw/courier/ucrb8a.pfb></usr/share
 pe1/urw/times/utmb8a.pfb></usr/share/texmf-dist/fonts/type1/urw/times/utmbi8a.p
 fb></usr/share/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-di
 st/fonts/type1/urw/times/utmri8a.pfb>
-Output written on paper-A-final.pdf (14 pages, 291752 bytes).
+Output written on paper-A-final.pdf (14 pages, 291091 bytes).
 PDF statistics:
  476 PDF objects out of 1000 (max. 8388607)
  421 compressed objects within 5 object streams
