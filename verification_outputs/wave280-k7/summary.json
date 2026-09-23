@@ -1,0 +1,96 @@
+{
+  "sweep_name": "wf280_k7_3seed_novelty",
+  "seeds_run": 3,
+  "source_fasta": "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_n1000/baseline.fasta",
+  "subsample_n": 300,
+  "per_seed": [
+    {
+      "seed": 42,
+      "n_records": 300,
+      "status": 1.0,
+      "reason": "",
+      "novelty_at_0.5": 1.0,
+      "novelty_at_0.8": 1.0,
+      "novelty_at_0.95": 1.0,
+      "nohit_all": 300.0,
+      "hits_kept": 0.0,
+      "n_with_family": 300.0,
+      "n_total": 300.0
+    },
+    {
+      "seed": 43,
+      "n_records": 300,
+      "status": 1.0,
+      "reason": "",
+      "novelty_at_0.5": 1.0,
+      "novelty_at_0.8": 1.0,
+      "novelty_at_0.95": 1.0,
+      "nohit_all": 300.0,
+      "hits_kept": 0.0,
+      "n_with_family": 300.0,
+      "n_total": 300.0
+    },
+    {
+      "seed": 44,
+      "n_records": 300,
+      "status": 1.0,
+      "reason": "",
+      "novelty_at_0.5": 1.0,
+      "novelty_at_0.8": 1.0,
+      "novelty_at_0.95": 1.0,
+      "nohit_all": 300.0,
+      "hits_kept": 0.0,
+      "n_with_family": 300.0,
+      "n_total": 300.0
+    }
+  ],
+  "stats": {
+    "novelty_at_0.5": {
+      "mean": 1.0,
+      "std_paired": 0.0,
+      "t": Infinity,
+      "d_f": 2,
+      "p_value": 0.0,
+      "d_z": Infinity
+    },
+    "novelty_at_0.8": {
+      "mean": 1.0,
+      "std_paired": 0.0,
+      "t": Infinity,
+      "d_f": 2,
+      "p_value": 0.0,
+      "d_z": Infinity
+    },
+    "novelty_at_0.95": {
+      "mean": 1.0,
+      "std_paired": 0.0,
+      "t": Infinity,
+      "d_f": 2,
+      "p_value": 0.0,
+      "d_z": Infinity
+    },
+    "nohit_rate": {
+      "mean": 1.0,
+      "std_paired": 0.0,
+      "t": Infinity,
+      "d_f": 2,
+      "p_value": 0.0,
+      "d_z": Infinity
+    }
+  },
+  "raw_p_values": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "bonferroni_p_values": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "m_tests": 4,
+  "k7_status": "PASS",
+  "wrapper_default": "restrict_novelty_to_target_db=True"
+}

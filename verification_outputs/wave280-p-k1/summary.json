@@ -1,0 +1,158 @@
+{
+  "schema_version": "1.0.0",
+  "sweep_id": "wf280_k1_rdkit_validity_3seed_n200",
+  "n_seeds": 3,
+  "n_records_per_seed": 200,
+  "validity_mode": "rdkit",
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "per_seed_rdkit_validity_pct": [
+    0.535,
+    0.59,
+    0.585
+  ],
+  "per_seed_rdkit_n_valid": [
+    107.0,
+    118.0,
+    117.0
+  ],
+  "per_seed_rdkit_n_total": [
+    200.0,
+    200.0,
+    200.0
+  ],
+  "per_seed_rdkit_avg_num_components": [
+    0.9975,
+    0.9971706081081081,
+    0.9988805970149254
+  ],
+  "summary_stats": {
+    "rdkit_validity_pct": {
+      "mean": 0.57,
+      "std_paired": 0.03041381265149106,
+      "t": 2.363403409423726,
+      "d_f": 2,
+      "p_value": 0.14189442721316936,
+      "d_z": 1.3645115946344677,
+      "mean_diff": 0.041500000000000016,
+      "baseline": 0.5285,
+      "p_bonf": 0.5675777088526774
+    },
+    "rdkit_n_valid": {
+      "mean": 114.0,
+      "std_paired": 6.082762530298219,
+      "t": 32.46120345473547,
+      "d_f": 2,
+      "p_value": 0.000947661155147679,
+      "d_z": 18.741484552810732,
+      "mean_diff": 114.0,
+      "baseline": 0.0,
+      "p_bonf": 0.003790644620590716
+    },
+    "rdkit_n_total": {
+      "mean": 200.0,
+      "std_paired": 0.0,
+      "t": Infinity,
+      "d_f": 2,
+      "p_value": 0.0,
+      "d_z": Infinity,
+      "mean_diff": 200.0,
+      "baseline": 0.0,
+      "p_bonf": 0.0
+    },
+    "rdkit_avg_num_components": {
+      "mean": 0.9978504017076778,
+      "std_paired": 0.0009072494325802437,
+      "t": 1905.0192064549417,
+      "d_f": 2,
+      "p_value": 2.7555043647549565e-07,
+      "d_z": 1099.8633516581679,
+      "mean_diff": 0.9978504017076778,
+      "baseline": 0.0,
+      "p_bonf": 1.1022017459019826e-06
+    }
+  },
+  "alpha_per_threshold": 0.0125,
+  "rubric": {
+    "promote_to_strong_if": "d_z > 0.8 AND p_bonf < 0.0125 (Wave 22 metric-rev3)",
+    "baseline_validity_used": 0.5285
+  },
+  "per_seed_summaries": [
+    {
+      "seed": 42,
+      "arm": "baseline",
+      "n_records": 200,
+      "n_sampled": 200,
+      "validity_mode": "rdkit",
+      "weights_path": "/home/hugo/codes/flowa-multistep-reinference/data/flowmol3/weights_real/checkpoints/last.ckpt",
+      "n_timesteps": 250,
+      "device": "cuda:0",
+      "load_seconds": 5.786,
+      "sample_seconds": 79.461,
+      "metrics": {
+        "rdkit_validity_pct": 0.535,
+        "rdkit_avg_num_components": 0.9975,
+        "rdkit_n_total": 200.0,
+        "rdkit_n_valid": 107.0,
+        "validity_pct": 0.535
+      },
+      "rdkit_validity_pct": 0.535,
+      "rdkit_n_valid": 107.0,
+      "rdkit_n_total": 200.0,
+      "rdkit_avg_num_components": 0.9975,
+      "timestamp": "2026-09-22T23:24:27+0800"
+    },
+    {
+      "seed": 43,
+      "arm": "baseline",
+      "n_records": 200,
+      "n_sampled": 200,
+      "validity_mode": "rdkit",
+      "weights_path": "/home/hugo/codes/flowa-multistep-reinference/data/flowmol3/weights_real/checkpoints/last.ckpt",
+      "n_timesteps": 250,
+      "device": "cuda:0",
+      "load_seconds": 0.181,
+      "sample_seconds": 71.12,
+      "metrics": {
+        "rdkit_validity_pct": 0.59,
+        "rdkit_avg_num_components": 0.9971706081081081,
+        "rdkit_n_total": 200.0,
+        "rdkit_n_valid": 118.0,
+        "validity_pct": 0.59
+      },
+      "rdkit_validity_pct": 0.59,
+      "rdkit_n_valid": 118.0,
+      "rdkit_n_total": 200.0,
+      "rdkit_avg_num_components": 0.9971706081081081,
+      "timestamp": "2026-09-22T23:25:38+0800"
+    },
+    {
+      "seed": 44,
+      "arm": "baseline",
+      "n_records": 200,
+      "n_sampled": 200,
+      "validity_mode": "rdkit",
+      "weights_path": "/home/hugo/codes/flowa-multistep-reinference/data/flowmol3/weights_real/checkpoints/last.ckpt",
+      "n_timesteps": 250,
+      "device": "cuda:0",
+      "load_seconds": 0.183,
+      "sample_seconds": 72.545,
+      "metrics": {
+        "rdkit_validity_pct": 0.585,
+        "rdkit_avg_num_components": 0.9988805970149254,
+        "rdkit_n_total": 200.0,
+        "rdkit_n_valid": 117.0,
+        "validity_pct": 0.585
+      },
+      "rdkit_validity_pct": 0.585,
+      "rdkit_n_valid": 117.0,
+      "rdkit_n_total": 200.0,
+      "rdkit_avg_num_components": 0.9988805970149254,
+      "timestamp": "2026-09-22T23:26:51+0800"
+    }
+  ],
+  "timestamp": "2026-09-22T23:26:51+0800"
+}

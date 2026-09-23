@@ -1,0 +1,26 @@
+#                                                                            --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                        accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------              -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+TSP1_ADAMTS          PF19030.7  framework_seed5|family=PF00072.24 -               0.04   14.9   2.5     0.086   13.8   0.9   2.3   2   0   0   2   2   2   0 Thrombospondin type 1 domain
+Thioredoxin-like_PDI PF26981.1  framework_seed7|family=PF02517.18 -              0.053   14.2   0.6     0.099   13.3   0.2   1.7   2   0   0   2   2   2   0 PDI-like, Thioredoxin-like domain
+Inhibitor_I24        PF10465.17 framework_seed16|family=PF00005.27 -              0.055   14.2   1.5     0.091   13.5   1.5   1.3   1   0   0   1   1   1   0 PinA peptidase inhibitor
+UPF0182              PF03699.19 framework_seed17|family=PF00072.24 -             0.0017   17.3   0.7     0.002   17.1   0.7   1.0   1   0   0   1   1   1   1 Uncharacterised protein family (UPF0182)
+DUF6278              PF19794.5  framework_seed29|family=PF00072.24 -               0.15   12.4   0.1      0.28   11.5   0.1   1.4   1   0   0   1   1   1   0 Family of unknown function (DUF6278)
+Countin_N            PF28846.1  framework_seed30|family=PF00183.19 -               0.11   13.6   3.2       1.7    9.7   0.0   2.5   2   0   0   2   2   2   0 Countin N-terminal domain
+IF3_C                PF00707.28 framework_seed32|family=PF00005.27 -               0.29   11.8   0.1      0.51   11.0   0.1   1.4   1   0   0   1   1   1   0 Translation initiation factor IF-3, C-terminal domain
+DUF1433              PF07252.17 framework_seed37|family=PF00072.24 -               0.06   14.3   0.0      0.18   12.8   0.0   1.7   2   0   0   2   2   2   0 Protein of unknown function (DUF1433)
+Imm70                PF15601.13 framework_seed37|family=PF00072.24 -              0.079   13.3   0.1      0.14   12.6   0.1   1.3   1   0   0   1   1   1   0 Immunity protein 70
+DUF5363              PF17320.9  framework_seed39|family=PF02517.18 -             0.0026   18.4   0.2       2.5    8.8   0.0   2.6   2   0   0   2   2   2   2 Family of unknown function (DUF5363)
+Calici_PP_N          PF08405.16 framework_seed47|family=PF02517.18 -               0.49    9.9   1.9      0.64    9.5   1.9   1.1   1   0   0   1   1   1   0 Viral polyprotein N-terminal
+HcgC                 PF06690.18 framework_seed48|family=PF00005.27 -               0.21   11.8   0.0      0.29   11.4   0.0   1.2   1   0   0   1   1   1   0 FeGP cofactor biosynthesis protein, methyltransferase HcgC
+RepD-like_N          PF22477.3  framework_seed49|family=PF00072.24 -               0.23   12.6   0.4      0.51   11.5   0.1   1.7   2   0   0   2   2   2   0 Replication initiation protein, N-terminal
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /tmp/wf280-lineageflow/seed44/fasta/framework_n100.fasta
+# Target file:     /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /tmp/wf280-lineageflow/seed44/hmmscan_n100/framework/hmmscan.tbl --acc --noali --cpu 4 /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /tmp/wf280-lineageflow/seed44/fasta/framework_n100.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Tue Sep 22 23:18:22 2026
+# [ok]

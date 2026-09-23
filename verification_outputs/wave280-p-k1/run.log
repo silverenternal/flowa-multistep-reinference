@@ -1,0 +1,25 @@
+[seed 42 | arm=baseline] starting N=200
+[seed 42 | arm=baseline] ckpt loaded in 6.016s
+[seed 42 | arm=baseline] sampled 200 in 92.124s
+[seed 42 | arm=baseline] metrics: {'rdkit_validity_pct': 0.535, 'rdkit_avg_num_components': 0.9975, 'rdkit_n_total': 200.0, 'rdkit_n_valid': 107.0, 'validity_pct': 0.535}
+[seed 42 | arm=framework] starting N=200
+[seed 42 | arm=framework] ckpt loaded in 0.185s
+[seed 42 | arm=framework] sampled 200 in 76.105s
+[seed 42 | arm=framework] metrics: {'rdkit_validity_pct': 0.535, 'rdkit_avg_num_components': 0.9975, 'rdkit_n_total': 200.0, 'rdkit_n_valid': 107.0, 'validity_pct': 0.535}
+[seed 43 | arm=baseline] starting N=200
+[seed 43 | arm=baseline] ckpt loaded in 0.183s
+[seed 43 | arm=baseline] sampled 200 in 69.321s
+[seed 43 | arm=baseline] metrics: {'rdkit_validity_pct': 0.59, 'rdkit_avg_num_components': 0.9971706081081081, 'rdkit_n_total': 200.0, 'rdkit_n_valid': 118.0, 'validity_pct': 0.59}
+[seed 43 | arm=framework] starting N=200
+[seed 43 | arm=framework] ckpt loaded in 0.195s
+[seed 43 | arm=framework] sampled 200 in 70.704s
+[seed 43 | arm=framework] metrics: {'rdkit_validity_pct': 0.59, 'rdkit_avg_num_components': 0.9971706081081081, 'rdkit_n_total': 200.0, 'rdkit_n_valid': 118.0, 'validity_pct': 0.59}
+[seed 44 | arm=baseline] starting N=200
+[seed 44 | arm=baseline] ckpt loaded in 0.181s
+[seed 44 | arm=baseline] sampled 200 in 71.598s
+[seed 44 | arm=baseline] metrics: {'rdkit_validity_pct': 0.585, 'rdkit_avg_num_components': 0.9988805970149254, 'rdkit_n_total': 200.0, 'rdkit_n_valid': 117.0, 'validity_pct': 0.585}
+[seed 44 | arm=framework] starting N=200
+[seed 44 | arm=framework] ckpt loaded in 0.278s
+[seed 44 | arm=framework] sampled 200 in 74.417s
+[seed 44 | arm=framework] metrics: {'rdkit_validity_pct': 0.585, 'rdkit_avg_num_components': 0.9988805970149254, 'rdkit_n_total': 200.0, 'rdkit_n_valid': 117.0, 'validity_pct': 0.585}
+wrote /tmp/wf280-k1/summary.json

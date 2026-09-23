@@ -1,0 +1,79 @@
+{
+  "novelty": {
+    "query_fasta": "/tmp/wf280-k7/seed43/input.fasta",
+    "n_total": 300,
+    "missing_family_headers": 0,
+    "n_with_family": 300,
+    "ref_split": "train",
+    "scope": "all",
+    "coverage_thresholds": {
+      "min_qcov": 0.8,
+      "min_tcov": 0.8
+    },
+    "mmseqs": {
+      "binary": "/home/hugo/bin/mmseqs",
+      "threads": 32,
+      "sensitivity": 7.5,
+      "max_hits": 500,
+      "target_db": "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/pfam_holdout_targetDB",
+      "target_db_preexisted": true
+    },
+    "plddt_filter": null,
+    "ref_stats": null,
+    "hits": {
+      "hits_kept": 0,
+      "nohit_all": 300,
+      "nohit_fam": 300
+    },
+    "nnid_all": {
+      "mean": null,
+      "median": null,
+      "p10": null,
+      "p90": null
+    },
+    "nnid_fam": {
+      "mean": null,
+      "median": null,
+      "p10": null,
+      "p90": null
+    },
+    "novelty_all": {
+      "0.95": 1.0,
+      "0.8": 1.0,
+      "0.5": 1.0
+    },
+    "novelty_fam": {
+      "0.95": 1.0,
+      "0.8": 1.0,
+      "0.5": 1.0
+    },
+    "duplicates": {
+      "duplicate_all_rate": 0.0,
+      "duplicate_fam_rate": 0.0
+    },
+    "within_gen_clusters": {
+      "coverage_threshold": 0.8,
+      "cov_mode": 0,
+      "thresholds": {
+        "0.9": {
+          "n_clusters": 300,
+          "cluster_fraction": 1.0,
+          "mean_cluster_size": 1.0,
+          "max_cluster_size": 1,
+          "n_singletons": 300,
+          "singleton_fraction_clusters": 1.0,
+          "singleton_fraction_sequences": 1.0
+        },
+        "0.8": {
+          "n_clusters": 300,
+          "cluster_fraction": 1.0,
+          "mean_cluster_size": 1.0,
+          "max_cluster_size": 1,
+          "n_singletons": 300,
+          "singleton_fraction_clusters": 1.0,
+          "singleton_fraction_sequences": 1.0
+        }
+      }
+    }
+  }
+}

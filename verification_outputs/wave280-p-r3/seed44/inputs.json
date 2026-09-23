@@ -1,0 +1,12 @@
+{
+  "wave": "280 R3",
+  "kind": "flowmol3_fg_dev_3seed_sweep",
+  "seed": 44,
+  "n_records_per_arm": 100,
+  "nfe": 250,
+  "n_mols": 1,
+  "r3_fix_in_place": true,
+  "r3_fix_location": "adaptive_reflow/adapters/flowmol3_v2_adapter.py:_solve_ode_upstream_batch:2861-2883",
+  "git_head": "5de7c81",
+  "output_dir": "/tmp/wf280-r3/seed44"
+}

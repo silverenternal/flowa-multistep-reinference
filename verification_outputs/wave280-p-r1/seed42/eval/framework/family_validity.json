@@ -1,0 +1,14 @@
+{
+  "n_total": 1000,
+  "missing_family_headers": 0,
+  "hmmscan_total_hits": 342,
+  "hmmscan_unique_queries": 123,
+  "coverage_any_hit": 0.123,
+  "top1_family_accuracy": 0.0,
+  "topk_contains_intended": 0.0,
+  "topk_family": 10,
+  "intended_hit_rate_evalue": 0.0,
+  "evalue_threshold": 0.001,
+  "score_margin_mean": 1.637190082644628,
+  "score_margin_median": 0.8000000000000007
+}

@@ -1,0 +1,14 @@
+{
+  "status": 1.0,
+  "novelty__n_total": 300.0,
+  "novelty__missing_family_headers": 0.0,
+  "novelty__n_with_family": 300.0,
+  "metric_kind": "family_validity+foldability+self_consistency+novelty",
+  "upstream_orchestrator": "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/evaluate_all.py",
+  "len_bias_long": 1.0,
+  "length_bias": "long",
+  "sweep_n_records_actual": 0,
+  "sweep_n_records_requested": 300,
+  "sweep_n_records_match": false,
+  "sweep_name": "run_lineageflow_upstream_eval"
+}

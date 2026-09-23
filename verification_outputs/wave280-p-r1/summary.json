@@ -1,0 +1,92 @@
+{
+  "sweep_name": "wf280_r1_3seed_hmmer",
+  "seeds_run": 3,
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "n_records": 1000,
+  "length_bias": "short",
+  "elapsed_total_s": 1050.017493724823,
+  "per_seed": [
+    {
+      "seed": 42,
+      "n_records": 1000,
+      "length_bias": "short",
+      "framework_fallback_per_family_count": {},
+      "baseline_hits": 158,
+      "framework_hits": 342,
+      "baseline_wrapper_status": 1.0,
+      "framework_wrapper_status": 1.0,
+      "baseline_fasta_sha256": "4ef0ec94d67850aa018d8cb83806d1ad52f80081dca758a732891a08a9e80db1",
+      "framework_fasta_sha256": "afe53dc0ea168c9d7629915ce6bda02de28299cc1bfa730583410888b83aaec5"
+    },
+    {
+      "seed": 43,
+      "n_records": 1000,
+      "length_bias": "short",
+      "framework_fallback_per_family_count": {
+        "PF00005.27": 250,
+        "PF00072.24": 250,
+        "PF00183.19": 250,
+        "PF02517.18": 250
+      },
+      "baseline_hits": 159,
+      "framework_hits": 168,
+      "baseline_wrapper_status": 1.0,
+      "framework_wrapper_status": 1.0,
+      "baseline_fasta_sha256": "f0af2d2d48712f373377cda40959c6f2e24e9986248717bec674f6f80ecac1b2",
+      "framework_fasta_sha256": "b9739824d5b9ff2025c0ce88637c7452de630fd0d9acb54f354dba11a07ae99a"
+    },
+    {
+      "seed": 44,
+      "n_records": 1000,
+      "length_bias": "short",
+      "framework_fallback_per_family_count": {
+        "PF00005.27": 250,
+        "PF00072.24": 250,
+        "PF00183.19": 250,
+        "PF02517.18": 250
+      },
+      "baseline_hits": 174,
+      "framework_hits": 188,
+      "baseline_wrapper_status": 1.0,
+      "framework_wrapper_status": 1.0,
+      "baseline_fasta_sha256": "692d523e5f4be8adebd7d7ec675e7713024ecd3a51c9ae1a0cdc84bb2bb5cb24",
+      "framework_fasta_sha256": "4fda3f94be4596a7b41c3a276ad8c58d7198fb8da771e91920e47a13f0279670"
+    }
+  ],
+  "stats": {
+    "mean": 69.0,
+    "std_paired": 99.62429422585637,
+    "t": 1.1996221067454713,
+    "d_f": 2,
+    "p_two_sided": 0.3531218414075301,
+    "p_one_sided": 0.17656092070376506,
+    "d_z": 0.6926021462553239
+  },
+  "baseline_hits": [
+    158,
+    159,
+    174
+  ],
+  "framework_hits": [
+    342,
+    168,
+    188
+  ],
+  "diffs": [
+    184,
+    9,
+    14
+  ],
+  "p_bonf_rlevel": 1.0,
+  "p_bonf_cell": 0.3531218414075301,
+  "alpha_rlevel": 0.003125,
+  "alpha_cell": 0.05,
+  "vendedored_untouched": true,
+  "wrapper": "tools.upstream_eval.run_lineageflow_upstream_eval",
+  "vendored_eval_script": "data/lineageflow_upstream/evaluation/evaluate_all.py",
+  "vendored_metric_script": "data/lineageflow_upstream/evaluation/family_validity_hmmer.py"
+}

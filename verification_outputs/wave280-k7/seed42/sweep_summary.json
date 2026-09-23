@@ -1,0 +1,13 @@
+{
+  "seed": 42,
+  "n_records": 300,
+  "status": 1.0,
+  "reason": "",
+  "novelty_at_0.5": 1.0,
+  "novelty_at_0.8": 1.0,
+  "novelty_at_0.95": 1.0,
+  "nohit_all": 300.0,
+  "hits_kept": 0.0,
+  "n_with_family": 300.0,
+  "n_total": 300.0
+}

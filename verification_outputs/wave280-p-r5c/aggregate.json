@@ -1,0 +1,135 @@
+{
+  "schema_version": "wave280_r5c_aggregate_v1",
+  "n_seeds": 3,
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "ckpt_path": "data/mnist_fm/production.ckpt",
+  "smoke_ckpt_baseline": {
+    "best_arm": "evidence_driven",
+    "baseline_fid": 29.492531055292112,
+    "best_arm_fid": 23.387929967811573,
+    "best_arm_pct": -28.431085232877745,
+    "best_arm_p_bonf": 3.9528380568754073e-11,
+    "best_arm_dz": -13.175464990609804
+  },
+  "per_seed": [
+    {
+      "seed": 42,
+      "n_records": 200,
+      "baseline_fid": 11.989574801471122,
+      "best_arm": "evidence_driven",
+      "best_arm_fid": 13.666766293436751,
+      "best_arm_delta_pct": 11.901272590854958,
+      "best_arm_p_bonf": 0.0025792941956539472,
+      "best_arm_dz": 1.5462636525670879,
+      "all_arms": {
+        "cosine": {
+          "fid_headline": 14.028829504503307,
+          "delta_vs_baseline_pct": 14.779234889089748,
+          "p_value_bonf": 0.0008267901343887996,
+          "cohens_dz": 1.8189463461250448
+        },
+        "codimension_sheet": {
+          "fid_headline": 15.210353843008562,
+          "delta_vs_baseline_pct": 13.269630765474332,
+          "p_value_bonf": 0.00023011357339086658,
+          "cohens_dz": 2.158826410049443
+        },
+        "evidence_driven": {
+          "fid_headline": 13.666766293436751,
+          "delta_vs_baseline_pct": 11.901272590854958,
+          "p_value_bonf": 0.0025792941956539472,
+          "cohens_dz": 1.5462636525670879
+        }
+      }
+    },
+    {
+      "seed": 43,
+      "n_records": 200,
+      "baseline_fid": 11.989574801471122,
+      "best_arm": "evidence_driven",
+      "best_arm_fid": 13.666766293436751,
+      "best_arm_delta_pct": 11.892900223831958,
+      "best_arm_p_bonf": 0.006822825680830036,
+      "best_arm_dz": 1.3311807675367295,
+      "all_arms": {
+        "cosine": {
+          "fid_headline": 14.028829504503307,
+          "delta_vs_baseline_pct": 12.637480919054628,
+          "p_value_bonf": 0.0047915854037303696,
+          "cohens_dz": 1.407624520889766
+        },
+        "codimension_sheet": {
+          "fid_headline": 15.210353843008562,
+          "delta_vs_baseline_pct": 13.568020440998108,
+          "p_value_bonf": 0.00030459540009641906,
+          "cohens_dz": 2.0809338111603224
+        },
+        "evidence_driven": {
+          "fid_headline": 13.666766293436751,
+          "delta_vs_baseline_pct": 11.892900223831958,
+          "p_value_bonf": 0.006822825680830036,
+          "cohens_dz": 1.3311807675367295
+        }
+      }
+    },
+    {
+      "seed": 44,
+      "n_records": 200,
+      "baseline_fid": 11.989574801471122,
+      "best_arm": "evidence_driven",
+      "best_arm_fid": 13.666766293436751,
+      "best_arm_delta_pct": 7.324335942007791,
+      "best_arm_p_bonf": 0.03051206786330929,
+      "best_arm_dz": 1.024344164740289,
+      "all_arms": {
+        "cosine": {
+          "fid_headline": 14.028829504503307,
+          "delta_vs_baseline_pct": 9.340362944008735,
+          "p_value_bonf": 0.016002784820109417,
+          "cohens_dz": 1.1535923697573627
+        },
+        "codimension_sheet": {
+          "fid_headline": 15.210353843008562,
+          "delta_vs_baseline_pct": 8.532896586455799,
+          "p_value_bonf": 0.0027135077791415885,
+          "cohens_dz": 1.5346689701432816
+        },
+        "evidence_driven": {
+          "fid_headline": 13.666766293436751,
+          "delta_vs_baseline_pct": 7.324335942007791,
+          "p_value_bonf": 0.03051206786330929,
+          "cohens_dz": 1.024344164740289
+        }
+      }
+    }
+  ],
+  "aggregate_best_arm": {
+    "fid_mean": 13.666766293436751,
+    "fid_std": 0.0,
+    "delta_pct_mean": 10.37283625223157,
+    "delta_pct_std": 2.6400820309619633,
+    "p_bonf_mean": 0.013304729246597757,
+    "d_z_per_seed": [
+      1.5462636525670879,
+      1.3311807675367295,
+      1.024344164740289
+    ]
+  },
+  "paired_vs_smoke_ckpt_baseline": {
+    "diff_per_seed": [
+      -9.721163674374822,
+      -9.721163674374822,
+      -9.721163674374822
+    ],
+    "d_z": Infinity,
+    "t_stat": Infinity,
+    "df": 2,
+    "p_value_raw": 0.0,
+    "p_value_bonf": 0.0,
+    "interpretation": "Negative d_z means the production ckpt's best-arm FID is LOWER than the smoke-ckpt baseline's best-arm FID (i.e., the production ckpt improves framework quality)."
+  }
+}

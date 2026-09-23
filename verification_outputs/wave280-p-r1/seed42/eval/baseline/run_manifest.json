@@ -1,0 +1,11 @@
+{
+  "outdir": "/tmp/wf280-r1/seed42/eval/baseline",
+  "paths": {
+    "family_validity_json": "/tmp/wf280-r1/seed42/eval/baseline/family_validity.json",
+    "family_validity_per_seq": "/tmp/wf280-r1/seed42/eval/baseline/family_validity_per_seq.jsonl",
+    "family_validity_log": "/tmp/wf280-r1/seed42/eval/baseline/family_validity.log"
+  },
+  "metrics": [
+    "family_validity"
+  ]
+}

@@ -1,0 +1,35 @@
+#                                                                            --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                        accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------              -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+CHIPS                PF11434.15 framework_seed1|family=PF00072.24 -               0.28   11.8   0.0        26    5.4   0.0   2.4   2   0   0   2   2   2   0 Chemotaxis-inhibiting protein CHIPS
+TMEM234              PF10639.16 framework_seed4|family=PF00005.27 -              0.099   13.4   0.0      0.17   12.7   0.0   1.4   1   0   0   1   1   1   0 Putative transmembrane family 234
+DEATH_SH3BP4         PF24094.2  framework_seed8|family=PF00005.27 -              0.052   14.3   0.3      0.13   13.0   0.2   1.7   1   1   1   2   2   2   0 SH3BP4, DEATH domain-like
+DUF3465              PF11948.16 framework_seed13|family=PF00072.24 -                  1   10.0   4.3       2.3    8.9   1.1   2.5   2   1   0   2   2   2   0 Protein of unknown function (DUF3465)
+RRG1_N               PF29574.1  framework_seed16|family=PF00005.27 -             0.0013   19.4   0.5    0.0083   16.8   0.1   2.2   2   0   0   2   2   2   1 RRG1 N-terminal domain
+DUF5686              PF18939.8  framework_seed19|family=PF02517.18 -               0.39   10.9   0.7      0.56   10.4   0.7   1.2   1   0   0   1   1   1   0 Family of unknown function (DUF5686)
+DUF192               PF02643.22 framework_seed19|family=PF02517.18 -               0.66   10.5   2.5       5.5    7.6   0.2   2.2   2   0   0   2   2   2   0 Uncharacterized ACR, COG1430
+PSRP-3_Ycf65         PF04839.19 framework_seed20|family=PF00005.27 -              0.083   13.8   3.4       4.5    8.3   0.4   2.9   3   0   0   3   3   3   0 Plastid and cyanobacterial ribosomal protein (PSRP-3 / Ycf65)
+MCM_OB               PF17207.10 framework_seed20|family=PF00005.27 -               0.54   10.7   1.7      0.72   10.3   0.3   1.8   2   1   0   2   2   2   0 MCM OB domain
+TELO2_ARM            PF25320.2  framework_seed24|family=PF00005.27 -              0.076   13.2   1.4      0.11   12.6   1.4   1.3   1   0   0   1   1   1   0 TELO2 ARM repeat domain
+ADAM10_Cys-rich      PF21299.3  framework_seed26|family=PF00183.19 -              0.091   14.2   0.9     0.091   14.2   0.9   2.7   3   0   0   3   3   3   0 ADAM10, cysteine-rich domain
+DUF8796              PF31062.1  framework_seed31|family=PF02517.18 -               0.26   11.7   0.0      0.36   11.2   0.0   1.2   1   0   0   1   1   1   0 Domain of unknown function (DUF8796)
+CXCXC                PF03128.20 framework_seed32|family=PF00005.27 -                2.3    9.4   5.9        47    5.3   0.2   3.6   3   0   0   3   3   3   0 CXCXC repeat
+DsbD_2               PF13386.13 framework_seed34|family=PF00183.19 -               0.33   11.5   0.4      0.51   10.9   0.4   1.2   1   0   0   1   1   1   0 Cytochrome C biogenesis protein transmembrane region
+DUF1689              PF07954.17 framework_seed35|family=PF02517.18 -               0.14   13.2   0.1      0.25   12.4   0.0   1.5   2   0   0   2   2   2   0 Protein of unknown function (DUF1689)
+fn3_4                PF16794.12 framework_seed38|family=PF00183.19 -               0.17   12.5   1.2      0.86   10.3   0.1   2.5   2   1   0   2   2   2   0 Fibronectin-III type domain
+DEFL308              PF30541.1  framework_seed42|family=PF00183.19 -                1.8    9.2   6.0         3    8.6   0.2   2.7   3   0   0   3   3   3   0 Defensin-like protein 308 domain
+DAGK_acc             PF00609.25 framework_seed43|family=PF02517.18 -               0.22   12.6   0.4      0.34   12.0   0.1   1.4   2   0   0   2   2   2   0 Diacylglycerol kinase accessory domain
+Lpp-LpqN             PF10738.16 framework_seed47|family=PF02517.18 -              0.074   13.2   0.0      0.12   12.6   0.0   1.2   1   0   0   1   1   1   0 Probable lipoprotein LpqN
+PH_PKH3_C            PF25347.2  framework_seed48|family=PF00005.27 -               0.26   11.7   0.0      0.37   11.2   0.0   1.2   1   0   0   1   1   1   0 PKH3 kinase C-terminal PH domain
+SLD5_C               PF16922.12 framework_seed49|family=PF00072.24 -               0.23   12.4   0.3       1.3   10.0   0.1   2.3   3   0   0   3   3   3   0 DNA replication complex GINS protein SLD5 C-terminus
+7TM_GPCR_Srbc        PF10316.16 framework_seed49|family=PF00072.24 -                2.9    8.0   5.9       4.5    7.4   5.9   1.2   1   0   0   1   1   1   0 Serpentine type 7TM GPCR chemoreceptor Srbc
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /tmp/wf280-lineageflow/seed42/fasta/framework_n100.fasta
+# Target file:     /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /tmp/wf280-lineageflow/seed42/hmmscan_n100/framework/hmmscan.tbl --acc --noali --cpu 4 /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /tmp/wf280-lineageflow/seed42/fasta/framework_n100.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Tue Sep 22 23:17:00 2026
+# [ok]

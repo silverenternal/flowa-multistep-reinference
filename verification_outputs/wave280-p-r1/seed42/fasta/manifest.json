@@ -1,0 +1,38 @@
+{
+  "n": 1000,
+  "seed": 42,
+  "min_len": 30,
+  "max_len": 150,
+  "family_ids": [
+    "PF00005.27",
+    "PF00072.24",
+    "PF00183.19",
+    "PF02517.18"
+  ],
+  "nfe_per_record": 10,
+  "n_rounds": 3,
+  "baseline_per_family_count": {
+    "PF00005.27": 250,
+    "PF00072.24": 250,
+    "PF00183.19": 250,
+    "PF02517.18": 250
+  },
+  "framework_per_family_count": {
+    "PF00005.27": 250,
+    "PF00072.24": 250,
+    "PF00183.19": 250,
+    "PF02517.18": 250
+  },
+  "framework_fallback_per_family_count": {},
+  "per_family_count": {
+    "PF00005.27": 250,
+    "PF00072.24": 250,
+    "PF00183.19": 250,
+    "PF02517.18": 250
+  },
+  "source": "wave158_p2_seed42_copy",
+  "source_sha256": {
+    "baseline.fasta": "4ef0ec94d67850aa018d8cb83806d1ad52f80081dca758a732891a08a9e80db1",
+    "framework.fasta": "afe53dc0ea168c9d7629915ce6bda02de28299cc1bfa730583410888b83aaec5"
+  }
+}

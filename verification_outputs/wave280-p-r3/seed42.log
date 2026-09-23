@@ -1,0 +1,9 @@
+==============================================================================
+Wave 280 R3 fg_dev sweep — seed=42
+  n_records_per_arm = 100, nfe = 250, n_mols = 1
+  R3 fix (DGL repeat_interleave tile) is in flowmol3_v2_adapter.py:2861-2883
+  output_dir = /tmp/wf280-r3/seed42
+==============================================================================
+Wrote /tmp/wf280-r3/seed42/inputs.json
+Loading FlowMol3 v2 adapter (upstream path) ...
+Adapter loaded in 11.55s

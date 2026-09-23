@@ -1,0 +1,22 @@
+{
+  "status": 1.0,
+  "family_validity__n_total": 1000.0,
+  "family_validity__missing_family_headers": 0.0,
+  "family_validity__hmmscan_total_hits": 168.0,
+  "family_validity__hmmscan_unique_queries": 150.0,
+  "family_validity__coverage_any_hit": 0.15,
+  "family_validity__top1_family_accuracy": 0.0,
+  "family_validity__topk_contains_intended": 0.0,
+  "family_validity__topk_family": 10.0,
+  "family_validity__intended_hit_rate_evalue": 0.0,
+  "family_validity__evalue_threshold": 0.001,
+  "family_validity__score_margin_mean": 2.466666666666667,
+  "family_validity__score_margin_median": 2.299999999999999,
+  "metric_kind": "family_validity+foldability+self_consistency+novelty",
+  "upstream_orchestrator": "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/evaluate_all.py",
+  "length_bias": "short",
+  "sweep_n_records_actual": 0,
+  "sweep_n_records_requested": 1000,
+  "sweep_n_records_match": false,
+  "sweep_name": "run_lineageflow_upstream_eval"
+}

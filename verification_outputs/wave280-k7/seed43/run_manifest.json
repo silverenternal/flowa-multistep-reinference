@@ -1,0 +1,11 @@
+{
+  "outdir": "/tmp/wf280-k7/seed43",
+  "paths": {
+    "novelty_json": "/tmp/wf280-k7/seed43/novelty.json",
+    "novelty_per_seq": "/tmp/wf280-k7/seed43/novelty_per_seq.jsonl",
+    "novelty_log": "/tmp/wf280-k7/seed43/novelty.log"
+  },
+  "metrics": [
+    "novelty"
+  ]
+}

@@ -1,0 +1,1415 @@
+# hmmscan :: search sequence(s) against a profile database
+# HMMER 3.4 (Aug 2023); http://hmmer.org/
+# Copyright (C) 2023 Howard Hughes Medical Institute.
+# Freely distributed under the BSD open source license.
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# query sequence file:             /tmp/wf280-lineageflow/seed43/fasta/framework_n100.fasta
+# target HMM database:             /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# per-seq hits tabular output:     /tmp/wf280-lineageflow/seed43/hmmscan_n100/framework/hmmscan.tbl
+# prefer accessions over names:    yes
+# show alignments in output:       no
+# multithread parallelization:     4 workers
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Query:       framework_seed0|family=PF00005.27  [L=264]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (264 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       975  (0.0323555); expected 602.7 (0.02)
+Passed bias filter:                      571  (0.0189487); expected 602.7 (0.02)
+Passed Vit filter:                        33  (0.00109511); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.29u 0.17s 00:00:00.46 Elapsed: 00:00:00.52
+# Mc/sec: 2411.65
+//
+Query:       framework_seed1|family=PF00072.24  [L=246]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (246 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       927  (0.0307626); expected 602.7 (0.02)
+Passed bias filter:                      477  (0.0158293); expected 602.7 (0.02)
+Passed Vit filter:                        32  (0.00106192); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.28u 0.15s 00:00:00.43 Elapsed: 00:00:00.41
+# Mc/sec: 2836.38
+//
+Query:       framework_seed2|family=PF00183.19  [L=218]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (218 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       887  (0.0294352); expected 602.7 (0.02)
+Passed bias filter:                      268  (0.00889361); expected 602.7 (0.02)
+Passed Vit filter:                        20  (0.000663702); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.31u 0.16s 00:00:00.47 Elapsed: 00:00:00.36
+# Mc/sec: 2848.24
+//
+Query:       framework_seed3|family=PF02517.18  [L=236]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (236 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       738  (0.0244906); expected 602.7 (0.02)
+Passed bias filter:                      422  (0.0140041); expected 602.7 (0.02)
+Passed Vit filter:                        17  (0.000564147); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.24u 0.10s 00:00:00.34 Elapsed: 00:00:00.37
+# Mc/sec: 2982.92
+//
+Query:       framework_seed4|family=PF00005.27  [L=277]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model      Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------   -----------
+  ------ inclusion threshold ------
+        5.1    6.3   9.9        7.5    5.8   9.9    1.2  1  PF04780.18  Protein of unknown function (DUF629)
+
+
+Domain annotation for each model:
+>> PF04780.18  Protein of unknown function (DUF629)
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 ?    5.8   9.9   0.00025       7.5      50      89 ..      56      95 ..      41     108 .. 0.81
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (277 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1074  (0.0356408); expected 602.7 (0.02)
+Passed bias filter:                      321  (0.0106524); expected 602.7 (0.02)
+Passed Vit filter:                        25  (0.000829628); expected 30.1 (0.001)
+Passed Fwd filter:                         1  (3.31851e-05); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.26u 0.12s 00:00:00.38 Elapsed: 00:00:00.35
+# Mc/sec: 3761.76
+//
+Query:       framework_seed5|family=PF00072.24  [L=202]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model      Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------   -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (202 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1077  (0.0357404); expected 602.7 (0.02)
+Passed bias filter:                      481  (0.015962); expected 602.7 (0.02)
+Passed Vit filter:                        27  (0.000895998); expected 30.1 (0.001)
+Passed Fwd filter:                         1  (3.31851e-05); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.24u 0.14s 00:00:00.38 Elapsed: 00:00:00.35
+# Mc/sec: 2679.60
+//
+Query:       framework_seed6|family=PF00183.19  [L=236]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model     Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------  -----------
+  ------ inclusion threshold ------
+      0.023   15.3   5.3       0.08   13.5   0.7    2.6  2  PF22992.3  BIRD-IDD transcription factor, fourth C2HC zinc fi
+
+
+Domain annotation for each model:
+>> PF22992.3  BIRD-IDD transcription factor, fourth C2HC zinc finger
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 ?    3.2   0.3    0.0044   1.3e+02       3       8 ..      71      76 ..      69      78 .. 0.87
+   2 ?   13.5   0.7   2.7e-06      0.08      14      27 ..     145     158 ..     142     164 .. 0.88
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (236 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       800  (0.0265481); expected 602.7 (0.02)
+Passed bias filter:                      322  (0.0106856); expected 602.7 (0.02)
+Passed Vit filter:                        15  (0.000497777); expected 30.1 (0.001)
+Passed Fwd filter:                         1  (3.31851e-05); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.26u 0.11s 00:00:00.37 Elapsed: 00:00:00.35
+# Mc/sec: 3154.08
+//
+Query:       framework_seed7|family=PF02517.18  [L=212]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (212 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1025  (0.0340147); expected 602.7 (0.02)
+Passed bias filter:                      617  (0.0204752); expected 602.7 (0.02)
+Passed Vit filter:                        50  (0.00165926); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.30u 0.15s 00:00:00.44 Elapsed: 00:00:00.31
+# Mc/sec: 3210.38
+//
+Query:       framework_seed8|family=PF00005.27  [L=202]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (202 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       806  (0.0267472); expected 602.7 (0.02)
+Passed bias filter:                      471  (0.0156302); expected 602.7 (0.02)
+Passed Vit filter:                        28  (0.000929183); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.24u 0.11s 00:00:00.35 Elapsed: 00:00:00.33
+# Mc/sec: 2896.12
+//
+Query:       framework_seed9|family=PF00072.24  [L=246]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (246 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       778  (0.025818); expected 602.7 (0.02)
+Passed bias filter:                      533  (0.0176877); expected 602.7 (0.02)
+Passed Vit filter:                        33  (0.00109511); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.26u 0.08s 00:00:00.34 Elapsed: 00:00:00.33
+# Mc/sec: 3488.48
+//
+Query:       framework_seed10|family=PF00183.19  [L=236]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (236 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       987  (0.0327537); expected 602.7 (0.02)
+Passed bias filter:                      397  (0.0131745); expected 602.7 (0.02)
+Passed Vit filter:                        14  (0.000464591); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.23u 0.13s 00:00:00.36 Elapsed: 00:00:00.32
+# Mc/sec: 3413.10
+//
+Query:       framework_seed11|family=PF02517.18  [L=254]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (254 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1044  (0.0346453); expected 602.7 (0.02)
+Passed bias filter:                      554  (0.0183845); expected 602.7 (0.02)
+Passed Vit filter:                        29  (0.000962368); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.27u 0.13s 00:00:00.40 Elapsed: 00:00:00.42
+# Mc/sec: 2841.73
+//
+Query:       framework_seed12|family=PF00005.27  [L=208]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model     Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------  -----------
+  ------ inclusion threshold ------
+       0.07   13.9   0.0       0.13   13.0   0.0    1.4  2  PF29336.1  Autophagy-related protein 33
+
+
+Domain annotation for each model:
+>> PF29336.1  Autophagy-related protein 33
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 ?   -3.4   0.0      0.44   1.3e+04      93     111 ..      54      72 ..      50      98 .. 0.58
+   2 ?   13.0   0.0   4.3e-06      0.13      68     118 ..     121     171 ..     115     199 .. 0.71
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (208 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1267  (0.0420455); expected 602.7 (0.02)
+Passed bias filter:                      597  (0.0198115); expected 602.7 (0.02)
+Passed Vit filter:                        32  (0.00106192); expected 30.1 (0.001)
+Passed Fwd filter:                         1  (3.31851e-05); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.24u 0.09s 00:00:00.32 Elapsed: 00:00:00.35
+# Mc/sec: 2792.91
+//
+Query:       framework_seed13|family=PF00072.24  [L=281]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (281 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       741  (0.0245902); expected 602.7 (0.02)
+Passed bias filter:                      334  (0.0110838); expected 602.7 (0.02)
+Passed Vit filter:                        25  (0.000829628); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.25u 0.15s 00:00:00.40 Elapsed: 00:00:00.41
+# Mc/sec: 3190.10
+//
+Query:       framework_seed14|family=PF00183.19  [L=205]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (205 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       732  (0.0242915); expected 602.7 (0.02)
+Passed bias filter:                      558  (0.0185173); expected 602.7 (0.02)
+Passed Vit filter:                        34  (0.00112829); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.26u 0.13s 00:00:00.39 Elapsed: 00:00:00.42
+# Mc/sec: 2313.57
+//
+Query:       framework_seed15|family=PF02517.18  [L=251]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model      Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------   -----------
+  ------ inclusion threshold ------
+        0.1   12.8   0.0       0.15   12.3   0.0    1.2  1  PF04887.18  Poxvirus M2 protein
+
+
+Domain annotation for each model:
+>> PF04887.18  Poxvirus M2 protein
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 ?   12.3   0.0   4.9e-06      0.15       2      86 ..      84     169 ..      83     208 .. 0.85
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (251 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       863  (0.0286387); expected 602.7 (0.02)
+Passed bias filter:                      423  (0.0140373); expected 602.7 (0.02)
+Passed Vit filter:                        12  (0.000398221); expected 30.1 (0.001)
+Passed Fwd filter:                         1  (3.31851e-05); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.27u 0.12s 00:00:00.39 Elapsed: 00:00:00.51
+# Mc/sec: 2331.76
+//
+Query:       framework_seed16|family=PF00005.27  [L=210]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (210 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1209  (0.0401208); expected 602.7 (0.02)
+Passed bias filter:                      681  (0.0225991); expected 602.7 (0.02)
+Passed Vit filter:                        49  (0.00162607); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.27u 0.10s 00:00:00.37 Elapsed: 00:00:00.45
+# Mc/sec: 2187.50
+//
+Query:       framework_seed17|family=PF00072.24  [L=205]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (205 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       934  (0.0309949); expected 602.7 (0.02)
+Passed bias filter:                      571  (0.0189487); expected 602.7 (0.02)
+Passed Vit filter:                        28  (0.000929183); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.28u 0.13s 00:00:00.41 Elapsed: 00:00:00.40
+# Mc/sec: 2422.95
+//
+Query:       framework_seed18|family=PF00183.19  [L=285]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (285 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       622  (0.0206411); expected 602.7 (0.02)
+Passed bias filter:                      387  (0.0128426); expected 602.7 (0.02)
+Passed Vit filter:                        22  (0.000730072); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.25u 0.11s 00:00:00.36 Elapsed: 00:00:00.39
+# Mc/sec: 3439.18
+//
+Query:       framework_seed19|family=PF02517.18  [L=241]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (241 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1040  (0.0345125); expected 602.7 (0.02)
+Passed bias filter:                      470  (0.015597); expected 602.7 (0.02)
+Passed Vit filter:                        26  (0.000862813); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.23u 0.12s 00:00:00.35 Elapsed: 00:00:00.44
+# Mc/sec: 2582.40
+//
+Query:       framework_seed20|family=PF00005.27  [L=273]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (273 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       636  (0.0211057); expected 602.7 (0.02)
+Passed bias filter:                      372  (0.0123449); expected 602.7 (0.02)
+Passed Vit filter:                        27  (0.000895998); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.24u 0.12s 00:00:00.36 Elapsed: 00:00:00.40
+# Mc/sec: 3173.27
+//
+Query:       framework_seed21|family=PF00072.24  [L=256]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (256 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       616  (0.020442); expected 602.7 (0.02)
+Passed bias filter:                      487  (0.0161611); expected 602.7 (0.02)
+Passed Vit filter:                        33  (0.00109511); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.31u 0.12s 00:00:00.43 Elapsed: 00:00:00.39
+# Mc/sec: 3047.35
+//
+Query:       framework_seed22|family=PF00183.19  [L=285]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model      Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------   -----------
+  ------ inclusion threshold ------
+       0.07   14.0   0.1        2.6    8.9   0.1    2.2  2  PF07667.17  Protein of unknown function (DUF1600)
+
+
+Domain annotation for each model:
+>> PF07667.17  Protein of unknown function (DUF1600)
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 ?    8.9   0.1   8.7e-05       2.6      46      96 ..     123     169 ..     100     179 .. 0.83
+   2 ?    2.7   0.0    0.0077   2.3e+02      40      55 ..     240     255 ..     229     262 .. 0.79
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (285 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       870  (0.028871); expected 602.7 (0.02)
+Passed bias filter:                      387  (0.0128426); expected 602.7 (0.02)
+Passed Vit filter:                        24  (0.000796443); expected 30.1 (0.001)
+Passed Fwd filter:                         1  (3.31851e-05); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.28u 0.12s 00:00:00.40 Elapsed: 00:00:00.46
+# Mc/sec: 2888.77
+//
+Query:       framework_seed23|family=PF02517.18  [L=264]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model      Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------   -----------
+  ------ inclusion threshold ------
+       0.12   12.5   0.1       0.16   12.0   0.1    1.2  1  PF08584.17  Ribonuclease P 40kDa (Rpp40) subunit
+
+
+Domain annotation for each model:
+>> PF08584.17  Ribonuclease P 40kDa (Rpp40) subunit
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 ?   12.0   0.1   5.4e-06      0.16      91     156 ..       3      71 ..       1     105 [. 0.74
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (264 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1004  (0.0333178); expected 602.7 (0.02)
+Passed bias filter:                      666  (0.0221013); expected 602.7 (0.02)
+Passed Vit filter:                        44  (0.00146014); expected 30.1 (0.001)
+Passed Fwd filter:                         1  (3.31851e-05); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.32u 0.13s 00:00:00.45 Elapsed: 00:00:00.49
+# Mc/sec: 2531.47
+//
+Query:       framework_seed24|family=PF00005.27  [L=298]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (298 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1044  (0.0346453); expected 602.7 (0.02)
+Passed bias filter:                      433  (0.0143692); expected 602.7 (0.02)
+Passed Vit filter:                        23  (0.000763257); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.29u 0.12s 00:00:00.41 Elapsed: 00:00:00.47
+# Mc/sec: 2993.14
+//
+Query:       framework_seed25|family=PF00072.24  [L=290]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (290 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       618  (0.0205084); expected 602.7 (0.02)
+Passed bias filter:                      297  (0.00985598); expected 602.7 (0.02)
+Passed Vit filter:                        18  (0.000597332); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.27u 0.14s 00:00:00.41 Elapsed: 00:00:00.51
+# Mc/sec: 2669.17
+//
+Query:       framework_seed26|family=PF00183.19  [L=206]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model     Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------  -----------
+  ------ inclusion threshold ------
+       0.16   12.0   0.3       0.25   11.3   0.3    1.3  1  PF28964.1  Domain of unknown function (DUF8487)
+
+
+Domain annotation for each model:
+>> PF28964.1  Domain of unknown function (DUF8487)
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 ?   11.3   0.3   8.4e-06      0.25      34     113 ..      99     178 ..      91     182 .. 0.78
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (206 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1040  (0.0345125); expected 602.7 (0.02)
+Passed bias filter:                      603  (0.0200106); expected 602.7 (0.02)
+Passed Vit filter:                        50  (0.00165926); expected 30.1 (0.001)
+Passed Fwd filter:                         1  (3.31851e-05); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.26u 0.11s 00:00:00.37 Elapsed: 00:00:00.42
+# Mc/sec: 2289.38
+//
+Query:       framework_seed27|family=PF02517.18  [L=228]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model      Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------   -----------
+  ------ inclusion threshold ------
+       0.11   13.4   0.2       0.19   12.7   0.2    1.4  1  PF10801.14  Protein of unknown function (DUF2537)
+
+
+Domain annotation for each model:
+>> PF10801.14  Protein of unknown function (DUF2537)
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 ?   12.7   0.2   6.3e-06      0.19      35      63 ..     107     135 ..      88     139 .. 0.86
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (228 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       754  (0.0250216); expected 602.7 (0.02)
+Passed bias filter:                      303  (0.0100551); expected 602.7 (0.02)
+Passed Vit filter:                        19  (0.000630517); expected 30.1 (0.001)
+Passed Fwd filter:                         1  (3.31851e-05); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.29u 0.13s 00:00:00.42 Elapsed: 00:00:00.32
+# Mc/sec: 3381.93
+//
+Query:       framework_seed28|family=PF00005.27  [L=296]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (296 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       911  (0.0302316); expected 602.7 (0.02)
+Passed bias filter:                      475  (0.0157629); expected 602.7 (0.02)
+Passed Vit filter:                        35  (0.00116148); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.27u 0.12s 00:00:00.39 Elapsed: 00:00:00.38
+# Mc/sec: 3701.43
+//
+Query:       framework_seed29|family=PF00072.24  [L=232]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (232 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       982  (0.0325878); expected 602.7 (0.02)
+Passed bias filter:                      474  (0.0157297); expected 602.7 (0.02)
+Passed Vit filter:                        37  (0.00122785); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.27u 0.10s 00:00:00.37 Elapsed: 00:00:00.42
+# Mc/sec: 2595.47
+//
+Query:       framework_seed30|family=PF00183.19  [L=202]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (202 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1115  (0.0370014); expected 602.7 (0.02)
+Passed bias filter:                      538  (0.0178536); expected 602.7 (0.02)
+Passed Vit filter:                        26  (0.000862813); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.25u 0.12s 00:00:00.37 Elapsed: 00:00:00.35
+# Mc/sec: 2710.54
+//
+Query:       framework_seed31|family=PF02517.18  [L=210]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (210 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1200  (0.0398221); expected 602.7 (0.02)
+Passed bias filter:                      699  (0.0231964); expected 602.7 (0.02)
+Passed Vit filter:                        51  (0.00169244); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.28u 0.13s 00:00:00.41 Elapsed: 00:00:00.46
+# Mc/sec: 2159.50
+//
+Query:       framework_seed32|family=PF00005.27  [L=226]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (226 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       795  (0.0263822); expected 602.7 (0.02)
+Passed bias filter:                      445  (0.0147674); expected 602.7 (0.02)
+Passed Vit filter:                        25  (0.000829628); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.26u 0.14s 00:00:00.40 Elapsed: 00:00:00.33
+# Mc/sec: 3184.82
+//
+Query:       framework_seed33|family=PF00072.24  [L=226]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model      Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------   -----------
+  ------ inclusion threshold ------
+       0.12   13.3   1.7       0.33   11.9   1.7    1.8  2  PF06313.17  Drosophila ACP53EA protein
+       0.15   12.4   0.2       0.29   11.5   0.2    1.3  1  PF15487.12  FAM220 family
+
+
+Domain annotation for each model:
+>> PF06313.17  Drosophila ACP53EA protein
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 ?   -1.8   0.0       0.4   6.1e+03      37      65 ..      94     122 ..      78     124 .. 0.66
+   2 ?   11.9   1.7   2.2e-05      0.33      26      73 ..     125     175 ..      94     180 .. 0.83
+
+>> PF15487.12  FAM220 family
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 ?   11.5   0.2   1.9e-05      0.29     140     189 ..       8      54 ..       3      59 .. 0.84
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (226 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       851  (0.0282405); expected 602.7 (0.02)
+Passed bias filter:                      476  (0.0157961); expected 602.7 (0.02)
+Passed Vit filter:                        41  (0.00136059); expected 30.1 (0.001)
+Passed Fwd filter:                         2  (6.63702e-05); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               2  [number of targets reported over threshold]
+# CPU time: 0.25u 0.10s 00:00:00.35 Elapsed: 00:00:00.33
+# Mc/sec: 3164.33
+//
+Query:       framework_seed34|family=PF00183.19  [L=269]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (269 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       675  (0.0223999); expected 602.7 (0.02)
+Passed bias filter:                      241  (0.00799761); expected 602.7 (0.02)
+Passed Vit filter:                        17  (0.000564147); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.26u 0.11s 00:00:00.37 Elapsed: 00:00:00.37
+# Mc/sec: 3405.33
+//
+Query:       framework_seed35|family=PF02517.18  [L=266]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (266 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1176  (0.0390257); expected 602.7 (0.02)
+Passed bias filter:                      447  (0.0148337); expected 602.7 (0.02)
+Passed Vit filter:                        21  (0.000696887); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.29u 0.12s 00:00:00.41 Elapsed: 00:00:00.46
+# Mc/sec: 2747.07
+//
+Query:       framework_seed36|family=PF00005.27  [L=300]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (300 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1009  (0.0334838); expected 602.7 (0.02)
+Passed bias filter:                      389  (0.012909); expected 602.7 (0.02)
+Passed Vit filter:                        26  (0.000862813); expected 30.1 (0.001)
+Passed Fwd filter:                         1  (3.31851e-05); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.30u 0.15s 00:00:00.44 Elapsed: 00:00:00.41
+# Mc/sec: 3398.62
+//
+Query:       framework_seed37|family=PF00072.24  [L=228]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (228 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       650  (0.0215703); expected 602.7 (0.02)
+Passed bias filter:                      368  (0.0122121); expected 602.7 (0.02)
+Passed Vit filter:                        23  (0.000763257); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.27u 0.15s 00:00:00.42 Elapsed: 00:00:00.37
+# Mc/sec: 2853.42
+//
+Query:       framework_seed38|family=PF00183.19  [L=280]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (280 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       706  (0.0234287); expected 602.7 (0.02)
+Passed bias filter:                      382  (0.0126767); expected 602.7 (0.02)
+Passed Vit filter:                        20  (0.000663702); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.30u 0.13s 00:00:00.43 Elapsed: 00:00:00.39
+# Mc/sec: 3391.82
+//
+Query:       framework_seed39|family=PF02517.18  [L=211]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (211 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1346  (0.0446672); expected 602.7 (0.02)
+Passed bias filter:                      611  (0.0202761); expected 602.7 (0.02)
+Passed Vit filter:                        40  (0.0013274); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.28u 0.11s 00:00:00.39 Elapsed: 00:00:00.38
+# Mc/sec: 2639.60
+//
+Query:       framework_seed40|family=PF00005.27  [L=277]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (277 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1038  (0.0344461); expected 602.7 (0.02)
+Passed bias filter:                      273  (0.00905953); expected 602.7 (0.02)
+Passed Vit filter:                        23  (0.000763257); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.31u 0.14s 00:00:00.45 Elapsed: 00:00:00.35
+# Mc/sec: 3716.17
+//
+Query:       framework_seed41|family=PF00072.24  [L=269]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (269 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       586  (0.0194465); expected 602.7 (0.02)
+Passed bias filter:                      414  (0.0137386); expected 602.7 (0.02)
+Passed Vit filter:                        25  (0.000829628); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.25u 0.11s 00:00:00.36 Elapsed: 00:00:00.34
+# Mc/sec: 3741.56
+//
+Query:       framework_seed42|family=PF00183.19  [L=288]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model      Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------   -----------
+  ------ inclusion threshold ------
+        3.4    8.7   5.1       0.56   11.3   0.3    2.0  2  PF15848.11  Odontogenesis associated phosphoprotein
+
+
+Domain annotation for each model:
+>> PF15848.11  Odontogenesis associated phosphoprotein
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 ?   -1.6   0.7      0.18   5.5e+03      46      81 ..      74      95 ..      61     120 .. 0.45
+   2 ?   11.3   0.3   1.8e-05      0.56       2      54 ..     147     200 ..     146     220 .. 0.85
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (288 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       794  (0.026349); expected 602.7 (0.02)
+Passed bias filter:                      342  (0.0113493); expected 602.7 (0.02)
+Passed Vit filter:                        26  (0.000862813); expected 30.1 (0.001)
+Passed Fwd filter:                         1  (3.31851e-05); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.25u 0.12s 00:00:00.37 Elapsed: 00:00:00.40
+# Mc/sec: 3346.26
+//
+Query:       framework_seed43|family=PF02517.18  [L=276]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (276 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       704  (0.0233623); expected 602.7 (0.02)
+Passed bias filter:                      446  (0.0148006); expected 602.7 (0.02)
+Passed Vit filter:                        32  (0.00106192); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.26u 0.12s 00:00:00.38 Elapsed: 00:00:00.45
+# Mc/sec: 2900.50
+//
+Query:       framework_seed44|family=PF00005.27  [L=207]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (207 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                      1295  (0.0429747); expected 602.7 (0.02)
+Passed bias filter:                      405  (0.01344); expected 602.7 (0.02)
+Passed Vit filter:                        19  (0.000630517); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.27u 0.14s 00:00:00.41 Elapsed: 00:00:00.44
+# Mc/sec: 2225.99
+//
+Query:       framework_seed45|family=PF00072.24  [L=220]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model     Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------  -----------
+  ------ inclusion threshold ------
+       0.15   12.9   0.0       0.31   11.9   0.0    1.4  1  PF22461.3  SLBB domain
+
+
+Domain annotation for each model:
+>> PF22461.3  SLBB domain
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 ?   11.9   0.0     1e-05      0.31      17      65 ..      91     138 ..      88     142 .. 0.87
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (220 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       716  (0.0237605); expected 602.7 (0.02)
+Passed bias filter:                      472  (0.0156634); expected 602.7 (0.02)
+Passed Vit filter:                        30  (0.000995553); expected 30.1 (0.001)
+Passed Fwd filter:                         1  (3.31851e-05); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.25u 0.14s 00:00:00.39 Elapsed: 00:00:00.39
+# Mc/sec: 2651.47
+//
+Query:       framework_seed46|family=PF00183.19  [L=249]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (249 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       929  (0.030829); expected 602.7 (0.02)
+Passed bias filter:                      664  (0.0220349); expected 602.7 (0.02)
+Passed Vit filter:                        47  (0.0015597); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.32u 0.13s 00:00:00.45 Elapsed: 00:00:00.37
+# Mc/sec: 3143.24
+//
+Query:       framework_seed47|family=PF02517.18  [L=220]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model     Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------  -----------
+  ------ inclusion threshold ------
+       0.13   13.3   0.9       0.27   12.3   0.5    1.6  1  PF23117.2  DpnD N-terminal domain
+
+
+Domain annotation for each model:
+>> PF23117.2  DpnD N-terminal domain
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 ?   12.3   0.5   8.9e-06      0.27      42      70 ..     108     135 ..     101     144 .. 0.86
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (220 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       837  (0.0277759); expected 602.7 (0.02)
+Passed bias filter:                      463  (0.0153647); expected 602.7 (0.02)
+Passed Vit filter:                        28  (0.000929183); expected 30.1 (0.001)
+Passed Fwd filter:                         1  (3.31851e-05); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.29u 0.15s 00:00:00.43 Elapsed: 00:00:00.48
+# Mc/sec: 2139.45
+//
+Query:       framework_seed48|family=PF00005.27  [L=224]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model      Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------   -----------
+  ------ inclusion threshold ------
+      0.075   13.8   0.2       0.55   11.0   0.0    2.2  2  PF07732.22  Multicopper oxidase
+
+
+Domain annotation for each model:
+>> PF07732.22  Multicopper oxidase
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 ?   11.0   0.0   1.8e-05      0.55      31      59 ..      11      37 ..       7      66 .. 0.86
+   2 ?    0.0   0.0     0.047   1.4e+03      47      65 ..     171     189 ..     168     217 .. 0.70
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (224 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       541  (0.0179531); expected 602.7 (0.02)
+Passed bias filter:                      378  (0.012544); expected 602.7 (0.02)
+Passed Vit filter:                        28  (0.000929183); expected 30.1 (0.001)
+Passed Fwd filter:                         1  (3.31851e-05); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.22u 0.13s 00:00:00.35 Elapsed: 00:00:00.38
+# Mc/sec: 2784.19
+//
+Query:       framework_seed49|family=PF00072.24  [L=291]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (291 residues searched)
+Target model(s):                       30134  (4754065 nodes)
+Passed MSV filter:                       720  (0.0238933); expected 602.7 (0.02)
+Passed bias filter:                      525  (0.0174222); expected 602.7 (0.02)
+Passed Vit filter:                        38  (0.00126103); expected 30.1 (0.001)
+Passed Fwd filter:                         0  (0); expected 0.3 (1e-05)
+Initial search space (Z):              30134  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 0.31u 0.10s 00:00:00.41 Elapsed: 00:00:00.43
+# Mc/sec: 3186.35
+//
+[ok]

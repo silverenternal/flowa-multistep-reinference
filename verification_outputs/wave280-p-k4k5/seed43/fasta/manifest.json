@@ -1,0 +1,44 @@
+{
+  "n": 500,
+  "seed": 43,
+  "min_len": 200,
+  "max_len": 300,
+  "family_ids": [
+    "PF00005.27",
+    "PF00072.24",
+    "PF00183.19",
+    "PF02517.18"
+  ],
+  "nfe_per_record": 10,
+  "n_rounds": 3,
+  "temperature": 1.0,
+  "beta_base": 0.5,
+  "restart_min_nfe": 20,
+  "nfe_ref": 50,
+  "upstream_eval_len_bias": "long",
+  "lineageflow_prior_mix": 1.0,
+  "baseline_per_family_count": {
+    "PF00005.27": 125,
+    "PF00072.24": 125,
+    "PF00183.19": 125,
+    "PF02517.18": 125
+  },
+  "framework_per_family_count": {
+    "PF00005.27": 125,
+    "PF00072.24": 125,
+    "PF00183.19": 125,
+    "PF02517.18": 125
+  },
+  "framework_fallback_per_family_count": {
+    "PF00005.27": 125,
+    "PF00072.24": 125,
+    "PF00183.19": 125,
+    "PF02517.18": 125
+  },
+  "per_family_count": {
+    "PF00005.27": 125,
+    "PF00072.24": 125,
+    "PF00183.19": 125,
+    "PF02517.18": 125
+  }
+}
