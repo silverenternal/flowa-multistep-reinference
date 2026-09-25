@@ -12,19 +12,28 @@ default on re-runs. Saves the rendered draft to `--output` and the
 collected JSON to `--save-config`. See `docs/CONTRIBUTING-cover-letter.md`
 for the 3-step quickstart.
 
+Wave 360 P2 extension: adds `--dry-run` (prints the 17 default values from
+`tnnls_submission/cover_letter_FILL_AUTOFILL.json` without writing to
+either `cover_letter.md` OR `--output`) and `--validate` (reads the
+canonical `cover_letter.md`, reports which placeholders are still
+`[USER TO FILL: ...]` vs already filled; read-only) and a summary print
+at the end of `--interactive` mode showing filled / remaining / total.
+
 Important constraints
 ---------------------
 1. The script does NOT write to `tnnls_submission/cover_letter.md` directly.
    It produces a rendered draft at `--output <path>` that the user reviews
    before overwriting the canonical file. This keeps the canonical file
-   byte-stable until the user explicitly approves.
+   byte-stable until the user explicitly approves. (`--dry-run` and
+   `--validate` are explicitly read-only — they NEVER write any file.)
 2. All 17 fields are required (non-empty strings). The script fails closed
    if any field is missing or empty.
 3. The script never touches vendored upstream code or claim-bearing numbers
    in the cover letter — only the `[USER TO FILL: ...]` placeholders.
 4. `--interactive` requires a TTY. For non-interactive use (CI / scripts),
    use `--config <json>` with the schema at
-   `/tmp/cover_letter_data.template.json`.
+   `/tmp/cover_letter_data.template.json`, `--dry-run` to inspect defaults,
+   or `--validate` to audit fill state.
 
 The 17 fields (per FILL_GUIDE.md)
 ---------------------------------
@@ -349,6 +358,190 @@ def render(
 
 
 # ---------------------------------------------------------------------------
+# Wave 360 P2 — `--dry-run` + `--validate` read-only helpers
+# ---------------------------------------------------------------------------
+
+
+def load_autofill_defaults(autofill_path: Path) -> dict[str, str]:
+    """Load the structured defaults from `cover_letter_FILL_AUTOFILL.json`.
+
+    Wave 354 P4 scaffolded this file as a `placeholders: [{id, default_value,
+    source_path, rationale}, ...]` array (richer than the flat 17-key schema
+    expected by `--config`). For `--dry-run`, we only need the 17
+    `default_value` strings, keyed by `id`. Missing keys fall back to
+    `INTERACTIVE_DEFAULTS` so `--dry-run` is still useful even if a future
+    scaffolding PR drops a placeholder.
+    """
+    try:
+        raw = json.loads(autofill_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        sys.exit(
+            f"ERROR: autofill scaffold not found: {autofill_path}\n"
+            "Expected per Wave 354 P4 — re-create it or pass --autofill."
+        )
+    except json.JSONDecodeError as exc:
+        sys.exit(
+            f"ERROR: autofill scaffold is not valid JSON: {autofill_path}: {exc}"
+        )
+
+    # Wave 354 P4 structured form: {"placeholders": [{"id": ..., "default_value":
+    # ...}, ...]}. Tolerate the flat form too (forward-compat for hand-written
+    # templates).
+    if isinstance(raw, dict) and "placeholders" in raw:
+        entries = raw["placeholders"]
+    elif isinstance(raw, dict):
+        entries = [{"id": k, "default_value": v} for k, v in raw.items()]
+    else:
+        sys.exit(
+            f"ERROR: autofill scaffold must be a JSON object; "
+            f"got {type(raw).__name__}"
+        )
+
+    defaults: dict[str, str] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        key = entry.get("id")
+        if not key:
+            continue
+        defaults[key] = str(entry.get("default_value", "")).strip()
+
+    # Backfill any missing 17 fields from INTERACTIVE_DEFAULTS so the
+    # --dry-run output is always complete.
+    for key in REQUIRED_FIELDS:
+        if not defaults.get(key):
+            defaults[key] = INTERACTIVE_DEFAULTS.get(key, "")
+
+    return defaults
+
+
+def run_dry_run(
+    autofill_path: Path,
+    *,
+    output_stream=sys.stdout,
+) -> int:
+    """Print the 17 default values from the autofill scaffold.
+
+    Read-only: does NOT write to `cover_letter.md` OR to `--output`.
+    Does NOT require a TTY (safe in CI / scripts).
+    Returns 0 always; warnings about missing scaffold go through `sys.exit`
+    in `load_autofill_defaults`.
+    """
+    defaults = load_autofill_defaults(autofill_path)
+
+    output_stream.write("=" * 72 + "\n")
+    output_stream.write(
+        "TNNLS Cover Letter — --dry-run (Wave 360 P2)\n"
+    )
+    output_stream.write("=" * 72 + "\n\n")
+    output_stream.write(
+        f"Source: {autofill_path}\n"
+        f"Total placeholders: {len(REQUIRED_FIELDS)}\n"
+        "Behavior: read-only — does NOT modify cover_letter.md and does "
+        "NOT write --output.\n\n"
+    )
+
+    n_with_value = 0
+    n_empty = 0
+    for idx, (key, _, label) in enumerate(FIELDS, start=1):
+        value = defaults.get(key, "")
+        status = "[default]" if value else "[EMPTY]"
+        if value:
+            n_with_value += 1
+        else:
+            n_empty += 1
+        output_stream.write(
+            f"--- {idx:2d}/{len(REQUIRED_FIELDS)} {label} ---\n"
+            f"    key: {key}\n"
+            f"    {status}: {value}\n\n"
+        )
+
+    output_stream.write("=" * 72 + "\n")
+    output_stream.write(
+        f"Summary: {n_with_value}/{len(REQUIRED_FIELDS)} defaults populated; "
+        f"{n_empty} empty.\n"
+        "Next step — run `python3 tools/render_cover_letter.py --interactive` "
+        "(TTY required) to fill the form interactively, OR edit a JSON "
+        "config and run `--config <path>`.\n"
+        "To audit the current canonical file's fill state without writing, "
+        "run `python3 tools/render_cover_letter.py --validate`.\n"
+    )
+    return 0
+
+
+def run_validate(
+    canonical_path: Path,
+    *,
+    output_stream=sys.stdout,
+) -> int:
+    """Read the canonical cover letter and report unfilled placeholders.
+
+    Read-only: does NOT write to `cover_letter.md`. Does NOT require a TTY.
+    Returns 0 always (informational only — useful as a pre-submit checklist
+    but not a gate).
+    """
+    import re as _re
+
+    canonical_text = canonical_path.read_text(encoding="utf-8")
+
+    output_stream.write("=" * 72 + "\n")
+    output_stream.write(
+        "TNNLS Cover Letter — --validate (Wave 360 P2)\n"
+    )
+    output_stream.write("=" * 72 + "\n\n")
+    output_stream.write(
+        f"Canonical: {canonical_path}\n"
+        f"Behavior: read-only — does NOT modify cover_letter.md.\n\n"
+    )
+
+    n_unfilled = 0
+    n_filled = 0
+    for idx, (key, pattern, label) in enumerate(FIELDS, start=1):
+        regex = _re.compile(pattern, _re.DOTALL)
+        match = regex.search(canonical_text)
+        if match is None:
+            # Placeholder no longer present in the file — already filled.
+            n_filled += 1
+            status = "[FILLED]"
+            evidence = "(placeholder pattern not found — assumed filled)"
+        else:
+            # Placeholder still present — not yet filled.
+            n_unfilled += 1
+            status = "[UNFILLED]"
+            # Show the first 80 chars of the matched placeholder text so
+            # the user can locate it.
+            snippet = match.group(0)
+            if len(snippet) > 80:
+                snippet = snippet[:77] + "..."
+            evidence = f"still on disk as: {snippet!r}"
+        output_stream.write(
+            f"--- {idx:2d}/{len(REQUIRED_FIELDS)} {label} ---\n"
+            f"    key: {key}\n"
+            f"    {status} {evidence}\n\n"
+        )
+
+    output_stream.write("=" * 72 + "\n")
+    output_stream.write(
+        f"Summary: {n_filled}/{len(REQUIRED_FIELDS)} placeholders filled; "
+        f"{n_unfilled} still unfilled.\n"
+    )
+    if n_unfilled > 0:
+        output_stream.write(
+            f"\nAction: run `python3 tools/render_cover_letter.py "
+            f"--interactive` to fill the remaining "
+            f"{n_unfilled} placeholder(s), OR inspect "
+            f"`--dry-run` to see what the scaffolded defaults would be.\n"
+        )
+    else:
+        output_stream.write(
+            "\nAll 17 placeholders are filled. Re-hash the submission "
+            "package before upload:\n"
+            "  cd tnnls_submission && sha256sum -- *.md\n"
+        )
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Interactive mode helpers (Wave 352 P2)
 # ---------------------------------------------------------------------------
 
@@ -455,7 +648,10 @@ def main(argv: list[str] | None = None) -> int:
             "USER_TO_FILL placeholders. Produces an output file that the "
             "user reviews before overwriting the canonical cover letter. "
             "Use --interactive for a stdin-driven fill with default "
-            "suggestions, or --config for non-interactive JSON-driven fill."
+            "suggestions, or --config for non-interactive JSON-driven fill. "
+            "Use --dry-run to inspect the 17 scaffolded defaults (read-only, "
+            "no TTY required) and --validate to audit the canonical file's "
+            "current fill state (read-only)."
         )
     )
     mode = parser.add_mutually_exclusive_group(required=True)
@@ -466,7 +662,7 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "Path to JSON config file with the 17 pre-filled fields. "
             "See /tmp/cover_letter_data.template.json for the schema. "
-            "Mutually exclusive with --interactive."
+            "Mutually exclusive with --interactive, --dry-run, --validate."
         ),
     )
     mode.add_argument(
@@ -477,7 +673,32 @@ def main(argv: list[str] | None = None) -> int:
             "suggestions (requires a TTY). Saves the rendered draft to "
             "--output (default /tmp/cover_letter_filled.md) and the "
             "collected JSON to --save-config. See "
-            "docs/CONTRIBUTING-cover-letter.md for the 3-step guide."
+            "docs/CONTRIBUTING-cover-letter.md for the 3-step guide. "
+            "Mutually exclusive with --config, --dry-run, --validate."
+        ),
+    )
+    mode.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=(
+            "Wave 360 P2 — print the 17 default values from "
+            "--autofill (default tnnls_submission/cover_letter_FILL_AUTOFILL.json) "
+            "and exit. Read-only: does NOT write to cover_letter.md and "
+            "does NOT write to --output. No TTY required. Use this to "
+            "preview defaults before --interactive or --config. "
+            "Mutually exclusive with --config, --interactive, --validate."
+        ),
+    )
+    mode.add_argument(
+        "--validate",
+        action="store_true",
+        help=(
+            "Wave 360 P2 — read --canonical (default "
+            "tnnls_submission/cover_letter.md), count how many of the 17 "
+            "placeholders are still [USER TO FILL: ...] vs already filled, "
+            "and exit. Read-only: does NOT write to cover_letter.md. No TTY "
+            "required. Exits 0 always (informational; not a gate). "
+            "Mutually exclusive with --config, --interactive, --dry-run."
         ),
     )
     parser.add_argument(
@@ -494,7 +715,8 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "Path to write the rendered draft. NOT the canonical file. "
             "Review the draft and then `cp` it into place. Default: "
-            "/tmp/cover_letter_filled.md (interactive) or REQUIRED (config)."
+            "/tmp/cover_letter_filled.md (interactive) or REQUIRED (config). "
+            "Ignored by --dry-run and --validate (both read-only)."
         ),
     )
     parser.add_argument(
@@ -518,7 +740,25 @@ def main(argv: list[str] | None = None) -> int:
             "Re-run later with --config <path> to re-render after edits."
         ),
     )
+    parser.add_argument(
+        "--autofill",
+        type=Path,
+        default=Path("tnnls_submission/cover_letter_FILL_AUTOFILL.json"),
+        help=(
+            "Wave 360 P2 — --dry-run reads defaults from this scaffold "
+            "(default tnnls_submission/cover_letter_FILL_AUTOFILL.json, "
+            "per Wave 354 P4). Ignored by --config, --interactive, "
+            "--validate."
+        ),
+    )
     args = parser.parse_args(argv)
+
+    # Wave 360 P2 — short-circuit read-only modes BEFORE any I/O on the
+    # canonical file. Both modes exit 0 (informational only).
+    if args.dry_run:
+        return run_dry_run(args.autofill)
+    if args.validate:
+        return run_validate(args.canonical)
 
     if args.interactive:
         # Load template (schema + any pre-filled values).
@@ -543,6 +783,7 @@ def main(argv: list[str] | None = None) -> int:
     args.output.write_text(rendered, encoding="utf-8")
 
     n_substituted = len(REQUIRED_FIELDS) - len(warnings)
+    n_remaining = len(warnings)
     print()
     print(
         f"Rendered {n_substituted}/{len(REQUIRED_FIELDS)} USER_TO_FILL "
@@ -558,6 +799,20 @@ def main(argv: list[str] | None = None) -> int:
         "  # update MANIFEST.md SHA-256 column for cover_letter.md "
         "(per FILL_GUIDE.md step 6)"
     )
+    # Wave 360 P2 — interactive summary block (filled / remaining / total)
+    # shown AFTER the next-step instructions so the user can read both.
+    if args.interactive:
+        print()
+        print(
+            f"Interactive summary: filled={n_substituted}, "
+            f"remaining={n_remaining}, total={len(REQUIRED_FIELDS)}"
+        )
+        if n_remaining > 0:
+            print(
+                f"  {n_remaining} placeholder(s) did not match in the "
+                f"canonical text — inspect the warnings below before "
+                f"applying the draft."
+            )
     if warnings:
         print()
         print("Warnings:")
