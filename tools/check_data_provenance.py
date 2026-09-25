@@ -99,53 +99,53 @@ class ProvenanceResult:
 # ---------------------------------------------------------------------------
 
 
-def _line_has_both(line: str, sha: str, path: str) -> bool:
-    """Return True if the line contains both ``sha`` and ``path`` (in any
-    order). The audit docs sometimes pair a path on one line and the
-    sha on the next; we pair them only when they coexist on the same
-    line to avoid false positives across table rows.
-    """
-    return sha in line and path in line
-
-
 def _extract_citations(audit_doc: Path) -> list[Citation]:
     """Return all ``(sha, path)`` pairs cited in ``audit_doc``.
 
     The extractor is deliberately conservative: it only pairs a sha256
-    and a path when they appear on the same physical line. This is
-    strict enough to catch almost every audit-doc citation (the docs
-    format is "<path> sha256=abc123..." or "(sha256 abc123...) path/...")
-    while filtering out unrelated hashes (e.g. the headline-cell sha
-    ledger that intentionally lists per-file hashes without paths).
+    and a path when they appear in the same clause of the same line.
+    A clause is a substring bounded by the standard citation
+    separators `` + ``, ``; ``, or sentence-final ``. `` (period
+    followed by a capital letter). This avoids cartesian-product
+    false positives where multiple SHAs and multiple paths on the same
+    line get cross-paired (the docs format is "<path> sha256=abc123...
+    + <other-path> sha256=def456... + <bare-path-with-no-sha>").
     """
     rel_doc = str(audit_doc.relative_to(REPO_ROOT))
     text = audit_doc.read_text(encoding="utf-8")
     citations: list[Citation] = []
+    # Clause separators: " + " (typical inline list join), "; " (typical
+    # semicolon list join), and ". " followed by an uppercase letter
+    # (sentence boundary; the uppercase look-ahead avoids splitting on
+    # decimal numbers such as "d_s=+0.460" or "31444 B").
+    clause_re = re.compile(r"\s+\+\s+|\;\s+|\.\s+(?=[A-Z])")
     for line_no, line in enumerate(text.splitlines(), start=1):
-        # Find candidate sha256s on this line.
-        shas = SHA256_RE.findall(line)
-        if not shas:
-            continue
-        # Find candidate verification_outputs/ paths on this line.
-        paths = VERIF_PATH_RE.findall(line)
-        if not paths:
-            continue
-        # Pair every sha with every path that coexists on the same line.
-        # Most lines have one of each; the cartesian product stays
-        # small in practice.
-        for sha in shas:
-            for path in paths:
+        for clause in clause_re.split(line):
+            # Find candidate sha256s in this clause.
+            shas = SHA256_RE.findall(clause)
+            if not shas:
+                continue
+            # Find candidate verification_outputs/ paths in this clause.
+            paths = VERIF_PATH_RE.findall(clause)
+            if not paths:
+                continue
+            # Pair sha256s and paths sequentially (1 SHA + 1 path per
+            # pair). Truncate at min length so leftovers (which pair with
+            # paths/SHAs on adjacent lines via the re-cite pattern) are
+            # dropped here -- a SHA in this clause without a matching
+            # verification_outputs/ path in the same clause is not a
+            # citation for any path on this line.
+            for sha, path in zip(shas, paths, strict=False):
                 # Drop leading "./" / "/" so the path is repo-relative.
                 clean = path.lstrip("./").lstrip("/")
-                if _line_has_both(line, sha, clean):
-                    citations.append(
-                        Citation(
-                            doc=rel_doc,
-                            line=line_no,
-                            sha256=sha.lower(),
-                            path=clean,
-                        )
+                citations.append(
+                    Citation(
+                        doc=rel_doc,
+                        line=line_no,
+                        sha256=sha.lower(),
+                        path=clean,
                     )
+                )
     return citations
 
 
