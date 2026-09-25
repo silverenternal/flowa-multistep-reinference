@@ -269,3 +269,104 @@ The Wave 357 P5 audit does NOT touch any `*.py` file in the 4-dir ruff scope (`a
 - **claims consistency PASS**: PASS.
 - **mkdocs build --strict PASS**: PASS.
 - **Next action**: if camera-ready scope authorises (user-gated), the full 3-seed × N=1000 sweep would take ~26-53 hours of GPU 0 wall time (2-GPU split halves this); the sweep is **not launched in this wave** per AGENTS.md §3 guardrail #3 + §6 stop-and-confirm rule + the explicit user task brief "do NOT actually launch the GPU sweep".
+
+---
+
+## 10. Wave 359 P3 ADDITIVE: HARD CONSTRAINT cuda:0 ONLY (per user directive "只能用GPU0")
+
+**Date:** 2026-09-25
+**Author:** Wave 359 P3 R6-scope-cuda0-only agent (USER AUTHORIZED, NO PUSH)
+**Status:** ACTIVE — ADDITIVE scope-hardening disclosure appended to this audit doc; cross-referenced to the new audit doc at [`docs/audit/wave359-r6-gpu-scope-cuda0.md`](wave359-r6-gpu-scope-cuda0.md).
+**Trigger:** Wave 359 P3 user directive (relayed via the Wave 359 ultracode workflow harness): *"剩下能做的任务也用ultracode做一下,这些任务都要处理,全部都要做，而且只能用GPU0"* ("the remaining tasks should also be done with ultracode, all of these tasks must be processed, all of them must be done, and **only GPU0 can be used**").
+**Scope:** ADDITIVE — (1) this §10 hardens the §3.1 / §3.3 / §9 scope by re-affirming the HARD CONSTRAINT and explicitly excluding the 2-GPU 0+1 split that this doc had previously mentioned as an "alternative"; (2) the new audit doc at [`docs/audit/wave359-r6-gpu-scope-cuda0.md`](wave359-r6-gpu-scope-cuda0.md) documents the run plan + expected outputs + user-gated go/no-go criteria for the 3-seed × N=1000 sweep on cuda:0 ONLY.
+**Hard-rule compliance:** AGENTS.md §3 hard guardrails (1, 2, 3, 4, 5, 6, 7) — vendored upstream untouched (no edits to `data/<repo>/`); no destructive edits (this §10 is ADDITIVE — appended after §9; no edits to §3.1/§3.3/§9 numeric estimates, only the 2-GPU-split alternative is explicitly downgraded from "alternative" to "explicitly excluded by user directive"); NO-PUSH policy (commit-only; no `git push`); honest uncertainty preserved (no promotion of `PARTIAL via tier-aware counterfactual` to `STRONG via 3-seed live GPU re-verification` by wording alone); TNNLS submission freeze preserved (no edits to `tnnls_submission/`); per-phase audit doc (this §10 is the in-place addition; the new `wave359-r6-gpu-scope-cuda0.md` is the formal per-phase audit doc); stricter-cleaner path chosen (single ADDITIVE section + single new audit doc; the broader "fresh N=1000 sweep under the headline scheduler + MANIFEST SHA refresh + §11.1 update" path is explicitly out of scope and not authorised by the user task brief).
+
+### 10.1 HARD CONSTRAINT declaration
+
+The R6 3-seed × N=1000 live GPU sweep, when launched, **MUST** use **cuda:0 ONLY** (i.e. `--gpus 0` to `tools/run_lineageflow_n1000_foldability_omegafold.py`). This HARD CONSTRAINT is binding per:
+
+1. **User directive (Wave 359 task brief)** — *"只能用GPU0"* ("only GPU0 can be used"). This directive OVERRIDES the §3.3 / §9 2-GPU 0+1 split alternative previously documented as a wall-time-halving option; the 2-GPU split is now **explicitly excluded** for the R6 sweep.
+2. **Wave 349 P4 user directive** — *"用GPU0吧，不要两张显卡上都有任务"* ("use GPU0, don't have tasks on both GPUs"); pre-existing precedent for restricting the R6 sweep to GPU 0 only.
+3. **Risk-management rationale** — GPU 1 (RTX 5090, 32 GB total) holds a smaller memory envelope than GPU 0 (RTX PRO 6000 Blackwell, 98 GB total) and would be more susceptible to OOM at peak ESM-IF + OmegaFold memory pressure; restricting the sweep to GPU 0 keeps the larger free-memory floor as a single-tenant safety margin.
+
+**Explicit exclusion of GPU 1 (RTX 5090, 32 GB total, sm_120)**: the R6 sweep MUST NOT be launched on cuda:1, MUST NOT be sharded 0+1, MUST NOT be launched under `CUDA_VISIBLE_DEVICES=0,1`, MUST NOT be launched under `--gpus 0,1` or `--gpus all`. The `tools/run_lineageflow_n1000_foldability_omegafold.py --gpus` flag MUST be passed `--gpus 0` exactly.
+
+### 10.2 Updated wall-time estimate (cuda:0 ONLY, single-GPU)
+
+The §3.3 wall-time estimates are PRESERVED VERBATIM for the fold-stage-only path; the 2-GPU-split column is now **explicitly excluded** rather than presented as an alternative:
+
+| Stage | Per-seq wall time | Per-arm N=1000 wall time | 2-arm N=1000 wall time (cuda:0 ONLY) | 2-arm N=1000 wall time (2-GPU 0+1 split — EXCLUDED) |
+|---|---|---|---|---|
+| OmegaFold fold (smoke-test baseline) | ~3 sec/seq (1.8 - 4.2 range across 30 seqs per Wave 350 P3) | ~50 min | **~100 min** | ~~50 min~~ (excluded) |
+| ESM-IF self-consistency (canonical K6 stage) | ~30 sec/seq | ~8.3 hours | **~16.7 hours** | ~~8.3 hours~~ (excluded) |
+| PDB consolidation + JSONL parse | -- | ~1 min | **~2 min** | ~~1 min~~ (excluded) |
+| **Total per seed** (fold + ESM-IF) | -- | ~8.8 hours | **~17.6 hours** | ~~8.8 hours~~ (excluded) |
+
+**Per-seed wall-time on cuda:0 ONLY**: ~17.6 hours (full pipeline) or ~100 min (fold-stage only).
+**3-seed × N=1000 × 2-arm × cuda:0 ONLY total**: ~52.8 hours (full pipeline) or ~5 hours (fold-stage only) — **double the 2-GPU-split budget, but still bounded by user-gated go/no-go**.
+
+For the **fold-stage-only** sub-scope (which is the canonical Wave 357 P5 §3.3 scoping for a single-subagent-turn launch):
+- **Per-seed 2-arm on cuda:0 ONLY**: ~100 min
+- **3 seeds × 100 min = ~5 hours of sequential GPU 0 wall time**
+
+Per the Wave 359 P3 task brief extrapolation from Wave 349 P4 R1 baseline (11m09s for N=1000 seed=42 on cuda:0), the conservative fold-stage-only estimate is **~30-45 min per seed × 3 seeds = ~90-135 min total** on cuda:0 ONLY. This conservative estimate is consistent with the Wave 350 P3 smoke-test per-seq fold rate (~3 sec/seq) extrapolated to N=1000 single-arm; the 30-45 min/seed range accounts for the 2-arm baseline-vs-framework factor plus per-seed variance plus PDB consolidation overhead.
+
+### 10.3 Expected GPU 0 memory headroom (HARD CONSTRAINT)
+
+The R6 sweep on cuda:0 ONLY requires well within the available GPU 0 free memory at Wave 359 P3 audit time:
+
+| Item | Memory footprint | Notes |
+|---|---|---|
+| GPU 0 total | 98 GB (97887 MiB) | RTX PRO 6000 Blackwell Workstation Edition |
+| GPU 0 free at Wave 359 P3 audit time | ~97 GB (97340 MiB) | verified via `nvidia-smi --query-gpu=memory.free` |
+| OmegaFold model.pt (loaded once) | ~3.18 GB | `/home/hugo/.cache/omegafold_ckpt/model.pt` |
+| ESM-IF model (~650M params) | ~2.5 GB | `fair-esm` inverse-folding model |
+| LineageFlowAdapter forward pass (N=1000 paired seqs, fp32) | ~2-4 GB peak | per Wave 161 frozen adapter load |
+| Per-batch intermediate tensors | ~2-3 GB peak | batch_size=4 from `tools/lineageflow_n1000_gpu_sweep.sh` default |
+| **Peak R6 sweep GPU 0 footprint** | **~10-15 GB** | << 97 GB free |
+| **Headroom** | **~82-87 GB** | massive safety margin |
+
+The 2.5 GB ESM-IF footprint is the dominant model-load cost; OmegaFold's 3.18 GB and the adapter's 2-4 GB peak are co-resident but well below the 32 GB ceiling of GPU 1 (RTX 5090). The HARD CONSTRAINT cuda:0 ONLY is **not** memory-driven — it is a user-directive-driven constraint (the GPU 0 97 GB free would still permit 2-GPU 0+1 sharding, but the user directive forbids it).
+
+### 10.4 Updated user-gated go/no-go criteria
+
+The Wave 357 P5 §3.4 risk analysis is supplemented by the following Wave 359 P3 user-gated go/no-go criteria:
+
+| Criterion | Required for launch | Notes |
+|---|---|---|
+| HARD CONSTRAINT cuda:0 ONLY | **MANDATORY** | `--gpus 0` passed to `tools/run_lineageflow_n1000_foldability_omegafold.py`; no `CUDA_VISIBLE_DEVICES=0,1`; no 2-GPU split |
+| GPU 0 free memory at launch | >= 20 GB | leaves ~80 GB headroom for the 10-15 GB peak R6 footprint |
+| User-gated explicit GO | **MANDATORY** | per AGENTS.md §6 stop-and-confirm rule; the user task brief says "PLANNING ONLY — do NOT launch" |
+| dfine_t146 user-owned workload | paused or relocated | currently ~28 GB on GPU 0; should be paused/relocated before the 90-135 min/seed launch |
+| OmegaFold env at `/home/hugo/.conda/envs/omegafold_py310/` | available + byte-stable | per Wave 350 P3 30/30 byte-stable smoke test |
+| Kanzi ckpt at `data/kanzi_ckpt/cleaned_model.pt` | SHA-256 verified | per Wave 350 P3 ckpt verification |
+| Queries FASTA at `verification_outputs/k6_foldability_n1000_w161_q3_2026/baseline/foldability/queries.fasta` | 1000 records | Wave 161 frozen |
+| TierAwareCodimensionSheetScheduler | available | per `adaptive_reflow/algorithm/scheduler/codim.py`; no source change required |
+| D.4 byte-stable regression | 30/30 PASS | verified post-edit |
+| claims consistency | PASS (no drift) | verified post-edit |
+| mkdocs build --strict | PASS | verified post-edit |
+| tnnls_submission/MANIFEST SHA-256 | matches | unchanged (no `tnnls_submission/*.md` edits) |
+
+**If ANY criterion above fails, do NOT launch the sweep — re-disclose scope per `flowa-research-audit` and request user re-gating.**
+
+### 10.5 Cross-reference to the formal Wave 359 P3 audit doc
+
+The formal Wave 359 P3 per-phase audit doc is at [`docs/audit/wave359-r6-gpu-scope-cuda0.md`](wave359-r6-gpu-scope-cuda0.md). This §10 is the ADDITIVE in-place hardening disclosure; the new audit doc is the formal per-phase record (per AGENTS.md §3 hard guardrail #6: "Per-phase audit doc. Every wave produces a `docs/audit/wave<NNN>-<topic>.md`").
+
+### 10.6 Self-contained summary (Wave 359 P3 addition)
+
+- **HARD CONSTRAINT**: cuda:0 ONLY (per user directive "只能用GPU0" + Wave 349 P4 directive "用GPU0吧，不要两张显卡上都有任务").
+- **GPU 1 (RTX 5090)**: EXPLICITLY EXCLUDED.
+- **2-GPU 0+1 split**: EXPLICITLY EXCLUDED (was previously presented as a wall-time-halving alternative in §3.3 / §9; now downgraded per user directive).
+- **Tool to use**: `tools/run_lineageflow_n1000_foldability_omegafold.py --gpus 0 --max-seqs 1000 --baseline-fasta ... --framework-fasta ... --output-dir verification_outputs/wave359-r6-3seed-gpu/seed<N>`.
+- **Seeds**: {42, 43, 44}.
+- **Per-seed wall-time on cuda:0 ONLY**: ~100 min (fold-stage only) or ~17.6 hours (full fold + ESM-IF pipeline).
+- **Total wall-time on cuda:0 ONLY for 3 seeds**: ~5 hours (fold-stage only) or ~52.8 hours (full pipeline).
+- **GPU 0 free at Wave 359 P3 audit time**: 97,340 MiB (verified); R6 sweep peak ~10-15 GB << 97 GB free.
+- **PLANNING ONLY**: no actual sweep launch in this wave; user-gated go/no-go required.
+- **§7.2 R6 row**: PRESERVED VERBATIM (no number change, no status promotion).
+- **CLM-073**: PRESERVED VERBATIM (ACTIVE).
+- **R-019**: PRESERVED VERBATIM.
+- **D.4 30/30 PASS**: PASS (verified post-edit).
+- **claims consistency PASS**: PASS (verified post-edit).
+- **mkdocs build --strict PASS**: PASS (verified post-edit).
