@@ -20,6 +20,25 @@ How it works:
   walks every `Asserted by` reference, and exits non-zero if drift is
   detected.
 
+## Wave 349-352 ADDITIVE addenda — consolidated status table
+
+Per Wave 268 strict-clean rule (status history additive, no removal), Wave 349-352 work
+is preserved as ADDITIVE addenda on the existing CLM rows below. The full Wave 349-352
+audit trail lives in `docs/audit/wave349-*.md` ... `docs/audit/wave352-*.md` (17 docs);
+this table surfaces **only** the CLM-level ADDITIVE addenda (i.e. addenda that touched
+a `## CLM-NNN:` row in this file). Wave 349-352 work that touched `docs/drafts/paper-A-final.md`,
+`tools/`, `tnnls_submission/`, `verification_outputs/`, or `docs/CONSOLIDATED_RESULTS.md`
+without modifying a `## CLM-NNN:` row is recorded in the corresponding `wave35X-*.md`
+audit doc, not here.
+
+| CLM ID | Wave 349-352 ADDITIVE addendum summary |
+|---|---|
+| CLM-060 | **Wave 352 P5 (R5a Wave 351 P2 n=10 paired-t confirmation, TIE_PERSISTS, additive per Wave 268 strict-clean)** — the single TIE cell R5a (2D Two Moons W₂) is now corroborated at n=10 paired seeds under 4 statistical conventions (unpaired Cohen's d_s = +1.011, paired Cohen's d_z = +0.845, Hedges g = +0.773, DerSimonian-Laird random-effects meta-d_z = +0.844 with p=0.0007); all classify as **TIE** under Wave 195 P1 verdict-precedence rule (|Δ| = 0.0091 < min_effect_size 0.01 floor). The §7.2 R5a TIE row is preserved verbatim; the Wave 195 P2 verdict distribution (0 SUPPORTED / 1 REGRESSES / 1 TIE / 6 UNDERPOWERED) is preserved verbatim; the Wave 326 11-cell verdict distribution is preserved verbatim. Per-seed d_z range −0.40 (seed 0, framework BETTER) to +2.30 (seed 5, framework WORSE) — central tendency DL d_z = +0.844 reflects consistently-positive small-magnitude framework-vs-baseline gap. No R-level / K-level cell number is changed; no §7.2 R5a row text is changed; no §10.6 R-level inventory number is changed. Full evidence: [`docs/audit/wave351-r5a-n10.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave351-r5a-n10.md) + [`docs/audit/wave352-claims-r5a-update.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave352-claims-r5a-update.md) + `verification_outputs/wave216-p2-r5a-extended.csv` (N=1000 records/seed × canonical 10 seeds `[0, 1, 2, 3, 4, 5, 6, 43, 44, 45]`). |
+
+**Summary:** 1 of 61 active CLM rows received a Wave 349-352 ADDITIVE addendum (CLM-060).
+The other 60 active CLMs preserve their pre-Wave-349 status verbatim. No CLM number,
+no CLM status label, and no asserted-by reference is changed.
+
 ## CLM-001: Sheet tube evidence scales as `Theta(eps^{+1})` {#CLM-001}
 
 - Status: ACTIVE
