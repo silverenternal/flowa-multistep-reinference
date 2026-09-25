@@ -32,6 +32,7 @@ All 5 verification gates PASS (Gate A ruff = 0 errors, Gate B pytest test_contra
 | Cell | R1 LineageFlow hmmscan_total_hits |
 | Commit | `7a135ee` "Wave 310: R1 data provenance — commit hits.tbl files + SOURCE.md provenance note" |
 | Files committed | `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/baseline_hits.tbl` (sha256 `d2db37691bbb020a9de8d7c51da9a7049a140b91f29db073eab37982b0158379`, 31444 B) + `framework_hits.tbl` (sha256 `04830145efb22ca216e568cbc876e1b0e7577557519badfc7df10a7778114b04`, 64111 B) + `docs/headline-evidence/r1_lineageflow_hmmer_p1e-10/SOURCE.md` (4424 B) |
+| Files committed (Wave 342 re-cite additive) | `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/framework_hits.tbl` (sha256 `04830145efb22ca216e568cbc876e1b0e7577557519badfc7df10a7778114b04`, 64111 B; full path re-cite so the SHA→file attribution is unambiguous; previously cited as bare `framework_hits.tbl` on the line above) |
 | Status | STRONG → PARTIAL (single-seed seed=42, d_z=+0.182 small effect-size; 3-seed pool invalidated per Wave 280 P §4.2 framework-fallback contamination) |
 | Action | Vendored data files committed to git history so the R1 headline number is byte-stable and reviewable from git tree |
 | Risk | LOW (data-archaeology-verified per Wave 307; SHA-256 stable) |
@@ -81,6 +82,8 @@ All 5 verification gates PASS (Gate A ruff = 0 errors, Gate B pytest test_contra
 | Numerical identity | Canonical R5 evidence: baseline W₂=0.6606 → framework W₂=0.5919 (-10.40%); per-seed: seed 0 -10.43%, seed 1 -10.46%, seed 2 -10.32%; per-seed paired-t t ≈ -49.04, df=2, p_raw ≈ 1.8e-4, Bonf-PASS at R-level α=0.007143 by 5.7× (p_bonf=0.00126); d_z ≈ -49; direction-consistent 3/3 |
 | Data-availability gap | Per-round raw CSV files (3 seeds × 5 schedulers × 20 rounds × 1000 samples/round) NOT preserved per docs/CLAIMS.md line 3783; stored under `/tmp/wf280-r5/` paths (host-reboot-vulnerable, never migrated to `verification_outputs/`) per Wave 307 data-archaeology audit |
 | Multi-source verification | 5-row multi-source-support table anchored on `docs/r4-survey/10-sota-2d-experiment-results.md` (sha256 `9618e8f9b53e1610a614d099d748dfe743c5670958de790ca5ed4eb02f035a48`) + `verification_outputs/g1_deep_dive_q3_2026.json` (sha256 `74ae053aa8dbb8646f5e26b8eede2a28beee74211b18e38a20ca95cc52f5e995` row `twodim_fm_2d_ablation_2d_rf_sota`) |
+| Multi-source verification (Wave 342 re-cite additive) | `verification_outputs/g1_deep_dive_q3_2026.json` sha256 `74ae053aa8dbb8646f5e26b8eede2a28beee74211b18e38a20ca95cc52f5e995` (on-disk current). |
+| Multi-source verification (Wave 342 docs file re-cite) | `docs/r4-survey/10-sota-2d-experiment-results.md` sha256 `9618e8f9b53e1610a614d099d748dfe743c5670958de790ca5ed4eb02f035a48` (on-disk current; the parser does NOT track docs/ paths, so this line is documentation-only and not verifier-visible). |
 | §3.1 preservation | R5 was NEVER enumerated in §3.1's Table 3.1 R-level cells (R1, R2, R3, R5a, R5b, R5c, R6, k=7 R-cells; R5 absent); R5 demotion does NOT shrink R-level Bonferroni family k=7 |
 | Risk | LOW (no code edits, additive supplementary disclosure per Wave 268 strict-clean directive) |
 

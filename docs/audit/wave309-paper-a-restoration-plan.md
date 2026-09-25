@@ -150,6 +150,8 @@ The 4 NEUTRAL cells were never inflated claims at last push; the K-cells were st
 
 **Issue at last push:** Paper R5a TIE at d_s=+0.460 (n=3 unpaired) is fully supportable from `verification_outputs/wave195-p2-r-level-power.csv` (sha256 `985b071f3b34facda589f8997e742f44f3fe068b035ae30d5ce66295d21111e3`) + `docs/audit/wave189-p2-post-cd70821-2d-sweep.md` (sha256 `87ae2144d48221d9809a469adc41013803cf5040f1411c19ddb5128fd10792f5`). Wave 209 P6 (n=7) and Wave 216 P2 (n=10) both confirm TIE_PERSISTS=true. The R4 -78.25% headline is from a SEPARATE experiment (2D FM ablation single_pass→multi_round_no_restart head-to-head, baseline W₂=2.85, framework W₂=0.62) but is sourced from `verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_ablation` which is NOT in origin/main at 6036207.
 
+**Wave 342 re-cite (additive per Wave 268 strict-clean):** `verification_outputs/g1_deep_dive_q3_2026.json` sha256 `74ae053aa8dbb8646f5e26b8eede2a28beee74211b18e38a20ca95cc52f5e995` (on-disk current).
+
 **Files involved:**
 - `verification_outputs/wave195-p2-r-level-power.csv` (in git at 6036207)
 - `verification_outputs/wave216-p2-r5a-extended.json` (sha256 `1e7b271dfa2825cf08ddeada5b60b6cd2745898a3d10079acefa4175109363bc`, in git at 6036207)

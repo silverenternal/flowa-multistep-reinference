@@ -61,6 +61,10 @@
 
 **Answer.** The smoke-vs-production flip is REAL, not a misinterpretation. The Wave 334 R5c regime curve (`docs/audit/mnist/wf334-r5c-regime-curve.md`) characterizes the flip across 3 ckpts: epochs=1 (smoke, base_channels=8, 6K imgs) framework-WINS -28.43% (d_z=-13.18); epochs=2 (intermediate, base_channels=16, 60K imgs) baseline-WINS +8.53% (d_z=+1.16); epochs=3 (production, base_channels=16, 60K imgs, 3-seed) baseline-WINS +10.37% (d_z=+1.30). The flip happens between epochs=1 and epochs=2 (with a confound: smoke uses base_channels=8/6K imgs vs epochs=2-3 use base_channels=16/60K imgs); the clean epochs-only transition is between epochs=2 and epochs=3 (matched architecture, matched dataset). The most parsimonious explanation: the framework's restart-blend glue exploits under-trained velocity fields (smoke); at well-trained velocity fields (production), the framework's restart-blend adds noise rather than correction. The framework's value-add for production-ckpt models is the **cross-budget** claim (Wave 128 paradigm: comparable quality at fewer NFEs). The honest disclosure is in §7.2 + §10 + the regime curve audit. Reference: `data/mnist_fm/epochs2.ckpt.npz` sha256 `ca3ae972b6580de8c9a957f01dee1df786539768a0064da57ffacd9cc80ae360`; `/tmp/wf334-r5c-sweep/aggregate.json`; `verification_outputs/wave191-p3-mnist-n1000.json`.
 
+**Wave 342 re-cite (additive per Wave 268 strict-clean):** `verification_outputs/wave191-p3-mnist-n1000.json` sha256 `a5270a0aacc99551c3ed15304f00d68baa41ac3f6012e3ad26f2dbbe96dc5e06` (on-disk current).
+
+**Wave 342 ckpt-SHA disambiguation note:** The 64-char SHA referenced above in the Q7 Answer refers to the `data/mnist_fm/epochs2.ckpt.npz` ckpt file, NOT to the JSON file. The parser-attribution false positive from the original Q7 Answer's cartesian-product pairing is documented but cannot be removed without destructive edits.
+
 ---
 
 ## 8. Q8 — R1 single-seed
