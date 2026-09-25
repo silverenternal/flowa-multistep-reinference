@@ -664,6 +664,10 @@ The scheduler-codepath audit inventoried 24 findings (2 critical + 12 major + 10
 
 The FID GPU compute path was correct only after the FID GPU fixpoint; pre-fix, the InceptionV3 forward pass was not pinned to CUDA, producing a silent CPU fallback that inflated FID compute wall by ~5× and produced an apples-to-oranges comparison vs the cosine baseline. The fixpoint confirmed CUDA activation via 2.2 GB GPU memory growth during FID compute. All FID values in §7 are post-fixpoint.
 
+### 9.4 Vendor ckpt availability (Wave 353 ADDITIVE)
+
+Of the 9 vendored upstream repositories (FlowMol3, LineageFlow, Kanzi, HiDream-I1, GraphBFN, Lumina-Image-2.0, ProtBFN-AbBFN, Wan2.2, FreqFlow), 5 (FlowMol3, LineageFlow, Kanzi, HiDream-I1, GraphBFN) ship with their pre-trained checkpoints either vendored or available via HuggingFace Hub. The remaining 4 (Lumina-Image-2.0, ProtBFN-AbBFN, Wan2.2, FreqFlow) require environment-level setup that is outside the framework's scope. The R6 Kanzi k6 foldability live GPU 3-seed N=1000 paired sweep (camera-ready scope per §10.5) was previously deferred because the Kanzi ckpt was not on disk; Wave 350 P3 verified the Kanzi ckpt is now at `data/kanzi_ckpt/cleaned_model.pt` and OmegaFold is operational, unblocking the R6 sweep. The R3 FlowMol3 fg_dev N=1000 sweep (camera-ready scope per §10.1) remains deferred because of an RDKit environment-level sampling-rate gap (Wave 351 P3 success rate 36.7% vs canonical 99.9%); the fix requires ETKDGv3 / MMFF environment investigation, not framework changes. The FreqFlow public `nnet_ema.pth` does not exist on `data/freqflow/`, GitHub releases, HF Hub, or PyPI; FreqFlow is reported at the synthetic-skeleton level only.
+
 ---
 
 ## 10 Future Work
