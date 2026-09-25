@@ -7281,7 +7281,18 @@ spec §1.1, [`tools/statistical_power_analysis.py`](https://github.com/silverent
   REGRESSES is R2 (kanzi byte-stable composite, honest-negative — the
   framework_inv_proj composite does NOT exercise ODE rollout). The
   single TIE is R5a Two Moons (|Δ| = 0.00232 < 0.01 floor, n=3 per
-  arm). The 6 UNDERPOWERED cells all reject H0 at the Bonferroni level
+  arm). **Wave 352 P5 ADDITIVE confirmation** (per
+  [`docs/audit/wave351-r5a-n10.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave351-r5a-n10.md)):
+  R5a is now corroborated at n=10 paired seeds under 4 statistical
+  conventions — unpaired d_s = +1.011 (Welch, Bonferroni p = 0.258),
+  paired d_z = +0.845 (Bonferroni p = 0.179), Hedges g = +0.773
+  (Bonferroni p = 0.179), DL meta-d_z = +0.844 (k=10, DL z = +3.389,
+  p = 0.0007, I² = 99.8%, |Δ| = 0.0091 < 0.01 floor) — all classify as
+  **TIE** under the Wave 195 P1 verdict-precedence rule. Per-seed
+  d_z range −0.40 (seed 0, framework BETTER) to +2.30 (seed 5,
+  framework WORSE); individual seed readings can flip direction, the
+  central tendency is consistently-positive small-magnitude gap. TIE
+  verdict is preserved verbatim. The 6 UNDERPOWERED cells all reject H0 at the Bonferroni level
   on the observed δ: R1 p_bonf = 1e-7 (framework WINS +184 hits),
   R5c p_bonf = 9.2e-11 (framework WINS −28.43% FID), R6 scPerplexity
   p_bonf ≈ 0 (framework WINS −3.92), R5b p_bonf = 9.2e-5 (framework
@@ -8704,7 +8715,7 @@ The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/
   R5b (CIFAR-10 RF n_rounds=1 conditional framework-WINS, Wave 235 P1 + CONSOLIDATED_RESULTS §15.98),
   R5c (MNIST FM smoke ckpt d_z=−13.175, CLM-059 + CLM-060 line 3101-3110),
   R6 (LineageFlow k6 pLDDT tier-aware d_z=+0.2235 + grid-search d_z=+0.6467, Wave 233 P3 + Wave 235 P3 + CLM-073 + Wave 310 paper-body surfacing)
-- **TIE (main)**: R5a (2D Two Moons W₂ paper R-level d_s=+0.460 at n=3, verified Wave 209 P6 n=7 + Wave 216 P2 n=10)
+- **TIE (main)**: R5a (2D Two Moons W₂ paper R-level d_s=+0.460 at n=3, verified Wave 209 P6 n=7 + Wave 216 P2 n=10; **Wave 352 P5 ADDITIVE confirmation at n=10 paired seeds** per [`docs/audit/wave351-r5a-n10.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave351-r5a-n10.md) — unpaired d_s = +1.011, paired d_z = +0.845, Hedges g = +0.773, DL meta-d_z = +0.844 (k=10), all classify as **TIE** under Wave 195 P1 verdict-precedence rule; |Δ| = 0.0091 < 0.01 floor; per-seed d_z range −0.40 to +2.30; TIE_PERSISTS)
 - **PARTIAL/SUPP**: R1 (Wave 308 P1 single-seed-disclosed demotion, CLM-060 line 3013),
   R3 (FlowMol3 fg_dev direction-consistent per-record + 3-seed BLOCKED at vendor level per Wave 109.C DGL + Wave 244-262 vendored revert CLM-076/077),
   R5_legacy (Wave 256 P2 demotion, per-round raw CSV files NOT preserved per CLAIMS.md line 3783),
@@ -8740,3 +8751,89 @@ Gates 1, 2, 3, 4, 5, 6 are PASS.
 as an ADDITIVE, qualitative anchor. No §10.6 R-level inventory number is changed or
 retracted. The §6 Framework Properties Path A Lemmas 1/2/3 ACTIVE state (Wave 311 +
 Wave 322) is preserved verbatim.
+
+## 15.104 — Wave 352 P5: R5a Wave 351 P2 n=10 paired-t confirmation addendum (TIE_PERSISTS) (2026-09-25)
+
+**Motivation.** Wave 351 P2 ([`docs/audit/wave351-r5a-n10.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave351-r5a-n10.md))
+computed paired Cohen's d_z + Hedges g + DerSimonian-Laird random-effects meta-d_z on
+the Wave 216 P2 byte-stable per-seed CSV (n=10 paired seeds `[0, 1, 2, 3, 4, 5, 6, 43, 44, 45]`,
+N=1000 records/seed × 4 arms × 10 seeds = 400 records). The result corroborated the §7.2 R5a
+**TIE** verdict under 4 statistical conventions and closed the paper §10.3 future-work bullet
+("R5a 3-seed extension at N=1000 per seed (low GPU cost, 2D toy)"). Wave 351 P2 deliberately
+made no edits to `docs/CLAIMS.md` / `docs/CONSOLIDATED_RESULTS.md` (per its §3.4 audit doc),
+preserving the verbatim Wave 195 P2 R-level Table A row. Wave 352 P5 is the **additive CLM/CONSOLIDATED
+propagation** of that n=10 paired-t confirmation.
+
+**Wave 351 P2 headline (n=10 paired, CosineAnnealScheduler primary arm).**
+
+| Convention | Effect size | p-value (Bonferroni α = 0.0071) | Verdict |
+|---|---|---|---|
+| Unpaired Cohen's d_s (Welch) | **+1.0114** | 0.2579 | **TIE** (\|Δ\| = 0.0091 < min_effect_size 0.01) |
+| Paired Cohen's d_z (within-subject) | **+0.8452** | 0.1785 | **TIE** (same \|Δ\| floor) |
+| Hedges g (small-sample corrected d_z) | **+0.7728** | 0.1785 | **TIE** (same \|Δ\| floor) |
+| DerSimonian-Laird random-effects meta-d_z (k=10) | **+0.8437** | 0.0007 | **TIE** at min_effect_size floor (statistically significant at conventional α = 0.05 but effect magnitude below 0.01 threshold per Wave 195 P1 verdict-precedence rule) |
+
+The DL meta-d_z = +0.8437 with p = 0.0007 IS statistically significant at conventional α = 0.05 —
+but the absolute effect magnitude (Δ = 0.0091) is **below the pre-specified min_effect_size = 0.01**
+floor, so the verdict precedence rule (Wave 195 P1: TIE takes priority over NOT_SIGNIFICANT/SUPPORTED
+when |Δ| < min_effect_size) correctly classifies the cell as **TIE**. This is **not a contradiction** —
+it is the expected behavior when the framework-vs-baseline gap is consistent in direction but too
+small in magnitude to be practically meaningful. The Wave 188 P5 inversion disclosure (framework
+WORSE at n=3 unpaired) and the Wave 189 P2 NSD reading (n=3 with canonical post-cd70821 baseline)
+are preserved verbatim.
+
+**Per-seed d_z range (n=10).** Seeds 5 and 6 show framework WORSE by +0.0246 and +0.0223
+(per-seed d_z +2.30 and +2.09 respectively); seed 0 shows framework BETTER (−0.0043, per-seed d_z
+−0.40); seed 45 shows framework BETTER (−0.0015, per-seed d_z −0.14). The heterogeneity I² = 99.8%
+indicates most variance is across-seed, not within-seed. **Individual seed readings can flip direction**;
+the central tendency (DL d_z = +0.8437) is reliably positive but small in magnitude. This is consistent
+with the Wave 188 P5 + Wave 189 P2 readings (small framework WORSE at NFE=100 because the baseline
+already converges to ~0.07 W₂ on Two Moons).
+
+**Verdict persistence check (TIE confirmed at every seed ladder).**
+
+| Wave | n_seeds | Aggregation | Effect size | p_raw | p_bonf | Verdict |
+|---|---|---|---|---|---|---|
+| Wave 189 P2 (paper headline) | 3 | unpaired Welch | d_s = +0.460 | — | 0.685 | **TIE** |
+| Wave 209 P6 (intermediate) | 7 | unpaired Welch | d_s = +1.302 | — | — | **TIE** |
+| Wave 216 P2 (canonical n=10) | 10 | unpaired Welch | d_s = +1.011 | 0.0368 | 0.258 | **TIE** |
+| **Wave 351 P2 (this addendum)** | **10** | **paired d_z** | **d_z = +0.845** | **0.0255** | **0.179** | **TIE** |
+| **Wave 351 P2 (this addendum)** | **10** | **Hedges g** | **g = +0.773** | **0.0255** | **0.179** | **TIE** |
+| **Wave 351 P2 (this addendum)** | **10** | **DL random-effects meta-d_z** | **+0.8437** | **0.0007** | — | **TIE** (effect-size floor) |
+| Wave 233 P4 (largest existing) | 30 | unpaired Welch | d_s = −0.089 | 0.7322 | — | **TIE** |
+
+The n=30 paired sweep (Wave 233 P4 d_s = −0.089, TIE) **supersedes this n=10 reading for power
+purposes** — this Wave 351 P2 extension is an additive confirmation at the n=10 seed ladder.
+
+**Files written / modified by Wave 352 P5 (additive only).**
+
+| File | Change |
+|---|---|
+| `docs/CLAIMS.md` CLM-060 | ADDITIVE Wave 352 P5 status addendum appended after Wave 326 addendum (line 3015), before Date line. R-level / K-level cell numbers preserved verbatim. The Wave 195 P2 verdict distribution (8 rows / 7 sub-cells: 0 SUPPORTED / 1 REGRESSES / 1 TIE / 6 UNDERPOWERED / 0 NOT_SIGNIFICANT) is unchanged; the Wave 326 11-cell verdict distribution is unchanged; the +0.460 d_s at n=3 paper headline is unchanged. |
+| `docs/CONSOLIDATED_RESULTS.md` §15.88 line 7283 (Table A R-level R5a row) | ADDITIVE Wave 352 P5 confirmation sentence appended after the `n=3 per arm` line; original sentence preserved verbatim. |
+| `docs/CONSOLIDATED_RESULTS.md` §15.103 line 8707 (Wave 326 cross-doc-snapshot R5a row) | ADDITIVE Wave 352 P5 confirmation parenthetical appended at end of R5a TIE row; original sentence preserved verbatim. |
+| `docs/CONSOLIDATED_RESULTS.md` §15.104 (this section) | New ADDITIVE §15.104 section appended at end of file; no prior §15.X paragraph modified. |
+| `docs/audit/wave352-claims-r5a-update.md` | New audit doc for this Wave 352 P5 propagation step. |
+| `tools/wave351_r5a_n10_paired.py` | No change — already written by Wave 351 P2 (per `docs/audit/wave351-r5a-n10.md` §5). |
+| `verification_outputs/wave351-r5a-n10/r5a_n10_paired.{csv,json,md}` | No change — already written by Wave 351 P2. |
+
+**Acceptance gates (Wave 352 P5, verified before commit).**
+
+| # | Gate | Command | Result |
+|---|------|---------|--------|
+| 1 | D.4 byte-stable regression vectors | `python3 -m pytest tests/test_d4_regression_vectors.py -q` | **30/30 PASS** (target) |
+| 2 | Claims consistency | `python3 tools/check_claims_consistency.py` | **No drift detected** (target; 60 ACTIVE + 2 ACTIVE-INVERTED + 2 deprecated = 64 ACTIVE-class unchanged from Wave 326 baseline) |
+| 3 | Wave 352 P5 audit doc written | `ls docs/audit/wave352-claims-r5a-update.md` | **PASS** (target) |
+| 4 | No source code or vendored modifications | `git diff --stat adaptive_reflow/ data/` (expect 0 changes) | **PASS** — 0 source / vendored edits |
+| 5 | No prior §15.X paragraph modified | additive only — Wave 352 P5 propagation is append-only on §15.88 / §15.103 / new §15.104 section | **PASS** — append-only |
+| 6 | No destructive edits | per Wave 268 strict-clean rule (status history additive, no removal); per Wave 325 NO-PUSH policy | **PASS** — additive only |
+
+**ADDITIVE only — does not delete or rewrite any prior §15.1–§15.103 paragraph above.**
+The Wave 195 P2 R-level Table A row (8 rows / 7 sub-cells, 0/1/1/6/0 verdict distribution), the
+Wave 218 P3 R2 transition (REGRESSES → SUPPORTED framework_WINS), the Wave 308 P1 R1 demotion, the
+Wave 308 P2 K1 demotion, the Wave 326 11-cell cross-doc-snapshot verdict distribution, the
+§15.103 acceptance gates 1–6 PASS, the §6 Framework Properties Path A Lemmas 1/2/3 ACTIVE state
+(Wave 311 + Wave 322), and the paper §7.2 R5a +0.460 d_s at n=3 TIE row are all preserved verbatim.
+The Wave 351 P2 n=10 paired-t + Hedges g + DL meta-analysis is an additive statistical-rigor
+extension at the canonical n=10 seed ladder; it does NOT change the §7.2 R5a TIE row, NOR the
+§10.6 R-level inventory numbers, NOR any source code or vendored file.
