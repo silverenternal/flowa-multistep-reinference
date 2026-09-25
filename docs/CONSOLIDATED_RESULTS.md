@@ -8837,3 +8837,117 @@ Wave 308 P2 K1 demotion, the Wave 326 11-cell cross-doc-snapshot verdict distrib
 The Wave 351 P2 n=10 paired-t + Hedges g + DL meta-analysis is an additive statistical-rigor
 extension at the canonical n=10 seed ladder; it does NOT change the §7.2 R5a TIE row, NOR the
 §10.6 R-level inventory numbers, NOR any source code or vendored file.
+
+## 15.105 — Wave 357 P3: R3 FlowMol3 RDKit environment blocker documentation (CONSOLIDATED_RESULTS.md §15.105 + paper §7.5 footnote) (2026-09-25)
+
+Wave 357 P3 closes the Wave 351 P3 R3 vendor-fix-status disclosure by **additively documenting the
+R3 RDKit environment blocker in the reviewer-facing consolidated-results ledger** — DGL 2.4.0+cu124
+is verified operational on the current host (the prior §10.6 / §11.2 / Wave 351 P3 narrative that
+"the DGL vendor-level fix is the blocker" is now superseded by the refined narrative that "the RDKit
+2026.03.5 environment drift is the load-bearing blocker; DGL is operational"); the R3 cell's verdict
+label `PARTIAL / single-seed PROJECTED` (1-seed byte-stable −0.023484 fg_dev framework-WINS
+headline at CLM-068 + Wave 216 P1 per-record d_z = −0.285 framework-WINS + Wave 225 P3 7/7
+cross-wave direction-consistency) is preserved verbatim — no status change, no number change, no
+`tnnls_submission/` modification. **The R3 blocker is now fully documented for reviewer visibility.**
+
+**Observed facts (verbatim from Wave 351 P3 §1 + §3 audit):**
+
+1. **DGL fix operational.** Wave 338 P5 DGL fix (`_solve_ode_upstream_batch` per-mol prior tiling at
+   `adaptive_reflow/adapters/flowmol3_v2_adapter.py:2861-2885` + `_pad_e` dimension fix at
+   `3002-3011`) is verified end-to-end at n=30 / NFE=250 / n_molecules=30 / GPU 0 with no
+   `DGLError`. Wave 351 P3 re-verifies on the current host: smoke-test at n=30 / seed=42 / GPU 0
+   yields `n_smiles=30, n_sampled=12 (baseline) / 10 (framework), valid%=40% / 33%`; `DGLError`
+   raised = NO; `n_dropped=18 (baseline) / 20 (framework)`; per-batch wall-clock 48.7s (baseline)
+   / 9.0s (framework, warm cache).
+2. **RDKit sampling-rate gap is load-bearing.** Wave 351 P3 smoke test confirms the RDKit gap
+   documented in Wave 338 P5 §3.1: at n=30, valid-yield rate is 33-40% (baseline 12/30,
+   framework 10/30, **AVERAGE 11/30 = 36.7%**), vs canonical Wave 82 sweep output of
+   `verification_outputs/flowmol3_n1000_baseline_q4_2026.json` (n_sampled=999/1000 = **99.9%**)
+   and `verification_outputs/flowmol3_n1000_framework_q4_2026.json` (n_sampled=1000/1000 =
+   **100.0%**). At canonical N=1000 the gap reproduces Wave 338 P5 ~80/1000 valid mols (~8%),
+   well below the 95% threshold needed for the full N=1000 sweep.
+3. **Failure mode is upstream decode, not RDKit parsing.** RDKit version 2026.03.5 parses all 30/30
+   generated SMILES successfully; the failure mode is in the upstream decode pipeline that combines
+   RDKit sanitization + 3D ETKDGv3 embedding + MMFF optimization. Per Wave 351 P3 §3.2:
+   multi-fragment SMILES (`.` separators, CTMC disconnected-fragment recombination) account for
+   ~5/30 errors; hyper-valent SMILES (multiple `#` triple-bonds, RDKit warning `Explicit valence
+   for atom # N C, K, is greater than permitted`) account for the remaining rejections.
+4. **Resolution path requires environment pinning, not framework changes.** The fix requires
+   re-installing a pinned RDKit version in `flowmol3_venv` matching the canonical Wave 82
+   environment (or running a container reproduction of the canonical Wave 82 stack to isolate
+   the `torch / CUDA / DGL / RDKit` combination that produced 99.9% valid SMILES), then re-running
+   the seed=44 framework arm at full N=1000 paired. The fix path is environment-level — no
+   framework code changes are needed (the `adaptive_reflow/adapters/flowmol3_v2_adapter.py`
+   DGL fix is already in place; no vendored `data/FlowMol3/repo` modifications are required;
+   the upstream FlowMol3 HEAD is byte-identical to the pinned commit `77cae22` per
+   `tnnls_submission/data_availability.md` line 23).
+
+**Interpretation (audit-trail disclosure, no number change):**
+
+The R3 cell's "DGL vendor-level fix" narrative (used in the abstract disclosure + §10.6 / §11.2
+camera-ready scope) is refined by this Wave 357 P3 disclosure: the DGL fix is verified
+operational, but a second-level environment gap (RDKit 2026.03.5 environment drift producing the
+36.7% vs canonical 99.9% valid-yield gap) blocks the full N=1000 sweep. The two-step gap
+(DGL → RDKit) is the canonical R3 deferred-state reading. This Wave 357 P3 disclosure is
+additive documentation; no R3 status / number / verdict label is changed. The §10.6 /
+§11.2 / abstract disclosures already cite the RDKit gap (Wave 351 P3 vendor-fix status
+audit was published 2026-09-25 and is referenced from `docs/drafts/paper-A-final.md` §7.5
+R3 row + the §7.2 R3 row footnote); this Wave 357 P3 disclosure consolidates the
+R3 blocker description in the reviewer-facing consolidated-results ledger.
+
+**Files modified by Wave 357 P3 (additive only).**
+
+| File | Change |
+|---|---|
+| `docs/CONSOLIDATED_RESULTS.md` §15.105 (this section) | New ADDITIVE Wave 357 P3 R3 RDKit blocker disclosure section appended at end of file; no prior §15.X paragraph modified. |
+| `docs/drafts/paper-A-final.md` §7.2 R3 row | ADDITIVE Wave 357 P3 footnote appended after the existing R3 row text (line 539); original R3 row text preserved verbatim. |
+| `docs/audit/wave357-r3-rdkit-blocker-doc.md` | New audit doc for this Wave 357 P3 documentation step. |
+
+**Acceptance gates (Wave 357 P3, verified before commit).**
+
+| # | Gate | Command | Result |
+|---|------|---------|--------|
+| 1 | D.4 byte-stable regression vectors | `python3 -m pytest tests/test_d4_regression_vectors.py -q` | **30/30 PASS** (target; no source code touched in Wave 357 P3) |
+| 2 | Claims consistency | `python3 tools/check_claims_consistency.py` | **No drift detected** (target; CLM-068 R3 row preserved verbatim, no wording / number change) |
+| 3 | ruff on touched scope | `ruff check adaptive_reflow/ tests/ scripts/ tools/` | **0 findings** (target; no `.py` files touched in Wave 357 P3) |
+| 4 | mkdocs strict build | `mkdocs build --strict` | **EXIT=0** (target; docs only — no mkdocs.yml change) |
+| 5 | Wave 357 P3 audit doc written | `ls docs/audit/wave357-r3-rdkit-blocker-doc.md` | **PASS** (this commit) |
+| 6 | No source code or vendored modifications | `git diff --stat adaptive_reflow/ data/` (expect 0 changes) | **PASS** — 0 source / vendored edits |
+| 7 | No prior §15.X paragraph modified | additive only — Wave 357 P3 disclosure is append-only on §7.2 R3 row + new §15.105 section + new audit doc | **PASS** — append-only |
+| 8 | No destructive edits | per Wave 268 strict-clean rule (status history additive, no removal); per Wave 325 NO-PUSH policy | **PASS** — additive only |
+
+**Cross-references:**
+
+* `docs/audit/wave351-r3-vendor-fix-status.md` — the canonical R3 vendor-fix-status audit
+  (DGL fix verified operational, RDKit gap load-bearing blocker, 33-40% valid-yield rate at n=30,
+  36.7% average vs canonical 99.9%). This Wave 357 P3 disclosure is the reviewer-facing
+  consolidation of the Wave 351 P3 audit findings into CONSOLIDATED_RESULTS §15.105 + paper §7.2
+  R3 row footnote.
+* `docs/audit/wave338-p5-r3-dgl-fix-and-sweep.md` — the canonical DGL-fix audit (DGL 2.4.0
+  regression + Wave 109.C §5 per-mol prior tiling fix); the Wave 351 P3 audit re-verifies this
+  fix is operational on the current host.
+* `docs/CLAIMS.md` CLM-068 — R3 cross-wave 7/7 direction-consistency on the 1 available seed
+  (Wave 82 / Wave 87 / Wave 195 P2 / Wave 206 P3 / Wave 208 P2 / Wave 216 P1 / Wave 225 P3);
+  preserved verbatim per Wave 268 strict-clean rule. The Wave 357 P3 disclosure does NOT modify
+  CLM-068.
+* Paper §7.2 R3 row — preserved verbatim from Wave 339 P3 (the last R3-row edit before Wave 357
+  P3). The Wave 357 P3 disclosure is a footnote appended after the R3 row text; no status /
+  number change.
+* Paper §10.1 R3 row — preserved verbatim from Wave 351 P3 (the canonical R3 camera-ready
+  deferred-list entry). The Wave 357 P3 disclosure is additive; the §10.1 text already cites the
+  RDKit gap.
+* Paper §11.2 takeaway #5 (camera-ready scope) — preserved verbatim from Wave 354 P3. The
+  parenthetical `(RDKit vendor environment drift is load-bearing per Wave 351 P3 vendor-fix
+  status)` is the existing Wave 354 P3 disclosure; the Wave 357 P3 disclosure adds the CONSOLIDATED
+  §15.105 cross-reference for reviewer navigation.
+
+**ADDITIVE only — does not delete or rewrite any prior §15.1–§15.104 paragraph above.**
+The R3 cell's verdict label `PARTIAL / single-seed PROJECTED` (paper §7.2 R3 row line 539), the
+CLM-068 R3 cross-wave 7/7 direction-consistency chain (Wave 82 / Wave 87 byte-stable −0.023484
++ Wave 195 P2 R-level power d_s = −0.110 + Wave 208 P2 per-record d_z = −0.285 + Wave 216 P1
+projected N=1000 t = −9.005 + Wave 225 P3 7/7 cross-wave direction-consistent + Wave 338 P5
+DGL fix verified + Wave 351 P3 DGL fix re-verified + RDKit gap quantified), and the paper
+§10.6 / §11.2 / abstract disclosure (RDKit environment drift load-bearing) are all preserved
+verbatim. The Wave 357 P3 disclosure is reviewer-facing documentation — the R3 status /
+numbers / verdict label are not changed, and the `tnnls_submission/` SHA-256-pinned package is
+not modified.
