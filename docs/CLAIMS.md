@@ -4120,3 +4120,35 @@ The two vocabularies are disjoint by design: the top-level `ACTIVE/PROVISIONAL/D
 - ruff 0 across any touched file (this CLAIMS.md edit is documentation-only).
 - mkdocs strict 0 warnings (CLAIMS.md is in the mkdocs nav; the audit-table section is plain markdown compatible with mkdocs strict mode).
 - vendored NOT touched (no edits under `data/`).
+
+---
+
+## §k5-k6-camera-ready-scope — Wave 357 P6 final disclosure (2026-09-25, ADDITIVE)
+
+**Authored:** 2026-09-25 (Wave 357 P6, additive per Wave 268 strict-clean rule).
+**Authority:** `python3 tools/check_claims_consistency.py` (exits 0, "No drift detected"); `pytest tests/test_d4_regression_vectors.py -q` 30 / 30 PASS.
+**Audit doc:** [`docs/audit/wave357-k5-k6-camera-ready.md`](../audit/wave357-k5-k6-camera-ready.md).
+**Mode:** ADDITIVE — new section; no existing `## CLM-NNN:` row, no field, no word was modified. Both K5 and K6 status labels are **preserved verbatim** from their canonical disclosure surfaces.
+
+The two K-level cells that remain on the camera-ready deferred list are itemised below with their current status (preserved verbatim — no promotion by wording alone) and the upstream-side / compute-side root-cause disclosure. The framework-side protocol surface (`FlowMatchingODEAdapter` + `AdapterCapabilities` + `CapabilityTokenHandshake` per paper §3.4) is fully wired and ready to receive either adapter when the upstream-side gap is closed; the blockers are environmental (K5) and compute-priority (K6), not framework-side.
+
+| K-cell | Subject | Current status (preserved verbatim) | Camera-ready scope |
+|---|---|---|---|
+| **K5** | FreqFlow + MM-FM integration (PHASE-4 model download + adapter integration + N=1000 sweep) | **ENV_BLOCKED** | (a) Re-run `FreqFlowAdapter` real-ckpt sweep once `nnet_ema.pth` becomes publicly available on HF Hub / GitHub releases / PyPI. (b) Integrate MM-FM adapter once the published MM-FM checkpoint is available AND the upstream `MMFMAdapter` class is shipped (or implement one locally following the `FlowMatchingODEAdapter` Protocol). |
+| **K6** | Wan2.2 N=1000 sweep + 4-arm H2H + statistical tests (TOST / JT / BF01 / DerSimonian-Laird meta / non-inferiority) | **DEFERRED** | Launch the Wan2.2 N=1000 sweep + 4-arm H2H (vanilla + Fast-DLLM + AB-Cache + LeDiFlow) × NFE ∈ {50, 100} × {pLDDT, scPerplexity} + statistical tests once the next GPU release can accommodate the multi-week wall-clock budget. |
+
+**K5 ENV_BLOCKED root cause** — FreqFlow's public `nnet_ema.pth` does not exist on `data/freqflow/`, GitHub releases, HF Hub, or PyPI (verified per Wave 189 P3 + CLM-056 + paper §9.4 line 690); MM-FM has no shipped adapter (per Wave 36 Agent A upstream-file inventory + `docs/CONSOLIDATED_RESULTS.md` §13 PHASE-4 scope revision 2026-09-05 user directive). Both blockers are **environmental / upstream-side** (not framework-side); the framework-side protocol surface is fully wired. The current `FreqFlowAdapter` operates in synthetic-skeleton mode (CLM-056 — synthetic-skeleton pass-through + D.5 conformance battery + restart-blend glue path verified, but explicitly NOT a FreqFlow quantitative result).
+
+**K6 DEFERRED root cause** — compute priority (multi-week GPU sweep deferred behind R6 Kanzi k6 foldability + R3 FlowMol3 fg_dev + R5b CIFAR-10 RF cross-budget + Theorem 5 numerical-validation GPU waves per Wave 127 / Wave 131 / Wave 132 / Wave 152 STATUS.md freeze markers + `docs/CONSOLIDATED_RESULTS.md` §15.29 + §15.30 STATUS.md freeze marker rows). The Wan2.2 vendor ckpt is git-vendored at `data/wan2_2/repo` per Wave 260 P1 (commit hash pinned in MANIFEST row 8 / `tnnls_submission/data_availability.md` §8 row 8) and the Wan2.2 upstream codebase is byte-identical to the pinned upstream commit hash; the Wan2.2 N=1000 sweep + 4-arm H2H + statistical tests are deferred **not** because of a missing ckpt or a missing adapter class (both exist) but because of **GPU compute priority**.
+
+**Cross-doc propagation summary** (K5 + K6 disclosure already exists across 8 governance surfaces; this section consolidates the existing disclosure into a single camera-ready scope final-disclosure paragraph):
+1. `paper-A-final.md` §9 line 668 (original §9 K5 = "Protein-family cluster dependence"; redefined per Wave 356 P3 to refer to FreqFlow + MM-FM integration scope) + §9 line 670 (K6 explicitly names FreqFlow + Wan2.2 + MM-FM)
+2. `paper-A-final.md` §9.4 line 690 (Vendor ckpt availability — names Wan2.2 + FreqFlow explicitly)
+3. `tnnls_submission/submission_checklist.md` "Honest disclosures" subsection rows 19 + 20 (PENDING (camera-ready))
+4. `tnnls_submission/data_availability.md` §8 rows 8 + 9 (Wan2.2 + FreqFlow pinned commits)
+5. `docs/CLAIMS.md` CLM-056 (FreqFlowAdapter synthetic-only) + §cross-ref-audit-table row 4078 DEFERRED vocabulary inventory
+6. `docs/CONSOLIDATED_RESULTS.md` §13 PHASE-4 scope revision + §15.6 "FreqFlow / MM-FM real-ckpt sweep" row + §15.29 + §15.30 STATUS.md freeze markers
+7. `docs/audit/wave356-submission-checklist-review.md` §2.3 rows 19 + 20 (camera-ready fixes #7 + #8)
+8. `docs/audit/wave357-k5-k6-camera-ready.md` (this audit doc, NEW Wave 357 P6)
+
+**Hard-rule compliance verified:** (i) no K5 status promotion — `ENV_BLOCKED` preserved verbatim from CLM-056 + paper §9.4 + `submission_checklist.md` honest-disclosures row 19 + Wave 356 P3 row 19; (ii) no K6 status promotion — `DEFERRED` preserved verbatim from paper §9 + §9.4 + `submission_checklist.md` honest-disclosures row 20 + Wave 356 P3 row 20 + Wave 127/131/132/152 STATUS.md freeze markers; (iii) ADDITIVE only — this section is added at the bottom of `docs/CLAIMS.md` and does NOT displace any existing content (the `§cross-ref-audit-table` Wave 355 P2 audit-table section above is preserved verbatim); (iv) NO-PUSH policy honoured; (v) `tools/check_claims_consistency.py` exits 0 (no `## CLM-NNN:` row edited); (vi) D.4 30/30 PASS preserved; (vii) vendored upstream untouched (no edits under `data/`); (viii) ruff 0 (no `.py` file modified); (ix) mkdocs strict 0 warnings (this section is plain markdown compatible with mkdocs strict mode).
