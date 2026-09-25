@@ -130,3 +130,146 @@ The following items are honestly disclosed as incomplete or partial, with full p
 - [`tnnls_submission/submission_checklist.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/submission_checklist.md) — TNNLS editorial requirements
 - [`docs/CLAIMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md) — 39 ACTIVE claims (claims_consistency check passes)
 - [`docs/audit/wave{235,236,238}-*.md`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/audit) — Wave 235-238 audit trail
+
+---
+
+## Upstream vendored repositories — pinned commits (Wave 356 P2 additive — 2026-09-25)
+
+The 9 vendored upstream repositories referenced in the manuscript are
+pinned at their canonical upstream commit hashes (or SHA-256-pinned
+tarball for tarball-vendored releases). These are the same sources the
+Wave 260 user directive ("all modifications to others' original repos
+must be reverted") references; vendored code is byte-identical to
+upstream. **Source of truth: `git -C data/<repo>/<path> log -1 --format='%H'`
+read-only on 2026-09-25 (no vendored file modified during this
+verification).**
+
+| # | Repository | Local vendored path | Pinned upstream ref | Vendor mode |
+|---|------------|---------------------|---------------------|-------------|
+| 1 | FlowMol3 | `data/FlowMol3/repo/` | git commit `77cae22174b7792b0e25e9e0414038420736d841` (`77cae22`) — "Update readme.md" | git vendor (cloned at `77cae22`) |
+| 2 | LineageFlow | `data/lineageflow_upstream/` | git commit `ccef84adff421fcb6b855285bc1860e1f9a94f59` (`ccef84a`) — "Prepare LineageFlow public release" | git vendor (cloned at `ccef84a`) |
+| 3 | Kanzi | `data/kanzi_upstream/` | git commit `cfed9cf4be06a98bd2ce5f8492e20c0b9fa0d41b` (`cfed9cf`) — "add nano banana strip" | git vendor (cloned at `cfed9cf`) |
+| 4 | HiDream-I1 | `data/hidream_i1/weights/` | git commit `8ccbbfb270ccdae26d6bb0081df67dc81e4033bf` (`8ccbbfb`) — "Update README.md" | git vendor (HF-diffusers mirror at `8ccbbfb`) |
+| 5 | GraphBFN | `data/graphbfn/repo/` | git commit `a36ce07d680a3299b56d2e1436917c30b9817fc0` (`a36ce07`) — "Initial commit" | git vendor (cloned at `a36ce07`) |
+| 6 | Lumina-Image-2.0 | `data/lumina_image_2_0/repo/` | git commit `4a4d6f856115db07e8ae127280ebcc3d9f65004e` (`4a4d6f8`) — "Update README.md" | git vendor (cloned at `4a4d6f8`) |
+| 7 | ProtBFN-AbBFN | `data/protbfn_abbfn/repo/` | git commit `869a9afb2c0167b2d5a35b07867220da9732ef43` (`869a9af`) — "Update README.md" | git vendor (cloned at `869a9af`) |
+| 8 | Wan2.2 | `data/wan2_2/repo/` | git commit `42bf4cfaa384bc21833865abc2f9e6c0e67233dc` (`42bf4cf`) — "fix readme" | git vendor (cloned at `42bf4cf`) |
+| 9 | FreqFlow | `data/freqflow_ckpt/upstream/` (source tree) + `data/freqflow_ckpt/upstream.tar.gz` (packaged tarball) | tarball SHA-256-pinned per `data/freqflow_ckpt/SHA256SUMS` (1024 source-tree files + 32 weights; pinned 2026-09-05 per Wave 36 Agent B) | tarball vendor (CVPR 2026, arXiv 2604.15521; no git release available) |
+
+**Honest-uncertainty disclosure (additive):** for FreqFlow (row 9), no
+git-vendored repo is published by the authors; the upstream source is
+SHA-256-pinned as a tarball per `data/freqflow_ckpt/SHA256SUMS.upstream`.
+The `nnet_ema.pth` weights remain **NOT RELEASED** by upstream as of
+2026-09-25 (verified by [CLM-056](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#clm-056) — FreqFlowAdapter is
+synthetic-skeleton-only by editorial honesty). Rows 1–8 use git
+vendor mode and are byte-identical to upstream commit hashes per the
+Wave 262 P2 verify
+([`docs/audit/wave262-p2-verify.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave262-p2-verify.md)).
+
+---
+
+## Reproduction instructions (Wave 356 P2 additive — 2026-09-25)
+
+The manuscript's headline numbers are reproduced from byte-stable artifacts at
+[verification_outputs/](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs).
+Reviewers re-verify in four steps. Step 2 + 3 use the `reproduce/`
+directory's per-cell one-click scripts (R1–R6, one per cell) plus a
+`verify_all_headlines.sh` master verifier that runs all cells serially.
+
+1. **Activate the appropriate sidecar venv** — never mix model environments
+   ([`docs/environments.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/environments.md)):
+
+   ```bash
+   # FlowMol3, 2D (Two Moons / Eight Gaussians), CIFAR-10, MNIST FM
+   source .venvs/flowmol3_venv/bin/activate
+   # LineageFlow (R1, R4-R5, plus HMMER Pfam-A reads)
+   source .venvs/lineageflow_venv/bin/activate
+   # Kanzi (R2 — protein decision-metric saturation)
+   source .venvs/kanzi_venv/bin/activate
+   ```
+
+   Sidecar venvs mirror each upstream repo's `requirements.txt` /
+   `environment.yml` and keep the framework's project venv minimal
+   (torch-free, stdlib-only). Vendored upstream code (rows 1–9 above) is
+   byte-identical to upstream regardless of which venv is activated.
+
+2. **Install** (reviewer-side, idempotent): the framework itself plus
+   per-model deps:
+
+   ```bash
+   pip install -e .                               # framework (project venv)
+   pip install -r data/FlowMol3/repo/requirements.txt   # or model-equivalent
+   ```
+
+   Each vendored repo's `requirements.txt` (or `environment.yml`) is at
+   the canonical upstream path listed in the table above.
+
+3. **Reproduce per-cell** via `reproduce/*.sh` (one-click, byte-stable):
+
+   ```bash
+   bash reproduce/01_R1_LineageFlow.sh        # R1: HMMER N=1000
+   bash reproduce/02_R2_Kanzi.sh              # R2: Kanzi RMSD N=1000
+   bash reproduce/03_R3_FlowMol3.sh           # R3: FlowMol3 fg_dev N=200
+   bash reproduce/04_R4_2D_TwoMoons.sh        # R4: 2D Two Moons W2
+   bash reproduce/05_R5_2D_EightGaussians.sh  # R5: 2D Eight Gaussians W2
+   bash reproduce/06_R5b_CIFAR_n_rounds1.sh   # R5b: CIFAR-10 matched-NFE=50
+   bash reproduce/07_R6_MNIST_TierAware.sh    # R6: MNIST FM tier-aware
+   ```
+
+   Each per-cell script verifies the headline from the byte-stable
+   `verification_outputs/<cell>/` artifact (default behaviour prints
+   "OK" / "FAIL" against the pinned headline). The full live-sweep
+   re-execution command is **commented out** by default inside each
+   script; uncomment for an end-to-end re-run (cells range from 30 min
+   GPU to 50 h CPU).
+
+4. **Verify all 7 R-level headlines** with one command:
+
+   ```bash
+   bash reproduce/verify_all_headlines.sh
+   # Expected: "OK: All 7/7 R-level headlines verified"
+   # On failure, exits non-zero and prints the failing cell(s).
+   ```
+
+   Then run the engineering gates (must all exit 0):
+
+   ```bash
+   python3 -m pytest tests/test_d4_regression_vectors.py -q     # 30/30 PASS
+   ruff check adaptive_reflow/ tests/ scripts/ tools/           # 0 findings
+   mkdocs build --strict                                         # exit 0
+   python3 tools/check_claims_consistency.py                    # no drift
+   cd tnnls_submission && sha256sum -- *.md                     # matches MANIFEST
+   ```
+
+   Wall-clock budgets and skipped-record counts for each cell are in
+   the per-cell audit notes ([docs/audit/wave{086,235,236}-*.md](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/audit)).
+   Out-of-scope: K4 (Kanzi saturation ceiling), K5 (FreqFlow + MM-FM
+   integration), and K6 (Wan2.2 N=1000 sweep) are honestly disclosed as
+   `UNDERPOWERED` / `DEFERRED` / `ENV_BLOCKED` in the prior section —
+   these are not reproducible from public artifacts at submission
+   time.
+
+---
+
+## Supporting audit documents (Wave 343-355; Wave 356 P2 additive — 2026-09-25)
+
+The Wave 349-355 audit-trail docs that back this submission (in addition
+to the Wave 235-238 entries above) are:
+
+- **Wave 343** (paper-fix wave): [`docs/audit/wave343-paper-fixes.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave343-paper-fixes.md) (also mirrored to `tnnls_submission/supplementary_bundle/audit_docs/`)
+- **Wave 345** (cross-doc fixes): [`docs/audit/wave345-cross-doc-fixes.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave345-cross-doc-fixes.md)
+- **Wave 348** (link fix): [`docs/audit/wave348-link-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave348-link-fix.md)
+- **Wave 349** (paper-writeup + gap audit): [`docs/audit/wave349-impl.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave349-impl.md) + [`docs/audit/wave349-gap-audit.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave349-gap-audit.md) + [`docs/audit/wave349-gpu-acceleration.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave349-gpu-acceleration.md)
+- **Wave 350** (R1 materialize + figure + Thm5): [`docs/audit/wave350-r1-materialize-status.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave350-r1-materialize-status.md) + [`docs/audit/wave350-r5b-figure.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave350-r5b-figure.md) + [`docs/audit/wave350-thm5.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave350-thm5.md) + [`docs/audit/wave350-r6-live-attempt.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave350-r6-live-attempt.md)
+- **Wave 351** (cover-letter helper + R3 vendor fix + Thm5 numerical + R5a N=10): [`docs/audit/wave351-*.md`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/audit) (4 docs)
+- **Wave 352** (claims update + framework anchors + R6 status + sec10-9 close-out + cover-letter + L-appendix): [`docs/audit/wave352-*.md`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/audit) (7 docs)
+- **Wave 353** (theorem-4 derivation + placeholder-fill + claims consolidation + conclusion + H2H + ledger + limitations + pseudocode): [`docs/audit/wave353-*.md`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/audit) (8 docs)
+- **Wave 354** (cover-letter scaffold + manifest SHA-256 refresh + lean subclaims + paper-final polish + R5b figure verify): [`docs/audit/wave354-*.md`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/audit) (5 docs)
+- **Wave 355** (capability-token example + claims deep-audit + final SHA-256 refresh + supplementary polish + verification-outputs README): [`docs/audit/wave355-*.md`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/audit) (5 docs)
+- **Wave 356** (this wave — `tnnls_submission/data_availability.md` polish): [`docs/audit/wave356-data-availability-polish.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave356-data-availability-polish.md)
+
+Together these 35+ audit docs constitute the reproducible evidence
+chain from code → verification_outputs/ → headline number. Each
+`verification_outputs/` artifact is byte-addressable per the
+[`docs/verification_outputs.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/verification_outputs.md)
+master index (Wave 355 P1, SHA-256 disclosed).
