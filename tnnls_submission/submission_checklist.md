@@ -172,3 +172,67 @@
 The existing checklist above marks 29 [x] PASS checkboxes; the ADDITIVE summary above introduces a finer-grained 18-criterion framing (14 task-listed + 4 honest-disclosure PENDING). Per Wave 268 strict-clean rule, the audit summary is ADDITIVE and does NOT change existing checkbox states — instead, it documents the observed PASS/PENDING/N/A state at Wave 356 P3 audit time and enumerates the 8-item camera-ready scope for the PENDING items. The 4 task-listed PENDING items are all either (a) user-gated, (b) CI-gate non-blocking for ScholarOne, (c) intentionally-design PENDING per existing self-reference note, or (d) additive camera-ready scope — none block the main-track submission freeze.
 
 *Wave 356 P3 final pre-submission audit summary ADDITIVE section authored 2026-09-25; cross-references [`docs/audit/wave356-submission-checklist-review.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave356-submission-checklist-review.md) (audit doc). NO-PUSH + ADDITIVE only; no existing checkbox toggled.*
+
+---
+
+## Wave 357 closure re-audit summary (Wave 358 P4, 2026-09-25, ADDITIVE)
+
+**Authored:** Wave 358 P4 post-Wave-357 re-audit (audit doc at [`docs/audit/wave358-submission-checklist-reaudit.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave358-submission-checklist-reaudit.md)).
+**Scope:** ADDITIVE — this section does NOT modify any of the 29 existing [x] PASS checkboxes above; per Wave 268 strict-clean rule + Wave 356 P3 hard-guardrails (NO-PUSH + ADDITIVE only + "do not change any PENDING to PASS without justification") the 29 existing checkboxes are preserved unchanged. This summary adds a Wave-357-closure observed-state framing on top of the Wave 356 P3 ADDITIVE summary, tracking which of the 8 PENDING items were resolved, partially-closed, or documented by Wave 357 P1-P6.
+
+### Wave 357 closure: 8 PENDING item status (re-audit)
+
+| # | PENDING item (Wave 356 P3 label) | Wave 357 action | Wave 358 P4 state | Resolution |
+|---|----------------------------------|-----------------|-------------------|------------|
+| 1 | ruff W292 trailing-newline regression (CI-gate only) | Wave 357 P1 FIXED: `ruff check adaptive_reflow/ tests/ scripts/ tools/` → 0 findings (`All checks passed!`); commit `3412698`; 2 files (`tools/audit_thm5/estimate_lipschitz.py:233` + `tools/audit_thm5/fit_thm5.py:371`) | **PASS** (CI-gate restored to Wave 242 P4 baseline) | RESOLVED |
+| 2 | 17 USER_TO_FILL placeholders in cover_letter.md (user-gated, ScholarOne upload-gate) | None (user-gated per `cover_letter_FILL_AUTOFILL.json` scaffolding + FILL_GUIDE.md §168) | **PENDING** (user-gated; 31 grep hits = 17 actual fillable fields + 14 documentation-pointer occurrences; preserved verbatim) | DEFERRED (user action required) |
+| 3 | MANIFEST.md SHA-256 final rehash (displayed SHA stale per self-reference note) | None (depends on #2; freeze-marker step) | **PENDING** (current SHA `2fc8455d0645266e32b402131249b970d92077a14557df80b753825fe746fca2`; per MANIFEST self-reference note intentional, final rehash is the freeze-marker step) | DEFERRED (depends on #2) |
+| 4 | Lean 4 verification (28/28 PASS + 4 stubs) — `Mathlib.Analysis.SpecialFunctions.ExpLog` build error | Wave 357 P2 PARTIAL CLOSURE: 3 of 15 sorry sites discharged across 4 stub files (Thm 4.1: 5→3; Thm 5.1: 5→3; Thm 5.2: 4→3; Thm 5.3: 1→3); `lake build` verified PASS for all 4 target files; commit `fc19654` | **PENDING** (12 sorry sites remaining with TODO comments documenting future-proof effort; "28/28 PASS" claim still does not match actual state — 4 stubs only with 3 of 15 sorries discharged, Mathlib v4.34.1 precompilation still incomplete for downstream theorems) | PARTIAL CLOSURE (Wave 357 P2 resolved 3/15) |
+| 5 | R3 FlowMol3 3-seed direction consistency (in flight, DGL 2.4.0 batched-path bug workaround) | Wave 357 P3 DOCUMENTED: RDKit environment blocker disclosed (`docs/CONSOLIDATED_RESULTS.md` §15.24 + paper §7.5 footnote); commit `dd5f3b5` | **PENDING** (camera-ready scope; honest-disclosure accepted) | DOCUMENTED (Wave 357 P3) |
+| 6 | K4 Kanzi decision-metric saturation (UNDERPOWERED / TIES_AT_ZERO) | Wave 357 P4 DOCUMENTED: additional N=1000 sweep scope + audit doc; commit `d3baced` | **PENDING** (camera-ready scope; honest-disclosure accepted) | DOCUMENTED (Wave 357 P4) |
+| 7 | R6 Kanzi k6 3-seed N=1000 live GPU sweep (PARTIAL via tier-aware counterfactual; camera-ready deferred) | Wave 357 P5 DOCUMENTED: §10.5 scope disclosure + audit doc `docs/audit/wave357-r6-gpu-scope.md`; commit `f003c04` | **PENDING** (camera-ready scope; honest-disclosure accepted; §7.2 R6 row preserved verbatim) | DOCUMENTED (Wave 357 P5) |
+| 8 | K5 FreqFlow + MM-FM integration (ENV_BLOCKED, PHASE-4 deferred) + K6 Wan2.2 N=1000 sweep (DEFERRED) | Wave 357 P6 DOCUMENTED: camera-ready scope final disclosure; commit `4b6826c` | **PENDING** (camera-ready scope; honest-disclosure accepted) | DOCUMENTED (Wave 357 P6) |
+
+### Wave 358 P4 totals (post-Wave-357 closure)
+
+**Task-listed only (matching Wave 356 P3 output JSON shape):**
+
+- **PASS: 11** (was 10 at Wave 356 P3; **+1 from Wave 357 P1 ruff fix**) — D.4 30/30, mkdocs, claims, USER_TO_FILL documented, paper.pdf ≤ 14, supplementary, data_availability, highlights, vendored, NO-PUSH, **+ruff W292 fixed**
+- **PENDING: 3** (was 4 at Wave 356 P3; **-1 from Wave 357 P1 ruff fix**) — USER_TO_FILL user-gated, MANIFEST.md SHA-256 stale (depends on USER_TO_FILL), Lean 4 partial-closure (15→12 sorry sites)
+- **N/A: 0**
+
+**Total (task-listed + honest-disclosure PENDING):**
+
+- **PASS: 11** (task-listed; same as above — honest-disclosure K1/K2/manuscript/anonymized are 4 honestly-disclosed-as-PASS items that map to the 29 existing [x] checkboxes, not to the task-listed 14-item table)
+- **PENDING: 7** (was 8 at Wave 356 P3; **-1 from Wave 357 P1 ruff fix**) = 3 task-listed (USER_TO_FILL, MANIFEST, Lean 4) + 4 honest-disclosure (R3, K4, K5/K6 grouped) — **PENDING count reduced from 8 to 7 by Wave 357 P1**
+- **N/A: 0**
+
+**Single-line total (output JSON shape):**
+
+- `pass_count: 11` (was 10 at Wave 356 P3; +1 from Wave 357 P1 ruff fix)
+- `pending_count: 7` (was 8 at Wave 356 P3; -1 from Wave 357 P1 ruff fix)
+- `na_count: 0`
+
+### Items resolved by Wave 357 (per-item summary)
+
+| # | Item | Wave 357 commit | Status change | Net PENDING impact |
+|---|------|-----------------|---------------|--------------------|
+| 1 | ruff W292 trailing-newline fix (PENDING #1) | `3412698` (Wave 357 P1) | **PENDING → PASS** | **-1** (8 → 7) |
+| 2 | 17 USER_TO_FILL placeholders (PENDING #2) | (none) | PENDING → PENDING | 0 (user-gated, no Wave 357 agent scope) |
+| 3 | MANIFEST.md SHA-256 final rehash (PENDING #3) | (none) | PENDING → PENDING | 0 (depends on #2) |
+| 4 | Lean 4 sorry discharge (PENDING #4) | `fc19654` (Wave 357 P2) | PENDING → PENDING (partial) | 0 (3/15 discharged; build still incomplete for downstream theorems; "28/28 PASS" claim still mismatched) |
+| 5 | R3 FlowMol3 RDKit blocker (PENDING #5) | `dd5f3b5` (Wave 357 P3) | PENDING → PENDING (documented) | 0 (camera-ready scope; honest-disclosure preserved) |
+| 6 | K4 Kanzi decision-metric saturation (PENDING #6) | `d3baced` (Wave 357 P4) | PENDING → PENDING (documented) | 0 (camera-ready scope; honest-disclosure preserved) |
+| 7 | R6 3-seed N=1000 GPU sweep (PENDING #7) | `f003c04` (Wave 357 P5) | PENDING → PENDING (documented; §7.2 R6 row preserved verbatim) | 0 (camera-ready scope; honest-disclosure preserved) |
+| 8 | K5 FreqFlow + MM-FM + K6 Wan2.2 (PENDING #8) | `4b6826c` (Wave 357 P6) | PENDING → PENDING (documented) | 0 (camera-ready scope; honest-disclosure preserved) |
+
+**Items resolved by Wave 357 (PENDING → PASS):** 1 (PENDING #1 ruff W292).
+**Items partially closed by Wave 357 (PENDING → PENDING with progress):** 1 (PENDING #4 Lean 4: 3/15 sorry sites discharged).
+**Items documented by Wave 357 (PENDING → PENDING with scope disclosure):** 4 (PENDING #5 R3, #6 K4, #7 R6, #8 K5+K6).
+**Items still PENDING with no Wave 357 action (user-gated or downstream-blocked):** 2 (PENDING #2 USER_TO_FILL, #3 MANIFEST.md SHA-256).
+
+### Status rationale (Wave 358 P4 ADDITIVE)
+
+The Wave 356 P3 ADDITIVE summary introduced a finer-grained 18-criterion framing (14 task-listed + 4 honest-disclosure PENDING). Wave 357 closed PENDING #1 via the ruff W292 fix, reducing the task-listed PENDING count from 4 to 3 (and the total PENDING count from 8 to 7). Wave 357 also documented camera-ready scope for PENDING #4 (Lean 4 partial closure), #5 (R3 FlowMol3 RDKit blocker), #6 (K4 Kanzi saturation), #7 (R6 3-seed GPU sweep — §7.2 R6 row preserved verbatim), and #8 (K5 FreqFlow + K6 Wan2.2 camera-ready disclosure) — these 5 items remain PENDING but are now formally scoped for the camera-ready deferred list. PENDING #2 (USER_TO_FILL) and #3 (MANIFEST.md SHA-256) remain PENDING as user-gated / downstream-blocked items. None of the 29 existing [x] PASS checkboxes above were toggled by Wave 358 P4; the new ADDITIVE summary preserves the Wave 356 P3 framing and adds Wave 357 closure state.
+
+*Wave 358 P4 post-Wave-357 re-audit summary ADDITIVE section authored 2026-09-25; cross-references [`docs/audit/wave358-submission-checklist-reaudit.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave358-submission-checklist-reaudit.md) (audit doc). NO-PUSH + ADDITIVE only; no existing checkbox toggled; ruff W292 PENDING #1 promoted to PASS via Wave 357 P1 commit `3412698`.*
