@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.6.8)  23 SEP 2026 23:45
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.6.8)  25 SEP 2026 13:40
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -2110,178 +2110,194 @@ er \OT1/ptm/b/n/9 /
  []
 
 
-Underfull \hbox (badness 1478) in paragraph at lines 318--319
+Underfull \hbox (badness 10000) in paragraph at lines 316--317
+\OT1/ptm/b/n/9 a dep-re-cated back-compat alias for the molecule-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 316--317
+\OT1/ptm/b/n/9 domain con-crete impl \OT1/pcr/b/n/9 EqualRmsCoordinateMixer
+ []
+
+
+Underfull \hbox (badness 2680) in paragraph at lines 316--317
+\OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 adaptive_reflow/molecular/mixer.py:411 \OT1/ptm/
+b/n/9 + ADR-
+ []
+
+
+Underfull \hbox (badness 1478) in paragraph at lines 320--321
 []\OT1/ptm/b/n/9 Let $\OML/cmm/m/it/9 S$ \OT1/ptm/b/n/9 and $\OML/cmm/m/it/9 S[
 ]$ \OT1/ptm/b/n/9 be two \OT1/pcr/b/n/9 StateMachine \OT1/ptm/b/n/9 in-stances 
 from
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 318--319
+Underfull \hbox (badness 10000) in paragraph at lines 320--321
 \OT1/ptm/b/n/9 695 generic class \OT1/pcr/b/n/9 StateMachine[TState, TEvent]\OT
 1/ptm/b/n/9 )
  []
 
 
-Underfull \hbox (badness 2698) in paragraph at lines 318--319
+Underfull \hbox (badness 2698) in paragraph at lines 320--321
 \OT1/ptm/b/n/9 ini-tial-ized iden-ti-cally (same \OT1/pcr/b/n/9 initial\OT1/ptm
 /b/n/9 , same \OT1/pcr/b/n/9 name\OT1/ptm/b/n/9 , same
  []
 
 
-Underfull \hbox (badness 5939) in paragraph at lines 318--319
+Underfull \hbox (badness 5939) in paragraph at lines 320--321
 \OT1/pcr/b/n/9 _transitions \OT1/ptm/b/n/9 list, same \OT1/pcr/b/n/9 _regions \
 OT1/ptm/b/n/9 / \OT1/pcr/b/n/9 _parallel \OT1/ptm/b/n/9 /
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 318--319
+Underfull \hbox (badness 10000) in paragraph at lines 320--321
 \OT1/pcr/b/n/9 _counter = 0\OT1/ptm/b/n/9 ). Then for any fi-nite event se-quen
 ce
  []
 
 
-Underfull \hbox (badness 4792) in paragraph at lines 318--319
+Underfull \hbox (badness 4792) in paragraph at lines 320--321
 \OT1/ptm/b/n/9 and dis-patched via ei-ther \OT1/pcr/b/n/9 send(event, payload) 
 \OT1/ptm/b/n/9 or
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 318--319
+Underfull \hbox (badness 10000) in paragraph at lines 320--321
 \OT1/pcr/b/n/9 asend(event, payload)\OT1/ptm/b/n/9 , the \OT1/pcr/b/n/9 Transit
 ionLog \OT1/ptm/b/n/9 tu-ple
  []
 
 LaTeX Font Info:    Font shape `OT1/pcr/b/it' in size <9> not available
-(Font)              Font shape `OT1/pcr/b/sl' tried instead on input line 322.
+(Font)              Font shape `OT1/pcr/b/sl' tried instead on input line 324.
 
-Underfull \hbox (badness 10000) in paragraph at lines 322--323
+Underfull \hbox (badness 10000) in paragraph at lines 324--325
 []\OT1/ptm/b/it/9 Case A (pri-or-ity tiebreak, \OT1/pcr/b/sl/9 state_machine.py
 :386\OT1/ptm/b/it/9 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 322--323
+Underfull \hbox (badness 10000) in paragraph at lines 324--325
 \OT1/pcr/b/sl/9 _try_pick_sync\OT1/ptm/b/it/9 /\OT1/pcr/b/sl/9 _try_pick_async\
 OT1/ptm/b/it/9 ). \OT1/ptm/b/n/9 Both
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 322--323
+Underfull \hbox (badness 10000) in paragraph at lines 324--325
 \OT1/ptm/b/n/9 sync and async vari-ants ma-te-ri-alise \OT1/pcr/b/n/9 indexed =
 
  []
 
 
-Underfull \hbox (badness 2809) in paragraph at lines 322--323
+Underfull \hbox (badness 2809) in paragraph at lines 324--325
 \OT1/ptm/b/n/9 pair $\OT1/cmr/m/n/9 (\OMS/cmsy/m/n/9 ^^@[]\OML/cmm/m/it/9 ; []\
 OT1/cmr/m/n/9 )$\OT1/ptm/b/n/9 . The sort key has no
  []
 
 [7]
-Underfull \hbox (badness 10000) in paragraph at lines 324--325
+Underfull \hbox (badness 10000) in paragraph at lines 326--327
 []\OT1/ptm/b/it/9 Case B (his-tory, \OT1/pcr/b/sl/9 state_machine.py:680{740\OT
 1/ptm/b/it/9 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 324--325
+Underfull \hbox (badness 10000) in paragraph at lines 326--327
 \OT1/pcr/b/sl/9 _update_history \OT1/ptm/b/it/9 / \OT1/pcr/b/sl/9 _restore_hist
 ory\OT1/ptm/b/it/9 ). \OT1/ptm/b/n/9 His-tory is
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 326--327
+Underfull \hbox (badness 10000) in paragraph at lines 328--329
 []\OT1/ptm/b/it/9 Case C (par-al-lel re-gions, sync,
  []
 
 
-Underfull \hbox (badness 2781) in paragraph at lines 326--327
+Underfull \hbox (badness 2781) in paragraph at lines 328--329
 \OT1/pcr/b/sl/9 state_machine.py:767{775\OT1/ptm/b/it/9 , \OT1/pcr/b/sl/9 _disp
 atch_sync\OT1/ptm/b/it/9 ). \OT1/ptm/b/n/9 When
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 326--327
+Underfull \hbox (badness 10000) in paragraph at lines 328--329
 \OT1/pcr/b/n/9 Mapping[str, StateMachine].values()\OT1/ptm/b/n/9 , de-ter-min-i
 s-tic
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 328--329
+Underfull \hbox (badness 10000) in paragraph at lines 330--331
 []\OT1/ptm/b/it/9 Case D (asyn-cio.gather, async,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 328--329
+Underfull \hbox (badness 10000) in paragraph at lines 330--331
 \OT1/pcr/b/sl/9 state_machine.py:924{955\OT1/ptm/b/it/9 , \OT1/pcr/b/sl/9 _disp
 atch_async\OT1/ptm/b/it/9 ).
  []
 
 
-Underfull \hbox (badness 3049) in paragraph at lines 328--329
+Underfull \hbox (badness 3049) in paragraph at lines 330--331
 \OT1/ptm/b/n/9 via \OT1/pcr/b/n/9 coros = [sub._can_async(event, payload) for
  []
 
 
-Underfull \hbox (badness 1688) in paragraph at lines 328--329
+Underfull \hbox (badness 1688) in paragraph at lines 330--331
 \OT1/ptm/b/n/9 flag (de-fault \OT1/pcr/b/n/9 False\OT1/ptm/b/n/9 ), so it raise
 s on the first ex-cep-tion
  []
 
 
-Underfull \hbox (badness 3009) in paragraph at lines 328--329
+Underfull \hbox (badness 3009) in paragraph at lines 330--331
 \OT1/ptm/b/n/9 on a single-threaded event loop. There-fore the re-solved
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 328--329
+Underfull \hbox (badness 10000) in paragraph at lines 330--331
 \OT1/ptm/b/n/9 log en-try | \OT1/pcr/b/n/9 (event, source, target, priority,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 330--331
+Underfull \hbox (badness 10000) in paragraph at lines 332--333
 []\OT1/ptm/b/n/9 The 4 cases cover all dis-patch paths be-cause
  []
 
 
-Underfull \hbox (badness 2547) in paragraph at lines 330--331
+Underfull \hbox (badness 2547) in paragraph at lines 332--333
 \OT1/pcr/b/n/9 _dispatch_sync \OT1/ptm/b/n/9 and \OT1/pcr/b/n/9 _dispatch_async
  \OT1/ptm/b/n/9 are the only
  []
 
 
-Underfull \hbox (badness 3536) in paragraph at lines 330--331
+Underfull \hbox (badness 3536) in paragraph at lines 332--333
 \OT1/pcr/b/n/9 ...] | None | bool\OT1/ptm/b/n/9 , no floats) is de-ter-min-is-t
 ic given
  []
 
 
-Underfull \hbox (badness 1558) in paragraph at lines 334--335
+Underfull \hbox (badness 1558) in paragraph at lines 336--337
 []\OT1/ptm/b/n/9 Let $\OML/cmm/m/it/9 L \OT1/cmr/m/n/9 = (\OML/cmm/m/it/9 e[]; 
 [] ; e[]\OT1/cmr/m/n/9 )$ \OT1/ptm/b/n/9 be the append-only hash chain
  []
 
 
-Underfull \hbox (badness 6001) in paragraph at lines 334--335
+Underfull \hbox (badness 6001) in paragraph at lines 336--337
 \OT1/ptm/b/n/9 string. The hash func-tion \OT1/pcr/b/n/9 compute_ledger_row_has
 h
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 334--335
+Underfull \hbox (badness 10000) in paragraph at lines 336--337
 \OT1/ptm/b/n/9 com-mits ev-ery record field | \OT1/pcr/b/n/9 ledger_row_id\OT1/
 ptm/b/n/9 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 334--335
+Underfull \hbox (badness 10000) in paragraph at lines 336--337
 \OT1/pcr/b/n/9 round_index\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 source_round\OT1/ptm/
 b/n/9 , \OT1/pcr/b/n/9 target_round\OT1/ptm/b/n/9 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 334--335
+Underfull \hbox (badness 10000) in paragraph at lines 336--337
 \OT1/pcr/b/n/9 applied_policy_hash\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 selected_bund
 le_digest\OT1/ptm/b/n/9 ,
  []
@@ -2294,185 +2310,185 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.336 ... SHA-256(prev\_row ∥ prev\_prev\_hash)}
+l.338 ... SHA-256(prev\_row ∥ prev\_prev\_hash)}
                                                    is broken at the first ta...
 
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
 
-Underfull \hbox (badness 2197) in paragraph at lines 336--337
+Underfull \hbox (badness 2197) in paragraph at lines 338--339
 \OT1/ptm/b/n/9 tam-per modal-ity | append-only mu-ta-tion (tail), in-place
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 336--337
+Underfull \hbox (badness 10000) in paragraph at lines 338--339
 \OT1/pcr/b/n/9 prev_ledger_row_hash == SHA-256(prev_row
  []
 
 
-Underfull \hbox (badness 2401) in paragraph at lines 336--337
+Underfull \hbox (badness 2401) in paragraph at lines 338--339
 \OT1/ptm/b/n/9 with col-li-sion prob-a-bil-ity $\OMS/cmsy/m/n/9 ^^T \OT1/cmr/m/
 n/9 2[]$ \OT1/ptm/b/n/9 (neg-li-gi-ble per NIST
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 336--337
+Underfull \hbox (badness 10000) in paragraph at lines 338--339
 \OT1/ptm/b/n/9 SP 800-107 128-bit se-cu-rity rec-om-men-da-tion). Source:
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 336--337
+Underfull \hbox (badness 10000) in paragraph at lines 338--339
 \OT1/pcr/b/n/9 adaptive_reflow/frame/ledger_chain.py:113{218
  []
 
 
-Underfull \hbox (badness 1983) in paragraph at lines 338--339
+Underfull \hbox (badness 1983) in paragraph at lines 340--341
 \OML/cmm/m/it/9 e[]$ \OT1/ptm/b/n/9 is the canon-i-cal row se-ri-al-i-sa-tion \
 OT1/pcr/b/n/9 (ledger_row_id,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 338--339
+Underfull \hbox (badness 10000) in paragraph at lines 340--341
 \OT1/pcr/b/n/9 round_index, source_round, target_round,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 338--339
+Underfull \hbox (badness 10000) in paragraph at lines 340--341
 \OT1/pcr/b/n/9 applied_policy_hash, selected_bundle_digest,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 338--339
+Underfull \hbox (badness 10000) in paragraph at lines 340--341
 \OT1/pcr/b/n/9 audit_codes, per_channel_decision, h_\OMS/cmsy/b/n/9 f\OT1/pcr/b
 /n/9 n-1\OMS/cmsy/b/n/9 g\OT1/pcr/b/n/9 )\OT1/ptm/b/n/9 .
  []
 
 
-Underfull \hbox (badness 3780) in paragraph at lines 338--339
+Underfull \hbox (badness 3780) in paragraph at lines 340--341
 \OT1/ptm/b/n/9 256 col-li-sion prob-a-bil-ity is at most $\OT1/cmr/m/n/9 2[]$ \
 OT1/ptm/b/n/9 for a 256-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 338--339
+Underfull \hbox (badness 10000) in paragraph at lines 340--341
 \OT1/ptm/b/n/9 bit hash by the birthday-bound in-ver-sion ar-gu-ment).
  []
 
 
-Underfull \hbox (badness 6775) in paragraph at lines 338--339
+Underfull \hbox (badness 6775) in paragraph at lines 340--341
 \OT1/pcr/b/n/9 verify_ledger_chain \OT1/ptm/b/n/9 fails at row $\OML/cmm/m/it/9
  n$ \OT1/ptm/b/n/9 on the first
  []
 
 
-Underfull \hbox (badness 1472) in paragraph at lines 338--339
+Underfull \hbox (badness 1472) in paragraph at lines 340--341
 \OT1/ptm/b/n/9 mis-matched field and \OT1/pcr/b/n/9 LedgerChain.append \OT1/ptm
 /b/n/9 would have
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 340--341
+Underfull \hbox (badness 10000) in paragraph at lines 342--343
 []\OT1/ptm/b/it/9 Case 2 | Mid-chain tam-per $\OML/cmm/m/it/9 e[]$\OT1/ptm/b/it
 /9 , $\OML/cmm/m/it/9 j < n$
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 340--341
+Underfull \hbox (badness 10000) in paragraph at lines 342--343
 \OT1/ptm/b/it/9 (\OT1/pcr/b/sl/9 ledger_chain.py:113{218\OT1/ptm/b/it/9 ). \OT1
 /ptm/b/n/9 An ad-ver-sary mod-i-fies
  []
 
 
-Underfull \hbox (badness 2119) in paragraph at lines 340--341
+Underfull \hbox (badness 2119) in paragraph at lines 342--343
 \OT1/ptm/b/n/9 hashes still match the re-com-puted hashes). At $\OML/cmm/m/it/9
  i \OT1/cmr/m/n/9 = \OML/cmm/m/it/9 j$\OT1/ptm/b/n/9 ,
  []
 
 
-Underfull \hbox (badness 5288) in paragraph at lines 340--341
+Underfull \hbox (badness 5288) in paragraph at lines 342--343
 \OT1/ptm/b/n/9 mis-match is re-ported at the \OT1/ptm/b/it/9 first \OT1/ptm/b/n
 /9 tam-pered in-dex |
  []
 
 
-Underfull \hbox (badness 1521) in paragraph at lines 340--341
+Underfull \hbox (badness 1521) in paragraph at lines 342--343
 \OT1/ptm/b/n/9 specif-i-cally, \OT1/pcr/b/n/9 verify_ledger_chain \OT1/ptm/b/n/
 9 walks rows in or-der
  []
 
 
-Underfull \hbox (badness 2744) in paragraph at lines 340--341
+Underfull \hbox (badness 2744) in paragraph at lines 342--343
 \OT1/ptm/b/n/9 and raises \OT1/pcr/b/n/9 LedgerChainError \OT1/ptm/b/n/9 with \
 OT1/pcr/b/n/9 index=j \OT1/ptm/b/n/9 as soon
  []
 
 
-Underfull \hbox (badness 6445) in paragraph at lines 340--341
+Underfull \hbox (badness 6445) in paragraph at lines 342--343
 \OT1/ptm/b/n/9 as \OT1/pcr/b/n/9 row.row_hash \OT1/ptm/b/n/9 fails to match \OT
 1/pcr/b/n/9 _recompute(row)\OT1/ptm/b/n/9 .
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 340--341
+Underfull \hbox (badness 10000) in paragraph at lines 342--343
 \OT1/pcr/b/n/9 LedgerChain.append\OT1/ptm/b/n/9 : the \OT1/pcr/b/n/9 prev_ledge
 r_row_hash
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 340--341
+Underfull \hbox (badness 10000) in paragraph at lines 342--343
 \OT1/ptm/b/n/9 link-age check at \OT1/pcr/b/n/9 ledger_chain.py:166{174 \OT1/pt
 m/b/n/9 would
  []
 
 
-Underfull \hbox (badness 4713) in paragraph at lines 340--341
+Underfull \hbox (badness 4713) in paragraph at lines 342--343
 \OT1/ptm/b/n/9 catch any in-ser-tion at-tempt that does not match the
  []
 
 
-Underfull \hbox (badness 7777) in paragraph at lines 340--341
+Underfull \hbox (badness 7777) in paragraph at lines 342--343
 \OT1/ptm/b/n/9 cur-rent head, rais-ing \OT1/pcr/b/n/9 LedgerChainError \OT1/ptm
 /b/n/9 im-me-di-ately.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 342--343
+Underfull \hbox (badness 10000) in paragraph at lines 344--345
 []\OT1/ptm/b/it/9 Case 3 | In-sert/delete fake en-try
  []
 
 
-Underfull \hbox (badness 1354) in paragraph at lines 342--343
+Underfull \hbox (badness 1354) in paragraph at lines 344--345
 \OT1/pcr/b/n/9 prev_ledger_row_hash \OT1/ptm/b/n/9 field dis-agrees with the \O
 T1/ptm/b/it/9 cur-rent
  []
 
 [8]
-Underfull \hbox (badness 10000) in paragraph at lines 346--347
+Underfull \hbox (badness 10000) in paragraph at lines 348--349
 []\OT1/ptm/b/n/9 The in-cre-men-tal \OT1/pcr/b/n/9 LedgerChain.append \OT1/ptm/
 b/n/9 closes the
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 346--347
+Underfull \hbox (badness 10000) in paragraph at lines 348--349
 \OT1/ptm/b/n/9 ver-i-fi-ca-tion win-dow from $\OML/cmm/m/it/9 O\OT1/cmr/m/n/9 (
 \OML/cmm/m/it/9 R\OT1/cmr/m/n/9 )$ \OT1/ptm/b/n/9 per round (en-gine)
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 346--347
+Underfull \hbox (badness 10000) in paragraph at lines 348--349
 \OT1/ptm/b/n/9 to $\OML/cmm/m/it/9 O\OT1/cmr/m/n/9 (1)$ \OT1/ptm/b/n/9 amor-tis
 ed | ex-actly one \OT1/pcr/b/n/9 _recompute
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 346--347
+Underfull \hbox (badness 10000) in paragraph at lines 348--349
 \OT1/ptm/b/n/9 per ap-pended row (\OT1/pcr/b/n/9 hash_computations \OT1/ptm/b/n
 /9 counter,
  []
 
 
-Overfull \hbox (34.2858pt too wide) detected at line 352
+Overfull \hbox (34.2858pt too wide) detected at line 354
 \U/msb/m/n/9 E[]\OMS/cmsy/m/n/9 k\OML/cmm/m/it/9 x[] \OMS/cmsy/m/n/9 ^^@ \OML/c
 mm/m/it/9 x[]\OMS/cmsy/m/n/9 k[][]  ^^T  \OML/cmm/m/it/9 C[] \OMS/cmsy/m/n/9 ^^
 A [] []^^@\OML/cmm/m/it/9 n[]=^^\[][] \OT1/cmr/m/n/9 + \OML/cmm/m/it/9 C[] \OMS
@@ -2480,62 +2496,62 @@ A [] []^^@\OML/cmm/m/it/9 n[]=^^\[][] \OT1/cmr/m/n/9 + \OML/cmm/m/it/9 C[] \OMS
  []
 
 
-Underfull \hbox (badness 5302) in paragraph at lines 358--359
+Underfull \hbox (badness 5302) in paragraph at lines 360--361
 []\OT1/ptm/b/n/9 These three prop-er-ties | com-po-si-tion clo-sure, byte-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 358--359
+Underfull \hbox (badness 10000) in paragraph at lines 360--361
 \OT1/ptm/b/n/9 determinism, tamper-evidence | and the multi-round
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 370--371
+Underfull \hbox (badness 10000) in paragraph at lines 372--373
 []\OT1/ptm/b/n/9 R2 | Kanzi inv-proj (STRONG). Kanzi
  []
 
 
-Underfull \hbox (badness 1460) in paragraph at lines 370--371
+Underfull \hbox (badness 1460) in paragraph at lines 372--373
 \OT1/ptm/b/n/9 framework-WINS | the frame-work de-liv-ers a small but
  []
 
 
-Underfull \hbox (badness 2635) in paragraph at lines 374--375
+Underfull \hbox (badness 2635) in paragraph at lines 376--377
 []\OT1/ptm/b/n/9 R5b | CIFAR-10 RF matched-NFE = 50 (STRONG
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 374--375
+Underfull \hbox (badness 10000) in paragraph at lines 376--377
 \OT1/ptm/b/n/9 RE-GRESSES bound-ary). CIFAR-10 RF UNet (im-age
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 374--375
+Underfull \hbox (badness 10000) in paragraph at lines 376--377
 \OT1/ptm/b/n/9 RF, con-di-tional on \OT1/pcr/b/n/9 n_rounds\OT1/ptm/b/n/9 ). He
 ad-line sched-uler:
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 374--375
+Underfull \hbox (badness 10000) in paragraph at lines 376--377
 \OT1/pcr/b/n/9 CosineAnnealScheduler\OT1/ptm/b/n/9 . Co-hen's $\OML/cmm/m/it/9 
 d[] \OT1/cmr/m/n/9 = +2\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 700$
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 374--375
+Underfull \hbox (badness 10000) in paragraph at lines 376--377
 \OT1/ptm/b/n/9 at \OT1/pcr/b/n/9 n_rounds = 10\OT1/ptm/b/n/9 ; con-di-tional at
  \OT1/pcr/b/n/9 n_rounds = 1\OT1/ptm/b/n/9 :
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 374--375
+Underfull \hbox (badness 10000) in paragraph at lines 376--377
 \OML/cmm/m/it/9 d[] \OMS/cmsy/m/n/9 2 \OT1/cmr/m/n/9 [+4\OML/cmm/m/it/9 :\OT1/c
 mr/m/n/9 29\OML/cmm/m/it/9 ; \OT1/cmr/m/n/9 +4\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 4
 9]$ \OT1/ptm/b/n/9 4/4 sched-ulers framework-WINS
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 374--375
+Underfull \hbox (badness 10000) in paragraph at lines 376--377
 \OT1/ptm/b/n/9 ($\OT1/cmr/m/n/9 ^^A[] \OMS/cmsy/m/n/9 2 \OT1/cmr/m/n/9 [\OMS/cm
 sy/m/n/9 ^^@\OT1/cmr/m/n/9 0\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 06%\OML/cmm/m/it/9 
 ; \OMS/cmsy/m/n/9 ^^@\OT1/cmr/m/n/9 0\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 88%]$\OT1/
@@ -2543,112 +2559,112 @@ ptm/b/n/9 ). Bonferroni-corrected
  []
 
 
-Underfull \hbox (badness 2922) in paragraph at lines 376--377
+Underfull \hbox (badness 2922) in paragraph at lines 378--379
 []\OT1/ptm/b/n/9 R5c | MNIST FM smoke ckpt (STRONG). MNIST
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 376--377
+Underfull \hbox (badness 10000) in paragraph at lines 378--379
 \OT1/ptm/b/n/9 FM (im-age FM, smoke ckpt). Head-line sched-uler:
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 378--379
+Underfull \hbox (badness 10000) in paragraph at lines 380--381
 []\OT1/ptm/b/n/9 R6 | Kanzi k6 fold-abil-ity (STRONG via tier-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 378--379
+Underfull \hbox (badness 10000) in paragraph at lines 380--381
 \OT1/ptm/b/n/9 aware coun-ter-fac-tual). Kanzi k6 fold-abil-ity (pro-tein
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 378--379
+Underfull \hbox (badness 10000) in paragraph at lines 380--381
 \OT1/ptm/b/n/9 fold-abil-ity, $\OML/cmm/m/it/9 N \OT1/cmr/m/n/9 = 1000$ \OT1/pt
 m/b/n/9 paired). Head-line sched-uler:
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 378--379
+Underfull \hbox (badness 10000) in paragraph at lines 380--381
 \OT1/pcr/b/n/9 TierAwareCodimensionSheetScheduler \OT1/ptm/b/n/9 wrap-ping
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 378--379
+Underfull \hbox (badness 10000) in paragraph at lines 380--381
 \OT1/pcr/b/n/9 CodimensionSheetScheduler \OT1/ptm/b/n/9 (the only theoretical-
  []
 
 
-Underfull \hbox (badness 1577) in paragraph at lines 378--379
+Underfull \hbox (badness 1577) in paragraph at lines 380--381
 \OT1/ptm/b/n/9 tier-aware-arm coun-ter-fac-tual $\OML/cmm/m/it/9 d[] \OT1/cmr/m
 /n/9 = +0\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 2235$ \OT1/ptm/b/n/9 (Bonferroni-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 378--379
+Underfull \hbox (badness 10000) in paragraph at lines 380--381
 \OT1/ptm/b/n/9 0.5$\OML/cmm/m/it/9 onfrozenWave\OT1/cmr/m/n/9 161\OML/cmm/m/it/
 9 paireddiff\OT1/cmr/m/n/9 )\OML/cmm/m/it/9 :Hard \OMS/cmsy/m/n/9 ^^@ \OML/cmm/
 m/it/9 tierpLDDT$\OT1/ptm/b/n/9 d[]z
  []
 
 
-Underfull \hbox (badness 1430) in paragraph at lines 378--379
+Underfull \hbox (badness 1430) in paragraph at lines 380--381
 \OT1/ptm/b/n/9 = +1.189$\OT1/cmr/m/n/9 ; \OML/cmm/m/it/9 scPerplexity$\OT1/ptm/
 b/n/9 d[]z = -1.077$\OT1/cmr/m/n/9 (\OML/cmm/m/it/9 naive\OT1/cmr/m/n/9 )\OML/c
 mm/m/it/9 =$\OT1/ptm/b/n/9 -4.019\TS1/ptm/b/n/9 $ \OT1/ptm/b/n/9 (cluster-
  []
 
 
-Underfull \hbox (badness 1661) in paragraph at lines 380--381
+Underfull \hbox (badness 1661) in paragraph at lines 382--383
 []\OT1/ptm/b/n/9 R1 | Lin-eage-Flow HM-MER (PAR-TIAL / single-seed).
  []
 
 
-Underfull \hbox (badness 2717) in paragraph at lines 380--381
+Underfull \hbox (badness 2717) in paragraph at lines 382--383
 \OT1/ptm/b/n/9 Lin-eage-Flow \OT1/pcr/b/n/9 hmmscan_total_hits \OT1/ptm/b/n/9 (
 pro-tein FM, $\OML/cmm/m/it/9 N \OT1/cmr/m/n/9 =
  []
 
 
-Underfull \hbox (badness 2197) in paragraph at lines 380--381
+Underfull \hbox (badness 2197) in paragraph at lines 382--383
 \OT1/cmr/m/n/9 1000$ \OT1/ptm/b/n/9 paired, single-seed seed = 42). Head-line s
 ched-uler:
  []
 
 [9]
-Underfull \hbox (badness 1466) in paragraph at lines 393--394
+Underfull \hbox (badness 1466) in paragraph at lines 395--396
 \OT1/cmr/m/n/9 0\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 008333$\OT1/ptm/b/n/9 . Scope: 
 three dif-fi-culty tiers \TS1/ptm/b/n/9 � \OT1/ptm/b/n/9 two met-rics
  []
 
 
-Underfull \hbox (badness 3333) in paragraph at lines 402--403
+Underfull \hbox (badness 3333) in paragraph at lines 404--405
 \OT1/ptm/b/n/9 not-theory ver-dict that is struc-turally im-por-tant: 10 of
  []
 
 
-Underfull \hbox (badness 4084) in paragraph at lines 402--403
+Underfull \hbox (badness 4084) in paragraph at lines 404--405
 \OT1/ptm/b/n/9 the only con-troller in the frame-work that ig-nores all
  []
 
 
-Underfull \hbox (badness 3189) in paragraph at lines 402--403
+Underfull \hbox (badness 3189) in paragraph at lines 404--405
 \OT1/ptm/b/n/9 four pa-per quan-ti-ties | and only 1 of 11 cells (R6
  []
 
 
-Underfull \hbox (badness 3735) in paragraph at lines 402--403
+Underfull \hbox (badness 3735) in paragraph at lines 404--405
 \OT1/ptm/b/n/9 k6 fold-abil-ity) in-stan-ti-ates a paper-quantity-driven wrap-
  []
 
 
-Underfull \hbox (badness 2065) in paragraph at lines 402--403
+Underfull \hbox (badness 2065) in paragraph at lines 404--405
 \OT1/ptm/b/n/9 per (\OT1/pcr/b/n/9 TierAwareCodimensionSheetScheduler \OT1/ptm/
 b/n/9 wrap-ping
  []
 
 
-Underfull \hbox (badness 2762) in paragraph at lines 406--407
+Underfull \hbox (badness 2762) in paragraph at lines 408--409
 []\OT1/ptm/b/n/9 The R6 k6 fold-abil-ity pat-tern (SELECTIVE-pLDDT /
  []
 
@@ -2660,41 +2676,41 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.410 ...only (the cross-budget sweep delivers ≈
+l.412 ...only (the cross-budget sweep delivers ≈
                                                   10× NFE compression at ma...
 
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
 LaTeX Font Info:    Trying to load font information for TS1+pcr on input line 4
-12.
+14.
 (/usr/share/texmf-dist/tex/latex/psnfss/ts1pcr.fd
 File: ts1pcr.fd 2001/06/04 font definitions for TS1/pcr.
 )
-Underfull \hbox (badness 10000) in paragraph at lines 412--413
+Underfull \hbox (badness 10000) in paragraph at lines 414--415
 []\OT1/ptm/b/n/9 Mechanism (R5b \OT1/pcr/b/n/9 n_rounds \OT1/ptm/b/n/9 con-di-t
 ional). The R5b
  []
 
 
-Underfull \hbox (badness 7796) in paragraph at lines 412--413
+Underfull \hbox (badness 7796) in paragraph at lines 414--415
 \OT1/ptm/b/n/9 bound-ary is a 4-scheduler \TS1/ptm/b/n/9 � \OT1/ptm/b/n/9 3-\OT
 1/pcr/b/n/9 n_rounds \OT1/ptm/b/n/9 con-di-tional
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 412--413
+Underfull \hbox (badness 10000) in paragraph at lines 414--415
 \OT1/ptm/b/n/9 grid (\OT1/pcr/b/n/9 docs/audit/wave336-r5b-mechanism.md\OT1/ptm
 /b/n/9 ): at
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 412--413
+Underfull \hbox (badness 10000) in paragraph at lines 414--415
 \OT1/pcr/b/n/9 n_rounds = 1 \OT1/ptm/b/n/9 the frame-work WINS 4/4 sched-ulers
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 412--413
+Underfull \hbox (badness 10000) in paragraph at lines 414--415
 \OT1/ptm/b/n/9 ($\OT1/cmr/m/n/9 ^^A[] \OMS/cmsy/m/n/9 2 \OT1/cmr/m/n/9 [\OMS/cm
 sy/m/n/9 ^^@\OT1/cmr/m/n/9 1\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 60%\OML/cmm/m/it/9 
 ; \OMS/cmsy/m/n/9 ^^@\OT1/cmr/m/n/9 2\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 53%]$\OT1/
@@ -2703,40 +2719,40 @@ ptm/b/n/9 ); at \OT1/pcr/b/n/9 n_rounds $\OMS/cmsy/m/n/9 ^^U$ \OT1/pcr/b/n/9 2
  []
 
 [10]
-Underfull \hbox (badness 10000) in paragraph at lines 422--423
+Underfull \hbox (badness 10000) in paragraph at lines 424--425
 []\OT1/ptm/b/n/9 The R5c smoke-vs-production flip (smoke ckpt
  []
 
 
-Underfull \hbox (badness 6348) in paragraph at lines 422--423
+Underfull \hbox (badness 6348) in paragraph at lines 424--425
 \OT1/ptm/b/n/9 framework-WINS $\OMS/cmsy/m/n/9 ^^@\OT1/cmr/m/n/9 28\OML/cmm/m/i
 t/9 :\OT1/cmr/m/n/9 43%$\OT1/ptm/b/n/9 , pro-duc-tion ckpt framework-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 422--423
+Underfull \hbox (badness 10000) in paragraph at lines 424--425
 \OT1/ptm/b/n/9 REGRESSES $\OT1/cmr/m/n/9 +10\OML/cmm/m/it/9 :\OT1/cmr/m/n/9 37%
 $ \OT1/ptm/b/n/9 at matched NFE $\OT1/cmr/m/n/9 = 50$\OT1/ptm/b/n/9 )
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 422--423
+Underfull \hbox (badness 10000) in paragraph at lines 424--425
 \OT1/ptm/b/n/9 is char-ac-terised across a 3-point regime curve
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 422--423
+Underfull \hbox (badness 10000) in paragraph at lines 424--425
 \OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 docs/audit/mnist/wf334-r5c-regime-curve.md\OT1/p
 tm/b/n/9 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 422--423
+Underfull \hbox (badness 10000) in paragraph at lines 424--425
 \OT1/pcr/b/n/9 data/mnist_fm/epochs2.ckpt.npz \OT1/ptm/b/n/9 sha256
  []
 
 
-Overfull \hbox (366.51125pt too wide) in paragraph at lines 425--434
+Overfull \hbox (366.51125pt too wide) in paragraph at lines 427--436
  [] 
  []
 
@@ -2748,58 +2764,58 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.440 ...image axis (CIFAR-10 RF cross-budget, ≈
+l.442 ...image axis (CIFAR-10 RF cross-budget, ≈
                                                   10× speedup at matched qu...
 
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
 
-Underfull \hbox (badness 6876) in paragraph at lines 448--449
+Underfull \hbox (badness 6876) in paragraph at lines 450--451
 []\OT1/ptm/b/n/9 The frame-work's re-pro-ducibil-ity con-tract is en-forced
  []
 
 
-Underfull \hbox (badness 4595) in paragraph at lines 448--449
+Underfull \hbox (badness 4595) in paragraph at lines 450--451
 \OT1/ptm/b/n/9 by 5 gates on ev-ery com-mit: D.4 30/30 byte-stability
  []
 
 
-Underfull \hbox (badness 2334) in paragraph at lines 452--453
+Underfull \hbox (badness 2334) in paragraph at lines 454--455
 []\OT1/ptm/b/n/9 Reproducibility is en-forced by the D.4 byte-stable re-
  []
 
 LaTeX Info: Symbol \textrightarrow not provided by
             font family ptm in TS1 encoding.
-            Default family used instead on input line 460.
+            Default family used instead on input line 462.
 LaTeX Info: Symbol \textrightarrow not provided by
             font family ptm in TS1 encoding.
-            Default family used instead on input line 460.
+            Default family used instead on input line 462.
 LaTeX Info: Symbol \textrightarrow not provided by
             font family ptm in TS1 encoding.
-            Default family used instead on input line 460.
+            Default family used instead on input line 462.
 LaTeX Info: Symbol \textrightarrow not provided by
             font family ptm in TS1 encoding.
-            Default family used instead on input line 460.
+            Default family used instead on input line 462.
 
-Underfull \hbox (badness 10000) in paragraph at lines 464--465
+Underfull \hbox (badness 10000) in paragraph at lines 466--467
 []\OT1/ptm/b/n/9 The ad-ver-sar-ial claims ver-i-fier
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 464--465
+Underfull \hbox (badness 10000) in paragraph at lines 466--467
 \OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 tools/check_claims_consistency.py\OT1/ptm/b/n/9 
 ) en-forces
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 464--465
+Underfull \hbox (badness 10000) in paragraph at lines 466--467
 \OT1/ptm/b/n/9 4 guar-an-tees: \OT1/pcr/b/n/9 Disputed by \OT1/ptm/b/n/9 auto-d
 emotes claims to
  []
 
 
-Underfull \hbox (badness 3364) in paragraph at lines 464--465
+Underfull \hbox (badness 3364) in paragraph at lines 466--467
 \OT1/ptm/b/n/9 PRO-VI-SIONAL re-gard-less of the \OT1/pcr/b/n/9 Status: \OT1/pt
 m/b/n/9 field; sta-tus
  []
@@ -2812,7 +2828,7 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.468 The batched harness delivers ≈
+l.470 The batched harness delivers ≈
                                       30× speedup on the codimension sweep,...
 
 You may provide a definition with
@@ -2826,258 +2842,258 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.472 ... was actually \texttt{0.5676} (K-level α
+l.474 ... was actually \texttt{0.5676} (K-level α
                                                   =0.0125); R5c's \texttt{p\...
 
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
 
-Underfull \hbox (badness 7704) in paragraph at lines 472--473
+Underfull \hbox (badness 7704) in paragraph at lines 474--475
 []\OT1/ptm/b/n/9 The frame-work's re-pro-ducibil-ity pos-ture in-cludes an
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 472--473
+Underfull \hbox (badness 10000) in paragraph at lines 474--475
 \OT1/ptm/b/n/9 ex-plicit \OT1/ptm/b/it/9 Hon-est Dis-clo-sure Pro-to-col \OT1/p
 tm/b/n/9 for in-con-sis-ten-cies
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 472--473
+Underfull \hbox (badness 10000) in paragraph at lines 474--475
 \OT1/ptm/b/n/9 sur-faced dur-ing the Wave 306/307 au-dit pass
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 472--473
+Underfull \hbox (badness 10000) in paragraph at lines 474--475
 \OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 docs/audit/wave306-11-cell-alignment.md\OT1/ptm/
 b/n/9 ,
  []
 
 
-Underfull \hbox (badness 2035) in paragraph at lines 472--473
+Underfull \hbox (badness 2035) in paragraph at lines 474--475
 \OT1/ptm/b/n/9 =0.0125); R5c's \OT1/pcr/b/n/9 p_bonf=9.22e-11 \OT1/ptm/b/n/9 wa
 s the R-level k=7
  []
 
 
-Underfull \hbox (badness 6876) in paragraph at lines 472--473
+Underfull \hbox (badness 6876) in paragraph at lines 474--475
 \OT1/ptm/b/n/9 as a \OT1/pcr/b/n/9 W286 P -> W291 P4 -> W292 re-anchor \OT1/ptm
 /b/n/9 chain
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 472--473
+Underfull \hbox (badness 10000) in paragraph at lines 474--475
 \OT1/ptm/b/n/9 (CLM-082, \OT1/pcr/b/n/9 docs/CLAIMS.md:3820\OT1/ptm/b/n/9 ) and
  the orig-i-nal
  []
 
 
-Underfull \hbox (badness 2452) in paragraph at lines 472--473
+Underfull \hbox (badness 2452) in paragraph at lines 474--475
 \OT1/ptm/b/n/9 AC-TIVE sta-tus is pre-served ver-ba-tim as an ad-den-dum,
  []
 
 
-Underfull \hbox (badness 2961) in paragraph at lines 472--473
+Underfull \hbox (badness 2961) in paragraph at lines 474--475
 \OT1/ptm/b/n/9 not a sta-tus flip. Wave num-bers are re-tained so \OT1/pcr/b/n/
 9 git
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 472--473
+Underfull \hbox (badness 10000) in paragraph at lines 474--475
 \OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 tools/check_claims_consistency.py:288-525\OT1/pt
 m/b/n/9 )
  []
 
 
-Underfull \hbox (badness 1990) in paragraph at lines 472--473
+Underfull \hbox (badness 1990) in paragraph at lines 474--475
 \OT1/ptm/b/n/9 Ver-i-fi-ca-tion ev-i-dence: D.4 30/30 PASS pre-served; ruff 0;
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 472--473
+Underfull \hbox (badness 10000) in paragraph at lines 474--475
 \OT1/ptm/b/n/9 side-car chain \OT1/pcr/b/n/9 0a65d20b -> 8e7367a0 -> c99192dc
  []
 
 [11]
-Underfull \hbox (badness 4254) in paragraph at lines 476--477
+Underfull \hbox (badness 4254) in paragraph at lines 478--479
 []\OT1/ptm/b/n/9 The frame-work main-tains a \OT1/ptm/b/it/9 Wave-Based Au-dit 
 Chain
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 476--477
+Underfull \hbox (badness 10000) in paragraph at lines 478--479
 \OT1/ptm/b/n/9 of self-contained \OT1/pcr/b/n/9 docs/audit/waveNNN-pK-\OT1/pcr/
 b/sl/9 .md
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 476--477
+Underfull \hbox (badness 10000) in paragraph at lines 478--479
 \OT1/pcr/b/n/9 artefacts (CLM-083), with docs/audit/INDEX.md
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 476--477
+Underfull \hbox (badness 10000) in paragraph at lines 478--479
 \OT1/pcr/b/n/9 re-clustering 94 audit files across 24 waves
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 476--477
+Underfull \hbox (badness 10000) in paragraph at lines 478--479
 \OT1/pcr/b/n/9 by topic (cifar / algorithm_4arm / engineering
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 476--477
+Underfull \hbox (badness 10000) in paragraph at lines 478--479
 \OT1/pcr/b/n/9 / reproducibility / claims / theory / etc.).
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 476--477
+Underfull \hbox (badness 10000) in paragraph at lines 478--479
 \OT1/pcr/b/n/9 Every Wave N produces a waveNNN-.md \OT1/ptm/b/n/9 doc with
  []
 
 
-Underfull \hbox (badness 3098) in paragraph at lines 476--477
+Underfull \hbox (badness 3098) in paragraph at lines 478--479
 \OT1/ptm/b/n/9 TL;DR + Method + Ver-dicts + IN-VARI-ANTS + Edit-
  []
 
 
-Underfull \hbox (badness 3250) in paragraph at lines 476--477
+Underfull \hbox (badness 3250) in paragraph at lines 478--479
 \OT1/ptm/b/n/9 ven-dored script NOT mod-i-fied in that wave. Cross-doc
  []
 
 
-Underfull \hbox (badness 6001) in paragraph at lines 476--477
+Underfull \hbox (badness 6001) in paragraph at lines 478--479
 \OT1/ptm/b/n/9 prop-a-ga-tion is an-chored by SHA-256 side-cars | the
  []
 
 
-Underfull \hbox (badness 2818) in paragraph at lines 476--477
+Underfull \hbox (badness 2818) in paragraph at lines 478--479
 \OT1/ptm/b/n/9 Wave 328 freeze tag (\OT1/pcr/b/n/9 v3.0-tnnls-ready\OT1/ptm/b/n
 /9 ) ships a \TS1/ptm/b/n/9 �\OT1/ptm/b/n/9 7
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 476--477
+Underfull \hbox (badness 10000) in paragraph at lines 478--479
 \OT1/ptm/b/n/9 SHA-256 chain \OT1/pcr/b/n/9 0a65d20b -> 8e7367a0 -> c99192dc
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 476--477
+Underfull \hbox (badness 10000) in paragraph at lines 478--479
 \OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 docs/audit/wave328-freeze-manifest.md\OT1/ptm/b/
 n/9 ) that
  []
 
 
-Underfull \hbox (badness 1975) in paragraph at lines 476--477
+Underfull \hbox (badness 1975) in paragraph at lines 478--479
 \OT1/ptm/b/n/9 Each wave-doc owns a dis-joint file scope so con-cur-rent
  []
 
 
-Underfull \hbox (badness 1817) in paragraph at lines 476--477
+Underfull \hbox (badness 1817) in paragraph at lines 478--479
 \OT1/ptm/b/n/9 that an-chors \TS1/ptm/b/n/9 �\OT1/ptm/b/n/9 8.5. Ver-i-fi-ca-ti
 on ev-i-dence: D.4 30/30 PASS
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 480--481
+Underfull \hbox (badness 10000) in paragraph at lines 482--483
 []\OT1/ptm/b/n/9 The frame-work's lazy-memoized cache
  []
 
 
-Overfull \hbox (71.8466pt too wide) in paragraph at lines 480--481
+Overfull \hbox (71.8466pt too wide) in paragraph at lines 482--483
 \OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 adaptive_reflow/framework/paper_quantities_cache
 .py:138-610\OT1/ptm/b/n/9 ,
  []
 
 
-Underfull \hbox (badness 4229) in paragraph at lines 480--481
+Underfull \hbox (badness 4229) in paragraph at lines 482--483
 \OT1/ptm/b/n/9 CLM-084) is the sin-gle dor-mant/active con-struc-tor that
  []
 
 
-Underfull \hbox (badness 2547) in paragraph at lines 480--481
+Underfull \hbox (badness 2547) in paragraph at lines 482--483
 \OML/cmm/m/it/9 B[]$ \OT1/ptm/b/n/9 root-cell pack-ing, $\OML/cmm/m/it/9 C[]$ \
 OT1/ptm/b/n/9 per-cell co-ef-fi-cient, $\OML/cmm/m/it/9 e[]$ \OT1/ptm/b/n/9 ex-
 te-rior
  []
 
 
-Underfull \hbox (badness 7869) in paragraph at lines 480--481
+Underfull \hbox (badness 7869) in paragraph at lines 482--483
 \OT1/ptm/b/n/9 gap) through the en-gine with-out pol-lut-ing call sites.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 480--481
+Underfull \hbox (badness 10000) in paragraph at lines 482--483
 \OT1/ptm/b/n/9 When \OT1/pcr/b/n/9 profile_residual_fn is None \OT1/ptm/b/n/9 (
 the de-fault),
  []
 
 
-Underfull \hbox (badness 2088) in paragraph at lines 480--481
+Underfull \hbox (badness 2088) in paragraph at lines 482--483
 \OT1/ptm/b/n/9 the cache is a dor-mant car-rier: ev-ery prop-erty re-turns
  []
 
 
-Underfull \hbox (badness 3189) in paragraph at lines 480--481
+Underfull \hbox (badness 3189) in paragraph at lines 482--483
 \OT1/ptm/b/n/9 sen-tinel. When \OT1/pcr/b/n/9 profile_residual_fn \OT1/ptm/b/n/
 9 is sup-plied, the
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 480--481
+Underfull \hbox (badness 10000) in paragraph at lines 482--483
 \OT1/pcr/b/n/9 _LazyMemoCachedEvaluationCost \OT1/ptm/b/n/9 sentinel-memo slot
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 480--481
+Underfull \hbox (badness 10000) in paragraph at lines 482--483
 \OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 paper_quantities_cache.py:139-187\OT1/ptm/b/n/9 
 ); two reads
  []
 
 
-Underfull \hbox (badness 2941) in paragraph at lines 480--481
+Underfull \hbox (badness 2941) in paragraph at lines 482--483
 \OT1/ptm/b/n/9 the closed-set \OT1/pcr/b/n/9 PAPER_QUANTITIES_SITE_NAMES \OT1/p
 tm/b/n/9 con-stant
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 480--481
+Underfull \hbox (badness 10000) in paragraph at lines 482--483
 \OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 paper_quantities_cache.py:112-130\OT1/ptm/b/n/9 
 ), and per-site
  []
 
 
-Underfull \hbox (badness 1521) in paragraph at lines 480--481
+Underfull \hbox (badness 1521) in paragraph at lines 482--483
 \OT1/pcr/b/n/9 B, C, e_rho) \OT1/ptm/b/n/9 4-tuple / \OT1/pcr/b/n/9 (sheet_A, c
 ell_C) \OT1/ptm/b/n/9 2-tuple /
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 480--481
+Underfull \hbox (badness 10000) in paragraph at lines 482--483
 \OT1/pcr/b/n/9 PaperQuantitiesSnapshot \OT1/ptm/b/n/9 / \OT1/pcr/b/n/9 profile_
 residual_fn
  []
 
 
-Underfull \hbox (badness 7238) in paragraph at lines 480--481
+Underfull \hbox (badness 7238) in paragraph at lines 482--483
 \OT1/ptm/b/n/9 callable). The \OT1/pcr/b/n/9 consume(site_name) \OT1/ptm/b/n/9 
 ac-ti-va-tion log is
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 480--481
+Underfull \hbox (badness 10000) in paragraph at lines 482--483
 \OT1/ptm/b/n/9 end-point (\OT1/pcr/b/n/9 paper_quantities_cache.py:517-536\OT1/
 ptm/b/n/9 )
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 480--481
+Underfull \hbox (badness 10000) in paragraph at lines 482--483
 \OT1/ptm/b/n/9 re-ports per-site hit/miss counts. Tests:
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 480--481
+Underfull \hbox (badness 10000) in paragraph at lines 482--483
 \OT1/pcr/b/n/9 tests/test_paper_quantities_cache.py \OT1/ptm/b/n/9 ver-i-fies
  []
 
@@ -3089,79 +3105,79 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.490 ...while the cross-budget sweep delivers ≈
+l.492 ...while the cross-budget sweep delivers ≈
                                                   10× NFE compression at ma...
 
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
 
-Underfull \hbox (badness 3179) in paragraph at lines 492--493
+Underfull \hbox (badness 3179) in paragraph at lines 494--495
 []\OT1/ptm/b/n/9 K3 | Sample-difficulty strat-i-fi-ca-tion. FlowA's op-tional
  []
 
 
-Underfull \hbox (badness 2932) in paragraph at lines 494--495
+Underfull \hbox (badness 2932) in paragraph at lines 496--497
 \OT1/ptm/b/n/9 cou-ples the four sched-uler ports (\OT1/pcr/b/n/9 SchedulerProt
 ocol\OT1/ptm/b/n/9 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 494--495
+Underfull \hbox (badness 10000) in paragraph at lines 496--497
 \OT1/pcr/b/n/9 MergeOperatorProtocol\OT1/ptm/b/n/9 , \OT1/pcr/b/n/9 PolicyDrive
 rProtocol\OT1/ptm/b/n/9 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 494--495
+Underfull \hbox (badness 10000) in paragraph at lines 496--497
 \OT1/pcr/b/n/9 RestartBlenderProtocol\OT1/ptm/b/n/9 ); iso-lated de-ploy-ment o
 f
  []
 
 
-Underfull \hbox (badness 2671) in paragraph at lines 494--495
+Underfull \hbox (badness 2671) in paragraph at lines 496--497
 \OT1/ptm/b/n/9 any sin-gle com-po-nent does not de-liver the frame-work's
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 494--495
+Underfull \hbox (badness 10000) in paragraph at lines 496--497
 \OT1/ptm/b/n/9 head-line value-add. The five-arm cumulative-add
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 494--495
+Underfull \hbox (badness 10000) in paragraph at lines 496--497
 \OT1/ptm/b/n/9 struc-ture (A2 iso-lates \OT1/pcr/b/n/9 CodimensionSheetSchedule
 r
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 494--495
+Underfull \hbox (badness 10000) in paragraph at lines 496--497
 \OT1/ptm/b/n/9 alone, A3 adds \OT1/pcr/b/n/9 BoundedMergeOperator\OT1/ptm/b/n/9
  , A4 adds
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 494--495
+Underfull \hbox (badness 10000) in paragraph at lines 496--497
 \OT1/pcr/b/n/9 EvidenceDrivenScheduler\OT1/ptm/b/n/9 ) shows that the pro-tein
  []
 
 [12]
-Underfull \hbox (badness 3199) in paragraph at lines 498--499
+Underfull \hbox (badness 3199) in paragraph at lines 500--501
 []\OT1/ptm/b/n/9 K6 | Frequency-domain and multi-modal in-te-gra-tion.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 538--539
+Underfull \hbox (badness 10000) in paragraph at lines 540--541
 []\OT1/ptm/b/n/9 The fol-low-ing re-runs are pri-ori-tised: (a) R6
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 538--539
+Underfull \hbox (badness 10000) in paragraph at lines 540--541
 \OT1/ptm/b/n/9 3-seed re-verification un-der the full theoretical-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 538--539
+Underfull \hbox (badness 10000) in paragraph at lines 540--541
 \OT1/ptm/b/n/9 perspective stack (\OT1/pcr/b/n/9 CodimensionSheetScheduler \OT1
 /ptm/b/n/9 +
  []
@@ -3175,7 +3191,7 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.548 ...alidity (NOT-SIGNIFICANT at K-level α).}
+l.550 ...alidity (NOT-SIGNIFICANT at K-level α).}
                                                    FlowMol3 \texttt{rdkit\_v...
 
 You may provide a definition with
@@ -3189,42 +3205,22 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.548 ...s: \textbf{NOT-SIGNIFICANT at K-level α}
+l.550 ...s: \textbf{NOT-SIGNIFICANT at K-level α}
                                                    — the underlying byte-s...
 
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
 
-Underfull \hbox (badness 2393) in paragraph at lines 548--549
+Underfull \hbox (badness 2393) in paragraph at lines 550--551
 \OT1/ptm/b/n/9 FM, 3-seed \TS1/ptm/b/n/9 � \OT1/ptm/b/n/9 n=200 paired sweep). 
 Head-line sched-uler:
  []
 
 
-Underfull \hbox (badness 1655) in paragraph at lines 548--549
+Underfull \hbox (badness 1655) in paragraph at lines 550--551
 \OT1/ptm/b/n/9 sha256 \OT1/pcr/b/n/9 af322f38\OT1/ptm/b/n/9 . Sta-tus: NOT-SIGN
 IFICANT at K-level
- []
-
-
-! LaTeX Error: Unicode character α (U+03B1)
-               not set up for use with LaTeX.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.550 ... Status: \textbf{SUPPORTED at K-level α}
-                                                   (preserved verbatim from ...
-
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 550--551
-\OT1/ptm/b/n/9 Lin-eage-Flow \OT1/pcr/b/n/9 hmmscan_length_bias \OT1/ptm/b/n/9 
-(pro-tein FM,
  []
 
 
@@ -3243,106 +3239,126 @@ You may provide a definition with
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 552--553
+\OT1/ptm/b/n/9 Lin-eage-Flow \OT1/pcr/b/n/9 hmmscan_length_bias \OT1/ptm/b/n/9 
+(pro-tein FM,
+ []
+
+
+! LaTeX Error: Unicode character α (U+03B1)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.554 ... Status: \textbf{SUPPORTED at K-level α}
+                                                   (preserved verbatim from ...
+
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 554--555
 []\OT1/ptm/b/n/9 K5 | Lin-eage-Flow HM-MER framework-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 552--553
+Underfull \hbox (badness 10000) in paragraph at lines 554--555
 \OT1/ptm/b/n/9 vs-baseline delta (SUP-PORTED). Lin-eage-Flow
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 552--553
+Underfull \hbox (badness 10000) in paragraph at lines 554--555
 \OT1/pcr/b/n/9 hmmscan_framework_vs_baseline \OT1/ptm/b/n/9 (pro-tein FM,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 554--555
+Underfull \hbox (badness 10000) in paragraph at lines 556--557
 []\OT1/ptm/b/n/9 K7 | Lin-eage-Flow nov-elty (PAR-TIAL / di-rec-tion
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 554--555
+Underfull \hbox (badness 10000) in paragraph at lines 556--557
 \OT1/ptm/b/n/9 IN-VERTED). Lin-eage-Flow \OT1/pcr/b/n/9 novel_pct_pfam_twilight
 
  []
 
 
-Underfull \hbox (badness 1590) in paragraph at lines 554--555
+Underfull \hbox (badness 1590) in paragraph at lines 556--557
 \OT1/ptm/b/n/9 (pro-tein FM, $\OML/cmm/m/it/9 N \OT1/cmr/m/n/9 = 1000$ \OT1/ptm
 /b/n/9 per arm). Head-line sched-uler:
  []
 
 
-Underfull \hbox (badness 3449) in paragraph at lines 554--555
+Underfull \hbox (badness 3449) in paragraph at lines 556--557
 \OT1/pcr/b/n/9 CosineAnnealScheduler\OT1/ptm/b/n/9 . The W280 P driver \OT1/pcr
 /b/n/9 d_z =
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 554--555
+Underfull \hbox (badness 10000) in paragraph at lines 556--557
 \OT1/pcr/b/n/9 +\OMS/cmsy/b/n/9 nfg\OT1/pcr/b/n/9 text\OMS/cmsy/b/n/9 f\OT1/pcr
 /b/n/9 Inf\OMS/cmsy/b/n/9 g\TS1/pcr/b/n/9 $ \OT1/pcr/b/n/9 is a numerical artif
 act (driver
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 554--555
+Underfull \hbox (badness 10000) in paragraph at lines 556--557
 \OT1/pcr/b/n/9 subsamples \OT1/ptm/b/n/9 base-line.fasta \OT1/pcr/b/n/9 only, p
 roducing 0/0
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 554--555
+Underfull \hbox (badness 10000) in paragraph at lines 556--557
 \OT1/pcr/b/n/9 paired-diff). The W166 P3 canonical evidence
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 554--555
+Underfull \hbox (badness 10000) in paragraph at lines 556--557
 \OT1/pcr/b/n/9 is the authoritative reading: baseline
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 554--555
+Underfull \hbox (badness 10000) in paragraph at lines 556--557
 \OT1/pcr/b/n/9 466/1000 = 46.6% vs framework 37/1000 = 3.7%
  []
 
 
-Underfull \hbox (badness 1867) in paragraph at lines 554--555
+Underfull \hbox (badness 1867) in paragraph at lines 556--557
 \OT1/ptm/b/n/9 The frame-work is 12.6\TS1/ptm/b/n/9 � \OT1/ptm/b/n/9 LESS Pfam-
 novel than base-line
  []
 
 
-Underfull \hbox (badness 1881) in paragraph at lines 554--555
+Underfull \hbox (badness 1881) in paragraph at lines 556--557
 \OT1/ptm/b/n/9 | the structural-correctness sig-nal is pre-served, but the
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 558--559
+Underfull \hbox (badness 10000) in paragraph at lines 560--561
 []\OT1/ptm/b/n/9 The \TS1/ptm/b/n/9 �\OT1/ptm/b/n/9 7.8 R5c regime curve
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 558--559
+Underfull \hbox (badness 10000) in paragraph at lines 560--561
 \OT1/ptm/b/n/9 (\OT1/pcr/b/n/9 docs/audit/mnist/wf334-r5c-regime-curve.md\OT1/p
 tm/b/n/9 )
  []
 
 
-Underfull \hbox (badness 3219) in paragraph at lines 562--563
+Underfull \hbox (badness 3219) in paragraph at lines 564--565
 \OT1/ptm/b/n/9 the restart-blend op-er-a-tor as a func-tion of \OT1/pcr/b/n/9 n
 _rounds\OT1/ptm/b/n/9 ,
  []
 
 
-Underfull \hbox (badness 4995) in paragraph at lines 562--563
+Underfull \hbox (badness 4995) in paragraph at lines 564--565
 \TS1/ptm/b/n/9 �\OT1/ptm/b/n/9 7.6 \OT1/pcr/b/n/9 n_rounds \OT1/ptm/b/n/9 tran-
 si-tion at matched NFE = 50 on
  []
 
 
-Underfull \hbox (badness 4467) in paragraph at lines 562--563
+Underfull \hbox (badness 4467) in paragraph at lines 564--565
 \OT1/ptm/b/n/9 CIFAR-10 RF and ex-tend-ing to the \TS1/ptm/b/n/9 �\OT1/ptm/b/n/
 9 7.8 R5c regime
  []
@@ -3360,10 +3376,10 @@ Package rerunfilecheck Info: File `paper-A-final.out' has not changed.
 (rerunfilecheck)             Checksum: 520C017A2DAC0FA92260FDE51C7D8CDB;15902.
  ) 
 Here is how much of TeX's memory you used:
- 11675 strings out of 469504
- 177943 string characters out of 5470285
- 612660 words of memory out of 5000000
- 40047 multiletter control sequences out of 15000+600000
+ 11680 strings out of 469504
+ 177997 string characters out of 5470285
+ 612722 words of memory out of 5000000
+ 40050 multiletter control sequences out of 15000+600000
  671351 words of font info for 127 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  75i,10n,79p,2613b,643s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -3382,10 +3398,10 @@ st/fonts/type1/urw/courier/ucrbo8a.pfb></usr/share/texmf-dist/fonts/type1/urw/t
 imes/utmb8a.pfb></usr/share/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/
 share/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-dist/fonts/
 type1/urw/times/utmri8a.pfb>
-Output written on paper-A-final.pdf (14 pages, 304544 bytes).
+Output written on paper-A-final.pdf (14 pages, 305270 bytes).
 PDF statistics:
- 488 PDF objects out of 1000 (max. 8388607)
- 431 compressed objects within 5 object streams
- 111 named destinations out of 1000 (max. 500000)
+ 490 PDF objects out of 1000 (max. 8388607)
+ 433 compressed objects within 5 object streams
+ 113 named destinations out of 1000 (max. 500000)
  545 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -311,7 +311,9 @@ is well-typed iff each component satisfies its own protocol contract, and the co
 
 \textbf{Sub-claim 1.3 — MergeOperatorProtocol closure.} \texttt{BoundedMergeOperator} enforces the bounded noise floor that prevents escape from the fibre; its closure under composition follows from the \texttt{noise\_floor ≤ schedule\_envelope} invariant maintained at the runner layer; the merge operator's output fed into \texttt{engine.run\_round} is therefore always inside the scheduled envelope.
 
-\textbf{Sub-claim 1.4 — RestartBlenderProtocol closure.} \texttt{LinearBlender} / \texttt{DistanceDecayBlender} / \texttt{LatentConvexMixer} / \texttt{RMSPreservingCoordinateMixer} all keep the prior/fresh blend inside the scheduled envelope, so the composition with the scheduler is closed (the blender operates strictly on the schedule-bounded noise envelope, never outside it). $\blacksquare$
+\textbf{Sub-claim 1.4 — RestartBlenderProtocol closure.} \texttt{LinearBlender} / \texttt{DistanceDecayBlender} / \texttt{LatentConvexMixer} all keep the prior/fresh blend inside the scheduled envelope, so the composition with the scheduler is closed (the blender operates strictly on the schedule-bounded noise envelope, never outside it). $\blacksquare$
+
+\textbf{Sub-claim 1.4 note (Wave 342 additive disposition).} The previous enumeration cited \texttt{RMSPreservingCoordinateMixer}, a deprecated back-compat alias for the molecule-domain concrete impl \texttt{EqualRmsCoordinateMixer} (\texttt{adaptive\_reflow/molecular/mixer.py:411} + ADR-0009); full RMS-precondition analysis is deferred to a separate ultracode per the Wave 342 deferred-to-ultracode disposition. Sub-claims 1.1--1.3 and \S6.3--\S6.5 are unchanged.
 
 \subsection{6.3 Lemma 2 — State-machine byte-determinism}
 
@@ -351,11 +353,11 @@ Let $v_\theta$ be a flow-matching velocity field with Lipschitz constant $L$ and
 
 $$\mathbb{E}\bigl[\|x_T^{(n_\text{rounds})} - x_T^{\text{target}}\|^2\bigr] \;\leq\; C_1 \cdot \exp\!\bigl(-n_\text{rounds} / \tau_\text{residual}\bigr) + C_2 \cdot \exp\!\bigl(-T / \tau_\text{velocity}\bigr),$$
 
-with $\tau_\text{residual} = \Theta(\varepsilon_\theta^{-2} \log(1/\varepsilon_\theta))$, $\tau_\text{velocity} = \Theta(L^{-1})$, and $C_1, C_2 > 0$ constants depending only on $p_\text{data}$ and the schedule envelope. In the \textbf{under-trained regime} ($\varepsilon_\theta$ large), the residual-error term dominates and restart-blending accelerates convergence; in the \textbf{well-trained regime} ($\varepsilon_\theta$ small), the velocity-field term dominates and the restart-blend value-add vanishes — the regime-dependence observed in §7.8 R5c and §7.6 R5b. The bound follows from Bolley--Guilin--Villani (2012) concentration (residual-error term, $\exp(-i / \tau_\text{residual})$ rate) and Lipschitz propagation of the ODE-flow (velocity-field term, $\exp(-T/\tau_\text{velocity})$ rate); Lemma 1 closure ensures the BGV12 bounded-support hypothesis holds by construction for every well-typed runner. $\blacksquare$ \textbf{Sub-claim 4.1}: framework value-add $\text{VA}(v_\theta) := C_2 e^{-T/\tau_\text{velocity}} - C_1 e^{-n_\text{rounds}/\tau_\text{residual}}$ satisfies $\partial \text{VA} / \partial \varepsilon_\theta \leq 0$ — monotone non-increasing in ckpt fidelity.
+with $\tau_\text{residual} = \Theta(\varepsilon_\theta^{-2} \log(1/\varepsilon_\theta))$, $\tau_\text{velocity} = \Theta(L^{-1})$, and $C_1, C_2 > 0$ constants depending only on $p_\text{data}$ and the schedule envelope. In the \textbf{under-trained regime} ($\varepsilon_\theta$ large), the residual-error term dominates and restart-blending accelerates convergence; in the \textbf{well-trained regime} ($\varepsilon_\theta$ small), the velocity-field term dominates and the restart-blend value-add vanishes — the regime-dependence observed in §7.8 R5c and §7.6 R5b. The bound follows from Bolley--Guilin--Villani (2012)~[N] concentration (residual-error term, $\exp(-i / \tau_\text{residual})$ rate) and Lipschitz propagation of the ODE-flow~[M] (velocity-field term, $\exp(-T/\tau_\text{velocity})$ rate); Lemma 1 closure ensures the BGV12 bounded-support hypothesis holds by construction for every well-typed runner. $\blacksquare$ \textbf{Sub-claim 4.1}: framework value-add $\text{VA}(v_\theta) := C_2 e^{-T/\tau_\text{velocity}} - C_1 e^{-n_\text{rounds}/\tau_\text{residual}}$ satisfies $\partial \text{VA} / \partial \varepsilon_\theta \leq 0$ — monotone non-increasing in ckpt fidelity.
 
 \subsection{6.6 Framework Properties as primary contribution}
 
-These three properties — composition closure, byte-determinism, tamper-evidence — and the multi-round convergence-rate bound of Theorem 4 are the typed-contracts architecture made formal. The framework is module-independent of any particular theoretical companion. What remains load-bearing across all deployments is the four-protocol composition layer + the byte-stable state machine + the tamper-evident ledger chain + the BGV12 + Lipschitz-propagation convergence bound. This is the architecture contribution the paper claims.
+These three properties — composition closure, byte-determinism, tamper-evidence — and the multi-round convergence-rate bound of Theorem 4 are the typed-contracts architecture made formal. The framework is module-independent of any particular theoretical companion. What remains load-bearing across all deployments is the four-protocol composition layer + the byte-stable state machine + the tamper-evident ledger chain + the BGV12~[N] + Lipschitz-propagation~[M] convergence bound. This is the architecture contribution the paper claims.
 
 
 
@@ -565,9 +567,14 @@ Future work: derive a closed-form attenuation bound on the restart-blend operato
 
 \section{11 Conclusion}
 
-We have presented FlowA, a typed-contracts framework that reconstructs flow matching inference as a multi-round re-inference layer. The framework partitions over three domains with a four-port control surface and integrates five genuinely-novel engineering innovations (capability-token handshake, hash-chained ledger, PEP 695 state machine, typed four-port wire carrier, lazy-memoized site-aware cache). It is integrated into 5 vendored flow matching checkpoints with zero-line changes. We validate FlowA across 11 headline cells with 3 seeds × 4 pre-registered Bonferroni families × D.4 byte-stable 30/30, observing 2.5–10× cross-budget NFE compression alongside byte-stable composite-axis lifts on all three Tier-3 real checkpoints. We establish three formal framework properties (composition closure, byte-determinism, tamper-evidence) and the multi-round re-inference convergence-rate bound of Theorem 4. The framework is module-independent of any particular theoretical companion; 10 of 11 headline cells use the baseline scheduler that ignores all four paper quantities. The typed-contracts architecture is, in our measurements, empirical rather than aspirational.
+We have presented FlowA, a typed-contracts framework that reconstructs flow matching inference as a multi-round re-inference layer over three domains with a four-port control surface. Validated across 11 headline cells with 3 seeds × 4 pre-registered Bonferroni families × D.4 byte-stable 30/30, we observe 2.5–10× cross-budget NFE compression alongside byte-stable composite-axis lifts on all three Tier-3 real checkpoints. The framework is module-independent of any particular theoretical companion — 10 of 11 headline cells use the baseline scheduler that ignores all four paper quantities — and establishes three formal framework properties (composition closure, byte-determinism, tamper-evidence) plus the multi-round re-inference convergence-rate bound of Theorem 4.
 \end{abstract}
 
+\begingroup
+\scriptsize
+\sloppy
+\setlength{\itemsep}{0pt}
+\setlength{\parskip}{0pt}
 \begin{thebibliography}{99}
 \bibitem{flow-matching} Lipman et al. Flow Matching for Generative Modeling. ICLR 2023.
 \bibitem{rectified-flow} Liu et al. Flow Straight and Fast. ICLR 2023 / arXiv 2209.03003.
@@ -584,6 +591,9 @@ We have presented FlowA, a typed-contracts framework that reconstructs flow matc
 \bibitem{lineageflow} LineageFlow. ICML 2026.
 \bibitem{kanzi} Kanzi. ICLR 2026.
 \bibitem{flowmol3} FlowMol3. NeurIPS 2024.
+\bibitem{bgv12} Bolley, Guillin, Villani (2012). Concentration inequalities for empirical measures. Sém. Probab. Strasbourg 31, 89-110.
+\bibitem{villani2003} Villani, C. (2003). Topics in Optimal Transportation. GSM 58, AMS.
 \end{thebibliography}
+\endgroup
 
 \end{document}
