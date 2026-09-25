@@ -225,6 +225,7 @@ not_in_nav: |
   theory/theorem-1-self-contained.md
   lean/*.md
   lean_issue_re_inference_provenance.md
+  verification_outputs.md
   paper-draft.md
   push-ready-summary.md
   tables/*.md

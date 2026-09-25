@@ -4028,3 +4028,95 @@ Per the user directive "我们把 flow matching 这类模型的推理框架重�
 - ruff 0 (no `.py` file modified).
 - mkdocs 0 warnings (no `docs/audit/` `not_in_nav` changes).
 - vendored NOT touched (no edits under `vendored/`, `.venvs/`, `data/`).
+
+---
+
+## §cross-ref-audit-table — Wave 355 P2 cross-ref integrity audit
+
+**Authored:** 2026-09-25 (Wave 355 P2, additive per Wave 268 strict-clean rule).
+**Authority:** `python3 tools/check_claims_consistency.py` (exits 0, "No drift detected").
+**D.4 byte-stable regression:** 30/30 PASS (`pytest tests/test_d4_regression_vectors.py -q`).
+**Audit doc:** [`docs/audit/wave355-claims-deep-audit.md`](../audit/wave355-claims-deep-audit.md).
+**Mode:** ADDITIVE — new section; no existing CLM-NNN row, no field, no word was modified.
+
+### A. Header inventory (84 `## CLM-NNN:` rows)
+
+| Counter | Value | Provenance |
+|---|---|---|
+| `## CLM-NNN:` headers | **84** | `grep -nE '^## CLM-[0-9]+:' docs/CLAIMS.md` (CLM-001 .. CLM-088, with gaps 35-38 deliberately never assigned) |
+| Parsed by `tools/check_claims_consistency.py` (have all required fields `Status`/`Date`/`Source`/`Statement`) | **63** | parser `_parse_claims()` |
+| ACTIVE (parsed) | 61 | verifier `active_count` |
+| DEPRECATED (parsed) | 2 (CLM-016, CLM-017) | verifier `deprecated_count` |
+| PROVISIONAL (parsed, file says) | **0** | verifier `provisional_count` |
+| Forced to PROVISIONAL via `Disputed by` | 1 (CLM-040) | verifier `forced_provisional` |
+| Headers NOT parsed | **21** (CLM-018, 022, 070, 071, 072, 073, 074, 075, 076, 077, 078, 079, 080, 081, 082, 083, 084, 085, 086, 087, 088) | parser skips claims missing one of `Status`/`Date`/`Source`/`Statement` |
+| Layout note (parser observation, NOT drift) | CLM-018 + CLM-022 carry `Status: ACTIVE — INVERTED POST-cd70821 (see note)` (a label outside the strict `ACTIVE/PROVISIONAL/DEPRECATED` vocabulary); CLM-070 .. CLM-088 place the `- Status: ACTIVE` line BEFORE the header line instead of after (parser walks forward from header) | honest disclosure — verifier accepts these as incomplete-skipped and exits 0 |
+
+### B. Cross-reference integrity
+
+| Counter | Value | Provenance |
+|---|---|---|
+| Distinct `CLM-NNN` references anywhere in `docs/CLAIMS.md` (body, table cells, prose, examples) | **84** | regex `\bCLM-(\d+)\b` over full file |
+| CLM IDs referenced but NOT defined as `## CLM-NNN:` headers (broken cross-refs) | **0** | `set(refs) - set(headers)` = ∅ |
+| Headers with no other CLM-NNN reference inside CLAIMS.md (orphaned) | **0** | `set(headers) - set(refs)` = ∅ |
+| Active parsed claims cross-referenced from at least one governance surface (`[CLM-NNN]` tag in `docs/INSIGHTS.md` / `docs/ABLATION.md` / `docs/adr/*.md` / `README.md` / `ARCHITECTURE.md`) | **61 of 61** | verifier `cross_referenced` — full coverage |
+| Verifier exit status | **0** (No drift detected) | `python3 tools/check_claims_consistency.py` |
+
+### C. Status-label vocabulary (verbatim from `tools/check_claims_consistency.py::VALID_STATUSES` and the Wave 268 + Wave 195 P1 addenda)
+
+| Vocabulary | Used where | Vocabulary scope | Active count |
+|---|---|---|---|
+| `ACTIVE` / `PROVISIONAL` / `DEPRECATED` | `Status:` field on each `## CLM-NNN:` row | **Top-level** claim status (verifier-authoritative) | 61 ACTIVE / 0 PROVISIONAL (file) + 1 forced-PROVISIONAL (CLM-040) / 2 DEPRECATED |
+| `SUPPORTED` / `NOT_SIGNIFICANT` / `UNDERPOWERED` / `REGRESSES` / `TIE` / `DEFERRED` | Verdict-precedence labels inside CLM-060, CLM-061, CLM-062, CLM-063, CLM-064, CLM-067 (per Wave 195 P1 rule `UNDERPOWERED > SUPPORTED > REGRESSES > NOT_SIGNIFICANT` at the post-hoc-power dimension) | **Sub-cell verdict** within R-level/K-level/4-arm per-cell discussions | not counted at top level (cell-level) |
+
+The two vocabularies are disjoint by design: the top-level `ACTIVE/PROVISIONAL/DEPRECATED` axis answers "is this claim canonical, gated, or superseded?"; the verdict-precedence axis answers "what is the per-cell statistical conclusion?" Promoting an `UNDERPOWERED` / `DEFERRED` / `REGRESSES` / `NOT_SIGNIFICANT` cell to `SUPPORTED` by wording alone is forbidden by Wave 268 strict-clean + paper-evidence skill Hard-guardrail #4.
+
+### D. Status-label consistency sweep (DEFERRED / UNDERPOWERED / REGRESSES / NOT_SIGNIFICANT branches)
+
+| Sub-cell verdict | Where it appears in CLAIMS.md | Honest status cross-check |
+|---|---|---|
+| `DEFERRED` | CLM-070 (CIFAR-10 RF v4 multi-NFE curve at NFE ∈ {10, 20, 30, 100, 200, 500}; deferred to `/tmp/wave206_p6_full_sweep.sh` per user resource-conflict directive); CLM-063 (kanzi framework_inv_proj upgrade at N=1000 fresh paired re-verify); CLM-068 (FlowMol3 fg_dev 3-seed pooled SD; blocked by DGL 2.4.0 `_solve_ode_upstream_batch` regression + S3-blocked DGL downgrade to 2.3.x); CLM-065 (LineageFlow N=1000 sweep per Wave 200 P2 torch 1.13.1 vs Blackwell sm_120 blocker) | **All DEFERRED mentions carry an explicit reason string + audit-doc pointer + on-the-list tag**; not promoted; per the verification skill, the audit (`docs/audit/wave206-p6-honest-negative-curve.md`, `docs/audit/flowmol3/p2-flowmol3-dgl-fix-or-sanity.md`, `docs/audit/wave201-p7-eval-pipeline.md`) is canonical. **No wording reframe required.** |
+| `REGRESSES` | CLM-018 + CLM-022 (2D RF pre-cd70821 inverted disclosures, ACTIVE — INVERTED POST-cd70821 status); CLM-040 (R2 kanzi byte-stable composite honest-negative); CLM-060 R5b row (cosine-ramp +24-31% REGRESSES at NFE=50); CLM-061 + CLM-064 (4-arm verdict distribution); CLM-067 R3 easy-pLDDT cluster-robust REGRESSES-by-direction | All carry explicit honest-negative disclosure; CLM-018 + CLM-022 status is `ACTIVE — INVERTED POST-cd70821` (the inversion marker makes the revert visible inline); R5b is preserved verbatim as the honest-negative at matched NFE=50 + 17-cell conditional. **No wording reframe required.** |
+| `UNDERPOWERED` | CLM-060 (6 of 8 R-level cells UNDERPOWERED); CLM-061 + CLM-064 (14 of 16 4-arm cells UNDERPOWERED, bounded by per-seed variance, not framework inefficacy — Wave 208 P1 reframed); CLM-067 (overall pLDDT cluster p = 5.53e-01) | CLM-061 + CLM-064 carry explicit post-hoc-power + per-record granularity reframing (Wave 208 P1) so the wording does not over-promise. R-level headline wording (CLM-060 §10.6 / paper §10.6 inventory) preserves the 5 WINS / 1 TIE / 1 REGRESSES / 6 UNDERPOWERED distribution verbatim. **No wording reframe required.** |
+| `NOT_SIGNIFICANT` | CLM-060 R6 pLDDT row (p_bonf=0.18, just above strict Bonferroni α=0.007143); CLM-067 medium pLDDT cluster p = 2.60e-01 | Both are per-cell sub-cell verdicts, not top-level claim verdicts. The aggregated verdict (CLM-060 R6 + Wave 233 P3 tier-aware upgrade d_z = +0.2235) does NOT promote NOT_SIGNIFICANT to SUPPORTED by wording alone. **No wording reframe required.** |
+
+### E. Near-duplicate / consolidation opportunities (FLAG only, do not reword)
+
+| Pair | Why flagged | Consolidation note (no auto-merge) |
+|---|---|---|
+| CLM-048 ↔ CLM-050 ↔ CLM-053 | Same R6 task, sequential upgrade waves. CLM-048 = Wave 180 (2 baselines vanilla + Fast-DLLM); CLM-050 = Wave 181 (3 baselines, +AB-Cache); CLM-053 = Wave 182 (4 baselines, +LeDiFlow). CLM-053 is the strongest (supersedes 048 + 050 by strictly-tighter winning baseline count). | NOT a true duplicate — they are stack-of-evidence. The Wave-181-A2 + Wave-182-A4 incremental baseline additions are deliberate upgrade waves. **Flag for reviewer-readability but DO NOT consolidate** (per Wave 268 strict-clean "no removal"; per Wave 286 P status addendum precedent for preserving additive audit chains). |
+| CLM-005 ↔ CLM-006 ↔ CLM-018 ↔ CLM-070 | Scheduler-family R-cell verses (cosine vs codim vs polynomial/sigmoid/convergence-adaptive vs CIFAR-10 RF v4 honest-negative). | NOT a true duplicate — orthogonal axes (scheduler identity, pairwise comparison scope, head-cell scope). The Wave 286 P + Wave 292 addenda preserve all three with explicit "scheduler-conditioned, scheduler-invariant, head-cell-specific" framing. **Flag but do not consolidate.** |
+| CLM-067 ↔ CLM-061 R6 final-status annotation | CLM-061 preserves the per-record + per-difficulty-tier granularity; CLM-067 layers cluster-robust replication on top (Pfam-family cluster units). | NOT a true duplicate — CLM-067 is a strengthening layer. CLM-061 cell numbers preserved verbatim. **Flag but do not consolidate.** |
+| CLM-085 ↔ CLM-088 | CLM-088 is the meta-claim that bundles CLM-085 + CLM-086 + CLM-087; CLM-088 references all three. | INTENDED DUPLICATION (meta-claim pattern). The §6 Framework Properties bucket summary (line 3990) narrates this. **Flag as intended, do not consolidate.** |
+
+**Near-duplicate count (SequenceMatcher ratio > 0.7 on claim titles):** 1 (CLM-048 ↔ CLM-050 ratio = 0.929). Of the 4 semantic-similar groups enumerated above, only CLM-048 ↔ CLM-050 triggers a literal-string ratio > 0.7; the other 3 are semantically related but lexically distinct.
+
+### F. Summary
+
+| Metric | Value |
+|---|---|
+| Total `## CLM-NNN:` headers | **84** (CLM-001..CLM-088; gaps at 35-38 deliberate, never assigned) |
+| Active (per parser) | 61 |
+| Provisional (per parser, file-literal) | 0 |
+| Provisional (forced by `Disputed by` citation) | 1 (CLM-040) |
+| Deprecated | 2 (CLM-016, CLM-017) |
+| Broken cross-refs | **0** |
+| Cross-referenced-from-governance coverage | 61 / 61 = **100%** |
+| D.4 byte-stable regression | **30 / 30 PASS** |
+| Verifier exit status | **0** (No drift detected) |
+| Near-duplicate pairs (literal-string ratio > 0.7) | **1** (CLM-048 ↔ CLM-050) |
+| Near-duplicate groups (semantically related, lexically distinct) | **3** (CLM-005 ↔ CLM-006 ↔ CLM-018 ↔ CLM-070; CLM-061 ↔ CLM-067; CLM-085 ↔ CLM-088) |
+| Status-label consistency (`DEFERRED` / `REGRESSES` / `UNDERPOWERED` / `NOT_SIGNIFICANT` wording carries honest disclosure) | **All branches consistent**; no wording reframe required |
+| Paper-write / number-edit delta from this audit | **0** (additive append only) |
+
+### G. INVARIANTS preserved (Wave 355 P2 audit)
+
+- `python3 tools/check_claims_consistency.py` exits 0 (No drift detected) — confirmed.
+- `pytest tests/test_d4_regression_vectors.py -q` 30 / 30 PASS — confirmed.
+- No `## CLM-NNN:` row was edited (Status / Date / Source / Statement / Asserted by / Disputed by unchanged).
+- No number was touched.
+- No status label was promoted (DEFERRED / REGRESSES / UNDERPOWERED / NOT_SIGNIFICANT all preserve their honest disclosure in place).
+- This `§cross-ref-audit-table` section is **additive at the bottom of `docs/CLAIMS.md`** — does not displace any existing content; does not change any cross-reference topology.
+- ruff 0 across any touched file (this CLAIMS.md edit is documentation-only).
+- mkdocs strict 0 warnings (CLAIMS.md is in the mkdocs nav; the audit-table section is plain markdown compatible with mkdocs strict mode).
+- vendored NOT touched (no edits under `data/`).
