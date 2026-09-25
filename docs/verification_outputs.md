@@ -382,4 +382,140 @@ Per Wave 268 strict-clean rule, updates to this README are ADDITIVE only — nev
 
 ---
 
-_Last updated: 2026-09-25 (Wave 355 P1 — master index created)._
+## 11. Cross-reference back-fill matrix (Wave 360 P4)
+
+> **Status:** ADDITIVE back-fill — surfaces every `verification_outputs/<path>` cross-reference
+> actually made from the three active TNNLS-facing surfaces against on-disk byte-stable artefacts.
+> No destructive edits; no rows in §3.X modified; no SHA regeneration in MANIFEST.md.
+> **Date:** 2026-09-25.
+> **Audit doc:** [`docs/audit/wave360-verification-outputs-xref.md`](audit/wave360-verification-outputs-xref.md)
+> (this back-fill audit trail — observed facts (52 cross-refs) + interpretation
+> (3 broken refs flagged in active submission surfaces) + gaps (R3 in-flight, R4/R5 phantom paths)).
+
+### 11.1 Surfacing corpus (the 3 active surfaces searched)
+
+| # | Surface | Path under repo root | Files searched | Lines |
+|---|---|---|---|---|
+| 1 | Paper A | `docs/drafts/paper-A-final.md` | 1 | 1044 |
+| 2 | Supplementary | `supplementary.md` | 1 | 785 |
+| 3 | TNNLS submission | `tnnls_submission/{cover_letter,data_availability,figures,highlights,MANIFEST,submission_checklist,tables}.md` | 7 | 2826 |
+| **Total** | **—** | **—** | **9 files** | **4655 lines** |
+
+The FILL_GUIDE.md + submission_checklist.md README + `tnnls_submission/supplementary/README.md`
+were also grep'd and contain no `verification_outputs/<path>` references — they are referenced by MANIFEST row 31.
+
+### 11.2 Back-fill matrix (52 cross-references resolved)
+
+Each row corresponds to a `verification_outputs/<path>` that is *cited by at least one active surface*,
+with the per-surface line/section anchor + the on-disk byte-stable SHA-256 (first-16-hex displayed;
+full 64-hex on-disk in the audit doc). Status legend:
+
+- **OK** — on-disk artefact exists at HEAD; SHA-256 reproducible.
+- **MISS** — cited in an active surface but the directory/file does not exist on disk
+  (broken cross-ref; **flagged**, not edited — the TNNLS submission is frozen per AGENTS.md §3 #5).
+- **TRUNC** — grep-extracted mid-pattern artefact (e.g. `wave183-p4-aggregate.py` line ending in a
+  trailing dash / `flowmol3/...`); not a real path. Surfaced here for completeness; no action.
+
+| # | Path | SHA-256¹ | Size² | Citing surface(s) | Status |
+|---|---|---|---|---|---|
+| 1 | `wave183-p4-aggregate.py` | `30714cc1b6421344…` | 18581 B | MANIFEST.md rows 37–39 (Figure 3/4/5 renderer anchor); paper-A-final.md §7.7.1 | OK |
+| 2 | `wave183-p4-aggregation.csv` | `b9627e1a63b1e30f…` | 3010 B | MANIFEST.md row 32 (paper provenance); paper-A-final.md §7.7.1 (36-row aggregation source) | OK |
+| 3 | `wave183-p4-figure-deltas-finer.png` | `1412578cc63add7a…` | 144560 B | MANIFEST.md row 39 (SHA-256 pinned); paper-A-final.md §7.7.1 Figure 5 | OK |
+| 4 | `wave183-p4-figure-pLDDT-finer.png` | `0ac80722b7063f4a…` | 146117 B | MANIFEST.md row 37 (SHA-256 pinned); paper-A-final.md §7.7.1 Figure 3 | OK |
+| 5 | `wave183-p4-figure-scPerplexity-finer.png` | `f590c0b8ac6b82a1…` | 133574 B | MANIFEST.md row 38 (SHA-256 pinned); paper-A-final.md §7.7.1 Figure 4 | OK |
+| 6 | `wave189-p2-post-cd70821-combined.json` | `48e8f6e902ee77d2…` | 2871 B | paper-A-final.md §7.6 §7.2 R1 (R5a aggregation source); tables.md §T4 row (R1 cell source) | OK |
+| 7 | `wave189-p2-sota-2d-rerun/` (12 files) | `67bf67b98378cc6d…` | dir 12 files 1314 B | paper-A-final.md §7.6 R5a (per-seed CSVs); tables.md (T4 row); audit-doc pointer to closest valid 2D R4/R5 evidence (see §11.3 row 49-50) | OK |
+| 8 | `wave191-r5-n1000/` | n/a | n/a | tables.md §T5 row (`verification_outputs/wave191-r5-n1000/`) — **closest valid evidence**: `wave191-p2-cifar10-n1000/` (CIFAR-10 RF) + `wave191-p3-mnist-n1000/` (MNIST FM); see §11.3 row 51 | **MISS** |
+| 9 | `wave206-p6-honest-negative-curve.json` | `a319b561891cc59d…` | 4337 B | paper-A-final.md §7.6.2 (12-cell grid data point at `n_rounds=20`) | OK |
+| 10 | `wave225-p7-r5b-reduced-rounds.json` | `f22f57d9f3f42a97…` | 3591 B | paper-A-final.md §7.6.2 (12-cell grid data point at `n_rounds=2`) | OK |
+| 11 | `wave230-p2-real-4arm-per-record.csv` | `3fe15266ac5bec2c…` | 6259 B | data_availability.md §"16 cells" row; tables.md rows 29-32 + §T4; submission_checklist.md line 67 | OK |
+| 12 | `wave234-p2-tost.csv` | `85fedbdd998551b1…` | 3082 B | cover_letter.md §TOST; tables.md row 42 + §T4 | OK |
+| 13 | `wave234-p3-jonckheere.csv` | `003f33f4b87b7b3e…` | 278 B | cover_letter.md §Jonckheere; tables.md rows 44-45 + §T4 | OK |
+| 14 | `wave234-p4-bf01.csv` | `e531da9f717047ef…` | 2349 B | cover_letter.md §BF01; tables.md row 43 + §T4 | OK |
+| 15 | `wave234-p5-meta-analysis.csv` | `97a62d55ce836e6e…` | 3497 B | cover_letter.md §meta-analysis | OK |
+| 16 | `wave234-p5-meta-summary.json` | `4126511e94482efa…` | 943 B | cover_letter.md §meta; tables.md row 46 + §T4 | OK |
+| 17 | `wave234-p6-ni-test.csv` | `8db5f339eea1e91c…` | 377 B | tables.md row 47 (non-inferiority for `n_rounds≥2`) | OK |
+| 18 | `wave234-p6-non-inferiority.csv` | `eba23c92cd63e0bb…` | 924 B | cover_letter.md §non-inferiority (statistical-methods deliverable) | OK |
+| 19 | `wave235-p1-r5b-fix.csv` | `6829631549b51c41…` | 1914 B | data_availability.md R5b row + tables.md row 48 (R5b n_rounds=1 fix) | OK |
+| 20 | `wave235-p1-r5b-fix.json` | `488655ce10e0e1be…` | 3594 B | paper-A-final.md §7.6.2 (12-cell grid data point at `n_rounds=1`); cover_letter.md §R5b; data_availability.md R5b; tables.md row 16 + row 48 + row 88 | OK |
+| 21 | `wave235-p2-r2-uplift.csv` | `3041c9da28ee90d5…` | 4252 B | cover_letter.md §R2; tables.md row 89 | OK |
+| 22 | `wave235-p2-r2-uplift.json` | `9458748eb571fece…` | 13636 B | data_availability.md R2; tables.md row 12 + row 89 | OK |
+| 23 | `wave235-p3-r6-uplift.csv` | `a3397fae974aff1c…` | 3939 B | cover_letter.md §R6; tables.md row 90 | OK |
+| 24 | `wave235-p3-r6-uplift.json` | `9a9dff1867efa54c…` | 13843 B | data_availability.md R6; tables.md row 17 + row 90 | OK |
+| 25 | `wave236-p2-wallclock.json` | `b2cbb1abaffab17f…` | 738 B | tables.md row 91 (CUDA-graph wall-clock) | OK |
+| 26 | `wave242-p2-flowmol3-direction.csv` | `4edb517cc8080b40…` | 1596 B | cover_letter.md §FlowMol3 direction (R3) | OK |
+| 27 | `wave349-r1-3seed-gpu/` (3 files, `SHA256SUMS`) | `e01fa758bac2fb84…` | dir 3 files 4252 B | paper-A-final.md §3.5 (hash-chained ledger SHA-256 chain); MANIFEST.md row 32 (paper provenance); tables.md §T2 row | OK |
+| 28 | `wave351-p3-thm5-numerical/lipschitz_estimate.json` | `8dc029a08d6d8835…` | 1405 B | paper-A-final.md §6.6.1 + §A.3.6 + §A.3.4 (byte-stable L_local ≈ 0.3810); tables.md §T6 | OK |
+| 29 | `wave351-p3-thm5-numerical/thm5_fit.json` | `1827fb3ee3878b3b…` | 8623 B | paper-A-final.md §6.6.1 (eps_theta ≈ 0.0506 + sigma_blend 0.0596 to 0.2920) | OK |
+| 30 | `wave355-capability-token-example/` (1 file, `SHA256SUMS`) | `eb42da374c461d4a…` | dir 1 file 762 B | paper-A-final.md §3.4.2; highlights.md capability-token anchor | OK |
+| 31 | `wave355-capability-token-example/synthetic_continuous_capability_token.json` | `584f8e02c3eda4fd…` | 762 B | paper-A-final.md §3.4.2 (584f8e02 token); highlights.md capability-token anchor | OK |
+| 32 | `wave88_kanzi_n1000_baseline/kanzi_n1000_paper_metrics.json` | `ca262894e0a4d40d…` | 2148 B | supplementary.md line 9 (§S0 baseline) + §S5 (N=1000 Kanzi baseline + framework N=10); §S7 verdict distribution | OK |
+| 33 | `cifar_n200_nfe50_ema_corrected/comparison.md` | `e51720f3f872e142…` | 1734 B | supplementary.md line 170 (provenance note) | OK |
+| 34 | `ckpt_sha256.json` | `20ca38ddf5b18971…` | 3488 B | supplementary.md §S6; cover_letter.md line 148; submission_checklist.md line 18 | OK |
+| 35 | `flowmol3/` | `0836272a25cebbfe…` | dir 4 files 6208 B | supplementary.md §S6 (4 files sidecar); submission_checklist.md line 18 (FlowMol3 ckpt anchor) | OK |
+| 36 | `flowmol3_n1000_baseline_q4_2026.json` | `beb0174d1acf1b0e…` | 13201 B | supplementary.md §S5 + §S7 + line 100 + line 391 + line 415 | OK |
+| 37 | `flowmol3_n1000_baseline_wave87_q4_2026.json` | `368a23044010cf95…` | 498 B | supplementary.md line 100 + line 423 (byte-stable Wave 90 re-run); tables.md row 13 | OK |
+| 38 | `flowmol3_n1000_baseline_wave109_c_q4_2026.json` | `50ca0dec8f013eda…` | 1045 B | supplementary.md line 415 (Wave 109.c per-metrics re-extraction) | OK |
+| 39 | `flowmol3_n1000_framework_q4_2026.json` | `b44452a958394d3f…` | 16970 B | supplementary.md §S5 + §S7 + line 391 + line 400 | OK |
+| 40 | `flowmol3_real_composite_q4_2026.json` | `6934e9000a53122a…` | 25110 B | supplementary.md line 453 (Wave 74 F.5 3-run byte-identical composite) | OK |
+| 41 | `kanzi_inv_proj_n20_20260913_corrected/checkpoint.json` | `ceb2d1da861386a3…` | 9814 B | supplementary.md §S5 (Kanzi inv-proj N=20 corrected) | OK |
+| 42 | `kanzi_inv_proj_n20_20260913_corrected/initial_summary.json` | `3d216cda424895e3…` | 3446 B | supplementary.md §S5 | OK |
+| 43 | `kanzi_n1000_coords.txt` | `09153a874d993d77…` | 2635744 B | supplementary.md §S5 (2.6 MB Kanzi coordinate sidecar) | OK |
+| 44 | `kanzi_n1000_framework_paper_metrics_diverse/kanzi_n1000_framework_paper_metrics.json` | `a0c37b498f8c664b…` | 1980 B | supplementary.md line 102 + line 233 | OK |
+| 45 | `kanzi_n1000_manifest.json` | `584bcceaded51ef2…` | 460 B | supplementary.md line 475; submission_checklist.md line 18 | OK |
+| 46 | `kanzi_nfe_scan_q4_2026.json` | `dc48e9df1e322e84…` | 73933 B | supplementary.md line 260 (Wave 133 cross-doc Kanzi composite +0.1695) | OK |
+| 47 | `kanzi_real_ckpt_forward_q4_2026.json` | `d79b6659ad4e92b8…` | 3220 B | supplementary.md line 471 (Kanzi real ckpt SHA-256 ledger row); submission_checklist.md line 18 | OK |
+| 48 | `lineageflow_hmmer_real_n1000_w158_q3_2026/` (2 files) | `3aceba6f217275b8…` | dir 2 files 95555 B | data_availability.md line 66 (R1 HMMER); tables.md row 11 (R1 headline); submission_checklist.md line 36 | OK |
+| 49 | `r4_2d_two_moons_w2_m7p28pct/` | n/a | n/a | data_availability.md line 69 (R4 W₂ −7.28%); tables.md row 14 (R4 W₂ headline) — **closest valid evidence**: `wave189-p2-sota-2d-rerun/two_moons_{baseline,PaperRatioAdaptiveScheduler}_seed{0,1,2}.csv` (paper §7.6 R5a + supplementary.md line 529); see §11.3 row 49 | **MISS** |
+| 50 | `r5_2d_eight_gaussians_w2_m10p40pct/` | n/a | n/a | data_availability.md line 70 (R5 W₂ −10.40%); tables.md row 15 (R5 W₂ headline) — **closest valid evidence**: `wave189-p2-sota-2d-rerun/eight_gaussians_{baseline,PaperRatioAdaptiveScheduler}_seed{0,1,2}.csv` (supplementary.md line 529); see §11.3 row 50 | **MISS** |
+| 51 | `lineageflow_real_ckpt_forward_q4_2026.json` | `f2411d5eb3cc4f81…` | 4742 B | supplementary.md line 472 (LineageFlow ckpt SHA-256 ledger row); submission_checklist.md line 18 | OK |
+| 52 | `lineageflow_v2_aggregated_q4_2026.json` | `cca83486f15454dc…` | 39936 B | supplementary.md line 345 (Wave 133 LineageFlow composite +0.2083 + framework_improves) | OK |
+| 53 | `power_analysis/per_cell.csv` | `9cfe77e1bb0335e1…` | 1254 B | supplementary.md §S7 (Wave 93 12-row per-cell table) | OK |
+
+¹ First-16-hex of the SHA-256 (full 64-hex recorded in the audit doc + inline in the
+MANIFEST.md figure SHA column for the figures). ² Bytes (B) for files; `dir N files M B`
+for directories (size is total bytes of recursively contained files).
+
+### 11.3 Resolved / broken cross-reference summary
+
+| Metric | Count |
+|---|---|
+| Total unique `verification_outputs/<path>` references across 9 active surfaces | 68 (deduped; 17 are mid-pattern grep-truncated artefacts) |
+| Real on-disk artifacts cited (rows 1-52 in §11.2 minus the 3 MISS rows) | 49 |
+| Real on-disk artifacts cited (rows 1-47 + 53 = §11.2 OK status) | **49** |
+| Real on-disk MISSING artifacts cited (rows 48, 49, 50) | **3 distinct phantom paths**, **5 individual cross-references broken across active surfaces** |
+| Truncated-pattern artefacts (e.g. `flowmol3/...`, `flowmol3_n1000_`, `wave235-p4-flowmol3-`, `wave236-p2-cuda-graph-wall-clock.`, `wave242-p1-flowmol3-seed{43,}`, `lineageflow_n1000_`, `lineageflow_n1000_omegafold_q4_2026_`) | 17 grep-mid-pattern artefacts; not real paths; no row needed |
+| Mid-pattern anchor resolution | The full intended path is recoverable by reading the surrounding markdown context (e.g. `flowmol3/` → row 35; `lineageflow_n1000_*` → `lineageflow_real_ckpt_forward_q4_2026.json` row 51 + `lineageflow_v2_aggregated_q4_2026.json` row 52 + `lineageflow_hmmer_real_n1000_w158_q3_2026/` row 48) |
+
+### 11.4 Broken cross-references (FLAGGED, NOT FIXED)
+
+The 3 phantom paths below are cited from the active TNNLS submission surfaces but do **not**
+exist on disk at HEAD `a796ba3`. Per AGENTS.md §3 hard guardrail #5 (TNNLS submission freeze
+is sacred — once `v3.0-tnnls-ready` tag is cut, only additive docs in `tnnls_submission/`
+are allowed), the surfaces themselves are **not edited**. The smallest next action is
+flagged below for the user-gated Wave 360+ follow-up.
+
+| Phantom path | Closest valid on-disk evidence | Missing in | Forward action |
+|---|---|---|---|
+| `r4_2d_two_moons_w2_m7p28pct/` | `wave189-p2-sota-2d-rerun/two_moons_*` (3 seeds × 2 arms = 6 CSVs at the canonical 2D Two Moons paper-parity reading; the actual paper-quantity +W₂ numbers) | tables.md row 14 (R4 W₂ headline); data_availability.md line 69 | Wave 360 P5 (USER-gated): either re-create `r4_2d_two_moons_w2_m7p28pct/` as a symlink/copy of the wave189 evidence (preferred — preserves §11 numbers verbatim), OR add ADDITIVE see-also row alongside the existing R4 row in tables.md + data_availability.md |
+| `r5_2d_eight_gaussians_w2_m10p40pct/` | `wave189-p2-sota-2d-rerun/eight_gaussians_*` (3 seeds × 2 arms = 6 CSVs at the canonical 2D Eight Gaussians paper-parity reading) | tables.md row 15 (R5 W₂ headline); data_availability.md line 70 | Wave 360 P5 (USER-gated): same pattern — re-create `r5_2d_eight_gaussians_w2_m10p40pct/` as a symlink/copy, OR ADDITIVE see-also row |
+| `wave191-r5-n1000/` | `wave191-p2-cifar10-n1000/` (CIFAR-10 RF N=1000 baseline+framework per-arm) + `wave191-p3-mnist-n1000/` (MNIST FM N=1000 smoke+production per-arm) — both cited explicitly in tnnls_submission/tables.md §15.87 + supplementary §S8 | tables.md row 109 (T5 R5c regime-dependent curve 3-point table) | Wave 360 P5 (USER-gated): re-create `wave191-r5-n1000/` as a symlink to wave191-p2-cifar10-n1000/ + wave191-p3-mnist-n1000/, OR ADDITIVE see-also row pointing at the two existing dirs |
+
+The R3 FlowMol3 fg_dev (tables.md row 13 + data_availability.md line 68 R3 row) cites
+`verification_outputs/wave242-p1-flowmol3-seed{43,44}-*.json` — this is **correctly broken**
+(in-flight), not a phantom path. The current on-disk row 26 `wave242-p2-flowmol3-direction.csv`
+exists; the seed43/44 per-record CSVs are pending.
+
+### 11.5 Compliance verification summary
+
+| Check | Command | Result |
+|---|---|---|
+| D.4 byte-stable regression | `python3 -m pytest tests/test_d4_regression_vectors.py -q` | 30/30 PASS (per AGENTS.md §2.3 hard requirement) |
+| claims consistency | `python3 tools/check_claims_consistency.py` | exits 0 (this §11 contains no CLM-NNN mutations; matrix rows carry artifact SHAs only) |
+| ruff lint (scope dirs) | `ruff check adaptive_reflow/ tests/ scripts/ tools/` | 0 findings (this §11 is a docs surface, no `.py` touched) |
+| mkdocs build --strict | `mkdocs build --strict` | exits 0 (this §11 is appended to `docs/verification_outputs.md`, which is in `mkdocs.yml` nav per docs/INDEX_MAINTENANCE.md) |
+| Hard guardrail #1 (vendored upstream) | (no touch) | n/a — no vendored code touched in this back-fill |
+| Hard guardrail #3 (NO-PUSH) | (per commit message convention) | n/a — commit message ends with `(USER AUTHORIZED, NO PUSH)` |
+| Hard guardrail #5 (TNNLS freeze) | (no touch) | n/a — no `tnnls_submission/*` modification |
+
+_Last updated: 2026-09-25 (Wave 360 P4 — cross-reference back-fill matrix appended)._
