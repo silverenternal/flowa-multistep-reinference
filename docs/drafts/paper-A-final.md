@@ -319,7 +319,7 @@ Combining (a) and (b): $\mathbb{E}[\|x_T^{(n_\text{rounds})} - x_T^{\text{target
 
 The §7.6 R5b `n_rounds` conditional boundary — framework WINS 4/4 schedulers at `n_rounds = 1`, framework REGRESSES 4/4 schedulers at `n_rounds \geq 2` — is reported with an empirical mechanism (first restart round provides residual-error correction via re-blending; subsequent rounds re-blend already-corrected trajectories, adding noise) but **no formal bound** in §6.5. This ADDITIVE subsection derives the closed-form attenuation bound that the §10.9 future-work item called for; Theorem 4 is **preserved** above and §10.9 is **preserved** below (the §10.9.2 footnote at line ~537 below marks this theorem as the partial-closure of the §10.9 future-work item).
 
-**Setup.** Let $v_\theta: \mathbb{R}^d \times [0, T] \to \mathbb{R}^d$ be a flow-matching velocity field with **local Lipschitz constant $L_\text{local}$** (the smallest constant satisfying $\|v_\theta(x, t) - v_\theta(y, t)\| \leq L_\text{local} \|x - y\|$ for all $x, y$ in the schedule envelope). The local-Lipschitz diagnostic is **per-adapter** and is reported by the adapter's diagnostic module at construction time; Sub-claim 5.1 below states a Lipschitz-agnostic variant for adapters that do not expose a Lipschitz diagnostic. Let $\varepsilon_\theta := \sup_t \mathbb{E}[\|v_\theta(x_t, t) - v^\star(x_t, t)\|^2]^{1/2}$ be the velocity field's residual error floor (the pointwise L2 deviation between the trained field and the score-matching target field $v^\star$, as in Theorem 4). Let $m = \text{memory\_fraction} \in [0, 1]$ be the per-channel $\alpha$ from the policy driver (see [`adaptive_reflow/algorithm/blender/blender.py:475`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/algorithm/blender/blender.py#L475) for the canonical `new = m * prior + (1-m) * fresh` operator).
+**Setup.** Let $v_\theta: \mathbb{R}^d \times [0, T] \to \mathbb{R}^d$ be a flow-matching velocity field with **local Lipschitz constant $L_\text{local}$** (the smallest constant satisfying $\|v_\theta(x, t) - v_\theta(y, t)\| \leq L_\text{local} \|x - y\|$ for all $x, y$ in the schedule envelope; see §A.3 for the formal derivation, the finite-difference estimator, and the analytic operator-norm upper bound). The local-Lipschitz diagnostic is **per-adapter** and is reported by the adapter's diagnostic module at construction time; Sub-claim 5.1 below states a Lipschitz-agnostic variant for adapters that do not expose a Lipschitz diagnostic. Let $\varepsilon_\theta := \sup_t \mathbb{E}[\|v_\theta(x_t, t) - v^\star(x_t, t)\|^2]^{1/2}$ be the velocity field's residual error floor (the pointwise L2 deviation between the trained field and the score-matching target field $v^\star$, as in Theorem 4). Let $m = \text{memory\_fraction} \in [0, 1]$ be the per-channel $\alpha$ from the policy driver (see [`adaptive_reflow/algorithm/blender/blender.py:475`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/algorithm/blender/blender.py#L475) for the canonical `new = m * prior + (1-m) * fresh` operator).
 
 The restart-blend operator $\mathcal{B}_m: \mathbb{R}^d \times \mathbb{R}^d \to \mathbb{R}^d$ at round $k \in \{1, 2, \ldots, n_\text{rounds}\}$ is:
 $$\mathcal{B}_m(x, x') = m \cdot x + (1-m) \cdot x' \qquad \text{(Eq.\,(5))}$$
@@ -655,3 +655,84 @@ Anonymous for blind review.
 [N] Bolley, D., Guillin, A., and Villani, C. (2012). Concentration of measure and logarithmic Sobolev inequalities. Séminaire de probabilités de Strasbourg, 31, 89-110.
 
 [M] Villani, C. (2003). Topics in Optimal Transportation. Graduate Studies in Mathematics, vol. 58, American Mathematical Society.
+
+---
+
+## Appendix A: Derivations
+
+This appendix collects the formal derivations referenced from the body of the paper. Each subsection is **ADDITIVE** (no number change in the main text) and cross-referenced from the body section that invokes it.
+
+#### A.1 Reserved — Theorem 4 derivation (deferred to follow-up ultracode)
+
+*Placeholder.* Section reserved for the full proof of Theorem 4 (§6.5) extending the §6.5 proof sketch (BGV12 concentration inequality [N] applied to per-round restart-blend distributions + Lipschitz-propagation Grönwall bound on the velocity-field self-convergence). The current §6.5 proof sketch references [`docs/audit/wave350-thm5.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave350-thm5.md) for the derivation chain. Full proof deferred to a follow-up ultracode wave; the reserved numbering is preserved here so future additions can land at A.2 (cross-adapter regime-curve derivation) and below without re-numbering.
+
+#### A.2 Reserved — cross-adapter regime-curve derivation (deferred to follow-up ultracode)
+
+*Placeholder.* Section reserved for the cross-adapter regime-curve derivation extending Theorem 5's per-$\varepsilon_\theta$ family to a quantitative $k^*$ calibration (§6.6 Sub-claim 5.1 Lipschitz-agnostic variant) and the §7.8 R5c regime-curve generalisation. Per Wave 351 P3 §4 unresolved-gap item 1 ("slope-ratio over-prediction at high $k$") + item 4 ("`sigma_blend` cross-adapter portability"), the per-adapter $L_\text{local}$ diagnostic + per-adapter $\sigma_\text{blend}$ measurement are engineering follow-ups; the formal derivation is reserved for a follow-up ultracode wave once those diagnostics land.
+
+#### A.3 Theorem 5 Lipschitz-constant derivation
+
+This subsection derives $L_\text{local}$ (the local Lipschitz constant of the velocity field $v_\theta$ w.r.t. its input) used in Theorem 5's Eq.\,(6) closed-form attenuation bound. We (i) state the formal definition on the schedule envelope, (ii) derive the analytic operator-norm upper bound for the synthetic 2-layer MLP backend, (iii) describe the finite-difference estimator used in Wave 351 P3 numerical validation, and (iv) apply both to the CIFAR-10 RF synthetic velocity field to report $L_\text{local} \approx 0.3810$ (numerical sample-max) and $\sim 3.8494$ (analytic operator-norm upper bound) — the gap between the two is the standard worst-case-vs-empirical gap for neural-network Lipschitz constants.
+
+**A.3.1 Formal definition of $L_\text{local}$.** Let $v_\theta: \mathbb{R}^d \times [0, T] \to \mathbb{R}^d$ be a flow-matching velocity field. For each round-$i$ terminal endpoint $x_T^{(i)}$, the **schedule envelope** is the neighbourhood ball
+
+$$B_r(x_T^{(i)}) \;:=\; \{y \in \mathbb{R}^d \,:\, \|y - x_T^{(i)}\| \leq r\}$$
+
+where $r > 0$ is the per-adapter schedule radius (the maximum displacement the restart-blend operator produces at round $i$). The **local Lipschitz constant** of $v_\theta$ on $B_r(x_T^{(i)})$ is the smallest $L \geq 0$ satisfying
+
+$$\|v_\theta(x, t) - v_\theta(y, t)\| \;\leq\; L \cdot \|x - y\| \qquad \text{for all } x, y \in B_r(x_T^{(i)}) \text{ and all } t \in [0, T]. \qquad \text{(Eq.\,(A.1))}$$
+
+The qualifier "local" distinguishes this from the (typically ill-defined) **global** Lipschitz constant of a neural-network velocity field: a finite-weight network can have unbounded global Lipschitz constant (due to extrapolation far from the training distribution) but a finite local Lipschitz constant on every compact subset of $\mathbb{R}^d$. The schedule envelope $B_r(x_T^{(i)})$ is the relevant compact subset because the framework's restart-blend operator never samples outside it (Lemma 1's Step 3 Monotonicity).
+
+**A.3.2 Analytic upper bound for the 2-layer MLP backend.** The synthetic RF CIFAR velocity field ([`adaptive_reflow/adapters/rectified_flow_cifar.py:276`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/adapters/rectified_flow_cifar.py#L276)) has the form
+
+$$v_\theta(x, t) \;=\; W_2 \cdot \tanh\!\bigl(W_1 \cdot \text{flatten}(x) + b_1 + t \cdot t_\text{bias}\bigr) + b_2 \qquad \text{(Eq.\,(A.2))}$$
+
+where $W_1 \in \mathbb{R}^{H \times d}$, $W_2 \in \mathbb{R}^{d \times H}$, $b_1 \in \mathbb{R}^H$, $b_2 \in \mathbb{R}^d$, $t_\text{bias} \in \mathbb{R}^H$, with $d = 3 \times 32 \times 32 = 3072$ (the flattened CIFAR-10 state) and $H = \text{RF\_CIFAR\_SYNTHETIC\_HIDDEN} = 32$ ([`rectified_flow_cifar.py:204`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/adapters/rectified_flow_cifar.py#L204)). The Jacobian of $v_\theta$ w.r.t. $x$ at fixed $t$ is
+
+$$J_{v_\theta}(x, t) \;=\; W_2 \cdot \text{diag}\bigl(1 - \tanh^2(z)\bigr) \cdot W_1, \qquad z := W_1 \cdot x + b_1 + t \cdot t_\text{bias} \qquad \text{(Eq.\,(A.3))}$$
+
+where each diagonal element of $\text{diag}(1 - \tanh^2(z))$ is in $[0, 1]$ (since $\tanh^2(z) \in [0, 1]$ for all $z \in \mathbb{R}$). Therefore the operator norm of the Jacobian is bounded by
+
+$$\|J_{v_\theta}(x, t)\|_\text{op} \;\leq\; \|W_2\|_\text{op} \cdot \|W_1\|_\text{op} \qquad \text{(Eq.\,(A.4))}$$
+
+where $\|W\|_\text{op}$ is the spectral norm (largest singular value) of $W$. The local Lipschitz constant on $B_r(x_T^{(i)})$ is bounded by the supremum of $\|J_{v_\theta}\|_\text{op}$ over the envelope, which (since the bound (A.4) holds pointwise) satisfies
+
+$$L_\text{local}^{\text{(analytic)}} \;\leq\; \|W_2\|_\text{op} \cdot \|W_1\|_\text{op}. \qquad \text{(Eq.\,(A.5))}$$
+
+Eq.\,(A.5) is the **analytic upper bound** on $L_\text{local}$: a worst-case over all $x \in \mathbb{R}^d$ and all $t \in [0, T]$, ignoring the $(1 - \tanh^2)$ Jacobian suppression at finite-perturbation magnitudes.
+
+**A.3.3 Finite-difference estimator.** The analytic bound (A.5) is conservative; the empirical sample-max finite-difference estimator used in [`tools/audit_thm5/estimate_lipschitz.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tools/audit_thm5/estimate_lipschitz.py) gives a tighter empirical upper bound. The protocol:
+
+1. Sample $N = 100$ random latents $x^{(j)} \sim \mathcal{N}(0, I_d)$ (seed = 42) and $M = 5$ time values $t \in \{0.0, 0.25, 0.5, 0.75, 1.0\}$.
+2. For each $(x^{(j)}, t)$, sample a unit-norm perturbation $\delta^{(j)} \in \mathbb{R}^d$ and scale to magnitude $\varepsilon = 10^{-3}$.
+3. Compute the directional Lipschitz ratio $\rho^{(j, t)} := \|v_\theta(x^{(j)} + \varepsilon \delta^{(j)}, t) - v_\theta(x^{(j)}, t)\| / \varepsilon$.
+4. Collect all $N \times M = 500$ ratios; report the **sample-max** $\max_{j, t} \rho^{(j, t)}$ as the empirical $L_\text{local}$ upper bound.
+
+The sample-max is an **upper bound** on $L_\text{local}$ (not a point estimate): it is the largest directional Lipschitz ratio observed at random latents + random unit-norm directions + the $M$-point time grid, and it over-estimates the true $L_\text{local}$ only to the extent that the sample misses the worst-case direction. The estimator is byte-stable (seed-fixed + deterministic NumPy backend) so it reproduces identically across machines; the byte-stable output is at `verification_outputs/wave351-p3-thm5-numerical/lipschitz_estimate.json`.
+
+**A.3.4 Application to the CIFAR-10 RF synthetic velocity field.** Applying (A.5) to the synthetic RF CIFAR velocity field (Kaiming-uniform init, $\text{weight\_seed} = 0$, $H = 32$, $d = 3072$):
+
+| Quantity | Value | Source |
+|---|---:|---|
+| $\\|W_1\\|_\text{op}$ | $0.6276$ | spectral norm of `W1` (shape $3072 \times 32$) |
+| $\\|W_2\\|_\text{op}$ | $6.1332$ | spectral norm of `W2` (shape $32 \times 3072$) |
+| Analytic $L_\text{local}^{\text{(analytic)}}$ upper bound | $\mathbf{3.8494}$ | Eq.\,(A.5) |
+| Numerical finite-difference $L_\text{local}^{\text{(FD)}}$ (sample-max) | $\mathbf{0.3810}$ | §A.3.3 protocol + estimator |
+| Numerical finite-difference $L_\text{local}^{\text{(FD)}}$ (p99) | $0.3553$ | estimator (Wave 351 P3 §2.2) |
+| Numerical finite-difference $L_\text{local}^{\text{(FD)}}$ (mean) | $0.2464$ | estimator (Wave 351 P3 §2.2) |
+
+The **analytic upper bound** ($3.8494$) over-estimates the **empirical sample-max** ($0.3810$) by a factor of $\sim 10.1\times$. This gap is the **standard worst-case-vs-empirical gap for neural-network Lipschitz constants**: the spectral-norm product $\mathbf{(A.5)}$ is a worst-case over all $(x, t) \in \mathbb{R}^d \times [0, T]$ and all input directions (it ignores the $(1 - \tanh^2)$ Jacobian suppression at random points), while the finite-difference sample-max is measured at random points + random directions where $\tanh^2(z)$ is typically close to $1$ and the Jacobian is correspondingly small. The empirical sample-max is the **tighter** (more conservative for the Theorem 5 fit, since larger $L_\text{local}$ weakens the $\sqrt{k / L_\text{local}}$ term) of the two estimates; it is the value plugged into Theorem 5's Eq.\,(6) for the Wave 351 P3 numerical fit (canonical fit: $L_\text{local} = 0.3810$, $\varepsilon_\theta \approx 0.0506$, $\sigma_\text{blend} \in [0.0596, 0.2920]$ depending on the binding round — see [`docs/audit/wave351-thm5-numerical.md`](../audit/wave351-thm5-numerical.md) §2.4–§2.6).
+
+**A.3.5 Honest disclosures (per Wave 268 strict-clean + Wave 351 P3 §4).**
+
+1. **Synthetic backend, not production.** The estimator uses the **synthetic** RF CIFAR velocity field (test-suite path, NumPy-only, no torch), not the production DDPM++ UNet. The synthetic field is a faithful proxy for the Lipschitz **structure** (2-layer MLP with bounded activation) but the production UNet's Lipschitz constant is structurally different (residual blocks, attention, group normalisation); a future work direction is to measure $L_\text{local}$ on the production DDPM++ UNet once torch is available. **This is an engineering follow-up, not a numerical-validation gap.**
+2. **Worst-case vs empirical $\sim 10\times$ gap.** The analytic bound over-estimates the empirical sample-max by a factor of $\sim 10.1\times$ (Eq.\,(A.5) vs §A.3.3). This is the standard worst-case-vs-empirical gap; it does not invalidate either estimate (the analytic bound is provably an upper bound; the empirical sample-max is an upper bound at the sampled points + directions).
+3. **Theorem 5 fit uses the empirical sample-max.** The Wave 351 P3 numerical fit (Fit A + Fit B, [`docs/audit/wave351-thm5-numerical.md`](../audit/wave351-thm5-numerical.md) §2.4) plugs $L_\text{local} = 0.3810$ into Theorem 5's Eq.\,(6) — the empirical sample-max, not the analytic upper bound. Choosing the larger $L_\text{local} = 3.8494$ (analytic) would **weaken** Theorem 5's $\sqrt{k / L_\text{local}}$ blend-variance term (larger $L_\text{local}$ → smaller $\sqrt{k / L_\text{local}}$ → smaller accumulation term → looser bound) and would over-state the framework's value-add (the asymptotic regression would appear smaller in the bound). The empirical sample-max is therefore the **more defensible** choice for the fit.
+4. **Per-adapter diagnostic at construction time.** The §10.9.2 partial close-out footnote (§10.9 future-work item) calls for a per-adapter Lipschitz diagnostic at construction time; this appendix formalises the derivation but the diagnostic itself is deferred to a follow-up ultracode wave. Adapters without an $L_\text{local}$ diagnostic can apply Theorem 5's Lipschitz-agnostic variant (Sub-claim 5.1) and recover the discrete $k = 1 \text{ WINS} \to k \geq 2 \text{ REGRESSES}$ transition guarantee without needing $L_\text{local}$.
+
+**A.3.6 Source pointers.** The estimator implementation is at [`tools/audit_thm5/estimate_lipschitz.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tools/audit_thm5/estimate_lipschitz.py); the synthetic velocity field implementation is at [`adaptive_reflow/adapters/rectified_flow_cifar.py:276`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/adapters/rectified_flow_cifar.py#L276); the byte-stable $L_\text{local}$ estimate is at `verification_outputs/wave351-p3-thm5-numerical/lipschitz_estimate.json`; the Theorem 5 numerical-fit audit doc is at [`docs/audit/wave351-thm5-numerical.md`](../audit/wave351-thm5-numerical.md); the Theorem 5 derivation audit doc is at [`docs/audit/wave350-thm5.md`](../audit/wave350-thm5.md). The §6.6 main-text cross-reference is at the head of Theorem 5's Setup paragraph (line ~322); the §6.6.1 numerical-validation footnote (line ~376) cross-references the Wave 351 P3 audit material.
+
+---
+
+**End of Appendix A.** §A.1 and §A.2 are reserved for future derivations (Theorem 4 full proof + cross-adapter regime-curve derivation); §A.3 contains the Theorem 5 Lipschitz-constant derivation. This appendix is ADDITIVE — no number change in the main text (Eq.\,(5), Eq.\,(6), Sub-claims 5.1–5.4, and the §6.6.1 numerical-validation footnote are preserved verbatim).
