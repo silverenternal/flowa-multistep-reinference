@@ -120,6 +120,32 @@ In multi-model SOTA-comparison contexts (FlowMol3, LineageFlow, Kanzi, FreqFlow,
 
 **Algorithm signature.** The capability surface is the `@dataclass(frozen=True) AdapterCapabilities` ([`adaptive_reflow/universal/adapter.py:131`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/universal/adapter.py#L131)) carrying `supported_channels: tuple[str, ...]`, `channel_domains: dict[str, str]`, optional `materializer: type | None`, plus per-feature booleans (`has_continuous_kind`, `has_restart_boundary`, `has_condition_injection`, etc.). Every concrete adapter overrides `def capabilities() -> AdapterCapabilities` ([`adaptive_reflow/adapters/_adapter_common.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/adapters/_adapter_common.py)), and the engine consumes the returned instance verbatim as `capability_token=adapter.capabilities()` ([`flowmol3.py:1311`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/adapters/flowmol3.py#L1311), [`twodim_fm.py:851`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/adapters/twodim_fm.py#L851), [`mnist_fm.py:576`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/adapters/mnist_fm.py#L576), [`freqflow.py:876`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/adapters/freqflow.py#L876), [`graphbfn.py:816`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/adapters/graphbfn.py#L816)). The handshake is fail-closed: an unknown channel or a missing feature raises `EngineCapabilityMismatch` with the per-channel `audit_codes` string appended to `EngineRoundResult.audit_codes`. The `audit_codes` field round-trips through `parse_audit_code` as a `":"`-delimited back-compat string (e.g. `capability_unsupported:foo:continuous_kind_not_advertised`), and the `materializer: type | None` field is normalised into the typed `MaterializationRoute` instance at construction time so downstream code never branches on `None`. The handshake is invoked at every round boundary, not at construction — adapters that pass round 0 may fail round 1 if the run shifts to a feature the adapter does not advertise, and the failure is captured as structured data on the ledger rather than as a stack trace. This per-round invocation is what enables the framework to support multi-adapter SOTA-comparison contexts where a single harness switches among FlowMol3, LineageFlow, Kanzi, FreqFlow, MM-FM and each adapter's capability mismatch surfaces as a reviewer-readable audit row. Verification reference: [`tests/test_capability_handshake.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tests/test_capability_handshake.py) (50/50 PASS) asserts that mismatched capability declarations round-trip into the ledger as `":"`-delimited audit codes without raising; [`tests/test_adapter_capabilities_dataclass.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tests/test_adapter_capabilities_dataclass.py) (30/30 PASS) pins the frozen-dataclass byte-equality of the handshake surface across 5 vendored adapters.
 
+#### 3.4.1 Pseudocode: capability-token handshake signature
+
+```python
+@dataclass(frozen=True)
+class AdapterCapabilities:
+    has_continuous_channels: bool
+    has_discrete_channels: bool
+    supported_channels: tuple[str, ...]
+    channel_domains: Mapping[ChannelName, ChannelDomain]
+    materializer: type | None = None  # typed MaterializationRoute instance
+
+
+def verify(token: AdapterCapabilities, bundle: StateBundle,
+           audit_codes: list[str]) -> bool:
+    """Re-runs every round; never raises; ":"-delimited audit codes."""
+    if token is None or bundle is None:
+        audit_codes.append(f"{ERR_CAPABILITY_UNSUPPORTED}:caps_missing")
+        return False
+    for channel in bundle.channels:
+        if channel not in token.supported_channels:
+            audit_codes.append(
+                f"{ERR_CAPABILITY_UNSUPPORTED}:{channel}:not_advertised")
+    return all(not c.startswith(ERR_CAPABILITY_UNSUPPORTED)
+               for c in audit_codes)
+```
+
 ### 3.5 Innovation: Hash-Chained Ledger with O(1) Verification
 
 *Implementation: see [`adaptive_reflow/frame/ledger_chain.py:113`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/frame/ledger_chain.py#L113) in the silverenternal/flowa-multistep-reinference repo.*
@@ -162,6 +188,32 @@ A test can assert `log.to_json() == expected_log.to_json()` exactly (no flaky ti
 
 **Algorithm signature.** The state representation primitive is `class StateMachine[TState, TEvent]` ([`adaptive_reflow/contracts/state_machine.py:372`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/contracts/state_machine.py#L372), docstring of parallel regions anchored at line 386) — a PEP 695 generic class parametrised over the literal state vocabulary (`TState`) and the literal event vocabulary (`TEvent`) so that `mypy --strict` rejects invalid literal usages at type-check time. The class is decorated `@runtime_checkable` via the `Protocol` base + `runtime_checkable()` registration in [`adaptive_reflow/contracts/__init__.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/contracts/__init__.py). The state machine is the orchestration spine of the engine: each round, the runner dispatches a `Phase` event to the protocol-wrapped state machine via `send()` (sync) or `asend()` (async) and the state machine appends one `TransitionLog` row per dispatch. Each transition appends a `@dataclass(frozen=True) TransitionLog` row ([`state_machine.py:134`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/contracts/state_machine.py#L134)) carrying deterministic fields only: `counter: int` (starts at 1, increments by 1), `event: str` (the `str(event)` of the generic parameter), `source: str` (`str(source_state)`), `target: str` (`str(target_state)`), `guard_name: str | None`, `guard_result: bool | None`, `effect_name: str | None`, `history_restored: tuple[str, ...]`, `kind: str`, `internal_subpath: str`, plus the async marker. No `datetime.now()`, no `id()`, no `random.random()`, no set-iteration. The dispatch surface covers four cases that together exhaust all reachable paths: priority tiebreak (`_try_pick_sync`/`_try_pick_async`), history pseudo-state restoration (`_update_history`/`_restore_history`), parallel-region sync iteration (`_dispatch_sync`), and `asyncio.gather` parallel async dispatch (`_dispatch_async`). Verification reference: [`tests/test_state_machine_byte_deterministic.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tests/test_state_machine_byte_deterministic.py) (60/60 PASS) replays fixed event sequences and asserts byte-equal `log.to_json()` across machines; [`tests/test_state_machine_hsm.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tests/test_state_machine_hsm.py) (40/40 PASS) covers hierarchical + parallel-region + history restoration paths; [`tests/test_state_machine_typed_generics.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tests/test_state_machine_typed_generics.py) (20/20 PASS) asserts that `mypy --strict` rejects invalid literal state/event usages at type-check time.
 
+#### 3.6.1 Pseudocode: PEP 695 generic state machine signature
+
+```python
+class StateMachine[TState, TEvent]:
+    """PEP 695 generic; mypy --strict enforces literal state/event vocab."""
+
+    def __init__(self, *, initial: TState, name: str = "sm") -> None: ...
+    def on(self, event: TEvent) -> TransitionBuilder[TState, TEvent]: ...
+    def send(self, event: TEvent) -> None:
+        """Appends TransitionLog(counter=N+1, event, source, target)."""
+        ...
+
+    @property
+    def log(self) -> tuple[TransitionLog, ...]: ...
+
+
+# Usage:
+sm: StateMachine[Literal["idle", "running"], Literal["start", "stop"]] = (
+    StateMachine(initial="idle"))
+
+@sm.on("start").to("running")
+def _start(ctx): ...
+
+sm.send("start")  # log[0] = TransitionLog(counter=1, event="start", ...)
+```
+
 ### 3.7 Innovation: Typed Four-Port Wire Carrier with Auto-Wrap
 
 *Implementation: see [`adaptive_reflow/algorithm/scheduler/protocols.py:157`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/algorithm/scheduler/protocols.py#L157) in the silverenternal/flowa-multistep-reinference repo.*
@@ -171,6 +223,36 @@ Standard typed-migration patterns force a hard break: PyTorch TypedDict + `from_
 The framework does both — typed subclass for new code, auto-wrap for legacy — preserving byte-equivalent test behaviour across 2356 tests. A reviewer can read the legacy adapter code and see raw dicts in `compose_condition(bundle, delta)` calls; the framework silently upgrades those to typed `MappingConditionAdapter` instances without breaking the test fixture. The migration path is invisible to the caller and verifiable from the test suite.
 
 **Algorithm signature.** The four-port adapter protocol is the typed wire carrier: `@runtime_checkable` `Protocol` declarations for `SchedulerProtocol`, `PolicyDriverProtocol`, `MergeOperatorProtocol`, `RestartBlenderProtocol` ([`adaptive_reflow/algorithm/scheduler/protocols.py:157`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/algorithm/scheduler/protocols.py#L157)). Each protocol declares a closed method set and a frozen dataclass return type (`ScheduleSample`, `MemoryFractionPolicy`, `RestartPolicy`, `RestartBlendResult`). The wire carrier is the `@dataclass(frozen=True) StateBundle` ([`adaptive_reflow/contracts/bundle.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/contracts/bundle.py)) plus `ODEConditionDelta` ([`adaptive_reflow/contracts/condition.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/contracts/condition.py)) and `AuditCode` ([`adaptive_reflow/contracts/audit.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/contracts/audit.py)). The four ports are wired as follows in the engine runner ([`adaptive_reflow/frame/engine.py:445-492`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/frame/engine.py#L445-L492)): scheduler -> driver -> engine.run_round -> merge -> restart_blender, and the typed contracts are verified at construction time via `isinstance(s, SchedulerProtocol)` checks (no inheritance required). `ODEConditionDelta.__post_init__` performs the auto-wrap from untyped Mapping to typed `MappingConditionAdapter` instance ([`condition.py:113-148`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/contracts/condition.py#L113-L148)); `parse_audit_code` is total over `AuditCode`, legacy `":"`-delimited strings, and empty strings (fail-open). The closed-set `CONDITION_KINDS` literal ([`condition.py:24`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/contracts/condition.py#L24)) defines the per-channel kinds (`"continuous"`, `"discrete"`, `"latent"`, `"graph"`) and adding a new kind requires a paired acceptance test, with the discriminator exhaustively type-narrowed by mypy. The runtime conformance test asserts structural membership via `isinstance` for every concrete scheduler family — 13 schedulers, 4 policy drivers, 4 merge operators, 4 restart blenders. Verification reference: [`tests/test_protocol_conformance.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tests/test_protocol_conformance.py) (80/80 PASS) asserts structural conformance via `isinstance(s, SchedulerProtocol)` for every concrete scheduler family; [`tests/test_condition_auto_wrap.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tests/test_condition_auto_wrap.py) (40/40 PASS) asserts that legacy dict payloads are silently upgraded without test breakage; [`tests/test_state_bundle_byte_stable.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tests/test_state_bundle_byte_stable.py) (35/35 PASS) certifies that the `StateBundle.to_bytes()` serialisation is byte-stable across Python versions.
+
+#### 3.7.1 Pseudocode: four-port wire carrier signature
+
+```python
+@runtime_checkable
+class SchedulerProtocol(Protocol):
+    def sample(self, outer_cycle_id: int, round_in_cycle: int,
+               target_round: int) -> ScheduleSample: ...
+    def cycle_length(self) -> int: ...
+    def schedule_family(self) -> str: ...
+    def inject_noise(self, state, sample, *, generator: np.random.Generator): ...
+
+
+@runtime_checkable
+class PolicyDriverProtocol(Protocol):
+    def compute_policy(self, sample, *, base_policy: FinalRestartPolicy,
+                       channel: str, prior_endpoint_digest: str) -> FinalRestartPolicy: ...
+
+
+@runtime_checkable
+class MergeOperatorProtocol(Protocol):
+    def merge(self, prev: float, dynamic: float, *, cap: float, floor: float,
+              delta_cap_up: float, delta_cap_down: float) -> float: ...
+
+
+@runtime_checkable
+class RestartBlenderProtocol(Protocol):
+    def blend(self, prior_state, fresh_state, *, memory_fraction: float,
+              channel: str) -> StateBundle: ...
+```
 
 ### 3.8 Why the framework's identity is the typed contract
 
