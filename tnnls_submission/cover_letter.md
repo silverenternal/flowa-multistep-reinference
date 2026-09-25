@@ -126,7 +126,7 @@ statistical reporting (12-column per-row tables under four
 pre-registered Bonferroni families). TNNLS's expectation of
 reproducible, statistically disciplined cross-domain validation
 is met: the verification-output corpus (319 files under
-`verification_outputs/`) sources every headline number from a
+[`verification_outputs/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs)) sources every headline number from a
 byte-addressable artifact, and §5 of the manuscript discloses a
 matched-NFE = 50 image-domain regression as a first-class
 boundary statement rather than as a hidden caveat.
@@ -139,13 +139,13 @@ hash-chained transition log spanning 5155 pytest tests, and a
 **5-gate CI** (`ruff`, `mkdocs`, `claims`, `vendored`, `D.4`)
 that is green on every push. The framework is reconstructed
 around three typed-systems primitives — **typed contracts**
-(`adaptive_reflow/contracts/` with lazy `__getattr__` cycle
+([`adaptive_reflow/contracts/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/adaptive_reflow/contracts) with lazy `__getattr__` cycle
 protection per `28e3bf9`), **byte-determinism** (D.4 30/30
 regression vectors; CUDA-graph capture gated by
 `ADAPTIVE_REFLOW_CUDA_GRAPH=1` returns
 `static_output.clone()` and is byte-identical to the eager
 path on the same seed), and a **hash-chained ledger**
-(`verification_outputs/ckpt_sha256.json` for the three
+([`verification_outputs/ckpt_sha256.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/ckpt_sha256.json) for the three
 real-checkpoint models — FlowMol3, Kanzi, LineageFlow — and a
 SHA-256 §7 chain `0a65d20b → 8e7367a0 → c99192dc → 176c6d4`
 for self-referential manifest audit trails). TNNLS's
@@ -175,7 +175,7 @@ $g(x) = (1 + 0.25\cdot\tanh(x))\cdot\sin(x)$ (Proposition 2
 family) under the framework default F-side profile $(d, c,
 \rho, \eta) = (1.0, 1.0, 0.1, 0.1)$ applies; for the **3 core
 adapters** (LineageFlow, Kanzi, FlowMol3 — Wave 229 P3,
-`docs/audit/wave229-p3-core-adapter-paper-quantities.md`), the
+[`docs/audit/wave229-p3-core-adapter-paper-quantities.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave229-p3-core-adapter-paper-quantities.md)), the
 framework carries an **empirical residual profile** built from
 each adapter's documented residual distribution, yielding
 adapter-specific $A_g$ within 15 % of the canonical witness
@@ -183,7 +183,7 @@ adapter-specific $A_g$ within 15 % of the canonical witness
 0.746$, FlowMol3 $A_g^{\text{emp}} = 0.848$). $C_g$ and $e_\rho$
 match the canonical because (ρ, c, η) are framework defaults
 for all 12 adapters; $B_g^{\text{emp}} = 1.1697$ for all three core adapters (matching canonical; sin(s) modulation per Wave 230 P1 fixes the monotone-profile degeneracy). The paper quantities are computed via typed
-evaluators in `adaptive_reflow/theory/paper_quantities.py`. The
+evaluators in [`adaptive_reflow/theory/paper_quantities.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/theory/paper_quantities.py). The
 framework's value-add is the **scheduler architecture** —
 `CosineAnnealScheduler` (consumes $A_g$ → smoothing-ramp
 aggressiveness), `CodimensionSheetScheduler` (consumes
@@ -194,7 +194,7 @@ the full quadruple → per-cell restart probability), and BRAI
 local velocity-field geometry rather than depending on
 per-adapter paper-quantity overrides. The framework exposes
 `AdapterCapabilities.profile_residual_fn` in
-`adaptive_reflow/profile_residual.py` as the future-extension
+[`adaptive_reflow/profile_residual.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/profile_residual.py) as the future-extension
 point; the **3 core adapters exercise this hook today** (Wave
 229 P3) while the remaining 9 fall back to the canonical-witness
 closed forms. The framework operates without retraining,
@@ -298,7 +298,7 @@ d_z ≥ +0.3 is **NOT met** — the easy-tier regression is halved
 finer stratification or a larger reduction factor. R2 Kanzi
 RMSD d_z lifts from -0.099 to **+0.046** (sign flip; R2 d_z ≥
 -0.3 threshold MET), confirming the qualitative improvement
-at the easy tier. See `docs/audit/wave233-p3-tier-aware.md`
+at the easy tier. See [`docs/audit/wave233-p3-tier-aware.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave233-p3-tier-aware.md)
 for full method and results.
 
 **P5 — CIFAR RF n_rounds=2 override reduces R5b magnitude but
@@ -319,7 +319,7 @@ NFE=50. The override is shipped as a **documented surface**
 so future sweeps can reproduce the n_rounds=2 counterfactual
 without code duplication. Mitigation `--no-final-restart` is
 queued for camera-ready. D.4 byte-stable 30/30 PASS preserved.
-See `docs/audit/wave233-p5-r5b-fix.md`.
+See [`docs/audit/wave233-p5-r5b-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave233-p5-r5b-fix.md).
 
 **P6 — SHA-256 state-bundle cache saves negligible wall-clock
 (HONEST NEGATIVE).** The Wave 233 P6 digest cache
@@ -341,7 +341,7 @@ cache alone; **CUDA-graph capture or model kernel fusion**
 shipped because it is a clean abstraction (zero behavioral risk,
 D.4 30/30 PASS preserved) and a useful instrumentation surface
 (cache hit-rate / size stats), not because it solves the
-wall-clock problem. See `docs/audit/wave233-p6-wall-clock-opt.md`.
+wall-clock problem. See [`docs/audit/wave233-p6-wall-clock-opt.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave233-p6-wall-clock-opt.md).
 
 **Implication for the framework claim.** The three Wave 233
 P3–P6 follow-ups are **directionally consistent** with the
@@ -367,7 +367,7 @@ per-record paired-$t$ test, the manuscript integrates a
 Jonckheere-Terpstra ordered-hypothesis test, Bayesian factors
 BF01, DerSimonian-Laird random-effects meta-analysis, and
 non-inferiority testing — each shipped as a typed, byte-stable
-function in `adaptive_reflow/stats/equivalence.py` and
+function in [`adaptive_reflow/stats/equivalence.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/stats/equivalence.py) and
 documented under a dedicated audit doc. The five methods
 target distinct failure modes of the primary paired-$t$ test
 and together convert the §MS.10.6 per-record verdict
@@ -376,8 +376,8 @@ across 16 4-arm cells) into a structurally richer
 five-axis statistical narrative.
 
 **P2 — TOST equivalence testing** (audit:
-`docs/audit/wave234-p2-tost.md`; CSV:
-`verification_outputs/wave234-p2-tost.csv`). Two One-Sided
+[`docs/audit/wave234-p2-tost.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave234-p2-tost.md); CSV:
+[`verification_outputs/wave234-p2-tost.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p2-tost.csv)). Two One-Sided
 Tests (Schuirmann 1987) with equivalence margin = 0.1 SD
 (Cohen 1988 "small effect" threshold). On the 16 (baseline,
 framework, metric, NFE) cells: 0/16 cells formally TOST-
@@ -392,8 +392,8 @@ claim is **practical equivalence** in 9-14/16 cells, not
 strict TOST equivalence.
 
 **P3 — Jonckheere-Terpstra monotone trend test** (audit:
-`docs/audit/wave234-p3-jonckheere.md`; CSV:
-`verification_outputs/wave234-p3-jonckheere.csv`). JT trend
+[`docs/audit/wave234-p3-jonckheere.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave234-p3-jonckheere.md); CSV:
+[`verification_outputs/wave234-p3-jonckheere.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p3-jonckheere.csv)). JT trend
 test against the ordered alternative
 $\text{mean(easy)} \le \text{mean(medium)} \le \text{mean(hard)}$
 across the three Wave 233 P3 tiers. On both protein cells,
@@ -408,8 +408,8 @@ corrected at $\alpha = 0.0167$) are pooled into a single
 structural finding.
 
 **P4 — BF01 (Bayes factor for H0)** (audit:
-`docs/audit/wave234-p4-bf01.md`; CSV:
-`verification_outputs/wave234-p4-bf01.csv`). Wagenmakers
+[`docs/audit/wave234-p4-bf01.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave234-p4-bf01.md); CSV:
+[`verification_outputs/wave234-p4-bf01.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p4-bf01.csv)). Wagenmakers
 (2007) BIC approximation closed form
 `BF01 = sqrt(n) * (1 + t^2 / (n-1)) ** (-n / 2)` on the
 Wave 230 P2 per-cell diff summaries. On 16 cells: 14/16
@@ -422,9 +422,9 @@ corresponding baseline. TOST + BF01 jointly support the
 practical-equivalence claim in 9/16 cells.
 
 **P5 — Random-effects meta-analysis** (audit:
-`docs/audit/wave234-p5-meta-analysis.md`; CSV:
-`verification_outputs/wave234-p5-meta-analysis.csv`; JSON:
-`verification_outputs/wave234-p5-meta-summary.json`).
+[`docs/audit/wave234-p5-meta-analysis.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave234-p5-meta-analysis.md); CSV:
+[`verification_outputs/wave234-p5-meta-analysis.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p5-meta-analysis.csv); JSON:
+[`verification_outputs/wave234-p5-meta-summary.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p5-meta-summary.json)).
 DerSimonian-Laird random-effects meta-analysis on K = 12
 cross-domain studies (R-level primary families + 4-arm
 foldability cells). Pooled $d_{\text{RE}} = +1.117$ (95% CI
@@ -437,8 +437,8 @@ the pooled estimate is firmly positive in the direction-
 inconclusive regime.
 
 **P6 — Non-inferiority test** (audit:
-`docs/audit/wave234-p6-non-inferiority.md`; CSV:
-`verification_outputs/wave234-p6-non-inferiority.csv`).
+[`docs/audit/wave234-p6-non-inferiority.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave234-p6-non-inferiority.md); CSV:
+[`verification_outputs/wave234-p6-non-inferiority.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p6-non-inferiority.csv)).
 One-sided non-inferiority test (Schuirmann 1987 / ICH E9
 framework) on R5b CIFAR-10 Rectified Flow at matched NFE=50
 (Wave 191 P2 N=1000, best arm `evidence_driven`). Pre-
@@ -472,7 +472,7 @@ practical-equivalence claim at 9/16 cells with strong
 Bayesian evidence for H0; P2 (TOST) reframes the §MS.10.6
 14/16 UNDERPOWERED verdict as practical equivalence (not
 effect absence). The five methods share a common backend
-(`adaptive_reflow/stats/equivalence.py`), each ships a
+([`adaptive_reflow/stats/equivalence.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/stats/equivalence.py)), each ships a
 typed function with audit-doc + CSV provenance, and all
 five preserve D.4 byte-stable 30/30 PASS.
 
@@ -491,8 +491,8 @@ honest disclosure of an outstanding gap.
 
 **P1 — R5b CIFAR-10 RF `n_rounds=1` structurally eliminates
 the regression.** Wave 235 P1 (audit:
-`docs/audit/wave235-p1-r5b-fix.md`; CSV:
-`verification_outputs/wave235-p1-r5b-fix.csv`) introduces
+[`docs/audit/wave235-p1-r5b-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave235-p1-r5b-fix.md); CSV:
+[`verification_outputs/wave235-p1-r5b-fix.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p1-r5b-fix.csv)) introduces
 two counterfactual configurations on the existing
 `RectifiedFlowCIFARAdapter`: `--no-final-restart` (skip the
 last round's `apply_restart_distribution` + `solve_ode`)
@@ -520,8 +520,8 @@ new flag is consumed by `_run_framework_state_chains(...)`
 which is NOT on the regression-vector audit path).
 
 **P2 — R2 Kanzi tier-aware grid-search medium-effect uplift.**
-Wave 235 P2 (audit: `docs/audit/wave235-p2-r2-uplift.md`;
-CSV: `verification_outputs/wave235-p2-r2-uplift.csv`) performs
+Wave 235 P2 (audit: [`docs/audit/wave235-p2-r2-uplift.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave235-p2-r2-uplift.md);
+CSV: [`verification_outputs/wave235-p2-r2-uplift.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p2-r2-uplift.csv)) performs
 a 2-D counterfactual grid over
 `(easy_tier_nfe_reduction_factor, hard_tier_nfe_intensity)`
 with 5×4 = 20 cells at N=1000 paired (frozen Wave 214 P2 data;
@@ -546,8 +546,8 @@ new `hard_tier_nfe_intensity` parameter on the
 
 **P3 — R6 k6 tier-aware grid-search LARGE overall uplift
 with easy-tier regression eliminated.** Wave 235 P3 (audit:
-`docs/audit/wave235-p3-r6-uplift.md`; CSV:
-`verification_outputs/wave235-p3-r6-uplift.csv`) grid-searches
+[`docs/audit/wave235-p3-r6-uplift.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave235-p3-r6-uplift.md); CSV:
+[`verification_outputs/wave235-p3-r6-uplift.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p3-r6-uplift.csv)) grid-searches
 `(easy_factor ∈ {0.0, 0.1, 0.25, 0.5, 0.75}) × (hard_intensity ∈
 {1.0, 1.5, 2.0, 3.0})` with 5×4 = 20 cells at N=1000 paired
 (frozen Wave 161 data; no live GPU run; Wave 225 P4 / Wave 233
@@ -568,8 +568,8 @@ same `hard_tier_nfe_intensity` parameter on the
 
 **P4 — FlowMol3 3-seed expansion (HONEST DISCLOSURE on
 partial sweep).** Wave 235 P4 (audit:
-`docs/audit/wave235-p4-flowmol3-3seed.md`; partial sweep
-artefacts at `verification_outputs/wave235-p4-flowmol3-*.json`)
+[`docs/audit/wave235-p4-flowmol3-3seed.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave235-p4-flowmol3-3seed.md); partial sweep
+artefacts at [`verification_outputs/wave235-p4-flowmol3-*.json`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs))
 expands the FlowMol3 R3 fg_dev evidence from 1 seed (Wave 87,
 seed=42, NFE=250, N=1000, per-record REOS d_z = -0.285,
 direction-correct framework improvement) toward 3 seeds per
@@ -620,13 +620,13 @@ claim retraction.
 
 ### §R6.5 Wave 236 P2 — 24.6× → 1.26× wall-clock closure via CUDA-graph capture
 
-Wave 236 P2 (audit: `docs/audit/wave236-p2-wallclock-fix.md`;
-CSV/JSON: `verification_outputs/wave236-p2-cuda-graph-wall-clock.{csv,json}`)
+Wave 236 P2 (audit: [`docs/audit/wave236-p2-wallclock-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave236-p2-wallclock-fix.md);
+CSV/JSON: [`verification_outputs/wave236-p2-cuda-graph-wall-clock.{csv,json}`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs))
 implements the **CUDA-graph capture** path recommended by Wave
 217 P3 Option A and Wave 233 P6 §5 — the remaining 99.8 %
 model-forward-chain gap that the SHA-256 cache (§R4 P6) could
 not touch. The new `CudaGraphVelocityFieldCache` (file:
-`adaptive_reflow/framework/cuda_graph_capture.py`) is gated by
+[`adaptive_reflow/framework/cuda_graph_capture.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/framework/cuda_graph_capture.py)) is gated by
 the env-var `ADAPTIVE_REFLOW_CUDA_GRAPH=1` (default off, which
 preserves every byte-stable behaviour); it captures one graph
 per `(model_id, chunk_size, dtype, device)` key, replays on
@@ -705,8 +705,8 @@ after the wiring commit `a998a85` and again at HEAD
 (`6f6485a`). Output identity is byte-identical across modes on
 the same seed (`-0.12151377 -0.11754159 -0.09046896`). Full
 re-measurement at HEAD, including the five-arm wall-clock CSV
-and JSON, is in `verification_outputs/wave236-p2-cuda-graph-wall-clock.{csv,json}`
-and audited in `docs/audit/wave238-p2-cuda-graph-verify.md`.
+and JSON, is in [`verification_outputs/wave236-p2-cuda-graph-wall-clock.{csv,json}`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs)
+and audited in [`docs/audit/wave238-p2-cuda-graph-verify.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave238-p2-cuda-graph-verify.md).
 
 ## §5 Validation Scope — 11-Cell Empirical Evaluation with Honest Disclosure
 
@@ -716,11 +716,11 @@ disclosed with an explicit verdict distribution rather than a
 "framework-WINS" aggregate: **4 STRONG (main) + 1 TIE (main) + 6
 PARTIAL/SUPP** = 11 cells. The full audit-grade alignment between
 paper-claimed and actual-deployed numbers (per-cell d_z, p,
-p_bonf, n, N) is documented in `docs/audit/wave306-11-cell-alignment.md`
+p_bonf, n, N) is documented in [`docs/audit/wave306-11-cell-alignment.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave306-11-cell-alignment.md)
 (11 rows × 17 columns) and corroborated by the Wave 307
 cross-cell data archaeology synthesis
-(`docs/audit/wave307-archaeology-summary.md`). The headline
-distribution, anchored at `docs/audit/wave326-crossdoc-metrics-snapshot.md`,
+([`docs/audit/wave307-archaeology-summary.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave307-archaeology-summary.md)). The headline
+distribution, anchored at [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave326-crossdoc-metrics-snapshot.md),
 distributes as:
 
 - **STRONG (main, 4 cells):** R2 Kanzi RMSD deployed paired-t
@@ -752,7 +752,7 @@ tables with 12-column per-row statistics (`n_paired, mean_diff,
 sd_diff, t, df, p_raw, CI95_low, CI95_high, d_z, test_type, family,
 α_bonferroni, bonf_sig`) under four pre-registered Bonferroni
 families. **Wave 333 R5c deep investigation** (continued in
-`docs/audit/mnist/wf334-r5c-regime-curve.md`) is disclosed in
+[`docs/audit/mnist/wf334-r5c-regime-curve.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/mnist/wf334-r5c-regime-curve.md)) is disclosed in
 full at §7 below: the R5c direction-flip between smoke-ckpt
 (framework-WINS) and production-ckpt (framework REGRESSES +10.37 %)
 is **NOT** a data misinterpretation, but a real production-ckpt
@@ -761,7 +761,7 @@ disclosable boundary. **Wave 306 / Wave 307 / Wave 333 deep
 investigation transparency:** all three investigations are READ-ONLY
 synthesis docs (no silent re-writing of headline numbers); every
 audit-claimed discrepancy is cross-checked against canonical
-git-tracked data (`verification_outputs/`), every claim of "data
+git-tracked data ([`verification_outputs/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs)), every claim of "data
 lost" or "fabricated" is mapped to a specific SHA-256 of the
 upstream artefact, and every cell whose paper-claim diverges from
 actual data carries an in-paper §-number citation to the
@@ -813,8 +813,8 @@ per-record granularity); **14/16 UNDERPOWERED** (direction-
 consistent with framework-neutral-to-favourable across all
 baselines; underpower is the per-record variance floor, not
 effect absence). Source:
-`verification_outputs/wave230-p2-real-4arm-per-record.csv` and
-`docs/audit/wave230-p2-real-4arm-per-record.md`. This **supersedes**
+[`verification_outputs/wave230-p2-real-4arm-per-record.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave230-p2-real-4arm-per-record.csv) and
+[`docs/audit/wave230-p2-real-4arm-per-record.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave230-p2-real-4arm-per-record.md). This **supersedes**
 the Wave 229 P1 bootstrap verdict (3 SUPPORTED + 7 REGRESSES + 6
 UNDERPOWERED); the 7 REGRESSES were bootstrap variance-inflation
 artifacts that vanished under real per-record analysis (8/16
@@ -833,7 +833,7 @@ the honest update).
 
 - **Wave 236 P2 wall-clock closure: 24.6× → 1.26×.** CUDA-graph
   capture (`ADAPTIVE_REFLOW_CUDA_GRAPH=1`, opt-in env-var;
-  `adaptive_reflow/framework/cuda_graph_capture.py`) closes
+  [`adaptive_reflow/framework/cuda_graph_capture.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/framework/cuda_graph_capture.py)) closes
   **76.78 % of the framework wall-clock gap** on the R5b
   CIFAR-10 RF matched-NFE=50 / BATCH=64 harness. Framework
   runner drops from 7.812 s to 1.814 s (**4.31× speedup**);
@@ -941,7 +941,7 @@ lower NFE / lower N / different graph-path settings).
 NFE=250; NFE was not the main confound.** Wave 242 P2 attempted
 to lift the NFE confound by re-running seeds 43/44 at the Wave 87
 NFE=250 / N=200 / single_mol path configuration via the
-`scripts/wave242_p1_flowmol3_rescue_single_mol.py` rescue script.
+[`scripts/wave242_p1_flowmol3_rescue_single_mol.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/scripts/wave242_p1_flowmol3_rescue_single_mol.py) rescue script.
 The script was **NEVER EXECUTED** before Wave 242 P2 verification
 was launched, so the per-seed inputs for seeds 43/44 are
 **MISSING on disk** and the NFE=250 pooled 3-seed per-record
@@ -970,10 +970,10 @@ a **conditional boundary** that holds on the Wave 87 NFE=250
 framework-WINS claim across seeds. The full per-seed diagnostic,
 the protocol-mismatch disclosure (seed 42 N=1000 batched vs
 seeds 43/44 N=200 single_mol), and the confound analysis are
-reproduced in `docs/drafts/section-2-method.md` §2.13
+reproduced in [`docs/drafts/section-2-method.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/section-2-method.md) §2.13
 Limitations and audited in
-`docs/audit/wave242-p2-flowmol3-direction.md`
-(`verification_outputs/wave242-p2-flowmol3-direction.csv`).
+[`docs/audit/wave242-p2-flowmol3-direction.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave242-p2-flowmol3-direction.md)
+([`verification_outputs/wave242-p2-flowmol3-direction.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave242-p2-flowmol3-direction.csv)).
 
 ## §8 Reproducibility — GitHub + Zenodo + Docker
 
@@ -983,19 +983,19 @@ The submission is accompanied by:
   repository, SHA-256-pinned at the freeze-marker commit
   `5b21cca` and re-pinned at the Wave 332 DeepSeek-final-pass
   commit `176c6d4`. The repository includes the full
-  `adaptive_reflow/` framework code, 5155 pytest tests, the
+  [`adaptive_reflow/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/adaptive_reflow) framework code, 5155 pytest tests, the
   **D.4 byte-stable regression suite at 30/30 PASS**, the Wave
   190/195/196/198/203 statistical scripts, every R-cell config
   YAML, `pyproject.toml` + `uv.lock`, `README.md`, `QUICKSTART.md`,
   and `TUTORIAL.md`. Three of three real-checkpoint models
   (FlowMol3, Kanzi, LineageFlow) are SHA-256-pinned in
-  `verification_outputs/ckpt_sha256.json` and reviewer-verifiable
+  [`verification_outputs/ckpt_sha256.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/ckpt_sha256.json) and reviewer-verifiable
   with `sha256sum`. The full SHA-256 §7 chain
   (`0a65d20b → 8e7367a0 → c99192dc → 176c6d4`) is preserved in
   the manifest for self-referential audit-trail verification.
 
 - **Verification-output corpus** (319 files under
-  `verification_outputs/`) covering Wave 87 (FlowMol3), Wave
+  [`verification_outputs/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs)) covering Wave 87 (FlowMol3), Wave
   95–99 (R-level power), Wave 106 (G1 SHA-256), Wave 161 (k6
   foldability), Wave 191 (CIFAR-10 N=1000), Wave 198 (per-record
   k6), Wave 203 (cluster-robust k6), Wave 206 (LineageFlow / Kanzi
@@ -1014,7 +1014,7 @@ The submission is accompanied by:
 
 - **Zenodo deposit** for code archive + verification outputs, both
   with assigned Zenodo DOIs (Apache-2.0 or MIT license). The
-  Zenodo deposit draft is in `docs/zenodo-release/` and the
+  Zenodo deposit draft is in [`docs/zenodo-release/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/zenodo-release) and the
   freeze-marker commit hash is referenced from the deposit
   metadata.
 
@@ -1023,7 +1023,7 @@ The submission is accompanied by:
   (Wave 218 P1 bridge restore, landed in the Wave 217 P5 bulk window;
   provenance annotated in commit `f59523b` Wave 218 P4) onward. The
   fix restores the Wave 95.P3.B trained-inverse bridge in
-  `tools/_kanzi_sweep_runner.py:_synthesize_x_final_real` lines
+  [`tools/_kanzi_sweep_runner.py:_synthesize_x_final_real`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tools/_kanzi_sweep_runner.py) lines
   414-473, which had been bypassed by a Wave 196 P3 shape-detection
   skip-bridge branch (combined with the Wave 178 P2+P3 `(L, 3)`
   random-Gaussian change in `build_initial_state`) and produced a
@@ -1036,7 +1036,7 @@ The submission is accompanied by:
   (was 33/33 in pre-Wave-178; 3 pre-Wave-196 shape-contract tests
   retired in Wave 196 P3 because Wave 178 changed the
   synthetic-mode latent shape to `(L, 3)` — see
-  `docs/audit/wave218-p1-fix-applied.md` §Incident context).
+  [`docs/audit/wave218-p1-fix-applied.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave218-p1-fix-applied.md) §Incident context).
 
 - **Per-record CSVs** (N=1000+ rows per cell) available on Zenodo
   behind a reviewer-token gate for full re-analysis.
@@ -1054,7 +1054,7 @@ will land on the canonical source tree; the descriptive repository
 name is preserved intentionally to keep the URL self-documenting
 about the method's *behaviour* (paper-quantity-driven multi-step
 re-inference) rather than its *identity* (**FlowA**). The audit
-record for this naming decision is `docs/audit/wave213-p6-repo-naming.md`.
+record for this naming decision is [`docs/audit/wave213-p6-repo-naming.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave213-p6-repo-naming.md).
 
 ## §9 Suggested Associate Editor and Reviewers
 
@@ -1076,7 +1076,7 @@ time):
    audit Theorem 1 (Lemma 2–5 derivation, g-independent rate
    corollary, the four paper quantities $(A_g, B_g, C_g, e_\rho)$
    and their typed evaluators in
-   `adaptive_reflow/theory/paper_quantities.py`).
+   [`adaptive_reflow/theory/paper_quantities.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/theory/paper_quantities.py)).
    - *Affiliation:* `[USER TO FILL: Reviewer 1 affiliation]` (e.g.,
      Meta AI Research (ProbFlow team) / Weizmann Institute — *to
      be confirmed at submission.*)
@@ -1219,7 +1219,7 @@ Sincerely,
 
 **Submission package manifest** (for editorial reference):
 
-1. Manuscript PDF (`docs/drafts/paper-A-final.md`
+1. Manuscript PDF ([`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md)
    typeset to double-column 14-page TNNLS format).
 2. Supplementary PDF (S1–S8: Theorem 1 derivation, per-record
    tables, hp-sensitivity sweep, 4-arm per-seed margin table,

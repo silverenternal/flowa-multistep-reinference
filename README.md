@@ -1,24 +1,24 @@
 # FlowA: A Typed-Contracts Re-Inference Framework for Frozen Flow-Matching Checkpoints
 
-[English](README.md) | [中文](README.zh.md)
+[English](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/README.md) | [中文](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/README.zh.md)
 
 [![CI](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml/badge.svg)](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml)
-[![D.4 byte-stable](https://img.shields.io/badge/D.4-30%2F30%20PASS-brightgreen)](#submission-gates-verified-at-final-pre-push) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![D.4 byte-stable](https://img.shields.io/badge/D.4-30%2F30%20PASS-brightgreen)](#submission-gates-verified-at-final-pre-push) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](#installation)
 [![PyTorch 2.7](https://img.shields.io/badge/torch-2.7%2Bcu128-orange.svg)](#installation)
 [![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)](#tnnls-submission-package)
 [![Adapters](https://img.shields.io/badge/adapters-16-orange.svg)](#repository-structure)
 [![5-gate PASS](https://img.shields.io/badge/5--gate-PASS-brightgreen.svg)](#submission-gates-verified-at-final-pre-push)
-[![mkdocs strict](https://img.shields.io/badge/mkdocs--strict-0%20warnings-success.svg)](mkdocs.yml)
+[![mkdocs strict](https://img.shields.io/badge/mkdocs--strict-0%20warnings-success.svg)](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/mkdocs.yml)
 
 **Last updated:** 2026-09-23 (Wave 339 final polish — H7+H8+B6 COMPLETE, 9-gate ALL PASS, commit `2d0fc48`). Source tree frozen at `v3.1-internal-publishable`. Paper A ready for TNNLS submission.
 
-**Scheduler scope of this README:** All 7 headline numbers in the [Headline Results](#headline-results) section were produced under `CosineAnnealScheduler` (the controller that ignores all 4 paper quantities). `CodimensionSheetScheduler` and the other paper-quantity-grounded controllers (`PaperRatioAdaptiveScheduler`, `EvidenceDrivenScheduler`, `ConvergenceAdaptiveScheduler`) are research-stage; see the Wave 287 codepath audit + the Wave 291 sweep audit, and the full 16-site enumeration at [`docs/audit/wave292-p1-pipeline-inventory.md`](docs/audit/wave292-p1-pipeline-inventory.md).
+**Scheduler scope of this README:** All 7 headline numbers in the [Headline Results](#headline-results) section were produced under `CosineAnnealScheduler` (the controller that ignores all 4 paper quantities). `CodimensionSheetScheduler` and the other paper-quantity-grounded controllers (`PaperRatioAdaptiveScheduler`, `EvidenceDrivenScheduler`, `ConvergenceAdaptiveScheduler`) are research-stage; see the Wave 287 codepath audit + the Wave 291 sweep audit, and the full 16-site enumeration at [`docs/audit/wave292-p1-pipeline-inventory.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave292-p1-pipeline-inventory.md).
 
-**Wave 297 narrative reframe:** the paper narrative now leads with the **typed-contracts framework** (reconstructing flow matching inference as a multi-round re-inference layer partitioned over three domains with a four-port control surface) and the **systematic empirical significance** across 11 R+K cells. JMAA Theorem 1 + Lemmas 2-5 are now framed as **one theoretical companion lens** (not the framework's identity), living in §6 of the paper draft with CodimensionSheetScheduler partial validation on R6 and Wave 296 in-progress for full 16-site activation via `PaperQuantitiesCache` opt-in. The title drops "Paper-Quantity-Driven"; the framework reconstruction is the headline. See [`docs/audit/wave297-p2-paper-design.md`](docs/audit/wave297-p2-paper-design.md) for the section re-design.
+**Wave 297 narrative reframe:** the paper narrative now leads with the **typed-contracts framework** (reconstructing flow matching inference as a multi-round re-inference layer partitioned over three domains with a four-port control surface) and the **systematic empirical significance** across 11 R+K cells. JMAA Theorem 1 + Lemmas 2-5 are now framed as **one theoretical companion lens** (not the framework's identity), living in §6 of the paper draft with CodimensionSheetScheduler partial validation on R6 and Wave 296 in-progress for full 16-site activation via `PaperQuantitiesCache` opt-in. The title drops "Paper-Quantity-Driven"; the framework reconstruction is the headline. See [`docs/audit/wave297-p2-paper-design.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave297-p2-paper-design.md) for the section re-design.
 
 **Wave 290 + 291 engineering note:** the Wave 290 P3 batched framework harness
-([`tools/batched_framework_cifar.py`](tools/batched_framework_cifar.py)) provides a
+([`tools/batched_framework_cifar.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tools/batched_framework_cifar.py)) provides a
 byte-deterministic FID-only path that bypasses `engine.run_round` for the codim
 lever sweep, producing a ~28-35× framework_wall speedup without modifying any
 framework source (`adaptive_reflow/`). The Wave 290 P1 audit (`docs/audit/wave290-p1-bottleneck-confirmed.md`)
@@ -45,7 +45,7 @@ verdict holds globally.
 - [Reproducibility](#reproducibility) — 5-gate invariants + D.4 30/30 + Wave 326 pre-push snapshot
 - [Submission Gates](#submission-gates-verified-at-final-pre-push) — D.4, mkdocs, claims, pytest, ruff, mypy
 - [Citation](#citation) — BibTeX entry for TNNLS submission
-- [中文 README](README.zh.md) — 双语 README
+- [中文 README](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/README.zh.md) — 双语 README
 
 ---
 
@@ -78,18 +78,18 @@ verdict holds globally.
 | Item | Value |
 |---|---|
 | **Paper ID** | Paper A — FlowA: A Typed-Contracts Re-Inference Framework for Frozen Flow-Matching Checkpoints |
-| **Paper PDF** | [`docs/drafts/paper-A-final.pdf`](docs/drafts/paper-A-final.pdf) (14 pages, IEEEtran-journal typeset, sha256 `29384565f188fd36370cc748dc5b796c479c6212bd8575321e3d5b41262d7751`) |
-| **Paper draft** | [`docs/drafts/paper-A-final.md`](docs/drafts/paper-A-final.md) (15,574 words, §6 Framework Properties Lemmas 1/2/3 ACTIVE, sha256 `c8e26722bab22408896a7d8336c25a11f298b797190d62869695c9ef62830d2f`) |
+| **Paper PDF** | [`docs/drafts/paper-A-final.pdf`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.pdf) (14 pages, IEEEtran-journal typeset, sha256 `29384565f188fd36370cc748dc5b796c479c6212bd8575321e3d5b41262d7751`) |
+| **Paper draft** | [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) (16,081 words, §6 Framework Properties Lemmas 1/2/3 ACTIVE, sha256 `cca9187b557ef5b9ed703154cb9b2ebece2512e0d3730d1561c1115878f3e16e`) |
 | **Target venue** | IEEE TNNLS (Transactions on Neural Networks and Learning Systems) |
-| **Submission status** | **READY** — 9-gate ALL PASS at pre-push (D.4 30/30, contracts 195/195, ruff 0 errors, claims no drift, mkdocs strict 0 warnings, vendored NOT touched, data integrity 6/149/0 mismatches, reproducibility 12/12, PDF ≤14 pages); cover letter needs 17 USER_TO_FILL fields per [`tnnls_submission/FILL_GUIDE.md`](tnnls_submission/FILL_GUIDE.md) |
-| **Submission package** | [`tnnls_submission/`](tnnls_submission/) — 7 files with real SHA-256 (cover_letter.md, highlights.md, tables.md, figures.md, data_availability.md, submission_checklist.md, MANIFEST.md) |
+| **Submission status** | **READY** — 9-gate ALL PASS at pre-push (D.4 30/30, contracts 195/195, ruff 0 errors, claims no drift, mkdocs strict 0 warnings, vendored NOT touched, data integrity 6/149/0 mismatches, reproducibility 12/12, PDF ≤14 pages); cover letter needs 17 USER_TO_FILL fields per [`tnnls_submission/FILL_GUIDE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/FILL_GUIDE.md) |
+| **Submission package** | [`tnnls_submission/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tnnls_submission) — 7 files with real SHA-256 (cover_letter.md, highlights.md, tables.md, figures.md, data_availability.md, submission_checklist.md, MANIFEST.md) |
 | **H7 terminology cleanup** | **59 fixes, 0 residual jargon** (Wave 338 H7 audit) |
 | **H8 abbreviations** | **5 defined at first use** (Wave 339 H8 audit: pLDDT, scPerplexity, RDKit, HSM, HMMER) |
 | **B6 cross-doc numbers** | **3 aligned to CLAIMS.md canonical** (Wave 339 B6 audit: R5b FID range, seeds 42/43/44, STRONG count breakdown) |
-| **Final paper sha256** | `c8e26722bab22408896a7d8336c25a11f298b797190d62869695c9ef62830d2f` (15,574 words) |
+| **Final paper sha256** | `cca9187b557ef5b9ed703154cb9b2ebece2512e0d3730d1561c1115878f3e16e` (16,081 words) |
 | **Final PDF sha256** | `29384565f188fd36370cc748dc5b796c479c6212bd8575321e3d5b41262d7751` (14 pages IEEEtran-journal) |
-| **Final metrics audit** | [`docs/audit/wave326-final-metrics-table.md`](docs/audit/wave326-final-metrics-table.md) + [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](docs/audit/wave326-crossdoc-metrics-snapshot.md) |
-| **Decision rationale** | [`docs/audit/wave238-p3-journal-decision.md`](docs/audit/wave238-p3-journal-decision.md) (why TNNLS over NeurIPS/ICML) |
+| **Final metrics audit** | [`docs/audit/wave326-final-metrics-table.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave326-final-metrics-table.md) + [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave326-crossdoc-metrics-snapshot.md) |
+| **Decision rationale** | [`docs/audit/wave238-p3-journal-decision.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave238-p3-journal-decision.md) (why TNNLS over NeurIPS/ICML) |
 | **Wave lineage** | Wave 336 (Tier 1+2 TNNLS execution) → Wave 337 (final self-check) → Wave 338 (H7 terminology cleanup) → **Wave 339 (H8 5 abbreviations + B6 3 cross-doc numbers + 9-gate re-run + final PDF, commit `2d0fc48`)** |
 
 **Push status:** PUSH to `origin/main` is BLOCKED at the USER permission gate per Wave 325 directive. Wave 339 final polish is content-complete and pre-push-ready; final USER authorization required to push.
@@ -98,7 +98,7 @@ verdict holds globally.
 
 ## Final Empirical Metrics (11 cells)
 
-The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/SUPP** (5 main cells + 6 supplementary cells = 11 headline cells total). This is the canonical Wave 326 verdict distribution; cross-doc anchor at [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](docs/audit/wave326-crossdoc-metrics-snapshot.md).
+The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/SUPP** (5 main cells + 6 supplementary cells = 11 headline cells total). This is the canonical Wave 326 verdict distribution; cross-doc anchor at [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave326-crossdoc-metrics-snapshot.md).
 
 | # | Cell | Metric | Verdict | Headline |
 |:---:|---|---|---|---|
@@ -131,7 +131,7 @@ The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/
 | R6 per-tier | 6 | 0.05/6 = 0.008333 | R6 hard / medium / easy × pLDDT / scPerplexity |
 | K-level | 4 | 0.05/4 = 0.0125 | K1, K4, K5, K7 |
 
-**Statistical methods:** TOST equivalence testing (16 cells), Jonckheere-Terpstra ordered test (R2 + R6), BF01 Bayes factor (16 cells), DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z=+1.117, I²=99.60%), and non-inferiority test (R5b, negative result: p_NI = 0.9985). Full details in [DATA_PRESENTATION.md §3](DATA_PRESENTATION.md).
+**Statistical methods:** TOST equivalence testing (16 cells), Jonckheere-Terpstra ordered test (R2 + R6), BF01 Bayes factor (16 cells), DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z=+1.117, I²=99.60%), and non-inferiority test (R5b, negative result: p_NI = 0.9985). Full details in [DATA_PRESENTATION.md §3](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/DATA_PRESENTATION.md).
 
 ---
 
@@ -139,13 +139,13 @@ The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/
 
 | # | Model | Metric | Scheduler | Baseline | Framework | Δ | Effect size | Paper § | Verification |
 |---|---|---|---|---:|---:|---:|---|---|---|
-| R1 | LineageFlow (ICML 2026 protein FM) | `hmmscan_total_hits` N=1000 | CosineAnnealScheduler | 158 | 342 | **+116.46%** | p ≈ 1.5e-08 | §7.6.1 | [ver.](verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/SOURCE.md) |
-| R2 | Kanzi | RMSD (N=1000 paired-t) | framework_inv_proj synthetic x_final + trained inverse projection | reference | d_z = −0.0990 | Bonf-sig p=0.0018 | framework_WINS | §7.6.2 | [ver.](verification_outputs/wave218-p3-kanzi-framework-wins.json) |
-| R3 | FlowMol3 (ICML 2026 mol FM) | `fg_dev` per-record d_z | Gaussian perturbation σ=0.05 | reference | d_z = −0.285 | Bonf-sig <1e-4 | framework_WINS (N=200 per-record; 3-seed pooled BLOCKED at vendor level) | §7.6.3 | [ver.](verification_outputs/wave216-p1-r3-per-record.json) |
-| R4 | 2D Two Moons (2D FM ablation) | W₂ | single_pass → multi_round_no_restart | 2.85 | 0.62 | **−78.25%** | framework_WINS (raw Δ%) | §7.6.4 | [ver.](verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_ablation) |
-| R5 | 2D Eight Gaussians (2D FM ablation) | W₂ | single_pass → multi_round_no_restart | 2.31 | 0.76 | **−67.10%** | framework_WINS (raw Δ%) | §7.6.5 | [ver.](verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_eight_gaussians) |
-| R5b | CIFAR-10 Rectified Flow (n_rounds=1) | FID | 4 schedulers tested (cosineanneal / codimensionsheet / evidencedriven / freetraj) | 454.39 | 447.11 / 442.89 / 453.85 / 451.37 (4 schedulers) | **−2.53% to −0.12%** on 4/4 schedulers | framework-WINS | §7.6.7 | [ver.](verification_outputs/wave235-p1-r5b-fix.json#rounds1) |
-| R6 | k6 foldability (tier-aware) | **pLDDT d_z** | TierAwareCodimensionSheetScheduler | +0.224 | **+0.647** | +189% | large | §7.6.6 | [ver.](verification_outputs/wave235-p3-r6-uplift.json) |
+| R1 | LineageFlow (ICML 2026 protein FM) | `hmmscan_total_hits` N=1000 | CosineAnnealScheduler | 158 | 342 | **+116.46%** | p ≈ 1.5e-08 | §7.6.1 | [ver.](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/SOURCE.md) |
+| R2 | Kanzi | RMSD (N=1000 paired-t) | framework_inv_proj synthetic x_final + trained inverse projection | reference | d_z = −0.0990 | Bonf-sig p=0.0018 | framework_WINS | §7.6.2 | [ver.](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave218-p3-kanzi-framework-wins.json) |
+| R3 | FlowMol3 (ICML 2026 mol FM) | `fg_dev` per-record d_z | Gaussian perturbation σ=0.05 | reference | d_z = −0.285 | Bonf-sig <1e-4 | framework_WINS (N=200 per-record; 3-seed pooled BLOCKED at vendor level) | §7.6.3 | [ver.](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave216-p1-r3-per-record.json) |
+| R4 | 2D Two Moons (2D FM ablation) | W₂ | single_pass → multi_round_no_restart | 2.85 | 0.62 | **−78.25%** | framework_WINS (raw Δ%) | §7.6.4 | [ver.](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_ablation) |
+| R5 | 2D Eight Gaussians (2D FM ablation) | W₂ | single_pass → multi_round_no_restart | 2.31 | 0.76 | **−67.10%** | framework_WINS (raw Δ%) | §7.6.5 | [ver.](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_eight_gaussians) |
+| R5b | CIFAR-10 Rectified Flow (n_rounds=1) | FID | 4 schedulers tested (cosineanneal / codimensionsheet / evidencedriven / freetraj) | 454.39 | 447.11 / 442.89 / 453.85 / 451.37 (4 schedulers) | **−2.53% to −0.12%** on 4/4 schedulers | framework-WINS | §7.6.7 | [ver.](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p1-r5b-fix.json#rounds1) |
+| R6 | k6 foldability (tier-aware) | **pLDDT d_z** | TierAwareCodimensionSheetScheduler | +0.224 | **+0.647** | +189% | large | §7.6.6 | [ver.](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p3-r6-uplift.json) |
 
 **24.6× wall-clock gap → 1.26×** (wall-clock fix phase): CUDA-graph capture closes 76.8% of framework/baseline wall-clock ratio (4.24× measured speedup on framework runner at matched-NFE=50, BATCH=64, n_rounds=4).
 
@@ -159,7 +159,7 @@ The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/
 - **R5b (Image)**: n_rounds=1 framework_WINS ΔFID=-2.53% to -0.66% (4 schedulers at seed 42 NFE=50)
 - **R6 (Image)**: tier-aware pLDDT d_z: +0.224 → +0.647 (+189%) framework_WINS (cluster-robust 5/8 SUPPORTED)
 
-**Statistical methods** (statistical methods upgrade): TOST equivalence testing (16 cells), Jonckheere-Terpstra ordered test (R2 + R6), BF01 Bayes factor (16 cells), DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z=+1.117, I²=99.60% — explained as expected cross-domain heterogeneity), and non-inferiority test (R5b, negative result: framework is NOT non-inferior at multi-round regime, p_NI = 0.9985). Full details in [DATA_PRESENTATION.md §3](DATA_PRESENTATION.md).
+**Statistical methods** (statistical methods upgrade): TOST equivalence testing (16 cells), Jonckheere-Terpstra ordered test (R2 + R6), BF01 Bayes factor (16 cells), DerSimonian-Laird random-effects meta-analysis (k=12 studies, pooled d_z=+1.117, I²=99.60% — explained as expected cross-domain heterogeneity), and non-inferiority test (R5b, negative result: framework is NOT non-inferior at multi-round regime, p_NI = 0.9985). Full details in [DATA_PRESENTATION.md §3](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/DATA_PRESENTATION.md).
 
 **K-cells (Wave 297 expansion):** K1 (FlowMol3 RDKit, d_z=+1.36 borderline), K4 (LineageFlow HMMER length-bias on hmmscan_total_hits, hit-count metric 12-22/100 POWERED per Wave 280 P sweep), K5 (LineageFlow HMMER framework-vs-baseline delta on hmmscan_total_hits, SUPPORTS-WITH-CAVEAT d_z=+1.15 p_bonf=0.734 underpowered per n=3 paired-seeds), K7 (LineageFlow novelty@0.95=1.0000 d_z=∞).
 
@@ -171,13 +171,13 @@ Beyond the empirical results, the framework ships seven **genuinely novel** prim
 
 | # | Innovation | Bucket | One-line novelty | Paper landing |
 |:---:|---|---|---|---|
-| 1 | **Hash-Chained Ledger Rows w/ O(1) Verification** ([CLM-078](docs/CLAIMS.md#CLM-078)) | Code #2 | SHA-256 chain over canonical row fields; tamper detected at append time with one hash computation per row (vs O(R) full re-walk for `git fsck`); `ParallelLedgerChain.finalize` produces the same head hash as the sequential chain | §3, §8 |
-| 2 | **PEP 695 Generic State Machine w/ Byte-Deterministic Log** ([CLM-079](docs/CLAIMS.md#CLM-079)) | Code #4 | Stdlib-only state machine library with HSM, parallel regions, history pseudo-states, visualization, and wall-clock-free `TransitionLog` (no `datetime.now()`, no `id()`, no `random.random()`); mypy --strict catches invalid literals | §3, §8 |
-| 3 | **Capability-Token Handshake w/ Fail-Closed Audit Trail** ([CLM-080](docs/CLAIMS.md#CLM-080)) | Code #1 | Per-adapter 9-bool-flag `AdapterCapabilities` enforced at every dispatch; mismatches accumulate `":"`-delimited `audit_codes` (e.g. `capability_unsupported:foo:continuous_kind_not_advertised`) rather than crash — partial rounds remain auditable via `LedgerRow` | §3, §5 |
-| 4 | **Typed Four-Port Wire Carrier + Auto-Wrap** ([CLM-081](docs/CLAIMS.md#CLM-081)) | Code #5 | 5 typed `Condition` subclasses + discriminated `condition_kind` literal; `ODEConditionDelta.__post_init__` auto-wraps raw dicts into typed `MappingConditionAdapter` for 2356-test back-compat — closes the gap between Pydantic v2 breaking-change migration and forever-untyped legacy | §3, §5 |
-| 5 | **Honest Disclosure When Hypothesis Is Refuted** ([CLM-082](docs/CLAIMS.md#CLM-082)) | Method #1 | Inline additive publication of refuted lever hypotheses as `W286 P -> W291 P4 -> W292 re-anchor` chains in `docs/CLAIMS.md`; ACTIVE status preserved verbatim (refutations are ADDENDA, not status flips) | §1, §8, §9 |
-| 6 | **Wave-Based Audit Chain + Topic-Cluster Cross-Reference** ([CLM-083](docs/CLAIMS.md#CLM-083)) | Method #2 | 24 waves × multi-phase self-contained `docs/audit/waveNNN-pK-*.md` artefacts (TL;DR + Method + Verdicts + INVARIANTS + Edit discipline); `docs/audit/INDEX.md` re-clusters by topic so reviewers answer questions without grepping wave numbers | §1, §8, §10 |
-| 7 | **Lazy-Memoized Paper-Quantity Cache w/ Site-Aware Dispatch** ([CLM-084](docs/CLAIMS.md#CLM-084)) | Code #3 | Single dormant/active constructor; 15 JMAA theory sites share one cache keyed by `site_name` via `PAPER_QUANTITIES_SITE_NAMES` closed-set; per-site return shape + idempotent `consume()` activation log | §4, §6, §9, §10 |
+| 1 | **Hash-Chained Ledger Rows w/ O(1) Verification** ([CLM-078](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-078)) | Code #2 | SHA-256 chain over canonical row fields; tamper detected at append time with one hash computation per row (vs O(R) full re-walk for `git fsck`); `ParallelLedgerChain.finalize` produces the same head hash as the sequential chain | §3, §8 |
+| 2 | **PEP 695 Generic State Machine w/ Byte-Deterministic Log** ([CLM-079](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-079)) | Code #4 | Stdlib-only state machine library with HSM, parallel regions, history pseudo-states, visualization, and wall-clock-free `TransitionLog` (no `datetime.now()`, no `id()`, no `random.random()`); mypy --strict catches invalid literals | §3, §8 |
+| 3 | **Capability-Token Handshake w/ Fail-Closed Audit Trail** ([CLM-080](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-080)) | Code #1 | Per-adapter 9-bool-flag `AdapterCapabilities` enforced at every dispatch; mismatches accumulate `":"`-delimited `audit_codes` (e.g. `capability_unsupported:foo:continuous_kind_not_advertised`) rather than crash — partial rounds remain auditable via `LedgerRow` | §3, §5 |
+| 4 | **Typed Four-Port Wire Carrier + Auto-Wrap** ([CLM-081](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-081)) | Code #5 | 5 typed `Condition` subclasses + discriminated `condition_kind` literal; `ODEConditionDelta.__post_init__` auto-wraps raw dicts into typed `MappingConditionAdapter` for 2356-test back-compat — closes the gap between Pydantic v2 breaking-change migration and forever-untyped legacy | §3, §5 |
+| 5 | **Honest Disclosure When Hypothesis Is Refuted** ([CLM-082](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-082)) | Method #1 | Inline additive publication of refuted lever hypotheses as `W286 P -> W291 P4 -> W292 re-anchor` chains in `docs/CLAIMS.md`; ACTIVE status preserved verbatim (refutations are ADDENDA, not status flips) | §1, §8, §9 |
+| 6 | **Wave-Based Audit Chain + Topic-Cluster Cross-Reference** ([CLM-083](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-083)) | Method #2 | 24 waves × multi-phase self-contained `docs/audit/waveNNN-pK-*.md` artefacts (TL;DR + Method + Verdicts + INVARIANTS + Edit discipline); `docs/audit/INDEX.md` re-clusters by topic so reviewers answer questions without grepping wave numbers | §1, §8, §10 |
+| 7 | **Lazy-Memoized Paper-Quantity Cache w/ Site-Aware Dispatch** ([CLM-084](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-084)) | Code #3 | Single dormant/active constructor; 15 JMAA theory sites share one cache keyed by `site_name` via `PAPER_QUANTITIES_SITE_NAMES` closed-set; per-site return shape + idempotent `consume()` activation log | §4, §6, §9, §10 |
 
 **Reviewer-resilience ranking** (post-W298 P5 re-classification, defensibility × novelty × reviewer-value):
 1. Hash-chained ledger — strongest claim, Git packfile verifies in O(R), this is O(1) at append
@@ -308,7 +308,7 @@ Per-cell full audit trail at `docs/audit/wave*.md` (cited per cell above).
 | **Pytest (5155 passed / 196 skipped)** | green | `pytest tests/` |
 | **Ruff lint (4-directory scope)** | 0 findings | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
 | **Mypy type-check** | 0 errors | `mypy adaptive_reflow/` |
-| **Final paper sha256** | `c8e26722bab22408896a7d8336c25a11f298b797190d62869695c9ef62830d2f` | `sha256sum docs/drafts/paper-A-final.md` |
+| **Final paper sha256** | `cca9187b557ef5b9ed703154cb9b2ebece2512e0d3730d1561c1115878f3e16e` | `sha256sum docs/drafts/paper-A-final.md` |
 | **Final PDF sha256** | `29384565f188fd36370cc748dc5b796c479c6212bd8575321e3d5b41262d7751` (14 pages) | `sha256sum docs/drafts/paper-A-final.pdf` |
 
 **Reproducibility recipe:**
@@ -327,7 +327,7 @@ python3 tools/verify_submission_readiness.py
 mkdocs build --strict
 ```
 
-**Reviewer re-verification:** Compare the embedded `verification_outputs/` SHA-256 against `sha256sum docs/headline-evidence/rN_*/SOURCE.md`. Final pre-push metrics snapshot at `docs/audit/wave326-final-metrics-table.md`. Final paper SHA-256 `c8e26722bab22408896a7d8336c25a11f298b797190d62869695c9ef62830d2f`; final PDF SHA-256 `29384565f188fd36370cc748dc5b796c479c6212bd8575321e3d5b41262d7751` (14 pages IEEEtran-journal).
+**Reviewer re-verification:** Compare the embedded `verification_outputs/` SHA-256 against `sha256sum docs/headline-evidence/rN_*/SOURCE.md`. Final pre-push metrics snapshot at `docs/audit/wave326-final-metrics-table.md`. Final paper SHA-256 `cca9187b557ef5b9ed703154cb9b2ebece2512e0d3730d1561c1115878f3e16e`; final PDF SHA-256 `29384565f188fd36370cc748dc5b796c479c6212bd8575321e3d5b41262d7751` (14 pages IEEEtran-journal).
 
 **K-cells reproducibility note:** 6 supplementary cells (R1, R3, R5_legacy, K1, K4+K5, K7) have data-archaeology disclosures (per-round CSV NOT preserved / 3-seed pool BLOCKED / single-seed only / direction-INVERTED). The 4 STRONG + 1 TIE main cells are the load-bearing reproducibility anchors; see DATA_PRESENTATION.md §2.4 + §2.5 + §6.7 for full disclosure.
 
@@ -418,9 +418,9 @@ directive dated 2026-09-22. Verified (`docs/audit/wave262-p1-revert-all.md`,
 
 ## TNNLS Submission Package
 
-This work is being submitted to **IEEE Transactions on Neural Networks and Learning Systems (TNNLS)** (decision rationale at [`docs/audit/wave238-p3-journal-decision.md`](docs/audit/wave238-p3-journal-decision.md)).
+This work is being submitted to **IEEE Transactions on Neural Networks and Learning Systems (TNNLS)** (decision rationale at [`docs/audit/wave238-p3-journal-decision.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave238-p3-journal-decision.md)).
 
-See [`tnnls_submission/`](tnnls_submission/) for the complete submission package:
+See [`tnnls_submission/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tnnls_submission) for the complete submission package:
 
 | File | Size (bytes) | SHA-256 |
 |---|---:|---|
@@ -447,17 +447,17 @@ Re-verify with `cd tnnls_submission && sha256sum -- *.md`.
   year={2026},
   note={Under review at TNNLS; submission package at tnnls\_submission/;
         pre-push metrics snapshot: docs/audit/wave326-final-metrics-table.md;
-        final paper sha256: c8e26722bab22408896a7d8336c25a11f298b797190d62869695c9ef62830d2f}
+        final paper sha256: cca9187b557ef5b9ed703154cb9b2ebece2512e0d3730d1561c1115878f3e16e}
 }
 ```
 
-**BibTeX note:** The `note` field references the Wave 326 final pre-push metrics snapshot for reproducibility. The submission-package SHA-256 column in [`tnnls_submission/MANIFEST.md`](tnnls_submission/MANIFEST.md) is the source-of-truth for cover letter + highlights + tables + figures + data availability + checklist.
+**BibTeX note:** The `note` field references the Wave 326 final pre-push metrics snapshot for reproducibility. The submission-package SHA-256 column in [`tnnls_submission/MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md) is the source-of-truth for cover letter + highlights + tables + figures + data availability + checklist.
 
 ---
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/LICENSE).
 
 ## Acknowledgements
 
@@ -471,10 +471,10 @@ Theoretical companion (not the framework's identity): Theorem 1 + Lemmas 2-5 are
 
 ## Contact
 
-For TNNLS review correspondence: see [`tnnls_submission/cover_letter.md`](tnnls_submission/cover_letter.md).
+For TNNLS review correspondence: see [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md).
 
 For paper issues: open a GitHub issue or PR.
 
 ---
 
-**See [CHANGELOG.md](CHANGELOG.md) for the development history.**
+**See [CHANGELOG.md](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/CHANGELOG.md) for the development history.**

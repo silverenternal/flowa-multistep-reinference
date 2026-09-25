@@ -1,6 +1,6 @@
 # TNNLS Cover Letter — FILL GUIDE
 
-**Target file:** `tnnls_submission/cover_letter.md`
+**Target file:** [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md)
 **Total `[USER TO FILL: …]` occurrences (per `grep -nE 'USER.TO.FILL'`):** 31
 **Distinct fillable fields (unique content the user must write):** 17
   - 1 Authors block
@@ -145,7 +145,7 @@
 
 ## How to apply
 
-1. **Open** `tnnls_submission/cover_letter.md` in your editor.
+1. **Open** [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md) in your editor.
 2. **Locate each placeholder** with:
    ```bash
    grep -nE 'USER.TO.FILL' tnnls_submission/cover_letter.md
@@ -170,7 +170,7 @@
    ```bash
    cd tnnls_submission && sha256sum -- *.md
    ```
-6. **Update** the SHA-256 column in `tnnls_submission/MANIFEST.md` (and the cover-letter header reference if any) for `cover_letter.md`.
+6. **Update** the SHA-256 column in [`tnnls_submission/MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md) (and the cover-letter header reference if any) for [`cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md).
 7. **Run the §0 documentation-mirror check** (optional but recommended): after filling, the §0 placeholder pointer list (lines 11, 15, 19, 24–31) may be left intact, OR you can update them to read "**[FILLED]**" so future readers don't grep a stale list. Either choice is acceptable as long as `grep -nE 'USER.TO.FILL' tnnls_submission/cover_letter.md` returns only the §0 documentation pointers and §0 convention text (14 hits), not 17.
 8. **Commit:**
    ```bash

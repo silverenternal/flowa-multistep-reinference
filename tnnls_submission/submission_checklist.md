@@ -8,17 +8,17 @@
 
 ### Manuscript
 
-- [x] **Manuscript ≤ 14 pages** (TNNLS main-track limit) excluding refs + supplementary — `docs/drafts/paper-A-final.md` typeset to double-column 14-page TNNLS format via `site/build_pdf/`. Pages preserved at 14 ±2.
-- [x] **Cover letter uploaded to Editorial Manager** — `tnnls_submission/cover_letter.md` (snapshot of `docs/cover-letter-tnnls.md`). All 11 USER ACTION placeholders filled before upload.
-- [x] **Highlights (3 bullets, 85-char each)** — `tnnls_submission/highlights.md`.
-- [x] **Anonymized** — no author / institution / acknowledgement visible in `docs/drafts/paper-A-final.md`, `tnnls_submission/cover_letter.md`, or supplementary.
+- [x] **Manuscript ≤ 14 pages** (TNNLS main-track limit) excluding refs + supplementary — [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) typeset to double-column 14-page TNNLS format via `site/build_pdf/`. Pages preserved at 14 ±2.
+- [x] **Cover letter uploaded to Editorial Manager** — [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md) (snapshot of [`docs/cover-letter-tnnls.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/cover-letter-tnnls.md)). All 11 USER ACTION placeholders filled before upload.
+- [x] **Highlights (3 bullets, 85-char each)** — [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md).
+- [x] **Anonymized** — no author / institution / acknowledgement visible in [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md), [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md), or supplementary.
 
 ### Reviewer-proof guarantees
 
-- [x] **G1 SHA-256 checkpoint verification** — Kanzi `c2f2ab8d...d270`; LineageFlow `f0b4b25e...54a2b`; FlowMol3 epoch 17, global_step 1,547,236, sha256 `d6cda2d7...`. Re-verify against `verification_outputs/kanzi_n1000_manifest.json` + `verification_outputs/lineageflow_real_ckpt_forward_q4_2026.json` + `data/flowmol3/weights_real/checkpoints/last.ckpt` before ship.
+- [x] **G1 SHA-256 checkpoint verification** — Kanzi `c2f2ab8d...d270`; LineageFlow `f0b4b25e...54a2b`; FlowMol3 epoch 17, global_step 1,547,236, sha256 `d6cda2d7...`. Re-verify against [`verification_outputs/kanzi_n1000_manifest.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/kanzi_n1000_manifest.json) + [`verification_outputs/lineageflow_real_ckpt_forward_q4_2026.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/lineageflow_real_ckpt_forward_q4_2026.json) + [`data/flowmol3/weights_real/checkpoints/last.ckpt`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/data/flowmol3/weights_real/checkpoints/last.ckpt) before ship.
 - [x] **G2 upstream default sampling config** — FlowMol3 `flowmol.FlowMol.sample(...)` at paper-default NFE 250 + perturbation σ 0.05 (framework arm); LineageFlow `evaluation/evaluate_all.py` with `--nfe 250` against Wave-80-vendored Pfam-A.hmm + MMseqs2 target DB; Kanzi `kanzi.DAE.encode+decode+kabsch_rmsd` on Wave-88-vendored 4-PDB reference set.
-- [x] **G3 zero new LOC in upstream metric code** — `tools/paper_metrics.py` wraps `posebusters/modules/energy_ratio.py` (PB 0.6.5) + `flowmol/fm3_evals/geometry/{xtb_optimization,rmsd_energy}.py`; `tools/paper_metrics_kanzi.py` wraps `kanzi.DAE` encode/decode/kabsch utilities; `tools/upstream_eval.py` wraps `LineageFlow/evaluation/evaluate_all.py`. No net-new metric math.
-- [x] **G4 vendored upstream snapshot frozen** — LineageFlow at `ccef84a` ("Prepare LineageFlow public release") under `data/lineageflow_upstream/`; Kanzi at `cfed9cf` under `data/kanzi_upstream/`; FlowMol3 at `77cae22` ("Update readme.md") under `data/FlowMol3/repo/`. All three referenced by SHA-pinned paths in every `verification_outputs/*_n1000_*.json`.
+- [x] **G3 zero new LOC in upstream metric code** — [`tools/paper_metrics.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tools/paper_metrics.py) wraps `posebusters/modules/energy_ratio.py` (PB 0.6.5) + `flowmol/fm3_evals/geometry/{xtb_optimization,rmsd_energy}.py`; [`tools/paper_metrics_kanzi.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tools/paper_metrics_kanzi.py) wraps `kanzi.DAE` encode/decode/kabsch utilities; [`tools/upstream_eval.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tools/upstream_eval.py) wraps `LineageFlow/evaluation/evaluate_all.py`. No net-new metric math.
+- [x] **G4 vendored upstream snapshot frozen** — LineageFlow at `ccef84a` ("Prepare LineageFlow public release") under [`data/lineageflow_upstream/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/data/lineageflow_upstream); Kanzi at `cfed9cf` under [`data/kanzi_upstream/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/data/kanzi_upstream); FlowMol3 at `77cae22` ("Update readme.md") under [`data/FlowMol3/repo/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/data/FlowMol3/repo). All three referenced by SHA-pinned paths in every [`verification_outputs/*_n1000_*.json`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs).
 
 ### Acceptance gates (verified at Wave 242 P4)
 
@@ -26,14 +26,14 @@
 - [x] **mkdocs build --strict:** 0 warnings (Wave 238 P4 + Wave 242 P4)
 - [x] **claims_consistency:** no drift (Wave 238 P4 + Wave 242 P4)
 - [x] **Abstract word count:** 328 words (Wave 242 P3 — TNNLS allows up to 250; reviewer can request trim if needed)
-- [x] **Ruff lint (4-directory scope):** 0 findings across `adaptive_reflow/`, `tests/`, `scripts/`, `tools/`
+- [x] **Ruff lint (4-directory scope):** 0 findings across [`adaptive_reflow/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/adaptive_reflow), [`tests/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tests), [`scripts/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/scripts), [`tools/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tools)
 - [x] **Mypy type-check:** 0 errors
 - [x] **Pytest:** 5155 passed / 196 skipped
 
 ### Tier-3 cells (12 of 12)
 
-- [x] **FlowMol3:** full N=1000 sweep available (Wave 87 baseline 999 + framework 1000 — see `verification_outputs/flowmol3_n1000_*_q4_2026.json`). Wave 242 P1 3-seed NFE=250 N=200 single_mol rescue in flight for direction consistency.
-- [x] **LineageFlow:** N=1000 sweep archived (Wave 158 P2 with truly-real sequences) — sha256-pinned at `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/`.
+- [x] **FlowMol3:** full N=1000 sweep available (Wave 87 baseline 999 + framework 1000 — see [`verification_outputs/flowmol3_n1000_*_q4_2026.json`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs)). Wave 242 P1 3-seed NFE=250 N=200 single_mol rescue in flight for direction consistency.
+- [x] **LineageFlow:** N=1000 sweep archived (Wave 158 P2 with truly-real sequences) — sha256-pinned at [`verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026).
 - [x] **Kanzi:** N=1000 sweep + 5-arm ablation RESOLVED 5/5 (Wave 157 P2 commit `daa523b`).
 
 ### Statistical methods (Wave 234 P5)
@@ -60,16 +60,16 @@
 
 ## Upload order for TNNLS Editorial Manager
 
-1. **Manuscript:** `docs/drafts/paper-A-final.md` typeset to double-column 14-page TNNLS format (via `site/build_pdf/`).
+1. **Manuscript:** [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) typeset to double-column 14-page TNNLS format (via `site/build_pdf/`).
 2. **Supplementary material:**
-   - `docs/theory/theorem-1-self-contained.md` (Theorem 1 derivation appendix)
-   - `docs/theory/` (full theory package)
-   - `verification_outputs/wave230-p2-real-4arm-per-record.csv` (per-record 4-arm H2H tables)
-   - `verification_outputs/wave234-*.csv/json` (statistical methods outputs)
-3. **Highlights:** paste the three bullets from `tnnls_submission/highlights.md` into the Editorial Manager "Highlights" field.
-4. **Cover letter:** upload `tnnls_submission/cover_letter.md` after filling all 11 `[USER TO FILL: ...]` placeholders.
-5. **Data availability:** upload `tnnls_submission/data_availability.md`.
-6. **Reproducibility checklist:** upload `tnnls_submission/submission_checklist.md` (this file).
+   - [`docs/theory/theorem-1-self-contained.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/theory/theorem-1-self-contained.md) (Theorem 1 derivation appendix)
+   - [`docs/theory/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/theory) (full theory package)
+   - [`verification_outputs/wave230-p2-real-4arm-per-record.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave230-p2-real-4arm-per-record.csv) (per-record 4-arm H2H tables)
+   - [`verification_outputs/wave234-*.csv/json`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs) (statistical methods outputs)
+3. **Highlights:** paste the three bullets from [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md) into the Editorial Manager "Highlights" field.
+4. **Cover letter:** upload [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md) after filling all 11 `[USER TO FILL: ...]` placeholders.
+5. **Data availability:** upload [`tnnls_submission/data_availability.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/data_availability.md).
+6. **Reproducibility checklist:** upload [`tnnls_submission/submission_checklist.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/submission_checklist.md) (this file).
 
 ---
 
@@ -90,12 +90,12 @@
 
 ## Cross-references
 
-- `tnnls_submission/MANIFEST.md` — package manifest with SHA-256 + size + role
-- `tnnls_submission/cover_letter.md` — cover letter (canonical source: `docs/cover-letter-tnnls.md`)
-- `tnnls_submission/highlights.md` — 3 editor-facing highlights
-- `tnnls_submission/tables.md` — 5 paper-ready tables
-- `tnnls_submission/figures.md` — 5 ASCII architecture diagrams
-- `tnnls_submission/data_availability.md` — Data availability statement
-- `docs/internal/tnnls_submission_action_checklist.md` — canonical TNNLS action checklist (Wave 238 P3)
-- `docs/audit/wave238-p3-journal-decision.md` — Wave 238 P3 journal decision (TPAMI → TNNLS)
-- `docs/audit/wave238-p4-final-verify.md` — Wave 238 P4 final pre-push verification
+- [`tnnls_submission/MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md) — package manifest with SHA-256 + size + role
+- [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md) — cover letter (canonical source: [`docs/cover-letter-tnnls.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/cover-letter-tnnls.md))
+- [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md) — 3 editor-facing highlights
+- [`tnnls_submission/tables.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/tables.md) — 5 paper-ready tables
+- [`tnnls_submission/figures.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/figures.md) — 5 ASCII architecture diagrams
+- [`tnnls_submission/data_availability.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/data_availability.md) — Data availability statement
+- [`docs/internal/tnnls_submission_action_checklist.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/internal/tnnls_submission_action_checklist.md) — canonical TNNLS action checklist (Wave 238 P3)
+- [`docs/audit/wave238-p3-journal-decision.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave238-p3-journal-decision.md) — Wave 238 P3 journal decision (TPAMI → TNNLS)
+- [`docs/audit/wave238-p4-final-verify.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave238-p4-final-verify.md) — Wave 238 P4 final pre-push verification

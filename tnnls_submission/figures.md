@@ -247,7 +247,7 @@
 
 ## Cross-references
 
-- `docs/ARCHITECTURE.md` — full architecture governance doc
-- `docs/drafts/section-2-method.md` — paper §2 method
-- `docs/audit/wave235-p1-r5b-fix.md` + `wave235-p2-r2-uplift.md` + `wave235-p3-r6-uplift.md` + `wave236-p2-wallclock-fix.md` — Wave 235-236 high-leverage improvements
-- `tnnls_submission/MANIFEST.md` — package manifest
+- [`docs/ARCHITECTURE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHITECTURE.md) — full architecture governance doc
+- [`docs/drafts/section-2-method.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/section-2-method.md) — paper §2 method
+- [`docs/audit/wave235-p1-r5b-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave235-p1-r5b-fix.md) + [`wave235-p2-r2-uplift.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave235-p2-r2-uplift.md) + [`wave235-p3-r6-uplift.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave235-p3-r6-uplift.md) + [`wave236-p2-wallclock-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave236-p2-wallclock-fix.md) — Wave 235-236 high-leverage improvements
+- [`tnnls_submission/MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md) — package manifest

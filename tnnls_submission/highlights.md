@@ -35,7 +35,7 @@
 
 ## Cross-references
 
-- `docs/cover-letter-tnnls.md` §3 Insight — Paper-Quantity-Driven Scheduling
-- `docs/drafts/abstract-final.md` — 250-word TPAMI-envelope abstract
-- `docs/internal/tnnls_submission_action_checklist.md` — TNNLS editorial requirements
-- `tnnls_submission/MANIFEST.md` — package manifest
+- [`docs/cover-letter-tnnls.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/cover-letter-tnnls.md) §3 Insight — Paper-Quantity-Driven Scheduling
+- [`docs/drafts/abstract-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/abstract-final.md) — 250-word TPAMI-envelope abstract
+- [`docs/internal/tnnls_submission_action_checklist.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/internal/tnnls_submission_action_checklist.md) — TNNLS editorial requirements
+- [`tnnls_submission/MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md) — package manifest

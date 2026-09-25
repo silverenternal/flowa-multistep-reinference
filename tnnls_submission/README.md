@@ -26,9 +26,9 @@ tnnls_submission/
 The **manuscript PDF and source** live one level up:
 
 ```
-docs/drafts/paper-A-final.pdf   ← 14 pages, 305270 bytes (Wave 324 D+5, ready-to-submit)
-docs/drafts/paper-A-final.tex   ← IEEEtran-journal source
-docs/drafts/paper-A-final.{aux,log,out}
+[`docs/drafts/paper-A-final.pdf`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.pdf)   ← 14 pages, 305270 bytes (Wave 324 D+5, ready-to-submit)
+[`docs/drafts/paper-A-final.tex`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.tex)   ← IEEEtran-journal source
+[`docs/drafts/paper-A-final.{aux,log,out}`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/drafts)
 ```
 
 ---
@@ -74,22 +74,22 @@ Walk through these in order; each step has a single command that produces one li
 Open `https://mc.manuscriptcentral.com/tnnls` (IEEE TNNLS Editorial
 Manager). Sign in as the corresponding author, click **"New
 Submission"**, and follow the 7-step wizard. Each step below names
-the `tnnls_submission/` (or `docs/drafts/`) file you upload.
+the [`tnnls_submission/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tnnls_submission) (or [`docs/drafts/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/drafts)) file you upload.
 
 ### Step 1 — Article Type
 Select: **"Regular Paper"** (TNNLS treats the manuscript as a regular research article, not a correspondence or survey). Title and abstract go in **Step 2**.
 
 ### Step 2 — Title, Abstract, Keywords
-- **Title:** paste verbatim from the manuscript, line 1 of `docs/drafts/paper-A-final.tex` (PDF page 1).
+- **Title:** paste verbatim from the manuscript, line 1 of [`docs/drafts/paper-A-final.tex`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.tex) (PDF page 1).
 - **Abstract:** copy the body of `Abstract.` (between `\begin{abstract}` and `\end{abstract}` in the `.tex`, or page 1 of the PDF). **Do not include** the index-terms/IEEE keywords here — those live in Step 3.
 - **Keywords:** copy the 9 IEEE keyword terms from `\begin{IEEEkeywords}` … `\end{IEEEkeywords}` (or the IEEEtran section in the PDF).
 
 ### Step 3 — Manuscript File
-- Upload: **`docs/drafts/paper-A-final.pdf`** (14 pages, IEEEtran-journal typeset).
+- Upload: **[`docs/drafts/paper-A-final.pdf`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.pdf)** (14 pages, IEEEtran-journal typeset).
 - The system will probe for embedded fonts and page count; both should pass.
 
 ### Step 4 — Supplementary Material
-- Upload: **`tnnls_submission/supplementary/README.md`** as a text attachment.
+- Upload: **[`tnnls_submission/supplementary/README.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/supplementary/README.md)** as a text attachment.
   - The supplementary bundle is **indexed**, not bundled into a single PDF — ScholarOne accepts up to 5 supplementary files, but a single `supplementary/README.md` index that hyperlinks every cell is the cleanest delivery. Reviewers click through to the byte-addressable JSON / CSV / markdown files in the public Zenodo / GitHub mirror (see `data_availability.md`).
 - **If ScholarOne rejects .md**, convert to PDF via:
   ```bash
@@ -97,11 +97,11 @@ Select: **"Regular Paper"** (TNNLS treats the manuscript as a regular research a
   ```
 
 ### Step 5 — Cover Letter
-- Upload: **`tnnls_submission/cover_letter.md`** after all 17 `[USER TO FILL: ...]` placeholders are filled (see `FILL_GUIDE.md`).
+- Upload: **[`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md)** after all 17 `[USER TO FILL: ...]` placeholders are filled (see [`FILL_GUIDE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/FILL_GUIDE.md)).
 - If ScholarOne only accepts PDF: `pandoc -o cover_letter.pdf tnnls_submission/cover_letter.md --pdf-engine=xelatex -V geometry:margin=1in -V fontsize=11pt`.
 
 ### Step 6 — Highlights
-- Paste the three bullets from `tnnls_submission/highlights.md` (each ≤ 85 chars) into the "Manuscript Highlights" field. **Each highlight on its own line.**
+- Paste the three bullets from [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md) (each ≤ 85 chars) into the "Manuscript Highlights" field. **Each highlight on its own line.**
 
 ### Step 7 — Suggested Reviewers / Associate Editor / COI
 - Suggested Associate Editor: copy from cover letter §9.
@@ -125,7 +125,7 @@ Select: **"Regular Paper"** (TNNLS treats the manuscript as a regular research a
    ```bash
    git push origin v3.0-tnnls-ready
    ```
-4. **Generate the Zenodo deposit** from the tagged commit. Use the `docs/zenodo-release/` recipe — the deposit metadata should reference the v3.0-tnnls-ready tag, not the HEAD. Save the assigned Zenodo DOI in `tnnls_submission/data_availability.md` §Code availability.
+4. **Generate the Zenodo deposit** from the tagged commit. Use the [`docs/zenodo-release/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/zenodo-release) recipe — the deposit metadata should reference the v3.0-tnnls-ready tag, not the HEAD. Save the assigned Zenodo DOI in [`tnnls_submission/data_availability.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/data_availability.md) §Code availability.
 5. **Send the Zenodo DOIs to the TNNLS editorial office** via the Editorial Manager "Reply to decision email" channel after acknowledgement (this is optional but TNNLS authors typically include it in the cover-letter-post-upload follow-up email).
 
 ---
@@ -153,18 +153,18 @@ Select: **"Regular Paper"** (TNNLS treats the manuscript as a regular research a
 
 ## 6. Cross-reference to package artifacts
 
-- `tnnls_submission/MANIFEST.md` — file-by-file SHA-256 ledger (re-hash after every edit)
-- `tnnls_submission/FILL_GUIDE.md` — detailed walkthrough for `cover_letter.md` placeholders
-- `tnnls_submission/supplementary/README.md` — supplementary bundle index (headline cells, audit docs, verification outputs)
-- `tnnls_submission/data_availability.md` — Zenodo DOIs + per-record CSV provenance
-- `tnnls_submission/highlights.md` — 3 TNNLS highlights, provenance-traced
-- `tnnls_submission/tables.md` — 5 paper-ready tables (R1-R6 + 4-arm H2H + statistical + wall-clock + reproducibility)
-- `tnnls_submission/figures.md` — ASCII architecture diagrams
-- `tnnls_submission/submission_checklist.md` — D.4 + mkdocs + claims + pytest + acceptance gates
-- `docs/audit/wave324-d5-review.md` — final D+5 review (ready-to-submit verdict, 9 CRITICAL fixes already applied)
-- `docs/audit/wave323-typeset-execution.md` — IEEEtran-journal typeset execution
-- `docs/audit/wave322-restoration-execution.md` — Path A Lemma 2/3 (state-machine byte-determinism + ledger tamper-evidence)
-- `docs/audit/wave311-restoration-execution.md` — Path A Lemma 1 (protocol composition closure)
-- `docs/audit/wave310-restoration-execution.md` — R6 STRONG tier-aware upgrade + D2 restoration
-- `docs/audit/wave297-final.md` + `wave298-final.md` — paper restoration + 7-novelty catalogue
-- `docs/audit/wave306-11-cell-alignment.md` + `wave307-data-archaeology.md` — 11-cell alignment
+- [`tnnls_submission/MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md) — file-by-file SHA-256 ledger (re-hash after every edit)
+- [`tnnls_submission/FILL_GUIDE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/FILL_GUIDE.md) — detailed walkthrough for `cover_letter.md` placeholders
+- [`tnnls_submission/supplementary/README.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/supplementary/README.md) — supplementary bundle index (headline cells, audit docs, verification outputs)
+- [`tnnls_submission/data_availability.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/data_availability.md) — Zenodo DOIs + per-record CSV provenance
+- [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md) — 3 TNNLS highlights, provenance-traced
+- [`tnnls_submission/tables.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/tables.md) — 5 paper-ready tables (R1-R6 + 4-arm H2H + statistical + wall-clock + reproducibility)
+- [`tnnls_submission/figures.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/figures.md) — ASCII architecture diagrams
+- [`tnnls_submission/submission_checklist.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/submission_checklist.md) — D.4 + mkdocs + claims + pytest + acceptance gates
+- [`docs/audit/wave324-d5-review.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave324-d5-review.md) — final D+5 review (ready-to-submit verdict, 9 CRITICAL fixes already applied)
+- [`docs/audit/wave323-typeset-execution.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave323-typeset-execution.md) — IEEEtran-journal typeset execution
+- [`docs/audit/wave322-restoration-execution.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave322-restoration-execution.md) — Path A Lemma 2/3 (state-machine byte-determinism + ledger tamper-evidence)
+- [`docs/audit/wave311-restoration-execution.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave311-restoration-execution.md) — Path A Lemma 1 (protocol composition closure)
+- [`docs/audit/wave310-restoration-execution.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave310-restoration-execution.md) — R6 STRONG tier-aware upgrade + D2 restoration
+- [`docs/audit/wave297-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave297-final.md) + [`wave298-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave298-final.md) — paper restoration + 7-novelty catalogue
+- [`docs/audit/wave306-11-cell-alignment.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave306-11-cell-alignment.md) + [`wave307-data-archaeology.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave307-data-archaeology.md) — 11-cell alignment
