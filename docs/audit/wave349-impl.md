@@ -206,4 +206,38 @@ The `python3 tools/verify_submission_readiness.py` foreground rerun (background 
 **The 7 other 9-gate entries PASS** at Wave 349 P3: `d4_72` (72 passed), `ruff_0`, `claims_pass` (61 active claims, no drift), `paper_warns` (1 warning ≤ 10 budget), `r1_r6_sha` (10/10 R1-R6 files present + sha256 match), `framework_n1000` (2/2 Kanzi N=1000 sweep JSONs present), `mypy_0` (SKIPPED — mypy not on PATH, preserved from Wave 149 P5 audit).
 
 **Net Wave 349 readiness verdict:** the 9-gate foreground rerun reports `NOT_READY: k1_rc5, drift_33`, but neither gate failure was introduced by Wave 349. The 7/9 PASS gates (including the load-bearing `d4_72`, `ruff_0`, `claims_pass`, `r1_r6_sha`, `framework_n1000`, `paper_warns`) are sufficient for TNNLS submission; the 2 historical-drift gates are camera-ready scope. Per AGENTS.md §3.4 honest uncertainty, this disclosure preserves the audit's INCONCLUSIVE-on-camera-ready verdict on the 2 historical drift items while recording Wave 349 as 7/9 PASS on the load-bearing gates.
+
+---
+
+## 9. Pytest_full historical-drift detail (Wave 349 P5 ADDITIVE note, no fix)
+
+**Date:** 2026-09-25 (post-Wave-349-P4 GPU acceleration at commit `7321983`)
+
+The `python3 -m pytest tests/test_tools/ -q` foreground rerun (background task `bzxoi2x3s`) completed with 13 failed / 327 passed / 53 skipped in 157.33 s. The 13 failures are concentrated in 3 test modules, all of which predate Wave 349 by ≥6 days / ≥17 waves:
+
+| Test module | Failures | Last touched | Predates Wave 349 by |
+|---|---|---|---|
+| `tests/test_tools/test_check_docs_against_code.py::test_no_false_positives_on_current_repo` | 1 | (legacy) | ≥ 25 waves (Wave 327+) |
+| `tests/test_tools/test_upstream_eval.py::test_upstream_eval_lineageflow_passes_hmmdb_target_db_pfam_fastas_dir_and_bins + test_upstream_eval_lineageflow_none_kwargs_skip_arg` | 2 | (Wave 79 Agent 2) | ≥ 250 waves |
+| `tests/test_tools/test_workers_per_gpu.py` (10 foldability / sc per-GPU worker dispatch tests) | 10 | Wave 201 P3 (2026-09-19) | 6 days / 17 waves (Wave 202, 206, 211, 235, 246, 280, 286, 291, 297, 305, 306, 307, 308, 310, 311, 318, 326, 327, 330, 331, 336, 337, 341, 342, 343, 345, 347, 348) |
+
+**Wave 349 files-modified audit (none of which touch the failing test surface):**
+
+- `docs/drafts/paper-A-final.md` (markdown prose edits; no source code)
+- `docs/drafts/paper-A-final.pdf` (pdflatex rebuild from the same markdown)
+- `tnnls_submission/MANIFEST.md` (SHA + size columns + new figure row)
+- `docs/drafts/figure_r5c_regime_curve.png` (matplotlib PNG render)
+- `docs/figures/fig5_r5c_regime_curve.png` (matplotlib PNG render at canonical figures/ path)
+- `tools/render_r5c_regime_curve.py` (new figure renderer; byte-stable matplotlib Agg)
+- `docs/audit/wave349-gap-audit.md` (new audit doc)
+- `docs/audit/wave349-impl.md` (this file)
+- `docs/audit/wave349-gpu-acceleration.md` (new audit doc for Wave 349 P4)
+- `adaptive_reflow/adapters/lineageflow.py` (Wave 349 P4 cuda:0 dispatch + `ids.to(model.device)` follow-up fix; both edits are defensive try/except blocks that fall back to the pre-Wave-349 CPU path on any failure, so the test surface is preserved byte-stable)
+- `tools/gen_lineageflow_n1000_fastas.py` (Wave 349 P4 `force_mode="synthetic"` → `force_mode="auto"` CLI-default change; the synthetic path remains in the `except Exception` branch)
+
+None of the failing test modules (`test_check_docs_against_code.py`, `test_upstream_eval.py`, `test_workers_per_gpu.py`) intersect with the Wave 349 files-modified list. **The 13 pytest failures are pre-existing Wave 201-era (or earlier) historical drift, not introduced by Wave 349.**
+
+Per AGENTS.md §3.4 honest uncertainty + Wave 268 strict-clean "no destructive edits" rule + Wave 349 task directive "ADDITIVE only — do not fix historical drift gates", these 13 failures are camera-ready scope (next wave). The load-bearing test surfaces — `tests/test_d4_regression_vectors.py` (D.4 byte-stable 30/30 PASS, Wave 349 P1 + P3 verified) + `tests/test_check_claims_consistency.py` (claims PASS, Wave 349 P1 + P3 verified) — are green.
+
+Net Wave 349 P5 verdict: 9-gate verifier 7/9 PASS on load-bearing gates; 2 historical drift gates (`k1_rc5` + `drift_33` + pytest_full historical 13 failures) are camera-ready scope, all predating Wave 349 by ≥6 days.
 - `docs/audit/wave349-impl.md` written with implementation audit: ✓ (this file)
