@@ -1,0 +1,22 @@
+name = "flowa-multistep-reinference-formal"
+defaultTargets = ["FlowA.Theorem4Subclaim41",
+                  "FlowA.Theorem5Subclaim51",
+                  "FlowA.Theorem5Subclaim52",
+                  "FlowA.Theorem5Subclaim53"]
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4.git"
+rev = "v4.34.1"
+
+[[lean_lib]]
+name = "FlowA.Theorem4Subclaim41"
+
+[[lean_lib]]
+name = "FlowA.Theorem5Subclaim51"
+
+[[lean_lib]]
+name = "FlowA.Theorem5Subclaim52"
+
+[[lean_lib]]
+name = "FlowA.Theorem5Subclaim53"
