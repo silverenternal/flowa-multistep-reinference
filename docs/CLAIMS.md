@@ -4153,3 +4153,81 @@ The two K-level cells that remain on the camera-ready deferred list are itemised
 8. `docs/audit/wave357-k5-k6-camera-ready.md` (this audit doc, NEW Wave 357 P6)
 
 **Hard-rule compliance verified:** (i) no K5 status promotion — `ENV_BLOCKED` preserved verbatim from CLM-056 + paper §9.4 + `submission_checklist.md` honest-disclosures row 19 + Wave 356 P3 row 19; (ii) no K6 status promotion — `DEFERRED` preserved verbatim from paper §9 + §9.4 + `submission_checklist.md` honest-disclosures row 20 + Wave 356 P3 row 20 + Wave 127/131/132/152 STATUS.md freeze markers; (iii) ADDITIVE only — this section is added at the bottom of `docs/CLAIMS.md` and does NOT displace any existing content (the `§cross-ref-audit-table` Wave 355 P2 audit-table section above is preserved verbatim); (iv) NO-PUSH policy honoured; (v) `tools/check_claims_consistency.py` exits 0 (no `## CLM-NNN:` row edited); (vi) D.4 30/30 PASS preserved; (vii) vendored upstream untouched (no edits under `data/`); (viii) ruff 0 (no `.py` file modified); (ix) mkdocs strict 0 warnings (this section is plain markdown compatible with mkdocs strict mode).
+
+---
+
+## §status-summary — Wave 360 P1 CLM status distribution (2026-09-25, ADDITIVE)
+
+**Authored:** 2026-09-25 (Wave 360 P1, additive per Wave 268 strict-clean rule).
+**Authority:** `python3 tools/check_claims_consistency.py` (exits 0, "No drift detected"); `pytest tests/test_d4_regression_vectors.py -q` 30 / 30 PASS; `ruff check` 0 findings; `mkdocs build --strict` 0 warnings.
+**Audit doc:** [`docs/audit/wave360-claims-status-summary.md`](../audit/wave360-claims-status-summary.md).
+**Mode:** ADDITIVE — new section at the bottom of `docs/CLAIMS.md`; no existing `## CLM-NNN:` row, no field, no word, no status label was modified. The status distribution table below is a tally of the **current** `Status:` field on each `## CLM-NNN:` row (preserved verbatim — no promotion, no demotion).
+
+### A. Status-label vocabulary (top-level claim status)
+
+The top-level status vocabulary is `ACTIVE` / `PROVISIONAL` / `DEPRECATED` per `tools/check_claims_consistency.py::VALID_STATUSES` (canonical). A separate "sub-cell verdict" vocabulary (`SUPPORTED` / `NOT_SIGNIFICANT` / `UNDERPOWERED` / `REGRESSES` / `TIE` / `DEFERRED`, per Wave 195 P1 verdict-precedence rule) lives inside CLM-060 / CLM-061 / CLM-062 / CLM-063 / CLM-064 / CLM-067 and is **disjoint** from the top-level axis. The two axes are not summed in the table below — only the top-level `Status:` field is tallied. For the verdict-precedence distribution, see the §cross-ref-audit-table Wave 355 P2 section above (rows 4078-4115).
+
+### B. Top-level totals (84 `## CLM-NNN:` headers)
+
+| Status | Count | Provenance / layout note |
+|---|---|---|
+| `ACTIVE` | **82** | 61 parsed-ACTIVE (file-literal `- Status: ACTIVE` with all required fields) + 2 extended-label ACTIVE (`CLM-018` + `CLM-022` carry `ACTIVE — INVERTED POST-cd70821 (see note)` per the §cross-ref-audit-table Wave 355 P2 row 4054 layout note) + 15 layout-skipped ACTIVE (`CLM-070..084` place the `- Status: ACTIVE` line before the `## CLM-NNN:` header) + 3 heading-embedded ACTIVE (`CLM-086`, `CLM-087`, `CLM-088` carry `Status: ACTIVE (Wave 322 …)` inline in the `## CLM-NNN:` heading) + 1 implicit-ACTIVE (`CLM-085` has no `Status:` line at all but is documented as ACTIVE by the §6 Framework Properties bucket summary above (line 3990) and by the meta-claim `CLM-088` ("Lemma 1 (CLM-085, Wave 311 ACTIVE)"); the §cross-ref-audit-table Wave 355 P2 row 4053 lists `CLM-085` as parser-skipped (layout-only — not a status downgrade)) |
+| `PROVISIONAL` | **0** | No `## CLM-NNN:` row carries a file-literal `- Status: PROVISIONAL` field. **Note (verifier-driven annotation, not a top-level `Status:` field):** `CLM-040` is `ACTIVE` file-literal but is auto-promoted to `PROVISIONAL` at verifier-runtime by `tools/check_claims_consistency.py` because it carries a `Disputed by:` reference; see the verifier output row `Forced to PROVISIONAL by ` `` ` `` `Disputed by` `` ` `` ` citation: CLM-040` and the §cross-ref-audit-table Wave 355 P2 row 4051 (`Forced to PROVISIONAL via ` `` ` `` `Disputed by` `` ` `` `: 1 (CLM-040)`). This annotation is recorded separately from the top-level `Status:` field and is not added to the `PROVISIONAL` count below — preserving the Wave 195 P1 verdict-precedence + Wave 268 strict-clean rule that no claim status is changed by this audit. |
+| `DEPRECATED` | **2** | `CLM-016` + `CLM-017` — both parsed-DEPRECATED with `- Status: DEPRECATED` field + supersession markers preserved verbatim; cited only for historical context. |
+| **Total** | **84** | `## CLM-001 .. ## CLM-088` (gaps at CLM-035..038 deliberately never assigned per §cross-ref-audit-table Wave 355 P2 row 4049). |
+
+**Sanity check:** 82 + 0 + 2 = **84** = total CLM header count. Matches the §cross-ref-audit-table Wave 355 P2 row 4049 + row 4067 ("Total `## CLM-NNN:` headers | **84**").
+
+### C. Per-section breakdown (84 CLMs grouped by topic section)
+
+The 84 CLMs are grouped below by **topic section** (paper Theorem / Lemma, DEPRECATED historical markers, scheduler family + framework contracts, R-cells headline empirical, K-cells PHASE-4 model scope, framework-internal governance, framework-internal deep-innovation, Path A formal verification). Grouping is by CLM number range + title keyword match (Kanzi / LineageFlow / FlowMol3 / FreqFlow / Wan2.2 / MM-FM for the K-cells bucket; `Wave 298 P1+P6` + `Wave 311 Path A` + `Wave 322 Path A` for the framework-internal + Path A buckets; everything else R-cells / paper-theorem per its number range). No row's `Status:` field was modified to fit a bucket — every row preserves its verbatim status.
+
+| Section | CLM IDs | Count | ACTIVE | PROVISIONAL | DEPRECATED |
+|---|---|---|---|---|---|
+| **Paper Theorem / Lemma statements** (foundational theory) | CLM-001..015 | 15 | 15 | 0 | 0 |
+| **DEPRECATED historical markers** (superseded claims) | CLM-016, CLM-017 | 2 | 0 | 0 | 2 |
+| **Scheduler family + framework contracts** | CLM-018..034 | 17 | 17 | 0 | 0 |
+| **R-cells — early Wave empirical** (R1..R6 headline empirical, Wave 100s-180s) | CLM-039..047 | 9 | 9 | 0 | 0 |
+| **R-cells — Wave 180s protein + Theorem 1** (R6 LineageFlow protein re-inference) | CLM-048..055 | 8 | 8 | 0 | 0 |
+| **K-cells / cross-adapter Theorem 1** (FreqFlow synthetic-only + kanzi + lineageflow load-bearing) | CLM-056, CLM-057, CLM-058 | 3 | 3 | 0 | 0 |
+| **R-cells — power analysis + statistical tests** (TOST / JT / BF01 / DL meta / non-inferiority) | CLM-059..064 | 6 | 6 | 0 | 0 |
+| **R-cells — eval pipeline + audit-grade stats** | CLM-065..069 | 5 | 5 | 0 | 0 |
+| **R-cells — Wave 206+ uplift reversals** (R5b matched-NFE reversal, R2 RMSD medium uplift, R6 pLDDT large uplift, CUDA-graph, TNNLS decision) | CLM-070..075 | 6 | 6 | 0 | 0 |
+| **Framework-internal governance** (Wave 244-262 vendored revert per Wave 260 user directive) | CLM-076, CLM-077 | 2 | 2 | 0 | 0 |
+| **Framework-internal deep-innovation inventory** (Wave 298 P1-P6: Code #1..5 + Method #1..2) | CLM-078..084 | 7 | 7 | 0 | 0 |
+| **Path A formal verification lemmas** (§6 Framework Properties — Wave 311/322) | CLM-085..088 | 4 | 4 | 0 | 0 |
+| **TOTAL** | CLM-001..088 | **84** | **82** | **0** | **2** |
+
+**Headline observations** (interpretation, no status change):
+- The **82 / 2 / 0** split (97.6% ACTIVE / 2.4% DEPRECATED / 0.0% PROVISIONAL) reflects the project's "supersede-don't-deprecate" hygiene — claims that were originally wrong (CLM-016's inverted `eps` exponents, CLM-017's selection_ratio-converges-to-1 hypothesis) were explicitly marked DEPRECATED and replaced by their successor claims (CLM-022 + CLM-046 respectively), not silently overwritten.
+- The **0 file-literal PROVISIONAL** count is the post-Wave 195 P1 + Wave 268 strict-clean steady state: every claim is either canonical (ACTIVE), superseded (DEPRECATED), or carries a verifier-driven `Disputed by` annotation (only `CLM-040` does, recorded separately under `forced_provisional` in the verifier output). The `Disputed by` mechanism keeps `CLM-040` honest by surfacing the contradiction inline rather than demoting its top-level status — this preserves the "the verifier auto-promotes, the human decides" division of labour.
+- The **Path A formal verification bucket (CLM-085..088)** went from "1 of 3 ACTIVE (Wave 311 PARTIAL-APPLY)" to "all 4 ACTIVE (Wave 322 COMPLETE)" with no DEPRECATED rows — the two PLACEHOLDER rows (originally slated as Lemmas 2 + 3 in Wave 312 / Wave 313) were upgraded in place, not deprecated-and-replaced, because the §6 Framework Properties framing made the placeholder-to-formal transition an additive evolution rather than a supersession.
+- The **K-cells bucket (CLM-056 + CLM-057 + CLM-058)** mixes PHASE-4 model scope (CLM-056 FreqFlow synthetic-only) with cross-adapter Theorem 1 load-bearing analysis (CLM-057 + CLM-058 spanning kanzi + lineageflow) — the latter is treated as cross-adapter R-cell evidence rather than K-cell evidence; the bucket grouping is by topic similarity, not by status semantics.
+
+### D. Cross-reference to §cross-ref-audit-table (Wave 355 P2)
+
+This §status-summary section is **not** a replacement for the §cross-ref-audit-table Wave 355 P2 section above (line 4038 onwards). The two sections answer different questions:
+
+| Question | Section | Row range |
+|---|---|---|
+| "How many `## CLM-NNN:` headers exist, by top-level status, by section?" | **§status-summary (this section)** | rows 4158-4190 |
+| "Are all CLM-NNN references resolvable? Are there broken / orphan cross-refs?" | §cross-ref-audit-table Wave 355 P2 | rows 4056-4059 |
+| "Are the sub-cell verdicts (`SUPPORTED` / `REGRESSES` / etc.) internally consistent across CLM-060..067?" | §cross-ref-audit-table Wave 355 P2 §D | rows 4076-4115 |
+| "Are there near-duplicate / consolidation opportunities across the 84 CLMs?" | §cross-ref-audit-table Wave 355 P2 §E | rows 4117-4128 |
+| "What does the §6 Framework Properties bucket summary say about Wave 311/322 Path A?" | §6 Framework Properties bucket summary | rows 3990-3994 |
+
+Both sections co-exist: §cross-ref-audit-table answers "is the ledger structurally sound?"; §status-summary answers "what is the headline status distribution?". The two are mutually consistent — the §cross-ref-audit-table Wave 355 P2 row 4049 ("Total `## CLM-NNN:` headers | **84**") matches this §status-summary row 4183 ("**TOTAL** | … **84**"); the row 4067 ("ACTIVE | 61 / PROVISIONAL | 0 / DEPRECATED | 2") matches this section's parsed-ACTIVE 61 + extended-label ACTIVE 2 + layout-skipped ACTIVE 15 + heading-embedded ACTIVE 3 + implicit ACTIVE 1 = **82 ACTIVE** (the §cross-ref-audit-table row 4067 reports the **parsed-only** count of 61 ACTIVE; the §status-summary row 4167 reports the **total-including-layout-skipped** count of 82 ACTIVE; the difference of 21 is the 21 layout-skipped headers enumerated in §cross-ref-audit-table Wave 355 P2 row 4053).
+
+### E. INVARIANTS preserved (Wave 360 P1 audit)
+
+- `python3 tools/check_claims_consistency.py` exits 0 ("No drift detected") — confirmed.
+- `pytest tests/test_d4_regression_vectors.py -q` 30 / 30 PASS — confirmed.
+- No `## CLM-NNN:` row was edited (`Status:` / `Date:` / `Source:` / `Statement:` / `Asserted by:` / `Disputed by:` all unchanged).
+- No number was touched.
+- No status label was promoted, demoted, or removed.
+- The `82 / 0 / 2` tally is an additive accounting of the **current** state — it does not change any CLM's status.
+- This `§status-summary` section is **additive at the bottom of `docs/CLAIMS.md`** — does not displace any existing content; does not change any cross-reference topology; does not change any R-cell / K-cell / framework-internal number.
+- ruff 0 across any touched file (this CLAIMS.md edit is documentation-only).
+- mkdocs strict 0 warnings (this section is plain markdown compatible with mkdocs strict mode).
+- vendored NOT touched (no edits under `data/`).
+- NO-PUSH policy honoured (this commit is local-only; no `git push` performed by the agent).
