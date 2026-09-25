@@ -224,6 +224,15 @@ the current freeze-state hash. Future edits to any in-bundle file
 require regenerating the archive + sidecar + updating the SHA above
 (per Wave 344 traceability convention).
 
+**Per-file SHA-256 (Wave 360 cross-reference):** the per-file SHA-256
+column for every in-bundle file is the sidecar
+[`supplementary_bundle/SHA256SUMS`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/supplementary_bundle/SHA256SUMS)
+above (40 entries, sorted lowercase, excludes self). Reviewers verify
+any single file by reading the matching line in the sidecar, or
+batch-verify all 40 with `cd supplementary_bundle && sha256sum -c SHA256SUMS`
+(40/40 OK at Wave 360 verify; see
+[`docs/audit/wave360-supplementary-bundle-verify.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave360-supplementary-bundle-verify.md)).
+
 **Why the bundle is additive** (per AGENTS.md §3 hard-guardrail #2 "no
 destructive edits"): every file in the ZIP is a byte-copy of an
 existing repo file; no source file is moved, renamed, or deleted. The
