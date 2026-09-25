@@ -677,6 +677,7 @@ Governance (scope, audit, gap, condition, placeholder, cross-cutting). This clus
 
 ## Maintenance
 
+- **Full maintenance pattern documented:** see [`INDEX_MAINTENANCE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/INDEX_MAINTENANCE.md) for the regen-script behavior (cluster assignment, Active/Historical flag logic, re-run protocol, edge cases). Self-documenting companion to this INDEX (Wave 358 P3).
 - **New audit file?** Place it under `docs/audit/<cluster>/waveNNN-*.md`; the cluster is determined by filename keyword scan (see `cluster_order` in `/tmp/regen_index.py`). Files at the top level are classified by filename + first-30-line content scan.
 - **Active vs Historical flag?** Re-run citation-grep against the active surfaces list (see `ACTIVE_SURFACES` + `TNNLS_SURFACES` in `/tmp/regen_index.py`).
 - **Cluster boundaries are heuristic.** If a file lands in the wrong cluster because its filename is generic, the filename keyword was the primary signal — content keywords were the fallback. Inspect the first 30 lines of the file to confirm.
