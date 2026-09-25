@@ -236,6 +236,7 @@ not_in_nav: |
   cover-letter-tnnls.md
   RELEASE-NOTES.md
   reproduce.md
+  reproduce/INDEX.md
   internal/*.md
   internal/**/*.md
   drafts/*.md
