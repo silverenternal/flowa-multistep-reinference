@@ -1,0 +1,174 @@
+{
+  "_about": "Wave 354 P4 — Cover Letter USER_TO_FILL Auto-fill SCAFFOLDING (NOT a flat --config input).",
+  "_note": "Structured defaults for the 17 USER_TO_FILL placeholders in tnnls_submission/cover_letter.md. Each entry reuses the Wave 351 P5 / Wave 352 P2 INTERACTIVE_DEFAULTS exemplar values from tools/render_cover_letter.py (already in the repo, NOT newly invented). Source paths point to FILL_GUIDE.md sections + the Wave 351 P5 / Wave 352 P2 audit docs that back the schema; no fabricated numbers. The user is expected to OVERRIDE every value with real names / institutional emails / affiliations before submitting. Hard guardrails respected: (i) NO-PUSH policy; (ii) ADDITIVE only — tnnls_submission/cover_letter.md is NOT modified; (iii) the 17 USER_TO_FILL placeholders in cover_letter.md remain UNCHANGED; (iv) defaults point to verified artifacts only.",
+  "_schema_compatibility": "This SCAFFOLDING has the richer audit-trail structure required by Wave 354 P4 (version + auto_filled_count + per-placeholder {id, default_value, source_path, rationale}). tools/render_cover_letter.py --config expects a FLAT dict of the 17 field names; to derive the flat config: jq '{authors_block: .placeholders[0].default_value, editor_header: .placeholders[1].default_value, ..., corresponding_author_email: .placeholders[16].default_value}' tnnls_submission/cover_letter_FILL_AUTOFILL.json > /tmp/cover_letter_data.json. Alternatively, run the helper in --interactive mode (Wave 352 P2) which pre-fills prompts from /tmp/cover_letter_data.template.json — this scaffolding can be hand-flattened into that template.",
+
+  "version": "wave354-p4-scaffold-v1",
+  "schema_date": "2026-09-25",
+  "auto_filled_count": 17,
+  "source_helper": {
+    "path": "tools/render_cover_letter.py",
+    "wave_origin": "Wave 351 P5 (baseline) + Wave 352 P2 (interactive extension)",
+    "audit_docs": [
+      "docs/audit/wave351-cover-letter-helper.md",
+      "docs/audit/wave352-cover-letter-interactive.md"
+    ]
+  },
+
+  "placeholders": [
+    {
+      "id": "authors_block",
+      "section": "§opening header",
+      "line": "51-52",
+      "default_value": "Hugo Huang, MIT CSAIL, 32 Vassar St, Cambridge, MA, USA, hugo@example.com\nCorresponding author: Hugo Huang (hugo@example.com)",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['authors_block'] + tnnls_submission/FILL_GUIDE.md#1-authors-block",
+      "rationale": "Exemplar one-author / one-affiliation / one-email block from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §1 instructs that the cover-letter authors block must identify every author, each affiliation, and the corresponding-author marker in the same order as the manuscript title page (TNNLS author-block convention)."
+    },
+    {
+      "id": "editor_header",
+      "section": "§opening header",
+      "line": "56",
+      "default_value": "Prof. Ming Li, Department of ECE, University of Example, mli@example.edu",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['editor_header'] + tnnls_submission/FILL_GUIDE.md#2-suggested-associate-editor",
+      "rationale": "One-line exemplar AE name from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §2 specifies that the cover letter renders the AE name identically at the header (line 56) and §9 (line 986), and that the AE should cover learning systems / generative models / diffusion / flow matching scope."
+    },
+    {
+      "id": "reviewers_header",
+      "section": "§opening header",
+      "line": "60",
+      "default_value": "(see §9 below — five reviewers listed with affiliations and emails)",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['reviewers_header'] + tnnls_submission/FILL_GUIDE.md#3-suggested-reviewers-header-pointer",
+      "rationale": "Compact header pointer from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §3 recommends '(see §9 below)' to keep the cover-letter header readable and avoid duplicating the full reviewer block at line 60."
+    },
+    {
+      "id": "editor_section9",
+      "section": "§9",
+      "line": "986",
+      "default_value": "Ming Li, Department of ECE, University of Example, mli@example.edu",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['editor_section9'] + tnnls_submission/FILL_GUIDE.md#2-suggested-associate-editor",
+      "rationale": "Verbose §9 AE line from Wave 351 P5 INTERACTIVE_DEFAULTS; the Wave 352 P2 audit doc §1 verifies rendered-draft line 56 (header) vs line 986 (§9) AE consistency and confirms 'Prof.' prefix is prepended at §9 by the surrounding prose, so the §9 replacement is name + affiliation + email without 'Prof.'."
+    },
+    {
+      "id": "reviewer1_affiliation",
+      "section": "§9",
+      "line": "1003",
+      "default_value": "Meta AI Research (ProbFlow team) — to be confirmed at submission",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['reviewer1_affiliation'] + tnnls_submission/FILL_GUIDE.md#4-reviewer-1-probflow--flow-matching-theory",
+      "rationale": "Exemplar affiliation for Reviewer 1 (ProbFlow / flow-matching theory) from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §4 backs the Meta AI ProbFlow / Weizmann exemplar as a senior researcher from the Y. Lipman group or equivalent lab who can audit Theorem 1 (Lemmas 2-5, paper quantities (A_g, B_g, C_g, e_ρ))."
+    },
+    {
+      "id": "reviewer1_email",
+      "section": "§9",
+      "line": "1006",
+      "default_value": "reviewer1.theory@example.com",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['reviewer1_email'] + tnnls_submission/FILL_GUIDE.md#4-reviewer-1-probflow--flow-matching-theory",
+      "rationale": "Exemplar placeholder email from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §4 instructs that the user must replace it with an institutional email address (not personal Gmail) and run a 5-year COI sweep against the TNNLS Editorial Manager database."
+    },
+    {
+      "id": "reviewer2_affiliation",
+      "section": "§9",
+      "line": "1017",
+      "default_value": "Université Gustave Eiffel / LIGM (Vialard group) — to be confirmed at submission",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['reviewer2_affiliation'] + tnnls_submission/FILL_GUIDE.md#5-reviewer-2-convergence-bound--bl-distance-expert",
+      "rationale": "Exemplar affiliation for Reviewer 2 (Convergence Bound / BL-distance expert) from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §5 backs the Université Gustave Eiffel / LIGM (Vialard) or Yale (Chewi) exemplar as a researcher who can audit the BL upper bound BL(μ_{g,ε}, ν_g) ≤ A_g · exp(−NFE / B_g) + C_g · e_ρ and the g-independent rate corollary."
+    },
+    {
+      "id": "reviewer2_email",
+      "section": "§9",
+      "line": "1020",
+      "default_value": "reviewer2.convergence@univ-eiffel.fr",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['reviewer2_email'] + tnnls_submission/FILL_GUIDE.md#5-reviewer-2-convergence-bound--bl-distance-expert",
+      "rationale": "Exemplar institutional email from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §5 confirms the email must be an institutional address because the TNNLS Editorial Manager pings the email on file for all subsequent correspondence."
+    },
+    {
+      "id": "reviewer3_affiliation",
+      "section": "§9",
+      "line": "1032",
+      "default_value": "Stanford University (Lu DPM-Solver group) — to be confirmed at submission",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['reviewer3_affiliation'] + tnnls_submission/FILL_GUIDE.md#6-reviewer-3-ode-solver--nfe-efficiency-expert",
+      "rationale": "Exemplar affiliation for Reviewer 3 (ODE solver / NFE-efficiency expert) from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §6 backs the Stanford (Lu group) or Peking University exemplar as a researcher from the C. Lu DPM-Solver group or equivalent who can audit the solver-agnostic stack (Euler, Heun, DPM-Solver++, Dormand-Prince RK45, CTMC, BFN) and the matched-NFE = 50 regression disclosed in §7."
+    },
+    {
+      "id": "reviewer3_email",
+      "section": "§9",
+      "line": "1035",
+      "default_value": "reviewer3.solver@stanford.edu",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['reviewer3_email'] + tnnls_submission/FILL_GUIDE.md#6-reviewer-3-ode-solver--nfe-efficiency-expert",
+      "rationale": "Exemplar institutional email from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §6 instructs the user to pick a reviewer with at least one paper on DPM-Solver, EDM, or consistency-model ODE integration, and to avoid recent (≤24 months) FlowA-citing authors if possible."
+    },
+    {
+      "id": "reviewer4_affiliation",
+      "section": "§9",
+      "line": "1048",
+      "default_value": "Meta AI (ESM-IF / EvolutionaryScale LineageFlow) — to be confirmed at submission",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['reviewer4_affiliation'] + tnnls_submission/FILL_GUIDE.md#7-reviewer-4-protein-generation-expert",
+      "rationale": "Exemplar affiliation for Reviewer 4 (Protein generation expert) from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §7 backs the Meta AI (ESM-IF / EvolutionaryScale LineageFlow) or Westlake / Microsoft Research (Kanzi) exemplar, and flags this as the highest-risk reviewer for COI with co-author networks in the protein-generation community."
+    },
+    {
+      "id": "reviewer4_email",
+      "section": "§9",
+      "line": "1052",
+      "default_value": "reviewer4.protein@meta.com",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['reviewer4_email'] + tnnls_submission/FILL_GUIDE.md#7-reviewer-4-protein-generation-expert",
+      "rationale": "Exemplar placeholder email from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §7 instructs a manual COI sweep (last 5 years of coauthorship, advisor lineage, funding overlap) before submission because Reviewer 4 overlaps with co-author networks in the protein-generation community (see cover-letter §9 COI paragraph)."
+    },
+    {
+      "id": "reviewer5_affiliation",
+      "section": "§9",
+      "line": "1065",
+      "default_value": "Department of Statistics, University of Example (computational-statistics focus) — to be confirmed at submission",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['reviewer5_affiliation'] + tnnls_submission/FILL_GUIDE.md#8-reviewer-5-statistical-rigor-expert",
+      "rationale": "Exemplar affiliation for Reviewer 5 (Statistical rigor expert) from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §8 backs the computational-statistics / causal-inference / meta-analysis exemplar who can audit the 12-column audit-grade per-row reporting (n_paired, mean_diff, sd_diff, t, df, p_raw, CI95_low, CI95_high, d_z, test_type, family, α_bonferroni, bonf_sig)."
+    },
+    {
+      "id": "reviewer5_email",
+      "section": "§9",
+      "line": "1069",
+      "default_value": "reviewer5.stats@example.edu",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['reviewer5_email'] + tnnls_submission/FILL_GUIDE.md#8-reviewer-5-statistical-rigor-expert",
+      "rationale": "Exemplar institutional email from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §8 confirms the email must be an institutional address and that the reviewer should have both classical (Bonferroni / Holm) and modern (Benjamini-Hochberg, pre-registration) multiple-testing experience."
+    },
+    {
+      "id": "corresponding_author_name",
+      "section": "§11 closing",
+      "line": "1126",
+      "default_value": "Hugo Huang",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['corresponding_author_name'] + tnnls_submission/FILL_GUIDE.md#9-corresponding-author-name",
+      "rationale": "Exemplar corresponding-author name from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §9 specifies no titles (Prof./Dr.) in the signature block and that the name must match the asterisk-marked author on the manuscript title page."
+    },
+    {
+      "id": "corresponding_author_affiliation",
+      "section": "§11 closing",
+      "line": "1127",
+      "default_value": "MIT CSAIL, 32 Vassar St, Cambridge, MA, USA",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['corresponding_author_affiliation'] + tnnls_submission/FILL_GUIDE.md#10-corresponding-author-affiliation",
+      "rationale": "Exemplar department + institution + city line from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §10 confirms that TNNLS Editorial Manager does not require a full postal address on the cover letter (it lives in the user profile), but a department + institution line keeps the printed cover letter self-contained."
+    },
+    {
+      "id": "corresponding_author_email",
+      "section": "§11 closing",
+      "line": "1128",
+      "default_value": "hugo@example.com",
+      "source_path": "tools/render_cover_letter.py:INTERACTIVE_DEFAULTS['corresponding_author_email'] + tnnls_submission/FILL_GUIDE.md#11-corresponding-author-email",
+      "rationale": "Exemplar institutional email from Wave 351 P5 INTERACTIVE_DEFAULTS; FILL_GUIDE §11 instructs the user to use a stable, monitored institutional address (NOT personal Gmail/Outlook) because this email is what TNNLS uses for all subsequent correspondence (decision letter, reviewer comments, proofs)."
+    }
+  ],
+
+  "usage_notes": {
+    "render_via_helper": "For a flat-config render: python3 tools/render_cover_letter.py --config <flat-config.json> --output /tmp/cover_letter_filled.md (where <flat-config.json> is a JSON object with the 17 field names as top-level keys).",
+    "render_via_interactive": "For interactive prompts pre-filled with these defaults: cp tnnls_submission/cover_letter_FILL_AUTOFILL.json /tmp/cover_letter_data.template.json && python3 tools/render_cover_letter.py --interactive (per Wave 352 P2 3-step quickstart in docs/CONTRIBUTING-cover-letter.md).",
+    "review_and_apply": [
+      "Review the rendered draft at /tmp/cover_letter_filled.md",
+      "Override the INTERACTIVE_DEFAULTS exemplar values with REAL names / institutional emails / affiliations",
+      "cp /tmp/cover_letter_filled.md tnnls_submission/cover_letter.md",
+      "cd tnnls_submission && sha256sum -- *.md   # re-hash the package",
+      "Update MANIFEST.md SHA-256 column for cover_letter.md (per FILL_GUIDE.md step 6)"
+    ],
+    "guardrails": {
+      "no_push": "Per Wave 325 NO-PUSH policy; this scaffolding is committed but never pushed without explicit user gating.",
+      "additive_only": "Per Wave 268 strict-clean rule; tnnls_submission/cover_letter.md is NOT modified by this scaffolding.",
+      "placeholders_unchanged": "The 17 USER_TO_FILL placeholders in cover_letter.md remain UNCHANGED (31 grep hits preserved: 17 fillable + 11 §0 documentation pointers + 3 §0 convention text); this JSON only provides structured default VALUES for the user to OVERRIDE.",
+      "no_fabricated_numbers": "All 17 defaults reuse the Wave 351 P5 / Wave 352 P2 INTERACTIVE_DEFAULTS exemplar values from tools/render_cover_letter.py — no newly invented names / emails / affiliations."
+    }
+  }
+}
