@@ -191,8 +191,42 @@ These gaps are not blockers for the Q1 TNNLS submission because the Wave 355 P3 
 
 ## 8. Commit message (USER AUTHORIZED, NO PUSH)
 
+| Item | Value |
+|---|---|
+| **Commit hash** | `8238601783421a445cb1b6f1816beb62f7521009` (HEAD on `main`) |
+| **Files in commit** | `docs/CLAIMS.md` (P2) + `docs/audit/wave355-claims-deep-audit.md` (P2) + `docs/audit/wave355-supplementary-polish.md` (P3, this wave) + `mkdocs.yml` (P3) + `supplementary.md` (P3) |
+| **Commit message** | `Wave 355 P2: docs/CLAIMS.md cross-ref integrity audit + status-label consistency check (USER AUTHORIZED, NO PUSH)` (P2 commit message; P3 files rolled into the same commit due to parallel-agent race in the wave-355 harness; see §9 below) |
+| **Push state** | Local only; NOT pushed; per Wave 325 + `todo/PUSH-READY.md` NO-PUSH policy |
+
+The intended Wave 355 P3 commit message was:
+
 ```
 Wave 355 P3: supplementary.md final polish + table of contents + cross-reference integrity (USER AUTHORIZED, NO PUSH)
 ```
 
-The commit is staged locally; push is user-gated per Wave 325 + `todo/PUSH-READY.md`.
+The P3 commit body (preserved verbatim from the heredoc the agent composed):
+
+- `supplementary.md`: ADDITIVE Table of Contents (13 rows: S1-S8 + Wave 353-354 POLISH layer + Cross-references + Authoring notes) at line 21 (before the Wave 132 NeurIPS Supplementary Template Index); each row carries one-line summary + canonical cross-reference to `docs/CONSOLIDATED_RESULTS.md` §15.NN, `docs/CLAIMS.md` CLM-NNN, or the current headline-evidence / verification-outputs artifact.
+- `supplementary.md`: ADDITIVE Wave 355 P3 verification ledger paragraph documenting 0 TODO markers + 0 FIXME markers + 0 Wave-94 placeholders + `mkdocs build --strict` PASS + hard-rule compliance.
+- `mkdocs.yml`: ADDITIVE 1-line addition of `verification_outputs.md` to `not_in_nav:` allowlist (closes Wave 355 P1 mkdocs strict-mode regression; follow the same pattern as `paper-draft.md` / `INSIGHTS.md` / `cover-letter-tnnls.md`).
+- `docs/audit/wave355-supplementary-polish.md`: NEW audit doc (observed facts + interpretation + unresolved gaps + cross-references + verification gates).
+
+Hard rules honored: ADDITIVE only (no destructive edits); NO-PUSH (per Wave 325 + `todo/PUSH-READY.md`); no number changes (per `flowa-paper-evidence` skill); no status promotion (`UNDERPOWERED`/`DEFERRED`/`REGRESSES`/`NOT_SIGNIFICANT` unchanged); `mkdocs build --strict` EXIT=0; `check_claims_consistency.py` No drift detected.
+
+---
+
+## 9. Parallel-agent commit-message overlap (race-condition disclosure)
+
+The Wave 355 P3 commit landed inside commit `8238601` which is the Wave 355 P2 commit (CLAIMS.md cross-ref integrity audit). This is a parallel-agent race in the wave-355 harness:
+
+- Wave 355 P2 staged `docs/CLAIMS.md` + `docs/audit/wave355-claims-deep-audit.md` before Wave 355 P3 ran.
+- Wave 355 P3 staged `supplementary.md` + `mkdocs.yml` + `docs/audit/wave355-supplementary-polish.md` and ran `git commit -m "Wave 355 P3: ..."`.
+- The P3 commit command did not create a new commit because the P2 agent's commit had already consumed the staged files (race between the P2 `git commit` and P3 `git add` + `git commit`); the resulting commit carries the P2 commit message.
+
+This is disclosed here for completeness. The work is committed at `8238601` (HEAD on `main`); both the P2 and P3 file sets are inside the commit; the commit message attributes to P2 because the P2 commit landed first. Per Wave 268 strict-clean rule + Wave 325 NO-PUSH policy, the cleanest action is to:
+
+1. **NOT amend** the existing commit (amending would rewrite the P2 commit history, which is destructive).
+2. **NOT cherry-pick** the P3 files into a new commit (that would create a redundant commit).
+3. **Document** the actual commit hash (`8238601`) in this audit doc as the canonical P3 commit location, and the intended P3 commit message above for traceability.
+
+Future waves should sequence P-stages more carefully (e.g., `git add -p` per stage, or use of git worktrees per agent) to avoid this race; this is a Wave 355+ harness improvement, not a P3 fix.
