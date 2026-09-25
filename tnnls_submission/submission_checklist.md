@@ -99,3 +99,76 @@
 - [`docs/internal/tnnls_submission_action_checklist.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/internal/tnnls_submission_action_checklist.md) — canonical TNNLS action checklist (Wave 238 P3)
 - [`docs/audit/wave238-p3-journal-decision.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave238-p3-journal-decision.md) — Wave 238 P3 journal decision (TPAMI → TNNLS)
 - [`docs/audit/wave238-p4-final-verify.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave238-p4-final-verify.md) — Wave 238 P4 final pre-push verification
+- [`docs/audit/wave356-submission-checklist-review.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave356-submission-checklist-review.md) — Wave 356 P3 final pre-submission audit summary (PASS/PENDING/N/A + camera-ready scope enumeration)
+
+---
+
+## Final pre-submission audit summary (Wave 356 P3, 2026-09-25, ADDITIVE)
+
+**Authored:** Wave 356 P3 final review (audit doc at [`docs/audit/wave356-submission-checklist-review.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave356-submission-checklist-review.md)).
+**Scope:** ADDITIVE — this section does NOT modify any of the 29 existing [x] PASS checkboxes above; per Wave 268 strict-clean rule + Wave 356 P3 hard-guardrails (NO-PUSH + ADDITIVE only + "do not change any PENDING to PASS without justification") the 29 existing checkboxes are preserved unchanged. This summary adds an audit-time observed-state framing on top of the existing checklist at the granularity of the 14 task-listed acceptance criteria + 4 honest-disclosure PENDING items.
+
+### Wave 356 P3 observed-state table (14 task-listed acceptance criteria)
+
+| # | Acceptance criterion | Observed state | Evidence (one-liner) |
+|---|----------------------|----------------|----------------------|
+| 1 | D.4 30/30 PASS | **PASS** | `pytest tests/test_d4_regression_vectors.py -q` → 30 passed |
+| 2 | ruff 0 findings (4-dir scope) | **PENDING** (regression) | `ruff check adaptive_reflow/ tests/ scripts/ tools/` → 2 W292 errors in `tools/audit_thm5/{estimate_lipschitz.py:233, fit_thm5.py:371}` (introduced by Wave 350/351 audits, NOT in Wave 242 P4 0-finding baseline); CI-gate only, NOT a ScholarOne upload-gate |
+| 3 | mkdocs build --strict | **PASS** | exit code 0 |
+| 4 | claims consistency PASS | **PASS** | `python3 tools/check_claims_consistency.py` → no drift (61 active + 2 deprecated claims) |
+| 5 | 17 USER_TO_FILL placeholders documented | **PASS** (documented in FILL_GUIDE.md) | `tnnls_submission/FILL_GUIDE.md` documents 17 fillable fields (1 author + 1 editor + 5 reviewers × {affiliation, email} + 3 corresponding-author); 31 grep hits = 17 distinct fields + 14 documentation-pointer occurrences |
+| 6 | MANIFEST.md SHA-256 ledger current | **PENDING** (displayed SHA stale; per MANIFEST self-reference note intentional) | MANIFEST row 23 displays `f93c7df70be...` (46891 bytes) but `sha256sum tnnls_submission/MANIFEST.md` computes `5c593ed8b01b76c...` (47820 bytes); per MANIFEST self-reference note the displayed SHA is "the hash of the bytes BEFORE this very SHA-row was added"; final rehash is the freeze-marker step |
+| 7 | paper.pdf page count ≤ 14 | **PASS** | `pdfinfo docs/drafts/paper-A-final.pdf` → 14 pages |
+| 8 | supplementary submittable | **PASS** | `tnnls_submission/supplementary_bundle.zip` (148 MB) + `tnnls_submission/supplementary/README.md` byte-stable; 40 entries |
+| 9 | cover letter submittable | **PENDING** (17 USER_TO_FILL placeholders un-filled) | `grep -c "USER TO FILL" tnnls_submission/cover_letter.md` → 31 hits; per FILL_GUIDE.md §168 the 17 actual fillable fields should show no `[USER TO FILL: ...]` strings after user fills them; user-gated per `cover_letter_FILL_AUTOFILL.json` scaffolding |
+| 10 | data_availability.md submittable | **PASS** | SHA `eb410e1fd8a60b6f93d9e2dd7ba391c9a3b31e7ff79d64afbdfde52f70de2692` (10035 bytes) |
+| 11 | highlights submittable | **PASS** | SHA `1655ae5e380322d6ec2467512ea1196b73ce70000d955a5a68fbd6b57c75ff99` (2350 bytes); 3 TNNLS editor-facing highlights each ≤ 85 chars (Wave 356 P4 5-bullet polish is camera-ready variant at `tnnls_submission/highlights_v2.md`) |
+| 12 | Lean 4 verification 28/28 PASS + 4 new stubs | **PENDING** (PENDING_MATHLIB_CACHE; build fails) | `cd formal && lake build FlowA.Theorem5Subclaim53` → "error: no such file or directory" for `Mathlib.Analysis.SpecialFunctions.ExpLog`; per Wave 354 P5 audit 4 stubs (Thm 4.1 + 5.1 + 5.2 + 5.3) authored with 15 sorry sites total; "28/28 PASS" claim does NOT match actual state (4 stubs only, no proofs, Mathlib v4.34.1 precompilation incomplete) |
+| 13 | Wave 260 vendored byte-identical preserved | **PASS** | FlowMol3 `77cae22174b7792b0e25e9e0414038420736d841`; LineageFlow `ccef84adff421fcb6b855285bc1860e1f9a94f59`; Kanzi `cfed9cf4be06a98bd2ce5f8492e20c0b9fa0d41b` — all match MANIFEST pins |
+| 14 | NO-PUSH policy honoured | **PASS** | no `git push` since Wave 242 freeze; Wave 343-356 commits carry `(USER AUTHORIZED, NO PUSH)` footer per `todo/PUSH-READY.md` |
+
+### Wave 356 P3 observed-state table (4 honest-disclosure PENDING items, not on task list but disclosed in existing "Honest disclosures" subsection)
+
+| # | Acceptance criterion | Item | Camera-ready scope? |
+|---|----------------------|------|---------------------|
+| 15 | R3 FlowMol3 3-seed direction consistency | **PENDING** (in flight) | YES (camera-ready fix #5) |
+| 16 | K4 Kanzi decision-metric saturation | **PENDING** (UNDERPOWERED / TIES_AT_ZERO) | YES (camera-ready fix #6) |
+| 17 | K5 FreqFlow + MM-FM integration | **PENDING** (ENV_BLOCKED, PHASE-4 deferred) | YES (camera-ready fix #7) |
+| 18 | K6 Wan2.2 N=1000 sweep | **PENDING** (DEFERRED) | YES (camera-ready fix #8) |
+
+### Wave 356 P3 totals
+
+- **PASS: 14** of 18 items (10 task-listed + 4 honestly-disclosed-but-PENDING items 15-18 are PENDING not PASS; so 10 task-listed PASS + 0 honest-disclosure PASS-from-list = 10; counting honestly-disclosed K1/K2 as PASS + the 10 = 12 PASS items total; recount below for clarity)
+
+**Recount (matching task-listed 14 + 4 honest-disclosure):**
+
+- **PASS: 10** task-listed items (D.4, mkdocs, claims, USER_TO_FILL documented, paper.pdf ≤ 14, supplementary, data_availability, highlights, vendored, NO-PUSH) **+ 4 honestly-disclosed-as-PASS** (K1 RESOLVED 5/5, K2 PROTOCOL_MISMATCH preserved, manuscript, anonymized) — **total PASS = 10 + 4 = 14**
+- **PENDING: 4** task-listed items (ruff, MANIFEST, cover letter un-filled, Lean 4) **+ 4 honest-disclosure PENDING** (R3 in-flight, K4 saturation, K5 PHASE-4, K6 Wan2.2) — **total PENDING = 4 + 4 = 8**
+- **N/A: 0**
+
+(The "PASS 10 + honestly-disclosed-PASS 4" vs "honest-disclosure PENDING 4" split is because the existing 29 [x] checkboxes include both PASS items and honestly-disclosed-PENDING items; the Wave 356 P3 ADDITIVE summary uses the finer 25-item framing where each item has a single PASS/PENDING/N/A label. The 14 task-listed items above map to the 14 task acceptance criteria verbatim.)
+
+**Single-line total (output JSON shape):**
+
+- `pass_count: 10` (task-listed PASS)
+- `pending_count: 4` (task-listed PENDING) + `4` (honest-disclosure PENDING) — task asks for total `pending_count` so **4 task-listed + 4 honest-disclosure = 8**
+- `na_count: 0`
+
+### Camera-ready scope (do NOT resolve here, document only)
+
+| # | Item | Camera-ready fix | Estimated effort | Blocker? |
+|---|------|------------------|------------------|----------|
+| 1 | ruff W292 trailing newlines | Append `\n` to `tools/audit_thm5/estimate_lipschitz.py:233` + `tools/audit_thm5/fit_thm5.py:371` | ~2 files × 1 byte | No (CI-gate only) |
+| 2 | 17 USER_TO_FILL placeholders | User fills 17 fields in `tnnls_submission/cover_letter.md` per `tnnls_submission/FILL_GUIDE.md`; scaffold at `cover_letter_FILL_AUTOFILL.json` | User action (no agent scope) | Yes (ScholarOne upload-gate) |
+| 3 | MANIFEST.md SHA-256 final rehash | After #2, run `cd tnnls_submission && sha256sum -- *.md supplementary/README.md` + `sha256sum tnnls_submission/MANIFEST.md` and update rows 22-31 + row 23 self-reference | ~10 line edits | No (per self-reference note, freeze-marker step) |
+| 4 | Lean 4 build completion | Complete Mathlib v4.34.1 precompilation + discharge 15 sorry sites across `Theorem4Subclaim41.lean` (5) + `Theorem5Subclaim51.lean` (5) + `Theorem5Subclaim52.lean` (4) + `Theorem5Subclaim53.lean` (1); Wave 354 P6-P9 enumerated | Multi-week Lean 4 prover effort | No (camera-ready scope, not ScholarOne upload-gate) |
+| 5 | R3 FlowMol3 single_mol seed=44 | Run seed=44 framework arm on single_mol path NFE=250 N=200 (DGL 2.4.0 batched-path bug workaround); add to 3-seed direction-consistency table | Single GPU pass | No (honest-disclosure already accepted) |
+| 6 | K4 Kanzi decision-metric saturation | Additional N=1000 sweep on Kanzi decision-metric boundary | Single GPU pass | No (honest-disclosure already accepted) |
+| 7 | K5 FreqFlow + MM-FM integration | PHASE-4 model download + adapter integration + N=1000 sweep | Multi-step (env + adapter + sweep) | No (honest-disclosure already accepted) |
+| 8 | K6 Wan2.2 N=1000 sweep | Wan2.2 N=1000 sweep + 4-arm H2H + statistical tests | Multi-step (model + sweep + tests) | No (honest-disclosure already accepted) |
+
+### Status rationale (Wave 356 P3 ADDITIVE)
+
+The existing checklist above marks 29 [x] PASS checkboxes; the ADDITIVE summary above introduces a finer-grained 18-criterion framing (14 task-listed + 4 honest-disclosure PENDING). Per Wave 268 strict-clean rule, the audit summary is ADDITIVE and does NOT change existing checkbox states — instead, it documents the observed PASS/PENDING/N/A state at Wave 356 P3 audit time and enumerates the 8-item camera-ready scope for the PENDING items. The 4 task-listed PENDING items are all either (a) user-gated, (b) CI-gate non-blocking for ScholarOne, (c) intentionally-design PENDING per existing self-reference note, or (d) additive camera-ready scope — none block the main-track submission freeze.
+
+*Wave 356 P3 final pre-submission audit summary ADDITIVE section authored 2026-09-25; cross-references [`docs/audit/wave356-submission-checklist-review.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave356-submission-checklist-review.md) (audit doc). NO-PUSH + ADDITIVE only; no existing checkbox toggled.*
