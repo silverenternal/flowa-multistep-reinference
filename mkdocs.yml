@@ -91,6 +91,7 @@ nav:
       - 05 — fix plan: governance/05-fix-plan.md
       - 06 — verification report: governance/06-verification-report.md
       - Audit index (topic-cluster): audit/INDEX.md
+      - Audit INDEX maintenance: audit/INDEX_MAINTENANCE.md
       - Current audit records:
           - BRAI perturbation magnitude: audit/brai-perturbation-magnitude-2026-09-13.md
           - CIFAR evaluation corrections: audit/cifar-evaluation-corrections.md
