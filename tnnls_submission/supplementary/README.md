@@ -3,7 +3,7 @@
 **Venue:** IEEE Transactions on Neural Networks and Learning Systems (TNNLS)
 **Manuscript:** FlowA: Training-Free, Paper-Quantity-Driven Re-Inference for Flow-Matching Checkpoints
 **Submitted:** pending (cover-letter USER ACTION placeholders to be filled)
-**Freeze-marker commit:** Wave 324 HEAD (`paper-flat-ieeetran.{tex,pdf}` 10 pp., 2026-09-23)
+**Freeze-marker commit:** Wave 343 + Wave 344 HEAD (`paper-A-final.{md,tex,pdf}` 14 pp., 2026-09-25; Wave 343 paper bibliography fix added BGV12 + Villani 2003 + RMSPreserving disposition)
 **Final tag (to push):** `v3.0-tnnls-ready`
 
 This README indexes every artifact that the manuscript sources a
@@ -24,7 +24,7 @@ headline number.
 
 Per-cell `SOURCE.md` files document the byte-stable chain from each
 headline number back to the originating sweep run. Every cell listed
-in `docs/drafts/paper-flat-ieeetran.tex` Table II (R1–R6) has a
+in `docs/drafts/paper-A-final.tex` Table II (R1–R6) has a
 matching entry under `docs/headline-evidence/`.
 
 | Cell | Domain | Path |
@@ -188,8 +188,8 @@ proof sketches; the source markdown (above) carries the full proofs.
 - `tnnls_submission/README.md` — ScholarOne upload instructions
 - `tnnls_submission/cover_letter.md` — cover letter (17 USER placeholders — see `FILL_GUIDE.md`)
 - `tnnls_submission/FILL_GUIDE.md` — fill-guide for cover-letter placeholders
-- `docs/drafts/paper-flat-ieeetran.{tex,pdf}` — 10-page IEEEtran-typeset manuscript (TNNLS-ready)
-- `docs/drafts/paper-flat-ieeetran.aux` / `.log` — typeset diagnostic logs (compile-clean)
+- `docs/drafts/paper-A-final.{tex,pdf}` — 10-page IEEEtran-typeset manuscript (TNNLS-ready)
+- `docs/drafts/paper-A-final.aux` / `.log` — typeset diagnostic logs (compile-clean)
 
 ## G. Review-reproducibility bundle (Wave 344 — single-archive package)
 

@@ -1219,7 +1219,7 @@ Sincerely,
 
 **Submission package manifest** (for editorial reference):
 
-1. Manuscript PDF (`docs/drafts/paper-flattened-draft.md`
+1. Manuscript PDF (`docs/drafts/paper-A-final.md`
    typeset to double-column 14-page TNNLS format).
 2. Supplementary PDF (S1–S8: Theorem 1 derivation, per-record
    tables, hp-sensitivity sweep, 4-arm per-seed margin table,

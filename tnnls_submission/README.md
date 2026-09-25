@@ -26,9 +26,9 @@ tnnls_submission/
 The **manuscript PDF and source** live one level up:
 
 ```
-docs/drafts/paper-flat-ieeetran.pdf   ← 10 pages, 381510 bytes (Wave 324 D+5, ready-to-submit)
-docs/drafts/paper-flat-ieeetran.tex   ← IEEEtran-journal source
-docs/drafts/paper-flat-ieeetran.{aux,log,out}
+docs/drafts/paper-A-final.pdf   ← 10 pages, 381510 bytes (Wave 324 D+5, ready-to-submit)
+docs/drafts/paper-A-final.tex   ← IEEEtran-journal source
+docs/drafts/paper-A-final.{aux,log,out}
 ```
 
 ---
@@ -51,7 +51,7 @@ Walk through these in order; each step has a single command that produces one li
 
 3. **Manuscript compiles cleanly.**
    ```bash
-   pdfinfo docs/drafts/paper-flat-ieeetran.pdf | grep -E "Pages|File size"
+   pdfinfo docs/drafts/paper-A-final.pdf | grep -E "Pages|File size"
    ```
    Expect: `Pages: 10`, `File size: 381510 bytes`.
 
@@ -63,7 +63,7 @@ Walk through these in order; each step has a single command that produces one li
 
 5. **Anonymous blind-review check** (paper has no author / institution visible):
    ```bash
-   grep -iE "hwei|university of|institute|department" docs/drafts/paper-flat-ieeetran.{tex,pdf} | head -5
+   grep -iE "hwei|university of|institute|department" docs/drafts/paper-A-final.{tex,pdf} | head -5
    ```
    Expect: empty output (or only IEEEtran-journal boilerplate that the typesetter strips before upload).
 
@@ -80,12 +80,12 @@ the `tnnls_submission/` (or `docs/drafts/`) file you upload.
 Select: **"Regular Paper"** (TNNLS treats the manuscript as a regular research article, not a correspondence or survey). Title and abstract go in **Step 2**.
 
 ### Step 2 — Title, Abstract, Keywords
-- **Title:** paste verbatim from the manuscript, line 1 of `docs/drafts/paper-flat-ieeetran.tex` (PDF page 1).
+- **Title:** paste verbatim from the manuscript, line 1 of `docs/drafts/paper-A-final.tex` (PDF page 1).
 - **Abstract:** copy the body of `Abstract.` (between `\begin{abstract}` and `\end{abstract}` in the `.tex`, or page 1 of the PDF). **Do not include** the index-terms/IEEE keywords here — those live in Step 3.
 - **Keywords:** copy the 9 IEEE keyword terms from `\begin{IEEEkeywords}` … `\end{IEEEkeywords}` (or the IEEEtran section in the PDF).
 
 ### Step 3 — Manuscript File
-- Upload: **`docs/drafts/paper-flat-ieeetran.pdf`** (10 pages, IEEEtran-journal typeset).
+- Upload: **`docs/drafts/paper-A-final.pdf`** (10 pages, IEEEtran-journal typeset).
 - The system will probe for embedded fonts and page count; both should pass.
 
 ### Step 4 — Supplementary Material
@@ -117,7 +117,7 @@ Select: **"Regular Paper"** (TNNLS treats the manuscript as a regular research a
 2. **Tag the freeze-marker commit** in your local repo (the commit whose SHA is the source for the manuscript PDF):
    ```bash
    cd /home/hugo/codes/flowa-multistep-reinference
-   git log --oneline docs/drafts/paper-flat-ieeetran.tex | head -1
+   git log --oneline docs/drafts/paper-A-final.tex | head -1
    # Copy the commit SHA and tag:
    git tag -a v3.0-tnnls-ready <SHA> -m "TNNLS submission freeze-marker (ScholarOne ID TNNLS-2026-XXXX)"
    ```

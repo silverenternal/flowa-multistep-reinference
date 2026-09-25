@@ -8,10 +8,10 @@
 
 ### Manuscript
 
-- [x] **Manuscript ≤ 14 pages** (TNNLS main-track limit) excluding refs + supplementary — `docs/drafts/paper-flattened-draft.md` typeset to double-column 14-page TNNLS format via `site/build_pdf/`. Pages preserved at 14 ±2.
+- [x] **Manuscript ≤ 14 pages** (TNNLS main-track limit) excluding refs + supplementary — `docs/drafts/paper-A-final.md` typeset to double-column 14-page TNNLS format via `site/build_pdf/`. Pages preserved at 14 ±2.
 - [x] **Cover letter uploaded to Editorial Manager** — `tnnls_submission/cover_letter.md` (snapshot of `docs/cover-letter-tnnls.md`). All 11 USER ACTION placeholders filled before upload.
 - [x] **Highlights (3 bullets, 85-char each)** — `tnnls_submission/highlights.md`.
-- [x] **Anonymized** — no author / institution / acknowledgement visible in `docs/drafts/paper-flattened-draft.md`, `tnnls_submission/cover_letter.md`, or supplementary.
+- [x] **Anonymized** — no author / institution / acknowledgement visible in `docs/drafts/paper-A-final.md`, `tnnls_submission/cover_letter.md`, or supplementary.
 
 ### Reviewer-proof guarantees
 
@@ -60,7 +60,7 @@
 
 ## Upload order for TNNLS Editorial Manager
 
-1. **Manuscript:** `docs/drafts/paper-flattened-draft.md` typeset to double-column 14-page TNNLS format (via `site/build_pdf/`).
+1. **Manuscript:** `docs/drafts/paper-A-final.md` typeset to double-column 14-page TNNLS format (via `site/build_pdf/`).
 2. **Supplementary material:**
    - `docs/theory/theorem-1-self-contained.md` (Theorem 1 derivation appendix)
    - `docs/theory/` (full theory package)
