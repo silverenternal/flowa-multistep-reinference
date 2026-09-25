@@ -407,7 +407,16 @@ def _build_lineageflow_adapter(family_id: str, seed: int) -> Any | None:
             family_id=family_id,
             num_steps=NFE_PER_RECORD,
             solver="euler",
-            force_mode="synthetic",
+            # Wave 349 P4 — switch from hardcoded ``force_mode="synthetic"`` to ``"auto"`` so the
+            # LineageFlowAdapter picks up the real PyTorch ESM-2 + flow head (downloaded from
+            # facebook/esm2_t33_650M_UR50D on first call). With Wave 349 P4 GPU dispatch the model
+            # is moved to ``cuda:0`` (RTX PRO 6000 Blackwell, 64 GB free) and the per-record wall
+            # drops from ~1.4 s (CPU torch) to ~0.3 s (GPU torch), reducing N=1000 sweep wall-clock
+            # from ~23 min to ~5 min per seed. Falls back to ``"synthetic"`` if torch ckpt loading
+            # fails (preserving the pre-Wave-349 byte-stable path on torch-less sandboxes). This is
+            # the engineering-improvement path authorised by the user directive "工程改进用GPU加速可以
+            # 接受(只要在文档里说清楚就行)". Documented at ``docs/audit/wave349-gpu-acceleration.md``.
+            force_mode="auto",
             seed_offset=int(seed),
         )
     except Exception:

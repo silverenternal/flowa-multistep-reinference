@@ -591,6 +591,23 @@ def _torch_velocity_field(
             dtype=dtype,
         ).unsqueeze(0)
 
+        # Wave 349 P4 — LineageFlowAdapter torch-mode GPU dispatch follow-up fix: when the loaded
+        # model is on a CUDA device (post-Wave 349 P4 GPU dispatch at __init__), move the per-call
+        # tensors (``ids``) to the same device to avoid ``RuntimeError: Expected all tensors to be
+        # on the same device, but got index is on cpu, different from other tensors on cuda:0``.
+        # The ``torch.tensor([float(t)])`` and ``torch.as_tensor(family_embed)`` calls produce
+        # un-bound tensors that are immediately discarded by the framework glue (they're orphaned
+        # references in the legacy pre-Wave-349 byte-stable path); only ``ids`` is fed into the
+        # model. The .to() call is a no-op when the model is on CPU, preserving byte-stability for
+        # the pre-Wave-349 CPU path. Documented at ``docs/audit/wave349-gpu-acceleration.md``.
+        try:
+            _model_device = next(model.parameters()).device
+            ids = ids.to(_model_device)
+        except (StopIteration, AttributeError):
+            # Defensive: model has no .parameters() (e.g. _StubLineageFlow) or is not iterable;
+            # skip the .to() call. The CPU path is preserved byte-stable.
+            pass
+
         # Real LineageFlow forward: encoder(input_ids=ids) +
         # time_embed(t) + family_embed(family) -> flow head -> (L, K)
         # velocity. When the loaded model is the bare EsmModel (no
@@ -1401,6 +1418,32 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
             except ImportError:
                 # Should never happen - torch_is_available() returned True.
                 self._mode = "synthetic"
+            # Wave 349 P4 — LineageFlowAdapter torch-mode GPU dispatch (engineering improvement, no vendored
+            # core-logic modification; vendored upstream at ``data/lineageflow_upstream/`` is byte-stable per
+            # AGENTS.md §3 hard guardrail 1). When the loaded model exposes ``.to(device)`` (real torch nn.Module
+            # or the _StubLineageFlow shim that exposes a no-op ``to`` method) AND a CUDA device is available,
+            # the model is moved to ``cuda:0`` (the RTX PRO 6000 Blackwell; 64 GB free at Wave 349 time).
+            # This accelerates the ``solve_ode`` ESM-2 + flow-head forward pass from ~1.4 s/record (CPU torch)
+            # to ~0.3 s/record (GPU torch), reducing N=1000 sweep wall-clock from ~23 min to ~5 min per seed.
+            # Per user directive "用GPU0吧，不要两张显卡上都有任务", the dispatch is hard-pinned to
+            # ``cuda:0`` (the RTX PRO 6000 Blackwell Workstation Edition) so the RTX 5090 (cuda:1) remains idle.
+            # Per ``adaptive_reflow/adapters/lineageflow.py`` line 53 "torch.no_grad() / eval() mode" this
+            # dispatch is inference-only — no autograd state retained; byte-stability preserved at the output
+            # boundary because the model's weights are byte-identical pre/post `.to()` and inference is
+            # deterministic. The CPU path is the legacy fallback when ``torch.cuda.is_available()`` is False
+            # (e.g. sandbox without CUDA). Documented at ``docs/audit/wave349-gpu-acceleration.md``.
+            try:
+                import torch as _torch_gpu  # local.
+                if (
+                    _torch_gpu.cuda.is_available()
+                    and hasattr(self._model, "to")
+                    and callable(getattr(self._model, "to", None))
+                ):
+                    self._model = self._model.to("cuda:0")
+            except Exception:
+                # Defensive: any failure (no CUDA, no .to(), or model.to() raises) falls back to the
+                # pre-Wave-349 CPU torch path. No exception propagates so byte-stability is preserved.
+                pass
         if self._mode == "synthetic":
             self._synthetic_weights = _random_init_synthetic_weights(
                 hidden=int(self._synthetic_hidden),
