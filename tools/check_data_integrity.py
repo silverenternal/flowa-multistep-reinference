@@ -92,13 +92,10 @@ def _iter_ledger_entries(ledger: Path) -> Iterable[tuple[str, str]]:
         if not s or s.startswith("#"):
             continue
         # Format: "<sha256>  <path>" -- exactly two spaces between fields.
-        if "  " not in s:
-            # Tolerate single-space separators (some upstream tools emit
-            # single-space, some double-space); the ``split`` with a
-            # bounded ``maxsplit=1`` handles both.
-            parts = s.split(maxsplit=1)
-        else:
-            parts = s.split("  ", 1)
+        # Tolerate single-space separators (some upstream tools emit
+        # single-space, some double-space); the ``split`` with a
+        # bounded ``maxsplit=1`` handles both.
+        parts = s.split(maxsplit=1) if "  " not in s else s.split("  ", 1)
         if len(parts) != 2:
             continue
         sha, rel = parts[0].strip(), parts[1].strip()

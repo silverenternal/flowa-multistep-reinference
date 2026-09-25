@@ -190,3 +190,41 @@ proof sketches; the source markdown (above) carries the full proofs.
 - `tnnls_submission/FILL_GUIDE.md` — fill-guide for cover-letter placeholders
 - `docs/drafts/paper-flat-ieeetran.{tex,pdf}` — 10-page IEEEtran-typeset manuscript (TNNLS-ready)
 - `docs/drafts/paper-flat-ieeetran.aux` / `.log` — typeset diagnostic logs (compile-clean)
+
+## G. Review-reproducibility bundle (Wave 344 — single-archive package)
+
+To make reviewer reproducibility a single-file transfer, this Wave
+packaged the per-cell headline artifacts, the headline-evidence
+SOURCE.md provenance, and the most consequential Wave 339 + Wave 343
+audit docs into one archive:
+
+**Archive:** `tnnls_submission/supplementary_bundle.zip`
+- **Size:** 148 MB (compressed)
+- **SHA-256:** `d1b5ba24a55a9336e7b65cee7bea652482943932181ddfdd6a8d6a9e5c758f3e`
+- **Self-extracting tarball not used**: zip preserves directory structure
+  on Windows / macOS / Linux without PATH requirements
+
+**Bundle contents** (40 files, 159 MB uncompressed):
+
+| Subdirectory | Count | Contents |
+|---|---|---|
+| `headline_artifacts/` | 11 entries (8 files + 3 subdirs) | 6 headline artifacts copied verbatim from `verification_outputs/`: R2 `wave218-p3-kanzi-framework-wins.{json,csv}`, R5c `wave191-p3-mnist-n1000.json`, R6 `wave233-p3-tier-aware-r6.{json,csv}`, R5b `wave247-p3-r5b-n1000-n1/` (with `inception_feats_cache/`), R1 `lineageflow_hmmer_real_n1000_w158_q3_2026/` (`baseline_hits.tbl` + `framework_hits.tbl`), K7 `novelty_pctid_w166_q3_2026/` (`novelty_results.json` + `novelty_results_full.json` + baseline/framework `.m8` files) |
+| `headline_evidence/` | 11 files | 10 per-cell `SOURCE.md` provenance files (R1, R2, R3, R4, R5, R5c, R6, Kanzi N=1000, composite axis, NFE 2.5–10×) + hub `README.md`, all dereferenced from the symlinks under `paper-data/headline-evidence/` so reviewers do not need to resolve any path outside the archive |
+| `audit_docs/` | 3 files | `wave306-11-cell-alignment.md` (the 11-cell alignment audit), `wave339-b6-fixes.md` (Wave 339 final-polish upstream fix), `wave343-paper-fixes.md` (Wave 343 paper bibliography fix for BGV12 + Villani 2003) |
+| `SHA256SUMS` | 1 file | sidecar with sorted SHA-256 (40 entries, excludes self) |
+
+**Sidecar integrity file:** `tnnls_submission/supplementary_bundle/SHA256SUMS` (40 lines, lowercase sorted, two-space separator, relative paths from archive root; format matches `paper-data/SHA256SUMS`). Reviewers re-verify with:
+
+```bash
+cd supplementary_bundle && sha256sum -c SHA256SUMS
+```
+
+The archive is rebuilt only at Wave boundaries; the ZIP SHA above is
+the current freeze-state hash. Future edits to any in-bundle file
+require regenerating the archive + sidecar + updating the SHA above
+(per Wave 344 traceability convention).
+
+**Why the bundle is additive** (per AGENTS.md §3 hard-guardrail #2 "no
+destructive edits"): every file in the ZIP is a byte-copy of an
+existing repo file; no source file is moved, renamed, or deleted. The
+manifest above is the only new artifact.

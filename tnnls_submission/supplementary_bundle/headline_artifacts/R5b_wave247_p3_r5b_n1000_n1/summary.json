@@ -1,0 +1,170 @@
+{
+  "n_samples": 1000,
+  "n_rounds": 1,
+  "framework_samples": 1000,
+  "baseline_num_steps": 50,
+  "match_nfe": "budget",
+  "wall_clock_s": 3990.675449741073,
+  "paper_uplift_27_enabled": false,
+  "paper_uplift_27_e_rho": null,
+  "audit_codes_for_floor_lifted": 0,
+  "rows": [
+    {
+      "name": "baseline",
+      "fid": 48.40585114335397,
+      "wall_clock_s": 33.60305368900299,
+      "framework_total_nfe": 0,
+      "extractor_family": "inceptionv3_tfport"
+    },
+    {
+      "name": "CosineAnnealScheduler",
+      "fid": 48.566797284461586,
+      "wall_clock_s": 868.5071407590294,
+      "framework_total_nfe": 50,
+      "extractor_family": "inceptionv3_tfport"
+    },
+    {
+      "name": "CodimensionSheetScheduler",
+      "fid": 48.65935975344689,
+      "wall_clock_s": 896.7027345269453,
+      "framework_total_nfe": 50,
+      "extractor_family": "inceptionv3_tfport"
+    },
+    {
+      "name": "EvidenceDrivenScheduler",
+      "fid": 48.16690776088757,
+      "wall_clock_s": 848.7283526329556,
+      "framework_total_nfe": 50,
+      "extractor_family": "inceptionv3_tfport"
+    },
+    {
+      "name": "FreeTrajScheduler",
+      "fid": 48.252238142590045,
+      "wall_clock_s": 883.1373565630056,
+      "framework_total_nfe": 50,
+      "extractor_family": "inceptionv3_tfport"
+    }
+  ],
+  "eval_reports": [
+    {
+      "name": "baseline",
+      "eval_report": {
+        "adapter_id": "run_sota_cifar:baseline",
+        "dataset_id": "cifar10",
+        "metrics": {
+          "fid": {
+            "name": "fid",
+            "value": 48.40585114335397,
+            "is_finite": true,
+            "marker": null,
+            "diagnostics": {
+              "family": "inceptionv3_tfport"
+            },
+            "n_samples": 1000,
+            "feature_dim": 2048
+          }
+        },
+        "missing_dependencies": [],
+        "stderr_notes": [],
+        "wall_clock_s": 0.0,
+        "schema_version": "eval_report.v1.0.0"
+      }
+    },
+    {
+      "name": "CosineAnnealScheduler",
+      "eval_report": {
+        "adapter_id": "run_sota_cifar:CosineAnnealScheduler",
+        "dataset_id": "cifar10",
+        "metrics": {
+          "fid": {
+            "name": "fid",
+            "value": 48.566797284461586,
+            "is_finite": true,
+            "marker": null,
+            "diagnostics": {
+              "family": "inceptionv3_tfport"
+            },
+            "n_samples": 1000,
+            "feature_dim": 2048
+          }
+        },
+        "missing_dependencies": [],
+        "stderr_notes": [],
+        "wall_clock_s": 0.0,
+        "schema_version": "eval_report.v1.0.0"
+      }
+    },
+    {
+      "name": "CodimensionSheetScheduler",
+      "eval_report": {
+        "adapter_id": "run_sota_cifar:CodimensionSheetScheduler",
+        "dataset_id": "cifar10",
+        "metrics": {
+          "fid": {
+            "name": "fid",
+            "value": 48.65935975344689,
+            "is_finite": true,
+            "marker": null,
+            "diagnostics": {
+              "family": "inceptionv3_tfport"
+            },
+            "n_samples": 1000,
+            "feature_dim": 2048
+          }
+        },
+        "missing_dependencies": [],
+        "stderr_notes": [],
+        "wall_clock_s": 0.0,
+        "schema_version": "eval_report.v1.0.0"
+      }
+    },
+    {
+      "name": "EvidenceDrivenScheduler",
+      "eval_report": {
+        "adapter_id": "run_sota_cifar:EvidenceDrivenScheduler",
+        "dataset_id": "cifar10",
+        "metrics": {
+          "fid": {
+            "name": "fid",
+            "value": 48.16690776088757,
+            "is_finite": true,
+            "marker": null,
+            "diagnostics": {
+              "family": "inceptionv3_tfport"
+            },
+            "n_samples": 1000,
+            "feature_dim": 2048
+          }
+        },
+        "missing_dependencies": [],
+        "stderr_notes": [],
+        "wall_clock_s": 0.0,
+        "schema_version": "eval_report.v1.0.0"
+      }
+    },
+    {
+      "name": "FreeTrajScheduler",
+      "eval_report": {
+        "adapter_id": "run_sota_cifar:FreeTrajScheduler",
+        "dataset_id": "cifar10",
+        "metrics": {
+          "fid": {
+            "name": "fid",
+            "value": 48.252238142590045,
+            "is_finite": true,
+            "marker": null,
+            "diagnostics": {
+              "family": "inceptionv3_tfport"
+            },
+            "n_samples": 1000,
+            "feature_dim": 2048
+          }
+        },
+        "missing_dependencies": [],
+        "stderr_notes": [],
+        "wall_clock_s": 0.0,
+        "schema_version": "eval_report.v1.0.0"
+      }
+    }
+  ]
+}

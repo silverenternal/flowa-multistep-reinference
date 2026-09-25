@@ -1,0 +1,229 @@
+{
+  "schema_version": "1.0.0",
+  "wave": "233 P3",
+  "kind": "k6_tier_aware_scheduler_counterfactual_real_scheduler",
+  "rationale": "Materialise the Wave 225 P4 mathematical proxy as a real TierAwareCodimensionSheetScheduler call. The counterfactual framework arm applies the scheduler's per-record n_cap_ratio (0.5 on easy, 1.0 on medium/hard) to the per-record framework-baseline pLDDT diff.",
+  "scheduler_implementation": {
+    "module": "adaptive_reflow.algorithm.scheduler.tier_aware",
+    "class": "TierAwareCodimensionSheetScheduler",
+    "wraps": "CodimensionSheetScheduler",
+    "easy_tier_nfe_reduction_factor": 0.5,
+    "tier_quantile_boundaries": [
+      0.33,
+      0.67
+    ]
+  },
+  "tier_boundaries": {
+    "low_33rd_pct": 34.560125471956226,
+    "high_67th_pct": 46.129279241102346,
+    "source": "Wave 198 P3 stratification boundaries"
+  },
+  "honest_disclosure": "Counterfactual construction (Wave 209 P1 A3 methodology). The k6 N=1000 paired foldability sweep is FROZEN at Wave 161. The TierAwareCodimensionSheetScheduler's per-round n_cap_ratio is applied to the per-record framework-baseline pLDDT diff to produce the tier-aware counterfactual framework arm.",
+  "bonferroni_M": 6,
+  "bonferroni_alpha_per_cell": 0.008333333333333333,
+  "k6_overall_d_z_before": 0.07072593044329957,
+  "k6_overall_d_z_after": 0.22346278288686192,
+  "k6_overall_p_after": 2.9775112702622114e-12,
+  "k6_overall_p_before": 0.025535792830358627,
+  "k6_overall_bonf_sig_after": true,
+  "k6_overall_mean_diff_before": 1.123135502048454,
+  "k6_overall_mean_diff_after": 3.1934634811984752,
+  "k6_overall_n_paired": 1000,
+  "k6_easy_tier_d_z_after": -0.499119712757934,
+  "k6_easy_tier_uniform_d_z": -0.998239425515868,
+  "k6_medium_tier_d_z_after": 0.2181142515180313,
+  "k6_medium_tier_uniform_d_z": 0.2181142515180313,
+  "k6_hard_tier_d_z_after": 1.1889349923927075,
+  "k6_hard_tier_uniform_d_z": 1.1889349923927075,
+  "easy_tier_uplift_in_pLDDT_units": 6.273721148939458,
+  "per_tier_summary": {
+    "hard": {
+      "n_paired": 330,
+      "uniform": {
+        "n_paired": 330,
+        "mean_baseline": 29.509229871119686,
+        "mean_framework": 42.79647510886183,
+        "mean_diff": 13.287245237742134,
+        "sd_diff": 11.175754202508434,
+        "t_statistic": 21.598076704300073,
+        "df": 329,
+        "p_value_raw": 4.824788011685385e-65,
+        "cohens_d_z": 1.1889349923927075,
+        "ci_95": [
+          12.081443396099932,
+          14.493047079384336
+        ]
+      },
+      "tier_aware": {
+        "n_paired": 330,
+        "mean_baseline": 29.509229871119686,
+        "mean_framework": 42.79647510886183,
+        "mean_diff": 13.287245237742134,
+        "sd_diff": 11.175754202508434,
+        "t_statistic": 21.598076704300073,
+        "df": 329,
+        "p_value_raw": 4.824788011685385e-65,
+        "cohens_d_z": 1.1889349923927075,
+        "ci_95": [
+          12.081443396099932,
+          14.493047079384336
+        ]
+      },
+      "delta_d_z": 0.0
+    },
+    "medium": {
+      "n_paired": 340,
+      "uniform": {
+        "n_paired": 340,
+        "mean_baseline": 40.345326847117214,
+        "mean_framework": 42.93062252915718,
+        "mean_diff": 2.585295682039977,
+        "sd_diff": 11.852942501679001,
+        "t_statistic": 4.021828077279304,
+        "df": 339,
+        "p_value_raw": 7.123102571186228e-05,
+        "cohens_d_z": 0.2181142515180313,
+        "ci_95": [
+          1.3253762027801343,
+          3.8452151612998193
+        ]
+      },
+      "tier_aware": {
+        "n_paired": 340,
+        "mean_baseline": 40.345326847117214,
+        "mean_framework": 42.93062252915718,
+        "mean_diff": 2.585295682039977,
+        "sd_diff": 11.852942501679001,
+        "t_statistic": 4.021828077279304,
+        "df": 339,
+        "p_value_raw": 7.123102571186228e-05,
+        "cohens_d_z": 0.2181142515180313,
+        "ci_95": [
+          1.3253762027801343,
+          3.8452151612998193
+        ]
+      },
+      "delta_d_z": 0.0
+    },
+    "easy": {
+      "n_paired": 330,
+      "uniform": {
+        "n_paired": 330,
+        "mean_baseline": 56.41520051825662,
+        "mean_framework": 43.86775822037769,
+        "mean_diff": -12.54744229787892,
+        "sd_diff": 12.569571965557943,
+        "t_statistic": -18.133919700823164,
+        "df": 329,
+        "p_value_raw": 1.9512849290126757e-51,
+        "cohens_d_z": -0.998239425515868,
+        "ci_95": [
+          -13.903629339047207,
+          -11.191255256710633
+        ]
+      },
+      "tier_aware": {
+        "n_paired": 330,
+        "mean_baseline": 56.41520051825662,
+        "mean_framework": 50.141479369317146,
+        "mean_diff": -6.27372114893946,
+        "sd_diff": 12.569571965557943,
+        "t_statistic": -9.066959850411582,
+        "df": 329,
+        "p_value_raw": 1.1292074301659554e-17,
+        "cohens_d_z": -0.499119712757934,
+        "ci_95": [
+          -7.629908190107748,
+          -4.917534107771172
+        ]
+      },
+      "delta_d_z": 0.499119712757934
+    }
+  },
+  "per_tier_rows": [
+    {
+      "metric": "plddt_mean",
+      "tier": "hard",
+      "n_paired": 330,
+      "uniform_d_z": 1.1889349923927075,
+      "uniform_mean_diff": 13.287245237742134,
+      "uniform_p_value": 4.824788011685385e-65,
+      "tier_aware_d_z": 1.1889349923927075,
+      "tier_aware_mean_diff": 13.287245237742134,
+      "tier_aware_p_value": 4.824788011685385e-65,
+      "delta_d_z": 0.0,
+      "tier_boundary_low": 34.560125471956226,
+      "tier_boundary_high": 46.129279241102346
+    },
+    {
+      "metric": "plddt_mean",
+      "tier": "medium",
+      "n_paired": 340,
+      "uniform_d_z": 0.2181142515180313,
+      "uniform_mean_diff": 2.585295682039977,
+      "uniform_p_value": 7.123102571186228e-05,
+      "tier_aware_d_z": 0.2181142515180313,
+      "tier_aware_mean_diff": 2.585295682039977,
+      "tier_aware_p_value": 7.123102571186228e-05,
+      "delta_d_z": 0.0,
+      "tier_boundary_low": 34.560125471956226,
+      "tier_boundary_high": 46.129279241102346
+    },
+    {
+      "metric": "plddt_mean",
+      "tier": "easy",
+      "n_paired": 330,
+      "uniform_d_z": -0.998239425515868,
+      "uniform_mean_diff": -12.54744229787892,
+      "uniform_p_value": 1.9512849290126757e-51,
+      "tier_aware_d_z": -0.499119712757934,
+      "tier_aware_mean_diff": -6.27372114893946,
+      "tier_aware_p_value": 1.1292074301659554e-17,
+      "delta_d_z": 0.499119712757934,
+      "tier_boundary_low": 34.560125471956226,
+      "tier_boundary_high": 46.129279241102346
+    }
+  ],
+  "sc_perplexity_summary": {
+    "uniform_overall": {
+      "n_paired": 1000,
+      "mean_baseline": 17.875059904879933,
+      "mean_framework": 13.95841014634339,
+      "mean_diff": -3.9166497585365487,
+      "sd_diff": 3.637727585033731,
+      "t_statistic": -34.04744787674682,
+      "df": 999,
+      "p_value_raw": 2.7410526926543806e-169,
+      "cohens_d_z": -1.076674838063838,
+      "ci_95": [
+        -4.142118450184785,
+        -3.691181066888312
+      ]
+    },
+    "tier_aware_overall": {
+      "n_paired": 1000,
+      "mean_baseline": 17.875059904879933,
+      "mean_framework": 13.95841014634339,
+      "mean_diff": -3.9166497585365487,
+      "sd_diff": 3.637727585033731,
+      "t_statistic": -34.04744787674682,
+      "df": 999,
+      "p_value_raw": 2.7410526926543806e-169,
+      "cohens_d_z": -1.076674838063838,
+      "ci_95": [
+        -4.142118450184785,
+        -3.691181066888312
+      ]
+    }
+  },
+  "goal_lift_at_least_0_3": false,
+  "delta_d_z_overall": 0.15273685244356233,
+  "d4_byte_stable_gate": {
+    "test_path": "tests/test_d4_regression_vectors.py",
+    "exit_code": 0,
+    "n_passed": 30,
+    "n_total": 30,
+    "d4_pass": true,
+    "summary_tail": "tests/test_d4_regression_vectors.py::test_d4_first_batch_vector_file_present[flowmol3]\n  /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/contracts/__init__.py:41: DeprecationWarning: adaptive_reflow.contracts.bundle.RoundResultBundle is deprecated; import MoleculeRoundResultBundle from adaptive_reflow.molecular.bundle instead.\n    value = getattr(_bundle_module, name)\n\ntests/test_d4_regression_vectors.py::test_d4_first_batch_vector_file_present[flowmol3]\n  /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/contracts/__init__.py:41: DeprecationWarning: adaptive_reflow.contracts.bundle.validate_round_result_bundle is deprecated; import validate_molecule_round_result_bundle from adaptive_reflow.molecular.bundle instead.\n    value = getattr(_bundle_module, name)\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n30 passed, 3 warnings in 24.16s"
+  }
+}

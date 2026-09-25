@@ -3,8 +3,8 @@
 **Venue:** *IEEE Transactions on Neural Networks and Learning Systems* (TNNLS)
 **Manuscript:** FlowA: A Training-Free Re-Inference Framework for Frozen Flow-Matching Checkpoints
 **Submitted:** pending (cover-letter USER ACTION placeholders to be filled)
-**Freeze-marker commit:** Wave 331 HEAD (`paper-A-final.{tex,pdf}` 14 pp., 2026-09-23)
-**Final tag (to push):** `v3.0-tnnls-ready`
+**Freeze-marker commit:** Wave 343 HEAD (`paper-A-final.{md,tex,pdf}` 14 pp., 2026-09-25; Wave 343 paper bibliography fix added BGV12 + Villani 2003 + RMSPreserving disposition)
+**Final tag (to push):** `v3.0-tnnls-ready` (kept; paper revision applied as additive Wave 343 bibliography fix, no schema-level version bump)
 **Canonical paper:** `docs/drafts/paper-A-final.md` (replaces `paper-flat-flattened.md`, archived to `paper-flat-flattened.ARCHIVED-2026-09-23.md`)
 
 ---
@@ -20,18 +20,21 @@ cd tnnls_submission && sha256sum -- *.md supplementary/README.md
 | File | Size (bytes) | SHA-256 | Role |
 |---|---|---|---|
 | `README.md` | 9446 | `3e26948a24ddfc6b17088d466c8aed874594f7e2571cb985c65062f65924bd30` | ScholarOne upload walkthrough (this MANIFEST's sister doc); 7-step upload sequence, common pitfalls, post-upload Zenodo DOI step |
-| `MANIFEST.md` | 11894 | `283020362f6cde0bb764d7e8721b080275bf1fd702d1365f1a8115438cdd91e3` | Package manifest with SHA-256 + size + role (this file — self-referencing SHA at freeze; **NOTE:** the displayed SHA is the hash of the bytes BEFORE this very SHA-row was added; after this edit the file SHA becomes the current `sha256sum MANIFEST.md` output, so reviewers should re-hash on receipt and confirm with the post-edit SHA pinned in `docs/audit/wave324-final-verify.md`) |
-| `cover_letter.md` | 60394 | `acc18453978a5b0b1e3fc0548efedf21b3bb0e45ba2e1d4f60d9a8a5b4a18c7f` | Editor-facing cover letter (TNNLS — 17 `[USER TO FILL: ...]` placeholders enumerated in `FILL_GUIDE.md`; 31 grep hits → 17 distinct fields = 1 authors + 1 editor + 5 reviewers × {affiliation, email} + 3 corresponding-author fields) |
+| `MANIFEST.md` | 13131 | `b87c59b91913a0c258f87f695e7f7bf5569ee3b96c0cafdb181251cec6d8ba8f` | Package manifest with SHA-256 + size + role (this file — self-referencing SHA at freeze; **NOTE:** the displayed SHA is the hash of the bytes BEFORE this very SHA-row was added; after this edit the file SHA becomes the current `sha256sum MANIFEST.md` output, so reviewers should re-hash on receipt and confirm with the post-edit SHA pinned in `docs/audit/wave343-manifest-rehash.md`) |
+| `cover_letter.md` | 65442 | `394e4ca58b44964e3e99195fbf1efea439e75cfa248249cf70c5e402e63e228f` | Editor-facing cover letter (TNNLS — 17 `[USER TO FILL: ...]` placeholders enumerated in `FILL_GUIDE.md`; 31 grep hits → 17 distinct fields = 1 authors + 1 editor + 5 reviewers × {affiliation, email} + 3 corresponding-author fields) |
 | `FILL_GUIDE.md` | 11901 | `9a759125de0c8cd58c6e06d072259ceddeffbbc26317d9340c900325306cde41` | 17-field fill guide for `cover_letter.md`; one section per placeholder with category, section, line, what_needed, example_or_hint, hint |
 | `highlights.md` | 1913 | `96406b3851f3a099b6346247d40ac35b492213d703819421c6f16f629f4279dd` | 3 TNNLS editor-facing highlights (each ≤ 85 chars) |
 | `tables.md` | 7435 | `b7aeda919b495a9ea2d0c4c3f62609dfe9acc8fdb48b62888f3022b066fb8ce2` | 5 TNNLS paper tables (R1–R6 headline, 4-arm H2H, statistical methods, wall-clock, reproducibility gates) |
 | `figures.md` | 23307 | `030f61a70031dbd6a6cf8dd7487035d21c3375002cad2968a6d8af71636a2d27` | ASCII architecture diagrams (FlowA hexagonal layers, re-inference dataflow, 3-tier experiment hierarchy, 4-arm H2H schematic) |
 | `data_availability.md` | 7072 | `8553877d704a702172ac41d44d4215515002ca576d3994b6b52b94d6425b66b4` | Data availability statement + Zenodo DOI references + per-record CSV provenance |
 | `submission_checklist.md` | 7368 | `208a21e0b28938a89cef135be70215616222ff9162825b6e36254f1afe9ce6e3` | TNNLS editorial requirements checklist (D.4 30/30 PASS, mkdocs 0 warnings, claims 0 drift, pytest 5155/196) |
-| `supplementary/README.md` | 11283 | `66986c3bddb015d41d491059dbc4c526b58592d83afdaace43a7f7527afc47c3` | Supplementary bundle index: per-cell SOURCE.md provenance (rows A), cross-doc audit trail (rows B), verification outputs (rows C), source code anchors (rows D), three self-contained Lemma proofs (rows E), Theorem 1 theory package (rows F) |
-| `../docs/drafts/paper-A-final.pdf` | 291752 | `37842cc02dd6c5ed767359714f3765d0259df0b51932276e5d89b463dcc320e1` | **READY TO SUBMIT** TNNLS-formatted manuscript PDF (14 pages, IEEEtran-journal double-column, Wave 331 DeepSeek 5-day RESOLUTION pass; Day 1 clean rewrite + Day 2 delete JMAA residue + Day 3 Path A full proofs + Day 4 integrate 7 innovations + Day 5 data fix; 0 fatal errors) |
-| `../docs/drafts/paper-A-final.tex` | 40656 | `fe3d6dd4a0851155c56160a8fd1a9bbe7456f54f7f238db1f0db961db1c19db9` | IEEEtran-journal LaTeX source for the manuscript (14-page output; canonical markdown source `paper-A-final.md` sha256 `e0c83200501028c50de8ad3b7af5911381288119f00414584ebec5c11c9ea6b2`) |
-| `../docs/drafts/paper-flat-ieeetran.pdf` | 381510 | `255befcaa98f759cdf70f609334ca4700c5e062878dd1f8fdf8e4bb4e450f63a` | **SUPERSEDED by paper-A-final.pdf** Wave 324 PRE-RESOLUTION manuscript PDF (10 pages); archived for historical reference; do NOT upload |
+| `supplementary/README.md` | 13948 | `aa555ce2870edad4b4569add5fc96668010a855789023da6c31a7cbc5515b612` | Supplementary bundle index: per-cell SOURCE.md provenance (rows A), cross-doc audit trail (rows B), verification outputs (rows C), source code anchors (rows D), three self-contained Lemma proofs (rows E), Theorem 1 theory package (rows F), Wave 344 review-reproducibility bundle (rows G) |
+| `../docs/drafts/paper-A-final.md` | 121271 | `e4664f0315bdaece8964104e547442a52958503dd2400eb27beb916c6ffb20aa` | Canonical Wave 343 manuscript markdown source (Wave 343 paper bibliography fix added BGV12 + Villani 2003 references + RMSPreserving disposition note; replaces Wave 331 PRE-FIX source) |
+| `../docs/drafts/paper-A-final.pdf` | 305270 | `426cb5d3b60987ab3cf6d26068ed8f67b5963c8c2084599bed0cae3d453a16da` | **READY TO SUBMIT** TNNLS-formatted manuscript PDF (14 pages, IEEEtran-journal double-column, Wave 343 bibliography fix post-Wave 331 DeepSeek 5-day RESOLUTION pass; 0 fatal errors) |
+| `../docs/drafts/paper-A-final.tex` | 110195 | `2d4785a3920dacfdbf89e8237a83f1bc7b27e833b6bdf62d25cc1a31a721a0fe` | IEEEtran-journal LaTeX source for the manuscript (14-page output; canonical markdown source `paper-A-final.md` sha256 `e4664f0315bdaece8964104e547442a52958503dd2400eb27beb916c6ffb20aa`) |
+| `../docs/drafts/paper-flat-ieeetran.pdf` | 381510 | `d9133f5f9b8bbc9d056f1cc127ed307a820a208df07913acd682a8290d75877a` | **SUPERSEDED by paper-A-final.pdf** Wave 324 PRE-RESOLUTION manuscript PDF (10 pages); archived for historical reference; do NOT upload |
+| `../docs/drafts/paper-flat-ieeetran.tex` | 66293 | `c9f4a7d489289d8d15548e0c6af1851791444297ffa3e0475a075c8f49c86a05` | **SUPERSEDED by paper-A-final.tex** Wave 324 PRE-RESOLUTION LaTeX source for the 10-page PRE-RESOLUTION manuscript; archived for historical reference; do NOT upload |
+| `supplementary_bundle.zip` | 154249954 | `d1b5ba24a55a9336e7b65cee7bea652482943932181ddfdd6a8d6a9e5c758f3e` | **Wave 344 single-archive review-reproducibility bundle** (148 MB compressed, 159 MB uncompressed, 40 entries): headline artifacts (R1/R2/R5b/R5c/R6 + K7), headline-evidence SOURCE.md provenance (10 per-cell rows), and the 3 most-consequential Wave 339 + Wave 343 audit docs; reconstructed from `paper-data/` equivalents with sidecar `SHA256SUMS` for reviewer re-verification (sha256sum -c SHA256SUMS) |
 | `../docs/drafts/paper-flat-flattened.md` | — | — | **ARCHIVED to paper-flat-flattened.ARCHIVED-2026-09-23.md** (Wave 331; the legacy 1602-line paper-flat-flattened.md contains the version-control log that the DeepSeek 5-day RESOLUTION pass replaced with paper-A-final.md) |
 
 > SHA-256 rehash command (run after every edit to the .md files):
@@ -48,14 +51,16 @@ cd tnnls_submission && sha256sum -- *.md supplementary/README.md
 
 ## Cross-references (in-repo)
 
-- **`docs/drafts/paper-A-final.{tex,pdf}`** — 14-page IEEEtran-typeset manuscript (Wave 331 DeepSeek 5-day RESOLUTION pass — the uploadable PDF for Step 3 of ScholarOne)
-- **`docs/drafts/paper-A-final.aux` / `.log` / `.out`** — typeset diagnostic logs (compile-clean post Wave 331)
+- **`docs/drafts/paper-A-final.{md,tex,pdf}`** — 14-page IEEEtran-typeset manuscript (Wave 343 paper bibliography fix on top of Wave 331 DeepSeek 5-day RESOLUTION pass — added BGV12 + Villani 2003 references + RMSPreserving disposition; the uploadable PDF for Step 3 of ScholarOne)
+- **`docs/drafts/paper-A-final.aux` / `.log` / `.out`** — typeset diagnostic logs (compile-clean post Wave 343)
 - **`docs/drafts/paper-flat-flattened.ARCHIVED-2026-09-23.md`** — ARCHIVED legacy 1602-line paper (DO NOT MODIFY); the version-control-log form of the paper that the DeepSeek 5-day RESOLUTION pass replaced with `paper-A-final.md`
 - **`docs/drafts/abstract-final.md`** — abstract body and keyword list
-- **`docs/drafts/paper-A-final.md`** — canonical Wave 331 markdown source (replaces paper-flat-flattened.md)
+- **`docs/drafts/paper-A-final.md`** — canonical Wave 343 markdown source (replaces paper-flat-flattened.md; Wave 343 fixed BGV12 reference + Villani 2003 + RMSPreserving disposition)
 - **`docs/cover-letter-tnnls.md`** — canonical cover letter (the snapshot in `tnnls_submission/cover_letter.md` is frozen at Wave 322; identical content)
 - **`docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md`** — three self-contained Lemma proofs (Lemma 1 Path A Wave 311; Lemmas 2/3 Path A Wave 322) inserted in paper §6 Framework Properties
 - **`docs/theory/theorem-1-self-contained.md` + `theorem1_rate_bound.md` + `operating-regime.md` + `DEVIATIONS.md`** — Theorem 1 theory package (mathematical foundation cross-referenced by §3 cover letter Insight)
+- **`docs/audit/wave343-paper-fixes.md`** — Wave 343 paper bibliography fix audit (BGV12 + Villani 2003 references added; RMSPreserving disposition documented and noted as out-of-scope for this submission)
+- **`docs/audit/wave344-supplementary-bundle.md`** — Wave 344 single-archive review-reproducibility bundle (148 MB zip + sidecar `SHA256SUMS`)
 - **`docs/audit/wave331-data-fix.md`** — Wave 331 Day 5 audit (6 data inconsistencies fixed: R3, R5c, K1, R1, K7, R5a)
 - **`docs/audit/wave324-d5-review.md`** — Final D+5 review (9 CRITICAL fixes applied; READY_TO_SUBMIT verdict)
 - **`docs/audit/wave323-typeset-execution.md`** — IEEEtran-journal typeset execution
@@ -69,6 +74,7 @@ cd tnnls_submission && sha256sum -- *.md supplementary/README.md
 - **`docs/audit/wave297-final.md` + `wave297-p1..p8`** — Restored paper body (intro, framework, empirical, limitations, README)
 - **`tnnls_submission/FILL_GUIDE.md`** — fill-guide for the 17 USER placeholders in `cover_letter.md`
 - **`tnnls_submission/supplementary/README.md`** — supplementary bundle index (per-cell SOURCE.md, audit trail, verification outputs)
+- **`tnnls_submission/supplementary_bundle.zip`** — Wave 344 single-archive review-reproducibility bundle (148 MB; SHA-256 above; sidecar `supplementary_bundle/SHA256SUMS`)
 
 ---
 
@@ -76,7 +82,7 @@ cd tnnls_submission && sha256sum -- *.md supplementary/README.md
 
 1. **Article Type:** Regular Paper (TNNLS treats this as a regular research article, not a survey/correspondence)
 2. **Title / Abstract / Keywords:** verbatim from manuscript PDF page 1 (title + IEEE keywords list)
-3. **Manuscript:** upload **`docs/drafts/paper-A-final.pdf`** (14 pages, IEEEtran-typeset, Wave 331 DeepSeek 5-day RESOLUTION pass)
+3. **Manuscript:** upload **`docs/drafts/paper-A-final.pdf`** (14 pages, IEEEtran-typeset, Wave 343 bibliography fix on top of Wave 331 DeepSeek 5-day RESOLUTION pass)
 4. **Supplementary:** upload **`tnnls_submission/supplementary/README.md`** (optionally as PDF; see `README.md` §2 Step 4 for pandoc conversion)
 5. **Cover Letter:** upload **`tnnls_submission/cover_letter.md`** after filling all 17 USER placeholders (see `FILL_GUIDE.md`)
 6. **Highlights:** paste 3 bullets from **`tnnls_submission/highlights.md`** (each ≤ 85 chars)

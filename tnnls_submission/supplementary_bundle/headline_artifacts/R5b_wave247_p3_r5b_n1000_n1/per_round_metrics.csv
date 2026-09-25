@@ -1,0 +1,5 @@
+scheduler,round_index,n_cap,num_steps,evidence_ratio
+CosineAnnealScheduler,0,1.0,50,
+CodimensionSheetScheduler,0,1.0,50,1.0
+EvidenceDrivenScheduler,0,1.0,50,
+FreeTrajScheduler,0,1.0,50,

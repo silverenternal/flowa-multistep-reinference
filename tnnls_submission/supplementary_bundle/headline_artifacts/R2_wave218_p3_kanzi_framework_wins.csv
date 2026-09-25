@@ -1,0 +1,2 @@
+cell,metric,n_records,pairing,mean_diff,sd_diff,se_diff,ci_95_low,ci_95_high,t_statistic,df,p_raw,p_bonferroni_alpha,cohens_d_z,bonf_sig,verdict,framework_source,baseline_source
+R2_kanzi_inv_proj_rmsd_A,reconstruction_rmsd_Å,1000,paired,-0.018964,0.191554,0.006057,-0.030851,-0.007078,-3.1307,999,1.7943e-03,7.1429e-03,-0.0990,True,framework_wins,verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/kanzi_n1000_framework_paper_metrics.json,verification_outputs/wave218-p3-kanzi-baseline-n1000/kanzi_n1000_paper_metrics.json

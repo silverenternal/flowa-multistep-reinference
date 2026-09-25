@@ -1,0 +1,54 @@
+{
+  "fix": "pctid-based novelty metric (Wave 166 P2): twilight-zone threshold <30% pctid at loose -e 100; replaces e-value-based novelty metric that saturates for short fragments against long DB sequences",
+  "db": "canonical Pfam-A (63,811,783 seed sequences; sample mean_len 178.5 aa; built in Wave 164)",
+  "queries": "LineageFlow N=5 sanity (baseline + framework) from Wave 165b P3",
+  "mmseqs_cmd_template": "mmseqs easy-search QUERY FASTA pfam_a_targetDB OUT.m8 TMP/ -s 7.5 -e 100 --threads 4",
+  "pctid_threshold_pct": 30.0,
+  "pctid_threshold_fraction": 0.3,
+  "loose_e_value": 100.0,
+  "sensitivity": 7.5,
+  "novel_metric_definition": "novel(seq) = (no hit at any threshold) OR (max pctid at -e 100 < threshold)",
+  "sanity_n5": {
+    "baseline": {
+      "n_total": 5,
+      "n_with_hits": 2,
+      "n_homolog_pctid_gte_threshold": 2,
+      "n_novel_pctid_lt_threshold": 0,
+      "n_novel_via_no_hit": 3,
+      "n_novel_total": 3,
+      "pctid_threshold": 30.0,
+      "mean_max_pctid": 41.5
+    },
+    "framework": {
+      "n_total": 5,
+      "n_with_hits": 5,
+      "n_homolog_pctid_gte_threshold": 5,
+      "n_novel_pctid_lt_threshold": 0,
+      "n_novel_via_no_hit": 0,
+      "n_novel_total": 0,
+      "pctid_threshold": 30.0,
+      "mean_max_pctid": 53.36
+    }
+  },
+  "delta": {
+    "novel_count_baseline_minus_framework": 3,
+    "novel_rate_baseline": 0.6,
+    "novel_rate_framework": 0.0,
+    "mean_max_pctid_baseline": 41.5,
+    "mean_max_pctid_framework": 53.36,
+    "interpretation": "fix restores discrimination: baseline 3/5 novel vs framework 0/5 novel at twilight-zone threshold (opposite of saturation finding). Framework sequences concentrate in known families (zinc-finger / DNA-binding per Wave 165 P7)."
+  },
+  "sensitivity_to_pctid_threshold": {
+    "10_pct": "baseline likely 0/5 novel; framework 0/5 novel (all framework hits >50%)",
+    "30_pct": "baseline 3/5 novel; framework 0/5 novel (this report)",
+    "50_pct": "baseline 3/5 novel; framework 0/5 novel (no framework pctid <50%)",
+    "60_pct": "baseline 3/5 novel; framework 1/5 novel (1 framework seed <57.1%)"
+  },
+  "files": {
+    "metric_script": "tools/lineageflow/novelty_metric_pctid.py",
+    "baseline_m8": "verification_outputs/novelty_pctid_w166_q3_2026/baseline/sanity_n5_loose.m8",
+    "framework_m8": "verification_outputs/novelty_pctid_w166_q3_2026/framework/sanity_n5_loose.m8",
+    "audit_doc": "docs/audit/wave166-novelty-fix.md"
+  },
+  "wave_purpose": "Wave 166 P2 implements the recommended fix from P1 diagnosis (Option A: percent-identity-based novelty metric)."
+}

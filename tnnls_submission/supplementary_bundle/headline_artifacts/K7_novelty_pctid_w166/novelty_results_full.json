@@ -1,0 +1,140 @@
+{
+  "metadata": {
+    "wave": "166 P3",
+    "date": "2026-09-16",
+    "sweep_config": {
+      "mmseqs_version": "c77b5afa910bec52c784566e378cb6ebd3d0d453",
+      "sensitivity": 7.5,
+      "e_value": 100.0,
+      "threads_per_arm": 16,
+      "target_db": "pfam_canonical canonical seed (W164 build, 63,811,783 sequences)",
+      "query_arm": "LineageFlow N=1000 baseline/framework (W158 FASTAs)"
+    },
+    "metric": "percent-identity-based novelty at twilight-zone threshold (Rost 1999)"
+  },
+  "thresholds_tested": [
+    20.0,
+    30.0,
+    50.0
+  ],
+  "n_total_full": 1000,
+  "n1000_full": {
+    "threshold_20": {
+      "baseline": {
+        "m8_path": "/tmp/w166/sweep_n1000_e100/baseline/full.m8",
+        "pctid_threshold": 20.0,
+        "n_total": 1000,
+        "n_with_hits": 538,
+        "n_homolog_pctid_gte_threshold": 538,
+        "n_novel_pctid_lt_threshold": 0,
+        "n_novel_via_no_hit": 462,
+        "n_novel_total": 462,
+        "novel_rate_pctid": 0.462,
+        "mean_max_pctid": 48.71710037174721
+      },
+      "framework": {
+        "m8_path": "/tmp/w166/sweep_n1000_e100/framework/full.m8",
+        "pctid_threshold": 20.0,
+        "n_total": 1000,
+        "n_with_hits": 963,
+        "n_homolog_pctid_gte_threshold": 963,
+        "n_novel_pctid_lt_threshold": 0,
+        "n_novel_via_no_hit": 37,
+        "n_novel_total": 37,
+        "novel_rate_pctid": 0.037,
+        "mean_max_pctid": 50.861370716510905
+      },
+      "delta_novel_count": 425,
+      "delta_novel_pct": 0.425,
+      "baseline_mean_max_pctid": 48.71710037174721,
+      "framework_mean_max_pctid": 50.861370716510905
+    },
+    "threshold_30": {
+      "baseline": {
+        "m8_path": "/tmp/w166/sweep_n1000_e100/baseline/full.m8",
+        "pctid_threshold": 30.0,
+        "n_total": 1000,
+        "n_with_hits": 538,
+        "n_homolog_pctid_gte_threshold": 534,
+        "n_novel_pctid_lt_threshold": 4,
+        "n_novel_via_no_hit": 462,
+        "n_novel_total": 466,
+        "novel_rate_pctid": 0.466,
+        "mean_max_pctid": 48.71710037174721
+      },
+      "framework": {
+        "m8_path": "/tmp/w166/sweep_n1000_e100/framework/full.m8",
+        "pctid_threshold": 30.0,
+        "n_total": 1000,
+        "n_with_hits": 963,
+        "n_homolog_pctid_gte_threshold": 963,
+        "n_novel_pctid_lt_threshold": 0,
+        "n_novel_via_no_hit": 37,
+        "n_novel_total": 37,
+        "novel_rate_pctid": 0.037,
+        "mean_max_pctid": 50.861370716510905
+      },
+      "delta_novel_count": 429,
+      "delta_novel_pct": 0.429,
+      "baseline_mean_max_pctid": 48.71710037174721,
+      "framework_mean_max_pctid": 50.861370716510905
+    },
+    "threshold_50": {
+      "baseline": {
+        "m8_path": "/tmp/w166/sweep_n1000_e100/baseline/full.m8",
+        "pctid_threshold": 50.0,
+        "n_total": 1000,
+        "n_with_hits": 538,
+        "n_homolog_pctid_gte_threshold": 249,
+        "n_novel_pctid_lt_threshold": 289,
+        "n_novel_via_no_hit": 462,
+        "n_novel_total": 751,
+        "novel_rate_pctid": 0.751,
+        "mean_max_pctid": 48.71710037174721
+      },
+      "framework": {
+        "m8_path": "/tmp/w166/sweep_n1000_e100/framework/full.m8",
+        "pctid_threshold": 50.0,
+        "n_total": 1000,
+        "n_with_hits": 963,
+        "n_homolog_pctid_gte_threshold": 483,
+        "n_novel_pctid_lt_threshold": 480,
+        "n_novel_via_no_hit": 37,
+        "n_novel_total": 517,
+        "novel_rate_pctid": 0.517,
+        "mean_max_pctid": 50.861370716510905
+      },
+      "delta_novel_count": 234,
+      "delta_novel_pct": 0.234,
+      "baseline_mean_max_pctid": 48.71710037174721,
+      "framework_mean_max_pctid": 50.861370716510905
+    }
+  },
+  "sanity_n5_p2": {
+    "baseline": {
+      "m8_path": "/tmp/w166/baseline_n5_e100.m8",
+      "pctid_threshold": 30.0,
+      "n_total": 5,
+      "n_with_hits": 2,
+      "n_homolog_pctid_gte_threshold": 2,
+      "n_novel_pctid_lt_threshold": 0,
+      "n_novel_via_no_hit": 3,
+      "n_novel_total": 3,
+      "novel_rate_pctid": 0.6,
+      "mean_max_pctid": 41.5
+    },
+    "framework": {
+      "m8_path": "/tmp/w166/framework_n5_e100.m8",
+      "pctid_threshold": 30.0,
+      "n_total": 5,
+      "n_with_hits": 5,
+      "n_homolog_pctid_gte_threshold": 5,
+      "n_novel_pctid_lt_threshold": 0,
+      "n_novel_via_no_hit": 0,
+      "n_novel_total": 0,
+      "novel_rate_pctid": 0.0,
+      "mean_max_pctid": 53.36
+    },
+    "delta_novel_count": 3
+  }
+}
