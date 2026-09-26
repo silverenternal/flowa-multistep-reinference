@@ -236,3 +236,24 @@ The existing checklist above marks 29 [x] PASS checkboxes; the ADDITIVE summary 
 The Wave 356 P3 ADDITIVE summary introduced a finer-grained 18-criterion framing (14 task-listed + 4 honest-disclosure PENDING). Wave 357 closed PENDING #1 via the ruff W292 fix, reducing the task-listed PENDING count from 4 to 3 (and the total PENDING count from 8 to 7). Wave 357 also documented camera-ready scope for PENDING #4 (Lean 4 partial closure), #5 (R3 FlowMol3 RDKit blocker), #6 (K4 Kanzi saturation), #7 (R6 3-seed GPU sweep — §7.2 R6 row preserved verbatim), and #8 (K5 FreqFlow + K6 Wan2.2 camera-ready disclosure) — these 5 items remain PENDING but are now formally scoped for the camera-ready deferred list. PENDING #2 (USER_TO_FILL) and #3 (MANIFEST.md SHA-256) remain PENDING as user-gated / downstream-blocked items. None of the 29 existing [x] PASS checkboxes above were toggled by Wave 358 P4; the new ADDITIVE summary preserves the Wave 356 P3 framing and adds Wave 357 closure state.
 
 *Wave 358 P4 post-Wave-357 re-audit summary ADDITIVE section authored 2026-09-25; cross-references [`docs/audit/wave358-submission-checklist-reaudit.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave358-submission-checklist-reaudit.md) (audit doc). NO-PUSH + ADDITIVE only; no existing checkbox toggled; ruff W292 PENDING #1 promoted to PASS via Wave 357 P1 commit `3412698`.*
+
+---
+
+## Wave 364 G38 page-count recheck annotation (Wave 364 G38, 2026-09-27, ADDITIVE)
+
+**Authored:** Wave 364 G38 page-count recheck (gap G38 closure; audit doc at [`docs/audit/wave364-g38.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave364-g38.md)).
+**Scope:** ADDITIVE — this section does NOT modify any of the 29 existing [x] PASS checkboxes above or any of the Wave 356 P3 / Wave 358 P4 ADDITIVE summary tables; per Wave 268 strict-clean rule + Wave 356 P3 hard-guardrails (NO-PUSH + ADDITIVE only) the existing prose and tables are preserved unchanged. This section adds a single explicit page-count ≤ 14 annotation tied to the Wave 356 P1 PDF rebuild SHA-256 and byte-size, per gap G38.
+**Page count verification (`pdfinfo docs/drafts/paper-A-final.pdf`):** `Pages: 14` (single-column IEEEtran-journal letter, 612 × 792 pts) — **14 ≤ 14 (TNNLS main-track limit OK; no trim required, no largest ADDITIVE block identified for supplementary move)**.
+**Annotation (per gap G38 spec):** Pages: 14 ≤ 14 (verified by Wave 356 P1 PDF rebuild at sha256 `66279af5...d161f`; 299741 bytes; full SHA-256 `66279af56ab12b0c21fddf3a3d21f7f4cab36d0fc806416a03c8c263c9dd161f` per MANIFEST.md row 33 + `docs/audit/wave356-pdf-rebuild.md` line 18).
+
+### Cross-references (Wave 364 G38)
+
+- [`docs/audit/wave364-g38.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave364-g38.md) — Wave 364 G38 gap-closure audit doc (observed facts + interpretation + ADDITIVE-only verified by git diff)
+- [`docs/audit/wave356-pdf-rebuild.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave356-pdf-rebuild.md) — Wave 356 P1 PDF rebuild audit (3 LaTeX compile-bug fixes + 14-page compile-clean + byte-stable at 299741 bytes)
+- [`tnnls_submission/MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md) row 33 — `paper-A-final.pdf | 299741 | 66279af5...d161f | READY TO SUBMIT (rebuilt Wave 356 P1)`
+
+### Status rationale (Wave 364 G38 ADDITIVE)
+
+Per Wave 268 strict-clean rule + Wave 356 P3 hard-guardrails (NO-PUSH + ADDITIVE only), the gap-G38 closure is realised as a single ADDITIVE annotation paragraph + cross-reference table at the end of this file. No existing checkbox is toggled, no existing summary table is modified, and no destructive prose edit is performed. The annotation anchors the page-count ≤ 14 invariant to the byte-stable Wave 356 P1 PDF rebuild (299741 bytes, SHA-256 `66279af5...d161f`) so a reviewer can independently re-verify via `pdfinfo docs/drafts/paper-A-final.pdf` and `sha256sum docs/drafts/paper-A-final.pdf`. Because the page count is exactly 14 (not > 14), no largest ADDITIVE block was identified for supplementary move; the task's "do NOT actually trim, only document the finding" branch is satisfied trivially (no finding to document).
+
+*Wave 364 G38 page-count recheck annotation ADDITIVE section authored 2026-09-27; cross-references [`docs/audit/wave364-g38.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave364-g38.md) (audit doc). NO-PUSH + ADDITIVE only; no existing checkbox toggled; no existing summary table modified; page count = 14 verified by `pdfinfo` against Wave 356 P1 byte-stable rebuild.*
