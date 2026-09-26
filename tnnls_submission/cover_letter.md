@@ -53,6 +53,8 @@ affiliations, and corresponding-author email]`
 
 **Date:** 2026-09-21
 
+**Last internal draft refresh (post-Wave-358 P4 totals):** 2026-09-25 (last updated post-Wave-358 P4 totals; final submission date will be set at ScholarOne upload).
+
 **Suggested Associate Editor:** `[USER TO FILL: Suggested Associate
 Editor — TNNLS AE specialising in learning systems / generative
 models / diffusion / flow matching]` (see §9 below)
