@@ -685,6 +685,62 @@ The framework maintains an *append-only reproducibility ledger* of self-containe
 
 The framework's lazy-memoized cache is the single dormant/active constructor that threads the four paper-quantity inputs ($A_g$ sheet evidence, $B_g$ root-cell packing, $C_g$ per-cell coefficient, $e_\rho$ exterior gap) through the engine without polluting call sites. When `profile_residual_fn is None` (the default), the cache is a dormant carrier: every property returns `None` and every `get(site_name)` returns the site-specific sentinel. When `profile_residual_fn` is supplied, the cache lazily memoizes each quantity on first read; two reads after the first evaluation return the same float object (byte-stable), enabling D.4 regression reproduction across pytest versions. The 16-site taxonomy is keyed by `site_name` via the closed-set `PAPER_QUANTITIES_SITE_NAMES` constant, and per-site return shapes are heterogeneous (`e_rho` / `cell_C` / `(A, B, C, e_rho)` 4-tuple / `(sheet_A, cell_C)` 2-tuple / `PaperQuantitiesSnapshot` / `profile_residual_fn` callable). The `consume(site_name)` activation log is idempotent, so repeated reads at the same site are byte-stable and the stats endpoint reports per-site hit/miss counts. The test suite verifies site-aware dispatch returns the expected per-site return shape across all 16 sites. Verification evidence: D.4 30/30 PASS preserved; ruff 0; mkdocs 0 warnings; vendored NOT touched; 5-gate PASS at the v3.0 release tag.
 
+### 8.10 Reproducibility Manifest (Wave 366 ADDITIVE)
+
+This subsection consolidates the per-cell reproducibility recipes + verifier harness + D.4 regression command into a single reviewer-facing manifest. Every headline cell in §7 has a single-source-of-truth recipe file under `paper-data/<cell>/` and a per-cell audit doc under `docs/audit/`; the three verifier scripts under `reproduce/` chain the recipes into a single bash invocation that a reviewer can run on a fresh clone to verify byte-stable evidence chains on all 11 cells. The 11 cells are: R1 (LineageFlow HMMER retro-validation), R2 (Kanzi RMSD), R3 (FlowMol3 fg_dev), R4_legacy (R5_legacy 2D Eight Gaussians ablation), R5a (2D Two Moons), R5b (CIFAR-10 RF), R5c (MNIST FM regime curve), R6 (LineageFlow k6 foldability), K1 (FlowMol3 RDKit-validity), K4 + K5 (LineageFlow HMMER length-bias + framework-vs-baseline delta), and K7 (LineageFlow novelty).
+
+**Per-cell recipe table.** Each cell's recipe file path + SHA-256 + audit doc path:
+
+| # | Cell | Recipe file path | Recipe SHA-256 | Audit doc |
+|---|---|---|---|---|
+| 1 | **R1** (LineageFlow HMMER N=1000 paired) | `paper-data/K4_k5_lineageflow_hmmer/R1_REPRODUCIBILITY_RECIPE.md` | `98a869c2a4af00eaf5b2fd89c02f66eb80974728322e425079346c0675a57088` | [`docs/audit/wave363-r1-recipe.md`](../audit/wave363-r1-recipe.md) |
+| 2 | **R2** (Kanzi RMSD N=1000 paired-t) | `paper-data/R2_kanzi_rmsd/REPRODUCIBILITY_RECIPE.md` | `be3a4ff26fb1d436a5d29dcbb0c8e62a8c826ff9b8ed4c177e6c808310146a27` | [`docs/audit/wave363-r2-recipe.md`](../audit/wave363-r2-recipe.md) |
+| 3 | **R3** (FlowMol3 fg_dev 7/7 direction) | `paper-data/R3_flowmol3_fgdev/R3_REPRODUCIBILITY_RECIPE.md` | `0c91f4d966d4707e10e28c4198ace3b5b077e9646ead1c04408765444a6e8ba5` | [`docs/audit/wave363-r3-recipe.md`](../audit/wave363-r3-recipe.md) |
+| 4 | **R5a** (2D Two Moons W₂ n=10 + DL meta) | `paper-data/R5a_2d_two_moons/REPRODUCIBILITY_RECIPE.md` | `fb1d48c90e54ffa9957710757098e734b4cfd56bcfccb234323291410a266496` | [`docs/audit/wave363-r5a-recipe.md`](../audit/wave363-r5a-recipe.md) |
+| 5 | **R5b** (CIFAR-10 RF 4-scheduler × 3-n_rounds grid) | `paper-data/R5b_cifar10_rf/REPRODUCIBILITY_RECIPE.md` | `dfb6e489f8a576284140ca55d5e6aabe25c5830c69f7eea1fb5b49ea6b8395fe` | [`docs/audit/wave363-r5b-recipe.md`](../audit/wave363-r5b-recipe.md) |
+| 6 | **R5c** (MNIST FM regime curve 3 ckpts) | `paper-data/R5c_mnist_fm/REPRODUCIBILITY_RECIPE.md` | `febf8fc4022eab67f5de59d8108c3c3f2430a8872b64fe1dcd79a77bfbb91039` | [`docs/audit/wave363-r5c-recipe.md`](../audit/wave363-r5c-recipe.md) |
+| 7 | **K1** (FlowMol3 RDKit-validity 3 seeds) | `paper-data/K1_kanzi_algorithm/REPRODUCIBILITY_RECIPE.md` | `963552455bc45e3cc1374f5c18a644c599ba625702bf56be2ccf8fc47098e3ce` | [`docs/audit/wave363-k1-recipe.md`](../audit/wave363-k1-recipe.md) |
+| 8 | **K4 + K5** (LineageFlow HMMER length-bias + paired delta) | `paper-data/K4_k5_lineageflow_hmmer/REPRODUCIBILITY_RECIPE.md` | `50a1a8a512e7df8df1926fe50081fa4b6ca1b5d26ce671fe783cfa4ed18d932b` | [`docs/audit/wave363-k4-recipe.md`](../audit/wave363-k4-recipe.md) |
+| 9 | **K7** (LineageFlow novelty pctid<30%) | `paper-data/K7_lineageflow_novelty/REPRODUCIBILITY_RECIPE.md` | `cdb03fdf60a00f2bc02f8ca75d1e804ecae04e89459acbf16ae0e860d1f9eb82` | [`docs/audit/wave363-k7-recipe.md`](../audit/wave363-k7-recipe.md) |
+| 10 | **R6** (LineageFlow k6 foldability tier-aware) | `paper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md` | `a5ce94a0cd3645a06c1ee9104c158eff04838b8e9408ce1cafd5d53565758645` | [`docs/audit/wave362-r6-recipe.md`](../audit/wave362-r6-recipe.md) |
+| 11 | **R4_legacy** (R5_legacy 2D Eight Gaussians W₂) | `paper-data/R5_legacy_2d_eight_gaussians/SOURCE.md` | `2b665b83e9b5955dffa72436566d1456c4155cf72a246774b96188555f6a1859` | [`docs/audit/wave363-all-cell-recipes.md`](../audit/wave363-all-cell-recipes.md) (consolidation reference) |
+
+The 11 recipe files total $\sim 2{,}511$ lines of reviewer-facing reproducibility content; each recipe is byte-stable at the SHA-256 above and verified by the master verifier `reproduce/09_verify_all_cell_recipes.sh`. The full per-cell status table (status label + headline metric + master-verifier PASS/FAIL) is at [`docs/audit/wave363-all-cell-recipes.md`](../audit/wave363-all-cell-recipes.md) §2.
+
+**Verifier harness.** Three bash scripts under `reproduce/` chain the recipes into a single-command reviewer invocation:
+
+```bash
+# Single-cell R6 verifier (Wave 362 P2 deliverable; SHA-256 ba98ec60666d527ed9ceee9f707c109b04d93aa32749bff5186ef31863884d3e)
+bash reproduce/08_verify_R6_recipe.sh
+
+# Master verifier: all 11 cells (Wave 363 P2 deliverable; SHA-256 97f6227e565fa03c06433d0a7de98ad0abdc61217fee9a3c67c4846706c4d25d)
+# Exits 0 with "OK: All 11/11 paper cell recipes verified" on a fresh clone (~5 sec wall time, CPU-only)
+bash reproduce/09_verify_all_cell_recipes.sh
+
+# Canonical headline-evidence verifier (existing; SHA-256 2b0356f49b8dd17ffc6718f35bb0db0bc6bd5cb90bc162f49dbda2b78d2c65d6)
+bash reproduce/verify_all_headlines.sh
+```
+
+The master verifier (`09_verify_all_cell_recipes.sh`, 539 lines) is the canonical entry point: it iterates the 11 cells in row order, verifies the SHA-256 chain on each recipe file, checks the byte-stable evidence files under `paper-data/<cell>/`, and emits the aggregate verdict. A reviewer running the master verifier on a fresh clone + Python 3.11 + bash 5.x + GNU sha256sum will see the same `OK: All 11/11 paper cell recipes verified` output.
+
+**D.4 byte-stable regression.** The 30/30 byte-stable regression suite is the framework's reproducibility contract — every regression vector is a byte-stable output from a specific (cell, scheduler, adapter, seed) tuple:
+
+```bash
+# D.4 byte-stable regression: must report 30 passed
+python3 -m pytest tests/test_d4_regression_vectors.py -q
+```
+
+D.4 is the single fixpoint that makes byte-stable reproducibility possible across the headline results (§8.2); it is enforced by a CI hook on the repository and any D.4 failure blocks merge.
+
+**Honest disclosure.** Four reviewer-facing facts about this manifest:
+
+1. **paper.pdf NOT regenerated post-Wave 356 P1.** The paper source `docs/drafts/paper-A-final.md` is ADDITIVE-ONLY since the Wave 356 P1 final-review pass; this §8.10 ADDITIVE subsection is the latest in a chain of wave-by-wave ADDITIVE footnote / polynomial additions (Wave 356 P2 + Wave 357 P5 + Wave 357 P6 + Wave 358 + Wave 359 + Wave 360 + Wave 361 + Wave 363 P3 + Wave 364 P10 + Wave 365 P1-P2 + Wave 366 P2). The compiled `paper.pdf` reflects the §7 / §8 / §9 / §10 prose as of Wave 356 P1; regenerating the PDF is held until the user-gated next release to preserve the SHIP-IT-or-ADDITIVE-only discipline.
+2. **17 USER_TO_FILL placeholders preserved in `cover_letter.md`.** The TNNLS cover letter contains 17 USER_TO_FILL placeholders (per Wave 365 P1 honest-disclosure consolidation) that are deliberately preserved until the user fills in author-specific institutional information; no placeholder is auto-replaced by the agent.
+3. **Vendored 9 upstream repos byte-identical per Wave 260 directive.** The 9 vendored upstream repositories under `data/` (FlowMol3, LineageFlow, Kanzi, HiDream-I1, GraphBFN, Lumina-Image-2.0, ProtBFN-AbBFN, Wan2.2, FreqFlow) remain byte-identical to their pinned upstream commit hashes per the Wave 260 user directive + AGENTS.md §3 hard guardrail #1 ("all modifications to others' original repos must be reverted"); the SHA-256 chain is verified by the per-repo `MANIFEST` + `tnnls_submission/data_availability.md` §8 row 8 vendored-upstream table.
+4. **Wave 366 P2 ADDITIVE discipline.** This §8.10 subsection is ADDITIVE-only: 0 lines of prior §8.1–§8.9 prose modified; 0 lines of `tnnls_submission/` modified; 0 lines of vendored upstream code modified; the new content is a single new subsection anchored to existing recipe files + audit docs + verifier scripts (all SHA-256-byte-stable at the values above). The audit doc for this addition is at [`docs/audit/wave366-p2-reproducibility-manifest.md`](../audit/wave366-p2-reproducibility-manifest.md).
+
+Verification evidence: D.4 30/30 PASS preserved (`pytest tests/test_d4_regression_vectors.py -q` → 30 passed); claims no drift (`python3 tools/check_claims_consistency.py` → "No drift detected."); ruff 0; mkdocs 0 warnings; vendored NOT touched; 5-gate PASS at the v3.0 release tag.
+
 ---
 
 ## 9 Limitations
