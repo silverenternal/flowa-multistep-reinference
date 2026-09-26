@@ -863,6 +863,30 @@ Anonymous for blind review.
 
 ---
 
+## Bibliography (ADDITIVE — Wave 364 G15)
+
+*Wave 364 G15 additive close. The section above (`References (placeholder keys)` + the [N]/[M] BGV12 / Villani keys) preserves all existing citations verbatim. This `Bibliography` section is purely ADDITIVE: 8 fully-expanded author + title + venue + year entries that close G15 (full bibliography). These are the canonical primary sources for the four supporting frameworks used throughout the paper:*
+
+1. **Bolley, F., Guillin, A., and Villani, C.** (2012). *Quantitative concentration inequalities for empirical measures on non-compact spaces.* HAL preprint `hal-00643570`; Bolley-Guilin-Villani concentration inequality used in Theorem 4 (per-round restart-blend distribution) and Theorem 5 (restart-blend attenuation bound) — see §6.5 main text and §A.1.4 / §A.1.8 appendix derivations. Referenced in the body as `[N]` / "BGV12".
+
+2. **Villani, C.** (2003). *Topics in Optimal Transportation.* Graduate Studies in Mathematics, vol. 58, American Mathematical Society (AMS GSM 58). Provides the Wasserstein-2 background, the Grönwall integration theory, and the diffeomorphism-on-bounded-support property used in §A.1.3 component (b) (velocity Lipschitz Grönwall) and §A.1.4 component (c) (convex-hull domination). Referenced in the body as `[M]`.
+
+3. **Schuirmann, D. J.** (1987). *A comparison of the two one-sided tests procedure and the power approach for assessing the equivalence of average bioavailability.* Journal of Pharmacokinetics and Biopharmaceutics, 15(6), 657–680. Original TOST (Two One-Sided Tests) framework that anchors the equivalence testing used throughout §7 empirical results (R-cell + K-cell paired comparisons; cross-budget NFE compression tests). Used by `adaptive_reflow.stats.tost` (CLM-024).
+
+4. **Wagenmakers, E.-J.** (2007). *A practical solution to the pervasive problems of p values.* Psychonomic Bulletin & Review, 14(5), 779–804. Bayes Factor 01 (BF01) framework — null-hypothesis evidence quantification used in §7 alongside TOST for the same R/K-cells where the BF01 < 1/3 threshold supports the framework hypothesis. Used by `adaptive_reflow.stats.bf01`.
+
+5. **Higgins, J. P. T., and Thompson, S. G.** (2002). *Quantifying heterogeneity in a meta-analysis.* Statistics in Medicine, 21(11), 1539–1558. I² heterogeneity statistic that anchors the random-effects meta-analysis battery in §7 (cross-cell pooled effect estimates with heterogeneity quantification). Used by `adaptive_reflow.stats.meta` together with reference 7 (DerSimonian–Laird 1986).
+
+6. **Jonckheere, A. R.** (1954). *A distribution-free k-sample test against ordered alternatives.* Biometrika, 41(1/2), 133–145 (reprinted in British Journal of Mathematical and Statistical Psychology). Jonckheere–Terpstra (JT) trend test — distribution-free monotone trend test used in §7 cross-budget NFE monotonicity analysis (whether framework quality improves monotonically as NFE budget grows). Used by `adaptive_reflow.stats.jt`.
+
+7. **DerSimonian, R., and Laird, N.** (1986). *Meta-analysis in clinical trials.* Controlled Clinical Trials, 7(3), 177–188. Random-effects meta-analysis methodology (DerSimonian–Laird estimator of between-study variance τ² + inverse-variance weighted pooled effect) that pairs with reference 5 (Higgins–Thompson 2002) for the I² heterogeneity quantification in `adaptive_reflow.stats.meta`.
+
+8. **Lakens, D.** (2017). *Equivalence testing for psychological science: A tutorial.* Social Psychological and Personality Science, 8(4), 355–362. Practical TOST equivalence-testing framework with equivalence-bound selection guidance (smallest effect size of interest, SESOI), used in §7 for the equivalence-bound (`Δ`) selection rationale behind the cross-budget NFE compression equivalence claims. Used by `adaptive_reflow.stats.tost` (Lakens 2017 supplements Schuirmann 1987 with the SESOI selection protocol).
+
+*ADDITIVE-only: no number change in §7, §6.5, §A.1, or any other prior section. Cross-references are preserved verbatim (the body still uses `[N]` for Bolley-Guilin-Villani and `[M]` for Villani; the new entries here are expansion of those keys plus six new keys that anchor the §7 statistical methodology).*
+
+---
+
 ## Appendix A: Derivations
 
 This appendix collects the formal derivations referenced from the body of the paper. Each subsection is **ADDITIVE** (no number change in the main text) and cross-referenced from the body section that invokes it.
