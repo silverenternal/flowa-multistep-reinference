@@ -367,6 +367,8 @@ This section establishes three formal properties of the typed-contracts framewor
 
 These properties elevate the framework from "code that happens to work" to a typed-contracts architecture whose component boundaries are formally verified at the byte-stability layer. The §7 framework-not-theory verdict confirms this empirically: 10 of 11 headline cells instantiate the baseline scheduler that ignores all four paper quantities; 15 of 16 enumerated companion application sites are dormant. The three properties below establish what the framework *is*, not what the companion paper says about it.
 
+**§6 preamble note (Wave 364 PG20, additive, lemma-numbering reconciliation).** Section 6 uses the convention: Lemmas 1-3 = framework properties (composition closure, byte-determinism, tamper-evidence); Theorems 4-5 = convergence rate bounds. Supplementary §S1 uses a separate convention: Lemmas 2-5 = paper Theorem 1 derivation lemmas. The two lemma sequences are distinct; cross-references between paper §6 and supplementary §S1 are resolved by content, not by number.
+
 ### 6.2 Lemma 1 — Protocol composition closure
 
 Let $\Sigma = \{\text{Scheduler}, \text{PolicyDriver}, \text{MergeOperator}, \text{RestartBlender}\}$ denote the four-protocol composition layer; each protocol defines a contract over a round of identical inputs (adapter-shaped boundary, fixed `ChannelName` tuple, `prior_endpoint_digest` payload). Then any composition
