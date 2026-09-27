@@ -2,7 +2,7 @@
 
 **Authors:** Anonymous for blind review.
 
-**Abstract.** Flow-matching checkpoints normally generate each sample with a single evaluation of a frozen velocity-field flow map. FlowA instead iterates that map from an initial condition blended from the preceding endpoint and a fresh sample, creating a feedback-driven re-inference dynamical system without retraining or changing vendored checkpoint code. Four typed control ports expose the schedule, policy, merge, and restart decisions; a per-round state bundle and hash-chained ledger make those decisions reproducible and auditable. Under explicit contraction conditions, we prove fixed-point convergence of the composite map and derive an exact restart-blend squared-error identity. Across eleven protein, molecular, toy, and image cells, the evidence separates four strong main-cell results, one tie, and six partial or supplementary results. Cross-budget NFE estimates are distinguished from directly measured matched-NFE quality comparisons. At matched NFE, CIFAR-10 rectified flow improves in the single-round setting but regresses with additional rounds; the MNIST smoke-checkpoint benefit also reverses on better-trained checkpoints. These boundaries turn the method into a conditional inference choice rather than a universal quality-improvement claim. Byte-stable regression vectors and SHA-256-pinned per-cell recipes support independent verification.
+**Abstract.** We reformulate inference for frozen flow-matching checkpoints on both sides of the sampling relation: a fresh initial condition becomes a feedback-driven restart blend, and a one-shot endpoint evaluation becomes an iterated composite flow map. The underlying velocity-field ODE remains unchanged, requiring neither retraining nor changes to vendored checkpoint code. Four typed control ports expose the schedule, policy, merge, and restart decisions; a per-round state bundle and hash-chained ledger make those decisions reproducible and auditable. Under explicit contraction conditions, we prove fixed-point convergence of the composite map and derive an exact restart-blend squared-error identity. Across eleven protein, molecular, toy, and image cells, the evidence separates four strong main-cell results, one tie, and six partial or supplementary results. Cross-budget NFE estimates are distinguished from directly measured matched-NFE quality comparisons. At matched NFE, CIFAR-10 rectified flow improves in the single-round setting but regresses with additional rounds; the MNIST smoke-checkpoint benefit also reverses on better-trained checkpoints. These boundaries turn the method into a conditional inference choice rather than a universal quality-improvement claim. Byte-stable regression vectors and SHA-256-pinned per-cell recipes support independent verification.
 
 **Index Terms.** Flow matching, rectified flow, training-free inference, re-inference, typed-contracts framework, framework properties, empirical verification, byte-stable reproducibility, hash-chained ledger.
 
@@ -10,7 +10,7 @@
 
 ## 1 Introduction
 
-Flow matching and rectified flow define generation as a single ODE integration of a learned velocity field. Inference-time acceleration at this layer has proceeded along three disjoint routes: solver-level methods reduce function evaluations per sample on a fixed marginal; trajectory-level methods straighten the sampling path at training time; re-inference blending methods consume outcome-conditioned feedback across rounds but rely on hand-set blending factors with no convergence theory. This paper takes a fourth route. We reformulate inference itself as a feedback-driven multi-round dynamical system that leaves the frozen velocity field untouched, and we characterize its conditional contraction and restart-blend error properties.
+Flow matching and rectified flow define generation as a single ODE integration of a learned velocity field. Inference-time acceleration at this layer has proceeded along three disjoint routes: solver-level methods reduce function evaluations per sample on a fixed marginal; trajectory-level methods straighten the sampling path at training time; re-inference blending methods consume outcome-conditioned feedback across rounds but rely on hand-set blending factors with no convergence theory. This paper takes a fourth route. We change two parts of the inference specification together: the initial condition becomes a feedback-driven restart blend, and the frozen ODE flow map becomes one step of an iterated composite dynamical system. The velocity field itself is unchanged. We characterize the resulting system's conditional contraction and restart-blend error properties.
 
 We also offer a theoretical perspective (Paper B companion) that, under specific conditions, supplies a convergence bound; this paper does not depend on that perspective. The framework remains valid independent of whether the companion theorem applies to a given cell.
 
@@ -18,9 +18,9 @@ We evaluate seven R-level cells (R1 LineageFlow, R2 Kanzi, R3 FlowMol3, R5a 2D T
 
 **Contributions.**
 
-(i) **Inference-dynamics reformulation.** We reformulate inference for frozen flow matching checkpoints by rewriting both sides of the flow ODE (1) (defined in §2.2): the initial condition becomes a feedback-driven restart blend, and the flow map is iterated as a composite dynamical system $G = \Phi_T^{v_\theta} \circ \mathcal{B}_m$. The frozen velocity field $v_\theta$ is untouched — no retraining, distillation, or Reflow. The composite system $G$ admits a conditional fixed-point theorem (§6).
+(i) **Inference-dynamics reformulation.** We reformulate inference for frozen flow matching checkpoints by changing both parts of the sampling relation (1) defined in §2.2: the initial condition becomes a feedback-driven restart blend, and the endpoint relation becomes an iteration of the composite map $G = \Phi_T^{v_\theta} \circ \mathcal{B}_m$. The ODE $\dot x_t=v_\theta(x_t,t)$ and its frozen velocity field remain untouched — no retraining, distillation, or Reflow. The composite system $G$ admits a conditional fixed-point theorem (§6).
 
-(ii) **Convergence theory for the new dynamics.** We prove a conditional contraction theorem for a fixed fresh input when the memory-weighted flow-map Lipschitz constant is below one, and an exact squared-error identity for the restart blend. These statements do not by themselves guarantee an FID gain; proofs are in Appendix A.
+(ii) **Convergence theory for the new dynamics.** We prove a conditional contraction theorem for a fixed fresh input when the memory-weighted flow-map Lipschitz constant is below one, and an exact squared-error identity for the restart blend. Their contraction factor and blend-error terms define testable diagnostics for the checkpoint-setting and round-count studies, but do not by themselves guarantee an FID gain; proofs are in Appendix A.
 
 (iii) **Typed-contracts architecture.** We propose a typed-contracts framework that reconstructs flow matching inference as a multi-round re-inference layer partitioned over three domains (algorithm layer, evaluation layer, adapter layer) with 13 schedulers (9 baselines; 4 optional theoretical-perspective controllers), each conforming to `SchedulerProtocol` and exposed via a four-port control surface (`SchedulerProtocol`, `PolicyDriverProtocol`, `MergeOperatorProtocol`, `RestartBlenderProtocol`). The framework's identity is the typed contract surface.
 
@@ -48,7 +48,7 @@ Standard flow-matching inference computes the endpoint as a single ODE-flow eval
 
 where $\Phi_T^{v_\theta}$ is the flow map of the frozen velocity field $v_\theta$ at time $T$. Equation (1) is a one-shot, memoryless, Markov evaluation: the initial condition $x_0$ is drawn once, and the flow map is applied once. No information from prior evaluations enters either side.
 
-FlowA rewrites both sides of (1). The initial condition is replaced by a feedback-driven restart blend of the previous round's endpoint and a fresh prior sample; the flow map is iterated as a composite dynamical system:
+FlowA changes both parts of the sampling relation in (1). The initial condition is replaced by a feedback-driven restart blend of the previous round's endpoint and a fresh prior sample; the endpoint relation is iterated as a composite dynamical system:
 
     x_0^{(k)} = B_m(x_T^{(k-1)}, x_0^{fresh,(k)}),
     x_T^{(k)} = Φ_T^{v_θ}(x_0^{(k)}),   k = 1, ..., n_rounds,   (2)
@@ -57,9 +57,9 @@ with the restart-blend operator $B_m(a, b) = m \cdot a + (1-m) \cdot b$, $m \in 
 
     x* = Φ_T^{v_θ}(B_m(x*, x^{fresh})).   (3)
 
-The frozen velocity field $v_\theta$ is untouched: no retraining, no distillation, no Reflow. What changes is the boundary condition (left side of (1)) and the iteration structure (right side of (1)). Theorems 4 and 5 below give a conditional fixed-point result for $G$ and an exact squared-error identity for $B_m$, respectively.
+The frozen velocity field $v_\theta$ is untouched: no retraining, no distillation, no Reflow. The two changes are the input rule and the iteration of the endpoint map; they do not rewrite the differential equation $\dot x_t=v_\theta(x_t,t)$. Theorems 4 and 5 below give a conditional fixed-point result for $G$ and an exact squared-error identity for $B_m$, respectively.
 
-Equation (2) occupies a fourth position relative to the three known inference-acceleration families. Solver-level methods discretise the right side of (1) more efficiently but keep the left side memoryless. Trajectory-level methods modify $v_\theta$ itself, requiring retraining. Re-inference α-blending methods modify the left side of (1) with a hand-set blending factor but keep the right side as a single flow-map evaluation. Equation (2) modifies both sides simultaneously; the resulting composite system $G$ is contractive under the explicit condition in §6.
+Equation (2) occupies a fourth position relative to the three known inference-acceleration families. Solver-level methods change the numerical integration of the same ODE but keep inference memoryless. Trajectory-level methods modify $v_\theta$ itself, requiring retraining. Re-inference α-blending methods adjust the next input with a hand-set factor. Equation (2) couples the input rule to repeated endpoint-map evaluation; the resulting composite system $G$ is contractive only under the explicit condition in §6.
 
 ### 2.3 Typed ML systems and contract-driven design
 
@@ -278,7 +278,7 @@ class RestartBlenderProtocol(Protocol):
 
 ### 3.8 Why the framework's identity is the typed contract
 
-Per the multi-wave pipeline inventory, 15 of 16 enumerated companion application sites are dormant under the validated cosine baseline. The framework's headline empirical wins (§7) are produced by the typed-contracts loop with site 1 (the cosine ramp itself) + site 6 fallback (`BoundedMergeOperator` no-paper-quantity lift) + site 7 fallback (`ScheduleDerivedPolicyDriver` with no paper-quantity normalisation) — i.e. the contract surface is sufficient to deliver the value-add independent of whether any companion theorem quantity is consumed. The companion quantifies why the loop works in a particular limit; the contract is what the loop is.
+Per the multi-wave pipeline inventory, 15 of 16 enumerated companion application sites are dormant under the validated cosine baseline. The framework's headline measurements (§7) primarily exercise the typed-contracts loop with the cosine ramp, bounded merge, and schedule-derived policy. The observed operating boundaries arise in these instantiated composite maps $G$ under particular checkpoints, schedules, and evaluators; they are not consequences of the optional companion quantities. The contract surface makes the same inference-dynamics reformulation deployable and auditable across checkpoint families.
 
 ---
 
@@ -432,7 +432,7 @@ $$G_b(x):=\Phi_T^{v_\theta}\!\left(\mathcal{B}_m(x,b)\right),\qquad \mathcal{B}_
 
 $$\|G_b^{\,k}(x)-x_b^*\|\leq q^k\|x-x_b^*\|. \tag{5}$$
 
-The result follows from $\|G_b(x)-G_b(y)\|\leq K\|m(x-y)\|=q\|x-y\|$ and the Banach fixed-point theorem; §A.1 gives the proof and a bound for changing fresh inputs. If $v_\theta$ is only known to be $L$-Lipschitz on an invariant envelope, Grönwall gives the sufficient upper bound $K\leq e^{LT}$, so $m e^{LT}<1$ is sufficient but may be restrictive. Structural protocol conformance by itself does not guarantee $q<1$. The theorem concerns convergence to the composite map's fixed point under a fixed fresh input; it does not establish convergence to the data distribution, a fixed-NFE FID gain, or the checkpoint-fidelity trend observed in §7.8.
+The result follows from $\|G_b(x)-G_b(y)\|\leq K\|m(x-y)\|=q\|x-y\|$ and the Banach fixed-point theorem; §A.1 gives the proof and a bound for changing fresh inputs. If $v_\theta$ is only known to be $L$-Lipschitz on an invariant envelope, Grönwall gives the sufficient upper bound $K\leq e^{LT}$, so $m e^{LT}<1$ is sufficient but may be restrictive. Structural protocol conformance by itself does not guarantee $q<1$. The theorem identifies a measurable stability variable, $q=mK$: estimating it across the fixed-architecture checkpoint settings in §7.8 would test whether the observed change in round-to-round behaviour tracks contraction strength. The theorem concerns convergence to $G_b$'s fixed point under a fixed fresh input; it does not establish convergence to the data distribution or predict the observed FID sign.
 
 ### 6.6 Theorem 5 — Exact restart-blend error identity
 
@@ -446,7 +446,7 @@ Consequently, for $m<1$, blending improves squared endpoint error relative to $X
 
 $$\mathbb{E}\|Y-z\|^2-\mathbb{E}\|X-z\|^2<m\,\mathbb{E}\|X-Y\|^2. \tag{7}$$
 
-The proof is the pointwise convex-combination identity in §A.3. Equation (6) is an error decomposition, not an FID bound: FID depends on feature distributions, and neither the right side of Eq. (6) nor the type contracts determine its sign. In particular, Theorem 5 does not predict a universal first-round-only correction. The R5b `n_rounds` boundary is measured separately in §7.6, with its N=200 and N=1000 protocols distinguished there.
+The proof is the pointwise convex-combination identity in §A.3. Equation (7) supplies a per-round mechanistic diagnostic for the R5b question: with a specified endpoint target, measure fresh-input error, preceding-endpoint error, and their discrepancy to determine whether blending improves squared endpoint error as rounds accumulate. This makes the proposed restart-correction explanation testable. It is not an FID bound: FID depends on feature distributions, so the identity does not predict a universal first-round-only FID correction. The R5b `n_rounds` boundary is measured separately in §7.6, with its N=200 and N=1000 protocols distinguished there.
 
 ### 6.7 Framework Properties as primary contribution
 

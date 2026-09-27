@@ -2,6 +2,8 @@
 
 ## Wave 372 current highlights (supersede the historical list below)
 
+**Editorial positioning, Wave 373:** FlowA changes both parts of the frozen-checkpoint sampling relation: its input is a feedback-driven blend, and its endpoint map becomes an iterated dynamical system. The velocity-field ODE remains unchanged. The two theorems provide testable stability and squared-error diagnostics for the observed regime boundaries without claiming to predict FID direction.
+
 1. Frozen flow maps become an auditable feedback loop through four typed control ports and a hash-chained round ledger.
 2. Fixed-point convergence is proved when the memory-weighted endpoint-map Lipschitz constant is below one.
 3. An exact restart-blend squared-error identity is established; neither theorem determines the sign of Inception FID.

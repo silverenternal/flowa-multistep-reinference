@@ -2,6 +2,8 @@
 
 > **Wave 372 manuscript correction for the editor.** The current PDF is eight IEEEtran double-column pages. It proves fixed-point convergence only under an explicit contraction condition and gives an exact restart-blend squared-error identity. Neither theorem establishes a CIFAR-10 FID direction or a universal checkpoint-quality trend. The production CIFAR-10 single-round summary improves on two of four scheduler arms at N=1000, seed 42; its N=200 single-round probe improves on four arms, one by only 0.117%. The 2.5–10× cross-budget NFE range is an extrapolation, while the directly measured Tier-1 speedup is 1.0×. Any earlier cover-letter wording or formula inconsistent with this correction is superseded by this paragraph and the Wave 372 manuscript.
 
+> **Wave 373 positioning.** The manuscript's central contribution is an inference-dynamics reformulation: a feedback-driven restart blend replaces the one-shot initial condition, and the frozen endpoint map is iterated as a composite system. This changes the sampling relation while leaving the learned velocity-field ODE intact. The conditional contraction factor and exact blend-error identity define measurements that can test the observed checkpoint and round-count boundaries; the paper does not infer FID signs from them.
+
 ## §0 USER ACTION REQUIRED — Fill These Placeholders Before Submitting
 
 This cover letter contains placeholders that **must be replaced by the
