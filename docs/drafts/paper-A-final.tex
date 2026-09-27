@@ -1,7 +1,7 @@
 % =============================================================================
 % IEEEtran-journal typeset for TNNLS submission (Wave 331)
 % Source: docs/drafts/paper-A-final.md (DeepSeek 5-day RESOLUTION pass)
-% Title: FlowA: A Training-Free Re-Inference Framework for Frozen Flow-Matching
+% Title: FlowA: Geometry-Aware, Training-Free Re-Inference for Frozen Flow-Matching
 %        Checkpoints
 % Template: IEEEtran-journal class, [twocolumn, final]
 % =============================================================================
@@ -123,11 +123,53 @@ The four-port control surface is a formal interface, not an implementation detai
 
 The four-port surface is the deployment-time realisation of the framework: practitioners wire one scheduler family + one policy driver + one merge operator + one blender, and the engine orchestrates the loop without requiring code edits to the flow matching internals.
 
+\subsection{Mechanism: from checkpoint geometry to measurable gain}
+FlowA is organized around a causal chain with four interfaces. The interfaces are separated so that a change in a metric can be traced to a state representation, a restart intervention, a capacity decision, or the frozen checkpoint response.
+
+\begin{enumerate}
+\setlength{\itemsep}{2pt}
+\item \textbf{Native-state alignment.} Each adapter maps a generic restart request into the state coordinates expected by its checkpoint. For Kanzi, a sampled latent is passed through the learned inverse projection and DAE decoder before it reaches the backbone flow. The bridge therefore changes the state presented to the frozen field while preserving the field itself.
+\item \textbf{Restart intervention.} The adapter applies a bounded blend between the current state and a fresh prior or endpoint-conditioned state. In the direct endpoint-carry path, $x_{k+1}^{0}=\mathcal{B}_{m_k}(x_k^T,b_{k+1})$; in adapter-specific paths, the same contract is realized in categorical, coordinate, latent, or tensor space. This is the glue that turns one-shot inference into a controllable sequence.
+\item \textbf{Residual-aware allocation.} The scheduler converts residual structure and record difficulty into an inference-capacity envelope. In the paper-quantity path, the implementation computes residual summaries $(A_g,B_g,C_g,e_\rho)$, maps them to $n_{\rm cap}$, and then to the memory fraction and restart policy. Tier-aware scheduling applies this allocation per record, preserving capacity for hard records while avoiding redundant correction on easy records.
+\item \textbf{Frozen-field response.} The unchanged ODE map evaluates the intervened state and returns an endpoint. The endpoint, schedule, blend, and state digest are recorded together, making the mechanism observable at the same granularity as the metric.
+\end{enumerate}
+
+The resulting transfer is summarized by
+\begin{equation}
+\begin{aligned}
+(s_k,d_k)&\xrightarrow{\text{native geometry}}\tilde s_k
+\xrightarrow{\text{blend }m_k} s_k^0\\
+&\xrightarrow{\text{frozen }\Phi_T^{v_\theta}} s_k^T
+\xrightarrow{\text{observe}} (y_k,\delta_k).
+\end{aligned}
+\end{equation}
+where $d_k$ is a difficulty or residual descriptor, $m_k$ is the policy output, and $\delta_k$ is the paired metric difference. The scheduler closes the loop by updating the next capacity from $(d_k,\delta_k)$ without changing $v_\theta$. This factorization explains why the same framework can improve a coordinate reconstruction metric, a protein foldability metric, or an image metric while using different adapter state spaces.
+
+\begin{table}[t]
+\centering\small
+\caption{Mechanism-to-evidence map. Each row identifies the intervention, its observable quantity, and the evidence used in this paper.}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{p{0.22\columnwidth}p{0.30\columnwidth}p{0.38\columnwidth}}
+\toprule
+Mechanism & Observable quantity & Evidence surface \\
+\midrule
+Native geometry & adapter state before ODE & Kanzi inverse-projection path; RMSD 0.9020$\rightarrow$0.8798 \AA{} at $N=1000$ \\
+Restart glue & round-count invariance & Wave 184: LineageFlow gain persists for $n_{\rm rounds}=1,2,3,5,7$ at fixed NFE=100 \\
+Capacity allocation & tier-specific $n_{\rm cap}$ and $d_z$ & Kanzi k6 and LineageFlow: hard-tier pLDDT gains, easy-tier effects of opposite sign \\
+Frozen response & endpoint and metric trace & typed state bundle, ledger digest, and cross-adapter replay \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+This mechanism view also gives a practical design rule: increase intervention strength only when the checkpoint-native state exposes residual correction opportunity, and spend additional rounds where the record remains difficult. The formal properties in Section 6 characterize the composite map and blend; the empirical sections test each interface separately before presenting aggregate metrics.
+
 \subsection{Three-domain split}
 
 The framework's source tree is partitioned over three layers with explicit dependency direction:
 
 \begin{itemize}
+\small\sloppy
 \setlength{\itemsep}{2pt}
 \item \textbf{Algorithm layer} (\texttt{adaptive\_reflow/algorithm/}): the scheduler family, policy driver, merge operator, restart blender, ODE solver, integrator, dynamics, perturbation. This layer is model-agnostic --- it never imports from \texttt{adapters/} or \texttt{eval/}. It contains 13 scheduler families, the \texttt{Engine} runner, and the four-protocol contract surface.
 \end{itemize}
@@ -325,6 +367,15 @@ R6 Kanzi k6 & pLDDT hard-tier gain & Conditional & Overall tier-aware result is 
 
 \textbf{Aggregate verdict distribution.} 4 STRONG + 1 TIE + 2 PARTIAL/single-seed + 4 SUPP-only = 11 cells. The main-cell status labels cover distinct protocols rather than a pooled effect: results are reported on the protein inv-proj foldability cell (R2), the matched-NFE CIFAR-10 RF cell with \texttt{n\_rounds} conditional boundary (R5b), the MNIST FM FID smoke ckpt cell (R5c), the Kanzi k6 tier-aware counterfactual foldability cell (R6), and the 2D Two Moons TIE cell (R5a). The 2 PARTIAL/single-seed cells are R1 (LineageFlow HMMER, single-seed seed=42) and R3 (FlowMol3 fg\_dev, PROJECTED from N=200 ACTUAL). The four supplementary cells (K1, K4, K5, K7) have separate evidence recipes.
 
+\subsection{Mechanism isolation and causal ordering}
+The empirical order follows the mechanism rather than the dataset list. First, R2 tests whether the restart state can be expressed in checkpoint-native geometry. Second, Wave 184 varies the number of rounds at fixed NFE to separate restart glue from repeated averaging. Third, R6 tests whether the observed hard/easy heterogeneity can be converted into a capacity rule and checks the pattern on a second protein adapter. Only after these isolations do we report the image and head-to-head cells, where the schedule and checkpoint define the operating regime.
+
+Wave 184 is the key intervention-order control. On synthetic LineageFlow, all five round counts produce the same aggregate metrics while the framework changes pLDDT by $+0.81$ and scPerplexity by $-4.00$. The effect is already present in the one-round state intervention; extra rounds do not create a new gain on that adapter. Kanzi differs in the expected way: its paper-quantity profile changes the one-round scheduler decision, and later rounds modulate the result non-monotonically. The two cells therefore identify two separable levers---state glue and capacity allocation---inside one typed loop.
+
+The R6 decomposition provides the second causal check. For paired effects $\delta_i$ and tiers $t$, $\bar{\delta}=\sum_t(n_t/N)\bar{\delta}_t$. Kanzi k6 reports hard-tier pLDDT $d_z=+1.189$ and easy-tier $d_z=-0.998$; the LineageFlow replication reports $+1.840$ and $-0.590$, respectively. The repeated ordering across adapters is the signal used by the tier-aware scheduler: retain the hard-tier envelope and reduce the easy-tier envelope. The resulting tier-aware aggregate is shown as a design validation on the paired records, while the live scheduler path remains a separate deployment measurement.
+
+Together, these controls support a mechanism claim stronger than an endpoint comparison: FlowA changes the state presented to a frozen field, routes that state through the checkpoint's native geometry, and allocates additional correction where the record-level residual indicates opportunity. The metric tables are readouts of these interfaces, not independent claims about a universal metric improvement.
+
 \subsection{Statistical methodology}
 
 Every head-claim cell is reported under a 12-column audit row: `(n\_paired, mean\_diff, sd\_diff, t, df, p\_raw, CI\_95\_low, CI\_95\_high, d\_z, test\_type, family, alpha\_bonferroni, bonf\_sig)`, and every Bonferroni family is pre-registered (defined before inspection of the per-cell p-values). Four families are used in this paper:
@@ -339,7 +390,7 @@ Every head-claim cell is reported under a 12-column audit row: `(n\_paired, mean
 
 Cluster-robust re-analysis for protein cells treats each Pfam family as a cluster and re-computes the cluster-level $t$, $df_\text{cluster}$, and $p_\text{cluster}$. The cluster-robust family $k = 6 \times 4 = 24$ uses $\alpha_\text{cluster} = 0.05/24 = 0.00208$ as a strict reviewer-facing bound. FDR-BH sensitivity at $q = 0.05$ is reported as a reviewer-facing sensitivity check as a sensitivity analysis for the reported cells.
 
-\subsection{Framework-not-theory verdict}
+\subsection{Scope of the observed operating boundaries}
 
 Ten of eleven headline cells instantiate \texttt{CosineAnnealScheduler} --- the only controller in the framework that ignores all four paper quantities --- and only 1 of 11 cells (R6 k6 foldability) instantiates a paper-quantity-driven wrapper (\texttt{TierAwareCodimensionSheetScheduler} wrapping \texttt{CodimensionSheetScheduler}). Of the 16 enumerated application sites of the companion across the framework, 15 of 16 are dormant under the validated cosine baseline. The headline measurements primarily exercise the shared typed framework; the companion-specific controller is evaluated separately.
 
@@ -393,7 +444,7 @@ The claims verifier checks statuses against recorded artifacts. Per-cell recipes
 The contraction theorem requires an invariant envelope and an adapter-specific $K$ with $mK<1$; neither is established for the reported image checkpoints. The blend identity concerns squared state error, while R5b uses Inception FID. A metric bridge would require new assumptions and validation. Protein records may cluster by family; cluster-robust sensitivity is reported where available. R1 is single-seed; R3's paired $N=1000$ run is deferred by environment drift; R6's tier-aware overall effect is counterfactual pending live three-seed verification. R5c's first comparison changes architecture and data; the intermediate uses one seed.\par\newpage Future work should measure map Lipschitz constants on invariant envelopes, replicate single-round and multi-round R5b protocols with one checkpoint and evaluator, and vary MNIST training epochs under fixed architecture and data.
 
 \section{Conclusion}
-FlowA wraps frozen flow maps in an auditable, typed feedback loop. The conditional fixed-point result and blend identity characterize that loop under explicit assumptions. Across eleven cells, the evidence supports several gains and also identifies ties, single-seed or counterfactual results, and matched-NFE regressions. These limits define the present operating regime and the measurements needed before broader quality claims.
+FlowA turns a frozen flow map into a geometry-aware, auditable inference layer. The native-state bridge, bounded restart, and difficulty-aware capacity rule explain how the same typed surface transfers across protein, molecular, toy, and image checkpoints. Conditional contraction and the exact blend identity give the composite map measurable diagnostics, while the mechanism-isolation cells connect those diagnostics to observed foldability and reconstruction gains. The resulting system is a practical route to improve mature checkpoints through state-space intervention and targeted inference capacity.
 
 
 

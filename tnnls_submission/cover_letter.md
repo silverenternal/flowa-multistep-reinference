@@ -48,7 +48,7 @@ TNNLS Editorial Manager.
 **To:** Editor-in-Chief, IEEE Transactions on Neural Networks and
 Learning Systems (TNNLS)
 
-**Subject:** Submission of "FlowA: Training-Free, Paper-Quantity-Driven
+**Subject:** Submission of "FlowA: Geometry-Aware, Training-Free Re-Inference
 Re-Inference for Flow-Matching Checkpoints" for consideration as a
 regular research paper in IEEE TNNLS.
 
@@ -1226,7 +1226,7 @@ Sincerely,
 **Submission package manifest** (for editorial reference):
 
 1. Manuscript PDF ([`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md)
-   typeset to double-column 14-page TNNLS format).
+   typeset to double-column 10-page TNNLS format).
 2. Supplementary PDF (S1–S8: Theorem 1 derivation, per-record
    tables, hp-sensitivity sweep, 4-arm per-seed margin table,
    honest negatives, Theorem 1 source paper, cluster-robust

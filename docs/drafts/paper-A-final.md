@@ -294,6 +294,27 @@ The integrations reveal three reusable principles that connect the abstract map 
 
 Together these principles define FlowA's value proposition: route inference through the representation a checkpoint already supports, allocate effort where the trajectory is hardest, and record each transition so that improvements can be reproduced and transferred across model families.
 
+### 3.10 Causal mechanism chain
+
+FlowA is a four-stage inference transformation. The adapter first expresses a restart request in the checkpoint-native state geometry; the restart blender then forms a bounded state intervention; the scheduler converts residual structure and record difficulty into an inference-capacity envelope; finally, the unchanged velocity field evaluates the intervened state and returns an endpoint. Each stage has a typed boundary and a measurable trace.
+
+In the paper-quantity path, the residual profile \(A_g,B_g,C_g,e_\rho\) is mapped to \(n_{\rm cap}\), then to the memory fraction and restart policy. In the tier-aware path, this envelope is applied per record: hard records retain correction capacity while easy records receive a lighter intervention. The generic state transition is
+
+\[
+(s_k,d_k) \xrightarrow{\text{native geometry}} \tilde s_k \xrightarrow{\mathcal B_{m_k}} s_k^0 \xrightarrow{\Phi_T^{v_\theta}} s_k^T \xrightarrow{\text{observe}} (y_k,\delta_k),
+\]
+
+where \(d_k\) is a difficulty descriptor and \(\delta_k\) is the paired metric effect. The scheduler closes the loop from the observed trace without changing \(v_\theta\). This factorization makes the mechanism portable across coordinate, categorical, latent, graph, and image state spaces.
+
+| Mechanism | Framework realization | Evidence |
+|---|---|---|
+| Native geometry | Adapter-specific state bridge | Kanzi RMSD 0.9020 \(→\) 0.8798 \AA{} at \(N=1000\) |
+| Restart glue | Bounded restart and endpoint carry | Wave 184 gain persists for \(n_{\rm rounds}\in\{1,2,3,5,7\}\) at fixed NFE=100 |
+| Capacity allocation | Residual/difficulty-aware \(n_{\rm cap}\) | Hard-tier pLDDT gains replicated on Kanzi and LineageFlow |
+| Frozen response | Endpoint observation and ledger trace | Typed bundles and cross-adapter replay |
+
+This mechanism chain is the organizing principle for the empirical section: geometry is tested first, restart glue is isolated next, difficulty allocation is replicated across adapters, and image/SOTA cells then show the operating regimes in which the same intervention is useful.
+
 ## 4 Scheduler Family
 
 ### 4.1 Thirteen-family taxonomy
@@ -524,7 +545,15 @@ We validate FlowA across 11 headline cells — 7 R-level cells (R1 LineageFlow, 
 | R5c | STRONG (smoke) / REGIME-DEPENDENT | §7.2 R5c row + §7.8 R5c regime curve 3-point table | [`docs/CLAIMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md) CLM-059 R5c MNIST FM smoke ckpt + Figure 1 (this paper, R5c regime curve PNG) |
 | R6 | STRONG (tier-aware counterfactual) | §7.2 R6 row + §7.5 R6 cross-adapter replication | [`docs/CLAIMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md) CLM-061 R6 cluster-robustness + CLM-073 R6 tier-aware d_z=+0.2235 |
 
-### 7.3 Statistical methodology
+### 7.3 Mechanism isolation and causal ordering
+
+The results are read in causal order. R2 tests whether the restart state reaches the checkpoint through native geometry. Wave 184 varies round count at fixed NFE and shows that the LineageFlow gain is already present in the one-round restart intervention: pLDDT changes by +0.81 and scPerplexity by −4.00, while aggregate metrics are identical for \(n_{\rm rounds}\in\{1,2,3,5,7\}\). Kanzi then exposes the complementary allocation effect: its one-round cell changes the scheduler decision, with later rounds adding non-monotonic modulation.
+
+R6 supplies the record-level mechanism. Kanzi k6 has hard-tier pLDDT \(d_z=+1.189\) and easy-tier \(d_z=-0.998\); the LineageFlow replication gives \( +1.840\) and \( -0.590\). The repeated hard-to-easy ordering is the signal used by the tier-aware scheduler to preserve hard-tier capacity and reduce redundant easy-tier intervention. The tier-aware aggregate is reported as a design validation on the paired records, while the live scheduler measurement is a separate deployment target.
+
+These controls connect FlowA's metric improvements to an explicit state-space mechanism: align the intervention with the checkpoint geometry, apply it at the restart boundary, and allocate its strength to the remaining correction demand.
+
+### 7.4 Statistical methodology
 
 Every head-claim cell is reported under a 12-column audit row: `(n_paired, mean_diff, sd_diff, t, df, p_raw, CI_95_low, CI_95_high, d_z, test_type, family, alpha_bonferroni, bonf_sig)`, and every Bonferroni family is pre-registered (defined before inspection of the per-cell p-values). Four families are used in this paper:
 
@@ -535,11 +564,11 @@ Every head-claim cell is reported under a 12-column audit row: `(n_paired, mean_
 
 Cluster-robust re-analysis for protein cells treats each Pfam family as a cluster and re-computes the cluster-level $t$, $df_\text{cluster}$, and $p_\text{cluster}$. The cluster-robust family $k = 6 \times 4 = 24$ uses $\alpha_\text{cluster} = 0.05/24 = 0.00208$ as a strict reviewer-facing bound. FDR-BH sensitivity at $q = 0.05$ is reported as a reviewer-facing sensitivity check and agrees with the Bonferroni verdict on every cell.
 
-### 7.4 Framework-not-theory verdict
+### 7.5 Scope of the observed operating boundaries
 
 The composite map in §2.2 and the typed control surface do not require the optional companion-paper quantities. Ten of eleven headline cells use the cosine scheduler, whose paper-quantity inputs are dormant. This demonstrates that the shared framework is independently deployable across checkpoint families. Theorem 4 requires $mK<1$ and fixed fresh input; Theorem 5 concerns squared endpoint error. The R5b and R5c FID boundaries are empirical findings, not predictions of either theorem.
 
-### 7.5 R6 cross-adapter replication
+### 7.6 R6 cross-adapter replication
 
 The R6 k6 foldability pattern (SELECTIVE-pLDDT / UNIVERSAL-scPerplexity) is replicated on a second adapter (LineageFlow $N = 574$ paired records, hard tier $n = 191$, medium tier $n = 192$, easy tier $n = 191$): hard pLDDT $d_z = +1.840 > +1.189$ (k6 hard pLDDT); medium pLDDT $d_z = +0.976 > +0.218$; easy pLDDT $d_z = -0.590$ (same sign as k6 easy $d_z = -0.998$); scPerplexity $d_z$ uniformly in $[-1.002, -1.044]$. The monotone `hard > medium > easy` in pLDDT $d_z$ is TRUE on both adapters; the SELECTIVE-pLDDT / UNIVERSAL-scPerplexity framing is CONFIRMED on 2 adapters.
 
@@ -549,7 +578,7 @@ In the Kanzi framework arm, a sampled latent passes through the trained inverse 
 
 The protein foldability data reveal a second, allocation-level mechanism. Let $\delta_i$ be the paired framework-minus-baseline pLDDT for record $i$. Its overall mean decomposes exactly as $\bar\delta=\sum_t(n_t/N)\bar\delta_t$ across difficulty tiers $t$. Hard-tier benefit and easy-tier loss can cancel in the aggregate, even if difficult proteins improve. This direction pattern appears on both Kanzi k6 and LineageFlow (§7.5). A tier-aware controller implements the corresponding allocation rule by reducing the easy-tier capacity fraction while retaining the hard-tier allocation. The reported overall change from $d_z=+0.071$ to $+0.2235$ is a counterfactual transformation of frozen paired differences; a live controller run is still needed to measure the scheduler's effect (`paper-data/R6_lineageflow_k6/R6_SOURCE.md`). The measured cross-adapter heterogeneity supplies a concrete reason to test selective compute allocation.
 
-### 7.6 NFE-matched boundary
+### 7.7 NFE-matched boundary
 
 R5b is informative because the same total NFE budget can lead to different FID directions as the round count and evaluation protocol change. The following readings are separate sweeps; their baseline FIDs and sample sizes differ, so the rows must not be treated as one paired trajectory.
 
@@ -562,7 +591,7 @@ R5b is informative because the same total NFE budget can lead to different FID d
 
 The first and third rows support a round-count boundary at $N=200$ under their respective configurations. The $N=1000$ result narrows the single-round claim: its four schedulers do not all improve. Theorem 5 gives an exact blend-error identity, but FID is a feature-distribution metric; the observed FID sign cannot be deduced from that identity alone. A shared-checkpoint, multi-seed sweep varying only round count is needed to establish a cross-protocol transition law. The cross-budget 2.5--10$\times$ NFE range remains an extrapolation, not a directly measured speedup (`verification_outputs/wave73_phase2_tier1_speedup.json`).
 
-### 7.7 Head-to-head comparison
+### 7.8 Head-to-head comparison
 
 The head-to-head cell compares FlowA against `vanilla` + `Fast-DLLM` + `AB-Cache` + `LeDiFlow` on the R6 foldability axes at NFE $\in \{50, 100\}$. FlowA wins both metrics at both NFE settings vs all four baselines. The 16-cell Table B family is Bonferroni-significant at $\alpha = 0.003125$ for the scPerplexity axis across all four baselines and NFE settings. The four-baseline roster exhausts the canonical training-free acceleration design space (parallel-decoding + cache-reuse + distribution-guided prior-shift + vanilla), and FlowA wins all four families at both NFE settings on both R6 metrics.
 
@@ -574,7 +603,7 @@ The head-to-head cell compares FlowA against `vanilla` + `Fast-DLLM` + `AB-Cache
 
 The figures visualize two qualitative findings from the 18-cell finer ladder: (a) **saturation boundaries** — `lineageflow` reaches `$\Delta\text{pLDDT} \le 0.5$` at `NFE=500` (the largest NFE in the ladder, marking framework-utility-saturation); `kanzi` has **no** saturation boundary in $[10, 500]$ because its `$\Delta$pLDDT does not stay within the `$\le 0.5$` band — `kanzi` `$\Delta$pLDDT oscillates between positive (framework-WINS) and negative (framework-REGRESSES) values across the ladder; (b) **kanzi unique sweet spot at `NFE=75`** — the only `NFE` in the 9-point ladder where `kanzi` framework WINS both metrics simultaneously (`$\Delta$pLDDT = +2.123` framework-WINS; `$\Delta$scPerplexity = -4.759` framework-WINS, lower is better); the `NFE=75` cell is the intersection of the two model-NFE subsets that win both metrics, making it the unique `kanzi` operating point where the framework is monotone-WINS on both axes (cross-referenced in [`docs/CLAIMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md) CLM-051 "framework wins both metrics at 10/18 (model,NFE) cells with both-models intersection at NFE=75 only"). The 36-row aggregation source is [`verification_outputs/wave183-p4-aggregation.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave183-p4-aggregation.csv) (2 models × 9 NFEs × 2 arms = 36 rows × 7 cols: `model`, `nfe`, `arm`, `plddt`, `scperp`, `delta_plddt`, `delta_scperp`); the audit material is [`docs/audit/wave183-p4-aggregate.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave183-p4-aggregate.md). **No number change in §7.7** — the 16-cell Table B family verdict (`FlowA` wins all four baselines at both `NFE=50` and `NFE=100` on both R6 metrics) is preserved verbatim per the Wave 268 strict-clean "no number change" rule; this §7.7.1 paragraph is ADDITIVE.
 
-### 7.8 R5c regime-dependent curve (smoke vs production ckpt)
+### 7.9 R5c regime-dependent curve (smoke vs production ckpt)
 
 The R5c smoke-vs-production flip (smoke ckpt framework-WINS $-28.43\%$, production ckpt framework-REGRESSES $+10.37\%$ at matched NFE $= 50$) is characterised across a 3-point regime curve (the audit material, `data/mnist_fm/epochs2.ckpt.npz` sha256 `ca3ae972…`):
 
@@ -588,11 +617,11 @@ The epochs $=1\to2$ comparison is confounded: the smoke checkpoint uses eight ch
 
 **Figure 1 (Wave 349 ADDITIVE, no number change).** The R5c regime curve is rendered as a single-panel figure at [`docs/figures/fig5_r5c_regime_curve.png`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/figures/fig5_r5c_regime_curve.png) (renderer [`tools/render_r5c_regime_curve.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tools/render_r5c_regime_curve.py); the figure's PNG sha256 is recorded in `tnnls_submission/MANIFEST.md`). The figure plots the per-epoch $\Delta$ FID percentage (negative = framework-WINS, positive = baseline-WINS) against training epochs (1 / 2 / 3); each data point is labelled with the §7.8 byte-stable verdict (`framework_wins` / `baseline_wins`). The 3 data points are transcribed verbatim from the §7.8 3-point table above; the rendering uses matplotlib's `Agg` backend (no GUI dependency, no InceptionV3 activation) and is byte-stable under repeated invocation. The figure closes the §10.8(i) "Future-work: plot the regime curve as a figure" gap (paper's own §10.8(i) flagged this at ~30 min, data exists); the empirical regime-dependence is preserved verbatim per the Wave 268 strict-clean "no number change" rule.
 
-### 7.9 Summary
+### 7.10 Summary
 
 The evidence supports a portable, auditable inference layer and several cell-specific improvements. R2 measures a small paired reconstruction gain; R6's strongest pLDDT evidence is concentrated in the hard tier and its overall tier-aware result is counterfactual; R5c improves on the smoke checkpoint and regresses on better-trained checkpoints; R5a remains a tie. R1 and R3 retain single-seed and projected-evidence limits. R5b shows a conditional single-round FID opportunity and a multi-round regression, with the $N=1000$ production reading improving on only two of four schedulers. The proposed explanation in terms of residual correction is a hypothesis for targeted ablation, not a consequence of Theorems 4--5.
 
-### 7.10 Cell-status and evidence index
+### 7.11 Cell-status and evidence index
 
 The 11-cell verdict distribution `4 STRONG + 1 TIE + 6 PARTIAL/SUPP = 11` (R2 / R5b / R5c / R6 STRONG; R5a TIE; R1 / R3 / K1 / K4 / K5 / K7 PARTIAL/SUPP) is consolidated below into a single reviewer-navigation table that maps each cell to (a) the canonical paper §7.2 / §10.7 status label, (b) the canonical `## CLM-NNN:` row in `docs/CLAIMS.md`, (c) the canonical `§15.NN` section in `docs/CONSOLIDATED_RESULTS.md`, and (d) the wave-introduced + wave-last-updated provenance. No status label is changed, no number is changed, no CLM row is modified.
 
