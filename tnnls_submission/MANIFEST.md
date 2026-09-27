@@ -240,9 +240,9 @@ The rows below supersede earlier hashes and page counts for these four actively 
 
 | Current file | Bytes | SHA-256 | Current reading |
 |---|---:|---|---|
-| `../docs/drafts/paper-A-final.md` | 201271 | `42f423803bd524dc3c4eeb412ef2de594df8507d712c363e8c1814831e0b7633` | Canonical Markdown; added mechanism-isolation evidence from the Wave 184 round-count ablation. |
-| `../docs/drafts/paper-A-final.tex` | 49788 | `ba6e875482b9fc060188d8d9aaf60d8fcec06b5810e2904220e4f41fe46ac074` | Current IEEEtran source with mechanism map and mechanism-isolation paragraph. |
-| `../docs/drafts/paper-A-final.pdf` | 306189 | `916bb692c566bdf605dd7058c872c6189fb8084fdfcad26b7f160ab6a3df6811` | Current 9-page double-column PDF. |
+| `../docs/drafts/paper-A-final.md` | 201271 | `bd372b0d9df60eb193aaf9895d3b8ffa41663cd13d154781dc85c31acfa69bc0` | Canonical Markdown with the geometry-aware mechanism narrative. |
+| `../docs/drafts/paper-A-final.tex` | 51258 | `36862ad78983a32f8390542807a839f72c0c4d640a5a04df92b36dc20e75784c` | IEEEtran source with core FlowA mechanism figure. |
+| `../docs/drafts/paper-A-final.pdf` | 312275 | `7d53b4f1e5dc73b815f72903026acec8a7f4f8d10faf872cdc2f2116e6b66417` | Current 9-page double-column PDF. |
 | `cover_letter.md` | 74218 | `98ac764a3f101b4bb0b63393cf672f8d8c82889efba0dac5a757152457c09e02` | Current cover letter with a mechanism addendum. |
 
 Verification: `sha256sum -- docs/drafts/paper-A-final.{md,tex,pdf} tnnls_submission/cover_letter.md` from the repository root. The execution-path audit is `docs/audit/wave375-image-feedback-path.md`.

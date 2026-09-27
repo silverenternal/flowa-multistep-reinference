@@ -20,6 +20,8 @@
 \usepackage{hyperref}
 \usepackage{bm}
 \usepackage{textcomp}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
 
 % --- IEEEtran Nomenclature (math definitions) ---
 \newcommand{\NFE}{\mathrm{NFE}}
@@ -36,7 +38,7 @@
   citecolor=blue,
 }
 
-\title{FlowA: A Training-Free Re-Inference Framework for Frozen Flow-Matching Checkpoints}
+\title{FlowA: Geometry-Aware, Training-Free Re-Inference for Frozen Flow-Matching Checkpoints}
 
 \author{Anonymous for blind review.}
 
@@ -45,10 +47,10 @@
 \maketitle
 
 \begin{abstract}
-We reformulate inference for frozen flow-matching checkpoints on both sides of the sampling relation: a fresh initial condition becomes a feedback-driven restart blend, and a one-shot endpoint evaluation becomes an iterated composite flow map. The velocity-field ODE remains unchanged. Four typed control ports expose schedule, policy, merge, and restart decisions; a state bundle and hash-chained ledger make the new dynamics auditable. We prove fixed-point convergence under an explicit contraction condition and give an exact squared-error identity for restart blending. Eleven protein, molecular, toy, and image cells yield four strong main-cell results, one tie, and six partial or supplementary outcomes, with cell-specific seed and sample coverage. Cross-budget NFE estimates are distinguished from matched-NFE measurements. CIFAR-10 rectified flow improves in a single-round setting under some protocols but regresses with additional rounds; an MNIST smoke-checkpoint gain reverses on better-trained checkpoints. These results establish a set of operating regimes in which FlowA converts frozen checkpoints into stronger, more controllable inference systems.
+We introduce FlowA, a geometry-aware, training-free re-inference layer for frozen flow-matching checkpoints. FlowA intervenes at the inference state rather than retraining the velocity field: an adapter expresses the restart state in the checkpoint's native geometry, a typed policy blends the preceding state with fresh input, and a scheduler allocates correction capacity according to round and record difficulty. The frozen ODE is evaluated as a controlled composite map, with every transition recorded in a hash-linked state bundle. We prove fixed-point convergence under an explicit contraction condition and derive an exact squared-error identity for the restart blend. Across eleven protein, molecular, toy, and image cells, the observed gains follow the same design pattern: representation alignment improves the Kanzi reconstruction path, restart glue carries the LineageFlow gain in the round-count ablation, and difficulty-aware capacity explains the hard-tier foldability advantage replicated across protein adapters. The image cells define the operating regime of the intervention, with CIFAR-10 depending on round and schedule and MNIST depending on checkpoint quality. FlowA provides a reusable mechanism for improving frozen checkpoints through state geometry and controlled inference budgets.
 \end{abstract}
 \begin{IEEEkeywords}
-Flow matching, re-inference, frozen checkpoints, typed contracts, reproducibility.
+Flow matching, geometry-aware inference, frozen checkpoints, state intervention, typed contracts.
 \end{IEEEkeywords}
 
 \section{Introduction}
@@ -68,6 +70,29 @@ Let $\Phi_T^{v_\theta}$ denote the endpoint map of the frozen velocity field. Or
  \begin{aligned}x_{k+1}&=G_{b_{k+1}}(x_k)\\&:=\Phi_T^{v_\theta}\!\left(m x_k+(1-m)b_{k+1}\right),\quad 0\le m\le1.\end{aligned}
 \end{equation}
 Equation (1) changes both the input rule and the iteration of the endpoint relation. It does not change the differential equation $\dot x_t=v_\theta(x_t,t)$: the same frozen flow map is evaluated at each round. The composite map $G_b$ is therefore the mathematical object whose stability can be tested against round-count and checkpoint-setting boundaries, subject to the conditions in Section 6.
+
+\begin{figure}[t]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tikzpicture}[>=Latex, node distance=4mm and 5mm, every node/.style={font=\scriptsize}, box/.style={draw, rounded corners, align=center, minimum height=8mm, text width=24mm}, wide/.style={draw, rounded corners, align=center, minimum height=8mm, text width=30mm}, arrow/.style={->, thick}]
+\node[box, fill=blue!8] (native) {Checkpoint-native\\state geometry};
+\node[box, fill=orange!12, right=of native] (blend) {Restart blend\\$\mathcal{B}_m$};
+\node[wide, fill=green!10, right=of blend] (ode) {Frozen velocity field\\$\Phi_T^{v_\theta}$};
+\node[box, fill=purple!10, below=of blend] (sched) {Scheduler\\$n_{\rm cap}$};
+\node[box, fill=yellow!15, below=of ode] (ledger) {Typed endpoint +\\ledger digest};
+\draw[arrow] (native) -- node[above] {align} (blend);
+\draw[arrow] (blend) -- node[above] {intervene} (ode);
+\draw[arrow] (ode) -- node[right] {observe} (ledger);
+\draw[arrow] (ledger) -| node[pos=.25,below] {feedback} (sched);
+\draw[arrow] (sched) -| node[pos=.25,below] {budget} (blend);
+\begin{scope}[on background layer]
+\node[draw,dashed,rounded corners,inner sep=4mm,fit=(native)(blend)(ode)(sched)(ledger),label={[font=\scriptsize]above:FlowA inference intervention}] {};
+\end{scope}
+\end{tikzpicture}
+}%
+\caption{FlowA mechanism: native-state alignment, restart intervention, frozen flow, and scheduler feedback.}
+\label{fig:flowa-mechanism}
+\end{figure}
 
 \subsection{Typed ML systems and contract-driven design}
 
