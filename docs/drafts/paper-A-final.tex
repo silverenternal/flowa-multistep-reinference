@@ -88,20 +88,11 @@ The four-port control surface is a formal interface, not an implementation detai
 \begin{enumerate}
 \setlength{\itemsep}{2pt}
 \item \textbf{\texttt{SchedulerProtocol}} declares the per-round capacity scheduler contract: \texttt{sample(outer\_cycle\_id, round\_in\_cycle, target\_round) -> ScheduleSample}, \texttt{cycle\_length() -> int}, \texttt{schedule\_family() -> str}, \texttt{config\_hash() -> str}, \texttt{reset()}, \texttt{record\_round\_feedback(round\_in\_cycle, metrics)}, \texttt{inject\_noise(state, schedule\_sample, *, generator) -> state}. The \texttt{runtime\_checkable} decorator makes every concrete scheduler pass \texttt{isinstance(s, SchedulerProtocol)} iff it declares the method set; the framework never imports a concrete scheduler class.
-\end{enumerate}
 
-\begin{enumerate}
-\setlength{\itemsep}{2pt}
 \item \textbf{\texttt{PolicyDriverProtocol}} declares the per-round restart-decision contract: given a \texttt{MemoryFractionPolicy} and a \texttt{RestartPolicy}, return the per-round noise-and-step envelope. The default \texttt{ScheduleDerivedPolicyDriver} consumes only the scheduler's \texttt{memory\_fraction()}; \texttt{AdaptivePolicyDriver} consumes paper-quantity inputs when the optional theoretical companion is opted into (dormant under the cosine baseline).
-\end{enumerate}
 
-\begin{enumerate}
-\setlength{\itemsep}{2pt}
 \item \textbf{\texttt{MergeOperatorProtocol}} declares the round-boundary merge contract: given two states (incoming + outgoing), apply the bounded merge. \texttt{BoundedMergeOperator} ships as the default concrete implementation.
-\end{enumerate}
 
-\begin{enumerate}
-\setlength{\itemsep}{2pt}
 \item \textbf{\texttt{RestartBlenderProtocol}} declares the per-channel restart-blend contract: given a \texttt{memory\_fraction} and a per-channel residual profile, return the per-channel restart weight. \texttt{LinearBlender} and \texttt{CategoricalBlender} ship as the default concrete implementations.
 \end{enumerate}
 
@@ -185,37 +176,21 @@ To wrap a vendored checkpoint, the adapter subclass must declare nine methods (t
 \begin{enumerate}
 \setlength{\itemsep}{2pt}
 \item \texttt{capabilities() -> AdapterCapabilities} --- static handshake; advertises per-cell resolution, channel shape, weight path.
-\end{enumerate}
-\begin{enumerate}
-\setlength{\itemsep}{2pt}
+
 \item \texttt{build\_initial\_state(*, batch\_id, sample\_id) -> StateBundle} --- fresh prior at $t = 0$; encodes the vendored model's native state container into a typed bundle.
-\end{enumerate}
-\begin{enumerate}
-\setlength{\itemsep}{2pt}
+
 \item \texttt{export\_endpoint(state) -> StateBundle} --- native endpoint as a fresh bundle.
-\end{enumerate}
-\begin{enumerate}
-\setlength{\itemsep}{2pt}
+
 \item \texttt{detach\_and\_validate\_endpoint(bundle) -> StateBundle} --- fail-closed detach gate.
-\end{enumerate}
-\begin{enumerate}
-\setlength{\itemsep}{2pt}
+
 \item \texttt{apply\_restart\_distribution(state, policy) -> StateBundle} --- beta-blend prior; the framework's \texttt{RestartPolicy} is the only coupling.
-\end{enumerate}
-\begin{enumerate}
-\setlength{\itemsep}{2pt}
+
 \item \texttt{compose\_condition(bundle, delta) -> ODEConditionDelta} --- declarative condition.
-\end{enumerate}
-\begin{enumerate}
-\setlength{\itemsep}{2pt}
+
 \item \texttt{solve\_ode(state, condition, *, seed) -> ODEIntegratorTrace} --- the one method that calls vendored code (typically a single \texttt{vendored\_model.sample(...)} invocation).
-\end{enumerate}
-\begin{enumerate}
-\setlength{\itemsep}{2pt}
+
 \item \texttt{observe\_endpoint(trace, state) -> StateBundle} --- observation-only post-step.
-\end{enumerate}
-\begin{enumerate}
-\setlength{\itemsep}{2pt}
+
 \item \texttt{observe\_token\_indices(trace, paper\_quantities, *, temperature, rng) -> dict[str, Any]} --- per-channel token indices for Tier-3 metric-axis close.
 \end{enumerate}
 
@@ -346,7 +321,7 @@ The adversarial claims verifier (\texttt{tools/check\_claims\_consistency.py}) e
 The claims verifier checks statuses against recorded artifacts. Per-cell recipes pin commands, seeds, environment, and checkpoint provenance; the hash-chained ledger records round transitions. D.4 contains 30 byte-stable regression vectors. These checks establish replay integrity within their recorded environments, not statistical replication across every checkpoint.
 
 \section{Limitations and Future Work}
-The contraction theorem requires an invariant envelope and an adapter-specific $K$ with $mK<1$; neither is established for the reported image checkpoints. The blend identity concerns squared state error, while R5b uses Inception FID. A metric bridge would require new assumptions and validation. Protein records may cluster by family; the paper reports cluster-robust sensitivity where available. R1 is single-seed, R3's full paired $N=1000$ run is deferred by environment drift, and R6's tier-aware overall effect is a counterfactual pending live three-seed verification. R5c's first transition changes architecture and training-set size as well as epochs, while its intermediate checkpoint has one seed. Future work should measure map Lipschitz constants on invariant envelopes, replicate single-round and multi-round R5b protocols with one checkpoint and evaluator, and vary MNIST training epochs under fixed architecture and data.
+The contraction theorem requires an invariant envelope and an adapter-specific $K$ with $mK<1$; neither is established for the reported image checkpoints. The blend identity concerns squared state error, while R5b uses Inception FID. A metric bridge would require new assumptions and validation. Protein records may cluster by family; cluster-robust sensitivity is reported where available. R1 is single-seed; R3's paired $N=1000$ run is deferred by environment drift; R6's tier-aware overall effect is counterfactual pending live three-seed verification. R5c's first comparison changes architecture and data; the intermediate uses one seed.\par\newpage Future work should measure map Lipschitz constants on invariant envelopes, replicate single-round and multi-round R5b protocols with one checkpoint and evaluator, and vary MNIST training epochs under fixed architecture and data.
 
 \section{Conclusion}
 FlowA wraps frozen flow maps in an auditable, typed feedback loop. The conditional fixed-point result and blend identity characterize that loop under explicit assumptions. Across eleven cells, the evidence supports several gains and also identifies ties, single-seed or counterfactual results, and matched-NFE regressions. These limits define the present operating regime and the measurements needed before broader quality claims.
