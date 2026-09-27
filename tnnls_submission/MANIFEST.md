@@ -240,9 +240,9 @@ The rows below supersede earlier hashes and page counts for these four actively 
 
 | Current file | Bytes | SHA-256 | Current reading |
 |---|---:|---|---|
-| `../docs/drafts/paper-A-final.md` | 200674 | `68ff84ad0c9141bc6882229977ec848131577e51d5cc2f2e908dbde134130551` | Canonical Markdown; expanded mechanism-to-metric transfer section. |
-| `../docs/drafts/paper-A-final.tex` | 49205 | `86cb4346418033be9dc981e3e9808f20f318a00e83f31640d7a18500d741683f` | Current IEEEtran source with mechanism map and aligned table typography. |
-| `../docs/drafts/paper-A-final.pdf` | 306189 | `250069954fa7068140a1bc92f1cba69321ac3daae1929d0692ea8e6761e989fc` | Current 9-page double-column PDF. |
+| `../docs/drafts/paper-A-final.md` | 201271 | `42f423803bd524dc3c4eeb412ef2de594df8507d712c363e8c1814831e0b7633` | Canonical Markdown; added mechanism-isolation evidence from the Wave 184 round-count ablation. |
+| `../docs/drafts/paper-A-final.tex` | 49788 | `ba6e875482b9fc060188d8d9aaf60d8fcec06b5810e2904220e4f41fe46ac074` | Current IEEEtran source with mechanism map and mechanism-isolation paragraph. |
+| `../docs/drafts/paper-A-final.pdf` | 306189 | `916bb692c566bdf605dd7058c872c6189fb8084fdfcad26b7f160ab6a3df6811` | Current 9-page double-column PDF. |
 | `cover_letter.md` | 74218 | `98ac764a3f101b4bb0b63393cf672f8d8c82889efba0dac5a757152457c09e02` | Current cover letter with a mechanism addendum. |
 
 Verification: `sha256sum -- docs/drafts/paper-A-final.{md,tex,pdf} tnnls_submission/cover_letter.md` from the repository root. The execution-path audit is `docs/audit/wave375-image-feedback-path.md`.

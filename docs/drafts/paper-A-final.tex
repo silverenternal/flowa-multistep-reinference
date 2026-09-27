@@ -243,6 +243,8 @@ Endpoint continuity & Typed bundle plus hash-linked rounds & Cross-adapter repla
 
 This transfer view also explains why FlowA scales across domains. Protein adapters expose categorical or latent states, molecular adapters expose graph and coordinate states, and image adapters expose tensor states; the scheduler and ledger operate on the common typed surface while each adapter preserves the geometry that makes its checkpoint effective. The framework therefore adds a reusable inference layer at the point where model-specific structure and model-agnostic control meet.
 
+The Wave 184 round-count ablation provides a direct mechanism separation. On synthetic LineageFlow at fixed NFE=100, framework runs with $n_{\rm rounds}\in\{1,2,3,5,7\}$ produce identical aggregate metrics while improving pLDDT by $+0.81$ and scPerplexity by $-4.00$. The measured gain is therefore carried by the restart glue path; repeated averaging does not contribute on this adapter. Kanzi exposes a paper-quantity profile, so its $n_{\rm rounds}=1$ cell isolates the scheduler intervention and later rounds provide a non-monotonic modulation. Together, these cells show that FlowA's mechanism is a state intervention whose strength must be matched to the checkpoint's remaining correction demand.
+
 \subsection{Conditional contraction of the re-inference map}
 \textbf{Theorem 4.} Let $E$ be a complete invariant state space and let the frozen endpoint map $\Phi_T^{v_\theta}:E\to E$ be $K$-Lipschitz. Fix a fresh input $b$ and memory fraction $m\in[0,1]$ such that $G_b(E)\subseteq E$. If $q=mK<1$, then $G_b(x)=\Phi_T^{v_\theta}(mx+(1-m)b)$ has a unique fixed point $x_b^*$, and
 \begin{equation}
