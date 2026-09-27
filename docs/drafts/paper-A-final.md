@@ -284,6 +284,16 @@ Per the multi-wave pipeline inventory, 15 of 16 enumerated companion application
 
 ---
 
+### 3.9 Mechanistic design principles
+
+The integrations reveal three reusable principles that connect the abstract map to measurable gains. **Representation alignment** places the restart state in the coordinate system expected by the frozen checkpoint. In Kanzi, the inverse projection and DAE decoder map a sampled latent to backbone coordinates before the velocity field is evaluated, so the bridge uses the same geometric representation that defined the checkpoint's reconstruction objective.
+
+**Difficulty-selective computation** treats an aggregate score as a mixture of record-level regimes. For paired differences $\delta_i$ and tiers $t$, $\bar{\delta}=\sum_t(n_t/N)\bar{\delta}_t$. A scheduler can preserve capacity where the velocity field has the largest correction opportunity and reduce redundant computation on already-easy records. The hard-tier pLDDT gains and easy-tier losses observed on Kanzi and LineageFlow make this decomposition operational.
+
+**Auditable state continuity** turns a multi-round solver into a reproducible scientific object. Each transition carries the native state reference, schedule sample, policy, endpoint digest and ledger link. The same measurement surface can therefore be used across protein, molecule and image adapters: what state entered the solver, how much capacity was allocated, and which endpoint was returned. These logs support mechanism-aware ablations without modifying the frozen checkpoint.
+
+Together these principles define FlowA's value proposition: route inference through the representation a checkpoint already supports, allocate effort where the trajectory is hardest, and record each transition so that improvements can be reproduced and transferred across model families.
+
 ## 4 Scheduler Family
 
 ### 4.1 Thirteen-family taxonomy
