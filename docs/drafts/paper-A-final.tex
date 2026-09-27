@@ -1,7 +1,7 @@
 % =============================================================================
 % IEEEtran-journal typeset for TNNLS submission (Wave 331)
 % Source: docs/drafts/paper-A-final.md (DeepSeek 5-day RESOLUTION pass)
-% Title: FlowA: Geometry-Aware, Training-Free Re-Inference for Frozen Flow-Matching
+% Title: FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching
 %        Checkpoints
 % Template: IEEEtran-journal class, [twocolumn, final]
 % =============================================================================
@@ -38,7 +38,7 @@
   citecolor=blue,
 }
 
-\title{FlowA: Geometry-Aware, Training-Free Re-Inference for Frozen Flow-Matching Checkpoints}
+\title{FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints}
 
 \author{Anonymous for blind review.}
 
@@ -47,14 +47,14 @@
 \maketitle
 
 \begin{abstract}
-We introduce FlowA, a geometry-aware, training-free re-inference layer for frozen flow-matching checkpoints. FlowA changes the inference state and its update rule while keeping the learned velocity field fixed: adapters express restart states in checkpoint-native geometry, typed policies blend state and fresh input, and a scheduler allocates correction capacity by round and record difficulty. The resulting frozen ODE is evaluated as a controlled composite map, with each transition preserved in a hash-linked state bundle. We establish conditional fixed-point convergence and an exact squared-error identity for the restart blend, then connect these properties to mechanism-isolating evidence across eleven protein, molecular, toy, and image cells. Native-state alignment improves the Kanzi reconstruction path; restart glue carries the LineageFlow gain in the fixed-NFE round-count study; and difficulty-aware capacity concentrates foldability gains on hard protein records across adapters. Image cells further trace how the intervention responds to round, schedule, and checkpoint regime. FlowA turns mature frozen checkpoints into inspectable, geometry-aware inference systems without retraining.
+We introduce FlowA, a geometry-aware, training-free re-inference layer for frozen flow-matching checkpoints. We reformulate inference on both sides of the sampling relation while keeping the learned velocity field fixed: adapters express restart states in checkpoint-native geometry, typed policies blend state and fresh input, and a scheduler allocates correction capacity by round and record difficulty. The resulting frozen ODE is evaluated as a controlled composite map, with each transition preserved in a hash-linked state bundle. We establish conditional fixed-point convergence and an exact squared-error identity for the restart blend, then connect these properties to mechanism-isolating evidence across eleven protein, molecular, toy, and image cells. Native-state alignment improves the Kanzi reconstruction path; restart glue carries the LineageFlow gain in the fixed-NFE round-count study; and difficulty-aware capacity concentrates foldability gains on hard protein records across adapters. Image cells further trace how the intervention responds to round, schedule, and checkpoint regime. FlowA turns mature frozen checkpoints into inspectable, geometry-aware inference systems without retraining.
 \end{abstract}
 \begin{IEEEkeywords}
 Flow matching, geometry-aware inference, frozen checkpoints, state intervention, typed contracts.
 \end{IEEEkeywords}
 
 \section{Introduction}
-Frozen flow-matching checkpoints generate samples by integrating a learned velocity field once from a prior state. FlowA reforms this inference specification in two linked places: it expresses the next initial condition as a geometry-aware restart blend and turns the one-shot endpoint evaluation into an iterated composite map. The ODE and learned velocity field remain fixed, while the state transition becomes explicit, typed, and measurable. A four-port contract exposes schedule, policy, merge, and restart rules across protein, molecule, toy, and image adapters; a per-round state bundle and hash-chained ledger preserve each decision for replay.
+Frozen flow-matching checkpoints generate samples by integrating a learned velocity field once from a prior state. The reformulation acts in two linked places: it expresses the next initial condition as a geometry-aware restart blend and turns the one-shot endpoint evaluation into an iterated composite map. The ODE and learned velocity field remain fixed, while the state transition becomes explicit, typed, and measurable. A four-port contract exposes schedule, policy, merge, and restart rules across protein, molecule, toy, and image adapters; a per-round state bundle and hash-chained ledger preserve each decision for replay.
 
 Our contributions are (i) an inference-dynamics reformulation with a conditional contraction theorem; (ii) an exact restart-blend identity that provides a per-round state diagnostic; (iii) typed integration with five checkpoint adapters and zero edits to vendored code; and (iv) an eleven-cell evaluation organized around mechanism isolation and operating regimes. The evidence includes four strong main-cell results, one tie, and six partial or supplementary cells. R1 is single-seed; R3's paired per-record evidence is measured at $N=200$ and the larger paired result is projected; R6's overall tier-aware result is counterfactual. The 2.5--10$\times$ cross-budget NFE range is an extrapolation from published trajectories, not a measured wall-clock speedup. A direct Tier-1 measurement yields 1.0$\times$ NFE speedup (\texttt{wave73\_phase2\_tier1\_speedup.json}). Matched-NFE image quality depends on round count and checkpoint setting (Secs. 7.6 and 7.8). Four prespecified Bonferroni families and 30 byte-stable D.4 regression vectors support the evidence chain.
 
@@ -71,28 +71,7 @@ Let $\Phi_T^{v_\theta}$ denote the endpoint map of the frozen velocity field. Or
 \end{equation}
 Equation (1) changes both the input rule and the iteration of the endpoint relation while retaining the differential equation $\dot x_t=v_\theta(x_t,t)$. The same frozen flow map is evaluated at each round, so the composite map $G_b$ becomes the object whose stability can be measured across round-count and checkpoint settings under the conditions in Section 6.
 
-\begin{figure}[t]
-\centering
-\resizebox{\columnwidth}{!}{%
-\begin{tikzpicture}[>=Latex, node distance=4mm and 5mm, every node/.style={font=\scriptsize}, box/.style={draw, rounded corners, align=center, minimum height=8mm, text width=24mm}, wide/.style={draw, rounded corners, align=center, minimum height=8mm, text width=30mm}, arrow/.style={->, thick}]
-\node[box, fill=blue!8] (native) {Checkpoint-native\\state geometry};
-\node[box, fill=orange!12, right=of native] (blend) {Restart blend\\$\mathcal{B}_m$};
-\node[wide, fill=green!10, right=of blend] (ode) {Frozen velocity field\\$\Phi_T^{v_\theta}$};
-\node[box, fill=purple!10, below=of blend] (sched) {Scheduler\\$n_{\rm cap}$};
-\node[box, fill=yellow!15, below=of ode] (ledger) {Typed endpoint +\\ledger digest};
-\draw[arrow] (native) -- node[above] {align} (blend);
-\draw[arrow] (blend) -- node[above] {intervene} (ode);
-\draw[arrow] (ode) -- node[right] {observe} (ledger);
-\draw[arrow] (ledger) -| node[pos=.25,below] {feedback} (sched);
-\draw[arrow] (sched) -| node[pos=.25,below] {budget} (blend);
-\begin{scope}[on background layer]
-\node[draw,dashed,rounded corners,inner sep=4mm,fit=(native)(blend)(ode)(sched)(ledger),label={[font=\scriptsize]above:FlowA inference intervention}] {};
-\end{scope}
-\end{tikzpicture}
-}%
-\caption{FlowA mechanism: native-state alignment, restart intervention, frozen flow, and scheduler feedback.}
-\label{fig:flowa-mechanism}
-\end{figure}
+
 
 \subsection{Typed ML systems and contract-driven design}
 
@@ -154,7 +133,7 @@ where $d_k$ is a difficulty or residual descriptor, $m_k$ is the policy output, 
 Mechanism & Observable quantity & Evidence surface \\
 \midrule
 Native geometry & adapter state before ODE & Kanzi inverse-projection path; RMSD 0.9020$\rightarrow$0.8798 \AA{} at $N=1000$ \\
-Restart glue & round-count invariance & Wave 184: LineageFlow gain persists for $n_{\rm rounds}=1,2,3,5,7$ at fixed NFE=100 \\
+Restart glue & round-count invariance & fixed-NFE round-count study: the LineageFlow gain persists for $n_{\rm rounds}=1,2,3,5,7$ at NFE=100 \\
 Capacity allocation & tier-specific $n_{\rm cap}$ and $d_z$ & Kanzi k6 and LineageFlow: hard-tier pLDDT gains, easy-tier effects of opposite sign \\
 Frozen response & endpoint and metric trace & typed state bundle, ledger digest, and cross-adapter replay \\
 \bottomrule
@@ -163,6 +142,29 @@ Frozen response & endpoint and metric trace & typed state bundle, ledger digest,
 \end{table}
 
 This mechanism view also gives a practical design rule: increase intervention strength only when the checkpoint-native state exposes residual correction opportunity, and spend additional rounds where the record remains difficult. The formal properties in Section 6 characterize the composite map and blend; the empirical sections test each interface separately before presenting aggregate metrics.
+
+\begin{figure}[t]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tikzpicture}[>=Latex, node distance=4mm and 5mm, every node/.style={font=\scriptsize}, box/.style={draw, rounded corners, align=center, minimum height=8mm, text width=24mm}, wide/.style={draw, rounded corners, align=center, minimum height=8mm, text width=30mm}, arrow/.style={->, thick}]
+\node[box, fill=blue!8] (native) {Checkpoint-native\\state geometry};
+\node[box, fill=orange!12, right=of native] (blend) {Restart blend\\$\mathcal{B}_m$};
+\node[wide, fill=green!10, right=of blend] (ode) {Frozen velocity field\\$\Phi_T^{v_\theta}$};
+\node[box, fill=purple!10, below=of blend] (sched) {Scheduler\\$n_{\rm cap}$};
+\node[box, fill=yellow!15, below=of ode] (ledger) {Typed endpoint +\\ledger digest};
+\draw[arrow] (native) -- node[above] {align} (blend);
+\draw[arrow] (blend) -- node[above] {intervene} (ode);
+\draw[arrow] (ode) -- node[right] {observe} (ledger);
+\draw[arrow] (ledger) -| node[pos=.25,below] {feedback} (sched);
+\draw[arrow] (sched) -| node[pos=.25,below] {budget} (blend);
+\begin{scope}[on background layer]
+\node[draw,dashed,rounded corners,inner sep=4mm,fit=(native)(blend)(ode)(sched)(ledger),label={[font=\scriptsize]above:FlowA inference intervention}] {};
+\end{scope}
+\end{tikzpicture}
+}%
+\caption{FlowA mechanism: native-state alignment, restart intervention, frozen flow, and scheduler feedback.}
+\label{fig:flowa-mechanism}
+\end{figure}
 
 \subsection{Three-domain split}
 
@@ -310,7 +312,7 @@ Endpoint continuity & Typed bundle plus hash-linked rounds & Cross-adapter repla
 
 This transfer view also explains why FlowA scales across domains. Protein adapters expose categorical or latent states, molecular adapters expose graph and coordinate states, and image adapters expose tensor states; the scheduler and ledger operate on the common typed surface while each adapter preserves the geometry that makes its checkpoint effective. The framework therefore adds a reusable inference layer at the point where model-specific structure and model-agnostic control meet.
 
-The Wave 184 round-count ablation provides a direct mechanism separation. On synthetic LineageFlow at fixed NFE=100, framework runs with $n_{\rm rounds}\in\{1,2,3,5,7\}$ produce identical aggregate metrics while improving pLDDT by $+0.81$ and scPerplexity by $-4.00$. The measured gain is therefore carried by the restart glue path; repeated averaging does not contribute on this adapter. Kanzi exposes a paper-quantity profile, so its $n_{\rm rounds}=1$ cell isolates the scheduler intervention and later rounds provide a non-monotonic modulation. Together, these cells show that FlowA's mechanism is a state intervention whose strength must be matched to the checkpoint's remaining correction demand.
+The fixed-NFE round-count study provides a direct mechanism separation. On synthetic LineageFlow at fixed NFE=100, framework runs with $n_{\rm rounds}\in\{1,2,3,5,7\}$ produce identical aggregate metrics while improving pLDDT by $+0.81$ and scPerplexity by $-4.00$. The measured gain is therefore carried by the restart glue path; repeated averaging does not contribute on this adapter. Kanzi exposes a paper-quantity profile, so its $n_{\rm rounds}=1$ cell isolates the scheduler intervention and later rounds provide a non-monotonic modulation. Together, these cells show that FlowA's mechanism is a state intervention whose strength must be matched to the checkpoint's remaining correction demand.
 
 \subsection{Conditional contraction of the re-inference map}
 \textbf{Theorem 4.} Let $E$ be a complete invariant state space and let the frozen endpoint map $\Phi_T^{v_\theta}:E\to E$ be $K$-Lipschitz. Fix a fresh input $b$ and memory fraction $m\in[0,1]$ such that $G_b(E)\subseteq E$. If $q=mK<1$, then $G_b(x)=\Phi_T^{v_\theta}(mx+(1-m)b)$ has a unique fixed point $x_b^*$, and
@@ -368,9 +370,9 @@ R6 Kanzi k6 & pLDDT hard-tier gain & Conditional & Overall tier-aware result is 
 \textbf{Aggregate verdict distribution.} 4 STRONG + 1 TIE + 2 PARTIAL/single-seed + 4 SUPP-only = 11 cells. The main-cell status labels cover distinct protocols rather than a pooled effect: results are reported on the protein inv-proj foldability cell (R2), the matched-NFE CIFAR-10 RF cell with \texttt{n\_rounds} conditional boundary (R5b), the MNIST FM FID smoke ckpt cell (R5c), the Kanzi k6 tier-aware counterfactual foldability cell (R6), and the 2D Two Moons TIE cell (R5a). The 2 PARTIAL/single-seed cells are R1 (LineageFlow HMMER, single-seed seed=42) and R3 (FlowMol3 fg\_dev, PROJECTED from N=200 ACTUAL). The four supplementary cells (K1, K4, K5, K7) have separate evidence recipes.
 
 \subsection{Mechanism isolation and causal ordering}
-The empirical order follows the mechanism rather than the dataset list. First, R2 tests whether the restart state can be expressed in checkpoint-native geometry. Second, Wave 184 varies the number of rounds at fixed NFE to separate restart glue from repeated averaging. Third, R6 tests whether the observed hard/easy heterogeneity can be converted into a capacity rule and checks the pattern on a second protein adapter. Only after these isolations do we report the image and head-to-head cells, where the schedule and checkpoint define the operating regime.
+The empirical order follows the mechanism rather than the dataset list. First, R2 tests whether the restart state can be expressed in checkpoint-native geometry. Second, the fixed-NFE round-count study varies the number of rounds to separate restart glue from repeated averaging. Third, R6 tests whether the observed hard/easy heterogeneity can be converted into a capacity rule and checks the pattern on a second protein adapter. Only after these isolations do we report the image and head-to-head cells, where the schedule and checkpoint define the operating regime.
 
-Wave 184 is the key intervention-order control. On synthetic LineageFlow, all five round counts produce the same aggregate metrics while the framework changes pLDDT by $+0.81$ and scPerplexity by $-4.00$. The effect is already present in the one-round state intervention; extra rounds do not create a new gain on that adapter. Kanzi differs in the expected way: its paper-quantity profile changes the one-round scheduler decision, and later rounds modulate the result non-monotonically. The two cells therefore identify two separable levers---state glue and capacity allocation---inside one typed loop.
+The fixed-NFE round-count study is the key intervention-order control. On synthetic LineageFlow, all five round counts produce the same aggregate metrics while the framework changes pLDDT by $+0.81$ and scPerplexity by $-4.00$. The effect is already present in the one-round state intervention; extra rounds do not create a new gain on that adapter. Kanzi differs in the expected way: its paper-quantity profile changes the one-round scheduler decision, and later rounds modulate the result non-monotonically. The two cells therefore identify two separable levers---state glue and capacity allocation---inside one typed loop.
 
 The R6 decomposition provides the second causal check. For paired effects $\delta_i$ and tiers $t$, $\bar{\delta}=\sum_t(n_t/N)\bar{\delta}_t$. Kanzi k6 reports hard-tier pLDDT $d_z=+1.189$ and easy-tier $d_z=-0.998$; the LineageFlow replication reports $+1.840$ and $-0.590$, respectively. The repeated ordering across adapters is the signal used by the tier-aware scheduler: retain the hard-tier envelope and reduce the easy-tier envelope. The resulting tier-aware aggregate is shown as a design validation on the paired records, while the live scheduler path remains a separate deployment measurement.
 

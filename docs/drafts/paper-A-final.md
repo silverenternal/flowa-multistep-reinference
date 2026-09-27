@@ -1,8 +1,8 @@
-# FlowA: Geometry-Aware, Training-Free Re-Inference for Frozen Flow-Matching Checkpoints
+# FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints
 
 **Authors:** Anonymous for blind review.
 
-**Abstract.** We introduce FlowA, a geometry-aware, training-free re-inference layer for frozen flow-matching checkpoints. FlowA changes the inference state and its update rule while keeping the learned velocity field fixed: adapters express restart states in checkpoint-native geometry, typed policies blend state and fresh input, and a scheduler allocates correction capacity by round and record difficulty. The resulting frozen ODE is evaluated as a controlled composite map, with each transition preserved in a hash-linked state bundle. We establish conditional fixed-point convergence and an exact squared-error identity for the restart blend, then connect these properties to mechanism-isolating evidence across eleven protein, molecular, toy, and image cells. Native-state alignment improves the Kanzi reconstruction path; restart glue carries the LineageFlow gain in the fixed-NFE round-count study; and difficulty-aware capacity concentrates foldability gains on hard protein records across adapters. Image cells further trace how the intervention responds to round, schedule, and checkpoint regime. FlowA turns mature frozen checkpoints into inspectable, geometry-aware inference systems without retraining.
+**Abstract.** We introduce FlowA, a geometry-aware, training-free re-inference layer for frozen flow-matching checkpoints. We reformulate inference on both sides of the sampling relation while keeping the learned velocity field fixed: adapters express restart states in checkpoint-native geometry, typed policies blend state and fresh input, and a scheduler allocates correction capacity by round and record difficulty. The resulting frozen ODE is evaluated as a controlled composite map, with each transition preserved in a hash-linked state bundle. We establish conditional fixed-point convergence and an exact squared-error identity for the restart blend, then connect these properties to mechanism-isolating evidence across eleven protein, molecular, toy, and image cells. Native-state alignment improves the Kanzi reconstruction path; restart glue carries the LineageFlow gain in the fixed-NFE round-count study; and difficulty-aware capacity concentrates foldability gains on hard protein records across adapters. Image cells further trace how the intervention responds to round, schedule, and checkpoint regime. FlowA turns mature frozen checkpoints into inspectable, geometry-aware inference systems without retraining.
 
 **Index Terms.** Flow matching, rectified flow, training-free inference, re-inference, typed-contracts framework, framework properties, empirical verification, byte-stable reproducibility, hash-chained ledger.
 
@@ -309,7 +309,7 @@ where \(d_k\) is a difficulty descriptor and \(\delta_k\) is the paired metric e
 | Mechanism | Framework realization | Evidence |
 |---|---|---|
 | Native geometry | Adapter-specific state bridge | Kanzi RMSD 0.9020 \(→\) 0.8798 \AA{} at \(N=1000\) |
-| Restart glue | Bounded restart and endpoint carry | Wave 184 gain persists for \(n_{\rm rounds}\in\{1,2,3,5,7\}\) at fixed NFE=100 |
+| Restart glue | Bounded restart and endpoint carry | fixed-NFE round-count study: the gain persists for \(n_{\rm rounds}\in\{1,2,3,5,7\}\) at NFE=100 |
 | Capacity allocation | Residual/difficulty-aware \(n_{\rm cap}\) | Hard-tier pLDDT gains replicated on Kanzi and LineageFlow |
 | Frozen response | Endpoint observation and ledger trace | Typed bundles and cross-adapter replay |
 
@@ -407,7 +407,7 @@ FlowA's central engineering advantage is that one transition surface can express
 
 This transfer view explains why FlowA scales across domains. Protein adapters expose categorical or latent states, molecular adapters expose graph and coordinate states, and image adapters expose tensor states; the scheduler and ledger operate on the common typed surface while each adapter preserves the geometry that makes its checkpoint effective. The framework adds a reusable inference layer exactly where model-specific structure and model-agnostic control meet.
 
-The Wave 184 round-count ablation separates the two main pathways. On synthetic LineageFlow at fixed NFE=100, framework runs with $n_{\rm rounds}\in\{1,2,3,5,7\}$ produce identical aggregate metrics while improving pLDDT by $+0.81$ and scPerplexity by $-4.00$. The measured gain is carried by the restart glue path; repeated averaging does not change the result on this adapter. Kanzi exposes a paper-quantity profile, so its $n_{\\rm rounds}=1$ cell isolates the scheduler intervention and later rounds provide a non-monotonic modulation. Together, these cells show that FlowA is a state intervention whose strength is matched to the checkpoint's remaining correction demand.
+The fixed-NFE round-count study separates the two main pathways. On synthetic LineageFlow at fixed NFE=100, framework runs with $n_{\rm rounds}\in\{1,2,3,5,7\}$ produce identical aggregate metrics while improving pLDDT by $+0.81$ and scPerplexity by $-4.00$. The measured gain is carried by the restart glue path; repeated averaging does not change the result on this adapter. Kanzi exposes a paper-quantity profile, so its $n_{\\rm rounds}=1$ cell isolates the scheduler intervention and later rounds provide a non-monotonic modulation. Together, these cells show that FlowA is a state intervention whose strength is matched to the checkpoint's remaining correction demand.
 
 ### 6.1 Three formal properties
 
@@ -547,7 +547,7 @@ We validate FlowA across 11 headline cells — 7 R-level cells (R1 LineageFlow, 
 
 ### 7.3 Mechanism isolation and causal ordering
 
-The results are read in causal order. R2 tests whether the restart state reaches the checkpoint through native geometry. Wave 184 varies round count at fixed NFE and shows that the LineageFlow gain is already present in the one-round restart intervention: pLDDT changes by +0.81 and scPerplexity by −4.00, while aggregate metrics are identical for \(n_{\rm rounds}\in\{1,2,3,5,7\}\). Kanzi then exposes the complementary allocation effect: its one-round cell changes the scheduler decision, with later rounds adding non-monotonic modulation.
+The results are read in causal order. R2 tests whether the restart state reaches the checkpoint through native geometry. the fixed-NFE round-count study varies round count and shows that the LineageFlow gain is already present in the one-round restart intervention: pLDDT changes by +0.81 and scPerplexity by −4.00, while aggregate metrics are identical for \(n_{\rm rounds}\in\{1,2,3,5,7\}\). Kanzi then exposes the complementary allocation effect: its one-round cell changes the scheduler decision, with later rounds adding non-monotonic modulation.
 
 R6 supplies the record-level mechanism. Kanzi k6 has hard-tier pLDDT \(d_z=+1.189\) and easy-tier \(d_z=-0.998\); the LineageFlow replication gives \( +1.840\) and \( -0.590\). The repeated hard-to-easy ordering is the signal used by the tier-aware scheduler to preserve hard-tier capacity and reduce redundant easy-tier intervention. The tier-aware aggregate is reported as a design validation on the paired records, while the live scheduler measurement is a separate deployment target.
 

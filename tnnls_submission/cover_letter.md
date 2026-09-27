@@ -48,8 +48,8 @@ TNNLS Editorial Manager.
 **To:** Editor-in-Chief, IEEE Transactions on Neural Networks and
 Learning Systems (TNNLS)
 
-**Subject:** Submission of "FlowA: Geometry-Aware, Training-Free Re-Inference
-Re-Inference for Flow-Matching Checkpoints" for consideration as a
+**Subject:** Submission of "FlowA: Geometry-Aware State-Intervention Reformulation
+for Frozen Flow-Matching Checkpoints" for consideration as a
 regular research paper in IEEE TNNLS.
 
 **Authors:** `[USER TO FILL: Authors block — full author list,
