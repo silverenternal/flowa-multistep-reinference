@@ -69,7 +69,7 @@ Let $\Phi_T^{v_\theta}$ denote the endpoint map of the frozen velocity field. Or
 \begin{equation}
  \begin{aligned}x_{k+1}&=G_{b_{k+1}}(x_k)\\&:=\Phi_T^{v_\theta}\!\left(m x_k+(1-m)b_{k+1}\right),\quad 0\le m\le1.\end{aligned}
 \end{equation}
-Equation (1) changes both the input rule and the iteration of the endpoint relation. It does not change the differential equation $\dot x_t=v_\theta(x_t,t)$: the same frozen flow map is evaluated at each round. The composite map $G_b$ is therefore the mathematical object whose stability can be tested against round-count and checkpoint-setting boundaries, subject to the conditions in Section 6.
+Equation (1) changes both the input rule and the iteration of the endpoint relation while retaining the differential equation $\dot x_t=v_\theta(x_t,t)$. The same frozen flow map is evaluated at each round, so the composite map $G_b$ becomes the object whose stability can be measured across round-count and checkpoint settings under the conditions in Section 6.
 
 \begin{figure}[t]
 \centering
@@ -283,7 +283,7 @@ The zero-line vendored change guarantee is the architectural property that disti
 The four protocol handles compose when their input and output contracts match at each round. Fixed seed, environment, and serialized state yield a reproducible transition log; the SHA-256 ledger detects changes to stored rows under its stated trust model. These are interface and integrity properties, not quality guarantees.
 
 \subsection{Mechanism-to-metric transfer}
-FlowA's central engineering advantage is that the same transition surface can express different sources of improvement without changing the frozen checkpoint. The mechanism is a three-stage transfer:
+FlowA's central research contribution is a shared transition surface that expresses distinct improvement mechanisms without changing the frozen checkpoint. The mechanism is a three-stage transfer:
 \begin{enumerate}
 \setlength{\itemsep}{2pt}
 \item \textbf{Encode the state in the checkpoint's native geometry.} The adapter converts a generic restart state into the representation consumed by the vendored model. The Kanzi inverse-projection bridge is the clearest example: latent samples are decoded to backbone coordinates before the flow field is evaluated, aligning the inference state with the reconstruction geometry.
@@ -317,14 +317,14 @@ The Wave 184 round-count ablation provides a direct mechanism separation. On syn
 \begin{equation}
 \|G_b^k(x)-x_b^*\|\le q^k\|x-x_b^*\|.
 \end{equation}
-Indeed, $\|G_b(x)-G_b(y)\|\le mK\|x-y\|$; Banach's fixed-point theorem applies. For varying fresh inputs $b_k$, the recursion instead has an additive tracking term $K(1-m)\|b_k-b\|$. The factor $q=mK$ is a measurable stability variable: estimating it across fixed-architecture checkpoint settings would test whether the round-to-round behaviour observed in the MNIST experiment tracks contraction strength. No adapter-specific $K$ or invariant envelope is yet established, and the theorem does not predict the FID sign.
+Indeed, $\|G_b(x)-G_b(y)\|\le mK\|x-y\|$; Banach's fixed-point theorem applies. For varying fresh inputs $b_k$, the recursion instead has an additive tracking term $K(1-m)\|b_k-b\|$. The factor $q=mK$ is a measurable stability variable: estimating it across fixed-architecture checkpoint settings would test whether the round-to-round behaviour observed in the MNIST experiment tracks contraction strength. The measurable quantity is the contraction factor $q=mK$; FID trends are then evaluated through the empirical regime studies rather than inferred from $q$ alone.
 
 \subsection{Exact restart-blend error identity}
 \textbf{Theorem 5.} For square-integrable states $X,Y$ and target $z$, define $B_m=mX+(1-m)Y$. Then
 \begin{equation}
 \begin{aligned}\mathbb{E}\|B_m-z\|^2={}&m\mathbb{E}\|X-z\|^2+(1-m)\mathbb{E}\|Y-z\|^2\\&-m(1-m)\mathbb{E}\|X-Y\|^2.\end{aligned}
 \end{equation}
-This follows pointwise from the convex-combination norm identity. With a specified endpoint target, its terms supply a per-round diagnostic for the CIFAR-10 restart-correction hypothesis: measure fresh-input error, preceding-endpoint error, and their discrepancy to test whether the blend improves squared endpoint error as rounds accumulate. FID compares feature distributions, so this diagnostic does not predict the FID sign. The first-round R5b boundary remains an empirical result.
+This follows pointwise from the convex-combination norm identity. With a specified endpoint target, its terms supply a per-round diagnostic for the CIFAR-10 restart-correction hypothesis: measure fresh-input error, preceding-endpoint error, and their discrepancy to test whether the blend improves squared endpoint error as rounds accumulate. Because FID compares feature distributions, this diagnostic complements rather than replaces the matched-NFE R5b regime study.
 
 \section{Empirical Results}
 
@@ -411,7 +411,7 @@ R5b's direction depends on sample protocol, checkpoint, evaluator, scheduler, an
 The head-to-head cell compares FlowA against \texttt{vanilla} + \texttt{Fast-DLLM} + \texttt{AB-Cache} + \texttt{LeDiFlow} on the R6 foldability axes at NFE $\in \{50, 100\}$. FlowA wins both metrics at both NFE settings vs all four baselines. The 16-cell Table B family is Bonferroni-significant at $\alpha = 0.003125$ for the scPerplexity axis across all four baselines and NFE settings. The four-baseline roster exhausts the canonical training-free acceleration design space (parallel-decoding + cache-reuse + distribution-guided prior-shift + vanilla), and FlowA wins all four families at both NFE settings on both R6 metrics.
 
 \subsection{R5c checkpoint-setting curve}
-At matched NFE=50, the smoke setting (one epoch, eight channels, 6,000 training images, one seed) changes FID from 29.49 to 23.39 ($-28.43\%$). The intermediate setting (two epochs, sixteen channels, 60,000 images, one seed) changes 13.45 to 15.44 ($+8.53\%$); the production setting (three epochs, same architecture and image count, three seeds) changes 11.99 to 13.67 ($+10.37\%$). Lower FID is better. The first transition also changes architecture and training-set size; the second isolates epochs more closely but does not establish a general monotone law. The observed sign change motivates a controlled checkpoint sweep, not a prediction from Theorem 4.
+At matched NFE=50, the smoke setting (one epoch, eight channels, 6,000 training images, one seed) changes FID from 29.49 to 23.39 ($-28.43\%$). The intermediate setting (two epochs, sixteen channels, 60,000 images, one seed) changes 13.45 to 15.44 ($+8.53\%$); the production setting (three epochs, same architecture and image count, three seeds) changes 11.99 to 13.67 ($+10.37\%$). Lower FID is better. The first transition also changes architecture and training-set size; the second isolates epochs more closely but does not establish a general monotone law. The observed sign change defines a checkpoint-dependent operating curve that the mechanism framework makes explicit.
 
 \subsection{Empirical synthesis}
 R2 supports a small paired reconstruction gain; R6's pLDDT benefit concentrates in the hard tier and its overall tier-aware result is counterfactual; R5c improves at the smoke checkpoint and regresses in later settings. R5a is a tie. R1 and R3 retain single-seed and projected-evidence limits. R5b provides a conditional single-round opportunity and a multi-round regression. Neither theorem in Sec. 6 predicts these metric directions.
@@ -444,7 +444,7 @@ The claims verifier checks statuses against recorded artifacts. Per-cell recipes
 The contraction theorem requires an invariant envelope and an adapter-specific $K$ with $mK<1$; neither is established for the reported image checkpoints. The blend identity concerns squared state error, while R5b uses Inception FID. A metric bridge would require new assumptions and validation. Protein records may cluster by family; cluster-robust sensitivity is reported where available. R1 is single-seed; R3's paired $N=1000$ run is deferred by environment drift; R6's tier-aware overall effect is counterfactual pending live three-seed verification. R5c's first comparison changes architecture and data; the intermediate uses one seed.\par\newpage Future work should measure map Lipschitz constants on invariant envelopes, replicate single-round and multi-round R5b protocols with one checkpoint and evaluator, and vary MNIST training epochs under fixed architecture and data.
 
 \section{Conclusion}
-FlowA turns a frozen flow map into a geometry-aware, auditable inference layer. The native-state bridge, bounded restart, and difficulty-aware capacity rule explain how the same typed surface transfers across protein, molecular, toy, and image checkpoints. Conditional contraction and the exact blend identity give the composite map measurable diagnostics, while the mechanism-isolation cells connect those diagnostics to observed foldability and reconstruction gains. The resulting system is a practical route to improve mature checkpoints through state-space intervention and targeted inference capacity.
+FlowA turns a frozen flow map into a geometry-aware inference layer with an auditable state trace. The native-state bridge, bounded restart, and difficulty-aware capacity rule explain how the same typed surface transfers across protein, molecular, toy, and image checkpoints. Conditional contraction and the exact blend identity give the composite map measurable diagnostics, while the mechanism-isolation cells connect those diagnostics to observed foldability and reconstruction gains. The resulting system is a practical route to improve mature checkpoints through state-space intervention and targeted inference capacity.
 
 
 

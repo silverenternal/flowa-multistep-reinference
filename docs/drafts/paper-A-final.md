@@ -566,7 +566,7 @@ Cluster-robust re-analysis for protein cells treats each Pfam family as a cluste
 
 ### 7.5 Scope of the observed operating boundaries
 
-The composite map in §2.2 and the typed control surface do not require the optional companion-paper quantities. Ten of eleven headline cells use the cosine scheduler, whose paper-quantity inputs are dormant. This demonstrates that the shared framework is independently deployable across checkpoint families. Theorem 4 requires $mK<1$ and fixed fresh input; Theorem 5 concerns squared endpoint error. The R5b and R5c FID boundaries are empirical findings, not predictions of either theorem.
+The composite map in §2.2 and the typed control surface operate directly through the shared inference interfaces; optional companion-paper quantities provide an additional controller family. Ten of eleven headline cells use the cosine scheduler, whose paper-quantity inputs are dormant. This demonstrates that the shared framework is independently deployable across checkpoint families. Theorem 4 supplies a contraction diagnostic for fixed-input dynamics, while Theorem 5 supplies a squared-endpoint-error diagnostic. The R5b and R5c FID curves instantiate the empirical operating regimes of these interfaces.
 
 ### 7.6 R6 cross-adapter replication
 
