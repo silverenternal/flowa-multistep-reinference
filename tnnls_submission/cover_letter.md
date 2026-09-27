@@ -1,5 +1,7 @@
 # Cover Letter — FlowA for IEEE TNNLS
 
+> **Wave 372 manuscript correction for the editor.** The current PDF is eight IEEEtran double-column pages. It proves fixed-point convergence only under an explicit contraction condition and gives an exact restart-blend squared-error identity. Neither theorem establishes a CIFAR-10 FID direction or a universal checkpoint-quality trend. The production CIFAR-10 single-round summary improves on two of four scheduler arms at N=1000, seed 42; its N=200 single-round probe improves on four arms, one by only 0.117%. The 2.5–10× cross-budget NFE range is an extrapolation, while the directly measured Tier-1 speedup is 1.0×. Any earlier cover-letter wording or formula inconsistent with this correction is superseded by this paragraph and the Wave 372 manuscript.
+
 ## §0 USER ACTION REQUIRED — Fill These Placeholders Before Submitting
 
 This cover letter contains placeholders that **must be replaced by the

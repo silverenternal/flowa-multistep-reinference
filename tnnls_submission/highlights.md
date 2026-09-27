@@ -1,5 +1,15 @@
 # TNNLS Editor-Facing Highlights — FlowA
 
+## Wave 372 current highlights (supersede the historical list below)
+
+1. Frozen flow maps become an auditable feedback loop through four typed control ports and a hash-chained round ledger.
+2. Fixed-point convergence is proved when the memory-weighted endpoint-map Lipschitz constant is below one.
+3. An exact restart-blend squared-error identity is established; neither theorem determines the sign of Inception FID.
+4. Eleven cells include conditional CIFAR-10 single-round gains, multi-round regressions, and an MNIST checkpoint-setting reversal.
+5. The 2.5–10× NFE range is a trajectory-based extrapolation; directly measured Tier-1 speedup is 1.0×.
+
+The former Theorem 4 convergence-rate and Theorem 5 FID-attenuation formulas in the frozen historical list below were withdrawn after the Wave 372 audit. The current manuscript and the five highlights above govern submission wording.
+
 **Status:** 5 highlights, each ≤ 25 words (Wave 356 P4 final polish; expanded from
 3 highlights at ≤ 85 chars to 5 highlights at ≤ 25 words so the editor-facing
 summary surfaces the framework innovations, the two formal theorems, the honest
