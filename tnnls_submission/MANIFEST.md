@@ -240,9 +240,9 @@ The rows below supersede earlier hashes and page counts for these four actively 
 
 | Current file | Bytes | SHA-256 | Current reading |
 |---|---:|---|---|
-| `../docs/drafts/paper-A-final.md` | 198090 | `2f0ad6299e5fe41c72251cc37584a9f290595a39a3b4cca3d987d160fb0327dc` | Canonical Markdown; added the R2/R6 mechanism explanation and design-principles section. |
-| `../docs/drafts/paper-A-final.tex` | 46806 | `205af78ff47bb88771c2757e754df7c09c0ff5caab5aa19f4a6109d9be71e9ed` | Current IEEEtran source with aligned mechanism section. |
-| `../docs/drafts/paper-A-final.pdf` | 286624 | `d091a9b319a0e69d45310b265e4922b0a5cfbebd46d23399b992b9cfd08e3f7c` | Current 8-page double-column PDF. |
+| `../docs/drafts/paper-A-final.md` | 200674 | `68ff84ad0c9141bc6882229977ec848131577e51d5cc2f2e908dbde134130551` | Canonical Markdown; expanded mechanism-to-metric transfer section. |
+| `../docs/drafts/paper-A-final.tex` | 49205 | `86cb4346418033be9dc981e3e9808f20f318a00e83f31640d7a18500d741683f` | Current IEEEtran source with mechanism map and aligned table typography. |
+| `../docs/drafts/paper-A-final.pdf` | 306189 | `250069954fa7068140a1bc92f1cba69321ac3daae1929d0692ea8e6761e989fc` | Current 9-page double-column PDF. |
 | `cover_letter.md` | 74218 | `98ac764a3f101b4bb0b63393cf672f8d8c82889efba0dac5a757152457c09e02` | Current cover letter with a mechanism addendum. |
 
 Verification: `sha256sum -- docs/drafts/paper-A-final.{md,tex,pdf} tnnls_submission/cover_letter.md` from the repository root. The execution-path audit is `docs/audit/wave375-image-feedback-path.md`.

@@ -215,6 +215,34 @@ The zero-line vendored change guarantee is the architectural property that disti
 \section{Framework Properties}
 The four protocol handles compose when their input and output contracts match at each round. Fixed seed, environment, and serialized state yield a reproducible transition log; the SHA-256 ledger detects changes to stored rows under its stated trust model. These are interface and integrity properties, not quality guarantees.
 
+\subsection{Mechanism-to-metric transfer}
+FlowA's central engineering advantage is that the same transition surface can express different sources of improvement without changing the frozen checkpoint. The mechanism is a three-stage transfer:
+\begin{enumerate}
+\setlength{\itemsep}{2pt}
+\item \textbf{Encode the state in the checkpoint's native geometry.} The adapter converts a generic restart state into the representation consumed by the vendored model. The Kanzi inverse-projection bridge is the clearest example: latent samples are decoded to backbone coordinates before the flow field is evaluated, aligning the inference state with the reconstruction geometry.
+\item \textbf{Allocate capacity by correction opportunity.} The scheduler maps per-round information and record difficulty to an NFE envelope. Hard protein records receive the full correction budget while already-easy records can be processed with a lighter envelope. This makes the observed hard-tier pLDDT advantage actionable rather than an after-the-fact stratification.
+\item \textbf{Convert endpoints into reusable evidence.} The endpoint, policy and schedule are returned as typed objects and linked by the ledger. The same run can therefore be inspected at the state, round, record and aggregate levels, allowing a mechanism discovered on one adapter to be tested on another.
+\end{enumerate}
+
+Table~\ref{tab:mechanism-map} summarizes how these stages connect implementation to the headline measurements.
+\begin{table}[t]
+\centering\footnotesize
+\setlength{\tabcolsep}{2pt}
+\caption{Mechanism map from implementation to measured evidence.}
+\label{tab:mechanism-map}
+\begin{tabular}{p{0.21\columnwidth}p{0.31\columnwidth}p{0.34\columnwidth}}
+\toprule
+Mechanism & Framework realization & Evidence surface \\
+\midrule
+Representation alignment & Latent-to-coordinate adapter bridge & Kanzi RMSD 0.9020 $\rightarrow$ 0.8798~\AA{} \\
+Difficulty-aware budget & Tier-aware $n_{\rm cap}$ allocation & Hard-tier pLDDT gains on Kanzi and LineageFlow \\
+Endpoint continuity & Typed bundle plus hash-linked rounds & Cross-adapter replay and D.4 byte stability \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This transfer view also explains why FlowA scales across domains. Protein adapters expose categorical or latent states, molecular adapters expose graph and coordinate states, and image adapters expose tensor states; the scheduler and ledger operate on the common typed surface while each adapter preserves the geometry that makes its checkpoint effective. The framework therefore adds a reusable inference layer at the point where model-specific structure and model-agnostic control meet.
+
 \subsection{Conditional contraction of the re-inference map}
 \textbf{Theorem 4.} Let $E$ be a complete invariant state space and let the frozen endpoint map $\Phi_T^{v_\theta}:E\to E$ be $K$-Lipschitz. Fix a fresh input $b$ and memory fraction $m\in[0,1]$ such that $G_b(E)\subseteq E$. If $q=mK<1$, then $G_b(x)=\Phi_T^{v_\theta}(mx+(1-m)b)$ has a unique fixed point $x_b^*$, and
 \begin{equation}

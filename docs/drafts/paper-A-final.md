@@ -370,6 +370,22 @@ The zero-line vendored change guarantee is the architectural property that disti
 
 **Proof-scope correction (Wave 372).** The previously stated residual-error exponential rate and first-round-only FID sign bound are not established by the assumptions printed in this manuscript. The revised statements below give the contraction and blend identities that do follow from explicit hypotheses. The R5b round-count transition remains an empirical observation with protocol-specific evidence in §7.2 and §7.6; its former derivation is retained in Git history and assessed in `docs/audit/wave372-manuscript-claim-audit.md`.
 
+### 6.1 Mechanism-to-metric transfer
+
+FlowA's central engineering advantage is that one transition surface can express different sources of improvement without changing the frozen checkpoint. The mechanism is a three-stage transfer:
+
+1. **Encode the state in the checkpoint's native geometry.** The adapter converts a generic restart state into the representation consumed by the vendored model. The Kanzi inverse-projection bridge maps latent samples to backbone coordinates before the flow field is evaluated, aligning the inference state with the reconstruction geometry.
+2. **Allocate capacity by correction opportunity.** The scheduler maps record difficulty and per-round information to an NFE envelope. Hard protein records retain the full correction budget while already-easy records can use a lighter envelope, turning the hard-tier pLDDT pattern into an actionable allocation rule.
+3. **Convert endpoints into reusable evidence.** Endpoint, policy and schedule are returned as typed objects and linked by the ledger. A run can therefore be inspected at state, round, record and aggregate levels, allowing a mechanism discovered on one adapter to be tested on another.
+
+| Mechanism | Framework realization | Evidence surface |
+|---|---|---|
+| Representation alignment | Latent-to-coordinate adapter bridge | Kanzi RMSD 0.9020 → 0.8798 Å |
+| Difficulty-aware budget | Tier-aware $n_{\rm cap}$ allocation | Hard-tier pLDDT gains on Kanzi and LineageFlow |
+| Endpoint continuity | Typed bundle plus hash-linked rounds | Cross-adapter replay and D.4 byte stability |
+
+This transfer view explains why FlowA scales across domains. Protein adapters expose categorical or latent states, molecular adapters expose graph and coordinate states, and image adapters expose tensor states; the scheduler and ledger operate on the common typed surface while each adapter preserves the geometry that makes its checkpoint effective. The framework adds a reusable inference layer exactly where model-specific structure and model-agnostic control meet.
+
 ### 6.1 Three formal properties
 
 This section establishes three formal properties of the typed-contracts framework: (i) **protocol composition closure** — the four-protocol composition layer is closed under sequential composition, so any well-typed per-protocol instance composes into a well-typed runner; (ii) **state-machine byte-determinism** — the orchestrator state machine is byte-identical across runs on a fixed Python version + RNG seed; (iii) **ledger tamper-evidence** — the append-only hash chain detects any post-hoc tampering with $O(1)$ amortised verification. §6.5 proves conditional fixed-point contraction for a fixed fresh input, and §6.6 gives an exact restart-blend squared-error identity. Neither theorem determines FID or explains the R5c checkpoint trend without further assumptions.
