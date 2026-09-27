@@ -231,3 +231,18 @@ The READY_TO_SUBMIT verdict from Wave 324 D+5 holds. The two MEDIUM inconsistenc
 ---
 
 **End of MANIFEST.md**
+
+---
+
+## Wave 375 current-artifact SHA-256 addendum (2026-09-27)
+
+The rows below supersede earlier hashes and page counts for these four actively edited files. Historical rows above remain as an audit trail under the submission freeze.
+
+| Current file | Bytes | SHA-256 | Current reading |
+|---|---:|---|---|
+| `../docs/drafts/paper-A-final.md` | 196347 | `b6c40b6ef56aafbe2d810d12f0b25ec79d8324a4aa07c2885429622185cbf861` | Canonical Markdown; added the R2/R6 mechanism explanation. |
+| `../docs/drafts/paper-A-final.tex` | 44849 | `a424c37f54001ae58ab080a4c880f5817d5f360627478d43d457248c2b484c26` | Current IEEEtran source. |
+| `../docs/drafts/paper-A-final.pdf` | 284849 | `74875de8a0835968f162a47c724dc9133a3fbb1b2ef32866a46caf23a9c06672` | Current 8-page double-column PDF. |
+| `cover_letter.md` | 74218 | `98ac764a3f101b4bb0b63393cf672f8d8c82889efba0dac5a757152457c09e02` | Current cover letter with a mechanism addendum. |
+
+Verification: `sha256sum -- docs/drafts/paper-A-final.{md,tex,pdf} tnnls_submission/cover_letter.md` from the repository root. The execution-path audit is `docs/audit/wave375-image-feedback-path.md`.

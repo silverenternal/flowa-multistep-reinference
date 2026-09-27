@@ -1236,3 +1236,9 @@ Sincerely,
 5. Data availability statement (Zenodo DOIs for code + data).
 6. Reproducibility checklist (per `docs/tnnls_submission_checklist.md`
    §5 acceptance gates).
+
+---
+
+## Current manuscript mechanism addendum (2026-09-27)
+
+The current eight-page IEEEtran manuscript explains two concrete pathways behind its frozen-checkpoint results. For Kanzi, the trained inverse-projection and DAE bridge puts the sampled state in the checkpoint's backbone-coordinate input space; the paired reconstruction comparison at N=1000 is 0.9020 to 0.8798 Å. For protein foldability, paired results on Kanzi k6 and LineageFlow show larger pLDDT benefit on hard records than on easy records. This observed heterogeneity motivates the implemented tier-aware capacity controller. The reported overall tier-aware uplift is a counterfactual analysis of frozen paired differences; a live controller evaluation remains the next causal test. The source-level evidence chain is recorded in `docs/audit/wave375-image-feedback-path.md` and the R2/R6 per-cell recipes. This addendum supersedes historical page-count and mechanism descriptions above where they differ from the current PDF.

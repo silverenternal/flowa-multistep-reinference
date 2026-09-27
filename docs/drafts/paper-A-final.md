@@ -515,6 +515,12 @@ The composite map in §2.2 and the typed control surface do not require the opti
 
 The R6 k6 foldability pattern (SELECTIVE-pLDDT / UNIVERSAL-scPerplexity) is replicated on a second adapter (LineageFlow $N = 574$ paired records, hard tier $n = 191$, medium tier $n = 192$, easy tier $n = 191$): hard pLDDT $d_z = +1.840 > +1.189$ (k6 hard pLDDT); medium pLDDT $d_z = +0.976 > +0.218$; easy pLDDT $d_z = -0.590$ (same sign as k6 easy $d_z = -0.998$); scPerplexity $d_z$ uniformly in $[-1.002, -1.044]$. The monotone `hard > medium > easy` in pLDDT $d_z$ is TRUE on both adapters; the SELECTIVE-pLDDT / UNIVERSAL-scPerplexity framing is CONFIRMED on 2 adapters.
 
+#### 7.5.1 Where the measured gains can arise
+
+In the Kanzi framework arm, a sampled latent passes through the trained inverse projection and DAE decoder into backbone coordinates before the frozen velocity-field solve. That bridge aligns the numerical state with the checkpoint's expected coordinate representation. The paired $N=1000$ reconstruction RMSD changes from 0.9020 to 0.8798 Å. This measures the complete valid pathway; a matched bridge ablation would be needed to assign the 0.022 Å difference to inverse projection alone (`paper-data/R2_kanzi_rmsd/R2_SOURCE.md`).
+
+The protein foldability data reveal a second, allocation-level mechanism. Let $\delta_i$ be the paired framework-minus-baseline pLDDT for record $i$. Its overall mean decomposes exactly as $\bar\delta=\sum_t(n_t/N)\bar\delta_t$ across difficulty tiers $t$. Hard-tier benefit and easy-tier loss can cancel in the aggregate, even if difficult proteins improve. This direction pattern appears on both Kanzi k6 and LineageFlow (§7.5). A tier-aware controller implements the corresponding allocation rule by reducing the easy-tier capacity fraction while retaining the hard-tier allocation. The reported overall change from $d_z=+0.071$ to $+0.2235$ is a counterfactual transformation of frozen paired differences; a live controller run is still needed to measure the scheduler's effect (`paper-data/R6_lineageflow_k6/R6_SOURCE.md`). The measured cross-adapter heterogeneity supplies a concrete reason to test selective compute allocation.
+
 ### 7.6 NFE-matched boundary
 
 R5b is informative because the same total NFE budget can lead to different FID directions as the round count and evaluation protocol change. The following readings are separate sweeps; their baseline FIDs and sample sizes differ, so the rows must not be treated as one paired trajectory.
