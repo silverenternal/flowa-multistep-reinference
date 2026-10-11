@@ -188,7 +188,7 @@ proof sketches; the source markdown (above) carries the full proofs.
 - [`tnnls_submission/README.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/README.md) — ScholarOne upload instructions
 - [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md) — cover letter (17 USER placeholders — see `FILL_GUIDE.md`)
 - [`tnnls_submission/FILL_GUIDE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/FILL_GUIDE.md) — fill-guide for cover-letter placeholders
-- [`docs/drafts/paper-A-final.{tex,pdf}`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/drafts) — 10-page IEEEtran-typeset manuscript (TNNLS-ready)
+- [`docs/drafts/paper-A-final.{tex,pdf}`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/drafts) — 11-page IEEEtran-typeset manuscript (TNNLS-ready)
 - [`docs/drafts/paper-A-final.aux`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.aux) / [`.log`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.log) — typeset diagnostic logs (compile-clean)
 
 ## G. Review-reproducibility bundle (Wave 344 — single-archive package)

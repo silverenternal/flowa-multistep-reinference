@@ -8,7 +8,7 @@
 
 ### Manuscript
 
-- [x] **Manuscript ≤ 14 pages** (TNNLS main-track limit) excluding refs + supplementary — [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) typeset to double-column 14-page TNNLS format via `site/build_pdf/`. Pages preserved at 14 ±2.
+- [x] **Manuscript ≤ 14 pages** (TNNLS main-track limit) excluding refs + supplementary — [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) typeset to double-column TNNLS format via `site/build_pdf/`. Current build 11 pages (well within the ≤ 14 limit).
 - [x] **Cover letter uploaded to Editorial Manager** — [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md) (snapshot of [`docs/cover-letter-tnnls.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/cover-letter-tnnls.md)). All 11 USER ACTION placeholders filled before upload.
 - [x] **Highlights (3 bullets, 85-char each)** — [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md).
 - [x] **Anonymized** — no author / institution / acknowledgement visible in [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md), [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md), or supplementary.
@@ -118,7 +118,7 @@
 | 4 | claims consistency PASS | **PASS** | `python3 tools/check_claims_consistency.py` → no drift (61 active + 2 deprecated claims) |
 | 5 | 17 USER_TO_FILL placeholders documented | **PASS** (documented in FILL_GUIDE.md) | `tnnls_submission/FILL_GUIDE.md` documents 17 fillable fields (1 author + 1 editor + 5 reviewers × {affiliation, email} + 3 corresponding-author); 31 grep hits = 17 distinct fields + 14 documentation-pointer occurrences |
 | 6 | MANIFEST.md SHA-256 ledger current | **PENDING** (displayed SHA stale; per MANIFEST self-reference note intentional) | MANIFEST row 23 displays `f93c7df70be...` (46891 bytes) but `sha256sum tnnls_submission/MANIFEST.md` computes `5c593ed8b01b76c...` (47820 bytes); per MANIFEST self-reference note the displayed SHA is "the hash of the bytes BEFORE this very SHA-row was added"; final rehash is the freeze-marker step |
-| 7 | paper.pdf page count ≤ 14 | **PASS** | `pdfinfo docs/drafts/paper-A-final.pdf` → 14 pages |
+| 7 | paper.pdf page count ≤ 14 | **PASS** | `pdfinfo docs/drafts/paper-A-final.pdf` → 11 pages |
 | 8 | supplementary submittable | **PASS** | `tnnls_submission/supplementary_bundle.zip` (148 MB) + `tnnls_submission/supplementary/README.md` byte-stable; 40 entries |
 | 9 | cover letter submittable | **PENDING** (17 USER_TO_FILL placeholders un-filled) | `grep -c "USER TO FILL" tnnls_submission/cover_letter.md` → 31 hits; per FILL_GUIDE.md §168 the 17 actual fillable fields should show no `[USER TO FILL: ...]` strings after user fills them; user-gated per `cover_letter_FILL_AUTOFILL.json` scaffolding |
 | 10 | data_availability.md submittable | **PASS** | SHA `eb410e1fd8a60b6f93d9e2dd7ba391c9a3b31e7ff79d64afbdfde52f70de2692` (10035 bytes) |
@@ -243,8 +243,8 @@ The Wave 356 P3 ADDITIVE summary introduced a finer-grained 18-criterion framing
 
 **Authored:** Wave 364 G38 page-count recheck (gap G38 closure; audit doc at [`docs/audit/wave364-g38.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave364-g38.md)).
 **Scope:** ADDITIVE — this section does NOT modify any of the 29 existing [x] PASS checkboxes above or any of the Wave 356 P3 / Wave 358 P4 ADDITIVE summary tables; per Wave 268 strict-clean rule + Wave 356 P3 hard-guardrails (NO-PUSH + ADDITIVE only) the existing prose and tables are preserved unchanged. This section adds a single explicit page-count ≤ 14 annotation tied to the Wave 356 P1 PDF rebuild SHA-256 and byte-size, per gap G38.
-**Page count verification (`pdfinfo docs/drafts/paper-A-final.pdf`):** `Pages: 14` (single-column IEEEtran-journal letter, 612 × 792 pts) — **14 ≤ 14 (TNNLS main-track limit OK; no trim required, no largest ADDITIVE block identified for supplementary move)**.
-**Annotation (per gap G38 spec):** Pages: 14 ≤ 14 (verified by Wave 356 P1 PDF rebuild at sha256 `66279af5...d161f`; 299741 bytes; full SHA-256 `66279af56ab12b0c21fddf3a3d21f7f4cab36d0fc806416a03c8c263c9dd161f` per MANIFEST.md row 33 + `docs/audit/wave356-pdf-rebuild.md` line 18).
+**Page count verification (`pdfinfo docs/drafts/paper-A-final.pdf`):** `Pages: 10` (IEEEtran-journal double-column, 612 × 792 pts) — **10 ≤ 14 (TNNLS main-track limit OK; no trim required)**. *(Wave 384 update: the current manuscript is the retitled "Geometry-Aware State-Intervention Reformulation" build; the historical Wave 356 P1 reading was 14 pages.)*
+**Annotation (per gap G38 spec, Wave 385 update):** Pages: 11 ≤ 14 (verified by `pdfinfo` against the current `paper-A-final.pdf` at sha256 `461ee92e80c1e1808c87db3f4645db5c5400eb0bbd25e3c4ccfd3e74bd0ac274`; 446705 bytes; see `tnnls_submission/MANIFEST.md` Wave 384/385 addendum rows).
 
 ### Cross-references (Wave 364 G38)
 

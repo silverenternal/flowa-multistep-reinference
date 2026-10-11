@@ -1,55 +1,42 @@
-# `todo/INDEX.md` — Master entry point (2026-09-21 post-Wave 205)
+# `todo/INDEX.md` — Master entry point (2026-10-11, post-Wave 384)
 
-**Date:** 2026-09-21 (post-Wave 205 — TPAMI checklist; todo/ refactored from 30 files → 11 files)
+> **Start here → [`WAVES.md`](WAVES.md).** It is the consolidated, increment-free
+> management surface: current state, phase history, evidence ledger, gates,
+> decisions, lessons, risks, and open items in one place. The files below are
+> retained for provenance; `WAVES.md` supersedes them as the primary read.
+
+**Date:** 2026-10-11 (Wave 384 documentation refresh — venue is TNNLS; project at HEAD `061682c` ≈ Wave 383)
 **Purpose:** curated entry point to the `todo/` working folder. New readers should start with the [Reading order](#reading-order-for-new-readers) section.
 
+> **Historical note.** This file previously described a "TPAMI 6-week path (post-Wave 205)". The venue was switched to **TNNLS** at Wave 238 P3 and the project is now at Wave 383. The TPAMI framing below was superseded; the plan file `TPAMI-6-WEEK-PLAN.md` is retained only as history.
+
 ---
 
-## Current execution — TPAMI 6-week path (post-Wave 205)
+## Current execution — TNNLS (post-Wave 384)
 
-**Strategy:** Switch from EAAI/JMLR to **TPAMI (IEEE Trans on Pattern Analysis and Machine Intelligence)** after DeepSeek audit + Wave 203/204 statistics standardization (12-col stats table, cluster-robust, 2 p-value bug fixes).
+**Venue:** IEEE TNNLS (Transactions on Neural Networks and Learning Systems, CAS 1区 TOP) — switched from TPAMI at Wave 238 P3 (`docs/audit/engineering/wave238-p3-journal-decision.md`). Backups: TIP → PR → Neural Networks → EAAI.
+
+**State:** HEAD `061682c` (≈ Wave 385, uncommitted), 188 commits ahead of `origin/main` (user-gated NO-PUSH per Wave 325). All acceptance gates PASS. Manuscript = `docs/drafts/paper-A-final.pdf` (11 pages, SHA `461ee92e…`), title *"FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints"*.
 
 **Entry points:**
-- **[STATUS.md](STATUS.md)** — current state + last completed wave + next actions
-- **[TPAMI-6-WEEK-PLAN.md](TPAMI-6-WEEK-PLAN.md)** — full 6-week data-prep schedule (W1-W6)
-- **[`docs/tpami_submission_checklist.md`](../docs/tpami_submission_checklist.md)** — 6-section TPAMI checklist (core perf + mechanism + efficiency + stats + reproducibility + limitations)
+- **[STATUS.md](STATUS.md)** — current state + R-level claims + recent waves + venue decision
+- **[RISK-REGISTER.md](RISK-REGISTER.md)** — forward-looking risks + mitigations (R-001..R-022)
+- **[PUSH-READY.md](PUSH-READY.md)** — push-readiness summary (user-gated)
+- **[`docs/audit/wave384-project-audit.md`](../docs/audit/wave384-project-audit.md)** — latest project audit + documentation-drift trail
+- **[`tnnls_submission/SUBMISSION_READINESS.md`](../tnnls_submission/SUBMISSION_READINESS.md)** — single-source submission-readiness consolidation (Wave 365)
 
-**Waves 198-205 status:**
-
-| Wave | Outcome | Status |
-|---|---|---|
-| 198 | Per-record + strata analysis found cancellation root cause (NOT effect-size bound) | ✅ DONE |
-| 199-200 | LineageFlow N=1000 sweep BLOCKED-ON-DATA (CPU >40h/arm, torch 1.13.1 vs Blackwell sm_120) | ⛔ BLOCKED |
-| 201 | Eval pipeline 2-3× speedup via --workers-per-gpu + LPT + auto-detect | ✅ DONE |
-| 202 | Found omegafold_py310 conda env (torch 2.14.0+cu130 + sm_120 supported) | ✅ DONE |
-| 203 | Statistics audit fix: 2 p-value bugs + cluster-robust + 12-col stats table + CLM-066/067 | ✅ DONE |
-| 204 | Wave 196 vanilla scPerplexity defensive sf() fix; commit `72ba46e` | ✅ DONE |
-| 205 | TPAMI submission data-preparation checklist | ✅ DONE |
-
-**Waves 206-210 (TPAMI 6-week plan):**
-
-| Wave | Goal | Status |
-|---|---|---|
-| **206** | W2 — N=1000 paired-record re-runs on omegafold_py310 (LineageFlow, Kanzi, FlowMol3, 2D, CIFAR, MNIST, FreqFlow, CIFAR honest-negative curve) | 🟢 NEXT |
-| 207 | W3 — Ablation + control experiments (5-arm A0-A4, fixed-threshold, random/uniform, single-scheduler, cosine-ramp) | QUEUED |
-| 208 | W4 — Efficiency + Pareto frontier (wall-clock, memory, NFE accounting, Pareto NFE {10...1000}, 2.5-10× speedup CI) | QUEUED |
-| 209 | W5 — Statistical depth (12-col stats refresh, Bonferroni families, cluster-robust replication, FDR-BH, bootstrap CI) | QUEUED |
-| 210 | W6 — Reproducibility + submission (GitHub, Zenodo, Docker, docs refresh, honest negatives, tag v3.0-tpami-submission + push) | QUEUED |
-
-**W1 ✅ DONE** — see `STATUS.md` §"Recent waves" + `docs/tpami_submission_checklist.md` §1 for completion evidence.
+**Remaining user-gated actions (agent cannot perform):**
+1. Fill the **17 `[USER TO FILL]` placeholders** in `tnnls_submission/cover_letter.md` (see `tnnls_submission/FILL_GUIDE.md`).
+2. **`git push`** to `origin/main` (NO-PUSH policy; user authorization required).
 
 ---
 
-## Folder layout (2026-09-21 post-Wave 205)
+## Folder layout (2026-10-11 post-Wave 384)
 
 The `todo/` root holds 11 files:
 
-- **10 governance docs** (kept from pre-Wave-205 layout): STATUS, INDEX, README, decisions, lessons-learned, GATES, LOOP, TIMELINE, RISK-REGISTER, PUSH-READY
-- **1 new plan file:** TPAMI-6-WEEK-PLAN.md
-
-**15 obsolete task files** (2026-09-14-tier1-*, adapter-improvement-*, algo-improvement-*, paper-finish-line-*, code-tasks-before-freeze, PHASE-1/2/3) and **3 stale synthesis files** (EXECUTION-PLAN, framework-freeze-checklist, framework-internal-metrics, framework-capability-metrics, push-unpushed-commits) moved to `/tmp/todo-archive-2026-09-21/` for traceability.
-
-> **TODO refactor rationale:** Every pre-Wave-205 task file was tied to a now-superseded venue (EAAI / JMLR) or completion state. They are preserved in `/tmp/todo-archive-2026-09-21/` if needed; if not referenced by 2026-10-21, they will be deleted.
+- **10 governance docs:** STATUS, INDEX, README, decisions, lessons-learned, GATES, LOOP, TIMELINE, RISK-REGISTER, PUSH-READY
+- **1 historical plan file:** TPAMI-6-WEEK-PLAN.md (superseded by the TNNLS path)
 
 ---
 
@@ -59,13 +46,12 @@ The `todo/` root holds 11 files:
 
 | File | Purpose |
 |---|---|
-| [TPAMI-6-WEEK-PLAN.md](TPAMI-6-WEEK-PLAN.md) | **NEW** — 6-week TPAMI data-prep schedule with W1-W6 deliverables + per-wave scope + critical risks |
+| [STATUS.md](STATUS.md) | **single source of truth** — current state + R-level claims + recent waves + venue decision |
 
-### 2. Operational & governance (preserved from pre-Wave-205)
+### 2. Operational & governance
 
 | File | Purpose |
 |---|---|
-| [STATUS.md](STATUS.md) | **single source of truth** — current state + R-level claims + recent waves + venue decision |
 | [README.md](README.md) | directory structure + when to add new files + current focus |
 | [GATES.md](GATES.md) | master gate definitions (binding rule: every todo/ task must have an acceptance gate) |
 | [PUSH-READY.md](PUSH-READY.md) | push-readiness summary (user-gated; reflects current HEAD) |
@@ -75,9 +61,9 @@ The `todo/` root holds 11 files:
 | [LOOP.md](LOOP.md) | per-model lifecycle + iteration mechanism + stop conditions |
 | [TIMELINE.md](TIMELINE.md) | phase durations + "project done" definition |
 
-### 3. Archived (moved to `/tmp/todo-archive-2026-09-21/`)
+### 3. Archived
 
-15 obsolete task files + 5 stale synthesis docs. Preserved for traceability until 2026-10-21.
+15 obsolete task files + 5 stale synthesis docs were moved to `/tmp/todo-archive-2026-09-21/` (preserved for traceability). Pre-Wave-205 task files tied to superseded venues (EAAI/JMLR) are not referenced by the current TNNLS path.
 
 ---
 
@@ -85,17 +71,17 @@ The `todo/` root holds 11 files:
 
 1. **[README.md](README.md)** — directory structure + when to add new files + current focus
 2. **[STATUS.md](STATUS.md)** — current state + R-level claims + recent waves + venue decision
-3. **[TPAMI-6-WEEK-PLAN.md](TPAMI-6-WEEK-PLAN.md)** — full 6-week schedule
-4. **[`docs/tpami_submission_checklist.md`](../docs/tpami_submission_checklist.md)** — 6-section TPAMI checklist
-5. **[`docs/paper-draft.md`](../docs/paper-draft.md)** — main paper draft
-6. **[`docs/CLAIMS.md`](../docs/CLAIMS.md)** — 55+ active claims ledger with provenance
-7. **[`docs/audit/INDEX.md`](../docs/audit/INDEX.md)** — per-wave audit catalogue (Wave 1 → Wave 205)
+3. **[`docs/audit/wave384-project-audit.md`](../docs/audit/wave384-project-audit.md)** — latest audit + documentation-drift trail
+4. **[`tnnls_submission/SUBMISSION_READINESS.md`](../tnnls_submission/SUBMISSION_READINESS.md)** — submission-readiness consolidation
+5. **[`docs/drafts/paper-A-final.md`](../docs/drafts/paper-A-final.md)** — canonical paper source (title + abstract inline)
+6. **[`docs/CLAIMS.md`](../docs/CLAIMS.md)** — 61 active claims ledger with provenance
+7. **[`docs/audit/INDEX.md`](../docs/audit/INDEX.md)** — per-wave audit catalogue (topic clusters)
 
 After those seven, branch by interest:
-- **Statistics rigor:** [`docs/tables/wave203-p4-standardized-stats.md`](../docs/tables/wave203-p4-standardized-stats.md) + [`verification_outputs/wave203-p3-k6-cluster-robust.json`](../verification_outputs/wave203-p3-k6-cluster-robust.json)
-- **Mechanism validation:** see TPAMI-6-WEEK-PLAN.md §"W3 Ablation"
-- **Efficiency / Pareto:** see TPAMI-6-WEEK-PLAN.md §"W4 Efficiency"
-- **Reproducibility:** see TPAMI-6-WEEK-PLAN.md §"W6 Reproducibility"
+- **Statistics rigor:** [`docs/tables/wave203-p4-standardized-stats.md`](../docs/tables/wave203-p4-standardized-stats.md)
+- **Mechanism validation:** paper §6 (Lemmas 1–3 + Theorems 4–5)
+- **Efficiency / Pareto:** paper §7.7 + `verification_outputs/`
+- **Reproducibility:** `reproduce/` + `paper-data/<cell>/REPRODUCIBILITY_RECIPE.md`
 - **Decision history:** [decisions.md](decisions.md) → [lessons-learned.md](lessons-learned.md) → [RISK-REGISTER.md](RISK-REGISTER.md)
 
 ---
@@ -104,9 +90,8 @@ After those seven, branch by interest:
 
 - `todo.json` (project root) — machine-readable task index
 - `git log origin/main..HEAD` — unpushed commits (user-gated)
-- `git tag v2.7-paper-stats-audit-fix` — pending tag (Wave 203 P5)
 - `docs/CONSOLIDATED_RESULTS.md` — single source of truth for experimental evidence
-- `docs/CLAIMS.md` — 55+ active claims (CLM-040, CLM-061, CLM-066, CLM-067 updated Wave 203/204)
-- `docs/baseline-audit-report.md` — Wave-by-wave audit row ledger
-- `verification_outputs/` — 264+ verification artifacts (N=1000 sweep JSONs + per-record JSONL + standardized stats tables + cluster-robust CSVs)
-- `data/` — model checkpoints (FlowMol3 + Kanzi + LineageFlow + CIFAR-10 RF + MNIST FM + FreqFlow)
+- `docs/CLAIMS.md` — 61 active claims (CLM-001..CLM-069)
+- `docs/audit/INDEX.md` — per-wave audit catalogue (topic clusters)
+- `verification_outputs/` — byte-addressable verification artifacts
+- `data/` — vendored model checkpoints (FlowMol3 + Kanzi + LineageFlow + CIFAR-10 RF + MNIST FM + FreqFlow)

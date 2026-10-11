@@ -1,24 +1,24 @@
-# `todo/STATUS.md` — current execution status (2026-09-25, post-Wave 346)
+# `todo/STATUS.md` — current execution status (2026-10-11, post-Wave 384)
 
-**Updated:** 2026-09-25 (Wave 347 governance refresh — `todo/STATUS.md` + `todo/RISK-REGISTER.md` + `docs/audit/INDEX.md` re-pointed at HEAD `9ed4d7e` Wave 346 README byte/page fix, post-Wave 341 deep audit, post-Wave 343 BGV12/Villani fix, post-Wave 344 supplementary bundle, post-Wave 345 cross-doc fix)
+**Updated:** 2026-10-11 (Wave 385 figure-addendum — added the §III architecture TikZ figure and the §VII evidence-comparison figure to `paper-A-final.{tex,md}`, re-typeset the PDF to 11 pages; `todo/STATUS.md` + `todo/INDEX.md` + README/README.zh.md/docs/README.md re-pointed at the 11-page build; see [`docs/audit/wave385-figures.md`](../docs/audit/wave385-figures.md). Prior Wave 384 project audit + documentation refresh re-pointed the governance docs at HEAD `061682c` ≈ Wave 383; manuscript retitled and re-typeset 14 → 10 pages during Waves 366–383; see [`docs/audit/wave384-project-audit.md`](../docs/audit/wave384-project-audit.md))
 
 ---
 
-## Current state (2026-09-25)
+## Current state (2026-10-11)
 
-- **HEAD commit:** `9ed4d7e2` (Wave 346 README.md byte/page numbers updated: 10 pages / 381510 bytes → 14 pages / 305270 bytes for `paper-A-final.pdf`; 9-gate PASS; v3.0-tnnls-ready tag re-cut; USER AUTHORIZED, NO PUSH)
-- **Tag:** `v3.0-tnnls-ready` (re-cut at Wave 346; NOT pushed to `origin/main`)
-- **Unpushed commits ahead of `origin/main`:** 142+ (Wave 205 → Wave 346, user-gated per Wave 325 NO-PUSH policy)
-- **D.4 byte-stable regression vectors:** **30/30 PASS** (verified via `pytest tests/test_d4_regression_vectors.py -q` at Wave 347 governance refresh)
-- **Pytest default-threads:** 5155 passed, 196 skipped (preserved from Wave 131 freeze; ruff-frozen code)
-- **Ruff:** post-Wave 127 Phase 4 auto-fix count: ~207 remaining (out-of-scope-for-7-day; CLM-024 wording acknowledges)
+- **HEAD commit:** `061682c` ("Restore reformulation positioning in manuscript", ≈ Wave 383). Prior governance refresh was at `9ed4d7e2` (Wave 346); Waves 348–383 intervened (manuscript restructure, see below).
+- **Tag:** `v3.1-tnnls-with-figure` / `v3.0-tnnls-ready` (NOT pushed to `origin/main`)
+- **Unpushed commits ahead of `origin/main`:** 188 (Wave 205 → Wave 383, user-gated per Wave 325 NO-PUSH policy)
+- **D.4 byte-stable regression vectors:** **30/30 PASS** (verified via `pytest tests/test_d4_regression_vectors.py -q` at Wave 384 audit: `30 passed, 3 warnings in 7.56s`)
+- **Pytest:** full-suite Wave 384 re-run = **25 failed / 5166 passed / 145 skipped / 16 errors** (env/ordering-dependent; `tests/test_claims/` green 146/146 in isolation). The README "5155 passed / 196 skipped" figure is the Wave 131 freeze baseline and is not reproducible in the current environment — see [`docs/audit/wave384-project-audit.md`](../docs/audit/wave384-project-audit.md) §2.1 (finding D9).
+- **Ruff:** 0 findings in scope (`ruff check adaptive_reflow/ tests/ scripts/ tools/` → All checks passed!, Wave 384)
 - **Mypy:** 988 errors in 70 files (camera-ready only; CLM-024 wording acknowledges)
-- **mkdocs build --strict:** PASS
+- **mkdocs build --strict:** PASS (exit 0, ~29s at Wave 384)
 - **ckpt SHA-256:** 4/4 PASS
-- **claims_consistency:** PASS (61 active claims, 2 deprecated, 0 provisional; CLM-040 forced to PROVISIONAL by `Disputed by` citation; verified at Wave 347 governance refresh)
-- **9-gate:** ALL PASS (verified at Wave 339 + re-verified at Wave 342 + Wave 343 + Wave 344 + Wave 345 + Wave 346)
-- **Venue:** TNNLS (IEEE Trans on Neural Networks and Learning Systems, CAS 1区 TOP) — switched from TPAMI at Wave 238 P3; v3.0-tnnls-ready tag re-cut at Wave 328 + Wave 338 + Wave 343 + Wave 346; `tnnls_submission/` package contains 8 files + supplementary bundle (`supplementary_bundle/`)
-- **Paper:** `docs/drafts/paper-A-final.pdf` (14 pages, 305270 bytes, SHA-256 `426cb5d3...` after Wave 343 pdflatex rebuild); BGV12 [N] + Villani 2003 [M] bibliography entries added at Wave 343; `RMSPreservingCoordinateMixer` removed from §6.2 Sub-claim 1.4 enumeration at Wave 343
+- **claims_consistency:** PASS (61 active claims, 2 deprecated, 0 provisional; CLM-040 forced to PROVISIONAL by `Disputed by` citation; verified at Wave 384 audit)
+- **9-gate:** ALL PASS (verified at Wave 339; re-verified at Wave 342–346; **re-verified at Wave 384**)
+- **Venue:** TNNLS (IEEE Trans on Neural Networks and Learning Systems, CAS 1区 TOP) — switched from TPAMI at Wave 238 P3; `tnnls_submission/` package contains 8 files + supplementary bundle (`supplementary_bundle/`)
+- **Paper:** `docs/drafts/paper-A-final.pdf` (**11 pages, 446705 bytes, SHA-256 `461ee92e...`**); title **"FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints"** (renamed during Waves 366–383; two figures added in Wave 385); `.md` sha256 `42ff08ac...`; `.tex` sha256 `ba920254...`; evidence-comparison figure `docs/figures/fig9_cell_evidence_comparison.png` sha256 `4f3224bd...`
 
 ## R-level experimental claims (load-bearing for paper §7.3 / §10.6)
 
@@ -48,7 +48,7 @@
 - TIE (main, 1): R5a (2D Two Moons paper R-level d_s=+0.460 at n=3, verified Wave 209 P6 n=7 + Wave 216 P2 n=10)
 - PARTIAL/SUPP (6): R1 (single-seed-disclosed), R3 (3-seed BLOCKED), K1 (Wave 308 P2 §10 supplementary), K4+K5 (Wave 306), K7 (Wave 306)
 
-## Recent waves (Wave 339-347)
+## Recent waves (Wave 339-384)
 
 | Wave | Outcome | Status |
 |---|---|---|
@@ -60,13 +60,19 @@
 | 344 | Package supplementary bundle (6 headline artifacts + headline-evidence + audit docs) + update MANIFEST SHA-256 ledger (paper v3.1 Wave 343) + 9-gate | DONE |
 | 345 | Cross-doc stale references fixed (paper-flat-ieeetran.pdf → paper-A-final.pdf; paper-flattened-draft.md → paper-A-final.md) in 4 tnnls_submission/*.md + 9-gate + re-tag | DONE |
 | 346 | README.md byte/page numbers updated (10 pages / 381510 bytes → 14 pages / 305270 bytes for paper-A-final.pdf) + 9-gate + re-tag v3.0-tnnls-ready | DONE |
-| 347 | Governance refresh: `todo/STATUS.md` + `todo/RISK-REGISTER.md` (R-016..R-022) + `docs/audit/INDEX.md` (regenerated from 394-file on-disk layout) | IN PROGRESS |
+| 347 | Governance refresh: `todo/STATUS.md` + `todo/RISK-REGISTER.md` (R-016..R-022) + `docs/audit/INDEX.md` (regenerated from 394-file on-disk layout) | DONE |
+| 348–365 | TNNLS submission-package hardening: cross-doc GitHub-URL fixes (Wave 348, 282 paths), supplementary-bundle SHA refresh, per-cell reproducibility recipes (Waves 362–363), paper-polish gap closures (Wave 364), submission-readiness consolidation (Wave 365) | DONE |
+| 366–371 | Manuscript polish: abstract compression (Wave 370, 1017 → 250 words, USER-EXPLICIT DESTRUCTIVE), theory de-wave (Wave 367 P5), mechanism synthesis (Wave 371) | DONE |
+| 372–375 | **Manuscript restructure**: claim audit (Wave 372, removes unestablished residual-error rate + first-round FID sign bound), inference-dynamics positioning (Wave 373), typeset check (Wave 374), image-feedback path (Wave 375) | DONE |
+| 379–383 | **Mechanism restructure + retitle**: mechanism synthesis (379), mechanism restructure (380), style polish (381), abstract/introduction polish (382), reformulation positioning + title → *"Geometry-Aware State-Intervention Reformulation"* + mechanism figure relocation (383); PDF re-typeset 14 → **10 pages** | DONE |
+| **384** | **Project audit + documentation refresh** (this wave): gates re-verified ALL PASS at HEAD `061682c`; cross-doc drift D1–D8 documented; README/README.zh/docs/README + STATUS/INDEX/README refreshed to current title + 10-page build; paper internal cross-reference defects P1–P5 flagged; audit doc `docs/audit/wave384-project-audit.md` | DONE |
+| **385** | **Figure-addendum**: added the §III architecture TikZ figure (three-domain split + four-port surface + five adapters + kernel band) and the §VII evidence-comparison figure (matplotlib PNG + committed renderer `tools/render_cell_evidence_figure.py`, ruff-clean, byte-stable); `.md` source synced (§3.2 ASCII architecture + §7.2 PNG reference); PDF re-typeset 10 → 11 pages (zero fatal errors, zero overfull hboxes); MANIFEST + governance page-count/SHA rows refreshed; audit doc `docs/audit/wave385-figures.md` | DONE |
 
-**See `docs/audit/wave341-deep-audit.md` for full deep-audit finding trail.**
+**See `docs/audit/wave341-deep-audit.md` for the Wave 341 deep-audit finding trail and `docs/audit/wave384-project-audit.md` for the Wave 384 audit + documentation-drift trail.**
 
-## Venue decision (revised 2026-09-25)
+## Venue decision (revised 2026-10-11)
 
-**Primary: TNNLS (IEEE Trans on Neural Networks and Learning Systems, CAS 1区 TOP)** — switched from TPAMI at Wave 238 P3 (`docs/audit/engineering/wave238-p3-journal-decision.md`); v3.0-tnnls-ready tag re-cut at Wave 328, Wave 338, Wave 343, Wave 346.
+**Primary: TNNLS (IEEE Trans on Neural Networks and Learning Systems, CAS 1区 TOP)** — switched from TPAMI at Wave 238 P3 (`docs/audit/engineering/wave238-p3-journal-decision.md`); tags `v3.0-tnnls-ready` + `v3.1-tnnls-with-figure` (NOT pushed).
 
 **Backups:** TIP (IEEE Trans on Image Processing) → PR (Pattern Recognition) → Neural Networks → EAAI.
 

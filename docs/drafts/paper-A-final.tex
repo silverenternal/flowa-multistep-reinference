@@ -21,7 +21,7 @@
 \usepackage{bm}
 \usepackage{textcomp}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds,calc}
 
 % --- IEEEtran Nomenclature (math definitions) ---
 \newcommand{\NFE}{\mathrm{NFE}}
@@ -100,7 +100,83 @@ The four-port control surface is a formal interface, not an implementation detai
 \item \textbf{\texttt{RestartBlenderProtocol}} declares the per-channel restart-blend contract: given a \texttt{memory\_fraction} and a per-channel residual profile, return the per-channel restart weight. \texttt{LinearBlender} and \texttt{CategoricalBlender} ship as the default concrete implementations.
 \end{enumerate}
 
-The four-port surface is the deployment-time realisation of the framework: practitioners wire one scheduler family + one policy driver + one merge operator + one blender, and the engine orchestrates the loop without requiring code edits to the flow matching internals.
+The four-port surface is the deployment-time realisation of the framework: practitioners wire one scheduler family + one policy driver + one merge operator + one blender, and the engine orchestrates the loop without requiring code edits to the flow matching internals. Figure~\ref{fig:flowa-architecture} summarises the resulting three-domain architecture and its shared kernel.
+
+\begin{figure*}[t]
+\centering
+\resizebox{0.98\textwidth}{!}{%
+\begin{tikzpicture}[
+  >=Latex,
+  font=\scriptsize,
+  node distance=2.2mm,
+  adapter/.style={draw, rounded corners, align=center, minimum height=5.6mm, text width=21mm, fill=blue!8},
+  port/.style={draw, rounded corners, align=center, minimum height=5.6mm, text width=33mm, fill=green!10},
+  evalb/.style={draw, rounded corners, align=center, minimum height=5.6mm, text width=31mm, fill=purple!10},
+  engine/.style={draw, rounded corners, align=center, minimum height=5.6mm, text width=33mm, fill=green!22},
+  dtitle/.style={font=\scriptsize\bfseries, align=center},
+  arrow/.style={->, thick},
+  dep/.style={->, thick, dashed, gray!75},
+]
+% ---------------- Adapter layer ----------------
+\node[adapter] (a1) {LineageFlow (protein)};
+\node[adapter, below=of a1] (a2) {Kanzi (protein)};
+\node[adapter, below=of a2] (a3) {FlowMol3 (molecule)};
+\node[adapter, below=of a3] (a4) {CIFAR-10 RF (image)};
+\node[adapter, below=of a4] (a5) {MNIST FM (image)};
+\node[dtitle, above=2.2mm of a1] (atitle) {Adapter layer\\\texttt{adapters/}};
+\node[below=1.6mm of a5, font=\scriptsize, align=center] (anote)
+  {5 frozen checkpoints (\texttt{data/}),\\zero-line edits};
+\begin{scope}[on background layer]
+\node[draw, rounded corners, fill=blue!4, inner sep=3mm,
+      fit=(atitle)(a5)(anote)] (acont) {};
+\end{scope}
+% ---------------- Algorithm layer ----------------
+\node[engine, right=30mm of a1] (eng) {Engine $\cdot$ 13 schedulers};
+\node[port, below=of eng] (p1) {\texttt{SchedulerProtocol}};
+\node[port, below=of p1] (p2) {\texttt{PolicyDriverProtocol}};
+\node[port, below=of p2] (p3) {\texttt{MergeOperatorProtocol}};
+\node[port, below=of p3] (p4) {\texttt{RestartBlenderProtocol}};
+\node[dtitle, above=2.2mm of eng] (btitle) {Algorithm layer\\\texttt{algorithm/}};
+\node[below=1.6mm of p4, font=\scriptsize, align=center] (bnote)
+  {four-port control surface\\model-agnostic};
+\begin{scope}[on background layer]
+\node[draw, rounded corners, fill=green!4, inner sep=3mm,
+      fit=(btitle)(p4)(bnote)] (bcont) {};
+\end{scope}
+% ---------------- Evaluation layer ----------------
+\node[evalb, right=30mm of eng] (e1) {FID / $W_2$ / coverage\\evaluators};
+\node[evalb, below=of e1] (e2) {theorem-statement\\checker};
+\node[evalb, below=of e2] (e3) {Lipschitz diagnostic\\+ PosteriorSelection};
+\node[dtitle, above=2.2mm of e1] (etitle) {Evaluation layer\\\texttt{eval/}};
+\node[below=1.6mm of e3, font=\scriptsize, align=center] (enote)
+  {model-agnostic\\consumes adapter output};
+\begin{scope}[on background layer]
+\node[draw, rounded corners, fill=purple!4, inner sep=3mm,
+      fit=(etitle)(e3)(enote)] (econt) {};
+\end{scope}
+% ---------------- flow arrows ----------------
+\draw[arrow] (acont.east) -- node[above=0.6mm, font=\scriptsize]{typed StateBundle} (bcont.west);
+\draw[arrow] (bcont.east) -- node[above=0.6mm, font=\scriptsize]{endpoint trace} (econt.west);
+% ---------------- shared kernel band ----------------
+\coordinate (bl) at ([xshift=-6mm, yshift=-9mm]acont.south west);
+\coordinate (br) at ([xshift=6mm, yshift=-23mm]econt.south east);
+\draw[rounded corners, fill=yellow!15, draw] (bl) rectangle (br);
+\node[align=center, font=\scriptsize, text width=170mm] at ($(bl)!0.5!(br)$)
+  {\textbf{Framework kernel}: \texttt{StateBundle} $\cdot$ typed contracts $\cdot$ SHA-256 hash-chained ledger $\cdot$ byte-stable replay};
+\draw[dep] (acont.south) -- ($(bl)!0.5!(br) + (0,7mm)$);
+\draw[dep] (bcont.south) -- ($(bl)!0.5!(br) + (0,7mm)$);
+\draw[dep] (econt.south) -- ($(bl)!0.5!(br) + (0,7mm)$);
+\end{tikzpicture}%
+}
+\caption{FlowA architecture. The adapter layer wraps five frozen checkpoints
+without modifying vendored code; the algorithm layer exposes the four-port
+control surface and the thirteen scheduler families; the evaluation layer
+supplies model-agnostic metrics and diagnostics. All three layers rest on a
+shared framework kernel that carries the typed state bundles and the
+SHA-256 hash-chained ledger used for byte-stable replay. Dependency direction
+is adapter~$\to$~algorithm, adapter~$\to$~eval, and algorithm/eval~$\to$~framework.}
+\label{fig:flowa-architecture}
+\end{figure*}
 
 \subsection{Mechanism: from checkpoint geometry to measurable gain}
 FlowA is organized around a causal chain with four interfaces. The interfaces are separated so that a change in a metric can be traced to a state representation, a restart intervention, a capacity decision, or the frozen checkpoint response.
@@ -331,7 +407,7 @@ This follows pointwise from the convex-combination norm identity. With a specifi
 \section{Empirical Results}
 
 \subsection{Evaluation scope}
-Seven R-level cells and four supplementary K-cells span protein, molecule, toy, and image domains. Sample sizes, seed policies, metrics, and baselines vary by cell; the per-cell recipes and claim ledger give the exact provenance. The main status distribution is four strong cells, one tie, and two partial cells; four K-cells remain supplementary. A strong label on R5b is conditional on protocol and round count.
+Seven R-level cells and four supplementary K-cells span protein, molecule, toy, and image domains. Sample sizes, seed policies, metrics, and baselines vary by cell; the per-cell recipes and claim ledger give the exact provenance. The main status distribution is four strong cells, one tie, and two partial cells; four K-cells remain supplementary. A strong label on R5b is conditional on protocol and round count. Figure~\ref{fig:cell-evidence} places the per-cell effect sizes and the eleven-cell verdict distribution side by side.
 
 \begin{table*}[t]
 \centering\small
@@ -350,6 +426,20 @@ R6 Kanzi k6 & pLDDT hard-tier gain & Conditional & Overall tier-aware result is 
 \bottomrule
 \end{tabular}
 \end{table*}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../figures/fig9_cell_evidence_comparison.png}
+\caption{Evidence comparison across the eleven headline cells. (a) Per-cell
+standardized effect size $|d|$ on a log scale; the dashed line marks the
+$|d|=0.8$ STRONG-promotion bar. R6 contributes two points (tier-aware
+counterfactual and hard tier). (b) The eleven-cell verdict distribution
+(four STRONG $+$ one TIE $+$ two PARTIAL $+$ four supplementary). R5b is
+protocol-conditional and the four K-cells are supplementary; neither carries
+a single standardized effect size, so they are omitted from (a). Values are
+transcribed verbatim from Sec.~VII-B.}
+\label{fig:cell-evidence}
+\end{figure}
 
 \subsection{Per-cell status}
 
