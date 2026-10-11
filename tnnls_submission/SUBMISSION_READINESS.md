@@ -304,3 +304,15 @@ The FlowA TNNLS submission is submittable at the highest reproducibility standar
 - **Manifest row-47 note.** The SHA table's row-47 parenthetical ("closes the `§10.8(i)` … gap"; reference to "§7.8") is superseded by the §7.9 correction above; the figure renders the §7.9 regime curve as a standalone artifact, and its manuscript reference is §7.9 (not §7.8).
 
 *Manuscript-consistency pass #3 addendum authored 2026-10-12; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §3.4.2 / §4.5 / §7.9 and `docs/CLAIMS.md`.*
+
+---
+
+## 14. Manuscript-consistency pass #4 (2026-10-12 ADDITIVE)
+
+> **ADDITIVE — appended after the submission freeze; no existing line above is modified. §1 (14 PASS) and §2 (6 PENDING) are unchanged.**
+
+- **§1 row 6 / §3.1 G38 (paper ≤ 14 pages).** The manuscript PDF is unchanged by this pass (still **11 pages**, SHA-256 `ce0f0461de3b240bf14d0df8c7198fd4c1819aa75973ae596fc0abb2b39b1225`, 447019 bytes): the pass-#4 fixes are markdown-source-only, and the `.tex` build (hence the PDF) is byte-identical. The rows retain the earlier readings verbatim; the refreshed markdown value is pinned in `tnnls_submission/MANIFEST.md` and the `README`/`todo` surfaces.
+- **Consistency corrections carried by this pass.** §3.4.2's `AdapterCapabilities` group count/arithmetic (four groups summing to 20 → five groups summing to 22, adding the two D5 `channel_types` / `channel_shapes` fields); §3.4's `has_continuous_kind` → `has_continuous_channels`; §4.5's redundant legacy "K3+R5b CIFAR-10 RF fix" token removed so the list equals the 10 cosine cells. **No metric or claim number changed; no status label moved.**
+- **Documented-not-fixed.** §10.3's R5a/R5c seed-coverage labels (contradict §7.2), §9's `K1`–`K8` limitation labels (collide with the K-cells), and §8.10's `R4_legacy` inclusion in "the 11 cells" are `.md`-only legacy labels that require a taxonomy/provenance decision; they are recorded in the audit doc rather than silently reworded.
+
+*Manuscript-consistency pass #4 addendum authored 2026-10-12; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §3.4 / §3.4.2 / §4.5 / §8.10 / §9 / §10.3 and `docs/audit/manuscript-defect-review-4.md`.*
