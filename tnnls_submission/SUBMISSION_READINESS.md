@@ -328,3 +328,15 @@ The FlowA TNNLS submission is submittable at the highest reproducibility standar
 - **Pass-#4 deferred items all closed.** G4 (§10.3 seed labels), G5 (§9 `K1`–`K8` collision), and G6 (§8.10 `R4_legacy`) were resolved in this pass; see `docs/audit/manuscript-defect-review-5.md`.
 
 *Manuscript-consistency pass #5 addendum authored 2026-10-12; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §7.2 / §8.3 / §8.10 / §9 / §10.3 and `docs/audit/manuscript-defect-review-5.md`.*
+
+---
+
+## 16. Manuscript-consistency pass #6 (2026-10-12 ADDITIVE)
+
+> **ADDITIVE — appended after the submission freeze; no existing line above is modified. §1 (14 PASS) and §2 (6 PENDING) are unchanged.**
+
+- **§1 row 6 / §3.1 G38 (paper ≤ 14 pages).** The manuscript PDF is unchanged by this pass (still **11 pages**, SHA-256 `68b28acda286a394cabe17a92f67d715f09208cf19b10385f29fd67b732d0238`, 446895 bytes): the pass-#6 fixes are markdown-source-only, and the `.tex` build (hence the PDF) is byte-identical. The refreshed markdown value (`9613cb01…`, 211903 bytes) is pinned in `tnnls_submission/MANIFEST.md` and the `README`/`todo` surfaces.
+- **Consistency corrections carried by this pass.** §7.8.1's inline math unwrapped from backticks (the only section in the manuscript that wrapped math in code spans) — this also repaired the odd-backtick mis-nesting on the `ΔpLDDT + ΔscPerplexity` figure bullet that had swallowed the bold title, the `[` link-opener and the `band — kanzi` fragment (restoring that figure's hyperlink); Appendix A's `#### A.1/A.2/A.3` promoted to `###` (heading-level skip `##`→`####` removed; anchor slugs unchanged). **No metric or claim number changed; no status label moved.**
+- **Documented-not-fixed.** The `.md` reading copy still carries internal `(Wave NNN …)` provenance labels in several headings (§3.4.2, §3.5.1, §7.8.1, §8.10, §9.4, §9.4.1, Bibliography) and one unnumbered lead-in heading (`### Three formal properties`). These are part of the documented intentional `.md`/`.tex` divergence — the authoritative `.tex`/PDF headings are clean, and the wave labels are referenced by this MANIFEST and the audit trail, so they are recorded rather than stripped. See `docs/audit/manuscript-defect-review-6.md`.
+
+*Manuscript-consistency pass #6 addendum authored 2026-10-12; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §7.8.1 / Appendix A and `docs/audit/manuscript-defect-review-6.md`.*
