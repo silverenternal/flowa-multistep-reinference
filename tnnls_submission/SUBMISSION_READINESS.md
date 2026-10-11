@@ -316,3 +316,15 @@ The FlowA TNNLS submission is submittable at the highest reproducibility standar
 - **Documented-not-fixed.** §10.3's R5a/R5c seed-coverage labels (contradict §7.2), §9's `K1`–`K8` limitation labels (collide with the K-cells), and §8.10's `R4_legacy` inclusion in "the 11 cells" are `.md`-only legacy labels that require a taxonomy/provenance decision; they are recorded in the audit doc rather than silently reworded.
 
 *Manuscript-consistency pass #4 addendum authored 2026-10-12; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §3.4 / §3.4.2 / §4.5 / §8.10 / §9 / §10.3 and `docs/audit/manuscript-defect-review-4.md`.*
+
+---
+
+## 15. Manuscript-consistency pass #5 (2026-10-12 ADDITIVE)
+
+> **ADDITIVE — appended after the submission freeze; no existing line above is modified. §1 (14 PASS) and §2 (6 PENDING) are unchanged.**
+
+- **§1 row 6 / §3.1 G38 (paper ≤ 14 pages).** The manuscript PDF was rebuilt after the fifth defect sweep (still **11 pages**): current SHA-256 `68b28acda286a394cabe17a92f67d715f09208cf19b10385f29fd67b732d0238` (446895 bytes), superseding the §14 reading `ce0f0461…` / 447019 bytes. The rows retain the earlier readings verbatim; the refreshed values are pinned in `tnnls_submission/MANIFEST.md` and the `README`/`todo` surfaces.
+- **Consistency corrections carried by this pass.** The R3 per-cell row's duplicated deferred-sweep sentence removed (`.md` §7.2 + `.tex` §7.2); §8.10's "11 cells" list reworded so the manifest covers the eleven headline cells plus the retained legacy `R4_legacy` ablation (closes pass-#4 G6); §9's limitation dimensions relabelled `K1`–`K8` → `L1`–`L8` with a disambiguation note (closes pass-#4 G5); §10.3's seed-coverage list corrected and §8.3's single-seed list updated to drop R5a (closes pass-#4 G4); the `README.md` / `README.zh.md` word-count metadata refreshed (`25,175` → `25,564` words). **No metric or claim number changed; no status label moved.**
+- **Pass-#4 deferred items all closed.** G4 (§10.3 seed labels), G5 (§9 `K1`–`K8` collision), and G6 (§8.10 `R4_legacy`) were resolved in this pass; see `docs/audit/manuscript-defect-review-5.md`.
+
+*Manuscript-consistency pass #5 addendum authored 2026-10-12; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §7.2 / §8.3 / §8.10 / §9 / §10.3 and `docs/audit/manuscript-defect-review-5.md`.*
