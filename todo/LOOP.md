@@ -76,7 +76,7 @@ The project is **done** when **ALL** of the following hold:
 - [ ] **>= 3 RANKING.md models verdict = supported** (or "partially_supported"
       for saturated metrics, with explicit caveat in CLM-001..CLM-047)
 - [ ] **Workshop paper draft** exists (per `paper-writeup.md` + G-MASTER-PAPER)
-- [ ] **All unpushed commits pushed to origin/main** (G-OPS-PUSH)
+- [x] **All unpushed commits pushed to origin/main** (G-OPS-PUSH — 0 unpushed; `origin/main` = `fea137d` as of 2026-10-12)
 - [ ] **User explicit "project done"** confirmation
 
 If any of the above is **false**, the loop continues.

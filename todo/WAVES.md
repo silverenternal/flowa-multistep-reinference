@@ -37,9 +37,11 @@ does not.
 
 ### 1.1 Repository
 
-- **Branch:** `main`. **HEAD:** `0209002` ("Push unblock: purge 147.1 MB supplementary_bundle.zip from history + gitignore").
+- **Branch:** `main`. **HEAD:** `fea137d` ("docs(manuscript): fourth consistency sweep — capability groups, field name, §4.5 cell list"). (Prior 2026-10-11 reading: `0209002` "Push unblock: purge 147.1 MB supplementary_bundle.zip from history + gitignore".)
 - **Ahead of `origin/main`:** **0** commits. The 192-commit backlog was pushed on
-  2026-10-11 (user-authorized; the first push since the Wave 325 NO-PUSH policy).
+  2026-10-11, and the three manuscript-consistency sweeps (`165df71` / `60c2441` /
+  `fea137d`) were re-pushed on 2026-10-12 — so `origin/main` = `fea137d`
+  (user-authorized; the first push since the Wave 325 NO-PUSH policy).
   Pushing remains **user-gated** — agents commit locally but never push.
 - **Tags (local, unpushed):** `v3.0-tnnls-ready`, `v3.1-tnnls-with-figure` (the tag
   push stays user-gated).
@@ -374,7 +376,9 @@ Readiness is consolidated in `tnnls_submission/SUBMISSION_READINESS.md`.
    (guide: `tnnls_submission/FILL_GUIDE.md`).
 2. ~~`git push` to `origin/main`~~ — **DONE 2026-10-11** (`origin/main` = `0209002`;
    the 192-commit backlog was pushed after the 147.1 MB supplementary-bundle blob
-   was purged from history + gitignored).
+   was purged from history + gitignored). **Re-pushed 2026-10-12** — the three
+   manuscript-consistency sweeps (`165df71` / `60c2441` / `fea137d`) landed, so
+   **`origin/main` = `fea137d`** (0 ahead / 0 behind).
 
 ---
 

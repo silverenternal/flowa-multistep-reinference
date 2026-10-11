@@ -7,6 +7,10 @@
 > `supplementary_bundle.zip` was purged from history + gitignored (GitHub 100 MB
 > blob limit). See [`docs/audit/governance-refresh-post-push.md`](../docs/audit/governance-refresh-post-push.md)
 > and [`docs/audit/push-unblock-large-blob.md`](../docs/audit/push-unblock-large-blob.md).
+> **Re-pushed 2026-10-12:** the three manuscript-consistency sweeps
+> (`165df71` / `60c2441` / `fea137d`) were pushed, so **`origin/main` = `fea137d`**
+> (0 ahead / 0 behind as of 2026-10-12). The `0209002` reading above is the
+> 2026-10-11 snapshot and is preserved as provenance.
 > **Do not read the "2 unpushed commits" / "READY TO PUSH" statements below as
 > current** — the push is complete and the working tree is 0 commits ahead.
 
@@ -31,6 +35,10 @@ all gates green.
 | Wave 144 Phase 2 | 1 | `48ce283` — fix 3 Kanzi baseline JSONs untracked (git add -f for .gitignore-blocked verification_outputs/ files; closes Wave 143 Phase 0 honest finding; ensures reproducibility provenance chain intact) |
 | Wave 144 Phase 4 | 1 | `1d1723d` — push + fix + PDF close - audit doc + baseline R.32 + CONSOLIDATED 15.41 |
 | **Total unpushed** | **2** | 0 behind `origin/main`; awaiting user OK before push |
+
+> **HISTORICAL (2026-09-14).** This 2-commit backlog was resolved on
+> 2026-10-11 and the working tree is now **0 commits ahead** of
+> `origin/main` (`fea137d` as of 2026-10-12). Retained for provenance only.
 
 ## Pushed Wave 137-143 (18 commits on origin/main)
 

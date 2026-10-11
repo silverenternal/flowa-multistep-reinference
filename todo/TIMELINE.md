@@ -84,7 +84,7 @@ The project is done when **ALL** of:
       with caveat in CLM-001..CLM-047)
 - [ ] **Workshop paper draft** exists with all required content (per
       `paper-writeup.md` checklist + G-MASTER-PAPER gate)
-- [ ] **All unpushed commits pushed to origin/main** (G-OPS-PUSH)
+- [x] **All unpushed commits pushed to origin/main** (G-OPS-PUSH — 0 unpushed; `origin/main` = `fea137d` as of 2026-10-12)
 - [ ] **User explicit "project done"** confirmation
 
 Until then: loop continues (per `LOOP.md`).

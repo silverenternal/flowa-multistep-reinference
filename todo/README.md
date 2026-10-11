@@ -25,13 +25,13 @@ todo/
 └── lessons-learned.md              (lessons LL-001.., append-only)
 ```
 
-## Current focus (2026-10-11)
+## Current focus (2026-10-12)
 
-**Venue:** IEEE TNNLS (switched from TPAMI at Wave 238 P3). Project at HEAD `0209002`; **pushed to `origin/main`** (0 ahead; the 192-commit backlog landed 2026-10-11 under explicit user authorization). All acceptance gates PASS (pytest subset green / mypy 0 / ruff 0 / claims no-drift / mkdocs strict exit 0).
+**Venue:** IEEE TNNLS (switched from TPAMI at Wave 238 P3). Project at HEAD `fea137d`; **pushed to `origin/main`** (0 ahead; the 192-commit backlog landed 2026-10-11 under explicit user authorization, and the three manuscript-consistency sweeps `165df71` / `60c2441` / `fea137d` landed 2026-10-12). All acceptance gates PASS (pytest subset green / mypy 0 / ruff 0 / claims no-drift / mkdocs strict exit 0).
 
 **Remaining user-gated actions:**
 1. Fill the 17 `[USER TO FILL]` placeholders in `tnnls_submission/cover_letter.md` (see `tnnls_submission/FILL_GUIDE.md`).
-2. ~~`git push` to `origin/main`.~~ — **DONE 2026-10-11** (`origin/main` = `0209002`).
+2. ~~`git push` to `origin/main`.~~ — **DONE 2026-10-11** (`origin/main` = `0209002`); **re-pushed 2026-10-12** (`origin/main` = `fea137d`).
 
 **Latest audit:** [`docs/audit/governance-refresh-post-push.md`](../docs/audit/governance-refresh-post-push.md) — post-push governance refresh (HEAD `0209002`; push complete; gates re-verified green). Prior: [`docs/audit/wave384-project-audit.md`](../docs/audit/wave384-project-audit.md) — gates GREEN; documentation-drift D1–D8 documented and refreshed.
 

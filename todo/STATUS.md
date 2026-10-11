@@ -1,14 +1,14 @@
-# `todo/STATUS.md` — current execution status (2026-10-11, post-push governance refresh)
+# `todo/STATUS.md` — current execution status (2026-10-12, post-push governance refresh)
 
-**Updated:** 2026-10-11 (post-push governance refresh — `origin/main` advanced from `6036207` to `0209002`; the 192-commit backlog was pushed after the 147.1 MB `supplementary_bundle.zip` was purged from history + gitignored (GitHub 100 MB blob limit); CI gates re-verified green — pytest subset `5055 passed / 171 skipped / 50 deselected / 12 xfailed / 0 failed`, mypy 0 errors in 230 files, ruff 0, claims no-drift, mkdocs `--strict` exit 0; see [`docs/audit/governance-refresh-post-push.md`](../docs/audit/governance-refresh-post-push.md). Prior Wave 385 figure-addendum — §III architecture TikZ figure + §VII evidence-comparison figure added to `paper-A-final.{tex,md}`, PDF re-typeset to 11 pages; see [`docs/audit/wave385-figures.md`](../docs/audit/wave385-figures.md). Wave 384 project audit re-pointed the governance docs at HEAD `061682c` ≈ Wave 383; see [`docs/audit/wave384-project-audit.md`](../docs/audit/wave384-project-audit.md))
+**Updated:** 2026-10-12 (post-push governance refresh — `origin/main` advanced from `0209002` to `fea137d`; the three manuscript-consistency sweeps `165df71` / `60c2441` / `fea137d` were pushed after user authorization, following the earlier `dc10cdb` manuscript-fix pass). **Prior 2026-10-11 update:** post-push governance refresh — `origin/main` advanced from `6036207` to `0209002`; the 192-commit backlog was pushed after the 147.1 MB `supplementary_bundle.zip` was purged from history + gitignored (GitHub 100 MB blob limit); CI gates re-verified green — pytest subset `5055 passed / 171 skipped / 50 deselected / 12 xfailed / 0 failed`, mypy 0 errors in 230 files, ruff 0, claims no-drift, mkdocs `--strict` exit 0; see [`docs/audit/governance-refresh-post-push.md`](../docs/audit/governance-refresh-post-push.md). Prior Wave 385 figure-addendum — §III architecture TikZ figure + §VII evidence-comparison figure added to `paper-A-final.{tex,md}`, PDF re-typeset to 11 pages; see [`docs/audit/wave385-figures.md`](../docs/audit/wave385-figures.md). Wave 384 project audit re-pointed the governance docs at HEAD `061682c` ≈ Wave 383; see [`docs/audit/wave384-project-audit.md`](../docs/audit/wave384-project-audit.md))
 
 ---
 
-## Current state (2026-10-11)
+## Current state (2026-10-12)
 
-- **HEAD commit:** `0209002` ("Push unblock: purge 147.1 MB supplementary_bundle.zip from history + gitignore"). **Pushed to `origin/main`** (user-authorized 2026-10-11; first push since the Wave 325 NO-PUSH policy). Prior governance refresh was at `061682c` (≈ Wave 383); Waves 384–385 intervened (project audit + figure-addendum).
+- **HEAD commit:** `fea137d` ("docs(manuscript): fourth consistency sweep — capability groups, field name, §4.5 cell list"). **Pushed to `origin/main`** (user-authorized 2026-10-12; this push landed the three manuscript-consistency sweeps `165df71` / `60c2441` / `fea137d`, following the earlier `dc10cdb` manuscript-fix pass). Prior governance refresh was at `061682c` (≈ Wave 383); Waves 384–385 intervened (project audit + figure-addendum).
 - **Tag:** `v3.1-tnnls-with-figure` / `v3.0-tnnls-ready` (local; the tag push remains user-gated per `tnnls_submission/README.md` §3)
-- **Unpushed commits ahead of `origin/main`:** **0** (all commits through `0209002` are on `origin/main`; the 192-commit backlog landed 2026-10-11 after the 147.1 MB supplementary-bundle blob was purged from local history — `origin/main` had never contained the backlog, so no force-push was needed)
+- **Unpushed commits ahead of `origin/main`:** **0** (all commits through `fea137d` are on `origin/main`; the 192-commit backlog landed 2026-10-11 after the 147.1 MB supplementary-bundle blob was purged from local history, and the three manuscript-consistency sweeps landed 2026-10-12 — `origin/main` had never contained the backlog, so no force-push was needed)
 - **D.4 byte-stable regression vectors:** **30/30 PASS** (verified via `pytest tests/test_d4_regression_vectors.py -q` at Wave 384 audit: `30 passed, 3 warnings in 7.56s`)
 - **Pytest:** CI subset (`-m "not slow and not benchmark"`) = **5055 passed / 171 skipped / 50 deselected / 12 xfailed / 0 failed** (measured 2026-10-11, 8m39s; the earlier Wave 384 "25 failed / 5166 passed" figure reflected env/ordering-dependent failures that are now resolved). The README "5155 passed / 196 skipped" figure is the Wave 131 freeze baseline.
 - **Ruff:** 0 findings in scope (`ruff check adaptive_reflow/ tests/ scripts/ tools/` → All checks passed!, Wave 384)
@@ -92,7 +92,7 @@
 - ~~Mypy 988-error repair (camera-ready)~~ — **CLOSED** (mypy --strict now 0 errors in 230 files)
 - Ruff 207 non-auto-fixable findings (camera-ready)
 - FreqFlow + MM-FM integration (no upstream ckpt / no shipped adapter)
-- ~~Push to origin/main (user-gated; see `todo/PUSH-READY.md` and `wave325-push-execution.md`)~~ — **DONE 2026-10-11** (`origin/main` = `0209002`; 192-commit backlog pushed)
+- ~~Push to origin/main (user-gated; see `todo/PUSH-READY.md` and `wave325-push-execution.md`)~~ — **DONE 2026-10-11** (`origin/main` = `0209002`; 192-commit backlog pushed); **re-pushed 2026-10-12** (`origin/main` = `fea137d`; three manuscript-consistency sweeps)
 - Wave 341 §6.5 RMSPreserving class reintroduction (deprecated back-compat alias; canonical name `EqualRmsCoordinateMixer` per ADR-0009)
 - 3-seed R3 N=1000 paired sweep (BLOCKED at vendor level per CLM-068; smoke ckpt Wave 191 byte-stable is the load-bearing evidence)
 - 3-seed R1 N=1000 (Wave 308 P1 invalidated by framework-fallback contamination on seeds 43/44)

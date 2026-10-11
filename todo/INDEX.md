@@ -5,7 +5,7 @@
 > decisions, lessons, risks, and open items in one place. The files below are
 > retained for provenance; `WAVES.md` supersedes them as the primary read.
 
-**Date:** 2026-10-11 (post-push governance refresh — venue is TNNLS; project at HEAD `0209002`)
+**Date:** 2026-10-11 (post-push governance refresh — venue is TNNLS); **push markers refreshed 2026-10-12** (project at HEAD `fea137d`; `origin/main` = `fea137d`)
 **Purpose:** curated entry point to the `todo/` working folder. New readers should start with the [Reading order](#reading-order-for-new-readers) section.
 
 > **Historical note.** This file previously described a "TPAMI 6-week path (post-Wave 205)". The venue was switched to **TNNLS** at Wave 238 P3. The TPAMI framing below was superseded; the plan file `TPAMI-6-WEEK-PLAN.md` is retained only as history.
@@ -16,7 +16,7 @@
 
 **Venue:** IEEE TNNLS (Transactions on Neural Networks and Learning Systems, CAS 1区 TOP) — switched from TPAMI at Wave 238 P3 (`docs/audit/engineering/wave238-p3-journal-decision.md`). Backups: TIP → PR → Neural Networks → EAAI.
 
-**State:** HEAD `0209002`; **pushed to `origin/main`** (0 ahead; the 192-commit backlog landed 2026-10-11). All acceptance gates PASS (pytest subset green / mypy 0 / ruff 0 / claims no-drift / mkdocs strict exit 0). Manuscript = `docs/drafts/paper-A-final.pdf` (11 pages, SHA `ce0f0461…`), title *"FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints"*.
+**State:** HEAD `fea137d`; **pushed to `origin/main`** (0 ahead; the 192-commit backlog landed 2026-10-11, and the three manuscript-consistency sweeps `165df71` / `60c2441` / `fea137d` landed 2026-10-12). All acceptance gates PASS (pytest subset green / mypy 0 / ruff 0 / claims no-drift / mkdocs strict exit 0). Manuscript = `docs/drafts/paper-A-final.pdf` (11 pages, SHA `ce0f0461…`), title *"FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints"*.
 
 **Entry points:**
 - **[STATUS.md](STATUS.md)** — current state + R-level claims + recent waves + venue decision
@@ -27,7 +27,7 @@
 
 **Remaining user-gated actions (agent cannot perform):**
 1. Fill the **17 `[USER TO FILL]` placeholders** in `tnnls_submission/cover_letter.md` (see `tnnls_submission/FILL_GUIDE.md`).
-2. ~~**`git push`** to `origin/main`~~ — **DONE 2026-10-11** (`origin/main` = `0209002`). The remaining push item is the submission tag (see `tnnls_submission/README.md` §3).
+2. ~~**`git push`** to `origin/main`~~ — **DONE 2026-10-11** (`origin/main` = `0209002`), **re-pushed 2026-10-12** (`origin/main` = `fea137d`). The remaining push item is the submission tag (see `tnnls_submission/README.md` §3).
 
 ---
 
