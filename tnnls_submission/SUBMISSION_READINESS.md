@@ -281,3 +281,14 @@ The FlowA TNNLS submission is submittable at the highest reproducibility standar
 - **§1 row 6 / §3.1 G38 (paper ≤ 14 pages).** The manuscript PDF was rebuilt after the defect-fix pass (still **11 pages**): current SHA-256 `8bc37858a7e6cbdfcc74dfd41f355f036433d0dfa75376b13482d91e6da5d9b5` (446703 bytes), superseding `461ee92e…` / 446705 bytes. The rows retain the earlier reading verbatim; the refreshed value is pinned in `tnnls_submission/MANIFEST.md` and the `README`/`todo` surfaces.
 
 *Manuscript-review correction addendum authored 2026-10-11; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §6 + §3.5.1 and `verification_outputs/wave349-r1-3seed-gpu/SHA256SUMS`.*
+
+---
+
+## 12. Manuscript-consistency pass (2026-10-12 ADDITIVE)
+
+> **ADDITIVE — appended after the submission freeze; no existing line above is modified. §1 (14 PASS) and §2 (6 PENDING) are unchanged.**
+
+- **§1 row 6 / §3.1 G38 (paper ≤ 14 pages).** The manuscript PDF was rebuilt after the second defect-fix pass (still **11 pages**): current SHA-256 `33d3a771fc6ea0cd4cd8a685058f4d9237417696351aa6e816388af613444916` (447018 bytes), superseding the §11 reading `8bc37858…` / 446703 bytes. The rows retain the earlier readings verbatim; the refreshed value is pinned in `tnnls_submission/MANIFEST.md` and the `README`/`todo` surfaces.
+- **Consistency corrections carried by this pass.** §2.3 citation keys corrected (`[13]`/`[14]`/`[15]` → `[10]`/`[11]`/`[12]`, matching the reference list); raw p-values mis-tagged as "Bonferroni-corrected $p$" relabelled for R5a / R1 / the `.tex` R2 row; a dangling `§10.8(i)` reference and a stray `§15.104` (an R5a section) pointer in the §7.11 R5c row fixed; two inline-code glitches repaired; the R2 synthetic-input-coordinate disclosure added to the `.tex` R2 row; an additive R2 deployed-path clarification appended to `docs/CLAIMS.md` CLM-060. **No metric or claim number changed; no status label moved.**
+
+*Manuscript-consistency pass addendum authored 2026-10-12; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §2.3 / §7.2 / §7.9 / §7.11 and `docs/CLAIMS.md` CLM-060.*
