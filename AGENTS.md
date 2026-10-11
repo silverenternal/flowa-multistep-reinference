@@ -4,6 +4,11 @@
 > task to the right project skill + the right commands so you do not
 > reinvent them. Project skills are in `.codex/skills/` (Codex-format)
 > AND mirrored below as portable checklists.
+>
+> **Management & map surfaces:** [`todo/WAVES.md`](todo/WAVES.md) is the
+> consolidated project record (current state, phase history, evidence, gates,
+> decisions, risks); [`docs/README.md`](docs/README.md) is the documentation
+> map. Prefer these over per-increment records for management state.
 
 ---
 
@@ -36,7 +41,7 @@ short contract — read it once and obey it.
 Translate **verified** results into publication evidence.
 
 - Read `docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.md`, `docs/INSIGHTS.md`,
-  and the relevant `docs/audit/wave*.md` **before** editing prose.
+  and the relevant `docs/audit/` records **before** editing prose.
 - Every quantitative statement must point to a result artifact or audit
   with: model, metric, N, seed policy, environment (`.venvs/<model>_venv`),
   and comparison direction.
@@ -60,36 +65,36 @@ Translate **verified** results into publication evidence.
 - `tnnls_submission/{MANIFEST,cover_letter,highlights,tables,figures,data_availability,submission_checklist}.md`
 - `README.md`, `README.zh.md`, `cover-letter-tnnls.md`
 - `docs/CONSOLIDATED_RESULTS.md`, `docs/INSIGHTS.md`
-- `docs/audit/wave*-paper*.md` (audits whose topic is paper)
+- `docs/audit/` records whose topic is paper
 
 **Hard requirements before commit:**
 - `python tools/check_claims_consistency.py` exits 0
 - `mkdocs build --strict` exits 0 (if `mkdocs.yml` or `docs/` were touched)
 - `ruff check` 0 findings in any *.py touched
 
-### 2.2 `flowa-experiment-sweep` — bounded, restartable experiment waves
+### 2.2 `flowa-experiment-sweep` — bounded, restartable experiments
 
-Run experiments as small, restartable waves.
+Run experiments as small, restartable, gate-checked increments.
 
 - Read target config + adapter contract first; select the sidecar venv
   per `docs/environments.md` — **never mix model environments** (FlowMol3
   uses `flowmol3_venv`; LineageFlow uses `lineageflow_venv`; Kanzi uses
   `kanzi_venv`; 2D / CIFAR / MNIST FM all use `flowmol3_venv`).
-- **Before** launching, capture and persist to `verification_outputs/<wave>/METADATA.json`:
+- **Before** launching, capture and persist to `verification_outputs/<increment>/METADATA.json`:
   GPU ID + free memory, command line, config path, seed, sample count,
   output directory, max-records cap, wall-clock budget.
 - Use bounded runs (`--max-records N` / `--num-records N`) and explicit
   `--seed`; never delete or overwrite a prior `verification_outputs/<old>/*`.
 - Emit **two** outputs: (a) machine-readable JSON/CSV; (b) a short audit
-  note `docs/audit/wave<NNN>-<topic>.md` with device + skipped + stats
+  note `docs/audit/<increment>-<topic>.md` with device + skipped + stats
   caveats.
 - After any code change: re-run focused `pytest tests/<relevant>.py` and
   applicable D.4 regression vectors.
 
 **Owns:**
 - `tools/sweep_*.py` (sweep drivers; may be added)
-- `verification_outputs/<new_wave>/*` (new evidence)
-- `docs/audit/wave<NNN>-*.md` (wave audit note)
+- `verification_outputs/<increment>/*` (new evidence)
+- `docs/audit/<increment>-*.md` (audit note)
 - `adaptive_reflow/adapters/<one>/` (only the one being tested)
 - `reproduce/*.sh` (per-cell scripts)
 
@@ -103,8 +108,8 @@ Run experiments as small, restartable waves.
 
 Audit claims with a reproducible evidence chain.
 
-- Start from the relevant claim, adapter, wave, or metric; inspect
-  `docs/CLAIMS.md`, `todo/STATUS.md`, owning code/config **before**
+- Start from the relevant claim, adapter, increment, or metric; inspect
+  `docs/CLAIMS.md`, `todo/WAVES.md`, owning code/config **before**
   drawing conclusions.
 - Record exact: file paths, commit, environment/venv, sample size,
   command used. Separate **observed facts** vs **interpretation** vs
@@ -118,7 +123,7 @@ Audit claims with a reproducible evidence chain.
 
 **Owns:**
 - `docs/audit/<topic>.md` (new audit)
-- `todo/STATUS.md`, `todo/RISK-REGISTER.md`, `todo/EXECUTION-PLAN.md`
+- `todo/WAVES.md` (consolidated record), `todo/RISK-REGISTER.md`
   (state updates)
 - May edit `docs/CLAIMS.md` only to flag (CLM-NNN status
   `SUPPORTED/UNDERPOWERED/REGRESSES/DEFERRED/NOT_SIGNIFICANT`) — never
@@ -140,7 +145,7 @@ These come from real feedback in the conversation log. **Never violate.**
    `data/GraphBFN/`, `data/Lumina-Image-2.0/`, `data/ProtBFN-AbBFN/`,
    `data/Wan2.2/`, `data/FreqFlow/` (9 vendored repos) must stay
    byte-identical to upstream commit hashes (FlowMol3 `77cae22`,
-   LineageFlow `ccef84a`, Kanzi `cfed9cf`, …). Per Wave 260 user
+   LineageFlow `ccef84a`, Kanzi `cfed9cf`, …). Per a standing user
    directive — *all modifications to others' original repos must be
    reverted.* Pinned commit list in
    `tnnls_submission/data_availability.md` "Unmodified vendored
@@ -156,9 +161,10 @@ These come from real feedback in the conversation log. **Never violate.**
 5. **TNNLS submission freeze is sacred.** Once `v3.0-tnnls-ready` tag
    is cut, only additive docs in `tnnls_submission/` are allowed.
    Numbers must not move; SHA-256s must be regenerated.
-6. **Per-phase audit doc.** Every wave produces a `docs/audit/wave<NNN>-*.md`.
-   Format mirrors the 12-decimal-CLAIMS-table pattern from Wave 121-273.
-7. **Stricter = cleaner.** Per Wave 268 — "严格一点，按照最干净的方法来".
+6. **Per-increment audit doc.** Every increment produces a `docs/audit/<increment>-*.md`
+   note (existing records keep their historical names). Format mirrors the
+   12-decimal-CLAIMS-table pattern.
+7. **Stricter = cleaner.** Standing directive — "严格一点，按照最干净的方法来".
    When two valid options, pick the cleaner one (fewer files touched,
    fewer lines changed, more additive).
 
@@ -183,7 +189,7 @@ mkdocs build --strict
 # claims consistency (must exit 0, no drift)
 python3 tools/check_claims_consistency.py
 
-# pytest full (must be 5155 passed / 196 skipped)
+# pytest full (subset green; full-suite is env/ordering-dependent)
 python3 -m pytest tests/ -q
 
 # mypy type-check (target: 0 errors; current state documented in CLM-024)
@@ -202,8 +208,8 @@ grep -nE "^### CLM-[0-9]+" docs/CLAIMS.md | head -50
 # 2. Look up the headline evidence
 ls verification_outputs/ | head -50
 
-# 3. Look up the wave audit for the change context
-ls docs/audit/ | grep -E "^wave[0-9]+" | tail -20
+# 3. Look up the audit record for the change context
+ls docs/audit/ | tail -20
 
 # 4. After any docs edit, verify
 python3 tools/check_claims_consistency.py
@@ -227,11 +233,11 @@ python3 tools/sweep_*.py --max-records 1000 --seed 42 \
     --output-dir /tmp/sweep/seed42 2>&1 | tee /tmp/sweep/seed42.log
 
 # 4. Move evidence into verification_outputs/
-mkdir -p verification_outputs/wave<NNN>-<topic>
-mv /tmp/sweep/seed42/* verification_outputs/wave<NNN>-<topic>/
+mkdir -p verification_outputs/<increment>-<topic>
+mv /tmp/sweep/seed42/* verification_outputs/<increment>-<topic>/
 
 # 5. Write audit note
-$EDITOR docs/audit/wave<NNN>-<topic>.md   # follow wave<NNN>-*.md format
+$EDITOR docs/audit/<increment>-<topic>.md   # follow the audit-note format
 
 # 6. Re-verify D.4 + relevant capability
 python3 -m pytest tests/test_d4_regression_vectors.py -q
@@ -240,15 +246,15 @@ python3 -m pytest tests/test_d4_regression_vectors.py -q
 ### 4.4 Research-audit workflow (template reference)
 
 ```bash
-# 1. Find the claim / wave / topic under question
-grep -RnE "CLM-[0-9]+|wave[0-9]+|R[0-9]+" docs/CLAIMS.md docs/CONSOLIDATED_RESULTS.md | head -30
+# 1. Find the claim / increment / topic under question
+grep -RnE "CLM-[0-9]+|R[0-9]+" docs/CLAIMS.md docs/CONSOLIDATED_RESULTS.md | head -30
 
 # 2. Re-read what was claimed (paper §X) vs what code does
 $EDITOR docs/paper-draft.md       # the claim
 grep -RnE "def .*?" adaptive_reflow/  # the code
 
 # 3. Reproduce from existing artifact (NEVER re-run long sweep)
-python3 -c "import json; print(json.load(open('verification_outputs/<wave>/result.json'))['headline'])"
+python3 -c "import json; print(json.load(open('verification_outputs/<increment>/result.json'))['headline'])"
 
 # 4. Write audit note
 $EDITOR docs/audit/<topic>.md   # follow the observed/interpretation/gap format
@@ -262,7 +268,7 @@ $EDITOR docs/audit/<topic>.md   # follow the observed/interpretation/gap format
 AGENTS.md                         # ← THIS FILE (read first)
 README.md / README.zh.md          # bilingual user-facing
 CLAIMS.md                         # ACTIVE claim ledger (gate-mutation gate)
-CHANGELOG.md                      # wave-by-wave history
+CHANGELOG.md                      # development history
 
 adaptive_reflow/                  # core framework (do NOT casually edit)
 ├── universal/                     # model-agnostic kernel
@@ -274,13 +280,13 @@ adaptive_reflow/                  # core framework (do NOT casually edit)
 
 configs/                          # configuration presets
 reproduce/                         # one-click per-cell scripts (R1..R6)
-scripts/                          # wave driver + reproduction scripts
-tests/                            # 5155 pytest + D.4 byte-stable regression
+scripts/                          # experiment-driver + reproduction scripts
+tests/                            # pytest suite + D.4 byte-stable regression
 verification_outputs/                # byte-addressable headline evidence (gitignored)
 tnnls_submission/                 # TNNLS submission package (7 files)
-docs/                             # paper drafts + 270+ audit docs
+docs/                             # paper drafts + audit records
 ├── drafts/                        # paper source
-├── audit/                         # wave-by-wave audit trail (wave1..wave273+)
+├── audit/                         # audit trail (per-increment records)
 ├── api/                           # mkdocstrings auto-generated
 └── ...
 data/                             # 9 vendored upstream repos (DO NOT MODIFY)
@@ -288,7 +294,7 @@ eaai_submission/                  # historical EAAI submission (archive)
 todo/                             # active root plans + governance
 tools/                            # paper-metric + sweep scripts
 .codex/skills/                    # Skill flowa-paper-evidence / experiment-sweep / research-audit
-.claude/workflows/                # legacy wave-driver JS workflows (do not delete)
+.claude/workflows/                # legacy experiment-driver JS workflows (do not delete)
 .github/workflows/                # CI: ci.yml / cpu-tests / docs-deploy / docs-validate / ...
 ```
 
@@ -298,7 +304,7 @@ tools/                            # paper-metric + sweep scripts
 
 If a request doesn't match any of the 3 project skills, **stop** and
 ask the user. Do not invent a new workflow. The three skills cover all
-historical wave work.
+historical work.
 
 If a request seems destructive or controversial (e.g. touching vendored
 code, pushing to remote, cutting a tag), **stop** and confirm with the
@@ -310,4 +316,4 @@ first. Per `flowa-research-audit`: prefer existing tools.
 
 ---
 
-_Last updated: 2026-09-22 (Wave 274 — workflow + skill configuration)._
+_Last updated: 2026-10-11 (documentation-management consolidation — management surface `todo/WAVES.md`, map `docs/README.md`)._
