@@ -244,7 +244,7 @@ The Wave 356 P3 ADDITIVE summary introduced a finer-grained 18-criterion framing
 **Authored:** Wave 364 G38 page-count recheck (gap G38 closure; audit doc at [`docs/audit/wave364-g38.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave364-g38.md)).
 **Scope:** ADDITIVE — this section does NOT modify any of the 29 existing [x] PASS checkboxes above or any of the Wave 356 P3 / Wave 358 P4 ADDITIVE summary tables; per Wave 268 strict-clean rule + Wave 356 P3 hard-guardrails (NO-PUSH + ADDITIVE only) the existing prose and tables are preserved unchanged. This section adds a single explicit page-count ≤ 14 annotation tied to the Wave 356 P1 PDF rebuild SHA-256 and byte-size, per gap G38.
 **Page count verification (`pdfinfo docs/drafts/paper-A-final.pdf`):** `Pages: 10` (IEEEtran-journal double-column, 612 × 792 pts) — **10 ≤ 14 (TNNLS main-track limit OK; no trim required)**. *(Wave 384 update: the current manuscript is the retitled "Geometry-Aware State-Intervention Reformulation" build; the historical Wave 356 P1 reading was 14 pages.)*
-**Annotation (per gap G38 spec, Wave 385 update):** Pages: 11 ≤ 14 (verified by `pdfinfo` against the current `paper-A-final.pdf` at sha256 `33d3a771fc6ea0cd4cd8a685058f4d9237417696351aa6e816388af613444916`; 447018 bytes; see `tnnls_submission/MANIFEST.md` Wave 384/385 + manuscript-consistency addendum rows).
+**Annotation (per gap G38 spec, Wave 385 update):** Pages: 11 ≤ 14 (verified by `pdfinfo` against the current `paper-A-final.pdf` at sha256 `ce0f0461de3b240bf14d0df8c7198fd4c1819aa75973ae596fc0abb2b39b1225`; 447019 bytes; see `tnnls_submission/MANIFEST.md` Wave 384/385 + manuscript-consistency addendum rows).
 
 ### Cross-references (Wave 364 G38)
 

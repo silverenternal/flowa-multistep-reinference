@@ -292,3 +292,15 @@ The FlowA TNNLS submission is submittable at the highest reproducibility standar
 - **Consistency corrections carried by this pass.** §2.3 citation keys corrected (`[13]`/`[14]`/`[15]` → `[10]`/`[11]`/`[12]`, matching the reference list); raw p-values mis-tagged as "Bonferroni-corrected $p$" relabelled for R5a / R1 / the `.tex` R2 row; a dangling `§10.8(i)` reference and a stray `§15.104` (an R5a section) pointer in the §7.11 R5c row fixed; two inline-code glitches repaired; the R2 synthetic-input-coordinate disclosure added to the `.tex` R2 row; an additive R2 deployed-path clarification appended to `docs/CLAIMS.md` CLM-060. **No metric or claim number changed; no status label moved.**
 
 *Manuscript-consistency pass addendum authored 2026-10-12; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §2.3 / §7.2 / §7.9 / §7.11 and `docs/CLAIMS.md` CLM-060.*
+
+---
+
+## 13. Manuscript-consistency pass #3 (2026-10-12 ADDITIVE)
+
+> **ADDITIVE — appended after the submission freeze; no existing line above is modified. §1 (14 PASS) and §2 (6 PENDING) are unchanged.**
+
+- **§1 row 6 / §3.1 G38 (paper ≤ 14 pages).** The manuscript PDF was rebuilt after the third defect sweep (still **11 pages**): current SHA-256 `ce0f0461de3b240bf14d0df8c7198fd4c1819aa75973ae596fc0abb2b39b1225` (447019 bytes), superseding the §12 reading `33d3a771…` / 447018 bytes. The rows retain the earlier readings verbatim; the refreshed values are pinned in `tnnls_submission/MANIFEST.md` and the `README`/`todo` surfaces.
+- **Consistency corrections carried by this pass.** §7.9's Bonferroni-family paragraph `§7.3` → `§7.4`; the audit-row column count `12-column` → `13-column` (in `paper-A-final.md` and `docs/CLAIMS.md`); §3.4.2's capability-token field counts `24-field` → `22-field`, `9 flags` → `10 flags`, `Eight True` → `Nine True`, group-(iv) `6 fields` → `7 fields` (ground truth via `dataclasses.fields`); §7.9's false "closes the §10.8 future-work gap" citation replaced with an accurate standalone-figure statement; §4.5's theoretical-perspective self-contradiction rewritten so R6 is the sole theoretical-perspective cell. The R5a seed-coverage provenance (F6) is recorded as a known documentation gap rather than reworded. **No metric or claim number changed; no status label moved.**
+- **Manifest row-47 note.** The SHA table's row-47 parenthetical ("closes the `§10.8(i)` … gap"; reference to "§7.8") is superseded by the §7.9 correction above; the figure renders the §7.9 regime curve as a standalone artifact, and its manuscript reference is §7.9 (not §7.8).
+
+*Manuscript-consistency pass #3 addendum authored 2026-10-12; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §3.4.2 / §4.5 / §7.9 and `docs/CLAIMS.md`.*
