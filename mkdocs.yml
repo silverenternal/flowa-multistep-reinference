@@ -244,6 +244,7 @@ not_in_nav: |
   inserted-lemmas/*.md
   INSIGHTS.md
   audit/wave*.md
+  audit/push-unblock-large-blob.md
   audit/*/wave*.md
   audit/algorithm_4arm/*.md
   audit/cifar/*.md

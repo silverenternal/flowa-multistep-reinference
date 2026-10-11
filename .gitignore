@@ -85,3 +85,11 @@ results/*_tmp/
 # tracked.
 formal/.lake/
 /formal/lake-manifest.json
+
+# TNNLS supplementary bundle. The single-archive review-reproducibility bundle
+# is ~147 MB (154,249,954 bytes), which exceeds GitHub's 100 MB blob limit and
+# is rejected by the pre-receive hook. It is therefore distributed out-of-band
+# (SHA-256 pinned in tnnls_submission/MANIFEST.md) and kept on disk for local
+# packaging only -- never committed. Regenerate from paper-data/ + the sidecar
+# supplementary_bundle/SHA256SUMS; verify with `sha256sum -c`.
+tnnls_submission/supplementary_bundle.zip

@@ -198,7 +198,7 @@ packaged the per-cell headline artifacts, the headline-evidence
 SOURCE.md provenance, and the most consequential Wave 339 + Wave 343
 audit docs into one archive:
 
-**Archive:** [`tnnls_submission/supplementary_bundle.zip`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/supplementary_bundle.zip)
+**Archive:** `tnnls_submission/supplementary_bundle.zip` (distributed out-of-band — the 147 MB archive exceeds GitHub's 100 MB blob limit and is intentionally not tracked in git; verify against the SHA-256 below)
 - **Size:** 148 MB (compressed)
 - **SHA-256:** `d1b5ba24a55a9336e7b65cee7bea652482943932181ddfdd6a8d6a9e5c758f3e`
 - **Self-extracting tarball not used**: zip preserves directory structure
