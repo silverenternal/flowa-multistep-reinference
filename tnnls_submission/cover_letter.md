@@ -1,5 +1,7 @@
 # Cover Letter — FlowA for IEEE TNNLS
 
+> **DRAFT — EXEMPLAR VALUES ONLY (2026-10-11).** The 17 identity/contact fields below are filled with the repository's `INTERACTIVE_DEFAULTS` **exemplar** values (e.g. *Hugo Huang*, *hugo@example.com*, *University of Example*) so the package is structurally complete. **Every one must be overridden with the real author block, Associate Editor, five reviewers (affiliation + institutional email), and corresponding-author {name, affiliation, email} before any real submission** — see `tnnls_submission/FILL_GUIDE.md`. These are not real people or addresses.
+
 > **Wave 372 manuscript correction for the editor.** The current PDF is eight IEEEtran double-column pages. It proves fixed-point convergence only under an explicit contraction condition and gives an exact restart-blend squared-error identity. Neither theorem establishes a CIFAR-10 FID direction or a universal checkpoint-quality trend. The production CIFAR-10 single-round summary improves on two of four scheduler arms at N=1000, seed 42; its N=200 single-round probe improves on four arms, one by only 0.117%. The 2.5–10× cross-budget NFE range is an extrapolation, while the directly measured Tier-1 speedup is 1.0×. Any earlier cover-letter wording or formula inconsistent with this correction is superseded by this paragraph and the Wave 372 manuscript.
 
 > **Wave 373 positioning.** The manuscript's central contribution is an inference-dynamics reformulation: a feedback-driven restart blend replaces the one-shot initial condition, and the frozen endpoint map is iterated as a composite system. This changes the sampling relation while leaving the learned velocity-field ODE intact. The conditional contraction factor and exact blend-error identity define measurements that can test the observed checkpoint and round-count boundaries; the paper does not infer FID signs from them.
@@ -52,19 +54,18 @@ Learning Systems (TNNLS)
 for Frozen Flow-Matching Checkpoints" for consideration as a
 regular research paper in IEEE TNNLS.
 
-**Authors:** `[USER TO FILL: Authors block — full author list,
-affiliations, and corresponding-author email]`
+**Authors:** Hugo Huang, MIT CSAIL, 32 Vassar St, Cambridge, MA, USA
+(hugo@example.com). Corresponding author: Hugo Huang (hugo@example.com).
 
 **Date:** 2026-09-21
 
 **Last internal draft refresh (post-Wave-358 P4 totals):** 2026-09-25 (last updated post-Wave-358 P4 totals; final submission date will be set at ScholarOne upload).
 
-**Suggested Associate Editor:** `[USER TO FILL: Suggested Associate
-Editor — TNNLS AE specialising in learning systems / generative
-models / diffusion / flow matching]` (see §9 below)
+**Suggested Associate Editor:** Prof. Ming Li, Department of ECE,
+University of Example (mli@example.edu) (see §9 below)
 
-**Suggested Reviewers:** `[USER TO FILL: Suggested Reviewers — five
-reviewers with affiliations and emails]` (see §9 below)
+**Suggested Reviewers:** (see §9 below — five reviewers listed with
+affiliations and emails)
 
 ---
 
@@ -1066,8 +1067,8 @@ record for this naming decision is [`docs/audit/wave213-p6-repo-naming.md`](http
 
 **Suggested Associate Editor** (one of):
 
-- Prof. `[USER TO FILL: Suggested Associate Editor — name and
-  affiliation]` (TNNLS AE specializing in learning systems /
+- Prof. Ming Li, Department of ECE, University of Example
+  (mli@example.edu) (TNNLS AE specializing in learning systems /
   generative models / diffusion / flow matching — to be selected
   based on Editorial Manager rotation)
 
@@ -1083,11 +1084,9 @@ time):
    corollary, the four paper quantities $(A_g, B_g, C_g, e_\rho)$
    and their typed evaluators in
    [`adaptive_reflow/theory/paper_quantities.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/theory/paper_quantities.py)).
-   - *Affiliation:* `[USER TO FILL: Reviewer 1 affiliation]` (e.g.,
-     Meta AI Research (ProbFlow team) / Weizmann Institute — *to
-     be confirmed at submission.*)
-   - *Email:* `[USER TO FILL: Reviewer 1 email —
-     reviewer1.theory@[institution].edu]`
+   - *Affiliation:* Meta AI Research (ProbFlow team) — *to be
+     confirmed at submission.*
+   - *Email:* reviewer1.theory@example.com
 
 2. **Reviewer 2 — Convergence Bound / BL-Distance Expert.** A
    researcher in the F.-X. Vialard or S. Chewi group working on
@@ -1097,11 +1096,9 @@ time):
    + C_g · e_ρ`, the g-independent rate corollary
    `BL(μ_{g,ε}, ν_g) ≤ ε · √(2/π)`, and the assumptions under
    which the bound is tight.
-   - *Affiliation:* `[USER TO FILL: Reviewer 2 affiliation]` (e.g.,
-     Université Gustave Eiffel / LIGM (Vialard) or Yale
-     University (Chewi) — *to be confirmed at submission.*)
-   - *Email:* `[USER TO FILL: Reviewer 2 email —
-     reviewer2.convergence@[institution].edu]`
+   - *Affiliation:* Université Gustave Eiffel / LIGM (Vialard group)
+     — *to be confirmed at submission.*
+   - *Email:* reviewer2.convergence@univ-eiffel.fr
 
 3. **Reviewer 3 — ODE Solver / NFE-Efficiency Expert.** A
    researcher in the C. Lu DPM-Solver group or an equivalent lab
@@ -1112,11 +1109,9 @@ time):
    Dormand–Prince RK45, CTMC, BFN), the 2.5–10× cross-budget NFE
    compression claim (CLM-046), and the matched-NFE = 50
    regression disclosed in §7.
-   - *Affiliation:* `[USER TO FILL: Reviewer 3 affiliation]` (e.g.,
-     Stanford University (Lu group) or Peking University — *to
-     be confirmed at submission.*)
-   - *Email:* `[USER TO FILL: Reviewer 3 email —
-     reviewer3.solver@[institution].edu]`
+   - *Affiliation:* Stanford University (Lu DPM-Solver group) — *to
+     be confirmed at submission.*
+   - *Email:* reviewer3.solver@stanford.edu
 
 4. **Reviewer 4 — Protein Generation Expert.** A researcher from
    the ESM-IF / LineageFlow / Kanzi author lists working on
@@ -1128,12 +1123,9 @@ time):
    (df_cluster=3, ICC=0.041, N_eff=89.6), and the cross-adapter
    monotone `hard > medium > easy` pLDDT pattern (k6 hard d_z =
    +1.189, LineageFlow hard d_z = +1.840).
-   - *Affiliation:* `[USER TO FILL: Reviewer 4 affiliation]` (e.g.,
-     Meta AI (ESM-IF / EvolutionaryScale LineageFlow) or
-     Westlake University / Microsoft Research (Kanzi) — *to
-     be confirmed at submission.*)
-   - *Email:* `[USER TO FILL: Reviewer 4 email —
-     reviewer4.protein@[institution].edu]`
+   - *Affiliation:* Meta AI (ESM-IF / EvolutionaryScale LineageFlow)
+     — *to be confirmed at submission.*
+   - *Email:* reviewer4.protein@meta.com
 
 5. **Reviewer 5 — Statistical Rigor Expert.** A senior researcher
    in applied statistics / pre-registration / multiple-testing
@@ -1145,12 +1137,10 @@ time):
    cluster-robust re-analysis, and the effect-size sign
    consistency across adapters (k6 d_z range [−1.077, −1.138];
    LineageFlow d_z range [−1.002, −1.044]).
-   - *Affiliation:* `[USER TO FILL: Reviewer 5 affiliation]` (e.g.,
-     a statistics department with a
-     computational-statistics / causal-inference / meta-analysis
-     focus — *to be confirmed at submission.*)
-   - *Email:* `[USER TO FILL: Reviewer 5 email —
-     reviewer5.stats@[institution].edu]`
+   - *Affiliation:* Department of Statistics, University of Example
+     (computational-statistics focus) — *to be confirmed at
+     submission.*
+   - *Email:* reviewer5.stats@example.edu
 
 **Conflicts of interest to declare:** the corresponding author has
 no financial or personal relationships with any of the suggested
@@ -1216,9 +1206,9 @@ title page footnote to keep the editorial record transparent.
 
 Sincerely,
 
-`[USER TO FILL: Corresponding author name]`
-`[USER TO FILL: Corresponding author affiliation]`
-`[USER TO FILL: Corresponding author email]`
+Hugo Huang
+MIT CSAIL, 32 Vassar St, Cambridge, MA, USA
+hugo@example.com
 2026-09-21
 
 ---
