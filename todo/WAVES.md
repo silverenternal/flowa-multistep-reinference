@@ -33,16 +33,16 @@ does not.
 
 ---
 
-## 1. Current state (as of 2026-10-11)
+## 1. Current state (as of 2026-10-12)
 
 ### 1.1 Repository
 
-- **Branch:** `main`. **HEAD:** `fea137d` ("docs(manuscript): fourth consistency sweep — capability groups, field name, §4.5 cell list"). (Prior 2026-10-11 reading: `0209002` "Push unblock: purge 147.1 MB supplementary_bundle.zip from history + gitignore".)
-- **Ahead of `origin/main`:** **0** commits. The 192-commit backlog was pushed on
-  2026-10-11, and the three manuscript-consistency sweeps (`165df71` / `60c2441` /
-  `fea137d`) were re-pushed on 2026-10-12 — so `origin/main` = `fea137d`
-  (user-authorized; the first push since the Wave 325 NO-PUSH policy).
-  Pushing remains **user-gated** — agents commit locally but never push.
+- **Branch:** `main`. **HEAD:** `8756f19` ("docs(manuscript): eighth consistency sweep — §6.1 stray heading + §8.10 stale honest-disclosure"). (Prior readings: `fea137d` "docs(manuscript): fourth consistency sweep — capability groups, field name, §4.5 cell list"; `0209002` "Push unblock: purge 147.1 MB supplementary_bundle.zip from history + gitignore".)
+- **Ahead of `origin/main`:** **5** commits (`origin/main` = `fea137d`). The
+  192-commit backlog was pushed on 2026-10-11 and the early manuscript-consistency
+  sweeps (`165df71` / `60c2441` / `fea137d`) were re-pushed on 2026-10-12; the
+  later manuscript-consistency sweeps and the governance / repo-docs refreshes are
+  local-only. Pushing remains **user-gated** — agents commit locally but never push.
 - **Tags (local, unpushed):** `v3.0-tnnls-ready`, `v3.1-tnnls-with-figure` (the tag
   push stays user-gated).
 
@@ -64,9 +64,22 @@ does not.
   skipped / 50 deselected / 12 xfailed / 0 failed`. The earlier "25 failed /
   5166 passed" reading was environment/ordering-dependent and is resolved; the
   long-cited "5155 passed / 196 skipped" figure is a historical freeze baseline.
-- **Mypy:** `mypy --strict adaptive_reflow` → **0 errors in 230 files** (the prior
-  988-error camera-ready deferral was closed).
+- **Mypy:** `mypy --strict adaptive_reflow` → **0 errors in 230 files** in the
+  canonical environment (the prior 988-error camera-ready deferral was closed).
+  **Environment caveat:** in the current sandbox (`mypy 2.3.1` via
+  `.venvs/flowmol3_venv`) the same command reports **39 errors** in adapter files
+  (missing third-party stubs + version-dependent checks) — environment-dependent
+  and pre-existing, recorded in `docs/audit/manuscript-defect-review-7.md`.
 - **Ruff:** 0 findings in scope.
+- **Readiness verifier (`tools/verify_submission_readiness.py`):** the hard gates
+  pass (`d4_72`, `ruff_0`, `claims_pass`, `paper_warns`, `r1_r6_sha`,
+  `framework_n1000`); two **camera-ready-scope doc-drift** gates remain red —
+  `k1_rc5` (reads the legacy EAAI-era `docs/paper-draft.md`, whose K1 §10.4 wording
+  predates the current manuscript) and `drift_33` (148 historical `33/33 PASS`
+  occurrences under `docs/audit/engineering/`). Both are documented camera-ready
+  items (readiness-verifier audit trail under `docs/audit/`: the pytest side was
+  closed with xfail markers; the doc side remains open per the camera-ready scope)
+  — **not** submission blockers.
 
 ### 1.3 Manuscript
 

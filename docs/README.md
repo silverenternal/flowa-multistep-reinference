@@ -1,9 +1,9 @@
 # Documentation map for `flowa-multistep-reinference`
 
-> **Paper A is ready for TNNLS submission (updated 2026-10-11).**
+> **Paper A is ready for TNNLS submission (updated 2026-10-12).**
 > Paper PDF: [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf) — 11 pages, IEEEtran-journal double-column, sha256 `47f6eb0418d041b0dccdba68bcdf8b794c02e8a710368a8eaebe5e17f89ca732`.
 > Headline verdicts: **4 STRONG + 1 TIE + 6 PARTIAL/SUPPLEMENTARY** across the 11 cells.
-> Acceptance gates ALL PASS: D.4 30/30 · contracts 195/195 · ruff 0 · claims no drift · mkdocs 0 warnings · vendored `data/` untouched · data integrity 6/149/0 · reproducibility 12/12.
+> Acceptance gates ALL PASS: D.4 30/30 · contracts 195/195 · ruff 0 · claims no drift · mkdocs 0 warnings · vendored `data/` untouched · data integrity 6/149/0 · reproducibility 12/12. The separate readiness verifier (`tools/verify_submission_readiness.py`) additionally checks `r1_r6_sha` / `framework_n1000` / `k1_rc5` / `drift_33`; the last two are documented **camera-ready-scope** doc-drift gates and remain red (they read the legacy EAAI-era [`paper-draft.md`](paper-draft.md) and historical `33/33 PASS` strings).
 > **Management surface:** [`../todo/WAVES.md`](../todo/WAVES.md) — the consolidated, increment-free project record (current state, phase history, evidence ledger, gates, decisions, risks).
 > **Submission package:** [`../tnnls_submission/`](../tnnls_submission/) — 7 core files with real SHA-256 (the cover letter still needs its `[USER TO FILL]` fields).
 
@@ -88,7 +88,7 @@ archival trace.
 | [`baseline-audit-report.md`](baseline-audit-report.md) | Baseline audit report. |
 | [`drafts/paper-A-final.md`](drafts/paper-A-final.md) | **Canonical manuscript source** (title + abstract inline). |
 | [`drafts/paper-A-final.tex`](drafts/paper-A-final.tex) | IEEEtran build source for the submitted PDF. |
-| [`paper-draft.md`](paper-draft.md) · [`paper-draft-anonymous.md`](paper-draft-anonymous.md) · [`paper-profile.md`](paper-profile.md) | Paper-draft variants and the venue profile. |
+| [`paper-draft.md`](paper-draft.md) (legacy EAAI-era draft) · [`paper-draft-anonymous.md`](paper-draft-anonymous.md) · [`paper-profile.md`](paper-profile.md) | Paper-draft variants and the venue profile; the live manuscript is [`drafts/paper-A-final.md`](drafts/paper-A-final.md). |
 | [`tables/`](tables/) | Paper-ready tables (paper quantities, algorithms, state machines, CIFAR ablation). |
 | [`figures/`](figures/) | Paper-ready figures (protocol diagram, feedback loops, per-round selection ratio, CIFAR-10 FID curve, evidence comparison). |
 
@@ -127,6 +127,7 @@ intentionally archival and rot-tolerant.
   paper-table template, synthetic-oracle audit. Entry point:
   [`r17-survey/state-report.md`](r17-survey/state-report.md).
 - [`paper-final-neurips.md`](paper-final-neurips.md) — superseded venue draft.
+- **Superseded compiled PDFs** — [`paper-final-neurips.pdf`](paper-final-neurips.pdf) (NeurIPS-era), [`paper-eaai.pdf`](paper-eaai.pdf) (EAAI-era), [`paper-tnnls.pdf`](paper-tnnls.pdf) (byte-identical duplicate of `paper-eaai.pdf`). Retained for provenance; the live PDF is [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf).
 - [`ARCHIVE/`](ARCHIVE/) — historical context, intentionally **not** part of the
   live mkdocs build (enforced by `mkdocs.yml` `exclude_docs`). Preserved on disk
   for archaeology; not maintained and not reachable from the GitHub Pages nav.

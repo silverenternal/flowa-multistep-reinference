@@ -255,6 +255,7 @@ not_in_nav: |
   audit/manuscript-defect-review-6.md
   audit/manuscript-defect-review-7.md
   audit/manuscript-defect-review-8.md
+  audit/repo-docs-maintenance.md
   audit/*/wave*.md
   audit/algorithm_4arm/*.md
   audit/cifar/*.md

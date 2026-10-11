@@ -70,7 +70,7 @@
 | **Paper PDF / 论文 PDF** | [`docs/drafts/paper-A-final.pdf`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.pdf) (11 pages, IEEEtran-journal double-column typeset, sha256 `47f6eb0418d041b0dccdba68bcdf8b794c02e8a710368a8eaebe5e17f89ca732`) |
 | **Paper draft / 论文草稿** | [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) (25,576 words, §6 Framework Properties Lemmas 1–3 + Theorems 4–5 ACTIVE, sha256 `d83e283bb5467459caa235067f190e203984e716f8c4efaa61664d43a7f0f52a`) |
 | **Target venue / 目标期刊** | IEEE TNNLS (Transactions on Neural Networks and Learning Systems) |
-| **Submission status / 投稿状态** | **READY / 已就绪** — 9-gate ALL PASS at pre-push (D.4 30/30, contracts 195/195, ruff 0 errors, claims no drift, mkdocs strict 0 warnings, vendored NOT touched, data integrity 6/149/0 mismatches, reproducibility 12/12, PDF ≤14 pages); cover letter needs 17 USER_TO_FILL fields per [`tnnls_submission/FILL_GUIDE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/FILL_GUIDE.md) |
+| **Submission status / 投稿状态** | **READY / 已就绪** — 9-gate ALL PASS at pre-push (D.4 30/30, contracts 195/195, ruff 0 errors, claims no drift, mkdocs strict 0 warnings, vendored NOT touched, data integrity 6/149/0 mismatches, reproducibility 12/12, PDF ≤14 pages); cover letter needs 17 USER_TO_FILL fields per [`tnnls_submission/FILL_GUIDE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/FILL_GUIDE.md). The separate readiness verifier (`tools/verify_submission_readiness.py`) also reports two **camera-ready-scope** doc-drift gates red (`k1_rc5`, `drift_33`) — documented, not submission blockers; see [`todo/WAVES.md`](todo/WAVES.md) §1.2 |
 | **Submission package / 投稿包** | [`tnnls_submission/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tnnls_submission) — 7 files with real SHA-256 (cover_letter.md, highlights.md, tables.md, figures.md, data_availability.md, submission_checklist.md, MANIFEST.md) |
 | **H7 terminology cleanup / H7 术语清理** | **59 fixes, 0 residual jargon / 59 项修复，0 残余术语** |
 | **H8 abbreviations / H8 缩写** | **5 defined at first use / 5 项首用定义** (pLDDT, scPerplexity, RDKit, HSM, HMMER) |
@@ -299,9 +299,11 @@ Per-cell audit records under [`docs/audit/`](https://github.com/silverenternal/f
 | **Source tree freeze** | `v3.1-internal-publishable` tag, vendored 8 repos UNMODIFIED | `docs/ARCHITECTURE.md` |
 | **Pytest** | 子集 green；全量运行给出 25 failed / 5166 passed / 145 skipped / 16 errors（环境/顺序相关；`tests/test_claims/` 隔离下 146/146 green）— 见 [`docs/audit/INDEX.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/INDEX.md) 的 `engineering` 簇 | `pytest tests/` |
 | **Ruff lint (4-directory scope)** | 0 findings | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
-| **Mypy type-check** | 0 errors | `mypy adaptive_reflow/` |
+| **Mypy type-check** | 0 errors in the canonical environment; **39** in the current sandbox (`mypy 2.3.1`, missing third-party stubs) — env-dependent, pre-existing | `mypy adaptive_reflow/` |
 | **Final paper sha256** | `d83e283bb5467459caa235067f190e203984e716f8c4efaa61664d43a7f0f52a` | `sha256sum docs/drafts/paper-A-final.md` |
 | **Final PDF sha256** | `47f6eb0418d041b0dccdba68bcdf8b794c02e8a710368a8eaebe5e17f89ca732` (11 pages) | `sha256sum docs/drafts/paper-A-final.pdf` |
+
+> **Gate-scope note.** The "9-gate" row above is the project's hard-requirement acceptance set. The broader readiness verifier (`tools/verify_submission_readiness.py`) additionally checks `r1_r6_sha`, `framework_n1000`, `k1_rc5`, and `drift_33`. Of these, `k1_rc5` and `drift_33` are the documented **camera-ready-scope** doc-drift gates and remain red — they read the legacy EAAI-era `docs/paper-draft.md` and historical `33/33 PASS` strings respectively, both superseded by the current manuscript. This is a gate-scope difference, not a contradiction: see [`todo/WAVES.md`](todo/WAVES.md) §1.2.
 
 **Reproducibility recipe / 可复现性脚本:**
 
@@ -377,7 +379,7 @@ data/                     # vendored upstream checkpoints (8 repos, all unmodifi
 | Abstract word count | **183 words** (abstract trim phase from 328) | `docs/drafts/abstract-final.md` |
 | Pytest | **5155 passed / 196 skipped** | `pytest tests/` |
 | Ruff lint (4-directory scope) | **0 findings** | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
-| Mypy type-check | **0 errors** | `mypy adaptive_reflow/` |
+| Mypy type-check | **0 errors** in the canonical environment; **39** in the current sandbox (env-dependent, pre-existing) | `mypy adaptive_reflow/` |
 | TNNLS submission package | **7 files** with real SHA-256 | `tnnls_submission/MANIFEST.md` |
 
 ---
