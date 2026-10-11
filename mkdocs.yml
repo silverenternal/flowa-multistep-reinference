@@ -253,6 +253,7 @@ not_in_nav: |
   audit/manuscript-defect-review-4.md
   audit/manuscript-defect-review-5.md
   audit/manuscript-defect-review-6.md
+  audit/manuscript-defect-review-7.md
   audit/*/wave*.md
   audit/algorithm_4arm/*.md
   audit/cifar/*.md

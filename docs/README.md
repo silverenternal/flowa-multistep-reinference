@@ -1,7 +1,7 @@
 # Documentation map for `flowa-multistep-reinference`
 
 > **Paper A is ready for TNNLS submission (updated 2026-10-11).**
-> Paper PDF: [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf) — 11 pages, IEEEtran-journal double-column, sha256 `68b28acda286a394cabe17a92f67d715f09208cf19b10385f29fd67b732d0238`.
+> Paper PDF: [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf) — 11 pages, IEEEtran-journal double-column, sha256 `47f6eb0418d041b0dccdba68bcdf8b794c02e8a710368a8eaebe5e17f89ca732`.
 > Headline verdicts: **4 STRONG + 1 TIE + 6 PARTIAL/SUPPLEMENTARY** across the 11 cells.
 > Acceptance gates ALL PASS: D.4 30/30 · contracts 195/195 · ruff 0 · claims no drift · mkdocs 0 warnings · vendored `data/` untouched · data integrity 6/149/0 · reproducibility 12/12.
 > **Management surface:** [`../todo/WAVES.md`](../todo/WAVES.md) — the consolidated, increment-free project record (current state, phase history, evidence ledger, gates, decisions, risks).

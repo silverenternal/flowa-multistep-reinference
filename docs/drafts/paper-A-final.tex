@@ -179,7 +179,7 @@ is adapter~$\to$~algorithm, adapter~$\to$~eval, and algorithm/eval~$\to$~framewo
 \end{figure*}
 
 \subsection{Mechanism: from checkpoint geometry to measurable gain}
-FlowA is organized around a causal chain with four interfaces. The interfaces are separated so that a change in a metric can be traced to a state representation, a restart intervention, a capacity decision, or the frozen checkpoint response.
+FlowA is organized around a causal chain with four interfaces (Figure~\ref{fig:flowa-mechanism}). The interfaces are separated so that a change in a metric can be traced to a state representation, a restart intervention, a capacity decision, or the frozen checkpoint response; Table~\ref{tab:mechanism-evidence} lists each interface's observable quantity and evidence surface.
 
 \begin{enumerate}
 \setlength{\itemsep}{2pt}
@@ -203,6 +203,7 @@ where $d_k$ is a difficulty or residual descriptor, $m_k$ is the policy output, 
 \begin{table}[t]
 \centering\small
 \caption{Mechanism-to-evidence map. Each row identifies the intervention, its observable quantity, and the evidence used in this paper.}
+\label{tab:mechanism-evidence}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{p{0.22\columnwidth}p{0.30\columnwidth}p{0.38\columnwidth}}
 \toprule
@@ -409,11 +410,12 @@ This follows pointwise from the convex-combination norm identity. With a specifi
 \section{Empirical Results}
 
 \subsection{Evaluation scope}
-Seven R-level cells and four supplementary K-cells span protein, molecule, toy, and image domains. Sample sizes, seed policies, metrics, and baselines vary by cell; the per-cell recipes and claim ledger give the exact provenance. The main status distribution is four strong cells, one tie, and two partial cells; four K-cells remain supplementary. A strong label on R5b is conditional on protocol and round count. Figure~\ref{fig:cell-evidence} places the per-cell effect sizes and the eleven-cell verdict distribution side by side.
+Seven R-level cells and four supplementary K-cells span protein, molecule, toy, and image domains. Sample sizes, seed policies, metrics, and baselines vary by cell; the per-cell recipes and claim ledger give the exact provenance. The main status distribution is four strong cells, one tie, and two partial cells; four K-cells remain supplementary. A strong label on R5b is conditional on protocol and round count. Figure~\ref{fig:cell-evidence} places the per-cell effect sizes and the eleven-cell verdict distribution side by side, and Table~\ref{tab:main-cell-evidence} reports the per-cell metric, status, and scope boundary.
 
 \begin{table*}[t]
 \centering\small
 \caption{Main-cell evidence at the reported metric and protocol. Negative $\Delta$FID is favourable. Status labels are cell-specific, not pooled across metrics.}
+\label{tab:main-cell-evidence}
 \begin{tabular}{llll}
 \toprule
 Cell and model & Metric or result & Status & Scope boundary \\
@@ -472,7 +474,7 @@ Together, these controls support a mechanism claim stronger than an endpoint com
 
 \subsection{Statistical methodology}
 
-Every head-claim cell is reported under a 13-column audit row: `(n\_paired, mean\_diff, sd\_diff, t, df, p\_raw, CI\_95\_low, CI\_95\_high, d\_z, test\_type, family, alpha\_bonferroni, bonf\_sig)`, and every Bonferroni family is pre-registered (defined before inspection of the per-cell p-values). Four families are used in this paper:
+Every head-claim cell is reported under a 13-column audit row: \texttt{(n\_paired, mean\_diff, sd\_diff, t, df, p\_raw, CI\_95\_low, CI\_95\_high, d\_z, test\_type, family, alpha\_bonferroni, bonf\_sig)}, and every Bonferroni family is pre-registered (defined before inspection of the per-cell p-values). Four families are used in this paper:
 
 \begin{itemize}
 \setlength{\itemsep}{2pt}
@@ -482,7 +484,7 @@ Every head-claim cell is reported under a 13-column audit row: `(n\_paired, mean
 \item \textbf{Five-arm ablation family}, $k = 5$ raw tests, $\alpha = 0.05/5 = 0.010$. Scope: A0--A4 cumulative-add arms.
 \end{itemize}
 
-Cluster-robust re-analysis for protein cells treats each Pfam family as a cluster and re-computes the cluster-level $t$, $df_\text{cluster}$, and $p_\text{cluster}$. The cluster-robust family $k = 6 \times 4 = 24$ uses $\alpha_\text{cluster} = 0.05/24 = 0.00208$ as a strict reviewer-facing bound. FDR-BH sensitivity at $q = 0.05$ is reported as a reviewer-facing sensitivity check as a sensitivity analysis for the reported cells.
+Cluster-robust re-analysis for protein cells treats each Pfam family as a cluster and re-computes the cluster-level $t$, $df_\text{cluster}$, and $p_\text{cluster}$. The cluster-robust family $k = 6 \times 4 = 24$ uses $\alpha_\text{cluster} = 0.05/24 = 0.00208$ as a strict reviewer-facing bound. FDR-BH sensitivity at $q = 0.05$ is reported as a reviewer-facing sensitivity analysis for the reported cells.
 
 \subsection{Scope of the observed operating boundaries}
 
