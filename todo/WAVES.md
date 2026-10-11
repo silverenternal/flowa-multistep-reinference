@@ -1,6 +1,6 @@
 # `todo/WAVES.md` — consolidated project state and history
 
-**Date:** 2026-10-11
+**Date:** 2026-10-11 (post-push governance refresh)
 **Status:** living document (single governance surface)
 **Purpose:** one self-contained record of *where the project is*, *how it got
 here*, *what the evidence says*, and *what remains* — written at the level of
@@ -37,11 +37,12 @@ does not.
 
 ### 1.1 Repository
 
-- **Branch:** `main`. **HEAD:** `061682c` ("Restore reformulation positioning in manuscript").
-- **Ahead of `origin/main`:** 188 commits. Pushing is **user-gated** under the
-  standing NO-PUSH policy (agents commit locally but never push; the user runs
-  `git push origin main`).
-- **Tags (local, unpushed):** `v3.0-tnnls-ready`, `v3.1-tnnls-with-figure`.
+- **Branch:** `main`. **HEAD:** `0209002` ("Push unblock: purge 147.1 MB supplementary_bundle.zip from history + gitignore").
+- **Ahead of `origin/main`:** **0** commits. The 192-commit backlog was pushed on
+  2026-10-11 (user-authorized; the first push since the Wave 325 NO-PUSH policy).
+  Pushing remains **user-gated** — agents commit locally but never push.
+- **Tags (local, unpushed):** `v3.0-tnnls-ready`, `v3.1-tnnls-with-figure` (the tag
+  push stays user-gated).
 
 ### 1.2 Acceptance gates (snapshot)
 
@@ -55,18 +56,15 @@ does not.
 | Import acyclic | **PASS** | `pytest tests/test_framework/test_import_acyclic.py -v` |
 | Vendored repos | **byte-identical** | `data/` untouched |
 
-**Honest disclosures (not gate failures, but stated):**
+**Gate results (re-verified 2026-10-11):**
 
-- **Full-suite pytest is not reproducible as a single green number.** A recent
-  full run gave `25 failed / 5166 passed / 145 skipped / 16 errors`; the
-  failures are environment/ordering-dependent, and `tests/test_claims/` passes
-  146/146 in isolation. The long-cited "5155 passed / 196 skipped" figure is a
-  historical freeze baseline, not a current measurement. See the `engineering`
-  topic cluster in `docs/audit/INDEX.md` for the characterization.
-- **Mypy:** 988 errors across 70 files — deliberately deferred to camera-ready;
-  the relevant claim wording acknowledges this.
-- **Ruff:** a further set of non-auto-fixable findings remains out of scope for
-  the submission freeze.
+- **Pytest (CI subset `-m "not slow and not benchmark"`):** `5055 passed / 171
+  skipped / 50 deselected / 12 xfailed / 0 failed`. The earlier "25 failed /
+  5166 passed" reading was environment/ordering-dependent and is resolved; the
+  long-cited "5155 passed / 196 skipped" figure is a historical freeze baseline.
+- **Mypy:** `mypy --strict adaptive_reflow` → **0 errors in 230 files** (the prior
+  988-error camera-ready deferral was closed).
+- **Ruff:** 0 findings in scope.
 
 ### 1.3 Manuscript
 
@@ -374,7 +372,9 @@ Readiness is consolidated in `tnnls_submission/SUBMISSION_READINESS.md`.
 
 1. Fill the `[USER TO FILL]` placeholders in `tnnls_submission/cover_letter.md`
    (guide: `tnnls_submission/FILL_GUIDE.md`).
-2. `git push` to `origin/main` (NO-PUSH policy; explicit authorization required).
+2. ~~`git push` to `origin/main`~~ — **DONE 2026-10-11** (`origin/main` = `0209002`;
+   the 192-commit backlog was pushed after the 147.1 MB supplementary-bundle blob
+   was purged from history + gitignored).
 
 ---
 

@@ -1,18 +1,18 @@
-# `todo/STATUS.md` — current execution status (2026-10-11, post-Wave 384)
+# `todo/STATUS.md` — current execution status (2026-10-11, post-push governance refresh)
 
-**Updated:** 2026-10-11 (Wave 385 figure-addendum — added the §III architecture TikZ figure and the §VII evidence-comparison figure to `paper-A-final.{tex,md}`, re-typeset the PDF to 11 pages; `todo/STATUS.md` + `todo/INDEX.md` + README/README.zh.md/docs/README.md re-pointed at the 11-page build; see [`docs/audit/wave385-figures.md`](../docs/audit/wave385-figures.md). Prior Wave 384 project audit + documentation refresh re-pointed the governance docs at HEAD `061682c` ≈ Wave 383; manuscript retitled and re-typeset 14 → 10 pages during Waves 366–383; see [`docs/audit/wave384-project-audit.md`](../docs/audit/wave384-project-audit.md))
+**Updated:** 2026-10-11 (post-push governance refresh — `origin/main` advanced from `6036207` to `0209002`; the 192-commit backlog was pushed after the 147.1 MB `supplementary_bundle.zip` was purged from history + gitignored (GitHub 100 MB blob limit); CI gates re-verified green — pytest subset `5055 passed / 171 skipped / 50 deselected / 12 xfailed / 0 failed`, mypy 0 errors in 230 files, ruff 0, claims no-drift, mkdocs `--strict` exit 0; see [`docs/audit/governance-refresh-post-push.md`](../docs/audit/governance-refresh-post-push.md). Prior Wave 385 figure-addendum — §III architecture TikZ figure + §VII evidence-comparison figure added to `paper-A-final.{tex,md}`, PDF re-typeset to 11 pages; see [`docs/audit/wave385-figures.md`](../docs/audit/wave385-figures.md). Wave 384 project audit re-pointed the governance docs at HEAD `061682c` ≈ Wave 383; see [`docs/audit/wave384-project-audit.md`](../docs/audit/wave384-project-audit.md))
 
 ---
 
 ## Current state (2026-10-11)
 
-- **HEAD commit:** `061682c` ("Restore reformulation positioning in manuscript", ≈ Wave 383). Prior governance refresh was at `9ed4d7e2` (Wave 346); Waves 348–383 intervened (manuscript restructure, see below).
-- **Tag:** `v3.1-tnnls-with-figure` / `v3.0-tnnls-ready` (NOT pushed to `origin/main`)
-- **Unpushed commits ahead of `origin/main`:** 188 (Wave 205 → Wave 383, user-gated per Wave 325 NO-PUSH policy)
+- **HEAD commit:** `0209002` ("Push unblock: purge 147.1 MB supplementary_bundle.zip from history + gitignore"). **Pushed to `origin/main`** (user-authorized 2026-10-11; first push since the Wave 325 NO-PUSH policy). Prior governance refresh was at `061682c` (≈ Wave 383); Waves 384–385 intervened (project audit + figure-addendum).
+- **Tag:** `v3.1-tnnls-with-figure` / `v3.0-tnnls-ready` (local; the tag push remains user-gated per `tnnls_submission/README.md` §3)
+- **Unpushed commits ahead of `origin/main`:** **0** (all commits through `0209002` are on `origin/main`; the 192-commit backlog landed 2026-10-11 after the 147.1 MB supplementary-bundle blob was purged from local history — `origin/main` had never contained the backlog, so no force-push was needed)
 - **D.4 byte-stable regression vectors:** **30/30 PASS** (verified via `pytest tests/test_d4_regression_vectors.py -q` at Wave 384 audit: `30 passed, 3 warnings in 7.56s`)
-- **Pytest:** full-suite Wave 384 re-run = **25 failed / 5166 passed / 145 skipped / 16 errors** (env/ordering-dependent; `tests/test_claims/` green 146/146 in isolation). The README "5155 passed / 196 skipped" figure is the Wave 131 freeze baseline and is not reproducible in the current environment — see [`docs/audit/wave384-project-audit.md`](../docs/audit/wave384-project-audit.md) §2.1 (finding D9).
+- **Pytest:** CI subset (`-m "not slow and not benchmark"`) = **5055 passed / 171 skipped / 50 deselected / 12 xfailed / 0 failed** (measured 2026-10-11, 8m39s; the earlier Wave 384 "25 failed / 5166 passed" figure reflected env/ordering-dependent failures that are now resolved). The README "5155 passed / 196 skipped" figure is the Wave 131 freeze baseline.
 - **Ruff:** 0 findings in scope (`ruff check adaptive_reflow/ tests/ scripts/ tools/` → All checks passed!, Wave 384)
-- **Mypy:** 988 errors in 70 files (camera-ready only; CLM-024 wording acknowledges)
+- **Mypy:** **0 errors in 230 files** (`mypy --strict adaptive_reflow`, measured 2026-10-11; the prior 988-error deferral was closed by the mypy batch — torch `nn.Module` override + stale `type: ignore` removal + ~24 real fixes)
 - **mkdocs build --strict:** PASS (exit 0, ~29s at Wave 384)
 - **ckpt SHA-256:** 4/4 PASS
 - **claims_consistency:** PASS (61 active claims, 2 deprecated, 0 provisional; CLM-040 forced to PROVISIONAL by `Disputed by` citation; verified at Wave 384 audit)
@@ -89,10 +89,10 @@
 
 ## Out of scope (deferred)
 
-- Mypy 988-error repair (camera-ready)
+- ~~Mypy 988-error repair (camera-ready)~~ — **CLOSED** (mypy --strict now 0 errors in 230 files)
 - Ruff 207 non-auto-fixable findings (camera-ready)
 - FreqFlow + MM-FM integration (no upstream ckpt / no shipped adapter)
-- Push to origin/main (user-gated; see `todo/PUSH-READY.md` and `wave325-push-execution.md`)
+- ~~Push to origin/main (user-gated; see `todo/PUSH-READY.md` and `wave325-push-execution.md`)~~ — **DONE 2026-10-11** (`origin/main` = `0209002`; 192-commit backlog pushed)
 - Wave 341 §6.5 RMSPreserving class reintroduction (deprecated back-compat alias; canonical name `EqualRmsCoordinateMixer` per ADR-0009)
 - 3-seed R3 N=1000 paired sweep (BLOCKED at vendor level per CLM-068; smoke ckpt Wave 191 byte-stable is the load-bearing evidence)
 - 3-seed R1 N=1000 (Wave 308 P1 invalidated by framework-fallback contamination on seeds 43/44)

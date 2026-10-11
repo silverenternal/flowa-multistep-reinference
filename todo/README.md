@@ -4,7 +4,7 @@
 > covering current state, phase history, evidence, gates, decisions, lessons,
 > risks, and open items. The per-task files below are retained for provenance.
 
-**Date:** 2026-10-11 (post-Wave 384 documentation refresh)
+**Date:** 2026-10-11 (post-push governance refresh)
 **Purpose:** Per-task markdown tracker for the **TNNLS** submission work. Lives alongside `todo.json` (machine-readable index) — this folder is for human-readable planning.
 
 ## Structure (post-Wave 384)
@@ -27,13 +27,13 @@ todo/
 
 ## Current focus (2026-10-11)
 
-**Venue:** IEEE TNNLS (switched from TPAMI at Wave 238 P3). Project at HEAD `061682c` (≈ Wave 383); 188 commits ahead of `origin/main` (user-gated NO-PUSH). All acceptance gates PASS.
+**Venue:** IEEE TNNLS (switched from TPAMI at Wave 238 P3). Project at HEAD `0209002`; **pushed to `origin/main`** (0 ahead; the 192-commit backlog landed 2026-10-11 under explicit user authorization). All acceptance gates PASS (pytest subset green / mypy 0 / ruff 0 / claims no-drift / mkdocs strict exit 0).
 
 **Remaining user-gated actions:**
 1. Fill the 17 `[USER TO FILL]` placeholders in `tnnls_submission/cover_letter.md` (see `tnnls_submission/FILL_GUIDE.md`).
-2. `git push` to `origin/main`.
+2. ~~`git push` to `origin/main`.~~ — **DONE 2026-10-11** (`origin/main` = `0209002`).
 
-**Latest audit:** [`docs/audit/wave384-project-audit.md`](../docs/audit/wave384-project-audit.md) — gates GREEN; documentation-drift D1–D8 documented and refreshed; paper internal cross-reference defects P1–P5 flagged.
+**Latest audit:** [`docs/audit/governance-refresh-post-push.md`](../docs/audit/governance-refresh-post-push.md) — post-push governance refresh (HEAD `0209002`; push complete; gates re-verified green). Prior: [`docs/audit/wave384-project-audit.md`](../docs/audit/wave384-project-audit.md) — gates GREEN; documentation-drift D1–D8 documented and refreshed.
 
 ## Convention
 

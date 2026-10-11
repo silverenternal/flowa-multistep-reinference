@@ -245,6 +245,7 @@ not_in_nav: |
   INSIGHTS.md
   audit/wave*.md
   audit/push-unblock-large-blob.md
+  audit/governance-refresh-post-push.md
   audit/*/wave*.md
   audit/algorithm_4arm/*.md
   audit/cifar/*.md

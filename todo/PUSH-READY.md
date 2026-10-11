@@ -1,4 +1,18 @@
-# PUSH-READY — 2026-09-14 (Wave 145 final pass refresh)
+# PUSH-READY — SUPERSEDED (2026-10-11)
+
+> **SUPERSEDED / RESOLVED 2026-10-11.** This is a Wave-145-era snapshot
+> (2026-09-14) of a 2-commit push backlog, retained for provenance only. That
+> backlog was long superseded, and on **2026-10-11** the full 192-commit backlog
+> was pushed to `origin/main` (`origin/main` = `0209002`) after the 147.1 MB
+> `supplementary_bundle.zip` was purged from history + gitignored (GitHub 100 MB
+> blob limit). See [`docs/audit/governance-refresh-post-push.md`](../docs/audit/governance-refresh-post-push.md)
+> and [`docs/audit/push-unblock-large-blob.md`](../docs/audit/push-unblock-large-blob.md).
+> **Do not read the "2 unpushed commits" / "READY TO PUSH" statements below as
+> current** — the push is complete and the working tree is 0 commits ahead.
+
+---
+
+# PUSH-READY — 2026-09-14 (Wave 145 final pass refresh) [HISTORICAL]
 
 **2 unpushed commits on `main`** (Wave 144 Phase 2 + Phase 4).
 18 commits already pushed to `origin/main` covering Wave 137 → Wave 143
