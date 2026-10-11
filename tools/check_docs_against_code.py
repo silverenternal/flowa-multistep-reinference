@@ -542,6 +542,24 @@ PROSE_SYMBOL_DENYLIST: frozenset[str] = frozenset(
         "TIES_at_NFE_100", "Var_seed",
         "NOT_RUN_paper_vs_cosine_ablation_absent",
         "LeDiFlow", "SE_delta", "TypeAlias",
+        # Documentation-management pass: inline references that are prose
+        # labels or third-party / upstream names, not project-internal
+        # Python symbols. Each is silently skipped so the scanner reports
+        # real project drift instead of these false positives:
+        #   * ``CanHandle``  -- ONNX Runtime ``IExecutionProvider::CanHandle``
+        #     capability hook, referenced inline in the handshake prose.
+        #   * ``AutoModel``  -- HuggingFace Transformers ``AutoModel``
+        #     entry point, referenced inline in the adapter comparison.
+        #   * ``CapabilityTokenHandshake`` -- paper §3.4 protocol-surface
+        #     concept; no such class exists under ``adaptive_reflow/``.
+        #   * ``MMFMAdapter`` -- upstream MM-FM adapter (K5), not shipped;
+        #     the ledger prose names it as a future integration target.
+        #   * ``ENV_BLOCKED`` -- K-cell status enum token used as a prose
+        #     label (``ENV_BLOCKED`` / ``DEFERRED``), not a Python symbol.
+        #   * ``PENDING_MATHLIB_CACHE`` -- Lean-stub cache-status token
+        #     used inline in the INSIGHTS formal-verification note.
+        "CanHandle", "AutoModel", "CapabilityTokenHandshake",
+        "MMFMAdapter", "ENV_BLOCKED", "PENDING_MATHLIB_CACHE",
     }
 )
 """Names that look like Python symbols but are almost always prose, not
@@ -964,6 +982,11 @@ def _scan_path_claims(
             continue
         for match in PATH_CLAIM_RE.finditer(line):
             raw = match.group("path")
+            # A path reference at the end of a sentence captures the
+            # sentence-final period (``.../test_d4_regression_vectors.py.``).
+            # Strip trailing punctuation so the on-disk lookup sees the
+            # real path; valid repo paths never end in ``. , ; :``.
+            raw = raw.rstrip(".,;:")
             if _is_placeholder_path(raw):
                 # ``tests/test_<your_subpackage>/...`` style placeholders
                 # are scaffolding hints, not concrete claims.
@@ -1016,6 +1039,55 @@ def _scan_path_claims(
     return claims
 
 
+#: File extensions recognised when deciding whether an inline token is a
+#: *filename stem* (e.g. ``METRIC_LEDGER`` in ``docs/METRIC_LEDGER.md``,
+#: ``Theorem5Subclaim51`` in ``Theorem5Subclaim51.lean``) rather than a
+#: Python-symbol reference. A filename stem is an artefact pointer and
+#: must NOT be verified against the ``adaptive_reflow/`` symbol index.
+_PATH_LIKE_EXTENSIONS: frozenset[str] = frozenset(
+    {
+        "md", "markdown", "rst", "txt", "json", "jsonl", "yaml", "yml",
+        "toml", "cfg", "ini", "sh", "bash", "zsh", "py", "pyi", "lean",
+        "rs", "c", "h", "cc", "cpp", "hpp", "go", "js", "ts", "tsx", "sql",
+        "tex", "bib", "csv", "tsv", "npz", "npy", "pt", "pth", "ckpt",
+        "pdf", "png", "jpg", "jpeg", "svg", "html", "ipynb", "lock",
+    }
+)
+
+#: Matches a ``stem.ext`` filename fragment: the captured ``stem`` is the
+#: token immediately before a recognised extension. Longest extensions
+#: are tried first so ``.jsonl`` wins over ``.json``.
+_FILENAME_STEM_RE: re.Pattern[str] = re.compile(
+    r"(?P<stem>[A-Za-z0-9_]+)\.(?:"
+    + "|".join(sorted(_PATH_LIKE_EXTENSIONS, key=len, reverse=True))
+    + r")\b"
+)
+
+#: Matches a ``stem.{...}`` brace-expansion fragment. The stem counts as a
+#: filename only when the brace contents include a recognised extension
+#: (``docs/METRIC_LEDGER.{md,json}``); a brace-expanded *attribute* list
+#: (``SigmoidScheduler.{midpoint, steepness}``) is left alone so the
+#: symbol is still verified.
+_FILENAME_BRACE_RE: re.Pattern[str] = re.compile(
+    r"(?P<stem>[A-Za-z0-9_]+)\.\{(?P<inner>[^}]*)\}"
+)
+
+
+def _filename_stems(payload: str) -> set[str]:
+    """Return the set of filename-stem tokens in an inline payload.
+
+    ``docs/METRIC_LEDGER.{md,json}`` -> ``{"METRIC_LEDGER"}``;
+    ``adaptive_reflow/molecular/mixer.py::EqualRmsCoordinateMixer`` ->
+    ``{"mixer"}`` (so ``EqualRmsCoordinateMixer`` is still verified).
+    """
+    stems = {m.group("stem") for m in _FILENAME_STEM_RE.finditer(payload)}
+    for m in _FILENAME_BRACE_RE.finditer(payload):
+        inner = {p.strip().lower() for p in m.group("inner").split(",")}
+        if inner & _PATH_LIKE_EXTENSIONS:
+            stems.add(m.group("stem"))
+    return stems
+
+
 def _scan_inline_backticks(
     text: str,
     md_path: Path,
@@ -1028,6 +1100,9 @@ def _scan_inline_backticks(
     extraction is treated as authoritative -- its line number tracks the
     AST symbol's actual location, not the arbitrary position of the name
     in surrounding prose).
+
+    Tokens that are the stem of a filename (see ``_filename_stems``) are
+    skipped: they are artefact pointers, not symbol references.
     """
     claims: list[Claim] = []
     lines = text.splitlines()
@@ -1035,6 +1110,15 @@ def _scan_inline_backticks(
     for line_no, line in enumerate(lines, start=1):
         for match in BACKTICK_RE.finditer(line):
             payload = match.group(1).strip()
+            # A token that is the *stem of a filename* (``METRIC_LEDGER``
+            # in ``docs/METRIC_LEDGER.md``, ``Theorem5Subclaim51`` in
+            # ``Theorem5Subclaim51.lean``) is an artefact pointer, not a
+            # symbol reference -- skip it. This is deliberately precise:
+            # ``path.py::EqualRmsCoordinateMixer`` and
+            # ``checkers.py:Theorem1Statement`` keep their non-stem
+            # tokens, and math like ``BoundedMergeOperator.e_rho/4`` is
+            # untouched.
+            filename_stems = _filename_stems(payload)
             # A single payload may contain several words separated by
             # dots, spaces, or commas (e.g. `from foo import Bar`).
             # Treat dot-separated identifiers as one symbol only if it
@@ -1049,6 +1133,8 @@ def _scan_inline_backticks(
                 ]
                 tokens.extend(pieces)
             for name in tokens:
+                if name in filename_stems:
+                    continue
                 if not _is_likely_python_symbol(name):
                     continue
                 if (line_no, name) in already_claimed:

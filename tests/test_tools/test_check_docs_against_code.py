@@ -176,6 +176,74 @@ def test_inline_symbol_filter_skips_short_camelcase() -> None:
     assert not checker._is_likely_python_symbol("dataclass")
 
 
+def test_inline_filename_stem_tokens_are_skipped() -> None:
+    """A token that is the stem of a filename (immediately before a
+    recognised file extension) is an artefact pointer, not a symbol.
+    """
+    assert checker._filename_stems(
+        "docs/METRIC_LEDGER.{md,json}"
+    ) == {"METRIC_LEDGER"}
+    assert checker._filename_stems(
+        "tnnls_submission/FILL_GUIDE.md"
+    ) == {"FILL_GUIDE"}
+    assert checker._filename_stems(
+        "Theorem5Subclaim51.lean"
+    ) == {"Theorem5Subclaim51"}
+    # A brace-expanded *attribute* list is not a filename -- the symbol
+    # must still be verified (``SigmoidScheduler``, ``MeanFlowMergeOperator``).
+    assert checker._filename_stems(
+        "SigmoidScheduler.{midpoint, steepness}"
+    ) == set()
+    assert checker._filename_stems("MeanFlowMergeOperator.{t, s}") == set()
+
+
+def test_inline_path_crossrefs_keep_symbol_tokens() -> None:
+    """``path::Symbol`` / ``path:Symbol`` cross-references keep their
+    non-stem tokens so the symbol is still verified, and arithmetic
+    (``a.b/4``) is not mistaken for a path.
+    """
+    assert checker._filename_stems(
+        "adaptive_reflow/molecular/mixer.py::EqualRmsCoordinateMixer"
+    ) == {"mixer"}
+    assert checker._filename_stems(
+        "theory/checkers.py:Theorem1Statement"
+    ) == {"checkers"}
+    assert checker._filename_stems("BoundedMergeOperator.e_rho/4") == set()
+
+
+def test_inline_scan_skips_filename_stems_but_keeps_symbols() -> None:
+    """End-to-end: ``_scan_inline_backticks`` drops filename-stem tokens
+    (``METRIC_LEDGER``, ``FILL_GUIDE``) but still verifies a real symbol
+    referenced through a ``path::Symbol`` cross-reference.
+    """
+    text = (
+        "See `docs/METRIC_LEDGER.md` and `tnnls_submission/FILL_GUIDE.md`.\n"
+        "The `adaptive_reflow/molecular/mixer.py::EqualRmsCoordinateMixer` "
+        "class.\n"
+    )
+    claims = checker._scan_inline_backticks(
+        text, Path("DOC.md"), {"EqualRmsCoordinateMixer"}, set()
+    )
+    assert {c.symbol for c in claims} == {"EqualRmsCoordinateMixer"}
+    assert all(c.status == "ok" for c in claims)
+
+
+def test_path_claim_strips_sentence_final_period(synthetic_repo: Path) -> None:
+    """A path reference at the end of a sentence must not capture the
+    sentence-final period (``.../test_repo.py.``).
+    """
+    md = _write_markdown(
+        synthetic_repo,
+        "GOV.md",
+        "Source-of-truth surface: tests/test_repo.py.\n",
+    )
+    text = md.read_text(encoding="utf-8")
+    claims = checker._scan_path_claims(text, md, synthetic_repo)
+    by_symbol = {(c.symbol, c.status) for c in claims}
+    assert ("tests/test_repo.py", "ok") in by_symbol
+    assert all(not c.symbol.endswith(".") for c in claims)
+
+
 # ---------------------------------------------------------------------------
 # End-to-end against a synthetic repo + the actual current repo
 # ---------------------------------------------------------------------------
@@ -247,7 +315,6 @@ def test_claim_verification_against_actual_repo(synthetic_repo: Path) -> None:
     ] == "missing"
 
 
-@pytest.mark.xfail(reason="k1_rc5 historical drift, see Wave 359 P1")
 def test_no_false_positives_on_current_repo() -> None:
     """Sanity check: every claim in the project's governance docs +
     ``docs/*.md`` must verify against the actual codebase. This is the
