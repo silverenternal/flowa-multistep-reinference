@@ -582,7 +582,7 @@ class ReInferenceRunner:
         # not see a stale config. ``None`` outside ``run()`` is the
         # expected state for callers (e.g. tests) that invoke the
         # B-class helper directly without going through ``run()``.
-        self._active_config = config
+        self._active_config: ReInferenceConfig | None = config
 
         # When the engine flag is on AND the cache is active, wire the
         # 8 B-class dormant sites via the cache. This is a no-op when
@@ -1401,7 +1401,7 @@ class ReInferenceRunner:
             with contextlib.suppress(AttributeError, TypeError):
                 # Engine slot may be frozen / read-only — skip silently
                 # so the activation log entry is the only side effect.
-                engine._paper_quantities_mfpqa_snapshot = mfpqa_snapshot
+                engine._paper_quantities_mfpqa_snapshot = mfpqa_snapshot  # type: ignore[attr-defined]
 
         # ---- Site 8 (evidence) — Evidence-driven scheduler ---------------
         evidence_snapshot = cache.get("evidence")
@@ -1430,7 +1430,7 @@ class ReInferenceRunner:
         checker_snapshot = cache.get("checker")
         if checker_snapshot is not None:
             with contextlib.suppress(AttributeError, TypeError):
-                engine._paper_quantities_checker_snapshot = checker_snapshot
+                engine._paper_quantities_checker_snapshot = checker_snapshot  # type: ignore[attr-defined]
 
         # ---- Site 14 (sheet_cell) — Sheet-vs-cell heuristic --------------
         sheet_cell_value = cache.get("sheet_cell")
@@ -1447,7 +1447,7 @@ class ReInferenceRunner:
         if derivation_e_rho is not None:
             self._paper_quantities_derivation_e_rho = float(derivation_e_rho)
             with contextlib.suppress(AttributeError, TypeError):
-                engine._paper_quantities_derivation_e_rho = float(
+                engine._paper_quantities_derivation_e_rho = float(  # type: ignore[attr-defined]
                     derivation_e_rho,
                 )
 

@@ -138,7 +138,7 @@ def _resolve_pipeline_class() -> type:
     # 2. diffusers fallback.
     try:
         from diffusers import HiDreamImagePipeline
-        return HiDreamImagePipeline
+        return HiDreamImagePipeline  # type: ignore[no-any-return]
     except ImportError as exc:  # pragma: no cover — guaranteed to surface
         raise ImportError(
             "hidream_i1_upstream_shim: cannot resolve HiDreamImagePipeline "
@@ -162,7 +162,7 @@ def _resolve_output_class() -> type | None:
         except Exception:  # noqa: BLE001
             pass
     try:
-        from diffusers.pipelines.hidream_image import HiDreamImagePipelineOutput  # type: ignore
+        from diffusers.pipelines.hidream_image import HiDreamImagePipelineOutput
         return HiDreamImagePipelineOutput  # type: ignore[no-any-return]
     except ImportError:
         return None
@@ -199,7 +199,7 @@ def _resolve_scheduler_class(name: str) -> type:
         # FlashFlowMatch equivalent; the upstream FlashFlowMatch is the
         # Fast variant's scheduler).
         from diffusers import FlowMatchEulerDiscreteScheduler
-        return FlowMatchEulerDiscreteScheduler
+        return FlowMatchEulerDiscreteScheduler  # type: ignore[no-any-return]
     if name in ("unipc", "flowunipc", "flow_unipc"):
         if upstream_is_available():
             try:
@@ -215,10 +215,10 @@ def _resolve_scheduler_class(name: str) -> type:
         # diffusers has no UniPC equivalent for HiDream; fall back to
         # FlowMatchEulerDiscreteScheduler (lossy but valid).
         from diffusers import FlowMatchEulerDiscreteScheduler
-        return FlowMatchEulerDiscreteScheduler
+        return FlowMatchEulerDiscreteScheduler  # type: ignore[no-any-return]
     if name in ("euler", "flowmatcheuler"):
         from diffusers import FlowMatchEulerDiscreteScheduler
-        return FlowMatchEulerDiscreteScheduler
+        return FlowMatchEulerDiscreteScheduler  # type: ignore[no-any-return]
     raise ValueError(f"hidream_i1_upstream_shim: unknown scheduler name {name!r}")
 
 

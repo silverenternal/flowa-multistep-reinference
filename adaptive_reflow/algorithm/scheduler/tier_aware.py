@@ -583,8 +583,10 @@ class TierAwareCodimensionSheetScheduler:
             # Fallback for legacy inner schedulers that only accept
             # the ``metrics`` kwarg (or only ``paper_quantities``).
             # Retry with the alternative name when possible.
-            if "metrics" not in kwargs and isinstance(
-                self._base, CodimensionSheetScheduler,
+            if (
+                "metrics" not in kwargs
+                and paper_quantities is not None
+                and isinstance(self._base, CodimensionSheetScheduler)
             ):
                 self._base.record_round_feedback(
                     round_in_cycle=round_in_cycle,
@@ -655,7 +657,7 @@ def _tier_aware_codimension_factory(
     safe no-op so the wrapper is byte-identical to the wrapped
     :class:`CodimensionSheetScheduler` until the caller opts in.
     """
-    from adaptive_reflow.algorithm.scheduler.adaptive import (  # type: ignore
+    from adaptive_reflow.algorithm.scheduler.adaptive import (
         CodimensionSheetScheduler,
     )
     base = CodimensionSheetScheduler(
@@ -669,6 +671,6 @@ def _tier_aware_codimension_factory(
     return TierAwareCodimensionSheetScheduler(
         base=base,
         easy_tier_nfe_reduction_factor=float(easy_tier_nfe_reduction_factor),
-        tier_quantile_boundaries=tuple(tier_quantile_boundaries),
+        tier_quantile_boundaries=tier_quantile_boundaries,
         baseline_metric_extractor=baseline_metric_extractor,
     )

@@ -1562,10 +1562,10 @@ def _ctmc_real_velocity_field_ex(
         x_pred.cpu().numpy().astype(np.float64)
         - np.asarray(x, dtype=np.float64).reshape(n_atoms, 3)
     ) * inv_dt
-    c_pred_np = c_pred.cpu().numpy().astype(np.float64)  # type: ignore[var-annotated]
-    p_a_np = p_a.cpu().numpy().astype(np.float64)  # type: ignore[var-annotated]
-    p_c_np = p_c.cpu().numpy().astype(np.float64)  # type: ignore[var-annotated]
-    p_e_np = p_e.cpu().numpy().astype(np.float64)  # type: ignore[var-annotated]
+    c_pred_np = c_pred.cpu().numpy().astype(np.float64)
+    p_a_np = p_a.cpu().numpy().astype(np.float64)
+    p_c_np = p_c.cpu().numpy().astype(np.float64)
+    p_e_np = p_e.cpu().numpy().astype(np.float64)
     return (
         np.nan_to_num(v_x, nan=0.0, posinf=0.0, neginf=0.0),
         c_pred_np,
@@ -3016,7 +3016,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 dtype=np.int64,
             )
             pad_e[:cur_n, :cur_n] = arr
-            return pad_e  # type: ignore[no-any-return]
+            return pad_e
 
         x_padded = [_pad_x(x) for x in x_batch]
         c_padded = [_pad_c(c) for c in c_batch]

@@ -1175,7 +1175,7 @@ def _torch_velocity_field(
     # so the trajectory lives in (L, 3) coord space throughout.
     if state_shape != original_state_shape and original_state_shape[-1] > 3:
         v_3d = out.reshape(state_shape)
-        v_padded = np.zeros(original_state_shape, dtype=np.float64)
+        v_padded: ArrayF64 = np.zeros(original_state_shape, dtype=np.float64)
         v_padded[..., :3] = v_3d[..., :3]
         return v_padded
     return out.reshape(state_shape)
@@ -1243,7 +1243,7 @@ def _load_torch_model(weights_path: Path) -> Any:
             super().__init__()
             self._dae = dae
 
-        def forward(self, x: torch.Tensor, t: torch.Tensor, family: torch.Tensor = None) -> torch.Tensor:  # type: ignore[assignment]
+        def forward(self, x: torch.Tensor, t: torch.Tensor, family: torch.Tensor = None) -> torch.Tensor:
             # Wave 113.A: Real backbone-coord migration. Replaces the
             # Wave 112.C-2 fail-fast placeholder (RC-2 option B) with the
             # two-call upstream pipeline:
@@ -1269,7 +1269,7 @@ def _load_torch_model(weights_path: Path) -> Any:
             # Shape-tolerant: upstream DAE.encode returns (s_BLD, c_BLD, idx_BL) but newer
             # versions may add a 4th element. Use indexed access on the codebook latent.
             z = _encode_result[1] if isinstance(_encode_result, tuple) else _encode_result
-            return self._dae.net(x, t, z_BLD=z)  # type: ignore[no-any-return]  # (B, L, 3) velocity field
+            return self._dae.net(x, t, z_BLD=z)  # (B, L, 3) velocity field
 
     def _builder(p: Path) -> Any:
         """Build the real ``_KanziDAEShim`` from ``p`` (Wave 99 followup).
@@ -2638,6 +2638,9 @@ class KanziAdapter(FlowMatchingODEAdapter):
         self,
         trace: ODEIntegratorTrace,
         paper_quantities: Any,
+        *,
+        temperature: float = 1.0,
+        rng: Any = None,
     ) -> dict[str, ArrayF64]:
         """Decode the trajectory's ``(L_z,)`` AR-prior discrete token indices.
 

@@ -249,7 +249,7 @@ def read_fasta(path: str | Path) -> list[tuple[str, str]]:
 
         return [
             (str(rec.id), str(rec.seq))
-            for rec in SeqIO.parse(str(fasta_path), "fasta")  # type: ignore[no-untyped-call]
+            for rec in SeqIO.parse(str(fasta_path), "fasta")
         ]
     except ImportError:
         pass

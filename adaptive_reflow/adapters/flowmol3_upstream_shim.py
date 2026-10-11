@@ -374,7 +374,7 @@ def _rdkit_bridge_validity(sampled_mols: Sequence[Any]) -> dict[str, float]:
         Chem,
         RDLogger,
     )
-    RDLogger.DisableLog("rdApp.*")  # silence kekulization warnings on bad geom
+    RDLogger.DisableLog("rdApp.*")  # type: ignore[attr-defined]  # silence kekulization warnings on bad geom
 
     n_total = 0
     n_valid = 0

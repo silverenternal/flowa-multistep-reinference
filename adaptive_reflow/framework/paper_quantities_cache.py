@@ -76,7 +76,7 @@ constructed inside :meth:`get` is the frozen carrier declared in
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 from adaptive_reflow.contracts.dynamic_noise_bias import PaperQuantitiesSnapshot
 from adaptive_reflow.theory.paper_quantities import (
@@ -180,7 +180,7 @@ class _LazyMemoCachedEvaluationCost:
         if self._value is self._NOT_COMPUTED:
             assert self._producer is not None
             self._value = float(self._producer())
-        return self._value
+        return cast(float, self._value)
 
     def is_computed(self) -> bool:
         """Return ``True`` iff the value has been computed at least once."""
@@ -479,11 +479,20 @@ class PaperQuantitiesCache:
         if site_name == "profile":
             return self.profile_residual_fn
         # "mfpqa", "evidence", "fid", "lipschitz", "checker" → snapshot
+        sheet_A = self.sheet_A
+        packing_B = self.packing_B
+        cell_C = self.cell_C
+        e_rho = self.e_rho
+        # ``is_active`` was checked above, so each property returns a
+        # float (never ``None``); the asserts make that invariant
+        # explicit for the type checker and for readers.
+        assert sheet_A is not None and packing_B is not None
+        assert cell_C is not None and e_rho is not None
         return PaperQuantitiesSnapshot(
-            sheet_A=float(self.sheet_A),
-            packing_B=float(self.packing_B),
-            cell_C=float(self.cell_C),
-            exterior_gap_e_rho=float(self.e_rho),
+            sheet_A=sheet_A,
+            packing_B=packing_B,
+            cell_C=cell_C,
+            exterior_gap_e_rho=e_rho,
         )
 
     # ------------------------------------------------------------------

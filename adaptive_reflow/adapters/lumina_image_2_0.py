@@ -447,7 +447,7 @@ def _load_torch_pipeline(weights_dir: Path, *, dtype: Any) -> Any:
     import torch  # local import -- torch is optional at the framework level.
     from diffusers import Lumina2Pipeline  # local import -- diffusers is optional.
 
-    pipeline = Lumina2Pipeline.from_pretrained(  # type: ignore[no-untyped-call]
+    pipeline = Lumina2Pipeline.from_pretrained(
         str(weights_dir),
         torch_dtype=dtype,
         variant=None,

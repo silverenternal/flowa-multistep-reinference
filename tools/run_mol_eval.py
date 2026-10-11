@@ -1936,6 +1936,22 @@ def _build_eval_report_block(
     return result.to_dict()
 
 
+def _pb_value_to_float(pb: Any) -> float:
+    """Coerce a PoseBusters result to a float, mapping missing to NaN.
+
+    ``compute_pb_validity`` / ``compute_pb_validity_mmff`` return a block
+    dict whose ``value`` is ``None`` when the PoseBusters call fails (see
+    ``PB_VALIDITY_MARKER_STUB_UNAVAILABLE``). The eval-report metric
+    vector needs a float there, so ``None`` (and an absent ``value`` key)
+    both downgrade to ``NaN`` rather than raising ``TypeError``.
+    """
+    if isinstance(pb, dict):
+        pb = pb.get("value")
+    if pb is None:
+        return NAN
+    return float(pb)
+
+
 def evaluate(
     *,
     input_path: Path,
@@ -2206,16 +2222,8 @@ def evaluate(
                 "sa": float(sa),
                 "logp": float(logp),
                 "fcd": float(fcd_value),
-                "pb_validity": (
-                    float(pb_validity.get("value", NAN))
-                    if isinstance(pb_validity, dict)
-                    else float(pb_validity) if pb_validity is not None else NAN
-                ),
-                "pb_validity_mmff": (
-                    float(pb_validity_mmff.get("value", NAN))
-                    if isinstance(pb_validity_mmff, dict)
-                    else float(pb_validity_mmff) if pb_validity_mmff is not None else NAN
-                ),
+                "pb_validity": _pb_value_to_float(pb_validity),
+                "pb_validity_mmff": _pb_value_to_float(pb_validity_mmff),
                 "fg_deviation": float(fg_dev_value),
                 "fg_deviation_eq4": (
                     None if (fg_eq4_value is None)

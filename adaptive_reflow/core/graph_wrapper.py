@@ -562,7 +562,7 @@ class DGLGraphBridge:
             (int(graph.num_nodes()), DEFAULT_NODE_FEATURE_DIM), dtype=np.float64
         )
         ei = (
-            torch.stack(graph.edges()).detach().cpu().numpy().astype(np.int64)  # type: ignore[var-annotated]
+            torch.stack(graph.edges()).detach().cpu().numpy().astype(np.int64)
             if int(graph.num_edges()) > 0
             else np.zeros((2, 0), dtype=np.int64)
         )

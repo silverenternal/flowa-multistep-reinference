@@ -433,12 +433,19 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-# The published Rectified-Flow DDPM++ topology subclasses ``torch.nn.Module``.
-# ``torch`` is an optional ``[rf-cifar]`` extra and is absent from the
-# type-checking environment, so ``ignore_missing_imports`` resolves
-# ``nn.Module`` to ``Any`` and every layer trips ``subclass-any``. Only that
-# one consequence is relaxed; the module stays otherwise strict.
-module = ["adaptive_reflow.adapters._gnobitab_ddpmpp"]
+# Published / upstream model topologies that subclass ``torch.nn.Module``.
+# ``torch`` is an optional extra and is absent from the type-checking
+# environment, so ``ignore_missing_imports`` resolves ``nn.Module`` to
+# ``Any`` and every subclass trips ``subclass-any``. Only that one
+# consequence is relaxed; the modules stay otherwise strict.
+module = [
+    "adaptive_reflow.adapters._gnobitab_ddpmpp",
+    "adaptive_reflow.adapters.protbfn_abbfn_model",
+    "adaptive_reflow.adapters.self_flow",
+    "adaptive_reflow.adapters.kanzi",
+    "adaptive_reflow.adapters.hidream_i1",
+    "adaptive_reflow.adapters.flowmol3_v2_adapter",
+]
 disallow_subclassing_any = false
 
 [[tool.mypy.overrides]]

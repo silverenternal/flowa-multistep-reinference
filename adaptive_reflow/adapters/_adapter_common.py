@@ -159,7 +159,7 @@ def decode_with_temperature(
     # vectorised multinomial would either need its own seed per row
     # or a separate global-key scheme that we cannot guarantee
     # matches the caller's RNG sequence).
-    out = np.empty(int(L), dtype=np.int64)
+    out: NDArray[np.int64] = np.empty(int(L), dtype=np.int64)
     for i in range(int(L)):
         out[i] = int(
             rng.choice(int(K), replace=True, p=p[i].astype(np.float64))

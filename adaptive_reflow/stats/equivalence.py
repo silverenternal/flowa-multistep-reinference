@@ -45,23 +45,24 @@ from dataclasses import dataclass
 from typing import Literal
 
 import numpy as np
+from numpy.typing import NDArray
 from scipy import stats as _scipy_stats
 
 # Optional backend discovery -------------------------------------------------
 try:  # pragma: no cover - environment-dependent
-    import pingouin as _pingouin  # type: ignore[import-not-found]
+    import pingouin as _pingouin
 
     _HAS_PINGOUIN = True
 except Exception:  # pragma: no cover - environment-dependent
-    _pingouin = None  # type: ignore[assignment]
+    _pingouin = None
     _HAS_PINGOUIN = False
 
 try:  # pragma: no cover - environment-dependent
-    import statsmodels as _statsmodels  # type: ignore[import-not-found]
+    import statsmodels as _statsmodels
 
     _HAS_STATSMODELS = True
 except Exception:  # pragma: no cover - environment-dependent
-    _statsmodels = None  # type: ignore[assignment]
+    _statsmodels = None
     _HAS_STATSMODELS = False
 
 
@@ -422,7 +423,7 @@ def _jonckheere_terpstra_statistic(groups: Sequence[Sequence[float]]) -> float:
     _scipy_stats.rankdata(values, method="average")
 
     # cumulative count per group (in rank order)
-    counts = np.zeros(len(groups), dtype=float)
+    counts: NDArray[np.float64] = np.zeros(len(groups), dtype=float)
     u_total = 0.0
     for idx in range(n):
         g = pooled[idx][1]

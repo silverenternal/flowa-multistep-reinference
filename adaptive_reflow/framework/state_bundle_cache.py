@@ -215,7 +215,7 @@ class StateBundleDigestCache:
         self.hits = 0
         self.misses = 0
 
-    def stats(self) -> dict[str, int]:
+    def stats(self) -> dict[str, float]:
         """Return a snapshot of the cache stats (for the audit doc)."""
         total = self.hits + self.misses
         hit_rate = (self.hits / float(total)) if total > 0 else 0.0

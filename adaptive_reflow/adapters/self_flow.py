@@ -508,7 +508,7 @@ def _load_torch_model(weights_path: Path) -> Any:
 
     # Try to instantiate via diffusers' SiT (when available).
     try:
-        from diffusers import SiTTransformer2DModel  # type: ignore[attr-defined]
+        from diffusers import SiTTransformer2DModel
         model = SiTTransformer2DModel(
             num_attention_heads=16,
             attention_head_dim=hidden // 16,

@@ -574,7 +574,7 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
 
     # 1. Scheduler — the local checkpoint ships FlowMatchLCMScheduler;
     #    keep it as-is so the published shift + sigma schedule is used.
-    scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(  # type: ignore[no-untyped-call]
+    scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(
         str(weights_path / "scheduler"),
     )
 
@@ -604,13 +604,13 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
     )
 
     # 4. Transformer (DiT) — 16 shard safetensors.
-    transformer = HiDreamImageTransformer2DModel.from_pretrained(  # type: ignore[no-untyped-call]
+    transformer = HiDreamImageTransformer2DModel.from_pretrained(
         str(weights_path / "transformer"),
         dtype=torch.bfloat16,
     )
 
     # 5. VAE (FLUX.1-AutoencoderKL).
-    vae = AutoencoderKL.from_pretrained(  # type: ignore[no-untyped-call]
+    vae = AutoencoderKL.from_pretrained(
         str(weights_path / "vae"),
         dtype=torch.bfloat16,
     )
@@ -661,12 +661,12 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
         @property
         def device(self) -> torch.device:
             """Return the dummy parameter's device (mirrors ModuleUtilsMixin)."""
-            return self._dummy.device  # type: ignore[return-value]
+            return self._dummy.device
 
         @property
         def dtype(self) -> torch.dtype:
             """Return the dummy parameter's dtype (mirrors ModuleUtilsMixin)."""
-            return self._dummy.dtype  # type: ignore[return-value]
+            return self._dummy.dtype
 
         def forward(  # noqa: D401 — nn.Module forward signature
             self,
@@ -682,7 +682,7 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
             dtype = self._dummy.dtype
             all_hidden = tuple(
                 torch.zeros(
-                    batch, seq, self.HIDDEN_DIM, dtype=dtype, device=device,  # type: ignore[arg-type]
+                    batch, seq, self.HIDDEN_DIM, dtype=dtype, device=device,
                 )
                 for _ in range(self.NUM_LAYERS + 1)
             )
