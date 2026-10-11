@@ -71,12 +71,12 @@ does not.
 - **Title:** *"FlowA: Geometry-Aware State-Intervention Reformulation for Frozen
   Flow-Matching Checkpoints."*
 - **Artifacts:**
-  - `docs/drafts/paper-A-final.pdf` — **11 pages**, 446705 bytes,
-    SHA-256 `461ee92e…` (IEEEtran-journal, double-column, embedded fonts).
+  - `docs/drafts/paper-A-final.pdf` — **11 pages**, 446703 bytes,
+    SHA-256 `8bc37858…` (IEEEtran-journal, double-column, embedded fonts).
   - `docs/drafts/paper-A-final.md` — canonical markdown source,
-    SHA-256 `42ff08ac…`.
+    SHA-256 `c88d6069…`.
   - `docs/drafts/paper-A-final.tex` — build source for the PDF,
-    SHA-256 `ba920254…`.
+    SHA-256 `cca0be6f…`.
   - `docs/figures/fig9_cell_evidence_comparison.png` — evidence-comparison
     figure, SHA-256 `4f3224bd…` (rendered by `tools/render_cell_evidence_figure.py`).
 - **Figures:** the manuscript carries (i) an inline TikZ architecture diagram
