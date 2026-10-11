@@ -76,7 +76,7 @@ does not.
   - `docs/drafts/paper-A-final.pdf` — **11 pages**, 446788 bytes,
     SHA-256 `47f6eb04…` (IEEEtran-journal, double-column, embedded fonts).
   - `docs/drafts/paper-A-final.md` — canonical markdown source,
-    SHA-256 `9613cb01…`.
+    SHA-256 `d83e283b…`.
   - `docs/drafts/paper-A-final.tex` — build source for the PDF,
     SHA-256 `55e058d5…`.
   - `docs/figures/fig9_cell_evidence_comparison.png` — evidence-comparison

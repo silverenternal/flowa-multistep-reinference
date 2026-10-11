@@ -352,3 +352,15 @@ The FlowA TNNLS submission is submittable at the highest reproducibility standar
 - **Documented-not-fixed.** §8.10's honest-disclosure item #1 still reads "`paper.pdf` NOT regenerated post-Wave 356 P1" and refers to a `paper.pdf` filename that does not exist (the artifact is `paper-A-final.pdf`, rebuilt several times since Wave 356). It is a frozen Wave-366-P2 ADDITIVE block whose own text asserts additive-only provenance, so it is recorded rather than reworded. See `docs/audit/manuscript-defect-review-7.md`.
 
 *Manuscript-consistency pass #7 addendum authored 2026-10-12; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.tex` §7.4 / §III.2 / §VII.1 and `docs/audit/manuscript-defect-review-7.md`.*
+
+---
+
+## 18. Manuscript-consistency pass #8 (2026-10-12 ADDITIVE)
+
+> **ADDITIVE — appended after the submission freeze; no existing line above is modified. §1 (14 PASS) and §2 (6 PENDING) are unchanged.**
+
+- **§1 row 6 / §3.1 G38 (paper ≤ 14 pages).** The manuscript PDF is unchanged by this pass (still **11 pages**, SHA-256 `47f6eb0418d041b0dccdba68bcdf8b794c02e8a710368a8eaebe5e17f89ca732`, 446788 bytes): the pass-#8 fixes are markdown-source-only, so the `.tex` build (hence the PDF) is byte-identical. The refreshed markdown value (`d83e283b…`, 212082 bytes) is pinned in `tnnls_submission/MANIFEST.md` and the `README`/`todo` surfaces.
+- **Consistency corrections carried by this pass (closes deferred items D2 + D3).** §6.1's stray unnumbered `### Three formal properties` heading removed (its text merged into the paragraph as a bold lead-in) — the manuscript's only unnumbered non-back-matter heading; and §8.10's honest-disclosure item #1 rewritten from the stale "`paper.pdf` NOT regenerated post-Wave 356 P1" wording (which named a non-existent `paper.pdf` artifact) to "**PDF regeneration status (corrected 2026-10-12).**" with an explicit `**Correction:**` note, retaining the additive-history enumeration. **No metric or claim number changed; no status label moved.**
+- **Documented-not-fixed.** The `.md` reading copy still carries internal `(Wave NNN …)` provenance labels in several headings (§3.4.2, §3.5.1, §7.8.1, §8.10, §9.4, §9.4.1, Bibliography) — part of the documented intentional `.md`/`.tex` divergence (the authoritative `.tex`/PDF headings are clean). Recorded rather than stripped. See `docs/audit/manuscript-defect-review-8.md`.
+
+*Manuscript-consistency pass #8 addendum authored 2026-10-12; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §6.1 / §8.10 and `docs/audit/manuscript-defect-review-8.md`.*
