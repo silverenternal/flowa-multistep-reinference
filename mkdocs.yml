@@ -259,6 +259,7 @@ not_in_nav: |
   audit/readiness-verifier-repoint.md
   audit/repo-docs-maintenance-2.md
   audit/docs-legacy-inventory.md
+  audit/release-notes-v31-refresh.md
   audit/*/wave*.md
   audit/algorithm_4arm/*.md
   audit/cifar/*.md

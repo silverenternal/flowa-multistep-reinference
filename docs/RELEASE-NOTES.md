@@ -1,13 +1,42 @@
 # Release Notes
 
 **Project:** FlowA — Training-Free, Paper-Quantity-Driven Re-Inference for Flow-Matching Checkpoints
-**Version:** v3.0-tnnls-ready
-**Status:** TNNLS submission package frozen at commit `51e0aa4`
+**Version:** v3.1-tnnls-with-figure (latest tag, `490b388`)
+**Status:** Current release — additive over the `v3.0-tnnls-ready` TNNLS submission freeze; no headline number moved
+**Tags in the v3.x series:**
+- `v3.1-tnnls-with-figure` — commit `490b388`, 2026-09-25 (R5c regime-curve figure + gap closures)
+- `v3.0-tnnls-ready` — commit `91663f6`, 2026-09-25 (TNNLS pre-submission freeze)
+- `v3.1-alignment-snapshot` — commit `e8e6f5b`, 2026-09-23 (cosine-only scheduler framing alignment)
+- `v3.1-internal-publishable` — commit `27edab6`, 2026-09-23 (codim lever verdict + batched harness)
+
 **License:** MIT
 
 ---
 
+## v3.1-tnnls-with-figure — changes since v3.0
+
+**Scope:** additive documentation, one figure, and one GPU-dispatch hardening. **No headline number changed and no claim status was flipped** (AGENTS.md hard guardrails #4 honest-uncertainty and #5 submission-freeze). The eleven-cell verdict distribution remains `4 STRONG + 1 TIE + 6 PARTIAL/SUPP`.
+
+| Change | Surface | Reference |
+|---|---|---|
+| R5c regime-curve figure rendered — closes the paper's own §10.8(i) "plot the regime curve as a figure (~30 min)" future-work item | `docs/figures/fig5_r5c_regime_curve.png` (canonical single-panel) + `docs/drafts/figure_r5c_regime_curve.png` (auxiliary 2-panel); renderer `tools/render_r5c_regime_curve.py` | `docs/audit/wave349-impl.md` §2.1 |
+| §10.9 "Theorem 5 (future work)" binding label + §10.9.1 R5b-conditional-boundary footnote | `docs/drafts/paper-A-final.md` | `docs/audit/wave349-impl.md` §2.2 |
+| §7.2 per-cell power-disclosure index (R-cell → paper §X.Y → audit handle) | `docs/drafts/paper-A-final.md` | `docs/audit/wave349-impl.md` §2.3 |
+| §7.1 status-rubric clarification paragraph | `docs/drafts/paper-A-final.md` | `docs/audit/wave349-impl.md` §3.2 |
+| §10.5 R6 live-GPU follow-up note (re-verification deferred to camera-ready) | `docs/drafts/paper-A-final.md` | `docs/audit/wave349-impl.md` §3.4 |
+| LineageFlow adapter `cuda:0` dispatch + `ids.to(model.device)` (defensive `try/except`; falls back to the pre-v3.1 path on any failure) | `adaptive_reflow/adapters/lineageflow.py` | `docs/audit/wave349-gpu-acceleration.md` |
+| `gen_lineageflow_n1000_fastas.py` CLI default `force_mode` `synthetic` → `auto` | `tools/gen_lineageflow_n1000_fastas.py` | same |
+| Submission-package rehash | `tnnls_submission/MANIFEST.md` (rows 23, 32-36) | `docs/audit/wave349-impl.md` §6.1 |
+
+**R1 status is unchanged.** The v3.1 wave re-ran the R1 3-seed framework-fallback retro-validation probe (recorded in `docs/audit/wave349-gap-audit.md` §2). The paper's R1 verdict stays **PARTIAL / single-seed-disclosed** (seed-42 single-seed; the 3-seed pool remains invalidated by the seed-43/44 framework-fallback contamination per the Wave 280 P audit) — the probe does **not** promote R1 by wording.
+
+**Freeze-time gate readings.** The *Submission Gates* table below is the `v3.0-tnnls-ready` freeze-time snapshot and is retained verbatim. Current gate state (re-verified 2026-10-12) lives in [`todo/WAVES.md`](../todo/WAVES.md) §1.2: D.4 30/30 PASS, ruff 0 findings, `mkdocs build --strict` exit 0, claims no drift, and the 9-gate readiness verifier at `READY_WITH_SKIPS: mypy_0`.
+
+---
+
 ## Overview
+
+> *The sections below describe the frozen TNNLS submission. Their headline numbers and freeze-time gate readings are unchanged from the `v3.0-tnnls-ready` tag; v3.1 added only the documentation, figure, and GPU-dispatch items listed above.*
 
 This release prepares the FlowA framework for submission to **IEEE Transactions on Neural Networks and Learning Systems (TNNLS)**. The submission package, audit trail, and reproducibility materials are frozen. Reviewers can re-verify every headline number against byte-stable artifacts under `verification_outputs/`.
 

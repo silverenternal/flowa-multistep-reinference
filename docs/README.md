@@ -47,7 +47,7 @@ archival trace.
 | [FLOWA_WORKFLOW.md](FLOWA_WORKFLOW.md) | The working loop: evidence-first, one objective per increment, gate-checked, with machine-readable results. |
 | [`DEPRECATION.md`](DEPRECATION.md) | Versioned deprecation table for `adaptive_reflow.legacy/` and friends, with replacement paths and sunset versions. |
 | [`RELEASING.md`](RELEASING.md) | The PyPI release process for this research-stage package, gated on paper acceptance. |
-| [`RELEASE-NOTES.md`](RELEASE-NOTES.md) | Release notes for the current source-tree freeze. |
+| [`RELEASE-NOTES.md`](RELEASE-NOTES.md) | Release notes — current tag `v3.1-tnnls-with-figure`, additive over the `v3.0-tnnls-ready` freeze. |
 | [`adr/`](adr/) | Architecture-decision records — universal-vs-molecular split, typed-contracts core boundary, seven-step engine operation order, fail-closed audit-code policy, theorem-aligned FID per-round pattern, etc. |
 | [design/B5_BATCHED_TRAJECTORIES.md](design/B5_BATCHED_TRAJECTORIES.md) | B5 batched-trajectories design note (load-bearing). |
 | [`review/B5-VERIFICATION.md`](review/B5-VERIFICATION.md) | B5 batched-trajectories verification report. |
