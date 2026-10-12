@@ -1,0 +1,126 @@
+{
+  "schema": "gap09_reinference_diagnostic.v1",
+  "cell": "cifar10_rf_synthetic_velocity_field (R5b cell field; NumPy-only)",
+  "theorem4": {
+    "flow_map_lipschitz": {
+      "flow_map_k_mean": 1.0308160350060285,
+      "flow_map_k_max": 1.0676286798898678,
+      "flow_map_k_p95": 1.0465672287333474
+    },
+    "rows": [
+      {
+        "m": 0.3,
+        "q_mK_max": 0.3202886039669603,
+        "q_mK_mean": 0.3092448105018085,
+        "round_map_q": 0.3133438254418538,
+        "round_map_empirical_rate": 0.3821485327424624,
+        "round_map_k_max": 1.0444794181395127,
+        "round_map_converged": 1.0,
+        "round_map_contraction_holds": 1.0,
+        "round_map_contracts_empirically": 1.0,
+        "round_map_rate_tracks_q": 0.0
+      },
+      {
+        "m": 0.5,
+        "q_mK_max": 0.5338143399449339,
+        "q_mK_mean": 0.5154080175030142,
+        "round_map_q": 0.5301385537014773,
+        "round_map_empirical_rate": 0.6164136301683891,
+        "round_map_k_max": 1.0602771074029547,
+        "round_map_converged": 0.0,
+        "round_map_contraction_holds": 1.0,
+        "round_map_contracts_empirically": 1.0,
+        "round_map_rate_tracks_q": 1.0
+      },
+      {
+        "m": 0.7,
+        "q_mK_max": 0.7473400759229074,
+        "q_mK_mean": 0.7215712245042198,
+        "round_map_q": 0.7416480544750094,
+        "round_map_empirical_rate": 0.77984736660117,
+        "round_map_k_max": 1.0594972206785849,
+        "round_map_converged": 0.0,
+        "round_map_contraction_holds": 1.0,
+        "round_map_contracts_empirically": 1.0,
+        "round_map_rate_tracks_q": 1.0
+      },
+      {
+        "m": 0.9,
+        "q_mK_max": 0.960865811900881,
+        "q_mK_mean": 0.9277344315054257,
+        "round_map_q": 0.9434785228966799,
+        "round_map_empirical_rate": 0.847471062148006,
+        "round_map_k_max": 1.0483094698851998,
+        "round_map_converged": 0.0,
+        "round_map_contraction_holds": 1.0,
+        "round_map_contracts_empirically": 1.0,
+        "round_map_rate_tracks_q": 1.0
+      }
+    ],
+    "contraction_holds_all_m": true,
+    "contracts_empirically_all_m": true,
+    "rate_tracks_q_all_m": false
+  },
+  "theorem5": {
+    "rows": [
+      {
+        "sigma_x": 0.3,
+        "sigma_y": 0.1,
+        "blend_err_x": 276.42447374623794,
+        "blend_err_y": 30.67891032650934,
+        "blend_err_blend": 76.79811572558584,
+        "blend_e_xy_sq": 307.0143052431511,
+        "blend_identity_residual": -2.842170943040401e-14,
+        "blend_condition_holds": 1.0,
+        "blend_measured_better": 1.0,
+        "blend_prediction_matches": 1.0
+      },
+      {
+        "sigma_x": 0.1,
+        "sigma_y": 0.3,
+        "blend_err_x": 30.71303241268608,
+        "blend_err_y": 276.15657099510867,
+        "blend_err_blend": 76.68377034002205,
+        "blend_e_xy_sq": 307.00412545550137,
+        "blend_identity_residual": 2.842170943040401e-14,
+        "blend_condition_holds": 0.0,
+        "blend_measured_better": 0.0,
+        "blend_prediction_matches": 1.0
+      },
+      {
+        "sigma_x": 0.2,
+        "sigma_y": 0.2,
+        "blend_err_x": 122.65595476713384,
+        "blend_err_y": 123.10925320250976,
+        "blend_err_blend": 61.5243688657545,
+        "blend_e_xy_sq": 245.4329404762692,
+        "blend_identity_residual": 0.0,
+        "blend_condition_holds": 1.0,
+        "blend_measured_better": 1.0,
+        "blend_prediction_matches": 1.0
+      },
+      {
+        "sigma_x": 0.05,
+        "sigma_y": 0.4,
+        "blend_err_x": 7.672243305673186,
+        "blend_err_y": 491.18526593116,
+        "blend_err_blend": 124.66822998572326,
+        "blend_e_xy_sq": 499.0420985307734,
+        "blend_identity_residual": 0.0,
+        "blend_condition_holds": 0.0,
+        "blend_measured_better": 0.0,
+        "blend_prediction_matches": 1.0
+      }
+    ],
+    "max_abs_identity_residual": 2.842170943040401e-14,
+    "all_predictions_match": true
+  },
+  "verdict": {
+    "theorem4_measured_on_cell": true,
+    "theorem4_contraction_holds": true,
+    "theorem4_contracts_empirically": true,
+    "theorem4_rate_tracks_q": false,
+    "theorem5_identity_exact": true,
+    "theorem5_predictions_match": true
+  }
+}
