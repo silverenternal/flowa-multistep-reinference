@@ -1,0 +1,86 @@
+R1-REMEASURE-D004b — LineageFlow HMMER hmmscan_total_hits, 3 seeds x N=1000 x 2 arms
+=====================================================================================
+
+Date           : 2026-10-12
+Base commit    : 1264cec (fix(lineageflow): D-004b — per-record random restart state
+                 on the real path)
+Cell           : R1 (hmmscan_total_hits)
+Purpose        : re-measure R1 on the genuine real-forward basis with the D-004b
+                 per-record stochastic restart init. The D-004 (pre-b) real-forward
+                 run collapsed every framework record onto ONE trajectory
+                 (framework hits = 0 on all 3 seeds; see
+                 docs/audit/r1-d004-remeasure.md). D-004b restores per-record
+                 diversity on the real-classifier path by seeding the restart
+                 fresh state from softmax(randn(L, AA_VOCAB)) (the Wave-41 tool
+                 noise convention); the synthetic path is byte-unchanged so D.4
+                 is preserved.
+
+Pipeline
+--------
+gen    : tools/gen_lineageflow_n1000_fastas.py
+         --outdir <dir> --n 1000 --seed <S> --upstream-eval-len-bias short
+         --nfe 10 --n-rounds 3 --temperature 1.0
+         force_mode="auto" -> real LineageFlowClassifier (D-004 live)
+         D-004b branch: _is_lineageflow_classifier -> restart fresh state is a
+         per-record random simplex (softmax(randn(L, AA_VOCAB))).
+hmmer  : /home/hugo/hmmer_build/bin/hmmscan --noali --cpu 32 --tblout <out> --acc
+         data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm <fasta>
+hits   : non-comment tblout lines
+stats  : tools/r1_d004_analysis.py (per-seed paired-t df=999 + DerSimonian-Laird
+         random-effects meta); validated to reproduce the pre-D-004 R1 3-seed
+         summary exactly (d_pooled=0.110175, z=4.0733).
+
+Environment
+-----------
+venv   : .venvs/lineageflow_venv  (torch 2.14.0+cu130, transformers 4.57.6)
+gpu    : CUDA_VISIBLE_DEVICES=1  (NVIDIA GeForce RTX 5090, idle)
+
+Zero fallback
+-------------
+framework_fallback_per_family_count == {} on all 3 seeds.
+lineageflow_prior_mix == 0.0 (no synthetic family-prior mixing) on all 3 seeds.
+
+Baseline unchanged (the only variable is the framework arm)
+-----------------------------------------------------------
+Hit counts 158/159/174 == the D-004 run AND the pre-D-004 run. The baseline
+hit-lines are byte-identical to the D-004 run's (whole-file sha differs only in
+the hmmscan comment header, which embeds the input path).
+
+Headline
+--------
+seed  baseline  framework  diff
+ 42      158       275      +117   (per-record d_z = +0.169, p_raw = 1.08e-7)
+ 43      159       272      +113   (per-record d_z = +0.170, p_raw = 9.75e-8)
+ 44      174       259       +85   (per-record d_z = +0.129, p_raw = 5.08e-5)
+
+3/3 seeds direction-consistent framework > baseline.
+seed-level pooled  : mean_diff = 105.0, t = 10.43 (df=2), p = 0.00907, d_z = +6.02
+DL random-effects  : d_pooled = +0.1559, se = 0.0184, z = 8.49, p ~ 0, I^2 = 0.0%
+                     95% CI [0.120, 0.192]; Bonferroni-significant at k=7.
+
+Reading
+-------
+On the genuine real-forward basis with a per-record stochastic restart init, R1
+is a direction-consistent, Bonferroni-significant framework WIN on all 3 seeds
+(mean +105 hits, +66% on the seed-42 baseline). This is the OPPOSITE of the
+D-004 zero-collapse reading (d_pooled = -0.4013) and is ABOVE the pre-D-004
+contaminated run (d_pooled = +0.110175). The pooled effect (0.156) still sits
+below the 0.8 STRONG-promotion bar, so R1 remains a small-effect PARTIAL-class
+cell; what changed is that its real-forward basis is now a WIN, not a collapse.
+
+Caveat (must be carried with this result)
+-----------------------------------------
+The D-004b restart init is a TOOL-CONVENTION surrogate (softmax(randn) simplex),
+not the upstream intervention/mutation sampler. A reviewer may ask whether the
+gain is driven by the framework's restart-blend or by the random init alone;
+disentangling that (init-only vs full framework arm) is the natural next control.
+
+Files
+-----
+seed{42,43,44}/baseline_hits.tbl   HMMER tblout, baseline arm
+seed{42,43,44}/framework_hits.tbl  HMMER tblout, framework arm
+seed{42,43,44}/manifest.json       gen-script manifest (per-family counts, zero fallback)
+summary.json                       per-seed paired-t + DL meta (tools/r1_d004_analysis.py)
+SHA256SUMS                         checksums of the above
+
+FASTAs are not committed (large); regenerate with the pipeline above.

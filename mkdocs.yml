@@ -261,6 +261,8 @@ not_in_nav: |
   audit/r3-env-investigation.md
   audit/lineageflow-real-forward-fix.md
   audit/r1-d004-remeasure.md
+  audit/r1-d004b-remeasure.md
+  audit/todo-surface-reset.md
   audit/repo-docs-maintenance.md
   audit/readiness-verifier-repoint.md
   audit/repo-docs-maintenance-2.md

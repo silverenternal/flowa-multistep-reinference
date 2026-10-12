@@ -4,7 +4,7 @@
 > Paper PDF: [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf) — 11 pages, IEEEtran-journal double-column, sha256 `a9883fc9c8356c8093c2ee983fd782496aa5f9647456f938f6b21a5793f22a5d`.
 > Headline verdicts: **4 STRONG + 1 TIE + 6 PARTIAL/SUPPLEMENTARY** across the 11 cells.
 > Acceptance gates ALL PASS: D.4 30/30 · contracts 195/195 · ruff 0 · claims no drift · mkdocs 0 warnings · vendored `data/` untouched · data integrity 6/149/0 · reproducibility 12/12. The separate readiness verifier (`tools/verify_submission_readiness.py`) additionally checks `r1_r6_sha` / `framework_n1000` and two doc-drift gates — `k1_rc5` (the K1 disclosure-wording gate, pointed at the live manuscript) and `drift_33` (the historical pre-expansion D.4 `33/33` count, which survives only in historical records) — and now passes **all** of them (`READY_WITH_SKIPS: mypy_0`, exit 0).
-> **Management surface:** [`../todo/WAVES.md`](../todo/WAVES.md) — the consolidated, increment-free project record (current state, phase history, evidence ledger, gates, decisions, risks).
+> **Management surface:** [`../todo.json`](../todo.json) — the single current-state record (gates, evidence ledger, LineageFlow real-forward saga, open gaps, assessment). Replaced the retired `todo/` directory on 2026-10-13.
 > **Submission package:** [`../tnnls_submission/`](../tnnls_submission/) — 7 core files with real SHA-256 (the cover letter still needs its `[USER TO FILL]` fields).
 
 This page is the discoverable entry point for the `docs/` tree. Every entry
@@ -23,7 +23,7 @@ archival trace.
 
 | Layer | What it is | Where it lives |
 |---|---|---|
-| **Canonical** | Single sources of truth that an external reviewer reads. When a number changes, these are updated first. | [`CLAIMS.md`](CLAIMS.md), [`CONSOLIDATED_RESULTS.md`](CONSOLIDATED_RESULTS.md), [METRIC_LEDGER.md](METRIC_LEDGER.md), [`ARCHITECTURE.md`](ARCHITECTURE.md), [`drafts/paper-A-final.md`](drafts/paper-A-final.md), [`../todo/WAVES.md`](../todo/WAVES.md) |
+| **Canonical** | Single sources of truth that an external reviewer reads. When a number changes, these are updated first. | [`CLAIMS.md`](CLAIMS.md), [`CONSOLIDATED_RESULTS.md`](CONSOLIDATED_RESULTS.md), [METRIC_LEDGER.md](METRIC_LEDGER.md), [`ARCHITECTURE.md`](ARCHITECTURE.md), [`drafts/paper-A-final.md`](drafts/paper-A-final.md), [`../todo.json`](../todo.json) |
 | **Active reference** | Cited supporting docs (specs, theory, quality gates, surveys). | the numbered sections below |
 | **Historical / archival** | Per-increment records and superseded material, retained for provenance and verification. Not actively maintained; not part of the mkdocs site. | [`audit/`](audit/), [`ARCHIVE/`](ARCHIVE/), the `r*-survey/` trees |
 
@@ -129,7 +129,7 @@ intentionally archival and rot-tolerant.
 - [`paper-final-neurips.md`](paper-final-neurips.md) — superseded venue draft.
 - **Superseded compiled PDFs** — [`paper-final-neurips.pdf`](paper-final-neurips.pdf) (NeurIPS-era), [`paper-eaai.pdf`](paper-eaai.pdf) (EAAI-era), [`paper-tnnls.pdf`](paper-tnnls.pdf) (byte-identical duplicate of `paper-eaai.pdf`). Retained for provenance; the live PDF is [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf).
 - **Superseded top-level submission artifacts** — [`../cover_letter.md`](../cover_letter.md) (ICLR-2027 / NeurIPS-workshop era), [`../submission_checklist.md`](../submission_checklist.md) (ICLR-2027 era, Wave 97), and [`../supplementary.md`](../supplementary.md) (NeurIPS/ICML-era template, Wave 97) are **legacy and read by no current tooling** (each carries a top banner). The canonical TNNLS package is [`../tnnls_submission/`](../tnnls_submission/); the EAAI-era package is archived at [`../eaai_submission/`](../eaai_submission/).
-- **Legacy / historical `docs/` documents** (each carries a top banner; full classification in [`audit/docs-legacy-inventory.md`](audit/docs-legacy-inventory.md)) — **legacy/superseded:** [`submission-checklist-final.md`](submission-checklist-final.md) (NeurIPS-era; → [`../tnnls_submission/submission_checklist.md`](../tnnls_submission/submission_checklist.md)), [`push-ready-summary.md`](push-ready-summary.md) (Wave 72-74; → [`../todo/PUSH-READY.md`](../todo/PUSH-READY.md)), [`STRATEGY_FRAMEWORK_SCOPE.md`](STRATEGY_FRAMEWORK_SCOPE.md) (2026-09-04 draft). **Historical records:** [`code-release-checklist.md`](code-release-checklist.md) (tag `v1.0.1-paper-final`), [`reproducibility_record.md`](reproducibility_record.md) (Wave 15).
+- **Legacy / historical `docs/` documents** (each carries a top banner; full classification in [`audit/docs-legacy-inventory.md`](audit/docs-legacy-inventory.md)) — **legacy/superseded:** [`submission-checklist-final.md`](submission-checklist-final.md) (NeurIPS-era; → [`../tnnls_submission/submission_checklist.md`](../tnnls_submission/submission_checklist.md)), [`push-ready-summary.md`](push-ready-summary.md) (Wave 72-74; → the retired `todo/PUSH-READY.md`, removed 2026-10-13), [`STRATEGY_FRAMEWORK_SCOPE.md`](STRATEGY_FRAMEWORK_SCOPE.md) (2026-09-04 draft). **Historical records:** [`code-release-checklist.md`](code-release-checklist.md) (tag `v1.0.1-paper-final`), [`reproducibility_record.md`](reproducibility_record.md) (Wave 15).
 - [`ARCHIVE/`](ARCHIVE/) — historical context, intentionally **not** part of the
   live mkdocs build (enforced by `mkdocs.yml` `exclude_docs`). Preserved on disk
   for archaeology; not maintained and not reachable from the GitHub Pages nav.
@@ -144,7 +144,7 @@ Rules for keeping the tree navigable. They apply to any new document.
 |---|---|---|
 | Reviewer-facing reference or a source of truth | `docs/` (top level or a topic dir) and register it in this map | specs, theory, gate docs |
 | A per-increment working record | `docs/audit/` (topic-clustered) | close-out notes, sweep records |
-| Project-level management state | [`../todo/`](../todo/) — prefer the consolidated [`../todo/WAVES.md`](../todo/WAVES.md) | status, decisions, risks |
+| Project-level management state | [`../todo.json`](../todo.json) | status, gates, gaps, assessment |
 
 **Naming.** New management and map documents are written at the level of
 **project phases**, not individual work increments — do **not** introduce
@@ -161,7 +161,7 @@ phase-level language.
 **Canonical-first updates.** When a reported number changes, update the
 canonical surfaces first ([`CLAIMS.md`](CLAIMS.md), [METRIC_LEDGER.md](METRIC_LEDGER.md),
 [`CONSOLIDATED_RESULTS.md`](CONSOLIDATED_RESULTS.md)), then propagate to
-[`../README.md`](../README.md), [`../todo/WAVES.md`](../todo/WAVES.md), and the
+[`../README.md`](../README.md), [`../todo.json`](../todo.json), and the
 submission package, re-running `tools/check_claims_consistency.py` and refreshing
 the SHA-256 column in [`../tnnls_submission/MANIFEST.md`](../tnnls_submission/MANIFEST.md).
 

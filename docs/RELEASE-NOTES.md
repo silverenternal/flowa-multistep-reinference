@@ -30,7 +30,7 @@
 
 **R1 status is unchanged.** The v3.1 wave re-ran the R1 3-seed framework-fallback retro-validation probe (recorded in `docs/audit/wave349-gap-audit.md` §2). The paper's R1 verdict stays **PARTIAL / single-seed-disclosed** (seed-42 single-seed; the 3-seed pool remains invalidated by the seed-43/44 framework-fallback contamination per the Wave 280 P audit) — the probe does **not** promote R1 by wording.
 
-**Freeze-time gate readings.** The *Submission Gates* table below is the `v3.0-tnnls-ready` freeze-time snapshot and is retained verbatim. Current gate state (re-verified 2026-10-12) lives in [`todo/WAVES.md`](../todo/WAVES.md) §1.2: D.4 30/30 PASS, ruff 0 findings, `mkdocs build --strict` exit 0, claims no drift, and the 9-gate readiness verifier at `READY_WITH_SKIPS: mypy_0`.
+**Freeze-time gate readings.** The *Submission Gates* table below is the `v3.0-tnnls-ready` freeze-time snapshot and is retained verbatim. Current gate state (re-verified 2026-10-12) lives in [`todo.json`](../todo.json) `gates`: D.4 30/30 PASS, ruff 0 findings, `mkdocs build --strict` exit 0, claims no drift, and the 9-gate readiness verifier at `READY_WITH_SKIPS: mypy_0`.
 
 ---
 
