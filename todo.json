@@ -714,13 +714,25 @@
           "Wave 216 P1 projected N=1000 paired t=-9.005",
           "Wave 338 P5 DGL fix 验证可用；Wave 351 P3 复测 RDKit gap (docs/audit/wave351-r3-vendor-fix-status.md)"
         ],
-        "genuinely_left": "3-seed N=1000 paired。被 RDKit 2026.03.5 环境漂移卡住(valid-yield 36.7% @ n=30 vs canonical 99.9%)；需容器复现 Wave 82 的 torch/CUDA/DGL/RDKit 组合。",
+        "genuinely_left": "3-seed N=1000 paired。此前以为被 RDKit 2026.03.5 环境漂移卡住；2026-10-12 环境调查 REFUTE 了该归因：flowmol3_venv 与 Wave 82 之前的 requirements-lock.txt (2026-09-05) 逐项一致，无环境漂移。真实根因是 batched path 的 prior tiling 回归 (repeat_interleave，2026-09-22 Wave 277 引入) —— 它把 per-mol prior 交错(interleave)而非分块(block)铺开，破坏 CTMC prior，导致 valid-yield 40%。",
         "evidence_of_attempt": [
+          "docs/audit/r3-env-investigation.md",
           "docs/audit/wave338-p5-r3-dgl-fix-and-sweep.md",
           "docs/audit/wave351-r3-vendor-fix-status.md"
         ],
-        "resource": "环境级调查(容器复现) + 3-seed sweep；非框架侧改动",
-        "status": "OPEN (canonical 1-seed live 已在盘；3-seed 升级 blocked)"
+        "resource": "修复 = 一行 (.repeat(n_mol,1) 取代 .repeat_interleave(n_mol,dim=0)) + cuda:0 全量 10-batch N=1000 重跑；无需容器复现",
+        "status": "OPEN (canonical 1-seed live 已在盘；根因已定位为框架侧 tiling bug，非环境漂移；修复 + 3-seed 重跑待用户 gate)",
+        "diagnosis_2026_10_12": {
+          "date": "2026-10-12",
+          "verdict": "documented RDKit-2026.03.5-drift root cause REFUTED",
+          "env_vs_lock": "live flowmol3_venv == requirements-lock.txt (2026-09-05, pre-Wave-82) on python/torch/dgl/numpy/rdkit/scipy/pytorch-lightning",
+          "actual_root_cause": "adaptive_reflow/adapters/flowmol3_v2_adapter.py:_solve_ode_upstream_batch uses torch.repeat_interleave(n_mol,dim=0) (interleaved) instead of .repeat(n_mol,1) (blocked) for the per-mol prior; introduced 1efe5ce 2026-09-22 (Wave 277)",
+          "evidence": "HEAD n=30 = 12/30 baseline + 10/30 framework valid (matches Wave 351 P3 exactly); blocked .repeat(n_mol,1) n=30 = 30/30 + 30/30 (100%), n=100 = 100/100 + 100/100",
+          "canonical_path": "wave240-p2-flowmol3-direction.csv seed_42 = 'batched DGL (n_molecules=100)'",
+          "honest_caveat": "blocked tiling restores valid-yield + baseline fg_dev scale but does NOT reproduce canonical framework-arm direction at n<=100 single-batch; full 10-batch N=1000 cuda:0 re-run required",
+          "no_change": "R3 verdict/numbers/CLM-068/CONSOLIDATED_RESULTS §15.105/paper/tnnls all preserved verbatim; no code committed",
+          "audit_doc": "docs/audit/r3-env-investigation.md"
+        }
       },
       {
         "id": "R1-3SEED-MATERIALIZE",
