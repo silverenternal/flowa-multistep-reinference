@@ -2,7 +2,7 @@
   "schema_version": "flowa-state-v2",
   "purpose": "Single management surface for the FlowA / TNNLS submission. Replaces the former repo-root todo.json AND the entire todo/ directory (deleted 2026-10-13 by user directive). Records: current state, binding gates, the R/K evidence ledger, the LineageFlow real-forward (D-004/D-004b) saga, the open Tier-1 gaps, an honest one-screen assessment, and the recommended attack order. No frozen surface (docs/CLAIMS.md, docs/CONSOLIDATED_RESULTS.md, docs/drafts/paper-A-final.*, tnnls_submission/) is changed by edits to this file.",
   "updated_at": "2026-10-13",
-  "head": "74fa61c",
+  "head": "14bf0ae",
   "policy": {
     "no_push": true,
     "commit_footer": "(USER AUTHORIZED, NO PUSH)",
@@ -78,9 +78,9 @@
         "id": "R3",
         "model": "FlowMol3",
         "metric": "fg_dev",
-        "status": "PARTIAL / single-seed PROJECTED",
-        "value": "-0.023484 framework-WINS (1-seed); 3-seed ACTUAL mean -0.0377 p=0.559 not significant",
-        "blocker": "RDKit env drift (valid-yield 36.7% vs 99.9%)"
+        "status": "PARTIAL / 3-seed ACTUAL (not significant)",
+        "value": "3-seed N=1000 ACTUAL mean -0.0377 fg_dev framework-WINS direction, p=0.559 not significant; canonical 1-seed -0.023484",
+        "blocker": "none for measurement (valid-yield 100%, env canonical); residual: low-power n_seeds=3 + frozen-surface label still says PROJECTED"
       },
       {
         "id": "R5a",
@@ -170,14 +170,6 @@
       "acceptance": "live 3-seed paired d_z >= +0.2235; R6 label becomes live-GPU-STRONG."
     },
     {
-      "id": "GAP-02-R3-N1000",
-      "priority": "P0",
-      "owner": "gpu",
-      "status": "OPEN",
-      "gap": "R3: N=1000 PROJECTED -> ACTUAL. RDKit env drift (valid-yield 36.7% vs 99.9%) must be pinned/container-reproduced.",
-      "acceptance": "valid yield >= 99%; N=1000 paired measured; R3 label drops 'PROJECTED'."
-    },
-    {
       "id": "GAP-04-R5B-ROUNDS",
       "priority": "P0",
       "owner": "gpu",
@@ -224,7 +216,8 @@
     "GAP-18/19/21: dead links + Q1-odds + test-citation cluster fixed.",
     "GAP-22: R2/R1 rubric disclosure satisfied (option A, no label change).",
     "GAP-23: retracted - R2 significance is not a pairing artifact.",
-    "GAP-09-THEORY: resolved 2026-10-13 (commit 74fa61c) - measurable diagnostic (q=mK<1 Thm4 + exact blend identity Thm5) on the R5b cell field; contraction holds and round map contracts at all m, Thm5 identity exact + Eq.7 predicts blend sign 4/4. See docs/audit/gap09-reinference-diagnostic.md."
+    "GAP-09-THEORY: resolved 2026-10-13 (commit 74fa61c) - measurable diagnostic (q=mK<1 Thm4 + exact blend identity Thm5) on the R5b cell field; contraction holds and round map contracts at all m, Thm5 identity exact + Eq.7 predicts blend sign 4/4. See docs/audit/gap09-reinference-diagnostic.md.",
+    "GAP-02-R3-N1000: resolved 2026-10-13 at the management surface (measurement done in 0f62c27 + docs/audit/r3-env-investigation.md §9; valid-yield 100%, 3-seed N=1000 ACTUAL, PROJECTED label dropped in todo.json only). Frozen CLAIMS/paper/tnnls NOT touched (user decision 2026-10-13). See docs/audit/gap02-r3-n1000-resolved.md."
   ],
   "assessment": {
     "date": "2026-10-13",
@@ -251,13 +244,13 @@
     ]
   },
   "recommended_attack_order": [
-    "1. D-004B-ATTRIBUTION (P0): init-only vs full-framework arm at matched NFE - converts the D-004b win into a mechanism-attributed win.",
-    "2. GAP-02-R3-N1000 (P0): pin RDKit env, run the real N=1000 paired fg_dev sweep - removes the flagship molecular cell's PROJECTED label.",
-    "3. GAP-01-R6-LIVE (P0): 3-seed x N=1000 live GPU sweep - converts counterfactual-STRONG to live-STRONG.",
+    "1. D-004B-ATTRIBUTION (P0, in progress): init-only vs full-framework arm at matched NFE.",
+    "2. GAP-01-R6-LIVE (P0, USER-AUTHORIZED): 3-seed x N=1000 live GPU sweep on cuda:0 - converts counterfactual-STRONG to live-STRONG.",
+    "3. GAP-04-R5B-ROUNDS (P0): matched multi-seed round-count test - turns the R5b boundary into a law.",
     "4. GAP-12-BASELINE (P1): tuned-baseline per headline cell.",
-    "5. GAP-09-THEORY (P1): one measurable criterion that predicts a cell's sign.",
-    "6. GAP-04-R5B-ROUNDS (P0): matched multi-seed round-count test - turns the R5b boundary into a law.",
-    "7. GAP-15-VENUE (user) + GAP-20-COVERLETTER (user) at submission time."
+    "5. GAP-17-K2K6 (P2): pin env or retain honest disclosure.",
+    "6. GAP-15-VENUE (user) + GAP-20-COVERLETTER (user) at submission time.",
+    "DONE: GAP-02-R3-N1000 (management surface, 2026-10-13); GAP-09-THEORY (2026-10-13)."
   ],
   "removed_surfaces": {
     "date": "2026-10-13",
