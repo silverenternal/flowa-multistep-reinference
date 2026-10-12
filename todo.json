@@ -64,7 +64,8 @@
         "synthetic_headline": "158 -> 342 (+116%)",
         "real_forward_d004b": "158/159/174 -> 275/272/259 (3/3 framework-WINS; DL d_pooled=+0.156, z=8.49, I2=0)",
         "effect": "small (d_z ~ 0.13-0.17 per seed; below 0.8 STRONG bar)",
-        "blocker": "init-attribution control (init-only vs full-framework) not yet run"
+        "attribution": "D-004b-attribution DONE 2026-10-13: init-only 298/274/290 vs framework 275/272/259 vs baseline 158/159/174. init-only ~ framework >> baseline (pooled B-A=+123.7 p=0.0043; B-C=+18.7 p=0.164 n.s.). The real-forward win is the PER-RECORD RANDOM INIT, not the restart-blend.",
+        "blocker": "none for attribution (control run); R1 retained PARTIAL with the mechanism disclosed"
       },
       {
         "id": "R2",
@@ -149,18 +150,10 @@
     "D-004_remeasure": "docs/audit/r1-d004-remeasure.md - with the real field live, the framework arm collapsed to 0 hits on all 3 seeds (d_pooled=-0.4013). Root cause: _build_initial_state_and_condition accepts a seed it never uses -> record-identical x0; only the restart perturbation carried per-record entropy, and it was too weak once the deterministic real field was live.",
     "D-004b_fix": "1264cec - on the real-classifier path, the restart fresh state is a per-record random simplex softmax(randn(L, AA_VOCAB)) (Wave-41 tool noise convention). Synthetic path byte-unchanged (D.4 preserved). Tests added.",
     "D-004b_remeasure": "docs/audit/r1-d004b-remeasure.md - 3/3 seeds framework-WINS: 158/159/174 -> 275/272/259 (mean +105 hits, +66% on seed-42 baseline). Per-record d_z=+0.169/+0.170/+0.129; seed-level d_z=+6.02; DL d_pooled=+0.1559, z=8.49, I2=0, Bonferroni-sig at k=7.",
-    "evidence": "verification_outputs/r1_3seed_d004b_q4_2026/ (force-added; SHA256SUMS 11/11 OK)",
-    "caveat": "D-004b restart init is a tool-convention surrogate, not the upstream intervention sampler. The init-only vs full-framework control is NOT yet run - so the win is real on the real-forward basis but not yet mechanism-attributed."
+    "evidence": "verification_outputs/r1_3seed_d004b_q4_2026/ (force-added; SHA256SUMS 11/11 OK); attribution: verification_outputs/r1_d004b_attribution_q4_2026/",
+    "caveat": "D-004b restart init is a tool-convention surrogate, not the upstream intervention sampler. The init-only vs full-framework control HAS NOW BEEN RUN (2026-10-13): init-only ~ framework >> baseline, so the R1 win is attributable to the per-record random INIT, not the restart-blend (docs/audit/r1-d004b-attribution.md)."
   },
   "open_gaps": [
-    {
-      "id": "D-004B-ATTRIBUTION",
-      "priority": "P0",
-      "owner": "gpu",
-      "status": "OPEN",
-      "gap": "R1 D-004b win attribution: run an init-only arm vs the full framework arm at matched NFE to separate the random-init contribution from the restart-blend contribution. Without it the D-004b win is real but not mechanism-attributed.",
-      "acceptance": "init-only vs full-framework separated; R1 real-forward verdict either promoted or retained PARTIAL with the attribution disclosed."
-    },
     {
       "id": "GAP-01-R6-LIVE",
       "priority": "P0",
@@ -211,7 +204,8 @@
     "GAP-23: retracted - R2 significance is not a pairing artifact.",
     "GAP-09-THEORY: resolved 2026-10-13 (commit 74fa61c) - measurable diagnostic (q=mK<1 Thm4 + exact blend identity Thm5) on the R5b cell field; contraction holds and round map contracts at all m, Thm5 identity exact + Eq.7 predicts blend sign 4/4. See docs/audit/gap09-reinference-diagnostic.md.",
     "GAP-02-R3-N1000: resolved 2026-10-13 at the management surface (measurement done in 0f62c27 + docs/audit/r3-env-investigation.md §9; valid-yield 100%, 3-seed N=1000 ACTUAL, PROJECTED label dropped in todo.json only). Frozen CLAIMS/paper/tnnls NOT touched (user decision 2026-10-13). See docs/audit/gap02-r3-n1000-resolved.md.",
-    "GAP-17-K2K6: resolved 2026-10-13 (commit <pending>) - honest disclosure retained (accepted per the gap's own criterion). K2 (CIFAR v4 N=500 provenance) was already CLOSED by Wave 147 P3; K6 (Wan2.2) is env-blocked (weights are 135-byte LFS pointer stubs, real ckpt absent) IN ADDITION to the disclosed compute-priority blocker; K5 (FreqFlow) un-pinnable (no public nnet_ema.pth). No frozen surface edited; no status promoted. See docs/audit/gap17-k2k6-disclosure.md."
+    "GAP-17-K2K6: resolved 2026-10-13 (commit ea40989) - honest disclosure retained (accepted per the gap's own criterion). K2 (CIFAR v4 N=500 provenance) was already CLOSED by Wave 147 P3; K6 (Wan2.2) is env-blocked (weights are 135-byte LFS pointer stubs, real ckpt absent) IN ADDITION to the disclosed compute-priority blocker; K5 (FreqFlow) un-pinnable (no public nnet_ema.pth). No frozen surface edited; no status promoted. See docs/audit/gap17-k2k6-disclosure.md.",
+    "D-004B-ATTRIBUTION: resolved 2026-10-13 - init-only control arm run (3 seeds x N=1000, real-forward). Result: init-only (B) ~ framework (C) >> baseline (A); seed-level pooled B-A=+123.7 hits (p=0.0043), B-C=+18.7 (p=0.164 n.s.). The R1 real-forward win is carried by the PER-RECORD RANDOM INITIAL STATE, not the multi-round restart-blend. R1 retained PARTIAL with the mechanism disclosed (NOT promoted). Evidence: verification_outputs/r1_d004b_attribution_q4_2026/ (SHA256SUMS OK). See docs/audit/r1-d004b-attribution.md."
   ],
   "assessment": {
     "date": "2026-10-13",
@@ -238,13 +232,13 @@
     ]
   },
   "recommended_attack_order": [
-    "1. D-004B-ATTRIBUTION (P0, in progress): init-only vs full-framework arm at matched NFE.",
+    "1. D-004B-ATTRIBUTION (P0): DONE 2026-10-13 - init-only ~ framework >> baseline; the R1 win is the per-record random INIT, not the restart-blend.",
     "2. GAP-01-R6-LIVE (P0, USER-AUTHORIZED): 3-seed x N=1000 live GPU sweep on cuda:0 - converts counterfactual-STRONG to live-STRONG.",
     "3. GAP-04-R5B-ROUNDS (P0): matched multi-seed round-count test - turns the R5b boundary into a law.",
     "4. GAP-12-BASELINE (P1): tuned-baseline per headline cell.",
-    "5. GAP-17-K2K6 (P2): pin env or retain honest disclosure.",
+    "5. GAP-17-K2K6 (P2): DONE 2026-10-13 - honest disclosure retained (K6 env-blocked by un-pulled LFS ckpt).",
     "6. GAP-15-VENUE (user) + GAP-20-COVERLETTER (user) at submission time.",
-    "DONE: GAP-02-R3-N1000 (management surface, 2026-10-13); GAP-09-THEORY (2026-10-13); GAP-17-K2K6 (honest disclosure retained, 2026-10-13)."
+    "DONE: GAP-02-R3-N1000 (2026-10-13); GAP-09-THEORY (2026-10-13); GAP-17-K2K6 (2026-10-13); D-004B-ATTRIBUTION (2026-10-13)."
   ],
   "removed_surfaces": {
     "date": "2026-10-13",

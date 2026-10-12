@@ -1,0 +1,165 @@
+{
+  "kind": "r1_d004b_attribution",
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "n_per_seed": 1000,
+  "arms": {
+    "A": "baseline",
+    "B": "init_only",
+    "C": "framework"
+  },
+  "per_seed": [
+    {
+      "seed": 42,
+      "baseline_total": 158,
+      "init_only_total": 298,
+      "framework_total": 275,
+      "init_minus_baseline": {
+        "n_records": 1000,
+        "mean_diff_per_record": 0.14,
+        "sd_diff": 0.723134097469427,
+        "t": 6.122223719955213,
+        "df": 999,
+        "p_raw": 1.3242754754527886e-09,
+        "d_z": 0.19360171300167323,
+        "dz_var": 0.0010187408116385912
+      },
+      "init_minus_framework": {
+        "n_records": 1000,
+        "mean_diff_per_record": 0.023,
+        "sd_diff": 0.8031912076934832,
+        "t": 0.9055426091221498,
+        "df": 999,
+        "p_raw": 0.3653963372495069,
+        "d_z": 0.02863577163157561,
+        "dz_var": 0.001000410003708468
+      },
+      "framework_minus_baseline": {
+        "n_records": 1000,
+        "mean_diff_per_record": 0.117,
+        "sd_diff": 0.6912226767032378,
+        "t": 5.352638139771947,
+        "df": 999,
+        "p_raw": 1.075284046268871e-07,
+        "d_z": 0.16926528012366057,
+        "dz_var": 0.0010143253675276706
+      }
+    },
+    {
+      "seed": 43,
+      "baseline_total": 159,
+      "init_only_total": 274,
+      "framework_total": 272,
+      "init_minus_baseline": {
+        "n_records": 1000,
+        "mean_diff_per_record": 0.115,
+        "sd_diff": 0.685744300191584,
+        "t": 5.303171033543601,
+        "df": 999,
+        "p_raw": 1.4011956199871758e-07,
+        "d_z": 0.16770099287426984,
+        "dz_var": 0.0010140618115055079
+      },
+      "init_minus_framework": {
+        "n_records": 1000,
+        "mean_diff_per_record": 0.002,
+        "sd_diff": 0.7540322039306838,
+        "t": 0.08387646160691245,
+        "df": 999,
+        "p_raw": 0.9331714586831688,
+        "d_z": 0.0026524066075351003,
+        "dz_var": 0.001000003517630406
+      },
+      "framework_minus_baseline": {
+        "n_records": 1000,
+        "mean_diff_per_record": 0.113,
+        "sd_diff": 0.6653372631032126,
+        "t": 5.370770516179457,
+        "df": 999,
+        "p_raw": 9.753086171573359e-08,
+        "d_z": 0.16983867621205292,
+        "dz_var": 0.0010144225879687313
+      }
+    },
+    {
+      "seed": 44,
+      "baseline_total": 174,
+      "init_only_total": 290,
+      "framework_total": 259,
+      "init_minus_baseline": {
+        "n_records": 1000,
+        "mean_diff_per_record": 0.116,
+        "sd_diff": 0.720460313315774,
+        "t": 5.0915255399884165,
+        "df": 999,
+        "p_raw": 4.24370024769602e-07,
+        "d_z": 0.16100817471282117,
+        "dz_var": 0.0010129618161621773
+      },
+      "init_minus_framework": {
+        "n_records": 1000,
+        "mean_diff_per_record": 0.031,
+        "sd_diff": 0.7737167683575416,
+        "t": 1.2670089556585507,
+        "df": 999,
+        "p_raw": 0.20544737793336826,
+        "d_z": 0.04006634115712304,
+        "dz_var": 0.0010008026558468595
+      },
+      "framework_minus_baseline": {
+        "n_records": 1000,
+        "mean_diff_per_record": 0.085,
+        "sd_diff": 0.6604628764822525,
+        "t": 4.069776071986918,
+        "df": 999,
+        "p_raw": 5.077205673097519e-05,
+        "d_z": 0.12869761954332049,
+        "dz_var": 0.0010082815386380586
+      }
+    }
+  ],
+  "seed_level_pooled": {
+    "init_minus_baseline": {
+      "values": [
+        140,
+        115,
+        116
+      ],
+      "mean": 123.66666666666667,
+      "sd": 14.153915830374762,
+      "t": 15.133405655110478,
+      "df": 2,
+      "p_two_sided": 0.004338039472644388,
+      "d_z": 8.737275828733841
+    },
+    "init_minus_framework": {
+      "values": [
+        23,
+        2,
+        31
+      ],
+      "mean": 18.666666666666668,
+      "sd": 14.977761292440647,
+      "t": 2.1586413645767593,
+      "df": 2,
+      "p_two_sided": 0.16352666542998778,
+      "d_z": 1.2462921729222531
+    },
+    "framework_minus_baseline": {
+      "values": [
+        117,
+        113,
+        85
+      ],
+      "mean": 105.0,
+      "sd": 17.435595774162696,
+      "t": 10.430692311887219,
+      "df": 2,
+      "p_two_sided": 0.00906642437304986,
+      "d_z": 6.0221630141022455
+    }
+  }
+}

@@ -1,0 +1,64 @@
+R1 D-004B-ATTRIBUTION — init-only control arm vs baseline vs framework
+=====================================================================
+
+Date           : 2026-10-13
+Cell           : R1 (hmmscan_total_hits)
+Purpose        : Separate the per-record random-initial-state contribution from
+                 the multi-round restart-blend contribution in the D-004b R1
+                 real-forward win. The D-004b restart fix gave the restart fresh
+                 state a per-record random simplex; this control asks whether a
+                 SINGLE pass from that same random init already reproduces the
+                 win (B ~ C) or not (B ~ A).
+
+Arms
+----
+A baseline   : canonical near-uniform init, single pass   (r1_3seed_d004b_q4_2026)
+B init-only  : per-record random simplex init, single pass (this dir)
+C framework  : canonical init + 3 restart-blend rounds     (r1_3seed_d004b_q4_2026)
+
+Pipeline
+--------
+gen  : tools/r1_d004b_attribution.py --outdir <dir> --n 1000 --seed <S> --nfe 10
+       (in-process sampler swap: _synthesize_latent_like_tensor ->
+        _synthesize_random_simplex; single solve_ode, no restart/blend;
+        lengths/families replayed from seed ^ 0x5A5A to match arm C)
+hmmer: /home/hugo/hmmer_build/bin/hmmscan --noali --cpu 32 --tblout <out> --acc
+       data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm <fasta>
+hits : non-comment tblout lines
+stats: tools/r1_d004b_attribution_analysis.py (per-seed paired-t df=999 +
+       seed-level pooled t on the 3 totals)
+
+Environment
+-----------
+venv : .venvs/lineageflow_venv  (torch 2.14.0+cu130, transformers 4.57.6)
+gpu  : CUDA_VISIBLE_DEVICES=1   (real-forward, force_mode="auto")
+
+Zero fallback
+-------------
+init_only fallback_per_family_count == {} on all 3 seeds.
+
+Headline (N=1000 per arm per seed)
+----------------------------------
+seed  baseline  init-only  framework
+ 42      158       298        275
+ 43      159       274        272
+ 44      174       290        259
+
+seed-level pooled B-A = +123.7 hits (t=15.13, p=0.0043)
+seed-level pooled B-C = +18.7  hits (t=2.16,  p=0.164 n.s.)
+seed-level pooled C-A = +105.0 hits (t=10.43, p=0.0091)
+
+Reading
+-------
+B ~ C  =>  the R1 real-forward win is carried by the PER-RECORD RANDOM INITIAL
+STATE, not by the multi-round restart-blend. The restart-blend adds ~0 over the
+random init. R1 stays PARTIAL, now with a precise mechanism.
+
+Files
+-----
+attribution_summary.json        3-arm per-seed + seed-level pooled statistics
+seed{42,43,44}/init_only_hits.tbl   HMMER tblout, arm B
+seed{42,43,44}/manifest.json        init-only gen manifest
+SHA256SUMS                       checksums of the above
+
+FASTAs are not committed (regenerable with the pipeline above).
