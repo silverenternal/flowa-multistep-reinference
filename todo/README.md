@@ -20,6 +20,7 @@ todo/
 ├── LOOP.md                         (per-model lifecycle + iteration + stop conditions)
 ├── TIMELINE.md                     (phase durations + project-done definition)
 ├── RISK-REGISTER.md                (forward-looking risks + mitigations R-001..R-022)
+├── SUBMISSION-GAP-CHECKLIST.md     (executable Tier-1 readiness gap list, P0/P1/P2)
 ├── PUSH-READY.md                   (push-readiness summary, user-gated)
 ├── decisions.md                    (architecture decisions D-001.., append-only)
 └── lessons-learned.md              (lessons LL-001.., append-only)
@@ -27,13 +28,15 @@ todo/
 
 ## Current focus (2026-10-12)
 
-**Venue:** IEEE TNNLS (switched from TPAMI). Project at HEAD `a957906`; **7 commits ahead of `origin/main`** (`fea137d`; the later manuscript-consistency sweeps, the governance / repo-docs refreshes, and the readiness-verifier repoint are local-only — push is user-gated). Acceptance gates PASS (D.4 30/30 / ruff 0 / claims no-drift / mkdocs strict exit 0). The readiness verifier (`tools/verify_submission_readiness.py`) passes **all** gates (`READY_WITH_SKIPS: mypy_0`, exit 0 — `mypy_0` SKIPs when mypy is absent from PATH): `k1_rc5` was repointed at the live manuscript and `drift_33`'s allowlist extended on explicit user decision; see `todo/WAVES.md` §1.2.
+**Venue:** IEEE TNNLS (switched from TPAMI). Project at HEAD `ee3871e`; **12 commits ahead of `origin/main`** (`fea137d`; the later manuscript-consistency sweeps, the governance / repo-docs refreshes, the readiness-verifier repoint, the `docs/` legacy inventory, and the `RELEASE-NOTES` v3.1 refresh are local-only — push is user-gated). Acceptance gates PASS (D.4 30/30 / ruff 0 / claims no-drift / mkdocs strict exit 0). The readiness verifier (`tools/verify_submission_readiness.py`) passes **all** gates (`READY_WITH_SKIPS: mypy_0`, exit 0 — `mypy_0` SKIPs when mypy is absent from PATH): `k1_rc5` was repointed at the live manuscript and `drift_33`'s allowlist extended on explicit user decision; see `todo/WAVES.md` §1.2.
 
 **Remaining user-gated actions:**
 1. Fill the 17 `[USER TO FILL]` placeholders in `tnnls_submission/cover_letter.md` (see `tnnls_submission/FILL_GUIDE.md`).
-2. `git push` the 7 local-only commits to `origin/main` (last pushed: `fea137d`, 2026-10-12).
+2. `git push` the 12 local-only commits to `origin/main` (last pushed: `fea137d`, 2026-10-12).
 
 **Latest audit:** [`docs/audit/readiness-verifier-repoint.md`](../docs/audit/readiness-verifier-repoint.md) — readiness-verifier repoint + drift_33 allowlist + pytest collection fix + 5 stale Kanzi test updates (HEAD `a957906`). Prior: [`docs/audit/repo-docs-maintenance.md`](../docs/audit/repo-docs-maintenance.md) — repo-docs maintenance refresh (HEAD `8756f19`); [`docs/audit/governance-refresh-post-push.md`](../docs/audit/governance-refresh-post-push.md) — post-push governance refresh (HEAD `0209002`).
+
+**Tier-1 readiness gaps:** [`SUBMISSION-GAP-CHECKLIST.md`](SUBMISSION-GAP-CHECKLIST.md) — 20 executable fixes (P0/P1/P2) toward the CAS Tier-1 / TNNLS decision, each with owner + blocker + required resource + acceptance criterion.
 
 ## Convention
 
@@ -54,6 +57,7 @@ Add a new file here when:
 ## See also
 
 - [`docs/CLAIMS.md`](../docs/CLAIMS.md) — 61 active claims ledger
+- [`SUBMISSION-GAP-CHECKLIST.md`](SUBMISSION-GAP-CHECKLIST.md) — executable Tier-1 readiness gap list (P0/P1/P2)
 - [`docs/audit/INDEX.md`](../docs/audit/INDEX.md) — per-wave audit catalogue (topic clusters)
 - [`tnnls_submission/SUBMISSION_READINESS.md`](../tnnls_submission/SUBMISSION_READINESS.md) — submission-readiness consolidation
 - [`docs/drafts/paper-A-final.md`](../docs/drafts/paper-A-final.md) — canonical paper source

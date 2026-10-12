@@ -379,6 +379,12 @@ lessons, which are retrospective.)
 - Push to `origin/main` (user-gated).
 - Reintroducing deprecated back-compat aliases (canonical names only).
 
+> **Full Tier-1 readiness gap list:** [`SUBMISSION-GAP-CHECKLIST.md`](SUBMISSION-GAP-CHECKLIST.md)
+> — 20 executable fixes (P0/P1/P2) with owner + blocker + required resource +
+> acceptance criterion, covering the evidence-strength, framing/honesty, theory,
+> statistics, baseline-fairness, and hygiene gaps toward the CAS Tier-1 / TNNLS
+> decision.
+
 ---
 
 ## 9. Submission readiness and user-gated actions
