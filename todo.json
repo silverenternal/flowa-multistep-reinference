@@ -194,13 +194,6 @@
       "acceptance": "venue decided; positioning matches."
     },
     {
-      "id": "GAP-17-K2K6",
-      "priority": "P2",
-      "owner": "gpu",
-      "status": "OPEN",
-      "gap": "K2/K6 env-blocked per-cell sweeps (pin env or retain honest disclosure)."
-    },
-    {
       "id": "GAP-20-COVERLETTER",
       "priority": "P2",
       "owner": "user",
@@ -217,7 +210,8 @@
     "GAP-22: R2/R1 rubric disclosure satisfied (option A, no label change).",
     "GAP-23: retracted - R2 significance is not a pairing artifact.",
     "GAP-09-THEORY: resolved 2026-10-13 (commit 74fa61c) - measurable diagnostic (q=mK<1 Thm4 + exact blend identity Thm5) on the R5b cell field; contraction holds and round map contracts at all m, Thm5 identity exact + Eq.7 predicts blend sign 4/4. See docs/audit/gap09-reinference-diagnostic.md.",
-    "GAP-02-R3-N1000: resolved 2026-10-13 at the management surface (measurement done in 0f62c27 + docs/audit/r3-env-investigation.md §9; valid-yield 100%, 3-seed N=1000 ACTUAL, PROJECTED label dropped in todo.json only). Frozen CLAIMS/paper/tnnls NOT touched (user decision 2026-10-13). See docs/audit/gap02-r3-n1000-resolved.md."
+    "GAP-02-R3-N1000: resolved 2026-10-13 at the management surface (measurement done in 0f62c27 + docs/audit/r3-env-investigation.md §9; valid-yield 100%, 3-seed N=1000 ACTUAL, PROJECTED label dropped in todo.json only). Frozen CLAIMS/paper/tnnls NOT touched (user decision 2026-10-13). See docs/audit/gap02-r3-n1000-resolved.md.",
+    "GAP-17-K2K6: resolved 2026-10-13 (commit <pending>) - honest disclosure retained (accepted per the gap's own criterion). K2 (CIFAR v4 N=500 provenance) was already CLOSED by Wave 147 P3; K6 (Wan2.2) is env-blocked (weights are 135-byte LFS pointer stubs, real ckpt absent) IN ADDITION to the disclosed compute-priority blocker; K5 (FreqFlow) un-pinnable (no public nnet_ema.pth). No frozen surface edited; no status promoted. See docs/audit/gap17-k2k6-disclosure.md."
   ],
   "assessment": {
     "date": "2026-10-13",
@@ -250,7 +244,7 @@
     "4. GAP-12-BASELINE (P1): tuned-baseline per headline cell.",
     "5. GAP-17-K2K6 (P2): pin env or retain honest disclosure.",
     "6. GAP-15-VENUE (user) + GAP-20-COVERLETTER (user) at submission time.",
-    "DONE: GAP-02-R3-N1000 (management surface, 2026-10-13); GAP-09-THEORY (2026-10-13)."
+    "DONE: GAP-02-R3-N1000 (management surface, 2026-10-13); GAP-09-THEORY (2026-10-13); GAP-17-K2K6 (honest disclosure retained, 2026-10-13)."
   ],
   "removed_surfaces": {
     "date": "2026-10-13",
