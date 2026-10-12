@@ -1,0 +1,25 @@
+{
+  "kind": "gap12_2d_tuned_baseline_wellaveraged",
+  "timestamp_utc": "2026-10-12T22:02:38Z",
+  "cell": "R5a (2D Two Moons RF ablation)",
+  "driver": "tools/run_sota_2d_experiment.py",
+  "command": "tools/run_sota_2d_experiment.py --target two_moons --n-seeds 1 --n-rounds 20 --output-dir /tmp/gap12_2d_sota",
+  "target": "two_moons",
+  "seeds": [0],
+  "n_rounds": 20,
+  "n_samples_per_round": 1000,
+  "protocol_note": "well-averaged: 1000 samples/round vs the canonical ablation's 1-20 points/round (runner endpoints are (n_rounds, 2))",
+  "baseline_w2": 0.07899486658804267,
+  "framework_per_scheduler": {
+    "CosineAnnealScheduler": {"w2": 0.0866, "pct_vs_baseline": -9.68},
+    "CodimensionSheetScheduler": {"w2": 0.0746, "pct_vs_baseline": 5.60},
+    "EvidenceDrivenScheduler": {"w2": 0.0834, "pct_vs_baseline": -5.60},
+    "FreeTrajScheduler": {"w2": 0.0822, "pct_vs_baseline": -4.01}
+  },
+  "framework_best_w2": 0.0746,
+  "framework_best_scheduler": "CodimensionSheetScheduler",
+  "framework_wins_of_4": 1,
+  "headline_pct_improvement": -0.32203970266678295,
+  "canonical_ablation": {"baseline_w2": 2.85, "framework_w2": 0.62, "ratio": 4.6},
+  "verdict": "straw-man REAL: the canonical 4.6x R5a win does not survive a well-averaged baseline; only 1/4 schedulers beats the baseline and only by +5.6%"
+}
