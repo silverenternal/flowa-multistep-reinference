@@ -1,4 +1,4 @@
-# Wave 361 — R6 sweep seed=42/43 框架配置错诊断 (framework RMSD 2.5-2.6 Å vs 用户预期 ~0.8 Å)
+# Wave 361 — R6 sweep seed=42/43 框架配置错诊断 (framework RMSD 2.5-2.6 Å vs 用户预期 ~0.8 — 单位未定)
 
 **Date:** 2026-09-26
 **Author:** Wave 361 GPU-launch agent (USER AUTHORIZED R6 sweep, USER-INSIGHT post-launch)
@@ -12,7 +12,16 @@
 
 **Translation:** "The current data I recall is the bad data from earlier. The framework's effect should be around 0.8. You can stop the process and monitor first."
 
-The user is identifying that the framework-arm RMSD values measured by `sweep_kanzi_n1000_framework_paper_metrics.py` (~2.59 Å at seed=42, ~2.51 Å at seed=43) are **NOT the framework's true performance** — the framework's expected RMSD is approximately 0.8 Å (significantly better than the Wave 88 baseline of 0.9020 Å). The current sweep is measuring ~2.5-2.6 Å, which is ~1.7 Å WORSE than baseline, suggesting the framework wrapper is being bypassed (i.e. the framework arm is actually running baseline-like computation, not the framework's `TierAwareCodimensionSheetScheduler` + `BoundedMergeOperator` + `EvidenceDrivenScheduler` stack).
+### 1.1 Note on the unit of "0.8" (ambiguity — UNRESOLVED)
+
+The unit of the user's "0.8" is **not resolved**, and the two Wave 361 docs initially read it differently — this doc as an RMSD target (~0.8 Å), `wave361-r6-forensic-evidence-chain.md` §3.1/§5 as a pLDDT-scale statement. The two readings are **inconsistent** and **neither is verified**:
+
+- **RMSD-Å reading (this doc, contextually natural):** the user was looking at the Kanzi reconstruction-RMSD output (2.5–2.6 Å), and the Wave 88 Kanzi baseline is 0.9020 Å, so ~0.8 Å would be a plausible improvement target. **But reconstruction RMSD is the R2 (Kanzi) metric, not an R6 metric.**
+- **pLDDT reading (forensic doc):** numerically unsupported — R6's paired pLDDT effect is +1.12 on a 0–100 scale, which is not "0.8".
+
+**Honest position:** the user's "0.8" most plausibly refers to the **Kanzi reconstruction-RMSD (R2)** scale and was stated while a mis-scoped "R6" sweep was running; it does **not** correspond to any R6 (LineageFlow foldability) metric. The unit is left **unresolved** here rather than asserted. (Corrected 2026-10-12: this note was added to remove the contradiction with the forensic doc.)
+
+The user is identifying that the framework-arm RMSD values measured by `sweep_kanzi_n1000_framework_paper_metrics.py` (~2.59 Å at seed=42, ~2.51 Å at seed=43) are **NOT the framework's true performance** — the user's recalled framework value is ~0.8 (unit UNRESOLVED — see §1.1; the RMSD-Å reading, if correct, is the R2/Kanzi metric, not R6). The current sweep is measuring ~2.5-2.6 Å, which is ~1.7 Å WORSE than baseline, suggesting the framework wrapper is being bypassed (i.e. the framework arm is actually running baseline-like computation, not the framework's `TierAwareCodimensionSheetScheduler` + `BoundedMergeOperator` + `EvidenceDrivenScheduler` stack).
 
 ## 2. What I observed
 
@@ -24,7 +33,7 @@ The user is identifying that the framework-arm RMSD values measured by `sweep_ka
 
 Compare to:
 - Wave 88 baseline: 0.9020 ± 0.137 Å (N=1000)
-- Framework EXPECTED: ~0.8 Å (per user, framework should IMPROVE over baseline, not regress by ~1.7 Å)
+- Framework EXPECTED: ~0.8 (per user; unit UNRESOLVED — see §1.1. The RMSD-Å reading is contextually natural but is the R2/Kanzi metric, not R6)
 - R6 §10.5 "STRONG via tier-aware counterfactual" d_z = +0.2235 (Bonferroni-significant at α = 0.05 via `easy_tier_nfe_reduction_factor = 0.5` on the canonical paired-diff reference)
 
 The current sweep's framework RMSD (2.5-2.6 Å) is **far worse than the baseline (0.90 Å)**. This is NOT a framework regression — this is a **measurement artifact**, likely because:
@@ -73,7 +82,7 @@ Three options, in order of increasing scope:
 - This requires explicit user authorization (source modification, AGENTS.md §3 guardrail #2).
 - The patch would be a 1-3 line change to ensure the framework wrapper is invoked.
 - After the patch, re-run 3 seeds (60-135 min wall on cuda:0).
-- The corrected sweep is expected to show framework RMSD ≈ 0.8 Å (per user), well below the baseline 0.90 Å — making R6 STRONG via direct evidence (not just counterfactual).
+- The corrected sweep is expected to show framework RMSD ≈ 0.8 Å (per user; unit unresolved — see §1.1), well below the baseline 0.90 Å — making R6 STRONG via direct evidence (not just counterfactual).
 
 ## 6. Recommendation
 

@@ -47,7 +47,7 @@ The **load-bearing evidence** is the **Wave 161 frozen substrate** + **Wave 233 
 | sc_perplexity (median) | 17.57 | 13.77 | -3.81 |
 | corr_pLDDT_vs_sc | 0.171 | -0.132 | direction-flipping correlation |
 
-**This is the framework's true performance on R6** — pLDDT +1.12 paired, sc_perplexity -3.92 paired. The user comment "框架的效果应该在0.8左右" is consistent with this (the user likely is referring to the pLDDT unit's tens-of-units scale; +1.12 pLDDT paired is the framework's actual effect size).
+**This is the framework's true performance on R6** — pLDDT +1.12 paired, sc_perplexity -3.92 paired. The unit of the user comment "框架的效果应该在0.8左右" is **UNRESOLVED** and is *not* claimed here to match either R6 metric — see `docs/audit/wave361-r6-launch-discrepancy.md` §1.1 for the two conflicting readings (RMSD Å vs pLDDT scale).
 
 ### 3.2 Frozen Wave 161 methodology
 
@@ -107,7 +107,7 @@ The 2026-09-26 R6 launch attempted to run `tools/sweep_kanzi_n1000_framework_pap
 
 The seed=42/43 framework-arm RMSD values (2.5914 ± 0.0727 Å, 2.5090 ± 0.0652 Å) are **Kanzi reconstruction RMSD measurements**, NOT R6 framework foldability measurements. They are **not comparable** to the Wave 161 frozen R6 substrate (which is foldability pLDDT, not reconstruction RMSD).
 
-This explains the user's comment that "the framework effect should be around 0.8" — the user is referring to **pLDDT unit's tens-of-units scale** (where +1.12 paired pLDDT is the framework's true effect), not RMSD Å (which is an entirely different metric on a different model).
+The user's comment that "the framework effect should be around 0.8" is **not** evidence about R6's metric scale. Its unit is **UNRESOLVED** (see `docs/audit/wave361-r6-launch-discrepancy.md` §1.1): the RMSD-Å reading is contextually natural but belongs to the R2 (Kanzi) metric, and the pLDDT reading is numerically unsupported. Neither reading should be asserted.
 
 ## 6. Reproduction of the R6 framework performance record (no re-run required)
 
@@ -133,7 +133,7 @@ import statistics
 ```
 
 ### 6.3 Wave 235 P3 best grid cell d_z = +0.6467 (reproducible from frozen substrate)
-The 20-cell grid search is fully parameterised in `verification_outputs/wave235-p3-r6-uplift.json`; the best cell (easy_factor=0.1, hard_intensity=3.0) yields d_z = +0.6467 Bonf-sig.
+The 20-cell grid search is fully parameterised in `verification_outputs/wave235-p3-r6-uplift.json`; the best cell (easy_factor=0.0, hard_intensity=3.0, cell_idx=3) yields d_z = +0.6467 Bonf-sig (easy-tier regression fully eliminated).
 
 ### 6.4 Verification commands (D.4 byte-stable)
 ```bash
