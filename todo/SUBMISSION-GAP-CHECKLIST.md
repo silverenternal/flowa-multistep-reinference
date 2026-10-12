@@ -85,7 +85,7 @@ Two **new, real** defects were found by the same pass and are added below as
 | GAP-16 | P2 | agent | OPEN | 31 deferred reviewer-facing gaps |
 | GAP-17 | P2 | gpu | OPEN | K2/K6 env-blocked per-cell sweeps |
 | GAP-18 | P2 | agent | **RESOLVED** (2026-10-12) | Dead links in the manuscript — repointed (§7.11 + §7.8.1) |
-| GAP-19 | P2 | agent | OPEN | Stale Q1-odds citations (50-65 vs 60-75; §11.1 disclosure removed at Wave 370) |
+| GAP-19 | P2 | agent | **RESOLVED** (2026-10-12) | Q1-odds removed from submission docs — aligned with the manuscript (Wave 370 removal) |
 | GAP-20 | P2 | user | OPEN | 17 `[USER TO FILL]` cover-letter placeholders |
 | GAP-21 | **P0** | agent | **RESOLVED** (2026-10-12) | Manuscript test citations repointed to real files + measured counts |
 
@@ -295,21 +295,27 @@ Two **new, real** defects were found by the same pass and are added below as
 - **Acceptance:** every audit-doc link resolves; `data/` links either resolve or
   are scoped as checkout-dependent.
 
-### GAP-19 — Stale Q1-odds citations (submission docs)
+### GAP-19 — Stale Q1-odds citations (submission docs) — **RESOLVED** (2026-10-12)
 - **Owner:** agent. **Finding:** the §11.1 "Q1 acceptance-probability 60-75 %"
   disclosure was **deliberately removed at Wave 370** (`62154e0`, a user-authorized
   destructive rewrite; `git log -S "60-75"` confirms). Yet three submission-facing
   surfaces still cite it:
-  (a) `tnnls_submission/MANIFEST.md` row 32's provenance text ("Wave 354 P3 ADDITIVE:
+  (a) `tnnls_submission/MANIFEST.md` row 56's provenance text ("Wave 354 P3 ADDITIVE:
   §1 abstract + §11.1 … Q1 acceptance 60-75 % disclosure");
   (b) `tnnls_submission/SUBMISSION_READINESS.md` §5 + §1 ("§11.1 … 60-75 %");
   (c) `tnnls_submission/submission_checklist.md:87` ("50-65 %", contradicting the
   other two).
-- **Action:** reconcile the three surfaces (and decide whether a Q1-odds estimate
-  belongs in the submission docs at all, given it was removed from the paper).
-  **Note:** editing `MANIFEST.md` re-hashes its self-SHA row.
+- **Resolution (user decision "移除，与手稿对齐").** Removed the self-assessed
+  acceptance probability from the submission docs so they align with the manuscript:
+  §5 of `SUBMISSION_READINESS.md` retitled "Venue fit — no self-assessed acceptance
+  probability" (numeric estimate stripped; strengths/risk factors retained
+  qualitatively; line-14 / §7-table / §7-JSON / §8.3 / §9 references removed; new §19
+  addendum records the in-place edit); `submission_checklist.md` section retitled
+  "Reviewer-facing strengths" with the "50-65 %" line removed; `MANIFEST.md` row 56
+  gains an additive Wave 370-removal note + row 54 SHA refresh + row 47 self-SHA
+  update. No metric/claim number changed.
 - **Handle:** `tnnls_submission/MANIFEST.md`; `tnnls_submission/SUBMISSION_READINESS.md`;
-  `tnnls_submission/submission_checklist.md`.
+  `tnnls_submission/submission_checklist.md`. Audit: `docs/audit/gap19-q1-odds-alignment.md`.
 
 ### GAP-20 — Cover-letter placeholders
 - **Owner:** user. **Action:** fill the 17 `[USER TO FILL]` fields at submission

@@ -73,9 +73,9 @@
 
 ---
 
-## Acceptance probability estimate
+## Reviewer-facing strengths
 
-**DeepSeek 2026-09-21 evaluation** (after Wave 235-242 improvements):
+> **No self-assessed acceptance probability.** Earlier revisions carried a TNNLS acceptance-probability estimate (50-65%, DeepSeek 2026-09-21 post-Wave-238). That estimate was removed from the manuscript at Wave 370; to stay aligned with the manuscript, this checklist asserts no numeric probability. The reviewer-facing improvements below are retained as qualitative notes.
 
 - **R5b conditional boundary:** REGRESSES → n_rounds=1 framework-WINS
 - **R2 medium-effect uplift:** d_z +0.047 → +0.3927 (+743%)
@@ -83,8 +83,6 @@
 - **24.6× wall-clock fix:** CUDA-graph capture 4.24× speedup (76.8% closure)
 - **Statistical methods upgrade:** TOST/JT/BF01/meta/NI
 - **FlowMol3 3-seed rescue:** Wave 242 P1 in flight
-
-**TNNLS acceptance probability:** **50-65%** (DeepSeek 2026-09-21 post-Wave-238 estimate)
 
 ---
 

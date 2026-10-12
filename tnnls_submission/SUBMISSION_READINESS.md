@@ -11,7 +11,7 @@
 - No edits to `tnnls_submission/MANIFEST.md` — SHA-256 column is preserved unchanged; this new doc does NOT enter the MANIFEST ledger (per Wave 365 P1 task brief: ADDITIVE only, no existing `tnnls_submission/*.md` file modified).
 - No edits to `tnnls_submission/cover_letter.md` — 17 USER_TO_FILL placeholders preserved verbatim (31 grep hits).
 - No edits to `tnnls_submission/highlights.md`, `tnnls_submission/tables.md`, `tnnls_submission/figures.md`, `tnnls_submission/data_availability.md`, `tnnls_submission/submission_checklist.md` — all byte-identical to Wave 364 baseline.
-- No edits to `docs/drafts/paper-A-final.md` — §11.1 honest-verdict paragraph preserved verbatim; the Q1 acceptance-probability 60-75% is cited here verbatim.
+- No edits to `docs/drafts/paper-A-final.md` — §11.1 honest-verdict paragraph preserved verbatim. (The Q1 acceptance-probability disclosure formerly cited here was removed from the manuscript at Wave 370; this doc no longer asserts one — see §5.)
 - No edits to `docs/CONSOLIDATED_RESULTS.md` §15.103 — final 11-cell verdict distribution cited here verbatim.
 - No edits to any `docs/audit/*.md` file — Wave 362 / 363 / 364 audit docs cited here verbatim.
 - No edits to any vendored upstream repo (the 9 vendored repos in `data/` remain byte-identical to upstream pinned commits per Wave 260 hard-guardrail #1).
@@ -129,17 +129,13 @@ All 31 explicitly DEFERRED gaps are bounded by either (a) user action, (b) envir
 
 ---
 
-## 5. Q1 acceptance probability — 60-75% (Wave 351-352 estimate)
+## 5. Venue fit — no self-assessed acceptance probability
 
-### 5.1 Estimate provenance
+> **REMOVED 2026-10-12 (GAP-19; user-authorized).** Earlier revisions of this doc cited a self-assessed TNNLS Q1 acceptance-probability estimate (60-75%, Wave 351-352; up from a 45-60% Wave 238 baseline) attributed to `docs/drafts/paper-A-final.md` §11.1. That estimate was **deliberately removed from the manuscript at Wave 370** (`62154e0`, a user-authorized destructive rewrite). To stay aligned with the manuscript, this doc **no longer asserts any numeric acceptance probability**; the reviewer-facing strengths and risk factors below are retained as qualitative engineering notes only.
 
-Per `docs/drafts/paper-A-final.md` §11.1 (b) verbatim disclosure:
+### 5.1 Reviewer-facing strengths (no probability attached)
 
-> The Wave 351-352 estimate of the TNNLS Q1-acceptance probability is **60-75%** (the post-Wave-353-POLISH-layer estimate, reflecting the R6 tier-aware counterfactual verdict $d_z = +0.2235$ Bonferroni-significant at $\alpha = 0.05$ from CLM-073 / R-019 plus the eight Wave 353 POLISH-layer additions enumerated in (d) below); the prior Wave 238 / pre-Wave-351 estimate was **45-60%** (the original DeepSeek 2026-09-21 post-Wave-238 evaluation).
-
-### 5.2 Reasoning breakdown (per `docs/drafts/paper-A-final.md` §11.1 verbatim + Wave 351-352 estimate rationale)
-
-1. **R6 tier-aware counterfactual verdict** ($d_z = +0.2235$ Bonferroni-significant at $\alpha = 0.05$; CLM-073 / R-019) — the load-bearing item in the upward shift from 45-60% → 60-75%.
+1. **R6 tier-aware counterfactual verdict** ($d_z = +0.2235$ Bonferroni-significant at $\alpha = 0.05$; CLM-073 / R-019).
 2. **R5b conditional boundary** (n_rounds=1 framework-WINS, n_rounds≥2 framework-REGRESSES) — honestly framed per Wave 364 G11 close; preserves the §7.6 R5b mechanism paragraph.
 3. **R2 medium-effect uplift** ($d_z$ +0.047 → +0.3927, +743% lift) — Bonferroni-significant at $\alpha = 0.05/7$.
 4. **R6 large-effect uplift** ($d_z$ +0.224 → +0.647, +189% lift with easy-tier elimination) — Bonferroni-significant in the Wave 235 P3 best grid cell.
@@ -147,18 +143,14 @@ Per `docs/drafts/paper-A-final.md` §11.1 (b) verbatim disclosure:
 6. **Statistical methods upgrade** (TOST / JT / BF01 / DerSimonian-Laird meta / Non-Inferiority) — per Wave 234 P5.
 7. **FlowMol3 3-seed rescue** (R3 direction-consistent; Wave 242 P1 + Wave 357 P3) — preserves the §11.1 (b) honest-disclosure status.
 8. **Industry-leading reproducibility contract** (5-gate invariant enforcement + D.4 byte-stable 30/30 regression + Lean 4 formal-verification sidecar + SHA-256 manifest chain; vendored upstream byte-identical to pinned upstream commits FlowMol3 `77cae22` / LineageFlow `ccef84a` / Kanzi `cfed9cf`) — per Wave 268 strict-clean + Wave 357 P2.
-9. **Wave 353 POLISH layer** (8 reviewer-facing additions: P1 Theorem 4 derivation + P2 paper-quantity closed-form + P3 hash-chained ledger SHA-256 example + P4 Wave 183 finer-NFE figures + P5 pseudocode blocks + P6 vendor ckpt availability + P7 key-takeaways + P8 CLAIMS status table) — drives the upward shift from 45-60% → 60-75%.
-10. **Wave 364 polish layer** (8 ADDITIVE gap closures G3 / G11 / G15 / G20 / G31 / G32 / G34 / G38; 0 lines of existing prose modified) — additional reviewer-facing improvements post-Wave-353 baseline; preserved verbatim per Wave 268 strict-clean rule.
+9. **Wave 353 POLISH layer** (8 reviewer-facing additions: P1 Theorem 4 derivation + P2 paper-quantity closed-form + P3 hash-chained ledger SHA-256 example + P4 Wave 183 finer-NFE figures + P5 pseudocode blocks + P6 vendor ckpt availability + P7 key-takeaways + P8 CLAIMS status table).
+10. **Wave 364 polish layer** (8 ADDITIVE gap closures G3 / G11 / G15 / G20 / G31 / G32 / G34 / G38; 0 lines of existing prose modified) — preserved verbatim per Wave 268 strict-clean rule.
 
-### 5.3 Estimate range (60-75%)
-
-The 60-75% range reflects uncertainty over the reviewer panel's tolerance for:
+### 5.2 Reviewer-risk factors (no probability attached)
 
 - **Counterfactual methodology** (R6 tier-aware counterfactual is mathematically principled but not a live GPU 3-seed × N=1000 sweep; honest-disclosure preserved verbatim in `paper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md §(d)` + paper §10.5 + CLM-073 + R-019).
 - **PARTIAL/SUPP cell honest-disclosure** (6 of 11 headline cells are PARTIAL/SUPP; the 4 SUPP-only K-cells are demoted to §10 supplementary; per Wave 308 P1 / P2 + Wave 306 demotions).
 - **Honest disclosure of matched-NFE image-domain regression** (CIFAR-10 RF at NFE=50 where framework regresses by 10.7%; first-class boundary disclosure, not a footnote; per §11.1 / §11.2 honest verdict).
-
-The 60-75% estimate is **higher than the 45-60% Wave 238 baseline** by 15-20 percentage points; the upward shift is driven by reviewer-facing additions (Wave 353 POLISH layer + Wave 364 polish layer) that do not alter any §11 verdict number.
 
 ---
 
@@ -187,7 +179,7 @@ All 7 cross-cutting invariants observed at Wave 365 P1 audit time.
 | **Reviewer-facing risks closed** | 8 / 39 (G3 / G11 / G15 / G20 / G31 / G32 / G34 / G38) | §3.1 |
 | **Reviewer-facing risks DEFERRED** | 31 / 39 (1 user-gated + 3 env-blocked + 8 out-of-scope + 19 low-impact camera-ready polish) | §3.2 |
 | **Camera-ready wall-time** | ~5-7 hours GPU + ~1-2 hours polish + multi-week Lean 4 (non-blocking) | §4 |
-| **Q1 acceptance probability** | 60-75% (Wave 351-352 estimate; up from 45-60% Wave 238 baseline) | §5 |
+| **Self-assessed acceptance probability** | Not asserted — aligned with the manuscript (removed at Wave 370) | §5 |
 | **Cross-cutting invariants** | 7 / 7 observed | §6 |
 | **Vendored upstream** | 9 / 9 byte-identical | §6 invariant #1 |
 | **NO-PUSH policy** | honoured (0 pushes since Wave 242 freeze) | §6 invariant #2 |
@@ -204,7 +196,7 @@ All 7 cross-cutting invariants observed at Wave 365 P1 audit time.
 - `pending_count: 6`
 - `deferred_gap_count: 31`
 - `camera_ready_wall_time_hours: 5-7 GPU + 1-2 polish + multi-week Lean 4`
-- `q1_acceptance_probability_pct: 60-75%`
+- `q1_acceptance_probability_pct: not_asserted`
 - `vendored_repos_byte_identical: 9 / 9`
 - `no_push_since_wave: 242`
 - `user_to_fill_placeholders_preserved: 17`
@@ -232,7 +224,7 @@ All 7 cross-cutting invariants observed at Wave 365 P1 audit time.
 
 ### 8.3 Paper / claims / risk-register / governance surfaces (cited verbatim)
 
-- `docs/drafts/paper-A-final.md` §11.1 (honest verdict + Q1 acceptance probability 60-75%) + §11.2 (key takeaways) + §7.2 (11-cell verdict distribution) + §10.5 (R6 counterfactual disclosure) + §A.1 (Theorem 4 derivation) + §6.6 (Theorem 5 closed-form).
+- `docs/drafts/paper-A-final.md` §11.1 (honest verdict) + §11.2 (key takeaways) + §7.2 (11-cell verdict distribution) + §10.5 (R6 counterfactual disclosure) + §A.1 (Theorem 4 derivation) + §6.6 (Theorem 5 closed-form).
 - `docs/CONSOLIDATED_RESULTS.md` §15.103 (final 11-cell verdict distribution) + §15.104 (Wave 352 P5 R5a n=10 paired-t confirmation TIE_PERSISTS addendum) + §15.98 (R5b conditional boundary disclosure).
 - `docs/CLAIMS.md` CLM-059 (R5c REGIME-DEPENDENT), CLM-060 (R1 PARTIAL + K1 SUPP / UNDERPOWERED status addenda), CLM-068 (R3 direction-consistent addendum), CLM-069 (R4/R5/R3/R5c Wave 206 P4 refresh), CLM-072 (R5b conditional), CLM-073 (R6 tier-aware counterfactual).
 - `todo/RISK-REGISTER.md` R-019 (R6 live GPU re-verification deferred item).
@@ -256,7 +248,7 @@ All 4 pre-submission gates PASS at Wave 365 P1 audit time. The Wave 365 P1 conso
 
 ## 9. Status rationale (Wave 365 P1 ADDITIVE)
 
-The FlowA TNNLS submission is submittable at the highest reproducibility standard for a 2026 paper: 14 task-listed PASS items + 6 PENDING items (1 ScholarOne upload-gate + 5 camera-ready scope) + 31 explicitly DEFERRED gaps (1 user-gated + 3 env-blocked + 8 out-of-scope + 19 low-impact camera-ready polish) + Q1 acceptance probability 60-75% (Wave 351-352 estimate, up from 45-60% Wave 238 baseline) + 7 cross-cutting invariants observed (vendored byte-identical + NO-PUSH + 17 USER_TO_FILL preserved + ADDITIVE only + Wave 268 strict-clean + counterfactual disclosed + 5 Lemmas ACTIVE + 2 Theorems closed-form). The submission-readiness doc is **strictly additive**: one new file (`tnnls_submission/SUBMISSION_READINESS.md`); zero edits to any existing `tnnls_submission/*.md` file or any other file in the repo. Per Wave 268 strict-clean rule + Wave 357 P5 + Wave 364 G32 hard-guardrails (NO-PUSH + ADDITIVE only + "do not change any PENDING to PASS without justification"), the existing PASS checkboxes + ADDITIVE summary tables are preserved unchanged.
+The FlowA TNNLS submission is submittable at the highest reproducibility standard for a 2026 paper: 14 task-listed PASS items + 6 PENDING items (1 ScholarOne upload-gate + 5 camera-ready scope) + 31 explicitly DEFERRED gaps (1 user-gated + 3 env-blocked + 8 out-of-scope + 19 low-impact camera-ready polish) + 7 cross-cutting invariants observed (vendored byte-identical + NO-PUSH + 17 USER_TO_FILL preserved + ADDITIVE only + Wave 268 strict-clean + counterfactual disclosed + 5 Lemmas ACTIVE + 2 Theorems closed-form). The submission-readiness doc is **strictly additive**: one new file (`tnnls_submission/SUBMISSION_READINESS.md`); zero edits to any existing `tnnls_submission/*.md` file or any other file in the repo. Per Wave 268 strict-clean rule + Wave 357 P5 + Wave 364 G32 hard-guardrails (NO-PUSH + ADDITIVE only + "do not change any PENDING to PASS without justification"), the existing PASS checkboxes + ADDITIVE summary tables are preserved unchanged.
 
 *Wave 365 P1 submission-readiness consolidation doc ADDITIVE section authored 2026-09-27; cross-references `docs/audit/wave362-r6-recipe.md` + `docs/audit/wave363-all-cell-recipes.md` + `docs/audit/wave364-paper-polish-gaps.md` + `docs/drafts/paper-A-final.md` §11.1 + `docs/CONSOLIDATED_RESULTS.md` §15.103 + `tnnls_submission/submission_checklist.md`. NO-PUSH + ADDITIVE only; no existing `tnnls_submission/*.md` file modified; 17 USER_TO_FILL placeholders preserved verbatim; 9 vendored upstream repos byte-identical.*
 
@@ -364,3 +356,16 @@ The FlowA TNNLS submission is submittable at the highest reproducibility standar
 - **Documented-not-fixed.** The `.md` reading copy still carries internal `(Wave NNN …)` provenance labels in several headings (§3.4.2, §3.5.1, §7.8.1, §8.10, §9.4, §9.4.1, Bibliography) — part of the documented intentional `.md`/`.tex` divergence (the authoritative `.tex`/PDF headings are clean). Recorded rather than stripped. See `docs/audit/manuscript-defect-review-8.md`.
 
 *Manuscript-consistency pass #8 addendum authored 2026-10-12; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §6.1 / §8.10 and `docs/audit/manuscript-defect-review-8.md`.*
+
+---
+
+## 19. Venue-fit alignment — self-assessed acceptance probability removed (2026-10-12; GAP-19)
+
+> **This section records an IN-PLACE edit to §5 (the one exception to the "no existing line above is modified" convention of §10–§18), authorized by the user's GAP-19 decision "移除，与手稿对齐" (remove, align with the manuscript). §1 (14 PASS) and §2 (6 PENDING) are unchanged.**
+
+- **What changed.** §5 was retitled from "Q1 acceptance probability — 60-75%" to "Venue fit — no self-assessed acceptance probability", and the numeric estimate (60-75% / prior 45-60%) was removed from §5.1–§5.3; the reviewer-facing strengths and risk factors were retained as qualitative notes (§5.1 / §5.2). Downstream numeric references were removed: §1 line 14 (the "cited here verbatim" clause), the §7 summary-table row, the §7 single-line JSON key (`q1_acceptance_probability_pct` → `not_asserted`), §8.3, and §9.
+- **Why.** The manuscript's §11.1 acceptance-probability disclosure was **deliberately removed at Wave 370** (`62154e0`, a user-authorized destructive rewrite); `git log -S "60-75" -- docs/drafts/paper-A-final.md` confirms the manuscript no longer carries it. Three submission-facing surfaces had continued to cite the removed estimate, and two of them contradicted each other (60-75% here vs 50-65% in `submission_checklist.md`). Aligning the submission docs with the manuscript removes the false attribution and the internal contradiction.
+- **`submission_checklist.md`.** The parallel "Acceptance probability estimate" section was retitled to "Reviewer-facing strengths" and its "50-65%" line removed (its MANIFEST row-54 SHA refreshed accordingly).
+- **No metric or claim number changed; no status label moved.** The removal is of a self-assessed *meta*-projection, not of any §11 verdict, per-cell status, or paper quantity.
+
+*Venue-fit alignment authored 2026-10-12; user-authorized in-place removal (GAP-19); cross-references `docs/drafts/paper-A-final.md` §11.1, `tnnls_submission/submission_checklist.md`, `tnnls_submission/MANIFEST.md` row 56, and `docs/audit/gap19-q1-odds-alignment.md`.*
