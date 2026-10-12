@@ -84,10 +84,10 @@ Two **new, real** defects were found by the same pass and are added below as
 | GAP-15 | P1 | user | OPEN | Venue-fit decision (TNNLS vs reposition) |
 | GAP-16 | P2 | agent | OPEN | 31 deferred reviewer-facing gaps |
 | GAP-17 | P2 | gpu | OPEN | K2/K6 env-blocked per-cell sweeps |
-| GAP-18 | P2 | agent | OPEN | Dead link in manuscript §7.11 (wave280 contamination doc) |
+| GAP-18 | P2 | agent | **RESOLVED** (2026-10-12) | Dead links in the manuscript — repointed (§7.11 + §7.8.1) |
 | GAP-19 | P2 | agent | OPEN | Stale Q1-odds citations (50-65 vs 60-75; §11.1 disclosure removed at Wave 370) |
 | GAP-20 | P2 | user | OPEN | 17 `[USER TO FILL]` cover-letter placeholders |
-| GAP-21 | **P0** | agent | OPEN | Manuscript cites ~10 test files that never existed (+ unverifiable pass counts) |
+| GAP-21 | **P0** | agent | **RESOLVED** (2026-10-12) | Manuscript test citations repointed to real files + measured counts |
 
 ---
 
