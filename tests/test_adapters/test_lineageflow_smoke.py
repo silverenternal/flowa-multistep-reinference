@@ -510,6 +510,50 @@ def test_install_checkpoint_compat_shim_marks_class_as_empty() -> None:
     assert "forward" not in own_callables
 
 
+def test_checkpoint_compat_shim_preserves_upstream_core_package_path() -> None:
+    """D-004 follow-up regression: the fabricated ``core`` parent must expose a
+    ``__path__`` pointing at the vendored upstream ``core/`` package.
+
+    Before this fix ``_install_checkpoint_compat`` registered a bare
+    ``types.ModuleType("core")`` with no ``__path__``. Because the shim is
+    installed *before* ``_builder`` runs, that non-package ``core`` shadowed the
+    real upstream tree and made ``models.model``'s
+    ``from core.hf_cache import ...`` raise
+    ``ModuleNotFoundError: 'core' is not a package`` — so
+    ``_try_import_lineageflow_upstream`` returned ``None`` and the D-004
+    real-classifier path was silently disabled in the eval pipeline (the
+    framework arm degraded to the bare-EsmModel zero-velocity field).
+    """
+    import sys
+    from pathlib import Path
+
+    from adaptive_reflow.adapters import lineageflow as lf
+
+    upstream_core = (
+        Path(lf.__file__).resolve().parent.parent.parent
+        / lf._LINEAGEFLOW_UPSTREAM_DIR
+        / "core"
+    )
+    if not upstream_core.is_dir():
+        pytest.skip("vendored data/lineageflow_upstream/core absent")
+
+    saved_core = sys.modules.get("core")
+    saved_sampler = sys.modules.get("core.sampler")
+    try:
+        # Force-clean so the shim re-fabricates ``core`` from scratch.
+        sys.modules.pop("core.sampler", None)
+        sys.modules.pop("core", None)
+        lf._install_checkpoint_compat()
+        core_mod = sys.modules["core"]
+        assert getattr(core_mod, "__path__", None) == [str(upstream_core)]
+    finally:
+        for name, mod in (("core", saved_core), ("core.sampler", saved_sampler)):
+            if mod is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = mod
+
+
 def test_shim_unblocks_torch_load_on_real_ckpt() -> None:
     """End-to-end: with the shim installed, ``torch.load`` can resolve
     the pickled ``core.sampler.SamplerConfig`` class reference in the

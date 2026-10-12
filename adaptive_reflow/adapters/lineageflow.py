@@ -1169,7 +1169,29 @@ def _install_checkpoint_compat() -> type:
     if "core.sampler" in sys.modules and hasattr(sys.modules["core.sampler"], "SamplerConfig"):
         return sys.modules["core.sampler"].SamplerConfig  # type: ignore[no-any-return]
     if "core" not in sys.modules:
-        sys.modules["core"] = types.ModuleType("core")
+        core_mod = types.ModuleType("core")
+        # D-004 follow-up (R1-REMEASURE-D004): the fabricated parent ``core``
+        # must expose a ``__path__`` pointing at the vendored upstream
+        # ``core/`` package, otherwise it is not a package and shadows the
+        # real upstream tree. Without this, ``models.model``'s
+        # ``from core.hf_cache import ...`` and ``inference.inference``'s
+        # ``from core.vector_field import ...`` raise
+        # ``ModuleNotFoundError: No module named 'core.hf_cache'; 'core' is
+        # not a package`` — which made ``_try_import_lineageflow_upstream``
+        # return ``None`` and silently disabled the D-004 real-classifier
+        # path in the eval pipeline (it degraded to the bare-EsmModel
+        # zero-velocity field). Giving ``__path__`` keeps the
+        # ``core.sampler.SamplerConfig`` shim while letting the real
+        # submodules resolve. Additive: no behaviour change when the
+        # upstream ``core/`` directory is absent.
+        _upstream_core = (
+            Path(__file__).resolve().parent.parent.parent
+            / _LINEAGEFLOW_UPSTREAM_DIR
+            / "core"
+        )
+        if _upstream_core.is_dir():
+            core_mod.__path__ = [str(_upstream_core)]  # type: ignore[attr-defined]
+        sys.modules["core"] = core_mod
     mod = types.ModuleType("core.sampler")
     class SamplerConfig:  # noqa: D401 - upstream-mandated empty shim
         pass
