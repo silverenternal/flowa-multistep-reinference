@@ -2,7 +2,7 @@
   "schema_version": "flowa-state-v2",
   "purpose": "Single management surface for the FlowA / TNNLS submission. Replaces the former repo-root todo.json AND the entire todo/ directory (deleted 2026-10-13 by user directive). Records: current state, binding gates, the R/K evidence ledger, the LineageFlow real-forward (D-004/D-004b) saga, the open Tier-1 gaps, an honest one-screen assessment, and the recommended attack order. No frozen surface (docs/CLAIMS.md, docs/CONSOLIDATED_RESULTS.md, docs/drafts/paper-A-final.*, tnnls_submission/) is changed by edits to this file.",
   "updated_at": "2026-10-13",
-  "head": "1264cec",
+  "head": "74fa61c",
   "policy": {
     "no_push": true,
     "commit_footer": "(USER AUTHORIZED, NO PUSH)",
@@ -45,23 +45,100 @@
   },
   "venue": {
     "primary": "IEEE TNNLS (CAS Tier-1 / JCR Q1)",
-    "backups_in_order": ["TIP", "Pattern Recognition", "Neural Networks", "EAAI"],
+    "backups_in_order": [
+      "TIP",
+      "Pattern Recognition",
+      "Neural Networks",
+      "EAAI"
+    ],
     "self_assessed_acceptance_probability": null
   },
   "evidence_ledger": {
     "note": "11 headline cells. Verdicts verbatim from paper §7.2/§7.11; no number changed here. R1 gains a NEW additive real-forward reading from D-004b (see lineageflow_real_forward).",
     "cells": [
-      {"id": "R1", "model": "LineageFlow", "metric": "HMMER hits", "status": "PARTIAL / single-seed-disclosed", "synthetic_headline": "158 -> 342 (+116%)", "real_forward_d004b": "158/159/174 -> 275/272/259 (3/3 framework-WINS; DL d_pooled=+0.156, z=8.49, I2=0)", "effect": "small (d_z ~ 0.13-0.17 per seed; below 0.8 STRONG bar)", "blocker": "init-attribution control (init-only vs full-framework) not yet run"},
-      {"id": "R2", "model": "Kanzi", "metric": "reconstruction RMSD (A)", "status": "STRONG framework-WINS", "value": "0.9020 -> 0.8798 (-0.022 A; d_z=-0.0990, Bonferroni-sig)", "caveat": "synthetic-input-coordinate basis; small effect; 'STRONG' = significance, not effect-size threshold"},
-      {"id": "R3", "model": "FlowMol3", "metric": "fg_dev", "status": "PARTIAL / single-seed PROJECTED", "value": "-0.023484 framework-WINS (1-seed); 3-seed ACTUAL mean -0.0377 p=0.559 not significant", "blocker": "RDKit env drift (valid-yield 36.7% vs 99.9%)"},
-      {"id": "R5a", "model": "2D Two Moons", "metric": "W2", "status": "TIE", "value": "|Delta|=0.0091 < 0.01 floor; persists at n=7 and n=10"},
-      {"id": "R5b", "model": "CIFAR-10 RF", "metric": "FID", "status": "CONDITIONAL", "value": "n_rounds=1 improves (N=200 4/4; N=1000 2/4); n_rounds>=2 regresses"},
-      {"id": "R5c", "model": "MNIST FM", "metric": "FID", "status": "STRONG (smoke ckpt) / REGIME-DEPENDENT", "value": "smoke -28.43% (d_z=-13.18); production +10.37% baseline-WINS"},
-      {"id": "R6", "model": "LineageFlow k6", "metric": "pLDDT / scPerp", "status": "STRONG via tier-aware counterfactual", "value": "hard tier d_z=+1.189; scPerp cluster-robust d_z=-4.019; head-to-head beats vanilla+Fast-DLLM+AB-Cache+LeDiFlow (16-cell Table B Bonferroni-sig)", "caveat": "tier-aware upgrade is counterfactual; live 3-seed GPU pending"},
-      {"id": "K1", "model": "FlowMol3 RDKit-validity", "metric": "validity", "status": "NOT-SIGNIFICANT at K-level alpha", "value": "p_b=0.5676 vs alpha_K=0.0125 (family-multiplier correction)"},
-      {"id": "K4", "model": "LineageFlow HMMER length-bias", "metric": "length-bias", "status": "SUPPORTED at K-level alpha", "value": "cluster-robust d_z=+0.84, p_b=0.009"},
-      {"id": "K5", "model": "LineageFlow HMMER fw-vs-baseline delta", "metric": "delta hits", "status": "SUPPORTED / SUPPORTS-WITH-CAVEAT", "value": "cluster-robust d_z=+1.12, p_b=0.003; Wave 280 re-agg n=3 caveat pending n>=7"},
-      {"id": "K7", "model": "LineageFlow novelty", "metric": "novel_pct_pfam_twilight", "status": "PARTIAL / SUPP - direction INVERTED", "value": "baseline 46.6% vs framework 3.7% novel (framework 12.6x LESS novel); structural-correctness signal preserved"}
+      {
+        "id": "R1",
+        "model": "LineageFlow",
+        "metric": "HMMER hits",
+        "status": "PARTIAL / single-seed-disclosed",
+        "synthetic_headline": "158 -> 342 (+116%)",
+        "real_forward_d004b": "158/159/174 -> 275/272/259 (3/3 framework-WINS; DL d_pooled=+0.156, z=8.49, I2=0)",
+        "effect": "small (d_z ~ 0.13-0.17 per seed; below 0.8 STRONG bar)",
+        "blocker": "init-attribution control (init-only vs full-framework) not yet run"
+      },
+      {
+        "id": "R2",
+        "model": "Kanzi",
+        "metric": "reconstruction RMSD (A)",
+        "status": "STRONG framework-WINS",
+        "value": "0.9020 -> 0.8798 (-0.022 A; d_z=-0.0990, Bonferroni-sig)",
+        "caveat": "synthetic-input-coordinate basis; small effect; 'STRONG' = significance, not effect-size threshold"
+      },
+      {
+        "id": "R3",
+        "model": "FlowMol3",
+        "metric": "fg_dev",
+        "status": "PARTIAL / single-seed PROJECTED",
+        "value": "-0.023484 framework-WINS (1-seed); 3-seed ACTUAL mean -0.0377 p=0.559 not significant",
+        "blocker": "RDKit env drift (valid-yield 36.7% vs 99.9%)"
+      },
+      {
+        "id": "R5a",
+        "model": "2D Two Moons",
+        "metric": "W2",
+        "status": "TIE",
+        "value": "|Delta|=0.0091 < 0.01 floor; persists at n=7 and n=10"
+      },
+      {
+        "id": "R5b",
+        "model": "CIFAR-10 RF",
+        "metric": "FID",
+        "status": "CONDITIONAL",
+        "value": "n_rounds=1 improves (N=200 4/4; N=1000 2/4); n_rounds>=2 regresses"
+      },
+      {
+        "id": "R5c",
+        "model": "MNIST FM",
+        "metric": "FID",
+        "status": "STRONG (smoke ckpt) / REGIME-DEPENDENT",
+        "value": "smoke -28.43% (d_z=-13.18); production +10.37% baseline-WINS"
+      },
+      {
+        "id": "R6",
+        "model": "LineageFlow k6",
+        "metric": "pLDDT / scPerp",
+        "status": "STRONG via tier-aware counterfactual",
+        "value": "hard tier d_z=+1.189; scPerp cluster-robust d_z=-4.019; head-to-head beats vanilla+Fast-DLLM+AB-Cache+LeDiFlow (16-cell Table B Bonferroni-sig)",
+        "caveat": "tier-aware upgrade is counterfactual; live 3-seed GPU pending"
+      },
+      {
+        "id": "K1",
+        "model": "FlowMol3 RDKit-validity",
+        "metric": "validity",
+        "status": "NOT-SIGNIFICANT at K-level alpha",
+        "value": "p_b=0.5676 vs alpha_K=0.0125 (family-multiplier correction)"
+      },
+      {
+        "id": "K4",
+        "model": "LineageFlow HMMER length-bias",
+        "metric": "length-bias",
+        "status": "SUPPORTED at K-level alpha",
+        "value": "cluster-robust d_z=+0.84, p_b=0.009"
+      },
+      {
+        "id": "K5",
+        "model": "LineageFlow HMMER fw-vs-baseline delta",
+        "metric": "delta hits",
+        "status": "SUPPORTED / SUPPORTS-WITH-CAVEAT",
+        "value": "cluster-robust d_z=+1.12, p_b=0.003; Wave 280 re-agg n=3 caveat pending n>=7"
+      },
+      {
+        "id": "K7",
+        "model": "LineageFlow novelty",
+        "metric": "novel_pct_pfam_twilight",
+        "status": "PARTIAL / SUPP - direction INVERTED",
+        "value": "baseline 46.6% vs framework 3.7% novel (framework 12.6x LESS novel); structural-correctness signal preserved"
+      }
     ],
     "verdict_distribution": "4 STRONG (R2, R5b-conditional, R5c-smoke, R6) + 1 TIE (R5a) + 6 PARTIAL/SUPP (R1, R3, K1, K4, K5, K7)"
   },
@@ -76,15 +153,68 @@
     "caveat": "D-004b restart init is a tool-convention surrogate, not the upstream intervention sampler. The init-only vs full-framework control is NOT yet run - so the win is real on the real-forward basis but not yet mechanism-attributed."
   },
   "open_gaps": [
-    {"id": "D-004B-ATTRIBUTION", "priority": "P0", "owner": "gpu", "status": "OPEN", "gap": "R1 D-004b win attribution: run an init-only arm vs the full framework arm at matched NFE to separate the random-init contribution from the restart-blend contribution. Without it the D-004b win is real but not mechanism-attributed.", "acceptance": "init-only vs full-framework separated; R1 real-forward verdict either promoted or retained PARTIAL with the attribution disclosed."},
-    {"id": "GAP-01-R6-LIVE", "priority": "P0", "owner": "gpu", "status": "OPEN", "gap": "R6: counterfactual-STRONG -> live-GPU-STRONG. 3-seed x N=1000 paired live sweep under TierAwareCodimensionSheetScheduler (~26-53 GPU-h on GPU 0, contended).", "acceptance": "live 3-seed paired d_z >= +0.2235; R6 label becomes live-GPU-STRONG."},
-    {"id": "GAP-02-R3-N1000", "priority": "P0", "owner": "gpu", "status": "OPEN", "gap": "R3: N=1000 PROJECTED -> ACTUAL. RDKit env drift (valid-yield 36.7% vs 99.9%) must be pinned/container-reproduced.", "acceptance": "valid yield >= 99%; N=1000 paired measured; R3 label drops 'PROJECTED'."},
-    {"id": "GAP-04-R5B-ROUNDS", "priority": "P0", "owner": "gpu", "status": "OPEN", "gap": "R5b: matched-protocol multi-seed round-count test (n_rounds in {1,2,3} x 4 schedulers x 3 seeds at matched NFE).", "acceptance": "round-count boundary confirmed or refuted at multi-seed."},
-    {"id": "GAP-09-THEORY", "priority": "P1", "owner": "agent", "status": "OPEN", "gap": "Theory: a measurable diagnostic for q=mK<1 (Thm 4) and for when the blend helps (Thm 5), verified to predict the sign of the effect on >=1 cell.", "acceptance": ">=1 cell where the criterion's predicted direction matches the measurement."},
-    {"id": "GAP-12-BASELINE", "priority": "P1", "owner": "agent(+gpu)", "status": "OPEN", "gap": "Baseline fairness: matched-NFE + at least one tuned baseline per headline cell (straw-man exposure).", "acceptance": "tuned-baseline comparison exists per headline cell."},
-    {"id": "GAP-15-VENUE", "priority": "P1", "owner": "user", "status": "OPEN", "gap": "Venue-fit decision: TNNLS vs repositioning to a systems/applications venue.", "acceptance": "venue decided; positioning matches."},
-    {"id": "GAP-17-K2K6", "priority": "P2", "owner": "gpu", "status": "OPEN", "gap": "K2/K6 env-blocked per-cell sweeps (pin env or retain honest disclosure)."},
-    {"id": "GAP-20-COVERLETTER", "priority": "P2", "owner": "user", "status": "OPEN", "gap": "17 [USER TO FILL] placeholders in tnnls_submission/cover_letter.md."}
+    {
+      "id": "D-004B-ATTRIBUTION",
+      "priority": "P0",
+      "owner": "gpu",
+      "status": "OPEN",
+      "gap": "R1 D-004b win attribution: run an init-only arm vs the full framework arm at matched NFE to separate the random-init contribution from the restart-blend contribution. Without it the D-004b win is real but not mechanism-attributed.",
+      "acceptance": "init-only vs full-framework separated; R1 real-forward verdict either promoted or retained PARTIAL with the attribution disclosed."
+    },
+    {
+      "id": "GAP-01-R6-LIVE",
+      "priority": "P0",
+      "owner": "gpu",
+      "status": "OPEN",
+      "gap": "R6: counterfactual-STRONG -> live-GPU-STRONG. 3-seed x N=1000 paired live sweep under TierAwareCodimensionSheetScheduler (~26-53 GPU-h on GPU 0, contended).",
+      "acceptance": "live 3-seed paired d_z >= +0.2235; R6 label becomes live-GPU-STRONG."
+    },
+    {
+      "id": "GAP-02-R3-N1000",
+      "priority": "P0",
+      "owner": "gpu",
+      "status": "OPEN",
+      "gap": "R3: N=1000 PROJECTED -> ACTUAL. RDKit env drift (valid-yield 36.7% vs 99.9%) must be pinned/container-reproduced.",
+      "acceptance": "valid yield >= 99%; N=1000 paired measured; R3 label drops 'PROJECTED'."
+    },
+    {
+      "id": "GAP-04-R5B-ROUNDS",
+      "priority": "P0",
+      "owner": "gpu",
+      "status": "OPEN",
+      "gap": "R5b: matched-protocol multi-seed round-count test (n_rounds in {1,2,3} x 4 schedulers x 3 seeds at matched NFE).",
+      "acceptance": "round-count boundary confirmed or refuted at multi-seed."
+    },
+    {
+      "id": "GAP-12-BASELINE",
+      "priority": "P1",
+      "owner": "agent(+gpu)",
+      "status": "OPEN",
+      "gap": "Baseline fairness: matched-NFE + at least one tuned baseline per headline cell (straw-man exposure).",
+      "acceptance": "tuned-baseline comparison exists per headline cell."
+    },
+    {
+      "id": "GAP-15-VENUE",
+      "priority": "P1",
+      "owner": "user",
+      "status": "OPEN",
+      "gap": "Venue-fit decision: TNNLS vs repositioning to a systems/applications venue.",
+      "acceptance": "venue decided; positioning matches."
+    },
+    {
+      "id": "GAP-17-K2K6",
+      "priority": "P2",
+      "owner": "gpu",
+      "status": "OPEN",
+      "gap": "K2/K6 env-blocked per-cell sweeps (pin env or retain honest disclosure)."
+    },
+    {
+      "id": "GAP-20-COVERLETTER",
+      "priority": "P2",
+      "owner": "user",
+      "status": "OPEN",
+      "gap": "17 [USER TO FILL] placeholders in tnnls_submission/cover_letter.md."
+    }
   ],
   "resolved_gaps": [
     "GAP-03-R1-3SEED: single-seed -> clean 3-seed real-forward basis DONE via D-004b (direction framework-WINS); residual = D-004B-ATTRIBUTION control.",
@@ -93,7 +223,8 @@
     "GAP-16: 31 deferred reviewer-facing gaps triaged (explicit acceptances).",
     "GAP-18/19/21: dead links + Q1-odds + test-citation cluster fixed.",
     "GAP-22: R2/R1 rubric disclosure satisfied (option A, no label change).",
-    "GAP-23: retracted - R2 significance is not a pairing artifact."
+    "GAP-23: retracted - R2 significance is not a pairing artifact.",
+    "GAP-09-THEORY: resolved 2026-10-13 (commit 74fa61c) - measurable diagnostic (q=mK<1 Thm4 + exact blend identity Thm5) on the R5b cell field; contraction holds and round map contracts at all m, Thm5 identity exact + Eq.7 predicts blend sign 4/4. See docs/audit/gap09-reinference-diagnostic.md."
   ],
   "assessment": {
     "date": "2026-10-13",
@@ -130,7 +261,10 @@
   ],
   "removed_surfaces": {
     "date": "2026-10-13",
-    "removed": ["todo.json (old)", "todo/ (entire directory: decisions.md, GATES.md, INDEX.md, lessons-learned.md, LOOP.md, PUSH-READY.md, README.md, RISK-REGISTER.md, STATUS.md, SUBMISSION-GAP-CHECKLIST.md, TIMELINE.md, TPAMI-6-WEEK-PLAN.md, WAVES.md)"],
+    "removed": [
+      "todo.json (old)",
+      "todo/ (entire directory: decisions.md, GATES.md, INDEX.md, lessons-learned.md, LOOP.md, PUSH-READY.md, README.md, RISK-REGISTER.md, STATUS.md, SUBMISSION-GAP-CHECKLIST.md, TIMELINE.md, TPAMI-6-WEEK-PLAN.md, WAVES.md)"
+    ],
     "reason": "User directive: replace the legacy governance surface with a single current-state todo.json.",
     "known_dangling_references": [
       "docs/drafts/paper-A-final.md:842 links todo/RISK-REGISTER.md R-019 (frozen manuscript; left untouched per the freeze rule)."
