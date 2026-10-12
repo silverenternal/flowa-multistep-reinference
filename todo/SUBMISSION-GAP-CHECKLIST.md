@@ -89,6 +89,7 @@ Two **new, real** defects were found by the same pass and are added below as
 | GAP-20 | P2 | user | OPEN | 17 `[USER TO FILL]` cover-letter placeholders |
 | GAP-21 | **P0** | agent | **RESOLVED** (2026-10-12) | Manuscript test citations repointed to real files + measured counts |
 | GAP-22 | P1 | agent/user | OPEN | R2/R1 STRONG-label rubric inconsistency (R2 STRONG at d=0.099 vs R1 PARTIAL at 0.182) |
+| GAP-23 | **P0** | agent(+gpu) | OPEN | R2 paired comparison invalid — framework arm measures a *generated* structure, baseline measures the *input*; pairing spurious (supersedes GAP-22) |
 
 ---
 
@@ -122,6 +123,43 @@ Two **new, real** defects were found by the same pass and are added below as
   `docs/audit/wave352-framework-code-anchors.md` §2.1.
 - **Acceptance:** every cited test path resolves; no unverifiable pass count remains.
   *(Editing the manuscript triggers the rebuild + SHA-ledger loop.)*
+
+### GAP-23 — R2 paired comparison invalid (NEW 2026-10-12, P0 measurement integrity)
+- **Owner:** agent (fix path is GPU-gated). **Priority:** P0 — invalidates a headline STRONG cell.
+- **Finding.** R2's headline (paper §7.2; `docs/CLAIMS.md` CLM-060/063/073) is a *paired* test
+  (`t = 3.02`/`3.13`, `df = 999`, `p_raw = 0.00257`/`0.00179`, `d_z = +0.096`/`-0.099`,
+  framework-WINS, Bonferroni-significant). But the two arms measure **different quantities**:
+  - **baseline** = autoencoder round-trip of the **input** record (`_kanzi_sweep_runner.py:777-783`
+    sets `coords_pred_A = coords_angstrom`; `:928-952` → `kabsch_rmsd(input, decode(encode(input)))`);
+  - **framework** = autoencoder round-trip of a **generated** structure
+    (`_synthesize_x_final_real` `:348-482` builds `x0` from `rng.standard_normal((64,512))` seeded
+    by `(seed, record_idx)` at `:448-450`, runs the bridge + `solve_ode`; `:789-830` sets
+    `coords_pred_A = x_final`). The framework arm **never consumes input record *i***.
+  Both framework arms record `measurement_scope = "generated-coordinate autoencoder roundtrip;
+  **not paired input reconstruction**"` (w149 mean 0.8798; w214 mean 0.8838 — w214 is the arm
+  Wave 218 used). The Wave 196/218 join matches on the shared `seq_*` key only
+  (`w196_p3_kanzi_finalize.py:88-92`), so the pairing is spurious.
+- **Proof.** `corr(baseline seq_i, framework seq_i) = +0.0003` (w149) / `+0.0196` (w214), n=1000 —
+  two arms measuring the same inputs would be strongly correlated. Marginals are near-identical,
+  which is why the defect is invisible in aggregate stats. The Wave-218 headline reproduces
+  exactly (`paper-data/R2_kanzi_rmsd/wave218-p3-kanzi-framework-wins.json`).
+- **Why it matters.** The `df = 999` significance is an artifact of pairing two independent
+  samples. R2's STRONG label is unsupported; and even *unpaired*, "generated-structure round-trip"
+  vs "input-structure round-trip" is a confounded comparison. This is the root cause behind
+  **GAP-22** (R2's `d_z = 0.099` is a spurious artifact, not a small genuine effect).
+- **Fix options (user's directive: fix the metric, not the document):**
+  - **(F1) Valid paired framework arm — the principled fix (GPU-gated).** Seed the framework `x0`
+    from **input record *i***, run the restart-blend solve, measure
+    `kabsch_rmsd(framework_processed_input_i, decode(encode(...)))` paired vs the baseline
+    round-trip of the same input. Cost: a code path seeding `x0` from input coords + a Kanzi
+    `N=1000` run (~75 min/arm; the ~97 GB DAE needs GPU 0).
+  - **(F2) Re-frame R2 as an unpaired generative-quality comparison** — honest but weak/confounded.
+  - **(F3) Drop R2 as an invalid cell** — headline → 3 STRONG + 1 TIE + …; user-gated.
+- **Handle:** `docs/audit/gap23-r2-paired-comparison-invalid.md`;
+  `tools/_kanzi_sweep_runner.py:348-482,777-830`; `docs/drafts/paper-A-final.md` §7.2 R2 row;
+  `docs/CLAIMS.md` CLM-060/063/073.
+- **Acceptance:** R2 is either (a) re-measured with a valid input-paired design, or (b) re-framed /
+  dropped with the headline count updated. No unverifiable paired claim remains.
 
 ### GAP-01 — R6: convert counterfactual-STRONG to live-GPU-STRONG
 - **Owner:** gpu (launch is user-gated).

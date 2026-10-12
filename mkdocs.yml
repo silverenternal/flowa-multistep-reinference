@@ -264,6 +264,7 @@ not_in_nav: |
   audit/gap19-q1-odds-alignment.md
   audit/gap14-novelty-differentiation.md
   audit/gap16-deferred-triage.md
+  audit/gap23-r2-paired-comparison-invalid.md
   audit/*/wave*.md
   audit/algorithm_4arm/*.md
   audit/cifar/*.md
