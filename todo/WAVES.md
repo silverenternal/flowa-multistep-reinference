@@ -253,7 +253,7 @@ index live in the paper and in `docs/CONSOLIDATED_RESULTS.md`.
 | # | Model | Metric | Baseline | Framework | Δ | N | Verdict |
 |---|---|---|---:|---:|---:|---:|---|
 | R1 | LineageFlow | HMMER hits | 158 | **342** | **+116%** | 1000 (single seed) | PARTIAL — single-seed-disclosed |
-| R2 | Kanzi | RMSD (medium tier) | 0.6146 | **0.5919** | **−0.0227** | 1000 | SUPPORTED |
+| R2 | Kanzi | reconstruction RMSD (Å) | 0.9020 | **0.8798** | **−0.022** | 1000 | SUPPORTED |
 | R3 | CIFAR-10 RF v2 | FID | 218.87 | **122.18** | **−44.17%** | 1000 | NFE-averaged (3-seed blocked at vendor level) |
 | R4 | 2D Two Moons | W₂ | 0.5029 | **0.4663** | **−7.28%** | 1000 | matched |
 | R5 | 2D Eight Gaussians | W₂ | 0.6606 | **0.5919** | **−10.40%** | 1000 | matched |

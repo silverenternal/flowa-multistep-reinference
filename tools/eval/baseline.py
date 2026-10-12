@@ -65,7 +65,14 @@ def _build_initial_state_and_condition(
     return bundle, condition
 
 
-def _solve_baseline(adapter: Any, *, nfe: int, seed: int, n_molecules: int = 1) -> tuple[Any, float]:
+def _solve_baseline(
+    adapter: Any,
+    *,
+    nfe: int,
+    seed: int,
+    n_molecules: int = 1,
+    bundle: Any = None,
+) -> tuple[Any, float]:
     """Baseline single-pass ODE solve with the paper-default NFE.
 
     Returns (trace, wallclock_seconds). No framework glue: just the
@@ -75,10 +82,28 @@ def _solve_baseline(adapter: Any, *, nfe: int, seed: int, n_molecules: int = 1) 
     :meth:`solve_ode` call generates ``n_molecules`` independent
     trajectories per cell. Currently only consumed by the FlowMol3
     v2 adapter; other adapters ignore the kwarg.
+
+    ``bundle`` (GAP-23 F1, additive) — when supplied, solve from this
+    pre-built :class:`StateBundle` instead of building a fresh one from
+    ``(adapter, seed, nfe)``. The per-record paired comparison
+    (paper §2.2 Eq. 1 vs Eq. 2) requires BOTH arms to start from the
+    *same* ``x_0``; the caller builds it once (with a per-record
+    ``sample_id``) and threads it into both arms. Defaults to ``None``
+    so every pre-GAP-23 caller is byte-identical.
     """
-    bundle, condition = _build_initial_state_and_condition(
-        adapter, seed=seed, nfe=nfe
-    )
+    if bundle is None:
+        bundle, condition = _build_initial_state_and_condition(
+            adapter, seed=seed, nfe=nfe
+        )
+    else:
+        from adaptive_reflow.universal.state import ODEConditionDelta  # type: ignore
+
+        condition = ODEConditionDelta(
+            delta_spec={"num_steps": int(nfe), "sampler_id": "euler"},
+            source="run_real_ckpt_eval",
+            target_round=0,
+            calibration_artifact_hash="run_real_ckpt_eval:default",
+        )
     t0 = time.monotonic()
     try:
         trace = adapter.solve_ode(

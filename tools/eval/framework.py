@@ -609,6 +609,37 @@ def _make_framework_policy(
     return _dc_replace(draft, policy_hash=hash_policy_hash(draft))
 
 
+def _stash_endpoint_as_x0(adapter: Any, bundle: Any, trace: Any) -> None:
+    """Write the just-solved endpoint into ``bundle``'s native-state ``x0``.
+
+    GAP-23 F1 (additive) — paper §2.2 Eq. 2 requires the restart blend to
+    combine the *previous round's endpoint* ``x_T^{(k-1)}`` with fresh
+    noise: ``x_0^{(k)} = B_m(x_T^{(k-1)}, x_0^{fresh,(k)})``. The stock
+    ``apply_restart_distribution`` blends ``prior_entry["x0"]`` — which,
+    after ``solve_ode``, still holds the *initial condition* (the
+    trajectory is stored under a separate ``traj_digest``). Without this
+    stash the loop blends the initial condition and decays the memory of
+    the original ``x_0`` across rounds, which is NOT Eq. 2.
+
+    No-op (returns silently) when the adapter does not expose the
+    expected native-state cache, so synthetic / legacy adapters keep
+    their existing behaviour.
+    """
+    import numpy as _np  # local import: numpy is stdlib-adjacent
+
+    states = getattr(adapter, "_native_states", None)
+    if states is None:
+        return
+    src = states.get(str(trace.native_state_digest))
+    dst = states.get(bundle.native_state_digest)
+    if src is None or dst is None or "trajectory" not in src:
+        return
+    traj = _np.asarray(src["trajectory"], dtype=_np.float64)
+    shape_fn = getattr(adapter, "_effective_traj_shape", None)
+    shape = shape_fn() if callable(shape_fn) else traj.shape[1:]
+    dst["x0"] = traj[-1].reshape(shape)
+
+
 def _solve_framework(
     adapter: Any,
     *,
@@ -620,6 +651,9 @@ def _solve_framework(
     tier_aware_baseline_metrics: dict[Any, float] | None = None,
     current_record_id: Any = None,
     scheduler_name: str = "cosine",
+    bundle: Any = None,
+    restart_from_endpoint: bool = False,
+    reanchor: bool = True,
 ) -> tuple[Any, float]:
     """Framework multi-round ODE solve with the same total NFE budget.
 
@@ -665,6 +699,26 @@ def _solve_framework(
     byte-stable path). All three kwargs default to ``None`` so
     pre-Wave-275 callers (D.4 vector suite + Wave 161 K6 R6) are
     byte-identical. See ``docs/audit/wave275-p4-r6-proposal.md`` §2.1.
+
+    GAP-23 F1 (additive) — paper-canonical paired mode. Three optional
+    kwargs let a caller run the exact §2.2 Eq. 2 system against a
+    shared initial condition:
+
+    * ``bundle`` — when supplied, the loop starts from this pre-built
+      :class:`StateBundle` (same ``x_0`` as the baseline arm) instead of
+      building a fresh one from ``(adapter, seed, nfe)``.
+    * ``restart_from_endpoint`` — when ``True``, stash each round's
+      solved endpoint into the bundle's native-state ``x0`` before the
+      restart blend so ``apply_restart_distribution`` blends
+      ``x_T^{(k-1)}`` (Eq. 2) rather than the initial condition.
+    * ``reanchor`` — when ``False``, skip the post-loop full-NFE
+      re-anchor solve and return the last round's trace (the Eq. 2
+      endpoint ``x_T^{(n_rounds)}``), keeping the framework's total NFE
+      budget equal to the baseline's.
+
+    All three default to the pre-GAP-23 byte-stable behaviour, so every
+    existing caller (D.4 vector suite, Wave 158/161/172b ladders) is
+    unchanged.
     """
     # NB: legacy tests monkey-patch ``tools._compute_paper_quantities``
     # and ``tools._make_framework_policy``. Look them up via the shim so
@@ -676,7 +730,8 @@ def _solve_framework(
     _compute_paper_quantities = _shim._compute_paper_quantities
     _make_framework_policy = _shim._make_framework_policy
 
-    bundle, _ = _build_initial_state_and_condition(adapter, seed=seed, nfe=nfe)
+    if bundle is None:
+        bundle, _ = _build_initial_state_and_condition(adapter, seed=seed, nfe=nfe)
     # Wave 64 Agent 1 fix (Bug A.3): distribute the total NFE across
     # rounds so the per-round sum equals ``nfe`` exactly. The previous
     # ``round(nfe / n_rounds)`` formula gave 9 / 51 / 201 for
@@ -764,6 +819,10 @@ def _solve_framework(
             trace = adapter.solve_ode(
                 cur_bundle, condition, seed=int(seed) + int(r),
             )
+        # GAP-23 F1 — Eq. 2 fidelity: make the restart blend consume the
+        # just-solved endpoint (x_T^{(k-1)}), not the initial condition.
+        if restart_from_endpoint:
+            _stash_endpoint_as_x0(adapter, cur_bundle, trace)
         # Restart distribution step: blend the current round's bundle
         # (the prior round's endpoint, identity-passed through
         # ``export_endpoint``) with the per-round restart policy to
@@ -824,6 +883,11 @@ def _solve_framework(
             # Restart path unavailable; degenerate to baseline.
             break
     wall = time.monotonic() - t0
+    # GAP-23 F1 — paired mode returns the last round's trace (the Eq. 2
+    # endpoint x_T^{(n_rounds)}) without the post-loop full-NFE re-anchor,
+    # so the framework's total NFE budget equals the baseline's.
+    if not reanchor:
+        return trace, wall
     # Wave 64 Agent 1 fix (Bug A.1 + Bug A.2 — root cause in
     # docs/audit/wave63-root-cause.md §2): the trace returned above is
     # from the LAST per-round solve_ode call, which carries

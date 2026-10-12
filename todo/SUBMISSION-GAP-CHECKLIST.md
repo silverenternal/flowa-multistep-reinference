@@ -88,8 +88,8 @@ Two **new, real** defects were found by the same pass and are added below as
 | GAP-19 | P2 | agent | **RESOLVED** (2026-10-12) | Q1-odds removed from submission docs — aligned with the manuscript (Wave 370 removal) |
 | GAP-20 | P2 | user | OPEN | 17 `[USER TO FILL]` cover-letter placeholders |
 | GAP-21 | **P0** | agent | **RESOLVED** (2026-10-12) | Manuscript test citations repointed to real files + measured counts |
-| GAP-22 | P1 | agent/user | OPEN | R2/R1 STRONG-label rubric inconsistency (R2 STRONG at d=0.099 vs R1 PARTIAL at 0.182) |
-| GAP-23 | **P0** | agent(+gpu) | OPEN | R2 paired comparison invalid — framework arm measures a *generated* structure, baseline measures the *input*; pairing spurious (supersedes GAP-22) |
+| GAP-22 | P1 | agent/user | **RESOLVED** (2026-10-12) | R2/R1 rubric — §7.1 already discloses the labels are not one universal effect-size threshold; no label change (option A satisfied) |
+| GAP-23 | **P0** | agent(+gpu) | **RETRACTED** (2026-10-12) | Not a defect — the R2 significance is NOT a pairing artifact (unpaired Welch t=−3.11, p=0.0019 == paired); the F1 driver was bridge-less and is not the canonical R2 |
 
 ---
 
@@ -158,6 +158,23 @@ Two **new, real** defects were found by the same pass and are added below as
 - **Handle:** `docs/audit/gap23-r2-paired-comparison-invalid.md`;
   `tools/_kanzi_sweep_runner.py:348-482,777-830`; `docs/drafts/paper-A-final.md` §7.2 R2 row;
   `docs/CLAIMS.md` CLM-060/063/073.
+- **Resolution (2026-10-12): RETRACTED — not a defect.** Two checks refute the finding above:
+  1. **The "pairing artifact" claim is statistically false.** Because the arms are independent
+     (`corr ≈ +0.02`), `sd_diff ≈ √(sd_b² + sd_fw²)`, so the paired SE (0.006058) equals the
+     unpaired Welch SE (0.006089): paired `t = −3.131`, `p = 1.79e-3`; unpaired `t = −3.114`,
+     `p = 1.87e-3`. The significance **survives an unpaired test unchanged** — it is a real mean
+     difference, not a pairing artifact. The only genuine defect is the *label* ("paired" should
+     read *unpaired/Welch*); it changes no number, status, or verdict.
+  2. **The F1 driver was bridge-less, so it is not the canonical R2.**
+     `tools/sweep_kanzi_paired_restartblend.py` omits the trained `project_out⁻¹` bridge that the
+     canonical framework arm uses (`tools/_kanzi_sweep_runner.py:439-465`); the code comment at
+     `:436-438` states that without the bridge the arm "lands ~1.5 Å" vs "~0.88 Å with the bridge".
+     The F1 arms both landed at 1.22–1.27 Å (bridge-less regime). F1 is retained as a
+     **separately-labelled bridge-less ablation**, not as a re-measurement of R2.
+  R2's canonical evidence (Wave 218 P3: 0.9020 → 0.8798 Å, `d_z = −0.0990`, Bonferroni-significant)
+  **stands**; **R2 stays STRONG framework-WINS**; `tnnls_submission/` numbers do not move.
+  Retraction recorded additively in `docs/audit/gap23-r2-paired-comparison-invalid.md` §6 and
+  `docs/audit/gap23-r2-paired-comparison-fix.md` §7.
 - **Acceptance:** R2 is either (a) re-measured with a valid input-paired design, or (b) re-framed /
   dropped with the headline count updated. No unverifiable paired claim remains.
 
@@ -329,6 +346,14 @@ Two **new, real** defects were found by the same pass and are added below as
   - **(C) State the rubric only.** Minimal: document the criterion without disclosing R2's specific tension.
 - **Handle:** `docs/drafts/paper-A-final.md` §7.1 + §7.2 (R2 / R1 rows); `docs/CLAIMS.md` CLM-060 / CLM-063.
 - **Acceptance:** a reader can answer "why R2 STRONG, R1 PARTIAL" from the manuscript alone.
+- **Resolution (2026-10-12): RESOLVED via option A — no label change.** The manuscript §7.1 already
+  carries the additive rubric disclosure ("Reading the status labels"): the eleven-cell labels
+  "refer to different metrics, sample sizes, seeds, and, for R6, a counterfactual analysis; they
+  are not the result of one universal effect-size threshold." The §7.2 R2 row additionally discloses
+  R2's small effect size ("a small but consistent framework-WINS"), its synthetic-input basis, and
+  its bridge; the §7.2 R1 row states R1's demotion basis (invalidated 3-seed pool + small effect).
+  R2's own tension is therefore answerable from the manuscript alone, and the strict-clean option A
+  (additive disclosure, no re-label) is satisfied without touching the frozen submission package.
 
 ---
 

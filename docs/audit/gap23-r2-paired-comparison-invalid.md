@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-12
 **Increment:** GAP-23 (new, from a live-manuscript measurement audit; supersedes the GAP-22 premise)
-**Status:** OPEN — P0 (measurement integrity)
+**Status:** ~~OPEN — P0 (measurement integrity)~~ → **RETRACTED (2026-10-12): the "pairing artifact" claim is statistically false and the R2 framework-WINS label stands; see §6.**
 **Owner:** agent (fix path is GPU-gated)
 
 ---
@@ -106,3 +106,67 @@ strong; it needs (a) an input-seeded framework `x0` path and (b) a GPU run.
 No number, status, or verdict was changed by this audit. It records a
 measurement-integrity defect and flags the affected claims; the repair (if F1) is
 a *measurement* change, not a wording change.
+
+---
+
+## 6. RETRACTION (2026-10-12) — the §1–§5 defect statement is WITHDRAWN
+
+**Status: RETRACTED.** Two independent checks refute the §2 conclusion. The
+R2 `STRONG framework-WINS` label **stands**; no measurement defect exists.
+
+### 6.1 The "pairing artifact" claim is statistically false
+
+§1.5–§2 asserted that *"the `df = 999` significance is an artifact of pairing
+two independent samples."* That is wrong. Because the two arms are (near-)
+independent — the audit's own `corr ≈ +0.02` — the paired-difference SD equals
+the quadrature sum of the arm SDs:
+
+    sd_diff ≈ sqrt(sd_base² + sd_fw²) = sqrt(0.1359² + 0.1364²) = 0.1926 Å
+
+(observed `sd_diff_A = 0.19155`, the 0.5 % gap being the `corr ≈ +0.02`
+term). The paired and unpaired standard errors therefore coincide:
+
+| test | SE | t | p (two-sided) |
+|---|---:|---:|---:|
+| paired (`df = 999`) | 0.19155/√1000 = 0.006058 | −3.131 | 1.79 × 10⁻³ |
+| unpaired Welch | √(0.1359²/1000 + 0.1364²/1000) = 0.006089 | −3.114 | 1.87 × 10⁻³ |
+
+The significance **survives an unpaired/Welch test unchanged**. It is a real
+mean difference between the two measured populations, not a pairing artifact.
+The genuine — and much smaller — defect is the **label**: the test should be
+described as *unpaired* (Welch), not "paired by record index". That is a
+wording nuance; the numbers and the verdict do not move.
+
+### 6.2 The F1 "repair" measured a different experiment
+
+`docs/audit/gap23-r2-paired-comparison-fix.md` ran a **bridge-less** variant
+(raw-latent single-pass vs raw-latent restart-blend) and reported a regression
+(1.2200 Å vs 1.2652 Å). That is **not** the canonical R2:
+
+- the canonical framework arm feeds a sampled latent through the **trained
+  `project_out⁻¹` bridge + DAE decode** before the ODE solve
+  (`tools/_kanzi_sweep_runner.py:439-465`), which places the initial state on
+  the DAE manifold;
+- the code comment at `tools/_kanzi_sweep_runner.py:436-438` states explicitly
+  that *without* the bridge the arm "lands ~1.5 Å" versus "~0.88 Å with the
+  bridge". The F1 arms both landed at 1.22–1.27 Å — the bridge-less regime.
+
+So F1 is a different measurement; it does **not** refute R2. (F1 is retained
+as a legitimate, separately-labelled bridge-less ablation, not as a repair of
+R2.)
+
+### 6.3 What stands
+
+The canonical R2 (Wave 218 P3) is a valid measurement: baseline (real-input
+autoencoder round-trip) **0.9028 Å** vs framework (bridge-generated
+round-trip) **0.8838 Å**, `mean_diff = −0.01896 Å`, Bonferroni-significant at
+R-level α = 0.007143, verdict **framework-WINS**. The paper already discloses
+its basis (§7.2: synthetic input coordinates; framework-internal reconstruction
+RMSD; the trained bridge). **R2 stays STRONG framework-WINS.**
+
+### 6.4 Provenance
+
+Retracted by the 2026-10-12 corrective pass; the §1–§5 text is preserved
+verbatim above as the historical record (additive discipline). The `paired`
+→ `unpaired` label nuance is recorded for a future wording pass; it changes no
+number, status, or verdict.
