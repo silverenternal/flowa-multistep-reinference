@@ -28,7 +28,7 @@ todo/
 
 ## Current focus (2026-10-12)
 
-**Venue:** IEEE TNNLS (switched from TPAMI). Project at HEAD `ee3871e`; **12 commits ahead of `origin/main`** (`fea137d`; the later manuscript-consistency sweeps, the governance / repo-docs refreshes, the readiness-verifier repoint, the `docs/` legacy inventory, and the `RELEASE-NOTES` v3.1 refresh are local-only — push is user-gated). Acceptance gates PASS (D.4 30/30 / ruff 0 / claims no-drift / mkdocs strict exit 0). The readiness verifier (`tools/verify_submission_readiness.py`) passes **all** gates (`READY_WITH_SKIPS: mypy_0`, exit 0 — `mypy_0` SKIPs when mypy is absent from PATH): `k1_rc5` was repointed at the live manuscript and `drift_33`'s allowlist extended on explicit user decision; see `todo/WAVES.md` §1.2.
+**Venue:** IEEE TNNLS (switched from TPAMI). Project at HEAD `9e95536`; **16 commits ahead of `origin/main`** (`fea137d`; the later manuscript-consistency sweeps, the governance / repo-docs refreshes, the readiness-verifier repoint, the `docs/` legacy inventory, the `RELEASE-NOTES` v3.1 refresh, the Tier-1 gap checklist, the manuscript citation-integrity fix, and the GAP-19 venue-fit alignment are local-only — push is user-gated). Acceptance gates PASS (D.4 30/30 / ruff 0 / claims no-drift / mkdocs strict exit 0). The readiness verifier (`tools/verify_submission_readiness.py`) passes **all** gates (`READY_WITH_SKIPS: mypy_0`, exit 0 — `mypy_0` SKIPs when mypy is absent from PATH): `k1_rc5` was repointed at the live manuscript and `drift_33`'s allowlist extended on explicit user decision; see `todo/WAVES.md` §1.2.
 
 **Remaining user-gated actions:**
 1. Fill the 17 `[USER TO FILL]` placeholders in `tnnls_submission/cover_letter.md` (see `tnnls_submission/FILL_GUIDE.md`).

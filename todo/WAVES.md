@@ -37,12 +37,14 @@ does not.
 
 ### 1.1 Repository
 
-- **Branch:** `main`. **HEAD:** `2319c57` ("docs(repo): unified inventory of docs/ legacy artifacts"). (Prior readings: `a957906` "chore(tests,docs): repoint readiness verifier at live manuscript, clear drift_33, fix pytest collection + 5 stale Kanzi tests"; `8756f19` "docs(manuscript): eighth consistency sweep — §6.1 stray heading + §8.10 stale honest-disclosure"; `3f2c03a` "docs(repo): repository documentation maintenance — increment-free management surface, gate-claim honesty, legacy inventory"; `fea137d` "docs(manuscript): fourth consistency sweep — capability groups, field name, §4.5 cell list".)
-- **Ahead of `origin/main`:** **11** commits (`origin/main` = `fea137d`). The
+- **Branch:** `main`. **HEAD:** `9e95536` ("docs(submission): remove self-assessed acceptance probability from submission docs (GAP-19)"). (Prior readings: `3fb5f67` "docs(manuscript): repoint fabricated test citations to real files with measured counts (GAP-18/GAP-21)"; `9baae54` "docs(todo): verification pass on the Tier-1 gap checklist"; `2319c57` "docs(repo): unified inventory of docs/ legacy artifacts"; `a957906` "chore(tests,docs): repoint readiness verifier at live manuscript, clear drift_33, fix pytest collection + 5 stale Kanzi tests"; `8756f19` "docs(manuscript): eighth consistency sweep — §6.1 stray heading + §8.10 stale honest-disclosure"; `3f2c03a` "docs(repo): repository documentation maintenance — increment-free management surface, gate-claim honesty, legacy inventory"; `fea137d` "docs(manuscript): fourth consistency sweep — capability groups, field name, §4.5 cell list".)
+- **Ahead of `origin/main`:** **16** commits (`origin/main` = `fea137d`). The
   192-commit backlog was pushed on 2026-10-11 and the early manuscript-consistency
   sweeps (`165df71` / `60c2441` / `fea137d`) were re-pushed on 2026-10-12; the
   later manuscript-consistency sweeps, the governance / repo-docs refreshes, the
-  readiness-verifier repoint + Kanzi test fixes, and the `docs/` legacy inventory are
+  readiness-verifier repoint + Kanzi test fixes, the `docs/` legacy inventory, the
+  Tier-1 gap checklist, the manuscript citation-integrity fix, and the GAP-19
+  venue-fit alignment are
   local-only. Pushing remains **user-gated** — agents commit locally but never push.
 - **Tags (local, unpushed):** `v3.0-tnnls-ready`, `v3.1-tnnls-with-figure` (the tag
   push stays user-gated).
@@ -402,7 +404,8 @@ Readiness is consolidated in `tnnls_submission/SUBMISSION_READINESS.md`.
    the 192-commit backlog was pushed after the 147.1 MB supplementary-bundle blob
    was purged from history + gitignored). **Re-pushed 2026-10-12** — the three
    manuscript-consistency sweeps (`165df71` / `60c2441` / `fea137d`) landed, so
-   **`origin/main` = `fea137d`** (0 ahead / 0 behind).
+   **`origin/main` = `fea137d`** (0 ahead / 0 behind *at re-push time*; **16**
+   local-only commits have since landed — see §1.1).
 
 ---
 
