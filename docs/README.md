@@ -1,7 +1,7 @@
 # Documentation map for `flowa-multistep-reinference`
 
 > **Paper A is ready for TNNLS submission (updated 2026-10-12).**
-> Paper PDF: [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf) — 11 pages, IEEEtran-journal double-column, sha256 `47f6eb0418d041b0dccdba68bcdf8b794c02e8a710368a8eaebe5e17f89ca732`.
+> Paper PDF: [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf) — 11 pages, IEEEtran-journal double-column, sha256 `747d0501cbcfc57cfad74a918fa60411aa78a26c093830f5592e1bc13662fe8c`.
 > Headline verdicts: **4 STRONG + 1 TIE + 6 PARTIAL/SUPPLEMENTARY** across the 11 cells.
 > Acceptance gates ALL PASS: D.4 30/30 · contracts 195/195 · ruff 0 · claims no drift · mkdocs 0 warnings · vendored `data/` untouched · data integrity 6/149/0 · reproducibility 12/12. The separate readiness verifier (`tools/verify_submission_readiness.py`) additionally checks `r1_r6_sha` / `framework_n1000` and two doc-drift gates — `k1_rc5` (the K1 disclosure-wording gate, pointed at the live manuscript) and `drift_33` (the historical pre-expansion D.4 `33/33` count, which survives only in historical records) — and now passes **all** of them (`READY_WITH_SKIPS: mypy_0`, exit 0).
 > **Management surface:** [`../todo/WAVES.md`](../todo/WAVES.md) — the consolidated, increment-free project record (current state, phase history, evidence ledger, gates, decisions, risks).

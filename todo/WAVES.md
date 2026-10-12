@@ -37,8 +37,8 @@ does not.
 
 ### 1.1 Repository
 
-- **Branch:** `main`. **HEAD:** `9e95536` ("docs(submission): remove self-assessed acceptance probability from submission docs (GAP-19)"). (Prior readings: `3fb5f67` "docs(manuscript): repoint fabricated test citations to real files with measured counts (GAP-18/GAP-21)"; `9baae54` "docs(todo): verification pass on the Tier-1 gap checklist"; `2319c57` "docs(repo): unified inventory of docs/ legacy artifacts"; `a957906` "chore(tests,docs): repoint readiness verifier at live manuscript, clear drift_33, fix pytest collection + 5 stale Kanzi tests"; `8756f19` "docs(manuscript): eighth consistency sweep — §6.1 stray heading + §8.10 stale honest-disclosure"; `3f2c03a` "docs(repo): repository documentation maintenance — increment-free management surface, gate-claim honesty, legacy inventory"; `fea137d` "docs(manuscript): fourth consistency sweep — capability groups, field name, §4.5 cell list".)
-- **Ahead of `origin/main`:** **16** commits (`origin/main` = `fea137d`). The
+- **Branch:** `main`. **HEAD:** `a2e0650` ("docs(todo): refresh state pins to HEAD 9e95536 (16 ahead)"). (Prior readings: `9e95536` "docs(submission): remove self-assessed acceptance probability from submission docs (GAP-19)"; `3fb5f67` "docs(manuscript): repoint fabricated test citations to real files with measured counts (GAP-18/GAP-21)"; `9baae54` "docs(todo): verification pass on the Tier-1 gap checklist"; `2319c57` "docs(repo): unified inventory of docs/ legacy artifacts"; `a957906` "chore(tests,docs): repoint readiness verifier at live manuscript, clear drift_33, fix pytest collection + 5 stale Kanzi tests"; `8756f19` "docs(manuscript): eighth consistency sweep — §6.1 stray heading + §8.10 stale honest-disclosure"; `3f2c03a` "docs(repo): repository documentation maintenance — increment-free management surface, gate-claim honesty, legacy inventory"; `fea137d` "docs(manuscript): fourth consistency sweep — capability groups, field name, §4.5 cell list".)
+- **Ahead of `origin/main`:** **17** commits (`origin/main` = `fea137d`). The
   192-commit backlog was pushed on 2026-10-11 and the early manuscript-consistency
   sweeps (`165df71` / `60c2441` / `fea137d`) were re-pushed on 2026-10-12; the
   later manuscript-consistency sweeps, the governance / repo-docs refreshes, the
@@ -93,12 +93,12 @@ does not.
 - **Title:** *"FlowA: Geometry-Aware State-Intervention Reformulation for Frozen
   Flow-Matching Checkpoints."*
 - **Artifacts:**
-  - `docs/drafts/paper-A-final.pdf` — **11 pages**, 446788 bytes,
-    SHA-256 `47f6eb04…` (IEEEtran-journal, double-column, embedded fonts).
+  - `docs/drafts/paper-A-final.pdf` — **11 pages**, 448382 bytes,
+    SHA-256 `747d0501…` (IEEEtran-journal, double-column, embedded fonts).
   - `docs/drafts/paper-A-final.md` — canonical markdown source,
-    SHA-256 `d83e283b…`.
+    SHA-256 `9943fffb…`.
   - `docs/drafts/paper-A-final.tex` — build source for the PDF,
-    SHA-256 `55e058d5…`.
+    SHA-256 `46f1612e…`.
   - `docs/figures/fig9_cell_evidence_comparison.png` — evidence-comparison
     figure, SHA-256 `4f3224bd…` (rendered by `tools/render_cell_evidence_figure.py`).
 - **Figures:** the manuscript carries (i) an inline TikZ architecture diagram

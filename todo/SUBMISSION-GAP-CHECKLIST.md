@@ -80,7 +80,7 @@ Two **new, real** defects were found by the same pass and are added below as
 | GAP-11 | P1 | agent | NARROWED | bibliography meta-analysis cross-ref (minor) |
 | GAP-12 | P1 | agent(+gpu) | OPEN | Baseline fairness: matched-NFE + tuned baseline |
 | GAP-13 | P1 | agent/user | VERIFIED | Lean claim already marked PENDING |
-| GAP-14 | P1 | agent | OPEN | Novelty boundary vs prior training-free methods |
+| GAP-14 | P1 | agent | **RESOLVED** (2026-10-12) | §2.1 novelty-differentiation paragraph added (.md + .tex; PDF rebuilt) |
 | GAP-15 | P1 | user | OPEN | Venue-fit decision (TNNLS vs reposition) |
 | GAP-16 | P2 | agent | OPEN | 31 deferred reviewer-facing gaps |
 | GAP-17 | P2 | gpu | OPEN | K2/K6 env-blocked per-cell sweeps |
@@ -252,11 +252,21 @@ Two **new, real** defects were found by the same pass and are added below as
 - **Acceptance:** the claim matches reality (0 `sorry` for what is claimed, or no
   claim).
 
-### GAP-14 — Novelty boundary vs prior training-free methods
+### GAP-14 — Novelty boundary vs prior training-free methods — **RESOLVED** (2026-10-12)
 - **Owner:** agent.
 - **Action:** add an explicit differentiation paragraph against DPM-Solver++,
   UniPC, consistency models, Fast-DLLM, and LeDiFlow.
-- **Handle:** §1; §2 related work.
+- **Resolution.** §2.1 of `paper-A-final.md` (and `paper-A-final.tex`) gains an
+  explicit "differentiation from adjacent mechanisms" paragraph: predictor–corrector
+  samplers (UniPC [5] / EDM [4] / DPM-Solver++ [3]) act within one trajectory with no
+  cross-round feedback; trajectory-level distillation (Consistency Models [8] /
+  LCM-LoRA [9]) changes $v_\theta$; re-inference α-blending (Sabour et al. 2024 /
+  Fast-DLLM [6] / AB-Cache / LeDiFlow [7]) uses a hand-set β (discrete-token caching
+  for Fast-DLLM; a learned prior-shift for LeDiFlow). FlowA is distinguished on three
+  axes at once (frozen field; outcome-conditioned initial-condition blend; convergence
+  analysis of the composite map). Additive; no metric/number/verdict change. PDF
+  rebuilt (still 11 pages). Audit: `docs/audit/gap14-novelty-differentiation.md`.
+- **Handle:** §1; §2 related work (now §2.1).
 - **Acceptance:** the "re-inference / restart blend" contribution is clearly
   distinct from existing restart / predictor-corrector / training-free acceleration.
 

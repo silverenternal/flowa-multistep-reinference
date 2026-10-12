@@ -369,3 +369,15 @@ The FlowA TNNLS submission is submittable at the highest reproducibility standar
 - **No metric or claim number changed; no status label moved.** The removal is of a self-assessed *meta*-projection, not of any §11 verdict, per-cell status, or paper quantity.
 
 *Venue-fit alignment authored 2026-10-12; user-authorized in-place removal (GAP-19); cross-references `docs/drafts/paper-A-final.md` §11.1, `tnnls_submission/submission_checklist.md`, `tnnls_submission/MANIFEST.md` row 56, and `docs/audit/gap19-q1-odds-alignment.md`.*
+
+---
+
+## 20. Novelty-differentiation paragraph (2026-10-12; GAP-14)
+
+> **ADDITIVE — appended after the submission freeze; no existing line above is modified. §1 (14 PASS) and §2 (6 PENDING) are unchanged.**
+
+- **§2.1 novelty differentiation.** An explicit differentiation paragraph was added to `paper-A-final.md` §2.1 (and mirrored in `paper-A-final.tex`), contrasting FlowA with predictor–corrector samplers (UniPC [5] / EDM [4] / DPM-Solver++ [3]), trajectory-level distillation (Consistency Models [8] / LCM-LoRA [9]), and re-inference α-blending (Sabour et al. 2024 / Fast-DLLM [6] / AB-Cache / LeDiFlow [7]). It states the three distinguishing axes (frozen $v_\theta$; outcome-conditioned initial-condition blend $B_m$; convergence analysis of the composite map $G$). **No metric, claim number, per-cell status, or verdict changed.**
+- **§1 row 6 / §3.1 G38 (paper ≤ 14 pages).** The manuscript PDF was rebuilt (still **11 pages**): current SHA-256 `747d0501cbcfc57cfad74a918fa60411aa78a26c093830f5592e1bc13662fe8c` (448382 bytes), superseding the §17/§18 reading `47f6eb04…` / 446788 bytes. Current `.md` SHA-256 `9943fffb…` (213273 bytes, 25,763 words); current `.tex` SHA-256 `46f1612e…` (65903 bytes). The rows retain the earlier readings verbatim; the refreshed values are pinned in `tnnls_submission/MANIFEST.md` and the `README`/`todo` surfaces.
+- **Build.** `pdflatex` × 3 passes, exit 0, 0 fatal errors, 0 Overfull hboxes; the added paragraph renders in the PDF (`pdftotext` confirms).
+
+*Novelty-differentiation addendum authored 2026-10-12 (GAP-14); ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §2.1 / `paper-A-final.tex` §2.1 and `docs/audit/gap14-novelty-differentiation.md`.*

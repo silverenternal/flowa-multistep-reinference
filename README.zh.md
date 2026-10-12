@@ -67,16 +67,16 @@
 | Item / 项目 | Value / 值 |
 |---|---|
 | **Paper ID / 论文编号** | Paper A — FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints |
-| **Paper PDF / 论文 PDF** | [`docs/drafts/paper-A-final.pdf`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.pdf) (11 pages, IEEEtran-journal double-column typeset, sha256 `47f6eb0418d041b0dccdba68bcdf8b794c02e8a710368a8eaebe5e17f89ca732`) |
-| **Paper draft / 论文草稿** | [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) (25,576 words, §6 Framework Properties Lemmas 1–3 + Theorems 4–5 ACTIVE, sha256 `d83e283bb5467459caa235067f190e203984e716f8c4efaa61664d43a7f0f52a`) |
+| **Paper PDF / 论文 PDF** | [`docs/drafts/paper-A-final.pdf`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.pdf) (11 pages, IEEEtran-journal double-column typeset, sha256 `747d0501cbcfc57cfad74a918fa60411aa78a26c093830f5592e1bc13662fe8c`) |
+| **Paper draft / 论文草稿** | [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) (25,763 words, §6 Framework Properties Lemmas 1–3 + Theorems 4–5 ACTIVE, sha256 `9943fffbb688f7861602df9d4f1c4bd73710fd82d02e93d6bf6412526aca2a54`) |
 | **Target venue / 目标期刊** | IEEE TNNLS (Transactions on Neural Networks and Learning Systems) |
 | **Submission status / 投稿状态** | **READY / 已就绪** — 9-gate ALL PASS at pre-push (D.4 30/30, contracts 195/195, ruff 0 errors, claims no drift, mkdocs strict 0 warnings, vendored NOT touched, data integrity 6/149/0 mismatches, reproducibility 12/12, PDF ≤14 pages); cover letter needs 17 USER_TO_FILL fields per [`tnnls_submission/FILL_GUIDE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/FILL_GUIDE.md). The separate readiness verifier (`tools/verify_submission_readiness.py`) also reports two **camera-ready-scope** doc-drift gates red (`k1_rc5`, `drift_33`) — documented, not submission blockers; see [`todo/WAVES.md`](todo/WAVES.md) §1.2 |
 | **Submission package / 投稿包** | [`tnnls_submission/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tnnls_submission) — 7 files with real SHA-256 (cover_letter.md, highlights.md, tables.md, figures.md, data_availability.md, submission_checklist.md, MANIFEST.md) |
 | **H7 terminology cleanup / H7 术语清理** | **59 fixes, 0 residual jargon / 59 项修复，0 残余术语** |
 | **H8 abbreviations / H8 缩写** | **5 defined at first use / 5 项首用定义** (pLDDT, scPerplexity, RDKit, HSM, HMMER) |
 | **B6 cross-doc numbers / B6 跨文档数字** | **3 aligned to CLAIMS.md canonical / 3 项与 CLAIMS.md 对齐** (R5b FID range, seeds 42/43/44, STRONG count breakdown) |
-| **Final paper sha256 / 论文 sha256** | `d83e283bb5467459caa235067f190e203984e716f8c4efaa61664d43a7f0f52a` (25,576 words) |
-| **Final PDF sha256 / PDF sha256** | `47f6eb0418d041b0dccdba68bcdf8b794c02e8a710368a8eaebe5e17f89ca732` (11 pages IEEEtran-journal) |
+| **Final paper sha256 / 论文 sha256** | `9943fffbb688f7861602df9d4f1c4bd73710fd82d02e93d6bf6412526aca2a54` (25,763 words) |
+| **Final PDF sha256 / PDF sha256** | `747d0501cbcfc57cfad74a918fa60411aa78a26c093830f5592e1bc13662fe8c` (11 pages IEEEtran-journal) |
 | **Final metrics audit / 最终指标审计** | [`docs/METRIC_LEDGER.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/METRIC_LEDGER.md) + [`docs/CONSOLIDATED_RESULTS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CONSOLIDATED_RESULTS.md) |
 | **Decision rationale / 决策依据** | [`tnnls_submission/SUBMISSION_READINESS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/SUBMISSION_READINESS.md) |
 | **Development phases / 开发阶段** | 基础 → 候选分析 → 适配器 → baseline-vs-framework 对比 → N=1000 放大 → 消融 → 效率 / Pareto → 统计严谨性 → 复现 / 打包 → 投稿整合 → 手稿重构 + 图表。整合记录：[`todo/WAVES.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/todo/WAVES.md) |
@@ -300,8 +300,8 @@ Per-cell audit records under [`docs/audit/`](https://github.com/silverenternal/f
 | **Pytest** | 子集 green；全量运行给出 25 failed / 5166 passed / 145 skipped / 16 errors（环境/顺序相关；`tests/test_claims/` 隔离下 146/146 green）— 见 [`docs/audit/INDEX.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/INDEX.md) 的 `engineering` 簇 | `pytest tests/` |
 | **Ruff lint (4-directory scope)** | 0 findings | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
 | **Mypy type-check** | 0 errors in the canonical environment; **39** in the current sandbox (`mypy 2.3.1`, missing third-party stubs) — env-dependent, pre-existing | `mypy adaptive_reflow/` |
-| **Final paper sha256** | `d83e283bb5467459caa235067f190e203984e716f8c4efaa61664d43a7f0f52a` | `sha256sum docs/drafts/paper-A-final.md` |
-| **Final PDF sha256** | `47f6eb0418d041b0dccdba68bcdf8b794c02e8a710368a8eaebe5e17f89ca732` (11 pages) | `sha256sum docs/drafts/paper-A-final.pdf` |
+| **Final paper sha256** | `9943fffbb688f7861602df9d4f1c4bd73710fd82d02e93d6bf6412526aca2a54` | `sha256sum docs/drafts/paper-A-final.md` |
+| **Final PDF sha256** | `747d0501cbcfc57cfad74a918fa60411aa78a26c093830f5592e1bc13662fe8c` (11 pages) | `sha256sum docs/drafts/paper-A-final.pdf` |
 
 > **Gate-scope note.** The "9-gate" row above is the project's hard-requirement acceptance set. The broader readiness verifier (`tools/verify_submission_readiness.py`) additionally checks `r1_r6_sha`, `framework_n1000`, and two doc-drift gates (`k1_rc5` — the K1 disclosure-wording gate, now pointed at the live manuscript; `drift_33` — the historical pre-expansion D.4 `33/33` count, which survives only in historical records). This is a gate-scope difference, not a contradiction: see [`todo/WAVES.md`](todo/WAVES.md) §1.2.
 
@@ -321,7 +321,7 @@ python3 tools/verify_submission_readiness.py
 mkdocs build --strict
 ```
 
-**Reviewer re-verification / 评审复验:** Compare the embedded `verification_outputs/` SHA-256 against `sha256sum docs/headline-evidence/rN_*/SOURCE.md`. Final pre-push metrics snapshot in [`docs/METRIC_LEDGER.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/METRIC_LEDGER.md). Final paper SHA-256 `d83e283bb5467459caa235067f190e203984e716f8c4efaa61664d43a7f0f52a`; final PDF SHA-256 `47f6eb0418d041b0dccdba68bcdf8b794c02e8a710368a8eaebe5e17f89ca732` (11 pages IEEEtran-journal).
+**Reviewer re-verification / 评审复验:** Compare the embedded `verification_outputs/` SHA-256 against `sha256sum docs/headline-evidence/rN_*/SOURCE.md`. Final pre-push metrics snapshot in [`docs/METRIC_LEDGER.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/METRIC_LEDGER.md). Final paper SHA-256 `9943fffbb688f7861602df9d4f1c4bd73710fd82d02e93d6bf6412526aca2a54`; final PDF SHA-256 `747d0501cbcfc57cfad74a918fa60411aa78a26c093830f5592e1bc13662fe8c` (11 pages IEEEtran-journal).
 
 **K-cells reproducibility note / K-单元可复现性注:** 6 supplementary cells have data-archaeology disclosures. The 4 STRONG + 1 TIE main cells are the load-bearing reproducibility anchors; see DATA_PRESENTATION.md §2.4 + §2.5 + §6.7 for full disclosure.
 
@@ -440,7 +440,7 @@ Re-verify with `cd tnnls_submission && sha256sum -- *.md`.
   year={2026},
   note={Under review at TNNLS; submission package at tnnls\_submission/;
         pre-push metrics snapshot: docs/METRIC_LEDGER.md;
-        final paper sha256: d83e283bb5467459caa235067f190e203984e716f8c4efaa61664d43a7f0f52a}
+        final paper sha256: 9943fffbb688f7861602df9d4f1c4bd73710fd82d02e93d6bf6412526aca2a54}
 }
 ```
 
