@@ -387,8 +387,13 @@ def main(argv: list[str] | None = None) -> int:
         f"paired_{k}": v for k, v in paired.items()
     })
     all_rows = per_seed_rows + [summary_row]
+    # The summary row carries the extra ``paired_*`` columns; include them in
+    # the CSV header (using only the per-seed keys crashes with
+    # "dict contains fields not in fieldnames" before the JSON is written).
+    fieldnames = list(per_seed_rows[0].keys())
+    fieldnames += [k for k in summary_row if k not in fieldnames]
     with csv_path.open("w", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=list(all_rows[0].keys()))
+        writer = csv.DictWriter(fh, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(all_rows)
     print(f"wrote {csv_path}", flush=True)

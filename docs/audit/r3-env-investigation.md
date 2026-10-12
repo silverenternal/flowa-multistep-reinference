@@ -4,7 +4,7 @@
 **Author:** R3 environment-investigation pass (light-GPU, parallel to the user's GPU-0 job)
 **Scope:** Diagnose the R3 FlowMol3 `fg_dev` N=1000 "valid-yield gap" — canonical Wave 82 produced **999/1000 (99.9%)** valid molecules, while the current host produces only **33–40% valid** at n=30 (`docs/audit/wave351-r3-vendor-fix-status.md`) and **~8%** at N=1000 (`docs/audit/wave338-p5-r3-dgl-fix-and-sweep.md`). The blocker is documented across Wave 338 P5 / Wave 351 P3 / Wave 357 P3 / `docs/CONSOLIDATED_RESULTS.md` §15.105 / paper §7.2 R3 footnote as an **"RDKit 2026.03.5 environment drift"**.
 
-**Status:** **DIAGNOSIS COMPLETE — the documented root cause is REFUTED.** No source code, no vendored upstream, no `tnnls_submission/`, no `docs/CLAIMS.md`, and no R3 number/verdict was modified by this pass. The R3 verdict label `PARTIAL / single-seed PROJECTED` is preserved verbatim.
+**Status:** **DIAGNOSIS COMPLETE — the documented root cause is REFUTED.** The diagnosis itself changed no source code, no vendored upstream, no `tnnls_submission/`, no `docs/CLAIMS.md`, and no R3 number/verdict. The R3 verdict label `PARTIAL / single-seed PROJECTED` is preserved verbatim. **Follow-up (2026-10-12, user-gated):** the blocked-tiling fix + a CPU regression test were applied and a full 3-seed N=1000 re-run launched — see §8.
 
 **Trigger:** User chose the **"R3 环境调查"** track after the R1 3-seed materialization closed — to diagnose / reproduce the canonical Wave 82 `RDKit / torch / CUDA / DGL` combination that unblocks the R3 3-seed N=1000 P0 gap.
 
@@ -122,7 +122,7 @@ Wave 338 P5's own verification table (`docs/audit/wave338-p5-r3-dgl-fix-and-swee
 - R3 numbers (per-arm aggregate UNPAIRED; per-record paired ACTUAL n=200 `d_z=−0.285`; PROJECTED N=1000 `t=−9.005`) — preserved verbatim.
 - `docs/CLAIMS.md` CLM-068, `docs/CONSOLIDATED_RESULTS.md` §15.105, the paper §7.2 R3 footnote, and every `tnnls_submission/` file — **not modified**.
 - The Wave 338 P5 DGL-fix and Wave 351 P3 smoke results — preserved verbatim as historical records (this audit *supersedes their root-cause attribution*, not their observations).
-- No source code, no vendored upstream, no adapter — **no code change is committed by this pass**. The `.repeat(n_mol,1)` experiment was applied to a working copy and reverted (`git checkout HEAD -- adaptive_reflow/adapters/flowmol3_v2_adapter.py`); the adapter is byte-identical to HEAD.
+- No source code, no vendored upstream, no adapter — the *diagnosis* commit made no code change. (The follow-up fix + regression test are recorded in §8.) The `.repeat(n_mol,1)` experiment was applied to a working copy and reverted for the diagnosis commit; the adapter was byte-identical to HEAD at that point.
 
 ---
 
@@ -167,4 +167,18 @@ The blocked tiling restores the **valid-yield** (40% → 100%) and the **baselin
 
 ---
 
-_Last updated: 2026-10-12 (R3 environment investigation — documented RDKit-drift root cause REFUTED; actual cause is the `repeat_interleave` batched prior-tiling regression introduced 2026-09-22; no code / number / verdict change)._
+## 8. Follow-up (2026-10-12) — fix applied, regression test added, full sweep launched
+
+User-gated after the diagnosis ("改 tiling + 跑全量 N=1000"):
+
+1. **Adapter fix** — `adaptive_reflow/adapters/flowmol3_v2_adapter.py` `_solve_ode_upstream_batch`: the four prior channels now use `.repeat(int(n_mol), 1)` (blocked) instead of `.repeat_interleave(int(n_mol), dim=0)` (interleaved). The comment block was rewritten to document the blocked-layout requirement and explicitly warn against `repeat_interleave`. Byte-stability for `n_mol == 1` is preserved (`repeat(1, 1)` is a no-op).
+
+2. **CPU regression test** — `tests/test_adapters/test_flowmol3_v2_adapter_conformance.py::TestFlowMol3V2NMoleculesBatch::test_v2_upstream_batched_prior_is_block_tiled`. Uses the stub-upstream harness (no checkpoint needed) to capture the `prior` dict reaching `sample()` and asserts every per-molecule block is identical (blocked layout). **Validated**: it PASSES with the fix and FAILS with `repeat_interleave` (re-verified by temporarily reverting the tiling).
+
+3. **Driver crash fix** — `scripts/wave338_p5_r3_n1000_paired.py` built its CSV `fieldnames` from the per-seed row only, so the summary row's extra `paired_*` columns raised `ValueError: dict contains fields not in fieldnames` **before** the paired JSON was written — which is why `verification_outputs/wave338-p5-r3-n1000-paired.json` never existed. Header now unions the summary-row keys.
+
+4. **Full 3-seed N=1000 re-run** — `scripts/wave338_p5_r3_n1000_paired.py --n-total 1000 --nfe-batch 100 --seeds 42 43 44 --device cuda:0`, output in `verification_outputs/r3_n1000_3seed_fixed_q4_2026/` (per-arm JSON + per-seed sweep JSON + `wave338-p5-r3-n1000-paired.{csv,json}` + `METADATA.txt`). `cuda:0` is mandatory because the adapter seeds via `_seed_everything(seed, str(device))`. Results are appended below when the run completes.
+
+---
+
+_Last updated: 2026-10-12 (R3 environment investigation — documented RDKit-drift root cause REFUTED; actual cause is the `repeat_interleave` batched prior-tiling regression introduced 2026-09-22; follow-up fix + regression test applied; full 3-seed N=1000 re-run launched)._

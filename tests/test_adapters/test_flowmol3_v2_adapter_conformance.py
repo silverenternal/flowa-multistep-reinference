@@ -470,6 +470,87 @@ class TestFlowMol3V2NMoleculesBatch:
             "the default (D.4 byte-stability)."
         )
 
+    def test_v2_upstream_batched_prior_is_block_tiled(self) -> None:
+        """The upstream batched prior must be BLOCK-tiled, not interleaved.
+
+        Regression for the R3 FlowMol3 valid-yield collapse
+        (``docs/audit/r3-env-investigation.md``): the vendored
+        ``FlowMol.sample`` builds ``g = dgl.batch(g)`` (a *blocked* node
+        layout — molecule 0's nodes, then molecule 1's, ...) and assigns
+        ``g.ndata['x_0'] = prior['x_0']`` with no broadcasting. So the
+        per-molecule prior must be repeated as whole blocks
+        (``prior.repeat(n_mol, 1)``). ``repeat_interleave`` yields an
+        *interleaved* layout that scrambles the prior relative to the
+        molecule boundaries — shape-compatible but semantically wrong.
+
+        Uses the stub-upstream harness to capture the ``prior`` dict that
+        reaches ``sample`` without loading the real checkpoint.
+        """
+        torch = pytest.importorskip("torch")
+        from adaptive_reflow.adapters.flowmol3_v2_adapter import (
+            FlowMol3V2Adapter,
+        )
+
+        captured: dict[str, object] = {}
+
+        class _StubMol:
+            def __init__(self) -> None:
+                self.num_atoms = 3
+                self.positions = torch.zeros(3, 3)
+                self.atom_types = ["C", "H", "H"]
+                self.atom_charges = torch.zeros(3, 1, dtype=torch.float32)
+                self.bond_src_idxs = torch.as_tensor([], dtype=torch.long)
+                self.bond_dst_idxs = torch.as_tensor([], dtype=torch.long)
+                self.bond_types = torch.as_tensor([], dtype=torch.long)
+                self.rdkit_mol = None
+
+        class _StubModel:
+            def __init__(self) -> None:
+                self.n_atom_types = 11
+                self.n_atom_charges = 6
+                self.n_bond_types = 4
+                self.fake_atoms = False
+                self.atom_type_map = [
+                    "C", "H", "N", "O", "F", "P", "S", "Cl", "Br", "I",
+                ]
+
+            def sample(self, *, n_atoms, n_timesteps, device, prior):
+                captured["prior"] = {
+                    k: (v.clone() if hasattr(v, "clone") else v)
+                    for k, v in prior.items()
+                }
+                return [_StubMol() for _ in range(int(len(n_atoms)))]
+
+        adapter = FlowMol3V2Adapter(
+            backend="torch", device="cpu", use_upstream=True,
+        )
+        adapter._model = _StubModel()
+        adapter._use_upstream = True
+        adapter._model_meta = {"kind": "upstream_flowmol"}
+        state = adapter.build_initial_state(batch_id="b0", sample_id="s0")
+        cond = _make_condition_delta(num_steps=2)
+
+        n_mol = 4
+        adapter.solve_ode(state, cond, seed=42, n_molecules=n_mol)
+
+        prior = captured["prior"]
+        assert isinstance(prior, dict)
+        for key in ("x_0", "a_0", "c_0", "e_0"):
+            tensor = prior[key]
+            assert tensor.shape[0] % n_mol == 0, (
+                f"prior[{key!r}] rows {tensor.shape[0]} not divisible by "
+                f"n_mol={n_mol}"
+            )
+            rows_per_mol = tensor.shape[0] // n_mol
+            blocks = tensor.reshape(n_mol, rows_per_mol, *tensor.shape[1:])
+            for k in range(1, n_mol):
+                assert torch.equal(blocks[0], blocks[k]), (
+                    f"prior[{key!r}] is not block-tiled: molecule {k} "
+                    f"differs from molecule 0 — the tiling is interleaved "
+                    f"(repeat_interleave) instead of blocked (repeat); "
+                    f"see docs/audit/r3-env-investigation.md."
+                )
+
 
 # ---------------------------------------------------------------------------
 # Wave 74 F2 — seed threading through the upstream ``FlowMol.sample`` call.
