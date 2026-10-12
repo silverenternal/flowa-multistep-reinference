@@ -8,6 +8,12 @@ legacy artifacts (root-level ICLR-2027-era submission files + two venue drafts).
 **Status:** COMPLETE. All gates green. **No manuscript artifact, metric, claim,
 source module, or vendored-upstream file changed.**
 
+**Pass commits:** `268d91c` (state pins + legacy labels), `3b0cfe5` (bookkeeping
+banners). The live state pins in `todo/WAVES.md` / `todo/README.md` / `README*.md`
+read the HEAD at the **start** of this pass (`a957906`); the post-pass HEAD is the
+second commit above (the project's self-referencing-SHA convention pins the
+pre-edit actual in the live surface and the post-edit actual here).
+
 ---
 
 ## 1. Findings (observed facts)
