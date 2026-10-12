@@ -1,7 +1,7 @@
 {
   "schema_version": "wave11_audit_fixes_v1",
   "purpose": "Active task list: 4 divergence fixes from Wave 7 SYNTHESIS. Old framework_iteration_v1 tasks pruned per user directive (\"老的完成任务可删除\"). One-at-a-time execution model per user directive.",
-  "updated_at": "2026-09-05T03:00:00Z",
+  "updated_at": "2026-10-12T00:00:00Z",
   "tasks": [
     {
       "id": "P0-2",
@@ -671,5 +671,172 @@
     ],
     "consequence": "Phase 1 GATES.md \"G-MASTER-PHASE-1\" passes verification commands, but audit reveals 3 high + 2 medium findings are NOT actually fixed. Phase 1 is **partially** done; full closure requires A1 fix wave.",
     "next_action": "run Wave 12 = A1 fix wave (3 high + 2 medium + 2 low tasks above) before Phase 2 can start per LOOP.md + GATES.md blocking rules"
+  },
+  "q1_hard_gap_assessment": {
+    "date": "2026-10-12",
+    "assessed_at_head": "07098f6",
+    "assessed_by": "user request: 评估拿去发一区还存在哪些硬gap + 核查到底做到什么程度",
+    "verdict": "工程/复现性是 TNNLS 一区水准；硬 gap 全部集中在实证强度轴。但核查后：几乎每个 gap 以前都尝试过，canonical live 证据大多已在盘上；真正的剩余项很窄。headline 结构 = 1 无条件(R2, 小效应+合成输入) + 3 条件/反事实(R5b 仅 n_rounds=1; R5c 仅 smoke ckpt; R6 仅 counterfactual)。",
+    "corrections_to_first_pass_assessment": [
+      "R6 不是『没有 live 证据』：Wave 161 frozen substrate 是真实 paired foldability 实测(baseline pLDDT 42.07 vs framework 43.20, +1.12 paired; sc_perplexity -3.92 paired)。只有 tier-aware 升级(d_z +0.071 -> +0.2235)是 counterfactual 数学。",
+      "R3 不是『没有 N=1000』：Wave 82/87 canonical N=1000 1-seed 是 live(fg_dev 0.6381 -> 0.6146, -0.0235, framework 胜 4.05σ)。只有 3-seed paired 升级被 RDKit 环境漂移卡住。",
+      "R1 不是『没测过 3-seed』：Wave 280 P 已跑 3-seed，但 seed=43/44 100% framework-fallback 污染 -> 作废；Wave 349 已做 N=20 zero-fallback 反证。只是从未重跑到干净 3-seed。",
+      "Wave 361 的 R6 launch 失败是 metric-mismatch(跑成了 Kanzi reconstruction RMSD 驱动，非 R6 foldability 管线) + 1 行 import bug，不是 GPU 预算问题。"
+    ],
+    "gaps": [
+      {
+        "id": "R6-LIVE-TIERAWARE",
+        "priority": "P0",
+        "title": "R6: tier-aware counterfactual -> live TierAwareCodimensionSheetScheduler 实测",
+        "already_done": [
+          "Wave 161 frozen substrate: 真实 paired foldability 实测 (paper-data/R6_lineageflow_k6/ 软链到 verification_outputs/k6_foldability_n1000_w161_q3_2026/)",
+          "Wave 233 P3 tier-aware counterfactual d_z=+0.2235 (verification_outputs/wave233-p3-tier-aware-r6.json)",
+          "Wave 235 P3 20-cell grid search 最佳格 d_z=+0.6467 (verification_outputs/wave235-p3-r6-uplift.json)",
+          "Wave 350 P3 env unblock + 30/30 byte-stable smoke (docs/audit/wave350-r6-live-attempt.md)",
+          "Wave 357 P5 / Wave 359 P3 范围+cuda:0 硬约束 (docs/audit/wave357-r6-gpu-scope.md, wave359-r6-gpu-scope-cuda0.md)"
+        ],
+        "genuinely_left": "用 TierAwareCodimensionSheetScheduler 跑 live 3-seed x N=1000 (把 counterfactual 转成 live)。Wave 361 尝试因 metric-mismatch + import bug 失败，无 R6 live sweep。",
+        "evidence_of_attempt": [
+          "docs/audit/wave361-r6-launch-attempt.md",
+          "docs/audit/wave361-r6-launch-discrepancy.md",
+          "docs/audit/wave361-r6-forensic-evidence-chain.md"
+        ],
+        "resource": "~26-53 GPU-h (cuda:0 ONLY) 或 fold-only ~5h；先修 tools/sweep_kanzi_n1000_diverse.py:105 的 import 或改用正确驱动",
+        "status": "OPEN (counterfactual 证据完整；live 转换未做)"
+      },
+      {
+        "id": "R3-N1000-3SEED",
+        "priority": "P0",
+        "title": "R3: 3-seed N=1000 paired (当前 PARTIAL / single-seed PROJECTED)",
+        "already_done": [
+          "Wave 82/87 canonical N=1000 1-seed live: fg_dev 0.6381->0.6146, -0.0235 (verification_outputs/flowmol3_n1000_{baseline,framework}_q4_2026.json)",
+          "Wave 208 P2 N=200 per-record paired d_z=-0.285 (t=-4.027, p=8.03e-5)",
+          "Wave 216 P1 projected N=1000 paired t=-9.005",
+          "Wave 338 P5 DGL fix 验证可用；Wave 351 P3 复测 RDKit gap (docs/audit/wave351-r3-vendor-fix-status.md)"
+        ],
+        "genuinely_left": "3-seed N=1000 paired。被 RDKit 2026.03.5 环境漂移卡住(valid-yield 36.7% @ n=30 vs canonical 99.9%)；需容器复现 Wave 82 的 torch/CUDA/DGL/RDKit 组合。",
+        "evidence_of_attempt": [
+          "docs/audit/wave338-p5-r3-dgl-fix-and-sweep.md",
+          "docs/audit/wave351-r3-vendor-fix-status.md"
+        ],
+        "resource": "环境级调查(容器复现) + 3-seed sweep；非框架侧改动",
+        "status": "OPEN (canonical 1-seed live 已在盘；3-seed 升级 blocked)"
+      },
+      {
+        "id": "R1-3SEED-MATERIALIZE",
+        "priority": "P0",
+        "title": "R1: 3-seed N=1000 aggregate d_z 物化 (当前 PARTIAL / single-seed-disclosed)",
+        "already_done": [
+          "Wave 158 P2 single-seed live: baseline 158 vs framework 342 hits (+116%), d_z=+0.182, p=1.25e-8 (verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/)",
+          "Wave 280 P 3-seed 已跑但 seed=43/44 100% fallback 污染 -> 作废 (verification_outputs/wave280-p-r1/summary.json)",
+          "Wave 349 zero-fallback 反证 N=20 + N=1000@long-bias (docs/audit/wave349-gap-audit.md)"
+        ],
+        "genuinely_left": "3 个干净 N=1000 sweep (seed 42/43/44, --upstream-eval-len-bias short) + zero-fallback 校验 + HMMER + DL meta-analysis。Wave 350 P2 已开出配方，但从未执行。verification_outputs/wave349-r1-3seed-gpu/ 只有 seed42+seed44 manifest，无 seed43、无 HMMER 结果。",
+        "evidence_of_attempt": [
+          "docs/audit/wave350-r1-materialize-status.md",
+          "docs/audit/wave280-p-r1-sweep-result.md"
+        ],
+        "resource": "~2.5h wall (executed 2026-10-12)",
+        "status": "DONE (2026-10-12, real-ckpt basis)",
+        "resolution": {
+          "date": "2026-10-12",
+          "evidence_dir": "verification_outputs/r1_3seed_real_ckpt_q4_2026/ (10 committed artifacts, SHA256SUMS 10/10 OK)",
+          "basis": "real-ckpt (torch) force_mode=auto; ckpt data/lineageflow/lineageflow-rp55.ckpt",
+          "protocol": "--n 1000 --upstream-eval-len-bias short --nfe 10 --n-rounds 3 --temperature 1.0; cosine; zero fallback on all 3 seeds",
+          "per_seed": {
+            "seed42": {
+              "baseline": 158,
+              "framework": 271,
+              "pct": 71.52,
+              "d_z": 0.164,
+              "p": 2.45e-07
+            },
+            "seed43": {
+              "baseline": 159,
+              "framework": 213,
+              "pct": 33.96,
+              "d_z": 0.086,
+              "p": 0.00673
+            },
+            "seed44": {
+              "baseline": 174,
+              "framework": 230,
+              "pct": 32.18,
+              "d_z": 0.081,
+              "p": 0.011
+            }
+          },
+          "all_seeds_direction_consistent": true,
+          "dl_meta": {
+            "d_pooled": 0.11,
+            "z": 4.073,
+            "p_two": 4.635e-05,
+            "p_bonf_k7": 0.0003244,
+            "I2_pct": 54.13
+          },
+          "verdict": "STRONG bar NOT met (pooled d_z=0.110 < 0.8) -> R1 stays PARTIAL; direction-consistent + DL-meta Bonferroni-significant",
+          "basis_fork": "Wave 158 canonical headline (158->342, +116%, d_z=+0.182) is a synthetic-velocity-field number; baseline byte-identical between bases, framework differs (real-ckpt 271 vs synthetic 342 on seed 42)",
+          "audit_doc": "docs/audit/r1-3seed-real-ckpt-materialize.md"
+        }
+      },
+      {
+        "id": "R5B-MULTISEED-ROUNDCOUNT",
+        "priority": "P1",
+        "title": "R5b: matched-protocol 多 seed round-count test",
+        "already_done": [
+          "N=200 seed42 单轮 4/4 负 (wave235-p1-r5b-fix.json)",
+          "N=1000 seed42 production 单轮 2/4 改善 (wave247-p3-r5b-n1000-n1/summary.json)",
+          "多轮回归 sweep (wave225-p7-r5b-reduced-rounds.json, wave206-p6-honest-negative-curve.json)",
+          "Wave 336 R5b 机制审计 (docs/audit/wave336-r5b-mechanism.md)"
+        ],
+        "genuinely_left": "共享 ckpt、只变 round count 的 matched-protocol 多 seed 扫描 (n_rounds in {1,2,3} x 4 schedulers x 3 seeds, matched NFE)",
+        "resource": "GPU sweep + 设计",
+        "status": "OPEN"
+      },
+      {
+        "id": "R5C-MATCHED-ARCH",
+        "priority": "P1",
+        "title": "R5c: matched-architecture ckpt 复现",
+        "already_done": [
+          "3-point regime curve (docs/audit/mnist/wf334-r5c-regime-curve.md)",
+          "production ckpt 3-seed baseline-wins +10.37% (verification_outputs/wave280-p-r5c/aggregate.json)"
+        ],
+        "genuinely_left": "matched-architecture (仅 epochs 变) 的多 ckpt + seed 复现；当前 epochs=1->2 混杂(8 vs 16 channels, 6K vs 60K imgs)",
+        "status": "OPEN"
+      },
+      {
+        "id": "THEORY-TESTABLE-CRITERION",
+        "priority": "P1",
+        "title": "理论: Theorem 4/5 与 headline FID 符号的连接",
+        "already_done": [
+          "Theorem 4 条件收缩 + Theorem 5 精确平方误差恒等式 (paper §6.5/§6.6)",
+          "Wave 350 P1 Theorem 5 closed-form 衰减界 (docs/audit/wave350-thm5.md)",
+          "Wave 372 已撤回残差指数率与首轮 FID 符号界 (docs/audit/wave372-manuscript-claim-audit.md)"
+        ],
+        "genuinely_left": "一个可测判据(在 >=1 个 cell 上命中方向)；否则定理保持 conditional diagnostic 定位",
+        "status": "OPEN (定位已诚实；不建议再投入率/符号界)"
+      }
+    ],
+    "not_real_gaps_already_canonical": [
+      "R2 显著性: index-matched two-sample 与 unpaired Welch 一致(t=-3.11/p=1.87e-3)，非 pairing artifact；GAP-23 已撤回，R2 保持 STRONG framework-WINS",
+      "R2/R1 rubric 张力: §7.1 已有 additive rubric 披露，可从手稿自答",
+      "novelty 边界: §2.1 differentiation 段已加 (GAP-14 resolved)",
+      "文档漂移(标题/页数/SHA): Wave 384 已系统性刷新，非实证 gap"
+    ],
+    "recommended_attack_order": [
+      "1. R1-3SEED-MATERIALIZE (~2.5h, 配方已备, 最高性价比)",
+      "2. R6-LIVE-TIERAWARE (先修 1 行 import/换驱动，再 ~5h fold-only 或 ~26-53h full)",
+      "3. R3-N1000-3SEED (RDKit 容器复现，最麻烦，但把 PROJECTED 变 ACTUAL)",
+      "4. R5B / R5C / THEORY (视预算)"
+    ],
+    "cross_refs": [
+      "todo/SUBMISSION-GAP-CHECKLIST.md",
+      "todo/RISK-REGISTER.md (R-019 venue / R-022 R5a)",
+      "tnnls_submission/SUBMISSION_READINESS.md",
+      "docs/audit/wave384-project-audit.md",
+      "docs/audit/wave361-r6-forensic-evidence-chain.md",
+      "docs/audit/wave351-r3-vendor-fix-status.md",
+      "docs/audit/wave350-r1-materialize-status.md"
+    ]
   }
 }

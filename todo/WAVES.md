@@ -93,12 +93,12 @@ does not.
 - **Title:** *"FlowA: Geometry-Aware State-Intervention Reformulation for Frozen
   Flow-Matching Checkpoints."*
 - **Artifacts:**
-  - `docs/drafts/paper-A-final.pdf` — **11 pages**, 448382 bytes,
-    SHA-256 `747d0501…` (IEEEtran-journal, double-column, embedded fonts).
+  - `docs/drafts/paper-A-final.pdf` — **11 pages**, 460079 bytes,
+    SHA-256 `a9883fc9…` (IEEEtran-journal, double-column, embedded fonts).
   - `docs/drafts/paper-A-final.md` — canonical markdown source,
-    SHA-256 `9943fffb…`.
+    SHA-256 `0586a564…`.
   - `docs/drafts/paper-A-final.tex` — build source for the PDF,
-    SHA-256 `46f1612e…`.
+    SHA-256 `33f4ea9a…`.
   - `docs/figures/fig9_cell_evidence_comparison.png` — evidence-comparison
     figure, SHA-256 `4f3224bd…` (rendered by `tools/render_cell_evidence_figure.py`).
 - **Figures:** the manuscript carries (i) an inline TikZ architecture diagram
@@ -252,7 +252,7 @@ index live in the paper and in `docs/CONSOLIDATED_RESULTS.md`.
 
 | # | Model | Metric | Baseline | Framework | Δ | N | Verdict |
 |---|---|---|---:|---:|---:|---:|---|
-| R1 | LineageFlow | HMMER hits | 158 | **342** | **+116%** | 1000 (single seed) | PARTIAL — single-seed-disclosed |
+| R1 | LineageFlow | HMMER hits | 158 | **342** | **+116%** | 1000 (single seed, synthetic-basis) | PARTIAL — single-seed-disclosed; real-ckpt 3-seed run (2026-10-12) = 158→271 / 159→213 / 174→230, all direction-consistent, DL meta $d_z=+0.110$ (Bonferroni-sig), still below the 0.8 STRONG bar |
 | R2 | Kanzi | reconstruction RMSD (Å) | 0.9020 | **0.8798** | **−0.022** | 1000 | SUPPORTED |
 | R3 | CIFAR-10 RF v2 | FID | 218.87 | **122.18** | **−44.17%** | 1000 | NFE-averaged (3-seed blocked at vendor level) |
 | R4 | 2D Two Moons | W₂ | 0.5029 | **0.4663** | **−7.28%** | 1000 | matched |
@@ -268,7 +268,14 @@ K-cells).
 **Key honest corrections retained:**
 
 - **R1 demoted** from a 3-seed STRONG to single-seed-disclosed: the extra seeds
-  were contaminated by a framework fallback path.
+  were contaminated by a framework fallback path. A **fresh zero-fallback
+  3-seed real-ckpt materialization (2026-10-12)** now confirms the direction
+  (3/3 framework-WINS) and is Bonferroni-significant at the R-level family
+  (DL meta $d_z=+0.110$, $p_{\text{Bonf},k=7}=3.24\times10^{-4}$), but the
+  pooled effect stays below the $0.8$ STRONG bar, so R1 remains PARTIAL. The
+  canonical headline ($158\to342$, $+116\%$) is a **synthetic-velocity-field**
+  number; the real-ckpt basis gives $158\to271$ on seed 42
+  (`docs/audit/r1-3seed-real-ckpt-materialize.md`).
 - **R5b is conditional:** a genuine win at a single round, a genuine regression
   at two or more rounds. Only 2 of 4 schedulers win at N=1000.
 - **R5c flips direction** between the smoke checkpoint (framework wins) and the

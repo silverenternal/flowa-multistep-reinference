@@ -22,7 +22,7 @@
 - **claims_consistency:** PASS (61 active claims, 2 deprecated, 0 provisional; CLM-040 forced to PROVISIONAL by `Disputed by` citation; verified at Wave 384 audit)
 - **9-gate:** ALL PASS (verified at Wave 339; re-verified at Wave 342–346; **re-verified at Wave 384**)
 - **Venue:** TNNLS (IEEE Trans on Neural Networks and Learning Systems, CAS 1区 TOP) — switched from TPAMI at Wave 238 P3; `tnnls_submission/` package contains 8 files + supplementary bundle (`supplementary_bundle/`)
-- **Paper:** `docs/drafts/paper-A-final.pdf` (**11 pages, 448382 bytes, SHA-256 `747d0501...`**); title **"FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints"** (renamed during Waves 366–383; two figures added in Wave 385; manuscript-review defect fixes 2026-10-11 + 2026-10-12 consistency pass; GAP-14 novelty-differentiation paragraph added 2026-10-12); `.md` sha256 `9943fffb...`; `.tex` sha256 `46f1612e...`; evidence-comparison figure `docs/figures/fig9_cell_evidence_comparison.png` sha256 `4f3224bd...`
+- **Paper:** `docs/drafts/paper-A-final.pdf` (**11 pages, 460079 bytes, SHA-256 `a9883fc9...`**); title **"FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints"** (renamed during Waves 366–383; two figures added in Wave 385; manuscript-review defect fixes 2026-10-11 + 2026-10-12 consistency pass; GAP-14 novelty-differentiation paragraph added 2026-10-12; R1 3-seed real-ckpt basis-disclosure footnote added 2026-10-12); `.md` sha256 `0586a564...`; `.tex` sha256 `33f4ea9a...`; evidence-comparison figure `docs/figures/fig9_cell_evidence_comparison.png` sha256 `4f3224bd...`
 
 ## R-level experimental claims (load-bearing for paper §7.3 / §10.6)
 
