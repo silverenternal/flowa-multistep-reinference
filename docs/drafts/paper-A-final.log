@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.6.8)  12 OCT 2026 12:07
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.6.8)  12 OCT 2026 15:04
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1338,14 +1338,9 @@ Underfull \hbox (badness 10000) in paragraph at lines 452--453
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 452--453
-\OT1/pcr/m/n/10 reconstruction_kabsch_rmsd_[]A \OT1/ptm/m/n/10 (pro-tein
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 452--453
-\OT1/ptm/m/n/10 flow-AE, paired $\OML/cmm/m/it/10 N \OT1/cmr/m/n/10 = 1000$\OT1
-/ptm/m/n/10 ). Head-line sched-uler:
+Underfull \hbox (badness 2393) in paragraph at lines 452--453
+\OT1/pcr/m/n/10 reconstruction_kabsch_rmsd_[]A \OT1/ptm/m/n/10 (pro-tein flow-A
+E,
  []
 
 
@@ -1356,10 +1351,9 @@ Underfull \hbox (badness 2495) in paragraph at lines 452--453
  []
 
 
-Underfull \hbox (badness 2846) in paragraph at lines 452--453
-\OT1/ptm/m/n/10 Raw $\OML/cmm/m/it/10 p \OT1/cmr/m/n/10 = 1\OML/cmm/m/it/10 :\O
-T1/cmr/m/n/10 79 \OMS/cmsy/m/n/10 ^^B \OT1/cmr/m/n/10 10[]$\OT1/ptm/m/n/10 , Bo
-nferroni-significant at R-
+Underfull \hbox (badness 3989) in paragraph at lines 452--453
+\OT1/ptm/m/n/10 byte-stable $\OML/cmm/m/it/10 ^^[ \OT1/cmr/m/n/10 = 0$\OT1/ptm/
+m/n/10 ; the two arms are in-de-pen-dent,
  []
 
 [7 <../figures/fig9_cell_evidence_comparison.png>]
@@ -1448,7 +1442,7 @@ ptm/m/n/10 (data-capped at 200 by
  []
 
 
-Underfull \vbox (badness 10000) has occurred while \output is active []
+Underfull \vbox (badness 2478) has occurred while \output is active []
 
  [8]
 Underfull \hbox (badness 2626) in paragraph at lines 479--480
@@ -1492,11 +1486,6 @@ Underfull \hbox (badness 6559) in paragraph at lines 493--494
  []
 
 [9]
-Underfull \hbox (badness 1400) in paragraph at lines 515--516
-[]\OT1/ptm/m/n/10 R2 sup-ports a small paired re-con-struc-tion gain; R6's
- []
-
-
 Underfull \hbox (badness 3907) in paragraph at lines 521--522
 []\OT1/ptm/m/n/10 The frame-work's re-pro-ducibil-ity con-tract is en-forced
  []
@@ -1616,7 +1605,7 @@ rier/ucrb8a.pfb></usr/share/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr
 /share/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-dist/fonts
 /type1/urw/times/utmbi8a.pfb></usr/share/texmf-dist/fonts/type1/urw/times/utmr8
 a.pfb></usr/share/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on paper-A-final.pdf (11 pages, 448382 bytes).
+Output written on paper-A-final.pdf (11 pages, 448996 bytes).
 PDF statistics:
  467 PDF objects out of 1000 (max. 8388607)
  398 compressed objects within 4 object streams
