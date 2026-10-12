@@ -763,6 +763,60 @@
         "single_hardest_point": "无任何 cell 同时满足 live + 无条件 + 强效应"
       }
     },
+    "config_error_reassessment_2026_10_12": {
+      "date": "2026-10-12",
+      "assessed_at_head": "320cb11",
+      "trigger": "user: '之前跑实验的时候搞错配置了，有些本来强的东西被你说弱了，但真正弱的或者说差一点能赢的东西没有被修起来' — 用配置错误的视角重新审视记录在案的 verdict",
+      "thesis": "记录在案的 verdict 被配置错误**双向**扭曲: (1) 若干强 cell 因跑错配置被低估 (配置可修 → 应重测); (2) 若干弱 cell 因未修配置而未修起来。因此多个 verdict 是 lower bound, 不是框架的真实能力。",
+      "systemic_finding": {
+        "finding": "12/13 headline cells 用 CosineAnnealScheduler (结构性忽略全部 4 个 paper quantities); 仅 1/13 (R6) 用 paper-quantity-driven 的 TierAwareCodimensionSheetScheduler",
+        "evidence": "docs/audit/wave292-p2-config-genealogy.md:11-12 + docs/audit/wave287-p-scheduler-codepath-audit.md finding C-2",
+        "implication": "多数 cell 的 'framework' 其实没启用其核心机制 (paper-quantity 控制器) — 等于把框架的能力系统性测低",
+        "caveat": "这是配置选择 (cosine eps_implicit=0 默认), 不是代码 bug; 但后果与低估相同"
+      },
+      "verified_underestimates": {
+        "R1": {
+          "what": "3-seed real-ckpt run (2026-10-12, base 07098f6) 用 force_mode=auto, 但那是 D-004 修复 (a4b58de, 同日更晚) 之前 → adapter 输出全零 velocity field; framework 臂的改进 (seed42 158->271, DL d_z=+0.110) 只来自 restart-blend, 不含真实 LineageFlow flow",
+          "evidence": "docs/audit/lineageflow-real-forward-fix.md:19-22,83-84; docs/audit/r1-3seed-real-ckpt-materialize.md:34",
+          "verdict_is": "LOWER BOUND — 用 D-004 修复后的 adapter 重测可能显著更强",
+          "fix_available": true,
+          "also_affected": "wave349-r1-3seed-gpu/ (torch mode, pre-fix, 同样零 velocity)"
+        },
+        "R5b": {
+          "what": "headline 只报了 cosine scheduler 下的 REGRESSES; 同一 NFE/seed/ref 下, paper-quantity 控制器 codimension_sheet 得 framework_WINS -1.69% vs cosine +69.88%",
+          "evidence": "docs/audit/wave286-p-cifar-resweep-aggregated.md:120-147 (DIRECTION_FLIP_CONFIRMED|cos=+69.88% cod=-1.69% delta_pp=-71.57)",
+          "verdict_is": "'n_rounds>=2 REGRESSES' 是 cosine artifact; codim 下 framework-WINS (p_bonf=1.95e-3); nfe_aware_memory 也 -2.50% wins",
+          "fix_available": true
+        },
+        "R6": {
+          "what": "Wave 161 substrate 用 force_mode=synthetic (未训练 NumPy field); tier-aware uplift (d_z +0.2235) 是 CPU-only counterfactual; 无 live run",
+          "evidence": "docs/audit/wave361-r6-forensic-evidence-chain.md; paper-data/R6_lineageflow_k6/R6_SOURCE.md",
+          "verdict_is": "counterfactual + synthetic-basis; live 转换 0%",
+          "fix_available": "需 ~4-8h driver + GPU"
+        },
+        "R3": {
+          "what": "canonical seed-42 (0.6381->0.6146) 是 pre-tiling-fix adapter (e3f4072 untiled prior); 修复后 3-seed 聚合方向一致 (-0.0377) 但不显著",
+          "evidence": "docs/audit/r3-env-investigation.md §9",
+          "verdict_is": "已重测 (DONE 2026-10-12); 方向复现但 power 不足",
+          "fix_available": "已做"
+        },
+        "K1": {
+          "what": "K1 (FlowMol3 RDKit validity) d_z=+1.3645 borderline STRONG, 卡在 N=200 sample-size (p_bonf=0.054 略高于 0.0125)",
+          "evidence": "CLM-060 Wave 280 P addendum; docs/audit/wave280-p-k1-sweep-result.md",
+          "verdict_is": "power-limited; N=1000 重测可能转 STRONG",
+          "fix_available": true
+        }
+      },
+      "spurious_wins_already_corrected": [
+        "R5a/R4/R5: tanh-vs-ReLU adapter bug 造的 -7.28%/-10.40% 'wins' (fixed cd70821) — 修后转 TIE",
+        "R2 (historical): Wave 178-196 bridge-skip bug 造的 +0.66 Å spurious loss (fixed Wave 214); noise-collapse 2.5017 Å (fixed Wave 124)",
+        "R5c: STRONG d_z=-13.175 在 under-trained smoke ckpt 上; production ckpt framework-REGRESSES +10.37% (已披露)",
+        "K1: 早期 p_bonf=0.054 是错的, 实际 0.5676 (Wave 308 已 demote)",
+        "K7: baseline-only driver 造 d_z=+inf artifact (Wave 308 已 demote)"
+      ],
+      "implication": "多个 verdict 是'错误配置下的 lower bound'。在**修正配置**下重测, 可能把若干 PARTIAL 升级为 STRONG (尤其 R1 与 R5b), 并补齐'差一点能赢'的 cell。这不是粉饰 — 是把框架的真实机制 (paper-quantity 控制器 + 真实 flow) 真正启用后重测。",
+      "no_change": "CLM/paper/tnnls 冻结面不动; 本块是 task 优先级重排 + 证据记录"
+    },
     "gaps": [
       {
         "id": "R6-LIVE-TIERAWARE",
@@ -932,6 +986,62 @@
         "genuinely_left": "一个可测判据(在 >=1 个 cell 上命中方向)；否则定理保持 conditional diagnostic 定位",
         "status": "OPEN (定位已诚实；不建议再投入率/符号界)",
         "audit_2026_10_12": "见 reassessment_2026_10_12.due_diligence_per_gap.THEORY-TESTABLE-CRITERION。关键核查: Thm4/Thm5 均明确 disclaim FID 连接; 旧衰减界因 sign error 被 Wave 372 撤回; 唯一 near-hit (Wave 351 P3) 建立在已撤回 bound + 合成 RF field 上; 结构性 dead end (endpoint-L2 vs distributional feature distance)"
+      },
+      {
+        "id": "R1-REMEASURE-D004",
+        "priority": "P0",
+        "title": "R1: 用 D-004 修复后的 adapter 重跑 3-seed (真实 LineageFlow flow)",
+        "rationale": "现记录的 R1 3-seed real-ckpt (DL d_z=+0.110, PARTIAL) 是在 D-004 修复前跑的: adapter 输出全零 velocity field, framework 臂的改进只来自 restart-blend。D-004 (a4b58de) 已让 force_mode=auto 走真实 LineageFlowClassifier + compute_family_vector_field。用修复后 adapter 重测是**最高性价比**的潜在升级 (R1 可能从 PARTIAL 转 STRONG)。",
+        "already_done": [
+          "D-004 修复已提交 (a4b58de); 真实 forward pass CPU smoke 通过 (非零/有限/simplex-tangent)",
+          "R1 3-seed 重跑配方已备 (docs/audit/r1-3seed-real-ckpt-materialize.md §2)"
+        ],
+        "genuinely_left": "重跑 3-seed × N=1000 × 2 arms (--upstream-eval-len-bias short) + HMMER + zero-fallback 校验 + DL meta",
+        "resource": "~2.5h wall (同上次)",
+        "status": "OPEN",
+        "audit_2026_10_12": "见 config_error_reassessment_2026_10_12.verified_underestimates.R1"
+      },
+      {
+        "id": "R5B-REMEASURE-PAPER-SCHEDULER",
+        "priority": "P0",
+        "title": "R5b: 用 paper-quantity 控制器 (codimension_sheet) 重跑",
+        "rationale": "R5b headline 的 'n_rounds>=2 REGRESSES' 是 cosine scheduler artifact。同一 NFE/seed/ref 下 codimension_sheet 得 framework_WINS -1.69% vs cosine +69.88% (71.57pp flip, wave286)。用 codim 重跑可能把 R5b 从 '条件性/回归' 转成无条件 framework-WINS。",
+        "already_done": [
+          "5-scheduler × N=200 × 3-seed 对比已在盘 (docs/audit/wave286-p-cifar-resweep-aggregated.md §4): codim -1.69% wins, nfe_aware_memory -2.50% wins, cosine +69.88% regresses",
+          "n_rounds=1 已有 3-seed 支持 (pooled d_z 4.21)"
+        ],
+        "genuinely_left": "用 codimension_sheet (或 nfe_aware_memory) 重跑 R5b 的 n_rounds ∈ {1,2,3} matched-NFE 多 seed 扫描",
+        "resource": "~30-60 min GPU",
+        "status": "OPEN",
+        "audit_2026_10_12": "见 config_error_reassessment_2026_10_12.verified_underestimates.R5b"
+      },
+      {
+        "id": "SCHEDULER-PAPER-QUANTITY-SYSTEMIC",
+        "priority": "P0",
+        "title": "系统性: 用 paper-quantity 控制器重测 headline cells (12/13 现用 cosine)",
+        "rationale": "12/13 headline cells 用 CosineAnnealScheduler — 它结构性忽略全部 4 个 paper quantities, 即框架的核心机制没启用。仅 R6 用了 paper-quantity 控制器。这是最深层的低估来源。",
+        "already_done": [
+          "配置家谱已在盘 (docs/audit/wave292-p2-config-genealogy.md)",
+          "codim 控制器在 CIFAR-10 RF 上已证明可翻转 verdict (wave286)"
+        ],
+        "genuinely_left": "选 1-2 个 headline cell, 用 paper-quantity 控制器 (codimension_sheet / nfe_aware_memory) 重测, 验证是否系统性升级",
+        "resource": "视 cell 而定; 先做 R5b (已备配方) 作为试点",
+        "status": "OPEN",
+        "audit_2026_10_12": "见 config_error_reassessment_2026_10_12.systemic_finding"
+      },
+      {
+        "id": "K1-N1000-POWER",
+        "priority": "P1",
+        "title": "K1: FlowMol3 RDKit validity N=1000 重测 (当前卡在 N=200 power)",
+        "rationale": "K1 d_z=+1.3645 borderline STRONG, 仅卡在 N=200 样本量 (p_bonf=0.054 > 0.0125)。N=1000 可能转 STRONG。",
+        "already_done": [
+          "K1 3-seed N=200 sweep 已完成 (docs/audit/wave280-p-k1-sweep-result.md)",
+          "R3 的 tiling 修复 (0f62c27) 已让 batched path 恢复 100% valid yield"
+        ],
+        "genuinely_left": "K1 N=1000 3-seed 重测",
+        "resource": "~30-60 min GPU (复用 R3 修复后的 batched path)",
+        "status": "OPEN",
+        "audit_2026_10_12": "见 config_error_reassessment_2026_10_12.verified_underestimates.K1"
       }
     ],
     "not_real_gaps_already_canonical": [
@@ -941,11 +1051,14 @@
       "文档漂移(标题/页数/SHA): Wave 384 已系统性刷新，非实证 gap"
     ],
     "recommended_attack_order": [
-      "1. R6-LIVE-TIERAWARE (最高杠杆: 把唯一强效应 cell 从 counterfactual 转 live; 但最贵: 先写 ~4-8h driver, 再 ~5h fold-only 或 ~26-53h full)",
-      "2. R5B-MULTISEED-ROUNDCOUNT (~30 min GPU: n_rounds=2 加 seeds 43/44 + 补 n_rounds=3; cheapest closure)",
-      "3. R5C-MATCHED-ARCH (~20 min: materialize epochs=1@16ch/60K + N=200 sweep; 去混杂)",
-      "4. THEORY-TESTABLE-CRITERION (低 ROI: 维持 repositioned 定位, 不建议再追 FID-sign bridge)",
-      "note: R1 / R3 / D-004 本轮已完成, 从原列表移除 (见 reassessment_2026_10_12)"
+      "1. R1-REMEASURE-D004 (P0, ~2.5h): 用 D-004 修复后 adapter 重跑 R1 3-seed — 现 d_z=+0.110 是零-velocity lower bound; 可能升 STRONG。最高性价比",
+      "2. R5B-REMEASURE-PAPER-SCHEDULER (P0, ~30-60min): 用 codimension_sheet 重跑 — 现 'REGRESSES' 是 cosine artifact (71.57pp flip 已证)",
+      "3. SCHEDULER-PAPER-QUANTITY-SYSTEMIC (P0): 12/13 cells 用 cosine (忽略 paper quantities); 以 R5b 为试点验证系统性升级",
+      "4. R6-LIVE-TIERAWARE (P0, 最贵): 唯一强效应 cell 靠 counterfactual; 先写 ~4-8h driver 再 ~5h/~26-53h",
+      "5. K1-N1000-POWER (P1, ~30-60min): 卡 N=200, 升 N=1000 可能转 STRONG",
+      "6. R5C-MATCHED-ARCH (P1, ~20min): 去混杂",
+      "7. THEORY-TESTABLE-CRITERION (低 ROI): 维持 repositioned 定位",
+      "note: 优先级按 config_error_reassessment_2026_10_12 重排 — 先修配置再重测被低估的强 cell, 而非先追最贵的 R6"
     ],
     "cross_refs": [
       "todo/SUBMISSION-GAP-CHECKLIST.md",
