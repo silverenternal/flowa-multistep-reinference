@@ -185,10 +185,16 @@ none. The concern is structurally impossible for these five cells.
   **synthetic NumPy velocity field** (backend `numpy`) — "validity numbers will
   sit near zero on both arms until real FlowMol3 weights land". So it is not a
   real-fg_dev tuned-baseline either.
-- **Residual:** a tuned-baseline comparison on the fg_dev / RDKit-validity axis
-  requires the **real FlowMol3 production checkpoint pipeline** at elevated NFE
-  (not reproducible from the harnesses available here). R3 and K1 share this one
-  blocker (same model).
+- **Residual (now runnable, not env-blocked):** the real N=1000 paired pipeline
+  DOES run — `scripts/wave338_p5_r3_n1000_paired.py --n-total 1000 --nfe 250
+  --seeds 42 43 44 --device cuda:0` (the RDKit 2026.03.5 blocker was **refuted**
+  in `docs/audit/gap02-r3-n1000-resolved.md`; the real cause was a prior-tiling
+  bug, fixed). The script exposes `--nfe`, but applies it to **both** arms
+  (no independent baseline-NFE flag), so a tuned-baseline sweep needs a small
+  driver extension (allowed — `scripts/` is owned by the experiment-sweep
+  skill) plus a free GPU slot. R3 and K1 share this one blocker (same model).
+  Deferred here only because both GPUs are occupied by the GAP-01 / GAP-04
+  sweeps.
 
 ### 4.3 R5a — 2D Two Moons — **straw-man REAL (magnitude not robust)**
 
