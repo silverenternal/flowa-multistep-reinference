@@ -41,38 +41,86 @@ work; it does not perform it.
 - The **theory is conditional and partly outsourced** (Theorems 4/5 are a
   conditional contraction + an arithmetic identity; the sampling-measure
   convergence result lives in a companion paper this one does not depend on).
-- Several **credibility landmines** remain: an extrapolated speedup presented
-  near the abstract, an overstated formal-verification claim, a 99.6 %-I² pooled
-  meta-analysis, and an un-tuned-baseline exposure.
+
+## 1.5 Verification pass (2026-10-12, post-checklist)
+
+A verification pass against the **live manuscript** (`docs/drafts/paper-A-final.md`)
+found that most of the *framing/honesty* items below were **already handled** — the
+earlier assessment over-relied on aggregate surfaces (`docs/RELEASE-NOTES.md`,
+`todo/WAVES.md`, `tnnls_submission/SUBMISSION_READINESS.md`) rather than the
+manuscript itself. Corrected status:
+
+| ID | Corrected status | Evidence (live manuscript) |
+|---|---|---|
+| GAP-05 | **VERIFIED — already handled** | §7.2 R5c row reads "STRONG (smoke ckpt) / REGIME-DEPENDENT"; §7.9 conditions it |
+| GAP-06 | **VERIFIED — already handled** | §1(v) + §7.2 + §11.1 all qualify each STRONG cell ("R2, conditional R5b, smoke-checkpoint R5c, counterfactual R6") |
+| GAP-07 | **VERIFIED — already handled** | §1 + §7.7 disclose the 2.5–10× range as an extrapolation; §11.1 states the measured Tier-1 speedup is 1.0× |
+| GAP-08 | **VERIFIED — already handled** | §7.2 R2 row carries a full honest disclosure (synthetic input coords, framework-internal RMSD) |
+| GAP-10 | **VERIFIED — already handled** | §11.1: the residual-correction explanation is "a hypothesis ... not a consequence of Theorems 4–5" |
+| GAP-11 | **NARROWED (minor)** | the manuscript does not headline a pooled `d_z`/I²; only the bibliography references the meta-analysis methodology |
+| GAP-13 | **VERIFIED — already disclosed** | no Lean/formal claim in the manuscript; `submission_checklist.md` row 12 marks it `PENDING (PENDING_MATHLIB_CACHE)` |
+
+Two **new, real** defects were found by the same pass and are added below as
+**GAP-21** (a manuscript test-citation cluster). GAP-18 is expanded accordingly.
 
 ## 2. Scoreboard
 
-| ID | Priority | Owner | One-line gap |
-|---|---|---|---|
-| GAP-01 | P0 | gpu | R6: counterfactual-STRONG → live-GPU-STRONG |
-| GAP-02 | P0 | gpu | R3: N=1000 PROJECTED → ACTUAL |
-| GAP-03 | P0 | gpu | R1: single-seed → 3-seed |
-| GAP-04 | P0 | gpu | R5b: matched-protocol multi-seed round-count test |
-| GAP-05 | P0 | agent(+gpu) | R5c: production-ckpt regime stated conditionally |
-| GAP-06 | P0 | agent | Headline reframe: unconditional vs conditional STRONG |
-| GAP-07 | P0 | agent | NFE speedup: drop 2.5–10× extrapolation; state measured 1.0× |
-| GAP-08 | P0 | agent(+gpu) | R2: the one unconditional STRONG — strengthen or scope |
-| GAP-09 | P1 | agent(+gpu) | Theory: testable criterion for `q<1` / blend benefit |
-| GAP-10 | P1 | agent | Mechanism (residual correction): test it or scope it |
-| GAP-11 | P1 | agent | I²=99.6 % pooled meta-analysis: drop or re-aggregate |
-| GAP-12 | P1 | agent(+gpu) | Baseline fairness: matched-NFE + tuned baseline |
-| GAP-13 | P1 | agent/user | Lean 4 claim: finish or downscope |
-| GAP-14 | P1 | agent | Novelty boundary vs prior training-free methods |
-| GAP-15 | P1 | user | Venue-fit decision (TNNLS vs reposition) |
-| GAP-16 | P2 | agent | 31 deferred reviewer-facing gaps |
-| GAP-17 | P2 | gpu | K2/K6 env-blocked per-cell sweeps |
-| GAP-18 | P2 | agent | Dead link in manuscript §7.11 (wave280 contamination doc) |
-| GAP-19 | P2 | agent | Stale citations / state pins |
-| GAP-20 | P2 | user | 17 `[USER TO FILL]` cover-letter placeholders |
+| ID | Priority | Owner | Status | One-line gap |
+|---|---|---|---|---|
+| GAP-01 | P0 | gpu | OPEN | R6: counterfactual-STRONG → live-GPU-STRONG |
+| GAP-02 | P0 | gpu | OPEN | R3: N=1000 PROJECTED → ACTUAL |
+| GAP-03 | P0 | gpu | OPEN | R1: single-seed → 3-seed |
+| GAP-04 | P0 | gpu | OPEN | R5b: matched-protocol multi-seed round-count test |
+| GAP-05 | P0 | agent | VERIFIED | R5c regime already stated conditionally |
+| GAP-06 | P0 | agent | VERIFIED | headline already qualified per cell |
+| GAP-07 | P0 | agent | VERIFIED | NFE extrapolation already disclosed |
+| GAP-08 | P0 | agent | VERIFIED | R2 scope already disclosed |
+| GAP-09 | P1 | agent(+gpu) | OPEN | Theory: testable criterion for `q<1` / blend benefit |
+| GAP-10 | P1 | agent | VERIFIED | mechanism already scoped as a hypothesis |
+| GAP-11 | P1 | agent | NARROWED | bibliography meta-analysis cross-ref (minor) |
+| GAP-12 | P1 | agent(+gpu) | OPEN | Baseline fairness: matched-NFE + tuned baseline |
+| GAP-13 | P1 | agent/user | VERIFIED | Lean claim already marked PENDING |
+| GAP-14 | P1 | agent | OPEN | Novelty boundary vs prior training-free methods |
+| GAP-15 | P1 | user | OPEN | Venue-fit decision (TNNLS vs reposition) |
+| GAP-16 | P2 | agent | OPEN | 31 deferred reviewer-facing gaps |
+| GAP-17 | P2 | gpu | OPEN | K2/K6 env-blocked per-cell sweeps |
+| GAP-18 | P2 | agent | OPEN | Dead link in manuscript §7.11 (wave280 contamination doc) |
+| GAP-19 | P2 | agent | OPEN | Stale Q1-odds citations (50-65 vs 60-75; §11.1 disclosure removed at Wave 370) |
+| GAP-20 | P2 | user | OPEN | 17 `[USER TO FILL]` cover-letter placeholders |
+| GAP-21 | **P0** | agent | OPEN | Manuscript cites ~10 test files that never existed (+ unverifiable pass counts) |
 
 ---
 
 ## 3. P0 — load-bearing
+
+> **Note (2026-10-12 verification pass):** GAP-05 / GAP-06 / GAP-07 / GAP-08 are
+> **already handled** in the live manuscript (see §1.5). They are retained below
+> for the record; no edit is needed.
+
+### GAP-21 — Manuscript cites test files that never existed (NEW, P0)
+- **Owner:** agent.
+- **Finding:** §3.4–§3.7 of `docs/drafts/paper-A-final.md` cite ~10 test files
+  with parenthetical pass counts (e.g. `tests/test_protocol_conformance.py`
+  "80/80 PASS", `tests/test_condition_auto_wrap.py` "40/40 PASS",
+  `tests/test_capability_handshake.py` "50/50 PASS",
+  `tests/test_state_machine_byte_deterministic.py` "60/60 PASS",
+  `tests/test_ledger_chain.py` "50/50 PASS", …). **None of these paths ever
+  existed in git history** (`git log --all -- <path>` → empty) and none exist on
+  disk, so every such link 404s and every pass count is unverifiable.
+- **Already known:** `docs/audit/wave352-framework-code-anchors.md` §2.1 item 1
+  documented this as "pre-existing paper drift … out of scope"; it was never fixed.
+- **Blocker:** the real files do not correspond 1:1 to the cited names (e.g.
+  `test_ledger_chain.py` → `tests/test_frame/test_ledger_chain.py`;
+  `test_protocol_conformance.py` → `tests/test_universal/test_adapter_protocol_conformance.py`;
+  `test_condition_auto_wrap.py` → `tests/test_universal/test_condition_typed.py`),
+  and the cited pass counts do not match the real files' test counts.
+- **Action (needs a decision):** repoint each citation to the real file **and**
+  either (a) replace the pass count with the real measured count, or (b) drop the
+  parenthetical count and point at the test suite / audit trail.
+- **Handle:** `docs/drafts/paper-A-final.md` §3.4–§3.7;
+  `docs/audit/wave352-framework-code-anchors.md` §2.1.
+- **Acceptance:** every cited test path resolves; no unverifiable pass count remains.
+  *(Editing the manuscript triggers the rebuild + SHA-ledger loop.)*
 
 ### GAP-01 — R6: convert counterfactual-STRONG to live-GPU-STRONG
 - **Owner:** gpu (launch is user-gated).
@@ -232,17 +280,36 @@ work; it does not perform it.
 - **Owner:** gpu. **Action:** pin the env and sweep, or retain the honest
   disclosure. **Handle:** `tnnls_submission/SUBMISSION_READINESS.md` PENDING #5.
 
-### GAP-18 — Dead link in manuscript §7.11
-- **Owner:** agent. **Action:** §7.11 (line 568) cites
-  `docs/audit/wave280-p-framework-fallback-contamination.md`, which **does not
-  exist**; repoint to the canonical `docs/audit/wave280-p-r1-sweep-result.md`.
-  **Handle:** `docs/drafts/paper-A-final.md` §7.11.
+### GAP-18 — Dead links in the manuscript
+- **Owner:** agent. **Action:** a systematic sweep of the manuscript's
+  `github.com/.../blob|tree/main/<path>` links found **15 missing paths** (73
+  distinct linked paths checked). Two are audit-doc links
+  (`docs/audit/wave280-p-framework-fallback-contamination.md` at §7.11 line 568 →
+  canonical `docs/audit/wave280-p-r1-sweep-result.md`; `docs/audit/wave183-p4-aggregate.md`
+  → the real artifact is `verification_outputs/wave183-p4-aggregate.py`), ~10 are
+  the test-citation cluster (**GAP-21**), and 3 are `data/` directory links
+  (`data/cifar/`, `data/kanzi/upstream/`, `data/flowmol3/repo/`) that resolve on a
+  full vendored checkout but not in this tree.
+- **Handle:** `docs/drafts/paper-A-final.md`; the sweep script (ad-hoc `re` over
+  `blob|tree/main/<path>` URLs).
+- **Acceptance:** every audit-doc link resolves; `data/` links either resolve or
+  are scoped as checkout-dependent.
 
-### GAP-19 — Stale citations / state pins
-- **Owner:** agent. **Action:** (a) `tnnls_submission/SUBMISSION_READINESS.md`
-  cites a §11.1 "Q1 acceptance-probability 60–75 %" that the current §11.1 no
-  longer contains — fix or remove; (b) `todo/README.md` pinned HEAD/ahead stale.
-  **Handle:** `tnnls_submission/SUBMISSION_READINESS.md`; `todo/README.md`.
+### GAP-19 — Stale Q1-odds citations (submission docs)
+- **Owner:** agent. **Finding:** the §11.1 "Q1 acceptance-probability 60-75 %"
+  disclosure was **deliberately removed at Wave 370** (`62154e0`, a user-authorized
+  destructive rewrite; `git log -S "60-75"` confirms). Yet three submission-facing
+  surfaces still cite it:
+  (a) `tnnls_submission/MANIFEST.md` row 32's provenance text ("Wave 354 P3 ADDITIVE:
+  §1 abstract + §11.1 … Q1 acceptance 60-75 % disclosure");
+  (b) `tnnls_submission/SUBMISSION_READINESS.md` §5 + §1 ("§11.1 … 60-75 %");
+  (c) `tnnls_submission/submission_checklist.md:87` ("50-65 %", contradicting the
+  other two).
+- **Action:** reconcile the three surfaces (and decide whether a Q1-odds estimate
+  belongs in the submission docs at all, given it was removed from the paper).
+  **Note:** editing `MANIFEST.md` re-hashes its self-SHA row.
+- **Handle:** `tnnls_submission/MANIFEST.md`; `tnnls_submission/SUBMISSION_READINESS.md`;
+  `tnnls_submission/submission_checklist.md`.
 
 ### GAP-20 — Cover-letter placeholders
 - **Owner:** user. **Action:** fill the 17 `[USER TO FILL]` fields at submission
