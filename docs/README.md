@@ -102,9 +102,9 @@ archival trace.
 | [`PERFORMANCE_BUDGETS.md`](PERFORMANCE_BUDGETS.md) | Kernel p95 wall-clock budgets and the regression gate that fails CI on hot-path regressions. |
 | [`environments.md`](environments.md) | The two-tier venv layout: one project venv (`.venv`, stdlib-only framework) + per-model venvs under `.venvs/`. |
 | [`reproduce.md`](reproduce.md) | How to reproduce the headline results end-to-end. |
-| [`reproducibility_record.md`](reproducibility_record.md) | The reproducibility record: environment hash, seeds, and per-cell recipes. |
+| [`reproducibility_record.md`](reproducibility_record.md) | **Historical** Wave-15 reproducibility record (2026-09-05); the current recipe is [`reproduce.md`](reproduce.md). |
 | [`verification_outputs.md`](verification_outputs.md) | Guide to the byte-addressable `verification_outputs/` tree. |
-| [`code-release-checklist.md`](code-release-checklist.md) | Pre-release checklist for the source tree. |
+| [`code-release-checklist.md`](code-release-checklist.md) | **Historical** release-archive checklist for tag `v1.0.1-paper-final` (2026-09-14); the current release process is [`RELEASING.md`](RELEASING.md). |
 | [`governance/`](governance/) | Governance audit documents: code organisation, algorithm, framework, test/CI, fix plan, verification report. |
 | [`audit/PHASE4_DOCSTRING_AUDIT.md`](audit/PHASE4_DOCSTRING_AUDIT.md) | Phase-4 docstring audit. |
 
@@ -129,6 +129,7 @@ intentionally archival and rot-tolerant.
 - [`paper-final-neurips.md`](paper-final-neurips.md) — superseded venue draft.
 - **Superseded compiled PDFs** — [`paper-final-neurips.pdf`](paper-final-neurips.pdf) (NeurIPS-era), [`paper-eaai.pdf`](paper-eaai.pdf) (EAAI-era), [`paper-tnnls.pdf`](paper-tnnls.pdf) (byte-identical duplicate of `paper-eaai.pdf`). Retained for provenance; the live PDF is [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf).
 - **Superseded top-level submission artifacts** — [`../cover_letter.md`](../cover_letter.md) (ICLR-2027 / NeurIPS-workshop era), [`../submission_checklist.md`](../submission_checklist.md) (ICLR-2027 era, Wave 97), and [`../supplementary.md`](../supplementary.md) (NeurIPS/ICML-era template, Wave 97) are **legacy and read by no current tooling** (each carries a top banner). The canonical TNNLS package is [`../tnnls_submission/`](../tnnls_submission/); the EAAI-era package is archived at [`../eaai_submission/`](../eaai_submission/).
+- **Legacy / historical `docs/` documents** (each carries a top banner; full classification in [`audit/docs-legacy-inventory.md`](audit/docs-legacy-inventory.md)) — **legacy/superseded:** [`submission-checklist-final.md`](submission-checklist-final.md) (NeurIPS-era; → [`../tnnls_submission/submission_checklist.md`](../tnnls_submission/submission_checklist.md)), [`push-ready-summary.md`](push-ready-summary.md) (Wave 72-74; → [`../todo/PUSH-READY.md`](../todo/PUSH-READY.md)), [`STRATEGY_FRAMEWORK_SCOPE.md`](STRATEGY_FRAMEWORK_SCOPE.md) (2026-09-04 draft). **Historical records:** [`code-release-checklist.md`](code-release-checklist.md) (tag `v1.0.1-paper-final`), [`reproducibility_record.md`](reproducibility_record.md) (Wave 15).
 - [`ARCHIVE/`](ARCHIVE/) — historical context, intentionally **not** part of the
   live mkdocs build (enforced by `mkdocs.yml` `exclude_docs`). Preserved on disk
   for archaeology; not maintained and not reachable from the GitHub Pages nav.

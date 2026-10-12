@@ -1,5 +1,10 @@
 # Reproducibility Validation Record
 
+> **HISTORICAL (Wave 15, 2026-09-05).** A point-in-time reproducibility record; the
+> current reproducibility recipe lives in [`../README.md`](../README.md) (the
+> reproducibility section) and [`reproduce.md`](reproduce.md). Retained for
+> provenance only.
+
 Date: 2026-09-05T03:48:00Z (Wave 15 F.2 refresh; preserves Wave 6 baseline)
 Trigger: Wave 14 baseline audit (F.2 = 4/8 REPRODUCED, 1/8 PARTIAL, 3/8 NOT_REPRODUCED) + Wave 15 F.2 reproduction flip per `todo/algo-improvement-f2-reproduction.md`
 Hardware: GPU 0 (RTX PRO 6000, 97887 MiB); GPU 1 (RTX 5090, 32607 MiB) **NOT touched** (per user directive).

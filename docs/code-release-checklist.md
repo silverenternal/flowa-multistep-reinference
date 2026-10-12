@@ -1,5 +1,9 @@
 # Code Release Archive Checklist (2026-09-14)
 
+> **HISTORICAL (release record, 2026-09-14).** A point-in-time checklist for the
+> `v1.0.1-paper-final` archive; not the current release process (see
+> [`RELEASING.md`](RELEASING.md)). Retained for provenance only.
+
 ## Source archive
 
 - **Tag:** `v1.0.1-paper-final`

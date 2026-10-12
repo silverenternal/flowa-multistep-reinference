@@ -1,5 +1,12 @@
 # Final Submission Pre-Flight Checklist (2026-09-14)
 
+> **LEGACY (NeurIPS-era, 2026-09-14) — not the submission checklist.** This
+> pre-flight checklist predates the TNNLS switch (it references a NeurIPS-template
+> PDF and a double-blind draft, and cites `docs/supplementary-neurips.pdf`, which no
+> longer exists). The canonical checklist is
+> [`../tnnls_submission/submission_checklist.md`](../tnnls_submission/submission_checklist.md).
+> Retained for provenance only.
+
 ## A. Paper package
 - [ ] docs/paper-final-neurips.pdf — NeurIPS-template PDF (≤9 pages for main text)
 - [ ] docs/paper-draft-anonymous.md — double-blind review version

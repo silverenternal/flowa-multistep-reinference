@@ -1,5 +1,9 @@
 # Push-Ready Summary — Wave 72 closure + Wave 73 multi-tier story + Wave 74 FlowMol3 F1-F5 closure
 
+> **LEGACY (Wave 72-74, 2026-09-08) — not the current push status.** Superseded by
+> [`../todo/PUSH-READY.md`](../todo/PUSH-READY.md) and the live state in
+> [`../todo/WAVES.md`](../todo/WAVES.md). Retained for provenance only.
+
 **Date:** 2026-09-08
 **Wave:** 72 closure (pre-push synthesis) + Wave 73 (multi-tier story) + Wave 74 (FlowMol3 v2 composite reproducibility closure) — **final pre-push state**
 **Role:** Author the pre-push summary + final commit. NO push (per locked-in constraint).

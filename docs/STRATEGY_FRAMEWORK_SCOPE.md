@@ -1,5 +1,10 @@
 # Framework Scope Strategy: SOTA Models vs Toy Validation
 
+> **LEGACY (draft, 2026-09-04) — not the current framework scope.** A
+> point-in-time "Draft for review" written during the OOM-driven scope
+> re-evaluation; the finalized scope lives in [`../README.md`](../README.md) and
+> [`ARCHITECTURE.md`](ARCHITECTURE.md). Retained for provenance only.
+
 **Date:** 2026-09-04
 **Status:** Draft for review
 **Trigger:** 80GB OOM on FlowMol3 N=5000 paper-parity run (2026-09-04 04:36:57);
