@@ -554,6 +554,80 @@ def test_checkpoint_compat_shim_preserves_upstream_core_package_path() -> None:
                 sys.modules[name] = mod
 
 
+def test_d004b_real_classifier_path_uses_random_simplex_restart(monkeypatch) -> None:
+    """D-004b regression: on the real-classifier path the fresh restart state is
+    a per-record RANDOM simplex; the synthetic path keeps the canonical
+    near-uniform draw.
+
+    The canonical ``_synthesize_latent_like_tensor`` gives ``1/K + U(0, 1e-6)``
+    — per-record variation ~1e-6. Once the deterministic real flow is live that
+    contributes no per-record signal, so the framework arm collapses onto one
+    trajectory (0 Pfam hits — see ``docs/audit/r1-d004-remeasure.md``). The
+    restart perturbation is the pipeline's only per-record seed carrier, so the
+    branch must fire there — and ONLY on the real-classifier marker, so the
+    synthetic path stays byte-identical.
+    """
+    from adaptive_reflow.adapters import lineageflow as lf
+
+    # (1) The random-simplex sampler is a valid simplex, per-record distinct,
+    # and genuinely non-uniform on the AA dims (unlike the canonical init).
+    a = lf._synthesize_random_simplex(np.random.default_rng(0))
+    b = lf._synthesize_random_simplex(np.random.default_rng(1))
+    assert a.shape == LINEAGEFLOW_STATE_SHAPE
+    assert np.allclose(a.sum(axis=-1), 1.0)
+    assert not np.allclose(a, b)
+    aa_dim = int(lf.LINEAGEFLOW_AA_VOCAB)
+    assert a[:, :aa_dim].std() > 1e-3
+    u = lf._synthesize_latent_like_tensor(np.random.default_rng(0))
+    assert u[:, :aa_dim].std() < 1e-5
+
+    # (2) The branch fires only on ``_is_lineageflow_classifier``.
+    calls = {"random": 0, "uniform": 0}
+    real_rand = lf._synthesize_random_simplex
+    real_uni = lf._synthesize_latent_like_tensor
+
+    def _count(key, fn):
+        def _wrapped(rng):
+            calls[key] += 1
+            return fn(rng)
+        return _wrapped
+
+    monkeypatch.setattr(lf, "_synthesize_random_simplex", _count("random", real_rand))
+    monkeypatch.setattr(lf, "_synthesize_latent_like_tensor", _count("uniform", real_uni))
+
+    import types
+
+    def _policy() -> FinalRestartPolicy:
+        return FinalRestartPolicy(
+            policy_id=PolicyId("uniform-beta-0.5"),
+            writer_id="inference.adaptive_reflow",
+            run_id=RunId("test-run"),
+            target_round=0,
+            outer_cycle_id=0,
+            beta_by_channel={AMINO_ACID_CATEGORICAL: FactorValue(0.5)},
+            alpha_by_channel={AMINO_ACID_CATEGORICAL: FactorValue(1.0)},
+            fresh_noise_floor_by_channel={AMINO_ACID_CATEGORICAL: FactorValue(0.0)},
+            schedule_sample=None,
+            freeze_admission_by_channel={AMINO_ACID_CATEGORICAL: True},
+            ledger_row_id=LedgerRowId("ledger-uniform-beta-0.5"),
+            policy_hash=ArtifactHash("d004b"),
+            created_at_round=0,
+            beta_from_schedule=False,
+        )
+
+    adapter = _make_adapter(num_steps=4)
+    bundle = adapter.build_initial_state(batch_id="d004b", sample_id="s0")
+    calls["random"] = calls["uniform"] = 0  # reset after the init draw
+
+    adapter._model = None
+    adapter.apply_restart_distribution(bundle, _policy())
+    assert calls == {"random": 0, "uniform": 1}
+
+    adapter._model = types.SimpleNamespace(_is_lineageflow_classifier=True)
+    adapter.apply_restart_distribution(bundle, _policy())
+    assert calls == {"random": 1, "uniform": 1}
+
+
 def test_shim_unblocks_torch_load_on_real_ckpt() -> None:
     """End-to-end: with the shim installed, ``torch.load`` can resolve
     the pickled ``core.sampler.SamplerConfig`` class reference in the

@@ -1016,14 +1016,15 @@
         "title": "LineageFlow 真实前向路径: per-record 随机 simplex 初始化 (D-004b)",
         "rationale": "R1-REMEASURE-D004 证明: D-004 让真实 flow 生效后, framework 臂因 build_initial_state 的近均匀/逐记录相同初始化而塌缩成单轨迹 (0 hits)。要公平测量真实前向基线, 必须先给它一个合法的随机噪声初始化。",
         "already_done": [
-          "根因已定位: _synthesize_latent_like_tensor = 1/K + U(0,1e-6) (lineageflow.py:518-526)",
-          "N=20 bounded probe 已验证方向: 把初始化换成 per-record softmax(randn(L,K)) (Wave-41 工具的噪声约定, tools/run_lineageflow_real_ckpt.py:212-215) 后多样性恢复 (20/20 唯一序列, 20/20 唯一 30-AA 前缀), 输出呈蛋白样; HMMER N=20 baseline 4 vs framework 3 (n 太小, 不足以下结论)"
+          "根因已精确定位 (两处): (1) _build_initial_state_and_condition (tools/eval/baseline.py:44-65) 接受 seed 参数但从不使用, 且 _solve_framework 始终用默认 batch_id='eval'/sample_id='s0' -> x0 对每条记录完全相同; (2) 管线唯一的 per-record seed 载体是 restart 扰动 (restart_seed 折入 per-record policy hash)",
+          "隔离探针 (N=20): 只改 init 采样器无效 (仍 1 个唯一 30-AA 前缀); 只改 restart fresh 采样器 -> 多样性完全恢复 (20/20 唯一前缀)"
         ],
-        "genuinely_left": "实现分支 (仅在 _is_lineageflow_classifier 为真时用随机 simplex 初始化, 保证 synthetic 模式字节稳定 + D.4 向量不回归) + 3-seed N=1000 重测 + HMMER + DL meta",
+        "genuinely_left": "在 apply_restart_distribution 的 fresh 采样处加分支 (仅 _is_lineageflow_classifier 为真时用 _synthesize_random_simplex; synthetic 保持字节稳定 + D.4 向量不回归) + 3-seed N=1000 重测 + HMMER + DL meta",
         "resource": "~30min 实现+测试; ~1.5h 生成; ~25min HMMER",
-        "status": "OPEN",
-        "caveat": "这是 framework/method 级改动 (改变噪声分布), 需谨慎; synthetic 模式必须字节不变",
-        "audit_2026_10_12": "见 docs/audit/r1-d004-remeasure.md §6/§10"
+        "status": "IMPLEMENTED",
+        "pilot_2026_10_12": "N=200 seed42: 200/200 唯一序列 + 200/200 唯一前缀, zero fallback, HMMER baseline 37 vs framework 49 (framework 领先)",
+        "caveat": "这是 framework/method 级改动 (改变 restart fresh 状态分布), 需谨慎; synthetic 模式必须字节不变",
+        "audit_2026_10_12": "见 docs/audit/r1-d004-remeasure.md §6/§10 + docs/audit/r1-d004b-remeasure.md"
       },
       {
         "id": "R5B-REMEASURE-PAPER-SCHEDULER",

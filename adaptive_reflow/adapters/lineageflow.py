@@ -526,6 +526,38 @@ def _synthesize_latent_like_tensor(rng: np.random.Generator) -> ArrayF64:
     return np.asarray(theta, dtype=np.float64).reshape(LINEAGEFLOW_STATE_SHAPE)
 
 
+def _synthesize_random_simplex(rng: np.random.Generator) -> ArrayF64:
+    """Sample a per-record random ``(L, K)`` per-position categorical (D-004b).
+
+    Used **only** on the real-classifier path, as the *fresh restart state* in
+    :meth:`LineageFlowAdapter.apply_restart_distribution`. The canonical
+    :func:`_synthesize_latent_like_tensor` draws ``1/K + U(0, 1e-6)`` — a
+    near-uniform simplex whose per-record variation is ~1e-6. That is fine for
+    the synthetic velocity field, but once the deterministic *real* flow is
+    live every record follows the same ODE trajectory and the framework arm
+    collapses onto a single sequence (0 Pfam hits — see
+    ``docs/audit/r1-d004-remeasure.md``). The restart perturbation is the
+    pipeline's only per-record seed carrier, so it must supply the diversity.
+
+    Here the AA dims are drawn as ``softmax(randn(L, AA_VOCAB))`` — the Wave-41
+    tool's noise convention (``tools/run_lineageflow_real_ckpt.py:212-215``).
+    The special-token dims keep the canonical uniform share so the row stays on
+    the simplex; after the row is renormalised, the real field's own
+    ``x[:, :AA_VOCAB]`` renormalisation recovers exactly ``softmax(randn)``.
+    """
+    L = int(LINEAGEFLOW_STATE_SHAPE[0])
+    K = int(LINEAGEFLOW_VOCAB_SIZE)
+    aa_dim = int(LINEAGEFLOW_AA_VOCAB)
+    logits = rng.standard_normal((L, aa_dim))
+    z = logits - logits.max(axis=-1, keepdims=True)
+    aa = np.exp(z)
+    aa = aa / aa.sum(axis=-1, keepdims=True)
+    theta = np.full((L, K), 1.0 / float(K), dtype=np.float64)
+    theta[:, :aa_dim] = aa
+    theta = theta / theta.sum(axis=-1, keepdims=True)
+    return np.asarray(theta, dtype=np.float64).reshape(LINEAGEFLOW_STATE_SHAPE)
+
+
 # ---------------------------------------------------------------------------
 # Conditioning cache helpers
 # ---------------------------------------------------------------------------
@@ -1969,7 +2001,21 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
             if offset:
                 seed = (seed + offset) & 0xFFFF_FFFF
             fresh_rng = np.random.default_rng(seed)
-            fresh_theta = _synthesize_latent_like_tensor(fresh_rng)
+            # D-004b — on the REAL-classifier path the fresh restart state is a
+            # per-record RANDOM simplex. The canonical uniform+jitter draw
+            # (variation ~1e-6) contributes essentially no per-record signal,
+            # so once the deterministic real flow is live every record follows
+            # the SAME ODE trajectory and the framework arm collapses to one
+            # sequence (0 Pfam hits — docs/audit/r1-d004-remeasure.md). The
+            # restart perturbation is the pipeline's only per-record seed
+            # carrier (``restart_seed`` folds in the per-record policy hash),
+            # so this is where the diversity has to come from. Branch ONLY on
+            # the real-classifier marker: the synthetic path stays
+            # byte-identical (D.4 vectors preserved).
+            if getattr(self._model, "_is_lineageflow_classifier", False):
+                fresh_theta = _synthesize_random_simplex(fresh_rng)
+            else:
+                fresh_theta = _synthesize_latent_like_tensor(fresh_rng)
             perturbation_audit: tuple[str, ...] = ()
         else:
             # Opt-in path. ``paper_quantities`` is read from the prior

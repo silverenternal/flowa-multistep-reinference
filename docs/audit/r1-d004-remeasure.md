@@ -106,12 +106,20 @@ individually overwhelming.
 
 ## 6. Root cause — the real flow collapses to one trajectory
 
-The framework's `build_initial_state` → `_synthesize_latent_like_tensor` draws a
-**near-uniform** per-position simplex for every record
-(`1/K + U(0, 1e-6)`, `adaptive_reflow/adapters/lineageflow.py:518-526`). The
-per-record seed only perturbs the 10⁻⁶ jitter. Under the (now live)
-**deterministic** real velocity field every record therefore follows the *same*
-trajectory:
+The initial state is **record-independent**. `build_initial_state` seeds its RNG
+from `seed_from_ids(batch_id, sample_id, seed_offset)`; the eval pipeline reaches
+it through `_build_initial_state_and_condition(adapter, seed=…, nfe=…)`
+(`tools/eval/baseline.py:44-65`), which **accepts a `seed` argument but never
+uses it** — it calls
+`adapter.build_initial_state(batch_id="eval", sample_id="s0")` with the defaults,
+and `_solve_framework` never overrides them. So every record is built with the
+**same** `(batch_id, sample_id, seed_offset)` → the **same `x0`**. The
+near-uniform draw (`1/K + U(0, 1e-6)`,
+`adaptive_reflow/adapters/lineageflow.py:518-526`) compounds this: even a
+per-record random draw would not help while the seed is constant.
+
+Under the (now live) **deterministic** real velocity field every record
+therefore follows the *same* trajectory:
 
 | arm (seed 42) | unique sequences / 1000 | unique 30-AA prefixes |
 |---|---:|---:|
@@ -122,16 +130,23 @@ The 121 distinct framework sequences are just 121 distinct **lengths** (30–150
 AA) — i.e. truncations of one collapsed sequence. That sequence is a
 low-complexity poly-S/A/T string with no Pfam domain, hence 0 hits.
 
-The pre-D-004 runs escaped the collapse only because the zero velocity field left
-the **restart-blend perturbation RNG** as the sole source of per-record
-diversity. Remove the zero-field accident (i.e. actually run the model) and the
-framework arm has no stochastic input at all.
+The pipeline's **only per-record seed carrier is the restart perturbation**:
+`apply_restart_distribution` derives `restart_seed` from
+`(policy.policy_hash, next_round)`, and the per-round policy hash folds in the
+per-record seed. The pre-D-004 runs escaped the collapse only because the zero
+velocity field left that restart RNG as the sole source of diversity; remove the
+zero-field accident (i.e. actually run the model) and the canonical uniform
+restart draw (per-record variation ~10⁻⁶) contributes nothing either.
 
-**Bounded diagnostic probe** (N=20, not a recorded result): monkeypatching the
-init to a per-record random simplex `softmax(randn(L, K))` — the Wave-41 tool's
-noise convention (`tools/run_lineageflow_real_ckpt.py:212-215`) — restores full
-diversity (20/20 unique sequences, 20/20 unique 30-AA prefixes) and protein-like
-output; HMMER at N=20 gives baseline 4 vs framework 3 (inconclusive at this n).
+**Bounded diagnostic probes** (N=20, not recorded results): branching the
+*initial-state* sampler to a per-record random simplex changes nothing (still 1
+unique 30-AA prefix), confirming the init is not the lever. Branching the
+*restart* fresh-state sampler to a per-record random simplex
+`softmax(randn(L, AA_VOCAB))` — the Wave-41 tool's noise convention
+(`tools/run_lineageflow_real_ckpt.py:212-215`) — restores full diversity (20/20
+unique sequences, 20/20 unique 30-AA prefixes) with protein-like output. This
+motivates the follow-up **D-004b** (recorded separately in
+`docs/audit/r1-d004b-remeasure.md`).
 
 ---
 
@@ -150,9 +165,11 @@ this audit is a **new, additive** observation and does not rewrite it. R1's
 status label is untouched here.
 
 **Implication:** R1 cannot be measured on a real-forward basis until the
-framework arm has a valid stochastic initialization for the real flow. That is a
-distinct follow-up (**D-004b**), recorded in `todo.json`; it is **not** applied
-here (it is a framework/method change, not a recording step).
+framework arm carries a per-record seed into the real-flow path. That is the
+distinct follow-up **D-004b** (branch the *restart* fresh-state sampler on the
+real-classifier marker), recorded in `todo.json` and in
+`docs/audit/r1-d004b-remeasure.md`; the D-004 re-measurement above does **not**
+apply it.
 
 ---
 
@@ -188,10 +205,16 @@ here (it is a framework/method change, not a recording step).
 ## 10. Unresolved / noted
 
 - **D-004b (follow-up, not taken here):** give the real-classifier path a
-  per-record stochastic initialization (random simplex), branching on
+  per-record stochastic *restart* fresh state (random simplex), branching on
   `_is_lineageflow_classifier` so the synthetic-mode byte-stability (D.4 vectors)
   is untouched. Requires a fresh 3-seed N=1000 re-measure to know whether the
-  real-forward basis is competitive with the baseline.
+  real-forward basis is competitive with the baseline. See
+  `docs/audit/r1-d004b-remeasure.md`.
+- **The init seed is not threaded per record.** `_build_initial_state_and_condition`
+  (`tools/eval/baseline.py:44-65`) takes a `seed` argument it never uses, so
+  `x0` is identical for every record. Fixing that would change the shared
+  baseline path and every recorded cell, so it is **not** attempted here; the
+  targeted D-004b restart branch is the freeze-safe lever.
 - **`alpha_h` remains a synthetic Dirichlet prior** — the released checkpoint
   ships no real Pfam priors (documented limitation of D-004,
   `docs/audit/lineageflow-real-forward-fix.md`).
