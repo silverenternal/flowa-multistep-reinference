@@ -474,6 +474,82 @@ def test_torch_velocity_field_dtype_argmax_long_does_not_raise() -> None:
 
 
 # ---------------------------------------------------------------------------
+# D-004 — real upstream classifier path (non-zero velocity)
+# ---------------------------------------------------------------------------
+
+
+class _StubRealClassifier:
+    """Minimal stand-in for the upstream ``LineageFlowClassifier``.
+
+    Exposes only what :func:`_lineageflow_real_velocity_field` touches:
+    ``.parameters()`` (device discovery), a keyword forward returning
+    ``(1, L, 20)`` logits, and the loader-injected
+    ``_lineageflow_vf_fn`` + ``_is_lineageflow_classifier`` marker.
+    """
+
+    _is_lineageflow_classifier = True
+
+    def __init__(self, torch_mod: object) -> None:
+        self._torch = torch_mod
+        self._p = torch_mod.zeros(1, dtype=torch_mod.float32)  # type: ignore[attr-defined]
+        self._lineageflow_vf_fn = self._vf
+
+    def parameters(self):  # noqa: ANN201 - duck-typed torch surface
+        return iter([self._p])
+
+    def __call__(self, *, x_simplex, t, pad_mask, gap_flag, family_id=None):  # noqa: ANN001, ANN204, ARG002
+        return self._torch.zeros_like(x_simplex)
+
+    def _vf(self, x, t, logits, alpha_h, *, pad_mask=None, gap_mask=None):  # noqa: ANN001, ANN204, ARG002
+        # Deterministic non-zero (constant) field so the test can assert
+        # the real branch was exercised.
+        return self._torch.ones_like(x) * 0.01
+
+
+def test_torch_velocity_field_uses_real_classifier_when_marked() -> None:
+    """D-004 regression: when the loaded model is the real upstream
+    ``LineageFlowClassifier`` (``_is_lineageflow_classifier`` set by
+    :func:`_load_torch_model`), ``_torch_velocity_field`` must run the
+    real path — project the 33-dim state to the 20-dim AA simplex, call
+    the classifier + ``compute_family_vector_field``, and embed the
+    ``(L, 20)`` velocity back into ``(L, 33)`` with the special-token
+    dims zeroed (so the field stays tangent to the simplex).
+
+    Before the D-004 fix the torch path emitted an all-zero velocity
+    (``h.new_zeros``); this test pins the non-zero real branch with a
+    stub classifier, so no 10.5 GB checkpoint is required.
+    """
+    torch = pytest.importorskip("torch")
+
+    from adaptive_reflow.adapters.lineageflow import (
+        LINEAGEFLOW_AA_VOCAB,
+        _torch_velocity_field,
+    )
+
+    model = _StubRealClassifier(torch)
+    x = np.full(
+        LINEAGEFLOW_STATE_SHAPE, 1.0 / LINEAGEFLOW_VOCAB_SIZE, dtype=np.float64,
+    )
+
+    out = _torch_velocity_field(
+        model=model,
+        x=x,
+        t=0.5,
+        dtype=torch.float32,
+        cache={},
+        guidance_scale=1.0,
+    )
+
+    assert out.shape == LINEAGEFLOW_STATE_SHAPE
+    assert out.dtype == np.float64
+    assert np.isfinite(out).all()
+    # Real branch: the AA dims carry the (non-zero) model velocity ...
+    assert np.any(out[:, :LINEAGEFLOW_AA_VOCAB] != 0.0)
+    # ... and the special-token dims are zeroed.
+    assert np.all(out[:, LINEAGEFLOW_AA_VOCAB:] == 0.0)
+
+
+# ---------------------------------------------------------------------------
 # Wave 59 Agent 4 — PerturbationPolicy wiring
 # ---------------------------------------------------------------------------
 

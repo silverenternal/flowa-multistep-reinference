@@ -146,6 +146,17 @@ from adaptive_reflow.universal.state import (
 #: Pfam amino-acid alphabet used by ESM-2.
 LINEAGEFLOW_VOCAB_SIZE: int = 33
 
+#: Amino-acid simplex dimension used by the upstream
+#: ``LineageFlowClassifier`` (``FlowTransformerConfig.aa_vocab = 20``).
+#: The framework state's FIRST 20 dims are the 20 standard amino acids
+#: in ``ACDEFGHIKLMNPQRSTVWY`` order (the same convention the FASTA
+#: writer decodes via ``idx % 20`` — see
+#: ``tools/gen_lineageflow_n1000_fastas.py`` ``AA_SET``). The real
+#: upstream forward pass consumes this 20-dim AA simplex; the
+#: framework's 33-dim state is projected to it in
+#: :func:`_torch_velocity_field`.
+LINEAGEFLOW_AA_VOCAB: int = 20
+
 #: Canonical LineageFlow maximum sequence length. The published
 #: checkpoint integrates over sequences up to 1024 tokens; the
 #: framework defaults to 256 (a Pfam-family-domain typical length)
@@ -229,6 +240,23 @@ LINEAGEFLOW_NUM_STEPS_DEFAULT: int = 100
 #: ``t=1`` (final integration endpoint). LineageFlow integrates over
 #: the linear interpolation ``[0, 1]`` flow-matching interval.
 LINEAGEFLOW_T_END: float = 1.0
+
+#: Upstream ``FlowTransformerConfig.alpha_max`` — the model's native
+#: flow horizon ``τ ∈ [alpha_min, alpha_max] = [0, 16]``. The framework
+#: integrates its own normalised ``t ∈ [0, 1]`` grid, so
+#: :func:`_torch_velocity_field` maps ``τ = t * LINEAGEFLOW_TAU_MAX``
+#: before calling the real classifier (full-horizon coverage). See
+#: ``data/lineageflow_upstream/models/model.py`` (``alpha_min`` /
+#: ``alpha_max`` / ``normalize_time``).
+LINEAGEFLOW_TAU_MAX: float = 16.0
+
+#: Deterministic seed for the synthetic family prior ``alpha_h``.
+#: Upstream ships family priors as separate JSON assets
+#: (``dataset/pfam_priors_asr_mad/*.prior.json``) that are NOT part of
+#: the released checkpoint and are not vendored here, so the adapter
+#: synthesises a fixed Dirichlet-style prior (mirrors
+#: ``tools/run_lineageflow_real_ckpt.py``). Recorded as a limitation.
+LINEAGEFLOW_ALPHA_H_SEED: int = 0x1C_70_1F_11  # "LGFLOW" mnemonic + 1
 
 #: Available samplers. ``"euler"`` is the 1st-order baseline;
 #: ``"heun"`` is the 2nd-order predictor-corrector used by the
@@ -539,9 +567,89 @@ def _synthetic_family_conditioning(
     }
 
 
+def _synthesize_alpha_h(L: int, *, dtype: Any) -> Any:
+    """Build a deterministic synthetic family prior ``alpha_h`` ``(L, 20)``.
+
+    Upstream ships family priors as separate JSON assets
+    (``dataset/pfam_priors_asr_mad/*.prior.json``) that are **not** part
+    of the released ``lineageflow-rp55.ckpt`` and are not vendored in
+    this repo. The real forward pass therefore needs a prior; we build a
+    fixed Dirichlet-style prior with concentration 10, byte-identical to
+    the formula used by ``tools/run_lineageflow_real_ckpt.py`` and
+    ``scripts/baselines/_lineageflow_helpers.py`` (seeded by
+    :data:`LINEAGEFLOW_ALPHA_H_SEED` so it is deterministic). This is an
+    honest limitation: the prior is synthetic, so no family-specific
+    claim follows from the vector field.
+    """
+    import torch  # local import - torch is optional at the framework level.
+
+    gen = torch.Generator().manual_seed(int(LINEAGEFLOW_ALPHA_H_SEED))
+    alpha = torch.rand((int(L), int(LINEAGEFLOW_AA_VOCAB)),
+                       generator=gen, dtype=torch.float64) * 0.5 + 0.25
+    alpha = alpha * (10.0 / alpha.sum(dim=-1, keepdim=True))
+    return alpha.to(dtype)
+
+
 # ---------------------------------------------------------------------------
 # Torch velocity field - production path; requires ``torch`` runtime
 # ---------------------------------------------------------------------------
+
+
+def _lineageflow_real_velocity_field(
+    model: Any,
+    x: ArrayF64,
+    t: float,
+    *,
+    dtype: Any,
+) -> ArrayF64:
+    """Real upstream LineageFlow velocity field for the 33-dim framework state.
+
+    Projects the framework's ``(L, 33)`` amino-acid + special-token
+    simplex to the upstream model's 20-dim AA simplex (first
+    :data:`LINEAGEFLOW_AA_VOCAB` dims, renormalised), runs the real
+    ``LineageFlowClassifier`` (ESM-2-650M backbone + flow head), and maps
+    the resulting ``(L, 20)`` velocity back into the ``(L, 33)`` state
+    (special-token dims zeroed, so the field stays tangent to the
+    simplex). The framework's normalised time ``t ∈ [0, 1]`` is mapped to
+    the model's native horizon ``τ = t * LINEAGEFLOW_TAU_MAX``.
+
+    ``alpha_h`` is a synthetic Dirichlet prior (:func:`_synthesize_alpha_h`)
+    — the real Pfam priors are not vendored in this repo. The sequence is
+    treated as all-valid with no gaps (the adapter carries no per-position
+    validity mask). See ``docs/audit/lineageflow-real-forward-fix.md``.
+    """
+    import torch  # local import - torch is optional at the framework level.
+
+    device = next(model.parameters()).device
+    L = int(x.shape[0])
+    x_aa = np.asarray(x[:, :LINEAGEFLOW_AA_VOCAB], dtype=np.float64)
+    x_aa = x_aa / np.maximum(x_aa.sum(axis=-1, keepdims=True), 1e-30)
+
+    xt = torch.as_tensor(x_aa, dtype=dtype, device=device).unsqueeze(0)
+    tt = torch.full(
+        (1,), float(t) * float(LINEAGEFLOW_TAU_MAX), dtype=dtype, device=device,
+    )
+    pad_mask = torch.ones((1, L), dtype=torch.bool, device=device)
+    gap_mask = torch.zeros((1, L), dtype=torch.bool, device=device)
+    alpha_h = _synthesize_alpha_h(L, dtype=dtype).to(device)
+
+    with torch.no_grad():
+        logits = model(
+            x_simplex=xt,
+            t=tt,
+            pad_mask=pad_mask,
+            gap_flag=gap_mask,
+            family_id=None,
+        )
+        v20 = model._lineageflow_vf_fn(  # noqa: SLF001 - injected by the loader
+            xt, tt, logits, alpha_h, pad_mask=pad_mask, gap_mask=gap_mask,
+        )
+
+    v33 = np.zeros((L, int(LINEAGEFLOW_VOCAB_SIZE)), dtype=np.float64)
+    v33[:, :LINEAGEFLOW_AA_VOCAB] = (
+        v20.squeeze(0).detach().cpu().numpy().astype(np.float64)
+    )
+    return v33.reshape(LINEAGEFLOW_STATE_SHAPE)
 
 
 def _torch_velocity_field(
@@ -563,11 +671,25 @@ def _torch_velocity_field(
     (inference-only determinism), and the result is cast back to a
     NumPy ``(L, K)`` float64 array.
 
+    Two model shapes are supported:
+
+    * **Real upstream classifier** (``_is_lineageflow_classifier`` set by
+      :func:`_load_torch_model`): dispatched to
+      :func:`_lineageflow_real_velocity_field` — the real ESM-2-650M +
+      flow head + Dirichlet vector field. ``guidance_scale`` is accepted
+      for Protocol parity but **unused** (upstream LineageFlow has no
+      classifier-free guidance).
+    * **Bare ``EsmModel``** (legacy fallback): the encoder's hidden state
+      is degraded to a zero ``(B, L, K)`` projection (no flow head).
+
     NOTE - this is the protocol-boundary call. The internal rotary
     positional embeddings / per-position timestep / Pfam-family MLP
     are implementation details; the adapter treats them as opaque.
     """
     import torch  # local import - torch is optional at the framework level.
+
+    if getattr(model, "_is_lineageflow_classifier", False):
+        return _lineageflow_real_velocity_field(model, x, t, dtype=dtype)
 
     with torch.no_grad():
         # F-4 fix (Wave 47 Agent B): the loaded ESM-2 encoder expects
@@ -646,6 +768,67 @@ _LINEAGEFLOW_UPSTREAM_DIR: str = (
 )
 
 
+def _try_import_lineageflow_upstream() -> dict[str, Any] | None:
+    """Import the upstream LineageFlow forward surface, or ``None`` on failure.
+
+    Reaches the vendored upstream tree (``data/lineageflow_upstream/``) via
+    a ``sys.path.insert`` (upstream ships no ``setup.py``/``pyproject.toml``,
+    so this is the only honest way in — mirrors
+    ``tools/run_lineageflow_real_ckpt.py``). Returns a dict with whatever
+    resolved::
+
+        {"classifier": LineageFlowClassifier,            # models.model
+         "config": FlowTransformerConfig,                # models.model
+         "load_checkpoint_state": fn,                    # inference.inference
+         "compute_family_vector_field": fn}              # inference.inference
+
+    Individual entries are ``None`` when their module failed to import
+    (e.g. a venv without ``transformers``); the whole function returns
+    ``None`` only when the path is missing or nothing resolved. On
+    success the upstream dir stays on ``sys.path`` so later imports in the
+    same process reuse it.
+    """
+    import importlib
+    import sys
+
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    upstream = repo_root / _LINEAGEFLOW_UPSTREAM_DIR
+    if not upstream.exists():
+        return None
+    upstream_str = str(upstream)
+    if upstream_str not in sys.path:
+        sys.path.insert(0, upstream_str)
+
+    out: dict[str, Any] = {
+        "classifier": None,
+        "config": None,
+        "load_checkpoint_state": None,
+        "compute_family_vector_field": None,
+    }
+    try:
+        # The class lives in the ``models.model`` submodule (upstream's
+        # ``models/__init__.py`` is empty, so ``import models`` alone does
+        # NOT expose ``LineageFlowClassifier``).
+        model_mod = importlib.import_module("models.model")
+        out["classifier"] = getattr(model_mod, "LineageFlowClassifier", None)
+        out["config"] = getattr(model_mod, "FlowTransformerConfig", None)
+    except Exception:  # noqa: BLE001 - honest degrade to None
+        pass
+    try:
+        inference_mod = importlib.import_module("inference.inference")
+        out["load_checkpoint_state"] = getattr(
+            inference_mod, "load_checkpoint_state", None
+        )
+        out["compute_family_vector_field"] = getattr(
+            inference_mod, "compute_family_vector_field", None
+        )
+    except Exception:  # noqa: BLE001 - honest degrade to None
+        pass
+    if all(v is None for v in out.values()):
+        return None
+    return out
+
+
 def _try_import_lineageflow_classifier() -> Any | None:
     """Import ``LineageFlowClassifier`` from upstream, returning ``None`` on failure.
 
@@ -656,13 +839,16 @@ def _try_import_lineageflow_classifier() -> Any | None:
     than raising. This matches the Wave 45 Agent A review
     recommendation (§6a — adapter-layer honest fallback).
 
-    The function is intentionally side-effect-only on success: it
-    inserts the upstream dir at ``sys.path[0]`` so subsequent
-    ``import``s within the same process find the same module. On
-    failure the path is untouched.
+    NOTE: this probe imports the ``models`` package (whose
+    ``__init__.py`` is empty upstream) rather than ``models.model``, so
+    it returns ``None`` on this vendored tree — i.e. the
+    :class:`LineageFlowClassifierAwareRestart` policy always uses its
+    deterministic per-position proxy. That behaviour is **preserved
+    verbatim** (byte-stable restart blending); the real
+    ``models.model.LineageFlowClassifier`` is reached only by
+    :func:`_try_import_lineageflow_upstream` for the forward pass.
     """
     import importlib
-    import os
     import sys
 
     repo_root = Path(__file__).resolve().parent.parent.parent
@@ -670,26 +856,13 @@ def _try_import_lineageflow_classifier() -> Any | None:
     if not upstream.exists():
         return None
     upstream_str = str(upstream)
-    inserted = upstream_str not in sys.path
-    if inserted:
+    if upstream_str not in sys.path:
         sys.path.insert(0, upstream_str)
     try:
-        # The upstream ``models`` package also pulls in ESM and
-        # fair-esm deps. A failure here is the common case in CPU
-        # / sidecar-less environments.
         models_pkg = importlib.import_module("models")
-        cls = getattr(models_pkg, "LineageFlowClassifier", None)
-        if cls is None:
-            return None
-        return cls
-    except Exception:
+        return getattr(models_pkg, "LineageFlowClassifier", None)
+    except Exception:  # noqa: BLE001 - honest degrade to None
         return None
-    finally:
-        # We do NOT pop the path we inserted even on failure — once a
-        # sidecar has successfully injected it once, downstream tests
-        # should not have to re-inject. The cost is at most a single
-        # extra entry in ``sys.path``.
-        del os
 
 
 def _lineageflow_classifier_confidence_proxy(theta: ArrayF64) -> ArrayF64:
@@ -1134,12 +1307,24 @@ def _load_torch_model(weights_path: Path) -> Any:
     import torch  # local import - torch is optional.
 
     def _builder(p: Path) -> Any:
-        """Build the real LineageFlow ESM-2 + flow head (or shape-only stub).
+        """Build the real LineageFlow model (or shape-only stub).
 
-        Re-runs ``torch.load`` so the local ``sd`` variable can be
-        passed to :meth:`EsmModel.load_state_dict`. The shim is still
-        installed by :func:`load_real_weights` so the pickle resolution
-        succeeds.
+        Preference order:
+
+        1. **Real upstream ``LineageFlowClassifier``** (ESM-2-650M backbone
+           + flow head), when the upstream tree at
+           ``data/lineageflow_upstream/`` imports and the checkpoint
+           carries the flow head (``out_head.weight``). This is the real
+           forward pass; :func:`_torch_velocity_field` detects it via the
+           ``_is_lineageflow_classifier`` marker.
+        2. **Bare ``EsmModel``** (legacy fallback): loads the encoder only;
+           the flow head is absent so the velocity field degrades to zero.
+        3. **``_StubLineageFlow``** shape-only placeholder when
+           ``transformers`` is not installed in this venv.
+
+        Re-runs ``torch.load`` so the local ``sd`` variable can be passed
+        to ``load_state_dict``. The shim is still installed by
+        :func:`load_real_weights` so the pickle resolution succeeds.
 
         Returns the stub only on ``ImportError`` /
         ``ModuleNotFoundError`` (transformers is not installed in this
@@ -1149,6 +1334,32 @@ def _load_torch_model(weights_path: Path) -> Any:
         """
         state = torch.load(str(p), map_location="cpu", weights_only=False)
         sd = state.get("state_dict", state)
+
+        # --- (1) Real upstream LineageFlowClassifier (preferred). The
+        # checkpoint's Lightning state_dict keys are prefixed with
+        # "model."; upstream ``load_checkpoint_state`` strips that prefix,
+        # so mirror it here to avoid a third 10.5 GB torch.load. The
+        # ``out_head.weight`` guard is load-bearing: a minimal / fake ckpt
+        # (as used by the capability-missing test) has no flow head and
+        # must fall through to the EsmModel path so its honest-failure
+        # semantics are preserved.
+        upstream = _try_import_lineageflow_upstream()
+        if upstream is not None and all(
+            upstream.get(k) is not None
+            for k in ("classifier", "config", "compute_family_vector_field")
+        ):
+            sd_stripped = {
+                str(k).replace("model.", ""): v for k, v in sd.items()
+            }
+            if "out_head.weight" in sd_stripped:
+                model = upstream["classifier"](upstream["config"]())
+                model.load_state_dict(sd_stripped, strict=False)
+                model.eval()
+                model._is_lineageflow_classifier = True
+                model._lineageflow_vf_fn = upstream[
+                    "compute_family_vector_field"
+                ]
+                return model
 
         # Inspect key shapes to derive the model config.
         try:

@@ -474,8 +474,8 @@
       "id": "D-004-lineageflow-blocked-resolution",
       "title": "Decide LineageFlow BLOCKED resolution (find upstream core source vs declare design-only)",
       "priority": "P0",
-      "status": "pending",
-      "phase": "pending",
+      "status": "done",
+      "phase": "done",
       "execution_wave": 12,
       "depends_on": [],
       "effort_estimate": "5-30 min depending on resolution",
@@ -485,14 +485,21 @@
         "todo/models/lineageflow.md §G updated with chosen path",
         "either: LineageFlowAdapter can run real forward pass (option a) OR LineageFlowAdapter is removed and §F verdict is \"design-only\" (option b)"
       ],
+      "resolution": "OPTION (a) — real forward pass. The upstream source tree is vendored at data/lineageflow_upstream/ (upstream commit ccef84ad) and the LineageFlowAdapter torch path now builds the real models.model.LineageFlowClassifier (657.6M params, ckpt load missing=0/unexpected=0) + inference.inference.compute_family_vector_field (D-004 fix, 2026-10-12). Evidence: docs/audit/lineageflow-real-forward-fix.md (bounded real-ckpt smoke: non-zero, finite, simplex-tangent velocity) + tools/run_lineageflow_real_ckpt.py (Wave 41). Acceptance-criteria path note: todo/models/lineageflow.md was superseded by docs/models/lineageflow.model_card.md (now corrected).",
+      "residual_caveats": [
+        "alpha_h family prior is synthetic (upstream ships it as a separate JSON asset that is not vendored)",
+        "adapter uses the base-flow vector field, not the upstream intervention/mutation sampler (generate_with_intervention)",
+        "LineageFlowClassifierAwareRestart probe preserved verbatim (restart blending byte-stable)"
+      ],
+      "completed_at": "2026-10-12",
       "created_at": "2026-09-05T03:00:00Z"
     },
     {
       "id": "Phase-2-first-next-model",
       "title": "Phase 2 first next-model analysis (after LineageFlow): write todo/models/<model>.md for next RANKING.md candidate",
       "priority": "P0",
-      "status": "pending",
-      "phase": "pending",
+      "status": "done",
+      "phase": "done",
       "execution_wave": 12,
       "depends_on": [
         "A1-phase1-acceptance"
@@ -505,6 +512,8 @@
         "RANKING.md updated with new model entry",
         "next-model §C explicitly checks upstream source availability (LL-001 enforcement)"
       ],
+      "resolution": "SUPERSEDED. The todo/models/<model>.md + RANKING.md surface was replaced by docs/models/*.model_card.md (Mitchell/Gebru 8-field cards). Seven model cards now exist — flowmol3, freqflow, kanzi, lineageflow, rectified_flow_cifar, self_flow, twodim_fm — so Phase 2 was executed well beyond the 'first next model'. Neither todo/models/ nor RANKING.md exists at HEAD.",
+      "completed_at": "2026-10-12",
       "created_at": "2026-09-05T03:00:00Z"
     }
   ],

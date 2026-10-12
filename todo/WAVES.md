@@ -325,6 +325,15 @@ pass before any work starts.
 - **D-004 — No re-runs on synthetic shims.** A synthetic-only re-run produces no
   new signal; either unblock the real forward pass or classify the model as
   design-only.
+  - *Resolved for LineageFlow (2026-10-12).* The upstream source tree is vendored
+    at `data/lineageflow_upstream/`, and the `LineageFlowAdapter` torch path now
+    builds the real `models.model.LineageFlowClassifier` + the real
+    `compute_family_vector_field` (D-004 fix; bounded real-ckpt smoke shows a
+    non-zero, finite, simplex-tangent velocity). Residual caveats: the `alpha_h`
+    family prior is synthetic, and the adapter uses the base-flow vector field,
+    not the upstream intervention/mutation sampler. Audit:
+    `docs/audit/lineageflow-real-forward-fix.md`. The manuscript's R1 row is
+    unchanged (the real-ckpt basis fork is disclosed additively).
 
 ---
 

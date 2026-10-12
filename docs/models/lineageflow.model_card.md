@@ -5,14 +5,17 @@
 **Card status:** COMPLETE (8/8 fields populated; production torch-mode
 ckpt loading is **UNBLOCKED** via the Wave 39 5-LOC `_install_checkpoint_compat`
 shim — mirrors upstream `_install_checkpoint_compat()` in
-`inference/inference.py:39-59`. The real forward pass additionally
-requires the upstream `core` source repo + a CUDA host; the
-synthetic-mode Protocol surface remains fully wired and tested.
-25/25 tests pass on CPU in ~18 s; 1 real-ckpt end-to-end test loads
-the 10.5 GB published checkpoint with the shim installed and confirms
-the encoder `word_embeddings` tensor shape = `(33, 1280)` matches the
-paper).
-**Last updated:** 2026-09-05 (Wave 39 Agent B).
+`inference/inference.py:39-59`). **The real forward pass now runs in the
+adapter**: the upstream source tree is vendored at
+`data/lineageflow_upstream/`, and the torch path builds the real
+`models.model.LineageFlowClassifier` (657.6 M params) + the real
+`inference.inference.compute_family_vector_field` (D-004 fix, 2026-10-12;
+see `docs/audit/lineageflow-real-forward-fix.md`). The synthetic-mode
+Protocol surface remains fully wired and tested. 25/25 hand-written tests
+pass on CPU in ~18 s; 1 real-ckpt end-to-end test loads the 10.5 GB
+published checkpoint with the shim installed and confirms the encoder
+`word_embeddings` tensor shape = `(33, 1280)` matches the paper.
+**Last updated:** 2026-10-12 (D-004 real-forward-pass fix).
 **F.4 gate:** PASS (≥ 0.8 per-model target met).
 
 ---
@@ -39,7 +42,7 @@ paper).
   Generated sequences must **not** be deployed as drug candidates
   or therapeutic proteins without expert review.
 
-## 2. Training Data — **BLOCKED on upstream core**
+## 2. Training Data — upstream `core` vendored; forward pass unblocked
 
 - **Source.** Pfam families (El-Gebali et al. 2019) — 88 600
   proteins across 8 886 families per the paper.
@@ -51,20 +54,19 @@ paper).
   SHA-256 verified: `f0b4b25e626878be5c26da9e65d44c2e1551a076652d416f955b1357cde54a2b`).
   The checkpoint stores `hyper_parameters["sampler_cfg"]` which
   carries the runtime knob-set for the per-family sampler.
-- **BLOCKED field — upstream `core` source repo.** The ckpt
-  pickle references `core.sampler.SamplerConfig` and the
-  `core.sampler.*` / `core.flow_model.*` runtime; the upstream
-  `core` source is **unreachable from this environment**
-  (GitHub not surfaced, sandbox network blocks
-  drive.google.com, huggingface.co HEAD requests, github.com
-  sometimes blocked). Without `core.sampler.SamplerConfig` the
-  real model cannot run. **This field is BLOCKED on the upstream
-  `core` source being reconstructed.** Until then, the
-  training-data description above is sourced from the paper +
-  the ckpt `hyper_parameters` blob, not from a real forward
-  pass.
+- **Upstream `core` source repo — now VENDORED (D-004, 2026-10-12).** The
+  ckpt pickle references `core.sampler.SamplerConfig` (shimmed by
+  `_install_checkpoint_compat`) and the upstream `core` /
+  `models.model` / `inference.inference` modules. Those are vendored at
+  `data/lineageflow_upstream/` (upstream commit `ccef84ad`), so the real
+  model now loads and runs: the adapter builds
+  `models.model.LineageFlowClassifier(FlowTransformerConfig())` and loads
+  the ckpt with **missing=0 / unexpected=0**. **This field is no longer
+  blocked.** The training-data description above is still sourced from the
+  paper + the ckpt `hyper_parameters` blob (the released checkpoint ships
+  no dataset), but a real forward pass now runs end-to-end.
 
-## 3. Evaluation Data — **BLOCKED on upstream core**
+## 3. Evaluation Data — real forward pass runs; prior is synthetic
 
 - **Held-out reference.** Per-paper Pfam held-out families.
 - **Evaluator.** `family_validity` (the paper's headline metric,
@@ -74,11 +76,14 @@ paper).
 - **Why this is the right eval.** `family_validity` is the
   paper's own metric; framework-vs-baseline comparison is
   the natural framework value-add claim.
-- **BLOCKED field.** All empirical `family_validity` /
-  `avg_log_likelihood` / `amino_acid_diversity` numbers on the
-  real ckpt are **BLOCKED** on `core` reconstruction. The
-  Wave 10 R2 numbers below are on the synthetic velocity field
-  and saturate at the validity ceiling (1.0 vs 1.0, delta 0 %).
+- **Real-ckpt numbers (D-004, 2026-10-12).** The real forward pass now runs
+  (see §2 / §8), but the adapter's `alpha_h` **family prior is synthetic**
+  (upstream ships it as a separate JSON asset that is not vendored), so no
+  family-specific `family_validity` claim follows yet. The Wave 10 R2 numbers
+  below are on the synthetic velocity field and saturate at the validity
+  ceiling (1.0 vs 1.0, delta 0 %). The real-ckpt basis is a **different**
+  model from the canonical R1 headline (see
+  `docs/audit/r1-3seed-real-ckpt-materialize.md`).
 
 ## 4. Quantitative Analyses
 
@@ -96,10 +101,13 @@ The framework shows small positive uplifts on secondary metrics
 (`avg_log_likelihood` +0.23 %, `amino_acid_diversity` +0.09 %),
 but `family_validity` ties at the saturation ceiling. **Claim
 verdict (Wave 10, protein axis): PARTIAL support** — framework
-ties at saturation on the synthetic surface; **real-ckpt verdict
-open until the upstream `core` source repo is reconstructed**.
-R3 (`docs/baseline-audit-report.md` §F.2) is `NOT_REPRODUCED` for
-the real-ckpt case.
+ties at saturation on the synthetic surface. The **real-ckpt verdict is
+now obtainable** (D-004, 2026-10-12: the real forward pass runs in the
+adapter); a real-ckpt re-run on the 3-seed basis is recorded additively in
+`docs/audit/r1-3seed-real-ckpt-materialize.md` (direction-consistent
+framework-WINS, pooled `d_z = +0.110`, below the 0.8 STRONG bar → R1 stays
+PARTIAL). R3 (`docs/baseline-audit-report.md` §F.2) remains
+`NOT_REPRODUCED`.
 
 ## 5. Ethical Considerations
 
@@ -120,8 +128,9 @@ the real-ckpt case.
   family priors).
 - **Environmental cost.** GPU-bound. The 657.6 M parameter
   ESM-2 backbone at bf16 ≈ 3.5 GB on-device, plus trajectory
-  buffer. Real-ckpt forward pass wall-clock TBD once `core` is
-  reconstructed.
+  buffer. The real-ckpt forward pass now runs (D-004): ~2.5 s/record
+  on a contended `cuda:0` (RTX PRO 6000), ~0.3 s/record on a clean GPU
+  (`docs/audit/wave349-gpu-acceleration.md`).
 - **Mitigations.** None required for the adapter itself.
   Downstream use must include biosafety review and disclosure.
   Generated sequences are not patentable / not licensable as
@@ -142,16 +151,20 @@ the real-ckpt case.
   `tests/test_adapters/test_lineageflow.py::test_shim_unblocks_torch_load_on_real_ckpt`
   which loads the 10.5 GB published ckpt and confirms the encoder
   `word_embeddings` tensor shape = `(33, 1280)` matches the paper.
-  The full forward pass still requires the upstream `core`
-  source repo + a CUDA host; the Wave 10 synthetic-mode path
-  remains the only forward path that runs end-to-end today.
-- **Production torch-mode BLOCKED on upstream `core` runtime.**
-  The ckpt references `core.sampler.FlowMatchingSampler /
-  PhylogenySampler` and `core.flow_model.flow_step`; the upstream
-  `core` source repo is unreachable from this environment.
-  **Without `core`, the real forward pass cannot run; the
-  synthetic-mode velocity field is the only forward path that
-  runs today.**
+  **The real forward pass now runs** (D-004, 2026-10-12): the upstream
+  `core` / `models.model` / `inference.inference` tree is vendored at
+  `data/lineageflow_upstream/`, and the torch path builds the real
+  `LineageFlowClassifier` + `compute_family_vector_field` — the velocity
+  field is non-zero (`docs/audit/lineageflow-real-forward-fix.md`).
+- **Production torch-mode: upstream `core` runtime now available.**
+  The ckpt references `core.sampler.SamplerConfig` (shimmed) and the
+  upstream `core` / `models.model` / `inference.inference` modules, which
+  are vendored. The adapter loads the ckpt with missing=0/unexpected=0 and
+  runs the real vector field. Caveats that remain: the `alpha_h` family
+  prior is **synthetic** (upstream ships it as a separate JSON asset that
+  is not vendored), and the adapter uses the base-flow vector field rather
+  than the upstream intervention/mutation sampler
+  (`generate_with_intervention`).
 - **HF ckpt is 10× larger than Wave 9 R3 estimate.** Wave 9 R3
   reported "sub-GB"; the actual ckpt is 9.788 GB on disk.
 - **Synthetic-mode is not a baseline reproduction.** When
@@ -198,7 +211,7 @@ the real-ckpt case.
 - **Cross-references:**
   `docs/paper-draft.md` §4 protein record,
   `docs/PLUG_IN_YOUR_MODEL.md` §LineageFlow,
-  `todo/models/lineageflow.md` §A-E,
+  `docs/audit/lineageflow-real-forward-fix.md` (D-004),
   `docs/baseline-audit-report.md` §F.2 R3,
   `docs/CONSOLIDATED_RESULTS.md` §7.3,
   `docs/CLAIMS.md` (LineageFlow claim ledger entry).
@@ -213,16 +226,14 @@ the real-ckpt case.
   `tests/test_adapters/test_lineageflow.py::test_shim_unblocks_torch_load_on_real_ckpt`
   (10.5 GB ckpt loads successfully, encoder `word_embeddings`
   tensor shape = `(33, 1280)` matches the paper). The full
-  forward pass additionally requires the upstream `core` source
-  repo + a CUDA host.
-- **BLOCKED on upstream `core` source repo runtime.** The ckpt
-  pickle references `core.sampler.SamplerConfig` (now shimmed,
-  Wave 39) but **also** `core.sampler.FlowMatchingSampler /
-  PhylogenySampler` and `core.flow_model.flow_step` (still
-  MISSING). Without these, the real forward pass cannot run.
-  This blocks every quantitative result that requires a real
-  forward pass (§3 evaluation data, §4 quantitative analyses
-  real-ckpt row).
+  forward pass now runs end-to-end in the adapter (D-004, 2026-10-12).
+- **Upstream `core` runtime — now vendored (D-004).** The ckpt
+  pickle references `core.sampler.SamplerConfig` (shimmed, Wave 39) and
+  the upstream `core` / `models.model` / `inference.inference` modules,
+  which are vendored at `data/lineageflow_upstream/`. The real forward
+  pass runs; the residual limitation is that the `alpha_h` family prior
+  is synthetic (§3) and the adapter uses the base-flow vector field
+  rather than the upstream intervention/mutation sampler.
 - **BLOCKED on data pipeline.** The tokenizer + MSA context
   fetcher for Pfam family conditioning is **MISSING**. Without
   it, the `pfam_family_cond` channel cannot be populated.
@@ -243,13 +254,15 @@ the real-ckpt case.
 - **Synthetic-mode saturation.** `family_validity` ties at
   1.0 in both arms on the synthetic velocity field; the
   framework's value-add is invisible at the saturation
-  ceiling. A real-ckpt re-run is required before any
-  framework uplift claim can be published.
+  ceiling. A real-ckpt re-run has since been materialised
+  (`docs/audit/r1-3seed-real-ckpt-materialize.md`): direction-consistent
+  framework-WINS on 3 zero-fallback seeds, pooled `d_z = +0.110`, below
+  the 0.8 STRONG bar → R1 remains PARTIAL.
 
 ---
 
 **See also:** `adaptive_reflow/adapters/lineageflow.py`,
-`todo/models/lineageflow.md`,
+`docs/audit/lineageflow-real-forward-fix.md` (D-004 real forward pass),
 `docs/PLUG_IN_YOUR_MODEL.md` §LineageFlow,
 `docs/baseline-audit-report.md` §F.2 R3,
 `tests/test_adapters/test_lineageflow.py` (22/22 pass),
