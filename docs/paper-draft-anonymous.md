@@ -1,5 +1,11 @@
 # the proposed framework: A Typed-Contracts Framework for Flow-Matching Re-Inference
 
+> **LEGACY DRAFT (workshop-era, 2026-09-05) — not the submission manuscript.**
+> The canonical TNNLS manuscript is
+> [`drafts/paper-A-final.md`](drafts/paper-A-final.md) (compiled:
+> [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf)). Retained for provenance
+> only.
+
 **Status:** workshop draft, 5-section outline (§1–§5 + §6 Conclusion + References).
 Generated 2026-09-05. Every numeric claim below is traceable to a record
 in `docs/CLAIMS.md`, `docs/ABLATION.md`, `docs/CONSOLIDATED_RESULTS.md`,

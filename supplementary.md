@@ -1,5 +1,11 @@
 # Supplementary Material — FlowA: Re-inference as Inference-Time Control for Frozen Flow-Matching Checkpoints
 
+> **LEGACY (NeurIPS/ICML-era template, Wave 97) — not the submission supplementary.**
+> The canonical TNNLS supplementary is
+> [`tnnls_submission/supplementary/`](tnnls_submission/supplementary/). This
+> top-level file is retained for provenance only and is **not** read by any current
+> tooling.
+
 **Date authored:** 2026-09-10
 **Author:** Wave 97 Agent A
 **Status:** Wave 127 — all 7 TODO markers replaced with verified numbers (additive; pre-Wave 127 numbers preserved verbatim)

@@ -1,5 +1,10 @@
 # Submission Checklist — FlowA (ICLR 2027 / NeurIPS Flow-Matching Workshop)
 
+> **LEGACY (ICLR 2027 era, Wave 97) — not the submission checklist.**
+> The canonical TNNLS checklist is
+> [`tnnls_submission/submission_checklist.md`](tnnls_submission/submission_checklist.md).
+> This top-level file is retained for provenance only.
+
 **Date authored:** 2026-09-10
 **Author:** Wave 97 Agent A
 **Status:** TEMPLATE — pending Wave 92c (Kanzi N=1000 framework paper-metric) + Wave 93 Phase 2 (per-cell CI / Bonferroni / power analysis)

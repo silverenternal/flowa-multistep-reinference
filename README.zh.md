@@ -11,7 +11,7 @@
 [![5-gate PASS](https://img.shields.io/badge/5--gate-PASS-brightgreen.svg)](#submission-gates-verified-at-final-pre-push--终版前推送时验证)
 [![mkdocs strict](https://img.shields.io/badge/mkdocs--strict-0%20warnings-success.svg)](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/mkdocs.yml)
 
-**Last updated / 最近更新:** 2026-10-11 (手稿重排为 11 页并加入架构图与证据对比图；HEAD `061682c` 全门 PASS；论文在"手稿重构"阶段改题为 *Geometry-Aware State-Intervention Reformulation* 并围绕 inference-dynamics 重构)。项目状态与历史：[`todo/WAVES.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/todo/WAVES.md)。论文 A 已准备 TNNLS 投稿。
+**Last updated / 最近更新:** 2026-10-12 (HEAD `a957906` 全门 PASS；readiness verifier 现已全绿——`k1_rc5` 指向活稿、`drift_33` 白名单收敛到活稿面——并修复了裸 `pytest` 收集错误与 5 个过时的 Kanzi 适配器测试)。手稿 = `docs/drafts/paper-A-final.pdf`（11 页，IEEEtran；已改题为 *Geometry-Aware State-Intervention Reformulation* 并围绕 inference-dynamics 重构）。项目状态与历史：[`todo/WAVES.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/todo/WAVES.md)。论文 A 已准备 TNNLS 投稿。
 
 **Scheduler scope of this README / 本 README 的调度器适用范围:** All 7 headline numbers in the [Headline Results](#headline-results--头条结果) section were produced under `CosineAnnealScheduler` (the controller that ignores all 4 paper quantities). `CodimensionSheetScheduler` 和其他 paper-quantity-grounded 控制器 (`PaperRatioAdaptiveScheduler`、`EvidenceDrivenScheduler`、`ConvergenceAdaptiveScheduler`) 均为研究阶段；详见 [`docs/ALGORITHMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ALGORITHMS.md) 与 [`docs/CLAIMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md) 中汇总的 pipeline inventory。
 

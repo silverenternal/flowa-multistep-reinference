@@ -3,7 +3,7 @@
 > **Paper A is ready for TNNLS submission (updated 2026-10-12).**
 > Paper PDF: [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf) — 11 pages, IEEEtran-journal double-column, sha256 `47f6eb0418d041b0dccdba68bcdf8b794c02e8a710368a8eaebe5e17f89ca732`.
 > Headline verdicts: **4 STRONG + 1 TIE + 6 PARTIAL/SUPPLEMENTARY** across the 11 cells.
-> Acceptance gates ALL PASS: D.4 30/30 · contracts 195/195 · ruff 0 · claims no drift · mkdocs 0 warnings · vendored `data/` untouched · data integrity 6/149/0 · reproducibility 12/12. The separate readiness verifier (`tools/verify_submission_readiness.py`) additionally checks `r1_r6_sha` / `framework_n1000` and two doc-drift gates: `k1_rc5` (the K1 disclosure-wording gate, now pointed at the live manuscript) and `drift_33` (the historical pre-expansion D.4 `33/33` count, which survives only in historical records).
+> Acceptance gates ALL PASS: D.4 30/30 · contracts 195/195 · ruff 0 · claims no drift · mkdocs 0 warnings · vendored `data/` untouched · data integrity 6/149/0 · reproducibility 12/12. The separate readiness verifier (`tools/verify_submission_readiness.py`) additionally checks `r1_r6_sha` / `framework_n1000` and two doc-drift gates — `k1_rc5` (the K1 disclosure-wording gate, pointed at the live manuscript) and `drift_33` (the historical pre-expansion D.4 `33/33` count, which survives only in historical records) — and now passes **all** of them (`READY_WITH_SKIPS: mypy_0`, exit 0).
 > **Management surface:** [`../todo/WAVES.md`](../todo/WAVES.md) — the consolidated, increment-free project record (current state, phase history, evidence ledger, gates, decisions, risks).
 > **Submission package:** [`../tnnls_submission/`](../tnnls_submission/) — 7 core files with real SHA-256 (the cover letter still needs its `[USER TO FILL]` fields).
 
@@ -128,6 +128,7 @@ intentionally archival and rot-tolerant.
   [`r17-survey/state-report.md`](r17-survey/state-report.md).
 - [`paper-final-neurips.md`](paper-final-neurips.md) — superseded venue draft.
 - **Superseded compiled PDFs** — [`paper-final-neurips.pdf`](paper-final-neurips.pdf) (NeurIPS-era), [`paper-eaai.pdf`](paper-eaai.pdf) (EAAI-era), [`paper-tnnls.pdf`](paper-tnnls.pdf) (byte-identical duplicate of `paper-eaai.pdf`). Retained for provenance; the live PDF is [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf).
+- **Superseded top-level submission artifacts** — [`../cover_letter.md`](../cover_letter.md) (ICLR-2027 / NeurIPS-workshop era), [`../submission_checklist.md`](../submission_checklist.md) (ICLR-2027 era, Wave 97), and [`../supplementary.md`](../supplementary.md) (NeurIPS/ICML-era template, Wave 97) are **legacy and read by no current tooling** (each carries a top banner). The canonical TNNLS package is [`../tnnls_submission/`](../tnnls_submission/); the EAAI-era package is archived at [`../eaai_submission/`](../eaai_submission/).
 - [`ARCHIVE/`](ARCHIVE/) — historical context, intentionally **not** part of the
   live mkdocs build (enforced by `mkdocs.yml` `exclude_docs`). Preserved on disk
   for archaeology; not maintained and not reachable from the GitHub Pages nav.

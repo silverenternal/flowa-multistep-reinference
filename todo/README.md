@@ -27,13 +27,13 @@ todo/
 
 ## Current focus (2026-10-12)
 
-**Venue:** IEEE TNNLS (switched from TPAMI). Project at HEAD `8756f19`; **5 commits ahead of `origin/main`** (`fea137d`; the later manuscript-consistency sweeps and governance / repo-docs refreshes are local-only — push is user-gated). Acceptance gates PASS (D.4 30/30 / ruff 0 / claims no-drift / mkdocs strict exit 0). The readiness verifier (`tools/verify_submission_readiness.py`) now passes **all** gates (`READY_WITH_SKIPS: mypy_0`, exit 0 — `mypy_0` SKIPs when mypy is absent from PATH): `k1_rc5` was repointed at the live manuscript and `drift_33`'s allowlist extended on explicit user decision; see `todo/WAVES.md` §1.2.
+**Venue:** IEEE TNNLS (switched from TPAMI). Project at HEAD `a957906`; **7 commits ahead of `origin/main`** (`fea137d`; the later manuscript-consistency sweeps, the governance / repo-docs refreshes, and the readiness-verifier repoint are local-only — push is user-gated). Acceptance gates PASS (D.4 30/30 / ruff 0 / claims no-drift / mkdocs strict exit 0). The readiness verifier (`tools/verify_submission_readiness.py`) passes **all** gates (`READY_WITH_SKIPS: mypy_0`, exit 0 — `mypy_0` SKIPs when mypy is absent from PATH): `k1_rc5` was repointed at the live manuscript and `drift_33`'s allowlist extended on explicit user decision; see `todo/WAVES.md` §1.2.
 
 **Remaining user-gated actions:**
 1. Fill the 17 `[USER TO FILL]` placeholders in `tnnls_submission/cover_letter.md` (see `tnnls_submission/FILL_GUIDE.md`).
-2. `git push` the 5 local-only commits to `origin/main` (last pushed: `fea137d`, 2026-10-12).
+2. `git push` the 7 local-only commits to `origin/main` (last pushed: `fea137d`, 2026-10-12).
 
-**Latest audit:** [`docs/audit/repo-docs-maintenance.md`](../docs/audit/repo-docs-maintenance.md) — repo-docs maintenance refresh (HEAD `8756f19`; new-management-surface wave-ref cleanup + gate-honesty reconciliation + legacy-artifact inventory). Prior: [`docs/audit/governance-refresh-post-push.md`](../docs/audit/governance-refresh-post-push.md) — post-push governance refresh (HEAD `0209002`).
+**Latest audit:** [`docs/audit/readiness-verifier-repoint.md`](../docs/audit/readiness-verifier-repoint.md) — readiness-verifier repoint + drift_33 allowlist + pytest collection fix + 5 stale Kanzi test updates (HEAD `a957906`). Prior: [`docs/audit/repo-docs-maintenance.md`](../docs/audit/repo-docs-maintenance.md) — repo-docs maintenance refresh (HEAD `8756f19`); [`docs/audit/governance-refresh-post-push.md`](../docs/audit/governance-refresh-post-push.md) — post-push governance refresh (HEAD `0209002`).
 
 ## Convention
 

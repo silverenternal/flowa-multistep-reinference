@@ -1,5 +1,11 @@
 # FlowA: Training-Free Re-Inference as Inference-Time Control for Frozen Flow-Matching Checkpoints
 
+> **LEGACY DRAFT (NeurIPS 2026 anonymous submission) — not the submission manuscript.**
+> The canonical TNNLS manuscript is
+> [`drafts/paper-A-final.md`](drafts/paper-A-final.md) (compiled:
+> [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf)). Retained for provenance
+> only.
+
 **Anonymous submission to NeurIPS 2026.**
 
 [Author list masked for double-blind review]

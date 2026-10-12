@@ -1,5 +1,11 @@
 # Cover Letter
 
+> **LEGACY (ICLR 2027 / NeurIPS-workshop era) — not the submission cover letter.**
+> The canonical TNNLS cover letter is
+> [`tnnls_submission/cover_letter.md`](tnnls_submission/cover_letter.md) (render with
+> `tools/render_cover_letter.py`). This top-level file is retained for provenance
+> only and is **not** read by any current tooling.
+
 **To:** Area Chair / Program Committee, ICLR 2027 (or NeurIPS Flow-Matching Workshop)
 **From:** The authors (anonymized for double-blind review)
 **Re:** Submission of **FlowA: Re-inference as Inference-Time Control for Frozen Flow-Matching Checkpoints**

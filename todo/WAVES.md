@@ -37,12 +37,13 @@ does not.
 
 ### 1.1 Repository
 
-- **Branch:** `main`. **HEAD:** `8756f19` ("docs(manuscript): eighth consistency sweep — §6.1 stray heading + §8.10 stale honest-disclosure"). (Prior readings: `fea137d` "docs(manuscript): fourth consistency sweep — capability groups, field name, §4.5 cell list"; `0209002` "Push unblock: purge 147.1 MB supplementary_bundle.zip from history + gitignore".)
-- **Ahead of `origin/main`:** **5** commits (`origin/main` = `fea137d`). The
+- **Branch:** `main`. **HEAD:** `a957906` ("chore(tests,docs): repoint readiness verifier at live manuscript, clear drift_33, fix pytest collection + 5 stale Kanzi tests"). (Prior readings: `8756f19` "docs(manuscript): eighth consistency sweep — §6.1 stray heading + §8.10 stale honest-disclosure"; `3f2c03a` "docs(repo): repository documentation maintenance — increment-free management surface, gate-claim honesty, legacy inventory"; `fea137d` "docs(manuscript): fourth consistency sweep — capability groups, field name, §4.5 cell list"; `0209002` "Push unblock: purge 147.1 MB supplementary_bundle.zip from history + gitignore".)
+- **Ahead of `origin/main`:** **7** commits (`origin/main` = `fea137d`). The
   192-commit backlog was pushed on 2026-10-11 and the early manuscript-consistency
   sweeps (`165df71` / `60c2441` / `fea137d`) were re-pushed on 2026-10-12; the
-  later manuscript-consistency sweeps and the governance / repo-docs refreshes are
-  local-only. Pushing remains **user-gated** — agents commit locally but never push.
+  later manuscript-consistency sweeps, the governance / repo-docs refreshes, and the
+  readiness-verifier repoint + Kanzi test fixes are local-only. Pushing remains
+  **user-gated** — agents commit locally but never push.
 - **Tags (local, unpushed):** `v3.0-tnnls-ready`, `v3.1-tnnls-with-figure` (the tag
   push stays user-gated).
 
