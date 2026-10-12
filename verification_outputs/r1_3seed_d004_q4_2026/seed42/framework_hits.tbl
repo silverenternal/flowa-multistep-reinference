@@ -1,0 +1,13 @@
+#                                                                            --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                        accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------              -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /tmp/r1_d004/n1000/seed42/framework.fasta
+# Target file:     data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /tmp/r1_d004/n1000/seed42/framework_hits.tbl --acc --noali --cpu 32 data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /tmp/r1_d004/n1000/seed42/framework.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Mon Oct 12 22:35:15 2026
+# [ok]

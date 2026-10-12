@@ -998,8 +998,32 @@
         ],
         "genuinely_left": "重跑 3-seed × N=1000 × 2 arms (--upstream-eval-len-bias short) + HMMER + zero-fallback 校验 + DL meta",
         "resource": "~2.5h wall (同上次)",
+        "status": "DONE",
+        "audit_2026_10_12": "见 config_error_reassessment_2026_10_12.verified_underestimates.R1",
+        "result_2026_10_12": {
+          "outcome": "REGRESSION — 假设被证伪。真实前向基线上 framework 臂 3-seed 全部 0 hits (baseline 158/159/174)。",
+          "verdict": "DL d_pooled=-0.4013 (z=-21.15, I2=0.0%), direction-consistent baseline>framework。R1 真实前向基线是崩溃而非升级。",
+          "blocking_defect_fixed": "D-004 修复此前是空转的: _install_checkpoint_compat 造的裸 ModuleType('core') 没有 __path__, 遮住 vendored 上游 core/ 包, 导致 models.model 的 from core.hf_cache import 抛 'core is not a package' -> _try_import_lineageflow_upstream 返回 None -> adapter 静默退回全零 velocity field。已修 (bf66aa4, 给 core 加 __path__) + 回归测试。",
+          "root_cause": "framework 的 build_initial_state -> _synthesize_latent_like_tensor 对每条记录给近均匀 simplex (1/K + U(0,1e-6))。真实 flow 是确定性的, 于是 1000 条记录塌缩成 1 条轨迹 (seed42: 121 个唯一序列/1000, 唯一 30-AA 前缀=1)。pre-D-004 之所以没塌缩, 是因为零 velocity field 把 per-record 多样性完全交给了 restart-blend RNG。",
+          "what_this_invalidates": "pre-D-004 R1 3-seed real-ckpt 的 +113/+54/+56 (framework 271/213/230) 是零-velocity + restart-blend 的产物, 不是关于真实 LineageFlow 模型的证据。",
+          "evidence": "verification_outputs/r1_3seed_d004_q4_2026/ (11 files + SHA256SUMS); docs/audit/r1-d004-remeasure.md",
+          "follow_up": "D-004b (见下) — 给真实分类器路径加 per-record 随机 simplex 初始化"
+        }
+      },
+      {
+        "id": "D-004B-STOCHASTIC-INIT",
+        "priority": "P0",
+        "title": "LineageFlow 真实前向路径: per-record 随机 simplex 初始化 (D-004b)",
+        "rationale": "R1-REMEASURE-D004 证明: D-004 让真实 flow 生效后, framework 臂因 build_initial_state 的近均匀/逐记录相同初始化而塌缩成单轨迹 (0 hits)。要公平测量真实前向基线, 必须先给它一个合法的随机噪声初始化。",
+        "already_done": [
+          "根因已定位: _synthesize_latent_like_tensor = 1/K + U(0,1e-6) (lineageflow.py:518-526)",
+          "N=20 bounded probe 已验证方向: 把初始化换成 per-record softmax(randn(L,K)) (Wave-41 工具的噪声约定, tools/run_lineageflow_real_ckpt.py:212-215) 后多样性恢复 (20/20 唯一序列, 20/20 唯一 30-AA 前缀), 输出呈蛋白样; HMMER N=20 baseline 4 vs framework 3 (n 太小, 不足以下结论)"
+        ],
+        "genuinely_left": "实现分支 (仅在 _is_lineageflow_classifier 为真时用随机 simplex 初始化, 保证 synthetic 模式字节稳定 + D.4 向量不回归) + 3-seed N=1000 重测 + HMMER + DL meta",
+        "resource": "~30min 实现+测试; ~1.5h 生成; ~25min HMMER",
         "status": "OPEN",
-        "audit_2026_10_12": "见 config_error_reassessment_2026_10_12.verified_underestimates.R1"
+        "caveat": "这是 framework/method 级改动 (改变噪声分布), 需谨慎; synthetic 模式必须字节不变",
+        "audit_2026_10_12": "见 docs/audit/r1-d004-remeasure.md §6/§10"
       },
       {
         "id": "R5B-REMEASURE-PAPER-SCHEDULER",
@@ -1051,14 +1075,15 @@
       "文档漂移(标题/页数/SHA): Wave 384 已系统性刷新，非实证 gap"
     ],
     "recommended_attack_order": [
-      "1. R1-REMEASURE-D004 (P0, ~2.5h): 用 D-004 修复后 adapter 重跑 R1 3-seed — 现 d_z=+0.110 是零-velocity lower bound; 可能升 STRONG。最高性价比",
-      "2. R5B-REMEASURE-PAPER-SCHEDULER (P0, ~30-60min): 用 codimension_sheet 重跑 — 现 'REGRESSES' 是 cosine artifact (71.57pp flip 已证)",
-      "3. SCHEDULER-PAPER-QUANTITY-SYSTEMIC (P0): 12/13 cells 用 cosine (忽略 paper quantities); 以 R5b 为试点验证系统性升级",
-      "4. R6-LIVE-TIERAWARE (P0, 最贵): 唯一强效应 cell 靠 counterfactual; 先写 ~4-8h driver 再 ~5h/~26-53h",
-      "5. K1-N1000-POWER (P1, ~30-60min): 卡 N=200, 升 N=1000 可能转 STRONG",
-      "6. R5C-MATCHED-ARCH (P1, ~20min): 去混杂",
-      "7. THEORY-TESTABLE-CRITERION (低 ROI): 维持 repositioned 定位",
-      "note: 优先级按 config_error_reassessment_2026_10_12 重排 — 先修配置再重测被低估的强 cell, 而非先追最贵的 R6"
+      "1. R1-REMEASURE-D004 (P0) — DONE 2026-10-12: 结果证伪假设。真实前向基线 framework=0 hits (3/3 seeds), DL d_z=-0.4013; 根因是近均匀确定性初始化导致塌缩。见 docs/audit/r1-d004-remeasure.md",
+      "2. D-004B-STOCHASTIC-INIT (P0, ~30min+2h): R1 真实前向基线要可测, 必须先给 per-record 随机 simplex 初始化 (N=20 probe 已证恢复多样性)。这是 R1 真实基线的前置",
+      "3. R5B-REMEASURE-PAPER-SCHEDULER (P0, ~30-60min): 用 codimension_sheet 重跑 — 现 'REGRESSES' 是 cosine artifact (71.57pp flip 已证)",
+      "4. SCHEDULER-PAPER-QUANTITY-SYSTEMIC (P0): 12/13 cells 用 cosine (忽略 paper quantities); 以 R5b 为试点验证系统性升级",
+      "5. R6-LIVE-TIERAWARE (P0, 最贵): 唯一强效应 cell 靠 counterfactual; 先写 ~4-8h driver 再 ~5h/~26-53h",
+      "6. K1-N1000-POWER (P1, ~30-60min): 卡 N=200, 升 N=1000 可能转 STRONG",
+      "7. R5C-MATCHED-ARCH (P1, ~20min): 去混杂",
+      "8. THEORY-TESTABLE-CRITERION (低 ROI): 维持 repositioned 定位",
+      "note: 优先级按 config_error_reassessment_2026_10_12 重排; 2026-10-12 R1 重测结果 (REGRESSION) 加入后, D-004b 成为 R1 真实基线的前置"
     ],
     "cross_refs": [
       "todo/SUBMISSION-GAP-CHECKLIST.md",

@@ -1,0 +1,79 @@
+R1-REMEASURE-D004 — LineageFlow HMMER hmmscan_total_hits, 3 seeds x N=1000 x 2 arms
+=====================================================================================
+
+Date           : 2026-10-12
+Base commit    : bf66aa4 (fix: keep the D-004 real-classifier path live)
+Cell           : R1 (hmmscan_total_hits)
+Purpose        : re-measure R1 on the GENUINE real-forward basis, now that the
+                 D-004 adapter path actually runs the real LineageFlowClassifier
+                 (the pre-D-004 "real-ckpt" runs integrated an all-zero velocity
+                 field — see docs/audit/r1-d004-remeasure.md).
+
+Pipeline
+--------
+gen    : tools/gen_lineageflow_n1000_fastas.py
+         --outdir <dir> --n 1000 --seed <S> --upstream-eval-len-bias short
+         --nfe 10 --n-rounds 3 --temperature 1.0
+         force_mode="auto" -> real LineageFlowClassifier (D-004 live)
+hmmer  : /home/hugo/hmmer_build/bin/hmmscan --noali --cpu 32 --tblout <out> --acc
+         data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm <fasta>
+hits   : non-comment tblout lines
+stats  : tools/r1_d004_analysis.py (per-seed paired-t df=999 + DerSimonian-Laird
+         random-effects meta); validated to reproduce the pre-D-004 R1 3-seed
+         summary exactly (d_pooled=0.110175, z=4.0733).
+
+Environment
+-----------
+venv   : .venvs/lineageflow_venv  (torch 2.14.0+cu130, transformers 4.57.6)
+gpu    : CUDA_VISIBLE_DEVICES=1  (NVIDIA GeForce RTX 5090, idle)
+         NOTE: the pre-D-004 run used cuda:0 (RTX PRO 6000). The device is not a
+         confound here: the pre-D-004 framework arm integrated a ZERO velocity
+         field, so its output could not depend on the device at all.
+
+Zero fallback
+-------------
+framework_fallback_per_family_count == {} on all 3 seeds.
+
+Baseline byte-identity (the only variable is the framework arm)
+---------------------------------------------------------------
+seed42 baseline sha256 = 4ef0ec94d67850aa018d8cb83806d1ad52f80081dca758a732891a08a9e80db1
+seed43 baseline sha256 = f0af2d2d48712f373377cda40959c6f2e24e9986248717bec674f6f80ecac1b2
+seed44 baseline sha256 = 692d523e5f4be8adebd7d7ec675e7713024ecd3a51c9ae1a0cdc84bb2bb5cb24
+All three == the pre-D-004 run's baseline FASTAs. Hit counts 158/159/174 == pre-D-004.
+
+Headline
+--------
+framework hits = 0 on ALL 3 seeds (baseline 158 / 159 / 174).
+DL meta d_pooled = -0.4013 (z = -21.15, I^2 = 0.0%); direction-consistent
+baseline>framework. R1 on the genuine real-forward basis is a MASSIVE regression,
+not an improvement.
+
+Root cause (diagnostic, not a recorded metric)
+----------------------------------------------
+The framework's build_initial_state -> _synthesize_latent_like_tensor draws a
+near-uniform simplex (1/K + U(0, 1e-6)) for every record. Under the (now live)
+deterministic real flow this collapses every record onto ONE trajectory:
+
+  seed42 framework: 121 unique sequences / 1000, and exactly 1 unique 30-AA prefix
+  seed42 baseline : 1000 unique sequences / 1000
+
+Diversity came only from per-record length truncation (121 distinct lengths).
+The pre-D-004 runs escaped the collapse because the zero velocity field left the
+restart-blend perturbation RNG as the sole source of per-record diversity.
+
+Bounded probe (N=20, diagnostic only): monkeypatching the init to a per-record
+random simplex softmax(randn(L, K)) — the Wave-41 tool's noise convention —
+restores full diversity (20/20 unique sequences, 20/20 unique 30-AA prefixes) and
+protein-like output; HMMER at N=20 gives baseline 4 vs framework 3 (inconclusive
+at this n). This motivates follow-up D-004b (per-record stochastic init for the
+real-classifier path); it is NOT applied here.
+
+Files
+-----
+seed{42,43,44}/baseline_hits.tbl   HMMER tblout, baseline arm
+seed{42,43,44}/framework_hits.tbl  HMMER tblout, framework arm
+seed{42,43,44}/manifest.json       gen-script manifest (per-family counts, zero fallback)
+summary.json                       per-seed paired-t + DL meta (tools/r1_d004_analysis.py)
+SHA256SUMS                         checksums of the above
+
+FASTAs are not committed (large); regenerate with the pipeline above.
