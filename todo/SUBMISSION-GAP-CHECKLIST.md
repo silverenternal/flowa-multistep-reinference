@@ -82,7 +82,7 @@ Two **new, real** defects were found by the same pass and are added below as
 | GAP-13 | P1 | agent/user | VERIFIED | Lean claim already marked PENDING |
 | GAP-14 | P1 | agent | **RESOLVED** (2026-10-12) | §2.1 novelty-differentiation paragraph added (.md + .tex; PDF rebuilt) |
 | GAP-15 | P1 | user | OPEN | Venue-fit decision (TNNLS vs reposition) |
-| GAP-16 | P2 | agent | OPEN | 31 deferred reviewer-facing gaps |
+| GAP-16 | P2 | agent | **RESOLVED** (2026-10-12) | 31 deferred gaps triaged; 31 explicit acceptances recorded |
 | GAP-17 | P2 | gpu | OPEN | K2/K6 env-blocked per-cell sweeps |
 | GAP-18 | P2 | agent | **RESOLVED** (2026-10-12) | Dead links in the manuscript — repointed (§7.11 + §7.8.1) |
 | GAP-19 | P2 | agent | **RESOLVED** (2026-10-12) | Q1-odds removed from submission docs — aligned with the manuscript (Wave 370 removal) |
@@ -281,10 +281,19 @@ Two **new, real** defects were found by the same pass and are added below as
 
 ## 5. P2 — polish / hygiene
 
-### GAP-16 — 31 deferred reviewer-facing gaps
+### GAP-16 — 31 deferred reviewer-facing gaps — **RESOLVED** (2026-10-12)
 - **Owner:** agent. **Action:** triage the list; close the low-impact ones or
   record explicit acceptance. **Handle:** `docs/audit/wave364-paper-polish-gaps.md`
   §5.
+- **Resolution.** All 31 deferred gaps (user-gated {G2}; env-blocked {G8, G9, G23};
+  out-of-scope {G4/G7, G5/G10, G6, G12, G14, G19, G22, G24}; low-impact {16};
+  plus the unlisted G13) are **ACCEPTED-DEFERRED** with category-level reasons and
+  mapped to this checklist where a mapping is clear. **Observed fact:** the Wave 364
+  39-gap inventory's *per-gap descriptions* are not persisted anywhere in the repo
+  (only IDs + categories survive in `wave364 §5`), so a per-gap close-out is not
+  possible without re-deriving the inventory; the explicit-acceptance path is
+  therefore taken. This checklist supersedes the Wave 364 inventory as the operative
+  gap list. Audit: `docs/audit/gap16-deferred-triage.md`.
 
 ### GAP-17 — K2/K6 env-blocked per-cell sweeps
 - **Owner:** gpu. **Action:** pin the env and sweep, or retain the honest
