@@ -310,7 +310,7 @@ Per-cell audit records under [`docs/audit/`](https://github.com/silverenternal/f
 | **Final paper sha256** | `d83e283bb5467459caa235067f190e203984e716f8c4efaa61664d43a7f0f52a` | `sha256sum docs/drafts/paper-A-final.md` |
 | **Final PDF sha256** | `47f6eb0418d041b0dccdba68bcdf8b794c02e8a710368a8eaebe5e17f89ca732` (11 pages) | `sha256sum docs/drafts/paper-A-final.pdf` |
 
-> **Gate-scope note.** The "9-gate" row above is the project's hard-requirement acceptance set. The broader readiness verifier (`tools/verify_submission_readiness.py`, run in the reproducibility recipe below) additionally checks `r1_r6_sha`, `framework_n1000`, `k1_rc5`, and `drift_33`. Of these, `k1_rc5` and `drift_33` are the documented **camera-ready-scope** doc-drift gates and remain red — they read the legacy EAAI-era `docs/paper-draft.md` and historical `33/33 PASS` strings respectively, both superseded by the current manuscript. This is a gate-scope difference, not a contradiction: see [`todo/WAVES.md`](todo/WAVES.md) §1.2.
+> **Gate-scope note.** The "9-gate" row above is the project's hard-requirement acceptance set. The broader readiness verifier (`tools/verify_submission_readiness.py`, run in the reproducibility recipe below) additionally checks `r1_r6_sha`, `framework_n1000`, and two doc-drift gates (`k1_rc5` — the K1 disclosure-wording gate, now pointed at the live manuscript; `drift_33` — the historical pre-expansion D.4 `33/33` count, which survives only in historical records). This is a gate-scope difference, not a contradiction: see [`todo/WAVES.md`](todo/WAVES.md) §1.2.
 
 **Reproducibility recipe:**
 

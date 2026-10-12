@@ -528,17 +528,20 @@ def test_torch_velocity_field_validates_against_per_call_state_shape() -> None:
     Wave 120 Phase 4 discovered a ValueError in real-mode sweeps:
     ``ValueError: cannot reshape array of size 32768 into shape (64, 64)``.
     The pre-fix code bound a module-global validator to ``(64, 64)`` and
-    invoked it inside ``_torch_velocity_field`` even though real-mode
-    passes ``state_shape=self._real_state_shape = (64, 512)`` (= 32768
-    elements). The fix builds a per-call validator closure via
-    ``make_validate_state_shape(state_shape)`` so the validator honors
-    the per-call shape.
+    invoked it inside ``_torch_velocity_field``. The fix builds a per-call
+    validator closure via ``make_validate_state_shape(state_shape)`` so the
+    validator honors the per-call shape.
 
-    This test exercises BOTH the synthetic-mode default ``(64, 64)``
-    (regression guard for byte-stability) AND the real-mode ``(64, 512)``
-    (the actual bug). It uses a stub ``nn.Module`` so no real DAE
-    checkpoint is required — the regression is at the validator step
-    which runs BEFORE ``model.forward`` is invoked.
+    Wave 149/178 contract (updated 2026-10-12). ``_torch_velocity_field``
+    now bridges any ``state_shape`` whose last dim is not 3 through
+    ``kanzi_latent_to_coords`` (which requires a ``latent_to_coord_decoder``
+    in the cache), feeds ``(1, L, 3)`` to the model, and reshapes the output
+    back to the caller's ``state_shape``. The ``(L, 3)`` coord path is a
+    no-op. The test pins: (a) the per-call validator accepts each
+    ``state_shape`` (not just the global ``(64, 64)``), (b) the output shape
+    matches the per-call ``state_shape``, and (c) the bridge-less ``(L, 512)``
+    path raises ``CapabilityMissingError``. A stub ``nn.Module`` + stub
+    decoder keep it checkpoint-free.
     """
     pytest.importorskip("torch", reason="torch is required for the stub DAE model")
 
@@ -549,9 +552,8 @@ def test_torch_velocity_field_validates_against_per_call_state_shape() -> None:
     class _StubDae(_torch.nn.Module):
         """Minimal stub matching the ``_torch_velocity_field`` call contract.
 
-        Returns ``torch.zeros_like(x_t)`` so the post-forward
-        ``v.squeeze(0).cpu().numpy().reshape(state_shape)`` is a no-op
-        (total element count matches). Holds a single 1-element
+        Returns ``torch.zeros_like(x)`` so the post-forward reshape is a
+        no-op (total element count matches). Holds a single 1-element
         ``Parameter`` so ``next(model.parameters())`` works on CPU/CUDA.
         """
 
@@ -562,9 +564,27 @@ def test_torch_velocity_field_validates_against_per_call_state_shape() -> None:
         def forward(self, x, t, family=None):  # noqa: D401 — stub signature
             return _torch.zeros_like(x)
 
+    class _StubBridgeDecoder:
+        def quantize(self, z):  # noqa: D401
+            return z
+
+        def decode(self, idx_BL, n_steps=50, seed=0):  # noqa: D401
+            B, L = idx_BL.shape[0], idx_BL.shape[1]
+            return _torch.zeros((B, L, 3), dtype=_torch.float64)
+
+    import sys
+    sys.modules.setdefault("tools.kanzi_latent_to_coord", type(sys)("tools.kanzi_latent_to_coord"))
+    sys.modules["tools.kanzi_latent_to_coord"].kanzi_latent_to_coords = (
+        lambda x, decoder, fsq_quantizer, n_steps, seed:
+            _torch.zeros((1, x.shape[0], 3), dtype=_torch.float64).numpy()
+    )
+
     model = _StubDae()
     cache = {
         "family_embed": np.zeros(1152, dtype=np.float64),
+        "latent_to_coord_decoder": _StubBridgeDecoder(),
+        "decoder_steps": 50,
+        "bridge_seed": 0,
     }
 
     # --- Real-mode path: state_shape=(64, 512) = 32768 elements ---
@@ -612,10 +632,24 @@ def test_torch_velocity_field_validates_against_per_call_state_shape() -> None:
     )
     assert out_default.shape == (64, 64)
 
-    # Wave 149 P1 regression: real-mode (64, 512) input must still validate
+    # --- Coord path: state_shape=(64, 3) is a no-op (no bridge needed) ---
+    x_coord = np.random.default_rng(2).standard_normal((64, 3)).astype(np.float64)
+    out_coord = _torch_velocity_field(
+        model=model,
+        x=x_coord,
+        t=0.5,
+        dtype=_torch.float64,
+        cache={"family_embed": np.zeros(1152, dtype=np.float64)},
+        guidance_scale=1.0,
+        state_shape=(64, 3),
+    )
+    assert out_coord.shape == (64, 3)
+
+    # --- Bridge-less (L, 512) path: missing decoder → CapabilityMissingError ---
     cache_no_bridge = {"family_embed": np.zeros(1152, dtype=np.float64)}
-    out_real_no_bridge = _torch_velocity_field(model=model, x=x_real, t=0.5, dtype=_torch.float64, cache=cache_no_bridge, guidance_scale=1.0, state_shape=(64, 512))
-    assert out_real_no_bridge.shape == (64, 512)
+    with pytest.raises(Exception) as exc_info:
+        _torch_velocity_field(model=model, x=x_real, t=0.5, dtype=_torch.float64, cache=cache_no_bridge, guidance_scale=1.0, state_shape=(64, 512))
+    assert "latent_to_coord_decoder" in str(exc_info.value)
 
 
 def test_torch_velocity_field_inverse_projects_post_project_out_latents() -> None:
@@ -696,7 +730,11 @@ def test_torch_velocity_field_inverse_projects_post_project_out_latents() -> Non
     assert model.last_x_shape == (1, 64, 3), (
         f"expected model to receive (1, 64, 3), got {model.last_x_shape}"
     )
-    assert out_latent.shape == (64, 3)
+    # Wave 177 P1 — the velocity field reshapes its output back to the
+    # caller's original ``state_shape`` (the zero-pad workaround), so a
+    # (L, 512) input yields a (L, 512) output (the model velocity lives in
+    # the first 3 channels; the rest are held at zero).
+    assert out_latent.shape == (64, 512)
     assert out_latent.dtype == np.float64
     assert np.isfinite(out_latent).all()
 

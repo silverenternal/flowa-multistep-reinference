@@ -71,15 +71,19 @@ does not.
   (missing third-party stubs + version-dependent checks) — environment-dependent
   and pre-existing, recorded in `docs/audit/manuscript-defect-review-7.md`.
 - **Ruff:** 0 findings in scope.
-- **Readiness verifier (`tools/verify_submission_readiness.py`):** the hard gates
-  pass (`d4_72`, `ruff_0`, `claims_pass`, `paper_warns`, `r1_r6_sha`,
-  `framework_n1000`); two **camera-ready-scope doc-drift** gates remain red —
-  `k1_rc5` (reads the legacy EAAI-era `docs/paper-draft.md`, whose K1 §10.4 wording
-  predates the current manuscript) and `drift_33` (148 historical `33/33 PASS`
-  occurrences under `docs/audit/engineering/`). Both are documented camera-ready
-  items (readiness-verifier audit trail under `docs/audit/`: the pytest side was
-  closed with xfail markers; the doc side remains open per the camera-ready scope)
-  — **not** submission blockers.
+- **Readiness verifier (`tools/verify_submission_readiness.py`):** **all gates
+  pass** — `d4_72`, `ruff_0`, `claims_pass`, `paper_warns`, `r1_r6_sha`,
+  `k1_rc5`, `drift_33`, `framework_n1000`; `mypy_0` is SKIP when mypy is absent
+  from PATH (as in the current sandbox) → `READY_WITH_SKIPS: mypy_0`, exit 0.
+  *(Updated 2026-10-12: the two former doc-drift gates were cleared on explicit
+  user decision — `k1_rc5` was repointed from the superseded EAAI-era
+  `docs/paper-draft.md` to the live manuscript `docs/drafts/paper-A-final.md`
+  (sentinels "NOT-SIGNIFICANT at K-level" + "0.5676"); `drift_33`'s
+  `DRIFT_SAFE_PATHS` was extended to cover the historical record trees so only
+  the live reviewer-facing surface is flagged — 0 offenders. Prior reading
+  preserved: these two gates were the documented camera-ready-scope doc-drift
+  items; the pytest side had been closed with xfail markers per
+  `docs/audit/wave359-k1-rc5-drift33-fix.md`.)*
 
 ### 1.3 Manuscript
 

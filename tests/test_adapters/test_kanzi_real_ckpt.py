@@ -411,8 +411,12 @@ def test_real_adapter_smoke_round_trip(
     # (T, L_abstract, n_channels_decoder) = (3, 64, 512). Pre-Wave-92
     # the trajectory had shape ``(T, 64, 64)`` and the upstream DAE
     # decode call raised a shape mismatch on the first sample.
-    assert traj.shape == (3, 64, 512)
-    assert traj.shape == (3, *adapter.state_shape)
+    # Wave 178 P2 — real-mode trajectory now lives in ``(L, 3)`` coord
+    # space throughout (``_real_state_shape`` = (64, 3); the public
+    # ``state_shape`` remains the (64, 512) latent dimension). The
+    # trajectory therefore has shape ``(3, 64, 3)``.
+    assert traj.shape == (3, 64, 3)
+    assert traj.shape == (3, *adapter._real_state_shape)
     import numpy as np
     assert np.isfinite(traj).all(), (
         "real-ckpt torch-mode trajectory must be finite everywhere"
@@ -448,7 +452,9 @@ def test_real_adapter_heun_solver_smoke(
     traj = adapter.export_trajectory(trace)
     assert traj is not None
     # Wave 92 — Heun real-mode trajectory also uses ckpt shape.
-    assert traj.shape == (3, 64, 512)
+    # Wave 178 P2 — real-mode trajectory is ``(L, 3)`` coord space
+    # (see ``test_real_adapter_smoke_round_trip``).
+    assert traj.shape == (3, 64, 3)
     assert np.isfinite(traj).all()
 
 
@@ -678,7 +684,9 @@ def test_state_shape_abstract_vs_real() -> None:
     """Wave 92 — abstract and real adapters return distinct state shapes.
 
     Abstract (synthetic / no-ckpt): ``(L, d) = (64, 64)``.
-    Real (ckpt loaded): ``(L, n_channels_decoder) = (64, 512)``.
+    Real (ckpt loaded): the public ``state_shape`` is the latent
+    dimension ``(L, n_channels_decoder) = (64, 512)``; the trajectory
+    shape ``_real_state_shape`` is ``(L, 3)`` coord space (Wave 178 P2).
     """
     syn = KanziAdapter(force_mode="synthetic", num_steps=2)
     assert syn._abstract_mode is True
@@ -694,7 +702,7 @@ def test_state_shape_abstract_vs_real() -> None:
     )
     assert real._abstract_mode is False
     assert real.state_shape == (64, 512)
-    assert real._real_state_shape == (64, 512)
+    assert real._real_state_shape == (64, 3)
 
 
 def test_abstract_constants_unchanged_for_back_compat() -> None:

@@ -259,6 +259,13 @@ addopts = [
     "-ra",
     "--strict-markers",
 ]
+# Scope a bare ``pytest`` to the real test tree. CI always invokes
+# ``pytest tests/`` explicitly; without ``testpaths`` a bare run also
+# collects the stray ``tools/*_test.py`` debug scripts (e.g.
+# ``tools/w196_p3_kanzi_debug_test.py`` imports the ``kanzi`` package and
+# aborts collection with an ImportError). Explicit paths still override
+# ``testpaths``, so ``pytest tools/...`` continues to work.
+testpaths = ["tests"]
 
 [tool.pytest-benchmark]
 # Default tuning for pytest-benchmark across the suite. These defaults

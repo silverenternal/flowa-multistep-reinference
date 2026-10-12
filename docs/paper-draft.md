@@ -4,10 +4,11 @@
 > superseded EAAI-structured draft. The current canonical manuscript for the
 > TNNLS submission is [`drafts/paper-A-final.md`](drafts/paper-A-final.md)
 > (compiled: [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf)). This file is
-> retained for provenance and is still read by `tools/verify_submission_readiness.py`
-> (the `r1_r6_sha` R1–R6 evidence cross-link table in §9, and the `k1_rc5` K1-wording
-> gate whose expected wording predates the current manuscript). Do **not** edit it as
-> if it were the live manuscript.
+> retained for provenance only: **no verifier gate reads it** (the
+> `tools/verify_submission_readiness.py` `r1_r6_sha` / `framework_n1000` gates use
+> hardcoded artifact lists, and the `k1_rc5` K1-wording gate was repointed at the
+> live manuscript on 2026-10-12). Do **not** edit it as if it were the live
+> manuscript.
 
 **Status:** camera-ready, EAAI 5-section structure aligned to the
 MrFlow (Zheng et al. 2026, arXiv:2607.01642) template per

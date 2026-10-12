@@ -39,12 +39,12 @@ Gates verified (9 total):
    (Wave 152 P2) must all exist AND their sha256 must match the
    documented digest in the paper. Any missing file or sha256 mismatch
    is FAIL.
-7. **K1 status (RC5 is the only blocker)** —
-   ``docs/paper-draft.md`` §10.4 K1 disclosure must mention that **4 of 5
-   RCs are RESOLVED** and **only RC5 (35h GPU 5-arm ablation) remains**
-   as the camera-ready deferred blocker. Per Wave 153 §10.5.1 the
-   expected wording is verbatim "4 of 5 RCs RESOLVED, only RC5 (35h GPU
-   5-arm ablation) remains".
+7. **K1 disclosure wording (historically "k1_rc5")** — the canonical
+   manuscript ``docs/drafts/paper-A-final.md`` must disclose the K1 cell's
+   **NOT-SIGNIFICANT at K-level α** status and its corrected Bonferroni value
+   (**0.5676** at k = 4). (Historically this gate read the superseded EAAI-era
+   ``docs/paper-draft.md`` and its "4 of 5 RCs RESOLVED / only RC5 remains"
+   wording; the target and sentinels now follow the live manuscript.)
 8. **drift check (no remaining 33/33 outside Wave 149 audit trail)** —
    ``grep -rn "33/33 PASS" docs/ | grep -v "Wave 149" | grep -v
    "wave149"`` must return only intentional historical-caveat
@@ -113,8 +113,8 @@ REPO_ROOT: Path = Path(__file__).resolve().parent.parent
 PAPER_LOG: Path = REPO_ROOT / "docs" / "build_pdf" / "paper.log"
 """LaTeX build log; source of truth for paper.pdf warning count."""
 
-PAPER_DRAFT: Path = REPO_ROOT / "docs" / "paper-draft.md"
-"""Canonical paper draft; source of K1 §10.4 wording check."""
+PAPER_MANUSCRIPT: Path = REPO_ROOT / "docs" / "drafts" / "paper-A-final.md"
+"""Canonical manuscript (the live TNNLS submission source); source of the K1 disclosure-wording check."""
 
 DOCS_DIR: Path = REPO_ROOT / "docs"
 """Top-level docs dir; scanned for 33/33 PASS drift."""
@@ -215,15 +215,18 @@ FRAMEWORK_N1000_ARTIFACTS: tuple[tuple[str, str], ...] = (
 PAPER_WARN_THRESHOLD: int = 10
 """Maximum allowed LaTeX Warning + Overfull count in paper.log."""
 
-# K1 §10.4 RC5 wording — the verifier looks for these tokens in the
-# paper-draft.md K1 disclosure paragraph. Per Wave 153 §10.5.1 the
-# expected state is "4 of 5 RCs RESOLVED + only RC5 (35h GPU 5-arm
-# ablation) remains".
+# K1 disclosure wording — the verifier looks for these tokens in the
+# canonical manuscript's K1 disclosure (§10.7 supplementary cells, echoed
+# in the §7 status table + the L1 boundary paragraph). The K1 cell was
+# demoted to supplementary as NOT-SIGNIFICANT at the K-level α after the
+# audit corrected the Bonferroni multiplier (p_b 0.054 → 0.5676 at k = 4).
+# (Historically this gate read the superseded EAAI-era docs/paper-draft.md
+# and its "only RC5 / REMAINING" wording; it now reads the live manuscript.)
 K1_RC5_PHRASES: tuple[str, ...] = (
-    "only RC5",
-    "REMAINING",
+    "NOT-SIGNIFICANT at K-level",
+    "0.5676",
 )
-"""K1 RC5-status sentinel phrases that must appear in paper-draft.md."""
+"""K1 disclosure sentinel phrases that must appear in the canonical manuscript."""
 
 # Drift check — grep "33/33 PASS" across docs/ then exclude the Wave
 # 149 audit trail (which documents the drift fix). All remaining
@@ -268,6 +271,23 @@ DRIFT_SAFE_PATHS: tuple[str, ...] = (
     # self-referential but correct: the audit doc is the gate's
     # documentation surface, not an unintended new occurrence.
     "docs/audit/wave153-verify-submission-readiness.md",
+    # Historical per-increment records added after the Wave 151/152 close.
+    # The "33/33 PASS" string is the pre-expansion D.4 count (D.4 is now
+    # 72/72); every surviving occurrence lives inside a historical record,
+    # which the project's provenance rule retains verbatim. These trees are
+    # historical by definition, so a 33/33 mention inside them is not "new
+    # drift". The gate greps ``docs/`` only, so the effective flagged surface
+    # is the live reviewer-facing files *under docs/* (e.g. docs/README.md and
+    # docs/drafts/); the root READMEs, todo/ and tnnls_submission/ are outside
+    # the scan scope entirely.
+    "docs/audit/",
+    "docs/ARCHIVE/",
+    "docs/supplementary/",
+    "docs/internal/",
+    "docs/paper-draft-precut",
+    "docs/tables/",
+    "docs/baseline-audit-report.md",
+    "docs/CONSOLIDATED_RESULTS.md",
 )
 """Files / patterns that may LEGITIMATELY mention 33/33 PASS without
 triggering the drift check. Any 33/33 occurrence OUTSIDE these
@@ -579,31 +599,33 @@ def gate_r1_r6_sha(report: GateReport) -> GateResult:
 
 
 def gate_k1_rc5(report: GateReport) -> GateResult:
-    """Gate 7: K1 §10.4 RC5 wording check.
+    """Gate 7: K1 disclosure-wording check (historically the ``k1_rc5`` gate).
 
-    Per ``docs/paper-draft.md`` §10.4 K1 disclosure + §10.5.1, the
-    expected K1 state is "4 of 5 RCs RESOLVED + only RC5 (35h GPU
-    5-arm ablation) remains". The verifier scans paper-draft.md for
-    the sentinel phrases ``only RC5`` AND ``REMAINING``.
+    The verifier scans the canonical manuscript
+    (``docs/drafts/paper-A-final.md``) for the K1 disclosure sentinels: the
+    cell's NOT-SIGNIFICANT-at-K-level-α status and its corrected Bonferroni
+    value. (Historically this gate read the superseded EAAI-era
+    ``docs/paper-draft.md`` and its "only RC5" / "REMAINING" wording; the target
+    and sentinels now follow the live manuscript.)
     """
-    if not PAPER_DRAFT.exists():
+    if not PAPER_MANUSCRIPT.exists():
         return GateResult(
             name="k1_rc5",
             passed=False,
-            detail=f"paper-draft.md not found at {PAPER_DRAFT}",
+            detail=f"canonical manuscript not found at {PAPER_MANUSCRIPT}",
         )
-    text = PAPER_DRAFT.read_text(errors="replace")
+    text = PAPER_MANUSCRIPT.read_text(errors="replace")
     if all(phrase in text for phrase in K1_RC5_PHRASES):
         return GateResult(
             name="k1_rc5",
             passed=True,
-            detail='K1 §10.4 wording confirms "only RC5" + "REMAINING" status',
+            detail='K1 disclosure wording confirms "NOT-SIGNIFICANT at K-level" + "0.5676"',
         )
     missing = [p for p in K1_RC5_PHRASES if p not in text]
     return GateResult(
         name="k1_rc5",
         passed=False,
-        detail=f"K1 §10.4 wording missing sentinel phrases: {', '.join(missing)}",
+        detail=f"K1 disclosure wording missing sentinel phrases: {', '.join(missing)}",
     )
 
 
