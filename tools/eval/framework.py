@@ -559,13 +559,59 @@ def _make_framework_policy(
         )
         beta = float(1.0 - float(sample.n_cap))
     else:
-        beta = 0.5  # legacy constant — preserved byte-identical for
-                    # adapters that don't expose paper_quantities.
-                    # Wave 45 / Wave 64 / Wave 82 hardcoded this value
-                    # per round; the framework's scheduler drives the
-                    # per-round β in production only via this entry
-                    # point, so byte-stability of the legacy path is
-                    # load-bearing for the D.4 vector suite.
+        # Wave 275 P4 / GAP-01 — R6 tier-aware restart-blend on the
+        # constant-β (legacy) path. LineageFlow exposes no
+        # ``profile_residual_fn``, so ``paper_quantities`` is always
+        # ``None`` for the k6 foldability arm and the tier-aware
+        # wrapper would otherwise NEVER be built (verified 2026-10-13:
+        # β = 0.5 for hard/medium/easy alike, so the R6 live arm was
+        # byte-identical to the uniform arm). When the tier-aware flags
+        # are active we wrap a :class:`ConstantScheduler` (``n_cap`` =
+        # 0.5, i.e. the legacy ``β = 1 - n_cap = 0.5`` base) in the
+        # :class:`TierAwareCodimensionSheetScheduler`, which reduces
+        # ``n_cap`` on the easy tier (baseline metric above the 67th
+        # percentile) by ``tier_aware_n_cap``. The subsequent
+        # ``β = 1 - n_cap`` mapping then raises β on the easy tier —
+        # the AS-DESIGNED Wave 275 P4 factor-0.5 materialization
+        # (user-selected 2026-10-13, ``docs/audit/gap01-r6-live-*.md``).
+        # When either flag is absent the legacy constant-0.5 path is
+        # preserved byte-identically for the D.4 vector suite.
+        _tier_active = bool(
+            tier_aware_n_cap is not None
+            and 0.0 < float(tier_aware_n_cap) < 1.0
+            and isinstance(tier_aware_baseline_metrics, dict)
+            and len(tier_aware_baseline_metrics) > 0,
+        )
+        if _tier_active:
+            from adaptive_reflow.algorithm.scheduler import (  # type: ignore
+                ConstantScheduler,
+                TierAwareCodimensionSheetScheduler,
+            )
+            _const_base = ConstantScheduler(
+                cycle_length=20, n_cap=0.5, seed=int(seed),
+            )
+            _tier_sched = TierAwareCodimensionSheetScheduler(
+                base=_const_base,
+                easy_tier_nfe_reduction_factor=float(tier_aware_n_cap),
+                tier_quantile_boundaries=(0.33, 0.67),
+                baseline_metric_extractor=(
+                    lambda qid, _m=tier_aware_baseline_metrics: float(_m[qid])
+                ),
+            )
+            _tier_sched.set_baseline_metrics(dict(tier_aware_baseline_metrics))
+            _tier_sched.set_current_record(current_record_id)
+            _tier_sample = _tier_sched.sample(
+                0, int(target_round), int(target_round),
+            )
+            beta = float(1.0 - float(_tier_sample.n_cap))
+        else:
+            beta = 0.5  # legacy constant — preserved byte-identical for
+                        # adapters that don't expose paper_quantities.
+                        # Wave 45 / Wave 64 / Wave 82 hardcoded this value
+                        # per round; the framework's scheduler drives the
+                        # per-round β in production only via this entry
+                        # point, so byte-stability of the legacy path is
+                        # load-bearing for the D.4 vector suite.
     # Wave 173 P4 — NFE-adaptive restart-blend strength. The
     # ``nfe == 0`` sentinel preserves the legacy byte-stable contract
     # (D.4 vector suite + Wave 161 K6 R6 sha256 are both measured

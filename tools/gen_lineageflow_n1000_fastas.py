@@ -124,6 +124,41 @@ NFE_REF: int = 50  # overridden by --nfe-ref in main()
 # builds a :class:`TierAwareCodimensionSheetScheduler` and uses its
 # ``n_cap`` to redistribute the per-round NFE budget (R6 live sweep).
 SCHEDULER_NAME: str = "cosine"  # overridden by --scheduler in main()
+# Wave 275 P4 / GAP-01 — R6 tier-aware restart-blend knobs. When
+# ``TIER_AWARE_N_CAP`` is in ``(0, 1)`` AND ``TIER_AWARE_BASELINE_METRICS``
+# is a non-empty ``{qid: baseline_pLDDT}`` mapping, ``_solve_framework``
+# wraps the framework's ``n_cap`` producer in a
+# :class:`TierAwareCodimensionSheetScheduler` and reduces the easy-tier
+# ``n_cap`` by the factor (the Wave 225 P4 counterfactual, materialised
+# live). Defaults preserve the legacy byte-stable path (no wrapper).
+TIER_AWARE_N_CAP: float = 1.0  # overridden by --tier-aware-n-cap in main()
+TIER_AWARE_BASELINE_METRICS: dict[str, float] | None = (
+    None  # overridden by --tier-aware-baseline-metrics-jsonl in main()
+)
+
+
+def _load_baseline_metrics_jsonl(path: Path) -> dict[str, float]:
+    """Load a foldability JSONL into a ``{qid: plddt_mean}`` mapping.
+
+    The tier-aware wrapper (:class:`TierAwareCodimensionSheetScheduler`)
+    stratifies records by the 33rd / 67th percentile of the supplied
+    baseline metric; for the k6 foldability axis the metric is the
+    baseline ``plddt_mean``. The Wave 161 frozen
+    ``.../baseline/foldability/foldability.jsonl`` carries exactly one
+    row per record with ``qid`` + ``plddt_mean`` (Wave 275 P4 §1.5).
+    """
+    import json
+
+    mapping: dict[str, float] = {}
+    with path.open() as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            row = json.loads(line)
+            qid = str(row["qid"])
+            mapping[qid] = float(row["plddt_mean"])
+    return mapping
 
 
 def _biased_aa(
@@ -324,7 +359,24 @@ def _apply_sensitivity_patches(*, beta_base: float, nfe_ref: int) -> None:
                 tier_aware_baseline_metrics=tier_aware_baseline_metrics,
                 current_record_id=current_record_id,
             )
-            if paper_quantities is None and _policy is not None:
+            # Wave 275 P4 / GAP-01 — the tier-aware restart-blend path
+            # (constant-β branch of ``_make_framework_policy``) already
+            # set a per-record β from the easy-tier ``n_cap`` reduction.
+            # The Wave 186 P2 β override must NOT clobber it back to a
+            # flat ``beta_base``, otherwise the R6 live sweep degenerates
+            # to the uniform arm. Skip the override whenever the
+            # tier-aware flags are active (same guard as the inner).
+            _tier_active = bool(
+                tier_aware_n_cap is not None
+                and 0.0 < float(tier_aware_n_cap) < 1.0
+                and isinstance(tier_aware_baseline_metrics, dict)
+                and len(tier_aware_baseline_metrics) > 0,
+            )
+            if (
+                paper_quantities is None
+                and _policy is not None
+                and not _tier_active
+            ):
                 # Replace the per-channel β with ``beta_base``
                 # AFTER the legacy 0.5 has been applied. The NFE-
                 # aware ``min(1.0, NFE_REF / max(nfe, 1))`` scaling
@@ -432,6 +484,7 @@ def _framework_emit_sequence(
     length: int,
     seed: int,
     temperature: float = 1.0,
+    record_id: Any = None,
 ) -> str | None:
     """Drive one framework multi-round pass and return a length-``length`` AA string.
 
@@ -503,6 +556,15 @@ def _framework_emit_sequence(
             # NFE distribution; ``"tier_aware_codimension"`` activates
             # the scheduler-driven NFE allocation on LineageFlow.
             scheduler_name=str(SCHEDULER_NAME),
+            # Wave 275 P4 / GAP-01 — live tier-aware restart-blend. When
+            # ``TIER_AWARE_N_CAP`` is in ``(0, 1)`` and the baseline
+            # metric mapping is populated, ``_solve_framework`` wraps the
+            # ``n_cap`` producer in a ``TierAwareCodimensionSheetScheduler``
+            # and reduces the easy-tier ``n_cap`` for ``record_id``.
+            # Defaults (1.0 / None) preserve the byte-stable path.
+            tier_aware_n_cap=TIER_AWARE_N_CAP,
+            tier_aware_baseline_metrics=TIER_AWARE_BASELINE_METRICS,
+            current_record_id=record_id,
         )
     except Exception:
         return None
@@ -621,6 +683,12 @@ def _write_framework_arm(
                     length=length,
                     seed=int(seed) + int(i),
                     temperature=float(temperature),
+                    # Wave 275 P4 / GAP-01 — per-record cursor for the
+                    # tier-aware wrapper. The fold pipeline assigns
+                    # ``q{i}`` to record ``i`` (see the foldability JSONL
+                    # ``qid`` column), so the baseline-pLDDT mapping keys
+                    # line up with the framework arm's record order.
+                    record_id=f"q{i}",
                 )
             if seq is None:
                 # Defensive fallback: bare-RNG draw. The auditor
@@ -800,6 +868,40 @@ def main() -> None:
             "``docs/audit/wave338-phase2-mechanism.md``."
         ),
     )
+    # Wave 275 P4 / GAP-01 — live tier-aware restart-blend knobs. When
+    # ``--tier-aware-n-cap`` is in ``(0, 1)`` AND the baseline-metrics
+    # JSONL is supplied, the framework arm wraps its ``n_cap`` producer
+    # in a ``TierAwareCodimensionSheetScheduler`` and reduces the
+    # easy-tier ``n_cap`` by the factor (the Wave 225 P4 counterfactual,
+    # materialised live). Defaults (1.0 / None) preserve the byte-stable
+    # path. See ``docs/audit/wave275-p4-r6-proposal.md`` §2.1.
+    p.add_argument(
+        "--tier-aware-n-cap",
+        type=float,
+        default=1.0,
+        help=(
+            "Wave 275 P4 / GAP-01 — easy-tier ``n_cap`` reduction factor "
+            "in ``(0, 1]``. ``1.0`` (default) is the tier-aware wrapper's "
+            "safe no-op (byte-stable with the legacy CodimensionSheet "
+            "scheduler). ``0.5`` activates the R6 tier-aware live sweep. "
+            "Only takes effect together with "
+            "``--tier-aware-baseline-metrics-jsonl``."
+        ),
+    )
+    p.add_argument(
+        "--tier-aware-baseline-metrics-jsonl",
+        type=Path,
+        default=None,
+        help=(
+            "Wave 275 P4 / GAP-01 — path to a baseline foldability JSONL "
+            "with ``qid`` + ``plddt_mean`` per record (e.g. the Wave 161 "
+            "frozen ``.../baseline/foldability/foldability.jsonl``). When "
+            "supplied (with ``--tier-aware-n-cap < 1``), the framework arm "
+            "classifies each record by its baseline pLDDT tier and reduces "
+            "the easy-tier ``n_cap``. When ``None`` (default) the legacy "
+            "byte-stable path is preserved."
+        ),
+    )
     # Wave 276 P — K5 prior-composition knob. ``prior_mix=0.0`` is
     # the legacy Wave 81/86/158 byte-stable path
     # (FAMILY_PROFILES-biased AA composition); ``prior_mix=1.0``
@@ -889,6 +991,20 @@ def main() -> None:
     # legacy byte-stable uniform NFE distribution.
     global SCHEDULER_NAME
     SCHEDULER_NAME = str(args.scheduler).strip()
+    # Wave 275 P4 / GAP-01 — wire the tier-aware restart-blend knobs.
+    # ``TIER_AWARE_N_CAP`` in ``(0, 1)`` + a loaded baseline-metric
+    # mapping activates the ``TierAwareCodimensionSheetScheduler`` in
+    # ``_solve_framework``. Defaults (1.0 / None) keep the byte-stable
+    # path.
+    global TIER_AWARE_N_CAP
+    TIER_AWARE_N_CAP = float(args.tier_aware_n_cap)
+    global TIER_AWARE_BASELINE_METRICS
+    if args.tier_aware_baseline_metrics_jsonl is not None:
+        TIER_AWARE_BASELINE_METRICS = _load_baseline_metrics_jsonl(
+            Path(args.tier_aware_baseline_metrics_jsonl)
+        )
+    else:
+        TIER_AWARE_BASELINE_METRICS = None
     # Wave 186 P2 — patch the framework glue to honour the
     # sensitivity-analysis parameters. The framework's
     # ``_make_framework_policy`` reads ``ADAPTER_NFE_REF`` from
@@ -941,6 +1057,13 @@ def main() -> None:
         # (default ``"cosine"`` byte-stable; ``"tier_aware_codimension"``
         # activates the live R6 sweep).
         "scheduler_name": str(SCHEDULER_NAME),
+        # Wave 275 P4 / GAP-01 — live tier-aware restart-blend capture.
+        "tier_aware_n_cap": float(TIER_AWARE_N_CAP),
+        "tier_aware_baseline_metrics_n": (
+            len(TIER_AWARE_BASELINE_METRICS)
+            if TIER_AWARE_BASELINE_METRICS is not None
+            else 0
+        ),
         # Wave 276 P — K4 + K5 weak-metric remediation axis values.
         # ``upstream_eval_len_bias`` keys the K4 length distribution
         # (short=30-150 AA byte-stable, long=200-300 AA powered);
