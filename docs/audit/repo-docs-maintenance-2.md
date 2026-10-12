@@ -43,6 +43,14 @@ source module, or vendored-upstream file changed.**
 - `docs/README.md` §6: added a "Superseded top-level submission artifacts" bullet
   covering the three root files + the `eaai_submission/` archive.
 
+**Workstream 3 — navigation pointers on the frozen bookkeeping (F1 follow-on).**
+Nine of the ten legacy per-wave bookkeeping files under `todo/` pinned an older
+HEAD with no pointer to the live surface. Added a one-line **HISTORICAL** banner
+(bodies preserved verbatim) to `STATUS.md`, `GATES.md`, `LOOP.md`, `TIMELINE.md`,
+`RISK-REGISTER.md`, `decisions.md`, `lessons-learned.md`, `TPAMI-6-WEEK-PLAN.md`,
+and a `WAVES.md` pointer to the existing superseded banner in `PUSH-READY.md`.
+(`INDEX.md` already pointed at `WAVES.md`.)
+
 ## 3. Gate results (acceptance record)
 
 | Gate | Command | Result |

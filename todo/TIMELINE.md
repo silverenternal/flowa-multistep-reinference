@@ -1,5 +1,9 @@
 # `todo/TIMELINE.md` — phase durations + "project done" definition
 
+> **HISTORICAL — not the primary management surface.** The live project state and
+> history are in [`WAVES.md`](WAVES.md); this file is retained for provenance and
+> its state pins (HEAD, gate counts) may predate the current HEAD.
+
 **Date:** 2026-09-05
 **Purpose:** time-budget the 4-phase plan per user "对机子负担最小" directive.
 Also define "project done" precisely so the loop has a clear exit.

@@ -1,5 +1,9 @@
 # `todo/GATES.md` — Acceptance gates (binding rule per user directive)
 
+> **HISTORICAL — not the primary management surface.** The live project state and
+> history are in [`WAVES.md`](WAVES.md); this file is retained for provenance and
+> its state pins (HEAD, gate counts) may predate the current HEAD.
+
 **Date:** 2026-09-05
 **User directive:** *"todo目录下的所有任务都要有验收门槛，没过门槛就禁止进入下一步任务"*
 (translation: every task in `todo/` must have an acceptance gate; if a gate

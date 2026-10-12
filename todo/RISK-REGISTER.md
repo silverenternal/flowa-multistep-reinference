@@ -1,5 +1,9 @@
 # `todo/RISK-REGISTER.md` — forward-looking risks + mitigations
 
+> **HISTORICAL — not the primary management surface.** The live project state and
+> history are in [`WAVES.md`](WAVES.md); this file is retained for provenance and
+> its state pins (HEAD, gate counts) may predate the current HEAD.
+
 **Date:** 2026-09-25 (last append: Wave 347 governance refresh — R-016..R-022 appended; original 2026-09-05 baseline preserved verbatim below)
 **Purpose:** catalog risks that **could** happen (different from
 `lessons-learned.md` which records risks that **did** happen). Each risk has

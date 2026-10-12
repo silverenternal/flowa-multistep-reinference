@@ -1,5 +1,9 @@
 # `todo/STATUS.md` — current execution status (2026-10-12, post-push governance refresh)
 
+> **HISTORICAL — not the primary management surface.** The live project state and
+> history are in [`WAVES.md`](WAVES.md); this file is retained for provenance and
+> its state pins (HEAD, gate counts) may predate the current HEAD.
+
 **Updated:** 2026-10-12 (post-push governance refresh — `origin/main` advanced from `0209002` to `fea137d`; the three manuscript-consistency sweeps `165df71` / `60c2441` / `fea137d` were pushed after user authorization, following the earlier `dc10cdb` manuscript-fix pass). **Prior 2026-10-11 update:** post-push governance refresh — `origin/main` advanced from `6036207` to `0209002`; the 192-commit backlog was pushed after the 147.1 MB `supplementary_bundle.zip` was purged from history + gitignored (GitHub 100 MB blob limit); CI gates re-verified green — pytest subset `5055 passed / 171 skipped / 50 deselected / 12 xfailed / 0 failed`, mypy 0 errors in 230 files, ruff 0, claims no-drift, mkdocs `--strict` exit 0; see [`docs/audit/governance-refresh-post-push.md`](../docs/audit/governance-refresh-post-push.md). Prior Wave 385 figure-addendum — §III architecture TikZ figure + §VII evidence-comparison figure added to `paper-A-final.{tex,md}`, PDF re-typeset to 11 pages; see [`docs/audit/wave385-figures.md`](../docs/audit/wave385-figures.md). Wave 384 project audit re-pointed the governance docs at HEAD `061682c` ≈ Wave 383; see [`docs/audit/wave384-project-audit.md`](../docs/audit/wave384-project-audit.md))
 
 ---

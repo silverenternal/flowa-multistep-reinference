@@ -1,5 +1,9 @@
 # TPAMI 6-Week Data-Preparation Plan (FlowA)
 
+> **HISTORICAL — not the primary management surface.** The live project state and
+> history are in [`WAVES.md`](WAVES.md); this file is retained for provenance and
+> its state pins (HEAD, gate counts) may predate the current HEAD.
+
 **Created:** 2026-09-21 (Wave 205)
 **Anchor commit:** `72ba46e`
 **Target venue:** IEEE TPAMI (double-column, 14 pp main text + unlimited refs + supplementary)

@@ -13,6 +13,7 @@
 > 2026-10-11 snapshot and is preserved as provenance.
 > **Do not read the "2 unpushed commits" / "READY TO PUSH" statements below as
 > current** — the push is complete and the working tree is 0 commits ahead.
+> The live project state and history are in [`WAVES.md`](WAVES.md).
 
 ---
 

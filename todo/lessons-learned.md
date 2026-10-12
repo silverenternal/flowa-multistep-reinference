@@ -1,5 +1,9 @@
 # `todo/lessons-learned.md` — cross-cutting patterns (LL-001, ...)
 
+> **HISTORICAL — not the primary management surface.** The live project state and
+> history are in [`WAVES.md`](WAVES.md); this file is retained for provenance and
+> its state pins (HEAD, gate counts) may predate the current HEAD.
+
 **Purpose:** capture cross-cutting lessons that affect how we approach future
 work. Each entry: title, evidence, mitigation. Append-only.
 

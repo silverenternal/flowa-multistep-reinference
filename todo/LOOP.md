@@ -1,5 +1,9 @@
 # `todo/LOOP.md` — Per-model lifecycle + iteration mechanism + stop conditions
 
+> **HISTORICAL — not the primary management surface.** The live project state and
+> history are in [`WAVES.md`](WAVES.md); this file is retained for provenance and
+> its state pins (HEAD, gate counts) may predate the current HEAD.
+
 **Date:** 2026-09-05
 **Purpose:** the `PHASE-1..4` files describe **a single model's journey**
 through 4 stages. This file defines the **loop** that runs many models through

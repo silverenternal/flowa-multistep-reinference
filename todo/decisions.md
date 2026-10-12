@@ -1,5 +1,9 @@
 # `todo/decisions.md` — decision log (append-only)
 
+> **HISTORICAL — not the primary management surface.** The live project state and
+> history are in [`WAVES.md`](WAVES.md); this file is retained for provenance and
+> its state pins (HEAD, gate counts) may predate the current HEAD.
+
 **Purpose:** record WHY choices were made. Future readers (or future-us) need
 to know "why X not Y". Each entry: date, context, choice, rationale,
 consequences.
