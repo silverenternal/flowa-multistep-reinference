@@ -78,8 +78,19 @@ from adaptive_reflow.adapters.kanzi import default_kanzi_adapter  # noqa: E402
 # caught the Wave 96.E stuck sweep earlier.
 from tools._gpu_watchdog import gpu_watchdog  # noqa: E402
 
-# Wave 112.D-1: --config support.
-from tools._kanzi_sweep_runner import apply_kanzi_profile_defaults  # noqa: E402
+# Wave 96.B — reuse the diverse-endpoint helper + parser. Both moved into
+# the shared runner when Wave 105 P1-A extracted ``tools/_kanzi_sweep_runner.py``
+# (``real_framework_x_final_512d`` was renamed ``_synthesize_x_final_real``;
+# ``parse_record`` kept its name). Importing them from the old
+# ``..._inv_proj`` module raised ImportError and blocked the driver.
+# Wave 112.D-1: ``apply_kanzi_profile_defaults`` backs the --config flag.
+from tools._kanzi_sweep_runner import (  # noqa: E402
+    _synthesize_x_final_real as real_framework_x_final_512d,
+)
+from tools._kanzi_sweep_runner import (  # noqa: E402
+    apply_kanzi_profile_defaults,
+    parse_record,
+)
 
 # Wave 97.D — hard N-record assertion + summary JSON contract (closes
 # the Wave 96 reality-check gap: agents silently wrote N<=10 sweeps and
@@ -97,14 +108,6 @@ from tools.paper_metrics_kanzi import (  # noqa: E402
     compute_codebook_js_distance,
     compute_codebook_perplexity,
     compute_codebook_utilization,
-)
-
-# Wave 96.B — reuse the diverse-endpoint helper + parser from the Wave 95
-# Phase 3.C driver (this is the production version of the Wave 96.D
-# debug script, not a re-implementation).
-from tools.sweep_kanzi_n1000_framework_paper_metrics_inv_proj import (  # noqa: E402
-    parse_record,
-    real_framework_x_final_512d,
 )
 
 
