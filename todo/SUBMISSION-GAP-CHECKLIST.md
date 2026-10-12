@@ -88,6 +88,7 @@ Two **new, real** defects were found by the same pass and are added below as
 | GAP-19 | P2 | agent | **RESOLVED** (2026-10-12) | Q1-odds removed from submission docs — aligned with the manuscript (Wave 370 removal) |
 | GAP-20 | P2 | user | OPEN | 17 `[USER TO FILL]` cover-letter placeholders |
 | GAP-21 | **P0** | agent | **RESOLVED** (2026-10-12) | Manuscript test citations repointed to real files + measured counts |
+| GAP-22 | P1 | agent/user | OPEN | R2/R1 STRONG-label rubric inconsistency (R2 STRONG at d=0.099 vs R1 PARTIAL at 0.182) |
 
 ---
 
@@ -276,6 +277,20 @@ Two **new, real** defects were found by the same pass and are added below as
   align the positioning accordingly.
 - **Handle:** `todo/RISK-REGISTER.md` R-019.
 - **Acceptance:** venue decided; abstract/intro positioning matches it.
+
+### GAP-22 — R2/R1 STRONG-label rubric inconsistency (NEW 2026-10-12, from a live-manuscript read)
+- **Owner:** agent (the fix *path* is user-gated). **Priority:** P1 (borderline P0 — a reviewer-visible internal contradiction in the headline).
+- **Finding.** The manuscript states a `|d| = 0.8` "STRONG-promotion bar" (§7.1 figure caption) and applies it to demote **R1** (`d_z = +0.182 < 0.8 → PARTIAL`, §7.2 R1 row). But **R2** is labelled **STRONG** with `d_z = -0.0990` (§7.2 R2 row) — an order of magnitude *below* the bar, and below R1's own effect. The same rubric yields opposite labels. The tension is three-layered:
+  (a) manuscript §7.2 — R2 STRONG at `|d_z| = 0.099` vs R1 PARTIAL at `0.182`;
+  (b) `docs/CLAIMS.md` CLM-063 (Wave 196 P4, R2 REGRESSES → SUPPORTED) rests on paired-t significance at N=1000 (`p_raw = 0.00257`, **Cohen's `d_z = +0.096`**) — i.e. significance, not effect size;
+  (c) CLM-063's own aggregate artifact `verification_outputs/wave196-p4-table-a-r-level.json` records **R2 verdict = UNDERPOWERED**, and CLM-060 (Wave 195 P2) recorded R2 = **REGRESSES** — so the claims ledger has carried REGRESSES / UNDERPOWERED / SUPPORTED / STRONG for the same cell at different times.
+- **Why it matters.** A reviewer who reads §7.1 + §7.2 will ask "why is R2 STRONG at `|d| = 0.099` when R1 is demoted at `0.182`?" — and the answer is not in the manuscript.
+- **Fix options (user decision):**
+  - **(A) Additive rubric disclosure — strict-clean, recommended.** Add an ADDITIVE footnote to §7.2 (and one sentence to §7.1) stating that STRONG = Bonferroni-significant at the pre-registered α, *not* a large-effect threshold, and disclosing R2's `|d_z| = 0.099` + the CLM-063 UNDERPOWERED artifact. No label change; preserves Wave 268 strict-clean + the submission freeze.
+  - **(B) Add an effect-size floor to the rubric and re-label R2.** Demote R2 to PARTIAL/small-effect (headline → 3 STRONG + 1 TIE + 7 PARTIAL/SUPP). Most internally consistent, but changes a headline count — needs a user decision (and either a new measurement or an explicit override of the freeze).
+  - **(C) State the rubric only.** Minimal: document the criterion without disclosing R2's specific tension.
+- **Handle:** `docs/drafts/paper-A-final.md` §7.1 + §7.2 (R2 / R1 rows); `docs/CLAIMS.md` CLM-060 / CLM-063.
+- **Acceptance:** a reader can answer "why R2 STRONG, R1 PARTIAL" from the manuscript alone.
 
 ---
 

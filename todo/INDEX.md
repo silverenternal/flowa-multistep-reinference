@@ -16,7 +16,7 @@
 
 **Venue:** IEEE TNNLS (Transactions on Neural Networks and Learning Systems, CAS 1区 TOP) — switched from TPAMI at Wave 238 P3 (`docs/audit/engineering/wave238-p3-journal-decision.md`). Backups: TIP → PR → Neural Networks → EAAI.
 
-**State:** HEAD `ca730b9`; the 192-commit backlog + three manuscript-consistency sweeps landed 2026-10-11/12; **18 commits ahead of `origin/main`** (`fea137d`), local-only (push is user-gated). All acceptance gates PASS (pytest subset green / mypy 0 / ruff 0 / claims no-drift / mkdocs strict exit 0). Manuscript = `docs/drafts/paper-A-final.pdf` (11 pages, SHA `47f6eb04…`), title *"FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints"*.
+**State:** HEAD `23671ac`; the 192-commit backlog + three manuscript-consistency sweeps landed 2026-10-11/12; **19 commits ahead of `origin/main`** (`fea137d`), local-only (push is user-gated). All acceptance gates PASS (pytest subset green / mypy 0 / ruff 0 / claims no-drift / mkdocs strict exit 0). Manuscript = `docs/drafts/paper-A-final.pdf` (11 pages, SHA `47f6eb04…`), title *"FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints"*.
 
 **Entry points:**
 - **[STATUS.md](STATUS.md)** — current state + R-level claims + recent waves + venue decision
