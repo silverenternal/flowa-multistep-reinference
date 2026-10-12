@@ -436,7 +436,7 @@ R-level cells at their appropriate granularities:
 | R-cell | Wave 195 P2 verdict | Wave 216 final verdict | mechanism |
 |---|---|---|---|
 | **R1** LineageFlow HMMER | WINS | **WINS** (unchanged) | d_z = +0.255, p = 1.49e-08 |
-| **R2** Kanzi `framework_inv_proj` | REGRESSES (initial) | **framework_wins** (Wave 218 P3 N=1000 paired sweep) | d_z = -0.099, p_raw = 1.7943e-03, Bonferroni-significant at α = 0.007143 |
+| **R2** Kanzi `framework_inv_proj` | REGRESSES (initial) | **framework_wins** (Wave 218 P3 N=1000 index-matched two-sample sweep) | d_z = -0.099, p_raw = 1.7943e-03, Bonferroni-significant at α = 0.007143 |
 | **R3** FlowMol3 `fg_dev` | UNDERPOWERED (per-arm) | **framework_wins** (Wave 216 P1 per-record proxy uplift) | ACTUAL n=200 per-record: d_z = -0.285, p = 8.03e-05; PROJECTED n=1000: d_z = -0.285, p = 1.07e-18, post-hoc power = 1.000 |
 | **R5a** 2D Two Moons W₂ | TIE (n=3) | **TIE** (Wave 216 P2 n=10 extension confirmed) | best arm = CosineAnnealScheduler, d_s = +1.011, p_raw = 0.037, Bonferroni p = 0.258 |
 | **R5b** CIFAR-10 RF NFE=50 FID | REGRESSES | **REGRESSES (boundary)** (unchanged, first-class honest-negative) | d_z = +2.700, p = 1.31e-05, Bonferroni-significant in wrong direction |

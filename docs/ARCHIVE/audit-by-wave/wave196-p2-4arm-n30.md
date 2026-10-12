@@ -14,7 +14,7 @@ on the R6 task (LineageFlow synthetic protein gen) at n=30 paired seeds
 power-analysis verdict of CLM-061.
 
 This doc covers the **Track B** half of Wave 196. Track C (kanzi N=1000
-framework_inv_proj real-ckpt paired re-verify) is covered by a separate
+framework_inv_proj real-ckpt index-matched two-sample re-verify) is covered by a separate
 agent (Wave 196 P3).
 
 ---

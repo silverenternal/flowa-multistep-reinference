@@ -33,7 +33,7 @@ that must be answered before paper propagation:
 
 ### Q2: Which commit was used to run the Kanzi R2 framework_wins data?
 
-**Answer:** The Wave 218 P3 N=1000 paired sweep was run on the Wave 218
+**Answer:** The Wave 218 P3 N=1000 index-matched two-sample sweep was run on the Wave 218
 P1 fixed HEAD = `e3d1c01`. The full N=1000 numbers in
 `verification_outputs/wave218-p3-kanzi-framework-wins.csv` are:
 
@@ -106,7 +106,7 @@ The CLM-060 R2 row description is updated to reflect:
    of `tools/_kanzi_sweep_runner.py:_synthesize_x_final_real`).
 2. The Wave 218 P2 N=10 smoke test on the Wave 218 P1 fixed HEAD
    confirming framework mean returns to 0.8758 Å.
-3. The Wave 218 P3 N=1000 paired sweep confirming framework_wins at
+3. The Wave 218 P3 N=1000 index-matched two-sample sweep confirming framework_wins at
    full N=1000 (d_z = −0.0990, p_raw = 1.7943e-3,
    Bonferroni-significant at α = 0.007143).
 
@@ -121,9 +121,9 @@ values.
 |---|---|---|
 | `docs/tables/wave204-p3-standardized-stats.md` (line 38) | R2 row updated to Wave 218 P3 N=1000 numbers | one source-of-truth table |
 | `docs/CLAIMS.md` (CLM-060 Statement, ~line 3030) | R2 update note rewritten to reflect Wave 218 P1 fix + P2 smoke + P3 N=1000 | claim ledger accuracy |
-| `docs/drafts/paper-flattened-draft.md` (Table 3.2 line 217) | R2 row updated to Wave 218 P3 N=1000 paired t numbers; "Reading the table" line and §3.3 CI narrative updated to framework_wins | paper §3.3 accuracy |
+| `docs/drafts/paper-flattened-draft.md` (Table 3.2 line 217) | R2 row updated to Wave 218 P3 N=1000 index-matched two-sample t numbers; "Reading the table" line and §3.3 CI narrative updated to framework_wins | paper §3.3 accuracy |
 | `docs/drafts/results-final.md` (§3.3.a, ~line 417, 441) | R2 row verdict mechanism updated; "BLOCKED on missing P3 verdict" annotation closed | results §3.1 closure |
-| `docs/cover-letter-tpami.md` (§8, after line 302) | new R2 reproducibility provenance note added (commit `e3d1c01` Wave 218 P1, Wave 218 P2 N=10 smoke, Wave 218 P3 N=1000 paired sweep, D.4 30/30 explanation) | reviewer code-vs-paper alignment check |
+| `docs/cover-letter-tpami.md` (§8, after line 302) | new R2 reproducibility provenance note added (commit `e3d1c01` Wave 218 P1, Wave 218 P2 N=10 smoke, Wave 218 P3 N=1000 index-matched two-sample sweep, D.4 30/30 explanation) | reviewer code-vs-paper alignment check |
 
 ## 3. Cross-references
 
@@ -141,11 +141,11 @@ values.
 - `docs/audit/wave218-p2-smoke.md` — Wave 218 P2 N=10 smoke
   confirming the Wave 218 P1 fix is reproducible from HEAD
 - `docs/audit/wave218-p3-n1000-verified.md` — Wave 218 P3 N=1000
-  paired sweep verification
+  index-matched two-sample sweep verification
 - `docs/audit/wave218-p4-provenance-annotation.md` — Wave 218 P4
   provenance annotation of the Wave 218 P1 commit (commit `f59523b`)
 - `verification_outputs/wave218-p3-kanzi-framework-wins.csv` —
-  Wave 218 P3 N=1000 paired t-test CSV (mean_diff = -0.018964,
+  Wave 218 P3 N=1000 index-matched two-sample t-test CSV (mean_diff = -0.018964,
   d_z = -0.0990, p_raw = 1.7943e-3, framework_wins)
 
 ## 4. Verification gates
@@ -170,7 +170,7 @@ reproducibility contract:
 3. **Baseline arm JSON:**
    `verification_outputs/wave218-p3-kanzi-baseline-n1000/kanzi_n1000_paper_metrics.json`
 4. **Statistical test:** `verification_outputs/wave218-p3-kanzi-framework-wins.csv`
-   (paired t-test, N=1000, df=999, mean_diff = −0.018964 Å,
+   (index-matched two-sample t-test, N=1000, df=999, mean_diff = −0.018964 Å,
    d_z = −0.0990, p_raw = 1.7943e-3, CI95 = [−0.0309, −0.0071],
    Bonferroni-significant at α = 0.007143, framework_wins).
 5. **Bridge restore rationale:** Wave 218 P1 audit doc

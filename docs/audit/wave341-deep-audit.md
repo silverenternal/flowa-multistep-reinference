@@ -93,7 +93,7 @@ provenance: citations=44 paths=32 drifts=6
 
 | Property | Status |
 |---|---|
-| Headline source | `verification_outputs/wave218-p3-kanzi-framework-wins.json` (deployed paired-t, d_z=−0.0990, p_raw=1.79e-3, Bonf-sig at α=0.007143, framework_WINS) |
+| Headline source | `verification_outputs/wave218-p3-kanzi-framework-wins.json` (deployed index-matched two-sample t, d_z=−0.0990, p_raw=1.79e-3, Bonf-sig at α=0.007143, framework_WINS) |
 | N=1000 paired | ✅ single-seed = canonical |
 | 3-seed pooled / n=30 / n=100 | ❌ **MISSING** — only seed_base=42 paired-t |
 | SHA256SUMS ledger for headline | ✅ framework_source: `verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/kanzi_n1000_framework_paper_metrics.json` exists; baseline_source: `verification_outputs/wave218-p3-kanzi-baseline-n1000/...` exists; both rooted in `kanzi_n1000_*` directories |
@@ -224,7 +224,7 @@ Per-cell artifact presence matrix (verified by `ls verification_outputs/...`):
 | Cell | Required artifact | Present | Cell evidence family |
 |---|---|---|---|
 | R1 | 4 (Wave 158 base + Wave 280 3-seed pooled) | ✅ | single-seed + 3-seed N=1000 |
-| R2 | 2 (Wave 218 paired-t + Wave 214 framework_inv_proj) | ✅ | single-seed N=1000 paired-t |
+| R2 | 2 (Wave 218 index-matched two-sample t + Wave 214 framework_inv_proj) | ✅ | single-seed N=1000 index-matched two-sample t |
 | R3 | 1 + 2 partial (Wave 87 / Wave 206 P3 / Wave 235 P4) | ⚠️ | 1-seed only; 3-seed BLOCKED |
 | R5a | 1 (Wave 189 n=3) + 0 for n>=7 | ❌ for n>=7 evidence | TIE_PERSISTS at n=3 |
 | R5b | 4 (Wave 235 rounds1/2/10 + Wave 247 N=1000 + g1_deep_dive v2) | ✅ 5 | N=1000 vs N=200 data-source inconsistency |

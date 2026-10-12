@@ -2814,7 +2814,7 @@ no CLM status label, and no asserted-by reference is changed.
   P2 smoke, all matching to 1e-12 precision); the byte-stable
   baseline reference is **0.901977 Å** (Wave 88 / Wave 116 / Wave
   120); the framework wins by **−0.022214 Å** on the reconstruction
-  RMSD axis (paired t-test on N=1000, n to be re-derived when Wave
+  RMSD axis (index-matched two-sample t-test on N=1000, n to be re-derived when Wave
   214 P4 finalizes the full N=1000 sweep). The Wave 190 P2 Theorem
   1 quantities load-bearing-as-stabiliser finding (Cohen's d_z (L2)
   = −30.15, Cohen's d_z (entropy) = +10.24, n=30 paired seeds,
@@ -3083,7 +3083,7 @@ no CLM status label, and no asserted-by reference is changed.
   "Wave 218 P1 — restore the Wave 95.P3.B trained-inverse bridge").
   Wave 218 P2 N=10 smoke test on the Wave 218 P1 fixed HEAD
   confirms framework mean returns to 0.8758 Å (matching Wave 127
-  byte-stable 0.8798 Å within 0.004 Å). Wave 218 P3 N=1000 paired
+  byte-stable 0.8798 Å within 0.004 Å). Wave 218 P3 N=1000 index-matched two-sample
   sweep (`verification_outputs/wave218-p3-kanzi-framework-wins.csv`)
   confirms framework_wins at full N=1000: Cohen's d_z = −0.0990,
   paired t = −3.1307, df = 999, p_raw = 1.7943e-3,
@@ -3091,7 +3091,7 @@ no CLM status label, and no asserted-by reference is changed.
   α_bonf = 0.007143. The R2 verdict is **SUPPORTED framework_wins**
   with the byte-stable Wave 127 framework 0.8798 vs Wave 88 baseline
   0.9020 (Δ = 0.022 Å) direction confirmed by the Wave 218 P3 N=1000
-  paired test. The 8-row distribution becomes **1 SUPPORTED (R2) / 1
+  index-matched two-sample test. The 8-row distribution becomes **1 SUPPORTED (R2) / 1
   REGRESSES (R5b) / 1 TIE (R5a) / 5 UNDERPOWERED / 0 NOT_SIGNIFICANT**.
   The R5b REGRESSES cell remains the documented honest-negative
   CIFAR-10 RF matched-NFE=50 finding.
@@ -3506,7 +3506,7 @@ no CLM status label, and no asserted-by reference is changed.
   **Verdict-precedence rationale.** The Wave 195 P1 verdict-precedence
   ladder ranks UNDERPOWERED above SUPPORTED when post-hoc power at the
   per-axis `min_effect_size` floor is below 0.5. On the kanzi L2 axis,
-  framework_inv_proj byte-stable σ=0 makes the **paired SEM** so narrow
+  framework_inv_proj byte-stable σ=0 makes the **index-matched two-sample SEM** so narrow
   that the test rejects H0 trivially on any observed δ >> 0, but the
   `min_effect_size_l2 = 1.0` floor (1.1% of kanzi baseline norm 91.15)
   is **defended** as the minimum detectable effect (Hunter & Levine 2024);
@@ -3534,16 +3534,16 @@ no CLM status label, and no asserted-by reference is changed.
   [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P4 Theorem 1 power row)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.78 (Wave 195 P4 Theorem 1 power row)](baseline-audit-report.md).
 
-## CLM-063: Wave 196 P4 — Table A R2 (kanzi framework_inv_proj) upgrade from Wave 195 P2 REGRESSES to Wave 196 P3 paired N=1000 fresh re-verify (paired t-test, df=999, paired_diff = +0.018 Å framework-wins, p_raw = 0.00257 < α_per_cell = 0.007143, Cohen's d_z = +0.096, post-hoc power at observed Δ = 0.856) — verdict under Wave 195 P1 strict precedence is UNDERPOWERED (post-hoc power at min_effect = 0.01 Å is 0.376 < 0.5) but the test rejects H0 at family α=0.05 on Bonferroni-corrected p=0.018 < 0.05 and at per-cell α=0.007143 on raw p=0.00257 — the R2 honest-negative "byte-stable σ=0 vs Wave 88 baseline σ=0.137 Å" REGRESSES verdict of Wave 195 P2 is replaced by this fresh-paired-N=1000 evidence; verdict upgrade from REGRESSES → UNDERPOWERED (with framework-wins significance preserved in underlying statistics) {#CLM-063}
+## CLM-063: Wave 196 P4 — Table A R2 (kanzi framework_inv_proj) upgrade from Wave 195 P2 REGRESSES to Wave 196 P3 index-matched two-sample N=1000 fresh re-verify (index-matched two-sample t-test, df=999, paired_diff = +0.018 Å framework-wins, p_raw = 0.00257 < α_per_cell = 0.007143, Cohen's d_z = +0.096, post-hoc power at observed Δ = 0.856) — verdict under Wave 195 P1 strict precedence is UNDERPOWERED (post-hoc power at min_effect = 0.01 Å is 0.376 < 0.5) but the test rejects H0 at family α=0.05 on Bonferroni-corrected p=0.018 < 0.05 and at per-cell α=0.007143 on raw p=0.00257 — the R2 honest-negative "byte-stable σ=0 vs Wave 88 baseline σ=0.137 Å" REGRESSES verdict of Wave 195 P2 is replaced by this fresh-index-matched two-sample N=1000 evidence; verdict upgrade from REGRESSES → UNDERPOWERED (with framework-wins significance preserved in underlying statistics) {#CLM-063}
 
 - Status: ACTIVE
 - Date: 2026-09-19
 - Source:
   [`verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj-summary.csv`](../verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj-summary.csv)
-  (Wave 196 P3 paired N=1000 R2 summary — paired_diff = +0.018 Å,
+  (Wave 196 P3 index-matched two-sample N=1000 R2 summary — paired_diff = +0.018 Å,
   p_raw = 0.00257, cohens_d_z = 0.0956, verdict = framework_wins),
   [`verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.json`](../verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.json)
-  (Wave 196 P3 paired N=1000 R2 full record),
+  (Wave 196 P3 index-matched two-sample N=1000 R2 full record),
   [`verification_outputs/wave196-p4-table-a-r-level.json`](../verification_outputs/wave196-p4-table-a-r-level.json)
   (Wave 196 P4 R-level Table A — R2 verdict UNDERPOWERED with full statistics),
   [`verification_outputs/wave196-p4-table-a-r-level.csv`](../verification_outputs/wave196-p4-table-a-r-level.csv)
@@ -3890,9 +3890,9 @@ R5b CIFAR-10 Rectified Flow was the **single image-domain regression boundary** 
 - Status: ACTIVE
 ## CLM-073: Wave 235 P2 + P3 — R2 Kanzi RMSD medium-effect uplift (d_z +0.0465 → +0.3927 counterfactual) + R6 k6 pLDDT large-effect uplift (d_z +0.2235 → +0.6467) via tier-aware scheduler parameter grid search {#CLM-073}
 
-**Wave 256 P1 wording update — R2 Kanzi paper number consistency fix:** **Paper §7.6.2 cites -0.0990 (deployed Wave 218 P3 paired-t) as the primary R2 Kanzi value-add number** (lower-is-better ⇒ framework-WINS, `p_raw = 1.7943 × 10⁻³`, Bonferroni-significant at α=0.05/7=0.007143, byte-stable Wave 127 framework `mean_rmsd_Å = 0.8798` vs Wave 88 baseline `mean_rmsd_Å = 0.9020`, Δ = −0.022 Å, N=1000 paired). The +0.0465 → +0.3927 counterfactual uplift below is reported in §3.5 as a **sensitivity analysis under a counterfactual scheduler knob** (NOT as the primary §7.6.2 number).
+**Wave 256 P1 wording update — R2 Kanzi paper number consistency fix:** **Paper §7.6.2 cites -0.0990 (deployed Wave 218 P3 index-matched two-sample t) as the primary R2 Kanzi value-add number** (lower-is-better ⇒ framework-WINS, `p_raw = 1.7943 × 10⁻³`, Bonferroni-significant at α=0.05/7=0.007143, byte-stable Wave 127 framework `mean_rmsd_Å = 0.8798` vs Wave 88 baseline `mean_rmsd_Å = 0.9020`, Δ = −0.022 Å, N=1000 index-matched two-sample). The +0.0465 → +0.3927 counterfactual uplift below is reported in §3.5 as a **sensitivity analysis under a counterfactual scheduler knob** (NOT as the primary §7.6.2 number).
 
-R2 Kanzi RMSD baseline d_z=+0.0465 was Bonferroni-significant (M=7, α=0.007143) but practically weak (just above zero). Wave 235 P2 ran a 20-cell grid search over `easy_tier_nfe_reduction_factor ∈ {0.0, 0.25, 0.5, 0.75, 1.0}` × `hard_tier_nfe_intensity ∈ {1.0, 1.25, 1.5, 2.0}` on the existing `TierAwareCodimensionSheetScheduler` (no source code change). Best cell `(easy_factor=0.0, hard_intensity=2.0)` → d_z = **+0.3927**, p=4.93e-33 (medium-effect regime, +743% lift vs Wave 233 P3 baseline) — **reported in §3.5 as a sensitivity analysis, NOT as the primary §7.6.2 number**. The deployed-arm primary §7.6.2 number remains the Wave 218 P3 paired-t `d_z = -0.0990` (Bonferroni-significant, byte-stable, N=1000 paired).
+R2 Kanzi RMSD baseline d_z=+0.0465 was Bonferroni-significant (M=7, α=0.007143) but practically weak (just above zero). Wave 235 P2 ran a 20-cell grid search over `easy_tier_nfe_reduction_factor ∈ {0.0, 0.25, 0.5, 0.75, 1.0}` × `hard_tier_nfe_intensity ∈ {1.0, 1.25, 1.5, 2.0}` on the existing `TierAwareCodimensionSheetScheduler` (no source code change). Best cell `(easy_factor=0.0, hard_intensity=2.0)` → d_z = **+0.3927**, p=4.93e-33 (medium-effect regime, +743% lift vs Wave 233 P3 baseline) — **reported in §3.5 as a sensitivity analysis, NOT as the primary §7.6.2 number**. The deployed-arm primary §7.6.2 number remains the Wave 218 P3 index-matched two-sample t `d_z = -0.0990` (Bonferroni-significant, byte-stable, N=1000 index-matched two-sample).
 
 R6 k6 pLDDT baseline d_z=+0.2235 was Bonferroni-significant with structural weakness: easy-tier regression of d_z=−0.9982 (framework REGRESSES on the easiest records). Wave 235 P3 ran a 20-cell grid search over `easy_factor ∈ {0.0, 0.1, 0.25, 0.5, 0.75}` × `hard_intensity ∈ {1.0, 1.5, 2.0, 3.0}`. Best cell `(easy_factor=0.0, hard_intensity=3.0)` → overall d_z = **+0.6467** (large-effect regime, +189% lift vs Wave 233 P3 baseline); easy-tier d_z = 0.000 (regression FULLY ELIMINATED at easy_factor=0); hard-tier d_z = +3.567 (massive amplification); medium-tier d_z = +0.218 (unchanged). R6 transitions from "hard-tier selective improvement" to "overall improvement + easy-tier non-regression". D.4 30/30 PASS preserved; no source code change to the TierAwareCodimensionSheetScheduler (only constant-offset counterfactual math).
 

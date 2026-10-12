@@ -24,7 +24,7 @@ This document is the **single source-of-truth** for Paper-A metrics at the pre-p
 | Item | Value |
 |---|---|
 | Paper file | `docs/drafts/paper-flat-flattened.md` |
-| sha256 | `58c21076fc66bbf87c647537328e33911b42fe03123c5d61eaa0ecc8fa5562b7` |
+| sha256 | `f33d11141e83d2063a6889fbc9e2e0a79e257a25e9edd4b16075c5bf638e88f7` |
 | Line count | 1602 (was 1567 at Wave 325; +35 lines from §7.2.x "Final Paper A verdict distribution" table + §7.1/§7.2/§7.9/§7.11 verdict-distribution updates) |
 | Commit (pending) | `docs: Wave 326 verdict-distribution update — 4 STRONG + 1 TIE main + 6 PARTIAL/SUPP` |
 | Last push commit (origin/main) | `7dd7520` (Wave 325 D+5+1 push-execution, BLOCKED at permission gate) |
@@ -38,7 +38,7 @@ This is the **canonical pre-push metrics table**. Verbatim copy from Wave 309 re
 
 | Position | Cell | Verdict at last push | New verdict (Wave 310 restoration) | Headline metric | Effort |
 |---|---|---|---|---|---|
-| **MAIN** | R2 | MISALIGNED_AT_LAST_PUSH_then_FIXED (one-sample t+3.532 → paired t−0.099) | **STRONG framework-WINS** | paired d_z = −0.099, p = 1.79e-3 | 2 edits |
+| **MAIN** | R2 | MISALIGNED_AT_LAST_PUSH_then_FIXED (one-sample t+3.532 → index-matched two-sample t−0.099) | **STRONG framework-WINS** | index-matched two-sample d_z = −0.099, p = 1.79e-3 | 2 edits |
 | **MAIN** | R5c | SUPPORTABLE (smoke ckpt, PROVISIONAL disclosure inline) | **STRONG framework-WINS (smoke ckpt, production ckpt deferred)** | smoke d_z = −13.175, p = 1.32e-11 | 0 edits |
 | **MAIN** | R6 | PARTIAL_RESTORE (uniform +0.071 UNPRIMED + counterfactual +0.2235 NOT surfaced) | **STRONG tier-aware promotion** (counterfactual +0.2235 Bonf-sig at α=0.05) | tier-aware d_z = +0.2235, p = 2.98e-12 | 5 edits |
 | **MAIN** | R5b | SUPPORTABLE (3 N points all REGRESSES, n_rounds conditional partially known) | **STRONG REGRESSES boundary characterization** + n_rounds=1 WINS reframing | REGRESSES d_z = +2.700, p = 1.31e-5 (10 chunks) / −1.60% (n_rounds=1) | 2 edits |
@@ -66,7 +66,7 @@ This is the **canonical pre-push metrics table**. Verbatim copy from Wave 309 re
 
 | Cell | Position | Verdict | Headline d_z | Bonferroni p | Scheduler | Adapter | Notes |
 |---|---|---|---:|---|---|---|---|
-| R2 | MAIN | STRONG framework-WINS | −0.0990 | 1.79e-3 (R-level α=0.007143) | `CosineAnnealScheduler` | Kanzi inv-proj | Wave 218 P3 paired t N=1000, sha256 9b5c3b68 |
+| R2 | MAIN | STRONG framework-WINS | −0.0990 | 1.79e-3 (R-level α=0.007143) | `CosineAnnealScheduler` | Kanzi inv-proj | Wave 218 P3 index-matched two-sample t N=1000, sha256 9b5c3b68 |
 | R5a | MAIN | TIE | d_s = +0.460 | 0.604 (R-level α=0.007143) | `CosineAnnealScheduler` | 2D Two Moons | n=3+7+10 TIE_PERSISTS |
 | R5b | MAIN | STRONG REGRESSES-boundary | +2.700 (n_rounds=10); +4.29 to +4.49 (n_rounds=1) | 9.17e-5 (n_rounds=10 REGRESSION) / n_rounds=1 4/4 WINS | `CosineAnnealScheduler` | CIFAR-10 RF | matched-NFE=50 |
 | R5c | MAIN | STRONG (smoke ckpt only) | −13.18 (smoke) / +1.5463/+1.3312/+1.0243 (production per-seed) | 3.95e-11 (smoke, per-3-arm-count k=3) | `CosineAnnealScheduler` | MNIST FM | production ckpt REGRESSES +10.37% |
@@ -134,4 +134,4 @@ This is the **canonical pre-push metrics table**. Verbatim copy from Wave 309 re
 
 Per the Wave 325 D+5+1 push-execution audit, the push to `origin/main` is **BLOCKED at the USER permission gate**. The Wave 326 verdict-distribution update is **content-complete + pre-push-ready** but **NOT pushed**. The push requires USER authorization.
 
-**Status:** **READY-TO-PUSH (USER AUTHORIZATION PENDING)** — Wave 326 verdict-distribution update applied at paper-flat-flattened.md sha256 `58c21076fc66bbf87c647537328e33911b42fe03123c5d61eaa0ecc8fa5562b7`; final 11-row verdict-distribution table preserved verbatim from Wave 309 restoration plan §3; 5-gate invariants verified; vendored NOT touched.
+**Status:** **READY-TO-PUSH (USER AUTHORIZATION PENDING)** — Wave 326 verdict-distribution update applied at paper-flat-flattened.md sha256 `f33d11141e83d2063a6889fbc9e2e0a79e257a25e9edd4b16075c5bf638e88f7`; final 11-row verdict-distribution table preserved verbatim from Wave 309 restoration plan §3; 5-gate invariants verified; vendored NOT touched.

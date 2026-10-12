@@ -78,11 +78,11 @@ Recorded for provenance; the digests are the pre-commit working-tree values.
 | `README.md` | `ed07cf068f74b8525a28517a2918f9081fa3febaf2b7b92f2e79532444798ec2` |
 | `README.zh.md` | `2df96f60041cf22a18aa1ef488c83dc08867530579e2792ec1161e8f433774a3` |
 | `docs/README.md` | `d7672d3e3d11f0ba72389f6dff1a249824784df5ace6cf4db69594e5ff002930` |
-| `cover_letter.md` | `71d9b83a024a0c90e28b0152a123304e7709c2ba6bc1056fd2ccb8fb53ec3782` |
+| `cover_letter.md` | `a2f6b82f0973eb5d0fb823b4bee0104e39fe32f517696140c8c43e600554a39b` |
 | `submission_checklist.md` | `64d51aaa18dbdd7ee5fbb21c45d3472b740fc473ed04e425e5dbf6067fe40c3b` |
 | `supplementary.md` | `d3cb7783269c566eba1df8c285401931ee973ead2f84a539847b66bca7a8d174` |
-| `docs/paper-draft-anonymous.md` | `87e0e730612e13830bffa665f7f868434715d61c0c95e8a3c7edfd38fe2ee014` |
-| `docs/paper-final-neurips.md` | `bf6ea519b85afb7ac11358db9777c227923fcd972db12559f960bab512b4951e` |
+| `docs/paper-draft-anonymous.md` | `d508c0ed1ca46a929a1ad121066cf346380a96ce9ac9b2222eb2a0d78ba24a32` |
+| `docs/paper-final-neurips.md` | `566380e6c8e1b72efb65867d50b233b2acac8585320c543ccdfa96c538bbf225` |
 
 ## 4. Unresolved gaps / caveats
 

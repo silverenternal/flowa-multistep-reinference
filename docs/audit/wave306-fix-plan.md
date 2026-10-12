@@ -17,7 +17,7 @@
 Wave 304 cell audits revealed 9 inconsistencies between paper claims and actual data spanning **8 cells** (R1, R2, R3, R5b, R5c, K1, K4, K7) + 1 cross-cutting fix (Cell-ID + position realignment). **Every fix below is paper-text or data-migration only; no new experiments are required** (the experimental evidence is already canonical — the issue is presentation, not substance). Total estimated work: **~12 hours** if user D0 signs off all `requiresUserAuth=true` items; the data-migration sub-plan (`requiresUserAuth=true` per Wave 268) is the longest single item at ~3 hours.
 
 **Honest disclosure — what changes vs the current paper:**
-1. R2 §3.3 Table 3.2 row REGRESSION `d_z=+3.532` (one-sample t, framework_source=W196_byte_stable_fallback) → DEPLOYED `d_z=-0.0990` (paired-t, framework_source=W214-P2 byte-stable). **This is the most load-bearing fix** (DeepSeek #1 priority): §3.3 currently REPORTS R2 as REGRESSION while the canonical deployed data shows framework-WINS. The §7.1 Table 7.1 row already reports the deployed value correctly, but §3.3 Table 3.2 row 200 lines earlier contradicts it.
+1. R2 §3.3 Table 3.2 row REGRESSION `d_z=+3.532` (one-sample t, framework_source=W196_byte_stable_fallback) → DEPLOYED `d_z=-0.0990` (index-matched two-sample t, framework_source=W214-P2 byte-stable). **This is the most load-bearing fix** (DeepSeek #1 priority): §3.3 currently REPORTS R2 as REGRESSION while the canonical deployed data shows framework-WINS. The §7.1 Table 7.1 row already reports the deployed value correctly, but §3.3 Table 3.2 row 200 lines earlier contradicts it.
 2. R1 §7.1 Table 7.1 row 1 d_z=+9.2/p_bonf=0.001 STRONG → 3-seed-pooled d_z=+0.6926/p_bonf=1.0 PARTIAL (seed-43/44 used 100% framework-fallback contamination per `/tmp/wf280-r1/seed{43,44}/fasta/manifest.json`). **The "d_z=+9.2" number is fabricated** (matches no actual computation).
 3. K1 p_bonf=0.054 (no computational basis) → 0.5676 (K-level k=4, α=0.0125). The 0.054 figure has been propagated across `wave280-p-k1-sweep-result.md` §0/§3.3/§3.4/§4/§6 + paper §3.2/§7.1/§7.4 + CLAIMS.md line 3012.
 4. K4+K5 p_bonf=0.734 → SUPP only (FAILS all 3 pre-registered alphas).
@@ -35,7 +35,7 @@ Wave 304 cell audits revealed 9 inconsistencies between paper claims and actual 
 
 ## 1. Issue 1: R2 paper §3.3 Table 3.2 row 319 REGRESSION vs deployed framework-WINS
 
-**Cell:** R2 (Kanzi reconstruction_kabsch_rmsd_Å, protein flow-AE, paired N=1000)
+**Cell:** R2 (Kanzi reconstruction_kabsch_rmsd_Å, protein flow-AE, index-matched two-sample N=1000)
 **Priority:** CRITICAL (DeepSeek #1 priority — data integrity)
 **Type:** DESTRUCTIVE on paper (replaces wrong numbers with correct numbers)
 **requiresUserAuth:** **true** (paper-flat-flattened.md edit)
@@ -43,11 +43,11 @@ Wave 304 cell audits revealed 9 inconsistencies between paper claims and actual 
 
 ### 1.1 Background
 
-Paper §3.3 Table 3.2 line 319 reports R2 as `one-sample t vs baseline mean | 1000 (vs baseline mean) | +0.6565 | 0.1859 | 111.69 | 999 | 0.0 | [+0.6450, +0.6680] | +3.532 (d_z) | R-level primary | 0.007143 | YES (regression by direction; lower_is_better; byte-stable)`. This is the **Wave 206 P2** data, which uses `framework_source=W196_byte_stable_fallback` (framework mean = 1.5585 Å, NOT the canonical W218 P3 framework mean = 0.8838 Å). The `+3.532 d_z` is a one-sample Cohen's d, NOT a paired t-test on per-record differences.
+Paper §3.3 Table 3.2 line 319 reports R2 as `one-sample t vs baseline mean | 1000 (vs baseline mean) | +0.6565 | 0.1859 | 111.69 | 999 | 0.0 | [+0.6450, +0.6680] | +3.532 (d_z) | R-level primary | 0.007143 | YES (regression by direction; lower_is_better; byte-stable)`. This is the **Wave 206 P2** data, which uses `framework_source=W196_byte_stable_fallback` (framework mean = 1.5585 Å, NOT the canonical W218 P3 framework mean = 0.8838 Å). The `+3.532 d_z` is a one-sample Cohen's d, NOT an index-matched two-sample t-test on per-record differences.
 
-The deployed Wave 218 P3 paired-t data (per `verification_outputs/wave218-p3-kanzi-framework-wins.json` sha256=9b5c3b68..., 984 bytes; framework_source=verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/kanzi_n1000_framework_paper_metrics.json sha256=971aa2d1... byte-stable 37550 bytes; baseline_source=verification_outputs/wave218-p3-kanzi-baseline-n1000/kanzi_n1000_paper_metrics.json) shows framework-WINS at d_z=-0.0990, p_raw=1.79e-3, Bonferroni-PASS at α=0.007143.
+The deployed Wave 218 P3 index-matched two-sample t data (per `verification_outputs/wave218-p3-kanzi-framework-wins.json` sha256=9b5c3b68..., 984 bytes; framework_source=verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/kanzi_n1000_framework_paper_metrics.json sha256=971aa2d1... byte-stable 37550 bytes; baseline_source=verification_outputs/wave218-p3-kanzi-baseline-n1000/kanzi_n1000_paper_metrics.json) shows framework-WINS at d_z=-0.0990, p_raw=1.79e-3, Bonferroni-PASS at α=0.007143.
 
-Paper §7.1 Table 7.1 row 2 (line 641) already reports the deployed value `+0.096 (Wave 196 P3 fresh paired; byte-stable σ=0 vs Wave 88 σ=0.137 Å) | 0.018 | PARTIAL (per-cell UNDERPOWERED at min_effect=0.01; framework-WINS significance preserved)` — but this uses Wave 196 P3 (different from Wave 218 P3) and the sign convention differs (+0.096 vs -0.0990). Wave 254 P1 was APPLIED to DATA_PRESENTATION.md §2.2 (correctly establishes deployed d_z=-0.0990, framework-WINS); Wave 254 P2 was scoped to fix paper-draft*.md §3.3 Table 3.2 line 319 but is **PENDING**.
+Paper §7.1 Table 7.1 row 2 (line 641) already reports the deployed value `+0.096 (Wave 196 P3 fresh index-matched two-sample; byte-stable σ=0 vs Wave 88 σ=0.137 Å) | 0.018 | PARTIAL (per-cell UNDERPOWERED at min_effect=0.01; framework-WINS significance preserved)` — but this uses Wave 196 P3 (different from Wave 218 P3) and the sign convention differs (+0.096 vs -0.0990). Wave 254 P1 was APPLIED to DATA_PRESENTATION.md §2.2 (correctly establishes deployed d_z=-0.0990, framework-WINS); Wave 254 P2 was scoped to fix paper-draft*.md §3.3 Table 3.2 line 319 but is **PENDING**.
 
 ### 1.2 Proposed fix — paper §3.3 Table 3.2 line 319
 
@@ -58,7 +58,7 @@ Paper §7.1 Table 7.1 row 2 (line 641) already reports the deployed value `+0.09
 
 **New string (proposed replacement, deployed Wave 218 P3 values):**
 ```
-| **R2** Kanzi inv-proj rmsd_Å | 1000 (paired) | −0.0190 | 0.1916 | −3.131 | 999 | 1.79 × 10⁻³ | [−0.0309, −0.0071] | −0.0990 (d_z) | paired t | R-level primary | 0.007143 | **YES (framework-WINS; lower_is_better; byte-stable σ=0 on framework_inv_proj arm)** |
+| **R2** Kanzi inv-proj rmsd_Å | 1000 (index-matched two-sample) | −0.0190 | 0.1916 | −3.131 | 999 | 1.79 × 10⁻³ | [−0.0309, −0.0071] | −0.0990 (d_z) | index-matched two-sample t | R-level primary | 0.007143 | **YES (framework-WINS; lower_is_better; byte-stable σ=0 on framework_inv_proj arm)** |
 ```
 
 ### 1.3 Proposed fix — paper §3.3 line 333 95% CI paragraph (same R2 contradiction)
@@ -70,19 +70,19 @@ R2 framework REGRESSES [+0.6450, +0.6680] Å (one-sample t vs baseline mean, byt
 
 **New string:**
 ```
-R2 framework-WINS [−0.0309, −0.0071] Å (paired t-test on Wave 218 P3 paired N=1000, framework_inv_proj byte-stable σ=0)
+R2 framework-WINS [−0.0309, −0.0071] Å (index-matched two-sample t-test on Wave 218 P3 index-matched two-sample N=1000, framework_inv_proj byte-stable σ=0)
 ```
 
 ### 1.4 Proposed fix — paper §7.1 Table 7.1 row 2 line 641 (sign convention alignment)
 
 **Old string (verbatim line 641):**
 ```
-| 2 | **R2** | Kanzi `reconstruction_kabsch_rmsd_Å` (protein flow-AE, paired N=1000) | `CosineAnnealScheduler` | +0.096 (Wave 196 P3 fresh paired; byte-stable σ=0 vs Wave 88 σ=0.137 Å) | 0.018 (R-level primary k=7) | PARTIAL (per-cell UNDERPOWERED at min_effect=0.01; framework-WINS significance preserved) |
+| 2 | **R2** | Kanzi `reconstruction_kabsch_rmsd_Å` (protein flow-AE, index-matched two-sample N=1000) | `CosineAnnealScheduler` | +0.096 (Wave 196 P3 fresh index-matched two-sample; byte-stable σ=0 vs Wave 88 σ=0.137 Å) | 0.018 (R-level primary k=7) | PARTIAL (per-cell UNDERPOWERED at min_effect=0.01; framework-WINS significance preserved) |
 ```
 
 **New string (replace +0.096 with Wave 218 P3 deployed value −0.0990, upgrade status from PARTIAL to STRONG since Bonferroni-PASS at α=0.007143):**
 ```
-| 2 | **R2** | Kanzi `reconstruction_kabsch_rmsd_Å` (protein flow-AE, paired N=1000) | `CosineAnnealScheduler` | **−0.0990** (Wave 218 P3 deployed paired-t; framework_source=W214-P2 byte-stable σ=0 framework_inv_proj) | **1.79e-3** (R-level primary k=7) | **STRONG** (framework-WINS; lower_is_better; Bonferroni-PASS at α=0.007143) |
+| 2 | **R2** | Kanzi `reconstruction_kabsch_rmsd_Å` (protein flow-AE, index-matched two-sample N=1000) | `CosineAnnealScheduler` | **−0.0990** (Wave 218 P3 deployed index-matched two-sample t; framework_source=W214-P2 byte-stable σ=0 framework_inv_proj) | **1.79e-3** (R-level primary k=7) | **STRONG** (framework-WINS; lower_is_better; Bonferroni-PASS at α=0.007143) |
 ```
 
 ### 1.5 Cross-document propagation (low-effort, requiresUserAuth=false)
@@ -648,7 +648,7 @@ Per Wave 306 audit findings + Issues 1-9 above, the **post-fix 5 main-text claim
 
 ### 10.2 Claim R2 (Kanzi RMSD, after Issue 1 fix)
 
-> **R2 Kanzi reconstruction_kabsch_rmsd_Å framework-WINS** (Wave 218 P3 deployed paired-t, N=1000 paired per-record, baseline_mean=0.9028 Å → framework_mean=0.8838 Å, mean_diff=−0.0190 Å, sd_diff=0.1916, t=−3.131, df=999, p_raw=1.79e-3, CI95=[−0.0309, −0.0071], Cohen's d_z=−0.0990, Bonferroni-significant at R-level α=0.007143). **framework_source=W214-P2 byte-stable** (sha256=971aa2d1... 37550 bytes); baseline_source=W218-P3 baseline (sha256=35343d1c...). The d_z=+3.532 one-sample-t REGRESSION claim at paper §3.3 line 319 (Wave 206 P2, framework_source=W196_byte_stable_fallback) is **REMOVED**. Source: `verification_outputs/wave218-p3-kanzi-framework-wins.json` (sha256=9b5c3b68... 984 bytes) + `verification_outputs/wave218-p3-kanzi-framework-wins.csv` (536 bytes).
+> **R2 Kanzi reconstruction_kabsch_rmsd_Å framework-WINS** (Wave 218 P3 deployed index-matched two-sample t, N=1000 index-matched two-sample, per-record, baseline_mean=0.9028 Å → framework_mean=0.8838 Å, mean_diff=−0.0190 Å, sd_diff=0.1916, t=−3.131, df=999, p_raw=1.79e-3, CI95=[−0.0309, −0.0071], Cohen's d_z=−0.0990, Bonferroni-significant at R-level α=0.007143). **framework_source=W214-P2 byte-stable** (sha256=971aa2d1... 37550 bytes); baseline_source=W218-P3 baseline (sha256=35343d1c...). The d_z=+3.532 one-sample-t REGRESSION claim at paper §3.3 line 319 (Wave 206 P2, framework_source=W196_byte_stable_fallback) is **REMOVED**. Source: `verification_outputs/wave218-p3-kanzi-framework-wins.json` (sha256=9b5c3b68... 984 bytes) + `verification_outputs/wave218-p3-kanzi-framework-wins.csv` (536 bytes).
 
 ### 10.3 Claim R3 (FlowMol3 fg_dev, after Issue 2 fix)
 

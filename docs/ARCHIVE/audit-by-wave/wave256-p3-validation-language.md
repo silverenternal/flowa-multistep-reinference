@@ -6,7 +6,7 @@
 
 ## 1. Motivation / 动机
 
-Per Wave 256 P1 R2 Kanzi paper number consistency fix (`b2662dc`), the paper §7.6.2 (CLM-073) cites `d_z = −0.0990` (deployed paired-t) as primary value-add; the +0.3927 counterfactual grid search is reported separately in §3.5 as sensitivity analysis.
+Per Wave 256 P1 R2 Kanzi paper number consistency fix (`b2662dc`), the paper §7.6.2 (CLM-073) cites `d_z = −0.0990` (deployed index-matched two-sample t) as primary value-add; the +0.3927 counterfactual grid search is reported separately in §3.5 as sensitivity analysis.
 
 This wave finalizes the data-validation language in `DATA_PRESENTATION.md` so that the document does NOT mislead readers into believing all numbers are ACTUAL MEASUREMENTS, and explicitly labels counterfactual and projected numbers.
 
@@ -26,7 +26,7 @@ Additionally, the original Cohen's `d_z = −2.93` (R4) and `d_z = −3.13` (R5)
 
 ### 2.2 §2.2 R2 section-level disclaimer (new blockquote at top of §2.2)
 
-> **Section-level disclaimer (Wave 256 P3):** **R2 has FOUR readings (deployed paired-t, counterfactual uplift, grid search best, PQ-weight-tuned); the paper §7.6.2 cites the deployed paired-t (−0.0990) as primary value-add; the +0.3927 counterfactual is sensitivity analysis only.**
+> **Section-level disclaimer (Wave 256 P3):** **R2 has FOUR readings (deployed index-matched two-sample t, counterfactual uplift, grid search best, PQ-weight-tuned); the paper §7.6.2 cites the deployed index-matched two-sample t (−0.0990) as primary value-add; the +0.3927 counterfactual is sensitivity analysis only.**
 
 **Reasoning:** R2 has four readings, and a reader skimming §2.2 might be confused. The blockquote at the top makes the four-reading structure explicit and tells the reader that the paper uses the deployed arm as primary.
 
@@ -61,7 +61,7 @@ Additionally, the original Cohen's `d_z = −2.93` (R4) and `d_z = −3.13` (R5)
 ## 4. Future work / 后续
 
 - If a future wave re-derives the R4 / R5 d_z values via a paired-t with df ≥ 30, those numbers can be re-introduced as ACTUAL MEASUREMENTS (currently the 2D FM ablation framework_WINS verdict is at the raw-delta level only).
-- R2 has FOUR readings explicitly; if any future wave produces a live-GPU paired-t with stronger effect size (Wave 255 P2 confirmed none found at that time), it would become the new primary paper §7.6.2 number.
+- R2 has FOUR readings explicitly; if any future wave produces a live-GPU index-matched two-sample t with stronger effect size (Wave 255 P2 confirmed none found at that time), it would become the new primary paper §7.6.2 number.
 
 ## 5. References / 引用
 

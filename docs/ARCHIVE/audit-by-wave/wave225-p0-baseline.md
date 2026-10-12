@@ -23,7 +23,7 @@ Captured before any Wave 225 modifications so future diffs have a clean referenc
 
 ## Notes
 
-- **R2** (`framework_wins`, d_z = -0.099): Kanzi inverse projection RMSD, paired n=1000.
+- **R2** (`framework_wins`, d_z = -0.099): Kanzi inverse projection RMSD, index-matched two-sample n=1000.
   Bonferroni-significant at alpha=0.00714.
 - **R3** (`framework_wins`, d_z = -0.285 projected from 200-record cap at wave87 sweep):
   FlowMol3 functional-group deviation, projected to n=1000. Actual n=200 also bonf-sig.

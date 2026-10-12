@@ -1001,7 +1001,7 @@ detectable effect sizes. Concretely:
 
 - **JT ordered hypothesis:** the `hard > medium > easy`
   direction was taken from the Wave 233 P3 already-observed
-  per-tier paired-t p-value pattern (R2: framework regresses
+  per-tier index-matched two-sample t p-value pattern (R2: framework regresses
   on hard, UNDERPOWERED on medium, SUPPORTS on easy; R6: SUPPORTS
   on hard, SUPPORTS on medium, REGRESSES on easy). The JT test
   is confirmatory in the sense that it pools the three per-tier

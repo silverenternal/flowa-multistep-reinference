@@ -49,9 +49,9 @@ an exemplar that must be overridden.
 ## Ledger refresh
 
 - `MANIFEST.md` row 32 (`cover_letter.md`): `74223` / `4435866e…` → **`74006` /
-  `2a438d7f…`** (exact).
+  `75834a70…`** (exact).
 - `MANIFEST.md` Wave-380 addendum row (`cover_letter.md`): `74223` / `5151aac5…` →
-  **`74006` / `2a438d7f…`** (the addendum row was already stale; now exact for
+  **`74006` / `75834a70…`** (the addendum row was already stale; now exact for
   `cover_letter.md`).
 - `MANIFEST.md` self-row (row 31): `55862` / `f76bb996…` → **`56136` / `d1fc6d40…`**
   (the previous edit's pinned post-edit value, per the self-referencing convention);
@@ -83,8 +83,8 @@ The DRAFT banner keeps this unambiguous.
 
 ```bash
 grep -cE 'USER.TO.FILL' tnnls_submission/cover_letter.md      # 14 (expected)
-sha256sum tnnls_submission/cover_letter.md                    # 2a438d7f…
-grep -c '2a438d7f…' tnnls_submission/MANIFEST.md              # 2 (row 32 + addendum)
+sha256sum tnnls_submission/cover_letter.md                    # 75834a70…
+grep -c '75834a70…' tnnls_submission/MANIFEST.md              # 2 (row 32 + addendum)
 python3 tools/check_claims_consistency.py                     # No drift detected
 PYTHONPATH=. python3 tools/check_docs_against_code.py         # OK
 mkdocs build --strict                                         # exit 0

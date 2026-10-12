@@ -14,7 +14,7 @@
 
 | Sub-directory | Paper cell | Verdict | Anchor |
 |---|---|---|---|
-| `R2_kanzi_rmsd/` | R2 Kanzi RMSD uplift | **STRONG** (deployed paired-t Bonf-sig at α=0.007143) | `wave218-p3-kanzi-framework-wins.csv` |
+| `R2_kanzi_rmsd/` | R2 Kanzi RMSD uplift | **STRONG** (deployed index-matched two-sample t Bonf-sig at α=0.007143) | `wave218-p3-kanzi-framework-wins.csv` |
 | `R5c_mnist_fm/` | R5c MNIST FM FID | **STRONG** (smoke ckpt) / **PARTIAL** (production ckpt direction-FLIPS +10.37%) | `wave280-p-r5c/aggregate.json` + `wave191-p3-mnist-n1000/` |
 | `R6_lineageflow_k6/` | R6 LineageFlow k6 foldability | **STRONG** (tier-aware counterfactual d_z=+0.2235) | `k6_foldability_n1000_w161_q3_2026/` + `wave225-p4-k6-tier-aware.json` |
 | `R5b_cifar10_rf/` | R5b CIFAR-10 RF v2 FID | **STRONG conditional** (n_rounds=1) / **REGRESSES** (n_rounds≥2) | `wave191-p2-cifar10-n1000/` + `wave235-p1-r5b-fix.{csv,json}` |

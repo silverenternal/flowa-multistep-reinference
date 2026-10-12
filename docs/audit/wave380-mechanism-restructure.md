@@ -18,7 +18,7 @@ The LaTeX manuscript now includes a mechanism subsection with the state-transiti
 ## Evidence used
 
 - Wave 184 / CLM-049: fixed NFE=100, `n_rounds ∈ {1,2,3,5,7}`; synthetic LineageFlow gain persists at all round counts, isolating restart glue.
-- Kanzi R2: native latent → inverse projection → DAE decoder → backbone ODE path; paired RMSD 0.9020 → 0.8798 Å at `N=1000`.
+- Kanzi R2: native latent → inverse projection → DAE decoder → backbone ODE path; index-matched two-sample RMSD 0.9020 → 0.8798 Å at `N=1000`.
 - R6: hard/easy pLDDT effects replicate across Kanzi and LineageFlow, motivating tier-aware capacity allocation.
 - `docs/audit/wave375-image-feedback-path.md`: image drivers are presented as adapter-specific operating regimes rather than being used to over-attribute endpoint feedback.
 

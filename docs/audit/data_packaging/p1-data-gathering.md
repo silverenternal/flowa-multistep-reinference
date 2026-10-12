@@ -71,7 +71,7 @@ Because the graduate student will make figures, **numbers must be readable direc
 
 **Adapter**: Kanzi (protein inverse projection reconstruction)
 **Metric**: rmsd_Å (lower-better)
-**Why excellent**: N=1000 paired (deployed Wave 218 P3 sweep, byte-stable Wave 127 framework 0.8798 vs Wave 88 baseline 0.9020 Δ=0.022 Å) — Bonferroni-significant framework_wins。
+**Why excellent**: N=1000 index-matched two-sample (deployed Wave 218 P3 sweep, byte-stable Wave 127 framework 0.8798 vs Wave 88 baseline 0.9020 Δ=0.022 Å) — Bonferroni-significant framework_wins。
 
 | 项 / Item | 数值 / Value | 来源 / Source |
 |---|---:|---|
@@ -618,7 +618,7 @@ R6 用 BF01 不是 R-level 的 cell,而是 4-arm Table B 的 16 cells。详见 �
 | cell | n_paired | mean_diff | d_z | bonf_sig | verdict |
 |---|---:|---:|---:|:---:|---|
 | R1 LineageFlow hmmscan | 1000 (unpaired) | +0.1840 | +0.255 (d_s) | YES | framework_WINS |
-| R2 Kanzi inv-proj rmsd_Å | 1000 (paired) | -0.02221 | -0.1612 | YES | framework_WINS |
+| R2 Kanzi inv-proj rmsd_Å | 1000 (index-matched two-sample) | -0.02221 | -0.1612 | YES | framework_WINS |
 | R3 FlowMol3 fg_dev (1-seed per-arm unpaired) | 999/1000 (unpaired) | -0.02348 | -0.110 (d_s) | NO (UNDERPOWERED) | (per-arm UNDERPOWERED) |
 | R3 FlowMol3 fg_dev per-record proxy (PROJECTED N=1000 paired) | 1000 (projected) | -0.360 | -0.285 | **YES** | framework_WINS (per-record granularity) |
 | R5a 2D two_moons W₂ | 10 (unpaired seeds) | +0.0091 | +1.011 (d_s) | NO | TIE |

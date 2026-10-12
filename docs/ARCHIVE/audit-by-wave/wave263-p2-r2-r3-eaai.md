@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-22
 **Branch:** main
-**Scope:** README.md three-issue patch — Issue 3 (R3 row had `TBD/TBD/TBD` cells), Issue 4 (R2 row reported counterfactual grid-search uplift +743% as headline, omitting the deployed paired-t framework_WINS verdict), Issue 6 (README cited `JMAA Theorem 1` and `eaai_submission/supplementary_paper.pdf` as the theoretical-foundation anchor).
+**Scope:** README.md three-issue patch — Issue 3 (R3 row had `TBD/TBD/TBD` cells), Issue 4 (R2 row reported counterfactual grid-search uplift +743% as headline, omitting the deployed index-matched two-sample t framework_WINS verdict), Issue 6 (README cited `JMAA Theorem 1` and `eaai_submission/supplementary_paper.pdf` as the theoretical-foundation anchor).
 
 ## Issues addressed
 
@@ -22,13 +22,13 @@ The note "3-seed pooled BLOCKED at vendor level" preserves the CLM-068 camera-re
 
 ### Issue 4 — R2 deployed vs counterfactual
 
-**Problem.** README R2 row reported `+0.0465 → +0.3927 (Δ +743%, medium)` as the headline. The +0.3927 value comes from `verification_outputs/wave235-p2-r2-uplift.json`, a **counterfactual grid search** over `easy_tier_nfe_reduction_factor × hard_tier_nfe_intensity` (Wave 225 P5 / Wave 233 P3 constant-offset methodology, NO live GPU run). The **deployed** paired-t arm reading from Wave 218 P3 (`verification_outputs/wave218-p3-kanzi-framework-wins.json`) was available: d_z = -0.0990, p=0.0018, Bonf-sig, verdict `framework_wins` — but was buried in the wave audit trail rather than surfaced as the headline.
+**Problem.** README R2 row reported `+0.0465 → +0.3927 (Δ +743%, medium)` as the headline. The +0.3927 value comes from `verification_outputs/wave235-p2-r2-uplift.json`, a **counterfactual grid search** over `easy_tier_nfe_reduction_factor × hard_tier_nfe_intensity` (Wave 225 P5 / Wave 233 P3 constant-offset methodology, NO live GPU run). The **deployed** index-matched two-sample t arm reading from Wave 218 P3 (`verification_outputs/wave218-p3-kanzi-framework-wins.json`) was available: d_z = -0.0990, p=0.0018, Bonf-sig, verdict `framework_wins` — but was buried in the wave audit trail rather than surfaced as the headline.
 
-**Fix.** Replaced R2 row with the **deployed paired-t framework_WINS** reading, with the counterfactual grid-search value reported as a separate sensitivity-analysis parenthetical:
+**Fix.** Replaced R2 row with the **deployed index-matched two-sample t framework_WINS** reading, with the counterfactual grid-search value reported as a separate sensitivity-analysis parenthetical:
 
 | # | Old R2 row | New R2 row |
 |---|---|---|
-| R2 | RMSD d_z (N=1000 tier-aware) \| +0.0465 \| **+0.3927** \| +743% \| medium \| §7.6.2 | RMSD d_z (N=1000 paired-t) \| -0.0990 \| -0.0990 \| weak Bonf-sig \| **framework_WINS** (deployed paired-t d_z=-0.0990, p=0.0018, Bonf-sig; counterfactual grid search d_z=+0.3927 medium-effect reported separately as sensitivity analysis) \| §7.6.2 |
+| R2 | RMSD d_z (N=1000 tier-aware) \| +0.0465 \| **+0.3927** \| +743% \| medium \| §7.6.2 | RMSD d_z (N=1000 index-matched two-sample t) \| -0.0990 \| -0.0990 \| weak Bonf-sig \| **framework_WINS** (deployed index-matched two-sample t d_z=-0.0990, p=0.0018, Bonf-sig; counterfactual grid search d_z=+0.3927 medium-effect reported separately as sensitivity analysis) \| §7.6.2 |
 
 Verification anchor updated to `verification_outputs/wave218-p3-kanzi-framework-wins.json` (the deployed arm source: `n_records=1000, paired_n_records=1000, t=-3.13, df=999, p_raw=0.0018, d_z=-0.099, verdict=framework_wins`). The counterfactual grid-search source (`wave235-p2-r2-uplift.json`) is preserved by reference inside the effect-size cell so the +0.3927 sensitivity-analysis finding remains traceable.
 
@@ -97,7 +97,7 @@ python3 tools/check_claims_consistency.py
 
 | File | Lines changed | Nature |
 |---|---:|---|
-| `README.md` | R2 row (line 16) | deployed arm reading from Wave 218 P3: d_z=-0.0990 paired-t framework_WINS; counterfactual +0.3927 grid-search moved to sensitivity-analysis parenthetical; verification anchor updated to `wave218-p3-kanzi-framework-wins.json` |
+| `README.md` | R2 row (line 16) | deployed arm reading from Wave 218 P3: d_z=-0.0990 index-matched two-sample t framework_WINS; counterfactual +0.3927 grid-search moved to sensitivity-analysis parenthetical; verification anchor updated to `wave218-p3-kanzi-framework-wins.json` |
 | `README.md` | R3 row (line 17) | per-record d_z=-0.285 framework_WINS from Wave 216 P1 (Bonf-sig <1e-4, N=200 per-record, 3-seed pooled BLOCKED at vendor level); verification anchor updated to `wave216-p1-r3-per-record.json` |
 | `README.md` | Repository Structure (line 152) | removed `eaai_submission/` entry |
 | `README.md` | Acknowledgements / Theoretical foundation (line 244) | removed `JMAA Theorem 1` + `eaai_submission/supplementary_paper.pdf` reference; replaced with paper-self-contained Theorem 1 §2 formulation |
@@ -110,7 +110,7 @@ python3 tools/check_claims_consistency.py
 
 ## Conclusion
 
-README is reconciled with Wave 216 P1 (R3 deployed per-record d_z=-0.285 framework_WINS) and Wave 218 P3 (R2 deployed paired-t d_z=-0.0990 framework_WINS with counterfactual grid-search sensitivity analysis preserved). The JMAA Theorem 1 + EAAI supplementary-paper references are removed in favor of the paper-self-contained Theorem 1 formulation. All three acceptance gates (D.4 byte-stable, mkdocs strict, claims consistency) pass. The framework source code, vendored upstream code, and verification_outputs are unchanged.
+README is reconciled with Wave 216 P1 (R3 deployed per-record d_z=-0.285 framework_WINS) and Wave 218 P3 (R2 deployed index-matched two-sample t d_z=-0.0990 framework_WINS with counterfactual grid-search sensitivity analysis preserved). The JMAA Theorem 1 + EAAI supplementary-paper references are removed in favor of the paper-self-contained Theorem 1 formulation. All three acceptance gates (D.4 byte-stable, mkdocs strict, claims consistency) pass. The framework source code, vendored upstream code, and verification_outputs are unchanged.
 
 ## Attribution
 

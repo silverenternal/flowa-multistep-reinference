@@ -22,7 +22,7 @@ PARTIAL/SUPP** = 5 main cells + 6 supplementary cells = 11 headline cells total.
 | # | Cell | Metric | Status | Anchor |
 |---|---|---|---|---|
 | 1 | **R1** LineageFlow HMMER | `hmmscan_total_hits` | **PARTIAL / single-seed-disclosed** | Wave 308 P1 demotion (CLM-060 line 3013); seed-42 single-seed seed=42 d_z=+0.182, p_raw=1.25×10⁻⁸, Bonferroni-significant at observed δ |
-| 2 | **R2** Kanzi RMSD | `reconstruction_kabsch_rmsd_Å` | **STRONG** (deployed) | Wave 218 P3 N=1000 paired-t d_z=−0.0990, p_raw=1.7943×10⁻³, Bonferroni-significant at α=0.05/7=0.007143 (lower-is-better ⇒ framework-WINS); CLM-060 line 3071 + DATA_PRESENTATION.md §2.2 |
+| 2 | **R2** Kanzi RMSD | `reconstruction_kabsch_rmsd_Å` | **STRONG** (deployed) | Wave 218 P3 N=1000 index-matched two-sample t d_z=−0.0990, p_raw=1.7943×10⁻³, Bonferroni-significant at α=0.05/7=0.007143 (lower-is-better ⇒ framework-WINS); CLM-060 line 3071 + DATA_PRESENTATION.md §2.2 |
 | 3 | **R3** FlowMol3 fg_dev | `fg_dev` | **PARTIAL** (direction-consistent; 3-seed blocked at vendor level) | Wave 87 seed=42 N=1000 batched direction framework-WINS −0.0235 (4.05σ) + Wave 208 P2 per-record ACTUAL N=200 paired d_z=−0.285 p=8.03e-05 Bonf-sig + Wave 216 P1 PROJECTED N=1000 paired d_z=−0.285 (assumption-anchored projection); 3-seed full pooled BLOCKED by DGL 2.4.0+cu124 batched-path graph-ndata-shape bug + Wave 109.C §5 framework-side fix + vendored revert per CLM-076/077 |
 | 4 | **R5a** 2D Two Moons W₂ (paper Table 2.9 row 4 = R4 in headline-evidence) | `W2` | **TIE** (paper R-level d_s=+0.460 at n=3) | Wave 209 P6 (n=7) + Wave 216 P2 (n=10) verified paper-TIE; -78.25% from separate 2D FM ablation `g1_deep_dive_q3_2026.json#twodim_fm_2d_ablation` coexists (DATA_PRESENTATION.md §2.4 + Wave 311 R5a reconciliation footnote in DATA_PRESENTATION.md §3 line 378) |
 | 5 | **R5** (legacy) 2D Eight Gaussians W₂ | `W2` | **SUPP / LEGACY** (per-round raw CSV files NOT preserved) | Wave 256 P2 demotion; legacy per-seed scalars survive in `docs/r4-survey/10-sota-2d-experiment-results.md` lines 175-211 but per-round raw CSV files NOT preserved per `docs/CLAIMS.md` line 3783; DATA_PRESENTATION.md §2.5 + Wave 306 Issue 11 |
@@ -97,7 +97,7 @@ applied to the §7.2 Table 7.1 row 1 status column.
 | Cell | d_z | Effect band | Bonf-sig? | Source |
 |---|---:|---|---|---|
 | R1 (seed=42 single-seed) | +0.182 | small | YES (p=1.25e-8 Bonf-sig at observed δ) | `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/{baseline,framework}_hits.tbl` |
-| R2 (deployed paired-t) | −0.0990 | small | YES (p_raw=1.79e-3, α=0.007143) | `verification_outputs/wave218-p3-kanzi-framework-wins.csv` |
+| R2 (deployed index-matched two-sample t) | −0.0990 | small | YES (p_raw=1.79e-3, α=0.007143) | `verification_outputs/wave218-p3-kanzi-framework-wins.csv` |
 | R2 (Wave 235 P2 grid best) | +0.3927 | MEDIUM | YES (sensitivity analysis; counterfactual) | `verification_outputs/wave235-p2-r2-uplift.json#best` |
 | R3 (per-record n=200 ACTUAL) | −0.285 | small-medium | YES (p=8.03e-5) | `verification_outputs/wave208-p2-flowmol3-sanity.json` |
 | R3 (PROJECTED n=1000 paired) | −0.285 | small-medium | YES (p=1.07e-18 projected; assumption-anchored) | `verification_outputs/wave216-p1-r3-per-record.json` |

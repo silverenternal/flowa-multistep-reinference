@@ -140,7 +140,7 @@ verdict is corrected at the source.
 **Verdict propagation:** The audit doc references the wrong verdict
 *as the thing to be corrected*, not *as a paper-text claim*. The
 doc itself recommends deferring any paper-text edit until Gate 2
-(N=1000 paired-record sweep returning to ~0.8798 Å) closes.
+(N=1000 index-matched two-sample record sweep returning to ~0.8798 Å) closes.
 
 **Correction needed:** NO. The doc is quarantined; not eligible for
 commit. The references to `baseline_wins` are correct as historical

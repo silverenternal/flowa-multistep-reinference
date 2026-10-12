@@ -22,7 +22,7 @@ DeepSeek's feedback identified three CRITICAL data issues that must be addressed
 
 | Reading | d_z value | Status |
 |---|---|---|
-| Deployed paired-t (Wave 218 P3) | -0.0990 | **Primary** (now cited in paper §7.6.2) |
+| Deployed index-matched two-sample t (Wave 218 P3) | -0.0990 | **Primary** (now cited in paper §7.6.2) |
 | Counterfactual uplift (Wave 225 P5) | +0.0465 | Sensitivity analysis (§3.5) |
 | Grid search best (Wave 235 P2) | +0.3927 | Sensitivity analysis (§3.5), NOT cited as primary |
 | PQ-weight-tuned (Wave 225 P8) | -0.396 | Sensitivity analysis (§3.5), NOT cited as primary |

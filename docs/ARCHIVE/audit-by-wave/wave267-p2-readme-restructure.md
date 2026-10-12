@@ -24,7 +24,7 @@ line. Each of the 7 R-level headline cells gets one bullet in the form:
 The 7 bullets are:
 
 1. **R1 (Protein)**: HMMER hits 158 → 342 (+116.46%) — framework_uplift on LineageFlow protein FM
-2. **R2 (Protein)**: RMSD d_z = -0.0990 (Bonf-sig) — deployed paired-t framework_uplift on Kanzi
+2. **R2 (Protein)**: RMSD d_z = -0.0990 (Bonf-sig) — deployed index-matched two-sample t framework_uplift on Kanzi
 3. **R3 (Molecular)**: per-record d_z = -0.285 (Bonf-sig) — Wave 87 + Wave 208 framework_WINS (3-seed-pooled BLOCKED at vendor level)
 4. **R4 (Toy FM)**: 2D FM ablation ΔFID=-78.25% framework_WINS on two_moons
 5. **R5 (Toy FM)**: 2D FM ablation ΔFID=-67.10% framework_WINS on eight_gaussians

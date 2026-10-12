@@ -65,7 +65,7 @@ Added three new TOC entries mirroring the Quick Navigation additions.
 | Item | Value |
 |---|---|
 | Paper ID | Paper A — FlowA: A Typed-Contracts Re-Inference Framework for Frozen Flow-Matching Checkpoints |
-| Paper PDF | `docs/drafts/paper-flat-ieeetran.pdf` (10 pages, IEEEtran-journal typeset, sha256 `58c21076fc66bbf87c647537328e33911b42fe03123c5d61eaa0ecc8fa5562b7`) |
+| Paper PDF | `docs/drafts/paper-flat-ieeetran.pdf` (10 pages, IEEEtran-journal typeset, sha256 `f33d11141e83d2063a6889fbc9e2e0a79e257a25e9edd4b16075c5bf638e88f7`) |
 | Paper draft | `docs/drafts/paper-flat-flattened.md` (1602 lines) |
 | Target venue | IEEE TNNLS |
 | Submission status | READY — 5/5 submission gates PASS |

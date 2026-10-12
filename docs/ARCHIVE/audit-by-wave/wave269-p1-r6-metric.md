@@ -95,7 +95,7 @@ exactly four lines:
 
 ```
 21:| R6 | k6 foldability (tier-aware) | **pLDDT d_z** | +0.224 | **+0.647** | +189% | large | §7.6.6 | [ver.](verification_outputs/wave235-p3-r6-uplift.json) |
-28:- **R2 (Protein)**: RMSD d_z = -0.0990 (Bonf-sig) — deployed paired-t framework_WINS on Kanzi
+28:- **R2 (Protein)**: RMSD d_z = -0.0990 (Bonf-sig) — deployed index-matched two-sample t framework_WINS on Kanzi
 33:- **R6 (Image)**: tier-aware pLDDT d_z: +0.224 → +0.647 (+189%) framework_WINS (cluster-robust 5/8 SUPPORTED)
 132:| R6 | `bash reproduce/07_R6_MNIST_TierAware.sh` | `pLDDT d_z = +0.647 (+189%)` |
 ```
@@ -107,7 +107,7 @@ column (just `FID`, no `d_z` suffix).
 
 `grep -n "| R[0-9]\|FID\|RMSD\|pLDDT" README.md` confirms:
 
-- R2 row (line 16): Metric col = `RMSD (N=1000 paired-t)` — correct
+- R2 row (line 16): Metric col = `RMSD (N=1000 index-matched two-sample t)` — correct
 - R3 row (line 17): Metric col = `fg_dev per-record d_z` — correct
 - R5b row (line 20): Metric col = `FID` — correct (image FID)
 - R6 row (line 21): Metric col = `**pLDDT d_z**` — **FIXED**, was

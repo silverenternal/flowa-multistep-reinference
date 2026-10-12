@@ -169,7 +169,7 @@ computed at the Pfam-family unit, not at the per-record F-side unit.
 ### 5.2 Kanzi (R2)
 
 The `KanziAdapter` is exercised at NFE $\in \{10, 50, 100, 500,
-1000, 2000\}$ (R2 inv-proj rmsd_Å, N = 1000 paired vs baseline).
+1000, 2000\}$ (R2 inv-proj rmsd_Å, N = 1000 index-matched two-sample vs baseline).
 The default profile applies. The Theorem-1 load-bearing test on
 the Kanzi synthetic protein axis confirms the paper-quantity
 scheduler's stabilisation role (paper-quantity $L_2 \approx 0.46$ vs

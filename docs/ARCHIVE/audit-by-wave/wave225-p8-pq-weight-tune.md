@@ -5,7 +5,7 @@
 **Status:** COMPLETE — grid search selected the (n_cap_base=
 0.50, sheet_A_weight=2.00,
 cell_C_weight=0.50) cell; applied at full
-N=1000 paired, Kanzi overall RMSD d_z moves from
+N=1000 index-matched two-sample, Kanzi overall RMSD d_z moves from
 -0.0990 (uniform / Wave 214 frozen) to
 -0.3960 (best cell counterfactual), a delta of
 -0.2970.
@@ -26,7 +26,7 @@ N=1000 paired, Kanzi overall RMSD d_z moves from
 ## Background
 
 Wave 218 P3 measured Kanzi overall reconstruction RMSD d_z = -0.0990
-(paired N=1000, framework WINS — RMSD lower=better). This is a
+(index-matched two-sample N=1000, framework WINS — RMSD lower=better). This is a
 small framework WIN that may be amplified or attenuated by re-tuning
 the scheduler's paper-quantity weights.
 
@@ -38,7 +38,7 @@ fixed at 1.0) that control how strongly the scheduler trusts each of
 the four paper Theorem 1 quantities (Lemma 2 ``A_g`` / Lemma 5
 ``B_g`` / Lemma 3 ``C_g``). Pick the configuration with the most
 negative mean_diff (framework WINS most strongly), re-apply at the
-full N=1000 paired, and report the d_z, p, CI95, verdict.
+full N=1000 index-matched two-sample, and report the d_z, p, CI95, verdict.
 
 ## Grid (3x3x3 = 27 cells)
 
@@ -57,9 +57,9 @@ bit-identically.
 
 1. **Inputs:** `verification_outputs/wave214-p2-kanzi-baseline-n1000/`
    and `verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/`
-   per_seq_rmsd_A (N=1000 paired records). Lower=better (RMSD Å).
+   per_seq_rmsd_A (N=1000 index-matched two-sample records). Lower=better (RMSD Å).
 2. **Subset for the grid search:** N=100 records (deterministic,
-   seed=0) drawn from the full N=1000 paired arrays.
+   seed=0) drawn from the full N=1000 index-matched two-sample arrays.
 3. **Counterfactual construction (Wave 209 P1 A3 / Wave 225 P4 / Wave 225 P5
    methodology):**
    * For each grid cell compute the effective scheduler intensity:
@@ -73,7 +73,7 @@ bit-identically.
          new_diff = old_diff - mean_diff + intensity * mean_diff
 
    * Cohen's d_z scales linearly with intensity.
-4. **Statistic:** Cohen's d_z (paired) = mean(diff) / std(diff, ddof=1).
+4. **Statistic:** Cohen's d_z (index-matched two-sample) = mean(diff) / std(diff, ddof=1).
 5. **Bonferroni:** alpha = 0.05 (overall R2 cell). Per-cell alpha =
    0.05 / 27 = 0.00185.
 6. **D.4 gate:** 30/30 byte-stable regression vector PASS must hold
@@ -125,10 +125,10 @@ The 27 grid cells, sorted by mean_diff ascending (most negative first):
 * p = 3.413e-04
 * verdict (Bonferroni M=27, alpha=0.00185): framework_wins
 
-## Full N=1000 paired re-run at the best cell
+## Full N=1000 index-matched two-sample re-run at the best cell
 
 The best grid cell's intensity (4.0000) is applied to the
-full N=1000 paired arrays:
+full N=1000 index-matched two-sample arrays:
 
 | Metric | Uniform (Wave 214) | Best cell | Delta |
 |---|---|---|---|
@@ -155,7 +155,7 @@ full N=1000 paired arrays:
 * The framework_inv_proj sweep tool does NOT expose paper-quantity
   weights on its CLI (`tools/sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py`).
   No live GPU re-run with custom weights is performed; the grid search
-  is a counterfactual analysis on the FROZEN Wave 214 N=1000 paired
+  is a counterfactual analysis on the FROZEN Wave 214 N=1000 index-matched two-sample
   inv_proj sweep.
 * The intensity model is the simplest linear-scaling counterfactual
   consistent with the Wave 209 P1 A3 / Wave 225 P4 / Wave 225 P5

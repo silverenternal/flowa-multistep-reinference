@@ -48,19 +48,19 @@ git log.
 
 | File | Size | SHA-256 |
 |---|---:|---|
-| `paper-flat-flattened.ARCHIVED-2026-09-23.md` | 334433 | `58c21076fc66bbf87c647537328e33911b42fe03123c5d61eaa0ecc8fa5562b7` |
+| `paper-flat-flattened.ARCHIVED-2026-09-23.md` | 334703 | `f33d11141e83d2063a6889fbc9e2e0a79e257a25e9edd4b16075c5bf638e88f7` |
 
 ### 2.2 Flattened intermediates (8 files)
 
 | File | Size | SHA-256 |
 |---|---:|---|
-| `paper-flat-flattened-zh.md`       | 268109 | `7d00c3c5f43bcec226858557e82f57ae8d7e0a4e4d9df029e9509ddace8ffd48` |
-| `paper-flattened-draft.md`         |  92017 | `c9691721ac9ea3beb5932b065e984a0015c9bd88d50edb411914c158d8bbcb1a` |
+| `paper-flat-flattened-zh.md`       | 268307 | `90a68b710964600bc4876087de5af447ceedb754a793a267efe844706a3880ea` |
+| `paper-flattened-draft.md`         |  92287 | `3d3b9f61b06cf3145c00ef7f3113904039f20e164bc94a42b7ea1f440c975514` |
 | `abstract-flattened.md`            |   4056 | `37b2ba472dbf4837c031a52a44b2334f7f1e26f53c79de401ec664f7d0a5e517` |
 | `methods-stats-flattened-draft.md` |  17475 | `9998f7bd814ee9a9b0ed440f7903f2a59b5abe06db7de740f669ce4d734f6f6e` |
-| `methods-why-per-record.md`        |  54658 | `36a252a85c42d4b1608e77a22cb964d5e313db5ffb276f523a76d7153f6a9fbd` |
+| `methods-why-per-record.md`        |  54676 | `3c3ac3070cb2bb37c5a880c5ad7d3be42162de3ece6eda765bd1f72586027f69` |
 | `results-flattened-draft.md`       |  42266 | `2cf985bdc4de33f829311e6b4ff78694faba539d387cdfd3ade2fe6d2342158f` |
-| `section-2-method.md`              | 113516 | `2337419edfe7779206db629d036fd6321ab81c4517905b40dd078dadc616e813` |
+| `section-2-method.md`              | 113570 | `c0bd668fcba003f688bcda393ca01e0870a07076ab0b4c9476f9977c51700858` |
 | `limitations-flattened-draft.md`   |  21610 | `e2c7872cdcb04380072506093b51860b08dd4f8d0d1fd75e75efdcd4bc381e14` |
 
 **Aggregate:** 9 files, 948,140 bytes, 0.904 MB.

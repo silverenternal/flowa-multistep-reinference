@@ -29,7 +29,7 @@ Total **20 grid cells**.
 * `verification_outputs/wave214-p2-kanzi-baseline-n1000/kanzi_n1000_paper_metrics.json`
 * `verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/kanzi_n1000_framework_paper_metrics.json`
 
-Both sweeps are paired per-record (N=1000). Tier assignment by
+Both sweeps are index-matched two-sample, per-record (N=1000). Tier assignment by
 baseline_RMSD percentile: p33 = 0.8381, p67 = 0.9529.
 
 Tier sizes: hard = 330, medium = 340, easy = 330.
@@ -63,7 +63,7 @@ passthrough.
 
 ### Statistics
 
-* Per-cell: paired t-test, d_z = mean_diff / sd_diff (Cohen's d_z).
+* Per-cell: index-matched two-sample t-test, d_z = mean_diff / sd_diff (Cohen's d_z).
 * Bonferroni family M=3 (3 tiers x 1 metric),
   per-cell alpha = 0.01667.
 * Cell significance = `p_value < 0.01667`.
@@ -191,7 +191,7 @@ stable regression vector gate is unchanged from the Wave 233 P3 PASS.
 ## Honest disclosure
 
 This is a counterfactual grid search (Wave 209 P1 A3 / Wave 225 P5 /
-Wave 233 P3 constant-offset methodology). The Kanzi N=1000 paired
+Wave 233 P3 constant-offset methodology). The Kanzi N=1000 index-matched two-sample
 inv_proj sweep is FROZEN at Wave 214; no live GPU run was launched
 within this agent. The TierAwareCodimensionSheetScheduler's per-
 record n_cap ratio is replaced here by an explicit per-tier

@@ -56,7 +56,7 @@ All 6 weak-claim 3-seed sweeps were launched from the same parent commit and fol
 ### 3.2 R2 (Kanzi RMSD)
 - **Paper claim:** §3.3 +3.532 REGRESSION + §7.1 +0.096 PARTIAL (CONFLICTING)
 - **Audit verdict:** deployed Wave 218 P3 -0.0990 framework-WINS is canonical; +3.532 is stale Wave 206 P2 one-sample-t regression artifact
-- **Data found:** `verification_outputs/wave218-p3-kanzi-framework-wins.json` (984 bytes, sha256 9b5c3b68) confirms d_z=-0.0990 paired-t, p_bonf=0.0071.
+- **Data found:** `verification_outputs/wave218-p3-kanzi-framework-wins.json` (984 bytes, sha256 9b5c3b68) confirms d_z=-0.0990 index-matched two-sample t, p_bonf=0.0071.
 - **Audit verdict: CONFIRMED CORRECT.** Paper has TWO conflicting R2 entries; needs honest consolidation to deployed -0.0990.
 
 ### 3.3 R3 (FlowMol3 fg_dev)
@@ -157,7 +157,7 @@ All 6 weak-claim 3-seed sweeps were launched from the same parent commit and fol
 
 ### 8.1 SAFE to PROCEED (data confirmed, audit correct)
 
-- **R2** — replace stale +3.532 with deployed -0.0990 paired-t; update §3.3 + §7.1; ~1h.
+- **R2** — replace stale +3.532 with deployed -0.0990 index-matched two-sample t; update §3.3 + §7.1; ~1h.
 - **R5b** — add conditional disclosure table (n_rounds=1 WINS, n_rounds≥2 REGRESSES); ~1.5h.
 - **R5c** — fix p_bonf 9.22e-11 → 3.95e-11 (both < α=0.007143) + add production-ckpt direction-FLIP disclosure; ~3.5h (after /tmp migration).
 - **K1** — replace p_bonf 0.054 → 0.5676 + reclassify K-level; demote from §7.1 row 8 to §10; ~2.5h.

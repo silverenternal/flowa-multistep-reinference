@@ -68,7 +68,7 @@ Per-cell, I queried six categories of evidence:
 
 **Paper claim:** §3.3 line 319 d_z=+3.532 REGRESSION + §7.1 line 641 d_z=+0.096 PARTIAL (CONFLICTING)
 
-**Audit verdict (Wave 306):** Deployed Wave 218 P3 paired-t d_z=-0.0990 framework-WINS is canonical; +3.532 is stale Wave 206 P2 regression artifact
+**Audit verdict (Wave 306):** Deployed Wave 218 P3 index-matched two-sample t d_z=-0.0990 framework-WINS is canonical; +3.532 is stale Wave 206 P2 regression artifact
 
 **Archaeology findings:**
 
@@ -371,7 +371,7 @@ In contrast, the W166 P3 in-git data (commit 6644004) IS a paired baseline-vs-fr
 | Cell | Wave 306 Audit Verdict | Archaeology-Verified Verdict | Action Tier |
 |------|----------------------|------------------------------|-------------|
 | R1 | d_z=+9.2 FABRICATED; actual +0.6926 | **AUDIT CORRECT.** Seed-43/44 fallback contamination verified. Single-seed seed=42 +116% headline still real. | TIER 2 HOLD (root-cause investigation, 4h) |
-| R2 | +3.532 stale Wave 206 P2 regression; canonical -0.0990 | **AUDIT CORRECT.** Wave 218 P3 paired-t -0.0990 verified byte-stable. | TIER 1 SAFE (1h edit, no migration) |
+| R2 | +3.532 stale Wave 206 P2 regression; canonical -0.0990 | **AUDIT CORRECT.** Wave 218 P3 index-matched two-sample t -0.0990 verified byte-stable. | TIER 1 SAFE (1h edit, no migration) |
 | R3 | N=1000 paired WRONG; p=1.07e-18 projection; /tmp/wf280-r3/ never produced output | **AUDIT PARTIALLY OVERREACHING.** Per-record d_z=-0.285 ACTUAL at N=200 IS real and Bonf-PASS. Audit correct on N-label + projection + sweep incompleteness. | TIER 1 SAFE (2h edit, fix N-label + add projection disclosure) |
 | R5 | per-round CSVs not preserved; stale 0.5579/0.4999 in SOURCE.md | **AUDIT OVERREACHING.** Canonical 0.6606/0.5919 supported by 25+ files. Per-round CSV gap honestly disclosed. Stale SOURCE.md mitigated by Wave 151 P5 ADDITIVE note. | TIER 3 KEEP PAPER UNCHANGED (0.1h optional doc sync) |
 | R5a | +0.460 TIE framework WORSE; -78.25% unsupported | **AUDIT PARTIALLY OVERREACHING.** R5a R-level +0.460 TIE IS framework-WORSE. BUT -78.25% IS supported by SEPARATE 2D FM ablation experiment (g1_deep_dive_q3_2026.json#twodim_fm_2d_ablation). Audit conflated two cells. | TIER 3 KEEP PAPER UNCHANGED (4h add explicit disclosure) |
@@ -427,7 +427,7 @@ All 6 Wave 280 P sweeps stored their outputs in /tmp/ (NOT in git). One filesyst
 
 | Cell | Action | Effort | Migration prereq? |
 |------|--------|--------|-------------------|
-| R2 | Replace +3.532 → -0.0990 paired-t at §3.3 + §7.1; status PARTIAL → STRONG | 1h | NO (data in git) |
+| R2 | Replace +3.532 → -0.0990 index-matched two-sample t at §3.3 + §7.1; status PARTIAL → STRONG | 1h | NO (data in git) |
 | R3 | Fix N-label (200 not 1000); clarify p=1.07e-18 projection; add cross-seed fail disclosure | 2h | NO (per-record data in git) |
 | R5b | §3.2 conditional disclosure (n_rounds=1 WINS, n_rounds≥2 REGRESSES) | 1.5h | NO (data in git) |
 | R5c | Fix p_bonf 9.22e-11 → 3.95e-11; add §3.2 row + §7.1 row 6 production-ckpt direction-flip | 3.5h | YES (need /tmp/wf280-r5c/ → verification_outputs/wave280-p-r5c/) |

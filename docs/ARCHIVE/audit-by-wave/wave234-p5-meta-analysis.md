@@ -40,7 +40,7 @@ Sign convention: per-cell ``d`` values are sign-normalised so that **POSITIVE d 
 | # | study | domain | d | n | SE | d_kind | source |
 |---|-------|--------|---|---|----|--------|--------|
 | 1 | `R1_lineageflow_hmmer` | LineageFlow protein HMMER hits (higher-better) | +0.2548 | 1000 | 0.0447 | d_s | wave196-p4-table-a-r-level.json (unpaired Welch, n_b=n_f=1000; framework wins) |
-| 2 | `R2_kanzi_inv_proj` | Kanzi protein inv_proj reconstruction_rmsd_A (lower-better) | +0.0956 | 1000 | 0.0316 | d_z | wave196-p4-table-a-r-level.json (paired N=1000, df=999; framework wins on lower RMSD) |
+| 2 | `R2_kanzi_inv_proj` | Kanzi protein inv_proj reconstruction_rmsd_A (lower-better) | +0.0956 | 1000 | 0.0316 | d_z | wave196-p4-table-a-r-level.json (index-matched two-sample N=1000, df=999; framework wins on lower RMSD) |
 | 3 | `R3_flowmol3_fg_dev_reos` | FlowMol3 REOS_n_flags per-record (lower-better) | +0.2847 | 200 | 0.0707 | d_z | wave208-p2-flowmol3-sanity.json (per_record_tests.reos_n_flags: source d_z=-0.2847; flipped to +0.2847 because source convention is (baseline-framework)/sd_diff and framework is better on lower REOS count) |
 | 4 | `R5a_2D_two_moons_W2` | TwoDimFM 2D two_moons W2 (lower-better) | -0.4599 | 3 | 0.8165 | d_s | wave196-p4-table-a-r-level.json (unpaired Welch, n_b=n_f=3, sd-pooled; framework W2 slightly higher => slight regression on lower-better; flipped from +0.460 to -0.460) |
 | 5 | `R5b_CIFAR_matched_NFE50_FID` | RectifiedFlowCIFAR matched-NFE=50 FID (lower-better) | -2.7004 | 10 | 0.3162 | d_z | wave196-p4-table-a-r-level.json (chunk-level paired t-test, df=9; framework FID higher by 20.21% => framework regresses on lower-better; flipped from +2.700 to -2.700) |

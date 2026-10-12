@@ -3,7 +3,7 @@
 **Date.** 2026-09-19
 **Agent.** Wave 196 P4 aggregate agent
 **Working directory.** `<repo_root>`
-**Upstream agents.** Wave 196 P2 (Track B 4-arm n=30 paired, commit `8e1a3e0`) + Wave 196 P3 (kanzi N=1000 framework_inv_proj paired re-verify, commit `c38a900`)
+**Upstream agents.** Wave 196 P2 (Track B 4-arm n=30 paired, commit `8e1a3e0`) + Wave 196 P3 (kanzi N=1000 framework_inv_proj index-matched two-sample re-verify, commit `c38a900`)
 **Goal.** Regenerate the §10.35 paper Table A (R-level) and Table B (4-arm) per-cell power tables with the upgraded Wave 196 data.
 
 **Output artifacts.**
@@ -48,7 +48,7 @@ Only **R2** was upgraded. All other R-level cells (R1, R3, R5a, R5b, R5c, R6) ar
 | cell                  | Wave 195 P2 verdict | Wave 196 P4 verdict | Δ signed (Å) Wave 195 → P4 | Why changed |
 |-----------------------|---------------------|---------------------|----------------------------|-------------|
 | R1_lineageflow_hmmer  | UNDERPOWERED        | UNDERPOWERED        | n/a                        | unchanged   |
-| **R2_kanzi_inv_proj** | **REGRESSES**       | **UNDERPOWERED**    | **+1.6 → −0.0184**         | **paired N=1000 fresh re-verify (Wave 196 P3)** |
+| **R2_kanzi_inv_proj** | **REGRESSES**       | **UNDERPOWERED**    | **+1.6 → −0.0184**         | **index-matched two-sample N=1000 fresh re-verify (Wave 196 P3)** |
 | R3_flowmol3_fg_dev    | UNDERPOWERED        | UNDERPOWERED        | n/a                        | unchanged   |
 | R5a_2D_two_moons_W2   | TIE                 | TIE                 | n/a                        | unchanged   |
 | R5b_cifar10rf_NFE50   | UNDERPOWERED        | UNDERPOWERED        | n/a                        | unchanged   |
@@ -56,7 +56,7 @@ Only **R2** was upgraded. All other R-level cells (R1, R3, R5a, R5b, R5c, R6) ar
 | R6_pLDDT              | UNDERPOWERED        | UNDERPOWERED        | n/a                        | unchanged   |
 | R6_scPerplexity       | UNDERPOWERED        | UNDERPOWERED        | n/a                        | unchanged   |
 
-### 2.2 R2 — kanzi framework_inv_proj paired N=1000
+### 2.2 R2 — kanzi framework_inv_proj index-matched two-sample N=1000
 
 **Source.** `verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj-summary.csv` + `.json` (Wave 196 P3 commit `c38a900`).
 
@@ -84,7 +84,7 @@ Only **R2** was upgraded. All other R-level cells (R1, R3, R5a, R5b, R5c, R6) ar
 
 **Honest interpretation.** The paired t-test is significant at α_per_cell = 0.007143 (p_raw = 0.00257 < 0.007143), and post-hoc power at the *observed* delta (0.0184 Å) is 0.856 — the test reliably detected the observed effect. The UNDERPOWERED verdict reflects only that we cannot reliably detect the 0.01 Å min_effect_size floor (NCP ≈ 1.64 < 1.96). Under the **per-cell adjusted α** formulation (Wave 196 P3 author's interpretation), the verdict is `framework_wins`. We retain the Wave 195 P1 verdict precedence for consistency with Tables A and B.
 
-**Verdict upgrade vs Wave 195 P2.** Wave 195 P2 used Wave 88's N=1000 baseline (σ_b = 0.137 Å, byte-stable framework σ_f = 0.0). The Wave 88 baseline had a different reconstruction-Kabsch normalization that produced a mean RMSD of 0.902 Å (vs Wave 196 P3's fresh 0.8982 Å), and the framework byte-stable σ_f = 0 made the "paired diff" SE dominated by the baseline σ (0.137/√1000 = 0.00433 Å); the resulting delta=+1.6 (signed against framework-wins direction due to a sign-convention mismatch in Wave 195 P2's `signed_delta` calculation) flagged REGRESSES. Wave 196 P3's paired N=1000 fresh re-verify uses consistent encode/decode on the same 1000 records for both arms, producing paired_diff_std = 0.192 Å and SE = 0.006 Å — small enough that paired-diff-mean = 0.018 Å clears the 0.01 Å min_effect_size floor and becomes statistically significant at α_per_cell = 0.007143.
+**Verdict upgrade vs Wave 195 P2.** Wave 195 P2 used Wave 88's N=1000 baseline (σ_b = 0.137 Å, byte-stable framework σ_f = 0.0). The Wave 88 baseline had a different reconstruction-Kabsch normalization that produced a mean RMSD of 0.902 Å (vs Wave 196 P3's fresh 0.8982 Å), and the framework byte-stable σ_f = 0 made the "index-matched two-sample diff" SE dominated by the baseline σ (0.137/√1000 = 0.00433 Å); the resulting delta=+1.6 (signed against framework-wins direction due to a sign-convention mismatch in Wave 195 P2's `signed_delta` calculation) flagged REGRESSES. Wave 196 P3's index-matched two-sample N=1000 fresh re-verify uses consistent encode/decode on the same 1000 records for both arms, producing paired_diff_std = 0.192 Å and SE = 0.006 Å — small enough that paired-diff-mean = 0.018 Å clears the 0.01 Å min_effect_size floor and becomes statistically significant at α_per_cell = 0.007143.
 
 ### 2.3 Table A summary
 
@@ -158,7 +158,7 @@ The remaining 14 cells (all `vs FastDLLM / AB-Cache / LeDiFlow` cells, plus `vs 
 - Wave 195 P2 (R-level baseline): `verification_outputs/wave195-p2-r-level-power.{csv,json}` — 8 cells, R2=REGRESSES, all others unchanged.
 - Wave 195 P3 (4-arm baseline): `verification_outputs/wave195-p3-4arm-power.{csv,json}` — 12 cells, ALL UNDERPOWERED.
 - Wave 196 P2 (Track B n=30 paired): `verification_outputs/wave196-p2-4arm-paired.{csv,json}` — 16 cells, 2 SUPPORTED on Vanilla_scPerplexity.
-- Wave 196 P3 (kanzi N=1000 paired re-verify): `verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.{csv,json,summary.csv}` — paired Δ=+0.018 Å framework-wins (p_raw=0.00257 < α_per_cell=0.007143).
+- Wave 196 P3 (kanzi N=1000 index-matched two-sample re-verify): `verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.{csv,json,summary.csv}` — index-matched two-sample Δ=+0.018 Å framework-wins (p_raw=0.00257 < α_per_cell=0.007143).
 - Wave 196 P4 (this agent): `verification_outputs/wave196-p4-table-{a-r-level,b-4arm-n30}.{csv,json}`.
 
 **Open gap for paper.** Table A's R2 verdict is UNDERPOWERED (Wave 195 P1 spec) but the underlying statistics clearly support framework-wins (p_raw=0.00257 < α_per_cell=0.007143). Two follow-ups are possible:
@@ -194,4 +194,4 @@ CPU-only. numpy + scipy.stats. No GPU. No torch.
 - Hunter & Levine 2024 — modern power analysis for ML benchmarks.
 - Wave 195 P1 spec (`docs/audit/wave195-p1-power-spec.md`) — §3 Tables A and B.
 - Wave 196 P2 spec (`docs/audit/wave196-p2-4arm-n30.md`) — paired n=30 upgrade.
-- Wave 196 P3 spec (`docs/audit/wave196-p3-kanzi-n1000-framework-inv-proj.md`) — paired N=1000 re-verify.
+- Wave 196 P3 spec (`docs/audit/wave196-p3-kanzi-n1000-framework-inv-proj.md`) — index-matched two-sample N=1000 re-verify.

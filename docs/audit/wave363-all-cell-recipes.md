@@ -47,7 +47,7 @@ The FlowA TNNLS submission now has **byte-stable evidence chains for every headl
 | # | Cell | Status label | Paper SHA anchor | Recipe file path | Master-verifier result |
 |---|---|---|---|---|---|
 | 1 | **R1** (LineageFlow HMMER retro-validation, N=1000 paired) | `PARTIAL / single-seed-disclosed` (Wave 308 P1 demotion) | `docs/drafts/paper-A-final.md` §3.5.1 line 186-200 | `paper-data/K4_k5_lineageflow_hmmer/R1_REPRODUCIBILITY_RECIPE.md` (SHA `98a869c2...`, 167 lines) | **PASS** (SHA-256 chain verified; `framework_fallback_per_family_count = {}` invariant at N=1000) |
-| 2 | **R2** (Kanzi RMSD framework_inv_proj, N=1000 paired-t) | `SUPPORTED framework_wins` (Wave 218 P3 Bonf-sig at α=0.05/7) | `docs/drafts/paper-A-final.md` §7.6.2 | `paper-data/R2_kanzi_rmsd/REPRODUCIBILITY_RECIPE.md` (SHA `be3a4ff2...`, 302 lines) | **PASS** (d_z=-0.0990, p_raw=1.79e-3, verdict=framework_wins) |
+| 2 | **R2** (Kanzi RMSD framework_inv_proj, N=1000 index-matched two-sample t) | `SUPPORTED framework_wins` (Wave 218 P3 Bonf-sig at α=0.05/7) | `docs/drafts/paper-A-final.md` §7.6.2 | `paper-data/R2_kanzi_rmsd/REPRODUCIBILITY_RECIPE.md` (SHA `be3a4ff2...`, 302 lines) | **PASS** (d_z=-0.0990, p_raw=1.79e-3, verdict=framework_wins) |
 | 3 | **R3** (FlowMol3 fg_dev, 7/7 direction-consistent) | `PARTIAL / single-seed PROJECTED` (RDKit env blocker) | `docs/drafts/paper-A-final.md` §7.2 R3 row + CONSOLIDATED §15.105 | `paper-data/R3_flowmol3_fgdev/R3_REPRODUCIBILITY_RECIPE.md` (SHA `0c91f4d9...`, 343 lines) | **PASS** (sweep fg_dev Δ=-0.02348 + projected N=1000 d_z=-0.285, 4.05σ framework-WINS) |
 | 4 | **R5a** (2D Two Moons W₂, n=10 paired + DL meta) | `TIE` (Wave 195 P1 verdict-precedence rule 1) | `docs/drafts/paper-A-final.md` §7.2 R5a row | `paper-data/R5a_2d_two_moons/REPRODUCIBILITY_RECIPE.md` (SHA `fb1d48c9...`, 231 lines) | **PASS** (paired d_z=+0.845, Hedges g=+0.773, DL meta-d_z=+0.844 p=0.0007, verdict=TIE) |
 | 5 | **R5b** (CIFAR-10 RF, 4-scheduler × 3-n_rounds grid) | `CONDITIONAL` (n_rounds=1 SUPPORTED; n_rounds≥2 REGRESSES) | `docs/drafts/paper-A-final.md` §7.6 mechanism paragraph | `paper-data/R5b_cifar10_rf/REPRODUCIBILITY_RECIPE.md` (SHA `839e5d90...`, 177 lines) | **PASS** (n_rounds=1 d_z∈[+4.37, +4.73]; n_rounds≥2 REGRESSES) |
@@ -71,7 +71,7 @@ Per-cell provenance chain (audit-time SHA-256 verified 2026-09-26T21:42Z):
 | # | Cell | Commit SHA | Recipe SHA-256 (first 16 chars) | Headline metric |
 |---|---|---|---|---|
 | 1 | R1 | `295c843` (Wave 363 P1.R1) | `98a869c2a4af00ea` | `framework_fallback_per_family_count = {}` at N=1000 (seeds 42 + 44; seed 43 NOT collected at `verification_outputs/`) |
-| 2 | R2 | `0ec9a29` (Wave 363 P1) | `be3a4ff26fb1d436` | d_z = -0.0990 (paired-t, N=1000, framework_WINS Bonf-sig) |
+| 2 | R2 | `0ec9a29` (Wave 363 P1) | `be3a4ff26fb1d436` | d_z = -0.0990 (index-matched two-sample t, N=1000, framework_WINS Bonf-sig) |
 | 3 | R3 | `c958e2c` (Wave 363 P1.R3) | `0c91f4d966d4707e` | sweep fg_dev Δ = -0.023484; PROJECTED N=1000 d_z = -0.285 (4.05σ framework-WINS) |
 | 4 | R5a | `bd8d997` (Wave 363 P1.R5a) | `fb1d48c90e54ffa9` | paired d_z = +0.845; Hedges g = +0.773; DL meta-d_z = +0.844 p = 0.0007; verdict TIE |
 | 5 | R5b | `2c1c44b` (Wave 363 P1.R5b) | `839e5d90cae4201d` | n_rounds=1: ΔFID ∈ [-1.60%, -2.53%], d_z ∈ [+4.37, +4.73]; n_rounds≥2: ΔFID ∈ [+9.77%, +30.65%], p_bonf=9.17e-5 |
@@ -223,7 +223,7 @@ These gaps remain PENDING for the camera-ready cycle; none affect the reproducib
 ### 7.1 Per-cell audit docs (Wave 363 P1, 9 NEW)
 
 - `docs/audit/wave363-r1-recipe.md` (156 lines, SHA-256 `fdd80102...`) — R1 LineageFlow HMMER retro-validation recipe (Wave 363 P1.R1).
-- `docs/audit/wave363-r2-recipe.md` (252 lines, SHA-256 `e2b111f1...`) — R2 Kanzi RMSD framework_WINS paired-t recipe (Wave 363 P1).
+- `docs/audit/wave363-r2-recipe.md` (252 lines, SHA-256 `76aba702...`) — R2 Kanzi RMSD framework_WINS index-matched two-sample t recipe (Wave 363 P1).
 - `docs/audit/wave363-r3-recipe.md` (250 lines, SHA-256 `72c1fa5c...`) — R3 FlowMol3 fg_dev PROJECTED N=1000 recipe (Wave 363 P1.R3).
 - `docs/audit/wave363-r5a-recipe.md` (181 lines, SHA-256 `227b5f7d...`) — R5a 2D Two Moons W₂ TIE recipe (Wave 363 P1.R5a).
 - `docs/audit/wave363-r5b-recipe.md` (147 lines, SHA-256 `814e85c7...`) — R5b CIFAR-10 RF CONDITIONAL recipe (Wave 363 P1.R5b).

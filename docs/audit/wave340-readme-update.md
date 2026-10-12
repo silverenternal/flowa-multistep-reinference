@@ -63,7 +63,7 @@ The README.zh.md bilingual mirror is updated identically.
 ### 4.2 Paper A Submission Status table — Paper PDF + Paper draft rows
 
 **Before:**
-- Paper PDF: `docs/drafts/paper-flat-ieeetran.pdf` (10 pages, IEEEtran-journal typeset, sha256 `58c21076fc66bbf87c647537328e33911b42fe03123c5d61eaa0ecc8fa5562b7`)
+- Paper PDF: `docs/drafts/paper-flat-ieeetran.pdf` (10 pages, IEEEtran-journal typeset, sha256 `f33d11141e83d2063a6889fbc9e2e0a79e257a25e9edd4b16075c5bf638e88f7`)
 - Paper draft: `docs/drafts/paper-flat-flattened.md` (1602 lines, §6 Framework Properties Lemmas 1/2/3 ACTIVE)
 
 **After:**
@@ -115,7 +115,7 @@ The 5-gate pre-push row from Wave 326 has been promoted to 9-gate to reflect the
 
 ### 4.7 Reviewer re-verification — paper SHA-256 update
 
-**Before:** `paper-flat-flattened.md sha256 58c21076fc66bbf87c647537328e33911b42fe03123c5d61eaa0ecc8fa5562b7`
+**Before:** `paper-flat-flattened.md sha256 f33d11141e83d2063a6889fbc9e2e0a79e257a25e9edd4b16075c5bf638e88f7`
 
 **After:** `Final paper SHA-256 c8e26722bab22408896a7d8336c25a11f298b797190d62869695c9ef62830d2f; final PDF SHA-256 29384565f188fd36370cc748dc5b796c479c6212bd8575321e3d5b41262d7751 (14 pages IEEEtran-journal)`
 

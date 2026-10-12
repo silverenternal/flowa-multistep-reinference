@@ -277,7 +277,7 @@ same weights (modulo initialization seed) — wasted work.
 ## 5. Cross-references
 
 - `docs/audit/wave196-p3-kanzi-n1000-framework-inv-proj.md` — Wave 196 P3
-  audit (uses w149 fallback, concludes framework_wins via paired t-test;
+  audit (uses w149 fallback, concludes framework_wins vian index-matched two-sample t-test;
   calls out the Wave-178 framework_inv_proj path regression in §6 follow-ups)
 - `docs/audit/wave206-p2-kanzi-framework-n1000.md` — Wave 206 P2 audit
   (partial 96/1000 run + W196 fallback; explicitly hypothesises "torch

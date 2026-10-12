@@ -16,27 +16,27 @@ The deepseek feedback after Wave 264 P1 flagged that the R2 row's Baseline and F
 - Baseline = `-0.0990`
 - Framework = `-0.0990`
 - Δ = `weak Bonf-sig`
-- Effect size = `**framework_WINS** (deployed paired-t d_z=-0.0990, p=0.0018, Bonf-sig; counterfactual grid search d_z=+0.3927 medium-effect reported separately as sensitivity analysis)`
+- Effect size = `**framework_WINS** (deployed index-matched two-sample t d_z=-0.0990, p=0.0018, Bonf-sig; counterfactual grid search d_z=+0.3927 medium-effect reported separately as sensitivity analysis)`
 
-The fact that Baseline and Framework are both `-0.0990` is itself correct (deployed paired-t reading: the framework arms shifts the per-record RMSD by d_z = -0.0990 relative to the baseline arm; both arms are paired within each record, and the d_z metric is reported as the framework-arm signed effect size). But to a reviewer scanning the table, two identical numbers in the Baseline / Framework columns reads like either a typo or a sign that something is wrong with the verdict.
+The fact that Baseline and Framework are both `-0.0990` is itself correct (deployed index-matched two-sample t reading: the framework arms shifts the per-record RMSD by d_z = -0.0990 relative to the baseline arm; both arms are index-matched two-sample within each record, and the d_z metric is reported as the framework-arm signed effect size). But to a reviewer scanning the table, two identical numbers in the Baseline / Framework columns reads like either a typo or a sign that something is wrong with the verdict.
 
 **Fix.** Replaced the R2 row to make the column semantics explicit:
 
 | # | Old R2 row | New R2 row |
 |---|---|---|
 | Model | `Kanzi (mol. DAE inv-proj)` | `Kanzi` |
-| Metric | `RMSD d_z (N=1000 paired-t)` | `RMSD (N=1000 paired-t)` |
+| Metric | `RMSD d_z (N=1000 index-matched two-sample t)` | `RMSD (N=1000 index-matched two-sample t)` |
 | Baseline | `-0.0990` | `reference` |
 | Framework | `-0.0990` | `d_z = −0.0990` |
 | Δ | `weak Bonf-sig` | `Bonf-sig p=0.0018` |
-| Effect size | `**framework_WINS** (deployed paired-t d_z=-0.0990, p=0.0018, Bonf-sig; counterfactual grid search d_z=+0.3927 medium-effect reported separately as sensitivity analysis)` | `framework_WINS` |
+| Effect size | `**framework_WINS** (deployed index-matched two-sample t d_z=-0.0990, p=0.0018, Bonf-sig; counterfactual grid search d_z=+0.3927 medium-effect reported separately as sensitivity analysis)` | `framework_WINS` |
 | Paper § | `§7.6.2` | `§7.6.2` (unchanged) |
 | Verification | `verification_outputs/wave218-p3-kanzi-framework-wins.json` | `verification_outputs/wave218-p3-kanzi-framework-wins.json` (unchanged) |
 
 This makes the semantics explicit:
 - **Baseline column** = `reference` (the Kanzi baseline arm is the reference point; no numeric value because the d_z metric is signed relative to baseline, not a per-arm absolute reading)
-- **Framework column** = `d_z = −0.0990` (the deployed paired-t Cohen's d_z effect size of the framework over the baseline arm; sign convention: negative d_z means framework RMSD < baseline RMSE)
-- **Δ column** = `Bonf-sig p=0.0018` (the Bonferroni-corrected significance of the paired-t reading; matches the deployed arm's `t=-3.13, df=999, p_raw=0.0018` from `verification_outputs/wave218-p3-kanzi-framework-wins.json`)
+- **Framework column** = `d_z = −0.0990` (the deployed index-matched two-sample t Cohen's d_z effect size of the framework over the baseline arm; sign convention: negative d_z means framework RMSD < baseline RMSE)
+- **Δ column** = `Bonf-sig p=0.0018` (the Bonferroni-corrected significance of the index-matched two-sample t reading; matches the deployed arm's `t=-3.13, df=999, p_raw=0.0018` from `verification_outputs/wave218-p3-kanzi-framework-wins.json`)
 - **Effect size column** = `framework_WINS` (the verdict only; counterfactual grid-search +0.3927 sensitivity analysis remains documented in `verification_outputs/wave235-p2-r2-uplift.json` and the Wave 263 P2 audit doc for the trace, but is removed from the table cell to keep the cell readable)
 
 ## Numerical fidelity check
@@ -45,12 +45,12 @@ The new row preserves every number from the old row, only reassigns the labels:
 
 | Quantity | Old cell location | New cell location | Same value? |
 |---|---|---|---|
-| Deployed paired-t d_z = -0.0990 | Baseline + Framework + Effect-size parenthetical | Framework (`d_z = −0.0990`) | YES |
+| Deployed index-matched two-sample t d_z = -0.0990 | Baseline + Framework + Effect-size parenthetical | Framework (`d_z = −0.0990`) | YES |
 | Bonferroni significance p=0.0018 | Effect-size parenthetical | Δ (`Bonf-sig p=0.0018`) | YES |
 | Verdict `framework_WINS` | Effect-size (bolded) | Effect size (`framework_WINS`) | YES |
 | Verification anchor `wave218-p3-kanzi-framework-wins.json` | Verification | Verification | YES |
 | Paper anchor `§7.6.2` | Paper § | Paper § | YES |
-| Metric name `RMSD (N=1000 paired-t)` | Metric | Metric (dropped `d_z` prefix) | equivalent |
+| Metric name `RMSD (N=1000 index-matched two-sample t)` | Metric | Metric (dropped `d_z` prefix) | equivalent |
 
 No number is changed, added, or removed. The `d_z` prefix was dropped from the Metric cell only because the metric label is now redundant with the Framework column content (`d_z = −0.0990`).
 
@@ -62,7 +62,7 @@ The counterfactual sensitivity analysis is **NOT** removed from the project:
 - The source artifact `verification_outputs/wave235-p2-r2-uplift.json` remains in the repo
 - The Wave 263 P2 audit doc section "Issue 4 — R2 deployed vs counterfactual" preserves the full provenance (counterfactual grid search over `easy_tier_nfe_reduction_factor × hard_tier_nfe_intensity`, Wave 225 P5 / Wave 233 P3 constant-offset methodology, NO live GPU run)
 - The Wave 263 P2 diff summary also preserves this provenance
-- The deployed paired-t arm reading (the headline) is fully sourced from `verification_outputs/wave218-p3-kanzi-framework-wins.json`
+- The deployed index-matched two-sample t arm reading (the headline) is fully sourced from `verification_outputs/wave218-p3-kanzi-framework-wins.json`
 
 The inline parenthetical removal is a readability cleanup (the table cell was the longest in the table, scrolled off-screen on narrow displays) — the counterfactual sensitivity finding remains fully traceable in the audit doc and the verification_outputs/ directory.
 
@@ -124,7 +124,7 @@ All other rows also have 9 cells (verified for R1, R3, R4, R5, R5b, R6). Header 
 
 | File | Lines changed | Nature |
 |---|---:|---|
-| `README.md` | R2 row (line 16) | Baseline column `-0.0990` → `reference`; Framework column `-0.0990` → `d_z = −0.0990`; Δ column `weak Bonf-sig` → `Bonf-sig p=0.0018`; Effect size column trimmed from long parenthetical to `framework_WINS`; Model name simplified from `Kanzi (mol. DAE inv-proj)` to `Kanzi`; Metric name simplified from `RMSD d_z (N=1000 paired-t)` to `RMSD (N=1000 paired-t)`; Paper § + Verification columns unchanged |
+| `README.md` | R2 row (line 16) | Baseline column `-0.0990` → `reference`; Framework column `-0.0990` → `d_z = −0.0990`; Δ column `weak Bonf-sig` → `Bonf-sig p=0.0018`; Effect size column trimmed from long parenthetical to `framework_WINS`; Model name simplified from `Kanzi (mol. DAE inv-proj)` to `Kanzi`; Metric name simplified from `RMSD d_z (N=1000 index-matched two-sample t)` to `RMSD (N=1000 index-matched two-sample t)`; Paper § + Verification columns unchanged |
 
 ## Out-of-scope items preserved verbatim
 

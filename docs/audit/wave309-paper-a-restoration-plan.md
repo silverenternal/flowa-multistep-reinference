@@ -45,7 +45,7 @@ The 4 NEUTRAL cells were never inflated claims at last push; the K-cells were st
 
 | Position | Cell | Verdict at last push | New verdict after restoration | Headline metric | Effort |
 |---|---|---|---|---|---|
-| **MAIN** | R2 | MISALIGNED_AT_LAST_PUSH_then_FIXED (one-sample t+3.532 → paired t−0.099) | **STRONG framework-WINS** | paired d_z = −0.099, p = 1.79e-3 | 2 edits |
+| **MAIN** | R2 | MISALIGNED_AT_LAST_PUSH_then_FIXED (one-sample t+3.532 → index-matched two-sample t−0.099) | **STRONG framework-WINS** | index-matched two-sample d_z = −0.099, p = 1.79e-3 | 2 edits |
 | **MAIN** | R5c | SUPPORTABLE (smoke ckpt, PROVISIONAL disclosure inline) | **STRONG framework-WINS (smoke ckpt, production ckpt deferred)** | smoke d_z = −13.175, p = 1.32e-11 | 0 edits |
 | **MAIN** | R6 | PARTIAL_RESTORE (uniform +0.071 UNPRIMED + counterfactual +0.2235 NOT surfaced) | **STRONG tier-aware promotion** (counterfactual +0.2235 Bonf-sig at α=0.05) | tier-aware d_z = +0.2235, p = 2.98e-12 | 5 edits |
 | **MAIN** | R5b | SUPPORTABLE (3 N points all REGRESSES, n_rounds conditional partially known) | **STRONG REGRESSES boundary characterization** + n_rounds=1 WINS reframing | REGRESSES d_z = +2.700, p = 1.31e-5 (10 chunks) / −1.60% (n_rounds=1) | 2 edits |
@@ -71,7 +71,7 @@ The 4 NEUTRAL cells were never inflated claims at last push; the K-cells were st
 
 ### 4.1 R2 (CAN_RESTORE — highest impact, 2 edits)
 
-**Issue at last push:** Paper §3.3 line 319 + line 333 + §7.1 line 641 cite a one-sample-t against a baseline-mean giving `d_z = +3.532` (REGRESSION, byte-stable σ=0 artifact). The paired-t data already exists in git at last push and supports framework-WINS at `d_z = −0.0990`.
+**Issue at last push:** Paper §3.3 line 319 + line 333 + §7.1 line 641 cite a one-sample-t against a baseline-mean giving `d_z = +3.532` (REGRESSION, byte-stable σ=0 artifact). The index-matched two-sample t data already exists in git at last push and supports framework-WINS at `d_z = −0.0990`.
 
 **Files involved:**
 - `verification_outputs/wave218-p3-kanzi-framework-wins.json` (sha256 `9b5c3b68d05b136e662fffbef1873693f28c43547cebf7b8c7b480261d0de49c`, in git at 6036207)
@@ -81,7 +81,7 @@ The 4 NEUTRAL cells were never inflated claims at last push; the K-cells were st
 - `docs/drafts/paper-flat-flattened.md` line 92, line 106, line 319, line 333, line 641
 
 **Edits:**
-1. `paper-flat-flattened.md` line 92 + line 106: Replace `+3.532` → `−0.0990` (Cohen's paired d_z).
+1. `paper-flat-flattened.md` line 92 + line 106: Replace `+3.532` → `−0.0990` (Cohen's index-matched two-sample d_z).
 2. `paper-flat-flattened.md` line 319 + line 333: Replace `one-sample t` → `paired t` and add Wave 218 P3 JSON SHA256 in citation.
 3. `paper-flat-flattened.md` line 641: Update status from `PARTIAL` → `STRONG framework-WINS`.
 4. `paper-flat-flattened.md` cross-link `wave218-p3-n1000-verified.md`.
@@ -245,7 +245,7 @@ The post-last-push redefinition of K1 as "FlowMol3 RDKit-validity" (p_bonf=0.567
 | # | Cell | Metric | Position at last push | New Position (Paper A) | Verdict at last push | New verdict | d_z | p_bonf | α | Bonf Pass | Effort |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 1 | R1 | LineageFlow HMMER `hmmscan_total_hits` | MAIN §3.1 row + §7.1 row 1 | **SUPP** | STRONG primary d_z=+0.182 (cluster-robust UNDERPOWERED + single-seed) | **PARTIAL** (+116% aggregate + cluster-robust UNDERPOWERED + single-seed) | +0.182 single-seed / +116% aggregate | 1.247e-8 (single-seed) | 0.007143 | PASS single-seed / FAIL cluster | 3 commits + 2 edits |
-| 2 | R2 | Kanzi `reconstruction_kabsch_rmsd_Å` paired t | MAIN §3.3 row + §7.1 row 2 | **MAIN** | MISALIGNED (one-sample t+3.532 → paired t−0.099) | **STRONG framework-WINS** | −0.0990 | 1.79e-3 | 0.007143 | **PASS** | 2 edits |
+| 2 | R2 | Kanzi `reconstruction_kabsch_rmsd_Å` index-matched two-sample t | MAIN §3.3 row + §7.1 row 2 | **MAIN** | MISALIGNED (one-sample t+3.532 → index-matched two-sample t−0.099) | **STRONG framework-WINS** | −0.0990 | 1.79e-3 | 0.007143 | **PASS** | 2 edits |
 | 3 | R3 | FlowMol3 `fg_dev` per-record REOS proxy | MAIN §3.3 row + §7.1 row 3 | **MAIN** (with internal reconcile) | NEUTRAL with internal inconsistency | **NEUTRAL reconciled** (per-record d_z=−0.285 N=200 ACTUAL + per-arm d_s=−0.110) | −0.285 (proxy) / −0.110 (per-arm) | 8.03e-5 (proxy) / 1.42e-2 (per-arm) | 0.007143 | PASS proxy / FAIL per-arm | 1 edit |
 | 4 | R5a | 2D Two Moons W2 | MAIN §3.5 row + §7.1 row 4 | **MAIN** | TIE d_s=+0.460 (n=3 unpaired) | **TIE** with R4 -78.25% footnote (separate experiment) | +0.460 (TIE) / −78.25% (FM ablation) | 0.604 | 0.007143 | FAIL (TIE) | 2 edits |
 | 5 | R5b | CIFAR-10 RF NFE=50 FID | MAIN §3.2 row + §3.6 boundary + §7.1 row 5 | **MAIN** | REGRESSES d_z=+2.700 + n_rounds=2 override | **STRONG REGRESSES boundary** + n_rounds=1 WINS reframing | +2.700 (10 chunks) / −1.60% (n_rounds=1) | 9.17e-5 / 8.72e-132 | 0.007143 | PASS wrong-direction (REGRESSES) / PASS n_rounds=1 WINS | 2 edits |

@@ -107,7 +107,7 @@ Compare baseline / framework / raw_delta_pct / framework_wins values to DATA_PRE
 
 | cell | action | rationale | doc § | audit doc |
 |---|---|---|---|---|
-| **R2 (Kanzi)** | KEEP current | Wave 255 P2: `d_z = -0.0990` Bonf-sig framework_WINS is the strongest live-GPU paired reading; counterfactual readings are not directly comparable per Wave 254 P1 disclosure | §2.2 | `wave255-p2-r2-re-audit.md` |
+| **R2 (Kanzi)** | KEEP current | Wave 255 P2: `d_z = -0.0990` Bonf-sig framework_WINS is the strongest live-GPU index-matched two-sample reading; counterfactual readings are not directly comparable per Wave 254 P1 disclosure | §2.2 | `wave255-p2-r2-re-audit.md` |
 | **R3 (FlowMol3 fg_dev)** | KEEP current | Wave 255 P3: per-record framework_WINS `d_z = -0.285` Bonf-sig already published; per-arm aggregate `d_s = -0.129` UNDERPOWERED correctly disclosed | §2.3 | `wave255-p3-r3-re-audit.md` |
 | **R4 (2D Two Moons)** | REPLACE | Wave 255 P1: 2D FM ablation source restores framework_WINS Δ = −78.25% | §2.4 | `wave255-p1-restore-r4-r5.md` |
 | **R5 (2D Eight Gaussians)** | REPLACE | Wave 255 P1: 2D FM ablation source restores framework_WINS Δ = −67.10% | §2.5 | `wave255-p1-restore-r4-r5.md` |

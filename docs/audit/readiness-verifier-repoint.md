@@ -103,7 +103,7 @@ Recorded for provenance; the digests are the pre-commit working-tree values.
 | `README.md` | `037d59bbdb8f02393e935149fbe2e54247b5ed81327f6531fbe40a709c481e7b` |
 | `README.zh.md` | `18ec16609e937f0436502c8e70d0560f8c7164af5b07f745afaf14e680d21df0` |
 | `docs/README.md` | `ecea99851effe38bccfbdc5b386d32fbd41050ec30210c7dc01b0d29a35bd727` |
-| `docs/paper-draft.md` | `acde7543089e3dd9462db7825e6409a9741f0731c97600515a3033026b48c24b` |
+| `docs/paper-draft.md` | `37c329401da6ca5fd2663eb19e781b92b40833499017f13d9e81af13bb9757a6` |
 | `todo/WAVES.md` | `6766225956d3d35938593f6cae8ba03cbf291d00cc850375599a290015af964a` |
 | `todo/README.md` | `a2c6d85ecd39d8851942a5e46d266cdb939cd57efe64919029a1bc151e753e5e` |
 | `tests/test_adapters/test_kanzi_real_ckpt.py` | `c791d6e5c7ff70165c29909280d3c6a34a8c641b34ec016c3deb2be1dfbe9351` |

@@ -8,14 +8,14 @@
 ## Goal
 
 Verify all final gates green after Wave 196 (P2 4-arm n=30 paired + P3
-kanzi N=1000 framework_inv_proj paired + P4 aggregate Table A R2 + Table B
+kanzi N=1000 framework_inv_proj index-matched two-sample + P4 aggregate Table A R2 + Table B
 4-arm + P5 §10.36 paper section + CLM-061/040/063 cross-references) Track B
 and Track C replication. Wave 196 closes 2 power-analysis gaps identified
 in Wave 195: (1) Wave 195 P3 4-arm was 12 cells × n=3 unpaired Welch
 (ALL 12 UNDERPOWERED), now upgraded to 16 cells × n=30 paired t-test with
 +Vanilla control arm (2 SUPPORTED + 14 UNDERPOWERED); (2) Wave 195 P2 R2
 kanzi row had a byte-stable sign-convention artifact (REGRESSES), now
-re-verified with Wave 196 P3 paired N=1000 fresh data (UNDERPOWERED
+re-verified with Wave 196 P3 index-matched two-sample N=1000 fresh data (UNDERPOWERED
 framework-wins significant at `d_z = 0.0956`, `p_raw = 0.00257`).
 
 ## Gate-by-gate results
@@ -55,7 +55,7 @@ Wave 195 P2/P3/P4 or Wave 196 P2/P3/P4 code logic; only style fixes.
 CLM-061 was transitioned from "12/12 UNDERPOWERED at n=3 unpaired" to
 "2 SUPPORTED + 14 UNDERPOWERED at n=30 paired t-test (4-arm with
 +Vanilla control)" per Wave 196 P4 verdict. CLM-040's R2 cell cross-
-reference was updated to point to the Wave 196 P3 paired N=1000 fresh
+reference was updated to point to the Wave 196 P3 index-matched two-sample N=1000 fresh
 data (verdict upgrade REGRESSES → UNDERPOWERED framework-wins
 significant). CLM-040 itself remains correctly PROVISIONAL (Disputed
 by) per Wave 193 P3 honest disclosure; the kanzi foldability verdict
@@ -70,7 +70,7 @@ upgrade is captured under the cross-reference CLM-063 + §10.36.
   analysis gaps.
 * **(b) Track B** — 4-arm head-to-head at n=30 paired seeds, verdict
   upgrade (12 → 16 cells with +Vanilla control arm).
-* **(c) Track C** — kanzi N=1000 framework_inv_proj paired re-
+* **(c) Track C** — kanzi N=1000 framework_inv_proj index-matched two-sample re-
   verification (paired_diff_mean = +0.018 Å framework-wins,
   p_bonf = 0.00257, d_z = 0.0956).
 * **(d) Updated Table B + Table A R2 row** — 16-cell verdict
@@ -126,7 +126,7 @@ captured under CLM-063 + §10.36.
 $ ls -la verification_outputs/wave196*
 -rw-r--r-- wave196-p2-4arm-n30-summary.csv                (1.7K)
 -rw-r--r-- wave196-p2-4arm-n30-summary.json               (4.3K)
--rw-r--r-- wave196-p3-kanzi-n1000-framework-inv-proj.csv (32K, paired per-record)
+-rw-r--r-- wave196-p3-kanzi-n1000-framework-inv-proj.csv (32K, index-matched two-sample, per-record)
 -rw-r--r-- wave196-p3-kanzi-n1000-framework-inv-proj.json (2.8K)
 -rw-r--r-- wave196-p4-table-a-r-level.csv                 (2.4K, 8 rows / 7 sub-cells)
 -rw-r--r-- wave196-p4-table-a-r-level.json                (13K)
@@ -169,14 +169,14 @@ CLM-061 (updated) + CLM-063.
 ## Verdict
 
 **ALL FINAL GATES GREEN** for Wave 196 Track B (4-arm n=30 paired) +
-Track C (kanzi N=1000 framework_inv_proj paired) replication. Two
+Track C (kanzi N=1000 framework_inv_proj index-matched two-sample) replication. Two
 power-analysis gaps closed: (1) 4-arm verdict goes from
 "ALL 12 UNDERPOWERED at n=3" to "2 SUPPORTED + 14 UNDERPOWERED at n=30
 paired t-test (4-arm with +Vanilla control)"; (2) kanzi R2 verdict
 goes from "REGRESSES (byte-stable composite)" to "UNDERPOWERED with
 framework-wins significance at p_raw = 0.00257". The §10.6 R-level
 inventory headline numbers are preserved verbatim; Wave 196 adds the
-fresh paired-N=1000 re-verification on R2 and the 16-cell
+fresh index-matched two-sample N=1000 re-verification on R2 and the 16-cell
 paired-t-test 4-arm head-to-head verdict upgrade.
 
 Ready for `v2.0-paper-bc-replication` tag + push.

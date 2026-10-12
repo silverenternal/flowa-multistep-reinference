@@ -50,7 +50,7 @@ Two honest-disclosure paragraphs were added to §2.2:
 
 1. **First disclosure** (post-fix): distinguishes the deployed Wave 218 P3 uniform arm (mean_diff=-0.01896 Å, d_z=-0.0990, NFE=50) from the Wave 225 P5 tier-aware counterfactual (d_z=+0.0465, NOT Bonferroni-significant) and from the Wave 235 P2 grid-search best cell (d_z=+0.3927, easy_factor=0.0, hard_intensity=2.0). Wave 235 P2 derives d_z from `kanzi_overall_d_z_after=+0.0465` by additionally scaling hard-tier offset 2.0× — NOT directly comparable to the deployed Wave 218 P3 uniform d_z.
 
-2. **Second disclosure (per Wave 253 P3 verification):** the +743% d_z value cited in paper §7.6.2 (CLM-073) was traced to `wave235-p2-r2-uplift.json` (counterfactual uplift), not to a direct baseline-vs-framework paired-t. The direct paired-t (Wave 218 P3) gives d_z = -0.0990 which is Bonferroni-significant but smaller magnitude. Both readings are honest; the +743% comes from a 20-cell grid search counterfactual, while -0.0990 is a 30-seed paired-t direct measurement.
+2. **Second disclosure (per Wave 253 P3 verification):** the +743% d_z value cited in paper §7.6.2 (CLM-073) was traced to `wave235-p2-r2-uplift.json` (counterfactual uplift), not to a direct baseline-vs-framework index-matched two-sample t. The direct index-matched two-sample t (Wave 218 P3) gives d_z = -0.0990 which is Bonferroni-significant but smaller magnitude. Both readings are honest; the +743% comes from a 20-cell grid search counterfactual, while -0.0990 is a 30-seed index-matched two-sample t direct measurement.
 
 ---
 
@@ -106,7 +106,7 @@ After Wave 254 P1 fix, §2.2 R2 Kanzi table now matches Wave 218 P3 deployed arm
 
 **Important**: the deployed R2 result is **d_z = -0.0990** (Wave 218 P3, Bonferroni-significant, small effect size). This is the only result that counts for the R-level claim. The counterfactual numbers (Wave 225 P5 tier-aware +0.0465, Wave 235 P2 grid +0.3927, Wave 225 P8 PQ-weight-tuned -0.396) are NOT deployed — they are documented for "what the framework COULD do" under different scheduler knobs.
 
-**Paper draft (§7.6.2, CLM-073)** — the +743% wording in CLM-073 is now flagged in DATA_PRESENTATION.md §2.2 disclosure as a counterfactual uplift artifact (Wave 235 P2 grid-search), NOT a direct paired-t measurement. A future wave should align CLM-073 with the verified -0.0990 deployed d_z to avoid confusing reviewers.
+**Paper draft (§7.6.2, CLM-073)** — the +743% wording in CLM-073 is now flagged in DATA_PRESENTATION.md §2.2 disclosure as a counterfactual uplift artifact (Wave 235 P2 grid-search), NOT a direct index-matched two-sample t measurement. A future wave should align CLM-073 with the verified -0.0990 deployed d_z to avoid confusing reviewers.
 
 ---
 

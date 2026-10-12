@@ -176,7 +176,7 @@ Per-sub-directory counts (from `paper-data/SHA256SUMS`):
 
 | Path | SHA-256 |
 |---|---|
-| `headline-evidence/README.md` | `fee98ed9a78862f4d617b0c6b2780b1a0d630aebacd1a57614af69d253b9c889` |
+| `headline-evidence/README.md` | `333af11ef5eabbf14f60348b5adc900c1facef2dadfeda9d0bf20956756f8120` |
 
 *(Sub-directories `r1_lineageflow_hmmer/`, `r2_flowmol3_fgdev/`, `r3_cifar_rf_v2_fid/`, `r4_2d_two_moons/`, `r5_2d_eight_gaussians/`, `r6_mnist_fm/`, `composite_axis_byte_stable/`, `byte_reproducibility_evidence/`, `kanzi_n1000_byte_reproducible/`, `nfe_speedup_2p5_to_10x/` are symlinks to `docs/headline-evidence/` sub-directories; their internal SOURCE.md files are enumerated at freeze time and preserved as-is.)*
 

@@ -76,7 +76,7 @@ parenthetical 95% CIs in the surrounding paragraph):
 > $[+0.05, +0.30]$ effect-magnitude corridor, confirming a homogeneous
 > framework-WINS signal across the per-record unit.
 
-> **R2 — Kanzi inv-proj reconstruction_rmsd_Å.** Per-record paired
+> **R2 — Kanzi inv-proj reconstruction_rmsd_Å.** Per-record index-matched two-sample
 > one-sample t-test against the original baseline mean (0.901977 Å) on N
 > = 1000 sequences yields mean diff = +0.6565 Å (95% CI [+0.6450,
 > +0.6680], $d_z = +3.532$, $t = 111.69$, $p_{\text{raw}} < 10^{-300}$);
@@ -158,7 +158,7 @@ records the canonical values for cross-checking.
 | R6 scPerplexity naive | [−4.142, −3.691] | [−4.142, −3.691] | YES |
 | R6 pLDDT cluster | [−8.14, +10.39] | [+0.139, +2.107]* | NO (cluster vs naive) |
 
-*R2 paper Table 3.2 currently reports the per-record paired R2 diff at
+*R2 paper Table 3.2 currently reports the per-record index-matched two-sample R2 diff at
 the **paired baseline - framework** sign convention (Δ = base − fw =
 −0.6565, CI [−0.6680, −0.6450]); this audit reports the **framework −
 baseline** sign convention used in `wave206-p2-kanzi-framework-n1000.csv`

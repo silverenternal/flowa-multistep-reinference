@@ -222,7 +222,7 @@ R6) and the **per-seed N** for image / 2D / molecular cells.
 | Cell | n_seeds | n_paired per seed | n_paired total | audit-grade unit | seed list |
 |---|---|---|---|---|---|
 | R1 LineageFlow HMMER | 6 | n/a (per-record paired) | 1000 | per-record | `[42, 43, 44, 45, 46, 47]` |
-| R2 Kanzi inv-proj | 3 | n/a (per-record paired) | 1000 | per-record | `[42, 43, 44]` |
+| R2 Kanzi inv-proj | 3 | n/a (per-record index-matched two-sample) | 1000 | per-record | `[42, 43, 44]` |
 | R3 FlowMol3 fg_dev | **1** | 999 / 1000 | 1000 | per-record (DGL 2.4.0 wheel gap blocks 3-seed re-run) | `[42]` |
 | R5a 2D Two Moons | **7** (Wave 209 P6 E2) | 3 (per-seed unpaired) | 3 per seed | per-seed | `[0, 1, 2, 3, 4, 5, 6]` |
 | R5b CIFAR-10 RF NFE=50 | 1 | 10 chunks × 100 | 1000 | per-chunk (df=9) | `[42]` |

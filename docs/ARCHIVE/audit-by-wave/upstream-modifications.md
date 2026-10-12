@@ -192,7 +192,7 @@ will force:
    reverting to a single-worker per-GPU OmegaFold + ESM-IF
    evaluation. Wall-clock cost: ~2-3× the Wave 206 P1 N=1000 runtime
    (estimated 4-6 hours on GPU 0). Output: identical **or**
-   byte-stable `d_z = -0.0990` paired-t reading when run on the same
+   byte-stable `d_z = -0.0990` index-matched two-sample t reading when run on the same
    frozen seed stream (`verification_outputs/wave206-p1-lineageflow-n1000.json`
    is the byte-stable reference).
 2. **R6 LineageFlow k6 rerun** without the multi-worker sharding.

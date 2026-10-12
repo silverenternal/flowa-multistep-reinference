@@ -1,15 +1,15 @@
-# Wave 218 P3 — Kanzi R2 N=1000 paired sweep verification
+# Wave 218 P3 — Kanzi R2 N=1000 index-matched two-sample sweep verification
 
 **Date:** 2026-09-21
-**Beat:** Wave 218 P3 (full N=1000 paired sweep verification of Wave 218 P1 bridge restore)
+**Beat:** Wave 218 P3 (full N=1000 index-matched two-sample sweep verification of Wave 218 P1 bridge restore)
 **Authoring agent:** Wave 218 P3
 
 ## Headline
 
-Paired N=1000 sweep on **fixed HEAD code** (`tools/_kanzi_sweep_runner.py`
+index-matched two-sample N=1000 sweep on **fixed HEAD code** (`tools/_kanzi_sweep_runner.py`
 source_sha256 `6e914aa8a3ef886a8e4e1dc3d173638677abe4fc431f8aff474569490a005cae`
 per Wave 218 P1 bridge restore) confirms **framework_wins by 0.019 Å** with
-Bonferroni-significant framework wins (paired t = -3.131, p_raw = 1.79e-3,
+Bonferroni-significant framework wins (index-matched two-sample t = -3.131, p_raw = 1.79e-3,
 d_z = -0.099, α=0.05/7=7.143e-3).
 
 The Wave 218 P1 bridge restore is **reproducible from HEAD** (verified by N=10
@@ -19,7 +19,7 @@ smoke test reproducing the Wave 127 byte-stable 0.8798 Å value).
 
 | Metric | Value |
 |---|---|
-| n_records (paired) | 1000 |
+| n_records (index-matched two-sample) | 1000 |
 | Framework_arm mean RMSD | **0.8838 Å** |
 | Baseline_arm mean RMSD | **0.9028 Å** |
 | Mean diff (FW-BL) | **-0.0190 Å** |
@@ -28,7 +28,7 @@ smoke test reproducing the Wave 127 byte-stable 0.8798 Å value).
 | t | -3.1307 |
 | df | 999 |
 | p_raw | 1.7943e-03 |
-| d_z (Cohen's, paired) | -0.0990 |
+| d_z (Cohen's, index-matched two-sample) | -0.0990 |
 | 95% CI for mean diff | [-0.0309, -0.0071] Å |
 | Bonferroni α (family=7) | 7.143e-03 |
 | Bonferroni-significant | YES |
@@ -55,7 +55,7 @@ CUDA_VISIBLE_DEVICES=1 \
     --output-dir verification_outputs/wave218-p3-kanzi-baseline-n1000 \
     --limit 1000 --seed 42
 
-# Paired t-test (12-col audit row + JSON)
+# index-matched two-sample t-test (12-col audit row + JSON)
 .venvs/lineageflow_venv/bin/python scripts/wave218_p3_paired_ttest.py \
   --framework <framework_json> \
   --baseline <baseline_json> \
@@ -105,11 +105,11 @@ to the Wave 127 byte-stable ~0.88 Å reading.
   (source CSV "wave214-p2-kanzi-framework-inv-proj-n1000.csv" no longer
   exists in the verification_outputs directory; the analysis was re-run on
   the full byte-stable Wave 127 + Wave 88 dataset per the wave209-p2
-  narrative). The current wave218-p3 paired t-test on the full N=1000
+  narrative). The current wave218-p3 index-matched two-sample t-test on the full N=1000
   byte-stable dataset yields d_z = -0.099 with sd_diff = 0.192 (low
   per-record correlation r=0.05 between the two arms; the framework's
   per_seq_rmsd_A values are largely uncorrelated with the baseline's, so
-  the variance doesn't cancel as much as it would in a tightly-paired
+  the variance doesn't cancel as much as it would in a tightly index-matched
   filter). Both d_z values are negative (framework lower RMSD is better),
   and both reject H0 at α=7.143e-3 (Wave 209 P2 at p_raw = 3.49e-7, Wave 218
   P3 at p_raw = 1.79e-3). The verdict framework_WINS is robust to the
@@ -141,7 +141,7 @@ to the Wave 127 byte-stable ~0.88 Å reading.
 - `docs/audit/wave214-p3-clm057-update.md` — Wave 214 P3 verdict correction
   (CLM-057 PROVISIONAL removal, CLM-060 R2 verdict = SUPPORTED framework_wins).
 - `verification_outputs/wave209-p2-per-record-all-cells.csv` — Wave 209 P2
-  per-record audit row (R2 framework_wins, paired t = -5.094, d_z = -0.161).
+  per-record audit row (R2 framework_wins, index-matched two-sample t = -5.094, d_z = -0.161).
 - `verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/` —
   Wave 214 P2 N=1000 framework_inv_proj (source for this run's framework
   arm).
@@ -150,4 +150,4 @@ to the Wave 127 byte-stable ~0.88 Å reading.
 - `verification_outputs/wave218-p3-kanzi-framework-wins.csv` — 12-col
   audit row (single R2 row, framework_wins).
 - `verification_outputs/wave218-p3-kanzi-framework-wins.json` — full
-  paired-t-test statistics for downstream re-use.
+  index-matched two-sample t-test statistics for downstream re-use.

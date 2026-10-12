@@ -40,7 +40,7 @@ FlowA 是一个 training-free, solver-agnostic 的 re-inference framework,围绕
 
 ## 关键诚实披露
 
-- **R2 Kanzi:** 论文 §7.6.2 引用 deployed paired-t d_z=-0.0990 (weak but Bonf-sig),不是 +0.3927 counterfactual uplift
+- **R2 Kanzi:** 论文 §7.6.2 引用 deployed index-matched two-sample t d_z=-0.0990 (weak but Bonf-sig),不是 +0.3927 counterfactual uplift
 - **R5b CIFAR:** 是 conditional boundary — Wave 247 完整验证显示只在 seed 42 + n_rounds=1 + NFE=50 时 framework_WINS(ΔFID -0.9% to -3.54%);seed 43/44 UNDERPOWERED;NFE>50 WIN 不 extends;tier-aware wrapper 无效(只有 no-op params best)— **honest disclosure**:R5b 是 conditional WIN,不是 unconditional strength
 - **R3 FlowMol3:** **3-seed pooled analysis BLOCKED at vendor level** — vendored upstream metrics.py (commit 77cae22) lacks `.num_atoms` / `.atom_types` / `.valencies` / `.atom_charges` / `.fake_atoms` / `.rdkit_mol` / `.build_molecule` for partial rdkit.Chem.Mol objects. Framework ships unmodified vendored code per academic-integrity directive 2026-09-22. R3 verdict rests on Wave 87 seed 42 N=1000 framework_WINS + Wave 208 P2 per-record framework_WINS (d_z=-0.285 N=200 Bonf-sig) + Wave 216 P1 projected N=1000 framework_WINS.
 - **Tier-aware 参数:** 经验选择(not theorem-derived),overfit risk LOW

@@ -214,7 +214,7 @@ B.1 (batched MPNN message-passing) — but the fix introduced a silent
 per-channel mean-pool bug that only surfaces when batch size > 1 AND
 `per_channel_jitter_std > 0`. The bug was masked by per-seed paired-t
 testing at N=200 across single-seed sweeps; it surfaced only when Wave 216
-P5 cross-seed N=1000 paired-t tests reported systematic R2 (Kanzi) framework
+P5 cross-seed N=1000 index-matched two-sample t tests reported systematic R2 (Kanzi) framework
 REGRESSIONS on seeds 43/44. Per Wave 260 + Wave 262 defensive-patch revert,
 the canonical mitigation is `python3 -c "import dgl; print(dgl.__version__)"
 == 2.1.0` only for FlowMol3 sweeps (lineageflow_n1000 uses dgl 2.4.0 with

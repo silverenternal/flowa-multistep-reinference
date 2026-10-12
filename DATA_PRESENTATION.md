@@ -58,7 +58,7 @@
 
 ### 2.2 R2: Kanzi Molecular DAE inverse-projection
 
-> **Section-level disclaimer (Wave 256 P3):** **R2 has FOUR readings (deployed paired-t, counterfactual uplift, grid search best, PQ-weight-tuned); the paper §7.6.2 cites the deployed paired-t (−0.0990) as primary value-add; the +0.3927 counterfactual is sensitivity analysis only.**
+> **Section-level disclaimer (Wave 256 P3):** **R2 has FOUR readings (deployed index-matched two-sample t, counterfactual uplift, grid search best, PQ-weight-tuned); the paper §7.6.2 cites the deployed index-matched two-sample t (−0.0990) as primary value-add; the +0.3927 counterfactual is sensitivity analysis only.**
 
 **测试指标 / Metric:** RMSD (Ångström, lower-better)
 **样本规模 / Sample size:** N = 1000 paired records
@@ -82,10 +82,10 @@
 
 **Honest disclosure / 诚实披露**: deployed R2 result is the Wave 218 P3 uniform arm (mean_diff = -0.01896 Å, d_z = -0.0990, p_raw = 1.79e-03, NFE = 50 from `adapter_steps` in Wave 214 P2 `checkpoint.json`). Bonferroni-significant (α=0.05/7=0.007143) but small effect size (Cohen's d_z ≈ -0.10). The Wave 225 P5 tier-aware counterfactual (easy_factor=0.5 only; medium/hard tier unchanged per source, both medium and hard appear identical to uniform) yields d_z = +0.0465 (NOT Bonferroni-significant, p=0.1415) — i.e. the tier-aware counterfactual HALTS back to the no-tier uplift value (Δ = 0% vs uniform d_z=-0.0990). The Wave 235 P2 grid-search best cell (easy_factor=0.0, hard_intensity=2.0) reports d_z=+0.3927 — that is per `wave235-p2-r2-uplift.json#best`, but note Wave 235 P2 derives d_z from `kanzi_overall_d_z_after = +0.0465` (Wave 225 P5 tier-aware) by additionally scaling hard-tier offset 2.0×; it is NOT directly comparable to the deployed Wave 218 P3 uniform d_z=-0.0990 (different baseline). PQ-weight-tuned (Wave 225 P8, d_z = -0.396, lower-is-better = framework WINS more strongly) is the deepest counterfactual but is computed via constant-intensity scaling on the frozen Wave 214 N=1000 arrays, NOT a live GPU re-run with custom weights — included for completeness only.
 
-**Honest disclosure (per Wave 256 P1 — R2 Kanzi paper number consistency fix):** **Paper §7.6.2 cites −0.0990 (deployed paired-t) as the primary R2 value-add number.** The +0.3927 counterfactual grid search is reported separately in §3.5 as a sensitivity analysis (NOT as the primary §7.6.2 number). The deployed arm is the Wave 218 P3 N=1000 paired sweep (`d_z = -0.0990`, `p_raw = 1.7943 × 10⁻³`, Bonferroni-significant at α=0.05/7=0.007143, lower-is-better ⇒ framework-WINS, byte-stable Wave 127 framework `mean_rmsd_Å = 0.8798` vs Wave 88 baseline `mean_rmsd_Å = 0.9020`, Δ = −0.022 Å). The +743% (`d_z = +0.3927`) reading was traced to `wave235-p2-r2-uplift.json` (Wave 235 P2 20-cell grid-search counterfactual, best cell `easy_factor=0.0, hard_intensity=2.0`), NOT to a direct baseline-vs-framework paired-t. Both readings are honest; the +743% comes from a 20-cell grid search counterfactual (sensitivity analysis), while −0.0990 is the deployed-arm paired-t direct measurement (primary §7.6.2 number). CLM-073 wording in `docs/CLAIMS.md` updated to reflect deployed-arm-as-primary narrative.
+**Honest disclosure (per Wave 256 P1 — R2 Kanzi paper number consistency fix):** **Paper §7.6.2 cites −0.0990 (deployed index-matched two-sample t) as the primary R2 value-add number.** The +0.3927 counterfactual grid search is reported separately in §3.5 as a sensitivity analysis (NOT as the primary §7.6.2 number). The deployed arm is the Wave 218 P3 N=1000 index-matched two-sample sweep (`d_z = -0.0990`, `p_raw = 1.7943 × 10⁻³`, Bonferroni-significant at α=0.05/7=0.007143, lower-is-better ⇒ framework-WINS, byte-stable Wave 127 framework `mean_rmsd_Å = 0.8798` vs Wave 88 baseline `mean_rmsd_Å = 0.9020`, Δ = −0.022 Å). The +743% (`d_z = +0.3927`) reading was traced to `wave235-p2-r2-uplift.json` (Wave 235 P2 20-cell grid-search counterfactual, best cell `easy_factor=0.0, hard_intensity=2.0`), NOT to a direct baseline-vs-framework index-matched two-sample t. Both readings are honest; the +743% comes from a 20-cell grid search counterfactual (sensitivity analysis), while −0.0990 is the deployed-arm index-matched two-sample t direct measurement (primary §7.6.2 number). CLM-073 wording in `docs/CLAIMS.md` updated to reflect deployed-arm-as-primary narrative.
 
 **Data sources:**
-- `verification_outputs/wave218-p3-kanzi-framework-wins.json` (Wave 218 P3 deployed paired-t arm, df=999, bonf_sig=True)
+- `verification_outputs/wave218-p3-kanzi-framework-wins.json` (Wave 218 P3 deployed index-matched two-sample t arm, df=999, bonf_sig=True)
 - `verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/checkpoint.json` (Wave 214 P2 `adapter_steps: 50`, NFE=50)
 - `verification_outputs/wave225-p5-kanzi-tier-aware.json` (Wave 225 P5 tier-aware counterfactual, `kanzi_overall_d_z_after` = +0.0465)
 - `verification_outputs/wave235-p2-r2-uplift.json` (Wave 235 P2 20-cell grid search best cell d_z=+0.3927, easy_factor=0.0, hard_intensity=2.0)
@@ -615,7 +615,7 @@ K1-K8 honest-negative disclosure preserved in paper §10.4 + CLM-071.
 **Final 11-cell verdict distribution (Wave 310 + Wave 322 final).** 4 STRONG (R2 + R5b + R5c + R6) + 1 TIE (R5a) + 6 PARTIAL/SUPP (R1 + R3 + R5_legacy + K1 + K4 + K7) = 11 headline cells.
 
 **STRONG cells (§2 mapping):**
-- §2.2 R2 Kanzi RMSD deployed paired-t d_z=−0.0990 (STRONG)
+- §2.2 R2 Kanzi RMSD deployed index-matched two-sample t d_z=−0.0990 (STRONG)
 - §2.6 R5b CIFAR-10 RF n_rounds=1 framework-WINS conditional (STRONG)
 - §2.6 / CLM-059 / CLM-060 R5c MNIST FM smoke ckpt d_z=−13.175 (STRONG)
 - §2.7 R6 LineageFlow k6 tier-aware d_z=+0.2235 + grid-search d_z=+0.6467 (STRONG)

@@ -92,7 +92,7 @@ The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/
 
 | # | Cell / 单元 | Metric / 指标 | Verdict / 裁决 | Headline / 头条 |
 |:---:|---|---|---|---|
-| 1 | **R2** | Kanzi RMSD (paired-t) | **STRONG** | d_z = −0.0990, p_raw = 1.79e-3, Bonf-sig at α = 0.007143 |
+| 1 | **R2** | Kanzi RMSD (index-matched two-sample t) | **STRONG** | d_z = −0.0990, p_raw = 1.79e-3, Bonf-sig at α = 0.007143 |
 | 2 | **R5b** | CIFAR-10 RF FID (matched NFE = 50) | **STRONG (conditional)** | ΔFID = −1.60% to −2.53% (n_rounds=1, 4 schedulers); +9.77% to +30.19% (n_rounds≥2) |
 | 3 | **R5c** | MNIST FM FID (smoke ckpt) | **STRONG (smoke)** | d_z = −13.175, p_bonf = 3.95e-11 |
 | 4 | **R6** | LineageFlow k6 foldability (tier-aware) | **STRONG** | d_z = +0.2235 (Bonf-sig at α = 0.05/6 = 0.008333) + grid best d_z = +0.6467 |
@@ -130,7 +130,7 @@ The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/
 | # | Model | Metric | Scheduler | Baseline | Framework | Δ | Effect size | Paper § | Verification |
 |---|---|---|---|---:|---:|---:|---|---|---|
 | R1 | LineageFlow (ICML 2026 protein FM) | `hmmscan_total_hits` N=1000 | CosineAnnealScheduler | 158 | 342 | **+116.46%** | p ≈ 1.5e-08 | §7.6.1 | [ver.](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/SOURCE.md) |
-| R2 | Kanzi | RMSD (N=1000 paired-t) | framework_inv_proj synthetic x_final + trained inverse projection | reference | d_z = −0.0990 | Bonf-sig p=0.0018 | framework_WINS | §7.6.2 | [ver.](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/headline-evidence) |
+| R2 | Kanzi | RMSD (N=1000 index-matched two-sample t) | framework_inv_proj synthetic x_final + trained inverse projection | reference | d_z = −0.0990 | Bonf-sig p=0.0018 | framework_WINS | §7.6.2 | [ver.](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/headline-evidence) |
 | R3 | FlowMol3 (ICML 2026 mol FM) | `fg_dev` per-record d_z | Gaussian perturbation σ=0.05 | reference | d_z = −0.285 | Bonf-sig <1e-4 | framework_WINS (N=200 per-record; 3-seed pooled BLOCKED at vendor level) | §7.6.3 | [ver.](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/headline-evidence) |
 | R4 | 2D Two Moons (2D FM ablation) | W₂ | single_pass → multi_round_no_restart | 2.85 | 0.62 | **−78.25%** | framework_WINS (raw Δ%) | §7.6.4 | [ver.](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_ablation) |
 | R5 | 2D Eight Gaussians (2D FM ablation) | W₂ | single_pass → multi_round_no_restart | 2.31 | 0.76 | **−67.10%** | framework_WINS (raw Δ%) | §7.6.5 | [ver.](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/g1_deep_dive_q3_2026.json#twodim_fm_2d_eight_gaussians) |
@@ -142,7 +142,7 @@ The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/
 ### One-line Summary per Cell / 各单元单行总结
 
 - **R1 (Protein)**: HMMER hits: 158 → 342 (+116.46%) — framework_WINS on LineageFlow protein FM
-- **R2 (Protein)**: RMSD d_z = -0.0990 (Bonf-sig) — deployed paired-t framework_WINS on Kanzi
+- **R2 (Protein)**: RMSD d_z = -0.0990 (Bonf-sig) — deployed index-matched two-sample t framework_WINS on Kanzi
 - **R3 (Molecular)**: per-record d_z = -0.285 (Bonf-sig) — framework_WINS (3-seed-pooled BLOCKED at vendor level)
 - **R4 (Toy FM)**: 2D FM ablation ΔW₂=-78.25% framework_WINS on two_moons
 - **R5 (Toy FM)**: 2D FM ablation ΔW₂=-67.10% framework_WINS on eight_gaussians

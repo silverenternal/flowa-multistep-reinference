@@ -10,7 +10,7 @@ DeepSeek external review feedback flagged that the existing `DATA_PRESENTATION.m
 
 1. **Too long:** Teacher will not read 583 lines of data dictionary.
 2. **Too many internal terms:** Wave numbers, CLM IDs, P1/P2/P3 phases, audit doc paths are internal development traces — confusing to outside readers.
-3. **Data inconsistency risk:** R2 has four readings (deployed paired-t / counterfactual uplift / grid search best / PQ-weight-tuned); R4/R5 had original d_z values that were REMOVED for lack of source support.
+3. **Data inconsistency risk:** R2 has four readings (deployed index-matched two-sample t / counterfactual uplift / grid search best / PQ-weight-tuned); R4/R5 had original d_z values that were REMOVED for lack of source support.
 4. **Misleading "data integrity" line:** Could give readers the impression that all numbers are actual measurements, when some are counterfactual or projected.
 
 Recommended fix: split into two documents. Address R2/R4/R5 data issues first.

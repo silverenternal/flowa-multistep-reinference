@@ -46,7 +46,7 @@
 | Cell | N_total | NFE | seed_count | path | wallclock (measured) | hardware |
 |---|---:|---:|---:|---|---|---|
 | **R1** | 1000 | 500 | 1 (n=1000 records, 1 seed) | batched | 850 ms / 950 ms (baseline / framework, per-sample pipeline) | CPU + GPU (Stage A = LineageFlow FM forward on NVIDIA RTX PRO 6000 Blackwell; Stage B = external `hmmscan --cpu 4 --noali` against Pfam-A.hmm) |
-| **R2** | 1000 | 50 (single-pass) | 1 (Wave 218 P3 deployed N=1000 paired) | batched | 8.82 ms / 3.17 ms (per-sample; framework faster in synthetic-mode adapter) | CPU 1 core (synthetic-mode adapter) |
+| **R2** | 1000 | 50 (single-pass) | 1 (Wave 218 P3 deployed N=1000 index-matched two-sample) | batched | 8.82 ms / 3.17 ms (per-sample; framework faster in synthetic-mode adapter) | CPU 1 core (synthetic-mode adapter) |
 | **R3** | **200** | 250 (seed 42) / 100 (seeds 43, 44) | **3** (seeds 42, 43, 44; N=200 single_mol is the Wave 87 / Wave 235 P4 fallback) | **single_mol** (`n_molecules=1`) | 184.49 ms / 198.28 ms (per-sample, batched anchor); single_mol wall-clock N/A in published audit | NVIDIA RTX PRO 6000 Blackwell (98 GB); DGL 2.4.0+cu124 batched-path bug workaround → single_mol path |
 | **R5a** | 10 (paired chunks) | 500 | **3** seeds (Wave 216 P2 extension; Wave 225 P1 at n=10) | batched | 4.50 ms / 5.10 ms (per-sample) | CPU 1 core |
 | **R5b** | 10 (paired chunks, df=9) | **50 (matched)** | 1 seed per chunk (Wave 195 P2 deployed) | batched (BATCH=64) | 37.83 ms / 930.52 ms (per-sample, matched NFE=50; framework 24.60× slower) → **1.814 s framework wall at matched NFE=50 / BATCH=64 with CUDA-graph opt-in (Wave 236 P2, 1.26× ratio)** | CPU 1 core (DDPM++/RF UNet open weights; CUDA-graph capture requires NVIDIA RTX PRO 6000 Blackwell or 5090) |

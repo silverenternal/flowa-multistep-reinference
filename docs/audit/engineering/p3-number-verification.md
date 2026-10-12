@@ -47,7 +47,7 @@ Per-claim table: claim | source file | source value | doc value | status.
 |---|---|---:|---:|:---:|
 | n_paired | `wave218-p3-kanzi-framework-wins.json#paired_n_records` | **1000** | 1000 | **MATCH** |
 | **mean_diff (Å)** | `wave218-p3-kanzi-framework-wins.json#mean_diff_A` | **−0.01896431518762014** | **−0.02221** | **MISMATCH** |
-| **sd_diff (Å)** | source wave218-p3 has **sd_diff_A=0.19155366904444077** (NOT 0.1378 as doc claims) | **0.19155** | 0.1378 | **MISMATCH** (doc value matches wave195-p2#R2_kanzi_inv_proj (sd=0.13748 for baseline-only), but actual deployed paired-t sd is 0.1916) |
+| **sd_diff (Å)** | source wave218-p3 has **sd_diff_A=0.19155366904444077** (NOT 0.1378 as doc claims) | **0.19155** | 0.1378 | **MISMATCH** (doc value matches wave195-p2#R2_kanzi_inv_proj (sd=0.13748 for baseline-only), but actual deployed index-matched two-sample t sd is 0.1916) |
 | t | `wave218-p3-kanzi-framework-wins.json#t` | **−3.1307377487136434** | −5.094 | **MISMATCH** |
 | df | `wave218-p3-kanzi-framework-wins.json#df` | **999** | 999 | **MATCH** |
 | p_raw | `wave218-p3-kanzi-framework-wins.json#p_raw` | **0.0017943283041154617** | 3.49e-07 | **MISMATCH** |

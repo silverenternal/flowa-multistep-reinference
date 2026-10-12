@@ -953,7 +953,7 @@ The submission is accompanied by:
   spurious +0.66 Å regression in framework_inv_proj. The Wave 218
   P1 fix is verified at Wave 218 P2 N=10 smoke (mean = 0.8758 Å,
   matching Wave 127 byte-stable 0.8798 Å within 0.004 Å) and Wave
-  218 P3 N=1000 paired sweep (Cohen's d_z = −0.0990,
+  218 P3 N=1000 index-matched two-sample sweep (Cohen's d_z = −0.0990,
   p_raw = 1.7943 × 10⁻³, Bonferroni-significant at α = 0.007143,
   framework_wins). D.4 byte-stable regression suite is **30/30 PASS**
   (was 33/33 in pre-Wave-178; 3 pre-Wave-196 shape-contract tests

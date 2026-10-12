@@ -11,7 +11,7 @@ Generate a Chinese version of the flattened paper for user review only (NOT for 
 ## Deliverables
 
 - `docs/drafts/paper-flat-flattened-zh.md` — Chinese translation for review
-  - SHA-256 (at commit time): `7d00c3c5f43bcec226858557e82f57ae8d7e0a4e4d9df029e9509ddace8ffd48`
+  - SHA-256 (at commit time): `90a68b710964600bc4876087de5af447ceedb754a793a267efe844706a3880ea`
   - Size: 268,109 bytes
   - Lines: 1,403
   - Word count (wc -w): 24,692

@@ -13,7 +13,7 @@ changes in this wave.
 |---|---|---|---|
 | 1 | 265 P1 | eeb6976 | README R1 p-value fact fix — `p < 1e-10` → `p ≈ 1.5e-08` |
 | 2 | 265 P2 | c44fee9 | README Quick Start cell count + R3 row format consistency |
-| 3 | 265 P3 | 03d1dc9 | R2 row format decision — KEEP (paired-design semantics) |
+| 3 | 265 P3 | 03d1dc9 | R2 row format decision — KEEP (index-matched two-sample design semantics) |
 
 This wave is the P4 audit pass. It re-runs all four gates against the
 post-Wave-265 README and writes this audit doc. No source-code change.
@@ -90,11 +90,11 @@ Current README R3 row (line 17):
 R2 row for comparison (line 16):
 
 ```
-| R2 | Kanzi | RMSD (N=1000 paired-t) | reference | d_z = −0.0990 | Bonf-sig p=0.0018 | framework_WINS | §7.6.2 | [ver.](verification_outputs/wave218-p3-kanzi-framework-wins.json) |
+| R2 | Kanzi | RMSD (N=1000 index-matched two-sample t) | reference | d_z = −0.0990 | Bonf-sig p=0.0018 | framework_WINS | §7.6.2 | [ver.](verification_outputs/wave218-p3-kanzi-framework-wins.json) |
 ```
 
 **PASS** — R3 now uses the same `reference | d_z = ...` column
-semantics as R2. Both are paired-design cells (R2 = paired-t on
+semantics as R2. Both are per-record effect-size cells (R2 = index-matched two-sample t on
 RMSD, R3 = per-record paired d_z on fg_dev), and both correctly
 report Baseline=`reference` (no independent baseline number) and
 Framework=`d_z = ...` (the paired-effect-size summary).
@@ -107,7 +107,7 @@ level BLOCKED note is preserved verbatim.
 
 ```
 | R1 | LineageFlow (ICML 2026 protein FM) | `hmmscan_total_hits` N=1000 | 158 | 342 | **+116.46%** | p ≈ 1.5e-08 | §7.6.1 |
-| R2 | Kanzi | RMSD (N=1000 paired-t) | reference | d_z = −0.0990 | Bonf-sig p=0.0018 | framework_WINS | §7.6.2 |
+| R2 | Kanzi | RMSD (N=1000 index-matched two-sample t) | reference | d_z = −0.0990 | Bonf-sig p=0.0018 | framework_WINS | §7.6.2 |
 | R3 | FlowMol3 (ICML 2026 mol FM) | `fg_dev` per-record d_z | reference | d_z = −0.285 | Bonf-sig <1e-4 | framework_WINS (N=200 per-record; 3-seed pooled BLOCKED at vendor level) | §7.6.3 |
 | R4 | 2D Two Moons (2D FM ablation) | W₂ | 2.85 | 0.62 | **−78.25%** | framework_WINS (raw Δ%) | §7.6.4 |
 | R5 | 2D Eight Gaussians (2D FM ablation) | W₂ | 2.31 | 0.76 | **−67.10%** | framework_WINS (raw Δ%) | §7.6.5 |

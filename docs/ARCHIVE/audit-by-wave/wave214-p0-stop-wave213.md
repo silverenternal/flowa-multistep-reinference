@@ -152,7 +152,7 @@ drift (option 1), the fix is to **revert the adapter to its Wave
 not produce a `mean_rmsd_A` jump of this magnitude — but worth
 checking.
 
-### Gate 2 — Re-run R2 Kanzi framework_inv_proj N=1000 paired-record sweep
+### Gate 2 — Re-run R2 Kanzi framework_inv_proj N=1000 index-matched two-sample record sweep
 
 After the fix, re-run the full N=1000 sweep on the same seed (42),
 same NFE budget as Wave 127 (5 rounds × 10 NFE), same hardware

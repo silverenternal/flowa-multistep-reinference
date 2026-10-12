@@ -626,7 +626,7 @@ records.
   lifted from +0.0707 (uniform) to **+0.2235** (Δd_z = +0.1527;
   Bonferroni-sig at α = 0.05, p = 2.98 × 10⁻¹²); per-tier easy d_z
   halved from −0.9982 to −0.4991.
-- **R2 (Kanzi framework_inv_proj RMSD, N=1000 paired):** overall
+- **R2 (Kanzi framework_inv_proj RMSD, N=1000 index-matched two-sample):** overall
   d_z lifted from −0.0990 (uniform framework WINS) to **+0.0465**
   (sign flip; Δd_z = +0.1455); R2 d_z ≥ −0.3 threshold **MET**
   with sign-flipped non-significance (p = 0.14).
@@ -1499,7 +1499,7 @@ boundary rather than a multi-seed reproduction.
 | Cell | Adapter | Domain | N_total | NFE | seed_count | path | wallclock (measured) | hardware |
 |---|---|---|---:|---:|---:|---|---|---|
 | **R1** | `LineageFlowAdapter` | protein FM (HMMER hits) | 1000 | 500 | 1 (n=1000 records, 1 seed) | batched | 850 ms / 950 ms (baseline / framework, per-sample) | CPU + GPU (Stage A = LineageFlow FM forward on NVIDIA RTX PRO 6000 Blackwell; Stage B = external `hmmscan --cpu 4 --noali` against Pfam-A.hmm) |
-| **R2** | `KanziAdapter` | protein flow-AE (inv-proj RMSD) | 1000 | 50 (single-pass) | 1 (Wave 218 P3 deployed N=1000 paired) | batched | 8.82 ms / 3.17 ms (per-sample, framework faster in synthetic-mode adapter) | CPU 1 core (synthetic-mode adapter; Wave 218 P3 N=1000 paired) |
+| **R2** | `KanziAdapter` | protein flow-AE (inv-proj RMSD) | 1000 | 50 (single-pass) | 1 (Wave 218 P3 deployed N=1000 index-matched two-sample) | batched | 8.82 ms / 3.17 ms (per-sample, framework faster in synthetic-mode adapter) | CPU 1 core (synthetic-mode adapter; Wave 218 P3 N=1000 index-matched two-sample) |
 | **R3** | `FlowMol3Adapter` | molecular 3D FM (fg_dev, REOS_n_flags) | **200** | 250 (seed 42) / 100 (seeds 43, 44) | **3** (seeds 42, 43, 44; N=200 single_mol is the Wave 87 / Wave 235 P4 fallback) | **single_mol** (`n_molecules=1`) | 184.49 ms / 198.28 ms (per-sample, batched anchor); single_mol wall-clock N/A in published audit | NVIDIA RTX PRO 6000 Blackwell (98 GB); DGL 2.4.0+cu124 batched-path bug workaround → single_mol path |
 | **R5a** | `TwoDimFMAdapter` | 2D synthetic FM (Two Moons $W_2$) | 10 (5 baseline + 5 framework; per-seed chunks) | 500 | **3** seeds (Wave 216 P2 extension from n=3; Wave 225 P1 d_z-vs-TIE reconciliation at n=10) | batched | 4.50 ms / 5.10 ms (per-sample) | CPU 1 core |
 | **R5b** | `RectifiedFlowCIFARAdapter` | image RF (CIFAR-10 FID) | 10 (paired chunks, df=9) | **50 (matched)** | 1 seed per chunk (Wave 195 P2 deployed) | batched (BATCH=64) | 37.83 ms / 930.52 ms (per-sample, matched NFE=50; framework 24.60× slower) → **1.814 s framework wall at matched NFE=50 / BATCH=64 with CUDA-graph opt-in (Wave 236 P2, 1.26× ratio)** | CPU 1 core (DDPM++/RF UNet open weights; CUDA-graph capture requires NVIDIA RTX PRO 6000 Blackwell or 5090) |

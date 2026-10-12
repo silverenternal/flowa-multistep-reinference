@@ -222,7 +222,7 @@ Files in this section: 7
 
 ## R2 Kanzi RMSD uplift (framework inv_proj bundle)
 
-Framework inv_proj N=1000 bundle — paired RMSD per record plus summary JSON — backs the R2 framework arm's RMSD distribution.
+Framework inv_proj N=1000 bundle — index-matched two-sample RMSD per record plus summary JSON — backs the R2 framework arm's RMSD distribution.
 
 Files in this section: 4
 

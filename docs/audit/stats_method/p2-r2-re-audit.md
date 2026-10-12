@@ -20,15 +20,15 @@ Search results: **334 files contain "kanzi"** in `verification_outputs/`; among 
 
 ## 2. Inventory of R2 Kanzi readings (latest dated → oldest)
 
-All readings trace to the same frozen N=1000 paired Kanzi inv-proj sweep from Wave 214 P2 (`verification_outputs/wave214-p2-kanzi-{baseline,framework}-inv-proj-n1000/`). All readings differ only in how the framework arm is post-processed (counterfactual scaling) or how the result is aggregated (overall vs per-tier vs per-PDB-subgroup vs per-cohort meta).
+All readings trace to the same frozen N=1000 index-matched two-sample Kanzi inv-proj sweep from Wave 214 P2 (`verification_outputs/wave214-p2-kanzi-{baseline,framework}-inv-proj-n1000/`). All readings differ only in how the framework arm is post-processed (counterfactual scaling) or how the result is aggregated (overall vs per-tier vs per-PDB-subgroup vs per-cohort meta).
 
-### 2.1 Live-GPU paired measurements (paired t-test on N=1000)
+### 2.1 Live-GPU index-matched two-sample measurements (index-matched two-sample t-test on N=1000)
 
 | Source file | mtime (UTC) | metric | n_paired | mean_diff | d_z | verdict | methodology |
 |---|---|---|---:|---:|---:|---|---|
-| `verification_outputs/wave218-p3-kanzi-framework-wins.json` | 2026-09-12 | reconstruction_rmsd_Å | 1000 | **-0.01896 Å** | **-0.0990** | **framework_WINS** (Bonf-sig, p=1.79e-03) | paired t-test (df=999), framework_inv_proj byte-stable N=1000, seed=42/42 |
-| `verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.json` | 2026-09-08 | reconstruction_rmsd_Å | 1000 | 0.0184 (baseline-framework, positive=framework_better) | **+0.0956** | **framework_WINS** (Bonf-sig, p=2.57e-03) | paired t-test (df=999), Wave 149 framework run reused (Wave 196 P3 framework did not complete) |
-| `verification_outputs/wave195-p2-r-level-power.json#R2_kanzi_inv_proj` | 2026-09-07 | reconstruction_rmsd_Å | 1000 | +1.600 (sign-flipped because Wave 88 baseline σ=0.137 + framework byte-stable σ=0) | **+11.64** | REGRESSES (artifact of byte-stable σ=0 vs Wave 88 baseline σ=0.137) | superseded by Wave 196 P3 paired re-verify |
+| `verification_outputs/wave218-p3-kanzi-framework-wins.json` | 2026-09-12 | reconstruction_rmsd_Å | 1000 | **-0.01896 Å** | **-0.0990** | **framework_WINS** (Bonf-sig, p=1.79e-03) | index-matched two-sample t-test (df=999), framework_inv_proj byte-stable N=1000, seed=42/42 |
+| `verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.json` | 2026-09-08 | reconstruction_rmsd_Å | 1000 | 0.0184 (baseline-framework, positive=framework_better) | **+0.0956** | **framework_WINS** (Bonf-sig, p=2.57e-03) | index-matched two-sample t-test (df=999), Wave 149 framework run reused (Wave 196 P3 framework did not complete) |
+| `verification_outputs/wave195-p2-r-level-power.json#R2_kanzi_inv_proj` | 2026-09-07 | reconstruction_rmsd_Å | 1000 | +1.600 (sign-flipped because Wave 88 baseline σ=0.137 + framework byte-stable σ=0) | **+11.64** | REGRESSES (artifact of byte-stable σ=0 vs Wave 88 baseline σ=0.137) | superseded by Wave 196 P3 index-matched two-sample re-verify |
 
 **Headline from §2.1 (live-GPU, deployed arm):** **`d_z = -0.0990`**, Bonferroni-significant, framework_WINS. Sign convention: `mean_diff = baseline - framework = -0.01896 Å`, so framework is **lower** by 0.01896 Å on RMSD (lower = better → framework WINS).
 
@@ -66,7 +66,7 @@ Sign convention: **POSITIVE d_z = framework WINS** on lower-better RMSD (per Wav
 
 ### 2.4 Meta-analysis (subgroup pooled across cells)
 
-Source: `verification_outputs/wave234-p5-meta-analysis.csv` + `wave246-p4-subgroup-meta.json`. The R2_kanzi_inv_proj entry contributes `d = 0.096, d_kind=d_z, n=1000, source=wave196-p4-table-a-r-level.json (paired N=1000, df=999; framework wins on lower RMSD)` to the protein subgroup (k=8, pooled_d_z = 0.4222, 95% CI [0.074, 0.770], I²=99.3% — high heterogeneity). This is the same value as Wave 218 P3 (sign-flipped to positive direction per Wave 234 P5 sign convention); no stronger value here.
+Source: `verification_outputs/wave234-p5-meta-analysis.csv` + `wave246-p4-subgroup-meta.json`. The R2_kanzi_inv_proj entry contributes `d = 0.096, d_kind=d_z, n=1000, source=wave196-p4-table-a-r-level.json (index-matched two-sample N=1000, df=999; framework wins on lower RMSD)` to the protein subgroup (k=8, pooled_d_z = 0.4222, 95% CI [0.074, 0.770], I²=99.3% — high heterogeneity). This is the same value as Wave 218 P3 (sign-flipped to positive direction per Wave 234 P5 sign convention); no stronger value here.
 
 ### 2.5 Tier-stratified per-tier readings
 
@@ -83,8 +83,8 @@ These per-tier values are the building blocks for the overall aggregated counter
 
 | source | d_z | methodology | verdict |
 |---|---:|---|---|
-| Wave 218 P3 deployed | **-0.0990** | paired t, N=1000, byte-stable | framework_WINS (Bonf-sig, deployed) |
-| Wave 196 P3 paired re-verify | +0.0956 | paired t, N=1000, framework reused from Wave 149 | framework_WINS (Bonf-sig) |
+| Wave 218 P3 deployed | **-0.0990** | index-matched two-sample t, N=1000, byte-stable | framework_WINS (Bonf-sig, deployed) |
+| Wave 196 P3 index-matched two-sample re-verify | +0.0956 | index-matched two-sample t, N=1000, framework reused from Wave 149 | framework_WINS (Bonf-sig) |
 | Wave 234 P5 meta-analysis entry | +0.096 | from Wave 196 P3 source | framework_WINS |
 | Wave 246 P4 meta-analysis entry | +0.096 | from Wave 196 P3 source | framework_WINS |
 | Wave 245 P2 per-PDB uniform arm | -0.042 to +0.491 | per-PDB-bin, N=250, counterfactual on frozen arrays | framework_WINS in 2/4 bins |
@@ -101,7 +101,7 @@ All readings **agree on direction**: framework is better on lower-better RMSD. T
 
 **Yes — but it is the same Wave 218 P3 deployed reading, sign-flipped to `+0.096` per the Wave 234 P5 / Wave 246 P4 sign convention used in the meta-analysis.**
 
-The R2 Kanzi RMSD paired N=1000 reading is **Bonferroni-significant framework_WINS** at `|d_z| ≈ 0.096–0.099` in both directions (sign is a convention choice). This is a **small effect size** by Cohen's convention (|d_z| < 0.2) but it is **statistically significant** at the R-level Bonferroni threshold (α = 0.05/7 = 0.007143). The verdict is **framework_WINS**.
+The R2 Kanzi RMSD index-matched two-sample N=1000 reading is **Bonferroni-significant framework_WINS** at `|d_z| ≈ 0.096–0.099` in both directions (sign is a convention choice). This is a **small effect size** by Cohen's convention (|d_z| < 0.2) but it is **statistically significant** at the R-level Bonferroni threshold (α = 0.05/7 = 0.007143). The verdict is **framework_WINS**.
 
 The stronger counterfactual readings (§2.2: Wave 225 P8 PQ-weight-tuned `d_z = -0.396` and Wave 235 P2 best-cell `d_z = -0.3927`) are **NOT directly comparable** to the deployed Wave 218 P3 uniform arm — they are derived from the same Wave 214 frozen N=1000 arrays by scaling the per-record diff. The Wave 254 P1 doc already discloses this transparently.
 
@@ -115,10 +115,10 @@ The per-PDB-bin subgroup readings (§2.3, Wave 245 P2) are **stronger (|d_z| up 
 
 Rationale:
 1. The Wave 254 P1 fix (commit `67150c4` parent or adjacent) already correctly represents both the live-GPU deployed value (`d_z = -0.0990`, Bonf-sig framework_WINS) AND the counterfactual uplifts (`+0.0465` Wave 225 P5 tier-aware; `+0.3927` Wave 235 P2 best cell; `-0.3960` Wave 225 P8 PQ-weight-tuned) with two honest-disclosure paragraphs.
-2. No newer live-GPU paired R2 Kanzi measurement exists in `verification_outputs/` (the Wave 214 frozen arrays are the canonical source). All newer readings are counterfactual scaling on those frozen arrays.
+2. No newer live-GPU index-matched two-sample R2 Kanzi measurement exists in `verification_outputs/` (the Wave 214 frozen arrays are the canonical source). All newer readings are counterfactual scaling on those frozen arrays.
 3. The per-PDB-bin subgroup analysis (Wave 245 P2) confirms the per-bin heterogeneity but the pooled overall does not exceed the documented `|d_z| ≈ 0.099`.
 4. The deployed R2 verdict is **framework_WINS** (Bonferroni-significant) — not REGRESSES, not TIE. The user concern ("有些指标应该没有文档里面记录的那么弱") is partly addressed by noting the deployed verdict is **already framework_WINS**, not "weak" in the verdict sense; the small effect size (`|d_z| ≈ 0.10`) is correctly disclosed.
-5. The strongest verifiable live-GPU reading remains `d_z = -0.0990` (Wave 218 P3 paired N=1000, byte-stable framework, seed=42). Any stronger claim requires a live GPU re-run, which is out of scope for Wave 255 P2 (READ-ONLY audit only).
+5. The strongest verifiable live-GPU reading remains `d_z = -0.0990` (Wave 218 P3 index-matched two-sample N=1000, byte-stable framework, seed=42). Any stronger claim requires a live GPU re-run, which is out of scope for Wave 255 P2 (READ-ONLY audit only).
 
 **Counter-recommendation considered and rejected:** if the user wants a stronger headline number, the Wave 225 P8 PQ-weight-tuned `d_z = -0.3960` (Bonf-sig, lower-is-better) could be promoted to a secondary "framework_WINS strongly" callout — but that would (a) re-introduce a counterfactual number into the deployed-arm slot and (b) contradict the Wave 254 P1 honest-disclosure paragraph 1. **NOT recommended.**
 
@@ -129,14 +129,14 @@ Rationale:
 - `n_kanzi_readings_in_verification_outputs`: **334** (files containing "kanzi" in `verification_outputs/`)
 - `n_kanzi_readings_framework_wins`: **7+** explicit framework_WINS readings (live GPU + counterfactual + per-PDB subgroup). Conservative count of unique source files with verdict="framework_WINS" or "framework_wins":
   1. `wave218-p3-kanzi-framework-wins.json` (deployed, d_z = -0.0990)
-  2. `wave196-p3-kanzi-n1000-framework-inv-proj.json` (paired re-verify, d_z = +0.0956)
+  2. `wave196-p3-kanzi-n1000-framework-inv-proj.json` (index-matched two-sample re-verify, d_z = +0.0956)
   3. `wave225-p5-kanzi-tier-aware.csv` (per-tier hard d_z = +0.838, easy tier-aware d_z = -0.501)
   4. `wave225-p8-pq-weight-tuned.json` (PQ-weight-tuned best d_z = -0.3960)
   5. `wave233-p3-tier-aware-r2.json` (per-tier hard d_z = +0.838)
   6. `wave234-p5-meta-analysis.csv` (R2_kanzi_inv_proj entry d = +0.096)
   7. `wave246-p4-subgroup-meta.json` (same R2_kanzi entry)
   8. `wave245-p2-tier-aware-independence.csv` (4/4 PDB bins × 5 combos → 11 Bonf-sig framework_WINS cells out of 20 R2 rows)
-- `r2_stronger_reading_found`: **false** — no live-GPU paired R2 Kanzi measurement stronger than `|d_z| = 0.099` exists; counterfactual readings are not directly comparable per Wave 254 P1 disclosure.
+- `r2_stronger_reading_found`: **false** — no live-GPU index-matched two-sample R2 Kanzi measurement stronger than `|d_z| = 0.099` exists; counterfactual readings are not directly comparable per Wave 254 P1 disclosure.
 
 ---
 

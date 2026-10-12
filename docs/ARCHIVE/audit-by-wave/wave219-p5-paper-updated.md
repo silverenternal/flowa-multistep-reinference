@@ -15,7 +15,7 @@ reproducibility note pointing at the new commit hash; clean
 `/home/user/` paths; confirm 35 unpushed commits safe + D.4
 byte-stable + mkdocs build 0 warnings + claims_consistency ok; push")
 **cannot be executed** at this time. The Wave 218 P3 (= Wave 219 P1)
-N=1000 paired sweep has not completed.
+N=1000 index-matched two-sample sweep has not completed.
 
 ## Why this task is blocked
 
@@ -23,7 +23,7 @@ N=1000 paired sweep has not completed.
 
 Per `docs/audit/wave219-p1-sweep-launched.md` and the Wave 219 P4
 BLOCKED note (`docs/audit/wave219-p4-stats-clm.md`, commit `da14d9f`),
-the two arms of the N=1000 paired sweep on the Wave 218 P1 fixed HEAD
+the two arms of the N=1000 index-matched two-sample sweep on the Wave 218 P1 fixed HEAD
 (`1dcae06`) were launched at 2026-09-21 10:22 UTC / 10:23 UTC:
 
 ```
@@ -73,7 +73,7 @@ The user requested a cover-letter note of the form:
 > Reviewers can git checkout this commit to verify byte-stable
 > framework mean RMSD ≈ 0.8798 Å.
 
-The commit hash we will write is `2b9e50a` (Wave 219 P1: "N=1000 paired
+The commit hash we will write is `2b9e50a` (Wave 219 P1: "N=1000 index-matched two-sample
 sweep launched on Wave 218 P1 fixed HEAD (PIDs 3170622 + 3170774)").
 The reproduce command will be the framework-arm launch line from that
 commit. **But the "framework mean RMSD ≈ 0.8798 Å" claim is not yet
@@ -87,7 +87,7 @@ note stays blank until Wave 219 P2 + P3 produce the N=1000 verdict.
 1. **Wait** for both Wave 219 P1 sweep PIDs (3170622 + 3170774) to
    complete. Estimated wallclock remaining: ~5–6 h for the framework
    arm.
-2. Wave 219 P2: run sweep postprocess (paired t-test, Cohen's d_z,
+2. Wave 219 P2: run sweep postprocess (index-matched two-sample t-test, Cohen's d_z,
    Bonferroni correction) and produce
    `verification_outputs/wave219-p3-kanzi-r2-verdict.csv` (or
    equivalent).

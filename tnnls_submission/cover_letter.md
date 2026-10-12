@@ -730,7 +730,7 @@ cross-cell data archaeology synthesis
 distribution, anchored at [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave326-crossdoc-metrics-snapshot.md),
 distributes as:
 
-- **STRONG (main, 4 cells):** R2 Kanzi RMSD deployed paired-t
+- **STRONG (main, 4 cells):** R2 Kanzi RMSD deployed index-matched two-sample t
   d_z = −0.0990 (Wave 218 P3, framework-WINS); R5b CIFAR-10 RF
   **conditional at `n_rounds=1`** (3/4 schedulers enter the
   framework-WINS regime, ΔFID −1.60 % to −2.53 %); R5c MNIST FM
@@ -1037,7 +1037,7 @@ The submission is accompanied by:
   spurious +0.66 Å regression in framework_inv_proj. The Wave 218
   P1 fix is verified at Wave 218 P2 N=10 smoke (mean = 0.8758 Å,
   matching Wave 127 byte-stable 0.8798 Å within 0.004 Å) and Wave
-  218 P3 N=1000 paired sweep (Cohen's d_z = −0.0990,
+  218 P3 N=1000 index-matched two-sample sweep (Cohen's d_z = −0.0990,
   p_raw = 1.7943 × 10⁻³, Bonferroni-significant at α = 0.007143,
   framework_wins). D.4 byte-stable regression suite is **30/30 PASS**
   (was 33/33 in pre-Wave-178; 3 pre-Wave-196 shape-contract tests
@@ -1231,4 +1231,4 @@ hugo@example.com
 
 ## Current manuscript mechanism addendum (2026-09-27)
 
-The current eight-page IEEEtran manuscript explains two concrete pathways behind its frozen-checkpoint results. For Kanzi, the trained inverse-projection and DAE bridge puts the sampled state in the checkpoint's backbone-coordinate input space; the paired reconstruction comparison at N=1000 is 0.9020 to 0.8798 Å. For protein foldability, paired results on Kanzi k6 and LineageFlow show larger pLDDT benefit on hard records than on easy records. This observed heterogeneity motivates the implemented tier-aware capacity controller. The reported overall tier-aware uplift is a counterfactual analysis of frozen paired differences; a live controller evaluation remains the next causal test. The source-level evidence chain is recorded in `docs/audit/wave375-image-feedback-path.md` and the R2/R6 per-cell recipes. This addendum supersedes historical page-count and mechanism descriptions above where they differ from the current PDF.
+The current eight-page IEEEtran manuscript explains two concrete pathways behind its frozen-checkpoint results. For Kanzi, the trained inverse-projection and DAE bridge puts the sampled state in the checkpoint's backbone-coordinate input space; the index-matched two-sample reconstruction comparison at N=1000 is 0.9020 to 0.8798 Å. For protein foldability, paired results on Kanzi k6 and LineageFlow show larger pLDDT benefit on hard records than on easy records. This observed heterogeneity motivates the implemented tier-aware capacity controller. The reported overall tier-aware uplift is a counterfactual analysis of frozen paired differences; a live controller evaluation remains the next causal test. The source-level evidence chain is recorded in `docs/audit/wave375-image-feedback-path.md` and the R2/R6 per-cell recipes. This addendum supersedes historical page-count and mechanism descriptions above where they differ from the current PDF.

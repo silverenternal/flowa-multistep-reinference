@@ -82,7 +82,7 @@ This table is the **authoritative 11-cell verdict-distribution** for Paper A pre
 
 | Family | Cell | Cell status (pre-Wave-310) | **Cell status (Wave 326 final)** | Statistic | Edits |
 |---|---|---|---|---|---|
-| **MAIN** | R2 | MISALIGNED_AT_LAST_PUSH_then_FIXED (one-sample t+3.532 → paired t−0.099) | **STRONG framework-WINS** | paired d_z = −0.099, p = 1.79e-3 | 2 edits |
+| **MAIN** | R2 | MISALIGNED_AT_LAST_PUSH_then_FIXED (one-sample t+3.532 → index-matched two-sample t−0.099) | **STRONG framework-WINS** | index-matched two-sample d_z = −0.099, p = 1.79e-3 | 2 edits |
 | **MAIN** | R5c | SUPPORTABLE (smoke ckpt, PROVISIONAL disclosure inline) | **STRONG framework-WINS (smoke ckpt, production ckpt deferred)** | smoke d_z = −13.175, p = 1.32e-11 | 0 edits |
 | **MAIN** | R6 | PARTIAL_RESTORE (uniform +0.071 UNPRIMED + counterfactual +0.2235 NOT surfaced) | **STRONG tier-aware promotion** (counterfactual +0.2235 Bonf-sig at α=0.05) | tier-aware d_z = +0.2235, p = 2.98e-12 | 5 edits |
 | **MAIN** | R5b | SUPPORTABLE (3 N points all REGRESSES, n_rounds conditional partially known) | **STRONG REGRESSES boundary characterization** + n_rounds=1 WINS reframing | REGRESSES d_z = +2.700, p = 1.31e-5 (10 chunks) / −1.60% (n_rounds=1) | 2 edits |

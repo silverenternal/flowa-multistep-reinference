@@ -218,7 +218,7 @@ results.
 ### 5.2 Kanzi (R2)
 
 The `KanziAdapter` is exercised at NFE $\in \{10, 50, 100, 500,
-1000, 2000\}$ (R2 inv-proj rmsd_Å, N = 1000 paired vs baseline).
+1000, 2000\}$ (R2 inv-proj rmsd_Å, N = 1000 index-matched two-sample vs baseline).
 The default profile applies. The Theorem-1 load-bearing test on
 the Kanzi synthetic protein axis (`docs/drafts/paper-flattened-
 draft.md` §3.5) confirms the paper-quantity scheduler's

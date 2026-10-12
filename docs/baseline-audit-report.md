@@ -7223,7 +7223,7 @@ byte-stable composite; Table B 4-arm head-to-head 12-cells-all-
 UNDERPOWERED-at-n=3 from Wave 195 P3 budget ceiling. The two Wave
 196 replication efforts are independent: Track B (Wave 196 P2 + P4
 paired n=30 4-arm head-to-head on common seeds 42..71) and Track C
-(Wave 196 P3 paired N=1000 kanzi framework_inv_proj re-verify on
+(Wave 196 P3 index-matched two-sample N=1000 kanzi framework_inv_proj re-verify on
 common 1000 records).
 
 **Per-baseline audit trail gains one new section + two claim upgrades.**
@@ -7232,7 +7232,7 @@ common 1000 records).
   Six subsections: (a) Motivation: Wave 196 B + C replication closes 2
   power-analysis gaps; (b) Track B — 4-arm head-to-head at n=30 paired
   seeds, verdict upgrade; (c) Track C — kanzi N=1000
-  framework_inv_proj paired re-verification; (d) Updated Table B +
+  framework_inv_proj index-matched two-sample re-verification; (d) Updated Table B +
   Table A R2 row; (e) Verdict升级: CLM-061 + CLM-040 status change;
   (f) 21 acceptance gates (all PASS).
 * **CLM-061 status change.** CLM-061 transitions from Wave 195 P3
@@ -7252,7 +7252,7 @@ common 1000 records).
   cells requires n ≥ 100 seeds (Wave 197+ scope).
 * **CLM-040 + CLM-063 cross-references on kanzi foldability.** The
   kanzi foldability R2 cell verdict upgrade is captured under CLM-063
-  (kanzi framework_inv_proj paired N=1000 fresh re-verify — paired
+  (kanzi framework_inv_proj index-matched two-sample N=1000 fresh re-verify — index-matched two-sample
   t-test, df=999, paired_diff = +0.018 Å framework-wins, p_raw =
   0.00257 < α_per_cell = 0.007143, Cohen's d_z = 0.0956, post-hoc
   power at observed Δ = 0.856). Verdict upgrade: REGRESSES (Wave
@@ -7277,7 +7277,7 @@ kanzi framework_inv_proj).**
 | Wave | cell | pairing | n_b | n_f | δ (Å) | δ_SE | 95% CI | p_raw | p_bonf | Cohen's d | verdict |
 |------|------|---------|----:|----:|------:|-----:|--------|------:|-------:|----------:|---------|
 | Wave 195 P2 | R2_kanzi_inv_proj | paired (byte-stable) | 1000 | 1000 | +1.600 | 0.00435 | [1.591, 1.608] | 0.0 | 0.0 | +11.64 (`d_z`) | **REGRESSES** |
-| **Wave 196 P4** | **R2_kanzi_inv_proj** | **paired (fresh)** | **1000** | **1000** | **+0.018** | **0.00609** | **[0.0065, 0.0303]** | **0.00257** | **0.018** | **+0.096 (`d_z`)** | **UNDERPOWERED (framework-wins significant)** |
+| **Wave 196 P4** | **R2_kanzi_inv_proj** | **index-matched two-sample (fresh)** | **1000** | **1000** | **+0.018** | **0.00609** | **[0.0065, 0.0303]** | **0.00257** | **0.018** | **+0.096 (`d_z`)** | **UNDERPOWERED (framework-wins significant)** |
 
 **Output JSONs.**
 
@@ -7935,7 +7935,7 @@ N=574 caveat) without modifying the underlying k6 finding. No
 
 **Scope:** Wave 206 P7 final-gate verification (TPAMI 6-week plan §W2). The Wave 206 W2 N=1000 paired-record re-runs are complete on the `omegafold_py310` conda env (torch 2.14.0+cu130, sm_120-capable, resolves the Wave 200 P2 torch 1.13.1 vs Blackwell sm_120 blocker). All 6 P1-P6 outputs exist:
 - `verification_outputs/wave206-p1-lineageflow-n1000.{csv,json}` — R1 HMMER (+116%, p=1.25e-8, Bonf-sig) + R6 foldability N=1000 sweep on real ckpt
-- `verification_outputs/wave206-p2-kanzi-framework-n1000.{csv,json}` — R2 Kanzi framework_inv_proj byte-stable reference (mean_diff = +0.656 Å, d_z = +3.532; **legacy Wave 196 byte-stable composite reading — DEPLOYED ARM primary §7.6.2 number is now the Wave 218 P3 paired-t `d_z = -0.0990` (framework-WINS, Bonferroni-significant at α=0.007143, byte-stable Wave 127 framework `mean_rmsd_Å = 0.8798` vs Wave 88 baseline `mean_rmsd_Å = 0.9020`, Δ = −0.022 Å, N=1000 paired; wave218-p3-kanzi-framework-wins.json sha256 9b5c3b68) per CLM-073 §7.6.2 framing — Wave 256 P1 wording update**)
+- `verification_outputs/wave206-p2-kanzi-framework-n1000.{csv,json}` — R2 Kanzi framework_inv_proj byte-stable reference (mean_diff = +0.656 Å, d_z = +3.532; **legacy Wave 196 byte-stable composite reading — DEPLOYED ARM primary §7.6.2 number is now the Wave 218 P3 index-matched two-sample t `d_z = -0.0990` (framework-WINS, Bonferroni-significant at α=0.007143, byte-stable Wave 127 framework `mean_rmsd_Å = 0.8798` vs Wave 88 baseline `mean_rmsd_Å = 0.9020`, Δ = −0.022 Å, N=1000 index-matched two-sample; wave218-p3-kanzi-framework-wins.json sha256 9b5c3b68) per CLM-073 §7.6.2 framing — Wave 256 P1 wording update**)
 - `verification_outputs/wave206-p3-flowmol3-n1000.{csv,json}` — R3 FlowMol3 fg_dev N=999+1000 (1-seed byte-stable; 3-seed blocked by DGL 2.4.0, see CLM-068)
 - `verification_outputs/wave206-p4-r-level-refresh.{csv,json}` — R4/R5/R3/R5c paired-t sf-based p-value refresh (Wave 195 P2 / Wave 204 P1 sf() defensive fix; see CLM-069)
 - `verification_outputs/wave206-p5-freqflow-n1000.{csv,json}` — FreqFlow synthetic N=1000 (SYNTHETIC_ONLY, no public ckpt)

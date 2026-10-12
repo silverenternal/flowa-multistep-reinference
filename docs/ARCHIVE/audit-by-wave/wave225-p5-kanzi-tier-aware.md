@@ -25,7 +25,7 @@
 
 ## Background
 
-Wave 218 P3 measured Kanzi overall reconstruction RMSD d_z = -0.0990 (paired
+Wave 218 P3 measured Kanzi overall reconstruction RMSD d_z = -0.0990 (index-matched two-sample
 N=1000, framework WINS — RMSD lower=better). This single-cell R2 reading
 obscures a per-tier structure that is similar to Wave 225 P4 (k6):
 
@@ -50,7 +50,7 @@ The brief's target: lift Kanzi overall RMSD d_z from -0.0990 toward >= -0.3.
 
 1. **Inputs:** `verification_outputs/wave214-p2-kanzi-baseline-n1000/`
    and `verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/`
-   per_seq_rmsd_A (N=1000 paired records). Lower=better (RMSD Å).
+   per_seq_rmsd_A (N=1000 index-matched two-sample records). Lower=better (RMSD Å).
 2. **Tier assignment:** by baseline per_seq_rmsd_A percentile
    (33rd=0.8381, 67th=0.9529). 3 tiers: hard (≤0.8381),
    medium (0.8381–0.9529), easy (>0.9529).
@@ -103,7 +103,7 @@ and medium tiers are unchanged.
   per-record variance. This is the established Wave 209 P1 A3 methodology
   (`scripts/wave209_p1_algorithm_ablation.py:440-531`) and Wave 225 P4
   template (`scripts/wave225_p4_k6_tier_aware.py`).
-* The Kanzi N=1000 paired inv_proj sweep is FROZEN at Wave 214
+* The Kanzi N=1000 index-matched two-sample inv_proj sweep is FROZEN at Wave 214
   (`verification_outputs/wave214-p2-kanzi-baseline-n1000/` and
   `verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/`).
   A live reduced-intensity GPU sweep is queued for the camera-ready

@@ -8,7 +8,7 @@
 > > `baseline_wins` into claim (ii)/(iii). [...] Wave 213 P4/P7/P8/P9
 > > would propagate baseline_wins into the paper and must not be
 > > dispatched until Wave 214 Gate 1 (diagnose Wave 127 → Wave 196
-> > regression) + Gate 2 (re-run R2 framework_inv_proj N=1000 paired-
+> > regression) + Gate 2 (re-run R2 framework_inv_proj N=1000 index-matched two-sample-
 > > record sweep returning to ~0.8798 Å) are closed."
 >
 > **Action taken:** the audit doc below is written but **NOT committed**
@@ -226,7 +226,7 @@ The R2 verdict propagation is the dominant blocker. Per Wave 214 P0,
 this audit doc is written but **NOT committed** — the audit verdict
 must be re-dispatched after Wave 214 Gate 1 (diagnose Wave 127 → Wave
 196 regression) + Gate 2 (re-run R2 framework_inv_proj N=1000
-paired-record sweep returning to ~0.8798 Å) close.
+index-matched two-sample record sweep returning to ~0.8798 Å) close.
 
 After Gates 1+2:
 - If R2 returns to `framework_wins` (small effect, d_z ≈ -0.16):

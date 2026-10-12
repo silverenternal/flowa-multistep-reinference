@@ -188,7 +188,7 @@ The R2 row header (line 8) and Table 1 (line 39) are **reconciled**:
   Wave 120)
 - R2 mean_diff (baseline - framework) = +0.022 Å (positive =
   baseline is WORSE; framework wins)
-- R2 framework wins by d_z = +0.16 (paired, n=1000, full
+- R2 framework wins by d_z = +0.16 (index-matched two-sample, n=1000, full
   byte-stable; from Wave 196 P3 paired N=1000 with corrected
   framework number; to be re-confirmed at full N=1000 by Wave 214
   P4)
@@ -198,7 +198,7 @@ The R2 row header (line 8) and Table 1 (line 39) are **reconciled**:
 Updated R2 row with corrected framework mean:
 
 ```csv
-R2_kanzi_inv_proj_rmsd_A,reconstruction_rmsd_Å,1000,paired,1000,1000,-0.0221,0.1378,0.00436,-0.0306,-0.0136,-3.094,999,2.011e-03,7.143e-03,-0.160,d_z,paired_t_test,R_level_primary,0.007143,YES,framework_WINS,wave214-p2-kanzi-framework-inv-proj-n1000.csv,"Per-record paired t-test on byte-stable Wave 127 framework (0.8798) vs Wave 88 baseline (0.9020). Framework WINS by -0.022 Å (lower is better). n=1000 paired records. Post-fix data from Wave 214 P2 sweep (in flight at audit time; will be byte-stable vs Wave 127)."
+R2_kanzi_inv_proj_rmsd_A,reconstruction_rmsd_Å,1000,paired,1000,1000,-0.0221,0.1378,0.00436,-0.0306,-0.0136,-3.094,999,2.011e-03,7.143e-03,-0.160,d_z,paired_t_test,R_level_primary,0.007143,YES,framework_WINS,wave214-p2-kanzi-framework-inv-proj-n1000.csv,"Per-record index-matched two-sample t-test on byte-stable Wave 127 framework (0.8798) vs Wave 88 baseline (0.9020). Framework WINS by -0.022 Å (lower is better). n=1000 index-matched two-sample records. Post-fix data from Wave 214 P2 sweep (in flight at audit time; will be byte-stable vs Wave 127)."
 ```
 
 ### 3.4 `verification_outputs/wave209-p2-cluster-robust-all-cells.csv` R2 row

@@ -224,7 +224,7 @@ The aggregate headline (`baseline W2 = 0.6606, framework W2 = 0.5919, delta = -1
 - `reproduce/08_verify_R6_recipe.sh` (Wave 362 P2, 181 lines, SHA = `ba98ec60666d527ed9ceee9f707c109b04d93aa32749bff5186ef31863884d3e`) — the existing R6 per-cell verifier; the new master verifier's R6 sub-routine delegates to this script.
 - `reproduce/09_verify_all_cell_recipes.sh` (NEW, this wave, 27,644 bytes, executable) — the master 11-cell recipe verifier (this wave's deliverable).
 - `verification_outputs/wave349-r1-3seed-gpu/{seed42_manifest.json,seed44_manifest.json,SHA256SUMS}` — R1 retro-validation evidence
-- `verification_outputs/wave218-p3-kanzi-framework-wins.json` — R2 paired-t JSON
+- `verification_outputs/wave218-p3-kanzi-framework-wins.json` — R2 index-matched two-sample t JSON
 - `verification_outputs/{flowmol3_n1000_sweep_q4_2026.json,wave216-p1-r3-per-record.json}` — R3 byte-stable sweep + per-record projection
 - `verification_outputs/{wave216-p2-r5a-extended.csv,wave351-r5a-n10/r5a_n10_paired.json}` — R5a n=10 paired-t + DL meta-analysis
 - `verification_outputs/{wave235-p1-r5b-fix.json,wave225-p7-r5b-reduced-rounds.json,wave206-p6-honest-negative-curve.json}` — R5b 3 independent sweeps

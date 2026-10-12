@@ -14,7 +14,7 @@ records in 77.5 seconds, mean self-reconstruction RMSD 0.8860 Å and standard
 deviation 0.1235 Å. Command, hashes, process handle, exit code and metrics:
 `verification_outputs/kanzi_inv_proj_n20_20260913_preflight/`.
 This is a generated-coordinate autoencoder roundtrip after a single adapter
-rollout, not paired input reconstruction or a multi-round refinement result.
+rollout, not real-input reconstruction or a multi-round refinement result.
 It does not close the original scientific acceptance criteria.
 
 The corrected run at commit `85b5080` also completed all 20 records without

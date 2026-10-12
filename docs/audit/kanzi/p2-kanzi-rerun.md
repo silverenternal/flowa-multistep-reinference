@@ -9,7 +9,7 @@
 Apply the Wave 214 P1 root-cause fix to
 `tools/_kanzi_sweep_runner.py:_synthesize_x_final_real`, re-run
 `framework_inv_proj` at small-scale (N=10) and full-scale (N=1000) on
-the kanzi_venv + RTX 5090, and re-verify the paired t-test verdict on
+the kanzi_venv + RTX 5090, and re-verify the index-matched two-sample t-test verdict on
 the Kanzi R2 cell.
 
 ### Wave 214 P1 → P2 fix summary
@@ -91,7 +91,7 @@ the trained `Linear(512→4)` maps tiny inputs to tiny codes that the
 FSQ argmin then snaps to the same codebook index). σ=1.0 is the
 correct value, matching the pre-Wave 178 `build_initial_state` path.
 
-## 2. Full N=1000 paired sweep
+## 2. Full N=1000 index-matched two-sample sweep
 
 Started at 2026-09-21 02:55 CST on kanzi_venv + RTX 5090 (CUDA=1):
 
@@ -100,7 +100,7 @@ Started at 2026-09-21 02:55 CST on kanzi_venv + RTX 5090 (CUDA=1):
 | framework_inv_proj (with fix) | `tools/sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py` | 1 | ~14.2 s/rec × 1000 ≈ 4h | `verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/` |
 | baseline (fresh) | `tools/sweep_kanzi_n1000_paper_metrics.py` | 0 | ~1.0 s/rec × 1000 ≈ 17 min | `verification_outputs/wave214-p2-kanzi-baseline-n1000/` |
 
-## 3. Paired t-test (post-completion)
+## 3. index-matched two-sample t-test (post-completion)
 
 After both sweeps complete, run
 `tools/w196_p3_kanzi_paired_ttest.py` with the Wave 214 P2
@@ -151,7 +151,7 @@ phases can be re-dispatched:
 - `docs/audit/wave206-p2-kanzi-framework-n1000.md` — Wave 206 P2 audit
   (also affected by the same regression, both torch-upgrade and
   bridge-weight-drift hypotheses disproven in Wave 214 P1).
-- `tools/w196_p3_kanzi_paired_ttest.py` — paired t-test tool
+- `tools/w196_p3_kanzi_paired_ttest.py` — index-matched two-sample t-test tool
   (re-used here; supports w149 fallback-style data sources via JSON).
 
 ## 6. Pending deliverables
@@ -160,7 +160,7 @@ This document will be amended after the full N=1000 sweep completes:
 
 - framework_inv_proj N=1000 mean RMSD (post-fix)
 - baseline N=1000 mean RMSD (fresh re-run)
-- paired t-test summary CSV/JSON
-- 12-col paired-t verdict (framework_mean, baseline_mean, mean_diff,
+- index-matched two-sample t-test summary CSV/JSON
+- 12-col index-matched two-sample t verdict (framework_mean, baseline_mean, mean_diff,
   sd_diff, t, df, p, d_z, ci95, verdict)
 - Commit SHA after final verification

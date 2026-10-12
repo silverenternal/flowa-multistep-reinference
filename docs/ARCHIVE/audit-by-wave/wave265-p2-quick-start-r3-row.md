@@ -94,5 +94,5 @@ strictly descriptive.
 
 Two remaining non-fact fixes from DeepSeek third-round review applied. Quick
 Start now says "7 R-level cells" matching the 7-row table; R3 row now follows
-the same "reference / d_z" paired-design format as R2. No claim rewrites, no
+the same "reference / d_z" index-matched two-sample design format as R2. No claim rewrites, no
 number changes, no source-of-truth drift.

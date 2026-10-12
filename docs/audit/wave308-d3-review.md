@@ -62,10 +62,10 @@ Per DeepSeek fast-path priority #2 (Tier 1 paper edits, 6-8h parallel; actual = 
 **Files modified:** `docs/drafts/paper-flat-flattened.md` (3 edits at lines 319/335/663).
 
 **Key changes:**
-- §3.3 Table 3.2 R2 row updated: mean=+0.6565/df=999/t=111.69/p=0.0 → mean=−0.0190/df=999/t=−3.160/p=1.79e-3/d_z=−0.0990 (Wave 218 P3 paired framework-WINS).
-- §3.6 R2 bullet reframed: "R2 framework REGRESSES [+0.6450, +0.6680]" → "R2 framework-WINS [−0.0309, −0.0071] (paired t-test on Wave 218 P3 paired N=1000, framework_inv_proj byte-stable σ=0; Wave 254 P1+)".
+- §3.3 Table 3.2 R2 row updated: mean=+0.6565/df=999/t=111.69/p=0.0 → mean=−0.0190/df=999/t=−3.160/p=1.79e-3/d_z=−0.0990 (Wave 218 P3 index-matched two-sample framework-WINS).
+- §3.6 R2 bullet reframed: "R2 framework REGRESSES [+0.6450, +0.6680]" → "R2 framework-WINS [−0.0309, −0.0071] (index-matched two-sample t-test on Wave 218 P3 index-matched two-sample N=1000, framework_inv_proj byte-stable σ=0; Wave 254 P1+)".
 - §7.1 Table 7.1 R2 row status transitions: PARTIAL (per-cell UNDERPOWERED) → **STRONG (Wave 218 P3 d_z=−0.0990, Bonferroni p=1.79e-3 < α=0.007143; wave218-p3-kanzi-framework-wins.json sha256 9b5c3b68)**.
-- Evidence provenance: `wave218-p3-kanzi-framework-wins.json` sha256 9b5c3b68 (canonical deployed byte-stable paired-WINS).
+- Evidence provenance: `wave218-p3-kanzi-framework-wins.json` sha256 9b5c3b68 (canonical deployed byte-stable index-matched two-sample WINS).
 
 ### 3.3 R3: N=200 ACTUAL annotation + p=1.07e-18 PROJECTED disclosure
 
@@ -141,7 +141,7 @@ Per DeepSeek fast-path priority #3 (parallel doc propagation; avoid silent drift
 |---|---:|---|
 | `docs/paper-draft.md` | 3 | R5c p_bonf 9.22e-11 → 3.95e-11 at lines 1444/1463/2956 |
 | `docs/CLAIMS.md` | 4 | R5c p_bonf at lines 3009/3086; K1 addendum preserved verbatim per Wave 268 strict-clean + Wave 308 P2 demotion addendum at lines 3012-3013 |
-| `docs/baseline-audit-report.md` | 2 | R5c at line 7154; R2 Kanzi byte-stable reference expanded at line 7938 with deployed arm primary §7.6.2 = Wave 218 P3 paired-t d_z=−0.0990 |
+| `docs/baseline-audit-report.md` | 2 | R5c at line 7154; R2 Kanzi byte-stable reference expanded at line 7938 with deployed arm primary §7.6.2 = Wave 218 P3 index-matched two-sample t d_z=−0.0990 |
 | `docs/audit/wave275-p4-mnist-proposal.md` | 1 | R5c CLM-060 verdict p=9.22e-11 → p=3.95e-11 at line 508 |
 | `docs/headline-evidence/README.md` | 1 | R5a (2D Two Moons) reference: appended note about TIE post-cd70821 (line 20) |
 | `reproduce/05_R5_2D_EightGaussians.sh` | 3 | Cosmetic typo fix in script header: baseline 2.31 → 0.6606, framework 0.76 → 0.5919, delta -67.10% → -10.40% (matches canonical Wave 158 headline) |
@@ -161,7 +161,7 @@ Per DeepSeek fast-path priority #3 (parallel doc propagation; avoid silent drift
 | # | Cell | Domain | Scheduler | d_z | p_bonf | Status (post-Wave 308) | Source-of-record |
 |--:|---|---|---|---:|---:|---|---|
 | 1 | R1 | LineageFlow HMMER | CosineAnnealScheduler | **+0.182** (single-seed seed=42) | 1.25e-8 (single-seed) | **PARTIAL / single-seed-disclosed** | §3.3 Table 3.2 † / §7.1 Table 7.1 |
-| 2 | R2 | Kanzi flow-AE inv-proj | CosineAnnealScheduler | −0.0990 (Wave 218 P3 paired) | 1.79e-3 | **STRONG** (paired framework-WINS) | §3.3 Table 3.2 / §7.1 Table 7.1 |
+| 2 | R2 | Kanzi flow-AE inv-proj | CosineAnnealScheduler | −0.0990 (Wave 218 P3 index-matched two-sample) | 1.79e-3 | **STRONG** (index-matched two-sample framework-WINS) | §3.3 Table 3.2 / §7.1 Table 7.1 |
 | 3 | R3 | FlowMol3 fg_dev | CosineAnnealScheduler | d_s=−0.110 (Wave 195 P2 unpaired); d_z=−0.285 (Wave 208 P2 per-record ACTUAL n=200, PROJECTED n=1000) | 0.014 (unpaired); 1.07e-18 (projected) | PARTIAL (per-record paired ACTUAL n=200; PROJECTED n=1000 via t-scaling) | §3.3 Table 3.2 / §7.1 Table 7.1 |
 | 4 | R5a | 2D Two Moons FM | CosineAnnealScheduler | -78.25% (TIE post-cd70821) | — | TIE (post-cd70821 reading) | §7.1 Table 7.1 |
 | 5 | R5b | CIFAR-10 RF matched-NFE=50 FID | CosineAnnealScheduler (4 schedulers × 3 n_rounds cells) | conditional: $d_z = +4.29$ to $+4.49$ at `n_rounds=1` 4/4 WIN; $d_z = +2.46$ to $+3.21$ at `n_rounds≥2` 4/4 REGRESSES | 9.17e-5 at `n_rounds=10` (regression direction); 0.00417 at `n_rounds=1` (WIN direction) | **CONDITIONAL boundary** (§3.6 R5b conditional subsection) | §3.3 Table 3.2 / §3.6 / §7.1 Table 7.1 |
@@ -178,7 +178,7 @@ Per DeepSeek fast-path priority #3 (parallel doc propagation; avoid silent drift
 
 ### Headline empirical wins (main text): 3 cells
 1. **R1 PARTIAL / single-seed-disclosed** — LineageFlow HMMER framework-WINS by +116.46% (single-seed seed=42 d_z=+0.182, p_raw=1.25e-8, Bonferroni-significant at α=0.007143).
-2. **R2 STRONG** — Kanzi flow-AE inv-proj framework-WINS d_z=−0.0990 (Wave 218 P3 paired N=1000, Bonferroni p=1.79e-3 < α=0.007143).
+2. **R2 STRONG** — Kanzi flow-AE inv-proj framework-WINS d_z=−0.0990 (Wave 218 P3 index-matched two-sample N=1000, Bonferroni p=1.79e-3 < α=0.007143).
 3. **R5c STRONG (smoke ckpt only); PARTIAL on production ckpt** — MNIST FM matched-NFE=50 FID d_z=−13.175 (smoke); production ckpt direction FLIPS per Wave 280 P §10.
 4. **R6 YES (cluster-robust across all tiers)** — LineageFlow k6 foldability per-tier paired t $d_z \in [-1.033, -1.138]$, p ∈ [6.0e-54, 3.05e-63].
 
@@ -205,7 +205,7 @@ Per DeepSeek fast-path priority #3 (parallel doc propagation; avoid silent drift
 
 ### Headline reading:
 - **3 STRONG/PARTIAL cells flagged as headline:** R1, R5c, R6
-- **R2 transitions from PARTIAL → STRONG** (Wave 218 P3 paired deployed primary §7.6.2 = d_z=−0.0990 framework-WINS)
+- **R2 transitions from PARTIAL → STRONG** (Wave 218 P3 index-matched two-sample deployed primary §7.6.2 = d_z=−0.0990 framework-WINS)
 - **K1 + K7 demoted to §10 supplementary per Wave 280 P K1 Bonferroni correction + W166 P3 K7 direction inversion**
 
 ---

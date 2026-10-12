@@ -1746,7 +1746,7 @@ paired-diff SE >> observed Δ, which are statistically indistinguishable
 from zero on either test). The Wave 195 P3 "FlowA wins 12/12 on point
 estimate" headline is preserved verbatim on sign-of-delta consistency.
 
-### §10.36 (c) Track C — kanzi N=1000 framework_inv_proj paired re-verification
+### §10.36 (c) Track C — kanzi N=1000 framework_inv_proj index-matched two-sample re-verification
 
 Track C re-runs the Wave 195 P2 R2 cell (kanzi framework_inv_proj,
 byte-stable composite vs Wave 88 baseline) with a paired N=1000 fresh
@@ -1758,7 +1758,7 @@ variance, not baseline-vs-framework scale mismatch). Wave 196 P4
 re-aggregates the Wave 196 P3 summary into the Wave 195 P1 verdict
 machinery.
 
-**Statistical test.** Paired t-test on within-record per-arm RMSD Å
+**Statistical test.** index-matched two-sample t-test on within-record per-arm RMSD Å
 (common 1000 records, df = 999). Cohen's `d_z = mean(diff) / std(diff)`
 on within-subject diffs. Cohen 1988 §2.4 post-hoc power (paired form).
 Bonferroni α per cell = 0.05 / 7 = **0.007143** (N=7 R-level sub-cells).
@@ -1834,7 +1834,7 @@ B; the doc captures both interpretations.
 | Wave | cell | pairing | n_b | n_f | δ (Å) | δ_SE | 95% CI | p_raw | p_bonf | Cohen's d | verdict |
 |------|------|---------|----:|----:|------:|-----:|--------|------:|-------:|----------:|---------|
 | Wave 195 P2 | R2_kanzi_inv_proj | paired | 1000 | 1000 | +1.600 | 0.00435 | [1.591, 1.608] | 0.0 | 0.0 | +11.64 (`d_z`) | **REGRESSES** |
-| **Wave 196 P4** | **R2_kanzi_inv_proj** | **paired** | **1000** | **1000** | **+0.018** | **0.00609** | **[0.0065, 0.0303]** | **0.00257** | **0.018** | **+0.096 (`d_z`)** | **UNDERPOWERED (framework-wins significant)** |
+| **Wave 196 P4** | **R2_kanzi_inv_proj** | **index-matched two-sample** | **1000** | **1000** | **+0.018** | **0.00609** | **[0.0065, 0.0303]** | **0.00257** | **0.018** | **+0.096 (`d_z`)** | **UNDERPOWERED (framework-wins significant)** |
 
 The Wave 195 P2 R2 verdict (REGRESSES) is **replaced** by the Wave 196
 P4 verdict (UNDERPOWERED, framework-wins significant on both Bonferroni

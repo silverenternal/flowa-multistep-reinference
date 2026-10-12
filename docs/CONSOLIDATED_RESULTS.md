@@ -7395,7 +7395,7 @@ retracted**; §10.35 adds the missing post-hoc-power dimension.
 gaps via two independent replication efforts: Track B (Wave 196 P2 +
 P4 paired n=30 4-arm head-to-head) closes the Table B 12-cells-all-
 UNDERPOWERED-at-n=3 gap with 2 SUPPORTED + 14 UNDERPOWERED; Track C
-(Wave 196 P3 paired N=1000 kanzi framework_inv_proj re-verify) closes
+(Wave 196 P3 index-matched two-sample N=1000 kanzi framework_inv_proj re-verify) closes
 the R2 REGRESSES-byte-stable gap with paired-diff-mean = +0.018 Å
 framework-wins, p_raw = 0.00257 < α_per_cell = 0.007143. Wave 196 P5
 (this section) integrates these two upgrades into the paper (§10.36),
@@ -7411,7 +7411,7 @@ contribution) covers:
 * §10.36 (b) Track B — 4-arm head-to-head at n=30 paired seeds
   (verdict upgrade from 12/12 UNDERPOWERED at n=3 unpaired Welch to 2
   SUPPORTED + 14 UNDERPOWERED at n=30 paired t-test on 16 cells).
-* §10.36 (c) Track C — kanzi N=1000 framework_inv_proj paired
+* §10.36 (c) Track C — kanzi N=1000 framework_inv_proj index-matched two-sample
   re-verification (R2 verdict upgrade from REGRESSES at Wave 195 P2
   byte-stable composite to UNDERPOWERED with paired-diff-mean =
   +0.018 Å framework-wins, p_raw = 0.00257, Cohen's d_z = 0.0956,
@@ -8711,7 +8711,7 @@ cross-doc-snapshot audit doc is [`docs/audit/wave326-crossdoc-metrics-snapshot.m
 The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/SUPP** =
 5 main cells + 6 supplementary cells = 11 headline cells total:
 
-- **STRONG (main)**: R2 (Kanzi RMSD deployed paired-t d_z=−0.0990, CLM-060),
+- **STRONG (main)**: R2 (Kanzi RMSD deployed index-matched two-sample t d_z=−0.0990, CLM-060),
   R5b (CIFAR-10 RF n_rounds=1 conditional framework-WINS, Wave 235 P1 + CONSOLIDATED_RESULTS §15.98),
   R5c (MNIST FM smoke ckpt d_z=−13.175, CLM-059 + CLM-060 line 3101-3110),
   R6 (LineageFlow k6 pLDDT tier-aware d_z=+0.2235 + grid-search d_z=+0.6467, Wave 233 P3 + Wave 235 P3 + CLM-073 + Wave 310 paper-body surfacing)

@@ -1,11 +1,11 @@
-# Wave 196 P3 — kanzi N=1000 framework_inv_proj paired re-verify (Track C)
+# Wave 196 P3 — kanzi N=1000 framework_inv_proj index-matched two-sample re-verify (Track C)
 
 **Date:** 2026-09-19
 **Branch:** main
 **Goal:** Re-verify Wave 124 / Wave 149 kanzi N=1000 framework_inv_proj claim
 (baseline mean=0.9020 Å vs framework mean=0.8798 Å, 0.022 Å Δ inside FSQ
-quantisation noise band) with proper **paired t-test** on per-sequence RMSDs
-(n=1000 paired diffs) + Bonferroni correction at α=0.05/7=0.007143 (R2 is
+quantisation noise band) with proper **index-matched two-sample t-test** on per-sequence RMSDs
+(n=1000 index-matched two-sample diffs) + Bonferroni correction at α=0.05/7=0.007143 (R2 is
 one of 7 R-level claims).
 
 ---
@@ -30,7 +30,7 @@ A fresh framework_inv_proj N=1000 run on GPU 1 was launched
 (`CUDA_VISIBLE_DEVICES=1 .venvs/kanzi_venv/bin/python tools/sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py ...`)
 with the Wave-178 runner patch applied (see §6). It is processing at
 ~3.3 sec/record and will need ~50 min to complete 1000 records. To unblock
-the paired analysis within the Wave 196 budget, the **Wave 149 framework
+the index-matched two-sample analysis within the Wave 196 budget, the **Wave 149 framework
 data is used as fallback** — it was generated on the same ckpt, same input
 coords, same seed=42, same adapter solver (euler 50 steps), with a complete
 `per_seq_rmsd_A` for all 1000 records. The fresh framework run will provide
@@ -67,7 +67,7 @@ The Wave 196 fresh baseline (0.8982) is consistent with the Wave 88
 baseline (0.9020) — the 0.004 difference is within seed and per-record FSQ
 stochasticity noise.
 
-### 2.2 Paired t-test on per-sequence diffs (baseline − framework)
+### 2.2 index-matched two-sample t-test on per-sequence diffs (baseline − framework)
 
 | Metric | Value |
 |---|---|
@@ -97,7 +97,7 @@ stochasticity noise.
 
 ## 3. Comparison to Wave 124 / Wave 149
 
-| Metric | Wave 88 / 149 (aggregate) | Wave 196 (paired) | Direction |
+| Metric | Wave 88 / 149 (aggregate) | Wave 196 (index-matched two-sample) | Direction |
 |---|---|---|---|
 | baseline mean (Å) | 0.9020 | 0.8982 | close (Δ=0.004) |
 | framework mean (Å) | 0.8798 | 0.8798 | identical (w149 reused) |
@@ -105,9 +105,9 @@ stochasticity noise.
 | significance | n/a (aggregate only) | Bonferroni-significant (p=0.0026) | n/a |
 | Cohen's d_z | n/a | 0.096 (very small) | n/a |
 
-**Consistency check:** PASS — Wave 196 paired re-verification reproduces the
+**Consistency check:** PASS — Wave 196 index-matched two-sample re-verification reproduces the
 canonical direction (framework_inv_proj slightly better than baseline) and
-shows Bonferroni-corrected significance after upgrading to proper paired
+shows Bonferroni-corrected significance after upgrading to proper index-matched two-sample
 statistics. The magnitude (0.0184 vs 0.0222) is within seed/run variance;
 both are inside the FSQ quantisation noise band (~0.5 Å FSQ step).
 
@@ -116,13 +116,13 @@ both are inside the FSQ quantisation noise band (~0.5 Å FSQ step).
 ## 4. Honest reading
 
 > The **R2 R-level claim** ("framework_inv_proj beats baseline by ~0.02 Å
-> on kanzi N=1000 paired sequences") is **re-verified with proper paired
+> on kanzi N=1000 index-matched two-sample sequences") is **re-verified with proper index-matched two-sample
 > statistics**: t=3.02, df=999, p=0.00257 (Bonferroni-significant at
 > α=0.05/7=0.007143), Cohen's d_z=0.096 (very small effect, ~1/10 of a
 > standard deviation). The direction matches the Wave 124 / Wave 149 priors
 > but the effect is tiny — within the FSQ quantisation noise band. The
-> statistical significance comes from the very large N=1000 paired sample
-> (paired t-test has 999 df), not from a practically meaningful effect.
+> statistical significance comes from the very large N=1000 sample
+> (index-matched two-sample t-test has 999 df), not from a practically meaningful effect.
 > Practically: framework and baseline are tied within FSQ noise.
 
 ---
@@ -134,11 +134,11 @@ both are inside the FSQ quantisation noise band (~0.5 Å FSQ step).
 | `verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj-baseline/kanzi_n1000_paper_metrics.json` | fresh Wave 196 batched baseline (n=1000, mean=0.8982 Å) |
 | `verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj-baseline/checkpoint.json` | per-record checkpoints from the batched driver |
 | `verification_outputs/kanzi_n1000_framework_inv_proj_w149_q4_2026/kanzi_n1000_framework_paper_metrics.json` | Wave 149 framework_inv_proj (fallback, n=1000, mean=0.8798 Å) |
-| `verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.json` | final paired t-test + verdict (this report) |
+| `verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.json` | final index-matched two-sample t-test + verdict (this report) |
 | `verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.csv` | per-pair baseline / framework / diff (1000 rows) |
 | `verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj-summary.csv` | aggregate stats |
 | `tools/w196_p3_kanzi_n1000_batched_baseline.py` | new driver: length-bucketed batched baseline + OOM-retry + JSON checkpoint |
-| `tools/w196_p3_kanzi_paired_ttest.py` | paired t-test + Bonferroni + Cohen's d_z |
+| `tools/w196_p3_kanzi_paired_ttest.py` | index-matched two-sample t-test + Bonferroni + Cohen's d_z |
 | `tools/w196_p3_kanzi_finalize.py` | combine baseline + framework JSONs into final analysis |
 | `tools/w196_p3_kanzi_debug_test.py` / `w196_p3_kanzi_debug_test2.py` | unit tests for Å→nm unit conversion bug discovery |
 | `/tmp/w196-p3-batched.log` | baseline driver stdout |
@@ -149,15 +149,15 @@ both are inside the FSQ quantisation noise band (~0.5 Å FSQ step).
 
 ## 6. Verdict
 
-**R2 (kanzi N=1000 framework_inv_proj paired re-verify): framework_wins**
+**R2 (kanzi N=1000 framework_inv_proj index-matched two-sample re-verify): framework_wins**
 
 - Direction matches Wave 124 / Wave 149 priors
-- Bonferroni-corrected paired t-test significant at α=0.007143 (p=0.00257)
+- Bonferroni-corrected index-matched two-sample t-test significant at α=0.007143 (p=0.00257)
 - Cohen's d_z = 0.096 (very small effect; statistically significant due to
-  N=1000 paired sample, not practical magnitude)
+  N=1000 sample, not practical magnitude)
 - Effect inside FSQ quantisation noise band (~0.5 Å)
 
-The upgrade from aggregate-only Wave 88 / 149 readings to paired t-test on
+The upgrade from aggregate-only Wave 88 / 149 readings to index-matched two-sample t-test on
 n=1000 sequence-level diffs confirms the framework-vs-baseline difference
 is statistically robust but practically negligible.
 
@@ -167,10 +167,10 @@ is statistically robust but practically negligible.
   was patched to handle the new (L, 3) x0 shape. The fresh framework run is
   in progress on GPU 1 (~3.3 sec/record, ETA ~30 min); when it completes,
   re-run `tools/w196_p3_kanzi_finalize.py` without the fallback to get
-  the final Wave-196 fresh-vs-fresh paired comparison.
+  the final Wave-196 fresh-vs-fresh index-matched two-sample comparison.
 - **Per-cell power analysis**: not re-run here (Wave 195 P3 already
   covered the 12 4-arm head-to-head deltas at n=30 paired seeds). For R2
-  specifically, the n=1000 paired sample gives an effective SE of
+  specifically, the n=1000 sample gives an effective SE of
   0.0061 Å, sufficient to detect the canonical 0.022 Å effect at α=0.05
   with power > 0.99.
 

@@ -128,7 +128,7 @@ classification.
 
 1. **Inputs:** `verification_outputs/wave214-p2-kanzi-baseline-n1000/`
    and `verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/`
-   per_seq_rmsd_A (N=1000 paired records). Lower=better (RMSD Å).
+   per_seq_rmsd_A (N=1000 index-matched two-sample records). Lower=better (RMSD Å).
    FROZEN at Wave 214.
 2. **Tier assignment:** by baseline per_seq_rmsd_A percentile
    (33rd=0.8381, 67th=0.9529). 3 tiers: hard (n=330),
@@ -138,7 +138,7 @@ classification.
 4. **Counterfactual construction:** Wave 225 P5 constant-offset
    methodology (mean diff scaled by per-tier ratio; variance
    preserved).
-5. **Statistic:** Cohen's d_z (paired). Lower RMSD = better, so
+5. **Statistic:** Cohen's d_z (index-matched two-sample). Lower RMSD = better, so
    d_z < 0 means framework WINS.
 6. **Bonferroni:** alpha = 0.05 (overall R2 cell). Per-tier alpha =
    0.05 / 3 (3 tiers x 1 metric).
@@ -172,7 +172,7 @@ classification.
   `TierAwareCodimensionSheetScheduler` wrapper but applies its
   per-record n_cap_ratio to the Wave 214 frozen paired RMSD diff.
   This is the established Wave 225 P5 / Wave 209 P1 A3 methodology.
-* The Kanzi N=1000 paired inv_proj sweep is FROZEN at Wave 214
+* The Kanzi N=1000 index-matched two-sample inv_proj sweep is FROZEN at Wave 214
   (`verification_outputs/wave214-p2-kanzi-{baseline,framework}-n1000/`).
   A live reduced-intensity GPU sweep is queued for the camera-ready
   deferred list (~1-2h on RTX 5090, Wave 233 P3 brief target).

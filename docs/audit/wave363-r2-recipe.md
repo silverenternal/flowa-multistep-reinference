@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-27
 **Author:** Wave 363 P1 (R2 recipe agent — additive documentation pass)
-**Scope:** Author `paper-data/R2_kanzi_rmsd/REPRODUCIBILITY_RECIPE.md` so the R2 §7.6.2 STRONG Kanzi framework_inv_proj paired-t headline (d_z = −0.0990, framework_WINS Bonf-sig at α=0.05/7=0.007143) is **fully reproducible from the byte-stable Wave 218 P3 paired-t JSON + Wave 214 / Wave 88 / Wave 127 / Wave 131 / Wave 149 source files**, without re-running the ~4 h GPU N=1000 sweep.
+**Scope:** Author `paper-data/R2_kanzi_rmsd/REPRODUCIBILITY_RECIPE.md` so the R2 §7.6.2 STRONG Kanzi framework_inv_proj index-matched two-sample t headline (d_z = −0.0990, framework_WINS Bonf-sig at α=0.05/7=0.007143) is **fully reproducible from the byte-stable Wave 218 P3 index-matched two-sample t JSON + Wave 214 / Wave 88 / Wave 127 / Wave 131 / Wave 149 source files**, without re-running the ~4 h GPU N=1000 sweep.
 
 **Status:** **RECIPE PUBLISHED — SHA-256 chain verified (3 layers, 10 anchors); reproduce/02_R2_Kanzi.sh exits 0; Python snippet reproduces d_z=-0.0990 from byte-stable JSON.**
 
@@ -12,8 +12,8 @@
 
 | Item | Value | Source |
 |---|---|---|
-| R2 headline metric | baseline `mean_rmsd_Å = 0.9020` (Wave 88) → framework `mean_rmsd_Å = 0.8798` (Wave 127), paired Δ=−0.022 Å | `verification_outputs/wave88_kanzi_n1000_baseline/...` + `verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave127_q3_2026/...` |
-| R2 §7.6.2 paired-t verdict | `d_z = −0.0990`, `p_raw = 1.7943 × 10⁻³`, `bonf_sig = true`, `verdict = framework_wins` | `verification_outputs/wave218-p3-kanzi-framework-wins.json` (Wave 218 P3 paired-t on Wave 214 sources) |
+| R2 headline metric | baseline `mean_rmsd_Å = 0.9020` (Wave 88) → framework `mean_rmsd_Å = 0.8798` (Wave 127), index-matched two-sample Δ=−0.022 Å | `verification_outputs/wave88_kanzi_n1000_baseline/...` + `verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave127_q3_2026/...` |
+| R2 §7.6.2 index-matched two-sample t verdict | `d_z = −0.0990`, `p_raw = 1.7943 × 10⁻³`, `bonf_sig = true`, `verdict = framework_wins` | `verification_outputs/wave218-p3-kanzi-framework-wins.json` (Wave 218 P3 index-matched two-sample t on Wave 214 sources) |
 | Wave 127 framework byte-stable | mean=0.8797630831061047 (identical across Wave 127 / Wave 131 / Wave 149 re-runs; per-record std=0.1364, NOT σ=0) | `docs/audit/kanzi/p1-kanzi-byte-stability-regression.md` §1.1 measurement history |
 | Wave 88 baseline byte-stable | mean=0.9019772501591515 (n=1000, std=0.1374) | `verification_outputs/wave88_kanzi_n1000_baseline/...` |
 | Recipe doc | NEW: `paper-data/R2_kanzi_rmsd/REPRODUCIBILITY_RECIPE.md` (~300 lines, 4 sections a-d) | this wave |
@@ -21,7 +21,7 @@
 | Verification script | `reproduce/02_R2_Kanzi.sh` (existing Wave 218 script; no new verifier authored) | re-used, exits 0 |
 | Status change | **NONE** — additive docs only; §7.6.2 STRONG framework_wins preserved verbatim | this wave |
 
-**Headline:** The R2 §7.6.2 STRONG Kanzi framework_inv_proj verdict (d_z=−0.0990, framework_WINS Bonf-sig) is now fully reproducible from the byte-stable Wave 218 P3 paired-t JSON via 4 independent verification surfaces: (1) Layer 1 SHA-256 chain (Wave 218 paired-t JSON + 2 logs + CSV); (2) Layer 2 SHA-256 chain (Wave 214 source files); (3) Layer 3 SHA-256 chain (Wave 88 baseline + Wave 127 / Wave 131 / Wave 149 framework_inv_proj); (4) `reproduce/02_R2_Kanzi.sh` (one-shot verifier; exit 0). The recipe is safe to run in CI (no GPU, <1 sec wall time).
+**Headline:** The R2 §7.6.2 STRONG Kanzi framework_inv_proj verdict (d_z=−0.0990, framework_WINS Bonf-sig) is now fully reproducible from the byte-stable Wave 218 P3 index-matched two-sample t JSON via 4 independent verification surfaces: (1) Layer 1 SHA-256 chain (Wave 218 index-matched two-sample t JSON + 2 logs + CSV); (2) Layer 2 SHA-256 chain (Wave 214 source files); (3) Layer 3 SHA-256 chain (Wave 88 baseline + Wave 127 / Wave 131 / Wave 149 framework_inv_proj); (4) `reproduce/02_R2_Kanzi.sh` (one-shot verifier; exit 0). The recipe is safe to run in CI (no GPU, <1 sec wall time).
 
 ---
 
@@ -41,7 +41,7 @@ No existing file in `paper-data/R2_kanzi_rmsd/` was modified (the 7 symlinks + `
 
 ### 2.2 SHA-256 chain (verified at this audit)
 
-**Layer 1 — Wave 218 P3 paired-t JSON (canonical headline stats)**:
+**Layer 1 — Wave 218 P3 index-matched two-sample t JSON (canonical headline stats)**:
 
 | File | SHA-256 (verified) | Recipe doc anchor |
 |---|---|---|
@@ -50,7 +50,7 @@ No existing file in `paper-data/R2_kanzi_rmsd/` was modified (the 7 symlinks + `
 | `verification_outputs/wave218-p3-kanzi-baseline-n1000.log` | `f532e7aefd9de43d5657a6a86dc591f98f654985b312a4dc488ad231bb0cf0fe` | ✓ |
 | `verification_outputs/wave218-p3-kanzi-framework-n1000.log` | `709e093eb83d048f308d15ebb010d0ed0f4d8c33f7ac8766e2bf3fdc5ef84ed2` | ✓ |
 
-**Layer 2 — Wave 214 source files (used by Wave 218 paired-t)**:
+**Layer 2 — Wave 214 source files (used by Wave 218 index-matched two-sample t)**:
 
 | File | SHA-256 (verified) | Recipe doc anchor |
 |---|---|---|
@@ -96,8 +96,8 @@ The §7.6.2 headline numbers come from TWO different file pairs:
 
 | anchor pair | baseline mean (Å) | framework mean (Å) | Δ (Å) | d_z | source-of-truth |
 |---|---|---|---|---|---|
-| Wave 88 baseline + Wave 127 framework (paper §7.6.2 headline) | **0.9020** | **0.8798** | **−0.022** | (not paired-t'd together; just means) | Wave 256 P1 wording update; docs/drafts/paper-A-final.md §7.6.2 |
-| Wave 214 baseline + Wave 214 framework (Wave 218 P3 paired-t) | **0.9027** | **0.8838** | **−0.019** | **−0.0990** | `verification_outputs/wave218-p3-kanzi-framework-wins.json` |
+| Wave 88 baseline + Wave 127 framework (paper §7.6.2 headline) | **0.9020** | **0.8798** | **−0.022** | (not index-matched two-sample t'd together; just means) | Wave 256 P1 wording update; docs/drafts/paper-A-final.md §7.6.2 |
+| Wave 214 baseline + Wave 214 framework (Wave 218 P3 index-matched two-sample t) | **0.9027** | **0.8838** | **−0.019** | **−0.0990** | `verification_outputs/wave218-p3-kanzi-framework-wins.json` |
 
 Both pairs are direction-consistent (framework_wins); magnitude difference (0.019 vs 0.022) reflects seed and per-record FSQ stochasticity. The recipe §(d) discloses this anchor-matrix explicitly per Wave 268 strict-clean rule (no wording reframing of UNDERPOWERED / DEFERRED / REGRESSES / NOT_SIGNIFICANT).
 
@@ -107,19 +107,19 @@ Both pairs are direction-consistent (framework_wins); magnitude difference (0.01
 
 ### 3.1 Why this recipe is sufficient (not a workaround)
 
-The R2 §7.6.2 STRONG verdict is carried by the **Wave 218 P3 paired-t computed on the Wave 214 source files** + the **Wave 256 P1 wording update** that anchors the paper headline numbers on the **Wave 88 + Wave 127 byte-stable source files**. The recipe documents both anchor layers explicitly:
+The R2 §7.6.2 STRONG verdict is carried by the **Wave 218 P3 index-matched two-sample t computed on the Wave 214 source files** + the **Wave 256 P1 wording update** that anchors the paper headline numbers on the **Wave 88 + Wave 127 byte-stable source files**. The recipe documents both anchor layers explicitly:
 
-- **Wave 218 P3 paired-t JSON** is the **canonical load-bearing evidence** for the d_z / p_raw / bonf_sig / verdict headline. The recipe's Python snippet verifies these 4 stats against the byte-stable JSON.
+- **Wave 218 P3 index-matched two-sample t JSON** is the **canonical load-bearing evidence** for the d_z / p_raw / bonf_sig / verdict headline. The recipe's Python snippet verifies these 4 stats against the byte-stable JSON.
 - **Wave 88 + Wave 127 source files** carry the paper headline numbers (0.9020 / 0.8798 / Δ=−0.022 Å). The recipe documents these in §(a) + §(b) Layer 3.
 - **Wave 127 / Wave 131 / Wave 149 byte-stable framework_inv_proj re-runs** demonstrate that the framework headline mean is byte-identical across 3 re-runs (the byte-stability claim is "Δmean = 0.0 across re-runs", NOT "per-record std = 0").
 
-The recipe's job is to make **all 3 layers** (Wave 218 paired-t + Wave 214 sources + Wave 88 + Wave 127 / Wave 131 / Wave 149 framework re-runs) **byte-addressable and reproducible**, so a reviewer can verify the §7.6.2 verdict without re-running the ~4 h GPU N=1000 sweep.
+The recipe's job is to make **all 3 layers** (Wave 218 index-matched two-sample t + Wave 214 sources + Wave 88 + Wave 127 / Wave 131 / Wave 149 framework re-runs) **byte-addressable and reproducible**, so a reviewer can verify the §7.6.2 verdict without re-running the ~4 h GPU N=1000 sweep.
 
 ### 3.2 Why I did NOT modify R2_SOURCE.md or the paper-data symlinks
 
 Per AGENTS.md hard guardrail #2 ("No destructive edits. Additive is the rule") and the Wave 363 task instructions ("NO modifications to existing paper-data files"):
 
-- `paper-data/R2_kanzi_rmsd/R2_SOURCE.md` (Wave 328 freeze source provenance) is preserved verbatim. The 2 symlinks it anchors (`kanzi_n1000_paper_metrics.json` → `02e9df30...` and `kanzi_framework_paper_metrics.json` → `a0c37b49...`) point to the canonical kanzi_n1000_paper_metrics files (n=200 baseline, n=10 diverse framework) which are **NOT the Wave 88 + Wave 127 n=1000 paired sources** for the §7.6.2 headline. The recipe §(b) "Note on staleness" discloses this explicitly.
+- `paper-data/R2_kanzi_rmsd/R2_SOURCE.md` (Wave 328 freeze source provenance) is preserved verbatim. The 2 symlinks it anchors (`kanzi_n1000_paper_metrics.json` → `02e9df30...` and `kanzi_framework_paper_metrics.json` → `a0c37b49...`) point to the canonical kanzi_n1000_paper_metrics files (n=200 baseline, n=10 diverse framework) which are **NOT the Wave 88 + Wave 127 n=1000 index-matched two-sample sources** for the §7.6.2 headline. The recipe §(b) "Note on staleness" discloses this explicitly.
 - The correct remediation path is a separate Wave 364+ cleanup pass that re-points the 2 symlinks to the Wave 88 + Wave 127 / Wave 131 sources. This is intentionally OUT OF SCOPE for Wave 363 P1 (additive-only).
 
 ### 3.3 What this recipe does NOT do
@@ -229,24 +229,24 @@ PASS — only 1 new file (the recipe doc); the 7 existing symlinks + `R2_SOURCE.
 - **`reproduce/02_R2_Kanzi.sh`** (existing): the one-shot recipe verifier; exits 0 (verified §5.1). No new verifier authored (the existing one is sufficient).
 - **`paper-data/R2_kanzi_rmsd/R2_SOURCE.md`** (existing Wave 328 freeze): source provenance for the 7 paper-data symlinks. **OUT OF SCOPE** for this audit (additive-only; the 2 symlink-target / SHA-256 staleness is a separate Wave 364+ cleanup item).
 - **`docs/audit/kanzi/p1-kanzi-byte-stability-regression.md`** (existing Wave 214 P1): byte-stability audit for the framework_inv_proj mean across Wave 127 / Wave 131 / Wave 149 re-runs.
-- **`docs/audit/kanzi/p3-kanzi-n1000-framework-inv-proj.md`** (existing Wave 196 P3): paired-t re-verification + byte-stable evidence chain.
+- **`docs/audit/kanzi/p3-kanzi-n1000-framework-inv-proj.md`** (existing Wave 196 P3): index-matched two-sample t re-verification + byte-stable evidence chain.
 - **`docs/CLAIMS.md` CLM-060 + CLM-063 + CLM-073** (existing): R2 verdict transition (REGRESSES → framework_wins) + tier-aware counterfactual uplifts.
 - **`docs/CONSOLIDATED_RESULTS.md` §7.6.2 + Wave 256 P1 wording update** (existing): canonical R2 paper cite (d_z=-0.0990 framework_wins, byte-stable Wave 127 framework mean=0.8798 vs Wave 88 baseline mean=0.9020, Δ=-0.022 Å).
-- **`verification_outputs/wave218-p3-kanzi-framework-wins.json`** (existing): Wave 218 P3 paired-t headline JSON (the load-bearing evidence for d_z / p_bonf / verdict).
+- **`verification_outputs/wave218-p3-kanzi-framework-wins.json`** (existing): Wave 218 P3 index-matched two-sample t headline JSON (the load-bearing evidence for d_z / p_bonf / verdict).
 
 ---
 
 ## 8. Smallest next action
 
-If the user later authorizes a multi-wave camera-ready R2 refresh (full live GPU 3-seed N=1000 paired sweep under the post-Wave-178 framework), the recipe can be **extended** (not replaced) to include the live GPU evidence:
+If the user later authorizes a multi-wave camera-ready R2 refresh (full live GPU 3-seed N=1000 index-matched two-sample sweep under the post-Wave-178 framework), the recipe can be **extended** (not replaced) to include the live GPU evidence:
 
 1. **Re-point the framework_inv_proj path** to the post-Wave-178 `kanzi.py` (coord-space trajectory) — the Wave 214 P1 byte-stability audit identified the Wave 178 P2+P3 architectural change as the regression root cause; restoring the bridge call in `_synthesize_x_final_real` is a 4-8 hour engineering effort.
-2. **Run 3-seed (42/43/44) N=1000 paired sweep** on GPU 0 (~12 h GPU wall time, 3 arms × ~4 h each).
+2. **Run 3-seed (42/43/44) N=1000 index-matched two-sample sweep** on GPU 0 (~12 h GPU wall time, 3 arms × ~4 h each).
 3. **Aggregate + write audit doc** (`docs/audit/wave363-r2-live-3seed.md`) with the new live-GPU d_z + per-seed mean + Bonf-sig verdict.
 4. **Add a `## Live GPU 3-seed re-verification` section to `REPRODUCIBILITY_RECIPE.md`** with the new live-GPU SHA-256 chain + Python snippet reproducing the live d_z.
-5. **Update `paper-data/MANIFEST.md` §R2 + `docs/drafts/paper-A-final.md` §7.6.2** if status changes from Wave 218 P3 paired-t to live GPU 3-seed.
+5. **Update `paper-data/MANIFEST.md` §R2 + `docs/drafts/paper-A-final.md` §7.6.2** if status changes from Wave 218 P3 index-matched two-sample t to live GPU 3-seed.
 
-Until the user explicitly authorizes this multi-wave effort, the Wave 218 P3 paired-t remains the canonical R2 §7.6.2 verdict, and **this Wave 363 P1 recipe is the authoritative reproducibility surface** for the R2 Kanzi framework_inv_proj evidence chain.
+Until the user explicitly authorizes this multi-wave effort, the Wave 218 P3 index-matched two-sample t remains the canonical R2 §7.6.2 verdict, and **this Wave 363 P1 recipe is the authoritative reproducibility surface** for the R2 Kanzi framework_inv_proj evidence chain.
 
 ---
 
