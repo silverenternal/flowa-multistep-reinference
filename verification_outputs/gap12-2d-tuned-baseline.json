@@ -1,0 +1,34 @@
+{
+  "kind": "gap12_2d_tuned_baseline",
+  "timestamp_utc": "2026-10-12T20:58:59.081589+00:00",
+  "cell": "R5a (2D Two Moons RF ablation)",
+  "target": "two_moons",
+  "seed": 42,
+  "steps": [
+    100,
+    200
+  ],
+  "per_baseline_steps": {
+    "100": {
+      "baseline_num_steps": 100,
+      "baseline_w2": 0.08284159843285922,
+      "wall_seconds": 9.374512212118134,
+      "framework_w2": 0.62,
+      "baseline_beats_framework": true
+    },
+    "200": {
+      "baseline_num_steps": 200,
+      "baseline_w2": 0.0828415245602749,
+      "wall_seconds": 17.952148250071332,
+      "framework_w2": 0.62,
+      "baseline_beats_framework": true
+    }
+  },
+  "verdict": {
+    "framework_w2": 0.62,
+    "best_baseline_w2": 0.0828415245602749,
+    "best_baseline_num_steps": 200,
+    "framework_beats_tuned_baseline": false,
+    "canonical_baseline_w2": 2.85
+  }
+}

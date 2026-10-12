@@ -1,0 +1,164 @@
+{
+  "kind": "gap12_tuned_baseline_cifar",
+  "timestamp_utc": "2026-10-12T21:30:05.662803+00:00",
+  "cell": "R5b (CIFAR-10 RF)",
+  "seed": 42,
+  "n_samples": 200,
+  "n_rounds": 1,
+  "framework_nfe": 50,
+  "baseline_nfes": [
+    50,
+    100,
+    200
+  ],
+  "per_baseline_nfe": {
+    "50": {
+      "baseline_fid": 447.8942533397681,
+      "framework_arms": {
+        "CosineAnnealScheduler": {
+          "fid_headline": 447.1203832409154,
+          "delta_vs_baseline_pct": -0.1727796445438405,
+          "cohens_dz": 4.659034506196338,
+          "t_stat": 65.88869786227097,
+          "p_value_raw": 4.143568360349422e-137,
+          "n_paired": 200
+        },
+        "CodimensionSheetScheduler": {
+          "fid_headline": 442.899269897256,
+          "delta_vs_baseline_pct": -1.115214898442332,
+          "cohens_dz": 4.425183070582588,
+          "t_stat": 62.581539144017135,
+          "p_value_raw": 7.311179550794906e-133,
+          "n_paired": 200
+        },
+        "EvidenceDrivenScheduler": {
+          "fid_headline": 453.87879335602975,
+          "delta_vs_baseline_pct": 1.3361502121622044,
+          "cohens_dz": 4.81052201124353,
+          "t_stat": 68.031054703949,
+          "p_value_raw": 9.31102775483865e-140,
+          "n_paired": 200
+        },
+        "FreeTrajScheduler": {
+          "fid_headline": 451.4060882539841,
+          "delta_vs_baseline_pct": 0.7840767967058342,
+          "cohens_dz": 4.399438246874611,
+          "t_stat": 62.217452355529886,
+          "p_value_raw": 2.2072884867026484e-132,
+          "n_paired": 200
+        }
+      },
+      "run_dir": "verification_outputs/gap12-tuned-baseline-bnfe50-fnfe50-n200"
+    },
+    "100": {
+      "baseline_fid": 443.74581542193687,
+      "framework_arms": {
+        "CosineAnnealScheduler": {
+          "fid_headline": 447.1203832409154,
+          "delta_vs_baseline_pct": 0.7604731586639952,
+          "cohens_dz": 4.764141548305559,
+          "t_stat": 67.37513590678877,
+          "p_value_raw": 5.9106243664903624e-139,
+          "n_paired": 200
+        },
+        "CodimensionSheetScheduler": {
+          "fid_headline": 442.899269897256,
+          "delta_vs_baseline_pct": -0.19077262145581056,
+          "cohens_dz": 4.609055710384934,
+          "t_stat": 65.18189095359533,
+          "p_value_raw": 3.22412369897197e-136,
+          "n_paired": 200
+        },
+        "EvidenceDrivenScheduler": {
+          "fid_headline": 453.87879335602975,
+          "delta_vs_baseline_pct": 2.283509518722539,
+          "cohens_dz": 4.76211331846526,
+          "t_stat": 67.34645240531117,
+          "p_value_raw": 6.410561946143371e-139,
+          "n_paired": 200
+        },
+        "FreeTrajScheduler": {
+          "fid_headline": 451.4060882539841,
+          "delta_vs_baseline_pct": 1.7262749452101136,
+          "cohens_dz": 4.54598090567627,
+          "t_stat": 64.28987851096507,
+          "p_value_raw": 4.4215597344288797e-135,
+          "n_paired": 200
+        }
+      },
+      "run_dir": "verification_outputs/gap12-tuned-baseline-bnfe100-fnfe50-n200"
+    },
+    "200": {
+      "baseline_fid": 439.2524766261005,
+      "framework_arms": {
+        "CosineAnnealScheduler": {
+          "fid_headline": 447.1203832409154,
+          "delta_vs_baseline_pct": 1.7912037002610233,
+          "cohens_dz": 4.751092279157091,
+          "t_stat": 67.19059137270057,
+          "p_value_raw": 9.971223163119367e-139,
+          "n_paired": 200
+        },
+        "CodimensionSheetScheduler": {
+          "fid_headline": 442.899269897256,
+          "delta_vs_baseline_pct": 0.8302271393360219,
+          "cohens_dz": 4.57910025858371,
+          "t_stat": 64.7582568915523,
+          "p_value_raw": 1.1135141402562442e-135,
+          "n_paired": 200
+        },
+        "EvidenceDrivenScheduler": {
+          "fid_headline": 453.87879335602975,
+          "delta_vs_baseline_pct": 3.3298199801339883,
+          "cohens_dz": 4.854384162185358,
+          "t_stat": 68.65135919131689,
+          "p_value_raw": 1.6460818848938653e-140,
+          "n_paired": 200
+        },
+        "FreeTrajScheduler": {
+          "fid_headline": 451.4060882539841,
+          "delta_vs_baseline_pct": 2.766885168465192,
+          "cohens_dz": 4.620014354825178,
+          "t_stat": 65.33686958952153,
+          "p_value_raw": 2.0525145730464644e-136,
+          "n_paired": 200
+        }
+      },
+      "run_dir": "verification_outputs/gap12-tuned-baseline-bnfe200-fnfe50-n200"
+    }
+  },
+  "best_baseline": {
+    "nfe": 200,
+    "fid": 439.2524766261005
+  },
+  "verdict": {
+    "CosineAnnealScheduler": {
+      "framework_fid_matched_nfe": 447.1203832409154,
+      "best_baseline_fid": 439.2524766261005,
+      "best_baseline_nfe": 200,
+      "framework_beats_tuned_baseline": false,
+      "margin_vs_best_baseline_pct": 1.7912037002610233
+    },
+    "CodimensionSheetScheduler": {
+      "framework_fid_matched_nfe": 442.899269897256,
+      "best_baseline_fid": 439.2524766261005,
+      "best_baseline_nfe": 200,
+      "framework_beats_tuned_baseline": false,
+      "margin_vs_best_baseline_pct": 0.8302271393360219
+    },
+    "EvidenceDrivenScheduler": {
+      "framework_fid_matched_nfe": 453.87879335602975,
+      "best_baseline_fid": 439.2524766261005,
+      "best_baseline_nfe": 200,
+      "framework_beats_tuned_baseline": false,
+      "margin_vs_best_baseline_pct": 3.3298199801339883
+    },
+    "FreeTrajScheduler": {
+      "framework_fid_matched_nfe": 451.4060882539841,
+      "best_baseline_fid": 439.2524766261005,
+      "best_baseline_nfe": 200,
+      "framework_beats_tuned_baseline": false,
+      "margin_vs_best_baseline_pct": 2.766885168465192
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "kind": "gap12_mnist_tuned_baseline",
+  "timestamp_utc": "2026-10-12T21:27:21.256237+00:00",
+  "cell": "R5c (MNIST FM, smoke ckpt)",
+  "ckpt": "data/mnist_fm.npz",
+  "seed": 42,
+  "n_samples": 1000,
+  "baseline_steps": [
+    50,
+    100,
+    200
+  ],
+  "per_baseline_steps": {
+    "50": {
+      "baseline_num_steps": 50,
+      "baseline_fid": 29.492531086687933,
+      "wall_seconds": 288.2620737589896,
+      "framework_fid_matched_nfe": 23.3879,
+      "framework_beats_baseline": true,
+      "baseline_beats_framework": false,
+      "margin_framework_vs_baseline_pct": -20.698905321976202
+    },
+    "100": {
+      "baseline_num_steps": 100,
+      "baseline_fid": 29.490152560775527,
+      "wall_seconds": 602.327197387116,
+      "framework_fid_matched_nfe": 23.3879,
+      "framework_beats_baseline": true,
+      "baseline_beats_framework": false,
+      "margin_framework_vs_baseline_pct": -20.69250929848378
+    },
+    "200": {
+      "baseline_num_steps": 200,
+      "baseline_fid": 29.488987709533205,
+      "wall_seconds": 934.8861235608347,
+      "framework_fid_matched_nfe": 23.3879,
+      "framework_beats_baseline": true,
+      "baseline_beats_framework": false,
+      "margin_framework_vs_baseline_pct": -20.689376555170274
+    }
+  },
+  "verdict": {
+    "framework_fid_matched_nfe": 23.3879,
+    "best_baseline_fid": 29.488987709533205,
+    "best_baseline_num_steps": 200,
+    "framework_beats_tuned_baseline": true,
+    "canonical_smoke_win_margin_pct": -20.698821734339244
+  }
+}

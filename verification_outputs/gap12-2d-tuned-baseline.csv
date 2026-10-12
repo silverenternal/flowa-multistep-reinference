@@ -1,0 +1,3 @@
+baseline_num_steps,baseline_w2,framework_w2,baseline_beats_framework,wall_seconds
+100,0.08284159843285922,0.62,True,9.374512212118134
+200,0.0828415245602749,0.62,True,17.952148250071332
