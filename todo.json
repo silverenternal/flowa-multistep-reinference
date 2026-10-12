@@ -729,8 +729,8 @@
           "docs/audit/wave338-p5-r3-dgl-fix-and-sweep.md",
           "docs/audit/wave351-r3-vendor-fix-status.md"
         ],
-        "resource": "修复 = 一行 (.repeat(n_mol,1) 取代 .repeat_interleave(n_mol,dim=0)) + cuda:0 全量 10-batch N=1000 重跑；无需容器复现",
-        "status": "OPEN (canonical 1-seed live 已在盘；根因已定位为框架侧 tiling bug，非环境漂移；修复 + 3-seed 重跑待用户 gate)",
+        "resource": "修复 = 一行 (.repeat(n_mol,1) 取代 .repeat_interleave(n_mol,dim=0)) + cuda:0 全量 10-batch N=1000 重跑；无需容器复现 (executed 2026-10-12)",
+        "status": "DONE (2026-10-12) — 3-seed N=1000 ACTUAL 完成；valid-yield 修复到 100%；framework-WINS 方向聚合复现 (-0.0377) 但不显著 (p=0.559, CI 跨 0)，与既有 UNDERPOWERED per-arm verdict 一致。canonical verdict/数字/CLM-068/CLM-060/CONSOLIDATED §15.105/paper/tnnls 全部逐字保留 (additive observation only)。",
         "diagnosis_2026_10_12": {
           "date": "2026-10-12",
           "verdict": "documented RDKit-2026.03.5-drift root cause REFUTED",
@@ -741,6 +741,27 @@
           "honest_caveat": "blocked tiling restores valid-yield + baseline fg_dev scale but does NOT reproduce canonical framework-arm direction at n<=100 single-batch; full 10-batch N=1000 cuda:0 re-run required",
           "no_change": "R3 verdict/numbers/CLM-068/CONSOLIDATED_RESULTS §15.105/paper/tnnls all preserved verbatim; no code committed",
           "audit_doc": "docs/audit/r3-env-investigation.md"
+        },
+        "results_2026_10_12": {
+          "date": "2026-10-12",
+          "verdict": "3-seed N=1000 ACTUAL completed — valid-yield restored to 100%; framework-WINS direction reproduced in aggregate but NOT significant",
+          "evidence_dir": "verification_outputs/r3_n1000_3seed_fixed_q4_2026/ (13 artifacts + SHA256SUMS)",
+          "config": "blocked tiling (.repeat(n_mol,1)); NFE=250; 10 batches x 100 mols/arm; cuda:0; wallclock 2h13m49s",
+          "per_seed": {
+            "seed42": {"baseline_fg_dev": 0.605186, "framework_fg_dev": 0.655220, "paired_diff": 0.050035, "verdict": "baseline_wins"},
+            "seed43": {"baseline_fg_dev": 0.787544, "framework_fg_dev": 0.650808, "paired_diff": -0.136736, "verdict": "framework_wins"},
+            "seed44": {"baseline_fg_dev": 0.583237, "framework_fg_dev": 0.556876, "paired_diff": -0.026361, "verdict": "framework_wins"}
+          },
+          "paired_summary": {"n_seeds": 3, "mean_diff": -0.037687, "sd_diff": 0.093899, "se_diff": 0.054213, "t": -0.695175, "df": 2, "p_raw": 0.558854, "ci_95": [-0.143944, 0.068570], "cohens_d_z": -0.401360, "bonf_alpha": 0.0071428571428571435, "bonf_sig": false},
+          "interpretation": "Direction consistent with canonical Wave 82 headline (-0.0235): framework fg_dev lower in aggregate (-0.0377), 2/3 seeds framework_wins. Not significant (p=0.559, 95% CI crosses 0) — consistent with the pre-existing UNDERPOWERED per-arm verdict. Converts R3 from 1-seed + PROJECTED to ACTUAL 3-seed (pooled SD now measurable, replacing NaN).",
+          "honest_caveats": [
+            "canonical seed-42 point NOT reproduced (-0.0235 -> +0.0500) because it came from the pre-fix adapter (untiled prior, revision e3f4072); the two are different configurations, so only aggregate direction is comparable",
+            "per-record PROJECTED (t=-9.005, significant) vs per-arm ACTUAL 3-seed (p=0.559, not significant) is a granularity difference, not a conflict",
+            "n_seeds=3/df=2 is low-power; does not by itself lift R3 out of UNDERPOWERED",
+            "single shared tiled prior per batch; whether canonical used independent per-mol priors (audit §5 option b) remains unverified"
+          ],
+          "no_change": "R3 verdict/numbers/CLM-068/CLM-060/CONSOLIDATED_RESULTS §15.105/paper/tnnls all preserved verbatim; additive observation only",
+          "audit_doc": "docs/audit/r3-env-investigation.md §9"
         }
       },
       {

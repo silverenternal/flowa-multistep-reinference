@@ -1,0 +1,160 @@
+
+========== seed_base=42 ==========
+[baseline seed_base=42] Loading FlowMol3 v2 adapter (upstream path)...
+[baseline] adapter + model loaded in 3.807s
+[baseline seed_base=42] batch 1/10: 100 mols in 163.798s (running 100)
+[baseline seed_base=42] batch 2/10: 100 mols in 35.635s (running 200)
+[baseline seed_base=42] batch 3/10: 100 mols in 78.9s (running 300)
+[baseline seed_base=42] batch 4/10: 100 mols in 144.503s (running 400)
+[baseline seed_base=42] batch 5/10: 100 mols in 245.167s (running 500)
+[18:28:49] Explicit valence for atom # 6 N, 4, is greater than permitted
+[baseline seed_base=42] batch 6/10: 99 mols in 294.666s (running 599)
+[baseline seed_base=42] batch 7/10: 100 mols in 300.907s (running 699)
+[18:36:47] Explicit valence for atom # 4 Br, 2, is greater than permitted
+[18:36:47] Explicit valence for atom # 4 Br, 2, is greater than permitted
+[baseline seed_base=42] batch 8/10: 98 mols in 177.536s (running 797)
+[baseline seed_base=42] batch 9/10: 100 mols in 108.482s (running 897)
+[baseline seed_base=42] batch 10/10: 100 mols in 273.872s (running 997)
+Error messages: disconnected: 399, valence: 0, kekulization: 0, other: 0, valid: 997, total: 997
+running bosebusters
+[18:43:29] UFFTYPER: Unrecognized charge state for atom: 5
+[18:43:29] UFFTYPER: Unrecognized charge state for atom: 5
+[baseline seed_base=42] metrics computed in 43.334s: fg_dev=0.605186, validity=1.0000
+[framework seed_base=42] Loading FlowMol3 v2 adapter (upstream path)...
+[framework] adapter + model loaded in 3.276s
+[framework seed_base=42] batch 1/10: 100 mols in 259.684s (running 100)
+[framework seed_base=42] batch 2/10: 100 mols in 285.645s (running 200)
+[framework seed_base=42] batch 3/10: 100 mols in 124.174s (running 300)
+[framework seed_base=42] batch 4/10: 100 mols in 203.474s (running 400)
+[19:02:28] Explicit valence for atom # 6 Br, 2, is greater than permitted
+[framework seed_base=42] batch 5/10: 99 mols in 239.379s (running 499)
+[framework seed_base=42] batch 6/10: 100 mols in 272.278s (running 599)
+[framework seed_base=42] batch 7/10: 100 mols in 274.929s (running 699)
+[framework seed_base=42] batch 8/10: 100 mols in 98.185s (running 799)
+[19:16:52] Explicit valence for atom # 6 Br, 2, is greater than permitted
+[framework seed_base=42] batch 9/10: 99 mols in 217.235s (running 898)
+[framework seed_base=42] batch 10/10: 100 mols in 229.005s (running 998)
+Error messages: disconnected: 377, valence: 0, kekulization: 0, other: 0, valid: 998, total: 998
+running bosebusters
+[framework seed_base=42] metrics computed in 44.563s: fg_dev=0.655220, validity=1.0000
+wrote verification_outputs/r3_n1000_3seed_fixed_q4_2026/flowmol3_n1000_baseline_wave338_p5_seed42.json
+wrote verification_outputs/r3_n1000_3seed_fixed_q4_2026/flowmol3_n1000_framework_wave338_p5_seed42.json
+wrote verification_outputs/r3_n1000_3seed_fixed_q4_2026/flowmol3_n1000_sweep_wave338_p5_seed42.json (paired_diff_fg_dev=+0.050035)
+
+========== seed_base=43 ==========
+[baseline seed_base=43] Loading FlowMol3 v2 adapter (upstream path)...
+[baseline] adapter + model loaded in 3.782s
+[baseline seed_base=43] batch 1/10: 100 mols in 294.797s (running 100)
+[baseline seed_base=43] batch 2/10: 100 mols in 261.604s (running 200)
+[baseline seed_base=43] batch 3/10: 100 mols in 29.69s (running 300)
+[baseline seed_base=43] batch 4/10: 100 mols in 35.875s (running 400)
+[baseline seed_base=43] batch 5/10: 100 mols in 39.487s (running 500)
+[baseline seed_base=43] batch 6/10: 100 mols in 36.661s (running 600)
+[baseline seed_base=43] batch 7/10: 100 mols in 16.135s (running 700)
+[19:33:35] Explicit valence for atom # 2 P, 6, is greater than permitted
+[baseline seed_base=43] batch 8/10: 99 mols in 12.146s (running 799)
+[19:33:46] Explicit valence for atom # 5 Cl, 4, is greater than permitted
+[19:33:47] UFFTYPER: Warning: hybridization set to SP3 for atom 4
+[19:33:47] Explicit valence for atom # 4 Cl, 4, is greater than permitted
+[19:33:47] Explicit valence for atom # 1 P, 6, is greater than permitted
+[19:33:47] UFFTYPER: Unrecognized atom type: S_5+4 (2)
+[19:33:47] UFFTYPER: Unrecognized atom type: S_5+4 (3)
+[19:33:47] UFFTYPER: Unrecognized atom type: S_5+4 (4)
+[19:33:47] Explicit valence for atom # 1 C, 5, is greater than permitted
+[19:33:47] Explicit valence for atom # 5 Br, 2, is greater than permitted
+[19:33:47] Explicit valence for atom # 4 Br, 2, is greater than permitted
+[19:33:47] UFFTYPER: Warning: hybridization set to SP3 for atom 5
+[19:33:47] Explicit valence for atom # 6 Br, 4, is greater than permitted
+[baseline seed_base=43] batch 9/10: 91 mols in 11.937s (running 890)
+[baseline seed_base=43] batch 10/10: 100 mols in 31.423s (running 990)
+Error messages: disconnected: 374, valence: 0, kekulization: 0, other: 0, valid: 990, total: 990
+running bosebusters
+[19:34:45] UFFTYPER: Unrecognized charge state for atom: 3
+[19:34:45] UFFTYPER: Unrecognized charge state for atom: 3
+[19:35:03] UFFTYPER: Unrecognized atom type: S_5+4 (2)
+[19:35:03] UFFTYPER: Unrecognized atom type: S_5+4 (3)
+[19:35:03] UFFTYPER: Unrecognized atom type: S_5+4 (4)
+[19:35:03] UFFTYPER: Unrecognized atom type: S_5+4 (2)
+[19:35:03] UFFTYPER: Unrecognized atom type: S_5+4 (3)
+[19:35:03] UFFTYPER: Unrecognized atom type: S_5+4 (4)
+Energy ratio module failed because UFF parameters missing for molecule.
+[baseline seed_base=43] metrics computed in 53.88s: fg_dev=0.787544, validity=1.0000
+[framework seed_base=43] Loading FlowMol3 v2 adapter (upstream path)...
+[framework] adapter + model loaded in 0.202s
+[framework seed_base=43] batch 1/10: 100 mols in 14.644s (running 100)
+[framework seed_base=43] batch 2/10: 100 mols in 68.185s (running 200)
+[19:40:02] Explicit valence for atom # 3 P, 6, is greater than permitted
+[framework seed_base=43] batch 3/10: 99 mols in 207.473s (running 299)
+[framework seed_base=43] batch 4/10: 100 mols in 156.67s (running 399)
+[19:45:37] Explicit valence for atom # 5 C, 4, is greater than permitted
+[framework seed_base=43] batch 5/10: 99 mols in 177.891s (running 498)
+[framework seed_base=43] batch 6/10: 100 mols in 157.832s (running 598)
+[framework seed_base=43] batch 7/10: 100 mols in 190.924s (running 698)
+[framework seed_base=43] batch 8/10: 100 mols in 205.245s (running 798)
+[19:57:25] Explicit valence for atom # 9 Br, 2, is greater than permitted
+[framework seed_base=43] batch 9/10: 99 mols in 153.334s (running 897)
+[framework seed_base=43] batch 10/10: 100 mols in 148.869s (running 997)
+Error messages: disconnected: 375, valence: 0, kekulization: 0, other: 0, valid: 997, total: 997
+running bosebusters
+[framework seed_base=43] metrics computed in 44.833s: fg_dev=0.650808, validity=1.0000
+wrote verification_outputs/r3_n1000_3seed_fixed_q4_2026/flowmol3_n1000_baseline_wave338_p5_seed43.json
+wrote verification_outputs/r3_n1000_3seed_fixed_q4_2026/flowmol3_n1000_framework_wave338_p5_seed43.json
+wrote verification_outputs/r3_n1000_3seed_fixed_q4_2026/flowmol3_n1000_sweep_wave338_p5_seed43.json (paired_diff_fg_dev=-0.136736)
+
+========== seed_base=44 ==========
+[baseline seed_base=44] Loading FlowMol3 v2 adapter (upstream path)...
+[baseline] adapter + model loaded in 3.298s
+[baseline seed_base=44] batch 1/10: 100 mols in 224.34s (running 100)
+[baseline seed_base=44] batch 2/10: 100 mols in 218.627s (running 200)
+[20:08:25] Explicit valence for atom # 9 Cl, 2, is greater than permitted
+[baseline seed_base=44] batch 3/10: 99 mols in 19.619s (running 299)
+[baseline seed_base=44] batch 4/10: 100 mols in 28.696s (running 399)
+[baseline seed_base=44] batch 5/10: 100 mols in 20.951s (running 499)
+[baseline seed_base=44] batch 6/10: 100 mols in 26.134s (running 599)
+[baseline seed_base=44] batch 7/10: 100 mols in 36.575s (running 699)
+[baseline seed_base=44] batch 8/10: 100 mols in 26.944s (running 799)
+[baseline seed_base=44] batch 9/10: 100 mols in 17.027s (running 899)
+[baseline seed_base=44] batch 10/10: 100 mols in 13.478s (running 999)
+Error messages: disconnected: 540, valence: 0, kekulization: 0, other: 0, valid: 999, total: 999
+running bosebusters
+[20:12:00] UFFTYPER: Unrecognized charge state for atom: 4
+[20:12:00] UFFTYPER: Unrecognized charge state for atom: 4
+[baseline seed_base=44] metrics computed in 47.569s: fg_dev=0.583237, validity=1.0000
+[framework seed_base=44] Loading FlowMol3 v2 adapter (upstream path)...
+[framework] adapter + model loaded in 0.279s
+[framework seed_base=44] batch 1/10: 100 mols in 18.089s (running 100)
+[20:12:37] Explicit valence for atom # 1 P, 6, is greater than permitted
+[framework seed_base=44] batch 2/10: 99 mols in 16.605s (running 199)
+[framework seed_base=44] batch 3/10: 100 mols in 19.913s (running 299)
+[framework seed_base=44] batch 4/10: 100 mols in 16.368s (running 399)
+[framework seed_base=44] batch 5/10: 100 mols in 17.726s (running 499)
+[framework seed_base=44] batch 6/10: 100 mols in 17.997s (running 599)
+[20:15:10] UFFTYPER: Warning: hybridization set to SP3 for atom 3
+[20:15:10] Explicit valence for atom # 5 Cl, 2, is greater than permitted
+[framework seed_base=44] batch 7/10: 98 mols in 80.269s (running 697)
+[framework seed_base=44] batch 8/10: 100 mols in 188.029s (running 797)
+[framework seed_base=44] batch 9/10: 100 mols in 181.157s (running 897)
+[framework seed_base=44] batch 10/10: 100 mols in 267.688s (running 997)
+Error messages: disconnected: 307, valence: 0, kekulization: 0, other: 0, valid: 997, total: 997
+running bosebusters
+[framework seed_base=44] metrics computed in 36.046s: fg_dev=0.556876, validity=1.0000
+wrote verification_outputs/r3_n1000_3seed_fixed_q4_2026/flowmol3_n1000_baseline_wave338_p5_seed44.json
+wrote verification_outputs/r3_n1000_3seed_fixed_q4_2026/flowmol3_n1000_framework_wave338_p5_seed44.json
+wrote verification_outputs/r3_n1000_3seed_fixed_q4_2026/flowmol3_n1000_sweep_wave338_p5_seed44.json (paired_diff_fg_dev=-0.026361)
+
+=== Paired summary across seeds ===
+  n_seeds: 3
+  mean_diff: -0.03768736331195862
+  sd_diff: 0.09389926069577538
+  se_diff: 0.05421276343941277
+  t_statistic: -0.6951751012301256
+  df: 2
+  p_value_raw: 0.5588539693563345
+  ci_95_low: -0.14394437965320764
+  ci_95_high: 0.06856965302929041
+  cohens_d_z: -0.40135953182913836
+  test_type: paired_t_test_across_seeds
+  alpha_bonferroni: 0.0071428571428571435
+  bonf_sig: False
+wrote verification_outputs/r3_n1000_3seed_fixed_q4_2026/wave338-p5-r3-n1000-paired.csv
+wrote verification_outputs/r3_n1000_3seed_fixed_q4_2026/wave338-p5-r3-n1000-paired.json

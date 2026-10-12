@@ -1,0 +1,5 @@
+start_utc=2026-10-12T10:12:35Z
+0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97887 MiB, 1259 MiB, 0 %
+1, NVIDIA GeForce RTX 5090, 32607 MiB, 5 MiB, 0 %
+cmd: scripts/wave338_p5_r3_n1000_paired.py --n-total 1000 --nfe-batch 100 --seeds 42 43 44 --device cuda:0
+adapter_fix: repeat_interleave -> .repeat(n_mol,1) (block tiling)

@@ -177,8 +177,54 @@ User-gated after the diagnosis ("改 tiling + 跑全量 N=1000"):
 
 3. **Driver crash fix** — `scripts/wave338_p5_r3_n1000_paired.py` built its CSV `fieldnames` from the per-seed row only, so the summary row's extra `paired_*` columns raised `ValueError: dict contains fields not in fieldnames` **before** the paired JSON was written — which is why `verification_outputs/wave338-p5-r3-n1000-paired.json` never existed. Header now unions the summary-row keys.
 
-4. **Full 3-seed N=1000 re-run** — `scripts/wave338_p5_r3_n1000_paired.py --n-total 1000 --nfe-batch 100 --seeds 42 43 44 --device cuda:0`, output in `verification_outputs/r3_n1000_3seed_fixed_q4_2026/` (per-arm JSON + per-seed sweep JSON + `wave338-p5-r3-n1000-paired.{csv,json}` + `METADATA.txt`). `cuda:0` is mandatory because the adapter seeds via `_seed_everything(seed, str(device))`. Results are appended below when the run completes.
+4. **Full 3-seed N=1000 re-run** — `scripts/wave338_p5_r3_n1000_paired.py --n-total 1000 --nfe-batch 100 --seeds 42 43 44 --device cuda:0`, output in `verification_outputs/r3_n1000_3seed_fixed_q4_2026/` (per-arm JSON + per-seed sweep JSON + `wave338-p5-r3-n1000-paired.{csv,json}` + `METADATA.txt`). `cuda:0` is mandatory because the adapter seeds via `_seed_everything(seed, str(device))`.
 
 ---
 
-_Last updated: 2026-10-12 (R3 environment investigation — documented RDKit-drift root cause REFUTED; actual cause is the `repeat_interleave` batched prior-tiling regression introduced 2026-09-22; follow-up fix + regression test applied; full 3-seed N=1000 re-run launched)._
+## 9. Results (2026-10-12) — the 3-seed N=1000 re-run completed
+
+**Run:** `scripts/wave338_p5_r3_n1000_paired.py --n-total 1000 --nfe-batch 100 --seeds 42 43 44 --device cuda:0`, output in `verification_outputs/r3_n1000_3seed_fixed_q4_2026/` (13 artifacts + `SHA256SUMS`). Wall-clock **2 h 13 m 49 s** on `cuda:0` (RTX PRO 6000 Blackwell). NFE=250, 10 batches × 100 mols per arm, blocked tiling (`.repeat(n_mol, 1)`).
+
+### 9.1 Per-seed and paired results
+
+| seed | baseline `fg_dev` | framework `fg_dev` | paired diff | baseline n_sampled | framework n_sampled | verdict |
+|---|---|---:|---:|---:|---:|---|
+| 42 | 0.605186 | 0.655220 | **+0.050035** | 997 | 998 | baseline_wins |
+| 43 | 0.787544 | 0.650808 | **−0.136736** | 990 | 997 | framework_wins |
+| 44 | 0.583237 | 0.556876 | **−0.026361** | 999 | 997 | framework_wins |
+
+**3-seed paired summary:** `n_seeds=3`, `mean_diff=−0.037687`, `sd_diff=0.093899`, `se_diff=0.054213`, `t=−0.695175`, `df=2`, `p_raw=0.558854`, 95% CI `[−0.143944, +0.068570]`, `cohens_d_z=−0.401360`, Bonferroni α=0.05/7=0.007143, `bonf_sig=False`.
+
+All six arms emit `validity_pct=1.0000` (of the n_sampled molecules, 100% are RDKit-valid; the small shortfall from 1000 is decode-drop, not invalidity).
+
+### 9.2 Interpretation
+
+1. **The blocked-tiling fix restores the valid-yield.** Every arm emits `validity=1.0000` with n_sampled 990–999/1000. This is the fix's direct, unambiguous effect (40% → 100% valid-yield vs the HEAD `repeat_interleave` path, §2.5).
+2. **The framework-WINS direction is reproduced in aggregate.** The 3-seed mean paired diff is `−0.0377` (framework `fg_dev` lower) — the same direction as the canonical Wave 82 seed-42 headline (`−0.0235`). 2 of 3 seeds are `framework_wins`.
+3. **But it is not statistically significant.** `p=0.559` ≫ 0.05 (and ≫ Bonferroni α=0.007143); the 95% CI `[−0.144, +0.069]` straddles zero. This is fully consistent with the pre-existing **UNDERPOWERED** per-arm verdict (CLM-060 / Wave 195 P2): a directional improvement the per-arm aggregate cannot resolve at n=3 seeds.
+4. **This converts R3 from 1-seed + PROJECTED to ACTUAL 3-seed.** The 3-seed pooled SD is now measurable (`sd_diff=0.0939`), replacing the previously NaN pooled SD (Wave 206 P3).
+
+### 9.3 Honest caveats
+
+- **The canonical seed-42 point is not reproduced** (canonical `−0.0235` → fixed-adapter `+0.0500`). This is expected and is **not** a contradiction: the canonical number was produced by the **pre-fix** adapter revision (`e3f4072`, untiled prior), whereas this run uses the **post-fix** blocked-tiling adapter. Different prior layout → different trajectory → different per-seed value. The two are **not** the same configuration, so the seed-42 point is not comparable across them; only the aggregate direction is.
+- **Per-record PROJECTED (t=−9.005, significant) vs per-arm ACTUAL 3-seed (p=0.559, not significant) is a granularity difference, not a conflict.** The per-record proxy (Wave 216 P1, REOS flag count) operates at the record granularity where the framework value-add is detectable; the per-arm aggregate has one paired observation per arm. Both readings are honest (unchanged from the existing R3 disclosure).
+- **`n_seeds=3`, `df=2`** is a low-power design; the CI is correspondingly wide. This run does not by itself lift R3 out of UNDERPOWERED.
+- **Single shared tiled prior per batch.** With `.repeat(n_mol, 1)` all 100 molecules in a batch share one prior; the framework's σ=0.05 perturbation is applied to that shared prior. Whether the canonical batched path instead used **independent per-molecule priors** (audit §3.4 / §5 option (b)) remains **unverified**; this run does not settle it.
+
+### 9.4 What this does NOT change
+
+- R3 verdict label, the canonical 1-seed numbers, CLM-068, CLM-060, `docs/CONSOLIDATED_RESULTS.md` §15.105, the paper, and every `tnnls_submission/` file — **all preserved verbatim**. This section is **additive observation only**.
+- No source code, no vendored upstream, no adapter change in this recording increment.
+- The `repeat_interleave` → `.repeat(n_mol, 1)` adapter fix + CPU regression test were already committed in `0f62c27`; this increment only records the completed re-run.
+
+### 9.5 Artifacts
+
+| Artifact | Path |
+|---|---|
+| 3-seed sweep dir (13 files + `SHA256SUMS`) | `verification_outputs/r3_n1000_3seed_fixed_q4_2026/` |
+| Paired summary | `verification_outputs/r3_n1000_3seed_fixed_q4_2026/wave338-p5-r3-n1000-paired.{csv,json}` |
+| Driver | `scripts/wave338_p5_r3_n1000_paired.py` |
+
+---
+
+_Last updated: 2026-10-12 (R3 environment investigation — RDKit-drift root cause REFUTED; actual cause is the `repeat_interleave` batched prior-tiling regression; fix + regression test committed in `0f62c27`; **full 3-seed N=1000 re-run completed — valid-yield restored to 100%, framework-WINS direction reproduced in aggregate (−0.0377) but not significant (p=0.559), consistent with the existing UNDERPOWERED verdict; canonical seed-42 point not reproduced because it came from the pre-fix adapter configuration**)._

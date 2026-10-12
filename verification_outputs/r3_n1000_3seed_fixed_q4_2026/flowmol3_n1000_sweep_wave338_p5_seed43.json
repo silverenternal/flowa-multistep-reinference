@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0.0",
+  "sweep_id": "wave338_p5_r3_n1000_paired_seed43",
+  "model": "flowmol3",
+  "checkpoint": "/home/hugo/codes/flowa-multistep-reinference/data/flowmol3/weights_real/checkpoints/last.ckpt",
+  "n_total_per_arm": 1000,
+  "nfe": 250,
+  "nfe_batch": 100,
+  "n_batches": 10,
+  "seed_base": 43,
+  "device": "cuda:0",
+  "paper_targets": {
+    "validity_pct": 0.999,
+    "pb_validity_pct": 0.919,
+    "fg_dev": 0.27,
+    "ood_ring_rate": 0.1
+  },
+  "baseline": {
+    "perturbation_sigma": 0.0,
+    "metrics": {
+      "validity_pct": 1.0,
+      "pb_validity_pct": 0.6202020202020202,
+      "fg_dev": 0.7875437702930053,
+      "ood_ring_rate": 0.03535353535353535,
+      "wallclock_s": 53.88
+    },
+    "n_sampled": 990,
+    "n_smiles": 1000,
+    "n_errors": 5,
+    "wallclock_sampling_s": 769.765,
+    "wallclock_metrics_s": 53.88,
+    "errors_sample": [
+      "dropped_smiles:[H]C([H])([H])OP(=O)(=O)C([H])([H])C([H])([H])[H]",
+      "dropped_smiles:[H]C([H])(Cl)C12S[SH]1#Cl2",
+      "dropped_smiles:[H]C(Cl)(Cl)C12[PH]#[SH]1S2",
+      "dropped_smiles:[H]C([H])(Cl)C1(Cl)Cl#Cl1",
+      "dropped_smiles:[H]OP(=O)(=O)N([H])[H]"
+    ]
+  },
+  "framework": {
+    "perturbation_sigma": 0.05,
+    "metrics": {
+      "validity_pct": 1.0,
+      "pb_validity_pct": 0.6198595787362087,
+      "fg_dev": 0.650807567672527,
+      "ood_ring_rate": 0.007021063189568706,
+      "wallclock_s": 44.833
+    },
+    "n_sampled": 997,
+    "n_smiles": 1000,
+    "n_errors": 3,
+    "wallclock_sampling_s": 1481.078,
+    "wallclock_metrics_s": 44.833,
+    "errors_sample": [
+      "dropped_smiles:[H]C([H])([H])C([H])(OP(=O)(=O)C(C([H])([H])[H])(C([H])([H])[H])C([H])([H])[H])C([H])([H])[H]",
+      "dropped_smiles:[H]OC(=O)C([H])([H])C([H])([C+](=O)[O-])C([H])([H])[H]",
+      "dropped_smiles:[H]C([H])([H])C([H])([H])OC(=O)C([H])([H])C1(C([H])([H])[H])SBr1"
+    ]
+  },
+  "timestamp": "2026-10-12T20:00:39+0800",
+  "paired_diff_fg_dev": -0.13673620262047825,
+  "verdict": "framework_wins"
+}
