@@ -163,7 +163,15 @@ promoted.
   no headline signal.
 - **Residual:** a tuned-baseline comparison on the fg_dev / RDKit-validity axis
   requires re-running FlowMol3 with `--paper-metrics` at elevated NFE (not done
-  here).
+  here). A fresh attempt was made — `tools/run_real_ckpt_eval.py --model
+  flowmol3` (and `flowmol3_v2`, `--n-molecules 4`) at NFE ∈ {50, 100, 200} with
+  `--force-mode real --metric-mode real --paper-metrics`
+  (`verification_outputs/gap12-flowmol3-tuned-nfe.json`,
+  `gap12-flowmol3v2-tuned-nfe.json`) — but the harness's FlowMol3 metric stays a
+  degenerate TIE (`0.073404`) and `--paper-metrics` degrades to `none`
+  (`no _PAPER_QUANTITY_PROFILES entry`), so it does not surface fg_dev. The
+  headline fg_dev requires the FlowMol3 v2 SOTA runner's `--baseline-nfe` path
+  (`tools/run_sota_flowmol3_v2_adapter_experiment.py`), not this harness.
 
 ### 4.3 R5a — 2D Two Moons
 

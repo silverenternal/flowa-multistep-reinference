@@ -174,9 +174,11 @@
       "id": "GAP-12-BASELINE",
       "priority": "P1",
       "owner": "agent(+gpu)",
-      "status": "OPEN",
-      "gap": "Baseline fairness: matched-NFE + at least one tuned baseline per headline cell (straw-man exposure).",
-      "acceptance": "tuned-baseline comparison exists per headline cell."
+      "status": "PARTIAL",
+      "gap": "Baseline fairness: matched-NFE + at least one tuned baseline per headline cell (straw-man exposure). 11 headline cells (R1,R2,R3,R5a,R5b,R5c,R6,K1,K4,K5,K7).",
+      "acceptance": "tuned-baseline comparison exists per headline cell.",
+      "progress": "7/11 decisive. NEW sweeps: R5b (baseline NFE {50,100,200} vs framework@50: baseline FID 447.89->443.75->439.25; framework wins 2/4->1/4->0/4 => the n_rounds=1 matched-NFE win does NOT survive baseline tuning, straw-man REAL) and R5c (baseline steps {50,100,200}: FID 29.4925->29.4890 step-insensitive; framework@matched 23.3879 BEATS => straw-man REFUTED). Structural (bare-RNG baseline, no compute knob): R1/R6/K4/K5/K7. Residual (documented, not promoted): R2 (Kanzi RMSD - harness metric saturated; needs RMSD-axis rerun), R3/K1 (FlowMol3 fg_dev/validity - harness TIE 0.073404 + paper-metrics degrades to none; needs run_sota_flowmol3_v2_adapter_experiment.py --baseline-nfe path), R5a (2D - current data file != canonical ablation model).",
+      "evidence": "docs/audit/gap12-tuned-baseline.md; verification_outputs/gap12-tuned-baseline-cifar.json; verification_outputs/gap12-mnist-tuned-baseline.json; verification_outputs/gap12-2d-tuned-baseline.json; verification_outputs/gap12-flowmol3-tuned-nfe.json"
     },
     {
       "id": "GAP-15-VENUE",
@@ -235,7 +237,7 @@
     "1. D-004B-ATTRIBUTION (P0): DONE 2026-10-13 - init-only ~ framework >> baseline; the R1 win is the per-record random INIT, not the restart-blend.",
     "2. GAP-01-R6-LIVE (P0, USER-AUTHORIZED): 3-seed x N=1000 live GPU sweep on cuda:0 - converts counterfactual-STRONG to live-STRONG.",
     "3. GAP-04-R5B-ROUNDS (P0): matched multi-seed round-count test - turns the R5b boundary into a law.",
-    "4. GAP-12-BASELINE (P1): tuned-baseline per headline cell.",
+    "4. GAP-12-BASELINE (P1): PARTIAL 2026-10-13 - 7/11 cells decisive (R5b straw-man REAL, R5c refuted, R1/R6/K4/K5/K7 structurally invariant); 4 residual (R2/R3/K1/R5a need headline-metric reruns).",
     "5. GAP-17-K2K6 (P2): DONE 2026-10-13 - honest disclosure retained (K6 env-blocked by un-pulled LFS ckpt).",
     "6. GAP-15-VENUE (user) + GAP-20-COVERLETTER (user) at submission time.",
     "DONE: GAP-02-R3-N1000 (2026-10-13); GAP-09-THEORY (2026-10-13); GAP-17-K2K6 (2026-10-13); D-004B-ATTRIBUTION (2026-10-13)."
