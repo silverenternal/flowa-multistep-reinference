@@ -683,8 +683,8 @@
   },
   "q1_hard_gap_assessment": {
     "date": "2026-10-12",
-    "assessed_at_head": "07098f6",
-    "assessed_by": "user request: 评估拿去发一区还存在哪些硬gap + 核查到底做到什么程度",
+    "assessed_at_head": "1db9ca4",
+    "assessed_by": "user request: 评估拿去发一区还存在哪些硬gap + 核查到底做到什么程度 (第二次评估; R1/R3/D-004 已完成)",
     "verdict": "工程/复现性是 TNNLS 一区水准；硬 gap 全部集中在实证强度轴。但核查后：几乎每个 gap 以前都尝试过，canonical live 证据大多已在盘上；真正的剩余项很窄。headline 结构 = 1 无条件(R2, 小效应+合成输入) + 3 条件/反事实(R5b 仅 n_rounds=1; R5c 仅 smoke ckpt; R6 仅 counterfactual)。",
     "corrections_to_first_pass_assessment": [
       "R6 不是『没有 live 证据』：Wave 161 frozen substrate 是真实 paired foldability 实测(baseline pLDDT 42.07 vs framework 43.20, +1.12 paired; sc_perplexity -3.92 paired)。只有 tier-aware 升级(d_z +0.071 -> +0.2235)是 counterfactual 数学。",
@@ -692,6 +692,77 @@
       "R1 不是『没测过 3-seed』：Wave 280 P 已跑 3-seed，但 seed=43/44 100% framework-fallback 污染 -> 作废；Wave 349 已做 N=20 zero-fallback 反证。只是从未重跑到干净 3-seed。",
       "Wave 361 的 R6 launch 失败是 metric-mismatch(跑成了 Kanzi reconstruction RMSD 驱动，非 R6 foldability 管线) + 1 行 import bug，不是 GPU 预算问题。"
     ],
+    "reassessment_2026_10_12": {
+      "date": "2026-10-12",
+      "assessed_at_head": "1db9ca4",
+      "trigger": "user: 评估拿去发一区还存在哪些硬gap + 核查到底做到什么程度 (第二次评估; R1/R3/D-004 已完成; user hypothesis: '我们快赢了')",
+      "changes_since_first_pass": [
+        "R1-3SEED-MATERIALIZE: OPEN -> DONE (real-ckpt 3-seed; pooled d_z=0.110, Bonferroni-sig 但 < 0.8 STRONG bar)",
+        "R3-N1000-3SEED: OPEN -> DONE (3-seed ACTUAL; mean -0.0377, p=0.559 不显著; 仍是 UNDERPOWERED)",
+        "D-004 LineageFlow real forward pass: BLOCKED -> DONE (adapter 现跑真实 LineageFlowClassifier)",
+        "剩余硬 gap 数: 6 -> 4 (R6-LIVE-TIERAWARE, R5B, R5C, THEORY)"
+      ],
+      "headline_structure_verdict": "11-cell = 4 STRONG + 1 TIE + 6 PARTIAL/SUPP。唯一的硬 gap 类型: 没有任何一个 cell 同时满足 (live + 无条件 + 强效应)。逐 cell: R1 live 3-seed 但 d_z=0.110<0.8; R2 无条件但小效应+合成输入; R3 live 3-seed 但不显著; R5b/R5c 条件性 (n_rounds=1 / smoke ckpt); R6 强效应但反事实。一区审稿人最可能问: 'unconditional, strong, live 的证据在哪?'",
+      "due_diligence_per_gap": {
+        "R6-LIVE-TIERAWARE": {
+          "live_evidence_on_disk": "Wave 161 frozen substrate (真实 GPU fold, N=1000 paired): pLDDT 42.07->43.20 (paired +1.12), sc_perplexity 17.88->13.96 (paired -3.92); 文件 verification_outputs/k6_foldability_n1000_w161_q3_2026/{baseline,framework}/summary.json; 但用的是旧 cosine+framework 路径, NOT TierAwareCodimensionSheetScheduler",
+          "counterfactual_only": "tier-aware uplift d_z=+0.2235 (verification_outputs/wave233-p3-tier-aware-r6.json), best 20-cell grid d_z=+0.6467 (verification_outputs/wave235-p3-r6-uplift.json) — 全部是 CPU-only 常数偏移 math, 作用在 Wave 161 的 frozen paired diff 上",
+          "why_wave361_failed": "(a) 目标 launch 被 tools/sweep_kanzi_n1000_diverse.py:105 的 import bug 挡住 — 已修 (commit d252269, 2026-10-12); (b) 实际 fallback 跑的是 tools/sweep_kanzi_n1000_framework_paper_metrics.py, 一个 Kanzi DAE 工具 (量 reconstruction_kabsch_rmsd_A), 不是 R6 的 OmegaFold pLDDT / ESM-IF sc_perplexity — 模型+指标都量错了",
+          "genuinely_left": "(i) 不存在能重建 TierAwareCodimensionSheetScheduler framework 臂的 driver (~4-8h 工程); (ii) live 3-seed x N=1000 x 2-arm fold+ESM-IF on cuda:0 (~26-53 GPU-h; fold-only ~5h)",
+          "progress": "live 转换 0% — 反事实文档完整, live 一点没跑",
+          "doc_defects_found": [
+            "wave361-r6-launch-discrepancy.md:27 与 wave361-r6-forensic-evidence-chain.md:50 对用户 '0.8' 的读数矛盾 (RMSD A vs pLDDT)",
+            "wave361-r6-forensic-evidence-chain.md:91 误写 best grid cell easy_factor=0.1 (实际 wave235-p3 是 0.0)"
+          ],
+          "smallest_next_step": "先写一个能跑 TierAwareCodimensionSheetScheduler framework 臂的 driver, 再上 cuda:0 fold-only pilot"
+        },
+        "R5B-MULTISEED-ROUNDCOUNT": {
+          "measured": [
+            "n_rounds=1, 3 seeds, N=100: framework_WINS 全 3 seed; pooled d_z per scheduler 3.94-4.34, overall 4.21 (verification_outputs/wave247-p2-r5b-multiseed.json:221-229)",
+            "n_rounds=1, seed42, N=1000: 仅 2/4 改善 (verification_outputs/wave247-p3-r5b-n1000-n1/summary.json)",
+            "n_rounds=2, seed42 only, N=200: REGRESSES 4/4, +9.77%..+16.62% (verification_outputs/wave225-p7-r5b-reduced-rounds.json)",
+            "n_rounds=20, 单 seed, N=500: REGRESSES 4/4, +24.46%..+30.65%, p_bonf=9.17e-5 (verification_outputs/wave206-p6-honest-negative-curve.json)"
+          ],
+          "genuinely_left": "{1,2,3}x4 sched x3 seeds matched-NFE grid 不存在; n_rounds=3 从未测过; 两个回归点都是单 seed (seed42)",
+          "progress": "win 真实但只覆盖 n_rounds=1; 损失单 seed。cheapest closure 之一",
+          "smallest_next_step": "用现有 driver 重跑 n_rounds=2 N=200 加 seeds 43/44, 再加 n_rounds=3 (~10 min GPU each)"
+        },
+        "R5C-MATCHED-ARCH": {
+          "measured": [
+            "smoke: epochs=1, 8ch, 6K, N=1000 x1seed -> -28.43%, d_z=-13.18, p=3.95e-11, framework_wins",
+            "intermediate: epochs=2, 16ch, 60K, N=200 x1seed -> +8.53%, d_z=+1.16, baseline_wins",
+            "production: epochs=3, 16ch, 60K, N=200 x3seed -> +10.37%, d_z=+1.30, p=1.33e-2, baseline_wins (verification_outputs/wave280-p-r5c/aggregate.json)"
+          ],
+          "ckpts_on_disk": "data/mnist_fm.npz (8ch/6K); data/mnist_fm/epochs2.ckpt.npz + production.ckpt.npz (both 16ch/60K); 无 epochs=1/16ch ckpt",
+          "genuinely_left": "matched-arch (仅 epochs 变) 多 ckpt + seed 复现。WINS->LOSS 翻转 (epochs 1->2) 混杂 (8 vs 16 ch, 6K vs 60K); 唯一 clean matched-arch 转变是 epochs 2->3, 两端都 baseline_wins (回归加深 +8.53%->+10.37%); 无任何 matched-arch 点 framework_wins",
+          "progress": "clean matched-arch 数据目前只显示 baseline-wins 且加深 — '快赢了' 对 R5C overstated",
+          "smallest_next_step": "materialize epochs=1 at 16ch/60K (~10-15 min CPU, tools/materialize_mnist_fm.py) 然后 N=200 sweep (~3.6 min)"
+        },
+        "THEORY-TESTABLE-CRITERION": {
+          "proves": "Thm4 conditional contraction (q=mK<1, 明确 'does not predict the observed FID sign'); Thm5 exact blend identity Eq.7 (明确 'not an FID bound')",
+          "retracted": "Wave 372: 旧 Thm5 衰减界 sign error (RHS 对 k>=2 strictly negative); covariance cross-term 符号错 (应 +2m(1-m)Cov); 旧 Thm4 Gronwall 指数衰减 unsupported (local Lipschitz 只给 stability, 不给 rate)",
+          "testable_criterion_hit": "无 (live theorems)。唯一 near-hit Wave 351 P3 是在已撤回的 bound 上 + 合成 RF velocity field, 且 'prediction' 结构性 guaranteed — 不是 test",
+          "genuinely_left": "一个在 >=1 cell 命中方向的可测判据; 但结构性障碍: 定理给 endpoint-L2 陈述, FID 是 distributional feature distance — 可能不存在 bridge",
+          "progress": "genuinely open; FID-sign criterion 是 low-ROI dead end。已正确 reposition 为 'regime-boundary diagnostics' (Waves 372/373/379/380)。GAP-09 仍 OPEN",
+          "recommendation": "维持 repositioned 定位; 不建议再追 FID-sign bridge"
+        }
+      },
+      "is_it_true_we_are_close_to_winning": {
+        "verdict": "部分成立, 但被高估",
+        "supported": [
+          "工程/复现性已达一区水准 (14 PASS + 7 invariants + vendored byte-identical + D.4)",
+          "大量 canonical live 证据在盘 (Wave 161 R6 fold, Wave 82/87 R3, Wave 158 R1)",
+          "R1 / R3 / D-004 三个 gap 本轮已关闭",
+          "R5B 的 win 真实 (3-seed d_z 4.21) 且 closure 便宜 (~30 min GPU)"
+        ],
+        "overstated": [
+          "R6: live 转换 0%, 且需要一个尚不存在的 driver (~4-8h 工程) + ~26-53 GPU-h",
+          "R5C: clean matched-arch 只有 baseline-wins 且加深",
+          "THEORY: 结构性 dead end, 非 '快赢了'"
+        ],
+        "single_hardest_point": "无任何 cell 同时满足 live + 无条件 + 强效应"
+      }
+    },
     "gaps": [
       {
         "id": "R6-LIVE-TIERAWARE",
@@ -710,8 +781,9 @@
           "docs/audit/wave361-r6-launch-discrepancy.md",
           "docs/audit/wave361-r6-forensic-evidence-chain.md"
         ],
-        "resource": "~26-53 GPU-h (cuda:0 ONLY) 或 fold-only ~5h；先修 tools/sweep_kanzi_n1000_diverse.py:105 的 import 或改用正确驱动",
-        "status": "OPEN (counterfactual 证据完整；live 转换未做)"
+        "resource": "~26-53 GPU-h (cuda:0 ONLY) 或 fold-only ~5h。注: import bug (tools/sweep_kanzi_n1000_diverse.py:105) 已于 d252269 修复; 但真正的 blocker 是缺一个 TierAwareCodimensionSheetScheduler framework-arm driver (~4-8h 工程)",
+        "status": "OPEN (counterfactual 证据完整；live 转换未做)",
+        "audit_2026_10_12": "见 reassessment_2026_10_12.due_diligence_per_gap.R6-LIVE-TIERAWARE。关键核查: Wave 161 frozen substrate 是真实 live fold (pLDDT +1.12 / scPerp -3.92) 但用旧路径; tier-aware uplift (d_z +0.2235 / best +0.6467) 是 CPU-only 反事实; Wave 361 fallback 跑成 Kanzi DAE (量错模型+指标); live 转换 0%"
       },
       {
         "id": "R3-N1000-3SEED",
@@ -832,8 +904,9 @@
           "Wave 336 R5b 机制审计 (docs/audit/wave336-r5b-mechanism.md)"
         ],
         "genuinely_left": "共享 ckpt、只变 round count 的 matched-protocol 多 seed 扫描 (n_rounds in {1,2,3} x 4 schedulers x 3 seeds, matched NFE)",
-        "resource": "GPU sweep + 设计",
-        "status": "OPEN"
+        "resource": "~30 min GPU (重跑 n_rounds=2 N=200 + seeds 43/44, 补 n_rounds=3; ~10 min/point)",
+        "status": "OPEN",
+        "audit_2026_10_12": "见 reassessment_2026_10_12.due_diligence_per_gap.R5B-MULTISEED-ROUNDCOUNT。关键核查: n_rounds=1 有 3-seed 支持 (pooled d_z 4.21); n_rounds=2 与 n_rounds=20 的 REGRESSES 都只测了 seed42; n_rounds=3 从未测过"
       },
       {
         "id": "R5C-MATCHED-ARCH",
@@ -844,7 +917,8 @@
           "production ckpt 3-seed baseline-wins +10.37% (verification_outputs/wave280-p-r5c/aggregate.json)"
         ],
         "genuinely_left": "matched-architecture (仅 epochs 变) 的多 ckpt + seed 复现；当前 epochs=1->2 混杂(8 vs 16 channels, 6K vs 60K imgs)",
-        "status": "OPEN"
+        "status": "OPEN",
+        "audit_2026_10_12": "见 reassessment_2026_10_12.due_diligence_per_gap.R5C-MATCHED-ARCH。关键核查: 唯一 clean matched-arch 转变 (epochs 2->3) 两端都 baseline_wins 且回归加深 (+8.53%->+10.37%); 无任何 matched-arch 点 framework_wins; 缺 epochs=1/16ch ckpt"
       },
       {
         "id": "THEORY-TESTABLE-CRITERION",
@@ -856,7 +930,8 @@
           "Wave 372 已撤回残差指数率与首轮 FID 符号界 (docs/audit/wave372-manuscript-claim-audit.md)"
         ],
         "genuinely_left": "一个可测判据(在 >=1 个 cell 上命中方向)；否则定理保持 conditional diagnostic 定位",
-        "status": "OPEN (定位已诚实；不建议再投入率/符号界)"
+        "status": "OPEN (定位已诚实；不建议再投入率/符号界)",
+        "audit_2026_10_12": "见 reassessment_2026_10_12.due_diligence_per_gap.THEORY-TESTABLE-CRITERION。关键核查: Thm4/Thm5 均明确 disclaim FID 连接; 旧衰减界因 sign error 被 Wave 372 撤回; 唯一 near-hit (Wave 351 P3) 建立在已撤回 bound + 合成 RF field 上; 结构性 dead end (endpoint-L2 vs distributional feature distance)"
       }
     ],
     "not_real_gaps_already_canonical": [
@@ -866,10 +941,11 @@
       "文档漂移(标题/页数/SHA): Wave 384 已系统性刷新，非实证 gap"
     ],
     "recommended_attack_order": [
-      "1. R1-3SEED-MATERIALIZE (~2.5h, 配方已备, 最高性价比)",
-      "2. R6-LIVE-TIERAWARE (先修 1 行 import/换驱动，再 ~5h fold-only 或 ~26-53h full)",
-      "3. R3-N1000-3SEED (RDKit 容器复现，最麻烦，但把 PROJECTED 变 ACTUAL)",
-      "4. R5B / R5C / THEORY (视预算)"
+      "1. R6-LIVE-TIERAWARE (最高杠杆: 把唯一强效应 cell 从 counterfactual 转 live; 但最贵: 先写 ~4-8h driver, 再 ~5h fold-only 或 ~26-53h full)",
+      "2. R5B-MULTISEED-ROUNDCOUNT (~30 min GPU: n_rounds=2 加 seeds 43/44 + 补 n_rounds=3; cheapest closure)",
+      "3. R5C-MATCHED-ARCH (~20 min: materialize epochs=1@16ch/60K + N=200 sweep; 去混杂)",
+      "4. THEORY-TESTABLE-CRITERION (低 ROI: 维持 repositioned 定位, 不建议再追 FID-sign bridge)",
+      "note: R1 / R3 / D-004 本轮已完成, 从原列表移除 (见 reassessment_2026_10_12)"
     ],
     "cross_refs": [
       "todo/SUBMISSION-GAP-CHECKLIST.md",
