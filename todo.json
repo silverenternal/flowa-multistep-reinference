@@ -2,7 +2,7 @@
   "schema_version": "flowa-state-v2",
   "purpose": "Single management surface for the FlowA / TNNLS submission. Replaces the former repo-root todo.json AND the entire todo/ directory (deleted 2026-10-13 by user directive). Records: current state, binding gates, the R/K evidence ledger, the LineageFlow real-forward (D-004/D-004b) saga, the open Tier-1 gaps, an honest one-screen assessment, and the recommended attack order. No frozen surface (docs/CLAIMS.md, docs/CONSOLIDATED_RESULTS.md, docs/drafts/paper-A-final.*, tnnls_submission/) is changed by edits to this file.",
   "updated_at": "2026-10-13",
-  "head": "14bf0ae",
+  "head": "ea1e36a",
   "policy": {
     "no_push": true,
     "commit_footer": "(USER AUTHORIZED, NO PUSH)",
@@ -186,14 +186,17 @@
       "owner": "user",
       "status": "OPEN",
       "gap": "Venue-fit decision: TNNLS vs repositioning to a systems/applications venue.",
-      "acceptance": "venue decided; positioning matches."
+      "acceptance": "venue decided; positioning matches.",
+      "agent_action": "none - owner=user. Not agent-executable: it is a positioning/venue decision that changes the paper narrative and the submission target."
     },
     {
       "id": "GAP-20-COVERLETTER",
       "priority": "P2",
       "owner": "user",
       "status": "OPEN",
-      "gap": "17 [USER TO FILL] placeholders in tnnls_submission/cover_letter.md."
+      "gap": "17 [USER TO FILL] placeholders in tnnls_submission/cover_letter.md.",
+      "agent_action": "none - owner=user. Not agent-executable: only the author can supply the names/affiliations/emails.",
+      "observed_state": "tnnls_submission/cover_letter.md currently holds 12 '[USER TO FILL: ...]' placeholders (authors block, suggested associate editor, 5 suggested reviewers + affiliations, corresponding-author name/affiliation/email); todo.json had recorded 17. The 12 match FILL_GUIDE.md's enumerated list; the extra mentions elsewhere in the package are references to the convention, not placeholders."
     }
   ],
   "resolved_gaps": [
@@ -239,7 +242,7 @@
     "3. GAP-04-R5B-ROUNDS (P0): matched multi-seed round-count test - turns the R5b boundary into a law.",
     "4. GAP-12-BASELINE (P1): PARTIAL 2026-10-13 - 9/11 resolved (R5b straw-man REAL, R5c refuted, R5a well-averaged win not robust, R1/R6/K4/K5/K7 + R2 structurally invariant); 2 residual (R3/K1 need the real FlowMol3 production-ckpt pipeline).",
     "5. GAP-17-K2K6 (P2): DONE 2026-10-13 - honest disclosure retained (K6 env-blocked by un-pulled LFS ckpt).",
-    "6. GAP-15-VENUE (user) + GAP-20-COVERLETTER (user) at submission time.",
+    "6. GAP-15-VENUE (user) + GAP-20-COVERLETTER (user): USER-GATED - not agent-executable (venue decision; 12 author-supplied placeholders in cover_letter.md). Reported back to the user 2026-10-13.",
     "DONE: GAP-02-R3-N1000 (2026-10-13); GAP-09-THEORY (2026-10-13); GAP-17-K2K6 (2026-10-13); D-004B-ATTRIBUTION (2026-10-13)."
   ],
   "removed_surfaces": {
