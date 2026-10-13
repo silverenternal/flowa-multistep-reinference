@@ -24,8 +24,9 @@ the same FlowMol3 model) remain residual.
 
 - **2 NEW baseline-compute sweeps**: R5b (straw-man **REAL**), R5c (straw-man
   **REFUTED**).
-- **1 NEW well-averaged protocol run**: R5a — the canonical 4.6× win **does not
-  survive** a well-averaged baseline (straw-man **REAL**; §4.3).
+- **1 NEW well-averaged protocol run**: R5a — a TIE cell; the run **corroborates**
+  the TIE (straw-man **N/A**; §4.3). (The 4.6× `twodim_fm_2d_ablation` is the
+  separate **R4** experiment, not R5a.)
 - **6 structurally compute-invariant**: R1, R6, K4, K5, K7 (LineageFlow bare-RNG
   baseline — no solver) and R2 (Kanzi — DAE encode, no NFE knob; §4.1).
 - **2 residual**: R3, K1 (FlowMol3 fg_dev / RDKit validity — needs the heavy
@@ -35,7 +36,7 @@ the same FlowMol3 model) remain residual.
 |---|---|---|---|---|
 | **R5b** | CIFAR-10 RF | FID | **NEW sweep** — win does NOT survive (framework loses 4/4 at baseline NFE=200) | `gap12-tuned-baseline-cifar.json` + Wave 225 P9 |
 | **R5c** | MNIST FM | FID | **NEW sweep** — win SURVIVES (baseline step-insensitive) | `gap12-mnist-tuned-baseline.json` |
-| **R5a** | 2D Two Moons | W2 | **NEW well-averaged run** — win does NOT survive (1/4 schedulers beat baseline, +5.6 %) | `gap12-2d-sota-wellaveraged/` |
+| **R5a** | 2D Two Moons | W2 | **NEW well-averaged run** — TIE corroborated (1/4 schedulers beat baseline, +5.6 %; cell is already a TIE) | `gap12-2d-sota-wellaveraged/` |
 | R1 | LineageFlow | hmmscan hits | **structurally invariant** (bare-RNG baseline) | this doc §3 + `wave183-p4` |
 | R6 | LineageFlow k6 | pLDDT / scPerp | **structurally invariant** | this doc §3 |
 | K4 | LineageFlow | hmmscan hits | **structurally invariant** | this doc §3 |
@@ -196,34 +197,37 @@ none. The concern is structurally impossible for these five cells.
   Deferred here only because both GPUs are occupied by the GAP-01 / GAP-04
   sweeps.
 
-### 4.3 R5a — 2D Two Moons — **straw-man REAL (magnitude not robust)**
+### 4.3 R5a — 2D Two Moons — **TIE; straw-man not applicable (cell is not a win)**
 
-- The canonical headline (`verification_outputs/g1_deep_dive_q3_2026.json`, row
-  `twodim_fm_2d_ablation`: baseline W2 2.85 → framework W2 0.62, 4.6×) is
-  produced by `tools/run_ablation.py`. Reproduced fresh (seed 42):
-  `single_pass` final_w2 = **2.6691** (1 round), `multi_round_no_restart`
-  final_w2 = **0.3482** (20 rounds). The canonical protocol is reproduced.
-- **Sample-count confound:** `ReInferenceResult.endpoints` is `(n_rounds, 2)`
-  (`adaptive_reflow/algorithm/runner/runner.py:240`), so the ablation's W2 is
-  computed over **1 point** (`single_pass`) vs **20 points**
-  (`multi_round_no_restart`). `multi_round_no_restart` uses `beta=1.0`
-  (memory_fraction = 0 → full fresh noise each round), i.e. the 20 endpoints are
-  **20 independent draws**. The 4.6× "win" therefore confounds sample count with
-  the framework effect.
-- **Well-averaged protocol** (`tools/run_sota_2d_experiment.py`, 1000
-  samples/round × 20 rounds, seed 0; same adapter/weights/evaluator for both
-  arms): baseline W2 = **0.0790**; framework per scheduler — CosineAnneal
-  0.0866 (−9.7 %), **CodimensionSheet 0.0746 (+5.6 %), the only win**,
-  EvidenceDriven 0.0834 (−5.6 %), FreeTraj 0.0822 (−4.0 %). Only **1 of 4**
-  schedulers beats the baseline, and only by **+5.6 %** — not 4.6×. Evidence:
+- The R5a headline is a **TIE**, not a framework win: 2D Two Moons $W_2$, $n=3$
+  unpaired seeds, Cohen's $d_s = +0.460$, $|\Delta| = 0.00232 <
+  \text{min\_effect\_size} = 0.01$, raw $p = 0.604$ (paper §7.2 R5a row;
+  `docs/CLAIMS.md` CLM-060). The straw-man concern ("the framework wins only
+  because the baseline was denied compute") does not apply to a TIE cell —
+  there is no win to defend.
+- **Well-averaged confirmation** (`tools/run_sota_2d_experiment.py`, 1000
+  samples/round × 20 rounds, seed 0 — the *same* protocol as the R5a headline;
+  same adapter/weights/evaluator for both arms): baseline $W_2$ = **0.0790**;
+  framework per scheduler — CosineAnneal 0.0866 (−9.7 %), **CodimensionSheet
+  0.0746 (+5.6 %)**, EvidenceDriven 0.0834 (−5.6 %), FreeTraj 0.0822 (−4.0 %).
+  Only **1 of 4** schedulers beats the baseline, and only by **+5.6 %** —
+  consistent with the TIE label. Evidence:
   `verification_outputs/gap12-2d-sota-wellaveraged/` (comparison.md + per-arm
   CSVs + summary.json).
-- **Verdict:** the R5a headline magnitude is **not robust to the baseline's
-  sample count**. The canonical ablation's small-sample baseline makes the
-  framework look 4.6× better; under a well-averaged baseline the framework is at
-  near-parity (1/4 schedulers win, +5.6 %). Caveat: the two protocols differ in
-  sample count and scoring path, so this is a **magnitude** exposure, not a
-  claim that the canonical run is wrong.
+- **Separate experiment (NOT R5a):** the `twodim_fm_2d_ablation` row
+  (`verification_outputs/g1_deep_dive_q3_2026.json`, baseline $W_2$ 2.85 →
+  framework 0.62, 4.6×) is the **R4 2D FM ablation**, explicitly documented in
+  the paper (§7.2 R5a row) as a *distinct measurement* from R5a. Reproduced
+  fresh (seed 42): `single_pass` 2.6691 → `multi_round_no_restart` 0.3482. In
+  that ablation the $W_2$ is computed over
+  `ReInferenceResult.endpoints = (n_rounds, 2)`
+  (`adaptive_reflow/algorithm/runner/runner.py:240`) — **1 point**
+  (`single_pass`) vs **20 points** (`multi_round_no_restart`, `beta=1.0` → 20
+  independent draws), so its magnitude is sample-count-confounded. Recorded as
+  an **R4 note only**: R4 is not one of the 11 headline cells, so it is outside
+  GAP-12's scope.
+- **Verdict:** R5a is a TIE and stays a TIE; the well-averaged run corroborates
+  it. No straw-man exposure on R5a.
 - The earlier attempt `scripts/gap12_2d_tuned_baseline.py` (retained) swept the
   adapter `num_steps` ∈ {100, 200} but gave identical W2 (0.08284) at both —
   because the runner hardcodes `delta_spec={"num_steps": 100}`

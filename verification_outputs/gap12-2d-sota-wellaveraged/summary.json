@@ -20,6 +20,7 @@
   "framework_best_scheduler": "CodimensionSheetScheduler",
   "framework_wins_of_4": 1,
   "headline_pct_improvement": -0.32203970266678295,
-  "canonical_ablation": {"baseline_w2": 2.85, "framework_w2": 0.62, "ratio": 4.6},
-  "verdict": "straw-man REAL: the canonical 4.6x R5a win does not survive a well-averaged baseline; only 1/4 schedulers beats the baseline and only by +5.6%"
+  "r5a_paper_headline": {"status": "TIE", "metric": "2D Two Moons W2", "n_unpaired_seeds": 3, "cohens_d_s": 0.460, "abs_delta": 0.00232, "min_effect_size": 0.01},
+  "r4_ablation_note": {"row": "twodim_fm_2d_ablation", "baseline_w2": 2.85, "framework_w2": 0.62, "ratio": 4.6, "separate_experiment": true},
+  "verdict": "R5a is a TIE cell (paper §7.2); this well-averaged run corroborates near-parity (1/4 schedulers beat baseline, +5.6%). Straw-man concern is N/A for a TIE. The 4.6x twodim_fm_2d_ablation is the separate R4 experiment, outside the 11-cell scope."
 }
