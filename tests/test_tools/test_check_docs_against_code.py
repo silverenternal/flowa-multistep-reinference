@@ -197,6 +197,29 @@ def test_inline_filename_stem_tokens_are_skipped() -> None:
     assert checker._filename_stems("MeanFlowMergeOperator.{t, s}") == set()
 
 
+def test_inline_dir_brace_glob_paths_are_skipped() -> None:
+    """A ``dir/{a.ext,b.ext}`` file-glob pointer names artefacts, so the
+    directory token must not become an inline-symbol claim; a
+    ``dir/{Foo,Bar}.py`` glob (extension outside the brace) must keep its
+    symbols.
+    """
+    assert checker._is_dir_brace_glob_path(
+        "paper-data/R2_kanzi_rmsd/{R2_SOURCE.md,REPRODUCIBILITY_RECIPE.md}"
+    )
+    assert not checker._is_dir_brace_glob_path(
+        "adaptive_reflow/algorithm/{CosineAnneal,CodimensionSheet}.py"
+    )
+    assert not checker._is_dir_brace_glob_path("SigmoidScheduler.{midpoint, steepness}")
+
+    claims = checker._scan_inline_backticks(
+        "See `paper-data/R2_kanzi_rmsd/{R2_SOURCE.md,REPRODUCIBILITY_RECIPE.md}`.\n",
+        Path("DOC.md"),
+        set(),
+        set(),
+    )
+    assert claims == []
+
+
 def test_inline_path_crossrefs_keep_symbol_tokens() -> None:
     """``path::Symbol`` / ``path:Symbol`` cross-references keep their
     non-stem tokens so the symbol is still verified, and arithmetic

@@ -1073,6 +1073,28 @@ _FILENAME_BRACE_RE: re.Pattern[str] = re.compile(
 )
 
 
+#: Matches a ``dir/{a.ext,b.ext}`` brace-glob artefact pointer, where every
+#: brace part is a whole filename (the extension sits *inside* the brace).
+#: ``paper-data/R2_kanzi_rmsd/{R2_SOURCE.md,REPRODUCIBILITY_RECIPE.md}``
+#: names files, so the directory token ``R2_kanzi_rmsd`` must not become an
+#: inline-symbol claim. A ``dir/{Foo,Bar}.py`` glob (extension outside the
+#: brace) is NOT matched, so its symbols are still verified.
+_DIR_BRACE_GLOB_RE: re.Pattern[str] = re.compile(
+    r"[A-Za-z0-9_./-]+/\{(?P<inner>[^}]*)\}"
+)
+
+
+def _is_dir_brace_glob_path(payload: str) -> bool:
+    """True when ``payload`` is a ``dir/{a.ext,b.ext}`` file-glob pointer."""
+    for m in _DIR_BRACE_GLOB_RE.finditer(payload):
+        parts = [p.strip() for p in m.group("inner").split(",") if p.strip()]
+        if parts and all(
+            p.rsplit(".", 1)[-1].lower() in _PATH_LIKE_EXTENSIONS for p in parts
+        ):
+            return True
+    return False
+
+
 def _filename_stems(payload: str) -> set[str]:
     """Return the set of filename-stem tokens in an inline payload.
 
@@ -1110,6 +1132,10 @@ def _scan_inline_backticks(
     for line_no, line in enumerate(lines, start=1):
         for match in BACKTICK_RE.finditer(line):
             payload = match.group(1).strip()
+            # A ``dir/{a.ext,b.ext}`` file-glob pointer names artefacts, not
+            # symbols -- skip it (see ``_is_dir_brace_glob_path``).
+            if _is_dir_brace_glob_path(payload):
+                continue
             # A token that is the *stem of a filename* (``METRIC_LEDGER``
             # in ``docs/METRIC_LEDGER.md``, ``Theorem5Subclaim51`` in
             # ``Theorem5Subclaim51.lean``) is an artefact pointer, not a
