@@ -118,6 +118,15 @@ def main() -> int:
     p.add_argument("--gpu", type=str, default="0")
     p.add_argument("--skip-generate", action="store_true")
     p.add_argument("--skip-fold", action="store_true")
+    p.add_argument("--fold-baseline", action="store_true",
+                   help="Also fold the fresh per-seed baseline arm into "
+                        "seed*/baseline/foldability/ (skipped when the JSONL "
+                        "already exists). Needed for a valid within-seed "
+                        "pairing: the baseline RNG is seeded by --seed.")
+    p.add_argument("--pair-with", choices=("frozen", "fresh"), default="frozen",
+                   help="Pair the framework arm against the frozen Wave 161 "
+                        "baseline (legacy; only valid for seed 42) or against "
+                        "the seed-matched fresh baseline fold.")
     args = p.parse_args()
 
     seeds = [int(s) for s in args.seeds.split(",") if s.strip()]
@@ -161,6 +170,26 @@ def main() -> int:
         base_identical = (len(fseq) == len(nseq) and fseq == nseq)
         print(f"[seed {seed}] baseline byte-identical to frozen: {base_identical}")
 
+        # ---- 1b. fold the FRESH baseline arm (required for a valid
+        # within-seed pairing: ``_write_baseline_arm`` seeds its RNG with
+        # ``--seed``, so only seed 42 reproduces the frozen Wave 161
+        # baseline; seeds 43/44 draw different sequences). ----
+        base_fold_dir = sdir / "baseline" / "foldability"
+        if args.fold_baseline and not (base_fold_dir / "foldability.jsonl").exists():
+            cmd = [
+                str(OMEGAFOLD_PY), str(RUN_FOLD),
+                "--fasta", str(sdir / "fasta" / "baseline.fasta"),
+                "--outdir", str(base_fold_dir),
+                "--omegafold-bin", OMEGAFOLD_BIN,
+                "--fold-gpus", str(args.gpu), "--sc-gpus", str(args.gpu),
+                "--max-seqs", str(args.n),
+                "--skip-sc", "--no-plots", "--log-every", "60",
+            ]
+            rc = _run(cmd, env=env, log=log)
+            if rc != 0:
+                print(f"[seed {seed}] baseline fold failed rc={rc}")
+                return 1
+
         # ---- 2. fold framework arm ----
         fw_fold_dir = sdir / "framework" / "foldability"
         if not args.skip_fold:
@@ -178,14 +207,22 @@ def main() -> int:
                 print(f"[seed {seed}] fold failed rc={rc}")
                 return 1
 
+        if args.pair_with == "fresh":
+            base_map = _load_jsonl(base_fold_dir / "foldability.jsonl")
+        else:
+            base_map = base_plddt
         fw_plddt = _load_jsonl(fw_fold_dir / "foldability.jsonl")
-        common = sorted(set(base_plddt) & set(fw_plddt),
+        common = sorted(set(base_map) & set(fw_plddt),
                         key=lambda q: int(q[1:]))
-        b = np.array([base_plddt[q] for q in common], dtype=float)
+        b = np.array([base_map[q] for q in common], dtype=float)
         f = np.array([fw_plddt[q] for q in common], dtype=float)
         res = _paired(b, f)
         res["seed"] = seed
         res["baseline_byte_identical"] = bool(base_identical)
+        res["baseline_source"] = (
+            "fresh seed-matched fold" if args.pair_with == "fresh"
+            else "frozen Wave 161 (seed 42)"
+        )
         res["n_framework_folded"] = int(len(fw_plddt))
         res["tier_aware_n_cap"] = float(args.tier_aware_n_cap)
 
@@ -206,9 +243,13 @@ def main() -> int:
     all_b, all_f = [], []
     for seed in seeds:
         sdir = outdir / f"seed{seed}"
+        if args.pair_with == "fresh":
+            base_map = _load_jsonl(sdir / "baseline" / "foldability" / "foldability.jsonl")
+        else:
+            base_map = base_plddt
         fw_plddt = _load_jsonl(sdir / "framework" / "foldability" / "foldability.jsonl")
-        common = sorted(set(base_plddt) & set(fw_plddt), key=lambda q: int(q[1:]))
-        all_b.extend(base_plddt[q] for q in common)
+        common = sorted(set(base_map) & set(fw_plddt), key=lambda q: int(q[1:]))
+        all_b.extend(base_map[q] for q in common)
         all_f.extend(fw_plddt[q] for q in common)
     pooled = _paired(np.array(all_b), np.array(all_f))
 
@@ -218,6 +259,7 @@ def main() -> int:
         "n_per_seed": int(args.n),
         "tier_aware_n_cap": float(args.tier_aware_n_cap),
         "gpu": str(args.gpu),
+        "pair_with": str(args.pair_with),
         "baseline_source": str(FROZEN_BASELINE.relative_to(REPO)),
         "per_seed": results,
         "pooled": pooled,
