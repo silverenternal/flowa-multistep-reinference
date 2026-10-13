@@ -2,9 +2,9 @@
   "schema_version": "flowa-state-v3",
   "purpose": "Open work only: what still stands between the current HEAD and submission. State, the 11-cell evidence ledger, the publication assessment, the binding policy and the gate snapshot live in docs/audit/todo-history.md (2026-10-13 user directive: this file answers only 'what is left to do').",
   "updated_at": "2026-10-13",
-  "head": "8a9fed4f",
+  "head": "d56993c5",
   "history": "docs/audit/todo-history.md",
-  "note": "The Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is already Tier-1 grade - do not spend effort there). DONE: GAP-24 (regime law, docs/audit/gap24-boundary-law.md) and GAP-25 (R1 blend isolation + <=+46-hit equivalence bound, docs/audit/gap25-r1-blend-isolation.md). Remaining: GAP-26 (R5b tuned-baseline regime), GAP-27 (R3 power), GAP-28 (R6 faithful live), then GAP-29 (manuscript density + the optional R1 disclosure).",
+  "note": "The Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is already Tier-1 grade - do not spend effort there). DONE: GAP-24 (regime law), GAP-25 (R1 blend isolation), GAP-26 (R5b bound - no tested protocol survives a tuned baseline; the GAP-24 law reproduces the flip). Remaining: GAP-27 (R3 power), GAP-28 (R6 faithful live), then GAP-29 (manuscript density + the optional R1 disclosure).",
   "gate_chain": [
     "python tools/verify_submission_readiness.py",
     "python tools/check_claims_consistency.py",
@@ -16,15 +16,6 @@
   "no_push": true,
   "commit_footer": "(USER AUTHORIZED, NO PUSH)",
   "open_gaps": [
-    {
-      "id": "GAP-26-R5B-REGIME",
-      "priority": "P0",
-      "owner": "agent(+gpu)",
-      "status": "OPEN",
-      "gap": "R5b n_rounds=1 wins at matched NFE but LOSES 4/4 at baseline NFE=200; n_rounds>=2 regresses. Find whether any protocol (scheduler / NFE / round schedule) survives a tuned baseline, or sharply bound the surviving regime.",
-      "acceptance": "a surviving configuration documented, OR a precise boundary condition that the GAP-24 law reproduces.",
-      "evidence": "docs/audit/gap12-tuned-baseline.md section 4; docs/audit/gap04-r5b-rounds.md"
-    },
     {
       "id": "GAP-27-R3-POWER",
       "priority": "P1",
