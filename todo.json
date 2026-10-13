@@ -2,7 +2,7 @@
   "schema_version": "flowa-state-v2",
   "purpose": "Single management surface for the FlowA / TNNLS submission. Replaces the former repo-root todo.json AND the entire todo/ directory (deleted 2026-10-13 by user directive). Records: current state, binding gates, the R/K evidence ledger, the LineageFlow real-forward (D-004/D-004b) saga, the open Tier-1 gaps, an honest one-screen assessment, and the recommended attack order. No frozen surface (docs/CLAIMS.md, docs/CONSOLIDATED_RESULTS.md, docs/drafts/paper-A-final.*, tnnls_submission/) is changed by edits to this file.",
   "updated_at": "2026-10-13",
-  "head": "ea1e36a",
+  "head": "0b0d85b",
   "policy": {
     "no_push": true,
     "commit_footer": "(USER AUTHORIZED, NO PUSH)",
@@ -163,14 +163,6 @@
       "acceptance": "live 3-seed paired d_z >= +0.2235; R6 label becomes live-GPU-STRONG."
     },
     {
-      "id": "GAP-04-R5B-ROUNDS",
-      "priority": "P0",
-      "owner": "gpu",
-      "status": "OPEN",
-      "gap": "R5b: matched-protocol multi-seed round-count test (n_rounds in {1,2,3} x 4 schedulers x 3 seeds at matched NFE).",
-      "acceptance": "round-count boundary confirmed or refuted at multi-seed."
-    },
-    {
       "id": "GAP-12-BASELINE",
       "priority": "P1",
       "owner": "agent(+gpu)",
@@ -210,7 +202,8 @@
     "GAP-09-THEORY: resolved 2026-10-13 (commit 74fa61c) - measurable diagnostic (q=mK<1 Thm4 + exact blend identity Thm5) on the R5b cell field; contraction holds and round map contracts at all m, Thm5 identity exact + Eq.7 predicts blend sign 4/4. See docs/audit/gap09-reinference-diagnostic.md.",
     "GAP-02-R3-N1000: resolved 2026-10-13 at the management surface (measurement done in 0f62c27 + docs/audit/r3-env-investigation.md §9; valid-yield 100%, 3-seed N=1000 ACTUAL, PROJECTED label dropped in todo.json only). Frozen CLAIMS/paper/tnnls NOT touched (user decision 2026-10-13). See docs/audit/gap02-r3-n1000-resolved.md.",
     "GAP-17-K2K6: resolved 2026-10-13 (commit ea40989) - honest disclosure retained (accepted per the gap's own criterion). K2 (CIFAR v4 N=500 provenance) was already CLOSED by Wave 147 P3; K6 (Wan2.2) is env-blocked (weights are 135-byte LFS pointer stubs, real ckpt absent) IN ADDITION to the disclosed compute-priority blocker; K5 (FreqFlow) un-pinnable (no public nnet_ema.pth). No frozen surface edited; no status promoted. See docs/audit/gap17-k2k6-disclosure.md.",
-    "D-004B-ATTRIBUTION: resolved 2026-10-13 - init-only control arm run (3 seeds x N=1000, real-forward). Result: init-only (B) ~ framework (C) >> baseline (A); seed-level pooled B-A=+123.7 hits (p=0.0043), B-C=+18.7 (p=0.164 n.s.). The R1 real-forward win is carried by the PER-RECORD RANDOM INITIAL STATE, not the multi-round restart-blend. R1 retained PARTIAL with the mechanism disclosed (NOT promoted). Evidence: verification_outputs/r1_d004b_attribution_q4_2026/ (SHA256SUMS OK). See docs/audit/r1-d004b-attribution.md."
+    "D-004B-ATTRIBUTION: resolved 2026-10-13 - init-only control arm run (3 seeds x N=1000, real-forward). Result: init-only (B) ~ framework (C) >> baseline (A); seed-level pooled B-A=+123.7 hits (p=0.0043), B-C=+18.7 (p=0.164 n.s.). The R1 real-forward win is carried by the PER-RECORD RANDOM INITIAL STATE, not the multi-round restart-blend. R1 retained PARTIAL with the mechanism disclosed (NOT promoted). Evidence: verification_outputs/r1_d004b_attribution_q4_2026/ (SHA256SUMS OK). See docs/audit/r1-d004b-attribution.md.",
+    "GAP-04-R5B-ROUNDS: matched multi-seed round-count test DONE 2026-10-13 - boundary CONFIRMED (n_rounds=1 win/tie 3/4; n_rounds>=2 regress 3/4 by +20-31% FID); caveat = the framework arm is seed-invariant, so the 3 seeds probe baseline-side variability only."
   ],
   "assessment": {
     "date": "2026-10-13",
@@ -239,7 +232,7 @@
   "recommended_attack_order": [
     "1. D-004B-ATTRIBUTION (P0): DONE 2026-10-13 - init-only ~ framework >> baseline; the R1 win is the per-record random INIT, not the restart-blend.",
     "2. GAP-01-R6-LIVE (P0, USER-AUTHORIZED): 3-seed x N=1000 live GPU sweep on cuda:0 - converts counterfactual-STRONG to live-STRONG.",
-    "3. GAP-04-R5B-ROUNDS (P0): matched multi-seed round-count test - turns the R5b boundary into a law.",
+    "3. GAP-04-R5B-ROUNDS (P0): DONE 2026-10-13 - boundary CONFIRMED at multi-seed (n_rounds=1 win/tie 3/4 schedulers; n_rounds>=2 regress 3/4 by +20-31% FID; CodimensionSheet never regresses). Disclosure: the framework arm is seed-invariant (seed_base unused in the runner), so the 3 seeds probe the baseline axis only.",
     "4. GAP-12-BASELINE (P1): PARTIAL 2026-10-13 - 9/11 resolved (R5b straw-man REAL, R5c refuted, R5a well-averaged win not robust, R1/R6/K4/K5/K7 + R2 structurally invariant); 2 residual (R3/K1 need the real FlowMol3 production-ckpt pipeline).",
     "5. GAP-17-K2K6 (P2): DONE 2026-10-13 - honest disclosure retained (K6 env-blocked by un-pulled LFS ckpt).",
     "6. GAP-15-VENUE (user) + GAP-20-COVERLETTER (user): USER-GATED - not agent-executable (venue decision; 12 author-supplied placeholders in cover_letter.md). Reported back to the user 2026-10-13.",
