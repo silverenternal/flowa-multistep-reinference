@@ -1,0 +1,21 @@
+{
+  "increment": "gap01-r6-tier-aware-live",
+  "gpu_id": 0,
+  "gpu_name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+  "gpu_free_mib_at_launch": 96782,
+  "command": ".venvs/flowmol3_venv/bin/python tools/sweep_r6_tier_aware_live.py --outdir verification_outputs/gap01-r6-tier-aware-live --seeds 42,43,44 --n 1000 --tier-aware-n-cap 0.5 --gpu 0",
+  "config": "gen_lineageflow_n1000_fastas.py --upstream-eval-len-bias short --nfe 10 --n-rounds 3 --temperature 1.0 --tier-aware-n-cap 0.5",
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "sample_count": 1000,
+  "output_dir": "verification_outputs/gap01-r6-tier-aware-live",
+  "max_records_cap": 1000,
+  "wall_clock_budget": "~3h (generation ~18min + fold ~2h)",
+  "start_utc": "2026-10-12T19:45:04Z",
+  "python": "3.12.13",
+  "cuda_visible_devices": "0",
+  "hard_constraint": "cuda:0 ONLY (user directive \u53ea\u80fd\u7528GPU0)"
+}

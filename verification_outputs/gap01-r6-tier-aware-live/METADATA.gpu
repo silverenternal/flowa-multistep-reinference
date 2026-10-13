@@ -1,0 +1,3 @@
+index, name, memory.total [MiB], memory.free [MiB]
+0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97887 MiB, 96782 MiB
+1, NVIDIA GeForce RTX 5090, 32607 MiB, 20955 MiB

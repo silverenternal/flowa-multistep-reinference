@@ -1,0 +1,12 @@
+{
+  "n_total": 1000,
+  "n_with_plddt": 1000,
+  "plddt_mean_mean": 44.92493264794548,
+  "plddt_mean_median": 41.30283660130719,
+  "plddt_mean_p10": 29.969304144385028,
+  "plddt_mean_p90": 65.53147972972974,
+  "thresholds": [
+    70.0,
+    80.0
+  ]
+}

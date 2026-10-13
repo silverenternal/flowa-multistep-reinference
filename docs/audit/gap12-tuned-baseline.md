@@ -19,18 +19,16 @@ solver-based cell is to **give the baseline more compute** (more NFE / steps)
 and check whether the framework's *matched-protocol* win survives.
 
 The paper has **11 headline cells** (§7/§10.10): R1, R2, R3, R5a, R5b, R5c, R6,
-K1, K4, K5, K7. This audit covers all 11. **9 of 11 are resolved**; 2 (R3, K1 —
-the same FlowMol3 model) remain residual.
+K1, K4, K5, K7. This audit covers all 11. **11 of 11 are now resolved.**
 
-- **2 NEW baseline-compute sweeps**: R5b (straw-man **REAL**), R5c (straw-man
-  **REFUTED**).
+- **3 NEW baseline-compute sweeps**: R5b (straw-man **REAL**), R5c (straw-man
+  **REFUTED**), R3/K1 (straw-man **REFUTED** at 2× and 4× baseline NFE; §4.2).
 - **1 NEW well-averaged protocol run**: R5a — a TIE cell; the run **corroborates**
   the TIE (straw-man **N/A**; §4.3). (The 4.6× `twodim_fm_2d_ablation` is the
   separate **R4** experiment, not R5a.)
 - **6 structurally compute-invariant**: R1, R6, K4, K5, K7 (LineageFlow bare-RNG
   baseline — no solver) and R2 (Kanzi — DAE encode, no NFE knob; §4.1).
-- **2 residual**: R3, K1 (FlowMol3 fg_dev / RDKit validity — needs the heavy
-  real-FlowMol3 pipeline; §4.2).
+- **0 residual** (R3/K1 closed 2026-10-13, §4.2).
 
 | cell | model | headline metric | tuned-baseline status | source |
 |---|---|---|---|---|
@@ -43,8 +41,8 @@ the same FlowMol3 model) remain residual.
 | K5 | LineageFlow | hits delta | **structurally invariant** | this doc §3 |
 | K7 | LineageFlow | novelty | **structurally invariant** | this doc §3 |
 | R2 | Kanzi | RMSD (Å) | **structurally invariant** — DAE encode, no NFE knob; composite NFE-invariant {10..2000} | §4.1 |
-| R3 | FlowMol3 | fg_dev | **residual** — scan degenerate TIE | §4.2 |
-| K1 | FlowMol3 | RDKit validity | **residual** — scan degenerate TIE | §4.2 |
+| R3 | FlowMol3 | fg_dev | **NEW sweep** — win SURVIVES (baseline NFE 250/500/1000 all framework-favoured; §4.2) | `gap12-r3-tuned-baseline-nfe{500,1000}/` |
+| K1 | FlowMol3 | RDKit validity | **NEW sweep** — win SURVIVES (baseline pb_validity *degrades* with more NFE; §4.2) | `gap12-r3-tuned-baseline-nfe{500,1000}/` |
 
 ---
 
@@ -168,34 +166,72 @@ none. The concern is structurally impossible for these five cells.
   (Earlier this cell was mis-documented as "residual, needs elevated-NFE
   re-run"; that framing was wrong because the DAE encode has no NFE.)
 
-### 4.2 R3 / K1 — FlowMol3 (fg_dev / RDKit validity) — **residual**
+### 4.2 R3 / K1 — FlowMol3 (fg_dev / RDKit validity) — **win SURVIVES (straw-man REFUTED)**
 
-- The existing NFE scan (`verification_outputs/flowmol3_fine_nfe_q4_2026.json`,
+**Why the earlier attempts failed (kept for the record).**
+
+- The legacy NFE scan (`verification_outputs/flowmol3_fine_nfe_q4_2026.json`,
   NFE ∈ {5, 10, 25, 50, 100, 200}) reports a **degenerate TIE**: baseline ==
-  framework == 0.073404 at every NFE (the `reduction_value` metric). It carries
-  no headline signal.
-- A fresh attempt was made — `tools/run_real_ckpt_eval.py --model flowmol3`
-  (and `flowmol3_v2`, `--n-molecules 4`) at NFE ∈ {50, 100, 200} with
-  `--force-mode real --metric-mode real --paper-metrics`
-  (`verification_outputs/gap12-flowmol3-tuned-nfe.json`,
-  `gap12-flowmol3v2-tuned-nfe.json`) — but the harness's FlowMol3 metric stays a
-  degenerate TIE (`0.073404`) and `--paper-metrics` degrades to `none`
-  (`no _PAPER_QUANTITY_PROFILES entry`), so it does not surface fg_dev.
-- The v2 SOTA runner (`tools/run_sota_flowmol3_v2_adapter_experiment.py`) has the
-  right `--baseline-nfe` plumbing but its own docstring states it runs the
-  **synthetic NumPy velocity field** (backend `numpy`) — "validity numbers will
-  sit near zero on both arms until real FlowMol3 weights land". So it is not a
-  real-fg_dev tuned-baseline either.
-- **Residual (now runnable, not env-blocked):** the real N=1000 paired pipeline
-  DOES run — `scripts/wave338_p5_r3_n1000_paired.py --n-total 1000 --nfe 250
-  --seeds 42 43 44 --device cuda:0` (the RDKit 2026.03.5 blocker was **refuted**
-  in `docs/audit/gap02-r3-n1000-resolved.md`; the real cause was a prior-tiling
-  bug, fixed). The script exposes `--nfe`, but applies it to **both** arms
-  (no independent baseline-NFE flag), so a tuned-baseline sweep needs a small
-  driver extension (allowed — `scripts/` is owned by the experiment-sweep
-  skill) plus a free GPU slot. R3 and K1 share this one blocker (same model).
-  Deferred here only because both GPUs are occupied by the GAP-01 / GAP-04
-  sweeps.
+  framework == 0.073404 at every NFE (the `reduction_value` metric) — no
+  headline signal.
+- `tools/run_real_ckpt_eval.py --model flowmol3` (and `flowmol3_v2`) at
+  NFE ∈ {50, 100, 200} with `--force-mode real --metric-mode real
+  --paper-metrics` stays a degenerate TIE (`0.073404`) and `--paper-metrics`
+  degrades to `none` (`no _PAPER_QUANTITY_PROFILES entry`), so it never
+  surfaces fg_dev.
+- The v2 SOTA runner has the right `--baseline-nfe` plumbing but runs the
+  **synthetic NumPy velocity field** (its own docstring), so it is not a
+  real-fg_dev tuned baseline either.
+
+**The real pipeline, and the driver extension.** The production-ckpt N=1000
+paired pipeline runs (`scripts/wave338_p5_r3_n1000_paired.py`; the RDKit
+blocker was refuted in `docs/audit/gap02-r3-n1000-resolved.md`). It applied one
+NFE to **both** arms, so a tuned baseline was impossible. Commit `ea1e36a` adds
+`--baseline-nfe` (0 = legacy matched behaviour, so the canonical invocation is
+byte-unchanged) and `scripts/gap12_r3_tuned_baseline.sh` drives the canonical
+protocol (N=1000, seeds 42/43/44, framework NFE=250) with the baseline arm at
+NFE = 500 and 1000.
+
+**Result — R3 (`fg_dev`, lower is better; negative diff = framework wins).**
+
+| baseline NFE | baseline fg_dev (42/43/44) | framework fg_dev | mean diff | p | d_z |
+|---:|---|---|---:|---:|---:|
+| 250 (matched) | 0.6052 / 0.7875 / 0.5832 | 0.6552 / 0.6508 / 0.5569 | −0.0377 | 0.559 | −0.401 |
+| 500 (2×) | 0.6741 / 0.7666 / 0.6064 | same | −0.0614 | 0.165 | −1.239 |
+| 1000 (4×) | 0.5618 / 0.7949 / 0.6258 | same | −0.0399 | 0.627 | −0.329 |
+
+The framework fg_dev is **byte-identical at all three budgets** (the framework
+arm is NFE=250 throughout), which doubles as a determinism check on the
+pipeline. The framework's direction holds at every baseline budget and the sign
+never reverses — so the R3 win is **not** a compute artifact. Honest caveats:
+the effect is **not statistically significant** at n=3 seeds (p = 0.165–0.627),
+and the advantage is non-monotone in the baseline budget (−0.0377 → −0.0614 →
+−0.0399), i.e. it is not "more baseline compute always helps the framework".
+
+**Result — K1 (`pb_validity_pct`, RDKit-bridged; higher is better).**
+
+| baseline NFE | baseline pb_validity (42/43/44) | framework pb_validity |
+|---:|---|---|
+| 250 (matched) | 0.5988 / 0.6202 / 0.4545 | 0.6192 / 0.6199 / 0.6901 |
+| 500 (2×) | 0.5301 / 0.5755 / 0.4270 | same |
+| 1000 (4×) | 0.5015 / 0.5678 / 0.4100 | same |
+
+The baseline's RDKit-bridged validity **degrades monotonically** as it is given
+more solver steps, while the framework's is unchanged — so the framework's
+advantage *grows* with baseline compute (seed 42: +0.020 → +0.089 → +0.118).
+The plain `validity_pct` is saturated at 1.0 in both arms at every budget, so
+`pb_validity_pct` is the discriminating metric. K1 remains
+**NOT-SIGNIFICANT at the K-level α** (its own verdict, unchanged) — this sweep
+only refutes the straw-man reading.
+
+**Verdict:** R3/K1 straw-man **REFUTED**. Both cells now have a tuned-baseline
+comparison at 2× and 4× the matched baseline budget. No frozen surface was
+changed; the R3/K1 headline verdicts are unchanged.
+
+**Evidence:** `verification_outputs/gap12-r3-tuned-baseline-nfe{500,1000}/`
+(`wave338-p5-r3-n1000-paired.{json,csv}` + per-arm JSONs),
+`verification_outputs/r3_n1000_3seed_fixed_q4_2026/` (matched-NFE control),
+`verification_outputs/_gap04-logs/gap12-r3-baseline-nfe*.log`.
 
 ### 4.3 R5a — 2D Two Moons — **TIE; straw-man not applicable (cell is not a win)**
 

@@ -1,0 +1,141 @@
+{
+  "kind": "gap01_r6_tier_aware_live_sweep",
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "n_per_seed": 1000,
+  "tier_aware_n_cap": 0.5,
+  "gpu": "0",
+  "pair_with": "fresh",
+  "baseline_source": "verification_outputs/k6_foldability_n1000_w161_q3_2026/baseline/foldability/foldability.jsonl",
+  "per_seed": {
+    "42": {
+      "n": 1000,
+      "mean_baseline": 42.07247315651403,
+      "mean_framework": 44.92493264794548,
+      "mean_diff": 2.8524594914314547,
+      "sd_diff": 18.42681117523125,
+      "cohens_d_z": 0.15479940963771543,
+      "seed": 42,
+      "baseline_byte_identical": true,
+      "baseline_source": "fresh seed-matched fold",
+      "n_framework_folded": 1000,
+      "tier_aware_n_cap": 0.5,
+      "per_tier": {
+        "hard": {
+          "n": 330,
+          "mean_baseline": 29.509229871119686,
+          "mean_framework": 44.61156342914523,
+          "mean_diff": 15.102333558025537,
+          "sd_diff": 13.813726738660053,
+          "cohens_d_z": 1.0932845164628238
+        },
+        "medium": {
+          "n": 340,
+          "mean_baseline": 40.345326847117214,
+          "mean_framework": 44.78343224307169,
+          "mean_diff": 4.438105395954473,
+          "sd_diff": 14.98597770222878,
+          "cohens_d_z": 0.2961505404678681
+        },
+        "easy": {
+          "n": 330,
+          "mean_baseline": 56.415200518256604,
+          "mean_framework": 45.38409016267632,
+          "mean_diff": -11.031110355580278,
+          "sd_diff": 16.197187086427828,
+          "cohens_d_z": -0.6810509934051215
+        }
+      }
+    },
+    "43": {
+      "n": 1000,
+      "mean_baseline": 42.26166613235679,
+      "mean_framework": 44.55737577607599,
+      "mean_diff": 2.295709643719207,
+      "sd_diff": 18.045678365386927,
+      "cohens_d_z": 0.12721658877188924,
+      "seed": 43,
+      "baseline_byte_identical": false,
+      "baseline_source": "fresh seed-matched fold",
+      "n_framework_folded": 1000,
+      "tier_aware_n_cap": 0.5,
+      "per_tier": {
+        "hard": {
+          "n": 312,
+          "mean_baseline": 29.37119699993674,
+          "mean_framework": 44.295770427869655,
+          "mean_diff": 14.924573427932918,
+          "sd_diff": 13.345960979800209,
+          "cohens_d_z": 1.1182839100550361
+        },
+        "medium": {
+          "n": 345,
+          "mean_baseline": 40.136670844984806,
+          "mean_framework": 44.45969591597501,
+          "mean_diff": 4.3230250709902,
+          "sd_diff": 14.048124748817287,
+          "cohens_d_z": 0.3077296897832685
+        },
+        "easy": {
+          "n": 343,
+          "mean_baseline": 56.12449337276026,
+          "mean_framework": 44.89358691419616,
+          "mean_diff": -11.230906458564089,
+          "sd_diff": 16.050186928526085,
+          "cohens_d_z": -0.6997368011087358
+        }
+      }
+    },
+    "44": {
+      "n": 1000,
+      "mean_baseline": 41.5978098971797,
+      "mean_framework": 44.35511655291253,
+      "mean_diff": 2.7573066557328247,
+      "sd_diff": 17.45860171303691,
+      "cohens_d_z": 0.1579339915678272,
+      "seed": 44,
+      "baseline_byte_identical": false,
+      "baseline_source": "fresh seed-matched fold",
+      "n_framework_folded": 1000,
+      "tier_aware_n_cap": 0.5,
+      "per_tier": {
+        "hard": {
+          "n": 372,
+          "mean_baseline": 29.090557429023164,
+          "mean_framework": 43.42186505189901,
+          "mean_diff": 14.331307622875853,
+          "sd_diff": 13.007325899787043,
+          "cohens_d_z": 1.1017873876067399
+        },
+        "medium": {
+          "n": 286,
+          "mean_baseline": 40.53396339569925,
+          "mean_framework": 44.60391913427197,
+          "mean_diff": 4.069955738572717,
+          "sd_diff": 14.44320017940172,
+          "cohens_d_z": 0.28179044034694717
+        },
+        "easy": {
+          "n": 342,
+          "mean_baseline": 56.09183918834239,
+          "mean_framework": 45.16216924328745,
+          "mean_diff": -10.92966994505494,
+          "sd_diff": 14.109187451016753,
+          "cohens_d_z": -0.7746491414193603
+        }
+      }
+    }
+  },
+  "pooled": {
+    "n": 3000,
+    "mean_baseline": 41.97731639535017,
+    "mean_framework": 44.612474992311334,
+    "mean_diff": 2.635158596961162,
+    "sd_diff": 17.977089086097084,
+    "cohens_d_z": 0.14658427648328842
+  },
+  "timestamp": "2026-10-13T19:36:30+0800"
+}

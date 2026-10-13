@@ -131,13 +131,84 @@ touched.
 
 ### 3.1 Result
 
-> **[FILLED IN §4 after the sweep completes]**
+**Pairing defect found during the run, and fixed.** The baseline arm's RNG is
+seeded by `--seed` (`tools/gen_lineageflow_n1000_fastas.py:615`,
+`baseline_rng = random.Random(int(seed))`), so the baseline is **not**
+seed-invariant: only seed 42 reproduces the frozen Wave 161 baseline
+(verified sequence-by-sequence), while seeds 43 and 44 draw different
+sequences. The original driver paired **every** seed's framework arm against
+the *frozen* baseline pLDDT, which is an **unpaired** comparison for seeds
+43/44. Fixed in commit `0b0d85b` by folding a seed-matched baseline per seed
+(`--fold-baseline`) and pairing within seed (`--pair-with fresh`).
+
+Final run:
+
+```
+tools/sweep_r6_tier_aware_live.py --seeds 42,43,44 --n 1000 \
+    --tier-aware-n-cap 0.5 --gpu 0 \
+    --skip-generate --skip-fold --fold-baseline --pair-with fresh
+```
+
+**Per-seed within-seed pairing** (framework − baseline pLDDT, per record;
+positive = framework better):
+
+| seed | n | mean baseline | mean framework | mean diff | sd diff | **d_z** | baseline fold |
+|---|---:|---:|---:|---:|---:|---:|---|
+| 42 | 1000 | 42.0725 | 44.9249 | +2.8525 | 18.4268 | **+0.1548** | frozen Wave 161 (byte-identical) |
+| 43 | 1000 | 42.2617 | 44.5574 | +2.2957 | 18.0457 | **+0.1272** | fresh, seed-matched |
+| 44 | 1000 | 41.5978 | 44.3551 | +2.7573 | 17.4586 | **+0.1579** | fresh, seed-matched |
+| **pooled** | **3000** | **41.9773** | **44.6125** | **+2.6352** | **17.9771** | **+0.1466** | — |
+
+**Per-tier decomposition** (frozen 34.560 / 46.129 pLDDT boundaries):
+
+| seed | hard (n) | medium (n) | easy (n) |
+|---|---|---|---|
+| 42 | +15.1023, d_z=**+1.0933** (330) | +4.4381, d_z=+0.2962 (340) | −11.0311, d_z=**−0.6811** (330) |
+| 43 | +14.9246, d_z=**+1.1183** (312) | +4.3230, d_z=+0.3077 (345) | −11.2309, d_z=**−0.6997** (343) |
+| 44 | +14.3313, d_z=**+1.1018** (372) | +4.0700, d_z=+0.2818 (286) | −10.9297, d_z=**−0.7746** (342) |
+
+For contrast, the same run under the **frozen** (invalid) pairing gave
++0.1548 / +0.1380 / +0.1293 — the correction moves seed 43 down by ~0.011 and
+seed 44 up by ~0.029; the conclusion is unchanged either way.
+
+**Acceptance check:** `live 3-seed paired d_z >= +0.2235` → **NOT MET**
+(pooled +0.1466, all three seeds +0.127…+0.158). R6 pLDDT is **not** promoted
+to live-GPU-STRONG.
 
 ---
 
 ## 4. Interpretation
 
-> **[FILLED IN after the sweep completes]**
+1. **The counterfactual does not materialize as specified.** The pooled live
+   `d_z = +0.1466` falls short of the `+0.2235` bar. Taken alone, that is a
+   negative result for the *materialization* of the tier-aware counterfactual.
+
+2. **But the tier structure reproduces almost exactly.** The hard tier moves
+   by **+14.3 to +15.1 pLDDT points** with `d_z ≈ +1.10` on **3/3 seeds** —
+   against the counterfactual's hard-tier `d_z = +1.1895`. The easy tier
+   **regresses** by ≈ −11 points with `d_z ≈ −0.72` on **3/3 seeds**, matching
+   the Wave 280 P report that the easy tier REGRESSES across 3/3 seeds. The
+   medium tier is mildly positive (+4.1 to +4.4, `d_z ≈ +0.29`) on 3/3 seeds.
+
+3. **The pooled shortfall is the known direction mismatch, not a mechanism
+   failure.** §1.2 established that the as-designed wiring maps the easy tier
+   to **β = 0.75** (more fresh-noise perturbation), whereas the Wave 225 P4
+   counterfactual *halves* the easy-tier deviation from baseline (less
+   perturbation). The as-designed run therefore amplifies exactly the tier the
+   counterfactual damps: the easy-tier regression cancels roughly three
+   quarters of the hard-tier gain, which is what drives the pooled `d_z` below
+   the bar. §5 caveat 1 predicted this outcome in advance — the live sweep
+   refutes the *materialization*, not the proxy arithmetic.
+
+4. **This is a genuine 3-seed framework sweep** (unlike the CIFAR-10 R5b
+   sweep, where the framework arm turned out to be seed-invariant): the
+   framework arm's mean pLDDT differs per seed (44.9249 / 44.5574 / 44.3551),
+   and the per-tier `d_z` values agree across seeds to ~±0.04.
+
+5. **What would move the label:** re-running with the faithful direction
+   (easy-tier β 0.5 → 0.25, i.e. factor 1.5 on `n_cap`, per §1.2). That is a
+   wiring change plus another ~2 h/seed of GPU time, and is recorded here as
+   the concrete next step rather than performed.
 
 ---
 

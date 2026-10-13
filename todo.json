@@ -2,7 +2,7 @@
   "schema_version": "flowa-state-v3",
   "purpose": "Open work only: what still stands between the current HEAD and submission. State, the 11-cell evidence ledger, the publication assessment, the binding policy and the gate snapshot were moved to docs/audit/todo-history.md (2026-10-13, user directive: this file answers only 'what is left to do').",
   "updated_at": "2026-10-13",
-  "head": "1f6a55c",
+  "head": "0a56052",
   "history": "docs/audit/todo-history.md",
   "gate_chain": [
     "python tools/verify_submission_readiness.py",
@@ -15,26 +15,6 @@
   "no_push": true,
   "commit_footer": "(USER AUTHORIZED, NO PUSH)",
   "open_gaps": [
-    {
-      "id": "GAP-01-R6-LIVE",
-      "priority": "P0",
-      "owner": "gpu",
-      "status": "IN PROGRESS",
-      "gap": "R6 pLDDT: convert the tier-aware counterfactual (d_z=+0.2235) into a live 3-seed x N=1000 paired reading on cuda:0.",
-      "acceptance": "live 3-seed paired d_z >= +0.2235 -> the R6 pLDDT label becomes live-STRONG.",
-      "remaining": "Finish the seed44 fresh-baseline fold, then re-run tools/sweep_r6_tier_aware_live.py --skip-generate --skip-fold --fold-baseline --pair-with fresh and fill docs/audit/gap01-r6-live-wiring.md §3.1/§4. The baseline arm is seeded by --seed, so the frozen Wave 161 baseline only matches seed 42; seeds 43/44 need their own fold (driver extended with --fold-baseline / --pair-with fresh, commit 0b0d85b). Provisional readings under the invalid frozen pairing: +0.1548 / +0.1380 / +0.1293 (seed 43 corrects to +0.1272) - below the bar.",
-      "evidence": "tools/sweep_r6_tier_aware_live.py; verification_outputs/gap01-r6-tier-aware-live/"
-    },
-    {
-      "id": "GAP-12-BASELINE",
-      "priority": "P1",
-      "owner": "agent(+gpu)",
-      "status": "PARTIAL",
-      "gap": "Baseline fairness: matched-NFE plus at least one tuned baseline per headline cell (11 cells).",
-      "acceptance": "a tuned-baseline comparison exists per headline cell.",
-      "remaining": "9/11 resolved. R3/K1 is the last pair: baseline NFE=1000 is running on GPU1; then update docs/audit/gap12-tuned-baseline.md §4.2 with the NFE in {250, 500, 1000} table. At baseline NFE=500 the baseline gets worse (fg_dev advantage -0.0614, pb_validity lower) => straw-man refuted at 2x.",
-      "evidence": "docs/audit/gap12-tuned-baseline.md; verification_outputs/gap12-*"
-    },
     {
       "id": "GAP-15-VENUE",
       "priority": "P1",
@@ -59,6 +39,8 @@
     "GAP-02-R3-N1000 - real 3-seed N=1000 R3 measurement, valid-yield 100%",
     "GAP-04-R5B-ROUNDS - round-count boundary CONFIRMED (n_rounds=1 win/tie 3/4; >=2 regress 3/4 by +20-31% FID)",
     "GAP-09-THEORY - q=mK<1 + exact blend identity predict the R5b sign 4/4",
-    "GAP-17-K2K6 - honest disclosure retained (K6 env-blocked by LFS-pointer stubs)"
+    "GAP-17-K2K6 - honest disclosure retained (K6 env-blocked by LFS-pointer stubs)",
+    "GAP-01-R6-LIVE - live R6 pLDDT sweep DONE: pooled within-seed d_z=+0.1466 (n=3000; per-seed +0.1548/+0.1272/+0.1579) - BELOW the +0.2235 bar, so R6 pLDDT is NOT promoted to live-STRONG. Tier structure reproduces on 3/3 seeds (hard d_z=+1.10, medium +0.29, easy -0.72); the pooled shortfall is the known as-designed direction mismatch (easy-tier beta 0.75 vs the counterfactual's damped easy tier). Pairing defect found+fixed (baseline RNG is seeded by --seed, so only seed 42 matches the frozen baseline). docs/audit/gap01-r6-live-wiring.md",
+    "GAP-12-BASELINE - 11/11 headline cells now have a tuned-baseline comparison. R5b straw-man REAL; R5c refuted; R5a TIE corroborated; R1/R6/K4/K5/K7 + R2 structurally invariant; R3/K1 REFUTED at 2x and 4x baseline NFE (fg_dev -0.0377/-0.0614/-0.0399; baseline pb_validity degrades monotonically while the framework's is fixed). docs/audit/gap12-tuned-baseline.md"
   ]
 }

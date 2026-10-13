@@ -1,0 +1,6 @@
+{
+  "input_fasta": "verification_outputs/gap01-r6-tier-aware-live/seed44/fasta/baseline.fasta",
+  "n_input": 1000,
+  "n_used": 1000,
+  "skipped": {}
+}

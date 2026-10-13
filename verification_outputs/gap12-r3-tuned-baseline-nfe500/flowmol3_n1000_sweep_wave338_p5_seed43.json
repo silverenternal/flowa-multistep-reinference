@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0.0",
+  "sweep_id": "wave338_p5_r3_n1000_paired_seed43",
+  "model": "flowmol3",
+  "checkpoint": "/home/hugo/codes/flowa-multistep-reinference/data/flowmol3/weights_real/checkpoints/last.ckpt",
+  "n_total_per_arm": 1000,
+  "nfe": 250,
+  "baseline_nfe": 500,
+  "nfe_batch": 100,
+  "n_batches": 10,
+  "seed_base": 43,
+  "device": "cuda:0",
+  "paper_targets": {
+    "validity_pct": 0.999,
+    "pb_validity_pct": 0.919,
+    "fg_dev": 0.27,
+    "ood_ring_rate": 0.1
+  },
+  "baseline": {
+    "perturbation_sigma": 0.0,
+    "metrics": {
+      "validity_pct": 1.0,
+      "pb_validity_pct": 0.5754812563323202,
+      "fg_dev": 0.76657553282712,
+      "ood_ring_rate": 0.03546099290780142,
+      "wallclock_s": 66.43
+    },
+    "n_sampled": 987,
+    "n_smiles": 1000,
+    "n_errors": 5,
+    "wallclock_sampling_s": 573.659,
+    "wallclock_metrics_s": 66.43,
+    "errors_sample": [
+      "dropped_smiles:[H]C([H])(N(=O)[O-])C([H])([H])[N+](=O)[O-]",
+      "dropped_smiles:[H]N(C(=O)C1(C([H])([H])[H])ClCl1)C([H])([H])[H]",
+      "dropped_smiles:[H]C([H])(Cl)C(Br)[PH]#Br",
+      "dropped_smiles:[H]C([H])([H])C12[SH]3[SH]1#Cl32",
+      "dropped_smiles:[H]C([H])(Cl)C1([H])S#Cl1"
+    ]
+  },
+  "framework": {
+    "perturbation_sigma": 0.05,
+    "metrics": {
+      "validity_pct": 1.0,
+      "pb_validity_pct": 0.6198595787362087,
+      "fg_dev": 0.650807567672527,
+      "ood_ring_rate": 0.007021063189568706,
+      "wallclock_s": 67.077
+    },
+    "n_sampled": 997,
+    "n_smiles": 1000,
+    "n_errors": 3,
+    "wallclock_sampling_s": 244.812,
+    "wallclock_metrics_s": 67.077,
+    "errors_sample": [
+      "dropped_smiles:[H]C([H])([H])C([H])(OP(=O)(=O)C(C([H])([H])[H])(C([H])([H])[H])C([H])([H])[H])C([H])([H])[H]",
+      "dropped_smiles:[H]OC(=O)C([H])([H])C([H])([C+](=O)[O-])C([H])([H])[H]",
+      "dropped_smiles:[H]C([H])([H])C([H])([H])OC(=O)C([H])([H])C1(C([H])([H])[H])SBr1"
+    ]
+  },
+  "timestamp": "2026-10-13T17:54:32+0800",
+  "paired_diff_fg_dev": -0.11576796515459298,
+  "verdict": "framework_wins"
+}
