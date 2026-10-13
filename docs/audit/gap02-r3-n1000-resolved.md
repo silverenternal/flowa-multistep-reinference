@@ -38,6 +38,8 @@ The **measurement** work was completed in a prior increment (`docs/audit/r3-env-
 
 3-seed paired summary: `mean_diff = −0.037687`, `sd_diff = 0.093899`, `se = 0.054213`, `t = −0.695175`, `df = 2`, `p_raw = 0.558854`, 95% CI `[−0.143944, +0.068570]`, `cohens_d_z = −0.401360`, Bonferroni α = 0.05/7 = 0.007143, `bonf_sig = False`.
 
+*2026-10-13 ADDITIVE correction (GAP-27; no point estimate / verdict change).* The 95% CI quoted above used a normal 1.96 multiplier at `df = 2`; the correct t multiplier is `t_{0.975,2} = 4.3027`, so the corrected CI is **`[−0.270946, +0.195571]`**. Point estimate, `t`, `p` and the not-significant verdict are unchanged. See `docs/audit/gap27-r3-power.md`.
+
 **Direction:** framework-WINS in aggregate (−0.0377), 2/3 seeds framework-wins — same direction as the canonical seed-42 headline (−0.0235). **Significance:** none (p = 0.559), consistent with the existing UNDERPOWERED per-arm verdict.
 
 ---

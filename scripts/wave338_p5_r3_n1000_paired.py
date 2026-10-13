@@ -293,8 +293,12 @@ def _paired_summary(per_seed: list[dict]) -> dict:
     t_stat = mean / se if se == se and se > 0 else float("nan")
     df = n - 1
     p_raw = float(2.0 * scipy.stats.t.sf(abs(t_stat), df=df)) if t_stat == t_stat else float("nan")
-    ci_low = mean - 1.96 * se if se == se else float("nan")
-    ci_high = mean + 1.96 * se if se == se else float("nan")
+    # The seed-level CI must use the t multiplier for df = n - 1, not the
+    # normal 1.96: at n = 3 (df = 2) the correct multiplier is 4.303, so a
+    # 1.96 CI is ~2.2x too narrow. Corrected here (GAP-27).
+    t_crit = float(scipy.stats.t.ppf(0.975, df=df)) if df > 0 else float("nan")
+    ci_low = mean - t_crit * se if se == se and t_crit == t_crit else float("nan")
+    ci_high = mean + t_crit * se if se == se and t_crit == t_crit else float("nan")
     d_z = mean / sd if sd == sd and sd > 0 else float("nan")
     return {
         "n_seeds": n,
@@ -306,6 +310,7 @@ def _paired_summary(per_seed: list[dict]) -> dict:
         "p_value_raw": p_raw,
         "ci_95_low": ci_low,
         "ci_95_high": ci_high,
+        "ci_95_t_crit": t_crit,
         "cohens_d_z": d_z,
         "test_type": "paired_t_test_across_seeds",
     }

@@ -201,12 +201,14 @@
     "t_statistic": -2.1468593810092393,
     "df": 2,
     "p_value_raw": 0.16490563672345424,
-    "ci_95_low": -0.11742003154256997,
-    "ci_95_high": -0.005342533643491361,
+    "ci_95_low": -0.18439928062337763,
+    "ci_95_high": 0.0616367154373163,
     "cohens_d_z": -1.2394898415379576,
     "test_type": "paired_t_test_across_seeds",
     "alpha_bonferroni": 0.0071428571428571435,
-    "bonf_sig": false
+    "bonf_sig": false,
+    "ci_95_t_crit": 4.302652729749462,
+    "ci_95_note": "Corrected (GAP-27): t multiplier for df = n_seeds - 1 (4.3027); the earlier value used a normal 1.96 multiplier."
   },
   "honest_disclosure": "Wave 338 P5 R3 N=1000 paired sweep at 3 seeds (42, 43, 44). The DGL fix (Wave 109.C \u00a76.2 repeat_interleave per-mol prior tiling + Wave 338 P2 _pad_e dimension fix in flowmol3_v2_adapter._solve_ode_upstream_batch) made the batched n_molecules=100 path operational at NFE=250. Each arm runs 10 batches \u00d7 100 mols via the upstream FlowMol.sample() call.",
   "timestamp": "2026-10-13T18:09:52+0800"

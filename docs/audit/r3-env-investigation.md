@@ -195,6 +195,8 @@ User-gated after the diagnosis ("改 tiling + 跑全量 N=1000"):
 
 **3-seed paired summary:** `n_seeds=3`, `mean_diff=−0.037687`, `sd_diff=0.093899`, `se_diff=0.054213`, `t=−0.695175`, `df=2`, `p_raw=0.558854`, 95% CI `[−0.143944, +0.068570]`, `cohens_d_z=−0.401360`, Bonferroni α=0.05/7=0.007143, `bonf_sig=False`.
 
+*2026-10-13 ADDITIVE correction (GAP-27; no point estimate / verdict change).* The 95% CI quoted above used a **normal 1.96** multiplier at `df = 2`; the correct t multiplier is `t_{0.975,2} = 4.3027`. The corrected CI is **`[−0.270946, +0.195571]`**. The point estimate, `t`, `p` and the not-significant verdict are unchanged. See `docs/audit/gap27-r3-power.md`.
+
 All six arms emit `validity_pct=1.0000` (of the n_sampled molecules, 100% are RDKit-valid; the small shortfall from 1000 is decode-drop, not invalidity).
 
 ### 9.2 Interpretation
