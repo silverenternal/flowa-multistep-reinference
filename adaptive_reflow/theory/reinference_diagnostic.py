@@ -30,6 +30,7 @@ field (synthetic MLP, torch UNet, …) without importing torch.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
@@ -42,6 +43,8 @@ __all__ = [
     "RoundMapContractionReport",
     "blend_identity_terms",
     "contraction_variable",
+    "critical_memory",
+    "critical_restart_ratio",
     "estimate_flow_map_lipschitz",
     "integrate_flow",
     "round_map_contraction",
@@ -176,6 +179,42 @@ def contraction_variable(m: float, k: float) -> float:
     if not np.isfinite(kk) or kk < 0.0:
         raise ValueError(f"K must be finite and >= 0, got {k!r}")
     return mm * kk
+
+
+def critical_restart_ratio(m: float) -> float:
+    """Closed-form boundary of the Theorem-5 Eq. 7 improvement condition.
+
+    For **independent isotropic Gaussian residuals** (``err_X = sigma_X^2``,
+    ``err_Y = sigma_Y^2``, ``err_XY = sigma_X^2 + sigma_Y^2`` per dimension) the
+    condition ``err_Y - err_X < m * err_XY`` is equivalent to
+
+        ``sigma_Y / sigma_X < sqrt((1 + m) / (1 - m))``,
+
+    so the blend improves the endpoint error exactly when the *restart-quality
+    ratio* ``q = sigma_Y / sigma_X`` is below this critical value. The bound
+    grows with ``m`` (more memory tolerates a worse fresh restart); ``q* <= 1``
+    is impossible for ``m > 0``, i.e. a fresh restart at least as good as the
+    preceding state always helps.
+
+    This is the analytic form of the boundary the GAP-24 runner measures.
+    """
+    mm = float(m)
+    if not np.isfinite(mm) or mm < 0.0 or mm >= 1.0:
+        raise ValueError(f"m must be finite and in [0, 1), got {m!r}")
+    return math.sqrt((1.0 + mm) / (1.0 - mm))
+
+
+def critical_memory(q: float) -> float:
+    """Inverse of :func:`critical_restart_ratio`.
+
+    Returns the memory fraction ``m*(q) = (q^2 - 1) / (q^2 + 1)`` above which a
+    restart-blend with restart-quality ratio ``q`` improves the endpoint error.
+    ``m* <= 0`` for ``q <= 1`` (always improves).
+    """
+    qq = float(q)
+    if not np.isfinite(qq) or qq < 0.0:
+        raise ValueError(f"q must be finite and >= 0, got {q!r}")
+    return (qq * qq - 1.0) / (qq * qq + 1.0)
 
 
 def round_map_contraction(

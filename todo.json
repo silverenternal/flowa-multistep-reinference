@@ -2,9 +2,9 @@
   "schema_version": "flowa-state-v3",
   "purpose": "Open work only: what still stands between the current HEAD and submission. State, the 11-cell evidence ledger, the publication assessment, the binding policy and the gate snapshot live in docs/audit/todo-history.md (2026-10-13 user directive: this file answers only 'what is left to do').",
   "updated_at": "2026-10-13",
-  "head": "32e4977",
+  "head": "8bb855bc",
   "history": "docs/audit/todo-history.md",
-  "note": "The Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is already Tier-1 grade - do not spend effort there). This batch is the empirical-upgrade program: one unifying falsifiable regime law (GAP-24) plus the per-cell fixes it must absorb (GAP-25..28), then a density pass on the manuscript (GAP-29).",
+  "note": "The Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is already Tier-1 grade - do not spend effort there). GAP-24 (the unifying falsifiable regime law) is DONE - docs/audit/gap24-boundary-law.md: blend improves iff q < sqrt((1+m)/(1-m)), 45/45 off-boundary matches on the R5b field, 15/16 headline-cell directions. The remaining fixes (GAP-25..28) absorb that law; then a density pass on the manuscript (GAP-29).",
   "gate_chain": [
     "python tools/verify_submission_readiness.py",
     "python tools/check_claims_consistency.py",
@@ -16,15 +16,6 @@
   "no_push": true,
   "commit_footer": "(USER AUTHORIZED, NO PUSH)",
   "open_gaps": [
-    {
-      "id": "GAP-24-BOUNDARY-LAW",
-      "priority": "P0",
-      "owner": "agent",
-      "status": "OPEN",
-      "gap": "Replace the per-cell 'conditional / regression' excuses with ONE falsifiable regime law that predicts WHEN the framework wins vs loses, unifying: R5b round-count + baseline-NFE dependence, R6 tier structure, R5c smoke-vs-production, R3 direction. Then backtest the law against all 11 headline cells.",
-      "acceptance": "a single criterion (stated BEFORE backtesting) predicts the sign/regime of the headline cells; misses enumerated honestly; new audit doc.",
-      "evidence": "docs/audit/todo-history.md section 4; docs/audit/gap04-r5b-rounds.md; docs/audit/gap01-r6-live-wiring.md"
-    },
     {
       "id": "GAP-25-R1-BLEND-ISOLATION",
       "priority": "P0",
