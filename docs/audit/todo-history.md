@@ -114,6 +114,7 @@ Tuned-baseline / straw-man status is GAP-12's — see
 | GAP-23 | 2026-10-13 | retracted — R2 significance is not a pairing artifact |
 | D-004B-ATTRIBUTION | 2026-10-13 | init-only ≈ framework ≫ baseline, so the R1 win is the random INIT — `docs/audit/r1-d004b-attribution.md` |
 | GAP-24-BOUNDARY-LAW | 2026-10-13 | one falsifiable regime law `blend improves iff q < sqrt((1+m)/(1-m))` (Theorem-5 Eq. 7 closed form); 45/45 off-boundary matches on the R5b field, 15/16 headline-cell directions — `docs/audit/gap24-boundary-law.md` |
+| GAP-25-R1-BLEND-ISOLATION | 2026-10-13 | the R1 win is the per-record random INIT (B ≈ C, B ≫ A); blend marginal bounded ≤ +46 hits (≤ 28 % of baseline) — `docs/audit/gap25-r1-blend-isolation.md` |
 
 ## 7. Publication assessment (2026-10-13)
 
