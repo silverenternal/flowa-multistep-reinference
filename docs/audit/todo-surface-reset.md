@@ -88,3 +88,26 @@ The background R1-REMEASURE-D004b run completed: 3 seeds × N=1000 × 2 arms on 
 | #5 TNNLS freeze | ✅ no `tnnls_submission/` number moved; the frozen manuscript link is flagged, not edited |
 | #6 per-increment audit doc | ✅ this file |
 | #7 stricter = cleaner | ✅ one management surface replaces fourteen legacy files |
+
+---
+
+## 6. Addendum (2026-10-13) — todo.json narrowed to open work only
+
+Per a later user directive ("这个文件现在太长了" → "只留待办"), the surface
+described in §2 was split again:
+
+- **`todo.json`** now holds only: `schema_version`, `purpose`, `updated_at`,
+  `head`, `history`, `gate_chain`, `no_push`, `commit_footer`, `open_gaps`,
+  `done_2026-10-13`. It answers one question — *what is left to do*.
+- **`docs/audit/todo-history.md`** (new) holds everything that is state or
+  history rather than open work: the binding policy rationale, the gate
+  snapshot, the manuscript/venue metadata, the 11-cell `evidence_ledger`, the
+  `lineageflow_real_forward` (D-004/D-004b) saga, the closed-gap list, the
+  publication assessment, and `removed_surfaces`.
+
+Consequence for §2/§4 above: the key names `evidence_ledger`,
+`lineageflow_real_forward`, `resolved_gaps`, `recommended_attack_order` and
+`removed_surfaces` are no longer top-level keys of `todo.json`; the
+`removed_surfaces.known_dangling_references` pointer flagged in §4 now lives in
+`docs/audit/todo-history.md` §8. No fact was dropped; nothing frozen was
+touched.

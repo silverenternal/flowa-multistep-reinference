@@ -1,176 +1,39 @@
 {
-  "schema_version": "flowa-state-v2",
-  "purpose": "Single management surface for the FlowA / TNNLS submission. Replaces the former repo-root todo.json AND the entire todo/ directory (deleted 2026-10-13 by user directive). Records: current state, binding gates, the R/K evidence ledger, the LineageFlow real-forward (D-004/D-004b) saga, the open Tier-1 gaps, an honest one-screen assessment, and the recommended attack order. No frozen surface (docs/CLAIMS.md, docs/CONSOLIDATED_RESULTS.md, docs/drafts/paper-A-final.*, tnnls_submission/) is changed by edits to this file.",
+  "schema_version": "flowa-state-v3",
+  "purpose": "Open work only: what still stands between the current HEAD and submission. State, the 11-cell evidence ledger, the publication assessment, the binding policy and the gate snapshot were moved to docs/audit/todo-history.md (2026-10-13, user directive: this file answers only 'what is left to do').",
   "updated_at": "2026-10-13",
-  "head": "0b0d85b",
-  "policy": {
-    "no_push": true,
-    "commit_footer": "(USER AUTHORIZED, NO PUSH)",
-    "frozen_surfaces": [
-      "docs/CLAIMS.md",
-      "docs/CONSOLIDATED_RESULTS.md",
-      "docs/drafts/paper-A-final.md",
-      "docs/drafts/paper-A-final.tex",
-      "docs/drafts/paper-A-final.pdf",
-      "tnnls_submission/**"
-    ],
-    "additive_rule": "Frozen surfaces change only via additive addenda backed by a new measurement; never by wording alone. Vendored upstream (data/**) stays byte-identical.",
-    "gate_chain": [
-      "python tools/verify_submission_readiness.py",
-      "python tools/check_claims_consistency.py",
-      "python tools/check_docs_against_code.py",
-      "python -m pytest tests/test_d4_regression_vectors.py tests/test_adapters/test_regression_vectors.py -q",
-      "ruff check adaptive_reflow/ tests/ scripts/ tools/",
-      "mkdocs build --strict"
-    ]
-  },
-  "gates": {
-    "as_of": "2026-10-12",
-    "d4_byte_stable": "30/30 PASS",
-    "ruff": "0 findings in scope",
-    "mkdocs_strict": "PASS (exit 0)",
-    "checkpoint_sha256": "4/4 PASS",
-    "claims_consistency": "PASS, no drift",
-    "import_acyclic": "PASS",
-    "vendored": "byte-identical (data/ untouched)",
-    "readiness_verifier": "READY_WITH_SKIPS: mypy_0 (mypy absent in sandbox) — exit 0",
-    "pytest_ci_subset": "5055 passed / 171 skipped / 50 deselected / 12 xfailed / 0 failed"
-  },
-  "manuscript": {
-    "title": "FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints",
-    "pdf": "docs/drafts/paper-A-final.pdf (11 pages, IEEEtran-journal)",
-    "source_md": "docs/drafts/paper-A-final.md",
-    "source_tex": "docs/drafts/paper-A-final.tex",
-    "figure": "docs/figures/fig9_cell_evidence_comparison.png"
-  },
-  "venue": {
-    "primary": "IEEE TNNLS (CAS Tier-1 / JCR Q1)",
-    "backups_in_order": [
-      "TIP",
-      "Pattern Recognition",
-      "Neural Networks",
-      "EAAI"
-    ],
-    "self_assessed_acceptance_probability": null
-  },
-  "evidence_ledger": {
-    "note": "11 headline cells. Verdicts verbatim from paper §7.2/§7.11; no number changed here. R1 gains a NEW additive real-forward reading from D-004b (see lineageflow_real_forward).",
-    "cells": [
-      {
-        "id": "R1",
-        "model": "LineageFlow",
-        "metric": "HMMER hits",
-        "status": "PARTIAL / single-seed-disclosed",
-        "synthetic_headline": "158 -> 342 (+116%)",
-        "real_forward_d004b": "158/159/174 -> 275/272/259 (3/3 framework-WINS; DL d_pooled=+0.156, z=8.49, I2=0)",
-        "effect": "small (d_z ~ 0.13-0.17 per seed; below 0.8 STRONG bar)",
-        "attribution": "D-004b-attribution DONE 2026-10-13: init-only 298/274/290 vs framework 275/272/259 vs baseline 158/159/174. init-only ~ framework >> baseline (pooled B-A=+123.7 p=0.0043; B-C=+18.7 p=0.164 n.s.). The real-forward win is the PER-RECORD RANDOM INIT, not the restart-blend.",
-        "blocker": "none for attribution (control run); R1 retained PARTIAL with the mechanism disclosed"
-      },
-      {
-        "id": "R2",
-        "model": "Kanzi",
-        "metric": "reconstruction RMSD (A)",
-        "status": "STRONG framework-WINS",
-        "value": "0.9020 -> 0.8798 (-0.022 A; d_z=-0.0990, Bonferroni-sig)",
-        "caveat": "synthetic-input-coordinate basis; small effect; 'STRONG' = significance, not effect-size threshold"
-      },
-      {
-        "id": "R3",
-        "model": "FlowMol3",
-        "metric": "fg_dev",
-        "status": "PARTIAL / 3-seed ACTUAL (not significant)",
-        "value": "3-seed N=1000 ACTUAL mean -0.0377 fg_dev framework-WINS direction, p=0.559 not significant; canonical 1-seed -0.023484",
-        "blocker": "none for measurement (valid-yield 100%, env canonical); residual: low-power n_seeds=3 + frozen-surface label still says PROJECTED"
-      },
-      {
-        "id": "R5a",
-        "model": "2D Two Moons",
-        "metric": "W2",
-        "status": "TIE",
-        "value": "|Delta|=0.0091 < 0.01 floor; persists at n=7 and n=10"
-      },
-      {
-        "id": "R5b",
-        "model": "CIFAR-10 RF",
-        "metric": "FID",
-        "status": "CONDITIONAL",
-        "value": "n_rounds=1 improves (N=200 4/4; N=1000 2/4); n_rounds>=2 regresses"
-      },
-      {
-        "id": "R5c",
-        "model": "MNIST FM",
-        "metric": "FID",
-        "status": "STRONG (smoke ckpt) / REGIME-DEPENDENT",
-        "value": "smoke -28.43% (d_z=-13.18); production +10.37% baseline-WINS"
-      },
-      {
-        "id": "R6",
-        "model": "LineageFlow k6",
-        "metric": "pLDDT / scPerp",
-        "status": "STRONG via tier-aware counterfactual",
-        "value": "hard tier d_z=+1.189; scPerp cluster-robust d_z=-4.019; head-to-head beats vanilla+Fast-DLLM+AB-Cache+LeDiFlow (16-cell Table B Bonferroni-sig)",
-        "caveat": "tier-aware upgrade is counterfactual; live 3-seed GPU pending"
-      },
-      {
-        "id": "K1",
-        "model": "FlowMol3 RDKit-validity",
-        "metric": "validity",
-        "status": "NOT-SIGNIFICANT at K-level alpha",
-        "value": "p_b=0.5676 vs alpha_K=0.0125 (family-multiplier correction)"
-      },
-      {
-        "id": "K4",
-        "model": "LineageFlow HMMER length-bias",
-        "metric": "length-bias",
-        "status": "SUPPORTED at K-level alpha",
-        "value": "cluster-robust d_z=+0.84, p_b=0.009"
-      },
-      {
-        "id": "K5",
-        "model": "LineageFlow HMMER fw-vs-baseline delta",
-        "metric": "delta hits",
-        "status": "SUPPORTED / SUPPORTS-WITH-CAVEAT",
-        "value": "cluster-robust d_z=+1.12, p_b=0.003; Wave 280 re-agg n=3 caveat pending n>=7"
-      },
-      {
-        "id": "K7",
-        "model": "LineageFlow novelty",
-        "metric": "novel_pct_pfam_twilight",
-        "status": "PARTIAL / SUPP - direction INVERTED",
-        "value": "baseline 46.6% vs framework 3.7% novel (framework 12.6x LESS novel); structural-correctness signal preserved"
-      }
-    ],
-    "verdict_distribution": "4 STRONG (R2, R5b-conditional, R5c-smoke, R6) + 1 TIE (R5a) + 6 PARTIAL/SUPP (R1, R3, K1, K4, K5, K7)"
-  },
-  "lineageflow_real_forward": {
-    "purpose": "Track the D-004/D-004b saga that determines R1's real-forward basis.",
-    "D-004_defect": "The checkpoint-compat shim registered a bare core module with no __path__, shadowing vendored upstream core/ -> _try_import_lineageflow_upstream() returned None -> adapter integrated an all-zero velocity field. Every 'real-ckpt' run before the fix was zero-field.",
-    "D-004_fix": "bf66aa4 - give the fabricated core a __path__ pointing at data/lineageflow_upstream/core/ when present. _model becomes models.model.LineageFlowClassifier; velocity non-zero.",
-    "D-004_remeasure": "docs/audit/r1-d004-remeasure.md - with the real field live, the framework arm collapsed to 0 hits on all 3 seeds (d_pooled=-0.4013). Root cause: _build_initial_state_and_condition accepts a seed it never uses -> record-identical x0; only the restart perturbation carried per-record entropy, and it was too weak once the deterministic real field was live.",
-    "D-004b_fix": "1264cec - on the real-classifier path, the restart fresh state is a per-record random simplex softmax(randn(L, AA_VOCAB)) (Wave-41 tool noise convention). Synthetic path byte-unchanged (D.4 preserved). Tests added.",
-    "D-004b_remeasure": "docs/audit/r1-d004b-remeasure.md - 3/3 seeds framework-WINS: 158/159/174 -> 275/272/259 (mean +105 hits, +66% on seed-42 baseline). Per-record d_z=+0.169/+0.170/+0.129; seed-level d_z=+6.02; DL d_pooled=+0.1559, z=8.49, I2=0, Bonferroni-sig at k=7.",
-    "evidence": "verification_outputs/r1_3seed_d004b_q4_2026/ (force-added; SHA256SUMS 11/11 OK); attribution: verification_outputs/r1_d004b_attribution_q4_2026/",
-    "caveat": "D-004b restart init is a tool-convention surrogate, not the upstream intervention sampler. The init-only vs full-framework control HAS NOW BEEN RUN (2026-10-13): init-only ~ framework >> baseline, so the R1 win is attributable to the per-record random INIT, not the restart-blend (docs/audit/r1-d004b-attribution.md)."
-  },
+  "head": "1f6a55c",
+  "history": "docs/audit/todo-history.md",
+  "gate_chain": [
+    "python tools/verify_submission_readiness.py",
+    "python tools/check_claims_consistency.py",
+    "python tools/check_docs_against_code.py",
+    "python -m pytest tests/test_d4_regression_vectors.py tests/test_adapters/test_regression_vectors.py -q",
+    "ruff check adaptive_reflow/ tests/ scripts/ tools/",
+    "mkdocs build --strict"
+  ],
+  "no_push": true,
+  "commit_footer": "(USER AUTHORIZED, NO PUSH)",
   "open_gaps": [
     {
       "id": "GAP-01-R6-LIVE",
       "priority": "P0",
       "owner": "gpu",
-      "status": "OPEN",
-      "gap": "R6: counterfactual-STRONG -> live-GPU-STRONG. 3-seed x N=1000 paired live sweep under TierAwareCodimensionSheetScheduler (~26-53 GPU-h on GPU 0, contended).",
-      "acceptance": "live 3-seed paired d_z >= +0.2235; R6 label becomes live-GPU-STRONG."
+      "status": "IN PROGRESS",
+      "gap": "R6 pLDDT: convert the tier-aware counterfactual (d_z=+0.2235) into a live 3-seed x N=1000 paired reading on cuda:0.",
+      "acceptance": "live 3-seed paired d_z >= +0.2235 -> the R6 pLDDT label becomes live-STRONG.",
+      "remaining": "Finish the seed44 fresh-baseline fold, then re-run tools/sweep_r6_tier_aware_live.py --skip-generate --skip-fold --fold-baseline --pair-with fresh and fill docs/audit/gap01-r6-live-wiring.md §3.1/§4. The baseline arm is seeded by --seed, so the frozen Wave 161 baseline only matches seed 42; seeds 43/44 need their own fold (driver extended with --fold-baseline / --pair-with fresh, commit 0b0d85b). Provisional readings under the invalid frozen pairing: +0.1548 / +0.1380 / +0.1293 (seed 43 corrects to +0.1272) - below the bar.",
+      "evidence": "tools/sweep_r6_tier_aware_live.py; verification_outputs/gap01-r6-tier-aware-live/"
     },
     {
       "id": "GAP-12-BASELINE",
       "priority": "P1",
       "owner": "agent(+gpu)",
       "status": "PARTIAL",
-      "gap": "Baseline fairness: matched-NFE + at least one tuned baseline per headline cell (straw-man exposure). 11 headline cells (R1,R2,R3,R5a,R5b,R5c,R6,K1,K4,K5,K7).",
-      "acceptance": "tuned-baseline comparison exists per headline cell.",
-      "progress": "9/11 resolved. NEW sweeps: R5b (baseline NFE {50,100,200} vs framework@50: baseline FID 447.89->443.75->439.25; framework wins 2/4->1/4->0/4 => the n_rounds=1 matched-NFE win does NOT survive baseline tuning, straw-man REAL) and R5c (baseline steps {50,100,200}: FID 29.4925->29.4890 step-insensitive; framework@matched 23.3879 BEATS => straw-man REFUTED). NEW well-averaged run R5a (canonical ablation W2 is over (n_rounds,2) points => sample-count confound; well-averaged 1000/round: baseline 0.0790 vs best framework 0.0746, only 1/4 schedulers win by +5.6% => straw-man REAL, magnitude not robust). Structural (no compute knob): R1/R6/K4/K5/K7 (bare-RNG baseline) + R2 (Kanzi DAE encode, nfe_budget='n/a'; composite NFE-invariant {10..2000}). Residual (documented, not promoted): R3/K1 (FlowMol3 fg_dev/validity - harness TIE 0.073404, paper-metrics degrades to none, v2 SOTA runner is synthetic-NumPy; needs the real production-ckpt pipeline).",
-      "evidence": "docs/audit/gap12-tuned-baseline.md; verification_outputs/gap12-tuned-baseline-cifar.json; verification_outputs/gap12-mnist-tuned-baseline.json; verification_outputs/gap12-2d-tuned-baseline.json; verification_outputs/gap12-2d-sota-wellaveraged/; verification_outputs/gap12-flowmol3-tuned-nfe.json"
+      "gap": "Baseline fairness: matched-NFE plus at least one tuned baseline per headline cell (11 cells).",
+      "acceptance": "a tuned-baseline comparison exists per headline cell.",
+      "remaining": "9/11 resolved. R3/K1 is the last pair: baseline NFE=1000 is running on GPU1; then update docs/audit/gap12-tuned-baseline.md §4.2 with the NFE in {250, 500, 1000} table. At baseline NFE=500 the baseline gets worse (fg_dev advantage -0.0614, pb_validity lower) => straw-man refuted at 2x.",
+      "evidence": "docs/audit/gap12-tuned-baseline.md; verification_outputs/gap12-*"
     },
     {
       "id": "GAP-15-VENUE",
@@ -179,78 +42,23 @@
       "status": "OPEN",
       "gap": "Venue-fit decision: TNNLS vs repositioning to a systems/applications venue.",
       "acceptance": "venue decided; positioning matches.",
-      "agent_action": "none - owner=user. Not agent-executable: it is a positioning/venue decision that changes the paper narrative and the submission target."
+      "agent_action": "none - owner=user; not agent-executable."
     },
     {
       "id": "GAP-20-COVERLETTER",
       "priority": "P2",
       "owner": "user",
       "status": "OPEN",
-      "gap": "17 [USER TO FILL] placeholders in tnnls_submission/cover_letter.md.",
-      "agent_action": "none - owner=user. Not agent-executable: only the author can supply the names/affiliations/emails.",
-      "observed_state": "tnnls_submission/cover_letter.md currently holds 12 '[USER TO FILL: ...]' placeholders (authors block, suggested associate editor, 5 suggested reviewers + affiliations, corresponding-author name/affiliation/email); todo.json had recorded 17. The 12 match FILL_GUIDE.md's enumerated list; the extra mentions elsewhere in the package are references to the convention, not placeholders."
+      "gap": "12 '[USER TO FILL: ...]' placeholders remain in tnnls_submission/cover_letter.md (authors block; suggested associate editor; 5 suggested reviewers + affiliations; corresponding-author name/affiliation/email).",
+      "acceptance": "no '[USER TO FILL' remains.",
+      "agent_action": "none - owner=user; only the author can supply names/affiliations/emails."
     }
   ],
-  "resolved_gaps": [
-    "GAP-03-R1-3SEED: single-seed -> clean 3-seed real-forward basis DONE via D-004b (direction framework-WINS); residual = D-004B-ATTRIBUTION control.",
-    "GAP-05/06/07/08: framing/honesty items already handled in the live manuscript (verified 2026-10-12).",
-    "GAP-14: novelty-differentiation paragraph added.",
-    "GAP-16: 31 deferred reviewer-facing gaps triaged (explicit acceptances).",
-    "GAP-18/19/21: dead links + Q1-odds + test-citation cluster fixed.",
-    "GAP-22: R2/R1 rubric disclosure satisfied (option A, no label change).",
-    "GAP-23: retracted - R2 significance is not a pairing artifact.",
-    "GAP-09-THEORY: resolved 2026-10-13 (commit 74fa61c) - measurable diagnostic (q=mK<1 Thm4 + exact blend identity Thm5) on the R5b cell field; contraction holds and round map contracts at all m, Thm5 identity exact + Eq.7 predicts blend sign 4/4. See docs/audit/gap09-reinference-diagnostic.md.",
-    "GAP-02-R3-N1000: resolved 2026-10-13 at the management surface (measurement done in 0f62c27 + docs/audit/r3-env-investigation.md §9; valid-yield 100%, 3-seed N=1000 ACTUAL, PROJECTED label dropped in todo.json only). Frozen CLAIMS/paper/tnnls NOT touched (user decision 2026-10-13). See docs/audit/gap02-r3-n1000-resolved.md.",
-    "GAP-17-K2K6: resolved 2026-10-13 (commit ea40989) - honest disclosure retained (accepted per the gap's own criterion). K2 (CIFAR v4 N=500 provenance) was already CLOSED by Wave 147 P3; K6 (Wan2.2) is env-blocked (weights are 135-byte LFS pointer stubs, real ckpt absent) IN ADDITION to the disclosed compute-priority blocker; K5 (FreqFlow) un-pinnable (no public nnet_ema.pth). No frozen surface edited; no status promoted. See docs/audit/gap17-k2k6-disclosure.md.",
-    "D-004B-ATTRIBUTION: resolved 2026-10-13 - init-only control arm run (3 seeds x N=1000, real-forward). Result: init-only (B) ~ framework (C) >> baseline (A); seed-level pooled B-A=+123.7 hits (p=0.0043), B-C=+18.7 (p=0.164 n.s.). The R1 real-forward win is carried by the PER-RECORD RANDOM INITIAL STATE, not the multi-round restart-blend. R1 retained PARTIAL with the mechanism disclosed (NOT promoted). Evidence: verification_outputs/r1_d004b_attribution_q4_2026/ (SHA256SUMS OK). See docs/audit/r1-d004b-attribution.md.",
-    "GAP-04-R5B-ROUNDS: matched multi-seed round-count test DONE 2026-10-13 - boundary CONFIRMED (n_rounds=1 win/tie 3/4; n_rounds>=2 regress 3/4 by +20-31% FID); caveat = the framework arm is seed-invariant, so the 3 seeds probe baseline-side variability only."
-  ],
-  "assessment": {
-    "date": "2026-10-13",
-    "question": "Can this be published in a CAS Tier-1 / Q1 journal (TNNLS)?",
-    "verdict": "Plausible, but sitting on the decision boundary. The contribution type (portable training-free re-inference framework + typed contracts + hash-chained ledger + byte-stable reproducibility + 2 conditional theorems + mechanism-isolating evidence) is exactly what TNNLS publishes; the reproducibility infrastructure is above the venue norm. The gating risk is the empirical axis, not the framework.",
-    "strong_axes": [
-      "Framework + reproducibility infrastructure (D.4 byte-stable, SHA-256 ledger, per-cell recipes, master verifier) - Tier-1 grade.",
-      "Large, significant effects where the mechanism is load-bearing (R6 hard-tier d_z=+1.189; R6 scPerp cluster-robust d_z=-4.019; R5c smoke d_z=-13.18; K4/K5 cluster-robust d_z=+0.84/+1.12).",
-      "Head-to-head: FlowA beats vanilla + Fast-DLLM + AB-Cache + LeDiFlow on R6 both metrics x both NFE (16-cell Table B Bonferroni-sig).",
-      "Two theorems with proofs + honest scope (Wave 372 retracted the parts that did not follow).",
-      "The conditional/regression cells form a coherent 'headroom' story, not noise."
-    ],
-    "gating_risks": [
-      "R1/R3 flagship protein/molecule cells are single-seed/projected (R1 now improved by D-004b; R3 still env-blocked).",
-      "Baseline fairness (GAP-12): straw-man baseline is the classic framework-paper death.",
-      "The conditional/regression cluster needs one clean boundary law, not per-cell excuses.",
-      "Meta-content density: 11 pages carry a lot of audit/disclosure prose; a reviewer may read it as engineering-heavy / science-thin.",
-      "D-004b win is not yet mechanism-attributed (init vs restart-blend confound)."
-    ],
-    "decision_variables": [
-      "How R1 (D-004b attribution) and R3 (N=1000 actual) real-ckpt runs land.",
-      "Whether the conditional evidence converges into one boundary law.",
-      "Whether the framework framing survives the 'conditional wins' critique."
-    ]
-  },
-  "recommended_attack_order": [
-    "1. D-004B-ATTRIBUTION (P0): DONE 2026-10-13 - init-only ~ framework >> baseline; the R1 win is the per-record random INIT, not the restart-blend.",
-    "2. GAP-01-R6-LIVE (P0, USER-AUTHORIZED): 3-seed x N=1000 live GPU sweep on cuda:0 - converts counterfactual-STRONG to live-STRONG.",
-    "3. GAP-04-R5B-ROUNDS (P0): DONE 2026-10-13 - boundary CONFIRMED at multi-seed (n_rounds=1 win/tie 3/4 schedulers; n_rounds>=2 regress 3/4 by +20-31% FID; CodimensionSheet never regresses). Disclosure: the framework arm is seed-invariant (seed_base unused in the runner), so the 3 seeds probe the baseline axis only.",
-    "4. GAP-12-BASELINE (P1): PARTIAL 2026-10-13 - 9/11 resolved (R5b straw-man REAL, R5c refuted, R5a well-averaged win not robust, R1/R6/K4/K5/K7 + R2 structurally invariant); 2 residual (R3/K1 need the real FlowMol3 production-ckpt pipeline).",
-    "5. GAP-17-K2K6 (P2): DONE 2026-10-13 - honest disclosure retained (K6 env-blocked by un-pulled LFS ckpt).",
-    "6. GAP-15-VENUE (user) + GAP-20-COVERLETTER (user): USER-GATED - not agent-executable (venue decision; 12 author-supplied placeholders in cover_letter.md). Reported back to the user 2026-10-13.",
-    "DONE: GAP-02-R3-N1000 (2026-10-13); GAP-09-THEORY (2026-10-13); GAP-17-K2K6 (2026-10-13); D-004B-ATTRIBUTION (2026-10-13)."
-  ],
-  "removed_surfaces": {
-    "date": "2026-10-13",
-    "removed": [
-      "todo.json (old)",
-      "todo/ (entire directory: decisions.md, GATES.md, INDEX.md, lessons-learned.md, LOOP.md, PUSH-READY.md, README.md, RISK-REGISTER.md, STATUS.md, SUBMISSION-GAP-CHECKLIST.md, TIMELINE.md, TPAMI-6-WEEK-PLAN.md, WAVES.md)"
-    ],
-    "reason": "User directive: replace the legacy governance surface with a single current-state todo.json.",
-    "known_dangling_references": [
-      "docs/drafts/paper-A-final.md:842 links todo/RISK-REGISTER.md R-019 (frozen manuscript; left untouched per the freeze rule)."
-    ],
-    "repaired_references": [
-      "docs/README.md (management-surface pointers repointed to todo.json).",
-      "docs/RELEASE-NOTES.md (gate-state pointer repointed to todo.json)."
-    ]
-  }
+  "done_2026-10-13": [
+    "D-004B-ATTRIBUTION - init-only ~ framework >> baseline; the R1 win is the per-record random INIT",
+    "GAP-02-R3-N1000 - real 3-seed N=1000 R3 measurement, valid-yield 100%",
+    "GAP-04-R5B-ROUNDS - round-count boundary CONFIRMED (n_rounds=1 win/tie 3/4; >=2 regress 3/4 by +20-31% FID)",
+    "GAP-09-THEORY - q=mK<1 + exact blend identity predict the R5b sign 4/4",
+    "GAP-17-K2K6 - honest disclosure retained (K6 env-blocked by LFS-pointer stubs)"
+  ]
 }
