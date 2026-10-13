@@ -368,7 +368,7 @@ def _apply_sensitivity_patches(*, beta_base: float, nfe_ref: int) -> None:
             # tier-aware flags are active (same guard as the inner).
             _tier_active = bool(
                 tier_aware_n_cap is not None
-                and 0.0 < float(tier_aware_n_cap) < 1.0
+                and float(tier_aware_n_cap) > 0.0
                 and isinstance(tier_aware_baseline_metrics, dict)
                 and len(tier_aware_baseline_metrics) > 0,
             )

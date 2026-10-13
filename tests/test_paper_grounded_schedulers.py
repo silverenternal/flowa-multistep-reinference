@@ -1128,11 +1128,39 @@ class TestTierAwareCodimensionSheetScheduler:
                 easy_tier_nfe_reduction_factor=0.0,
             )
 
-    def test_easy_tier_factor_above_one_is_rejected(self) -> None:
-        """``easy_tier_nfe_reduction_factor > 1`` is rejected (must lie in ``(0, 1]``)."""
+    def test_easy_tier_factor_above_one_increases_n_cap(self) -> None:
+        """``easy_tier_nfe_reduction_factor > 1`` is accepted and raises easy n_cap.
+
+        GAP-28: a factor > 1 *increases* the easy-tier ``n_cap`` (lowers
+        ``beta = 1 - n_cap``) — the faithful direction. The product stays
+        clamped to ``[0, 1]``.
+        """
+        metrics = {"hard_rec": 0.0, "med_rec": 0.5, "easy_rec": 1.0}
+        wrapper = TierAwareCodimensionSheetScheduler(
+            easy_tier_nfe_reduction_factor=1.5,
+        )
+        wrapper.set_baseline_metrics(dict(metrics))
+        ref = TierAwareCodimensionSheetScheduler(
+            easy_tier_nfe_reduction_factor=1.0,
+        )
+        ref.set_baseline_metrics(dict(metrics))
+        wrapper.set_current_record("easy_rec")
+        ref.set_current_record("easy_rec")
+        saw_increase = False
+        for r in range(10):
+            s15 = wrapper.sample(0, r, r)
+            s10 = ref.sample(0, r, r)
+            assert 0.0 <= s15.n_cap <= 1.0
+            assert s15.n_cap >= s10.n_cap - 1e-12
+            if s15.n_cap > s10.n_cap + 1e-9:
+                saw_increase = True
+        assert saw_increase
+
+    def test_easy_tier_factor_negative_is_rejected(self) -> None:
+        """``easy_tier_nfe_reduction_factor <= 0`` is rejected."""
         with pytest.raises(ValueError, match="easy_tier_nfe_reduction_factor"):
             TierAwareCodimensionSheetScheduler(
-                easy_tier_nfe_reduction_factor=1.5,
+                easy_tier_nfe_reduction_factor=-0.5,
             )
 
     def test_quantile_boundaries_invalid_order_rejected(self) -> None:

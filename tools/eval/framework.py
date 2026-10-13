@@ -505,7 +505,7 @@ def _make_framework_policy(
         # (records with baseline_pLDDT above the 67th percentile).
         _tier_active = bool(
             tier_aware_n_cap is not None
-            and 0.0 < float(tier_aware_n_cap) < 1.0
+            and float(tier_aware_n_cap) > 0.0
             and isinstance(tier_aware_baseline_metrics, dict)
             and len(tier_aware_baseline_metrics) > 0,
         )
@@ -568,17 +568,18 @@ def _make_framework_policy(
         # byte-identical to the uniform arm). When the tier-aware flags
         # are active we wrap a :class:`ConstantScheduler` (``n_cap`` =
         # 0.5, i.e. the legacy ``β = 1 - n_cap = 0.5`` base) in the
-        # :class:`TierAwareCodimensionSheetScheduler`, which reduces
+        # :class:`TierAwareCodimensionSheetScheduler`, which scales
         # ``n_cap`` on the easy tier (baseline metric above the 67th
         # percentile) by ``tier_aware_n_cap``. The subsequent
-        # ``β = 1 - n_cap`` mapping then raises β on the easy tier —
-        # the AS-DESIGNED Wave 275 P4 factor-0.5 materialization
-        # (user-selected 2026-10-13, ``docs/audit/gap01-r6-live-*.md``).
-        # When either flag is absent the legacy constant-0.5 path is
-        # preserved byte-identically for the D.4 vector suite.
+        # ``β = 1 - n_cap`` mapping then moves β on the easy tier:
+        # factor 0.5 raises easy β to 0.75 (the AS-DESIGNED Wave 275 P4
+        # materialization, user-selected 2026-10-13); factor 1.5 *lowers*
+        # easy β to 0.25 (the GAP-28 faithful direction). When either
+        # flag is absent the legacy constant-0.5 path is preserved
+        # byte-identically for the D.4 vector suite.
         _tier_active = bool(
             tier_aware_n_cap is not None
-            and 0.0 < float(tier_aware_n_cap) < 1.0
+            and float(tier_aware_n_cap) > 0.0
             and isinstance(tier_aware_baseline_metrics, dict)
             and len(tier_aware_baseline_metrics) > 0,
         )

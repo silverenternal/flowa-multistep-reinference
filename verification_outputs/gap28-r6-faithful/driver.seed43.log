@@ -1,0 +1,9 @@
+frozen baseline records: 1000
+/home/hugo/codes/flowa-multistep-reinference/.venvs/lineageflow_venv/bin/python /home/hugo/codes/flowa-multistep-reinference/tools/gen_lineageflow_n1000_fastas.py --outdir verification_outputs/gap28-r6-faithful/seed43/fasta --n 1000 --seed 43 --upstream-eval-len-bias short --nfe 10 --n-rounds 3 --temperature 1.0 --tier-aware-n-cap 1.5 --tier-aware-baseline-metrics-jsonl /home/hugo/codes/flowa-multistep-reinference/verification_outputs/k6_foldability_n1000_w161_q3_2026/baseline/foldability/foldability.jsonl
+[seed 43] baseline byte-identical to frozen: False
+/home/hugo/.conda/envs/omegafold_py310/bin/python /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/run_foldability.py --fasta verification_outputs/gap28-r6-faithful/seed43/fasta/baseline.fasta --outdir verification_outputs/gap28-r6-faithful/seed43/baseline/foldability --omegafold-bin /home/hugo/.conda/envs/omegafold_py310/bin/omegafold --fold-gpus 0 --sc-gpus 0 --max-seqs 1000 --skip-sc --no-plots --log-every 60
+/home/hugo/.conda/envs/omegafold_py310/bin/python /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/run_foldability.py --fasta verification_outputs/gap28-r6-faithful/seed43/fasta/framework.fasta --outdir verification_outputs/gap28-r6-faithful/seed43/framework/foldability --omegafold-bin /home/hugo/.conda/envs/omegafold_py310/bin/omegafold --fold-gpus 0 --sc-gpus 0 --max-seqs 1000 --skip-sc --no-plots --log-every 60
+[seed 43] d_z=+0.1009 mean_diff=+1.7659 n=1000
+
+pooled d_z = +0.1009 (n=1000, mean_diff=+1.7659)
+wrote verification_outputs/gap28-r6-faithful/sweep_summary.json

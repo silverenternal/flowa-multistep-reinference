@@ -1,0 +1,39 @@
+{
+  "increment": "gap28-r6-faithful",
+  "kind": "gap28_r6_tier_aware_live_faithful",
+  "purpose": "GAP-28 faithful-direction R6 live sweep: flip the easy-tier beta direction (0.75 -> 0.25) by setting the tier-aware n_cap factor to 1.5, and re-run the 3-seed N=1000 paired pLDDT sweep.",
+  "gpu": "0",
+  "gpu_note": "GPU0 only; matches the recorded R6 hard constraint ('cuda:0 ONLY'). GPU1 was contended by another project's mol-metal job at capture time.",
+  "command_canonical": ".venvs/lineageflow_venv/bin/python tools/sweep_r6_tier_aware_live.py --outdir verification_outputs/gap28-r6-faithful --seeds 42,43,44 --n 1000 --tier-aware-n-cap 1.5 --gpu 0 --fold-baseline --pair-with fresh",
+  "command_executed": "Three independent single-seed invocations run in parallel (seeds are independent; folding caches PDBs): for S in 42 43 44: .venvs/lineageflow_venv/bin/python tools/sweep_r6_tier_aware_live.py --outdir verification_outputs/gap28-r6-faithful --seeds $S --n 1000 --tier-aware-n-cap 1.5 --gpu 0 --fold-baseline --pair-with fresh > verification_outputs/gap28-r6-faithful/driver.seed$S.log 2>&1",
+  "parallelization_note": "The sequential driver was stopped after ~40 min (seed42 generation done, ~420/1000 baseline chains folded). It was relaunched as three concurrent single-seed drivers on GPU0 (which was only ~28% utilised during folding). Seeds are independent and folding is deterministic, so per-seed results are identical to the sequential run; only wall-clock changes. The per-seed sweep_summary.json race is harmless (the pooled sweep_summary.json is rewritten by tools/gap28_aggregate.py after all seeds finish).",
+  "gen_config": {
+    "gen_script": "tools/gen_lineageflow_n1000_fastas.py",
+    "nfe": 10,
+    "n_rounds": 3,
+    "temperature": 1.0,
+    "upstream_eval_len_bias": "short",
+    "tier_aware_n_cap": 1.5,
+    "tier_aware_baseline_metrics_jsonl": "verification_outputs/k6_foldability_n1000_w161_q3_2026/baseline/foldability/foldability.jsonl"
+  },
+  "seeds": [42, 43, 44],
+  "n_per_seed": 1000,
+  "sample_count": 6000,
+  "output_directory": "verification_outputs/gap28-r6-faithful",
+  "max_records_cap": 1000,
+  "wall_clock_budget_hours": 8,
+  "pairing": "within-seed fresh baseline fold (--pair-with fresh); the frozen Wave 161 baseline metrics drive tier assignment only",
+  "acceptance_bar_pooled_dz": 0.2235,
+  "as_designed_reference_pooled_dz": 0.1466,
+  "mechanism_check": "N=20 pilot: factor 1.5 vs 0.5 framework arms differ on exactly the easy-tier records (5/20: q5,q8,q9,q10,q19); baseline byte-identical. N=1000 confirm: vs the as-designed run, exactly the 330 frozen-easy records per seed differ; hard 0/330 and medium 0/340 byte-identical.",
+  "result": {
+    "per_seed_pooled_dz": {"42": 0.1031, "43": 0.1009, "44": 0.1277},
+    "pooled_dz": 0.1104,
+    "pooled_mean_diff": 1.993,
+    "pooled_n": 3000,
+    "acceptance_met": false,
+    "verdict": "DEFINITIVE_NULL: the faithful direction (easy beta 0.75 -> 0.25) LOWERS the pooled d_z vs the as-designed run (+0.1466); the GAP-01 s4.5 direction-mismatch hypothesis is refuted"
+  },
+  "timestamp_start": "2026-10-13T16:25:52Z",
+  "timestamp_end": "2026-10-13T19:49:00Z"
+}

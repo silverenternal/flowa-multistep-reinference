@@ -158,10 +158,13 @@ def _compute_tier_boundaries(
 class TierAwareCodimensionSheetScheduler:
     """Tier-aware wrapper around :class:`CodimensionSheetScheduler`.
 
-    Reduces the per-round ``n_cap`` by ``easy_tier_nfe_reduction_factor``
+    Scales the per-round ``n_cap`` by ``easy_tier_nfe_reduction_factor``
     on records whose baseline metric lies above the high quantile
     boundary (the *easy* tier), preserving the full ``n_cap`` envelope on
-    hard / medium tiers.
+    hard / medium tiers. The factor may be ``<= 1`` (reduce ``n_cap``,
+    i.e. raise the fresh-noise fraction ``beta = 1 - n_cap``) or ``> 1``
+    (increase ``n_cap``, i.e. *lower* ``beta`` — the GAP-28 faithful
+    direction); the result is clamped to ``[0, 1]``.
 
     Tier assignment
     ---------------
@@ -219,12 +222,15 @@ class TierAwareCodimensionSheetScheduler:
             ``eps_direction="decreasing"`` (Wave 233 P3 default;
             matches the framework default since Wave 34).
         :param easy_tier_nfe_reduction_factor: the multiplicative
-            reduction applied to ``n_cap`` on the easy tier. Must
-            lie in ``(0, 1]``. ``1.0`` = no reduction (default,
-            safe no-op); ``0.5`` = halve the ``n_cap`` on easy
-            (matches the Wave 225 P4 / P5 counterfactual). The
-            factor is **clipped into ``(0, 1]``** so a misconfigured
-            value of ``0`` cannot silently zero out the easy tier.
+            factor applied to ``n_cap`` on the easy tier. Must be
+            ``> 0`` (finite). ``1.0`` = no change (default, safe
+            no-op); ``0.5`` = halve the ``n_cap`` on easy (raises
+            easy-tier ``beta`` to ``1 - 0.5*n_cap`` — the Wave 225
+            P4 / P5 counterfactual as-designed); ``1.5`` = *increase*
+            the easy-tier ``n_cap`` (lowers easy-tier ``beta`` — the
+            GAP-28 faithful direction). The factor is **clipped into
+            ``(0, inf)``** and the product is clamped to ``[0, 1]`` so a
+            misconfigured value cannot escape the unit interval.
         :param tier_quantile_boundaries: 2-tuple of quantiles
             ``(q_low, q_high)`` in ``(0, 1)`` with
             ``q_low < q_high``. Defaults to ``(0.33, 0.67)`` per
@@ -283,10 +289,11 @@ class TierAwareCodimensionSheetScheduler:
             raise ValueError(
                 f"easy_tier_nfe_reduction_factor must be finite, got {factor!r}"
             )
-        if not (0.0 < factor <= 1.0):
+        if not (factor > 0.0):
             raise ValueError(
-                "easy_tier_nfe_reduction_factor must lie in (0, 1], "
-                f"got {factor!r}"
+                "easy_tier_nfe_reduction_factor must be > 0 "
+                "(a factor > 1 *increases* the easy-tier n_cap, i.e. lowers "
+                f"beta — the GAP-28 faithful direction); got {factor!r}"
             )
         # Validate tier_quantile_boundaries (delegated to _compute_tier_boundaries).
         low, high = _compute_tier_boundaries(
