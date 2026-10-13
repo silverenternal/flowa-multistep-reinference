@@ -117,6 +117,7 @@ Tuned-baseline / straw-man status is GAP-12's — see
 | GAP-25-R1-BLEND-ISOLATION | 2026-10-13 | the R1 win is the per-record random INIT (B ≈ C, B ≫ A); blend marginal bounded ≤ +46 hits (≤ 28 % of baseline) — `docs/audit/gap25-r1-blend-isolation.md` |
 | GAP-26-R5B-REGIME | 2026-10-13 | no tested R5b protocol survives a tuned baseline (0/4 at baseline NFE=200); the GAP-24 law reproduces the 2/4→1/4→0/4 flip — `docs/audit/gap26-r5b-regime.md` |
 | GAP-27-R3-POWER | 2026-10-13 | R3 is bounded-marginal (~49 seeds for 80 % power; d_z=−0.40); fixed a seed-level CI defect (1.96 at df=2 → t=4.303; NFE=500 CI had falsely excluded 0) — `docs/audit/gap27-r3-power.md` |
+| GAP-28-R6-LIVE-FAITHFUL | 2026-10-13 | the faithful easy-tier direction (β 0.75→0.25) is a DEFINITIVE NULL: pooled d_z +0.1104 < as-designed +0.1466 < bar +0.2235; the GAP-01 §4.3/§4.5 direction-mismatch hypothesis is refuted (easy-tier regression is monotone *increasing* in β_easy); tier isolation exact; secondary finding — the frozen reference tier is uncorrelated with the seed's own baseline on seeds 43/44 (Pearson +0.03/−0.01) — `docs/audit/gap28-r6-faithful.md` |
 
 ## 7. Publication assessment (2026-10-13)
 
