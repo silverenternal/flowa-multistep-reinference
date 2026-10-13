@@ -206,11 +206,17 @@ def _compute_metrics(sampled_mols, *, arm_name, seed_base):
 
 
 def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
-                  upstream_repo, device, out_dir) -> dict:
-    """Run baseline + framework arms for one seed and return the paired dict."""
+                  upstream_repo, device, out_dir, baseline_nfe=None) -> dict:
+    """Run baseline + framework arms for one seed and return the paired dict.
+
+    ``baseline_nfe`` (GAP-12 tuned-baseline extension) lets the *baseline* arm
+    run at a different solver budget than the framework arm. ``None`` keeps the
+    legacy matched-NFE behaviour (both arms at ``nfe``).
+    """
+    base_nfe = int(nfe) if baseline_nfe is None else int(baseline_nfe)
     baseline_raw = _generate_arm(
         arm_name="baseline", perturbation_sigma=PERTURBATION_SIGMA_BASELINE,
-        seed_base=seed_base, n_total=n_total, nfe=nfe, nfe_batch=nfe_batch,
+        seed_base=seed_base, n_total=n_total, nfe=base_nfe, nfe_batch=nfe_batch,
         weights_path=weights_path, upstream_repo=upstream_repo, device=device,
     )
     baseline_metrics = _compute_metrics(baseline_raw["_sampled_mols"],
@@ -240,6 +246,7 @@ def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
         "checkpoint": str(weights_path),
         "n_total_per_arm": int(n_total),
         "nfe": int(nfe),
+        "baseline_nfe": int(base_nfe),
         "nfe_batch": int(nfe_batch),
         "n_batches": int(n_total // nfe_batch),
         "seed_base": int(seed_base),
@@ -308,6 +315,9 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--n-total", type=int, default=N_TOTAL)
     p.add_argument("--nfe", type=int, default=NFE)
+    p.add_argument("--baseline-nfe", type=int, default=0,
+                   help="GAP-12 tuned-baseline: run the baseline arm at this "
+                        "solver budget (0 = matched, use --nfe).")
     p.add_argument("--nfe-batch", type=int, default=NFE_BATCH)
     p.add_argument("--seeds", type=int, nargs="+", default=list(SEEDS))
     p.add_argument("--device", default=DEVICE)
@@ -325,6 +335,7 @@ def main(argv: list[str] | None = None) -> int:
             int(seed),
             n_total=int(args.n_total),
             nfe=int(args.nfe),
+            baseline_nfe=(int(args.baseline_nfe) if int(args.baseline_nfe) > 0 else None),
             nfe_batch=int(args.nfe_batch),
             weights_path=WEIGHTS_PATH,
             upstream_repo=UPSTREAM_REPO,
@@ -406,6 +417,9 @@ def main(argv: list[str] | None = None) -> int:
         "n_seeds_completed": len(per_seed),
         "n_total_per_arm": int(args.n_total),
         "nfe": int(args.nfe),
+        "baseline_nfe": (
+            int(args.baseline_nfe) if int(args.baseline_nfe) > 0 else int(args.nfe)
+        ),
         "nfe_batch": int(args.nfe_batch),
         "device": str(args.device),
         "per_seed": per_seed,
