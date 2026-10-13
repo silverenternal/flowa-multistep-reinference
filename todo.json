@@ -1,9 +1,10 @@
 {
   "schema_version": "flowa-state-v3",
-  "purpose": "Open work only: what still stands between the current HEAD and submission. State, the 11-cell evidence ledger, the publication assessment, the binding policy and the gate snapshot were moved to docs/audit/todo-history.md (2026-10-13, user directive: this file answers only 'what is left to do').",
+  "purpose": "Open work only: what still stands between the current HEAD and submission. State, the 11-cell evidence ledger, the publication assessment, the binding policy and the gate snapshot live in docs/audit/todo-history.md (2026-10-13 user directive: this file answers only 'what is left to do').",
   "updated_at": "2026-10-13",
-  "head": "0a56052",
+  "head": "32e4977",
   "history": "docs/audit/todo-history.md",
+  "note": "The Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is already Tier-1 grade - do not spend effort there). This batch is the empirical-upgrade program: one unifying falsifiable regime law (GAP-24) plus the per-cell fixes it must absorb (GAP-25..28), then a density pass on the manuscript (GAP-29).",
   "gate_chain": [
     "python tools/verify_submission_readiness.py",
     "python tools/check_claims_consistency.py",
@@ -16,31 +17,76 @@
   "commit_footer": "(USER AUTHORIZED, NO PUSH)",
   "open_gaps": [
     {
-      "id": "GAP-15-VENUE",
-      "priority": "P1",
-      "owner": "user",
+      "id": "GAP-24-BOUNDARY-LAW",
+      "priority": "P0",
+      "owner": "agent",
       "status": "OPEN",
-      "gap": "Venue-fit decision: TNNLS vs repositioning to a systems/applications venue.",
-      "acceptance": "venue decided; positioning matches.",
-      "agent_action": "none - owner=user; not agent-executable."
+      "gap": "Replace the per-cell 'conditional / regression' excuses with ONE falsifiable regime law that predicts WHEN the framework wins vs loses, unifying: R5b round-count + baseline-NFE dependence, R6 tier structure, R5c smoke-vs-production, R3 direction. Then backtest the law against all 11 headline cells.",
+      "acceptance": "a single criterion (stated BEFORE backtesting) predicts the sign/regime of the headline cells; misses enumerated honestly; new audit doc.",
+      "evidence": "docs/audit/todo-history.md section 4; docs/audit/gap04-r5b-rounds.md; docs/audit/gap01-r6-live-wiring.md"
+    },
+    {
+      "id": "GAP-25-R1-BLEND-ISOLATION",
+      "priority": "P0",
+      "owner": "agent",
+      "status": "OPEN",
+      "gap": "R1's flagship +116% is attributed to the per-record random INIT, not the restart-blend. Either (a) demonstrate a blend-only contribution beyond the init, or (b) reframe the R1 claim to the init effect (the blend is inert here).",
+      "acceptance": "a blend-vs-init experiment with a clear verdict; the R1 claim wording matches the finding.",
+      "evidence": "docs/audit/r1-d004b-attribution.md; verification_outputs/r1_d004b_attribution_q4_2026/"
+    },
+    {
+      "id": "GAP-26-R5B-REGIME",
+      "priority": "P0",
+      "owner": "agent(+gpu)",
+      "status": "OPEN",
+      "gap": "R5b n_rounds=1 wins at matched NFE but LOSES 4/4 at baseline NFE=200; n_rounds>=2 regresses. Find whether any protocol (scheduler / NFE / round schedule) survives a tuned baseline, or sharply bound the surviving regime.",
+      "acceptance": "a surviving configuration documented, OR a precise boundary condition that the GAP-24 law reproduces.",
+      "evidence": "docs/audit/gap12-tuned-baseline.md section 4; docs/audit/gap04-r5b-rounds.md"
+    },
+    {
+      "id": "GAP-27-R3-POWER",
+      "priority": "P1",
+      "owner": "agent(+gpu)",
+      "status": "OPEN",
+      "gap": "R3 fg_dev direction is framework-favoured but underpowered (n=3, p=0.559; the sign holds at baseline NFE 500/1000). Raise power to a definitive verdict.",
+      "acceptance": "R3 powered to significance, or a clearly-bounded null (state the seeds/molecules needed).",
+      "evidence": "docs/audit/gap02-r3-n1000-resolved.md; docs/audit/gap12-tuned-baseline.md section 4.2"
+    },
+    {
+      "id": "GAP-28-R6-LIVE-FAITHFUL",
+      "priority": "P1",
+      "owner": "agent(+gpu)",
+      "status": "OPEN",
+      "gap": "R6 live pLDDT landed at pooled d_z=+0.1466 (< +0.2235). The as-designed wiring maps the easy tier to beta=0.75 while the counterfactual damps it; fix the easy-tier direction (beta 0.5 -> 0.25, factor 1.5 on n_cap) and re-run the live 3-seed sweep.",
+      "acceptance": "faithful-direction live 3-seed paired d_z >= +0.2235 (promote), OR a definitive null with the easy-tier regression explained.",
+      "evidence": "docs/audit/gap01-r6-live-wiring.md sections 1.2 / 4.5"
+    },
+    {
+      "id": "GAP-29-MANUSCRIPT-DENSITY",
+      "priority": "P2",
+      "owner": "agent(+user)",
+      "status": "OPEN",
+      "gap": "11 pages carry heavy audit/disclosure prose; a reviewer may read it as engineering-heavy / science-thin. Tighten the live manuscript toward the empirical contribution once GAP-24 lands.",
+      "acceptance": "reduced meta-content density; requires user authorization to touch the frozen manuscript.",
+      "evidence": "docs/audit/todo-history.md section 7 (gating risk 4)"
+    },
+    {
+      "id": "GAP-15-VENUE",
+      "priority": "P3",
+      "owner": "user",
+      "status": "PARKED",
+      "gap": "Venue-fit decision (user: 'leave it for now'): TNNLS vs repositioning to a systems/applications venue.",
+      "acceptance": "venue decided.",
+      "agent_action": "none - owner=user; parked by user 2026-10-13."
     },
     {
       "id": "GAP-20-COVERLETTER",
-      "priority": "P2",
+      "priority": "P3",
       "owner": "user",
       "status": "OPEN",
       "gap": "12 '[USER TO FILL: ...]' placeholders remain in tnnls_submission/cover_letter.md (authors block; suggested associate editor; 5 suggested reviewers + affiliations; corresponding-author name/affiliation/email).",
       "acceptance": "no '[USER TO FILL' remains.",
       "agent_action": "none - owner=user; only the author can supply names/affiliations/emails."
     }
-  ],
-  "done_2026-10-13": [
-    "D-004B-ATTRIBUTION - init-only ~ framework >> baseline; the R1 win is the per-record random INIT",
-    "GAP-02-R3-N1000 - real 3-seed N=1000 R3 measurement, valid-yield 100%",
-    "GAP-04-R5B-ROUNDS - round-count boundary CONFIRMED (n_rounds=1 win/tie 3/4; >=2 regress 3/4 by +20-31% FID)",
-    "GAP-09-THEORY - q=mK<1 + exact blend identity predict the R5b sign 4/4",
-    "GAP-17-K2K6 - honest disclosure retained (K6 env-blocked by LFS-pointer stubs)",
-    "GAP-01-R6-LIVE - live R6 pLDDT sweep DONE: pooled within-seed d_z=+0.1466 (n=3000; per-seed +0.1548/+0.1272/+0.1579) - BELOW the +0.2235 bar, so R6 pLDDT is NOT promoted to live-STRONG. Tier structure reproduces on 3/3 seeds (hard d_z=+1.10, medium +0.29, easy -0.72); the pooled shortfall is the known as-designed direction mismatch (easy-tier beta 0.75 vs the counterfactual's damped easy tier). Pairing defect found+fixed (baseline RNG is seeded by --seed, so only seed 42 matches the frozen baseline). docs/audit/gap01-r6-live-wiring.md",
-    "GAP-12-BASELINE - 11/11 headline cells now have a tuned-baseline comparison. R5b straw-man REAL; R5c refuted; R5a TIE corroborated; R1/R6/K4/K5/K7 + R2 structurally invariant; R3/K1 REFUTED at 2x and 4x baseline NFE (fg_dev -0.0377/-0.0614/-0.0399; baseline pb_validity degrades monotonically while the framework's is fixed). docs/audit/gap12-tuned-baseline.md"
   ]
 }

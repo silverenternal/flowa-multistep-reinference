@@ -111,3 +111,34 @@ Consequence for §2/§4 above: the key names `evidence_ledger`,
 `removed_surfaces.known_dangling_references` pointer flagged in §4 now lives in
 `docs/audit/todo-history.md` §8. No fact was dropped; nothing frozen was
 touched.
+
+---
+
+## 7. Addendum (2026-10-13) — completed work removed; empirical-upgrade program opened
+
+Per a later user directive ("todo.json 里那些已经完成的任务就从 todo.json 里去除，
+这个文件不能长" + "你提到的这些卡点我们都要做好对应的修复"), `todo.json` was
+rewritten again:
+
+- **The `done_2026-10-13` array was deleted entirely.** Completed work is
+  already recorded in `docs/audit/todo-history.md` §6 (closed-gap table) and in
+  git history, so keeping it in the open-work surface was pure duplication.
+  `todo.json` now carries **only** `open_gaps` (plus the fixed header keys).
+- **A new empirical-upgrade program was opened** (the six agent-side gaps),
+  derived from the publication assessment's gating risks
+  (`docs/audit/todo-history.md` §7). The program's thesis: the Q1 gating risk is
+  the **empirical axis**, not the framework, so the fixes target the evidence,
+  not the infrastructure.
+
+| new gap | gating risk it addresses | acceptance |
+|---|---|---|
+| GAP-24-BOUNDARY-LAW | §7 risk 3 (per-cell excuses → one law) | a criterion stated before backtesting predicts the 11-cell regime |
+| GAP-25-R1-BLEND-ISOLATION | §7 risk 1 (R1 win is the random init) | blend-vs-init experiment; claim matches the finding |
+| GAP-26-R5B-REGIME | §7 risk 2 (straw-man baseline) | surviving config, or a precise boundary the law reproduces |
+| GAP-27-R3-POWER | §7 risk 1 (R3 underpowered) | R3 significant, or a clearly-bounded null |
+| GAP-28-R6-LIVE-FAITHFUL | §7 risk 1 (R6 live below bar) | faithful easy-tier direction clears +0.2235, or a definitive null |
+| GAP-29-MANUSCRIPT-DENSITY | §7 risk 4 (engineering-heavy / science-thin) | reduced meta-content density (needs user sign-off) |
+
+`GAP-15-VENUE` is marked `PARKED` (user: "投到哪家先不管"); `GAP-20-COVERLETTER`
+stays user-gated. No frozen surface was touched; the numbers in the evidence
+ledger are unchanged.
