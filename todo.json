@@ -2,9 +2,9 @@
   "schema_version": "flowa-state-v3",
   "purpose": "Open work only: what still stands between the current HEAD and submission. State, the 11-cell evidence ledger, the publication assessment, the binding policy and the gate snapshot live in docs/audit/todo-history.md (2026-10-13 user directive: this file answers only 'what is left to do').",
   "updated_at": "2026-10-14",
-  "head": "221efaee",
+  "head": "38f31292",
   "history": "docs/audit/todo-history.md",
-  "note": "The Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is already Tier-1 grade - do not spend effort there). DONE: GAP-24 (regime law), GAP-25 (R1 blend isolation), GAP-26 (R5b bound), GAP-27 (R3 power + CI defect fix), GAP-28 (R6 faithful live = null), GAP-30 (R6 fresh-tier live: as-designed +0.1604 < bar +0.2235), GAP-31 (R6 LIVE UPLIFT: scPerp d_z -0.8393, hard-tier anchor +1.1211, uniform arm +0.1466 = genuine live positive with NO tier manipulation). VENUE DIRECTION (user directive 2026-10-14): target a GENERAL ML venue, NOT a domain-specific image/CV or bio/medical one - the cross-domain breadth (protein + molecule + toy + image) and genuine SOTA improvements across domains are the asset; do not pigeonhole. The empirical axis needs: SOTA head-to-head beyond R6, a tuned-baseline survival cell, an R1 mechanism fix, uniform cross-domain coverage, systematic ablations, larger-N effect sizes. GAP-32..GAP-37 are agent-actionable; GAP-15 is agent+user.",
+  "note": "Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is Tier-1 grade). VENUE (user directive 2026-10-14): GENERAL ML, not domain-specific. Metric-state inventory (2026-10-14 audit): 11 cells = 4 STRONG (R2 tiny-effect; R5b conditional; R5c smoke; R6 counterfactual-pLDDT + strong scPerp) + 1 TIE (R5a) + 6 PARTIAL/SUPP (R1 init-attributed, R3 n.s., R5_legacy, K1 n.s., K4/K5 supp, K7 inverted). Tuned-baseline status (GAP-12): R5c SURVIVES (straw-man refuted) but smoke-only; R3/K1 hold directionally (n.s.); R5b DIES 0/4; R1/R6/K4/K5/K7 + R2 structurally compute-invariant. Ablations already exist (paper 7.3 five-arm k=5, 7.7 NFE boundary, 7.9 regime curve, docs/ABLATION.md 36 uplifts). GENUINELY-NEW work: GAP-35 (clean non-smoke + tuned-baseline-surviving cross-domain cell), GAP-32 (SOTA head-to-head beyond R6), GAP-34 (R1 mechanism), GAP-37 (more seeds). MOSTLY-COVERED: GAP-36 (consolidate existing ablations). DECISIONS/WRITING: GAP-15 (venue), GAP-29 (manuscript). GAP-33 absorbed into GAP-35.",
   "gate_chain": [
     "python tools/verify_submission_readiness.py",
     "python tools/check_claims_consistency.py",
@@ -15,82 +15,85 @@
   ],
   "no_push": true,
   "commit_footer": "(USER AUTHORIZED, NO PUSH)",
+  "execution_order_note": "Phase 0 = framing decision (cheap, unblocks the write-up). Phase 1 = empirical hard currency; GAP-35/32/37 share GPU sweeps and should be run together (GAP-37 piggybacks on the same runs). Phase 2 = R1 mechanism, then consolidation, then the manuscript. GAP-20 is user-only.",
   "open_gaps": [
     {
-      "id": "GAP-32-SOTA-HEADTOHEAD",
-      "priority": "P1",
-      "owner": "agent",
-      "status": "OPEN",
-      "gap": "Only R6 carries a head-to-head SOTA comparison (vanilla + Fast-DLLM + AB-Cache + LeDiFlow). Pattern Recognition (and TNNLS) reviewers expect a cross-cell baseline table. Extend seed-matched head-to-head comparisons against recent sampling-acceleration / distillation / cache methods to at least two more cells (candidates: R2 Kanzi RMSD, R3 FlowMol3, R5b CIFAR-10 FID, R5c MNIST FID).",
-      "acceptance": ">=2 additional cells with seed-matched SOTA baselines + Bonferroni-corrected paired statistics, recorded in the 11-cell ledger.",
-      "evidence": "README 11-cell ledger (only R6 has baselines); docs/audit/todo-history.md section 7 (gating risk 3)"
-    },
-    {
-      "id": "GAP-33-TUNED-BASELINE-SURVIVAL",
-      "priority": "P1",
-      "owner": "agent",
-      "status": "OPEN",
-      "gap": "R5b dies under a tuned baseline (GAP-26: 0/4 at baseline NFE=200). A framework paper that loses to a tuned baseline is the classic reject. Find at least one cell (R5b or another) that wins at matched NFE against a *tuned* baseline, not a straw-man one.",
-      "acceptance": ">=1 cell with framework-WINS at matched NFE against a tuned baseline, Bonferroni-corrected, recorded in the ledger.",
-      "evidence": "docs/audit/gap26-r5b-regime.md; docs/audit/todo-history.md section 7 (gating risk 2)"
-    },
-    {
-      "id": "GAP-34-R1-MECHANISM",
-      "priority": "P1",
-      "owner": "agent",
-      "status": "OPEN",
-      "gap": "R1's +116% flagship is attributed by GAP-25 to the per-record random init, not the restart-blend. Either (a) show the init is a legitimate, load-bearing part of the mechanism with a supporting experiment, or (b) re-run under a setting where the restart-blend itself is isolated and wins.",
-      "acceptance": "R1 either re-attributed honestly with a mechanism experiment, or replaced by a blend-isolating positive cell.",
-      "evidence": "docs/audit/gap25-r1-blend-isolation.md; docs/audit/todo-history.md section 7 (gating risk 1)"
-    },
-    {
-      "id": "GAP-35-CROSS-DOMAIN-COVERAGE",
-      "priority": "P1",
-      "owner": "agent",
-      "status": "OPEN",
-      "gap": "The paper's asset is cross-domain generality, so every domain in the claim must be carried by a clean positive - but the image cells are the weakest: R5b is conditional (0/4 under a tuned baseline) and R5c is smoke-checkpoint only and flips sign on the production checkpoint. Strengthen the weakest cross-domain cell(s) so that no domain in the cross-domain claim rests only on a conditional or smoke-checkpoint result.",
-      "acceptance": "no domain in the cross-domain claim is supported only by a conditional or smoke-checkpoint cell; >=1 image cell stable across checkpoints, Bonferroni-corrected.",
-      "evidence": "README 11-cell ledger (R5b conditional, R5c regime-dependent); docs/audit/todo-history.md section 7"
-    },
-    {
-      "id": "GAP-36-ABLATION-MATRIX",
-      "priority": "P2",
-      "owner": "agent",
-      "status": "OPEN",
-      "gap": "Pattern Recognition reviewers expect systematic ablations. Build a consolidated rounds x schedulers x checkpoints ablation table with matched-NFE controls, beyond the current per-cell round-count and scheduler studies.",
-      "acceptance": "a consolidated ablation table across >=2 checkpoints x >=3 schedulers x >=2 round counts, with matched-NFE controls.",
-      "evidence": "docs/drafts/paper-A-final.md section 7 (per-cell studies)"
-    },
-    {
-      "id": "GAP-37-STATISTICAL-POWER",
-      "priority": "P2",
-      "owner": "agent",
-      "status": "OPEN",
-      "gap": "Several effects are small or underpowered: R2 is STRONG but d_z = -0.099 (tiny); R3 is bounded-marginal (~49 seeds for 80% power). Increase N / seed coverage on the primary cells to lift the effect sizes toward medium or to reach adequate power.",
-      "acceptance": "primary cells reported at medium+ effect size, or with adequate power (>=80%) at the reported N.",
-      "evidence": "docs/audit/gap27-r3-power.md; README 11-cell ledger (R2 d_z = -0.0990)"
-    },
-    {
       "id": "GAP-15-VENUE",
+      "phase": "0",
       "priority": "P1",
       "owner": "agent+user",
       "status": "OPEN",
-      "gap": "Venue target: GENERAL ML (user directive 2026-10-14 - do NOT pigeonhole into an image/CV or bio/medical venue; the cross-domain breadth and genuine SOTA improvements are the asset). Candidates (CAS Tier-1): IEEE TNNLS (current, IEEEtran 11pp, IF 10.2), IEEE TPAMI (CCF-A, IF ~20.8), JMLR, Artificial Intelligence (Elsevier), IEEE Transactions on Cybernetics, Information Sciences. Dropped as leads: Pattern Recognition (pattern/CV-centric) and AI4Science venues (bio-specific). Decide the general-ML target and scope the format/narrative change (the manuscript should lead with cross-domain generality).",
+      "gap": "Venue target: GENERAL ML (user directive 2026-10-14 - do NOT pigeonhole into an image/CV or bio/medical venue; the cross-domain breadth and genuine per-domain SOTA improvements are the asset). Candidates (CAS Tier-1): IEEE TNNLS (current, IEEEtran 11pp, IF 10.2), IEEE TPAMI (CCF-A, IF ~20.8), JMLR, Artificial Intelligence (Elsevier), IEEE Transactions on Cybernetics, Information Sciences. Dropped as leads: Pattern Recognition (pattern/CV-centric) and AI4Science venues (bio-specific). Decide the general-ML target and scope the format/narrative change (the manuscript should lead with cross-domain generality).",
       "acceptance": "general-ML venue decided; the required framing + format change scoped; user authorizes touching the frozen manuscript.",
       "agent_action": "agent prepares a venue-fit memo across the general-ML candidates with the required changes per option; the final choice is the user's.",
       "evidence": "docs/audit/todo-history.md section 7 (2026-10-14 venue-fit addendum); README 'Complete Inventory'"
     },
     {
+      "id": "GAP-35-CROSS-DOMAIN-COVERAGE",
+      "phase": "1",
+      "priority": "P1",
+      "owner": "agent",
+      "status": "OPEN",
+      "absorbs": "GAP-33-TUNED-BASELINE-SURVIVAL",
+      "gap": "The paper's asset is cross-domain generality, so every domain in the claim must be carried by a clean positive. Current state: R5b is CONDITIONAL - a tuned baseline kills it (0/4 at baseline NFE=200, GAP-12 section 2 / GAP-26); R5c is SMOKE-only - it DOES survive a tuned baseline (GAP-12 section 2.5 straw-man REFUTED, baseline is step-insensitive) but only on the smoke checkpoint, and it flips sign on the production checkpoint. R3/K1 hold directionally under baseline-NFE tuning but are not significant. Residual: a cross-domain cell that is BOTH clean (non-smoke) AND survives a tuned baseline. (Absorbs the old GAP-33: R5c already satisfies tuned-baseline survival, but only on the smoke ckpt.)",
+      "acceptance": ">=1 cross-domain cell that is non-smoke-checkpoint AND framework-WINS vs a tuned baseline at matched NFE, Bonferroni-corrected.",
+      "evidence": "docs/audit/gap12-tuned-baseline.md (R5b REAL / R5c REFUTED); docs/audit/gap26-r5b-regime.md; README 11-cell ledger"
+    },
+    {
+      "id": "GAP-32-SOTA-HEADTOHEAD",
+      "phase": "1",
+      "priority": "P1",
+      "owner": "agent",
+      "status": "OPEN",
+      "gap": "Only R6 carries an external-method head-to-head (vanilla + Fast-DLLM + AB-Cache + LeDiFlow; paper section 7.8, 16-cell Table B). Every other cell compares only against its own vanilla baseline + baseline-NFE tuning (a straw-man refutation, not a SOTA comparison). Extend seed-matched external-method head-to-head to at least two more cells (candidates: R2 Kanzi RMSD, R3 FlowMol3 fg_dev, R5b CIFAR-10 FID, R5c MNIST FID).",
+      "acceptance": ">=2 additional cells with seed-matched external-method SOTA baselines + Bonferroni-corrected paired statistics, recorded in the 11-cell ledger.",
+      "evidence": "paper-A-final.md section 7.8 (R6-only head-to-head); docs/audit/todo-history.md section 7"
+    },
+    {
+      "id": "GAP-37-STATISTICAL-POWER",
+      "phase": "1",
+      "priority": "P2",
+      "owner": "agent",
+      "status": "OPEN",
+      "piggybacks_on": ["GAP-35-CROSS-DOMAIN-COVERAGE", "GAP-32-SOTA-HEADTOHEAD"],
+      "gap": "Several effects are small or underpowered: R2 is STRONG but d_z = -0.099 (tiny); R3 is bounded-marginal (~49 seeds for 80% power). Wave 197 P3 root-cause: more records/seed cannot upgrade the verdict because d_z is bounded by seed-to-seed variance - the fix is more SEEDS. Increase seed coverage on the primary cells; run inside the GAP-35/GAP-32 sweeps.",
+      "acceptance": "primary cells reported at medium+ effect size, or with adequate power (>=80%) at the reported seed count.",
+      "evidence": "docs/audit/gap27-r3-power.md; README 11-cell ledger (R2 d_z = -0.0990)"
+    },
+    {
+      "id": "GAP-34-R1-MECHANISM",
+      "phase": "2",
+      "priority": "P1",
+      "owner": "agent",
+      "status": "OPEN",
+      "gap": "R1's +116% flagship is attributed by GAP-25 to the per-record random init, not the restart-blend (init-only 298/274/290 ~= framework 275/272/259 >> baseline 158/159/174). Either (a) show the init is a legitimate, load-bearing part of the mechanism with a supporting experiment, or (b) re-run under a setting where the restart-blend itself is isolated and wins.",
+      "acceptance": "R1 either re-attributed honestly with a mechanism experiment, or replaced by a blend-isolating positive cell.",
+      "evidence": "docs/audit/gap25-r1-blend-isolation.md; docs/audit/r1-d004b-attribution.md; docs/audit/todo-history.md section 5"
+    },
+    {
+      "id": "GAP-36-ABLATION-MATRIX",
+      "phase": "2",
+      "priority": "P2",
+      "owner": "agent",
+      "status": "OPEN",
+      "mostly_covered": true,
+      "gap": "Ablations largely already exist: paper section 7.3 (five-arm ablation family, k=5), section 7.7 (NFE-matched boundary), section 7.9 (R5c smoke-vs-production regime curve), plus docs/ABLATION.md (36 algorithm-uplift isolation/interaction/cumulative tests). The residual is a CONSOLIDATED rounds x schedulers x checkpoints table for the generative headline cells - an aggregation/writing task, NOT new experiments.",
+      "acceptance": "one consolidated ablation table (rounds x schedulers x checkpoints) with matched-NFE controls, assembled from existing runs.",
+      "evidence": "paper-A-final.md sections 7.3 / 7.7 / 7.9; docs/ABLATION.md"
+    },
+    {
       "id": "GAP-29-MANUSCRIPT-DENSITY",
+      "phase": "3",
       "priority": "P2",
       "owner": "agent+user",
       "status": "OPEN",
-      "gap": "11 pages carry heavy audit/disclosure prose; a reviewer may read it as engineering-heavy / science-thin. Tighten the live manuscript toward the empirical contribution. Also carries the optional additive R1 disclosure (name the init attribution + the <=+46-hit blend bound) - docs/audit/gap25-r1-blend-isolation.md section 3 - the R6 faithful-null finding (docs/audit/gap28-r6-faithful.md), and the new live R6 uplift (docs/audit/gap31-r6-live-uplift.md: scPerp d_z -0.8393, hard-tier anchor +1.1211, uniform arm +0.1466).",
+      "gap": "11 pages carry heavy audit/disclosure prose; a reviewer may read it as engineering-heavy / science-thin. Tighten the live manuscript toward the empirical contribution and lead with cross-domain generality. Also carries the optional additive R1 disclosure (init attribution + the <=+46-hit blend bound) - docs/audit/gap25-r1-blend-isolation.md section 3 - the R6 faithful-null finding (docs/audit/gap28-r6-faithful.md), and the new live R6 uplift (docs/audit/gap31-r6-live-uplift.md: scPerp d_z -0.8393, hard-tier anchor +1.1211, uniform arm +0.1466).",
       "acceptance": "reduced meta-content density; requires user authorization to touch the frozen manuscript.",
       "evidence": "docs/audit/todo-history.md section 7 (gating risk 4); docs/audit/gap25-r1-blend-isolation.md; docs/audit/gap28-r6-faithful.md; docs/audit/gap31-r6-live-uplift.md"
     },
     {
       "id": "GAP-20-COVERLETTER",
+      "phase": "3",
       "priority": "P3",
       "owner": "user",
       "status": "OPEN",

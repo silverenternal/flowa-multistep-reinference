@@ -164,11 +164,28 @@ Tier-1): **IEEE TNNLS** (current, IEEEtran 11pp, IF 10.2), **IEEE TPAMI**
 Transactions on Cybernetics**, **Information Sciences**. Pattern Recognition
 (pattern/CV-centric) and the AI4Science venues (bio-specific) were considered
 and dropped as leads because they would narrow the work to a single domain; the
-manuscript should lead with cross-domain generality. The gaps the target shares
-are recorded as `GAP-32-SOTA-HEADTOHEAD`, `GAP-33-TUNED-BASELINE-SURVIVAL`,
-`GAP-34-R1-MECHANISM`, `GAP-35-CROSS-DOMAIN-COVERAGE`, plus
-`GAP-36-ABLATION-MATRIX` and `GAP-37-STATISTICAL-POWER`; the venue choice itself
-is `GAP-15-VENUE`.
+manuscript should lead with cross-domain generality.
+
+**Metric-state inventory + execution order (2026-10-14).** A per-cell audit
+against the 11-cell ledger and GAP-12 found that several of the venue-driven
+gaps were already largely satisfied, so `todo.json` was re-scoped to what is
+genuinely new:
+
+- **Already covered** — tuned-baseline survival: R5c *survives* a tuned baseline
+  (GAP-12 §2.5, straw-man REFUTED) but only on the smoke checkpoint; R3/K1 hold
+  directionally (n.s.); R5b dies (0/4); R1/R6/K4/K5/K7 and R2 are structurally
+  compute-invariant. Ablations: paper §7.3 (five-arm, k=5), §7.7 (NFE boundary),
+  §7.9 (regime curve) and `docs/ABLATION.md` (36 uplifts) already exist.
+- **GAP-33-TUNED-BASELINE-SURVIVAL was absorbed into GAP-35** (its residual is
+  the non-smoke half of the same requirement).
+- **GAP-36 reframed** as an aggregation/writing task (consolidate existing
+  ablations), not new experiments.
+
+The re-ordered open set is: **Phase 0** GAP-15-VENUE; **Phase 1** (shared GPU
+sweeps) GAP-35-CROSS-DOMAIN-COVERAGE → GAP-32-SOTA-HEADTOHEAD →
+GAP-37-STATISTICAL-POWER; **Phase 2** GAP-34-R1-MECHANISM →
+GAP-36-ABLATION-MATRIX; **Phase 3** GAP-29-MANUSCRIPT-DENSITY and
+GAP-20-COVERLETTER (user).
 
 ## 8. Removed surfaces
 
