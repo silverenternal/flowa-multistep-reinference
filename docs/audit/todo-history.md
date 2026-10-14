@@ -75,6 +75,32 @@ Tuned-baseline / straw-man status is GAP-12's — see
 **Verdict distribution:** 4 STRONG (R2, R5b-conditional, R5c-smoke, R6) +
 1 TIE (R5a) + 6 PARTIAL/SUPP (R1, R3, K1, K4, K5, K7).
 
+### 4.1 External-method head-to-head extension (GAP-32, 2026-10-14)
+
+R6 was the only cell with a published-external-method comparison (§7.8). GAP-32
+extends the same roster (`vanilla` + Fast-DLLM + AB-Cache + LeDiFlow +
+framework, seed-matched, Bonferroni-corrected paired t-test, unit = seed) to
+**two more cells**. Recorded here as an **observations-only** addendum (no
+frozen claim surface moved); full detail in `docs/audit/gap32-headtohead.md`.
+
+| cell | metric | vanilla | best external | framework | framework Δ% | p_bonf | verdict |
+|---|---|---:|---:|---:|---:|---:|:---|
+| R5c MNIST FM `w16e1_5k` | Fréchet-projection FID ↓ | 24.9115 | 24.6390 (AB-Cache) | **14.3815** | **−42.27** | 4.6 × 10⁻⁴ | framework WINS |
+| R3 FlowMol3 | `fg_dev` ↓ | 0.4741 | 0.4154 (Fast-DLLM) | 0.5265 | +11.05 | 1.00 | framework loses (n.s.) |
+
+- **MNIST:** decisive framework win; flowa beats every external arm by ≈ −42 %
+  (all Bonferroni-significant, all 3 seeds). The external accelerators each move
+  FID by ≤ 1 %.
+- **FlowMol3 R3:** framework **does not win** (+11.05 %, n.s.); the external
+  accelerators *reduce* `fg_dev` (Fast-DLLM −12.4 %, AB-Cache −5.8 %). This
+  head-to-head tests the **coordinate channel** only (the vendored FlowMol3
+  sampler is CTMC-based; only the x-channel is a continuous ODE); the framework
+  arm is the restart-blend, not the canonical R3 σ = 0.05 prior perturbation.
+  R3 N = 250/seed (canonical is 1000) — disclosed.
+- **Dropped 3rd cell:** 2D eight-gaussians (framework arm diverges, W₂ +882 %).
+- **Net:** the "beats SOTA" claim now stands on **R6 + MNIST**; R3 is an explicit
+  counter-example (negative transfer on the molecule coordinate channel).
+
 ## 5. R1 real-forward saga (D-004 / D-004b)
 
 - **D-004 defect:** the checkpoint-compat shim registered a bare core module
@@ -120,6 +146,7 @@ Tuned-baseline / straw-man status is GAP-12's — see
 | GAP-28-R6-LIVE-FAITHFUL | 2026-10-13 | the faithful easy-tier direction (β 0.75→0.25) is a DEFINITIVE NULL: pooled d_z +0.1104 < as-designed +0.1466 < bar +0.2235; the GAP-01 §4.3/§4.5 direction-mismatch hypothesis is refuted (easy-tier regression is monotone *increasing* in β_easy); tier isolation exact; secondary finding — the frozen reference tier is uncorrelated with the seed's own baseline on seeds 43/44 (Pearson +0.03/−0.01) — `docs/audit/gap28-r6-faithful.md` |
 | GAP-30-R6-TIER-TARGETING | 2026-10-14 | fresh-tier (correctly targeted) 3-seed live re-run recorded: as-designed pooled d_z +0.1604 (↑ from frozen-tier +0.1466, still < bar +0.2235); faithful +0.1103 (null confirmed); under the wrapper's own quantile tier rule the easy tier is the only group that differs (hard/medium byte-identical) and the fresh-easy regression is −0.6562 (β 0.75) → −0.8811 (β 0.25), monotone in β_easy; tier isolation exact (330/330 per seed) — `docs/audit/gap30-r6-fresh-tier.md` |
 | GAP-31-R6-LIVE-UPLIFT | 2026-10-14 | three live, non-counterfactual R6 measurements on the seed-matched arms (3 seeds × N=1000): **scPerplexity** (ESM-IF) pooled d_z −0.8393 (framework WINS on every tier: hard −0.7952 / medium −0.8634 / easy −0.8924); **hard-tier pLDDT** anchor d_z +1.1211 (≈ frozen hard-tier counterfactual +1.1889); **uniform arm** (factor 1.0, no tier manipulation) d_z +0.1466 (n=3000) — the framework beats the baseline live with no tier cut; as-designed +0.1604. Honest live ladder: uniform +0.1466 → as-designed +0.1604 → disclosed counterfactual +0.2235 (the tier-aware refinement adds only +0.0138 d_z) — `docs/audit/gap31-r6-live-uplift.md` |
+| GAP-32-SOTA-HEADTOHEAD | 2026-10-14 | external-method head-to-head extended beyond R6 to **2 more cells** (seed-matched, Bonferroni-corrected paired statistics): **R5c MNIST `w16e1_5k`** framework-WINS −42.27 % FID (p_bonf 4.6e-4, beats every external arm); **R3 FlowMol3** framework does **not** win +11.05 % fg_dev (n.s.; coordinate-channel restart-blend; external Fast-DLLM/AB-Cache reduce fg_dev). Dropped 3rd candidate 2D eight-gaussians (framework arm diverges). Observations-only; no frozen surface moved — `docs/audit/gap32-headtohead.md` |
 
 ## 7. Publication assessment (2026-10-13)
 

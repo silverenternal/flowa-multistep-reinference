@@ -1,0 +1,67 @@
+{
+  "seed": 43,
+  "n_samples": 1000,
+  "nfe": 50,
+  "beta": 0.5,
+  "metrics": {
+    "vanilla": 0.16264631666707743,
+    "fastdllm": 0.1618824221903375,
+    "abcache": 0.17883672691252134,
+    "lediflow": 0.25615252767829144,
+    "flowa": 1.6097952045203219
+  },
+  "solver_stats": {
+    "vanilla": {
+      "n_macro_steps": 50,
+      "effective_nfe": 50,
+      "wall_sec": 0.023314066987950355
+    },
+    "fastdllm": {
+      "n_macro_steps": 50,
+      "n_verifier_steps": 25000,
+      "n_verifier_steps_per_sample": 25,
+      "n_skip_steps": 25000,
+      "effective_nfe": 75,
+      "mean_confidence": 0.9996199884240363,
+      "threshold": 0.5,
+      "n_batch": 1000,
+      "wall_sec": 0.023088346992153674
+    },
+    "abcache": {
+      "n_macro_steps": 50,
+      "n_recompute_steps": 10,
+      "n_cache_reuse_steps": 40,
+      "effective_nfe": 10,
+      "warmup_steps": 2,
+      "recompute_interval": 6,
+      "cache_reuse_rate": 0.8,
+      "queue_length_final": 2,
+      "n_batch": 1000,
+      "wall_sec": 0.002301300992257893
+    },
+    "lediflow": {
+      "n_macro_steps": 50,
+      "effective_nfe": 50,
+      "prior_alpha": 0.5,
+      "prior_shift_amount": 0.4,
+      "prior_seed": 19524,
+      "prior_scale": 0.4,
+      "n_batch": 1000,
+      "wall_sec": 0.010158869990846142
+    },
+    "flowa": {
+      "num_steps_per_round": [
+        12,
+        9,
+        3,
+        1
+      ],
+      "total_nfe_per_sample": 25,
+      "beta": 0.5,
+      "n_rounds": 4,
+      "restart_from_round": 1,
+      "wall_sec": 0.6742757010215428
+    }
+  },
+  "wall_sec": 0.8729936770105269
+}

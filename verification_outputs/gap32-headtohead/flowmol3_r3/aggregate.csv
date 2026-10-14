@@ -1,0 +1,6 @@
+cell,arm,n_seeds,fg_dev_mean,fg_dev_std,delta_vs_vanilla_pct,cohens_dz,t_stat,df,p_value_raw,p_value_bonferroni,bonferroni_significant,direction
+flowmol3_r3,vanilla,3,0.474110,0.053940,0.000000,0.000000,0.000000,2,1,nan,,tie
+flowmol3_r3,fastdllm,3,0.415389,0.022998,-12.385640,-1.203994,-2.085378,2,0.172365,0.68946,False,framework_wins
+flowmol3_r3,abcache,3,0.446789,0.040248,-5.762675,-0.326332,-0.565223,2,0.628871,1,False,framework_wins
+flowmol3_r3,lediflow,3,0.478847,0.014365,0.999021,0.112598,0.195025,2,0.863389,1,False,framework_loses
+flowmol3_r3,flowa,3,0.526512,0.020750,11.052613,0.894141,1.548698,2,0.261558,1,False,framework_loses

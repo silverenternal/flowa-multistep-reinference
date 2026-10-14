@@ -1,0 +1,111 @@
+{
+  "seed": 44,
+  "n_molecules": 250,
+  "nfe": 250,
+  "n_atoms_min": 24,
+  "n_atoms_max": 108,
+  "n_atoms_mean": 47.94,
+  "metrics": {
+    "vanilla": {
+      "fg_dev": 0.4123691686273304,
+      "validity_pct": 1.0,
+      "pb_validity_pct": 0.964,
+      "ood_ring_rate": 0.044
+    },
+    "fastdllm": {
+      "fg_dev": 0.40098172268440924,
+      "validity_pct": 1.0,
+      "pb_validity_pct": 0.968,
+      "ood_ring_rate": 0.068
+    },
+    "abcache": {
+      "fg_dev": 0.4781296481398898,
+      "validity_pct": 1.0,
+      "pb_validity_pct": 0.932,
+      "ood_ring_rate": 0.036
+    },
+    "lediflow": {
+      "fg_dev": 0.46564371793097437,
+      "validity_pct": 1.0,
+      "pb_validity_pct": 0.972,
+      "ood_ring_rate": 0.044
+    },
+    "flowa": {
+      "fg_dev": 0.530669017754472,
+      "validity_pct": 1.0,
+      "pb_validity_pct": 0.952,
+      "ood_ring_rate": 0.028
+    }
+  },
+  "solver_stats": {
+    "vanilla": {
+      "arm": "vanilla",
+      "n_molecules": 250,
+      "n_chunks": 3,
+      "first_chunk_stats": {
+        "n_macro_steps": 249,
+        "effective_nfe": 249,
+        "arm": "vanilla"
+      },
+      "wall_sec": 234.80686613701982
+    },
+    "fastdllm": {
+      "arm": "fastdllm",
+      "n_molecules": 250,
+      "n_chunks": 3,
+      "first_chunk_stats": {
+        "n_macro_steps": 249,
+        "effective_nfe": 249,
+        "arm": "fastdllm",
+        "n_verifier_steps": 12500,
+        "n_skip_steps": 12500,
+        "threshold": 0.5
+      },
+      "wall_sec": 367.18963003900717
+    },
+    "abcache": {
+      "arm": "abcache",
+      "n_molecules": 250,
+      "n_chunks": 3,
+      "first_chunk_stats": {
+        "n_macro_steps": 249,
+        "effective_nfe": 44,
+        "arm": "abcache",
+        "n_recompute_steps": 44,
+        "n_cache_reuse_steps": 205
+      },
+      "wall_sec": 225.84276564899483
+    },
+    "lediflow": {
+      "arm": "lediflow",
+      "n_molecules": 250,
+      "n_chunks": 3,
+      "first_chunk_stats": {
+        "n_macro_steps": 249,
+        "effective_nfe": 249,
+        "arm": "lediflow"
+      },
+      "wall_sec": 241.18742946197744
+    },
+    "flowa": {
+      "arm": "flowa",
+      "n_molecules": 250,
+      "n_chunks": 3,
+      "first_chunk_stats": {
+        "arm": "flowa",
+        "n_rounds": 4,
+        "restart_from_round": 1,
+        "beta": 0.5,
+        "restart_step_indices": [
+          62,
+          124,
+          187
+        ],
+        "total_nfe_per_sample": 249,
+        "n_coordinate_restarts": 3
+      },
+      "wall_sec": 249.45525004400406
+    }
+  },
+  "wall_sec": 1318.4833693900146
+}

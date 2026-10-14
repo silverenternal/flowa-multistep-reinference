@@ -1,0 +1,52 @@
+{
+  "kind": "gap32_headtohead_sweep",
+  "timestamp_utc": "2026-10-14T19:10:00+00:00",
+  "cells": {
+    "mnist_fm": {
+      "driver": "tools/sweep_gap32_headtohead.py --cell mnist_fm",
+      "device": "cpu (MnistFmAdapter is numpy-backed; no GPU)",
+      "checkpoint": "data/mnist_fm/w16e1_5k.ckpt.npz",
+      "checkpoint_sha256": "01729867b67372e3...",
+      "n_samples": 1000,
+      "nfe": 50,
+      "seeds": [42, 43, 44],
+      "metric": "frechet_projection",
+      "reference": "MNIST test (10K digits, framework-internal 784->128 projection)",
+      "framework_config": {
+        "n_rounds": 4,
+        "restart_from_round": 1,
+        "beta": 0.5,
+        "num_steps_per_round": [12, 9, 3, 1]
+      },
+      "wall_min": 54.7
+    },
+    "flowmol3_r3": {
+      "driver": "tools/sweep_gap32_flowmol3.py",
+      "device": "cuda:0",
+      "weights": "data/flowmol3/weights_real/checkpoints/last.ckpt",
+      "weights_sha256": "0e949b56b54c1d2fcbded4f0c9857bfd33dbde86bcc9db2f82572628f7f9f5b5",
+      "n_molecules": 250,
+      "nfe": 250,
+      "seeds": [42, 43, 44],
+      "metric": "paper_fg_deviation",
+      "reference": "GEOM_DRUGS",
+      "solver_config_fingerprint": "4345df0cefc5d3c43b696412dbc1dea38cb79ad890f3af726d3576fce5ff0edf",
+      "framework_config": {
+        "n_rounds": 4,
+        "restart_from_round": 1,
+        "beta": 0.5,
+        "restart_step_indices": [62, 124, 187]
+      },
+      "wall_min": 83.06
+    }
+  },
+  "arms": ["vanilla", "fastdllm", "abcache", "lediflow", "flowa"],
+  "statistics": {
+    "unit_of_replication": "seed",
+    "test": "two-sided paired t-test vs vanilla",
+    "alpha_bonferroni_vs_vanilla": 0.0125,
+    "alpha_bonferroni_flowa_vs_external": 0.016666666666666666
+  },
+  "audit": "docs/audit/gap32-headtohead.md",
+  "vendored_upstream_untouched": true
+}

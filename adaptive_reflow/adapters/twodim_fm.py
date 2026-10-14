@@ -115,7 +115,9 @@ TWODIM_FM_DEFAULT_MAX_STEPS: int = 1000
 TWODIM_FM_NATIVE_STATES_MAXSIZE: int = 128
 
 # Integrator method literals.
-IntegratorMethod = Literal["rk4", "dormand_prince", "heun", "dpm_solver", "unipc"]
+IntegratorMethod = Literal[
+    "euler", "rk4", "dormand_prince", "heun", "dpm_solver", "unipc"
+]
 
 # Local type alias to keep numpy dependency off hot annotation paths.
 ArrayF64 = NDArray[np.float64]
@@ -227,6 +229,45 @@ def _velocity_field(
     if np.asarray(x, dtype=np.float64).ndim == 1:
         return np.asarray(out[0], dtype=np.float64)
     return np.asarray(out, dtype=np.float64)
+
+
+def _integrate_euler(
+    weights: Mapping[str, ArrayF64],
+    x0: ArrayF64,
+    t_grid: ArrayF64,
+    noise_sigma: float = 0.0,
+    noise_seed: int | None = None,
+    call_count_ref: list[int] | None = None,
+) -> ArrayF64:
+    """Pure forward-Euler integration over ``t_grid``; returns ``(T, 2)``.
+
+    First-order step ``x_{i+1} = x_i + dt * v(x_i, t_i)`` with the canonical
+    ``[-5, 5]`` coordinate clamp. Added additively in GAP-32 so the 2D
+    framework arm runs in the same Euler family as the external head-to-head
+    solvers (:mod:`tools.gap32_external_solvers`); the canonical 2D path
+    stays ``rk4``.
+    """
+    x0_arr = np.asarray(x0, dtype=np.float64).reshape(2)
+    grid = np.asarray(t_grid, dtype=np.float64).reshape(-1)
+    if grid.size < 2:
+        raise ValueError("t_grid_must_have_at_least_two_points")
+    traj = np.empty((grid.size, 2), dtype=np.float64)
+    traj[0] = x0_arr
+    x_cur = x0_arr.copy()
+    for i in range(1, grid.size):
+        t0 = float(grid[i - 1])
+        t1 = float(grid[i])
+        dt = float(t1 - t0)
+        v = _velocity_field(
+            weights, x_cur, t0, noise_sigma, noise_seed, call_count_ref
+        )
+        x_cur = np.clip(
+            x_cur + dt * np.asarray(v, dtype=np.float64).reshape(2),
+            -TWODIM_FM_CLAMP,
+            TWODIM_FM_CLAMP,
+        )
+        traj[i] = x_cur
+    return traj
 
 
 def _integrate_rk4(
@@ -665,6 +706,7 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         ):
             raise ValueError(f"unknown_target:{target}")
         if integrator not in (
+            "euler",
             "rk4",
             "dormand_prince",
             "heun",
@@ -1059,7 +1101,18 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         noise_counter = [self._noise_call_count]
         noise_sigma = float(self._noise_sigma)
         noise_seed = int(self._noise_seed)
-        if self._integrator == "rk4":
+        if self._integrator == "euler":
+            traj = _integrate_euler(
+                self._weights,
+                x0,
+                t_grid,
+                noise_sigma=noise_sigma,
+                noise_seed=noise_seed,
+                call_count_ref=noise_counter,
+            )
+            actual_steps = int(num_steps)
+            accept_rate = 1.0
+        elif self._integrator == "rk4":
             traj = _integrate_rk4(
                 self._weights,
                 x0,

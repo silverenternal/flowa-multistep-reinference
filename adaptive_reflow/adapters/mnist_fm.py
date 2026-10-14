@@ -141,8 +141,12 @@ MNIST_FM_DEFAULT_ATOL: float = 1e-4
 MNIST_FM_DEFAULT_MAX_STEPS: int = 1000
 
 # Integrator method literal (P0-2 — mirrors :data:`twodim_fm.IntegratorMethod`
-# but scoped to the two integrators the MNIST adapter actually exposes today).
-MnistFmIntegratorMethod = Literal["rk4", "dormand_prince"]
+# but scoped to the integrators the MNIST adapter actually exposes).
+# ``"euler"`` (1st-order, 1 NFE/step) was added additively in GAP-32 so the
+# R5c framework arm can be matched-NFE against the Euler-family external
+# solvers (Fast-DLLM / AB-Cache / LeDiFlow) in the head-to-head. The default
+# remains ``"rk4"`` — no existing trajectory changes.
+MnistFmIntegratorMethod = Literal["euler", "rk4", "dormand_prince"]
 
 
 # ---------------------------------------------------------------------------
@@ -220,6 +224,36 @@ def _unet_evaluate(weights: list[ArrayF64], x: ArrayF64, t: float) -> ArrayF64:
         v = velocity_field_forward(weights, arr, float(t))
         return np.asarray(v.reshape(arr.shape[0], MNIST_FLAT_DIM), dtype=np.float64)
     raise ValueError("x_must_have_shape_784_or_b_784")
+
+
+def _integrate_euler(
+    weights: list[ArrayF64],
+    x0: ArrayF64,
+    t_grid: ArrayF64,
+) -> ArrayF64:
+    """Pure Euler integration over ``t_grid``; returns ``(len(t_grid), 784)``.
+
+    First-order forward-Euler step ``x_{i+1} = x_i + dt * v(x_i, t_i)`` with
+    a ``[-1, 1]`` pixel clamp. Added additively in GAP-32 so the R5c
+    framework arm runs in the same Euler family as the external
+    head-to-head solvers (``tools/gap32_external_solvers.py``); the
+    canonical MNIST path stays ``rk4``.
+    """
+    x0_arr = np.asarray(x0, dtype=np.float64).reshape(MNIST_FLAT_DIM)
+    grid = np.asarray(t_grid, dtype=np.float64).reshape(-1)
+    if grid.size < 2:
+        raise ValueError("t_grid_must_have_at_least_two_points")
+    traj = np.empty((grid.size, MNIST_FLAT_DIM), dtype=np.float64)
+    traj[0] = x0_arr
+    x_cur = x0_arr.copy()
+    for i in range(1, grid.size):
+        t0 = float(grid[i - 1])
+        t1 = float(grid[i])
+        dt = float(t1 - t0)
+        x_cur = x_cur + dt * _unet_evaluate(weights, x_cur, t0)
+        np.clip(x_cur, -MNIST_FM_CLAMP, MNIST_FM_CLAMP, out=x_cur)
+        traj[i] = x_cur
+    return traj
 
 
 def _integrate_rk4(
@@ -469,7 +503,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         init_seed: int = 12345,
         blender: RestartBlenderProtocol | None = None,
     ) -> None:
-        if integrator not in ("rk4", "dormand_prince"):
+        if integrator not in ("euler", "rk4", "dormand_prince"):
             raise ValueError(f"unknown_integrator:{integrator}")
         if num_steps <= 0:
             raise ValueError("num_steps_must_be_positive")
@@ -743,7 +777,11 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         if num_steps <= 0:
             raise ValueError("num_steps_must_be_positive")
         x0 = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(MNIST_FLAT_DIM)
-        if self._integrator == "rk4":
+        if self._integrator == "euler":
+            t_grid = np.linspace(0.0, 1.0, num_steps + 1, dtype=np.float64)
+            traj = _integrate_euler(self._weights, x0, t_grid)
+            actual_steps = int(num_steps)
+        elif self._integrator == "rk4":
             t_grid = np.linspace(0.0, 1.0, num_steps + 1, dtype=np.float64)
             traj = _integrate_rk4(self._weights, x0, t_grid)
             actual_steps = int(num_steps)

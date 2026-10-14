@@ -1285,5 +1285,60 @@ def test_constant_beta_overrides_schedule(
     )
 
 
+def test_euler_integrator_matches_manual_euler_step(
+    twodim_fm_weights_path: Path,
+) -> None:
+    """GAP-32: the additive ``euler`` integrator is a plain forward-Euler step.
+
+    With ``num_steps=1`` the single step must equal
+    ``clip(x0 + v(x0, 0), -5, 5)`` exactly — a saturation-independent guard
+    (the canonical ``rk4`` path is unchanged).
+    """
+    from adaptive_reflow.adapters.twodim_fm import (
+        TwoDimFMAdapter,
+        _velocity_field,
+    )
+    from adaptive_reflow.universal.state import ODEConditionDelta
+
+    adapter = TwoDimFMAdapter(
+        weights_path=twodim_fm_weights_path,
+        target="two_moons",
+        integrator="euler",
+        num_steps=1,
+    )
+    bundle = adapter.build_initial_state(batch_id="gap32-test", sample_id="s00000")
+    x0 = np.asarray(
+        adapter._native_states.get(bundle.native_state_digest)["x0"],  # noqa: SLF001
+        dtype=np.float64,
+    ).reshape(2)
+    condition = ODEConditionDelta(
+        delta_spec={"num_steps": 1},
+        source="gap32_test",
+        target_round=0,
+        calibration_artifact_hash="cal-gap32",
+    )
+    trace = adapter.solve_ode(bundle, condition, seed=0)
+    endpoint = np.asarray(
+        adapter._native_states.get(trace.native_state_digest)["trajectory"]  # noqa: SLF001
+    )[-1]
+    manual = np.clip(
+        x0 + 1.0 * _velocity_field(adapter._weights, x0, 0.0),  # noqa: SLF001
+        -5.0,
+        5.0,
+    )
+    assert np.allclose(endpoint, manual, atol=1e-12), (
+        f"euler num_steps=1 must equal clip(x0 + v(x0,0)); "
+        f"endpoint={endpoint!r} manual={manual!r}"
+    )
+
+
+def test_unknown_integrator_rejected() -> None:
+    """An unsupported integrator family must be rejected at construction."""
+    from adaptive_reflow.adapters.twodim_fm import TwoDimFMAdapter
+
+    with pytest.raises(ValueError, match="unknown_integrator"):
+        TwoDimFMAdapter(integrator="not_a_real_integrator")  # type: ignore[arg-type]
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-x", "--no-header", "-q"]))

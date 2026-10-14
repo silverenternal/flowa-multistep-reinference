@@ -1,0 +1,67 @@
+{
+  "seed": 43,
+  "n_samples": 1000,
+  "nfe": 50,
+  "beta": 0.5,
+  "metrics": {
+    "vanilla": 24.98330161061049,
+    "fastdllm": 24.96145222947974,
+    "abcache": 24.704036698222836,
+    "lediflow": 24.883823918912938,
+    "flowa": 14.283345291560607
+  },
+  "solver_stats": {
+    "vanilla": {
+      "n_macro_steps": 50,
+      "effective_nfe": 50,
+      "wall_sec": 260.3445213859959
+    },
+    "fastdllm": {
+      "n_macro_steps": 50,
+      "n_verifier_steps": 25000,
+      "n_verifier_steps_per_sample": 25,
+      "n_skip_steps": 25000,
+      "effective_nfe": 75,
+      "mean_confidence": 0.9999291819937824,
+      "threshold": 0.5,
+      "n_batch": 1000,
+      "wall_sec": 454.12058193597477
+    },
+    "abcache": {
+      "n_macro_steps": 50,
+      "n_recompute_steps": 10,
+      "n_cache_reuse_steps": 40,
+      "effective_nfe": 10,
+      "warmup_steps": 2,
+      "recompute_interval": 6,
+      "cache_reuse_rate": 0.8,
+      "queue_length_final": 2,
+      "n_batch": 1000,
+      "wall_sec": 40.300119023013394
+    },
+    "lediflow": {
+      "n_macro_steps": 50,
+      "effective_nfe": 50,
+      "prior_alpha": 0.5,
+      "prior_shift_amount": 0.36604016193571104,
+      "prior_seed": 19524,
+      "prior_scale": 0.4,
+      "n_batch": 1000,
+      "wall_sec": 205.56043955602217
+    },
+    "flowa": {
+      "num_steps_per_round": [
+        12,
+        9,
+        3,
+        1
+      ],
+      "total_nfe_per_sample": 25,
+      "beta": 0.5,
+      "n_rounds": 4,
+      "restart_from_round": 1,
+      "wall_sec": 180.6135031649901
+    }
+  },
+  "wall_sec": 1142.6492705290148
+}

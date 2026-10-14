@@ -393,10 +393,53 @@ def test_no_nan_over_many_seeds(mnist_fm_weights_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# 7. observe_endpoint returns a StateBundle resolving to a (784,) array.
+# 6b. euler integrator (GAP-32 additive path) is finite + distinct from rk4.
 # ---------------------------------------------------------------------------
 
 
+def test_euler_integrator_matches_manual_euler_step(mnist_fm_weights_path: Path) -> None:
+    """``integrator="euler"`` with ``num_steps=1`` equals one manual Euler step.
+
+    GAP-32 added the Euler path so the R5c framework arm is matched-NFE
+    against the Euler-family external solvers. With a single step the
+    trajectory is exactly ``clip(x0 + v(x0, 0))`` — a precise guard on the
+    new branch that does not depend on trajectory saturation.
+    """
+    from adaptive_reflow.adapters.mnist_fm import (
+        MnistFmAdapter,
+        _unet_evaluate,
+    )
+
+    adapter = MnistFmAdapter(weights_path=mnist_fm_weights_path, integrator="euler")
+    bundle = adapter.build_initial_state(
+        batch_id="batch-euler", sample_id="sample-euler"
+    )
+    x0 = np.asarray(
+        adapter._native_states[bundle.native_state_digest]["x0"],  # noqa: SLF001
+        dtype=np.float64,
+    )
+    condition = _make_condition_delta(target_round=0, num_steps=1)
+    trace = adapter.solve_ode(bundle, condition, seed=0)
+    endpoint = _endpoint_from_trace(adapter, trace)
+    assert np.all(np.isfinite(endpoint))
+    assert float(np.max(np.abs(endpoint))) <= 1.0 + 1e-9
+    expected = np.clip(
+        x0 + 1.0 * _unet_evaluate(adapter._weights, x0, 0.0), -1.0, 1.0  # noqa: SLF001
+    )
+    assert np.allclose(endpoint, expected, atol=1e-12)
+
+
+def test_unknown_integrator_rejected(mnist_fm_weights_path: Path) -> None:
+    """An unknown integrator string still raises ``unknown_integrator``."""
+    from adaptive_reflow.adapters.mnist_fm import MnistFmAdapter
+
+    with pytest.raises(ValueError, match="unknown_integrator"):
+        MnistFmAdapter(weights_path=mnist_fm_weights_path, integrator="bogus")  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
+# 7. observe_endpoint returns a StateBundle resolving to a (784,) array.
+# ---------------------------------------------------------------------------
 def test_endpoint_shape_correct(mnist_fm_weights_path: Path) -> None:
     """``observe_endpoint`` resolves under the adapter's native-state cache to ``(784,)``."""
     from adaptive_reflow.adapters.mnist_fm import MnistFmAdapter

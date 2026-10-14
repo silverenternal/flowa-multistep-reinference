@@ -1,0 +1,6 @@
+cell,arm,n_seeds,metric_mean,metric_std,delta_vs_vanilla_pct,cohens_dz,t_stat,df,p_value_raw,p_value_bonferroni,bonferroni_significant,direction
+twodim_eight_gaussians,vanilla,3,0.164061,0.014153,0.000000,0.000000,0.000000,2,1,nan,,tie
+twodim_eight_gaussians,fastdllm,3,0.163489,0.014287,-0.349084,-2.804838,-4.858122,2,0.0398546,0.159419,False,framework_wins
+twodim_eight_gaussians,abcache,3,0.184247,0.012147,12.303753,4.475827,7.752361,2,0.0162351,0.0649403,False,framework_loses
+twodim_eight_gaussians,lediflow,3,0.272042,0.021811,65.817375,8.403609,14.555479,2,0.0046869,0.0187476,True,framework_loses
+twodim_eight_gaussians,flowa,3,1.611100,0.001916,882.010982,115.280826,199.672247,2,2.50812e-05,0.000100325,True,framework_loses

@@ -1,0 +1,6 @@
+cell,arm,n_seeds,metric_mean,metric_std,delta_vs_vanilla_pct,cohens_dz,t_stat,df,p_value_raw,p_value_bonferroni,bonferroni_significant,direction
+mnist_fm,vanilla,3,24.911500,0.164937,0.000000,0.000000,0.000000,2,1,nan,,tie
+mnist_fm,fastdllm,3,24.889985,0.165384,-0.086365,-32.277429,-55.906146,2,0.000319796,0.00127918,True,framework_wins
+mnist_fm,abcache,3,24.638997,0.168267,-1.093885,-33.082581,-57.300712,2,0.000304426,0.0012177,True,framework_wins
+mnist_fm,lediflow,3,24.813558,0.162064,-0.393158,-33.937783,-58.781964,2,0.000289283,0.00115713,True,framework_wins
+mnist_fm,flowa,3,14.381487,0.088155,-42.269687,-53.737803,-93.076606,2,0.00011541,0.00046164,True,framework_wins
