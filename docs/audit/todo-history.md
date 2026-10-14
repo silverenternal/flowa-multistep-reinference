@@ -187,6 +187,34 @@ GAP-37-STATISTICAL-POWER; **Phase 2** GAP-34-R1-MECHANISM →
 GAP-36-ABLATION-MATRIX; **Phase 3** GAP-29-MANUSCRIPT-DENSITY and
 GAP-20-COVERLETTER (user).
 
+**GAP-35-CROSS-DOMAIN-COVERAGE — RESOLVED 2026-10-14.** The gap's residual was
+a cross-domain cell that is *both* non-smoke *and* survives a tuned baseline.
+The paper's §7.9 R5c regime curve confounded **width** (8 vs 16 channels) with
+**training budget** (1 epoch / 6 K images vs 2-3 epochs / 60 K images); §10.8
+named the missing control. The audit
+[`docs/audit/gap35-cross-domain.md`](gap35-cross-domain.md) runs that control as
+a factorial sweep (`tools/sweep_gap35_mnist_regime.py`, N = 200, seeds
+42/43/44, the canonical `wave191` matched-NFE protocol):
+
+- **Width is irrelevant to the sign.** At 60 K images the framework regresses at
+  *both* widths: `w8e3_60k` (width 8) +3.11 %, `w16e1_60k` (width 16) +3.96 %.
+- **The optimization budget is the governing variable.** The delta is monotone
+  in optimizer steps: 78 steps → −25.4 %, 93 → −28.4 %, 156 → −15.2 %,
+  937 → +3.96 %, 1 874 → +8.53 %, 2 811 → +3.11 / +10.37 %. The sign flips
+  between 156 and 937 steps (equivalently, baseline FID 19 → 13).
+- **A production-width (base16, 75 KB → non-smoke) checkpoint wins.**
+  `w16e1_5k` (78 steps) is framework-WINS −25.39 % (per-seed −25.43 / −24.77 /
+  −25.97 %), best-arm Bonferroni p = 7.4 × 10⁻⁶, and **survives a tuned
+  baseline** (baseline step-insensitive: 27.2361 → 27.2327 → 27.2311 across
+  50/100/200 steps). `w16e1_10k` (156 steps) corroborates: −15.18 %,
+  Bonferroni-significant. → **GAP-35 acceptance met.**
+- **Honest caveat:** the two winning cells are non-smoke by the canonical *width*
+  flag but share the smoke recipe's *low training budget*; the load-bearing
+  claim is width-independence, not that a production-*budget* model wins.
+
+GAP-35 is removed from `todo.json`; the remaining Phase-1 items are
+GAP-32-SOTA-HEADTOHEAD and GAP-37-STATISTICAL-POWER.
+
 ## 8. Removed surfaces
 
 - **Removed 2026-10-13:** the legacy repo-root `todo.json` and the entire

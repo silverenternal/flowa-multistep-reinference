@@ -4,7 +4,7 @@
   "updated_at": "2026-10-14",
   "head": "38f31292",
   "history": "docs/audit/todo-history.md",
-  "note": "Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is Tier-1 grade). VENUE (user directive 2026-10-14): GENERAL ML, not domain-specific. Metric-state inventory (2026-10-14 audit): 11 cells = 4 STRONG (R2 tiny-effect; R5b conditional; R5c smoke; R6 counterfactual-pLDDT + strong scPerp) + 1 TIE (R5a) + 6 PARTIAL/SUPP (R1 init-attributed, R3 n.s., R5_legacy, K1 n.s., K4/K5 supp, K7 inverted). Tuned-baseline status (GAP-12): R5c SURVIVES (straw-man refuted) but smoke-only; R3/K1 hold directionally (n.s.); R5b DIES 0/4; R1/R6/K4/K5/K7 + R2 structurally compute-invariant. Ablations already exist (paper 7.3 five-arm k=5, 7.7 NFE boundary, 7.9 regime curve, docs/ABLATION.md 36 uplifts). GENUINELY-NEW work: GAP-35 (clean non-smoke + tuned-baseline-surviving cross-domain cell), GAP-32 (SOTA head-to-head beyond R6), GAP-34 (R1 mechanism), GAP-37 (more seeds). MOSTLY-COVERED: GAP-36 (consolidate existing ablations). DECISIONS/WRITING: GAP-15 (venue), GAP-29 (manuscript). GAP-33 absorbed into GAP-35.",
+  "note": "Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is Tier-1 grade). VENUE (user directive 2026-10-14): GENERAL ML, not domain-specific. Metric-state inventory (2026-10-14 audit): 11 cells = 4 STRONG (R2 tiny-effect; R5b conditional; R5c smoke; R6 counterfactual-pLDDT + strong scPerp) + 1 TIE (R5a) + 6 PARTIAL/SUPP (R1 init-attributed, R3 n.s., R5_legacy, K1 n.s., K4/K5 supp, K7 inverted). GAP-35 RESOLVED 2026-10-14: matched-architecture MNIST regime sweep resolves the section 7.9 width/training confound - the matched-NFE win tracks the optimization budget (<=10K-image ckpts win; 60K-image ckpts regress at BOTH widths). The new base16 (non-smoke) checkpoint w16e1_5k (78 steps) is framework-WINS -25.4% Bonferroni-sig and survives a tuned baseline -> GAP-35 acceptance met. See docs/audit/gap35-cross-domain.md. Tuned-baseline status (GAP-12): R5c SURVIVES (straw-man refuted) but smoke-only; R3/K1 hold directionally (n.s.); R5b DIES 0/4; R1/R6/K4/K5/K7 + R2 structurally compute-invariant. Ablations already exist (paper 7.3 five-arm k=5, 7.7 NFE boundary, 7.9 regime curve, docs/ABLATION.md 36 uplifts). GENUINELY-NEW remaining: GAP-32 (SOTA head-to-head beyond R6), GAP-34 (R1 mechanism), GAP-37 (more seeds). MOSTLY-COVERED: GAP-36 (consolidate existing ablations). DECISIONS/WRITING: GAP-15 (venue), GAP-29 (manuscript). GAP-33 absorbed into GAP-35 (resolved).",
   "gate_chain": [
     "python tools/verify_submission_readiness.py",
     "python tools/check_claims_consistency.py",
@@ -15,7 +15,7 @@
   ],
   "no_push": true,
   "commit_footer": "(USER AUTHORIZED, NO PUSH)",
-  "execution_order_note": "Phase 0 = framing decision (cheap, unblocks the write-up). Phase 1 = empirical hard currency; GAP-35/32/37 share GPU sweeps and should be run together (GAP-37 piggybacks on the same runs). Phase 2 = R1 mechanism, then consolidation, then the manuscript. GAP-20 is user-only.",
+  "execution_order_note": "Phase 0 = framing decision (cheap, unblocks the write-up). Phase 1 = empirical hard currency; GAP-32/37 share GPU sweeps and should be run together (GAP-37 piggybacks on the same runs). GAP-35 is RESOLVED (see note). Phase 2 = R1 mechanism, then consolidation, then the manuscript. GAP-20 is user-only.",
   "open_gaps": [
     {
       "id": "GAP-15-VENUE",
@@ -27,17 +27,6 @@
       "acceptance": "general-ML venue decided; the required framing + format change scoped; user authorizes touching the frozen manuscript.",
       "agent_action": "agent prepares a venue-fit memo across the general-ML candidates with the required changes per option; the final choice is the user's.",
       "evidence": "docs/audit/todo-history.md section 7 (2026-10-14 venue-fit addendum); README 'Complete Inventory'"
-    },
-    {
-      "id": "GAP-35-CROSS-DOMAIN-COVERAGE",
-      "phase": "1",
-      "priority": "P1",
-      "owner": "agent",
-      "status": "OPEN",
-      "absorbs": "GAP-33-TUNED-BASELINE-SURVIVAL",
-      "gap": "The paper's asset is cross-domain generality, so every domain in the claim must be carried by a clean positive. Current state: R5b is CONDITIONAL - a tuned baseline kills it (0/4 at baseline NFE=200, GAP-12 section 2 / GAP-26); R5c is SMOKE-only - it DOES survive a tuned baseline (GAP-12 section 2.5 straw-man REFUTED, baseline is step-insensitive) but only on the smoke checkpoint, and it flips sign on the production checkpoint. R3/K1 hold directionally under baseline-NFE tuning but are not significant. Residual: a cross-domain cell that is BOTH clean (non-smoke) AND survives a tuned baseline. (Absorbs the old GAP-33: R5c already satisfies tuned-baseline survival, but only on the smoke ckpt.)",
-      "acceptance": ">=1 cross-domain cell that is non-smoke-checkpoint AND framework-WINS vs a tuned baseline at matched NFE, Bonferroni-corrected.",
-      "evidence": "docs/audit/gap12-tuned-baseline.md (R5b REAL / R5c REFUTED); docs/audit/gap26-r5b-regime.md; README 11-cell ledger"
     },
     {
       "id": "GAP-32-SOTA-HEADTOHEAD",

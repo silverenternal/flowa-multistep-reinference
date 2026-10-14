@@ -76,6 +76,13 @@ def main() -> int:
     ap.add_argument("--ckpt", default=str(CANONICAL_SMOKE_CKPT))
     ap.add_argument("--framework-fid", type=float,
                     default=CANONICAL_FRAMEWORK_FID_MATCHED)
+    ap.add_argument("--out-json", type=Path,
+                    default=OUT_DIR / "gap12-mnist-tuned-baseline.json",
+                    help="Output JSON path (GAP-35 reuses this driver on other "
+                         "checkpoints without clobbering the canonical smoke result).")
+    ap.add_argument("--out-csv", type=Path,
+                    default=OUT_DIR / "gap12-mnist-tuned-baseline.csv",
+                    help="Output CSV path.")
     args = ap.parse_args()
 
     steps_list = [int(s) for s in args.baseline_steps.split(",")]
@@ -144,10 +151,12 @@ def main() -> int:
         "verdict": verdict,
     }
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    out_json = OUT_DIR / "gap12-mnist-tuned-baseline.json"
+    out_json = Path(args.out_json)
+    out_json.parent.mkdir(parents=True, exist_ok=True)
     out_json.write_text(json.dumps(summary, indent=2, default=str) + "\n")
 
-    out_csv = OUT_DIR / "gap12-mnist-tuned-baseline.csv"
+    out_csv = Path(args.out_csv)
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
     with out_csv.open("w", newline="") as f_:
         wr = csv.writer(f_)
         wr.writerow(["baseline_num_steps", "baseline_fid",

@@ -1,0 +1,10 @@
+[gap35] w16e1_5k seed42: /home/linuxbrew/.linuxbrew/opt/python@3.14/bin/python3.14 /home/hugo/codes/flowa-multistep-reinference/scripts/wave191_p3_mnist_sweep.py --ckpt /home/hugo/codes/flowa-multistep-reinference/data/mnist_fm/w16e1_5k.ckpt.npz --n-samples 200 --seed 42 --output-dir /home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap35-mnist-regime/w16e1_5k/seed42 --output-json /home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap35-mnist-regime/w16e1_5k/seed42/sweep_summary.json --quiet
+[gap35] w16e1_5k seed42: done in 215.4s
+[gap35] w16e1_10k seed42: /home/linuxbrew/.linuxbrew/opt/python@3.14/bin/python3.14 /home/hugo/codes/flowa-multistep-reinference/scripts/wave191_p3_mnist_sweep.py --ckpt /home/hugo/codes/flowa-multistep-reinference/data/mnist_fm/w16e1_10k.ckpt.npz --n-samples 200 --seed 42 --output-dir /home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap35-mnist-regime/w16e1_10k/seed42 --output-json /home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap35-mnist-regime/w16e1_10k/seed42/sweep_summary.json --quiet
+[gap35] w16e1_10k seed42: done in 226.6s
+[gap35] wrote /home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap35-mnist-regime/aggregate.json
+[gap35] wrote /home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap35-mnist-regime/aggregate.csv
+  w8e3_60k         w= 8 e=3 n=3 Δ%=+3.107 d_z=+5.455 bonf_sig=True
+  w16e1_5k         w=16 e=1 n=1 Δ%=-25.432 d_z=+nan bonf_sig=False
+  w16e1_10k        w=16 e=1 n=1 Δ%=-14.673 d_z=+nan bonf_sig=False
+  w16e1_60k        w=16 e=1 n=3 Δ%=+3.958 d_z=+7.409 bonf_sig=True

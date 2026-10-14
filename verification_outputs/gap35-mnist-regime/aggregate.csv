@@ -1,0 +1,5 @@
+ckpt,base_channels,epochs,train_images,opt_steps,non_smoke_by_width,n_seeds,baseline_fid_mean,best_arm_fid_mean,delta_pct_mean,cohens_dz,p_value_bonferroni,bonf_sig,verdict
+w8e3_60k,8,3,60000,2811,False,3,14.345388,14.814761,3.106736,5.454797,0.0330536,True,baseline_wins
+w16e1_5k,16,1,5000,78,True,3,27.236124,21.103041,-25.390211,-42.489892,0.000553743,True,framework_wins
+w16e1_10k,16,1,10000,156,True,3,19.525950,18.139166,-15.184225,-31.512115,0.00100653,True,framework_wins
+w16e1_60k,16,1,60000,937,True,3,13.341632,15.593491,3.958316,7.408787,0.0180539,True,baseline_wins

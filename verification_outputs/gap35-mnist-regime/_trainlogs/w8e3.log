@@ -1,0 +1,19 @@
+<frozen runpy>:130: RuntimeWarning: 'adaptive_reflow.adapters.mnist_fm_train' found in sys.modules after import of package 'adaptive_reflow.adapters', but prior to execution of 'adaptive_reflow.adapters.mnist_fm_train'; this may result in unpredictable behaviour
+[mnist_fm] loading MNIST train images from data/mnist_cache ...
+[mnist_fm] loaded 60000 training images
+[mnist_fm] epoch 1/3 step 1/2811 loss=1121.567682
+[mnist_fm] epoch 1/3 step 200/2811 loss=464.075709
+[mnist_fm] epoch 1/3 step 400/2811 loss=342.423674
+[mnist_fm] epoch 1/3 step 600/2811 loss=296.246920
+[mnist_fm] epoch 1/3 step 800/2811 loss=277.202931
+[mnist_fm] epoch 2/3 step 1000/2811 loss=256.362900
+[mnist_fm] epoch 2/3 step 1200/2811 loss=248.581811
+[mnist_fm] epoch 2/3 step 1400/2811 loss=236.224893
+[mnist_fm] epoch 2/3 step 1600/2811 loss=235.760184
+[mnist_fm] epoch 2/3 step 1800/2811 loss=226.724441
+[mnist_fm] epoch 3/3 step 2000/2811 loss=227.440201
+[mnist_fm] epoch 3/3 step 2200/2811 loss=212.819227
+[mnist_fm] epoch 3/3 step 2400/2811 loss=210.915340
+[mnist_fm] epoch 3/3 step 2600/2811 loss=226.442217
+[mnist_fm] epoch 3/3 step 2800/2811 loss=201.251973
+[mnist_fm] saved data/mnist_fm/w8e3.ckpt.npz (22654 bytes)

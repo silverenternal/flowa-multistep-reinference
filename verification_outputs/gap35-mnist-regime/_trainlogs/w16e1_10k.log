@@ -1,0 +1,6 @@
+<frozen runpy>:130: RuntimeWarning: 'adaptive_reflow.adapters.mnist_fm_train' found in sys.modules after import of package 'adaptive_reflow.adapters', but prior to execution of 'adaptive_reflow.adapters.mnist_fm_train'; this may result in unpredictable behaviour
+[mnist_fm] loading MNIST train images from data/mnist_cache ...
+[mnist_fm] loaded 10000 training images
+[mnist_fm] epoch 1/1 step 1/156 loss=1124.641758
+[mnist_fm] epoch 1/1 step 100/156 loss=431.156430
+[mnist_fm] saved data/mnist_fm/w16e1_10k.ckpt.npz (75146 bytes)

@@ -1,0 +1,167 @@
+{
+  "schema_version": "wave191_p3_mnist_n1000_v1",
+  "target": "mnist_fm",
+  "n_records": 200,
+  "nfe": 50,
+  "baseline_fid": 27.236123946774484,
+  "framework_arms": {
+    "cosine": {
+      "fid_headline": 21.292916590303122,
+      "fid_chunks_mean": 43.009368306351426,
+      "fid_chunks_std": 2.399656292918239,
+      "delta_vs_baseline_pct": -26.299125251261614,
+      "p_value_raw": 3.553163097080869e-08,
+      "p_value_bonferroni": 1.0659489291242608e-07,
+      "bonferroni_significant": true,
+      "cohens_dz": -5.415208609095776,
+      "t_stat": -17.124393209695054,
+      "df": 9,
+      "n_chunks": 10,
+      "chunk_fids": [
+        44.06884405227001,
+        44.793610215423556,
+        42.07514903780145,
+        46.75022222077247,
+        40.625204504668154,
+        44.79245685687402,
+        44.34763763987534,
+        40.868024596274324,
+        42.935329333824434,
+        38.83720460573051
+      ],
+      "per_round_num_steps": [
+        12,
+        9,
+        3,
+        1
+      ],
+      "total_nfe_per_sample": 25,
+      "beta": 0.5,
+      "telemetry": {
+        "total_nfe_per_sample": 25,
+        "wall_sec": 34.78883066198614
+      }
+    },
+    "codimension_sheet": {
+      "fid_headline": 21.103041390096415,
+      "fid_chunks_mean": 43.900023056515536,
+      "fid_chunks_std": 3.69597824486723,
+      "delta_vs_baseline_pct": -24.772898831969602,
+      "p_value_raw": 3.462946289722879e-07,
+      "p_value_bonferroni": 1.0388838869168637e-06,
+      "bonferroni_significant": true,
+      "cohens_dz": -4.166108848910381,
+      "t_stat": -13.1743929427391,
+      "df": 9,
+      "n_chunks": 10,
+      "chunk_fids": [
+        40.37812183574335,
+        38.81806397614352,
+        44.09695084867721,
+        49.18000355437862,
+        41.30069723213039,
+        46.67147754860521,
+        48.65268675893225,
+        42.815426971672224,
+        46.57153990124658,
+        40.51526193762602
+      ],
+      "per_round_num_steps": [
+        12,
+        12,
+        12,
+        12
+      ],
+      "total_nfe_per_sample": 48,
+      "beta": 0.5,
+      "telemetry": {
+        "total_nfe_per_sample": 48,
+        "wall_sec": 188.34201914299047
+      }
+    },
+    "evidence_driven": {
+      "fid_headline": 21.207727609858807,
+      "fid_chunks_mean": 43.99352693059998,
+      "fid_chunks_std": 3.2862586561334006,
+      "delta_vs_baseline_pct": -24.612670547207713,
+      "p_value_raw": 1.7660534989971666e-07,
+      "p_value_bonferroni": 5.2981604969915e-07,
+      "bonferroni_significant": true,
+      "cohens_dz": -4.504400363146812,
+      "t_stat": -14.2441646408335,
+      "df": 9,
+      "n_chunks": 10,
+      "chunk_fids": [
+        41.4945422638002,
+        45.246565991301395,
+        44.550871563890766,
+        46.247024342769066,
+        41.69921896152347,
+        51.338952851884464,
+        44.34842271667213,
+        41.4911256280112,
+        43.808744206982006,
+        39.70980077916509
+      ],
+      "per_round_num_steps": [
+        12,
+        9,
+        3,
+        1
+      ],
+      "total_nfe_per_sample": 25,
+      "beta": 0.5,
+      "telemetry": {
+        "total_nfe_per_sample": 25,
+        "wall_sec": 44.777321998990374
+      }
+    }
+  },
+  "best_arm": "codimension_sheet",
+  "verdict": "framework_wins",
+  "r5_implication": "Wave 191 P3 MNIST FM (N=200, smoke model 1-epoch base_channels=8) at matched NFE=50 confirms the framework BEATS the single-pass baseline (best arm codimension_sheet FID=21.1030 vs baseline 27.2361, \u0394=-24.77% Bonferroni p=0.0000). This MATCHES the Wave 128 CIFAR-10 RF -44.17% claim at matched NFE and STRENGTHENS the R5 MNIST FID -15.01% headline: the framework's MNIST value-add is robust to (1) the smoke-trained model and (2) the integer-NFE matched protocol. The paper's R5 claim stands.",
+  "wall_min": 13.8,
+  "commit_sha": "PENDING",
+  "alpha_bonferroni": 0.016666666666666666,
+  "n_chunks": 10,
+  "chunk_size": 20,
+  "statistical_test": "paired two-sided t-test (df=9) on chunk-level FIDs (k=10 disjoint chunks of 20 samples each, paired across arms and reference); Cohen's d_z on within-chunk diffs; Bonferroni correction across 3 arms (alpha=0.05/3=0.0167)",
+  "headline_fids": {
+    "baseline": 27.236123946774484,
+    "cosine": 21.292916590303122,
+    "codimension_sheet": 21.103041390096415,
+    "evidence_driven": 21.207727609858807
+  },
+  "summary_row_fids": {
+    "baseline": 27.236123946774484,
+    "CosineAnnealScheduler": 21.292916590303122,
+    "CodimensionSheetScheduler": 21.103041390096415,
+    "EvidenceDrivenScheduler": 21.207727609858807
+  },
+  "checkpoint": "data/mnist_fm.npz",
+  "checkpoint_sha256": "01729867b67372e3f1632c76480e16dc35bf1c552d7785b83e56346791d3a2df",
+  "checkpoint_size_bytes": 75035,
+  "checkpoint_is_smoke_materialization": false,
+  "n_samples_requested": 200,
+  "n_samples_used": 200,
+  "n_samples_was_capped": false,
+  "sweep_command": "python scripts/wave191_p3_mnist_sweep.py --n-samples 200 --output-dir verification_outputs/wave191-p3-mnist-n1000 --seed 43",
+  "postprocessor": "scripts/wave191_p3_mnist_sweep.py",
+  "per_arm_n_features": {
+    "baseline": 200,
+    "cosine": 200,
+    "codimension_sheet": 200,
+    "evidence_driven": 200
+  },
+  "honest_disclosure": "Production ckpt used: data/mnist_fm.npz (75035 bytes, sha256=01729867b67372e3); 3-epoch base_channels=16 recipe.",
+  "arm_seed_offsets": {
+    "cosine": 0,
+    "codimension_sheet": 1000000,
+    "evidence_driven": 2000000
+  },
+  "framework_max_num_steps_per_round": 12,
+  "n_rounds": 4,
+  "beta_framework": 0.5,
+  "beta_baseline": 0.0,
+  "fid_metric": "framework-internal Fr\u00e9chet-projection over 784 -> 128 deterministic Gaussian random projection (seed=42); reference = MNIST test set (10K digits, same projection); MnistFrechetProjectionEvaluator (adaptive_reflow.eval.mnist_fid). This is NOT the literature InceptionV3 FID \u2014 the absolute numbers are framework-internal; the paired baseline-vs-arm comparison is valid since both arms use the same projection + reference."
+}

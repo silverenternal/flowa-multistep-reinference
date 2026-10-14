@@ -1,0 +1,26 @@
+{
+  "kind": "gap35_mnist_regime_sweep",
+  "timestamp_utc": "2026-10-14T13:07:47.812549+00:00",
+  "device": "cpu (MnistFmAdapter is numpy-backed; no GPU)",
+  "n_samples": 200,
+  "ckpts": {
+    "w16e1_5k": {
+      "path": "data/mnist_fm/w16e1_5k.ckpt.npz",
+      "base_channels": 16,
+      "epochs": 1,
+      "train_images": 5000
+    },
+    "w16e1_10k": {
+      "path": "data/mnist_fm/w16e1_10k.ckpt.npz",
+      "base_channels": 16,
+      "epochs": 1,
+      "train_images": 10000
+    }
+  },
+  "seeds": [
+    43,
+    44
+  ],
+  "driver": "tools/sweep_gap35_mnist_regime.py",
+  "inner_driver": "scripts/wave191_p3_mnist_sweep.py"
+}

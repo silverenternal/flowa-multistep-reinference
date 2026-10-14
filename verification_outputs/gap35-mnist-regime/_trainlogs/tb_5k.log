@@ -1,0 +1,16 @@
+[gap12-mnist] baseline_steps=[50, 100, 200] N=200 seed=42 ckpt=w16e1_5k.ckpt.npz framework_fid(matched)=21.103
+[gap12-mnist] ref features: (10000, 128)
+[baseline] 200 samples in 567.9s (0.4 samples/s), NFE=50
+  [baseline num_steps=50] FID=27.2361 (LOSES to framework@21.1030) wall=567.9s
+[baseline] 200 samples in 276.1s (0.7 samples/s), NFE=100
+  [baseline num_steps=100] FID=27.2327 (LOSES to framework@21.1030) wall=276.1s
+[baseline] 200 samples in 616.7s (0.3 samples/s), NFE=200
+  [baseline num_steps=200] FID=27.2311 (LOSES to framework@21.1030) wall=616.7s
+
+==============================================================================
+HEADLINE — GAP-12 tuned baseline (R5c MNIST FM smoke)
+==============================================================================
+  best baseline: steps=200 FID=27.2311
+  framework@matched NFE: FID=21.1030 -> BEATS tuned baseline
+wrote verification_outputs/gap35-mnist-regime/tuned_baseline_w16e1_5k.json
+wrote verification_outputs/gap35-mnist-regime/tuned_baseline_w16e1_5k.csv
