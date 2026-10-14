@@ -1,0 +1,6 @@
+{
+  "input_fasta": "verification_outputs/gap31-r6-live-uplift/uniform/seed44/fasta/framework.fasta",
+  "n_input": 1000,
+  "n_used": 1000,
+  "skipped": {}
+}

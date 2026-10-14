@@ -160,9 +160,9 @@
 |---|---|---|
 | **scPerplexity**（ESM-IF，越低越好） | framework vs baseline，按 `qid` 配对，N=3000 | **d_z = −0.8393**（diff −3.6823）；framework 在**每一层级**均 WINS（hard −0.7952 / medium −0.8634 / easy −0.8924） |
 | **hard-tier pLDDT**（臂无关；wrapper 只触碰 easy 层） | framework vs baseline 在 hard 层，N=990 | **d_z = +1.1211**（diff +15.0065）；逐种子 +1.0933/+1.1021/+1.1692 —— ≈ 冻结 hard-tier 反事实 +1.1889 |
-| **uniform 臂**（factor 1.0，无层级操纵） | 诚实 live “before” vs as-designed | 用于衡量层级感知提升的 live 基线 |
+| **uniform 臂**（factor 1.0，无层级操纵） | framework vs 种子匹配 baseline，诚实 live “before”，N=3000 | **d_z = +0.1466**（diff +2.6386）；逐种子 +0.1373/+0.1366/+0.1659 —— 框架**在完全不做层级操纵时**即已胜出 baseline |
 
-**诚实解读 R6 单元。** 在 live pLDDT 轴上框架**未**达到冻结的 +0.2235 门槛（GAP-28/30）；在 live **scPerplexity** 轴上它强烈且一致地胜出（GAP-31，d_z = −0.8393），且 live **hard-tier** pLDDT 锚点复现了冻结 hard-tier 反事实（d_z = +1.1211 vs +1.1889）。`+0.2235` 论文数字仍标注为反事实代理；live 证据以增量方式并排报告。
+**诚实解读 R6 单元。** 在 live pLDDT 轴上框架**未**达到冻结的 +0.2235 门槛（GAP-28/30）；在 live **scPerplexity** 轴上它强烈且一致地胜出（GAP-31，d_z = −0.8393），且 live **hard-tier** pLDDT 锚点复现了冻结 hard-tier 反事实（d_z = +1.1211 vs +1.1889）。诚实的 live R6 阶梯为 **uniform +0.1466 → as-designed +0.1604 →（已披露反事实）+0.2235**：框架在 pLDDT 上即使不做层级感知削减也是真实的 live 正向，层级感知精化仅再贡献 +0.0138 `d_z`。`+0.2235` 论文数字仍标注为反事实代理；live 证据以增量方式并排报告。
 
 ---
 

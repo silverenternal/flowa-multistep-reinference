@@ -132,6 +132,16 @@ def main() -> int:
         uni_all.extend((uv - bv).tolist())
         asd_all.extend((av - bv).tolist())
 
+    _zero_u = np.zeros(len(uni_all))
+    _zero_a = np.zeros(len(asd_all))
+    plddt_pooled = {
+        "uniform_vs_baseline": _paired(_zero_u, np.array(uni_all)),
+        "as_designed_vs_baseline": _paired(_zero_a, np.array(asd_all)),
+        "note": "pooled over seeds; uniform = easy-tier factor 1.0 (honest "
+                "before), as-designed = factor 0.5; both vs the seed-matched "
+                "baseline",
+    }
+
     summary = {
         "kind": "gap31_r6_live_uplift",
         "seeds": seeds,
@@ -147,6 +157,7 @@ def main() -> int:
             "note": "uniform (factor 1.0, no tier manipulation) vs as-designed "
                     "(factor 0.5); both paired against the seed-matched baseline",
             "per_seed": plddt_per_seed,
+            "pooled": plddt_pooled,
         },
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
     }
@@ -154,6 +165,12 @@ def main() -> int:
     out.write_text(json.dumps(summary, indent=2))
     print(f"scPerp pooled: n={sc_pooled['n']} mean_diff={sc_pooled['mean_diff']:+.4f} "
           f"d_z={sc_pooled['cohens_d_z']:+.4f}")
+    _pu = plddt_pooled["uniform_vs_baseline"]
+    _pa = plddt_pooled["as_designed_vs_baseline"]
+    print(f"pLDDT pooled uniform-vs-baseline:    n={_pu['n']} "
+          f"diff={_pu['mean_diff']:+.4f} d_z={_pu['cohens_d_z']:+.4f}")
+    print(f"pLDDT pooled as-designed-vs-baseline: n={_pa['n']} "
+          f"diff={_pa['mean_diff']:+.4f} d_z={_pa['cohens_d_z']:+.4f}")
     print(f"wrote {out}")
     return 0
 

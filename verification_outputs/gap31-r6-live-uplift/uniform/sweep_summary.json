@@ -1,0 +1,144 @@
+{
+  "kind": "gap30_r6_fresh_tier_live",
+  "seeds": [
+    43
+  ],
+  "n_per_seed": 1000,
+  "tier_aware_n_cap": 1.0,
+  "gpu": "0",
+  "baseline_root": "verification_outputs/gap28-r6-faithful",
+  "tier_source": "fresh (each seed's own baseline fold)",
+  "per_seed": {
+    "43": {
+      "n": 1000,
+      "mean_baseline": 42.26166613235679,
+      "mean_framework": 44.68872271530068,
+      "mean_diff": 2.4270565829438895,
+      "sd_diff": 17.76462258438837,
+      "cohens_d_z": 0.13662303105030768,
+      "seed": 43,
+      "baseline_byte_identical": true,
+      "baseline_source": "reused seed-matched fresh fold (GAP-28)",
+      "tier_source": "fresh (this seed's own baseline fold)",
+      "tier_aware_n_cap": 1.0,
+      "n_framework_folded": 1000,
+      "per_tier": {
+        "frozen": {
+          "hard": {
+            "n": 330,
+            "mean_baseline": 42.02173933429143,
+            "mean_framework": 44.563486178775435,
+            "mean_diff": 2.541746844484005,
+            "sd_diff": 17.375117938338533,
+            "cohens_d_z": 0.1462865952049506
+          },
+          "medium": {
+            "n": 340,
+            "mean_baseline": 41.86866590145802,
+            "mean_framework": 43.5359704332158,
+            "mean_diff": 1.667304531757777,
+            "sd_diff": 17.981490561698624,
+            "cohens_d_z": 0.09272337718816313
+          },
+          "easy": {
+            "n": 330,
+            "mean_baseline": 42.90650225922693,
+            "mean_framework": 46.0016434212467,
+            "mean_diff": 3.095141162019768,
+            "sd_diff": 17.948317811965428,
+            "cohens_d_z": 0.1724474234547129
+          }
+        },
+        "fresh": {
+          "hard": {
+            "n": 330,
+            "mean_baseline": 29.666983610906833,
+            "mean_framework": 43.89548754519538,
+            "mean_diff": 14.22850393428856,
+            "sd_diff": 12.910496924059805,
+            "cohens_d_z": 1.1020880155102735
+          },
+          "medium": {
+            "n": 340,
+            "mean_baseline": 40.66089045482921,
+            "mean_framework": 44.81335423171762,
+            "mean_diff": 4.152463776888408,
+            "sd_diff": 14.183740382244547,
+            "cohens_d_z": 0.29276225205634293
+          },
+          "easy": {
+            "n": 330,
+            "mean_baseline": 56.505632685198805,
+            "mean_framework": 45.35354965637033,
+            "mean_diff": -11.152083028828466,
+            "sd_diff": 16.017309725383996,
+            "cohens_d_z": -0.6962519436803304
+          }
+        }
+      }
+    }
+  },
+  "pooled": {
+    "n": 1000,
+    "mean_baseline": 42.26166613235679,
+    "mean_framework": 44.68872271530068,
+    "mean_diff": 2.4270565829438895,
+    "sd_diff": 17.76462258438837,
+    "cohens_d_z": 0.13662303105030768
+  },
+  "pooled_per_tier": {
+    "frozen": {
+      "hard": {
+        "n": 330,
+        "mean_baseline": 42.02173933429143,
+        "mean_framework": 44.563486178775435,
+        "mean_diff": 2.541746844484005,
+        "sd_diff": 17.375117938338533,
+        "cohens_d_z": 0.1462865952049506
+      },
+      "medium": {
+        "n": 340,
+        "mean_baseline": 41.86866590145802,
+        "mean_framework": 43.5359704332158,
+        "mean_diff": 1.667304531757777,
+        "sd_diff": 17.981490561698624,
+        "cohens_d_z": 0.09272337718816313
+      },
+      "easy": {
+        "n": 330,
+        "mean_baseline": 42.90650225922693,
+        "mean_framework": 46.0016434212467,
+        "mean_diff": 3.095141162019768,
+        "sd_diff": 17.948317811965428,
+        "cohens_d_z": 0.1724474234547129
+      }
+    },
+    "fresh": {
+      "hard": {
+        "n": 330,
+        "mean_baseline": 29.666983610906833,
+        "mean_framework": 43.89548754519538,
+        "mean_diff": 14.22850393428856,
+        "sd_diff": 12.910496924059805,
+        "cohens_d_z": 1.1020880155102735
+      },
+      "medium": {
+        "n": 340,
+        "mean_baseline": 40.66089045482921,
+        "mean_framework": 44.81335423171762,
+        "mean_diff": 4.152463776888408,
+        "sd_diff": 14.183740382244547,
+        "cohens_d_z": 0.29276225205634293
+      },
+      "easy": {
+        "n": 330,
+        "mean_baseline": 56.505632685198805,
+        "mean_framework": 45.35354965637033,
+        "mean_diff": -11.152083028828466,
+        "sd_diff": 16.017309725383996,
+        "cohens_d_z": -0.6962519436803304
+      }
+    }
+  },
+  "timestamp": "2026-10-14T16:26:41+0800"
+}

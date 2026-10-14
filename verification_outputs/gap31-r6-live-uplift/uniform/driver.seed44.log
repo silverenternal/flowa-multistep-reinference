@@ -1,0 +1,7 @@
+/home/hugo/codes/flowa-multistep-reinference/.venvs/lineageflow_venv/bin/python /home/hugo/codes/flowa-multistep-reinference/tools/gen_lineageflow_n1000_fastas.py --outdir verification_outputs/gap31-r6-live-uplift/uniform/seed44/fasta --n 1000 --seed 44 --upstream-eval-len-bias short --nfe 10 --n-rounds 3 --temperature 1.0 --tier-aware-n-cap 1.0 --tier-aware-baseline-metrics-jsonl verification_outputs/gap28-r6-faithful/seed44/baseline/foldability/foldability.jsonl
+[seed 44] baseline byte-identical to reused fresh: True
+/home/hugo/.conda/envs/omegafold_py310/bin/python /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/run_foldability.py --fasta verification_outputs/gap31-r6-live-uplift/uniform/seed44/fasta/framework.fasta --outdir verification_outputs/gap31-r6-live-uplift/uniform/seed44/framework/foldability --omegafold-bin /home/hugo/.conda/envs/omegafold_py310/bin/omegafold --fold-gpus 0 --sc-gpus 0 --max-seqs 1000 --skip-sc --no-plots --log-every 60
+[seed 44] d_z=+0.1659 mean_diff=+2.9846 n=1000
+
+pooled d_z = +0.1659 (n=1000, mean_diff=+2.9846)
+wrote verification_outputs/gap31-r6-live-uplift/uniform/sweep_summary.json

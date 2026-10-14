@@ -176,9 +176,9 @@ investigations (GAP-24 … GAP-31)** that stress-test, refine, or re-anchor them
 |---|---|---|
 | **scPerplexity** (ESM-IF, lower = better) | framework vs baseline, paired by `qid`, N=3000 | **d_z = −0.8393** (diff −3.6823); framework WINS on **every tier** (hard −0.7952 / medium −0.8634 / easy −0.8924) |
 | **hard-tier pLDDT** (arm-independent; wrapper touches only the easy tier) | framework vs baseline on the hard tier, N=990 | **d_z = +1.1211** (diff +15.0065); per-seed +1.0933/+1.1021/+1.1692 — ≈ the frozen hard-tier counterfactual +1.1889 |
-| **uniform arm** (factor 1.0, no tier manipulation) | the honest live "before" vs as-designed | the live baseline against which the tier-aware lift is measured |
+| **uniform arm** (factor 1.0, no tier manipulation) | framework vs seed-matched baseline, the honest live "before", N=3000 | **d_z = +0.1466** (diff +2.6386); per-seed +0.1373/+0.1366/+0.1659 — the framework beats the baseline **with no tier manipulation at all** |
 
-**Reading the R6 cell honestly.** On the live pLDDT axis the framework does **not** reach the frozen +0.2235 bar (GAP-28/30); on the live **scPerplexity** axis it wins strongly and uniformly (GAP-31, d_z = −0.8393), and the live **hard-tier** pLDDT anchor reproduces the frozen hard-tier counterfactual (d_z = +1.1211 vs +1.1889). The `+0.2235` paper number remains labelled a counterfactual proxy; the live evidence is reported additively alongside it.
+**Reading the R6 cell honestly.** On the live pLDDT axis the framework does **not** reach the frozen +0.2235 bar (GAP-28/30); on the live **scPerplexity** axis it wins strongly and uniformly (GAP-31, d_z = −0.8393), and the live **hard-tier** pLDDT anchor reproduces the frozen hard-tier counterfactual (d_z = +1.1211 vs +1.1889). The honest live R6 ladder is **uniform +0.1466 → as-designed +0.1604 → (disclosed counterfactual) +0.2235**: the framework is a genuine live positive on pLDDT even without the tier-aware cut, and the tier-aware refinement adds only +0.0138 `d_z` on top. The `+0.2235` paper number remains labelled a counterfactual proxy; the live evidence is reported additively alongside it.
 
 ---
 
