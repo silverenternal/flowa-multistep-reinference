@@ -4,7 +4,7 @@
   "updated_at": "2026-10-14",
   "head": "221efaee",
   "history": "docs/audit/todo-history.md",
-  "note": "The Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is already Tier-1 grade - do not spend effort there). DONE: GAP-24 (regime law), GAP-25 (R1 blend isolation), GAP-26 (R5b bound), GAP-27 (R3 power + CI defect fix), GAP-28 (R6 faithful live = null), GAP-30 (R6 fresh-tier live: as-designed +0.1604 < bar +0.2235), GAP-31 (R6 LIVE UPLIFT: scPerp d_z -0.8393, hard-tier anchor +1.1211, uniform arm +0.1466 = genuine live positive with NO tier manipulation). NEW 2026-10-14 (from the venue-fit analysis): the venue is now a live 3-way decision (TNNLS / Pattern Recognition / AI4Science) and the empirical axis needs four things every candidate venue shares - SOTA head-to-head beyond R6, a tuned-baseline survival cell, an R1 mechanism fix, and clean image/pattern cells - plus systematic ablations and larger-N effect sizes. GAP-32..GAP-37 are agent-actionable; GAP-15 is agent+user.",
+  "note": "The Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is already Tier-1 grade - do not spend effort there). DONE: GAP-24 (regime law), GAP-25 (R1 blend isolation), GAP-26 (R5b bound), GAP-27 (R3 power + CI defect fix), GAP-28 (R6 faithful live = null), GAP-30 (R6 fresh-tier live: as-designed +0.1604 < bar +0.2235), GAP-31 (R6 LIVE UPLIFT: scPerp d_z -0.8393, hard-tier anchor +1.1211, uniform arm +0.1466 = genuine live positive with NO tier manipulation). VENUE DIRECTION (user directive 2026-10-14): target a GENERAL ML venue, NOT a domain-specific image/CV or bio/medical one - the cross-domain breadth (protein + molecule + toy + image) and genuine SOTA improvements across domains are the asset; do not pigeonhole. The empirical axis needs: SOTA head-to-head beyond R6, a tuned-baseline survival cell, an R1 mechanism fix, uniform cross-domain coverage, systematic ablations, larger-N effect sizes. GAP-32..GAP-37 are agent-actionable; GAP-15 is agent+user.",
   "gate_chain": [
     "python tools/verify_submission_readiness.py",
     "python tools/check_claims_consistency.py",
@@ -44,12 +44,12 @@
       "evidence": "docs/audit/gap25-r1-blend-isolation.md; docs/audit/todo-history.md section 7 (gating risk 1)"
     },
     {
-      "id": "GAP-35-IMAGE-CELLS-POSITIVE",
+      "id": "GAP-35-CROSS-DOMAIN-COVERAGE",
       "priority": "P1",
       "owner": "agent",
       "status": "OPEN",
-      "gap": "The pattern/CV cells are the weakest: R5b is conditional (0/4 under a tuned baseline), R5c is smoke-checkpoint only and flips sign on the production checkpoint. Pattern Recognition is pattern/CV-centric while the paper is protein/molecule-heavy, so the image side must be made into clean positives (stable across checkpoints, not conditional) - or the venue decision must move to an AI4Science target where the protein content is an asset rather than a scope mismatch.",
-      "acceptance": ">=1 clean image/pattern cell positive (stable across checkpoints, Bonferroni-corrected), OR the venue decision (GAP-15) resolves to an AI4Science target and the reframe is scoped.",
+      "gap": "The paper's asset is cross-domain generality, so every domain in the claim must be carried by a clean positive - but the image cells are the weakest: R5b is conditional (0/4 under a tuned baseline) and R5c is smoke-checkpoint only and flips sign on the production checkpoint. Strengthen the weakest cross-domain cell(s) so that no domain in the cross-domain claim rests only on a conditional or smoke-checkpoint result.",
+      "acceptance": "no domain in the cross-domain claim is supported only by a conditional or smoke-checkpoint cell; >=1 image cell stable across checkpoints, Bonferroni-corrected.",
       "evidence": "README 11-cell ledger (R5b conditional, R5c regime-dependent); docs/audit/todo-history.md section 7"
     },
     {
@@ -75,10 +75,10 @@
       "priority": "P1",
       "owner": "agent+user",
       "status": "OPEN",
-      "gap": "Venue is now a live 3-way decision: (a) IEEE TNNLS (current, IEEEtran 11pp, CAS Tier-1 TOP, IF 10.2) - scope is network/learning-centric while this paper is an inference-time sampling framework; (b) Pattern Recognition (CAS Tier-1 TOP, IF ~8, pattern/CV-centric, Elsevier format) - better scope fit for generative sampling but requires the image side (GAP-35) plus a template + likely narrative change; (c) an AI4Science Tier-1 (Nature Machine Intelligence / Briefings in Bioinformatics / npj Computational Materials / Digital Discovery) where the protein/molecule content is an asset, but requires reframing from 'general ML framework' to 'AI4Science method' and a stronger biological signal.",
-      "acceptance": "venue decided; the required reframing + format change scoped; user authorizes touching the frozen manuscript.",
-      "agent_action": "agent prepares a venue-fit memo (TNNLS vs Pattern Recognition vs AI4Science) with the required changes per option; the final choice is the user's.",
-      "evidence": "docs/audit/todo-history.md section 7; README 'Complete Inventory'"
+      "gap": "Venue target: GENERAL ML (user directive 2026-10-14 - do NOT pigeonhole into an image/CV or bio/medical venue; the cross-domain breadth and genuine SOTA improvements are the asset). Candidates (CAS Tier-1): IEEE TNNLS (current, IEEEtran 11pp, IF 10.2), IEEE TPAMI (CCF-A, IF ~20.8), JMLR, Artificial Intelligence (Elsevier), IEEE Transactions on Cybernetics, Information Sciences. Dropped as leads: Pattern Recognition (pattern/CV-centric) and AI4Science venues (bio-specific). Decide the general-ML target and scope the format/narrative change (the manuscript should lead with cross-domain generality).",
+      "acceptance": "general-ML venue decided; the required framing + format change scoped; user authorizes touching the frozen manuscript.",
+      "agent_action": "agent prepares a venue-fit memo across the general-ML candidates with the required changes per option; the final choice is the user's.",
+      "evidence": "docs/audit/todo-history.md section 7 (2026-10-14 venue-fit addendum); README 'Complete Inventory'"
     },
     {
       "id": "GAP-29-MANUSCRIPT-DENSITY",

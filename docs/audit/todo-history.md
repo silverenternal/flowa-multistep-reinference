@@ -155,21 +155,20 @@ axis, not the framework.
 4. Meta-content density: 11 pages carry a lot of audit/disclosure prose; a
    reviewer may read it as engineering-heavy / science-thin.
 
-**Addendum (2026-10-14) — venue fit.** The venue is now a live three-way
-decision. **IEEE TNNLS** (CAS Tier-1 TOP, IF 10.2) is scope-adjacent but
-network/learning-centric, while this paper is an inference-time sampling
-framework. **Pattern Recognition** (CAS Tier-1 TOP, IF ≈ 8) is a closer scope
-fit for generative sampling, but is pattern/CV-centric while the paper is
-protein/molecule-heavy, so its weaker image cells (R5b conditional, R5c
-regime-dependent) become a compounded scope+empirical risk, and it needs an
-Elsevier template plus a likely narrative change. An **AI4Science** Tier-1
-(Nature Machine Intelligence / Briefings in Bioinformatics / npj Computational
-Materials / Digital Discovery) makes the protein content an asset but needs a
-reframe from "general ML framework" to "AI4Science method". The gaps every
-candidate venue shares are recorded as `GAP-32-SOTA-HEADTOHEAD`,
-`GAP-33-TUNED-BASELINE-SURVIVAL`, `GAP-34-R1-MECHANISM`,
-`GAP-35-IMAGE-CELLS-POSITIVE`, plus `GAP-36-ABLATION-MATRIX` and
-`GAP-37-STATISTICAL-POWER`; the venue choice itself is `GAP-15-VENUE`.
+**Addendum (2026-10-14) — venue fit.** The venue target is a **general ML**
+journal (user directive 2026-10-14: do not pigeonhole into an image/CV or
+bio/medical venue — the cross-domain breadth, protein + molecule + toy + image,
+and the genuine per-domain SOTA improvements are the asset). Candidates (CAS
+Tier-1): **IEEE TNNLS** (current, IEEEtran 11pp, IF 10.2), **IEEE TPAMI**
+(CCF-A, IF ≈ 20.8), **JMLR**, **Artificial Intelligence** (Elsevier), **IEEE
+Transactions on Cybernetics**, **Information Sciences**. Pattern Recognition
+(pattern/CV-centric) and the AI4Science venues (bio-specific) were considered
+and dropped as leads because they would narrow the work to a single domain; the
+manuscript should lead with cross-domain generality. The gaps the target shares
+are recorded as `GAP-32-SOTA-HEADTOHEAD`, `GAP-33-TUNED-BASELINE-SURVIVAL`,
+`GAP-34-R1-MECHANISM`, `GAP-35-CROSS-DOMAIN-COVERAGE`, plus
+`GAP-36-ABLATION-MATRIX` and `GAP-37-STATISTICAL-POWER`; the venue choice itself
+is `GAP-15-VENUE`.
 
 ## 8. Removed surfaces
 
