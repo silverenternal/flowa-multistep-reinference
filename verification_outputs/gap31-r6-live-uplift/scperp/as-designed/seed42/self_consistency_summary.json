@@ -1,0 +1,10 @@
+{
+  "n_total": 1000,
+  "n_scored": 1000,
+  "n_errors": 0,
+  "top_errors": [],
+  "sc_perplexity_mean": 14.167196888901865,
+  "sc_perplexity_median": 13.870378427672392,
+  "sc_perplexity_p10": 11.15179006392015,
+  "sc_perplexity_p90": 17.471292187069327
+}

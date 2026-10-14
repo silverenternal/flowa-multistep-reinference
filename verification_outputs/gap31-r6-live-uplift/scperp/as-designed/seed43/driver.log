@@ -1,0 +1,8 @@
+/home/hugo/.conda/envs/omegafold_py310/lib/python3.10/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/hugo/.conda/envs/omegafold_py310/lib/python3.10/site-packages/esm/pretrained.py:215: UserWarning: Regression weights not found, predicting contacts will not produce correct results.
+  warnings.warn(
+[esmif] progress 0/1000 scored
+[esmif] progress 440/1000 scored
+wrote_jsonl: verification_outputs/gap31-r6-live-uplift/scperp/as-designed/seed43/self_consistency.jsonl
+wrote_summary: verification_outputs/gap31-r6-live-uplift/scperp/as-designed/seed43/self_consistency_summary.json

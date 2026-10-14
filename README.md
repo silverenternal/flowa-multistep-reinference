@@ -34,6 +34,7 @@ verdict holds globally.
 ### Quick Navigation
 
 - [Paper A Submission Status](#paper-a-submission-status) — TNNLS submission package + final metrics snapshot
+- [Complete Inventory: Innovations & Experiments](#complete-inventory-innovations--experiments) — the single consolidated view of what was built and what every experiment measured
 - [Final Empirical Metrics](#final-empirical-metrics-11-cells) — 4 STRONG + 1 TIE + 6 PARTIAL/SUPP (final)
 - [Headline Results](#headline-results) — seven R-level cells + four K-cells at a glance
 - [Deep Innovations](#deep-innovations) — seven genuinely novel primary contributions
@@ -51,6 +52,7 @@ verdict holds globally.
 ## Contents
 
 - [Paper A Submission Status](#paper-a-submission-status)
+- [Complete Inventory: Innovations & Experiments](#complete-inventory-innovations--experiments)
 - [Final Empirical Metrics (11 cells)](#final-empirical-metrics-11-cells)
 - [Headline Results](#headline-results)
 - [Deep Innovations](#deep-innovations)
@@ -92,6 +94,91 @@ verdict holds globally.
 | **Development phases** | foundation → candidate analysis → adapters → baseline-vs-framework comparisons → N=1000 scale-up → ablation → efficiency / Pareto → statistical rigor → reproducibility / packaging → venue consolidation → manuscript restructure + figures. Consolidated record: [`todo/WAVES.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/todo/WAVES.md) |
 
 **Push status:** PUSH to `origin/main` is BLOCKED at the USER permission gate (standing NO-PUSH policy). The working tree is content-complete and pre-push-ready; final USER authorization is required to push.
+
+---
+
+## Complete Inventory: Innovations & Experiments
+
+This is the single consolidated view of the project: **(1) what was built** and
+**(2) what every experiment measured**. Detail lives in
+[`docs/CLAIMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md)
+(innovation ledger, `CLM-NNN`) and
+[`docs/audit/INDEX.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/INDEX.md)
+(per-increment records); this section is the map.
+
+### Part 1 — What was built (innovation inventory)
+
+**24 innovations** are catalogued in the deep-innovation inventory
+([`docs/audit/wave298-p6-deep-innovations.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave298-p6-deep-innovations.md) §F; bucket summary in
+[`docs/CLAIMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md) §"Deep-innovation bucket summary"). They partition into four buckets, plus a §6 lemma trio.
+
+**Genuinely novel (7) — primary contributions, paper §3–§4** (each closes a gap between two known prior-art poles; the combination is unique to this project):
+
+| # | Innovation | Claim | One-line novelty |
+|:---:|---|---|---|
+| 1 | Hash-chained ledger rows w/ O(1) verification | [CLM-078](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-078) | SHA-256 chain detects tampering at append time in one hash/row (vs `git fsck` O(R) re-walk) |
+| 2 | PEP 695 state machine w/ byte-deterministic log | [CLM-079](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-079) | Wall-clock-free `TransitionLog`; `transitions`/`python-statemachine` call `datetime.now()` |
+| 3 | Capability-token handshake w/ fail-closed audit trail | [CLM-080](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-080) | Capability mismatch accumulates `audit_codes` (structured) rather than crash |
+| 4 | Typed four-port wire carrier + auto-wrap | [CLM-081](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-081) | Typed `Condition` subclasses + legacy auto-wrap, byte-equivalent across 2356 tests |
+| 5 | Honest disclosure when hypothesis is refuted | [CLM-082](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-082) | Refutations published inline as additive addenda; `ACTIVE` status never flipped by wording |
+| 6 | Wave-based audit chain + topic-cluster cross-reference | [CLM-083](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-083) | Self-contained per-increment records + topic re-clustering so reviewers answer by topic |
+| 7 | Lazy-memoized paper-quantity cache w/ site-aware dispatch | [CLM-084](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-084) | One dormant/active cache shared by 15 theory sites, keyed by a closed-set site vocabulary |
+
+**Incremental / well-known-applied (7) — supporting, paper §5–§7:** D.4 byte-stable scheduler regression vectors (30/30) · permutation test for the lever hypothesis · bounded-Lipschitz convergence diagnostic · cosine σ-across-seeds canonical noise band · 6-gate CI on every PR · vendored purity + capability-token fail-closed handshake · theorem-aligned FID evaluator.
+
+**Methodology (5) — paper §8:** `check_claims_consistency.py` adversarial claims verifier · backward-compat as primary invariant · wave-based audit chain · permutation test for the lever hypothesis · honest disclosure when refuted.
+
+**Engineering utilities (5) — paper §10 + appendix:** batched framework harness · adversarial scheduler stress matrix · empirical `profile_residual_fn` adapter-agnostic residual interface · theorem-aligned FID evaluator · bounded-Lipschitz convergence diagnostic.
+
+**§6 Framework Properties — three formally-verified lemmas (all ACTIVE):**
+
+| Lemma | Claim | Statement |
+|---|---|---|
+| Lemma 1 — Protocol composition closure | [CLM-085](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-085) | The composition `A ∘ B` of two `SchedulerProtocol`-conformant schedulers preserves cache coherence + idempotence + monotonicity under a containment/radius condition; canonical instance = `TierAwareCodimensionSheetScheduler ∘ CodimensionSheetScheduler` |
+| Lemma 2 — State-machine byte-determinism | [CLM-086](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-086) | Two identically-initialised `StateMachine` instances produce byte-identical `TransitionLog` tuples for any finite event sequence (4-case proof: priority tiebreak / history / parallel regions / `asyncio.gather`) |
+| Lemma 3 — Ledger tamper-evidence | [CLM-087](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-087) | The append-only hash chain detects any post-hoc tampering at the first mismatching index (3-case proof: tail / mid-chain / insert-delete), modulo SHA-256 collision resistance ≤ 2⁻¹²⁸ |
+
+### Part 2 — What every experiment measured (experiment → effect ledger)
+
+Two layers: the **11 headline cells** (paper §7.2/§7.11) and the **closed-gap
+investigations (GAP-24 … GAP-31)** that stress-test, refine, or re-anchor them.
+
+**2.1 — The 11 headline cells.** Canonical verdict distribution **4 STRONG + 1 TIE + 6 PARTIAL/SUPP**; the full table is in [Final Empirical Metrics](#final-empirical-metrics-11-cells). Effect achieved per cell:
+
+| cell | model / metric | effect achieved |
+|---|---|---|
+| **R1** | LineageFlow · HMMER hits | Synthetic +116% (158 → 342); real-forward **3/3 seeds WINS** (158/159/174 → 275/272/259, DL d_pooled = +0.156, I²=0). PARTIAL — attribution (GAP-25) shows the win is the per-record random **init**, not the restart-blend |
+| **R2** | Kanzi · RMSD | **STRONG framework-WINS** d_z = −0.0990 (Bonferroni-sig, p_raw = 1.79e-3); structurally compute-invariant |
+| **R3** | FlowMol3 · `fg_dev` | 3-seed N=1000 d_z = −0.0377 (framework-WINS direction, p = 0.559, n.s.); advantage **holds at 2×/4× baseline NFE** → straw-man baseline refuted (GAP-27: bounded-marginal, ~49 seeds for 80% power) |
+| **R5a** | 2D Two Moons · W₂ | **TIE** \|Δ\| = 0.0091 < 0.01 floor; persists at n=7 and n=10 |
+| **R5b** | CIFAR-10 RF · FID | **CONDITIONAL**: n_rounds=1 wins at matched NFE=50 (−1.2% to −2.5%, 4 schedulers); dies under a tuned baseline (GAP-26: 0/4 at baseline NFE=200); n_rounds ≥ 2 regresses +20% to +31% |
+| **R5c** | MNIST FM · FID | **STRONG (smoke ckpt)** d_z = −13.18; production ckpt flips to baseline-WINS (+10.37%) — regime-dependent |
+| **R6** | LineageFlow k6 · pLDDT / scPerp | **STRONG on scPerp** (cluster-robust d_z = −4.019); hard-tier counterfactual d_z = +1.189; beats vanilla + Fast-DLLM + AB-Cache + LeDiFlow (Bonferroni-sig). Live 3-seed pLDDT landed below the +0.2235 bar — see §2.3 |
+| **K1** | FlowMol3 · RDKit-validity | **NOT-SIGNIFICANT** at K-level α (p_b = 0.5676 vs α_K = 0.0125); framework validity exceeds baseline at matched and 2×/4× NFE → straw-man refuted |
+| **K4** | LineageFlow · HMMER length-bias | **SUPPORTED** cluster-robust d_z = +0.84 (p_b = 0.009) |
+| **K5** | LineageFlow · HMMER delta | **SUPPORTED / with caveat** cluster-robust d_z = +1.12 (p_b = 0.003); n=3 re-aggregation caveat |
+| **K7** | LineageFlow · novelty | **PARTIAL / direction-INVERTED**: framework 12.6× LESS Pfam-novel than baseline at pctid<30% |
+
+**2.2 — Closed-gap investigations (GAP-24 … GAP-30).** Each is a bounded, restartable increment that either produced a falsifiable law or re-anchored a cell; the full record is [`docs/audit/todo-history.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/todo-history.md) §6.
+
+| investigation | question | effect achieved |
+|---|---|---|
+| **GAP-24** Boundary law | is there one law behind the conditional cells? | **A falsifiable regime law** `blend improves iff q < √((1+m)/(1−m))` (Theorem-5 Eq. 7 closed form): 45/45 off-boundary matches on the R5b field, 15/16 headline-cell directions |
+| **GAP-25** R1 blend isolation | is R1's win the blend or the init? | **Isolated**: init-only ≈ framework ≫ baseline (B−A = +123.7, p=0.0043; B−C = +18.7, n.s.) ⇒ the win is the **per-record random init**; blend marginal bounded ≤ +46 hits |
+| **GAP-26** R5b regime | does any protocol survive a tuned baseline? | **No tested protocol survives** (0/4 at baseline NFE=200); the GAP-24 law reproduces the 2/4→1/4→0/4 flip |
+| **GAP-27** R3 power | can R3 be promoted? | R3 is **bounded-marginal** (d_z = −0.40, ~49 seeds for 80% power); fixed a seed-level CI defect (1.96 at df=2 → t=4.303) |
+| **GAP-28** R6 faithful tier | does the faithful easy-tier direction fix R6? | **Definitive null**: faithful +0.1104 < as-designed +0.1466 < bar +0.2235; the easy-tier regression is monotone *increasing* in β_easy |
+| **GAP-30** R6 tier-targeting | was the frozen tier source the residual? | Correctly-targeted fresh-tier 3-seed live re-run: as-designed **+0.1604** (↑ from +0.1466, still < bar); tier isolation exact (330/330/seed); the easy tier is the only group that differs (hard/medium byte-identical) |
+
+**2.3 — The live R6 uplift (GAP-31, newest).** The frozen R6 `+0.2235` headline is a *disclosed counterfactual proxy* on the frozen Wave-161 paired diff, **not** a live GPU run (the wrapper's `+0.2235` is a per-record diff-mean shift at `easy_tier_nfe_reduction_factor=0.5`). The live re-runs refute the 50% easy-tier cut (live cut ≈ 32%). GAP-31 supplies three **live, non-counterfactual** measurements on the seed-matched arms:
+
+| axis | measurement | live effect (3-seed pooled) |
+|---|---|---|
+| **scPerplexity** (ESM-IF, lower = better) | framework vs baseline, paired by `qid`, N=3000 | **d_z = −0.8393** (diff −3.6823); framework WINS on **every tier** (hard −0.7952 / medium −0.8634 / easy −0.8924) |
+| **hard-tier pLDDT** (arm-independent; wrapper touches only the easy tier) | framework vs baseline on the hard tier, N=990 | **d_z = +1.1211** (diff +15.0065); per-seed +1.0933/+1.1021/+1.1692 — ≈ the frozen hard-tier counterfactual +1.1889 |
+| **uniform arm** (factor 1.0, no tier manipulation) | the honest live "before" vs as-designed | the live baseline against which the tier-aware lift is measured |
+
+**Reading the R6 cell honestly.** On the live pLDDT axis the framework does **not** reach the frozen +0.2235 bar (GAP-28/30); on the live **scPerplexity** axis it wins strongly and uniformly (GAP-31, d_z = −0.8393), and the live **hard-tier** pLDDT anchor reproduces the frozen hard-tier counterfactual (d_z = +1.1211 vs +1.1889). The `+0.2235` paper number remains labelled a counterfactual proxy; the live evidence is reported additively alongside it.
 
 ---
 

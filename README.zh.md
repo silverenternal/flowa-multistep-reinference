@@ -24,6 +24,7 @@
 ### Quick Navigation / 快速导航
 
 - [Paper A Submission Status / 论文 A 投稿状态](#paper-a-submission-status--论文-a-投稿状态) — TNNLS 投稿包 + 最终指标快照
+- [Complete Inventory: Innovations & Experiments / 完整盘点：创新点与实验](#complete-inventory-innovations--experiments--完整盘点创新点与实验) — 构建了什么 + 每个实验测出了什么 的唯一整合视图
 - [Final Empirical Metrics / 最终实证指标](#final-empirical-metrics-11-cells--最终实证指标-11-单元) — 4 STRONG + 1 TIE + 6 PARTIAL/SUPP（最终）
 - [Headline Results / 头条结果](#headline-results--头条结果) — 七个 R-level 单元 + 四个 K-cell 概览
 - [Deep Innovations / 深度创新](#deep-innovations--深度创新) — 七项真正新颖的首要贡献
@@ -41,6 +42,7 @@
 ## Contents / 目录
 
 - [Paper A Submission Status / 论文 A 投稿状态](#paper-a-submission-status--论文-a-投稿状态)
+- [Complete Inventory: Innovations & Experiments / 完整盘点：创新点与实验](#complete-inventory-innovations--experiments--完整盘点创新点与实验)
 - [Final Empirical Metrics / 最终实证指标](#final-empirical-metrics-11-cells--最终实证指标-11-单元)
 - [Headline Results / 头条结果](#headline-results--头条结果)
 - [Deep Innovations / 深度创新](#deep-innovations--深度创新)
@@ -82,6 +84,85 @@
 | **Development phases / 开发阶段** | 基础 → 候选分析 → 适配器 → baseline-vs-framework 对比 → N=1000 放大 → 消融 → 效率 / Pareto → 统计严谨性 → 复现 / 打包 → 投稿整合 → 手稿重构 + 图表。整合记录：[`todo/WAVES.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/todo/WAVES.md) |
 
 **Push status / 推送状态:** PUSH to `origin/main` is BLOCKED at the USER permission gate (standing NO-PUSH policy). The working tree is content-complete and pre-push-ready; final USER authorization is required to push. / 推送至 `origin/main` 在 USER 权限门处被阻塞（NO-PUSH 常设政策）。工作树内容完备并就绪待推送；最终 USER 授权为推送前提。
+
+---
+
+## Complete Inventory: Innovations & Experiments / 完整盘点：创新点与实验
+
+本节是项目的唯一整合视图：**(1) 构建了什么** 与 **(2) 每个实验测出了什么**。细节见
+[`docs/CLAIMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md)（创新账本，`CLM-NNN`）与
+[`docs/audit/INDEX.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/INDEX.md)（逐增量记录）；本节是地图。
+
+### Part 1 — 构建了什么（创新清单）
+
+**24 项创新** 收录于深度创新清单（[`docs/audit/wave298-p6-deep-innovations.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave298-p6-deep-innovations.md) §F；桶汇总见 [`docs/CLAIMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md)）。分为四个桶，外加 §6 引理三件套。
+
+**真正新颖（7）— 主要贡献，论文 §3–§4**（每项都弥合两个已知先验极点之间的空白；其组合为本项目独有）：
+
+| # | 创新 | Claim | 一句话新颖点 |
+|:---:|---|---|---|
+| 1 | 哈希链账本行 + O(1) 验证 | [CLM-078](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-078) | SHA-256 链在 append 时以每行一次哈希检测篡改（对比 `git fsck` 的 O(R) 全链重走） |
+| 2 | PEP 695 状态机 + 字节确定日志 | [CLM-079](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-079) | 无壁钟 `TransitionLog`；`transitions`/`python-statemachine` 均调用 `datetime.now()` |
+| 3 | 能力令牌握手 + 失败关闭审计链 | [CLM-080](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-080) | 能力不匹配累积为 `audit_codes`（结构化）而非崩溃 |
+| 4 | 类型化四端口线载波 + 自动包裹 | [CLM-081](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-081) | 类型化 `Condition` 子类 + 遗留自动包裹，2356 项测试字节等价 |
+| 5 | 假设被证伪时的诚实披露 | [CLM-082](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-082) | 证伪以增量附注在线发布；`ACTIVE` 状态绝不因措辞而翻转 |
+| 6 | 基于增量的审计链 + 主题聚类交叉引用 | [CLM-083](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-083) | 自包含逐增量记录 + 主题重聚类，评审者按主题而非文件名作答 |
+| 7 | 惰性记忆化论文量缓存 + 站点感知派发 | [CLM-084](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-084) | 一个休眠/激活缓存由 15 个理论站点共享，以闭集站点词表为键 |
+
+**增量 / 已知方法应用（7）— 支撑，论文 §5–§7：** D.4 字节稳定调度器回归向量（30/30）· lever 假设置换检验 · 有界 Lipschitz 收敛诊断 · 余弦 σ-跨种子规范噪声带 · 每次 PR 6 门 CI · vendored 纯度 + 能力令牌失败关闭握手 · 定理对齐 FID 评估器。
+
+**方法论（5）— 论文 §8：** `check_claims_consistency.py` 对抗式 claims 校验器 · 向后兼容作为首要不变量 · 基于增量的审计链 · lever 假设置换检验 · 被证伪时的诚实披露。
+
+**工程工具（5）— 论文 §10 + 附录：** batched framework harness · 对抗式调度器压力矩阵 · 经验性 `profile_residual_fn` 适配器无关残差接口 · 定理对齐 FID 评估器 · 有界 Lipschitz 收敛诊断。
+
+**§6 Framework Properties — 三条形式化验证引理（均 ACTIVE）：**
+
+| 引理 | Claim | 陈述 |
+|---|---|---|
+| 引理 1 — 协议组合闭包 | [CLM-085](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-085) | 两个符合 `SchedulerProtocol` 的调度器的组合 `A ∘ B` 在包含/半径条件下保持缓存一致性 + 幂等性 + 单调性；规范实例 = `TierAwareCodimensionSheetScheduler ∘ CodimensionSheetScheduler` |
+| 引理 2 — 状态机字节确定性 | [CLM-086](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-086) | 两个相同初始化的 `StateMachine` 实例对任意有限事件序列产生字节相同的 `TransitionLog` 元组（4 情形证明：优先级平局 / 历史 / 并行区域 / `asyncio.gather`） |
+| 引理 3 — 账本防篡改 | [CLM-087](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md#CLM-087) | 仅追加哈希链在第一个不匹配索引处检测任何事后篡改（3 情形证明：尾部 / 链中 / 插入删除），模 SHA-256 抗碰撞 ≤ 2⁻¹²⁸ |
+
+### Part 2 — 每个实验测出了什么（实验 → 效果账本）
+
+两层：**11 个头条单元**（论文 §7.2/§7.11）与**封闭缺口调查（GAP-24 … GAP-31）**——后者对前者进行压力测试、精化或重锚。
+
+**2.1 — 11 个头条单元。** 权威裁决分布 **4 STRONG + 1 TIE + 6 PARTIAL/SUPP**；完整表见 [最终实证指标](#final-empirical-metrics-11-cells--最终实证指标-11-单元)。每单元达到的效果：
+
+| 单元 | 模型 / 指标 | 达到的效果 |
+|---|---|---|
+| **R1** | LineageFlow · HMMER hits | 合成 +116%（158 → 342）；真实前向 **3/3 种子 WINS**（158/159/174 → 275/272/259，DL d_pooled = +0.156，I²=0）。PARTIAL —— 归因（GAP-25）表明增益来自逐记录随机 **init**，而非 restart-blend |
+| **R2** | Kanzi · RMSD | **STRONG framework-WINS** d_z = −0.0990（Bonferroni-sig，p_raw = 1.79e-3）；结构上计算不变 |
+| **R3** | FlowMol3 · `fg_dev` | 3 种子 N=1000 d_z = −0.0377（framework-WINS 方向，p = 0.559，n.s.）；优势**在 2×/4× 基线 NFE 下依然成立** → 稻草人基线被证伪（GAP-27：有界边缘，~49 种子达 80% 功效） |
+| **R5a** | 2D Two Moons · W₂ | **TIE** \|Δ\| = 0.0091 < 0.01 下限；n=7、n=10 下持续 |
+| **R5b** | CIFAR-10 RF · FID | **CONDITIONAL**：n_rounds=1 在匹配 NFE=50 下胜出（−1.2% 至 −2.5%，4 调度器）；在调优基线下失效（GAP-26：基线 NFE=200 时 0/4）；n_rounds ≥ 2 回归 +20% 至 +31% |
+| **R5c** | MNIST FM · FID | **STRONG（smoke ckpt）** d_z = −13.18；生产 ckpt 翻转为基线-WINS（+10.37%）—— 依赖 regime |
+| **R6** | LineageFlow k6 · pLDDT / scPerp | **scPerp 上 STRONG**（cluster-robust d_z = −4.019）；hard-tier 反事实 d_z = +1.189；击败 vanilla + Fast-DLLM + AB-Cache + LeDiFlow（Bonferroni-sig）。live 3 种子 pLDDT 低于 +0.2235 门槛 —— 见 §2.3 |
+| **K1** | FlowMol3 · RDKit-validity | **NOT-SIGNIFICANT** at K-level α（p_b = 0.5676 vs α_K = 0.0125）；框架 validity 在匹配与 2×/4× NFE 下均超过基线 → 稻草人被证伪 |
+| **K4** | LineageFlow · HMMER length-bias | **SUPPORTED** cluster-robust d_z = +0.84（p_b = 0.009） |
+| **K5** | LineageFlow · HMMER delta | **SUPPORTED / 带 caveat** cluster-robust d_z = +1.12（p_b = 0.003）；n=3 再聚合 caveat |
+| **K7** | LineageFlow · novelty | **PARTIAL / 方向反转**：框架在 pctid<30% 时 Pfam-新颖度比基线低 12.6× |
+
+**2.2 — 封闭缺口调查（GAP-24 … GAP-30）。** 每个都是受限、可重启的增量，要么产出一条可证伪律，要么重锚一个单元；完整记录见 [`docs/audit/todo-history.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/todo-history.md) §6。
+
+| 调查 | 问题 | 达到的效果 |
+|---|---|---|
+| **GAP-24** 边界律 | 条件单元背后是否有单一律？ | **一条可证伪的 regime 律** `blend improves iff q < √((1+m)/(1−m))`（定理 5 式 7 闭式）：R5b 场 45/45 边界外匹配，15/16 头条单元方向 |
+| **GAP-25** R1 blend 隔离 | R1 的增益是 blend 还是 init？ | **已隔离**：init-only ≈ framework ≫ baseline（B−A = +123.7，p=0.0043；B−C = +18.7，n.s.）⇒ 增益是**逐记录随机 init**；blend 边缘有界 ≤ +46 hits |
+| **GAP-26** R5b regime | 是否有协议能在调优基线下存活？ | **无测试协议存活**（基线 NFE=200 时 0/4）；GAP-24 律复现 2/4→1/4→0/4 翻转 |
+| **GAP-27** R3 功效 | R3 能否提升？ | R3 为**有界边缘**（d_z = −0.40，~49 种子达 80% 功效）；修复了种子级 CI 缺陷（df=2 时 1.96 → t=4.303） |
+| **GAP-28** R6 faithful 层级 | faithful easy-tier 方向能否修复 R6？ | **确定性 null**：faithful +0.1104 < as-designed +0.1466 < 门槛 +0.2235；easy-tier 回归随 β_easy *单调递增* |
+| **GAP-30** R6 层级定位 | 冻结层级来源是否是残差？ | 正确定位的新鲜层级 3 种子 live 重跑：as-designed **+0.1604**（较 +0.1466 上升，仍 < 门槛）；层级隔离精确（330/330/种子）；easy 层级是唯一不同组（hard/medium 字节相同） |
+
+**2.3 — live R6 提升（GAP-31，最新）。** 冻结的 R6 `+0.2235` 头条是冻结 Wave-161 配对差上的*已披露反事实代理*，**非** live GPU 运行（wrapper 的 `+0.2235` 是 `easy_tier_nfe_reduction_factor=0.5` 下的逐记录 diff 均值位移）。live 重跑证伪了 50% easy-tier 削减（live 削减 ≈ 32%）。GAP-31 在种子匹配臂上给出三个 **live、非反事实**测量：
+
+| 轴 | 测量 | live 效果（3 种子 pooled） |
+|---|---|---|
+| **scPerplexity**（ESM-IF，越低越好） | framework vs baseline，按 `qid` 配对，N=3000 | **d_z = −0.8393**（diff −3.6823）；framework 在**每一层级**均 WINS（hard −0.7952 / medium −0.8634 / easy −0.8924） |
+| **hard-tier pLDDT**（臂无关；wrapper 只触碰 easy 层） | framework vs baseline 在 hard 层，N=990 | **d_z = +1.1211**（diff +15.0065）；逐种子 +1.0933/+1.1021/+1.1692 —— ≈ 冻结 hard-tier 反事实 +1.1889 |
+| **uniform 臂**（factor 1.0，无层级操纵） | 诚实 live “before” vs as-designed | 用于衡量层级感知提升的 live 基线 |
+
+**诚实解读 R6 单元。** 在 live pLDDT 轴上框架**未**达到冻结的 +0.2235 门槛（GAP-28/30）；在 live **scPerplexity** 轴上它强烈且一致地胜出（GAP-31，d_z = −0.8393），且 live **hard-tier** pLDDT 锚点复现了冻结 hard-tier 反事实（d_z = +1.1211 vs +1.1889）。`+0.2235` 论文数字仍标注为反事实代理；live 证据以增量方式并排报告。
 
 ---
 
