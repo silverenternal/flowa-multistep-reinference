@@ -1,0 +1,30 @@
+{
+  "increment": "gap30-r6-fresh-tier",
+  "kind": "gap30_r6_tier_aware_live_fresh_tier",
+  "purpose": "GAP-30: re-run the R6 tier-aware live sweep with the tier source changed from the frozen Wave 161 metrics to each seed's OWN fresh baseline fold (the record's actual baseline quality), for both the as-designed (easy beta 0.75) and faithful (easy beta 0.25) directions.",
+  "gpu": "0",
+  "gpu_note": "GPU0 only (the recorded R6 directive). GPU0 was free at launch.",
+  "command_canonical": "PYTHONPATH=$PWD .venvs/lineageflow_venv/bin/python tools/sweep_r6_fresh_tier_live.py --outdir verification_outputs/gap30-r6-fresh-tier/<arm> --baseline-root verification_outputs/gap28-r6-faithful --seeds 42,43,44 --n 1000 --tier-aware-n-cap <0.5|1.5> --gpu 0",
+  "command_executed": "Six concurrent single-seed invocations (2 arms x 3 seeds); the baseline FASTAs + folds are reused verbatim from gap28-r6-faithful (bare-RNG seed-deterministic).",
+  "baseline_root": "verification_outputs/gap28-r6-faithful",
+  "arms": {
+    "as-designed": {"tier_aware_n_cap": 0.5, "easy_beta": 0.75},
+    "faithful": {"tier_aware_n_cap": 1.5, "easy_beta": 0.25}
+  },
+  "seeds": [42, 43, 44],
+  "n_per_seed": 1000,
+  "sample_count": 6000,
+  "max_records_cap": 1000,
+  "pairing": "within-seed fresh baseline fold (reused from gap28-r6-faithful)",
+  "tier_source": "fresh (each seed's own baseline fold)",
+  "tier_assignment_rule": "quantile boundaries DEFAULT_TIER_QUANTILES (0.33, 0.67) computed from the reference baseline (the wrapper's own rule), so the 'fresh' group is exactly the record set the wrapper damps",
+  "acceptance_bar_pooled_dz": 0.2235,
+  "as_designed_frozen_tier_reference_pooled_dz": 0.1466,
+  "faithful_frozen_tier_reference_pooled_dz": 0.1104,
+  "result_as_designed_fresh_tier_pooled_dz": 0.1604,
+  "result_faithful_fresh_tier_pooled_dz": 0.1103,
+  "bar_met": false,
+  "tier_isolation": "exact: for all 3 seeds the framework FASTAs of the two arms differ on exactly the 330 fresh-quantile-easy records (0 elsewhere)",
+  "timestamp_start": "2026-10-14T02:17:42Z",
+  "timestamp_end": "2026-10-14T05:14:00Z"
+}

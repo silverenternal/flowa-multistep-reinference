@@ -1,0 +1,6 @@
+{
+  "input_fasta": "verification_outputs/gap30-r6-fresh-tier/faithful/seed43/fasta/framework.fasta",
+  "n_input": 1000,
+  "n_used": 1000,
+  "skipped": {}
+}
