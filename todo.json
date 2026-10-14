@@ -2,9 +2,9 @@
   "schema_version": "flowa-state-v3",
   "purpose": "Open work only: what still stands between the current HEAD and submission. State, the 11-cell evidence ledger, the publication assessment, the binding policy and the gate snapshot live in docs/audit/todo-history.md (2026-10-13 user directive: this file answers only 'what is left to do').",
   "updated_at": "2026-10-14",
-  "head": "78ecfce3",
+  "head": "221efaee",
   "history": "docs/audit/todo-history.md",
-  "note": "The Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is already Tier-1 grade - do not spend effort there). DONE: GAP-24 (regime law), GAP-25 (R1 blend isolation), GAP-26 (R5b bound), GAP-27 (R3 bounded-marginal + CI defect fix), GAP-28 (R6 faithful live = DEFINITIVE NULL: pooled d_z +0.1104 < as-designed +0.1466 < bar +0.2235), GAP-30 (R6 fresh-tier live: as-designed +0.1604 still < bar, faithful +0.1103; easy-tier regression monotone in beta_easy; tier isolation exact), GAP-31 (R6 LIVE UPLIFT, 3-seed x N=1000: scPerplexity d_z -0.8393 framework-WINS on every tier; hard-tier pLDDT anchor +1.1211; uniform arm factor 1.0 d_z +0.1466 = genuine live positive with NO tier manipulation; as-designed +0.1604; honest live ladder uniform +0.1466 -> as-designed +0.1604 -> disclosed counterfactual +0.2235). Remaining: GAP-29 (manuscript density + the optional R1 disclosure + the optional additive R6 live disclosure).",
+  "note": "The Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is already Tier-1 grade - do not spend effort there). DONE: GAP-24 (regime law), GAP-25 (R1 blend isolation), GAP-26 (R5b bound), GAP-27 (R3 power + CI defect fix), GAP-28 (R6 faithful live = null), GAP-30 (R6 fresh-tier live: as-designed +0.1604 < bar +0.2235), GAP-31 (R6 LIVE UPLIFT: scPerp d_z -0.8393, hard-tier anchor +1.1211, uniform arm +0.1466 = genuine live positive with NO tier manipulation). NEW 2026-10-14 (from the venue-fit analysis): the venue is now a live 3-way decision (TNNLS / Pattern Recognition / AI4Science) and the empirical axis needs four things every candidate venue shares - SOTA head-to-head beyond R6, a tuned-baseline survival cell, an R1 mechanism fix, and clean image/pattern cells - plus systematic ablations and larger-N effect sizes. GAP-32..GAP-37 are agent-actionable; GAP-15 is agent+user.",
   "gate_chain": [
     "python tools/verify_submission_readiness.py",
     "python tools/check_claims_consistency.py",
@@ -17,22 +17,77 @@
   "commit_footer": "(USER AUTHORIZED, NO PUSH)",
   "open_gaps": [
     {
-      "id": "GAP-29-MANUSCRIPT-DENSITY",
-      "priority": "P2",
-      "owner": "agent(+user)",
+      "id": "GAP-32-SOTA-HEADTOHEAD",
+      "priority": "P1",
+      "owner": "agent",
       "status": "OPEN",
-      "gap": "11 pages carry heavy audit/disclosure prose; a reviewer may read it as engineering-heavy / science-thin. Tighten the live manuscript toward the empirical contribution once GAP-24 lands. Also carries the optional additive R1 disclosure (name the init attribution + the <=+46-hit blend bound) - docs/audit/gap25-r1-blend-isolation.md section 3 - the R6 faithful-null finding (docs/audit/gap28-r6-faithful.md), and the new live R6 uplift (docs/audit/gap31-r6-live-uplift.md: scPerp d_z -0.8393, hard-tier anchor +1.1211, uniform arm +0.1466).",
-      "acceptance": "reduced meta-content density; requires user authorization to touch the frozen manuscript.",
-      "evidence": "docs/audit/todo-history.md section 7 (gating risk 4); docs/audit/gap25-r1-blend-isolation.md; docs/audit/gap28-r6-faithful.md; docs/audit/gap31-r6-live-uplift.md"
+      "gap": "Only R6 carries a head-to-head SOTA comparison (vanilla + Fast-DLLM + AB-Cache + LeDiFlow). Pattern Recognition (and TNNLS) reviewers expect a cross-cell baseline table. Extend seed-matched head-to-head comparisons against recent sampling-acceleration / distillation / cache methods to at least two more cells (candidates: R2 Kanzi RMSD, R3 FlowMol3, R5b CIFAR-10 FID, R5c MNIST FID).",
+      "acceptance": ">=2 additional cells with seed-matched SOTA baselines + Bonferroni-corrected paired statistics, recorded in the 11-cell ledger.",
+      "evidence": "README 11-cell ledger (only R6 has baselines); docs/audit/todo-history.md section 7 (gating risk 3)"
+    },
+    {
+      "id": "GAP-33-TUNED-BASELINE-SURVIVAL",
+      "priority": "P1",
+      "owner": "agent",
+      "status": "OPEN",
+      "gap": "R5b dies under a tuned baseline (GAP-26: 0/4 at baseline NFE=200). A framework paper that loses to a tuned baseline is the classic reject. Find at least one cell (R5b or another) that wins at matched NFE against a *tuned* baseline, not a straw-man one.",
+      "acceptance": ">=1 cell with framework-WINS at matched NFE against a tuned baseline, Bonferroni-corrected, recorded in the ledger.",
+      "evidence": "docs/audit/gap26-r5b-regime.md; docs/audit/todo-history.md section 7 (gating risk 2)"
+    },
+    {
+      "id": "GAP-34-R1-MECHANISM",
+      "priority": "P1",
+      "owner": "agent",
+      "status": "OPEN",
+      "gap": "R1's +116% flagship is attributed by GAP-25 to the per-record random init, not the restart-blend. Either (a) show the init is a legitimate, load-bearing part of the mechanism with a supporting experiment, or (b) re-run under a setting where the restart-blend itself is isolated and wins.",
+      "acceptance": "R1 either re-attributed honestly with a mechanism experiment, or replaced by a blend-isolating positive cell.",
+      "evidence": "docs/audit/gap25-r1-blend-isolation.md; docs/audit/todo-history.md section 7 (gating risk 1)"
+    },
+    {
+      "id": "GAP-35-IMAGE-CELLS-POSITIVE",
+      "priority": "P1",
+      "owner": "agent",
+      "status": "OPEN",
+      "gap": "The pattern/CV cells are the weakest: R5b is conditional (0/4 under a tuned baseline), R5c is smoke-checkpoint only and flips sign on the production checkpoint. Pattern Recognition is pattern/CV-centric while the paper is protein/molecule-heavy, so the image side must be made into clean positives (stable across checkpoints, not conditional) - or the venue decision must move to an AI4Science target where the protein content is an asset rather than a scope mismatch.",
+      "acceptance": ">=1 clean image/pattern cell positive (stable across checkpoints, Bonferroni-corrected), OR the venue decision (GAP-15) resolves to an AI4Science target and the reframe is scoped.",
+      "evidence": "README 11-cell ledger (R5b conditional, R5c regime-dependent); docs/audit/todo-history.md section 7"
+    },
+    {
+      "id": "GAP-36-ABLATION-MATRIX",
+      "priority": "P2",
+      "owner": "agent",
+      "status": "OPEN",
+      "gap": "Pattern Recognition reviewers expect systematic ablations. Build a consolidated rounds x schedulers x checkpoints ablation table with matched-NFE controls, beyond the current per-cell round-count and scheduler studies.",
+      "acceptance": "a consolidated ablation table across >=2 checkpoints x >=3 schedulers x >=2 round counts, with matched-NFE controls.",
+      "evidence": "docs/drafts/paper-A-final.md section 7 (per-cell studies)"
+    },
+    {
+      "id": "GAP-37-STATISTICAL-POWER",
+      "priority": "P2",
+      "owner": "agent",
+      "status": "OPEN",
+      "gap": "Several effects are small or underpowered: R2 is STRONG but d_z = -0.099 (tiny); R3 is bounded-marginal (~49 seeds for 80% power). Increase N / seed coverage on the primary cells to lift the effect sizes toward medium or to reach adequate power.",
+      "acceptance": "primary cells reported at medium+ effect size, or with adequate power (>=80%) at the reported N.",
+      "evidence": "docs/audit/gap27-r3-power.md; README 11-cell ledger (R2 d_z = -0.0990)"
     },
     {
       "id": "GAP-15-VENUE",
-      "priority": "P3",
-      "owner": "user",
-      "status": "PARKED",
-      "gap": "Venue-fit decision (user: 'leave it for now'): TNNLS vs repositioning to a systems/applications venue.",
-      "acceptance": "venue decided.",
-      "agent_action": "none - owner=user; parked by user 2026-10-13."
+      "priority": "P1",
+      "owner": "agent+user",
+      "status": "OPEN",
+      "gap": "Venue is now a live 3-way decision: (a) IEEE TNNLS (current, IEEEtran 11pp, CAS Tier-1 TOP, IF 10.2) - scope is network/learning-centric while this paper is an inference-time sampling framework; (b) Pattern Recognition (CAS Tier-1 TOP, IF ~8, pattern/CV-centric, Elsevier format) - better scope fit for generative sampling but requires the image side (GAP-35) plus a template + likely narrative change; (c) an AI4Science Tier-1 (Nature Machine Intelligence / Briefings in Bioinformatics / npj Computational Materials / Digital Discovery) where the protein/molecule content is an asset, but requires reframing from 'general ML framework' to 'AI4Science method' and a stronger biological signal.",
+      "acceptance": "venue decided; the required reframing + format change scoped; user authorizes touching the frozen manuscript.",
+      "agent_action": "agent prepares a venue-fit memo (TNNLS vs Pattern Recognition vs AI4Science) with the required changes per option; the final choice is the user's.",
+      "evidence": "docs/audit/todo-history.md section 7; README 'Complete Inventory'"
+    },
+    {
+      "id": "GAP-29-MANUSCRIPT-DENSITY",
+      "priority": "P2",
+      "owner": "agent+user",
+      "status": "OPEN",
+      "gap": "11 pages carry heavy audit/disclosure prose; a reviewer may read it as engineering-heavy / science-thin. Tighten the live manuscript toward the empirical contribution. Also carries the optional additive R1 disclosure (name the init attribution + the <=+46-hit blend bound) - docs/audit/gap25-r1-blend-isolation.md section 3 - the R6 faithful-null finding (docs/audit/gap28-r6-faithful.md), and the new live R6 uplift (docs/audit/gap31-r6-live-uplift.md: scPerp d_z -0.8393, hard-tier anchor +1.1211, uniform arm +0.1466).",
+      "acceptance": "reduced meta-content density; requires user authorization to touch the frozen manuscript.",
+      "evidence": "docs/audit/todo-history.md section 7 (gating risk 4); docs/audit/gap25-r1-blend-isolation.md; docs/audit/gap28-r6-faithful.md; docs/audit/gap31-r6-live-uplift.md"
     },
     {
       "id": "GAP-20-COVERLETTER",
