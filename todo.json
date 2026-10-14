@@ -2,9 +2,9 @@
   "schema_version": "flowa-state-v3",
   "purpose": "Open work only: what still stands between the current HEAD and submission. State, the 11-cell evidence ledger, the publication assessment, the binding policy and the gate snapshot live in docs/audit/todo-history.md (2026-10-13 user directive: this file answers only 'what is left to do').",
   "updated_at": "2026-10-14",
-  "head": "7bfb77c0",
+  "head": "78ecfce3",
   "history": "docs/audit/todo-history.md",
-  "note": "The Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is already Tier-1 grade - do not spend effort there). DONE: GAP-24 (regime law), GAP-25 (R1 blend isolation), GAP-26 (R5b bound), GAP-27 (R3 bounded-marginal + CI defect fix), GAP-28 (R6 faithful live = DEFINITIVE NULL: pooled d_z +0.1104 < as-designed +0.1466 < bar +0.2235), GAP-30 (R6 fresh-tier live: as-designed +0.1604 still < bar, faithful +0.1103; easy-tier regression monotone in beta_easy; tier isolation exact). Remaining: GAP-29 (manuscript density + the optional R1 disclosure).",
+  "note": "The Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is already Tier-1 grade - do not spend effort there). DONE: GAP-24 (regime law), GAP-25 (R1 blend isolation), GAP-26 (R5b bound), GAP-27 (R3 bounded-marginal + CI defect fix), GAP-28 (R6 faithful live = DEFINITIVE NULL: pooled d_z +0.1104 < as-designed +0.1466 < bar +0.2235), GAP-30 (R6 fresh-tier live: as-designed +0.1604 still < bar, faithful +0.1103; easy-tier regression monotone in beta_easy; tier isolation exact), GAP-31 (R6 LIVE UPLIFT, 3-seed x N=1000: scPerplexity d_z -0.8393 framework-WINS on every tier; hard-tier pLDDT anchor +1.1211; uniform arm factor 1.0 d_z +0.1466 = genuine live positive with NO tier manipulation; as-designed +0.1604; honest live ladder uniform +0.1466 -> as-designed +0.1604 -> disclosed counterfactual +0.2235). Remaining: GAP-29 (manuscript density + the optional R1 disclosure + the optional additive R6 live disclosure).",
   "gate_chain": [
     "python tools/verify_submission_readiness.py",
     "python tools/check_claims_consistency.py",
@@ -21,9 +21,9 @@
       "priority": "P2",
       "owner": "agent(+user)",
       "status": "OPEN",
-      "gap": "11 pages carry heavy audit/disclosure prose; a reviewer may read it as engineering-heavy / science-thin. Tighten the live manuscript toward the empirical contribution once GAP-24 lands. Also carries the optional additive R1 disclosure (name the init attribution + the <=+46-hit blend bound) - docs/audit/gap25-r1-blend-isolation.md section 3 - and now the R6 faithful-null finding (docs/audit/gap28-r6-faithful.md).",
+      "gap": "11 pages carry heavy audit/disclosure prose; a reviewer may read it as engineering-heavy / science-thin. Tighten the live manuscript toward the empirical contribution once GAP-24 lands. Also carries the optional additive R1 disclosure (name the init attribution + the <=+46-hit blend bound) - docs/audit/gap25-r1-blend-isolation.md section 3 - the R6 faithful-null finding (docs/audit/gap28-r6-faithful.md), and the new live R6 uplift (docs/audit/gap31-r6-live-uplift.md: scPerp d_z -0.8393, hard-tier anchor +1.1211, uniform arm +0.1466).",
       "acceptance": "reduced meta-content density; requires user authorization to touch the frozen manuscript.",
-      "evidence": "docs/audit/todo-history.md section 7 (gating risk 4); docs/audit/gap25-r1-blend-isolation.md; docs/audit/gap28-r6-faithful.md"
+      "evidence": "docs/audit/todo-history.md section 7 (gating risk 4); docs/audit/gap25-r1-blend-isolation.md; docs/audit/gap28-r6-faithful.md; docs/audit/gap31-r6-live-uplift.md"
     },
     {
       "id": "GAP-15-VENUE",
