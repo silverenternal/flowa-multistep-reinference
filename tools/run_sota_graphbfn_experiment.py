@@ -238,12 +238,17 @@ def _run_baseline(
     condition_kind: str,
     property_value: float | None,
     output_dir: Path,
+    shared_prior: bool = False,
 ) -> tuple[Path, float, list[Any | None]]:
     """Run the single-pass baseline; pickle ``(mols, sampling_time)``.
 
     Returns ``(pkl_path, wall_clock_s, mols_list)``. Entries the glue
     could not convert to RDKit stay ``None`` so the validity denominator
     still counts them (matching the FlowMol3 harness convention).
+
+    ``shared_prior`` (GAP-37 class): drop ``arm_name`` from the prior key so
+    the baseline and framework arms build the **same** canonical prior
+    (paired design). Default off = legacy arm-keyed prior (byte-stable).
     """
     from adaptive_reflow.universal.state import ODEConditionDelta
 
@@ -253,7 +258,10 @@ def _run_baseline(
     mols: list[Any | None] = []
     for i in range(int(n_mols)):
         bundle = adapter.build_initial_state(
-            batch_id=f"graphbfn-baseline-{seed}",
+            batch_id=(
+                f"graphbfn-{seed}" if shared_prior
+                else f"graphbfn-baseline-{seed}"
+            ),
             sample_id=f"sample-{i}",
         )
         spec: dict[str, Any] = {
@@ -352,6 +360,7 @@ def _run_framework(
     condition_kind: str,
     property_value: float | None,
     output_dir: Path,
+    shared_prior: bool = False,
 ) -> tuple[Path, float, list[Any | None]]:
     """Run the FlowA multi-round framework; pickle the per-chain endpoint.
 
@@ -385,7 +394,10 @@ def _run_framework(
     mols: list[Any | None] = []
     for sample_index in range(int(n_mols)):
         bundle = adapter.build_initial_state(
-            batch_id=f"graphbfn-framework-{seed}",
+            batch_id=(
+                f"graphbfn-{seed}" if shared_prior
+                else f"graphbfn-framework-{seed}"
+            ),
             sample_id=f"sample-{sample_index}",
         )
         final_trace: Any = None
@@ -890,6 +902,18 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
             "any n_mols >= 200). Set MOL_EVAL_NO_WRAP=1 to skip globally."
         ),
     )
+    parser.add_argument(
+        "--shared-prior",
+        dest="shared_prior",
+        action="store_true",
+        default=False,
+        help=(
+            "GAP-37 class: drop arm_name from the per-batch prior key so the "
+            "baseline and framework arms build the SAME canonical prior "
+            "(paired design). Default off = legacy arm-keyed prior "
+            "(byte-stable)."
+        ),
+    )
     args = parser.parse_args(argv)
     if bool(args.smoke):
         args.n_mols = 4
@@ -1020,6 +1044,7 @@ def main(argv: list[str] | None = None) -> int:
         condition_kind=condition_kind,
         property_value=property_value,
         output_dir=output_dir,
+        shared_prior=bool(args.shared_prior),
     )
     print(
         f"[run_sota_graphbfn] baseline: {baseline_pkl} "
@@ -1038,6 +1063,7 @@ def main(argv: list[str] | None = None) -> int:
         condition_kind=condition_kind,
         property_value=property_value,
         output_dir=output_dir,
+        shared_prior=bool(args.shared_prior),
     )
     print(
         f"[run_sota_graphbfn] framework: {framework_pkl} "

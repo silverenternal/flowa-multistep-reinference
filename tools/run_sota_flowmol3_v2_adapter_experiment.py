@@ -446,8 +446,13 @@ def _run_baseline(
     baseline_nfe: int,
     seed: int,
     output_dir: Path,
+    shared_prior: bool = False,
 ) -> tuple[Path, float, list[Any | None]]:
     """Run the single-pass baseline; pickle ``(mols, sampling_time)``.
+
+    ``shared_prior`` (GAP-37 class): drop ``arm_name`` from the prior key so
+    the baseline and framework arms build the **same** canonical prior
+    (paired design). Default off = legacy arm-keyed prior (byte-stable).
 
     Returns ``(pkl_path, wall_clock_s, mols_list)``. Each ``mols_list[i]``
     is ``None`` for endpoints the glue couldn't convert to RDKit so
@@ -461,7 +466,10 @@ def _run_baseline(
     mols: list[Any | None] = []
     for i in range(int(n_mols)):
         bundle = adapter.build_initial_state(
-            batch_id=f"flowmol3-baseline-{seed}",
+            batch_id=(
+                f"flowmol3-{seed}" if shared_prior
+                else f"flowmol3-baseline-{seed}"
+            ),
             sample_id=f"sample-{i}",
         )
         cond = ODEConditionDelta(
@@ -493,6 +501,7 @@ def _run_framework(
     per_round_nfe: int,
     seed: int,
     output_dir: Path,
+    shared_prior: bool = False,
 ) -> tuple[Path, float, list[Any | None]]:
     """Run the FlowA multi-round framework; pickle the per-chain endpoint.
 
@@ -532,7 +541,10 @@ def _run_framework(
     final_trace: Any = None
     for sample_index in range(int(n_mols)):
         bundle = adapter.build_initial_state(
-            batch_id=f"flowmol3-framework-{seed}",
+            batch_id=(
+                f"flowmol3-{seed}" if shared_prior
+                else f"flowmol3-framework-{seed}"
+            ),
             sample_id=f"sample-{sample_index}",
         )
         for r in range(int(n_rounds)):
@@ -1064,6 +1076,18 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="store_false",
         help="Skip the paper eq.4 FG-deviation block.",
     )
+    parser.add_argument(
+        "--shared-prior",
+        dest="shared_prior",
+        action="store_true",
+        default=False,
+        help=(
+            "GAP-37 class: drop arm_name from the per-batch prior key so the "
+            "baseline and framework arms build the SAME canonical prior "
+            "(paired design). Default off = legacy arm-keyed prior "
+            "(byte-stable)."
+        ),
+    )
     args = parser.parse_args(argv)
     if args.compute_flowmol3_paper_metrics is None:
         args.compute_flowmol3_paper_metrics = _upstream_paper_metrics_available()
@@ -1135,6 +1159,7 @@ def main(argv: list[str] | None = None) -> int:
         baseline_nfe=int(baseline_nfe),
         seed=int(args.seed),
         output_dir=output_dir,
+        shared_prior=bool(args.shared_prior),
     )
     print(
         f"[run_sota_flowmol3] baseline: {baseline_pkl} "
@@ -1151,6 +1176,7 @@ def main(argv: list[str] | None = None) -> int:
         per_round_nfe=int(per_round_nfe),
         seed=int(args.seed),
         output_dir=output_dir,
+        shared_prior=bool(args.shared_prior),
     )
     print(
         f"[run_sota_flowmol3] framework: {framework_pkl} "

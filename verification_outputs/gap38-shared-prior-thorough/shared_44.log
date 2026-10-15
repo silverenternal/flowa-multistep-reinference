@@ -1,0 +1,26 @@
+is_upstream_available: True
+PB_CONFIG_WITH_ENERGY_RATIO_PATH: /home/hugo/codes/flowa-multistep-reinference/tools/pb_config_with_energy_ratio.yaml (exists: True)
+[baseline] Loading FlowMol3 v2 adapter (upstream path) ...
+[baseline] adapter constructor completed in 0.0s
+[baseline]   use_upstream = True
+[baseline]   ctmc_enabled = True
+[baseline] batch 1/1: 100 mols in 74.691s (running total 100)
+[baseline] wrote /home/hugo/codes/flowa-multistep-reinference/verification_outputs/flowmol3_n1000_baseline_wave87_q4_2026.json (n_sampled=100, n_smiles=100, n_errors=0, wallclock=74.692s)
+[baseline] computing 4 paper metrics via upstream SampleAnalyzer.analyze ...
+Error messages: disconnected: 51, valence: 0, kekulization: 0, other: 0, valid: 100, total: 100
+running bosebusters
+[baseline] metrics: validity_pct=1.0000 (paper 0.999), pb_validity_pct=0.4800 (paper 0.919), fg_dev=0.8590 (paper 0.27), ood_ring_rate=0.0200 (paper 0.10), wallclock=6.205s
+[framework] Loading FlowMol3 v2 adapter (upstream path) ...
+[framework] adapter constructor completed in 0.0s
+[framework]   use_upstream = True
+[framework]   ctmc_enabled = True
+[18:15:25] Explicit valence for atom # 5 Cl, 2, is greater than permitted
+[framework] batch 1/1: 99 mols in 65.894s (running total 99)
+[framework] n_sampled=99 != n_smiles=100 (delta=-1, dropped=1); CTMC valence artifact per docs/audit/wave107-a2-flowmol3-drop.md
+[framework] wrote /home/hugo/codes/flowa-multistep-reinference/verification_outputs/flowmol3_n1000_framework_wave87_q4_2026.json (n_sampled=99, n_smiles=100, n_errors=1, wallclock=65.895s)
+[framework] computing 4 paper metrics via upstream SampleAnalyzer.analyze ...
+Error messages: disconnected: 41, valence: 0, kekulization: 0, other: 0, valid: 99, total: 99
+running bosebusters
+[framework] metrics: validity_pct=1.0000 (paper 0.999), pb_validity_pct=0.5859 (paper 0.919), fg_dev=0.6916 (paper 0.27), ood_ring_rate=0.0202 (paper 0.10), wallclock=6.468s
+wrote sweep summary: /home/hugo/codes/flowa-multistep-reinference/verification_outputs/flowmol3_n1000_sweep_wave87_q4_2026.json
+sweep total wallclock: 157.499s

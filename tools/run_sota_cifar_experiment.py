@@ -583,6 +583,7 @@ def _run_framework(
     exact_total_steps: int | None = None,
     no_final_restart: bool = False,
     cosine_ramp_strength: float | None = None,
+    shared_prior: bool = False,
 ) -> tuple[Path, list[dict[str, float]], float, int]:
     """Drive the framework multi-round run for one scheduler.
 
@@ -629,6 +630,7 @@ def _run_framework(
             exact_total_steps=exact_total_steps,
             no_final_restart=bool(no_final_restart),
             cosine_ramp_strength=cosine_ramp_strength,
+            shared_prior=bool(shared_prior),
         )
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -735,6 +737,7 @@ def _run_framework_state_chains(
     exact_total_steps: int | None,
     no_final_restart: bool = False,
     cosine_ramp_strength: float | None = None,
+    shared_prior: bool = False,
 ) -> tuple[Path, list[dict[str, float]], float, int]:
     """Drive final CIFAR samples through Engine-managed endpoint chains.
 
@@ -839,7 +842,10 @@ def _run_framework_state_chains(
     channel = ChannelName("image")
     for sample_index in range(int(framework_samples)):
         bundle = adapter.build_initial_state(
-            batch_id=f"sota-cifar-{scheduler_name}",
+            batch_id=(
+                "sota-cifar-shared" if shared_prior
+                else f"sota-cifar-{scheduler_name}"
+            ),
             sample_id=f"sample-{sample_index}",
         )
         previous_trajectory: NDArray[np.float64] | None = None
@@ -1297,6 +1303,20 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
             "when --paper-uplift-27 is set."
         ),
     )
+    parser.add_argument(
+        "--shared-prior",
+        dest="shared_prior",
+        action="store_true",
+        default=False,
+        help=(
+            "GAP-37 class: drop the scheduler name from the per-batch prior "
+            "key so all framework scheduler arms build the SAME canonical "
+            "prior (paired design). Default off = legacy scheduler-keyed "
+            "prior (byte-stable). NOTE: the CIFAR baseline draws via "
+            "batched_inference (separate RNG), so this aligns the framework "
+            "arms across schedulers only."
+        ),
+    )
     args = parser.parse_args(argv)
     if bool(args.quick):
         args.n_samples = QUICK_N_SAMPLES
@@ -1452,6 +1472,7 @@ def main(argv: list[str] | None = None) -> int:
             exact_total_steps=exact_total_steps,
             no_final_restart=bool(getattr(args, "no_final_restart", False)),
             cosine_ramp_strength=getattr(args, "cosine_ramp_strength", None),
+            shared_prior=bool(getattr(args, "shared_prior", False)),
         )
         sel_last = float(per_round[-1].get("evidence_ratio", float("nan")))
         rows.append(

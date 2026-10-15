@@ -113,6 +113,15 @@ ARM_SEED_OFFSETS: dict[str, int] = {
     "evidence_driven": 2_000_000,
 }
 
+#: Arm-keyed-prior fix (GAP-38 class, sibling of GAP-37): the legacy design
+#: keys the prior on the arm name (``wave191-p3-baseline`` vs
+#: ``wave191-p3-{arm}``), so the baseline and framework arms draw INDEPENDENT
+#: ``x0`` — the baseline-vs-framework comparison is a two-sample test in
+#: disguise. When ``--shared-prior`` is set both arms build this SAME prior
+#: (and share the round-0 solver seed), so they differ only by the
+#: restart-blend mechanism — the intended paired design.
+SHARED_BATCH_ID: str = "wave191-p3"
+
 
 # ---------------------------------------------------------------------------
 # Policy construction
@@ -225,15 +234,21 @@ def run_baseline(
     n_samples: int,
     seed: int,
     verbose: bool = True,
+    shared_prior: bool = False,
 ) -> np.ndarray:
     """Generate ``n_samples`` baseline endpoints (1 round × 50 NFE, beta=0).
 
+    ``shared_prior`` (GAP-38) makes the baseline build the SAME ``x0`` prior as
+    the framework arms (``SHARED_BATCH_ID``) instead of the arm-keyed
+    ``wave191-p3-baseline`` key, so the comparison is paired.
+
     Returns ``(n_samples, 784)`` float64 endpoints.
     """
+    batch_id = SHARED_BATCH_ID if shared_prior else "wave191-p3-baseline"
     samples = np.empty((int(n_samples), MNIST_FM_FLAT_DIM), dtype=np.float64)
     t0 = time.perf_counter()
     for i in range(int(n_samples)):
-        bundle = adapter.build_initial_state(batch_id="wave191-p3-baseline", sample_id=f"s{i:05d}")
+        bundle = adapter.build_initial_state(batch_id=batch_id, sample_id=f"s{i:05d}")
         # No restart (beta=0); the policy doesn't matter — solve_ode uses the bundle's x0.
         condition = ODEConditionDelta(
             delta_spec={"t0": 0.0, "t1": 1.0, "num_steps": int(BASELINE_NUM_STEPS)},
@@ -267,6 +282,7 @@ def run_framework_arm(
     beta: float,
     weights_path: Path,
     verbose: bool = True,
+    shared_prior: bool = False,
 ) -> tuple[np.ndarray, dict[str, int]]:
     """Generate ``n_samples`` framework-arm endpoints (4 rounds × num_steps_per_round[r], beta=beta).
 
@@ -274,6 +290,10 @@ def run_framework_arm(
     → compose_condition → solve_ode (num_steps=num_steps_per_round[r]).
     The next round's build_initial_state uses a fresh batch_id so the
     restart-blend sees a fresh source noise.
+
+    ``shared_prior`` (GAP-38) keys round 0 on ``SHARED_BATCH_ID`` (the same
+    prior as the baseline) instead of ``wave191-p3-{arm_name}``, so the
+    baseline and framework arms start from the SAME ``x0`` — the paired design.
 
     Returns ``(samples, telemetry)`` where ``telemetry`` carries total
     NFE per sample and wall-clock breakdown.
@@ -288,13 +308,14 @@ def run_framework_arm(
         num_steps=int(BASELINE_NUM_STEPS),  # default; overridden per round via condition
     )
 
+    round0_batch_id = SHARED_BATCH_ID if shared_prior else f"wave191-p3-{arm_name}"
     samples = np.empty((int(n_samples), MNIST_FM_FLAT_DIM), dtype=np.float64)
     total_nfe = int(sum(num_steps_per_round))
     t0 = time.perf_counter()
     for i in range(int(n_samples)):
         # Round 0: build initial state (fresh Gaussian x0)
         bundle = adapter.build_initial_state(
-            batch_id=f"wave191-p3-{arm_name}", sample_id=f"s{i:05d}",
+            batch_id=round0_batch_id, sample_id=f"s{i:05d}",
         )
         # Subsequent rounds: apply_restart_distribution with beta
         for r in range(int(cycle_length)):
@@ -390,6 +411,11 @@ def main(argv: list[str] | None = None) -> int:
                              "R5c sweep passes data/mnist_fm/production.ckpt "
                              "for the production-ckpt re-materialization.")
     parser.add_argument("--k-chunks", type=int, default=K_CHUNKS)
+    parser.add_argument("--shared-prior", action="store_true",
+                        help="GAP-38: make the baseline and framework arms build "
+                             "the SAME x0 prior (SHARED_BATCH_ID) and share the "
+                             "round-0 solver seed, so the comparison is paired. "
+                             "Legacy default keys the prior on the arm name.")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
 
@@ -470,6 +496,7 @@ def main(argv: list[str] | None = None) -> int:
         n_samples=int(n_samples),
         seed=int(args.seed),
         verbose=not args.quiet,
+        shared_prior=bool(args.shared_prior),
     )
 
     arm_samples: dict[str, np.ndarray] = {}
@@ -477,15 +504,20 @@ def main(argv: list[str] | None = None) -> int:
     for name in ARM_LABELS:
         if not args.quiet:
             print(f"[wave191-p3] generating {name} ({n_samples} samples) ...")
+        # GAP-38: when shared, the framework's round-0 solver seed matches the
+        # baseline's (``args.seed``), so round 0 is byte-identical and the arms
+        # differ only by the restart-blend mechanism.
+        seed_offset = int(args.seed) if args.shared_prior else ARM_SEED_OFFSETS[name]
         s, tel = run_framework_arm(
             arm_name=name,
             cycle_length=int(N_ROUNDS),
             n_samples=int(n_samples),
             num_steps_per_round=arm_num_steps[name],
-            seed_offset=ARM_SEED_OFFSETS[name],
+            seed_offset=seed_offset,
             beta=float(BETA_FRAMEWORK),
             weights_path=ckpt_path,
             verbose=not args.quiet,
+            shared_prior=bool(args.shared_prior),
         )
         arm_samples[name] = s
         arm_telemetry[name] = tel
@@ -698,6 +730,8 @@ def main(argv: list[str] | None = None) -> int:
         "per_arm_n_features": {k: int(n_samples) for k in ["baseline", *ARM_LABELS]},
         "honest_disclosure": honest_disclosure,
         "arm_seed_offsets": dict(ARM_SEED_OFFSETS),
+        "shared_prior": bool(args.shared_prior),
+        "shared_batch_id": (SHARED_BATCH_ID if args.shared_prior else None),
         "framework_max_num_steps_per_round": int(FRAMEWORK_MAX_NUM_STEPS),
         "n_rounds": int(N_ROUNDS),
         "beta_framework": float(BETA_FRAMEWORK),

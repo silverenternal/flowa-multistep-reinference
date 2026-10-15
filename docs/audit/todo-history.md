@@ -153,6 +153,32 @@ its rows are reported for sign/robustness, not magnitude; the two d_z columns ar
 on different units (per-sample vs paired-chunk). Aggregation-only, no new
 experiments — `docs/audit/gap36-ablation-matrix.md`.
 
+### 4.4 Shared-prior fix applied to the remaining arm-keyed drivers (GAP-38, 2026-10-15)
+
+GAP-37 found the arm-keyed-prior defect in **one** driver and fixed it. GAP-38
+applies the same additive `--shared-prior` flag (default off = byte-stable) to
+the **five** other drivers that still carried it: `tools/wave87_n1000_sweep.py`,
+`tools/run_sota_flowmol3_v2_adapter_experiment.py`,
+`tools/run_sota_graphbfn_experiment.py`, `tools/run_sota_cifar_experiment.py`,
+`scripts/wave235_p4_flowmol3_3seed.py`. Bounded A/B on the canonical K1/R3
+driver (`wave87`, N=100, NFE=250, `nfe_batch=100`, seeds 42/43/44):
+
+| metric | mode | mean Δ | SD | d_z |
+|---|---|---:|---:|---:|
+| `fg_dev` | legacy | +0.0939 | 0.3591 | +0.261 |
+| `fg_dev` | shared | −0.0132 | **0.1306** | −0.101 |
+| `pb_validity_pct` | legacy | +0.273 | 0.202 | **+1.351** |
+| `pb_validity_pct` | shared | +0.032 | **0.115** | +0.279 |
+
+**Reading:** the shared prior is a real **design** correction (cross-seed SD
+collapses 2.75× / 1.76×) but it does **not** flip the near-miss cells into
+wins. For K1 `pb_validity` the apparent framework advantage **shrinks**
+(`d_z +1.35 → +0.28`) — the legacy number was partly nuisance-prior noise.
+Consistent with GAP-37's honest limit. GraphBFN was not testable (no usable
+weights). Observations-only; no frozen surface moved —
+`docs/audit/gap38-shared-prior-thorough.md`;
+evidence `verification_outputs/gap38-shared-prior-thorough/`.
+
 ## 5. R1 real-forward saga (D-004 / D-004b)
 
 - **D-004 defect:** the checkpoint-compat shim registered a bare core module

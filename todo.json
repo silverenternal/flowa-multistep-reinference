@@ -2,9 +2,9 @@
   "schema_version": "flowa-state-v3",
   "purpose": "Open work only: what still stands between the current HEAD and submission. State, the 11-cell evidence ledger, the publication assessment, the binding policy and the gate snapshot live in docs/audit/todo-history.md (2026-10-13 user directive: this file answers only 'what is left to do').",
   "updated_at": "2026-10-15",
-  "head": "e495157b",
+  "head": "c6d0a3d2",
   "history": "docs/audit/todo-history.md",
-  "note": "Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is Tier-1 grade). VENUE (user directive 2026-10-14): GENERAL ML, not domain-specific. Cell state (11 cells): 4 STRONG + 1 TIE + 6 PARTIAL/SUPP. Load-bearing open problem: the namesake restart-blend lacks a clean positive cell (R1 is init-attributed, R3 n.s., R5b dies under a tuned baseline) - this is what GAP-34 targets. Resolved-gap history, the evidence ledger, the publication assessment and the gate snapshot live in docs/audit/todo-history.md.",
+  "note": "Q1 gating risk is the EMPIRICAL axis, not the framework (infrastructure is Tier-1 grade). VENUE (user directive 2026-10-14): GENERAL ML, not domain-specific. Cell state (11 cells): 4 STRONG + 1 TIE + 6 PARTIAL/SUPP. Load-bearing open problem: the namesake restart-blend lacks a clean positive cell (R1 is init-attributed, R3 n.s., R5b dies under a tuned baseline) - this is what GAP-34 targets. GAP-38 (2026-10-15): the GAP-37 shared-prior fix is now applied (additive --shared-prior, default off) to all 6 arm-keyed drivers; bounded A/B shows it corrects the DESIGN (cross-seed SD 2.75x/1.76x tighter) but does NOT flip the near-miss cells - K1 pb_validity advantage shrinks d_z +1.35 -> +0.28 (legacy was partly nuisance noise). See docs/audit/gap38-shared-prior-thorough.md. Resolved-gap history, the evidence ledger, the publication assessment and the gate snapshot live in docs/audit/todo-history.md.",
   "gate_chain": [
     "python tools/verify_submission_readiness.py",
     "python tools/check_claims_consistency.py",

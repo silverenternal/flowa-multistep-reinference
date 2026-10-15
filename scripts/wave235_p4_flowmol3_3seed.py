@@ -68,8 +68,14 @@ def _generate_arm_single_mol(
     seed_base: int,
     n_total: int,
     nfe: int,
+    shared_prior: bool = False,
 ) -> dict:
-    """Generate N molecules using single-mol path (n_molecules=1)."""
+    """Generate N molecules using single-mol path (n_molecules=1).
+
+    ``shared_prior`` (GAP-37 class): drop ``arm_name`` from the prior key so
+    the baseline and framework arms build the **same** canonical prior
+    (paired design). Default off = legacy arm-keyed prior (byte-stable).
+    """
     from adaptive_reflow.universal.state import ODEConditionDelta
 
     smiles_list: list[str] = []
@@ -78,9 +84,13 @@ def _generate_arm_single_mol(
     t_total = time.perf_counter()
     for i in range(int(n_total)):
         seed = int(seed_base + i)
+        if shared_prior:
+            prior_key = f"w235p4-s{seed_base}-i{i}"
+        else:
+            prior_key = f"w235p4-{arm_name}-s{seed_base}-i{i}"
         bundle = adapter.build_initial_state(
-            batch_id=f"w235p4-{arm_name}-s{seed_base}-i{i}",
-            sample_id=f"w235p4-{arm_name}-s{seed_base}-i{i}-prior",
+            batch_id=prior_key,
+            sample_id=f"{prior_key}-prior",
         )
         _apply_perturbation(adapter, bundle, perturbation_sigma=perturbation_sigma, seed=seed)
         cond = ODEConditionDelta(
@@ -230,6 +240,13 @@ def main() -> int:
     p.add_argument("--seeds", type=int, nargs="+", default=[43, 44], help="Seeds (default 43 44).")
     p.add_argument("--n-mols-per-record", type=int, default=1, help="n_molecules per record (default 1).")
     p.add_argument("--no-compute-metrics", action="store_true", help="Skip paper-metric computation.")
+    p.add_argument(
+        "--shared-prior", action="store_true",
+        help=("GAP-37 class: drop arm_name from the per-batch prior key so "
+              "the baseline and framework arms build the SAME canonical "
+              "prior (paired design). Default off = legacy arm-keyed prior "
+              "(byte-stable)."),
+    )
     args = p.parse_args()
 
     n_total = int(args.n_total)
@@ -276,6 +293,7 @@ def main() -> int:
                 seed_base=int(seed),
                 n_total=n_total,
                 nfe=nfe,
+                shared_prior=bool(args.shared_prior),
                 **arm_kwargs,
             )
             # Persist raw arm JSON (with smiles_list capped to 200 to keep file small,

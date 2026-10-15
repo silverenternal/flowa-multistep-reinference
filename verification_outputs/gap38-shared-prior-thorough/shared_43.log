@@ -1,0 +1,27 @@
+is_upstream_available: True
+PB_CONFIG_WITH_ENERGY_RATIO_PATH: /home/hugo/codes/flowa-multistep-reinference/tools/pb_config_with_energy_ratio.yaml (exists: True)
+[baseline] Loading FlowMol3 v2 adapter (upstream path) ...
+[baseline] adapter constructor completed in 0.0s
+[baseline]   use_upstream = True
+[baseline]   ctmc_enabled = True
+[baseline] batch 1/1: 100 mols in 107.577s (running total 100)
+[baseline] wrote /home/hugo/codes/flowa-multistep-reinference/verification_outputs/flowmol3_n1000_baseline_wave87_q4_2026.json (n_sampled=100, n_smiles=100, n_errors=0, wallclock=107.578s)
+[baseline] computing 4 paper metrics via upstream SampleAnalyzer.analyze ...
+Error messages: disconnected: 51, valence: 0, kekulization: 0, other: 0, valid: 100, total: 100
+running bosebusters
+[baseline] metrics: validity_pct=1.0000 (paper 0.999), pb_validity_pct=0.4900 (paper 0.919), fg_dev=0.6708 (paper 0.27), ood_ring_rate=0.0000 (paper 0.10), wallclock=5.298s
+[framework] Loading FlowMol3 v2 adapter (upstream path) ...
+[framework] adapter constructor completed in 0.0s
+[framework]   use_upstream = True
+[framework]   ctmc_enabled = True
+[18:08:23] UFFTYPER: Unrecognized charge state for atom: 1
+[framework] batch 1/1: 100 mols in 97.817s (running total 100)
+[framework] wrote /home/hugo/codes/flowa-multistep-reinference/verification_outputs/flowmol3_n1000_framework_wave87_q4_2026.json (n_sampled=100, n_smiles=100, n_errors=0, wallclock=97.818s)
+[framework] computing 4 paper metrics via upstream SampleAnalyzer.analyze ...
+Error messages: disconnected: 64, valence: 0, kekulization: 0, other: 0, valid: 100, total: 100
+running bosebusters
+[18:08:27] UFFTYPER: Unrecognized charge state for atom: 1
+[18:08:27] UFFTYPER: Unrecognized charge state for atom: 1
+[framework] metrics: validity_pct=1.0000 (paper 0.999), pb_validity_pct=0.3600 (paper 0.919), fg_dev=0.8226 (paper 0.27), ood_ring_rate=0.0100 (paper 0.10), wallclock=5.91s
+wrote sweep summary: /home/hugo/codes/flowa-multistep-reinference/verification_outputs/flowmol3_n1000_sweep_wave87_q4_2026.json
+sweep total wallclock: 222.947s

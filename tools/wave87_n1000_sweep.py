@@ -149,6 +149,23 @@ def _framework_perturb_prior(adapter, bundle, *, perturbation_sigma: float, seed
         adapter._native_states[digest] = entry
 
 
+def _make_batch_id(
+    *, arm_name: str, seed_base: int, batch_idx: int, shared_prior: bool
+) -> str:
+    """Return the per-batch prior key (GAP-37 class).
+
+    ``shared_prior=True`` omits ``arm_name`` so the baseline and framework
+    arms build the **same** canonical prior for a given ``(seed_base,
+    batch_idx)`` — the intended paired design (the framework arm then differs
+    from the baseline only by the σ restart-blend perturbation). The legacy
+    (``False``) key includes ``arm_name`` and yields independent prior draws,
+    which confounds the comparison with nuisance prior noise.
+    """
+    if shared_prior:
+        return f"seed{seed_base}-batch{batch_idx}"
+    return f"{arm_name}-batch{batch_idx}-seed{seed_base + batch_idx}"
+
+
 def _generate_arm(
     *,
     arm_name: str,
@@ -161,6 +178,7 @@ def _generate_arm(
     upstream_repo: Path,
     device: str,
     output_json: Path,
+    shared_prior: bool = False,
 ) -> dict[str, Any]:
     """Generate 1000 SDF molecules for one arm (baseline or framework).
 
@@ -203,7 +221,10 @@ def _generate_arm(
     n_batches = n_total // nfe_batch
     for batch_idx in range(n_batches):
         seed = int(seed_base + batch_idx)
-        batch_id = f"{arm_name}-batch{batch_idx}-seed{seed}"
+        batch_id = _make_batch_id(
+            arm_name=arm_name, seed_base=seed_base, batch_idx=batch_idx,
+            shared_prior=shared_prior,
+        )
         # 1. Build canonical prior.
         bundle = _build_canonical_prior(adapter, batch_id)
         # 2. Apply framework's restart-blend perturbation (sigma=0 for
@@ -281,6 +302,7 @@ def _generate_arm(
     out = {
         "schema_version": "1.0.0",
         "arm": arm_name,
+        "shared_prior": bool(shared_prior),
         "n_target": int(n_total),
         "n_sampled": int(len(sampled_mols)),
         "n_smiles": int(len(smiles_list)),
@@ -390,6 +412,11 @@ def main(argv: list[str] | None = None) -> int:
                    help="Path to vendored FlowMol3 upstream repo.")
     p.add_argument("--device", default=DEVICE,
                    help=f"Torch device (default {DEVICE}).")
+    p.add_argument("--shared-prior", action="store_true",
+                   help=("GAP-37 class: drop arm_name from the per-batch prior "
+                         "key so the baseline and framework arms build the SAME "
+                         "canonical prior (paired design). Default off = legacy "
+                         "arm-keyed prior (byte-stable)."))
     args = p.parse_args(argv)
     if args.config is not None:
         try:
@@ -419,6 +446,7 @@ def main(argv: list[str] | None = None) -> int:
     weights_path = Path(args.weights_path)
     upstream_repo = Path(args.upstream_repo)
     device = str(args.device)
+    shared_prior = bool(args.shared_prior)
     n_batches = n_total // nfe_batch
 
     out_dir = REPO_ROOT / "verification_outputs"
@@ -455,6 +483,7 @@ def main(argv: list[str] | None = None) -> int:
         upstream_repo=upstream_repo,
         device=device,
         output_json=baseline_json,
+        shared_prior=shared_prior,
     )
     baseline_metrics = _compute_metrics(
         baseline_result["sampled_mols"], arm_name="baseline",
@@ -473,6 +502,7 @@ def main(argv: list[str] | None = None) -> int:
         upstream_repo=upstream_repo,
         device=device,
         output_json=framework_json,
+        shared_prior=shared_prior,
     )
     framework_metrics = _compute_metrics(
         framework_result["sampled_mols"], arm_name="framework",
