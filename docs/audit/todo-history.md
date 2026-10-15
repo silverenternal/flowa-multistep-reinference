@@ -101,6 +101,40 @@ frozen claim surface moved); full detail in `docs/audit/gap32-headtohead.md`.
 - **Net:** the "beats SOTA" claim now stands on **R6 + MNIST**; R3 is an explicit
   counter-example (negative transfer on the molecule coordinate channel).
 
+### 4.2 R3 paired-design fix (GAP-37, 2026-10-15)
+
+GAP-37 asked to raise the power / effect size of the primary cells. Root cause
+found: the R3 seed-level test was **not actually paired**. The driver keyed each
+batch's prior on the arm name
+(`batch_id = f"{arm_name}-seed{seed_base}-batch{batch_idx}"`), so the baseline
+and framework arms built **independent** priors — the "paired" t-test was a
+two-sample test in disguise, and its seed-to-seed variance was dominated by
+nuisance prior noise. A `--shared-prior` flag (a few lines) drops `arm_name`
+from the key so both arms build the **same** prior and share the solver seed.
+Observations-only addendum; full detail in
+`docs/audit/gap37-statistical-power.md`.
+
+| R3 quantity (unit = seed, n = 3) | independent prior (canonical) | shared prior (fixed) |
+|---|---:|---:|
+| mean_diff fg_dev | −0.03769 | −0.02725 |
+| sd_diff | 0.09390 | **0.02502** |
+| `d_z` | −0.401 (small) | **−1.089 (large)** |
+| seeds same sign | 2/3 | **3/3** |
+| seeds @ 80 % power (α=0.05) | 49 | **7** |
+| seeds @ 80 % power (Bonferroni α=0.05/7) | 78 | **11** |
+
+- **Acceptance:** GAP-37 asks "medium+ effect size **OR** ≥ 80 % power" — met via
+  the large-effect branch (`|d_z| = 1.089 ≥ 0.8`).
+- **Honest limit:** at the canonical n = 3 the test is **still n.s.**
+  (`p = 0.200`); the fix corrects the *design* (removes nuisance variance), it
+  does not manufacture significance. A definitive R3 verdict now needs ~7–11
+  seeds instead of ~49–78.
+- **Cross-cell power audit** (`tools/gap37_power_audit.py`) makes the replication
+  unit explicit: R1 record (n=3000) is adequate at d=0.156, while R3 seed (n=3)
+  is not — "underpowered" is not "no effect".
+- **Net:** the R3 label in the frozen surfaces is unchanged (PARTIAL / n.s.);
+  this records the correct paired design and its large effect size.
+
 ## 5. R1 real-forward saga (D-004 / D-004b)
 
 - **D-004 defect:** the checkpoint-compat shim registered a bare core module
@@ -147,6 +181,7 @@ frozen claim surface moved); full detail in `docs/audit/gap32-headtohead.md`.
 | GAP-30-R6-TIER-TARGETING | 2026-10-14 | fresh-tier (correctly targeted) 3-seed live re-run recorded: as-designed pooled d_z +0.1604 (↑ from frozen-tier +0.1466, still < bar +0.2235); faithful +0.1103 (null confirmed); under the wrapper's own quantile tier rule the easy tier is the only group that differs (hard/medium byte-identical) and the fresh-easy regression is −0.6562 (β 0.75) → −0.8811 (β 0.25), monotone in β_easy; tier isolation exact (330/330 per seed) — `docs/audit/gap30-r6-fresh-tier.md` |
 | GAP-31-R6-LIVE-UPLIFT | 2026-10-14 | three live, non-counterfactual R6 measurements on the seed-matched arms (3 seeds × N=1000): **scPerplexity** (ESM-IF) pooled d_z −0.8393 (framework WINS on every tier: hard −0.7952 / medium −0.8634 / easy −0.8924); **hard-tier pLDDT** anchor d_z +1.1211 (≈ frozen hard-tier counterfactual +1.1889); **uniform arm** (factor 1.0, no tier manipulation) d_z +0.1466 (n=3000) — the framework beats the baseline live with no tier cut; as-designed +0.1604. Honest live ladder: uniform +0.1466 → as-designed +0.1604 → disclosed counterfactual +0.2235 (the tier-aware refinement adds only +0.0138 d_z) — `docs/audit/gap31-r6-live-uplift.md` |
 | GAP-32-SOTA-HEADTOHEAD | 2026-10-14 | external-method head-to-head extended beyond R6 to **2 more cells** (seed-matched, Bonferroni-corrected paired statistics): **R5c MNIST `w16e1_5k`** framework-WINS −42.27 % FID (p_bonf 4.6e-4, beats every external arm); **R3 FlowMol3** framework does **not** win +11.05 % fg_dev (n.s.; coordinate-channel restart-blend; external Fast-DLLM/AB-Cache reduce fg_dev). Dropped 3rd candidate 2D eight-gaussians (framework arm diverges). Observations-only; no frozen surface moved — `docs/audit/gap32-headtohead.md` |
+| GAP-37-STATISTICAL-POWER | 2026-10-15 | the R3 seed-level "paired" test was **not paired** (driver keyed the prior on `arm_name` → independent priors → two-sample in disguise). A `--shared-prior` flag makes both arms build the SAME prior: R3 `d_z` −0.401 (small) → **−1.089 (large)**, sd 3.75× tighter, 3/3 seeds same sign, seeds-for-80 %-power 49 → 7 (Bonferroni 78 → 11). Acceptance met via the medium+ effect-size branch; n=3 still n.s. (p=0.200). Observations-only; no frozen surface moved — `docs/audit/gap37-statistical-power.md` |
 
 ## 7. Publication assessment (2026-10-13)
 
@@ -212,7 +247,8 @@ The re-ordered open set is: **Phase 0** GAP-15-VENUE; **Phase 1** (shared GPU
 sweeps) GAP-35-CROSS-DOMAIN-COVERAGE → GAP-32-SOTA-HEADTOHEAD →
 GAP-37-STATISTICAL-POWER; **Phase 2** GAP-34-R1-MECHANISM →
 GAP-36-ABLATION-MATRIX; **Phase 3** GAP-29-MANUSCRIPT-DENSITY and
-GAP-20-COVERLETTER (user).
+GAP-20-COVERLETTER (user). *(Phase 1 is now complete: GAP-35 resolved
+2026-10-14, GAP-32 resolved 2026-10-14, GAP-37 resolved 2026-10-15.)*
 
 **GAP-35-CROSS-DOMAIN-COVERAGE — RESOLVED 2026-10-14.** The gap's residual was
 a cross-domain cell that is *both* non-smoke *and* survives a tuned baseline.
@@ -239,8 +275,9 @@ a factorial sweep (`tools/sweep_gap35_mnist_regime.py`, N = 200, seeds
   flag but share the smoke recipe's *low training budget*; the load-bearing
   claim is width-independence, not that a production-*budget* model wins.
 
-GAP-35 is removed from `todo.json`; the remaining Phase-1 items are
-GAP-32-SOTA-HEADTOHEAD and GAP-37-STATISTICAL-POWER.
+GAP-35 is removed from `todo.json`; the remaining Phase-1 items were
+GAP-32-SOTA-HEADTOHEAD (resolved 2026-10-14) and GAP-37-STATISTICAL-POWER
+(resolved 2026-10-15) — Phase 1 is now complete.
 
 ## 8. Removed surfaces
 

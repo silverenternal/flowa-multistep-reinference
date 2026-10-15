@@ -1,0 +1,5 @@
+seed_base,n_total_per_arm,baseline_fg_dev,framework_fg_dev,baseline_n_sampled,framework_n_sampled,paired_diff_fg_dev,verdict,wallclock_sampling_s,wallclock_metrics_s,paired_n_seeds,paired_mean_diff,paired_sd_diff,paired_se_diff,paired_t_statistic,paired_df,paired_p_value_raw,paired_ci_95_low,paired_ci_95_high,paired_ci_95_t_crit,paired_cohens_d_z,paired_test_type,paired_alpha_bonferroni,paired_bonf_sig
+42,1000,0.717406089951701,0.6624079061612497,998,995,-0.054998183790451294,framework_wins,358.16600000000005,123.611,,,,,,,,,,,,,,
+43,1000,0.6504745348716334,0.6301645452673438,998,996,-0.020309989604289647,framework_wins,275.593,101.54599999999999,,,,,,,,,,,,,,
+44,1000,0.7491078693511888,0.7426783685991116,994,999,-0.006429500752077155,framework_wins,366.889,98.146,,,,,,,,,,,,,,
+PAIRED_SUMMARY,,,,,,-0.027245891382272697,framework_wins,,,3,-0.027245891382272697,0.02501618062626436,0.01444309861867003,-1.8864297822527498,2,0.19987607630358029,-0.08938952907993399,0.034897746315388584,4.302652729749462,-1.0891307425909524,paired_t_test_across_seeds,0.0071428571428571435,False

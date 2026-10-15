@@ -281,6 +281,7 @@ not_in_nav: |
   audit/gap15-venue-fit.md
   audit/gap35-cross-domain.md
   audit/gap32-headtohead.md
+  audit/gap37-statistical-power.md
   audit/repo-docs-maintenance.md
   audit/readiness-verifier-repoint.md
   audit/repo-docs-maintenance-2.md

@@ -1,0 +1,15 @@
+cell,metric,unit,n,effect_size,alpha,source,power,n_for_80pct,verdict
+R1,HMMER hits,record,3000,0.156,0.0071428571428571435,docs/audit/todo-history.md §5 (DL d_pooled=+0.156),1.0,512.5,adequate
+R1,HMMER hits (seed-pooled),seed,3,0.156,0.0071428571428571435,docs/audit/todo-history.md §5 (seed-pooled p_bonf=0.063),0.0093,512.5,bounded_null
+R2,Kanzi RMSD,record,1000,0.0956,0.0071428571428571435,verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj.json,0.6304,1364.8,bounded_null
+R2,Kanzi RMSD (cluster-robust),cluster,4,-0.879,0.0071428571428571435,verification_outputs/wave209-p2-cluster-robust-all-cells.csv,0.1756,16.1,bounded_null
+R3,FlowMol3 fg_dev (independent prior),seed,3,-0.401,0.0071428571428571435,docs/audit/gap27-r3-power.md,0.0233,77.6,bounded_null
+R3,FlowMol3 fg_dev (shared prior),seed,3,-1.089,0.0071428571428571435,verification_outputs/gap37-r3-shared-prior/wave338-p5-r3-n1000-paired.json,0.2107,10.5,bounded_null
+R5a,2D Two Moons W2,seed,3,0.46,0.0071428571428571435,README 11-cell ledger (TIE),0.0294,58.9,bounded_null
+R5b,CIFAR-10 FID,chunk,10,2.7,0.0071428571428571435,README 11-cell ledger (chunk-level paired t),1.0,1.7,adequate
+R5c,MNIST FM FID,chunk,10,-13.18,0.0071428571428571435,docs/audit/gap35-cross-domain.md,1.0,0.1,adequate
+R6,scPerp (cluster),cluster,4,4.019,0.008333333333333333,docs/audit/todo-history.md §4,1.0,0.7,adequate
+R6,pLDDT (cluster),cluster,4,0.333,0.008333333333333333,docs/audit/todo-history.md §4,0.0248,109.2,bounded_null
+K1,RDKit validity,seed,3,1.36,0.0125,README 11-cell ledger (K1),0.4435,6.0,bounded_null
+K4,HMMER length-bias,cluster,3,0.84,0.0125,docs/audit/todo-history.md §4 (K4),0.1486,15.8,bounded_null
+K5,HMMER delta,cluster,3,1.12,0.0125,docs/audit/todo-history.md §4 (K5),0.2885,8.9,bounded_null

@@ -1,0 +1,44 @@
+{
+  "kind": "gap37_r3_shared_prior_sweep",
+  "timestamp_utc": "2026-10-15T00:18:20+00:00",
+  "purpose": "GAP-37: R3 seed-level paired sweep with the shared-prior fix (both arms build the SAME canonical prior per (seed,batch); they differ only by the sigma=0.05 restart-blend perturbation).",
+  "driver": "scripts/wave338_p5_r3_n1000_paired.py",
+  "command": ".venvs/flowmol3_venv/bin/python scripts/wave338_p5_r3_n1000_paired.py --n-total 1000 --nfe 250 --nfe-batch 100 --seeds 42 43 44 --device cuda:0 --shared-prior --output-dir verification_outputs/gap37-r3-shared-prior",
+  "device": "cuda:0",
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+  "model": "flowmol3",
+  "checkpoint": "data/flowmol3/weights_real/checkpoints/last.ckpt",
+  "n_total_per_arm": 1000,
+  "nfe": 250,
+  "baseline_nfe": 250,
+  "nfe_batch": 100,
+  "n_batches": 10,
+  "seeds": [42, 43, 44],
+  "metric": "paper_fg_deviation",
+  "reference": "GEOM_DRUGS",
+  "design": "paired; arm-independent batch_id (shared_prior=True)",
+  "framework_config": {
+    "perturbation_sigma": 0.05,
+    "shared_solver_seed": true
+  },
+  "baseline_config": {
+    "perturbation_sigma": 0.0
+  },
+  "paired_summary": {
+    "n_seeds": 3,
+    "mean_diff_fg_dev": -0.027245891382272697,
+    "sd_diff": 0.02501618062626436,
+    "t_statistic": -1.8864297822527498,
+    "df": 2,
+    "p_value_raw": 0.19987607630358029,
+    "cohens_d_z": -1.0891307425909524
+  },
+  "wall_min_per_seed": [6.0, 6.3, 8.1],
+  "canonical_comparison": {
+    "independent_prior_d_z": -0.40135953182913836,
+    "independent_prior_source": "verification_outputs/r3_n1000_3seed_fixed_q4_2026/wave338-p5-r3-n1000-paired.json",
+    "seeds_for_80pct_power_independent": 49,
+    "seeds_for_80pct_power_shared": 7
+  },
+  "notes": "n=3 is still n.s. (p=0.200); the fix corrects the design (removes nuisance prior variance), it does not manufacture significance. Observations-only; no frozen surface moved. See docs/audit/gap37-statistical-power.md."
+}

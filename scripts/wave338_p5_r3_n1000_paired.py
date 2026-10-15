@@ -65,6 +65,20 @@ PAPER_TARGETS = {
 }
 
 
+def _make_batch_id(*, arm_name: str, seed_base: int, batch_idx: int,
+                   shared_prior: bool) -> str:
+    """Return the per-batch prior key.
+
+    ``shared_prior=True`` (GAP-37) omits ``arm_name`` so the baseline and
+    framework arms build the **same** canonical prior for a given
+    ``(seed_base, batch_idx)`` — the intended paired design. The legacy
+    (``False``) key includes ``arm_name`` and yields independent prior draws.
+    """
+    if shared_prior:
+        return f"seed{seed_base}-batch{batch_idx}"
+    return f"{arm_name}-seed{seed_base}-batch{batch_idx}"
+
+
 def _build_canonical_prior(adapter, batch_id: str):
     """Build the canonical FlowMol3 prior state."""
     return adapter.build_initial_state(batch_id=batch_id, sample_id=f"{batch_id}-prior")
@@ -87,8 +101,17 @@ def _framework_perturb_prior(adapter, bundle, *, perturbation_sigma: float, seed
 
 
 def _generate_arm(*, arm_name, perturbation_sigma, seed_base, n_total, nfe,
-                  nfe_batch, weights_path, upstream_repo, device):
-    """Generate N=1000 SDF molecules for one arm via the upstream path."""
+                  nfe_batch, weights_path, upstream_repo, device,
+                  shared_prior: bool = False):
+    """Generate N=1000 SDF molecules for one arm via the upstream path.
+
+    ``shared_prior`` (GAP-37): when True the per-batch ``batch_id`` omits the
+    ``arm_name`` so the baseline and framework arms build the **same** canonical
+    prior for a given ``(seed_base, batch_idx)``. The framework arm then differs
+    from the baseline only by the σ restart-blend perturbation, which is the
+    intended paired design; the legacy behaviour (arm-specific ``batch_id``)
+    confounds the comparison with an independent prior draw.
+    """
     from adaptive_reflow.adapters.flowmol3_v2_adapter import FlowMol3V2Adapter
     from adaptive_reflow.universal.state import ODEConditionDelta
 
@@ -119,7 +142,10 @@ def _generate_arm(*, arm_name, perturbation_sigma, seed_base, n_total, nfe,
     n_batches = n_total // nfe_batch
     for batch_idx in range(n_batches):
         seed = int(seed_base + batch_idx)
-        batch_id = f"{arm_name}-seed{seed_base}-batch{batch_idx}"
+        batch_id = _make_batch_id(
+            arm_name=arm_name, seed_base=seed_base, batch_idx=batch_idx,
+            shared_prior=shared_prior,
+        )
         bundle = _build_canonical_prior(adapter, batch_id)
         if perturbation_sigma > 0.0:
             _framework_perturb_prior(
@@ -206,7 +232,8 @@ def _compute_metrics(sampled_mols, *, arm_name, seed_base):
 
 
 def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
-                  upstream_repo, device, out_dir, baseline_nfe=None) -> dict:
+                  upstream_repo, device, out_dir, baseline_nfe=None,
+                  shared_prior: bool = False) -> dict:
     """Run baseline + framework arms for one seed and return the paired dict.
 
     ``baseline_nfe`` (GAP-12 tuned-baseline extension) lets the *baseline* arm
@@ -218,6 +245,7 @@ def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
         arm_name="baseline", perturbation_sigma=PERTURBATION_SIGMA_BASELINE,
         seed_base=seed_base, n_total=n_total, nfe=base_nfe, nfe_batch=nfe_batch,
         weights_path=weights_path, upstream_repo=upstream_repo, device=device,
+        shared_prior=shared_prior,
     )
     baseline_metrics = _compute_metrics(baseline_raw["_sampled_mols"],
                                        arm_name="baseline", seed_base=seed_base)
@@ -226,6 +254,7 @@ def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
         arm_name="framework", perturbation_sigma=PERTURBATION_SIGMA_FRAMEWORK,
         seed_base=seed_base, n_total=n_total, nfe=nfe, nfe_batch=nfe_batch,
         weights_path=weights_path, upstream_repo=upstream_repo, device=device,
+        shared_prior=shared_prior,
     )
     framework_metrics = _compute_metrics(framework_raw["_sampled_mols"],
                                         arm_name="framework", seed_base=seed_base)
@@ -326,6 +355,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--nfe-batch", type=int, default=NFE_BATCH)
     p.add_argument("--seeds", type=int, nargs="+", default=list(SEEDS))
     p.add_argument("--device", default=DEVICE)
+    p.add_argument("--shared-prior", action="store_true",
+                   help="GAP-37: build the SAME canonical prior for both arms "
+                        "(arm-independent batch_id) so the baseline-vs-framework "
+                        "comparison is a true paired perturbation. Default off "
+                        "(preserves the canonical arm-specific batch_id).")
     p.add_argument("--output-dir", type=Path,
                    default=REPO_ROOT / "verification_outputs")
     args = p.parse_args(argv)
@@ -346,6 +380,7 @@ def main(argv: list[str] | None = None) -> int:
             upstream_repo=UPSTREAM_REPO,
             device=str(args.device),
             out_dir=out_dir,
+            shared_prior=bool(args.shared_prior),
         )
         per_seed.append(sweep)
 
