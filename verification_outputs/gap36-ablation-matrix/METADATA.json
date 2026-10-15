@@ -1,0 +1,35 @@
+{
+  "gap": "GAP-36-ABLATION-MATRIX",
+  "kind": "consolidated_ablation_matrix",
+  "timestamp_utc": "2026-10-15T11:07:00+00:00",
+  "builder": "tools/gap36_ablation_matrix.py",
+  "builder_cmd": "python3 tools/gap36_ablation_matrix.py",
+  "outputs": ["ablation_matrix.json", "ablation_matrix.csv", "ablation_matrix.md"],
+  "n_rows": 24,
+  "sources": [
+    {
+      "path": "verification_outputs/gap04-r5b-rounds-multiseed.json",
+      "cell": "R5b",
+      "design": "rounds {1,2,3} x 4 schedulers x 3 seeds (42/43/44)",
+      "n_samples": 200,
+      "nfe": 50,
+      "match_nfe": "budget",
+      "stat_unit": "per_sample_feature_distance"
+    },
+    {
+      "path": "verification_outputs/gap35-mnist-regime/aggregate.json",
+      "cell": "R5c",
+      "design": "4 checkpoints x 3 schedulers x 3 seeds (42/43/44)",
+      "n_samples": 1000,
+      "nfe": 50,
+      "stat_unit": "paired_chunk"
+    }
+  ],
+  "verdict_rule": "tie if |delta_pct| < 0.5; n.s. if min_p_bonf >= 0.05; else wins by sign of mean_delta_pct",
+  "reading": "the sign of the framework effect tracks the training-budget axis (rounds for R5b, checkpoint for R5c), not the scheduler; w16e1_5k is framework-WINS on all 3 schedulers",
+  "notes": [
+    "aggregation-only; no new experiments",
+    "the two d_z columns are NOT on a common unit (stat_unit column records which)",
+    "R5b uses a degenerate smoke checkpoint (baseline FID ~452); its rows are for sign/robustness, not magnitude"
+  ]
+}

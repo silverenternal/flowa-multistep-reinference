@@ -1,0 +1,26 @@
+| cell | checkpoint | rounds | scheduler | nfe | n_samples | n_seeds | stat_unit | baseline_metric | mean_delta_pct | mean_dz | min_p_bonf | verdict |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| R5b | cifar10 smoke (epochs=1, ch=8) | 1 | CosineAnnealScheduler | 50 | 200 | 3 | per_sample_feature_distance | 452.411 | -1.1641 | 4.4062 | 0.0 | framework_wins |
+| R5b | cifar10 smoke (epochs=1, ch=8) | 1 | CodimensionSheetScheduler | 50 | 200 | 3 | per_sample_feature_distance | 452.411 | -2.0972 | 4.3679 | 0.0 | framework_wins |
+| R5b | cifar10 smoke (epochs=1, ch=8) | 1 | EvidenceDrivenScheduler | 50 | 200 | 3 | per_sample_feature_distance | 452.411 | 0.3298 | 4.7038 | 0.0 | tie |
+| R5b | cifar10 smoke (epochs=1, ch=8) | 1 | FreeTrajScheduler | 50 | 200 | 3 | per_sample_feature_distance | 452.411 | -0.2168 | 4.4657 | 0.0 | tie |
+| R5b | cifar10 smoke (epochs=1, ch=8) | 2 | CosineAnnealScheduler | 50 | 200 | 3 | per_sample_feature_distance | 452.411 | 21.4298 | 5.4173 | 0.0 | baseline_wins |
+| R5b | cifar10 smoke (epochs=1, ch=8) | 2 | CodimensionSheetScheduler | 50 | 200 | 3 | per_sample_feature_distance | 452.411 | -0.3037 | 4.1582 | 0.0 | tie |
+| R5b | cifar10 smoke (epochs=1, ch=8) | 2 | EvidenceDrivenScheduler | 50 | 200 | 3 | per_sample_feature_distance | 452.411 | 20.9826 | 5.5159 | 0.0 | baseline_wins |
+| R5b | cifar10 smoke (epochs=1, ch=8) | 2 | FreeTrajScheduler | 50 | 200 | 3 | per_sample_feature_distance | 452.411 | 30.6309 | 5.6888 | 0.0 | baseline_wins |
+| R5b | cifar10 smoke (epochs=1, ch=8) | 3 | CosineAnnealScheduler | 50 | 200 | 3 | per_sample_feature_distance | 452.411 | 21.4298 | 5.4173 | 0.0 | baseline_wins |
+| R5b | cifar10 smoke (epochs=1, ch=8) | 3 | CodimensionSheetScheduler | 50 | 200 | 3 | per_sample_feature_distance | 452.411 | 0.0878 | 4.3652 | 0.0 | tie |
+| R5b | cifar10 smoke (epochs=1, ch=8) | 3 | EvidenceDrivenScheduler | 50 | 200 | 3 | per_sample_feature_distance | 452.411 | 20.9826 | 5.5159 | 0.0 | baseline_wins |
+| R5b | cifar10 smoke (epochs=1, ch=8) | 3 | FreeTrajScheduler | 50 | 200 | 3 | per_sample_feature_distance | 452.411 | 20.463 | 5.4425 | 0.0 | baseline_wins |
+| R5c | w8e3_60k | 4 | codimension_sheet | 50 | 1000 | 3 | paired_chunk | 14.3454 | 5.1141 | 0.8157 | 0.019132 | baseline_wins |
+| R5c | w8e3_60k | 4 | cosine | 50 | 1000 | 3 | paired_chunk | 14.3454 | 5.598 | 0.7629 | 0.020439 | baseline_wins |
+| R5c | w8e3_60k | 4 | evidence_driven | 50 | 1000 | 3 | paired_chunk | 14.3454 | 3.1067 | 0.3271 | 0.796405 | n.s. |
+| R5c | w16e1_5k | 4 | codimension_sheet | 50 | 1000 | 3 | paired_chunk | 27.2361 | -25.3902 | -3.6804 | 1e-06 | framework_wins |
+| R5c | w16e1_5k | 4 | cosine | 50 | 1000 | 3 | paired_chunk | 27.2361 | -25.5882 | -4.7939 | 0.0 | framework_wins |
+| R5c | w16e1_5k | 4 | evidence_driven | 50 | 1000 | 3 | paired_chunk | 27.2361 | -25.1982 | -5.7241 | 0.0 | framework_wins |
+| R5c | w16e1_10k | 4 | codimension_sheet | 50 | 1000 | 3 | paired_chunk | 19.526 | -11.0599 | -1.5554 | 0.000996 | framework_wins |
+| R5c | w16e1_10k | 4 | cosine | 50 | 1000 | 3 | paired_chunk | 19.526 | -11.623 | -1.9317 | 0.00024 | framework_wins |
+| R5c | w16e1_10k | 4 | evidence_driven | 50 | 1000 | 3 | paired_chunk | 19.526 | -15.1842 | -3.0051 | 2e-06 | framework_wins |
+| R5c | w16e1_60k | 4 | codimension_sheet | 50 | 1000 | 3 | paired_chunk | 13.3416 | 6.9303 | 1.4353 | 0.001131 | baseline_wins |
+| R5c | w16e1_60k | 4 | cosine | 50 | 1000 | 3 | paired_chunk | 13.3416 | 5.328 | 0.8385 | 0.046374 | baseline_wins |
+| R5c | w16e1_60k | 4 | evidence_driven | 50 | 1000 | 3 | paired_chunk | 13.3416 | 3.9583 | 0.5771 | 0.257669 | n.s. |

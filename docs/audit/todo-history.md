@@ -135,6 +135,24 @@ Observations-only addendum; full detail in
 - **Net:** the R3 label in the frozen surfaces is unchanged (PARTIAL / n.s.);
   this records the correct paired design and its large effect size.
 
+### 4.3 Consolidated ablation matrix (GAP-36, 2026-10-15)
+
+GAP-36 asked for **one** table crossing the three axes the generative headline
+cells were swept along. Built by `tools/gap36_ablation_matrix.py` (CPU-only) from
+two committed matched-NFE runs — **24 rows**:
+
+- **R5b** (CIFAR-10 FM smoke, N=200, NFE=50): rounds {1,2,3} × 4 schedulers.
+- **R5c** (MNIST FM, N=1000, NFE=50): 4 checkpoints × 3 schedulers.
+
+Reading: the **sign** of the framework effect tracks the **training-budget axis**
+(rounds for R5b, checkpoint for R5c), **not** the scheduler; within a fixed
+setting the scheduler moves magnitude only. The decisive cell `w16e1_5k` is
+framework-WINS on **all three** schedulers (−25.20 … −25.59 % FID, p_bonf ≤ 1e-6).
+Honest caveat: the R5b smoke checkpoint has a degenerate baseline FID ≈ 452, so
+its rows are reported for sign/robustness, not magnitude; the two d_z columns are
+on different units (per-sample vs paired-chunk). Aggregation-only, no new
+experiments — `docs/audit/gap36-ablation-matrix.md`.
+
 ## 5. R1 real-forward saga (D-004 / D-004b)
 
 - **D-004 defect:** the checkpoint-compat shim registered a bare core module
@@ -182,6 +200,7 @@ Observations-only addendum; full detail in
 | GAP-31-R6-LIVE-UPLIFT | 2026-10-14 | three live, non-counterfactual R6 measurements on the seed-matched arms (3 seeds × N=1000): **scPerplexity** (ESM-IF) pooled d_z −0.8393 (framework WINS on every tier: hard −0.7952 / medium −0.8634 / easy −0.8924); **hard-tier pLDDT** anchor d_z +1.1211 (≈ frozen hard-tier counterfactual +1.1889); **uniform arm** (factor 1.0, no tier manipulation) d_z +0.1466 (n=3000) — the framework beats the baseline live with no tier cut; as-designed +0.1604. Honest live ladder: uniform +0.1466 → as-designed +0.1604 → disclosed counterfactual +0.2235 (the tier-aware refinement adds only +0.0138 d_z) — `docs/audit/gap31-r6-live-uplift.md` |
 | GAP-32-SOTA-HEADTOHEAD | 2026-10-14 | external-method head-to-head extended beyond R6 to **2 more cells** (seed-matched, Bonferroni-corrected paired statistics): **R5c MNIST `w16e1_5k`** framework-WINS −42.27 % FID (p_bonf 4.6e-4, beats every external arm); **R3 FlowMol3** framework does **not** win +11.05 % fg_dev (n.s.; coordinate-channel restart-blend; external Fast-DLLM/AB-Cache reduce fg_dev). Dropped 3rd candidate 2D eight-gaussians (framework arm diverges). Observations-only; no frozen surface moved — `docs/audit/gap32-headtohead.md` |
 | GAP-37-STATISTICAL-POWER | 2026-10-15 | the R3 seed-level "paired" test was **not paired** (driver keyed the prior on `arm_name` → independent priors → two-sample in disguise). A `--shared-prior` flag makes both arms build the SAME prior: R3 `d_z` −0.401 (small) → **−1.089 (large)**, sd 3.75× tighter, 3/3 seeds same sign, seeds-for-80 %-power 49 → 7 (Bonferroni 78 → 11). Acceptance met via the medium+ effect-size branch; n=3 still n.s. (p=0.200). Observations-only; no frozen surface moved — `docs/audit/gap37-statistical-power.md` |
+| GAP-36-ABLATION-MATRIX | 2026-10-15 | consolidated **rounds × schedulers × checkpoints** ablation matrix (24 rows, matched NFE=50) assembled from existing runs (R5b rounds × schedulers; R5c checkpoints × schedulers). Reading: the **sign** of the framework effect tracks the training-budget axis (rounds / checkpoint), **not** the scheduler; within a fixed setting the scheduler tunes magnitude only. Decisive cell **`w16e1_5k`** is framework-WINS on all 3 schedulers (−25.2…−25.6 % FID, p_bonf ≤ 1e-6). Aggregation-only; no new experiments; no frozen surface moved — `docs/audit/gap36-ablation-matrix.md` |
 
 ## 7. Publication assessment (2026-10-13)
 
@@ -247,8 +266,9 @@ The re-ordered open set is: **Phase 0** GAP-15-VENUE; **Phase 1** (shared GPU
 sweeps) GAP-35-CROSS-DOMAIN-COVERAGE → GAP-32-SOTA-HEADTOHEAD →
 GAP-37-STATISTICAL-POWER; **Phase 2** GAP-34-R1-MECHANISM →
 GAP-36-ABLATION-MATRIX; **Phase 3** GAP-29-MANUSCRIPT-DENSITY and
-GAP-20-COVERLETTER (user). *(Phase 1 is now complete: GAP-35 resolved
-2026-10-14, GAP-32 resolved 2026-10-14, GAP-37 resolved 2026-10-15.)*
+GAP-20-COVERLETTER (user). *(Phases 1–2 partly complete: GAP-35 resolved
+2026-10-14, GAP-32 resolved 2026-10-14, GAP-37 resolved 2026-10-15, GAP-36
+resolved 2026-10-15; GAP-34 in progress.)*
 
 **GAP-35-CROSS-DOMAIN-COVERAGE — RESOLVED 2026-10-14.** The gap's residual was
 a cross-domain cell that is *both* non-smoke *and* survives a tuned baseline.
