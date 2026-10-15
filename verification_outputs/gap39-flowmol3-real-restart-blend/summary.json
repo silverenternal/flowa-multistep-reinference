@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0.0",
+  "increment": "gap39-flowmol3-real-restart-blend",
+  "protocol": {
+    "driver": "scripts/wave338_p5_r3_n1000_paired.py",
+    "n_total_per_arm": 1000,
+    "nfe": 250,
+    "nfe_batch": 100,
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "device": "cuda:0 (physical GPU 1; CUDA_VISIBLE_DEVICES=1)"
+  },
+  "arms": {
+    "legacy_x_only_proxy": {
+      "fg_dev": {
+        "per_seed": [
+          0.05003478838151365,
+          -0.13673620262047825,
+          -0.02636067569691125
+        ],
+        "mean": -0.03768736331195862,
+        "sd": 0.09389926069577538,
+        "se": 0.05421276343941277,
+        "cohens_d_z": -0.40135953182913836,
+        "p_raw": 0.5588539693563345,
+        "n_framework_favourable": 2
+      },
+      "pb_validity_pct": {
+        "per_seed": [
+          0.020442087786405216,
+          -0.0003424414658115271,
+          0.23561575617744118
+        ],
+        "mean": 0.08523846749934495,
+        "sd": 0.13064454017176025,
+        "se": 0.07542766043632067,
+        "cohens_d_z": 0.6524456926196894,
+        "p_raw": 0.37574352660184773,
+        "n_framework_favourable": 2
+      },
+      "validity_pct": {
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "mean": 0.0,
+        "sd": 0.0,
+        "se": 0.0,
+        "cohens_d_z": NaN,
+        "p_raw": NaN,
+        "n_framework_favourable": 0
+      }
+    },
+    "real_restart_blend": {
+      "fg_dev": {
+        "per_seed": [
+          -0.0478918407562412,
+          -0.21069718048093855,
+          0.09431847840223717
+        ],
+        "mean": -0.05475684761164753,
+        "sd": 0.15262366880771813,
+        "se": 0.08811731627084436,
+        "cohens_d_z": -0.3587703535067851,
+        "p_raw": 0.5977199996344332,
+        "n_framework_favourable": 2
+      },
+      "pb_validity_pct": {
+        "per_seed": [
+          0.01620361083249744,
+          0.09479797979797977,
+          0.31184444223561575
+        ],
+        "mean": 0.14094867762203098,
+        "sd": 0.15312834643010065,
+        "se": 0.08840869203198089,
+        "cohens_d_z": 0.9204610440064447,
+        "p_raw": 0.2519086413108983,
+        "n_framework_favourable": 3
+      },
+      "validity_pct": {
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "mean": 0.0,
+        "sd": 0.0,
+        "se": 0.0,
+        "cohens_d_z": NaN,
+        "p_raw": NaN,
+        "n_framework_favourable": 0
+      }
+    }
+  },
+  "headline": {
+    "K1_pb_validity": {
+      "legacy_d_z": 0.6524456926196894,
+      "blend_d_z": 0.9204610440064447
+    },
+    "R3_fg_dev": {
+      "legacy_d_z": -0.40135953182913836,
+      "blend_d_z": -0.3587703535067851
+    }
+  },
+  "honest_disclosure": "Additive default-off wiring. K1 pb_validity effect size rises to large (d_z +0.92, 3/3 seeds) under the faithful all-channel restart-blend; R3 fg_dev is NOT flipped (mean improves, SD grows, d_z flat). Neither is significant at n=3. No frozen surface moved."
+}

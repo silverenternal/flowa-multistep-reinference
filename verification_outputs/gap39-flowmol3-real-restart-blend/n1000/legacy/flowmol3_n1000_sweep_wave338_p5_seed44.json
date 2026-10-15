@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0.0",
+  "sweep_id": "wave338_p5_r3_n1000_paired_seed44",
+  "model": "flowmol3",
+  "checkpoint": "/home/hugo/codes/flowa-multistep-reinference/data/flowmol3/weights_real/checkpoints/last.ckpt",
+  "n_total_per_arm": 1000,
+  "nfe": 250,
+  "baseline_nfe": 250,
+  "nfe_batch": 100,
+  "n_batches": 10,
+  "seed_base": 44,
+  "device": "cuda:0",
+  "shared_prior": false,
+  "real_restart_blend": false,
+  "restart_memory_fraction": 0.5,
+  "paper_targets": {
+    "validity_pct": 0.999,
+    "pb_validity_pct": 0.919,
+    "fg_dev": 0.27,
+    "ood_ring_rate": 0.1
+  },
+  "baseline": {
+    "perturbation_sigma": 0.0,
+    "metrics": {
+      "validity_pct": 1.0,
+      "pb_validity_pct": 0.4544544544544545,
+      "fg_dev": 0.5832365450689583,
+      "ood_ring_rate": 0.014014014014014014,
+      "wallclock_s": 48.707
+    },
+    "n_sampled": 999,
+    "n_smiles": 1000,
+    "n_errors": 1,
+    "wallclock_sampling_s": 194.961,
+    "wallclock_metrics_s": 48.707,
+    "errors_sample": [
+      "dropped_smiles:[H]C([H])=C([H])C([H])([H])N([H])C(=O)C1(C([H])([H])[H])SCl1"
+    ]
+  },
+  "framework": {
+    "perturbation_sigma": 0.05,
+    "metrics": {
+      "validity_pct": 1.0,
+      "pb_validity_pct": 0.6900702106318957,
+      "fg_dev": 0.556875869372047,
+      "ood_ring_rate": 0.015045135406218655,
+      "wallclock_s": 31.006
+    },
+    "n_sampled": 997,
+    "n_smiles": 1000,
+    "n_errors": 3,
+    "wallclock_sampling_s": 157.29,
+    "wallclock_metrics_s": 31.006,
+    "errors_sample": [
+      "dropped_smiles:[H]OP(=O)(=O)OC([H])([H])C([H])([H])C([H])([H])[H]",
+      "dropped_smiles:[H]C([H])([H])C1(Cl)[PH]#S1",
+      "dropped_smiles:[H]C([H])(Cl)C12[PH]#[SH]1Cl2"
+    ]
+  },
+  "timestamp": "2026-10-15T23:44:30+0800",
+  "paired_diff_fg_dev": -0.02636067569691125,
+  "verdict": "framework_wins"
+}

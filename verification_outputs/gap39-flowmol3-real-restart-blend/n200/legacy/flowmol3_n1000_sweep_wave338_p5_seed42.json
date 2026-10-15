@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0.0",
+  "sweep_id": "wave338_p5_r3_n1000_paired_seed42",
+  "model": "flowmol3",
+  "checkpoint": "/home/hugo/codes/flowa-multistep-reinference/data/flowmol3/weights_real/checkpoints/last.ckpt",
+  "n_total_per_arm": 200,
+  "nfe": 250,
+  "baseline_nfe": 250,
+  "nfe_batch": 100,
+  "n_batches": 2,
+  "seed_base": 42,
+  "device": "cuda:0",
+  "shared_prior": false,
+  "real_restart_blend": false,
+  "restart_memory_fraction": 0.5,
+  "paper_targets": {
+    "validity_pct": 0.999,
+    "pb_validity_pct": 0.919,
+    "fg_dev": 0.27,
+    "ood_ring_rate": 0.1
+  },
+  "baseline": {
+    "perturbation_sigma": 0.0,
+    "metrics": {
+      "validity_pct": 1.0,
+      "pb_validity_pct": 0.465,
+      "fg_dev": 0.5754371639319893,
+      "ood_ring_rate": 0.025,
+      "wallclock_s": 7.418
+    },
+    "n_sampled": 200,
+    "n_smiles": 200,
+    "n_errors": 0,
+    "wallclock_sampling_s": 100.205,
+    "wallclock_metrics_s": 7.418,
+    "errors_sample": []
+  },
+  "framework": {
+    "perturbation_sigma": 0.05,
+    "metrics": {
+      "validity_pct": 1.0,
+      "pb_validity_pct": 0.875,
+      "fg_dev": 0.6949403001395958,
+      "ood_ring_rate": 0.015,
+      "wallclock_s": 4.508
+    },
+    "n_sampled": 200,
+    "n_smiles": 200,
+    "n_errors": 0,
+    "wallclock_sampling_s": 54.98,
+    "wallclock_metrics_s": 4.508,
+    "errors_sample": []
+  },
+  "timestamp": "2026-10-15T22:41:54+0800",
+  "paired_diff_fg_dev": 0.11950313620760655,
+  "verdict": "baseline_wins"
+}

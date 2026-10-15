@@ -179,6 +179,35 @@ weights). Observations-only; no frozen surface moved —
 `docs/audit/gap38-shared-prior-thorough.md`;
 evidence `verification_outputs/gap38-shared-prior-thorough/`.
 
+### 4.5 Real FlowMol3 restart-blend wired into the R3/K1 framework arm (GAP-39, 2026-10-15)
+
+GAP-38's own recommendation pointed at the FlowMol3 restart-blend wiring gap.
+The canonical R3/K1 driver's framework arm was **not** the framework's
+restart-blend: it applied a coordinate-only single-shot Gaussian proxy
+(`x += N(0, 0.05)`) and never called the adapter's real
+`apply_restart_distribution` (all three channels). GAP-39 wires the real blend
+(additive `--real-restart-blend`, default off = byte-stable) in
+`scripts/wave338_p5_r3_n1000_paired.py`, and corrects the stale "size-mismatch
+bug" comment in the SOTA harness (bug fixed at `flowmol3_v2_adapter.py:1299`;
+harness gains `--restart-blend`). Canonical A/B, N=1000, NFE=250, seeds
+42/43/44 (legacy reproduces the committed `r3_n1000_3seed_fixed_q4_2026`
+bit-for-bit):
+
+| metric | mode | mean Δ | SD | `d_z` | `p` | seeds fw-favourable |
+|---|---|---:|---:|---:|---:|---:|
+| `fg_dev` (R3) | legacy | −0.03769 | 0.09390 | −0.401 | 0.559 | 2/3 |
+| `fg_dev` (R3) | real blend | −0.05476 | 0.15262 | **−0.359** | 0.598 | 2/3 |
+| `pb_validity_pct` (K1) | legacy | +0.0852 | 0.13064 | +0.652 | 0.376 | 2/3 |
+| `pb_validity_pct` (K1) | real blend | +0.1410 | 0.15313 | **+0.921** | 0.252 | **3/3** |
+
+**Reading:** the faithful all-channel blend lifts **K1 `pb_validity` to a large
+effect** (`d_z +0.65 → +0.92`, 3/3 seeds framework-favourable, legacy seed-43 tie
+gone) but does **not** flip **R3 `fg_dev`** (mean improves, SD grows, `d_z` flat).
+Neither cell is significant at n=3. The fix corrects the *mechanism*, it does not
+manufacture significance. Observations-only; no frozen surface moved —
+`docs/audit/gap39-flowmol3-real-restart-blend.md`;
+evidence `verification_outputs/gap39-flowmol3-real-restart-blend/`.
+
 ## 5. R1 real-forward saga (D-004 / D-004b)
 
 - **D-004 defect:** the checkpoint-compat shim registered a bare core module

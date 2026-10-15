@@ -502,6 +502,7 @@ def _run_framework(
     seed: int,
     output_dir: Path,
     shared_prior: bool = False,
+    restart_blend: bool = False,
 ) -> tuple[Path, float, list[Any | None]]:
     """Run the FlowA multi-round framework; pickle the per-chain endpoint.
 
@@ -509,6 +510,14 @@ def _run_framework(
     rounds; the per-round ``n_cap`` (default 1.0 for the cosine ramp)
     maps to ``per_round_nfe`` Euler steps. The endpoint of the final
     round is converted to an RDKit ``Chem.Mol`` and saved.
+
+    ``restart_blend`` (GAP-39, additive, default off = byte-stable) — when
+    True the round-over-round state is the adapter's real
+    :meth:`FlowMol3V2Adapter.apply_restart_distribution` blend (all three
+    channels: coordinate + charge + raw_pair), i.e. the FlowA restart-blend
+    itself. When False the legacy path chains the observed endpoint directly
+    (``solve_ode -> observe_endpoint`` with no restart blend), which is what
+    every pre-GAP-39 run used.
 
     Returns ``(pkl_path, wall_clock_s, mols_list)``.
     """
@@ -612,19 +621,23 @@ def _run_framework(
             # without the Engine's ledger / phase-state bookkeeping.
             trace = adapter.solve_ode(bundle, condition, seed=int(seed) + sample_index * 1000 + r)
             endpoint = adapter.observe_endpoint(trace, bundle)
-            # Chain the endpoint into the next round. We intentionally
-            # do NOT call ``apply_restart_distribution`` here because
-            # the FlowMol3 channel-aware blender has a known size-
-            # mismatch bug when molecule sizes differ across rounds
-            # (``_channel_aware_blend`` at flowmol3_v2_adapter.py:521
-            # mis-pads fresh_e when ``n_fresh > n_prior``). The chain
-            # below still demonstrates the multi-round re-inference
-            # loop via the protocol surface (build_initial_state →
-            # solve_ode → observe_endpoint) without the restart blend
-            # in the inner loop; the round-over-round state is the
-            # observed endpoint itself. A future turn can wire the
-            # restart blend once the size-mismatch bug is patched.
-            bundle = endpoint
+            # Chain the endpoint into the next round.
+            #
+            # GAP-39 (2026-10-15): the size-mismatch bug that used to
+            # block this call (``_channel_aware_blend`` mis-padding
+            # ``fresh_e`` when ``n_fresh > n_prior``) was patched in
+            # Wave 30 Agent B (flowmol3_v2_adapter.py:1299), so the real
+            # restart blend is now safe to wire. With ``--restart-blend``
+            # the round-over-round state is the adapter's
+            # ``apply_restart_distribution`` blend over all three channels
+            # (coordinate + charge + raw_pair) — the FlowA restart-blend
+            # itself — rather than the observed endpoint. The default
+            # (``restart_blend=False``) preserves the legacy endpoint
+            # chaining byte-identically.
+            if restart_blend:
+                bundle = adapter.apply_restart_distribution(endpoint, policy)
+            else:
+                bundle = endpoint
             final_trace = trace
         if glue is None or final_trace is None:
             mols.append(None)
@@ -1088,6 +1101,20 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
             "(byte-stable)."
         ),
     )
+    parser.add_argument(
+        "--restart-blend",
+        dest="restart_blend",
+        action="store_true",
+        default=False,
+        help=(
+            "GAP-39: wire the adapter's real apply_restart_distribution into "
+            "the framework arm's inner loop (all three channels: coordinate + "
+            "charge + raw_pair) instead of chaining the observed endpoint. The "
+            "size-mismatch bug that previously blocked this is fixed "
+            "(flowmol3_v2_adapter.py:1299). Default off = legacy endpoint "
+            "chaining (byte-stable)."
+        ),
+    )
     args = parser.parse_args(argv)
     if args.compute_flowmol3_paper_metrics is None:
         args.compute_flowmol3_paper_metrics = _upstream_paper_metrics_available()
@@ -1177,6 +1204,7 @@ def main(argv: list[str] | None = None) -> int:
         seed=int(args.seed),
         output_dir=output_dir,
         shared_prior=bool(args.shared_prior),
+        restart_blend=bool(args.restart_blend),
     )
     print(
         f"[run_sota_flowmol3] framework: {framework_pkl} "
@@ -1331,6 +1359,8 @@ def main(argv: list[str] | None = None) -> int:
         "per_round_nfe": int(per_round_nfe),
         "weights": str(args.weights) if args.weights else "synthetic",
         "device": str(args.device),
+        "shared_prior": bool(args.shared_prior),
+        "restart_blend": bool(args.restart_blend),
         "model_metadata": {
             str(k): (list(v) if isinstance(v, tuple) else v)
             for k, v in dict(getattr(adapter, "model_metadata", {}) or {}).items()

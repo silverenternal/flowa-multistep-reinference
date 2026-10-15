@@ -284,6 +284,7 @@ not_in_nav: |
   audit/gap37-statistical-power.md
   audit/gap36-ablation-matrix.md
   audit/gap38-shared-prior-thorough.md
+  audit/gap39-flowmol3-real-restart-blend.md
   audit/repo-docs-maintenance.md
   audit/readiness-verifier-repoint.md
   audit/repo-docs-maintenance-2.md

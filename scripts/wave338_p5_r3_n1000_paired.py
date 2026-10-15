@@ -100,9 +100,74 @@ def _framework_perturb_prior(adapter, bundle, *, perturbation_sigma: float, seed
         adapter._native_states[digest] = entry
 
 
+def _make_real_restart_policy(*, seed: int, memory_fraction: float):
+    """Build a ``FinalRestartPolicy`` with a flat per-channel memory fraction.
+
+    ``beta_by_channel`` is ``1 - memory_fraction`` on each of the three
+    FlowMol3 channels; ``beta_from_schedule=False`` preserves that value
+    verbatim (no cosine re-override). Mirrors the policy shape the SOTA
+    harness builds, but with a single scalar memory fraction instead of the
+    cosine schedule so the A/B has one clean knob.
+    """
+    from dataclasses import replace as _dc_replace
+
+    from adaptive_reflow.contracts import (
+        ArtifactHash,
+        FactorValue,
+        FinalRestartPolicy,
+        LedgerRowId,
+        PolicyId,
+        RunId,
+        hash_policy_hash,
+    )
+    from adaptive_reflow.universal.state import ChannelName
+
+    m = max(0.0, min(1.0, float(memory_fraction)))
+    channels = (
+        ChannelName("coordinate"),
+        ChannelName("charge"),
+        ChannelName("raw_pair"),
+    )
+    beta = FactorValue(1.0 - m)
+    policy = FinalRestartPolicy(
+        policy_id=PolicyId(f"wave338-real-restart-{seed}"),
+        writer_id="inference.adaptive_reflow",
+        run_id=RunId("wave338-real-restart"),
+        target_round=0,
+        outer_cycle_id=0,
+        beta_by_channel={c: beta for c in channels},
+        alpha_by_channel={c: FactorValue(1.0) for c in channels},
+        fresh_noise_floor_by_channel={c: FactorValue(0.0) for c in channels},
+        schedule_sample=None,
+        freeze_admission_by_channel={c: True for c in channels},
+        ledger_row_id=LedgerRowId(f"wave338-real-restart-{seed}"),
+        policy_hash=ArtifactHash(""),
+        created_at_round=0,
+        beta_from_schedule=False,
+    )
+    return _dc_replace(policy, policy_hash=hash_policy_hash(policy))
+
+
+def _apply_real_restart_blend(adapter, bundle, *, memory_fraction: float, seed: int):
+    """Apply the adapter's real ``apply_restart_distribution`` (GAP-39).
+
+    Replaces the x-only additive-Gaussian proxy (:func:`_framework_perturb_prior`)
+    with the actual FlowA restart-blend math: the adapter blends the prior's
+    ``(x, a, c, e)`` with a fresh draw via ``_channel_aware_blend`` over all
+    three FlowMol3 channels (coordinate + charge + raw_pair). The returned
+    bundle carries the blended native state, which the subsequent
+    ``solve_ode(..., n_molecules=...)`` tiles across the batch — so this is a
+    genuine prior-side restart-blend, not a coordinate-only perturbation.
+    """
+    policy = _make_real_restart_policy(seed=seed, memory_fraction=memory_fraction)
+    return adapter.apply_restart_distribution(bundle, policy)
+
+
 def _generate_arm(*, arm_name, perturbation_sigma, seed_base, n_total, nfe,
                   nfe_batch, weights_path, upstream_repo, device,
-                  shared_prior: bool = False):
+                  shared_prior: bool = False,
+                  real_restart_blend: bool = False,
+                  restart_memory_fraction: float = 0.5):
     """Generate N=1000 SDF molecules for one arm via the upstream path.
 
     ``shared_prior`` (GAP-37): when True the per-batch ``batch_id`` omits the
@@ -147,7 +212,12 @@ def _generate_arm(*, arm_name, perturbation_sigma, seed_base, n_total, nfe,
             shared_prior=shared_prior,
         )
         bundle = _build_canonical_prior(adapter, batch_id)
-        if perturbation_sigma > 0.0:
+        if real_restart_blend:
+            bundle = _apply_real_restart_blend(
+                adapter, bundle,
+                memory_fraction=restart_memory_fraction, seed=seed,
+            )
+        elif perturbation_sigma > 0.0:
             _framework_perturb_prior(
                 adapter, bundle, perturbation_sigma=perturbation_sigma, seed=seed,
             )
@@ -233,7 +303,8 @@ def _compute_metrics(sampled_mols, *, arm_name, seed_base):
 
 def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
                   upstream_repo, device, out_dir, baseline_nfe=None,
-                  shared_prior: bool = False) -> dict:
+                  shared_prior: bool = False, real_restart_blend: bool = False,
+                  restart_memory_fraction: float = 0.5) -> dict:
     """Run baseline + framework arms for one seed and return the paired dict.
 
     ``baseline_nfe`` (GAP-12 tuned-baseline extension) lets the *baseline* arm
@@ -255,6 +326,8 @@ def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
         seed_base=seed_base, n_total=n_total, nfe=nfe, nfe_batch=nfe_batch,
         weights_path=weights_path, upstream_repo=upstream_repo, device=device,
         shared_prior=shared_prior,
+        real_restart_blend=real_restart_blend,
+        restart_memory_fraction=restart_memory_fraction,
     )
     framework_metrics = _compute_metrics(framework_raw["_sampled_mols"],
                                         arm_name="framework", seed_base=seed_base)
@@ -280,6 +353,9 @@ def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
         "n_batches": int(n_total // nfe_batch),
         "seed_base": int(seed_base),
         "device": str(device),
+        "shared_prior": bool(shared_prior),
+        "real_restart_blend": bool(real_restart_blend),
+        "restart_memory_fraction": float(restart_memory_fraction),
         "paper_targets": PAPER_TARGETS,
         "baseline": {
             "perturbation_sigma": PERTURBATION_SIGMA_BASELINE,
@@ -360,6 +436,15 @@ def main(argv: list[str] | None = None) -> int:
                         "(arm-independent batch_id) so the baseline-vs-framework "
                         "comparison is a true paired perturbation. Default off "
                         "(preserves the canonical arm-specific batch_id).")
+    p.add_argument("--real-restart-blend", action="store_true",
+                   help="GAP-39: framework arm uses the adapter's real "
+                        "apply_restart_distribution (all three channels: "
+                        "coordinate + charge + raw_pair) instead of the x-only "
+                        "additive-Gaussian proxy. Default off = legacy proxy "
+                        "(byte-stable).")
+    p.add_argument("--restart-memory-fraction", type=float, default=0.5,
+                   help="GAP-39: per-channel memory fraction for "
+                        "--real-restart-blend (beta = 1 - m). Default 0.5.")
     p.add_argument("--output-dir", type=Path,
                    default=REPO_ROOT / "verification_outputs")
     args = p.parse_args(argv)
@@ -381,6 +466,8 @@ def main(argv: list[str] | None = None) -> int:
             device=str(args.device),
             out_dir=out_dir,
             shared_prior=bool(args.shared_prior),
+            real_restart_blend=bool(args.real_restart_blend),
+            restart_memory_fraction=float(args.restart_memory_fraction),
         )
         per_seed.append(sweep)
 
@@ -462,6 +549,9 @@ def main(argv: list[str] | None = None) -> int:
         ),
         "nfe_batch": int(args.nfe_batch),
         "device": str(args.device),
+        "shared_prior": bool(args.shared_prior),
+        "real_restart_blend": bool(args.real_restart_blend),
+        "restart_memory_fraction": float(args.restart_memory_fraction),
         "per_seed": per_seed,
         "paired_summary": paired,
         "honest_disclosure": (

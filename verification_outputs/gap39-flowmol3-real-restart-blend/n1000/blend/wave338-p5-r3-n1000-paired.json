@@ -1,0 +1,222 @@
+{
+  "schema_version": "1.0.0",
+  "wave": "338 P5",
+  "kind": "R3_n1000_paired_3seed",
+  "n_seeds_requested": 3,
+  "n_seeds_completed": 3,
+  "n_total_per_arm": 1000,
+  "nfe": 250,
+  "baseline_nfe": 250,
+  "nfe_batch": 100,
+  "device": "cuda:0",
+  "shared_prior": false,
+  "real_restart_blend": true,
+  "restart_memory_fraction": 0.5,
+  "per_seed": [
+    {
+      "schema_version": "1.0.0",
+      "sweep_id": "wave338_p5_r3_n1000_paired_seed42",
+      "model": "flowmol3",
+      "checkpoint": "/home/hugo/codes/flowa-multistep-reinference/data/flowmol3/weights_real/checkpoints/last.ckpt",
+      "n_total_per_arm": 1000,
+      "nfe": 250,
+      "baseline_nfe": 250,
+      "nfe_batch": 100,
+      "n_batches": 10,
+      "seed_base": 42,
+      "device": "cuda:0",
+      "shared_prior": false,
+      "real_restart_blend": true,
+      "restart_memory_fraction": 0.5,
+      "paper_targets": {
+        "validity_pct": 0.999,
+        "pb_validity_pct": 0.919,
+        "fg_dev": 0.27,
+        "ood_ring_rate": 0.1
+      },
+      "baseline": {
+        "perturbation_sigma": 0.0,
+        "metrics": {
+          "validity_pct": 1.0,
+          "pb_validity_pct": 0.5987963891675026,
+          "fg_dev": 0.6051856139617,
+          "ood_ring_rate": 0.013039117352056168,
+          "wallclock_s": 37.248
+        },
+        "n_sampled": 997,
+        "n_smiles": 1000,
+        "n_errors": 3,
+        "wallclock_sampling_s": 236.318,
+        "wallclock_metrics_s": 37.248,
+        "errors_sample": [
+          "dropped_smiles:[H]C([H])([H])C([H])([H])SC([H])([H])C([H])([H])C([H])([H])N(=O)[O-]",
+          "dropped_smiles:[H]C([H])([H])C1(C([H])([H])[H])SBr1",
+          "dropped_smiles:[H]C([H])([H])C1(C([H])([H])[H])SBr1"
+        ]
+      },
+      "framework": {
+        "perturbation_sigma": 0.05,
+        "metrics": {
+          "validity_pct": 1.0,
+          "pb_validity_pct": 0.615,
+          "fg_dev": 0.5572937732054588,
+          "ood_ring_rate": 0.005,
+          "wallclock_s": 35.323
+        },
+        "n_sampled": 1000,
+        "n_smiles": 1000,
+        "n_errors": 0,
+        "wallclock_sampling_s": 178.803,
+        "wallclock_metrics_s": 35.323,
+        "errors_sample": []
+      },
+      "timestamp": "2026-10-15T23:52:46+0800",
+      "paired_diff_fg_dev": -0.0478918407562412,
+      "verdict": "framework_wins"
+    },
+    {
+      "schema_version": "1.0.0",
+      "sweep_id": "wave338_p5_r3_n1000_paired_seed43",
+      "model": "flowmol3",
+      "checkpoint": "/home/hugo/codes/flowa-multistep-reinference/data/flowmol3/weights_real/checkpoints/last.ckpt",
+      "n_total_per_arm": 1000,
+      "nfe": 250,
+      "baseline_nfe": 250,
+      "nfe_batch": 100,
+      "n_batches": 10,
+      "seed_base": 43,
+      "device": "cuda:0",
+      "shared_prior": false,
+      "real_restart_blend": true,
+      "restart_memory_fraction": 0.5,
+      "paper_targets": {
+        "validity_pct": 0.999,
+        "pb_validity_pct": 0.919,
+        "fg_dev": 0.27,
+        "ood_ring_rate": 0.1
+      },
+      "baseline": {
+        "perturbation_sigma": 0.0,
+        "metrics": {
+          "validity_pct": 1.0,
+          "pb_validity_pct": 0.6202020202020202,
+          "fg_dev": 0.7875437702930053,
+          "ood_ring_rate": 0.03535353535353535,
+          "wallclock_s": 35.01
+        },
+        "n_sampled": 990,
+        "n_smiles": 1000,
+        "n_errors": 5,
+        "wallclock_sampling_s": 140.036,
+        "wallclock_metrics_s": 35.01,
+        "errors_sample": [
+          "dropped_smiles:[H]C([H])([H])OP(=O)(=O)C([H])([H])C([H])([H])[H]",
+          "dropped_smiles:[H]C([H])(Cl)C12S[SH]1#Cl2",
+          "dropped_smiles:[H]C(Cl)(Cl)C12[PH]#[SH]1S2",
+          "dropped_smiles:[H]C([H])(Cl)C1(Cl)Cl#Cl1",
+          "dropped_smiles:[H]OP(=O)(=O)N([H])[H]"
+        ]
+      },
+      "framework": {
+        "perturbation_sigma": 0.05,
+        "metrics": {
+          "validity_pct": 1.0,
+          "pb_validity_pct": 0.715,
+          "fg_dev": 0.5768465898120667,
+          "ood_ring_rate": 0.004,
+          "wallclock_s": 34.096
+        },
+        "n_sampled": 1000,
+        "n_smiles": 1000,
+        "n_errors": 0,
+        "wallclock_sampling_s": 171.917,
+        "wallclock_metrics_s": 34.096,
+        "errors_sample": []
+      },
+      "timestamp": "2026-10-15T23:59:08+0800",
+      "paired_diff_fg_dev": -0.21069718048093855,
+      "verdict": "framework_wins"
+    },
+    {
+      "schema_version": "1.0.0",
+      "sweep_id": "wave338_p5_r3_n1000_paired_seed44",
+      "model": "flowmol3",
+      "checkpoint": "/home/hugo/codes/flowa-multistep-reinference/data/flowmol3/weights_real/checkpoints/last.ckpt",
+      "n_total_per_arm": 1000,
+      "nfe": 250,
+      "baseline_nfe": 250,
+      "nfe_batch": 100,
+      "n_batches": 10,
+      "seed_base": 44,
+      "device": "cuda:0",
+      "shared_prior": false,
+      "real_restart_blend": true,
+      "restart_memory_fraction": 0.5,
+      "paper_targets": {
+        "validity_pct": 0.999,
+        "pb_validity_pct": 0.919,
+        "fg_dev": 0.27,
+        "ood_ring_rate": 0.1
+      },
+      "baseline": {
+        "perturbation_sigma": 0.0,
+        "metrics": {
+          "validity_pct": 1.0,
+          "pb_validity_pct": 0.4544544544544545,
+          "fg_dev": 0.5832365450689583,
+          "ood_ring_rate": 0.014014014014014014,
+          "wallclock_s": 47.265
+        },
+        "n_sampled": 999,
+        "n_smiles": 1000,
+        "n_errors": 1,
+        "wallclock_sampling_s": 216.84,
+        "wallclock_metrics_s": 47.265,
+        "errors_sample": [
+          "dropped_smiles:[H]C([H])=C([H])C([H])([H])N([H])C(=O)C1(C([H])([H])[H])SCl1"
+        ]
+      },
+      "framework": {
+        "perturbation_sigma": 0.05,
+        "metrics": {
+          "validity_pct": 1.0,
+          "pb_validity_pct": 0.7662988966900702,
+          "fg_dev": 0.6775550234711955,
+          "ood_ring_rate": 0.003009027081243731,
+          "wallclock_s": 30.704
+        },
+        "n_sampled": 997,
+        "n_smiles": 1000,
+        "n_errors": 3,
+        "wallclock_sampling_s": 196.255,
+        "wallclock_metrics_s": 30.704,
+        "errors_sample": [
+          "dropped_smiles:[H]N(C(=O)C1(C([H])([H])[H])SCl1)C([H])([H])C([H])([H])[H]",
+          "dropped_smiles:[H]OP(=O)(=O)N([H])[H]",
+          "dropped_smiles:[H]OP(=O)(=O)O[H]"
+        ]
+      },
+      "timestamp": "2026-10-16T00:07:20+0800",
+      "paired_diff_fg_dev": 0.09431847840223717,
+      "verdict": "baseline_wins"
+    }
+  ],
+  "paired_summary": {
+    "n_seeds": 3,
+    "mean_diff": -0.05475684761164753,
+    "sd_diff": 0.15262366880771813,
+    "se_diff": 0.08811731627084436,
+    "t_statistic": -0.6214084805231987,
+    "df": 2,
+    "p_value_raw": 0.5977199996344332,
+    "ci_95_low": -0.4338950590025927,
+    "ci_95_high": 0.32438136377929766,
+    "ci_95_t_crit": 4.302652729749462,
+    "cohens_d_z": -0.3587703535067851,
+    "test_type": "paired_t_test_across_seeds",
+    "alpha_bonferroni": 0.0071428571428571435,
+    "bonf_sig": false
+  },
+  "honest_disclosure": "Wave 338 P5 R3 N=1000 paired sweep at 3 seeds (42, 43, 44). The DGL fix (Wave 109.C \u00a76.2 repeat_interleave per-mol prior tiling + Wave 338 P2 _pad_e dimension fix in flowmol3_v2_adapter._solve_ode_upstream_batch) made the batched n_molecules=100 path operational at NFE=250. Each arm runs 10 batches \u00d7 100 mols via the upstream FlowMol.sample() call.",
+  "timestamp": "2026-10-16T00:07:20+0800"
+}
