@@ -1,0 +1,4 @@
+027a0f013658f4e725987f0a8c53a5ca  /tmp/gap40-pilot/legacy/framework.fasta
+027a0f013658f4e725987f0a8c53a5ca  /tmp/gap40-pilot/car/framework.fasta
+190e34823f5e1eca24e264ac66cf23a4  /tmp/gap40-pilot/n200_legacy/framework.fasta
+efb9f375d54651960a99c9b392483979  /tmp/gap40-pilot/n200_car/framework.fasta

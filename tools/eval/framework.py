@@ -115,6 +115,8 @@ def _resolve_adapter(
     force_mode: str = "synthetic",
     restart_min_nfe: int | None = None,
     nfe_budget: int | None = None,
+    classifier_aware_restart: bool = False,
+    classifier_alpha: float = 1.0,
 ) -> tuple[Any, str]:
     """Resolve the adapter factory for ``model``.
 
@@ -156,6 +158,12 @@ def _resolve_adapter(
     ``kind=synthetic`` — no real upstream forward, no SMILES cache,
     chemistry composite pinned to 0
     (docs/audit/wave71-phase3-sweep.md §4).
+
+    ``classifier_aware_restart`` / ``classifier_alpha`` (GAP-40) are
+    forwarded to the factory only when it accepts them (only
+    ``default_lineageflow_adapter`` does as of GAP-40). Both default to
+    the pre-GAP-40 no-op so every existing caller keeps its byte-stable
+    call shape.
     """
     spec = DOWNSTREAM_METRICS[model]
     factory_path = spec["adapter_factory"]
@@ -207,6 +215,18 @@ def _resolve_adapter(
             kwargs["restart_min_nfe"] = int(restart_min_nfe)
         if nfe_budget is not None and "nfe_budget" in sig_params:
             kwargs["nfe_budget"] = int(nfe_budget)
+        # GAP-40 (additive, default off) — thread the LineageFlow
+        # classifier-aware restart lever into the factory when it
+        # accepts the kwarg. Only ``default_lineageflow_adapter``
+        # does; every other factory keeps its byte-stable call shape.
+        # ``classifier_aware_restart=False`` (default) is a no-op.
+        if (
+            classifier_aware_restart
+            and "classifier_aware_restart" in sig_params
+        ):
+            kwargs["classifier_aware_restart"] = True
+            if "classifier_alpha" in sig_params:
+                kwargs["classifier_alpha"] = float(classifier_alpha)
         # Wave 73 Agent 3 — close GAP-4 (docs/audit/wave71-phase3-sweep.md §4).
         # The v2 FlowMol3 factory sets ``use_upstream=True`` for
         # real/auto (Wave 71 GAP-1) but defaults ``weights_path=None``,

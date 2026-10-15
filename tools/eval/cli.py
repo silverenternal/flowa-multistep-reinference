@@ -314,6 +314,31 @@ def build_argparser() -> argparse.ArgumentParser:
             "docs/audit/wave275-p4-r6-proposal.md §2.1."
         ),
     )
+    # GAP-40 — LineageFlow classifier-aware restart lever (additive,
+    # default off). Forwarded to ``_resolve_adapter``; only
+    # ``default_lineageflow_adapter`` consumes it. Default OFF keeps the
+    # scalar restart-blend byte-for-byte.
+    p.add_argument(
+        "--classifier-aware-restart", action="store_true",
+        help=(
+            "GAP-40: activate the LineageFlow adapter's per-position "
+            "classifier-aware restart policy "
+            "(``LineageFlowClassifierAwareRestart``) in the framework "
+            "arm's ``apply_restart_distribution``. Only effective for "
+            "``--model lineageflow``. Default OFF reproduces the scalar "
+            "``m = 1 - beta`` restart-blend byte-for-byte. See "
+            "docs/audit/gap40-lineageflow-classifier-aware-restart.md."
+        ),
+    )
+    p.add_argument(
+        "--classifier-alpha", type=float, default=1.0,
+        help=(
+            "GAP-40: bias strength for the classifier-aware restart "
+            "per-position memory vector. Only effective with "
+            "``--classifier-aware-restart``. Default 1.0 is the "
+            "policy's own default."
+        ),
+    )
     return p
 
 
@@ -442,6 +467,14 @@ def main(argv: list[str] | None = None) -> int:
                 ),
                 tier_aware_baseline_metrics_jsonl=(
                     getattr(args, "tier_aware_baseline_metrics_jsonl", None)
+                ),
+                # GAP-40 — LineageFlow classifier-aware restart lever
+                # (additive; default False = pre-GAP-40 scalar blend).
+                classifier_aware_restart=bool(
+                    getattr(args, "classifier_aware_restart", False),
+                ),
+                classifier_alpha=float(
+                    getattr(args, "classifier_alpha", 1.0),
                 ),
             )
             cells.append(cell)

@@ -1,0 +1,74 @@
+{
+  "gap": "GAP-40",
+  "date": "2026-10-16",
+  "base_commit": "b65406b1",
+  "config": {
+    "driver": "tools/gen_lineageflow_n1000_fastas.py",
+    "n_per_arm": 200,
+    "seed": 42,
+    "nfe": 10,
+    "n_rounds": 3,
+    "restart_min_nfe": 5,
+    "effective_n_rounds": 3,
+    "upstream_eval_len_bias": "short",
+    "temperature": 1.0,
+    "force_mode": "auto",
+    "device": "cuda:0"
+  },
+  "canonical_config_byte_stability": {
+    "note": "at canonical --restart-min-nfe 20 the gate degenerates n_rounds to 1; lever is inactive",
+    "legacy_framework_md5": "027a0f013658f4e725987f0a8c53a5ca",
+    "car_framework_md5": "027a0f013658f4e725987f0a8c53a5ca",
+    "identical": true
+  },
+  "gate_open_ab": {
+    "baseline": {
+      "total_hits": 37,
+      "records_ge1": 30,
+      "hits_per_record": 0.185
+    },
+    "legacy": {
+      "total_hits": 38,
+      "records_ge1": 32,
+      "hits_per_record": 0.19
+    },
+    "classifier_aware": {
+      "total_hits": 44,
+      "records_ge1": 42,
+      "hits_per_record": 0.22
+    },
+    "car_vs_legacy": {
+      "mwu_p": 0.11739448695647792,
+      "fisher_ge1_p": 0.12319018009961416
+    },
+    "car_vs_baseline": {
+      "mwu_p": 0.07262455034692608,
+      "fisher_ge1_p": 0.07596362467348292
+    },
+    "legacy_vs_baseline": {
+      "mwu_p": 0.3957281083416081
+    },
+    "per_family_hits": {
+      "baseline": {
+        "PF00005.27": 6,
+        "PF00072.24": 11,
+        "PF00183.19": 5,
+        "PF02517.18": 15
+      },
+      "legacy": {
+        "PF00005.27": 8,
+        "PF00072.24": 13,
+        "PF00183.19": 7,
+        "PF02517.18": 10
+      },
+      "classifier_aware": {
+        "PF00005.27": 13,
+        "PF00072.24": 9,
+        "PF00183.19": 13,
+        "PF02517.18": 9
+      }
+    },
+    "framework_fallback_per_family_count": {},
+    "baseline_byte_stable_across_arms": true
+  }
+}

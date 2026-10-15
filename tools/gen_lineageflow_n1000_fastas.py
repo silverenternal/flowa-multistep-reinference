@@ -425,7 +425,13 @@ def _apply_sensitivity_patches(*, beta_base: float, nfe_ref: int) -> None:
     _PATCHES_APPLIED = True
 
 
-def _build_lineageflow_adapter(family_id: str, seed: int) -> Any | None:
+def _build_lineageflow_adapter(
+    family_id: str,
+    seed: int,
+    *,
+    classifier_aware_restart: bool = False,
+    classifier_alpha: float = 1.0,
+) -> Any | None:
     """Lazy-construct a synthetic-mode :class:`LineageFlowAdapter`.
 
     The adapter defaults to ``force_mode="auto"``, which falls back
@@ -447,6 +453,16 @@ def _build_lineageflow_adapter(family_id: str, seed: int) -> Any | None:
     seed offset is layered onto the synthetic RNG via
     ``seed_offset=int(seed)`` so each adapter instance is keyed to a
     deterministic per-family seed stream.
+
+    GAP-40 (additive, default off) — ``classifier_aware_restart`` and
+    ``classifier_alpha`` are forwarded to
+    :class:`LineageFlowAdapter` so the framework arm's
+    ``apply_restart_distribution`` can use the adapter's real
+    per-position classifier-aware restart policy
+    (:class:`LineageFlowClassifierAwareRestart`,
+    ``adaptive_reflow/adapters/lineageflow.py:925``) instead of the
+    scalar ``m = 1 - beta`` blend. Defaults (``False`` / ``1.0``)
+    reproduce the pre-GAP-40 scalar-blend path byte-for-byte.
     """
     try:
         from adaptive_reflow.adapters.lineageflow import (  # type: ignore
@@ -459,6 +475,11 @@ def _build_lineageflow_adapter(family_id: str, seed: int) -> Any | None:
             family_id=family_id,
             num_steps=NFE_PER_RECORD,
             solver="euler",
+            # GAP-40 — additive opt-in. ``False`` (default) keeps the
+            # scalar restart-blend; ``True`` activates the adapter's
+            # per-position classifier-aware memory vector.
+            classifier_aware_restart=bool(classifier_aware_restart),
+            classifier_alpha=float(classifier_alpha),
             # Wave 349 P4 — switch from hardcoded ``force_mode="synthetic"`` to ``"auto"`` so the
             # LineageFlowAdapter picks up the real PyTorch ESM-2 + flow head (downloaded from
             # facebook/esm2_t33_650M_UR50D on first call). With Wave 349 P4 GPU dispatch the model
@@ -638,6 +659,8 @@ def _write_framework_arm(
     framework_rng: random.Random,
     temperature: float = 1.0,
     prior_mix: float = 0.0,
+    classifier_aware_restart: bool = False,
+    classifier_alpha: float = 1.0,
 ) -> tuple[dict[str, int], dict[str, int]]:
     """Write the framework arm: drives :class:`LineageFlowAdapter` for each record.
 
@@ -658,6 +681,12 @@ def _write_framework_arm(
     (per-position ``int(v) % 20`` argmax) is independent of
     ``prior_mix``; the flag only affects the bare-RNG fallback path
     (and the baseline arm via :func:`_write_baseline_arm`).
+
+    GAP-40 (additive, default off) — ``classifier_aware_restart`` /
+    ``classifier_alpha`` are forwarded to
+    :func:`_build_lineageflow_adapter` so the framework arm can use the
+    adapter's real per-position classifier-aware restart policy.
+    Defaults reproduce the pre-GAP-40 scalar blend byte-for-byte.
     """
     per_family_count: dict[str, int] = {}
     fallback_count: dict[str, int] = {}
@@ -668,7 +697,14 @@ def _write_framework_arm(
     # solve_ode call is keyed by a per-record seed offset).
     adapters: dict[str, Any | None] = {}
     for family_id in family_ids:
-        adapters[family_id] = _build_lineageflow_adapter(family_id, int(seed))
+        adapters[family_id] = _build_lineageflow_adapter(
+            family_id,
+            int(seed),
+            # GAP-40 — additive opt-in; defaults reproduce the
+            # pre-GAP-40 scalar restart-blend byte-for-byte.
+            classifier_aware_restart=bool(classifier_aware_restart),
+            classifier_alpha=float(classifier_alpha),
+        )
 
     with out_path.open("w") as f:
         for i in range(int(n)):
@@ -925,6 +961,38 @@ def main() -> None:
             "``docs/audit/wave275-p4-lineageflow-proposal.md`` §2.2."
         ),
     )
+    # GAP-40 — LineageFlow classifier-aware restart lever (additive,
+    # default off). When enabled the framework arm's
+    # ``apply_restart_distribution`` uses the adapter's real
+    # per-position memory vector derived from the LineageFlow
+    # classifier confidence (``LineageFlowClassifierAwareRestart``,
+    # ``adaptive_reflow/adapters/lineageflow.py:925``) instead of the
+    # scalar ``m = 1 - beta`` blend. Defaults reproduce the pre-GAP-40
+    # scalar path byte-for-byte.
+    p.add_argument(
+        "--classifier-aware-restart",
+        action="store_true",
+        help=(
+            "GAP-40 — activate the adapter's per-position "
+            "classifier-aware restart policy in the framework arm "
+            "(``LineageFlowClassifierAwareRestart``). Default OFF "
+            "reproduces the scalar ``m = 1 - beta`` restart-blend "
+            "byte-for-byte. See "
+            "``docs/audit/gap40-lineageflow-classifier-aware-restart.md``."
+        ),
+    )
+    p.add_argument(
+        "--classifier-alpha",
+        type=float,
+        default=1.0,
+        help=(
+            "GAP-40 — bias strength for the classifier-aware restart "
+            "per-position memory vector (``m_vec[l] = clip(base_m * "
+            "(1 + alpha * (c[l] - mean_c)), 0, 1)``). Only takes "
+            "effect with ``--classifier-aware-restart``. Default 1.0 "
+            "is the policy's own default."
+        ),
+    )
     args = p.parse_args()
 
     # Wave 276 P — resolve effective min/max len via
@@ -1051,6 +1119,18 @@ def main() -> None:
         "beta_base": float(BETA_BASE),
         "restart_min_nfe": int(RESTART_MIN_NFE),
         "nfe_ref": int(NFE_REF),
+        # GAP-40 — honest disclosure of the restart-blend gate outcome.
+        # When ``nfe < restart_min_nfe`` the framework arm degenerates
+        # to a single ``solve_ode`` pass (no
+        # ``apply_restart_distribution`` chain), so neither the scalar
+        # nor the classifier-aware restart-blend fires. Recorded here so
+        # the audit trail can distinguish a real multi-round run from
+        # the gated single-pass degeneracy. At the canonical R1 config
+        # (``--nfe 10``, default ``--restart-min-nfe 20``) this is 1.
+        "effective_n_rounds": (
+            int(N_ROUNDS) if int(NFE_PER_RECORD) >= int(RESTART_MIN_NFE)
+            else 1
+        ),
         # Wave 338 Phase 2 — R6 scheduler family forwarded to
         # ``_solve_framework``. Captured so the per-cell audit doc can
         # correlate FASTA bytes to the scheduler-driven NFE allocation
@@ -1071,6 +1151,10 @@ def main() -> None:
         # interpolation (0.0=byte-stable, 1.0=uniform-AA SUPPORTS).
         "upstream_eval_len_bias": str(args.upstream_eval_len_bias),
         "lineageflow_prior_mix": float(effective_prior_mix),
+        # GAP-40 — classifier-aware restart lever capture. ``False``
+        # (default) preserves the pre-GAP-40 scalar restart-blend.
+        "classifier_aware_restart": bool(args.classifier_aware_restart),
+        "classifier_alpha": float(args.classifier_alpha),
     }
 
     # ---- Baseline arm (bare RNG, preserved byte-shape) -----------------
@@ -1098,6 +1182,10 @@ def main() -> None:
         framework_rng=framework_rng,
         temperature=float(args.temperature),
         prior_mix=float(effective_prior_mix),
+        # GAP-40 — additive opt-in; default False reproduces the
+        # pre-GAP-40 scalar restart-blend byte-for-byte.
+        classifier_aware_restart=bool(args.classifier_aware_restart),
+        classifier_alpha=float(args.classifier_alpha),
     )
     manifest["framework_per_family_count"] = dict(framework_counts)
     manifest["framework_fallback_per_family_count"] = dict(fallback_counts)

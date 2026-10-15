@@ -1,0 +1,190 @@
+# GAP-40 — wiring the LineageFlow classifier-aware restart into the R1/K4/K5 framework arm
+
+**Date:** 2026-10-16
+**Author:** GAP-40 agent (USER AUTHORIZED, NO PUSH)
+**Base commit:** `b65406b1` (GAP-39 FlowMol3 real restart-blend)
+**Scope:** the user directive — *"要扭转这些差一点点 的指标只需要改几处关键代码"*, and
+the user's explicit selection of the **LineageFlow `classifier_aware_restart`**
+lever from the dormant-lever menu.
+**Frozen surfaces:** untouched (`docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.md`,
+`docs/drafts/paper-A-final.*`, `tnnls_submission/**`).
+**Vendored upstream:** untouched (`data/**` byte-identical).
+
+---
+
+## 0. TL;DR
+
+| Item | Result |
+|---|---|
+| Defect class | the LineageFlow adapter ships a real per-position classifier-aware restart policy (`LineageFlowClassifierAwareRestart`, `adaptive_reflow/adapters/lineageflow.py:925`) but **no headline driver enables it** — the symbol appeared only inside the adapter module |
+| Fix (additive, default off) | `--classifier-aware-restart` / `--classifier-alpha` on `tools/gen_lineageflow_n1000_fastas.py` (R1/K4/K5 driver) + `classifier_aware_restart`/`classifier_alpha` threaded through `default_lineageflow_adapter` → `tools/eval/framework.py::_resolve_adapter` → `tools/eval/sweep.py` → `tools/eval/cli.py` |
+| **Load-bearing structural finding** | at the **canonical R1 config** (`--nfe 10`, default `--restart-min-nfe 20`) the restart-blend gate degenerates `n_rounds` to **1** (`tools/gen_lineageflow_n1000_fastas.py:546`). The framework arm is a **single `solve_ode` pass** — neither the scalar nor the classifier-aware blend fires. The lever is therefore **byte-identical** to legacy at canonical config |
+| Gate-open A/B (N=200, seed 42, `--restart-min-nfe 5`) | baseline 37 → legacy 38 → **classifier-aware 44** hits; `car vs legacy` MWU `p=0.117`, Fisher `p=0.123`; `car vs baseline` `p=0.073`. Directional win, **not significant** at N=200 single seed; **family-dependent** (wins 2 of 4 families) |
+| Net | The lever is wired, additive, default-off, and **load-bearing once the gate is open**. It does **not** flip R1 at canonical config because the canonical config never runs the blend. No frozen surface moved. |
+
+---
+
+## 1. The dormant lever
+
+`LineageFlowAdapter.__init__` accepts `classifier_aware_restart: bool = False`
+(`lineageflow.py:1627`). When set, `apply_restart_distribution` replaces the
+scalar `m = 1 - beta` restart blend with a **per-position memory vector**
+`m_vec[l]` derived from a per-position classifier-confidence vector
+(`lineageflow.py:2052-2073`):
+
+```
+m_vec[l] = clip(base_m * (1 + alpha * (c[l] - mean_c)), 0, 1)
+```
+
+Confidence `c[l]` comes from the upstream 657M `LineageFlowClassifier` when
+reachable, else from the adapter-internal max-probability proxy
+(`_lineageflow_classifier_confidence_proxy`). The bias is centred on the mean
+confidence, so it is mass-preserving: when all positions share the same
+confidence the policy **reduces exactly to the scalar blend** (documented at
+`lineageflow.py:978-979`).
+
+Before GAP-40 the symbol `classifier_aware_restart` appeared **only** inside
+`adaptive_reflow/adapters/lineageflow.py` — no driver, tool, or reproduce script
+referenced it. The canonical factory `default_lineageflow_adapter`
+(`lineageflow.py:3006`) did not expose it either.
+
+## 2. The fix (additive, default off)
+
+### 2.1 Canonical R1/K4/K5 driver — `tools/gen_lineageflow_n1000_fastas.py`
+
+* `_build_lineageflow_adapter(..., classifier_aware_restart=False, classifier_alpha=1.0)`
+  forwards both kwargs to the `LineageFlowAdapter` constructor.
+* `_write_framework_arm(..., classifier_aware_restart=False, classifier_alpha=1.0)`
+  threads them to the adapter factory.
+* New CLI flags `--classifier-aware-restart` (store_true) and `--classifier-alpha`
+  (float, default 1.0); both recorded in `manifest.json`.
+* New manifest key `effective_n_rounds` — the honest disclosure of the
+  restart-blend gate outcome (see §3).
+
+### 2.2 Factory + generic driver
+
+* `default_lineageflow_adapter` (`lineageflow.py:3006`) gains
+  `classifier_aware_restart` / `classifier_alpha` kwargs (default off).
+* `tools/eval/framework.py::_resolve_adapter` gains the two params and forwards
+  them **only when the factory signature accepts them** (mirroring the existing
+  `restart_min_nfe` / `nfe_budget` / `weights_path` gating).
+* `tools/eval/sweep.py::_run_cell` / `_run_cell_impl` and `tools/eval/cli.py`
+  thread the flags end-to-end (`--classifier-aware-restart` / `--classifier-alpha`).
+
+Every default is the pre-GAP-40 no-op, so the D.4 regression vectors and all
+existing call shapes are byte-stable.
+
+## 3. The load-bearing structural finding
+
+`tools/gen_lineageflow_n1000_fastas.py:545-547`:
+
+```python
+effective_n_rounds = int(N_ROUNDS)
+if int(NFE_PER_RECORD) < int(RESTART_MIN_NFE):
+    effective_n_rounds = 1
+```
+
+The canonical R1 command (per `docs/audit/wave280-p-r1-sweep-result.md` §2.2) is
+
+```
+tools/gen_lineageflow_n1000_fastas.py --seed <N> --n 1000 \
+  --upstream-eval-len-bias short --nfe 10 --n-rounds 3 --temperature 1.0
+```
+
+with `--restart-min-nfe` at its default **20**. Since `10 < 20`, the gate fires
+and `effective_n_rounds = 1`: the framework arm runs a **single `solve_ode`
+pass with no `apply_restart_distribution` chain at all**.
+
+**Consequence:** the canonical R1 +116% framework-vs-baseline headline is
+produced entirely by the adapter's real ESM-2 forward pass (vs the bare-RNG
+baseline arm). The namesake restart-blend contributes **nothing** to the
+canonical R1 number — neither the scalar blend nor the classifier-aware blend is
+ever invoked. This is the mechanism-level explanation of the standing note that
+*"R1 is init-attributed"*.
+
+Empirical confirmation: at canonical config (N=200, seed 42) the legacy and
+classifier-aware framework arms are **byte-identical**
+(`md5 027a0f013658f4e725987f0a8c53a5ca`), while with the gate open
+(`--restart-min-nfe 5`) they differ.
+
+## 4. Gate-open A/B (N=200, seed 42, `--restart-min-nfe 5`)
+
+Config: `--nfe 10 --n-rounds 3 --restart-min-nfe 5 --upstream-eval-len-bias short
+--temperature 1.0`, N=200 per arm, real-forward (`force_mode="auto"`,
+`framework_fallback_per_family_count == {}`), GPU 0. Hit counter identical to the
+canonical R1 protocol:
+`hmmscan --noali --cpu 32 --tblout <out> --acc Pfam-A.hmm <fasta>`, hits =
+non-comment tblout lines.
+
+### 4.1 Totals
+
+| arm | total hits | records with ≥1 hit | hits / record |
+|---|---:|---:|---:|
+| baseline (bare RNG) | 37 | 30 | 0.1850 |
+| framework — legacy scalar blend | 38 | 32 | 0.1900 |
+| framework — **classifier-aware** | **44** | **42** | **0.2200** |
+
+### 4.2 Per-record statistics
+
+| comparison | Mann-Whitney `p` (greater) | Fisher exact `p` on ≥1 hit |
+|---|---:|---:|
+| classifier-aware vs legacy | 0.1174 | 0.1232 |
+| classifier-aware vs baseline | 0.0726 | 0.0760 |
+| legacy vs baseline | 0.3957 | 0.4451 |
+
+### 4.3 Per-family breakdown (total hits)
+
+| family | baseline | legacy | classifier-aware |
+|---|---:|---:|---:|
+| PF00005.27 | 6 | 8 | **13** |
+| PF00072.24 | 11 | **13** | 9 |
+| PF00183.19 | 5 | 7 | **13** |
+| PF02517.18 | **15** | 10 | 9 |
+
+## 5. Interpretation
+
+1. **The lever works mechanically.** With the gate open, the real
+   (`force_mode="auto"`) path produces a non-trivial per-position memory vector
+   (instrumented `c.std` 0.027–0.033, `m_vec` range 0.457–0.665 around
+   `base_m = 0.5`), and the framework FASTA changes.
+2. **Directionally positive, not significant.** At N=200 single seed the
+   classifier-aware arm gains +6 hits over the legacy scalar blend (+15.8%
+   hits/record; +10 records crossing the ≥1-hit threshold) and +7 over baseline
+   (+18.9%). `p ≈ 0.07–0.12` — a trend, not a result.
+3. **Family-dependent.** The gain is concentrated in PF00005.27 (+5) and
+   PF00183.19 (+6); the classifier-aware arm *loses* ground on PF00072.24 (−4)
+   and PF02517.18 (−1) relative to the legacy blend. The net +6 is therefore not
+   a uniform mechanism uplift.
+4. **The canonical R1 headline is untouched.** Because the canonical config
+   closes the restart-blend gate, GAP-40 changes **no** committed R1 number. To
+   make the lever measurable at all, the gate must be opened
+   (`--restart-min-nfe 5`), which is a *different* configuration from the
+   canonical one.
+
+## 6. Honest scope / what is NOT claimed
+
+* No canonical-scale (N=1000) sweep was run for GAP-40; the bounded N=200
+  single-seed A/B above is the only measurement. A 3-seed N=1000 sweep would be
+  the decisive test and is the natural follow-up.
+* No promotion of any R1/K4/K5/K7 verdict. The cell statuses are unchanged.
+* No claim that opening the gate is "the fix" for R1 — the bounded data show a
+  trend only, and the family split is mixed.
+
+## 7. Acceptance gates
+
+* `tools/verify_submission_readiness.py` — `READY_WITH_SKIPS:mypy_0` (known/accepted)
+* `tools/check_claims_consistency.py` — no drift
+* `tools/check_docs_against_code.py` — OK
+* `pytest tests/test_d4_regression_vectors.py tests/test_adapters/test_regression_vectors.py -q` — 72 passed
+* `ruff check` — clean
+* `mkdocs build --strict` — exit 0
+
+## 8. References
+
+* `adaptive_reflow/adapters/lineageflow.py:925` — `LineageFlowClassifierAwareRestart`
+* `adaptive_reflow/adapters/lineageflow.py:1627` — `classifier_aware_restart` ctor arg
+* `adaptive_reflow/adapters/lineageflow.py:2052` — opt-in branch in `apply_restart_distribution`
+* `adaptive_reflow/adapters/lineageflow.py:3006` — `default_lineageflow_adapter`
+* `tools/gen_lineageflow_n1000_fastas.py:545` — restart-blend gate
+* `docs/audit/wave280-p-r1-sweep-result.md` §2.2 — canonical R1 command
+* `docs/audit/gap39-flowmol3-real-restart-blend.md` — sibling dormant-lever fix

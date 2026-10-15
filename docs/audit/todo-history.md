@@ -208,6 +208,48 @@ manufacture significance. Observations-only; no frozen surface moved —
 `docs/audit/gap39-flowmol3-real-restart-blend.md`;
 evidence `verification_outputs/gap39-flowmol3-real-restart-blend/`.
 
+### 4.6 LineageFlow classifier-aware restart wired + the R1 gate degeneracy (GAP-40, 2026-10-16)
+
+The next dormant lever from the same menu. `LineageFlowClassifierAwareRestart`
+(`adaptive_reflow/adapters/lineageflow.py:925`) replaces the scalar restart blend
+with a per-position memory vector `m_vec[l] = clip(base_m·(1+α·(c[l]−mean_c)),0,1)`
+derived from a per-position classifier-confidence vector. Before GAP-40 the
+symbol appeared **only** inside the adapter module — no driver, tool, or factory
+referenced it. GAP-40 wires it additively (`--classifier-aware-restart` /
+`--classifier-alpha`, default off) through
+`tools/gen_lineageflow_n1000_fastas.py` (R1/K4/K5) and
+`default_lineageflow_adapter` → `tools/eval/framework.py` → `sweep.py` → `cli.py`.
+
+**Load-bearing structural finding.** At the **canonical R1 config** the
+restart-blend gate is **closed**: `tools/gen_lineageflow_n1000_fastas.py:545`
+degenerates `n_rounds` to 1 when `nfe < restart_min_nfe`, and the canonical
+command uses `--nfe 10` with the default `--restart-min-nfe 20`. The canonical R1
+framework arm is therefore a **single `solve_ode` pass** — neither the scalar nor
+the classifier-aware blend is ever invoked, so the +116% R1 headline is produced
+entirely by the adapter's real ESM-2 forward (vs the bare-RNG baseline). This is
+the mechanism-level explanation of the standing "R1 is init-attributed" note.
+Empirically: at canonical config the legacy and classifier-aware framework arms
+are byte-identical (`md5 027a0f01…`).
+
+**Gate-open bounded A/B** (N=200, seed 42, `--restart-min-nfe 5`,
+`force_mode="auto"`, zero fallback; canonical HMMER counter):
+
+| arm | total hits | records ≥1 hit | hits/record |
+|---|---:|---:|---:|
+| baseline (bare RNG) | 37 | 30 | 0.1850 |
+| framework — legacy scalar blend | 38 | 32 | 0.1900 |
+| framework — classifier-aware | **44** | **42** | **0.2200** |
+
+`car vs legacy` MWU `p=0.117` / Fisher `p=0.123`; `car vs baseline` `p=0.073`.
+Directional win, **not significant** at N=200 single seed, and **family-dependent**
+(wins PF00005.27 +5 and PF00183.19 +6; loses PF00072.24 −4 and PF02517.18 −1).
+
+**Reading:** the lever is real and load-bearing once the gate is open, but it does
+**not** flip R1 — the canonical R1 number is untouched (the gate is closed there),
+and the bounded gate-open lift is a trend only. Observations-only; no frozen
+surface moved — `docs/audit/gap40-lineageflow-classifier-aware-restart.md`;
+evidence `verification_outputs/gap40-lineageflow-classifier-aware-restart/`.
+
 ## 5. R1 real-forward saga (D-004 / D-004b)
 
 - **D-004 defect:** the checkpoint-compat shim registered a bare core module

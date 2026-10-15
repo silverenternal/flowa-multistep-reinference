@@ -1,0 +1,50 @@
+#                                                                           --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                       accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------             -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+IFNGR1_D2            PF07140.18 baseline_seed7|family=PF02517.18 -               0.17   12.8   3.9      0.34   11.9   3.9   1.5   1   1   0   1   1   1   0 Interferon gamma receptor (IFNGR1), D2 domain
+NUP53_C              PF28376.1  baseline_seed7|family=PF02517.18 -                5.1    7.7   5.7       8.9    6.9   5.7   1.3   1   0   0   1   1   1   0 Nucleoporin NUP53 C-terminal domain
+OTOGL_N              PF25961.1  baseline_seed13|family=PF00072.24 -              0.027   15.5   3.5     0.054   14.5   0.2   2.4   2   0   0   2   2   2   0 Otogelin-like N-terminal
+IcaD                 PF27790.1  baseline_seed15|family=PF02517.18 -              0.093   13.7   3.4      0.11   13.4   3.4   1.1   1   0   0   1   1   1   0 Poly-beta-1,6-N-acetyl-D-glucosamine synthesis protein IcaD
+Fusion_gly_K         PF01621.23 baseline_seed23|family=PF02517.18 -              0.062   13.0   2.4     0.069   12.9   2.4   1.1   1   0   0   1   1   1   0 Cell fusion glycoprotein K
+WcaA_C               PF30438.1  baseline_seed23|family=PF02517.18 -               0.31   11.8   0.7      0.51   11.1   0.7   1.3   1   0   0   1   1   1   0 Colanic acid biosynthesis protein WcaA C-terminal domain
+DUF4718              PF15842.11 baseline_seed25|family=PF00072.24 -              0.036   14.6   0.1     0.043   14.4   0.1   1.1   1   0   0   1   1   1   0 Domain of unknown function (DUF4718)
+Phage_Inh_C          PF26098.2  baseline_seed25|family=PF00072.24 -               0.12   12.9   0.3      0.15   12.6   0.3   1.2   1   0   0   1   1   1   0 Phage inhibitor of prohead protease C-terminal domain
+UPF0179              PF03684.19 baseline_seed28|family=PF00005.27 -                1.7    9.3   3.6       2.1    9.0   3.0   1.5   1   1   0   1   1   1   0 Uncharacterised protein family (UPF0179)
+DUF4305              PF14146.12 baseline_seed29|family=PF00072.24 -               0.11   13.3   0.0      0.16   12.8   0.0   1.2   1   0   0   1   1   1   0 Domain of unknown function (DUF4305)
+AMG1_III             PF21404.4  baseline_seed30|family=PF00183.19 -                0.1   13.1   0.1      0.11   13.0   0.1   1.1   1   0   0   1   1   1   0 Phosphoacetylglucosamine mutase AMG1, domain III
+SidJ_CaM_N           PF26375.1  baseline_seed37|family=PF00072.24 -              0.026   15.3   0.4      0.03   15.0   0.4   1.2   1   0   0   1   1   1   0 SidJ calmodulin-dependent glutamylase N-terminal domain
+ADGRF3_N             PF25387.2  baseline_seed37|family=PF00072.24 -              0.027   15.6   1.3     0.027   15.6   1.3   2.0   2   0   0   2   2   2   0 ADGRF3-like, N-terminal domain
+DYW_deaminase        PF14432.13 baseline_seed37|family=PF00072.24 -               0.17   12.4   1.1       0.2   12.2   1.1   1.3   1   0   0   1   1   1   0 DYW family of nucleic acid deaminases
+Usg                  PF06233.18 baseline_seed39|family=PF02517.18 -                1.3    9.9   3.4       2.3    9.2   0.2   2.0   1   1   1   2   2   2   0 Usg-like family
+GDE_C                PF06202.21 baseline_seed42|family=PF00183.19 -               0.14   11.8   2.3      0.15   11.7   2.3   1.1   1   0   0   1   1   1   0 Amylo-alpha-1,6-glucosidase
+tRNA-synt_1          PF00133.29 baseline_seed46|family=PF00183.19 -               0.64    9.4   4.8      0.85    9.0   4.8   1.4   1   1   0   1   1   1   0 tRNA synthetases class I (I, L, M and V)
+DUF547               PF04784.20 baseline_seed47|family=PF02517.18 -              0.023   15.4   0.3     0.027   15.2   0.3   1.1   1   0   0   1   1   1   0 Protein of unknown function, DUF547
+CPSF_A               PF03178.22 baseline_seed48|family=PF00005.27 -               0.15   12.1   0.4      0.16   12.0   0.4   1.0   1   0   0   1   1   1   0 CPSF A subunit region
+Psb28                PF03912.20 baseline_seed48|family=PF00005.27 -               0.18   12.8   2.0      0.25   12.4   2.0   1.2   1   0   0   1   1   1   0 Psb28 protein
+PSD4                 PF07631.17 baseline_seed48|family=PF00005.27 -               0.25   12.6   1.0      0.33   12.2   1.0   1.4   1   1   0   1   1   1   0 Protein of unknown function (DUF1592)
+AddB_5th             PF27467.2  baseline_seed63|family=PF02517.18 -               0.08   13.6   4.7      0.14   12.8   4.7   1.3   1   0   0   1   1   1   0 ATP-dependent helicase/deoxyribonuclease AddB fifth domain
+DUF2197              PF09963.15 baseline_seed66|family=PF00183.19 -                9.6    7.3   9.7      0.93   10.6   0.2   2.4   1   1   1   2   2   2   0 Uncharacterized protein conserved in bacteria (DUF2197)
+SEFIR                PF08357.17 baseline_seed69|family=PF00072.24 -               0.17   12.8   0.7      0.23   12.4   0.7   1.1   1   0   0   1   1   1   0 SEFIR domain
+MGC-24               PF05283.17 baseline_seed103|family=PF02517.18 -               0.55   11.3   7.2        12    6.9   3.0   2.1   2   0   0   2   2   2   0 Multi-glycosylated core protein 24 (MGC-24), sialomucin
+RE_TaqI              PF09573.17 baseline_seed104|family=PF00005.27 -               0.56   10.3   4.8      0.59   10.2   4.8   1.0   1   0   0   1   1   1   0 TaqI restriction endonuclease
+FeThRed_B            PF02943.22 baseline_seed111|family=PF02517.18 -               0.17   12.5   0.7      0.14   12.7   0.7   1.1   1   0   0   1   1   1   0 Ferredoxin thioredoxin reductase catalytic beta chain
+PEX-2N               PF09263.17 baseline_seed119|family=PF02517.18 -              0.064   14.3   0.9     0.072   14.1   0.9   1.1   1   0   0   1   1   1   0 Peroxisome biogenesis factor 1, N-terminal
+DUF4666              PF15697.11 baseline_seed133|family=PF00072.24 -               0.39   12.1   0.1      0.59   11.5   0.1   1.2   1   0   0   1   1   1   0 Domain of unknown function (DUF4666)
+Sulfotransfer_1      PF00685.34 baseline_seed141|family=PF00072.24 -                0.2   11.8   2.4      0.26   11.4   2.4   1.1   1   0   0   1   1   1   0 Sulfotransferase domain
+DUF2550              PF10739.16 baseline_seed144|family=PF00005.27 -                2.6    8.8   5.2       2.2    9.0   0.5   2.0   1   1   1   2   2   2   0 Protein of unknown function (DUF2550)
+FAM163               PF15069.12 baseline_seed149|family=PF00072.24 -               0.13   13.4   0.2      0.14   13.3   0.2   1.1   1   0   0   1   1   1   0 FAM163 family
+Ubiquitin_4          PF18036.9  baseline_seed159|family=PF02517.18 -                9.3    7.0   5.8        11    6.8   0.6   2.2   2   0   0   2   2   2   0 Ubiquitin-like domain
+T6SS_VgrG3-like_C    PF21277.3  baseline_seed162|family=PF00183.19 -                1.1    9.7   2.8       1.1    9.7   2.8   1.1   1   0   0   1   1   1   0 Type VI secretion system spike protein VgrG3-like, C-terminal
+EnP1_C               PF29632.1  baseline_seed175|family=PF02517.18 -               0.19   12.6   0.5      0.25   12.3   0.5   1.2   1   0   0   1   1   1   0 Microsporidian spore wall protein EnP1 C-terminal domain
+YdjM                 PF04307.20 baseline_seed187|family=PF02517.18 -                3.3    7.9   6.3        17    5.5   2.3   2.1   1   1   1   2   2   2   0 YdjM inner membrane protein
+DUF8481              PF28924.1  baseline_seed199|family=PF02517.18 -              0.012   16.3   0.8     0.012   16.3   0.8   1.2   1   0   0   1   1   1   0 Domain of unknown function (DUF8481)
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /tmp/gap40-pilot/n200_legacy/baseline.fasta
+# Target file:     /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /tmp/gap40-pilot/n200_legacy/baseline.tblout --acc --noali --cpu 32 /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /tmp/gap40-pilot/n200_legacy/baseline.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Fri Oct 16 01:50:21 2026
+# [ok]

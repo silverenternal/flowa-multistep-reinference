@@ -3009,12 +3009,21 @@ def default_lineageflow_adapter(
     force_mode: Mode | Literal["auto"] = "auto",
     family_id: str | None = None,
     num_steps: int | None = None,
+    classifier_aware_restart: bool = False,
+    classifier_alpha: float = 1.0,
 ) -> LineageFlowAdapter:
     """Default factory for :class:`LineageFlowAdapter`.
 
     Mirrors :func:`default_self_flow_adapter`. ``force_mode="auto"``
     picks ``"torch"`` when the weights file exists AND torch is
     importable; otherwise ``"synthetic"``.
+
+    GAP-40 (additive, default off) — ``classifier_aware_restart`` and
+    ``classifier_alpha`` are forwarded to the adapter constructor so
+    callers can opt in to the per-position classifier-aware restart
+    policy (:class:`LineageFlowClassifierAwareRestart`) without
+    touching the constructor directly. The defaults reproduce the
+    pre-GAP-40 scalar restart-blend byte-for-byte.
     """
     return LineageFlowAdapter(
         weights_path=weights_path,
@@ -3025,6 +3034,8 @@ def default_lineageflow_adapter(
         num_steps=int(num_steps)
         if num_steps is not None
         else LINEAGEFLOW_NUM_STEPS_DEFAULT,
+        classifier_aware_restart=bool(classifier_aware_restart),
+        classifier_alpha=float(classifier_alpha),
     )
 
 
