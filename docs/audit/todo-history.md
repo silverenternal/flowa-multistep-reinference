@@ -244,11 +244,33 @@ are byte-identical (`md5 027a0f01…`).
 Directional win, **not significant** at N=200 single seed, and **family-dependent**
 (wins PF00005.27 +5 and PF00183.19 +6; loses PF00072.24 −4 and PF02517.18 −1).
 
+**Decisive test — canonical N=1000, 3 seeds, gate-open** (seeds 42/43/44,
+`--nfe 10 --n-rounds 3 --restart-min-nfe 5`, `force_mode="auto"`, zero fallback;
+canonical HMMER counter). Per-seed totals (baseline / legacy / car):
+
+| seed | baseline | legacy (scalar blend) | car (classifier-aware) |
+|---:|---:|---:|---:|
+| 42 | 158 | 257 | **271** |
+| 43 | 159 | 265 | **269** |
+| 44 | 174 | 245 | **265** |
+
+Seed-level pooled (n=3, df=2): `car vs legacy` mean **+12.67** hits,
+`d_z=1.567`, **3/3 direction-consistent**, but `p_bonf_rlevel=1.0` → **NOT
+STRONG** (the pre-registered bar needs `p_two<1.95e-4`, i.e. `d_z>17.7` at n=3 —
+unreachable for any realistic effect). Per-record paired-t DL meta
+`d_pooled=+0.024`, `z=1.33`, `p=0.184` → **NOT significant**. The lever roughly
+doubles the framework-vs-baseline seed-level effect size (legacy `d_z=4.97` →
+car `d_z=8.77`), and the framework-vs-baseline effect is highly significant
+per-record (DL `d_pooled=+0.157`/`+0.139`), but the **incremental** lever effect
+is not significant under either statistic.
+
 **Reading:** the lever is real and load-bearing once the gate is open, but it does
 **not** flip R1 — the canonical R1 number is untouched (the gate is closed there),
-and the bounded gate-open lift is a trend only. Observations-only; no frozen
-surface moved — `docs/audit/gap40-lineageflow-classifier-aware-restart.md`;
-evidence `verification_outputs/gap40-lineageflow-classifier-aware-restart/`.
+and the gate-open lift is consistent but non-significant at N=1000 (same category
+as GAP-38 / GAP-39). Observations-only; no frozen surface moved —
+`docs/audit/gap40-lineageflow-classifier-aware-restart.md`; evidence
+`verification_outputs/gap40-lineageflow-classifier-aware-restart/`
+(`n200_gate_open/`, `canonical_gate_closed/`, `n1000_gate_open/`).
 
 ## 5. R1 real-forward saga (D-004 / D-004b)
 

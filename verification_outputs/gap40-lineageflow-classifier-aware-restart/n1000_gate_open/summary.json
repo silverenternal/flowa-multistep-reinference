@@ -1,0 +1,106 @@
+{
+  "gap": "GAP-40",
+  "date": "2026-10-16",
+  "run": "canonical N=1000 3-seed gate-open A/B",
+  "driver": "tools/gen_lineageflow_n1000_fastas.py",
+  "config": {
+    "n_per_arm": 1000,
+    "seeds": [42, 43, 44],
+    "nfe": 10,
+    "n_rounds": 3,
+    "restart_min_nfe": 5,
+    "effective_n_rounds": 3,
+    "upstream_eval_len_bias": "short",
+    "temperature": 1.0,
+    "force_mode": "auto",
+    "device": "cuda:0",
+    "arms": {
+      "legacy": "scalar restart-blend m = 1 - beta (classifier_aware_restart=false)",
+      "car": "classifier-aware restart-blend m_vec[l] (classifier_aware_restart=true, alpha=1.0)"
+    },
+    "note_gate": "canonical R1 uses default --restart-min-nfe 20 with --nfe 10; 10<20 degenerates n_rounds to 1 (single solve_ode, no blend). This run opens the gate (--restart-min-nfe 5) so the blend fires."
+  },
+  "hit_counter": "hmmscan --noali --cpu 32 --tblout <out> --acc Pfam-A.hmm <fasta>; hits = non-comment tblout lines (identical to canonical R1 protocol)",
+  "per_seed": {
+    "42": {"baseline": 158, "legacy": 257, "car": 271},
+    "43": {"baseline": 159, "legacy": 265, "car": 269},
+    "44": {"baseline": 174, "legacy": 245, "car": 265}
+  },
+  "seed_level_pooled_n3_df2": {
+    "car_vs_legacy": {
+      "per_seed_diffs": [14.0, 4.0, 20.0],
+      "mean_diff": 12.666666666666666,
+      "std_paired": 8.082903768654761,
+      "d_z": 1.5670935878004126,
+      "t": 2.714285714285714,
+      "p_two_sided": 0.11315594678226047,
+      "p_bonf_rlevel": 1.0,
+      "direction_consistent": true,
+      "verdict": "NOT STRONG (p_bonf_rlevel fails < 0.003125)"
+    },
+    "car_vs_baseline": {
+      "per_seed_diffs": [113.0, 110.0, 91.0],
+      "mean_diff": 104.66666666666667,
+      "std_paired": 11.930353445448855,
+      "d_z": 8.773140472765666,
+      "t": 15.195525040768976,
+      "p_two_sided": 0.004302872236592395,
+      "p_bonf_rlevel": 0.06884595578547832,
+      "direction_consistent": true,
+      "verdict": "NOT STRONG (p_bonf_rlevel fails < 0.003125)"
+    },
+    "legacy_vs_baseline": {
+      "per_seed_diffs": [99.0, 106.0, 71.0],
+      "mean_diff": 92.0,
+      "std_paired": 18.520259177452136,
+      "d_z": 4.967533073835558,
+      "t": 8.604019672161984,
+      "p_two_sided": 0.013240504626251976,
+      "p_bonf_rlevel": 0.2118480740200316,
+      "direction_consistent": true,
+      "verdict": "NOT STRONG (p_bonf_rlevel fails < 0.003125)"
+    }
+  },
+  "per_record_paired_t_df999": {
+    "car_vs_legacy": {
+      "per_seed": {
+        "42": {"mean_diff": 0.0140, "sd": 0.5605, "t": 0.790, "p": 0.4298, "d_z": 0.0250},
+        "43": {"mean_diff": 0.0040, "sd": 0.5022, "t": 0.252, "p": 0.8012, "d_z": 0.0080},
+        "44": {"mean_diff": 0.0200, "sd": 0.5018, "t": 1.260, "p": 0.2079, "d_z": 0.0399}
+      },
+      "dl_meta": {"d_pooled": 0.024261, "se": 0.018261, "z": 1.3286, "p_two": 0.18398, "p_bonf_k7": 1.0, "p_bonf_k16": 1.0, "I2": 0.0}
+    },
+    "car_vs_baseline": {
+      "per_seed": {
+        "42": {"mean_diff": 0.1130, "sd": 0.6608, "t": 5.408, "p": 7.993e-08, "d_z": 0.1710},
+        "43": {"mean_diff": 0.1100, "sd": 0.6726, "t": 5.172, "p": 2.798e-07, "d_z": 0.1636},
+        "44": {"mean_diff": 0.0910, "sd": 0.6702, "t": 4.294, "p": 1.928e-05, "d_z": 0.1358}
+      },
+      "dl_meta": {"d_pooled": 0.156744, "se": 0.018370, "z": 8.5325, "p_two": 1.4327e-17, "p_bonf_k7": 1.0029e-16, "p_bonf_k16": 2.2923e-16, "I2": 0.0}
+    },
+    "legacy_vs_baseline": {
+      "per_seed": {
+        "42": {"mean_diff": 0.0990, "sd": 0.6447, "t": 4.856, "p": 1.389e-06, "d_z": 0.1536},
+        "43": {"mean_diff": 0.1060, "sd": 0.6835, "t": 4.904, "p": 1.096e-06, "d_z": 0.1551},
+        "44": {"mean_diff": 0.0710, "sd": 0.6514, "t": 3.447, "p": 5.915e-04, "d_z": 0.1090}
+      },
+      "dl_meta": {"d_pooled": 0.139149, "se": 0.018348, "z": 7.5840, "p_two": 3.3499e-14, "p_bonf_k7": 2.3450e-13, "p_bonf_k16": 5.3599e-13, "I2": 0.0}
+    }
+  },
+  "verdict": {
+    "lever_flips_R1": false,
+    "summary": "The classifier-aware restart lever produces a consistent directional improvement over the plain scalar restart-blend at canonical N=1000 (car vs legacy mean +12.67 hits, d_z=1.567 seed-level, 3/3 seeds direction-consistent) but is NOT statistically significant under either the canonical seed-level protocol (p_bonf_rlevel=1.0) or the per-record paired-t DL meta (d_pooled=+0.024, p=0.184). The lever roughly doubles the framework-vs-baseline seed-level effect size (legacy d_z=4.97 -> car d_z=8.77) but neither clears the pre-registered STRONG bar.",
+    "no_frozen_surface_moved": true,
+    "no_verdict_promoted": true
+  },
+  "provenance": {
+    "retry_note": "seed44_car was killed by an EDQUOT (disk quota exceeded) on the quota'd /tmp tmpfs at 2026-10-16T05:19Z; regenerated under /home/hugo/gap40-n1000-work (deterministic, same seed/args).",
+    "baseline_byte_stable_across_arms": true,
+    "legacy_vs_car_framework_differ": true,
+    "legacy_vs_car_framework_md5": {
+      "seed42": ["cc17fe68b855e3eb77c7d6d2463d1097", "7204681d19e5e60fc34dc1a2837d3810"],
+      "seed43": ["c6e06c458c558bb63074fedca4fcc741", "e8a6974c3261b27808e2450341cd668e"],
+      "seed44": ["543e06ee6cfc20260e5aceb30adca85b", "31411950359808705cc77f69c4745db7"]
+    }
+  }
+}

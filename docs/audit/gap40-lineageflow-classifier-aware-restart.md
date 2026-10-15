@@ -20,7 +20,8 @@ lever from the dormant-lever menu.
 | Fix (additive, default off) | `--classifier-aware-restart` / `--classifier-alpha` on `tools/gen_lineageflow_n1000_fastas.py` (R1/K4/K5 driver) + `classifier_aware_restart`/`classifier_alpha` threaded through `default_lineageflow_adapter` → `tools/eval/framework.py::_resolve_adapter` → `tools/eval/sweep.py` → `tools/eval/cli.py` |
 | **Load-bearing structural finding** | at the **canonical R1 config** (`--nfe 10`, default `--restart-min-nfe 20`) the restart-blend gate degenerates `n_rounds` to **1** (`tools/gen_lineageflow_n1000_fastas.py:546`). The framework arm is a **single `solve_ode` pass** — neither the scalar nor the classifier-aware blend fires. The lever is therefore **byte-identical** to legacy at canonical config |
 | Gate-open A/B (N=200, seed 42, `--restart-min-nfe 5`) | baseline 37 → legacy 38 → **classifier-aware 44** hits; `car vs legacy` MWU `p=0.117`, Fisher `p=0.123`; `car vs baseline` `p=0.073`. Directional win, **not significant** at N=200 single seed; **family-dependent** (wins 2 of 4 families) |
-| Net | The lever is wired, additive, default-off, and **load-bearing once the gate is open**. It does **not** flip R1 at canonical config because the canonical config never runs the blend. No frozen surface moved. |
+| **Decisive test — canonical N=1000, 3 seeds, gate-open** | seed-level totals (baseline / legacy / car): 42 = 158/257/**271**, 43 = 159/265/**269**, 44 = 174/245/**265**. `car vs legacy` mean **+12.67** hits, `d_z=1.567`, **3/3 direction-consistent**, but `p_bonf_rlevel=1.0` → **NOT STRONG**. Per-record paired-t DL meta `d_pooled=+0.024`, `p=0.184` → **NOT significant**. The lever roughly doubles the framework-vs-baseline seed-level effect size (legacy `d_z=4.97` → car `d_z=8.77`) but neither clears the pre-registered bar |
+| Net | The lever is wired, additive, default-off, and **load-bearing once the gate is open**. It does **not** flip R1: the canonical config never runs the blend, and even with the gate open the incremental effect is consistent but not significant. No frozen surface moved. |
 
 ---
 
@@ -141,6 +142,60 @@ non-comment tblout lines.
 | PF00183.19 | 5 | 7 | **13** |
 | PF02517.18 | **15** | 10 | 9 |
 
+## 4b. Decisive test — canonical N=1000, 3 seeds, gate-open
+
+Config: `--n 1000 --nfe 10 --n-rounds 3 --restart-min-nfe 5
+--upstream-eval-len-bias short --temperature 1.0`, seeds `{42, 43, 44}`, arms
+`{legacy, car}`, `force_mode="auto"` (real-ckpt), GPU 0,
+`framework_fallback_per_family_count == {}` (zero fallback on every arm).
+Same hmmscan hit counter as the canonical R1 protocol. The baseline arm is
+byte-stable across the two arms (same seed → identical `baseline.fasta`), and
+the legacy-vs-car `framework.fasta` md5s differ on all 3 seeds (the lever is
+active). Evidence: `verification_outputs/gap40-lineageflow-classifier-aware-restart/n1000_gate_open/`.
+
+### 4b.1 Per-seed totals
+
+| seed | baseline (bare RNG) | legacy (scalar blend) | car (classifier-aware) |
+|---:|---:|---:|---:|
+| 42 | 158 | 257 | **271** |
+| 43 | 159 | 265 | **269** |
+| 44 | 174 | 245 | **265** |
+
+### 4b.2 Seed-level pooled statistics (n=3, df=2) — canonical R1 protocol
+
+| comparison | per-seed diffs | mean diff | `d_z` | `t` | `p_two` | `p_bonf_rlevel` | 3/3 dir | STRONG? |
+|---|---|---:|---:|---:|---:|---:|:--:|:--:|
+| **car vs legacy** | [14, 4, 20] | +12.67 | **1.567** | 2.714 | 0.1132 | **1.0** | ✓ | **no** |
+| car vs baseline | [113, 110, 91] | +104.67 | 8.773 | 15.196 | 0.0043 | 0.0688 | ✓ | no |
+| legacy vs baseline | [99, 106, 71] | +92.00 | 4.968 | 8.604 | 0.0132 | 0.2118 | ✓ | no |
+
+The pre-registered STRONG bar (`d_z > 0.8` ∧ `p_bonf_rlevel < 0.003125` ∧ 3/3
+direction-consistent) is **not met** by any comparison: `d_z` and direction pass
+for all three, but the strict R-level Bonferroni threshold is unreachable at
+n=3 (it requires `p_two < 1.95e-4`, i.e. `t > 30.6` / `d_z > 17.7`).
+
+### 4b.3 Per-record paired t (df=999) + DerSimonian–Laird meta
+
+| comparison | per-seed `d_z` | per-seed `p` | DL `d_pooled` | DL `z` | DL `p_two` | `p_bonf,k=7` |
+|---|---|---:|---:|---:|---:|---:|
+| **car vs legacy** | +0.025 / +0.008 / +0.040 | 0.43 / 0.80 / 0.21 | **+0.024** | 1.33 | **0.184** | 1.0 |
+| car vs baseline | +0.171 / +0.164 / +0.136 | 8.0e-8 / 2.8e-7 / 1.9e-5 | +0.157 | 8.53 | 1.4e-17 | 1.0e-16 |
+| legacy vs baseline | +0.154 / +0.155 / +0.109 | 1.4e-6 / 1.1e-6 / 5.9e-4 | +0.139 | 7.58 | 3.3e-14 | 2.3e-13 |
+
+The framework-vs-baseline effect (both arms) is highly significant per-record,
+but the **incremental** lever effect (car vs legacy) is not significant under
+either the seed-level or the per-record statistic.
+
+### 4b.4 Relation to the canonical R1 headline
+
+The canonical Wave 158 R1 `framework = 342` headline is a **synthetic-velocity-field**
+number; the real-ckpt basis (this run's `force_mode="auto"`) gives framework
+`= 271` on seed 42 (already disclosed in `docs/CLAIMS.md` — the "real-ckpt
+materialization addendum"). This run is therefore the real-ckpt family. The
+restart-blend blend is not required for the R1 headline; the framework-vs-baseline
+gap is driven by the adapter forward pass, consistent with §3 ("R1 is
+init-attributed"). Opening the gate neither breaks nor strengthens the headline.
+
 ## 5. Interpretation
 
 1. **The lever works mechanically.** With the gate open, the real
@@ -150,7 +205,10 @@ non-comment tblout lines.
 2. **Directionally positive, not significant.** At N=200 single seed the
    classifier-aware arm gains +6 hits over the legacy scalar blend (+15.8%
    hits/record; +10 records crossing the ≥1-hit threshold) and +7 over baseline
-   (+18.9%). `p ≈ 0.07–0.12` — a trend, not a result.
+   (+18.9%). `p ≈ 0.07–0.12` — a trend, not a result. The N=1000 3-seed sweep
+   (§4b) confirms the direction (3/3 seeds, seed-level `d_z=1.567`) but the
+   effect remains **non-significant** (seed-level `p_bonf_rlevel=1.0`;
+   per-record DL `p=0.184`).
 3. **Family-dependent.** The gain is concentrated in PF00005.27 (+5) and
    PF00183.19 (+6); the classifier-aware arm *loses* ground on PF00072.24 (−4)
    and PF02517.18 (−1) relative to the legacy blend. The net +6 is therefore not
@@ -163,12 +221,14 @@ non-comment tblout lines.
 
 ## 6. Honest scope / what is NOT claimed
 
-* No canonical-scale (N=1000) sweep was run for GAP-40; the bounded N=200
-  single-seed A/B above is the only measurement. A 3-seed N=1000 sweep would be
-  the decisive test and is the natural follow-up.
+* The canonical-scale (N=1000) 3-seed gate-open sweep **has now been run**
+  (§4b). It is the decisive test: the lever's incremental effect is consistent
+  (3/3 seeds, seed-level `d_z=1.567`) but **not significant** under either the
+  canonical seed-level protocol or the per-record DL meta. It does **not** flip R1.
 * No promotion of any R1/K4/K5/K7 verdict. The cell statuses are unchanged.
-* No claim that opening the gate is "the fix" for R1 — the bounded data show a
-  trend only, and the family split is mixed.
+* No claim that opening the gate is "the fix" for R1 — the N=1000 data confirm a
+  consistent-but-non-significant trend; the N=200 family split (wins 2 of 4
+  families) is not resolved at N=1000 either.
 
 ## 7. Acceptance gates
 
