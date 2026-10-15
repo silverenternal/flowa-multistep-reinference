@@ -104,3 +104,38 @@ No frozen surface was changed by this memo. The venue-driven empirical work
 - `docs/audit/gap19-q1-odds-alignment.md` (self-assessed acceptance probability
   removed from submission docs)
 - `docs/audit/todo-history.md` §7 (2026-10-14 venue-fit addendum)
+
+---
+
+## 6. Addendum (2026-10-15) — state update since the memo was written
+
+**Author:** GAP-15 agent (USER AUTHORIZED, NO PUSH). **Frozen surfaces:** untouched.
+**Additive only** — §0–§5 above are the 2026-10-14 memo and are unchanged.
+
+Since this memo, two venue-independent empirical gaps closed:
+
+- **GAP-37 (paired-design fix).** R3's "paired" test was inadvertently a
+  two-sample test (the driver keyed each batch's prior on `arm_name`). With a
+  shared prior the effect size moves from **`d_z = −0.401` (small)** to
+  **`d_z = −1.089` (large)**, the per-seed sd is 3.75× tighter, and 3/3 seeds
+  share the sign; required seeds for 80 % power drop **49 → 7**. R3 therefore
+  leaves the "weakest cells" row of §1: it was `n.s.`, it is now a
+  large-effect paired win. Evidence: `docs/audit/gap37-statistical-power.md`.
+- **GAP-36 (consolidated ablation matrix).** A 24-row
+  rounds × schedulers × checkpoints matrix shows the **sign** of the framework
+  effect tracks the **training-budget axis** (checkpoint budget / round count),
+  **not** the scheduler. The decisive cell `w16e1_5k` is framework-WINS on all
+  three schedulers (−25.2 … −25.6 % FID, Bonferroni p ≤ 1e-6); the scheduler
+  tunes magnitude, not sign. Evidence: `docs/audit/gap36-ablation-matrix.md`.
+
+**Effect on the recommendation: none.** The §3.1 recommendation (**stay on
+IEEE TNNLS**) and the §3.2/§3.3 alternatives are unchanged. Both new results
+*raise* the empirical axis — they strengthen the TNNLS case — but neither
+supplies the one thing that would justify the theory-forward JMLR / Artificial
+Intelligence reframe: a **positive cell that credits the namesake restart-blend
+`B_m`**. R1 remains init-attributed (GAP-25), R5b remains conditional, R5c is
+smoke. That load-bearing gap is the open item that would move the venue
+decision, and it is venue-independent.
+
+§4 (decision requested) still stands: confirm the target and, if a change is
+chosen, authorize the frozen-manuscript reframe.
