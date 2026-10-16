@@ -1,0 +1,3 @@
+seed42_negative/framework.fasta: total_hits=277 records=1000 records_with_hits=231 hits_per_record=0.2770
+seed43_negative/framework.fasta: total_hits=272 records=1000 records_with_hits=223 hits_per_record=0.2720
+seed44_negative/framework.fasta: total_hits=260 records=1000 records_with_hits=220 hits_per_record=0.2600

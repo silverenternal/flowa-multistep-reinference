@@ -1,0 +1,257 @@
+{
+  "gap": "GAP-40b",
+  "date": "2026-10-16",
+  "run": "decisive N=1000 3-seed gate-open sweep of the non-conserving `negative` classifier-aware restart bias mode",
+  "driver": "tools/gen_lineageflow_n1000_fastas.py",
+  "config": {
+    "n_per_arm": 1000,
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "nfe": 10,
+    "n_rounds": 3,
+    "restart_min_nfe": 5,
+    "effective_n_rounds": 3,
+    "upstream_eval_len_bias": "short",
+    "temperature": 1.0,
+    "force_mode": "auto",
+    "device": "cuda:0",
+    "classifier_alpha": 1.0,
+    "classifier_bias_mode": "negative",
+    "arms": {
+      "baseline": "bare RNG (reference GAP-40 arm, md5 byte-stable)",
+      "legacy": "scalar restart-blend m = 1 - beta (reference GAP-40 arm)",
+      "centered": "classifier-aware, mass-preserving (reference GAP-40 'car' arm)",
+      "negative": "classifier-aware, one-sided reduction m_vec[l] = clip(base_m + alpha*min(c[l]-mean_c,0),0,1)"
+    },
+    "note_gate": "canonical R1 uses default --restart-min-nfe 20 with --nfe 10; 10<20 degenerates n_rounds to 1. This run opens the gate (--restart-min-nfe 5)."
+  },
+  "hit_counter": "hmmscan --noali --cpu 32 --tblout <out> --acc Pfam-A.hmm <fasta>; hits = non-comment tblout lines (identical to canonical R1 protocol)",
+  "per_seed": {
+    "42": {
+      "baseline": 158,
+      "legacy": 257,
+      "centered": 271,
+      "negative": 277
+    },
+    "43": {
+      "baseline": 159,
+      "legacy": 265,
+      "centered": 269,
+      "negative": 272
+    },
+    "44": {
+      "baseline": 174,
+      "legacy": 245,
+      "centered": 265,
+      "negative": 260
+    }
+  },
+  "seed_level_pooled_n3_df2": {
+    "negative_vs_centered": {
+      "per_seed_diffs": [
+        6.0,
+        3.0,
+        -5.0
+      ],
+      "mean_diff": 1.3333333333333333,
+      "std_paired": 5.686240703077327,
+      "d_z": 0.23448415270421966,
+      "t": 0.40613846605344756,
+      "p_two_sided": 0.7239737762630584,
+      "p_bonf_rlevel": 1.0,
+      "direction_consistent": false
+    },
+    "negative_vs_legacy": {
+      "per_seed_diffs": [
+        20.0,
+        7.0,
+        15.0
+      ],
+      "mean_diff": 14.0,
+      "std_paired": 6.557438524302,
+      "d_z": 2.134979984656465,
+      "t": 3.69789380656762,
+      "p_two_sided": 0.06597453951679638,
+      "p_bonf_rlevel": 1.0,
+      "direction_consistent": true
+    },
+    "negative_vs_baseline": {
+      "per_seed_diffs": [
+        119.0,
+        113.0,
+        86.0
+      ],
+      "mean_diff": 106.0,
+      "std_paired": 17.578395831246947,
+      "d_z": 6.030129314278887,
+      "t": 10.444490348541507,
+      "p_two_sided": 0.009042808937519829,
+      "p_bonf_rlevel": 0.14468494300031726,
+      "direction_consistent": true
+    },
+    "centered_vs_legacy": {
+      "per_seed_diffs": [
+        14.0,
+        4.0,
+        20.0
+      ],
+      "mean_diff": 12.666666666666666,
+      "std_paired": 8.082903768654761,
+      "d_z": 1.5670935878004126,
+      "t": 2.714285714285714,
+      "p_two_sided": 0.11315594678226047,
+      "p_bonf_rlevel": 1.0,
+      "direction_consistent": true
+    }
+  },
+  "per_record_paired_t_df999": {
+    "negative_vs_centered": {
+      "42": {
+        "mean_diff": 0.006,
+        "sd": 0.5313,
+        "t": 0.357,
+        "p": 0.7210632477733349,
+        "d_z": 0.0113
+      },
+      "43": {
+        "mean_diff": 0.003,
+        "sd": 0.4952,
+        "t": 0.192,
+        "p": 0.8481174769296412,
+        "d_z": 0.0061
+      },
+      "44": {
+        "mean_diff": -0.005,
+        "sd": 0.4703,
+        "t": -0.336,
+        "p": 0.7368003017160111,
+        "d_z": -0.0106
+      },
+      "dl_meta": {
+        "d_pooled": 0.00224,
+        "se": 0.018258,
+        "z": 0.1227,
+        "p_two": 0.9023458896564945,
+        "p_bonf_k7": 1.0,
+        "I2": 0.0
+      }
+    },
+    "negative_vs_legacy": {
+      "42": {
+        "mean_diff": 0.02,
+        "sd": 0.3282,
+        "t": 1.927,
+        "p": 0.05424919799455185,
+        "d_z": 0.0609
+      },
+      "43": {
+        "mean_diff": 0.007,
+        "sd": 0.3272,
+        "t": 0.677,
+        "p": 0.4988595242916516,
+        "d_z": 0.0214
+      },
+      "44": {
+        "mean_diff": 0.015,
+        "sd": 0.308,
+        "t": 1.54,
+        "p": 0.12387150523359346,
+        "d_z": 0.0487
+      },
+      "dl_meta": {
+        "d_pooled": 0.043667,
+        "se": 0.018267,
+        "z": 2.3904,
+        "p_two": 0.016828045743602006,
+        "p_bonf_k7": 0.11779632020521405,
+        "I2": 0.0
+      }
+    },
+    "negative_vs_baseline": {
+      "42": {
+        "mean_diff": 0.119,
+        "sd": 0.6643,
+        "t": 5.665,
+        "p": 1.923481857546729e-08,
+        "d_z": 0.1791
+      },
+      "43": {
+        "mean_diff": 0.113,
+        "sd": 0.7034,
+        "t": 5.08,
+        "p": 4.4937311519232627e-07,
+        "d_z": 0.1607
+      },
+      "44": {
+        "mean_diff": 0.086,
+        "sd": 0.6775,
+        "t": 4.014,
+        "p": 6.41995439833093e-05,
+        "d_z": 0.1269
+      },
+      "dl_meta": {
+        "d_pooled": 0.155504,
+        "se": 0.01837,
+        "z": 8.4653,
+        "p_two": 2.554400235574057e-17,
+        "p_bonf_k7": 1.78808016490184e-16,
+        "I2": 0.0
+      }
+    },
+    "centered_vs_legacy": {
+      "42": {
+        "mean_diff": 0.014,
+        "sd": 0.5605,
+        "t": 0.79,
+        "p": 0.42976360775254197,
+        "d_z": 0.025
+      },
+      "43": {
+        "mean_diff": 0.004,
+        "sd": 0.5022,
+        "t": 0.252,
+        "p": 0.801202401592454,
+        "d_z": 0.008
+      },
+      "44": {
+        "mean_diff": 0.02,
+        "sd": 0.5018,
+        "t": 1.26,
+        "p": 0.2078727345572039,
+        "d_z": 0.0399
+      },
+      "dl_meta": {
+        "d_pooled": 0.024261,
+        "se": 0.018261,
+        "z": 1.3286,
+        "p_two": 0.18397871032851276,
+        "p_bonf_k7": 1.0,
+        "I2": 0.0
+      }
+    }
+  },
+  "verdict": {
+    "negative_beats_centered": false,
+    "summary": "The non-conserving `negative` mode is a WASH against the mass-preserving `centered` mode: negative vs centered seed-level diffs [6,3,-5] (2/3 direction, d_z=0.234, p_two=0.724), per-record DL d_pooled=+0.0022 (z=0.12, p=0.902). The N=200 single-seed 'negative wins 47 vs 44' was noise. `negative` vs legacy is d_pooled=+0.0437 (uncorrected p=0.017, Bonferroni k=7 p=0.118) - a nominally larger increment than centered vs legacy (d=+0.024, p=0.184) but still fails the family-wise bar. The non-conserving hypothesis is not supported.",
+    "no_frozen_surface_moved": true,
+    "no_verdict_promoted": true
+  },
+  "provenance": {
+    "baseline_byte_stable_across_arms": true,
+    "baseline_md5": {
+      "42": "363cc04df72f0391de3acf5588de0d83",
+      "43": "82a4dae14a4db543eca0011084228fca",
+      "44": "b8ecb79cba04d5fa0a4d5b8a6d7aed5f"
+    },
+    "reference_arms_reused": "baseline/legacy/centered are the archived GAP-40 n1000_gate_open arms; baseline md5 byte-verified equal to the negative run baseline at gen time.",
+    "negative_framework_md5": {
+      "42": "54dbc65ca15bd0e40f28d3576c064b6b",
+      "43": "63d17135a34059b6335b02fa55364100",
+      "44": "de7a13ae7eed260a9b63925203fe9428"
+    },
+    "framework_fallback_per_family_count": {}
+  }
+}

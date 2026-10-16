@@ -1,0 +1,56 @@
+{
+  "gap": "GAP-40b",
+  "date": "2026-10-16",
+  "run": "N=200 gate-open screen of the non-conserving classifier-aware restart bias modes",
+  "driver": "tools/gen_lineageflow_n1000_fastas.py",
+  "config": {
+    "n_per_arm": 200,
+    "seed": 42,
+    "nfe": 10,
+    "n_rounds": 3,
+    "restart_min_nfe": 5,
+    "effective_n_rounds": 3,
+    "upstream_eval_len_bias": "short",
+    "temperature": 1.0,
+    "force_mode": "auto",
+    "device": "cuda:0",
+    "classifier_alpha": 1.0,
+    "arms": {
+      "legacy": "scalar restart-blend (no --classifier-aware-restart)",
+      "centered": "--classifier-aware-restart --classifier-bias-mode centered (mass-preserving)",
+      "positive": "--classifier-aware-restart --classifier-bias-mode positive (one-sided boost)",
+      "negative": "--classifier-aware-restart --classifier-bias-mode negative (one-sided reduction)"
+    }
+  },
+  "totals": {
+    "baseline": {"total_hits": 37, "records_ge1": 30, "hits_per_record": 0.1850},
+    "legacy":   {"total_hits": 38, "records_ge1": 32, "hits_per_record": 0.1900},
+    "centered": {"total_hits": 44, "records_ge1": 42, "hits_per_record": 0.2200},
+    "positive": {"total_hits": 44, "records_ge1": 41, "hits_per_record": 0.2200},
+    "negative": {"total_hits": 47, "records_ge1": 40, "hits_per_record": 0.2350}
+  },
+  "per_record_mwu_greater": {
+    "negative_vs_centered": {"mean_diff": 0.0150, "mwu_p": 0.5557, "fisher_ge1_p": 1.0},
+    "positive_vs_centered": {"mean_diff": 0.0000, "mwu_p": 0.5384, "fisher_ge1_p": 1.0},
+    "negative_vs_legacy": {"mean_diff": 0.0450, "mwu_p": 0.1513, "fisher_ge1_p": 1.0},
+    "centered_vs_legacy": {"mean_diff": 0.0300, "mwu_p": 0.1174, "fisher_ge1_p": 1.0},
+    "negative_vs_baseline": {"mean_diff": 0.0500, "mwu_p": 0.0981, "fisher_ge1_p": 0.9537},
+    "centered_vs_baseline": {"mean_diff": 0.0350, "mwu_p": 0.0726, "fisher_ge1_p": 0.5518}
+  },
+  "finding": {
+    "positive_equals_centered": "the one-sided BOOST (add memory where confident, never reduce) gives the SAME total hits as centered (44 vs 44) - the 'add where confident' hypothesis is not supported at N=200.",
+    "negative_nominally_best": "the one-sided REDUCTION (reduce memory where uncertain, never boost) is nominally the highest (47 vs 44) but negative vs centered MWU p=0.556 - within noise at N=200 single seed.",
+    "screen_decision": "advance `negative` to the decisive N=1000 3-seed sweep."
+  },
+  "provenance": {
+    "baseline_byte_stable_across_arms": true,
+    "baseline_md5": "ff5a6de6609c72f86cae3a3c8279d50a",
+    "framework_md5": {
+      "legacy": "190e34823f5e1eca24e264ac66cf23a4",
+      "centered": "efb9f375d54651960a99c9b392483979",
+      "positive": "20129a5055fe25a57d9a83837c3ce54a",
+      "negative": "7c2780d934b71c26d9b280f22252c950"
+    },
+    "framework_fallback_per_family_count": {}
+  }
+}

@@ -212,13 +212,16 @@ evidence `verification_outputs/gap39-flowmol3-real-restart-blend/`.
 
 The next dormant lever from the same menu. `LineageFlowClassifierAwareRestart`
 (`adaptive_reflow/adapters/lineageflow.py:925`) replaces the scalar restart blend
-with a per-position memory vector `m_vec[l] = clip(base_m·(1+α·(c[l]−mean_c)),0,1)`
+with a per-position memory vector `m_vec[l] = clip(base_m + α·(c[l]−mean_c),0,1)`
 derived from a per-position classifier-confidence vector. Before GAP-40 the
 symbol appeared **only** inside the adapter module — no driver, tool, or factory
 referenced it. GAP-40 wires it additively (`--classifier-aware-restart` /
 `--classifier-alpha`, default off) through
 `tools/gen_lineageflow_n1000_fastas.py` (R1/K4/K5) and
 `default_lineageflow_adapter` → `tools/eval/framework.py` → `sweep.py` → `cli.py`.
+(The formula was previously documented as the multiplicative form
+`base_m·(1+α·(c−mean_c))`; GAP-40b corrected it to the additive form the code has
+always used — see §4.7.)
 
 **Load-bearing structural finding.** At the **canonical R1 config** the
 restart-blend gate is **closed**: `tools/gen_lineageflow_n1000_fastas.py:545`
@@ -271,6 +274,71 @@ as GAP-38 / GAP-39). Observations-only; no frozen surface moved —
 `docs/audit/gap40-lineageflow-classifier-aware-restart.md`; evidence
 `verification_outputs/gap40-lineageflow-classifier-aware-restart/`
 (`n200_gate_open/`, `canonical_gate_closed/`, `n1000_gate_open/`).
+
+### 4.7 Non-conserving bias modes — the "add/reduce memory one-sidedly" hypothesis (GAP-40b, 2026-10-16)
+
+Follow-up to GAP-40. The GAP-40 policy is *mass-preserving*: `m_vec` is centred
+on `base_m = 1 − β`, so the mean memory is unchanged and the classifier bias only
+**redistributes** memory from uncertain to confident positions. GAP-40b adds a
+`bias_mode` selector so the "add memory where confident without removing it
+elsewhere" hypothesis can be tested directly:
+
+```
+centred[l] = c[l] − mean_c
+m_vec[l]   = clip(base_m + alpha * bias(centred[l]), 0, 1)
+
+bias(x) = x          # "centered" (default)  — mass-preserving
+bias(x) = max(x, 0)  # "positive"           — one-sided boost
+bias(x) = min(x, 0)  # "negative"           — one-sided reduction
+```
+
+`classifier_bias_mode` is threaded additively (default `centered`, byte-stable)
+through `LineageFlowAdapter.__init__` → `default_lineageflow_adapter` →
+`tools/gen_lineageflow_n1000_fastas.py` (`--classifier-bias-mode`, recorded in
+`manifest.json`) → `tools/eval/framework.py::_resolve_adapter` → `sweep.py` →
+`cli.py`; unknown modes raise `lineageflow_classifier_bias_mode_unknown`; 7 CPU
+conformance tests added. The class docstring was also corrected (the additive
+form `base_m + alpha*(c−mean_c)`, not the multiplicative form it had stated) —
+doc-only, no behaviour change.
+
+**Screen** (N=200, seed 42, gate-open):
+
+| arm | total hits | records ≥1 | hits/record |
+|---|---:|---:|---:|
+| baseline | 37 | 30 | 0.1850 |
+| legacy | 38 | 32 | 0.1900 |
+| centered | 44 | 42 | 0.2200 |
+| positive | 44 | 41 | 0.2200 |
+| **negative** | **47** | 40 | 0.2350 |
+
+`positive` is **byte-inert vs `centered`** (44 == 44) — the "add where confident"
+hypothesis gains nothing. `negative` is nominally highest but
+`negative vs centered` MWU `p=0.556` (noise at N=200 single seed). Advance
+`negative` to the decisive N=1000 sweep.
+
+**Decisive test — N=1000, 3 seeds, gate-open** (baseline/legacy/centered reused
+from the archived GAP-40 arms; baseline md5 byte-verified equal):
+
+| seed | baseline | legacy | centered | negative |
+|---:|---:|---:|---:|---:|
+| 42 | 158 | 257 | 271 | 277 |
+| 43 | 159 | 265 | 269 | 272 |
+| 44 | 174 | 245 | 265 | 260 |
+
+Seed-level pooled (n=3, df=2): **`negative vs centered` diffs [6, 3, −5]**,
+mean **+1.33** hits, `d_z=0.234`, only **2 of 3** seeds positive,
+`p_two=0.724`. Per-record paired-t DL meta `d_pooled=+0.0022`, `z=0.12`,
+`p=0.902` — a **wash**. `negative vs legacy` is nominally larger than
+`centered vs legacy` (DL `d=+0.0437`, uncorrected `p=0.017` vs `+0.024`,
+`p=0.184`) but still fails the family-wise bar (`p_bonf,k=7 = 0.118`).
+
+**Reading:** non-conservation does **not** strengthen the lever. The
+mass-preserving vs one-sided distinction is not the binding constraint — the
+limiting factor is statistical power at n=3, not the memory-conservation choice.
+Same category as GAP-38/39/40. Observations-only; no frozen surface moved —
+`docs/audit/gap40-lineageflow-classifier-aware-restart.md` §4d; evidence
+`verification_outputs/gap40b-lineageflow-bias-modes/` (`n200_screen/`,
+`n1000_negative/`).
 
 ## 5. R1 real-forward saga (D-004 / D-004b)
 

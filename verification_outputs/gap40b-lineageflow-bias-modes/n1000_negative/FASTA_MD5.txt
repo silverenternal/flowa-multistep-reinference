@@ -1,0 +1,6 @@
+363cc04df72f0391de3acf5588de0d83  seed42_baseline.fasta
+54dbc65ca15bd0e40f28d3576c064b6b  seed42_negative_framework.fasta
+82a4dae14a4db543eca0011084228fca  seed43_baseline.fasta
+63d17135a34059b6335b02fa55364100  seed43_negative_framework.fasta
+b8ecb79cba04d5fa0a4d5b8a6d7aed5f  seed44_baseline.fasta
+de7a13ae7eed260a9b63925203fe9428  seed44_negative_framework.fasta

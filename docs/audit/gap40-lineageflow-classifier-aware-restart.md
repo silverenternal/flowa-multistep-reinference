@@ -21,7 +21,8 @@ lever from the dormant-lever menu.
 | **Load-bearing structural finding** | at the **canonical R1 config** (`--nfe 10`, default `--restart-min-nfe 20`) the restart-blend gate degenerates `n_rounds` to **1** (`tools/gen_lineageflow_n1000_fastas.py:546`). The framework arm is a **single `solve_ode` pass** — neither the scalar nor the classifier-aware blend fires. The lever is therefore **byte-identical** to legacy at canonical config |
 | Gate-open A/B (N=200, seed 42, `--restart-min-nfe 5`) | baseline 37 → legacy 38 → **classifier-aware 44** hits; `car vs legacy` MWU `p=0.117`, Fisher `p=0.123`; `car vs baseline` `p=0.073`. Directional win, **not significant** at N=200 single seed; **family-dependent** (wins 2 of 4 families) |
 | **Decisive test — canonical N=1000, 3 seeds, gate-open** | seed-level totals (baseline / legacy / car): 42 = 158/257/**271**, 43 = 159/265/**269**, 44 = 174/245/**265**. `car vs legacy` mean **+12.67** hits, `d_z=1.567`, **3/3 direction-consistent**, but `p_bonf_rlevel=1.0` → **NOT STRONG**. Per-record paired-t DL meta `d_pooled=+0.024`, `p=0.184` → **NOT significant**. The lever roughly doubles the framework-vs-baseline seed-level effect size (legacy `d_z=4.97` → car `d_z=8.77`) but neither clears the pre-registered bar |
-| Net | The lever is wired, additive, default-off, and **load-bearing once the gate is open**. It does **not** flip R1: the canonical config never runs the blend, and even with the gate open the incremental effect is consistent but not significant. No frozen surface moved. |
+| **GAP-40b — non-conserving bias modes (§4d)** | `centered` (mass-preserving) vs one-sided `positive`/`negative`. At N=200 `positive` ≡ `centered` (44 vs 44 hits) and `negative` nominally 47; at the decisive N=1000 3-seed sweep `negative` is a **wash vs `centered`** (diffs [6, 3, −5], `d_z=0.234`, 2/3 seeds; per-record DL `d=+0.0022`, `p=0.902`). Non-conservation does **not** strengthen the lever — the constraint is power, not memory conservation |
+| Net | The lever is wired, additive, default-off, and **load-bearing once the gate is open**. It does **not** flip R1: the canonical config never runs the blend, and even with the gate open the incremental effect is consistent but not significant. Making memory non-conserving does not help (§4d). No frozen surface moved. |
 
 ---
 
@@ -241,7 +242,89 @@ unknown-mode `ValueError` (policy + adapter), and default-mode == explicit
 `centered`.
 
 **Screen.** The N=200 gate-open A/B of `{legacy, centered, positive, negative}`
-(seed 42) is the decisive screen; results are recorded in §4d once complete.
+(seed 42) is the decisive screen; results are in §4d.
+
+## 4d. GAP-40b — N=200 screen + decisive N=1000 sweep of the non-conserving modes
+
+### 4d.1 N=200 gate-open screen (seed 42)
+
+Arms `{baseline, legacy, centered, positive, negative}` at the canonical
+gate-open config (`--nfe 10 --restart-min-nfe 5 --classifier-alpha 1.0`):
+
+| arm | total hits | records ≥1 | hits/record |
+|---|---:|---:|---:|
+| baseline | 37 | 30 | 0.1850 |
+| legacy | 38 | 32 | 0.1900 |
+| centered | 44 | 42 | 0.2200 |
+| positive | 44 | 41 | 0.2200 |
+| **negative** | **47** | 40 | 0.2350 |
+
+The one-sided **boost** (`positive`, "add memory where confident, never
+reduce") is **byte-for-byte indistinguishable from `centered`** at the total-hit
+level (44 vs 44) — the "add where confident" hypothesis gains nothing. The
+one-sided **reduction** (`negative`) is nominally the highest (47 vs 44), but
+`negative vs centered` per-record MWU `p=0.556` — within noise at N=200 single
+seed. Screen decision: advance `negative` to the decisive N=1000 3-seed sweep.
+All four framework FASTAs have distinct md5s (the modes are genuinely active);
+the baseline is byte-stable across arms. Evidence:
+`verification_outputs/gap40b-lineageflow-bias-modes/n200_screen/`.
+
+### 4d.2 Decisive N=1000 3-seed sweep — `negative` vs the GAP-40 arms
+
+Four arms per seed; `baseline`/`legacy`/`centered` reuse the archived GAP-40
+`n1000_gate_open` arms (baseline md5 byte-verified equal at gen time).
+
+| seed | baseline | legacy | centered | negative |
+|---:|---:|---:|---:|---:|
+| 42 | 158 | 257 | 271 | 277 |
+| 43 | 159 | 265 | 269 | 272 |
+| 44 | 174 | 245 | 265 | 260 |
+
+**Seed-level pooled (n=3, df=2, canonical R1 protocol):**
+
+| comparison | per-seed diffs | mean | `d_z` | `p_two` | `p_bonf_rlevel` | 3/3 dir | STRONG? |
+|---|---|---:|---:|---:|---:|:--:|:--:|
+| **negative vs centered** | [6, 3, −5] | +1.33 | **0.234** | 0.724 | **1.0** | ✗ (2/3) | **no** |
+| negative vs legacy | [20, 7, 15] | +14.00 | 2.135 | 0.066 | 1.0 | ✓ | no |
+| negative vs baseline | [119, 113, 86] | +106.00 | 6.030 | 0.009 | 0.145 | ✓ | no |
+| centered vs legacy | [14, 4, 20] | +12.67 | 1.567 | 0.113 | 1.0 | ✓ | no |
+
+**Per-record paired t (df=999) + DerSimonian–Laird meta:**
+
+| comparison | per-seed `d_z` | DL `d_pooled` | DL `z` | DL `p_two` | `p_bonf,k=7` |
+|---|---|---:|---:|---:|---:|
+| **negative vs centered** | +0.011 / +0.006 / −0.011 | **+0.0022** | 0.12 | **0.902** | 1.0 |
+| negative vs legacy | +0.061 / +0.021 / +0.049 | +0.0437 | 2.39 | 0.0168 | 0.118 |
+| negative vs baseline | +0.179 / +0.161 / +0.127 | +0.1555 | 8.47 | 2.6e-17 | 1.8e-16 |
+| centered vs legacy | +0.025 / +0.008 / +0.040 | +0.0243 | 1.33 | 0.184 | 1.0 |
+
+The DL reproduction of `centered vs legacy` (`d_pooled=+0.0243`, `z=1.33`,
+`p=0.184`) matches the GAP-40 §4b.3 numbers exactly — the statistics pipeline is
+the same one.
+
+### 4d.3 Verdict — the non-conserving hypothesis is not supported
+
+* **`negative` is a wash against `centered`.** Seed-level mean **+1.33** hits,
+  `d_z=0.234`, **only 2 of 3 seeds** positive, `p_two=0.724`; per-record DL
+  `d_pooled=+0.0022`, `z=0.12`, `p=0.902`. The N=200 single-seed "negative wins
+  47 vs 44" was **noise** — resolved as a null at N=1000.
+* **The one-sided boost is inert.** At N=200 `positive` ≡ `centered` on total
+  hits (44 vs 44). Making memory *non-conserving* (adding without removing, or
+  removing without adding) does **not** strengthen the lever.
+* **`negative` vs `legacy` is nominally larger than `centered` vs `legacy`**
+  (DL `d=+0.0437`, uncorrected `p=0.017` vs `+0.024`, `p=0.184`), but it still
+  fails the family-wise bar (`p_bonf,k=7 = 0.118`) and does not clear the
+  pre-registered R1 STRONG criterion. This is a weak, uncorrected trend, not a
+  result.
+* **Conclusion.** The mass-preserving vs non-conserving distinction is **not**
+  the binding constraint on the lever's magnitude. The GAP-40 finding stands
+  unchanged: the classifier-aware restart lever is directionally positive,
+  consistent, and **not significant** — the limiting factor is statistical
+  power at n=3, not the memory-conservation choice. This corroborates the
+  standing dormant-lever finding (GAP-38/39): wiring is real, but the near-miss
+  cells are power-limited, not code-limited.
+* No frozen surface moved; no R1/K4/K5/K7 verdict promoted. Evidence:
+  `verification_outputs/gap40b-lineageflow-bias-modes/n1000_negative/`.
 
 ## 5. Interpretation
 
@@ -276,6 +359,11 @@ unknown-mode `ValueError` (policy + adapter), and default-mode == explicit
 * No claim that opening the gate is "the fix" for R1 — the N=1000 data confirm a
   consistent-but-non-significant trend; the N=200 family split (wins 2 of 4
   families) is not resolved at N=1000 either.
+* **The non-conserving bias modes do not help (§4d).** The one-sided `positive`
+  mode is inert (≡ `centered` at N=200), and the one-sided `negative` mode is a
+  wash against `centered` at the decisive N=1000 3-seed sweep (per-record DL
+  `d=+0.0022`, `p=0.902`). No claim is made that non-conservation is a fix for
+  the near-miss cells; the binding constraint is statistical power at n=3.
 
 ## 7. Acceptance gates
 

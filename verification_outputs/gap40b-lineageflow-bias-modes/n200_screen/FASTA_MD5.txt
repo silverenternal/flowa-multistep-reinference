@@ -1,0 +1,8 @@
+ff5a6de6609c72f86cae3a3c8279d50a  legacy/baseline.fasta
+190e34823f5e1eca24e264ac66cf23a4  legacy/framework.fasta
+ff5a6de6609c72f86cae3a3c8279d50a  centered/baseline.fasta
+efb9f375d54651960a99c9b392483979  centered/framework.fasta
+ff5a6de6609c72f86cae3a3c8279d50a  positive/baseline.fasta
+20129a5055fe25a57d9a83837c3ce54a  positive/framework.fasta
+ff5a6de6609c72f86cae3a3c8279d50a  negative/baseline.fasta
+7c2780d934b71c26d9b280f22252c950  negative/framework.fasta

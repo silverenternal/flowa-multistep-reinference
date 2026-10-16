@@ -1,0 +1,5 @@
+legacy/baseline.fasta: total_hits=37 records=200 records_with_hits=30 hits_per_record=0.1850
+legacy/framework.fasta: total_hits=38 records=200 records_with_hits=32 hits_per_record=0.1900
+centered/framework.fasta: total_hits=44 records=200 records_with_hits=42 hits_per_record=0.2200
+positive/framework.fasta: total_hits=44 records=200 records_with_hits=41 hits_per_record=0.2200
+negative/framework.fasta: total_hits=47 records=200 records_with_hits=40 hits_per_record=0.2350
