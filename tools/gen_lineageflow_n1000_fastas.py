@@ -431,6 +431,7 @@ def _build_lineageflow_adapter(
     *,
     classifier_aware_restart: bool = False,
     classifier_alpha: float = 1.0,
+    classifier_bias_mode: str = "centered",
 ) -> Any | None:
     """Lazy-construct a synthetic-mode :class:`LineageFlowAdapter`.
 
@@ -463,6 +464,12 @@ def _build_lineageflow_adapter(
     ``adaptive_reflow/adapters/lineageflow.py:925``) instead of the
     scalar ``m = 1 - beta`` blend. Defaults (``False`` / ``1.0``)
     reproduce the pre-GAP-40 scalar-blend path byte-for-byte.
+
+    GAP-40b (additive, default off) — ``classifier_bias_mode`` selects
+    the bias shape of the classifier-aware policy: ``"centered"``
+    (default, mass-preserving), ``"positive"`` or ``"negative"``
+    (non-conserving one-sided variants). Only consulted when
+    ``classifier_aware_restart`` is on.
     """
     try:
         from adaptive_reflow.adapters.lineageflow import (  # type: ignore
@@ -480,6 +487,7 @@ def _build_lineageflow_adapter(
             # per-position classifier-aware memory vector.
             classifier_aware_restart=bool(classifier_aware_restart),
             classifier_alpha=float(classifier_alpha),
+            classifier_bias_mode=str(classifier_bias_mode),
             # Wave 349 P4 — switch from hardcoded ``force_mode="synthetic"`` to ``"auto"`` so the
             # LineageFlowAdapter picks up the real PyTorch ESM-2 + flow head (downloaded from
             # facebook/esm2_t33_650M_UR50D on first call). With Wave 349 P4 GPU dispatch the model
@@ -661,6 +669,7 @@ def _write_framework_arm(
     prior_mix: float = 0.0,
     classifier_aware_restart: bool = False,
     classifier_alpha: float = 1.0,
+    classifier_bias_mode: str = "centered",
 ) -> tuple[dict[str, int], dict[str, int]]:
     """Write the framework arm: drives :class:`LineageFlowAdapter` for each record.
 
@@ -704,6 +713,8 @@ def _write_framework_arm(
             # pre-GAP-40 scalar restart-blend byte-for-byte.
             classifier_aware_restart=bool(classifier_aware_restart),
             classifier_alpha=float(classifier_alpha),
+            # GAP-40b — bias shape (only consulted when the flag is on).
+            classifier_bias_mode=str(classifier_bias_mode),
         )
 
     with out_path.open("w") as f:
@@ -987,10 +998,27 @@ def main() -> None:
         default=1.0,
         help=(
             "GAP-40 — bias strength for the classifier-aware restart "
-            "per-position memory vector (``m_vec[l] = clip(base_m * "
-            "(1 + alpha * (c[l] - mean_c)), 0, 1)``). Only takes "
+            "per-position memory vector (``m_vec[l] = clip(base_m + "
+            "alpha * bias(c[l] - mean_c), 0, 1)``). Only takes "
             "effect with ``--classifier-aware-restart``. Default 1.0 "
             "is the policy's own default."
+        ),
+    )
+    # GAP-40b — bias shape for the classifier-aware restart policy
+    # (additive, default off). ``centered`` is the mass-preserving
+    # pre-GAP-40b behaviour; ``positive`` / ``negative`` are the
+    # non-conserving one-sided variants.
+    p.add_argument(
+        "--classifier-bias-mode",
+        choices=("centered", "positive", "negative"),
+        default="centered",
+        help=(
+            "GAP-40b — bias shape for the classifier-aware restart "
+            "memory vector: ``centered`` (default, mass-preserving: "
+            "bias(x)=x), ``positive`` (non-conserving one-sided boost: "
+            "bias(x)=max(x,0)), ``negative`` (non-conserving one-sided "
+            "reduction: bias(x)=min(x,0)). Only takes effect with "
+            "``--classifier-aware-restart``."
         ),
     )
     args = p.parse_args()
@@ -1155,6 +1183,8 @@ def main() -> None:
         # (default) preserves the pre-GAP-40 scalar restart-blend.
         "classifier_aware_restart": bool(args.classifier_aware_restart),
         "classifier_alpha": float(args.classifier_alpha),
+        # GAP-40b — bias shape (only consulted when the flag is on).
+        "classifier_bias_mode": str(args.classifier_bias_mode),
     }
 
     # ---- Baseline arm (bare RNG, preserved byte-shape) -----------------
@@ -1186,6 +1216,8 @@ def main() -> None:
         # pre-GAP-40 scalar restart-blend byte-for-byte.
         classifier_aware_restart=bool(args.classifier_aware_restart),
         classifier_alpha=float(args.classifier_alpha),
+        # GAP-40b — bias shape (only consulted when the flag is on).
+        classifier_bias_mode=str(args.classifier_bias_mode),
     )
     manifest["framework_per_family_count"] = dict(framework_counts)
     manifest["framework_fallback_per_family_count"] = dict(fallback_counts)

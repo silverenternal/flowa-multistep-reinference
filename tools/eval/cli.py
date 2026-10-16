@@ -339,6 +339,19 @@ def build_argparser() -> argparse.ArgumentParser:
             "policy's own default."
         ),
     )
+    # GAP-40b — bias shape (additive, default off). Only effective with
+    # ``--classifier-aware-restart``.
+    p.add_argument(
+        "--classifier-bias-mode",
+        choices=("centered", "positive", "negative"),
+        default="centered",
+        help=(
+            "GAP-40b: bias shape for the classifier-aware restart memory "
+            "vector — ``centered`` (default, mass-preserving), "
+            "``positive`` / ``negative`` (non-conserving one-sided "
+            "variants). Only effective with ``--classifier-aware-restart``."
+        ),
+    )
     return p
 
 
@@ -475,6 +488,10 @@ def main(argv: list[str] | None = None) -> int:
                 ),
                 classifier_alpha=float(
                     getattr(args, "classifier_alpha", 1.0),
+                ),
+                # GAP-40b — bias shape (additive; default "centered").
+                classifier_bias_mode=str(
+                    getattr(args, "classifier_bias_mode", "centered"),
                 ),
             )
             cells.append(cell)

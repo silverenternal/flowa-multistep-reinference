@@ -196,6 +196,53 @@ restart-blend blend is not required for the R1 headline; the framework-vs-baseli
 gap is driven by the adapter forward pass, consistent with §3 ("R1 is
 init-attributed"). Opening the gate neither breaks nor strengthens the headline.
 
+## 4c. GAP-40b — non-conserving bias modes (wiring)
+
+**Motivation.** The GAP-40 policy is *mass-preserving*: `m_vec` is centred on
+`base_m = 1 - β`, so the mean memory is unchanged and the classifier bias only
+**redistributes** memory from uncertain to confident positions. The observed
+GAP-40 effect (§4b) is consistent but small — plausibly because total memory is
+conserved. GAP-40b adds two **non-conserving one-sided** variants so the
+"add memory where confident without removing it elsewhere" hypothesis can be
+tested directly.
+
+**Mechanism.** The bias shape is selected by `bias_mode`
+(`adaptive_reflow/adapters/lineageflow.py`, `LineageFlowClassifierAwareRestart`):
+
+```
+centred[l] = c[l] - mean_c
+m_vec[l]   = clip(base_m + alpha * bias(centred[l]), 0, 1)
+
+bias(x) = x            # "centered" (default)  — mass-preserving (pre-GAP-40b)
+bias(x) = max(x, 0)    # "positive"           — mean(m_vec) >= base_m (boost)
+bias(x) = min(x, 0)    # "negative"           — mean(m_vec) <= base_m (reduce)
+```
+
+**Doc/code correction.** The class docstring previously stated the multiplicative
+form `base_m * (1 + alpha * (c - mean_c))`; the implementation has always been the
+**additive** form `base_m + alpha * (c - mean_c)`
+(`lineageflow.py::_bias_memory_fraction`). The docstring is corrected here, and the
+same correction is applied to the `--classifier-alpha` help text. No behaviour
+changed — this is a documentation fix.
+
+**Wiring (additive, default `centered` = byte-stable).**
+`classifier_bias_mode` is threaded through
+`LineageFlowAdapter.__init__` → `default_lineageflow_adapter` →
+`tools/gen_lineageflow_n1000_fastas.py` (`--classifier-bias-mode`, recorded in
+`manifest.json`) and through `tools/eval/framework.py::_resolve_adapter` →
+`sweep.py` → `cli.py`. Unknown modes raise
+`lineageflow_classifier_bias_mode_unknown` at construction.
+
+**Tests.** `tests/test_adapters/test_lineageflow_conformance.py` gains 7 cases:
+centered mass-preservation, positive one-sided boost (`mean > base`, uncertain
+positions pinned to base), negative one-sided reduction (`mean < base`,
+confident positions pinned to base), uniform-theta identity for all three modes,
+unknown-mode `ValueError` (policy + adapter), and default-mode == explicit
+`centered`.
+
+**Screen.** The N=200 gate-open A/B of `{legacy, centered, positive, negative}`
+(seed 42) is the decisive screen; results are recorded in §4d once complete.
+
 ## 5. Interpretation
 
 1. **The lever works mechanically.** With the gate open, the real

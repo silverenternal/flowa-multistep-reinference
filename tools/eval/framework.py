@@ -117,6 +117,7 @@ def _resolve_adapter(
     nfe_budget: int | None = None,
     classifier_aware_restart: bool = False,
     classifier_alpha: float = 1.0,
+    classifier_bias_mode: str = "centered",
 ) -> tuple[Any, str]:
     """Resolve the adapter factory for ``model``.
 
@@ -227,6 +228,13 @@ def _resolve_adapter(
             kwargs["classifier_aware_restart"] = True
             if "classifier_alpha" in sig_params:
                 kwargs["classifier_alpha"] = float(classifier_alpha)
+            # GAP-40b (additive) — bias shape; only threaded when the
+            # factory accepts it. Default "centered" is byte-stable.
+            if (
+                "classifier_bias_mode" in sig_params
+                and str(classifier_bias_mode) != "centered"
+            ):
+                kwargs["classifier_bias_mode"] = str(classifier_bias_mode)
         # Wave 73 Agent 3 — close GAP-4 (docs/audit/wave71-phase3-sweep.md §4).
         # The v2 FlowMol3 factory sets ``use_upstream=True`` for
         # real/auto (Wave 71 GAP-1) but defaults ``weights_path=None``,

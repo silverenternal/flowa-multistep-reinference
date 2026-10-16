@@ -351,6 +351,149 @@ def test_classifier_aware_restart_on_flips_audit_code_and_uses_per_position() ->
 
 
 # ---------------------------------------------------------------------------
+# GAP-40b — classifier-aware restart bias_mode (centered / positive / negative)
+# ---------------------------------------------------------------------------
+
+
+def _mixed_confidence_theta() -> np.ndarray:
+    """Half confident (spike) / half uncertain (uniform) categorical."""
+    theta = np.full(LINEAGEFLOW_STATE_SHAPE, 1.0 / LINEAGEFLOW_VOCAB_SIZE)
+    half = LINEAGEFLOW_STATE_SHAPE[0] // 2
+    theta[:half, :] = 0.0
+    theta[:half, 0] = 1.0
+    return theta
+
+
+def test_classifier_aware_restart_centered_mode_is_mass_preserving() -> None:
+    """The default ``centered`` mode keeps ``mean(m_vec) == base``."""
+    from adaptive_reflow.adapters.lineageflow import (
+        LineageFlowClassifierAwareRestart,
+    )
+
+    theta = _mixed_confidence_theta()
+    policy = LineageFlowClassifierAwareRestart(enable_upstream_probe=False)
+    m_vec = policy.propose_restart(
+        trace=None, paper_quantities=None,
+        base_memory_fraction=0.5, theta=theta,
+    )
+    assert m_vec.mean() == pytest.approx(0.5, abs=1e-9)
+    half = LINEAGEFLOW_STATE_SHAPE[0] // 2
+    assert m_vec[:half].mean() > 0.5  # confident half boosted
+    assert m_vec[half:].mean() < 0.5  # uncertain half reduced
+
+
+def test_classifier_aware_restart_positive_mode_is_one_sided_boost() -> None:
+    """``positive`` adds memory where confident and never reduces it."""
+    from adaptive_reflow.adapters.lineageflow import (
+        LineageFlowClassifierAwareRestart,
+    )
+
+    theta = _mixed_confidence_theta()
+    policy = LineageFlowClassifierAwareRestart(
+        bias_mode="positive", enable_upstream_probe=False,
+    )
+    m_vec = policy.propose_restart(
+        trace=None, paper_quantities=None,
+        base_memory_fraction=0.5, theta=theta,
+    )
+    half = LINEAGEFLOW_STATE_SHAPE[0] // 2
+    # Non-conserving: mean >= base, strictly greater here.
+    assert m_vec.mean() > 0.5
+    # Confident half boosted; uncertain half pinned to base.
+    assert m_vec[:half].mean() > 0.5
+    assert m_vec[half:].mean() == pytest.approx(0.5, abs=1e-12)
+
+
+def test_classifier_aware_restart_negative_mode_is_one_sided_reduction() -> None:
+    """``negative`` reduces memory where uncertain and never boosts it."""
+    from adaptive_reflow.adapters.lineageflow import (
+        LineageFlowClassifierAwareRestart,
+    )
+
+    theta = _mixed_confidence_theta()
+    policy = LineageFlowClassifierAwareRestart(
+        bias_mode="negative", enable_upstream_probe=False,
+    )
+    m_vec = policy.propose_restart(
+        trace=None, paper_quantities=None,
+        base_memory_fraction=0.5, theta=theta,
+    )
+    half = LINEAGEFLOW_STATE_SHAPE[0] // 2
+    # Non-conserving: mean <= base, strictly smaller here.
+    assert m_vec.mean() < 0.5
+    # Confident half pinned to base; uncertain half reduced.
+    assert m_vec[:half].mean() == pytest.approx(0.5, abs=1e-12)
+    assert m_vec[half:].mean() < 0.5
+
+
+def test_classifier_aware_restart_all_modes_identity_on_uniform_theta() -> None:
+    """Uniform theta ⇒ centred==0 ⇒ every mode reduces to the scalar."""
+    from adaptive_reflow.adapters.lineageflow import (
+        LineageFlowClassifierAwareRestart,
+    )
+
+    uniform = np.full(LINEAGEFLOW_STATE_SHAPE, 1.0 / LINEAGEFLOW_VOCAB_SIZE)
+    for mode in ("centered", "positive", "negative"):
+        policy = LineageFlowClassifierAwareRestart(
+            bias_mode=mode, enable_upstream_probe=False,
+        )
+        m_vec = policy.propose_restart(
+            trace=None, paper_quantities=None,
+            base_memory_fraction=0.4, theta=uniform,
+        )
+        assert np.all(m_vec == pytest.approx(0.4, abs=1e-12))
+
+
+def test_classifier_aware_restart_unknown_bias_mode_raises() -> None:
+    """An unknown bias_mode fails fast at construction."""
+    from adaptive_reflow.adapters.lineageflow import (
+        LineageFlowClassifierAwareRestart,
+    )
+
+    with pytest.raises(ValueError, match="classifier_bias_mode_unknown"):
+        LineageFlowClassifierAwareRestart(
+            bias_mode="bogus", enable_upstream_probe=False,
+        )
+
+
+def test_classifier_aware_restart_adapter_rejects_unknown_bias_mode() -> None:
+    """The adapter constructor validates ``classifier_bias_mode`` too."""
+    with pytest.raises(ValueError, match="classifier_bias_mode_unknown"):
+        _make_adapter(
+            num_steps=2,
+            classifier_aware_restart=True,
+            classifier_bias_mode="bogus",
+        )
+
+
+def test_classifier_aware_restart_default_bias_mode_is_centered() -> None:
+    """The adapter default bias_mode is ``centered`` (byte-stable)."""
+    adapter = _make_adapter(
+        num_steps=2, classifier_aware_restart=True,
+    )
+    assert adapter._classifier_aware_restart_bias_mode == "centered"
+    # ``centered`` explicit == default: same policy output.
+    from adaptive_reflow.adapters.lineageflow import (
+        LineageFlowClassifierAwareRestart,
+    )
+
+    theta = _mixed_confidence_theta()
+    default_out = LineageFlowClassifierAwareRestart(
+        enable_upstream_probe=False,
+    ).propose_restart(
+        trace=None, paper_quantities=None,
+        base_memory_fraction=0.5, theta=theta,
+    )
+    explicit_out = LineageFlowClassifierAwareRestart(
+        bias_mode="centered", enable_upstream_probe=False,
+    ).propose_restart(
+        trace=None, paper_quantities=None,
+        base_memory_fraction=0.5, theta=theta,
+    )
+    assert np.array_equal(default_out, explicit_out)
+
+
+# ---------------------------------------------------------------------------
 # F-4 dtype boundary fix (Wave 47 Agent B)
 # ---------------------------------------------------------------------------
 

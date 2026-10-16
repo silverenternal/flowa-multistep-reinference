@@ -92,6 +92,7 @@ def _run_cell(
     tier_aware_baseline_metrics_jsonl: str | pathlib.Path | None = None,
     classifier_aware_restart: bool = False,
     classifier_alpha: float = 1.0,
+    classifier_bias_mode: str = "centered",
 ) -> dict[str, Any]:
     """Run one (model, seed, nfe_budget) cell.
 
@@ -132,6 +133,7 @@ def _run_cell(
             ),
             classifier_aware_restart=classifier_aware_restart,
             classifier_alpha=classifier_alpha,
+            classifier_bias_mode=classifier_bias_mode,
         )
 
 
@@ -157,6 +159,7 @@ def _run_cell_impl(
     tier_aware_baseline_metrics_jsonl: str | pathlib.Path | None = None,
     classifier_aware_restart: bool = False,
     classifier_alpha: float = 1.0,
+    classifier_bias_mode: str = "centered",
 ) -> dict[str, Any]:
     """Inner implementation of :func:`_run_cell` — split for Wave 98.A
     watchdog wrapping without changing the public signature."""
@@ -192,6 +195,7 @@ def _run_cell_impl(
         nfe_budget=int(nfe),
         classifier_aware_restart=classifier_aware_restart,
         classifier_alpha=classifier_alpha,
+        classifier_bias_mode=classifier_bias_mode,
     )
     if adapter is None:
         cell["status"] = "BLOCKED"

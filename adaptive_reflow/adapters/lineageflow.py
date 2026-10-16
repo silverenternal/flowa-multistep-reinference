@@ -318,6 +318,20 @@ ERR_LINEAGEFLOW_INTEGRATOR_UNKNOWN: str = "lineageflow_integrator_unknown"
 ERR_LINEAGEFLOW_L_OUT_OF_RANGE: str = "lineageflow_L_out_of_range"
 ERR_LINEAGEFLOW_VOCAB_OUT_OF_RANGE: str = "lineageflow_vocab_out_of_range"
 ERR_LINEAGEFLOW_FAMILY_ID_INVALID: str = "lineageflow_family_id_invalid"
+ERR_LINEAGEFLOW_CLASSIFIER_BIAS_MODE_UNKNOWN: str = (
+    "lineageflow_classifier_bias_mode_unknown"
+)
+
+#: GAP-40b — bias shapes for :class:`LineageFlowClassifierAwareRestart`.
+#: ``"centered"`` is the mass-preserving default (pre-GAP-40b
+#: behaviour); ``"positive"`` / ``"negative"`` are the non-conserving
+#: one-sided variants (see the policy docstring).
+LINEAGEFLOW_CLASSIFIER_BIAS_MODE_CENTERED: str = "centered"
+LINEAGEFLOW_CLASSIFIER_BIAS_MODES: tuple[str, ...] = (
+    LINEAGEFLOW_CLASSIFIER_BIAS_MODE_CENTERED,
+    "positive",
+    "negative",
+)
 
 
 #: Module-level HF ``ModelOutput`` unwrap callable for the
@@ -964,19 +978,33 @@ class LineageFlowClassifierAwareRestart:
     Mapping confidence -> per-position memory fraction
     -------------------------------------------------
 
-    Let ``c[l]`` be the per-position confidence in ``[1/K, 1]``. The
-    policy returns
+    Let ``c[l]`` be the per-position confidence in ``[1/K, 1]`` and
+    ``centred[l] = c[l] - mean_c``. The policy returns
 
     .. code-block:: text
 
-        m_vec[l] = clip(base_m * (1 + alpha * (c[l] - mean_c)), 0, 1)
+        m_vec[l] = clip(base_m + alpha * bias(centred[l]), 0, 1)
 
     where ``base_m`` is the scalar ``1 - beta`` from the framework
-    policy, ``alpha`` controls the bias strength (default ``1.0``),
-    and the per-position bias is centred on the mean confidence so
-    the expected per-position memory fraction equals ``base_m``
-    (mass-preserving). When all positions have the same confidence
-    the policy reduces to today's scalar blend.
+    policy and ``alpha`` controls the bias strength (default ``1.0``,
+    clamped to ``[0, 2]``). ``bias_mode`` selects the bias shape:
+
+    * ``"centered"`` (default) — ``bias(x) = x``. The per-position
+      bias is centred on the mean confidence so the mean of ``m_vec``
+      equals ``base_m`` (**mass-preserving**: total memory unchanged,
+      redistributed from uncertain to confident positions). This is
+      the pre-GAP-40b behaviour.
+    * ``"positive"`` — ``bias(x) = max(x, 0)``. Memory is **added**
+      above ``base_m`` where the classifier is confident and left at
+      ``base_m`` elsewhere (never reduced). The mean of ``m_vec`` is
+      ``>= base_m`` (**non-conserving**, one-sided boost).
+    * ``"negative"`` — ``bias(x) = min(x, 0)``. Memory is **reduced**
+      below ``base_m`` where the classifier is uncertain and left at
+      ``base_m`` elsewhere (never boosted). The mean of ``m_vec`` is
+      ``<= base_m`` (**non-conserving**, one-sided reduction).
+
+    When all positions have the same confidence ``centred`` is zero,
+    so every mode reduces to today's scalar blend.
 
     Synthetic-mode behaviour
     ------------------------
@@ -1015,12 +1043,29 @@ class LineageFlowClassifierAwareRestart:
     # the path-insert side-effect never fires in unit tests.
     enable_upstream_probe: bool = True
 
+    # GAP-40b — bias shape. ``"centered"`` (default) is the
+    # mass-preserving pre-GAP-40b behaviour (``bias(x) = x``).
+    # ``"positive"`` is a non-conserving one-sided boost
+    # (``bias(x) = max(x, 0)``: add memory where confident, never
+    # reduce). ``"negative"`` is the mirror non-conserving one-sided
+    # reduction (``bias(x) = min(x, 0)``: reduce memory where
+    # uncertain, never boost). See the class docstring.
+    bias_mode: str = LINEAGEFLOW_CLASSIFIER_BIAS_MODE_CENTERED
+
     # Cached upstream class (filled lazily on first use). ``None``
     # means "probe failed or disabled"; a sentinel of ``Ellipsis``
     # would mean "probe in progress" but we don't need it because
     # the probe is fast and idempotent.
     _cached_cls: Any | None = None
     _probe_attempted: bool = False
+
+    def __post_init__(self) -> None:
+        if str(self.bias_mode) not in LINEAGEFLOW_CLASSIFIER_BIAS_MODES:
+            raise ValueError(
+                f"{ERR_LINEAGEFLOW_CLASSIFIER_BIAS_MODE_UNKNOWN}:"
+                f"{self.bias_mode!r}; expected one of "
+                f"{LINEAGEFLOW_CLASSIFIER_BIAS_MODES!r}"
+            )
 
     def propose_restart(
         self,
@@ -1156,25 +1201,42 @@ class LineageFlowClassifierAwareRestart:
         base_memory_fraction: float,
         confidence: ArrayF64,
     ) -> ArrayF64:
-        """Centre-perturb the scalar ``base_memory_fraction`` by confidence.
+        """Perturb the scalar ``base_memory_fraction`` by confidence.
 
         The mapping is:
 
         .. code-block:: text
 
-            deviation = alpha * (confidence - mean(confidence))
+            centred = confidence - mean(confidence)
+            deviation = alpha * bias(centred)
             m_vec = clip(base + deviation, 0, 1)
 
-        which is mass-preserving (the mean of ``m_vec`` equals
-        ``base_memory_fraction``) and bounded in ``[0, 1]`` for any
-        ``alpha in [0, 2]`` and ``base in [0, 1]``.
+        where ``bias`` depends on :attr:`bias_mode`:
+
+        * ``"centered"`` (default) — ``bias(x) = x``; the mean of
+          ``m_vec`` equals ``base_memory_fraction`` (mass-preserving).
+        * ``"positive"`` — ``bias(x) = max(x, 0)``; mean ``>=`` base
+          (non-conserving one-sided boost).
+        * ``"negative"`` — ``bias(x) = min(x, 0)``; mean ``<=`` base
+          (non-conserving one-sided reduction).
+
+        The result is bounded in ``[0, 1]`` for any ``alpha in [0, 2]``
+        and ``base in [0, 1]``.
         """
         c = np.asarray(confidence, dtype=np.float64).reshape(-1)
         if c.size == 0:
             return np.zeros((0,), dtype=np.float64)
         mean_c = float(c.mean())
         alpha = max(0.0, min(2.0, float(self.alpha)))
-        deviation = alpha * (c - mean_c)
+        centred = c - mean_c
+        mode = str(self.bias_mode)
+        if mode == "positive":
+            deviation = alpha * np.maximum(centred, 0.0)
+        elif mode == "negative":
+            deviation = alpha * np.minimum(centred, 0.0)
+        else:
+            # "centered" (validated in __post_init__).
+            deviation = alpha * centred
         m_vec = float(base_memory_fraction) + deviation
         return np.clip(m_vec, 0.0, 1.0).astype(np.float64)
 
@@ -1626,6 +1688,7 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         conditioning_cache_size: int = LINEAGEFLOW_NATIVE_STATES_MAXSIZE,
         classifier_aware_restart: bool = False,
         classifier_alpha: float = 1.0,
+        classifier_bias_mode: str = LINEAGEFLOW_CLASSIFIER_BIAS_MODE_CENTERED,
         perturbation: PerturbationPolicy | None = None,
     ) -> None:
         if int(num_steps) <= 0:
@@ -1744,6 +1807,13 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
             classifier_aware_restart
         )
         self._classifier_aware_restart_alpha = float(classifier_alpha)
+        if str(classifier_bias_mode) not in LINEAGEFLOW_CLASSIFIER_BIAS_MODES:
+            raise ValueError(
+                f"{ERR_LINEAGEFLOW_CLASSIFIER_BIAS_MODE_UNKNOWN}:"
+                f"{classifier_bias_mode!r}; expected one of "
+                f"{LINEAGEFLOW_CLASSIFIER_BIAS_MODES!r}"
+            )
+        self._classifier_aware_restart_bias_mode = str(classifier_bias_mode)
         self._classifier_aware_restart_policy: (
             LineageFlowClassifierAwareRestart | None
         ) = None
@@ -2054,6 +2124,9 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
                 self._classifier_aware_restart_policy = (
                     LineageFlowClassifierAwareRestart(
                         alpha=float(self._classifier_aware_restart_alpha),
+                        bias_mode=str(
+                            self._classifier_aware_restart_bias_mode
+                        ),
                         enable_upstream_probe=True,
                     )
                 )
@@ -3011,6 +3084,7 @@ def default_lineageflow_adapter(
     num_steps: int | None = None,
     classifier_aware_restart: bool = False,
     classifier_alpha: float = 1.0,
+    classifier_bias_mode: str = LINEAGEFLOW_CLASSIFIER_BIAS_MODE_CENTERED,
 ) -> LineageFlowAdapter:
     """Default factory for :class:`LineageFlowAdapter`.
 
@@ -3024,6 +3098,10 @@ def default_lineageflow_adapter(
     policy (:class:`LineageFlowClassifierAwareRestart`) without
     touching the constructor directly. The defaults reproduce the
     pre-GAP-40 scalar restart-blend byte-for-byte.
+
+    GAP-40b (additive, default off) — ``classifier_bias_mode`` selects
+    the bias shape (``"centered"`` mass-preserving default;
+    ``"positive"`` / ``"negative"`` non-conserving one-sided variants).
     """
     return LineageFlowAdapter(
         weights_path=weights_path,
@@ -3036,6 +3114,7 @@ def default_lineageflow_adapter(
         else LINEAGEFLOW_NUM_STEPS_DEFAULT,
         classifier_aware_restart=bool(classifier_aware_restart),
         classifier_alpha=float(classifier_alpha),
+        classifier_bias_mode=str(classifier_bias_mode),
     )
 
 
@@ -3052,10 +3131,13 @@ __all__ = [
     "ERR_LINEAGEFLOW_NUM_STEPS",
     "ERR_LINEAGEFLOW_VOCAB_OUT_OF_RANGE",
     "ERR_LINEAGEFLOW_WEIGHTS_MISSING",
+    "ERR_LINEAGEFLOW_CLASSIFIER_BIAS_MODE_UNKNOWN",
     "LINEAGEFLOW_CFG_SCALE_DEFAULT",
     "LINEAGEFLOW_CHANNEL_DOMAINS",
     "LINEAGEFLOW_CHANNELS",
     "LINEAGEFLOW_CLAMP",
+    "LINEAGEFLOW_CLASSIFIER_BIAS_MODE_CENTERED",
+    "LINEAGEFLOW_CLASSIFIER_BIAS_MODES",
     "LINEAGEFLOW_CONFIG_HASH",
     "LINEAGEFLOW_CONFIG_VERSION",
     "LINEAGEFLOW_FAMILY_EMBED_DIM",
