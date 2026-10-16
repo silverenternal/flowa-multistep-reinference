@@ -1,0 +1,33 @@
+{
+  "config": {
+    "seed": 42,
+    "n": 200,
+    "nfe": 10,
+    "n_rounds": 3,
+    "restart_min_nfe": 5,
+    "tier_aware_n_cap": 0.5,
+    "gate": "open",
+    "force_mode": "auto"
+  },
+  "arms": {
+    "baseline": {
+      "total_hits": 37,
+      "records_ge1": 30
+    },
+    "legacy": {
+      "total_hits": 38,
+      "records_ge1": 32
+    },
+    "tier_a": {
+      "total_hits": 50,
+      "records_ge1": 41
+    },
+    "tier_b": {
+      "total_hits": 50,
+      "records_ge1": 41
+    }
+  },
+  "tier_a_equals_tier_b": true,
+  "per_record_mwu_tier_a_vs_legacy_p_greater": 0.12022792438199814,
+  "notes": "tier_a == tier_b (framework md5 identical) -> --scheduler tier_aware_codimension is a no-op; the effect is driven entirely by --tier-aware-n-cap 0.5 + baseline jsonl. Single-seed screen only; advance to the decisive N=1000 sweep."
+}

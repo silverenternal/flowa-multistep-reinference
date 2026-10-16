@@ -1,0 +1,5 @@
+# GAP-41 N=200 gate-open screen (seed 42) — FASTA md5
+# tier_a = --tier-aware-n-cap 0.5 (+baseline jsonl); tier_b = same + --scheduler tier_aware_codimension
+legacy   baseline=ff5a6de6609c72f86cae3a3c8279d50a framework=190e34823f5e1eca24e264ac66cf23a4
+tier_a   baseline=ff5a6de6609c72f86cae3a3c8279d50a framework=3ecc30481d505c3a1e883172e5e35a2e
+tier_b   baseline=ff5a6de6609c72f86cae3a3c8279d50a framework=3ecc30481d505c3a1e883172e5e35a2e

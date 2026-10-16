@@ -380,6 +380,44 @@ verdict unchanged (PARTIAL). Observations-only; no frozen surface moved —
 `docs/audit/gap34-r1-init-dose.md`; evidence
 `verification_outputs/gap34-r1-init-dose/`.
 
+### 4.9 R1 tier-aware n_cap — the last dormant lever, a wash at N=1000 (GAP-41, 2026-10-16)
+
+The dormant-lever survey's final candidate: the **R6 tier-aware `n_cap`**
+scheduler path (trim restart NFE for records whose *baseline* pLDDT is already
+high), transplanted onto the R1 (HMMER-hit) metric via the already-wired flags
+`--tier-aware-n-cap 0.5` + `--tier-aware-baseline-metrics-jsonl <foldability.jsonl>`.
+
+**Screen (N=200, seed 42, gate-open).** `legacy` 38 → **`tier_a` 50** hits
+(**+12**, +31.6 %), per-record MWU `p=0.120` — the strongest signal in the whole
+survey. `tier_a ≡ tier_b` (framework md5 `3ecc3048…`) ⇒ `--scheduler
+tier_aware_codimension` is a **no-op**; the effect is entirely the `n_cap` +
+baseline JSONL.
+
+**Decisive (N=1000, seeds 42/43/44).** Controls reused byte-for-byte from the
+archived GAP-40 `n1000_gate_open` run (baseline md5 verified equal at gen time):
+
+| seed | baseline | legacy | centered | **tier** |
+|---:|---:|---:|---:|---:|
+| 42 | 158 | 257 | 271 | **252** |
+| 43 | 159 | 265 | 269 | **279** |
+| 44 | 174 | 245 | 265 | **262** |
+
+`tier vs legacy`: per-seed diffs **[−5, +14, +17]**, mean **+8.67**, `d_z=0.726`,
+**2/3 seeds positive**, `p_bonf_rlevel=1.0` → **NOT STRONG** (fails both the
+`d_z>0.8` bar and the 3/3 direction criterion); per-record DL `d_pooled=+0.0196`,
+`z=1.07`, `p=0.284`. `tier vs centered` is a wash (`d_z=−0.28`). The `centered vs
+legacy` control row reproduces GAP-40 §4b.2/§4b.3 exactly (`d_z=1.567`; DL
+`+0.0243`, `p=0.184`) — same pipeline.
+
+**Reading:** the R6 tier-aware mechanism is **real and wired** (framework FASTAs
+byte-distinct from every control arm; manifests record `tier_aware_n_cap=0.5`) but
+**inert on R1** — the N=200 `+12` did not replicate, exactly as GAP-40b's N=200
+`negative` screen did not. This is the **sixth consecutive dormant lever**
+(GAP-38/39/40/40b/34/41) that is wired and active yet fails the n=3 STRONG bar.
+The R1 near-miss is **power-limited, not code-limited**. Observations-only; no
+frozen surface moved — `docs/audit/gap41-r1-tier-aware-ncap.md`; evidence
+`verification_outputs/gap41-r1-tier-aware-ncap/`.
+
 ## 5. R1 real-forward saga (D-004 / D-004b)
 
 - **D-004 defect:** the checkpoint-compat shim registered a bare core module
@@ -434,6 +472,7 @@ verdict unchanged (PARTIAL). Observations-only; no frozen surface moved —
 | GAP-37-STATISTICAL-POWER | 2026-10-15 | the R3 seed-level "paired" test was **not paired** (driver keyed the prior on `arm_name` → independent priors → two-sample in disguise). A `--shared-prior` flag makes both arms build the SAME prior: R3 `d_z` −0.401 (small) → **−1.089 (large)**, sd 3.75× tighter, 3/3 seeds same sign, seeds-for-80 %-power 49 → 7 (Bonferroni 78 → 11). Acceptance met via the medium+ effect-size branch; n=3 still n.s. (p=0.200). Observations-only; no frozen surface moved — `docs/audit/gap37-statistical-power.md` |
 | GAP-36-ABLATION-MATRIX | 2026-10-15 | consolidated **rounds × schedulers × checkpoints** ablation matrix (24 rows, matched NFE=50) assembled from existing runs (R5b rounds × schedulers; R5c checkpoints × schedulers). Reading: the **sign** of the framework effect tracks the training-budget axis (rounds / checkpoint), **not** the scheduler; within a fixed setting the scheduler tunes magnitude only. Decisive cell **`w16e1_5k`** is framework-WINS on all 3 schedulers (−25.2…−25.6 % FID, p_bonf ≤ 1e-6). Aggregation-only; no new experiments; no frozen surface moved — `docs/audit/gap36-ablation-matrix.md` |
 | GAP-34-R1-MECHANISM | 2026-10-16 | closed via acceptance path (a): the R1 init dose-response (τ sweep of the per-record init simplex, 3 seeds, N=1000) shows the init is a **legitimate, load-bearing, model-mediated** knob — τ=0 collapses to 0 hits, τ=1 (canonical) gives +287.3 (paired t=40.73, p=6.0e-4) and reproduces the D-004b arm exactly; the dose-response is a non-monotone inverted-U peaking at the canonical τ=1 (honest caveat: the τ=2 fall is seed-heterogeneous). R1 stays PARTIAL — `docs/audit/gap34-r1-init-dose.md` |
+| GAP-41-R1-TIER-AWARE | 2026-10-16 | the last dormant lever: the R6 tier-aware `n_cap` mechanism (`--tier-aware-n-cap 0.5` + baseline pLDDT jsonl) on the R1 metric. N=200 screen `tier_a` 50 vs `legacy` 38 (**+12**, MWU p=0.120); decisive N=1000 3-seed sweep is a **wash** — per-seed diffs [−5,+14,+17], mean +8.67, `d_z=0.726`, **2/3**, `p_bonf=1.0`, per-record DL `d=+0.020 p=0.284`. Sixth consecutive wired-but-inert dormant lever; the R1 near-miss is power-limited, not code-limited. R1 stays PARTIAL — `docs/audit/gap41-r1-tier-aware-ncap.md` |
 
 ## 7. Publication assessment (2026-10-13)
 

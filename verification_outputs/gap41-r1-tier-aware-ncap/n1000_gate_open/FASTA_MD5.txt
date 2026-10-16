@@ -1,0 +1,5 @@
+# GAP-41 N=1000 decisive gate-open (seed 42/43/44) — FASTA md5
+# baseline arms byte-match the archived GAP-40 n1000_gate_open reference
+seed42   baseline=363cc04df72f0391de3acf5588de0d83 framework=ceb4d3ab724b85fa125867ce97e897e1
+seed43   baseline=82a4dae14a4db543eca0011084228fca framework=5c3bd87b0da6d68ee1e6ead741c749e2
+seed44   baseline=b8ecb79cba04d5fa0a4d5b8a6d7aed5f framework=20752083ac8f287611fe1baad7271230

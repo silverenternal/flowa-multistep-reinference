@@ -287,6 +287,7 @@ not_in_nav: |
   audit/gap39-flowmol3-real-restart-blend.md
   audit/gap40-lineageflow-classifier-aware-restart.md
   audit/gap34-r1-init-dose.md
+  audit/gap41-r1-tier-aware-ncap.md
   audit/repo-docs-maintenance.md
   audit/readiness-verifier-repoint.md
   audit/repo-docs-maintenance-2.md

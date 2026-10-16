@@ -1,0 +1,3 @@
+seed42_tier/framework.fasta: total_hits=252 records=1000 records_with_hits=208 hits_per_record=0.2520
+seed43_tier/framework.fasta: total_hits=279 records=1000 records_with_hits=233 hits_per_record=0.2790
+seed44_tier/framework.fasta: total_hits=262 records=1000 records_with_hits=226 hits_per_record=0.2620
