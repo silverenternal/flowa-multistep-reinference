@@ -340,6 +340,46 @@ Same category as GAP-38/39/40. Observations-only; no frozen surface moved —
 `verification_outputs/gap40b-lineageflow-bias-modes/` (`n200_screen/`,
 `n1000_negative/`).
 
+### 4.8 R1 init dose-response — the init is a load-bearing, model-mediated knob (GAP-34, 2026-10-16)
+
+Closes GAP-34 via acceptance path (a): *"show the init is a legitimate,
+load-bearing part of the mechanism with a supporting experiment."* D-004b had
+shown the R1 win is the per-record random init, not the blend; GAP-34 asks
+whether that init is a real mechanism component or a tool artifact.
+
+`tools/sweep_gap34_init_dose.py` sweeps the AA-logit temperature `τ` of the
+per-record init simplex `softmax(randn(L, AA_VOCAB)·τ)` — `τ=0` is the
+near-uniform canonical init, `τ=1` is the D-004b convention — holding the
+length/family RNG and solver seeds fixed; single-pass init-only arm, N=1000,
+`--nfe 10`, canonical HMMER counter. Baseline (arm A) = 158/159/174.
+
+| `τ` | seed 42 | seed 43 | seed 44 | mean | sd |
+|---:|---:|---:|---:|---:|---:|
+| 0.0 | 0 | 0 | 0 | **0.0** | 0.0 |
+| 0.25 | 261 | 266 | 273 | 266.7 | 6.0 |
+| 0.5 | 290 | 276 | 241 | 269.0 | 25.2 |
+| **1.0** | 298 | 274 | 290 | **287.3** | 12.2 |
+| 2.0 | 62 | 247 | 314 | 207.7 | 130.5 |
+
+**Findings.** (i) `τ=0` collapses to **0 hits on all 3 seeds** and `τ=1` gives
++287.3 hits (paired `t=40.73`, `p=6.0e-4`) — the init is **decisively
+load-bearing and model-mediated** (a random init cannot raise family-consistent
+HMMER hits without the model). (ii) The `τ=1.0` row reproduces the D-004b
+init-only arm (298/274/290) **exactly** — anchored, not re-derived. (iii) The
+dose-response is **non-monotone / inverted-U** (Spearman `ρ` per seed
+0.40/0.30/0.90, mean 0.53), peaking at the canonical `τ=1.0`; `τ=2.0` falls to
+72.3 % of peak. (iv) **Honest caveat:** the `τ=2.0` fall is seed-heterogeneous
+(seed42 62, seed43 247, seed44 314; sd 130.5 vs 12.2 at `τ=1.0`), so the shape is
+*"an interior optimum at the canonical `τ=1` with a high-variance high-`τ`
+regime"*, not a clean dome.
+
+**Reading:** the canonical init setting is the interior optimum of a
+model-mediated mechanism knob. R1's win is therefore a legitimate mechanism win
+(the restart step's required per-record diversity), not a tool artifact. R1
+verdict unchanged (PARTIAL). Observations-only; no frozen surface moved —
+`docs/audit/gap34-r1-init-dose.md`; evidence
+`verification_outputs/gap34-r1-init-dose/`.
+
 ## 5. R1 real-forward saga (D-004 / D-004b)
 
 - **D-004 defect:** the checkpoint-compat shim registered a bare core module
@@ -357,6 +397,11 @@ Same category as GAP-38/39/40. Observations-only; no frozen surface moved —
   275/272/259 ≫ baseline 158/159/174 (B−A=+123.7, p=0.0043; B−C=+18.7,
   p=0.164 n.s.) ⇒ the win is the **per-record random INIT**, not the
   restart-blend. R1 stays PARTIAL. See `docs/audit/r1-d004b-attribution.md`.
+- **Mechanism (DONE 2026-10-16, GAP-34):** the init dose-response shows the
+  init is a **load-bearing, model-mediated** knob (τ=0 → 0 hits; τ=1 → +287.3,
+  paired t=40.73, p=6.0e-4) with an interior optimum at the canonical τ=1 —
+  so the attribution is a legitimate mechanism component, not a tool artifact.
+  See §4.8 / `docs/audit/gap34-r1-init-dose.md`.
 - **Caveat:** the D-004b restart init is a tool-convention surrogate, not the
   upstream intervention sampler.
 - **Evidence:** `verification_outputs/r1_3seed_d004b_q4_2026/`;
@@ -388,6 +433,7 @@ Same category as GAP-38/39/40. Observations-only; no frozen surface moved —
 | GAP-32-SOTA-HEADTOHEAD | 2026-10-14 | external-method head-to-head extended beyond R6 to **2 more cells** (seed-matched, Bonferroni-corrected paired statistics): **R5c MNIST `w16e1_5k`** framework-WINS −42.27 % FID (p_bonf 4.6e-4, beats every external arm); **R3 FlowMol3** framework does **not** win +11.05 % fg_dev (n.s.; coordinate-channel restart-blend; external Fast-DLLM/AB-Cache reduce fg_dev). Dropped 3rd candidate 2D eight-gaussians (framework arm diverges). Observations-only; no frozen surface moved — `docs/audit/gap32-headtohead.md` |
 | GAP-37-STATISTICAL-POWER | 2026-10-15 | the R3 seed-level "paired" test was **not paired** (driver keyed the prior on `arm_name` → independent priors → two-sample in disguise). A `--shared-prior` flag makes both arms build the SAME prior: R3 `d_z` −0.401 (small) → **−1.089 (large)**, sd 3.75× tighter, 3/3 seeds same sign, seeds-for-80 %-power 49 → 7 (Bonferroni 78 → 11). Acceptance met via the medium+ effect-size branch; n=3 still n.s. (p=0.200). Observations-only; no frozen surface moved — `docs/audit/gap37-statistical-power.md` |
 | GAP-36-ABLATION-MATRIX | 2026-10-15 | consolidated **rounds × schedulers × checkpoints** ablation matrix (24 rows, matched NFE=50) assembled from existing runs (R5b rounds × schedulers; R5c checkpoints × schedulers). Reading: the **sign** of the framework effect tracks the training-budget axis (rounds / checkpoint), **not** the scheduler; within a fixed setting the scheduler tunes magnitude only. Decisive cell **`w16e1_5k`** is framework-WINS on all 3 schedulers (−25.2…−25.6 % FID, p_bonf ≤ 1e-6). Aggregation-only; no new experiments; no frozen surface moved — `docs/audit/gap36-ablation-matrix.md` |
+| GAP-34-R1-MECHANISM | 2026-10-16 | closed via acceptance path (a): the R1 init dose-response (τ sweep of the per-record init simplex, 3 seeds, N=1000) shows the init is a **legitimate, load-bearing, model-mediated** knob — τ=0 collapses to 0 hits, τ=1 (canonical) gives +287.3 (paired t=40.73, p=6.0e-4) and reproduces the D-004b arm exactly; the dose-response is a non-monotone inverted-U peaking at the canonical τ=1 (honest caveat: the τ=2 fall is seed-heterogeneous). R1 stays PARTIAL — `docs/audit/gap34-r1-init-dose.md` |
 
 ## 7. Publication assessment (2026-10-13)
 

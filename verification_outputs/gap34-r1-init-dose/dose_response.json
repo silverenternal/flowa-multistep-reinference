@@ -1,0 +1,213 @@
+{
+  "kind": "gap34_r1_init_dose",
+  "taus": [
+    0.0,
+    0.25,
+    0.5,
+    1.0,
+    2.0
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "n_per_seed": 1000,
+  "nfe": 10,
+  "baseline_totals": {
+    "42": 158,
+    "43": 159,
+    "44": 174
+  },
+  "rows": [
+    {
+      "tau": 0.0,
+      "seed": 42,
+      "hits": 0,
+      "baseline_hits": 158,
+      "delta_vs_baseline": -158,
+      "n": 1000,
+      "nfe": 10
+    },
+    {
+      "tau": 0.25,
+      "seed": 42,
+      "hits": 261,
+      "baseline_hits": 158,
+      "delta_vs_baseline": 103,
+      "n": 1000,
+      "nfe": 10
+    },
+    {
+      "tau": 0.5,
+      "seed": 42,
+      "hits": 290,
+      "baseline_hits": 158,
+      "delta_vs_baseline": 132,
+      "n": 1000,
+      "nfe": 10
+    },
+    {
+      "tau": 1.0,
+      "seed": 42,
+      "hits": 298,
+      "baseline_hits": 158,
+      "delta_vs_baseline": 140,
+      "n": 1000,
+      "nfe": 10
+    },
+    {
+      "tau": 2.0,
+      "seed": 42,
+      "hits": 62,
+      "baseline_hits": 158,
+      "delta_vs_baseline": -96,
+      "n": 1000,
+      "nfe": 10
+    },
+    {
+      "tau": 0.0,
+      "seed": 43,
+      "hits": 0,
+      "baseline_hits": 159,
+      "delta_vs_baseline": -159,
+      "n": 1000,
+      "nfe": 10
+    },
+    {
+      "tau": 0.25,
+      "seed": 43,
+      "hits": 266,
+      "baseline_hits": 159,
+      "delta_vs_baseline": 107,
+      "n": 1000,
+      "nfe": 10
+    },
+    {
+      "tau": 0.5,
+      "seed": 43,
+      "hits": 276,
+      "baseline_hits": 159,
+      "delta_vs_baseline": 117,
+      "n": 1000,
+      "nfe": 10
+    },
+    {
+      "tau": 1.0,
+      "seed": 43,
+      "hits": 274,
+      "baseline_hits": 159,
+      "delta_vs_baseline": 115,
+      "n": 1000,
+      "nfe": 10
+    },
+    {
+      "tau": 2.0,
+      "seed": 43,
+      "hits": 247,
+      "baseline_hits": 159,
+      "delta_vs_baseline": 88,
+      "n": 1000,
+      "nfe": 10
+    },
+    {
+      "tau": 0.0,
+      "seed": 44,
+      "hits": 0,
+      "baseline_hits": 174,
+      "delta_vs_baseline": -174,
+      "n": 1000,
+      "nfe": 10
+    },
+    {
+      "tau": 0.25,
+      "seed": 44,
+      "hits": 273,
+      "baseline_hits": 174,
+      "delta_vs_baseline": 99,
+      "n": 1000,
+      "nfe": 10
+    },
+    {
+      "tau": 0.5,
+      "seed": 44,
+      "hits": 241,
+      "baseline_hits": 174,
+      "delta_vs_baseline": 67,
+      "n": 1000,
+      "nfe": 10
+    },
+    {
+      "tau": 1.0,
+      "seed": 44,
+      "hits": 290,
+      "baseline_hits": 174,
+      "delta_vs_baseline": 116,
+      "n": 1000,
+      "nfe": 10
+    },
+    {
+      "tau": 2.0,
+      "seed": 44,
+      "hits": 314,
+      "baseline_hits": 174,
+      "delta_vs_baseline": 140,
+      "n": 1000,
+      "nfe": 10
+    }
+  ],
+  "aggregate": [
+    {
+      "tau": 0.0,
+      "mean_hits": 0.0,
+      "mean_delta_vs_baseline": -163.66666666666666,
+      "per_seed_hits": {
+        "42": 0,
+        "43": 0,
+        "44": 0
+      }
+    },
+    {
+      "tau": 0.25,
+      "mean_hits": 266.6666666666667,
+      "mean_delta_vs_baseline": 103.0,
+      "per_seed_hits": {
+        "42": 261,
+        "43": 266,
+        "44": 273
+      }
+    },
+    {
+      "tau": 0.5,
+      "mean_hits": 269.0,
+      "mean_delta_vs_baseline": 105.33333333333333,
+      "per_seed_hits": {
+        "42": 290,
+        "43": 276,
+        "44": 241
+      }
+    },
+    {
+      "tau": 1.0,
+      "mean_hits": 287.3333333333333,
+      "mean_delta_vs_baseline": 123.66666666666667,
+      "per_seed_hits": {
+        "42": 298,
+        "43": 274,
+        "44": 290
+      }
+    },
+    {
+      "tau": 2.0,
+      "mean_hits": 207.66666666666666,
+      "mean_delta_vs_baseline": 44.0,
+      "per_seed_hits": {
+        "42": 62,
+        "43": 247,
+        "44": 314
+      }
+    }
+  ],
+  "wall_s": 15861.5,
+  "note": "Single-pass init-only arm; tau is the AA-logit temperature of the per-record softmax(randn*tau) init. tau<=0 = canonical near-uniform (D-004 collapse anchor); tau=1 = canonical D-004b."
+}

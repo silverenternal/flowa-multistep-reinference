@@ -1,0 +1,100 @@
+{
+  "kind": "gap34_r1_init_dose_analysis",
+  "taus": [
+    0.0,
+    0.25,
+    0.5,
+    1.0,
+    2.0
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "per_tau": [
+    {
+      "tau": 0.0,
+      "mean_hits": 0.0,
+      "sd_hits": 0.0,
+      "per_seed_hits": {
+        "42": 0,
+        "43": 0,
+        "44": 0
+      }
+    },
+    {
+      "tau": 0.25,
+      "mean_hits": 266.6666666666667,
+      "sd_hits": 6.027713773341708,
+      "per_seed_hits": {
+        "42": 261,
+        "43": 266,
+        "44": 273
+      }
+    },
+    {
+      "tau": 0.5,
+      "mean_hits": 269.0,
+      "sd_hits": 25.238858928247925,
+      "per_seed_hits": {
+        "42": 290,
+        "43": 276,
+        "44": 241
+      }
+    },
+    {
+      "tau": 1.0,
+      "mean_hits": 287.3333333333333,
+      "sd_hits": 12.220201853215572,
+      "per_seed_hits": {
+        "42": 298,
+        "43": 274,
+        "44": 290
+      }
+    },
+    {
+      "tau": 2.0,
+      "mean_hits": 207.66666666666666,
+      "sd_hits": 130.52330570949132,
+      "per_seed_hits": {
+        "42": 62,
+        "43": 247,
+        "44": 314
+      }
+    }
+  ],
+  "spearman_per_seed": {
+    "42": 0.3999999999999999,
+    "43": 0.29999999999999993,
+    "44": 0.8999999999999998
+  },
+  "spearman_mean": 0.5333333333333332,
+  "peak": {
+    "peak_tau": 1.0,
+    "peak_mean_hits": 287.3333333333333,
+    "max_tau": 2.0,
+    "max_tau_mean_hits": 207.66666666666666,
+    "max_over_peak": 0.722737819025522
+  },
+  "collapse_anchor": {
+    "tau0_all_zero": true
+  },
+  "rise_contrast": {
+    "tau0_hits": [
+      0,
+      0,
+      0
+    ],
+    "tau1_hits": [
+      298,
+      274,
+      290
+    ],
+    "mean_rise": 287.3333333333333,
+    "paired_t": 40.72567196674424,
+    "paired_p": 0.0006023805332315321,
+    "n_seeds": 3
+  },
+  "note": "Spearman rho computed per seed over the tau points (rho=1.0 = perfectly monotone; <1 indicates a non-monotone / inverted-U dose-response). Rise contrast is tau=0 vs tau=1, paired over seeds (descriptive). 'peak' locates the interior optimum and how far the largest tau falls below it."
+}

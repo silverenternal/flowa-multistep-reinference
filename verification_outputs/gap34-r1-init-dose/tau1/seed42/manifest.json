@@ -1,0 +1,24 @@
+{
+  "n": 1000,
+  "seed": 42,
+  "nfe_per_record": 10,
+  "min_len": 30,
+  "max_len": 150,
+  "arm": "init_only",
+  "init_source": "random-simplex",
+  "init_tau": 1.0,
+  "family_ids": [
+    "PF00005.27",
+    "PF00072.24",
+    "PF00183.19",
+    "PF02517.18"
+  ],
+  "per_family_count": {
+    "PF00005.27": 250,
+    "PF00072.24": 250,
+    "PF00183.19": 250,
+    "PF02517.18": 250
+  },
+  "fallback_per_family_count": {},
+  "note": "Single solve_ode pass from a per-record initial state; no restart, no blend. Lengths/families replayed from the framework arm's RNG stream (seed ^ 0x5A5A)."
+}
