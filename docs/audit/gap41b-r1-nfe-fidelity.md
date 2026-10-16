@@ -23,7 +23,9 @@ rejections may be an artifact of the low NFE, not evidence the levers are inert.
 | **Consequence for prior levers** | GAP-38/39/40/40b/34/41 were all evaluated at NFE=10 — a *shared confound* |
 | **Premise test (this doc)** | N=200, seed 42, arms `{legacy, tier}`, NFE ∈ {10, 150}: does the budget move the R1 HMMER metric and/or the tier lever? |
 | **Resumable generation** | `--start-index` added to `tools/gen_lineageflow_n1000_fastas.py` (additive, default 0 byte-stable) so the N=200 result can be extended to N=1000 without recomputing the first 200 records |
-| Verdict | *(pending — filled once the premise run completes)* |
+| **Headline moves with budget** | framework-vs-baseline gap **+1 → +11** (NFE 10 → 150); the baseline arm is **byte-identical** (37 = 37) |
+| **Tier lever flips sign** | tier-vs-legacy **+12 → −2** (NFE 10 → 150) |
+| Verdict | **NFE is a load-bearing axis.** The six prior dormant-lever rejections were all measured at `--nfe 10`; the R1 metric is *not* budget-invariant, so those rejections are **conditional on the low budget**, not budget-independent. Premise only (N=200, single seed) — see §5 caveats. |
 
 ---
 
@@ -80,11 +82,85 @@ records. Byte-exactness and default byte-stability are pinned by
 
 ## 4. Results
 
-*(pending — filled once the premise run completes)*
+Run: `/home/hugo/gap41b-nfe150/run_premise.sh`, N=200, seed 42, gate-open
+(`--n-rounds 3 --restart-min-nfe 5`, `effective_n_rounds=3` at both budgets).
+Wall-clock: nfe10 arms 11.4 + 9.4 min; nfe150 arms 82.5 + 80.3 min; HMMER 5.5 min.
+
+### 4.1 Aggregate (canonical HMMER counter, 4 families × 50)
+
+| NFE | baseline | legacy fw | tier fw | fw − baseline | tier − legacy |
+|---:|---:|---:|---:|---:|---:|
+| 10  | 37 | 38 | 50 | **+1** | **+12** |
+| 150 | 37 | 48 | 46 | **+11** | **−2** |
+
+### 4.2 Sanity check — the baseline is NFE-invariant
+
+The baseline arm does **not** route through the framework refiner, so the budget
+knob does not touch it. Confirmed: `seed42_nfe10_legacy/baseline.fasta` and
+`seed42_nfe150_legacy/baseline.fasta` are **byte-identical** (md5
+`ff5a6de6609c72f86cae3a3c8279d50a`, 37 hits each). The framework arms differ
+(`cmp` first diverges at byte 36). So the movement below is entirely in the
+framework arm — i.e. the budget changes the *framework*, which is exactly the
+axis the lever rejections depend on.
+
+### 4.3 Per-record paired tests (union of records with ≥1 hit)
+
+| NFE | comparison | n | Σdiff | Wilcoxon p | sign + / − | sign p |
+|---:|---|---:|---:|---:|---:|---:|
+| 10  | framework vs baseline | 53 | +1  | 0.908 | 23 / 22 | 1.000 |
+| 10  | tier vs legacy        | 49 | +12 | 0.089 | 18 / 10 | 0.185 |
+| 150 | framework vs baseline | 69 | +11 | 0.217 | 39 / 30 | 0.336 |
+| 150 | tier vs legacy        | 49 | −2  | 0.696 | 9 / 10  | 1.000 |
+
+(Tier shares the legacy baseline FASTA, so tier-vs-legacy is a clean paired
+comparison; tier dirs carry no separate `baseline.tblout`.)
+
+### 4.4 Reading
+
+1. **The framework-vs-baseline headline is budget-sensitive.** At the canonical
+   `--nfe 10` the legacy framework is a wash (+1, p≈0.9); at the upstream ~150
+   budget it is a directional +11 (p≈0.22, not significant at N=200). The
+   budget *understates* the framework's effect at NFE=10 — it does not create a
+   spurious win, it hides a real one.
+2. **The tier lever flips sign.** The strongest GAP-41 lever — `tier_vs_legacy`
+   +12 (borderline p=0.089) at NFE=10 — is −2 (p=0.70) at NFE=150. Here the
+   budget works the *opposite* way: the low NFE *inflated* the lever. This is
+   consistent with GAP-41's own N=1000 3-seed result (`tier_vs_legacy` wash,
+   d_z=0.726): the +12 N=200 screen never survived at N=1000 either.
+3. Both directions mean the same thing for the audit: **the six dormant-lever
+   rejections (GAP-38/39/40/40b/34/41) are conditional on `--nfe 10`, not
+   budget-invariant.** NFE is a confound that has to be held fixed and reported,
+   exactly as the user suspected.
 
 ## 5. Verdict
 
-*(pending)*
+**NFE is a load-bearing axis; the prior lever rejections are NFE-conditional.**
+
+- Confirmed: the R1 framework-arm metric moves ~10 hits (baseline invariant,
+  37 = 37) between the canonical NFE=10 and the upstream ~150 budget. A metric
+  that moves 27 % of its own baseline under the budget knob cannot be used to
+  declare a lever "inert" without fixing the budget.
+- Direction is two-sided: the framework-vs-baseline headline *grows* with
+  budget (NFE=10 too harsh), while the tier lever *shrinks* (NFE=10 too
+  generous). Neither can be read off a single NFE.
+- The canonical R1 STRONG bar remains n=3 seeds; this premise is N=200, one
+  seed, so it **moves the question, it does not settle it**. What it settles is
+  that the budget axis must be reported and, for any future lever claim, fixed
+  at (or at least swept over) the upstream ~150 budget.
+
+**Caveats (honest uncertainty).**
+
+- Single seed (42), N=200. Seed-to-seed spread on this metric is large (GAP-41
+  N=1000 3-seed diffs spanned [−5, +17]); a +11 N=200 reading is a *premise*,
+  not a powered result. No NFE=150 comparison reaches p<0.05 at N=200.
+- β-scale confound: the canonical driver applies `min(1, NFE_REF/nfe)` with
+  `NFE_REF=50`, so at `nfe=150` the restart-blend β is 1/3 while at `nfe=10` it
+  saturates at 1.0 (§2). The premise reports the *combined* (steps + blend)
+  effect, as the canonical driver produces it; it does not separate the two.
+- Cost: measured **24.7 s/record at NFE=150** (82.5 min for the N=200 arm-pair,
+  vs 3.4 s/record at NFE=10). A decisive n=3 N=1000 run therefore costs
+  ≈ **21 h** (legacy headline arm) to ≈ **41 h** (legacy + tier) — a user-gated
+  compute decision, not launched here.
 
 ## 6. Reproduce
 

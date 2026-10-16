@@ -1,0 +1,60 @@
+{
+  "increment": "gap41b-r1-nfe-fidelity",
+  "topic": "R1 NFE-fidelity premise — does the inference budget move the R1 HMMER metric / the tier lever?",
+  "date_utc": "2026-10-16",
+  "author": "GAP-41b agent (USER AUTHORIZED, NO PUSH)",
+  "base_commit": "7867c861",
+  "device": {
+    "gpu_id": 0,
+    "gpu_name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+    "cuda_visible_devices": "0",
+    "gpu1": "unused (RTX 5090)"
+  },
+  "environment": {
+    "venv": ".venvs/lineageflow_venv",
+    "python": "3.12.14",
+    "note": "lineageflow_venv is the correct sidecar for LineageFlow; no other model env mixed"
+  },
+  "config": {
+    "driver": "tools/gen_lineageflow_n1000_fastas.py",
+    "seed": 42,
+    "n_records": 200,
+    "start_index": 0,
+    "families": ["PF00005.27", "PF00072.24", "PF00183.19", "PF02517.18"],
+    "per_family": 50,
+    "nfe_values": [10, 150],
+    "n_rounds": 3,
+    "restart_min_nfe": 5,
+    "effective_n_rounds": 3,
+    "temperature": 1.0,
+    "upstream_eval_len_bias": "short",
+    "nfe_ref": 50,
+    "arms": {
+      "legacy": {"tier_aware_n_cap": 1.0},
+      "tier": {"tier_aware_n_cap": 0.5,
+               "tier_aware_baseline_metrics_jsonl": "verification_outputs/k6_foldability_n1000_w161_q3_2026/baseline/foldability/foldability.jsonl"}
+    }
+  },
+  "command": "bash /home/hugo/gap41b-nfe150/run_premise.sh  (N=200 START=0)",
+  "resume_command": "N=1000 START=200 bash /home/hugo/gap41b-nfe150/run_premise.sh",
+  "hit_counter": "premise/count_hits.py (hmmscan --noali --cpu 32 --tblout <out> --acc Pfam-A.hmm <fasta>)",
+  "wall_clock_utc": {
+    "nfe10_legacy": {"start": "2026-10-16T10:07:06Z", "end": "2026-10-16T10:18:27Z", "seconds": 681},
+    "nfe10_tier": {"start": "2026-10-16T10:18:27Z", "end": "2026-10-16T10:27:50Z", "seconds": 563},
+    "nfe150_legacy": {"start": "2026-10-16T10:27:50Z", "end": "2026-10-16T11:50:18Z", "seconds": 4948},
+    "nfe150_tier": {"start": "2026-10-16T11:50:18Z", "end": "2026-10-16T13:10:37Z", "seconds": 4819},
+    "hmmer": {"start": "2026-10-16T13:10:37Z", "end": "2026-10-16T13:16:04Z", "seconds": 327}
+  },
+  "per_record_cost_s": {"nfe10": 3.4, "nfe150": 24.7},
+  "n_records_processed": 200,
+  "n_records_skipped": 0,
+  "headline": {
+    "baseline_byte_identical_across_nfe": true,
+    "baseline_md5": "ff5a6de6609c72f86cae3a3c8279d50a",
+    "baseline_hits": 37,
+    "framework_vs_baseline": {"nfe10": 1, "nfe150": 11},
+    "tier_vs_legacy": {"nfe10": 12, "nfe150": -2},
+    "verdict": "NFE is a load-bearing axis; the six prior dormant-lever rejections are conditional on --nfe 10, not budget-invariant."
+  },
+  "audit_note": "docs/audit/gap41b-r1-nfe-fidelity.md"
+}

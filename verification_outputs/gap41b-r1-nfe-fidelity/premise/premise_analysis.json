@@ -1,0 +1,120 @@
+{
+  "arms": {
+    "seed42_nfe10_legacy": {
+      "baseline": {
+        "total_hits": 37,
+        "records": 200,
+        "records_with_hits": 30,
+        "hits_per_record": 0.185
+      },
+      "framework": {
+        "total_hits": 38,
+        "records": 200,
+        "records_with_hits": 32,
+        "hits_per_record": 0.19
+      }
+    },
+    "seed42_nfe10_tier": {
+      "framework": {
+        "total_hits": 50,
+        "records": 200,
+        "records_with_hits": 41,
+        "hits_per_record": 0.25
+      }
+    },
+    "seed42_nfe150_legacy": {
+      "baseline": {
+        "total_hits": 37,
+        "records": 200,
+        "records_with_hits": 30,
+        "hits_per_record": 0.185
+      },
+      "framework": {
+        "total_hits": 48,
+        "records": 200,
+        "records_with_hits": 40,
+        "hits_per_record": 0.24
+      }
+    },
+    "seed42_nfe150_tier": {
+      "framework": {
+        "total_hits": 46,
+        "records": 200,
+        "records_with_hits": 39,
+        "hits_per_record": 0.23
+      }
+    }
+  },
+  "comparisons": {
+    "nfe10": {
+      "baseline": 37,
+      "legacy_framework": 38,
+      "tier_framework": 50,
+      "framework_vs_baseline": 1,
+      "tier_vs_legacy": 12,
+      "tier_vs_baseline": 13
+    },
+    "nfe150": {
+      "baseline": 37,
+      "legacy_framework": 48,
+      "tier_framework": 46,
+      "framework_vs_baseline": 11,
+      "tier_vs_legacy": -2,
+      "tier_vs_baseline": 9
+    }
+  },
+  "paired": {
+    "nfe10": {
+      "framework_vs_baseline": {
+        "n_records": 53,
+        "sum_base": 37,
+        "sum_fw": 38,
+        "sum_diff": 1,
+        "n_nonzero": 45,
+        "wilcoxon_stat": 508.0,
+        "wilcoxon_p": 0.9081737945335113,
+        "sign_pos": 23,
+        "sign_neg": 22,
+        "sign_test_p": 1.0
+      },
+      "tier_vs_legacy": {
+        "n_records": 49,
+        "sum_base": 38,
+        "sum_fw": 50,
+        "sum_diff": 12,
+        "n_nonzero": 28,
+        "wilcoxon_stat": 133.5,
+        "wilcoxon_p": 0.08940672171366558,
+        "sign_pos": 18,
+        "sign_neg": 10,
+        "sign_test_p": 0.1849333420395851
+      }
+    },
+    "nfe150": {
+      "framework_vs_baseline": {
+        "n_records": 69,
+        "sum_base": 37,
+        "sum_fw": 48,
+        "sum_diff": 11,
+        "n_nonzero": 69,
+        "wilcoxon_stat": 1016.0,
+        "wilcoxon_p": 0.21732875925073014,
+        "sign_pos": 39,
+        "sign_neg": 30,
+        "sign_test_p": 0.3355576182340152
+      },
+      "tier_vs_legacy": {
+        "n_records": 49,
+        "sum_base": 48,
+        "sum_fw": 46,
+        "sum_diff": -2,
+        "n_nonzero": 19,
+        "wilcoxon_stat": 86.0,
+        "wilcoxon_p": 0.6963890414620633,
+        "sign_pos": 9,
+        "sign_neg": 10,
+        "sign_test_p": 1.0
+      }
+    }
+  }
+}

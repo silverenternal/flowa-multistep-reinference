@@ -1,0 +1,6 @@
+seed42_nfe10_legacy/baseline.fasta: total_hits=37 records=200 records_with_hits=30 hits_per_record=0.1850
+seed42_nfe10_legacy/framework.fasta: total_hits=38 records=200 records_with_hits=32 hits_per_record=0.1900
+seed42_nfe10_tier/framework.fasta: total_hits=50 records=200 records_with_hits=41 hits_per_record=0.2500
+seed42_nfe150_legacy/baseline.fasta: total_hits=37 records=200 records_with_hits=30 hits_per_record=0.1850
+seed42_nfe150_legacy/framework.fasta: total_hits=48 records=200 records_with_hits=40 hits_per_record=0.2400
+seed42_nfe150_tier/framework.fasta: total_hits=46 records=200 records_with_hits=39 hits_per_record=0.2300
