@@ -633,6 +633,7 @@ def _write_baseline_arm(
     min_len: int,
     max_len: int,
     prior_mix: float = 0.0,
+    start_index: int = 0,
 ) -> dict[str, int]:
     """Write the baseline arm: bare RNG draws over each family's AA bias.
 
@@ -640,11 +641,27 @@ def _write_baseline_arm(
     :func:`_generate_sequence` so the K5 prior-composition flag
     (default ``0.0``, byte-stable) is honoured uniformly across both
     arms. ``prior_mix=1.0`` activates the K5 uniform-AA prior path.
+
+    GAP-41b (additive, default 0 = byte-stable) — ``start_index``
+    enables **resumable** generation: records ``[0, start_index)`` are
+    replayed through the RNG (discarded) so record ``start_index`` sees
+    the exact RNG state it would have in a from-scratch run, then only
+    records ``[start_index, n)`` are written (opened in append mode).
+    ``start_index=0`` reproduces the pre-GAP-41b output byte-for-byte.
     """
     baseline_rng = random.Random(int(seed))
+    # GAP-41b — replay the skipped prefix so the RNG stream at
+    # ``start_index`` matches a from-scratch run. The bare-RNG baseline
+    # is cheap, so a full replay of ``[0, start_index)`` is fine.
+    for i in range(int(start_index)):
+        family_id = family_ids[i % len(family_ids)]
+        length = baseline_rng.randint(int(min_len), int(max_len))
+        _generate_sequence(
+            baseline_rng, family_id, length, prior_mix=float(prior_mix),
+        )
     counts: dict[str, int] = {}
-    with out_path.open("w") as f:
-        for i in range(int(n)):
+    with out_path.open("a" if int(start_index) > 0 else "w") as f:
+        for i in range(int(start_index), int(n)):
             family_id = family_ids[i % len(family_ids)]
             length = baseline_rng.randint(int(min_len), int(max_len))
             seq = _generate_sequence(
@@ -670,6 +687,7 @@ def _write_framework_arm(
     classifier_aware_restart: bool = False,
     classifier_alpha: float = 1.0,
     classifier_bias_mode: str = "centered",
+    start_index: int = 0,
 ) -> tuple[dict[str, int], dict[str, int]]:
     """Write the framework arm: drives :class:`LineageFlowAdapter` for each record.
 
@@ -717,8 +735,18 @@ def _write_framework_arm(
             classifier_bias_mode=str(classifier_bias_mode),
         )
 
-    with out_path.open("w") as f:
-        for i in range(int(n)):
+    # GAP-41b — resume support (additive; ``start_index=0`` is
+    # byte-stable). Replay the skipped prefix's per-record length draws
+    # so the RNG stream at ``start_index`` matches a from-scratch run.
+    # The model path is keyed by ``seed + i`` and never consumes
+    # ``framework_rng`` (only the rare defensive fallback does), so
+    # replaying the length draws alone reproduces the state exactly
+    # whenever the skipped range had zero fallbacks — guaranteed by the
+    # ``framework_fallback_per_family_count == {}`` invariant.
+    for _ in range(int(start_index)):
+        framework_rng.randint(int(min_len), int(max_len))
+    with out_path.open("a" if int(start_index) > 0 else "w") as f:
+        for i in range(int(start_index), int(n)):
             family_id = family_ids[i % len(family_ids)]
             length = framework_rng.randint(int(min_len), int(max_len))
             adapter = adapters[family_id]
@@ -1021,6 +1049,22 @@ def main() -> None:
             "``--classifier-aware-restart``."
         ),
     )
+    p.add_argument(
+        "--start-index",
+        type=int,
+        default=0,
+        help=(
+            "GAP-41b — resumable generation (additive; default 0 = "
+            "byte-stable). Records ``[0, start_index)`` are skipped "
+            "(their RNG stream is replayed so record ``start_index`` "
+            "matches a from-scratch run) and only records "
+            "``[start_index, n)`` are written, appended to the existing "
+            "``baseline.fasta`` / ``framework.fasta``. Lets a bounded "
+            "N=200 run be extended to N=1000 without recomputing the "
+            "first 200 records. See "
+            "``docs/audit/gap41b-r1-nfe-fidelity.md``."
+        ),
+    )
     args = p.parse_args()
 
     # Wave 276 P — resolve effective min/max len via
@@ -1185,6 +1229,12 @@ def main() -> None:
         "classifier_alpha": float(args.classifier_alpha),
         # GAP-40b — bias shape (only consulted when the flag is on).
         "classifier_bias_mode": str(args.classifier_bias_mode),
+        # GAP-41b — resumable generation. ``0`` (default) means a
+        # from-scratch run; ``> 0`` means records ``[0, start_index)``
+        # were skipped and the arms were appended. ``n`` above is the
+        # target total, so a resumed run's per-family counts cover only
+        # the appended range.
+        "start_index": int(args.start_index),
     }
 
     # ---- Baseline arm (bare RNG, preserved byte-shape) -----------------
@@ -1196,6 +1246,7 @@ def main() -> None:
         min_len=int(effective_min_len),
         max_len=int(effective_max_len),
         prior_mix=float(effective_prior_mix),
+        start_index=int(args.start_index),
     )
     manifest["baseline_per_family_count"] = dict(baseline_counts)
     print(f"wrote {args.outdir / 'baseline.fasta'} (n={int(args.n)})")
@@ -1218,6 +1269,8 @@ def main() -> None:
         classifier_alpha=float(args.classifier_alpha),
         # GAP-40b — bias shape (only consulted when the flag is on).
         classifier_bias_mode=str(args.classifier_bias_mode),
+        # GAP-41b — resumable generation (default 0 = byte-stable).
+        start_index=int(args.start_index),
     )
     manifest["framework_per_family_count"] = dict(framework_counts)
     manifest["framework_fallback_per_family_count"] = dict(fallback_counts)

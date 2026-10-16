@@ -180,6 +180,17 @@ def _invoke_main(gen: Any, outdir: Path, n: int, seed: int) -> None:
         _sys.argv = saved_argv
 
 
+def _invoke_main_args(gen: Any, argv: list[str]) -> None:
+    """Invoke ``gen.main()`` with an explicit argv (monkey-patched)."""
+    import sys as _sys
+    saved_argv = list(_sys.argv)
+    try:
+        _sys.argv = ["gen_lineageflow_n1000_fastas.py", *argv]
+        gen.main()
+    finally:
+        _sys.argv = saved_argv
+
+
 # ---------------------------------------------------------------------------
 # 2. Per-record framework glue is exercised
 # ---------------------------------------------------------------------------
@@ -294,3 +305,47 @@ def test_gen_script_writes_per_family_headers(tmp_path: Path) -> None:
         assert family in gen.FAMILY_PROFILES, (
             f"record #{idx} family={family!r} not in FAMILY_PROFILES"
         )
+
+
+# ---------------------------------------------------------------------------
+# 5. GAP-41b — resumable generation is byte-exact
+# ---------------------------------------------------------------------------
+
+
+def test_gen_script_resume_is_byte_exact(tmp_path: Path) -> None:
+    """``--start-index`` resume reproduces a from-scratch run byte-for-byte.
+
+    GAP-41b — a bounded N=200 run must be extendable to N=1000 without
+    recomputing the first 200 records. We run N=8 from scratch and
+    compare it against a run that wrote N=4 then appended records
+    ``[4, 8)`` via ``--start-index 4``; both arms must be byte-identical.
+    """
+    gen = _import_gen_module()
+    out_full = tmp_path / "full"
+    out_resume = tmp_path / "resume"
+    out_full.mkdir(parents=True, exist_ok=True)
+    out_resume.mkdir(parents=True, exist_ok=True)
+
+    _invoke_main_args(
+        gen, ["--outdir", str(out_full), "--n", "8", "--seed", "42"],
+    )
+    _invoke_main_args(
+        gen, ["--outdir", str(out_resume), "--n", "4", "--seed", "42"],
+    )
+    _invoke_main_args(
+        gen, [
+            "--outdir", str(out_resume), "--n", "8", "--seed", "42",
+            "--start-index", "4",
+        ],
+    )
+
+    for fname in ("baseline.fasta", "framework.fasta"):
+        full_bytes = (out_full / fname).read_bytes()
+        resume_bytes = (out_resume / fname).read_bytes()
+        assert full_bytes == resume_bytes, (
+            f"{fname}: resumed run is NOT byte-identical to the "
+            f"from-scratch run — the RNG replay in --start-index is "
+            f"broken. full={len(full_bytes)}B resume={len(resume_bytes)}B"
+        )
+    # The resumed run must carry the full record count (4 + 4).
+    assert len(_read_seq_records(out_resume / "framework.fasta")) == 8

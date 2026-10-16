@@ -288,6 +288,7 @@ not_in_nav: |
   audit/gap40-lineageflow-classifier-aware-restart.md
   audit/gap34-r1-init-dose.md
   audit/gap41-r1-tier-aware-ncap.md
+  audit/gap41b-r1-nfe-fidelity.md
   audit/repo-docs-maintenance.md
   audit/readiness-verifier-repoint.md
   audit/repo-docs-maintenance-2.md
