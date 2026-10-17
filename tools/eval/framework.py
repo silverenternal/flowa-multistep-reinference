@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import math
 import pathlib
 import time
 from typing import Any
@@ -715,6 +716,79 @@ def _stash_endpoint_as_x0(adapter: Any, bundle: Any, trace: Any) -> None:
     dst["x0"] = traj[-1].reshape(shape)
 
 
+def _allocate_nfe_budget(
+    weights: list[float], nfe: int, n_rounds: int,
+) -> list[int]:
+    """Split an integer NFE budget across rounds in proportion to ``weights``.
+
+    The scheduler's ``n_cap`` is a *per-round fraction*, not a partition of
+    the budget: several families (``codimension_sheet``,
+    ``tier_aware_codimension``) return ``n_cap`` close to 1.0 on every round,
+    so ``sum(n_cap)`` is ~3 at ``n_rounds=3``. Multiplying that straight by
+    ``nfe`` overspends the budget by that factor (the pre-fix behaviour gave
+    ``[10, 10, 1]`` = 21 steps for ``nfe=10``). This helper normalises the
+    weights and apportions the integer budget with largest-remainder rounding.
+
+    Guarantees:
+      * ``sum(result) == nfe`` whenever ``nfe >= n_rounds``;
+      * every entry is ``>= 1`` in that case;
+      * when ``nfe < n_rounds`` it falls back to the legacy uniform-with-
+        remainder distribution (matching the cosine path's edge behaviour).
+
+    Pure w.r.t. arguments.
+    """
+    nfe = int(nfe)
+    n_rounds = int(n_rounds)
+    if n_rounds <= 0:
+        return []
+    # Defensive fallback: an empty / zero / non-finite weight vector means
+    # the scheduler supplied no usable signal — split uniformly.
+    total_w = 0.0
+    clean: list[float] = []
+    for w in weights[:n_rounds]:
+        try:
+            v = float(w)
+        except (TypeError, ValueError):
+            v = 0.0
+        if not math.isfinite(v) or v < 0.0:
+            v = 0.0
+        clean.append(v)
+        total_w += v
+    while len(clean) < n_rounds:
+        clean.append(1.0)
+        total_w += 1.0
+    if total_w <= 0.0:
+        clean = [1.0] * n_rounds
+        total_w = float(n_rounds)
+
+    targets = [w / total_w * float(nfe) for w in clean]
+    alloc = [max(1, int(math.floor(t))) for t in targets]
+
+    if sum(alloc) > nfe:
+        # ``nfe < n_rounds``: no proportional split can give every round a
+        # step. Mirror the legacy cosine edge behaviour exactly.
+        base = max(1, nfe // n_rounds)
+        rem = max(0, nfe - base * n_rounds)
+        alloc = [base] * n_rounds
+        if rem > 0:
+            alloc[-1] += rem
+        return alloc
+
+    remainder = nfe - sum(alloc)
+    if remainder > 0:
+        order = sorted(
+            range(n_rounds),
+            key=lambda i: targets[i] - math.floor(targets[i]),
+            reverse=True,
+        )
+        i = 0
+        while remainder > 0:
+            alloc[order[i % n_rounds]] += 1
+            remainder -= 1
+            i += 1
+    return alloc
+
+
 def _solve_framework(
     adapter: Any,
     *,
@@ -821,9 +895,10 @@ def _solve_framework(
     # so the Wave 158 / Wave 161 K6 / Wave 172b lineageflow ladder
     # anchor manifest bytes are unchanged. For any other registered
     # family (``tier_aware_codimension``, ``codimension_sheet``, etc.)
-    # the per-round NFE is derived from the scheduler's ``n_cap`` via
-    # ``nfe[r] = round(n_cap * nfe)`` (clipped to ``[1, nfe]``) so the
-    # scheduler can adaptively redistribute the budget across rounds.
+    # the per-round NFE is apportioned from the scheduler's ``n_cap``
+    # *weights* with a normalisation step: ``n_cap`` is a per-round
+    # fraction, not a partition, so the raw values must be rescaled to
+    # sum to ``nfe`` (see :func:`_allocate_nfe_budget`).
     n_rounds_int = max(1, int(n_rounds))
     nfe_per_round_list: list[int]
     if str(scheduler_name).strip().lower() == "cosine":
@@ -835,8 +910,8 @@ def _solve_framework(
             nfe_per_round_list[-1] += remainder_per_round
     else:
         # Scheduler-driven NFE allocation. Build the scheduler via
-        # ``build_scheduler`` and use its ``n_cap`` to derive per-round
-        # NFE. The scheduler's ``cycle_length`` is anchored to
+        # ``build_scheduler`` and use its ``n_cap`` as a per-round
+        # *weight*. The scheduler's ``cycle_length`` is anchored to
         # ``n_rounds`` so the per-round n_cap varies naturally across
         # rounds (a short cycle collapses every round to the same
         # n_cap value, masking the scheduler's per-round signal).
@@ -847,25 +922,20 @@ def _solve_framework(
             str(scheduler_name),
             cycle_length=int(n_rounds_int),
         )
-        _raw: list[int] = []
+        _weights: list[float] = []
         for _r in range(int(n_rounds_int)):
             try:
                 _sample = _sched.sample(0, int(_r), int(_r))
                 _n_cap = float(_sample.n_cap)
             except Exception:
                 # Defensive: a misconfigured scheduler falls back to
-                # the byte-stable uniform distribution for the failing
-                # round so a sweep cannot silently corrupt the manifest.
-                _n_cap = 1.0 / float(n_rounds_int)
-            _ns = int(round(float(_n_cap) * float(nfe)))
-            _ns = max(1, min(int(nfe), int(_ns)))
-            _raw.append(int(_ns))
-        # Reconcile sum to ``nfe`` exactly (distribute the rounding
-        # remainder to the LAST round so the total is preserved).
-        _total = sum(_raw)
-        if _total != int(nfe):
-            _raw[-1] = max(1, _raw[-1] + (int(nfe) - _total))
-        nfe_per_round_list = _raw
+                # a uniform weight for the failing round so a sweep
+                # cannot silently corrupt the manifest.
+                _n_cap = 1.0
+            _weights.append(float(_n_cap))
+        nfe_per_round_list = _allocate_nfe_budget(
+            _weights, int(nfe), int(n_rounds_int),
+        )
     t0 = time.monotonic()
     cur_bundle = bundle
     trace: Any = None

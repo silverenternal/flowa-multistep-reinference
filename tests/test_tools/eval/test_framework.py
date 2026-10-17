@@ -159,6 +159,110 @@ def test_solve_framework_distributes_nfe_per_round_to_sum_exactly() -> None:
     )
 
 
+def test_solve_framework_non_cosine_scheduler_conserves_nfe_budget() -> None:
+    """Every non-cosine scheduler must split exactly ``nfe`` steps across rounds.
+
+    Regression for the per-round budget leak: the pre-fix branch multiplied
+    the scheduler's per-round ``n_cap`` straight by ``nfe``. ``n_cap`` is a
+    *fraction* (several families return ~1.0 on every round), so the raw sum
+    overspent the budget — ``codimension_sheet`` produced ``[10, 10, 1]``
+    (21 steps) at ``nfe=10``, i.e. a 2.1x compute advantage over cosine.
+    The fix normalises the weights and apportions with largest-remainder
+    rounding (``_allocate_nfe_budget``), so the sum is always ``nfe``.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    schedulers = (
+        "codimension_sheet",
+        "tier_aware_codimension",
+        "linear",
+        "exponential",
+        "sigmoid",
+        "nfe_aware_memory",
+        "polynomial",
+        "constant",
+    )
+
+    for scheduler_name in schedulers:
+        adapter = default_flowmol3_adapter(
+            force_mode="synthetic", nfe_budget=10,
+        )
+        captured_num_steps: list[int] = []
+        original_solve_ode = adapter.solve_ode
+
+        def recording_solve_ode(
+            state, condition, *, seed,
+            _cap=captured_num_steps, _orig=original_solve_ode,
+        ):
+            _cap.append(int(condition.delta_spec["num_steps"]))
+            return _orig(state, condition, seed=seed)
+
+        adapter.solve_ode = recording_solve_ode  # type: ignore[assignment]
+
+        tools._solve_framework(
+            adapter, nfe=10, seed=42, n_rounds=3,
+            scheduler_name=scheduler_name,
+        )
+
+        per_round_nfes = captured_num_steps[:3]
+        assert sum(per_round_nfes) == 10, (
+            f"{scheduler_name}: per-round NFE {per_round_nfes} must sum to "
+            f"nfe_total=10, got sum={sum(per_round_nfes)}. The pre-fix "
+            f"codimension path overspent to 21."
+        )
+        assert all(n >= 1 for n in per_round_nfes), (
+            f"{scheduler_name}: every round needs at least one Euler step, "
+            f"got {per_round_nfes!r}"
+        )
+        # The post-loop re-anchor still runs at the full budget.
+        assert captured_num_steps[-1] == 10, (
+            f"{scheduler_name}: re-anchor must use nfe_total=10, got "
+            f"{captured_num_steps[-1]}"
+        )
+
+
+def test_solve_framework_cosine_path_unchanged_by_budget_fix() -> None:
+    """The canonical cosine split stays byte-identical to the legacy contract.
+
+    The budget-conservation fix only touches the non-cosine branch; the
+    cosine path must still produce ``[base, ..., base+remainder]`` so the
+    Wave 158 / 161 / 172b anchor manifests do not move.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    for nfe, n_rounds, expected in (
+        (10, 3, [3, 3, 4]),
+        (50, 3, [16, 16, 18]),
+        (200, 3, [66, 66, 68]),
+        (10, 1, [10]),
+    ):
+        adapter = default_flowmol3_adapter(
+            force_mode="synthetic", nfe_budget=nfe,
+        )
+        captured_num_steps: list[int] = []
+        original_solve_ode = adapter.solve_ode
+
+        def recording_solve_ode(
+            state, condition, *, seed,
+            _cap=captured_num_steps, _orig=original_solve_ode,
+        ):
+            _cap.append(int(condition.delta_spec["num_steps"]))
+            return _orig(state, condition, seed=seed)
+
+        adapter.solve_ode = recording_solve_ode  # type: ignore[assignment]
+
+        tools._solve_framework(
+            adapter, nfe=nfe, seed=42, n_rounds=n_rounds,
+            scheduler_name="cosine",
+        )
+        assert captured_num_steps[:n_rounds] == expected, (
+            f"cosine nfe={nfe} n_rounds={n_rounds}: expected {expected}, "
+            f"got {captured_num_steps[:n_rounds]!r}"
+        )
+
+
 def test_solve_framework_gate_firing_yields_byte_identical_to_baseline() -> None:
     """At NFE below the restart_min_nfe threshold, framework trace == baseline trace.
 

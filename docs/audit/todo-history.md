@@ -466,6 +466,38 @@ baseline drifts down (37/36/32) — a seed-level trend, not independent noise;
 watch it at N=1000. Evidence:
 `verification_outputs/gap41b-r1-nfe-fidelity/nfe150_screen/`.
 
+### 4.11 Scheduler NFE budget leak — the math schedulers were silently given 2.1× compute (GAP-42, 2026-10-16)
+
+The user pointed at the framework's core scheduler: the default is cosine
+annealing, but there is a paper-grounded family (`codimension_sheet`,
+`paper_ratio_adaptive`, `tier_aware_codimension`, …) that consumes the paper's
+sheet-vs-cell quantities. A check of `tools/eval/framework.py::_solve_framework`
+found a **budget leak** in the non-cosine branch: `n_cap` is a per-round
+*fraction* (`n_cap(r) = n_min + (n_max-n_min)*ratio(r)`), not a partition, but
+the driver multiplied it straight by `nfe`. At `nfe=10`, `n_rounds=3`:
+
+| `--scheduler` | per-round NFE | sum |
+|---|---:|---:|
+| `cosine` | `[3,3,4]` | 10 |
+| `codimension_sheet` | `[10,10,1]` | **21** |
+| `tier_aware_codimension` | `[10,10,1]` | **21** |
+| `linear` | `[10,5,1]` | 16 |
+| `nfe_aware_memory` | `[5,5,1]` | 11 |
+
+So every prior cosine-vs-math-scheduler comparison was a **compute** comparison,
+and would have been confounded with the GAP-41b NFE axis. Fixed with
+`_allocate_nfe_budget` (normalise weights → largest-remainder apportionment,
+floor 1 per round); the `cosine` path stays byte-identical (pinned by a test).
+
+Post-fix all schedulers sum to 10. But the fix also exposes the deeper issue:
+on R1 `codimension_sheet`'s `n_cap` is `[1.0, 0.9997, 1.0]` — a ~3e-4 spread —
+because the LineageFlow adapter exposes no `profile_residual_fn`, so the
+paper-quantity path never activates and the ratio saturates at ≈1. Its split
+`[4,3,3]` therefore differs from cosine `[3,3,4]` only in **where the rounding
+remainder lands**. The A/B is near-null by construction; the real lever is
+wiring a residual profile `g(x)` into the adapter. Observations-only —
+`docs/audit/gap42-scheduler-budget-conservation.md`.
+
 ## 5. R1 real-forward saga (D-004 / D-004b)
 
 - **D-004 defect:** the checkpoint-compat shim registered a bare core module
@@ -522,6 +554,7 @@ watch it at N=1000. Evidence:
 | GAP-34-R1-MECHANISM | 2026-10-16 | closed via acceptance path (a): the R1 init dose-response (τ sweep of the per-record init simplex, 3 seeds, N=1000) shows the init is a **legitimate, load-bearing, model-mediated** knob — τ=0 collapses to 0 hits, τ=1 (canonical) gives +287.3 (paired t=40.73, p=6.0e-4) and reproduces the D-004b arm exactly; the dose-response is a non-monotone inverted-U peaking at the canonical τ=1 (honest caveat: the τ=2 fall is seed-heterogeneous). R1 stays PARTIAL — `docs/audit/gap34-r1-init-dose.md` |
 | GAP-41-R1-TIER-AWARE | 2026-10-16 | the last dormant lever: the R6 tier-aware `n_cap` mechanism (`--tier-aware-n-cap 0.5` + baseline pLDDT jsonl) on the R1 metric. N=200 screen `tier_a` 50 vs `legacy` 38 (**+12**, MWU p=0.120); decisive N=1000 3-seed sweep is a **wash** — per-seed diffs [−5,+14,+17], mean +8.67, `d_z=0.726`, **2/3**, `p_bonf=1.0`, per-record DL `d=+0.020 p=0.284`. Sixth consecutive wired-but-inert dormant lever; the R1 near-miss is power-limited, not code-limited. R1 stays PARTIAL — `docs/audit/gap41-r1-tier-aware-ncap.md` |
 | GAP-41b-R1-NFE-FIDELITY | 2026-10-16 | the budget behind every prior rejection is a **load-bearing axis**. All six dormant-lever rejections ran at `--nfe 10`; upstream uses ~150 NFE. N=200 seed-42 premise (arms `{legacy,tier}` × NFE {10,150}, gate-open): baseline byte-identical across budgets (37 = 37, md5 `ff5a6de6…`), framework-vs-baseline **+1 → +11**, tier-vs-legacy **+12 → −2** (sign flip). So the six rejections are **conditional on `--nfe 10`**, not budget-invariant. Premise only (N=200, single seed; β-scale `NFE_REF=50` confound); n=3 N=1000 at NFE=150 ≈ 21–41 h = user-gated. Follow-up n=3 N=200 NFE=150 legacy screen: diffs +11/+19/+31, mean +20.33, **3/3** positive, t=3.50 p=0.073 (entry ticket only). Observations-only — `docs/audit/gap41b-r1-nfe-fidelity.md` |
+| GAP-42-SCHEDULER-BUDGET | 2026-10-16 | fixed a per-round NFE leak in `_solve_framework`: non-cosine schedulers multiplied the per-round `n_cap` *fraction* straight by `nfe`, so `codimension_sheet` ran `[10,10,1]`=21 steps at `nfe=10` (2.1× cosine). Any prior cosine-vs-math-scheduler A/B was a compute comparison. Fix: `_allocate_nfe_budget` (normalise + largest-remainder); cosine path byte-identical. Post-fix all sum to 10. Also found `codimension_sheet` is degenerate on R1 (`n_cap`≈`[1,1,1]` — no `profile_residual_fn`), so the A/B is near-null by construction — `docs/audit/gap42-scheduler-budget-conservation.md` |
 
 ## 7. Publication assessment (2026-10-13)
 
