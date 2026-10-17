@@ -1,0 +1,3 @@
+chain_off/baseline.fasta: total_hits=4 records=20 records_with_hits=3 hits_per_record=0.2000
+chain_off/framework.fasta: total_hits=3 records=20 records_with_hits=2 hits_per_record=0.1500
+chain_on/framework.fasta: total_hits=5 records=20 records_with_hits=5 hits_per_record=0.2500

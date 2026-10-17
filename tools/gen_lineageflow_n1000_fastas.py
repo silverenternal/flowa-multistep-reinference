@@ -124,6 +124,13 @@ NFE_REF: int = 50  # overridden by --nfe-ref in main()
 # builds a :class:`TierAwareCodimensionSheetScheduler` and uses its
 # ``n_cap`` to redistribute the per-round NFE budget (R6 live sweep).
 SCHEDULER_NAME: str = "cosine"  # overridden by --scheduler in main()
+# GAP-42b — Eq. 2 endpoint chain. When True, each round's restart blend
+# consumes the just-solved endpoint (``_solve_framework``'s
+# ``restart_from_endpoint``) instead of the initial condition. Default
+# ``False`` preserves the canonical Wave 158 / 161 / 172b byte-stable
+# path; enabling it is a protocol change that must be opted into
+# explicitly and reported alongside the result.
+RESTART_FROM_ENDPOINT: bool = False  # overridden by --restart-from-endpoint
 # Wave 275 P4 / GAP-01 — R6 tier-aware restart-blend knobs. When
 # ``TIER_AWARE_N_CAP`` is in ``(0, 1)`` AND ``TIER_AWARE_BASELINE_METRICS``
 # is a non-empty ``{qid: baseline_pLDDT}`` mapping, ``_solve_framework``
@@ -594,6 +601,8 @@ def _framework_emit_sequence(
             tier_aware_n_cap=TIER_AWARE_N_CAP,
             tier_aware_baseline_metrics=TIER_AWARE_BASELINE_METRICS,
             current_record_id=record_id,
+            # GAP-42b — Eq. 2 endpoint chain (default off = byte-stable).
+            restart_from_endpoint=bool(RESTART_FROM_ENDPOINT),
         )
     except Exception:
         return None
@@ -943,6 +952,18 @@ def main() -> None:
             "``docs/audit/wave338-phase2-mechanism.md``."
         ),
     )
+    p.add_argument(
+        "--restart-from-endpoint",
+        action="store_true",
+        help=(
+            "GAP-42b — make each round's restart blend consume the "
+            "just-solved endpoint (paper Eq. 2: x_0^(k) = "
+            "B_m(x_T^(k-1), x_0^fresh)) instead of the initial condition. "
+            "DEFAULT OFF: the canonical Wave 158 / 161 / 172b lineageflow "
+            "ladder anchor is byte-stable only with the flag off. Enabling "
+            "it is a protocol change — report it with every number."
+        ),
+    )
     # Wave 275 P4 / GAP-01 — live tier-aware restart-blend knobs. When
     # ``--tier-aware-n-cap`` is in ``(0, 1)`` AND the baseline-metrics
     # JSONL is supplied, the framework arm wraps its ``n_cap`` producer
@@ -1131,6 +1152,10 @@ def main() -> None:
     # legacy byte-stable uniform NFE distribution.
     global SCHEDULER_NAME
     SCHEDULER_NAME = str(args.scheduler).strip()
+    # GAP-42b — wire ``--restart-from-endpoint`` through the module-level
+    # global. Default False keeps the canonical byte-stable path.
+    global RESTART_FROM_ENDPOINT
+    RESTART_FROM_ENDPOINT = bool(args.restart_from_endpoint)
     # Wave 275 P4 / GAP-01 — wire the tier-aware restart-blend knobs.
     # ``TIER_AWARE_N_CAP`` in ``(0, 1)`` + a loaded baseline-metric
     # mapping activates the ``TierAwareCodimensionSheetScheduler`` in
@@ -1209,6 +1234,8 @@ def main() -> None:
         # (default ``"cosine"`` byte-stable; ``"tier_aware_codimension"``
         # activates the live R6 sweep).
         "scheduler_name": str(SCHEDULER_NAME),
+        # GAP-42b — Eq. 2 endpoint chain (default False = byte-stable).
+        "restart_from_endpoint": bool(RESTART_FROM_ENDPOINT),
         # Wave 275 P4 / GAP-01 — live tier-aware restart-blend capture.
         "tier_aware_n_cap": float(TIER_AWARE_N_CAP),
         "tier_aware_baseline_metrics_n": (

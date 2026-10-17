@@ -263,6 +263,71 @@ def test_solve_framework_cosine_path_unchanged_by_budget_fix() -> None:
         )
 
 
+def test_stash_endpoint_writes_the_key_the_adapter_reads() -> None:
+    """GAP-42b — the endpoint must land on the adapter's native key.
+
+    ``LineageFlowAdapter`` keeps its native state under ``theta`` and reads
+    that key in ``solve_ode`` / ``apply_restart_distribution``. Pre-fix the
+    stash wrote only ``x0``, so the endpoint was dead and the R1 framework
+    never chained rounds (every round restarted from the initial state).
+    """
+    from types import SimpleNamespace
+
+    import numpy as np
+
+    from tools.eval.framework import _stash_endpoint_as_x0
+
+    traj = np.arange(2 * 3 * 4, dtype=np.float64).reshape(2, 3, 4)
+    states = {
+        "trace-digest": {"trajectory": traj},
+        "bundle-digest": {"theta": np.zeros((3, 4)), "mode": "synthetic"},
+    }
+    adapter = SimpleNamespace(_native_states=states)
+    trace = SimpleNamespace(native_state_digest="trace-digest")
+    bundle = SimpleNamespace(native_state_digest="bundle-digest")
+
+    _stash_endpoint_as_x0(adapter, bundle, trace)
+
+    np.testing.assert_array_equal(states["bundle-digest"]["theta"], traj[-1])
+    np.testing.assert_array_equal(states["bundle-digest"]["x0"], traj[-1])
+
+
+def test_restart_from_endpoint_makes_the_scheduler_load_bearing() -> None:
+    """GAP-42b — chaining the endpoint is what lets the per-round split matter.
+
+    On the real (synthetic) LineageFlow adapter, with the chain OFF every
+    scheduler collapses to the same trace (the per-round endpoint is
+    discarded, so ``nfe_per_round`` cannot compound). With the chain ON the
+    same schedulers produce distinct traces. This is the regression that
+    pins the dormant-lever root cause.
+    """
+    from adaptive_reflow.adapters.lineageflow import LineageFlowAdapter
+    from tools.eval.framework import _solve_framework
+
+    def digest(scheduler_name: str, *, chain: bool) -> str:
+        adapter = LineageFlowAdapter(
+            force_mode="synthetic", family_id="PF00005.27",
+        )
+        trace, _ = _solve_framework(
+            adapter, nfe=10, seed=42, n_rounds=3,
+            scheduler_name=scheduler_name,
+            restart_from_endpoint=chain,
+        )
+        return str(trace.native_state_digest)
+
+    # Chain OFF (canonical default): the scheduler is inert.
+    assert digest("cosine", chain=False) == digest("sigmoid", chain=False), (
+        "with restart_from_endpoint=False the per-round split is discarded, "
+        "so every scheduler must collapse to the same trace"
+    )
+
+    # Chain ON: the scheduler's per-round split changes the trajectory.
+    assert digest("cosine", chain=True) != digest("sigmoid", chain=True), (
+        "with restart_from_endpoint=True the endpoint chains forward, so "
+        "different per-round NFE splits must produce different traces"
+    )
+
+
 def test_solve_framework_gate_firing_yields_byte_identical_to_baseline() -> None:
     """At NFE below the restart_min_nfe threshold, framework trace == baseline trace.
 

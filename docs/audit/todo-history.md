@@ -520,6 +520,15 @@ compound across rounds on R1. Enabling the chain is a protocol change
 `--restart-from-endpoint` on the R1 driver, (3) a fresh N=1000 3-seed run.
 Evidence: `verification_outputs/gap42-scheduler-budget/`.
 
+**Wiring landed (GAP-42b, default off).** `_stash_endpoint_as_x0` now also
+writes `dst["theta"]` when the native entry carries it, and the R1 driver gains
+`--restart-from-endpoint` (`store_true`, default off; recorded in the
+manifest). N=20 seed-42 smoke: `chain_off` framework is **byte-identical** to
+the archived GAP-42 cosine arm (default stays byte-stable); `chain_on`
+**differs** (chain is live). Hits: baseline 4, off 3, on 5 — noise at N=20;
+this establishes liveness, not an effect size. Next: N=200 3-seed screen of
+`chain_on` vs `chain_off`.
+
 ## 5. R1 real-forward saga (D-004 / D-004b)
 
 - **D-004 defect:** the checkpoint-compat shim registered a bare core module
@@ -577,6 +586,7 @@ Evidence: `verification_outputs/gap42-scheduler-budget/`.
 | GAP-41-R1-TIER-AWARE | 2026-10-16 | the last dormant lever: the R6 tier-aware `n_cap` mechanism (`--tier-aware-n-cap 0.5` + baseline pLDDT jsonl) on the R1 metric. N=200 screen `tier_a` 50 vs `legacy` 38 (**+12**, MWU p=0.120); decisive N=1000 3-seed sweep is a **wash** — per-seed diffs [−5,+14,+17], mean +8.67, `d_z=0.726`, **2/3**, `p_bonf=1.0`, per-record DL `d=+0.020 p=0.284`. Sixth consecutive wired-but-inert dormant lever; the R1 near-miss is power-limited, not code-limited. R1 stays PARTIAL — `docs/audit/gap41-r1-tier-aware-ncap.md` |
 | GAP-41b-R1-NFE-FIDELITY | 2026-10-16 | the budget behind every prior rejection is a **load-bearing axis**. All six dormant-lever rejections ran at `--nfe 10`; upstream uses ~150 NFE. N=200 seed-42 premise (arms `{legacy,tier}` × NFE {10,150}, gate-open): baseline byte-identical across budgets (37 = 37, md5 `ff5a6de6…`), framework-vs-baseline **+1 → +11**, tier-vs-legacy **+12 → −2** (sign flip). So the six rejections are **conditional on `--nfe 10`**, not budget-invariant. Premise only (N=200, single seed; β-scale `NFE_REF=50` confound); n=3 N=1000 at NFE=150 ≈ 21–41 h = user-gated. Follow-up n=3 N=200 NFE=150 legacy screen: diffs +11/+19/+31, mean +20.33, **3/3** positive, t=3.50 p=0.073 (entry ticket only). Observations-only — `docs/audit/gap41b-r1-nfe-fidelity.md` |
 | GAP-42-SCHEDULER-BUDGET | 2026-10-16 | fixed a per-round NFE leak in `_solve_framework`: non-cosine schedulers multiplied the per-round `n_cap` *fraction* straight by `nfe`, so `codimension_sheet` ran `[10,10,1]`=21 steps at `nfe=10` (2.1× cosine). Any prior cosine-vs-math-scheduler A/B was a compute comparison. Fix: `_allocate_nfe_budget` (normalise + largest-remainder); cosine path byte-identical. Post-fix all sum to 10. Also found `codimension_sheet` is degenerate on R1 (`n_cap`≈`[1,1,1]` — no `profile_residual_fn`), so the A/B is near-null by construction. Equal-NFE N=20 smoke: cosine and codimension FASTAs **byte-identical** (`md5 ad2205a3…`). **Root cause: the R1 framework does not chain rounds** — `restart_from_endpoint=False` (driver never overrides) and `_stash_endpoint_as_x0` writes `x0` while LineageFlow reads `theta`. Likely root cause of the six dormant-lever nulls; enabling it is a protocol change = user-gated — `docs/audit/gap42-scheduler-budget-conservation.md` |
+| GAP-42b-ENDPOINT-CHAIN | 2026-10-16 | wiring for the root cause, **default off**: `_stash_endpoint_as_x0` also writes the adapter's native key (`theta` for LineageFlow), and the R1 driver gains `--restart-from-endpoint`. N=20 smoke: `chain_off` **byte-identical** to the archived arm (default stable); `chain_on` **differs** (live); hits 4 / 3 / 5 (liveness only) — `docs/audit/gap42-scheduler-budget-conservation.md` §7.1 |
 
 ## 7. Publication assessment (2026-10-13)
 

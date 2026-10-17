@@ -168,6 +168,35 @@ not literally byte-inert), but nothing can compound across rounds.
   2. The R1 driver should expose `--restart-from-endpoint` (default off) so the
      canonical byte-stable path is unchanged.
 
+### 7.1 Wiring landed (default off) + N=20 chain smoke
+
+Both pieces are implemented additively:
+
+- `_stash_endpoint_as_x0` now also writes `dst["theta"]` when the destination
+  native entry carries a `theta` key (adapters that use `x0` are unchanged).
+- `tools/gen_lineageflow_n1000_fastas.py` gains `--restart-from-endpoint`
+  (`store_true`, default **off**) and records `restart_from_endpoint` in the
+  manifest.
+
+Smoke (`/home/hugo/gap41b-nfe150/run_chain_smoke.sh`, N=20, seed 42, NFE=10,
+cosine):
+
+| arm | framework hits | vs archive |
+|---|---:|---|
+| `chain_off` (default) | 3 | **byte-identical** to the GAP-42 archived cosine arm |
+| `chain_on` (`--restart-from-endpoint`) | 5 | **differs** (chain is live) |
+
+Baseline (shared): 4 hits. The two baseline FASTAs are byte-identical
+(`md5 6e7445d4…`), so the `chain_on` arm reuses the `chain_off` baseline
+`.tblout` rather than re-scoring it — hence no `chain_on/baseline.tblout`.
+
+Framework digests: `chain_off` = `ad2205a3…` (= the archived GAP-42 cosine
+arm), `chain_on` = `f2e93f75…`.
+
+The default path is byte-stable (the fix is dormant unless opted in), and the
+opt-in path genuinely changes the framework arm. At N=20 the 3 vs 5 hit
+difference is noise — this smoke establishes **liveness**, not an effect size.
+
 ## 8. Reproduce
 
 ```bash

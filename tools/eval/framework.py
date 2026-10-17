@@ -713,7 +713,17 @@ def _stash_endpoint_as_x0(adapter: Any, bundle: Any, trace: Any) -> None:
     traj = _np.asarray(src["trajectory"], dtype=_np.float64)
     shape_fn = getattr(adapter, "_effective_traj_shape", None)
     shape = shape_fn() if callable(shape_fn) else traj.shape[1:]
-    dst["x0"] = traj[-1].reshape(shape)
+    end = traj[-1].reshape(shape)
+    dst["x0"] = end
+    # GAP-42b — adapter-shape-aware. Some adapters (LineageFlow) keep their
+    # native state under ``"theta"`` and read *that* key in ``solve_ode`` /
+    # ``apply_restart_distribution``; writing only ``"x0"`` left the endpoint
+    # dead and made every round restart from the initial state. Write the
+    # endpoint to whichever key the destination entry actually carries so the
+    # Eq. 2 chain works for both conventions. Adapters that use ``"x0"`` (and
+    # have no ``"theta"``) are byte-identical to the pre-fix behaviour.
+    if "theta" in dst:
+        dst["theta"] = end
 
 
 def _allocate_nfe_budget(

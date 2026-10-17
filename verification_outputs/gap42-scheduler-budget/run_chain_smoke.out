@@ -1,0 +1,19 @@
+=== gen chain_off n=20 nfe=10 2026-10-17T03:41:29Z ===
+  done 2026-10-17T03:43:07Z
+=== gen chain_on n=20 nfe=10 2026-10-17T03:43:07Z ===
+  done 2026-10-17T03:44:44Z
+=== manifests ===
+chain_off restart_from_endpoint= False scheduler= cosine
+chain_on restart_from_endpoint= True scheduler= cosine
+=== chain_off vs archived GAP-42 cosine arm ===
+ad2205a368b5cdf374ec59d01953db4c  /home/hugo/gap41b-nfe150/chain_smoke/chain_off/framework.fasta
+ad2205a368b5cdf374ec59d01953db4c  /home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap42-scheduler-budget/scheduler_ab/nfe10_cosine/framework.fasta
+chain_off: BYTE-IDENTICAL to archive (byte-stable default)
+=== chain_off vs chain_on ===
+/home/hugo/gap41b-nfe150/chain_smoke/chain_off/framework.fasta /home/hugo/gap41b-nfe150/chain_smoke/chain_on/framework.fasta differ: byte 44, line 2
+chain_on: DIFFER (chain is live)
+=== HMMER 2026-10-17T03:44:44Z ===
+=== ALL DONE 2026-10-17T03:45:04Z ===
+chain_off/baseline.fasta: total_hits=4 records=20 records_with_hits=3 hits_per_record=0.2000
+chain_off/framework.fasta: total_hits=3 records=20 records_with_hits=2 hits_per_record=0.1500
+chain_on/framework.fasta: total_hits=5 records=20 records_with_hits=5 hits_per_record=0.2500
