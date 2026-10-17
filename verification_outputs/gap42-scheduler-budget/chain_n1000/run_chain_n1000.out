@@ -1,0 +1,59 @@
+=== gen seed=42 chain_on n=1000 start=0 2026-10-17T08:22:33Z ===
+  done 2026-10-17T08:49:25Z
+=== gen seed=43 chain_on n=1000 start=0 2026-10-17T08:49:25Z ===
+  done 2026-10-17T09:14:38Z
+=== gen seed=44 chain_on n=1000 start=0 2026-10-17T09:14:38Z ===
+  done 2026-10-17T09:35:10Z
+=== HMMER 2026-10-17T09:35:10Z ===
+=== canonical baseline identity check ===
+seed42/baseline.fasta: total_hits=158 records=1000 records_with_hits=145 hits_per_record=0.1580
+seed43/baseline.fasta: total_hits=159 records=1000 records_with_hits=148 hits_per_record=0.1590
+seed44/baseline.fasta: total_hits=174 records=1000 records_with_hits=157 hits_per_record=0.1740
+=== paired-t + DL meta (canonical tool) 2026-10-17T10:05:57Z ===
+  "seed_level_pooled": {
+    "diffs": [
+      122,
+      122,
+      85
+    ],
+    "mean_diff": 109.66666666666667,
+    "sd": 21.361959960016154,
+    "t": 8.891891891891891,
+    "df": 2,
+    "p_two_sided": 0.012412704727517916,
+    "d_z": 5.133736177388834,
+    "p_bonf_k7": 0.08688893309262541,
+    "p_bonf_k16": 0.19860327564028665
+  },
+  "dl_meta": {
+    "k": 3,
+    "Q": 1.4656024952417264,
+    "C": 1973.936620205991,
+    "tau2": 0.0,
+    "I2_pct": 0.0,
+    "d_pooled": 0.1609380115218525,
+    "se_pooled": 0.018377504479652123,
+    "z": 8.757337629820508,
+    "p_two_sided": 0.0,
+    "ci_95_lower": 0.12491876461601083,
+    "ci_95_upper": 0.19695725842769418,
+    "p_bonf_k7": 0.0,
+    "p_bonf_k16": 0.0
+  },
+  "verdict": {
+    "all_seeds_direction_consistent": true,
+    "alpha_rlevel_k7": 0.0071428571428571435,
+    "alpha_rlevel_k16": 0.003125,
+    "seed_level_dz_gt_0.8": true,
+    "seed_level_bonf_sig_k7": false,
+    "dl_dz_gt_0.8": false,
+    "dl_bonf_sig_k7": true
+  }
+}
+=== ALL DONE 2026-10-17T10:05:58Z ===
+seed42/baseline.fasta: total_hits=158 records=1000 records_with_hits=145 hits_per_record=0.1580
+seed42/framework.fasta: total_hits=280 records=1000 records_with_hits=236 hits_per_record=0.2800
+seed43/baseline.fasta: total_hits=159 records=1000 records_with_hits=148 hits_per_record=0.1590
+seed43/framework.fasta: total_hits=281 records=1000 records_with_hits=230 hits_per_record=0.2810
+seed44/baseline.fasta: total_hits=174 records=1000 records_with_hits=157 hits_per_record=0.1740
+seed44/framework.fasta: total_hits=259 records=1000 records_with_hits=223 hits_per_record=0.2590

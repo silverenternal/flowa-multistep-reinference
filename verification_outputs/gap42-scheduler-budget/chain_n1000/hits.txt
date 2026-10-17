@@ -1,0 +1,6 @@
+seed42/baseline.fasta: total_hits=158 records=1000 records_with_hits=145 hits_per_record=0.1580
+seed42/framework.fasta: total_hits=280 records=1000 records_with_hits=236 hits_per_record=0.2800
+seed43/baseline.fasta: total_hits=159 records=1000 records_with_hits=148 hits_per_record=0.1590
+seed43/framework.fasta: total_hits=281 records=1000 records_with_hits=230 hits_per_record=0.2810
+seed44/baseline.fasta: total_hits=174 records=1000 records_with_hits=157 hits_per_record=0.1740
+seed44/framework.fasta: total_hits=259 records=1000 records_with_hits=223 hits_per_record=0.2590

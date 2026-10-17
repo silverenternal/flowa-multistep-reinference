@@ -1,0 +1,91 @@
+{
+  "per_seed": [
+    {
+      "seed": 42,
+      "baseline_total_hits": 158,
+      "framework_total_hits": 280,
+      "total_diff": 122,
+      "total_pct": 77.21518987341773,
+      "n_records": 1000,
+      "mean_diff_per_record": 0.122,
+      "sd_diff": 0.6881784576616661,
+      "t": 5.606073108586243,
+      "df": 999,
+      "p_raw": 2.6772714406223726e-08,
+      "d_z": 0.17727959752552977,
+      "dz_var": 0.0010157140278494068,
+      "direction": "framework>baseline"
+    },
+    {
+      "seed": 43,
+      "baseline_total_hits": 159,
+      "framework_total_hits": 281,
+      "total_diff": 122,
+      "total_pct": 76.72955974842768,
+      "n_records": 1000,
+      "mean_diff_per_record": 0.122,
+      "sd_diff": 0.6925284077895979,
+      "t": 5.570859912764103,
+      "df": 999,
+      "p_raw": 3.258868828442111e-08,
+      "d_z": 0.1761660585006149,
+      "dz_var": 0.001015517240083821,
+      "direction": "framework>baseline"
+    },
+    {
+      "seed": 44,
+      "baseline_total_hits": 174,
+      "framework_total_hits": 259,
+      "total_diff": 85,
+      "total_pct": 48.85057471264368,
+      "n_records": 1000,
+      "mean_diff_per_record": 0.085,
+      "sd_diff": 0.6559003012693356,
+      "t": 4.098086257837168,
+      "df": 999,
+      "p_raw": 4.503603871029369e-05,
+      "d_z": 0.1295928662260151,
+      "dz_var": 0.001008397155488337,
+      "direction": "framework>baseline"
+    }
+  ],
+  "seed_level_pooled": {
+    "diffs": [
+      122,
+      122,
+      85
+    ],
+    "mean_diff": 109.66666666666667,
+    "sd": 21.361959960016154,
+    "t": 8.891891891891891,
+    "df": 2,
+    "p_two_sided": 0.012412704727517916,
+    "d_z": 5.133736177388834,
+    "p_bonf_k7": 0.08688893309262541,
+    "p_bonf_k16": 0.19860327564028665
+  },
+  "dl_meta": {
+    "k": 3,
+    "Q": 1.4656024952417264,
+    "C": 1973.936620205991,
+    "tau2": 0.0,
+    "I2_pct": 0.0,
+    "d_pooled": 0.1609380115218525,
+    "se_pooled": 0.018377504479652123,
+    "z": 8.757337629820508,
+    "p_two_sided": 0.0,
+    "ci_95_lower": 0.12491876461601083,
+    "ci_95_upper": 0.19695725842769418,
+    "p_bonf_k7": 0.0,
+    "p_bonf_k16": 0.0
+  },
+  "verdict": {
+    "all_seeds_direction_consistent": true,
+    "alpha_rlevel_k7": 0.0071428571428571435,
+    "alpha_rlevel_k16": 0.003125,
+    "seed_level_dz_gt_0.8": true,
+    "seed_level_bonf_sig_k7": false,
+    "dl_dz_gt_0.8": false,
+    "dl_bonf_sig_k7": true
+  }
+}

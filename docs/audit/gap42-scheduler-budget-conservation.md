@@ -21,6 +21,7 @@ branch. Frozen surfaces untouched (`docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.
 | **Post-fix allocations** | `cosine [3,3,4]`; `codimension_sheet` / `tier_aware_codimension` / `nfe_aware_memory` / `constant` `[4,3,3]`; `linear` / `polynomial` `[6,3,1]`; `exponential [3,3,4]`; `sigmoid [1,3,6]`. All sum to 10. |
 | **Why the lever was dormant** | On R1 the framework never chained rounds at all: the endpoint was written to `x0`, but LineageFlow reads `theta`. Fixed behind `--restart-from-endpoint` (default off), §7.1. |
 | **N=200 3-seed screen (§7.2)** | `fw_on − baseline` +13.67 (3+/0−) vs `fw_off − baseline` +7.67 (3+/0−); NFE-matched `on − off` +6.00, 2+/1−, p=0.276. **UNDERPOWERED** — suggestive, not evidence. |
+| **Decisive N=1000 (§7.3)** | Baseline reproduced exactly (158/159/174 = canonical). Chain-on framework 280/281/259 vs canonical chain-off 275/272/259 → **+5/+9/0**; `d_pooled` +0.1559 → **+0.1609** (+3 %). **Decisive null**: the chain is live but not a lever on R1. R1 stays PARTIAL. |
 
 ---
 
@@ -151,11 +152,17 @@ Measured (real `LineageFlowAdapter`, `nfe=10`, `n_rounds=3`, seed 42):
 So on R1 the scheduler channel is dead for two stacked reasons: the endpoint is
 not chained by default, and the stash targets the wrong native-state key.
 
-**This is the likely root cause of the six dormant-lever nulls.** Every R1
+**This was the working hypothesis for the six dormant-lever nulls.** Every R1
 "multi-round" framework arm is effectively `blend(initial_theta, fresh_noise)`
 followed by one solve per round, with no cross-round memory. Levers that change
 the blend weight (`n_cap`) still move the output (which is why GAP-40/41 were
 not literally byte-inert), but nothing can compound across rounds.
+
+> **Refuted as stated by §7.3 (2026-10-17).** With the chain genuinely live at
+> the canonical N=1000 configuration the R1 metric moves by +0.005 `d_z`
+> (+5/+9/0 hits), so the absence of cross-round memory is **not** what
+> suppressed those levers. The narrower claim — that other levers might only
+> become load-bearing *given* a live chain — remains untested.
 
 ## 7. Status / next step
 
@@ -173,8 +180,10 @@ not literally byte-inert), but nothing can compound across rounds.
 Both pieces landed (§7.1). The N=200 3-seed screen (§7.2) is
 **UNDERPOWERED**: `fw_on − baseline` = +13.67 (3+/0−) vs `fw_off − baseline`
 = +7.67 (3+/0−), but the NFE-matched marginal `on − off` is 2+/1− and is
-therefore not yet evidence. The decisive test remains the canonical N=1000
-3-seed run with `--restart-from-endpoint`.
+therefore not yet evidence. The decisive N=1000 run (§7.3) settles it: the
+chain is live but adds **+0.005 d_z** (d_pooled +0.1559 → +0.1609), so it is
+not a lever on R1 and R1 stays PARTIAL. The earlier "missing chain explains the
+dormant levers" hypothesis is **refuted as stated**.
 
 ### 7.1 Wiring landed (default off) + N=20 chain smoke
 
@@ -255,6 +264,51 @@ upstream sampler's own schedule (~150 steps). Consequences:
    is therefore the clean causal contrast for the chain — which is why the
    screen's null-ish marginal matters more than the pretty +13.67.
 
+### 7.3 Decisive N=1000 3-seed run — the chain is real but adds ~nothing
+
+`run_chain_n1000.sh` — seeds 42/43/44, N=1000 per seed, NFE=10, 3 rounds,
+cosine, `restart_min_nfe=20` (canonical value; inert for LineageFlow),
+`--restart-from-endpoint`, GPU 0, 2026-10-17 08:22–10:06Z (1 h 44 min).
+`chain_off` was **not** re-run: it is byte-stable (§7.1) and the canonical
+framework numbers 275/272/259 *are* that arm.
+
+**Identity check (passed).** The regenerated baseline hits are exactly the
+canonical values — 158 / 159 / 174 — so the pipeline is byte-comparable to the
+canonical R1 run and the comparison below is apples-to-apples.
+
+| seed | baseline | canonical fw (chain off) | fw (chain on) | chain − canonical | on − base |
+|---:|---:|---:|---:|---:|---:|
+| 42 | 158 | 275 | **280** | +5 | +122 |
+| 43 | 159 | 272 | **281** | +9 | +122 |
+| 44 | 174 | 259 | **259** | 0 | +85 |
+| mean | | 268.67 | **273.33** | **+4.67** | **+109.67** |
+
+Per-record statistics (canonical `tools/r1_d004_analysis.py`, df=999):
+
+| quantity | canonical (chain off) | chain on |
+|---|---:|---:|
+| per-seed `d_z` | +0.169 / +0.170 / +0.129 | +0.1773 / +0.1762 / +0.1296 |
+| `d_pooled` (DL) | +0.1559 | **+0.1609** |
+| se / z | 0.0184 / 8.49 | 0.0184 / 8.76 |
+| 95 % CI | [0.120, 0.192] | [0.125, 0.197] |
+| seed-level `d_z` | +6.02 | +5.13 |
+
+**Verdict — decisive null for the chain as a lever.** The chain moves the
+pooled effect by **+0.005 d_z** (+3 % relative), every per-seed `d_z` moves by
+≤ 0.008, and the new CI sits almost entirely inside the canonical CI. On the
+hit-count contrast, seed 44 is an exact tie and the other two move by +5/+9
+out of ~270 — i.e. 2+/1−, the same shape as the N=200 screen's 2+/1−.
+R1 remains **PARTIAL**: `d_pooled` 0.161 ≪ the 0.8 STRONG bar, unchanged in
+class by this run.
+
+**Consequence for the "dormant levers" hypothesis.** §7.1/§7.2 called the
+missing chain the *likely* root cause of the six dormant-lever nulls. This run
+**refutes that as stated**: with the chain genuinely live the R1 metric barely
+moves, so "nothing compounds across rounds" is not by itself what suppressed
+those levers. The narrower question — whether `n_cap` / blend-weight levers
+become load-bearing *given* a live chain — is still untested, and would need a
+tier-aware-n-cap A/B with `--restart-from-endpoint`.
+
 ## 8. Reproduce
 
 ```bash
@@ -281,8 +335,14 @@ bash /home/hugo/gap41b-nfe150/run_chain_smoke.sh
 # N=200 3-seed screen (§7.2) — ~47 min wall clock
 bash /home/hugo/gap41b-nfe150/run_chain_screen.sh
 
+# decisive N=1000 3-seed run with the chain ON (§7.3) — ~1 h 44 min
+bash /home/hugo/gap42d-n1000/run_chain_n1000.sh
+
 # analysis (CPU)
-python3 tools/gap42c_chain_screen_analysis.py
+python3 tools/gap42c_chain_screen_analysis.py            # N=200 screen
+.venvs/lineageflow_venv/bin/python tools/r1_d004_analysis.py \
+  --root /home/hugo/gap42d-n1000 --out /home/hugo/gap42d-n1000 \
+  --seeds 42 43 44 --n-per-seed 1000                     # canonical paired-t + DL meta
 ```
 
 Artifacts: `verification_outputs/gap42-scheduler-budget/chain_smoke/` and

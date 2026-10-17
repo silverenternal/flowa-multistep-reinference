@@ -1,0 +1,7 @@
+start=2026-10-17T08:22:33Z
+cell=R1 hmmscan_total_hits
+N=1000 nfe=10 n_rounds=3 restart_min_nfe=20 scheduler=cosine temperature=1.0
+upstream_eval_len_bias=short restart_from_endpoint=TRUE
+seeds=42 43 44 start_index=0
+canonical comparison: chain_off framework 275/272/259, baseline 158/159/174
+end=2026-10-17T10:05:58Z
