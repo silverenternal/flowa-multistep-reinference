@@ -1,0 +1,49 @@
+#                                                                           --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                       accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------             -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+DUF2650              PF10853.14 baseline_seed6|family=PF00183.19 -                5.2    7.5   8.5        33    5.0   8.5   2.3   1   1   0   1   1   1   0 Protein of unknown function (DUF2650)
+Rieske               PF00355.33 baseline_seed8|family=PF00005.27 -                2.5    8.8  10.2      0.54   10.9   6.5   1.7   1   1   1   2   2   2   0 Rieske [2Fe-2S] domain
+NTF2_3               PF26530.1  baseline_seed20|family=PF00005.27 -                0.2   12.4   0.2      0.22   12.3   0.2   1.1   1   0   0   1   1   1   0 NTF2-like domain
+DYF4_N               PF28985.1  baseline_seed27|family=PF02517.18 -               0.16   12.0   0.7       0.2   11.6   0.7   1.1   1   0   0   1   1   1   0 Protein dyf-4 N-terminal domain
+zf-C3HC4_4           PF15227.13 baseline_seed27|family=PF02517.18 -               0.38   11.6   0.0      0.38   11.6   0.0   3.1   3   1   0   3   3   3   0 zinc finger of C3HC4-type, RING
+CBM_14               PF01607.30 baseline_seed28|family=PF00005.27 -             0.0047   17.7   2.2     0.006   17.4   2.2   1.1   1   0   0   1   1   1   1 Chitin binding Peritrophin-A domain
+DUF6273              PF19789.7  baseline_seed34|family=PF00183.19 -               0.64   10.5   6.7      0.84   10.1   6.7   1.4   1   1   0   1   1   1   0 Domain of unknown function (DUF6273)
+Ezh2_MCSS            PF21358.3  baseline_seed43|family=PF02517.18 -              0.017   15.6   2.2     0.035   14.6   2.2   1.6   1   0   0   1   1   1   0 Ezh2, MCSS domain
+Coagulin             PF02035.20 baseline_seed46|family=PF00183.19 -              0.088   13.4   0.3       0.1   13.2   0.3   1.1   1   0   0   1   1   1   0 Coagulin
+WW_TCERG1            PF23517.2  baseline_seed71|family=PF02517.18 -               0.64   10.0   8.2      0.19   11.7   2.2   2.2   2   0   0   2   2   2   0 TCERG1 WW domain
+GO-like_E_set        PF09118.18 baseline_seed78|family=PF00183.19 -             0.0079   17.2   0.6     0.012   16.6   0.4   1.4   1   1   0   1   1   1   1 Galactose oxidase-like, Early set domain
+TBCD_C_yeast         PF30095.1  baseline_seed92|family=PF00005.27 -               0.25   11.2   0.0      0.31   10.9   0.0   1.0   1   0   0   1   1   1   0 TBCD C-terminal domain
+CCDC23               PF15674.11 baseline_seed96|family=PF00005.27 -              0.067   13.8   0.2     0.067   13.8   0.2   1.2   1   0   0   1   1   1   0 Coiled-coil domain-containing protein 23
+Pol_alpha_B_N        PF08418.16 baseline_seed98|family=PF00183.19 -               0.22   12.2   0.1       0.3   11.7   0.1   1.2   1   0   0   1   1   1   0 DNA polymerase alpha subunit B N-terminal
+Myc_N                PF01056.24 baseline_seed100|family=PF00005.27 -                  2    8.8   4.8       2.7    8.3   4.8   1.2   1   0   0   1   1   1   0 Myc amino-terminal region
+ODAPH                PF15848.11 baseline_seed112|family=PF00005.27 -                2.3    9.3   7.9      0.53   11.3   4.1   1.8   1   1   1   2   2   2   0 Odontogenesis associated phosphoprotein
+YhzF                 PF26302.2  baseline_seed113|family=PF00072.24 -               0.14   13.1   0.0      0.21   12.5   0.0   1.3   1   0   0   1   1   1   0 YhzF protein
+CLASP_N              PF12348.15 baseline_seed121|family=PF00072.24 -               0.21   11.8   0.5      0.25   11.6   0.5   1.1   1   0   0   1   1   1   0 CLASP N terminal
+PGC7_Stella          PF15549.12 baseline_seed129|family=PF00072.24 -                2.4    8.8   4.1       0.8   10.4   1.3   1.5   2   0   0   2   2   2   0 PGC7/Stella/Dppa3 domain
+ANT                  PF03374.20 baseline_seed130|family=PF00183.19 -                1.9    9.6   3.4       2.8    9.0   3.4   1.2   1   0   0   1   1   1   0 Phage antirepressor protein KilAC domain
+DUF8135              PF26456.1  baseline_seed130|family=PF00183.19 -                4.8    8.2   8.9      0.55   11.3   4.1   2.0   2   0   0   2   2   2   0 Domain of unknown function (DUF8135)
+Ribosomal_S14        PF00253.28 baseline_seed131|family=PF02517.18 -               0.49   10.9   4.7      0.77   10.2   4.7   1.4   1   0   0   1   1   1   0 Ribosomal protein S14p/S29e
+DUF7866              PF25268.1  baseline_seed133|family=PF00072.24 -              0.084   14.0   8.3       2.8    9.2   8.9   2.0   1   1   1   2   2   2   0 Domain of unknown function (DUF7866)
+DUF6901              PF21842.2  baseline_seed136|family=PF00005.27 -                0.6   10.2   3.3      0.58   10.3   3.3   1.0   1   0   0   1   1   1   0 Domain of unknown function (DUF6901)
+MEKK4_N              PF19431.5  baseline_seed137|family=PF00072.24 -                3.8    5.7   5.4       6.1    5.1   0.5   2.0   1   1   1   2   2   2   0 MEKK4 N-terminal
+IMPa_helical         PF18642.8  baseline_seed138|family=PF00183.19 -               0.02   16.0   0.0     0.021   15.9   0.0   1.2   1   0   0   1   1   1   0 Immunomodulating metalloprotease helical domain
+PMBR                 PF09373.16 baseline_seed141|family=PF00072.24 -               0.31   11.9   1.5       0.6   11.0   1.4   1.6   1   1   0   1   1   1   0 Pseudomurein-binding repeat
+UL21a                PF17636.7  baseline_seed143|family=PF02517.18 -              0.068   13.9   0.5     0.079   13.7   0.5   1.1   1   0   0   1   1   1   0 Viral Unique Long protein 21a
+Y_helicase_M         PF29494.1  baseline_seed148|family=PF00005.27 -               0.08   13.7   2.1      0.11   13.2   2.1   1.1   1   0   0   1   1   1   0 Y' element helicase middle domain
+A2L_zn_ribbon        PF08792.17 baseline_seed168|family=PF00005.27 -               0.36   11.3   0.4      0.36   11.3   0.4   3.3   3   0   0   3   3   3   0 A2L zinc ribbon domain
+Maelstrom            PF13017.13 baseline_seed170|family=PF00183.19 -              0.012   16.0   3.3     0.012   16.0   3.3   1.0   1   0   0   1   1   1   0 piRNA pathway germ-plasm component
+Gyro_capsid          PF04162.19 baseline_seed173|family=PF00072.24 -               0.14   11.9   6.3      0.16   11.6   6.3   1.1   1   0   0   1   1   1   0 Gyrovirus capsid protein (VP1)
+Radical_SAM_2        PF19238.6  baseline_seed173|family=PF00072.24 -                1.2    9.5   4.9       1.1    9.6   4.1   1.4   2   0   0   2   2   2   0 Radical SAM-like domain
+RRM_LARP4            PF26088.1  baseline_seed178|family=PF00183.19 -                7.4    7.8   7.0        18    6.6   0.9   2.2   1   1   1   2   2   2   0 La-related protein 4-like, RNA recognition motif
+MATalpha_HMGbox      PF04769.19 baseline_seed193|family=PF00072.24 -              0.045   13.8   3.1      0.05   13.6   3.1   1.0   1   0   0   1   1   1   0 Mating-type protein MAT alpha 1 HMG-box
+DUF6449              PF20047.5  baseline_seed195|family=PF02517.18 -                0.2   12.4   0.9      0.24   12.2   0.9   1.1   1   0   0   1   1   1   0 Domain of unknown function (DUF6449)
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /home/hugo/gap42e-interaction/seed43_tier_off/baseline.fasta
+# Target file:     /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /home/hugo/gap42e-interaction/seed43_tier_off/baseline.tblout --acc --noali --cpu 32 /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /home/hugo/gap42e-interaction/seed43_tier_off/baseline.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Sat Oct 17 19:23:09 2026
+# [ok]

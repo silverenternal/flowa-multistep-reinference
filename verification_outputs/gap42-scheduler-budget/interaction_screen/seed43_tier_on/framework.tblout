@@ -1,0 +1,57 @@
+#                                                                            --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                        accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------              -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+PRESAN               PF09687.16 framework_seed1|family=PF00072.24 -               0.14   13.3   0.0      0.15   13.3   0.0   1.0   1   0   0   1   1   1   0 Plasmodium RESA N-terminal
+SECTM1_C             PF28747.1  framework_seed3|family=PF02517.18 -               0.23   12.0   1.3      0.43   11.1   1.3   1.5   1   0   0   1   1   1   0 SECTM1 C-terminal domain
+DUF5374              PF17344.9  framework_seed7|family=PF02517.18 -              0.045   14.3   0.0     0.056   14.0   0.0   1.2   1   0   0   1   1   1   0 Family of unknown function (DUF5374)
+KBP3                 PF30212.1  framework_seed11|family=PF02517.18 -              0.063   14.2   0.4     0.081   13.8   0.4   1.4   1   1   0   1   1   1   0 Kinetochore-binding protein 3
+HAP1_N               PF04849.19 framework_seed25|family=PF00072.24 -               0.15   11.9   0.0      0.18   11.7   0.0   1.1   1   0   0   1   1   1   0 HAP1 N-terminal conserved region
+ToxB_N               PF18224.8  framework_seed38|family=PF00183.19 -               0.15   12.9   0.0      0.16   12.8   0.0   1.1   1   0   0   1   1   1   0 ToxB N-terminal domain
+SIGLECL1_C           PF27822.2  framework_seed39|family=PF02517.18 -               0.11   13.2   0.6      0.13   12.9   0.6   1.3   1   0   0   1   1   1   0 SIGLEC family-like protein 1 C-terminal domain
+Bubble               PF09227.17 framework_seed41|family=PF00072.24 -              0.035   15.0   0.3     0.046   14.6   0.3   1.2   1   0   0   1   1   1   0 Bubble protein
+Med12-LCEWAV         PF12145.14 framework_seed41|family=PF00072.24 -                0.2   11.2   0.4       0.2   11.1   0.4   1.0   1   0   0   1   1   1   0 Eukaryotic Mediator 12 subunit domain
+MANEC                PF07502.21 framework_seed44|family=PF00005.27 -             0.0061   17.5   2.8      0.18   12.8   0.1   2.2   2   0   0   2   2   2   2 MANEC domain
+DUF2141              PF09912.15 framework_seed46|family=PF00183.19 -               0.13   12.9   0.0      0.18   12.5   0.0   1.1   1   0   0   1   1   1   0 Uncharacterized protein conserved in bacteria (DUF2141)
+DUF6887              PF21826.2  framework_seed49|family=PF00072.24 -              0.086   13.9   0.4      0.56   11.2   0.0   1.9   2   0   0   2   2   2   0 Family of unknown function (DUF6887)
+Helic-prim_T7_N      PF21268.4  framework_seed51|family=PF02517.18 -               0.24   12.4   0.1      0.51   11.4   0.1   1.5   1   0   0   1   1   1   0 Bacteriophage T7 DNA helicase/primase, N-terminal a+b fold
+C2c1_WED-II          PF22204.3  framework_seed54|family=PF00183.19 -               0.12   13.4   0.0      0.12   13.3   0.0   1.1   1   0   0   1   1   1   0 CRISPR-associated endonuclease C2c1, wedge domain, second region
+DUF6498              PF20108.5  framework_seed58|family=PF00183.19 -               0.29   11.1   0.2      0.34   10.9   0.2   1.2   1   0   0   1   1   1   0 Family of unknown function (DUF6498)
+DUF2555              PF10742.15 framework_seed58|family=PF00183.19 -               0.33   11.6   0.1      0.54   10.9   0.1   1.3   1   0   0   1   1   1   0 Protein of unknown function (DUF2555)
+Diphthami_syn_2_C    PF28410.1  framework_seed62|family=PF00183.19 -               0.16   12.8   0.0      0.22   12.4   0.0   1.2   1   0   0   1   1   1   0 Diphthamide synthase C-terminal domain
+DUF1412              PF07203.18 framework_seed66|family=PF00183.19 -                0.1   13.3   0.0      0.18   12.5   0.0   1.5   1   0   0   1   1   1   0 Protein of unknown function (DUF1412)
+DUF6313              PF19832.5  framework_seed66|family=PF00183.19 -               0.17   12.4   0.1      0.21   12.0   0.1   1.1   1   0   0   1   1   1   0 Family of unknown function (DUF6313)
+DUF6398              PF19935.5  framework_seed67|family=PF02517.18 -              0.036   15.1   0.1     0.043   14.9   0.1   1.2   1   0   0   1   1   1   0 Domain of unknown function (DUF6398)
+zf-KKT2_KKT3         PF26235.1  framework_seed73|family=PF00072.24 -               0.12   13.1   0.0      0.14   13.0   0.0   1.2   1   0   0   1   1   1   0 KKT2/KKT3 zinc finger domain
+Myc_target_1         PF15179.12 framework_seed99|family=PF02517.18 -              0.079   13.6   0.0     0.095   13.4   0.0   1.1   1   0   0   1   1   1   0 Myc target protein 1
+zf-TAZ               PF02135.22 framework_seed115|family=PF02517.18 -              0.075   14.2   1.1      0.13   13.5   0.3   1.6   1   1   0   1   1   1   0 TAZ zinc finger
+DUF6492              PF20102.5  framework_seed117|family=PF00072.24 -              0.058   13.2   0.1     0.058   13.2   0.1   1.0   1   0   0   1   1   1   0 Family of unknown function (DUF6492)
+DUF725               PF05267.18 framework_seed123|family=PF02517.18 -              0.081   13.6   0.0     0.084   13.6   0.0   1.1   1   0   0   1   1   1   0 Protein of unknown function (DUF725)
+FAM194               PF14977.12 framework_seed124|family=PF00005.27 -               0.23   11.5   0.5      0.27   11.2   0.5   1.1   1   0   0   1   1   1   0 FAM194 protein
+YuA_Gp49             PF20788.3  framework_seed128|family=PF00005.27 -              0.069   14.1   0.1     0.096   13.6   0.1   1.2   1   0   0   1   1   1   0 YuA phage, Gp49
+tyr_de_CO2_C         PF21391.4  framework_seed138|family=PF00183.19 -              0.013   16.1   0.0     0.014   16.0   0.0   1.1   1   0   0   1   1   1   0 Tyrosine decarboxylase, C-terminal
+Tudor_FRX1           PF18336.8  framework_seed140|family=PF00005.27 -                0.2   12.3   0.0      0.48   11.1   0.0   1.6   1   0   0   1   1   1   0 Fragile X messenger ribonucleoprotein 1, Tudor domain
+EGF_ATRAID_C         PF27506.1  framework_seed144|family=PF00005.27 -               0.22   12.2   0.2       0.3   11.8   0.2   1.2   1   0   0   1   1   1   0 ATRAID-like, EGF domain
+DUF3177              PF11375.14 framework_seed149|family=PF00072.24 -             0.0041   17.7   0.8    0.0058   17.2   0.8   1.3   1   0   0   1   1   1   1 Protein of unknown function (DUF3177)
+DUF4581              PF15167.12 framework_seed149|family=PF00072.24 -               0.27   12.2   0.1      0.33   11.9   0.1   1.2   1   0   0   1   1   1   0 Domain of unknown function (DUF4581)
+FJX1_middle          PF28411.2  framework_seed156|family=PF00005.27 -               0.15   12.1   0.0      0.19   11.8   0.0   1.1   1   0   0   1   1   1   0 Four-jointed box protein middle domain
+DUF2256              PF10013.16 framework_seed158|family=PF00183.19 -              0.077   13.9   0.1      0.11   13.3   0.1   1.2   1   0   0   1   1   1   0 Uncharacterized protein conserved in bacteria (DUF2256)
+DUF7622              PF24602.2  framework_seed158|family=PF00183.19 -                0.1   13.3   0.2      0.12   13.1   0.2   1.1   1   0   0   1   1   1   0 Domain of unknown function (DUF7622)
+DUF6632              PF20337.3  framework_seed159|family=PF02517.18 -              0.063   14.0   0.8      0.09   13.5   0.8   1.2   1   0   0   1   1   1   0 Family of unknown function (DUF6632)
+Sigma54_AID          PF00309.26 framework_seed160|family=PF00005.27 -               0.12   12.9   0.2      0.16   12.5   0.2   1.2   1   0   0   1   1   1   0 Sigma-54 factor, Activator interacting domain (AID)
+Claudin_3            PF06653.17 framework_seed160|family=PF00005.27 -               0.13   13.0   0.1      0.13   13.0   0.1   1.0   1   0   0   1   1   1   0 Tight junction protein, Claudin-like
+AChE_tetra           PF08674.16 framework_seed163|family=PF02517.18 -                2.9    8.4  14.6        38    4.9   0.0   2.8   2   1   0   2   2   2   0 Acetylcholinesterase tetramerisation domain
+TMEM183_C            PF27923.1  framework_seed172|family=PF00005.27 -               0.12   13.1   0.5      0.16   12.6   0.5   1.2   1   0   0   1   1   1   0 Transmembrane protein 183 C-terminal domain
+DUF7081              PF23299.2  framework_seed187|family=PF02517.18 -               0.14   13.5   0.0      0.14   13.4   0.0   1.1   1   0   0   1   1   1   0 Domain of unknown function (DUF7081)
+Bfc                  PF22576.4  framework_seed188|family=PF00005.27 -               0.14   13.2   0.0      0.19   12.8   0.0   1.2   1   0   0   1   1   1   0 Transcriptional cofactor Bfc
+Gamma-thionin        PF00304.27 framework_seed191|family=PF02517.18 -              0.019   15.9   2.6     0.032   15.2   2.6   1.4   1   0   0   1   1   1   0 Gamma-thionin family
+Anti-sigma_N         PF28820.1  framework_seed197|family=PF00072.24 -              0.051   14.6   1.0     0.084   13.9   0.4   1.5   2   0   0   2   2   2   0 Anti-sigma factor, N-terminal domain
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /home/hugo/gap42e-interaction/seed43_tier_on/framework.fasta
+# Target file:     /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /home/hugo/gap42e-interaction/seed43_tier_on/framework.tblout --acc --noali --cpu 32 /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /home/hugo/gap42e-interaction/seed43_tier_on/framework.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Sat Oct 17 19:24:58 2026
+# [ok]

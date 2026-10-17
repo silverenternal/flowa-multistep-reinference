@@ -23,6 +23,7 @@ branch. Frozen surfaces untouched (`docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.
 | **N=200 3-seed screen (§7.2)** | `fw_on − baseline` +13.67 (3+/0−) vs `fw_off − baseline` +7.67 (3+/0−); NFE-matched `on − off` +6.00, 2+/1−, p=0.276. **UNDERPOWERED** — suggestive, not evidence. |
 | **Decisive N=1000 (§7.3)** | Baseline reproduced exactly (158/159/174 = canonical). Chain-on framework 280/281/259 vs canonical chain-off 275/272/259 → **+5/+9/0**; `d_pooled` +0.1559 → **+0.1609** (+3 %). **Decisive null**: the chain is live but not a lever on R1. R1 stays PARTIAL. |
 
+| **2x2 interaction (§7.4)** | tier-only +6.33 (3+/0−), chain-only +6.00 (2+/1−), both +4.67; interaction **−7.67, 0+/3−** (p=0.073). The two levers are **substitutes**, not complements — the chain does not unlock the tier lever, it cancels its apparent gain. Screen only. |
 ---
 
 ## 1. The defect
@@ -309,6 +310,51 @@ those levers. The narrower question — whether `n_cap` / blend-weight levers
 become load-bearing *given* a live chain — is still untested, and would need a
 tier-aware-n-cap A/B with `--restart-from-endpoint`.
 
+### 7.4 2x2 interaction: tier-aware `n_cap` x endpoint chain — substitutes, not complements
+
+`run_interaction_screen.sh` — seeds 42/43/44, N=200, NFE=10, cosine, gate-open
+(`restart_min_nfe=5`), GPU 0, 2026-10-17 10:44–11:28Z. Two new cells
+(`tier_off` = `--tier-aware-n-cap 0.5` + the k6 baseline-pLDDT jsonl;
+`tier_on` = same + `--restart-from-endpoint`). The two *legacy* cells are the
+GAP-42c arms (same seeds/config), so the full 2x2 costs only 6 generations.
+
+Reproducibility check: `seed42_tier_off` framework md5 is
+`3ecc30481d505c3a1e883172e5e35a2e` — **identical** to the GAP-41 archived
+`tier_a` arm, so the tier lever reproduces exactly.
+
+Total HMM hits (A = legacy/off, B = legacy/on, C = tier/off, D = tier/on):
+
+| seed | baseline | A | B | C | D | interaction |
+|---:|---:|---:|---:|---:|---:|---:|
+| 42 | 37 | 38 | 47 | 50 | 53 | −6 |
+| 43 | 36 | 49 | 47 | 51 | 44 | −5 |
+| 44 | 32 | 41 | 52 | 46 | 45 | −12 |
+
+Contrasts (n=3 seeds, paired t on per-seed diffs):
+
+| contrast | mean | direction | t | p |
+|---|---:|---|---:|---:|
+| tier effect, chain OFF (C−A) | +6.33 | 3+/0− | 2.14 | 0.166 |
+| tier effect, chain ON (D−B) | −1.33 | 1+/2− | −0.35 | 0.762 |
+| chain effect, tier OFF (B−A) | +6.00 | 2+/1− | 1.49 | 0.276 |
+| chain effect, tier ON (D−C) | −1.67 | 1+/2− | −0.57 | 0.624 |
+| **interaction (D−C)−(B−A)** | **−7.67** | **0+/3−** | −3.51 | 0.073 |
+
+Against the shared baseline: A +7.67, B +13.67, C **+14.00** (3+/0−), D +12.33.
+
+**Reading.** Each lever alone is worth roughly +6 hits over the legacy arm, but
+stacking them gives only +4.67, and the interaction is **negative on all three
+seeds**. They are **substitutes, not complements**: both act on the same
+per-round memory/budget axis and the gain saturates. The strongest single cell
+in the screen is `tier_off` (+14.0 vs baseline, 3/3) — which is exactly the arm
+GAP-41 took to N=1000 and found a wash (2/3, `d_z` 0.726).
+
+**Status: UNDERPOWERED / screen only.** n=3 seeds, N=200, interaction p=0.073.
+It does not license a claim, and it does not overturn GAP-41's N=1000 null. It
+does say that "turn the chain on and the other levers will start to work" is
+**not** supported: the chain *removes* the tier lever's apparent gain rather
+than unlocking it.
+
 ## 8. Reproduce
 
 ```bash
@@ -338,13 +384,17 @@ bash /home/hugo/gap41b-nfe150/run_chain_screen.sh
 # decisive N=1000 3-seed run with the chain ON (§7.3) — ~1 h 44 min
 bash /home/hugo/gap42d-n1000/run_chain_n1000.sh
 
+# 2x2 tier-aware n_cap x chain interaction screen (§7.4) — ~43 min
+bash /home/hugo/gap42e-interaction/run_interaction_screen.sh
+
 # analysis (CPU)
 python3 tools/gap42c_chain_screen_analysis.py            # N=200 screen
+python3 tools/gap42e_interaction_analysis.py             # 2x2 interaction
 .venvs/lineageflow_venv/bin/python tools/r1_d004_analysis.py \
   --root /home/hugo/gap42d-n1000 --out /home/hugo/gap42d-n1000 \
   --seeds 42 43 44 --n-per-seed 1000                     # canonical paired-t + DL meta
 ```
 
-Artifacts: `verification_outputs/gap42-scheduler-budget/chain_smoke/` and
-`verification_outputs/gap42-scheduler-budget/chain_screen/`
-(`hits.txt`, `screen_analysis.json`, per-arm FASTAs + manifests, `METADATA.*`).
+Artifacts: `verification_outputs/gap42-scheduler-budget/{chain_smoke,chain_screen,chain_n1000,interaction_screen}/`
+(`hits.txt`, `*_analysis.json` / `summary.json`, per-arm FASTAs + tblouts +
+manifests, `METADATA.*`).

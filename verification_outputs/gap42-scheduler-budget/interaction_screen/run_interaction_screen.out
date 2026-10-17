@@ -1,0 +1,28 @@
+=== gen seed=42 tier_off n=200 start=0 2026-10-17T10:44:19Z ===
+  done 2026-10-17T10:50:37Z
+=== gen seed=42 tier_on n=200 start=0 2026-10-17T10:50:37Z ===
+  done 2026-10-17T10:55:55Z
+=== gen seed=43 tier_off n=200 start=0 2026-10-17T10:55:55Z ===
+  done 2026-10-17T11:04:00Z
+=== gen seed=43 tier_on n=200 start=0 2026-10-17T11:04:00Z ===
+  done 2026-10-17T11:09:05Z
+=== gen seed=44 tier_off n=200 start=0 2026-10-17T11:09:05Z ===
+  done 2026-10-17T11:14:37Z
+=== gen seed=44 tier_on n=200 start=0 2026-10-17T11:14:37Z ===
+  done 2026-10-17T11:19:26Z
+=== sanity ===
+seed42 tier: chain is live
+seed43 tier: chain is live
+seed44 tier: chain is live
+seed42 tier_off: GAP-41 archived FASTA not present (tblout-only archive)
+=== HMMER 2026-10-17T11:19:26Z ===
+=== ALL DONE 2026-10-17T11:27:42Z ===
+seed42_tier_off/baseline.fasta: total_hits=37 records=200 records_with_hits=30 hits_per_record=0.1850
+seed42_tier_off/framework.fasta: total_hits=50 records=200 records_with_hits=41 hits_per_record=0.2500
+seed42_tier_on/framework.fasta: total_hits=53 records=200 records_with_hits=45 hits_per_record=0.2650
+seed43_tier_off/baseline.fasta: total_hits=36 records=200 records_with_hits=33 hits_per_record=0.1800
+seed43_tier_off/framework.fasta: total_hits=51 records=200 records_with_hits=46 hits_per_record=0.2550
+seed43_tier_on/framework.fasta: total_hits=44 records=200 records_with_hits=38 hits_per_record=0.2200
+seed44_tier_off/baseline.fasta: total_hits=32 records=200 records_with_hits=31 hits_per_record=0.1600
+seed44_tier_off/framework.fasta: total_hits=46 records=200 records_with_hits=39 hits_per_record=0.2300
+seed44_tier_on/framework.fasta: total_hits=45 records=200 records_with_hits=37 hits_per_record=0.2250

@@ -1,0 +1,9 @@
+seed42_tier_off/baseline.fasta: total_hits=37 records=200 records_with_hits=30 hits_per_record=0.1850
+seed42_tier_off/framework.fasta: total_hits=50 records=200 records_with_hits=41 hits_per_record=0.2500
+seed42_tier_on/framework.fasta: total_hits=53 records=200 records_with_hits=45 hits_per_record=0.2650
+seed43_tier_off/baseline.fasta: total_hits=36 records=200 records_with_hits=33 hits_per_record=0.1800
+seed43_tier_off/framework.fasta: total_hits=51 records=200 records_with_hits=46 hits_per_record=0.2550
+seed43_tier_on/framework.fasta: total_hits=44 records=200 records_with_hits=38 hits_per_record=0.2200
+seed44_tier_off/baseline.fasta: total_hits=32 records=200 records_with_hits=31 hits_per_record=0.1600
+seed44_tier_off/framework.fasta: total_hits=46 records=200 records_with_hits=39 hits_per_record=0.2300
+seed44_tier_on/framework.fasta: total_hits=45 records=200 records_with_hits=37 hits_per_record=0.2250

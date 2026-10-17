@@ -1,0 +1,6 @@
+start=2026-10-17T10:44:19Z
+N=200 nfe=10 n_rounds=3 restart_min_nfe=5 scheduler=cosine temperature=1.0
+seeds=42 43 44 start_index=0
+tier_aware_n_cap=0.5 baseline_metrics=/home/hugo/codes/flowa-multistep-reinference/verification_outputs/k6_foldability_n1000_w161_q3_2026/baseline/foldability/foldability.jsonl
+reused cells: chain_screen/seed*_chain_{off,on} (legacy n_cap)
+end=2026-10-17T11:27:42Z

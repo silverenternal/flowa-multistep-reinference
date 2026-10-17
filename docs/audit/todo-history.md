@@ -599,6 +599,39 @@ load-bearing *given* a live chain) is untested and would need a tier-aware
 `n_cap` A/B with `--restart-from-endpoint`. Observations-only —
 `docs/audit/gap42-scheduler-budget-conservation.md` §7.3.
 
+### 4.14 The two surviving levers are substitutes, not complements (GAP-42e, 2026-10-17)
+
+2x2 screen at N=200 / seeds 42/43/44 / NFE=10 / gate-open: {legacy, tier-aware
+`n_cap` 0.5} x {chain off, chain on}. The legacy row is the GAP-42c screen, so
+the full 2x2 cost only 6 generations (43 min). `seed42_tier_off` reproduces the
+GAP-41 archived `tier_a` arm **byte-for-byte** (`md5 3ecc3048…`).
+
+| seed | baseline | A legacy/off | B legacy/on | C tier/off | D tier/on |
+|---:|---:|---:|---:|---:|---:|
+| 42 | 37 | 38 | 47 | 50 | 53 |
+| 43 | 36 | 49 | 47 | 51 | 44 |
+| 44 | 32 | 41 | 52 | 46 | 45 |
+
+| contrast | mean | direction | t | p |
+|---|---:|---|---:|---:|
+| tier effect, chain OFF | +6.33 | 3+/0− | 2.14 | 0.166 |
+| tier effect, chain ON | −1.33 | 1+/2− | −0.35 | 0.762 |
+| chain effect, tier OFF | +6.00 | 2+/1− | 1.49 | 0.276 |
+| chain effect, tier ON | −1.67 | 1+/2− | −0.57 | 0.624 |
+| **interaction** | **−7.67** | **0+/3−** | −3.51 | 0.073 |
+
+Each lever alone is worth ~+6 hits over legacy; together only +4.67, and the
+interaction is negative on **all three seeds**. They are **substitutes**: both
+consume the same per-round memory/budget axis, so the gain saturates. The
+strongest single cell is tier-only (+14.0 vs baseline, 3/3) — exactly the arm
+GAP-41 took to N=1000 and found a wash.
+
+So "turn the chain on and the other dormant levers will wake up" is **not
+supported** — the chain cancels the tier lever's apparent gain rather than
+unlocking it. Screen only (n=3, N=200, p=0.073); it does not overturn GAP-41's
+N=1000 null. Observations-only —
+`docs/audit/gap42-scheduler-budget-conservation.md` §7.4.
+
 ## 5. R1 real-forward saga (D-004 / D-004b)
 
 - **D-004 defect:** the checkpoint-compat shim registered a bare core module
@@ -654,7 +687,8 @@ load-bearing *given* a live chain) is untested and would need a tier-aware
 | GAP-36-ABLATION-MATRIX | 2026-10-15 | consolidated **rounds × schedulers × checkpoints** ablation matrix (24 rows, matched NFE=50) assembled from existing runs (R5b rounds × schedulers; R5c checkpoints × schedulers). Reading: the **sign** of the framework effect tracks the training-budget axis (rounds / checkpoint), **not** the scheduler; within a fixed setting the scheduler tunes magnitude only. Decisive cell **`w16e1_5k`** is framework-WINS on all 3 schedulers (−25.2…−25.6 % FID, p_bonf ≤ 1e-6). Aggregation-only; no new experiments; no frozen surface moved — `docs/audit/gap36-ablation-matrix.md` |
 | GAP-34-R1-MECHANISM | 2026-10-16 | closed via acceptance path (a): the R1 init dose-response (τ sweep of the per-record init simplex, 3 seeds, N=1000) shows the init is a **legitimate, load-bearing, model-mediated** knob — τ=0 collapses to 0 hits, τ=1 (canonical) gives +287.3 (paired t=40.73, p=6.0e-4) and reproduces the D-004b arm exactly; the dose-response is a non-monotone inverted-U peaking at the canonical τ=1 (honest caveat: the τ=2 fall is seed-heterogeneous). R1 stays PARTIAL — `docs/audit/gap34-r1-init-dose.md` |
 | GAP-41-R1-TIER-AWARE | 2026-10-16 | the last dormant lever: the R6 tier-aware `n_cap` mechanism (`--tier-aware-n-cap 0.5` + baseline pLDDT jsonl) on the R1 metric. N=200 screen `tier_a` 50 vs `legacy` 38 (**+12**, MWU p=0.120); decisive N=1000 3-seed sweep is a **wash** — per-seed diffs [−5,+14,+17], mean +8.67, `d_z=0.726`, **2/3**, `p_bonf=1.0`, per-record DL `d=+0.020 p=0.284`. Sixth consecutive wired-but-inert dormant lever; the R1 near-miss is power-limited, not code-limited. R1 stays PARTIAL — `docs/audit/gap41-r1-tier-aware-ncap.md` |
-| GAP-41b-R1-NFE-FIDELITY | 2026-10-16 | the budget behind every prior rejection is a **load-bearing axis**. All six dormant-lever rejections ran at `--nfe 10`; upstream uses ~150 NFE. N=200 seed-42 premise (arms `{legacy,tier}` × NFE {10,150}, gate-open): baseline byte-identical across budgets (37 = 37, md5 `ff5a6de6…`), framework-vs-baseline **+1 → +11**, tier-vs-legacy **+12 → −2** (sign flip). So the six rejections are **conditional on `--nfe 10`**, not budget-invariant. Premise only (N=200, single seed; β-scale `NFE_REF=50` confound); n=3 N=1000 at NFE=150 ≈ 21–41 h = user-gated. Follow-up n=3 N=200 NFE=150 legacy screen: diffs +11/+19/+31, mean +20.33, **3/3** positive, t=3.50 p=0.073 (entry ticket only). Observations-only — `docs/audit/gap41b-r1-nfe-fidelity.md` |
+| GAP-41b-R1-NFE-FIDELITY | 2026-10-16 | the budget behind every prior rejection is a **load-bearing axis**. All six dormant-lever rejections ran at `--nfe 10`; upstream uses ~150 NFE. N=200 seed-42 premise (arms `{legacy,tier}` × NFE {10,150}, gate-open): baseline byte-identical across budgets (37 = 37, md5 `ff5a6de6…`), framework-vs-baseline **+1 → +11**, tier-vs-legacy **+12 → −2** (sign flip). So the six rejections are **conditional on `--nfe 10`**, not budget-invariant. Premise only (N=200, single seed; β-scale `NFE_REF=50` confound); n=3 N=1000 at NFE=150 ≈ 21–41 h = user-gated. Follow-up n=3 N=200 NFE=150 legacy screen: diffs +11/+19
+| GAP-42e-LEVER-INTERACTION | 2026-10-17 | 2x2 tier-aware `n_cap` x chain screen (N=200, 3 seeds): tier-only +6.33 (3+/0−), chain-only +6.00 (2+/1−), both +4.67; **interaction −7.67, 0+/3−** (t=−3.51, p=0.073). The two levers are **substitutes**, not complements — a live chain does not unlock the tier lever, it cancels its apparent gain. Screen only; does not overturn GAP-41's N=1000 null — `docs/audit/gap42-scheduler-budget-conservation.md` §7.4 |/+31, mean +20.33, **3/3** positive, t=3.50 p=0.073 (entry ticket only). Observations-only — `docs/audit/gap41b-r1-nfe-fidelity.md` |
 | GAP-42-SCHEDULER-BUDGET | 2026-10-16 | fixed a per-round NFE leak in `_solve_framework`: non-cosine schedulers multiplied the per-ro
 | GAP-42d-CHAIN-N1000 | 2026-10-17 | decisive canonical run with the chain ON: baseline reproduced exactly (158/159/174), chain-on framework 280/281/259 vs canonical chain-off 275/272/259 → +5/+9/**0**; `d_pooled` +0.1559 → **+0.1609** (+3 %), per-seed `d_z` moves ≤ 0.008. **Decisive null**: the chain is live but not a lever on R1; R1 stays PARTIAL. Also refutes the 'missing chain explains the dormant levers' hypothesis as stated — `docs/audit/gap42-scheduler-budget-conservation.md` §7.3 |und `n_cap` *fraction* straight by `nfe`, so `codimension_sheet` ran `[10,10,1]`=21 steps at `nfe=10` (2.1× cosine). Any prior cosine-vs-math-scheduler A/B was a compute comparison. Fix: `_allocate_nfe_budget` (normalise + largest-remainder); cosine path byte-identical. Post-fix all sum to 10. Also found `codimension_sheet` is degenerate on R1 (`n_cap`≈`[1,1,1]` — no `profile_residual_fn`), so the A/B is near-null by construction. Equal-NFE N=20 smoke: cosine and codimension FASTAs **byte-identical** (`md5 ad2205a3…`). **Root cause: the R1 framework does not chain rounds** — `restart_from_endpoint=False` (driver never overrides) and `_stash_endpoint_as_x0` writes `x0` while LineageFlow reads `theta`. Likely root cause of the six dormant-lever nulls; enabling it is a protocol change = user-gated — `docs/audit/gap42-scheduler-budget-conservation.md` |
 | GAP-42b-ENDPOINT-CHAIN | 2026-10-16 | wiring for the root cause, **default off**: `_stash_endpoint_as_x0` also writes the adapter's native key (`theta` for LineageFlow), and the R1 driver gains `--restart-from-endpoint`. N=20 smoke: `chain_off` **byte-identical** to the archived arm (default stable); `chain_on` **differs** (live); hits 4 / 3 / 5 (liveness only) — `docs/audit/gap42-scheduler-budget-conservation.md` §7.1 |

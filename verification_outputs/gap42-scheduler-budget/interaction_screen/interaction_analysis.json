@@ -1,0 +1,108 @@
+{
+  "seeds": {
+    "42": {
+      "baseline": 37,
+      "A_legacy_off": 38,
+      "B_legacy_on": 47,
+      "C_tier_off": 50,
+      "D_tier_on": 53,
+      "tier_wo_chain": 12,
+      "tier_w_chain": 6,
+      "chain_wo_tier": 9,
+      "chain_w_tier": 3,
+      "interaction": -6
+    },
+    "43": {
+      "baseline": 36,
+      "A_legacy_off": 49,
+      "B_legacy_on": 47,
+      "C_tier_off": 51,
+      "D_tier_on": 44,
+      "tier_wo_chain": 2,
+      "tier_w_chain": -3,
+      "chain_wo_tier": -2,
+      "chain_w_tier": -7,
+      "interaction": -5
+    },
+    "44": {
+      "baseline": 32,
+      "A_legacy_off": 41,
+      "B_legacy_on": 52,
+      "C_tier_off": 46,
+      "D_tier_on": 45,
+      "tier_wo_chain": 5,
+      "tier_w_chain": -7,
+      "chain_wo_tier": 11,
+      "chain_w_tier": -1,
+      "interaction": -12
+    }
+  },
+  "summary": {
+    "tier_wo_chain": {
+      "diffs": [
+        12,
+        2,
+        5
+      ],
+      "mean": 6.333333333333333,
+      "n_pos": 3,
+      "n_neg": 0,
+      "direction_consistent": true,
+      "t": 2.1376670117594454,
+      "p": 0.16599256551832053
+    },
+    "tier_w_chain": {
+      "diffs": [
+        6,
+        -3,
+        -7
+      ],
+      "mean": -1.3333333333333333,
+      "n_pos": 1,
+      "n_neg": 2,
+      "direction_consistent": false,
+      "t": -0.346843987809648,
+      "p": 0.7618034663298345
+    },
+    "chain_wo_tier": {
+      "diffs": [
+        9,
+        -2,
+        11
+      ],
+      "mean": 6.0,
+      "n_pos": 2,
+      "n_neg": 1,
+      "direction_consistent": false,
+      "t": 1.4846149779161804,
+      "p": 0.27593381196178335
+    },
+    "chain_w_tier": {
+      "diffs": [
+        3,
+        -7,
+        -1
+      ],
+      "mean": -1.6666666666666667,
+      "n_pos": 1,
+      "n_neg": 2,
+      "direction_consistent": false,
+      "t": -0.5735393346764044,
+      "p": 0.6241769859985856
+    },
+    "interaction": {
+      "diffs": [
+        -6,
+        -5,
+        -12
+      ],
+      "mean": -7.666666666666667,
+      "n_pos": 0,
+      "n_neg": 3,
+      "direction_consistent": true,
+      "t": -3.5074671176499077,
+      "p": 0.07255048567266137
+    }
+  },
+  "n_seeds": 3
+}
