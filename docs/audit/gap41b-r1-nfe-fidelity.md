@@ -25,6 +25,7 @@ rejections may be an artifact of the low NFE, not evidence the levers are inert.
 | **Resumable generation** | `--start-index` added to `tools/gen_lineageflow_n1000_fastas.py` (additive, default 0 byte-stable) so the N=200 result can be extended to N=1000 without recomputing the first 200 records |
 | **Headline moves with budget** | framework-vs-baseline gap **+1 → +11** (NFE 10 → 150); the baseline arm is **byte-identical** (37 = 37) |
 | **Tier lever flips sign** | tier-vs-legacy **+12 → −2** (NFE 10 → 150) |
+| **n=3 NFE=150 screen** | seeds 42/43/44 diffs **+11 / +19 / +31**, mean +20.33, **3/3** positive, t=3.50 p=0.073 — direction-consistent (entry ticket only; §4.5) |
 | Verdict | **NFE is a load-bearing axis.** The six prior dormant-lever rejections were all measured at `--nfe 10`; the R1 metric is *not* budget-invariant, so those rejections are **conditional on the low budget**, not budget-independent. Premise only (N=200, single seed) — see §5 caveats. |
 
 ---
@@ -132,6 +133,30 @@ comparison; tier dirs carry no separate `baseline.tblout`.)
    budget-invariant.** NFE is a confound that has to be held fixed and reported,
    exactly as the user suspected.
 
+### 4.5 n=3 N=200 NFE=150 legacy screen (direction check)
+
+The §4.1 +11 headline is a single seed. Before committing to a decisive
+N=1000 run, seeds 43/44 were generated at N=200, NFE=150, legacy arm
+(`/home/hugo/gap41b-nfe150/run_nfe150_screen.sh`); seed 42 is reused from the
+premise. Canonical HMMER counter:
+
+| seed | baseline | framework | framework − baseline |
+|---:|---:|---:|---:|
+| 42 | 37 | 48 | **+11** |
+| 43 | 36 | 55 | **+19** |
+| 44 | 32 | 63 | **+31** |
+
+3-seed: mean **+20.33**, **3+/0−**, one-sample t=3.50, p=0.073.
+**Direction-consistent 3/3** — the NFE=150 framework-vs-baseline headline is
+positive at every seed. This is an *entry ticket* for a decisive N=1000 run, not
+a result: p=0.073 at n=3, and this is still the N=200 screen (GAP-40b and GAP-41
+screens were both false positives at this scale).
+
+**Caveat (flagged):** the three diffs are monotone (+11 → +19 → +31) while the
+baseline drifts *down* (37 → 36 → 32). That is a seed-level trend, not
+independent noise; it inflates the apparent effect and should be watched at
+N=1000.
+
 ## 5. Verdict
 
 **NFE is a load-bearing axis; the prior lever rejections are NFE-conditional.**
@@ -166,6 +191,7 @@ comparison; tier dirs carry no separate `baseline.tblout`.)
 
 ```bash
 bash /home/hugo/gap41b-nfe150/run_premise.sh              # N=200 seed 42, NFE {10,150}
+bash /home/hugo/gap41b-nfe150/run_nfe150_screen.sh        # N=200 seeds 43/44, NFE 150 legacy
 # extend to N=1000 later (resumable):
 N=1000 START=200 bash /home/hugo/gap41b-nfe150/run_premise.sh
 ```

@@ -1,0 +1,45 @@
+#                                                                           --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                       accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------             -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+T3SS_LEE_assoc       PF13327.12 baseline_seed9|family=PF00072.24 -               0.13   12.9   0.6      0.22   12.2   0.6   1.3   1   0   0   1   1   1   0 Type III secretion system subunit
+KlcB_C               PF29622.1  baseline_seed15|family=PF02517.18 -               0.15   12.9   0.1       0.2   12.5   0.1   1.1   1   0   0   1   1   1   0 KlcB C-terminal domain
+APP1_cat             PF09949.16 baseline_seed18|family=PF00183.19 -               0.89   10.2   2.7       1.3    9.6   2.7   1.3   1   1   0   1   1   1   0 Phosphatidate phosphatase APP1, catalytic domain
+YCF90                PF17088.11 baseline_seed25|family=PF00072.24 -               0.03   14.6   2.1      0.03   14.6   2.1   1.0   1   0   0   1   1   1   0 Uncharacterised protein family
+C03B1_N              PF30099.1  baseline_seed35|family=PF02517.18 -                1.1   10.0   7.4       1.4    9.6   7.4   1.2   1   0   0   1   1   1   0 C03B1 N-terminal domain
+DUF5641              PF18701.7  baseline_seed56|family=PF00005.27 -             0.0046   17.9   0.5    0.0046   17.9   0.5   1.0   1   0   0   1   1   1   1 Family of unknown function (DUF5641)
+Myb_DNA-bind_6       PF13921.13 baseline_seed83|family=PF02517.18 -               0.94   10.4   4.7        24    5.9   4.7   2.5   1   1   0   1   1   1   0 Myb-like DNA-binding domain
+TraD_N               PF12615.14 baseline_seed92|family=PF00005.27 -               0.25   13.1   1.9      0.29   12.8   1.2   1.6   1   1   0   1   1   1   0 F sex factor protein N terminal
+CxC2                 PF18803.7  baseline_seed94|family=PF00183.19 -               0.22   12.4   3.6      0.27   12.2   3.2   1.4   1   1   0   1   1   1   0 CxC2 like cysteine cluster associated with KDZ transposases
+DUF5338              PF17273.8  baseline_seed97|family=PF00072.24 -              0.019   15.8   0.0     0.044   14.6   0.0   1.6   1   0   0   1   1   1   0 Family of unknown function (DUF5338)
+DUF5372              PF17342.9  baseline_seed100|family=PF00005.27 -               0.47   11.4   1.8      0.54   11.2   1.8   1.1   1   0   0   1   1   1   0 Family of unknown function (DUF5372)
+Lustrin_cystein      PF14625.12 baseline_seed105|family=PF00072.24 -              0.071   14.2   1.0     0.071   14.2   1.0   2.9   3   0   0   3   3   3   0 Lustrin, cysteine-rich repeated domain
+F59B10_3_N           PF28864.1  baseline_seed116|family=PF00005.27 -               0.01   16.3   0.2     0.018   15.5   0.2   1.4   1   0   0   1   1   1   0 F59B10.3 N-terminal domain
+FYVE                 PF01363.28 baseline_seed138|family=PF00183.19 -              0.037   14.9   3.4     0.038   14.8   3.4   1.0   1   0   0   1   1   1   0 FYVE zinc finger
+PPK2                 PF03976.21 baseline_seed142|family=PF00183.19 -                0.4   10.9   2.0      0.53   10.5   2.0   1.1   1   0   0   1   1   1   0 Polyphosphate kinase 2 (PPK2)
+DUF7996              PF25959.2  baseline_seed143|family=PF02517.18 -                5.7    7.5   5.8       9.2    6.8   5.8   1.3   1   0   0   1   1   1   0 Family of unknown function (DUF7996)
+Sarcoglycan_2        PF05510.19 baseline_seed153|family=PF00072.24 -                1.5    9.5   4.1       1.4    9.6   1.1   2.0   1   1   1   2   2   2   0 Sarcoglycan alpha/epsilon N-terminal domain
+DUF6402              PF19940.5  baseline_seed154|family=PF00183.19 -               0.15   11.8   0.9      0.25   11.2   0.1   1.7   2   0   0   2   2   2   0 Family of unknown function (DUF6402)
+DUF4528              PF15031.12 baseline_seed155|family=PF02517.18 -               0.13   13.0   4.5       0.2   12.3   4.5   1.4   1   0   0   1   1   1   0 Domain of unknown function (DUF4528)
+BAP                  PF06639.17 baseline_seed158|family=PF00183.19 -               0.63   11.2   6.4      0.67   11.1   6.4   1.1   1   0   0   1   1   1   0 Basal layer antifungal peptide (BAP)
+DND1_DSRM            PF14709.14 baseline_seed171|family=PF02517.18 -               0.21   12.6   1.3      0.42   11.7   1.3   1.6   1   0   0   1   1   1   0 double strand RNA binding domain from DEAD END PROTEIN 1
+Peptidase_S78_2      PF14550.12 baseline_seed172|family=PF00005.27 -               0.28   12.1   0.9      0.35   11.8   0.9   1.1   1   0   0   1   1   1   0 Putative phage serine protease XkdF
+PaaX_M               PF20803.3  baseline_seed173|family=PF00072.24 -              0.057   14.2   1.9     0.067   14.0   1.9   1.1   1   0   0   1   1   1   0 PaaX protein central Cas2-like domain
+Lipid_A_deac         PF28590.1  baseline_seed173|family=PF00072.24 -              0.083   12.8   0.2     0.093   12.6   0.2   1.1   1   0   0   1   1   1   0 Lipid A 3'-O-deacylase PGN_1123-type
+KwaA                 PF28043.2  baseline_seed181|family=PF00072.24 -               0.28   11.7   0.0      0.28   11.7   0.0   1.0   1   0   0   1   1   1   0 Anti-phage protein KwaA
+DUF6585              PF20226.4  baseline_seed182|family=PF00183.19 -               0.83    9.7   2.2      0.97    9.5   2.2   1.1   1   0   0   1   1   1   0 Family of unknown function (DUF6585)
+DUF6399              PF19936.6  baseline_seed184|family=PF00005.27 -               0.35   11.5   1.8      0.47   11.1   1.8   1.1   1   0   0   1   1   1   0 Family of unknown function (DUF6399)
+5TMH_Lnb             PF25221.2  baseline_seed185|family=PF00072.24 -               0.37   11.5   4.3      0.53   11.0   4.3   1.1   1   0   0   1   1   1   0 Lnb transmembrane domain
+zf-C4pol             PF14260.12 baseline_seed187|family=PF02517.18 -              0.033   15.2   0.4     0.039   14.9   0.4   1.1   1   0   0   1   1   1   0 C4-type zinc-finger of DNA polymerase delta
+Sel_put              PF04328.19 baseline_seed188|family=PF00005.27 -                1.2   10.0   9.0      0.52   11.2   4.1   2.3   1   1   1   2   2   2   0 Selenoprotein, putative
+DUF2310              PF10071.16 baseline_seed189|family=PF00072.24 -               0.07   14.0   0.6      0.07   14.0   0.6   1.5   1   1   1   2   2   2   0 Domain of unknown function (DUF2310)
+Exo84_C              PF16528.12 baseline_seed193|family=PF00072.24 -               0.59   10.6   4.8      0.89   10.0   4.8   1.3   1   0   0   1   1   1   0 Exocyst component 84 C-terminal
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /home/hugo/gap41b-nfe150/nfe150_screen/seed44_nfe150_legacy/baseline.fasta
+# Target file:     /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /home/hugo/gap41b-nfe150/nfe150_screen/seed44_nfe150_legacy/baseline.tblout --acc --noali --cpu 32 /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /home/hugo/gap41b-nfe150/nfe150_screen/seed44_nfe150_legacy/baseline.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Sat Oct 17 04:41:30 2026
+# [ok]

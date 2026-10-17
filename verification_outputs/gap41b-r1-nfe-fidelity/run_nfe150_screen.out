@@ -1,0 +1,12 @@
+=== gen seed=43 nfe=150 n=200 start=0 2026-10-16T17:55:14Z ===
+  done 2026-10-16T19:27:07Z
+=== gen seed=44 nfe=150 n=200 start=0 2026-10-16T19:27:07Z ===
+  done 2026-10-16T20:34:15Z
+=== HMMER 2026-10-16T20:34:15Z ===
+=== ALL DONE 2026-10-16T20:43:01Z ===
+seed42_nfe150_legacy/baseline.fasta: total_hits=37 records=200 records_with_hits=30 hits_per_record=0.1850
+seed42_nfe150_legacy/framework.fasta: total_hits=48 records=200 records_with_hits=40 hits_per_record=0.2400
+seed43_nfe150_legacy/baseline.fasta: total_hits=36 records=200 records_with_hits=33 hits_per_record=0.1800
+seed43_nfe150_legacy/framework.fasta: total_hits=55 records=200 records_with_hits=47 hits_per_record=0.2750
+seed44_nfe150_legacy/baseline.fasta: total_hits=32 records=200 records_with_hits=31 hits_per_record=0.1600
+seed44_nfe150_legacy/framework.fasta: total_hits=63 records=200 records_with_hits=50 hits_per_record=0.3150

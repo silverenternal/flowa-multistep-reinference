@@ -1,0 +1,33 @@
+{
+  "seeds": {
+    "42": {
+      "baseline": 37,
+      "framework": 48,
+      "diff": 11
+    },
+    "43": {
+      "baseline": 36,
+      "framework": 55,
+      "diff": 19
+    },
+    "44": {
+      "baseline": 32,
+      "framework": 63,
+      "diff": 31
+    }
+  },
+  "summary": {
+    "n_seeds": 3,
+    "diffs": [
+      11,
+      19,
+      31
+    ],
+    "mean_diff": 20.333333333333332,
+    "n_pos": 3,
+    "n_neg": 0,
+    "seed_t_stat": 3.498589941526067,
+    "seed_t_p": 0.07287980307197515,
+    "direction_consistent": true
+  }
+}

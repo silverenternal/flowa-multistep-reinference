@@ -1,0 +1,76 @@
+#                                                                            --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                        accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------              -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+Herpes_UL49_5        PF05702.19 framework_seed3|family=PF02517.18 -               0.16   12.7   0.1      0.25   12.1   0.1   1.2   1   0   0   1   1   1   0 Herpesvirus UL49.5 envelope/tegument protein
+Alginate_exp         PF13372.13 framework_seed4|family=PF00005.27 -               0.33   10.4   0.1       0.4   10.1   0.1   1.0   1   0   0   1   1   1   0 Alginate export
+APC_rep              PF18797.8  framework_seed7|family=PF02517.18 -               0.21   13.0   0.3       0.6   11.6   0.3   1.7   1   1   0   1   1   1   0 Adenomatous polyposis coli (APC) repeat
+DUF4797              PF16051.11 framework_seed9|family=PF00072.24 -               0.31   11.8   0.0      0.69   10.7   0.0   1.6   1   0   0   1   1   1   0 Domain of unknown function (DUF4797)
+ECSIT_N              PF06239.18 framework_seed15|family=PF02517.18 -              0.091   12.7   0.1       0.1   12.6   0.1   1.2   1   0   0   1   1   1   0 Evolutionarily conserved signalling intermediate in Toll pathway
+MgtE_N               PF03448.23 framework_seed15|family=PF02517.18 -               0.18   13.0   0.0       0.2   12.9   0.0   1.1   1   0   0   1   1   1   0 MgtE intracellular N domain
+DUF7576              PF24461.2  framework_seed22|family=PF00183.19 -              0.027   15.0   0.2     0.027   15.0   0.2   1.6   2   0   0   2   2   2   0 Family of unknown function (DUF7576)
+Rhamno_transf        PF11316.15 framework_seed23|family=PF02517.18 -              0.015   15.4   0.1      0.02   15.1   0.1   1.1   1   0   0   1   1   1   0 Putative rhamnosyl transferase
+RRM_7                PF16367.12 framework_seed29|family=PF00072.24 -               0.26   12.0   0.0      0.48   11.2   0.0   1.5   1   0   0   1   1   1   0 RNA recognition motif
+DUF2811              PF10929.14 framework_seed32|family=PF00005.27 -               0.12   13.4   1.1      0.21   12.6   0.2   1.8   2   0   0   2   2   2   0 Protein of unknown function (DUF2811)
+Tea_helical          PF24236.2  framework_seed33|family=PF00072.24 -                2.8    8.8   6.6      0.42   11.4   1.5   2.0   1   1   1   2   2   2   0 Telomere ends associated alpha-helical domain
+Keratin_matx         PF04579.18 framework_seed35|family=PF02517.18 -               0.12   13.5   3.7       0.2   12.7   3.7   1.3   1   0   0   1   1   1   0 Keratin, high-sulphur matrix protein
+Kazrin               PF25986.1  framework_seed42|family=PF00183.19 -               0.17   12.2   0.2      0.19   12.1   0.2   1.0   1   0   0   1   1   1   0 Kazrin domain
+Beta-lactamase       PF00144.30 framework_seed44|family=PF00005.27 -               0.24   11.3   1.2      0.25   11.2   1.2   1.1   1   0   0   1   1   1   0 Beta-lactamase
+Prok-RING_4          PF14447.13 framework_seed47|family=PF02517.18 -              0.016   15.8   0.6     0.031   14.9   0.2   1.7   2   0   0   2   2   2   0 Prokaryotic RING finger family 4
+tSH3-B_UBE2O         PF23046.2  framework_seed47|family=PF02517.18 -              0.031   14.7   0.0     0.031   14.7   0.0   1.0   1   0   0   1   1   1   0 UBE2O, tandem tSH3-B domain
+TMEM129_C            PF29721.1  framework_seed50|family=PF00183.19 -                1.7    9.7   6.5       1.8    9.6   6.5   1.1   1   0   0   1   1   1   0 TMEM129 RING domain
+C8                   PF08742.17 framework_seed51|family=PF02517.18 -              0.086   13.9   4.3       4.7    8.3   0.7   2.2   1   1   1   2   2   2   0 C8 domain
+Phospho_p8           PF10195.15 framework_seed52|family=PF00005.27 -               0.41   12.0   1.9      0.69   11.3   1.9   1.5   1   1   0   1   1   1   0 DNA-binding nuclear phosphoprotein p8
+Glycos_transf_N      PF04413.23 framework_seed54|family=PF00183.19 -               0.11   12.8   1.2       0.1   12.9   1.2   1.0   1   0   0   1   1   1   0 3-Deoxy-D-manno-octulosonic-acid transferase (kdotransferase)
+DUF6788              PF20586.4  framework_seed60|family=PF00005.27 -              0.051   14.3   2.8      0.12   13.1   2.8   1.6   1   0   0   1   1   1   0 Domain of unknown function (DUF6788)
+CCER1                PF15482.12 framework_seed60|family=PF00005.27 -               0.54   10.7  10.7      0.63   10.5  10.7   1.2   1   0   0   1   1   1   0 Coiled-coil domain-containing glutamate-rich protein family 1
+KH_PARP10            PF27824.1  framework_seed62|family=PF00183.19 -               0.19   12.3   0.1      0.45   11.0   0.0   1.7   2   0   0   2   2   2   0 Protein mono-ADP-ribosyltransferase PARP10, KH-domain type I
+WC-rich              PF20053.5  framework_seed64|family=PF00005.27 -              0.049   14.6   0.2     0.088   13.7   0.1   1.4   1   1   0   1   1   1   0 Wolframin cysteine-rich domain
+DUF1397              PF07165.17 framework_seed64|family=PF00005.27 -              0.055   13.5   0.3     0.063   13.3   0.3   1.1   1   0   0   1   1   1   0 Protein of unknown function (DUF1397)
+RRP12_HEAT           PF08161.19 framework_seed78|family=PF00183.19 -               0.48   10.5   0.1       0.6   10.2   0.1   1.2   1   0   0   1   1   1   0 Ribosomal RNA-processing protein 12, HEAT repeats
+DHC_N2               PF08393.19 framework_seed79|family=PF02517.18 -              0.032   13.8   0.5     0.032   13.8   0.5   1.0   1   0   0   1   1   1   0 Dynein heavy chain, N-terminal region 2
+YnfU                 PF23499.2  framework_seed81|family=PF00072.24 -              0.053   14.2   0.9     0.053   14.2   0.9   2.0   2   0   0   2   2   2   0 YnfU
+SPE9_EGF_4th         PF29137.1  framework_seed85|family=PF00072.24 -            0.00085   19.8   0.9    0.0014   19.1   0.6   1.7   1   1   0   1   1   1   1 SPE-9 fourth EGF-like domain
+TMEM183_C            PF27923.1  framework_seed92|family=PF00005.27 -               0.17   12.6   4.6      0.47   11.1   0.1   2.1   2   0   0   2   2   2   0 Transmembrane protein 183 C-terminal domain
+zf-CCHC_4            PF14392.12 framework_seed95|family=PF02517.18 -              0.011   16.1   0.8     0.019   15.3   0.8   1.4   1   0   0   1   1   1   0 Zinc knuckle
+PRY                  PF13765.15 framework_seed95|family=PF02517.18 -               0.14   12.6   0.2      0.25   11.7   0.2   1.4   1   0   0   1   1   1   0 SPRY-associated domain
+DUF6769              PF20558.5  framework_seed96|family=PF00005.27 -                5.6    8.3   9.4      0.24   12.7   3.3   1.9   1   1   1   2   2   2   0 Family of unknown function (DUF6769)
+DUF1737              PF08410.16 framework_seed99|family=PF02517.18 -               0.12   12.9   0.0      0.15   12.7   0.0   1.2   1   0   0   1   1   1   0 Domain of unknown function (DUF1737)
+BTB-POZ_ANK-like     PF25553.2  framework_seed105|family=PF00072.24 -              0.049   13.7   1.8       2.9    7.9   0.0   2.1   2   0   0   2   2   2   0 BTB/POZ Ankyrin-like repeat
+BCOR                 PF15808.11 framework_seed105|family=PF00072.24 -                0.8   10.6   4.8       0.3   11.9   2.1   1.6   1   1   1   2   2   2   0 BCL-6 co-repressor, non-ankyrin-repeat region
+Hemopexin            PF00045.25 framework_seed107|family=PF02517.18 -              0.017   15.7   0.1     0.026   15.2   0.1   1.2   1   0   0   1   1   1   0 Hemopexin
+PufQ                 PF05398.17 framework_seed110|family=PF00183.19 -              0.072   14.0   0.0     0.072   14.0   0.0   1.0   1   0   0   1   1   1   0 PufQ cytochrome subunit
+Coq4                 PF05019.19 framework_seed110|family=PF00183.19 -               0.17   11.8   0.4      0.19   11.7   0.4   1.0   1   0   0   1   1   1   0 Coenzyme Q (ubiquinone) biosynthesis protein Coq4
+YchJ_N               PF21612.5  framework_seed111|family=PF02517.18 -                1.3    9.9   9.2        32    5.5   9.2   2.7   1   1   0   1   1   1   0 YchJ family protein, N-terminal zinc binding domain
+PHD_2                PF13831.13 framework_seed116|family=PF00005.27 -             0.0046   17.1   1.3     0.011   16.0   1.3   1.6   1   0   0   1   1   1   1 PHD-finger
+Ig_CMFA_2nd          PF29538.1  framework_seed117|family=PF00072.24 -               0.24   12.4   0.0      0.25   12.3   0.0   1.1   1   0   0   1   1   1   0 Conditioned medium factor 2nd Ig-like domain
+ARM_CUL7_CUL9        PF24742.2  framework_seed127|family=PF02517.18 -                0.3   11.8   0.2      0.33   11.7   0.2   1.1   1   0   0   1   1   1   0 CUL7/CUL9 ARM repeat domain
+SGSH_C               PF16347.11 framework_seed128|family=PF00005.27 -               0.15   12.9   1.7      0.19   12.5   1.7   1.4   1   1   0   1   1   1   0 N-sulphoglucosamine sulphohydrolase, C-terminal
+zf-C3HC4_2           PF13923.13 framework_seed131|family=PF02517.18 -                  5    7.7  14.7       1.1    9.9  10.0   2.2   2   1   0   2   2   2   0 Zinc finger, C3HC4 type (RING finger)
+DUF6371              PF19898.5  framework_seed137|family=PF00072.24 -              0.042   14.3   3.2     0.073   13.6   3.2   1.4   1   1   0   1   1   1   0 Domain of unknown function (DUF6371)
+DEFB136              PF17333.8  framework_seed137|family=PF00072.24 -              0.052   14.2   0.2      0.15   12.8   0.2   1.8   1   0   0   1   1   1   0 Beta defensin 136
+Med31                PF05669.18 framework_seed143|family=PF02517.18 -               0.21   12.3   1.2      0.88   10.3   0.2   2.1   2   0   0   2   2   2   0 SOH1
+NB-LRR               PF12061.14 framework_seed143|family=PF02517.18 -               0.25   11.4   0.2      0.34   10.9   0.2   1.1   1   0   0   1   1   1   0 Late blight resistance protein R1
+DUF8128              PF26449.1  framework_seed144|family=PF00005.27 -              0.052   13.0   0.0     0.058   12.8   0.0   1.0   1   0   0   1   1   1   0 Domain of unknown function (DUF8128)
+PB1-like             PF26130.1  framework_seed151|family=PF02517.18 -             0.0039   18.2   0.5    0.0042   18.0   0.5   1.1   1   0   0   1   1   1   1 PB1-like domain
+OmpL37               PF28315.1  framework_seed151|family=PF02517.18 -             0.0093   16.0   0.2     0.011   15.8   0.2   1.0   1   0   0   1   1   1   1 Surface protein adhesin OmpL37
+FnI_RECK             PF25028.2  framework_seed159|family=PF02517.18 -              0.055   14.5   0.0      0.11   13.6   0.0   1.5   1   0   0   1   1   1   0 RECK, fibronectin type I module
+PPTA                 PF01239.29 framework_seed159|family=PF02517.18 -               0.76   10.4   5.4       3.5    8.3   0.1   2.6   3   0   0   3   3   3   0 Protein prenyltransferase alpha subunit repeat
+YLR108C_C            PF29129.1  framework_seed176|family=PF00005.27 -               0.19   11.7   0.0       0.2   11.7   0.0   1.0   1   0   0   1   1   1   0 YLR108C C-terminal domain
+SMYLE_N              PF18615.7  framework_seed176|family=PF00005.27 -                3.3    8.1   5.3       4.1    7.8   5.3   1.1   1   0   0   1   1   1   0 Short myomegalin-like EB1 binding proteins, N-terminal domain
+WD40_4               PF16300.12 framework_seed178|family=PF00183.19 -              0.067   13.7   0.0      0.11   13.1   0.0   1.3   1   0   0   1   1   1   0 Type of WD40 repeat
+SCNM1_acidic         PF15805.11 framework_seed182|family=PF00183.19 -               0.54   10.7   0.4      0.54   10.7   0.4   1.4   2   0   0   2   2   2   0 Acidic C-terminal region of sodium channel modifier 1 SCNM1
+PTM1-like_N          PF21902.2  framework_seed185|family=PF00072.24 -               0.21   12.4   0.1      0.22   12.3   0.1   1.2   1   0   0   1   1   1   0 PTM1-like, N-terminal domain
+zf-A20               PF01754.24 framework_seed187|family=PF02517.18 -               0.57   10.6   0.0      0.57   10.6   0.0   2.2   2   0   0   2   2   2   0 A20-like zinc finger
+GRXCR1-2_C           PF23733.3  framework_seed187|family=PF02517.18 -               0.69   10.6   2.8      0.49   11.1   0.7   1.7   2   0   0   2   2   2   0 GRXCR1/2, C-terminal domain
+DUF1775              PF07987.17 framework_seed191|family=PF02517.18 -              0.078   14.0   0.2     0.095   13.8   0.2   1.0   1   0   0   1   1   1   0 Domain of unknown function (DUF1775)
+EHMT1-2_CRR          PF21533.3  framework_seed192|family=PF00005.27 -               0.73   10.9   7.6       1.5    9.9   0.3   2.7   2   1   1   3   3   3   0 Histone-lysine N-methyltransferase EHMT1/EHMT2, Cys-rich region
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /home/hugo/gap41b-nfe150/nfe150_screen/seed44_nfe150_legacy/framework.fasta
+# Target file:     /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /home/hugo/gap41b-nfe150/nfe150_screen/seed44_nfe150_legacy/framework.tblout --acc --noali --cpu 32 /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /home/hugo/gap41b-nfe150/nfe150_screen/seed44_nfe150_legacy/framework.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Sat Oct 17 04:43:01 2026
+# [ok]

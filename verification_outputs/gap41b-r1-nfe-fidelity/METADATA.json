@@ -56,5 +56,22 @@
     "tier_vs_legacy": {"nfe10": 12, "nfe150": -2},
     "verdict": "NFE is a load-bearing axis; the six prior dormant-lever rejections are conditional on --nfe 10, not budget-invariant."
   },
+  "followup_n3_screen": {
+    "script": "run_nfe150_screen.sh",
+    "config": "N=200, NFE=150, legacy arm, seeds 42 (reused from premise) / 43 / 44",
+    "per_seed_diff_framework_minus_baseline": {"42": 11, "43": 19, "44": 31},
+    "baseline_hits": {"42": 37, "43": 36, "44": 32},
+    "framework_hits": {"42": 48, "43": 55, "44": 63},
+    "mean_diff": 20.33,
+    "direction_consistent_3_of_3": true,
+    "one_sample_t": 3.499,
+    "p_one_sample": 0.073,
+    "verdict": "Direction-consistent 3/3 (entry ticket only). p=0.073 at n=3; still the N=200 screen. Caveat: diffs are monotone (+11/+19/+31) while baseline drifts down (37/36/32) — a seed-level trend, watch at N=1000.",
+    "wall_clock_utc": {
+      "gen_seed43": {"start": "2026-10-16T17:55:14Z", "end": "2026-10-16T19:27:07Z"},
+      "gen_seed44": {"start": "2026-10-16T19:27:07Z", "end": "2026-10-16T20:34:15Z"},
+      "hmmer": {"start": "2026-10-16T20:34:15Z", "end": "2026-10-16T20:43:01Z"}
+    }
+  },
   "audit_note": "docs/audit/gap41b-r1-nfe-fidelity.md"
 }
