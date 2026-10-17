@@ -24,7 +24,7 @@ branch. Frozen surfaces untouched (`docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.
 | **Decisive N=1000 (§7.3)** | Baseline reproduced exactly (158/159/174 = canonical). Chain-on framework 280/281/259 vs canonical chain-off 275/272/259 → **+5/+9/0**; `d_pooled` +0.1559 → **+0.1609** (+3 %). **Decisive null**: the chain is live but not a lever on R1. R1 stays PARTIAL. |
 
 | **2x2 interaction (§7.4)** | tier-only +6.33 (3+/0−), chain-only +6.00 (2+/1−), both +4.67; interaction **−7.67, 0+/3−** (p=0.073). The two levers are **substitutes**, not complements — the chain does not unlock the tier lever, it cancels its apparent gain. Screen only. |
-| **NFE=150 decisive run (§9)** | Gate opens (150 ≥ 20 → 3 rounds, 300 velocity calls/record). Pre-run profiling: the hot path is the *vendored* incomplete-beta loop (70 %) + ESM-2 forward (29 %), already on GPU and launch/sync-bound — **no IO bottleneck**. Frozen upstream cannot be rewritten without numeric drift, so the adopted fix is seed-level concurrency (2.2× throughput, byte-identical at N=20) → ~8.3 h instead of ~18.4 h. |
+| **NFE=150 decisive run (§9)** | Gate opens (150 ≥ 20 → 3 rounds, 300 velocity calls/record). Pre-run profiling: the hot path is the *vendored* incomplete-beta loop (70 %) + ESM-2 forward (29 %), already on GPU and launch/sync-bound — **no IO bottleneck**. Frozen upstream cannot be rewritten without numeric drift, so the adopted fix is seed-level concurrency (2.2× throughput, byte-identical at N=20) → ~8.3 h instead of ~18.4 h. **Result:** framework 247/251/245 vs baseline 158/159/174 (baseline byte-identical to GAP-42d) → `d_pooled` +0.118, down from +0.161 at NFE=10. Direction holds 3/3 but the effect **shrinks 27 %**: NFE fidelity attenuates the R1 contrast, it does not rescue it. R1 stays PARTIAL. |
 ---
 
 ## 1. The defect
@@ -388,7 +388,7 @@ bash /home/hugo/gap42d-n1000/run_chain_n1000.sh
 # 2x2 tier-aware n_cap x chain interaction screen (§7.4) — ~43 min
 bash /home/hugo/gap42e-interaction/run_interaction_screen.sh
 
-# decisive N=1000 3-seed NFE=150 run, chain ON, gate open (§9) — ~8.3 h
+# decisive N=1000 3-seed NFE=150 run, chain ON, gate open (§9) — 9 h 56 min actual
 OUT=/home/hugo/gap42f-nfe150-n1000 N=1000 NFE=150 SEEDS="42 43 44" PARALLEL=1 \
   bash /home/hugo/gap42f-nfe150-n1000/run_nfe150_n1000.sh
 
@@ -408,9 +408,9 @@ manifests, `METADATA.*`).
 
 ## 9. Pre-run engineering for the NFE=150 decisive run
 
-**Status:** run launched 2026-10-17 13:31 UTC (21:31 local), ETA ~8.3 h.
-Result numbers are appended to §9.3 in a follow-up commit; this section records
-the profiling evidence and the engineering decision taken *before* launch.
+**Status:** completed 2026-10-17 23:27:52Z (9 h 56 min wall). §9.1–§9.3 record
+the profiling evidence and the engineering decision taken *before* launch;
+§9.4 records the result.
 
 ### 9.1 Where the time actually goes
 
@@ -493,8 +493,66 @@ Manifests on the 3-way smoke: `nfe_per_record=150`,
 `effective_n_rounds=3`, `restart_from_endpoint=true`,
 `framework_fallback_per_family_count={}` for all three seeds.
 
-### 9.4 Result
+### 9.4 Result — NFE fidelity attenuates the R1 advantage
 
-_Pending: appended when the N=1000 run completes (expected ~2026-10-17 22:00
-UTC / 2026-10-18 06:00 local)._
+**Run:** 2026-10-17 13:31:51Z → 23:27:52Z (9 h 56 min wall). Per-seed generation
+finished 22:52:54Z (seed 44), 22:56:15Z (seed 42), 23:00:32Z (seed 43), i.e.
+**33.6–34.1 s/record** per seed; HMMER + canonical analysis took a further
+27 min. All three manifests report `nfe_per_record=150`,
+`effective_n_rounds=3`, `restart_from_endpoint=true`, `scheduler_name=cosine`,
+and `framework_fallback_per_family_count={}`.
+
+**Identity check (passed).** The baseline FASTAs are **byte-identical** to the
+GAP-42d run (`md5 363cc04d… / 82a4dae1… / b8ecb79c…`) and the hit counts are
+exactly 158 / 159 / 174. The only changed variable is the framework arm's NFE
+budget (and, through the gate, the number of live rounds).
+
+| metric | NFE=10 (GAP-42d, 1 round) | NFE=150 (GAP-42f, 3 rounds) | Δ |
+|---|---:|---:|---:|
+| framework hits (42/43/44) | 280 / 281 / 259 | **247 / 251 / 245** | −33 / −30 / −14 |
+| baseline hits | 158 / 159 / 174 | 158 / 159 / 174 | 0 (byte-identical) |
+| fw − base | 122 / 122 / 85 | **89 / 92 / 71** | −33 / −30 / −14 |
+| per-seed `d_z` | +0.1773 / +0.1762 / +0.1296 | **+0.1280 / +0.1348 / +0.0907** | all lower |
+| `d_pooled` (DL) | +0.1609 | **+0.1178** | **−0.0431 (−27 %)** |
+| 95 % CI | [0.125, 0.197] | [0.0819, 0.1537] | shifts down |
+| DL z | 8.76 | 6.43 | |
+| seed-level mean diff | 109.67 | 84.00 | −25.67 (−23 %) |
+| seed-level `d_z` | 5.13 | 7.40 | up (cross-seed SD 21.4 → 11.4) |
+| seed-level p (df=2) | 0.0124 | 0.00604 | |
+| seed-level Bonferroni k7 | 0.0869 (n.s.) | 0.0423 (n.s.) | |
+| DL Bonferroni k16 | 0.0 (underflow in tool) | 2.06e-9 | survives |
+
+**Reading.**
+
+1. **Direction is robust — this is not a framework-not-win.** All three seeds
+   remain framework-favourable, per-seed raw p = 5.6e-5 / 2.2e-5 / 4.2e-3, and
+   the DL pooled 95 % CI excludes zero and survives Bonferroni k16.
+2. **Magnitude shrinks.** `d_pooled` falls 27 %, every per-seed `d_z` falls,
+   and the mean hit gap falls 23 %. The NFE=10 contrast was therefore *inflated*
+   by the low budget: at the higher-fidelity setting the effect is still
+   positive but materially smaller.
+3. **The gate-open chain does not compound.** This is consistent with §7.3's
+   decisive null for the chain as a lever, and extends it: at NFE=150 (three
+   live rounds, 300 velocity calls/record) the framework produces *fewer* HMM
+   hits than at NFE=10, while the baseline is fixed. More compute is not a route
+   to the 0.8 STRONG bar.
+4. **R1 remains PARTIAL.** `d_pooled` 0.118 ≪ 0.8, unchanged in class by this
+   run.
+5. **Caveat on attribution.** NFE and the number of live rounds co-vary by
+   construction (the gate opens *because* NFE ≥ 20), so this run cannot separate
+   "more steps per round" from "more rounds". The claim above is about the
+   canonical NFE=150 configuration, not about a single factor. A clean 2×2 would
+   require forcing the gate at NFE=10, which would change the canonical
+   `restart_min_nfe` and is therefore not the same cell.
+6. **Engineering.** Generation took 9 h 21–9 h 29 min vs the 8.3 h projection
+   (+13–14 %), because a co-tenant GPU-0 job shared the device for part of the
+   run; total wall clock including HMMER was 9 h 56 min, still **1.85×** faster
+   than the 18.4 h serial projection. Concurrency changed no bytes: the
+   baselines are byte-identical to GAP-42d and the N=20 serial-vs-parallel
+   identity check was performed before launch (§9.3).
+
+Artifacts: `verification_outputs/gap42-scheduler-budget/nfe150_n1000/`
+(`hits.txt`, `summary.json`, `analysis.log`, per-seed FASTAs + tblouts +
+manifests, `METADATA.*`, run script).
+
 

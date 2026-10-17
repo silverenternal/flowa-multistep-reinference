@@ -656,9 +656,19 @@ Adopted fix: one process per seed, three concurrent on cuda:0. Measured
 22.1 s/record solo vs 30.0 s/record at 3-way = **2.2x aggregate**, GPU 98-100 %,
 34.9 GB VRAM. `N=20` serial-vs-parallel FASTAs are **byte-identical**
 (framework `md5 87be1c7b…`, baseline `6e7445d4…`), so the concurrency is
-arithmetically free. Projected wall clock 18.4 h → **8.3 h**. Run launched
-13:31 UTC; result pending. Observations-only —
-`docs/audit/gap42-scheduler-budget-conservation.md` §9.
+arithmetically free. Projected wall clock 18.4 h → **8.3 h**.
+
+The run completed 23:27:52Z (9 h 56 min wall; generation 9 h 21–9 h 29 min,
++13–14 % over projection because a co-tenant GPU-0 job shared the device, still
+1.85x faster than the serial projection). The baseline arm is byte-identical to
+GAP-42d (hits 158/159/174). Framework hits fell from 280/281/259 at NFE=10 to
+**247/251/245**, so `d_pooled` fell from +0.1609 to **+0.1178 (−27 %)** and every
+per-seed `d_z` fell. Direction remains 3/3 framework-favourable and the DL pooled
+effect survives Bonferroni k16 (p=2.06e-9), so this is not a framework-not-win —
+but NFE fidelity **attenuates** the R1 contrast rather than rescuing it. R1 stays
+PARTIAL. NFE and live-round count co-vary by construction, so the claim is about
+the canonical NFE=150 cell, not a single factor. Observations-only —
+`docs/audit/gap42-scheduler-budget-conservation.md` §9.4.
 
 ## 5. R1 real-forward saga (D-004 / D-004b)
 
