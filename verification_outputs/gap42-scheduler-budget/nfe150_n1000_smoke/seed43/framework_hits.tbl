@@ -1,0 +1,20 @@
+#                                                                            --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                        accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------              -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+N_NLPC_P60           PF12912.13 framework_seed4|family=PF00005.27 -               0.62   10.9   9.8      0.21   12.4   2.7   2.0   1   1   1   2   2   2   0 NLPC_P60 stabilising domain, N term
+DUF6572              PF20212.4  framework_seed7|family=PF02517.18 -              0.018   16.0   0.0     0.018   16.0   0.0   1.0   1   0   0   1   1   1   0 Family of unknown function (DUF6572)
+YML054C-A            PF29278.1  framework_seed9|family=PF00072.24 -               0.28   11.9   1.4      0.51   11.0   0.2   2.0   2   0   0   2   2   2   0 Uncharacterized protein YML054C-A
+DUF1529              PF07485.17 framework_seed14|family=PF00183.19 -               0.22   12.1   0.0      0.25   11.9   0.0   1.0   1   0   0   1   1   1   0 Domain of Unknown Function (DUF1259)
+NS3                  PF17530.8  framework_seed14|family=PF00183.19 -               0.26   11.4   0.4      0.25   11.4   0.4   1.0   1   0   0   1   1   1   0 Non-structural protein NS3
+AraC_binding         PF02311.26 framework_seed17|family=PF00072.24 -              0.066   13.7   1.1       1.2    9.5   0.6   2.2   1   1   1   2   2   2   0 AraC-like ligand binding domain
+PolC_DP2_central     PF24844.2  framework_seed17|family=PF00072.24 -                2.7    7.5   2.6       3.3    7.2   2.6   1.1   1   0   0   1   1   1   0 DNA polymerase II large subunit DP2, central domain
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /home/hugo/gap42f-smoke-par/seed43/framework.fasta
+# Target file:     /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /home/hugo/gap42f-smoke-par/seed43/framework.tblout --acc --noali --cpu 32 /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /home/hugo/gap42f-smoke-par/seed43/framework.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Sat Oct 17 21:17:13 2026
+# [ok]

@@ -24,6 +24,7 @@ branch. Frozen surfaces untouched (`docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.
 | **Decisive N=1000 (§7.3)** | Baseline reproduced exactly (158/159/174 = canonical). Chain-on framework 280/281/259 vs canonical chain-off 275/272/259 → **+5/+9/0**; `d_pooled` +0.1559 → **+0.1609** (+3 %). **Decisive null**: the chain is live but not a lever on R1. R1 stays PARTIAL. |
 
 | **2x2 interaction (§7.4)** | tier-only +6.33 (3+/0−), chain-only +6.00 (2+/1−), both +4.67; interaction **−7.67, 0+/3−** (p=0.073). The two levers are **substitutes**, not complements — the chain does not unlock the tier lever, it cancels its apparent gain. Screen only. |
+| **NFE=150 decisive run (§9)** | Gate opens (150 ≥ 20 → 3 rounds, 300 velocity calls/record). Pre-run profiling: the hot path is the *vendored* incomplete-beta loop (70 %) + ESM-2 forward (29 %), already on GPU and launch/sync-bound — **no IO bottleneck**. Frozen upstream cannot be rewritten without numeric drift, so the adopted fix is seed-level concurrency (2.2× throughput, byte-identical at N=20) → ~8.3 h instead of ~18.4 h. |
 ---
 
 ## 1. The defect
@@ -387,6 +388,10 @@ bash /home/hugo/gap42d-n1000/run_chain_n1000.sh
 # 2x2 tier-aware n_cap x chain interaction screen (§7.4) — ~43 min
 bash /home/hugo/gap42e-interaction/run_interaction_screen.sh
 
+# decisive N=1000 3-seed NFE=150 run, chain ON, gate open (§9) — ~8.3 h
+OUT=/home/hugo/gap42f-nfe150-n1000 N=1000 NFE=150 SEEDS="42 43 44" PARALLEL=1 \
+  bash /home/hugo/gap42f-nfe150-n1000/run_nfe150_n1000.sh
+
 # analysis (CPU)
 python3 tools/gap42c_chain_screen_analysis.py            # N=200 screen
 python3 tools/gap42e_interaction_analysis.py             # 2x2 interaction
@@ -395,6 +400,101 @@ python3 tools/gap42e_interaction_analysis.py             # 2x2 interaction
   --seeds 42 43 44 --n-per-seed 1000                     # canonical paired-t + DL meta
 ```
 
-Artifacts: `verification_outputs/gap42-scheduler-budget/{chain_smoke,chain_screen,chain_n1000,interaction_screen}/`
+Artifacts: `verification_outputs/gap42-scheduler-budget/{chain_smoke,chain_screen,chain_n1000,interaction_screen,nfe150_n1000}/`
 (`hits.txt`, `*_analysis.json` / `summary.json`, per-arm FASTAs + tblouts +
 manifests, `METADATA.*`).
+
+---
+
+## 9. Pre-run engineering for the NFE=150 decisive run
+
+**Status:** run launched 2026-10-17 13:31 UTC (21:31 local), ETA ~8.3 h.
+Result numbers are appended to §9.3 in a follow-up commit; this section records
+the profiling evidence and the engineering decision taken *before* launch.
+
+### 9.1 Where the time actually goes
+
+Configuration: `nfe=150, n_rounds=3, restart_min_nfe=20` → gate open
+(`effective_n_rounds=3`), i.e. `3 x 50` chained rounds **plus** the canonical
+150-step re-anchor = **300 velocity-field calls per record**.
+
+Measured on the RTX PRO 6000 (cuda:0), `N=20`, seed 42, serial:
+
+| Stage | Time | Share |
+|---|---|---|
+| Per record (`_solve_framework` + decode) | **21.1–22.1 s** | 100 % |
+| `solve_ode` (all 4 solves) | 21.1 s | 99.9 % |
+| └ `compute_family_vector_field` | 14.6 s | **70 %** |
+| └ ESM-2-650M forward | 6.1 s | **29 %** |
+| Everything else (bundle build, restart blend, decode, FASTA write) | < 0.05 s | < 0.3 % |
+
+`cProfile` over 2 records (51.8 s under profiler overhead) resolves the 70 %:
+
+* `core/vector_field.py:_betacf` — 35.5 s, 2 400 calls, **345 600 iterations**
+  (≈144 iterations per call). Each iteration is ~20 elementwise ops on a
+  `(1, 256, 20)` tensor **plus a `torch.all(...)` device sync** for the
+  convergence break.
+* `_betainc` is called twice per `c_h` (symmetric finite difference
+  `a ± 1e-6`), so the loop performs ~576 iterations — and therefore ~576 device syncs — per velocity call.
+
+Transfer costs are *not* the bottleneck: H2D `x_aa` 0.1 ms, D2H `v20`
+< 0.1 ms, `alpha_h` synthesis 0.2 ms — together < 0.5 % of a velocity call.
+FASTA output is two buffered lines per record; there is no I/O wait. HMMER is a
+separate CPU stage after generation.
+
+**Reading:** the "CPU hot path" is a *vendored* pure-PyTorch continued-fraction
+loop that is already on the GPU but is **launch- and sync-bound** (thousands of
+tiny kernels, one device sync per iteration). `nvidia-smi utilization.gpu`
+reports 98–100 % for a single process because the metric counts "a kernel is
+active", not SM/FLOP occupancy — which is why throughput can still be raised
+without touching the arithmetic.
+
+### 9.2 Options measured and rejected (numeric drift)
+
+All variants were benchmarked on the same velocity call; drift is measured
+against the canonical `accurate` path (float64, `eps=3e-12`, early exit):
+
+| Variant | ms/call | Verdict |
+|---|---|---|
+| canonical (`EVOFLOW_BETAINC_MODE=accurate`) | 44.2 | reference |
+| TorchScript copy of `_betacf` | 31.6 | **rejected** — 5.8e-11 drift, not byte-identical |
+| convergence check every 4 iters | 34.7 | **rejected** — bit-identical in the probe, but not provably so and requires monkey-patching frozen upstream |
+| convergence check every 8 iters | 35.5 | **rejected** — 1.2e-10 drift |
+| fixed 200 iters, no sync | 282.8 | **rejected** — 1.7e-3 drift (float32 never converges) |
+| `EVOFLOW_BETAINC_MODE=fast` | — | **rejected** — changes work dtype to float32 + normal approximation |
+
+Editing `data/lineageflow_upstream/**` is forbidden by the AGENTS.md §3
+guardrail (byte-identical vendored upstream), and every fast rewrite changes
+the incomplete-beta trajectory. The only numerically *free* lever is therefore
+scheduling, not arithmetic.
+
+### 9.3 Adopted fix: seed-level concurrency on cuda:0
+
+The three seeds are independent processes with independent RNG streams and
+output files, so running them concurrently changes no per-record arithmetic.
+
+| Mode | s/record | Aggregate throughput |
+|---|---|---|
+| serial (1 process) | 22.1 | 1.00× |
+| 3-way (one process per seed) | 30.0 each | **2.2×** |
+
+GPU during the 3-way run: 98–100 % utilisation, 34.9 GB VRAM, ~300 W.
+Wall-clock projection: 3 000 records × 22.1 s = **18.4 h** serial vs
+3 000/3 × 30.0 s = **8.3 h** concurrent.
+
+Byte-identity check before launch (`N=20`, seed 42, serial vs 3-way):
+
+| File | md5 (serial) | md5 (3-way) | `cmp` |
+|---|---|---|---|
+| `framework.fasta` | `87be1c7bdd3999a1795cdf044f26ddd7` | same | identical |
+| `baseline.fasta` | `6e7445d48b1220fcffcfb84fccf43fb5` | same | identical |
+
+Manifests on the 3-way smoke: `nfe_per_record=150`,
+`effective_n_rounds=3`, `restart_from_endpoint=true`,
+`framework_fallback_per_family_count={}` for all three seeds.
+
+### 9.4 Result
+
+_Pending: appended when the N=1000 run completes (expected ~2026-10-17 22:00
+UTC / 2026-10-18 06:00 local)._
+

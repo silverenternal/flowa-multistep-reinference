@@ -1,0 +1,17 @@
+#                                                                            --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                        accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------              -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+N_NLPC_P60           PF12912.13 framework_seed5|family=PF00072.24 -               0.21   12.4   9.1      0.32   11.8   2.7   2.1   1   1   1   2   2   2   0 NLPC_P60 stabilising domain, N term
+DUF6572              PF20212.4  framework_seed8|family=PF00005.27 -               0.14   13.2   0.0      0.19   12.8   0.0   1.2   1   0   0   1   1   1   0 Family of unknown function (DUF6572)
+YML054C-A            PF29278.1  framework_seed10|family=PF00183.19 -               0.14   12.9   1.2      0.28   11.8   0.2   1.9   2   0   0   2   2   2   0 Uncharacterized protein YML054C-A
+DUF1529              PF07485.17 framework_seed15|family=PF02517.18 -               0.22   12.1   0.0      0.23   12.0   0.0   1.0   1   0   0   1   1   1   0 Domain of Unknown Function (DUF1259)
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /home/hugo/gap42f-smoke-par/seed42/framework.fasta
+# Target file:     /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /home/hugo/gap42f-smoke-par/seed42/framework.tblout --acc --noali --cpu 32 /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /home/hugo/gap42f-smoke-par/seed42/framework.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Sat Oct 17 21:17:02 2026
+# [ok]

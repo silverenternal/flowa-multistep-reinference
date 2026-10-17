@@ -1,0 +1,19 @@
+#                                                                            --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                        accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------              -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+N_NLPC_P60           PF12912.13 framework_seed3|family=PF02517.18 -               0.62   10.9   9.8      0.21   12.4   2.7   2.0   1   1   1   2   2   2   0 NLPC_P60 stabilising domain, N term
+DUF6572              PF20212.4  framework_seed6|family=PF00183.19 -               0.11   13.5   0.0      0.15   13.1   0.0   1.2   1   0   0   1   1   1   0 Family of unknown function (DUF6572)
+YML054C-A            PF29278.1  framework_seed8|family=PF00005.27 -               0.27   11.9   1.4      0.52   11.0   0.2   2.0   2   0   0   2   2   2   0 Uncharacterized protein YML054C-A
+AraC_binding         PF02311.26 framework_seed16|family=PF00005.27 -              0.096   13.1   0.9         1    9.8   0.5   2.2   1   1   1   2   2   2   0 AraC-like ligand binding domain
+PolC_DP2_central     PF24844.2  framework_seed16|family=PF00005.27 -                2.6    7.5   2.7       3.1    7.3   2.7   1.1   1   0   0   1   1   1   0 DNA polymerase II large subunit DP2, central domain
+DUF6788              PF20586.4  framework_seed19|family=PF02517.18 -                0.2   12.4   1.2      0.75   10.5   0.0   2.0   1   1   1   2   2   2   0 Domain of unknown function (DUF6788)
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /home/hugo/gap42f-smoke-par/seed44/framework.fasta
+# Target file:     /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /home/hugo/gap42f-smoke-par/seed44/framework.tblout --acc --noali --cpu 32 /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /home/hugo/gap42f-smoke-par/seed44/framework.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Sat Oct 17 21:17:25 2026
+# [ok]

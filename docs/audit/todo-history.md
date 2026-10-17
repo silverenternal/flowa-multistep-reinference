@@ -632,6 +632,34 @@ unlocking it. Screen only (n=3, N=200, p=0.073); it does not overturn GAP-41's
 N=1000 null. Observations-only —
 `docs/audit/gap42-scheduler-budget-conservation.md` §7.4.
 
+### 4.15 NFE=150 decisive run — profiling first, then seed-level concurrency (GAP-42f, 2026-10-17)
+
+The user authorised the 21 h NFE=150 decisive rerun but asked for an engineering
+pass first (raise GPU utilisation, move the CPU hot path to the GPU, cut I/O
+waits). Profiling at NFE=150 (gate open → 3x50 chained rounds + a 150-step
+re-anchor = 300 velocity calls/record):
+
+| stage | share of per-record wall |
+|---|---:|
+| `compute_family_vector_field` (vendored `_betacf` loop) | **69 %** |
+| ESM-2-650M forward | **29 %** |
+| everything else (bundle, blend, decode, FASTA write) | < 0.3 % |
+
+The `_betacf` loop runs ~144 iterations per call, each ~20 elementwise ops on a
+`(1,256,20)` tensor **plus one `torch.all` device sync** — it is already on the
+GPU, but launch- and sync-bound. H2D/D2H is < 0.5 % and there is no I/O wait, so
+the user's "I/O" hypothesis does not hold. Every fast rewrite of the loop was
+rejected on numeric drift (TorchScript 5.8e-11, check-every-8 1.2e-10,
+fixed-iteration 1.7e-3) and the upstream tree is frozen byte-identical.
+
+Adopted fix: one process per seed, three concurrent on cuda:0. Measured
+22.1 s/record solo vs 30.0 s/record at 3-way = **2.2x aggregate**, GPU 98-100 %,
+34.9 GB VRAM. `N=20` serial-vs-parallel FASTAs are **byte-identical**
+(framework `md5 87be1c7b…`, baseline `6e7445d4…`), so the concurrency is
+arithmetically free. Projected wall clock 18.4 h → **8.3 h**. Run launched
+13:31 UTC; result pending. Observations-only —
+`docs/audit/gap42-scheduler-budget-conservation.md` §9.
+
 ## 5. R1 real-forward saga (D-004 / D-004b)
 
 - **D-004 defect:** the checkpoint-compat shim registered a bare core module

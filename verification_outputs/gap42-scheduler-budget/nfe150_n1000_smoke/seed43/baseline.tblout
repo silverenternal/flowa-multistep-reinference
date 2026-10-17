@@ -1,0 +1,15 @@
+#                                                                           --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                       accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------             -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+DUF2650              PF10853.14 baseline_seed6|family=PF00183.19 -                5.2    7.5   8.5        33    5.0   8.5   2.3   1   1   0   1   1   1   0 Protein of unknown function (DUF2650)
+Rieske               PF00355.33 baseline_seed8|family=PF00005.27 -                2.5    8.8  10.2      0.54   10.9   6.5   1.7   1   1   1   2   2   2   0 Rieske [2Fe-2S] domain
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /home/hugo/gap42f-smoke-par/seed43/baseline.fasta
+# Target file:     /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /home/hugo/gap42f-smoke-par/seed43/baseline.tblout --acc --noali --cpu 32 /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /home/hugo/gap42f-smoke-par/seed43/baseline.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Sat Oct 17 21:17:08 2026
+# [ok]
