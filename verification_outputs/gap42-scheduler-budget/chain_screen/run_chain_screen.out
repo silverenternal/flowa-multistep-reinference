@@ -1,0 +1,30 @@
+=== gen seed=42 chain_off n=200 start=0 2026-10-17T05:24:44Z ===
+  done 2026-10-17T05:29:30Z
+=== gen seed=42 chain_on n=200 start=0 2026-10-17T05:29:30Z ===
+  done 2026-10-17T05:37:05Z
+=== gen seed=43 chain_off n=200 start=0 2026-10-17T05:37:05Z ===
+  done 2026-10-17T05:44:52Z
+=== gen seed=43 chain_on n=200 start=0 2026-10-17T05:44:52Z ===
+  done 2026-10-17T05:52:27Z
+=== gen seed=44 chain_off n=200 start=0 2026-10-17T05:52:27Z ===
+  done 2026-10-17T05:58:49Z
+=== gen seed=44 chain_on n=200 start=0 2026-10-17T05:58:49Z ===
+  done 2026-10-17T06:03:41Z
+=== sanity: baseline identical across arms / chain liveness ===
+seed42 baseline: IDENTICAL across arms (ok)
+seed42 framework: chain is live
+seed43 baseline: IDENTICAL across arms (ok)
+seed43 framework: chain is live
+seed44 baseline: IDENTICAL across arms (ok)
+seed44 framework: chain is live
+=== HMMER 2026-10-17T06:03:41Z ===
+=== ALL DONE 2026-10-17T06:12:18Z ===
+seed42_chain_off/baseline.fasta: total_hits=37 records=200 records_with_hits=30 hits_per_record=0.1850
+seed42_chain_off/framework.fasta: total_hits=38 records=200 records_with_hits=32 hits_per_record=0.1900
+seed42_chain_on/framework.fasta: total_hits=47 records=200 records_with_hits=44 hits_per_record=0.2350
+seed43_chain_off/baseline.fasta: total_hits=36 records=200 records_with_hits=33 hits_per_record=0.1800
+seed43_chain_off/framework.fasta: total_hits=49 records=200 records_with_hits=46 hits_per_record=0.2450
+seed43_chain_on/framework.fasta: total_hits=47 records=200 records_with_hits=40 hits_per_record=0.2350
+seed44_chain_off/baseline.fasta: total_hits=32 records=200 records_with_hits=31 hits_per_record=0.1600
+seed44_chain_off/framework.fasta: total_hits=41 records=200 records_with_hits=36 hits_per_record=0.2050
+seed44_chain_on/framework.fasta: total_hits=52 records=200 records_with_hits=43 hits_per_record=0.2600

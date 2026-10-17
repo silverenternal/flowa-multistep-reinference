@@ -1,0 +1,65 @@
+#                                                                            --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                        accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------              -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+DUF7560              PF24441.2  framework_seed0|family=PF00005.27 -               0.29   11.6   1.6        22    5.6   0.0   2.3   2   0   0   2   2   2   0 Family of unknown function (DUF7560)
+PAS_11               PF14598.13 framework_seed1|family=PF00072.24 -               0.21   12.3   0.1      0.34   11.6   0.1   1.3   1   0   0   1   1   1   0 PAS domain
+SECTM1_C             PF28747.1  framework_seed2|family=PF00183.19 -              0.025   15.1   1.1     0.049   14.2   1.1   1.4   1   0   0   1   1   1   0 SECTM1 C-terminal domain
+Med7                 PF05983.17 framework_seed4|family=PF00005.27 -              0.018   15.9   0.2     0.092   13.6   0.2   1.8   2   0   0   2   2   2   0 MED7 protein
+DUF5374              PF17344.9  framework_seed6|family=PF00183.19 -               0.22   12.1   0.0      0.41   11.2   0.0   1.4   1   0   0   1   1   1   0 Family of unknown function (DUF5374)
+RPN5_C               PF18098.7  framework_seed8|family=PF00005.27 -               0.13   13.1   0.2      0.79   10.6   0.0   2.1   2   0   0   2   2   2   0 26S proteasome regulatory subunit RPN5 C-terminal domain
+DUF5342              PF17277.8  framework_seed8|family=PF00005.27 -               0.15   13.2   1.7       8.6    7.5   0.1   2.4   1   1   1   2   2   2   0 Family of unknown function (DUF5342)
+KBP3                 PF30212.1  framework_seed10|family=PF00183.19 -              0.052   14.4   0.1     0.055   14.4   0.1   1.0   1   0   0   1   1   1   0 Kinetochore-binding protein 3
+SPASM                PF13186.12 framework_seed18|family=PF00183.19 -              0.094   13.7   0.2      0.69   11.0   0.3   1.9   1   1   1   2   2   2   0 Iron-sulfur cluster-binding domain
+HAP1_N               PF04849.19 framework_seed24|family=PF00005.27 -               0.36   10.7   0.0      0.47   10.3   0.0   1.1   1   0   0   1   1   1   0 HAP1 N-terminal conserved region
+MTD1_N               PF29359.1  framework_seed30|family=PF00183.19 -               0.35   11.9   2.8      0.54   11.3   2.8   1.3   1   0   0   1   1   1   0 MTD-1 N-terminal domain
+Bubble               PF09227.17 framework_seed40|family=PF00005.27 -              0.035   15.0   0.4     0.047   14.6   0.4   1.2   1   0   0   1   1   1   0 Bubble protein
+Med12-LCEWAV         PF12145.14 framework_seed40|family=PF00005.27 -               0.16   11.5   0.3      0.17   11.4   0.3   1.0   1   0   0   1   1   1   0 Eukaryotic Mediator 12 subunit domain
+DUF6887              PF21826.2  framework_seed48|family=PF00005.27 -               0.14   13.2   0.1       1.1   10.3   0.0   1.9   2   0   0   2   2   2   0 Family of unknown function (DUF6887)
+C2c1_WED-II          PF22204.3  framework_seed53|family=PF00072.24 -               0.22   12.5   0.0      0.23   12.4   0.0   1.1   1   0   0   1   1   1   0 CRISPR-associated endonuclease C2c1, wedge domain, second region
+TsiV3                PF20889.3  framework_seed59|family=PF02517.18 -               0.11   13.3   0.0       1.6    9.5   0.0   2.0   2   0   0   2   2   2   0 Antitoxin TsiV3
+DUF1412              PF07203.18 framework_seed65|family=PF00072.24 -               0.11   13.2   0.0      0.21   12.3   0.0   1.5   1   0   0   1   1   1   0 Protein of unknown function (DUF1412)
+DUF6313              PF19832.5  framework_seed65|family=PF00072.24 -               0.18   12.3   0.1      0.23   11.9   0.1   1.1   1   0   0   1   1   1   0 Family of unknown function (DUF6313)
+DUF6398              PF19935.5  framework_seed66|family=PF00183.19 -             0.0062   17.6   0.1    0.0062   17.6   0.1   1.0   1   0   0   1   1   1   1 Domain of unknown function (DUF6398)
+DUF1203              PF06718.17 framework_seed78|family=PF00183.19 -              0.078   14.0   0.0       0.1   13.6   0.0   1.2   1   0   0   1   1   1   0 Protein of unknown function (DUF1203)
+PTHB1_pf             PF23337.2  framework_seed93|family=PF00072.24 -              0.055   14.1   0.0     0.067   13.8   0.0   1.2   1   0   0   1   1   1   0 PTHB1 platform domain
+RNA_pol_Rpb2_4       PF04566.19 framework_seed93|family=PF00072.24 -               0.16   12.8   0.0      0.24   12.3   0.0   1.4   1   1   0   1   1   1   0 RNA polymerase Rpb2, domain 4
+Lysyl_endopep_N      PF27052.1  framework_seed95|family=PF02517.18 -                0.1   13.0   0.0      0.12   12.7   0.0   1.1   1   0   0   1   1   1   0 Lysyl endopeptidase N-terminal domain
+DUF6520              PF20130.5  framework_seed96|family=PF00005.27 -               0.05   14.7   0.1      0.11   13.6   0.1   1.6   1   1   1   2   2   2   0 Family of unknown function (DUF6520)
+GCK                  PF07802.17 framework_seed97|family=PF00072.24 -               0.23   12.6   0.0      0.33   12.1   0.0   1.3   1   0   0   1   1   1   0 GCK domain
+Myc_target_1         PF15179.12 framework_seed98|family=PF00183.19 -               0.12   13.0   0.0      0.15   12.7   0.0   1.1   1   0   0   1   1   1   0 Myc target protein 1
+Lipin_N              PF04571.20 framework_seed103|family=PF02517.18 -               0.13   13.1   0.0      0.14   12.9   0.0   1.1   1   0   0   1   1   1   0 lipin, N-terminal conserved region
+DO-GTPase1           PF19975.6  framework_seed108|family=PF00005.27 -                0.2   11.7   0.0      0.25   11.3   0.0   1.1   1   0   0   1   1   1   0 Double-GTPase 1
+YuA_Gp49             PF20788.3  framework_seed127|family=PF02517.18 -              0.047   14.6   0.1     0.069   14.1   0.1   1.2   1   0   0   1   1   1   0 YuA phage, Gp49
+tyr_de_CO2_C         PF21391.4  framework_seed137|family=PF00072.24 -              0.047   14.3   0.0      0.07   13.8   0.0   1.3   1   0   0   1   1   1   0 Tyrosine decarboxylase, C-terminal
+DUF6698              PF20414.4  framework_seed143|family=PF02517.18 -              0.073   13.5   0.2      0.11   12.8   0.1   1.5   1   1   0   1   1   1   0 Family of unknown function (DUF6698)
+ODAPH                PF15848.11 framework_seed156|family=PF00005.27 -               0.79   10.8   2.5      0.82   10.7   2.5   1.1   1   0   0   1   1   1   0 Odontogenesis associated phosphoprotein
+Phage_capsid         PF05065.20 framework_seed160|family=PF00005.27 -               0.25   11.4   0.0      0.35   11.0   0.0   1.1   1   0   0   1   1   1   0 Phage capsid family
+AChE_tetra           PF08674.16 framework_seed162|family=PF00183.19 -                3.2    8.3  14.8        38    4.9   0.0   2.8   2   1   0   2   2   2   0 Acetylcholinesterase tetramerisation domain
+LvgA                 PF29777.1  framework_seed164|family=PF00005.27 -               0.21   12.4   0.0      0.24   12.1   0.0   1.1   1   0   0   1   1   1   0 Type IV adapter protein LvgA
+DUF7045              PF23073.2  framework_seed169|family=PF00072.24 -              0.055   14.3   0.1       0.1   13.5   0.1   1.4   1   0   0   1   1   1   0 Domain of unknown function (DUF7045)
+Flu_C_NS1            PF03506.19 framework_seed170|family=PF00183.19 -              0.017   15.6   0.1      0.02   15.3   0.1   1.2   1   0   0   1   1   1   0 Influenza C non-structural protein (NS1)
+RINGv                PF12906.14 framework_seed170|family=PF00183.19 -              0.027   15.3   2.1      0.11   13.4   0.2   2.3   2   0   0   2   2   2   0 RING-variant domain
+Ycf34                PF10718.15 framework_seed174|family=PF00183.19 -              0.074   14.5   0.4      0.15   13.5   0.4   1.5   1   0   0   1   1   1   0 Hypothetical chloroplast protein Ycf34
+6PGD_Tyr1_C          PF27505.2  framework_seed176|family=PF00005.27 -                0.2   11.7   0.0       0.2   11.7   0.0   1.0   1   0   0   1   1   1   0 Tyr1-like, 6-phosphogluconate dehydrogenase C-terminal domain
+TniQ                 PF06527.17 framework_seed177|family=PF00072.24 -               0.17   13.2   0.1      0.17   13.2   0.1   1.1   1   0   0   1   1   1   0 TniQ
+H_T_assoc            PF24215.2  framework_seed184|family=PF00005.27 -               0.11   12.7   0.0      0.12   12.5   0.0   1.1   1   0   0   1   1   1   0 Phage head to tail associated domain
+DUF7081              PF23299.2  framework_seed186|family=PF00183.19 -               0.18   13.2   0.0      0.21   12.9   0.0   1.1   1   0   0   1   1   1   0 Domain of unknown function (DUF7081)
+Mtrc-MtrF_II-IV_dom  PF22113.2  framework_seed187|family=PF02517.18 -              0.022   15.0   0.3     0.028   14.6   0.3   1.2   1   0   0   1   1   1   0 Outer membrane cytochrome MtrC/MtrF-like, domains II/IV
+DGF-1_N              PF22279.2  framework_seed188|family=PF00005.27 -                0.4   11.8   0.0       0.4   11.8   0.0   1.5   2   0   0   2   2   2   0 DGF-1 N-terminal domain
+KduI                 PF04962.19 framework_seed194|family=PF00183.19 -               0.18   11.8   0.0      0.22   11.6   0.0   1.1   1   0   0   1   1   1   0 KduI/IolB family
+Anti-sigma_N         PF28820.1  framework_seed196|family=PF00005.27 -              0.021   15.8   0.1     0.024   15.6   0.1   1.1   1   0   0   1   1   1   0 Anti-sigma factor, N-terminal domain
+AgrD                 PF05931.16 framework_seed196|family=PF00005.27 -               0.31   11.8   0.6      0.36   11.6   0.0   1.4   2   0   0   2   2   2   0 Staphylococcal AgrD protein
+HTH_Mga              PF08280.18 framework_seed198|family=PF00183.19 -             0.0064   17.2   0.0    0.0074   17.0   0.0   1.2   1   0   0   1   1   1   1 M protein trans-acting positive regulator (MGA) HTH domain
+ARM_At3g06530        PF24477.3  framework_seed198|family=PF00183.19 -              0.045   14.0   0.0     0.051   13.9   0.0   1.0   1   0   0   1   1   1   0 At3g06530-like, ARM repeats
+DUF761               PF05553.17 framework_seed198|family=PF00183.19 -               0.17   12.2   0.1      0.23   11.8   0.1   1.2   1   0   0   1   1   1   0 Cotton fibre expressed protein
+LIC11073             PF28309.1  framework_seed198|family=PF00183.19 -               0.17   12.3   0.0      0.17   12.3   0.0   1.0   1   0   0   1   1   1   0 LIC11073-like
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /home/hugo/gap41b-nfe150/chain_screen/seed44_chain_on/framework.fasta
+# Target file:     /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /home/hugo/gap41b-nfe150/chain_screen/seed44_chain_on/framework.tblout --acc --noali --cpu 32 /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /home/hugo/gap41b-nfe150/chain_screen/seed44_chain_on/framework.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Sat Oct 17 14:12:18 2026
+# [ok]

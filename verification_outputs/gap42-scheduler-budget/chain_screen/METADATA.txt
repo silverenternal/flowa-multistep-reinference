@@ -1,0 +1,5 @@
+start=2026-10-17T05:24:44Z
+N=200 nfe=10 n_rounds=3 restart_min_nfe=5 scheduler=cosine temperature=1.0
+seeds=42 43 44 start_index=0
+cmd=./run_chain_screen.sh
+end=2026-10-17T06:12:18Z

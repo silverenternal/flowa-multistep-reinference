@@ -19,6 +19,8 @@ branch. Frozen surfaces untouched (`docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.
 | **Fix** | `_allocate_nfe_budget(weights, nfe, n_rounds)`: normalise the weights, apportion the integer budget with largest-remainder rounding, floor of 1 per round. Sum is exactly `nfe` whenever `nfe >= n_rounds`. |
 | **Blast radius** | Additive and branch-local: the `cosine` path is byte-identical (legacy `[base, …, base+remainder]`). Pinned by `test_solve_framework_cosine_path_unchanged_by_budget_fix`. |
 | **Post-fix allocations** | `cosine [3,3,4]`; `codimension_sheet` / `tier_aware_codimension` / `nfe_aware_memory` / `constant` `[4,3,3]`; `linear` / `polynomial` `[6,3,1]`; `exponential [3,3,4]`; `sigmoid [1,3,6]`. All sum to 10. |
+| **Why the lever was dormant** | On R1 the framework never chained rounds at all: the endpoint was written to `x0`, but LineageFlow reads `theta`. Fixed behind `--restart-from-endpoint` (default off), §7.1. |
+| **N=200 3-seed screen (§7.2)** | `fw_on − baseline` +13.67 (3+/0−) vs `fw_off − baseline` +7.67 (3+/0−); NFE-matched `on − off` +6.00, 2+/1−, p=0.276. **UNDERPOWERED** — suggestive, not evidence. |
 
 ---
 
@@ -168,6 +170,12 @@ not literally byte-inert), but nothing can compound across rounds.
   2. The R1 driver should expose `--restart-from-endpoint` (default off) so the
      canonical byte-stable path is unchanged.
 
+Both pieces landed (§7.1). The N=200 3-seed screen (§7.2) is
+**UNDERPOWERED**: `fw_on − baseline` = +13.67 (3+/0−) vs `fw_off − baseline`
+= +7.67 (3+/0−), but the NFE-matched marginal `on − off` is 2+/1− and is
+therefore not yet evidence. The decisive test remains the canonical N=1000
+3-seed run with `--restart-from-endpoint`.
+
 ### 7.1 Wiring landed (default off) + N=20 chain smoke
 
 Both pieces are implemented additively:
@@ -197,6 +205,56 @@ The default path is byte-stable (the fix is dormant unless opted in), and the
 opt-in path genuinely changes the framework arm. At N=20 the 3 vs 5 hit
 difference is noise — this smoke establishes **liveness**, not an effect size.
 
+### 7.2 N=200 3-seed chain screen (screen only — not a claim)
+
+`run_chain_screen.sh` — seeds 42/43/44, N=200 per seed, NFE=10, 3 rounds,
+cosine, temperature 1.0, GPU 0, 2026-10-17 05:24–06:12Z. Per seed two
+generations (`chain_off` = default, `chain_on` = `--restart-from-endpoint`);
+the baseline arm is byte-identical across the two (verified per seed).
+
+Total HMM hits (canonical R1 metric):
+
+| seed | baseline | fw_off | fw_on | off−base | on−base | on−off |
+|---:|---:|---:|---:|---:|---:|---:|
+| 42 | 37 | 38 | 47 | +1 | +10 | +9 |
+| 43 | 36 | 49 | 47 | +13 | +11 | −2 |
+| 44 | 32 | 41 | 52 | +9 | +20 | +11 |
+
+Seed-level summary (n=3 seeds, paired t on the per-seed diff):
+
+| contrast | mean | direction | t | p |
+|---|---:|---|---:|---:|
+| fw_off − baseline | +7.67 | 3+/0− | 2.17 | 0.162 |
+| fw_on − baseline | +13.67 | 3+/0− | 4.30 | 0.050 |
+| on − off (chain marginal) | +6.00 | 2+/1− | 1.49 | 0.276 |
+
+Secondary (descriptive, no test): `records_with_hits` — off 32/46/36 vs
+baseline 30/33/31 (+2/+13/+5); on 44/40/43 (+14/+7/+12).
+
+Reading, stated as observed fact and then as interpretation:
+
+- **Observed:** turning the chain on roughly doubles the mean
+  framework−baseline gap at this sample size (+7.67 → +13.67), and both
+  contrasts are 3/3 in direction.
+- **Observed:** the *marginal* chain effect is **not** direction-consistent
+  (seed 43 is −2), so the on−off contrast does not survive as a 3/3 signal.
+- **Interpretation:** the screen is compatible with "chaining helps", but it
+  does not establish it. n=3 seeds at N=200 gives a seed-level t with 2 df;
+  p=0.050 is a coincidence of this screen, not a result. Status:
+  **UNDERPOWERED** — the decisive test is the canonical N=1000 3-seed run.
+
+Methodological note established here: the baseline FASTA is **byte-identical**
+at NFE=10 and NFE=150 (seed 42 `md5 ff5a6de6…`, seed 43 `md5 1624b10e…`).
+`--nfe` therefore only moves the framework arm; the baseline uses the
+upstream sampler's own schedule (~150 steps). Consequences:
+
+1. `fw − baseline` is an **NFE-unmatched** contrast by construction (this is
+   exactly what GAP-41b measured), so it must not be read as a pure
+   framework effect.
+2. `on − off` **is** NFE-matched (same NFE=10, same seeds, same scheduler) and
+   is therefore the clean causal contrast for the chain — which is why the
+   screen's null-ish marginal matters more than the pretty +13.67.
+
 ## 8. Reproduce
 
 ```bash
@@ -213,3 +271,20 @@ for s in ["cosine","codimension_sheet","linear","sigmoid"]:
     print(s, cap[:3], sum(cap[:3]))
 PY
 ```
+
+Chain smoke and screen (GPU 0, LineageFlow venv):
+
+```bash
+# N=20 liveness smoke (§7.1) — ~3 min
+bash /home/hugo/gap41b-nfe150/run_chain_smoke.sh
+
+# N=200 3-seed screen (§7.2) — ~47 min wall clock
+bash /home/hugo/gap41b-nfe150/run_chain_screen.sh
+
+# analysis (CPU)
+python3 tools/gap42c_chain_screen_analysis.py
+```
+
+Artifacts: `verification_outputs/gap42-scheduler-budget/chain_smoke/` and
+`verification_outputs/gap42-scheduler-budget/chain_screen/`
+(`hits.txt`, `screen_analysis.json`, per-arm FASTAs + manifests, `METADATA.*`).

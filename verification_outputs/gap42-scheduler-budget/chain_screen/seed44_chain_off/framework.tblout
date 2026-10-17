@@ -1,0 +1,54 @@
+#                                                                            --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                        accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------              -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+SECTM1_C             PF28747.1  framework_seed2|family=PF00183.19 -              0.027   15.0   1.1     0.049   14.2   1.1   1.4   1   0   0   1   1   1   0 SECTM1 C-terminal domain
+DUF5374              PF17344.9  framework_seed6|family=PF00183.19 -              0.066   13.7   0.0      0.15   12.6   0.0   1.6   1   0   0   1   1   1   0 Family of unknown function (DUF5374)
+UEV                  PF05743.20 framework_seed8|family=PF00005.27 -               0.16   12.4   0.0      0.25   11.8   0.0   1.3   1   0   0   1   1   1   0 UEV domain
+DUF8439              PF28557.1  framework_seed23|family=PF02517.18 -               0.28   12.2   0.0       0.4   11.7   0.0   1.3   1   0   0   1   1   1   0 Domain of unknown function (DUF8439)
+Phage_rep_O_C        PF30394.1  framework_seed28|family=PF00005.27 -              0.095   13.5   0.5       1.1   10.1   0.5   2.0   1   1   0   1   1   1   0 Phage replication protein O, C-terminal domain
+Bubble               PF09227.17 framework_seed40|family=PF00005.27 -                0.1   13.5   1.0      0.14   13.1   1.0   1.2   1   0   0   1   1   1   0 Bubble protein
+zf-C2H2_ZNF142_18    PF23574.2  framework_seed52|family=PF00005.27 -              0.047   14.5   1.1         3    8.7   0.1   2.4   1   1   1   2   2   2   0 Zinc finger protein 142 C2H2 domain
+Toxin_3              PF00537.25 framework_seed60|family=PF00005.27 -              0.023   15.6   1.6      0.46   11.4   0.7   2.2   2   0   0   2   2   2   0 Scorpion toxin-like domain
+DUF1412              PF07203.18 framework_seed65|family=PF00072.24 -               0.12   13.0   0.2      0.23   12.1   0.1   1.5   1   1   0   1   1   1   0 Protein of unknown function (DUF1412)
+DUF6398              PF19935.5  framework_seed66|family=PF00183.19 -               0.16   13.0   0.0      0.16   13.0   0.0   1.0   1   0   0   1   1   1   0 Domain of unknown function (DUF6398)
+LytR_cpsA_psr        PF03816.21 framework_seed69|family=PF00072.24 -               0.24   11.6   0.0      0.31   11.2   0.0   1.1   1   0   0   1   1   1   0 LytR_cpsA_psr family
+CRAL_TRIO            PF00650.26 framework_seed71|family=PF02517.18 -              0.074   13.6   0.3     0.093   13.3   0.3   1.2   1   0   0   1   1   1   0 CRAL/TRIO domain
+MSMEG_3727_PQQ-assoc PF23509.2  framework_seed72|family=PF00005.27 -               0.28   11.3   0.0       0.3   11.2   0.0   1.0   1   0   0   1   1   1   0 MSMEG_3727, PQQ-associated
+Htd2                 PF27832.2  framework_seed88|family=PF00005.27 -              0.018   15.9   0.3     0.019   15.8   0.3   1.0   1   0   0   1   1   1   0 Hydroxyacyl-thioester dehydratase type 2
+NDUS4                PF04800.18 framework_seed89|family=PF00072.24 -              0.093   13.7   0.5       1.8    9.6   0.1   2.1   2   0   0   2   2   2   0 NADH dehydrogenase ubiquinone Fe-S protein 4
+Collar               PF07484.18 framework_seed89|family=PF00072.24 -               0.29   11.8   1.1      0.63   10.8   0.1   2.0   3   0   0   3   3   3   0 Phage Tail Collar Domain
+Lysyl_endopep_N      PF27052.1  framework_seed95|family=PF02517.18 -               0.26   11.6   0.0      0.31   11.4   0.0   1.0   1   0   0   1   1   1   0 Lysyl endopeptidase N-terminal domain
+DUF6520              PF20130.5  framework_seed96|family=PF00005.27 -              0.079   14.1   0.1      0.13   13.4   0.0   1.3   1   1   0   1   1   1   0 Family of unknown function (DUF6520)
+DUF7848              PF25232.2  framework_seed101|family=PF00072.24 -               0.13   13.2   0.7      0.73   10.7   0.1   2.1   1   1   1   2   2   2   0 Domain of unknown function (DUF7848)
+OSBS_N               PF22015.3  framework_seed111|family=PF02517.18 -              0.077   13.5   0.0      0.12   12.9   0.0   1.3   1   0   0   1   1   1   0 O-succinylbenzoate synthase, N-terminal domain
+YuA_Gp49             PF20788.3  framework_seed127|family=PF02517.18 -               0.03   15.2   0.1     0.043   14.8   0.1   1.2   1   0   0   1   1   1   0 YuA phage, Gp49
+DD3_C                PF28632.1  framework_seed128|family=PF00005.27 -              0.089   13.3   0.1      0.29   11.7   0.1   1.8   2   0   0   2   2   2   0 DD3-3 C-terminal transmembrane region
+DUF6525              PF20135.5  framework_seed140|family=PF00005.27 -              0.041   14.4   0.0     0.056   13.9   0.0   1.3   1   0   0   1   1   1   0 Family of unknown function (DUF6525)
+DUF6806              PF20621.4  framework_seed142|family=PF00183.19 -               0.14   12.6   0.0      0.18   12.2   0.0   1.2   1   0   0   1   1   1   0 Family of unknown function (DUF6806)
+zf-Tim10_DDP         PF02953.21 framework_seed142|family=PF00183.19 -               0.26   11.6   0.2      0.46   10.7   0.2   1.4   1   0   0   1   1   1   0 Tim10/DDP family zinc finger
+NELL_VWC_C           PF31028.1  framework_seed150|family=PF00183.19 -               0.18   12.2   2.3      0.28   11.5   2.3   1.3   1   0   0   1   1   1   0 NELL C-terminal VWC-associated domain
+DUF2690              PF10901.14 framework_seed153|family=PF00072.24 -               0.15   13.1   0.2      0.15   13.1   0.2   1.1   1   0   0   1   1   1   0 Protein of unknown function (DUF2690)
+Tna_leader           PF08053.17 framework_seed158|family=PF00183.19 -               0.12   13.1   0.5      0.24   12.1   0.2   1.7   2   0   0   2   2   2   0 Tryptophanase operon leader peptide
+AChE_tetra           PF08674.16 framework_seed162|family=PF00183.19 -               0.48   10.9   8.0      0.55   10.7   4.1   2.6   2   1   0   2   2   2   0 Acetylcholinesterase tetramerisation domain
+BsNagA_N             PF22644.3  framework_seed163|family=PF02517.18 -               0.27   11.7   2.0      0.91   10.0   2.0   1.8   1   1   0   1   1   1   0 BsNagA composite domain
+Flu_C_NS1            PF03506.19 framework_seed170|family=PF00183.19 -               0.02   15.3   0.1     0.026   14.9   0.1   1.2   1   0   0   1   1   1   0 Influenza C non-structural protein (NS1)
+BRO1                 PF03097.25 framework_seed176|family=PF00005.27 -                0.2   11.2   0.0      0.22   11.1   0.0   1.1   1   0   0   1   1   1   0 BRO1-like domain
+Colipase_C           PF02740.21 framework_seed179|family=PF02517.18 -              0.056   14.3   0.0     0.085   13.7   0.0   1.3   1   0   0   1   1   1   0 Colipase, C-terminal domain
+DUF7356              PF24053.2  framework_seed180|family=PF00005.27 -              0.061   14.0   0.0     0.061   14.0   0.0   1.0   1   0   0   1   1   1   0 Domain of unknown function (DUF7356)
+NdhM                 PF10664.16 framework_seed186|family=PF00183.19 -               0.19   12.4   0.2      0.22   12.2   0.2   1.1   1   0   0   1   1   1   0 Cyanobacterial and plastid NDH-1 subunit M
+Pox_P35              PF03213.21 framework_seed186|family=PF00183.19 -                0.2   11.5   0.5      0.21   11.5   0.5   1.0   1   0   0   1   1   1   0 Poxvirus P35 protein
+YqhG                 PF11079.14 framework_seed188|family=PF00005.27 -              0.029   14.1   0.0     0.034   13.9   0.0   1.0   1   0   0   1   1   1   0 Bacterial protein YqhG of unknown function
+AbiJ_NTD3            PF18860.8  framework_seed192|family=PF00005.27 -              0.066   13.7   0.2      0.11   13.0   0.2   1.4   1   0   0   1   1   1   0 AbiJ N-terminal domain 3
+CFAP298              PF11069.14 framework_seed192|family=PF00005.27 -               0.14   13.3   0.4      0.23   12.6   0.4   1.3   1   0   0   1   1   1   0 Cilia- and flagella-associated protein 298
+DUF6331              PF19856.5  framework_seed192|family=PF00005.27 -               0.17   12.9   0.0      0.22   12.5   0.0   1.2   1   0   0   1   1   1   0 Family of unknown function (DUF6331)
+Peptidase_C57        PF03290.19 framework_seed196|family=PF00005.27 -               0.11   11.9   0.0      0.11   11.9   0.0   1.0   1   0   0   1   1   1   0 Vaccinia virus I7 processing peptidase
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /home/hugo/gap41b-nfe150/chain_screen/seed44_chain_off/framework.fasta
+# Target file:     /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /home/hugo/gap41b-nfe150/chain_screen/seed44_chain_off/framework.tblout --acc --noali --cpu 32 /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /home/hugo/gap41b-nfe150/chain_screen/seed44_chain_off/framework.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Sat Oct 17 14:11:20 2026
+# [ok]

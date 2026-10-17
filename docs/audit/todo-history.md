@@ -529,6 +529,39 @@ the archived GAP-42 cosine arm (default stays byte-stable); `chain_on`
 this establishes liveness, not an effect size. Next: N=200 3-seed screen of
 `chain_on` vs `chain_off`.
 
+### 4.12 Endpoint chain — the first dormant lever that moves the metric, but not yet 3/3 (GAP-42c, 2026-10-17)
+
+`run_chain_screen.sh`: seeds 42/43/44, N=200 per seed, NFE=10, 3 rounds,
+cosine, temperature 1.0, GPU 0, 47 min wall clock. Each seed runs the default
+arm (`chain_off`) and the Eq. 2 arm (`chain_on`); the baseline FASTA is
+byte-identical across the two arms (verified per seed), so the baseline is
+shared.
+
+| seed | baseline | fw_off | fw_on | off−base | on−base | on−off |
+|---:|---:|---:|---:|---:|---:|---:|
+| 42 | 37 | 38 | 47 | +1 | +10 | +9 |
+| 43 | 36 | 49 | 47 | +13 | +11 | −2 |
+| 44 | 32 | 41 | 52 | +9 | +20 | +11 |
+| **mean** | | | | **+7.67** | **+13.67** | **+6.00** |
+| direction | | | | 3+/0− | 3+/0− | 2+/1− |
+| seed-level t / p | | | | 2.17 / 0.162 | 4.30 / 0.050 | 1.49 / 0.276 |
+
+Turning the chain on roughly **doubles** the mean framework−baseline gap, and
+both contrasts are 3/3 in direction — the first time any of the seven dormant
+levers has moved the R1 metric in a consistent direction. But the NFE-matched
+causal contrast (`on − off`) is **2+/1−** (seed 43 goes the other way), so the
+screen does not establish the chain effect. Status **UNDERPOWERED**; the
+decisive test is the canonical N=1000 3-seed run with
+`--restart-from-endpoint`.
+
+Methodological fact established along the way: the baseline FASTA is
+**byte-identical at NFE=10 and NFE=150** (seed 42 `md5 ff5a6de6…`, seed 43
+`md5 1624b10e…`). `--nfe` moves only the framework arm, so `fw − baseline` is
+NFE-unmatched by construction (the GAP-41b axis) while `on − off` is
+NFE-matched — which is why the null-ish marginal, not the +13.67, is the
+number that matters. Observations-only —
+`docs/audit/gap42-scheduler-budget-conservation.md` §7.2.
+
 ## 5. R1 real-forward saga (D-004 / D-004b)
 
 - **D-004 defect:** the checkpoint-compat shim registered a bare core module
@@ -587,6 +620,7 @@ this establishes liveness, not an effect size. Next: N=200 3-seed screen of
 | GAP-41b-R1-NFE-FIDELITY | 2026-10-16 | the budget behind every prior rejection is a **load-bearing axis**. All six dormant-lever rejections ran at `--nfe 10`; upstream uses ~150 NFE. N=200 seed-42 premise (arms `{legacy,tier}` × NFE {10,150}, gate-open): baseline byte-identical across budgets (37 = 37, md5 `ff5a6de6…`), framework-vs-baseline **+1 → +11**, tier-vs-legacy **+12 → −2** (sign flip). So the six rejections are **conditional on `--nfe 10`**, not budget-invariant. Premise only (N=200, single seed; β-scale `NFE_REF=50` confound); n=3 N=1000 at NFE=150 ≈ 21–41 h = user-gated. Follow-up n=3 N=200 NFE=150 legacy screen: diffs +11/+19/+31, mean +20.33, **3/3** positive, t=3.50 p=0.073 (entry ticket only). Observations-only — `docs/audit/gap41b-r1-nfe-fidelity.md` |
 | GAP-42-SCHEDULER-BUDGET | 2026-10-16 | fixed a per-round NFE leak in `_solve_framework`: non-cosine schedulers multiplied the per-round `n_cap` *fraction* straight by `nfe`, so `codimension_sheet` ran `[10,10,1]`=21 steps at `nfe=10` (2.1× cosine). Any prior cosine-vs-math-scheduler A/B was a compute comparison. Fix: `_allocate_nfe_budget` (normalise + largest-remainder); cosine path byte-identical. Post-fix all sum to 10. Also found `codimension_sheet` is degenerate on R1 (`n_cap`≈`[1,1,1]` — no `profile_residual_fn`), so the A/B is near-null by construction. Equal-NFE N=20 smoke: cosine and codimension FASTAs **byte-identical** (`md5 ad2205a3…`). **Root cause: the R1 framework does not chain rounds** — `restart_from_endpoint=False` (driver never overrides) and `_stash_endpoint_as_x0` writes `x0` while LineageFlow reads `theta`. Likely root cause of the six dormant-lever nulls; enabling it is a protocol change = user-gated — `docs/audit/gap42-scheduler-budget-conservation.md` |
 | GAP-42b-ENDPOINT-CHAIN | 2026-10-16 | wiring for the root cause, **default off**: `_stash_endpoint_as_x0` also writes the adapter's native key (`theta` for LineageFlow), and the R1 driver gains `--restart-from-endpoint`. N=20 smoke: `chain_off` **byte-identical** to the archived arm (default stable); `chain_on` **differs** (live); hits 4 / 3 / 5 (liveness only) — `docs/audit/gap42-scheduler-budget-conservation.md` §7.1 |
+| GAP-42c-CHAIN-SCREEN | 2026-10-17 | N=200 3-seed screen of the now-live chain. Per-seed `on − off` = +9 / −2 / +11 → mean +6.00, **2+/1−**, t=1.49 p=0.276; `fw_on − baseline` = +13.67 (3+/0−, p=0.050) vs `fw_off − baseline` +7.67 (3+/0−, p=0.162). Suggestive, **UNDERPOWERED** — the NFE-matched contrast is not 3/3. Also pinned: baseline FASTA is byte-identical at NFE=10 vs 150, so `--nfe` moves only the framework arm — `docs/audit/gap42-scheduler-budget-conservation.md` §7.2 |
 
 ## 7. Publication assessment (2026-10-13)
 

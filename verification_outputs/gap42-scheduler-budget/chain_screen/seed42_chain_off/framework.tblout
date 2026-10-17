@@ -1,0 +1,51 @@
+#                                                                            --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                        accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------              -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+Tincar_TM            PF28643.1  framework_seed1|family=PF00072.24 -               0.11   13.1   0.0      0.15   12.6   0.0   1.2   1   0   0   1   1   1   0 Tincar transmembrane helical domain
+CDC73_C              PF05179.21 framework_seed1|family=PF00072.24 -               0.13   12.6   0.3       0.2   12.0   0.3   1.2   1   0   0   1   1   1   0 RNA pol II accessory factor, Cdc73 family, C-terminal
+DUF5374              PF17344.9  framework_seed8|family=PF00005.27 -              0.075   13.6   0.0      0.18   12.3   0.0   1.7   1   0   0   1   1   1   0 Family of unknown function (DUF5374)
+Phage_rep_O_C        PF30394.1  framework_seed30|family=PF00183.19 -               0.13   13.1   0.5       1.4    9.7   0.4   2.2   1   1   1   2   2   2   0 Phage replication protein O, C-terminal domain
+GXWXG                PF14231.12 framework_seed33|family=PF00072.24 -              0.029   15.1   1.4     0.035   14.8   1.4   1.1   1   0   0   1   1   1   0 GXWXG protein
+DUF8409              PF28468.1  framework_seed37|family=PF00072.24 -               0.12   12.8   0.1      0.14   12.5   0.1   1.1   1   0   0   1   1   1   0 Domain of unknown function (DUF8409)
+HARP                 PF07443.19 framework_seed48|family=PF00005.27 -               0.12   12.7   0.0       0.2   11.9   0.0   1.4   1   0   0   1   1   1   0 HepA-related protein (HARP)
+DUF8111              PF26416.1  framework_seed48|family=PF00005.27 -               0.14   12.7   0.2      0.16   12.5   0.2   1.1   1   0   0   1   1   1   0 Putative primase C-terminal domain
+DUF8566              PF29561.1  framework_seed48|family=PF00005.27 -               0.16   12.4   0.0      0.21   12.0   0.0   1.1   1   0   0   1   1   1   0 Domain of unknown function (DUF8566)
+zf-C2H2_ZNF142_18    PF23574.2  framework_seed54|family=PF00183.19 -               0.41   11.5   1.4         9    7.2   0.1   2.4   1   1   1   2   2   2   0 Zinc finger protein 142 C2H2 domain
+Toxin_3              PF00537.25 framework_seed62|family=PF00183.19 -              0.015   16.2   1.6      0.36   11.8   0.7   2.2   2   0   0   2   2   2   0 Scorpion toxin-like domain
+Caleosin             PF05042.20 framework_seed62|family=PF00183.19 -               0.19   12.3   0.0      0.21   12.2   0.0   1.1   1   0   0   1   1   1   0 Caleosin related protein
+DUF1412              PF07203.18 framework_seed67|family=PF02517.18 -               0.18   12.5   0.2      0.49   11.1   0.0   1.8   2   0   0   2   2   2   0 Protein of unknown function (DUF1412)
+CRAL_TRIO            PF00650.26 framework_seed73|family=PF00072.24 -              0.063   13.8   0.3      0.08   13.5   0.3   1.2   1   0   0   1   1   1   0 CRAL/TRIO domain
+Baculo_LEF-11        PF06385.17 framework_seed73|family=PF00072.24 -               0.34   12.2   0.1      0.46   11.7   0.1   1.3   1   0   0   1   1   1   0 Baculovirus LEF-11 protein
+Pox_RNA_pol          PF03293.21 framework_seed75|family=PF02517.18 -                0.2   12.0   0.0      0.21   11.9   0.0   1.0   1   0   0   1   1   1   0 Poxvirus DNA-directed RNA polymerase, 18 kD subunit
+YajR_YAM             PF21987.3  framework_seed84|family=PF00005.27 -               0.32   11.5   0.0      0.38   11.2   0.0   1.1   1   0   0   1   1   1   0 YajR YAM domain
+Collar               PF07484.18 framework_seed91|family=PF02517.18 -              0.088   13.5   0.1      0.16   12.6   0.1   1.5   1   0   0   1   1   1   0 Phage Tail Collar Domain
+RING_CBP-p300        PF06001.19 framework_seed91|family=PF02517.18 -               0.15   13.1   0.0      0.15   13.1   0.0   1.7   2   0   0   2   2   2   0 CREB-binding protein/p300, atypical RING domain
+Lysyl_endopep_N      PF27052.1  framework_seed97|family=PF00072.24 -               0.34   11.3   0.0      0.41   11.0   0.0   1.1   1   0   0   1   1   1   0 Lysyl endopeptidase N-terminal domain
+DUF6520              PF20130.5  framework_seed98|family=PF00183.19 -              0.051   14.7   0.1     0.079   14.1   0.0   1.4   1   1   0   1   1   1   0 Family of unknown function (DUF6520)
+DUF7848              PF25232.2  framework_seed103|family=PF02517.18 -              0.094   13.6   1.3      0.52   11.2   0.8   2.1   1   1   1   2   2   2   0 Domain of unknown function (DUF7848)
+PPAK                 PF02818.21 framework_seed104|family=PF00005.27 -                1.5    9.9   5.6        35    5.5   1.0   3.1   3   0   0   3   3   3   0 PPAK motif
+OSBS_N               PF22015.3  framework_seed113|family=PF00072.24 -              0.056   13.9   0.0      0.08   13.4   0.0   1.3   1   0   0   1   1   1   0 O-succinylbenzoate synthase, N-terminal domain
+YuA_Gp49             PF20788.3  framework_seed129|family=PF00072.24 -               0.22   12.5   0.1      0.39   11.7   0.1   1.3   1   0   0   1   1   1   0 YuA phage, Gp49
+McdB                 PF26392.1  framework_seed131|family=PF02517.18 -               0.44   11.7   0.0      0.56   11.4   0.0   1.1   1   0   0   1   1   1   0 Maintenance of carboxysome distribution protein B
+DUF2625              PF10946.14 framework_seed133|family=PF00072.24 -                0.1   12.4   1.3      0.14   11.9   1.3   1.2   1   0   0   1   1   1   0 Protein of unknown function DUF2625
+EcpB_C               PF18649.9  framework_seed136|family=PF00005.27 -              0.021   15.4   0.1      0.07   13.8   0.0   1.8   2   0   0   2   2   2   0 EcpB C-terminal domain
+DUF6525              PF20135.5  framework_seed142|family=PF00183.19 -              0.056   13.9   0.1     0.082   13.4   0.1   1.3   1   0   0   1   1   1   0 Family of unknown function (DUF6525)
+DUF7901              PF25470.2  framework_seed143|family=PF02517.18 -              0.043   14.5   0.2     0.043   14.5   0.2   1.2   1   0   0   1   1   1   0 Domain of unknown function (DUF7901)
+RecR_ZnF             PF02132.22 framework_seed149|family=PF00072.24 -              0.035   14.7   0.4     0.035   14.7   0.4   1.8   2   0   0   2   2   2   0 RecR, Cys4-zinc finger domain
+Tna_leader           PF08053.17 framework_seed160|family=PF00005.27 -               0.21   12.3   0.6      0.59   10.9   0.2   2.0   2   0   0   2   2   2   0 Tryptophanase operon leader peptide
+BsNagA_N             PF22644.3  framework_seed165|family=PF00072.24 -              0.039   14.4   0.1     0.046   14.2   0.1   1.3   1   0   0   1   1   1   0 BsNagA composite domain
+DUF8771              PF30973.1  framework_seed167|family=PF02517.18 -               0.23   12.6   0.0      0.43   11.8   0.0   1.4   1   0   0   1   1   1   0 Family of unknown function (DUF8771)
+Zn_ribbon_IS1595     PF12760.13 framework_seed175|family=PF02517.18 -               0.47   11.2   5.1       1.7    9.4   5.1   2.0   1   1   0   1   1   1   0 Transposase zinc-ribbon domain
+Colipase_C           PF02740.21 framework_seed181|family=PF00072.24 -              0.042   14.7   0.0     0.061   14.2   0.0   1.3   1   0   0   1   1   1   0 Colipase, C-terminal domain
+DUF7356              PF24053.2  framework_seed182|family=PF00183.19 -               0.13   12.9   0.0      0.16   12.7   0.0   1.1   1   0   0   1   1   1   0 Domain of unknown function (DUF7356)
+DUF7772              PF24977.2  framework_seed199|family=PF02517.18 -              0.089   13.9   0.3      0.12   13.5   0.3   1.3   1   0   0   1   1   1   0 Family of unknown function (DUF7772)
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /home/hugo/gap41b-nfe150/chain_screen/seed42_chain_off/framework.fasta
+# Target file:     /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /home/hugo/gap41b-nfe150/chain_screen/seed42_chain_off/framework.tblout --acc --noali --cpu 32 /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /home/hugo/gap41b-nfe150/chain_screen/seed42_chain_off/framework.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Sat Oct 17 14:05:36 2026
+# [ok]

@@ -1,0 +1,9 @@
+seed42_chain_off/baseline.fasta: total_hits=37 records=200 records_with_hits=30 hits_per_record=0.1850
+seed42_chain_off/framework.fasta: total_hits=38 records=200 records_with_hits=32 hits_per_record=0.1900
+seed42_chain_on/framework.fasta: total_hits=47 records=200 records_with_hits=44 hits_per_record=0.2350
+seed43_chain_off/baseline.fasta: total_hits=36 records=200 records_with_hits=33 hits_per_record=0.1800
+seed43_chain_off/framework.fasta: total_hits=49 records=200 records_with_hits=46 hits_per_record=0.2450
+seed43_chain_on/framework.fasta: total_hits=47 records=200 records_with_hits=40 hits_per_record=0.2350
+seed44_chain_off/baseline.fasta: total_hits=32 records=200 records_with_hits=31 hits_per_record=0.1600
+seed44_chain_off/framework.fasta: total_hits=41 records=200 records_with_hits=36 hits_per_record=0.2050
+seed44_chain_on/framework.fasta: total_hits=52 records=200 records_with_hits=43 hits_per_record=0.2600
