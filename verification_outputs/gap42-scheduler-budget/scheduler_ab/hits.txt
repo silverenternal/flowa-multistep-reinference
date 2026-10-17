@@ -1,0 +1,3 @@
+nfe10_cosine/baseline.fasta: total_hits=4 records=20 records_with_hits=3 hits_per_record=0.2000
+nfe10_cosine/framework.fasta: total_hits=3 records=20 records_with_hits=2 hits_per_record=0.1500
+nfe10_codimension_sheet/framework.fasta: total_hits=3 records=20 records_with_hits=2 hits_per_record=0.1500

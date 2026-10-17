@@ -109,7 +109,66 @@ varies across rounds. That is a separate, larger change — not attempted here.
 - `tests/test_tools/eval/test_framework.py::test_solve_framework_cosine_path_unchanged_by_budget_fix`
   — cosine still yields `[3,3,4]` / `[16,16,18]` / `[66,66,68]` / `[10]`.
 
-## 6. Reproduce
+## 6. Equal-NFE A/B smoke (N=20, seed 42) — the arms are byte-identical
+
+Run: `/home/hugo/gap41b-nfe150/run_scheduler_ab_smoke.sh`, N=20, seed 42,
+NFE=10, gate-open, `--scheduler {cosine, codimension_sheet}`.
+
+| arm | per-round (actual) | baseline hits | framework hits |
+|---|---|---|---:|---:|
+| `cosine` | `[3, 3, 4]` | 4 | 3 |
+| `codimension_sheet` | `[4, 3, 3]` | 4 | 3 |
+
+**`md5(baseline)`: `6e7445d48b1220fcffcfb84fccf43fb5` for both arms.
+`md5(framework)`: `ad2205a368b5cdf374ec59d01953db4c` for both arms.**
+The framework FASTAs are byte-identical despite different per-round splits.
+
+### 6.1 Why — the R1 framework does not chain rounds at all
+
+`_solve_framework` has `restart_from_endpoint: bool = False`, and the R1 driver
+(`tools/gen_lineageflow_n1000_fastas.py::_framework_emit_sequence`) does not
+override it. With the flag off, the per-round restart blend reads the **initial**
+state every round, so the endpoint of round `r` never enters round `r+1`.
+
+Even with the flag on, the stash is adapter-shape-blind:
+`_stash_endpoint_as_x0` writes `dst["x0"]`, but `LineageFlowAdapter.solve_ode`
+reads `prior_entry["theta"]` (`adaptive_reflow/adapters/lineageflow.py:2400`)
+and `apply_restart_distribution` reads `prior_entry["theta"]`
+(`:2049`). The LineageFlow native-state entry has keys
+`['theta', 'source_round', 'mode', 'conditioning_hash']` — no `x0` — so the
+stash is written to a key nothing reads.
+
+Measured (real `LineageFlowAdapter`, `nfe=10`, `n_rounds=3`, seed 42):
+
+| configuration | cosine digest | sigmoid digest | scheduler-sensitive? |
+|---|---|---|---|
+| stock (`restart_from_endpoint=False`) | `27036f32…` | `27036f32…` | **no** |
+| `restart_from_endpoint=True` (writes `x0`) | `27036f32…` | `27036f32…` | **no** |
+| `restart_from_endpoint=True` + theta-aware stash | `85d2eb8e…` | `aeb2a98f…` | **yes** |
+
+So on R1 the scheduler channel is dead for two stacked reasons: the endpoint is
+not chained by default, and the stash targets the wrong native-state key.
+
+**This is the likely root cause of the six dormant-lever nulls.** Every R1
+"multi-round" framework arm is effectively `blend(initial_theta, fresh_noise)`
+followed by one solve per round, with no cross-round memory. Levers that change
+the blend weight (`n_cap`) still move the output (which is why GAP-40/41 were
+not literally byte-inert), but nothing can compound across rounds.
+
+## 7. Status / next step
+
+- The **budget leak is fixed** and committed (cosine path byte-identical).
+- The **scheduler A/B is a confirmed no-op** on R1, and the reason is the
+  missing endpoint chain, not the scheduler.
+- Turning the chain on is a **protocol change**: it would move every R1
+  framework number. It needs explicit authorization and a fresh N=1000 3-seed
+  measurement. Two additive pieces are required:
+  1. `_stash_endpoint_as_x0` should update the native key the adapter actually
+     reads (`theta` for LineageFlow), not only `x0`.
+  2. The R1 driver should expose `--restart-from-endpoint` (default off) so the
+     canonical byte-stable path is unchanged.
+
+## 8. Reproduce
 
 ```bash
 .venvs/lineageflow_venv/bin/python - <<'PY'

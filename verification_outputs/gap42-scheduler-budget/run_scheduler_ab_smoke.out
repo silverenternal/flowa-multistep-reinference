@@ -1,0 +1,15 @@
+=== gen scheduler=cosine n=20 nfe=10 2026-10-17T02:52:56Z ===
+  done 2026-10-17T02:54:17Z
+=== gen scheduler=codimension_sheet n=20 nfe=10 2026-10-17T02:54:17Z ===
+  done 2026-10-17T02:55:50Z
+=== manifest check ===
+cosine scheduler_name= cosine nfe_per_record= 10 n_rounds= 3
+codimension_sheet scheduler_name= codimension_sheet nfe_per_record= 10 n_rounds= 3
+=== byte compare (baseline should be identical; framework should differ) ===
+baseline: BYTE-IDENTICAL
+framework: BYTE-IDENTICAL
+=== HMMER 2026-10-17T02:55:50Z ===
+=== ALL DONE 2026-10-17T02:56:08Z ===
+nfe10_cosine/baseline.fasta: total_hits=4 records=20 records_with_hits=3 hits_per_record=0.2000
+nfe10_cosine/framework.fasta: total_hits=3 records=20 records_with_hits=2 hits_per_record=0.1500
+nfe10_codimension_sheet/framework.fasta: total_hits=3 records=20 records_with_hits=2 hits_per_record=0.1500

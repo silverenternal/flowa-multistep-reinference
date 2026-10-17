@@ -1,0 +1,16 @@
+#                                                                            --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                        accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------              -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+Tincar_TM            PF28643.1  framework_seed1|family=PF00072.24 -               0.11   13.1   0.0      0.15   12.6   0.0   1.2   1   0   0   1   1   1   0 Tincar transmembrane helical domain
+CDC73_C              PF05179.21 framework_seed1|family=PF00072.24 -               0.13   12.6   0.3       0.2   12.0   0.3   1.2   1   0   0   1   1   1   0 RNA pol II accessory factor, Cdc73 family, C-terminal
+DUF5374              PF17344.9  framework_seed8|family=PF00005.27 -              0.075   13.6   0.0      0.18   12.3   0.0   1.7   1   0   0   1   1   1   0 Family of unknown function (DUF5374)
+#
+# Program:         hmmscan
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SCAN
+# Query file:      /home/hugo/gap41b-nfe150/scheduler_ab/nfe10_codimension_sheet/framework.fasta
+# Target file:     /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm
+# Option settings: /home/hugo/hmmer_build/bin/hmmscan --tblout /home/hugo/gap41b-nfe150/scheduler_ab/nfe10_codimension_sheet/framework.tblout --acc --noali --cpu 32 /home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm /home/hugo/gap41b-nfe150/scheduler_ab/nfe10_codimension_sheet/framework.fasta 
+# Current dir:     /home/hugo/codes/flowa-multistep-reinference
+# Date:            Sat Oct 17 10:56:08 2026
+# [ok]
