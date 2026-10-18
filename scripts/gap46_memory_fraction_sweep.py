@@ -142,6 +142,30 @@ def _run_one(
     return {"tag": tag, "out_dir": str(out_dir.relative_to(REPO_ROOT)), "wall_seconds": wall}
 
 
+def _split_half_fid(feats: np.ndarray, ref_feats: np.ndarray, fid_fn) -> dict | None:
+    """FID of the two halves of one arm's sample pool.
+
+    FID is computed from 200 generated samples against a 10k reference, so
+    the estimator itself has a spread of several FID units. Splitting the
+    same pool in half and scoring each half gives a direct, assumption-free
+    scale for that spread: an ``m``-to-``m`` difference smaller than the
+    half-to-half difference is not resolvable at this N.
+    """
+    n = int(feats.shape[0])
+    if n < 4:
+        return None
+    half = n // 2
+    fa = float(fid_fn(feats[:half], ref_feats))
+    fb = float(fid_fn(feats[half:], ref_feats))
+    return {
+        "n_per_half": half,
+        "fid_half_a": fa,
+        "fid_half_b": fb,
+        "abs_diff": abs(fa - fb),
+        "mean": 0.5 * (fa + fb),
+    }
+
+
 def _evaluate_run(w247, run_dir: Path, ref_feats: np.ndarray) -> dict:
     """Headline FID + paired stats, identical to ``gap12_tuned_baseline``."""
     cache_dir = run_dir / "inception_feats_cache"
@@ -176,6 +200,7 @@ def _evaluate_run(w247, run_dir: Path, ref_feats: np.ndarray) -> dict:
             "t_stat": t,
             "p_value_raw": p,
             "n_paired": n,
+            "fid_split_half": _split_half_fid(f, ref_feats, w247._fid_numpy),
         }
     return {"baseline_fid": baseline_fid, "framework_arms": arms}
 
@@ -285,6 +310,32 @@ def main() -> int:
         if row["mean_delta_pct"] < 0 and row["p_value"] < alpha_arm
     ]
 
+    # The framework arm is a deterministic function of (scheduler, m): the
+    # adapter seeds ``build_initial_state`` from ``(batch_id, sample_id)``,
+    # not from ``WAVE247_SEED``, and the restart distribution draws from that
+    # same bundle. The seed therefore only re-draws the baseline. This block
+    # measures that instead of assuming it, because it decides how the
+    # 3-seed SD above may be read.
+    seed_spread: dict[str, dict[str, float]] = {}
+    for m_key, arms in per_seed.items():
+        for arm, seed_rows in arms.items():
+            fids = [r["fid_headline"] for r in seed_rows.values()]
+            seed_spread.setdefault(m_key, {})[arm] = {
+                "min": float(min(fids)),
+                "max": float(max(fids)),
+                "spread": float(max(fids) - min(fids)),
+            }
+    framework_fid_seed_invariant = all(
+        row["spread"] == 0.0 for arms in seed_spread.values() for row in arms.values()
+    )
+
+    out_json = OUT_ROOT / "gap46-memory-fraction.json"
+    if args.skip_runs and out_json.exists():
+        # Keep the recorded launch metadata; --skip-runs only re-derives.
+        prev = json.loads(out_json.read_text())
+        if not runs:
+            runs = list(prev.get("runs", []))
+
     summary = {
         "kind": "gap46_r5b_memory_fraction",
         "timestamp_utc": datetime.now(UTC).isoformat(),
@@ -304,9 +355,10 @@ def main() -> int:
         "aggregate": agg,
         "alpha_per_arm": alpha_arm,
         "survivors": survivors,
+        "framework_fid_seed_invariant": bool(framework_fid_seed_invariant),
+        "framework_fid_seed_spread": seed_spread,
         "runs": runs,
     }
-    out_json = OUT_ROOT / "gap46-memory-fraction.json"
     out_json.write_text(json.dumps(summary, indent=2, default=str) + "\n")
 
     out_csv = OUT_ROOT / "gap46-memory-fraction.csv"
