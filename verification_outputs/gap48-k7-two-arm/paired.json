@@ -1,0 +1,123 @@
+{
+  "analysis": "gap48-k7-two-arm-novelty",
+  "date_utc": "2026-10-18",
+  "inputs": {
+    "baseline_m8": "verification_outputs/novelty_pctid_w166_q3_2026/baseline/n1000_full_loose.m8",
+    "baseline_m8_sha256": "e4d5a52c969cf80c1813c666555a83528b722a977fcbb90ff73953e2621aedde",
+    "framework_m8": "verification_outputs/novelty_pctid_w166_q3_2026/framework/n1000_full_loose.m8",
+    "framework_m8_sha256": "4d667b9a7524c957f75f698a3b35a06d04c7889cf4e776f1dc108206c4ad94b2"
+  },
+  "n_total": 1000,
+  "n_baseline_with_hits": 538,
+  "n_framework_with_hits": 963,
+  "n_both_with_hits": 512,
+  "n_baseline_only_hits": 26,
+  "n_framework_only_hits": 451,
+  "pairing": "record index (arm prefix stripped); family agreement asserted",
+  "per_threshold": {
+    "pctid_20": {
+      "threshold": 20.0,
+      "both_novel": 11,
+      "framework_only_novel": 26,
+      "baseline_only_novel": 451,
+      "neither_novel": 512,
+      "n_baseline_novel": 462,
+      "n_framework_novel": 37,
+      "baseline_novel_rate": 0.462,
+      "framework_novel_rate": 0.037,
+      "delta_rate_fw_minus_bl": -0.42500000000000004,
+      "delta_ci95_newcombe": [
+        -0.45694787480386145,
+        -0.39063848011983315
+      ],
+      "phi": -0.06475544894857378,
+      "mcnemar_exact_p": 2.950686106600609e-101,
+      "paired_t": {
+        "n": 1000.0,
+        "mean": -0.425,
+        "sd": 0.5446757491128751,
+        "se": 0.01722415953455122,
+        "t": -24.674643726299735,
+        "df": 999.0,
+        "p": 2.3831000134182665e-105
+      }
+    },
+    "pctid_30": {
+      "threshold": 30.0,
+      "both_novel": 11,
+      "framework_only_novel": 26,
+      "baseline_only_novel": 455,
+      "neither_novel": 508,
+      "n_baseline_novel": 466,
+      "n_framework_novel": 37,
+      "baseline_novel_rate": 0.466,
+      "framework_novel_rate": 0.037,
+      "delta_rate_fw_minus_bl": -0.42900000000000005,
+      "delta_ci95_newcombe": [
+        -0.46093529378738923,
+        -0.394589446111945
+      ],
+      "phi": -0.06628971805567105,
+      "mcnemar_exact_p": 2.303656133815556e-102,
+      "paired_t": {
+        "n": 1000.0,
+        "mean": -0.429,
+        "sd": 0.5452121204231031,
+        "se": 0.01724112108467011,
+        "t": -24.88237266551327,
+        "df": 999.0,
+        "p": 9.781349067379377e-107
+      }
+    },
+    "pctid_50": {
+      "threshold": 50.0,
+      "both_novel": 392,
+      "framework_only_novel": 125,
+      "baseline_only_novel": 359,
+      "neither_novel": 124,
+      "n_baseline_novel": 751,
+      "n_framework_novel": 517,
+      "baseline_novel_rate": 0.751,
+      "framework_novel_rate": 0.517,
+      "delta_rate_fw_minus_bl": -0.23399999999999999,
+      "delta_ci95_newcombe": [
+        -0.27466028139083465,
+        -0.19287963020480242
+      ],
+      "phi": 0.017275057872177264,
+      "mcnemar_exact_p": 2.992025470931333e-27,
+      "paired_t": {
+        "n": 1000.0,
+        "mean": -0.234,
+        "sd": 0.6554949837135855,
+        "se": 0.02072857143349907,
+        "t": -11.288766365338464,
+        "df": 999.0,
+        "p": 6.720858022439795e-28
+      }
+    }
+  },
+  "mean_max_pctid_paired_both_hits": {
+    "n": 512.0,
+    "mean": 2.3253906249999994,
+    "sd": 13.836401543569853,
+    "se": 0.611488334917391,
+    "t": 3.802837261505811,
+    "df": 511.0,
+    "p": 0.00016033298172891483
+  },
+  "family_counts_both_hits": {
+    "PF00005.27": {
+      "n_both_hit": 150
+    },
+    "PF00072.24": {
+      "n_both_hit": 139
+    },
+    "PF00183.19": {
+      "n_both_hit": 103
+    },
+    "PF02517.18": {
+      "n_both_hit": 120
+    }
+  }
+}
