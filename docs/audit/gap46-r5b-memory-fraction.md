@@ -17,7 +17,23 @@ follow-up commit (no result is asserted before the grid finishes).
 
 ## 0. TL;DR
 
-_(filled after the sweep completes)_
+| Item | Value |
+|---|---|
+| Lever | `--memory-fraction` on the R5b runner (default = scheduler-derived, byte-stable) |
+| Grid | `m ∈ {default, 0.25, 0.5, 0.75}` × seeds {42, 43, 44} × 4 schedulers, N=200, baseline NFE=200, framework NFE=50, `n_rounds=3` |
+| Runs | **12/12 completed** (3 seeds × 4 `m`) |
+| Survivors | **none** — 0/16 cells pass (`Δ < 0`, `p < 0.0125`) |
+| Best cell | CodimensionSheet, `m=default`: **+1.48 %**, p=0.206 (not significant) |
+| Worst cell | CosineAnneal, `m=default`: **+23.13 %**, p=0.0018 |
+| Ordering | **not monotone in `m`**; it tracks proximity to each arm's native scheduler-derived `m` |
+| Framework FID across seeds | **bit-identical** (`framework_fid_seed_invariant = true`); only the baseline moves |
+| Split-half FID (N=200) | median **5.09 FID** (mean 5.69, range 0.11–15.33) — the estimator noise floor |
+| Verdict | **the boundary is confirmed**: raising `m` does not rescue R5b under a tuned baseline |
+
+**One sentence:** exposing the only predicted survival lever does not save
+R5b — every `m` loses, the ordering is set by scheduler/`m` compatibility
+rather than by `m` itself, and the seed axis adds no framework-side
+replication because the framework FID is seed-invariant.
 
 ---
 
@@ -131,13 +147,103 @@ R5b a conditional survival cell; otherwise the boundary is confirmed.
 
 ## 4. Results
 
-_(filled after the sweep completes)_
+### 4.1 Acceptance
+
+`survivors = []`. No `(m, scheduler)` cell reaches `Δ < 0` at
+`p < 0.05/4 = 0.0125`; indeed **no cell has a negative mean Δ at all**.
+
+| `m` | Scheduler | mean Δ vs tuned baseline | SD (seeds) | p | passes |
+|---|---|---:|---:|---:|---|
+| default | CodimensionSheet | **+1.48 %** | 1.39 | 0.206 | ✗ |
+| 0.5 | CodimensionSheet | +3.90 % | 1.42 | 0.042 | ✗ |
+| 0.25 | CodimensionSheet | +7.64 % | 1.47 | 0.012 | ✗ (Δ>0) |
+| 0.75 | CodimensionSheet | +8.47 % | 1.49 | 0.010 | ✗ (Δ>0) |
+| default | FreeTraj | +22.15 % | 1.67 | 0.0019 | ✗ |
+| default | EvidenceDriven | +22.67 % | 1.68 | 0.0018 | ✗ |
+| default | CosineAnneal | +23.13 % | 1.69 | 0.0018 | ✗ |
+| 0.25 | EvidenceDriven | +18.16 % | 1.62 | 0.0026 | ✗ |
+| 0.25 | CosineAnneal | +18.83 % | 1.63 | 0.0025 | ✗ |
+| 0.25 | FreeTraj | +19.17 % | 1.63 | 0.0024 | ✗ |
+| 0.5 | CosineAnneal | +21.52 % | 1.66 | 0.0020 | ✗ |
+| 0.5 | FreeTraj | +21.78 % | 1.67 | 0.0019 | ✗ |
+| 0.5 | EvidenceDriven | +21.96 % | 1.67 | 0.0019 | ✗ |
+| 0.75 | FreeTraj | +17.72 % | 1.61 | 0.0028 | ✗ |
+| 0.75 | EvidenceDriven | +17.84 % | 1.61 | 0.0027 | ✗ |
+| 0.75 | CosineAnneal | +17.98 % | 1.62 | 0.0027 | ✗ |
+
+The ordering is **not monotone in `m`**. The best cell for each scheduler sits
+at the `m` closest to that scheduler's native `n_cap`-derived value:
+
+- CodimensionSheet: `default` (native `m ≈ 0`) is best, and `m` 0.25 → 0.5 →
+  0.75 gets monotonically worse;
+- the other three: `m = 0.25` is best, `0.5` next, `0.75` worst for two of
+  them.
+
+### 4.2 Seed axis carries no framework-side replication
+
+`framework_fid_seed_invariant = true`: every one of the 16 `(m, scheduler)`
+cells has **bit-identical FID** at seeds 42/43/44 (e.g. CodimensionSheet
+`default` = 452.7848508077 on all three). The adapter seeds
+`build_initial_state` from `(batch_id, sample_id)`, not from the sampling
+seed, so the seed only re-draws the **baseline**.
+
+Consequence: the `sd_delta_pct` column above is a **baseline-only SD**, not a
+framework replication SD. The within-run per-record paired test (n=200) is
+unaffected, but "3 seeds" must not be read as three independent framework
+draws.
+
+### 4.3 Split-half FID — the noise floor at N=200
+
+Each arm's 200 samples were split into two halves and scored separately
+(48 rows = 16 cells × 3 seeds, identical across seeds by 4.2):
+
+| statistic | value |
+|---|---:|
+| median \|FID(half A) − FID(half B)\| | **5.09 FID** |
+| mean | 5.69 FID |
+| range | 0.11 – 15.33 FID |
+
+Against that floor, the `m`-to-`m` FID gaps are:
+
+| scheduler | min gap between any two `m` | resolvable? |
+|---|---:|---|
+| CodimensionSheet | 3.67 FID | marginal |
+| CosineAnneal | 3.81 FID | marginal |
+| EvidenceDriven | 1.41 FID | **no** |
+| FreeTraj | 1.62 FID | **no** |
+
+So the *ranking* is only interpretable where the gaps exceed ~5 FID; the
+close pairs (EvidenceDriven default vs 0.5, FreeTraj default vs 0.5) are
+inside the estimator noise. The **headline** (all 16 cells lose, by
++1.5 % to +23 %) is far larger than the noise for 15/16 cells; the
+CodimensionSheet `default` cell (+1.48 %, ≈ 6.6 FID) is at the noise edge,
+which is consistent with its non-significant p=0.206.
 
 ---
 
 ## 5. Interpretation
 
-_(filled after the sweep completes)_
+The GAP-24 law predicted that raising `m` would raise `q*(m)` and widen the
+surviving region. The sweep refutes the *actionable* form of that prediction:
+
+1. **No `m` survives.** The law is a necessary condition on `q`, not a
+   sufficient one. At baseline NFE=200 the baseline's endpoint is good enough
+   that the restart family loses regardless of the memory fraction.
+2. **The ordering is compatibility, not dose.** Best-`m` tracks each
+   scheduler's native `n_cap`-derived fraction. `m` and the NFE allocation
+   share the same `n_cap` schedule: forcing a different `m` while leaving the
+   per-round step budget alone makes the memory ratio and the round's step
+   count inconsistent. That is a design coupling in the runner, not a
+   property of the blend.
+3. **The seed axis does not replicate the framework.** The framework FID is a
+   deterministic function of `(scheduler, m)`; only the baseline is redrawn.
+   Any future multi-seed claim on this cell must either add a real framework
+   seed or state that the replication is baseline-only.
+
+**What would be needed to test the law properly:** sweep `m` *jointly* with
+the per-round step allocation (so `n_cap` and `m` stay consistent), or test at
+a baseline budget where `q` is closer to `q*(m)`. Neither is in this sweep;
+both are new pre-registrations, not re-analyses.
 
 ---
 
@@ -153,4 +259,21 @@ _(filled after the sweep completes)_
 
 ## 7. Unresolved / noted
 
-_(filled after the sweep completes)_
+- **No survivor, and the null is informative.** R5b stays a
+  tuned-baseline-negative cell. The 0/4 result now has a lever test behind it,
+  so the paper can say "we exposed and swept the only predicted survival
+  lever; it does not rescue the cell".
+- **`m` and the NFE schedule are coupled.** A future test must sweep them
+  jointly; a bare `m` sweep is not a clean dose-response.
+- **Framework FID is seed-invariant on this cell.** Any "3-seed" reading of
+  R5b must say that the seed re-draws the baseline only. This also explains
+  why the per-seed `Δ` moves: the numerator is fixed and the denominator
+  moves.
+- **Split-half is the right noise scale, not a significance test.** The
+  5.09-FID median is what an `m`-to-`m` gap must beat to be interpretable at
+  N=200; it is not a p-value.
+- **Re-analysis is cheap.** `--skip-runs` re-derives everything from the 12
+  run directories without touching the GPU.
+- **Co-tenancy.** The host ran other projects at load ~85–100 during the
+  sweep. FID is deterministic so the numbers are unaffected; wall-clock is
+  not reported.

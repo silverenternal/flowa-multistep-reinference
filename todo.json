@@ -152,13 +152,13 @@
     {
       "cell": "R5b",
       "metric": "FID (CIFAR-10 RF, n_rounds=1)",
-      "current": "matched-NFE win; 0/4 arms survive a tuned baseline",
+      "current": "tuned-baseline negative: 0/16 (m, scheduler) cells survive. Best cell CodimensionSheet default +1.48% (p=0.206). The boundary is confirmed; m is not a rescue lever when swept alone.",
       "blocker": "The restart memory fraction m is derived from the scheduler n_cap and is not exposed as a CLI flag, so the one lever the GAP-24 law says could raise q*(m) has never been swept.",
-      "plan": "GAP-46-R5B-MEMORY-SWEEP: expose m, sweep m in {0.25, 0.5, 0.75} under the tuned baseline, N=200 x 3 seeds.",
-      "acceptance": "Any m with delta<0, p<alpha (0.05/4), and a tuned-baseline pass -> R5b becomes a conditional survival cell; otherwise the boundary is confirmed.",
+      "plan": "DONE (GAP-46): exposed m, swept {default,0.25,0.5,0.75} x 3 seeds x 4 schedulers. No survivor.",
+      "acceptance": "Met as a negative: no m with delta<0, p<alpha, tuned-baseline pass. R5b stays a boundary cell.",
       "cost": "~1-2 h GPU + a runner change under tools/ or scripts/",
       "priority": "P1",
-      "status": "SCHEDULED",
+      "status": "COMPLETED (null)",
       "depends_on": "none"
     },
     {
@@ -284,11 +284,12 @@
       "phase": "1",
       "priority": "P1",
       "owner": "agent",
-      "status": "PLANNED",
+      "status": "COMPLETED",
       "gap": "R5b's matched-NFE win dies under a tuned baseline (0/4 arms). The GAP-24 law says a higher restart memory fraction m raises q*(m), but m is derived from the scheduler n_cap and is not exposed, so the only predicted survival lever is untested.",
       "acceptance": "Expose m as a CLI flag; sweep m in {0.25, 0.5, 0.75} under the tuned baseline at N=200 x 3 seeds. Any m with delta<0, p<alpha (0.05/4), and a tuned-baseline pass -> R5b becomes a conditional survival cell; otherwise the boundary is confirmed.",
-      "agent_action": "1) Add --memory-fraction to the R5b runner (additive, default derived-from-scheduler so existing bytes are unchanged). 2) Run the 3x3 grid (m x seed) on cuda:0. 3) Apply the tuned baseline at NFE=200. 4) Record in audit + todo.",
-      "evidence": "docs/audit/gap26-r5b-regime.md section 6; docs/audit/gap12-tuned-baseline.md; docs/audit/gap24-boundary-law.md"
+      "agent_action": "1) Added --memory-fraction (additive, default scheduler-derived). 2) Ran the 3x3 grid on cuda:0. 3) Applied the tuned baseline at NFE=200. 4) Recorded in audit + todo. 5) Re-analysed with split-half FID and the seed-spread diagnostic (--skip-runs).",
+      "evidence": "docs/audit/gap26-r5b-regime.md section 6; docs/audit/gap12-tuned-baseline.md; docs/audit/gap24-boundary-law.md",
+      "result": "DONE 2026-10-19. 12/12 runs (m in {default,0.25,0.5,0.75} x seeds 42/43/44 x 4 schedulers; N=200, baseline NFE=200, framework NFE=50, n_rounds=3). survivors = [] : no cell has a negative mean delta, so no m rescues R5b under the tuned baseline. Best cell CodimensionSheet default +1.48% (p=0.206); worst CosineAnneal default +23.13% (p=0.0018). The ordering is NOT monotone in m: the best m is the one closest to each scheduler's native n_cap-derived fraction (CodimensionSheet default; the other three m=0.25), because m and the NFE allocation share n_cap. framework_fid_seed_invariant = true: all 16 (m, scheduler) FIDs are bit-identical across seeds 42/43/44, so the 3-seed SD is a BASELINE-ONLY SD and the seed axis adds no framework-side replication. Split-half FID at N=200: median 5.09 FID (mean 5.69, range 0.11-15.33); the m-to-m gaps are 1.41-3.81 FID for three arms, so only the CodimensionSheet ranking is resolvable. Artifacts: verification_outputs/gap46-r5b-memory/{gap46-memory-fraction.json,csv,seed*/}; audit: docs/audit/gap46-r5b-memory-fraction.md. No frozen surface touched."
     },
     {
       "id": "GAP-47-K1-PB-METRIC",
