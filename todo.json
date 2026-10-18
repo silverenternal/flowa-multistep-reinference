@@ -9,18 +9,51 @@
   "config_inventory": "docs/audit/project-state-inventory.md",
   "venue": {
     "scope": "general ML (user directive 2026-10-14: do not pigeonhole into image/CV or bio-specific venues)",
+    "positioning": "Inference framework, NOT a model contribution (user directive 2026-10-18). The unit of contribution is the inference layer over a frozen checkpoint: no retraining, no new architecture. Judge fit by framework/system criteria (generality, plug-in cost, compute accounting, mechanism isolation), not by SOTA tables.",
     "primary": "IEEE TNNLS",
-    "backups": [
-      "IEEE TPAMI",
-      "JMLR",
-      "Artificial Intelligence (Elsevier)",
-      "IEEE Transactions on Cybernetics",
-      "Information Sciences"
+    "strategy": "Two-paper split (user-approved 2026-10-18): Paper A = framework + empirics + operating-regime law; Paper B = theory (composite-map contraction, fixed point, exact blend-error identity, boundary law).",
+    "paper_a_targets": [
+      {
+        "journal": "IEEE TNNLS",
+        "cas": "1区 Top",
+        "fit": "learning/adaptive systems; framework-level contribution is in scope",
+        "narrative": "lead with the frozen-checkpoint inference layer + boundary law, not FID wins"
+      },
+      {
+        "journal": "IEEE Transactions on Cybernetics",
+        "cas": "1区",
+        "fit": "controlled composite dynamical system + convergence condition + operating-regime law",
+        "narrative": "recast as a controllable inference system; no SOTA table required"
+      },
+      {
+        "journal": "Information Fusion",
+        "cas": "1区 Top",
+        "fit": "B_m is an inference-time fusion operator with an exact squared-error identity",
+        "narrative": "define endpoint and fresh prior as the two sources; the identity is the fusion-theoretic result"
+      }
+    ],
+    "paper_b_targets": [
+      {
+        "journal": "JMLR",
+        "cas": "verify current-year partition",
+        "fit": "theory-only: Thm 4/5, fixed point, 45/45 backtest"
+      },
+      {
+        "journal": "Neural Networks",
+        "cas": "1区",
+        "fit": "theory + method; boundary law as the core"
+      }
+    ],
+    "fallbacks": [
+      "Knowledge-Based Systems (1区)",
+      "Engineering Applications of AI (1区)"
     ],
     "dropped_as_leads": [
-      "Pattern Recognition (pattern/CV-centric)",
+      "Pattern Recognition (model/CV-centric)",
+      "IEEE TIP (model/CV-centric)",
       "AI4Science venues (bio-specific)"
-    ]
+    ],
+    "note_on_partitions": "CAS partitions change yearly; verify the current-year table before submission."
   },
   "q1_assessment": {
     "verdict": "BOUNDARY_NOT_YET_SUFFICIENT",
@@ -28,8 +61,32 @@
     "gating_risk": "empirical axis, not infrastructure (infrastructure is Tier-1 grade)",
     "why": "Only R6 is an unconditional STRONG cell. R2 is significant but d=-0.099; R5b dies under a tuned baseline; R5c is smoke-only and the production checkpoint flips to baseline-wins (+10.37%); R1's win is init-attributed and its pooled effect fell from +0.1609 to +0.1178 at NFE=150. The namesake restart-blend still has no clean positive cell.",
     "decisive_missing_piece": "One pre-registered, power-calibrated positive cell for the restart-blend, against a tuned baseline with Bonferroni control. GAP-43 pre-registers R3 fg_dev with the faithful all-channel blend + shared prior (a combination never run), 50 fresh seeds (55, 65, ..., 545; step 10 so solver-seed blocks are disjoint), alpha=0.05/7, |d|>=0.5, plus a 10-seed baseline-NFE=1000 tuned gate. n=50 is the smallest n that powers the 0.5 floor at 80%.",
-    "if_met": "Q1-defensible: R6 + K4/K5 + cross-domain breadth + Tier-1 reproducibility infrastructure.",
-    "if_not_met": "Major revision at best; reject risk if the blend still has no positive cell."
+    "if_met": "Q1-defensible: framework+theory core (Thm 4/5, 45/45 law backtest, typed 4-port, 5 checkpoints zero-line, 3 lemmas, byte-stable infrastructure) + one clean positive + the compute ledger.",
+    "if_not_met": "Still submittable as a framework/operating-regime paper at TNNLS/TCyb/Information Fusion, but 'steady accept' is not supportable; fall back to KBS/EAAI rather than forcing a SOTA framing.",
+    "blocking_point": {
+      "name": "evidence homogeneity, not SOTA",
+      "detail": "R1 is single-seed; R5c's strong result is a smoke checkpoint and the production checkpoint flips (+10.37%); R6's headline is a counterfactual proxy; K1's canonical metric is saturated. A reviewer can use this to attack the framework-generality claim even though each item is individually disclosed.",
+      "solutions": [
+        {
+          "id": "GAP-43-BLEND-POSITIVE",
+          "what": "one clean pre-registered positive cell (R3 fg_dev, 50 fresh seeds, tuned gate)"
+        },
+        {
+          "id": "GAP-49-COMPUTE-ACCOUNTING",
+          "what": "cross-domain compute ledger: same checkpoint, matched FID, NFE/wall-clock saved; on-identity evidence that does not depend on a positive cell"
+        },
+        {
+          "id": "GAP-50-EVIDENCE-GRADE-TABLE",
+          "what": "one table grading every cell by seeds / checkpoint regime / live-vs-counterfactual / metric saturation; converts a hidden weakness into a disclosed boundary"
+        }
+      ]
+    },
+    "framework_assets": [
+      "theory: composite map G + conditional contraction + fixed point (Thm 4) + exact squared-error identity (Thm 5)",
+      "falsifiable law: q < sqrt((1+m)/(1-m)); 45/45 off-boundary matches on R5b, 15/16 headline-cell directions, identity residual 2.7e-12",
+      "system: typed four-port surface, 13 schedulers, zero-line integration into 5 frozen checkpoints, hash-chained ledger + 3 lemmas, byte-stable 2356-test infrastructure",
+      "cross-domain: protein / molecule / 2D / CIFAR / MNIST under one inference interface"
+    ]
   },
   "evidence_state": {
     "strong_unconditional": [
@@ -179,11 +236,14 @@
     "GAP-45-R1-BLEND-OFF-150 (P1, ~8-9h CPU; credits or clears the blend at the canonical budget)",
     "GAP-48-K7-TWO-ARM (P1, ~1h CPU; resolves the inverted novelty claim)",
     "GAP-46-R5B-MEMORY-SWEEP (P1, ~5h GPU; the only predicted tuned-baseline survival lever)",
+    "GAP-49-COMPUTE-ACCOUNTING (P1, on-identity evidence; cheap, mostly derived from committed artifacts)",
     "GAP-44-CONFIG-INVENTORY (P1, labels corrected; P2 items user-gated)",
     "GAP-15-VENUE (P1, user gate; can run in parallel)",
     "GAP-47-K1-PB-METRIC (P2, user-gated metric change)",
     "GAP-29-MANUSCRIPT (P2, only after GAP-43; needs user authorization)",
-    "GAP-20-COVERLETTER (P3, user-only)"
+    "GAP-20-COVERLETTER (P3, user-only)",
+    "GAP-50-EVIDENCE-GRADE-TABLE (P2, audit draft then user-gated manuscript insertion)",
+    "GAP-51-PAPER-B-SPLIT (P2, user-gated theory-paper outline)"
   ],
   "open_gaps": [
     {
@@ -258,11 +318,11 @@
       "phase": "0",
       "priority": "P1",
       "owner": "agent+user",
-      "status": "OPEN",
-      "gap": "Decide the general-ML venue. Primary candidate IEEE TNNLS; backups TPAMI, JMLR, Artificial Intelligence, IEEE TCyb, Information Sciences. Pattern Recognition and AI4Science venues are dropped as leads. The manuscript must lead with cross-domain generality.",
-      "acceptance": "Venue chosen; format/narrative delta scoped; user authorizes touching the frozen manuscript.",
-      "agent_action": "Prepare a one-page venue-fit memo (fit, format delta, risk) per candidate; the choice is the user's.",
-      "evidence": "docs/audit/todo-history.md section 7 (2026-10-14 venue-fit addendum)"
+      "status": "DECIDED-SPLIT (user-approved 2026-10-18); final journal choice among the ranked Paper A targets remains the user call",
+      "gap": "Decide the venue under the corrected positioning: this is an inference-framework contribution (frozen checkpoint, no retraining), not a model contribution. Primary IEEE TNNLS; Paper A alternatives IEEE TCyb and Information Fusion; Paper B (theory) targets JMLR / Neural Networks. The earlier model-centric backups (TPAMI, Pattern Recognition, TIP) are dropped because they judge architectural novelty and SOTA tables.",
+      "acceptance": "Paper A venue chosen from venue.paper_a_targets; Paper B scoped from Appendix A + GAP-24; format/narrative delta recorded; user authorizes touching the frozen manuscript.",
+      "agent_action": "1) Use the venue.paper_a_targets ranking (fit + narrative per journal). 2) Paper A narrative: frozen-checkpoint inference layer, operating-regime law, compute ledger; never a SOTA table. 3) Paper B: extract Thm 4/5 + the 45/45 backtest into a standalone theory outline. 4) Do not edit docs/drafts/paper-A-final.* until the user authorizes it.",
+      "evidence": "docs/audit/todo-history.md section 7 (2026-10-14 venue-fit addendum); user directives 2026-10-14 (general ML) and 2026-10-18 (framework, not model; approve two-paper split)"
     },
     {
       "id": "GAP-29-MANUSCRIPT",
@@ -284,6 +344,41 @@
       "gap": "12 '[USER TO FILL: ...]' placeholders remain in tnnls_submission/cover_letter.md (authors block; suggested associate editor; 5 suggested reviewers + affiliations; corresponding-author name/affiliation/email).",
       "acceptance": "No '[USER TO FILL' remains.",
       "agent_action": "None - owner=user; only the author can supply names/affiliations/emails."
+    },
+    {
+      "id": "GAP-49-COMPUTE-ACCOUNTING",
+      "phase": "1",
+      "priority": "P1",
+      "owner": "agent",
+      "status": "PLANNED",
+      "gap": "The framework's identity is a training-free inference layer, but there is no cross-domain compute ledger. The only speed number in the manuscript (2.5-10x) is a published-trajectory extrapolation, not a measured saving. This is the on-identity evidence a framework reviewer will ask for, and it does not require a positive quality cell.",
+      "acceptance": "A table on >=3 domains (R1 LineageFlow, R3 FlowMol3, R5b CIFAR) reporting, at matched FID and at matched NFE, the NFE and wall-clock delta between baseline and framework, same checkpoint, no retraining. Derived from committed artifacts where possible; any new run on cuda:0 with 3 seeds.",
+      "agent_action": "1) Inventory existing NFE sweeps / sample NPZs / FID caches per cell (search before rebuilding). 2) Build iso-FID and iso-NFE curves by subsampling steps. 3) Report NFE saved at iso-FID and FID delta at iso-NFE, with seed spread. 4) Record in audit + todo; do not touch the frozen manuscript.",
+      "evidence": "docs/drafts/paper-A-final.md abstract (2.5-10x extrapolation caveat); tnnls_submission/supplementary_bundle/headline_evidence/NFE_SPEEDUP_2P5_TO_10X_SOURCE.md"
+    },
+    {
+      "id": "GAP-50-EVIDENCE-GRADE-TABLE",
+      "phase": "2",
+      "priority": "P2",
+      "owner": "agent+user",
+      "status": "PLANNED",
+      "user_gated": true,
+      "gap": "Evidence homogeneity is disclosed in prose but never in one place: R1 single-seed, R5c smoke checkpoint (production flips +10.37%), R6 counterfactual proxy, K1 saturated metric. A reviewer can therefore claim the framework's generality rests on heterogeneous evidence.",
+      "acceptance": "One table (cell x seeds x checkpoint regime x live-vs-counterfactual x metric saturation x verdict) covering all 11 headline cells, every number traceable to a committed artifact. Drafted as an audit doc first; insertion into the manuscript is user-gated.",
+      "agent_action": "1) Draft the table as docs/audit/evidence-grade-table.md from CLAIMS + per-cell audits. 2) Cross-check every row against the committed JSON/CSV. 3) Ask the user before inserting into docs/drafts/paper-A-final.*.",
+      "evidence": "docs/drafts/paper-A-final.md sections 7.2, 7.11, 8.10; docs/audit/gap26-r5b-regime.md; docs/audit/gap27-r3-power.md; docs/audit/gap28-r6-faithful-tier.md"
+    },
+    {
+      "id": "GAP-51-PAPER-B-SPLIT",
+      "phase": "2",
+      "priority": "P2",
+      "owner": "agent+user",
+      "status": "PLANNED",
+      "user_gated": true,
+      "gap": "Paper A currently carries the theory in Appendix A, which undersells Thm 4/5 and the 45/45 law backtest and bloats the framework paper. The user approved a two-paper split on 2026-10-18.",
+      "acceptance": "A standalone Paper B outline: composite map G, conditional contraction, fixed point, exact squared-error identity, boundary law, 45/45 + 15/16 backtest, proofs self-contained; overlap and citation policy with Paper A stated. Target JMLR or Neural Networks.",
+      "agent_action": "1) Extract Appendix A + docs/audit/gap24-boundary-law.md into an outline. 2) State what Paper A keeps (the law as an empirical organising result) vs what Paper B owns (proofs, general conditions). 3) User authorizes a new draft.",
+      "evidence": "docs/drafts/paper-A-final.md Appendix A; docs/audit/gap24-boundary-law.md; user directive 2026-10-18"
     }
   ]
 }
