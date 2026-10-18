@@ -495,6 +495,97 @@ def test_run_framework_real_adapter_emits_final_chain_endpoints(tmp_path: Path) 
     assert all(int(row["num_steps"]) >= 1 for row in per_round)
 
 
+def _capture_restart_betas(monkeypatch: pytest.MonkeyPatch, module: object) -> list[float]:
+    """Spy on ``Engine.run_round`` and collect the restart beta per call.
+
+    GAP-46: the restart blend strength is ``beta = 1 - m`` where ``m`` is
+    either scheduler-derived (``1 - n_cap``) or an explicit
+    ``--memory-fraction``. Asserting on the policy payload is the only
+    reliable check for the synthetic CIFAR adapter — its velocity field
+    can relax different betas into the same endpoint (same regime caveat
+    recorded for GAP-45).
+    """
+    engine_cls = module.Engine  # type: ignore[attr-defined]
+    original = engine_cls.run_round
+    betas: list[float] = []
+
+    def _spy(self: object, **kwargs: object) -> object:
+        policy = kwargs["policy"]
+        betas.append(float(policy.beta_by_channel["image"]))  # type: ignore[attr-defined]
+        return original(self, **kwargs)
+
+    monkeypatch.setattr(engine_cls, "run_round", _spy)
+    return betas
+
+
+def _synthetic_cifar_adapter() -> object:
+    from adaptive_reflow.adapters.rectified_flow_cifar import RectifiedFlowCIFARAdapter
+
+    return RectifiedFlowCIFARAdapter(
+        force_mode="synthetic", num_steps=1, synthetic_hidden=4, synthetic_seed=7
+    )
+
+
+def test_memory_fraction_override_reaches_restart_policy(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``--memory-fraction`` must set ``beta = 1 - m`` on restarts.
+
+    The override is the free lever that GAP-24's boundary law
+    ``q*(m) = sqrt((1+m)/(1-m))`` predicts can rescue the tuned-baseline
+    regime. Without this wiring the knob would be inert.
+
+    Round 0 is deliberately excluded: the canonical framework loop
+    restarts *after* solving, so the first state is never blended. The
+    override must therefore leave ``r=0`` at the scheduler-derived
+    ``beta = n_cap`` (= 1.0 for the cosine start).
+    """
+    module = _load_cifar_script_module()
+    betas = _capture_restart_betas(monkeypatch, module)
+    module._run_framework(
+        adapter=_synthetic_cifar_adapter(),
+        scheduler_name="CosineAnnealScheduler",
+        n_rounds=3,
+        framework_samples=2,
+        seed_base=0,
+        output_dir=tmp_path,
+        max_num_steps=2,
+        exact_total_steps=5,
+        memory_fraction=0.75,
+    )
+    assert len(betas) == 3 * 2, betas
+    for i in range(2):
+        row = betas[i * 3 : (i + 1) * 3]
+        assert row[0] == pytest.approx(1.0, abs=1e-9), row
+        assert row[1] == pytest.approx(0.25, abs=1e-9), row
+        assert row[2] == pytest.approx(0.25, abs=1e-9), row
+
+
+def test_memory_fraction_default_is_scheduler_derived(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Omitting the flag must keep ``beta = n_cap`` (byte-stable default)."""
+    module = _load_cifar_script_module()
+    betas = _capture_restart_betas(monkeypatch, module)
+    _samples_path, per_round, _wall, _nfe = module._run_framework(
+        adapter=_synthetic_cifar_adapter(),
+        scheduler_name="CosineAnnealScheduler",
+        n_rounds=3,
+        framework_samples=2,
+        seed_base=0,
+        output_dir=tmp_path,
+        max_num_steps=2,
+        exact_total_steps=5,
+    )
+    expected = [float(row["n_cap"]) for row in per_round]
+    # One beta per (sample, round), in sample-major order.
+    observed = [betas[i * len(expected) : (i + 1) * len(expected)] for i in range(2)]
+    for row in observed:
+        assert row == pytest.approx(expected, abs=1e-9), (row, expected)
+    # The default must NOT collapse to a constant (i.e. the override is off).
+    assert len(set(round(b, 6) for b in betas)) > 1, betas
+
+
 def test_run_framework_four_schedulers_produce_different_traces(
     tmp_path: Path,
 ) -> None:

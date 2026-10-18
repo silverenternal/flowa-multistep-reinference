@@ -584,6 +584,7 @@ def _run_framework(
     no_final_restart: bool = False,
     cosine_ramp_strength: float | None = None,
     shared_prior: bool = False,
+    memory_fraction: float | None = None,
 ) -> tuple[Path, list[dict[str, float]], float, int]:
     """Drive the framework multi-round run for one scheduler.
 
@@ -631,6 +632,7 @@ def _run_framework(
             no_final_restart=bool(no_final_restart),
             cosine_ramp_strength=cosine_ramp_strength,
             shared_prior=bool(shared_prior),
+            memory_fraction=memory_fraction,
         )
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -738,8 +740,19 @@ def _run_framework_state_chains(
     no_final_restart: bool = False,
     cosine_ramp_strength: float | None = None,
     shared_prior: bool = False,
+    memory_fraction: float | None = None,
 ) -> tuple[Path, list[dict[str, float]], float, int]:
     """Drive final CIFAR samples through Engine-managed endpoint chains.
+
+    ``memory_fraction`` (GAP-46) overrides the scheduler-derived restart
+    memory fraction ``m`` for every restart **after the first round**
+    (``r >= 1``). By default (``None``) ``m`` is
+    ``schedule_sample.memory_fraction()`` (i.e. ``1 - n_cap``), preserving
+    every byte-stable path. An explicit value turns ``m`` into a free lever
+    so the GAP-24 boundary law ``q*(m) = sqrt((1+m)/(1-m))`` can be swept
+    independently of the NFE schedule. Round 0 is never overridden: it has
+    no preceding endpoint (the canonical loop restarts *after* solving),
+    and blending the initial condition would rescale its variance.
 
     When ``no_final_restart`` is True, the LAST round (r == n_rounds - 1)
     is short-circuited: no engine.run_round / apply_restart_distribution /
@@ -869,6 +882,26 @@ def _run_framework_state_chains(
                     previous_trajectory[-1], dtype=np.float64
                 )
                 continue
+            # GAP-46 — the restart memory fraction is scheduler-derived by
+            # default (``1 - n_cap``). An explicit ``--memory-fraction``
+            # makes it a free lever, which is the only predicted
+            # tuned-baseline survival knob (GAP-24 boundary law q*(m)).
+            #
+            # The override is applied to rounds ``r >= 1`` only. Round 0
+            # has no preceding endpoint: the canonical framework loop is
+            # ``solve_ode -> export_endpoint -> apply_restart_distribution``
+            # (``tools/eval/framework.py:980``), so the first state is
+            # never blended. Overriding r=0 would rescale the initial
+            # condition (a blend of two independent N(0, I) draws has
+            # variance ``m^2 + (1-m)^2 < 1``) and confound the lever with
+            # an initial-condition perturbation the canonical framework
+            # does not have.
+            _override_active = memory_fraction is not None and int(r) >= 1
+            _memory_fraction = (
+                float(memory_fraction)
+                if _override_active
+                else float(schedule_sample.memory_fraction())
+            )
             policy = FinalRestartPolicy(
                 policy_id=PolicyId(f"sota-cifar-{scheduler_name}-{sample_index}-{r}"),
                 writer_id=MechanismId("inference.adaptive_reflow"),
@@ -876,7 +909,7 @@ def _run_framework_state_chains(
                 target_round=int(r),
                 outer_cycle_id=0,
                 beta_by_channel={
-                    channel: FactorValue(1.0 - float(schedule_sample.memory_fraction()))
+                    channel: FactorValue(1.0 - _memory_fraction)
                 },
                 alpha_by_channel={channel: FactorValue(1.0)},
                 fresh_noise_floor_by_channel={channel: FactorValue(0.0)},
@@ -1169,7 +1202,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
             "Cosine ramp n_min floor override (Wave 275 P3.2 K3+R5b fix). "
             "Default None uses the framework default (n_min=0.0, full "
             "[0, 1] amplitude); 0.5 raises n_min to 0.5, halving the cosine "
-            "ramp amplitude and forcing every round to deliver >=50% NFE. "
+            "ramp amplitude and forcing every round to deliver >=50%% NFE. "
             "Per docs/audit/wave275-p4-cifar10-proposal.md §2 + Wave 233 P5 "
             "plan. Only effective for the CosineAnnealScheduler; other "
             "schedulers ignore this flag."
@@ -1317,6 +1350,23 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
             "arms across schedulers only."
         ),
     )
+    parser.add_argument(
+        "--memory-fraction",
+        dest="memory_fraction",
+        type=float,
+        default=None,
+        help=(
+            "GAP-46 — override the restart memory fraction m for every "
+            "restart after the first round (r >= 1; round 0 has no "
+            "preceding endpoint and keeps the scheduler-derived value). "
+            "By default (omitted) m is scheduler-derived (1 - n_cap), which "
+            "keeps every existing byte-stable run unchanged. An explicit "
+            "value in (0, 1] turns m into a free lever: the restart beta is "
+            "1 - m, so m=1 is pure prior (no fresh noise) and m->0 is pure "
+            "fresh. Sweeping m tests the GAP-24 boundary law "
+            "q*(m) = sqrt((1+m)/(1-m))."
+        ),
+    )
     args = parser.parse_args(argv)
     if bool(args.quick):
         args.n_samples = QUICK_N_SAMPLES
@@ -1328,6 +1378,12 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         raise ValueError("n_rounds must be >= 1")
     if int(args.framework_samples) <= 0:
         raise ValueError("framework_samples must be >= 1")
+    if args.memory_fraction is not None:
+        m = float(args.memory_fraction)
+        if not (0.0 < m <= 1.0):
+            raise ValueError(
+                f"memory_fraction_must_be_in_(0,1]:{args.memory_fraction}"
+            )
     schedulers = tuple(s.strip() for s in str(args.schedulers).split(",") if s.strip())
     for name in schedulers:
         if name not in SCHEDULER_NAMES:
@@ -1473,6 +1529,7 @@ def main(argv: list[str] | None = None) -> int:
             no_final_restart=bool(getattr(args, "no_final_restart", False)),
             cosine_ramp_strength=getattr(args, "cosine_ramp_strength", None),
             shared_prior=bool(getattr(args, "shared_prior", False)),
+            memory_fraction=getattr(args, "memory_fraction", None),
         )
         sel_last = float(per_round[-1].get("evidence_ratio", float("nan")))
         rows.append(
