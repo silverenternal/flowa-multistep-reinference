@@ -6,6 +6,7 @@
   "no_push": true,
   "commit_footer": "(USER AUTHORIZED, NO PUSH)",
   "recording_policy": "Observations-only: write audit docs + todo.json + raw artifacts. Frozen CLAIMS.md / CONSOLIDATED_RESULTS.md / paper-A-final.* / tnnls_submission/** stay untouched without explicit user authorization.",
+  "config_inventory": "docs/audit/project-state-inventory.md",
   "venue": {
     "scope": "general ML (user directive 2026-10-14: do not pigeonhole into image/CV or bio-specific venues)",
     "primary": "IEEE TNNLS",
@@ -65,6 +66,7 @@
   "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 15 known failures (3 stale eval stubs that do not accept the GAP-40 classifier_aware_restart kwarg; 12 order-dependent test_paper_metrics cases that pass in isolation).",
   "execution_order": [
     "GAP-43-BLEND-POSITIVE (P0, decisive; before any manuscript rewrite)",
+    "GAP-44-CONFIG-INVENTORY (P1, paper-label corrections are user-gated; feeds GAP-29)",
     "GAP-15-VENUE (P1, user gate; can run in parallel)",
     "GAP-29-MANUSCRIPT (P2, only after GAP-43; needs user authorization)",
     "GAP-20-COVERLETTER (P3, user-only)"
@@ -80,6 +82,17 @@
       "acceptance": "Pre-registration committed BEFORE the run: docs/audit/gap43-blend-positive-preregistration.md. R3 fg_dev, real blend (memory 0.5), shared prior, fresh seeds 55, 65, ..., 545 (step 10), n=50, N=1000/arm, alpha=0.05/7, |d_z|>=0.5. Positive = mean<0 AND p<0.0071429 AND |d_z|>=0.5 AND the tuned-baseline gate passes (mean delta_tuned<0 on seeds 55, 65, ..., 145, baseline NFE=1000, best-of per seed). Bounded negative = d_z bootstrap CI lower bound > -0.5. Otherwise inconclusive; only a fresh-seed extension is permitted.",
       "agent_action": "1) Smoke the combined --shared-prior --real-restart-blend path at N=100 (seeds 45/46) and verify determinism on a rerun. 2) Commit tools/gap43_blend_positive_analysis.py + tests/test_gap43_analysis.py + the run-metadata recorder. 3) Run the 50-seed primary (~5.8 h) and the 10-seed tuned gate (~2.8 h) on cuda:0. 4) Apply the pre-registered decision rule. 5) Record in audit + todo.",
       "evidence": "docs/audit/gap43-blend-positive-preregistration.md; docs/audit/gap37-statistical-power.md; docs/audit/gap39-flowmol3-real-restart-blend.md; docs/audit/gap12-tuned-baseline.md section 4.2; docs/audit/gap27-r3-power.md; docs/audit/gap42-scheduler-budget-conservation.md section 9.4"
+    },
+    {
+      "id": "GAP-44-CONFIG-INVENTORY",
+      "phase": "0",
+      "priority": "P1",
+      "owner": "agent+user",
+      "status": "INVENTORIED",
+      "gap": "Configuration surfaces were asserted more uniformly than the code supports. (i) Paper section 4.5 says 10/11 headline cells use CosineAnnealScheduler; the code shows only R5a/R5b/R5c construct a scheduler, R2/R3/K1/K7 construct none, R6 is a counterfactual, and R1/K4/K5 pass a legacy 'cosine' string that framework.py:914-920 routes to a uniform NFE split. (ii) R5c's cited d_z=-13.18 is the evidence_driven arm, not cosine. (iii) R5a's artifact scheduler is PaperRatioAdaptiveScheduler, not cosine. (iv) R5c's arms are not NFE-matched: 25/48/25 vs baseline 50. (v) R5c's delta% is chunk-mean based (-28.43%) while the printed FIDs imply -20.70%. (vi) R2's YAML declares n_rounds=3 but the runner never reads it. (vii) R1 runs n_rounds=1 because RESTART_MIN_NFE=20 > NFE=10. (viii) environments.md lists 5 venvs while 11 exist.",
+      "acceptance": "Inventory committed at docs/audit/project-state-inventory.md with a per-cell truth table, an 11-item conflict ledger, and a P0/P1/P2 action register. No headline number moved. Paper-label corrections (P1-1..P1-5) require explicit user authorization because they touch the frozen manuscript; NFE-matched R5c and profile_residual_fn wiring (P2) require new pre-registered experiments.",
+      "agent_action": "1) P0: keep the inventory registered in mkdocs + todo. 2) Ask the user whether to authorize the P1 label/disclosure corrections (no numbers move). 3) Do not unify schedulers: 7/11 cells have no scheduler, R1 is a provable no-op, and any arm switch would move frozen numbers. 4) Treat P2 items as new pre-registrations, not config edits.",
+      "evidence": "docs/audit/project-state-inventory.md; docs/audit/scheduler-per-cell-summary.md (superseded by section 2.3); verification_outputs/wave191-p3-mnist-n1000.json; verification_outputs/wave189-p2-post-cd70821-combined.json; verification_outputs/wave235-p1-r5b-fix.json; verification_outputs/wave247-p3-r5b-n1000-n1/summary.json; docs/audit/gap42-scheduler-budget-conservation.md"
     },
     {
       "id": "GAP-15-VENUE",
