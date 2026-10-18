@@ -191,16 +191,45 @@ def analyze_multiseed(per_seed_curves: dict[int, dict]) -> dict:
             }
         valid = [v["nfe_ratio_baseline_over_framework"] for v in per_seed.values()]
         valid = [v for v in valid if v is not None]
+        # Matched-NFE comparison: the stable quantity. The framework FID is
+        # seed-invariant, so only the baseline level moves with the seed.
+        matched: dict[str, dict] = {}
+        for s in seeds:
+            curve = per_seed_curves[s]["curve"]
+            bl50 = curve.get("50", {}).get("fid")
+            if bl50 is None:
+                continue
+            matched[str(s)] = {
+                "baseline_fid_at_nfe50": float(bl50),
+                "delta_fid_framework_minus_baseline": fw_fid - float(bl50),
+                "delta_pct": 100.0 * (fw_fid - float(bl50)) / float(bl50),
+            }
         rows[arm] = {
             "framework_fid": fw_fid,
             "framework_nfe": framework_nfe,
             "per_seed": per_seed,
             "n_seeds_measurable": len(valid),
+            "iso_fid_ratio_resolvable": len(valid) == len(seeds),
             "nfe_ratio_mean": float(np.mean(valid)) if valid else None,
             "nfe_ratio_sd": float(np.std(valid, ddof=1)) if len(valid) > 1 else None,
             "nfe_ratio_min": float(min(valid)) if valid else None,
             "nfe_ratio_max": float(max(valid)) if valid else None,
+            "matched_nfe50": matched,
+            "matched_nfe_delta_pct_mean": (
+                float(np.mean([v["delta_pct"] for v in matched.values()])) if matched else None
+            ),
+            "matched_nfe_delta_pct_min": (
+                float(min(v["delta_pct"] for v in matched.values())) if matched else None
+            ),
+            "matched_nfe_delta_pct_max": (
+                float(max(v["delta_pct"] for v in matched.values())) if matched else None
+            ),
         }
+    baseline_levels = [
+        float(per_seed_curves[s]["curve"].get("200", {}).get("fid", float("nan")))
+        for s in seeds
+    ]
+    baseline_levels = [v for v in baseline_levels if v == v]
     return {
         "kind": "gap49_compute_ledger_multiseed",
         "timestamp_utc": datetime.now(UTC).isoformat(),
@@ -210,6 +239,18 @@ def analyze_multiseed(per_seed_curves: dict[int, dict]) -> dict:
         ),
         "seeds": seeds,
         "framework_nfe": framework_nfe,
+        "baseline_fid_at_nfe200": {
+            "values": baseline_levels,
+            "mean": float(np.mean(baseline_levels)) if baseline_levels else None,
+            "sd": (
+                float(np.std(baseline_levels, ddof=1)) if len(baseline_levels) > 1 else None
+            ),
+            "range": (
+                [float(min(baseline_levels)), float(max(baseline_levels))]
+                if baseline_levels
+                else None
+            ),
+        },
         "baseline_curves": {str(s): per_seed_curves[s]["curve"] for s in seeds},
         "framework_arms": rows,
     }
@@ -442,37 +483,62 @@ def main() -> int:
         seeds = [int(x) for x in str(args.seeds).split(",") if x.strip()]
         combined_path = OUT_DIR / "baseline_curve_multiseed.json"
         per_seed_curves: dict[int, dict] = {}
-        for seed in seeds:
-            seed_dir = OUT_DIR / f"seed{seed}"
-            doc = run_baseline_curve(nfes, args.n_samples, seed, out_dir=seed_dir)
-            (OUT_DIR / f"baseline_curve_seed{seed}.json").write_text(
-                json.dumps(doc, indent=2) + "\n"
-            )
-            per_seed_curves[seed] = doc
-        combined = {
-            "kind": "gap49_baseline_fid_curves",
-            "timestamp_utc": datetime.now(UTC).isoformat(),
-            "n_samples": int(args.n_samples),
-            "seeds": seeds,
-            "curves": {str(s): per_seed_curves[s]["curve"] for s in seeds},
-        }
-        combined_path.write_text(json.dumps(combined, indent=2) + "\n")
+        if args.skip_runs and combined_path.exists():
+            combined = json.loads(combined_path.read_text())
+            for key, curve in combined["curves"].items():
+                per_seed_curves[int(key)] = {
+                    "seed": int(key),
+                    "n_samples": combined.get("n_samples"),
+                    "curve": curve,
+                }
+        else:
+            for seed in seeds:
+                seed_dir = OUT_DIR / f"seed{seed}"
+                doc = run_baseline_curve(nfes, args.n_samples, seed, out_dir=seed_dir)
+                (OUT_DIR / f"baseline_curve_seed{seed}.json").write_text(
+                    json.dumps(doc, indent=2) + "\n"
+                )
+                per_seed_curves[seed] = doc
+            combined = {
+                "kind": "gap49_baseline_fid_curves",
+                "timestamp_utc": datetime.now(UTC).isoformat(),
+                "n_samples": int(args.n_samples),
+                "seeds": seeds,
+                "curves": {str(s): per_seed_curves[s]["curve"] for s in seeds},
+            }
+            combined_path.write_text(json.dumps(combined, indent=2) + "\n")
         ledger = analyze_multiseed(per_seed_curves)
         out = OUT_DIR / "compute_ledger_multiseed.json"
         out.write_text(json.dumps(ledger, indent=2) + "\n")
         print("\n" + "=" * 78)
-        print(f"GAP-49b — multi-seed iso-FID ledger (seeds={seeds})")
+        print(f"GAP-49b — multi-seed ledger (seeds={seeds})")
         print("=" * 78)
+        lvl = ledger["baseline_fid_at_nfe200"]
+        print(
+            f"  baseline FID@200: mean={lvl['mean']:.2f} sd={lvl['sd']:.2f} "
+            f"range=[{lvl['range'][0]:.2f}, {lvl['range'][1]:.2f}]"
+        )
         for arm, row in ledger["framework_arms"].items():
             mean = row["nfe_ratio_mean"]
+            sd = row["nfe_ratio_sd"]
             if mean is None:
-                print(f"  {arm:28s} FID={row['framework_fid']:.4f} ratio=outside measured range")
-                continue
+                print(f"  {arm:28s} FID={row['framework_fid']:.4f} iso-FID ratio=not measurable")
+            elif sd is None:
+                print(
+                    f"  {arm:28s} FID={row['framework_fid']:.4f} "
+                    f"iso-FID ratio={mean:.2f}x (resolvable on "
+                    f"{row['n_seeds_measurable']}/{len(seeds)} seeds only)"
+                )
+            else:
+                print(
+                    f"  {arm:28s} FID={row['framework_fid']:.4f} "
+                    f"iso-FID ratio mean={mean:.2f}x sd={sd:.2f} "
+                    f"range=[{row['nfe_ratio_min']:.2f}, {row['nfe_ratio_max']:.2f}]"
+                )
             print(
-                f"  {arm:28s} FID={row['framework_fid']:.4f} "
-                f"ratio mean={mean:.2f}x sd={row['nfe_ratio_sd']:.2f} "
-                f"range=[{row['nfe_ratio_min']:.2f}, {row['nfe_ratio_max']:.2f}] "
-                f"(n={row['n_seeds_measurable']})"
+                f"    matched NFE=50 delta: mean={row['matched_nfe_delta_pct_mean']:+.2f}% "
+                f"range=[{row['matched_nfe_delta_pct_min']:+.2f}, "
+                f"{row['matched_nfe_delta_pct_max']:+.2f}] over {len(row['matched_nfe50'])} seeds"
             )
         print(f"  wrote {out.relative_to(REPO_ROOT)}")
         return 0
