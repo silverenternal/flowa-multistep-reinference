@@ -77,17 +77,20 @@ def _load_runner():
     return mod
 
 
-def run_baseline_curve(nfes: list[int], n_samples: int, seed: int) -> dict:
+def run_baseline_curve(
+    nfes: list[int], n_samples: int, seed: int, out_dir: Path | None = None
+) -> dict:
     runner = _load_runner()
     w247 = _load_w247()
     ref_feats = np.load(REF_FEATS_NPZ, allow_pickle=False)["features"].astype(np.float64)
     adapter = runner._make_adapter(
         CHECKPOINT, num_steps=max(nfes), solver="euler", device="cuda"
     )
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    out_dir = OUT_DIR if out_dir is None else out_dir
+    out_dir.mkdir(parents=True, exist_ok=True)
     curve: dict[str, dict] = {}
     for nfe in nfes:
-        run_dir = OUT_DIR / f"baseline-nfe{nfe}"
+        run_dir = out_dir / f"baseline-nfe{nfe}"
         path, wall = runner._run_baseline(
             adapter=adapter,
             n_samples=int(n_samples),
@@ -99,11 +102,12 @@ def run_baseline_curve(nfes: list[int], n_samples: int, seed: int) -> dict:
         feats = w247._load_or_compute_features(cache, "baseline", path)
         fid = float(w247._fid_numpy(feats, ref_feats))
         curve[str(nfe)] = {"fid": fid, "wall_seconds": float(wall), "source": "measured_here"}
-        print(f"[gap49] baseline nfe={nfe}: FID={fid:.4f} wall={wall:.1f}s", flush=True)
+        print(f"[gap49] seed={seed} baseline nfe={nfe}: FID={fid:.4f} wall={wall:.1f}s", flush=True)
 
     # Merge the committed GAP-12 baseline points (NFE 50/100/200) so the
     # iso-FID interpolation spans the full measured range without re-running.
-    if GAP12_JSON.exists():
+    # Those points are seed 42, so they must not be attached to another seed.
+    if GAP12_JSON.exists() and int(seed) == 42:
         gap12 = json.loads(GAP12_JSON.read_text())
         for nfe_key, row in gap12.get("per_baseline_nfe", {}).items():
             if nfe_key in curve:
@@ -156,6 +160,58 @@ def _crossing_sensitivity(curve: dict[str, dict], target_fid: float, delta: floa
     return {
         f"fid_minus_{delta:g}": better,
         f"fid_plus_{delta:g}": worse,
+    }
+
+
+def analyze_multiseed(per_seed_curves: dict[int, dict]) -> dict:
+    """Iso-FID ledger with the baseline curve measured on several seeds.
+
+    The framework arm is a deterministic function of ``(scheduler, m)``: its
+    FID does not depend on the sampling seed (GAP-46 measured the spread as
+    exactly zero). The seed therefore only moves the *baseline* curve, which
+    is what this function propagates into the ratio.
+    """
+    gap12 = json.loads(GAP12_JSON.read_text())
+    arms = gap12["per_baseline_nfe"]["200"]["framework_arms"]
+    framework_nfe = 50.0
+    seeds = sorted(per_seed_curves)
+    rows: dict[str, dict] = {}
+    for arm, row in arms.items():
+        fw_fid = float(row["fid_headline"])
+        per_seed: dict[str, dict] = {}
+        for seed in seeds:
+            curve = per_seed_curves[seed]["curve"]
+            crossing = _interp_nfe_for_fid(curve, fw_fid)
+            per_seed[str(seed)] = {
+                "baseline_nfe_at_iso_fid": crossing,
+                "nfe_ratio_baseline_over_framework": (
+                    None if crossing is None else crossing / framework_nfe
+                ),
+                "baseline_fid_at_nfe200": float(curve.get("200", {}).get("fid", float("nan"))),
+            }
+        valid = [v["nfe_ratio_baseline_over_framework"] for v in per_seed.values()]
+        valid = [v for v in valid if v is not None]
+        rows[arm] = {
+            "framework_fid": fw_fid,
+            "framework_nfe": framework_nfe,
+            "per_seed": per_seed,
+            "n_seeds_measurable": len(valid),
+            "nfe_ratio_mean": float(np.mean(valid)) if valid else None,
+            "nfe_ratio_sd": float(np.std(valid, ddof=1)) if len(valid) > 1 else None,
+            "nfe_ratio_min": float(min(valid)) if valid else None,
+            "nfe_ratio_max": float(max(valid)) if valid else None,
+        }
+    return {
+        "kind": "gap49_compute_ledger_multiseed",
+        "timestamp_utc": datetime.now(UTC).isoformat(),
+        "protocol": (
+            "same frozen checkpoint, no retraining; the baseline FID-vs-NFE curve is "
+            "measured per seed, the framework FID is seed-invariant by construction"
+        ),
+        "seeds": seeds,
+        "framework_nfe": framework_nfe,
+        "baseline_curves": {str(s): per_seed_curves[s]["curve"] for s in seeds},
+        "framework_arms": rows,
     }
 
 
@@ -370,16 +426,62 @@ def main() -> int:
     ap.add_argument("--baseline-nfes", default="5,10,20,25")
     ap.add_argument("--n-samples", type=int, default=200)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument(
+        "--seeds",
+        default=None,
+        help="comma-separated seeds for a multi-seed baseline curve; when set, "
+        "writes baseline_curve_multiseed.json and skips the single-seed ledger",
+    )
     ap.add_argument("--skip-runs", action="store_true")
     args = ap.parse_args()
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    nfes = [int(x) for x in str(args.baseline_nfes).split(",") if x.strip()]
+
+    if args.seeds:
+        seeds = [int(x) for x in str(args.seeds).split(",") if x.strip()]
+        combined_path = OUT_DIR / "baseline_curve_multiseed.json"
+        per_seed_curves: dict[int, dict] = {}
+        for seed in seeds:
+            seed_dir = OUT_DIR / f"seed{seed}"
+            doc = run_baseline_curve(nfes, args.n_samples, seed, out_dir=seed_dir)
+            (OUT_DIR / f"baseline_curve_seed{seed}.json").write_text(
+                json.dumps(doc, indent=2) + "\n"
+            )
+            per_seed_curves[seed] = doc
+        combined = {
+            "kind": "gap49_baseline_fid_curves",
+            "timestamp_utc": datetime.now(UTC).isoformat(),
+            "n_samples": int(args.n_samples),
+            "seeds": seeds,
+            "curves": {str(s): per_seed_curves[s]["curve"] for s in seeds},
+        }
+        combined_path.write_text(json.dumps(combined, indent=2) + "\n")
+        ledger = analyze_multiseed(per_seed_curves)
+        out = OUT_DIR / "compute_ledger_multiseed.json"
+        out.write_text(json.dumps(ledger, indent=2) + "\n")
+        print("\n" + "=" * 78)
+        print(f"GAP-49b — multi-seed iso-FID ledger (seeds={seeds})")
+        print("=" * 78)
+        for arm, row in ledger["framework_arms"].items():
+            mean = row["nfe_ratio_mean"]
+            if mean is None:
+                print(f"  {arm:28s} FID={row['framework_fid']:.4f} ratio=outside measured range")
+                continue
+            print(
+                f"  {arm:28s} FID={row['framework_fid']:.4f} "
+                f"ratio mean={mean:.2f}x sd={row['nfe_ratio_sd']:.2f} "
+                f"range=[{row['nfe_ratio_min']:.2f}, {row['nfe_ratio_max']:.2f}] "
+                f"(n={row['n_seeds_measurable']})"
+            )
+        print(f"  wrote {out.relative_to(REPO_ROOT)}")
+        return 0
+
     curve_path = OUT_DIR / "baseline_curve.json"
     if args.skip_runs and curve_path.exists():
         curve_doc = json.loads(curve_path.read_text())
         # allow re-analysis after extending the NFE list
     else:
-        nfes = [int(x) for x in str(args.baseline_nfes).split(",") if x.strip()]
         curve_doc = run_baseline_curve(nfes, args.n_samples, args.seed)
         curve_path.write_text(json.dumps(curve_doc, indent=2) + "\n")
 
