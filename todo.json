@@ -26,7 +26,7 @@
     "as_of": "2026-10-18",
     "gating_risk": "empirical axis, not infrastructure (infrastructure is Tier-1 grade)",
     "why": "Only R6 is an unconditional STRONG cell. R2 is significant but d=-0.099; R5b dies under a tuned baseline; R5c is smoke-only and the production checkpoint flips to baseline-wins (+10.37%); R1's win is init-attributed and its pooled effect fell from +0.1609 to +0.1178 at NFE=150. The namesake restart-blend still has no clean positive cell.",
-    "decisive_missing_piece": "One pre-registered, power-calibrated positive cell for the restart-blend, against a tuned baseline with Bonferroni control. Candidate A (blend-isolating): K1 real-blend, d=+0.92 -> ~15 seeds. Candidate B (framework breadth): R6 hard-tier, d=+1.19 -> ~9 seeds. Both at 80% power, alpha=0.05/7.",
+    "decisive_missing_piece": "One pre-registered, power-calibrated positive cell for the restart-blend, against a tuned baseline with Bonferroni control. GAP-43 pre-registers R3 fg_dev with the faithful all-channel blend + shared prior (a combination never run), 50 fresh seeds (55, 65, ..., 545; step 10 so solver-seed blocks are disjoint), alpha=0.05/7, |d|>=0.5, plus a 10-seed baseline-NFE=1000 tuned gate. n=50 is the smallest n that powers the 0.5 floor at 80%.",
     "if_met": "Q1-defensible: R6 + K4/K5 + cross-domain breadth + Tier-1 reproducibility infrastructure.",
     "if_not_met": "Major revision at best; reject risk if the blend still has no positive cell."
   },
@@ -75,11 +75,11 @@
       "phase": "1",
       "priority": "P0",
       "owner": "agent",
-      "status": "OPEN",
-      "gap": "The namesake restart-blend has no clean positive cell: R1 is init-attributed (blend adds <=+46 hits; NFE=150 d_pooled +0.1178), R3 is n.s. (p=0.559), R5b dies under a tuned baseline. The near-misses are direction-consistent but underpowered at n=3. Candidate A (blend-isolating): K1 real-restart-blend, d_z=+0.92, 3/3 seeds, p=0.252 at n=3. Candidate B (framework breadth): R6 hard-tier, d_z=+1.19. The old n=3 bar (p<1.95e-4, d_z>17.7) is unreachable for realistic effects and must not be reused.",
-      "acceptance": "A pre-registration exists BEFORE the run (metric, tuned baseline, alpha/k, power-calibrated n, effect-size floor). The chosen cell is run at that n and reported with both seed-level and record-level DL statistics. Positive = clears the pre-registered Bonferroni threshold with |d|>=0.5 against the tuned baseline. If it fails, record a bounded negative and stop claiming a blend win.",
-      "agent_action": "1) Write the pre-registration (A first: ~15 seeds at 80% power, alpha=0.05/7, d=0.92; B fallback: ~9 seeds, d=1.19). 2) Run a cheap screen to confirm the effect survives the tuned baseline. 3) Run the full n. 4) Record in audit + todo.",
-      "evidence": "docs/audit/gap39-flowmol3-real-restart-blend.md; docs/audit/gap40-lineageflow-classifier-aware-restart.md; docs/audit/gap37-statistical-power.md; docs/audit/gap42-scheduler-budget-conservation.md section 9.4"
+      "status": "PRE-REGISTERED",
+      "gap": "The namesake restart-blend has no clean positive cell. A review of the pilots found two design defects: (i) GAP-39's blend run used the legacy arm-keyed prior (shared_prior=false), so its d_z is measured under the pairing defect GAP-37 fixed; (ii) GAP-39's 'K1' endpoint is paper_pb_validity_pct (UFF PoseBusters pb_valid), not the canonical rdkit_validity_pct (saturated at 1.0). The decisive test is therefore R3 fg_dev with the faithful all-channel blend + shared prior, a combination never run. Candidate B (R6 hard-tier) is not a blend cell and is a breadth fallback only.",
+      "acceptance": "Pre-registration committed BEFORE the run: docs/audit/gap43-blend-positive-preregistration.md. R3 fg_dev, real blend (memory 0.5), shared prior, fresh seeds 55, 65, ..., 545 (step 10), n=50, N=1000/arm, alpha=0.05/7, |d_z|>=0.5. Positive = mean<0 AND p<0.0071429 AND |d_z|>=0.5 AND the tuned-baseline gate passes (mean delta_tuned<0 on seeds 55, 65, ..., 145, baseline NFE=1000, best-of per seed). Bounded negative = d_z bootstrap CI lower bound > -0.5. Otherwise inconclusive; only a fresh-seed extension is permitted.",
+      "agent_action": "1) Smoke the combined --shared-prior --real-restart-blend path at N=100 (seeds 45/46) and verify determinism on a rerun. 2) Commit tools/gap43_blend_positive_analysis.py + tests/test_gap43_analysis.py + the run-metadata recorder. 3) Run the 50-seed primary (~5.8 h) and the 10-seed tuned gate (~2.8 h) on cuda:0. 4) Apply the pre-registered decision rule. 5) Record in audit + todo.",
+      "evidence": "docs/audit/gap43-blend-positive-preregistration.md; docs/audit/gap37-statistical-power.md; docs/audit/gap39-flowmol3-real-restart-blend.md; docs/audit/gap12-tuned-baseline.md section 4.2; docs/audit/gap27-r3-power.md; docs/audit/gap42-scheduler-budget-conservation.md section 9.4"
     },
     {
       "id": "GAP-15-VENUE",
