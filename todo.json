@@ -60,8 +60,8 @@
       "cell": "R1",
       "metric": "hmmscan_total_hits",
       "current": "PARTIAL: d=+0.1178 at NFE=150 (n=3); +0.1609 at NFE=10; init-attributed",
-      "blocker": "No blend-off (m=0) arm at the canonical NFE=150 budget. GAP-25 isolated the blend at NFE=10 and got an approximately zero point estimate with an upper bound of +46 hits, so the observed R1 win cannot be credited to the namesake blend.",
-      "plan": "GAP-45-R1-BLEND-OFF-150: paired blend-on vs blend-off at NFE=150, N=200 x 3 seeds, canonical HMMER counter.",
+      "blocker": "No blend-off arm at the canonical NFE=150 budget. GAP-25 isolated the blend at NFE=10 and got an approximately zero point estimate with an upper bound of +46 hits, so the observed R1 win cannot be credited to the namesake blend. Note the convention: the adapter blend is m*prior + (1-m)*fresh with m = 1 - beta, so a true blend-off (identity restart) is beta = 0 / m = 1, NOT m = 0. GATE FINDING (2026-10-18): the GAP-25/D-004b framework manifests record nfe_per_record=10 with restart_min_nfe=20, and the driver downgrades n_rounds to 1 below that threshold, so the 'blend' arm never ran apply_restart_distribution in a feeding round. B~C is therefore not evidence that the blend is zero; the blend has not been tested at any budget.",
+      "plan": "GAP-45-R1-BLEND-OFF-150: paired blend-on vs blend-off at NFE=150, N=200 x 3 seeds, canonical HMMER counter. Blend-off arm = `--beta-override 0.0` (m = 1, identity restart); blend-on arm = the canonical default (beta = 0.5 * 50/150 = 0.1667 at NFE=150).",
       "acceptance": "Delta(blend_on - blend_off) with a 95% CI. CI excludes 0 in the positive direction -> the blend gets a second positive cell; CI includes 0 -> R1 stays init-attributed and PARTIAL.",
       "cost": "~8-9 h CPU (6 arms x ~81 min at N=200 + HMMER)",
       "priority": "P1",
@@ -214,10 +214,10 @@
       "priority": "P1",
       "owner": "agent",
       "status": "PLANNED",
-      "gap": "R1's canonical win (d=+0.1178 at NFE=150) is init-attributed because the blend-off (m=0) arm has only been run at NFE=10 (GAP-25: approximately zero, upper bound +46 hits). The namesake blend has therefore never been credited or cleared at the canonical budget.",
+      "gap": "R1's canonical win (d=+0.1178 at NFE=150) is init-attributed because the blend-off arm has only been run at NFE=10 (GAP-25: approximately zero, upper bound +46 hits). The namesake blend has therefore never been credited or cleared at the canonical budget. Convention note: the adapter blend is m*prior + (1-m)*fresh with m = 1 - beta, so blend-off is beta = 0 (m = 1, identity restart), not m = 0. GATE FINDING (2026-10-18): the GAP-25/D-004b framework manifests record nfe_per_record=10 with restart_min_nfe=20, and the driver downgrades n_rounds to 1 below that threshold, so the 'blend' arm never ran apply_restart_distribution in a feeding round. B~C is therefore not evidence that the blend is zero; the blend has not been tested at any budget.",
       "acceptance": "Paired blend-on vs blend-off at NFE=150, N=200 x 3 seeds, canonical HMMER counter. Delta(blend_on - blend_off) with a 95% CI: excludes 0 positive -> the blend gets credit; includes 0 -> R1 stays init-attributed.",
-      "agent_action": "1) Add a blend-off flag (m=0) to the R1 driver (additive, default off). 2) Run 3 seeds x 2 arms at N=200, NFE=150, gate-open. 3) HMMER both arms. 4) Paired t + CI. 5) Record in audit + todo. Do not change the frozen R1 headline.",
-      "evidence": "docs/audit/gap25-r1-blend-isolation.md section 6; docs/audit/gap41b-r1-nfe-fidelity.md; docs/audit/gap42-scheduler-budget-conservation.md section 9.4"
+      "agent_action": "1) Add a blend-off flag (beta = 0) to the R1 driver (additive, default off). 2) Run 3 seeds x 2 arms at N=200, NFE=150, restart_min_nfe=5, gate-open. 3) HMMER both arms. 4) Paired t + CI. 5) Record in audit + todo. Do not change the frozen R1 headline.",
+      "evidence": "docs/audit/gap25-r1-blend-isolation.md sections 2 and 6; docs/audit/gap41b-r1-nfe-fidelity.md; docs/audit/gap42-scheduler-budget-conservation.md section 9.4; docs/audit/gap45-r1-blend-off-wiring.md"
     },
     {
       "id": "GAP-46-R5B-MEMORY-SWEEP",

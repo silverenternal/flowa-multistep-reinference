@@ -475,6 +475,123 @@ def test_make_framework_policy_paper_quantities_none_falls_back_to_legacy() -> N
         )
 
 
+def test_make_framework_policy_beta_override_zero_is_blend_off() -> None:
+    """GAP-45 — ``beta_override=0.0`` is a true blend-off at every NFE.
+
+    The restart blend is ``m * prior + (1 - m) * fresh`` with
+    ``m = 1 - beta``, so β = 0 makes the blend the identity. The
+    override must survive the NFE-adaptive scaling
+    (``0 * scale == 0``), which is why it is applied *before* the
+    scaling.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    adapter = default_flowmol3_adapter(force_mode="synthetic", nfe_budget=10)
+
+    for nfe in (0, 10, 50, 150):
+        policy = tools._make_framework_policy(
+            adapter, target_round=0, seed=42,
+            paper_quantities=None, nfe=int(nfe),
+            beta_override=0.0,
+        )
+        betas = [float(v) for v in policy.beta_by_channel.values()]
+        assert betas, "policy must carry at least one channel"
+        assert all(abs(b) < 1e-12 for b in betas), (
+            f"nfe={nfe}: beta_override=0.0 must survive the NFE scaling "
+            f"and yield β=0 (memory fraction 1.0), got {betas}"
+        )
+
+
+def test_make_framework_policy_beta_override_none_preserves_legacy() -> None:
+    """GAP-45 — ``beta_override=None`` (default) keeps the canonical β.
+
+    Byte-stability contract: with ``nfe=0`` the legacy path is β=0.5;
+    with ``nfe=150`` and NFE_REF=50 it is ``0.5 * 50/150``. Passing
+    ``None`` explicitly must be identical to omitting the kwarg.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    adapter = default_flowmol3_adapter(force_mode="synthetic", nfe_budget=10)
+
+    omitted = tools._make_framework_policy(
+        adapter, target_round=0, seed=42, paper_quantities=None, nfe=0,
+    )
+    explicit_none = tools._make_framework_policy(
+        adapter, target_round=0, seed=42, paper_quantities=None, nfe=0,
+        beta_override=None,
+    )
+    assert omitted.policy_hash == explicit_none.policy_hash, (
+        "beta_override=None must be byte-identical to omitting the kwarg"
+    )
+
+    beta_0 = float(next(iter(explicit_none.beta_by_channel.values())))
+    assert abs(beta_0 - 0.5) < 1e-12, f"nfe=0 legacy β must be 0.5, got {beta_0}"
+
+    scaled = tools._make_framework_policy(
+        adapter, target_round=0, seed=42, paper_quantities=None, nfe=150,
+        beta_override=None,
+    )
+    beta_150 = float(next(iter(scaled.beta_by_channel.values())))
+    assert abs(beta_150 - (0.5 * 50.0 / 150.0)) < 1e-12, (
+        f"nfe=150 legacy β must be 0.5 * 50/150 = {0.5 * 50 / 150}, "
+        f"got {beta_150}"
+    )
+
+
+def test_make_framework_policy_beta_override_is_clamped() -> None:
+    """GAP-45 — out-of-range overrides are clamped into ``[0, 1]``."""
+    tools = _import_tools_module()
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    adapter = default_flowmol3_adapter(force_mode="synthetic", nfe_budget=10)
+
+    high = tools._make_framework_policy(
+        adapter, target_round=0, seed=42, paper_quantities=None, nfe=0,
+        beta_override=2.5,
+    )
+    low = tools._make_framework_policy(
+        adapter, target_round=0, seed=42, paper_quantities=None, nfe=0,
+        beta_override=-1.0,
+    )
+    assert abs(float(next(iter(high.beta_by_channel.values()))) - 1.0) < 1e-12
+    assert abs(float(next(iter(low.beta_by_channel.values())))) < 1e-12
+
+
+def test_make_framework_policy_beta_override_wins_on_paper_quantity_path() -> None:
+    """GAP-45 — the override is the last word on β.
+
+    The paper-quantity-driven branch produces a scheduler-derived β;
+    an explicit override must replace it (this is what makes the
+    blend-off arm well-defined regardless of which β path the adapter
+    would otherwise take).
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    adapter = default_flowmol3_adapter(force_mode="synthetic", nfe_budget=10)
+    pq = {"sheet_A": 0.85, "packing_B": 0.10, "exterior_gap": 0.20}
+
+    baseline = tools._make_framework_policy(
+        adapter, target_round=0, seed=42, paper_quantities=pq,
+    )
+    overridden = tools._make_framework_policy(
+        adapter, target_round=0, seed=42, paper_quantities=pq,
+        beta_override=0.0,
+    )
+    baseline_beta = float(next(iter(baseline.beta_by_channel.values())))
+    overridden_beta = float(next(iter(overridden.beta_by_channel.values())))
+    assert abs(baseline_beta - 0.5) > 1e-6, (
+        f"precondition: the paper-quantity path must not already be 0.5, "
+        f"got {baseline_beta}"
+    )
+    assert abs(overridden_beta) < 1e-12, (
+        f"beta_override=0.0 must win over the scheduler-derived β, "
+        f"got {overridden_beta}"
+    )
+
+
 def test_compute_paper_quantities_returns_none_when_no_profile_fn() -> None:
     """``_compute_paper_quantities`` returns ``None`` when no ``profile_residual_fn``.
 
@@ -593,6 +710,9 @@ def test_solve_framework_paper_quantity_driven_beta_changes_per_round() -> None:
             # so pre-Wave-275 callers see byte-stable behaviour).
             tier_aware_baseline_metrics: Any = None,
             current_record_id: Any = None,
+            # GAP-45 — accept and forward the diagnostic β override so
+            # this stub keeps matching ``_make_framework_policy``.
+            beta_override: float | None = None,
         ) -> Any:
             policy = original_make_policy(
                 adapter,
@@ -603,6 +723,7 @@ def test_solve_framework_paper_quantity_driven_beta_changes_per_round() -> None:
                 tier_aware_n_cap=tier_aware_n_cap,
                 tier_aware_baseline_metrics=tier_aware_baseline_metrics,
                 current_record_id=current_record_id,
+                beta_override=beta_override,
             )
             captured_betas.append(
                 float(next(iter(policy.beta_by_channel.values())))

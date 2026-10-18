@@ -389,6 +389,7 @@ def _make_framework_policy(
     tier_aware_n_cap: float | None = None,
     tier_aware_baseline_metrics: dict[Any, float] | None = None,
     current_record_id: Any = None,
+    beta_override: float | None = None,
 ) -> Any:
     """Build a fresh ``FinalRestartPolicy`` for one framework round.
 
@@ -642,6 +643,13 @@ def _make_framework_policy(
                         # per-round β in production only via this entry
                         # point, so byte-stability of the legacy path is
                         # load-bearing for the D.4 vector suite.
+    # GAP-45 — diagnostic β override (default ``None`` preserves every
+    # byte-stable path). Applied BEFORE the NFE-adaptive scaling so
+    # ``beta_override=0.5`` reproduces the legacy default at any NFE,
+    # and ``beta_override=0.0`` is a true blend-off (memory fraction
+    # 1.0) at every NFE. The clamp keeps the policy payload in [0, 1].
+    if beta_override is not None:
+        beta = min(1.0, max(0.0, float(beta_override)))
     # Wave 173 P4 — NFE-adaptive restart-blend strength. The
     # ``nfe == 0`` sentinel preserves the legacy byte-stable contract
     # (D.4 vector suite + Wave 161 K6 R6 sha256 are both measured
@@ -813,6 +821,7 @@ def _solve_framework(
     bundle: Any = None,
     restart_from_endpoint: bool = False,
     reanchor: bool = True,
+    beta_override: float | None = None,
 ) -> tuple[Any, float]:
     """Framework multi-round ODE solve with the same total NFE budget.
 
@@ -1032,6 +1041,11 @@ def _solve_framework(
                 tier_aware_n_cap=tier_aware_n_cap,
                 tier_aware_baseline_metrics=tier_aware_baseline_metrics,
                 current_record_id=current_record_id,
+                # GAP-45 — diagnostic β override (additive; ``None``
+                # reproduces every byte-stable path). ``0.0`` is a true
+                # blend-off (memory fraction 1.0); see
+                # ``_make_framework_policy`` for the NFE-scaling order.
+                beta_override=beta_override,
             )
             cur_bundle = adapter.apply_restart_distribution(endpoint, policy)
         except CapabilityMissingError:

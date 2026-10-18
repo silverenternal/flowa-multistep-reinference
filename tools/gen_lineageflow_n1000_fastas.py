@@ -131,6 +131,23 @@ SCHEDULER_NAME: str = "cosine"  # overridden by --scheduler in main()
 # path; enabling it is a protocol change that must be opted into
 # explicitly and reported alongside the result.
 RESTART_FROM_ENDPOINT: bool = False  # overridden by --restart-from-endpoint
+# GAP-45 — diagnostic restart-blend override (``None`` = no override).
+# When set, ``_solve_framework`` passes it to
+# ``_make_framework_policy(beta_override=...)``, which replaces the
+# per-round β *before* the NFE-adaptive scaling. ``0.0`` therefore
+# yields β = 0 at every NFE, i.e. memory fraction m = 1 - β = 1: the
+# restart blend becomes the identity (``blended == prior_theta``). With
+# the canonical ``restart_from_endpoint=False`` the prior is the
+# initial condition, so every round re-solves the same x_0; with
+# ``--restart-from-endpoint`` it is the previous round's endpoint, so
+# the rounds form one continuous trajectory. Either way no fresh
+# perturbation enters. That is the "blend-off" arm of GAP-45.
+# ``None`` (default) preserves the canonical constant-β path
+# byte-identically. This is deliberately a *separate* flag from
+# ``--beta-base``: ``--beta-base`` only substitutes the legacy
+# constant and is skipped on the tier-aware path, whereas
+# ``--beta-override`` is the last word on β.
+BETA_OVERRIDE: float | None = None  # overridden by --beta-override in main()
 # Wave 275 P4 / GAP-01 — R6 tier-aware restart-blend knobs. When
 # ``TIER_AWARE_N_CAP`` is in ``(0, 1)`` AND ``TIER_AWARE_BASELINE_METRICS``
 # is a non-empty ``{qid: baseline_pLDDT}`` mapping, ``_solve_framework``
@@ -311,6 +328,12 @@ def _apply_sensitivity_patches(*, beta_base: float, nfe_ref: int) -> None:
         # absorbed here so the underlying policy helper never sees
         # an unexpected kwarg.
         scheduler_name: str = "cosine",
+        # GAP-45 — diagnostic β override. Must be forwarded explicitly:
+        # the wrapper is installed as ``_make_framework_policy`` and a
+        # ``**_extra_kwargs`` swallow would silently drop the override,
+        # making ``--beta-override`` a no-op. Forwarded verbatim; the
+        # inner applies it before the NFE scaling.
+        beta_override: float | None = None,
         **_extra_kwargs: Any,
     ) -> Any:
         """Mirror of the original helper with ``beta_base`` override.
@@ -365,6 +388,9 @@ def _apply_sensitivity_patches(*, beta_base: float, nfe_ref: int) -> None:
                 tier_aware_n_cap=tier_aware_n_cap,
                 tier_aware_baseline_metrics=tier_aware_baseline_metrics,
                 current_record_id=current_record_id,
+                # GAP-45 — forward the diagnostic override so the inner
+                # helper applies it (before NFE scaling).
+                beta_override=beta_override,
             )
             # Wave 275 P4 / GAP-01 — the tier-aware restart-blend path
             # (constant-β branch of ``_make_framework_policy``) already
@@ -383,6 +409,11 @@ def _apply_sensitivity_patches(*, beta_base: float, nfe_ref: int) -> None:
                 paper_quantities is None
                 and _policy is not None
                 and not _tier_active
+                # GAP-45 — when an explicit β override is in force the
+                # inner helper already produced the final (scaled) β.
+                # Re-substituting ``beta_base`` here would silently
+                # cancel it, so the override wins.
+                and beta_override is None
             ):
                 # Replace the per-channel β with ``beta_base``
                 # AFTER the legacy 0.5 has been applied. The NFE-
@@ -603,6 +634,8 @@ def _framework_emit_sequence(
             current_record_id=record_id,
             # GAP-42b — Eq. 2 endpoint chain (default off = byte-stable).
             restart_from_endpoint=bool(RESTART_FROM_ENDPOINT),
+            # GAP-45 — diagnostic β override (default ``None``).
+            beta_override=BETA_OVERRIDE,
         )
     except Exception:
         return None
@@ -964,6 +997,25 @@ def main() -> None:
             "it is a protocol change — report it with every number."
         ),
     )
+    p.add_argument(
+        "--beta-override",
+        type=float,
+        default=None,
+        help=(
+            "GAP-45 — diagnostic per-round β override, applied BEFORE the "
+            "NFE-adaptive ``min(1.0, NFE_REF / max(nfe, 1))`` scaling. "
+            "``0.0`` is a true restart-blend OFF (memory fraction "
+            "m = 1 - β = 1, so ``apply_restart_distribution`` returns the "
+            "prior unchanged and no fresh perturbation enters). With the "
+            "canonical ``--restart-from-endpoint`` OFF the prior is the "
+            "initial condition; with it ON the prior is the previous "
+            "round's endpoint. Default ``None`` applies no "
+            "override and preserves the canonical constant-β path "
+            "byte-identically. Distinct from ``--beta-base``, which only "
+            "substitutes the legacy 0.5 constant and is skipped when the "
+            "tier-aware wrapper is active."
+        ),
+    )
     # Wave 275 P4 / GAP-01 — live tier-aware restart-blend knobs. When
     # ``--tier-aware-n-cap`` is in ``(0, 1)`` AND the baseline-metrics
     # JSONL is supplied, the framework arm wraps its ``n_cap`` producer
@@ -1156,6 +1208,12 @@ def main() -> None:
     # global. Default False keeps the canonical byte-stable path.
     global RESTART_FROM_ENDPOINT
     RESTART_FROM_ENDPOINT = bool(args.restart_from_endpoint)
+    # GAP-45 — wire ``--beta-override`` through the module-level global.
+    # ``None`` (default) leaves the canonical β path untouched.
+    global BETA_OVERRIDE
+    BETA_OVERRIDE = (
+        None if args.beta_override is None else float(args.beta_override)
+    )
     # Wave 275 P4 / GAP-01 — wire the tier-aware restart-blend knobs.
     # ``TIER_AWARE_N_CAP`` in ``(0, 1)`` + a loaded baseline-metric
     # mapping activates the ``TierAwareCodimensionSheetScheduler`` in
@@ -1214,6 +1272,14 @@ def main() -> None:
         # parameter perturbation. Defaults preserve the Wave 158/172b
         # lineageflow ladder anchor.
         "beta_base": float(BETA_BASE),
+        # GAP-45 — record the diagnostic override so the arm is
+        # self-describing. ``None`` = canonical path. The effective
+        # per-round β is ``clamp(override) * min(1, nfe_ref / nfe)``;
+        # for the canonical R1 NFE=150 budget with override 0.0 that
+        # is exactly 0.0 (blend off).
+        "beta_override": (
+            None if BETA_OVERRIDE is None else float(BETA_OVERRIDE)
+        ),
         "restart_min_nfe": int(RESTART_MIN_NFE),
         "nfe_ref": int(NFE_REF),
         # GAP-40 — honest disclosure of the restart-blend gate outcome.

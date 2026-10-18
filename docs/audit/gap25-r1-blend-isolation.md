@@ -133,5 +133,18 @@ authorization). It is **not** applied here.
   bottleneck) or a direct blend-off arm (framework with `m` forced to 0), which
   is a runner change. Not required for the isolation verdict; recorded as the
   natural strengthening.
+
+  > **ADDITIVE correction (2026-10-18, GAP-45).** The phrase "`m` forced to 0"
+  > above is a sign error with respect to the adapter's convention. In
+  > `adaptive_reflow/adapters/lineageflow.py:2027` the blend is
+  > `blended = m * prior_theta + (1 - m) * fresh_theta` with
+  > `m = 1 - beta`. Forcing `m = 0` would be a *full* fresh restart
+  > (`beta = 1`), the maximal perturbation — the opposite of "blend off".
+  > The true blend-off (identity restart, `blended == prior_theta`) is
+  > `beta = 0` / `m = 1`. GAP-45 is implemented as `--beta-override 0.0`
+  > on the R1 driver; see `docs/audit/gap45-r1-blend-off-wiring.md`.
+  > The isolation verdict in §1–§2 is unaffected (it compares arms B and
+  > C, neither of which is a blend-off arm).
+
 - **The init mechanism is the D-004b surrogate**, not the upstream intervention
   sampler (D-004b caveat, unchanged).

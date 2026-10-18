@@ -349,3 +349,127 @@ def test_gen_script_resume_is_byte_exact(tmp_path: Path) -> None:
         )
     # The resumed run must carry the full record count (4 + 4).
     assert len(_read_seq_records(out_resume / "framework.fasta")) == 8
+
+
+# ---------------------------------------------------------------------------
+# 6. GAP-45 — ``--beta-override`` reaches the framework arm
+# ---------------------------------------------------------------------------
+
+
+def test_beta_override_reaches_restart_policy(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """GAP-45 — ``--beta-override`` reaches ``FinalRestartPolicy``.
+
+    The synthetic adapter's argmax decode is insensitive to a small
+    restart-blend perturbation (verified: the state digest changes but
+    every argmax token is unchanged), so a FASTA-bytes assertion would
+    be vacuous. We instead spy on ``apply_restart_distribution`` and
+    read the β actually carried by each per-round policy.
+
+    At ``--nfe 60`` the default path is
+    ``0.5 * min(1, NFE_REF / 60) = 0.5 * 50/60``; with
+    ``--beta-override 0.0`` it must be exactly 0.0.
+    """
+    import json
+
+    from adaptive_reflow.adapters.lineageflow import LineageFlowAdapter
+
+    gen = _import_gen_module()
+    recorded: list[list[float]] = []
+    _orig = LineageFlowAdapter.apply_restart_distribution
+
+    def _spy(self: Any, state: Any, policy: Any) -> Any:
+        recorded.append(
+            [float(v) for v in policy.beta_by_channel.values()]
+        )
+        return _orig(self, state, policy)
+
+    monkeypatch.setattr(
+        LineageFlowAdapter, "apply_restart_distribution", _spy,
+    )
+
+    out_default = tmp_path / "default"
+    out_off = tmp_path / "blend_off"
+
+    _invoke_main_args(
+        gen, [
+            "--outdir", str(out_default), "--n", "6", "--seed", "42",
+            "--nfe", "60",
+        ],
+    )
+    n_default = len(recorded)
+    _invoke_main_args(
+        gen, [
+            "--outdir", str(out_off), "--n", "6", "--seed", "42",
+            "--nfe", "60", "--beta-override", "0.0",
+        ],
+    )
+    off_calls = recorded[n_default:]
+
+    assert n_default > 0, (
+        "the framework arm never called apply_restart_distribution — "
+        "the --nfe 60 run must clear the --restart-min-nfe 20 gate"
+    )
+    assert off_calls, "blend-off arm produced no restart policy"
+
+    expected_default = 0.5 * min(1.0, 50.0 / 60.0)
+    for betas in recorded[:n_default]:
+        for b in betas:
+            assert abs(b - expected_default) < 1e-9, (
+                f"default arm β must be {expected_default}, got {betas}"
+            )
+    for betas in off_calls:
+        for b in betas:
+            assert abs(b) < 1e-12, (
+                f"--beta-override 0.0 must yield β=0 (blend off), "
+                f"got {betas}"
+            )
+
+    # The baseline arm never consults β — byte-identical.
+    assert (out_default / "baseline.fasta").read_bytes() == (
+        out_off / "baseline.fasta"
+    ).read_bytes(), "--beta-override must not touch the baseline arm"
+
+    default_manifest = json.loads(
+        (out_default / "manifest.json").read_text()
+    )
+    off_manifest = json.loads((out_off / "manifest.json").read_text())
+    assert default_manifest["beta_override"] is None
+    assert off_manifest["beta_override"] == 0.0
+
+
+def test_beta_override_default_is_byte_stable(tmp_path: Path) -> None:
+    """GAP-45 — omitting ``--beta-override`` reproduces the canonical run.
+
+    The flag is additive: an explicit ``--beta-override`` equal to the
+    canonical β path is not the same thing as omitting it, but
+    *omitting* it must be byte-identical to a run made before the flag
+    existed. We approximate the pre-flag run with an explicit
+    ``--beta-base 0.5`` (the legacy default), which routes through the
+    pre-existing sensitivity patch and must agree.
+    """
+    gen = _import_gen_module()
+    out_plain = tmp_path / "plain"
+    out_beta_base = tmp_path / "beta_base"
+
+    _invoke_main_args(
+        gen, [
+            "--outdir", str(out_plain), "--n", "6", "--seed", "42",
+            "--nfe", "60",
+        ],
+    )
+    _invoke_main_args(
+        gen, [
+            "--outdir", str(out_beta_base), "--n", "6", "--seed", "42",
+            "--nfe", "60", "--beta-base", "0.5",
+        ],
+    )
+
+    for fname in ("baseline.fasta", "framework.fasta"):
+        assert (out_plain / fname).read_bytes() == (
+            out_beta_base / fname
+        ).read_bytes(), (
+            f"{fname}: the default path changed — --beta-override must "
+            f"be additive (None default)"
+        )
