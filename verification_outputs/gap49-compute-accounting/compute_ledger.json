@@ -1,8 +1,13 @@
 {
   "kind": "gap49_compute_ledger",
-  "timestamp_utc": "2026-10-18T08:13:27.805923+00:00",
+  "timestamp_utc": "2026-10-18T08:28:52.837992+00:00",
   "protocol": "same frozen checkpoint, no retraining; FID on data/cifar10_inception_features.npz",
   "cifar_r5b": {
+    "seed_policy": {
+      "baseline_curve": 42,
+      "framework_arms": 42,
+      "note": "single-seed; the baseline FID level is seed-sensitive (439.2569 at seed 42 vs 449.0180 at seed 43, both NFE=200), so the iso-FID ratio is a seed-42 estimate, not a 3-seed estimate"
+    },
     "baseline_curve": {
       "5": {
         "fid": 491.6636026819298,

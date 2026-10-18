@@ -26,7 +26,7 @@ from the cached curve without touching the GPU).
 |---|---|
 | Primary compute unit | **NFE** (exact, hardware-independent, same checkpoint + solver) |
 | New GPU work | 4 baseline points, N=200, seed 42, `cuda:0` |
-| CIFAR iso-FID, CodimensionSheet | baseline needs **118.8 NFE** to match framework@50 → **2.38×** (robust: 1.96–2.82 at ±1 FID) |
+| CIFAR iso-FID, CodimensionSheet | baseline needs **118.8 NFE** to match framework@50 → **2.38×** (interpolation band 1.96–2.82 at ±1 FID; **seed 42 only**) |
 | CIFAR iso-FID, CosineAnneal | 59.3 NFE → **1.19×** (fragile: 0.98–1.42 at ±1 FID) |
 | CIFAR iso-FID, EvidenceDriven / FreeTraj | **0.58× / 0.76×** — framework *costs* compute at matched quality |
 | CIFAR ceiling | baseline@200 NFE = **439.25 FID**, better than all four framework arms → the win is **budget-conditional, never a quality-ceiling win** |
@@ -120,6 +120,17 @@ timing. FID is unaffected by warm-up.
 | CodimensionSheet | 442.8993 | 118.8 | **2.38×** | [98, 141] → 1.96–2.82 | [86.1, 163.4] → 1.72–3.27 |
 | EvidenceDriven | 453.8788 | 29.2 | **0.58×** | [26, 33] → 0.52–0.66 | [22.7, 36.2] → 0.45–0.72 |
 | FreeTraj | 451.4061 | 37.8 | **0.76×** | [34, 41] → 0.68–0.82 | [30.9, 44.7] → 0.62–0.89 |
+
+**Seed caveat (load-bearing).** The whole curve and all four arms are
+**seed 42 only**. The baseline FID at a fixed NFE is itself seed-sensitive: the
+GAP-46 grid measures baseline@200 NFE at **439.2569 (seed 42)** and
+**449.0180 (seed 43)**, a 9.8-FID spread. The ±1/±2 bands above bound
+*interpolation* error only; they do **not** cover seed-level variation. The
+defence is that the framework and baseline arms come from the same seed, so
+the *difference* (CodimensionSheet −5.0 FID at NFE=50) should be more stable
+than the level — but that is an argument, not a measurement. Until the curve
+is repeated at seeds 43/44, the 2.38× must be read as a **seed-42 estimate**
+(see §8, action 1).
 
 ### 3.3 Matched-NFE delta at NFE=50
 
@@ -254,6 +265,7 @@ with a documented protocol (§8).
 | R2 | any | `not_applicable` | DAE encode/decode, no flow rollout, no NFE knob (GAP-12 §4.1) |
 | K4/K5/K7 | any | `not_applicable` | LineageFlow bare-RNG baseline, no solver (GAP-12 §3) |
 | CIFAR | wall-clock | `not_recorded` | GAP-12 run dirs record per-round `n_steps` but no timing |
+| CIFAR | seed spread of the iso-FID ratio | `single_seed` | curve measured at seed 42 only; baseline@200 differs by 9.8 FID between seeds 42 and 43 |
 
 ---
 
@@ -293,14 +305,19 @@ change any conclusion. Artifact: `repro-check-nfe25-flowmol3venv/`.
 
 ## 8. Unresolved / next actions
 
-1. **Clean wall-clock calibration** (deferred, not blocking). Requires an
+1. **Repeat the curve at seeds 43/44** (8 points, ~15 min on an exclusive
+   GPU). This is the highest-value follow-up: it converts the only positive
+   compute number (2.38×) from a seed-42 estimate into a 3-seed estimate with
+   a real seed spread. Deferred only because `cuda:0` is held by the GAP-46
+   grid.
+2. **Clean wall-clock calibration** (deferred, not blocking). Requires an
    exclusive GPU; NFE is exact so the ledger does not depend on it. If run,
    report `a` and `b` per domain and re-derive the wall-clock ratios.
-2. **R6 curve re-run** with a documented protocol (N, seed, rounds, config) if
+3. **R6 curve re-run** with a documented protocol (N, seed, rounds, config) if
    it is ever to be cited; until then §5.2 is corroborating only.
-3. **The compute claim is scheduler-scoped.** The 2.38× belongs to
+4. **The compute claim is scheduler-scoped.** The 2.38× belongs to
    CodimensionSheet, not to "the framework". A cross-domain compute win needs a
    scheduler that wins at iso-FID on ≥2 domains — that is GAP-46's question,
    and its CIFAR grid is running separately.
-4. **No manuscript edit here.** The frozen surfaces were not touched; adopting
+5. **No manuscript edit here.** The frozen surfaces were not touched; adopting
    this ledger into the paper is a separate user-gated increment.

@@ -347,6 +347,15 @@ def analyze(curve_doc: dict) -> dict:
         "timestamp_utc": datetime.now(UTC).isoformat(),
         "protocol": "same frozen checkpoint, no retraining; FID on data/cifar10_inception_features.npz",
         "cifar_r5b": {
+            "seed_policy": {
+                "baseline_curve": 42,
+                "framework_arms": 42,
+                "note": (
+                    "single-seed; the baseline FID level is seed-sensitive "
+                    "(439.2569 at seed 42 vs 449.0180 at seed 43, both NFE=200), so the "
+                    "iso-FID ratio is a seed-42 estimate, not a 3-seed estimate"
+                ),
+            },
             "baseline_curve": curve,
             "framework_arms": rows,
         },
