@@ -20,11 +20,11 @@ It records what the code and the frozen artifacts actually do, and separates
    `evidence_driven` leads on MNIST smoke FID and `nfe_aware_memory` leads on the
    short-budget CIFAR screen. No arm wins every domain (§4).
 2. **"10 of 11 headline cells use `CosineAnnealScheduler`" is not supported by the code.**
-   Seven of the eleven cells instantiate **no scheduler at all**; the three
-   LineageFlow cells pass the string `"cosine"`, which `tools/eval/framework.py:914-920`
-   routes to a **legacy uniform NFE split**, not to `CosineAnnealScheduler` (§2.2).
-   The cells that do instantiate a real scheduler are R5a (`PaperRatioAdaptiveScheduler`),
-   R5b (four arms), and R5c (three arms).
+   Eight of the eleven cells instantiate **no scheduler object**: R2, R3, K1, K7
+   construct none; R1/K4/K5 pass the string `"cosine"`, which `tools/eval/framework.py:914-920`
+   routes to a **legacy uniform NFE split**; R6 is a post-hoc counterfactual.
+   Only R5a (`PaperRatioAdaptiveScheduler`), R5b (four arms), and R5c (three arms)
+   construct a real scheduler (§2.2).
 3. **"Unify on the best scheduler" is not an executable configuration change.** It would
    move frozen headline numbers on every cell it touches, and on R1 it is a provable
    no-op (cosine and codimension_sheet are byte-identical there, GAP-42 §6). It is a
@@ -177,8 +177,9 @@ already encodes (cosine for short/adaptive/sequential, codimension for long runs
 
 Four independent blockers, in increasing severity:
 
-1. **Most cells have nothing to unify.** 7 of 11 cells instantiate no scheduler
-   (§2.2). "Switching" them means adding a multi-round re-inference loop that was
+1. **Most cells have nothing to unify.** 8 of 11 cells do not instantiate a
+   scheduler object (4 construct none, 3 use the legacy label, 1 is a counterfactual;
+   §2.2). "Switching" them means adding a multi-round re-inference loop that was
    never part of their protocol — a new experiment, not a config change.
 2. **The string `"cosine"` is a byte-stability contract.** `framework.py:901-911`
    documents that the legacy split is preserved so the Wave 158 / Wave 161 / Wave 172b
