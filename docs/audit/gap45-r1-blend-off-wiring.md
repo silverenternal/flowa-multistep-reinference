@@ -209,6 +209,26 @@ qualitatively on this lever. Any statement about "the blend does
 nothing" must name the regime; the synthetic result is an
 argmax-collapse artifact, not evidence about the mechanism.
 
+### 3.3 N=20 driver smoke (confirms the wiring end-to-end)
+
+Full driver, not a direct adapter probe: `--n 20 --nfe 150 --n-rounds 3
+--restart-min-nfe 5 --seed 42`, blend-on (default) vs
+`--beta-override 0.0`, `.venvs/lineageflow_venv`, `cuda:0`
+(`verification_outputs/gap45-r1-blend-off-150/smoke/{on,off}/`).
+
+| Artifact | Result |
+|---|---|
+| `baseline.fasta` SHA-256 | `9fab8535…` in both arms — **identical** |
+| `framework.fasta` SHA-256 | `abbc2068…` (on) vs `6645e81c…` (off) |
+| Per-record decoded sequences | **0 / 20 identical** |
+| off manifest | `beta_override: 0.0`, `effective_n_rounds: 3`, `beta_base: 0.5` |
+| on manifest | `beta_override: null`, `effective_n_rounds: 3`, `beta_base: 0.5` |
+
+This reproduces §3.2 at the driver level (every record changes), rules
+out a baseline-side effect, and confirms the gate-open configuration
+(`effective_n_rounds == n_rounds == 3`) that the real sweep must use.
+Wall clock: 5 m 03 s (on) / 10 m 24 s (off) for 20 records.
+
 ---
 
 ## 4. Prescribed sweep (not run here)
