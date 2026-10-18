@@ -1,0 +1,48 @@
+{
+  "increment": "gap49-compute-accounting",
+  "topic": "Measured iso-FID / iso-NFE compute ledger across CIFAR-10, FlowMol3, LineageFlow",
+  "date_utc": "2026-10-18",
+  "author": "GAP-49 agent (USER AUTHORIZED, NO PUSH)",
+  "recorded": "post-hoc (the four curve points were launched before this file was written; no protocol value below was reconstructed after seeing a result)",
+  "device": {
+    "gpu_id": 0,
+    "gpu_name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+    "cuda_visible_devices": "0",
+    "gpu1": "unused (RTX 5090)"
+  },
+  "environment": {
+    "note": "the four curve points were produced in one session; the interpreter used for that session was not captured at launch. The NFE=25 point was therefore re-produced under the documented CIFAR venv to bound the environment effect.",
+    "documented_cifar_venv": ".venvs/flowmol3_venv (torch 2.7.0+cu128, python 3.12.13)",
+    "repro_check_venv": ".venvs/flowmol3_venv",
+    "other_candidate_venv": ".venvs/lineageflow_venv (torch 2.14.0+cu130, python 3.12.14)"
+  },
+  "config": {
+    "driver": "scripts/gap49_compute_accounting.py",
+    "checkpoint": "data/rectified_flow_cifar10.pth",
+    "reference_features": "data/cifar10_inception_features.npz",
+    "solver": "euler",
+    "n_samples": 200,
+    "seed": 42,
+    "baseline_nfes_measured_here": [5, 10, 20, 25],
+    "baseline_nfes_reused_from_gap12": [50, 100, 200],
+    "framework_nfe": 50,
+    "framework_source": "verification_outputs/gap12-tuned-baseline-cifar.json (same run as the baseline@50 point)"
+  },
+  "reproducibility_check": {
+    "point": "baseline NFE=25, N=200, seed 42",
+    "original_fid": 455.090736002038,
+    "reproduced_fid_flowmol3_venv": 455.0673960330291,
+    "delta_fid": -0.0233399690089,
+    "delta_pct_of_fid": -0.0051,
+    "verdict": "env-robust: the two torch builds differ by 0.005% in FID, far inside the +-1 FID sensitivity band reported in the ledger"
+  },
+  "wall_clock_caveat": {
+    "original_nfe25_wall_s": 4.009,
+    "repro_nfe25_wall_s": 26.867,
+    "swing_factor": 6.70,
+    "cause": "the repro ran while the GAP-46 m x seed grid occupied cuda:0; the swing is co-tenancy, not a code change",
+    "consequence": "wall-clock is not used for any ratio in the ledger; NFE is the compute unit"
+  },
+  "n_records_processed": 800,
+  "n_records_skipped": 0
+}

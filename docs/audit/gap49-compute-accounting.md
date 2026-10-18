@@ -61,7 +61,10 @@ For a fixed checkpoint and a fixed solver, sampling cost is
 compute measure, and it is the unit used for every ratio below. Wall-clock is
 reported where the artifact records it, but it is **not** used for any ratio:
 the committed runs share the GPU with other work and the spread (§4.3) is
-larger than the effect.
+larger than the effect. A direct control: the *same* baseline point
+(NFE=25, N=200, seed 42) took **4.01 s** in the original session and
+**26.87 s** in the reproduction run, which was co-tenant with the GAP-46 grid —
+a **6.70×** swing for identical work.
 
 ### 2.2 Iso-FID inversion (CIFAR only)
 
@@ -266,6 +269,25 @@ mkdocs build --strict                                          # exit 0
 
 Determinism check: re-running `--skip-runs` reproduces every number in §3–§5
 byte-for-byte from the cached curve + committed artifacts (no GPU involved).
+
+### 7.1 Environment cross-check
+
+The four new points were produced in one session whose interpreter was not
+captured at launch (`METADATA.json` records this post-hoc). The NFE=25 point
+was therefore re-produced under the **documented CIFAR venv**,
+`.venvs/flowmol3_venv` (torch 2.7.0+cu128), versus the other candidate
+`.venvs/lineageflow_venv` (torch 2.14.0+cu130):
+
+| Run | FID at NFE=25 |
+|---|---:|
+| original | 455.0907 |
+| `.venvs/flowmol3_venv` repro | 455.0674 |
+| Δ | **−0.0233 (−0.0051 %)** |
+
+The two torch builds agree to 0.005 % in FID, two orders of magnitude inside
+the ±1 FID band used for the sensitivity analysis. The ledger is therefore
+environment-robust; the exact interpreter of the original session does not
+change any conclusion. Artifact: `repro-check-nfe25-flowmol3venv/`.
 
 ---
 

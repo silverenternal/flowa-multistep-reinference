@@ -1,0 +1,262 @@
+{
+  "kind": "gap49_compute_ledger",
+  "timestamp_utc": "2026-10-18T08:13:27.805923+00:00",
+  "protocol": "same frozen checkpoint, no retraining; FID on data/cifar10_inception_features.npz",
+  "cifar_r5b": {
+    "baseline_curve": {
+      "5": {
+        "fid": 491.6636026819298,
+        "wall_seconds": 5.77630368701648,
+        "source": "measured_here"
+      },
+      "10": {
+        "fid": 466.71197670806833,
+        "wall_seconds": 1.608711195003707,
+        "source": "measured_here"
+      },
+      "20": {
+        "fid": 456.80001445605177,
+        "wall_seconds": 3.7576208850368857,
+        "source": "measured_here"
+      },
+      "25": {
+        "fid": 455.090736002038,
+        "wall_seconds": 4.009114302985836,
+        "source": "measured_here"
+      },
+      "50": {
+        "fid": 447.8942533397681,
+        "wall_seconds": null,
+        "source": "gap12_tuned_baseline"
+      },
+      "100": {
+        "fid": 443.74581542193687,
+        "wall_seconds": null,
+        "source": "gap12_tuned_baseline"
+      },
+      "200": {
+        "fid": 439.2524766261005,
+        "wall_seconds": null,
+        "source": "gap12_tuned_baseline"
+      }
+    },
+    "framework_arms": {
+      "CosineAnnealScheduler": {
+        "framework_nfe": 50,
+        "framework_fid": 447.1203832409154,
+        "baseline_nfe_at_iso_fid": 59.327246956335195,
+        "nfe_ratio_baseline_over_framework": 1.186544939126704,
+        "crossing_sensitivity_fid_pm1": {
+          "fid_minus_1": 71.37997643918098,
+          "fid_plus_1": 49.21444297249256
+        },
+        "crossing_sensitivity_fid_pm2": {
+          "fid_minus_2": 83.43270592202674,
+          "fid_plus_2": 45.74052367423991
+        },
+        "framework_fid_at_matched_nfe": 447.1203832409154,
+        "baseline_fid_at_matched_nfe": 447.8942533397681
+      },
+      "CodimensionSheetScheduler": {
+        "framework_nfe": 50,
+        "framework_fid": 442.899269897256,
+        "baseline_nfe_at_iso_fid": 118.84001102844316,
+        "nfe_ratio_baseline_over_framework": 2.376800220568863,
+        "crossing_sensitivity_fid_pm1": {
+          "fid_minus_1": 141.0951768513857,
+          "fid_plus_1": 98.15045472104676
+        },
+        "crossing_sensitivity_fid_pm2": {
+          "fid_minus_2": 163.3503426743283,
+          "fid_plus_2": 86.09772523820098
+        },
+        "framework_fid_at_matched_nfe": 442.899269897256,
+        "baseline_fid_at_matched_nfe": 447.8942533397681
+      },
+      "EvidenceDrivenScheduler": {
+        "framework_nfe": 50,
+        "framework_fid": 453.87879335602975,
+        "baseline_nfe_at_iso_fid": 29.21019094634346,
+        "nfe_ratio_baseline_over_framework": 0.5842038189268692,
+        "crossing_sensitivity_fid_pm1": {
+          "fid_minus_1": 32.68411024459611,
+          "fid_plus_1": 25.736271648090803
+        },
+        "crossing_sensitivity_fid_pm2": {
+          "fid_minus_2": 36.158029542848766,
+          "fid_plus_2": 22.694766022056818
+        },
+        "framework_fid_at_matched_nfe": 453.87879335602975,
+        "baseline_fid_at_matched_nfe": 447.8942533397681
+      },
+      "FreeTrajScheduler": {
+        "framework_nfe": 50,
+        "framework_fid": 451.4060882539841,
+        "baseline_nfe_at_iso_fid": 37.800168919227694,
+        "nfe_ratio_baseline_over_framework": 0.7560033783845539,
+        "crossing_sensitivity_fid_pm1": {
+          "fid_minus_1": 41.274088217480355,
+          "fid_plus_1": 34.32624962097504
+        },
+        "crossing_sensitivity_fid_pm2": {
+          "fid_minus_2": 44.74800751573301,
+          "fid_plus_2": 30.852330322722388
+        },
+        "framework_fid_at_matched_nfe": 451.4060882539841,
+        "baseline_fid_at_matched_nfe": 447.8942533397681
+      }
+    }
+  },
+  "r6_lineageflow_k6": {
+    "status": "not_measurable_ratio",
+    "reason": "baseline pLDDT is constant across NFE in the committed curve",
+    "provenance": "incomplete: the artifact directory holds only the CSV and a PNG, with no N / seed / config record; treat as corroborating, not load-bearing",
+    "corroboration": "the baseline pLDDT is bit-identical at every NFE, consistent with the solver-free bare-RNG baseline documented in GAP-12 \u00a73",
+    "curve": [
+      {
+        "nfe": 10,
+        "baseline_plddt": 42.34383978867649,
+        "framework_plddt": 44.21010858558757
+      },
+      {
+        "nfe": 50,
+        "baseline_plddt": 42.34383978867649,
+        "framework_plddt": 41.49726585525926
+      },
+      {
+        "nfe": 100,
+        "baseline_plddt": 42.34383978867649,
+        "framework_plddt": 40.9457180763388
+      },
+      {
+        "nfe": 200,
+        "baseline_plddt": 42.34383978867649,
+        "framework_plddt": 40.99838953759588
+      },
+      {
+        "nfe": 500,
+        "baseline_plddt": 42.34383978867649,
+        "framework_plddt": 40.77747080350496
+      }
+    ]
+  },
+  "r1_lineageflow": {
+    "status": "cost_model_measured_no_quality_curve",
+    "metric": "hmmscan hits (Pfam family match), measured only at NFE=150",
+    "protocol": {
+      "n_records": 200,
+      "seed": 42,
+      "n_rounds": 3,
+      "nfe_values": [
+        10,
+        150
+      ],
+      "device": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "venv": ".venvs/lineageflow_venv"
+    },
+    "per_record_cost_s": {
+      "nfe10": 3.4,
+      "nfe150": 24.7
+    },
+    "cost_model": {
+      "fixed_s_per_record": 1.8785714285714286,
+      "marginal_s_per_nfe_per_record": 0.15214285714285714,
+      "form": "t = fixed + marginal * NFE"
+    },
+    "wall_clock_ratio_150_over_10": 7.264705882352941,
+    "fixed_share_of_nfe10_cost": 0.5525210084033614,
+    "iso_quality_status": "not_measured",
+    "iso_quality_reason": "no committed quality-vs-NFE curve for R1; the headline is measured at a single budget (NFE=150), so an iso-quality NFE ratio cannot be formed"
+  },
+  "r3_flowmol3": {
+    "status": "measured_matched_nfe_only",
+    "metric": "fg_dev (lower is better); secondary pb_validity_pct",
+    "matched_nfe": 250,
+    "n_total_per_arm": 1000,
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "per_seed": [
+      {
+        "seed": 42,
+        "nfe_baseline": 250,
+        "nfe_framework": 250,
+        "baseline_fg_dev": 0.6051856139617,
+        "framework_fg_dev": 0.6552204023432137,
+        "fg_dev_delta_fw_minus_bl": 0.05003478838151365,
+        "baseline_pb_validity": 0.5987963891675026,
+        "framework_pb_validity": 0.6192384769539078,
+        "pb_validity_delta_fw_minus_bl": 0.020442087786405216,
+        "baseline_sampling_s": 1823.501,
+        "framework_sampling_s": 2203.996,
+        "wall_ratio_fw_over_bl": 1.208661799472553
+      },
+      {
+        "seed": 43,
+        "nfe_baseline": 250,
+        "nfe_framework": 250,
+        "baseline_fg_dev": 0.7875437702930053,
+        "framework_fg_dev": 0.650807567672527,
+        "fg_dev_delta_fw_minus_bl": -0.13673620262047825,
+        "baseline_pb_validity": 0.6202020202020202,
+        "framework_pb_validity": 0.6198595787362087,
+        "pb_validity_delta_fw_minus_bl": -0.0003424414658115271,
+        "baseline_sampling_s": 769.765,
+        "framework_sampling_s": 1481.078,
+        "wall_ratio_fw_over_bl": 1.9240651367625183
+      },
+      {
+        "seed": 44,
+        "nfe_baseline": 250,
+        "nfe_framework": 250,
+        "baseline_fg_dev": 0.5832365450689583,
+        "framework_fg_dev": 0.556875869372047,
+        "fg_dev_delta_fw_minus_bl": -0.02636067569691125,
+        "baseline_pb_validity": 0.4544544544544545,
+        "framework_pb_validity": 0.6900702106318957,
+        "pb_validity_delta_fw_minus_bl": 0.23561575617744118,
+        "baseline_sampling_s": 632.397,
+        "framework_sampling_s": 823.847,
+        "wall_ratio_fw_over_bl": 1.3027370465071781
+      }
+    ],
+    "baseline_nfe_sweep": {
+      "500": {
+        "baseline_fg_dev_per_seed": [
+          0.6741133622794652,
+          0.76657553282712,
+          0.6063587920602945
+        ],
+        "baseline_fg_dev_mean": 0.6823492290556267
+      },
+      "1000": {
+        "baseline_fg_dev_per_seed": [
+          0.5618370681188809,
+          0.7948667657995724,
+          0.625810599031885
+        ],
+        "baseline_fg_dev_mean": 0.6608381443167795
+      }
+    },
+    "wall_ratio_fw_over_bl_median": 1.3027370465071781,
+    "wall_ratio_note": "framework is slower at matched NFE on every seed; the magnitude is not usable because baseline wall-clock spreads 2.9x across seeds (co-tenancy)",
+    "baseline_curve": [
+      {
+        "nfe": 250.0,
+        "fg_dev": 0.6586553097745546
+      },
+      {
+        "nfe": 500.0,
+        "fg_dev": 0.6823492290556267
+      },
+      {
+        "nfe": 1000.0,
+        "fg_dev": 0.6608381443167795
+      }
+    ],
+    "iso_quality_status": "not_identifiable",
+    "iso_quality_reason": "baseline fg_dev is non-monotone in NFE, so the iso-quality crossing is not unique"
+  }
+}

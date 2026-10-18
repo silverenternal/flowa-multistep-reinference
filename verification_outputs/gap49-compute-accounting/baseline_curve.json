@@ -1,0 +1,45 @@
+{
+  "kind": "gap49_baseline_fid_curve",
+  "timestamp_utc": "2026-10-18T08:08:40.382936+00:00",
+  "checkpoint": "data/rectified_flow_cifar10.pth",
+  "device": "cuda:0",
+  "n_samples": 200,
+  "seed": 42,
+  "curve": {
+    "5": {
+      "fid": 491.6636026819298,
+      "wall_seconds": 5.77630368701648,
+      "source": "measured_here"
+    },
+    "10": {
+      "fid": 466.71197670806833,
+      "wall_seconds": 1.608711195003707,
+      "source": "measured_here"
+    },
+    "20": {
+      "fid": 456.80001445605177,
+      "wall_seconds": 3.7576208850368857,
+      "source": "measured_here"
+    },
+    "25": {
+      "fid": 455.090736002038,
+      "wall_seconds": 4.009114302985836,
+      "source": "measured_here"
+    },
+    "50": {
+      "fid": 447.8942533397681,
+      "wall_seconds": null,
+      "source": "gap12_tuned_baseline"
+    },
+    "100": {
+      "fid": 443.74581542193687,
+      "wall_seconds": null,
+      "source": "gap12_tuned_baseline"
+    },
+    "200": {
+      "fid": 439.2524766261005,
+      "wall_seconds": null,
+      "source": "gap12_tuned_baseline"
+    }
+  }
+}

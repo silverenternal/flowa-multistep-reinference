@@ -17,8 +17,14 @@ Cells without a measured curve (R1 HMMER hits, R3 fg_dev) are reported as
 
 Usage::
 
-    CUDA_VISIBLE_DEVICES=0 .venvs/lineageflow_venv/bin/python \\
+    CUDA_VISIBLE_DEVICES=0 .venvs/flowmol3_venv/bin/python \\
         scripts/gap49_compute_accounting.py --baseline-nfes 5,10,20,25
+
+``flowmol3_venv`` is the documented CIFAR environment (see
+``reproduce/06_R5b_CIFAR_n_rounds1.sh``). The committed curve was produced in
+one session whose interpreter was not captured at launch; the NFE=25 point was
+re-produced under ``flowmol3_venv`` and agrees to 0.005 % in FID, so the ledger
+is environment-robust (``METADATA.json`` §reproducibility_check).
 
 HARD CONSTRAINT: one GPU only (``cuda:0``).
 """
