@@ -271,6 +271,12 @@ are `+0.185, −0.013, −0.242, +0.085` (mean `+0.0034`, 2/4 favourable).
 Both are a **wash**. `R = 2` neither improves nor degrades the metrics
 on average; the seed-to-seed spread is larger than the effect.
 
+**Not significant.** `2/4` favourable with a mean of `−0.0003`
+(`fg_dev`) and `+0.0034` (`pb_validity`) is not evidence of a win. No
+significance test is reported because the point estimate is zero; a
+larger block would only estimate the null more precisely. Per the
+no-seed-engineering directive, no extension is run.
+
 **Conclusion.** `R = 2` is null on FlowMol3. It buys no `fg_dev` and
 does not reproduce the R = 1 `pb_validity` advantage (GAP-43: +0.212,
 50/50 seeds) — but it does not destroy it either; the four-seed mean is

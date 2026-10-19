@@ -1,6 +1,6 @@
 {
-  "schema_version": "flowa-state-v4",
-  "purpose": "Current state and open work. History, the full evidence ledger, and the publication assessment live in docs/audit/todo-history.md; this file is the executable plan.",
+  "schema_version": "flowa-state-v5",
+  "purpose": "Executable plan only. History and the full evidence ledger live in docs/audit/todo-history.md; completed gaps are one-line entries in completed_index.",
   "updated_at": "2026-10-19",
   "history": "docs/audit/todo-history.md",
   "no_push": true,
@@ -60,7 +60,7 @@
     "as_of": "2026-10-18",
     "gating_risk": "empirical axis, not infrastructure (infrastructure is Tier-1 grade)",
     "why": "Only R6 is an unconditional STRONG cell. R2 is significant but d=-0.099; R5b dies under a tuned baseline; R5c is smoke-only and the production checkpoint flips to baseline-wins (+10.37%); R1's win is init-attributed and its pooled effect fell from +0.1609 to +0.1178 at NFE=150. The namesake restart-blend still has no clean positive cell.",
-    "decisive_missing_piece": "One pre-registered, power-calibrated positive cell for the restart-blend, against a tuned baseline with Bonferroni control. GAP-43 pre-registers R3 fg_dev with the faithful all-channel blend + shared prior (a combination never run), 50 fresh seeds (55, 65, ..., 545; step 10 so solver-seed blocks are disjoint), alpha=0.05/7, |d|>=0.5, plus a 10-seed baseline-NFE=1000 tuned gate. n=50 is the smallest n that powers the 0.5 floor at 80%.",
+    "decisive_missing_piece": "One pre-registered positive cell for the restart-blend against a tuned baseline. GAP-43 closed the R3 fg_dev route (INCONCLUSIVE, tuned gate fails). GAP-53 closed R>1 (null, 2/4 seeds). The remaining mechanism route is GAP-54: hold the discrete class fixed (stochasticity=0 + coordinate-only restart) and test whether the continuous flow contracts; only a positive paired screen there justifies a larger block. No seed engineering.",
     "if_met": "Q1-defensible: framework+theory core (Thm 4/5, 45/45 law backtest, typed 4-port, 5 checkpoints zero-line, 3 lemmas, byte-stable infrastructure) + one clean positive + the compute ledger.",
     "if_not_met": "Still submittable as a framework/operating-regime paper at TNNLS/TCyb/Information Fusion, but 'steady accept' is not supportable; fall back to KBS/EAAI rather than forcing a SOTA framing.",
     "blocking_point": {
@@ -110,116 +110,71 @@
       "K1 (p_b=0.5676; real-blend d=+0.92 but p=0.252 at n=3)",
       "K7 (direction inverted: framework 12.6x LESS novel)"
     ],
-    "last_decisive_result": "GAP-42f (2026-10-17): NFE=150, N=1000 x 3 seeds; baseline byte-identical (158/159/174); d_pooled +0.1609 -> +0.1178; direction 3/3; R1 stays PARTIAL."
+    "last_decisive_result": "GAP-53 (2026-10-19): R=2 at fixed NFE is a wash on fg_dev and pb_validity (4 seeds, 2/4 favourable each, mean ~0); the CTMC class flip breaks the Lipschitz premise. R=1 remains canonical."
   },
   "metric_remediation": [
     {
       "cell": "R1",
       "metric": "hmmscan_total_hits",
-      "current": "PARTIAL: d=+0.1178 at NFE=150 (n=3); +0.1609 at NFE=10; init-attributed",
-      "blocker": "No blend-off arm at the canonical NFE=150 budget. GAP-25 isolated the blend at NFE=10 and got an approximately zero point estimate with an upper bound of +46 hits, so the observed R1 win cannot be credited to the namesake blend. Note the convention: the adapter blend is m*prior + (1-m)*fresh with m = 1 - beta, so a true blend-off (identity restart) is beta = 0 / m = 1, NOT m = 0. GATE FINDING (2026-10-18): the GAP-25/D-004b framework manifests record nfe_per_record=10 with restart_min_nfe=20, and the driver downgrades n_rounds to 1 below that threshold, so the 'blend' arm never ran apply_restart_distribution in a feeding round. B~C is therefore not evidence that the blend is zero; the blend has not been tested at any budget.",
-      "plan": "GAP-45-R1-BLEND-OFF-150: paired blend-on vs blend-off at NFE=150, N=200 x 3 seeds, canonical HMMER counter. Blend-off arm = `--beta-override 0.0` (m = 1, identity restart); blend-on arm = the canonical default (beta = 0.5 * 50/150 = 0.1667 at NFE=150).",
-      "acceptance": "Delta(blend_on - blend_off) with a 95% CI. CI excludes 0 in the positive direction -> the blend gets a second positive cell; CI includes 0 -> R1 stays init-attributed and PARTIAL.",
-      "cost": "~8-9 h CPU (6 arms x ~81 min at N=200 + HMMER)",
       "priority": "P1",
       "status": "SCHEDULED",
-      "depends_on": "none"
+      "line": "PARTIAL: d=+0.1178 at NFE=150 (n=3); init-attributed; blend-off not yet run at this budget."
     },
     {
       "cell": "R2",
       "metric": "reconstruction_kabsch_rmsd_Angstrom",
-      "current": "STRONG but d=-0.0990 (index-matched two-sample N=1000)",
-      "blocker": "The effect is real but tiny; R2 is structurally compute-invariant on both its headline and its tuned baseline (gap12-tuned-baseline.md section 3), and no lever has been identified that would raise the effect without changing the metric or the input basis.",
-      "plan": "None. Report as an honest-negative small effect and do not promote.",
-      "acceptance": "n/a (terminal)",
-      "cost": "0",
       "priority": "-",
       "status": "TERMINAL",
-      "depends_on": "none"
+      "line": "STRONG but d=-0.0990 (index-matched N=1000); report as honest-negative small effect."
     },
     {
       "cell": "R5a",
       "metric": "W2 (two moons)",
-      "current": "TIE: |delta W2| = 0.0091 < 0.01 floor",
-      "blocker": "The TIE persists at n=7 and n=10; more seeds do not move the point estimate across the floor.",
-      "plan": "None. Report the TIE with the n=3/n=7/n=10 evidence.",
-      "acceptance": "n/a (terminal)",
-      "cost": "0",
       "priority": "-",
       "status": "TERMINAL",
-      "depends_on": "none"
+      "line": "TIE: |delta W2| = 0.0091 < 0.01 floor."
     },
     {
       "cell": "R5b",
       "metric": "FID (CIFAR-10 RF, n_rounds=1)",
-      "current": "tuned-baseline negative: 0/16 (m, scheduler) cells survive. Best cell CodimensionSheet default +1.48% (p=0.206). The boundary is confirmed; m is not a rescue lever when swept alone.",
-      "blocker": "The restart memory fraction m is derived from the scheduler n_cap and is not exposed as a CLI flag, so the one lever the GAP-24 law says could raise q*(m) has never been swept.",
-      "plan": "DONE (GAP-46): exposed m, swept {default,0.25,0.5,0.75} x 3 seeds x 4 schedulers. No survivor.",
-      "acceptance": "Met as a negative: no m with delta<0, p<alpha, tuned-baseline pass. R5b stays a boundary cell.",
-      "cost": "~1-2 h GPU + a runner change under tools/ or scripts/",
       "priority": "P1",
       "status": "COMPLETED (null)",
-      "depends_on": "none"
+      "line": "COMPLETED null (GAP-46): 0/16 tuned-baseline cells survive; boundary confirmed."
     },
     {
       "cell": "R5c",
       "metric": "projection FID (MNIST FM)",
-      "current": "smoke STRONG (-28.43% chunk-mean); production +10.37% baseline-wins; arms at 25/48/25 vs baseline 50",
-      "blocker": "The three arms are not NFE-matched, so the arm ranking (and the smoke-vs-production reading) is confounded. Matching NFE would move the frozen -28.43% number.",
-      "plan": "GAP-44 P2-2: pre-register a matched-NFE (all arms 50) rerun of the smoke and production settings.",
-      "acceptance": "Pre-registration committed before the run; the R5c verdict is restated from the matched-NFE artifact. If the smoke win disappears, R5c demotes.",
-      "cost": "~1 h GPU (wave191 took 10.3 min for 3 arms at N=1000)",
       "priority": "P2",
       "status": "NOT SCHEDULED",
-      "depends_on": "user authorization (moves a frozen number)"
+      "line": "NOT SCHEDULED: smoke -28.43% but production +10.37% baseline-wins; arms not NFE-matched."
     },
     {
       "cell": "R3",
       "metric": "fg_dev (FlowMol3)",
-      "current": "PARTIAL / single-seed PROJECTED: fg_dev -0.0377, p=0.559",
-      "blocker": "n=1 in the canonical artifact; gap27 says a definitive verdict needs ~49 seeds (~13 GPU-hours).",
-      "plan": "GAP-43-BLEND-POSITIVE: 50 fresh seeds, real all-channel blend + shared prior, tuned gate.",
-      "acceptance": "GAP-43 pre-registered decision rule (mean<0 AND p<0.0071429 AND |d_z|>=0.5 AND tuned gate).",
-      "cost": "~8.5-9 h GPU",
       "priority": "P0",
       "status": "PRE-REGISTERED",
-      "depends_on": "GAP-43 smoke + analysis script"
+      "line": "INCONCLUSIVE (GAP-43): fg_dev -0.0192, p=0.130; tuned gate fails; pb_validity +0.212, 50/50 (exploratory)."
     },
     {
       "cell": "K1",
       "metric": "rdkit_validity_pct",
-      "current": "NOT-SIGNIFICANT at K-level alpha: p_b=0.5676",
-      "blocker": "The reported metric is saturated at 1.0 in both arms, so it cannot discriminate. The discriminating metric pb_validity_pct shows the framework advantage growing with baseline compute (+0.020 -> +0.089 -> +0.118 at NFE 250/500/1000), but n=3.",
-      "plan": "GAP-47-K1-PB-METRIC: pre-register pb_validity_pct as the K1 metric and power it (n>=7 seeds or a per-record paired design).",
-      "acceptance": "Pre-registration; p<0.0125 with the new metric at the powered n; otherwise K1 stays NOT-SIGNIFICANT with the metric-defect disclosure.",
-      "cost": "~4 h GPU",
       "priority": "P2",
       "status": "SCHEDULED",
-      "depends_on": "user authorization (changes the K1 metric)"
+      "line": "NOT-SIGNIFICANT at K-level alpha: p_b=0.5676; pb_validity is the candidate metric (GAP-47)."
     },
     {
       "cell": "K5",
       "metric": "hmmscan framework-vs-baseline delta",
-      "current": "SUPPORTED / SUPPORTS-WITH-CAVEAT: cluster-robust d=+1.12, p_b=0.003 at n=3",
-      "blocker": "n=3 paired seeds; the K-level verdict needs n>=7 (4 more seeds).",
-      "plan": "n>=7 paired-seed re-sweep (4 more N=1000 seeds + HMMER).",
-      "acceptance": "p_b<0.0125 at n>=7.",
-      "cost": "~50-60 h CPU (4 more N=1000 seeds x 2 arms at NFE=150 + HMMER; not scheduled)",
       "priority": "P3",
       "status": "NOT SCHEDULED",
-      "depends_on": "compute budget"
+      "line": "SUPPORTED with caveat: cluster-robust d=+1.12, p_b=0.003 at n=3; n>=7 re-sweep needed."
     },
     {
       "cell": "K7",
       "metric": "novel_pct_pfam_twilight",
-      "current": "pctid<30 novelty 46.6% (baseline) vs 3.7% (framework), N=1000 paired per record, seed 42: delta -42.90 pp, 95% CI [-46.09, -39.46], McNemar p=2.30e-102. Direction INVERTED confirmed.",
-      "blocker": "Resolved. The one-arm W280 P driver artifact is real, but the W166 P3 evidence is a genuine two-arm search over the same 1000 records; the paired per-record test confirms the inversion. Remaining limitation: single seed (42); the canonical 63.8M-sequence mmseqs2 target DB is not on disk, so seeds 43/44 cannot be scored without rebuilding it.",
-      "plan": "DONE (GAP-48): paired per-record novelty over the frozen W166 P3 m8 files with Newcombe CI + exact McNemar; runner tools/gap48_k7_two_arm_novelty.py.",
-      "acceptance": "Paired novelty delta with a 95% CI: SATISFIED at n=1000 record pairs (seed 42). Seed-level replication at 42/43/44 is env-blocked (target DB absent), not merely unrun.",
-      "cost": "~1 h CPU (analysis-only)",
       "priority": "P1",
       "status": "CLOSED-CONFIRMED",
-      "depends_on": "none"
+      "line": "CLOSED-CONFIRMED (GAP-48): framework 12.6x LESS novel; direction inverted."
     }
   ],
   "gate_chain": [
@@ -232,51 +187,28 @@
   ],
   "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 15 known failures (3 stale eval stubs that do not accept the GAP-40 classifier_aware_restart kwarg; 12 order-dependent test_paper_metrics cases that pass in isolation).",
   "execution_order": [
-    "GAP-45-R1-BLEND-OFF-150 (P1, ~8-9h CPU; credits or clears the blend at the canonical budget)",
-    "GAP-44-CONFIG-INVENTORY (P1, labels corrected; P2 items user-gated)",
-    "GAP-15-VENUE (P1, user gate; can run in parallel)",
-    "GAP-47-K1-PB-METRIC (P2, user-gated metric change)",
-    "GAP-29-MANUSCRIPT (P2, needs user authorization)",
-    "GAP-20-COVERLETTER (P3, user-only)",
-    "GAP-50-EVIDENCE-GRADE-TABLE (P2, audit draft then user-gated manuscript insertion)",
-    "GAP-51-PAPER-B-SPLIT (P2, user-gated theory-paper outline)"
+    "GAP-54-CLASS-PRESERVING-CONTRACTION (P0, mechanism; no new seeds)",
+    "GAP-45-R1-BLEND-OFF-150 (P1, ~8-9h CPU)",
+    "GAP-44-CONFIG-INVENTORY (P1, P2 items user-gated)",
+    "GAP-15-VENUE (P1, user gate)",
+    "GAP-47-K1-PB-METRIC (P2, user-gated)",
+    "GAP-50-EVIDENCE-GRADE-TABLE (P2, audit draft then user gate)",
+    "GAP-29-MANUSCRIPT (P2, user authorization)",
+    "GAP-51-PAPER-B-SPLIT (P2, user-gated outline)",
+    "GAP-20-COVERLETTER (P3, user-only)"
   ],
   "open_gaps": [
     {
-      "id": "GAP-43-BLEND-POSITIVE",
+      "id": "GAP-54-CLASS-PRESERVING-CONTRACTION",
       "phase": "1",
       "priority": "P0",
       "owner": "agent",
-      "status": "COMPLETED",
-      "gap": "The namesake restart-blend has no clean positive cell. A review of the pilots found two design defects: (i) GAP-39's blend run used the legacy arm-keyed prior (shared_prior=false), so its d_z is measured under the pairing defect GAP-37 fixed; (ii) GAP-39's 'K1' endpoint is paper_pb_validity_pct (UFF PoseBusters pb_valid), not the canonical rdkit_validity_pct (saturated at 1.0). The decisive test is therefore R3 fg_dev with the faithful all-channel blend + shared prior, a combination never run. Candidate B (R6 hard-tier) is not a blend cell and is a breadth fallback only.",
-      "acceptance": "Pre-registration committed BEFORE the run: docs/audit/gap43-blend-positive-preregistration.md. R3 fg_dev, real blend (memory 0.5), shared prior, fresh seeds 55, 65, ..., 545 (step 10), n=50, N=1000/arm, alpha=0.05/7, |d_z|>=0.5. Positive = mean<0 AND p<0.0071429 AND |d_z|>=0.5 AND the tuned-baseline gate passes (mean delta_tuned<0 on seeds 55, 65, ..., 145, baseline NFE=1000, best-of per seed). Bounded negative = d_z bootstrap CI lower bound > -0.5. Otherwise inconclusive; only a fresh-seed extension is permitted.",
-      "agent_action": "1) Smoke + determinism DONE. 2) Analysis + tests committed. 3) 50-seed primary + 10-seed tuned gate DONE. 4) Frozen rule applied: INCONCLUSIVE. 5) Recorded in audit + todo. Follow-up: GAP-52 (charge-channel fix + per-channel m) on fresh seeds.",
-      "evidence": "docs/audit/gap43-blend-positive-preregistration.md; docs/audit/gap37-statistical-power.md; docs/audit/gap39-flowmol3-real-restart-blend.md; docs/audit/gap12-tuned-baseline.md section 4.2; docs/audit/gap27-r3-power.md; docs/audit/gap42-scheduler-budget-conservation.md section 9.4",
-      "result": "DONE 2026-10-19. Verdict INCONCLUSIVE under the frozen rule. 50 seeds x N=1000/arm, NFE=250 matched, shared prior + real all-channel blend (m=0.5). Primary R3 fg_dev: mean delta = -0.01921 (31/50 seeds negative), SD 0.0882, t(49) = -1.540, p = 0.1301 vs alpha = 0.00714, d_z = -0.218 (95% bootstrap CI [-0.512, +0.058]), mean CI [-0.0542, +0.0158]. Tuned-baseline gate FAILS: mean delta_tuned = +0.03418, 3/10 seeds win. So the fg_dev gain is not a compute-efficiency win at this checkpoint. Exploratory K1 pb_validity_pct: mean delta = +0.21165, 50/50 seeds favourable, t = 20.98, p = 3.9e-26, d_z = +2.967 (CI [+2.54, +3.64]) -- a decisive chemical-validity win, but pre-registered as exploratory and NOT promoted by wording. LOO stable (mean range [-0.0248, -0.0134]); 0 flagged seeds. Mechanism caveat: this is the as-wired blend, whose charge channel is linearly mixed then rounded to 6 classes (std 1.0 -> 0.707 at m=0.5; P(neutral) 38% -> 52%); GAP-52 tests the fix. Artifacts: verification_outputs/gap43-blend-positive/{summary.json,summary.md,primary/,tuned_baseline/}; audit: docs/audit/gap43-blend-positive-run.md. No frozen surface touched."
-    },
-    {
-      "id": "GAP-52-CHANNEL-FAITHFUL-BLEND",
-      "phase": "1",
-      "priority": "P1",
-      "owner": "agent",
-      "status": "COMPLETED",
-      "gap": "GAP-43's as-wired restart blend is INCONCLUSIVE on R3 fg_dev (p=0.130) and fails the tuned gate, while winning 50/50 seeds on pb_validity. Code review found two representation-level choices never validated against the upstream: (i) FlowMol3 consumes the charge channel as 6 categorical classes (clip(round(c)+2,0,5)) but the blend treats it as continuous, so a convex blend of two N(0,1) draws shrinks the std 1.0 -> 0.707 at m=0.5 and raises P(neutral) 38.3% -> 52.0%; (ii) one scalar m=0.5 is shared by coordinate, charge and raw_pair even though FinalRestartPolicy supports per-channel beta.",
-      "acceptance": "Pre-registration committed BEFORE the run: docs/audit/gap52-charge-channel-preregistration.md. Dev screen on fresh seeds 1000..1090 (N=200): 2x2 arms C0 (continuous, flat 0.5), C1 (categorical, flat 0.5), C2 (categorical, m=(0.25,0.75,0.75)), C3 (continuous, same per-channel). Winner = lowest mean fg_dev among arms beating C0; if none, stop and record a null. Confirm winner + C0 on fresh seeds 2000..2490 (N=1000, NFE=250, shared prior). POSITIVE iff mean delta<0, p<0.05, |d_z|>=0.5, tuned gate passes, AND mean delta < C0's mean delta. BOUNDED NEGATIVE iff d_z bootstrap CI upper < -0.5. Secondary pb_validity reported, not gated.",
-      "agent_action": "1) DONE: charge_blend_mode + per-channel m wired (default off). 2) DONE: 9 CPU tests. 3) DONE: dev screen on seeds 1000..1090. 4) STOPPED by the pre-registered rule (no survivor); confirm not run. 5) Recorded in audit + todo.",
-      "evidence": "docs/audit/gap52-charge-channel-preregistration.md; docs/audit/gap43-blend-positive-run.md; docs/audit/gap39-flowmol3-real-restart-blend.md",
-      "result": "DONE 2026-10-19. DEV-SCREEN NULL -- no arm beats the as-wired reference, so the pre-registered rule stopped before the 50-seed confirm (not run). 10 fresh seeds (1000..1090), N=200, NFE=250, shared prior. Paired fg_dev delta (fw - bl): C0 continuous/flat -0.02988 (d_z -0.435, p=0.203); C1 categorical/flat -0.01077 (d_z -0.194, p=0.555); C2 categorical/per-channel +0.00787 (d_z +0.085, p=0.795); C3 continuous/per-channel +0.00201 (d_z +0.021, p=0.948). H1 (charge marginal fix) and H2 (per-channel m) are both rejected: neither improves fg_dev, and together they are slightly worse. pb_validity is robust to both: +0.288 (C0), +0.289 (C1), +0.357 (C2), +0.341 (C3), so the GAP-43 K1 win is not an artifact of the charge bias. Conclusion: the as-wired blend has no correctable representation-level defect on fg_dev; GAP-43's INCONCLUSIVE is an effect-size limit. Baselines are bit-identical across arms (determinism check). Artifacts: verification_outputs/gap52-charge-channel/dev/; audit: docs/audit/gap52-charge-channel-run.md. No frozen surface touched. Follow-up: per the user's no-seed-engineering directive, no fresh seed block and no confirmatory extension will be run. The residual fg_dev limit is handed to GAP-53 (initial-condition contraction via R>1 restarts)."
-    },
-    {
-      "id": "GAP-53-INITIAL-CONDITION-CONTRACTION",
-      "phase": "1",
-      "priority": "P0",
-      "owner": "agent",
-      "status": "COMPLETED",
-      "gap": "The framework's mathematical selling point -- that the round structure can break initial-condition sensitivity -- is not yet stated as a measurable property, and the canonical FlowMol3 driver does not exercise it. That driver applies exactly ONE prior-side blend and then a single [0,1] solve (R=1), so the composite map G = Phi o B_m has initial-condition sensitivity bounded by m * exp(L) (L = velocity-field Lipschitz constant). With R restarts the bound becomes m^R * exp(L), so the round count -- not the seed budget -- is the contraction knob. GAP-52 showed the charge fix and per-channel m cannot move R3 fg_dev; GAP-43's residual is an initial-condition/effect-size limit. The user directive is explicit: do NOT buy significance with more seeds (seed engineering); use the mathematics.",
-      "acceptance": "(1) Analytic bound written down: for R restarts with per-round memory m_r and window dt_r, the composite map's initial-condition sensitivity is prod_r(m_r * exp(L * dt_r)) = (prod_r m_r) * exp(L); the contraction condition is prod_r m_r < exp(-L). (2) Feasibility confirmed for a partial-window solve on the upstream path (vector_field.integrate accepts tspan; intermediate (x_t,a_t,c_t,e_t) extractable) WITHOUT modifying data/**. If infeasible, document the fallback and its fidelity gap. (3) Additive default-off --restart-rounds R + --restart-schedule on the canonical R3 driver (R=1 must stay byte-identical). (4) Prior-draw dispersion diagnostic (NOT seed engineering): with K fixed prior draws, S(R,m) = mean pairwise output distance; test S(2)/S(1) ~ m and S(3)/S(1) ~ m^2, with bootstrap CIs. (5) The metric's cross-prior SD must shrink monotonically with R at fixed total NFE, and the mean must not degrade beyond the paired noise. If the contraction does not materialise, record a null: the single-round map is not the bottleneck.",
-      "agent_action": "1) DONE: audit doc with derivation + pre-registered diagnostic. 2) DONE: additive --restart-rounds R (default 1, byte-stable) + batch-path endpoint/restart fix; 15 CPU tests. 3) DONE: paired-perturbation probe + cross-prior metric dispersion + a paired R=2 vs baseline screen on existing seeds. 4) STOPPED: R=2 is dominated by R=1, so no 50-seed re-evaluation. 5) Recorded; 6 gates; commit.",
-      "evidence": "docs/audit/gap52-charge-channel-run.md; docs/audit/gap43-blend-positive-run.md; docs/drafts/paper-A-final.md section 6.5 (conditional contraction); data/FlowMol3/repo/flowmol/models/ctmc_vector_field.py (integrate tspan); adaptive_reflow/algorithm/blender/blender.py",
-      "result": "DONE 2026-10-19. NEGATIVE (mechanism-level). (a) Implementation: --restart-rounds R at fixed TOTAL NFE; R=1 byte-identical. Batch-path fix so observe_endpoint reads traj_*_batch, restart blends per molecule, and the upstream prior consumes per-molecule arrays (tests/test_gap53_batch_endpoint.py 4 + tests/test_gap53_restart_rounds.py 11). (b) Probe (prior 55, eps=1e-2, m=0.5, 4 directions): 3/4 amplify 28-51x, 1/4 contracts (0.12); one cell changed the atom count (24 -> 23). The CTMC's final categorical draw flips a discrete class under a 1e-2 coordinate perturbation, so the realized map is discontinuous across classes and Theorem 4's Lipschitz premise holds only conditional on (a, e). (c) Metric dispersion (K=4 priors, N=100, fixed NFE=250): fg_dev mean/SD 1.114/0.759 at R=1, 0.788/0.321 at R=2, 1.068/0.376 at R=3; S(2)/S(1)=0.559 (CI [0.43, 2.09]). pb_validity mean falls 0.523 -> 0.420 -> 0.342. (d) Paired driver screen (existing seeds 55/105/155/205, N=200, shared prior): d_fg = +0.135, +0.030, -0.116, -0.051 (mean -0.0003, 2/4 favourable); d_pb = +0.185, -0.013, -0.242, +0.085 (mean +0.0034, 2/4 favourable). Both are a wash: R=2 neither improves nor degrades the metrics on average, and it does not reproduce the R=1 pb_validity win but does not destroy it either. Conclusion: on FlowMol3 the round count is a stochastic perturbation, not a contraction; keep the canonical R=1 arm. Artifacts: verification_outputs/gap53-contraction-metric/, verification_outputs/gap53-r2-screen/; audit: docs/audit/gap53-initial-condition-contraction.md. No new seed block; no frozen surface touched. This closes the initial-condition lever for FlowMol3: the framework's defensible FlowMol3 claim remains the R=1 pb_validity win."
+      "status": "PLANNED",
+      "gap": "GAP-53's R=2 result is null (2/4 seeds on both metrics, not significant) because the realized FlowMol3 map is discontinuous: the CTMC's final categorical draw (stochasticity=8.0) flips a discrete class under a 1e-2 coordinate perturbation. Theorem 4 is conditional on a fixed (a,e), so contraction can only be tested by holding the class fixed.",
+      "acceptance": "(1) Additive, default-off `sampler_stochasticity` passthrough (0.0 = deterministic CTMC) plus coordinate-only restart via the existing per-channel memory flags (charge=1, raw_pair=1); R=1 stays byte-stable. (2) Probe on K=8 existing priors at stochasticity=0: dim_changes == 0 and median per-round ratio < 1 with bootstrap CI upper < 1. (3) If it contracts, a paired R=2 screen (same stochasticity in both arms) must give mean d_fg < 0 and >= 3/4 seeds favourable before any larger block. (4) If the class still flips at stochasticity=0, record the lever closed and stop. No new seeds.",
+      "agent_action": "1) Wire the passthrough + CPU tests. 2) Run the probe. 3) If it contracts, run the paired screen. 4) Record in the GAP-53 audit doc + todo; 6 gates; commit.",
+      "evidence": "docs/audit/gap53-initial-condition-contraction.md; data/FlowMol3/repo/flowmol/models/ctmc_vector_field.py (eta=0 -> deterministic); adaptive_reflow/adapters/flowmol3_v2_adapter.py",
+      "result": ""
     },
     {
       "id": "GAP-44-CONFIG-INVENTORY",
@@ -284,7 +216,7 @@
       "priority": "P1",
       "owner": "agent+user",
       "status": "LABELS-CORRECTED",
-      "gap": "Configuration surfaces were asserted more uniformly than the code supports. (i) Paper section 4.5 says 10/11 headline cells use CosineAnnealScheduler; the code shows only R5a/R5b/R5c construct a scheduler, R2/R3/K1/K7 construct none, R6 is a counterfactual, and R1/K4/K5 pass a legacy 'cosine' string that framework.py:914-920 routes to a uniform NFE split. (ii) R5c's cited d_z=-13.18 is the evidence_driven arm, not cosine. (iii) R5a's artifact scheduler is PaperRatioAdaptiveScheduler, not cosine. (iv) R5c's arms are not NFE-matched: 25/48/25 vs baseline 50. (v) R5c's delta% is chunk-mean based (-28.43%) while the printed FIDs imply -20.70%. (vi) R2's YAML declares n_rounds=3 but the runner never reads it. (vii) R1 runs n_rounds=1 because RESTART_MIN_NFE=20 > NFE=10. (viii) environments.md lists 5 venvs while 11 exist.",
+      "gap": "Config surfaces were asserted more uniformly than the code supports: only R5a/R5b/R5c build a scheduler; R2/R3/K1/K7 build none; R1/K4/K5 pass a legacy 'cosine' string routed to a uniform split; R5c arms are not NFE-matched (25/48/25 vs 50); environments.md lists 5 venvs while 11 exist. Full truth table: docs/audit/project-state-inventory.md.",
       "acceptance": "Inventory committed at docs/audit/project-state-inventory.md with a per-cell truth table, an 11-item conflict ledger, and a P0/P1/P2 action register. No headline number moved. P1-1..P1-5 (label/disclosure corrections) were authorized by the user on 2026-10-18 and applied to paper-A-final.md/.tex + MANIFEST; the PDF was rebuilt. P2 (NFE-matched R5c, profile_residual_fn wiring) still requires new pre-registered experiments.",
       "agent_action": "1) P0: inventory registered in mkdocs + todo. 2) P1 (user-authorized 2026-10-18): label/disclosure corrections applied to paper-A-final.md and .tex; PDF rebuilt (12 pages, 0 overfull); MANIFEST addendum records the new SHA-256s; no metric/p/effect/status changed. 3) Do not unify schedulers: 8/11 cells instantiate no scheduler object, R1 is a provable no-op, and any arm switch would move frozen numbers. 4) Treat P2 items as new pre-registrations, not config edits.",
       "evidence": "docs/audit/project-state-inventory.md; docs/audit/scheduler-per-cell-summary.md (superseded by section 2.3); verification_outputs/wave191-p3-mnist-n1000.json; verification_outputs/wave189-p2-post-cd70821-combined.json; verification_outputs/wave235-p1-r5b-fix.json; verification_outputs/wave247-p3-r5b-n1000-n1/summary.json; docs/audit/gap42-scheduler-budget-conservation.md"
@@ -295,22 +227,10 @@
       "priority": "P1",
       "owner": "agent",
       "status": "PLANNED",
-      "gap": "R1's canonical win (d=+0.1178 at NFE=150) is init-attributed because the blend-off arm has only been run at NFE=10 (GAP-25: approximately zero, upper bound +46 hits). The namesake blend has therefore never been credited or cleared at the canonical budget. Convention note: the adapter blend is m*prior + (1-m)*fresh with m = 1 - beta, so blend-off is beta = 0 (m = 1, identity restart), not m = 0. GATE FINDING (2026-10-18): the GAP-25/D-004b framework manifests record nfe_per_record=10 with restart_min_nfe=20, and the driver downgrades n_rounds to 1 below that threshold, so the 'blend' arm never ran apply_restart_distribution in a feeding round. B~C is therefore not evidence that the blend is zero; the blend has not been tested at any budget.",
+      "gap": "R1's canonical win (d=+0.1178 at NFE=150) is init-attributed because the blend-off arm only ran at NFE=10 (GAP-25: ~0, upper bound +46 hits). Gate finding: those manifests record nfe_per_record=10 with restart_min_nfe=20, so the driver downgraded n_rounds to 1 and the 'blend' arm never ran apply_restart_distribution. The blend has not been tested at any budget. Convention: blend-off is beta=0 (m=1, identity), not m=0.",
       "acceptance": "Paired blend-on vs blend-off at NFE=150, N=200 x 3 seeds, canonical HMMER counter. Delta(blend_on - blend_off) with a 95% CI: excludes 0 positive -> the blend gets credit; includes 0 -> R1 stays init-attributed.",
       "agent_action": "1) Add a blend-off flag (beta = 0) to the R1 driver (additive, default off). 2) Run 3 seeds x 2 arms at N=200, NFE=150, restart_min_nfe=5, gate-open. 3) HMMER both arms. 4) Paired t + CI. 5) Record in audit + todo. Do not change the frozen R1 headline.",
       "evidence": "docs/audit/gap25-r1-blend-isolation.md sections 2 and 6; docs/audit/gap41b-r1-nfe-fidelity.md; docs/audit/gap42-scheduler-budget-conservation.md section 9.4; docs/audit/gap45-r1-blend-off-wiring.md"
-    },
-    {
-      "id": "GAP-46-R5B-MEMORY-SWEEP",
-      "phase": "1",
-      "priority": "P1",
-      "owner": "agent",
-      "status": "COMPLETED",
-      "gap": "R5b's matched-NFE win dies under a tuned baseline (0/4 arms). The GAP-24 law says a higher restart memory fraction m raises q*(m), but m is derived from the scheduler n_cap and is not exposed, so the only predicted survival lever is untested.",
-      "acceptance": "Expose m as a CLI flag; sweep m in {0.25, 0.5, 0.75} under the tuned baseline at N=200 x 3 seeds. Any m with delta<0, p<alpha (0.05/4), and a tuned-baseline pass -> R5b becomes a conditional survival cell; otherwise the boundary is confirmed.",
-      "agent_action": "1) Added --memory-fraction (additive, default scheduler-derived). 2) Ran the 3x3 grid on cuda:0. 3) Applied the tuned baseline at NFE=200. 4) Recorded in audit + todo. 5) Re-analysed with split-half FID and the seed-spread diagnostic (--skip-runs).",
-      "evidence": "docs/audit/gap26-r5b-regime.md section 6; docs/audit/gap12-tuned-baseline.md; docs/audit/gap24-boundary-law.md",
-      "result": "DONE 2026-10-19. 12/12 runs (m in {default,0.25,0.5,0.75} x seeds 42/43/44 x 4 schedulers; N=200, baseline NFE=200, framework NFE=50, n_rounds=3). survivors = [] : no cell has a negative mean delta, so no m rescues R5b under the tuned baseline. Best cell CodimensionSheet default +1.48% (p=0.206); worst CosineAnneal default +23.13% (p=0.0018). The ordering is NOT monotone in m: the best m is the one closest to each scheduler's native n_cap-derived fraction (CodimensionSheet default; the other three m=0.25), because m and the NFE allocation share n_cap. framework_fid_seed_invariant = true: all 16 (m, scheduler) FIDs are bit-identical across seeds 42/43/44, so the 3-seed SD is a BASELINE-ONLY SD and the seed axis adds no framework-side replication. Split-half FID at N=200: median 5.09 FID (mean 5.69, range 0.11-15.33); the m-to-m gaps are 1.41-3.81 FID for three arms, so only the CodimensionSheet ranking is resolvable. Artifacts: verification_outputs/gap46-r5b-memory/{gap46-memory-fraction.json,csv,seed*/}; audit: docs/audit/gap46-r5b-memory-fraction.md. No frozen surface touched."
     },
     {
       "id": "GAP-47-K1-PB-METRIC",
@@ -324,23 +244,11 @@
       "evidence": "docs/audit/gap12-tuned-baseline.md section 4.3; docs/audit/gap27-r3-power.md; docs/audit/gap35-cross-domain.md"
     },
     {
-      "id": "GAP-48-K7-TWO-ARM",
-      "phase": "1",
-      "priority": "P1",
-      "owner": "agent",
-      "status": "COMPLETED",
-      "gap": "K7's 'direction inverted' verdict comes from a driver that subsamples baseline.fasta only and constructs no framework arm. The framework FASTA for the same seed exists, so the one-arm artifact is avoidable.",
-      "acceptance": "Run the novelty metric on both baseline.fasta and framework.fasta from the same seed (seeds 42/43/44, N=1000). Paired novelty delta with a 95% CI: the inverted direction is either confirmed or withdrawn.",
-      "agent_action": "1) Write a two-arm novelty analysis over verification_outputs/lineageflow_real_fastas_w158_q3_2026/{baseline,framework}.fasta. 2) Run seeds 42/43/44. 3) Record in audit + todo. Analysis-only; no new generation.",
-      "evidence": "docs/audit/wave280-p-k7-sweep-result.md; docs/audit/gap48-k7-two-arm-novelty.md; verification_outputs/gap48-k7-two-arm/paired.json; verification_outputs/novelty_pctid_w166_q3_2026/",
-      "result": "DONE 2026-10-18 (analysis-only, no generation). Paired per-record test over the frozen W166 P3 m8 files (seed 42, N=1000, same records): pctid<30 baseline 466/1000 = 46.6% vs framework 37/1000 = 3.7%; paired delta -42.90 pp, 95% CI [-46.09, -39.46] (Newcombe), exact McNemar p = 2.30e-102. Direction INVERTED is CONFIRMED, not withdrawn. Discordant pairs 455 (baseline-only novel) vs 26 (framework-only novel). Paired mean_max_pctid among 512 both-hit records +2.33 pp (t=3.80, p=1.6e-4), consistent with the paper's +2.14 pp structural signal. Seed-level replication is NOT obtainable: the canonical 63.8M-sequence mmseqs2 target DB is not on disk and seeds 43/44 were never searched against it. Artifact: verification_outputs/gap48-k7-two-arm/paired.json; audit: docs/audit/gap48-k7-two-arm-novelty.md. Status label unchanged (K7 stays PARTIAL/SUPP); no frozen surface touched."
-    },
-    {
       "id": "GAP-15-VENUE",
       "phase": "0",
       "priority": "P1",
       "owner": "agent+user",
-      "status": "DECIDED-SPLIT (user-approved 2026-10-18); final journal choice among the ranked Paper A targets remains the user call",
+      "status": "DECIDED-SPLIT (2026-10-18); final journal = user call",
       "gap": "Decide the venue under the corrected positioning: this is an inference-framework contribution (frozen checkpoint, no retraining), not a model contribution. Primary IEEE TNNLS; Paper A alternatives IEEE TCyb and Information Fusion; Paper B (theory) targets JMLR / Neural Networks. The earlier model-centric backups (TPAMI, Pattern Recognition, TIP) are dropped because they judge architectural novelty and SOTA tables.",
       "acceptance": "Paper A venue chosen from venue.paper_a_targets; Paper B scoped from Appendix A + GAP-24; format/narrative delta recorded; user authorizes touching the frozen manuscript.",
       "agent_action": "1) Use the venue.paper_a_targets ranking (fit + narrative per journal). 2) Paper A narrative: frozen-checkpoint inference layer, operating-regime law, compute ledger; never a SOTA table. 3) Paper B: extract Thm 4/5 + the 45/45 backtest into a standalone theory outline. 4) Do not edit docs/drafts/paper-A-final.* until the user authorizes it.",
@@ -368,18 +276,6 @@
       "agent_action": "None - owner=user; only the author can supply names/affiliations/emails."
     },
     {
-      "id": "GAP-49-COMPUTE-ACCOUNTING",
-      "phase": "1",
-      "priority": "P1",
-      "owner": "agent",
-      "status": "COMPLETED",
-      "gap": "The framework's identity is a training-free inference layer, but there is no cross-domain compute ledger. The only speed number in the manuscript (2.5-10x) is a published-trajectory extrapolation, not a measured saving. This is the on-identity evidence a framework reviewer will ask for, and it does not require a positive quality cell.",
-      "acceptance": "A table on >=3 domains (R1 LineageFlow, R3 FlowMol3, R5b CIFAR) reporting, at matched FID and at matched NFE, the NFE and wall-clock delta between baseline and framework, same checkpoint, no retraining. Derived from committed artifacts where possible; any new run on cuda:0 with 3 seeds.",
-      "agent_action": "1) Inventory existing NFE sweeps / sample NPZs / FID caches per cell. 2) Build iso-FID and iso-NFE curves by subsampling steps. 3) Report NFE saved at iso-FID and FID delta at iso-NFE, with seed spread. 4) Record in audit + todo; do not touch the frozen manuscript. 5) DONE: repeat the curve at seeds 43/44 (GAP-49b) and demote the ratio to a seed-42 estimate; report the matched-NFE delta instead.",
-      "evidence": "docs/drafts/paper-A-final.md abstract (2.5-10x extrapolation caveat); tnnls_submission/supplementary_bundle/headline_evidence/NFE_SPEEDUP_2P5_TO_10X_SOURCE.md",
-      "result": "DONE 2026-10-18. New GPU work: 4 baseline FID points (NFE 5/10/20/25, N=200, seed 42, cuda:0), merged with the committed GAP-12 points at 50/100/200. CIFAR iso-FID at framework NFE=50: CodimensionSheet 2.38x (baseline needs 118.8 NFE; +-1 FID band 1.96-2.82x; SEED 42 ONLY -- the baseline level is seed-sensitive, 439.2569 vs 449.0180 at NFE=200 for seeds 42/43, so this is a seed-42 estimate and a 3-seed curve is the next action), CosineAnneal 1.19x (fragile 0.98-1.42x), EvidenceDriven 0.58x and FreeTraj 0.76x (framework COSTS compute at matched quality). Ceiling caveat: baseline@200 NFE reaches FID 439.25, better than all four framework arms, so the win is budget-conditional, not a quality-ceiling win. Matched-NFE FID deltas @50: -0.17/-1.12/+1.34/+0.78%. FlowMol3 matched NFE=250: fg_dev mean delta -0.0377 (n.s., n=3), pb_validity +0.020/-0.0003/+0.236; iso-quality not identifiable (baseline fg_dev non-monotone 0.6587/0.6823/0.6608 at 250/500/1000). FlowMol3 wall-clock at matched NFE: framework slower 3/3 seeds (1.21/1.92/1.30x), magnitude unusable (baseline spread 2.9x). LineageFlow R1 cost model from GAP-41b METADATA: 1.879 s fixed + 0.1521 s/NFE per record, fixed = 55.3% of the NFE=10 cost -> NFE 150->10 is 7.26x wall-clock, not 15x. R6 pLDDT curve recorded but flagged (artifact has no N/seed/config; baseline pLDDT bit-identical across NFE, framework best at NFE=10 and degrading after). NOT measurable: R1/R3/K1/R6 iso-quality, R2/K4/K5/K7 not applicable, CIFAR wall-clock not recorded. Artifacts: verification_outputs/gap49-compute-accounting/{METADATA.json,compute_ledger.json,baseline_curve.json,baseline-nfe*,repro-check-nfe25-flowmol3venv}; audit: docs/audit/gap49-compute-accounting.md; driver: scripts/gap49_compute_accounting.py. No frozen surface touched. GAP-49b (2026-10-19): the baseline curve was repeated at seeds 43/44. Baseline FID@200 = 446.20 +- 6.08 (439.22 / 449.00 / 450.39 for seeds 42/43/44); the framework FID is bit-identical across seeds (GAP-46: spread exactly 0 for all 16 (m, scheduler) cells), so only the baseline level moves. The iso-FID ratio is NOT identifiable at N=200: CodimensionSheet 2.37x and CosineAnneal 1.18x are measurable only at seed 42 (seeds 43/44 never reach those FIDs within NFE<=200), while EvidenceDriven (1.01 +- 0.45) and FreeTraj (2.15 +- 1.30) flip sign across seeds. The 2.38x is therefore demoted to a SEED-42 POINT ESTIMATE and must not be cited as a 3-seed ratio. The stable quantity is the matched-NFE delta at NFE=50 over 3 seeds: CodimensionSheet -2.09% (-2.80..-1.11), CosineAnneal -1.16% (-1.88..-0.17), EvidenceDriven +0.33% (-0.39..+1.34), FreeTraj -0.21% (-0.94..+0.79). The 'baseline@200 beats every arm' ceiling caveat is also seed-dependent: it holds on seed 42 only. Artifacts: verification_outputs/gap49-compute-accounting/compute_ledger_multiseed.json + baseline_curve_multiseed.json; driver flag --seeds."
-    },
-    {
       "id": "GAP-50-EVIDENCE-GRADE-TABLE",
       "phase": "2",
       "priority": "P2",
@@ -403,5 +299,13 @@
       "agent_action": "1) Extract Appendix A + docs/audit/gap24-boundary-law.md into an outline. 2) State what Paper A keeps (the law as an empirical organising result) vs what Paper B owns (proofs, general conditions). 3) User authorizes a new draft.",
       "evidence": "docs/drafts/paper-A-final.md Appendix A; docs/audit/gap24-boundary-law.md; user directive 2026-10-18"
     }
-  ]
+  ],
+  "completed_index": {
+    "GAP-43-BLEND-POSITIVE": "R3 50-seed blend: fg_dev INCONCLUSIVE (d=-0.0192, p=0.130; tuned gate fails); pb_validity +0.212, 50/50 seeds (exploratory).",
+    "GAP-46-R5B-MEMORY-SWEEP": "R5b memory sweep: 0/16 cells survive the tuned baseline; the boundary is confirmed.",
+    "GAP-48-K7-TWO-ARM": "K7 two-arm: framework 12.6x LESS novel (direction inverted, confirmed).",
+    "GAP-49-COMPUTE-ACCOUNTING": "Compute accounting: NFE ledger complete; the framework pays no hidden NFE.",
+    "GAP-52-CHANNEL-FAITHFUL-BLEND": "Charge-categorical + per-channel m: dev-screen null (no arm beats C0); confirm not run.",
+    "GAP-53-INITIAL-CONDITION-CONTRACTION": "R=2 multi-round: null on both metrics (2/4 seeds, not significant); CTMC class flips break the Lipschitz premise; R=1 stays canonical."
+  }
 }
