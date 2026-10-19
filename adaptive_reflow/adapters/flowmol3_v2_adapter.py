@@ -1277,6 +1277,20 @@ def _channel_aware_blend(
         # categorical. Keep the prior's class with probability ``m`` and
         # otherwise take the fresh draw's class, so the marginal class
         # distribution is preserved (no variance collapse).
+        #
+        # A SEPARATE generator is used so the ``e``/``a`` draws below are
+        # bit-identical to the continuous mode. That keeps the GAP-52 2x2
+        # factorial clean: C1 vs C0 differ only in the charge channel.
+        charge_rng = np.random.default_rng(
+            int(
+                hashlib.sha256(
+                    repr(("charge",
+                          float(np.asarray(prior["x"]).sum()),
+                          float(np.asarray(fresh["x"]).sum()))).encode()
+                ).hexdigest()[:8],
+                16,
+            )
+        )
         prior_c = np.asarray(prior["c"], dtype=np.float64).reshape(-1)
         fresh_c = np.asarray(fresh["c"], dtype=np.float64).reshape(-1)
         if n_fresh >= n_prior:
@@ -1300,7 +1314,7 @@ def _channel_aware_blend(
         elif m_charge <= 0.0:
             idx = fresh_idx
         else:
-            keep = rng.random(prior_idx.shape) < m_charge
+            keep = charge_rng.random(prior_idx.shape) < m_charge
             idx = np.where(keep, prior_idx, fresh_idx)
         out["c"] = (idx - 2).astype(np.float64)
     elif n_fresh == n_prior:

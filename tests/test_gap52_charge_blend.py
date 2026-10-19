@@ -114,6 +114,20 @@ def test_categorical_memory_zero_takes_the_fresh_class() -> None:
     )
 
 
+def test_categorical_does_not_perturb_the_other_channels() -> None:
+    """C1 vs C0 must differ only in the charge channel (clean 2x2)."""
+    mod = _blend_module()
+    prior, fresh = _state(11), _state(12)
+    cont = mod._channel_aware_blend(prior, fresh, _memory(0.5))
+    cat = mod._channel_aware_blend(
+        prior, fresh, _memory(0.5), charge_mode="categorical"
+    )
+    np.testing.assert_array_equal(cont["e"], cat["e"])
+    np.testing.assert_array_equal(cont["a"], cat["a"])
+    np.testing.assert_array_equal(cont["x"], cat["x"])
+    assert not np.array_equal(cont["c"], cat["c"])
+
+
 def test_per_channel_policy_betas() -> None:
     mod = _load_driver()
     from adaptive_reflow.universal.state import ChannelName
