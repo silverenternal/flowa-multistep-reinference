@@ -18,7 +18,7 @@ measures or feeds the model**, not by sample size:
 | Cell | Defect class | Where | Minimal fix | New compute |
 |---|---|---|---|---|
 | R5c | `matched NFE=50` is false: arms run 25 / 48 / 25 NFE vs baseline 50 | `scripts/wave191_p3_mnist_sweep.py:98,210` | allocate a fixed 50-NFE budget by `n_cap` weight | MNIST re-run (minutes) |
-| R3 | headline `d_z=-0.285` is a **projection** of a 200-record **proxy** (`reos_n_flags`), not `fg_dev` | `tools/wave87_n1000_sweep.py:320` (`smiles_list[:200]`) | keep all 1000 SMILES; compute per-record `fg_dev` | 30 min GPU |
+| R3 | headline `d_z=-0.285` is a **projection** of a **200-record** **proxy** (`reos_n_flags`), not `fg_dev`; the file named `n1000` is `n_total_per_arm=200` | `tools/wave87_n1000_sweep.py:320` (`smiles_list[:200]`) + artifact N | keep all 1000 SMILES; run N=1000; compute per-record `fg_dev` | 30 min GPU |
 | R6 | headline `+0.2235` is a **counterfactual**, while a live axis already measures `d_z=-0.84` | `scripts/wave225_p4_k6_tier_aware.py:164`; `verification_outputs/gap31-r6-live-uplift/` | report the live axis; fix the tier-β direction | 0 (already measured) |
 | R1 | canonical `--nfe 10` < `--restart-min-nfe 20` → `n_rounds=1`, blend never chains | `tools/gen_lineageflow_n1000_fastas.py:613` | open the gate (`--restart-min-nfe 5`) in the canonical recipe | config only |
 | R1 | inference budget is 15× below upstream (10 vs ~150) | same | canonical budget = 150 (NFE is load-bearing, GAP-41b) | 21 h CPU (the one real cost) |
@@ -84,31 +84,43 @@ Default off preserves the historical bytes.
 - the actual test is on **n=200** recoverable SMILES; the N=1000 row is a
   `t_N = t_200 * sqrt(N/200)` **projection**.
 
-Root cause of the 200 cap: `tools/wave87_n1000_sweep.py:320`
+**The canonical artifact itself is N=200.** The files named
+`flowmol3_n1000_{baseline,framework}_wave87_q4_2026.json` record
+`n_total_per_arm = 200`, `n_sampled = 200`, `n_smiles = 0`:
+
+```
+$ python3 -c "import json; d=json.load(open('verification_outputs/flowmol3_n1000_sweep_wave87_q4_2026.json')); print(d['n_total_per_arm'])"
+200
+```
+
+So the "N=1000" label is a filename, not a measurement. The projection step is
+therefore not a convenience — it is the only thing standing between a
+200-record proxy and the claimed N=1000 headline.
+
+A second, independent defect compounds it: `tools/wave87_n1000_sweep.py:320`
 
 ```python
 "smiles_list": smiles_list[:200],  # cap for the JSON dump
 ```
 
-The N=1000 sweep did run; only the persisted SMILES were truncated. The real
-N=1000 aggregate `fg_dev` reading is `p_raw = 0.01424` against the R-level
-Bonferroni floor `0.007143` → **UNDERPOWERED** (CLM-060). The reproduce script
-therefore asserts a number the claim ledger does not support.
+Even a future N=1000 run would persist only the first 200 SMILES, so a
+per-record `fg_dev` decomposition could not be computed from the dump.
 
 ### 2.2 Interpretation
 
 This is the single largest evidence-grade gap in the R-level table: a
-projected proxy is presented next to measured cells. It is also the cheapest to
-close — 30 min GPU (the historical sweep wall-clock in `reproduce/03`).
+projected proxy is presented next to measured cells, and the underlying
+artifact is one fifth of the advertised sample size. It is also cheap to close
+— 30 min GPU (the historical sweep wall-clock in `reproduce/03`).
 
 ### 2.3 Fix
 
-Add `--smiles-cap` to `tools/wave87_n1000_sweep.py` (default 200, legacy
-byte-stable; `0` = no cap). Re-run the canonical N=1000 sweep with
-`--smiles-cap 0`, then compute the **true per-record `fg_dev` decomposition**
-(each record's marginal contribution `Σ_i |1{record carries flag i} -
-flag_rate_i^train|`) rather than the flag-count proxy. The aggregate `fg_dev`
-is already measured; only its per-record decomposition is missing.
+Add `--smiles-cap` (default 200, legacy byte-stable; `0` = no cap) and
+`--output-dir` / `--wave-id` (so a new run cannot clobber the historical
+artifacts) to `tools/wave87_n1000_sweep.py`. Re-run the canonical **N=1000**
+sweep with `--smiles-cap 0`, then compute the **true per-record `fg_dev`
+decomposition** (each record's marginal contribution `Σ_i |1{record carries
+flag i} - flag_rate_i^train|`) rather than the flag-count proxy.
 
 ---
 
@@ -258,3 +270,98 @@ import json; d=json.load(open('verification_outputs/gap31-r6-live-uplift/gap31_s
 print(d['scperplexity_live']['pooled'])
 "
 ```
+
+---
+
+## 8. Results (2026-10-19, all three re-runs completed)
+
+### 8.1 R5c — equal NFE flips the cell to a significant honest negative
+
+Run: `verification_outputs/gap55-r5c-equal-nfe/`, production ckpt, N=1000,
+`--equal-total-nfe --shared-prior`, seed 42, 33 min.
+
+| arm | per-round NFE | total | FID | Δ vs baseline | Bonferroni p | `d_z` |
+|---|---|---:|---:|---:|---:|---:|
+| baseline | — | 50 | 9.8785 | — | — | — |
+| cosine | [25, 18, 6, 1] | **50** | 11.8322 | **+12.43%** | 1.17e-07 | +5.36 |
+| codimension_sheet | [13, 12, 12, 13] | **50** | 12.1874 | **+14.64%** | 4.10e-09 | +7.83 |
+| evidence_driven | [25, 18, 6, 1] | **50** | 11.0440 | **+9.17%** | 3.49e-06 | +3.61 |
+
+Verdict: **baseline_wins** on all three arms.
+
+Reading. The historical R5c headline (`−28.43%`, framework wins) came from
+(a) the **smoke** checkpoint and (b) arms at 25/48/25 NFE against a 50-NFE
+baseline. Under a truly equal budget on the **production** checkpoint the
+direction is a significant regression on every arm. This is consistent with
+the Wave 280 production-ckpt reading (+10.37%) and removes the "matched NFE"
+ambiguity from the cell. R5c should be reported as **REGRESSES at matched
+NFE=50**, not as a win.
+
+### 8.2 R3 — N=1000 measured, nominal but not Bonferroni-significant
+
+Run: `verification_outputs/gap55-r3-full-smiles/`, FlowMol3 `last.ckpt`,
+N=1000/arm, NFE=250, `--smiles-cap 0 --shared-prior`, seed 42, 17 min.
+
+| arm | n_sampled | n_smiles persisted | `fg_dev` |
+|---|---:|---:|---:|
+| baseline | 998 | 1000 | 0.7174 |
+| framework | 995 | 1000 | 0.6624 |
+
+Sweep Δ = **−0.0550** (framework improves).
+
+Record-level bootstrap (`tools/gap55_r3_per_record_fg_dev.py`, B=2000,
+recomputed `fg_dev` from the REOS flag matrix):
+
+| quantity | value |
+|---|---:|
+| recomputed `fg_dev` baseline | 0.6562 |
+| recomputed `fg_dev` framework | 0.5949 |
+| Δ (framework − baseline) | **−0.0613** |
+| bootstrap 95% CI | **[−0.1169, −0.0010]** |
+| bootstrap p (two-sided) | 0.043 |
+| favourable draws | 97.85% |
+| R-level Bonferroni α (k=7) | 0.00714 |
+
+Reading. The measured N=1000 effect is **negative and its 95% CI excludes 0**,
+so R3 now has a real directional result instead of a projection. It does
+**not** clear the pre-registered R-level Bonferroni floor, and it is a single
+seed — the R-level bar is 3 seeds. It is therefore **NOT_SIGNIFICANT at the
+R-level bar**, not a win.
+
+**The proxy is not a decomposition.** The historical per-record test used the
+REOS flag-count proxy. On this N=1000 run the proxy's paired diff is
+**+0.0021** (p=0.25, `d_z`=+0.036) — the opposite sign from the aggregate
+`fg_dev` (−0.061). A per-record t-test on the flag count is therefore not a
+test of `fg_dev`; the record-level bootstrap of the set-level metric is the
+correct inference. This independently confirms that the historical
+`d_z=-0.285` proxy result should not be presented as an `fg_dev` effect.
+
+### 8.3 R1 — the gate-open mechanism is live under current code
+
+Run: `verification_outputs/gap55-r1-gate-open-n200/`, N=200, seed 42,
+`--nfe 10 --n-rounds 3 --restart-min-nfe 5`.
+
+| check | observed |
+|---|---|
+| `effective_n_rounds` in manifest | **3** (gate open) |
+| `framework_fallback_per_family_count` | `{}` (no bare-RNG fallback) |
+| framework sequences differing from baseline | **200 / 200** |
+
+Reading. With the gate open, the canonical driver really does chain
+`export_endpoint -> apply_restart_distribution` across three rounds on the
+current code. The canonical recipe previously left the gate closed, which is
+why every lever screen at `--nfe 10` measured a single-pass arm. This run does
+not by itself produce a hit count; it verifies the wiring that the N=1000
+NFE=150 decisive run depends on.
+
+### 8.4 Net effect on the evidence table
+
+| cell | before | after |
+|---|---|---|
+| R5c | "framework wins −28.43% at matched NFE=50" (smoke ckpt, unequal NFE) | **REGRESSES +9.2…+14.6% at true NFE=50** (production ckpt, 3/3 arms) |
+| R3 | `d_z=-0.285` projected from a 200-record proxy | **Δfg=−0.061, CI [−0.117, −0.001], p=0.043**, single seed, not Bonferroni-significant |
+| R1 | canonical arm had the mechanism switched off | **wiring verified live**; NFE=150 decisive run is the remaining compute decision |
+| R6 | counterfactual `+0.2235` | live scPerplexity `−0.84` (3/3 seeds) available as the headline |
+
+No seed engineering was used. The only new compute was 33 min CPU (R5c),
+17 min GPU (R3), and ~11 min CPU (R1).

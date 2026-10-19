@@ -431,6 +431,12 @@ def main(argv: list[str] | None = None) -> int:
                          "Default 200 preserves the historical dump; 0 = "
                          "persist every record (needed for a true per-record "
                          "fg_dev decomposition instead of the REOS proxy)."))
+    p.add_argument("--output-dir", type=Path, default=None,
+                   help=("GAP-55: directory for the arm JSONs. Defaults to "
+                         "verification_outputs/ (historical path). Pass a new "
+                         "directory to avoid clobbering a prior run."))
+    p.add_argument("--wave-id", default="wave87",
+                   help="GAP-55: run tag embedded in the output filenames.")
     args = p.parse_args(argv)
     if args.config is not None:
         try:
@@ -464,7 +470,11 @@ def main(argv: list[str] | None = None) -> int:
     smiles_cap = int(args.smiles_cap)
     n_batches = n_total // nfe_batch
 
-    out_dir = REPO_ROOT / "verification_outputs"
+    out_dir = (
+        Path(args.output_dir).resolve()
+        if args.output_dir is not None
+        else REPO_ROOT / "verification_outputs"
+    )
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # Wave 87 Agent C: write to distinct paths so we do NOT clobber Wave 82's
@@ -472,7 +482,7 @@ def main(argv: list[str] | None = None) -> int:
     # The brief asks for new N=1000 paper-metric numbers at PB-xtb pipeline,
     # but Wave 87 Agent A audit showed PB's energy_ratio is UFF-based (not
     # xtb-based), so the numbers will be reproduced from the same pipeline.
-    WAVE_ID = "wave87"
+    WAVE_ID = str(args.wave_id)
     PREFIX = "flowmol3_n1000"
 
     # Save upstream module pre-import state for the report
@@ -620,8 +630,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"wrote sweep summary: {sweep_json}", flush=True)
     print(f"sweep total wallclock: {sweep_wallclock_s}s", flush=True)
 
-    # Persist the full sweep to /tmp for the report author to consume.
-    full_dump = Path(f"/tmp/{WAVE_ID}_agent_c/{WAVE_ID}_n1000_full.json")
+    # Persist the full sweep alongside the summary (GAP-55: repo-local, never
+    # /tmp — evidence artifacts must be byte-addressable inside the repo).
+    full_dump = out_dir / f"{WAVE_ID}_n1000_full.json"
     full_dump.parent.mkdir(parents=True, exist_ok=True)
     full_dump.write_text(json.dumps(sweep, indent=2), encoding="utf-8")
     return 0
