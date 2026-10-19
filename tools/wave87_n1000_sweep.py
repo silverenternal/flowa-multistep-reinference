@@ -179,11 +179,17 @@ def _generate_arm(
     device: str,
     output_json: Path,
     shared_prior: bool = False,
+    smiles_cap: int = 200,
 ) -> dict[str, Any]:
     """Generate 1000 SDF molecules for one arm (baseline or framework).
 
     Returns a dict with: n_total, n_sampled, n_failed, sampled_mols,
     wallclock_s, smiles_list.
+
+    ``smiles_cap`` (GAP-55) bounds how many SMILES are persisted into the
+    arm JSON. The historical value is 200; ``0`` persists every record so a
+    per-record ``fg_dev`` decomposition can be computed instead of the
+    REOS-flag-count proxy.
     """
     print(f"[{arm_name}] Loading FlowMol3 v2 adapter (upstream path) ...", flush=True)
     t0 = time.perf_counter()
@@ -317,7 +323,10 @@ def _generate_arm(
         "nfe_batch": int(nfe_batch),
         "device": str(device),
         "weights_path": str(weights_path),
-        "smiles_list": smiles_list[:200],  # cap for the JSON dump
+        "smiles_list": (
+            smiles_list if int(smiles_cap) <= 0 else smiles_list[: int(smiles_cap)]
+        ),  # GAP-55: cap 200 by default, 0 = persist all records
+        "smiles_cap": int(smiles_cap),
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
     }
     output_json.write_text(json.dumps(out, indent=2), encoding="utf-8")
@@ -417,6 +426,11 @@ def main(argv: list[str] | None = None) -> int:
                          "key so the baseline and framework arms build the SAME "
                          "canonical prior (paired design). Default off = legacy "
                          "arm-keyed prior (byte-stable)."))
+    p.add_argument("--smiles-cap", type=int, default=200,
+                   help=("GAP-55: max SMILES persisted into the arm JSON. "
+                         "Default 200 preserves the historical dump; 0 = "
+                         "persist every record (needed for a true per-record "
+                         "fg_dev decomposition instead of the REOS proxy)."))
     args = p.parse_args(argv)
     if args.config is not None:
         try:
@@ -447,6 +461,7 @@ def main(argv: list[str] | None = None) -> int:
     upstream_repo = Path(args.upstream_repo)
     device = str(args.device)
     shared_prior = bool(args.shared_prior)
+    smiles_cap = int(args.smiles_cap)
     n_batches = n_total // nfe_batch
 
     out_dir = REPO_ROOT / "verification_outputs"
@@ -484,6 +499,7 @@ def main(argv: list[str] | None = None) -> int:
         device=device,
         output_json=baseline_json,
         shared_prior=shared_prior,
+        smiles_cap=smiles_cap,
     )
     baseline_metrics = _compute_metrics(
         baseline_result["sampled_mols"], arm_name="baseline",
@@ -503,6 +519,7 @@ def main(argv: list[str] | None = None) -> int:
         device=device,
         output_json=framework_json,
         shared_prior=shared_prior,
+        smiles_cap=smiles_cap,
     )
     framework_metrics = _compute_metrics(
         framework_result["sampled_mols"], arm_name="framework",

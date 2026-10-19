@@ -223,6 +223,27 @@ def per_round_num_steps(name: str, cycle_length: int, max_num_steps: int) -> lis
     return out
 
 
+def per_round_num_steps_equal_budget(
+    name: str, cycle_length: int, total_nfe: int,
+) -> list[int]:
+    """GAP-55: split a FIXED total NFE across rounds by scheduler ``n_cap`` weight.
+
+    The legacy :func:`per_round_num_steps` applies ``max_num_steps`` as a
+    *per-round cap*, so the arm totals differ from the baseline budget
+    (measured: cosine 25, codimension_sheet 48, evidence_driven 25 vs a
+    baseline of 50). This helper instead treats the scheduler ``n_cap``
+    values as weights and apportions exactly ``total_nfe`` steps, so every
+    arm matches the baseline's total inference budget.
+    """
+    from tools.eval.framework import _allocate_nfe_budget  # local: keep import cost off cold start
+
+    sched = build_scheduler(name, cycle_length)
+    weights: list[float] = []
+    for r in range(int(cycle_length)):
+        weights.append(float(sched.sample(0, int(r), int(r)).n_cap))
+    return _allocate_nfe_budget(weights, int(total_nfe), int(cycle_length))
+
+
 # ---------------------------------------------------------------------------
 # Sample generation
 # ---------------------------------------------------------------------------
@@ -416,6 +437,13 @@ def main(argv: list[str] | None = None) -> int:
                              "the SAME x0 prior (SHARED_BATCH_ID) and share the "
                              "round-0 solver seed, so the comparison is paired. "
                              "Legacy default keys the prior on the arm name.")
+    parser.add_argument("--equal-total-nfe", action="store_true",
+                        help=f"GAP-55: apportion the baseline's total NFE "
+                             f"({BASELINE_NUM_STEPS}) across each arm's rounds "
+                             f"by scheduler n_cap weight, so every arm runs the "
+                             f"SAME total budget. Legacy default applies a "
+                             f"per-round cap and totals 25/48/25 for "
+                             f"cosine/codim/evidence.")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
 
@@ -476,7 +504,12 @@ def main(argv: list[str] | None = None) -> int:
     # ------------------------------------------------------------------
     arm_num_steps: dict[str, list[int]] = {}
     for name in ARM_LABELS:
-        ns = per_round_num_steps(name, int(N_ROUNDS), int(FRAMEWORK_MAX_NUM_STEPS))
+        if bool(args.equal_total_nfe):
+            ns = per_round_num_steps_equal_budget(
+                name, int(N_ROUNDS), int(BASELINE_NUM_STEPS),
+            )
+        else:
+            ns = per_round_num_steps(name, int(N_ROUNDS), int(FRAMEWORK_MAX_NUM_STEPS))
         arm_num_steps[name] = ns
         if not args.quiet:
             print(f"[wave191-p3] {name} per-round num_steps = {ns} "
@@ -691,6 +724,9 @@ def main(argv: list[str] | None = None) -> int:
         "target": "mnist_fm",
         "n_records": int(n_samples),
         "nfe": int(BASELINE_NUM_STEPS),
+        "nfe_allocation_mode": (
+            "equal_total_budget" if bool(args.equal_total_nfe) else "per_round_cap"
+        ),
         "baseline_fid": float(baseline_fid),
         "framework_arms": framework_arms_out,
         "best_arm": best_name,

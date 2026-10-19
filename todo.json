@@ -60,7 +60,7 @@
     "as_of": "2026-10-18",
     "gating_risk": "empirical axis, not infrastructure (infrastructure is Tier-1 grade)",
     "why": "Only R6 is an unconditional STRONG cell. R2 is significant but d=-0.099; R5b dies under a tuned baseline; R5c is smoke-only and the production checkpoint flips to baseline-wins (+10.37%); R1's win is init-attributed and its pooled effect fell from +0.1609 to +0.1178 at NFE=150. The namesake restart-blend still has no clean positive cell.",
-    "decisive_missing_piece": "One pre-registered positive cell for the restart-blend against a tuned baseline. GAP-43 closed the R3 fg_dev route (INCONCLUSIVE, tuned gate fails). GAP-53 closed R>1 (null, 2/4 seeds). The remaining mechanism route is GAP-54: hold the discrete class fixed (stochasticity=0 + coordinate-only restart) and test whether the continuous flow contracts; only a positive paired screen there justifies a larger block. No seed engineering.",
+    "decisive_missing_piece": "First close GAP-55: three cells (R3, R6, R1-config) currently rest on a proxy, a counterfactual, or a disabled mechanism, and R5c's 'matched NFE=50' label is false. These are code/config defects, not power limits. Then the remaining mechanism route is GAP-54 (hold the discrete class fixed). No seed engineering.",
     "if_met": "Q1-defensible: framework+theory core (Thm 4/5, 45/45 law backtest, typed 4-port, 5 checkpoints zero-line, 3 lemmas, byte-stable infrastructure) + one clean positive + the compute ledger.",
     "if_not_met": "Still submittable as a framework/operating-regime paper at TNNLS/TCyb/Information Fusion, but 'steady accept' is not supportable; fall back to KBS/EAAI rather than forcing a SOTA framing.",
     "blocking_point": {
@@ -110,7 +110,7 @@
       "K1 (p_b=0.5676; real-blend d=+0.92 but p=0.252 at n=3)",
       "K7 (direction inverted: framework 12.6x LESS novel)"
     ],
-    "last_decisive_result": "GAP-53 (2026-10-19): R=2 at fixed NFE is a wash on fg_dev and pb_validity (4 seeds, 2/4 favourable each, mean ~0); the CTMC class flip breaks the Lipschitz premise. R=1 remains canonical."
+    "last_decisive_result": "GAP-55 (2026-10-19): the weak-cell gap is mostly driver-level. R5c arms run 25/48/25 NFE vs baseline 50; R3's d_z=-0.285 is a projected 200-record proxy; R6's +0.2235 is a counterfactual while live scPerplexity gives d_z=-0.84 (3/3 seeds); R1's canonical gate collapses n_rounds to 1. Additive flags landed; re-runs pending."
   },
   "metric_remediation": [
     {
@@ -187,6 +187,7 @@
   ],
   "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 15 known failures (3 stale eval stubs that do not accept the GAP-40 classifier_aware_restart kwarg; 12 order-dependent test_paper_metrics cases that pass in isolation).",
   "execution_order": [
+    "GAP-55-EVIDENCE-GRADE-REPAIR (P0, code/config; cheap re-runs)",
     "GAP-54-CLASS-PRESERVING-CONTRACTION (P0, mechanism; no new seeds)",
     "GAP-45-R1-BLEND-OFF-150 (P1, ~8-9h CPU)",
     "GAP-44-CONFIG-INVENTORY (P1, P2 items user-gated)",
@@ -198,6 +199,18 @@
     "GAP-20-COVERLETTER (P3, user-only)"
   ],
   "open_gaps": [
+    {
+      "id": "GAP-55-EVIDENCE-GRADE-REPAIR",
+      "phase": "1",
+      "priority": "P0",
+      "owner": "agent",
+      "status": "IN_PROGRESS",
+      "gap": "Four cells are measurement-grade defects, not power limits: R5c runs 25/48/25 NFE vs a 50-NFE baseline while claiming matched NFE=50; R3's headline d_z=-0.285 is a sqrt(N/200) projection of a 200-record REOS-flag proxy, not fg_dev; R6 headlines a counterfactual (+0.2235) although a live scPerplexity axis measures d_z=-0.84 on 3/3 seeds; R1's canonical --nfe 10 < --restart-min-nfe 20 collapses n_rounds to 1, so the frozen 158->342 headline is not reproducible under current defaults.",
+      "acceptance": "(1) R5c: --equal-total-nfe allocates exactly 50 NFE to every arm; re-run N=1000 and record nfe_allocation_mode. (2) R3: --smiles-cap 0 persists all 1000 SMILES; re-run and compute per-record fg_dev, not the flag-count proxy. (3) R6: report the live scPerplexity axis as the headline; mark the pLDDT counterfactual secondary. (4) R1: canonical recipe opens the gate (--restart-min-nfe 5) and records effective_n_rounds; NFE=150 stays a separate user-gated compute decision. (5) No frozen surface moved; no seed engineering.",
+      "agent_action": "1) Land the two additive flags + R1 recipe note. 2) Run the cheap R5c/R3 re-runs. 3) Write the evidence-grade table. 4) 6 gates; commit.",
+      "evidence": "docs/audit/gap55-code-level-hardening.md",
+      "result": "Flags landed: --equal-total-nfe (R5c, sums to 50 for all 3 arms), --smiles-cap (R3, default 200 legacy / 0 = all), R1 recipe gate note. Re-runs pending."
+    },
     {
       "id": "GAP-54-CLASS-PRESERVING-CONTRACTION",
       "phase": "1",

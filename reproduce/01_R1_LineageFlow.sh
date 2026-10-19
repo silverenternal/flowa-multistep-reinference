@@ -77,6 +77,23 @@ echo "R1 reproduced: baseline=${baseline_total} -> framework=${framework_total} 
 #
 # Wallclock: ~30-50h CPU (Wave 86 N=1000 sweep).
 # External deps: HMMER (bioconda), Pfam-A.hmm DB, LineageFlow ckpt.
+#
+# GAP-55 NOTE (2026-10-19) — the frozen 158/342 headline was produced by
+# Wave 158, BEFORE the Wave 186 restart-blend gate. Under current defaults
+# (`--nfe 10`, `--restart-min-nfe 20`) the gate fires
+# (`tools/gen_lineageflow_n1000_fastas.py:613`), `n_rounds` collapses to 1,
+# and the framework arm no longer chains the restart blend. This script
+# verifies the stored .tbl artifacts; it does NOT assert that today's code
+# regenerates them. The canonical re-run must open the gate:
+#
+#   .venvs/lineageflow_venv/bin/python tools/gen_lineageflow_n1000_fastas.py \
+#     --n 1000 --seed 42 --nfe 150 --n-rounds 3 --restart-min-nfe 5 \
+#     --upstream-eval-len-bias short --temperature 1.0 \
+#     --output-dir ${VOUT_DIR}/regen
+#
+# `--nfe 150` matches the upstream LineageFlow released config
+# (steps_base=100 + steps_final=50; see docs/audit/gap41b-r1-nfe-fidelity.md).
+# At N=200 the NFE=150 arm is +20.3 hits over baseline on 3/3 seeds.
 # =============================================================================
 
 echo "OK R1 reproduced: framework hmmscan_total_hits = ${framework_total} (expected 342)"
