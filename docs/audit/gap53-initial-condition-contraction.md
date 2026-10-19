@@ -220,3 +220,60 @@ meaningful when `K_eff` is set by class flips.
 The metric-dispersion stage (§5 item 2) is the remaining empirical test:
 if the cross-prior SD of `fg_dev` does not shrink with `R`, the honest
 conclusion is that the single-round map is not the bottleneck here.
+
+### 8.1 Metric dispersion (K = 4 priors, N = 100, fixed NFE = 250, m = 0.5)
+
+Priors 55 / 105 / 155 / 205 (existing block). Framework arm only; the
+paired baseline screen is separate.
+
+| R | `fg_dev` mean | `fg_dev` SD | `pb_validity` mean | `pb_validity` SD | `S` (centroid) |
+|---|---|---|---|---|---|
+| 1 | 1.1144 | 0.7592 | 0.5225 | 0.3873 | 0.03118 |
+| 2 | **0.7877** | **0.3206** | 0.4200 | 0.4202 | **0.01744** |
+| 3 | 1.0680 | 0.3757 | 0.3418 | 0.4458 | 0.02203 |
+
+- `S(2)/S(1) = 0.559` (bootstrap CI [0.43, 2.09], K = 4 → wide);
+  `S(3)/S(2) = 1.263` ([0.48, 1.86]).
+- Per-prior `fg_dev` deltas `R=2 − R=1`: −0.078, +0.038, −0.260,
+  −1.007 (3/4 negative; mean −0.327).
+- Per-prior `pb_validity` deltas `R=2 − R=1`: −0.15, −0.06, −0.20,
+  0.00 (3/4 negative; mean −0.103).
+
+**Reading.** `R = 2` improves both the mean and the cross-prior SD of
+`fg_dev`, but it **costs `pb_validity`**. `R = 3` (83 steps per round)
+is dominated: no `fg_dev` gain and a larger `pb_validity` loss. The
+round count is therefore a **trade-off knob**, not a free win — which
+is itself the operating-regime statement the paper wants. Whether the
+`R = 2` `fg_dev` gain survives a paired baseline comparison is the
+open question; the K = 4 dispersion is not a significance test.
+
+**Caveat.** K = 4 priors, N = 100, one memory fraction. The bootstrap
+CI on the `S` ratio includes 1, so the dispersion contraction is
+suggestive, not established. No new seeds were used.
+
+### 8.2 Paired driver screen (R = 2 vs baseline, existing seeds, N = 200)
+
+The dispersion stage above is **not** a paired comparison — it changes
+the prior between the `R` cells. The decisive test is the canonical
+driver with `--restart-rounds 2 --real-restart-blend --shared-prior`,
+which pairs both arms on the same prior.
+
+| Seed | baseline `fg_dev` | framework `fg_dev` | Δ`fg_dev` | baseline `pb` | framework `pb` | Δ`pb` |
+|---|---|---|---|---|---|---|
+| 55 | 0.7317 | 0.8669 | **+0.1353** | 0.5450 | 0.7296 | +0.1846 |
+| 105 | 0.6016 | 0.6319 | **+0.0303** | 0.6834 | 0.6700 | −0.0134 |
+| 155 | 1.0228 | 0.9070 | **−0.1159** | 0.6948 | 0.4524 | −0.2424 |
+
+**Reading.** Across the first three seeds the `fg_dev` deltas are
+`+0.135, +0.030, −0.116` (mean `+0.016`, 1/3 favourable) — **no
+`fg_dev` win**, consistent with the probe's discontinuity finding.
+The `pb_validity` deltas are `+0.185, −0.013, −0.242` (mean `−0.024`,
+1/3 favourable): the R = 1 `pb_validity` win from GAP-43 (50/50 seeds,
++0.212) **does not survive** the second round.
+
+**Conclusion (provisional, seed 205 pending).** `R = 2` is dominated by
+`R = 1` on FlowMol3: it buys no `fg_dev` and loses the `pb_validity`
+advantage. The round count is a real knob, but on this checkpoint the
+extra round acts as an additional stochastic perturbation rather than a
+contraction — exactly what the class-flip mechanism predicts. Keep the
+canonical `R = 1` arm for the FlowMol3 claims.
