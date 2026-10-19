@@ -297,6 +297,7 @@ not_in_nav: |
   audit/gap46-r5b-memory-fraction.md
   audit/gap49-compute-accounting.md
   audit/gap52-charge-channel-preregistration.md
+  audit/gap52-charge-channel-run.md
   audit/project-state-inventory.md
   audit/repo-docs-maintenance.md
   audit/readiness-verifier-repoint.md
