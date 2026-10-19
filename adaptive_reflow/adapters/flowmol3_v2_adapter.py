@@ -151,6 +151,13 @@ FLOWMOL3ADAPTER_N_BOND_TYPES: int = 5
 #: GEOM-DRUGS-filtered; pad to 10 for the categorical relaxation).
 FLOWMOL3ADAPTER_N_ATOM_TYPES: int = 10
 
+#: Charge-class cardinality the upstream FlowMol3 checkpoint consumes
+#: (``n_atom_charges == 6``; ``_solve_ode_upstream`` maps the adapter's
+#: continuous ``c`` draw to ``clip(round(c) + 2, 0, 5)``). GAP-52 uses
+#: this to offer a categorical charge blend that preserves the marginal
+#: class distribution instead of collapsing it toward neutral.
+FLOWMOL3ADAPTER_N_CHARGE_CLASSES: int = 6
+
 # ---------------------------------------------------------------------------
 # Real-checkpoint (GEOM-Drugs CTMC) vocabulary constants.
 #
@@ -1188,6 +1195,8 @@ def _channel_aware_blend(
     prior: Mapping[str, Any],
     fresh: Mapping[str, Any],
     memory_fraction: Mapping[ChannelName, float],
+    *,
+    charge_mode: str = "continuous",
 ) -> dict[str, Any]:
     """Beta-blend the prior endpoint with a fresh prior draw.
 
@@ -1197,6 +1206,17 @@ def _channel_aware_blend(
     prior label is kept with probability ``memory_fraction`` and a
     fresh label is sampled otherwise. Both branches are detached —
     no in-place mutation of inputs.
+
+    ``charge_mode`` (GAP-52, default ``"continuous"`` = byte-stable):
+    the upstream FlowMol3 model consumes ``c`` as a 6-class categorical
+    (``clip(round(c) + 2, 0, 5)``), not as a continuous value. Linear
+    blending two independent ``N(0, 1)`` charge draws shrinks their
+    variance by ``m**2 + (1-m)**2`` (std 1.0 -> 0.707 at ``m=0.5``) and
+    raises the neutral-class probability from 38.3 % to 52.0 %.
+    ``"categorical"`` instead keeps the prior's *class* with probability
+    ``m`` and otherwise takes the fresh draw's class, which preserves the
+    marginal class distribution. The default keeps the historical
+    behaviour for every existing digest.
 
     When ``prior`` and ``fresh`` have differing molecule sizes (the
     restart boundary can sample a different size), we keep the prior
@@ -1243,7 +1263,47 @@ def _channel_aware_blend(
         )
     m_charge = float(memory_fraction.get(ChannelName("charge"), 0.5))
     m_charge = max(0.0, min(1.0, m_charge))
-    if n_fresh == n_prior:
+    rng = np.random.default_rng(
+        int(
+            hashlib.sha256(
+                repr((float(np.asarray(prior["x"]).sum()),
+                      float(np.asarray(fresh["x"]).sum()))).encode()
+            ).hexdigest()[:8],
+            16,
+        )
+    )
+    if charge_mode == "categorical":
+        # GAP-52 — the upstream model consumes ``c`` as a 6-class
+        # categorical. Keep the prior's class with probability ``m`` and
+        # otherwise take the fresh draw's class, so the marginal class
+        # distribution is preserved (no variance collapse).
+        prior_c = np.asarray(prior["c"], dtype=np.float64).reshape(-1)
+        fresh_c = np.asarray(fresh["c"], dtype=np.float64).reshape(-1)
+        if n_fresh >= n_prior:
+            fresh_c = fresh_c[:n_prior]
+        else:
+            fresh_c = np.concatenate(
+                [fresh_c, np.zeros(n_prior - n_fresh, dtype=np.float64)]
+            )
+        prior_idx = np.clip(
+            np.rint(prior_c).astype(np.int64) + 2,
+            0,
+            FLOWMOL3ADAPTER_N_CHARGE_CLASSES - 1,
+        )
+        fresh_idx = np.clip(
+            np.rint(fresh_c).astype(np.int64) + 2,
+            0,
+            FLOWMOL3ADAPTER_N_CHARGE_CLASSES - 1,
+        )
+        if m_charge >= 1.0:
+            idx = prior_idx
+        elif m_charge <= 0.0:
+            idx = fresh_idx
+        else:
+            keep = rng.random(prior_idx.shape) < m_charge
+            idx = np.where(keep, prior_idx, fresh_idx)
+        out["c"] = (idx - 2).astype(np.float64)
+    elif n_fresh == n_prior:
         out["c"] = np.asarray(
             m_charge * np.asarray(prior["c"], dtype=np.float64)
             + (1.0 - m_charge) * np.asarray(fresh["c"], dtype=np.float64),
@@ -1272,15 +1332,6 @@ def _channel_aware_blend(
         )
     m_pair = float(memory_fraction.get(ChannelName("raw_pair"), 0.5))
     m_pair = max(0.0, min(1.0, m_pair))
-    rng = np.random.default_rng(
-        int(
-            hashlib.sha256(
-                repr((float(np.asarray(prior["x"]).sum()),
-                      float(np.asarray(fresh["x"]).sum()))).encode()
-            ).hexdigest()[:8],
-            16,
-        )
-    )
     # Discrete resample: keep the prior label with probability m_pair,
     # otherwise pick from the fresh draw's labels. ``a`` follows the
     # same rule (model-local label, not exposed on the protocol
@@ -1683,10 +1734,16 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         ctmc_enabled: bool | None = None,
         use_upstream: bool = False,
         upstream_repo_dir: str | None = None,
+        charge_blend_mode: str = "continuous",
     ) -> None:
         if backend not in ("numpy", "torch"):
             raise ValueError(
                 f"unknown_backend:{backend} (expected 'numpy' or 'torch')"
+            )
+        if charge_blend_mode not in ("continuous", "categorical"):
+            raise ValueError(
+                "unknown_charge_blend_mode:"
+                f"{charge_blend_mode!r} (expected 'continuous' or 'categorical')"
             )
         if int(num_steps) <= 0:
             raise ValueError("num_steps_must_be_positive")
@@ -1710,6 +1767,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         self._backend = backend
         self._num_steps = int(num_steps)
         self._seed_offset = int(seed_offset)
+        self._charge_blend_mode = str(charge_blend_mode)
         self._weights_path = str(weights_path) if weights_path is not None else None
         self._device = str(device)
         self._use_upstream = bool(use_upstream)
@@ -2239,7 +2297,12 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             16,
         )
         fresh = _sample_native_state(int(restart_seed))
-        blended = _channel_aware_blend(prior_entry, fresh, memory_fraction)
+        blended = _channel_aware_blend(
+            prior_entry,
+            fresh,
+            memory_fraction,
+            charge_mode=self._charge_blend_mode,
+        )
         next_digest = digest_state(
             {
                 "kind": "restart",
@@ -2250,6 +2313,14 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 "m_coord": float(memory_fraction[ChannelName("coordinate")]),
                 "m_charge": float(memory_fraction[ChannelName("charge")]),
                 "m_pair": float(memory_fraction[ChannelName("raw_pair")]),
+                # GAP-52 — only the categorical mode adds a field, so the
+                # default continuous mode keeps its historical digest
+                # byte-for-byte (D.4 stability).
+                **(
+                    {"charge_mode": str(self._charge_blend_mode)}
+                    if self._charge_blend_mode != "continuous"
+                    else {}
+                ),
                 "x_hash": str(
                     hashlib.sha256(np.asarray(blended["x"]).tobytes()).hexdigest()
                 ),

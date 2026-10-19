@@ -259,6 +259,18 @@
       "result": "DONE 2026-10-19. Verdict INCONCLUSIVE under the frozen rule. 50 seeds x N=1000/arm, NFE=250 matched, shared prior + real all-channel blend (m=0.5). Primary R3 fg_dev: mean delta = -0.01921 (31/50 seeds negative), SD 0.0882, t(49) = -1.540, p = 0.1301 vs alpha = 0.00714, d_z = -0.218 (95% bootstrap CI [-0.512, +0.058]), mean CI [-0.0542, +0.0158]. Tuned-baseline gate FAILS: mean delta_tuned = +0.03418, 3/10 seeds win. So the fg_dev gain is not a compute-efficiency win at this checkpoint. Exploratory K1 pb_validity_pct: mean delta = +0.21165, 50/50 seeds favourable, t = 20.98, p = 3.9e-26, d_z = +2.967 (CI [+2.54, +3.64]) -- a decisive chemical-validity win, but pre-registered as exploratory and NOT promoted by wording. LOO stable (mean range [-0.0248, -0.0134]); 0 flagged seeds. Mechanism caveat: this is the as-wired blend, whose charge channel is linearly mixed then rounded to 6 classes (std 1.0 -> 0.707 at m=0.5; P(neutral) 38% -> 52%); GAP-52 tests the fix. Artifacts: verification_outputs/gap43-blend-positive/{summary.json,summary.md,primary/,tuned_baseline/}; audit: docs/audit/gap43-blend-positive-run.md. No frozen surface touched."
     },
     {
+      "id": "GAP-52-CHANNEL-FAITHFUL-BLEND",
+      "phase": "1",
+      "priority": "P1",
+      "owner": "agent",
+      "status": "IN_PROGRESS",
+      "gap": "GAP-43's as-wired restart blend is INCONCLUSIVE on R3 fg_dev (p=0.130) and fails the tuned gate, while winning 50/50 seeds on pb_validity. Code review found two representation-level choices never validated against the upstream: (i) FlowMol3 consumes the charge channel as 6 categorical classes (clip(round(c)+2,0,5)) but the blend treats it as continuous, so a convex blend of two N(0,1) draws shrinks the std 1.0 -> 0.707 at m=0.5 and raises P(neutral) 38.3% -> 52.0%; (ii) one scalar m=0.5 is shared by coordinate, charge and raw_pair even though FinalRestartPolicy supports per-channel beta.",
+      "acceptance": "Pre-registration committed BEFORE the run: docs/audit/gap52-charge-channel-preregistration.md. Dev screen on fresh seeds 1000..1090 (N=200): 2x2 arms C0 (continuous, flat 0.5), C1 (categorical, flat 0.5), C2 (categorical, m=(0.25,0.75,0.75)), C3 (continuous, same per-channel). Winner = lowest mean fg_dev among arms beating C0; if none, stop and record a null. Confirm winner + C0 on fresh seeds 2000..2490 (N=1000, NFE=250, shared prior). POSITIVE iff mean delta<0, p<0.05, |d_z|>=0.5, tuned gate passes, AND mean delta < C0's mean delta. BOUNDED NEGATIVE iff d_z bootstrap CI upper < -0.5. Secondary pb_validity reported, not gated.",
+      "agent_action": "1) Add charge_blend_mode to FlowMol3V2Adapter (default continuous, byte-stable) and per-channel memory flags to the canonical R3 driver. 2) CPU tests pin the marginal preservation + per-channel beta. 3) Run the dev screen. 4) Apply the selection rule, then the confirmatory block. 5) Record in audit + todo.",
+      "evidence": "docs/audit/gap52-charge-channel-preregistration.md; docs/audit/gap43-blend-positive-run.md; docs/audit/gap39-flowmol3-real-restart-blend.md",
+      "result": ""
+    },
+    {
       "id": "GAP-44-CONFIG-INVENTORY",
       "phase": "0",
       "priority": "P1",

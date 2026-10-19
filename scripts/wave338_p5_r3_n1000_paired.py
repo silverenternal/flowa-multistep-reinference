@@ -100,14 +100,19 @@ def _framework_perturb_prior(adapter, bundle, *, perturbation_sigma: float, seed
         adapter._native_states[digest] = entry
 
 
-def _make_real_restart_policy(*, seed: int, memory_fraction: float):
-    """Build a ``FinalRestartPolicy`` with a flat per-channel memory fraction.
+def _make_real_restart_policy(*, seed: int, memory_fraction: float,
+                              per_channel=None):
+    """Build a ``FinalRestartPolicy`` with per-channel memory fractions.
 
     ``beta_by_channel`` is ``1 - memory_fraction`` on each of the three
     FlowMol3 channels; ``beta_from_schedule=False`` preserves that value
     verbatim (no cosine re-override). Mirrors the policy shape the SOTA
-    harness builds, but with a single scalar memory fraction instead of the
+    harness builds, but with an explicit memory fraction instead of the
     cosine schedule so the A/B has one clean knob.
+
+    ``per_channel`` (GAP-52) is an optional mapping with any of the keys
+    ``coordinate`` / ``charge`` / ``raw_pair``; a missing key falls back to
+    the scalar ``memory_fraction``.
     """
     from dataclasses import replace as _dc_replace
 
@@ -122,20 +127,29 @@ def _make_real_restart_policy(*, seed: int, memory_fraction: float):
     )
     from adaptive_reflow.universal.state import ChannelName
 
-    m = max(0.0, min(1.0, float(memory_fraction)))
+    base = max(0.0, min(1.0, float(memory_fraction)))
+    overrides = dict(per_channel or {})
+
+    def _m(name: str) -> float:
+        value = overrides.get(name)
+        return max(0.0, min(1.0, base if value is None else float(value)))
+
     channels = (
         ChannelName("coordinate"),
         ChannelName("charge"),
         ChannelName("raw_pair"),
     )
-    beta = FactorValue(1.0 - m)
     policy = FinalRestartPolicy(
         policy_id=PolicyId(f"wave338-real-restart-{seed}"),
         writer_id="inference.adaptive_reflow",
         run_id=RunId("wave338-real-restart"),
         target_round=0,
         outer_cycle_id=0,
-        beta_by_channel={c: beta for c in channels},
+        beta_by_channel={
+            ChannelName("coordinate"): FactorValue(1.0 - _m("coordinate")),
+            ChannelName("charge"): FactorValue(1.0 - _m("charge")),
+            ChannelName("raw_pair"): FactorValue(1.0 - _m("raw_pair")),
+        },
         alpha_by_channel={c: FactorValue(1.0) for c in channels},
         fresh_noise_floor_by_channel={c: FactorValue(0.0) for c in channels},
         schedule_sample=None,
@@ -148,7 +162,8 @@ def _make_real_restart_policy(*, seed: int, memory_fraction: float):
     return _dc_replace(policy, policy_hash=hash_policy_hash(policy))
 
 
-def _apply_real_restart_blend(adapter, bundle, *, memory_fraction: float, seed: int):
+def _apply_real_restart_blend(adapter, bundle, *, memory_fraction: float, seed: int,
+                              per_channel=None):
     """Apply the adapter's real ``apply_restart_distribution`` (GAP-39).
 
     Replaces the x-only additive-Gaussian proxy (:func:`_framework_perturb_prior`)
@@ -158,8 +173,13 @@ def _apply_real_restart_blend(adapter, bundle, *, memory_fraction: float, seed: 
     bundle carries the blended native state, which the subsequent
     ``solve_ode(..., n_molecules=...)`` tiles across the batch — so this is a
     genuine prior-side restart-blend, not a coordinate-only perturbation.
+
+    ``per_channel`` (GAP-52) overrides the scalar ``memory_fraction`` for any
+    of ``coordinate`` / ``charge`` / ``raw_pair``.
     """
-    policy = _make_real_restart_policy(seed=seed, memory_fraction=memory_fraction)
+    policy = _make_real_restart_policy(
+        seed=seed, memory_fraction=memory_fraction, per_channel=per_channel,
+    )
     return adapter.apply_restart_distribution(bundle, policy)
 
 
@@ -167,7 +187,9 @@ def _generate_arm(*, arm_name, perturbation_sigma, seed_base, n_total, nfe,
                   nfe_batch, weights_path, upstream_repo, device,
                   shared_prior: bool = False,
                   real_restart_blend: bool = False,
-                  restart_memory_fraction: float = 0.5):
+                  restart_memory_fraction: float = 0.5,
+                  restart_memory_by_channel=None,
+                  charge_blend_mode: str = "continuous"):
     """Generate N=1000 SDF molecules for one arm via the upstream path.
 
     ``shared_prior`` (GAP-37): when True the per-batch ``batch_id`` omits the
@@ -190,6 +212,7 @@ def _generate_arm(*, arm_name, perturbation_sigma, seed_base, n_total, nfe,
         device=device,
         use_upstream=True,
         upstream_repo_dir=str(upstream_repo),
+        charge_blend_mode=charge_blend_mode,
     )
     _ = adapter._load_model()
     if adapter._loaded_model_kind() != "upstream_flowmol":
@@ -216,6 +239,7 @@ def _generate_arm(*, arm_name, perturbation_sigma, seed_base, n_total, nfe,
             bundle = _apply_real_restart_blend(
                 adapter, bundle,
                 memory_fraction=restart_memory_fraction, seed=seed,
+                per_channel=restart_memory_by_channel,
             )
         elif perturbation_sigma > 0.0:
             _framework_perturb_prior(
@@ -304,7 +328,9 @@ def _compute_metrics(sampled_mols, *, arm_name, seed_base):
 def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
                   upstream_repo, device, out_dir, baseline_nfe=None,
                   shared_prior: bool = False, real_restart_blend: bool = False,
-                  restart_memory_fraction: float = 0.5) -> dict:
+                  restart_memory_fraction: float = 0.5,
+                  restart_memory_by_channel=None,
+                  charge_blend_mode: str = "continuous") -> dict:
     """Run baseline + framework arms for one seed and return the paired dict.
 
     ``baseline_nfe`` (GAP-12 tuned-baseline extension) lets the *baseline* arm
@@ -328,6 +354,8 @@ def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
         shared_prior=shared_prior,
         real_restart_blend=real_restart_blend,
         restart_memory_fraction=restart_memory_fraction,
+        restart_memory_by_channel=restart_memory_by_channel,
+        charge_blend_mode=charge_blend_mode,
     )
     framework_metrics = _compute_metrics(framework_raw["_sampled_mols"],
                                         arm_name="framework", seed_base=seed_base)
@@ -356,6 +384,12 @@ def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
         "shared_prior": bool(shared_prior),
         "real_restart_blend": bool(real_restart_blend),
         "restart_memory_fraction": float(restart_memory_fraction),
+        "restart_memory_by_channel": (
+            dict(restart_memory_by_channel)
+            if restart_memory_by_channel is not None
+            else None
+        ),
+        "charge_blend_mode": str(charge_blend_mode),
         "paper_targets": PAPER_TARGETS,
         "baseline": {
             "perturbation_sigma": PERTURBATION_SIGMA_BASELINE,
@@ -445,12 +479,41 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--restart-memory-fraction", type=float, default=0.5,
                    help="GAP-39: per-channel memory fraction for "
                         "--real-restart-blend (beta = 1 - m). Default 0.5.")
+    p.add_argument("--restart-memory-fraction-coordinate", type=float,
+                   default=None,
+                   help="GAP-52: coordinate-channel override for "
+                        "--restart-memory-fraction.")
+    p.add_argument("--restart-memory-fraction-charge", type=float,
+                   default=None,
+                   help="GAP-52: charge-channel override for "
+                        "--restart-memory-fraction.")
+    p.add_argument("--restart-memory-fraction-pair", type=float,
+                   default=None,
+                   help="GAP-52: raw_pair-channel override for "
+                        "--restart-memory-fraction (also drives atom types).")
+    p.add_argument("--charge-blend-mode", choices=("continuous", "categorical"),
+                   default="continuous",
+                   help="GAP-52: 'categorical' keeps the prior's 6-class "
+                        "charge label with probability m instead of linearly "
+                        "blending the continuous draw. Default 'continuous' "
+                        "preserves the GAP-39/GAP-43 behaviour.")
     p.add_argument("--output-dir", type=Path,
                    default=REPO_ROOT / "verification_outputs")
     args = p.parse_args(argv)
 
     out_dir: Path = args.output_dir
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    memory_by_channel = {
+        key: value
+        for key, value in (
+            ("coordinate", args.restart_memory_fraction_coordinate),
+            ("charge", args.restart_memory_fraction_charge),
+            ("raw_pair", args.restart_memory_fraction_pair),
+        )
+        if value is not None
+    }
+    memory_by_channel = memory_by_channel or None
 
     per_seed = []
     for seed in args.seeds:
@@ -468,6 +531,8 @@ def main(argv: list[str] | None = None) -> int:
             shared_prior=bool(args.shared_prior),
             real_restart_blend=bool(args.real_restart_blend),
             restart_memory_fraction=float(args.restart_memory_fraction),
+            restart_memory_by_channel=memory_by_channel,
+            charge_blend_mode=str(args.charge_blend_mode),
         )
         per_seed.append(sweep)
 
