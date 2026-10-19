@@ -16,10 +16,10 @@ Statistics protocol mirrors GAP-40 (docs/audit/gap40-lineageflow-classifier-awar
   Per-record paired t (df=999) per seed -> DerSimonian-Laird random-effects meta.
 
 Arms:
-  tier      = /home/hugo/gap41-n1000/seed{seed}_tier   (NEW, this sweep)
-  baseline  = /home/hugo/gap40-n1000-work/seed{seed}_legacy/baseline.*
-  legacy    = /home/hugo/gap40-n1000-work/seed{seed}_legacy/framework.*
-  car       = /home/hugo/gap40-n1000-work/seed{seed}_car/framework.*
+  tier      = /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41-n1000/seed{seed}_tier   (NEW, this sweep)
+  baseline  = /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap40-n1000-work/seed{seed}_legacy/baseline.*
+  legacy    = /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap40-n1000-work/seed{seed}_legacy/framework.*
+  car       = /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap40-n1000-work/seed{seed}_car/framework.*
 """
 from __future__ import annotations
 
@@ -30,8 +30,8 @@ from pathlib import Path
 import numpy as np
 import scipy.stats as st
 
-TIER = Path("/home/hugo/gap41-n1000")
-REF = Path("/home/hugo/gap40-n1000-work")
+TIER = Path("/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41-n1000")
+REF = Path("/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap40-n1000-work")
 SEEDS = (42, 43, 44)
 
 

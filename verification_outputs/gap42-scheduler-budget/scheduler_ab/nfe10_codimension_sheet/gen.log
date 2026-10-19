@@ -6,6 +6,6 @@ Some weights of EsmModel were not initialized from the model checkpoint at faceb
 You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
 Some weights of EsmModel were not initialized from the model checkpoint at facebook/esm2_t33_650M_UR50D and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
 You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
-wrote /home/hugo/gap41b-nfe150/scheduler_ab/nfe10_codimension_sheet/baseline.fasta (n=20)
-wrote /home/hugo/gap41b-nfe150/scheduler_ab/nfe10_codimension_sheet/framework.fasta (n=20)
-wrote /home/hugo/gap41b-nfe150/scheduler_ab/nfe10_codimension_sheet/manifest.json
+wrote /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/scheduler_ab/nfe10_codimension_sheet/baseline.fasta (n=20)
+wrote /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/scheduler_ab/nfe10_codimension_sheet/framework.fasta (n=20)
+wrote /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/scheduler_ab/nfe10_codimension_sheet/manifest.json

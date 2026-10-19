@@ -69,7 +69,7 @@ canonical gate-open config (`--nfe 10 --n-rounds 3 --restart-min-nfe 5
 **Decisive (N=1000, seeds 42/43/44).** `run_tier.sh` generates the `tier` arm at
 the same config for three seeds. `baseline` / `legacy` / `centered` controls are
 **reused byte-for-byte** from the archived GAP-40 `n1000_gate_open` run
-(`/home/hugo/gap40-n1000-work`); the tier baseline FASTAs are md5-checked equal
+(`/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap40-n1000-work`); the tier baseline FASTAs are md5-checked equal
 to the GAP-40 reference at generation time.
 
 Scoring is the canonical R1 HMMER counter (`hmmscan --noali --cpu 32 --tblout
@@ -178,11 +178,11 @@ sits inside it.
 
 ```bash
 # screen (N=200, seed 42)
-bash /home/hugo/gap41-n200/run_screen.sh
+bash /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41-n200/run_screen.sh
 # decisive (N=1000, seeds 42/43/44)
-bash /home/hugo/gap41-n1000/run_tier.sh
+bash /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41-n1000/run_tier.sh
 # statistics (CPU-only)
-python tools/gap41_tier_analysis.py     # writes /home/hugo/gap41-n1000/analysis.json
+python tools/gap41_tier_analysis.py     # writes /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41-n1000/analysis.json
 ```
 
 Evidence: `verification_outputs/gap41-r1-tier-aware-ncap/`

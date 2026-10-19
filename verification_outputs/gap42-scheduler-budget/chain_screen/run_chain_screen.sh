@@ -9,13 +9,13 @@ set -euo pipefail
 
 REPO=/home/hugo/codes/flowa-multistep-reinference
 VENV=$REPO/.venvs/lineageflow_venv/bin/python
-OUT=/home/hugo/gap41b-nfe150/chain_screen
-PREMISE=/home/hugo/gap41b-nfe150/premise
+OUT=/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/chain_screen
+PREMISE=/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/premise
 N=${N:-200}
 START=${START:-0}
 SEEDS=${SEEDS:-"42 43 44"}
 cd "$REPO"
-export TMPDIR=/home/hugo/gap41-tmp TORCHINDUCTOR_CACHE_DIR=/home/hugo/gap41-torchinductor
+export TMPDIR=/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41-tmp TORCHINDUCTOR_CACHE_DIR=/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41-torchinductor
 mkdir -p "$TMPDIR" "$TORCHINDUCTOR_CACHE_DIR" "$OUT"
 cp "$PREMISE/count_hits.py" "$OUT/"
 

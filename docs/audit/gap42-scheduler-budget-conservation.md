@@ -116,7 +116,7 @@ varies across rounds. That is a separate, larger change — not attempted here.
 
 ## 6. Equal-NFE A/B smoke (N=20, seed 42) — the arms are byte-identical
 
-Run: `/home/hugo/gap41b-nfe150/run_scheduler_ab_smoke.sh`, N=20, seed 42,
+Run: `/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/run_scheduler_ab_smoke.sh`, N=20, seed 42,
 NFE=10, gate-open, `--scheduler {cosine, codimension_sheet}`.
 
 | arm | per-round (actual) | baseline hits | framework hits |
@@ -197,7 +197,7 @@ Both pieces are implemented additively:
   (`store_true`, default **off**) and records `restart_from_endpoint` in the
   manifest.
 
-Smoke (`/home/hugo/gap41b-nfe150/run_chain_smoke.sh`, N=20, seed 42, NFE=10,
+Smoke (`/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/run_chain_smoke.sh`, N=20, seed 42, NFE=10,
 cosine):
 
 | arm | framework hits | vs archive |
@@ -377,26 +377,26 @@ Chain smoke and screen (GPU 0, LineageFlow venv):
 
 ```bash
 # N=20 liveness smoke (§7.1) — ~3 min
-bash /home/hugo/gap41b-nfe150/run_chain_smoke.sh
+bash /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/run_chain_smoke.sh
 
 # N=200 3-seed screen (§7.2) — ~47 min wall clock
-bash /home/hugo/gap41b-nfe150/run_chain_screen.sh
+bash /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/run_chain_screen.sh
 
 # decisive N=1000 3-seed run with the chain ON (§7.3) — ~1 h 44 min
-bash /home/hugo/gap42d-n1000/run_chain_n1000.sh
+bash /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap42d-n1000/run_chain_n1000.sh
 
 # 2x2 tier-aware n_cap x chain interaction screen (§7.4) — ~43 min
-bash /home/hugo/gap42e-interaction/run_interaction_screen.sh
+bash /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap42e-interaction/run_interaction_screen.sh
 
 # decisive N=1000 3-seed NFE=150 run, chain ON, gate open (§9) — 9 h 56 min actual
-OUT=/home/hugo/gap42f-nfe150-n1000 N=1000 NFE=150 SEEDS="42 43 44" PARALLEL=1 \
-  bash /home/hugo/gap42f-nfe150-n1000/run_nfe150_n1000.sh
+OUT=/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap42f-nfe150-n1000 N=1000 NFE=150 SEEDS="42 43 44" PARALLEL=1 \
+  bash /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap42f-nfe150-n1000/run_nfe150_n1000.sh
 
 # analysis (CPU)
 python3 tools/gap42c_chain_screen_analysis.py            # N=200 screen
 python3 tools/gap42e_interaction_analysis.py             # 2x2 interaction
 .venvs/lineageflow_venv/bin/python tools/r1_d004_analysis.py \
-  --root /home/hugo/gap42d-n1000 --out /home/hugo/gap42d-n1000 \
+  --root /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap42d-n1000 --out /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap42d-n1000 \
   --seeds 42 43 44 --n-per-seed 1000                     # canonical paired-t + DL meta
 ```
 

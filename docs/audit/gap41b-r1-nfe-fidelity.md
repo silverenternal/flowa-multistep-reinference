@@ -66,7 +66,7 @@ effect.
 
 ## 3. Design
 
-**Premise test** (`/home/hugo/gap41b-nfe150/run_premise.sh`): N=200, seed 42,
+**Premise test** (`/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/run_premise.sh`): N=200, seed 42,
 gate-open config (`--n-rounds 3 --restart-min-nfe 5 --temperature 1.0`), arms
 `{legacy, tier}`, NFE ∈ {10, 150}, canonical HMMER counter.
 
@@ -83,7 +83,7 @@ records. Byte-exactness and default byte-stability are pinned by
 
 ## 4. Results
 
-Run: `/home/hugo/gap41b-nfe150/run_premise.sh`, N=200, seed 42, gate-open
+Run: `/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/run_premise.sh`, N=200, seed 42, gate-open
 (`--n-rounds 3 --restart-min-nfe 5`, `effective_n_rounds=3` at both budgets).
 Wall-clock: nfe10 arms 11.4 + 9.4 min; nfe150 arms 82.5 + 80.3 min; HMMER 5.5 min.
 
@@ -137,7 +137,7 @@ comparison; tier dirs carry no separate `baseline.tblout`.)
 
 The §4.1 +11 headline is a single seed. Before committing to a decisive
 N=1000 run, seeds 43/44 were generated at N=200, NFE=150, legacy arm
-(`/home/hugo/gap41b-nfe150/run_nfe150_screen.sh`); seed 42 is reused from the
+(`/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/run_nfe150_screen.sh`); seed 42 is reused from the
 premise. Canonical HMMER counter:
 
 | seed | baseline | framework | framework − baseline |
@@ -190,10 +190,10 @@ N=1000.
 ## 6. Reproduce
 
 ```bash
-bash /home/hugo/gap41b-nfe150/run_premise.sh              # N=200 seed 42, NFE {10,150}
-bash /home/hugo/gap41b-nfe150/run_nfe150_screen.sh        # N=200 seeds 43/44, NFE 150 legacy
+bash /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/run_premise.sh              # N=200 seed 42, NFE {10,150}
+bash /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/run_nfe150_screen.sh        # N=200 seeds 43/44, NFE 150 legacy
 # extend to N=1000 later (resumable):
-N=1000 START=200 bash /home/hugo/gap41b-nfe150/run_premise.sh
+N=1000 START=200 bash /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/run_premise.sh
 ```
 
 Evidence: `verification_outputs/gap41b-r1-nfe-fidelity/`.

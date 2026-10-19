@@ -25,15 +25,15 @@ set -euo pipefail
 
 REPO=/home/hugo/codes/flowa-multistep-reinference
 VENV=$REPO/.venvs/lineageflow_venv/bin/python
-OUT=${OUT:-/home/hugo/gap42f-nfe150-n1000}
-PREMISE=/home/hugo/gap41b-nfe150/premise
+OUT=${OUT:-/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap42f-nfe150-n1000}
+PREMISE=/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/premise
 N=${N:-1000}
 NFE=${NFE:-150}
 START=${START:-0}
 SEEDS=${SEEDS:-"42 43 44"}
 PARALLEL=${PARALLEL:-1}
 cd "$REPO"
-export TMPDIR=/home/hugo/gap41-tmp TORCHINDUCTOR_CACHE_DIR=/home/hugo/gap41-torchinductor
+export TMPDIR=/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41-tmp TORCHINDUCTOR_CACHE_DIR=/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41-torchinductor
 mkdir -p "$TMPDIR" "$TORCHINDUCTOR_CACHE_DIR" "$OUT"
 [ -f "$OUT/count_hits.py" ] || cp "$PREMISE/count_hits.py" "$OUT/"
 

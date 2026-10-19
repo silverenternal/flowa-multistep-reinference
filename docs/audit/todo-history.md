@@ -425,7 +425,7 @@ the canonical `--nfe 10`, but the upstream LineageFlow released config
 (`data/lineageflow_upstream/config/generation.json`) uses `steps_base=100` +
 `steps_final=50` ≈ **150 NFE** — a ~15× budget gap. The user's hypothesis: the
 rejections may be a low-budget artifact rather than evidence the levers are
-inert. **Premise test** (`/home/hugo/gap41b-nfe150/run_premise.sh`): N=200,
+inert. **Premise test** (`/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/run_premise.sh`): N=200,
 seed 42, gate-open (`--restart-min-nfe 5`, `effective_n_rounds=3`), arms
 `{legacy, tier}` × NFE ∈ {10, 150}.
 

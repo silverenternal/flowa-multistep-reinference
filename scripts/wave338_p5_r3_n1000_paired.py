@@ -162,25 +162,18 @@ def _make_real_restart_policy(*, seed: int, memory_fraction: float,
     return _dc_replace(policy, policy_hash=hash_policy_hash(policy))
 
 
-def _apply_real_restart_blend(adapter, bundle, *, memory_fraction: float, seed: int,
-                              per_channel=None):
-    """Apply the adapter's real ``apply_restart_distribution`` (GAP-39).
+def _split_nfe(total: int, rounds: int) -> list[int]:
+    """Split a fixed total NFE across ``rounds`` re-inference rounds.
 
-    Replaces the x-only additive-Gaussian proxy (:func:`_framework_perturb_prior`)
-    with the actual FlowA restart-blend math: the adapter blends the prior's
-    ``(x, a, c, e)`` with a fresh draw via ``_channel_aware_blend`` over all
-    three FlowMol3 channels (coordinate + charge + raw_pair). The returned
-    bundle carries the blended native state, which the subsequent
-    ``solve_ode(..., n_molecules=...)`` tiles across the batch — so this is a
-    genuine prior-side restart-blend, not a coordinate-only perturbation.
-
-    ``per_channel`` (GAP-52) overrides the scalar ``memory_fraction`` for any
-    of ``coordinate`` / ``charge`` / ``raw_pair``.
+    Every round gets ``total // rounds`` steps and the last round absorbs
+    the remainder, so ``sum(_split_nfe(total, r)) == total`` for any
+    ``r >= 1``. ``rounds=1`` returns ``[total]`` (the legacy path).
     """
-    policy = _make_real_restart_policy(
-        seed=seed, memory_fraction=memory_fraction, per_channel=per_channel,
-    )
-    return adapter.apply_restart_distribution(bundle, policy)
+    n_rounds = max(1, int(rounds))
+    base = int(total) // n_rounds
+    parts = [base] * n_rounds
+    parts[-1] += int(total) % n_rounds
+    return parts
 
 
 def _generate_arm(*, arm_name, perturbation_sigma, seed_base, n_total, nfe,
@@ -189,7 +182,8 @@ def _generate_arm(*, arm_name, perturbation_sigma, seed_base, n_total, nfe,
                   real_restart_blend: bool = False,
                   restart_memory_fraction: float = 0.5,
                   restart_memory_by_channel=None,
-                  charge_blend_mode: str = "continuous"):
+                  charge_blend_mode: str = "continuous",
+                  restart_rounds: int = 1):
     """Generate N=1000 SDF molecules for one arm via the upstream path.
 
     ``shared_prior`` (GAP-37): when True the per-batch ``batch_id`` omits the
@@ -235,25 +229,42 @@ def _generate_arm(*, arm_name, perturbation_sigma, seed_base, n_total, nfe,
             shared_prior=shared_prior,
         )
         bundle = _build_canonical_prior(adapter, batch_id)
+        policy = None
         if real_restart_blend:
-            bundle = _apply_real_restart_blend(
-                adapter, bundle,
-                memory_fraction=restart_memory_fraction, seed=seed,
+            policy = _make_real_restart_policy(
+                seed=seed,
+                memory_fraction=restart_memory_fraction,
                 per_channel=restart_memory_by_channel,
             )
+            bundle = adapter.apply_restart_distribution(bundle, policy)
         elif perturbation_sigma > 0.0:
             _framework_perturb_prior(
                 adapter, bundle, perturbation_sigma=perturbation_sigma, seed=seed,
             )
-        cond = ODEConditionDelta(
-            delta_spec={"num_steps": nfe},
-            source=f"wave338_p5_{arm_name}_seed{seed_base}",
-            target_round=0,
-            calibration_artifact_hash="wave338_p5",
-        )
         t_batch = time.perf_counter()
+        trace = None
         try:
-            trace = adapter.solve_ode(bundle, cond, seed=int(seed), n_molecules=nfe_batch)
+            # GAP-53 — R rounds at a fixed TOTAL NFE. R=1 is the legacy
+            # single-round path (one prior blend + one full solve).
+            rounds = max(1, int(restart_rounds))
+            nfe_parts = _split_nfe(nfe, rounds)
+            for round_idx, nfe_r in enumerate(nfe_parts):
+                cond = ODEConditionDelta(
+                    delta_spec={"num_steps": int(nfe_r)},
+                    source=f"wave338_p5_{arm_name}_seed{seed_base}",
+                    target_round=int(round_idx),
+                    calibration_artifact_hash="wave338_p5",
+                )
+                trace = adapter.solve_ode(
+                    bundle, cond, seed=int(seed), n_molecules=nfe_batch,
+                )
+                if round_idx < rounds - 1:
+                    if policy is None:
+                        raise RuntimeError(
+                            "restart_rounds > 1 requires --real-restart-blend"
+                        )
+                    endpoint = adapter.observe_endpoint(trace, bundle)
+                    bundle = adapter.apply_restart_distribution(endpoint, policy)
         except Exception as exc:
             errors.append(f"batch{batch_idx}:{type(exc).__name__}:{exc}")
             continue
@@ -297,6 +308,7 @@ def _generate_arm(*, arm_name, perturbation_sigma, seed_base, n_total, nfe,
         "perturbation_sigma": float(perturbation_sigma),
         "seed_base": int(seed_base),
         "nfe": int(nfe),
+        "restart_rounds": int(restart_rounds),
         "nfe_batch": int(nfe_batch),
         "device": str(device),
         "weights_path": str(weights_path),
@@ -330,7 +342,8 @@ def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
                   shared_prior: bool = False, real_restart_blend: bool = False,
                   restart_memory_fraction: float = 0.5,
                   restart_memory_by_channel=None,
-                  charge_blend_mode: str = "continuous") -> dict:
+                  charge_blend_mode: str = "continuous",
+                  restart_rounds: int = 1) -> dict:
     """Run baseline + framework arms for one seed and return the paired dict.
 
     ``baseline_nfe`` (GAP-12 tuned-baseline extension) lets the *baseline* arm
@@ -356,6 +369,7 @@ def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
         restart_memory_fraction=restart_memory_fraction,
         restart_memory_by_channel=restart_memory_by_channel,
         charge_blend_mode=charge_blend_mode,
+        restart_rounds=restart_rounds,
     )
     framework_metrics = _compute_metrics(framework_raw["_sampled_mols"],
                                         arm_name="framework", seed_base=seed_base)
@@ -390,6 +404,7 @@ def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
             else None
         ),
         "charge_blend_mode": str(charge_blend_mode),
+        "restart_rounds": int(restart_rounds),
         "paper_targets": PAPER_TARGETS,
         "baseline": {
             "perturbation_sigma": PERTURBATION_SIGMA_BASELINE,
@@ -497,12 +512,23 @@ def main(argv: list[str] | None = None) -> int:
                         "charge label with probability m instead of linearly "
                         "blending the continuous draw. Default 'continuous' "
                         "preserves the GAP-39/GAP-43 behaviour.")
+    p.add_argument("--restart-rounds", type=int, default=1,
+                   help="GAP-53: number of re-inference rounds at a fixed "
+                        "TOTAL NFE (default 1 = the legacy single-round arm). "
+                        "R>1 blends each endpoint with a fresh draw and "
+                        "re-solves with nfe/R steps per round. Requires "
+                        "--real-restart-blend.")
     p.add_argument("--output-dir", type=Path,
                    default=REPO_ROOT / "verification_outputs")
     args = p.parse_args(argv)
 
     out_dir: Path = args.output_dir
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    if int(args.restart_rounds) < 1:
+        raise SystemExit("--restart-rounds must be >= 1")
+    if int(args.restart_rounds) > 1 and not bool(args.real_restart_blend):
+        raise SystemExit("--restart-rounds > 1 requires --real-restart-blend")
 
     memory_by_channel = {
         key: value
@@ -533,6 +559,7 @@ def main(argv: list[str] | None = None) -> int:
             restart_memory_fraction=float(args.restart_memory_fraction),
             restart_memory_by_channel=memory_by_channel,
             charge_blend_mode=str(args.charge_blend_mode),
+            restart_rounds=int(args.restart_rounds),
         )
         per_seed.append(sweep)
 

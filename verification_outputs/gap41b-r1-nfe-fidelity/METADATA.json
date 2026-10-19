@@ -35,8 +35,8 @@
                "tier_aware_baseline_metrics_jsonl": "verification_outputs/k6_foldability_n1000_w161_q3_2026/baseline/foldability/foldability.jsonl"}
     }
   },
-  "command": "bash /home/hugo/gap41b-nfe150/run_premise.sh  (N=200 START=0)",
-  "resume_command": "N=1000 START=200 bash /home/hugo/gap41b-nfe150/run_premise.sh",
+  "command": "bash /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/run_premise.sh  (N=200 START=0)",
+  "resume_command": "N=1000 START=200 bash /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/run_premise.sh",
   "hit_counter": "premise/count_hits.py (hmmscan --noali --cpu 32 --tblout <out> --acc Pfam-A.hmm <fasta>)",
   "wall_clock_utc": {
     "nfe10_legacy": {"start": "2026-10-16T10:07:06Z", "end": "2026-10-16T10:18:27Z", "seconds": 681},

@@ -1749,6 +1749,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         use_upstream: bool = False,
         upstream_repo_dir: str | None = None,
         charge_blend_mode: str = "continuous",
+        restart_fresh_mode: str = "per_round",
     ) -> None:
         if backend not in ("numpy", "torch"):
             raise ValueError(
@@ -1758,6 +1759,11 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             raise ValueError(
                 "unknown_charge_blend_mode:"
                 f"{charge_blend_mode!r} (expected 'continuous' or 'categorical')"
+            )
+        if restart_fresh_mode not in ("per_round", "fixed"):
+            raise ValueError(
+                "unknown_restart_fresh_mode:"
+                f"{restart_fresh_mode!r} (expected 'per_round' or 'fixed')"
             )
         if int(num_steps) <= 0:
             raise ValueError("num_steps_must_be_positive")
@@ -1782,6 +1788,10 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         self._num_steps = int(num_steps)
         self._seed_offset = int(seed_offset)
         self._charge_blend_mode = str(charge_blend_mode)
+        # GAP-53 — "per_round" (default) re-draws the fresh restart input
+        # each round; "fixed" reuses the same fresh input for every round,
+        # which is the setting of Theorem 4 (G_b with a fixed b).
+        self._restart_fresh_mode = str(restart_fresh_mode)
         self._weights_path = str(weights_path) if weights_path is not None else None
         self._device = str(device)
         self._use_upstream = bool(use_upstream)
@@ -2311,12 +2321,58 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             16,
         )
         fresh = _sample_native_state(int(restart_seed))
-        blended = _channel_aware_blend(
-            prior_entry,
-            fresh,
-            memory_fraction,
-            charge_mode=self._charge_blend_mode,
+        n_molecules = int(prior_entry.get("n_molecules", 1))
+        is_batch = (
+            np.asarray(prior_entry["x"]).ndim == 3 and n_molecules > 1
         )
+        if is_batch:
+            # GAP-53 — blend each molecule's endpoint with its own fresh
+            # draw. The per-molecule seed is derived from
+            # ``(restart_seed, molecule index)`` so the batch is
+            # reproducible and the molecules do not collapse onto one
+            # another. ``_channel_aware_blend`` keeps the prior's size,
+            # so every molecule keeps its endpoint's atom count.
+            x_parts, c_parts, e_parts, a_parts = [], [], [], []
+            for mol_idx in range(n_molecules):
+                seed_i = int(
+                    hashlib.sha256(
+                        repr((int(restart_seed), int(mol_idx))).encode("utf-8")
+                    ).hexdigest()[:8],
+                    16,
+                )
+                fresh_i = _sample_native_state(seed_i)
+                sub_prior = {
+                    "x": np.asarray(prior_entry["x"])[mol_idx],
+                    "c": np.asarray(prior_entry["c"])[mol_idx],
+                    "e": np.asarray(prior_entry["e"])[mol_idx],
+                    "a": np.asarray(prior_entry["a"])[mol_idx],
+                    "n_atoms": int(np.asarray(prior_entry["x"]).shape[1]),
+                }
+                blended_i = _channel_aware_blend(
+                    sub_prior,
+                    fresh_i,
+                    memory_fraction,
+                    charge_mode=self._charge_blend_mode,
+                )
+                x_parts.append(blended_i["x"])
+                c_parts.append(blended_i["c"])
+                e_parts.append(blended_i["e"])
+                a_parts.append(blended_i["a"])
+            blended = {
+                "x": np.stack(x_parts, axis=0),
+                "c": np.stack(c_parts, axis=0),
+                "e": np.stack(e_parts, axis=0),
+                "a": np.stack(a_parts, axis=0),
+                "n_atoms": int(np.asarray(prior_entry["x"]).shape[1]),
+                "n_molecules": int(n_molecules),
+            }
+        else:
+            blended = _channel_aware_blend(
+                prior_entry,
+                fresh,
+                memory_fraction,
+                charge_mode=self._charge_blend_mode,
+            )
         next_digest = digest_state(
             {
                 "kind": "restart",
@@ -2324,6 +2380,13 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 "policy_hash": str(policy.policy_hash),
                 "source_round": int(next_round),
                 "n_atoms": int(blended["n_atoms"]),
+                # GAP-53 — only the batched branch adds this field so the
+                # single-molecule restart digest stays byte-identical.
+                **(
+                    {"n_molecules": int(n_molecules)}
+                    if is_batch
+                    else {}
+                ),
                 "m_coord": float(memory_fraction[ChannelName("coordinate")]),
                 "m_charge": float(memory_fraction[ChannelName("charge")]),
                 "m_pair": float(memory_fraction[ChannelName("raw_pair")]),
@@ -2900,6 +2963,18 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         n_mol = int(n_molecules)
         if n_mol < 1:
             raise ValueError("n_molecules_must_be_positive")
+        # GAP-53 — a batched restart endpoint stores per-molecule prior
+        # arrays under the same keys with a leading molecule axis. When
+        # present, each molecule starts from its own blended prior
+        # instead of the shared single-molecule prior tiled ``n_mol``
+        # times. The legacy path is unchanged: ``repeat_n == n_mol``.
+        _prior_x_nd = np.asarray(prior_entry["x"]).ndim
+        is_batch_prior = (
+            _prior_x_nd == 3
+            and int(prior_entry.get("n_molecules", 1)) == n_mol
+        )
+        repeat_n = 1 if is_batch_prior else n_mol
+        n_rows = int(n_mol * n_atoms) if is_batch_prior else int(n_atoms)
         n_atom_types_upstream = int(getattr(self._model, "n_atom_types", 11))
         n_charge_classes = int(getattr(self._model, "n_atom_charges", 6))
         n_bond_types_upstream = int(getattr(self._model, "n_bond_types", 4))
@@ -2910,39 +2985,52 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
 
         dev = torch.device(str(self._device))
         n = int(n_atoms)
-        # Build the prior dict once (the upstream pads/aligns to its
-        # batched graph's ndata shape; passing a single per-atom prior
-        # repeated across the batch is the canonical Wave 70 path).
-        x0_np = np.asarray(prior_entry["x"], dtype=np.float32).reshape(n, 3)
-        a_np = np.asarray(prior_entry["a"], dtype=np.int64).reshape(n)
+        # Build the prior dict once. In the legacy path a single
+        # per-atom prior is repeated across the batch; in the batched
+        # restart path the arrays already carry one row/block per
+        # molecule (blocked order, matching ``dgl.batch``).
+        x0_np = np.asarray(prior_entry["x"], dtype=np.float32).reshape(n_rows, 3)
+        a_np = np.asarray(prior_entry["a"], dtype=np.int64).reshape(n_rows)
         a0_one_hot = np.zeros(  # type: ignore[var-annotated]
-            (n, n_atom_types_upstream + 1), dtype=np.float32
+            (n_rows, n_atom_types_upstream + 1), dtype=np.float32
         )
         clipped = np.clip(a_np, 0, n_atom_types_upstream - 1)
-        for i in range(n):
+        for i in range(n_rows):
             a0_one_hot[i, int(clipped[i])] = 1.0
-        c_np = np.asarray(prior_entry["c"], dtype=np.float64).reshape(n)
+        c_np = np.asarray(prior_entry["c"], dtype=np.float64).reshape(n_rows)
         c_idx = np.clip(
             np.rint(c_np).astype(np.int64) + 2, 0, n_charge_classes - 1
         )
-        c0_one_hot = np.zeros((n, n_charge_classes + 1), dtype=np.float32)  # type: ignore[var-annotated]
-        for i in range(n):
+        c0_one_hot = np.zeros((n_rows, n_charge_classes + 1), dtype=np.float32)  # type: ignore[var-annotated]
+        for i in range(n_rows):
             c0_one_hot[i, int(c_idx[i])] = 1.0
-        e_np = np.asarray(prior_entry["e"], dtype=np.int64).reshape(n, n)
-        e_np = np.clip(e_np, 0, FLOWMOL3ADAPTER_N_BOND_TYPES - 1)
-        e_model_lbl = np.asarray(FLOWMOL3_ADAPTER_TO_MODEL_BOND,
-                                  dtype=np.int64)[e_np]
-        e0_one_hot_full = np.zeros(  # type: ignore[var-annotated]
-            (n, n, n_bond_types_upstream + 1), dtype=np.float32
+        n_e_blocks = n_mol if is_batch_prior else 1
+        e_np = np.asarray(prior_entry["e"], dtype=np.int64).reshape(
+            n_e_blocks, n, n
         )
-        for i in range(n):
-            for j in range(n):
-                if i == j:
-                    continue
-                e0_one_hot_full[i, j, int(e_model_lbl[i, j])] = 1.0
+        e_np = np.clip(e_np, 0, FLOWMOL3ADAPTER_N_BOND_TYPES - 1)
         upper_idx = np.triu_indices(n, k=1)
-        e0_ut = e0_one_hot_full[upper_idx[0], upper_idx[1]]
-        e0_full = np.concatenate([e0_ut, e0_ut], axis=0)
+        e_ut_parts = []
+        for m in range(n_e_blocks):
+            e_model_lbl = np.asarray(FLOWMOL3_ADAPTER_TO_MODEL_BOND,
+                                     dtype=np.int64)[e_np[m]]
+            e0_one_hot_full = np.zeros(  # type: ignore[var-annotated]
+                (n, n, n_bond_types_upstream + 1), dtype=np.float32
+            )
+            for i in range(n):
+                for j in range(n):
+                    if i == j:
+                        continue
+                    e0_one_hot_full[i, j, int(e_model_lbl[i, j])] = 1.0
+            e_ut_parts.append(e0_one_hot_full[upper_idx[0], upper_idx[1]])
+        # ``build_edge_idxs`` lays out each molecule as
+        # ``[upper_m, lower_m]`` and ``dgl.batch`` concatenates
+        # molecules, so the per-molecule pairs must stay together.
+        # With one block this is exactly ``concat([ut, ut])`` (the
+        # historical single-molecule order).
+        e0_full = np.concatenate(
+            [np.concatenate([ut, ut], axis=0) for ut in e_ut_parts], axis=0,
+        )
         prior_dict: dict[str, Any] = {
             # Tile the single-molecule prior across the batched DGL graph's
             # per-node dimension. The upstream `FlowMol.sample()` builds
@@ -2965,13 +3053,13 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             # The single-molecule path (n_mol == 1, Wave 70-72) is
             # byte-stable: `repeat(1, 1)` is a no-op view.
             "x_0": torch.as_tensor(x0_np, dtype=torch.float32).to(dev)
-                      .repeat(int(n_mol), 1),  # (n_mol * n, 3)
+                      .repeat(int(repeat_n), 1),  # (n_mol * n, 3)
             "a_0": torch.as_tensor(a0_one_hot, dtype=torch.float32).to(dev)
-                      .repeat(int(n_mol), 1),  # (n_mol * n, n_atom_types_upstream+1)
+                      .repeat(int(repeat_n), 1),  # (n_mol * n, n_atom_types_upstream+1)
             "c_0": torch.as_tensor(c0_one_hot, dtype=torch.float32).to(dev)
-                      .repeat(int(n_mol), 1),  # (n_mol * n, n_charge_classes+1)
+                      .repeat(int(repeat_n), 1),  # (n_mol * n, n_charge_classes+1)
             "e_0": torch.as_tensor(e0_full, dtype=torch.float32).to(dev)
-                      .repeat(int(n_mol), 1),  # (n_mol * 2 * n_ut, n_bond_types_upstream+1)
+                      .repeat(int(repeat_n), 1),  # (n_mol * 2 * n_ut, n_bond_types_upstream+1)
             "fake_atoms": bool(getattr(self._model, "fake_atoms", False)),
         }
         n_atoms_tensor = torch.as_tensor(
@@ -3951,18 +4039,52 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             raise CapabilityMissingError(
                 "missing_native_state", context=str(trace.native_state_digest)
             )
-        traj_x = np.asarray(traj_entry["traj_x"], dtype=np.float64)
-        traj_c = np.asarray(traj_entry["traj_c"], dtype=np.float64)
-        traj_e = np.asarray(traj_entry["traj_e"], dtype=np.int64)
-        x_final = np.asarray(traj_x[-1], dtype=np.float64)
-        c_final = np.asarray(traj_c[-1], dtype=np.float64)
-        e_final = np.asarray(traj_e[-1], dtype=np.int64)
+        # GAP-53 — batched trajectories (``n_molecules > 1``) cache
+        # ``traj_*_batch`` of shape ``(n_molecules, num_steps+1, ...)``
+        # and do NOT populate the legacy single-molecule keys. Reading
+        # ``traj_x`` unconditionally raised ``KeyError`` on that path,
+        # which is why multi-round restart could not run at batch size
+        # > 1. The batch endpoint keeps the same key names with a
+        # leading molecule axis and carries ``n_molecules``.
+        is_batch = "traj_x" not in traj_entry
+        if is_batch:
+            traj_x = np.asarray(traj_entry["traj_x_batch"], dtype=np.float64)
+            traj_c = np.asarray(traj_entry["traj_c_batch"], dtype=np.float64)
+            traj_e = np.asarray(traj_entry["traj_e_batch"], dtype=np.int64)
+            traj_a = np.asarray(traj_entry["traj_a_batch"], dtype=np.int64)
+            x_final = np.asarray(traj_x[:, -1], dtype=np.float64)
+            c_final = np.asarray(traj_c[:, -1], dtype=np.float64)
+            e_final = np.asarray(traj_e[:, -1], dtype=np.int64)
+            a_final = np.asarray(traj_a[:, -1], dtype=np.int64)
+            n_molecules = int(traj_entry["n_molecules"])
+            # The batch buffers are padded to the batch max, which can
+            # exceed the prior's ``n_atoms`` when per-molecule draws
+            # differ in size (synthetic path). The restart re-solve must
+            # use the padded width so every molecule keeps its rows.
+            n_atoms_out = int(traj_x.shape[2])
+        else:
+            traj_x = np.asarray(traj_entry["traj_x"], dtype=np.float64)
+            traj_c = np.asarray(traj_entry["traj_c"], dtype=np.float64)
+            traj_e = np.asarray(traj_entry["traj_e"], dtype=np.int64)
+            x_final = np.asarray(traj_x[-1], dtype=np.float64)
+            c_final = np.asarray(traj_c[-1], dtype=np.float64)
+            e_final = np.asarray(traj_e[-1], dtype=np.int64)
+            a_final = np.asarray(traj_entry["traj_a"][-1], dtype=np.int64)
+            n_molecules = 1
+            n_atoms_out = int(traj_entry["n_atoms"])
         endpoint_digest = digest_state(
             {
                 "kind": "endpoint",
                 "traj_digest": str(trace.native_state_digest),
                 "src_digest": str(state.native_state_digest),
-                "n_atoms": int(traj_entry["n_atoms"]),
+                "n_atoms": int(n_atoms_out),
+                # Only the batched branch adds this field so the
+                # single-molecule digest stays byte-identical (D.4).
+                **(
+                    {"n_molecules": int(n_molecules)}
+                    if is_batch
+                    else {}
+                ),
                 "x_final_hash": str(
                     hashlib.sha256(np.asarray(x_final).tobytes()).hexdigest()
                 ),
@@ -3981,8 +4103,9 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 "x": x_final,
                 "c": c_final,
                 "e": e_final,
-                "a": np.asarray(traj_entry["traj_a"][-1], dtype=np.int64),
-                "n_atoms": int(traj_entry["n_atoms"]),
+                "a": a_final,
+                "n_atoms": int(n_atoms_out),
+                "n_molecules": int(n_molecules),
                 "t": 1.0,
                 "audit": traj_entry.get("audit", ()),
             },

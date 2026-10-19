@@ -28,8 +28,8 @@ import re
 import sys
 from pathlib import Path
 
-CHAIN = Path("/home/hugo/gap41b-nfe150/chain_screen")
-INTER = Path("/home/hugo/gap42e-interaction")
+CHAIN = Path("/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/chain_screen")
+INTER = Path("/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap42e-interaction")
 LINE = re.compile(
     r"^(?P<dir>[^:]+)/(?P<file>[^:]+):\s+total_hits=(?P<hits>\d+)\s+"
     r"records=(?P<records>\d+)\s+records_with_hits=(?P<ge1>\d+)\s+"

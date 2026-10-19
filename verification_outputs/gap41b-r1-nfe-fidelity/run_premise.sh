@@ -6,14 +6,14 @@ set -euo pipefail
 
 REPO=/home/hugo/codes/flowa-multistep-reinference
 VENV=$REPO/.venvs/lineageflow_venv/bin/python
-OUT=/home/hugo/gap41b-nfe150/premise
+OUT=/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/premise
 BASELINE_JSONL=$REPO/verification_outputs/k6_foldability_n1000_w161_q3_2026/baseline/foldability/foldability.jsonl
 N=${N:-200}
 START=${START:-0}
 cd "$REPO"
-export TMPDIR=/home/hugo/gap41-tmp TORCHINDUCTOR_CACHE_DIR=/home/hugo/gap41-torchinductor
+export TMPDIR=/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41-tmp TORCHINDUCTOR_CACHE_DIR=/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41-torchinductor
 mkdir -p "$TMPDIR" "$TORCHINDUCTOR_CACHE_DIR" "$OUT"
-cp /home/hugo/gap41-n1000/count_hits.py "$OUT/" 2>/dev/null || cp /home/hugo/gap40-n1000-work/count_hits.py "$OUT/"
+cp /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41-n1000/count_hits.py "$OUT/" 2>/dev/null || cp /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap40-n1000-work/count_hits.py "$OUT/"
 
 gen() {  # gen <tag> <nfe> <extra-flags...>
   local tag="$1"; shift

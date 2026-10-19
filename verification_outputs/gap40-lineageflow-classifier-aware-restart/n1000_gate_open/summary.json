@@ -94,7 +94,7 @@
     "no_verdict_promoted": true
   },
   "provenance": {
-    "retry_note": "seed44_car was killed by an EDQUOT (disk quota exceeded) on the quota'd /tmp tmpfs at 2026-10-16T05:19Z; regenerated under /home/hugo/gap40-n1000-work (deterministic, same seed/args).",
+    "retry_note": "seed44_car was killed by an EDQUOT (disk quota exceeded) on the quota'd /tmp tmpfs at 2026-10-16T05:19Z; regenerated under /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap40-n1000-work (deterministic, same seed/args).",
     "baseline_byte_stable_across_arms": true,
     "legacy_vs_car_framework_differ": true,
     "legacy_vs_car_framework_md5": {
