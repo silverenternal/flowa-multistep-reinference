@@ -260,20 +260,22 @@ which pairs both arms on the same prior.
 
 | Seed | baseline `fg_dev` | framework `fg_dev` | Δ`fg_dev` | baseline `pb` | framework `pb` | Δ`pb` |
 |---|---|---|---|---|---|---|
-| 55 | 0.7317 | 0.8669 | **+0.1353** | 0.5450 | 0.7296 | +0.1846 |
-| 105 | 0.6016 | 0.6319 | **+0.0303** | 0.6834 | 0.6700 | −0.0134 |
-| 155 | 1.0228 | 0.9070 | **−0.1159** | 0.6948 | 0.4524 | −0.2424 |
+| 55 | 0.7317 | 0.8669 | +0.1353 | 0.5450 | 0.7296 | +0.1846 |
+| 105 | 0.6016 | 0.6319 | +0.0303 | 0.6834 | 0.6700 | −0.0134 |
+| 155 | 1.0228 | 0.9070 | −0.1159 | 0.9697 | 0.7273 | −0.2424 |
+| 205 | 0.6977 | 0.6468 | −0.0509 | 0.5600 | 0.6450 | +0.0850 |
 
-**Reading.** Across the first three seeds the `fg_dev` deltas are
-`+0.135, +0.030, −0.116` (mean `+0.016`, 1/3 favourable) — **no
-`fg_dev` win**, consistent with the probe's discontinuity finding.
-The `pb_validity` deltas are `+0.185, −0.013, −0.242` (mean `−0.024`,
-1/3 favourable): the R = 1 `pb_validity` win from GAP-43 (50/50 seeds,
-+0.212) **does not survive** the second round.
+**Reading.** The four `fg_dev` deltas are `+0.135, +0.030, −0.116,
+−0.051` (mean `−0.0003`, 2/4 favourable). The four `pb_validity` deltas
+are `+0.185, −0.013, −0.242, +0.085` (mean `+0.0034`, 2/4 favourable).
+Both are a **wash**. `R = 2` neither improves nor degrades the metrics
+on average; the seed-to-seed spread is larger than the effect.
 
-**Conclusion (provisional, seed 205 pending).** `R = 2` is dominated by
-`R = 1` on FlowMol3: it buys no `fg_dev` and loses the `pb_validity`
-advantage. The round count is a real knob, but on this checkpoint the
-extra round acts as an additional stochastic perturbation rather than a
-contraction — exactly what the class-flip mechanism predicts. Keep the
-canonical `R = 1` arm for the FlowMol3 claims.
+**Conclusion.** `R = 2` is null on FlowMol3. It buys no `fg_dev` and
+does not reproduce the R = 1 `pb_validity` advantage (GAP-43: +0.212,
+50/50 seeds) — but it does not destroy it either; the four-seed mean is
+zero with a large spread. The round count is a real knob, but on this
+checkpoint the extra round acts as an additional stochastic
+perturbation rather than a contraction, exactly what the class-flip
+mechanism predicts. Keep the canonical `R = 1` arm for the FlowMol3
+claims; do not spend a 50-seed block on `R = 2`.
