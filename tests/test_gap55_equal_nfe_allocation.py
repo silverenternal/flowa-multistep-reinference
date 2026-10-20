@@ -15,6 +15,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -24,6 +26,7 @@ from scripts.wave191_p3_mnist_sweep import (  # noqa: E402
     BASELINE_NUM_STEPS,
     FRAMEWORK_MAX_NUM_STEPS,
     N_ROUNDS,
+    beta_for_round,
     per_round_num_steps,
     per_round_num_steps_equal_budget,
 )
@@ -56,3 +59,27 @@ def test_equal_budget_preserves_the_scheduler_ordering() -> None:
     """Cosine anneals down, so its early rounds must get more steps."""
     steps = per_round_num_steps_equal_budget("cosine", N_ROUNDS, BASELINE_NUM_STEPS)
     assert steps[0] > steps[1] > steps[2]
+
+
+def test_constant_beta_is_legacy() -> None:
+    for r in range(N_ROUNDS):
+        assert beta_for_round(0.5, r, N_ROUNDS, "constant") == 0.5
+
+
+def test_equal_budget_conserves_the_total_fresh_fraction() -> None:
+    """After the R-1 restarts the retained signal must be 1 - beta_total."""
+    beta_total = 0.5
+    retained = 1.0
+    for r in range(1, N_ROUNDS):
+        retained *= 1.0 - beta_for_round(beta_total, r, N_ROUNDS, "equal_budget")
+    assert retained == pytest.approx(1.0 - beta_total, rel=1e-12)
+
+
+def test_equal_budget_endpoints() -> None:
+    assert beta_for_round(0.0, 0, 4, "equal_budget") == 0.0
+    assert beta_for_round(1.0, 0, 4, "equal_budget") == 1.0
+
+
+def test_unknown_beta_schedule_rejected() -> None:
+    with pytest.raises(ValueError):
+        beta_for_round(0.5, 0, 4, "geometric")

@@ -776,42 +776,64 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))  # type: ignore[attr-defined]
         if num_steps <= 0:
             raise ValueError("num_steps_must_be_positive")
+        # GAP-56: honour the interval carried by the condition.
+        # The MNIST FM path is ``x_t = (1 - t) * x_0 + t * x_1`` with
+        # ``x_0`` standard normal and ``x_1`` data (see
+        # ``mnist_fm_train.py``), so ``t`` is a genuine time coordinate.
+        # ``apply_restart_distribution`` builds
+        # ``blend = m * x_1_hat + (1 - m) * x_0``, which is *exactly* the
+        # path state at ``t = m``; integrating that state from ``t = 0``
+        # (the pre-GAP-56 behaviour) evaluates the velocity field at the
+        # wrong time and destroys the sample. The defaults below keep
+        # every legacy call byte-identical.
+        t_start = float(condition.delta_spec.get("t0", 0.0))  # type: ignore[attr-defined]
+        t_end = float(condition.delta_spec.get("t1", 1.0))  # type: ignore[attr-defined]
+        if not np.isfinite(t_start) or not np.isfinite(t_end):
+            raise ValueError("t0_t1_must_be_finite")
+        if not 0.0 <= t_start <= t_end <= 1.0:
+            raise ValueError("t0_t1_must_satisfy_0_le_t0_le_t1_le_1")
         x0 = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(MNIST_FLAT_DIM)
         if self._integrator == "euler":
-            t_grid = np.linspace(0.0, 1.0, num_steps + 1, dtype=np.float64)
+            t_grid = np.linspace(t_start, t_end, num_steps + 1, dtype=np.float64)
             traj = _integrate_euler(self._weights, x0, t_grid)
             actual_steps = int(num_steps)
         elif self._integrator == "rk4":
-            t_grid = np.linspace(0.0, 1.0, num_steps + 1, dtype=np.float64)
+            t_grid = np.linspace(t_start, t_end, num_steps + 1, dtype=np.float64)
             traj = _integrate_rk4(self._weights, x0, t_grid)
             actual_steps = int(num_steps)
         elif self._integrator == "dormand_prince":
             traj = _integrate_dormand_prince(
                 self._weights,
                 x0,
-                0.0,
-                1.0,
+                t_start,
+                t_end,
                 max_steps=max(int(self._max_steps), num_steps * 4),
                 rtol=float(self._rtol),
                 atol=float(self._atol),
             )
             actual_steps = max(1, traj.shape[0] - 1)
-            t_grid = np.linspace(0.0, 1.0, int(actual_steps) + 1, dtype=np.float64)
+            t_grid = np.linspace(t_start, t_end, int(actual_steps) + 1, dtype=np.float64)
         else:  # pragma: no cover — guarded by __init__ validation
             raise ValueError(f"unknown_integrator:{self._integrator}")
         traj_clamped = np.clip(traj, -MNIST_FM_CLAMP, MNIST_FM_CLAMP)
         overflowed = bool(np.any(np.abs(traj) > MNIST_FM_CLAMP))
         traj = traj_clamped
-        traj_digest = digest_state(
-            {
-                "kind": "trajectory",
-                "src_digest": state.native_state_digest,
-                "integrator": str(self._integrator),
-                "num_steps": int(num_steps),
-                "actual_steps": int(actual_steps),
-                "x0_head": [float(x0[i]) for i in range(8)],
-            }
-        )
+        # GAP-56: the trajectory depends on the integrated interval, so a
+        # non-default interval must be part of the identity surface.
+        # The legacy ``[0, 1]`` payload is left untouched so the frozen
+        # ``tests/test_adapters/test_regression_vectors.py`` hashes stay
+        # byte-identical; only a shifted interval extends the payload.
+        digest_payload: dict[str, Any] = {
+            "kind": "trajectory",
+            "src_digest": state.native_state_digest,
+            "integrator": str(self._integrator),
+            "num_steps": int(num_steps),
+            "actual_steps": int(actual_steps),
+            "x0_head": [float(x0[i]) for i in range(8)],
+        }
+        if (t_start, t_end) != (0.0, 1.0):
+            digest_payload["interval"] = [float(t_start), float(t_end)]
+        traj_digest = digest_state(digest_payload)
         stored: dict[str, Any] = {
             "trajectory": traj,
             "t_grid": t_grid,

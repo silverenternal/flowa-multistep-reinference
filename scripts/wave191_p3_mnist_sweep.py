@@ -128,6 +128,52 @@ SHARED_BATCH_ID: str = "wave191-p3"
 # ---------------------------------------------------------------------------
 
 
+def beta_for_round(
+    beta_total: float, round_idx: int, rounds: int, schedule: str,
+) -> float:
+    """GAP-55 root-cause fix — per-round fresh fraction from a total budget.
+
+    The legacy driver applies ``beta`` **every round**, so at ``beta=0.5`` and
+    ``rounds=4`` the retained signal after the last restart is
+    ``0.5**3 = 12.5%`` — an effective fresh fraction of **93.75%**, not the
+    50% the label suggests. ``equal_budget`` splits the total noise budget
+    geometrically across the ``rounds - 1`` actual restarts (round 0 starts
+    from the prior and has no restart), so the cumulative retention equals
+    ``1 - beta_total``:
+
+        beta_r = 1 - (1 - beta_total) ** (1 / (rounds - 1))
+
+    ``constant`` reproduces the historical behaviour byte-for-byte.
+    """
+    if str(schedule) == "constant":
+        return float(beta_total)
+    if str(schedule) != "equal_budget":
+        raise ValueError(f"unknown_beta_schedule:{schedule!r}")
+    restarts = max(1, int(rounds) - 1)
+    beta_total = max(0.0, min(1.0, float(beta_total)))
+    return float(1.0 - (1.0 - beta_total) ** (1.0 / restarts))
+
+
+def restart_t0_per_round(
+    beta_total: float, rounds: int, beta_schedule: str, t0_mode: str,
+) -> list[float]:
+    """GAP-56: the path time each round starts from.
+
+    ``zero`` reproduces the legacy wiring (every round re-integrates
+    ``[0, 1]``). ``memory`` starts round ``r >= 1`` at ``t = 1 - beta_r``,
+    which is the time the restart blend actually lives at.
+    """
+    if str(t0_mode) == "zero":
+        return [0.0] * int(rounds)
+    if str(t0_mode) != "memory":
+        raise ValueError(f"unknown_restart_t0_mode:{t0_mode!r}")
+    out: list[float] = [0.0]
+    for r in range(1, int(rounds)):
+        beta_r = beta_for_round(float(beta_total), int(r), int(rounds), str(beta_schedule))
+        out.append(float(1.0 - beta_r))
+    return out
+
+
 def make_policy(*, arm: str, beta: float, round_idx: int) -> FinalRestartPolicy:
     """Build a hash-valid :class:`FinalRestartPolicy` for ``(arm, beta, round_idx)``.
 
@@ -224,7 +270,12 @@ def per_round_num_steps(name: str, cycle_length: int, max_num_steps: int) -> lis
 
 
 def per_round_num_steps_equal_budget(
-    name: str, cycle_length: int, total_nfe: int,
+    name: str,
+    cycle_length: int,
+    total_nfe: int,
+    *,
+    allocation: str = "scheduler",
+    interval_lengths: list[float] | None = None,
 ) -> list[int]:
     """GAP-55: split a FIXED total NFE across rounds by scheduler ``n_cap`` weight.
 
@@ -234,13 +285,39 @@ def per_round_num_steps_equal_budget(
     baseline of 50). This helper instead treats the scheduler ``n_cap``
     values as weights and apportions exactly ``total_nfe`` steps, so every
     arm matches the baseline's total inference budget.
+
+    GAP-56 adds ``allocation`` because under ``--restart-t0-mode memory``
+    each round only traverses ``[t0_r, 1]``, so the scheduler's ``n_cap``
+    weights no longer describe how much path each round covers:
+
+    ``scheduler``
+        Legacy GAP-55 behaviour — weights are the scheduler ``n_cap``.
+    ``uniform``
+        Equal steps per round.
+    ``proportional``
+        Weights are the interval lengths ``1 - t0_r`` (round 0 covers the
+        whole path), i.e. a constant Euler step size across every round.
+        Requires ``interval_lengths``.
     """
     from tools.eval.framework import _allocate_nfe_budget  # local: keep import cost off cold start
 
-    sched = build_scheduler(name, cycle_length)
-    weights: list[float] = []
-    for r in range(int(cycle_length)):
-        weights.append(float(sched.sample(0, int(r), int(r)).n_cap))
+    if allocation == "scheduler":
+        sched = build_scheduler(name, cycle_length)
+        weights: list[float] = []
+        for r in range(int(cycle_length)):
+            weights.append(float(sched.sample(0, int(r), int(r)).n_cap))
+    elif allocation == "uniform":
+        weights = [1.0] * int(cycle_length)
+    elif allocation == "proportional":
+        if interval_lengths is None:
+            raise ValueError("proportional_allocation_requires_interval_lengths")
+        if len(interval_lengths) != int(cycle_length):
+            raise ValueError("interval_lengths_length_mismatch")
+        weights = [float(w) for w in interval_lengths]
+        if any(w < 0.0 for w in weights) or sum(weights) <= 0.0:
+            raise ValueError("interval_lengths_must_be_non_negative_and_nonzero")
+    else:
+        raise ValueError(f"unknown_nfe_allocation:{allocation!r}")
     return _allocate_nfe_budget(weights, int(total_nfe), int(cycle_length))
 
 
@@ -304,6 +381,8 @@ def run_framework_arm(
     weights_path: Path,
     verbose: bool = True,
     shared_prior: bool = False,
+    beta_schedule: str = "constant",
+    restart_t0_mode: str = "zero",
 ) -> tuple[np.ndarray, dict[str, int]]:
     """Generate ``n_samples`` framework-arm endpoints (4 rounds × num_steps_per_round[r], beta=beta).
 
@@ -340,12 +419,24 @@ def run_framework_arm(
         )
         # Subsequent rounds: apply_restart_distribution with beta
         for r in range(int(cycle_length)):
+            t_start = 0.0
             if r > 0:
-                policy = make_policy(arm=arm_name, beta=float(beta), round_idx=int(r))
+                beta_r = beta_for_round(
+                    float(beta), int(r), int(cycle_length), str(beta_schedule),
+                )
+                policy = make_policy(arm=arm_name, beta=beta_r, round_idx=int(r))
                 bundle = adapter.apply_restart_distribution(bundle, policy)
+                if str(restart_t0_mode) == "memory":
+                    # GAP-56: the blend ``m*x1 + (1-m)*x0`` is the path state at
+                    # t = m, so the round must integrate [m, 1], not [0, 1].
+                    t_start = 1.0 - float(beta_r)
             num_steps = int(num_steps_per_round[r])
             condition = ODEConditionDelta(
-                delta_spec={"t0": 0.0, "t1": 1.0, "num_steps": int(num_steps)},
+                delta_spec={
+                    "t0": float(t_start),
+                    "t1": 1.0,
+                    "num_steps": int(num_steps),
+                },
                 source=f"wave191_p3_{arm_name}",
                 target_round=int(r),
                 calibration_artifact_hash="cal-wave191-p3",
@@ -444,6 +535,35 @@ def main(argv: list[str] | None = None) -> int:
                              f"SAME total budget. Legacy default applies a "
                              f"per-round cap and totals 25/48/25 for "
                              f"cosine/codim/evidence.")
+    parser.add_argument("--beta-schedule", choices=("constant", "equal_budget"),
+                        default="constant",
+                        help="GAP-55: how the restart fresh fraction is split "
+                             "across rounds. 'constant' applies --beta every "
+                             "round (legacy: 4 rounds at 0.5 retain only 12.5%% "
+                             "of the signal). 'equal_budget' sets "
+                             "beta_r = 1-(1-beta)^(1/rounds) so the cumulative "
+                             "retention equals 1-beta.")
+    parser.add_argument("--beta-framework", type=float, default=BETA_FRAMEWORK,
+                        help=f"Total restart fresh fraction (default {BETA_FRAMEWORK}).")
+    parser.add_argument("--restart-t0-mode", choices=("zero", "memory"),
+                        default="zero",
+                        help="GAP-56: where each post-restart round starts on the "
+                             "probability-flow path. 'zero' (legacy) always starts "
+                             "at t=0 even though the restart blend is the path "
+                             "state at t=memory_fraction, so the velocity field is "
+                             "evaluated at the wrong time and beta=0 is NOT a "
+                             "no-op. 'memory' starts at t=memory_fraction, which "
+                             "makes the blend exactly on-path and makes beta=0 an "
+                             "exact no-op.")
+    parser.add_argument("--nfe-allocation",
+                        choices=("scheduler", "uniform", "proportional"),
+                        default="scheduler",
+                        help="GAP-56: how --equal-total-nfe apportions steps "
+                             "across rounds. 'scheduler' (legacy GAP-55) uses the "
+                             "scheduler n_cap weights; 'uniform' gives every "
+                             "round the same count; 'proportional' weights by the "
+                             "path interval each round actually covers "
+                             "(1 - t0_r), i.e. a constant Euler step size.")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
 
@@ -474,6 +594,10 @@ def main(argv: list[str] | None = None) -> int:
     # Smoke ckpt is ~22 KB (small base_channels=8 weights); production 3-epoch
     # base_channels=16 ckpt is ~75 KB. Threshold of 50 KB cleanly separates.
     ckpt_is_smoke = ckpt_size < 50_000
+    try:
+        ckpt_rel = str(ckpt_path.resolve().relative_to(REPO_ROOT))
+    except ValueError:  # pragma: no cover - out-of-tree ckpt
+        ckpt_rel = str(ckpt_path)
     n_samples_used = n_samples
     n_samples_was_capped = False
     if n_samples_used > FALLBACK_N_SAMPLES * 5:
@@ -503,10 +627,17 @@ def main(argv: list[str] | None = None) -> int:
     # 2. Per-round num_steps for each framework arm
     # ------------------------------------------------------------------
     arm_num_steps: dict[str, list[int]] = {}
+    t0_per_round = restart_t0_per_round(
+        float(args.beta_framework), int(N_ROUNDS),
+        str(args.beta_schedule), str(args.restart_t0_mode),
+    )
+    interval_lengths = [1.0 - float(t) for t in t0_per_round]
     for name in ARM_LABELS:
         if bool(args.equal_total_nfe):
             ns = per_round_num_steps_equal_budget(
                 name, int(N_ROUNDS), int(BASELINE_NUM_STEPS),
+                allocation=str(args.nfe_allocation),
+                interval_lengths=interval_lengths,
             )
         else:
             ns = per_round_num_steps(name, int(N_ROUNDS), int(FRAMEWORK_MAX_NUM_STEPS))
@@ -547,10 +678,12 @@ def main(argv: list[str] | None = None) -> int:
             n_samples=int(n_samples),
             num_steps_per_round=arm_num_steps[name],
             seed_offset=seed_offset,
-            beta=float(BETA_FRAMEWORK),
+            beta=float(args.beta_framework),
             weights_path=ckpt_path,
             verbose=not args.quiet,
             shared_prior=bool(args.shared_prior),
+            beta_schedule=str(args.beta_schedule),
+            restart_t0_mode=str(args.restart_t0_mode),
         )
         arm_samples[name] = s
         arm_telemetry[name] = tel
@@ -704,7 +837,7 @@ def main(argv: list[str] | None = None) -> int:
     # ------------------------------------------------------------------
     if ckpt_is_smoke:
         honest_disclosure = (
-            f"SMOKE CKPT USED: data/mnist_fm.npz ({ckpt_size} bytes, sha256={ckpt_sha256[:16]}) "
+            f"SMOKE CKPT USED: {ckpt_rel} ({ckpt_size} bytes, sha256={ckpt_sha256[:16]}) "
             f"was materialized via tools/materialize_mnist_fm.py with epochs=1, "
             f"base_channels=8, max_train_images=6000 (production recipe is "
             f"epochs=3, base_channels=16, full 60K images; 30-40 min CPU). The "
@@ -715,7 +848,7 @@ def main(argv: list[str] | None = None) -> int:
         )
     else:
         honest_disclosure = (
-            f"Production ckpt used: data/mnist_fm.npz ({ckpt_size} bytes, "
+            f"Production ckpt used: {ckpt_rel} ({ckpt_size} bytes, "
             f"sha256={ckpt_sha256[:16]}); 3-epoch base_channels=16 recipe."
         )
 
@@ -727,6 +860,18 @@ def main(argv: list[str] | None = None) -> int:
         "nfe_allocation_mode": (
             "equal_total_budget" if bool(args.equal_total_nfe) else "per_round_cap"
         ),
+        "nfe_allocation_weights": str(args.nfe_allocation),
+        "beta_schedule": str(args.beta_schedule),
+        "restart_t0_mode": str(args.restart_t0_mode),
+        "restart_t0_per_round": t0_per_round,
+        "beta_total": float(args.beta_framework),
+        "beta_per_round": [
+            beta_for_round(
+                float(args.beta_framework), r, int(N_ROUNDS),
+                str(args.beta_schedule),
+            )
+            for r in range(int(N_ROUNDS))
+        ],
         "baseline_fid": float(baseline_fid),
         "framework_arms": framework_arms_out,
         "best_arm": best_name,
@@ -751,7 +896,7 @@ def main(argv: list[str] | None = None) -> int:
             "CodimensionSheetScheduler": float(headline_fid["codimension_sheet"]),
             "EvidenceDrivenScheduler": float(headline_fid["evidence_driven"]),
         },
-        "checkpoint": "data/mnist_fm.npz",
+        "checkpoint": str(ckpt_rel),
         "checkpoint_sha256": ckpt_sha256,
         "checkpoint_size_bytes": int(ckpt_size),
         "checkpoint_is_smoke_materialization": bool(ckpt_is_smoke),

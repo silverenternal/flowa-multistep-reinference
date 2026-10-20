@@ -300,6 +300,8 @@ not_in_nav: |
   audit/gap52-charge-channel-run.md
   audit/gap53-initial-condition-contraction.md
   audit/gap55-code-level-hardening.md
+  audit/gap56-restart-t0-defect.md
+  audit/gap50-evidence-grade-table.md
   audit/project-state-inventory.md
   audit/repo-docs-maintenance.md
   audit/readiness-verifier-repoint.md
