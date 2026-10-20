@@ -203,11 +203,24 @@
       "phase": "1",
       "priority": "P0",
       "owner": "agent",
-      "status": "IN_PROGRESS",
+      "status": "ROOT-CAUSE-FIXED-MECHANISM-BOUNDED",
       "gap": "R5c regresses at honestly matched total NFE (+9.2% to +14.6% FID). Root cause: apply_restart_distribution builds blend = m*x1_hat + (1-m)*x0, which is exactly the linear-FM path state at t = m, but solve_ode hard-coded the interval [0,1]. So every restart re-traversed the full path from a state that is not a valid t=0 state. Invariant violated: beta=0 ('keep everything') is NOT a no-op (measured max|delta| = 1.0137, 24.9% relative drift on a [-1,1] signal).",
-      "acceptance": "(1) solve_ode honours t0/t1 from ODEConditionDelta with defaults 0/1 so legacy calls stay byte-identical. (2) --restart-t0-mode {zero,memory} and --nfe-allocation {scheduler,uniform,proportional}. (3) beta=0 under memory mode is an exact no-op (unit test). (4) D.4 30/30. (5) N=200 mechanism screen + N=1000 3-seed confirmation before any status label changes.",
-      "evidence": "docs/audit/gap56-restart-t0-defect.md; tests/test_gap56_restart_t0.py; verification_outputs/gap56-r5c-memory-t0/",
-      "opened_at": "2026-10-19"
+      "acceptance": "(1) solve_ode honours t0/t1 from ODEConditionDelta with defaults 0/1 so legacy calls stay byte-identical. (2) --restart-t0-mode {zero,memory} and --nfe-allocation {scheduler,uniform,proportional}. (3) beta=0 under memory mode is an exact no-op (unit test). (4) D.4 30/30. (5) N=200 mechanism screen done (5 mechanisms, 25 configs, 3 genuine draws) and recorded in the audit; N=1000 confirmation is now folded into GAP-57, where the regime ladder is re-measured at equal total NFE so a confirmation is not spent on a cell the mechanism cannot win.",
+      "evidence": "docs/audit/gap56-restart-t0-defect.md; tests/test_gap56_restart_t0.py; tools/gap56_nfe_floor.py; tools/gap56_r5c_paired_bootstrap.py; verification_outputs/gap56-r5c-memory-t0/; verification_outputs/gap56-nfe-floor/; verification_outputs/gap56-seedkey-legacy/; verification_outputs/gap56-seedkey-eqbeta/",
+      "opened_at": "2026-10-19",
+      "result": "Root cause confirmed and fixed: solve_ode ignored t0/t1, so a restart whose blend is the path state at t=m was re-integrated over the full [0,1] with a 1/(1-m) times too large step. beta=0 was not a no-op (max|delta|=1.0137, 24.9% relative drift). Second defect: the prior is keyed only on (batch_id, sample_id) and solve_ode discards its seed, so the Wave 280 '3-seed' R5c runs are three byte-identical copies. After the fix (t0=memory + equal total NFE + proportional allocation) the regression roughly halves but does not vanish: legacy +10.8..+20.9% -> +6.7..+9.7% at NFE=50 (three genuine prior draws, 18/18 cells positive, sign test p~3.8e-06). 25 configurations across five sampler-side mechanisms (beta budget, restart start time, NFE allocation, round count, total budget) never beat the baseline anywhere in NFE in [3,50]. FID decomposition: the sampler moves ~1 unit of an ~11-unit model-versus-reference gap, and the baseline reaches its FID floor by ~15 NFE. The historical -28.43% was measured on the smoke checkpoint. Conclusion: the sampler-side lever is exhausted on the production checkpoint; the governing variable is the model's own residual error (GAP-35), which now has to be re-tested under equal total NFE (GAP-57)."
+    },
+    {
+      "id": "GAP-57-EQUAL-NFE-REGIME-LADDER",
+      "phase": "1",
+      "priority": "P0",
+      "owner": "agent",
+      "status": "PLANNED",
+      "gap": "GAP-35 established that the restart gain is monotone in the model's optimisation budget (78-93 steps -> -25..-28%; 937+ steps -> +3..+10%), i.e. the mechanism corrects residual velocity-field error. But every framework arm in that table was run at the legacy per-round cap (~2x the baseline's NFE; GAP-44: R5c arms 25/48/25 vs baseline 50), so the magnitude of every win is confounded with compute. GAP-55 and GAP-56 showed that once total NFE is matched the production checkpoint regresses. Whether the GAP-35 ladder survives equal total NFE is unknown, and it decides whether R5c is a validated mechanism with a documented boundary or a compute artefact.",
+      "acceptance": "(1) Re-run the GAP-35 ladder checkpoints (w16e1_5k, w16e1_10k, w16e1_60k) with equal total NFE=50, --restart-t0-mode memory, --nfe-allocation proportional, GAP-56 beta, N=200, 3 genuine prior draws (--seed-keyed-prior 42/43/44). (2) For each checkpoint report baseline FID, best-arm FID, paired delta with CI, and the regression line of delta% on baseline FID. (3) The ladder survives only if the delta% at w16e1_5k stays negative and significant under equal NFE; otherwise record R5c as a compute-confounded historical result and close the cell. (4) No new seeds beyond 42/43/44; seeds are a diagnostic axis, never a significance lever.",
+      "agent_action": "1) Run the 3 checkpoints x 3 draws at equal NFE=50. 2) Aggregate into a regime table with the equal-NFE column beside the GAP-35 legacy column. 3) Record in docs/audit/gap57-equal-nfe-regime-ladder.md with observed/interpretation/gap separation. 4) If the ladder survives, the R5c claim is restated as a bounded mechanism (wins below ~27 FID baseline, regresses above ~14); if not, R5c closes as compute-confounded. 5) 6 gates + commit.",
+      "evidence": "docs/audit/gap35-cross-domain.md section 3; docs/audit/gap44-config-inventory; docs/audit/gap55-equal-nfe-allocation.md; docs/audit/gap56-restart-t0-defect.md section 5.5; verification_outputs/gap35-mnist-regime/",
+      "result": ""
     },
     {
       "id": "GAP-54-CLASS-PRESERVING-CONTRACTION",

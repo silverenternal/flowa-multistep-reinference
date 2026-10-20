@@ -276,3 +276,45 @@ def test_scheduler_allocation_is_the_gap55_behaviour():
     assert per_round_num_steps_equal_budget("cosine", 4, 50) == (
         per_round_num_steps_equal_budget("cosine", 4, 50, allocation="scheduler")
     )
+
+
+# ---------------------------------------------------------------------------
+# GAP-56: --seed had no effect on the generated samples
+# ---------------------------------------------------------------------------
+
+
+def test_prior_batch_suffix_changes_the_draw(tmp_path):
+    """The prior must depend on the seed, or a 3-seed design is vacuous.
+
+    ``build_initial_state`` keys the Gaussian on ``(batch_id, sample_id)``
+    only, and ``solve_ode`` discards its ``seed`` argument, so without the
+    suffix two "different seeds" produce byte-identical samples.
+    """
+    adapter = _adapter(tmp_path)
+    a = adapter.build_initial_state(batch_id="wave191-p3-s42", sample_id="s00000")
+    b = adapter.build_initial_state(batch_id="wave191-p3-s43", sample_id="s00000")
+    xa = np.asarray(adapter._native_states[a.native_state_digest]["x0"], dtype=np.float64)
+    xb = np.asarray(adapter._native_states[b.native_state_digest]["x0"], dtype=np.float64)
+    assert not np.array_equal(xa, xb)
+
+
+def test_prior_batch_suffix_is_empty_by_default():
+    """Legacy batch ids must not gain a suffix when the flag is off."""
+    import inspect
+
+    from scripts.wave191_p3_mnist_sweep import run_baseline, run_framework_arm
+
+    assert inspect.signature(run_baseline).parameters["batch_suffix"].default == ""
+    assert inspect.signature(run_framework_arm).parameters["batch_suffix"].default == ""
+
+
+def test_solve_ode_ignores_its_seed(tmp_path):
+    """Documents *why* the suffix is needed: the solver is deterministic."""
+    adapter = _adapter(tmp_path)
+    bundle = adapter.build_initial_state(batch_id="gap56", sample_id="s0")
+    cond = _condition(t0=0.0, t1=1.0, num_steps=6)
+    t1 = adapter.solve_ode(bundle, cond, seed=1)
+    t2 = adapter.solve_ode(bundle, cond, seed=999_999)
+    x1 = np.asarray(adapter._native_states[t1.native_state_digest]["trajectory"])
+    x2 = np.asarray(adapter._native_states[t2.native_state_digest]["trajectory"])
+    assert np.array_equal(x1, x2)

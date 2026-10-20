@@ -333,8 +333,10 @@ def run_baseline(
     seed: int,
     verbose: bool = True,
     shared_prior: bool = False,
+    num_steps: int = BASELINE_NUM_STEPS,
+    batch_suffix: str = "",
 ) -> np.ndarray:
-    """Generate ``n_samples`` baseline endpoints (1 round × 50 NFE, beta=0).
+    """Generate ``n_samples`` baseline endpoints (1 round × ``num_steps``, beta=0).
 
     ``shared_prior`` (GAP-38) makes the baseline build the SAME ``x0`` prior as
     the framework arms (``SHARED_BATCH_ID``) instead of the arm-keyed
@@ -342,14 +344,14 @@ def run_baseline(
 
     Returns ``(n_samples, 784)`` float64 endpoints.
     """
-    batch_id = SHARED_BATCH_ID if shared_prior else "wave191-p3-baseline"
+    batch_id = (SHARED_BATCH_ID if shared_prior else "wave191-p3-baseline") + str(batch_suffix)
     samples = np.empty((int(n_samples), MNIST_FM_FLAT_DIM), dtype=np.float64)
     t0 = time.perf_counter()
     for i in range(int(n_samples)):
         bundle = adapter.build_initial_state(batch_id=batch_id, sample_id=f"s{i:05d}")
         # No restart (beta=0); the policy doesn't matter — solve_ode uses the bundle's x0.
         condition = ODEConditionDelta(
-            delta_spec={"t0": 0.0, "t1": 1.0, "num_steps": int(BASELINE_NUM_STEPS)},
+            delta_spec={"t0": 0.0, "t1": 1.0, "num_steps": int(num_steps)},
             source="wave191_p3_baseline",
             target_round=0,
             calibration_artifact_hash="cal-wave191-p3",
@@ -364,7 +366,7 @@ def run_baseline(
     if verbose:
         print(
             f"[baseline] {n_samples} samples in {elapsed:.1f}s "
-            f"({n_samples / elapsed:.1f} samples/s), NFE={BASELINE_NUM_STEPS}",
+            f"({n_samples / elapsed:.1f} samples/s), NFE={int(num_steps)}",
             flush=True,
         )
     return samples
@@ -383,6 +385,7 @@ def run_framework_arm(
     shared_prior: bool = False,
     beta_schedule: str = "constant",
     restart_t0_mode: str = "zero",
+    batch_suffix: str = "",
 ) -> tuple[np.ndarray, dict[str, int]]:
     """Generate ``n_samples`` framework-arm endpoints (4 rounds × num_steps_per_round[r], beta=beta).
 
@@ -408,7 +411,9 @@ def run_framework_arm(
         num_steps=int(BASELINE_NUM_STEPS),  # default; overridden per round via condition
     )
 
-    round0_batch_id = SHARED_BATCH_ID if shared_prior else f"wave191-p3-{arm_name}"
+    round0_batch_id = (
+        SHARED_BATCH_ID if shared_prior else f"wave191-p3-{arm_name}"
+    ) + str(batch_suffix)
     samples = np.empty((int(n_samples), MNIST_FM_FLAT_DIM), dtype=np.float64)
     total_nfe = int(sum(num_steps_per_round))
     t0 = time.perf_counter()
@@ -564,8 +569,49 @@ def main(argv: list[str] | None = None) -> int:
                              "round the same count; 'proportional' weights by the "
                              "path interval each round actually covers "
                              "(1 - t0_r), i.e. a constant Euler step size.")
+    parser.add_argument("--total-nfe", type=int, default=BASELINE_NUM_STEPS,
+                        help="GAP-56: shared inference budget. Sets both the "
+                             "single-pass baseline's Euler step count and the "
+                             f"total NFE apportioned across the framework arms "
+                             f"(default {BASELINE_NUM_STEPS}). Lower it to probe "
+                             "the regime where the baseline is NOT already at "
+                             "the model's FID floor.")
+    parser.add_argument("--baseline-num-steps", type=int,
+                        default=None,
+                        help="GAP-56 attribution control: run the single-pass "
+                             "baseline with this many Euler steps instead of "
+                             f"{BASELINE_NUM_STEPS}. The framework arms keep "
+                             "their own budget, so a baseline at the framework's "
+                             "per-round step count isolates the cost of the "
+                             "starved first pass from the value of the restarts. "
+                             "Defaults to --total-nfe.")
+    parser.add_argument("--n-rounds", type=int, default=N_ROUNDS,
+                        help="GAP-56 attribution: number of restart rounds. "
+                             f"Default {N_ROUNDS}. Fewer rounds give round 0 a "
+                             "larger share of the fixed total NFE, which is the "
+                             "only lever that reduces the first pass's Euler "
+                             "step at a matched budget.")
+    parser.add_argument("--seed-keyed-prior", action="store_true",
+                        help="GAP-56: fold --seed into the prior batch id. "
+                             "Without this the prior is keyed only on "
+                             "(batch_id, sample_id) and solve_ode discards its "
+                             "seed argument, so --seed has NO effect on the "
+                             "generated samples and a '3-seed' design produces "
+                             "three byte-identical draws (measured: the Wave 280 "
+                             "R5c seed42/43/44 npz files are bit-equal).")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
+
+    n_rounds = int(args.n_rounds)
+    total_nfe = int(args.total_nfe)
+    if total_nfe <= 0:
+        raise SystemExit(f"total_nfe_must_be_positive:{total_nfe}")
+    baseline_steps = total_nfe if args.baseline_num_steps is None else int(args.baseline_num_steps)
+    batch_suffix = f"-s{int(args.seed)}" if bool(args.seed_keyed_prior) else ""
+    if baseline_steps <= 0:
+        raise SystemExit(f"baseline_num_steps_must_be_positive:{baseline_steps}")
+    if n_rounds < 1:
+        raise SystemExit(f"n_rounds_must_be_positive:{n_rounds}")
 
     n_samples = int(args.n_samples)
     output_dir = Path(args.output_dir)
@@ -607,7 +653,7 @@ def main(argv: list[str] | None = None) -> int:
     if not args.quiet:
         print(f"[wave191-p3] ckpt={ckpt_path} sha256={ckpt_sha256[:16]} "
               f"size={ckpt_size} bytes smoke={ckpt_is_smoke}")
-        print(f"[wave191-p3] N={n_samples} NFE={BASELINE_NUM_STEPS} rounds={N_ROUNDS} "
+        print(f"[wave191-p3] N={n_samples} NFE={BASELINE_NUM_STEPS} rounds={n_rounds} "
               f"framework-max-num-steps={FRAMEWORK_MAX_NUM_STEPS}")
 
     # ------------------------------------------------------------------
@@ -628,19 +674,19 @@ def main(argv: list[str] | None = None) -> int:
     # ------------------------------------------------------------------
     arm_num_steps: dict[str, list[int]] = {}
     t0_per_round = restart_t0_per_round(
-        float(args.beta_framework), int(N_ROUNDS),
+        float(args.beta_framework), n_rounds,
         str(args.beta_schedule), str(args.restart_t0_mode),
     )
     interval_lengths = [1.0 - float(t) for t in t0_per_round]
     for name in ARM_LABELS:
         if bool(args.equal_total_nfe):
             ns = per_round_num_steps_equal_budget(
-                name, int(N_ROUNDS), int(BASELINE_NUM_STEPS),
+                name, n_rounds, total_nfe,
                 allocation=str(args.nfe_allocation),
                 interval_lengths=interval_lengths,
             )
         else:
-            ns = per_round_num_steps(name, int(N_ROUNDS), int(FRAMEWORK_MAX_NUM_STEPS))
+            ns = per_round_num_steps(name, n_rounds, int(FRAMEWORK_MAX_NUM_STEPS))
         arm_num_steps[name] = ns
         if not args.quiet:
             print(f"[wave191-p3] {name} per-round num_steps = {ns} "
@@ -661,6 +707,8 @@ def main(argv: list[str] | None = None) -> int:
         seed=int(args.seed),
         verbose=not args.quiet,
         shared_prior=bool(args.shared_prior),
+        num_steps=int(baseline_steps),
+        batch_suffix=batch_suffix,
     )
 
     arm_samples: dict[str, np.ndarray] = {}
@@ -674,7 +722,7 @@ def main(argv: list[str] | None = None) -> int:
         seed_offset = int(args.seed) if args.shared_prior else ARM_SEED_OFFSETS[name]
         s, tel = run_framework_arm(
             arm_name=name,
-            cycle_length=int(N_ROUNDS),
+            cycle_length=n_rounds,
             n_samples=int(n_samples),
             num_steps_per_round=arm_num_steps[name],
             seed_offset=seed_offset,
@@ -684,6 +732,7 @@ def main(argv: list[str] | None = None) -> int:
             shared_prior=bool(args.shared_prior),
             beta_schedule=str(args.beta_schedule),
             restart_t0_mode=str(args.restart_t0_mode),
+            batch_suffix=batch_suffix,
         )
         arm_samples[name] = s
         arm_telemetry[name] = tel
@@ -856,21 +905,24 @@ def main(argv: list[str] | None = None) -> int:
         "schema_version": SCHEMA_VERSION,
         "target": "mnist_fm",
         "n_records": int(n_samples),
-        "nfe": int(BASELINE_NUM_STEPS),
+        "nfe": int(total_nfe),
+        "baseline_nfe": int(baseline_steps),
         "nfe_allocation_mode": (
             "equal_total_budget" if bool(args.equal_total_nfe) else "per_round_cap"
         ),
         "nfe_allocation_weights": str(args.nfe_allocation),
         "beta_schedule": str(args.beta_schedule),
         "restart_t0_mode": str(args.restart_t0_mode),
+        "seed_keyed_prior": bool(args.seed_keyed_prior),
+        "prior_batch_suffix": str(batch_suffix),
         "restart_t0_per_round": t0_per_round,
         "beta_total": float(args.beta_framework),
         "beta_per_round": [
             beta_for_round(
-                float(args.beta_framework), r, int(N_ROUNDS),
+                float(args.beta_framework), r, n_rounds,
                 str(args.beta_schedule),
             )
-            for r in range(int(N_ROUNDS))
+            for r in range(n_rounds)
         ],
         "baseline_fid": float(baseline_fid),
         "framework_arms": framework_arms_out,
@@ -914,7 +966,7 @@ def main(argv: list[str] | None = None) -> int:
         "shared_prior": bool(args.shared_prior),
         "shared_batch_id": (SHARED_BATCH_ID if args.shared_prior else None),
         "framework_max_num_steps_per_round": int(FRAMEWORK_MAX_NUM_STEPS),
-        "n_rounds": int(N_ROUNDS),
+        "n_rounds": n_rounds,
         "beta_framework": float(BETA_FRAMEWORK),
         "beta_baseline": float(BETA_BASELINE),
         "fid_metric": (
