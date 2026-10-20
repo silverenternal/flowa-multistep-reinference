@@ -50,6 +50,7 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import logging
+import math
 import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -1750,6 +1751,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         upstream_repo_dir: str | None = None,
         charge_blend_mode: str = "continuous",
         restart_fresh_mode: str = "per_round",
+        sampler_stochasticity: float | None = None,
     ) -> None:
         if backend not in ("numpy", "torch"):
             raise ValueError(
@@ -1767,6 +1769,27 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             )
         if int(num_steps) <= 0:
             raise ValueError("num_steps_must_be_positive")
+        # GAP-54 — CTMC sampler stochasticity. ``None`` (default) keeps the
+        # upstream ``FlowMol.sample`` default (``stochasticity=8.0`` at
+        # ``ctmc_vector_field.py:149``), which can flip a discrete class
+        # under an arbitrarily small coordinate perturbation. ``0.0`` makes
+        # the CTMC class transitions deterministic, which is the premise of
+        # the contraction bound (Theorem 4 is conditional on a fixed
+        # ``(a, e)`` stratum). Non-negative finite only.
+        if sampler_stochasticity is not None:
+            try:
+                _stoch = float(sampler_stochasticity)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    "sampler_stochasticity_must_be_float:"
+                    f"got {sampler_stochasticity!r}"
+                ) from exc
+            if not math.isfinite(_stoch) or _stoch < 0.0:
+                raise ValueError(
+                    "sampler_stochasticity_must_be_non_negative_finite:"
+                    f"got {sampler_stochasticity!r}"
+                )
+            sampler_stochasticity = _stoch
         if backend == "torch" and not _torch_is_available():
             raise ImportError(
                 "torch backend requested but torch is not importable; "
@@ -1792,6 +1815,11 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         # each round; "fixed" reuses the same fresh input for every round,
         # which is the setting of Theorem 4 (G_b with a fixed b).
         self._restart_fresh_mode = str(restart_fresh_mode)
+        # GAP-54 — ``None`` preserves the upstream default; ``0.0`` disables
+        # CTMC class flips (deterministic transition kernel).
+        self._sampler_stochasticity: float | None = (
+            None if sampler_stochasticity is None else float(sampler_stochasticity)
+        )
         self._weights_path = str(weights_path) if weights_path is not None else None
         self._device = str(device)
         self._use_upstream = bool(use_upstream)
@@ -1837,6 +1865,17 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         # real mode. The synthetic-mode test path also does NOT reach
         # the helper (skip-guarded on ``_backend == "torch"``).
         _run_construction_shape_guard(self, self._SHIM_INPUT_SHAPE)
+
+    def _sampler_kwargs(self) -> dict[str, float]:
+        """Extra kwargs for upstream ``FlowMol.sample`` (GAP-54).
+
+        Empty by default so the legacy call is byte-identical. When
+        ``sampler_stochasticity`` was supplied, forward it as the CTMC
+        ``stochasticity`` argument (``0.0`` = deterministic class transitions).
+        """
+        if self._sampler_stochasticity is None:
+            return {}
+        return {"stochasticity": float(self._sampler_stochasticity)}
 
     @property
     def use_upstream(self) -> bool:
@@ -2763,6 +2802,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 n_timesteps=int(num_steps),
                 device=str(self._device),
                 prior=prior_dict,
+                **self._sampler_kwargs(),
             )
         # ``sampled`` is a list with one SampledMolecule (single-mol batch).
         mol = sampled[0]
@@ -3075,6 +3115,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 n_timesteps=int(num_steps),
                 device=str(self._device),
                 prior=prior_dict,
+                **self._sampler_kwargs(),
             )
         if len(sampled) != n_mol:
             raise RuntimeError(
@@ -5186,6 +5227,7 @@ def default_flowmol3adapter(
     device: str = "cpu",
     ctmc_enabled: bool | None = None,
     force_mode: str | None = None,
+    sampler_stochasticity: float | None = None,
 ) -> FlowMol3V2Adapter:
     """Return a fresh :class:`FlowMol3V2Adapter` for tests + registry wiring.
 
@@ -5237,6 +5279,7 @@ def default_flowmol3adapter(
         # ``use_upstream=False`` default (byte-stable for all existing
         # callers).
         use_upstream=(force_mode in {"real", "auto"}),
+        sampler_stochasticity=sampler_stochasticity,
     )
 
 

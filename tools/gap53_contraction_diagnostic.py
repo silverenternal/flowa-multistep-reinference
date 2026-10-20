@@ -72,7 +72,7 @@ def _split_nfe(total: int, rounds: int) -> list[int]:
     return parts
 
 
-def _adapter(device: str):
+def _adapter(device: str, sampler_stochasticity: float | None = None):
     from adaptive_reflow.adapters.flowmol3_v2_adapter import FlowMol3V2Adapter
 
     adapter = FlowMol3V2Adapter(
@@ -82,6 +82,7 @@ def _adapter(device: str):
         device=str(device),
         use_upstream=True,
         upstream_repo_dir=str(UPSTREAM_REPO),
+        sampler_stochasticity=sampler_stochasticity,
     )
     _ = adapter._load_model()
     if adapter._loaded_model_kind() != "upstream_flowmol":
@@ -459,13 +460,18 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--eps", type=float, default=1e-2)
     p.add_argument("--n-dirs", type=int, default=4)
     p.add_argument("--device", default=DEVICE)
+    p.add_argument("--sampler-stochasticity", type=float, default=None,
+                   help=("GAP-54: CTMC stochasticity passed to the upstream "
+                         "FlowMol.sample. Omit to keep the upstream default "
+                         "(8.0); 0.0 makes class transitions deterministic so "
+                         "the map is continuous on a fixed (a, e) stratum."))
     p.add_argument("--output-dir", type=Path,
                    default=REPO_ROOT / "verification_outputs" / "gap53-contraction")
     args = p.parse_args(argv)
 
     out_dir: Path = args.output_dir
     out_dir.mkdir(parents=True, exist_ok=True)
-    adapter = _adapter(str(args.device))
+    adapter = _adapter(str(args.device), args.sampler_stochasticity)
 
     if args.stage == "contraction":
         rows = []
