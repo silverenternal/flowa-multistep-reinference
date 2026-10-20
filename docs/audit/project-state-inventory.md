@@ -350,6 +350,14 @@ which one the §7.2 single-seed number came from; flagged as **unconfirmed** (U1
 | P2-2 | R5c at genuinely matched NFE (all arms 50) | would move the `−28.43%` number |
 | P2-3 | β sweep at headline N | no prior; would need a pre-registration like GAP-43 |
 
+**Status update (2026-10-20, additive).**
+
+| # | State | Where |
+|---|---|---|
+| P2-2 | **CLOSED.** R5c re-measured with 50 NFE on both sides, 4 checkpoints × 3 genuine draws, N=1000. The `−28.43 %` does not survive: it was the smoke checkpoint, and the matched-NFE effect at `w16e1_5k` is `−9.37 %`. The production cell regresses `+9.52 %`. | `docs/audit/gap57-equal-nfe-regime-ladder.md` |
+| P2-3 | **ANSWERED FOR R1, NOT FOR THE OTHERS.** β ∈ {0, 1/6, 1} at NFE=150: β=0 collapses (0 hits), and β=1/6 vs β=1 is a tie in 3/3 seeds, so the memory term is null and the per-record perturbation carries the gain. R2/R3/R5a/R5b have not been swept. | `docs/audit/gap45-r1-blend-off-wiring.md` §8 |
+| P2-1 | **OPEN.** `profile_residual_fn` is still unwired for `codimension_sheet` on R1/K1/K4/K5. | — |
+
 ---
 
 ## 9. References
