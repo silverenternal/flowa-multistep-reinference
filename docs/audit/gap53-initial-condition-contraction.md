@@ -285,3 +285,85 @@ checkpoint the extra round acts as an additional stochastic
 perturbation rather than a contraction, exactly what the class-flip
 mechanism predicts. Keep the canonical `R = 1` arm for the FlowMol3
 claims; do not spend a 50-seed block on `R = 2`.
+
+---
+
+## 9. GAP-54 — class-preserving probe (`sampler_stochasticity = 0`), 2026-10-20
+
+§8 attributed the amplification to CTMC class flips, which left open whether the
+*continuous* map contracts once the class is held fixed. GAP-54 tests exactly
+that: the upstream `FlowMol.sample` stochasticity is set to 0 (deterministic
+CTMC, additive default-off passthrough, `tests/test_gap54_sampler_stochasticity.py`),
+so a `10^-2` coordinate perturbation cannot change which class is drawn.
+
+**Protocol.** `K = 8` existing priors (55 / 105 / … / 405, the GAP-43 block —
+no new seeds), `R ∈ {1,2,3,4}`, 4 directions each, `eps = 10^-2`, `m = 0.5`,
+`N = 20` molecules, total NFE = 250 split evenly across rounds,
+`.venvs/flowmol3_venv`, `cuda:0`, `OMP_NUM_THREADS=1`. Artifacts:
+`verification_outputs/gap54-contraction-stochasticity0/` (32 cells, 128
+direction-runs, `METADATA.txt` + `probe.log` + `summary.json`).
+
+### 9.1 Observed
+
+**The class is fixed.** `dim_changes = 0` in all 128 direction-runs. The
+stochasticity passthrough does what it claims: with the CTMC deterministic, the
+atom count never diverges. Acceptance condition (2) first half is met.
+
+**The map still expands.** Median per-round ratio by round index:
+
+| round | n | median ratio | share > 1 |
+|---:|---:|---:|---:|
+| 1 | 128 | **11.91** | 0.80 |
+| 2 | 96 | **3.80** | 1.00 |
+| 3 | 64 | **1.49** | 0.98 |
+| 4 | 32 | **1.23** | 1.00 |
+
+Cell-level `ratio_median` by round count:
+
+| R | cells | median | range |
+|---:|---:|---:|---|
+| 1 | 8 | 19.10 | [0.28, 40.31] |
+| 2 | 8 | 7.56 | [2.72, 11.73] |
+| 3 | 8 | 3.12 | [1.83, 4.36] |
+| 4 | 8 | 1.70 | [1.18, 2.08] |
+
+Verdict (`summary.json`): `NO CONTRACTION AT THIS m (CI upper >= 1)`,
+`ratio_median = 3.74`, bootstrap 95 % CI **[2.33, 7.02]**, `K_eff = 11.64`,
+`m* (q = 0.9) = 0.077`.
+
+### 9.2 Interpretation
+
+1. **The GAP-53 null is not a class-flip artefact.** With the class provably
+   fixed, 98–100 % of round transitions still expand. The continuous flow map
+   on this checkpoint has `K > 1` in the coordinate channel at `m = 0.5`.
+2. **The expansion is real but decaying.** 11.9 → 3.80 → 1.49 → 1.23. The
+   sequence is consistent with a fixed-point expansion factor just above 1
+   that the first round overshoots; it does not approach or cross 1 within
+   `R = 4`.
+3. **Contraction would require discarding the memory.** `m* ≈ 0.08` means
+   `β ≈ 0.92`: a restart that keeps 8 % of the previous sample. At that point
+   the "restart" is a fresh draw with a rounding error of the old one, and the
+   mechanism is no longer the one Theorem 4 describes.
+4. **Acceptance (3) is not triggered.** The paired `R = 2` screen was
+   conditional on contraction; it is not run, and no new seeds are spent.
+
+### 9.3 Caveat — `D_0` bookkeeping in this run
+
+The recorded `D[0]` is `eps = 10^-2`, but the direction is normalised in
+Frobenius norm, so the perturbation's per-coordinate RMS is
+`eps / sqrt(3 * n_atoms)` — smaller than `eps` by 5.5–13× for the atom counts
+in this block. Every ratio that involves `D[0]` (i.e. the round-1 ratio and
+`q_hat`) is therefore **understated** by that factor. The tool was corrected
+after the run (`d[0] = RMS(x_base - x_perturbed)`); the artifacts above keep
+the old convention. The correction can only make the round-1 ratios larger —
+already a median of 11.9 and 80 % above 1 — so the verdict is unchanged in
+either direction.
+
+### 9.4 Consequence
+
+**GAP-54 is closed.** The contraction premise does not hold on the realized
+FlowMol3 map even with the discrete class held fixed, so Theorem 4 cannot be
+exercised there at any `m` that still counts as a restart. The FlowMol3 cells
+keep `R = 1`. This is a negative result about the *model*, not about the
+framework: the same probe is the right test for any other adapter, and it is
+cheap (about 90 min on one GPU for 128 direction-runs).

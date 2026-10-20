@@ -1,9 +1,11 @@
 # GAP-57 — the GAP-35 regime ladder, re-measured at equal total NFE
 
-**Status:** observed facts complete; one open attribution (round-count axis).
-**Increment:** `gap57-equal-nfe-ladder`
-**Supersedes nothing.** Additive to `gap35-cross-domain.md` and
-`gap56-restart-t0-defect.md`.
+**Status:** complete at `N = 1000`; the `N = 200` screen is retained only as a
+screen (see §7).
+**Increment:** `gap57-equal-nfe-ladder` (N=200) and
+`gap57-equal-nfe-ladder-n1000` (N=1000, primary).
+**Supersedes nothing.** Additive to `gap35-cross-domain.md`,
+`gap56-restart-t0-defect.md` and `gap53-initial-condition-contraction.md` §9.
 
 ---
 
@@ -16,23 +18,27 @@ ran at the legacy per-round cap (cosine 25 / codim 48 / evidence 25 total NFE)
 against a 50-NFE baseline**, so the size of each win was confounded with
 compute.
 
-Re-measured with **50 NFE on both sides**, the ladder survives:
+Re-measured with **50 NFE on both sides at N = 1000**, the ladder survives:
 
 | ckpt | baseline FID | Δ% at equal NFE (best arm) | Δ% at legacy NFE (best arm) | compute share of the win |
 |---|---:|---:|---:|---:|
-| `w16e1_5k` | 27.20 | **−13.18** (cosine) | −22.52 (codim) | **9.33 pp** |
-| `w16e1_10k` | 19.21 | −1.89 (cosine) | −7.10 (evidence) | 5.21 pp |
-| `w16e1_60k` | 13.51 | +10.48 (cosine) | +16.88 (evidence) | −6.39 pp |
-| `production` | 12.49 | +6.08 (cosine) | — | — |
+| `w16e1_5k` | 24.49 | **−9.37** (cosine) | −22.52 (codim) | **13.15 pp** |
+| `w16e1_10k` | 16.96 | +2.81 (cosine) | −7.10 (evidence) | 9.91 pp |
+| `w16e1_60k` | 11.38 | +15.59 (cosine) | +16.88 (evidence) | −1.29 pp |
+| `production` | 9.99 | +9.52 (cosine) | — | — |
 
 Least squares of Δ % on the baseline FID over 12 (checkpoint × draw) points:
-slope **−1.145 %/FID unit**, R² **0.925**, zero crossing at baseline FID
-**≈ 21.1**. Record-level paired bootstrap: **13 wins / 18 losses / 5 ties** over
-36 cells, and all 9 cells at `w16e1_5k` favour the framework with a CI that
-excludes zero.
+slope **−1.177 %/FID unit**, R² **0.855**, zero crossing at baseline FID
+**≈ 22.5**. Record-level paired bootstrap: **3 wins / 27 losses / 6 ties** over
+36 cells; the only wins are the three `w16e1_5k` cosine cells, where the CI
+excludes zero in every draw.
 
-**The honest headline for this mechanism is −13.2 % at matched NFE, not
-−28.4 %.** Roughly 40 % of the historical `w16e1_5k` win was compute.
+**The honest headline for this mechanism is −9.4 % at matched NFE, not
+−28.4 %.** About 58 % of the historical `w16e1_5k` win was compute.
+
+A second, independent defect surfaced while doing this and is recorded in §7:
+**FID is badly biased upward at `n = 200`**, which inflated every earlier
+`N = 200` effect size by 40–65 % and flipped one sign.
 
 ---
 
@@ -56,8 +62,7 @@ have **identical** `baseline_fid` and **identical** `fid_headline` (only the
 chunk partition changes), so its pooled `d_z = −42.49` is a chunk-partition
 statistic, not a cross-draw one. And its `delta_pct_mean = −25.39 %` is a
 chunk-mean delta against a 20-image reference; the headline ratio of the same
-run is **−22.52 %**. Those two estimators disagree because the small-reference
-Fréchet bias is arm-dependent (GAP-56 §4.3).
+run is **−22.52 %**.
 
 ---
 
@@ -68,14 +73,14 @@ Held fixed across all 12 runs:
 | item | value |
 |---|---|
 | driver | `scripts/wave191_p3_mnist_sweep.py` |
-| N | 200 (chunked `k=10` for the driver's own test; bootstrap is record-level) |
+| N | **1000** (primary); 200 (screen, §7) |
 | draws | seeds 42 / 43 / 44 via `--seed-keyed-prior` (genuinely distinct priors; verified byte-distinct) |
 | pairing | `--shared-prior` — baseline and all arms share the round-0 prior *within* a draw |
 | budget | `--equal-total-nfe --total-nfe 50`, `--nfe-allocation scheduler` |
 | rounds | `--n-rounds 4`, `--beta-schedule equal_budget`, `--beta-framework 0.5` |
 | restart | `--restart-t0-mode memory` (round `r` starts at `t = 1 − β_r`) |
 | threads | `OMP_NUM_THREADS=1` (BLAS oversubscription is 12.7× slower, GAP-56 §8.3) |
-| estimator | `fid_headline` (full 10k MNIST reference), record-level paired bootstrap B=2000, `BOOT_SEED=20261020`, Bonferroni over 3 arms |
+| estimator | `fid_headline` (full 10k MNIST reference), record-level paired bootstrap B=2000, `BOOT_SEED=20261020`, Bonferroni over 3 arms, bias-corrected interval (§7.2) |
 
 Per-round NFE at this budget (all arms total exactly 50):
 
@@ -97,76 +102,79 @@ Checkpoints (all `base_channels=16`, none smoke by size):
 Driver:
 
 ```bash
-bash reproduce/gap57_equal_nfe_ladder.sh 6      # 12 runs, 6 concurrent, 14m51s wall
-python3 tools/gap57_regime_ladder.py            # tables + regression
+bash reproduce/gap57_equal_nfe_ladder.sh 6      # N=200 screen, 12 runs, 14m51s
+# N=1000: same flags with --n-samples 1000, 12 runs, ~45 min at 6 concurrent
+python3 tools/gap57_regime_ladder.py --root verification_outputs/gap57-equal-nfe-ladder-n1000
 python3 tools/gap56_r5c_paired_bootstrap.py --run-dir <dir> --out <dir>/paired_bootstrap.json
 ```
 
 ---
 
-## 3. Observed — per-draw
+## 3. Observed — per-draw, N = 1000
 
 Equal total NFE = 50 on both sides.
 
 | ckpt | seed | baseline FID | cosine | codim | evidence | Δ% cos | Δ% codim | Δ% evid |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `w16e1_5k` | 42 | 28.0127 | 24.4373 | 26.7994 | 27.0127 | −12.76 | −4.33 | −3.57 |
-| `w16e1_5k` | 43 | 26.7407 | 22.9248 | 25.5262 | 25.4619 | −14.27 | −4.54 | −4.78 |
-| `w16e1_5k` | 44 | 26.8405 | 23.4806 | 25.7420 | 25.8549 | −12.52 | −4.09 | −3.67 |
-| `w16e1_10k` | 42 | 19.8989 | 19.4377 | 20.8753 | 20.4807 | −2.32 | +4.91 | +2.92 |
-| `w16e1_10k` | 43 | 18.8371 | 18.5388 | 20.0027 | 19.3254 | −1.58 | +6.19 | +2.59 |
-| `w16e1_10k` | 44 | 18.8845 | 18.5508 | 19.8299 | 19.3000 | −1.77 | +5.01 | +2.20 |
-| `w16e1_60k` | 42 | 14.2800 | 15.7353 | 16.0742 | 15.7853 | +10.19 | +12.56 | +10.54 |
-| `w16e1_60k` | 43 | 13.4525 | 14.8577 | 15.3119 | 14.9092 | +10.45 | +13.82 | +10.83 |
-| `w16e1_60k` | 44 | 12.8030 | 14.1877 | 14.4877 | 14.1143 | +10.82 | +13.16 | +10.24 |
-| `production` | 42 | 12.9753 | 13.6277 | 14.0847 | 13.8441 | +5.03 | +8.55 | +6.70 |
-| `production` | 43 | 12.4798 | 13.1971 | 13.7043 | 13.3577 | +5.75 | +9.81 | +7.04 |
-| `production` | 44 | 12.0098 | 12.9060 | 13.1255 | 12.9429 | +7.46 | +9.29 | +7.77 |
+| `w16e1_5k` | 42 | 24.4977 | 22.1330 | 24.5235 | 24.4815 | −9.65 | +0.11 | −0.07 |
+| `w16e1_5k` | 43 | 24.5911 | 22.3419 | 24.6815 | 24.6995 | −9.15 | +0.37 | +0.44 |
+| `w16e1_5k` | 44 | 24.3764 | 22.1088 | 24.3872 | 24.4667 | −9.30 | +0.04 | +0.37 |
+| `w16e1_10k` | 42 | 16.9632 | 17.3826 | 18.7859 | 18.2508 | +2.47 | +10.74 | +7.59 |
+| `w16e1_10k` | 43 | 17.0408 | 17.5427 | 18.8753 | 18.3489 | +2.95 | +10.77 | +7.68 |
+| `w16e1_10k` | 44 | 16.8724 | 17.3804 | 18.6516 | 18.0891 | +3.01 | +10.55 | +7.21 |
+| `w16e1_60k` | 42 | 11.4009 | 13.1593 | 13.6144 | 13.1757 | +15.42 | +19.41 | +15.57 |
+| `w16e1_60k` | 43 | 11.3469 | 13.0983 | 13.4944 | 13.1464 | +15.44 | +18.93 | +15.86 |
+| `w16e1_60k` | 44 | 11.3908 | 13.2034 | 13.6630 | 13.2351 | +15.91 | +19.95 | +16.19 |
+| `production` | 42 | 9.9670 | 10.8551 | 11.2670 | 10.9111 | +8.91 | +13.04 | +9.47 |
+| `production` | 43 | 9.9906 | 10.9692 | 11.2849 | 11.0317 | +9.79 | +12.95 | +10.42 |
+| `production` | 44 | 10.0103 | 10.9966 | 11.2716 | 11.1228 | +9.85 | +12.60 | +11.11 |
+
+The baseline is now reproducible across draws to ±0.11 FID at worst — an order
+of magnitude tighter than at `N = 200` (±0.71), because the estimator, not the
+prior, dominated the `N = 200` spread.
 
 ## 4. Observed — three-draw summary, against the legacy protocol
 
-Both Δ % columns are **headline ratios**, so the two protocols are compared
-with the same estimator.
+Both Δ % columns are **headline ratios**, so the two protocols are compared with
+the same estimator.
 
 | ckpt | baseline FID (mean ± sd) | Δ% by arm, equal NFE | best arm | Δ% by arm, GAP-35 legacy | compute share |
 |---|---:|---|---:|---|---:|
-| `w16e1_5k` | 27.198 ± 0.707 | cos −13.18 / codim −4.32 / evid −4.01 | cosine −13.18 | cos −21.82 / codim −22.52 / evid −22.13 | **+9.33 pp** |
-| `w16e1_10k` | 19.207 ± 0.600 | cos −1.89 / codim +5.37 / evid +2.57 | cosine −1.89 | cos +1.61 / codim +4.04 / evid −7.10 | +5.21 pp |
-| `w16e1_60k` | 13.512 ± 0.740 | cos +10.48 / codim +13.18 / evid +10.54 | cosine +10.48 | cos +17.83 / codim +31.16 / evid +16.88 | −6.39 pp |
-| `production` | 12.488 ± 0.483 | cos +6.08 / codim +9.22 / evid +7.17 | cosine +6.08 | — | — |
+| `w16e1_5k` | 24.488 ± 0.108 | cos **−9.37** / codim +0.17 / evid +0.25 | cosine −9.37 | cos −21.82 / codim −22.52 / evid −22.13 | **+13.15 pp** |
+| `w16e1_10k` | 16.959 ± 0.084 | cos +2.81 / codim +10.69 / evid +7.49 | cosine +2.81 | cos +1.61 / codim +4.04 / evid −7.10 | +9.91 pp |
+| `w16e1_60k` | 11.380 ± 0.029 | cos +15.59 / codim +19.43 / evid +15.87 | cosine +15.59 | cos +17.83 / codim +31.16 / evid +16.88 | −1.29 pp |
+| `production` | 9.989 ± 0.022 | cos +9.52 / codim +12.87 / evid +10.34 | cosine +9.52 | — | — |
 
 "Compute share" = equal-NFE best-arm Δ % minus legacy best-arm Δ %. Positive
 means the legacy protocol *overstated* the win.
 
-## 5. Observed — record-level paired bootstrap
+## 5. Observed — record-level paired bootstrap, N = 1000
 
-Full 36-cell table: `python3 tools/gap57_regime_ladder.py` §"Record-level
-paired bootstrap". Summary:
+Full 36-cell table: `python3 tools/gap57_regime_ladder.py --root
+verification_outputs/gap57-equal-nfe-ladder-n1000` §"Record-level paired
+bootstrap". Summary:
 
 | checkpoint | cells favouring the framework | verdict |
 |---|---:|---|
-| `w16e1_5k` | **9 / 9** | framework wins, CI excludes 0 in every arm and draw |
-| `w16e1_10k` | 4 / 9 (cosine 3/3, evidence 1/3) | cosine wins; codim ties |
+| `w16e1_5k` | **3 / 9** (cosine 3/3; codim and evidence tie) | cosine wins in every draw, CI excludes 0 |
+| `w16e1_10k` | 0 / 9 | baseline wins in every cell |
 | `w16e1_60k` | 0 / 9 | baseline wins in every cell |
 | `production` | 0 / 9 | baseline wins in every cell |
 
-Sign census over 36 cells: **13 wins / 18 losses / 5 ties**.
+Sign census: **3 wins / 27 losses / 6 ties**.
 
-Two cells that the driver's *chunk-level* test calls significant regressions
-are **ties** at record level: `w16e1_10k_s42 codimension_sheet`
-(chunk p = 3.6e-08, bootstrap CI `[−0.3942, +0.4602]`) and
-`w16e1_10k_s44 codimension_sheet` (chunk p = 5.8e-08, CI
-`[−0.4156, +0.4341]`). This is the GAP-56 §4.3 bias again, now with an
-independent sign: the chunk estimator is not a valid test for this comparison.
+The winning cells: Δ = −2.365, −2.249, −2.268 FID, CIs
+`[−2.620, −2.122]`, `[−2.495, −2.000]`, `[−2.505, −2.028]`, 100 % of bootstrap
+replicates favouring the framework in all three.
 
 ## 6. Observed — the ladder
 
 Least squares of Δ % (mean over the three arms) on the baseline FID, 12 points:
 
-- slope **−1.145 % per FID unit**
-- intercept **+24.16 %**
-- R² **0.925**
-- zero crossing at baseline FID **≈ 21.10**
+- slope **−1.177 % per FID unit**
+- intercept **+26.45 %**
+- R² **0.855**
+- zero crossing at baseline FID **≈ 22.48**
 
 All four checkpoints are `base_channels=16`, and their baselines are
 step-insensitive at NFE = 50 (GAP-35 §4: `w16e1_5k` 27.2361 → 27.2311 across
@@ -174,20 +182,66 @@ step-insensitive at NFE = 50 (GAP-35 §4: `w16e1_5k` 27.2361 → 27.2311 across
 
 ---
 
-## 7. Interpretation
+## 7. The estimator defect this increment uncovered
+
+### 7.1 Observation
+
+While bootstrapping the `N = 200` ladder, the percentile interval repeatedly
+**excluded its own point estimate** (e.g. `w16e1_5k_s42` cosine: Δ = −3.575,
+95 % percentile CI `[−5.510, −4.223]`). A bootstrap interval that does not
+contain the estimate is a symptom of a biased functional, not a coding error.
+
+### 7.2 Calibration
+
+`tools/gap56_fid_small_n_bias.py`, `d = 128`, 10 000-sample reference,
+10 repetitions. `X ~ N(0, I)` has a true FID of 0 against the reference;
+`Z ~ N(0, 1.3² I)` has a true FID of 11.52.
+
+| n | E[FID X] (true 0) | E[FID Z] (true 11.52) | E[Δ̂] (true 11.52) | Δ bias |
+|---:|---:|---:|---:|---:|
+| 50 | 108.19 | 154.97 | 46.79 | +10.30 |
+| 100 | 57.27 | 85.99 | 28.72 | +11.62 |
+| **200** | **23.98** | **42.98** | **18.99** | **+6.77** |
+| 500 | 9.27 | 23.52 | 14.25 | +2.53 |
+| **1000** | **4.73** | **17.73** | **12.99** | **+1.26** |
+| 2000 | 2.56 | 14.78 | 12.22 | +0.63 |
+
+The bias is O(1), not O(1/n): `Tr(√(Σ̂ Σ_ref))` is concave in `Σ̂`, and at
+`n = 200` with `d = 128` the sample covariance is noisy enough (`n/d = 1.56`)
+that Jensen's gap dominates. A bootstrap resample of `n` points with duplicates
+has an *even noisier* covariance, which adds a second upward shift — that is why
+the raw percentile interval sits below the point estimate.
+
+### 7.3 Consequence, and what was done
+
+- The bootstrap tool now reports a **bias-corrected percentile interval**
+  (`delta_ci95`, plus the raw `delta_boot_bias`, the percentile and the basic
+  interval for transparency) and a p-value consistent with it. Every interval in
+  §5 contains its point estimate.
+- **`N = 200` effect sizes are not usable as estimates.** The `N = 200` ladder is
+  kept in `verification_outputs/gap57-equal-nfe-ladder/` as a screen only.
+- The screen was not merely noisy, it **flipped a sign**: at `N = 200`,
+  `w16e1_10k` cosine read −1.89 % (a win); at `N = 1000` it reads **+2.81 %**
+  (a significant regression). That is why §3–§6 use `N = 1000`.
+- GAP-56 §5.5 (N=200) carries a matching caveat note; its signs and ordering
+  stand, its magnitudes are inflated.
+
+---
+
+## 8. Interpretation
 
 1. **The mechanism is real.** At `w16e1_5k` the framework beats the baseline by
-   12.5–14.3 % in every draw with a record-level CI that excludes zero, at the
-   same total NFE. This is not a compute artifact and not a chunk-estimator
-   artifact.
-2. **The historical magnitude was inflated.** GAP-35's −22.52 % headline on the
-   same checkpoint becomes −13.18 % when the compute is matched: **9.33 pp of
-   the 22.5 pp win was the extra NFE**, about 41 %. The paper may not quote
-   −25.39 % (chunk-mean) or −28.43 % (smoke checkpoint) as this mechanism's
-   effect size.
+   9.2–9.7 % in every draw at `N = 1000`, at the same total NFE, with a
+   record-level CI that excludes zero. This is not a compute artifact and not a
+   chunk-estimator artifact.
+2. **The historical magnitude was inflated twice over.** GAP-35's −22.52 %
+   headline on the same checkpoint becomes −9.37 % when the compute is matched:
+   **13.15 pp of the 22.5 pp win was the extra NFE**, about 58 %. The paper may
+   not quote −25.39 % (chunk-mean), −28.43 % (smoke checkpoint), or any
+   `N = 200` number as this mechanism's effect size.
 3. **The sign flip is a property of the model, not of the budget.** With NFE
-   held at 50 everywhere, the sign still flips between baseline FID 19.2 and
-   13.5, and the fitted crossing is at 21.1. The mechanism corrects residual
+   held at 50 everywhere, the sign still flips between baseline FID 24.5 and
+   17.0, and the fitted crossing is at 22.5. The mechanism corrects residual
    velocity-field error; once the field has converged there is no residual left
    to correct and the restart only adds variance.
 4. **The best arm changes with the protocol.** Legacy best arm is
@@ -196,26 +250,27 @@ step-insensitive at NFE = 50 (GAP-35 §4: `w16e1_5k` 27.2361 → 27.2311 across
    scheduler allocation `cosine` receives `[25, 18, 6, 1]` — half the budget on
    round 0 — whereas `codimension_sheet` receives `[13, 12, 12, 13]`. The
    front-loaded allocation is what makes the restart useful.
-5. **`production` is the mildest regression of the converged checkpoints**
-   (+6.08 % vs +10.48 % at `w16e1_60k`), consistent with it being the best
-   model in the ladder and therefore the one with the least residual error.
+5. **Only one of the three arms survives at all.** At `w16e1_5k`, codim and
+   evidence are ties (+0.17 %, +0.25 %). The win is a `cosine`-allocation
+   property, not a property of "the framework" in general.
 
 ---
 
-## 8. What this changes, and what it does not
+## 9. What this changes, and what it does not
 
 **Changes.**
 
-- R5c's effect size at matched NFE is **−13.18 %** on `w16e1_5k`
-  (`w16e1_5k` baseline 27.198 ± 0.707), significant in 9/9 cells.
-- The mechanism now has a **documented boundary**: baseline FID ≳ 21 favours
-  the framework, baseline FID ≲ 19 favours the baseline.
+- R5c's effect size at matched NFE is **−9.37 %** on `w16e1_5k`
+  (baseline 24.488 ± 0.108), significant in 3/3 draws.
+- The mechanism has a **documented boundary**: baseline FID ≳ 22.5 favours the
+  framework, baseline FID ≲ 17 favours the baseline.
 - The GAP-35 ladder is confirmed *and* corrected: the sign pattern survives,
-  the magnitude roughly halves.
+  the magnitude falls to about 42 % of the legacy value.
+- The FID estimator's small-`n` bias is now measured and documented (§7).
 
 **Does not change.**
 
-- The production-checkpoint R5c cell still regresses (+6.08 %, 9/9 cells,
+- The production-checkpoint R5c cell still regresses (+9.52 %, 9/9 cells,
   record-level CI excludes zero). No sampler-side configuration tested in
   GAP-55/56/57 beats the baseline there.
 - The historical −28.43 % remains a smoke-checkpoint artifact and −25.39 %
@@ -226,16 +281,15 @@ step-insensitive at NFE = 50 (GAP-35 §4: `w16e1_5k` 27.2361 → 27.2311 across
 
 ---
 
-## 9. Unresolved gaps
+## 10. Unresolved gaps
 
-1. **N = 200, one architecture family.** The 12 runs are 4 checkpoints × 3
-   prior draws at N=200. A confirmation at N=1000 is required before any status
-   label moves; the three draws are a diagnostic axis, never a significance
-   lever.
-2. **The ladder axis is confounded.** `w16e1_5k → 10k → 60k → production`
-   varies optimisation steps, weight norm (17.27 → 17.46 → 18.25 → 19.19) and
-   the baseline's own FID together. The regression of Δ % on baseline FID is a
-   description of this ladder, not a causal statement about any one variable.
+1. **One architecture family, one width.** All four checkpoints are
+   `base_channels=16` MNIST-FM. The ladder is a statement about *this* model
+   family.
+2. **The ladder axis is confounded.** `w16e1_5k → 10k → 60k → production` varies
+   optimisation steps, weight norm (17.27 → 17.46 → 18.25 → 19.19) and the
+   baseline's own FID together. The regression of Δ % on baseline FID describes
+   this ladder; it is not a causal statement about any one variable.
 3. **Round count and β were not re-tuned at `w16e1_5k`.** The configuration is
    the one fixed on `production` in GAP-56 (`R=4`, `β=0.5`, scheduler
    allocation). At `w16e1_5k` round 3 receives a single Euler step; `R=2` or
@@ -244,6 +298,9 @@ step-insensitive at NFE = 50 (GAP-35 §4: `w16e1_5k` 27.2361 → 27.2311 across
 4. **Only the MNIST adapter honours `t0`/`t1`.** The other 11 adapters still
    hard-code `[0, 1]` (GAP-56 §8.2). Any cell that wires a restart through them
    has the same latent defect.
-5. **The threshold ≈ 21.1 is an extrapolation** between 19.21 and 13.51 on one
-   side and from 27.20 on the other. No checkpoint in the ladder sits inside
-   (19.2, 27.2), so the crossing is fitted, not observed.
+5. **The threshold ≈ 22.5 is an extrapolation** between 17.0 and 24.5. No
+   checkpoint in the ladder sits inside (17.0, 24.5), so the crossing is fitted,
+   not observed.
+6. **FID remains biased at `N = 1000`** (+4.73 on a true 0, +1.26 on a true
+   11.52). The paired design cancels most of it, but the *absolute* FIDs in §3
+   are not comparable with FIDs computed at other `n`.

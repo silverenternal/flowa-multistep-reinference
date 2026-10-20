@@ -70,6 +70,25 @@ def _fid_from_stats(
     )
 
 
+def _bias_corrected_ci(
+    point: float, deltas: np.ndarray,
+) -> tuple[float, float, float]:
+    """Bias-corrected percentile interval for a biased functional.
+
+    FID is biased upward at small ``n``, and a bootstrap resample of ``n``
+    points with duplicates is biased further. The raw percentile interval is
+    therefore an interval for ``theta + bias``, not for ``theta``; shifting it
+    down by the estimated bias ``mean(delta*) - point`` is the standard
+    correction and guarantees the interval contains ``point`` whenever the
+    bootstrap distribution is not wildly skewed.
+
+    Returns ``(lo, hi, bias)``.
+    """
+    lo, hi = np.percentile(deltas, [2.5, 97.5])
+    bias = float(np.mean(deltas)) - float(point)
+    return float(lo) - bias, float(hi) - bias, bias
+
+
 def _load(run_dir: Path, arm: str) -> np.ndarray:
     path = run_dir / f"{arm}_samples.npz"
     with np.load(path) as z:
@@ -130,17 +149,32 @@ def main(argv: list[str] | None = None) -> int:
                 - _fid_from_stats(bm, bs, ref_mu, ref_sigma)
             )
         lo, hi = np.percentile(deltas, [2.5, 97.5])
-        # two-sided bootstrap p: 2 * min(P(delta<=0), P(delta>=0)), capped at 1
-        p_two = float(min(1.0, 2.0 * min((deltas <= 0.0).mean(), (deltas >= 0.0).mean())))
+        point = float(fid_arm - fid_base)
+        bc_lo, bc_hi, bias = _bias_corrected_ci(point, deltas)
+        basic_lo = 2.0 * point - float(hi)
+        basic_hi = 2.0 * point - float(lo)
+        # two-sided bootstrap p, consistent with the bias-corrected interval:
+        # centre the bootstrap distribution on the bias-corrected estimate and
+        # ask how often it straddles zero.
+        centred = deltas - bias
+        p_two = float(min(1.0, 2.0 * min((centred <= 0.0).mean(), (centred >= 0.0).mean())))
+        p_two_pct = float(min(1.0, 2.0 * min((deltas <= 0.0).mean(), (deltas >= 0.0).mean())))
         p_bonf = float(min(1.0, p_two * len(ARMS)))
         out["arms"][arm] = {  # type: ignore[index]
             "fid_baseline": fid_base,
             "fid_arm": fid_arm,
-            "delta": float(fid_arm - fid_base),
+            "delta": point,
             "delta_pct": float((fid_arm - fid_base) / max(fid_base, 1e-12) * 100.0),
             "delta_mean_boot": float(deltas.mean()),
-            "delta_ci95": [float(lo), float(hi)],
+            "delta_boot_bias": bias,
+            "delta_bias_corrected": point - bias,
+            "delta_ci95": [bc_lo, bc_hi],
+            "delta_ci95_bias_corrected": [bc_lo, bc_hi],
+            "delta_ci95_basic": [float(basic_lo), float(basic_hi)],
+            "delta_ci95_percentile": [float(lo), float(hi)],
+            "ci_method": "percentile interval shifted by the estimated bootstrap bias",
             "p_two_sided": p_two,
+            "p_two_sided_percentile": p_two_pct,
             "p_bonferroni": p_bonf,
             "bonferroni_significant": bool(p_bonf < ALPHA_BONF),
             "frac_boot_favouring_framework": float((deltas < 0.0).mean()),
@@ -151,12 +185,13 @@ def main(argv: list[str] | None = None) -> int:
         Path(args.out).write_text(json.dumps(out, indent=2) + "\n")
 
     print(f"{'arm':<18}{'baseline':>10}{'arm':>10}{'delta':>10}{'d%':>8}"
-          f"{'CI95':>24}{'p':>10}{'p_bonf':>10}{'fav%':>8}")
+          f"{'CI95(bc)':>24}{'bias':>9}{'p':>10}{'p_bonf':>10}{'fav%':>8}")
     for arm in ARMS:
         r = out["arms"][arm]  # type: ignore[index]
         ci = f"[{r['delta_ci95'][0]:+.4f},{r['delta_ci95'][1]:+.4f}]"
         print(f"{arm:<18}{r['fid_baseline']:>10.4f}{r['fid_arm']:>10.4f}"
               f"{r['delta']:>+10.4f}{r['delta_pct']:>+8.2f}{ci:>24}"
+              f"{r['delta_boot_bias']:>+9.4f}"
               f"{r['p_two_sided']:>10.4f}{r['p_bonferroni']:>10.4f}"
               f"{r['frac_boot_favouring_framework']*100:>7.2f}%")
     return 0

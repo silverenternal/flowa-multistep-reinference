@@ -208,11 +208,15 @@ def contraction_probe(*, adapter, prior_seed: int, rounds: int, memory_fraction:
     parts = _split_nfe(NFE, int(rounds))
     rows = []
     for dir_idx, v in enumerate(dirs):
+        base_p = _perturb(adapter, base, v, float(eps))
         b0 = adapter.apply_restart_distribution(base, policy)
-        bp = adapter.apply_restart_distribution(
-            _perturb(adapter, base, v, float(eps)), policy,
-        )
-        d = [float(eps)]
+        bp = adapter.apply_restart_distribution(base_p, policy)
+        # D_0 is the RMS of the perturbation that was actually applied, not
+        # ``eps``: the direction is normalised in Frobenius norm, so the
+        # per-coordinate RMS is eps / sqrt(3 * n_atoms). Recording ``eps``
+        # overstated D_0 by that factor and therefore *understated* every
+        # ratio that involves it.
+        d = [_rms_diff(_entry_x(adapter, base), _entry_x(adapter, base_p))]
         d_rg = [abs(_rg(_entry_x(adapter, b0)) - _rg(_entry_x(adapter, bp)))]
         dim_changes = 0
         t0 = time.perf_counter()
@@ -410,6 +414,25 @@ def metric_analysis(records: list[dict]) -> dict:
     return {"per_rounds": per_r, "ratios": ratios}
 
 
+def _bootstrap_median_ci(
+    values, *, n_boot: int = 4000, seed: int = 20261020,
+) -> tuple[float, float, float]:
+    """Bootstrap CI for the median of *cell-level* statistics.
+
+    The independent unit is one ``(prior_seed, direction)`` cell, not one
+    round: the rounds inside a cell are a single trajectory, so resampling
+    individual round ratios would understate the interval.
+    """
+    arr = np.asarray([v for v in values if math.isfinite(v)], dtype=np.float64)
+    if arr.size == 0:
+        return float("nan"), float("nan"), float("nan")
+    point = float(np.median(arr))
+    rng = np.random.default_rng(int(seed))
+    idx = rng.integers(0, arr.size, size=(int(n_boot), arr.size))
+    meds = np.median(arr[idx], axis=1)
+    return point, float(np.quantile(meds, 0.025)), float(np.quantile(meds, 0.975))
+
+
 def _verdict(rows: list[dict], memory_fraction: float) -> dict:
     q_coord = np.asarray(
         [r["ratio_median"] for r in rows if math.isfinite(r["ratio_median"])],
@@ -427,14 +450,30 @@ def _verdict(rows: list[dict], memory_fraction: float) -> dict:
         return {"verdict": "INCONCLUSIVE", "reason": "no finite ratios"}
     q = float(np.median(q_rg)) if q_rg.size else float(np.median(q_coord))
     k_eff = q / float(memory_fraction) if memory_fraction > 0 else float("inf")
+    ratio_point, ratio_lo, ratio_hi = _bootstrap_median_ci(
+        [r.get("ratio_median") for r in rows if r.get("ratio_median") is not None],
+    )
     return {
         "q_coord_median": float(np.median(q_coord)) if q_coord.size else float("nan"),
         "q_rg_median": float(np.median(q_rg)) if q_rg.size else float("nan"),
+        "ratio_median_ci95": [ratio_lo, ratio_hi],
+        "ratio_median_point": ratio_point,
+        "contraction_ci_upper_below_1": bool(math.isfinite(ratio_hi) and ratio_hi < 1.0),
+        "n_dim_changes_total": int(sum(int(r.get("n_dim_changes", 0)) for r in rows)),
+        "dim_changes_zero": bool(
+            sum(int(r.get("n_dim_changes", 0)) for r in rows) == 0
+        ),
         "dim_change_rate": dim_rate,
         "k_eff": float(k_eff),
         "m_star_for_q_0.9": float(0.9 / k_eff) if k_eff > 0 else float("nan"),
         "verdict": (
-            "CONTRACTION AT THIS m" if q < 1.0 else "NO CONTRACTION AT THIS m"
+            "INCONCLUSIVE (no finite per-round ratio)"
+            if not math.isfinite(ratio_hi)
+            else (
+                "CONTRACTION AT THIS m (CI upper < 1)"
+                if ratio_hi < 1.0
+                else "NO CONTRACTION AT THIS m (CI upper >= 1)"
+            )
         ),
         "note": (
             "q_coord is the median per-round coordinate RMS ratio; it is "

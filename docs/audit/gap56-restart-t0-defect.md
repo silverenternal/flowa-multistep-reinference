@@ -289,6 +289,16 @@ steps left to distribute.
 
 ### 5.5 Genuine 3-draw confirmation
 
+> **N=200 caveat (added 2026-10-20, GAP-57 §7).** The FID estimator used here is
+> strongly biased upward at small `n`, and the bias is arm-dependent. Measured
+> calibration at `d=128` against a 10 000-image reference with a true FID of 0:
+> the estimate is 23.98 at `n=200` and 4.73 at `n=1000`; for a paired delta
+> whose true value is 11.52 the estimate is 18.99 at `n=200` and 12.99 at
+> `n=1000` (`tools/gap56_fid_small_n_bias.py`). The magnitudes below are
+> therefore **inflated by roughly 40–65 %**; the signs and ordering are what
+> this section is evidence for. Every number quoted outside this audit must come
+> from the `N=1000` re-measurement.
+
 With `--seed-keyed-prior` the seed axis is real (§6). Two configurations ×
 three prior draws, `NFE=50`, headline FID, `Δ%` versus the baseline of the
 same draw:
