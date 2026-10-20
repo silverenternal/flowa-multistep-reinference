@@ -21,13 +21,14 @@ Status vocabulary (from `AGENTS.md` §2.1):
 |---|---|---|---|---:|---|---:|---|---|
 | **R1** | LineageFlow | `hmmscan_total_hits` (↑) | 1000 × 3 | +184 hits vs 158 (+116%) | — | p_bonf 1.0e-7 (single-seed era) | **UNDERPOWERED / config-conditional** | `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/` |
 | **R1 (gate-open)** | LineageFlow | hits (↑) | 1000 × 3 | legacy mean 257 vs baseline 158 | — | `d_z=4.97`; car `d_z=8.77`, p_bonf=1.0 | **NOT_SIGNIFICANT at R-level** | `docs/audit/gap40-lineageflow-classifier-aware-restart.md` |
-| **R1 (NFE=150)** | LineageFlow | hits (↑) | 200 × 3 | +20.33 mean, 3/3 positive | — | t=3.50, p=0.073 | **IN FLIGHT** (N=1000, seed 42) | `verification_outputs/gap55-r1-nfe150-n1000/` |
+| **R1 (NFE=150)** | LineageFlow | hits (↑) | **1000 × 1** | **+117 hits (+74.1 %)**; per-record **+0.1170** | **[+0.073, +0.160]** | paired bootstrap excludes 0 | **POWERED, single-seed; mechanism-unattributed** (GAP-45 pending) | `verification_outputs/gap55-r1-nfe150-n1000/` |
 | **R2** | Kanzi | RMSD (↓) | 1000 × 1 | `d_z=−0.0990` | — | p_bonf 0.0018 | **SUPPORTED (small)** | `verification_outputs/wave218-p3-kanzi-framework-wins.json` |
 | **R3** | FlowMol3 | `fg_dev` (↓) | **1000 × 1** | **−0.061** | **[−0.117, −0.001]** | 0.043 (boot); R-level α=0.00714 | **NOT_SIGNIFICANT (single seed)** | `verification_outputs/gap55-r3-full-smiles/` |
 | **R3 (proxy, historical)** | FlowMol3 | REOS flag count (↓) | 200 → projected 1000 | `d_z=−0.285` (projected) | — | projected | **RETIRED** (proxy does not track `fg_dev`; observed +0.0021, p=0.25) | `verification_outputs/wave216-p1-r3-per-record.json` |
 | **R5a** | 2D FM | W₂ (↓) | 10 seeds | \|δ\|=0.0091 | — | — | **TIE** (\|δ\| < 0.01 floor) | `verification_outputs/g1_deep_dive_q3_2026.json` |
 | **R5b** | CIFAR-10 RF | FID (↓) | 200 × 3 | +52.33% (framework worse) | — | p_bonf 2.97e-3 | **REGRESSES** (honest negative) | `docs/audit/wave280-p-cifar-sweep-result.md` |
-| **R5c** | MNIST FM | projection-FID (↓) | **1000 × 1** | **+9.17 … +14.64%** (3/3 arms) | — | 3.5e-6 … 4.1e-9 | **REGRESSES at true NFE=50** | `verification_outputs/gap55-r5c-equal-nfe/` |
+| **R5c** | MNIST FM | projection-FID (↓) | **1000 × 3** | **+9.52 %** (cosine); codim +12.87, evid +10.34 | record-level boot excludes 0 in 9/9 | — | **REGRESSES at true NFE=50** | `verification_outputs/gap57-equal-nfe-ladder-n1000/` |
+| **R5c (boundary)** | MNIST FM, `w16e1_5k` | projection-FID (↓) | **1000 × 3** | **−9.37 %** (cosine); codim/evid tie | excludes 0, 3/3 draws | — | **SUPPORTED at matched NFE, model-conditional** (baseline FID 24.5) | same |
 | **R5c (historical)** | MNIST FM | projection-FID (↓) | 1000 × 1 | −28.43% | — | 3.95e-11 | **RETIRED** (smoke ckpt; arms at 25/48/25 NFE) | `verification_outputs/wave191-p3-mnist-n1000.json` |
 | **R6 (scPerp)** | LineageFlow | scPerplexity (↓) | **3000 × 3** | **−3.68** | — | `d_z=−0.8393` | **SUPPORTED** (3/3 seeds, all tiers) | `verification_outputs/gap31-r6-live-uplift/gap31_summary.json` |
 | **R6 (pLDDT, hard)** | LineageFlow | pLDDT (↑) | 990 × 3 | +15.01 | — | `d_z=+1.1211` | **SUPPORTED (tier-conditional)** | same |
@@ -57,8 +58,6 @@ Three rows moved from "weak positive" to a defensible label:
    the evidence.
 
 ## 3. Honest reading
-
-- **One unconditional positive cell:** R6 scPerplexity (live, 3 seeds, large).
 - **One tier-conditional positive:** R6 hard-tier pLDDT.
 - **One small significant positive:** R2 (`d_z=−0.099`).
 - **Two honest negatives:** R5b (CIFAR), R5c (MNIST at true NFE=50).

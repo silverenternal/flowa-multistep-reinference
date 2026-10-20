@@ -187,12 +187,12 @@
   ],
   "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 15 known failures (3 stale eval stubs that do not accept the GAP-40 classifier_aware_restart kwarg; 12 order-dependent test_paper_metrics cases that pass in isolation).",
   "execution_order": [
-    "GAP-54-CLASS-PRESERVING-CONTRACTION (P0, mechanism; no new seeds)",
-    "GAP-45-R1-BLEND-OFF-150 (P1, ~8-9h CPU)",
+    "GAP-54-CLASS-PRESERVING-CONTRACTION (P0, DONE 2026-10-20: NO CONTRACTION at stochasticity=0)",
+    "GAP-45-R1-BLEND-OFF-150 (P1, IN PROGRESS: 6 FASTA arms, scoring pending)",
     "GAP-44-CONFIG-INVENTORY (P1, P2 items user-gated)",
     "GAP-15-VENUE (P1, user gate)",
     "GAP-47-K1-PB-METRIC (P2, user-gated)",
-    "GAP-50-EVIDENCE-GRADE-TABLE (P2, audit draft then user gate)",
+    "GAP-50-EVIDENCE-GRADE-TABLE (P2, DRAFT COMPLETE; manuscript insertion user-gated)",
     "GAP-29-MANUSCRIPT (P2, user authorization)",
     "GAP-51-PAPER-B-SPLIT (P2, user-gated outline)",
     "GAP-20-COVERLETTER (P3, user-only)"
@@ -304,12 +304,12 @@
       "phase": "2",
       "priority": "P2",
       "owner": "agent+user",
-      "status": "PLANNED",
+      "status": "DRAFT-COMPLETE-USER-GATED",
       "user_gated": true,
       "gap": "Evidence homogeneity is disclosed in prose but never in one place: R1 single-seed, R5c smoke checkpoint (production flips +10.37%), R6 counterfactual proxy, K1 saturated metric. A reviewer can therefore claim the framework's generality rests on heterogeneous evidence.",
       "acceptance": "One table (cell x seeds x checkpoint regime x live-vs-counterfactual x metric saturation x verdict) covering all 11 headline cells, every number traceable to a committed artifact. Drafted as an audit doc first; insertion into the manuscript is user-gated.",
-      "agent_action": "1) Draft the table as docs/audit/evidence-grade-table.md from CLAIMS + per-cell audits. 2) Cross-check every row against the committed JSON/CSV. 3) Ask the user before inserting into docs/drafts/paper-A-final.*.",
-      "evidence": "docs/drafts/paper-A-final.md sections 7.2, 7.11, 8.10; docs/audit/gap26-r5b-regime.md; docs/audit/gap27-r3-power.md; docs/audit/gap28-r6-faithful-tier.md"
+      "agent_action": "1) Done: table drafted as docs/audit/gap50-evidence-grade-table.md (18 rows, every number traced to a committed artifact or a run dir), registered in mkdocs nav. 2) Rows updated with the GAP-56/57 findings: R5c is now REGRESSES at true NFE=50 on three genuine draws, and the model-conditional boundary row (w16e1_5k, -9.37% at matched NFE) is recorded separately from the production cell. 3) R1 (NFE=150) is POWERED but single-seed and mechanism-unattributed until GAP-45 lands. 4) Insertion into docs/drafts/paper-A-final.* remains user-gated; do not touch the manuscript.",
+      "evidence": "docs/audit/gap50-evidence-grade-table.md; docs/audit/gap57-equal-nfe-regime-ladder.md; docs/audit/gap55-code-level-hardening.md section 4.4; verification_outputs/gap57-equal-nfe-ladder-n1000/; verification_outputs/gap55-r1-nfe150-n1000/"
     },
     {
       "id": "GAP-51-PAPER-B-SPLIT",

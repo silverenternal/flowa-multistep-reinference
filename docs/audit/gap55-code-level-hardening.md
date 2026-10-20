@@ -365,3 +365,41 @@ NFE=150 decisive run depends on.
 
 No seed engineering was used. The only new compute was 33 min CPU (R5c),
 17 min GPU (R3), and ~11 min CPU (R1).
+
+### 4.4 Observed — the N=1000, NFE=150 confirmation (seed 42)
+
+`verification_outputs/gap55-r1-nfe150-n1000/seed42/` (the run whose cost §4.3
+called "the one real cost"). N=1000, `--nfe 150 --n-rounds 3
+--restart-min-nfe 5 --temperature 1.0 --upstream-eval-len-bias short`, gate
+open, `.venvs/lineageflow_venv`, `cuda:0`. Scoring is the canonical upstream
+HMMER pipeline (`family_validity__hmmscan_total_hits`).
+
+| arm | total hits | unique queries | coverage | eval wall |
+|---|---:|---:|---:|---:|
+| baseline | 158 | 145 | 0.145 | 441.8 s |
+| framework | **275** | **230** | **0.230** | 349.9 s |
+| Δ | **+117 (+74.1 %)** | +85 (+58.6 %) | +0.085 | — |
+
+Per-record paired analysis over the 1000 records (`family_validity_per_seq.jsonl`,
+paired by `qid`, 4000-replicate bootstrap, seed 20261020):
+
+| quantity | value |
+|---|---|
+| mean Δ hits per record | **+0.1170** |
+| 95 % CI | **[+0.0730, +0.1600]** |
+| records with framework > baseline | 207 |
+| records with baseline > framework | 121 |
+| ties | 672 |
+
+**Reading.** At the budget where the mechanism actually runs, the framework arm
+produces 74 % more Pfam hits and the paired CI excludes zero by a wide margin.
+This is a **single draw** (seed 42), so the honest label is *powered but
+single-seed*, not `SUPPORTED` under the three-seed convention used elsewhere.
+The N=200 screen in §4.2 gave `p = 0.073`; at N=1000 the paired CI excludes 0,
+which is consistent with that screen scaling rather than contradicting it.
+
+The remaining attribution question — does the *blend* earn this, or is it the
+initial-condition/prior difference? — is GAP-45 (`docs/audit/gap45-r1-blend-off-wiring.md`),
+which runs the same recipe with `--beta-override 0.0` (β = 0, m = 1, identity
+restart) at three seeds. Until that lands, the R1 NFE=150 win is
+**mechanism-unattributed**.
