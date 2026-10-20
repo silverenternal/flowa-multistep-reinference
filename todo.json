@@ -188,7 +188,8 @@
   "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 15 known failures (3 stale eval stubs that do not accept the GAP-40 classifier_aware_restart kwarg; 12 order-dependent test_paper_metrics cases that pass in isolation).",
   "execution_order": [
     "GAP-54-CLASS-PRESERVING-CONTRACTION (P0, DONE 2026-10-20: NO CONTRACTION at stochasticity=0)",
-    "GAP-45-R1-BLEND-OFF-150 (P1, IN PROGRESS: 6 FASTA arms, scoring pending)",
+    "GAP-45-R1-BLEND-OFF-150 (P1, DONE 2026-10-20: beta=0 is a collapse mode; perturbation carries the win)",
+    "GAP-58-R1-BETA1-POWERED (P2, N=1000 x 3 confirmation of the null memory term)",
     "GAP-44-CONFIG-INVENTORY (P1, P2 items user-gated)",
     "GAP-15-VENUE (P1, user gate)",
     "GAP-47-K1-PB-METRIC (P2, user-gated)",
@@ -250,11 +251,24 @@
       "phase": "1",
       "priority": "P1",
       "owner": "agent",
-      "status": "PLANNED",
+      "status": "DONE-CONTROL-DEGENERATE-MECHANISM-ATTRIBUTED",
       "gap": "R1's canonical win (d=+0.1178 at NFE=150) is init-attributed because the blend-off arm only ran at NFE=10 (GAP-25: ~0, upper bound +46 hits). Gate finding: those manifests record nfe_per_record=10 with restart_min_nfe=20, so the driver downgraded n_rounds to 1 and the 'blend' arm never ran apply_restart_distribution. The blend has not been tested at any budget. Convention: blend-off is beta=0 (m=1, identity), not m=0.",
       "acceptance": "Paired blend-on vs blend-off at NFE=150, N=200 x 3 seeds, canonical HMMER counter. Delta(blend_on - blend_off) with a 95% CI: excludes 0 positive -> the blend gets credit; includes 0 -> R1 stays init-attributed.",
-      "agent_action": "1) Add a blend-off flag (beta = 0) to the R1 driver (additive, default off). 2) Run 3 seeds x 2 arms at N=200, NFE=150, restart_min_nfe=5, gate-open. 3) HMMER both arms. 4) Paired t + CI. 5) Record in audit + todo. Do not change the frozen R1 headline.",
-      "evidence": "docs/audit/gap25-r1-blend-isolation.md sections 2 and 6; docs/audit/gap41b-r1-nfe-fidelity.md; docs/audit/gap42-scheduler-budget-conservation.md section 9.4; docs/audit/gap45-r1-blend-off-wiring.md"
+      "agent_action": "1) Done: 6 beta=0/1/6 arms + 3 beta=1 arms + sequential HMMER scoring + record-level paired analysis. 2) Do not re-run beta=0 as a control anywhere: it is a collapse mode. 3) The remaining powered confirmation (beta=1 at N=1000 x 3 seeds) is recorded as GAP-58, not spent here. 4) Paper surfaces stay untouched: no new blend claim may be added, and the existing wording already declines to claim it.",
+      "evidence": "docs/audit/gap45-r1-blend-off-wiring.md section 8; reproduce/gap45_r1_blend_off.sh; reproduce/gap45_r1_score.sh; reproduce/gap45_r1_beta1_control.sh; tools/gap45_r1_blend_off_paired.py; verification_outputs/gap45-r1-blend-off-150/ (6 dirs + attribution.json); verification_outputs/gap45-r1-beta1-150/ (3 dirs)",
+      "result": "The pre-registered blend-on/blend-off contrast at NFE=150 was run (3 seeds, N=200, canonical HMMER counter). beta=0 is not a neutral control: with m = 1 - beta it sets m=1, so the restart carries the previous sample and injects NO fresh perturbation. That arm collapses on all three seeds -- 0/0/0 hits vs baseline 37/36/32, 95-99/200 unique sequences, median entropy 1.68 bits vs 3.68 baseline, top-3 residue fraction 0.98 vs 0.34 -- the same low-complexity attractor already documented for R1 in r1-d004-remeasure.md section 6. The prescribed rule ('CI excludes 0 positive -> the blend gets credit') therefore fires but its inference is not licensed: the contrast is perturbation-vs-none, not blend-vs-none. A non-degenerate endpoint was added on the same axis (beta=1.0: fresh per-record simplex, no memory; not in the pre-registration, no new seeds): it is healthy (200/200 unique, 4.13 bits) and TIES beta=1/6 in 3/3 seeds (delta -0.010/+0.055/+0.055 hits per record, every CI spans 0), while both sit above baseline (beta=1/6 clears the CI in 2/3 seeds, beta=1 in 1/3). Conclusion: R1's NFE=150 gain is carried by the per-record random restart perturbation, not by the memory blend -- the D-004b conclusion, now measured with the blend actually executing (GAP-25's arm C had the gate closed). Controls: baseline FASTA byte-identical across beta within each seed (3/3); seed42 beta=1/6 reproduces the GAP-41b prefix 200/200 byte-identical; the N=200 seed42 arm is a byte-identical prefix of the N=1000 run. The frozen R1 headline is unchanged."
+    },
+    {
+      "id": "GAP-58-R1-BETA1-POWERED",
+      "phase": "1",
+      "priority": "P2",
+      "owner": "agent",
+      "status": "PLANNED",
+      "gap": "GAP-45 established at N=200 that the memory term adds nothing measurable (beta=1/6 vs beta=1 is a tie in 3/3 seeds) and that the per-record restart perturbation carries the R1 gain. N=200 is underpowered for the beta=1/6-vs-baseline contrast (2/3 seeds clear the CI, while the N=1000 seed-42 run does). The memory term's effect size is therefore bounded only by 'not detectable at N=200'.",
+      "acceptance": "(1) beta=1.0 at N=1000, 3 seeds (42/43/44), NFE=150, R=3, same recipe as verification_outputs/gap55-r1-nfe150-n1000. (2) Report per-record paired delta vs baseline and vs the beta=1/6 arm already recorded at N=1000 (seed 42 only). (3) The memory term is declared null only if the beta=1/6 vs beta=1 CI at N=1000 excludes nothing larger than +/-0.05 hits/record. (4) No new seeds beyond 42/43/44.",
+      "agent_action": "1) Run 3 arms at N=1000. 2) Score with family_validity only, sequentially (the novelty metric collides on a shared MMseqs2 temp dir under concurrency). 3) Record in docs/audit/gap58-r1-beta1-powered.md. 4) Do not touch the frozen R1 headline.",
+      "evidence": "docs/audit/gap45-r1-blend-off-wiring.md section 8.4; verification_outputs/gap45-r1-beta1-150/",
+      "result": ""
     },
     {
       "id": "GAP-47-K1-PB-METRIC",

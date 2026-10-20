@@ -26,6 +26,7 @@ classifier) regime. The 3-seed × 2-arm sweep is a separate increment.
 | Sensitivity (synthetic adapter) | **0** positions differ — argmax collapse; CPU tests must not assert FASTA bytes |
 | Byte-stability | `beta_override=None` is byte-identical to omitting the kwarg; D.4 30/30 PASS |
 | Sweep | **not run** in this increment |
+| **Sweep result (§8, 2026-10-20)** | β = 0 is a **collapse mode**, not a control: 0/0/0 hits vs baseline 37/36/32, entropy 1.68 bits, top-3 fraction 0.98. β = 1 (fresh perturbation, no memory) is healthy and **ties** β = 1/6 in 3/3 seeds → the gain is the perturbation, not the memory |
 
 ---
 
@@ -296,6 +297,12 @@ all 30 byte-stable vectors unchanged.
 
 ## 7. Unresolved / noted
 
+> **ADDITIVE correction (2026-10-20, §8).** The first bullet below is now
+> superseded: the sweep was run. It found that β = 0 is a collapse mode rather
+> than a control, and that the memory term adds nothing measurable
+> (β = 1/6 vs β = 1 is a tie in 3/3 seeds). The bullet is kept verbatim as the
+> state of knowledge when it was written.
+
 - **The sweep is not run.** GAP-45 stays `PLANNED` in `todo.json`
   until the 6-arm HMMER comparison lands.
 - **The blend-on arm is already attenuated at NFE=150.** β =
@@ -311,3 +318,152 @@ all 30 byte-stable vectors unchanged.
 - **The real-classifier probe loaded the 10.5 GB ckpt on GPU 0** and
   ran 6 framework solves (~2m17s wall, including load). No artifacts
   were written; this was a diagnostic only.
+
+---
+
+## 8. The sweep, run — beta = 0 is a collapse mode, not a control (2026-10-20)
+
+§4 prescribed a blend-on / blend-off contrast at NFE=150. It was run. The
+result is not the one the decision rule was written for.
+
+### 8.1 Protocol
+
+| item | value |
+|---|---|
+| generator | `tools/gen_lineageflow_n1000_fastas.py` |
+| seeds | 42 / 43 / 44 |
+| N | 200 records per arm |
+| NFE | 150, `--n-rounds 3 --restart-min-nfe 5 --temperature 1.0` |
+| length bias | `short` |
+| env | `.venvs/lineageflow_venv`, `cuda:0` (arms) / `cuda:1` (beta=1 control) |
+| scorer | `tools/gap55_r1_score_fastas.py --metrics family_validity` |
+| metric | `family_validity__hmmscan_total_hits` (canonical HMMER counter) |
+| artifacts | `verification_outputs/gap45-r1-blend-off-150/` (β = 0 and β = 1/6), `verification_outputs/gap45-r1-beta1-150/` (β = 1) |
+| aggregation | `tools/gap45_r1_blend_off_paired.py` → `attribution.json` |
+
+With `blended = m * prior + (1 - m) * fresh` and `m = 1 - beta`
+(`adaptive_reflow/adapters/lineageflow.py:2019`), the three arms are:
+
+| arm | beta | m | restart state |
+|---|---:|---:|---|
+| baseline | — | — | no restart, 150 NFE single pass |
+| **β = 1/6** (default at NFE=150) | 0.1667 | 0.833 | 83 % previous sample + 17 % fresh per-record simplex |
+| **β = 0** (the prescribed "blend off") | 0.0 | 1.000 | previous sample only — **no fresh perturbation at all** |
+| **β = 1** (added after the fact) | 1.0 | 0.000 | fresh per-record simplex only — **no memory** |
+
+β = 1 was not in the pre-registration. It was added because the pre-registered
+control turned out to be degenerate (§8.2) and the same axis has a second,
+non-degenerate endpoint. It costs no new seeds.
+
+### 8.2 Observed
+
+**Totals (hits, N = 200 per arm):**
+
+| seed | baseline | β = 0 | β = 1/6 | β = 1 |
+|---:|---:|---:|---:|---:|
+| 42 | 37 | **0** | 48 | 50 |
+| 43 | 36 | **0** | 55 | 44 |
+| 44 | 32 | **0** | 63 | 52 |
+| mean | 35.0 | **0.0** | 55.3 | 48.7 |
+
+**Sequence degeneracy** (median over 200 records):
+
+| arm | unique | median Shannon entropy | median top-3 residue fraction |
+|---|---:|---:|---:|
+| baseline | 200/200 | 3.68 bits | 0.34 |
+| **β = 0** | **95–99/200** | **1.68 bits** | **0.98** |
+| β = 1/6 | 200/200 | 4.13 bits | 0.28 |
+| β = 1 | 200/200 | 4.13 bits | 0.27 |
+
+**Paired contrasts** (record level, paired by `qid`, 4000-replicate bootstrap,
+seed 20261020):
+
+| contrast | Δ hits/record by seed | 95 % CI excludes 0 | verdict |
+|---|---|---:|---|
+| β = 1/6 vs baseline | +0.055 / +0.095 / +0.155 | 2/3 | framework ahead |
+| β = 1 vs baseline | +0.065 / +0.040 / +0.100 | 1/3 | framework ahead |
+| **β = 1/6 vs β = 1** | **−0.010 / +0.055 / +0.055** | **0/3** | **tie in 3/3** |
+| β = 1/6 vs β = 0 | +0.240 / +0.275 / +0.315 | 3/3 | β = 0 collapses |
+
+**Controls.**
+
+- *Baseline identity*: within each seed, `baseline.fasta` is byte-identical
+  between the β = 0 and β = 1/6 run directories (200/200 records, 3/3 seeds).
+  The baseline does not see β, and it does not.
+- *Reproducibility*: `seed42` β = 1/6 reproduces the GAP-41b canonical prefix
+  **200/200 records byte-identical**.
+- *Nesting*: the N = 200 `seed42` β = 1/6 arm is byte-identical to the first
+  200 records of the N = 1000 `gap55-r1-nfe150-n1000/seed42` arm (200/200), so
+  the screen is a strict prefix of the powered run rather than an independent
+  draw.
+
+### 8.3 The prescribed decision rule fires, and its inference is not licensed
+
+§4 says: "CI excludes 0 positive → the blend gets credit". The β = 1/6 vs β = 0
+CI excludes 0 by a wide margin, so by the letter of the rule the blend "gets
+credit". That reading is wrong, and the reason is visible in the arm itself:
+
+- β = 0 removes the *fresh perturbation*, not the blend. `m = 1` means the
+  restart state is the previous sample verbatim.
+- The arm then re-integrates the flow from a data-like state, which drives it
+  into a low-complexity attractor: entropy falls 3.68 → 1.68 bits, the top-3
+  residue fraction rises 0.34 → 0.98, half the records become duplicates, and
+  the arm scores **0 hits on all three seeds**.
+- This is the same failure signature already documented for R1 in
+  `docs/audit/r1-d004-remeasure.md` §6 ("a low-complexity poly-S/A/T string with
+  no Pfam domain, hence 0 hits"), which identified the restart perturbation as
+  the pipeline's only per-record seed carrier.
+
+So the contrast is "perturbation vs no perturbation", not "blend vs no blend".
+Comparing against a collapsed arm inflates any positive effect to look decisive.
+
+### 8.4 What the β = 1 arm settles
+
+β = 1 keeps the per-record perturbation and discards the memory, so it isolates
+the memory term at fixed total NFE and fixed R:
+
+- **β = 1 is not degenerate** (200/200 unique, 4.13 bits) — the perturbation
+  alone is enough to keep the arm alive.
+- **β = 1/6 vs β = 1 is a tie in 3/3 seeds** (Δ = −0.010 / +0.055 / +0.055
+  hits per record; every CI spans 0). The 83 % memory term adds nothing
+  measurable at NFE=150.
+- Both endpoints sit above the baseline; the β = 1/6 arm clears the CI in 2/3
+  seeds and the β = 1 arm in 1/3.
+
+**Reading: R1's NFE=150 gain is carried by the per-record random restart
+perturbation, not by the memory blend.** This is the D-004b conclusion
+(`docs/audit/r1-d004b-attribution.md`), now measured with the blend actually
+executing — which is exactly what GAP-25 could not do, because its arm C was
+downgraded to one round by the `nfe < restart_min_nfe` gate (§2.1).
+
+### 8.5 What this does and does not change
+
+- **Does not change** the frozen R1 headline. The N = 1000 NFE = 150 result
+  (+117 hits, +74.1 %, per-record CI [+0.073, +0.160]) stands; §8.2's N = 200
+  numbers are a screen and are underpowered for that contrast (2/3 seeds).
+- **Does change** the mechanism attribution available for the paper. The
+  defensible statement is "the restart's per-record perturbation is the
+  load-bearing mechanism; the memory fraction is not", not "the blend earns the
+  win". The pre-existing wording in the manuscript already declines to claim
+  the blend (`gap25-r1-blend-isolation.md` §0), so no overclaim needs
+  correcting — but no new blend claim may be added either.
+- **Does not license** "β = 0 is harmless". It is a collapse mode.
+
+### 8.6 Unresolved / noted
+
+- **N = 200 only for β = 1.** The powered comparison would be N = 1000 × 3
+  seeds; the screen is enough to see a 3/3 tie, not enough to bound the memory
+  term's effect size. Recorded as an open gap rather than a confirmation.
+- **β = 1/6 vs baseline is 2/3 at N = 200 but 1/1 at N = 1000** (seed 42, CI
+  [+0.073, +0.160]). The N = 200 screen is underpowered, not contradictory.
+- **Novelty was not scored.** `run_lineageflow_upstream_eval` with the `novelty`
+  metric invokes MMseqs2 through a *shared relative* temp directory
+  (`results/mmseqs_tmp` inside the vendored tree); two concurrent evaluations
+  collide and the metric returns `nonzero_exit`. Two arms were scored
+  concurrently and both failed that way, so every arm was re-scored sequentially
+  with `--metrics family_validity`. The R1 claim is about `hmmscan_total_hits`,
+  which is unaffected. The collision is a real property of the upstream
+  evaluator and is worth fixing before any future concurrent HMMER run.
+- **The machine was shared.** Two unrelated jobs from another project were
+  running throughout; per-arm wall time rose from ~55 min to ~70 min. No
+  measurement depends on wall time.
