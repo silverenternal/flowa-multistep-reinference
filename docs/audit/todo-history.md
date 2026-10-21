@@ -1306,3 +1306,55 @@ structural negative and the paper should say so.
 Two days of work have now moved R5c from "the framework's flagship MNIST win" to "a REGRESSES
 cell with one narrow exception, whose cause is an unexamined mean shift". That is the correct
 direction for the paper even though it is the uncomfortable one.
+
+## 19. Addendum (2026-10-21) — GAP-72 closed: the R5c cost is a location error
+
+### 19.1 The decomposition
+
+`delta_mu = mean(arm) - mean(baseline)` in pixel space, split into the all-ones direction (DC),
+the reference mean image (ink), and the residual: DC 3–15 %, ink 0–2 %, residual 83–96 % on all
+12 cells. The pre-registered rule (DC ≥ 0.5 → a scalar fixes it; DC < 0.2 → structured) resolves
+as **structured**. The shift is also arm-specific (cross-arm cosine −0.015 to +0.234) and not a
+border artifact (outer 2-px ring holds 8–23 % of the energy in 27 % of the area).
+
+### 19.2 But a location correction removes the whole gap
+
+Translating each arm so its mean equals the *baseline's* mean recovers 81–91 % of the loss on the
+three regression checkpoints and takes `w16e1_10k` and `w16e1_5k` *below* baseline. So the cost
+is a translation, not a quality loss.
+
+Calibrating **both** arms to the training mean — deployable, one vector subtraction per sample,
+target is a training-set statistic — gives:
+
+| ckpt | raw Δ (cosine) | calibrated Δ (cosine) |
+|---|---:|---:|
+| `production` | +9.5 % | **+2.5 %** |
+| `w16e1_10k` | +2.8 % | **−9.3 %** |
+| `w16e1_60k` | +15.6 % | **+4.8 %** |
+| `w16e1_5k` | −9.4 % | **−28.5 %** |
+
+Mean over the 12 cells: **−7.3 %**, from +6.3 % raw. R5c becomes 6 wins / 6 small regressions
+instead of 9 regressions.
+
+### 19.3 The operator, stated properly
+
+The restart has two separable effects:
+
+* **location** — always harmful, +8 to +19 % on the converged checkpoints, and ~19 pp on
+  `w16e1_5k` where it masks most of the shape gain;
+* **shape** — helpful on the under-trained checkpoints (−8 %, −28 %), mildly harmful on the
+  converged ones (+2 %, +6 %).
+
+The convergence boundary is exactly the baseline-FID ordering: the two best models (5.12, 5.77
+calibrated) lose on shape, the two worst (8.25, 11.33) gain. This is the same ordering as GAP-64's
+"no NFE headroom" and it now has a mechanism instead of a correlation.
+
+### 19.4 Why this matters for the plan
+
+GAP-67 intervened on dispersion and found nothing. GAP-72 intervened on location and found the
+whole effect. That is the correct way to settle a mechanism: one knob, one measurement. The
+remaining question is why the restart biases the mean at all — GAP-76.
+
+It also means the two days spent on R5c were not spent on a dead cell. The cell's story changed
+from "the framework wins MNIST" (artifact) to "the framework is a shape operator whose gains are
+hidden by a location error it also introduces" (measured, and actionable).
