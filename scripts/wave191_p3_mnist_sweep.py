@@ -306,6 +306,22 @@ def per_round_num_steps_equal_budget(
         weights: list[float] = []
         for r in range(int(cycle_length)):
             weights.append(float(sched.sample(0, int(r), int(r)).n_cap))
+    elif allocation == "evidence":
+        # The framework's OWN allocation (Wave 35 FIX-3): steps are apportioned
+        # inversely to each round's eps_implicit, so the fine-eps terminal
+        # refinement rounds get more steps than the coarse-eps early rounds.
+        # Bounded to an 8x skew and exact in total NFE. Until now this lived
+        # only in tools/run_controlled_audit.py; every headline cell allocated
+        # by n_cap, which is ~1.0 for codimension_sheet and therefore uniform.
+        from adaptive_reflow.algorithm.nfe_allocation import nfe_steps_for_evidence
+
+        sched = build_scheduler(name, cycle_length)
+        eps: list[float] = []
+        for r in range(int(cycle_length)):
+            sample = sched.sample(0, int(r), int(r))
+            e = getattr(sample, "eps_implicit", None)
+            eps.append(float(e) if e is not None else float("nan"))
+        return nfe_steps_for_evidence(int(total_nfe), eps)
     elif allocation == "uniform":
         weights = [1.0] * int(cycle_length)
     elif allocation == "proportional":
@@ -561,7 +577,7 @@ def main(argv: list[str] | None = None) -> int:
                              "makes the blend exactly on-path and makes beta=0 an "
                              "exact no-op.")
     parser.add_argument("--nfe-allocation",
-                        choices=("scheduler", "uniform", "proportional"),
+                        choices=("scheduler", "uniform", "proportional", "evidence"),
                         default="scheduler",
                         help="GAP-56: how --equal-total-nfe apportions steps "
                              "across rounds. 'scheduler' (legacy GAP-55) uses the "
