@@ -35,7 +35,12 @@ export TRANSFORMERS_OFFLINE=1
 export OMP_NUM_THREADS=8
 
 fail=0
-for seed in 42 43 44; do
+# 2026-10-21 user decision: finish seed 42, then stop. beta=1 is a null-bound
+# experiment - it cannot raise any metric - so under the new decision rule
+# (docs/audit/todo-history.md section 15) it does not earn three seeds. The
+# script is left at seed 42 so a re-run cannot silently resume the full set;
+# restore `42 43 44` only if the null bound becomes load-bearing.
+for seed in 42; do
   dir="$OUT/seed${seed}"
   mkdir -p "$dir"
   if [ -f "$dir/manifest.json" ]; then

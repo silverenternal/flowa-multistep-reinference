@@ -1091,3 +1091,60 @@ They are listed here so the chain from a closed gap to its record is explicit.
 Two further records are cited from `docs/audit/INDEX.md` and from the open-gap
 entries rather than from here: `gap15-venue-fit.md` (venue ranking, now in
 section 13.2) and `gap16-deferred-triage.md` (the 31 deferred reviewer items).
+
+---
+
+## 15. Addendum (2026-10-21) — decision rule: measure less, design more
+
+**Directive:** user — *"如果再补跑实验不能提升论文里指标的强度的话就不跑，而是转向那个
+实验相关的代码设计（对应的adapter，需要结合相应领域具体的逻辑和知识进行调研做对应的
+加强设计）"*.
+
+### 15.1 The rule now in force
+
+`todo.json` (schema `flowa-state-v7`) gained a `decision_rule` key:
+
+> An experiment runs only if it can change a claim's STATUS or a metric's MAGNITUDE.
+> More seeds, more draws or a larger N on an already-measured effect do not qualify:
+> they buy confidence, not strength, and the paper's weakness is not confidence.
+
+and a five-step `research_protocol` that every adapter gap must follow: read the
+upstream implementation of the state space, read the metric's *definition* and scorer,
+write the design hypothesis down before coding, change one mechanism at a time, then
+make one confirmatory measurement at the cell's canonical N/NFE/seeds with no seed
+top-ups afterwards.
+
+### 15.2 What this retired, and what it started
+
+| item | before | now |
+|---|---|---|
+| GAP-58 (beta=1 @ N=1000 x 3) | running 3 seeds, ~14-18 h | **stopped after seed 42** (user call). `reproduce/gap58_r1_beta1_n1000.sh` pinned to `for seed in 42`; result reported as a SINGLE-SEED bound |
+| GAP-59 (R1 seeds 43/44) | P0, ~10 h | **deferred**; re-enters only as GAP-69's confirmatory run |
+| GAP-62 (R3 seeds 43/44) | P1, ~8 h | **deferred**; re-enters only as GAP-68's confirmatory run |
+| GAP-61 (memory attribution) | P0, ~2.5 h | **deferred**; re-asked on the NEW operator after GAP-67/68 |
+| GAP-66 / GAP-63 (R5b matched budget, N=1000) | two separate runs | folded into **GAP-71 step (1)** as the before-arm |
+| GAP-44 (config inventory) | bookkeeping | re-scoped to **GAP-44-PROFILE-RESIDUAL-WIRING**, a prerequisite for the theory sites |
+
+Five new adapter gaps opened, all sharing one thesis derived from GAP-64's measurement
+that the blend is a variance-shrinking operator:
+
+| gap | state space | domain knowledge it must absorb |
+|---|---|---|
+| **GAP-67-BLEND-COVARIANCE-PRESERVATION** (P0) | the operator itself, all domains | second-moment matching; Thm 5's identity under a post-map |
+| **GAP-68-ADAPTER-FLOWMOL3-CHANNELS** (P0) | coordinate / charge / 5-class bond CTMC | valence + kekulisation; which channel fg_dev actually rewards |
+| **GAP-69-ADAPTER-LINAGEFLOW-PROTEIN** (P0) | ESM-2 embedding, family-conditioned | per-position conservation from the Pfam HMM; what hmmscan rewards |
+| **GAP-71-ADAPTER-IMAGE-SPECTRAL** (P1) | pixel or latent, DCT/wavelet bands | whether Inception features are low-frequency dominated |
+| **GAP-70-ADAPTER-KANZI-LATENT** (P1) | 64x64 latent + AR decoder prior | inverse-projection bridge; whether latent directions encode identity |
+
+The ordering is deliberate: GAP-67 first, because it is the only change that can turn a
+fidelity regression into a gain, and every adapter gap below it is measured against the
+operator GAP-67 leaves behind.
+
+### 15.3 Why this is the right move on the evidence
+
+Three of the paper's negative cells (R5c production +9.5%, R5b CIFAR +52.33% at N=200,
+K7 novelty 12.6x down) were traced by GAP-64/GAP-60 to one property of the map rather
+than to three unrelated weaknesses. Every remaining power-only experiment would have
+measured that same property more precisely without changing it. The honest options were
+to state the boundary, or to change the operator. This addendum chooses the second and
+keeps the first as the fallback if GAP-67's pre-registered reading fails.
