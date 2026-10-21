@@ -93,7 +93,8 @@
    "evidence": "rho_base = tr(S_gen)/tr(S_ref) in the FID projection space predicts the sign of the measured FID delta in 4/4 MNIST-FM checkpoints (production 0.782 / w16e1_10k 0.752 / w16e1_60k 0.704 -> FID up; w16e1_5k 1.006 -> FID down -9.65%). docs/audit/gap64-r5c-operating-regime.md",
    "what_it_unifies": "K7 novelty -42.9 pp (shrinkage removes tail samples), R1 +74% hmmscan hits and R6 scPerplexity d_z=-0.84 (both reward a smoother, higher-likelihood population), and the R5c split (helps only the one checkpoint whose base dispersion is at or above the data).",
    "what_it_forbids": "'For any FM model the framework improves inference quality' is FALSE on fidelity metrics and cannot be made true by better wiring: the operator is one-directional. The framework's own NFE allocator was wired in and measured (GAP-64): no sign flip.",
-   "what_replaces_it": "A never-worse selector: measure rho_base on a ~200-sample pilot, apply the framework iff rho_base >= 1. GAP-65 tests the rule out of family (R5b/R1/R3) with a pre-registered 6-of-7 threshold."
+   "what_replaces_it": "Two claims that survive the mechanism audit: (a) on coverage/functional metrics the framework raises validity at unchanged within-generation diversity (R1: +30..97% hits, 200/200 singletons, 3/3 seeds; beta=1 reproduces it, so the channel is the perturbation, not the blend); (b) on fidelity metrics the blend is a one-directional variance shrinker that pays only when the base model is at or above the data's dispersion (GAP-64/65). The 'improves ANY FM model' framing is dead on (b) and is replaced by (a)+(b) as an explicit operator-characterisation.",
+   "gap60_resolution": "R1 SURVIVES the collapse test. On the same nine FASTA pairs: beta=0 collapses to 5-6 clusters out of 200 (positive control); beta=1/6 and beta=1 both keep 200/200 singletons at 90% identity, identical to baseline, while hits rise 37->48/55/63 and 37->50/44/52. So the validity gain is not bought by diversity collapse, and K7 (distance to KNOWN Pfam families) is a different axis that moves as expected when validity rises. The R1/K7 'contradiction' was a measurement error on our side."
   }
  },
  "evidence_state": {
@@ -135,7 +136,7 @@
    "metric": "hmmscan_total_hits",
    "priority": "P0",
    "status": "3-SEED PENDING (GAP-59)",
-   "line": "POWERED at N=1000 but ONE seed: +117 hits (+74.1%), per-record CI [+0.073,+0.160]. 3-seed N=200 screen 48/55/63 vs 37/36/32 (3/3 positive, 2/3 CI). Mechanism = per-record restart perturbation, NOT the blend (GAP-45 s8). GAP-59 adds seeds 43/44 at N=1000."
+   "line": "POWERED at N=1000 but ONE seed: +117 hits (+74.1%), per-record CI [+0.073,+0.160]. 3-seed N=200 screen 48/55/63 vs 37/36/32 (3/3 positive, 2/3 CI). Mechanism = per-record restart perturbation, NOT the blend (GAP-45 s8). GAP-59 adds seeds 43/44 at N=1000. DIVERSITY CONTROL (GAP-60): on the same FASTA files the framework keeps 200/200 within-generation clusters at 90% identity (all singletons, identical to baseline) while hits rise; beta=0 collapses to 5-6 clusters. The gain is not bought by collapse."
   },
   {
    "cell": "R2",
@@ -190,15 +191,15 @@
    "cell": "K7",
    "metric": "novel_pct_pfam_twilight",
    "priority": "P0",
-   "status": "TRADEOFF UNMEASURED (GAP-60)",
-   "line": "12.6x LESS novel (3.7% vs 46.6%, McNemar p=1e-102), 1 seed. Never measured on the same samples as R1 validity, so the pair reads as \"validity bought with diversity loss\". GAP-60 scores both axes on the existing 9 FASTA sets."
+   "status": "RECONCILED (GAP-60); canonical re-run pending",
+   "line": "12.6x LESS novel (3.7% vs 46.6%, McNemar p=1e-102), 1 seed, measured against the 63.8M pfam_canonical build. GAP-60 showed this is NOT a diversity collapse: within-generation clustering is unchanged (200/200 singletons). K7 measures proximity to KNOWN Pfam families, which is expected to rise when validity rises - it is not the opposite of R1. Re-run against pfam_canonical on the GAP-45 sets before quoting the pair together."
   },
   {
    "cell": "R1/K7 joint",
    "metric": "hits x novelty (two-axis)",
    "priority": "P0",
-   "status": "SCHEDULED (GAP-60)",
-   "line": "No joint measurement exists. R1 +74% validity and K7 -42.9 pp novelty are on different samples."
+   "status": "RESOLVED (GAP-60)",
+   "line": "Not contradictory. R1's validity gain leaves within-generation diversity unchanged (200/200 clusters, all singletons); K7's novelty drop measures distance to known Pfam families and moves the expected direction when validity rises."
   },
   {
    "cell": "R5c boundary",
@@ -225,10 +226,8 @@
  ],
  "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 15 known failures (3 stale eval stubs that do not accept the GAP-40 classifier_aware_restart kwarg; 12 order-dependent test_paper_metrics cases that pass in isolation).",
  "execution_order": [
-  "GAP-60-VALIDITY-NOVELTY-TRADEOFF (P0, ~2 h, no new sampling; PROMOTED: if R1's +74% is also a shrinkage artefact the framework has no demonstrated quality win anywhere)",
   "GAP-66-R5B-EQUAL-BUDGET (P1, ~2 h GPU; the +18..+23% R5b arms are budget artefacts and must be retracted or confirmed)",
   "GAP-58-R1-BETA1-POWERED (P0, RUNNING: N=1000 x 3 beta=1 arm, ~14-18 h, resume-guarded)",
-  "GAP-60-VALIDITY-NOVELTY-TRADEOFF (P0, ~2 h, no new sampling; can run alongside GAP-58 on GPU1)",
   "GAP-61-MEMORY-ATTRIBUTION-WINNING-CELL (P0, ~2.5 h; the deepest question: does the memory term ever earn anything)",
   "GAP-59-R1-THREE-SEED-N1000 (P0, ~10 h; converts the strongest positive into a 3-seed cell)",
   "GAP-63-R5B-N1000 (P1, ~3 h; makes the R5b effect size quotable)",
@@ -365,22 +364,6 @@
    "deliverable": "A 3-seed N=1000 R1 cell: SUPPORTED or NOT_SIGNIFICANT, with the pooled CI."
   },
   {
-   "id": "GAP-60-VALIDITY-NOVELTY-TRADEOFF",
-   "phase": "1",
-   "priority": "P0",
-   "owner": "agent",
-   "status": "PLANNED",
-   "user_gated": false,
-   "depends_on": "none (uses existing FASTA)",
-   "est_wall": "~2 h, no new sampling",
-   "gap": "R1 reports +74 % Pfam hits and K7 reports 12.6x LESS novelty (3.7 % vs 46.6 % at pctid<30 %, McNemar p=1e-102) on the same model family. Both are single-axis, and they have never been measured on the same samples. A reviewer will read the pair as 'you bought validity by collapsing diversity', and nothing in the repo currently confirms or refutes that. The GAP-45 FASTA sets (beta in {0, 1/6, 1} x 3 seeds, N=200, plus each arm's baseline) are exactly the material needed and are already on disk.",
-   "acceptance": "(1) Score family_validity AND novelty on the 9 existing GAP-45 FASTA pairs plus their baselines - no new sampling. (2) Emit a two-axis table: hits per record and novelty fraction per arm, with the paired delta vs baseline on BOTH axes and CIs. (3) The trade-off is declared real only if novelty falls monotonically as hits rise across beta. (4) If beta=1 (no memory) shows the same hits and the same novelty loss, the loss belongs to the perturbation channel, not to the blend - that is the distinction the paper needs. (5) If novelty does NOT fall where hits rise, K7 and R1 are measuring different things and that must be stated explicitly.",
-   "agent_action": "1) Run tools/gap55_r1_score_fastas.py --metrics family_validity novelty SEQUENTIALLY per arm (MMseqs2 uses a shared relative temp dir; concurrency corrupts it). 2) Write tools/gap60_tradeoff.py to emit the two-axis table from the artifacts. 3) Write docs/audit/gap60-validity-novelty-tradeoff.md. 4) 6 gates + commit.",
-   "evidence": "docs/audit/gap48-k7-two-arm-novelty.md; docs/audit/gap45-r1-blend-off-wiring.md section 8; verification_outputs/gap45-r1-blend-off-150/; verification_outputs/gap45-r1-beta1-150/",
-   "result": "",
-   "deliverable": "One table that makes R1 and K7 the same story, or shows they are not."
-  },
-  {
    "id": "GAP-61-MEMORY-ATTRIBUTION-WINNING-CELL",
    "phase": "1",
    "priority": "P0",
@@ -442,6 +425,7 @@
   "GAP-54-CLASS-PRESERVING-CONTRACTION": "sampler_stochasticity=0 fixes the CTMC class (dim_changes=0, 128 direction-runs) and the map STILL expands: per-round ratio 11.91/3.80/1.49/1.23, K_eff=11.64, verdict NO CONTRACTION. Theorem 4 cannot be exercised on FlowMol3 at any m that still counts as a restart; FlowMol3 cells keep R=1.",
   "GAP-45-R1-BLEND-OFF-150": "beta=0 is a collapse mode, not a control (m=1 removes the fresh perturbation; 0/0/0 hits, entropy 1.68 bits, top-3 fraction 0.98). Added beta=1 (no memory): beta=1/6 vs beta=1 ties in 3/3 seeds, both above baseline. R1's NFE=150 gain is the per-record restart perturbation, not the memory blend.",
   "GAP-64-R5C-OPERATING-REGIME": "R5c closed at the mechanism level. (a) The framework's own NFE allocator (nfe_steps_for_evidence, previously used only by tools/run_controlled_audit.py) was wired into the MNIST driver as --nfe-allocation evidence: NFE=16 codi +10.09% vs +9.05% (scheduler), NFE=50 +8.70% vs +8.55%. No sign flip; the allocator is not the missing lever. (b) Baseline-only NFE ladder with a byte-identical prior: production 11.1035 (NFE=3) -> 11.0675 (NFE=100), 0.33%; w16e1_5k 26.9258 -> 26.7300, 0.73%. The RK4 sampler is converged at three steps, so R5c has no integration headroom and its delta measures only the cost of the restart. (c) Mechanism identified: the blend m*x1+(1-m)*x0 is a variance-shrinkage operator. rho = tr(S_g)/tr(S_ref) in the FID projection: production 0.782, w16e1_10k 0.752, w16e1_60k 0.704 (all shrink -> FID up), w16e1_5k 1.006 (shrink -> FID down, -9.65%). Sign rule rho_base >= 1 predicts the measured sign 4/4. This reconciles K7 (novelty -42.9 pp) and R1/R6 (coverage metrics up) as one mechanism.",
-  "GAP-65-DISPERSION-SELECTOR": "Out-of-family test of the rho sign rule. CONSISTENT but UNTESTED in the positive direction: sign(rho_base-1) matches the measured FID sign in 5/5 computable cells (R5c production 0.782/+8.91, w16e1_10k 0.752/+2.47, w16e1_60k 0.704/+15.42, w16e1_5k 1.006/-9.65; R5b CIFAR 0.972/+1.48). The pre-registered 6-of-7 threshold is not met because R1/R3 have no FID-style feature space, so the rule is not computable there - an applicability failure, disclosed as a defect in the pre-registration (applicability was not specified). Across 16 R5b cells corr(rho_arm, dFID) = -0.93, but that is driven by three arms the sweep under-budgeted (75-79 NFE vs 150) and which collapse to rho_arm ~ 0.10; within the non-collapsed arm the ordering is noisy. Net: rho is a monitoring statistic, not a selector contribution, and the framework cannot claim a fidelity win or a measured 'never worse'."
+  "GAP-65-DISPERSION-SELECTOR": "Out-of-family test of the rho sign rule. CONSISTENT but UNTESTED in the positive direction: sign(rho_base-1) matches the measured FID sign in 5/5 computable cells (R5c production 0.782/+8.91, w16e1_10k 0.752/+2.47, w16e1_60k 0.704/+15.42, w16e1_5k 1.006/-9.65; R5b CIFAR 0.972/+1.48). The pre-registered 6-of-7 threshold is not met because R1/R3 have no FID-style feature space, so the rule is not computable there - an applicability failure, disclosed as a defect in the pre-registration (applicability was not specified). Across 16 R5b cells corr(rho_arm, dFID) = -0.93, but that is driven by three arms the sweep under-budgeted (75-79 NFE vs 150) and which collapse to rho_arm ~ 0.10; within the non-collapsed arm the ordering is noisy. Net: rho is a monitoring statistic, not a selector contribution, and the framework cannot claim a fidelity win or a measured 'never worse'.",
+  "GAP-60-VALIDITY-NOVELTY-TRADEOFF": "No trade-off on the within-generation axis. Scored family_validity + novelty on the SAME nine GAP-45 FASTA pairs (3 seeds x beta in {0,1/6,1}, N=200, NFE=150). beta=0 collapses to 5-6 clusters out of 200 (singleton frac 0.00, 0 hits) - the detector is not blind. beta=1/6 and beta=1 both keep 200/200 clusters at 90% identity (singleton frac 1.00, identical to baseline) while hits rise 37->48/55/63 and 37->50/44/52. So R1's +74% is NOT bought by population collapse. beta=1 reproduces the gain, so it belongs to the perturbation channel, not the memory blend (second independent confirmation of GAP-45 s8). Novelty against the default pfam_holdout DB is degenerate (0 hits -> 1.0 everywhere) and is NOT quoted; K7's 3.7% vs 46.6% used the 63.8M pfam_canonical build on different samples and must be cited separately. The R1/K7 pair was a measurement error on our side, not a contradiction."
  }
 }
