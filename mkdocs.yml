@@ -288,6 +288,7 @@ not_in_nav: |
   audit/gap55-code-level-hardening.md
   audit/gap56-restart-t0-defect.md
   audit/gap57-equal-nfe-regime-ladder.md
+  audit/gap58-r1-beta1-powered.md
   audit/gap64-r5c-operating-regime.md
   audit/gap65-dispersion-selector.md
   audit/gap60-validity-novelty-tradeoff.md

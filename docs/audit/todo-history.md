@@ -900,6 +900,8 @@ slot. GAP-44 is compressed to its only remaining item (P2-1, the
 
 **GAP-60-VALIDITY-NOVELTY-TRADEOFF** — No trade-off on the within-generation axis. Scored family_validity + novelty on the SAME nine GAP-45 FASTA pairs (3 seeds x beta in {0,1/6,1}, N=200, NFE=150). beta=0 collapses to 5-6 clusters out of 200 (singleton frac 0.00, 0 hits) - the detector is not blind. beta=1/6 and beta=1 both keep 200/200 clusters at 90% identity (singleton frac 1.00, identical to baseline) while hits rise 37->48/55/63 and 37->50/44/52. So R1's +74% is NOT bought by population collapse. beta=1 reproduces the gain, so it belongs to the perturbation channel, not the memory blend (second independent confirmation of GAP-45 s8). Novelty against the default pfam_holdout DB is degenerate (0 hits -> 1.0 everywhere) and is NOT quoted; K7's 3.7% vs 46.6% used the 63.8M pfam_canonical build on different samples and must be cited separately. The R1/K7 pair was a measurement error on our side, not a contradiction.
 
+**GAP-58-R1-BETA1-POWERED** — single-seed N=1000 bound, closed by user decision before the third seed. β=1 (m=0, no memory term at all) gives 284 hits vs baseline 158 (**+126, +79.7%**, per-record d=+0.126, CI [+0.084,+0.168], 207 up/109 down, sign p=3.8e-08). The canonical β=1/6 arm gives 275. The β=1 − β=1/6 contrast is **+0.009 hits/record, CI [−0.041,+0.057], 192/189, sign p=0.918** — so the memory term is bounded at ≤ +0.057 hits/record (≤ 36% of the perturbation effect), not merely unmeasured. Control: baseline 158 reproduces GAP-55's 158 exactly; framework md5 differs. Consequence recorded for GAP-67: m=0 is a legitimate operating point on R1 and belongs in the image-cell design space. `docs/audit/gap58-r1-beta1-powered.md`.
+
 ## 11. Evidence state snapshot (2026-10-21)
 
 **strong_unconditional**
@@ -931,7 +933,7 @@ slot. GAP-44 is compressed to its only remaining item (P2-1, the
 
 **null_mechanism**
 
-- The memory term (m = 1 - beta) has no measured positive contribution on any cell: R1 beta=1/6 vs beta=1 ties in 3/3 seeds (GAP-45 s8); R5c boundary untested (GAP-61). beta=0 is a collapse mode, not a control.
+- The memory term (m = 1 - beta) has no measured positive contribution on any cell. R1 at N=1000: beta=1 (m=0) keeps the full +79.7% gain and the beta=1 - beta=1/6 contrast is +0.009 hits/record, CI [-0.041,+0.057], sign p=0.918 (GAP-58, single seed) - so the term is bounded at <= 36% of the perturbation effect, not just unmeasured. R5c boundary untested (deferred to GAP-67). beta=0 is a collapse mode, not a control.
 
 **measurement_hygiene**
 
