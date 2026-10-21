@@ -21,12 +21,13 @@
 | `paper-A-final.pdf`  | 305270 | `57c6d38373eb2e0a851b67472630c2f8fbc9df2bcb8342ffa15b9384e7e2dd35` | Rendered PDF |
 | `abstract-final.md`  |  13399 | `d4146d7094b28e955aba65dbcca4972930851caa4e3734fbcfab24398c799cc5` | Canonical 9-sentence abstract |
 | `results-final.md`   |  60937 | `3aa762d37c9a1bb57a61fcff56d9856267ed7e9065ed08fd7443211d77357144` | Canonical results / §3 / §4 |
-| `paper-flat-ieeetran.tex` | 66293 | `c9f4a7d489289d8d15548e0c6af1851791444297ffa3e0475a075c8f49c86a05` | Pre-flattening LaTeX draft (still actively referenced by paper-build flow) |
-| `paper-flat-ieeetran.pdf` | 381510 | `d9133f5f9b8bbc9d056f1cc127ed307a820a208df07913acd682a8290d75877a` | Rendered PDF of `paper-flat-ieeetran.tex` |
+| ~~`paper-flat-ieeetran.tex`~~ | 66293 | `c9f4a7d489289d8d15548e0c6af1851791444297ffa3e0475a075c8f49c86a05` | **MOVED 2026-10-21** to `docs/ARCHIVE/legacy-paper/`. The "still actively referenced by paper-build flow" note was stale: a repo-wide grep of `*.py`/`*.sh`/`*.yml` found zero tool references. |
+| ~~`paper-flat-ieeetran.pdf`~~ | 381510 | `d9133f5f9b8bbc9d056f1cc127ed307a820a208df07913acd682a8290d75877a` | **MOVED 2026-10-21** to `docs/ARCHIVE/legacy-paper/` with its `.aux`/`.out`/`.log` and the four `pdflatex-rerun*.log` iteration logs. |
 
-> **Note.** `paper-flat-ieeetran.tex` is retained as an **intermediate
-> LaTeX working surface** referenced by the paper-build driver; it is
-> NOT catalogued as an archive item because it is still actively used.
+> **Note (2026-10-21).** The two `paper-flat-ieeetran.*` rows above were the only
+> entries this file listed as "canonical / still in use". They are now archived
+> under `docs/ARCHIVE/legacy-paper/`; `paper-A-final.*` is the only live build
+> surface. The archived copies keep the SHA-256 values in the table.
 
 ## Archived + flattened files (catalog layer)
 

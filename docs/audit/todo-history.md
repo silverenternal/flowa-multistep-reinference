@@ -1072,3 +1072,22 @@ resolved rows are kept here because the reasoning is the record.
 **dropped_as_leads** — Pattern Recognition (model/CV-centric); IEEE TIP (model/CV-centric); AI4Science venues (bio-specific)
 
 **note_on_partitions** — CAS partitions change yearly; verify the current-year table before submission.
+
+---
+
+## 14. Evidence-artifact index (2026-10-21)
+
+The reference-graph scan behind `docs/ARCHIVE/audit-orphans/` found four recent
+audit records that carried load-bearing results but were cited from nowhere.
+They are listed here so the chain from a closed gap to its record is explicit.
+
+| record | gap it closes | what it holds |
+|---|---|---|
+| [`gap46-r5b-memory-fraction.md`](gap46-r5b-memory-fraction.md) | GAP-46-R5B-MEMORY-SWEEP | the 0/16 R5b memory-fraction sweep; the +18..+23% arms whose budget defect GAP-66 now retracts |
+| [`gap49-compute-accounting.md`](gap49-compute-accounting.md) | GAP-49-COMPUTE-ACCOUNTING | the NFE ledger showing the framework pays no hidden NFE |
+| [`gap56-restart-t0-defect.md`](gap56-restart-t0-defect.md) | GAP-56-RESTART-T0 | `solve_ode` ignored `t0`/`t1`, so restarts re-integrated over the full `[0,1]`; also the vacuous-seed defect |
+| [`gap60-validity-novelty-tradeoff.md`](gap60-validity-novelty-tradeoff.md) | GAP-60-VALIDITY-NOVELTY-TRADEOFF | same-FASTA validity x within-generation-diversity; the positive control (beta=0 collapses to 5-6 clusters) |
+
+Two further records are cited from `docs/audit/INDEX.md` and from the open-gap
+entries rather than from here: `gap15-venue-fit.md` (venue ranking, now in
+section 13.2) and `gap16-deferred-triage.md` (the 31 deferred reviewer items).

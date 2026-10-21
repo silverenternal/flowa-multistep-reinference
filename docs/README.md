@@ -88,7 +88,7 @@ archival trace.
 | [`baseline-audit-report.md`](baseline-audit-report.md) | Baseline audit report. |
 | [`drafts/paper-A-final.md`](drafts/paper-A-final.md) | **Canonical manuscript source** (title + abstract inline). |
 | [`drafts/paper-A-final.tex`](drafts/paper-A-final.tex) | IEEEtran build source for the submitted PDF. |
-| [`paper-draft.md`](paper-draft.md) (legacy EAAI-era draft) · [`paper-draft-anonymous.md`](paper-draft-anonymous.md) · [`paper-profile.md`](paper-profile.md) | Paper-draft variants and the venue profile; the live manuscript is [`drafts/paper-A-final.md`](drafts/paper-A-final.md). |
+| [`paper-profile.md`](paper-profile.md) | Venue profile. The legacy EAAI-era and anonymous drafts moved to [`ARCHIVE/legacy-paper/`](ARCHIVE/legacy-paper/) on 2026-10-21; the live manuscript is [`drafts/paper-A-final.md`](drafts/paper-A-final.md). |
 | [`tables/`](tables/) | Paper-ready tables (paper quantities, algorithms, state machines, CIFAR ablation). |
 | [`figures/`](figures/) | Paper-ready figures (protocol diagram, feedback loops, per-round selection ratio, CIFAR-10 FID curve, evidence comparison). |
 
@@ -126,10 +126,18 @@ intentionally archival and rot-tolerant.
 - **`r17-survey/`** — paper-parity evidence chain, image-eval tier-2 progress,
   paper-table template, synthetic-oracle audit. Entry point:
   [`r17-survey/state-report.md`](r17-survey/state-report.md).
-- [`paper-final-neurips.md`](paper-final-neurips.md) — superseded venue draft.
-- **Superseded compiled PDFs** — [`paper-final-neurips.pdf`](paper-final-neurips.pdf) (NeurIPS-era), [`paper-eaai.pdf`](paper-eaai.pdf) (EAAI-era), [`paper-tnnls.pdf`](paper-tnnls.pdf) (byte-identical duplicate of `paper-eaai.pdf`). Retained for provenance; the live PDF is [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf).
+- [`ARCHIVE/legacy-paper/paper-final-neurips.md`](ARCHIVE/legacy-paper/paper-final-neurips.md) — superseded venue draft (moved 2026-10-21).
+- **Superseded compiled PDFs** — [`ARCHIVE/legacy-paper/paper-final-neurips.pdf`](ARCHIVE/legacy-paper/paper-final-neurips.pdf) (NeurIPS-era), [`ARCHIVE/legacy-paper/paper-eaai.pdf`](ARCHIVE/legacy-paper/paper-eaai.pdf) (EAAI-era), [`ARCHIVE/legacy-paper/paper-tnnls.pdf`](ARCHIVE/legacy-paper/paper-tnnls.pdf) (byte-identical duplicate of `paper-eaai.pdf`). All three moved to `ARCHIVE/legacy-paper/` on 2026-10-21; the live PDF is [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf).
 - **Superseded top-level submission artifacts** — [`../cover_letter.md`](../cover_letter.md) (ICLR-2027 / NeurIPS-workshop era), [`../submission_checklist.md`](../submission_checklist.md) (ICLR-2027 era, Wave 97), and [`../supplementary.md`](../supplementary.md) (NeurIPS/ICML-era template, Wave 97) are **legacy and read by no current tooling** (each carries a top banner). The canonical TNNLS package is [`../tnnls_submission/`](../tnnls_submission/); the EAAI-era package is archived at [`../eaai_submission/`](../eaai_submission/).
 - **Legacy / historical `docs/` documents** (each carries a top banner; full classification in [`audit/docs-legacy-inventory.md`](audit/docs-legacy-inventory.md)) — **legacy/superseded:** [`submission-checklist-final.md`](submission-checklist-final.md) (NeurIPS-era; → [`../tnnls_submission/submission_checklist.md`](../tnnls_submission/submission_checklist.md)), [`push-ready-summary.md`](push-ready-summary.md) (Wave 72-74; → the retired `todo/PUSH-READY.md`, removed 2026-10-13), [`STRATEGY_FRAMEWORK_SCOPE.md`](STRATEGY_FRAMEWORK_SCOPE.md) (2026-09-04 draft). **Historical records:** [`code-release-checklist.md`](code-release-checklist.md) (tag `v1.0.1-paper-final`), [`reproducibility_record.md`](reproducibility_record.md) (Wave 15).
+- [`ARCHIVE/legacy-paper/`](ARCHIVE/legacy-paper/) — **new 2026-10-21.** Every superseded
+  manuscript body, compiled PDF and LaTeX intermediate (paper-draft.md,
+  paper-draft-anonymous.md, paper-final-neurips.*, paper-eaai.pdf, paper-tnnls.pdf,
+  the two `paper-draft-precut*.md.bak` snapshots, `paper-flat-ieeetran.*` and the
+  `pdflatex-rerun*.log` iteration logs). Nothing here is read by tooling.
+- [`ARCHIVE/audit-orphans/`](ARCHIVE/audit-orphans/) — **new 2026-10-21.** 25 audit
+  records with zero inbound references (2026-09 paper-polish / cover-letter notes
+  absorbed into `paper-A-final.*`). See `audit/INDEX.md` addendum.
 - [`ARCHIVE/`](ARCHIVE/) — historical context, intentionally **not** part of the
   live mkdocs build (enforced by `mkdocs.yml` `exclude_docs`). Preserved on disk
   for archaeology; not maintained and not reachable from the GitHub Pages nav.

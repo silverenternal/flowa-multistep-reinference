@@ -4,7 +4,7 @@
 
 Audit files are organized into topic-cluster subdirectories (`docs/audit/<cluster>/waveNNN-*.md`). Wave filenames are preserved (so `git log --follow` continues to work and the per-wave audit trail is intact). Flat files at the top level are classified into clusters by filename + first-30-line keyword scan (see `cluster_order` in `/tmp/regen_index.py`).
 
-**Active surface** = one of the docs that are loaded by an external reviewer (`docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.md`, `docs/METRIC_LEDGER.md`, `docs/INSIGHTS.md`, `docs/ARCHITECTURE.md`, `docs/README.md`, `docs/paper-draft.md`, `docs/cover-letter-tnnls.md`, `docs/push-ready-summary.md`, plus 13 other Tier-1 reviewer-facing docs and the 8 `tnnls_submission/*.md` package files). **Active** = a cluster file is cited from at least one active surface; **Historical** = not cited (preserved for the per-wave audit trail).
+**Active surface** = one of the docs that are loaded by an external reviewer (`docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.md`, `docs/METRIC_LEDGER.md`, `docs/INSIGHTS.md`, `docs/ARCHITECTURE.md`, `docs/README.md`, `docs/cover-letter-tnnls.md`, `docs/push-ready-summary.md`, plus 13 other Tier-1 reviewer-facing docs and the 8 `tnnls_submission/*.md` package files). **Active** = a cluster file is cited from at least one active surface; **Historical** = not cited (preserved for the per-wave audit trail).
 
 ---
 
@@ -33,16 +33,16 @@ Audit files are organized into topic-cluster subdirectories (`docs/audit/<cluste
 | `protbfn_abbfn` | ProtBFN-AbBFN (antibody / protein BFN) | 0 | 0 | 0 |
 | `wan2_2` | Wan2.2 video (video diffusion) | 0 | 0 | 0 |
 | `web_research` | Web research 2026 (FM literature surveys) | 1 | 0 | 1 |
-| `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 120 | 71 | 49 |
+| `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 114 | 71 | 43 |
 | `reproducibility` | Reproducibility (reproducibility-record, preregistration, reproduce-script) | 13 | 5 | 8 |
-| `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 23 | 10 | 13 |
+| `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 22 | 10 | 12 |
 | `push_state` | Push state (push-ready, freeze, release, submission) | 7 | 5 | 2 |
-| `algorithm_4arm` | Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency) | 38 | 19 | 19 |
-| `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 98 | 81 | 17 |
-| `stats_method` | Statistical methodology (R5/R6, p-value, bonferroni, TOST) | 44 | 15 | 29 |
-| `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 34 | 14 | 20 |
-| `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 37 | 22 | 15 |
-| `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 45 | 25 | 20 |
+| `algorithm_4arm` | Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency) | 34 | 19 | 15 |
+| `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 97 | 81 | 16 |
+| `stats_method` | Statistical methodology (R5/R6, p-value, bonferroni, TOST) | 41 | 15 | 26 |
+| `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 31 | 14 | 17 |
+| `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 35 | 22 | 13 |
+| `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 40 | 24 | 16 |
 | **TOTAL** | — | **509** | **306** | **203** |
 
 ---
@@ -204,7 +204,7 @@ Web research 2026 (FM literature surveys). This cluster is part of the project's
 
 ### Cluster: `engineering` — Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree)
 
-**Files: 120** (active: 71, historical: 49)
+**Files: 114** (active: 71, historical: 43)
 
 Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This cluster is part of the project's audit surface for engineering.
 
@@ -309,7 +309,6 @@ Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This 
 - `wave308-d3-review.md` (25.7KB, 2026-09-23)
 - `wave326-ci-design.md` (17.0KB, 2026-09-23)
 - `wave326-ci-redesign-execution.md` (19.1KB, 2026-09-23)
-- `wave326-data-integrity-design.md` (13.0KB, 2026-09-23)
 - `wave326-readme-update.md` (8.0KB, 2026-09-23)
 - `wave334-reviewer-prediction.md` (19.8KB, 2026-09-25)
 - `wave338-phase2-mechanism.md` (11.9KB, 2026-09-23)
@@ -319,20 +318,15 @@ Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This 
 - `wave353-a2-placeholder-fill.md` (18.7KB, 2026-09-25)
 - `wave353-conclusion-takeaways.md` (10.3KB, 2026-09-25)
 - `wave353-pseudocode-blocks.md` (12.3KB, 2026-09-25)
-- `wave354-cover-letter-scaffold.md` (15.7KB, 2026-09-25)
 - `wave355-supplementary-polish.md` (21.8KB, 2026-09-25)
-- `wave358-insights-gap-check.md` (33.6KB, 2026-09-25)
 - `wave359-final-consolidated.md` (39.6KB, 2026-09-25)
-- `wave360-cover-letter-interactive-ux.md` (14.5KB, 2026-09-25)
 - `wave360-verification-outputs-xref.md` (13.6KB, 2026-09-25)
 - `wave363-all-cell-recipes.md` (29.3KB, 2026-09-26)
 - `wave363-k4-recipe.md` (11.9KB, 2026-09-26)
 - `wave363-k7-recipe.md` (9.8KB, 2026-09-26)
 - `wave363-r1-recipe.md` (16.5KB, 2026-09-26)
-- `wave364-g11.md` (15.6KB, 2026-09-26)
 - `wave364-g3.md` (20.8KB, 2026-09-26)
 - `wave364-g34.md` (14.9KB, 2026-09-26)
-- `wave368-p2-section-7-6-deep.md` (15.1KB, 2026-09-26)
 
 ---
 
@@ -365,7 +359,7 @@ Reproducibility (reproducibility-record, preregistration, reproduce-script). Thi
 
 ### Cluster: `data_packaging` — Data packaging + manifest (sha256, csv, metric-ledger)
 
-**Files: 23** (active: 10, historical: 13)
+**Files: 22** (active: 10, historical: 12)
 
 Data packaging + manifest (sha256, csv, metric-ledger). This cluster is part of the project's audit surface for data_packaging.
 
@@ -396,7 +390,6 @@ Data packaging + manifest (sha256, csv, metric-ledger). This cluster is part of 
 - `wave342-readme-update.md` (12.8KB, 2026-09-25)
 - `wave355-verification-outputs-readme.md` (15.8KB, 2026-09-25)
 - `wave360-supplementary-bundle-verify.md` (6.3KB, 2026-09-25)
-- `wave367-p3-related-work.md` (10.5KB, 2026-09-26)
 
 ---
 
@@ -423,7 +416,7 @@ Push state (push-ready, freeze, release, submission). This cluster is part of th
 
 ### Cluster: `algorithm_4arm` — Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency)
 
-**Files: 38** (active: 19, historical: 19)
+**Files: 34** (active: 19, historical: 15)
 
 Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency). This cluster is part of the project's audit surface for algorithm_4arm.
 
@@ -462,20 +455,16 @@ Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency). This cluster
 - `wave300-p3-resolution-plan.md` (27.5KB, 2026-09-23)
 - `wave302-p5-codim-deep-dive.md` (15.1KB, 2026-09-23)
 - `wave303-day0-14-plan.md` (69.0KB, 2026-09-23)
-- `wave305-day0-risk-package.md` (37.8KB, 2026-09-23)
 - `wave336-r5b-mechanism.md` (20.6KB, 2026-09-23)
 - `wave353-limitations-vendor-note.md` (14.6KB, 2026-09-25)
 - `wave357-lean-sorry-discharge.md` (41.5KB, 2026-09-25)
-- `wave364-g20.md` (15.5KB, 2026-09-26)
-- `wave367-p5-theory-de-wave.md` (15.1KB, 2026-09-26)
-- `wave368-p1-new-section-2-2.md` (9.6KB, 2026-09-26)
 - `wave379-mechanism-synthesis.md` (6.2KB, 2026-09-27)
 
 ---
 
 ### Cluster: `sweep_eval` — Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability)
 
-**Files: 98** (active: 81, historical: 17)
+**Files: 97** (active: 81, historical: 16)
 
 Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability). This cluster is part of the project's audit surface for sweep_eval.
 
@@ -581,13 +570,12 @@ Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability). This cluste
 - `wave359-k1-rc5-drift33-fix.md` (13.7KB, 2026-09-25)
 - `wave359-lean-build-verify.md` (22.8KB, 2026-09-25)
 - `wave363-k1-recipe.md` (16.4KB, 2026-09-26)
-- `wave367-p2-intro-contributions.md` (14.0KB, 2026-09-26)
 
 ---
 
 ### Cluster: `stats_method` — Statistical methodology (R5/R6, p-value, bonferroni, TOST)
 
-**Files: 44** (active: 15, historical: 29)
+**Files: 41** (active: 15, historical: 26)
 
 Statistical methodology (R5/R6, p-value, bonferroni, TOST). This cluster is part of the project's audit surface for stats_method.
 
@@ -636,16 +624,13 @@ Statistical methodology (R5/R6, p-value, bonferroni, TOST). This cluster is part
 - `wave363-r5a-recipe.md` (18.3KB, 2026-09-26)
 - `wave363-r5b-recipe.md` (14.3KB, 2026-09-26)
 - `wave363-r5c-recipe.md` (17.6KB, 2026-09-26)
-- `wave364-g15.md` (19.8KB, 2026-09-26)
 - `wave364-p1-gap-selection-memo.md` (26.9KB, 2026-09-26)
-- `wave366-p3-r6-recipe-citation.md` (16.9KB, 2026-09-26)
-- `wave368-p3-section-7-8-deep.md` (10.8KB, 2026-09-26)
 
 ---
 
 ### Cluster: `paper_claims` — Paper + claims (paper packaging, claim audit, paper-update)
 
-**Files: 34** (active: 14, historical: 20)
+**Files: 31** (active: 14, historical: 17)
 
 Paper + claims (paper packaging, claim audit, paper-update). This cluster is part of the project's audit surface for paper_claims.
 
@@ -685,15 +670,12 @@ Paper + claims (paper packaging, claim audit, paper-update). This cluster is par
 - `wave364-g31.md` (12.8KB, 2026-09-26)
 - `wave364-g32.md` (15.7KB, 2026-09-26)
 - `wave364-paper-polish-gaps.md` (7.1KB, 2026-09-26)
-- `wave366-p1-abstract-disclosure.md` (6.6KB, 2026-09-26)
-- `wave371-paper-strengths.md` (3.8KB, 2026-09-27)
-- `wave381-paper-style-polish.md` (832B, 2026-09-27)
 
 ---
 
 ### Cluster: `final_verify` — Final-verify (per-wave close-out, pre-push hygiene)
 
-**Files: 37** (active: 22, historical: 15)
+**Files: 35** (active: 22, historical: 13)
 
 Final-verify (per-wave close-out, pre-push hygiene). This cluster is part of the project's audit surface for final_verify.
 
@@ -736,15 +718,13 @@ Final-verify (per-wave close-out, pre-push hygiene). This cluster is part of the
 - `wave293-final.md` (10.5KB, 2026-09-23)
 - `wave294-final.md` (18.1KB, 2026-09-23)
 - `wave300-final.md` (27.0KB, 2026-09-23)
-- `wave301-final.md` (15.8KB, 2026-09-23)
 - `wave302-final.md` (24.9KB, 2026-09-23)
-- `wave303-final.md` (68.3KB, 2026-09-23)
 
 ---
 
 ### Cluster: `governance` — Governance (scope, audit, gap, condition, placeholder, cross-cutting)
 
-**Files: 45** (active: 25, historical: 20)
+**Files: 40** (active: 24, historical: 16)
 
 Governance (scope, audit, gap, condition, placeholder, cross-cutting). This cluster is part of the project's audit surface for governance.
 
@@ -773,7 +753,6 @@ Governance (scope, audit, gap, condition, placeholder, cross-cutting). This clus
 - `wave349-gap-audit.md` (14.4KB, 2026-09-25)
 - `wave357-k4-saturation-scope.md` (29.6KB, 2026-09-25)
 - `wave361-consolidated-results-index.md` (5.1KB, 2026-09-25)
-- `wave373-inference-dynamics-positioning.md` (3.6KB, 2026-09-27)
 - `wave375-image-feedback-path.md` (8.6KB, 2026-09-27)
 
 **Historical (20 files, not cited by reviewer-facing surfaces):**
@@ -793,11 +772,7 @@ Governance (scope, audit, gap, condition, placeholder, cross-cutting). This clus
 - `wave339-h8-fixes.md` (6.3KB, 2026-09-23)
 - `wave341-deep-audit.md` (52.5KB, 2026-09-25)
 - `wave341-readme-cosine-vs-codim.md` (23.0KB, 2026-09-25)
-- `wave358-index-maintenance-doc.md` (7.9KB, 2026-09-25)
-- `wave374-final-typeset-check.md` (1.9KB, 2026-09-27)
 - `wave380-mechanism-restructure.md` (1.7KB, 2026-09-27)
-- `wave382-abstract-introduction-polish.md` (805B, 2026-09-27)
-- `wave383-reformulation-positioning.md` (1.0KB, 2026-09-27)
 
 ---
 
@@ -808,3 +783,44 @@ Governance (scope, audit, gap, condition, placeholder, cross-cutting). This clus
 - **Cluster boundaries are heuristic.** If a file lands in the wrong cluster because its filename is generic, the filename keyword was the primary signal — content keywords were the fallback. Inspect the first 30 lines of the file to confirm.
 
 _This file complements the per-wave `INDEX.md` table. The per-wave table is authoritative for *"what did Wave N do?"*; this topic-cluster index is authoritative for *"what does the project claim about X?"._
+
+---
+
+## Addendum (2026-10-21) — 25 orphaned flat files moved to `docs/ARCHIVE/audit-orphans/`
+
+A reference-graph scan (every `.md`/`.py`/`.yml`/`.sh`/`.json`/`.tex` in the repo,
+inbound `audit/<name>.md` links counted) found **38 audit records with no inbound
+reference at all**. Of those, 25 are 2026-09 paper-polish and cover-letter notes
+whose content was absorbed into `paper-A-final.*`; they are now in
+`docs/ARCHIVE/audit-orphans/` and have been removed from the cluster listings
+above (counts re-derived from the remaining bullets, not hand-adjusted):
+
+| cluster | files moved |
+|---|---:|
+| `engineering` | 6 |
+| `governance` | 5 |
+| `algorithm_4arm` | 4 |
+| `stats_method` | 3 |
+| `paper_claims` | 3 |
+| `final_verify` | 2 |
+| `data_packaging` | 1 |
+| `sweep_eval` | 1 |
+
+The other 13 orphans stay in place: `gap49-compute-accounting.md`,
+`gap56-restart-t0-defect.md`, `gap60-validity-novelty-tradeoff.md`,
+`gap46-r5b-memory-fraction.md`, `gap15-venue-fit.md`, `gap16-deferred-triage.md`,
+`manuscript-citation-integrity.md`, `repo-docs-maintenance-2.md`,
+`todo-surface-reset.md`, `wave326-ci-redesign-execution.md`,
+`wave330-zh-review-version.md`, `wave379-mechanism-synthesis.md`,
+`wave380-mechanism-restructure.md`. These are recent and load-bearing; the fix
+is to cite them, not to archive them. `docs/audit/todo-history.md` sections
+10-13 now cite the first four.
+
+Also corrected here: `docs/paper-draft.md` is no longer an "active surface"
+(it moved to `docs/ARCHIVE/legacy-paper/` on the same date).
+
+**Known limitation (pre-existing, not introduced here):** this index lists 484
+of the 558 audit records on disk. The generator (`/tmp/regen_index.py`, Wave 347)
+was never committed, so the listing cannot be regenerated reproducibly. Treat
+the index as a reading guide, not as a completeness proof; `ls docs/audit/` is
+authoritative.
