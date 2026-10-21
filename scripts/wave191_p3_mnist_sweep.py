@@ -403,6 +403,7 @@ def run_framework_arm(
     restart_t0_mode: str = "zero",
     batch_suffix: str = "",
     restart_noise_scale: float = 1.0,
+    mean_preserve: bool = False,
 ) -> tuple[np.ndarray, dict[str, int]]:
     """Generate ``n_samples`` framework-arm endpoints (4 rounds × num_steps_per_round[r], beta=beta).
 
@@ -414,6 +415,17 @@ def run_framework_arm(
     ``shared_prior`` (GAP-38) keys round 0 on ``SHARED_BATCH_ID`` (the same
     prior as the baseline) instead of ``wave191-p3-{arm_name}``, so the
     baseline and framework arms start from the SAME ``x0`` — the paired design.
+
+    ``mean_preserve`` (GAP-76, additive, default off) — centroid-anchored
+    restart. GAP-77 measured that the restart displaces the batch mean away
+    from the reference in 36/36 cells while contracting the covariance in
+    36/36, and that the displacement is the whole measured regression. The
+    fix applied here is reference-free: the final cloud is translated so its
+    batch centroid equals the **round-0** centroid (a single-pass draw from
+    the same prior, produced by the same run at no extra cost). A translation
+    leaves the covariance untouched, so this keeps the contraction channel and
+    removes only the first-moment defect. It is a batch operation, not a
+    per-sample one.
 
     Returns ``(samples, telemetry)`` where ``telemetry`` carries total
     NFE per sample and wall-clock breakdown.
@@ -433,6 +445,11 @@ def run_framework_arm(
         SHARED_BATCH_ID if shared_prior else f"wave191-p3-{arm_name}"
     ) + str(batch_suffix)
     samples = np.empty((int(n_samples), MNIST_FM_FLAT_DIM), dtype=np.float64)
+    round0_samples = (
+        np.empty((int(n_samples), MNIST_FM_FLAT_DIM), dtype=np.float64)
+        if mean_preserve
+        else None
+    )
     total_nfe = int(sum(num_steps_per_round))
     t0 = time.perf_counter()
     for i in range(int(n_samples)):
@@ -470,9 +487,23 @@ def run_framework_arm(
             # into an x0-bearing endpoint bundle (this is the canonical
             # round-to-round handoff the framework expects).
             bundle = adapter.observe_endpoint(trace, bundle)
+            if round0_samples is not None and r == 0:
+                # GAP-76: keep the single-pass endpoint of the same run so the
+                # final cloud can be anchored to its centroid (reference-free).
+                round0_entry = adapter._native_states.get(
+                    bundle.native_state_digest, {}
+                )
+                round0_samples[i] = np.asarray(
+                    round0_entry["x0"], dtype=np.float64
+                ).reshape(MNIST_FM_FLAT_DIM)
         # Last round's endpoint x0 is the final sample.
         entry = adapter._native_states.get(bundle.native_state_digest, {})
         samples[i] = np.asarray(entry["x0"], dtype=np.float64).reshape(MNIST_FM_FLAT_DIM)
+    if round0_samples is not None:
+        # GAP-76 centroid anchoring: a pure translation, so the covariance is
+        # unchanged and only the first moment moves.
+        shift = samples.mean(axis=0) - round0_samples.mean(axis=0)
+        samples = np.asarray(samples - shift, dtype=np.float64)
     elapsed = time.perf_counter() - t0
     if verbose:
         print(
@@ -622,6 +653,14 @@ def main(argv: list[str] | None = None) -> int:
                              "(default) leaves the convex blend byte-identical. "
                              "Values >1 restore the blend's second moment, which "
                              "the convex blend loses by m^2 (v_base - v_hat).")
+    parser.add_argument("--mean-preserve", action="store_true",
+                        help="GAP-76: centroid-anchored restart. Translate each "
+                             "framework arm's final cloud so its batch centroid "
+                             "equals the round-0 centroid of the same run. The "
+                             "translation leaves the covariance untouched, so it "
+                             "removes only the first-moment defect GAP-77 "
+                             "measured (36/36 cells, worth the whole regression). "
+                             "Default off = byte-identical legacy path.")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
 
@@ -757,6 +796,7 @@ def main(argv: list[str] | None = None) -> int:
             restart_t0_mode=str(args.restart_t0_mode),
             batch_suffix=batch_suffix,
             restart_noise_scale=float(args.restart_noise_scale),
+            mean_preserve=bool(args.mean_preserve),
         )
         arm_samples[name] = s
         arm_telemetry[name] = tel
@@ -937,6 +977,8 @@ def main(argv: list[str] | None = None) -> int:
         "nfe_allocation_weights": str(args.nfe_allocation),
         "beta_schedule": str(args.beta_schedule),
         "restart_t0_mode": str(args.restart_t0_mode),
+        "restart_noise_scale": float(args.restart_noise_scale),
+        "mean_preserve": bool(args.mean_preserve),
         "seed_keyed_prior": bool(args.seed_keyed_prior),
         "prior_batch_suffix": str(batch_suffix),
         "restart_t0_per_round": t0_per_round,
