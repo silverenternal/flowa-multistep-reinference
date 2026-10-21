@@ -293,6 +293,7 @@ not_in_nav: |
   audit/gap65-dispersion-selector.md
   audit/gap67-covariance-preservation.md
   audit/gap73-r5c-statistic.md
+  audit/gap75-r5c-n1000-table.md
   audit/gap60-validity-novelty-tradeoff.md
   audit/gap50-evidence-grade-table.md
   audit/project-state-inventory.md

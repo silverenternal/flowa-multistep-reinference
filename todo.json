@@ -25,8 +25,7 @@
  "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 15 known failures (3 stale eval stubs; 12 order-dependent test_paper_metrics cases). docs-vs-code verifies 3370 claims since the 2026-10-21 archive move.",
  "q1_gate": "The paper's weakness is now a MECHANISM weakness, not a power weakness. Three fidelity cells regress (R5c production +9.5%, R5b CIFAR +52% at N=200, K7 novelty 12.6x down) and GAP-64 traced all three to one property of the blend: it shrinks variance. GAP-67 changes that property. If it works, the fidelity regressions become a solved mechanism; if it does not, the boundary is real and gets stated as one. Everything else in this file is either adapter work that follows from the same thesis, or a user-gated document step.",
  "execution_order": [
-  "GAP-75-R5C-N1000-TABLE (P0, ~1 h CPU, no GPU; replaces the invalid chunk statistic with the N=1000 headline across the 3 existing seeds -- this is the R5c number the paper should quote)",
-  "GAP-72-R5C-MEAN-SHIFT (P0, ~2 h code + ~1 h GPU; GAP-67 falsified the dispersion explanation and the FID decomposition says the remaining cost is the mean term)",
+  "GAP-72-R5C-MEAN-SHIFT (P0, ~2 h code + ~1 h GPU; the corrected R5c table is 9 regressions / 1 win / 2 ties, and the FID decomposition says the cost is the mean term)",
   "GAP-44-PROFILE-RESIDUAL-WIRING (P1, ~1 h code; prerequisite for the A/B theory sites and for GAP-69)",
   "GAP-68-ADAPTER-FLOWMOL3-CHANNELS (P0, ~1 day research+code, ~8 h GPU; R3 fg_dev is the only molecule cell with a CI excluding 0)",
   "GAP-69-ADAPTER-LINAGEFLOW-PROTEIN (P0, ~1 day research+code, ~10 h GPU; R1 is the paper's headline positive)",
@@ -42,24 +41,10 @@
  ],
  "open_gaps": [
   {
-   "id": "GAP-75-R5C-N1000-TABLE",
-   "priority": "P0",
-   "status": "PLANNED",
-   "depends_on": "GAP-73 (done: the chunk statistic is invalid)",
-   "est_wall": "~1 h CPU, no GPU (the gap57 3-seed samples already exist)",
-   "gap": "GAP-73 showed the paired chunk test is an n=100 statistic and reverses the sign on w16e1_10k. The replacement -- the N=1000 headline against the full 10K reference -- has been computed for one seed and the cosine arm only (docs/audit/gap73-r5c-statistic.md section 3). The gap57 ladder already holds 3 seeds x 4 checkpoints x 3 arms at N=1000, so the corrected table costs no new sampling.",
-   "design_hypothesis": "The corrected R5c verdict is 10 losses / 2 wins at N=1000 (one seed, cosine + two other arms at the headline). If the 3-seed table reproduces that split, the R5c cell is a REGRESSES cell and the paper's current 'framework WINS -28.43%' reading is an artifact of the chunk statistic, not a measurement.",
-   "research": "(a) The three gap57 seeds are independent draws (seed-keyed prior, suffix -s42/-s43/-s44), so the per-seed N=1000 deltas are independent and can be combined with a t-test on 3 seeds -- report it, but n=3 is a weak test and the per-seed spread is the honest quantity. (b) Do not pool the raw samples across seeds: the FID at N=3000 is not the mean of three N=1000 FIDs, and pooling would change the estimator regime. (c) Report the sign agreement across seeds before any pooled p-value; if the 3 seeds disagree in sign on a cell, that cell is UNDERPOWERED, not a win or a loss.",
-   "acceptance": "(1) A 4 x 3 x 3 table (checkpoint x arm x seed) of N=1000 headline deltas with the conservative CI from GAP-73's method. (2) Per-cell sign agreement across the 3 seeds. (3) A one-line verdict per cell using the existing status vocabulary (REGRESSES / SUPPORTS / UNDERPOWERED / TIE). (4) Flag only -- no CLAIMS or paper edit.",
-   "agent_action": "1) Extend tools/gap73_r5c_nscan.py with a --headline-only mode over all seeds and arms (or write tools/gap75_r5c_table.py). 2) Run (CPU). 3) Write docs/audit/gap75-r5c-n1000-table.md. 4) Update GAP-72's framing if the table changes it. 5) 6 gates + commit.",
-   "evidence": "docs/audit/gap73-r5c-statistic.md; verification_outputs/gap57-equal-nfe-ladder-n1000/*_s{42,43,44}/",
-   "deliverable": "The R5c number the paper should quote, with a defensible verdict."
-  },
-  {
    "id": "GAP-72-R5C-MEAN-SHIFT",
    "priority": "P0",
    "status": "PLANNED",
-   "depends_on": "GAP-75 (the corrected R5c table must exist before the mean-shift work can claim a fix)",
+   "depends_on": "none (GAP-73 and GAP-75 are done; the corrected R5c table is 9 regressions / 1 win / 2 ties)",
    "est_wall": "~2 h code + ~1 h GPU (4 checkpoints x 1 arm, N=1000)",
    "gap": "The R5c fidelity cost is a MEAN shift, not a dispersion effect. Frechet decomposition at N=1000 (docs/audit/gap67-covariance-preservation.md section 2.1): production baseline (mean 4.881, cov 5.087) vs cosine (mean 5.641, cov 5.215) -- the mean term carries +0.760 of the +0.888 gap; w16e1_60k mean +1.480 of +1.758. The mean term increases on 4/4 checkpoints while the covariance term moves in both directions. GAP-67 falsified the dispersion explanation, so this is the only remaining mechanism for the fidelity cost, and nothing currently explains it.",
    "design_hypothesis": "The restart blends in noise that is independent of the prior, so the state at t=m is off the model's training manifold and the velocity field's conditional mean E[x1|x_m] is biased away from E[x1]. Two candidate forms: (i) a global DC offset (all 784 pixels shift the same way, e.g. a brightness/ink-mass bias) or (ii) a structured shift concentrated in the class-conditional means. Form (i) is correctable by a scalar; form (ii) is not.",

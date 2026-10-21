@@ -1268,3 +1268,41 @@ artifact rather than a measurement (FID at N=200, the chunk test, and the GAP-67
 The common shape is the same: a statistic whose bias is correlated with the treatment. Worth
 carrying forward as a review rule — **before trusting any cell, check that the statistic's bias
 is orthogonal to the arm it is comparing.**
+
+## 18. Addendum (2026-10-21) — GAP-75 closed: R5c is a REGRESSES cell
+
+### 18.1 The corrected table
+
+The `gap57` ladder already held 3 seeds × 4 checkpoints × 3 arms at N=1000, so the corrected
+R5c table cost no sampling. Verdicts (strict, 3-seed CI excludes 0): **9 REGRESSES, 2 TIE,
+1 SUPPORTS**. Under the paper's 1-FID-unit effect floor: 7 REGRESSES, 3 TIE, 1 SUPPORTS,
+1 UNDERPOWERED.
+
+The only win is `w16e1_5k`/cosine at −9.4 % — the least-trained checkpoint in the ladder, and
+the one where the baseline FID is worst (24.50). The largest regression is
+`w16e1_60k`/`codimension_sheet` at +19.4 %.
+
+### 18.2 Why the seeds are so tight
+
+The per-seed spread is ~0.1 FID (e.g. +1.8/+1.8/+1.8 for `w16e1_60k`/cosine). At N=1000 the
+sampling noise is already small, and the three seeds differ only in the prior draw. So these
+cells are not underpowered — they are clear. The CI is a seed-to-seed interval and does not
+include the estimator bias GAP-73 measured (~0.7 pp); the table is quoted with that caveat.
+
+### 18.3 What this does to the R-level tally
+
+`CLM-060` counts R5c as one of the 5-of-7 R-level WINS. On this table it is a REGRESSES cell.
+The tally is flagged, not edited. Combined with R5b (already REGRESSES), the honest R-level
+picture becomes **4 WINS (R1, R2, R3, R6) / 1 TIE (R5a) / 2 REGRESSES (R5b, R5c)**, pending the
+paper owner's decision.
+
+### 18.4 What is left of R5c
+
+One question, and it is GAP-72's: why does the restart move the mean? The FID decomposition at
+N=1000 says the mean term carries 86 % of production's gap and 84 % of `w16e1_60k`'s. If that
+shift is a global DC offset it is correctable by a scalar; if it is structured, the cell is a
+structural negative and the paper should say so.
+
+Two days of work have now moved R5c from "the framework's flagship MNIST win" to "a REGRESSES
+cell with one narrow exception, whose cause is an unexamined mean shift". That is the correct
+direction for the paper even though it is the uncomfortable one.
