@@ -1,7 +1,7 @@
 {
   "schema_version": "flowa-state-v5",
   "purpose": "Executable plan only. History and the full evidence ledger live in docs/audit/todo-history.md; completed gaps are one-line entries in completed_index.",
-  "updated_at": "2026-10-19",
+  "updated_at": "2026-10-21",
   "history": "docs/audit/todo-history.md",
   "no_push": true,
   "commit_footer": "(USER AUTHORIZED, NO PUSH)",
@@ -56,28 +56,28 @@
     "note_on_partitions": "CAS partitions change yearly; verify the current-year table before submission."
   },
   "q1_assessment": {
-    "verdict": "BOUNDARY_NOT_YET_SUFFICIENT",
-    "as_of": "2026-10-18",
-    "gating_risk": "empirical axis, not infrastructure (infrastructure is Tier-1 grade)",
-    "why": "Only R6 is an unconditional STRONG cell. R2 is significant but d=-0.099; R5b dies under a tuned baseline; R5c is smoke-only and the production checkpoint flips to baseline-wins (+10.37%); R1's win is init-attributed and its pooled effect fell from +0.1609 to +0.1178 at NFE=150. The namesake restart-blend still has no clean positive cell.",
-    "decisive_missing_piece": "A 3-seed confirmation of a positive cell at the R-level bar. R5c is now a clean honest negative at true NFE=50, R3 is a single-seed nominal win (-0.061, CI [-0.117,-0.001]) that needs seeds 43/44, and R6's live scPerplexity axis already gives -0.84 on 3/3 seeds. Priority: (a) R3 seeds 43/44 at N=1000, (b) GAP-54 class-preserving contraction. No seed engineering.",
-    "if_met": "Q1-defensible: framework+theory core (Thm 4/5, 45/45 law backtest, typed 4-port, 5 checkpoints zero-line, 3 lemmas, byte-stable infrastructure) + one clean positive + the compute ledger.",
-    "if_not_met": "Still submittable as a framework/operating-regime paper at TNNLS/TCyb/Information Fusion, but 'steady accept' is not supportable; fall back to KBS/EAAI rather than forcing a SOTA framing.",
+    "verdict": "ONE_3-SEED-POSITIVE-SHORT",
+    "as_of": "2026-10-21",
+    "gating_risk": "empirical axis, not infrastructure (infrastructure and theory are already Tier-1 grade)",
+    "why": "After GAP-45/54/56/57 the picture is sharper and harsher. (a) The namesake mechanism is null: on R1 at NFE=150 the memory term ties a no-memory restart in 3/3 seeds, and beta=0 collapses the arm outright, so no current result can be attributed to the blend. (b) R5c's historical -28.43% was the smoke checkpoint; at matched NFE the production cell regresses +9.52% on 3 draws, and only the under-trained w16e1_5k wins (-9.37%, 3/3 draws) - a model-conditional cell. (c) The positive cells are now R6 (3 seeds, N=3000, scPerplexity d_z=-0.84), R5c-boundary (3 draws, N=1000, model-conditional) and R1 (N=1000 but ONE seed). (d) K7 shows the framework is 12.6x less novel and that has never been measured on the same samples as R1's +74% validity, so the two headline results currently read as contradictory.",
+    "decisive_missing_piece": "One 3-seed positive at N=1000 on a canonical checkpoint (GAP-59: R1 seeds 43/44), plus one measurement that puts validity and novelty on the same axis (GAP-60) so R1 and K7 are one trade-off rather than two stories, plus a yes/no on whether the memory term earns anything anywhere (GAP-61).",
+    "if_met": "Q1-defensible: theory + byte-stable infrastructure + a 3-seed N=1000 positive cell + an explicit validity/novelty trade-off + honest negatives (R5c production, R5b, K7) + a compute ledger. The mechanism claim must be restated either way: the perturbation channel is what the evidence supports.",
+    "if_not_met": "Still submittable as a framework / operating-regime paper at TNNLS/TCyb/Information Fusion, but 'steady accept' is not supportable; fall back to KBS/EAAI rather than forcing a SOTA framing.",
     "blocking_point": {
-      "name": "evidence homogeneity, not SOTA",
-      "detail": "R1 is single-seed; R5c's strong result is a smoke checkpoint and the production checkpoint flips (+10.37%); R6's headline is a counterfactual proxy; K1's canonical metric is saturated. A reviewer can use this to attack the framework-generality claim even though each item is individually disclosed.",
+      "name": "evidence homogeneity: one 3-seed N=1000 positive, and a mechanism that the evidence supports",
+      "detail": "R1 (the strongest cross-domain positive) is single-seed at N=1000; R3 is single-seed and below the Bonferroni floor; R2 is single-seed with d=-0.099; R5b's effect size is an N=200 FID number that the project's own calibration says is inflated 40-65%; K7's novelty inversion has never been put on the same axis as R1's validity gain; and the memory blend - the paper's namesake - is null wherever it has been tested.",
       "solutions": [
         {
-          "id": "GAP-43-BLEND-POSITIVE",
-          "what": "one clean pre-registered positive cell (R3 fg_dev, 50 fresh seeds, tuned gate)"
+          "id": "GAP-59-R1-THREE-SEED-N1000",
+          "what": "R1 seeds 43/44 at N=1000 -> the one 3-seed positive on a canonical checkpoint (~10 h GPU)"
         },
         {
-          "id": "GAP-49-COMPUTE-ACCOUNTING",
-          "what": "cross-domain compute ledger: same checkpoint, matched FID, NFE/wall-clock saved; on-identity evidence that does not depend on a positive cell"
+          "id": "GAP-60-VALIDITY-NOVELTY-TRADEOFF",
+          "what": "score hits and novelty on the same 9 existing FASTA sets -> one trade-off curve instead of two contradictory headlines (~2 h, no new sampling)"
         },
         {
-          "id": "GAP-50-EVIDENCE-GRADE-TABLE",
-          "what": "one table grading every cell by seeds / checkpoint regime / live-vs-counterfactual / metric saturation; converts a hidden weakness into a disclosed boundary"
+          "id": "GAP-61-MEMORY-ATTRIBUTION-WINNING-CELL",
+          "what": "beta in {0,1/6,1} on the only N=1000 cell the framework wins -> does the memory term ever earn anything (~2.5 h GPU)"
         }
       ]
     },
@@ -85,47 +85,57 @@
       "theory: composite map G + conditional contraction + fixed point (Thm 4) + exact squared-error identity (Thm 5)",
       "falsifiable law: q < sqrt((1+m)/(1-m)); 45/45 off-boundary matches on R5b, 15/16 headline-cell directions, identity residual 2.7e-12",
       "system: typed four-port surface, 13 schedulers, zero-line integration into 5 frozen checkpoints, hash-chained ledger + 3 lemmas, byte-stable 2356-test infrastructure",
-      "cross-domain: protein / molecule / 2D / CIFAR / MNIST under one inference interface"
+      "cross-domain: protein / molecule / 2D / CIFAR / MNIST under one inference interface",
+      "measurement hygiene (new): FID small-n bias calibrated and corrected; chunk-level tests retired in favour of record-level paired bootstrap; seed axis verified non-vacuous"
     ]
   },
   "evidence_state": {
     "strong_unconditional": [
-      "R6 (scPerp d=-4.019; hard-tier d=+1.19; beats vanilla + Fast-DLLM + AB-Cache + LeDiFlow)"
+      "R6 scPerplexity: 3 seeds, N=3000, d_z=-0.8393, all tiers, beats vanilla + Fast-DLLM + AB-Cache + LeDiFlow"
     ],
     "strong_conditional": [
-      "R2 (Bonferroni-sig but d=-0.099)",
-      "R5b (matched-NFE win; 4/4 losses under a tuned baseline)",
-      "R5c (REGRESSES at true NFE=50: +9.17/+12.43/+14.64% on cosine/evidence/codim, production ckpt, N=1000)"
+      "R5c boundary (w16e1_5k): N=1000 x 3 draws, cosine -9.37%, CI excludes 0 in 3/3; model-conditional (baseline FID 24.5)",
+      "R6 pLDDT hard tier: 3 seeds, d_z=+1.1211 (tier-conditional; pooled is NOT_SIGNIFICANT)",
+      "R1 (NFE=150): N=1000 x 1 seed, +117 hits (+74.1%), per-record CI [+0.073,+0.160]; mechanism = per-record restart perturbation, not the blend",
+      "R2 Kanzi RMSD: N=1000 x 1 seed, d_z=-0.0990, Bonferroni-significant but small"
     ],
     "tie": [
-      "R5a (|delta W2|=0.0091 < 0.01 floor)"
+      "R5a: |delta W2| = 0.0091 < 0.01 floor"
     ],
-    "partial_support": [
-      "K4 (d=+0.84, p_b=0.009)",
-      "K5 (d=+1.12, p_b=0.003; n=3 re-aggregation caveat)"
+    "regresses": [
+      "R5c production: N=1000 x 3 draws, +9.52% / +12.87% / +10.34% (cosine/codim/evidence), 9/9 cells",
+      "R5b CIFAR FID: +52.33% at N=200 x 3 (magnitude not quotable; N=1000 pending, GAP-63)",
+      "K7 novelty: 12.6x LESS novel (3.7% vs 46.6%), McNemar p=1e-102, 1 seed"
     ],
-    "partial_or_negative": [
-      "K1 (p_b=0.5676; real-blend d=+0.92 but p=0.252 at n=3)",
-      "K7 (direction inverted: framework 12.6x LESS novel)",
-      "R1 (canonical arm wiring now verified live; NFE=150 N=1000 decisive run still user-gated)",
-      "R3 (N=1000 measured dfg=-0.061, CI[-0.117,-0.001], p=0.043, single seed; not Bonferroni-significant at k=7)"
+    "not_significant": [
+      "R3 fg_dev: -0.061, CI [-0.117,-0.001], p=0.043 > 0.00714 floor, 1 seed (GAP-62)",
+      "K1 pb_validity: d=+0.92, p=0.252 (metric saturated; GAP-47 user-gated)",
+      "R6 pLDDT pooled: d_z=+0.1466"
     ],
-    "last_decisive_result": "GAP-55 (2026-10-19): the weak-cell gap was mostly driver-level. Equal-NFE R5c flips to a significant regression (baseline_wins on 3/3 arms); R3's N=1000 fg_dev is -0.061 with a CI excluding 0 but p=0.043 > the 0.00714 R-level floor; R1's gate-open wiring is live (effective_n_rounds=3). No seed engineering."
+    "null_mechanism": [
+      "The memory term (m = 1 - beta) has no measured positive contribution on any cell: R1 beta=1/6 vs beta=1 ties in 3/3 seeds (GAP-45 s8); R5c boundary untested (GAP-61). beta=0 is a collapse mode, not a control."
+    ],
+    "measurement_hygiene": [
+      "FID at n=200 inflates a paired delta by 40-65% (true 11.52 reads 18.99); only N>=1000 FID numbers may be quoted",
+      "Chunk-level FID tests are arm-dependently biased; use record-level paired bootstrap with a bias-corrected interval",
+      "The MNIST FM seed axis was vacuous until --seed-keyed-prior; any pre-2026-10-20 '3-seed' MNIST claim is one draw"
+    ],
+    "last_decisive_result": "GAP-45 (2026-10-20): beta=0 collapses R1 to 0 hits on 3/3 seeds (entropy 1.68 bits, top-3 fraction 0.98) and beta=1/6 vs beta=1 ties in 3/3, so the NFE=150 gain is the per-record restart perturbation, not the blend."
   },
   "metric_remediation": [
     {
       "cell": "R1",
       "metric": "hmmscan_total_hits",
-      "priority": "P1",
-      "status": "SCHEDULED",
-      "line": "PARTIAL: d=+0.1178 at NFE=150 (n=3); init-attributed; blend-off not yet run at this budget."
+      "priority": "P0",
+      "status": "3-SEED PENDING (GAP-59)",
+      "line": "POWERED at N=1000 but ONE seed: +117 hits (+74.1%), per-record CI [+0.073,+0.160]. 3-seed N=200 screen 48/55/63 vs 37/36/32 (3/3 positive, 2/3 CI). Mechanism = per-record restart perturbation, NOT the blend (GAP-45 s8). GAP-59 adds seeds 43/44 at N=1000."
     },
     {
       "cell": "R2",
       "metric": "reconstruction_kabsch_rmsd_Angstrom",
-      "priority": "-",
-      "status": "TERMINAL",
-      "line": "STRONG but d=-0.0990 (index-matched N=1000); report as honest-negative small effect."
+      "priority": "P2",
+      "status": "SINGLE-SEED",
+      "line": "d=-0.0990 at N=1000, Bonferroni-significant but small; ONE seed. Report as a small honest effect and disclose the seed count; a 3-seed repeat is not currently scheduled."
     },
     {
       "cell": "R5a",
@@ -138,22 +148,22 @@
       "cell": "R5b",
       "metric": "FID (CIFAR-10 RF, n_rounds=1)",
       "priority": "P1",
-      "status": "COMPLETED (null)",
-      "line": "COMPLETED null (GAP-46): 0/16 tuned-baseline cells survive; boundary confirmed."
+      "status": "N=200 ONLY (GAP-63)",
+      "line": "+52.33% regression measured at N=200 x 3. FID at n=200 inflates a paired delta by 40-65% (GAP-57 calibration), so the SIGN stands and the MAGNITUDE does not. GAP-63 re-measures at N=1000 before any headline quote."
     },
     {
       "cell": "R5c",
       "metric": "projection FID (MNIST FM)",
-      "priority": "P2",
-      "status": "NOT SCHEDULED",
-      "line": "NOT SCHEDULED: smoke -28.43% but production +10.37% baseline-wins; arms not NFE-matched."
+      "priority": "P0",
+      "status": "RESOLVED (GAP-57)",
+      "line": "RESOLVED at matched NFE=50, N=1000, 3 draws: production +9.52/+12.87/+10.34% (REGRESSES, 9/9 cells); w16e1_5k -9.37% (SUPPORTED, model-conditional, 3/3 draws). -28.43% retired (smoke ckpt). Open sub-question: is the w16e1_5k win memory-driven? (GAP-61)."
     },
     {
       "cell": "R3",
       "metric": "fg_dev (FlowMol3)",
-      "priority": "P0",
-      "status": "PRE-REGISTERED",
-      "line": "INCONCLUSIVE (GAP-43): fg_dev -0.0192, p=0.130; tuned gate fails; pb_validity +0.212, 50/50 (exploratory)."
+      "priority": "P1",
+      "status": "SINGLE-SEED (GAP-62)",
+      "line": "N=1000 fg_dev -0.061, CI [-0.117,-0.001], p=0.043 > 0.00714 floor, ONE seed. The 50-seed GAP-43 blend was inconclusive. GAP-62 adds seeds 43/44 at N=1000."
     },
     {
       "cell": "K1",
@@ -172,9 +182,23 @@
     {
       "cell": "K7",
       "metric": "novel_pct_pfam_twilight",
-      "priority": "P1",
-      "status": "CLOSED-CONFIRMED",
-      "line": "CLOSED-CONFIRMED (GAP-48): framework 12.6x LESS novel; direction inverted."
+      "priority": "P0",
+      "status": "TRADEOFF UNMEASURED (GAP-60)",
+      "line": "12.6x LESS novel (3.7% vs 46.6%, McNemar p=1e-102), 1 seed. Never measured on the same samples as R1 validity, so the pair reads as \"validity bought with diversity loss\". GAP-60 scores both axes on the existing 9 FASTA sets."
+    },
+    {
+      "cell": "R1/K7 joint",
+      "metric": "hits x novelty (two-axis)",
+      "priority": "P0",
+      "status": "SCHEDULED (GAP-60)",
+      "line": "No joint measurement exists. R1 +74% validity and K7 -42.9 pp novelty are on different samples."
+    },
+    {
+      "cell": "R5c boundary",
+      "metric": "projection FID (MNIST FM, w16e1_5k)",
+      "priority": "P0",
+      "status": "SCHEDULED (GAP-61)",
+      "line": "-9.37% at matched NFE, 3/3 draws - the only N=1000 cell the framework wins. Memory attribution untested."
     }
   ],
   "gate_chain": [
@@ -187,54 +211,21 @@
   ],
   "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 15 known failures (3 stale eval stubs that do not accept the GAP-40 classifier_aware_restart kwarg; 12 order-dependent test_paper_metrics cases that pass in isolation).",
   "execution_order": [
-    "GAP-54-CLASS-PRESERVING-CONTRACTION (P0, DONE 2026-10-20: NO CONTRACTION at stochasticity=0)",
-    "GAP-45-R1-BLEND-OFF-150 (P1, DONE 2026-10-20: beta=0 is a collapse mode; perturbation carries the win)",
-    "GAP-58-R1-BETA1-POWERED (P2, N=1000 x 3 confirmation of the null memory term)",
-    "GAP-44-CONFIG-INVENTORY (P1, P2 items user-gated)",
-    "GAP-15-VENUE (P1, user gate)",
-    "GAP-47-K1-PB-METRIC (P2, user-gated)",
+    "GAP-58-R1-BETA1-POWERED (P0, RUNNING: N=1000 x 3 beta=1 arm, ~14-18 h, resume-guarded)",
+    "GAP-60-VALIDITY-NOVELTY-TRADEOFF (P0, ~2 h, no new sampling; can run alongside GAP-58 on GPU1)",
+    "GAP-61-MEMORY-ATTRIBUTION-WINNING-CELL (P0, ~2.5 h; the deepest question: does the memory term ever earn anything)",
+    "GAP-59-R1-THREE-SEED-N1000 (P0, ~10 h; converts the strongest positive into a 3-seed cell)",
+    "GAP-63-R5B-N1000 (P1, ~3 h; makes the R5b effect size quotable)",
+    "GAP-62-R3-THREE-SEED (P1, ~8 h; the second unconditional-positive candidate)",
+    "GAP-44-CONFIG-INVENTORY (P2; only P2-1 profile_residual_fn remains, needs adapter work)",
+    "GAP-47-K1-PB-METRIC (P2, USER GATE: changes the K1 metric in a frozen claim surface)",
+    "GAP-15-VENUE (P1, USER GATE: final journal choice)",
     "GAP-50-EVIDENCE-GRADE-TABLE (P2, DRAFT COMPLETE; manuscript insertion user-gated)",
-    "GAP-29-MANUSCRIPT (P2, user authorization)",
-    "GAP-51-PAPER-B-SPLIT (P2, user-gated outline)",
-    "GAP-20-COVERLETTER (P3, user-only)"
+    "GAP-29-MANUSCRIPT (P2, USER AUTHORIZATION)",
+    "GAP-51-PAPER-B-SPLIT (P2, USER GATE: outline only)",
+    "GAP-20-COVERLETTER (P3, USER ONLY)"
   ],
   "open_gaps": [
-    {
-      "id": "GAP-56-RESTART-T0",
-      "phase": "1",
-      "priority": "P0",
-      "owner": "agent",
-      "status": "ROOT-CAUSE-FIXED-MECHANISM-BOUNDED",
-      "gap": "R5c regresses at honestly matched total NFE (+9.2% to +14.6% FID). Root cause: apply_restart_distribution builds blend = m*x1_hat + (1-m)*x0, which is exactly the linear-FM path state at t = m, but solve_ode hard-coded the interval [0,1]. So every restart re-traversed the full path from a state that is not a valid t=0 state. Invariant violated: beta=0 ('keep everything') is NOT a no-op (measured max|delta| = 1.0137, 24.9% relative drift on a [-1,1] signal).",
-      "acceptance": "(1) solve_ode honours t0/t1 from ODEConditionDelta with defaults 0/1 so legacy calls stay byte-identical. (2) --restart-t0-mode {zero,memory} and --nfe-allocation {scheduler,uniform,proportional}. (3) beta=0 under memory mode is an exact no-op (unit test). (4) D.4 30/30. (5) N=200 mechanism screen done (5 mechanisms, 25 configs, 3 genuine draws) and recorded in the audit; N=1000 confirmation is now folded into GAP-57, where the regime ladder is re-measured at equal total NFE so a confirmation is not spent on a cell the mechanism cannot win.",
-      "evidence": "docs/audit/gap56-restart-t0-defect.md; tests/test_gap56_restart_t0.py; tools/gap56_nfe_floor.py; tools/gap56_r5c_paired_bootstrap.py; verification_outputs/gap56-r5c-memory-t0/; verification_outputs/gap56-nfe-floor/; verification_outputs/gap56-seedkey-legacy/; verification_outputs/gap56-seedkey-eqbeta/",
-      "opened_at": "2026-10-19",
-      "result": "Root cause confirmed and fixed: solve_ode ignored t0/t1, so a restart whose blend is the path state at t=m was re-integrated over the full [0,1] with a 1/(1-m) times too large step. beta=0 was not a no-op (max|delta|=1.0137, 24.9% relative drift). Second defect: the prior is keyed only on (batch_id, sample_id) and solve_ode discards its seed, so the Wave 280 '3-seed' R5c runs are three byte-identical copies. After the fix (t0=memory + equal total NFE + proportional allocation) the regression roughly halves but does not vanish: legacy +10.8..+20.9% -> +6.7..+9.7% at NFE=50 (three genuine prior draws, 18/18 cells positive, sign test p~3.8e-06). 25 configurations across five sampler-side mechanisms (beta budget, restart start time, NFE allocation, round count, total budget) never beat the baseline anywhere in NFE in [3,50]. FID decomposition: the sampler moves ~1 unit of an ~11-unit model-versus-reference gap, and the baseline reaches its FID floor by ~15 NFE. The historical -28.43% was measured on the smoke checkpoint. Conclusion: the sampler-side lever is exhausted on the production checkpoint; the governing variable is the model's own residual error (GAP-35), which now has to be re-tested under equal total NFE (GAP-57)."
-    },
-    {
-      "id": "GAP-57-EQUAL-NFE-REGIME-LADDER",
-      "phase": "1",
-      "priority": "P0",
-      "owner": "agent",
-      "status": "LADDER-CONFIRMED-AT-EQUAL-NFE-N1000",
-      "gap": "GAP-35 established that the restart gain is monotone in the model's optimisation budget (78-93 steps -> -25..-28%; 937+ steps -> +3..+10%), i.e. the mechanism corrects residual velocity-field error. But every framework arm in that table was run at the legacy per-round cap (~2x the baseline's NFE; GAP-44: R5c arms 25/48/25 vs baseline 50), so the magnitude of every win is confounded with compute. GAP-55 and GAP-56 showed that once total NFE is matched the production checkpoint regresses. Whether the GAP-35 ladder survives equal total NFE is unknown, and it decides whether R5c is a validated mechanism with a documented boundary or a compute artefact.",
-      "acceptance": "(1) Re-run the GAP-35 ladder checkpoints (w16e1_5k, w16e1_10k, w16e1_60k) with equal total NFE=50, --restart-t0-mode memory, --nfe-allocation proportional, GAP-56 beta, N=200, 3 genuine prior draws (--seed-keyed-prior 42/43/44). (2) For each checkpoint report baseline FID, best-arm FID, paired delta with CI, and the regression line of delta% on baseline FID. (3) The ladder survives only if the delta% at w16e1_5k stays negative and significant under equal NFE; otherwise record R5c as a compute-confounded historical result and close the cell. (4) No new seeds beyond 42/43/44; seeds are a diagnostic axis, never a significance lever.",
-      "agent_action": "1) Done: N=1000 ladder + bootstrap + FID bias calibration. 2) Do not re-tune R/beta at w16e1_5k after seeing the result -- that would be hyper-parameter engineering on a post-hoc-selected cell; it stays an open gap. 3) Any future MNIST-FM cell must be measured at N>=1000; N=200 is screen-only. 4) Paper surfaces stay untouched until the user authorises the R5c restatement.",
-      "evidence": "docs/audit/gap57-equal-nfe-regime-ladder.md; reproduce/gap57_equal_nfe_ladder.sh; tools/gap57_regime_ladder.py; tools/gap56_fid_small_n_bias.py; verification_outputs/gap57-equal-nfe-ladder-n1000/ (12 run dirs, each with sweep_summary.json + paired_bootstrap.json); verification_outputs/gap57-equal-nfe-ladder/ (N=200 screen + fid_small_n_bias.json)",
-      "result": "Ladder survives equal total NFE (50 both sides) at N=1000; magnitudes are ~42% of the legacy values. N=1000, 3 genuine prior draws (42/43/44), 4 checkpoints, record-level paired bootstrap B=2000 with a bias-corrected interval. w16e1_5k (baseline 24.488+-0.108): cosine -9.37% (3/3 draws, CI excludes 0, 100% of replicates favour the framework); codim +0.17% and evidence +0.25% are ties. w16e1_10k (16.959+-0.084): cosine +2.81%, codim +10.69%, evidence +7.49% -- all significant regressions. w16e1_60k (11.380+-0.029): +15.59 / +19.43 / +15.87. production (9.989+-0.022): +9.52 / +12.87 / +10.34. Census 3 wins / 27 losses / 6 ties over 36 cells. Delta% on baseline FID: slope -1.177 %/FID, R2 0.855, zero crossing at FID 22.48. Compute confound: 13.15 pp of the 22.52 pp legacy headline win at w16e1_5k (58%); legacy -25.39% is a chunk-mean estimator and its 3 'seeds' are one draw with three chunk partitions. SECOND DEFECT FOUND: the FID estimator is badly biased at small n -- calibration with a true FID of 0 gives 23.98 at n=200 and 4.73 at n=1000; for a paired delta whose true value is 11.52 the estimate is 18.99 at n=200 and 12.99 at n=1000. N=200 effect sizes are therefore inflated 40-65% and one sign flipped (w16e1_10k cosine: -1.89% at N=200, +2.81% at N=1000). All N=200 numbers are demoted to screen status. Conclusion: the mechanism is real and bounded -- it wins when the baseline FID is above ~22.5 and regresses below ~17; the production cell stays a significant regression. Honest R5c-family effect size at matched NFE is -9.37%, not -28.43% (smoke ckpt), not -25.39% (chunk-mean) and not -13.18% (N=200)."
-    },
-    {
-      "id": "GAP-54-CLASS-PRESERVING-CONTRACTION",
-      "phase": "1",
-      "priority": "P0",
-      "owner": "agent",
-      "status": "CLOSED-NO-CONTRACTION",
-      "gap": "GAP-53's R=2 result is null (2/4 seeds on both metrics, not significant) because the realized FlowMol3 map is discontinuous: the CTMC's final categorical draw (stochasticity=8.0) flips a discrete class under a 1e-2 coordinate perturbation. Theorem 4 is conditional on a fixed (a,e), so contraction can only be tested by holding the class fixed.",
-      "acceptance": "(1) Additive, default-off `sampler_stochasticity` passthrough (0.0 = deterministic CTMC) plus coordinate-only restart via the existing per-channel memory flags (charge=1, raw_pair=1); R=1 stays byte-stable. (2) Probe on K=8 existing priors at stochasticity=0: dim_changes == 0 and median per-round ratio < 1 with bootstrap CI upper < 1. (3) If it contracts, a paired R=2 screen (same stochasticity in both arms) must give mean d_fg < 0 and >= 3/4 seeds favourable before any larger block. (4) If the class still flips at stochasticity=0, record the lever closed and stop. No new seeds.",
-      "agent_action": "1) Wire the passthrough + CPU tests. 2) Run the probe. 3) If it contracts, run the paired screen. 4) Record in the GAP-53 audit doc + todo; 6 gates; commit.",
-      "evidence": "docs/audit/gap53-initial-condition-contraction.md section 9; verification_outputs/gap54-contraction-stochasticity0/ (METADATA.txt, probe.log, summary.json, 32 cells); adaptive_reflow/adapters/flowmol3_v2_adapter.py (sampler_stochasticity passthrough); tests/test_gap54_sampler_stochasticity.py",
-      "result": "Class-preserving probe run at sampler_stochasticity=0 (K=8 existing priors, R in {1,2,3,4}, 4 directions, eps=1e-2, m=0.5, N=20, NFE=250, cuda:0). dim_changes = 0 in all 128 direction-runs, so the discrete class IS fixed -- the GAP-53 confound is removed. The map still expands: median per-round ratio 11.91 / 3.80 / 1.49 / 1.23 for rounds 1-4 (98-100% of transitions > 1 after round 1). Cell-level ratio_median 19.10 (R=1) / 7.56 (R=2) / 3.12 (R=3) / 1.70 (R=4); verdict NO CONTRACTION, bootstrap CI [2.33, 7.02], K_eff=11.64, m* (q=0.9) = 0.077. Contraction would need m<=0.08, i.e. a restart that keeps 8% of the previous sample -- no longer the mechanism Theorem 4 describes. Acceptance (3) not triggered: the paired R=2 screen is not run and no new seeds are spent. Caveat: D[0] was recorded as eps rather than the true perturbation RMS eps/sqrt(3n), understating round-1 ratios by 5.5-13x; correcting it only strengthens the verdict. Tool fixed after the run."
-    },
     {
       "id": "GAP-44-CONFIG-INVENTORY",
       "phase": "0",
@@ -245,18 +236,6 @@
       "acceptance": "Inventory committed at docs/audit/project-state-inventory.md with a per-cell truth table, an 11-item conflict ledger, and a P0/P1/P2 action register. No headline number moved. P1-1..P1-5 (label/disclosure corrections) were authorized by the user on 2026-10-18 and applied to paper-A-final.md/.tex + MANIFEST; the PDF was rebuilt. P2 (NFE-matched R5c, profile_residual_fn wiring) still requires new pre-registered experiments.",
       "agent_action": "1) P0: inventory registered in mkdocs + todo. 2) P1 (user-authorized 2026-10-18): label/disclosure corrections applied to paper-A-final.md and .tex; PDF rebuilt (12 pages, 0 overfull); MANIFEST addendum records the new SHA-256s; no metric/p/effect/status changed. 3) Do not unify schedulers: 8/11 cells instantiate no scheduler object, R1 is a provable no-op, and any arm switch would move frozen numbers. 4) Treat P2 items as new pre-registrations, not config edits. 4) 2026-10-20 update: P2-2 (R5c at matched NFE) is closed by GAP-57 -- the -28.43% does not survive and the matched-NFE effect at w16e1_5k is -9.37% (production still +9.52%). P2-3 (beta sweep) is answered for R1 only by GAP-45 section 8: beta=0 collapses and the memory term is null in 3/3 seeds. P2-1 (profile_residual_fn for codimension_sheet on R1/K1/K4/K5) remains open and still needs adapter work plus a pre-registered sweep.",
       "evidence": "docs/audit/project-state-inventory.md; docs/audit/scheduler-per-cell-summary.md (superseded by section 2.3); verification_outputs/wave191-p3-mnist-n1000.json; verification_outputs/wave189-p2-post-cd70821-combined.json; verification_outputs/wave235-p1-r5b-fix.json; verification_outputs/wave247-p3-r5b-n1000-n1/summary.json; docs/audit/gap42-scheduler-budget-conservation.md; docs/audit/gap57-equal-nfe-regime-ladder.md; docs/audit/gap45-r1-blend-off-wiring.md section 8"
-    },
-    {
-      "id": "GAP-45-R1-BLEND-OFF-150",
-      "phase": "1",
-      "priority": "P1",
-      "owner": "agent",
-      "status": "DONE-CONTROL-DEGENERATE-MECHANISM-ATTRIBUTED",
-      "gap": "R1's canonical win (d=+0.1178 at NFE=150) is init-attributed because the blend-off arm only ran at NFE=10 (GAP-25: ~0, upper bound +46 hits). Gate finding: those manifests record nfe_per_record=10 with restart_min_nfe=20, so the driver downgraded n_rounds to 1 and the 'blend' arm never ran apply_restart_distribution. The blend has not been tested at any budget. Convention: blend-off is beta=0 (m=1, identity), not m=0.",
-      "acceptance": "Paired blend-on vs blend-off at NFE=150, N=200 x 3 seeds, canonical HMMER counter. Delta(blend_on - blend_off) with a 95% CI: excludes 0 positive -> the blend gets credit; includes 0 -> R1 stays init-attributed.",
-      "agent_action": "1) Done: 6 beta=0/1/6 arms + 3 beta=1 arms + sequential HMMER scoring + record-level paired analysis. 2) Do not re-run beta=0 as a control anywhere: it is a collapse mode. 3) The remaining powered confirmation (beta=1 at N=1000 x 3 seeds) is recorded as GAP-58, not spent here. 4) Paper surfaces stay untouched: no new blend claim may be added, and the existing wording already declines to claim it.",
-      "evidence": "docs/audit/gap45-r1-blend-off-wiring.md section 8; reproduce/gap45_r1_blend_off.sh; reproduce/gap45_r1_score.sh; reproduce/gap45_r1_beta1_control.sh; tools/gap45_r1_blend_off_paired.py; verification_outputs/gap45-r1-blend-off-150/ (6 dirs + attribution.json); verification_outputs/gap45-r1-beta1-150/ (3 dirs)",
-      "result": "The pre-registered blend-on/blend-off contrast at NFE=150 was run (3 seeds, N=200, canonical HMMER counter). beta=0 is not a neutral control: with m = 1 - beta it sets m=1, so the restart carries the previous sample and injects NO fresh perturbation. That arm collapses on all three seeds -- 0/0/0 hits vs baseline 37/36/32, 95-99/200 unique sequences, median entropy 1.68 bits vs 3.68 baseline, top-3 residue fraction 0.98 vs 0.34 -- the same low-complexity attractor already documented for R1 in r1-d004-remeasure.md section 6. The prescribed rule ('CI excludes 0 positive -> the blend gets credit') therefore fires but its inference is not licensed: the contrast is perturbation-vs-none, not blend-vs-none. A non-degenerate endpoint was added on the same axis (beta=1.0: fresh per-record simplex, no memory; not in the pre-registration, no new seeds): it is healthy (200/200 unique, 4.13 bits) and TIES beta=1/6 in 3/3 seeds (delta -0.010/+0.055/+0.055 hits per record, every CI spans 0), while both sit above baseline (beta=1/6 clears the CI in 2/3 seeds, beta=1 in 1/3). Conclusion: R1's NFE=150 gain is carried by the per-record random restart perturbation, not by the memory blend -- the D-004b conclusion, now measured with the blend actually executing (GAP-25's arm C had the gate closed). Controls: baseline FASTA byte-identical across beta within each seed (3/3); seed42 beta=1/6 reproduces the GAP-41b prefix 200/200 byte-identical; the N=200 seed42 arm is a byte-identical prefix of the N=1000 run. The frozen R1 headline is unchanged."
     },
     {
       "id": "GAP-58-R1-BETA1-POWERED",
@@ -336,6 +315,86 @@
       "acceptance": "A standalone Paper B outline: composite map G, conditional contraction, fixed point, exact squared-error identity, boundary law, 45/45 + 15/16 backtest, proofs self-contained; overlap and citation policy with Paper A stated. Target JMLR or Neural Networks.",
       "agent_action": "1) Extract Appendix A + docs/audit/gap24-boundary-law.md into an outline. 2) State what Paper A keeps (the law as an empirical organising result) vs what Paper B owns (proofs, general conditions). 3) User authorizes a new draft.",
       "evidence": "docs/drafts/paper-A-final.md Appendix A; docs/audit/gap24-boundary-law.md; user directive 2026-10-18"
+    },
+    {
+      "id": "GAP-59-R1-THREE-SEED-N1000",
+      "phase": "1",
+      "priority": "P0",
+      "owner": "agent",
+      "status": "PLANNED",
+      "user_gated": false,
+      "depends_on": "GAP-58 (same GPU queue)",
+      "est_wall": "~10 h GPU (2 arms x ~5 h)",
+      "gap": "R1's NFE=150 win (+117 hits, +74.1 %, per-record CI [+0.073, +0.160]) is the paper's strongest cross-domain positive and the only one on a canonical LineageFlow checkpoint, but it rests on ONE prior draw (seed 42). The N=200 screen covers three seeds (48/55/63 vs baseline 37/36/32, 3/3 positive, 2/3 CI excluding 0) and every N=200 arm is a byte-identical prefix of its N=1000 arm, so three-seed evidence exists but only at screen power. Until seeds 43/44 run at N=1000, the paper has no 3-seed positive on a production checkpoint.",
+      "acceptance": "(1) Seeds 43 and 44 at N=1000, NFE=150, R=3, restart_min_nfe=5, temperature=1.0, beta default (1/6), --start-index 0; recipe otherwise identical to gap55-r1-nfe150-n1000/seed42. (2) Per-seed per-record paired delta vs that seed's own baseline with a 95 % bootstrap CI and an exact sign test; then a pooled 3-seed estimate. (3) Report against the R-level alpha 0.00714 (k=7), not against 0.05. (4) Verdict: 3/3 CIs excluding 0 -> SUPPORTED (single-checkpoint, single-model); otherwise NOT_SIGNIFICANT with the pooled interval and the per-seed spread. (5) No seeds beyond 42/43/44. (6) Do not re-tune beta, R, or NFE after seeing the result.",
+      "agent_action": "1) Write reproduce/gap59_r1_seeds_n1000.sh (seeds 43/44, cuda:0 sequential, resume-guarded on manifest.json). 2) Capture pre-sweep METADATA (GPU, git SHA, command). 3) Score sequentially with --metrics family_validity (the novelty metric collides on a shared MMseqs2 temp dir). 4) Extend tools/gap45_r1_blend_off_paired.py with a --seeds argument so the 3-seed pooled table is generated from artifacts, not hand-assembled. 5) Write docs/audit/gap59-r1-three-seed.md with observed/interpretation/gap separation. 6) 6 gates + commit.",
+      "evidence": "docs/audit/gap55-code-level-hardening.md section 4.4; verification_outputs/gap55-r1-nfe150-n1000/; verification_outputs/gap45-r1-blend-off-150/ (3-seed N=200 screen)",
+      "result": "",
+      "deliverable": "A 3-seed N=1000 R1 cell: SUPPORTED or NOT_SIGNIFICANT, with the pooled CI."
+    },
+    {
+      "id": "GAP-60-VALIDITY-NOVELTY-TRADEOFF",
+      "phase": "1",
+      "priority": "P0",
+      "owner": "agent",
+      "status": "PLANNED",
+      "user_gated": false,
+      "depends_on": "none (uses existing FASTA)",
+      "est_wall": "~2 h, no new sampling",
+      "gap": "R1 reports +74 % Pfam hits and K7 reports 12.6x LESS novelty (3.7 % vs 46.6 % at pctid<30 %, McNemar p=1e-102) on the same model family. Both are single-axis, and they have never been measured on the same samples. A reviewer will read the pair as 'you bought validity by collapsing diversity', and nothing in the repo currently confirms or refutes that. The GAP-45 FASTA sets (beta in {0, 1/6, 1} x 3 seeds, N=200, plus each arm's baseline) are exactly the material needed and are already on disk.",
+      "acceptance": "(1) Score family_validity AND novelty on the 9 existing GAP-45 FASTA pairs plus their baselines - no new sampling. (2) Emit a two-axis table: hits per record and novelty fraction per arm, with the paired delta vs baseline on BOTH axes and CIs. (3) The trade-off is declared real only if novelty falls monotonically as hits rise across beta. (4) If beta=1 (no memory) shows the same hits and the same novelty loss, the loss belongs to the perturbation channel, not to the blend - that is the distinction the paper needs. (5) If novelty does NOT fall where hits rise, K7 and R1 are measuring different things and that must be stated explicitly.",
+      "agent_action": "1) Run tools/gap55_r1_score_fastas.py --metrics family_validity novelty SEQUENTIALLY per arm (MMseqs2 uses a shared relative temp dir; concurrency corrupts it). 2) Write tools/gap60_tradeoff.py to emit the two-axis table from the artifacts. 3) Write docs/audit/gap60-validity-novelty-tradeoff.md. 4) 6 gates + commit.",
+      "evidence": "docs/audit/gap48-k7-two-arm-novelty.md; docs/audit/gap45-r1-blend-off-wiring.md section 8; verification_outputs/gap45-r1-blend-off-150/; verification_outputs/gap45-r1-beta1-150/",
+      "result": "",
+      "deliverable": "One table that makes R1 and K7 the same story, or shows they are not."
+    },
+    {
+      "id": "GAP-61-MEMORY-ATTRIBUTION-WINNING-CELL",
+      "phase": "1",
+      "priority": "P0",
+      "owner": "agent",
+      "status": "PLANNED",
+      "user_gated": false,
+      "depends_on": "none",
+      "est_wall": "~2.5 h GPU (9 runs)",
+      "gap": "GAP-45 showed the memory term is null on R1 - the cell where the framework wins on LineageFlow. Whether ANY winning cell is memory-driven is unknown: the R5c boundary win (-9.37 % on w16e1_5k, 3 draws, N=1000, CI excluding 0) has never been run with beta != 1/6. If beta=1 reproduces that win, then the framework's namesake mechanism has no empirical support anywhere in the paper, and the theory (Thm 4 contraction of the memory map) must be restated as an operating-regime result rather than as the explanation of the gains. That is a positioning decision, and it should be made on evidence.",
+      "acceptance": "(1) w16e1_5k, N=1000, NFE=50 total, R=4, --restart-t0-mode memory, --nfe-allocation proportional, --equal-total-nfe, seeds 42/43/44, beta in {0, 1/6, 1}. (2) Record-level paired delta vs baseline per arm with CI, and the beta=1/6 vs beta=1 contrast with CI. (3) Verdict: if beta=1/6 vs beta=1 includes 0, record 'the memory term is null on every measured winning cell' and restate the theory's empirical scope. (4) beta=0 is expected to collapse; if it does NOT collapse on this checkpoint, that is itself a finding about the checkpoint's flow.",
+      "agent_action": "1) Add --beta-override style control to scripts/wave191_p3_mnist_sweep.py if it does not already accept a beta override (it accepts --beta-framework; verify semantics before running). 2) Run 9 cells. 3) Bootstrap with tools/gap56_r5c_paired_bootstrap.py (bias-corrected interval). 4) Write docs/audit/gap61-memory-attribution.md. 5) 6 gates + commit.",
+      "evidence": "docs/audit/gap45-r1-blend-off-wiring.md section 8; docs/audit/gap57-equal-nfe-regime-ladder.md; verification_outputs/gap57-equal-nfe-ladder-n1000/w16e1_5k_s4*/",
+      "result": "",
+      "deliverable": "A yes/no on whether the memory term earns anything anywhere."
+    },
+    {
+      "id": "GAP-62-R3-THREE-SEED",
+      "phase": "2",
+      "priority": "P1",
+      "owner": "agent",
+      "status": "PLANNED",
+      "user_gated": false,
+      "depends_on": "GAP-58/59 (GPU queue)",
+      "est_wall": "~8 h GPU",
+      "gap": "R3's N=1000 fg_dev is -0.061 with CI [-0.117, -0.001] but p=0.043, above the R-level floor 0.00714, and it is one seed. It is the only molecule-domain cell whose CI excludes 0, so it is the paper's best chance at a second unconditional positive - and equally the place where a seed-2 null would cost the least to discover.",
+      "acceptance": "(1) Seeds 43/44 at N=1000, same recipe and checkpoint as verification_outputs/gap55-r3-full-smiles. (2) Per-seed paired delta on fg_dev with CI, then a pooled 3-seed test. (3) SUPPORTED only if the pooled CI excludes 0 AND p < 0.00714. (4) Otherwise NOT_SIGNIFICANT with the pooled interval. (5) No seeds beyond 42/43/44; no re-tuning of the gate.",
+      "agent_action": "1) Reuse the GAP-55 R3 driver recipe (documented in gap55-code-level-hardening.md). 2) Run 2 cells. 3) Pool with the existing seed-42 artifact. 4) Write docs/audit/gap62-r3-three-seed.md. 5) 6 gates + commit.",
+      "evidence": "docs/audit/gap55-code-level-hardening.md; verification_outputs/gap55-r3-full-smiles/; docs/audit/gap27-r3-power.md",
+      "result": "",
+      "deliverable": "R3 resolved as SUPPORTED or NOT_SIGNIFICANT at 3 seeds."
+    },
+    {
+      "id": "GAP-63-R5B-N1000",
+      "phase": "2",
+      "priority": "P1",
+      "owner": "agent",
+      "status": "PLANNED",
+      "user_gated": false,
+      "depends_on": "GAP-58/59 (GPU queue)",
+      "est_wall": "~3 h GPU",
+      "gap": "R5b's +52.33 % CIFAR-10 FID regression is an N=200 x 3 measurement. GAP-57 calibrated the FID estimator against a known truth and found it is biased O(1) at small n: a paired delta whose true value is 11.52 reads 18.99 at n=200 and 12.99 at n=1000. The SIGN of R5b is probably right; the MAGNITUDE is not quotable. Quoting +52 % at N=200 next to R5c's N=1000 numbers is an inconsistency a reviewer can see.",
+      "acceptance": "(1) N=1000 x 3 for both arms, same checkpoint and recipe as the Wave 280 sweep. (2) Paired delta with the bias-corrected bootstrap CI at N=1000. (3) If the regression survives, quote the N=1000 magnitude and retire the N=200 number from every headline; if it does not survive, that is a correction to the record. (4) No new seeds beyond 42/43/44.",
+      "agent_action": "1) Locate the Wave 280 driver and its config. 2) Run 3 seeds at N=1000. 3) Recompute with tools/gap56_r5c_paired_bootstrap.py. 4) Write docs/audit/gap63-r5b-n1000.md. 5) 6 gates + commit.",
+      "evidence": "docs/audit/wave280-p-cifar-sweep-result.md; verification_outputs/gap57-equal-nfe-ladder/fid_small_n_bias.json; tools/gap56_fid_small_n_bias.py",
+      "result": "",
+      "deliverable": "R5b effect size quotable at N=1000, or the +52 % retired."
     }
   ],
   "completed_index": {
@@ -345,6 +404,10 @@
     "GAP-48-K7-TWO-ARM": "K7 two-arm: framework 12.6x LESS novel (direction inverted, confirmed).",
     "GAP-49-COMPUTE-ACCOUNTING": "Compute accounting: NFE ledger complete; the framework pays no hidden NFE.",
     "GAP-52-CHANNEL-FAITHFUL-BLEND": "Charge-categorical + per-channel m: dev-screen null (no arm beats C0); confirm not run.",
-    "GAP-53-INITIAL-CONDITION-CONTRACTION": "R=2 multi-round: null on both metrics (2/4 seeds, not significant); CTMC class flips break the Lipschitz premise; R=1 stays canonical."
+    "GAP-53-INITIAL-CONDITION-CONTRACTION": "R=2 multi-round: null on both metrics (2/4 seeds, not significant); CTMC class flips break the Lipschitz premise; R=1 stays canonical.",
+    "GAP-56-RESTART-T0": "solve_ode ignored t0/t1, so a restart whose blend is the path state at t=m was re-integrated over the full [0,1] (beta=0 drifted 24.9%); second defect: the prior was keyed only on (batch_id, sample_id) and solve_ode discarded its seed, so the Wave 280 '3-seed' R5c runs are three byte-identical copies. Fixed; regression halved (+15.9/+20.9/+10.8% -> +6.7/+9.7/+9.6%, 3 genuine draws, 18/18 positive).",
+    "GAP-57-EQUAL-NFE-REGIME-LADDER": "GAP-35 ladder re-measured at equal total NFE=50, N=1000, 3 draws: w16e1_5k -9.37% (3/3, CI excludes 0), w16e1_10k +2.81%, w16e1_60k +15.59%, production +9.52%; slope -1.177 %/FID, R2 0.855, zero crossing FID 22.5. Also found FID is O(1)-biased at small n (true 0 reads 23.98 at n=200, 4.73 at n=1000), so every N=200 effect size was inflated 40-65% and one sign flipped. -28.43% retired (smoke ckpt).",
+    "GAP-54-CLASS-PRESERVING-CONTRACTION": "sampler_stochasticity=0 fixes the CTMC class (dim_changes=0, 128 direction-runs) and the map STILL expands: per-round ratio 11.91/3.80/1.49/1.23, K_eff=11.64, verdict NO CONTRACTION. Theorem 4 cannot be exercised on FlowMol3 at any m that still counts as a restart; FlowMol3 cells keep R=1.",
+    "GAP-45-R1-BLEND-OFF-150": "beta=0 is a collapse mode, not a control (m=1 removes the fresh perturbation; 0/0/0 hits, entropy 1.68 bits, top-3 fraction 0.98). Added beta=1 (no memory): beta=1/6 vs beta=1 ties in 3/3 seeds, both above baseline. R1's NFE=150 gain is the per-record restart perturbation, not the memory blend."
   }
 }
