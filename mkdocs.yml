@@ -295,6 +295,7 @@ not_in_nav: |
   audit/gap73-r5c-statistic.md
   audit/gap75-r5c-n1000-table.md
   audit/gap72-r5c-mean-shift.md
+  audit/gap77-restart-mechanism.md
   audit/gap60-validity-novelty-tradeoff.md
   audit/gap50-evidence-grade-table.md
   audit/project-state-inventory.md

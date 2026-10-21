@@ -1358,3 +1358,60 @@ remaining question is why the restart biases the mean at all — GAP-76.
 It also means the two days spent on R5c were not spent on a dead cell. The cell's story changed
 from "the framework wins MNIST" (artifact) to "the framework is a shape operator whose gains are
 hidden by a location error it also introduces" (measured, and actionable).
+
+---
+
+## 20. GAP-77 closed — the restart has two channels, and only one of them is the problem
+
+**User directive that opened this section:** *"先搞清楚项目本身让 flow matching 推理质量变高的
+效果是怎么实现的"*. The instruction was to stop subtracting from R5c and first name the
+positive mechanism. This section is the answer, and it is a re-analysis: no model was run.
+
+### 20.1 The operator has exactly two measurable channels
+
+`tools/gap77_restart_mechanism.py` splits the Fréchet distance into bias / `Tr(Σ)` / cross
+for all 36 cells (4 checkpoints × 3 seeds × 3 arms, N=1000, matched NFE=50) and checks the
+split against the committed `paired_bootstrap.json` (it reproduces `production/cosine`
+9.967 / 10.855 / +0.888 exactly).
+
+| channel | direction | census |
+|---|---|---|
+| mean displacement | away from the reference | **36/36 up** (+0.76 … +3.32) |
+| covariance `Tr(Σ)` | down | **36/36 down** (−16.3 … −1.25) |
+
+The cross term recovers 80–85 % of the contraction, so the net shape gain is small but
+one-signed. The location loss is the entire measured regression. Removing the bias term
+arithmetically moves the mean ΔFID **+7.97 % → −3.33 %** and the wins **4/36 → 18/36**;
+GAP-72's *measured* calibration (both arms translated to the training mean) gives −7.3 %
+with 6 wins / 6 small regressions. Two independent brackets on the same number.
+
+### 20.2 The positive cells do not measure this operator
+
+Assembled from records already in the repo, not new evidence:
+
+* R1's baseline is a **bare RNG** over the Pfam AA bias (`gen_lineageflow_n1000_fastas.py:669`),
+  disclosed at `gap12-tuned-baseline.md` §3;
+* at the canonical R1 config (`--nfe 10`, `--restart-min-nfe 20`) the gate closes and the
+  framework arm is a **single `solve_ode`** (`todo-history.md` §13);
+* at gate-open NFE=150 the memory term is bounded at **≤ 0.057 hits/record** (GAP-58), and
+  β=0 collapses to 5–6 clusters / 0 hits (GAP-60) — the restart's real job there is
+  **breaking mode collapse**, not improving a sample;
+* the R1 metric that moves is `hmmscan_total_hits`, with `top1_family_accuracy = 0.0` and
+  `intended_hit_rate_evalue = 0.0` in **both** arms.
+
+So the paper's headline positive is model-vs-prior, and the framework's own contribution on
+that cell is de-collapse. The genuine model-vs-model wins are R3 `fg_dev` (−0.0235,
+p_bonf=0.028), kanzi pLDDT at NFE=75 only, and R5c `w16e1_5k` — which §20.1 shows is the
+covariance channel.
+
+### 20.3 What this changes
+
+The mechanism is now stated as a trade the project can act on rather than a cell verdict:
+
+> the restart is a covariance-contraction operator carrying a first-moment defect; the
+> contraction is net beneficial, the defect costs more on three of four checkpoints.
+
+That makes **GAP-76 the only open gap whose outcome can raise a metric rather than explain
+one**: it is the source-level mean-preserving restart, and its target is the −3.33 % /
+−7.3 % bracket, not a new cell. GAP-74 remains the theory counterpart (why the contraction
+is monotone in `1−m` at fixed `t0`).
