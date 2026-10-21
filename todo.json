@@ -225,7 +225,8 @@
  ],
  "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 15 known failures (3 stale eval stubs that do not accept the GAP-40 classifier_aware_restart kwarg; 12 order-dependent test_paper_metrics cases that pass in isolation).",
  "execution_order": [
-  "GAP-65-DISPERSION-SELECTOR (P0, ~3 h; out-of-family test of the rho sign rule - the only path to a universal 'never worse' claim)",
+  "GAP-60-VALIDITY-NOVELTY-TRADEOFF (P0, ~2 h, no new sampling; PROMOTED: if R1's +74% is also a shrinkage artefact the framework has no demonstrated quality win anywhere)",
+  "GAP-66-R5B-EQUAL-BUDGET (P1, ~2 h GPU; the +18..+23% R5b arms are budget artefacts and must be retracted or confirmed)",
   "GAP-58-R1-BETA1-POWERED (P0, RUNNING: N=1000 x 3 beta=1 arm, ~14-18 h, resume-guarded)",
   "GAP-60-VALIDITY-NOVELTY-TRADEOFF (P0, ~2 h, no new sampling; can run alongside GAP-58 on GPU1)",
   "GAP-61-MEMORY-ATTRIBUTION-WINNING-CELL (P0, ~2.5 h; the deepest question: does the memory term ever earn anything)",
@@ -242,22 +243,6 @@
  ],
  "open_gaps": [
   {
-   "id": "GAP-65-DISPERSION-SELECTOR",
-   "phase": "1",
-   "priority": "P0",
-   "owner": "agent",
-   "status": "PLANNED",
-   "user_gated": false,
-   "depends_on": "none",
-   "est_wall": "~3 h (pilot batches only; no new N=1000 sampling)",
-   "gap": "GAP-64 established that the restart blend is a variance-shrinkage operator and that the sign of the R5c delta is predicted 4/4 by rho_base = tr(S_gen)/tr(S_ref) in the FID projection (shrinkage pays iff rho_base >= 1). That is a hypothesis fitted on four checkpoints of ONE model family. Until it is tested out of family, the paper cannot claim a universal statement, and the current claim ('the framework improves any FM model') is false on fidelity metrics because the operator is one-directional. The deployable form is a selector: measure rho on a ~200-sample pilot, apply the framework only when rho_base >= 1. With that rule the honest universal statement is 'never worse than the base sampler, strictly better when the base is over-dispersed'.",
-   "acceptance": "(1) Compute rho_base for R5b (CIFAR-10, production ckpt), R1 (LineageFlow, canonical ckpt) and R3 (FlowMol3, canonical ckpt) from EXISTING baseline sample artifacts where available; sample only the missing pilot batches (~200 each). (2) Tabulate rho_base against the already-measured framework delta for those cells. (3) Pre-registered decision rule: the selector is SUPPORTED if the sign of the measured delta matches sign(rho_base - 1) in >= 6 of 7 cells (4 MNIST + 3 out-of-family); NOT_SUPPORTED otherwise, and in that case the rho rule is recorded as MNIST-specific and the paper's claim narrows to the measured cells. (4) No seed engineering: use the existing 3 seeds, do not add seeds to buy significance.",
-   "agent_action": "1) Reuse tools/gap64_dispersion_diagnostic.py (already parameterised by RUN_DIR:LABEL). 2) Locate existing baseline sample artifacts for R5b/R1/R3; only generate pilots where none exist. 3) Write docs/audit/gap65-dispersion-selector.md with the pre-registered rule stated BEFORE the numbers. 4) 6 gates + commit.",
-   "evidence": "docs/audit/gap64-r5c-operating-regime.md sections 3.2-3.3; verification_outputs/gap64c-dispersion/dispersion.json; verification_outputs/gap64b-nfe-headroom/headroom.json",
-   "result": "",
-   "deliverable": "An out-of-family test of the rho sign rule, and either a deployable never-worse selector or an honest narrowing of the claim."
-  },
-  {
    "id": "GAP-44-CONFIG-INVENTORY",
    "phase": "0",
    "priority": "P1",
@@ -267,6 +252,22 @@
    "acceptance": "Inventory committed at docs/audit/project-state-inventory.md with a per-cell truth table, an 11-item conflict ledger, and a P0/P1/P2 action register. No headline number moved. P1-1..P1-5 (label/disclosure corrections) were authorized by the user on 2026-10-18 and applied to paper-A-final.md/.tex + MANIFEST; the PDF was rebuilt. P2 (NFE-matched R5c, profile_residual_fn wiring) still requires new pre-registered experiments.",
    "agent_action": "1) P0: inventory registered in mkdocs + todo. 2) P1 (user-authorized 2026-10-18): label/disclosure corrections applied to paper-A-final.md and .tex; PDF rebuilt (12 pages, 0 overfull); MANIFEST addendum records the new SHA-256s; no metric/p/effect/status changed. 3) Do not unify schedulers: 8/11 cells instantiate no scheduler object, R1 is a provable no-op, and any arm switch would move frozen numbers. 4) Treat P2 items as new pre-registrations, not config edits. 4) 2026-10-20 update: P2-2 (R5c at matched NFE) is closed by GAP-57 -- the -28.43% does not survive and the matched-NFE effect at w16e1_5k is -9.37% (production still +9.52%). P2-3 (beta sweep) is answered for R1 only by GAP-45 section 8: beta=0 collapses and the memory term is null in 3/3 seeds. P2-1 (profile_residual_fn for codimension_sheet on R1/K1/K4/K5) remains open and still needs adapter work plus a pre-registered sweep.",
    "evidence": "docs/audit/project-state-inventory.md; docs/audit/scheduler-per-cell-summary.md (superseded by section 2.3); verification_outputs/wave191-p3-mnist-n1000.json; verification_outputs/wave189-p2-post-cd70821-combined.json; verification_outputs/wave235-p1-r5b-fix.json; verification_outputs/wave247-p3-r5b-n1000-n1/summary.json; docs/audit/gap42-scheduler-budget-conservation.md; docs/audit/gap57-equal-nfe-regime-ladder.md; docs/audit/gap45-r1-blend-off-wiring.md section 8"
+  },
+  {
+   "id": "GAP-66-R5B-EQUAL-BUDGET",
+   "phase": "1",
+   "priority": "P1",
+   "owner": "agent",
+   "status": "PLANNED",
+   "user_gated": false,
+   "depends_on": "none",
+   "est_wall": "~2 h GPU (3 seeds x 4 arms at matched total NFE)",
+   "gap": "The R5b memory sweep gave codimension_sheet 150 total NFE and the other three arms 75-79, because each arm's step count is set by its own n_cap and the sweep never applied an equal-total-NFE constraint. The three under-budgeted arms collapse (rho_arm ~ 0.10) and pay +18 to +23% FID. Every R5b number that quotes those arms - including the +23.13% cosine figure - is a budget artefact, not a statement about the blend. GAP-55 fixed exactly this defect for the MNIST driver; the R5b driver was never fixed.",
+   "acceptance": "(1) Port the GAP-55 equal-total-NFE constraint to the R5b driver so every arm spends the same total NFE as the baseline. (2) Re-run the 4 arms x 3 seeds at that matched budget. (3) Report per-arm delta with the bias-corrected paired interval. (4) Pre-registered reading: if the previously-quoted +18..+23% shrinks below +5%, the R5b 'regression' is retracted as an artefact and the audit that quotes it must be corrected; if it survives, the regression is real and is reported with the matched budget disclosed.",
+   "agent_action": "1) Read scripts/wave225_p9_r5b_matched_eff_nfe.py for the existing budget-matching hook before writing anything new. 2) Patch the R5b driver to accept an equal-total-NFE flag. 3) Run 12 cells on cuda:0. 4) Write docs/audit/gap66-r5b-equal-budget.md. 5) 6 gates + commit.",
+   "evidence": "docs/audit/gap65-dispersion-selector.md section 3.2; verification_outputs/gap46-r5b-memory/gap46-memory-fraction.csv; verification_outputs/wave225-p9-r5b-matched-eff-nfe.json",
+   "result": "",
+   "deliverable": "A matched-budget R5b table, and a retraction or confirmation of the +18..+23% arms."
   },
   {
    "id": "GAP-58-R1-BETA1-POWERED",
@@ -440,6 +441,7 @@
   "GAP-57-EQUAL-NFE-REGIME-LADDER": "GAP-35 ladder re-measured at equal total NFE=50, N=1000, 3 draws: w16e1_5k -9.37% (3/3, CI excludes 0), w16e1_10k +2.81%, w16e1_60k +15.59%, production +9.52%; slope -1.177 %/FID, R2 0.855, zero crossing FID 22.5. Also found FID is O(1)-biased at small n (true 0 reads 23.98 at n=200, 4.73 at n=1000), so every N=200 effect size was inflated 40-65% and one sign flipped. -28.43% retired (smoke ckpt).",
   "GAP-54-CLASS-PRESERVING-CONTRACTION": "sampler_stochasticity=0 fixes the CTMC class (dim_changes=0, 128 direction-runs) and the map STILL expands: per-round ratio 11.91/3.80/1.49/1.23, K_eff=11.64, verdict NO CONTRACTION. Theorem 4 cannot be exercised on FlowMol3 at any m that still counts as a restart; FlowMol3 cells keep R=1.",
   "GAP-45-R1-BLEND-OFF-150": "beta=0 is a collapse mode, not a control (m=1 removes the fresh perturbation; 0/0/0 hits, entropy 1.68 bits, top-3 fraction 0.98). Added beta=1 (no memory): beta=1/6 vs beta=1 ties in 3/3 seeds, both above baseline. R1's NFE=150 gain is the per-record restart perturbation, not the memory blend.",
-  "GAP-64-R5C-OPERATING-REGIME": "R5c closed at the mechanism level. (a) The framework's own NFE allocator (nfe_steps_for_evidence, previously used only by tools/run_controlled_audit.py) was wired into the MNIST driver as --nfe-allocation evidence: NFE=16 codi +10.09% vs +9.05% (scheduler), NFE=50 +8.70% vs +8.55%. No sign flip; the allocator is not the missing lever. (b) Baseline-only NFE ladder with a byte-identical prior: production 11.1035 (NFE=3) -> 11.0675 (NFE=100), 0.33%; w16e1_5k 26.9258 -> 26.7300, 0.73%. The RK4 sampler is converged at three steps, so R5c has no integration headroom and its delta measures only the cost of the restart. (c) Mechanism identified: the blend m*x1+(1-m)*x0 is a variance-shrinkage operator. rho = tr(S_g)/tr(S_ref) in the FID projection: production 0.782, w16e1_10k 0.752, w16e1_60k 0.704 (all shrink -> FID up), w16e1_5k 1.006 (shrink -> FID down, -9.65%). Sign rule rho_base >= 1 predicts the measured sign 4/4. This reconciles K7 (novelty -42.9 pp) and R1/R6 (coverage metrics up) as one mechanism."
+  "GAP-64-R5C-OPERATING-REGIME": "R5c closed at the mechanism level. (a) The framework's own NFE allocator (nfe_steps_for_evidence, previously used only by tools/run_controlled_audit.py) was wired into the MNIST driver as --nfe-allocation evidence: NFE=16 codi +10.09% vs +9.05% (scheduler), NFE=50 +8.70% vs +8.55%. No sign flip; the allocator is not the missing lever. (b) Baseline-only NFE ladder with a byte-identical prior: production 11.1035 (NFE=3) -> 11.0675 (NFE=100), 0.33%; w16e1_5k 26.9258 -> 26.7300, 0.73%. The RK4 sampler is converged at three steps, so R5c has no integration headroom and its delta measures only the cost of the restart. (c) Mechanism identified: the blend m*x1+(1-m)*x0 is a variance-shrinkage operator. rho = tr(S_g)/tr(S_ref) in the FID projection: production 0.782, w16e1_10k 0.752, w16e1_60k 0.704 (all shrink -> FID up), w16e1_5k 1.006 (shrink -> FID down, -9.65%). Sign rule rho_base >= 1 predicts the measured sign 4/4. This reconciles K7 (novelty -42.9 pp) and R1/R6 (coverage metrics up) as one mechanism.",
+  "GAP-65-DISPERSION-SELECTOR": "Out-of-family test of the rho sign rule. CONSISTENT but UNTESTED in the positive direction: sign(rho_base-1) matches the measured FID sign in 5/5 computable cells (R5c production 0.782/+8.91, w16e1_10k 0.752/+2.47, w16e1_60k 0.704/+15.42, w16e1_5k 1.006/-9.65; R5b CIFAR 0.972/+1.48). The pre-registered 6-of-7 threshold is not met because R1/R3 have no FID-style feature space, so the rule is not computable there - an applicability failure, disclosed as a defect in the pre-registration (applicability was not specified). Across 16 R5b cells corr(rho_arm, dFID) = -0.93, but that is driven by three arms the sweep under-budgeted (75-79 NFE vs 150) and which collapse to rho_arm ~ 0.10; within the non-collapsed arm the ordering is noisy. Net: rho is a monitoring statistic, not a selector contribution, and the framework cannot claim a fidelity win or a measured 'never worse'."
  }
 }
