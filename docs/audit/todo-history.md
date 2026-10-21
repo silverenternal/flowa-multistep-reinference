@@ -1218,3 +1218,53 @@ or a metric's magnitude. GAP-67 passed that test and produced a *negative* resul
 of GPU instead of the budgeted 3 hours, because the screen was designed to be falsifiable at one
 seed and two dose points. The pre-registered confirmation ladder was never run and did not need
 to be. That is the protocol working, and it is the reason the screen came before the ladder.
+
+## 17. Addendum (2026-10-21) — GAP-73 closed: the R5c statistic reverses the sign
+
+### 17.1 What was measured
+
+The paired chunk test splits both arms into 10 chunks of 100 and scores each chunk against a
+100-sample reference slice. `tools/gap73_r5c_nscan.py` reproduced it exactly and compared it to
+`Delta(N)` — the same comparison at N ∈ {100, 200, 500, 1000} with a matched-N reference, 30
+paired draws each — and to the N=1000 headline against the full 10K reference.
+
+The chunk test reproduces `Delta(100)` to within 0.6 pp on all four checkpoints. It is not an
+estimator of the headline; it *is* the headline at n=100.
+
+### 17.2 What it costs
+
+| ckpt | published chunk Δ (cosine) | N=1000 headline | ratio |
+|---|---:|---:|---:|
+| `production` | +0.6 % | **+8.9 %** | 14× |
+| `w16e1_10k` | −11.4 % | **+2.5 %** | sign flip |
+| `w16e1_60k` | +1.5 % | **+15.4 %** | 10× |
+| `w16e1_5k` | −19.6 % | **−9.7 %** | 2× |
+
+Across all three arms and four checkpoints, the chunk test reports 6 wins and 6 losses; the
+N=1000 headline reports 10 losses and 2 wins. Two cells the chunk test called −12.7 % and
+−12.9 % wins are, at N=1000, +0.1 % and −0.1 %. All three `w16e1_10k` arms flip sign.
+
+The bias scales with the arm's dispersion, which is why it is largest exactly where the
+framework was thought to be strongest: the two most-contracted checkpoints lose the most.
+
+### 17.3 What it retires
+
+* **CLM-059's R5c "WINS −28.43 %"** is a chunk statistic. Flagged, not edited.
+* **GAP-64's sign rule** was fitted on the chunk statistic, so it was fitted on the bias. It
+  remains true as a statement about the chunk statistic and is retired as a statement about
+  fidelity.
+* **The GAP-67 falsification now has a second reading**: the intervention on `rho` did not move
+  FID because FID, properly measured, does not track `rho`. Both gaps point at the same defect.
+
+### 17.4 What replaces it
+
+GAP-75 opens next and costs nothing: the `gap57` ladder already holds 3 seeds × 4 checkpoints ×
+3 arms at N=1000, so the corrected table is a re-read, not a re-run. The decision rule is not
+violated — no new sampling, no new seeds, just the right statistic on samples that already
+exist.
+
+This is the third time in two days that a "confident" number turned out to be an estimator
+artifact rather than a measurement (FID at N=200, the chunk test, and the GAP-67 cross-section).
+The common shape is the same: a statistic whose bias is correlated with the treatment. Worth
+carrying forward as a review rule — **before trusting any cell, check that the statistic's bias
+is orthogonal to the arm it is comparing.**
