@@ -263,10 +263,10 @@
       "phase": "1",
       "priority": "P2",
       "owner": "agent",
-      "status": "PLANNED",
+      "status": "IN_PROGRESS",
       "gap": "GAP-45 established at N=200 that the memory term adds nothing measurable (beta=1/6 vs beta=1 is a tie in 3/3 seeds) and that the per-record restart perturbation carries the R1 gain. N=200 is underpowered for the beta=1/6-vs-baseline contrast (2/3 seeds clear the CI, while the N=1000 seed-42 run does). The memory term's effect size is therefore bounded only by 'not detectable at N=200'.",
       "acceptance": "(1) beta=1.0 at N=1000, 3 seeds (42/43/44), NFE=150, R=3, same recipe as verification_outputs/gap55-r1-nfe150-n1000. (2) Report per-record paired delta vs baseline and vs the beta=1/6 arm already recorded at N=1000 (seed 42 only). (3) The memory term is declared null only if the beta=1/6 vs beta=1 CI at N=1000 excludes nothing larger than +/-0.05 hits/record. (4) No new seeds beyond 42/43/44.",
-      "agent_action": "1) Run 3 arms at N=1000. 2) Score with family_validity only, sequentially (the novelty metric collides on a shared MMseqs2 temp dir under concurrency). 3) Record in docs/audit/gap58-r1-beta1-powered.md. 4) Do not touch the frozen R1 headline.",
+      "agent_action": "1) Running: reproduce/gap58_r1_beta1_n1000.sh (N=1000, NFE=150, R=3, beta=1.0, seeds 42/43/44, cuda:0 sequential; resume-guarded by manifest.json). Artifacts land in verification_outputs/gap58-r1-beta1-n1000/. 2) Then score with family_validity only, sequentially (the novelty metric collides on a shared MMseqs2 temp dir under concurrency). 3) Compare against the beta=1/6 N=1000 arm (verification_outputs/gap55-r1-nfe150-n1000, seed 42) and the baseline of each seed. 4) Record in docs/audit/gap58-r1-beta1-powered.md. 5) Do not touch the frozen R1 headline.",
       "evidence": "docs/audit/gap45-r1-blend-off-wiring.md section 8.4; verification_outputs/gap45-r1-beta1-150/",
       "result": ""
     },
