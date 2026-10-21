@@ -1150,3 +1150,71 @@ than to three unrelated weaknesses. Every remaining power-only experiment would 
 measured that same property more precisely without changing it. The honest options were
 to state the boundary, or to change the operator. This addendum chooses the second and
 keeps the first as the fallback if GAP-67's pre-registered reading fails.
+
+## 16. Addendum (2026-10-21) — GAP-67 closed: the dispersion explanation is falsified
+
+### 16.1 What was tested
+
+`todo.json` §15 bet the plan on one change: replace the scalar convex restart blend with a
+second-moment-preserving one, on the theory that `m*x1_hat + (1-m)*x0` contracts the sample
+cloud and that restoring the blend's variance would restore `rho` and remove the R5c fidelity
+cost. The design was pre-registered in `docs/audit/gap67-covariance-preservation.md` §0 before
+any code was touched, including the prediction that R2 would fail if the FID gap turned out to
+be mean-driven (§2.1) and that the chunk statistic would respond to dispersion rather than
+quality (§2.2).
+
+Implementation: `MnistFmAdapter(restart_noise_scale=c)` (default `1.0`, byte-identical — the
+control reproduced `rho=0.7449`, `FID=10.8551`, `+0.63%` exactly), one `cosine` arm per
+checkpoint, N=1000, NFE=50, seed 42, baselines reused from the frozen `gap57` run.
+
+### 16.2 What happened
+
+The correction is a null with the wrong sign on 4/4 checkpoints. Causal sensitivity
+`d(rho ratio)/d(c^2)` measured −0.033, −0.051, −0.067, −0.056 against a predicted +5.6.
+Raising the injected noise scale by 1–12 % moved the output dispersion by 0.03–0.7 %, in the
+wrong direction, and made the chunk ΔFID uniformly slightly worse. R1, R2 and R3 all failed.
+
+### 16.3 Why the cross-section lied
+
+§2 of the audit had derived a 4.6–6.1× "amplification" by regressing the output deficit on the
+input deficit **across four checkpoints**. That looked like a causal gain and was not: both
+deficits are monotone in model quality, so the cross-section correlated two consequences of the
+same latent variable. The dose-response (same checkpoint, one knob, two points) gives ≈ −0.05×.
+**The intervention is the only valid instrument; a tight cross-section is not.** This is the
+second time in this project that a cross-sectional regularity survived four checkpoints and then
+failed under an intervention (the first was the GAP-64 sign rule, which GAP-67 also retires).
+
+### 16.4 What replaced it
+
+Two things, both recorded rather than assumed:
+
+1. **The R5c cost is a mean shift.** Fréchet decomposition at N=1000: the mean term carries
+   +0.760 of production's +0.888 gap and +1.480 of `w16e1_60k`'s +1.758, while the covariance
+   term moves in both directions across the four checkpoints. The dispersion question was the
+   wrong question; the mean is the mechanism.
+2. **The contraction is a conditioning effect.** The restart injects independent noise at `t=m`
+   and integrates to `t=1`, so the endpoint is approximately `E[x1|x_m]`, and conditional means
+   are under-dispersed by the law of total variance. No rescale of the injected noise can undo
+   it because the velocity field is scale-normalizing. This is *argued, not measured* — it is
+   the one surviving candidate, not a result.
+
+### 16.5 What this costs the plan
+
+The plan's premise — "the weakness is the operator, and the operator is fixable" — is half
+wrong. The operator is not fixable through its second moment; it may be fixable through its
+mean, which nobody has looked at. The three gaps opened below split the question accordingly:
+GAP-73 (is the R5c statistic even valid?), GAP-72 (what is the mean shift?), GAP-74 (is the
+conditioning explanation true?). GAP-73 goes first because it is free and because it decides
+whether the R5c numbers the paper quotes mean anything at all.
+
+The adapter gaps (GAP-68/69/71/70) are untouched by this and keep their places. GAP-67 was
+never a prerequisite for them — it was a prerequisite for the *claim* that the operator could
+be repaired, and that claim is now withdrawn.
+
+### 16.6 The lesson to carry
+
+`todo.json` §15's decision rule said: run an experiment only if it can change a claim's status
+or a metric's magnitude. GAP-67 passed that test and produced a *negative* result in 30 minutes
+of GPU instead of the budgeted 3 hours, because the screen was designed to be falsifiable at one
+seed and two dose points. The pre-registered confirmation ladder was never run and did not need
+to be. That is the protocol working, and it is the reason the screen came before the ladder.

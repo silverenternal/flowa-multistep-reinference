@@ -402,6 +402,7 @@ def run_framework_arm(
     beta_schedule: str = "constant",
     restart_t0_mode: str = "zero",
     batch_suffix: str = "",
+    restart_noise_scale: float = 1.0,
 ) -> tuple[np.ndarray, dict[str, int]]:
     """Generate ``n_samples`` framework-arm endpoints (4 rounds × num_steps_per_round[r], beta=beta).
 
@@ -425,6 +426,7 @@ def run_framework_arm(
     adapter = MnistFmAdapter(
         weights_path=str(weights_path),
         num_steps=int(BASELINE_NUM_STEPS),  # default; overridden per round via condition
+        restart_noise_scale=float(restart_noise_scale),
     )
 
     round0_batch_id = (
@@ -615,6 +617,11 @@ def main(argv: list[str] | None = None) -> int:
                              "generated samples and a '3-seed' design produces "
                              "three byte-identical draws (measured: the Wave 280 "
                              "R5c seed42/43/44 npz files are bit-equal).")
+    parser.add_argument("--restart-noise-scale", type=float, default=1.0,
+                        help="GAP-67: scalar on the fresh restart noise. 1.0 "
+                             "(default) leaves the convex blend byte-identical. "
+                             "Values >1 restore the blend's second moment, which "
+                             "the convex blend loses by m^2 (v_base - v_hat).")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
 
@@ -749,6 +756,7 @@ def main(argv: list[str] | None = None) -> int:
             beta_schedule=str(args.beta_schedule),
             restart_t0_mode=str(args.restart_t0_mode),
             batch_suffix=batch_suffix,
+            restart_noise_scale=float(args.restart_noise_scale),
         )
         arm_samples[name] = s
         arm_telemetry[name] = tel

@@ -502,6 +502,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         init_random_weights: bool = False,
         init_seed: int = 12345,
         blender: RestartBlenderProtocol | None = None,
+        restart_noise_scale: float = 1.0,
     ) -> None:
         if integrator not in ("euler", "rk4", "dormand_prince"):
             raise ValueError(f"unknown_integrator:{integrator}")
@@ -515,6 +516,8 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
             raise ValueError("max_steps_must_be_positive")
         if base_channels <= 0:
             raise ValueError("base_channels_must_be_positive")
+        if not np.isfinite(restart_noise_scale) or restart_noise_scale <= 0.0:
+            raise ValueError("restart_noise_scale_must_be_positive_and_finite")
         self._integrator: MnistFmIntegratorMethod = integrator
         self._num_steps = int(num_steps)
         self._seed_offset = int(seed_offset)
@@ -548,6 +551,10 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         self._blender: RestartBlenderProtocol = (
             blender if blender is not None else LinearBlender()
         )
+        # GAP-67: scalar on the fresh restart noise. 1.0 leaves the blend
+        # arithmetic untouched (the multiply is skipped entirely, so the
+        # default path stays byte-identical).
+        self._restart_noise_scale = float(restart_noise_scale)
 
     # ------------------------------------------------------------------
     # 1. Capability handshake
@@ -673,6 +680,15 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
             np.float64
         )
         np.clip(fresh_x0, -MNIST_FM_CLAMP, MNIST_FM_CLAMP, out=fresh_x0)
+        if self._restart_noise_scale != 1.0:
+            # GAP-67: the convex blend is under-dispersed by
+            # ``m^2 (v_base - v_hat)`` (see docs/audit/gap67-covariance-
+            # preservation.md §1). Scaling the fresh noise restores the
+            # blend's second moment while leaving Corr(y, prior) unchanged,
+            # because correlation is scale-invariant.
+            fresh_x0 = np.asarray(
+                fresh_x0 * self._restart_noise_scale, dtype=np.float64
+            )
 
         m_clipped = max(0.0, min(1.0, float(memory_fraction)))
         blended_x0 = np.asarray(
@@ -683,18 +699,22 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
 
         # Compact digest payload: include the blended x0 head and tail so
         # the digest differs across beta values but stays deterministic.
-        next_digest = digest_state(
-            {
-                "kind": "restart",
-                "src_digest": state.native_state_digest,
-                "policy_hash": str(policy.policy_hash),
-                "source_round": next_round,
-                "beta": float(beta),
-                "memory_fraction": float(memory_fraction),
-                "blended_head": [float(blended_x0[i]) for i in range(8)],
-                "blended_tail": [float(blended_x0[i]) for i in range(MNIST_FLAT_DIM - 8, MNIST_FLAT_DIM)],
-            }
-        )
+        digest_payload: dict[str, Any] = {
+            "kind": "restart",
+            "src_digest": state.native_state_digest,
+            "policy_hash": str(policy.policy_hash),
+            "source_round": next_round,
+            "beta": float(beta),
+            "memory_fraction": float(memory_fraction),
+            "blended_head": [float(blended_x0[i]) for i in range(8)],
+            "blended_tail": [float(blended_x0[i]) for i in range(MNIST_FLAT_DIM - 8, MNIST_FLAT_DIM)],
+        }
+        if self._restart_noise_scale != 1.0:
+            # GAP-67: the scale is part of the operator's identity only when
+            # it is not the default, so the frozen legacy digests stay
+            # byte-identical (same pattern as the GAP-56 shifted interval).
+            digest_payload["restart_noise_scale"] = float(self._restart_noise_scale)
+        next_digest = digest_state(digest_payload)
         self._native_states.put(
             next_digest,
             {
