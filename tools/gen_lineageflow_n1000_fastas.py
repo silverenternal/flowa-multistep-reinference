@@ -537,6 +537,33 @@ def _codimension_sheet_n_cap_vector(
     ]
 
 
+def _assert_no_profile_fallback(
+    init_perturbations: dict[str, Any] | None,
+    fallback_counts: dict[str, int],
+    *,
+    n: int,
+) -> None:
+    """GAP-69 — fail closed when a profile-aware arm degraded to bare RNG.
+
+    ``_write_framework_arm`` substitutes a bare-RNG draw whenever the model
+    path raises, which makes the arm indistinguishable from a second baseline
+    sample. For a profile arm that substitution is always invalid evidence, so
+    raise instead of writing a manifest that looks valid. The default
+    (``init_perturbations is None``) path is unaffected.
+    """
+    if init_perturbations is None:
+        return
+    total = int(sum(fallback_counts.values()))
+    if total <= 0:
+        return
+    raise SystemExit(
+        "gap69_profile_arm_fell_back_to_bare_rng:"
+        f"{total}/{int(n)} records, per-family {dict(fallback_counts)} — "
+        "this run is NOT the profile arm; discard it (usually a CUDA OOM on "
+        "the shared device)"
+    )
+
+
 def _build_init_perturbations(
     family_ids: list[str],
     *,
@@ -1607,6 +1634,16 @@ def main() -> None:
     )
     manifest["framework_per_family_count"] = dict(framework_counts)
     manifest["framework_fallback_per_family_count"] = dict(fallback_counts)
+    # GAP-69 — a profile-aware arm MUST NOT silently degrade. When the model
+    # path raises, ``_write_framework_arm`` substitutes a bare-RNG draw, which
+    # makes the arm indistinguishable from a second baseline sample. That is
+    # exactly what a CUDA OOM on a shared device produces (first observed
+    # 2026-10-22: 1000/1000 fallbacks, 181 hits vs baseline's 158 — the
+    # "profile" arm was pure noise). Fail closed instead of writing a manifest
+    # that looks valid.
+    _assert_no_profile_fallback(
+        init_perturbations, fallback_counts, n=int(args.n)
+    )
     print(f"wrote {args.outdir / 'framework.fasta'} (n={int(args.n)})")
 
     # Combined manifest field (Wave 81 shape, additive — preserves

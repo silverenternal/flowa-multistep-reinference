@@ -189,3 +189,41 @@ Arm D is not a paired arm (it decodes by categorical sampling rather than
 _Pending: `reproduce/gap69_profile_init.sh` is running at the pre-registered
 config (N=1000, NFE=150, R=3, β=1.0). Decision rule §0.4 applies unchanged._
 
+### 1.4 An invalidated run, and the guard it produced
+
+The first attempt (2026-10-22 13:08–13:11 local) **completed with exit code 0
+and produced a manifest that looked valid**, but it was not the profile arm.
+GPU 0 was shared with three ~21.6 GB neighbours; the ESM-2 forward hit
+`CUDACachingAllocator ... OOM on device 0` and `_write_framework_arm` did what
+it is designed to do — substituted the **bare-RNG draw** for the record. All
+1000 records fell back:
+
+```
+framework_fallback_per_family_count = {PF00005.27: 249, PF00072.24: 250,
+                                       PF00183.19: 250, PF02517.18: 250}
+```
+
+The scored "framework" arm was **181 hits / 0.0 % intended**, i.e. a second
+independent bare-RNG sample (baseline is 158). Had this been read at face
+value it would have been reported as "the profile arm regresses R1 from 284 to
+181" — a completely false conclusion.
+
+Two changes, both additive:
+
+* `tools.gen_lineageflow_n1000_fastas._assert_no_profile_fallback` — a profile
+  arm now **fails closed** (`SystemExit`) on any fallback, before the manifest
+  is written. The default (`--init-profile off`) path still tolerates
+  fallbacks exactly as before.
+* `reproduce/gap69_profile_init.sh` waits for ≥ 20 GB free on `cuda:0` before
+  starting, so a shared-device OOM costs minutes, not hours.
+
+The invalid artifacts are quarantined in
+`verification_outputs/gap69-lineageflow-profile/seed42_INVALID_oom/` with a
+`README.txt`. They are **not** evidence and no number from them appears above.
+
+This is a general hazard for every model arm in the repo, not just GAP-69: the
+defensive fallback is invisible unless someone reads
+`framework_fallback_per_family_count`. The guard closes it for the arms where
+the fallback is unambiguously invalid.
+
+

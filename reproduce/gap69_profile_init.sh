@@ -27,6 +27,29 @@ fi
 export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=8
 export CUDA_VISIBLE_DEVICES=0
 
+# GAP-69 — GPU headroom pre-flight. The 2026-10-22 attempt OOM'd on a shared
+# cuda:0 (three ~21.6 GB neighbours) and `_write_framework_arm` silently
+# substituted the bare-RNG draw for 1000/1000 records. The generator now fails
+# closed on any fallback, but that still wastes a multi-hour run — so wait for
+# the memory first. `NEED_MIB` covers the observed ~13 GB peak plus slack.
+NEED_MIB=${NEED_MIB:-20000}
+WAIT_MAX_S=${WAIT_MAX_S:-14400}
+waited=0
+while :; do
+  free_mib=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits -i 0)
+  if (( free_mib >= NEED_MIB )); then
+    echo "[gap69] gpu0 free=${free_mib} MiB >= ${NEED_MIB} MiB — starting"
+    break
+  fi
+  if (( waited >= WAIT_MAX_S )); then
+    echo "[gap69] ABORT: gpu0 free=${free_mib} MiB after ${waited}s" >&2
+    exit 3
+  fi
+  echo "[gap69] waiting for gpu0: free=${free_mib} MiB < ${NEED_MIB} MiB (${waited}s)"
+  sleep 60
+  waited=$(( waited + 60 ))
+done
+
 mkdir -p "$OUT"
 {
   echo "=== command ==="

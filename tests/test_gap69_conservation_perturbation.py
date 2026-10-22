@@ -220,3 +220,25 @@ def _restart_policy():
         policy_hash="test-hash",
         created_at_round=0,
     )
+
+
+def test_profile_arm_refuses_to_silently_degrade() -> None:
+    """GAP-69 — a bare-RNG fallback inside a profile arm must fail closed.
+
+    Observed on 2026-10-22: a CUDA OOM made ``_write_framework_arm`` substitute
+    the bare-RNG draw for 1000/1000 records, and the run still wrote a manifest
+    that looked valid (181 hits vs the baseline's 158). That is not the profile
+    arm and must never reach scoring.
+    """
+    from tools.gen_lineageflow_n1000_fastas import _assert_no_profile_fallback
+
+    # Default path: fallbacks are tolerated (pre-GAP-69 behaviour).
+    _assert_no_profile_fallback(None, {"PF00005.27": 3}, n=10)
+    # Profile arm with a clean run: fine.
+    _assert_no_profile_fallback({"PF00005.27": object()}, {}, n=10)
+    # Profile arm with any fallback: hard stop.
+    with pytest.raises(SystemExit) as exc:
+        _assert_no_profile_fallback(
+            {"PF00005.27": object()}, {"PF00005.27": 10}, n=10
+        )
+    assert "gap69_profile_arm_fell_back_to_bare_rng" in str(exc.value)
