@@ -219,15 +219,55 @@ mandatory under the pre-registration, and `reproduce/gap69_profile_escalate.sh`
 is running it. **No verdict is issued until those two seeds land** — §0.4.3
 requires 3 seeds for `SUPPORTED`.
 
-**The gain is not a few records and not a diversity collapse.**
+Note what rule 1 is a rule *about*: it was written on `hmmscan_total_hits`,
+which the decomposition below shows is ~92 % PF00005. So a 3-seed confirmation
+will confirm **a PF00005 effect**, not a general profile-aware effect. Rule 1 is
+left exactly as pre-registered — changing it after seeing the data would be the
+thing the anti-seed-shopping clause exists to prevent — but the scope of what it
+can establish is narrowed here, in the same section as the number, not in a
+discussion afterwards.
 
-* 345 records improve, 147 worsen, 508 are unchanged. The improvement is
-  broad-based, not a handful of outliers: the top-10 records hold 8.6 % of C's
-  hits (B: 9.2 %).
-* 1000/1000 sequences are unique in every arm; length distribution is identical
-  to B (mean 90.4, sd 35.6, min 30, max 150) because lengths come from the same
-  `(family, length)` RNG stream. So the hit count is not inflated by duplicate
-  sequences.
+**The 8.2× is one family, not four.** Decomposing by the record's assigned
+family kills the "profile init helps protein generation" reading:
+
+| assigned family | n | B hits | C hits | ratio | Δ hits/record | t |
+|---|---:|---:|---:|---:|---:|---:|
+| **PF00005** (ABC transporter ATPase) | 250 | 77 | **2141** | **27.81×** | **+8.256** | **19.56** |
+| PF00072 (response regulator) | 250 | 68 | 58 | 0.85× | −0.040 | −0.83 |
+| PF00183 (HSP90) | 250 | 72 | 58 | 0.81× | −0.056 | −1.24 |
+| PF02517 (CitB) | 250 | 67 | 72 | 1.07× | +0.020 | +0.41 |
+
+**Excluding PF00005, C/B = 0.908 (n = 750, Δ = −0.025 hits/record, t = −0.93).**
+The conservation init does nothing — slightly negative, not significant — on
+three of the four families. Every one of C's 40 intended-family hits and 184
+top-k recalls comes from PF00005. So the honest one-line summary of seed 42 is
+*"PF00005's profile works; the other three do not"*, not *"profile-aware init
+works"*.
+
+**Why PF00005 and not the others — the metric's "any family" definition.** It is
+not a difference in how much profile information was injected: mean
+conservation is 0.175 / 0.172 / 0.174 / 0.176 across the four families (§0.1's
+`c` is read off the HMM, so this was not a tunable). The difference is what the
+resulting sequence *matches*. C's PF00005 records hit **187 distinct Pfam
+models**, and the top of that list is the whole P-loop NTPase / AAA+ clan:
+
+```
+PF00005 185   PF13555 173   PF13191 101   PF03193  99   PF13401  94
+PF05729  90   PF25199  89   PF13476  63   PF20720  61   PF13481  60
+PF12775  53   PF00437  41   PF13671  39   PF02492  38   PF00931  34
+```
+
+A profile init that produces a recognizable P-loop (Walker A/B) motif lights up
+dozens of related models at once, and `hmmscan_total_hits` counts hits to *any*
+Pfam family. So the headline gain is substantially a **motif-promiscuity
+effect**: one short, ubiquitous motif matching a clan of ~187 models. That is a
+real property of the generated sequences, but it is not "the sample resembles
+its intended family" — only 40/250 do.
+
+**Diversity is intact, so the count is not duplicates.**
+1000/1000 sequences are unique in every arm, and the length distribution is
+identical to B (mean 90.4, sd 35.6, min 30, max 150) because lengths come from
+the same `(family, length)` RNG stream. The 8.2× is not a diversity collapse.
 
 **C vs D (the ceiling reference) — the model now adds, it no longer subtracts.**
 Arm D, with no model at all, scored 1634. Arm C scores 2329, i.e. **1.42× the
@@ -312,12 +352,16 @@ the fact.
 **If seeds 43/44 confirm rule 1**, the defensible statement is narrow and
 mechanical:
 
-> On R1 (LineageFlow, `N=1000`, `NFE=150`, `R=3`, `β=1.0`), replacing the
-> per-record isotropic `softmax(randn)` fresh-restart state with the assigned
-> family's Pfam match emission, weighted by that column's normalised information
-> content, raises `hmmscan_total_hits` by a factor of ~8 over the D-004b
-> init-only arm, and moves `intended_hit_rate_evalue` off exactly zero for the
-> first time.
+> On R1 (LineageFlow, `N=1000`, `NFE=150`, `R=3`, `β=1.0`), seeding the
+> per-record fresh-restart state with the assigned family's Pfam match emission
+> (weighted by that column's normalised information content) raises
+> `hmmscan_total_hits` by ~8× over the D-004b init-only arm — **and that gain is
+> entirely carried by PF00005**, whose profile yields a P-loop NTPase-like
+> sequence that matches ~187 related Pfam models. On the other three families
+> the intervention is null (C/B = 0.91, t = −0.93).
+
+That is a much weaker claim than "protein knowledge helps", and it is the
+strongest one the data supports.
 
 **It does not license:**
 
@@ -326,6 +370,10 @@ mechanical:
 * "the model learned family structure" — arm D reaches a comparable regime with
   no model at all; what C shows is that the *init* carries the signal and the
   model no longer destroys it.
+* that `hmmscan_total_hits` measures family fidelity. It counts hits to *any*
+  Pfam family, and 92 % of the gain is a single P-loop NTPase clan. A
+  reviewer-facing statement must say "matches many ATPase-family models", not
+  "recovers the intended domain".
 * any statement about foldability, novelty or designability. Only
   `family_validity` was scored.
 * escape from limitation **L1**. The positional correspondence
