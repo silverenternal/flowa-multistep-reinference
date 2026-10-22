@@ -340,6 +340,7 @@ KANZI_SYNTHETIC_SEED_DEFAULT: int = 0x4B_4E_5A_49  # "KANZI" hex-word — determ
 #: Audit / error codes (deterministic ASCII strings).
 AUDIT_KANZI_RESTART_BLEND: str = "kanzi_restart_blend"
 AUDIT_KANZI_GPT_PRIOR_RESTART: str = "kanzi_gpt_prior_restart"
+AUDIT_KANZI_TOKEN_SELECTIVE_BLEND: str = "kanzi_token_selective_blend"
 #: Wave 59 Agent 4 — emitted by ``apply_restart_distribution`` when a
 #: NON-default :class:`PerturbationPolicy` supplies the fresh restart
 #: state (i.e. the opt-in path). The legacy
@@ -1471,6 +1472,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
         conditioning_cache_size: int = KANZI_CONDITIONING_CACHE_SIZE,
         gpt_prior_restart_policy: KanziGPTPriorRestartPolicy | None = None,
         perturbation: PerturbationPolicy | None = None,
+        token_selective_blend: bool = False,
     ) -> None:
         if int(num_steps) <= 0:
             raise ValueError(ERR_KANZI_NUM_STEPS)
@@ -1517,6 +1519,19 @@ class KanziAdapter(FlowMatchingODEAdapter):
         self._gpt_prior_restart_policy: KanziGPTPriorRestartPolicy | None = (
             gpt_prior_restart_policy
         )
+
+        # GAP-70 — token-selective latent blend (default OFF).
+        # ``m_vec = m_base * w`` with ``w`` read per record from
+        # ``prior_entry["token_keep_weights"]``. The schedule still owns the
+        # global level, so ``w == 1`` reproduces the scalar blend exactly.
+        # Mutually exclusive with the GPT-prior policy: both would write
+        # ``m_vec`` and the precedence would be arbitrary.
+        self._token_selective_blend: bool = bool(token_selective_blend)
+        if self._token_selective_blend and gpt_prior_restart_policy is not None:
+            raise ValueError(
+                "token_selective_blend_and_gpt_prior_restart_policy_are_"
+                "mutually_exclusive"
+            )
 
         # Wave 59 Agent 4 — saturation-time perturbation policy.
         # ``None`` (the default) instantiates
@@ -2079,15 +2094,52 @@ class KanziAdapter(FlowMatchingODEAdapter):
             perturbation_audit = (AUDIT_KANZI_PERTURBATION_POLICY,)
 
         m_base = max(0.0, min(1.0, float(memory_fraction)))
-        # Wave 45 Agent F: optionally bias ``m`` per-position via the
-        # GPT-prior entropy signal (only meaningful in ``torch`` mode
-        # with a real ``gpt_prior_logits`` payload; in synthetic mode
-        # the policy degrades to ``m_vec = m_base``). The audit code
-        # is appended to ``provenance`` so the caller can distinguish
-        # a GPT-prior-aware restart from the schedule-driven
-        # fallback.
         gpt_policy_obj = getattr(self, "_gpt_prior_restart_policy", None)
-        if isinstance(gpt_policy_obj, KanziGPTPriorRestartPolicy):
+        if self._token_selective_blend:
+            # GAP-70 — per-token redistribution of the schedule's memory
+            # fraction: ``m_vec = m_base * w``. Fails closed: an enabled flag
+            # with no weights must never degrade to the scalar path (that is
+            # how GAP-69 produced a run that looked valid and was not).
+            if "token_keep_weights" not in prior_entry:
+                raise CapabilityMissingError(
+                    "missing_token_keep_weights",
+                    context=state.native_state_digest,
+                )
+            keep = np.asarray(
+                prior_entry["token_keep_weights"], dtype=np.float64
+            ).reshape(-1)
+            seq_len = int(KANZI_ABSTRACT_AR_SEQ_LENGTH)
+            if keep.shape[0] != seq_len:
+                raise CapabilityMissingError(
+                    "token_keep_weights_wrong_length",
+                    context=f"{keep.shape[0]}!={seq_len}",
+                )
+            if not np.all(np.isfinite(keep)):
+                raise CapabilityMissingError(
+                    "token_keep_weights_nonfinite",
+                    context=state.native_state_digest,
+                )
+            if float(keep.min()) < 0.0 or float(keep.max()) > 1.0:
+                raise CapabilityMissingError(
+                    "token_keep_weights_out_of_unit_interval",
+                    context=f"[{float(keep.min())},{float(keep.max())}]",
+                )
+            m_vec = np.clip(m_base * keep, 0.0, 1.0)
+            m_vec_full = np.broadcast_to(
+                m_vec[:, None], self._effective_traj_shape(),
+            )
+            blended = (
+                m_vec_full * prior_x + (1.0 - m_vec_full) * fresh_x
+            ).astype(np.float64)
+            m_for_digest: float | list[float] = [
+                float(x) for x in m_vec.tolist()
+            ]
+            gpt_prior_audit = (AUDIT_KANZI_TOKEN_SELECTIVE_BLEND,)
+        elif isinstance(gpt_policy_obj, KanziGPTPriorRestartPolicy):
+            # Wave 45 Agent F: bias ``m`` per-position via the GPT-prior
+            # entropy signal (only meaningful in ``torch`` mode with a real
+            # ``gpt_prior_logits`` payload; in synthetic mode the policy
+            # degrades to ``m_vec = m_base``).
             m_vec = np.asarray(
                 gpt_policy_obj.memory_fraction_vector(
                     prior_entry, base_m=m_base,
@@ -2103,9 +2155,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
             blended = (
                 m_vec_full * prior_x + (1.0 - m_vec_full) * fresh_x
             ).astype(np.float64)
-            m_for_digest: float | list[float] = [
-                float(x) for x in m_vec.tolist()
-            ]
+            m_for_digest = [float(x) for x in m_vec.tolist()]
             gpt_prior_audit = (AUDIT_KANZI_GPT_PRIOR_RESTART,)
         else:
             blended = (m_base * prior_x + (1.0 - m_base) * fresh_x).astype(np.float64)

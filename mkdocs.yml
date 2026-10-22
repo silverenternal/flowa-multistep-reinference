@@ -296,6 +296,7 @@ not_in_nav: |
   audit/gap68-flowmol3-channels.md
   audit/gap69-lineageflow-profile.md
   audit/gap71-image-spectral.md
+  audit/gap70-kanzi-latent.md
   audit/gap73-r5c-statistic.md
   audit/gap75-r5c-n1000-table.md
   audit/gap72-r5c-mean-shift.md
