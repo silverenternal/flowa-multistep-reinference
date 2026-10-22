@@ -2110,14 +2110,29 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
             # there; ``None`` makes BRAI degrade gracefully to its own
             # uniform-fresh fallback (see
             # :class:`PaperQuantityAttractorInversion`).
-            proposed = np.asarray(
-                perturbation.propose(
+            # GAP-69 — a policy that needs the per-record, per-round seed
+            # (e.g. :class:`ConservationWeightedPerturbation`, whose draw must
+            # differ across records) exposes ``propose_with_seed``. The
+            # ``restart_seed`` computed above already folds in the per-record
+            # ``policy_hash``, so it is exactly that seed. Policies without the
+            # hook take the unchanged ``propose`` path.
+            _seeded_propose = getattr(perturbation, "propose_with_seed", None)
+            if callable(_seeded_propose):
+                _proposed = _seeded_propose(
                     prior_theta,
                     prior_entry.get("paper_quantities"),
                     float(prior_entry.get("t", 0.0)),
-                ),
-                dtype=np.float64,
-            ).reshape(LINEAGEFLOW_STATE_SHAPE)
+                    int(restart_seed),
+                )
+            else:
+                _proposed = perturbation.propose(
+                    prior_theta,
+                    prior_entry.get("paper_quantities"),
+                    float(prior_entry.get("t", 0.0)),
+                )
+            proposed = np.asarray(_proposed, dtype=np.float64).reshape(
+                LINEAGEFLOW_STATE_SHAPE
+            )
             # Project back onto the per-position simplex — the
             # perturbation protocol works in an unconstrained state
             # space, but this channel is a categorical.

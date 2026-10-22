@@ -734,6 +734,224 @@ def default_uniform_fresh_perturbation() -> UniformFreshPerturbation:
 
 
 # ---------------------------------------------------------------------------
+# GAP-69: ConservationWeightedPerturbation (profile-aware fresh state)
+# ---------------------------------------------------------------------------
+
+
+class ConservationWeightedPerturbation:
+    """Per-position fresh draw tempered by a Pfam match-emission profile.
+
+    GAP-69. Replaces the isotropic ``softmax(randn(L, AA))`` fresh state with
+    the single-parameter interpolation
+
+        logits[i] = c_i * log p_i + (1 - c_i) * randn(AA)
+        fresh[i]  = softmax(logits[i])
+
+    where ``p_i`` is the assigned family's Pfam match-emission distribution at
+    profile column ``i`` and ``c_i in [0, 1]`` is that column's normalised
+    information content. ``c_i = 0`` reproduces the D-004b draw exactly
+    (:class:`UniformFreshPerturbation`'s real-classifier path); ``c_i = 1``
+    reproduces the profile emission itself. There is **no free
+    hyperparameter**: ``c`` is read off the HMM and ``span`` is the caller's
+    sequence-length ceiling.
+
+    Motivation: R1's gain is carried by the per-record random init
+    (``docs/audit/r1-d004b-attribution.md``), and that init carries no protein
+    knowledge. This policy is the smallest change that gives it some: conserved
+    columns stay near the family consensus, variable columns stay free.
+
+    Positional caveat (limitation L1 of
+    ``docs/audit/gap69-lineageflow-profile.md``): profile column ``i`` is
+    assumed to correspond to state position ``i`` (N-terminal, colinear). No
+    aligner is run.
+
+    Parameters
+    ----------
+    logp:
+        ``(span, AA)`` match-emission **log**-probabilities.
+    conservation:
+        ``(span,)`` normalised information content in ``[0, 1]``.
+    seed_offset:
+        Optional non-negative integer mixed into the seed. Default ``0``.
+
+    Notes
+    -----
+    :meth:`propose` is the Protocol entry point and derives its seed from the
+    content of ``x_saturated`` so it stays pure. :meth:`propose_with_seed` is
+    the preferred entry point when the caller already holds a per-record seed
+    (the LineageFlow adapter passes its ``restart_seed``), which is the only
+    way to guarantee per-record diversity independently of the prior state.
+    """
+
+    FAMILY: str = "conservation_weighted"
+
+    def __init__(
+        self,
+        *,
+        logp: Any,
+        conservation: Any,
+        seed_offset: int = 0,
+    ) -> None:
+        import numpy as _np
+
+        lp = _np.asarray(logp, dtype=_np.float64)
+        c = _np.asarray(conservation, dtype=_np.float64).reshape(-1)
+        if lp.ndim != 2:
+            raise PerturbationConfigError(
+                f"logp must be 2-D (span, AA); got shape {lp.shape!r}"
+            )
+        if c.shape[0] != lp.shape[0]:
+            raise PerturbationConfigError(
+                "conservation length must equal logp span; "
+                f"got {c.shape[0]} vs {lp.shape[0]}"
+            )
+        if not _np.isfinite(lp).all() or not _np.isfinite(c).all():
+            raise PerturbationConfigError("logp / conservation must be finite")
+        if float(c.min()) < 0.0 or float(c.max()) > 1.0:
+            raise PerturbationConfigError(
+                f"conservation must lie in [0, 1]; got "
+                f"[{float(c.min())}, {float(c.max())}]"
+            )
+        if not isinstance(seed_offset, int) or isinstance(seed_offset, bool):
+            raise PerturbationConfigError(
+                f"seed_offset: must be an integer, got {type(seed_offset).__name__}"
+            )
+        if int(seed_offset) < 0:
+            raise PerturbationConfigError(
+                f"seed_offset: must be non-negative, got {seed_offset!r}"
+            )
+        self._logp = lp
+        self._conservation = c
+        self._seed_offset = int(seed_offset)
+        self._config_hash_value = hash_artifact(
+            {
+                "family": self.FAMILY,
+                "span": int(lp.shape[0]),
+                "aa": int(lp.shape[1]),
+                "seed_offset": int(self._seed_offset),
+                "conservation_sum": float(c.sum()),
+                "logp_sum": float(lp.sum()),
+            }
+        )
+
+    # -- accessors ---------------------------------------------------------
+
+    @property
+    def family(self) -> str:
+        return self.FAMILY
+
+    @property
+    def seed_offset(self) -> int:
+        return int(self._seed_offset)
+
+    @property
+    def span(self) -> int:
+        return int(self._logp.shape[0])
+
+    # -- PerturbationPolicy ------------------------------------------------
+
+    def propose(
+        self,
+        x_saturated: Any,
+        paper_quantities: Mapping[str, Any] | None,
+        t: float,
+    ) -> Any:
+        """Content-derived seed; see :meth:`propose_with_seed`."""
+        del paper_quantities
+        import numpy as _np
+
+        arr = _np.asarray(x_saturated)
+        blob = arr.tobytes() + repr(float(t)).encode("utf-8")
+        seed = int(hashlib.sha256(blob).hexdigest()[:8], 16)
+        return self.propose_with_seed(x_saturated, None, t, seed)
+
+    def propose_with_seed(
+        self,
+        x_saturated: Any,
+        paper_quantities: Mapping[str, Any] | None,
+        t: float,
+        seed: int,
+    ) -> Any:
+        """Return a fresh per-position simplex of ``x_saturated``'s shape.
+
+        ``paper_quantities`` and ``t`` are accepted for Protocol symmetry and
+        unused. ``x_saturated`` is never mutated.
+        """
+        del paper_quantities, t
+        import numpy as _np
+
+        arr = _np.asarray(x_saturated, dtype=_np.float64)
+        if arr.ndim != 2:
+            raise PerturbationConfigError(
+                f"x_saturated must be 2-D (L, K); got shape {arr.shape!r}"
+            )
+        L, K = int(arr.shape[0]), int(arr.shape[1])
+        aa_dim = min(int(self._logp.shape[1]), K)
+
+        # Pad / truncate the profile onto the state's position axis. Positions
+        # beyond ``span`` carry c = 0, i.e. the plain D-004b draw.
+        logp = _np.zeros((L, aa_dim), dtype=_np.float64)
+        cons = _np.zeros(L, dtype=_np.float64)
+        n = min(L, int(self._logp.shape[0]))
+        logp[:n] = self._logp[:n, :aa_dim]
+        cons[:n] = self._conservation[:n]
+
+        rng = np_random_default_rng(
+            (int(seed) + int(self._seed_offset)) & 0xFFFFFFFF
+        )
+        noise = rng.standard_normal((L, aa_dim))
+        logits = cons[:, None] * logp + (1.0 - cons[:, None]) * noise
+        logits = logits - logits.max(axis=-1, keepdims=True)
+        aa = _np.exp(logits)
+        aa = aa / aa.sum(axis=-1, keepdims=True)
+
+        theta = _np.full((L, K), 1.0 / float(K), dtype=_np.float64)
+        theta[:, :aa_dim] = aa
+        theta = theta / theta.sum(axis=-1, keepdims=True)
+        return _np.asarray(theta, dtype=_np.float64)
+
+    # -- config round-trip (P1-1) -----------------------------------------
+
+    def config_hash(self) -> str:
+        return str(self._config_hash_value)
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config (the profile travels inline)."""
+        return {
+            "family": self.FAMILY,
+            "seed_offset": int(self._seed_offset),
+            "logp": [[float(v) for v in row] for row in self._logp],
+            "conservation": [float(v) for v in self._conservation],
+        }
+
+    @classmethod
+    def from_config(
+        cls, config: dict[str, Any]
+    ) -> ConservationWeightedPerturbation:
+        if str(config.get("family", cls.FAMILY)) != cls.FAMILY:
+            raise ValueError(
+                f"ConservationWeightedPerturbation.from_config: bad family "
+                f"{config.get('family')!r} (expected {cls.FAMILY!r})"
+            )
+        if "logp" not in config or "conservation" not in config:
+            raise PerturbationConfigError(
+                "from_config requires both 'logp' and 'conservation'"
+            )
+        return cls(
+            logp=config["logp"],
+            conservation=config["conservation"],
+            seed_offset=int(config.get("seed_offset", 0)),
+        )
+
+
+def default_conservation_weighted_perturbation(
+    *, logp: Any, conservation: Any
+) -> ConservationWeightedPerturbation:
+    """Factory mirroring :func:`default_uniform_fresh_perturbation`."""
+    return ConservationWeightedPerturbation(logp=logp, conservation=conservation)
+
+
+# ---------------------------------------------------------------------------
 # New implementation: PaperQuantityAttractorInversion (BRAI)
 # ---------------------------------------------------------------------------
 
@@ -1106,6 +1324,8 @@ def build_perturbation_from_config(
         return UniformFreshPerturbation.from_config(config)
     if family == PaperQuantityAttractorInversion.FAMILY:
         return PaperQuantityAttractorInversion.from_config(config)
+    if family == ConservationWeightedPerturbation.FAMILY:
+        return ConservationWeightedPerturbation.from_config(config)
     raise PerturbationConfigError(
         f"build_perturbation_from_config: unknown family {family!r}"
     )
@@ -1121,6 +1341,7 @@ __all__ = [
     "BRAI_GRAD_FALLBACK_TO_FD",
     "BRAI_NO_PAPER_QUANTITIES",
     "BRAI_NONFINITE_QUANTITY_COERCED",
+    "ConservationWeightedPerturbation",
     "DEFAULT_BRAI_EPS_SCALE",
     "DEFAULT_BRAI_GRAD_EPS",
     "DEFAULT_BRAI_SIGMA",
@@ -1131,5 +1352,6 @@ __all__ = [
     "UniformFreshPerturbation",
     "build_perturbation_from_config",
     "default_brai_perturbation",
+    "default_conservation_weighted_perturbation",
     "default_uniform_fresh_perturbation",
 ]

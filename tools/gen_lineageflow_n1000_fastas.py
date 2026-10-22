@@ -148,6 +148,17 @@ RESTART_FROM_ENDPOINT: bool = False  # overridden by --restart-from-endpoint
 # constant and is skipped on the tier-aware path, whereas
 # ``--beta-override`` is the last word on β.
 BETA_OVERRIDE: float | None = None  # overridden by --beta-override in main()
+# GAP-69 — profile-aware fresh-restart state. ``"off"`` (default) keeps the
+# D-004b ``softmax(randn)`` draw and therefore every byte-stable path.
+# ``"conservation"`` swaps in
+# :class:`ConservationWeightedPerturbation`, whose logits are
+# ``c_i * log p_i + (1 - c_i) * randn`` with ``p`` the assigned family's Pfam
+# match emission and ``c`` its normalised information content. The profile is
+# read from ``PROFILE_JSON`` (``tools/pfam_profile.py`` output). Only the
+# framework arm consumes this; the baseline arm is untouched, so pairing
+# against a pre-GAP-69 baseline run stays valid.
+INIT_PROFILE: str = "off"  # overridden by --init-profile in main()
+PROFILE_JSON: Path | None = None  # overridden by --profile-json in main()
 # Wave 275 P4 / GAP-01 — R6 tier-aware restart-blend knobs. When
 # ``TIER_AWARE_N_CAP`` is in ``(0, 1)`` AND ``TIER_AWARE_BASELINE_METRICS``
 # is a non-empty ``{qid: baseline_pLDDT}`` mapping, ``_solve_framework``
@@ -526,6 +537,46 @@ def _codimension_sheet_n_cap_vector(
     ]
 
 
+def _build_init_perturbations(
+    family_ids: list[str],
+    *,
+    init_profile: str,
+    profile_json: Path | None,
+) -> dict[str, Any] | None:
+    """GAP-69 — build one :class:`ConservationWeightedPerturbation` per family.
+
+    Returns ``None`` when ``init_profile == "off"`` so every pre-GAP-69 call
+    path stays byte-identical. Raises ``SystemExit`` on a missing/incomplete
+    profile rather than silently degrading to the isotropic draw — a silent
+    fallback would make the arm indistinguishable from the control.
+    """
+    if str(init_profile) == "off":
+        return None
+    if str(init_profile) != "conservation":
+        raise SystemExit(f"unknown_init_profile:{init_profile}")
+    if profile_json is None:
+        raise SystemExit("init_profile_conservation_requires_profile_json")
+    import json as _json
+
+    from adaptive_reflow.algorithm.perturbation import (
+        ConservationWeightedPerturbation,
+    )
+
+    payload = _json.loads(Path(profile_json).read_text())
+    by_pf = {str(k).split(".")[0]: v for k, v in payload["families"].items()}
+    out: dict[str, Any] = {}
+    for fid in family_ids:
+        pf = str(fid).split(".")[0]
+        if pf not in by_pf:
+            raise SystemExit(f"profile_missing_family:{fid}")
+        entry = by_pf[pf]
+        out[fid] = ConservationWeightedPerturbation(
+            logp=entry["logp"],
+            conservation=entry["conservation"],
+        )
+    return out
+
+
 def _build_lineageflow_adapter(
     family_id: str,
     seed: int,
@@ -534,6 +585,7 @@ def _build_lineageflow_adapter(
     classifier_alpha: float = 1.0,
     classifier_bias_mode: str = "centered",
     profile_residual_fn: Any | None = None,
+    perturbation: Any | None = None,
 ) -> Any | None:
     """Lazy-construct a synthetic-mode :class:`LineageFlowAdapter`.
 
@@ -595,6 +647,9 @@ def _build_lineageflow_adapter(
             # ``_compute_paper_quantities`` non-None and un-degenerates
             # the codimension-sheet ``n_cap``.
             profile_residual_fn=profile_residual_fn,
+            # GAP-69 — profile-aware fresh-restart state (additive, default
+            # None = the D-004b isotropic draw, byte-identical).
+            perturbation=perturbation,
             # Wave 349 P4 — switch from hardcoded ``force_mode="synthetic"`` to ``"auto"`` so the
             # LineageFlowAdapter picks up the real PyTorch ESM-2 + flow head (downloaded from
             # facebook/esm2_t33_650M_UR50D on first call). With Wave 349 P4 GPU dispatch the model
@@ -800,6 +855,7 @@ def _write_framework_arm(
     classifier_bias_mode: str = "centered",
     start_index: int = 0,
     profile_residual_fn: Any | None = None,
+    init_perturbations: dict[str, Any] | None = None,
 ) -> tuple[dict[str, int], dict[str, int]]:
     """Write the framework arm: drives :class:`LineageFlowAdapter` for each record.
 
@@ -847,6 +903,12 @@ def _write_framework_arm(
             classifier_bias_mode=str(classifier_bias_mode),
             # GAP-44 — paper-quantity wiring (default None = byte-stable).
             profile_residual_fn=profile_residual_fn,
+            # GAP-69 — per-family profile-aware fresh-restart policy
+            # (default None = the D-004b isotropic draw).
+            perturbation=(
+                None if init_perturbations is None
+                else init_perturbations.get(family_id)
+            ),
         )
 
     # GAP-41b — resume support (additive; ``start_index=0`` is
@@ -1229,6 +1291,34 @@ def main() -> None:
             "``docs/audit/gap44-p2-1-profile-residual.md``."
         ),
     )
+    p.add_argument(
+        "--init-profile",
+        choices=("off", "conservation"),
+        default="off",
+        help=(
+            "GAP-69 — profile-aware fresh-restart state for the framework "
+            "arm (additive; default 'off' = the D-004b isotropic "
+            "``softmax(randn)`` draw, byte-identical). 'conservation' "
+            "replaces the AA logits with "
+            "``c_i * log p_i + (1 - c_i) * randn`` where ``p`` is the "
+            "assigned family's Pfam match emission and ``c`` its "
+            "normalised information content; requires --profile-json. "
+            "Only the framework arm changes, so a pre-GAP-69 baseline "
+            "stays record-paired. See "
+            "``docs/audit/gap69-lineageflow-profile.md``."
+        ),
+    )
+    p.add_argument(
+        "--profile-json",
+        type=Path,
+        default=None,
+        help=(
+            "GAP-69 — path to the ``tools/pfam_profile.py`` output holding "
+            "the per-family match-emission log-probabilities and "
+            "conservation profiles. Required when --init-profile is not "
+            "'off'."
+        ),
+    )
     args = p.parse_args()
 
     # Wave 276 P — resolve effective min/max len via
@@ -1358,6 +1448,13 @@ def main() -> None:
     baseline_seed = int(args.seed)
     framework_seed = int(args.seed) ^ 0x5A5A
     family_ids = list(FAMILY_PROFILES.keys())
+    # GAP-69 — profile-aware fresh-restart state (additive, default off).
+    # ``None`` means the framework arm keeps the D-004b isotropic draw.
+    init_perturbations = _build_init_perturbations(
+        family_ids,
+        init_profile=str(getattr(args, "init_profile", "off")),
+        profile_json=getattr(args, "profile_json", None),
+    )
 
     manifest: dict[str, Any] = {
         "n": int(args.n),
@@ -1455,6 +1552,17 @@ def main() -> None:
             seed=int(args.seed),
             n_rounds=int(N_ROUNDS),
         ),
+        # GAP-69 — profile-aware fresh-restart state. ``off`` (default)
+        # means the framework arm used the D-004b ``softmax(randn)`` draw;
+        # ``conservation`` means the init logits were
+        # ``c_i * log p_i + (1 - c_i) * randn`` with ``p`` from the Pfam
+        # match emission and ``c`` its normalised information content.
+        "init_profile": str(getattr(args, "init_profile", "off")),
+        "init_profile_source": (
+            None if getattr(args, "profile_json", None) is None
+            else str(args.profile_json)
+        ),
+        "init_profile_is_active": bool(init_perturbations is not None),
     }
 
     # ---- Baseline arm (bare RNG, preserved byte-shape) -----------------
@@ -1493,6 +1601,9 @@ def main() -> None:
         start_index=int(args.start_index),
         # GAP-44 — paper-quantity wiring (default None = byte-stable).
         profile_residual_fn=profile_residual_fn,
+        # GAP-69 — per-family profile-aware fresh-restart policy
+        # (default None = the D-004b isotropic draw, byte-identical).
+        init_perturbations=init_perturbations,
     )
     manifest["framework_per_family_count"] = dict(framework_counts)
     manifest["framework_fallback_per_family_count"] = dict(fallback_counts)

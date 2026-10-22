@@ -69,6 +69,7 @@ PaperQuantitiesPerturbationSnapshotProtocol = (
     _perturbation_mod.PaperQuantitiesPerturbationSnapshotProtocol
 )
 PaperQuantityAttractorInversion = _perturbation_mod.PaperQuantityAttractorInversion
+ConservationWeightedPerturbation = _perturbation_mod.ConservationWeightedPerturbation
 PerturbationConfigError = _perturbation_mod.PerturbationConfigError
 PerturbationPolicy = _perturbation_mod.PerturbationPolicy
 UniformFreshPerturbation = _perturbation_mod.UniformFreshPerturbation
@@ -81,6 +82,9 @@ DEFAULT_BRAI_GRAD_EPS = _perturbation_mod.DEFAULT_BRAI_GRAD_EPS
 DEFAULT_BRAI_SIGMA = _perturbation_mod.DEFAULT_BRAI_SIGMA
 build_perturbation_from_config = _perturbation_mod.build_perturbation_from_config
 default_brai_perturbation = _perturbation_mod.default_brai_perturbation
+default_conservation_weighted_perturbation = (
+    _perturbation_mod.default_conservation_weighted_perturbation
+)
 default_uniform_fresh_perturbation = _perturbation_mod.default_uniform_fresh_perturbation
 del _perturbation_mod
 
@@ -122,6 +126,7 @@ __all__ = [
     "BRAI_NONFINITE_QUANTITY_COERCED",
     "BanditUCBRotationPolicy",
     "CategoricalDynamicNoiseBias",
+    "ConservationWeightedPerturbation",
     "DEFAULT_BRAI_EPS_SCALE",
     "DEFAULT_BRAI_GRAD_EPS",
     "DEFAULT_BRAI_SIGMA",
@@ -156,6 +161,7 @@ __all__ = [
     "build_perturbation_from_config",
     "build_rotation_policy",
     "default_brai_perturbation",
+    "default_conservation_weighted_perturbation",
     "default_dynamic_noise_bias",
     "default_uniform_fresh_perturbation",
 ]
