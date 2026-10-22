@@ -160,19 +160,43 @@ and asserts the scalar-collapsed hypothesis is **rejected**.
 | adapter operator | landed, default off |
 | operator is non-inert (per-position, not scalar-mean) | **asserted by test** (§1.1) |
 | generator wiring | landed, default off |
-| arm C run (N=1000, seed 42, NFE=10) | **not run** — GPU occupied by GAP-69 |
-| mmseqs novelty + Pfam validity | **not run** |
+| scoring + verdict tooling | landed (§3) |
+| arm B/C run (N=1000, seed 42, NFE=10) | **not run** — GPU occupied by GAP-69 |
+| canonical-DB novelty + Pfam validity | **not run** |
 | verdict | none |
 
-The run is one command once the GPU frees up:
+## 3. The scoring path, and a trap it avoids
+
+`tools/gap70_position_blend_report.py` takes the three arms' m8 + validity
+files and emits the §0.4 rules and one verdict. It is paired by record index and
+asserts the family matches at every index before computing anything, so a
+mis-ordered arm fails loudly instead of producing a plausible number.
+
+The trap: the generator's built-in `novelty` metric searches the **200-sequence**
+`data/lineageflow_upstream/databases/pfam35/pfam_holdout_targetDB`, and on this
+data it saturates — GAP-69's seed-42 run reports `novelty_all = 1.0` for both
+arms with `hits_kept = 0`. That is the same W280 artefact the K7 recipe already
+documents. K7's 46.6 % / 3.7 % come from `mmseqs easy-search` against the
+canonical **63.8 M**-sequence Pfam-A DB with `-s 7.5 -e 100`. The driver
+therefore runs `gap55` with `--metrics family_validity` **only** (validity is
+hmmscan and is sound) and does the novelty search separately against the
+canonical DB. Nothing from the built-in novelty is quotable.
+
+The whole run is one command once the GPU frees up:
 
 ```bash
-.venvs/lineageflow_venv/bin/python tools/gen_lineageflow_n1000_fastas.py \
-  --seed 42 --n 1000 --nfe 10 --n-rounds 3 --restart-min-nfe 5 \
-  --token-keep-weights conservation \
-  --profile-json verification_outputs/gap69-lineageflow-profile/profiles.json \
-  --outdir verification_outputs/gap70-lineageflow-position/seed42
+bash reproduce/gap70_position_blend.sh          # SEED=42 by default
 ```
 
-then score both arms with the K7 recipe
-(`docs/audit/gap48-k7-two-arm-novelty.md`) on the SAME samples.
+It generates **both** framework arms (scalar control and treatment) from the
+current commit rather than reusing the W166 artifacts, so the C-vs-B comparison
+never crosses a code era; it asserts the two `baseline.fasta` files are
+byte-identical (the flag only touches the framework arm) before scoring, which
+is what makes the per-record pairing valid. `B`'s novelty is then checked
+against K7's 3.7 % as a sanity read, not used as an input.
+
+Note the generator cannot reproduce W166's exact `framework.fasta` (no recorded
+generation command survives for `data/lineageflow_n1000/`), so `N_B` here is
+this commit's scalar arm, not necessarily 3.7 %. Rule 2 is written against
+`N_A` for that reason — the ratio is internal to the run.
+
