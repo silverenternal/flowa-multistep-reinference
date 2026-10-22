@@ -186,8 +186,65 @@ Arm D is not a paired arm (it decodes by categorical sampling rather than
 
 ### 1.3 Arm C — conservation-weighted init (seed 42)
 
-_Pending: `reproduce/gap69_profile_init.sh` is running at the pre-registered
-config (N=1000, NFE=150, R=3, β=1.0). Decision rule §0.4 applies unchanged._
+Config exactly as pre-registered: `N=1000`, `NFE=150`, `R=3`, `β=1.0`,
+`--init-profile conservation`, same prior, `seed 42`.
+Manifest: `init_profile_is_active = true`, `framework_fallback_per_family_count = {}`
+(the §1.4 guard passed, so this is the profile arm).
+
+**Pairing.** `baseline.fasta` md5 is `363cc04d…`, byte-identical to
+`gap58-r1-beta1-n1000/seed42/baseline.fasta`. The `--init-profile` flag touches
+only the framework arm's fresh-restart state, so the two runs are record-paired
+by `qid` and per-record differences are meaningful.
+
+| metric | A baseline | B init-only | **C conservation** | C/B |
+|---|---:|---:|---:|---:|
+| `hmmscan_total_hits` | 158 | 284 | **2329** | **8.20×** |
+| `hmmscan_unique_queries` | 145 | 239 | **394** | 1.65× |
+| `coverage_any_hit` | 0.145 | 0.239 | **0.394** | 1.65× |
+| `intended_hit_rate_evalue` | 0.000 | 0.000 | **0.040** | — |
+| `top1_family_accuracy` | 0.000 | 0.000 | **0.080** | — |
+| `topk_contains_intended` | 0.000 | 0.000 | **0.184** | — |
+| `score_margin_mean` | 2.336 | 2.336 | **3.429** | — |
+
+**Paired per-record contrast, C − B (n = 1000, pairing by `qid`):**
+
+| quantity | mean diff | sd | t | p (normal) | 95 % bootstrap CI |
+|---|---:|---:|---:|---:|---|
+| hits per record | **+2.045** | 4.944 | 13.08 | < 1e−38 | **[+1.744, +2.354]** |
+| intended-hit rate | **+0.040** | 0.196 | 6.45 | 1.1e−10 | **[+0.028, +0.052]** |
+
+**Rule 1 (§0.4): FIRES.** `H_C / H_B = 8.20 ≥ 1.15`, and the paired CI on
+`H_C − H_B` excludes 0 by a wide margin. Escalation to seeds 43/44 is therefore
+mandatory under the pre-registration, and `reproduce/gap69_profile_escalate.sh`
+is running it. **No verdict is issued until those two seeds land** — §0.4.3
+requires 3 seeds for `SUPPORTED`.
+
+**The gain is not a few records and not a diversity collapse.**
+
+* 345 records improve, 147 worsen, 508 are unchanged. The improvement is
+  broad-based, not a handful of outliers: the top-10 records hold 8.6 % of C's
+  hits (B: 9.2 %).
+* 1000/1000 sequences are unique in every arm; length distribution is identical
+  to B (mean 90.4, sd 35.6, min 30, max 150) because lengths come from the same
+  `(family, length)` RNG stream. So the hit count is not inflated by duplicate
+  sequences.
+
+**C vs D (the ceiling reference) — the model now adds, it no longer subtracts.**
+Arm D, with no model at all, scored 1634. Arm C scores 2329, i.e. **1.42× the
+pure-profile reference**, and beats D on `topk_contains_intended`
+(0.184 vs 0.142). D still leads on `hmmscan_unique_queries` (430 vs 394),
+`intended_hit_rate_evalue` (0.060 vs 0.040) and `top1` (0.11 vs 0.08). Read
+honestly: **C is not uniformly better than D**. The `MODEL_REDUNDANT` falsifier
+(`H_D ≥ H_C`) is not triggered, but neither is the model shown to dominate pure
+sampling on family identity. The per-record truncation caveat below applies to D
+more than to C.
+
+**Caveat on the per-record hit cap.** `family_validity_per_seq.jsonl` records at
+most 20 hits per sequence. C's per-record sum (2329) equals its
+`hmmscan_total_hits`, so C is unaffected. D's per-record sum is 1485 against a
+reported 1634 — 149 hits are truncated. The D reference is therefore a **lower
+bound** on its own total, which only strengthens the reading that C > D on total
+hits and weakens any claim that C > D on everything.
 
 ### 1.4 An invalidated run, and the guard it produced
 
@@ -227,3 +284,57 @@ defensive fallback is invisible unless someone reads
 the fallback is unambiguously invalid.
 
 
+
+---
+
+## 2. Status
+
+| item | state |
+|---|---|
+| §0 pre-registration | committed before any code/run (`9ec61f6d`) |
+| arm D (ceiling reference) | done, CPU, `armD_hmm_draw/` |
+| arm C seed 42 | done, rule 1 **fires** (`report_seed42.json`) |
+| seeds 43/44 (B and C) | **running** — `reproduce/gap69_profile_escalate.sh` |
+| verdict | **deferred** until 3 seeds land (§0.4.3) |
+
+The escalation runs **both** arms per seed. Arm B exists only at seed 42 on this
+config: the D-004b attribution runs
+(`verification_outputs/r1_d004b_attribution_q4_2026/`) are `NFE=10` and are not
+comparable to the `NFE=150` gap58 config. Each seed therefore needs two
+generations (~7.5 h each) plus scoring, and the driver asserts the two runs'
+baseline arms are byte-identical before the seed is accepted.
+
+## 3. What this will and will not license
+
+Written now, before the 3-seed verdict, so the claim cannot be inflated after
+the fact.
+
+**If seeds 43/44 confirm rule 1**, the defensible statement is narrow and
+mechanical:
+
+> On R1 (LineageFlow, `N=1000`, `NFE=150`, `R=3`, `β=1.0`), replacing the
+> per-record isotropic `softmax(randn)` fresh-restart state with the assigned
+> family's Pfam match emission, weighted by that column's normalised information
+> content, raises `hmmscan_total_hits` by a factor of ~8 over the D-004b
+> init-only arm, and moves `intended_hit_rate_evalue` off exactly zero for the
+> first time.
+
+**It does not license:**
+
+* "protein knowledge improves protein generation" — one metric, one config,
+  one adapter, one decode path.
+* "the model learned family structure" — arm D reaches a comparable regime with
+  no model at all; what C shows is that the *init* carries the signal and the
+  model no longer destroys it.
+* any statement about foldability, novelty or designability. Only
+  `family_validity` was scored.
+* escape from limitation **L1**. The positional correspondence
+  `state position i ↔ profile column round(i·(M−1)/(span−1))` is a proxy with no
+  aligner. If C's gain were an artifact of that proxy, this experiment cannot
+  tell — a follow-up would need `hmmalign` per record, which is out of budget.
+  This is the single largest threat to the result and it is declared in §0.5,
+  not discovered afterwards.
+
+The R1 claim in the paper stays "empirical perturbation result" until the
+3-seed verdict exists. If seeds 43/44 fail, that is where it stays, and this
+section is the record that the boundary was pre-declared.

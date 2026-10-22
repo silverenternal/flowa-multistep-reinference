@@ -16,7 +16,14 @@ cd "$(dirname "$0")/.."
 
 PY=".venvs/lineageflow_venv/bin/python"
 PROFILES="verification_outputs/gap69-lineageflow-profile/profiles.json"
-OUT="verification_outputs/gap69-lineageflow-profile/seed42"
+
+# Defaults reproduce the pre-registered seed-42 arm C exactly. The same script
+# is reused for the seeds 43/44 escalation (SEED=43 TAG=_init_only INIT_PROFILE=off
+# produces arm B on the same config) so there is one code path, not two.
+SEED=${SEED:-42}
+INIT_PROFILE=${INIT_PROFILE:-conservation}
+TAG=${TAG:-}
+OUT=${OUT:-verification_outputs/gap69-lineageflow-profile/seed${SEED}${TAG}}
 
 if [[ ! -f "$PROFILES" ]]; then
   echo "[gap69] building Pfam profiles"
@@ -53,7 +60,7 @@ done
 mkdir -p "$OUT"
 {
   echo "=== command ==="
-  echo "bash reproduce/gap69_profile_init.sh"
+  echo "bash reproduce/gap69_profile_init.sh  # SEED=$SEED INIT_PROFILE=$INIT_PROFILE TAG=$TAG"
   echo "=== start_utc ==="
   date -u +%FT%TZ
   echo "=== gpu ==="
@@ -61,15 +68,20 @@ mkdir -p "$OUT"
   echo "=== git ==="
   git rev-parse HEAD
   echo "=== design ==="
-  echo "init_profile=conservation; beta=1.0 (m=0); N=1000, NFE=150, R=3, seed 42"
+  echo "init_profile=$INIT_PROFILE; beta=1.0 (m=0); N=1000, NFE=150, R=3, seed $SEED"
 } > "$OUT/METADATA.txt"
 
+PROFILE_ARGS=()
+if [[ "$INIT_PROFILE" != "off" ]]; then
+  PROFILE_ARGS=(--init-profile "$INIT_PROFILE" --profile-json "$PROFILES")
+fi
+
 "$PY" tools/gen_lineageflow_n1000_fastas.py \
-  --seed 42 --n 1000 \
+  --seed "$SEED" --n 1000 \
   --upstream-eval-len-bias short \
   --nfe 150 --n-rounds 3 --restart-min-nfe 5 \
   --temperature 1.0 --beta-override 1.0 \
-  --init-profile conservation --profile-json "$PROFILES" \
+  "${PROFILE_ARGS[@]}" \
   --outdir "$OUT" 2>&1 | tee "$OUT/run.log"
 
 # MMseqs2 uses a shared relative temp dir (results/mmseqs_tmp) — score serially.
