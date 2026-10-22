@@ -299,6 +299,7 @@ not_in_nav: |
   audit/gap70-kanzi-latent.md
   audit/gap70-lineageflow-position-blend.md
   audit/gap74-conditional-mean-bound.md
+  audit/mechanism-core-driver.md
   audit/plan-2026-10-23-win-requirement.md
   audit/gap73-r5c-statistic.md
   audit/gap75-r5c-n1000-table.md

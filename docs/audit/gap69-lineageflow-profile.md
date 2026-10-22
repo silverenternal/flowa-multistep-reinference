@@ -323,7 +323,24 @@ defensive fallback is invisible unless someone reads
 `framework_fallback_per_family_count`. The guard closes it for the arms where
 the fallback is unambiguously invalid.
 
+### 1.5 Second abort — user-directed, because `cuda:0` ran out of memory
 
+2026-10-23 03:02 local. The user reported that GPU 0 was out of memory and asked
+for the framework's job to be stopped. The escalation process tree
+(`gap69_profile_escalate.sh` → `gap69_profile_init.sh` → the generator) was
+terminated with `SIGTERM`; no framework process remains on the device. The
+remaining GPU 0 occupancy after the stop belongs to other jobs, not to this repo.
+
+The interrupted cell was `seed43_init_only` (arm B, `--init-profile off`). Its
+`framework.fasta` held **134 of 1000 records** and ended on a header with no
+sequence, i.e. truncated mid-write. The whole directory is quarantined as
+`verification_outputs/gap69-lineageflow-profile/seed43_init_only_INVALID_aborted/`
+and no number from it is used. The resume key of
+`gap69_profile_escalate.sh` is `upstream_eval.json`, which was never written, so
+a later rerun regenerates the cell rather than skipping it.
+
+Cost: ~40 min of the first of four generations. The driver is unchanged and the
+pre-registration is untouched.
 
 ---
 
@@ -334,7 +351,7 @@ the fallback is unambiguously invalid.
 | §0 pre-registration | committed before any code/run (`9ec61f6d`) |
 | arm D (ceiling reference) | done, CPU, `armD_hmm_draw/` |
 | arm C seed 42 | done, rule 1 **fires** (`report_seed42.json`) |
-| seeds 43/44 (B and C) | **running** — `reproduce/gap69_profile_escalate.sh` |
+| seeds 43/44 (B and C) | **stopped** (§1.5) — resumable, nothing scored |
 | verdict | **deferred** until 3 seeds land (§0.4.3) |
 
 The escalation runs **both** arms per seed. Arm B exists only at seed 42 on this
