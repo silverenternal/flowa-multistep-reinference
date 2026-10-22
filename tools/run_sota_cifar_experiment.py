@@ -286,6 +286,47 @@ def build_scheduler(
 # ---------------------------------------------------------------------------
 
 
+def _check_matched_nfe(
+    baseline_steps: int,
+    rows: list[dict[str, Any]],
+    *,
+    require: bool,
+) -> tuple[bool, dict[str, dict[str, int]]]:
+    """GAP-71 / GAP-66 — is every framework arm at the baseline's total NFE?
+
+    ``--match-nfe budget`` (the driver default) allocates steps from ``n_cap``
+    and does **not** constrain the total. Wave 280 therefore quoted ``+52.33 %``
+    at framework NFE=3 against baseline NFE=2. This helper is the single place
+    that decides whether a run is a matched-compute comparison; it returns the
+    verdict and the per-arm mismatch so ``summary.json`` can record both.
+
+    Units are integration *steps* on both sides (the driver's own convention —
+    ``baseline_nfe`` in the headline JSON is ``baseline_num_steps``), so the
+    comparison stays apples-to-apples under either solver.
+    """
+    baseline = int(baseline_steps)
+    framework_by_arm = {
+        str(r["name"]): int(r.get("framework_total_nfe", 0))
+        for r in rows
+        if str(r["name"]) != "baseline"
+    }
+    mismatch = {
+        name: {"baseline": baseline, "framework": steps}
+        for name, steps in framework_by_arm.items()
+        if steps != baseline
+    }
+    matched = not mismatch
+    if not matched:
+        message = (
+            "[run_sota_cifar_experiment] NFE MISMATCH "
+            f"baseline={baseline} framework={framework_by_arm}"
+        )
+        if require:
+            raise SystemExit(message + " (--require-matched-nfe)")
+        print(message + " — delta is NOT a matched-compute comparison", flush=True)
+    return matched, mismatch
+
+
 def _make_adapter(
     checkpoint: Path | None,
     *,
@@ -294,6 +335,7 @@ def _make_adapter(
     device: str = "cpu",
     enable_paper_uplift_27: bool = False,
     paper_uplift_27_e_rho: float | None = None,
+    spectral_band_fraction: float | None = None,
 ) -> Any:
     """Return a fresh :class:`RectifiedFlowCIFARAdapter`.
 
@@ -319,6 +361,11 @@ def _make_adapter(
         paper_uplift_27_e_rho=(
             float(paper_uplift_27_e_rho)
             if paper_uplift_27_e_rho is not None
+            else None
+        ),
+        spectral_band_fraction=(
+            float(spectral_band_fraction)
+            if spectral_band_fraction is not None
             else None
         ),
     )
@@ -1367,6 +1414,35 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
             "q*(m) = sqrt((1+m)/(1-m))."
         ),
     )
+    parser.add_argument(
+        "--spectral-band-fraction",
+        dest="spectral_band_fraction",
+        type=float,
+        default=None,
+        help=(
+            "GAP-71 — replace the per-pixel restart blend with a "
+            "radial-frequency selective one: the prior keeps the bands below "
+            "the cutoff, the fresh draw gets the bands above it, raised-cosine "
+            "edge. The cutoff IS the memory fraction, so the operator has no "
+            "new hyperparameter and m=0 / m=1 reproduce the per-pixel "
+            "endpoints. Omitted (default) keeps the per-pixel blend "
+            "byte-identical. See docs/audit/gap71-image-spectral.md §0.2."
+        ),
+    )
+    parser.add_argument(
+        "--require-matched-nfe",
+        dest="require_matched_nfe",
+        action="store_true",
+        default=False,
+        help=(
+            "GAP-71 / GAP-66 — exit non-zero if the framework arm's total NFE "
+            "differs from the baseline's, BEFORE any FID is computed. "
+            "`--match-nfe budget` (the default) does NOT constrain the total, "
+            "which is how Wave 280 quoted a +52.33%% delta at framework NFE=3 "
+            "vs baseline NFE=2. summary.json always records `nfe_matched`, so "
+            "an unmatched run is visible either way."
+        ),
+    )
     args = parser.parse_args(argv)
     if bool(args.quick):
         args.n_samples = QUICK_N_SAMPLES
@@ -1481,6 +1557,7 @@ def main(argv: list[str] | None = None) -> int:
         device=str(args.device),
         enable_paper_uplift_27=bool(args.paper_uplift_27),
         paper_uplift_27_e_rho=args.paper_uplift_27_e_rho,
+        spectral_band_fraction=getattr(args, "spectral_band_fraction", None),
     )
     if str(args.device) == "cuda" and str(adapter._mode) != "torch":  # noqa: SLF001
         raise RuntimeError("cuda experiment requires torch and a valid checkpoint")
@@ -1551,6 +1628,17 @@ def main(argv: list[str] | None = None) -> int:
             f"wall={wall:.1f}s sel_ratio_last={sel_last:.4f}",
             flush=True,
         )
+
+    # --- GAP-71 / GAP-66: matched-total-NFE guard (BEFORE any FID) ---
+    # `--match-nfe budget` does not constrain the framework total; Wave 280
+    # quoted a delta at framework NFE=3 vs baseline NFE=2. Record the check
+    # unconditionally, and fail closed when the caller asked for it.
+    baseline_steps = int(args.baseline_num_steps)
+    nfe_matched, nfe_mismatch = _check_matched_nfe(
+        baseline_steps,
+        rows,
+        require=bool(getattr(args, "require_matched_nfe", False)),
+    )
 
     # --- FID computation (baseline + each scheduler) ---
     ref_path = Path(args.ref_npz)
@@ -1659,6 +1747,10 @@ def main(argv: list[str] | None = None) -> int:
         "framework_samples": int(framework_samples),
         "baseline_num_steps": int(args.baseline_num_steps),
         "match_nfe": str(args.match_nfe),
+        "nfe_matched": bool(nfe_matched),
+        "nfe_mismatch": nfe_mismatch,
+        "require_matched_nfe": bool(getattr(args, "require_matched_nfe", False)),
+        "spectral_band_fraction": getattr(args, "spectral_band_fraction", None),
         "wall_clock_s": float(total_wall),
         "paper_uplift_27_enabled": bool(getattr(args, "paper_uplift_27", False)),
         "paper_uplift_27_e_rho": getattr(adapter, "_paper_uplift_27_e_rho", None),

@@ -331,6 +331,51 @@ def _synthesize_image_like_tensor(rng: np.random.Generator) -> ArrayF64:
     return rng.standard_normal(RF_CIFAR_STATE_SHAPE).astype(np.float64)
 
 
+def _spectral_restart_blend(
+    prior_x: ArrayF64,
+    fresh_x: ArrayF64,
+    cut: float,
+) -> ArrayF64:
+    """GAP-71 — radial-frequency selective restart blend.
+
+    Keeps the prior's coefficients below the radial cutoff ``cut`` and the fresh
+    draw's above it, with a raised-cosine transition so a hard edge does not
+    ring. ``cut`` is the memory fraction itself, so the operator has no new
+    hyperparameter and its endpoints agree with the per-pixel blend:
+
+    * ``cut <= 0`` → the fresh draw (same as ``m = 0`` per-pixel);
+    * ``cut >= 1`` → the prior (same as ``m = 1`` per-pixel).
+
+    The cutoff is radial and therefore not a semantic band (limitation L1 in
+    ``docs/audit/gap71-image-spectral.md``); it is the cheapest operator that is
+    genuinely frequency-selective. FFT imposes circular periodicity (L2).
+    """
+    if cut <= 0.0:
+        return np.array(fresh_x, dtype=np.float64)
+    if cut >= 1.0:
+        return np.array(prior_x, dtype=np.float64)
+
+    height, width = prior_x.shape[-2], prior_x.shape[-1]
+    fy = np.fft.fftfreq(height)
+    fx = np.fft.fftfreq(width)
+    radius = np.sqrt(fy[:, None] ** 2 + fx[None, :] ** 2)
+    f_max = float(radius.max())
+    freq = radius / f_max  # normalised to [0, 1]
+
+    # Transition width: one bin, but never narrower than 10 % of the axis.
+    edge = max(1.0 / float(min(height, width)) / f_max, 0.1)
+    lo = cut - 0.5 * edge
+    hi = cut + 0.5 * edge
+    ramp = np.clip((hi - freq) / (hi - lo), 0.0, 1.0)
+    weight = 0.5 - 0.5 * np.cos(np.pi * ramp)  # 1 below lo, 0 above hi
+
+    prior_hat = np.fft.fft2(prior_x, axes=(-2, -1))
+    fresh_hat = np.fft.fft2(fresh_x, axes=(-2, -1))
+    w = weight[None, :, :]
+    blended = np.fft.ifft2(w * prior_hat + (1.0 - w) * fresh_hat, axes=(-2, -1))
+    return np.ascontiguousarray(np.real(blended), dtype=np.float64)
+
+
 # ---------------------------------------------------------------------------
 # Torch velocity field — production path; requires ``torch`` runtime
 # ---------------------------------------------------------------------------
@@ -758,6 +803,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         device: str = "cpu",
         enable_paper_uplift_27: bool = False,
         paper_uplift_27_e_rho: float | None = None,
+        spectral_band_fraction: float | None = None,
     ) -> None:
         if int(num_steps) <= 0:
             raise ValueError(ERR_RF_CIFAR_NUM_STEPS)
@@ -768,6 +814,17 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
                 f"{ERR_RF_CIFAR_INTEGRATOR_UNKNOWN}:{solver!r}"
                 f"; expected one of {RF_CIFAR_INTEGRATORS!r}"
             )
+        # GAP-71 — spectral restart blend (default off = byte-identical).
+        if spectral_band_fraction is not None:
+            _sbf = float(spectral_band_fraction)
+            if not (0.0 < _sbf < 1.0):
+                raise ValueError(
+                    "spectral_band_fraction_must_be_in_open_unit_interval:"
+                    f"{spectral_band_fraction!r}"
+                )
+            self._spectral_band_fraction: float | None = _sbf
+        else:
+            self._spectral_band_fraction = None
         self._num_steps = int(num_steps)
         self._seed_offset = int(seed_offset)
         self._synthetic_hidden = int(synthetic_hidden)
@@ -983,24 +1040,35 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         fresh_x = _synthesize_image_like_tensor(np.random.default_rng(restart_seed))
 
         m = max(0.0, min(1.0, float(memory_fraction)))
-        blended = (m * prior_x + (1.0 - m) * fresh_x).astype(np.float64)
+        if self._spectral_band_fraction is None:
+            blended = (m * prior_x + (1.0 - m) * fresh_x).astype(np.float64)
+            spectral_active = False
+        else:
+            # GAP-71 — `cut = m`, so the endpoints still agree with the
+            # per-pixel operator and there is no new hyperparameter.
+            blended = _spectral_restart_blend(prior_x, fresh_x, m)
+            spectral_active = True
         blended = np.clip(blended, -RF_CIFAR_CLAMP, RF_CIFAR_CLAMP)
 
-        next_digest = digest_state(
-            {
-                "kind": "restart",
-                "src_digest": state.native_state_digest,
-                "policy_hash": str(policy.policy_hash),
-                "source_round": next_round,
-                "beta": float(beta),
-                "memory_fraction": float(memory_fraction),
-                "blended_first": [
-                    float(blended[0, 0, 0]),
-                    float(blended[0, 0, 1]),
-                    float(blended[0, 1, 0]),
-                ],
-            }
-        )
+        digest_payload = {
+            "kind": "restart",
+            "src_digest": state.native_state_digest,
+            "policy_hash": str(policy.policy_hash),
+            "source_round": next_round,
+            "beta": float(beta),
+            "memory_fraction": float(memory_fraction),
+            "blended_first": [
+                float(blended[0, 0, 0]),
+                float(blended[0, 0, 1]),
+                float(blended[0, 1, 0]),
+            ],
+        }
+        if spectral_active:
+            # Conditional field keeps the default path byte-identical.
+            digest_payload["spectral_band_fraction"] = float(
+                self._spectral_band_fraction
+            )
+        next_digest = digest_state(digest_payload)
         self._native_states.put(
             next_digest,
             {
