@@ -176,3 +176,90 @@ Re-scope, in order:
 * `docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.md` and `tnnls_submission/**`
   are untouched: nothing here changes a recorded claim, it removes a planned
   one.
+
+---
+
+## 7. The dose-response: κ is a checkpoint marker, not a lever
+
+§4 named κ as the surviving candidate and §5 step 2 required a within-checkpoint
+dose-response before any threshold could be chosen. It was run on CPU
+(`reproduce/gap78_kappa_dose_response.sh`; MNIST-FM is a NumPy adapter, so no
+GPU was used).
+
+**Design.** Four checkpoints × `β ∈ {0.3, 0.5, 0.7}` (so `m = 0.7, 0.5, 0.3`),
+N = 200 **screen**, seed 42, NFE = 50, `R = 4`, `--mean-preserve`,
+`--seed-keyed-prior --shared-prior`. The shared prior is mandatory: with it the
+first 200 rows of the N = 1000 baseline draw are byte-identical to the N = 200
+draw, so this screen is a nested subsample. Without it every arm draws its own
+`x0` and the production baseline FID moves from 9.967 to 11.777 at the same
+checkpoint, NFE, β and seed — an 18 % shift that flipped a +1.2 % loss into an
+apparent −3.7 % win. That mistake was made and caught during this increment; the
+first run is quarantined as `gap78-kappa-dose-screen_INVALID_no_shared_prior/`
+and nothing from it is used.
+
+**Result** (`cosine` arm; the other two arms agree to within ~1 pp, full table in
+`verification_outputs/gap78-kappa-dose-screen/kappa_dose.json`):
+
+| checkpoint | β | κ | ΔFID | within-checkpoint slope |
+|---|---:|---:|---:|---|
+| `production` | 0.3 | 0.9543 | −0.75 % | |
+| `production` | 0.5 | 0.9540 | −0.25 % | κ ↓ ⇒ **worse** |
+| `production` | 0.7 | 0.9337 | +0.00 % | |
+| `w16e1_60k` | 0.5 | 0.8708 | −0.33 % | |
+| `w16e1_60k` | 0.7 | 0.8008 | +2.01 % | κ ↓ ⇒ **worse** |
+| `w16e1_10k` | 0.5 | 0.6793 | −8.07 % | |
+| `w16e1_10k` | 0.7 | 0.6517 | −4.36 % | κ ↓ ⇒ **worse** |
+| `w16e1_5k` | 0.3 | 0.6680 | −13.40 % | |
+| `w16e1_5k` | 0.5 | 0.5535 | −15.42 % | non-monotone |
+| `w16e1_5k` | 0.7 | 0.4998 | −11.94 % | |
+
+**The cross-section is perfect and the within-checkpoint slopes point the other
+way.** At β = 0.5 the four checkpoints order exactly by κ
+(0.954 → 0.871 → 0.679 → 0.554 maps to −0.25 → −0.33 → −8.07 → −15.42 %). But
+when κ is moved *inside* a checkpoint, lowering it makes ΔFID **worse** on
+`production`, `w16e1_60k` and `w16e1_10k`, and is non-monotone on `w16e1_5k`
+(best at κ = 0.554, worse on both sides).
+
+This is Simpson's paradox on the same statistic, and it is decisive: κ does not
+cause the benefit, it indexes the checkpoint. The gate is dead in **both** forms
+— rho (which fails to order the outcomes at all, §2) and κ (which orders them
+only across checkpoints, §7). No threshold exists that would survive the
+within-checkpoint test.
+
+**Two things this run does establish**, both useful:
+
+1. **The `w16e1_5k` win is β-robust.** −13.40 / −15.42 / −11.94 % across
+   β = 0.3 / 0.5 / 0.7. It is not a knob artefact, and it does not depend on
+   landing on a lucky β.
+2. **No restart knob makes the loss cells win.** Across β ∈ {0.3, 0.5, 0.7} and
+   all three arms, `production` stays inside [−1.44 %, +2.52 %] and
+   `w16e1_60k` inside [−0.42 %, +5.69 %] at N = 200. The direction that helps
+   them most is β = 0.3 (production −0.75 %, 60k's best arm at β = 0.5), and the
+   direction that hurts most is β = 0.7 — the opposite of what a "more
+   contraction is better" reading would predict.
+
+**Resolution caveat.** The loss cells move by ~1–2 pp across the whole β range,
+which is below what N = 200 can resolve: at N = 1000 the same β = 0.5
+configuration reads +1.23 % on `production` and +2.43 % on `w16e1_60k`. So this
+screen ranks the large effects and says nothing reliable about the small ones.
+The decisive comparison for those two cells has to be at N = 1000.
+
+---
+
+## 8. Where GAP-78 stands
+
+* The rho gate is falsified (§2). The κ gate is falsified (§7). **No gate.**
+* The mechanism that survives is the one in §4 read *descriptively*: the restart
+  averages the model's conditional noise, so a noisy checkpoint gains a lot and
+  a converged one gains nothing. That is a statement about which checkpoints
+  benefit, and it is not something the framework can select on — the observable
+  that predicts it is the checkpoint's identity, not a measurable knob.
+* The only remaining lever for the two loss cells is **weak dominance at a
+  better β**: find a β whose N = 1000 ΔFID is within the +1 % margin on
+  `production` and `w16e1_60k` while keeping the `w16e1_5k` / `w16e1_10k`
+  strict gains. β = 0.3 is the candidate the screen points at (production
+  −0.75 %, 5k −13.40 % at N = 200); it is untested at N = 1000.
+* If β = 0.3 at N = 1000 also lands outside the margin on the loss cells, then
+  R5c cannot be won by any restart configuration, and the cell's honest status
+  is a loss on two of four checkpoints. That outcome is not written here in
+  advance — it is the experiment the next increment has to run.
