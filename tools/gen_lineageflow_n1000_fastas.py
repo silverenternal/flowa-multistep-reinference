@@ -604,6 +604,52 @@ def _build_init_perturbations(
     return out
 
 
+def _build_token_keep_weights(
+    family_ids: list[str],
+    *,
+    mode: str,
+    profile_json: Path | None,
+) -> dict[str, Any] | None:
+    """GAP-70 (LineageFlow) — per-position ``keep`` weights from Pfam conservation.
+
+    ``w[j] = 1 - c[j]``: conserved columns keep the FRESH draw, variable columns
+    keep the PRIOR. That is the opposite polarity to GAP-69's init, and it is
+    deliberate — GAP-69 raised Pfam recognisability, K7 penalises it.
+
+    Returns ``None`` when ``mode == "off"`` so every pre-GAP-70 path stays
+    byte-identical. Raises ``SystemExit`` on a missing profile: a silent
+    fallback would make the arm indistinguishable from the scalar control.
+    """
+    if str(mode) == "off":
+        return None
+    if str(mode) != "conservation":
+        raise SystemExit(f"unknown_token_keep_weights:{mode}")
+    if profile_json is None:
+        raise SystemExit("token_keep_weights_conservation_requires_profile_json")
+    import json as _json
+
+    import numpy as _np
+
+    from adaptive_reflow.adapters.lineageflow import LINEAGEFLOW_STATE_SHAPE
+
+    payload = _json.loads(Path(profile_json).read_text())
+    by_pf = {str(k).split(".")[0]: v for k, v in payload["families"].items()}
+    state_len = int(LINEAGEFLOW_STATE_SHAPE[0])
+    # Same colinear proxy as GAP-69 §0.5 L1: state position j <-> profile
+    # column round(j * (span - 1) / (state_len - 1)).
+    out: dict[str, Any] = {}
+    for fid in family_ids:
+        pf = str(fid).split(".")[0]
+        if pf not in by_pf:
+            raise SystemExit(f"profile_missing_family:{fid}")
+        cons = _np.asarray(by_pf[pf]["conservation"], dtype=_np.float64).reshape(-1)
+        idx = _np.rint(
+            _np.linspace(0.0, float(cons.shape[0] - 1), state_len)
+        ).astype(_np.int64)
+        out[fid] = _np.clip(1.0 - cons[idx], 0.0, 1.0)
+    return out
+
+
 def _build_lineageflow_adapter(
     family_id: str,
     seed: int,
@@ -613,6 +659,7 @@ def _build_lineageflow_adapter(
     classifier_bias_mode: str = "centered",
     profile_residual_fn: Any | None = None,
     perturbation: Any | None = None,
+    token_keep_weights: Any | None = None,
 ) -> Any | None:
     """Lazy-construct a synthetic-mode :class:`LineageFlowAdapter`.
 
@@ -674,6 +721,8 @@ def _build_lineageflow_adapter(
             # ``_compute_paper_quantities`` non-None and un-degenerates
             # the codimension-sheet ``n_cap``.
             profile_residual_fn=profile_residual_fn,
+            # GAP-70 — per-position restart blend (default None = scalar).
+            token_keep_weights=token_keep_weights,
             # GAP-69 — profile-aware fresh-restart state (additive, default
             # None = the D-004b isotropic draw, byte-identical).
             perturbation=perturbation,
@@ -883,6 +932,7 @@ def _write_framework_arm(
     start_index: int = 0,
     profile_residual_fn: Any | None = None,
     init_perturbations: dict[str, Any] | None = None,
+    token_keep_weights: dict[str, Any] | None = None,
 ) -> tuple[dict[str, int], dict[str, int]]:
     """Write the framework arm: drives :class:`LineageFlowAdapter` for each record.
 
@@ -935,6 +985,11 @@ def _write_framework_arm(
             perturbation=(
                 None if init_perturbations is None
                 else init_perturbations.get(family_id)
+            ),
+            # GAP-70 — per-family per-position keep weights (default None).
+            token_keep_weights=(
+                None if token_keep_weights is None
+                else token_keep_weights.get(family_id)
             ),
         )
 
@@ -1319,6 +1374,20 @@ def main() -> None:
         ),
     )
     p.add_argument(
+        "--token-keep-weights",
+        choices=("off", "conservation"),
+        default="off",
+        help=(
+            "GAP-70 (re-scoped to LineageFlow) — replace the scalar restart "
+            "blend with a per-position one, ``m_vec = m * w``. "
+            "``conservation`` sets ``w = 1 - c`` from the Pfam profile: "
+            "conserved columns keep the FRESH draw, variable columns keep the "
+            "prior. Opposite polarity to --init-profile on purpose (GAP-69 "
+            "raised Pfam recognisability, K7 penalises it). Default off = "
+            "byte-stable scalar blend. Requires --profile-json."
+        ),
+    )
+    p.add_argument(
         "--init-profile",
         choices=("off", "conservation"),
         default="off",
@@ -1482,6 +1551,12 @@ def main() -> None:
         init_profile=str(getattr(args, "init_profile", "off")),
         profile_json=getattr(args, "profile_json", None),
     )
+    # GAP-70 (LineageFlow) — per-position keep weights (additive, default off).
+    token_keep_weights = _build_token_keep_weights(
+        family_ids,
+        mode=str(getattr(args, "token_keep_weights", "off")),
+        profile_json=getattr(args, "profile_json", None),
+    )
 
     manifest: dict[str, Any] = {
         "n": int(args.n),
@@ -1590,6 +1665,11 @@ def main() -> None:
             else str(args.profile_json)
         ),
         "init_profile_is_active": bool(init_perturbations is not None),
+        # GAP-70 — per-position restart blend (``m_vec = m * w``).
+        "token_keep_weights_mode": str(
+            getattr(args, "token_keep_weights", "off")
+        ),
+        "token_keep_weights_is_active": bool(token_keep_weights is not None),
     }
 
     # ---- Baseline arm (bare RNG, preserved byte-shape) -----------------
@@ -1631,6 +1711,8 @@ def main() -> None:
         # GAP-69 — per-family profile-aware fresh-restart policy
         # (default None = the D-004b isotropic draw, byte-identical).
         init_perturbations=init_perturbations,
+        # GAP-70 — per-position restart blend (default None = scalar).
+        token_keep_weights=token_keep_weights,
     )
     manifest["framework_per_family_count"] = dict(framework_counts)
     manifest["framework_fallback_per_family_count"] = dict(fallback_counts)

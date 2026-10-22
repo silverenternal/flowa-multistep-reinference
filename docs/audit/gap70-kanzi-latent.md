@@ -154,3 +154,9 @@ measurement that does not exist. Two re-scopes are available:
    still cannot move K7.
 
 This agent does not choose between them.
+
+**Resolution (user decision, 2026-10-23).** Re-scope **option 1** was chosen:
+GAP-70 is now a LineageFlow position-selective blend. The Kanzi flag landed in
+this commit stays behind its default-off switch but is not on the critical path.
+The active pre-registration is
+[`gap70-lineageflow-position-blend.md`](gap70-lineageflow-position-blend.md).

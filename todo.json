@@ -68,7 +68,7 @@
   {
    "id": "GAP-70-ADAPTER-KANZI-LATENT",
    "priority": "P1",
-   "status": "CODE_COMPLETE / EVALUATION_BLOCKED — token-selective blend landed default-off (fa401be7). But K7 is a LineageFlow cell, not a Kanzi cell, and no Kanzi driver computes validity or novelty, so the acceptance test cannot run. See docs/audit/gap70-kanzi-latent.md §0.2 and §2 (user decision on re-scope).",
+   "status": "CODE_COMPLETE (re-scoped to LineageFlow) — the Kanzi token-selective blend landed default-off (fa401be7) but cannot reach K7: K7 is a LineageFlow cell and no Kanzi driver computes validity/novelty (docs/audit/gap70-kanzi-latent.md §0.2). Per user decision (2026-10-23) the gap is re-scoped to a per-position restart blend on LineageFlowAdapter: m_vec = m*w with w = 1 - c, polarity deliberately opposite to GAP-69. Code landed default-off; pre-registration in docs/audit/gap70-lineageflow-position-blend.md §0. GPU run pending (must be serial with GAP-69: same venv, same GPU, shared mmseqs tmp).",
    "depends_on": "GAP-67",
    "est_wall": "~1 day research + code; ~4 h GPU",
    "gap": "K7 is the least explained number in the paper: 12.6x less novel (3.7% vs 46.6%, McNemar p=1e-102). GAP-60 showed it is not a diversity collapse - within-generation clustering is unchanged - so the samples are diverse but all close to KNOWN Pfam families. Kanzi's state is a 64x64 continuous latent with an autoregressive decoder prior, and the blend treats all 4096 coordinates alike. A scalar blend in that space is a global push toward the decoder's high-likelihood region, which is exactly the behaviour K7 measures.",

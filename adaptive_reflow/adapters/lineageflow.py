@@ -1691,6 +1691,7 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         classifier_bias_mode: str = LINEAGEFLOW_CLASSIFIER_BIAS_MODE_CENTERED,
         perturbation: PerturbationPolicy | None = None,
         profile_residual_fn: Callable[[float], float] | None = None,
+        token_keep_weights: Any | None = None,
     ) -> None:
         if int(num_steps) <= 0:
             raise ValueError(ERR_LINEAGEFLOW_NUM_STEPS)
@@ -1831,6 +1832,35 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
                 f"{LINEAGEFLOW_CLASSIFIER_BIAS_MODES!r}"
             )
         self._classifier_aware_restart_bias_mode = str(classifier_bias_mode)
+        # GAP-70 (re-scoped to LineageFlow, where K7 lives) — per-position
+        # blend: ``m_vec = m * w``. ``w`` is a property of the family, not of
+        # the record: the state is always ``LINEAGEFLOW_STATE_SHAPE`` and the
+        # generator builds one adapter per family, so a constant vector is the
+        # whole interface. ``None`` (default) keeps the scalar blend.
+        self._token_keep_weights: np.ndarray | None = None
+        if token_keep_weights is not None:
+            _w = np.asarray(token_keep_weights, dtype=np.float64).reshape(-1)
+            if _w.shape[0] != int(LINEAGEFLOW_STATE_SHAPE[0]):
+                raise ValueError(
+                    "token_keep_weights_wrong_length:"
+                    f"{_w.shape[0]}!={int(LINEAGEFLOW_STATE_SHAPE[0])}"
+                )
+            if not np.all(np.isfinite(_w)):
+                raise ValueError("token_keep_weights_nonfinite")
+            if float(_w.min()) < 0.0 or float(_w.max()) > 1.0:
+                raise ValueError(
+                    "token_keep_weights_out_of_unit_interval:"
+                    f"[{float(_w.min())},{float(_w.max())}]"
+                )
+            self._token_keep_weights = _w
+        if (
+            self._token_keep_weights is not None
+            and self._classifier_aware_restart_enabled
+        ):
+            raise ValueError(
+                "token_keep_weights_and_classifier_aware_restart_are_"
+                "mutually_exclusive"
+            )
         self._classifier_aware_restart_policy: (
             LineageFlowClassifierAwareRestart | None
         ) = None
@@ -2151,7 +2181,20 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         # today's scalar blend byte-identical for the 22 existing
         # tests; flipping the flag activates the per-position bias
         # without changing the surrounding renormalisation math.
-        if self._classifier_aware_restart_enabled:
+        if self._token_keep_weights is not None:
+            # GAP-70 — per-position redistribution of the schedule's memory
+            # fraction: ``m_vec = m * w``. Validated at construction, so
+            # there is no silent fallback to the scalar blend. This branch
+            # must stay exclusive: sharing the scalar ``else`` below would
+            # collapse ``m_vec`` back to ``mean(m * w)`` — a scalar blend
+            # wearing a vector's name.
+            keep = np.asarray(self._token_keep_weights, dtype=np.float64)
+            m_vec = np.clip(m * keep, 0.0, 1.0)
+            m_vec_b = m_vec.reshape(-1, 1)
+            blended = (m_vec_b * prior_theta
+                       + (1.0 - m_vec_b) * fresh_theta).astype(np.float64)
+            m = float(m_vec.mean())  # for the digest payload below.
+        elif self._classifier_aware_restart_enabled:
             if self._classifier_aware_restart_policy is None:
                 self._classifier_aware_restart_policy = (
                     LineageFlowClassifierAwareRestart(
