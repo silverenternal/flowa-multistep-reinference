@@ -1,7 +1,7 @@
 {
  "schema_version": "flowa-state-v7",
  "purpose": "Open work only: what is left, in what order, and the pre-registered acceptance test for each item. State, evidence ledger, venue metadata and closed gaps live in docs/audit/todo-history.md (sections 10-15).",
- "updated_at": "2026-10-22",
+ "updated_at": "2026-10-23",
  "history": "docs/audit/todo-history.md",
  "no_push": true,
  "commit_footer": "(USER AUTHORIZED, NO PUSH)",
@@ -40,7 +40,7 @@
   {
    "id": "GAP-69-ADAPTER-LINAGEFLOW-PROTEIN",
    "priority": "P0",
-   "status": "PLANNED",
+   "status": "IN_PROGRESS — seed 42 fired pre-registered rule 1 (C=2329 vs B=284 hits, 8.20x, paired CI [+1.744,+2.354]); seeds 43/44 escalating under reproduce/gap69_profile_escalate.sh. Verdict deferred until 3 seeds exist (docs/audit/gap69-lineageflow-profile.md §2).",
    "depends_on": "GAP-44 (paper-quantity channels), GAP-67",
    "est_wall": "~1 day research + code; ~10 h GPU",
    "gap": "R1's +74% hmmscan hits is the flagship positive, and its mechanism is a per-record RANDOM init (D-004b: init-only ~= full framework). That is a perturbation, not a design. Nothing in the adapter uses protein knowledge: the perturbation is isotropic over the ESM-2 embedding / sequence simplex, with no notion of conserved sites, family profiles, or foldability. GAP-60 showed the gain is not bought by diversity collapse, so the samples really are different - but we cannot say why, and a reviewer will ask.",
