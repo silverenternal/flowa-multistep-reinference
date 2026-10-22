@@ -503,6 +503,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         init_seed: int = 12345,
         blender: RestartBlenderProtocol | None = None,
         restart_noise_scale: float = 1.0,
+        restart_t0: float | None = None,
     ) -> None:
         if integrator not in ("euler", "rk4", "dormand_prince"):
             raise ValueError(f"unknown_integrator:{integrator}")
@@ -518,6 +519,17 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
             raise ValueError("base_channels_must_be_positive")
         if not np.isfinite(restart_noise_scale) or restart_noise_scale <= 0.0:
             raise ValueError("restart_noise_scale_must_be_positive_and_finite")
+        # GAP-74 — fixed restart time. ``None`` (default) keeps the
+        # driver-supplied ``t0``, which is what ties t0 = 1 - beta today.
+        if restart_t0 is not None:
+            _t0 = float(restart_t0)
+            if not np.isfinite(_t0) or not 0.0 <= _t0 <= 1.0:
+                raise ValueError(
+                    f"restart_t0_must_be_finite_in_[0,1]:{restart_t0!r}"
+                )
+            self._restart_t0: float | None = _t0
+        else:
+            self._restart_t0 = None
         self._integrator: MnistFmIntegratorMethod = integrator
         self._num_steps = int(num_steps)
         self._seed_offset = int(seed_offset)
@@ -808,6 +820,14 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         # every legacy call byte-identical.
         t_start = float(condition.delta_spec.get("t0", 0.0))  # type: ignore[attr-defined]
         t_end = float(condition.delta_spec.get("t1", 1.0))  # type: ignore[attr-defined]
+        # GAP-74 — fixed-``t0`` override, applied to RESTART rounds only.
+        # Round 0 has no preceding endpoint and must start at t = 0; overriding
+        # it would integrate the initial Gaussian from mid-path.
+        if (
+            self._restart_t0 is not None
+            and int(getattr(condition, "target_round", 0)) > 0
+        ):
+            t_start = float(self._restart_t0)
         if not np.isfinite(t_start) or not np.isfinite(t_end):
             raise ValueError("t0_t1_must_be_finite")
         if not 0.0 <= t_start <= t_end <= 1.0:

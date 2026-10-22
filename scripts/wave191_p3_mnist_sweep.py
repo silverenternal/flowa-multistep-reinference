@@ -156,13 +156,24 @@ def beta_for_round(
 
 def restart_t0_per_round(
     beta_total: float, rounds: int, beta_schedule: str, t0_mode: str,
+    fixed_t0: float | None = None,
 ) -> list[float]:
     """GAP-56: the path time each round starts from.
 
     ``zero`` reproduces the legacy wiring (every round re-integrates
     ``[0, 1]``). ``memory`` starts round ``r >= 1`` at ``t = 1 - beta_r``,
     which is the time the restart blend actually lives at.
+
+    GAP-74: ``fixed_t0`` pins round ``r >= 1`` to one time regardless of
+    ``beta``, which is what the conditional-mean-bound sweep needs — it varies
+    ``m`` at constant ``t0`` so the two channels are separable. Round 0 always
+    starts at 0. Default ``None`` is the pre-GAP-74 behaviour.
     """
+    if fixed_t0 is not None:
+        _t = float(fixed_t0)
+        if not np.isfinite(_t) or not 0.0 <= _t <= 1.0:
+            raise ValueError(f"fixed_t0_must_be_finite_in_[0,1]:{fixed_t0!r}")
+        return [0.0] + [_t] * (int(rounds) - 1)
     if str(t0_mode) == "zero":
         return [0.0] * int(rounds)
     if str(t0_mode) != "memory":
@@ -404,6 +415,7 @@ def run_framework_arm(
     batch_suffix: str = "",
     restart_noise_scale: float = 1.0,
     mean_preserve: bool = False,
+    restart_t0: float | None = None,
 ) -> tuple[np.ndarray, dict[str, int]]:
     """Generate ``n_samples`` framework-arm endpoints (4 rounds × num_steps_per_round[r], beta=beta).
 
@@ -439,6 +451,7 @@ def run_framework_arm(
         weights_path=str(weights_path),
         num_steps=int(BASELINE_NUM_STEPS),  # default; overridden per round via condition
         restart_noise_scale=float(restart_noise_scale),
+        restart_t0=restart_t0,  # GAP-74: None keeps the per-round t0
     )
 
     round0_batch_id = (
@@ -653,6 +666,14 @@ def main(argv: list[str] | None = None) -> int:
                              "(default) leaves the convex blend byte-identical. "
                              "Values >1 restore the blend's second moment, which "
                              "the convex blend loses by m^2 (v_base - v_hat).")
+    parser.add_argument("--restart-t0", type=float, default=None,
+                        help="GAP-74: pin every restart round (r >= 1) to this "
+                             "path time instead of t0 = 1 - beta_r. Needed to "
+                             "measure the conditional contraction at fixed t0 "
+                             "while m varies; without it the two are tied and "
+                             "the deviation channel cannot be separated from "
+                             "the marginal one. Round 0 always starts at 0. "
+                             "Default (omitted) keeps the per-round t0.")
     parser.add_argument("--mean-preserve", action="store_true",
                         help="GAP-76: centroid-anchored restart. Translate each "
                              "framework arm's final cloud so its batch centroid "
@@ -738,6 +759,9 @@ def main(argv: list[str] | None = None) -> int:
     t0_per_round = restart_t0_per_round(
         float(args.beta_framework), n_rounds,
         str(args.beta_schedule), str(args.restart_t0_mode),
+        fixed_t0=(
+            None if args.restart_t0 is None else float(args.restart_t0)
+        ),
     )
     interval_lengths = [1.0 - float(t) for t in t0_per_round]
     for name in ARM_LABELS:
@@ -797,6 +821,9 @@ def main(argv: list[str] | None = None) -> int:
             batch_suffix=batch_suffix,
             restart_noise_scale=float(args.restart_noise_scale),
             mean_preserve=bool(args.mean_preserve),
+            restart_t0=(
+                None if args.restart_t0 is None else float(args.restart_t0)
+            ),
         )
         arm_samples[name] = s
         arm_telemetry[name] = tel
@@ -979,6 +1006,9 @@ def main(argv: list[str] | None = None) -> int:
         "restart_t0_mode": str(args.restart_t0_mode),
         "restart_noise_scale": float(args.restart_noise_scale),
         "mean_preserve": bool(args.mean_preserve),
+        "restart_t0_override": (
+            None if args.restart_t0 is None else float(args.restart_t0)
+        ),
         "seed_keyed_prior": bool(args.seed_keyed_prior),
         "prior_batch_suffix": str(batch_suffix),
         "restart_t0_per_round": t0_per_round,
