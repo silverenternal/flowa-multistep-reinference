@@ -76,4 +76,10 @@ for seed in $SEEDS; do
 done
 
 echo "[gap74] done, failures=${fail}"
+
+python3 tools/gap74_rho_report.py \
+    --root "$OUT" \
+    --seeds $SEEDS \
+    --out "$OUT/report.json" 2>&1 | tee "$OUT/report.log"
+
 exit 0

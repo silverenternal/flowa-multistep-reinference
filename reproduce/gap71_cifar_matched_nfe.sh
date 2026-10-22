@@ -72,4 +72,10 @@ for seed in $SEEDS; do
   esac
 done
 
+if [[ "$ARM" == "both" ]]; then
+  python3 tools/gap71_cifar_matched_report.py \
+    --root "$OUTROOT" --seeds $SEEDS \
+    --out "$OUTROOT/report.json" 2>&1 | tee "$OUTROOT/report.log"
+fi
+
 echo "[gap71] DONE arm=$ARM $(date -u +%FT%TZ)"

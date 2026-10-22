@@ -143,7 +143,26 @@ silently break them. The GAP-71 sweep script passes the flag explicitly.
 * a value in `(0, 1)` switches `apply_restart_distribution` to the radial blend
   of §0.2, with `cut = m` and a raised-cosine transition.
 
-### 1.3 What is NOT done here
+### 1.3 The verdict tool
+
+`tools/gap71_cifar_matched_report.py` reads `<root>/<arm>/seed<k>/summary.json`
+and applies §0.4 mechanically. Three things it enforces that a hand calculation
+would not:
+
+* **unmatched cells are excluded, not averaged** — a cell whose `nfe_matched`
+  is false never enters the mean, so the defect that produced Wave 280 cannot
+  re-enter through the back door;
+* **rule 3 is checked on bytes** — the md5 of each `<scheduler>_samples.npz`
+  across seeds is compared, and a scheduler whose files are identical is
+  reported as `n = 1` regardless of how many seeds were launched;
+* **rule 1 and rule 2 are reported separately from the verdict**, so a run that
+  retracts the magnitude but does not halve the regression reads
+  `BAND_STRUCTURE_NOT_THE_LEVER` rather than being described as a partial win.
+
+Six tests pin the gate (unmatched exclusion, the three verdict branches, the
+missing-cell path, and the seed collapse).
+
+### 1.4 What is NOT done here
 
 The BEFORE arm and the AFTER arm are both GPU runs and are **not** part of this
 commit. This note exists so that the decision rules are on record before either
@@ -158,6 +177,7 @@ number exists.
 | §0 pre-registration | this file, committed before any run |
 | `--require-matched-nfe` | landed |
 | `spectral_band_fraction` | landed, default off |
+| verdict tool | **landed** (§1.3) |
 | BEFORE arm (matched NFE, N=1000, 3 seeds) | **not run** (GPU deferred by user directive) |
 | AFTER arm | **not run** |
 | verdict | none |

@@ -66,8 +66,45 @@ opposite ends (production `+1.24 %` REGRESS, `w16e1_5k` `−13.15 %` WIN at the
 effect floor), so a mechanism that is supposed to explain the *sign* must at
 minimum not be identical on both.
 
-### 0.4 Decision rules (fixed before the run)
+### 0.3a Amendment — the arm policy, and how rules 1 and 2 are operationalised
 
+Written **before any cell exists** (the sweep has not run), because §0.3 and
+§0.4 leave three things open that would otherwise be decided after seeing the
+numbers. All three resolutions are conservative.
+
+**(i) Which arm.** The driver runs three scheduler arms per cell, and §0.3 does
+not say which one `rho` is computed on. Picking one after the fact is a
+researcher degree of freedom. Resolution: compute `rho` **per arm**, and a
+checkpoint passes rule 1 only if **all three arms** pass. The mechanism claims
+that the contraction is a function of the amount of fresh noise, which is a
+property of the restart operator, not of a scheduler; a claim that only holds
+under one scheduler is not that claim. This is strictly harder to satisfy than
+any single-arm choice, and it matches GAP-76's convention of reporting all three.
+
+**(ii) Rule 1's "tie" clause.** "Non-decreasing … allows a tie only when the CI
+on that pair contains 0" cannot mean "all four pairs must exclude 0" (a tie is
+then forbidden) and cannot mean "any pair may be a tie" (the rule is then
+vacuous). Operationalisation: each adjacent pair is `PASS` (`CI low > 0`),
+`TIE` (`CI contains 0`) or `FAIL` (`CI high < 0`); the arm passes iff there is
+**no FAIL and at least 3 of 4 pairs are PASS**. One flat segment is tolerated,
+a significant decrease never is.
+
+**(iii) Rule 2's "not significantly below 1".** With a two-sided 95 % interval
+this is `CI high ≥ 1`, not `CI low ≥ 1` — the latter would demand the true value
+exceed 1 by two standard errors and would fail a correct `rho(0.9) = 1`.
+
+Two further mechanical requirements, both fail-closed:
+
+* **Pairing.** `rho(m)` and `rho(m')` are compared with a **paired** bootstrap
+  over record indices; the initial noise is seed-keyed, so record `i` at two
+  different `m` is the same draw. Records are pooled across the three
+  pre-registered seeds (independent draws) before resampling.
+* **L3 guard.** The baseline arm does not depend on `m`, so its samples must be
+  byte-identical across the `m` cells of a checkpoint. The report tool raises
+  rather than averaging if they differ — that would mean the equal-budget
+  allocation moved with `m`, which is exactly what L3 assumes does not happen.
+
+### 0.4 Decision rules (fixed before the run)
 1. **Monotone within the CI.** For each checkpoint, `rho(m)` must be
    non-decreasing in `m` at all four adjacent pairs, with the paired bootstrap
    95 % CI on each adjacent difference excluding 0 in the predicted direction.
@@ -127,6 +164,23 @@ Default path (`restart_t0=None`) is unchanged: the adapter keeps the
 driver-supplied `t0`, `restart_t0_per_round` keeps its `zero`/`memory` modes, and
 the digest is untouched.
 
+### 1.1 The verdict tool
+
+`tools/gap74_rho_report.py` reads the cells' `*_samples.npz` and emits the §0.4
+rules under the §0.3a operationalisation. It computes `rho` and the paired
+bootstrap from the samples directly, so no number has to be re-derived by hand
+after a 30-cell run. Six synthetic tests pin the decision logic, including the
+L3 guard and the `rho`-construction trap below.
+
+Worth recording: the obvious synthetic construction
+`X = sqrt(rho)·B + sqrt(1−rho)·E` gives `Tr(Cov X)/Tr(Cov B) ≈ 1` for **every**
+`rho` whenever `E` has the same scale as `B`, i.e. it produces a flat curve no
+matter what. The first version of the test did exactly that and reported
+`FALSIFIED` on a curve built to rise. The test fixture now uses
+`X = sqrt(rho)·B + 0.02·E` with the noise term fixed across `m`.
+
+The tool deliberately does **not** compute Theorem 5's deviation term (§0.2).
+
 ## 2. Status
 
 | item | state |
@@ -135,6 +189,7 @@ the digest is untouched.
 | step 2: D.4 + byte-identical control | verified in the same commit |
 | step 3: 5-point sweep on 2 checkpoints | **not run** (GPU deferred) |
 | step 4: this note | §0 written before the run; §3 empty |
+| verdict tool | **landed** (§1.1), with §0.3a amendment |
 | step 5: 6 gates + commit | gates run |
 
 ## 3. Results
