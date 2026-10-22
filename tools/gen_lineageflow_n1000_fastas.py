@@ -463,6 +463,69 @@ def _apply_sensitivity_patches(*, beta_base: float, nfe_ref: int) -> None:
     _PATCHES_APPLIED = True
 
 
+def _build_profile_residual_channels() -> tuple[Any | None, Any | None]:
+    """GAP-44 — build the R1 ``(profile_residual_fn, PaperQuantitiesCache)`` pair.
+
+    The profile comes from the empirical registry
+    (:func:`adaptive_reflow.adapters.profile_residual.profile_residual_fn_registry`)
+    keyed on ``"LineageFlowAdapter"`` — the same callable the Wave 229 P3 /
+    Wave 230 P1 audits validated. The cache is constructed from that profile
+    so :attr:`PaperQuantitiesCache.is_active` is ``True``; its four paper
+    quantities are then the ones the scheduler consumes.
+
+    Returns ``(None, None)`` when ``adaptive_reflow`` is unavailable so the
+    caller can fall back to the byte-stable path instead of crashing.
+    """
+    try:
+        from adaptive_reflow.adapters.profile_residual import (  # type: ignore
+            profile_residual_fn_registry,
+        )
+        from adaptive_reflow.framework.paper_quantities_cache import (  # type: ignore
+            PaperQuantitiesCache,
+        )
+    except Exception:  # pragma: no cover — defensive only
+        return None, None
+    profile_fn = profile_residual_fn_registry("LineageFlowAdapter")
+    return profile_fn, PaperQuantitiesCache(profile_residual_fn=profile_fn)
+
+
+def _codimension_sheet_n_cap_vector(
+    profile_residual_fn: Any | None,
+    *,
+    seed: int,
+    n_rounds: int,
+) -> list[float]:
+    """GAP-44 — the per-round ``n_cap`` the codimension-sheet base emits.
+
+    Mirrors the construction in
+    :func:`tools.eval.framework._make_framework_policy` (``cycle_length=20``,
+    ``n_min=0``, ``n_max=1``, ``eps_implicit=0.05``, ``decreasing``) so the
+    vector recorded in the R1 manifest is the vector the framework would
+    actually sample. ``profile_residual_fn=None`` reproduces the degenerate
+    pre-GAP-44 path (all ones); a real profile un-degenerates it.
+
+    Returns ``[]`` when the scheduler import is unavailable.
+    """
+    try:
+        from adaptive_reflow.algorithm.scheduler import (  # type: ignore
+            CodimensionSheetScheduler,
+        )
+    except Exception:  # pragma: no cover — defensive only
+        return []
+    sched = CodimensionSheetScheduler(
+        cycle_length=20,
+        n_min=0.0,
+        n_max=1.0,
+        eps_implicit=0.05,
+        eps_direction="decreasing",
+        seed=int(seed),
+        profile_residual_fn=profile_residual_fn,
+    )
+    return [
+        float(sched.sample(0, r, r).n_cap) for r in range(int(n_rounds))
+    ]
+
+
 def _build_lineageflow_adapter(
     family_id: str,
     seed: int,
@@ -470,6 +533,7 @@ def _build_lineageflow_adapter(
     classifier_aware_restart: bool = False,
     classifier_alpha: float = 1.0,
     classifier_bias_mode: str = "centered",
+    profile_residual_fn: Any | None = None,
 ) -> Any | None:
     """Lazy-construct a synthetic-mode :class:`LineageFlowAdapter`.
 
@@ -526,6 +590,11 @@ def _build_lineageflow_adapter(
             classifier_aware_restart=bool(classifier_aware_restart),
             classifier_alpha=float(classifier_alpha),
             classifier_bias_mode=str(classifier_bias_mode),
+            # GAP-44 — paper-quantity wiring (additive, default None =
+            # byte-stable). Supplying the profile makes
+            # ``_compute_paper_quantities`` non-None and un-degenerates
+            # the codimension-sheet ``n_cap``.
+            profile_residual_fn=profile_residual_fn,
             # Wave 349 P4 — switch from hardcoded ``force_mode="synthetic"`` to ``"auto"`` so the
             # LineageFlowAdapter picks up the real PyTorch ESM-2 + flow head (downloaded from
             # facebook/esm2_t33_650M_UR50D on first call). With Wave 349 P4 GPU dispatch the model
@@ -730,6 +799,7 @@ def _write_framework_arm(
     classifier_alpha: float = 1.0,
     classifier_bias_mode: str = "centered",
     start_index: int = 0,
+    profile_residual_fn: Any | None = None,
 ) -> tuple[dict[str, int], dict[str, int]]:
     """Write the framework arm: drives :class:`LineageFlowAdapter` for each record.
 
@@ -775,6 +845,8 @@ def _write_framework_arm(
             classifier_alpha=float(classifier_alpha),
             # GAP-40b — bias shape (only consulted when the flag is on).
             classifier_bias_mode=str(classifier_bias_mode),
+            # GAP-44 — paper-quantity wiring (default None = byte-stable).
+            profile_residual_fn=profile_residual_fn,
         )
 
     # GAP-41b — resume support (additive; ``start_index=0`` is
@@ -1138,6 +1210,25 @@ def main() -> None:
             "``docs/audit/gap41b-r1-nfe-fidelity.md``."
         ),
     )
+    p.add_argument(
+        "--profile-residual",
+        action="store_true",
+        help=(
+            "GAP-44 — wire the paper-quantity channels (additive; "
+            "default off = byte-stable). Constructs the adapter's "
+            "empirical ``profile_residual_fn`` from "
+            "``adaptive_reflow.adapters.profile_residual."
+            "profile_residual_fn_registry('LineageFlowAdapter')`` and "
+            "attaches it to every per-family adapter. Effect: "
+            "``tools.eval.framework._compute_paper_quantities`` stops "
+            "returning ``None``, so the per-round β becomes "
+            "paper-quantity-driven, and ``_make_framework_policy`` "
+            "forwards the profile into ``CodimensionSheetScheduler`` so "
+            "its ``n_cap`` stops saturating at 1.0. This is WIRING ONLY "
+            "— no cell's scheduler family is switched. See "
+            "``docs/audit/gap44-p2-1-profile-residual.md``."
+        ),
+    )
     args = p.parse_args()
 
     # Wave 276 P — resolve effective min/max len via
@@ -1228,6 +1319,16 @@ def main() -> None:
         )
     else:
         TIER_AWARE_BASELINE_METRICS = None
+    # GAP-44 — paper-quantity wiring (additive, default off). Build the
+    # empirical profile + its cache ONCE here; the cache's ``is_active``
+    # and the four quantities are recorded in the manifest so a run is
+    # self-describing about whether the channels were live.
+    profile_residual_fn: Any | None = None
+    paper_quantities_cache: Any | None = None
+    if bool(getattr(args, "profile_residual", False)):
+        profile_residual_fn, paper_quantities_cache = (
+            _build_profile_residual_channels()
+        )
     # Wave 186 P2 — patch the framework glue to honour the
     # sensitivity-analysis parameters. The framework's
     # ``_make_framework_policy`` reads ``ADAPTER_NFE_REF`` from
@@ -1328,6 +1429,32 @@ def main() -> None:
         # target total, so a resumed run's per-family counts cover only
         # the appended range.
         "start_index": int(args.start_index),
+        # GAP-44 — paper-quantity channel state. ``False`` (default)
+        # means every downstream consumer sees ``paper_quantities=None``
+        # and takes the byte-stable constant-β path.
+        "profile_residual_wired": bool(profile_residual_fn is not None),
+        "paper_quantities_cache_is_active": bool(
+            paper_quantities_cache is not None
+            and paper_quantities_cache.is_active
+        ),
+        "paper_quantities": (
+            None
+            if paper_quantities_cache is None
+            else {
+                "sheet_A": paper_quantities_cache.sheet_A,
+                "packing_B": paper_quantities_cache.packing_B,
+                "cell_C": paper_quantities_cache.cell_C,
+                "e_rho": paper_quantities_cache.e_rho,
+            }
+        ),
+        # GAP-44 — the codimension-sheet ``n_cap`` vector the framework
+        # would sample under this manifest's profile (all ones before
+        # this gap, i.e. β = 0 and a no-op restart blend).
+        "codimension_sheet_n_cap": _codimension_sheet_n_cap_vector(
+            profile_residual_fn,
+            seed=int(args.seed),
+            n_rounds=int(N_ROUNDS),
+        ),
     }
 
     # ---- Baseline arm (bare RNG, preserved byte-shape) -----------------
@@ -1364,6 +1491,8 @@ def main() -> None:
         classifier_bias_mode=str(args.classifier_bias_mode),
         # GAP-41b — resumable generation (default 0 = byte-stable).
         start_index=int(args.start_index),
+        # GAP-44 — paper-quantity wiring (default None = byte-stable).
+        profile_residual_fn=profile_residual_fn,
     )
     manifest["framework_per_family_count"] = dict(framework_counts)
     manifest["framework_fallback_per_family_count"] = dict(fallback_counts)

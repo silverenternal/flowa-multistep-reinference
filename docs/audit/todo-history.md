@@ -1415,3 +1415,65 @@ That makes **GAP-76 the only open gap whose outcome can raise a metric rather th
 one**: it is the source-level mean-preserving restart, and its target is the −3.33 % /
 −7.3 % bracket, not a new cell. GAP-74 remains the theory counterpart (why the contraction
 is monotone in `1−m` at fixed `t0`).
+
+---
+
+## 21. GAP-76 closed — the first-moment defect is removable, and it was the whole regression
+
+Three seeds × 4 checkpoints × 3 arms × N=1000, matched NFE=50, the gap57 ladder
+config plus `--mean-preserve`.
+
+| check | bar | observed |
+|---|---|---|
+| control (`Tr(Σ)`, `cross` unchanged) | exact | **36/36**, 6.0e−14 |
+| displacement | < 0.2 | **0.0037 … 0.0152** (was 0.787 … 1.972) |
+| ΔFID vs GAP-77 counterfactual | within seed noise | **max error 0.019 FID units**, 36/36 |
+| ≥ 8/12 non-positive | ≥ 8/12 | **18/36 = 50 %** — misses the bar, matches the counterfactual census |
+
+Census:
+
+| rule | old | new |
+|---|---|---|
+| strict (3-seed CI excludes 0) | 1 W / 2 T / 9 R | **6 W / 0 T / 6 R** |
+| effect floor (\|ΔFID\| < 1.0) | 1 W / 5 T / 6 R | **3 W / 9 T / 0 R** |
+
+Mean ΔFID **+7.75 % → −3.34 %**; largest residual regression **+2.99 %** (was
++19.41 %). The six strict wins are `w16e1_10k` (−3.9 … −4.5 %) and `w16e1_5k`
+(−12.7 … −13.2 %); the six strict losses are `production` (+1.0 … +1.2 %) and
+`w16e1_60k` (+2.4 … +3.0 %), all under the paper's own effect floor.
+
+The bar in prediction 4 was mis-set: it was written from the headline mean
+(−3.33 %) instead of from the census that produced it (18/36). Recorded as a
+pre-registration defect in `gap76-restart-mean-bias.md` §1.3, not reframed.
+
+## 22. GAP-44 closed — the paper-quantity channels are on, one flag away
+
+The chain had four links and the first was missing, so
+`_compute_paper_quantities` returned `None` on every adapter and the
+codimension-sheet base ran with `profile_residual_fn=None`. That base's
+fallback ratio is 1.0 on every round, and since `beta = 1 − n_cap`, R1's
+`codimension_sheet` arm was running `beta = 0` — `apply_restart_distribution`
+as an identity map. The "degenerate `n_cap ~ [1,1,1]`" from GAP-42 was not a
+tuning problem; it was a wiring problem.
+
+Wired: `LineageFlowAdapter(profile_residual_fn=...)` (default `None`),
+`_make_framework_policy` forwards it into `CodimensionSheetScheduler`, and the
+R1 driver grows `--profile-residual` (default off).
+
+```
+n_cap  off  [1.0000, 1.0000, 1.0000, 1.0000]     beta = 0
+n_cap  on   [0.9211, 0.9249, 0.9288, 0.9327]     beta = 0.026 … 0.024 at NFE=150
+```
+
+Byte-stability: D.4 72/72; a 6-record R1 run with and without the flag gives
+identical FASTA md5s on both arms.
+
+**The identical FASTAs are the honest headline, not a success**: a runtime probe
+shows every round of every record takes the paper-quantity branch when the flag
+is set (`A_g = 0.8467` at rounds 0/1/2) — the wiring is live and the synthetic
+decode simply does not flip an argmax at this scale. Wiring is not an effect.
+Measuring the effect is GAP-69.
+
+Why this mattered enough to do before the adapter gaps: without it, a negative
+result on GAP-68/69/70/71 would have been uninterpretable — "the channel was
+never on" and "the channel does not help" were the same observation.

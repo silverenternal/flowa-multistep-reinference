@@ -85,7 +85,7 @@ from __future__ import annotations
 
 import contextlib
 import hashlib
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, TypeAlias
@@ -1690,6 +1690,7 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         classifier_alpha: float = 1.0,
         classifier_bias_mode: str = LINEAGEFLOW_CLASSIFIER_BIAS_MODE_CENTERED,
         perturbation: PerturbationPolicy | None = None,
+        profile_residual_fn: Callable[[float], float] | None = None,
     ) -> None:
         if int(num_steps) <= 0:
             raise ValueError(ERR_LINEAGEFLOW_NUM_STEPS)
@@ -1706,6 +1707,11 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
             raise ValueError(ERR_LINEAGEFLOW_L_OUT_OF_RANGE)
         if int(vocab_size) <= 0:
             raise ValueError(ERR_LINEAGEFLOW_VOCAB_OUT_OF_RANGE)
+        if profile_residual_fn is not None and not callable(profile_residual_fn):
+            raise TypeError(
+                "profile_residual_fn_must_be_callable_or_none:"
+                f"{profile_residual_fn!r}"
+            )
         if not str(family_id):
             raise ValueError(ERR_LINEAGEFLOW_FAMILY_ID_INVALID)
         self._family_id = str(family_id)
@@ -1718,6 +1724,17 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         self._conditioning_cache_size = int(conditioning_cache_size)
         self._max_seq_length = int(max_seq_length)
         self._vocab_size = int(vocab_size)
+        # GAP-44 — paper-quantity wiring (additive, default off). When a
+        # ``profile_residual_fn`` is supplied, ``tools.eval.framework.
+        # _compute_paper_quantities`` finds it here and the framework's
+        # per-round β becomes paper-quantity-driven instead of the
+        # constant-0.5 legacy path; ``_make_framework_policy`` also
+        # forwards it into ``CodimensionSheetScheduler`` so the
+        # codimension-sheet ``n_cap`` stops degenerating to 1.0.
+        # ``None`` (the default) reproduces every pre-GAP-44 byte.
+        self.profile_residual_fn: Callable[[float], float] | None = (
+            profile_residual_fn
+        )
 
         # Resolve weights path.
         explicit = Path(weights_path) if weights_path is not None else None

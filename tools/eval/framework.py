@@ -517,6 +517,26 @@ def _make_framework_policy(
             PaperRatioAdaptiveScheduler,
             TierAwareCodimensionSheetScheduler,
         )
+        # GAP-44 — forward the adapter's ``profile_residual_fn`` into the
+        # codimension-sheet base. Without it the base falls back to the
+        # framework-side heuristic and its ``n_cap`` saturates at
+        # ``n_max = 1.0`` on every round (β = 1 − n_cap = 0.0, i.e. the
+        # restart blend is an identity map). ``_compute_paper_quantities``
+        # has already evaluated this profile successfully three times on
+        # the way here, so construction cannot fail on a broken profile.
+        _profile = None
+        try:
+            _caps = (
+                adapter.capabilities() if hasattr(adapter, "capabilities") else None
+            )
+        except Exception:
+            _caps = None
+        if _caps is not None:
+            _profile = getattr(_caps, "profile_residual_fn", None)
+        if _profile is None:
+            _profile = getattr(adapter, "profile_residual_fn", None)
+        if not callable(_profile):
+            _profile = None
         base_sched = CodimensionSheetScheduler(
             cycle_length=20,
             n_min=0.0,
@@ -524,6 +544,7 @@ def _make_framework_policy(
             eps_implicit=0.05,
             eps_direction="decreasing",
             seed=int(seed),
+            profile_residual_fn=_profile,
         )
         # Wave 275 P4 — R6 tier-aware n_cap wrapper. Active ONLY when
         # both flags are set and the reduction is in (0, 1). When the

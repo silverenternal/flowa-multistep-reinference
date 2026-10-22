@@ -25,12 +25,10 @@
  "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 15 known failures (3 stale eval stubs; 12 order-dependent test_paper_metrics cases). docs-vs-code verifies 3370 claims since the 2026-10-21 archive move.",
  "q1_gate": "The paper's weakness is now a MECHANISM weakness, not a power weakness. Three fidelity cells regress (R5c production +9.5%, R5b CIFAR +52% at N=200, K7 novelty 12.6x down) and GAP-64 traced all three to one property of the blend: it shrinks variance. GAP-67 changes that property. If it works, the fidelity regressions become a solved mechanism; if it does not, the boundary is real and gets stated as one. Everything else in this file is either adapter work that follows from the same thesis, or a user-gated document step.",
  "execution_order": [
-  "GAP-44-PROFILE-RESIDUAL-WIRING (P1, ~1 h code, no GPU; prerequisite for the A/B theory sites and for GAP-69)",
   "GAP-68-ADAPTER-FLOWMOL3-CHANNELS (P0, ~1 day research+code, ~8 h GPU; R3 fg_dev is the only molecule cell with a CI excluding 0)",
   "GAP-69-ADAPTER-LINAGEFLOW-PROTEIN (P0, ~1 day research+code, ~10 h GPU; R1 is the paper's headline positive)",
   "GAP-71-ADAPTER-IMAGE-SPECTRAL (P1, ~1 day, ~4 h GPU; absorbs the GAP-66/63 before-arm)",
   "GAP-70-ADAPTER-KANZI-LATENT (P1, ~1 day, ~4 h GPU; the K7 novelty drop)",
-  "GAP-76-RESTART-MEAN-BIAS (P1, ~3 h research + ~2 h code + ~1 h GPU; GAP-72 turned R5c from 9 regressions into 6 wins / 6 small regressions by removing the location error -- this asks whether it can be removed at the source)",
   "GAP-74-CONDITIONAL-MEAN-BOUND (P1, ~3 h code + ~2 h GPU; states the contraction as a theorem, or falsifies it)",
   "GAP-47-K1-PB-METRIC (P2, USER GATE; downstream of GAP-70)",
   "GAP-50-EVIDENCE-GRADE-TABLE (P2, DRAFT COMPLETE; refresh after the adapter gaps land)",
@@ -40,18 +38,6 @@
   "GAP-20-COVERLETTER (P3, USER ONLY)"
  ],
  "open_gaps": [
-  {
-   "id": "GAP-44-PROFILE-RESIDUAL-WIRING",
-   "priority": "P1",
-   "status": "PLANNED",
-   "depends_on": "none",
-   "est_wall": "~1 h code (no GPU)",
-   "gap": "The last open item of the config-inventory register (P2-1). `profile_residual_fn` is implemented for LineageFlow, Kanzi and FlowMol3 in adaptive_reflow/adapters/profile_residual.py, but no driver passes it, so paper_quantities_cache.is_active is False everywhere. Consequences: MultiFidelityPaperQuantityStep stays behind enable_full_jmaa_theory=False, the regime selectors are unreachable, and codimension_sheet degenerates to n_cap ~ [1,1,1] on R1. Every adapter gap below wants the paper-quantity channels to be live, so this is now a prerequisite rather than a bookkeeping task.",
-   "acceptance": "(1) The R1 driver passes profile_residual_fn and paper_quantities_cache.is_active is True on R1, asserted in a unit test. (2) codimension_sheet's per-round n_cap is no longer degenerate; report the vector. (3) No behaviour change on the default path (D.4 byte-stable). (4) Do not switch any cell's scheduler in this gap - wiring only.",
-   "agent_action": "1) Read adaptive_reflow/adapters/profile_residual.py and adaptive_reflow/framework/paper_quantities_cache.py. 2) Wire the registry into the R1 adapter path behind a flag. 3) Assert is_active flips. 4) Write docs/audit/gap44-p2-1-profile-residual.md. 5) 6 gates + commit.",
-   "evidence": "docs/audit/project-state-inventory.md; adaptive_reflow/adapters/profile_residual.py; adaptive_reflow/framework/paper_quantities_cache.py; docs/audit/gap42-scheduler-budget-conservation.md",
-   "deliverable": "The paper-quantity channels live on at least one cell, with the default path byte-identical."
-  },
   {
    "id": "GAP-68-ADAPTER-FLOWMOL3-CHANNELS",
    "priority": "P0",
@@ -107,20 +93,6 @@
    "agent_action": "1) Write docs/audit/gap70-kanzi-latent.md with the hypothesis. 2) Read the inverse-projection bridge and the decoder prior. 3) Implement the token-selective blend behind a flag. 4) Run validity + novelty on the same samples. 5) 6 gates + commit.",
    "evidence": "adaptive_reflow/adapters/kanzi.py (64x64 latent, AR decoder); docs/audit/gap60-validity-novelty-tradeoff.md; verification_outputs/novelty_pctid_w166_q3_2026/novelty_results_full.json",
    "deliverable": "K1 and K7 become one trade-off curve, or K7 is stated as an unexplained boundary with the latent hypothesis excluded."
-  },
-  {
-   "id": "GAP-76-RESTART-MEAN-BIAS",
-   "priority": "P1",
-   "status": "PLANNED",
-   "depends_on": "none (GAP-72 measured the effect; this explains it)",
-   "est_wall": "~3 h research + ~2 h code + ~1 h GPU",
-   "gap": "GAP-72 established that the R5c cost is a location error: a pure mean translation recovers 81-91% of the gap on the three regression checkpoints, and calibrating both arms to the training mean turns the cell from 9 regressions into 6 wins / 6 small regressions (mean -7.3%). What is NOT explained is why injecting fresh noise at t=m biases the endpoint's mean at all, or why the direction is scheduler-specific (cross-arm cosine similarity of the shift is -0.015 to +0.234, i.e. the three schedulers move the mean in nearly orthogonal directions).",
-   "design_hypothesis": "The blend y = m*x1_hat + (1-m)*x0 is an off-path state: it is the correct path state only if x0 is the noise that generated x1_hat. With an independent x0, the velocity field sees a state whose noise component is uncorrelated with its data component, and E[x1 | y] is biased. If that is the mechanism, the bias should scale with (1-m) and should be reproducible from the model's own velocity field without sampling: evaluate v(y, m) on synthetic off-path states and compare its integral to the on-path integral.",
-   "research": "(a) Read the MNIST FM velocity field (numpy MLP) and check whether the bias can be computed analytically for a linearised model. (b) The scheduler-specific direction is the surprising part: cosine and evidence_driven share the NFE allocation [25,18,6,1] and differ only in the policy hash, which changes the restart seed. If the bias direction is set by the noise realisation, 1000 samples should average it out; the fact that it does not suggests the map amplifies a few noise directions. Test by running the same arm with two different restart seeds and measuring the cosine between the two mean shifts. (c) Do not add seeds to buy significance -- this is a mechanism question, one draw per condition.",
-   "acceptance": "(1) Cross-arm cosine similarity reproduced and explained, or shown to be a finite-sample effect (the two-seed test in (b) settles it). (2) The bias's dependence on (1-m) measured at fixed t0 (reuses GAP-74's override). (3) A statement of whether the bias is removable at the source (a change to the blend) or only by post-hoc calibration. (4) The location/shape split re-measured on CIFAR R5b to check it is not an MNIST artifact.",
-   "agent_action": "1) GAP-77 already measured the target: the defect is the first-moment channel and removing it moves the mean dFID from +7.97% to -3.33% (4/36 -> 18/36 wins). 2) Build the SOURCE-level mean-preserving restart (default-off, digest-separated), not the post-hoc calibration: subtract the arm's own measured mean drift from the blend, estimated without the reference. 3) Two-restart-seed test (cheap, GPU) to settle whether the drift direction is a finite-sample effect. 4) Re-measure the 12-cell table at N=1000, 3 seeds. 5) Write docs/audit/gap76-restart-mean-bias.md. 6) 6 gates + commit.",
-   "evidence": "docs/audit/gap72-r5c-mean-shift.md; docs/audit/gap77-restart-mechanism.md (36/36 bias-up, 36/36 trace-down, mean-preserved counterfactual +7.97% -> -3.33%); verification_outputs/gap77-restart-mechanism/decomposition.json; verification_outputs/gap72-r5c-mean-shift/decomposition.json; verification_outputs/gap57-equal-nfe-ladder-n1000/",
-   "deliverable": "Either the location error is removable at the source -- which would make R5c a genuine win -- or it is intrinsic to restarting off-path, which is a clean structural statement."
   },
   {
    "id": "GAP-74-CONDITIONAL-MEAN-BOUND",
