@@ -1,7 +1,7 @@
 {
  "schema_version": "flowa-state-v7",
  "purpose": "Open work only: what is left, in what order, and the pre-registered acceptance test for each item. State, evidence ledger, venue metadata and closed gaps live in docs/audit/todo-history.md (sections 10-15).",
- "updated_at": "2026-10-21",
+ "updated_at": "2026-10-22",
  "history": "docs/audit/todo-history.md",
  "no_push": true,
  "commit_footer": "(USER AUTHORIZED, NO PUSH)",
@@ -25,7 +25,6 @@
  "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 15 known failures (3 stale eval stubs; 12 order-dependent test_paper_metrics cases). docs-vs-code verifies 3370 claims since the 2026-10-21 archive move.",
  "q1_gate": "The paper's weakness is now a MECHANISM weakness, not a power weakness. Three fidelity cells regress (R5c production +9.5%, R5b CIFAR +52% at N=200, K7 novelty 12.6x down) and GAP-64 traced all three to one property of the blend: it shrinks variance. GAP-67 changes that property. If it works, the fidelity regressions become a solved mechanism; if it does not, the boundary is real and gets stated as one. Everything else in this file is either adapter work that follows from the same thesis, or a user-gated document step.",
  "execution_order": [
-  "GAP-68-ADAPTER-FLOWMOL3-CHANNELS (P0, ~1 day research+code, ~8 h GPU; R3 fg_dev is the only molecule cell with a CI excluding 0)",
   "GAP-69-ADAPTER-LINAGEFLOW-PROTEIN (P0, ~1 day research+code, ~10 h GPU; R1 is the paper's headline positive)",
   "GAP-71-ADAPTER-IMAGE-SPECTRAL (P1, ~1 day, ~4 h GPU; absorbs the GAP-66/63 before-arm)",
   "GAP-70-ADAPTER-KANZI-LATENT (P1, ~1 day, ~4 h GPU; the K7 novelty drop)",
@@ -38,20 +37,6 @@
   "GAP-20-COVERLETTER (P3, USER ONLY)"
  ],
  "open_gaps": [
-  {
-   "id": "GAP-68-ADAPTER-FLOWMOL3-CHANNELS",
-   "priority": "P0",
-   "status": "PLANNED",
-   "depends_on": "GAP-67 (same blend kernel)",
-   "est_wall": "~1 day research + code; ~8 h GPU (N=1000, 3 seeds)",
-   "gap": "R3 fg_dev is -0.061 with CI [-0.117,-0.001] but p=0.043 > the 0.00714 floor, on one seed. The adapter has three channels with incompatible geometry - coordinate (continuous, Euclidean), charge (6-valued, already has a categorical blend), raw_pair (5-class bond-type logits, CTMC) - and the restart blends all three with one scalar m. That is wrong twice over: interpolating a bond type produces a molecule that does not exist (half single, half double), and a blended coordinate with an unblended bond order is a geometry the velocity field was never trained on.",
-   "design_hypothesis": "Per-channel m with a topology-locked schedule: the discrete bond channel keeps the prior's class (or resamples through the CTMC kernel) until the final round instead of being interpolated, and the coordinate weight is conditioned on whether the bond class changed this round. Use the existing adaptive_reflow/algorithm/per_channel_blender.py, which is implemented and has zero experimental use. Expected sign: fg_dev improves beyond the single-m arm, because the current arm is spending its restart budget producing off-manifold molecules.",
-   "research": "(a) Read FlowMol3's CTMC sampler and the _solve_ode_upstream charge mapping to learn which channels are genuinely discrete. (b) Read the fg_dev scorer: does it reward fragment composition (topology) more than geometry? If so the bond channel is the lever. (c) Check whether bond orders are kekulized before scoring - if they are, aromatic/double interconversion is free and the topology-lock may be unnecessary. (d) The per-channel design must keep the total NFE fixed.",
-   "acceptance": "(1) A per-channel arm and the current single-m arm on the same seeds and the same shared prior, N=1000, matched NFE. (2) Per-seed paired fg_dev delta with CI, then pooled 3 seeds (this is the confirmatory run the deferred GAP-62 would have been). (3) Pre-registered: SUPPORTED if the pooled CI excludes 0 and p < 0.00714; the per-channel arm must beat the single-m arm by >= 0.5 sd, otherwise record that channel geometry is not the bottleneck. (4) No seeds beyond 42/43/44.",
-   "agent_action": "1) Write docs/audit/gap68-flowmol3-channels.md with the hypothesis before coding. 2) Wire per_channel_blender into the FlowMol3 adapter behind a flag. 3) Verify default path byte-identical. 4) Run the two arms. 5) 6 gates + commit.",
-   "evidence": "adaptive_reflow/adapters/flowmol3_v2_adapter.py (channels, CTMC, charge mapping); adaptive_reflow/algorithm/per_channel_blender.py; verification_outputs/gap55-r3-full-smiles/; docs/audit/gap27-r3-power.md",
-   "deliverable": "R3 resolved as SUPPORTED or a bounded null with the channel hypothesis explicitly tested."
-  },
   {
    "id": "GAP-69-ADAPTER-LINAGEFLOW-PROTEIN",
    "priority": "P0",

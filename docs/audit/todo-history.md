@@ -1477,3 +1477,48 @@ Measuring the effect is GAP-69.
 Why this mattered enough to do before the adapter gaps: without it, a negative
 result on GAP-68/69/70/71 would have been uninterpretable — "the channel was
 never on" and "the channel does not help" were the same observation.
+
+---
+
+## 23. GAP-68 closed — channel geometry is implicated but cannot win the cell
+
+The gap's premise was wrong twice, and both corrections came from reading the
+code before running anything:
+
+* the three channels were **already** blended per-channel
+  (`_channel_aware_blend`, `flowmol3_v2_adapter.py:1195` — linear for
+  coordinate/charge, categorical resample for `raw_pair` and the atom-type
+  channel), so `per_channel_blender.py` is a duplicate, not a missing piece;
+* the published R3 number is the **σ=0.05 coordinate-only proxy**, not the
+  restart arm. So no result here can move CLM-068.
+
+What was actually wrong is narrower: the bond channel is resampled at the same
+rate as the coordinates, so at `m_pair = 0.5` half the bond labels and half the
+atom types are replaced by near-uniform prior draws, and the coordinates then
+diffuse into a geometry that graph was never trained on.
+
+The Wave 351/357 RDKit blocker (33–40 % valid yield) **does not reproduce**: the
+seed-42 baseline fg_dev is `0.717406089951701`, bit-identical to the committed
+GAP-55 artifact, with `validity = 1.000` and 2 dropped of 1000 in every arm.
+
+Result, 6 cells (a1 = all channels free, a2 = `m_pair = 1.0`), N=1000, NFE=250,
+shared prior, seeds 42/43/44:
+
+| arm | 42 | 43 | 44 | mean | `d_z` | CI95 |
+|---|---:|---:|---:|---:|---:|---|
+| a1 | +0.1259 | +0.0227 | −0.1032 | +0.0152 | +0.132 | [−0.270, +0.300] |
+| a2 | +0.0444 | +0.0306 | −0.1403 | −0.0217 | −0.211 | [−0.277, +0.234] |
+
+Rule 1 (a2 beats a1 by ≥ 0.5 sd) **passes**: paired mean −0.0369, sd 0.0447,
+`d_z = −0.83`. Rule 2 (a2's CI excludes 0) **fails**. Verdict
+`DIRECTIONAL_UNDERPOWERED`, not upgraded.
+
+Rule 2 was the wrong test — it asks "does the restart beat no-restart", while
+the gap asks "does per-channel beat single-m". Power from the observed effects:
+**12–19 seeds** for the hypothesis-relevant paired test, **176–280** for a
+baseline win. Per the standing no-seed-engineering rule the route stops here
+with the effect size recorded; the paper's R3 cell is unchanged.
+
+Side finding worth keeping: the lock makes the arm **more consistent**, not just
+better — a2's per-seed spread is 0.103 against a1's 0.115, and its seed-42
+regression drops 65 % (+0.126 → +0.044).
