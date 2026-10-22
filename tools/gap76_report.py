@@ -59,6 +59,64 @@ def _terms(
     }
 
 
+def _three_seed_summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Aggregate the per-cell deltas over seeds (one row per checkpoint × arm)."""
+    # t_{0.975, df=2}; used only when n == 3.
+    t_mult = {1: 12.706, 2: 4.303, 3: 3.182}.get(2, 4.303)
+    groups: dict[tuple[str, str], list[dict[str, object]]] = {}
+    for r in rows:
+        groups.setdefault((str(r["checkpoint"]), str(r["arm"])), []).append(r)
+    out: list[dict[str, object]] = []
+    for (checkpoint, arm), cells in sorted(groups.items()):
+        new = [float(c["delta_fid_new"]) for c in cells]  # type: ignore[arg-type]
+        old = [float(c["delta_fid_old"]) for c in cells]  # type: ignore[arg-type]
+        pct = [float(c["delta_fid_pct_new"]) for c in cells]  # type: ignore[arg-type]
+        n = len(new)
+        mean_new = float(np.mean(new))
+        mean_old = float(np.mean(old))
+        if n > 1:
+            sd = float(np.std(new, ddof=1))
+            half = t_mult * sd / float(np.sqrt(n))
+        else:
+            sd = 0.0
+            half = float("nan")
+        lo, hi = mean_new - half, mean_new + half
+        strict = (
+            ("WIN" if hi < 0.0 else "REGRESS")
+            if n > 1 and (lo > 0.0 or hi < 0.0)
+            else "TIE"
+        )
+        floor = "TIE" if abs(mean_new) < 1.0 else ("WIN" if mean_new < 0.0 else "REGRESS")
+        out.append(
+            {
+                "checkpoint": checkpoint,
+                "arm": arm,
+                "n": n,
+                "delta_fid_mean": mean_new,
+                "delta_fid_sd": sd,
+                "ci95_low": lo,
+                "ci95_high": hi,
+                "delta_fid_pct_mean": float(np.mean(pct)),
+                "delta_fid_old_mean": mean_old,
+                "verdict_strict": strict,
+                "verdict_effect_floor": floor,
+            }
+        )
+    return out
+
+
+def _counts(summary: list[dict[str, object]], key: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for s in summary:
+        k = str(s[key])
+        counts[k] = counts.get(k, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _mean_of(summary: list[dict[str, object]], key: str) -> float:
+    return float(np.mean([float(s[key]) for s in summary]))  # type: ignore[arg-type]
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--old", type=Path,
@@ -156,9 +214,41 @@ def main(argv: list[str] | None = None) -> int:
     print(f"control (translation-invariant terms reproduced): {len(rows) - len(control_fail)}/{len(rows)}")
     print(f"non-positive delta FID: {len(improved)}/{len(rows)}")
 
+    # ---- 3-seed aggregation -------------------------------------------
+    # Two verdicts, the same pair used by gap75-r5c-n1000-table.md:
+    #   * ``strict``       — the seed CI excludes 0;
+    #   * ``effect_floor`` — |mean dFID| < 1.0 FID unit is a tie.
+    # With n=3 the t multiplier at 95% is 4.303 (df=2).
+    summary = _three_seed_summary(rows)
+    if summary:
+        print()
+        print(f"{'ckpt':11s} {'arm':18s} {'n':>2s} {'dFID':>7s} {'CI95':>19s} "
+              f"{'pct':>7s} {'old_dFID':>9s} {'strict':>9s} {'floor':>9s}")
+        for s in summary:
+            print(
+                f"{s['checkpoint']:11s} {s['arm']:18s} {s['n']:2d} "
+                f"{s['delta_fid_mean']:+7.3f} "
+                f"[{s['ci95_low']:+7.3f},{s['ci95_high']:+7.3f}] "
+                f"{s['delta_fid_pct_mean']:+6.2f}% {s['delta_fid_old_mean']:+9.3f} "
+                f"{s['verdict_strict']:>9s} {s['verdict_effect_floor']:>9s}"
+            )
+        counts_strict = _counts(summary, "verdict_strict")
+        counts_floor = _counts(summary, "verdict_effect_floor")
+        print()
+        print(f"strict census (3 seeds, CI excludes 0): {counts_strict}")
+        print(f"effect-floor census (|dFID| < 1.0):     {counts_floor}")
+        print(f"mean dFID across cells: {_mean_of(summary, 'delta_fid_mean'):+.3f} FID units")
+        print(f"mean pct across cells:  {_mean_of(summary, 'delta_fid_pct_mean'):+.2f}%")
+
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps({"n_cells": len(rows), "cells": rows}, indent=1) + "\n",
-                        encoding="utf-8")
+    args.out.write_text(
+        json.dumps(
+            {"n_cells": len(rows), "cells": rows, "three_seed": summary},
+            indent=1,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     print(f"wrote {args.out}")
     return 0 if not control_fail else 2
 
