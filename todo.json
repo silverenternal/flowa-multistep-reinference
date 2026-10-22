@@ -1,18 +1,22 @@
 {
  "schema_version": "flowa-state-v7",
  "purpose": "Open work only: what is left, in what order, and the pre-registered acceptance test for each item. State, evidence ledger, venue metadata and closed gaps live in docs/audit/todo-history.md (sections 10-15).",
+ "objective": "The framework must WIN on every model task: R1 (LineageFlow hmmscan hits), R2 (Kanzi RMSD), R3 (FlowMol3 fg_dev), R5a (2D FM W2), R5b (CIFAR FID), R5c (MNIST FID), R6 (LineageFlow scPerplexity/pLDDT), K1 (FlowMol3 pb_validity), K7 (LineageFlow novelty). A TIE is a loss. A LOSS is an open mechanism gap, not a boundary to be published. Every cell that is not a win today has a mechanism gap below whose acceptance test is that win.",
+ "win_definition": "A cell wins only if BOTH hold. (1) POINT WIN: at the cell's canonical protocol (same checkpoint, same N, same seeds), the framework's metric is better with the paired 95% CI excluding 0 and clearing the cell's alpha. (2) FRONTIER DOMINANCE: over the NFE grid, the framework's (quality, NFE) curve lies at or below the baseline's at every grid point, and the framework's plateau is better than the baseline's plateau. (2) is the load-bearing one: flow-matching inference saturates with steps, so 'the baseline with more steps' is NOT a valid control and NOT a threat -- the baseline's ceiling is fixed by its own inference protocol. The framework's claim is that it raises that ceiling AND reaches a given quality at fewer NFE. Both halves are measured, not asserted.",
+ "frontier_protocol": "Per model: baseline and framework on the SAME checkpoint, prior, seed policy and N, swept over NFE in {10, 25, 50, 100, 200} (extended upward until the baseline plateaus for two consecutive points). Report per-NFE paired deltas with CIs, the plateau estimate (mean of the last two grid points), and the dominance verdict. A cell whose baseline does not plateau on the grid has an unfinished ceiling measurement, not a win.",
  "updated_at": "2026-10-23",
  "history": "docs/audit/todo-history.md",
  "no_push": true,
  "commit_footer": "(USER AUTHORIZED, NO PUSH)",
  "recording_policy": "Observations-only: write audit docs + todo.json + raw artifacts. Frozen CLAIMS.md / CONSOLIDATED_RESULTS.md / paper-A-final.* / tnnls_submission/** stay untouched without explicit user authorization.",
- "decision_rule": "An experiment runs only if it can change a claim's STATUS or a metric's MAGNITUDE. More seeds, more draws or a larger N on an already-measured effect do not qualify: they buy confidence, not strength, and the paper's weakness is not confidence. When a cell is power-limited or negative, stop measuring and strengthen the adapter: study the domain (the upstream implementation, the metric's own definition, the field's validity rules), write the design hypothesis down, change the code, then make ONE pre-registered measurement. Every experiment left in this file is either that confirmation run or a measurement defect that must be corrected.",
+ "decision_rule": "An experiment runs only if it can change a claim's STATUS or a metric's MAGNITUDE. More seeds, more draws or a larger N on an already-measured effect do not qualify: they buy confidence, not strength. When a cell is power-limited or negative, stop measuring and strengthen the adapter: study the domain (the upstream implementation, the metric's own definition, the field's validity rules), write the design hypothesis down, change the code, then make ONE pre-registered measurement. A tie is a loss and is treated as an open gap. Seed top-ups after a run are forbidden in every case; a cell's canonical seed set is fixed in its pre-registration before the first number exists.",
  "research_protocol": [
   "1) Read the upstream implementation of the state space being perturbed (channel geometry, latent geometry, embedding geometry) before proposing anything.",
   "2) Read the metric's definition and the scorer, not just its name: what does it reward, and would it reward the change we are about to make for a trivial reason?",
   "3) State the design hypothesis as a falsifiable sentence with the expected sign and rough size, in the audit doc, BEFORE touching code.",
   "4) Change one mechanism at a time; keep the old arm runnable so the before/after is paired on the same seed and the same prior.",
-  "5) One confirmatory measurement at the cell's canonical N/NFE/seeds. No seed top-ups afterwards."
+  "5) One confirmatory measurement at the cell's canonical N/NFE/seeds. No seed top-ups afterwards.",
+  "6) Never frame the control as 'the baseline with more steps'. Flow-matching inference saturates in the step count, so the baseline's ceiling is set by its own inference protocol; the correct control is the baseline at its plateau, and the claim to prove is (quality, NFE) frontier dominance plus a higher plateau."
  ],
  "gate_chain": [
   "python3 tools/verify_submission_readiness.py",
@@ -23,15 +27,18 @@
   "mkdocs build --strict"
  ],
  "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 15 known failures (3 stale eval stubs; 12 order-dependent test_paper_metrics cases). docs-vs-code verifies 3370 claims since the 2026-10-21 archive move.",
- "q1_gate": "The paper's weakness is now a MECHANISM weakness, not a power weakness. Three fidelity cells regress (R5c production +9.5%, R5b CIFAR +52% at N=200, K7 novelty 12.6x down) and GAP-64 traced all three to one property of the blend: it shrinks variance. GAP-67 changes that property. If it works, the fidelity regressions become a solved mechanism; if it does not, the boundary is real and gets stated as one. Everything else in this file is either adapter work that follows from the same thesis, or a user-gated document step.",
+ "q1_gate": "The requirement is a win on every model task, judged by win_definition (point win AND frontier dominance). Current state: R1 wins single-seed but the gain is one Pfam family (GAP-69 -> GAP-79); R2 wins small at one seed; R3 is a near-miss at one seed; R5a ties; R5b and R5c-production lose; K1's metric is saturated; K7 is inverted. GAP-76 already removed the MNIST first-moment defect (mean DeltaFID +7.75% -> -3.34%, 6 W / 0 T / 6 R strict), so the MNIST residual is a contraction, not a location error. Every non-winning cell therefore has a mechanism gap whose acceptance test is the win itself; none of them is closed by restating a boundary.",
  "execution_order": [
-  "GAP-69-ADAPTER-LINAGEFLOW-PROTEIN (P0, ~1 day research+code, ~10 h GPU; R1 is the paper's headline positive)",
-  "GAP-71-ADAPTER-IMAGE-SPECTRAL (P1, ~1 day, ~4 h GPU; absorbs the GAP-66/63 before-arm)",
-  "GAP-70-ADAPTER-KANZI-LATENT (P1, ~1 day, ~4 h GPU; the K7 novelty drop)",
-  "GAP-74-CONDITIONAL-MEAN-BOUND (P1, ~3 h code + ~2 h GPU; states the contraction as a theorem, or falsifies it)",
-  "GAP-47-K1-PB-METRIC (P2, USER GATE; downstream of GAP-70)",
-  "GAP-50-EVIDENCE-GRADE-TABLE (P2, DRAFT COMPLETE; refresh after the adapter gaps land)",
-  "GAP-29-MANUSCRIPT (P2, USER AUTHORIZATION; blocked on GAP-76/68/69 numbers)",
+  "GAP-84-INFERENCE-FRONTIER (P0, ~1 day code + analysis, CPU; defines the win metric for EVERY cell and is the paper's central claim: raised ceiling + fewer NFE)",
+  "GAP-69-ADAPTER-LINAGEFLOW-PROTEIN (P0, IN FLIGHT on cuda:0; R1 point win) -> GAP-79-R1-PER-FAMILY (P0, closes the PF00005-only concentration)",
+  "GAP-70-ADAPTER-KANZI-LATENT (P1, re-scoped to LineageFlow; K7 must become a win, not a <=2x loss)",
+  "GAP-71-ADAPTER-IMAGE-SPECTRAL (P1, CIFAR R5b must become a win at matched NFE)",
+  "GAP-74-CONDITIONAL-MEAN-BOUND (P1, theory + rho measurement; supplies GAP-78's target) -> GAP-78-R5C-CONTRACTION (P0, closes the last MNIST losses: production +1.0..1.2%, w16e1_60k +2.4..3.0%)",
+  "GAP-81-R3-FLOWMOL3-WIN (P1, FlowMol3 fg_dev must clear the R-level alpha at 3 seeds)",
+  "GAP-80-R5A-2D-WIN (P2, the 2D FM tie must become a win)",
+  "GAP-47-K1-PB-METRIC (P2, USER GATE; K1 must win at the new metric)",
+  "GAP-50-EVIDENCE-GRADE-TABLE (P2, refresh after the cells above land; every row must read WIN or OPEN)",
+  "GAP-29-MANUSCRIPT (P2, USER AUTHORIZATION; blocked on GAP-84/78/79 numbers)",
   "GAP-15-VENUE (P1, USER: final journal choice)",
   "GAP-51-PAPER-B-SPLIT (P2, USER GATE: outline only)",
   "GAP-20-COVERLETTER (P3, USER ONLY)"
@@ -46,10 +53,10 @@
    "gap": "R1's +74% hmmscan hits is the flagship positive, and its mechanism is a per-record RANDOM init (D-004b: init-only ~= full framework). That is a perturbation, not a design. Nothing in the adapter uses protein knowledge: the perturbation is isotropic over the ESM-2 embedding / sequence simplex, with no notion of conserved sites, family profiles, or foldability. GAP-60 showed the gain is not bought by diversity collapse, so the samples really are different - but we cannot say why, and a reviewer will ask.",
    "design_hypothesis": "Profile-aware perturbation, in two variants that share one control: (a) position-wise noise scaled by (1 - conservation), using the same Pfam HMM that the metric scores against, so the restart explores surface positions and leaves catalytic motifs alone; (b) perturb the ESM-2 embedding only and keep the sequence identity, so the fold is preserved while the surface changes. Expected sign: hits rise above the init-only arm, and the two variants separate - if (a) wins, the metric rewards motif preservation; if (b) wins, it rewards fold retention.",
    "research": "(a) How LineageFlow conditions on family - if family is already an input, the conservation weighting may be redundant and must be tested against it. (b) What hmmscan against Pfam actually rewards: recovery of known motifs (then (a)) or novel-but-plausible domains (then (b)). (c) The D-004b result means the comparison arm is init-only, NOT the plain baseline - beating the baseline again proves nothing new. (d) Reading the profile HMM per position costs a pass over the MSA; budget it.",
-   "acceptance": "(1) Seed 42 first: profile-aware arm vs init-only arm vs baseline, N=1000, NFE=150, R=3, same prior. (2) Only if the profile-aware arm beats init-only by >= 15% with a CI excluding 0 do seeds 43/44 run (this is the confirmatory run the deferred GAP-59 would have been). (3) Pre-registered: SUPPORTED only if the gain over init-only holds at 3 seeds; otherwise R1 stays an empirical perturbation result and the paper says so.",
+   "acceptance": "(1) Seed 42 first: profile-aware arm vs init-only arm vs baseline, N=1000, NFE=150, R=3, same prior. (2) Only if the profile-aware arm beats init-only by >= 15% with a CI excluding 0 do seeds 43/44 run (this is the confirmatory run the deferred GAP-59 would have been). (3) WIN requires BOTH: the 3-seed aggregate paired CI excludes 0, AND every one of the four families is at or above baseline. Seed 42 currently satisfies only the first: 8.20x aggregate, but PF00005 27.81x and the other three families 0.908 (n.s.). If seeds 43/44 replicate that concentration, R1 is not a win and GAP-79 opens.",
    "agent_action": "1) Write docs/audit/gap69-lineageflow-profile.md with the hypothesis. 2) Read the Pfam HMM used by the scorer to get per-position conservation. 3) Implement both variants behind flags. 4) Run seed 42. 5) Escalate to 3 seeds only on the pre-registered condition. 6) 6 gates + commit.",
    "evidence": "adaptive_reflow/adapters/lineageflow.py (ESM-2 conditioning, family input); docs/audit/r1-d004b-attribution.md; docs/audit/gap60-validity-novelty-tradeoff.md; verification_outputs/gap55-r1-nfe150-n1000/",
-   "deliverable": "R1 either becomes a designed mechanism that can be described in one sentence, or it stays an empirical perturbation result with the boundary stated."
+   "deliverable": "R1 as a designed, one-sentence mechanism that wins on the aggregate AND on every family. A family-conditional gain is not a deliverable; it opens GAP-79."
   },
   {
    "id": "GAP-71-ADAPTER-IMAGE-SPECTRAL",
@@ -60,10 +67,10 @@
    "gap": "Two fidelity regressions live in image domains (R5c production +9.5%, R5b CIFAR +52.33% at N=200), and the image adapters do nothing domain-specific: the blend is per-pixel, so it shrinks high-frequency content - where the model does its generative work - exactly as much as low-frequency content, where the prior is genuinely informative. GAP-64's rho explains the sign of the regression but not why the magnitude differs by checkpoint; the band structure is the obvious missing variable. The +52.33% is also an N=200 number that the project's own calibration says is inflated 40-65%, so the baseline must be re-measured before any arm is compared to it.",
    "design_hypothesis": "Spectral-aware blend: apply m per band in a DCT or wavelet decomposition, keeping the prior in low bands (structure) and the fresh sample in high bands (texture). Expected sign: the R5b and R5c regressions shrink by at least half relative to the pixel-space arm, because the shrinkage is applied where it is harmless.",
    "research": "(a) The CIFAR RF adapter's state space - pixel or latent; a latent blend makes the band argument different. (b) Whether Inception features are dominated by low-frequency content; if they are, the high-band preservation will not move FID and the hypothesis is wrong for a measurable reason. (c) The MNIST projection FID's basis, since R5c uses a projection rather than Inception.",
-   "acceptance": "(1) FIRST re-measure the CURRENT arm at matched total NFE and N=1000 x 3: this is the retraction baseline that GAP-66 and GAP-63 were opened for, and it is run once, here, as the before. Pre-registered: if the matched-budget N=1000 delta is below +5%, the +18..+23% and +52.33% figures are retracted. (2) THEN the spectral arm on the same cells and seeds. (3) Pre-registered: the spectral arm must cut the regression by at least half; if it does not, the band structure is not the missing variable and the boundary is stated without it.",
+   "acceptance": "(1) FIRST re-measure the CURRENT arm at matched total NFE and N=1000 x 3: this is the retraction baseline that GAP-66 and GAP-63 were opened for, and it is run once, here, as the before. Pre-registered: if the matched-budget N=1000 delta is below +5%, the +18..+23% and +52.33% figures are retracted. (2) THEN the spectral arm on the same cells and seeds. (3) WIN requires the spectral arm to be at or below the matched-NFE before arm with the paired CI excluding a regression: halving the regression is not a win and is not accepted. If it does not win, GAP-71 stays open with the failing pair named and the mechanism is changed again -- the image boundary is not published as a boundary.",
    "agent_action": "1) Write docs/audit/gap71-image-spectral.md with the hypothesis. 2) Locate the Wave 280 CIFAR driver and the R5c MNIST driver; add the matched-NFE constraint to the CIFAR driver (GAP-55 fixed MNIST, not CIFAR). 3) Run the before arm. 4) Implement the band blend. 5) Run the after arm. 6) 6 gates + commit.",
    "evidence": "docs/audit/gap64-r5c-operating-regime.md; docs/audit/gap57-equal-nfe-regime-ladder.md; docs/audit/wave280-p-cifar-sweep-result.md; verification_outputs/gap46-r5b-memory/gap46-memory-fraction.csv; verification_outputs/gap57-equal-nfe-ladder/fid_small_n_bias.json",
-   "deliverable": "R5b and R5c either become non-regressions, or the image boundary is stated with a tested mechanism and a retracted magnitude."
+   "deliverable": "R5b as a win at matched NFE, plus the retraction of the two inflated magnitudes. A smaller regression is not a deliverable."
   },
   {
    "id": "GAP-70-ADAPTER-KANZI-LATENT",
@@ -74,10 +81,10 @@
    "gap": "K7 is the least explained number in the paper: 12.6x less novel (3.7% vs 46.6%, McNemar p=1e-102). GAP-60 showed it is not a diversity collapse - within-generation clustering is unchanged - so the samples are diverse but all close to KNOWN Pfam families. Kanzi's state is a 64x64 continuous latent with an autoregressive decoder prior, and the blend treats all 4096 coordinates alike. A scalar blend in that space is a global push toward the decoder's high-likelihood region, which is exactly the behaviour K7 measures.",
    "design_hypothesis": "Decoder-aware latent blend: apply the GAP-67 covariance-preserving rescaling in latent space and, in addition, blend only the latent tokens whose decoded contribution is below a threshold (estimated by masking), leaving the tokens that carry sequence identity fresh. Expected sign: validity stays at or above the current arm while the novelty drop shrinks from 12.6x toward <= 2x.",
    "research": "(a) The inverse-projection bridge (kanzi-inv-proj-bridge follow-up): how a latent maps back to a sequence, and whether any latent direction is identifiable as 'identity'. (b) Kanzi's AR decoder prior: is it conditioned on the latent prefix? If so, a token-level blend changes the decoding order's meaning. (c) K7's novelty is measured against the 63.8M pfam_canonical build on different samples from R1 - the comparison must be run on the same samples as the validity number.",
-   "acceptance": "(1) Validity and novelty measured on the SAME samples, same seeds, N=1000. (2) Pre-registered: the adapter is SUPPORTED if validity does not fall and the novelty drop is <= 2x; if the novelty drop is unchanged, the decoder prior is not the lever and K7 stays an unexplained boundary. (3) The powered validity test is GAP-47's run and happens after this lands, on these samples.",
+   "acceptance": "(1) Validity and novelty measured on the SAME samples, same seeds, N=1000. (2) WIN requires novelty at or above the baseline's with validity at or above the framework's current arm -- a drop of <= 2x is NOT a win and is not accepted. (3) The powered validity test is GAP-47's run and happens after this lands, on these samples.",
    "agent_action": "1) Write docs/audit/gap70-kanzi-latent.md with the hypothesis. 2) Read the inverse-projection bridge and the decoder prior. 3) Implement the token-selective blend behind a flag. 4) Run validity + novelty on the same samples. 5) 6 gates + commit.",
    "evidence": "adaptive_reflow/adapters/kanzi.py (64x64 latent, AR decoder); docs/audit/gap60-validity-novelty-tradeoff.md; verification_outputs/novelty_pctid_w166_q3_2026/novelty_results_full.json",
-   "deliverable": "K1 and K7 become one trade-off curve, or K7 is stated as an unexplained boundary with the latent hypothesis excluded."
+   "deliverable": "K7 as a win: framework novelty at or above baseline with validity at or above the scalar arm. If the position blend does not deliver it, the mechanism is changed again; K7 is not published as an unexplained boundary."
   },
   {
    "id": "GAP-74-CONDITIONAL-MEAN-BOUND",
@@ -94,6 +101,76 @@
    "deliverable": "The contraction stated as a measured mechanism rather than a conjecture, or falsified and replaced."
   },
   {
+   "id": "GAP-84-INFERENCE-FRONTIER",
+   "priority": "P0",
+   "status": "PLANNED — the win metric for every cell, and the paper's central claim. No code yet.",
+   "depends_on": "none (CPU; reuses existing artifacts where the grid already exists)",
+   "est_wall": "~1 day code + analysis; no GPU",
+   "gap": "The claim is that the framework raises the ceiling and the speed of inference on a frozen checkpoint. Nothing in the repo measures that: every cell is one matched-NFE point, and the only ladder (GAP-57) covers one model at three NFE points with no plateau estimate. So the strongest objection -- 'the baseline would reach the same quality with more steps' -- has no committed answer, even though GAP-57 already observed that the baseline is step-insensitive (w16e1_5k 27.2361 -> 27.2311 across 50/100/200). The objection is wrong for a measurable reason: flow-matching inference saturates, so the baseline's ceiling is fixed by its own protocol.",
+   "design_hypothesis": "At a frozen checkpoint, baseline quality is flat in NFE beyond ~50, so the baseline's ceiling is set by its inference protocol and not by the compute budget. The framework's curve lies at or below the baseline's at every NFE, and its plateau is strictly better. Expected sign: pointwise delta <= 0 at every grid point; plateau delta < 0 with the CI excluding 0.",
+   "research": "(a) Per-model NFE grid and saturation point: a grid that stops before the plateau cannot establish a ceiling. (b) The metric's own N-dependence (the FID small-N bias, gap57 section 7) so the frontier is measured at N >= 1000 only. (c) The speed half needs the curve, not a point: the NFE at which the framework first reaches the baseline's plateau quality.",
+   "acceptance": "(1) One frontier artifact per model: per-NFE paired deltas with CIs, the plateau estimate, the dominance verdict, and the NFE-to-baseline-plateau number. (2) WIN requires dominance at every grid point AND a plateau improvement whose CI excludes 0. (3) A baseline that has not plateaued on the grid leaves the ceiling measurement INCOMPLETE; that is not a win and not a loss.",
+   "agent_action": "1) Write docs/audit/gap84-inference-frontier.md with the protocol before any number. 2) Implement tools/frontier_report.py (curve assembly, plateau estimate, dominance test, paired CIs). 3) Assemble the frontier for every model from existing artifacts where the grid exists, and flag the missing grid points as runs. 4) 6 gates + commit.",
+   "evidence": "docs/audit/gap57-equal-nfe-regime-ladder.md section 6 (baseline step-insensitivity); docs/audit/gap64-r5c-operating-regime.md; docs/audit/gap55-code-level-hardening.md",
+   "deliverable": "A per-model (quality, NFE) frontier where the framework dominates and the plateau is raised. This is the paper's headline, and every cell's win verdict is read off it."
+  },
+  {
+   "id": "GAP-79-R1-PER-FAMILY",
+   "priority": "P0",
+   "status": "PLANNED — opens only if GAP-69's seeds 43/44 replicate the PF00005-only concentration (seed 42: aggregate 8.20x, PF00005 27.81x, other three 0.908 n.s.).",
+   "depends_on": "GAP-69 (supplies the 3-seed samples and the per-family decomposition)",
+   "est_wall": "~1 day code + ~6 h GPU",
+   "gap": "Seed 42's 8.20x is entirely one family: PF00005 27.81x, PF00072 0.85x, PF00183 0.81x, PF02517 1.07x; excluding PF00005 the ratio is 0.908 (n=750, t=-0.93). All 40 intended hits and 184 of the top-k hits come from PF00005, whose records hit 187 distinct Pfam models -- the whole P-loop NTPase / AAA+ clan. The profile perturbation therefore makes one promiscuous motif more recognisable and does nothing for the other three families. A family-conditional gain is not a win.",
+   "design_hypothesis": "The profile perturbation imports information only where the family's HMM is discriminative against the rest of Pfam. PF00005 is promiscuous (187 models), so any nudge toward its motif scores as a hit; the other three need perturbation in their DISCRIMINATIVE columns -- where the family's emission differs most from its nearest Pfam neighbours -- rather than in its conserved columns. Expected sign: PF00072/PF00183/PF02517 rise above baseline while PF00005 does not fall.",
+   "research": "(a) Per-family discriminative columns: the profile columns that separate the family from its nearest neighbours, not merely where it is conserved. (b) The scorer counts hits against any family, so a promiscuous family can carry the aggregate; the win must be defined per family, which it now is. (c) Whether PF00005's gain is partly a metric artefact (hits on 187 models) rather than a real improvement.",
+   "acceptance": "(1) Reuse GAP-69's 3-seed samples; add only the arms the new lever needs. (2) WIN requires every family's paired CI to exclude 0 in the improving direction. (3) No seed top-ups.",
+   "agent_action": "1) Confirm the seeds 43/44 per-family pattern. 2) Compute per-family discriminative columns from the same Pfam-A HMM. 3) Implement the discriminative-subspace perturbation behind a flag. 4) One confirmatory run. 5) 6 gates + commit.",
+   "evidence": "docs/audit/gap69-lineageflow-profile.md section 1.3 (per-family table and the 187-model promiscuity); verification_outputs/gap69-lineageflow-profile/profiles.json",
+   "deliverable": "R1 as a win on all four families, not on one."
+  },
+  {
+   "id": "GAP-78-R5C-CONTRACTION",
+   "priority": "P0",
+   "status": "PLANNED — GAP-76 already removed the first-moment defect (mean DeltaFID +7.75% -> -3.34%, 6 W / 0 T / 6 R strict); this closes the six residual losses.",
+   "depends_on": "GAP-74 (measures rho and names the missing variance), GAP-76 (the mean-preserve arm this composes with)",
+   "est_wall": "~1 day code + ~2 h CPU",
+   "gap": "The six remaining strict losses are production (+1.0..1.2%) and w16e1_60k (+2.4..3.0%), all under the effect floor but all losses. GAP-67 falsified the scalar second-moment correction and GAP-72 located the original regression in the mean; what is left is the conditional-mean contraction GAP-74 measures (rho < 1): the endpoint is approximately E[x1|x_m], so the cloud is under-dispersed relative to p(x1). A scalar variance fix is already known not to work, so the correction must be directional.",
+   "design_hypothesis": "The residual loss is the contraction, and it is removable by restoring the conditional variance the restart discards along the conditional-mean direction -- not by rescaling the whole cloud. Expected sign: production and w16e1_60k move to <= 0 while the six existing strict wins (w16e1_10k -3.9..-4.5%, w16e1_5k -12.7..-13.2%) do not shrink.",
+   "research": "(a) Whether the contraction is anisotropic; GAP-67's null on the scalar correction says it must be. (b) The interaction with mean-preserve: the two corrections must compose without double-counting the first moment. (c) Whether the correction costs the wins on the under-trained checkpoints -- if it does, it is the wrong lever.",
+   "acceptance": "(1) The GAP-76 grid, 36 cells, one confirmatory run. (2) WIN requires all 12 production/w16e1_60k cells to be non-positive with the 3-seed CI excluding a regression, AND the six existing strict wins to survive. (3) No seed top-ups.",
+   "agent_action": "1) Wait for GAP-74's rho curve to name the missing variance. 2) Implement the directional variance restoration behind a flag. 3) One confirmatory run on the GAP-76 grid. 4) 6 gates + commit.",
+   "evidence": "docs/audit/gap76-restart-mean-bias.md section 3 (the census); docs/audit/gap67-covariance-preservation.md sections 5-6; docs/audit/gap74-conditional-mean-bound.md",
+   "deliverable": "R5c as 12/12 wins at matched NFE, with the mechanism named in one sentence."
+  },
+  {
+   "id": "GAP-81-R3-FLOWMOL3-WIN",
+   "priority": "P1",
+   "status": "PLANNED — R3 is a near-miss, not a null: fg_dev -0.061, CI [-0.117,-0.001], p=0.043, which does not clear the R-level alpha 0.00714.",
+   "depends_on": "GAP-68 (closed: the per-channel wiring), GAP-84 (the win metric)",
+   "est_wall": "~1 day code + ~4 h GPU",
+   "gap": "The effect exists but is too small to survive the family-wise correction, and the mechanism is wrong for the state space: FlowMol3 samples a CTMC over discrete bond/atom classes plus continuous coordinates, and the restart perturbs the state as if it were continuous. A blend across a class boundary breaks the flow's Lipschitz premise, so the restart is injecting noise that the model cannot integrate coherently.",
+   "design_hypothesis": "Restricting the restart to the continuous coordinates and keeping the discrete class assignment (or re-drawing it from the model's own transition kernel) removes the class flips, which should increase the effect rather than dilute it. Expected sign: fg_dev falls by at least 2x the current -0.061 and clears 0.00714 at 3 seeds.",
+   "research": "(a) The CTMC transition kernel: what a legal discrete-state restart is. (b) Whether fg_dev is dominated by the discrete classes -- then the class-preserving restart is the lever. (c) The GAP-68 channel wiring, which already separates the channels and supplies the hook.",
+   "acceptance": "(1) One confirmatory run at N=1000 x 3 seeds on the channel-split arm. (2) WIN requires the 3-seed paired CI to exclude 0 at alpha 0.00714 with fg_dev decreasing. (3) No seed top-ups beyond the pre-registered three.",
+   "agent_action": "1) Read the CTMC sampler and the GAP-68 channel wiring. 2) Implement the class-preserving restart behind a flag. 3) One run at 3 seeds. 4) 6 gates + commit.",
+   "evidence": "verification_outputs/gap55-r3-full-smiles/; docs/audit/gap68-flowmol3-channels.md",
+   "deliverable": "R3 as a win that clears the R-level alpha."
+  },
+  {
+   "id": "GAP-80-R5A-2D-WIN",
+   "priority": "P2",
+   "status": "PLANNED — R5a is a TIE (|delta| = 0.0091 against a 0.01 floor, 10 seeds). A tie is a loss.",
+   "depends_on": "GAP-84 (the win metric)",
+   "est_wall": "~1 day code + minutes of CPU",
+   "gap": "The same scalar blend that wins on protein and MNIST produces nothing measurable on the 2D toy: |delta| sits at the effect floor across 10 seeds. Either W2 on this data is insensitive to what the restart changes, or the restart is not reaching the quantity W2 measures.",
+   "design_hypothesis": "W2 on a 2D mixture is dominated by the global mode structure, which the blend preserves by construction (m*prior keeps the mode), so a blend that only re-randomises within-mode detail cannot move it. The lever is to make the restart act on the mode assignment (the discrete component) rather than on within-mode coordinates. Expected sign: W2 falls below the 0.01 floor with a CI excluding 0.",
+   "research": "(a) The 2D FM's data: how many modes, and whether W2 is mode-dominated. (b) Whether the adapter exposes a mode/component variable. (c) If W2 is genuinely insensitive to the operator, the cell's metric is the gap and is replaced with a stated justification -- a metric gap, not a boundary.",
+   "acceptance": "(1) One pre-registered run at the cell's 10 seeds. (2) WIN requires |delta| to clear the 0.01 floor with a CI excluding 0. (3) No seed top-ups.",
+   "agent_action": "1) Read the 2D adapter's state and the W2 estimator. 2) Write the pre-registration. 3) Implement the mode-level restart behind a flag. 4) One run. 5) 6 gates + commit.",
+   "evidence": "verification_outputs/g1_deep_dive_q3_2026.json; docs/audit/gap35-cross-domain.md",
+   "deliverable": "R5a as a win, or a documented metric gap that is then fixed."
+  },
+  {
    "id": "GAP-47-K1-PB-METRIC",
    "priority": "P2",
    "status": "PLANNED",
@@ -101,7 +178,7 @@
    "depends_on": "GAP-70 (supplies the samples), user authorization (changes the K1 metric in a frozen claim surface)",
    "est_wall": "~1 h analysis on GAP-70's samples",
    "gap": "K1's reported metric rdkit_validity_pct is saturated at 1.0 in both arms, so the cell cannot discriminate. pb_validity_pct shows a growing framework advantage with baseline compute (+0.020/+0.089/+0.118 at NFE 250/500/1000) but only at n=3.",
-   "acceptance": "Pre-register pb_validity_pct as the K1 metric and a powered n (>=7 seeds or a per-record paired design); p<0.0125 at the new metric -> K1 becomes SUPPORTED; otherwise K1 stays NOT-SIGNIFICANT with the metric-saturation disclosure.",
+   "acceptance": "Pre-register pb_validity_pct as the K1 metric and a powered n (>=7 seeds or a per-record paired design); p<0.0125 at the new metric -> K1 is a win. If the metric still does not separate, K1 is not closed by a saturation disclosure: the FlowMol3 restart mechanism changes next (GAP-81's channel work is the first candidate).",
    "agent_action": "1) Write the K1 metric pre-registration. 2) Reuse GAP-70's samples; run only the seeds GAP-70 already produced. 3) Apply the K-level alpha.",
    "evidence": "docs/audit/gap12-tuned-baseline.md section 4.3; docs/audit/gap27-r3-power.md; docs/audit/gap35-cross-domain.md",
    "deliverable": "K1 either discriminating or explicitly saturated in the record."
@@ -126,8 +203,8 @@
    "user_gated": true,
    "depends_on": "GAP-67/68/69 numbers + user authorization",
    "est_wall": "~1 day of editing",
-   "gap": "Manuscript rewrite. Must: (a) cut audit/disclosure density and lead with cross-domain generality; (b) position R1 honestly (init-attributed; NFE=150 d=+0.1178); (c) replace the R5c 'production-ckpt baseline wins' framing with the GAP-64/67 operating-regime mechanism (the blend shrinks variance; the fix preserves it); (d) state the surviving claims as an operator characterisation instead of 'improves any FM model'.",
-   "acceptance": "Density reduced; no claim exceeds its cell; R1/R5b/R5c/K7 boundaries explicit; every number matches a committed artifact; user authorizes frozen-manuscript edits.",
+   "gap": "Manuscript rewrite. Must: (a) cut audit/disclosure density and lead with cross-domain generality; (b) position R1 honestly (init-attributed; NFE=150 d=+0.1178); (c) replace the R5c 'production-ckpt baseline wins' framing with the measured mechanism and the fixed arm (GAP-76 removed the first-moment defect: mean DeltaFID +7.75% -> -3.34%; GAP-78 closes the residual); (d) state the contribution as the (quality, NFE) frontier: the framework raises the attainable ceiling at a frozen checkpoint and reaches a given quality at fewer NFE, which is a claim about the inference protocol, not about the model.",
+   "acceptance": "Density reduced; every cell in the paper reads WIN with its frontier dominance shown; no claim exceeds its cell; every number matches a committed artifact; user authorizes frozen-manuscript edits.",
    "agent_action": "Draft only after the adapter runs land; keep a claim-to-cell map; run tools/check_claims_consistency.py after every edit.",
    "evidence": "docs/audit/todo-history.md sections 11-15; docs/audit/gap64-r5c-operating-regime.md",
    "deliverable": "A manuscript whose claims match the evidence state."
@@ -182,8 +259,8 @@
   {
    "id": "GAP-62-R3-THREE-SEED",
    "why_deferred": "Same reason: seeds 43/44 at N=1000 would raise power on a -0.061 effect, not the effect. If the effect is real, the adapter work in GAP-68 is what makes it large enough to clear the 0.00714 floor.",
-   "re_entry": "Only as the confirmatory run of GAP-68, on the per-channel arm.",
-   "absorbed_into": "GAP-68-ADAPTER-FLOWMOL3-CHANNELS"
+   "re_entry": "Only as the confirmatory run of GAP-81, on the class-preserving arm.",
+   "absorbed_into": "GAP-81-R3-FLOWMOL3-WIN"
   },
   {
    "id": "GAP-61-MEMORY-ATTRIBUTION-WINNING-CELL",
