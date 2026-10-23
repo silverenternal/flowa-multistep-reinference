@@ -342,6 +342,14 @@ a later rerun regenerates the cell rather than skipping it.
 Cost: ~40 min of the first of four generations. The driver is unchanged and the
 pre-registration is untouched.
 
+**Resumed 2026-10-24.** `cuda:0` reported 2 MiB used / 0 % util (the 41.9 GB
+neighbour had exited) and the user lifted the pause, so `gap69_profile_escalate.sh`
+was restarted unchanged. The 20 GB headroom pre-flight passed (11.3 GB in use at
+start, 34 % util), and `seed43_init_only` regenerates from scratch because its
+`upstream_eval.json` was never written — the resume key still works as designed.
+No parameter, seed, or scoring rule changed; the quarantined directory stays
+quarantined and is never read.
+
 ---
 
 ## 2. Status
@@ -351,7 +359,7 @@ pre-registration is untouched.
 | §0 pre-registration | committed before any code/run (`9ec61f6d`) |
 | arm D (ceiling reference) | done, CPU, `armD_hmm_draw/` |
 | arm C seed 42 | done, rule 1 **fires** (`report_seed42.json`) |
-| seeds 43/44 (B and C) | **stopped** (§1.5) — resumable, nothing scored |
+| seeds 43/44 (B and C) | **running since 2026-10-24** (§1.5 for the 2026-10-23 stop; cuda:0 freed, user lifted the pause) |
 | verdict | **deferred** until 3 seeds land (§0.4.3) |
 
 The escalation runs **both** arms per seed. Arm B exists only at seed 42 on this
