@@ -428,3 +428,23 @@ finding — it has not been run.
 * Under the pre-registered 1 % relative rule the cell is a **LOSS**. Under the
   ledger's 1-FID-unit floor it is a **WIN**. R5c is not recorded as closed until
   the margin question is settled.
+
+### 10.7 Decision (2026-10-24)
+
+R5c is settled on the **ledger's per-cell floor**, decided by the user after both
+verdicts were on the table: 12/12 weak dominance, worst cell +0.098 FID units, 3
+strict floor-gains on `w16e1_5k`. This is the convention every R5c table since
+GAP-76 has used, and it is the one GAP-84 §0.5 now carries.
+
+Two things this decision does **not** do:
+
+* It does not delete the 1 % verdict. `verdict_relative` stays in the artifact
+  and this section stays in the audit; a reader can see that the cell fails the
+  stricter relative rule on one arm, and why that rule was the wrong ruler.
+* It does not convert the ties into gains. `production` and `w16e1_60k` are ties
+  on every arm and no strict gain is claimed there; `w16e1_10k` is −0.95 to
+  −1.00 units and is also a tie under the floor.
+
+The selector search is over and both candidates are falsified (§2, §7). The win
+is a parameter, β = 0.3, applied identically to every checkpoint, with no fitted
+threshold and no arm selection.
