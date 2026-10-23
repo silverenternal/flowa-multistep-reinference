@@ -26,6 +26,7 @@ N=200
 OUT=verification_outputs/gap78-kappa-dose-screen
 CKPTS=(production w16e1_5k)
 BETAS=(0.3 0.5 0.7)
+SEEDS=(42)
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -33,6 +34,7 @@ while [[ $# -gt 0 ]]; do
     --out)       OUT="$2"; shift 2 ;;
     --ckpts)     IFS=, read -r -a CKPTS <<< "$2"; shift 2 ;;
     --betas)     IFS=, read -r -a BETAS <<< "$2"; shift 2 ;;
+    --seeds)     IFS=, read -r -a SEEDS <<< "$2"; shift 2 ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
 done
@@ -40,7 +42,7 @@ done
 mkdir -p "$OUT"
 # Append, never truncate: a later invocation with a different --ckpts/--betas
 # must not erase the log of an earlier one.
-echo "[gap78] n=$N out=$OUT ckpts=${CKPTS[*]} betas=${BETAS[*]}" | tee -a "$OUT/run.log"
+echo "[gap78] n=$N out=$OUT ckpts=${CKPTS[*]} betas=${BETAS[*]} seeds=${SEEDS[*]}" | tee -a "$OUT/run.log"
 
 ckpt_path() {
   case "$1" in
@@ -52,14 +54,24 @@ ckpt_path() {
   esac
 }
 
+# One seed keeps the legacy cell name; several seeds get an explicit _s<seed>
+# suffix so a 3-seed directory can hold the seed-42 cells copied from an earlier
+# single-seed run alongside fresh 43/44 cells.
+if [[ ${#SEEDS[@]} -gt 1 ]]; then SEED_SUFFIXED=1; else SEED_SUFFIXED=0; fi
+
 for ck in "${CKPTS[@]}"; do
   for b in "${BETAS[@]}"; do
-    cell="$OUT/${ck}_beta${b}"
-    if [[ -f "$cell/sweep_summary.json" ]]; then
-      echo "[gap78] skip $cell (already scored)" | tee -a "$OUT/run.log"
-      continue
-    fi
-    echo "[gap78] $ck beta=$b -> $cell" | tee -a "$OUT/run.log"
+    for sd in "${SEEDS[@]}"; do
+      if [[ "$SEED_SUFFIXED" == "1" ]]; then
+        cell="$OUT/${ck}_beta${b}_s${sd}"
+      else
+        cell="$OUT/${ck}_beta${b}"
+      fi
+      if [[ -f "$cell/sweep_summary.json" ]]; then
+        echo "[gap78] skip $cell (already scored)" | tee -a "$OUT/run.log"
+        continue
+      fi
+      echo "[gap78] $ck beta=$b seed=$sd -> $cell" | tee -a "$OUT/run.log"
     # --shared-prior is NOT optional here: without it the baseline and every arm
     # draw their own x0 (batch ids wave191-p3-baseline-s42 vs wave191-p3-<arm>-s42),
     # so the comparison is not paired on the prior and the baseline FID moves by
@@ -68,12 +80,13 @@ for ck in "${CKPTS[@]}"; do
     # same experiment.
     python3 scripts/wave191_p3_mnist_sweep.py \
       --ckpt "$(ckpt_path "$ck")" \
-      --n-samples "$N" --seed 42 \
+      --n-samples "$N" --seed "$sd" \
       --total-nfe 50 --n-rounds 4 \
       --equal-total-nfe --beta-schedule equal_budget \
       --beta-framework "$b" --restart-t0-mode memory \
       --mean-preserve --seed-keyed-prior --shared-prior \
       --output-dir "$cell" >> "$OUT/run.log" 2>&1
+    done
   done
 done
 
