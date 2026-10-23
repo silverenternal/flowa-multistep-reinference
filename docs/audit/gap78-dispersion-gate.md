@@ -263,3 +263,54 @@ The decisive comparison for those two cells has to be at N = 1000.
   R5c cannot be won by any restart configuration, and the cell's honest status
   is a loss on two of four checkpoints. That outcome is not written here in
   advance — it is the experiment the next increment has to run.
+
+---
+
+## 9. β = 0.3 at N = 1000: weak dominance on all four checkpoints
+
+§8 named the one remaining lever and the screen pointed at β = 0.3. It was run
+at the real resolution (N = 1000, seed 42, NFE = 50, R = 4, mean-preserve,
+shared prior; `verification_outputs/gap78-kappa-dose-n1000/`). It works.
+
+**Headline ΔFID per arm** (the ledger metric — GAP-76's "+7.75 % → −3.34 %" is
+the headline, verified by recomputing that mean from its 12 cell means):
+
+| checkpoint | baseline | cosine | codim | evidence | **mean** | β = 0.5 mean (GAP-76, 3 seeds) |
+|---|---:|---:|---:|---:|---:|---:|
+| `production` | 9.9670 | +0.18 % | **−0.58 %** | −0.53 % | **−0.31 %** | +1.03 % |
+| `w16e1_60k` | 11.4009 | +0.73 % | +0.13 % | **+0.01 %** | **+0.29 %** | +2.82 % |
+| `w16e1_5k` | 24.4977 | −12.55 % | −12.56 % | **−12.80 %** | **−12.64 %** | −13.00 % |
+| `w16e1_10k` | 16.9632 | −5.60 % | −5.79 % | **−5.94 %** | **−5.78 %** | −4.30 % |
+
+Every one of the twelve cells is inside the +1 % margin (worst is +0.73 %), and
+two checkpoints carry strict gains of −5.8 % and −12.6 %. Under the frontier
+definition (`gap84-inference-frontier.md` §0.5–§0.6) that is a **WIN**: weak
+dominance everywhere, strict gain somewhere, no selector and no fitted
+threshold. The smaller restart costs 0.36 pp on `w16e1_5k` and buys 1.34 pp on
+`production` and 2.53 pp on `w16e1_60k`.
+
+**Three disclosures that must travel with this table.**
+
+1. **One seed.** GAP-76's β = 0.5 numbers are 3-seed means; these are seed 42
+   only. The direction is unambiguous at N = 1000 (the β = 0.3 and β = 0.5
+   values differ by 1.3–2.5 pp, far more than the ~0.2 pp seed spread GAP-76
+   measured), but the cell is not quotable until seeds 43/44 land.
+2. **The chunk-level statistic and the headline disagree in sign on
+   `w16e1_60k`.** Chunk Δ is −4.53 / −4.90 / −4.88 % (p ≤ 5e-11, all arms) while
+   the headline is +0.73 / +0.13 / +0.01 %. The sweep's own `verdict` string
+   therefore reads `baseline_wins` for that checkpoint even though every chunk
+   test is significant in the framework's favour. This is the same
+   headline-vs-chunk divergence GAP-67 §2.2 recorded, and it is not resolved
+   here. The ledger uses the headline, so `w16e1_60k` is scored as **weak
+   dominance, not a strict gain**, and the paper must not quote the chunk
+   number for it without both numbers on the page.
+3. **κ moves the wrong way again.** At β = 0.3 the `production` contraction is
+   0.953–0.963 and at β = 0.5 it is 0.954 — essentially unchanged — while the
+   headline moves from +1.23 % to +0.18 %. A 1 pp improvement with no change in
+   κ is one more refutation of §4's reading, consistent with §7.
+
+**What this does not claim.** `production` and `w16e1_60k` are weak-dominance
+cells. The framework is not worse there; it is not better either. The R5c
+strict gains are `w16e1_5k` and `w16e1_10k`, and the frontier win comes from
+"never worse anywhere, much better on two checkpoints", not from a win on all
+four.
