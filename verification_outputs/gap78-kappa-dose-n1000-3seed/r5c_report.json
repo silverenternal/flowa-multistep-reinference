@@ -1,0 +1,451 @@
+{
+ "schema": "gap78_r5c_report_v2",
+ "root": "verification_outputs/gap78-kappa-dose-n1000-3seed",
+ "margin_pct": 1.0,
+ "floor_units": 1.0,
+ "n_cells": 12,
+ "n_seeds_per_cell": [
+  3
+ ],
+ "rows": [
+  {
+   "ckpt": "production",
+   "arm": "codimension_sheet",
+   "n_seeds": 3,
+   "seeds": [
+    42,
+    43,
+    44
+   ],
+   "baseline_fid": 9.967044479007143,
+   "headline_delta": [
+    -0.5778232842394666,
+    -0.2692369670025783,
+    -0.6485318311430559
+   ],
+   "headline_mean": -0.4985306941283669,
+   "headline_sd": 0.2016968879921824,
+   "headline_ci95": [
+    -0.9995735399324296,
+    0.0025121516756957396
+   ],
+   "delta_units_mean": -0.04980353906433758,
+   "delta_units_ci95": [
+    -0.09991338309684303,
+    0.0003063049681678795
+   ],
+   "chunk_mean": -2.973554061141053,
+   "weak_dominance": true,
+   "strict_gain": false,
+   "weak_dominance_floor": true,
+   "strict_gain_floor": false
+  },
+  {
+   "ckpt": "production",
+   "arm": "cosine",
+   "n_seeds": 3,
+   "seeds": [
+    42,
+    43,
+    44
+   ],
+   "baseline_fid": 9.967044479007143,
+   "headline_delta": [
+    0.18333477617059155,
+    0.3998402012395334,
+    0.29065781613335284
+   ],
+   "headline_mean": 0.2912775978478259,
+   "headline_sd": 0.10825404319516659,
+   "headline_ci95": [
+    0.022359646697263424,
+    0.5601955489983884
+   ],
+   "delta_units_mean": 0.029105160996872808,
+   "delta_units_ci95": [
+    0.002185121227692051,
+    0.056025200766053565
+   ],
+   "chunk_mean": -2.5845887176589293,
+   "weak_dominance": true,
+   "strict_gain": false,
+   "weak_dominance_floor": true,
+   "strict_gain_floor": false
+  },
+  {
+   "ckpt": "production",
+   "arm": "evidence_driven",
+   "n_seeds": 3,
+   "seeds": [
+    42,
+    43,
+    44
+   ],
+   "baseline_fid": 9.967044479007143,
+   "headline_delta": [
+    -0.5308633223541072,
+    -0.29528079687757935,
+    -0.26821253832830955
+   ],
+   "headline_mean": -0.3647855525199987,
+   "headline_sd": 0.14446294293010184,
+   "headline_ci95": [
+    -0.7236513970031004,
+    -0.005919708036897009
+   ],
+   "delta_units_mean": -0.036420268272384725,
+   "delta_units_ci95": [
+    -0.07205056594681766,
+    -0.0007899705979517863
+   ],
+   "chunk_mean": -2.809552129454838,
+   "weak_dominance": true,
+   "strict_gain": true,
+   "weak_dominance_floor": true,
+   "strict_gain_floor": false
+  },
+  {
+   "ckpt": "w16e1_10k",
+   "arm": "codimension_sheet",
+   "n_seeds": 3,
+   "seeds": [
+    42,
+    43,
+    44
+   ],
+   "baseline_fid": 16.96324500826975,
+   "headline_delta": [
+    -5.7896578195574495,
+    -5.753587646269483,
+    -5.923940911166372
+   ],
+   "headline_mean": -5.822395458997768,
+   "headline_sd": 0.08977122864454189,
+   "headline_ci95": [
+    -6.045399553503836,
+    -5.5993913644917
+   ],
+   "delta_units_mean": -0.9873604231069469,
+   "delta_units_ci95": [
+    -1.0135810622565509,
+    -0.961139783957343
+   ],
+   "chunk_mean": -12.067494429732678,
+   "weak_dominance": true,
+   "strict_gain": true,
+   "weak_dominance_floor": true,
+   "strict_gain_floor": false
+  },
+  {
+   "ckpt": "w16e1_10k",
+   "arm": "cosine",
+   "n_seeds": 3,
+   "seeds": [
+    42,
+    43,
+    44
+   ],
+   "baseline_fid": 16.96324500826975,
+   "headline_delta": [
+    -5.599663849387753,
+    -5.478088510708446,
+    -5.742161653879455
+   ],
+   "headline_mean": -5.606638004658552,
+   "headline_sd": 0.13217463965284704,
+   "headline_ci95": [
+    -5.9349780115572,
+    -5.278297997759904
+   ],
+   "delta_units_mean": -0.9507447967862012,
+   "delta_units_ci95": [
+    -0.9946674833523782,
+    -0.9068221102200241
+   ],
+   "chunk_mean": -11.88506203766332,
+   "weak_dominance": true,
+   "strict_gain": true,
+   "weak_dominance_floor": true,
+   "strict_gain_floor": false
+  },
+  {
+   "ckpt": "w16e1_10k",
+   "arm": "evidence_driven",
+   "n_seeds": 3,
+   "seeds": [
+    42,
+    43,
+    44
+   ],
+   "baseline_fid": 16.96324500826975,
+   "headline_delta": [
+    -5.943229792308056,
+    -5.758782810960775,
+    -6.0316485765680685
+   ],
+   "headline_mean": -5.911220393278967,
+   "headline_sd": 0.13922062609314115,
+   "headline_ci95": [
+    -6.257063600810431,
+    -5.5653771857475025
+   ],
+   "delta_units_mean": -1.0023967409785872,
+   "delta_units_ci95": [
+    -1.049210494464276,
+    -0.9555829874928986
+   ],
+   "chunk_mean": -12.105733506216277,
+   "weak_dominance": true,
+   "strict_gain": true,
+   "weak_dominance_floor": true,
+   "strict_gain_floor": false
+  },
+  {
+   "ckpt": "w16e1_5k",
+   "arm": "codimension_sheet",
+   "n_seeds": 3,
+   "seeds": [
+    42,
+    43,
+    44
+   ],
+   "baseline_fid": 24.497662009159605,
+   "headline_delta": [
+    -12.564704325567913,
+    -12.467213036934847,
+    -12.625970146070657
+   ],
+   "headline_mean": -12.552629169524472,
+   "headline_sd": 0.08006442387474538,
+   "headline_ci95": [
+    -12.751520224241292,
+    -12.353738114807653
+   ],
+   "delta_units_mean": -3.0738805972750334,
+   "delta_units_ci95": [
+    -3.0912061372046833,
+    -3.0565550573453835
+   ],
+   "chunk_mean": -16.53397627394929,
+   "weak_dominance": true,
+   "strict_gain": true,
+   "weak_dominance_floor": true,
+   "strict_gain_floor": true
+  },
+  {
+   "ckpt": "w16e1_5k",
+   "arm": "cosine",
+   "n_seeds": 3,
+   "seeds": [
+    42,
+    43,
+    44
+   ],
+   "baseline_fid": 24.497662009159605,
+   "headline_delta": [
+    -12.55181828135759,
+    -12.43713678695573,
+    -12.549190419724857
+   ],
+   "headline_mean": -12.512715162679392,
+   "headline_sd": 0.0654659802642605,
+   "headline_ci95": [
+    -12.675341673090545,
+    -12.350088652268239
+   ],
+   "delta_units_mean": -3.0641242689463346,
+   "delta_units_ci95": [
+    -3.0873228904354613,
+    -3.040925647457208
+   ],
+   "chunk_mean": -16.439566459003405,
+   "weak_dominance": true,
+   "strict_gain": true,
+   "weak_dominance_floor": true,
+   "strict_gain_floor": true
+  },
+  {
+   "ckpt": "w16e1_5k",
+   "arm": "evidence_driven",
+   "n_seeds": 3,
+   "seeds": [
+    42,
+    43,
+    44
+   ],
+   "baseline_fid": 24.497662009159605,
+   "headline_delta": [
+    -12.798904869080127,
+    -12.644673439500112,
+    -12.732859574366417
+   ],
+   "headline_mean": -12.725479294315553,
+   "headline_sd": 0.0773801322549639,
+   "headline_ci95": [
+    -12.917702198990337,
+    -12.53325638964077
+   ],
+   "delta_units_mean": -3.116236914570576,
+   "delta_units_ci95": [
+    -3.1581266925768965,
+    -3.0743471365642554
+   ],
+   "chunk_mean": -16.64615860264115,
+   "weak_dominance": true,
+   "strict_gain": true,
+   "weak_dominance_floor": true,
+   "strict_gain_floor": true
+  },
+  {
+   "ckpt": "w16e1_60k",
+   "arm": "codimension_sheet",
+   "n_seeds": 3,
+   "seeds": [
+    42,
+    43,
+    44
+   ],
+   "baseline_fid": 11.400878754162306,
+   "headline_delta": [
+    0.1298600643335335,
+    0.14399370509836354,
+    0.1909921986007082
+   ],
+   "headline_mean": 0.1549486560108684,
+   "headline_sd": 0.032004572675424246,
+   "headline_ci95": [
+    0.07544489007939288,
+    0.23445242194234395
+   ],
+   "delta_units_mean": 0.017633186874488633,
+   "delta_units_ci95": [
+    0.00856227659450447,
+    0.026704097154472795
+   ],
+   "chunk_mean": -4.731336818218275,
+   "weak_dominance": true,
+   "strict_gain": false,
+   "weak_dominance_floor": true,
+   "strict_gain_floor": false
+  },
+  {
+   "ckpt": "w16e1_60k",
+   "arm": "cosine",
+   "n_seeds": 3,
+   "seeds": [
+    42,
+    43,
+    44
+   ],
+   "baseline_fid": 11.400878754162306,
+   "headline_delta": [
+    0.7309866608567934,
+    0.8825892329850078,
+    0.9661252178976762
+   ],
+   "headline_mean": 0.8599003705798257,
+   "headline_sd": 0.11919993124892349,
+   "headline_ci95": [
+    0.5637913261263282,
+    1.1560094150333233
+   ],
+   "delta_units_mean": 0.09784493795403411,
+   "delta_units_ci95": [
+    0.06430092953643321,
+    0.131388946371635
+   ],
+   "chunk_mean": -4.29460359858468,
+   "weak_dominance": false,
+   "strict_gain": false,
+   "weak_dominance_floor": true,
+   "strict_gain_floor": false
+  },
+  {
+   "ckpt": "w16e1_60k",
+   "arm": "evidence_driven",
+   "n_seeds": 3,
+   "seeds": [
+    42,
+    43,
+    44
+   ],
+   "baseline_fid": 11.400878754162306,
+   "headline_delta": [
+    0.011761692305100213,
+    0.1690150080513986,
+    0.23841168458527343
+   ],
+   "headline_mean": 0.1397294616472574,
+   "headline_sd": 0.11612832200325843,
+   "headline_ci95": [
+    -0.14874928244332247,
+    0.4282082057378373
+   ],
+   "delta_units_mean": 0.015891971984385595,
+   "delta_units_ci95": [
+    -0.016943430291787655,
+    0.04872737426055884
+   ],
+   "chunk_mean": -4.6622136112184265,
+   "weak_dominance": true,
+   "strict_gain": false,
+   "weak_dominance_floor": true,
+   "strict_gain_floor": false
+  }
+ ],
+ "per_checkpoint": {
+  "production": {
+   "mean_headline": -0.19067954960017994,
+   "mean_units": -0.01903954877994983,
+   "weak_dominance_all_arms": true,
+   "weak_dominance_floor_all_arms": true,
+   "strict_gain_arms": [
+    "evidence_driven"
+   ],
+   "strict_gain_floor_arms": []
+  },
+  "w16e1_10k": {
+   "mean_headline": -5.780084618978429,
+   "mean_units": -0.9801673202905784,
+   "weak_dominance_all_arms": true,
+   "weak_dominance_floor_all_arms": true,
+   "strict_gain_arms": [
+    "codimension_sheet",
+    "cosine",
+    "evidence_driven"
+   ],
+   "strict_gain_floor_arms": []
+  },
+  "w16e1_5k": {
+   "mean_headline": -12.596941208839807,
+   "mean_units": -3.084747260263981,
+   "weak_dominance_all_arms": true,
+   "weak_dominance_floor_all_arms": true,
+   "strict_gain_arms": [
+    "codimension_sheet",
+    "cosine",
+    "evidence_driven"
+   ],
+   "strict_gain_floor_arms": [
+    "codimension_sheet",
+    "cosine",
+    "evidence_driven"
+   ]
+  },
+  "w16e1_60k": {
+   "mean_headline": 0.38485949607931724,
+   "mean_units": 0.04379003227096945,
+   "weak_dominance_all_arms": false,
+   "weak_dominance_floor_all_arms": true,
+   "strict_gain_arms": [],
+   "strict_gain_floor_arms": []
+  }
+ },
+ "n_weak_dominance": 11,
+ "n_strict_gain": 7,
+ "n_weak_dominance_floor": 12,
+ "n_strict_gain_floor": 3,
+ "verdict_relative": "LOSS",
+ "verdict_floor": "WIN",
+ "caveat": "Headline metric decides. The chunk delta is printed for disclosure only; on w16e1_60k it disagrees with the headline in sign (GAP-78 \u00a79). A verdict computed on 1 seed has no interval and cannot be quoted."
+}

@@ -247,3 +247,38 @@ def test_markdown_renders_every_rung_and_the_verdict():
     for n in GRID:
         assert f"| {n} |" in md
     assert "verdict **WIN**" in md
+
+
+# --------------------------------------------------------------------------
+# §0.5 as amended: the margin is the cell's floor, not a universal 1 %
+# --------------------------------------------------------------------------
+
+
+def test_floor_margin_is_absolute_so_a_small_baseline_gets_a_wider_margin():
+    """+1.0 % of a 10.0 baseline is 0.10 units: a LOSS under 1 %, a tie under 1 unit."""
+    baseline = _flat(10.0)
+    framework = {n: 10.1 for n in GRID}
+    spec = _spec(baseline=baseline, framework=framework, spread=0.02)
+    rel = build_report(spec, margin=0.01)
+    floor = build_report(spec, floor_units=1.0)
+    assert rel["verdict"] == "LOSS"
+    assert floor["verdict"] == "TIE"
+    assert floor["margin_mode"] == "floor_units"
+    assert floor["rung_margins"][3] == pytest.approx(0.1)
+
+
+def test_floor_gain_must_beat_the_floor_not_just_zero():
+    """-5 % of a 10.0 baseline is 0.5 units: a strict gain at 0, not at 1 unit."""
+    spec = _spec(baseline=_flat(10.0), framework=_flat(9.5), spread=0.02)
+    rel = build_report(spec, margin=0.01)
+    floor = build_report(spec, floor_units=1.0)
+    assert rel["dominance"]["strict_gain_rungs"] == GRID
+    assert floor["dominance"]["strict_gain_rungs"] == []
+    assert floor["verdict"] == "TIE"
+
+
+def test_floor_mode_still_reports_a_real_regression():
+    spec = _spec(baseline=_flat(10.0), framework=_flat(12.0), spread=0.02)
+    rep = build_report(spec, floor_units=1.0)
+    assert rep["verdict"] == "LOSS"
+    assert rep["dominance"]["violations"] == GRID

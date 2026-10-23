@@ -34,10 +34,12 @@ def _write(root: Path, ckpt: str, seed: int, deltas: dict[str, float],
     }))
 
 
-def _three_seeds(root: Path, ckpt: str, deltas: dict[str, float], jitter: float) -> None:
+def _three_seeds(root: Path, ckpt: str, deltas: dict[str, float], jitter: float,
+                 *, baseline: float = 10.0) -> None:
     for i, seed in enumerate((42, 43, 44)):
         sign = (-1) ** i
-        _write(root, ckpt, seed, {a: d + sign * jitter for a, d in deltas.items()})
+        _write(root, ckpt, seed, {a: d + sign * jitter for a, d in deltas.items()},
+               baseline=baseline)
 
 
 def test_collect_groups_by_checkpoint_and_arm(tmp_path: Path):
@@ -53,7 +55,8 @@ def test_collect_groups_by_checkpoint_and_arm(tmp_path: Path):
 def test_single_seed_is_incomplete_not_a_win(tmp_path: Path):
     _write(tmp_path, "production", 42, {"cosine": -5.0, "codim": -6.0})
     rep = report(tmp_path)
-    assert rep["verdict"] == "INCOMPLETE"
+    assert rep["verdict_relative"] == "INCOMPLETE"
+    assert rep["verdict_floor"] == "INCOMPLETE"
     assert rep["n_strict_gain"] == 0  # no interval, so nothing is established
 
 
@@ -66,7 +69,8 @@ def test_all_cells_inside_the_margin_with_one_gain_is_a_win(tmp_path: Path):
     assert rep["n_cells"] == 6
     assert rep["n_weak_dominance"] == 6
     assert rep["n_strict_gain"] == 2
-    assert rep["verdict"] == "WIN"
+    assert rep["verdict_relative"] == "WIN"
+    assert rep["verdict_floor"] == "WIN"
 
 
 def test_a_mean_inside_the_margin_with_a_wide_interval_is_not_dominance(tmp_path: Path):
@@ -79,7 +83,7 @@ def test_a_mean_inside_the_margin_with_a_wide_interval_is_not_dominance(tmp_path
     assert row["headline_mean"] == pytest.approx(0.433, abs=1e-2)
     assert row["headline_ci95"][1] > 1.0
     assert row["weak_dominance"] is False
-    assert rep["verdict"] == "LOSS"
+    assert rep["verdict_relative"] == "LOSS"
 
 
 def test_all_weak_but_no_gain_is_a_tie(tmp_path: Path):
@@ -87,7 +91,7 @@ def test_all_weak_but_no_gain_is_a_tie(tmp_path: Path):
     rep = report(tmp_path)
     assert rep["n_weak_dominance"] == 2
     assert rep["n_strict_gain"] == 0
-    assert rep["verdict"] == "TIE"
+    assert rep["verdict_relative"] == "TIE"
 
 
 def test_margin_is_a_parameter(tmp_path: Path):
@@ -101,3 +105,39 @@ def test_render_prints_every_cell_and_the_caveat(tmp_path: Path):
     md = render(report(tmp_path))
     assert "| production | cosine | 3 |" in md
     assert "Caveat:" in md
+
+
+def test_the_two_margins_disagree_on_a_low_baseline(tmp_path: Path):
+    """+0.86 % of an 11.4 baseline is 0.098 FID units: fails 1 %, passes 1 unit.
+
+    This is the w16e1_60k x cosine cell. The relative rule calls it a loss and
+    the ledger's per-cell floor calls it a tie; the report must show both rather
+    than pick one.
+    """
+    _three_seeds(tmp_path, "w16e1_60k", {"cosine": 0.86}, 0.05, baseline=11.4)
+    rep = report(tmp_path)
+    row = rep["rows"][0]
+    assert row["headline_ci95"][1] > 1.0
+    assert row["delta_units_ci95"][1] < 1.0
+    assert row["weak_dominance"] is False
+    assert row["weak_dominance_floor"] is True
+    assert rep["verdict_relative"] == "LOSS"
+    # one cell and no gain is a tie under the floor rule, not a win
+    assert rep["verdict_floor"] == "TIE"
+
+
+def test_the_floor_is_absolute_so_a_large_baseline_can_fail_it(tmp_path: Path):
+    """+0.9 % of a 200 baseline is 1.8 units: passes 1 %, fails the 1-unit floor."""
+    _three_seeds(tmp_path, "big", {"cosine": 0.9}, 0.02, baseline=200.0)
+    row = report(tmp_path)["rows"][0]
+    assert row["weak_dominance"] is True
+    assert row["weak_dominance_floor"] is False
+
+
+def test_a_floor_gain_needs_the_whole_interval_past_the_floor(tmp_path: Path):
+    """-1.0 unit on the mean is not a floor gain if the CI straddles -1."""
+    _three_seeds(tmp_path, "w16e1_10k", {"cosine": -5.9}, 0.4, baseline=16.96)
+    row = report(tmp_path)["rows"][0]
+    assert row["delta_units_ci95"][0] < -1.0 < row["delta_units_ci95"][1]
+    assert row["strict_gain"] is True       # CI excludes 0
+    assert row["strict_gain_floor"] is False  # but not the floor

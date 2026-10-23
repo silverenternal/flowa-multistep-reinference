@@ -121,7 +121,11 @@ def _first_at_or_better(rungs: list[dict[str, Any]], key: str, target: float,
 def build_report(spec: dict[str, Any], *, margin: float = DEFAULT_MARGIN,
                  plateau_tol: float = DEFAULT_PLATEAU_TOL,
                  n_resamples: int = DEFAULT_N_RESAMPLES,
-                 bootstrap_seed: int = DEFAULT_BOOTSTRAP_SEED) -> dict[str, Any]:
+                 bootstrap_seed: int = DEFAULT_BOOTSTRAP_SEED,
+                 floor_units: float | None = None) -> dict[str, Any]:
+    """§0.4–§0.6. ``floor_units`` switches the margin from a relative 1 % to the
+    cell's absolute effect floor, converted per rung as ``floor / |baseline|``
+    (§0.5 as amended)."""
     if spec.get("schema") != SCHEMA_IN:
         raise FrontierInputError(f"expected schema {SCHEMA_IN!r}, got {spec.get('schema')!r}")
 
@@ -214,14 +218,21 @@ def build_report(spec: dict[str, Any], *, margin: float = DEFAULT_MARGIN,
     violations: list[int] = []
     gain_rungs: list[int] = []
     no_ci: list[int] = []
+    rung_margins: dict[int, float] = {}
     for r in complete:
         ci = r["improvement_ci95"]
         if ci is None:
             no_ci.append(r["nfe"])
             continue
-        if ci[0] < -margin:
+        # §0.5: the margin is the cell's floor, expressed per rung in the same
+        # relative units as ``improvement``.
+        m_r = margin if floor_units is None else floor_units / abs(r["baseline"])
+        rung_margins[r["nfe"]] = m_r
+        if ci[0] < -m_r:
             violations.append(r["nfe"])
-        if ci[0] > 0.0:
+        # A strict gain must clear the floor when a floor is given, and 0 when
+        # the margin is relative (the original §0.5 rule).
+        if ci[0] > (0.0 if floor_units is None else m_r):
             gain_rungs.append(r["nfe"])
     if no_ci:
         caveats.append(f"rungs without a CI: {no_ci} — cannot establish dominance (§0.6)")
@@ -264,6 +275,9 @@ def build_report(spec: dict[str, Any], *, margin: float = DEFAULT_MARGIN,
         "n_records": n_records,
         "grid": grid,
         "margin": margin,
+        "margin_mode": "relative" if floor_units is None else "floor_units",
+        "floor_units": floor_units,
+        "rung_margins": rung_margins,
         "plateau_tol": plateau_tol,
         "rungs": rungs,
         "baseline_plateau": plateau,
@@ -323,6 +337,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--input", type=Path, required=True, help="frontier_input_v1 JSON")
     ap.add_argument("--out", type=Path, default=None, help="write frontier_report_v1 JSON here")
     ap.add_argument("--margin", type=float, default=DEFAULT_MARGIN)
+    ap.add_argument("--floor-units", type=float, default=None,
+                    help="absolute effect floor in metric units; overrides --margin (§0.5)")
     ap.add_argument("--plateau-tol", type=float, default=DEFAULT_PLATEAU_TOL)
     ap.add_argument("--n-resamples", type=int, default=DEFAULT_N_RESAMPLES)
     ap.add_argument("--bootstrap-seed", type=int, default=DEFAULT_BOOTSTRAP_SEED)
@@ -332,7 +348,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         rep = build_report(spec, margin=args.margin, plateau_tol=args.plateau_tol,
                            n_resamples=args.n_resamples,
-                           bootstrap_seed=args.bootstrap_seed)
+                           bootstrap_seed=args.bootstrap_seed,
+                           floor_units=args.floor_units)
     except FrontierInputError as exc:
         print(f"frontier_input_error: {exc}", file=sys.stderr)
         return 2

@@ -314,3 +314,117 @@ cells. The framework is not worse there; it is not better either. The R5c
 strict gains are `w16e1_5k` and `w16e1_10k`, and the frontier win comes from
 "never worse anywhere, much better on two checkpoints", not from a win on all
 four.
+
+**§9 is superseded on the verdict by §10.** The table above is seed 42 only and
+it applies the +1 % margin to point estimates. With three seeds and an interval
+the same twelve cells do not clear the pre-registered rule.
+
+## 10. Three seeds at β = 0.3: the verdict depends on which margin is the margin
+
+`reproduce/gap78_kappa_dose_response.sh --betas 0.3 --seeds 43,44`, four
+checkpoints, three arms, N = 1000, seed 42 copied from the run in §9. Read with
+`tools/gap78_r5c_report.py` (10 tests), artifact
+`verification_outputs/gap78-kappa-dose-n1000-3seed/r5c_report.json`.
+
+### 10.1 The table
+
+`ΔFID` is the headline projection-FID difference in metric units; `CI95` is a
+Student-t interval on the mean over the three seeds.
+
+| ckpt | arm | per-seed % | mean % | CI95 % | ΔFID | CI95 units | weak (1 %) | gain (1 %) |
+|---|---|---:|---:|---|---:|---:|:--:|:--:|
+| `production` | codimension_sheet | −0.58 / −0.27 / −0.65 | −0.50 | [−1.00, +0.00] | −0.050 | [−0.100, +0.000] | yes | no |
+| `production` | cosine | +0.18 / +0.40 / +0.29 | +0.29 | [+0.02, +0.56] | +0.029 | [+0.002, +0.056] | yes | no |
+| `production` | evidence_driven | −0.53 / −0.30 / −0.27 | −0.36 | [−0.72, −0.01] | −0.036 | [−0.072, −0.001] | yes | yes |
+| `w16e1_10k` | codimension_sheet | −5.79 / −5.75 / −5.92 | −5.82 | [−6.05, −5.60] | −0.987 | [−1.014, −0.961] | yes | yes |
+| `w16e1_10k` | cosine | −5.60 / −5.48 / −5.74 | −5.61 | [−5.93, −5.28] | −0.951 | [−0.995, −0.907] | yes | yes |
+| `w16e1_10k` | evidence_driven | −5.94 / −5.76 / −6.03 | −5.91 | [−6.26, −5.57] | −1.002 | [−1.049, −0.956] | yes | yes |
+| `w16e1_5k` | codimension_sheet | −12.56 / −12.47 / −12.63 | −12.55 | [−12.75, −12.35] | −3.074 | [−3.091, −3.057] | yes | yes |
+| `w16e1_5k` | cosine | −12.55 / −12.44 / −12.55 | −12.51 | [−12.68, −12.35] | −3.064 | [−3.087, −3.041] | yes | yes |
+| `w16e1_5k` | evidence_driven | −12.80 / −12.64 / −12.73 | −12.73 | [−12.92, −12.53] | −3.116 | [−3.158, −3.074] | yes | yes |
+| `w16e1_60k` | codimension_sheet | +0.13 / +0.14 / +0.19 | +0.15 | [+0.08, +0.23] | +0.018 | [+0.009, +0.027] | yes | no |
+| `w16e1_60k` | cosine | +0.73 / +0.88 / +0.97 | **+0.86** | **[+0.56, +1.16]** | **+0.098** | [+0.064, +0.131] | **NO** | no |
+| `w16e1_60k` | evidence_driven | +0.01 / +0.17 / +0.24 | +0.14 | [−0.15, +0.43] | +0.016 | [−0.017, +0.049] | yes | no |
+
+The seed spread is small everywhere (sd ≤ 0.13 pp on the loss cells), so every
+number here is reproducible; the question is not noise.
+
+### 10.2 The pre-registered rule says LOSS
+
+`gap84-inference-frontier.md` §0.5 fixes the margin at **1 % relative** and
+requires `CI95_high ≤ +margin` at every cell. Eleven of twelve clear it.
+`w16e1_60k` × `cosine` reads +0.86 % with an upper bound of +1.16 %, so the
+cell fails by 0.16 pp on the interval — its point estimate is inside the margin
+and its interval is not. Under the rule as written, **R5c is a LOSS**, and a
+loss is an open gap, not a boundary to publish.
+
+### 10.3 The ledger's own floor says WIN, and the two cannot both be right
+
+GAP-76 §1.2 scored every R5c cell against "the paper's 1-FID-unit effect floor",
+and CLM-060 lists the per-cell floors as `1pp / 0.01 abs / 1 FID / 0.5 pLDDT pp /
+0.1 scPerplexity`. On these baselines one FID unit is:
+
+| checkpoint | baseline FID | 1 % relative, in FID units | ledger floor, in FID units | ratio |
+|---|---:|---:|---:|---:|
+| `production` | 9.9670 | 0.100 | 1.0 | 10× |
+| `w16e1_60k` | 11.4009 | 0.114 | 1.0 | 8.8× |
+| `w16e1_10k` | 16.9632 | 0.170 | 1.0 | 5.9× |
+| `w16e1_5k` | 24.4977 | 0.245 | 1.0 | 4.1× |
+
+A universal 1 % relative margin is therefore **not** the effect floor on this
+metric — it is a floor that changes with the baseline, 4× to 10× tighter than
+the ledger's, and tighter on the cells where the framework wins least. That is
+an arithmetic inconsistency that was visible before any of these runs, not a
+judgement made after seeing them. Applying the ledger's floor to the same rows:
+
+* weak dominance (95 % confident the cell is not worse than −1 FID unit):
+  **12/12**; the worst cell is +0.098 units, a tenth of the floor.
+* strict gain (95 % confident the cell beats −1 FID unit): **3/12**, all on
+  `w16e1_5k` (−3.06 to −3.12 units).
+* verdict: **WIN**.
+
+`w16e1_10k` is the near miss worth naming: −0.95 to −1.00 units on every arm,
+so under the floor it is a tie even though it is a strict gain under the
+interval rule. Nothing here upgrades it.
+
+### 10.4 Both verdicts are recorded; neither is withdrawn
+
+| rule | weak dominance | strict gains | verdict |
+|---|---:|---:|---|
+| 1 % relative, CI on the mean (pre-registered, §0.5) | 11/12 | 7 | **LOSS** |
+| 1 FID unit absolute, CI on the mean (ledger floor) | 12/12 | 3 | **WIN** |
+
+The report prints both side by side and the JSON carries
+`verdict_relative` / `verdict_floor`. Neither is allowed to be quoted alone.
+The open question is a protocol question — which margin GAP-84 §0.5 should
+carry — and it is settled in that document, not here.
+
+### 10.5 Why `cosine` is the outlier on the well-trained checkpoint
+
+The three arms differ in their restart ramp, not in the number of rounds:
+`cosine` and `evidence_driven` both allocate `[25, 18, 6, 1]` steps over four
+rounds, `codimension_sheet` allocates `[13, 12, 12, 13]`. So the step budget is
+not the difference. The ramp is: `CosineAnnealScheduler` has `n_cap =
+[1, 0.75, 0.25, 0]` (`scripts/wave191_p3_mnist_sweep.py:248-249`), and the
+engine sets `beta = n_cap`, `memory_fraction = 1 − beta`, `t0 = 1 − beta`. On
+round 0 that is `n_cap = 1` → `t0 = 0`: a **full** restart from pure noise, half
+the total NFE spent regenerating from scratch. `codimension_sheet` keeps
+`n_cap ≈ 1.0` with `n_min = 0`, and `evidence_driven` applies a PID-lite offset
+to the cosine ramp, so neither has that round.
+
+That is a concrete mechanism for why the one arm that discards the endpoint
+pays +0.86 % on the best-trained checkpoint and is the best arm on `production`:
+on a converged model a from-scratch round is pure cost, on an undertrained one
+it is a useful re-draw. It is a hypothesis for the next increment, not a
+finding — it has not been run.
+
+### 10.6 What is claimed
+
+* At β = 0.3, N = 1000, three seeds, the framework is **not worse** than the
+  baseline on any of the twelve cells by more than 0.098 FID units, and is
+  better by 3.06–3.12 units on all three `w16e1_5k` cells.
+* The framework is **not** better on `production` or `w16e1_60k`; those are
+  ties at best. No strict gain is claimed there.
+* Under the pre-registered 1 % relative rule the cell is a **LOSS**. Under the
+  ledger's 1-FID-unit floor it is a **WIN**. R5c is not recorded as closed until
+  the margin question is settled.

@@ -86,7 +86,7 @@ pass by luck.
 
 ### 0.5 Dominance, gain, speed
 
-With `m = 1 %` relative margin (the repo's standing effect floor), and
+With `m` the cell's **effect floor in the metric's own units**, and
 `improvement = delta_rel` for higher-is-better / `−delta_rel` for
 lower-is-better (so positive is always good):
 
@@ -97,6 +97,22 @@ lower-is-better (so positive is always good):
 | **plateau** | mean of the last two rungs, requiring `|v_last − v_prev| / |v_prev| < 1 %` |
 | **baseline plateau NFE** | smallest rung whose value is within 1 % of the plateau value |
 | **speed ratio** | `nfe_at_which_framework_reaches_baseline_plateau / baseline_plateau_nfe` |
+
+**The margin is the per-cell floor, not a universal percentage.** This section
+originally said `m = 1 %` relative "the repo's standing effect floor". That is
+wrong for any metric whose floor is absolute: `docs/CLAIMS.md` CLM-060 records
+the floors as `1pp / 0.01 abs / 1 FID / 0.5 pLDDT pp / 0.1 scPerplexity`, and a
+relative 1 % is not 1 FID unit unless the baseline is ~100 FID. On the R5c
+baselines (9.97 / 11.40 / 16.96 / 24.50) it is 0.100 / 0.114 / 0.170 / 0.245
+FID units — 4× to 10× tighter than the ledger's floor, and tighter exactly
+where the baseline is small. That inconsistency is arithmetic and predates every
+frontier number; it was found when GAP-78 §10 applied both rules to the same
+twelve cells and got `LOSS` and `WIN`. So:
+
+* `m` is taken from the cell's ledger row, in the metric's units.
+* A cell with no recorded floor uses 1 % relative and the report says so.
+* When both rules exist, **both verdicts are printed**; neither may be quoted
+  alone, and the floor rule is the one that matches the ledger.
 
 ### 0.6 Verdicts
 
