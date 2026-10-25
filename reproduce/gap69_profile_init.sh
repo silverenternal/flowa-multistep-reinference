@@ -28,6 +28,12 @@ TAG=${TAG:-}
 # the profile term only: logits = (c * log p) / T + (1 - c) * randn.
 N=${N:-1000}
 TEMPERATURE=${TEMPERATURE:-1.0}
+# GAP-79 lever 3 (additive): in-loop drift toward the same profile. Default 0
+# is byte-identical to the pre-GAP-79 arm; the flag is only passed when the
+# weight is positive, so every existing invocation keeps its exact command
+# line. Pre-registration: docs/audit/gap79-r1-family-lever.md §3.
+GUIDANCE_W=${GUIDANCE_W:-0}
+GUIDANCE_T0=${GUIDANCE_T0:-0.0}
 # GAP-79 screen only: generation can run concurrently (GPU has the room), but
 # scoring cannot — MMseqs2 shares `results/mmseqs_tmp`. SCORE=0 writes the
 # FASTAs and returns; the caller scores serially afterwards.
@@ -78,6 +84,7 @@ mkdir -p "$OUT"
   git rev-parse HEAD
   echo "=== design ==="
   echo "init_profile=$INIT_PROFILE; init_temperature=$TEMPERATURE; beta=1.0 (m=0); N=$N, NFE=150, R=3, seed $SEED"
+  echo "profile_guidance_weight=$GUIDANCE_W; profile_guidance_t_start=$GUIDANCE_T0"
 } > "$OUT/METADATA.txt"
 
 PROFILE_ARGS=()
@@ -88,6 +95,13 @@ if [[ "$INIT_PROFILE" != "off" ]]; then
   if [[ "$TEMPERATURE" != "1.0" ]]; then
     PROFILE_ARGS+=(--init-temperature "$TEMPERATURE")
   fi
+fi
+
+# GAP-79 lever 3 — independent of --init-profile, so a guidance-only arm is
+# expressible without inventing a second code path.
+if [[ "$GUIDANCE_W" != "0" && "$GUIDANCE_W" != "0.0" ]]; then
+  PROFILE_ARGS+=(--profile-guidance-weight "$GUIDANCE_W"
+                 --profile-guidance-t-start "$GUIDANCE_T0")
 fi
 
 "$PY" tools/gen_lineageflow_n1000_fastas.py \

@@ -3,7 +3,8 @@
 **Date:** 2026-10-25
 **Author:** GAP-79 agent (USER AUTHORIZED, NO PUSH)
 **Scope:** `todo.json` `GAP-79-R1-PER-FAMILY` (P0). Pre-registration is §0;
-the measurement that re-scoped the gap is §1. **No framework run exists yet.**
+the measurement that re-scoped the gap is §1; the temperature screen is §2.1;
+the lever-3 pre-registration is §3 (written before its first run).
 **Frozen surfaces:** untouched.
 
 ---
@@ -182,6 +183,11 @@ are in tension and one init cannot serve both.
 | screen table | `tools/gap79_dose_screen.py` + 6 tests (`f51cffb4` run script) |
 | confirmation (N = 1000, 3 seeds) | **not run — no dose qualified**, so there is nothing to confirm |
 | verdict | **`falsified: true`** — the init-strength lever moves hits, not identity (§2.1) |
+| lever 3 code | `ProfileGuidance` in `adaptive_reflow/adapters/lineageflow.py`; `--profile-guidance-weight` / `--profile-guidance-t-start` in `tools/gen_lineageflow_n1000_fastas.py`; 17 tests in `tests/test_gap79_profile_guidance.py` |
+| lever 3 pre-registration | **§3, written 2026-10-25 before any run** (dose grid `{0.5, 2, 8, 32, 128}`, `t_start = 0`, diversity guard) |
+| lever 3 screen tool | `tools/gap79_guidance_screen.py` + 11 tests (`tests/test_gap79_guidance_screen.py`) |
+| lever 3 screen run | **not run** — `reproduce/gap79_profile_guidance_screen.sh` (6 cells, N = 200, seed 42, ~2 h) |
+| lever 3 verdict | **pending**; §3.7 states what falsification would mean |
 
 ### 2.1 The screen result: the lever is real and points at the wrong thing
 
@@ -226,3 +232,116 @@ same reason (it is still an init-column lever).
 The screen is N = 200 and is therefore **screen-only** — none of the numbers in
 the table may be quoted as a result (`screen_report.json.note`). It is used here
 only to select a dose or to close the lever, which is what §0.4 authorises.
+
+---
+
+## 3. Pre-registration for lever 3 — in-loop profile drift (written before any run)
+
+**Date written:** 2026-10-25, before any generation with
+`--profile-guidance-weight > 0`. **Nothing in this section may be edited after
+the first dose is scored**; results go in §4.
+
+### 3.1 Why this placement and not another restart-side one
+
+`apply_restart_distribution` calls `perturbation.propose` at **every** restart
+(`adaptive_reflow/adapters/lineageflow.py`, the `_seeded_propose` branch), so
+"put the profile at every restart" is already the shipped behaviour and §2.1's
+temperature dose sharpened that injection by up to 25×. Both readings are flat
+on identity. What has never been tried is a force applied *during* the
+integration that follows the injection — the only stage that can undo it.
+That is the entire justification for this lever; it is not another init knob.
+
+### 3.2 The term
+
+```
+v_guided(x, t) = v(x, t) + weight * c * (p - x)        for t >= t_start
+```
+
+* `p` is the family's Pfam match-emission distribution (row-normalised), `c`
+  its normalised information content — the same tensors GAP-69's
+  `ConservationWeightedPerturbation` uses, loaded from the same
+  `profiles.json`.
+* `c = 0` columns do not move; positions past the profile's span do not move;
+  channels past the amino-acid block do not move (state is `(256, 33)`,
+  profile is `(150, 20)`).
+* The drift is the proximal form of `-KL(p || x)` ascent: fixed point `x = p`,
+  sign always toward `p`. The exact KL gradient `-p/x` is unusable as a
+  velocity near `x = 0`.
+* `weight = 0` is byte-identical to the unguided field (pinned by
+  `tests/test_gap79_profile_guidance.py`).
+
+**Arm definition.** Treatment = GAP-69 arm C (`--init-profile conservation`,
+`T = 1.0`) **plus** the drift. Control = the same arm without the drift. The
+incumbent init is kept in both arms so the comparison isolates the downstream
+force. A guidance-only arm (`--init-profile off`) is deliberately **not** run:
+it answers a different question and would double the cells.
+
+### 3.3 Dose grid
+
+`t_start = 0.0` (whole trajectory) is fixed for the screen. `weight` is the
+only axis:
+
+```
+weight in {0.5, 2, 8, 32, 128}
+```
+
+Scale check, done analytically before the run: `dt = 1/150`, mean `c = 0.17`,
+`|p - x| <= ~1.4`, so the per-step displacement is `~0.24 * weight * dt`; over
+a half-horizon `weight = 1` moves a position by `~0.08` in probability, i.e.
+the same order as the field itself. The grid brackets that by 0.5× to 128×,
+and 128 is a deliberate **collapse probe**: if identity only moves when the
+drift dominates the field, the lever is "replace the model with the profile",
+which §1.2 already measured (arm D, 0/250 on three families).
+
+### 3.4 Screen (N = 200, seed 42, `SCREEN_ONLY`)
+
+Six cells: one control + five doses. Generation may run concurrently; scoring
+is serial (shared MMseqs2 temp dir). Script:
+`reproduce/gap79_profile_guidance_screen.sh`. Table produced by
+`tools/gap79_guidance_screen.py` reading the per-record jsonl plus the FASTAs
+(the diversity guard needs the sequences, not the hit flags).
+
+A dose is **eligible** iff all four hold:
+
+1. `PF00072` intended-hit rate ≥ 1/50 (i.e. leaves 0).
+2. `PF02517` intended-hit rate ≥ 1/50.
+3. `PF00005` rate ≥ control − 1/50 (no collapse of the family that works).
+4. **Diversity guard:** unique-sequence fraction ≥ 0.95 **and** mean
+   per-position entropy ≥ 0.5 × control. A dose that lifts identity by emitting
+   near-copies of the consensus is not eligible — that is arm D wearing a
+   velocity term, and it would die on K7 novelty.
+
+Select the **smallest** eligible weight (least intervention). If none is
+eligible, lever 3 is **falsified** and GAP-79 closes with all three placements
+falsified.
+
+Screen numbers may choose the dose; they may never be quoted.
+
+### 3.5 Confirmation (N = 1000, seeds 42/43/44)
+
+Only the selected weight runs. WIN requires, for **every** family, a paired
+per-record CI on `intended_hit_evalue` that excludes 0 in the improving
+direction, **and** PF00005 not regressing, **and** the §3.4 diversity guard
+holding at N = 1000. Aggregate `hmmscan_total_hits` is reported but is not the
+acceptance test. Three seeds, no top-ups.
+
+### 3.6 Correction to §0.5 (recorded before any lever-3 run)
+
+§0.5 declared PF00183 structurally out of reach because its HMM is 518 columns
+and records are ≤ 150 aa. §1.1 contradicts the *strong* form of that claim: a
+120-aa prefix of the same consensus scores **9.4e−45**, so a partial domain is
+recognised and PF00183 is not hit-impossible. The boundary is on *full-domain*
+coverage, not on recognisability, and PF00183 therefore **stays in the
+acceptance set** of §3.5. §0.5's sentence is superseded by this paragraph; its
+L1 caveat stands.
+
+### 3.7 What falsification would mean
+
+If all five weights fail, then for this profile and this checkpoint the
+identity gap is not a *placement* problem: injecting the profile at the init,
+sharpening it 25×, and pulling the trajectory toward it for the whole
+integration all fail to move three of four families. The remaining
+explanations are representational (a single global profile cannot encode a
+family the shared prior has no mode for) and would need a different family
+conditioning path, not another scalar knob. That is the honest closing
+statement — it is not a claim that the framework cannot do the task.

@@ -1532,6 +1532,156 @@ def _load_torch_model(weights_path: Path) -> Any:
 
 
 # ---------------------------------------------------------------------------
+# GAP-79 lever 3 - in-loop profile guidance
+# ---------------------------------------------------------------------------
+
+
+class ProfileGuidanceConfigError(ValueError):
+    """Raised when a :class:`ProfileGuidance` spec is malformed."""
+
+
+@dataclass(frozen=True)
+class ProfileGuidance:
+    """Per-position drift toward a Pfam profile, applied inside the ODE.
+
+    GAP-69/79 put the profile into the *restart state* (``perturbation``).
+    GAP-79's temperature dose showed that sharpening it there by up to 25x
+    does not change which family the output is recognised as, and
+    ``apply_restart_distribution`` calls ``perturbation.propose`` at **every**
+    restart, so "put the profile at every restart" is already measured. The
+    one place the profile has not been tried is inside the integration that
+    follows, where the field can smooth it away:
+
+        v_guided(x, t) = v(x, t) + weight * c * (p - x)      for t >= t_start
+
+    ``p`` is the per-position amino-acid distribution of the profile and ``c``
+    its normalised conservation. The term is a relaxation whose stationary
+    point is ``x = p`` and whose sign always points toward it — the
+    L2-regularised ascent direction of ``-KL(p || x)``. (The exact KL gradient
+    is ``-p / x``, which diverges as ``x -> 0`` and is unusable as a velocity
+    component; ``p - x`` is the proximal form with the same fixed point.)
+    ``weight = 0`` reproduces the unguided field exactly, which is the default
+    at every call site.
+
+    Positions beyond the profile's span carry ``c = 0`` and are untouched, the
+    same convention ``ConservationWeightedPerturbation`` uses.
+    """
+
+    prob: ArrayF64
+    conservation: ArrayF64
+    weight: float
+    t_start: float = 0.0
+    family_id: str = ""
+
+    def __post_init__(self) -> None:
+        prob = np.asarray(self.prob, dtype=np.float64)
+        cons = np.asarray(self.conservation, dtype=np.float64).reshape(-1)
+        if prob.ndim != 2:
+            raise ProfileGuidanceConfigError(
+                f"prob must be 2-D (L, K); got shape {prob.shape!r}"
+            )
+        if not np.all(np.isfinite(prob)):
+            raise ProfileGuidanceConfigError("prob must be finite")
+        if np.any(prob < 0.0):
+            raise ProfileGuidanceConfigError("prob must be non-negative")
+        row = prob.sum(axis=-1, keepdims=True)
+        if np.any(row <= 0.0):
+            raise ProfileGuidanceConfigError("prob rows must have positive mass")
+        if cons.shape[0] != prob.shape[0]:
+            raise ProfileGuidanceConfigError(
+                "conservation length must equal prob's row count:"
+                f"{cons.shape[0]} != {prob.shape[0]}"
+            )
+        if not np.all(np.isfinite(cons)):
+            raise ProfileGuidanceConfigError("conservation must be finite")
+        if np.any(cons < 0.0) or np.any(cons > 1.0):
+            raise ProfileGuidanceConfigError(
+                "conservation must lie in [0, 1]"
+            )
+        weight = float(self.weight)
+        if not np.isfinite(weight) or weight < 0.0:
+            raise ProfileGuidanceConfigError(
+                f"weight must be finite and >= 0; got {self.weight!r}"
+            )
+        t_start = float(self.t_start)
+        if not np.isfinite(t_start) or not (0.0 <= t_start <= 1.0):
+            raise ProfileGuidanceConfigError(
+                f"t_start must lie in [0, 1]; got {self.t_start!r}"
+            )
+        object.__setattr__(self, "prob", prob / row)
+        object.__setattr__(self, "conservation", cons)
+        object.__setattr__(self, "weight", weight)
+        object.__setattr__(self, "t_start", t_start)
+        object.__setattr__(self, "family_id", str(self.family_id))
+
+    @property
+    def is_active(self) -> bool:
+        """``False`` when the drift is a no-op, so callers can skip it."""
+        return float(self.weight) > 0.0
+
+    def apply(self, v: ArrayF64, x: ArrayF64, t: float) -> ArrayF64:
+        """Return ``v`` plus the profile drift at ``(x, t)``.
+
+        ``v`` is never mutated. Shapes are padded/truncated onto ``x``'s
+        position axis: state positions past the profile's span keep ``c = 0``,
+        and so do channels past the amino-acid block. The second mask matters
+        because the LineageFlow state is ``(256, 33)`` while the profile is
+        ``(150, 20)``: without it the term would pull the 13 non-AA channels
+        toward zero at every conserved position, which is not part of the
+        ``-KL(p || x)`` reading and would silently distort the decode.
+        """
+        if not self.is_active or float(t) < float(self.t_start):
+            return v
+        arr_x = np.asarray(x, dtype=np.float64)
+        L, K = int(arr_x.shape[0]), int(arr_x.shape[1])
+        prob = np.asarray(self.prob, dtype=np.float64)
+        cons = np.asarray(self.conservation, dtype=np.float64)
+        n_pos = min(L, int(prob.shape[0]))
+        n_aa = min(K, int(prob.shape[1]))
+        p = np.zeros((L, K), dtype=np.float64)
+        p[:n_pos, :n_aa] = prob[:n_pos, :n_aa]
+        c = np.zeros(L, dtype=np.float64)
+        c[:n_pos] = cons[:n_pos]
+        drift = float(self.weight) * c[:, None] * (p - arr_x)
+        drift[:, n_aa:] = 0.0
+        return np.asarray(v, dtype=np.float64) + drift
+
+    def config_hash(self) -> str:
+        """Stable digest of the spec, used in the run manifest."""
+        h = hashlib.sha256()
+        h.update(np.ascontiguousarray(self.prob).tobytes())
+        h.update(np.ascontiguousarray(self.conservation).tobytes())
+        h.update(
+            repr(
+                (float(self.weight), float(self.t_start), str(self.family_id))
+            ).encode("utf-8")
+        )
+        return h.hexdigest()
+
+    def to_config(self) -> dict[str, Any]:
+        """JSON-serialisable form (the profile travels inline)."""
+        return {
+            "family_id": str(self.family_id),
+            "weight": float(self.weight),
+            "t_start": float(self.t_start),
+            "prob": [[float(v) for v in row] for row in self.prob],
+            "conservation": [float(v) for v in self.conservation],
+            "config_hash": self.config_hash(),
+        }
+
+    @classmethod
+    def from_config(cls, config: Mapping[str, Any]) -> ProfileGuidance:
+        """Inverse of :meth:`to_config`."""
+        return cls(
+            prob=np.asarray(config["prob"], dtype=np.float64),
+            conservation=np.asarray(config["conservation"], dtype=np.float64),
+            weight=float(config["weight"]),
+            t_start=float(config.get("t_start", 0.0)),
+            family_id=str(config.get("family_id", "")),
+        )
+
+
+# ---------------------------------------------------------------------------
 # Capabilities
 # ---------------------------------------------------------------------------
 
@@ -1692,6 +1842,7 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         perturbation: PerturbationPolicy | None = None,
         profile_residual_fn: Callable[[float], float] | None = None,
         token_keep_weights: Any | None = None,
+        profile_guidance: ProfileGuidance | None = None,
     ) -> None:
         if int(num_steps) <= 0:
             raise ValueError(ERR_LINEAGEFLOW_NUM_STEPS)
@@ -1712,6 +1863,13 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
             raise TypeError(
                 "profile_residual_fn_must_be_callable_or_none:"
                 f"{profile_residual_fn!r}"
+            )
+        if profile_guidance is not None and not isinstance(
+            profile_guidance, ProfileGuidance
+        ):
+            raise TypeError(
+                "profile_guidance_must_be_ProfileGuidance_or_none:"
+                f"{type(profile_guidance).__name__!r}"
             )
         if not str(family_id):
             raise ValueError(ERR_LINEAGEFLOW_FAMILY_ID_INVALID)
@@ -1736,6 +1894,9 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         self.profile_residual_fn: Callable[[float], float] | None = (
             profile_residual_fn
         )
+        # GAP-79 lever 3 — in-loop profile drift (additive, default None =
+        # byte-identical velocity field). See :class:`ProfileGuidance`.
+        self._profile_guidance: ProfileGuidance | None = profile_guidance
 
         # Resolve weights path.
         explicit = Path(weights_path) if weights_path is not None else None
@@ -2405,7 +2566,7 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         """
         if self._mode == "torch":
             assert self._model is not None
-            return _torch_velocity_field(
+            v = _torch_velocity_field(
                 self._model,
                 x,
                 t,
@@ -2413,17 +2574,34 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
                 cache=conditioning,
                 guidance_scale=float(guidance_scale),
             )
-        assert self._synthetic_weights is not None
-        family_embed = np.asarray(
-            conditioning.get(
-                "family_embed",
-                np.zeros(LINEAGEFLOW_FAMILY_EMBED_DIM, dtype=np.float64),
-            ),
-            dtype=np.float64,
-        ).reshape(LINEAGEFLOW_FAMILY_EMBED_DIM)
-        return _synthetic_velocity_field(
-            x, t, weights=self._synthetic_weights, family_embed=family_embed,
-        )
+        else:
+            assert self._synthetic_weights is not None
+            family_embed = np.asarray(
+                conditioning.get(
+                    "family_embed",
+                    np.zeros(LINEAGEFLOW_FAMILY_EMBED_DIM, dtype=np.float64),
+                ),
+                dtype=np.float64,
+            ).reshape(LINEAGEFLOW_FAMILY_EMBED_DIM)
+            v = _synthetic_velocity_field(
+                x, t, weights=self._synthetic_weights, family_embed=family_embed,
+            )
+        return self._apply_profile_guidance(v, x, t)
+
+    def _apply_profile_guidance(
+        self, v: ArrayF64, x: ArrayF64, t: float,
+    ) -> ArrayF64:
+        """GAP-79 lever 3 — add the profile drift to a velocity field.
+
+        ``None`` (the default) returns ``v`` unchanged, so every pre-GAP-79
+        trajectory is reproduced bit-for-bit. The drift itself lives in
+        :meth:`ProfileGuidance.apply`; this method only decides whether the
+        adapter has one.
+        """
+        pg = self._profile_guidance
+        if pg is None:
+            return v
+        return pg.apply(v, x, t)
 
     def solve_ode(
         self,
@@ -2531,6 +2709,12 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
                 )
             traj[i] = x_cur
 
+        pg_hash = (
+            self._profile_guidance.config_hash()
+            if self._profile_guidance is not None
+            and self._profile_guidance.is_active
+            else ""
+        )
         traj_digest = digest_state(
             {
                 "kind": "trajectory",
@@ -2549,6 +2733,9 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
                     float(x0[0, min(1, self._vocab_size - 1)]),
                 ],
                 "mode": self._mode,
+                # GAP-79 — only present when guidance is on, so the digest of
+                # every unguided run is unchanged.
+                **({"profile_guidance": pg_hash} if pg_hash else {}),
             }
         )
         self._put_native_state(

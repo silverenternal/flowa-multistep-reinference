@@ -542,6 +542,7 @@ def _assert_no_profile_fallback(
     fallback_counts: dict[str, int],
     *,
     n: int,
+    profile_guidance: dict[str, Any] | None = None,
 ) -> None:
     """GAP-69 — fail closed when a profile-aware arm degraded to bare RNG.
 
@@ -549,9 +550,12 @@ def _assert_no_profile_fallback(
     path raises, which makes the arm indistinguishable from a second baseline
     sample. For a profile arm that substitution is always invalid evidence, so
     raise instead of writing a manifest that looks valid. The default
-    (``init_perturbations is None``) path is unaffected.
+    (both dicts ``None``) path is unaffected.
+
+    GAP-79 lever 3 adds the second trigger: an in-loop guidance arm that fell
+    back to bare RNG is likewise not the arm it claims to be.
     """
-    if init_perturbations is None:
+    if init_perturbations is None and profile_guidance is None:
         return
     total = int(sum(fallback_counts.values()))
     if total <= 0:
@@ -664,6 +668,59 @@ def _build_token_keep_weights(
     return out
 
 
+def _build_profile_guidance(
+    family_ids: list[str],
+    *,
+    weight: float,
+    t_start: float,
+    profile_json: Path | None,
+) -> dict[str, Any] | None:
+    """GAP-79 lever 3 — per-family in-loop drift toward the Pfam profile.
+
+    ``weight == 0`` returns ``None`` so every pre-GAP-79 call path stays
+    byte-identical (the adapter's ``profile_guidance`` default is ``None``).
+    A positive weight with no profile raises instead of degrading to the
+    unguided field: a silent no-op would make the arm indistinguishable from
+    the control.
+
+    Alignment is the same L1 convention GAP-69's perturbation uses — profile
+    column ``i`` is state position ``i``, N-terminal, no aligner — so the two
+    profile levers can be compared without a second positional hypothesis.
+    """
+    if float(weight) <= 0.0:
+        return None
+    if profile_json is None:
+        raise SystemExit("profile_guidance_requires_profile_json")
+    import json as _json
+
+    import numpy as _np
+
+    from adaptive_reflow.adapters.lineageflow import ProfileGuidance
+
+    payload = _json.loads(Path(profile_json).read_text())
+    by_pf = {str(k).split(".")[0]: v for k, v in payload["families"].items()}
+    out: dict[str, Any] = {}
+    for fid in family_ids:
+        pf = str(fid).split(".")[0]
+        if pf not in by_pf:
+            raise SystemExit(f"profile_missing_family:{fid}")
+        entry = by_pf[pf]
+        logp = _np.asarray(entry["logp"], dtype=_np.float64)
+        cons = _np.asarray(entry["conservation"], dtype=_np.float64).reshape(-1)
+        # ``logp`` is log-probabilities; the drift wants probabilities and
+        # renormalises them anyway, so shift before exponentiating to keep
+        # the largest row at 1.0.
+        prob = _np.exp(logp - logp.max(axis=-1, keepdims=True))
+        out[fid] = ProfileGuidance(
+            prob=prob,
+            conservation=cons,
+            weight=float(weight),
+            t_start=float(t_start),
+            family_id=str(fid),
+        )
+    return out
+
+
 def _build_lineageflow_adapter(
     family_id: str,
     seed: int,
@@ -674,6 +731,7 @@ def _build_lineageflow_adapter(
     profile_residual_fn: Any | None = None,
     perturbation: Any | None = None,
     token_keep_weights: Any | None = None,
+    profile_guidance: Any | None = None,
 ) -> Any | None:
     """Lazy-construct a synthetic-mode :class:`LineageFlowAdapter`.
 
@@ -740,6 +798,9 @@ def _build_lineageflow_adapter(
             # GAP-69 — profile-aware fresh-restart state (additive, default
             # None = the D-004b isotropic draw, byte-identical).
             perturbation=perturbation,
+            # GAP-79 lever 3 — drift toward the same profile inside the ODE
+            # (additive, default None = the unguided field).
+            profile_guidance=profile_guidance,
             # Wave 349 P4 — switch from hardcoded ``force_mode="synthetic"`` to ``"auto"`` so the
             # LineageFlowAdapter picks up the real PyTorch ESM-2 + flow head (downloaded from
             # facebook/esm2_t33_650M_UR50D on first call). With Wave 349 P4 GPU dispatch the model
@@ -947,6 +1008,7 @@ def _write_framework_arm(
     profile_residual_fn: Any | None = None,
     init_perturbations: dict[str, Any] | None = None,
     token_keep_weights: dict[str, Any] | None = None,
+    profile_guidance: dict[str, Any] | None = None,
 ) -> tuple[dict[str, int], dict[str, int]]:
     """Write the framework arm: drives :class:`LineageFlowAdapter` for each record.
 
@@ -1004,6 +1066,11 @@ def _write_framework_arm(
             token_keep_weights=(
                 None if token_keep_weights is None
                 else token_keep_weights.get(family_id)
+            ),
+            # GAP-79 lever 3 — per-family in-loop profile drift (default None).
+            profile_guidance=(
+                None if profile_guidance is None
+                else profile_guidance.get(family_id)
             ),
         )
 
@@ -1444,6 +1511,30 @@ def main() -> None:
             "'off'."
         ),
     )
+    p.add_argument(
+        "--profile-guidance-weight",
+        type=float,
+        default=0.0,
+        help=(
+            "GAP-79 lever 3 — rate of the in-loop drift toward the same Pfam "
+            "profile, applied inside the ODE: "
+            "``v += weight * c * (p - x)``. Default 0.0 is byte-identical to "
+            "the unguided field. Requires --profile-json. Positional "
+            "alignment is the same L1 convention as --init-profile (profile "
+            "column i <-> state position i, N-terminal, no aligner). "
+            "Pre-registration: ``docs/audit/gap79-r1-family-lever.md`` §3."
+        ),
+    )
+    p.add_argument(
+        "--profile-guidance-t-start",
+        type=float,
+        default=0.0,
+        help=(
+            "GAP-79 lever 3 — integration time at which the drift switches "
+            "on (``t >= t_start``). Default 0.0 guides the whole trajectory; "
+            "1.0 is a no-op. Only consulted when the weight is positive."
+        ),
+    )
     args = p.parse_args()
 
     # Wave 276 P — resolve effective min/max len via
@@ -1587,6 +1678,13 @@ def main() -> None:
         mode=str(getattr(args, "token_keep_weights", "off")),
         profile_json=getattr(args, "profile_json", None),
     )
+    # GAP-79 lever 3 — in-loop drift toward the same profile (default off).
+    profile_guidance = _build_profile_guidance(
+        family_ids,
+        weight=float(getattr(args, "profile_guidance_weight", 0.0)),
+        t_start=float(getattr(args, "profile_guidance_t_start", 0.0)),
+        profile_json=getattr(args, "profile_json", None),
+    )
 
     manifest: dict[str, Any] = {
         "n": int(args.n),
@@ -1703,6 +1801,23 @@ def main() -> None:
             getattr(args, "token_keep_weights", "off")
         ),
         "token_keep_weights_is_active": bool(token_keep_weights is not None),
+        # GAP-79 lever 3 — in-loop profile drift. ``weight = 0`` (default)
+        # means the field was unguided; ``is_active`` records whether a spec
+        # reached the adapter, so a no-op dose cannot be mistaken for a run.
+        "profile_guidance_weight": float(
+            getattr(args, "profile_guidance_weight", 0.0)
+        ),
+        "profile_guidance_t_start": float(
+            getattr(args, "profile_guidance_t_start", 0.0)
+        ),
+        "profile_guidance_is_active": bool(profile_guidance is not None),
+        "profile_guidance_config_hash": (
+            None if profile_guidance is None
+            else {
+                fid: spec.config_hash()
+                for fid, spec in profile_guidance.items()
+            }
+        ),
     }
 
     # ---- Baseline arm (bare RNG, preserved byte-shape) -----------------
@@ -1746,6 +1861,8 @@ def main() -> None:
         init_perturbations=init_perturbations,
         # GAP-70 — per-position restart blend (default None = scalar).
         token_keep_weights=token_keep_weights,
+        # GAP-79 lever 3 — per-family in-loop profile drift (default None).
+        profile_guidance=profile_guidance,
     )
     manifest["framework_per_family_count"] = dict(framework_counts)
     manifest["framework_fallback_per_family_count"] = dict(fallback_counts)
@@ -1757,7 +1874,10 @@ def main() -> None:
     # "profile" arm was pure noise). Fail closed instead of writing a manifest
     # that looks valid.
     _assert_no_profile_fallback(
-        init_perturbations, fallback_counts, n=int(args.n)
+        init_perturbations,
+        fallback_counts,
+        n=int(args.n),
+        profile_guidance=profile_guidance,
     )
     print(f"wrote {args.outdir / 'framework.fasta'} (n={int(args.n)})")
 
