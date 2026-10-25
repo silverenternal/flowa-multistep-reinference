@@ -305,6 +305,7 @@ not_in_nav: |
   audit/mechanism-core-driver.md
   audit/paper-v32-data-refresh.md
   audit/paper-v32-verify-only-pass.md
+  audit/paper-v32-rewrite-preview.md
   audit/plan-2026-10-23-win-requirement.md
   audit/gap73-r5c-statistic.md
   audit/gap75-r5c-n1000-table.md
