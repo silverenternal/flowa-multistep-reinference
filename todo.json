@@ -101,15 +101,15 @@
   {
    "id": "GAP-80-R5A-2D-WIN",
    "priority": "P2",
-   "status": "PLANNED — R5a is a TIE (|delta| = 0.0091 against a 0.01 floor, 10 seeds). A tie is a loss.",
+   "status": "HARNESS GAP MEASURED, fix not implemented. The inherited hypothesis (W2 is mode-dominated; restart the discrete component) is falsified by arithmetic before any code: perfect mode balance is worth 0.0034 W2 against a 0.01 floor (docs/audit/gap80-r5a-harness.md §1). The real defect is upstream: the batched runner that scores R5a never calls apply_restart_distribution (0 calls over 3 rounds), so the framework arm is the baseline generator sampled 5 times with different seeds — confirmed by the noise scale (predicted diff_sd 0.0117, observed 0.0107). Separately, the fresh restart draw is record-invariant (identical x0 across records at m=0), so the blend contracts the population by m^2 instead of resampling it.",
    "depends_on": "GAP-84 (the win metric)",
-   "est_wall": "~1 day code + minutes of CPU",
+   "est_wall": "~0.5 day for the additive R5a restart driver + tests; fix (a) gated",
    "gap": "The same scalar blend that wins on protein and MNIST produces nothing measurable on the 2D toy: |delta| sits at the effect floor across 10 seeds. Either W2 on this data is insensitive to what the restart changes, or the restart is not reaching the quantity W2 measures.",
-   "design_hypothesis": "W2 on a 2D mixture is dominated by the global mode structure, which the blend preserves by construction (m*prior keeps the mode), so a blend that only re-randomises within-mode detail cannot move it. The lever is to make the restart act on the mode assignment (the discrete component) rather than on within-mode coordinates. Expected sign: W2 falls below the 0.01 floor with a CI excluding 0.",
-   "research": "(a) The 2D FM's data: how many modes, and whether W2 is mode-dominated. (b) Whether the adapter exposes a mode/component variable. (c) If W2 is genuinely insensitive to the operator, the cell's metric is the gap and is replaced with a stated justification -- a metric gap, not a boundary.",
+   "design_hypothesis": "Measured, not assumed: R5a's TIE is not evidence about the restart, because the scored path never applies one (batched runner, 3 rounds, 0 dispatch calls) and the fresh draw is shared across records. The next measurement is a restarted population: solve_ode -> observe_endpoint -> apply_restart_distribution -> solve_ode over 5 rounds at N=1000 x 10 seeds, with _run_baseline as the byte-identical control. Expected sign is not asserted: the first run diagnoses the m^2 contraction, and only a record-scoped seed makes the arm a resampling of the population.",
+   "research": "(a) The batched runner has no condition delta, so it cannot chain rounds through the adapter protocol — a dedicated driver is the additive route. (b) The record-invariance is shared with LineageFlowAdapter (restart_seed = f(policy_hash, next_round)), masked in R1 because m stays large. (c) Changing the seed convention moves every downstream byte, so it must be opt-in and is a user-gated decision.",
    "acceptance": "(1) One pre-registered run at the cell's 10 seeds. (2) WIN requires |delta| to clear the 0.01 floor with a CI excluding 0. (3) No seed top-ups.",
-   "agent_action": "1) Read the 2D adapter's state and the W2 estimator. 2) Write the pre-registration. 3) Implement the mode-level restart behind a flag. 4) One run. 5) 6 gates + commit.",
-   "evidence": "verification_outputs/g1_deep_dive_q3_2026.json; docs/audit/gap35-cross-domain.md",
+   "agent_action": "1) DONE: mode-lever ceiling (0.0034 < 0.01) -> inherited hypothesis dead. 2) DONE: F1 no-restart + F2 record-invariant fresh draw, both measured and pinned by tests/test_gap80_batched_restart.py. 3) NEXT (additive): build the R5a restart driver and pre-register its comparison. 4) USER GATE: record-scoped restart seed (changes restart semantics for every cell). 5) 6 gates + commit.",
+   "evidence": "docs/audit/gap80-r5a-harness.md §1-§3; verification_outputs/wave351-r5a-n10/r5a_n10_paired.json (diff_sd 0.0107); tests/test_gap80_batched_restart.py",
    "deliverable": "R5a as a win, or a documented metric gap that is then fixed."
   },
   {

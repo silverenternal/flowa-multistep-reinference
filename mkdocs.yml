@@ -301,6 +301,7 @@ not_in_nav: |
   audit/gap74-conditional-mean-bound.md
   audit/gap78-dispersion-gate.md
   audit/gap79-r1-family-lever.md
+  audit/gap80-r5a-harness.md
   audit/gap84-inference-frontier.md
   audit/mechanism-core-driver.md
   audit/paper-v32-data-refresh.md
