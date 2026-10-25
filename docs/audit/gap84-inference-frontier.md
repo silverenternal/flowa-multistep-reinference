@@ -537,3 +537,71 @@ dose is `R`. Decision rule, fixed before the run:
   the remaining distance is not a round-count question at all;
 * flat → `R` does not enter the effect above the cap, and §7's rungs are already
   at the best `R`.
+
+### 9.1 Result: R = 2 fails, 4–8 is a plateau, 12 falls off
+
+`reproduce/gap84c_round_dose.sh`, 15/15 cells, production, N = 1000, seeds
+42/43/44, NFE = 25, `min_steps_per_round = 2` (never binding here: 25 // 2 = 12,
+so `R_eff = R` and the dose is clean). `--shared-prior` makes the baseline the
+same draw at every R, so the baseline column is one number.
+
+Mean paired improvement, positive = framework better:
+
+| R | cosine | codimension_sheet | evidence_driven |
+|---:|---:|---:|---:|
+| 2 | −0.97 % | −1.18 % | **−1.50 %** |
+| 4 | −0.25 % | **+0.51 %** | +0.41 % |
+| 6 | **+0.67 %** | +0.17 % | **+0.64 %** |
+| 8 | +0.59 % | +0.35 % | **+0.64 %** |
+| 12 | +0.51 % | +0.21 % | +0.30 % |
+
+The `evidence_driven` rung in FID units, with its paired CI over the three
+seeds:
+
+| R | baseline | framework | Δ FID | Δ % | improvement CI95 (FID) |
+|---:|---:|---:|---:|---:|---|
+| 2 | 9.9828 | 10.1322 | +0.1494 | +1.50 % | [−0.1877, −0.1111] |
+| 4 | 9.9828 | 9.9422 | −0.0407 | −0.41 % | [+0.0079, +0.0734] |
+| 6 | 9.9828 | 9.9194 | −0.0634 | −0.64 % | [+0.0252, +0.1017] |
+| 8 | 9.9828 | 9.9187 | −0.0642 | −0.64 % | [+0.0240, +0.1044] |
+| 12 | 9.9828 | 9.9533 | −0.0296 | −0.30 % | [−0.0070, +0.0662] |
+
+Per seed (relative, `evidence_driven`): R = 2 → −1.34 / −1.64 / −1.51;
+R = 4 → +0.56 / +0.34 / +0.32; R = 6 → +0.77 / +0.47 / +0.47;
+R = 8 → +0.78 / +0.47 / +0.50; R = 12 → +0.39 / +0.13 / −0.05. Same sign on all
+three seeds at R ≤ 8; R = 12 flips sign on seed 44.
+
+### 9.2 Reading against the rule fixed in §9
+
+The data take the **third** branch — flat above the cap — with one clear
+qualification at the bottom of the range.
+
+* **R = 2 is a loss in every arm** (−0.97 to −1.50 %). Two rounds of 12–13 steps
+  each is not a restart, it is one long pass with a re-noise in the middle, and
+  it is worse than the baseline in all three seeds. This is the mirror image of
+  §8's rung-4 finding: at fixed budget the round count has a *lower* edge too,
+  and the framework must not be run below it.
+* **R ∈ {4, 6, 8} is a plateau.** The three arms put their maximum at 4, 6 and
+  6–8 respectively; the spread inside the plateau is ≤ 0.5 pp in every arm. So
+  the earlier draft's "interior optimum at 6–8, worth 1.56× the R = 4 gain" was
+  an `evidence_driven`-only reading and does not survive the other two arms —
+  `codimension_sheet` peaks at R = 4. The correct statement is that the optimum
+  is not identified at n = 3 beyond "somewhere in 4–8".
+* **R = 12 falls off**, where the budget is down to 2 steps per round.
+
+**Consequence.** R = 4, the value the whole grid uses, sits on the plateau in all
+three arms, so §7's rungs are not a conservative reading of the framework — they
+are the operating point. And the entire dose spans 0.06 FID at its best, against
+a 1.0 FID floor: the round count is a real but 16×-too-small lever on a
+converged field. The remaining distance in §8.4 is therefore not reachable by
+turning the round-count knob, which is what this section was built to decide.
+
+The one transferable statement is the shape: **the framework has a lower edge
+in R as well as an upper one.** Above the upper edge each round is down to one
+step (§8); below the lower edge the run is a long pass with a single re-noise in
+the middle, and it is *worse than the baseline* in every arm and every seed
+(−0.97 to −1.50 %). The two edges are not symmetric and this grid does not
+explain the lower one — at R = 2 each round still gets 12–13 steps, so the
+"not enough integration to repair the re-noise" account that works at the upper
+edge does not apply. It is recorded as a measured edge, not as an explained one;
+the grid's R = 4 sits inside it, which is the only fact the frontier needs.
