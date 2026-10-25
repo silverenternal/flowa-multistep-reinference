@@ -93,7 +93,10 @@ Reading §0.4 below: `alpha = 1/T` (smaller `T` = larger dose).
 1. **Screen (N = 200, seed 42, `SCREEN_ONLY`).** For each dose, record
    `intended_hit_evalue` and `hmmscan_total_hits` per family. A screen number
    may choose the dose; it may never be quoted (§0.3 of GAP-84, and the MNIST
-   small-N bias does not apply here but the principle does).
+   small-N bias does not apply here but the principle does). The table is
+   produced by `tools/gap79_dose_screen.py` from the per-record jsonl, so it is
+   re-derivable without re-scoring; the run itself is
+   `reproduce/gap79_temperature_screen.sh`.
 2. **Dose selection.** Pick the **smallest** dose (`T` closest to 1) at which
    PF00072 and PF02517 each reach a non-zero intended-hit rate on the screen,
    subject to PF00005 not losing its hits. If no dose does that, the lever is
@@ -174,7 +177,8 @@ are in tension and one init cannot serve both.
 | §0 pre-registration | written before any run of the dose |
 | §1 ceiling diagnostic | done, CPU, this document |
 | discriminative-column tool | **not built — the lever it implements is falsified in §1** |
-| dose knob (`--init-strength`) | not implemented |
-| screen (N = 200, 4 alphas) | not run |
-| confirmation (N = 1000, 3 seeds) | not run |
-| verdict | deferred until the confirmation lands |
+| dose knob | implemented as `--init-temperature` (profile-term temperature, §0.3b; commit `5afe3935`) |
+| screen (N = 200, 5 doses) | **RUNNING** since 2026-10-25T04:43Z (`reproduce/gap79_temperature_screen.sh`, PAR=3, GPU-bound) |
+| screen table | `tools/gap79_dose_screen.py` + 6 tests (`f51cffb4` run script) |
+| confirmation (N = 1000, 3 seeds) | not run — only the selected dose goes there |
+| verdict | deferred until the screen reports |
