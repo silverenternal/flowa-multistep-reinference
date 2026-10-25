@@ -22,6 +22,11 @@
 # unit per arm on this host). The default grid over 4 ckpts x 3 seeds is ~45 h
 # of CPU; --jobs runs independent cells concurrently at 1 BLAS thread each.
 #
+# The lowest rung is 4, not 3: the 4-round equal-budget allocator enforces one
+# step per round, so a requested 3 is realised as 4 on the framework arms while
+# the baseline runs 3 — not a matched-NFE point. See
+# docs/audit/gap84-inference-frontier.md §0.2b.
+#
 # Usage:
 #   reproduce/gap84_mnist_frontier.sh [--n-samples N] [--out DIR]
 #       [--ckpts a,b,c] [--seeds 42,43] [--nfes 3,10,50] [--jobs 4] [--beta 0.3]
@@ -33,7 +38,7 @@ N=1000
 OUT="verification_outputs/gap84-mnist-frontier"
 CKPTS=(production w16e1_5k w16e1_10k w16e1_60k)
 SEEDS=(42 43 44)
-NFES=(3 5 10 25 50 100 200)
+NFES=(4 5 10 25 50 100 200)
 JOBS=4
 BETA=0.3
 

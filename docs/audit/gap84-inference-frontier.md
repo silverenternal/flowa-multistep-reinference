@@ -58,6 +58,27 @@ new rung is looked at, so it cannot be steered. CIFAR already needs this: its
 baseline moves 447.8713 → 443.7343 over 50 → 100 (−0.92 %), i.e. it is still
 descending where MNIST is long flat (§2.1).
 
+### 0.2b Amendment — the lowest realisable rung is 4, not 3 (2026-10-25)
+
+Written **before any rung of the grid completed**, and before any frontier
+report exists.
+
+The R5c arm runs `--n-rounds 4` with `--equal-total-nfe`, and the equal-budget
+allocator enforces at least one step per round. A requested total of 3 is
+therefore realised as **4** on every framework arm (`[1,1,1,1]`) while the
+baseline runs exactly **3**. That rung would compare 4 NFE against 3, which is
+not a matched-NFE point and cannot enter a frontier.
+
+Rule: the lowest realisable rung is **4**; the grid becomes
+`{4, 5, 10, 25, 50, 100, 200}`. Every other rung was checked against the
+allocator and is exact (5→5, 10→10, 25→25, 50→50, 100→100, 200→200 for all
+three arms). The cells already started at 3 are quarantined as
+`*_INVALID_nfe_rounding` and no number from them is used.
+
+This does not weaken the low end: MNIST is converged by 3–4 steps (11.1035 →
+11.0675 from NFE 3 to 100, §0.1), so rung 4 sits at the same saturation point
+that motivated the lower bound.
+
 ### 0.3 N, seeds, pairing
 
 * **N ≥ 1000** for every quotable frontier. Below that the verdict is computed
@@ -289,7 +310,7 @@ GPU cells.
 
 **What runs.** `reproduce/gap84_mnist_frontier.sh`, 4 checkpoints
 (`production`, `w16e1_5k`, `w16e1_10k`, `w16e1_60k`) × 3 seeds (42/43/44) ×
-7 rungs (3, 5, 10, 25, 50, 100, 200) = **84 cells**, each cell one
+7 rungs (4, 5, 10, 25, 50, 100, 200 — see §0.2b) = **84 cells**, each cell one
 `wave191_p3_mnist_sweep.py` run of 4 arms (baseline + cosine +
 codimension_sheet + evidence_driven). Canonical flags are exactly GAP-78's:
 `--equal-total-nfe --beta-schedule equal_budget --beta-framework 0.3
@@ -321,5 +342,7 @@ p = 3.4e−12). That is a single cell at a single seed; it is recorded here as a
 feasibility check on the low rung, not as a frontier reading, and it will be
 superseded by the 3-seed grid.
 
-**Status:** grid running since 2026-10-25T03:27:15Z; no frontier report is
-issued until all rungs of a checkpoint have all three seeds.
+**Status:** first launch 2026-10-25T03:27:15Z was stopped 3m21s in when the
+rung-3 mismatch in §0.2b was found; the three `nfe3` cells it had started are
+quarantined and the grid was relaunched on `{4,5,10,25,50,100,200}`. No
+frontier report is issued until all rungs of a checkpoint have all three seeds.
