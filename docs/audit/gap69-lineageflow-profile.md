@@ -352,6 +352,62 @@ quarantined and is never read.
 
 ---
 
+### 1.6 Three seeds — the escalation result (2026-10-25)
+
+`gap69_profile_escalate.sh` finished at `2026-10-24T23:57:32Z` with
+`ESCALATION_DONE`. Both seeds passed the record-pairing assertion
+(`cmp` on the two runs' `baseline.fasta`): seed 43 `82a4dae1…`, seed 44
+`b8ecb79c…`, each identical across its `_init_only` and profile runs. No
+parameter, seed, or scoring rule changed between seeds.
+
+**Aggregate (`hmmscan_total_hits`, C over B, N = 1000/arm/seed):**
+
+| seed | B init-only | C conservation | C/B | paired 95 % CI on hits/record | report |
+|---:|---:|---:|---:|---|---|
+| 42 | 284 | 2329 | 8.20× | [+1.744, +2.354] | `report_seed42.json` |
+| 43 | 279 | 2250 | 8.06× | [+1.686, +2.270] | `report_seed43.json` |
+| 44 | 281 | 2376 | 8.46× | [+1.797, +2.405] | `report_seed44.json` |
+
+Rule 1 fires at all three seeds (ratio ≥ 1.15 and the CI excludes 0 in each).
+The aggregate is reproducible to ±0.2× across seeds.
+
+**Per-family (the condition the acceptance rule also requires).** Computed by
+`tools/gap69_per_family.py` → `per_family_3seed.json`; pairing by `qid`,
+grouping by `intended_family_canon`, n = 250 per family per seed.
+
+| family | seed 42 | seed 43 | seed 44 | seeds ≥ B | mean C/B |
+|---|---:|---:|---:|---:|---:|
+| **PF00005** | 27.81× | 40.90× | 31.61× | 3/3 | 33.44× |
+| PF00072 | 0.85× | 0.74× | 0.78× | **0/3** | 0.79× |
+| PF00183 | 0.81× | 0.87× | 0.73× | **0/3** | 0.80× |
+| PF02517 | 1.07× | 1.10× | 1.42× | 3/3 | 1.20× |
+| *excluding PF00005* | 0.908× | 0.895× | 0.920× | — | 0.908× |
+
+The seed-42 concentration **replicates exactly**. PF00072 and PF00183 are below
+the init-only arm at every seed (0/3), with per-seed paired CIs that include 0
+(t = −0.83/−1.43/−1.36 and −1.24/−0.74/−1.86). PF02517 is nominally at or above
+1.0 at every seed but is not a gain: its per-seed paired CIs all include 0
+(t = +0.41/+0.62/+1.83). Excluding PF00005, the ratio is 0.908/0.895/0.920 —
+the intervention does nothing on three families, at three seeds.
+
+Recomputation note: the tool gives seed 42 PF00005 t = 19.52 where §1.3's ad hoc
+table printed 19.56. The mean difference (+8.256) and ratio (27.81×) are
+identical; the difference is the sd convention in the ad hoc computation. The
+tool is now the canonical source for every per-family number.
+
+**Verdict under §0.4.3: `HEADLINE_GAIN_NO_FAMILY_IDENTITY`.**
+
+* rule 1 fires at 3/3 seeds — the aggregate condition is met;
+* the per-family condition (`todo.json` GAP-69 acceptance: every family at or
+  above the comparison arm) is met by 2 of 4 families;
+* therefore GAP-69 is **not** a win, R1 does not become a 3-seed STRONG cell,
+  and `GAP-79-R1-PER-FAMILY` opens.
+
+This is the outcome §3 was written to bound, and it is the honest one: the
+mechanism is real and reproducible, and it is a PF00005 mechanism.
+
+---
+
 ## 2. Status
 
 | item | state |
@@ -359,8 +415,9 @@ quarantined and is never read.
 | §0 pre-registration | committed before any code/run (`9ec61f6d`) |
 | arm D (ceiling reference) | done, CPU, `armD_hmm_draw/` |
 | arm C seed 42 | done, rule 1 **fires** (`report_seed42.json`) |
-| seeds 43/44 (B and C) | **running since 2026-10-24** (§1.5 for the 2026-10-23 stop; cuda:0 freed, user lifted the pause) |
-| verdict | **deferred** until 3 seeds land (§0.4.3) |
+| seeds 43/44 (B and C) | **done 2026-10-24T23:57:32Z**; both baseline arms byte-identical to their partners (`report_seed43.json`, `report_seed44.json`) |
+| per-family, 3 seeds | done, `per_family_3seed.json` (§1.6) |
+| verdict | **`HEADLINE_GAIN_NO_FAMILY_IDENTITY`** (§1.6): aggregate 3/3, families 2/4 → GAP-79 opens |
 
 The escalation runs **both** arms per seed. Arm B exists only at seed 42 on this
 config: the D-004b attribution runs
@@ -411,3 +468,12 @@ strongest one the data supports.
 The R1 claim in the paper stays "empirical perturbation result" until the
 3-seed verdict exists. If seeds 43/44 fail, that is where it stays, and this
 section is the record that the boundary was pre-declared.
+
+**Resolved 2026-10-25 (§1.6).** Seeds 43/44 confirmed rule 1 and confirmed the
+concentration: PF00005 3/3 at 27.81–40.90×, PF00072 and PF00183 0/3, PF02517
+nominally ≥ 1.0 but n.s. at every seed. The quoted paragraph at the top of §3
+therefore stands as written, with its numbers now measured at three seeds rather
+than extrapolated from one. The verdict is
+`HEADLINE_GAIN_NO_FAMILY_IDENTITY`; the paper-facing statement is the
+narrow one above, and the mechanism work moves to GAP-79.
+

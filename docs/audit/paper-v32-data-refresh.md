@@ -174,8 +174,8 @@ python3 -m pytest tests/ -q
 
 ## 9. Blockers and open decisions
 
-1. **GAP-69 not finished** — R1 refresh cannot start. Everything else can.
-2. **`tools/gap69_per_family.py` does not exist** — required by §4.2 and by GAP-69's own acceptance rule.
+1. ~~**GAP-69 not finished** — R1 refresh cannot start.~~ **Resolved 2026-10-25.** `ESCALATION_DONE 2026-10-24T23:57:32Z`; verdict `HEADLINE_GAIN_NO_FAMILY_IDENTITY` (aggregate 3/3 at 8.06–8.46×, families 2/4). R1 refresh can start, and it must be written as the narrow mechanism result of §4.1–§4.2, not as a headline replacement.
+2. ~~**`tools/gap69_per_family.py` does not exist**~~ **Resolved 2026-10-25** — `tools/gap69_per_family.py` + 10 tests; output `verification_outputs/gap69-lineageflow-profile/per_family_3seed.json`.
 3. **No frontier numbers exist.** GAP-84's inventory found 0 complete NFE grids, so the paper keeps the current matched-NFE framing. Writing a frontier section requires new GPU grids and is out of scope for this refresh.
 4. **No committed TeX/PDF build path.** `paper-A-final.tex` / `.pdf` were produced outside the repo; a repo-wide grep finds no script that regenerates them from `paper-A-final.md`. Either the build is scripted in this refresh (`reproduce/build_paper.sh`) or the .tex/.pdf are declared stale — silently shipping a PDF that disagrees with the .md is the one failure mode this checklist cannot tolerate.
 5. **§4.3 basis choice** — needs a decision before §7.9 is touched.
