@@ -189,3 +189,26 @@ python3 -m pytest tests/ -q
 * `v3.0-tnnls-ready` / `v3.1-*` tags
 * any number in a VERIFY-ONLY table
 * `docs/audit/` historical records (additive sections only)
+
+---
+
+## 11. VERIFY-ONLY pass — done 2026-10-25
+
+Full record: [`paper-v32-verify-only-pass.md`](paper-v32-verify-only-pass.md).
+Rows 1, 2, 4, 5, 7 re-read and recomputed; **no number changed and no frozen
+surface touched**. Three defects, all in prose, none in a digit:
+
+* **F1 (§3.5.1, row 2)** — the printed recipe `sha256sum --check SHA256SUMS`
+  cannot run: `SHA256SUMS` is markdown, not a checksum file. The three hashes
+  and the inner-column digest all reproduce exactly.
+* **F2 (§3.10, row 3)** — the "gain persists for `n_rounds ∈ {1,2,3,5,7}`"
+  clause is **not** supported by the only artifact carrying that grid: kanzi
+  pLDDT regresses at all five round counts, and lineageflow is byte-identical
+  across rounds by construction (no `profile_residual_fn`). The Kanzi RMSD
+  digits do verify; the checklist's source pointer for them is wrong.
+* **F3 (§5.3, row 4)** — three of the five vendored paths 404
+  (`data/kanzi/upstream/`, `data/flowmol3/repo/` (case), `data/cifar/`).
+
+F2 needs a decision (scope the clause or drop it) before the v3.2 tag; F1 and
+F3 are mechanical afterwards. Rows 6/8/9/10 stay blocked on GAP-84 (§9.3).
+
