@@ -720,3 +720,41 @@ the four-checkpoint table as the mechanism, not as four attempts at the same
 claim. The 84-cell grid, the cap, and the R dose together say one thing: the
 framework buys back exactly the part of the distribution the checkpoint has not
 learned yet.
+
+---
+
+## 11. The top of the grid: NFE = 400 (pre-registered 2026-10-25)
+
+§10's largest rung is NFE = 200 and both curves are flat there (baseline
+last-two relative change 0.018 % on production, 0.003 % on 5k). The remaining
+objection a reviewer can raise is not about the shape of the curve but about its
+top end: *"the baseline was still under-budgeted at 200."* §10 cannot answer
+that, because nothing above 200 was run.
+
+This section runs the two checkpoints where the answer matters, at **2× the
+largest rung**:
+
+| cell | NFE | seeds | arms | config |
+|---|---|---|---|---|
+| `w16e1_5k` | 400 | 42 / 43 / 44 | 4 | β = 0.3, R = 4, min_steps 2, shared prior |
+| `w16e1_10k` | 400 | 42 / 43 / 44 | 4 | same |
+
+Six cells, no new code, no new seeds, one new rung.
+
+**Decision rule, fixed before the run.**
+
+1. **Confirmation.** If the 5k gap at 400 stays within ±1 pp of its NFE = 200
+   value (−12.74 %), the plateau is confirmed at 2× the grid and §10's WIN
+   stands without a higher rung.
+2. **Non-closure.** If the gap shrinks by more than 1 pp, the framework's curve
+   is still descending at 200 and the frontier needs a higher top rung before
+   the plateau claim is made. The WIN would be withdrawn until that rung exists.
+3. **The 10k cell can change status.** Its TIE is 0.016 FID short of the floor.
+   If the 400 rung moves the gap past 1 FID with the CI lower bound above it,
+   10k flips to WIN and this section reports the flip. If it does not, 10k stays
+   a TIE and the 0.016 FID shortfall is a property of the checkpoint, not of the
+   budget.
+4. **No seed changes.** Same three seeds as every other rung; the run adds a
+   budget, not samples.
+
+Cost: ~45 min per arm, ~3 h per cell at one thread; six cells concurrent.
