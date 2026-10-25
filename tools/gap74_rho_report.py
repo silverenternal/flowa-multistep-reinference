@@ -28,8 +28,9 @@ import numpy as np
 
 DEFAULT_MS = [0.9, 0.7, 0.5, 0.3, 0.1]
 DEFAULT_CKPTS = ["production", "w16e1_5k"]
-DEFAULT_ARMS = ["CosineAnnealScheduler", "CodimensionSheetScheduler",
-                "EvidenceDrivenScheduler"]
+# Arm keys are the file prefixes the sweep writes
+# (``<arm>_samples.npz``), not the scheduler class names.
+DEFAULT_ARMS = ["cosine", "codimension_sheet", "evidence_driven"]
 
 
 def _cell_dir(root: Path, ckpt: str, m: float, seed: int) -> Path:

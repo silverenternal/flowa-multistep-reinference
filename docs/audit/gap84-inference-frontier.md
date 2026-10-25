@@ -758,3 +758,44 @@ Six cells, no new code, no new seeds, one new rung.
    budget, not samples.
 
 Cost: ~45 min per arm, ~3 h per cell at one thread; six cells concurrent.
+
+### 11.1 Result — the plateau survives at 2× the grid
+
+Six cells, 3 seeds each, scored 2026-10-25. Artifacts:
+`verification_outputs/gap84-nfe400/` (`frontier_input_*_nfe400.json`,
+`frontier_*_nfe400.json`); the 100/200 rungs are symlinked from
+`gap84-cap-frontier/` so the 400 rung is scored by the same code path as every
+other rung.
+
+| checkpoint | NFE | baseline | framework | Δ | Δ % | Δ CI95 (absolute) |
+|---|---:|---:|---:|---:|---:|---|
+| `w16e1_5k` | 200 | 24.4830 | 21.3629 | −3.1201 | −12.744 % | [−3.1395, −3.1077] |
+| `w16e1_5k` | **400** | 24.4821 | 21.3587 | −3.1234 | **−12.758 %** | [−3.1430, −3.1110] |
+| `w16e1_10k` | 200 | 16.9528 | 15.9505 | −1.0023 | −5.912 % | [−1.0177, −0.9810] |
+| `w16e1_10k` | **400** | 16.9518 | 15.9473 | −1.0045 | **−5.926 %** | [−1.0200, −0.9831] |
+
+Baseline plateau (last-two relative change over [200, 400]): 0.004 % on 5k,
+0.006 % on 10k. Neither baseline is still descending.
+
+**Rule 1 (confirmation) fires.** The 5k gap moves from −12.744 % to −12.758 %,
+i.e. **−0.014 pp**, two orders of magnitude inside the ±1 pp band. Doubling the
+budget past the top rung changes the effect by less than one part in a
+thousand. §10's `WIN` on `w16e1_5k` stands and no higher rung is needed.
+
+**Rule 3 (10k does not flip).** The absolute gap crosses 1 FID (−1.0045), but
+its CI95 is [−1.0200, −0.9831]: the lower bound in magnitude is 0.983, below
+the cell floor of 1 FID (CLM-060). Per the rule written before the run, `10k`
+stays a **TIE** and the 0.016 FID shortfall is a property of the checkpoint, not
+of the budget. It is not promoted by the point estimate.
+
+**Note on the report's `INCOMPLETE`.** `tools/frontier_report.py` emits
+`INCOMPLETE` because this merged grid has three rungs and §0.2 wants ≥ 5. That
+gate exists for a *frontier shape* verdict. §11 asks a narrower question — does
+the gap move between 200 and 400 — and §11.1's rules were fixed for that
+question. The §10 verdict on the seven-rung grid is unchanged; this section adds
+one rung and reads it with its own pre-registered rule.
+
+**What this closes.** The remaining reviewer objection in §11's preamble —
+"the baseline was still under-budgeted at 200" — is answered: at 400 the
+baseline moves 0.004 %, the framework moves with it, and the relative gap is
+flat to 0.01 pp. The 5k result is a plateau effect, not a budget artifact.

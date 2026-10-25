@@ -161,9 +161,9 @@ and asserts the scalar-collapsed hypothesis is **rejected**.
 | operator is non-inert (per-position, not scalar-mean) | **asserted by test** (§1.1) |
 | generator wiring | landed, default off |
 | scoring + verdict tooling | landed (§3) |
-| arm B/C run (N=1000, seed 42, NFE=10) | **not run** — GPU occupied by GAP-69 |
-| canonical-DB novelty + Pfam validity | **not run** |
-| verdict | none |
+| arm B/C run (N=1000, seed 42, NFE=10) | **done** — `verification_outputs/gap70-lineageflow-position/seed42/` |
+| canonical-DB novelty + Pfam validity | **done** — 63.8 M Pfam-A, `-s 7.5 -e 100` |
+| verdict | **`NOT_THE_LEVER`** (§4) |
 
 ## 3. The scoring path, and a trap it avoids
 
@@ -200,3 +200,79 @@ generation command survives for `data/lineageflow_n1000/`), so `N_B` here is
 this commit's scalar arm, not necessarily 3.7 %. Rule 2 is written against
 `N_A` for that reason — the ratio is internal to the run.
 
+
+---
+
+## 4. Result — the position blend is not the lever, and the novelty loss is already in the control
+
+Run 2026-10-25, seed 42, N = 1000 per arm, NFE = 10, one code era for all
+three arms. Artifacts: `verification_outputs/gap70-lineageflow-position/seed42/`
+(`report.json`, `m8/*.m8`, `*/upstream_*/family_validity_per_seq.jsonl`).
+
+### 4.1 The numbers
+
+| arm | what it is | novelty `N` (pctid < 30 % or no hit) | Pfam validity `V` |
+|---|---|---:|---:|
+| A | baseline, no restart | **46.6 %** | 14.5 % |
+| B | scalar blend (`m_vec = m`) — K7's framework arm | **0.8 %** | **21.4 %** |
+| C | position blend (`m_vec = m·(1 − c)`) — treatment | **1.5 %** | 19.5 % |
+
+Paired per-record differences:
+
+| contrast | Δ | 95 % CI | McNemar p |
+|---|---:|---|---:|
+| `N_C − N_B` | +0.70 pp | [−0.35, +1.67] pp | 0.167 |
+| `V_C − V_B` | −1.90 pp | [−5.96, +1.01] pp | 0.226 |
+| `V_B − V_A` | **+6.90 pp** | [+3.44, +10.15] pp | **4.3e−5** |
+
+### 4.2 Verdict against the §0.4 rules
+
+* **Rule 1 fails.** `V_C − V_B = −1.90 pp` with a CI whose lower end is
+  −5.96 pp, i.e. the CI does not exclude a drop larger than the 2 pp
+  tolerance. The point estimate is also a drop, not a gain.
+* **Rule 2 fails by an order of magnitude.** `N_A / N_C = 46.6 / 1.5 = 31.1`
+  against a ceiling of 2. The treatment is nowhere near "half the baseline's
+  novelty"; it is 3 % of it.
+* **Rule 3 fires.** `N_C − N_B` is not distinguishable from zero (CI spans 0,
+  p = 0.17). Per the rule written before the run, that is the falsification
+  branch: the decoder prior / blend locality is not the lever.
+
+**Verdict: `NOT_THE_LEVER`.** Position-selective memory does not recover
+novelty. It moves the quantity by +0.7 pp with a CI that includes 0, while
+costing ~1.9 pp of validity (also ns). There is no reading under which C is
+preferable to B.
+
+### 4.3 What the run found instead — the novelty loss is in the restart arm, not in the blend
+
+`N_B = 0.8 %` and `N_C = 1.5 %` sit at the same place. The drop from A's
+46.6 % is therefore **not** produced by the position mask; it is produced by
+the restart itself, i.e. by the arm that K7 already scores. This is the first
+measurement of that quantity against the canonical 63.8 M Pfam-A DB, and it
+corroborates the Wave 306 demotion of K7 (`direction-INVERTED`) with a valid
+instrument rather than the saturated 200-sequence holdout.
+
+The same table also reproduces the *positive* direction: `V_B − V_A = +6.9 pp`
+(p = 4.3e−5) is a real, powered validity gain from restarting. So the restart
+arm is a **validity-for-novelty trade**, measured on one run with both
+readouts on the same records — not a novelty claim with a validity caveat.
+
+Two honest limits on that sentence:
+
+* **B's 0.8 % is not K7's 3.7 %.** §3 already declared that W166's generation
+  command does not survive, so this run's scalar arm is this commit's B, not a
+  re-scoring of W166. Both numbers are single-digit percent; the ratio to A is
+  the robust part, the absolute value is era-dependent.
+* **One seed.** §0.5's L4 stands. Rule 4 permits a second seed only if rules 1
+  and 2 both hold; they do not, so no replication is run and no seed is
+  shopped.
+
+### 4.4 What closes
+
+GAP-70 asked whether the decoder prior could be made position-local so the
+blend stops overwriting family-specific positions. It cannot: the mask is
+inert against the quantity it was supposed to move. The novelty gap is a
+property of the restart operator at this checkpoint, and the next lever (if
+any) has to change what the restart *draws*, not where it writes.
+
+K7 stays demoted. This section does not promote it and does not change any
+number in `docs/CLAIMS.md`.
