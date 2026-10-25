@@ -346,3 +346,78 @@ superseded by the 3-seed grid.
 rung-3 mismatch in §0.2b was found; the three `nfe3` cells it had started are
 quarantined and the grid was relaunched on `{4,5,10,25,50,100,200}`. No
 frontier report is issued until all rungs of a checkpoint have all three seeds.
+
+---
+
+## 7. First complete checkpoint: production (2026-10-25)
+
+All 21 production cells (7 rungs × 3 seeds, N=1000) finished, so §6's
+issue-condition is met for this checkpoint and only this one. The other three
+checkpoints are still generating.
+
+```bash
+python3 tools/gap84_mnist_frontier_input.py \
+  --root verification_outputs/gap84-mnist-frontier --ckpt production \
+  --arm evidence_driven \
+  --out verification_outputs/gap84-mnist-frontier/frontier_input_production_evidence_driven.json
+python3 tools/frontier_report.py \
+  --input verification_outputs/gap84-mnist-frontier/frontier_input_production_evidence_driven.json \
+  --margin 0.01 --floor-units 1.0 \
+  --out verification_outputs/gap84-mnist-frontier/frontier_production_evidence_driven.json
+```
+
+Arm = `evidence_driven` (best at 4 of the 7 rungs on seed 42; `codimension_sheet`
+takes the other three by ≤ 0.08 FID). The choice does not carry the verdict:
+`cosine` and `codimension_sheet` give the same LOSS, the same single violation
+at rung 4, and the same speed ratio 2.50. Unit = seed (`n_units = 3`), per §6.
+
+| NFE | baseline | framework | Δ | Δ% | improvement CI95 |
+|---:|---:|---:|---:|---:|---|
+| 4 | 9.99196 | 12.7593 | +2.76738 | **+27.70 %** | [−0.2824, −0.2697] |
+| 5 | 9.97124 | 10.184 | +0.21275 | **+2.13 %** | [−0.0230, −0.0188] |
+| 10 | 9.96893 | 9.94286 | −0.02607 | −0.26 % | [+0.0019, +0.0038] |
+| 25 | 9.98282 | 9.94217 | −0.04065 | −0.41 % | [+0.0032, +0.0056] |
+| 50 | 9.98934 | 9.95292 | −0.03642 | −0.37 % | [+0.0027, +0.0053] |
+| 100 | 9.99289 | 9.95929 | −0.03361 | −0.34 % | [+0.0023, +0.0050] |
+| 200 | 9.99473 | 9.96133 | −0.03340 | −0.33 % | [+0.0023, +0.0050] |
+
+Baseline plateau **9.99381** over NFE [100, 200], last-two relative change
+0.018 % → flat, so this is convergence, not a compute limit (§0.4).
+
+**Verdict: LOSS.** `weak_dominance = false`, violation at rung 4;
+`strict_gain_rungs = []`; speed ratio **2.50** (the framework reaches the
+baseline plateau at NFE 10 vs the baseline's 4). Under §0.4 rule 2 a cell wins
+only on weak dominance at **every** rung plus (a strict gain or a speed ratio
+≤ 0.5), so neither clause is met.
+
+**What the table says, rung by rung.**
+
+1. **The loss is large and certain, not marginal.** At NFE=4 the framework is
+   27.7 % worse with a CI of [−0.2824, −0.2697] — an order of magnitude past
+   the −0.10 floor (1 FID unit on a 9.99 baseline). This is not a
+   near-miss that another seed would flip.
+2. **The sign flips at NFE ≥ 10 and the CI excludes 0 there**, but the gain is
+   0.026–0.041 FID units, i.e. **2.6–4.1 % of the cell's own floor**. Weak
+   dominance holds from rung 10 up; a strict gain never does.
+3. **The speed half of the claim is reversed on this checkpoint**: 10 NFE to
+   reach the baseline's plateau vs the baseline's 4.
+
+**Why rung 4 behaves this way — structural, and it was pre-registered.** With
+`--n-rounds 4 --equal-total-nfe` at total NFE=4 the allocator returns
+`[1,1,1,1]`: four rounds, one integration step each, and a re-noise between
+them. The restart needs per-round capacity to correct anything; at NFE = R it
+has none, so the composite map is four half-steps through noise. §0.2b put
+rung 4 in the grid *before* any number existed (it is the lowest feasible
+rung), so the rung stays and the verdict stands. Dropping it now, after seeing
+the table, would be moving the goalposts.
+
+**What this does and does not decide.** It decides the production checkpoint of
+R5c: no frontier win, and the direction of the speed ratio is against the
+framework. It does not decide R5c as a cell, because the other three
+checkpoints are still running — `w16e1_5k`'s probe at the low rung already has
+the opposite sign (baseline 24.666 vs 22.229, −14.98 %). If production turns out
+to be the only checkpoint that loses, the object to fix is the low-NFE
+allocation on a well-trained field (the restart budget at NFE ≈ R), not the
+wording of the verdict.
+
+
