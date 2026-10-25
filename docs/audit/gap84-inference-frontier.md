@@ -277,3 +277,49 @@ arm only is reported as `missing` and also forces `INCOMPLETE`.
   the frontier adds the plateau condition on top, at matched N.
 * The GAP-69 per-family report (GAP-79) is a **level** question on a rate
   metric, not a frontier question; it keeps its own pre-registration.
+
+---
+
+## 6. The MNIST grid — started 2026-10-25 (additive; no number yet)
+
+§3 said none of the five grids could start while `cuda:0` was paused. That
+constraint never applied to R5c: MNIST FM is a NumPy adapter and runs on CPU.
+The grid was therefore started on CPU while `cuda:0` stays free for the
+GPU cells.
+
+**What runs.** `reproduce/gap84_mnist_frontier.sh`, 4 checkpoints
+(`production`, `w16e1_5k`, `w16e1_10k`, `w16e1_60k`) × 3 seeds (42/43/44) ×
+7 rungs (3, 5, 10, 25, 50, 100, 200) = **84 cells**, each cell one
+`wave191_p3_mnist_sweep.py` run of 4 arms (baseline + cosine +
+codimension_sheet + evidence_driven). Canonical flags are exactly GAP-78's:
+`--equal-total-nfe --beta-schedule equal_budget --beta-framework 0.3
+--restart-t0-mode memory --mean-preserve --seed-keyed-prior --shared-prior
+--n-rounds 4`, with only `--total-nfe` changing between rungs.
+
+**Cost, measured not guessed.** One probe cell (`w16e1_5k`, seed 42, NFE=3,
+N=1000) took 142 s wall. Against the recorded 26.4 min at NFE=50 this gives
+≈ 50 s fixed + 30.7 s per NFE unit per cell, i.e. ≈ 3.45 h per
+(checkpoint, seed) and ≈ 41 h serial. With `--jobs 8` (1 BLAS thread each) the
+wall-clock estimate is **5–6 h**.
+
+**Two additive changes, no number moved.**
+
+1. `scripts/wave191_p3_mnist_sweep.py` now persists `baseline_chunk_fids`
+   alongside the framework arms' `chunk_fids`. The baseline's per-chunk FIDs
+   were always computed for the paired t-test and then discarded. This is a new
+   key only; every existing key keeps its value.
+2. `tools/gap84_mnist_frontier_input.py` converts the 84 cells into
+   `frontier_input_v1`. **Unit = seed**, not chunk: a chunk FID is on a
+   different scale from the headline FID (30.9 vs 21.4 on `w16e1_5k` at
+   NFE=50), and `frontier_report` divides the unit-level CI by the headline
+   baseline, so chunk units would make the delta and its CI disagree by ~30 %.
+   With 3 seeds the report carries `n_units = 3` and says so (§0.3).
+
+**First number, from the probe only.** At NFE=3 on `w16e1_5k` the baseline is
+24.666 and the best framework arm 22.229 (−14.98 %, chunk-paired Bonferroni
+p = 3.4e−12). That is a single cell at a single seed; it is recorded here as a
+feasibility check on the low rung, not as a frontier reading, and it will be
+superseded by the 3-seed grid.
+
+**Status:** grid running since 2026-10-25T03:27:15Z; no frontier report is
+issued until all rungs of a checkpoint have all three seeds.

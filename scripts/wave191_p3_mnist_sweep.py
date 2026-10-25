@@ -1021,6 +1021,14 @@ def main(argv: list[str] | None = None) -> int:
             for r in range(n_rounds)
         ],
         "baseline_fid": float(baseline_fid),
+        # GAP-84 ADDITIVE (2026-10-25): the baseline's per-chunk FIDs were always
+        # computed for the paired t-test but never persisted, so a chunk-level
+        # (quality, NFE) reading could only be formed for the framework arm. Same
+        # order and same chunk boundaries as ``framework_arms[*]["chunk_fids"]``.
+        # Note the scale: a chunk FID is not the headline FID, so a frontier that
+        # uses headline values must not mix these units in; they are for a
+        # separate, explicitly-labelled chunk-level sensitivity check.
+        "baseline_chunk_fids": [float(x) for x in chunk_fids["baseline"]],
         "framework_arms": framework_arms_out,
         "best_arm": best_name,
         "verdict": verdict,
