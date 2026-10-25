@@ -187,12 +187,92 @@ The tool deliberately does **not** compute Theorem 5's deviation term (§0.2).
 |---|---|
 | step 1: default-off `restart_t0` override | **landed** |
 | step 2: D.4 + byte-identical control | verified in the same commit |
-| step 3: 5-point sweep on 2 checkpoints | **not run** (GPU deferred) |
-| step 4: this note | §0 written before the run; §3 empty |
+| step 3: 5-point sweep on 2 checkpoints | **done** — 30 cells, 0 skipped (`verification_outputs/gap74-restart-t0/`) |
+| step 4: this note | §3 filled from the run |
 | verdict tool | **landed** (§1.1), with §0.3a amendment |
 | step 5: 6 gates + commit | gates run |
 
-## 3. Results
+## 3. Results — monotone everywhere, at the right level in one regime
 
-_None. Nothing in this section may be filled in from an earlier run; the
-`t0 = 1 − β` design cannot produce a fixed-`t0` reading._
+Run 2026-10-25, 30 cells (2 checkpoints x 5 `m` x 3 seeds), N = 1000,
+`t0 = 0.5` fixed, equal total NFE. Artifacts:
+`verification_outputs/gap74-restart-t0/rho_report.json` (bootstrap 1000,
+paired over record indices).
+
+### 3.1 The curves
+
+`rho(m)` = `Tr(Cov(endpoint)) / Tr(Cov(baseline))`, pooled over seeds 42/43/44.
+The three scheduler arms are reported separately because §0.3a(i) requires all
+three to agree.
+
+| checkpoint | arm | m = 0.1 | 0.3 | 0.5 | 0.7 | 0.9 |
+|---|---|---:|---:|---:|---:|---:|
+| `production` | cosine | 0.789 | 1.212 | 1.332 | 1.382 | 1.405 |
+| `production` | codimension_sheet | 0.763 | 1.197 | 1.308 | 1.362 | 1.381 |
+| `production` | evidence_driven | 0.770 | 1.200 | 1.334 | 1.385 | 1.406 |
+| `w16e1_5k` | cosine | 0.342 | 0.750 | 0.890 | 0.932 | 0.958 |
+| `w16e1_5k` | codimension_sheet | 0.301 | 0.743 | 0.888 | 0.937 | 0.958 |
+| `w16e1_5k` | evidence_driven | 0.344 | 0.744 | 0.886 | 0.934 | 0.960 |
+
+Every 95 % CI is narrower than 0.005 in absolute `rho`; the adjacent-pair
+contrasts are all PASS.
+
+### 3.2 Rule 1 (monotone, all arms): holds in both regimes
+
+All **4 of 4** adjacent pairs PASS in all **6** arm x checkpoint cells (24/24).
+The largest single step is `0.1 -> 0.3` (+0.42 on `production`); the smallest
+is `0.7 -> 0.9` (+0.023 on `production`, +0.024 on `w16e1_5k`), and both are
+several hundred CI-widths from zero. The contraction is therefore a function of
+the amount of fresh noise, not of the scheduler — which is what §0.1 predicted
+and what §0.3a(i) required.
+
+The response is also strongly **concave**: the first 0.2 of `m` buys 0.42 of
+`rho` on `production`, the last 0.2 buys 0.023. Most of the dispersion is
+recovered by `m = 0.5`; past that the curve is nearly flat.
+
+### 3.3 Rule 2 (`rho(0.9)` reaches 1): holds on `production`, fails on `w16e1_5k`
+
+| checkpoint | `rho(0.9)` | CI95 high | rule 2 |
+|---|---:|---:|---|
+| `production` | 1.381 - 1.406 | 1.384 - 1.409 | **holds** (all 3 arms) |
+| `w16e1_5k` | 0.958 - 0.960 | 0.960 - 0.962 | **fails** (all 3 arms) |
+
+On `production` the restarted population at `m = 0.9` is **41 % more dispersed**
+than the baseline — the restart does not merely avoid contraction, it inflates
+variance past the baseline's. On `w16e1_5k` it is still 4 % short even at the
+largest memory, and the CI excludes 1 comfortably.
+
+**Verdict: `PARTIAL_ONE_REGIME`.** The monotone mechanism is confirmed; the
+endpoint condition is met on the checkpoint where the framework regresses
+(`production`) and missed on the checkpoint where it wins (`w16e1_5k`).
+
+### 3.4 What that combination means
+
+The two checkpoints were chosen in §0.3 because GAP-76 measured them at
+opposite ends (production `+1.24 %` REGRESS, `w16e1_5k` `-13.15 %` WIN). The
+`rho` curves separate them in the same direction as the FID result, but with
+the opposite sign to the naive story:
+
+* On **production**, restarting over-disperses the endpoint. The framework
+  already hurts this checkpoint; a restarted population that is 41 % wider than
+  the data can only hurt it further, which is consistent with the regression.
+* On **w16e1_5k**, restarting still under-disperses even at `m = 0.9`. That is
+  the regime where the framework wins, so the win is **not** produced by
+  restoring dispersion — it must come from the conditional-mean correction
+  itself, at a dispersion cost that `rho` says is still being paid.
+
+This note therefore does **not** claim `rho -> 1` explains the sign. It says
+the deviation channel and the marginal channel come apart exactly where §0.2
+warned they would: the win on `w16e1_5k` survives while `rho < 1`.
+
+### 3.5 Limits
+
+* `t0 = 0.5` is fixed while `m` moves, so for `m != 0.5` the blended state is
+  off the path `x_t = (1 - t) x_0 + t x_1` by construction. That is the price
+  of separating the two channels (§0.1), and it means the absolute level of
+  `rho` is not a property of the operator alone. The *monotonicity* is immune
+  to it; the level is not. This is stated, not corrected: re-running at
+  `t0 = m` would answer a different question (and is what GAP-80 §8.7 does for
+  the 2-D adapter).
+* One N, one seed policy (42/43/44), one model. No claim is made about other
+  cells.

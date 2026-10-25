@@ -73,15 +73,15 @@
   {
    "id": "GAP-74-CONDITIONAL-MEAN-BOUND",
    "priority": "P1",
-   "status": "CODE_COMPLETE — default-off restart_t0 override landed (0b44abdb); verdict tool tools/gap74_rho_report.py landed with the §0.3a amendment that fixes the arm policy (all three arms must pass), rule-1 tie handling, and rule 2 as CI_high>=1 BEFORE any cell exists. The 30-cell 5-point sweep on 2 checkpoints is deferred by user directive (note: the MNIST FM adapter is NumPy/CPU, so this sweep does not contend for cuda:0).",
+   "status": "DONE — PARTIAL_ONE_REGIME (docs/audit/gap74-conditional-mean-bound.md §3). 30 cells, N=1000, t0=0.5 fixed, 3 seeds. Rule 1 (monotone, all three arms): 24/24 adjacent pairs PASS. production rho(0.9)=1.381-1.406 (CI_high 1.384-1.409) -> rule 2 holds; w16e1_5k rho(0.9)=0.958-0.960 (CI_high 0.960-0.962) -> rule 2 fails. The contraction is a function of the fresh-noise amount, not the scheduler, in both regimes; the endpoint level is checkpoint-dependent and separates the two GAP-76 regimes.",
    "depends_on": "GAP-72 (the mean and variance channels must be separated before either is formalised)",
-   "est_wall": "~3 h code + ~2 h GPU",
+   "est_wall": "done",
    "gap": "The surviving explanation for the rho contraction is the law of total variance: the restart injects independent noise at t=m and integrates to t=1, so the endpoint is approximately E[x1|x_m] rather than a draw from p(x1), and conditional means are under-dispersed. This is argued, not measured (docs/audit/gap67-covariance-preservation.md section 6.3). Separately, Theorem 5's variance term bounds the DEVIATION from the corrected prior, which is a different object from the MARGINAL dispersion measured by rho; GAP-67 measured that the marginal does not respond to the blend's second moment at all, so the two are decoupled and any paper sentence that conflates them is wrong.",
    "design_hypothesis": "The contraction is monotone in the injected noise fraction (1-m) at fixed restart time t0, and vanishes as m -> 1. The current design ties t0 = 1 - beta, so m and t0 cannot be varied independently; a fixed-t0 override is required to test this.",
    "research": "(a) The override must be additive and default-off so every frozen digest and D.4 vector is unchanged. (b) m -> 1 is the 'do not restart' arm; the prediction that the contraction vanishes there is nearly tautological, so the informative part is the SHAPE between m=0.2 and m=0.9, not the endpoint. (c) Any restatement of Theorem 5 is a paper-surface change and is out of scope here -- flag only.",
    "acceptance": "(1) rho contraction vs (1-m) at fixed t0 on production and w16e1_5k, 5 points. (2) Monotone within the bootstrap CI, or the explanation is falsified. (3) A one-paragraph mechanism statement written into the audit that distinguishes the deviation channel from the marginal channel, with the Theorem 5 flag.",
-   "agent_action": "1) Add a default-off restart_t0 override to the MNIST adapter. 2) Verify D.4 + the byte-identical control. 3) Run the 5-point sweep on 2 checkpoints. 4) Write docs/audit/gap74-conditional-mean-bound.md. 5) 6 gates + commit.",
-   "evidence": "docs/audit/gap67-covariance-preservation.md sections 6.3-6.4; docs/audit/wave350-thm5.md",
+   "agent_action": "DONE. Note §3.5 records the t0=0.5 confound: for m != 0.5 the blend is off-path by construction, so the level of rho is not a property of the operator alone. The monotonicity is immune to it. GAP-80 §8.7 is the 2-D re-run at t0 = m.",
+   "evidence": "docs/audit/gap74-conditional-mean-bound.md §3; verification_outputs/gap74-restart-t0/rho_report.json (30 cells)",
    "deliverable": "The contraction stated as a measured mechanism rather than a conjecture, or falsified and replaced."
   },
   {
