@@ -28,6 +28,10 @@ TAG=${TAG:-}
 # the profile term only: logits = (c * log p) / T + (1 - c) * randn.
 N=${N:-1000}
 TEMPERATURE=${TEMPERATURE:-1.0}
+# GAP-79 screen only: generation can run concurrently (GPU has the room), but
+# scoring cannot — MMseqs2 shares `results/mmseqs_tmp`. SCORE=0 writes the
+# FASTAs and returns; the caller scores serially afterwards.
+SCORE=${SCORE:-1}
 OUT=${OUT:-verification_outputs/gap69-lineageflow-profile/seed${SEED}${TAG}}
 
 if [[ ! -f "$PROFILES" ]]; then
@@ -95,8 +99,10 @@ fi
   --outdir "$OUT" 2>&1 | tee "$OUT/run.log"
 
 # MMseqs2 uses a shared relative temp dir (results/mmseqs_tmp) — score serially.
-"$PY" tools/gap55_r1_score_fastas.py \
-  --run-dir "$OUT" --arms baseline framework --length-bias short \
-  2>&1 | tee "$OUT/score.log"
+if [[ "$SCORE" != "0" ]]; then
+  "$PY" tools/gap55_r1_score_fastas.py \
+    --run-dir "$OUT" --arms baseline framework --length-bias short \
+    2>&1 | tee "$OUT/score.log"
+fi
 
 echo "[gap69] EXIT=0 $(date -u +%FT%TZ)"
