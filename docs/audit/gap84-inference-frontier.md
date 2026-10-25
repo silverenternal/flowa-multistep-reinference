@@ -421,3 +421,119 @@ allocation on a well-trained field (the restart budget at NFE ≈ R), not the
 wording of the verdict.
 
 
+---
+
+## 8. GAP-84b: the round count has to follow the budget (2026-10-25)
+
+§7 named the mechanism behind rung 4 — at `total_nfe == n_rounds` the allocator
+returns `[1,1,1,1]` — and said the object to fix is the low-NFE allocation, not
+the verdict wording. This section is that fix, measured.
+
+### 8.1 The knob
+
+`effective_rounds(n_rounds, total_nfe, min_steps_per_round)`
+(`scripts/wave191_p3_mnist_sweep.py`) caps the round count so that every round
+is worth at least `min_steps_per_round` integration steps:
+
+```python
+R_eff = min(n_rounds, max(1, total_nfe // min_steps_per_round))
+```
+
+CLI: `--min-steps-per-round`, default **1**. At the default the expression
+returns `n_rounds` unchanged, so every number already in §7 is reproduced
+bit-for-bit; `tests/test_gap84b_round_budget.py` pins that
+(`test_default_is_the_legacy_round_count`) and pins the degenerate case that
+motivated the change (`test_the_allocator_really_was_degenerate_at_nfe_eq_rounds`).
+
+Two properties make this a **policy** and not a per-rung fit:
+
+* `min_steps_per_round = 2` changes the grid only where `total_nfe < 2·n_rounds`,
+  i.e. only rungs 4 and 5 of this grid. Rungs 10–200 are untouched — the
+  assembled report below reuses their §7 cells through symlinks, not new runs.
+* When the cap bites all the way down (`total_nfe // min_steps == 1`) the run
+  degrades to a **single pass**, which is the baseline map itself, not a
+  one-round restart stub. The `ms=3` cells below show this as an exact
+  equality: all four arms land on the baseline FID to the last digit.
+
+### 8.2 The measurement (production, `evidence_driven`, 3 seeds, N = 1000)
+
+| NFE | `min_steps` | `R_eff` | baseline | framework | Δ % |
+|---:|---:|---:|---:|---:|---:|
+| 4 | 2 | 2 | 9.99196 | 10.37282 | **+3.81 %** |
+| 4 | 3 | 1 | 9.99196 | 9.99196 | **+0.00 %** |
+| 5 | 2 | 2 | 9.97124 | 10.37529 | +4.05 % |
+| 5 | 3 | 1 | 9.97124 | 9.97124 | **+0.00 %** |
+| 10 | 3 | 3 | 9.96893 | 9.99378 | +0.25 % |
+
+Compare rung 4 in §7: **12.7593 / +27.70 %**. The cap removes 86 % of that
+loss. Per-seed, the `R_eff = 1` rows are the baseline exactly (9.9761 / 9.9940 /
+10.0057 for every arm), which is the check that the knob has no residual of its
+own.
+
+`min_steps_per_round = 3` is **worse** where it acts — at NFE = 10 it forces
+`R_eff = 3` and gives 9.99378 vs 9.94286 for the uncapped `R = 4` (+0.25 % vs
+−0.26 %). So the useful setting is exactly 2; a stronger cap is not a stronger
+fix. Recorded here so that nobody "fixes it harder".
+
+### 8.3 The assembled frontier, and both verdicts
+
+`verification_outputs/gap84c-production-cap/` holds rungs 4 and 5 from the cap
+arm and rungs 10–200 as symlinks to the §7 cells:
+
+```bash
+python3 tools/gap84_mnist_frontier_input.py \
+  --root verification_outputs/gap84c-production-cap --ckpt production \
+  --arm evidence_driven \
+  --out verification_outputs/gap84c-production-cap/frontier_input.json
+python3 tools/frontier_report.py \
+  --input verification_outputs/gap84c-production-cap/frontier_input.json \
+  --margin 0.01 --floor-units 1.0 \
+  --out verification_outputs/gap84c-production-cap/frontier_report.json
+```
+
+| rule | violations | strict-gain rungs | speed ratio | verdict |
+|---|---|---|---:|---|
+| ledger floor (1 FID unit → margin 0.1000–0.1003) | none | none | 2.50 | **TIE** (was LOSS) |
+| pre-registered 1 % relative | 4, 5 | 10, 25, 50, 100, 200 | 2.50 | LOSS (was LOSS) |
+
+Both are printed because §0.5 and CLM-060 disagree on the unit and the audit
+does not get to pick the friendlier one after seeing the table. The floor rule
+is the one the ledger defines (CLM-060: 1 FID), and under it the production
+checkpoint moves from LOSS to TIE: every rung is now inside its own floor, and
+the two clauses that could still buy a WIN both fail — no rung clears +1 FID,
+and 10 NFE to the baseline plateau against the baseline's 4 is a ratio of 2.50,
+not ≤ 0.50.
+
+### 8.4 What the remaining distance is, in units
+
+At rungs 10–200 the framework is genuinely better: improvement CI95 excludes 0
+at all five rungs. The size is 0.026–0.041 FID units. The floor is 1.0. So the
+gap to a strict gain is **25×**, and it is an effect-size gap, not an allocation
+gap — the allocation is now correct at every rung of the grid.
+
+That is the honest state of this cell: the structural defect is gone, the
+residual is a mechanism question (how much does a restart buy on a field that
+has already converged?), and §9 is the next measurement on it.
+
+## 9. Next: is there a round-count dose at fixed NFE?
+
+The cap says `R` matters at NFE = 4 (4 → 2 is worth 2.39 FID). It does not say
+whether `R` matters *above* the cap. The next run holds NFE = 25 fixed and
+sweeps `n_rounds ∈ {2, 4, 6, 8, 12}` with `min_steps_per_round = 2`:
+a within-checkpoint dose-response on the only quantity the framework owns, with
+`R = 4` as the in-grid reference (the value used at every rung of §7).
+
+NFE = 25 is chosen over NFE = 10 because the 10-step budget saturates at
+`R_eff = 5` (two steps per round), which leaves only two distinct levels — not
+a dose-response. At NFE = 25 the same rule admits `R_eff ∈ {2,4,6,8,12}`, and 25
+is a rung where the framework already beats the baseline by 0.41 %.
+
+Pre-registration: 3 seeds, N = 1000, same arm, same margin rules as §8.3. The
+dose is `R`. Decision rule, fixed before the run:
+
+* monotone increase in the paired improvement as `R` rises → the lever is live,
+  keep climbing until it turns over, and the 25× in §8.4 is a budget question;
+* interior optimum at `R = 4` or below → `R` is saturated on this checkpoint and
+  the remaining distance is not a round-count question at all;
+* flat → `R` does not enter the effect above the cap, and §7's rungs are already
+  at the best `R`.

@@ -178,7 +178,51 @@ are in tension and one init cannot serve both.
 | §1 ceiling diagnostic | done, CPU, this document |
 | discriminative-column tool | **not built — the lever it implements is falsified in §1** |
 | dose knob | implemented as `--init-temperature` (profile-term temperature, §0.3b; commit `5afe3935`) |
-| screen (N = 200, 5 doses) | **RUNNING** since 2026-10-25T04:43Z (`reproduce/gap79_temperature_screen.sh`, PAR=3, GPU-bound) |
+| screen (N = 200, 5 doses) | **done** 2026-10-25, 5/5 cells (`reproduce/gap79_temperature_screen.sh`, seed 42) |
 | screen table | `tools/gap79_dose_screen.py` + 6 tests (`f51cffb4` run script) |
-| confirmation (N = 1000, 3 seeds) | not run — only the selected dose goes there |
-| verdict | deferred until the screen reports |
+| confirmation (N = 1000, 3 seeds) | **not run — no dose qualified**, so there is nothing to confirm |
+| verdict | **`falsified: true`** — the init-strength lever moves hits, not identity (§2.1) |
+
+### 2.1 The screen result: the lever is real and points at the wrong thing
+
+`verification_outputs/gap79-r1-temperature/screen_report.json`
+(`selected_temperature = null`, `falsified = true`). N = 200 per dose, seed 42,
+50 sequences per family. `rate` is the fraction of a family's own 50 sequences
+that hit that family's HMM.
+
+| T | fw hits | fw coverage | PF00005 | PF00072 | PF00183 | PF02517 | top-1 |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0.02 | 1339 | 0.665 | 1.00 | 0.00 | 0.00 | 0.00 | 0.250 |
+| 0.05 | 1314 | 0.630 | 1.00 | 0.00 | 0.00 | 0.00 | 0.250 |
+| 0.10 | 1214 | 0.585 | 1.00 | 0.00 | 0.00 | 0.00 | 0.255 |
+| 0.20 | 1191 | 0.545 | 1.00 | 0.00 | 0.00 | 0.00 | 0.245 |
+| 0.50 | 915 | 0.465 | 0.90 | 0.00 | 0.00 | 0.00 | 0.210 |
+| baseline | 37 | 0.150 | 0.00 | 0.00 | 0.00 | 0.00 | 0.000 |
+
+**The mechanism read is positive.** Temperature is a genuine dose on the
+profile term: as T falls 0.50 → 0.02, `hmmscan_total_hits` rises monotonically
+915 → 1339 (baseline 37, i.e. 24.7× → 36.2×) and `coverage_any_hit` rises
+0.465 → 0.665 (baseline 0.150). Sharpening the init does exactly what §0.3b
+said it would: it makes the generated sequences more protein-like to HMMER.
+
+**The identity read is dead.** Not one of the three failing families moves off
+0/50 at any dose, and PF00005 — the family that already worked — is the only
+one that ever fires. `top1_family_accuracy` is pinned at the 0.25 that one
+family out of four implies. Per §0.4 rule 2 the required families (PF00072,
+PF02517) must each leave 0 with PF00005 held; that never happens, so no dose is
+eligible and the lever is falsified as an identity lever.
+
+**What this means for the gap.** GAP-69's 8× hit gain is one family, and
+sharpening the same init by 25× in temperature does not spread it. The binding
+constraint is therefore not the *strength* of the profile signal at the init —
+it is already strong enough to lift total hits by an order of magnitude and to
+move coverage by 0.5 absolute. Whatever makes PF00072 / PF00183 / PF02517
+unreachable lives downstream of the init: either the family's own HMM is not
+representable by a single-profile perturbation of a shared consensus, or the
+sampler destroys the per-family signal after the init. The next lever has to be
+chosen against that, and §0.2's discriminative-column plan is falsified for the
+same reason (it is still an init-column lever).
+
+The screen is N = 200 and is therefore **screen-only** — none of the numbers in
+the table may be quoted as a result (`screen_report.json.note`). It is used here
+only to select a dose or to close the lever, which is what §0.4 authorises.

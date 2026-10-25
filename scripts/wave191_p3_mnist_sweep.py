@@ -280,6 +280,29 @@ def per_round_num_steps(name: str, cycle_length: int, max_num_steps: int) -> lis
     return out
 
 
+def effective_rounds(
+    n_rounds: int, total_nfe: int, min_steps_per_round: int = 1,
+) -> int:
+    """GAP-84b: the round count the budget can actually support.
+
+    ``_allocate_nfe_budget`` gives every round at least one step, so at
+    ``total_nfe == n_rounds`` the allocation is ``[1, 1, 1, 1]`` no matter what
+    the weights are — four one-step passes through re-noised states. Capping
+    the rounds at ``total_nfe // min_steps_per_round`` keeps every round usable
+    and, at the extreme, degrades to ``R = 1`` (the single-pass baseline)
+    rather than to a degenerate restart.
+
+    ``min_steps_per_round = 1`` returns ``n_rounds`` unchanged, including the
+    legacy ``total_nfe < n_rounds`` edge, so every pre-GAP-84b run is
+    byte-identical.
+    """
+    n_rounds = int(n_rounds)
+    min_steps = max(1, int(min_steps_per_round))
+    if min_steps <= 1:
+        return n_rounds
+    return min(n_rounds, max(1, int(total_nfe) // min_steps))
+
+
 def per_round_num_steps_equal_budget(
     name: str,
     cycle_length: int,
@@ -653,6 +676,15 @@ def main(argv: list[str] | None = None) -> int:
                              "larger share of the fixed total NFE, which is the "
                              "only lever that reduces the first pass's Euler "
                              "step at a matched budget.")
+    parser.add_argument("--min-steps-per-round", type=int, default=1,
+                        help="GAP-84b: cap the round count so every round keeps "
+                             "at least this many Euler steps, i.e. "
+                             "R = min(--n-rounds, total_nfe // this). At the "
+                             "default 1 nothing changes. At total NFE = 4 and "
+                             "--n-rounds 4 the legacy allocation is [1,1,1,1]; "
+                             "with 2 it becomes R=2, [2,2]; with 4, R=1 (the "
+                             "single-pass baseline) instead of a degenerate "
+                             "restart. Recorded as n_rounds_effective.")
     parser.add_argument("--seed-keyed-prior", action="store_true",
                         help="GAP-56: fold --seed into the prior batch id. "
                              "Without this the prior is keyed only on "
@@ -695,6 +727,18 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit(f"baseline_num_steps_must_be_positive:{baseline_steps}")
     if n_rounds < 1:
         raise SystemExit(f"n_rounds_must_be_positive:{n_rounds}")
+
+    # GAP-84b — the round count follows the budget. `_allocate_nfe_budget` gives
+    # every round at least one step, so at total NFE = n_rounds the allocation
+    # is [1,1,1,1] whatever the weights are: four one-step passes through
+    # re-noised states, which is not the framework, it is a stub of it. Capping
+    # the rounds at `total_nfe // min_steps_per_round` keeps every round usable
+    # and, at the extreme, degrades to R=1 (the single-pass baseline) instead of
+    # to a degenerate restart. Default 1 reproduces the pre-GAP-84b allocation
+    # exactly.
+    n_rounds_requested = n_rounds
+    min_steps_per_round = max(1, int(args.min_steps_per_round))
+    n_rounds = effective_rounds(n_rounds_requested, total_nfe, min_steps_per_round)
 
     n_samples = int(args.n_samples)
     output_dir = Path(args.output_dir)
@@ -1071,6 +1115,8 @@ def main(argv: list[str] | None = None) -> int:
         "shared_batch_id": (SHARED_BATCH_ID if args.shared_prior else None),
         "framework_max_num_steps_per_round": int(FRAMEWORK_MAX_NUM_STEPS),
         "n_rounds": n_rounds,
+        "n_rounds_requested": n_rounds_requested,
+        "min_steps_per_round": int(min_steps_per_round),
         "beta_framework": float(BETA_FRAMEWORK),
         "beta_baseline": float(BETA_BASELINE),
         "fid_metric": (
