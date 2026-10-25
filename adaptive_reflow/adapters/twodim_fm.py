@@ -1088,8 +1088,21 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
         if num_steps <= 0:
             raise ValueError("num_steps_must_be_positive")
-        # Build the t-grid on [0, 1] inclusive (num_steps + 1 points).
-        t_grid = np.linspace(0.0, 1.0, num_steps + 1, dtype=np.float64)
+        # Build the t-grid on ``[t_start, t_end]`` inclusive (num_steps + 1
+        # points). GAP-56 / GAP-80 — the condition may carry the interval.
+        # The path is ``x_t = (1 - t) * x_0 + t * x_1``, so
+        # ``apply_restart_distribution``'s blend ``m * x_1 + (1 - m) * x_0``
+        # *is* the path state at ``t = m``. Integrating that state from
+        # ``t = 0`` evaluates the velocity field at the wrong time and
+        # destroys the sample. The defaults below keep every legacy call
+        # byte-identical (``t0 = 0``, ``t1 = 1``).
+        t_start = float(condition.delta_spec.get("t0", 0.0))
+        t_end = float(condition.delta_spec.get("t1", 1.0))
+        if not np.isfinite(t_start) or not np.isfinite(t_end):
+            raise ValueError("t0_t1_must_be_finite")
+        if not 0.0 <= t_start <= t_end <= 1.0:
+            raise ValueError("t0_t1_must_satisfy_0_le_t0_le_t1_le_1")
+        t_grid = np.linspace(t_start, t_end, num_steps + 1, dtype=np.float64)
         grid = t_grid  # alias for the new-integrator branch below.
         x0 = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(2)
         # Wave 17 Phase 2: thread the controlled noise-injection params
@@ -1127,8 +1140,8 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
             traj = _integrate_dormand_prince(
                 self._weights,
                 x0,
-                0.0,
-                1.0,
+                float(t_start),
+                float(t_end),
                 max_steps=max(int(self._max_steps), num_steps * 4),
                 rtol=float(self._rtol),
                 atol=float(self._atol),
@@ -1179,18 +1192,23 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         traj_clamped = np.clip(traj, -TWODIM_FM_CLAMP, TWODIM_FM_CLAMP)
         overflowed = bool(np.any(np.abs(traj) > TWODIM_FM_CLAMP))
         traj = traj_clamped
-        traj_digest = digest_state(
-            {
-                "kind": "trajectory",
-                "src_digest": state.native_state_digest,
-                "integrator": str(self._integrator),
-                "num_steps": int(num_steps),
-                "actual_steps": int(actual_steps),
-                "target": self._target,
-                "shape": [int(traj.shape[0]), int(traj.shape[1])],
-                "x0": [float(x0[0]), float(x0[1])],
-            }
-        )
+        traj_digest_payload: dict[str, Any] = {
+            "kind": "trajectory",
+            "src_digest": state.native_state_digest,
+            "integrator": str(self._integrator),
+            "num_steps": int(num_steps),
+            "actual_steps": int(actual_steps),
+            "target": self._target,
+            "shape": [int(traj.shape[0]), int(traj.shape[1])],
+            "x0": [float(x0[0]), float(x0[1])],
+        }
+        # Only a non-default interval enters the digest, so every legacy
+        # call keeps its historical digest byte-for-byte while two solves
+        # that differ only by ``[t0, t1]`` cannot collide in the cache.
+        if (t_start, t_end) != (0.0, 1.0):
+            traj_digest_payload["t0"] = float(t_start)
+            traj_digest_payload["t1"] = float(t_end)
+        traj_digest = digest_state(traj_digest_payload)
         # Store the trajectory keyed by digest; observe_endpoint will
         # read the final row out of it.
         stored: dict[str, Any] = {
