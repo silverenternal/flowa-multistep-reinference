@@ -1543,3 +1543,47 @@ decided; their records stay where they were written:
 GAP-84's status was compressed from a run-log to the current measurement plus
 the next action; the long form stays in
 `docs/audit/gap84-inference-frontier.md` §6–§7.
+
+---
+
+## 24. GAP-84 closed (2026-10-25) — the MNIST frontier: one win, three ties, no violations
+
+The 84-cell grid (4 checkpoints × 7 NFE rungs × 3 seeds, N = 1000) is complete,
+and rungs 4–5 were re-run under the §8 round-cap policy so the table is one
+policy rather than a per-checkpoint fit. Records:
+`docs/audit/gap84-inference-frontier.md` §7–§10,
+`verification_outputs/gap84-cap-frontier/`.
+
+| checkpoint | baseline plateau | Δ FID | Δ % | verdict |
+|---|---:|---:|---:|---|
+| `w16e1_5k` | 24.4839 | −3.1206 | −12.75 % | **WIN** (7/7 strict gains) |
+| `w16e1_10k` | 16.9537 | −1.0036 | −5.92 % | TIE (CI_low 0.984 FID vs the 1.0 floor) |
+| `w16e1_60k` | 11.3795 | +0.0150 | +0.13 % | TIE |
+| `production` | 9.9938 | −0.0335 | −0.34 % | TIE |
+
+Three things were decided on the way, each with its own measurement:
+
+1. **The rung-4 loss was an allocation defect, not a mechanism limit.** At
+   `total_nfe == n_rounds` the allocator returns `[1,1,1,1]`. Capping the round
+   count at `total_nfe // 2` (`--min-steps-per-round 2`) turns production's
+   +27.70 % into +3.81 % and 60k's +20.34 % into +4.40 %, and removes the only
+   two weak-dominance violations in the grid. The default (1) reproduces every
+   pre-GAP-84b number bit-for-bit.
+2. **The round count is not the remaining lever.** A 5-level dose at fixed
+   NFE = 25 (R ∈ {2,4,6,8,12}) gives: R = 2 worse than the baseline in every
+   arm; R ∈ {4,6,8} a plateau whose argmax is arm-dependent; R = 12 falling off.
+   The whole dose spans 0.06 FID against a 1.0 FID floor.
+3. **The framework's gain is the baseline's distance to its own floor.** The
+   four checkpoints are a dose in that quantity: −12.75 % at baseline 24.48,
+   −5.92 % at 16.95, and ±0.3 % at 11.38 / 9.99 where the single pass has
+   already converged.
+
+The cell-level WIN is unchanged and does not depend on this: GAP-78 §10 records
+12/12 weak dominance with 3 strict floor-gains. What GAP-84 adds is the frontier
+form — on `w16e1_5k` the framework is at or below the baseline at every NFE from
+4 to 200 and its plateau is 3.12 FID lower, which is clause (2) of
+`win_definition` in full.
+
+The frontier protocol (audit §0, §10) is now the required form for the remaining
+cells; the speed clause is only testable where the baseline is still descending,
+which is GAP-71 (R5b) and GAP-80 (R5a), not MNIST.

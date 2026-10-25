@@ -30,6 +30,7 @@
 # Usage:
 #   reproduce/gap84_mnist_frontier.sh [--n-samples N] [--out DIR]
 #       [--ckpts a,b,c] [--seeds 42,43] [--nfes 3,10,50] [--jobs 4] [--beta 0.3]
+#       [--min-steps-per-round K]   # GAP-84b cap; default 1 = legacy allocation
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -41,6 +42,9 @@ SEEDS=(42 43 44)
 NFES=(4 5 10 25 50 100 200)
 JOBS=4
 BETA=0.3
+# GAP-84b/§8 policy: cap the round count so every round keeps >= this many
+# steps. Default 1 is the pre-GAP-84b allocation, bit-identical.
+MIN_STEPS=1
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -51,6 +55,7 @@ while [[ $# -gt 0 ]]; do
     --nfes)      IFS=, read -r -a NFES <<< "$2"; shift 2 ;;
     --jobs)      JOBS="$2"; shift 2 ;;
     --beta)      BETA="$2"; shift 2 ;;
+    --min-steps-per-round) MIN_STEPS="$2"; shift 2 ;;
     -h|--help)   sed -n '2,30p' "$0"; exit 0 ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
@@ -59,9 +64,9 @@ done
 mkdir -p "$OUT"
 {
   echo "start_utc=$(date -u +%FT%TZ)"
-  echo "n_samples=$N out=$OUT ckpts=${CKPTS[*]} seeds=${SEEDS[*]} nfes=${NFES[*]} jobs=$JOBS beta=$BETA"
+  echo "n_samples=$N out=$OUT ckpts=${CKPTS[*]} seeds=${SEEDS[*]} nfes=${NFES[*]} jobs=$JOBS beta=$BETA min_steps=$MIN_STEPS"
   echo "nproc=$(nproc) load=$(cut -d' ' -f1-3 /proc/loadavg)"
-  echo "flags=--equal-total-nfe --beta-schedule equal_budget --restart-t0-mode memory --mean-preserve --seed-keyed-prior --shared-prior --n-rounds 4"
+  echo "flags=--equal-total-nfe --beta-schedule equal_budget --restart-t0-mode memory --mean-preserve --seed-keyed-prior --shared-prior --n-rounds 4 --min-steps-per-round $MIN_STEPS"
   echo "resume_key=sweep_summary.json"
 } | tee "$OUT/METADATA.txt"
 
@@ -91,6 +96,7 @@ run_one() {
       --total-nfe "$nfe" --n-rounds 4 \
       --equal-total-nfe --beta-schedule equal_budget \
       --beta-framework "$BETA" --restart-t0-mode memory \
+      --min-steps-per-round "$MIN_STEPS" \
       --mean-preserve --seed-keyed-prior --shared-prior \
       --output-dir "$cell" > "$cell/run.log" 2>&1; then
     echo "[gap84] done  $cell $(date -u +%FT%TZ)"
@@ -102,7 +108,7 @@ run_one() {
 }
 export -f run_one
 export -f ckpt_path
-export OUT N BETA
+export OUT N BETA MIN_STEPS
 
 : > "$OUT/jobs.txt"
 for ck in "${CKPTS[@]}"; do

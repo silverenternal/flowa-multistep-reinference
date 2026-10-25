@@ -605,3 +605,118 @@ explain the lower one — at R = 2 each round still gets 12–13 steps, so the
 "not enough integration to repair the re-noise" account that works at the upper
 edge does not apply. It is recorded as a measured edge, not as an explained one;
 the grid's R = 4 sits inside it, which is the only fact the frontier needs.
+
+---
+
+## 10. All four checkpoints, under the cap (2026-10-25)
+
+The grid is complete: 84 cells, 7 rungs x 3 seeds x 4 checkpoints, N = 1000.
+Rungs 4 and 5 are re-run for every checkpoint with the §8 policy
+(`--min-steps-per-round 2`), because the policy is global and applying it to one
+checkpoint only would make the table a per-checkpoint fit. The four frontier
+reports are in `verification_outputs/gap84-cap-frontier/`; rungs 10–200 are the
+original cells, linked in, not re-run.
+
+```bash
+reproduce/gap84_mnist_frontier.sh --ckpts production,w16e1_5k,w16e1_10k,w16e1_60k \
+    --nfes 4,5 --min-steps-per-round 2 --jobs 6 \
+    --out verification_outputs/gap84-cap-lowrungs
+for ck in production w16e1_5k w16e1_10k w16e1_60k; do
+  python3 tools/gap84_mnist_frontier_input.py --root verification_outputs/gap84-cap-frontier \
+      --ckpt $ck --arm evidence_driven \
+      --out verification_outputs/gap84-cap-frontier/frontier_input_$ck.json
+  python3 tools/frontier_report.py --input verification_outputs/gap84-cap-frontier/frontier_input_$ck.json \
+      --margin 0.01 --floor-units 1.0 \
+      --out verification_outputs/gap84-cap-frontier/frontier_$ck.json
+done
+```
+
+### 10.1 The table
+
+| checkpoint | baseline plateau | framework plateau | Δ FID | Δ % | violations | strict gains | speed | verdict |
+|---|---:|---:|---:|---:|---|---:|---:|---|
+| `w16e1_5k` | 24.4839 | 21.3632 | **−3.1206** | **−12.75 %** | none | **7 / 7** | 1.00 | **WIN** |
+| `w16e1_10k` | 16.9537 | 15.9501 | −1.0036 | −5.92 % | none | 0 | 1.00 | TIE |
+| `w16e1_60k` | 11.3795 | 11.3945 | +0.0150 | +0.13 % | none | 0 | 2.50 | TIE |
+| `production` | 9.9938 | 9.9603 | −0.0335 | −0.34 % | none | 0 | 2.50 | TIE |
+
+**No checkpoint violates weak dominance under the cap.** All four sit at or
+below the baseline's CI at all seven rungs. Before the cap, `production` and
+`w16e1_60k` both violated at rung 4 (+27.70 % and +20.34 %); the cap removes
+both. It is not a production-specific patch — it improves the low rungs on every
+checkpoint it touches:
+
+| checkpoint | NFE 4, uncapped (R=4) | NFE 4, capped (R=2) | NFE 5, uncapped | NFE 5, capped |
+|---|---:|---:|---:|---:|
+| `w16e1_5k` | −9.60 % | **−11.05 %** | −11.85 % | −10.95 % |
+| `w16e1_10k` | +0.25 % | **−2.92 %** | −4.59 % | −2.72 % |
+| `w16e1_60k` | +20.34 % | **+4.40 %** | +2.13 % | +4.57 % |
+| `production` | +27.70 % | **+3.81 %** | +2.13 % | +4.05 % |
+
+The cap's effect is not uniform, and both directions are recorded:
+
+* **Rung 4 improves on every checkpoint.** On the two weak ones it is worth
+  1.5 pp of gain (−9.60 → −11.05 and +0.25 → −2.92); on the two strong ones it
+  turns a 20–28 % loss into a 4 % one. R = 4 at NFE = 4 is a bad configuration
+  everywhere.
+* **Rung 5 costs about 2 pp on the two strong checkpoints** (+2.13 → +4.05 and
+  +2.13 → +4.57). Both stay inside their own floor (8.8 and 10.0 pp), so the
+  cost is not a violation, but it is a real cost and the policy is not free.
+
+The policy is still the right one: it is a single rule that never violates
+dominance anywhere, and its one cost is 2 pp at a rung where the framework was
+already inside the floor.
+
+### 10.2 The mechanism reading: the gap is the distance to the field's floor
+
+Ordered by baseline quality, the plateau gap is
+
+| baseline plateau | 24.48 | 16.95 | 11.38 | 9.99 |
+|---|---:|---:|---:|---:|
+| framework − baseline, % | −12.75 | −5.92 | +0.13 | −0.34 |
+
+Outside the noise band the ordering is monotone: the worse the baseline, the
+larger the framework's gain. Inside the band — `w16e1_60k` at +0.13 % and
+`production` at −0.34 %, i.e. 0.015 and 0.034 FID — the sign is not meaningful,
+and the two checkpoints are the same statement: **on a converged field the
+restart changes nothing, because there is nothing left to recover.**
+
+That is the same quantity §7 and §9 kept running into. The restart re-noises the
+endpoint and re-integrates; what it can recover is the part of the distribution
+the single pass fails to reach. At 5k the baseline is 24.5 FID from the data and
+the framework closes 3.1 of it. At production the baseline is 9.99 and the
+framework closes 0.03. The framework's effect is a function of the baseline's
+own distance to its floor, and the four checkpoints are a dose in exactly that
+quantity — the same design as §9's R dose, one level up.
+
+### 10.3 What each verdict rests on
+
+* **`w16e1_5k` — WIN.** Strict gain at all seven rungs, CI excludes the 1 FID
+  floor everywhere (rung 4: [+0.1097, +0.1117] against a margin of 0.0408). No
+  caveat, quotable. This is the checkpoint where the frontier claim is stated.
+* **`w16e1_10k` — TIE, by 0.016 FID.** The point estimate clears the floor
+  (1.005 FID at rung 100) and the CI lower bound does not (0.984 FID). Under
+  §0.5 that is not a strict gain, and the corollary in CLM-060 says report the
+  failure rather than widen the interval. Recorded as TIE.
+* **`w16e1_60k` and `production` — TIE.** Weak dominance everywhere, no strict
+  gain, and the speed ratio is 2.50 because the baseline is at its plateau from
+  the first rung. On a converged field the speed clause cannot be met by
+  construction: the baseline's 4 NFE already sits on the plateau, so nothing can
+  reach it in ≤ 2. The speed half of the frontier claim is only testable where
+  the baseline is still descending (CIFAR, R5b).
+
+### 10.4 Where this leaves R5c
+
+R5c's cell-level win is GAP-78 §10 (12/12 weak dominance, 3 strict gains on the
+ledger floor) and does not depend on this section. What this section adds is the
+frontier form of the claim: on `w16e1_5k` the framework is at or below the
+baseline at every NFE from 4 to 200 **and** its plateau is 3.12 FID lower, which
+is clause (2) of `win_definition` in full. On the three better-trained
+checkpoints the same curve is flat-to-neutral and clause (2) is not met, for the
+reason measured in §10.2.
+
+The paper's R5c frontier statement therefore attaches to `w16e1_5k` and quotes
+the four-checkpoint table as the mechanism, not as four attempts at the same
+claim. The 84-cell grid, the cap, and the R dose together say one thing: the
+framework buys back exactly the part of the distribution the checkpoint has not
+learned yet.
