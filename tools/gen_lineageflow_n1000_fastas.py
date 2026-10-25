@@ -569,6 +569,7 @@ def _build_init_perturbations(
     *,
     init_profile: str,
     profile_json: Path | None,
+    temperature: float = 1.0,
 ) -> dict[str, Any] | None:
     """GAP-69 — build one :class:`ConservationWeightedPerturbation` per family.
 
@@ -576,6 +577,16 @@ def _build_init_perturbations(
     path stays byte-identical. Raises ``SystemExit`` on a missing/incomplete
     profile rather than silently degrading to the isotropic draw — a silent
     fallback would make the arm indistinguishable from the control.
+
+    GAP-79 (additive, default 1.0 = byte-identical to GAP-69) — ``temperature``
+    amplifies the profile term against the noise:
+    ``logits = (c * log p) / T + (1 - c) * randn``. ``T = 1`` reproduces GAP-69
+    exactly; ``T -> 0`` drives every column with ``c > 0`` to the profile's
+    argmax. Scaling the *weight* instead
+    (``c' = min(1, alpha*c)``) was measured to saturate at "sample from p",
+    which is arm D and scores 0/250 intended hits on three families
+    (``docs/audit/gap79-r1-family-lever.md`` §0.3b), so the dose is a
+    temperature, not a weight.
     """
     if str(init_profile) == "off":
         return None
@@ -583,6 +594,8 @@ def _build_init_perturbations(
         raise SystemExit(f"unknown_init_profile:{init_profile}")
     if profile_json is None:
         raise SystemExit("init_profile_conservation_requires_profile_json")
+    if not (temperature > 0.0):
+        raise SystemExit(f"init_temperature_must_be_positive:{temperature}")
     import json as _json
 
     from adaptive_reflow.algorithm.perturbation import (
@@ -600,6 +613,7 @@ def _build_init_perturbations(
         out[fid] = ConservationWeightedPerturbation(
             logp=entry["logp"],
             conservation=entry["conservation"],
+            temperature=float(temperature),
         )
     return out
 
@@ -1405,6 +1419,21 @@ def main() -> None:
         ),
     )
     p.add_argument(
+        "--init-temperature",
+        type=float,
+        default=1.0,
+        help=(
+            "GAP-79 — temperature on the profile-aware fresh draw: "
+            "``logits = (c * log p) / T + (1 - c) * randn``. Default 1.0 is "
+            "byte-identical to GAP-69. Lower T amplifies the profile against "
+            "the noise (T -> 0 drives every column with c > 0 to the profile's "
+            "argmax), which is the configuration whose consensus is recognised "
+            "by the family's own HMM. Only consulted "
+            "when --init-profile is 'conservation'. Pre-registration: "
+            "``docs/audit/gap79-r1-family-lever.md``."
+        ),
+    )
+    p.add_argument(
         "--profile-json",
         type=Path,
         default=None,
@@ -1550,6 +1579,7 @@ def main() -> None:
         family_ids,
         init_profile=str(getattr(args, "init_profile", "off")),
         profile_json=getattr(args, "profile_json", None),
+        temperature=float(getattr(args, "init_temperature", 1.0)),
     )
     # GAP-70 (LineageFlow) — per-position keep weights (additive, default off).
     token_keep_weights = _build_token_keep_weights(
@@ -1665,6 +1695,9 @@ def main() -> None:
             else str(args.profile_json)
         ),
         "init_profile_is_active": bool(init_perturbations is not None),
+        # GAP-79 — temperature on the profile-aware draw. 1.0 is the
+        # GAP-69 arm; recorded so a dose run cannot be mistaken for it.
+        "init_temperature": float(getattr(args, "init_temperature", 1.0)),
         # GAP-70 — per-position restart blend (``m_vec = m * w``).
         "token_keep_weights_mode": str(
             getattr(args, "token_keep_weights", "off")

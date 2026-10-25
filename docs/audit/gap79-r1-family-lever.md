@@ -58,15 +58,45 @@ c'_i(alpha) = min(1, alpha * c_i),   alpha in {1, 2, 4, 8}
 no per-family tuning: one `alpha` is chosen for all four families, exactly as
 GAP-78's `beta = 0.3` was one value for all four checkpoints.
 
+> **Superseded by §0.3b before any run.** The weight dose was replaced by a
+> temperature on the profile term; the monotone, one-value-for-all-four rule
+> is unchanged.
+
+### 0.3b Superseded before any run: the dose is a temperature, not a weight
+
+§0.3's `c' = min(1, alpha*c)` was replaced **before any generation run**,
+because its own limit is an already-measured arm: as `alpha -> inf` the draw
+becomes "sample from `p`", which is GAP-69's arm D, and arm D scores
+**0/250** intended hits on PF00072, PF00183 and PF02517 (§1.2). A dose whose
+endpoint is a known failure cannot be the lever that fixes the endpoint.
+
+The replacement keeps the profile's *shape* and changes only its *weight
+against the noise*:
+
+```
+logits[i] = (c_i * log p_i) / T + (1 - c_i) * randn(AA),   T in {0.5, 0.2, 0.1, 0.05, 0.02}
+```
+
+`T = 1` is byte-identical to GAP-69's arm C (asserted in
+`tests/test_gap69_conservation_perturbation.py`). As `T -> 0` every column
+with `c_i > 0` becomes the profile's argmax — the configuration the family's
+own HMM recognises at 1e−33…1e−255 (§1.1) — while `c_i = 0` columns stay a
+plain draw, so the init never collapses to a single sequence. Dividing the
+**whole** logit row instead would be a monotone transform of each row: same
+argmax, less sampling diversity, no change of mode. It would look like a dose
+and behave like a no-op, so it is explicitly not what is implemented.
+
+Reading §0.4 below: `alpha = 1/T` (smaller `T` = larger dose).
+
 ### 0.4 Decision rule
 
-1. **Screen (N = 200, seed 42, `SCREEN_ONLY`).** For each `alpha`, record
+1. **Screen (N = 200, seed 42, `SCREEN_ONLY`).** For each dose, record
    `intended_hit_evalue` and `hmmscan_total_hits` per family. A screen number
    may choose the dose; it may never be quoted (§0.3 of GAP-84, and the MNIST
    small-N bias does not apply here but the principle does).
-2. **Dose selection.** Pick the **smallest** `alpha` at which PF00072 and
-   PF02517 each reach a non-zero intended-hit rate on the screen, subject to
-   PF00005 not losing its hits. If no `alpha` does that, the lever is
+2. **Dose selection.** Pick the **smallest** dose (`T` closest to 1) at which
+   PF00072 and PF02517 each reach a non-zero intended-hit rate on the screen,
+   subject to PF00005 not losing its hits. If no dose does that, the lever is
    falsified and GAP-79 closes with that result.
 3. **Confirmation (N = 1000, seeds 42/43/44).** WIN requires, for **every**
    family, a paired per-record CI on `intended_hit_evalue` that excludes 0 in

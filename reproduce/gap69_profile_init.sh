@@ -23,6 +23,11 @@ PROFILES="verification_outputs/gap69-lineageflow-profile/profiles.json"
 SEED=${SEED:-42}
 INIT_PROFILE=${INIT_PROFILE:-conservation}
 TAG=${TAG:-}
+# GAP-79 (additive): N and the profile-init temperature. Defaults reproduce the
+# pre-registered GAP-69 arm exactly (N=1000, temperature 1.0). The dose divides
+# the profile term only: logits = (c * log p) / T + (1 - c) * randn.
+N=${N:-1000}
+TEMPERATURE=${TEMPERATURE:-1.0}
 OUT=${OUT:-verification_outputs/gap69-lineageflow-profile/seed${SEED}${TAG}}
 
 if [[ ! -f "$PROFILES" ]]; then
@@ -68,16 +73,21 @@ mkdir -p "$OUT"
   echo "=== git ==="
   git rev-parse HEAD
   echo "=== design ==="
-  echo "init_profile=$INIT_PROFILE; beta=1.0 (m=0); N=1000, NFE=150, R=3, seed $SEED"
+  echo "init_profile=$INIT_PROFILE; init_temperature=$TEMPERATURE; beta=1.0 (m=0); N=$N, NFE=150, R=3, seed $SEED"
 } > "$OUT/METADATA.txt"
 
 PROFILE_ARGS=()
 if [[ "$INIT_PROFILE" != "off" ]]; then
   PROFILE_ARGS=(--init-profile "$INIT_PROFILE" --profile-json "$PROFILES")
+  # Only passed when non-default, so every GAP-69 invocation keeps the exact
+  # command line it had before GAP-79.
+  if [[ "$TEMPERATURE" != "1.0" ]]; then
+    PROFILE_ARGS+=(--init-temperature "$TEMPERATURE")
+  fi
 fi
 
 "$PY" tools/gen_lineageflow_n1000_fastas.py \
-  --seed "$SEED" --n 1000 \
+  --seed "$SEED" --n "$N" \
   --upstream-eval-len-bias short \
   --nfe 150 --n-rounds 3 --restart-min-nfe 5 \
   --temperature 1.0 --beta-override 1.0 \

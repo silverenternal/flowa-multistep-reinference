@@ -773,6 +773,15 @@ class ConservationWeightedPerturbation:
         ``(span,)`` normalised information content in ``[0, 1]``.
     seed_offset:
         Optional non-negative integer mixed into the seed. Default ``0``.
+    temperature:
+        GAP-79. Divides the **profile** term only:
+        ``logits = (c * log p) / T + (1 - c) * randn``. ``T < 1`` raises the
+        profile's weight against the noise, so as ``T -> 0`` every column with
+        ``c > 0`` becomes the profile's argmax while ``c = 0`` columns stay a
+        plain draw. Default ``1.0`` is byte-identical to the GAP-69 policy.
+        Dividing the whole vector instead would not change the argmax at all
+        (a monotone transform of each row) — it would only collapse sampling
+        diversity, which is not a dose.
 
     Notes
     -----
@@ -791,6 +800,7 @@ class ConservationWeightedPerturbation:
         logp: Any,
         conservation: Any,
         seed_offset: int = 0,
+        temperature: float = 1.0,
     ) -> None:
         import numpy as _np
 
@@ -820,15 +830,22 @@ class ConservationWeightedPerturbation:
             raise PerturbationConfigError(
                 f"seed_offset: must be non-negative, got {seed_offset!r}"
             )
+        temp = float(temperature)
+        if not math.isfinite(temp) or temp <= 0.0:
+            raise PerturbationConfigError(
+                f"temperature must be finite and > 0; got {temperature!r}"
+            )
         self._logp = lp
         self._conservation = c
         self._seed_offset = int(seed_offset)
+        self._temperature = temp
         self._config_hash_value = hash_artifact(
             {
                 "family": self.FAMILY,
                 "span": int(lp.shape[0]),
                 "aa": int(lp.shape[1]),
                 "seed_offset": int(self._seed_offset),
+                "temperature": float(temp),
                 "conservation_sum": float(c.sum()),
                 "logp_sum": float(lp.sum()),
             }
@@ -900,7 +917,14 @@ class ConservationWeightedPerturbation:
             (int(seed) + int(self._seed_offset)) & 0xFFFFFFFF
         )
         noise = rng.standard_normal((L, aa_dim))
-        logits = cons[:, None] * logp + (1.0 - cons[:, None]) * noise
+        profile_logits = cons[:, None] * logp
+        if float(self._temperature) != 1.0:
+            # GAP-79 — amplify the profile against the noise. Scaling the whole
+            # row would be a monotone transform (same argmax, less diversity);
+            # scaling only ``c * log p`` is what moves the mode toward the
+            # consensus at columns with ``c > 0``.
+            profile_logits = profile_logits / float(self._temperature)
+        logits = profile_logits + (1.0 - cons[:, None]) * noise
         logits = logits - logits.max(axis=-1, keepdims=True)
         aa = _np.exp(logits)
         aa = aa / aa.sum(axis=-1, keepdims=True)
@@ -920,6 +944,7 @@ class ConservationWeightedPerturbation:
         return {
             "family": self.FAMILY,
             "seed_offset": int(self._seed_offset),
+            "temperature": float(self._temperature),
             "logp": [[float(v) for v in row] for row in self._logp],
             "conservation": [float(v) for v in self._conservation],
         }
@@ -941,6 +966,7 @@ class ConservationWeightedPerturbation:
             logp=config["logp"],
             conservation=config["conservation"],
             seed_offset=int(config.get("seed_offset", 0)),
+            temperature=float(config.get("temperature", 1.0)),
         )
 
 

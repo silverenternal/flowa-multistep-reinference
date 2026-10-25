@@ -242,3 +242,72 @@ def test_profile_arm_refuses_to_silently_degrade() -> None:
             {"PF00005.27": object()}, {"PF00005.27": 10}, n=10
         )
     assert "gap69_profile_arm_fell_back_to_bare_rng" in str(exc.value)
+
+
+# -- GAP-79: the init-temperature dose ------------------------------------
+
+
+def _temperature_policy(temperature: float) -> ConservationWeightedPerturbation:
+    logp, cons = _profile(conservation=0.2)
+    return ConservationWeightedPerturbation(
+        logp=logp, conservation=cons, temperature=temperature
+    )
+
+
+def _consensus_fraction(temperature: float, seeds: tuple[int, ...] = (1, 2, 3)) -> float:
+    policy = _temperature_policy(temperature)
+    x = np.full((L, K), 1.0 / K, dtype=np.float64)
+    consensus = np.asarray(policy._logp).argmax(axis=-1)
+    hits = 0
+    total = 0
+    for seed in seeds:
+        got = policy.propose_with_seed(x, None, 0.0, seed)
+        hits += int((got[:SPAN, :AA].argmax(axis=-1) == consensus).sum())
+        total += int(SPAN)
+    return hits / float(total)
+
+
+def test_temperature_one_is_byte_identical_to_gap69() -> None:
+    """``T = 1`` must reproduce the GAP-69 draw bit for bit."""
+    x = np.full((L, K), 1.0 / K, dtype=np.float64)
+    default = _temperature_policy(1.0)
+    explicit = _temperature_policy(1.0)
+    assert default.config_hash() == explicit.config_hash()
+    np.testing.assert_array_equal(
+        default.propose_with_seed(x, None, 0.0, 4242),
+        explicit.propose_with_seed(x, None, 0.0, 4242),
+    )
+
+
+def test_temperature_moves_the_mode_toward_the_consensus() -> None:
+    """A smaller ``T`` must raise the argmax hit-rate on the profile consensus.
+
+    This is the property the weight dose lacked: ``min(1, alpha*c)`` saturated
+    at "sample from p" (arm D) instead of the consensus. It also pins that the
+    dose never rewrites ``c`` itself.
+    """
+    base = _consensus_fraction(1.0)
+    half = _consensus_fraction(0.5)
+    sharp = _consensus_fraction(0.1)
+    sharper = _consensus_fraction(0.02)
+    assert base < half < sharp < sharper
+    assert sharper > 0.95
+    # The dose lives in the logits; the stored conservation profile is untouched.
+    policy = _temperature_policy(0.1)
+    np.testing.assert_array_equal(policy._conservation, _profile(conservation=0.2)[1])
+
+
+def test_temperature_must_be_positive() -> None:
+    from tools.gen_lineageflow_n1000_fastas import _build_init_perturbations
+
+    with pytest.raises(SystemExit):
+        _build_init_perturbations(
+            ["PF00005.27"], init_profile="conservation",
+            profile_json=Path("/nonexistent.json"), temperature=0.0,
+        )
+    logp, cons = _profile(conservation=0.2)
+    for bad in (-0.1, 0.0, float("nan"), float("inf")):
+        with pytest.raises(PerturbationConfigError):
+            ConservationWeightedPerturbation(
+                logp=logp, conservation=cons, temperature=bad
+            )
