@@ -1522,3 +1522,24 @@ with the effect size recorded; the paper's R3 cell is unchanged.
 Side finding worth keeping: the lock makes the arm **more consistent**, not just
 better — a2's per-seed spread is 0.103 against a1's 0.115, and its seed-42
 regression drops 65 % (+0.126 → +0.044).
+
+---
+
+## 2026-10-25 — todo.json compaction (closed gaps removed)
+
+`execution_order` 14 → 12, `open_gaps` 14 → 12. Removed because both are
+decided; their records stay where they were written:
+
+* **GAP-69-ADAPTER-LINAGEFLOW-PROTEIN** — closed `NOT A WIN` /
+  `HEADLINE_GAIN_NO_FAMILY_IDENTITY`. 3/3 seeds at 8.20× / 8.06× / 8.46×
+  aggregate, but the per-family condition fails (PF00005 3/3, PF00072 0/3,
+  PF00183 0/3, PF02517 3/3 with every CI covering 0). Record:
+  `docs/audit/gap69-lineageflow-profile.md` §1.6.
+* **GAP-78-R5C-CONTRACTION-GATE** — closed as a WIN. Both gates falsified;
+  the lever is β = 0.3, 12/12 weak dominance on the ledger floor with 3 strict
+  floor-gains. Record: `docs/audit/gap78-dispersion-gate.md` +
+  `verification_outputs/gap78-kappa-dose-n1000-3seed/r5c_report.json`.
+
+GAP-84's status was compressed from a run-log to the current measurement plus
+the next action; the long form stays in
+`docs/audit/gap84-inference-frontier.md` §6–§7.
