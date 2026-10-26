@@ -464,3 +464,52 @@ and tested first (`tools/gap79_confirmation_report.py`, 6 tests):
 
 This is an amendment to §3.5's wording, not to its bar: the bar is still
 "every family, CI excludes 0, three seeds, no top-ups".
+
+## 4.1 Round 2 screen (native target) — the lever works, dose-monotone
+
+Same protocol as round 1 (§3.4 unchanged, `t_start = 0.0`, N = 200, seed 42,
+NFE = 150, R = 3, `beta = 1.0`, arm C init at T = 1.0); the only difference is
+that the drift target is each family's **native-span** profile
+(`verification_outputs/gap79-native-profiles/profiles_native.json`, produced by
+`tools/pfam_profile.py --span 0`), while the init prior stays the
+pre-registered 150-slot one. Artifacts:
+`verification_outputs/gap79-r1-guidance/native/seed42/`; table from
+`tools/gap79_guidance_screen.py`.
+
+| cell | PF00072 | PF02517 | PF00183 | PF00005 (guard) | unique | mean H | H/ctrl | eligible |
+|---|---|---|---|---|---|---|---|---|
+| control | 0/50 | 0/50 | 0/50 | 8/50 | 1.000 | 3.77 | 1.00 | — |
+| W0.5 | 23/50 | 5/50 | 14/50 | 8/50 | 1.000 | 3.56 | 0.94 | **yes** |
+| W2 | 47/50 | 50/50 | 50/50 | 50/50 | 1.000 | 3.14 | 0.83 | yes |
+| W8 | 50/50 | 50/50 | 50/50 | 50/50 | 1.000 | 2.43 | 0.64 | yes |
+| W32 | 50/50 | 50/50 | 50/50 | 50/50 | 0.930 | 2.05 | 0.54 | no (unique) |
+| W128 | 50/50 | 50/50 | 50/50 | 50/50 | 0.830 | 2.02 | 0.54 | no (unique) |
+
+`selected_weight: 0.5`, `falsified: false` — the §3.4 rule selects the
+**smallest** eligible dose, and W0.5 is eligible on all four clauses.
+
+Three things this establishes that round 1 could not:
+
+* **The round-1 null was entirely F3.** With a target the family HMM actually
+  recognises, every family that was stuck at 0/50 leaves zero at the first
+  dose, and all three saturate by W8. The mechanism was never the problem; the
+  destination was.
+* **The dose-response is monotone in every family**, in the order of how far
+  each started from its profile: PF00072 23 → 47 → 50, PF00183 14 → 50,
+  PF02517 5 → 50. A single scalar moves three families with no per-family
+  tuning, which is what "the lever is a lever" means here.
+* **The guard family behaves differently at the low dose.** PF00005 is 8/50
+  under the control and still 8/50 at W0.5 — the dose that already moves all
+  three target families does not touch it. It only saturates from W2 up. So at
+  W0.5 the effect is not "everything looks more like a consensus"; it is
+  family-specific, which is the signature the guard was added to check.
+
+The diversity guard is what closes the top of the grid, and it closes it on
+unique-sequence fraction, not on entropy: W32 holds H at 0.54× control but has
+already fallen to 0.930 unique, and W128 to 0.830. The eligible set is
+therefore {0.5, 2, 8} — a factor of 16 wide, not a knife edge.
+
+**Confirmation (running, 2026-10-26):** W0.5 at N = 1000, seeds 42/43/44, per
+§3.5 with the §3.9 statistic (weaker of the two lower bounds must exceed 0 for
+every family, PF00005 not regressing, diversity guard at N = 1000). The screen
+numbers above chose the dose and are not quotable.
