@@ -45,6 +45,7 @@ POINT_VERDICTS = {
 }
 FRONTIER_VERDICTS = {"WIN", "TIE", "LOSS", "INCOMPLETE", "UNMEASURED"}
 CELL_VERDICTS = {"WIN", "OPEN", "BLOCKED", "SUPP"}
+PAPER_LABELS = {"STRONG", "CONDITIONAL", "TIE", "PARTIAL", "SUPP"}
 REQUIRED_CELL_KEYS = {
     "id",
     "name",
@@ -55,6 +56,7 @@ REQUIRED_CELL_KEYS = {
     "point",
     "frontier",
     "cell_verdict",
+    "paper_label",
     "scope",
     "next",
     "paper_anchor",
@@ -88,6 +90,7 @@ def validate(register: dict[str, Any], root: Path = ROOT) -> list[str]:
 
     seen: set[str] = set()
     counts = {"WIN": 0, "OPEN": 0, "BLOCKED": 0, "SUPP": 0}
+    label_counts: dict[str, int] = {}
     for cell in cells:
         cid = cell.get("id", "<missing>")
         if cid in seen:
@@ -107,6 +110,10 @@ def validate(register: dict[str, Any], root: Path = ROOT) -> list[str]:
         if cell["cell_verdict"] not in CELL_VERDICTS:
             errors.append(f"{cid}: bad cell verdict {cell['cell_verdict']!r}")
         counts[cell["cell_verdict"]] = counts.get(cell["cell_verdict"], 0) + 1
+        if cell.get("paper_label") not in PAPER_LABELS:
+            errors.append(f"{cid}: bad paper_label {cell.get('paper_label')!r}")
+        else:
+            label_counts[cell["paper_label"]] = label_counts.get(cell["paper_label"], 0) + 1
 
         both_win = point.get("verdict") == "WIN" and frontier.get("verdict") == "WIN"
         if cell["cell_verdict"] == "WIN" and not both_win:
@@ -133,6 +140,13 @@ def validate(register: dict[str, Any], root: Path = ROOT) -> list[str]:
                     errors.append(f"{cid}.{half}: quote not found in artifact or audit: {quote!r}")
 
     summary = register.get("summary", {})
+    declared_labels = summary.get("paper_labels", {})
+    for label in PAPER_LABELS:
+        if declared_labels.get(label) != label_counts.get(label, 0):
+            errors.append(
+                f"summary.paper_labels[{label}]={declared_labels.get(label)} "
+                f"but {label_counts.get(label, 0)} rows"
+            )
     if summary.get("cells") != len(cells):
         errors.append(f"summary.cells={summary.get('cells')} but {len(cells)} rows")
     for verdict, count in counts.items():
@@ -144,15 +158,15 @@ def validate(register: dict[str, Any], root: Path = ROOT) -> list[str]:
 
 def _cell_table(register: dict[str, Any]) -> list[str]:
     lines = [
-        "| cell | model | metric | point | frontier | cell verdict | scope |",
-        "|---|---|---|---|---|---|---|",
+        "| cell | model | metric | point | frontier | cell verdict | paper label | scope |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for cell in register["cells"]:
         point = cell["point"]["verdict"]
         frontier = cell["frontier"]["verdict"]
         lines.append(
             f"| **{cell['id']}** | {cell['model']} | `{cell['metric']}` | {point} | "
-            f"{frontier} | **{cell['cell_verdict']}** | {cell['scope']} |"
+            f"{frontier} | {cell['cell_verdict']} | **{cell['paper_label']}** | {cell['scope']} |"
         )
     return lines
 
@@ -205,6 +219,7 @@ def _quotable(register: dict[str, Any]) -> list[str]:
 
 def render(register: dict[str, Any]) -> str:
     summary = register["summary"]
+    labels = summary["paper_labels"]
     lines = [
         "# Paper evidence register",
         "",
@@ -228,7 +243,10 @@ def render(register: dict[str, Any]) -> str:
         "## Status at a glance",
         "",
         f"- Cells: **{summary['cells']}** — {summary['win']} WIN, {summary['open']} OPEN, "
-        f"{summary['blocked']} BLOCKED, {summary['supp']} SUPP.",
+        f"{summary['blocked']} BLOCKED, {summary['supp']} SUPP (strict two-half gate).",
+        f"- Paper labels: **{labels['STRONG']} STRONG + {labels['CONDITIONAL']} CONDITIONAL + "
+        f"{labels['TIE']} TIE + {labels['PARTIAL']} PARTIAL + {labels['SUPP']} SUPP-only = "
+        f"{summary['cells']}** — the labels used in §7.1 / §7.2 / §7.11.",
         f"- Frontier coverage: **{summary['frontier_measured_r_cells']} of "
         f"{summary['frontier_r_cells']} R-level cells** have a complete (quality, NFE) grid.",
         f"- {summary['note']}",

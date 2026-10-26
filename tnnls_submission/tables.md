@@ -1,5 +1,15 @@
 # TNNLS Submission Tables
 
+> **Authority note (2026-10-27).** The manuscript's own tables are the
+> submission tables: Table III (`paper-A-final.tex`, main-cell evidence)
+> and the §7.9 four-checkpoint frontier table. The cell-level register
+> is [`docs/PAPER-EVIDENCE.md`](../docs/PAPER-EVIDENCE.md). The tables
+> below are an internal inventory that accumulated across waves; where
+> a row here disagrees with the manuscript, the manuscript wins. Two
+> known historical mismatches are flagged inline: Table 1's R1 row is
+> the synthetic-velocity-field basis (the real-ckpt basis gives
+> 158 → 271), and Table 1's R6 row was mislabelled as MNIST FM.
+
 **Status:** TNNLS paper-ready tables (5 main tables). All data sourced from [`verification_outputs/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs) with byte-addressable provenance.
 
 ---
@@ -8,13 +18,14 @@
 
 | # | Model | Metric | Baseline | Framework | Δ | Paper § | Verification |
 |---|---|---|---:|---:|---:|---|---|
-| R1 | LineageFlow (ICML 2026 protein FM) | `hmmscan_total_hits` N=1000 | 158 | 342 | **+116.46%** (p<1e-10) | §7.6.1 | [`verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026) |
-| R2 | Kanzi (molecular DAE inv-proj) | `RMSD` N=1000 | 0.6146 | 0.5941 | **d_z +0.3927** (medium-effect) | §7.6.2 | [`verification_outputs/wave235-p2-r2-uplift.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p2-r2-uplift.json) |
-| R3 | FlowMol3 (ICML 2026 mol FM) | `fg_dev` N=200 NFE=250 | (Wave 87: 0.6381, NFE=250 N=1000) | (Wave 242 P1 in flight) | pending | §7.6.3 | [`verification_outputs/wave242-p1-flowmol3-seed43-*.json`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs) |
+| R1 | LineageFlow (ICML 2026 protein FM) | `hmmscan_total_hits` N=1000 | 158 | 342 | **+116.46%** (p<1e-10) | §7.6.1 | [`verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026) — *synthetic-velocity-field basis; the real-ckpt basis gives 158 → 271 (+71.5%), and the manuscript quotes the single-seed d_z = +0.182 reading* |
+| R2 | Kanzi (molecular DAE inv-proj) | `RMSD` N=1000 | 0.6146 | 0.5941 | **d_z +0.3927** (medium-effect) | §7.6.2 | [`verification_outputs/wave235-p2-r2-uplift.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p2-r2-uplift.json) — *counterfactual sensitivity; the manuscript's primary R2 number is d_z = −0.0990* |
+| R3 | FlowMol3 (ICML 2026 mol FM) | `fg_dev`, N=1000 per arm, NFE=250, 3 seeds | — | mean diff −0.0377 | **p = 0.559, d_z = −0.401** (not significant) | §7.2 / §7.9 | [`verification_outputs/r3_n1000_3seed_fixed_q4_2026/wave338-p5-r3-n1000-paired.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/r3_n1000_3seed_fixed_q4_2026/wave338-p5-r3-n1000-paired.json) |
 | R4 | 2D Two Moons (Liu 2022) | `W₂` | 0.5029 | 0.4663 | **−7.28%** | §7.6.4 | [`verification_outputs/r4_2d_two_moons_w2_m7p28pct/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs/r4_2d_two_moons_w2_m7p28pct) |
 | R5 | 2D Eight Gaussians (Liu 2022) | `W₂` | 0.6606 | 0.5919 | **−10.40%** | §7.6.5 | [`verification_outputs/r5_2d_eight_gaussians_w2_m10p40pct/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs/r5_2d_eight_gaussians_w2_m10p40pct) |
 | R5b | CIFAR-10 Rectified Flow | `FID` (matched-NFE=50) | 218.87 | 122.18 (batched, n_rounds=1) | **−2.53% to −0.66%** on 3/4 schedulers (n_rounds=1 framework-WINS) | §7.6.7 | [`verification_outputs/wave235-p1-r5b-fix.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p1-r5b-fix.json) |
-| R6 | MNIST FM | `FID` | 409.18 (k6 pLDDT baseline) | 347.75 (with tier-aware scheduler) | **d_z +0.647** (large-effect, +189%) | §7.6.6 | [`verification_outputs/wave235-p3-r6-uplift.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p3-r6-uplift.json) |
+| R5c | MNIST FM, four checkpoints × 7 NFE rungs | `FID` plateau (mean of last two rungs) | 24.4839 (`w16e1_5k`) | 21.3632 (`w16e1_5k`) | **−12.75%**, 7/7 strict-gain rungs (WIN); TIEs on `w16e1_10k` / `w16e1_60k` / `production` | §7.2 / §7.9 | [`verification_outputs/gap84-cap-frontier/frontier_w16e1_5k.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/gap84-cap-frontier/frontier_w16e1_5k.json) |
+| R6 | Kanzi k6 foldability (live tier-aware) | scPerplexity / pLDDT, n=3000 | — | scPerplexity d_z −0.8393; hard-tier pLDDT d_z +1.1211 | **pooled pLDDT d_z +0.1466** (below the +0.2235 bar) | §7.2 / §7.6 | [`verification_outputs/gap31-r6-live-uplift/gap31_summary.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/gap31-r6-live-uplift/gap31_summary.json) |
 
 **R5b Wave 235 P1 reversal:** R5b CIFAR-10 RF was REGRESSES (+24-31% ΔFID) under batched-path n_rounds=10, but framework-WINS at n_rounds=1 with ΔFID ∈ [-2.53%, -0.66%] on 3/4 schedulers. This is a **conditional boundary**, not a fundamental regression.
 

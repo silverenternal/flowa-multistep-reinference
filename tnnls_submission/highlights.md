@@ -41,14 +41,17 @@ C2·exp(-T/τ_velocity), derived in Theorem 4 / paper §A.1.**
 ---
 
 ## Highlight 4 — Honest 11-cell verdict distribution (paper §5 / §7)
-**11 empirical cells validated with honest verdict distribution: 4 STRONG + 1
-TIE + 6 PARTIAL/SUPP (paper §5 / §7, three generative domains).**
+**11 empirical cells validated with honest verdict distribution: 3 STRONG + 1
+CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only (paper §5 / §7, three generative
+domains).**
 
 ---
 
 ## Highlight 5 — Camera-ready scope disclosed
-**Camera-ready scope disclosed: full 3-seed R6 live GPU sweep + R3 RDKit fix +
-17 cover-letter USER placeholders (cover_letter.md §0).**
+**Camera-ready scope disclosed: R6 live three-seed tier-aware run measured
+(scPerplexity $d_z=-0.84$, hard-tier pLDDT $d_z=+1.12$); R3 three-seed test at
+$N=1000$ measured (direction-consistent, not significant); 17 cover-letter USER
+placeholders (cover_letter.md §0).**
 
 ---
 

@@ -35,7 +35,7 @@ verdict holds globally.
 
 - [Paper A Submission Status](#paper-a-submission-status) — TNNLS submission package + final metrics snapshot
 - [Complete Inventory: Innovations & Experiments](#complete-inventory-innovations--experiments) — the single consolidated view of what was built and what every experiment measured
-- [Final Empirical Metrics](#final-empirical-metrics-11-cells) — 4 STRONG + 1 TIE + 6 PARTIAL/SUPP (final)
+- [Final Empirical Metrics](#final-empirical-metrics-11-cells) — 3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only (final)
 - [Headline Results](#headline-results) — seven R-level cells + four K-cells at a glance
 - [Deep Innovations](#deep-innovations) — seven genuinely novel primary contributions
 - [Architecture](#architecture) — typed four-port control surface + 13 schedulers (9 baselines + 4 paper-quantity-driven controllers)
@@ -143,7 +143,7 @@ This is the single consolidated view of the project: **(1) what was built** and
 Two layers: the **11 headline cells** (paper §7.2/§7.11) and the **closed-gap
 investigations (GAP-24 … GAP-31)** that stress-test, refine, or re-anchor them.
 
-**2.1 — The 11 headline cells.** Canonical verdict distribution **4 STRONG + 1 TIE + 6 PARTIAL/SUPP**; the full table is in [Final Empirical Metrics](#final-empirical-metrics-11-cells). Effect achieved per cell:
+**2.1 — The 11 headline cells.** Canonical verdict distribution **3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only**; the full table is in [Final Empirical Metrics](#final-empirical-metrics-11-cells). Effect achieved per cell:
 
 | cell | model / metric | effect achieved |
 |---|---|---|
@@ -152,8 +152,8 @@ investigations (GAP-24 … GAP-31)** that stress-test, refine, or re-anchor them
 | **R3** | FlowMol3 · `fg_dev` | 3-seed N=1000 d_z = −0.0377 (framework-WINS direction, p = 0.559, n.s.); advantage **holds at 2×/4× baseline NFE** → straw-man baseline refuted (GAP-27: bounded-marginal, ~49 seeds for 80% power) |
 | **R5a** | 2D Two Moons · W₂ | **TIE** \|Δ\| = 0.0091 < 0.01 floor; persists at n=7 and n=10 |
 | **R5b** | CIFAR-10 RF · FID | **CONDITIONAL**: n_rounds=1 wins at matched NFE=50 (−1.2% to −2.5%, 4 schedulers); dies under a tuned baseline (GAP-26: 0/4 at baseline NFE=200); n_rounds ≥ 2 regresses +20% to +31% |
-| **R5c** | MNIST FM · FID | **STRONG (smoke ckpt)** d_z = −13.18; production ckpt flips to baseline-WINS (+10.37%) — regime-dependent |
-| **R6** | LineageFlow k6 · pLDDT / scPerp | **STRONG on scPerp** (cluster-robust d_z = −4.019); hard-tier counterfactual d_z = +1.189; beats vanilla + Fast-DLLM + AB-Cache + LeDiFlow (Bonferroni-sig). Live 3-seed pLDDT landed below the +0.2235 bar — see §2.3 |
+| **R5c** | MNIST FM · FID | **STRONG (checkpoint-conditional frontier)** four checkpoints × seven NFE rungs, N=1000, 3 seeds: `w16e1_5k` plateau 24.4839 → 21.3632 (−12.75%), weakly dominant at 7/7 rungs; the three better-trained checkpoints TIE (the old +10.37% was a budget mismatch, not a regression) |
+| **R6** | LineageFlow k6 · pLDDT / scPerp | **STRONG, live tier-aware** (n=3000): scPerplexity d_z = −0.8393, sign-consistent on 3/3 seeds and all tiers; hard-tier pLDDT d_z = +1.1211; pooled pLDDT d_z = +0.1466, below the +0.2235 bar. Beats vanilla + Fast-DLLM + AB-Cache + LeDiFlow (Bonferroni-sig) |
 | **K1** | FlowMol3 · RDKit-validity | **NOT-SIGNIFICANT** at K-level α (p_b = 0.5676 vs α_K = 0.0125); framework validity exceeds baseline at matched and 2×/4× NFE → straw-man refuted |
 | **K4** | LineageFlow · HMMER length-bias | **SUPPORTED** cluster-robust d_z = +0.84 (p_b = 0.009) |
 | **K5** | LineageFlow · HMMER delta | **SUPPORTED / with caveat** cluster-robust d_z = +1.12 (p_b = 0.003); n=3 re-aggregation caveat |
@@ -184,29 +184,31 @@ investigations (GAP-24 … GAP-31)** that stress-test, refine, or re-anchor them
 
 ## Final Empirical Metrics (11 cells)
 
-The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/SUPP** (5 main cells + 6 supplementary cells = 11 headline cells total). This is the canonical verdict distribution; cross-doc anchor at [docs/METRIC_LEDGER.md](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/METRIC_LEDGER.md).
+The 11 headline cells partition as **3 STRONG (main) + 1 CONDITIONAL (main) + 1 TIE (main) + 2 PARTIAL + 4 SUPP-only** = 11. This is the canonical verdict distribution; the cell-level register is [docs/PAPER-EVIDENCE.md](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/PAPER-EVIDENCE.md).
 
 | # | Cell | Metric | Verdict | Headline |
 |:---:|---|---|---|---|
 | 1 | **R2** | Kanzi RMSD (index-matched two-sample t) | **STRONG** | d_z = −0.0990, p_raw = 1.79e-3, Bonf-sig at α = 0.007143 |
-| 2 | **R5b** | CIFAR-10 RF FID (matched NFE = 50) | **STRONG (conditional)** | ΔFID = −1.60% to −2.53% (n_rounds=1, 4 schedulers); +9.77% to +30.19% (n_rounds≥2, honest-negative) |
-| 3 | **R5c** | MNIST FM FID (smoke ckpt) | **STRONG (smoke)** | d_z = −13.175, p_bonf = 3.95e-11 |
-| 4 | **R6** | LineageFlow k6 foldability (tier-aware) | **STRONG** | d_z = +0.2235 (Bonf-sig at α = 0.05/6 = 0.008333) + grid best d_z = +0.6467 |
+| 2 | **R5c** | MNIST FM FID (four checkpoints × seven NFE rungs) | **STRONG (checkpoint-conditional frontier)** | `w16e1_5k` plateau 24.4839 → 21.3632 (−12.75%), weakly dominant at 7/7 rungs; `w16e1_10k` / `w16e1_60k` / `production` TIE |
+| 3 | **R6** | LineageFlow k6 foldability (live tier-aware) | **STRONG** | scPerplexity d_z = −0.8393 (n=3000); hard-tier pLDDT d_z = +1.1211 (n=990); pooled pLDDT d_z = +0.1466 (below the +0.2235 bar) |
+| 4 | **R5b** | CIFAR-10 RF FID (matched NFE = 50) | **CONDITIONAL** | ΔFID = −1.60% to −2.53% (n_rounds=1, 4 schedulers); +9.77% to +30.19% (n_rounds≥2, honest-negative) |
 | 5 | **R5a** | 2D Two Moons W₂ (paper R-level) | **TIE** | d_s = +0.460, p = 0.604 (TIE_PERSISTS at n=3+7+10) |
-| 6 | R1 | LineageFlow HMMER | **PARTIAL / single-seed-disclosed** | d_z = +0.182, p_raw = 1.25e-8, +116.46% (seed=42 only) |
-| 7 | R3 | FlowMol3 fg_dev | **PARTIAL** | d_z = −0.285, p = 8.03e-5 (N=200 per-record ACTUAL); 3-seed pooled BLOCKED at vendor level |
-| 8 | R5_legacy | 2D Eight Gaussians W₂ | **SUPP / LEGACY** | −10.40%, per-round CSV NOT preserved |
-| 9 | K1 | FlowMol3 RDKit-validity | **SUPP / UNDERPOWERED** | d_z = +1.36, p_bonf = 0.5676 FAILS K-level α = 0.0125 by 45.4× |
-| 10 | K4+K5 | LineageFlow HMMER length-bias + uniform-AA | **SUPP** | K4 POWERED, K5 SUPPORTS-WITH-CAVEAT |
-| 11 | K7 | LineageFlow novelty | **SUPP / direction-INVERTED** | W166 P3 canonical baseline-vs-framework: framework 12.6× LESS Pfam-novel than baseline at pctid<30% |
+| 6 | **R1** | LineageFlow HMMER | **PARTIAL / single-seed-disclosed** | d_z = +0.182, p_raw = 1.25e-8; NFE=150 gives 158 → 275 hits (+74.1%), seed 42 only |
+| 7 | **R3** | FlowMol3 fg_dev | **PARTIAL / three-seed measured** | mean −0.0377, sd 0.0939, t = −0.695, df = 2, p = 0.559, d_z = −0.401 — direction-consistent, not significant |
+| 8 | **K1** | FlowMol3 RDKit-validity | **SUPP** | d_z = +1.36, p_bonf = 0.5676 FAILS K-level α = 0.0125 by 45.4× |
+| 9 | **K4** | LineageFlow HMMER length-bias | **SUPP** | cluster-robust d_z = +0.84, p_b = 0.009 |
+| 10 | **K5** | LineageFlow HMMER delta | **SUPP** | cluster-robust d_z = +1.12, p_b = 0.003; n=3 re-aggregation caveat |
+| 11 | **K7** | LineageFlow novelty | **SUPP / direction-INVERTED** | W166 P3 canonical baseline-vs-framework: framework 12.6× LESS Pfam-novel than baseline at pctid<30% |
 
 **Verdict distribution summary:**
 
 | Bucket | Count | Cells |
 |---|---:|---|
-| STRONG (main) | 4 | R2, R5b (conditional), R5c, R6 |
+| STRONG (main) | 3 | R2, R5c, R6 |
+| CONDITIONAL (main) | 1 | R5b |
 | TIE (main) | 1 | R5a |
-| PARTIAL/SUPP | 6 | R1, R3, R5_legacy, K1, K4+K5, K7 |
+| PARTIAL | 2 | R1, R3 |
+| SUPP-only | 4 | K1, K4, K5, K7 |
 | **Total** | **11** | |
 
 **Bonferroni family summary:**

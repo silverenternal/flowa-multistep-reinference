@@ -8954,12 +8954,61 @@ not modified.
 
 ---
 
+## 15.106 — 2026-10-27 evidence refresh: R5c frontier, R3 three-seed, R6 live (ADDITIVE)
+
+**Purpose.** Three cells moved from projected/conditional evidence to directly
+measured evidence. This section records the new readings and their artifacts;
+it does not delete or rewrite any prior §15.1–§15.105 paragraph, and no number
+above changes.
+
+**R5c — four-checkpoint, seven-rung NFE frontier.** Protocol: N=1000 per arm,
+seeds 42/43/44, rungs {4, 5, 10, 25, 50, 100, 200}, at least two integration
+steps per round, `evidence_driven` arm, plateau = mean of the last two rungs,
+dual dominance rule (1-FID floor and 1% relative margin).
+
+| checkpoint | baseline plateau | framework plateau | Δ FID | Δ relative | strict-gain rungs | verdict |
+|---|---:|---:|---:|---:|---:|:---|
+| `w16e1_5k` | 24.4839 | 21.3632 | −3.1206 | −12.75% | 7/7 | WIN |
+| `w16e1_10k` | 16.9537 | 15.9501 | −1.0036 | −5.92% | 0/7 | TIE |
+| `w16e1_60k` | 11.3795 | 11.3945 | +0.0150 | +0.13% | 0/7 | TIE |
+| `production` | 9.9938 | 9.9603 | −0.0335 | −0.34% | 0/7 | TIE |
+
+Artifacts: `verification_outputs/gap84-cap-frontier/frontier_*.json`. Audit:
+`docs/audit/gap84-inference-frontier.md`. The earlier single-budget regime curve
+(§15.103 / Wave 334) is retained as the historical point estimate; its framework
+arms ran 25–48 steps against a 50-step baseline, so its positive Δ FID at the
+better-trained checkpoints mixed a budget penalty with a checkpoint effect.
+
+**R3 — three-seed test at N=1000 per arm.** NFE=250, seeds 42/43/44, ten
+batches of 100 molecules per arm. Across-seed paired test: mean −0.0377
+(sd 0.0939), t=−0.695, df=2, p=0.559, d_z=−0.401, 95% CI [−0.271, +0.196] —
+direction-consistent but not significant at α=0.007143. The single-seed seed-42
+reading (−0.061, p=0.043) does not survive; the real restart blend gives −0.0548
+(sd 0.1526, d_z=−0.359, p=0.598). The N=200 REOS flag-count proxy is retired as
+a headline (it does not track `fg_dev`). Artifacts:
+`verification_outputs/r3_n1000_3seed_fixed_q4_2026/`. Audit:
+`docs/audit/gap39-flowmol3-real-restart-blend.md`.
+
+**R6 — live tier-aware run.** Three seeds at N=1000 per seed, n=3000 pooled.
+Live scPerplexity pooled d_z=−0.8393 (diff −3.6823), sign-consistent on 3/3
+seeds and all three tiers; live hard-tier pLDDT d_z=+1.1211 (n=990); pooled
+pLDDT d_z=+0.1466 (diff +2.6386), below the +0.2235 bar. The counterfactual
+(+0.2235) and grid-search (+0.6467) results are retained as design validation.
+Artifacts: `verification_outputs/gap31-r6-live-uplift/`. Audit:
+`docs/audit/gap31-r6-live-uplift.md`.
+
+**Register.** The cell-level verdicts live in `docs/PAPER-EVIDENCE.md`
+(generated from `docs/paper-evidence.json`); that register is the current
+source and this section is its narrative record.
+
+---
+
 ## §15.INDEX — Per-§15.NN navigation table (Wave 361, 2026-09-25, ADDITIVE)
 
 **Purpose.** This §15.INDEX is the canonical reviewer-facing navigation
-map for the 101 top-level sections in `docs/CONSOLIDATED_RESULTS.md`
-§15.1 → §15.105 (commits `d2f34c9` and earlier, 2026-08-23 →
-2026-09-25). Sections are listed in **document order** so a reader can
+map for the top-level sections in `docs/CONSOLIDATED_RESULTS.md`
+§15.1 → §15.106 (commits `d2f34c9` and earlier, 2026-08-23 →
+2026-10-27). Sections are listed in **document order** so a reader can
 jump directly from any row to the §15.NN anchor in this file. Audit-doc
 references resolve to either `docs/audit/wave<NNN>-*.md` or the
 `docs/ARCHIVE/audit-by-wave/wave<NNN>-*.md` archive; verification_outputs
@@ -9081,11 +9130,12 @@ references resolve to JSON/CSV evidence under `verification_outputs/`
 | `## 15.103` | Wave 326 cross-doc propagation snapshot: freeze final 11-cell verdict distribution (4 STRONG + 1 TIE + 6 PARTIAL/SUPP = 11 headline cells); ADDITIVE only; 6/6 PASS | n/a (cross-doc anchor) | `docs/audit/wave326-crossdoc-metrics-snapshot.md` |
 | `## 15.104` | Wave 352 P5: R5a Wave 351 P2 n=10 paired-t confirmation addendum (TIE_PERSISTS) — DL meta-d_z +0.8437 with p=0.0007 statistically significant at conventional α=0.05 but |Δ|=0.0091 below pre-specified min_effect_size=0.01 floor → TIE under Wave 195 P1 verdict-precedence rule | `verification_outputs/wave351-r5a-n10.csv` | `docs/audit/wave351-r5a-n10.md`, `docs/audit/wave352-claims-r5a-update.md` |
 | `## 15.105` | Wave 357 P3: R3 FlowMol3 RDKit environment blocker documentation (DGL fix operational, RDKit 2026.03.5 environment drift = load-bearing blocker; 36.7% valid-yield at n=30 vs canonical 99.9%); R3 verdict label `PARTIAL / single-seed PROJECTED` preserved verbatim | `verification_outputs/wave351-p3-rdkit-smoke.json` | `docs/audit/wave357-r3-rdkit-blocker-doc.md`, `docs/audit/wave351-r3-vendor-fix-status.md` |
+| `## 15.106` | 2026-10-27 evidence refresh: R5c four-checkpoint seven-rung frontier (WIN on `w16e1_5k`, −12.75% plateau, 7/7 rungs; TIE on the other three); R3 three-seed test at N=1000 (mean −0.0377, p=0.559, not significant); R6 live tier-aware run (scPerplexity d_z −0.8393, hard-tier pLDDT +1.1211) | `verification_outputs/gap84-cap-frontier/frontier_*.json`, `verification_outputs/r3_n1000_3seed_fixed_q4_2026/wave338-p5-r3-n1000-paired.json`, `verification_outputs/gap31-r6-live-uplift/gap31_summary.json` | `docs/audit/gap84-inference-frontier.md`, `docs/audit/gap39-flowmol3-real-restart-blend.md`, `docs/audit/gap31-r6-live-uplift.md` |
 
-**§15.INDEX summary.** 105 top-level sections indexed (15 + 15.1-15.12 +
-15.7.1-15.7.6 + §15.13-§15.105 + 15.NEXT). Cross-references resolved:
-105 / 105 rows have a populated `audit_doc_ref` column. The
-`verification_outputs_ref` column is populated for ~80 / 105 rows
+**§15.INDEX summary.** 106 top-level sections indexed (15 + 15.1-15.12 +
+15.7.1-15.7.6 + §15.13-§15.106 + 15.NEXT). Cross-references resolved:
+106 / 106 rows have a populated `audit_doc_ref` column. The
+`verification_outputs_ref` column is populated for ~81 / 106 rows
 (the remaining ~25 rows are docs-only waves — Wave 130-153 polish
 waves + §15.89-§15.94 paper-additive waves — where the audit doc is
 the closure artifact and the verification_outputs are gitignored /

@@ -26,7 +26,7 @@ tnnls_submission/
 The **manuscript PDF and source** live one level up:
 
 ```
-[`docs/drafts/paper-A-final.pdf`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.pdf)   ← 11 pages, 446705 bytes (Wave 385 current build, ready-to-submit)
+[`docs/drafts/paper-A-final.pdf`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.pdf)   ← 12 pages, 461403 bytes (2026-10-27 current build, ready-to-submit)
 [`docs/drafts/paper-A-final.tex`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.tex)   ← IEEEtran-journal source
 [`docs/drafts/paper-A-final.{aux,log,out}`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/drafts)
 ```
@@ -85,7 +85,7 @@ Select: **"Regular Paper"** (TNNLS treats the manuscript as a regular research a
 - **Keywords:** copy the 9 IEEE keyword terms from `\begin{IEEEkeywords}` … `\end{IEEEkeywords}` (or the IEEEtran section in the PDF).
 
 ### Step 3 — Manuscript File
-- Upload: **[`docs/drafts/paper-A-final.pdf`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.pdf)** (11 pages, IEEEtran-journal double-column typeset).
+- Upload: **[`docs/drafts/paper-A-final.pdf`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.pdf)** (12 pages, IEEEtran-journal double-column typeset).
 - The system will probe for embedded fonts and page count; both should pass.
 
 ### Step 4 — Supplementary Material

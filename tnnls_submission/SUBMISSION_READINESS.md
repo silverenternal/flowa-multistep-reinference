@@ -67,10 +67,10 @@
 | **G11** (R5b honest framing) | Medium | `docs/drafts/paper-A-final.md` §7.2 / §7.6 | `6204d6f` | n_rounds=1 WINS / n_rounds≥2 REGRESSES honest framing ADDITIVE close |
 | **G15** (Bibliography 8 entries) | Medium | `docs/drafts/paper-A-final.md` Bibliography §X | `2ef92c6` | 8 fully-expanded author + title + venue + year entries (Bolley-Guilin-Villani, Villani 2003, Schuirmann 1987, Wagenmakers 2007, Higgins-Thompson 2002, Jonckheere 1954, DerSimonian-Laird 1986, Lakens 2017) |
 | **G20** (Lemma numbering reconciliation) | Medium | `docs/drafts/paper-A-final.md` §6 preamble | `4ac279c` | Lemma numbering reconciliation between paper §6 and supplementary §S1 |
-| **G31** (Verdict-distribution canonical) | Low | `docs/drafts/paper-A-final.md` §7.2 / §11.1 | `255bdc8` | Canonical 11-cell verdict distribution statement (`4 STRONG + 1 TIE + 6 PARTIAL/SUPP`) |
+| **G31** (Verdict-distribution canonical) | Low | `docs/drafts/paper-A-final.md` §7.2 / §11.1 | `255bdc8` (superseded 2026-10-27) | Canonical 11-cell verdict distribution statement — **current reading `3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only`**; the `4 STRONG + 1 TIE + 6 PARTIAL/SUPP` label above is the pre-refresh record |
 | **G32** (Cover letter date refresh) | Low | `tnnls_submission/cover_letter.md` §0 | `3227090` | Cover letter date refreshed to 2026-09-25 (17 USER_TO_FILL placeholders preserved verbatim) |
 | **G34** (Strict-clean rule definition) | Low | `docs/drafts/paper-A-final.md` + `docs/audit/wave268-strict-clean.md` | `101370d` | Strict-clean rule definition footnote (Wave 268 directive preservation) |
-| **G38** (Page count recheck) | Low | `tnnls_submission/submission_checklist.md` §1 / §3 | `fea3aa` | Page count recheck annotation (`Pages: 11 ≤ 14` per `pdfinfo` against the Wave 385 current build at SHA `461ee92e…` / 446705 bytes; historical Wave 356 P1 reading was 14 pages) |
+| **G38** (Page count recheck) | Low | `tnnls_submission/submission_checklist.md` §1 / §3 | `fea3aa` (superseded 2026-10-27) | Page count recheck annotation — **current reading `Pages: 12 ≤ 14`** per `pdfinfo` against the 2026-10-27 build at SHA `a0a0d97f…` / 461403 bytes; the `11` reading above is historical |
 
 ### 3.2 Risks explicitly DEFERRED (31 / 39)
 
@@ -135,10 +135,10 @@ All 31 explicitly DEFERRED gaps are bounded by either (a) user action, (b) envir
 
 ### 5.1 Reviewer-facing strengths (no probability attached)
 
-1. **R6 tier-aware counterfactual verdict** ($d_z = +0.2235$ Bonferroni-significant at $\alpha = 0.05$; CLM-073 / R-019).
+1. **R6 live tier-aware verdict** (scPerplexity pooled $d_z=-0.8393$ at $n=3000$; hard-tier pLDDT $d_z=+1.1211$ at $n=990$; the earlier counterfactual $d_z=+0.2235$ is retained as design validation; CLM-073 / R-019).
 2. **R5b conditional boundary** (n_rounds=1 framework-WINS, n_rounds≥2 framework-REGRESSES) — honestly framed per Wave 364 G11 close; preserves the §7.6 R5b mechanism paragraph.
 3. **R2 medium-effect uplift** ($d_z$ +0.047 → +0.3927, +743% lift) — Bonferroni-significant at $\alpha = 0.05/7$.
-4. **R6 large-effect uplift** ($d_z$ +0.224 → +0.647, +189% lift with easy-tier elimination) — Bonferroni-significant in the Wave 235 P3 best grid cell.
+4. **R6 allocation direction confirmed live** (scPerplexity wins on 3/3 seeds and all three tiers; hard tier 3/3 supported; easy tier 3/3 regresses, which is the allocation effect the tier-aware rule exploits).
 5. **24.6× wall-clock fix** (CUDA-graph capture 4.24× speedup closing 76.8% of framework/baseline wall-clock ratio 3.40× → 1.26×) — per Wave 236 P2.
 6. **Statistical methods upgrade** (TOST / JT / BF01 / DerSimonian-Laird meta / Non-Inferiority) — per Wave 234 P5.
 7. **FlowMol3 3-seed rescue** (R3 direction-consistent; Wave 242 P1 + Wave 357 P3) — preserves the §11.1 (b) honest-disclosure status.
@@ -148,7 +148,7 @@ All 31 explicitly DEFERRED gaps are bounded by either (a) user action, (b) envir
 
 ### 5.2 Reviewer-risk factors (no probability attached)
 
-- **Counterfactual methodology** (R6 tier-aware counterfactual is mathematically principled but not a live GPU 3-seed × N=1000 sweep; honest-disclosure preserved verbatim in `paper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md §(d)` + paper §10.5 + CLM-073 + R-019).
+- **Pooled-pLDDT bar not met** (the live tier-aware run gives pooled pLDDT $d_z=+0.1466$, below the $+0.2235$ bar; the pLDDT gain is hard-tier only. The counterfactual construction is disclosed as the design-validation baseline in `paper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md §(d)` + paper §10.5 + CLM-073 + R-019).
 - **PARTIAL/SUPP cell honest-disclosure** (6 of 11 headline cells are PARTIAL/SUPP; the 4 SUPP-only K-cells are demoted to §10 supplementary; per Wave 308 P1 / P2 + Wave 306 demotions).
 - **Honest disclosure of matched-NFE image-domain regression** (CIFAR-10 RF at NFE=50 where framework regresses by 10.7%; first-class boundary disclosure, not a footnote; per §11.1 / §11.2 honest verdict).
 
@@ -162,8 +162,8 @@ All 31 explicitly DEFERRED gaps are bounded by either (a) user action, (b) envir
 | 2 | **NO-PUSH policy honoured** | No `git push` since Wave 242 freeze; all Wave 343-365 commits carry `(USER AUTHORIZED, NO PUSH)` footer per `todo/PUSH-READY.md` + Wave 325 NO-PUSH policy. Per `docs/audit/wave358-submission-checklist-reaudit.md` + `docs/audit/wave356-submission-checklist-review.md` |
 | 3 | **17 USER_TO_FILL placeholders preserved** | 31 grep hits in `tnnls_submission/cover_letter.md` = 17 distinct fields + 14 documentation-pointer occurrences; preserved verbatim per Wave 348 §0 + Wave 351 P5 + Wave 352 P2 governance + Wave 364 G32 (date refresh only, 0 placeholders modified). Per `tnnls_submission/FILL_GUIDE.md` |
 | 4 | **ADDITIVE only** | No edits to any existing `tnnls_submission/*.md` file in Wave 365 P1; no edits to `docs/drafts/paper-A-final.md` / `docs/CONSOLIDATED_RESULTS.md` / any `docs/audit/*.md` file. Per Wave 364 §6 hard-guardrail #2 + Wave 268 strict-clean rule |
-| 5 | **Wave 268 strict-clean rule observed** | Every per-cell status label preserved verbatim from §7.2 / §11.1 / §15.103: `STRONG` (R2 / R5b-conditional / R5c-smoke / R6) / `TIE` (R5a) / `PARTIAL/SUPP` (R1 / R3 / R5_legacy / K1 / K4 / K5 / K7). No promotion of `UNDERPOWERED` / `DEFERRED` / `REGRESSES` / `NOT_SIGNIFICANT` to `SUPPORTED` by wording alone |
-| 6 | **Counterfactual methodology disclosed** | R6 counterfactual methodology disclosed verbatim in 5 citing surfaces: `paper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md §(d)` + `docs/drafts/paper-A-final.md` §10.5 + `docs/drafts/paper-A-final.md` §11.1 (b) + `docs/CLAIMS.md` CLM-073 + `todo/RISK-REGISTER.md` R-019. Per Wave 362 P3 §3.3 + Wave 364 G31 |
+| 5 | **Wave 268 strict-clean rule observed** | Current labels: `STRONG` (R2 / R5c frontier / R6 live) / `CONDITIONAL` (R5b) / `TIE` (R5a) / `PARTIAL` (R1 / R3) / `SUPP-only` (K1 / K4 / K5 / K7). No promotion of `UNDERPOWERED` / `DEFERRED` / `REGRESSES` / `NOT_SIGNIFICANT` to `SUPPORTED` by wording alone |
+| 6 | **Live R6 measurement disclosed** | The live tier-aware run (`verification_outputs/gap31-r6-live-uplift/`) is the R6 headline, and the counterfactual construction is retained as design validation in `paper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md §(d)` + `docs/drafts/paper-A-final.md` §10.5 + `docs/drafts/paper-A-final.md` §11.1 (b) + `docs/CLAIMS.md` CLM-073 + `todo/RISK-REGISTER.md` R-019. |
 | 7 | **5 Lemmas ACTIVE + 2 Theorems closed-form** | Lemmas 1/2/3 (Protocol Composition Closure / State-Machine Byte-Determinism / Ledger Tamper-Evidence) ACTIVE per Wave 311 + Wave 322; Lemma 4 / Lemma 5 (Sub-claim 4.1 / Sub-claim 5.1) ACTIVE per Wave 350 P1 / Wave 354 P3; Theorem 4 closed-form rate bound (§6.5 + §A.1) per Wave 353 P1; Theorem 5 closed-form attenuation bound (§6.6) per Wave 350 P1 + Wave 354 P3 + Wave 364 G3 |
 
 All 7 cross-cutting invariants observed at Wave 365 P1 audit time.

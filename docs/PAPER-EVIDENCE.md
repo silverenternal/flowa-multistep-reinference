@@ -19,25 +19,26 @@ surface is historical**.
 
 ## Status at a glance
 
-- Cells: **11** — 1 WIN, 7 OPEN, 1 BLOCKED, 2 SUPP.
+- Cells: **11** — 1 WIN, 7 OPEN, 1 BLOCKED, 2 SUPP (strict two-half gate).
+- Paper labels: **3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only = 11** — the labels used in §7.1 / §7.2 / §7.11.
 - Frontier coverage: **1 of 7 R-level cells** have a complete (quality, NFE) grid.
 - One cell (R5c, w16e1_5k) satisfies both halves of the win definition. Seven cells have a point reading but no frontier grid; that is the single largest gap between the evidence base and the paper's claim.
 
 ## Cell register
 
-| cell | model | metric | point | frontier | cell verdict | scope |
-|---|---|---|---|---|---|---|
-| **R1** | LineageFlow | `hmmscan_total_hits` | WIN_SINGLE_SEED | UNMEASURED | **OPEN** | Point win is single-seed and metric-level (hit count); the family-identity half is still open. |
-| **R2** | Kanzi | `reconstruction_kabsch_rmsd_A` | WIN | UNMEASURED | **OPEN** | Point win measured; the frontier half has no grid. |
-| **R3** | FlowMol3 | `fg_dev` | NOT_SIGNIFICANT | UNMEASURED | **OPEN** | Point estimate is direction-consistent but not significant at 3 seeds; the existing NFE ladder is a stub. |
-| **R5a** | 2D rectified flow | `W2` | TIE | UNMEASURED | **OPEN** | TIE is a loss under the standing rule. |
-| **R5b** | CIFAR-10 rectified flow | `FID` | MIXED | INCOMPLETE | **OPEN** | Point reading is arm-dependent; the frontier has two rungs and the baseline is still descending. |
-| **R5c** | MNIST flow matching | `FID` | WIN | WIN | **WIN** | w16e1_5k checkpoint only; the other three checkpoints are TIEs. This is the only cell with the frontier half measured. |
-| **R6** | LineageFlow k6 | `scPerplexity / pLDDT` | WIN | UNMEASURED | **OPEN** | Point win on scPerplexity and hard-tier pLDDT; the frontier half has no usable grid. |
-| **K1** | FlowMol3 | `pb_validity_pct` | NOT_SIGNIFICANT | UNMEASURED | **BLOCKED** | Blocked on data, not on code: the driver persists only aggregate pb_validity_pct plus smiles_list[:200]. |
-| **K4** | LineageFlow | `hmmscan_total_hits` | POWERED | UNMEASURED | **SUPP** | Supplementary metric-collection cell; not an R-level win claim. |
-| **K5** | LineageFlow | `hmmscan_total_hits` | NOT_SIGNIFICANT | UNMEASURED | **SUPP** | Supplementary; not an R-level win claim. |
-| **K7** | LineageFlow | `novel fraction at pctid < 30%` | LOSS | UNMEASURED | **OPEN** | Measured loss; the lever (what the restart draws) is pre-registered but not run. |
+| cell | model | metric | point | frontier | cell verdict | paper label | scope |
+|---|---|---|---|---|---|---|---|
+| **R1** | LineageFlow | `hmmscan_total_hits` | WIN_SINGLE_SEED | UNMEASURED | OPEN | **PARTIAL** | Point win is single-seed and metric-level (hit count); the family-identity half is still open. |
+| **R2** | Kanzi | `reconstruction_kabsch_rmsd_A` | WIN | UNMEASURED | OPEN | **STRONG** | Point win measured; the frontier half has no grid. |
+| **R3** | FlowMol3 | `fg_dev` | NOT_SIGNIFICANT | UNMEASURED | OPEN | **PARTIAL** | Point estimate is direction-consistent but not significant at 3 seeds; the existing NFE ladder is a stub. |
+| **R5a** | 2D rectified flow | `W2` | TIE | UNMEASURED | OPEN | **TIE** | TIE is a loss under the standing rule. |
+| **R5b** | CIFAR-10 rectified flow | `FID` | MIXED | INCOMPLETE | OPEN | **CONDITIONAL** | Point reading is arm-dependent; the frontier has two rungs and the baseline is still descending. |
+| **R5c** | MNIST flow matching | `FID` | WIN | WIN | WIN | **STRONG** | w16e1_5k checkpoint only; the other three checkpoints are TIEs. This is the only cell with the frontier half measured. |
+| **R6** | LineageFlow k6 | `scPerplexity / pLDDT` | WIN | UNMEASURED | OPEN | **STRONG** | Point win on scPerplexity and hard-tier pLDDT; the frontier half has no usable grid. |
+| **K1** | FlowMol3 | `pb_validity_pct` | NOT_SIGNIFICANT | UNMEASURED | BLOCKED | **SUPP** | Blocked on data, not on code: the driver persists only aggregate pb_validity_pct plus smiles_list[:200]. |
+| **K4** | LineageFlow | `hmmscan_total_hits` | POWERED | UNMEASURED | SUPP | **SUPP** | Supplementary metric-collection cell; not an R-level win claim. |
+| **K5** | LineageFlow | `hmmscan_total_hits` | NOT_SIGNIFICANT | UNMEASURED | SUPP | **SUPP** | Supplementary; not an R-level win claim. |
+| **K7** | LineageFlow | `novel fraction at pctid < 30%` | LOSS | UNMEASURED | OPEN | **SUPP** | Measured loss; the lever (what the restart draws) is pre-registered but not run. |
 
 ## What the paper can quote today
 
@@ -144,11 +145,11 @@ kept only so old records remain traceable.
 - **Point (WIN):** w16e1_5k plateau 24.4839 -> 21.3632 (-3.1206, -12.75%); 10k 16.9537 -> 15.9501 (-5.92%, TIE); 60k 11.3795 -> 11.3945 (+0.13%, TIE); production 9.9938 -> 9.9603 (-0.34%, TIE); CI per-rung improvement CIs exclude 0 at every rung on w16e1_5k; p no p-value used for the frontier verdict.
 - **Frontier (WIN):** grid [4, 5, 10, 25, 50, 100, 200].
 - **Cell verdict:** WIN — w16e1_5k checkpoint only; the other three checkpoints are TIEs. This is the only cell with the frontier half measured.
-- **Next:** None required for the 5k WIN. The 10k cell is 0.016 FID short of the floor; that is a checkpoint property, not a lever.
+- **Next:** None required for the 5k WIN. The 10k cell clears the 1-FID floor as a point estimate (1.0036) but not at its CI lower bound (0.984); that is a checkpoint property, not a lever.
 - **Artifact:** verification_outputs/gap84-cap-frontier/frontier_w16e1_5k.json; **audit:** docs/audit/gap84-inference-frontier.md.
 - **Paper anchor:** §7.2 R5c; §7.9 regime curve; **claim:** CLM-059.
 
-> Caveat: Checkpoint-conditional: the WIN is on w16e1_5k only (7/7 strict-gain rungs). The other three checkpoints are TIEs, not losses; the 10k TIE misses the 1-FID floor by 0.016 FID.
+> Caveat: Checkpoint-conditional: the WIN is on w16e1_5k only (7/7 strict-gain rungs, per-rung CI lower bounds above the 1-FID floor). The other three checkpoints are TIEs, not losses. On w16e1_10k the plateau gain is 1.0036 FID as a point estimate but its 95% CI lower bound is 0.984 FID, and no rung's CI lower bound clears the floor.
 
 ### R6 — LineageFlow k6 foldability
 

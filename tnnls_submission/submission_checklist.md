@@ -2,6 +2,16 @@
 
 **Status:** Finalised for TNNLS submission. All boxes verified at Wave 242 P4 (D.4 30/30 PASS, mkdocs 0 warnings, claims_consistency no drift).
 
+> **Current-artifact banner (2026-10-27).** The dated page-count and
+> SHA-256 readings below are historical records. The current build is
+> **12 pages**, `docs/drafts/paper-A-final.pdf`, SHA-256
+> `a0a0d97f07a078cdcc0695003c7258f487d10c04a6e12f21511740eb0709aec9`
+> (461403 bytes, two `pdflatex` passes, zero overfull hboxes, zero
+> undefined references). The verdict distribution is **3 STRONG + 1
+> CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only**. R3's three-seed test
+> and R6's live tier-aware run are now measured, so camera-ready items
+> #5 and #7 below are closed; see `docs/PAPER-EVIDENCE.md`.
+
 ---
 
 ## Pre-submission gates (verified)
@@ -186,9 +196,9 @@ The existing checklist above marks 29 [x] PASS checkboxes; the ADDITIVE summary 
 | 2 | 17 USER_TO_FILL placeholders in cover_letter.md (user-gated, ScholarOne upload-gate) | None (user-gated per `cover_letter_FILL_AUTOFILL.json` scaffolding + FILL_GUIDE.md §168) | **PENDING** (user-gated; 31 grep hits = 17 actual fillable fields + 14 documentation-pointer occurrences; preserved verbatim) | DEFERRED (user action required) |
 | 3 | MANIFEST.md SHA-256 final rehash (displayed SHA stale per self-reference note) | None (depends on #2; freeze-marker step) | **PENDING** (current SHA `2fc8455d0645266e32b402131249b970d92077a14557df80b753825fe746fca2`; per MANIFEST self-reference note intentional, final rehash is the freeze-marker step) | DEFERRED (depends on #2) |
 | 4 | Lean 4 verification (28/28 PASS + 4 stubs) — `Mathlib.Analysis.SpecialFunctions.ExpLog` build error | Wave 357 P2 PARTIAL CLOSURE: 3 of 15 sorry sites discharged across 4 stub files (Thm 4.1: 5→3; Thm 5.1: 5→3; Thm 5.2: 4→3; Thm 5.3: 1→3); `lake build` verified PASS for all 4 target files; commit `fc19654` | **PENDING** (12 sorry sites remaining with TODO comments documenting future-proof effort; "28/28 PASS" claim still does not match actual state — 4 stubs only with 3 of 15 sorries discharged, Mathlib v4.34.1 precompilation still incomplete for downstream theorems) | PARTIAL CLOSURE (Wave 357 P2 resolved 3/15) |
-| 5 | R3 FlowMol3 3-seed direction consistency (in flight, DGL 2.4.0 batched-path bug workaround) | Wave 357 P3 DOCUMENTED: RDKit environment blocker disclosed (`docs/CONSOLIDATED_RESULTS.md` §15.24 + paper §7.5 footnote); commit `dd5f3b5` | **PENDING** (camera-ready scope; honest-disclosure accepted) | DOCUMENTED (Wave 357 P3) |
+| 5 | R3 FlowMol3 3-seed direction consistency (in flight, DGL 2.4.0 batched-path bug workaround) | 2026-10-27 CLOSED: three-seed test at N=1000 per arm, NFE=250, seeds 42/43/44 — mean −0.0377, sd 0.0939, t=−0.695, df=2, p=0.559, d_z=−0.401, 95% CI [−0.271, +0.196] (`verification_outputs/r3_n1000_3seed_fixed_q4_2026/`); direction-consistent, not significant | **CLOSED** (measured; R3 remains PARTIAL by effect size, not by missing data) | DONE (2026-10-27) |
 | 6 | K4 Kanzi decision-metric saturation (UNDERPOWERED / TIES_AT_ZERO) | Wave 357 P4 DOCUMENTED: additional N=1000 sweep scope + audit doc; commit `d3baced` | **PENDING** (camera-ready scope; honest-disclosure accepted) | DOCUMENTED (Wave 357 P4) |
-| 7 | R6 Kanzi k6 3-seed N=1000 live GPU sweep (PARTIAL via tier-aware counterfactual; camera-ready deferred) | Wave 357 P5 DOCUMENTED: §10.5 scope disclosure + audit doc `docs/audit/wave357-r6-gpu-scope.md`; commit `f003c04` | **PENDING** (camera-ready scope; honest-disclosure accepted; §7.2 R6 row preserved verbatim) | DOCUMENTED (Wave 357 P5) |
+| 7 | R6 Kanzi k6 3-seed N=1000 live GPU sweep (PARTIAL via tier-aware counterfactual; camera-ready deferred) | 2026-10-27 CLOSED: live tier-aware run, three seeds at N=1000 per seed (n=3000 pooled) — scPerplexity d_z=−0.8393, hard-tier pLDDT d_z=+1.1211, pooled pLDDT d_z=+0.1466 (`verification_outputs/gap31-r6-live-uplift/`) | **CLOSED** (measured live; pooled pLDDT remains below the +0.2235 bar) | DONE (2026-10-27) |
 | 8 | K5 FreqFlow + MM-FM integration (ENV_BLOCKED, PHASE-4 deferred) + K6 Wan2.2 N=1000 sweep (DEFERRED) | Wave 357 P6 DOCUMENTED: camera-ready scope final disclosure; commit `4b6826c` | **PENDING** (camera-ready scope; honest-disclosure accepted) | DOCUMENTED (Wave 357 P6) |
 
 ### Wave 358 P4 totals (post-Wave-357 closure)

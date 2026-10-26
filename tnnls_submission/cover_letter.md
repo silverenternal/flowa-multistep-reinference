@@ -720,8 +720,8 @@ and audited in [`docs/audit/wave238-p2-cuda-graph-verify.md`](https://github.com
 FlowA is validated across **11 headline empirical cells** spanning
 three generative domains (protein, molecular 3D, image) and
 disclosed with an explicit verdict distribution rather than a
-"framework-WINS" aggregate: **4 STRONG (main) + 1 TIE (main) + 6
-PARTIAL/SUPP** = 11 cells. The full audit-grade alignment between
+"framework-WINS" aggregate: **3 STRONG (main) + 1 CONDITIONAL (main) +
+1 TIE (main) + 2 PARTIAL + 4 SUPP-only** = 11 cells. The full audit-grade alignment between
 paper-claimed and actual-deployed numbers (per-cell d_z, p,
 p_bonf, n, N) is documented in [`docs/audit/wave306-11-cell-alignment.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave306-11-cell-alignment.md)
 (11 rows × 17 columns) and corroborated by the Wave 307
@@ -730,23 +730,26 @@ cross-cell data archaeology synthesis
 distribution, anchored at [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave326-crossdoc-metrics-snapshot.md),
 distributes as:
 
-- **STRONG (main, 4 cells):** R2 Kanzi RMSD deployed index-matched two-sample t
-  d_z = −0.0990 (Wave 218 P3, framework-WINS); R5b CIFAR-10 RF
-  **conditional at `n_rounds=1`** (3/4 schedulers enter the
-  framework-WINS regime, ΔFID −1.60 % to −2.53 %); R5c MNIST FM
-  smoke-ckpt d_z = −13.175 (Wave 191 P3); R6 LineageFlow k6
-  tier-aware counterfactual d_z = +0.2235 with grid-search LARGE
-  overall uplift d_z = +0.6467 (Wave 235 P3).
+- **STRONG (main, 3 cells):** R2 Kanzi RMSD deployed index-matched two-sample t
+  d_z = −0.0990 (Wave 218 P3, framework-WINS); R5c MNIST FM
+  checkpoint-conditional NFE frontier — on `w16e1_5k` the seven-rung
+  sweep lowers the FID plateau from 24.4839 to 21.3632 (−12.75 %,
+  weakly dominant at 7/7 rungs), with TIEs on the three better-trained
+  checkpoints; R6 LineageFlow k6 live tier-aware run —
+  scPerplexity pooled d_z = −0.8393 (n = 3000) and hard-tier pLDDT
+  d_z = +1.1211 (n = 990).
+- **CONDITIONAL (main, 1 cell):** R5b CIFAR-10 RF, conditional at
+  `n_rounds=1` (3/4 schedulers enter the framework-WINS regime,
+  ΔFID −1.60 % to −2.53 %); the multi-round readings regress.
 - **TIE (main, 1 cell):** R5a 2D Two Moons paper R-level d_s =
   +0.460 at n = 3 paired seeds (Wave 189 P2 / CLM-055
   PaperRatioAdaptiveScheduler; honest disclosure of the post-`cd70821`
   ReLU-activation fix that eliminates the pre-fix −7.28 % artifact).
-- **PARTIAL / SUPP (6 cells):** R1 LineageFlow HMMER (Wave 308
+- **PARTIAL (2 cells):** R1 LineageFlow HMMER (Wave 308
   P1 single-seed-disclosed demotion; seed-43/44 100 % framework
-  fallback rate); R3 FlowMol3 fg_dev (3-seed BLOCKED at vendor
-  level on DGL 2.4.0+cu124 batched-path regression, Wave 109.C);
-  R5 legacy 2D Eight Gaussians (per-round CSV NOT preserved —
-  honestly disclosed); K1 FlowMol3 RDKit-validity (Wave 308 P2
+  fallback rate); R3 FlowMol3 fg_dev (three-seed test at N=1000 per
+  arm: mean −0.0377, p = 0.559 — direction-consistent, not significant).
+- **SUPP-only (4 cells):** K1 FlowMol3 RDKit-validity (Wave 308 P2
   demotion to §10 supplementary, p_bonf = 0.5676 at K-level
   α = 0.0125); K4 + K5 LineageFlow HMMER (Wave 306 demotion;
   K4 hit-count powered, K5 paired-delta Bonferroni-FAIL); K7
@@ -758,13 +761,17 @@ The headline empirical findings are reported in three audit-grade
 tables with 12-column per-row statistics (`n_paired, mean_diff,
 sd_diff, t, df, p_raw, CI95_low, CI95_high, d_z, test_type, family,
 α_bonferroni, bonf_sig`) under four pre-registered Bonferroni
-families. **Wave 333 R5c deep investigation** (continued in
-[`docs/audit/mnist/wf334-r5c-regime-curve.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/mnist/wf334-r5c-regime-curve.md)) is disclosed in
-full at §7 below: the R5c direction-flip between smoke-ckpt
-(framework-WINS) and production-ckpt (framework REGRESSES +10.37 %)
-is **NOT** a data misinterpretation, but a real production-ckpt
-regime-shift that the per-epoch regime curve now surfaces as a
-disclosable boundary. **Wave 306 / Wave 307 / Wave 333 deep
+families. **R5c checkpoint-conditional frontier** (superseding the
+earlier single-budget regime curve,
+[`docs/audit/mnist/wf334-r5c-regime-curve.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/mnist/wf334-r5c-regime-curve.md))
+is reported at §7: on a matched seven-rung NFE grid
+{4, 5, 10, 25, 50, 100, 200} with three seeds and N = 1000 per arm,
+the framework lowers the FID plateau by 12.75 % on `w16e1_5k` and is
+weakly dominant at every rung, while the three better-trained
+checkpoints tie. The earlier single-budget reading compared
+framework arms at 25–48 steps against a 50-step baseline, so its
+positive Δ FID at the better-trained checkpoints mixed a budget
+penalty with a checkpoint effect. **Wave 306 / Wave 307 deep
 investigation transparency:** all three investigations are READ-ONLY
 synthesis docs (no silent re-writing of headline numbers); every
 audit-claimed discrepancy is cross-checked against canonical
@@ -790,17 +797,19 @@ the easy tier with same sign). The cluster-robust re-analysis at
 the Pfam-family unit (df_cluster=3, ICC=0.041, N_eff=89.6)
 pre-empts the per-record-independence objection.
 
-**Tier-aware counterfactual methodology — disclosed honestly.** R6
-is a counterfactual cell, not a live GPU run: the headline
-d_z = +0.2235 is constructed via Wave 225 P4 + Wave 233 P3
-REDUCED_INTENSITY_FACTOR = 0.5 per-record diff shift per Wave 209
-P1 A3 methodology (constant-offset on the frozen Wave 161
-foldability.jsonl data). R6 large-effect uplift d_z = +0.6467 (Wave
-235 P3) is a 5 × 4 grid-search counterfactual over
-`(easy_tier_nfe_reduction_factor, hard_tier_nfe_intensity)` on the
-same frozen data. Both counterfactuals are paper-quantity-grounded
-but **not** live GPU runs; we disclose this directly rather than
-as a hidden caveat.
+**Tier-aware methodology — live, with the counterfactual retained as
+design validation.** R6 is now a live tier-aware run on three seeds
+at N = 1000 per seed (n = 3000 pooled): pooled scPerplexity
+d_z = −0.8393 (diff −3.6823), sign-consistent on 3/3 seeds and all
+three difficulty tiers, and hard-tier pLDDT d_z = +1.1211 (n = 990).
+The pooled pLDDT is d_z = +0.1466 and does not reach the +0.2235
+bar. The earlier counterfactual construction — d_z = +0.2235 via
+Wave 225 P4 + Wave 233 P3 REDUCED_INTENSITY_FACTOR = 0.5 per-record
+diff shift per Wave 209 P1 A3 methodology, and the d_z = +0.6467
+5 × 4 grid search (Wave 235 P3) over
+`(easy_tier_nfe_reduction_factor, hard_tier_nfe_intensity)` — is
+retained as the design-validation baseline on the frozen Wave 161
+`foldability.jsonl` data.
 
 **R3 4-arm head-to-head verdict (Wave 230 P2, real per-record).**
 The 4-arm per-record paired-$t$ sweep across 16 cells (4 baselines
@@ -1229,6 +1238,6 @@ hugo@example.com
 
 ---
 
-## Current manuscript mechanism addendum (2026-09-27)
+## Current manuscript mechanism addendum (2026-10-27)
 
-The current eight-page IEEEtran manuscript explains two concrete pathways behind its frozen-checkpoint results. For Kanzi, the trained inverse-projection and DAE bridge puts the sampled state in the checkpoint's backbone-coordinate input space; the index-matched two-sample reconstruction comparison at N=1000 is 0.9020 to 0.8798 Å. For protein foldability, paired results on Kanzi k6 and LineageFlow show larger pLDDT benefit on hard records than on easy records. This observed heterogeneity motivates the implemented tier-aware capacity controller. The reported overall tier-aware uplift is a counterfactual analysis of frozen paired differences; a live controller evaluation remains the next causal test. The source-level evidence chain is recorded in `docs/audit/wave375-image-feedback-path.md` and the R2/R6 per-cell recipes. This addendum supersedes historical page-count and mechanism descriptions above where they differ from the current PDF.
+The current 12-page IEEEtran manuscript explains two concrete pathways behind its frozen-checkpoint results. For Kanzi, the trained inverse-projection and DAE bridge puts the sampled state in the checkpoint's backbone-coordinate input space; the index-matched two-sample reconstruction comparison at N=1000 is 0.9020 to 0.8798 Å. For protein foldability, paired results on Kanzi k6 and LineageFlow show larger pLDDT benefit on hard records than on easy records. This observed heterogeneity motivates the implemented tier-aware capacity controller. The live tier-aware run moves pooled scPerplexity by d_z = −0.8393 and hard-tier pLDDT by d_z = +1.1211, while pooled pLDDT stays below the +0.2235 bar — the allocation direction is confirmed where the tier decomposition predicts a gain. The source-level evidence chain is recorded in `docs/audit/wave375-image-feedback-path.md` and the R2/R6 per-cell recipes. This addendum supersedes historical page-count and mechanism descriptions above where they differ from the current PDF.

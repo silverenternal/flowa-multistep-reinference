@@ -1,5 +1,15 @@
 # Abstract — Final (Wave 232 P2 + Wave 233 P7 + Wave 234 P5 + Wave 235 P5 + Wave 236 P3 + Wave 237 P1 + Wave 242 P3 + Wave 244 P3)
 
+> **Historical working abstract (through Wave 246 P4), not the submitted text.**
+> The abstract of record is the one in
+> [`paper-A-final.md`](paper-A-final.md) §Abstract (mirrored in
+> `paper-A-final.tex`). That text is the one in the built PDF and in
+> `tnnls_submission/`. This file is kept for provenance only: its
+> verdict wording (six R-cells, "2.5–10× NFE compression", the R3
+> conditional-boundary line) predates the 2026-10-27 evidence refresh
+> and must not be quoted as current. Where the two disagree, the
+> paper file wins.
+
 **Status.** Finalised after Wave 232 P2 TPAMI-envelope trim (250 words, 9
 sentences), Wave 233 P7 tier-aware-scheduler sentence (1 added;
 body now 10 sentences), Wave 234 P5 statistical-methods additions

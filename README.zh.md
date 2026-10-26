@@ -25,7 +25,7 @@
 
 - [Paper A Submission Status / 论文 A 投稿状态](#paper-a-submission-status--论文-a-投稿状态) — TNNLS 投稿包 + 最终指标快照
 - [Complete Inventory: Innovations & Experiments / 完整盘点：创新点与实验](#complete-inventory-innovations--experiments--完整盘点创新点与实验) — 构建了什么 + 每个实验测出了什么 的唯一整合视图
-- [Final Empirical Metrics / 最终实证指标](#final-empirical-metrics-11-cells--最终实证指标-11-单元) — 4 STRONG + 1 TIE + 6 PARTIAL/SUPP（最终）
+- [Final Empirical Metrics / 最终实证指标](#final-empirical-metrics-11-cells--最终实证指标-11-单元) — 3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only（最终）
 - [Headline Results / 头条结果](#headline-results--头条结果) — 七个 R-level 单元 + 四个 K-cell 概览
 - [Deep Innovations / 深度创新](#deep-innovations--深度创新) — 七项真正新颖的首要贡献
 - [Architecture / 架构](#architecture--架构) — 类型化四端口控制面 + 13 调度器（9 基线 + 4 论文量驱动控制器）
@@ -127,7 +127,7 @@
 
 两层：**11 个头条单元**（论文 §7.2/§7.11）与**封闭缺口调查（GAP-24 … GAP-31）**——后者对前者进行压力测试、精化或重锚。
 
-**2.1 — 11 个头条单元。** 权威裁决分布 **4 STRONG + 1 TIE + 6 PARTIAL/SUPP**；完整表见 [最终实证指标](#final-empirical-metrics-11-cells--最终实证指标-11-单元)。每单元达到的效果：
+**2.1 — 11 个头条单元。** 权威裁决分布 **3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only**；完整表见 [最终实证指标](#final-empirical-metrics-11-cells--最终实证指标-11-单元)。每单元达到的效果：
 
 | 单元 | 模型 / 指标 | 达到的效果 |
 |---|---|---|
@@ -136,8 +136,8 @@
 | **R3** | FlowMol3 · `fg_dev` | 3 种子 N=1000 d_z = −0.0377（framework-WINS 方向，p = 0.559，n.s.）；优势**在 2×/4× 基线 NFE 下依然成立** → 稻草人基线被证伪（GAP-27：有界边缘，~49 种子达 80% 功效） |
 | **R5a** | 2D Two Moons · W₂ | **TIE** \|Δ\| = 0.0091 < 0.01 下限；n=7、n=10 下持续 |
 | **R5b** | CIFAR-10 RF · FID | **CONDITIONAL**：n_rounds=1 在匹配 NFE=50 下胜出（−1.2% 至 −2.5%，4 调度器）；在调优基线下失效（GAP-26：基线 NFE=200 时 0/4）；n_rounds ≥ 2 回归 +20% 至 +31% |
-| **R5c** | MNIST FM · FID | **STRONG（smoke ckpt）** d_z = −13.18；生产 ckpt 翻转为基线-WINS（+10.37%）—— 依赖 regime |
-| **R6** | LineageFlow k6 · pLDDT / scPerp | **scPerp 上 STRONG**（cluster-robust d_z = −4.019）；hard-tier 反事实 d_z = +1.189；击败 vanilla + Fast-DLLM + AB-Cache + LeDiFlow（Bonferroni-sig）。live 3 种子 pLDDT 低于 +0.2235 门槛 —— 见 §2.3 |
+| **R5c** | MNIST FM · FID | **STRONG（检查点条件式前沿）** 4 检查点 × 7 档 NFE，N=1000，3 种子：`w16e1_5k` 平台 24.4839 → 21.3632（−12.75%），7/7 档弱支配；三个训练更充分的检查点均为 TIE（旧的 +10.37% 是预算不匹配，不是回归） |
+| **R6** | LineageFlow k6 · pLDDT / scPerp | **STRONG，live tier-aware**（n=3000）：scPerplexity d_z = −0.8393，3/3 种子与全部层级同号；hard-tier pLDDT d_z = +1.1211；pooled pLDDT d_z = +0.1466，低于 +0.2235 门槛。击败 vanilla + Fast-DLLM + AB-Cache + LeDiFlow（Bonferroni-sig） |
 | **K1** | FlowMol3 · RDKit-validity | **NOT-SIGNIFICANT** at K-level α（p_b = 0.5676 vs α_K = 0.0125）；框架 validity 在匹配与 2×/4× NFE 下均超过基线 → 稻草人被证伪 |
 | **K4** | LineageFlow · HMMER length-bias | **SUPPORTED** cluster-robust d_z = +0.84（p_b = 0.009） |
 | **K5** | LineageFlow · HMMER delta | **SUPPORTED / 带 caveat** cluster-robust d_z = +1.12（p_b = 0.003）；n=3 再聚合 caveat |
@@ -168,30 +168,32 @@
 
 ## Final Empirical Metrics (11 cells) / 最终实证指标 (11 单元)
 
-The 11 headline cells partition as **4 STRONG (main) + 1 TIE (main) + 6 PARTIAL/SUPP** (5 main cells + 6 supplementary cells = 11 headline cells total). This is the canonical verdict distribution; cross-doc anchor at [`docs/METRIC_LEDGER.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/METRIC_LEDGER.md).
-11 个头条单元分为 **4 STRONG（主）+ 1 TIE（主）+ 6 PARTIAL/SUPP**（5 主单元 + 6 补充单元 = 11 个头条单元）。此为权威裁决分布；跨文档锚点见 [`docs/METRIC_LEDGER.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/METRIC_LEDGER.md)。
+The 11 headline cells partition as **3 STRONG (main) + 1 CONDITIONAL (main) + 1 TIE (main) + 2 PARTIAL + 4 SUPP-only** (5 main cells + 6 non-main cells = 11 headline cells total). This is the canonical verdict distribution; cross-doc anchor at [`docs/METRIC_LEDGER.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/METRIC_LEDGER.md).
+11 个头条单元分为 **3 STRONG（主）+ 1 CONDITIONAL（主）+ 1 TIE（主）+ 2 PARTIAL + 4 SUPP-only**（5 主单元 + 6 非主单元 = 11 个头条单元）。此为权威裁决分布；跨文档锚点见 [`docs/METRIC_LEDGER.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/METRIC_LEDGER.md)。
 
 | # | Cell / 单元 | Metric / 指标 | Verdict / 裁决 | Headline / 头条 |
 |:---:|---|---|---|---|
 | 1 | **R2** | Kanzi RMSD (index-matched two-sample t) | **STRONG** | d_z = −0.0990, p_raw = 1.79e-3, Bonf-sig at α = 0.007143 |
-| 2 | **R5b** | CIFAR-10 RF FID (matched NFE = 50) | **STRONG (conditional)** | ΔFID = −1.60% to −2.53% (n_rounds=1, 4 schedulers); +9.77% to +30.19% (n_rounds≥2) |
-| 3 | **R5c** | MNIST FM FID (smoke ckpt) | **STRONG (smoke)** | d_z = −13.175, p_bonf = 3.95e-11 |
-| 4 | **R6** | LineageFlow k6 foldability (tier-aware) | **STRONG** | d_z = +0.2235 (Bonf-sig at α = 0.05/6 = 0.008333) + grid best d_z = +0.6467 |
-| 5 | **R5a** | 2D Two Moons W₂ (paper R-level) | **TIE** | d_s = +0.460, p = 0.604 (TIE_PERSISTS at n=3+7+10) |
-| 6 | R1 | LineageFlow HMMER | **PARTIAL / single-seed-disclosed** | d_z = +0.182, p_raw = 1.25e-8, +116.46% (seed=42 only) |
-| 7 | R3 | FlowMol3 fg_dev | **PARTIAL** | d_z = −0.285, p = 8.03e-5 (N=200 per-record ACTUAL); 3-seed pooled BLOCKED |
-| 8 | R5_legacy | 2D Eight Gaussians W₂ | **SUPP / LEGACY** | −10.40%, per-round CSV NOT preserved |
-| 9 | K1 | FlowMol3 RDKit-validity | **SUPP / UNDERPOWERED** | d_z = +1.36, p_bonf = 0.5676 FAILS K-level α = 0.0125 by 45.4× |
-| 10 | K4+K5 | LineageFlow HMMER length-bias + uniform-AA | **SUPP** | K4 POWERED, K5 SUPPORTS-WITH-CAVEAT |
-| 11 | K7 | LineageFlow novelty | **SUPP / direction-INVERTED** | W166 P3: framework 12.6× LESS Pfam-novel than baseline at pctid<30% |
+| 2 | **R5c** | MNIST FM FID (4 检查点 × 7 档 NFE) | **STRONG（检查点条件式前沿）** | `w16e1_5k` 平台 24.4839 → 21.3632（−12.75%），7/7 档弱支配；其余三个检查点 TIE |
+| 3 | **R6** | LineageFlow k6 foldability (live tier-aware) | **STRONG** | scPerplexity d_z = −0.8393（n=3000）；hard-tier pLDDT d_z = +1.1211（n=990）；pooled pLDDT d_z = +0.1466（低于 +0.2235 门槛） |
+| 4 | **R5b** | CIFAR-10 RF FID (matched NFE = 50) | **CONDITIONAL** | ΔFID = −1.60% to −2.53%（n_rounds=1，4 调度器）；+9.77% to +30.19%（n_rounds≥2） |
+| 5 | **R5a** | 2D Two Moons W₂ (paper R-level) | **TIE** | d_s = +0.460, p = 0.604（n=3+7+10 持续 TIE） |
+| 6 | R1 | LineageFlow HMMER | **PARTIAL / single-seed-disclosed** | d_z = +0.182, p_raw = 1.25e-8；NFE=150 时 158 → 275 hits（+74.1%），仅 seed 42 |
+| 7 | R3 | FlowMol3 fg_dev | **PARTIAL / three-seed measured** | 均值 −0.0377，sd 0.0939，t = −0.695，df = 2，p = 0.559，d_z = −0.401 —— 方向一致但不显著 |
+| 8 | K1 | FlowMol3 RDKit-validity | **SUPP** | d_z = +1.36, p_bonf = 0.5676 FAILS K-level α = 0.0125 by 45.4× |
+| 9 | K4 | LineageFlow HMMER length-bias | **SUPP** | cluster-robust d_z = +0.84, p_b = 0.009 |
+| 10 | K5 | LineageFlow HMMER delta | **SUPP** | cluster-robust d_z = +1.12, p_b = 0.003；n=3 再聚合 caveat |
+| 11 | K7 | LineageFlow novelty | **SUPP / direction-INVERTED** | W166 P3：框架在 pctid<30% 时 Pfam-新颖度比基线低 12.6× |
 
 **Verdict distribution summary / 裁决分布汇总:**
 
 | Bucket / 类别 | Count / 计数 | Cells / 单元 |
 |---|---:|---|
-| STRONG (main) | 4 | R2, R5b (conditional), R5c, R6 |
-| TIE (main) | 1 | R5a |
-| PARTIAL/SUPP | 6 | R1, R3, R5_legacy, K1, K4+K5, K7 |
+| STRONG（主） | 3 | R2, R5c, R6 |
+| CONDITIONAL（主） | 1 | R5b |
+| TIE（主） | 1 | R5a |
+| PARTIAL | 2 | R1, R3 |
+| SUPP-only | 4 | K1, K4, K5, K7 |
 | **Total / 合计** | **11** | |
 
 **Bonferroni family summary / Bonferroni 族汇总:**

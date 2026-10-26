@@ -7,18 +7,18 @@ copied verbatim from the canonical manuscript, `docs/drafts/paper-A-final.md`:
   * Panel (a) per-cell standardized effect sizes -- §7.2 per-cell rows:
       R2  Kanzi inv-proj RMSD   d_z = -0.0990  (STRONG,  framework-WINS)
       R1  LineageFlow HMMER     d_z = +0.182   (PARTIAL, framework-WINS)
-      R6  Kanzi k6 pLDDT        d_z = +0.2235  (tier-aware counterfactual)
-                                d_z = +1.189   (hard tier)
-      R3  FlowMol3 REOS         d_z = -0.285   (PARTIAL, framework-WINS)
+      R6  Kanzi k6 scPerp       d_z = -0.8393  (STRONG, live, n=3000)
+                                d_z = +1.1211  (live hard tier, n=990)
+      R3  FlowMol3 fg_dev       d_z = -0.401   (PARTIAL, 3-seed mean)
       R5a 2D Two Moons W_2      d_s = +0.460   (TIE, unpaired)
-      R5c MNIST FM FID (smoke)  d_z = -13.18   (STRONG, framework-WINS)
     The vertical reference line at |d| = 0.8 is the paper's STRONG-promotion
     bar (§7.2: "d_z > 0.8 STRONG-promotion bar").
   * Panel (b) the 11-cell verdict distribution -- §7.2 / §7.11:
-      4 STRONG + 1 TIE + 2 PARTIAL/single-seed + 4 SUPP-only = 11 cells.
-    R5b is CONDITIONAL (protocol-dependent single-round) and the 4 K-cells
-    are SUPP-only; neither carries a single standardized effect size, so
-    panel (a) plots only the cells with a reported effect.
+      3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only = 11 cells.
+    R5b is CONDITIONAL (protocol-dependent single-round), R5c is STRONG on a
+    frontier (quality, NFE) comparison, and the 4 K-cells are SUPP-only.
+    R5b, R5c and the K-cells carry no single standardized effect size, so
+    panel (a) plots only the cells with a reported point effect.
 
 The renderer uses matplotlib's `Agg` backend (headless) and is byte-stable
 under repeated invocation. It emits a single-column, 2-panel PNG to
@@ -46,16 +46,16 @@ from matplotlib.ticker import FixedFormatter, FixedLocator
 PANEL_A = (
     ("R2", "Kanzi inv-proj RMSD", 0.0990, "$d_z=-0.0990$", "STRONG"),
     ("R1", "LineageFlow HMMER", 0.182, "$d_z=+0.182$", "PARTIAL"),
-    ("R6", "Kanzi k6 pLDDT (tier-aware)", 0.2235, "$d_z=+0.2235$", "STRONG"),
-    ("R3", "FlowMol3 REOS flags", 0.285, "$d_z=-0.285$", "PARTIAL"),
+    ("R3", "FlowMol3 fg_dev (3 seeds)", 0.401, "$d_z=-0.401$", "PARTIAL"),
     ("R5a", "2D Two Moons $W_2$", 0.460, "$d_s=+0.460$", "TIE"),
-    ("R6", "Kanzi k6 pLDDT (hard tier)", 1.189, "$d_z=+1.189$", "STRONG"),
-    ("R5c", "MNIST FM FID (smoke)", 13.18, "$d_z=-13.18$", "STRONG"),
+    ("R6", "Kanzi k6 scPerplexity (live)", 0.8393, "$d_z=-0.8393$", "STRONG"),
+    ("R6", "Kanzi k6 pLDDT hard tier (live)", 1.1211, "$d_z=+1.1211$", "STRONG"),
 )
 
 # Verdict distribution from §7.2 aggregate line / §7.11.
 PANEL_B = (
-    ("STRONG", 4, "#1b7837"),
+    ("STRONG", 3, "#1b7837"),
+    ("CONDITIONAL", 1, "#2c7fb8"),
     ("TIE", 1, "#777777"),
     ("PARTIAL", 2, "#b35806"),
     ("SUPP", 4, "#c9c9c9"),
@@ -64,6 +64,7 @@ PANEL_B = (
 # Verdict -> marker face colour (shared across panels).
 _VERDICT_COLOR = {
     "STRONG": "#1b7837",
+    "CONDITIONAL": "#2c7fb8",
     "TIE": "#777777",
     "PARTIAL": "#b35806",
     "SUPP": "#c9c9c9",
@@ -83,14 +84,14 @@ def _render_panel_a(ax) -> None:
                linestyle="--", zorder=1)
     ax.annotate(
         "STRONG bar $|d|=0.8$",
-        xy=(_STRONG_BAR, -0.45), xytext=(4, 0),
-        textcoords="offset points", ha="left", va="center",
+        xy=(_STRONG_BAR, n - 0.72), xytext=(-5, 0),
+        textcoords="offset points", ha="right", va="center",
         fontsize=6.5, color="#b2182b",
     )
 
     ax.set_xscale("log")
-    ax.set_xlim(0.06, 40)
-    ax.set_ylim(-0.7, n - 0.4)
+    ax.set_xlim(0.06, 2.0)
+    ax.set_ylim(-0.7, n - 0.25)
     ax.set_yticks(ys)
     # Values live in the y-tick labels so the STRONG-bar line never crosses text.
     ax.set_yticklabels(
