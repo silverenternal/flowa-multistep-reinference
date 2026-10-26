@@ -158,12 +158,19 @@ def resample(profile: list, span: int) -> list:
     Slot ``i`` maps to column ``round(i * (M - 1) / (span - 1))``. This is the
     positional (N-terminal, colinear) correspondence declared as limitation L1
     in the GAP-69 pre-registration.
+
+    ``span <= 0`` means **native**: the profile keeps its own ``M`` columns.
+    That matters when the profile is a *target* rather than a *prior*: the
+    resample duplicates columns whenever ``M < span`` (and drops them when
+    ``M > span``), so the argmax of a resampled profile is a stretched or
+    gappy sequence that the family's own HMM does not recognise. GAP-79
+    measured that directly — see ``docs/audit/gap79-r1-family-lever.md`` §3.8.
     """
     m = len(profile)
     if m == 0:
         raise ValueError("empty_profile")
     if span <= 0:
-        raise ValueError("span_must_be_positive")
+        return list(profile)
     if span == 1:
         return [profile[0]]
     return [profile[round(i * (m - 1) / (span - 1))] for i in range(span)]
@@ -178,7 +185,16 @@ def main(argv: list[str] | None = None) -> int:
         / "pfam35" / "Pfam-A.hmm",
     )
     ap.add_argument("--families", nargs="+", required=True)
-    ap.add_argument("--span", type=int, default=150)
+    ap.add_argument(
+        "--span",
+        type=int,
+        default=150,
+        help=(
+            "Slots to resample onto. 0 keeps each family's native LENG "
+            "(required when the profile is used as a drift *target*, not a "
+            "prior)."
+        ),
+    )
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args(argv)
 
@@ -186,7 +202,7 @@ def main(argv: list[str] | None = None) -> int:
         "source_hmm": str(args.pfam),
         "aa_order": AA_ORDER,
         "span": int(args.span),
-        "resample": "nearest_neighbour_relative",
+        "resample": "none" if int(args.span) <= 0 else "nearest_neighbour_relative",
         "families": {},
     }
     missing: list[str] = []

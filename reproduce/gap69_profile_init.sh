@@ -34,6 +34,9 @@ TEMPERATURE=${TEMPERATURE:-1.0}
 # line. Pre-registration: docs/audit/gap79-r1-family-lever.md §3.
 GUIDANCE_W=${GUIDANCE_W:-0}
 GUIDANCE_T0=${GUIDANCE_T0:-0.0}
+# Empty = fall back to $PROFILES (the 150-slot init profile). Set this to a
+# ``--span 0`` file when the drift target must be a native-length profile.
+GUIDANCE_PROFILES=${GUIDANCE_PROFILES:-}
 # GAP-79 screen only: generation can run concurrently (GPU has the room), but
 # scoring cannot — MMseqs2 shares `results/mmseqs_tmp`. SCORE=0 writes the
 # FASTAs and returns; the caller scores serially afterwards.
@@ -85,6 +88,7 @@ mkdir -p "$OUT"
   echo "=== design ==="
   echo "init_profile=$INIT_PROFILE; init_temperature=$TEMPERATURE; beta=1.0 (m=0); N=$N, NFE=150, R=3, seed $SEED"
   echo "profile_guidance_weight=$GUIDANCE_W; profile_guidance_t_start=$GUIDANCE_T0"
+  echo "profile_guidance_profile_json=${GUIDANCE_PROFILES:-$PROFILES (fallback)}"
 } > "$OUT/METADATA.txt"
 
 PROFILE_ARGS=()
@@ -102,6 +106,12 @@ fi
 if [[ "$GUIDANCE_W" != "0" && "$GUIDANCE_W" != "0.0" ]]; then
   PROFILE_ARGS+=(--profile-guidance-weight "$GUIDANCE_W"
                  --profile-guidance-t-start "$GUIDANCE_T0")
+  # GAP-79 §3.8 — the drift *target* must be a native-length profile; the
+  # 150-slot resample's argmax is a stretched sequence the family's own HMM
+  # does not recognise, so a drift toward it cannot raise the hit rate.
+  if [[ -n "$GUIDANCE_PROFILES" ]]; then
+    PROFILE_ARGS+=(--profile-guidance-json "$GUIDANCE_PROFILES")
+  fi
 fi
 
 "$PY" tools/gen_lineageflow_n1000_fastas.py \

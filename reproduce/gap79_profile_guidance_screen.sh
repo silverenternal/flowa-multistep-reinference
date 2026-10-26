@@ -10,6 +10,13 @@
 # confirmation arm (N=1000, seeds 42/43/44) is a separate run and only the
 # selected weight goes there.
 #
+# §3.8 (F3) — round 1 pointed the drift at the GAP-69 150-slot *resampled*
+# profile. That profile's argmax is a stretched sequence: its own family's HMM
+# does not recognise it for any LENG != 150 (PF00072 111, PF00183 518,
+# PF02517 93), so round 1 measured an invalid target, not the lever. This
+# script now builds a native-length target (``--span 0``) and keeps the init
+# prior on the pre-registered 150-slot file.
+#
 # Generation runs concurrently — each cell is an independent process with its
 # own outdir — but scoring is serial, because MMseqs2 shares
 # `results/mmseqs_tmp`. Only the `framework` arm is scored: the baseline arm
@@ -29,7 +36,16 @@ N=${N:-200}
 PAR=${PAR:-3}
 T0=${T0:-0.0}
 WEIGHTS=${WEIGHTS:-"0.5 2 8 32 128"}
-ROOT=${ROOT:-verification_outputs/gap79-r1-guidance/seed${SEED}}
+ROOT=${ROOT:-verification_outputs/gap79-r1-guidance/native/seed${SEED}}
+GUIDANCE_PROFILES=${GUIDANCE_PROFILES:-verification_outputs/gap79-native-profiles/profiles_native.json}
+export GUIDANCE_PROFILES
+
+# Native-length target (§3.8). Idempotent: the file is small and derived.
+if [[ ! -f "$GUIDANCE_PROFILES" ]]; then
+  "$PY" tools/pfam_profile.py \
+    --families PF00005 PF00072 PF00183 PF02517 --span 0 \
+    --out "$GUIDANCE_PROFILES"
+fi
 
 mkdir -p "$ROOT"
 {
@@ -43,6 +59,7 @@ mkdir -p "$ROOT"
   git rev-parse HEAD
   echo "=== design ==="
   echo "seed=$SEED N=$N NFE=150 R=3 beta=1.0 init=conservation T=1.0 t_start=$T0 weights=[$WEIGHTS]"
+  echo "guidance_profile_json=$GUIDANCE_PROFILES"
 } > "$ROOT/METADATA.txt"
 
 : > "$ROOT/FAILED.txt"

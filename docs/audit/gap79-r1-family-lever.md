@@ -313,7 +313,8 @@ A dose is **eligible** iff all four hold:
 
 Select the **smallest** eligible weight (least intervention). If none is
 eligible, lever 3 is **falsified** and GAP-79 closes with all three placements
-falsified.
+falsified — *provided the target is a valid family member*; §3.8 records the
+round-1 target defect that voids this clause for that run.
 
 Screen numbers may choose the dose; they may never be quoted.
 
@@ -345,3 +346,94 @@ explanations are representational (a single global profile cannot encode a
 family the shared prior has no mode for) and would need a different family
 conditioning path, not another scalar knob. That is the honest closing
 statement — it is not a claim that the framework cannot do the task.
+
+### 3.8 F3 — the round-1 target was not a family member (recorded after round 1, before round 2)
+
+Round 1 (2026-10-25, `verification_outputs/gap79-r1-guidance/seed42/`, git
+`9dc35080`) returned no eligible dose: `PF00072` and `PF02517` stayed at 0/50
+at every weight while the guard family `PF00005` went 8/50 → 50/50 at
+`weight = 2`. That pattern is not what a live lever looks like, and it is not
+what a dead lever looks like either — it is what a **broken target** looks
+like. The drift was pointing at `verification_outputs/gap69-lineageflow-profile/profiles.json`,
+whose `logp` is the GAP-69 **150-slot resample** of each HMM
+(`tools/pfam_profile.py::resample`, slot `i` → column
+`round(i·(M−1)/149)`).
+
+The four families have `LENG` 137 / 111 / 518 / 93. For `M < 150` the
+resample **duplicates** columns; for `M > 150` it **drops** them. The argmax of
+a resampled profile is therefore a stretched or gappy sequence, not a family
+member. Measured directly with the evaluator's own `hmmscan` call
+(`--evalue 1e-3 --no-cut-ga`), on the pure argmax consensus of each profile:
+
+| family | `LENG` | native consensus (top1 / E) | 150-slot resample (top1 / E) |
+|---|---|---|---|
+| PF00005 | 137 | PF00005 / 9.8e−58 | PF00005 / 8.7e−36 |
+| PF00072 | 111 | PF00072 / 6.0e−48 | PF12363 / 0.068 — **no hit** |
+| PF00183 | 518 | PF00183 / 2.4e−255 | *(no hit at all)* |
+| PF02517 | 93 | PF02517 / 9.1e−33 | PF03384 / 1.4 — **no hit** |
+
+The native consensus of each family is recognised at E ≤ 1e−32; the resampled
+one is recognised **only for `M ≈ 150`** (PF00005, 137 → 150, 13 duplicated
+columns). So a drift toward the resampled profile can only ever help the one
+family whose length is already near the span — exactly the observed asymmetry.
+The mechanism itself worked: mean per-position agreement between the output
+and the (resampled) target rose from 0.20–0.25 at control to 0.78–0.88 at
+`weight = 8` and 0.96–0.99 at `weight = 32`. The drift converged; it converged
+onto a sequence the HMM does not recognise.
+
+Round 1 is therefore **not** evidence about lever 3, and §3.4's "no eligible
+dose ⇒ falsified" clause is **not** triggered — the same distinction GAP-80
+drew between F1/F2 (harness defects) and a measured null.
+
+**Fix (additive, defaults unchanged).** `tools/pfam_profile.py --span 0` keeps
+each family's native `LENG` and writes `"resample": "none"`; the 150-slot
+default is untouched, so every GAP-69 artifact and the pre-registered arm C
+init stay byte-identical. The drift target is now a separate argument
+(`--profile-guidance-json`, plumbed through
+`reproduce/gap69_profile_init.sh` as `GUIDANCE_PROFILES`), so the init prior
+and the drift target can differ without a second code path. The manifest
+records `profile_guidance_profile_json` and the per-family
+`profile_guidance_profile_span`, so a cell can never again be ambiguous about
+which target it used. Round 2 re-runs the identical §3.4 screen at
+`verification_outputs/gap79-r1-guidance/native/seed42/`; round 1's artifacts
+are kept as the record of F3.
+
+One consequence is worth stating because it is not repaired by this fix: the
+drift is positional (`profile column i ↔ state position i`, §0.5 L1), and
+generation length is not controlled (round 1 mean 86–92 aa). For `PF00183`
+(`LENG` 518) the first 90 state positions cover 17 % of the domain; a native
+target cannot make that a full-domain match, only a recognisable partial one
+(§3.6). The fix removes the *invalid-target* confound; it does not remove the
+coverage boundary.
+
+## 4. Round 1 screen (2026-10-25) — VOID (F3), kept as the record
+
+Six cells, N = 200, seed 42, NFE = 150, R = 3, `beta = 1.0`, arm C init
+(`conservation`, T = 1.0), `t_start = 0.0`, weights
+{0.5, 2, 8, 32, 128}. Artifacts:
+`verification_outputs/gap79-r1-guidance/seed42/` (git `9dc35080`); the table
+below is `tools/gap79_guidance_screen.py` on those artifacts.
+
+| cell | PF00072 | PF02517 | PF00183 | PF00005 (guard) | unique | mean H | eligible |
+|---|---|---|---|---|---|---|---|
+| control | 0/50 | 0/50 | 0/50 | 8/50 | 1.000 | 3.77 | — |
+| W0.5 | 0/50 | 0/50 | 0/50 | 39/50 | 1.000 | 3.55 | no |
+| W2 | 0/50 | 0/50 | 0/50 | 50/50 | 1.000 | 3.09 | no |
+| W8 | 1/50 | 0/50 | 0/50 | 50/50 | 1.000 | 2.23 | no |
+| W32 | 0/50 | 0/50 | 0/50 | 50/50 | 0.955 | 1.73 | no |
+| W128 | 0/50 | 0/50 | 0/50 | 50/50 | 0.810 | 1.70 | no |
+
+`selected_weight: null`, `falsified: true` in the tool's output — **but §3.8
+shows the target was not a family member for three of the four families, so
+this table is a measurement of F3, not of lever 3.** Two readings survive it:
+
+* The drift is mechanically real and dose-monotone: agreement with the
+  (resampled) target rises 0.20–0.25 → 0.78–0.88 (W8) → 0.96–0.99 (W32).
+* The diversity guard bites at the top of the grid, not in the middle:
+  `W32` still holds unique ≥ 0.95 but entropy is already 0.46× control;
+  `W128` fails both (0.810, 0.45×). Any eligible dose therefore has to sit at
+  or below `W8`, which is where round 2's eligible set will be read.
+
+Round 2 re-runs §3.4 unchanged against the native target and writes
+`verification_outputs/gap79-r1-guidance/native/seed42/`; its §4.1 replaces the
+verdict above.

@@ -1526,6 +1526,18 @@ def main() -> None:
         ),
     )
     p.add_argument(
+        "--profile-guidance-json",
+        type=Path,
+        default=None,
+        help=(
+            "GAP-79 lever 3 — profile file for the drift *target*. Defaults "
+            "to --profile-json. Point this at a ``--span 0`` (native-length) "
+            "file: the resampled 150-slot profile's argmax is a stretched "
+            "sequence that the family's own HMM does not recognise, so a "
+            "drift toward it cannot raise the intended hit rate (§3.8)."
+        ),
+    )
+    p.add_argument(
         "--profile-guidance-t-start",
         type=float,
         default=0.0,
@@ -1679,11 +1691,19 @@ def main() -> None:
         profile_json=getattr(args, "profile_json", None),
     )
     # GAP-79 lever 3 — in-loop drift toward the same profile (default off).
+    # The *target* may differ from the *prior*: a resampled profile's argmax is
+    # a stretched sequence the family's own HMM does not recognise (§3.8), so
+    # the drift arm points at a native-span file while the control keeps the
+    # pre-registered 150-slot init.
+    guidance_profile_json = (
+        getattr(args, "profile_guidance_json", None)
+        or getattr(args, "profile_json", None)
+    )
     profile_guidance = _build_profile_guidance(
         family_ids,
         weight=float(getattr(args, "profile_guidance_weight", 0.0)),
         t_start=float(getattr(args, "profile_guidance_t_start", 0.0)),
-        profile_json=getattr(args, "profile_json", None),
+        profile_json=guidance_profile_json,
     )
 
     manifest: dict[str, Any] = {
@@ -1811,6 +1831,21 @@ def main() -> None:
             getattr(args, "profile_guidance_t_start", 0.0)
         ),
         "profile_guidance_is_active": bool(profile_guidance is not None),
+        # Which file the drift *target* came from, and its positional
+        # convention. ``native`` = one column per HMM match state; anything
+        # else is the GAP-69 150-slot resample, whose argmax is not a family
+        # member for M != 150 (§3.8).
+        "profile_guidance_profile_json": (
+            None if guidance_profile_json is None
+            else str(guidance_profile_json)
+        ),
+        "profile_guidance_profile_span": (
+            None if profile_guidance is None
+            else {
+                fid: int(spec.prob.shape[0])
+                for fid, spec in profile_guidance.items()
+            }
+        ),
         "profile_guidance_config_hash": (
             None if profile_guidance is None
             else {

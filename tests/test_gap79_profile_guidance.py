@@ -216,6 +216,64 @@ def test_config_round_trip_preserves_the_hash() -> None:
     assert np.allclose(restored.conservation, prof.conservation)
 
 
+def test_native_span_profile_keeps_its_own_row_count() -> None:
+    """A native (``--span 0``) target is not padded to 150 rows.
+
+    §3.8: the drift target must have one row per HMM match state. The resampled
+    150-slot file duplicates columns whenever ``M < 150``, and its argmax is
+    then a stretched sequence that the family's own HMM does not recognise, so
+    the arm would measure an invalid target instead of the lever.
+    """
+    from tools.pfam_profile import resample
+
+    profile = [[float(i)] for i in range(111)]
+    native = resample(profile, 0)
+    assert len(native) == 111
+    assert native == profile
+    # The pre-registered GAP-69 behaviour must not move: 150 slots still
+    # stretches, and 111 rows of output stay distinct from the native file.
+    assert len(resample(profile, 150)) == 150
+    assert len(resample(profile, 150)) != len(native)
+
+
+def test_guidance_over_a_native_span_leaves_the_tail_untouched() -> None:
+    """``M = 111 < 256``: positions past the profile keep ``c = 0``."""
+    span, n_aa, n_chan = 111, 20, 33
+    prof = ProfileGuidance(
+        prob=_one_hot(n_pos=span, n_aa=n_aa),
+        conservation=np.ones(span, dtype=np.float64),
+        weight=4.0,
+    )
+    x = np.full((256, n_chan), 1.0 / n_chan)
+    drift = prof.apply(np.zeros_like(x), x, 0.5)
+    assert np.any(np.abs(drift[:span, :n_aa]) > 0.0)
+    assert np.allclose(drift[span:, :], 0.0)
+    assert np.allclose(drift[:, n_aa:], 0.0)
+
+
+def test_cli_builder_accepts_a_native_profile(tmp_path) -> None:
+    """The target may come from a file with native lengths, not just span 150."""
+    import json
+
+    payload = {
+        "families": {
+            "PF00072.24": {
+                "logp": np.log(np.full((111, 3), 1.0 / 3.0)).tolist(),
+                "conservation": [1.0] * 111,
+            }
+        }
+    }
+    path = tmp_path / "profiles_native.json"
+    path.write_text(json.dumps(payload))
+    from tools.gen_lineageflow_n1000_fastas import _build_profile_guidance
+
+    specs = _build_profile_guidance(
+        ["PF00072.24"], weight=2.0, t_start=0.0, profile_json=path
+    )
+    assert specs is not None
+    assert specs["PF00072.24"].prob.shape == (111, 3)
+
+
 # ---------------------------------------------------------------------------
 # CLI wiring (tools/gen_lineageflow_n1000_fastas.py)
 # ---------------------------------------------------------------------------

@@ -167,9 +167,10 @@ def build(root: Path) -> dict:
     control = cell_block(control_dir)
 
     doses: list[dict] = []
-    for run_dir in sorted(root.glob("W*"), key=_weight_of):
-        if not run_dir.is_dir():
-            continue
+    # The sweep leaves sibling W<weight>.log files next to the cells, so filter
+    # to directories *before* sorting (the key parses the name).
+    dose_dirs = [p for p in root.glob("W*") if p.is_dir()]
+    for run_dir in sorted(dose_dirs, key=_weight_of):
         block = cell_block(run_dir)
         doses.append(
             {
