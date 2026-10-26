@@ -4,7 +4,7 @@
  "objective": "The framework must WIN on every model task: R1 (LineageFlow hmmscan hits), R2 (Kanzi RMSD), R3 (FlowMol3 fg_dev), R5a (2D FM W2), R5b (CIFAR FID), R5c (MNIST FID), R6 (LineageFlow scPerplexity/pLDDT), K1 (FlowMol3 pb_validity), K7 (LineageFlow novelty). A TIE is a loss. A LOSS is an open mechanism gap, not a boundary to be published. Every cell that is not a win today has a mechanism gap below whose acceptance test is that win.",
  "win_definition": "A cell wins only if BOTH hold. (1) POINT WIN: at the cell's canonical protocol (same checkpoint, same N, same seeds), the framework's metric is better with the paired 95% CI excluding 0 and clearing the cell's alpha. (2) FRONTIER DOMINANCE: over the NFE grid, the framework's (quality, NFE) curve lies at or below the baseline's at every grid point, and the framework's plateau is better than the baseline's plateau. (2) is the load-bearing one: flow-matching inference saturates with steps, so 'the baseline with more steps' is NOT a valid control and NOT a threat -- the baseline's ceiling is fixed by its own inference protocol. The framework's claim is that it raises that ceiling AND reaches a given quality at fewer NFE. Both halves are measured, not asserted.",
  "frontier_protocol": "Per model: baseline and framework on the SAME checkpoint, prior, seed policy and N, swept over NFE in {10, 25, 50, 100, 200} (extended upward until the baseline plateaus for two consecutive points). Report per-NFE paired deltas with CIs, the plateau estimate (mean of the last two grid points), and the dominance verdict. A cell whose baseline does not plateau on the grid has an unfinished ceiling measurement, not a win.",
- "updated_at": "2026-10-25",
+ "updated_at": "2026-10-26",
  "history": "docs/audit/todo-history.md",
  "no_push": true,
  "commit_footer": "(USER AUTHORIZED, NO PUSH)",
@@ -29,17 +29,17 @@
  "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 15 known failures (3 stale eval stubs; 12 order-dependent test_paper_metrics cases). docs-vs-code verifies 3370 claims since the 2026-10-21 archive move.",
  "q1_gate": "The requirement is a win on every model task, judged by win_definition (point win AND frontier dominance). Current state: R1 wins single-seed but the gain is one Pfam family (GAP-69 -> GAP-79); R2 wins small at one seed; R3 is a near-miss at one seed; R5a ties; R5b and R5c-production lose; K1's metric is saturated; K7 is inverted. GAP-76 already removed the MNIST first-moment defect (mean DeltaFID +7.75% -> -3.34%, 6 W / 0 T / 6 R strict), so the MNIST residual is a contraction, not a location error; GAP-78's offline screen then showed the contraction (kappa) predicts the sign while the base's dispersion (rho) does not. Every non-winning cell therefore has a mechanism gap whose acceptance test is the win itself; none of them is closed by restating a boundary.",
  "execution_order": [
-  "GAP-70-ADAPTER-KANZI-LATENT (P1, re-scoped to LineageFlow; K7 must become a win, not a <=2x loss)",
-  "GAP-71-ADAPTER-IMAGE-SPECTRAL (P1, CIFAR R5b must become a win at matched NFE)",
-  "GAP-74-CONDITIONAL-MEAN-BOUND (P1, theory counterpart: measures rho at fixed t0 and separates the deviation channel from the marginal one; does not gate GAP-78)",
-  "GAP-81-R3-FLOWMOL3-WIN (P1, FlowMol3 fg_dev must clear the R-level alpha at 3 seeds)",
-  "GAP-80-R5A-2D-WIN (P2, the 2D FM tie must become a win)",
-  "GAP-47-K1-PB-METRIC (P2, USER GATE; K1 must win at the new metric)",
-  "GAP-50-EVIDENCE-GRADE-TABLE (P2, refresh after the cells above land; every row must read WIN or OPEN)",
-  "GAP-29-MANUSCRIPT (P2, USER AUTHORIZATION; blocked on GAP-84/78/79 numbers)",
-  "GAP-15-VENUE (P1, USER: final journal choice)",
-  "GAP-51-PAPER-B-SPLIT (P2, USER GATE: outline only)",
-  "GAP-20-COVERLETTER (P3, USER ONLY)"
+  "1. GAP-79-R1-PER-FAMILY (P0) — round-2 screen RUNNING at verification_outputs/gap79-r1-guidance/native/seed42 (native --span 0 target, F3 fix 255f75c6). On finish: tools/gap79_guidance_screen.py -> §3.4 verdict -> if an eligible dose exists, the N=1000 x 3-seed confirmation is the NEXT GPU job (it is the only P0). If none is eligible, lever 3 is falsified and GAP-79 closes with all three placements falsified. Blocks the R1 row of GAP-50.",
+  "2. GAP-81-R3-FLOWMOL3-WIN (P1) — pre-registered (docs/audit/gap81-r3-sigma-dose.md), flag landed (d3968b85). Depends only on the GPU, not on GAP-79: the sigma screen (6 cells x N=1000, seed 42, ~1.5 h) can start as soon as cuda:0 frees. Screen -> >=10x eligibility -> single 3-seed confirmation. No other gap depends on it.",
+  "3. GAP-71-ADAPTER-IMAGE-SPECTRAL (P1) — code complete (16 tests). Dependency is INTERNAL and strict: the BEFORE arm (matched total NFE, N=1000 x 3 seeds) must run before the spectral arm, because it is the retraction baseline. ~3 h GPU for the before arm, then ~3 h for the after arm.",
+  "4. GAP-70-ADAPTER-KANZI-LATENT (P1, K7) — the position-selective blend is falsified; the cell still needs a mechanism. No GPU until a new mechanism is pre-registered: the CPU work is to read the restart operator's validity-for-novelty trade (V_B-V_A=+6.9pp, p=4.3e-5) and name the next lever. Independent of the three GPU jobs above.",
+  "5. GAP-80-R5A-2D-WIN (P2) — R5a is a measured TIE with the time-coordinate fix (0.0844 vs 0.0783, +7.8 %, p=0.29). The only untested lever left is the record-scoped restart seed, which is a USER GATE (it changes the restart semantics of every R-level cell). No run until that decision.",
+  "6. GAP-47-K1-PB-METRIC (P2, USER GATE) — blocked on data (no per-molecule PoseBusters verdicts, smiles_list[:200]); needs a pre-registered driver change before any run.",
+  "7. GAP-50-EVIDENCE-GRADE-TABLE (P2) — refresh after 1-3 land; every row WIN or OPEN. Insertion into the manuscript is user-gated.",
+  "8. GAP-29-MANUSCRIPT (P2, user authorization) — blocked on GAP-84/78/79/81 numbers.",
+  "9. GAP-15-VENUE (P1, user) — final journal choice; no agent work.",
+  "10. GAP-51-PAPER-B-SPLIT (P2, user gate) — outline only.",
+  "11. GAP-20-COVERLETTER (P3, user only)."
  ],
  "open_gaps": [
   {
