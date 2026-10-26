@@ -284,10 +284,6 @@ Every round of the framework loop produces a \texttt{StateBundle} carrying the p
 \subsection{Capability handshake and auditable state}
 Adapters declare supported channels and feature flags in a typed capability token. The runner checks that token at each round, records mismatches as structured audit codes, and prevents an unsupported transition. The per-round state bundle carries scheduler output, policy decisions, endpoint digests, and channel decisions to the next round. A SHA-256 hash chain links canonical ledger rows; incremental append verifies the incoming row and link in constant work per row. The chain detects later edits when checked against a trusted head hash. A typed state-machine wrapper records transitions while delegating scheduler behaviour; legacy mapping inputs are normalized at the adapter boundary. These four pieces make failures inspectable and replayable across checkpoint families.
 
-\subsection{Why the framework's identity is the typed contract}
-
-Fifteen of sixteen enumerated companion application sites are dormant under the validated cosine baseline. The headline measurements primarily exercise the shared typed loop with cosine scheduling, bounded merge, and a schedule-derived policy. The observed operating boundaries arise in these instantiated composite maps $G$ under particular checkpoints, schedules, and evaluators; they are not consequences of optional companion quantities. The four-port contract makes the inference-dynamics reformulation deployable and auditable across checkpoint families.
-
 \subsection{Mechanistic design principles}
 The integrations reveal three reusable principles that connect the abstract map to measurable gains. First, \textbf{representation alignment} places the restart state in the coordinate system expected by the frozen checkpoint. In Kanzi, the inverse projection and DAE decoder map a sampled latent to backbone coordinates before the velocity field is evaluated. The bridge is part of the inference mechanism: it makes the state visible to the same geometric decoder that defined the checkpoint's reconstruction objective.
 
@@ -323,11 +319,8 @@ is a default schedule family. It does not consume optional paper quantities when
 
 FlowA optionally ships 4 theoretical-perspective controllers that engage only under the Paper B companion lens. Concrete implementations include \texttt{CodimensionSheetScheduler}, \texttt{PaperRatioAdaptiveScheduler}, \texttt{EvidenceDrivenScheduler}, and \texttt{ConvergenceAdaptiveScheduler}. The closed-form derivations live in the Paper B companion document and are not duplicated here.
 
-\subsection{Innovation: Lazy-Memoized Site-Aware Cache}
-
-Standard memoisation patterns either cache aggressively or never: \texttt{functools.lru\_cache} / \texttt{functools.cache} are always-on after first call with no per-site dispatch; \texttt{torch.compile} lazy trace is always-on after first trace and not callable-on-demand; \texttt{@property} lazy init is per-call with no shared cache across sites; per-module lazy imports are dormant-until-first-access but not site-keyed. FlowA introduces a lazy-memoized site-aware cache with three novel aspects: (1) \textbf{single dormant/active constructor with \texttt{profile\_residual\_fn} as the activation trigger} --- call sites that do not supply the activation flag see byte-identical behaviour (every site returns \texttt{None}); (2) \textbf{16-site dispatch table keyed by \texttt{site\_name} via a closed-set literal} --- new sites are added by extending the closed set; \texttt{ValueError} on unknown site; (3) \textbf{per-site return shape + idempotent \texttt{consume()} activation log} --- each site returns the value shape that the corresponding code path expects, and \texttt{consume()} appends the site name to \texttt{\_activated\_sites} for the audit trail.
-
-The framework shares one cache across 16 sites without polluting the call sites. A reader of the framework sees \texttt{get\_paper\_quantities(site="sheet\_A")} and gets exactly what the corresponding code path expects (closed form \texttt{sheet\_evidence\_A(g)} at first call, bit-identical float forever after). The activation log means the framework can report which sites were exercised per round in \texttt{RoundTrace.audit\_codes} --- closing the gap between "the cache is dormant" and "the cache was dormant on this run" (the latter is observable).
+\subsection{Site-aware cache}
+The companion quantities are served through one lazy, site-keyed cache with sixteen entries. It is dormant unless a call site supplies \texttt{profile\_residual\_fn}, so a run that does not opt in is byte-identical to one without it. The activation log records which sites were exercised, which is what makes ``dormant on this run'' observable rather than assumed.
 
 \subsection{Validated headline usage}
 Only three headline cells instantiate a scheduler object (R5a records \texttt{PaperRatioAdaptiveScheduler}; R5b and R5c sweep four and three arms). Four cells construct no scheduler, three pass a legacy \texttt{"cosine"} label that selects a uniform NFE split, and R6 evaluates a tier-aware controller through a counterfactual analysis. This distribution locates the directly observed contribution in the shared inference and adapter contracts; the optional controller requires its own live validation.
@@ -420,6 +413,25 @@ Indeed, $\|G_b(x)-G_b(y)\|\le mK\|x-y\|$; Banach's fixed-point theorem applies. 
 \begin{aligned}\mathbb{E}\|B_m-z\|^2={}&m\mathbb{E}\|X-z\|^2+(1-m)\mathbb{E}\|Y-z\|^2\\&-m(1-m)\mathbb{E}\|X-Y\|^2.\end{aligned}
 \end{equation}
 This follows pointwise from the convex-combination norm identity. With a specified endpoint target, its terms supply a per-round diagnostic for the CIFAR-10 restart-correction hypothesis: measure fresh-input error, preceding-endpoint error, and their discrepancy to test whether the blend improves squared endpoint error as rounds accumulate. Because FID compares feature distributions, this diagnostic complements rather than replaces the matched-NFE R5b regime study.
+
+\subsection{From the contraction diagnostic to a measured gate}
+The theorems bound the composite map's contraction and the blend's squared error; neither fixes the sign of an FID change. A \emph{measured} contraction, however, orders the observed deltas on the MNIST family. Table~\ref{tab:kappa-gate} reports $\kappa$ --- the trace ratio of the framework arm's projected covariance to the reference-scaled baseline dispersion, computed at NFE$=50$ without reference data --- against the seven-rung plateau delta of the same four checkpoints under the same protocol (\S\ref{sec:r5c-frontier}). The two checkpoints with $\kappa<0.74$ move the plateau; the two with $\kappa>0.89$ sit inside the one-FID floor, and the same $2/2$ split holds on the NFE$=50$ delta itself. With four points the ordering is consistent with a threshold but does not establish one, and $\kappa$ is collinear with the optimizer-step budget on this family, so the table is a diagnostic and not an identification. It does mean the theory section is not decorative: the quantity the theorem bounds is measurable, and on this family it sorts the outcomes.
+
+\begin{table}[t]
+\centering\small
+\caption{Measured contraction $\kappa$ against the seven-rung plateau delta. Same checkpoints and protocol, $N=1000$ per arm, seeds 42/43/44; $\kappa$ is measured at NFE$=50$ and the delta is the plateau over rungs 100 and 200. $\kappa$ is averaged over 3 seeds $\times$ 3 arms. Negative $\Delta$FID is favourable.}
+\label{tab:kappa-gate}
+\begin{tabular}{lcccc}
+\toprule
+Checkpoint & Opt.\ steps & $\kappa$ & $\Delta$FID & Verdict \\
+\midrule
+\texttt{w16e1\_5k} & 78 & 0.667 & $-3.12$ & WIN \\
+\texttt{w16e1\_10k} & 156 & 0.738 & $-1.00$ & TIE \\
+\texttt{w16e1\_60k} & 937 & 0.893 & $+0.02$ & TIE \\
+\texttt{production} & 2,811 & 0.959 & $-0.03$ & TIE \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Empirical Results}
 \label{sec:results}

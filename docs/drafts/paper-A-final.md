@@ -521,7 +521,20 @@ $$\mathbb{E}\|Y-z\|^2-\mathbb{E}\|X-z\|^2<m\,\mathbb{E}\|X-Y\|^2. \tag{7}$$
 
 The proof is the pointwise convex-combination identity in §A.3. Equation (7) supplies a per-round mechanistic diagnostic for the R5b question: with a specified endpoint target, measure fresh-input error, preceding-endpoint error, and their discrepancy to determine whether blending improves squared endpoint error as rounds accumulate. This makes the proposed restart-correction explanation testable. It is not an FID bound: FID depends on feature distributions, so the identity does not predict a universal first-round-only FID correction. The R5b `n_rounds` boundary is measured separately in §7.7, with its N=200 and N=1000 protocols distinguished there.
 
-### 6.7 Framework Properties as primary contribution
+### 6.7 From the contraction diagnostic to a measured gate
+
+The theorems bound the composite map's contraction and the blend's squared error; neither fixes the sign of an FID change. A *measured* contraction, however, orders the observed deltas on the MNIST family. The table below reports κ — the trace ratio of the framework arm's projected covariance to the reference-scaled baseline dispersion, computed at NFE=50 without reference data — against the seven-rung plateau delta of the same four checkpoints under the same protocol (§7.9). The two checkpoints with κ < 0.74 move the plateau; the two with κ > 0.89 sit inside the one-FID floor, and the same 2/2 split holds on the NFE=50 delta itself. With four points the ordering is consistent with a threshold but does not establish one, and κ is collinear with the optimizer-step budget on this family, so the table is a diagnostic and not an identification. It does mean the theory section is not decorative: the quantity the theorem bounds is measurable, and on this family it sorts the outcomes.
+
+**Measured contraction κ against the seven-rung plateau delta.** Same checkpoints and protocol, N=1000 per arm, seeds 42/43/44; κ is measured at NFE=50 and the delta is the plateau over rungs 100 and 200. κ is averaged over 3 seeds × 3 arms. Negative ΔFID is favourable.
+
+| Checkpoint | Opt. steps | κ | ΔFID | Verdict |
+|---|---:|---:|---:|---|
+| `w16e1_5k` | 78 | 0.667 | −3.12 | WIN |
+| `w16e1_10k` | 156 | 0.738 | −1.00 | TIE |
+| `w16e1_60k` | 937 | 0.893 | +0.02 | TIE |
+| `production` | 2,811 | 0.959 | −0.03 | TIE |
+
+### 6.8 Framework Properties as primary contribution
 
 The framework properties establish protocol composition, deterministic transition logging, and ledger integrity. Theorem 4 adds a contraction result only when its explicit condition holds; Theorem 5 describes the arithmetic blend irrespective of checkpoint family. These statements are independent of the optional paper-quantity controllers. A convergence-of-sampling-measures result belongs to the separate theoretical companion and is not claimed here.
 

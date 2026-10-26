@@ -1627,3 +1627,38 @@ Three things drove the reordering:
 The carried-over items (GAP-70, 71, 79, 81, 80, 47, 50, 29, 15, 51, 20) keep
 their status and records; the new file lists them under `carried_over` with a
 one-line state and points here for detail.
+
+---
+
+## 26. v8 execution pass — every non-experiment item closed (2026-10-27)
+
+The v8 plan was written as nine gaps, five of which need GPU time. With the GPU
+busy on other work, the non-experiment items were executed in full:
+
+| gap | outcome | record |
+|---|---|---|
+| GAP-92 κ bridge | **EXECUTED.** κ tabulated against the plateau delta on four checkpoints; §VI-D + a table inserted; paid for by two compressions, 12 pages held | `docs/audit/gap92-kappa-bridge.md` |
+| GAP-90 | **PRE-REGISTERED and re-scoped.** The original design assumed five new epoch checkpoints had to be trained. `gap35-mnist-regime/aggregate.json` shows 5k/10k/60k is a clean training-set dose and 60k/epochs2/production a clean epoch dose; only `epochs2` and `w8e3` are unmeasured. 84 cells, no training, a few hours | `docs/audit/gap90-optsteps-dose.md` |
+| GAP-91 | Pre-registered as §8 of the GAP-90 document; blocked on GAP-90 data | same file |
+| GAP-93 | **PRE-REGISTERED.** Round count is already ruled out (0.06 FID span, 16× too small); the only undosed knob is the fresh-noise budget β. Two competing readings with opposite predicted signs | `docs/audit/gap93-converged-lever.md` |
+| GAP-94 | **Decision memo.** The repository's CIFAR checkpoint is at FID 447.9, so it cannot be the competitive benchmark; options A/B costed, user gate | `docs/audit/gap94-standard-benchmark.md` |
+| GAP-95 | **PRE-REGISTERED and re-ranked.** R5b first (the only cell where a grid can flip a verdict); baseline-only scans before any grid; four degenerate "grid" artifacts named and excluded | `docs/audit/gap95-frontier-grids.md` |
+| GAP-96 | **PRE-REGISTERED, re-scoped.** The packaging pass already spent the slack and the measured engineering surface is ~6.5 pages, not the three the entry assumed; a four-item cut list with what must survive verbatim | `docs/audit/gap96-manuscript-compression.md` |
+
+Two facts changed in `todo.json` as a result, and both are corrections rather
+than additions:
+
+* **GAP-90 was wrong on the facts.** It proposed training five epoch
+  checkpoints on the premise that the four R5c checkpoints differ on every axis
+  at once. Within the family, `5k / 10k / 60k` is a clean training-set dose and
+  `60k / epochs2 / production` a clean epoch dose. The gap is now two existing
+  checkpoints and 84 cells.
+* **GAP-92's "same runs" claim was wrong.** κ is measured at NFE=50 while the
+  plateau delta is at rungs 100–200. The protocol, checkpoints and seeds match;
+  the budget does not. The paper now says "same protocol" and "computed at
+  NFE=50", and the audit records the same-budget cross-check that keeps the 2/2
+  split, plus the within-floor ordering inversion that κ does not explain.
+
+Gates after the pass: `check_claims_consistency.py` exit 0, D.4 30/30 PASS,
+`ruff check` clean, `mkdocs build --strict` exit 0,
+`check_docs_against_code.py` 3371/3371 OK.

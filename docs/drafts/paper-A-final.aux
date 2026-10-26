@@ -23,13 +23,12 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Three-domain split}{4}{subsection.3.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Per-round state bundle}{5}{subsection.3.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-E}}Capability handshake and auditable state}{5}{subsection.3.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-F}}Why the framework's identity is the typed contract}{5}{subsection.3.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-G}}Mechanistic design principles}{5}{subsection.3.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-F}}Mechanistic design principles}{5}{subsection.3.6}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {IV}Scheduler Family}{5}{section.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Thirteen-family taxonomy}{5}{subsection.4.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Nine baselines}{5}{subsection.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Four theoretical-perspective controllers}{6}{subsection.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Innovation: Lazy-Memoized Site-Aware Cache}{6}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Four theoretical-perspective controllers}{5}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Site-aware cache}{6}{subsection.4.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-E}}Validated headline usage}{6}{subsection.4.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {V}Adapter Protocol}{6}{section.5}\protected@file@percent }
 \newlabel{sec:adapter}{{V}{6}{Adapter Protocol}{section.5}{}}
@@ -37,13 +36,16 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Minimum protocol surface}{6}{subsection.5.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Five concrete implementations}{6}{subsection.5.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Vendor-friendly architectural claim}{6}{subsection.5.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {VI}Framework Properties}{7}{section.6}\protected@file@percent }
-\newlabel{sec:properties}{{VI}{7}{Framework Properties}{section.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Mechanism-to-metric transfer}{7}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Framework Properties}{6}{section.6}\protected@file@percent }
+\newlabel{sec:properties}{{VI}{6}{Framework Properties}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Mechanism-to-metric transfer}{6}{subsection.6.1}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Mechanism map from implementation to measured evidence.}}{7}{table.2}\protected@file@percent }
 \newlabel{tab:mechanism-map}{{II}{7}{Mechanism map from implementation to measured evidence}{table.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}Conditional contraction of the re-inference map}{7}{subsection.6.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Measured contraction $\kappa $ against the seven-rung plateau delta. Same checkpoints and protocol, $N=1000$ per arm, seeds 42/43/44; $\kappa $ is measured at NFE$=50$ and the delta is the plateau over rungs 100 and 200. $\kappa $ is averaged over 3 seeds $\times $ 3 arms. Negative $\Delta $FID is favourable.}}{7}{table.3}\protected@file@percent }
+\newlabel{tab:kappa-gate}{{III}{7}{Measured contraction $\kappa $ against the seven-rung plateau delta. Same checkpoints and protocol, $N=1000$ per arm, seeds 42/43/44; $\kappa $ is measured at NFE$=50$ and the delta is the plateau over rungs 100 and 200. $\kappa $ is averaged over 3 seeds $\times $ 3 arms. Negative $\Delta $FID is favourable}{table.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-C}}Exact restart-blend error identity}{7}{subsection.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-D}}From the contraction diagnostic to a measured gate}{7}{subsection.6.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {VII}Empirical Results}{8}{section.7}\protected@file@percent }
 \newlabel{sec:results}{{VII}{8}{Empirical Results}{section.7}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-A}}Evaluation scope}{8}{subsection.7.1}\protected@file@percent }
@@ -51,8 +53,8 @@
 \newlabel{sec:per-cell}{{\mbox  {VII-B}}{8}{Per-cell status}{subsection.7.2}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Evidence comparison across the eleven headline cells. (a) Per-cell standardized effect size $|d|$ on a log scale; the dashed line marks the $|d|=0.8$ STRONG-promotion bar. R6 contributes two points (live scPerplexity and hard-tier pLDDT). (b) The eleven-cell verdict distribution (three STRONG $+$ one CONDITIONAL $+$ one TIE $+$ two PARTIAL $+$ four supplementary). R5b is protocol-conditional, R5c is a frontier comparison, and the four K-cells are supplementary; none of them carries a single standardized effect size, so they are omitted from (a). Values are transcribed verbatim from Sec.~VII-B.}}{8}{figure.4}\protected@file@percent }
 \newlabel{fig:cell-evidence}{{4}{8}{Evidence comparison across the eleven headline cells. (a) Per-cell standardized effect size $|d|$ on a log scale; the dashed line marks the $|d|=0.8$ STRONG-promotion bar. R6 contributes two points (live scPerplexity and hard-tier pLDDT). (b) The eleven-cell verdict distribution (three STRONG $+$ one CONDITIONAL $+$ one TIE $+$ two PARTIAL $+$ four supplementary). R5b is protocol-conditional, R5c is a frontier comparison, and the four K-cells are supplementary; none of them carries a single standardized effect size, so they are omitted from (a). Values are transcribed verbatim from Sec.~VII-B}{figure.4}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Main-cell evidence at the reported metric and protocol. Negative $\Delta $FID is favourable. Status labels are cell-specific, not pooled across metrics.}}{9}{table.3}\protected@file@percent }
-\newlabel{tab:main-cell-evidence}{{III}{9}{Main-cell evidence at the reported metric and protocol. Negative $\Delta $FID is favourable. Status labels are cell-specific, not pooled across metrics}{table.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Main-cell evidence at the reported metric and protocol. Negative $\Delta $FID is favourable. Status labels are cell-specific, not pooled across metrics.}}{9}{table.4}\protected@file@percent }
+\newlabel{tab:main-cell-evidence}{{IV}{9}{Main-cell evidence at the reported metric and protocol. Negative $\Delta $FID is favourable. Status labels are cell-specific, not pooled across metrics}{table.4}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-C}}Mechanism isolation and causal ordering}{10}{subsection.7.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-D}}Statistical methodology}{10}{subsection.7.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-E}}Scope of the observed operating boundaries}{10}{subsection.7.5}\protected@file@percent }

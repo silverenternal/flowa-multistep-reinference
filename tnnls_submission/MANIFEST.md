@@ -21,18 +21,26 @@
 > corresponding scope limit now stated in Sec. IX; `highlights.md` rebuilt as
 > a single five-bullet list (the withdrawn Theorem 4/5 formulas are marked
 > withdrawn and appear in no editor-facing surface); the cover letter's three
-> stacked errata banners merged into one current-manuscript block. Current
+> stacked errata banners merged into one current-manuscript block. A further
+> **κ-gate subsection (Sec. VI-D)** was then added: a four-checkpoint table
+> pairing the measured contraction κ against the seven-rung plateau delta, with
+> n=4, the non-significance of the ordering, the unidentified threshold and the
+> κ/optimizer-step collinearity all stated in the text; it was paid for by
+> compressing the site-aware-cache subsection (226 → ~70 words) and deleting the
+> "why the framework's identity is the typed contract" subsection, so the build
+> stays at 12 pages. Current
 > artifacts: `paper-A-final.md` =
-> `03593e815b13e87f85a235fe4c5ced96990de62fb6720a8232a62df6c0007445`
-> (224657 bytes, 27513 words); `paper-A-final.tex` =
-> `ce7a1320b6eae42ee631f2f1fccdc4b2276b78a7463cfda86664c61f1a1385b2`
-> (74341 bytes); `paper-A-final.pdf` =
-> `660330c1fbf931143538f488fb3d2ed47b410e6eb8b44094938fc217571e6937`
-> (614403 bytes, **12 pages**, two `pdflatex` passes, zero overfull hboxes,
+> `7a7036ebed7284468050141fe9f78e9bfc62ce907d666e3d2f587357ac40f1ce`
+> (226257 bytes, 27792 words); `paper-A-final.tex` =
+> `e1d3637ffc308cd332f3675df0073864c51bdf29103c7b7f7959adb0cc14417d`
+> (74183 bytes); `paper-A-final.pdf` =
+> `3112cccd24a2fa3be0ada9b02a0df42df11c866de32f057cb692348f535602c2`
+> (615702 bytes, **12 pages**, two `pdflatex` passes, zero overfull hboxes,
 > zero undefined references). The 2026-10-27 evidence-refresh banner below
 > (`85c90e5d…` / `a6fcee68…` / `a0a0d97f…`) is superseded on artifacts only;
 > its evidence statements remain current. Full trail:
-> `docs/audit/paper-packaging-2026-10-27.md`.
+> `docs/audit/paper-packaging-2026-10-27.md` and
+> `docs/audit/gap92-kappa-bridge.md`.
 
 > **2026-10-27 evidence-refresh addendum (superseded on artifacts by the
 > packaging addendum above).** The manuscript

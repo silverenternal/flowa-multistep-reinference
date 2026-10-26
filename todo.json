@@ -52,7 +52,7 @@
   "timing_risk": "TNNLS first review can take 6-12 months. Waiting for reviewer feedback before running GAP-90 therefore risks an 18-24 month total cycle, which is why GAP-90 is ordered first."
  },
  "execution_order": [
-  "1. GAP-90-EPOCH-DOSE-CONTROLLED (P0) - the identification experiment. Same architecture, same training set, only epochs vary; five levels. Two days on one GPU. Nothing else moves the acceptance estimate as much.",
+  "1. GAP-90-OPTSTEPS-DOSE-CONTROLLED (P0) - the identification experiment. No training: measure the frontier on the two existing checkpoints (epochs2, w8e3) that complete a clean optimizer-step dose and a width control. A few hours on one GPU. Nothing else moves the acceptance estimate as much.",
   "2. GAP-91-FLOOR-DISTANCE-LAW (P0, depends on GAP-90) - turn the measured relation into an out-of-sample predictor, or reject it.",
   "3. GAP-92-KAPPA-BRIDGE-INTO-PAPER (P1, no GPU) - GAP-78 already measured a contraction that orders the sign; the manuscript currently says no such thing exists. Put the measured relation in, with its scope.",
   "4. GAP-93-CONVERGED-CHECKPOINT-LEVER (P1) - production is a near-miss (-0.50 FID, CI [-0.9996, +0.0025]) not a wall. One pre-registered mechanism change.",
@@ -64,25 +64,25 @@
  ],
  "open_gaps": [
   {
-   "id": "GAP-90-EPOCH-DOSE-CONTROLLED",
+   "id": "GAP-90-OPTSTEPS-DOSE-CONTROLLED",
    "priority": "P0",
-   "status": "PLANNED - pre-registration not written yet",
-   "gap": "The paper's central claim is that the gain from re-inference is checkpoint-conditional. The evidence is four MNIST checkpoints (w16e1_5k, 10k, 60k, production) that differ in architecture, training-set size and training time at once. That is a cross-section. A reviewer can accept every number and still reject the inference.",
-   "design_hypothesis": "Under a controlled axis - same architecture, same training set, only the number of training epochs varies - the framework's plateau gain decreases monotonically with training completeness, because the gain is the baseline's distance to its own floor (GAP-84 reading). Expected size, from the distance-to-floor relation: about -3 FID at a baseline plateau near 24, about -1 FID near 17, and within the 1-FID floor at or below 11. Sign: negative everywhere, magnitude shrinking.",
-   "research": "1) Pin the family: one MNIST FM architecture, one training set (60k), epochs E in {1, 2, 5, 10, 20}, three training seeds each. 2) Verify each checkpoint's baseline plateau actually descends across NFE (a checkpoint whose single pass has already converged cannot carry the test). 3) Frontier per checkpoint at N=1000 per arm, sampling seeds 42/43/44, rungs {4,5,10,25,50,100,200}, --min-steps-per-round 2, headline arm evidence_driven, plateau = mean of the last two rungs. 4) Report the per-checkpoint plateau delta with its 95% CI and the floor verdict.",
-   "acceptance": "All three, or the law is rejected and the manuscript keeps its current hypothesis wording. (a) The plateau gain is non-increasing in E across the five levels, with the OLS slope's 95% CI excluding 0. (b) At E=1 the cell reproduces the WIN under the controlled axis: 7/7 strict rung gains and a plateau CI that clears the 1-FID floor. (c) At E=20 the cell ties inside the floor - the same verdict as production today, but now on a checkpoint that differs from E=1 only in training time.",
-   "est_wall": "2 days on cuda:0; about 210 N=1000 cells (5 checkpoints x 3 training seeds x 7 rungs x 2 arms)",
-   "agent_action": "Write docs/audit/gap90-epoch-dose.md first - hypothesis, sign, expected size, the exact checkpoint list, the acceptance test above - and commit it BEFORE the first sample. Then train, then sweep, then tools/frontier_report.py per checkpoint, then record.",
+   "status": "PRE-REGISTERED 2026-10-27 - re-scoped to two existing checkpoints; awaiting GPU",
+   "gap": "The paper's central claim is that the gain from re-inference is checkpoint-conditional. The evidence is four MNIST checkpoints presented as a cross-section that differs in architecture, training-set size and training time at once. That framing was wrong on the facts: 5k/10k/60k is a clean training-set dose at fixed width and fixed epoch count, and 60k/epochs2/production is a clean epoch dose at fixed width and fixed training set. Only two of the five dose points have a frontier measurement. A reviewer can accept every number and still reject the inference because the middle of the curve is unmeasured.",
+   "design_hypothesis": "Under a controlled axis - same architecture, same training set, only the optimizer-step budget varies - the framework's plateau gain decreases monotonically with training completeness, because the gain is the baseline's distance to its own floor (GAP-84 reading). Pre-registered predictions: plateau delta near 0 at 1,874 steps and near 0 at 2,811 steps for both widths; the OLS slope of delta on log(optimizer steps) is positive (gain shrinks as steps grow) with a 95% CI excluding 0; a width-8 checkpoint at production's 2,811 steps agrees with production within 1 FID.",
+   "research": "1) No training. Measure the frontier on the two checkpoints that never received one: epochs2 (1,874 steps, width 16) and w8e3 (2,811 steps, width 8). 2) Protocol identical to GAP-84 so the points are comparable: N=1000 per arm, sampling seeds 42/43/44, rungs {4,5,10,25,50,100,200}, --min-steps-per-round 2, headline arm evidence_driven, plateau = mean of the last two rungs, floor rule 1 FID absolute with the 1% relative rule reported alongside, verdict via tools/frontier_report.py unmodified. 3) Combine with GAP-84's four points into one five-level dose curve in optimizer steps plus a two-width comparison at 2,811 steps.",
+   "acceptance": "All four clauses, or the law is rejected and the manuscript keeps its current hypothesis wording. (a) Across the five optimizer-step levels (78, 156, 937, 1,874, 2,811) the plateau gain is non-increasing and the OLS slope of delta on log(steps) has a 95% CI excluding 0. (b) The 78-step point reproduces the GAP-84 WIN (7/7 strict rungs, plateau CI clearing the floor) - a pipeline consistency check, not new evidence. (c) At 2,811 steps w8e3 and production differ by less than 1 FID in plateau gain. (d) The three 60,000-image points (937/1,874/2,811) all sit inside the floor.",
+   "est_wall": "a few hours on cuda:0; 84 N=1000 cells (2 checkpoints x 7 rungs x 3 seeds x 2 arms); no training",
+   "agent_action": "Read docs/audit/gap90-optsteps-dose.md first - it is the committed pre-registration and supersedes the epoch-training design. Then run the two frontier sweeps, tools/frontier_report.py per checkpoint, then record.",
    "blocks": [
     "GAP-91-FLOOR-DISTANCE-LAW",
     "GAP-96-MANUSCRIPT-COMPRESSION"
    ],
-   "record": "docs/audit/gap90-epoch-dose.md; verification_outputs/gap90-epoch-dose/"
+   "record": "docs/audit/gap90-optsteps-dose.md; verification_outputs/gap90-optsteps-dose/"
   },
   {
    "id": "GAP-91-FLOOR-DISTANCE-LAW",
    "priority": "P0",
-   "status": "PLANNED - blocked on GAP-90",
+   "status": "PRE-REGISTERED 2026-10-27 - blocked on GAP-90 data",
    "gap": "GAP-84 recorded that the gain tracks the baseline's distance to its own floor, but only as a description of four points. A description is a caveat; a predictor is a result.",
    "design_hypothesis": "The plateau gain is a function of the baseline plateau's distance to the checkpoint family's floor, and that function predicts the sign and rough size on a checkpoint family it was not fitted on.",
    "research": "Fit the relation on the GAP-90 five points plus the four GAP-84 checkpoints; hold out one family (Kanzi reconstruction, or CIFAR-10 FID) and test the prediction there. Report the fit, the held-out error, and the sign agreement.",
@@ -92,18 +92,18 @@
    "blocks": [
     "GAP-96-MANUSCRIPT-COMPRESSION"
    ],
-   "record": "docs/audit/gap90-epoch-dose.md section 2"
+   "record": "docs/audit/gap90-optsteps-dose.md section 8"
   },
   {
    "id": "GAP-92-KAPPA-BRIDGE-INTO-PAPER",
    "priority": "P1",
-   "status": "PLANNED - no GPU needed",
+   "status": "EXECUTED 2026-10-27 - manuscript insertion done; no GPU",
    "gap": "The manuscript states that the two theorems do not determine the sign of an FID change. That is true of the theorems as stated. But GAP-78 measured a contraction (kappa) that does order the sign - 12/12 weak dominance at beta=0.3 on the floor rule - and that measurement is not in the paper. A reviewer reads 'the theory does not predict' as 'the theory is decorative', which is worse than the truth.",
    "design_hypothesis": "The measured contraction orders the sign of the plateau delta across checkpoints, even though the theorem alone does not. Reporting it converts the theory section from decoration into a diagnostic with a measured hit rate.",
-   "research": "Compute kappa per checkpoint from the existing diagnostics; tabulate kappa against the observed plateau delta for the four GAP-84 checkpoints and the five GAP-90 checkpoints. State the rule with its scope: measured on MNIST FM at beta=0.3 under one floor rule.",
-   "acceptance": "A table with at least four checkpoints, and a manuscript paragraph whose every clause is backed by a number in that table. Hard constraint: the paragraph must not claim the theorem predicts FID - only that the measured kappa orders it on this family.",
+   "research": "Computed kappa per checkpoint from the existing GAP-78 diagnostics and tabulated it against the GAP-84 seven-rung plateau delta for the four measured checkpoints. Scope stated in the paper: MNIST FM at beta=0.3 under one floor rule. The GAP-90 checkpoints are added to the table when GAP-90 runs, not before.",
+   "acceptance": "MET: a table with four checkpoints and a manuscript paragraph whose every clause is backed by a number in that table. The paragraph does not claim the theorem predicts FID - only that the measured kappa orders it on this family. n=4, non-significant ordering and the unidentified threshold are all stated in the text.",
    "est_wall": "no GPU; one re-analysis plus a manuscript edit",
-   "agent_action": "Read docs/audit/gap78-dispersion-gate.md and verification_outputs/gap78-kappa-dose-n1000-3seed/ before writing a single sentence.",
+   "agent_action": "Done. docs/audit/gap92-kappa-bridge.md holds the numbers and the three honesty limits; paper-A-final.tex section VI-D and paper-A-final.md section 6.7 hold the text.",
    "blocks": [
     "GAP-96-MANUSCRIPT-COMPRESSION"
    ],
@@ -112,26 +112,26 @@
   {
    "id": "GAP-93-CONVERGED-CHECKPOINT-LEVER",
    "priority": "P1",
-   "status": "PLANNED - mechanism change required, not a seed top-up",
+   "status": "PRE-REGISTERED 2026-10-27 - awaiting GPU; two-stage beta dose",
    "gap": "On the production checkpoint the headline arm moves +0.03 FID. But codimension_sheet at beta=0.3 moves -0.50 FID with CI [-0.9996, +0.0025] (GAP-78). The converged regime is a near-miss, not a wall, and the headline arm is the wrong arm there.",
    "design_hypothesis": "The beta schedule was tuned on the mid-range checkpoints; the converged end needs a different blend weight or a different channel selection, and one such change clears the 1-FID floor with weak dominance at every rung.",
-   "research": "Pre-register ONE mechanism change (candidates: a beta schedule that depends on the baseline's distance to its floor; channel selection driven by the per-channel residual profile). One confirmatory run at the canonical protocol.",
-   "acceptance": "Production checkpoint, 3 seeds, N=1000, 7 rungs: plateau CI clears the 1-FID floor AND weak dominance at every rung. Wiring alone does not count - GAP-38/39/40/40b showed the wiring is real but never reached significance at n=3, so the acceptance test is the CI, not the flag.",
-   "est_wall": "1 day on cuda:0",
-   "agent_action": "Pre-register in docs/audit/gap93-converged-lever.md with the expected sign and size before touching code.",
+   "research": "Only the fresh-noise budget beta has never been dosed on any checkpoint; every recorded result uses beta=0.3. Round count is already ruled out (GAP-84c: R in {2,4,6,8,12} spans 0.06 FID, 16x too small a lever) and the per-round step floor is inactive at rungs 100/200. Stage 1: production, beta in {0.15,0.30,0.50,0.70}, NFE=50, seeds 42/43/44, N=1000, arms evidence_driven + codimension_sheet (18 arm-cells, 9 runs). Stage 2: one confirmatory plateau run at the beta the stage-1 rule selects, rungs 100 and 200. Reproduction guard: beta=0.30 / NFE=50 / seed 42 must match the recorded FID to 4 decimals.",
+   "acceptance": "Decision rule fixed before the run. (1) beta lever exists: some beta gives a stage-1 CI excluding 0 with |delta| >= 1 FID AND stage 2 reproduces it at the plateau with the CI upper bound below -1.0. (2) No beta lever: every beta spans < 1 FID at both budgets - then H_kappa holds, the converged end is not reachable by the fresh-noise budget, and the paper says the checkpoint-conditional gain is not a tuning artifact. (3) Anything else is recorded as an interior optimum and NOT promoted.",
+   "est_wall": "about 15 h on cuda:0 in two bounded stages (stage 2 skipped under outcome 2)",
+   "agent_action": "Read docs/audit/gap93-converged-lever.md; it fixes the decision rule and the two competing readings (H_kappa vs H_noise) before any number exists.",
    "blocks": [],
    "record": "docs/audit/gap93-converged-lever.md"
   },
   {
    "id": "GAP-94-STANDARD-BENCHMARK",
    "priority": "P1",
-   "status": "USER GATED - needs a decision on model access and compute",
+   "status": "USER GATED - decision memo written 2026-10-27; nothing run",
    "gap": "The strongest image result is on a 5k-step MNIST checkpoint. In 2026 a generative-acceleration paper is read against ImageNet-256 / DiT / SD-class results, and this one has none. No amount of writing closes that.",
    "design_hypothesis": "The same round-boundary lever operates on a competitive checkpoint; if it does not, the method's scope is structured and small-data generation, and the paper should say that instead of implying general acceleration.",
-   "research": "Option A: a pretrained SD/DiT-class checkpoint with a training-free baseline at matched NFE. Option B: a properly trained CIFAR-10 FM at FID near 3, same frontier protocol. Option B is cheaper and still answers the objection.",
-   "acceptance": "Five or more rungs, 3 seeds, N>=1000, reported as a frontier (never as a single point), same floor rule as R5c.",
-   "est_wall": "2-5 GPU-days for option B; unknown for option A",
-   "agent_action": "Do not start. Bring the two options to the user with cost estimates first.",
+   "research": "The repository's CIFAR checkpoint is at baseline FID 447.9 at NFE=50, so it cannot serve as a competitive benchmark. Option B (recommended): a properly trained CIFAR-10 flow-matching checkpoint at FID <= 10, then the existing frontier protocol; the adapter is a loader change because tools/run_sota_cifar_experiment.py and the InceptionV3-tfport cache already exist. Option A: an SD/DiT-class latent model at 256^2, which needs a new adapter, CFG handling and reference statistics.",
+   "acceptance": "Five or more rungs, 3 seeds, N>=1000, reported as a frontier (never a single point), same floor rule as R5c.",
+   "est_wall": "Option B about 1.5 GPU-days plus checkpoint acquisition; Option A 5-15 GPU-days",
+   "agent_action": "Do not start. docs/audit/gap94-standard-benchmark.md is the decision memo; bring A / B / neither to the user and record the choice and date.",
    "blocks": [
     "GAP-96-MANUSCRIPT-COMPRESSION"
    ],
@@ -140,26 +140,26 @@
   {
    "id": "GAP-95-FRONTIER-GRIDS-REMAINING",
    "priority": "P2",
-   "status": "PLANNED",
+   "status": "PRE-REGISTERED 2026-10-27 - baseline-only scans first",
    "gap": "Six of seven R-level cells have no (quality, NFE) grid, which is the protocol the paper itself calls load-bearing. The packaging pass discloses this; it does not close it.",
    "design_hypothesis": "For most of these cells the baseline does not descend across NFE, so a grid would be a flat line and the frontier claim is simply not available. Measuring that is the honest close, and it is cheaper than assuming it.",
-   "research": "For R1, R2, R3, R5a, R5b: measure the baseline across the rung set first. If it descends, run the full grid; if it saturates, record the saturation measurement as the justification for a point-only verdict.",
-   "acceptance": "Every R-level cell has either a grid of five or more rungs or a recorded saturation measurement. No cell is left with a bare assertion.",
-   "est_wall": "1-3 GPU-days depending on how many baselines still descend",
-   "agent_action": "Do not reuse four existing artifacts that look like grids: kanzi_nfe_scan_q4_2026 (validity 1.0 on both arms at every rung), flowmol3_fine_nfe_q4_2026 (0.0734 on both arms at every rung), lineageflow_nfe_scan_paper_metric_q3_2026 (n=8, 8/8 ties at saturation), nfe_curve_fair_w170_q3_2026.csv (constant baseline across rungs). All four are degenerate; see docs/audit/paper-packaging-2026-10-27.md section 5.",
+   "research": "Re-ranked by whether the baseline can descend and whether the verdict can change, which is not the gap-list order. Rank 1 R5b CIFAR (baseline FID 447.9 at NFE=50, nowhere near converged; the only cell where a grid can flip a REGRESSES verdict). Rank 2 R3 FlowMol3 (NFE=250, likely near-converged). Rank 3 R2 Kanzi. Rank 4 R1 LineageFlow (NFE=150 is fixed by upstream fidelity, so a grid trades config fidelity for a frontier). Rank 5 R5a Two Moons (analytic, likely converges in a few steps). Method: run the BASELINE ALONE across the rung set first; a cell is saturated when the baseline moves less than the cell's floor between the lowest and highest rung, and that measurement is the justification for a point-only verdict.",
+   "acceptance": "Every R-level cell has either a grid of five or more rungs or a recorded saturation measurement with the number that shows saturation. No cell closed by citing a degenerate flat artifact.",
+   "est_wall": "about 1 GPU-day for R5b; about 0.5 GPU-day for the four baseline-only scans; up to 3 more for grids that survive the scan",
+   "agent_action": "Read docs/audit/gap95-frontier-grids.md. Do not reuse kanzi_nfe_scan_q4_2026 (validity 1.0 both arms every rung), flowmol3_fine_nfe_q4_2026 (0.0734 both arms every rung), lineageflow_nfe_scan_paper_metric_q3_2026 (n=8, 8/8 saturated), or nfe_curve_fair_w170_q3_2026 (baseline constant across rungs).",
    "blocks": [],
-   "record": "docs/audit/gap95-frontier-coverage.md"
+   "record": "docs/audit/gap95-frontier-grids.md"
   },
   {
    "id": "GAP-96-MANUSCRIPT-COMPRESSION",
    "priority": "P2",
-   "status": "PLANNED - depends on GAP-90, GAP-92, GAP-94",
-   "gap": "The paper is at 12 pages with no slack, and the engineering sections (typed contracts, hash-chained ledger, byte-determinism, the reproducibility manifest) occupy about three pages that a TNNLS reviewer reads as systems work. The two new results have no room.",
+   "status": "PRE-REGISTERED 2026-10-27 - runs after GAP-90 returns a number",
+   "gap": "The paper is at 12 pages with no slack, and the packaging pass already spent the slack it created (Figure 1, the kappa table, the frontier-coverage paragraph, section VI-D). Measured, the engineering surface is III-VI at about 5 pages plus VIII at about 1.5 - not the three pages this entry originally assumed. The GAP-90 figure needs about 0.35 page.",
    "design_hypothesis": "Compressing the engineering surface to one page and one appendix recovers enough space for the epoch-dose figure and the kappa table without removing any claim, number or status label.",
-   "research": "Cut sections III-C through III-G and VIII to roughly a third of their length; keep every identifier and every measured claim; move the detail to the supplementary bundle.",
-   "acceptance": "12 pages held; 0 overfull; no claim, number or status label removed; the GAP-90 figure and the GAP-92 table both present; docs/check_docs_against_code.py still verifies every claim.",
-   "est_wall": "half a day",
-   "agent_action": "Supersedes the old GAP-29-MANUSCRIPT entry.",
+   "research": "Cut in this order, each with what must survive verbatim: (1) III-A typed-contracts architecture, 779 words, move per-component prose into a component -> responsibility -> file table, recover about 0.3 page; (2) VII-B per-cell status, 959 words, keep only the scope boundary each cell cannot get from Table III, recover about 0.35 page; (3) VIII reproducibility, 395 words over six subsections, collapse to one gate -> command -> artifact -> expected-output table, recover about 0.3 page; (4) V adapter protocol, merge two subsections, recover about 0.15 page. Do NOT cut VI-A (422 words of load-bearing argument) unless 1-4 fall short.",
+   "acceptance": "12 pages held; 0 overfull hbox, 0 overfull vbox, 0 undefined references; no claim, number or status label removed (diff the CLM identifiers and cited numbers against the pre-compression build); check_claims_consistency.py exits 0; docs/check_docs_against_code.py still resolves every surviving identifier; the GAP-90 figure and the kappa table both present; paper-A-final.md in sync with the .tex.",
+   "est_wall": "half a day, after GAP-90",
+   "agent_action": "Typeset the GAP-90 figure at final size and measure before cutting to a target.",
    "blocks": [],
    "record": "docs/audit/gap96-manuscript-compression.md"
   },
