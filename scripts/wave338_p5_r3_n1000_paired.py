@@ -343,12 +343,17 @@ def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
                   restart_memory_fraction: float = 0.5,
                   restart_memory_by_channel=None,
                   charge_blend_mode: str = "continuous",
-                  restart_rounds: int = 1) -> dict:
+                  restart_rounds: int = 1,
+                  perturbation_sigma: float = PERTURBATION_SIGMA_FRAMEWORK) -> dict:
     """Run baseline + framework arms for one seed and return the paired dict.
 
     ``baseline_nfe`` (GAP-12 tuned-baseline extension) lets the *baseline* arm
     run at a different solver budget than the framework arm. ``None`` keeps the
     legacy matched-NFE behaviour (both arms at ``nfe``).
+
+    ``perturbation_sigma`` (GAP-81) is the framework arm's coordinate-only
+    prior noise. The default is the module constant, so every existing
+    invocation is byte-identical; the flag exists so the dose can be measured.
     """
     base_nfe = int(nfe) if baseline_nfe is None else int(baseline_nfe)
     baseline_raw = _generate_arm(
@@ -361,7 +366,7 @@ def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
                                        arm_name="baseline", seed_base=seed_base)
 
     framework_raw = _generate_arm(
-        arm_name="framework", perturbation_sigma=PERTURBATION_SIGMA_FRAMEWORK,
+        arm_name="framework", perturbation_sigma=float(perturbation_sigma),
         seed_base=seed_base, n_total=n_total, nfe=nfe, nfe_batch=nfe_batch,
         weights_path=weights_path, upstream_repo=upstream_repo, device=device,
         shared_prior=shared_prior,
@@ -417,7 +422,7 @@ def _run_one_seed(seed_base: int, *, n_total, nfe, nfe_batch, weights_path,
             "errors_sample": baseline_raw["errors_sample"],
         },
         "framework": {
-            "perturbation_sigma": PERTURBATION_SIGMA_FRAMEWORK,
+            "perturbation_sigma": float(perturbation_sigma),
             "metrics": framework_metrics,
             "n_sampled": int(framework_raw["n_sampled"]),
             "n_smiles": int(framework_raw["n_smiles"]),
@@ -518,6 +523,12 @@ def main(argv: list[str] | None = None) -> int:
                         "R>1 blends each endpoint with a fresh draw and "
                         "re-solves with nfe/R steps per round. Requires "
                         "--real-restart-blend.")
+    p.add_argument("--perturbation-sigma", type=float,
+                   default=PERTURBATION_SIGMA_FRAMEWORK,
+                   help="GAP-81: coordinate-only Gaussian prior noise on the "
+                        "framework arm. Default 0.05 is the canonical CLM-068 "
+                        "value, so omitting the flag is byte-identical. The "
+                        "dose is the R3 lever (docs/audit/gap81-r3-sigma-dose.md).")
     p.add_argument("--output-dir", type=Path,
                    default=REPO_ROOT / "verification_outputs")
     args = p.parse_args(argv)
@@ -560,6 +571,7 @@ def main(argv: list[str] | None = None) -> int:
             restart_memory_by_channel=memory_by_channel,
             charge_blend_mode=str(args.charge_blend_mode),
             restart_rounds=int(args.restart_rounds),
+            perturbation_sigma=float(args.perturbation_sigma),
         )
         per_seed.append(sweep)
 
@@ -644,6 +656,7 @@ def main(argv: list[str] | None = None) -> int:
         "shared_prior": bool(args.shared_prior),
         "real_restart_blend": bool(args.real_restart_blend),
         "restart_memory_fraction": float(args.restart_memory_fraction),
+        "perturbation_sigma": float(args.perturbation_sigma),
         "per_seed": per_seed,
         "paired_summary": paired,
         "honest_disclosure": (
