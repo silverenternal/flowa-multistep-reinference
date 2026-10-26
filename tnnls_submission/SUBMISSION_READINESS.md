@@ -70,7 +70,7 @@
 | **G31** (Verdict-distribution canonical) | Low | `docs/drafts/paper-A-final.md` §7.2 / §11.1 | `255bdc8` (superseded 2026-10-27) | Canonical 11-cell verdict distribution statement — **current reading `3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only`**; the `4 STRONG + 1 TIE + 6 PARTIAL/SUPP` label above is the pre-refresh record |
 | **G32** (Cover letter date refresh) | Low | `tnnls_submission/cover_letter.md` §0 | `3227090` | Cover letter date refreshed to 2026-09-25 (17 USER_TO_FILL placeholders preserved verbatim) |
 | **G34** (Strict-clean rule definition) | Low | `docs/drafts/paper-A-final.md` + `docs/audit/wave268-strict-clean.md` | `101370d` | Strict-clean rule definition footnote (Wave 268 directive preservation) |
-| **G38** (Page count recheck) | Low | `tnnls_submission/submission_checklist.md` §1 / §3 | `fea3aa` (superseded 2026-10-27) | Page count recheck annotation — **current reading `Pages: 12 ≤ 14`** per `pdfinfo` against the 2026-10-27 build at SHA `a0a0d97f…` / 461403 bytes; the `11` reading above is historical |
+| **G38** (Page count recheck) | Low | `tnnls_submission/submission_checklist.md` §1 / §3 | `fea3aa` (superseded 2026-10-27) | Page count recheck annotation — **current reading `Pages: 12 ≤ 14`** per `pdfinfo` against the 2026-10-27 packaging build at SHA `740b1d8c…` / 613629 bytes; the `11` and `10` readings above are historical |
 
 ### 3.2 Risks explicitly DEFERRED (31 / 39)
 

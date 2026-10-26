@@ -1,8 +1,7 @@
 % =============================================================================
 % IEEEtran-journal typeset for TNNLS submission (Wave 331)
 % Source: docs/drafts/paper-A-final.md (DeepSeek 5-day RESOLUTION pass)
-% Title: FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching
-%        Checkpoints
+% Title: FlowA: Re-Inference Control for Frozen Flow-Matching Checkpoints
 % Template: IEEEtran-journal class, [twocolumn, final]
 % =============================================================================
 
@@ -38,7 +37,7 @@
   citecolor=blue,
 }
 
-\title{FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints}
+\title{FlowA: Re-Inference Control for Frozen Flow-Matching Checkpoints}
 
 \author{Anonymous for blind review.}
 
@@ -47,16 +46,25 @@
 \maketitle
 
 \begin{abstract}
-We introduce FlowA, a geometry-aware, training-free re-inference layer for frozen flow-matching checkpoints. We reformulate inference on both sides of the sampling relation while keeping the learned velocity field fixed: adapters express restart states in checkpoint-native geometry, typed policies blend state and fresh input, and a scheduler allocates correction capacity by round and record difficulty. The resulting frozen ODE is evaluated as a controlled composite map, with each transition preserved in a hash-linked state bundle. We establish conditional fixed-point convergence and an exact squared-error identity for the restart blend, then connect these properties to mechanism-isolating evidence across eleven protein, molecular, toy, and image cells. Native-state alignment improves the Kanzi reconstruction path; restart glue carries the LineageFlow gain in the fixed-NFE round-count study; and difficulty-aware capacity concentrates foldability gains on hard protein records across adapters. Image cells further trace how the intervention responds to round, schedule, and checkpoint regime. On the under-trained MNIST checkpoint, a seven-rung NFE sweep lowers the FID plateau by 12.75\% and dominates the baseline at every rung; on the three better-trained checkpoints the same map converges to a tie. FlowA turns mature frozen checkpoints into inspectable, geometry-aware inference systems without retraining.
+Flow-matching inference spends its entire budget on one integration of a frozen velocity field. We show that moving the control variable from the step count to the round boundary changes what the sampler can reach, without retraining, distillation, or Reflow: the next initial condition becomes a blend of the previous endpoint and a fresh prior sample, and the endpoint map is iterated as a composite dynamical system. We prove conditional contraction of that map and an exact squared-error identity for the blend, and expose both through four typed protocols so that five vendored checkpoints run the loop unmodified. At equal NFE, the map lies below the one-shot baseline at all seven rungs on the least-trained MNIST checkpoint, lowering the FID plateau by 12.75\%, and returns a tie on three better-trained checkpoints from the same family; across protein and molecular adapters the same lever improves native-state reconstruction and concentrates foldability gains on hard records. The gain is therefore checkpoint-conditional, and the eleven-cell evidence localises where it is available.
 \end{abstract}
 \begin{IEEEkeywords}
-Flow matching, geometry-aware inference, frozen checkpoints, state intervention, typed contracts.
+Flow matching, re-inference, frozen checkpoints, training-free inference, typed contracts.
 \end{IEEEkeywords}
 
 \section{Introduction}
-Frozen flow-matching checkpoints generate samples by integrating a learned velocity field once from a prior state. The reformulation acts in two linked places: it expresses the next initial condition as a geometry-aware restart blend and turns the one-shot endpoint evaluation into an iterated composite map. The ODE and learned velocity field remain fixed, while the state transition becomes explicit, typed, and measurable. A four-port contract exposes schedule, policy, merge, and restart rules across protein, molecule, toy, and image adapters; a per-round state bundle and hash-chained ledger preserve each decision for replay.
+Frozen flow-matching checkpoints generate samples by integrating a learned velocity field once from a prior state. Every inference-time accelerator in current use spends its budget inside that single integration: more solver steps, a straighter path, or a learned shortcut. We ask a different question --- what becomes reachable when the control variable is the round boundary rather than the step count? FlowA answers it by changing both sides of the sampling relation. The next initial condition becomes a restart blend of the previous endpoint and a fresh prior sample, and the one-shot endpoint evaluation becomes an iteration of the resulting composite map. The ODE and the learned velocity field remain fixed, so no retraining, distillation, or Reflow is involved. A four-port contract exposes the schedule, policy, merge, and restart rules across protein, molecule, toy, and image adapters, and a per-round state bundle with a hash-chained ledger preserves each decision for replay.
 
-Our contributions are (i) an inference-dynamics reformulation with a conditional contraction theorem; (ii) an exact restart-blend identity that provides a per-round state diagnostic; (iii) typed integration with five checkpoint adapters and zero edits to vendored code; and (iv) an eleven-cell evaluation organized around mechanism isolation and operating regimes. The evidence includes three strong main-cell results, one conditional result, one tie, and six partial or supplementary cells. R1 is single-seed; R3 is measured at three seeds at $N=1000$ per arm and is direction-consistent but not significant; R6's headline is a live tier-aware run rather than a counterfactual. The 2.5--10$\times$ cross-budget NFE range is an extrapolation from published trajectories, not a measured wall-clock speedup. A direct Tier-1 measurement yields 1.0$\times$ NFE speedup (\texttt{wave73\_phase2\_tier1\_speedup.json}). Matched-NFE image quality depends on round count and checkpoint setting (Secs. 7.8 and 7.10). Four prespecified Bonferroni families and 30 byte-stable D.4 regression vectors support the evidence chain.
+Our contributions are three. (i) \emph{Reformulation and theory.} We recast inference for frozen checkpoints as a composite dynamical system $G$ (\S\ref{sec:reformulation}) and give a conditional contraction theorem together with an exact squared-error identity for the restart blend (\S\ref{sec:properties}). Neither predicts the sign of an FID change; both supply the diagnostics that the experiments use. (ii) \emph{Matched-budget evidence.} At equal NFE per sample the map lies below the one-shot baseline at all seven rungs on the least-trained MNIST checkpoint, lowering the FID plateau by 12.75\%, and returns a tie on three better-trained checkpoints from the same training family (Fig.~\ref{fig:r5c-frontier}, \S\ref{sec:r5c-frontier}). The same lever transfers across domains: native-state alignment carries the Kanzi reconstruction path, restart glue carries the LineageFlow round-count gain, and difficulty-aware capacity concentrates foldability gains on hard protein records across adapters (\S\ref{sec:per-cell}). (iii) \emph{Deployable, auditable integration.} Five vendored checkpoints are wrapped with zero edits to upstream code behind four typed protocols, and every round is replayable from a hash-chained state bundle (\S\ref{sec:framework}--\S\ref{sec:adapter}, \S\ref{sec:repro}).
+
+The eleven cells are reported with their status distribution --- three strong, one conditional, one tie, two partial, and four supplementary --- and with the protocol, sample size, and seed policy of each. One scope limit belongs here rather than in a footnote: the $2.5$--$10\times$ cross-budget NFE range quoted in \S\ref{sec:nfe-boundary} is an extrapolation from published trajectories, not a measured wall-clock speedup, and the directly measured Tier-1 speedup is $1.0\times$. The remaining limits --- the single-seed R1, the non-significant three-seed R3, R6's live rather than counterfactual headline, and the dormant companion controllers --- are collected in \S\ref{sec:scope} and \S\ref{sec:limitations}.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.88\textwidth]{../figures/fig_r5c_frontier.png}
+\caption{Matched-budget NFE frontier on four MNIST flow-matching checkpoints from the same training family ($N=1000$ per arm, seeds 42/43/44, rungs $\{4,5,10,25,50,100,200\}$, at least two integration steps per round). Solid: re-inference; dashed: one-shot baseline; bands: $\pm 1$ sd across the three seeds; grey window: the two rungs averaged into the plateau. On the least-trained checkpoint (shaded panel) the map is below the baseline at all seven rungs and lowers the plateau by 3.12 FID (12.75\%). On the three better-trained checkpoints no rung's confidence bound clears the one-FID floor, so the rung rule returns a tie. At 4 NFE the 60k and production checkpoints pay 2.3--2.8 FID for the round boundary, because the two-step-per-round floor leaves no integration budget to trade; that cost is recovered by 10--25 NFE and does not affect the plateau. Values are read from \texttt{verification\_outputs/gap84-mnist-frontier/}.}
+\label{fig:r5c-frontier}
+\end{figure*}
 
 \section{Related Work}
 
@@ -67,6 +75,7 @@ Flow matching [1] and Rectified Flow [2] define generation as integration of a l
 \textbf{Explicit differentiation from adjacent mechanisms.} The three families above are adjacent but distinct from FlowA on the axes that matter. \emph{Predictor--corrector} samplers (UniPC [5]; EDM's Heun-plus-Langevin corrector [4]; DPM-Solver++ [3]) re-evaluate $v_\theta$ and combine intermediate states, but strictly \emph{within a single trajectory}: the initial condition and the round count are fixed, the target marginal is unchanged, and no outcome-conditioned feedback crosses rounds or samples. \emph{Trajectory-level} distillation (Consistency Models [8], LCM-LoRA [9]) changes the velocity field itself by retraining $\theta$ or fitting a LoRA. \emph{Re-inference $\alpha$-blending} (Sabour et al. 2024; Fast-DLLM [6]; AB-Cache; LeDiFlow [7]) does iterate and consume cross-round feedback, but the next input is set by a hand-tuned or ramp-shaped per-round factor $\beta$ --- with Fast-DLLM [6] operating on discrete tokens via caching and parallel decoding, and LeDiFlow [7] shifting the prior with a \emph{learned} component. FlowA differs on three axes at once: the velocity field $v_\theta$ stays frozen (no retraining, distillation, or learned prior-shift network); the \emph{initial condition} is replaced by a geometry-aware memory blend $B_m$ of the previous endpoint and a fresh prior sample (\S2.2), so the round count rather than the solver step becomes the control knob; and the resulting composite map $G$ is characterised by an explicit conditional contraction condition (\S6.2) and exposed through the typed contract surface (\S3). It is this combination --- frozen field, an outcome-conditioned initial-condition rule, and a convergence analysis of the resulting composite map --- that defines the fourth position.
 
 \subsection{The inference-dynamics reformulation}
+\label{sec:reformulation}
 Let $\Phi_T^{v_\theta}$ denote the endpoint map of the frozen velocity field. Ordinary sampling evaluates $x_T=\Phi_T^{v_\theta}(b)$ for a fresh input $b$. FlowA instead uses
 \begin{equation}
  \begin{aligned}x_{k+1}&=G_{b_{k+1}}(x_k)\\&:=\Phi_T^{v_\theta}\!\left(m x_k+(1-m)b_{k+1}\right),\quad 0\le m\le1.\end{aligned}
@@ -84,6 +93,7 @@ Standard ML-publication practice buries negative results. ICML 2024's position p
 
 
 \section{Framework}
+\label{sec:framework}
 
 \subsection{Typed-contracts framework architecture}
 
@@ -323,6 +333,7 @@ The framework shares one cache across 16 sites without polluting the call sites.
 Only three headline cells instantiate a scheduler object (R5a records \texttt{PaperRatioAdaptiveScheduler}; R5b and R5c sweep four and three arms). Four cells construct no scheduler, three pass a legacy \texttt{"cosine"} label that selects a uniform NFE split, and R6 evaluates a tier-aware controller through a counterfactual analysis. This distribution locates the directly observed contribution in the shared inference and adapter contracts; the optional controller requires its own live validation.
 
 \section{Adapter Protocol}
+\label{sec:adapter}
 
 \subsection{Zero-line vendored integration}
 
@@ -363,6 +374,7 @@ The zero-line vendored change guarantee is the architectural property that disti
 
 
 \section{Framework Properties}
+\label{sec:properties}
 The four protocol handles compose when their input and output contracts match at each round. Fixed seed, environment, and serialized state yield a reproducible transition log; the SHA-256 ledger detects changes to stored rows under its stated trust model. These are interface and integrity properties, not quality guarantees.
 
 \subsection{Mechanism-to-metric transfer}
@@ -410,6 +422,7 @@ Indeed, $\|G_b(x)-G_b(y)\|\le mK\|x-y\|$; Banach's fixed-point theorem applies. 
 This follows pointwise from the convex-combination norm identity. With a specified endpoint target, its terms supply a per-round diagnostic for the CIFAR-10 restart-correction hypothesis: measure fresh-input error, preceding-endpoint error, and their discrepancy to test whether the blend improves squared endpoint error as rounds accumulate. Because FID compares feature distributions, this diagnostic complements rather than replaces the matched-NFE R5b regime study.
 
 \section{Empirical Results}
+\label{sec:results}
 
 \subsection{Evaluation scope}
 Seven R-level cells and four supplementary K-cells span protein, molecule, toy, and image domains. Sample sizes, seed policies, metrics, and baselines vary by cell; the per-cell recipes and claim ledger give the exact provenance. The main status distribution is three strong cells, one conditional cell, one tie, and two partial cells; four K-cells remain supplementary. A strong label on R5c is conditional on the checkpoint and a strong label on R5b is conditional on protocol and round count. Figure~\ref{fig:cell-evidence} places the per-cell effect sizes and the eleven-cell verdict distribution side by side, and Table~\ref{tab:main-cell-evidence} reports the per-cell metric, status, and scope boundary.
@@ -420,15 +433,15 @@ Seven R-level cells and four supplementary K-cells span protein, molecule, toy, 
 \label{tab:main-cell-evidence}
 \begin{tabular}{llll}
 \toprule
-Cell and model & Metric or result & Status & Scope boundary \\
+Cell and model & Metric or result & Status & Scope \\
 \midrule
-R1 LineageFlow & HMMER hits, $d_z=+0.182$ & Partial & One valid seed; small effect \\
-R2 Kanzi & Reconstruction RMSD, $d_z=-0.099$ & Strong & Small index-matched gain \\
-R3 FlowMol3 & fg\_dev, mean $-0.038$ (3 seeds) & Partial & Direction-consistent, n.s. at $N=1000$ \\
-R5a Two Moons & $W_2$ difference below effect floor & Tie & Seed-level test \\
-R5b CIFAR-10 RF & FID, matched NFE=50 & Conditional & $N=1000$: 2/4 single-round arms improve \\
-R5c MNIST FM & FID plateau $-12.75\%$ (5k ckpt) & Strong & Ties on the other three checkpoints \\
-R6 Kanzi k6 & scPerplexity $d_z=-0.84$; hard pLDDT $d_z=+1.12$ & Strong & Pooled pLDDT below bar \\
+R1 LineageFlow & HMMER hits, $d_z=+0.182$ & Partial & 1 valid seed \\
+R2 Kanzi & Reconstruction RMSD, $d_z=-0.099$ & Strong & Small gain \\
+R3 FlowMol3 & fg\_dev, mean $-0.038$ (3 seeds) & Partial & n.s., $N=1000$ \\
+R5a Two Moons & $W_2$ below effect floor & Tie & Seed-level test \\
+R5b CIFAR-10 RF & FID, matched NFE=50 & Conditional & 2/4 arms at $N=1000$ \\
+R5c MNIST FM & FID plateau $-12.75\%$ ($-3.12$) & Strong & 3 other ckpts tie \\
+R6 Kanzi k6 & scPerplexity $-0.84$; hard pLDDT $+1.12$ & Strong & Pooled pLDDT \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -449,6 +462,7 @@ from Sec.~VII-B.}
 \end{figure}
 
 \subsection{Per-cell status}
+\label{sec:per-cell}
 
 \textbf{R2 --- Kanzi inv-proj (STRONG).} Kanzi \texttt{reconstruction\_kabsch\_rmsd\_Å} (protein flow-AE, index-matched two-sample $N = 1000$). Headline arm: \texttt{framework\_inv\_proj} (one \texttt{solve\_ode} per record; no scheduler object is instantiated). Cohen's $d_z = -0.0990$ (index-matched two-sample $N = 1000$, framework\_inv\_proj byte-stable $\sigma = 0$; the two arms are independent, $\mathrm{corr} \approx +0.02$, so the index-matched $t$-test coincides with the unpaired Welch test --- $t = -3.11$, $p = 1.87 \times 10^{-3}$). Raw $p = 1.79 \times 10^{-3}$, Bonferroni-significant at R-level primary $k = 7$, $\alpha = 0.007143$. Status: \textbf{STRONG framework-WINS} --- the framework delivers a small but consistent framework-WINS on the per-record composite axis for the Kanzi Tier-3 real checkpoint. \emph{Measurement basis:} the reconstruction is evaluated on synthetic input coordinates (4 PDB backbones $\times$ 250 Gaussian perturbations, $\sigma = 0.10$~\AA{}), and the framework arm feeds the trained \texttt{project\_out}$^{-1}$ bridge the real 512-d trajectory endpoint; the reported $\Delta$ is a framework-internal reconstruction RMSD.
 
@@ -494,8 +508,11 @@ Every head-claim cell is reported under a 13-column audit row: \texttt{(n\_paire
 Cluster-robust re-analysis for protein cells treats each Pfam family as a cluster and re-computes the cluster-level $t$, $df_\text{cluster}$, and $p_\text{cluster}$. The cluster-robust family $k = 6 \times 4 = 24$ uses $\alpha_\text{cluster} = 0.05/24 = 0.00208$ as a strict reviewer-facing bound. FDR-BH sensitivity at $q = 0.05$ is reported as a reviewer-facing sensitivity analysis for the reported cells.
 
 \subsection{Scope of the observed operating boundaries}
+\label{sec:scope}
 
 Only three headline cells instantiate a scheduler object; of those, only 1 of 11 cells (R6 k6 foldability) engages a paper-quantity-driven wrapper (\texttt{TierAwareCodimensionSheetScheduler} around a \texttt{ConstantScheduler} base), and it does so live with \texttt{paper\_quantities=None}. Of the 16 enumerated application sites of the companion across the framework, 15 of 16 are dormant. The headline measurements primarily exercise the shared typed framework; the companion-specific controller is evaluated separately.
+
+Seed coverage and metric definitions bound the per-cell claims. R1 is single-seed. R3 is measured at three seeds at $N=1000$ per arm and is direction-consistent but not significant. R6's headline is a live tier-aware run rather than a counterfactual, and its pooled pLDDT stays below the $+0.2235$ bar. Matched-NFE image quality depends on round count and checkpoint setting (\S\ref{sec:nfe-boundary}, \S\ref{sec:r5c-frontier}). Four prespecified Bonferroni families and 30 byte-stable D.4 regression vectors govern the analyses.
 
 \subsection{R6 cross-adapter replication}
 
@@ -507,6 +524,7 @@ The adapter boundary supplies a concrete mechanism for using a frozen checkpoint
 The protein foldability data suggest a second, allocation-level mechanism. Let $\delta_i$ be the paired framework-minus-baseline pLDDT for record $i$. Its overall mean decomposes exactly as $\bar\delta=\sum_t (n_t/N)\bar\delta_t$ over difficulty tiers $t$. The observed hard-tier benefits and easy-tier losses can therefore cancel in the aggregate even when the framework helps difficult proteins. This pattern recurs on Kanzi k6 and LineageFlow (Sec. 7.6). A tier-aware controller implements the corresponding decision rule by reducing the easy-tier capacity fraction while leaving hard-tier allocation intact. The live run of that rule moves pooled scPerplexity by $d_z=-0.8393$ ($n=3000$) and hard-tier pLDDT by $d_z=+1.1211$ ($n=990$), while pooled pLDDT stays at $d_z=+0.1466$ and does not reach the $+0.2235$ bar; the frozen-sweep counterfactual ($+0.071$ to $+0.2235$) is retained as the design-validation baseline. The live result confirms the allocation direction on the two axes where the decomposition predicts a gain, and it does not confirm a pooled-pLDDT gain, which is what the decomposition permits when hard-tier benefit is diluted by easy-tier loss. This cross-adapter pattern gives FlowA a concrete design principle: allocate inference capacity according to difficulty and representation geometry.
 
 \subsection{Matched-NFE image boundary}
+\label{sec:nfe-boundary}
 R5b's direction depends on sample protocol, checkpoint, evaluator, scheduler, and round count (Sec. 7.2). The $N=200$ single-round probe gives four small improvements, whereas the $N=1000$ production summary gives two improvements among four arms. Separate multi-round comparisons show substantial FID regression. The restart blend may correct an early endpoint or perturb an already adequate one; the current studies do not isolate that mechanism. The reported 2.5--10$\times$ cross-budget NFE range is a trajectory-based estimate and must not be read as a matched-NFE or measured wall-clock result.
 
 \subsection{Head-to-head comparison}
@@ -514,6 +532,7 @@ R5b's direction depends on sample protocol, checkpoint, evaluator, scheduler, an
 The head-to-head cell compares FlowA against \texttt{vanilla} + \texttt{Fast-DLLM} + \texttt{AB-Cache} + \texttt{LeDiFlow} on the R6 foldability axes at NFE $\in \{50, 100\}$. FlowA wins both metrics at both NFE settings vs all four baselines. The 16-cell Table B family is Bonferroni-significant at $\alpha = 0.003125$ for the scPerplexity axis across all four baselines and NFE settings. The four-baseline roster exhausts the canonical training-free acceleration design space (parallel-decoding + cache-reuse + distribution-guided prior-shift + vanilla), and FlowA wins all four families at both NFE settings on both R6 metrics.
 
 \subsection{R5c checkpoint-conditional frontier}
+\label{sec:r5c-frontier}
 The R5c cell is evaluated on a (quality, NFE) grid: four checkpoints $\times$ seven rungs $\{4,5,10,25,50,100,200\}$, $N=1000$ per arm, three seeds, at least two integration steps per round, with the plateau defined as the mean of the last two rungs. On \texttt{w16e1\_5k} the baseline plateau is 24.4839 FID and the framework plateau 21.3632 FID ($-3.1206$, $-12.75\%$); the framework is weakly dominant at all seven rungs and gains strictly at 7/7. The three better-trained checkpoints tie: \texttt{w16e1\_10k} improves by 1.0036 FID ($-5.92\%$) with a CI lower bound of 0.984 FID, so no rung clears the one-FID floor, \texttt{w16e1\_60k} moves by $+0.0150$ FID ($+0.13\%$), and the production checkpoint by $-0.0335$ FID ($-0.34\%$); no rung violates weak dominance on any checkpoint.
 
 An earlier single-budget series measured one budget per checkpoint at baseline NFE=50 with framework budgets of 25--48: the smoke setting (one epoch, eight channels, 6,000 training images, one seed) changed the headline FID from 29.49 to 23.39 with a paired chunk-mean $\Delta$ FID of $-28.43\%$, the intermediate setting (two epochs, sixteen channels, 60,000 images, one seed) changed 13.45 to 15.44 ($+8.53\%$), and the production setting (three epochs, same architecture and image count, three seeds) changed 11.99 to 13.67 ($+10.37\%$). That series mixed a budget penalty with a checkpoint effect: the framework arm ran fewer steps than the 50-step baseline. At matched rungs the better-trained checkpoints are neutral rather than worse, and the frontier table above supersedes the sign-change reading.
@@ -522,6 +541,7 @@ An earlier single-budget series measured one budget per checkpoint at baseline N
 R2 supports a small index-matched two-sample reconstruction gain; R6's live tier-aware run wins on scPerplexity with the pLDDT gain concentrated in the hard tier; R5c lowers the FID plateau by $12.75\%$ on the under-trained MNIST checkpoint and ties on the three better-trained ones. R5a is a tie. R1 is single-seed, and R3 is direction-consistent but not significant at three seeds. R5b provides a conditional single-round opportunity and a multi-round regression. Neither theorem in Sec. 6 predicts these metric directions.
 
 \section{Reproducibility}
+\label{sec:repro}
 
 \subsection{Five-gate invariants}
 
@@ -546,6 +566,7 @@ The adversarial claims verifier (\texttt{tools/check\_claims\_consistency.py}) e
 The claims verifier checks statuses against recorded artifacts. Per-cell recipes pin commands, seeds, environment, and checkpoint provenance; the hash-chained ledger records round transitions. D.4 contains 30 byte-stable regression vectors. These checks establish replay integrity within their recorded environments, not statistical replication across every checkpoint.
 
 \section{Limitations and Future Work}
+\label{sec:limitations}
 The contraction theorem requires an invariant envelope and an adapter-specific $K$ with $mK<1$; neither is established for the reported image checkpoints. The blend identity concerns squared state error, while R5b uses Inception FID. A metric bridge would require new assumptions and validation. Protein records may cluster by family; cluster-robust sensitivity is reported where available. R1 is single-seed; R3's three-seed test is direction-consistent but not significant. R6's tier-aware effect is measured live but its pooled pLDDT stays below the $+0.2235$ bar. R5c's four checkpoints still differ in architecture and training-set size as well as in training time.\par\newpage Future work should measure map Lipschitz constants on invariant envelopes, replicate single-round and multi-round R5b protocols with one checkpoint and evaluator, and vary MNIST training epochs under fixed architecture and data.
 
 \section{Conclusion}

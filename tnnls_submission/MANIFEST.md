@@ -1,7 +1,34 @@
 # TNNLS Submission Package — MANIFEST
 
-> **2026-10-27 evidence-refresh addendum (current artifacts; supersedes every
-> page-count and SHA-256 reading above/below that differs).** The manuscript
+> **2026-10-27 packaging addendum (current artifacts; supersedes every
+> title, page-count and SHA-256 reading above/below that differs).** The
+> manuscript was **retitled** and its front matter repackaged around a single
+> claim: *moving the control variable from the step count to the round
+> boundary*. No metric, claim number, status label, or verdict changed, and no
+> sweep was run. Changes: new title **"FlowA: Re-Inference Control for Frozen
+> Flow-Matching Checkpoints"**; abstract rewritten 193 → 167 words with the
+> matched-budget result promoted to sentence 4; contributions collapsed 4 → 3
+> so that the matched-budget evidence is contribution (ii) rather than an
+> evaluation sub-clause; the six intro hedges moved to §VII-E; new
+> **Figure 1** (four-panel matched-rung NFE frontier, rendered by
+> `tools/render_r5c_frontier_figure.py` from
+> `verification_outputs/gap84-mnist-frontier/`, SHA-256
+> `f677c9b69a99f8f3be6617182c2290503040c18fd47bd4f0e44846395cc486f1`,
+> 203323 bytes); Table III scope column compressed to phrases. Current
+> artifacts: `paper-A-final.md` =
+> `60d8ca0c8d4f8a193ee04922af7cde93089937328058b1c87c1ae37e6d3c52ed`
+> (223739 bytes, 27361 words); `paper-A-final.tex` =
+> `16a6c864d6dbcd5f638fbfbd747c9511b5ac5bd4cb8d51397a87df2f8a5d76e2`
+> (73276 bytes); `paper-A-final.pdf` =
+> `740b1d8ce49dcd84f0fc537e09110e13a1be562892a468440881878c06d58658`
+> (613629 bytes, **12 pages**, two `pdflatex` passes, zero overfull hboxes,
+> zero undefined references). The 2026-10-27 evidence-refresh banner below
+> (`85c90e5d…` / `a6fcee68…` / `a0a0d97f…`) is superseded on artifacts only;
+> its evidence statements remain current. Full trail:
+> `docs/audit/paper-packaging-2026-10-27.md`.
+
+> **2026-10-27 evidence-refresh addendum (superseded on artifacts by the
+> packaging addendum above).** The manuscript
 > was refreshed with measured evidence only — no new sweep was run and no
 > existing number was altered. Current artifacts:
 > `paper-A-final.md` = `85c90e5d619bc349384eccaa545723b7f09064ab4df0f5b96a93cc966ed7c482`
@@ -58,7 +85,7 @@
 > **Manuscript-consistency pass #11 (2026-10-12) — R1 3-seed real-ckpt materialization addendum.** The R1 cell (`hmmscan_total_hits`) gained a **fresh zero-fallback 3-seed × N=1000-per-arm** materialization on the **real-ckpt (torch)** basis (`force_mode="auto"` per Wave 349 P4; ckpt `data/lineageflow/lineageflow-rp55.ckpt`) at `verification_outputs/r1_3seed_real_ckpt_q4_2026/` (10 committed artifacts; `SHA256SUMS` 10/10 OK). Per-seed (per-record paired $t$, $df = 999$): seed 42 $= 158 \rightarrow 271$ ($+71.52\%$, $d_z = +0.164$, $p = 2.45 \times 10^{-7}$); seed 43 $= 159 \rightarrow 213$ ($+33.96\%$, $d_z = +0.086$, $p = 6.73 \times 10^{-3}$); seed 44 $= 174 \rightarrow 230$ ($+32.18\%$, $d_z = +0.081$, $p = 1.10 \times 10^{-2}$) — all 3 seeds direction-consistent framework-WINS. DerSimonian–Laird random-effects meta of the 3 per-seed $d_z$: $d_\text{pooled} = +0.110$, $z = 4.073$, $p_\text{two} = 4.635 \times 10^{-5}$, $p_{\text{Bonf},k=7} = 3.244 \times 10^{-4}$ (significant), $I^2 = 54.13\%$. **No metric, claim number, status label, or verdict changed** — the pooled effect $d_z = +0.110$ is below the $0.8$ STRONG bar, so **R1 remains PARTIAL**; the §7.2 R1 row (`PARTIAL / single-seed-disclosed`, $d_z = +0.182$) is preserved verbatim and an **additive footnote** now discloses the real-ckpt 3-seed run **and the basis fork** (the canonical Wave 158 headline $158 \rightarrow 342$ / $+116\%$ is a **synthetic-velocity-field** number; the baseline arm is byte-identical between bases while the framework arm differs — real-ckpt 271 vs synthetic 342 on seed 42). `docs/CLAIMS.md` CLM-060 carries a matching additive status addendum. Resulting artifact SHA-256s: `paper-A-final.md` = `0586a5641c5a3c77343cef88d6218204f09c8355302e4a676a22cac501178f52` (214989 bytes; word count 25,959); `paper-A-final.tex` = `33f4ea9aae385642772b877af4374a20587b47388134adabb9ed6325704121c3` (67528 bytes); `paper-A-final.pdf` = `a9883fc9c8356c8093c2ee983fd782496aa5f9647456f938f6b21a5793f22a5d` (460079 bytes, **11 pages**, rebuilt with two `pdflatex` passes; zero fatal errors, zero undefined references). The pass-#9 `c6978764…` / `cd600246…` / `b3fd1c3e…` readings are superseded. Full trail: `docs/audit/r1-3seed-real-ckpt-materialize.md`.
 
 **Venue:** *IEEE Transactions on Neural Networks and Learning Systems* (TNNLS)
-**Manuscript:** FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints
+**Manuscript:** FlowA: Re-Inference Control for Frozen Flow-Matching Checkpoints
 **Submitted:** pending (cover-letter USER ACTION placeholders to be filled)
 **Freeze-marker commit:** Wave 343 HEAD (`paper-A-final.{md,tex,pdf}` 14 pp., 2026-09-25; Wave 343 paper bibliography fix added BGV12 + Villani 2003 + RMSPreserving disposition)
 **Final tag (to push):** `v3.0-tnnls-ready` (kept; paper revision applied as additive Wave 343 bibliography fix, no schema-level version bump)

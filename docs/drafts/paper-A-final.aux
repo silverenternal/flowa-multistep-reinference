@@ -5,63 +5,70 @@
 \@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{section.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {II}Related Work}{1}{section.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Flow matching inference paradigms}{1}{subsection.2.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Matched-budget NFE frontier on four MNIST flow-matching checkpoints from the same training family ($N=1000$ per arm, seeds 42/43/44, rungs $\{4,5,10,25,50,100,200\}$, at least two integration steps per round). Solid: re-inference; dashed: one-shot baseline; bands: $\pm 1$ sd across the three seeds; grey window: the two rungs averaged into the plateau. On the least-trained checkpoint (shaded panel) the map is below the baseline at all seven rungs and lowers the plateau by 3.12 FID (12.75\%). On the three better-trained checkpoints no rung's confidence bound clears the one-FID floor, so the rung rule returns a tie. At 4 NFE the 60k and production checkpoints pay 2.3--2.8 FID for the round boundary, because the two-step-per-round floor leaves no integration budget to trade; that cost is recovered by 10--25 NFE and does not affect the plateau. Values are read from \texttt  {verification\_outputs/gap84-mnist-frontier/}.}}{2}{figure.1}\protected@file@percent }
+\newlabel{fig:r5c-frontier}{{1}{2}{Matched-budget NFE frontier on four MNIST flow-matching checkpoints from the same training family ($N=1000$ per arm, seeds 42/43/44, rungs $\{4,5,10,25,50,100,200\}$, at least two integration steps per round). Solid: re-inference; dashed: one-shot baseline; bands: $\pm 1$ sd across the three seeds; grey window: the two rungs averaged into the plateau. On the least-trained checkpoint (shaded panel) the map is below the baseline at all seven rungs and lowers the plateau by 3.12 FID (12.75\%). On the three better-trained checkpoints no rung's confidence bound clears the one-FID floor, so the rung rule returns a tie. At 4 NFE the 60k and production checkpoints pay 2.3--2.8 FID for the round boundary, because the two-step-per-round floor leaves no integration budget to trade; that cost is recovered by 10--25 NFE and does not affect the plateau. Values are read from \texttt {verification\_outputs/gap84-mnist-frontier/}}{figure.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}The inference-dynamics reformulation}{2}{subsection.2.2}\protected@file@percent }
+\newlabel{sec:reformulation}{{\mbox  {II-B}}{2}{The inference-dynamics reformulation}{subsection.2.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Typed ML systems and contract-driven design}{2}{subsection.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {III}Framework}{2}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Typed-contracts framework architecture}{2}{subsection.3.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces FlowA architecture. The adapter layer wraps five frozen checkpoints without modifying vendored code; the algorithm layer exposes the four-port control surface and the thirteen scheduler families; the evaluation layer supplies model-agnostic metrics and diagnostics. All three layers rest on a shared framework kernel that carries the typed state bundles and the SHA-256 hash-chained ledger used for byte-stable replay. Dependency direction is adapter~$\to $~algorithm, adapter~$\to $~eval, and algorithm/eval~$\to $~framework.}}{3}{figure.1}\protected@file@percent }
-\newlabel{fig:flowa-architecture}{{1}{3}{FlowA architecture. The adapter layer wraps five frozen checkpoints without modifying vendored code; the algorithm layer exposes the four-port control surface and the thirteen scheduler families; the evaluation layer supplies model-agnostic metrics and diagnostics. All three layers rest on a shared framework kernel that carries the typed state bundles and the SHA-256 hash-chained ledger used for byte-stable replay. Dependency direction is adapter~$\to $~algorithm, adapter~$\to $~eval, and algorithm/eval~$\to $~framework}{figure.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {III}Framework}{3}{section.3}\protected@file@percent }
+\newlabel{sec:framework}{{III}{3}{Framework}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Typed-contracts framework architecture}{3}{subsection.3.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Mechanism: from checkpoint geometry to measurable gain}{3}{subsection.3.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces FlowA mechanism: native-state alignment, restart intervention, frozen flow, and scheduler feedback.}}{3}{figure.2}\protected@file@percent }
-\newlabel{fig:flowa-mechanism}{{2}{3}{FlowA mechanism: native-state alignment, restart intervention, frozen flow, and scheduler feedback}{figure.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces FlowA architecture. The adapter layer wraps five frozen checkpoints without modifying vendored code; the algorithm layer exposes the four-port control surface and the thirteen scheduler families; the evaluation layer supplies model-agnostic metrics and diagnostics. All three layers rest on a shared framework kernel that carries the typed state bundles and the SHA-256 hash-chained ledger used for byte-stable replay. Dependency direction is adapter~$\to $~algorithm, adapter~$\to $~eval, and algorithm/eval~$\to $~framework.}}{4}{figure.2}\protected@file@percent }
+\newlabel{fig:flowa-architecture}{{2}{4}{FlowA architecture. The adapter layer wraps five frozen checkpoints without modifying vendored code; the algorithm layer exposes the four-port control surface and the thirteen scheduler families; the evaluation layer supplies model-agnostic metrics and diagnostics. All three layers rest on a shared framework kernel that carries the typed state bundles and the SHA-256 hash-chained ledger used for byte-stable replay. Dependency direction is adapter~$\to $~algorithm, adapter~$\to $~eval, and algorithm/eval~$\to $~framework}{figure.2}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Mechanism-to-evidence map. Each row identifies the intervention, its observable quantity, and the evidence used in this paper.}}{4}{table.1}\protected@file@percent }
 \newlabel{tab:mechanism-evidence}{{I}{4}{Mechanism-to-evidence map. Each row identifies the intervention, its observable quantity, and the evidence used in this paper}{table.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces FlowA mechanism: native-state alignment, restart intervention, frozen flow, and scheduler feedback.}}{4}{figure.3}\protected@file@percent }
+\newlabel{fig:flowa-mechanism}{{3}{4}{FlowA mechanism: native-state alignment, restart intervention, frozen flow, and scheduler feedback}{figure.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Three-domain split}{4}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Per-round state bundle}{4}{subsection.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-E}}Capability handshake and auditable state}{4}{subsection.3.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-F}}Why the framework's identity is the typed contract}{4}{subsection.3.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-G}}Mechanistic design principles}{4}{subsection.3.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Per-round state bundle}{5}{subsection.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-E}}Capability handshake and auditable state}{5}{subsection.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-F}}Why the framework's identity is the typed contract}{5}{subsection.3.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-G}}Mechanistic design principles}{5}{subsection.3.7}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {IV}Scheduler Family}{5}{section.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Thirteen-family taxonomy}{5}{subsection.4.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Nine baselines}{5}{subsection.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Four theoretical-perspective controllers}{5}{subsection.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Innovation: Lazy-Memoized Site-Aware Cache}{5}{subsection.4.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-E}}Validated headline usage}{5}{subsection.4.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {V}Adapter Protocol}{5}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Zero-line vendored integration}{5}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Four theoretical-perspective controllers}{6}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Innovation: Lazy-Memoized Site-Aware Cache}{6}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-E}}Validated headline usage}{6}{subsection.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {V}Adapter Protocol}{6}{section.5}\protected@file@percent }
+\newlabel{sec:adapter}{{V}{6}{Adapter Protocol}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Zero-line vendored integration}{6}{subsection.5.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Minimum protocol surface}{6}{subsection.5.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Five concrete implementations}{6}{subsection.5.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Vendor-friendly architectural claim}{6}{subsection.5.4}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Mechanism map from implementation to measured evidence.}}{6}{table.2}\protected@file@percent }
-\newlabel{tab:mechanism-map}{{II}{6}{Mechanism map from implementation to measured evidence}{table.2}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {VI}Framework Properties}{6}{section.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Mechanism-to-metric transfer}{6}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Framework Properties}{7}{section.6}\protected@file@percent }
+\newlabel{sec:properties}{{VI}{7}{Framework Properties}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Mechanism-to-metric transfer}{7}{subsection.6.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Mechanism map from implementation to measured evidence.}}{7}{table.2}\protected@file@percent }
+\newlabel{tab:mechanism-map}{{II}{7}{Mechanism map from implementation to measured evidence}{table.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}Conditional contraction of the re-inference map}{7}{subsection.6.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-C}}Exact restart-blend error identity}{7}{subsection.6.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {VII}Empirical Results}{7}{section.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-A}}Evaluation scope}{7}{subsection.7.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Evidence comparison across the eleven headline cells. (a) Per-cell standardized effect size $|d|$ on a log scale; the dashed line marks the $|d|=0.8$ STRONG-promotion bar. R6 contributes two points (live scPerplexity and hard-tier pLDDT). (b) The eleven-cell verdict distribution (three STRONG $+$ one CONDITIONAL $+$ one TIE $+$ two PARTIAL $+$ four supplementary). R5b is protocol-conditional, R5c is a frontier comparison, and the four K-cells are supplementary; none of them carries a single standardized effect size, so they are omitted from (a). Values are transcribed verbatim from Sec.~VII-B.}}{7}{figure.3}\protected@file@percent }
-\newlabel{fig:cell-evidence}{{3}{7}{Evidence comparison across the eleven headline cells. (a) Per-cell standardized effect size $|d|$ on a log scale; the dashed line marks the $|d|=0.8$ STRONG-promotion bar. R6 contributes two points (live scPerplexity and hard-tier pLDDT). (b) The eleven-cell verdict distribution (three STRONG $+$ one CONDITIONAL $+$ one TIE $+$ two PARTIAL $+$ four supplementary). R5b is protocol-conditional, R5c is a frontier comparison, and the four K-cells are supplementary; none of them carries a single standardized effect size, so they are omitted from (a). Values are transcribed verbatim from Sec.~VII-B}{figure.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-B}}Per-cell status}{7}{subsection.7.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Main-cell evidence at the reported metric and protocol. Negative $\Delta $FID is favourable. Status labels are cell-specific, not pooled across metrics.}}{8}{table.3}\protected@file@percent }
-\newlabel{tab:main-cell-evidence}{{III}{8}{Main-cell evidence at the reported metric and protocol. Negative $\Delta $FID is favourable. Status labels are cell-specific, not pooled across metrics}{table.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-C}}Mechanism isolation and causal ordering}{9}{subsection.7.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-D}}Statistical methodology}{9}{subsection.7.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Evidence comparison across the eleven headline cells. (a) Per-cell standardized effect size $|d|$ on a log scale; the dashed line marks the $|d|=0.8$ STRONG-promotion bar. R6 contributes two points (live scPerplexity and hard-tier pLDDT). (b) The eleven-cell verdict distribution (three STRONG $+$ one CONDITIONAL $+$ one TIE $+$ two PARTIAL $+$ four supplementary). R5b is protocol-conditional, R5c is a frontier comparison, and the four K-cells are supplementary; none of them carries a single standardized effect size, so they are omitted from (a). Values are transcribed verbatim from Sec.~VII-B.}}{8}{figure.4}\protected@file@percent }
+\newlabel{fig:cell-evidence}{{4}{8}{Evidence comparison across the eleven headline cells. (a) Per-cell standardized effect size $|d|$ on a log scale; the dashed line marks the $|d|=0.8$ STRONG-promotion bar. R6 contributes two points (live scPerplexity and hard-tier pLDDT). (b) The eleven-cell verdict distribution (three STRONG $+$ one CONDITIONAL $+$ one TIE $+$ two PARTIAL $+$ four supplementary). R5b is protocol-conditional, R5c is a frontier comparison, and the four K-cells are supplementary; none of them carries a single standardized effect size, so they are omitted from (a). Values are transcribed verbatim from Sec.~VII-B}{figure.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Empirical Results}{8}{section.7}\protected@file@percent }
+\newlabel{sec:results}{{VII}{8}{Empirical Results}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-A}}Evaluation scope}{8}{subsection.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-B}}Per-cell status}{8}{subsection.7.2}\protected@file@percent }
+\newlabel{sec:per-cell}{{\mbox  {VII-B}}{8}{Per-cell status}{subsection.7.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Main-cell evidence at the reported metric and protocol. Negative $\Delta $FID is favourable. Status labels are cell-specific, not pooled across metrics.}}{9}{table.3}\protected@file@percent }
+\newlabel{tab:main-cell-evidence}{{III}{9}{Main-cell evidence at the reported metric and protocol. Negative $\Delta $FID is favourable. Status labels are cell-specific, not pooled across metrics}{table.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-C}}Mechanism isolation and causal ordering}{10}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-D}}Statistical methodology}{10}{subsection.7.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-E}}Scope of the observed operating boundaries}{10}{subsection.7.5}\protected@file@percent }
+\newlabel{sec:scope}{{\mbox  {VII-E}}{10}{Scope of the observed operating boundaries}{subsection.7.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-F}}R6 cross-adapter replication}{10}{subsection.7.6}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-G}}Where the measured gains can arise}{10}{subsection.7.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-H}}Matched-NFE image boundary}{10}{subsection.7.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-I}}Head-to-head comparison}{10}{subsection.7.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-J}}R5c checkpoint-conditional frontier}{10}{subsection.7.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-H}}Matched-NFE image boundary}{11}{subsection.7.8}\protected@file@percent }
+\newlabel{sec:nfe-boundary}{{\mbox  {VII-H}}{11}{Matched-NFE image boundary}{subsection.7.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-I}}Head-to-head comparison}{11}{subsection.7.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-J}}R5c checkpoint-conditional frontier}{11}{subsection.7.10}\protected@file@percent }
+\newlabel{sec:r5c-frontier}{{\mbox  {VII-J}}{11}{R5c checkpoint-conditional frontier}{subsection.7.10}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-K}}Empirical synthesis}{11}{subsection.7.11}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {VIII}Reproducibility}{11}{section.8}\protected@file@percent }
+\newlabel{sec:repro}{{VIII}{11}{Reproducibility}{section.8}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-A}}Five-gate invariants}{11}{subsection.8.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-B}}D.4 byte-stable regression suite}{11}{subsection.8.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-C}}Seed coverage and cluster sensitivity}{11}{subsection.8.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-D}}Pre-registered Bonferroni families}{11}{subsection.8.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-E}}Adversarial claims verifier}{11}{subsection.8.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-F}}Audit and replay}{11}{subsection.8.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {IX}Limitations and Future Work}{11}{section.9}\protected@file@percent }
 \bibcite{flow-matching}{1}
 \bibcite{rectified-flow}{2}
 \bibcite{dpm-solver-pp}{3}
@@ -79,6 +86,12 @@
 \bibcite{flowmol3}{15}
 \bibcite{bgv12}{16}
 \bibcite{villani2003}{17}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-C}}Seed coverage and cluster sensitivity}{12}{subsection.8.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-D}}Pre-registered Bonferroni families}{12}{subsection.8.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-E}}Adversarial claims verifier}{12}{subsection.8.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-F}}Audit and replay}{12}{subsection.8.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {IX}Limitations and Future Work}{12}{section.9}\protected@file@percent }
+\newlabel{sec:limitations}{{IX}{12}{Limitations and Future Work}{section.9}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {X}Conclusion}{12}{section.10}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{References}{12}{section*.1}\protected@file@percent }
 \gdef \@abspage@last{12}

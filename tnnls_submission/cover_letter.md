@@ -50,9 +50,8 @@ TNNLS Editorial Manager.
 **To:** Editor-in-Chief, IEEE Transactions on Neural Networks and
 Learning Systems (TNNLS)
 
-**Subject:** Submission of "FlowA: Geometry-Aware State-Intervention Reformulation
-for Frozen Flow-Matching Checkpoints" for consideration as a
-regular research paper in IEEE TNNLS.
+**Subject:** Submission of "FlowA: Re-Inference Control for Frozen Flow-Matching
+Checkpoints" for consideration as a regular research paper in IEEE TNNLS.
 
 **Authors:** Hugo Huang, MIT CSAIL, 32 Vassar St, Cambridge, MA, USA
 (hugo@example.com). Corresponding author: Hugo Huang (hugo@example.com).
@@ -1241,3 +1240,7 @@ hugo@example.com
 ## Current manuscript mechanism addendum (2026-10-27)
 
 The current 12-page IEEEtran manuscript explains two concrete pathways behind its frozen-checkpoint results. For Kanzi, the trained inverse-projection and DAE bridge puts the sampled state in the checkpoint's backbone-coordinate input space; the index-matched two-sample reconstruction comparison at N=1000 is 0.9020 to 0.8798 Å. For protein foldability, paired results on Kanzi k6 and LineageFlow show larger pLDDT benefit on hard records than on easy records. This observed heterogeneity motivates the implemented tier-aware capacity controller. The live tier-aware run moves pooled scPerplexity by d_z = −0.8393 and hard-tier pLDDT by d_z = +1.1211, while pooled pLDDT stays below the +0.2235 bar — the allocation direction is confirmed where the tier decomposition predicts a gain. The source-level evidence chain is recorded in `docs/audit/wave375-image-feedback-path.md` and the R2/R6 per-cell recipes. This addendum supersedes historical page-count and mechanism descriptions above where they differ from the current PDF.
+
+## Packaging note (2026-10-27)
+
+The manuscript is now titled **"FlowA: Re-Inference Control for Frozen Flow-Matching Checkpoints"** (previously "Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints"). The retitling accompanies a front-matter repackaging, not a change of results: the abstract, the contribution list, and Figure 1 now lead with the paper's single claim — that moving the control variable from the step count to the round boundary changes what a frozen sampler can reach — and the matched-budget evidence that supports it. No metric, status label, or verdict differs from the evidence-refresh reading recorded above. The new Figure 1 is a four-panel matched-rung NFE frontier on four MNIST checkpoints from one training family; the least-trained checkpoint improves at all seven rungs and lowers the FID plateau by 12.75%, while the three better-trained checkpoints return a tie under the one-FID floor rule.

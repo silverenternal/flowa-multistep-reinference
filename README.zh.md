@@ -1,4 +1,4 @@
-# FlowA：面向冻结 Flow-Matching 检查点的几何感知状态干预重构
+# FlowA：面向冻结 Flow-Matching 检查点的重推理控制
 
 [English](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/README.md) | [中文](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/README.zh.md)
 
@@ -11,7 +11,7 @@
 [![5-gate PASS](https://img.shields.io/badge/5--gate-PASS-brightgreen.svg)](#submission-gates-verified-at-final-pre-push--终版前推送时验证)
 [![mkdocs strict](https://img.shields.io/badge/mkdocs--strict-0%20warnings-success.svg)](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/mkdocs.yml)
 
-**Last updated / 最近更新:** 2026-10-12 (HEAD `a957906` 全门 PASS；readiness verifier 现已全绿——`k1_rc5` 指向活稿、`drift_33` 白名单收敛到活稿面——并修复了裸 `pytest` 收集错误与 5 个过时的 Kanzi 适配器测试)。手稿 = `docs/drafts/paper-A-final.pdf`（11 页，IEEEtran；已改题为 *Geometry-Aware State-Intervention Reformulation* 并围绕 inference-dynamics 重构）。项目状态与历史：[`todo/WAVES.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/todo/WAVES.md)。论文 A 已准备 TNNLS 投稿。
+**Last updated / 最近更新:** 2026-10-27（全门 PASS；`docs/PAPER-EVIDENCE.md` 是 cell 级证据的唯一来源）。手稿 = `docs/drafts/paper-A-final.pdf`（12 页，IEEEtran；已改题为 *Re-Inference Control for Frozen Flow-Matching Checkpoints*，并围绕单一主张重新包装——控制变量是轮边界，不是步数）。项目状态与历史：[`todo.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/todo.json)。论文 A 已准备 TNNLS 投稿。
 
 **Scheduler scope of this README / 本 README 的调度器适用范围:** All 7 headline numbers in the [Headline Results](#headline-results--头条结果) section were produced under `CosineAnnealScheduler` (the controller that ignores all 4 paper quantities). `CodimensionSheetScheduler` 和其他 paper-quantity-grounded 控制器 (`PaperRatioAdaptiveScheduler`、`EvidenceDrivenScheduler`、`ConvergenceAdaptiveScheduler`) 均为研究阶段；详见 [`docs/ALGORITHMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ALGORITHMS.md) 与 [`docs/CLAIMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md) 中汇总的 pipeline inventory。
 
@@ -68,7 +68,7 @@
 
 | Item / 项目 | Value / 值 |
 |---|---|
-| **Paper ID / 论文编号** | Paper A — FlowA: Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints |
+| **Paper ID / 论文编号** | Paper A — FlowA: Re-Inference Control for Frozen Flow-Matching Checkpoints |
 | **Paper PDF / 论文 PDF** | [`docs/drafts/paper-A-final.pdf`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.pdf) (11 pages, IEEEtran-journal double-column typeset, sha256 `a9883fc9c8356c8093c2ee983fd782496aa5f9647456f938f6b21a5793f22a5d`) |
 | **Paper draft / 论文草稿** | [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) (25,959 words, §6 Framework Properties Lemmas 1–3 + Theorems 4–5 ACTIVE, sha256 `0586a5641c5a3c77343cef88d6218204f09c8355302e4a676a22cac501178f52`) |
 | **Target venue / 目标期刊** | IEEE TNNLS (Transactions on Neural Networks and Learning Systems) |
@@ -516,8 +516,7 @@ Re-verify with `cd tnnls_submission && sha256sum -- *.md`.
 
 ```bibtex
 @article{flowa2026tnnls,
-  title={FlowA: Geometry-Aware State-Intervention Reformulation
-         for Frozen Flow-Matching Checkpoints},
+  title={FlowA: Re-Inference Control for Frozen Flow-Matching Checkpoints},
   author={[Authors block — to be filled at TNNLS submission]},
   journal={IEEE Transactions on Neural Networks and Learning Systems},
   year={2026},

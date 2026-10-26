@@ -3,10 +3,11 @@
 **Status:** Finalised for TNNLS submission. All boxes verified at Wave 242 P4 (D.4 30/30 PASS, mkdocs 0 warnings, claims_consistency no drift).
 
 > **Current-artifact banner (2026-10-27).** The dated page-count and
-> SHA-256 readings below are historical records. The current build is
-> **12 pages**, `docs/drafts/paper-A-final.pdf`, SHA-256
-> `a0a0d97f07a078cdcc0695003c7258f487d10c04a6e12f21511740eb0709aec9`
-> (461403 bytes, two `pdflatex` passes, zero overfull hboxes, zero
+> SHA-256 readings below are historical records. The manuscript is now titled
+> **"FlowA: Re-Inference Control for Frozen Flow-Matching Checkpoints"** and
+> the current build is **12 pages**, `docs/drafts/paper-A-final.pdf`, SHA-256
+> `740b1d8ce49dcd84f0fc537e09110e13a1be562892a468440881878c06d58658`
+> (613629 bytes, two `pdflatex` passes, zero overfull hboxes, zero
 > undefined references). The verdict distribution is **3 STRONG + 1
 > CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only**. R3's three-seed test
 > and R6's live tier-aware run are now measured, so camera-ready items
