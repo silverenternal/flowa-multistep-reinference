@@ -45,7 +45,7 @@ GAP-78's schedule exactly, so the two artifacts describe the same *protocol*
 measured at two different *budgets*.
 
 §3.1 is the check that this does not matter for the ordering: the same table
-built on the `NFE=50` delta gives the same 2/2 split.
+built on the `NFE=50` delta gives the same 2/2 split by magnitude.
 
 ## 3. The table
 
@@ -72,8 +72,9 @@ the `NFE=50` delta (GAP-78's own `evidence_driven` arm):
 | `w16e1_60k` | 0.893 | +0.1397 | [−0.1487, +0.4282] | floor |
 | `production` | 0.959 | −0.3648 | [−0.7237, −0.0059] | floor |
 
-The 2/2 split is identical at both budgets. Two details are worth recording
-because they cut against a cleaner story:
+The same 2/2 split --- two checkpoints move the plateau by more than the
+1-FID floor, two do not --- holds at both budgets. Two details are worth
+recording because they cut against a cleaner story:
 
 * The `production` point is a *strict* gain at `NFE=50` (CI excludes 0) but sits
   inside the 1-FID floor, so it is a TIE under the paper's rule. The same
@@ -87,9 +88,15 @@ because they cut against a cleaner story:
 
 ## 4. What the numbers say
 
-**The ordering is exact.** κ sorts the four checkpoints into "gain" and "no
-gain" with no error: the two below κ = 0.74 both move the plateau, the two above
-κ = 0.89 both sit inside the floor. A practitioner could use κ as a gate.
+**The ordering by magnitude is exact.** κ sorts the four checkpoints by how far
+they move the plateau with no error: 3.12 / 1.00 / 0.02 / 0.03 FID at
+κ = 0.667 / 0.738 / 0.893 / 0.959. The *verdict* split is 1 WIN + 3 TIE, not
+2 + 2: `w16e1_10k` moves the plateau by exactly 1.00 FID, which is the floor
+itself, and the frontier report scores it a TIE with `strict_gain_rungs: []`
+(`verification_outputs/gap84-cap-frontier/frontier_w16e1_10k.json`). Writing
+"the two below 0.74 both move the plateau" would overstate the 10k row; the
+correct sentence is that the magnitude decreases monotonically in κ and only the
+lowest point clears the floor.
 
 **The ordering is not a correlation result.** Spearman ρ = 0.8 on n = 4,
 which is not significant; with four points and a 2/2 split there are only six
@@ -124,9 +131,10 @@ Draft text (inserted as §VI-D):
 > the trace ratio of the framework arm's projected covariance to the
 > reference-scaled baseline dispersion, computed at NFE=50 without reference
 > data — against the seven-rung plateau delta of the same four checkpoints under
-> the same protocol. The two checkpoints with κ below 0.74 move the plateau; the
-> two with κ above 0.89 sit inside the one-FID floor, and the same 2/2 split
-> holds on the NFE=50 delta itself. With four points the ordering is consistent
+> the same protocol. The checkpoint at κ = 0.667 moves the plateau by 3.1 FID
+> and wins, the one at κ = 0.738 by 1.0 FID — exactly the floor — and the two
+> above κ = 0.89 by +0.02 and −0.03. The magnitude order is the same on the
+> NFE=50 delta. With four points the ordering is consistent
 > with a threshold but does not establish one, and κ is collinear with the
 > optimizer-step budget on this family, so the table is a diagnostic and not an
 > identification. It does mean the theory section is not decorative: the

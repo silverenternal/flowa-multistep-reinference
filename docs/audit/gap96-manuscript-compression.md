@@ -18,17 +18,17 @@ Where the 12 pages currently go, from the compiled PDF:
 
 | block | pages | words |
 |---|---|---:|
-| I Introduction + II Related work | 1–3 | 556 + 656 |
-| III Framework | 3–4 | 1,940 |
-| IV Scheduler family | 4–5 | 311 |
-| V Adapter protocol | 6–7 | 390 |
-| VI Framework properties | 7–8 | 876 |
-| VII Empirical results | 8–11 | 2,390 |
-| VIII Reproducibility | 11–12 | 395 |
+| I Introduction + II Related work | 1–3 | 1,215 |
+| III Framework | 3–4 | 2,152 |
+| IV Scheduler family | 4–5 | 314 |
+| V Adapter protocol | 6–7 | 396 |
+| VI Framework properties | 7–8 | 926 |
+| VII Empirical results | 8–11 | 2,701 |
+| VIII Reproducibility | 11–12 | 400 |
 | IX Limitations + X Conclusion | 12 | 379 |
 
 **The earlier premise of this gap is stale.** It said the engineering surface
-occupies "about three pages"; the measured figure is III–VI ≈ 5 pages plus
+occupies "about three pages"; the measured figure is III–VI ≈ 5.5 pages (3,788 words) plus
 VIII ≈ 1.5. Most of that is not padding — III-B carries the mechanism the paper
 is about — so the cut list below is ordered by *what a TNNLS reviewer reads as
 systems work*, not by word count alone.

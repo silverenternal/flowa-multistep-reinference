@@ -28,11 +28,12 @@ evidence of a live lever is wrong, and this document does not do that.
 ## 2. What is already ruled out — do not re-run it
 
 * **More rounds.** GAP-84c swept `R ∈ {2,4,6,8,12}` at fixed NFE=25 on
-  `production`, 15/15 cells, seeds 42/43/44. The best point in the whole dose
-  is −0.064 FID; the entire dose spans 0.06 FID against a 1.0 FID floor. The
-  round count is a **16×-too-small lever on a converged field**
+  `production`, 15/15 cells, seeds 42/43/44. Above the cap (R ≥ 4) the whole
+  dose spans 0.06 FID against a 1.0 FID floor — the audit's own reading is a
+  **16×-too-small lever on a converged field**
   (`gap84-inference-frontier.md` §9.2). R=4 is the operating point, not a
-  conservative setting.
+  conservative setting. Below the cap it is worse, not better: R=2 is a loss in
+  every arm (−0.97 to −1.50%), so the knob cannot be turned downward either.
 * **The per-round step floor.** `--min-steps-per-round 2` only binds where
   `total_nfe < 2·n_rounds`, i.e. at rungs 4 and 5. At rungs 100 and 200 every
   round already receives ≥2 steps, so the cap is inactive at the plateau and

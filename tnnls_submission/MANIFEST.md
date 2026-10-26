@@ -30,12 +30,12 @@
 > "why the framework's identity is the typed contract" subsection, so the build
 > stays at 12 pages. Current
 > artifacts: `paper-A-final.md` =
-> `7a7036ebed7284468050141fe9f78e9bfc62ce907d666e3d2f587357ac40f1ce`
-> (226257 bytes, 27792 words); `paper-A-final.tex` =
-> `e1d3637ffc308cd332f3675df0073864c51bdf29103c7b7f7959adb0cc14417d`
-> (74183 bytes); `paper-A-final.pdf` =
-> `3112cccd24a2fa3be0ada9b02a0df42df11c866de32f057cb692348f535602c2`
-> (615702 bytes, **12 pages**, two `pdflatex` passes, zero overfull hboxes,
+> `b66ea07a70a9ddae7a9d43e708625b2320424c4a3d4957b79862454e5b22b97a`
+> (226324 bytes, 27809 words); `paper-A-final.tex` =
+> `0847cd1e394387b05514b061c0657214e2deeba148d0fc5842607df050153309`
+> (74254 bytes); `paper-A-final.pdf` =
+> `8b94570ccb9a8a8619e90039b7563b5028d53c9d47130cd2df3b401dde418e9d`
+> (615789 bytes, **12 pages**, two `pdflatex` passes, zero overfull hboxes,
 > zero undefined references). The 2026-10-27 evidence-refresh banner below
 > (`85c90e5d…` / `a6fcee68…` / `a0a0d97f…`) is superseded on artifacts only;
 > its evidence statements remain current. Full trail:

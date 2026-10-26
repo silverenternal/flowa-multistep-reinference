@@ -1662,3 +1662,20 @@ than additions:
 Gates after the pass: `check_claims_consistency.py` exit 0, D.4 30/30 PASS,
 `ruff check` clean, `mkdocs build --strict` exit 0,
 `check_docs_against_code.py` 3371/3371 OK.
+
+**Self-check corrections (same day, before the pass was reported as done).** A
+re-read against the artifacts found four claims that were wrong as first
+written and are corrected in place:
+
+* **κ does not produce a 2/2 verdict split.** `w16e1_10k` moves the plateau by
+  exactly 1.00 FID — the floor itself — and the frontier report scores it a TIE
+  with `strict_gain_rungs: []`. The paper now states the magnitudes
+  (3.1 / 1.0 / 0.02 / 0.03 FID) rather than "the two below 0.74 move the
+  plateau", which would have overstated the 10k row.
+* **GAP-84c's round dose is not "the best point is −0.064 FID".** The audit's
+  reading is that the R ≥ 4 range spans 0.06 FID against a 1.0 FID floor, and
+  R = 2 is a loss in every arm. GAP-93 now says that.
+* **GAP-96's page and word inventory was estimated, not measured.** The table is
+  now the measured split (III 2,152 words; III–VI 3,788 over about 5.5 pages).
+* **GAP-92's original "same runs" claim** is corrected as recorded above: κ is
+  at NFE=50, the delta at rungs 100–200.
