@@ -513,3 +513,39 @@ therefore {0.5, 2, 8} — a factor of 16 wide, not a knife edge.
 §3.5 with the §3.9 statistic (weaker of the two lower bounds must exceed 0 for
 every family, PF00005 not regressing, diversity guard at N = 1000). The screen
 numbers above chose the dose and are not quotable.
+
+### 4.2 Incident: the confirmation run reused the screen tree (2026-10-26)
+
+The first launch of `reproduce/gap79_profile_guidance_confirm.sh` defaulted
+`BASE` to `verification_outputs/gap79-r1-guidance/native`, which is the screen
+tree, so it began writing N = 1000 cells over the N = 200 ones. Stopped after
+3 m 19 s. What it cost, cell by cell, at `native/seed42`:
+
+| cell | framework.fasta | METADATA / baseline / run.log | score.log, upstream_* | usable |
+|---|---|---|---|---|
+| control | truncated to 0 bytes | overwritten (N = 1000) | intact | report only |
+| W0.5 | truncated to 0 bytes | overwritten (N = 1000) | intact | report only |
+| W2, W8, W32, W128 | intact | intact | intact | yes |
+
+`screen_report.json` was written at 15:04, before the collision at 15:05, and
+is intact — the §4.1 table and `selected_weight` come from the untouched
+FASTAs. What is gone is the ability to *recompute* the diversity guard for
+those two cells from disk; the hit flags survive in
+`upstream_framework/family_validity_per_seq.jsonl`, but unique-fraction and
+per-position entropy need the sequences.
+
+Two changes, both fail-closed:
+
+* `gap79_profile_guidance_screen.sh` refuses to generate a cell whose
+  `framework.fasta` is non-empty unless `ALLOW_OVERWRITE=1`. Evidence is not
+  overwritten by accident.
+* `gap79_profile_guidance_confirm.sh` defaults to a separate tree
+  (`verification_outputs/gap79-r1-guidance/confirm/`) and refuses to start if
+  that tree already holds FASTAs.
+
+Repair, scheduled after the confirmation frees the GPU: regenerate control and
+W0.5 at N = 200 into a scratch ROOT (the generator is seeded, so the cells are
+the same cells), copy the two FASTAs and the N = 200 `METADATA.txt` back, then
+re-run `tools/gap79_guidance_screen.py` and diff against the preserved
+`screen_report.json`. A mismatch would mean the screen was not reproducible and
+would have to be stated as such; it would not be silently accepted.

@@ -19,7 +19,15 @@ WEIGHT=${WEIGHT:?set WEIGHT to the weight the screen selected}
 SEEDS=${SEEDS:-"42 43 44"}
 N=${N:-1000}
 PAR=${PAR:-2}
-BASE=${BASE:-verification_outputs/gap79-r1-guidance/native}
+# A separate tree from the screen on purpose: the screen cells are evidence and
+# must not be re-used as confirmation cells (an earlier revision defaulted this
+# to .../native and truncated two finished screen FASTAs).
+BASE=${BASE:-verification_outputs/gap79-r1-guidance/confirm}
+
+if find "$BASE" -name framework.fasta -size +0 2>/dev/null | grep -q .; then
+  echo "refusing: $BASE already holds framework FASTAs; pick a fresh BASE" >&2
+  exit 2
+fi
 
 for seed in $SEEDS; do
   echo "=== GAP-79 confirmation: seed $seed, weight $WEIGHT, N=$N ==="

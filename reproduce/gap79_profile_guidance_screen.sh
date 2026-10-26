@@ -67,6 +67,14 @@ mkdir -p "$ROOT"
 gen_one() {
   local tag="$1" w="$2"
   local out="$ROOT/$tag"
+  # Evidence is never silently overwritten. A confirmation run once reused a
+  # screen ROOT and truncated two finished cells; the guard makes that an
+  # error instead of a loss.
+  if [[ -s "$out/framework.fasta" && "${ALLOW_OVERWRITE:-0}" != "1" ]]; then
+    echo "[gap79g] REFUSING to overwrite $out/framework.fasta (ALLOW_OVERWRITE=1 to allow)"
+    echo "$tag refused: framework.fasta already exists" >> "$ROOT/FAILED.txt"
+    return 2
+  fi
   echo "[gap79g] generate $tag (weight=$w) -> $out"
   SEED="$SEED" N="$N" INIT_PROFILE=conservation TEMPERATURE=1.0 \
     GUIDANCE_W="$w" GUIDANCE_T0="$T0" SCORE=0 OUT="$out" \
@@ -75,7 +83,7 @@ gen_one() {
 }
 
 export -f gen_one
-export ROOT SEED N T0
+export ROOT SEED N T0 ALLOW_OVERWRITE
 
 # control first (tag, weight) then each dose; xargs bounds the pool.
 {
