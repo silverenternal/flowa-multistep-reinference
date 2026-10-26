@@ -2,7 +2,13 @@
 
 > **Catalog layer for archived + flattened-intermediate files.**
 > Wave 356 P5 — added as ADDITIVE catalog (no files deleted).
-> Generated: 2026-09-25.
+> Generated: 2026-09-25; canonical hashes refreshed 2026-10-27.
+>
+> **Read this first.** The only live manuscript build surface is
+> `paper-A-final.*`. The cell-level evidence behind it is
+> [`../PAPER-EVIDENCE.md`](../PAPER-EVIDENCE.md). Everything else in this
+> directory is a section source or an archived/flattened snapshot; none of it
+> is compiled into the submission.
 >
 > This index is the self-documenting archive layer for `docs/drafts/`.
 > The canonical paper surface remains `paper-A-final.md`
@@ -16,9 +22,9 @@
 
 | File | Size (bytes) | SHA-256 | Role |
 |---|---:|---|---|
-| `paper-A-final.md`   | 243669 | `9ec5b7f41ac113f88251cbea36aaeb08d599605829972cba4b58bf7640f4d23d` | Canonical prose (paper body) |
-| `paper-A-final.tex`  | 110195 | `2d4785a3920dacfdbf89e8237a83f1bc7b27e833b6bdf62d25cc1a31a721a0fe` | LaTeX source (IEEEtran) |
-| `paper-A-final.pdf`  | 305270 | `57c6d38373eb2e0a851b67472630c2f8fbc9df2bcb8342ffa15b9384e7e2dd35` | Rendered PDF |
+| `paper-A-final.md`   | 216736 | `1bd6e93feb7871dd92eff88789fede3199ff44fc2d52683818ce6328ba6f7f5d` | Canonical prose (paper body) |
+| `paper-A-final.tex`  | 68358 | `ec3e38f9298343674045d213ebfc988b77817d59620f703259c90016811f8df3` | LaTeX source (IEEEtran) |
+| `paper-A-final.pdf`  | 461516 | `f153903f3d401f9dbd65afcaea8caac7723aa083828b28c74a64886b6afb1da8` | Rendered PDF (12 pages) |
 | `abstract-final.md`  |  13399 | `d4146d7094b28e955aba65dbcca4972930851caa4e3734fbcfab24398c799cc5` | Canonical 9-sentence abstract |
 | `results-final.md`   |  60937 | `3aa762d37c9a1bb57a61fcff56d9856267ed7e9065ed08fd7443211d77357144` | Canonical results / §3 / §4 |
 | ~~`paper-flat-ieeetran.tex`~~ | 66293 | `c9f4a7d489289d8d15548e0c6af1851791444297ffa3e0475a075c8f49c86a05` | **MOVED 2026-10-21** to `docs/ARCHIVE/legacy-paper/`. The "still actively referenced by paper-build flow" note was stale: a repo-wide grep of `*.py`/`*.sh`/`*.yml` found zero tool references. |

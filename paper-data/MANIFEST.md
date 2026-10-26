@@ -1,5 +1,11 @@
 # paper-data/ MANIFEST — SHA-256 Ledger
 
+> **Frozen 2026-09-23 ledger; not the current evidence state.** It covers the
+> pre-2026-10-18 headline numbers only. The current cell-level register
+> (verdict, N/seeds, artifact, audit) is
+> [`../docs/PAPER-EVIDENCE.md`](../docs/PAPER-EVIDENCE.md). Keep this file for
+> byte-level provenance; do not read it as the current verdict table.
+
 **Date:** 2026-09-23 (Wave 328 freeze)
 **Purpose:** Per-file SHA-256 ledger of every data file under `paper-data/` that backs a headline number in `docs/drafts/paper-flat-flattened.md`.
 

@@ -5,10 +5,13 @@
 > reinvent them. Project skills are in `.codex/skills/` (Codex-format)
 > AND mirrored below as portable checklists.
 >
-> **Management & map surfaces:** [`todo/WAVES.md`](todo/WAVES.md) is the
-> consolidated project record (current state, phase history, evidence, gates,
-> decisions, risks); [`docs/README.md`](docs/README.md) is the documentation
-> map. Prefer these over per-increment records for management state.
+> **Management & map surfaces:** [`todo.json`](todo.json) is the consolidated
+> project record (current state, gates, open gaps, execution order);
+> [`docs/README.md`](docs/README.md) is the documentation map; and
+> [`docs/PAPER-EVIDENCE.md`](docs/PAPER-EVIDENCE.md) is the single cell-level
+> evidence register (generated from `docs/paper-evidence.json`). Prefer these
+> over per-increment records for management state. The `todo/` directory was
+> retired on 2026-10-13; any reference to it is stale.
 
 ---
 
@@ -19,7 +22,7 @@ re-implement their checks — invoke the skill and follow it.
 
 | Trigger phrases (user says any of these) | Project skill to invoke |
 |---|---|
-| "写论文", "改 paper", "改 abstract", "改 cover letter", "改 supplementary", "改 highlights", "改 data availability", "改 CLAIMS", "翻译 README", "中英 README", "doc updates", "paper polish", "narrative", "highlight result" | **`flowa-paper-evidence`** |
+| "写论文", "改 paper", "改 abstract", "改 cover letter", "改 supplementary", "改 highlights", "改 data availability", "改 CLAIMS", "翻译 README", "中英 README", "doc updates", "paper polish", "narrative", "highlight result", "整理论文数据", "证据总表", "paper data" | **`flowa-paper-evidence`** |
 | "跑实验", "重跑 sweep", "reproduce R{1..6}", "sweep seed N", "control / framework / baseline 4-arm", "k6 foldability", "CIFAR FID re-run", "per-record csv", "statistical test (TOST/JT/BF01/meta/NI)" | **`flowa-experiment-sweep`** |
 | "audit", "claim check", "drift", "regression", "gap investigation", "verification", "re-verify", "consistency check", "investigate", "为什么指标变了", "R-level 翻盘" | **`flowa-research-audit`** |
 
@@ -40,8 +43,11 @@ short contract — read it once and obey it.
 
 Translate **verified** results into publication evidence.
 
-- Read `docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.md`, `docs/INSIGHTS.md`,
-  and the relevant `docs/audit/` records **before** editing prose.
+- Read `docs/PAPER-EVIDENCE.md` (current cell verdicts + artifacts) first, then
+  `docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.md`, `docs/INSIGHTS.md`,
+  and the relevant `docs/audit/` records **before** editing prose. Where the
+  register and a frozen surface disagree, the register is current; the
+  difference is refresh work, not licence to rewrite a number.
 - Every quantitative statement must point to a result artifact or audit
   with: model, metric, N, seed policy, environment (`.venvs/<model>_venv`),
   and comparison direction.
@@ -60,6 +66,8 @@ Translate **verified** results into publication evidence.
   sweeps still pending.
 
 **Owns (allowed to edit):**
+- `docs/PAPER-EVIDENCE.md`, `docs/paper-evidence.json` (cell-level register;
+  regenerate the markdown, never hand-edit it)
 - `docs/drafts/*.md` (paper draft)
 - `docs/CLAIMS.md`
 - `tnnls_submission/{MANIFEST,cover_letter,highlights,tables,figures,data_availability,submission_checklist}.md`
@@ -109,8 +117,8 @@ Run experiments as small, restartable, gate-checked increments.
 Audit claims with a reproducible evidence chain.
 
 - Start from the relevant claim, adapter, increment, or metric; inspect
-  `docs/CLAIMS.md`, `todo/WAVES.md`, owning code/config **before**
-  drawing conclusions.
+  `docs/PAPER-EVIDENCE.md`, `docs/CLAIMS.md`, `todo.json`, owning code/config
+  **before** drawing conclusions.
 - Record exact: file paths, commit, environment/venv, sample size,
   command used. Separate **observed facts** vs **interpretation** vs
   **unresolved gaps** in the audit note.
@@ -123,8 +131,8 @@ Audit claims with a reproducible evidence chain.
 
 **Owns:**
 - `docs/audit/<topic>.md` (new audit)
-- `todo/WAVES.md` (consolidated record), `todo/RISK-REGISTER.md`
-  (state updates)
+- `todo.json` (consolidated record), `docs/PAPER-EVIDENCE.md` /
+  `docs/paper-evidence.json` (cell verdicts, state updates)
 - May edit `docs/CLAIMS.md` only to flag (CLM-NNN status
   `SUPPORTED/UNDERPOWERED/REGRESSES/DEFERRED/NOT_SIGNIFICANT`) — never
   the wording, never the numbers.
@@ -154,7 +162,8 @@ These come from real feedback in the conversation log. **Never violate.**
    destructive, do it as: (a) ADDITIVE paragraph first; (b) the
    destructive edit; (c) update the audit trail.
 3. **NO-PUSH policy.** No `git push` without explicit user gating.
-   Every agent commits; no agent pushes. Reaffirmed in `todo/PUSH-READY.md`.
+   Every agent commits; no agent pushes. Reaffirmed in `todo.json`
+   (`no_push` / `commit_footer`).
 4. **Honest uncertainty.** Never promote `UNDERPOWERED` / `DEFERRED` /
    `REGRESSES` / `NOT_SIGNIFICANT` to `SUPPORTED` by wording alone.
    Reframe wording, do not change numbers.
@@ -202,6 +211,10 @@ cd tnnls_submission && sha256sum -- *.md
 ### 4.2 Paper-write workflow (template reference)
 
 ```bash
+# 0. Read the current cell verdicts (generated; never hand-edit the markdown)
+python3 tools/paper_evidence.py --check
+sed -n '1,80p' docs/PAPER-EVIDENCE.md
+
 # 1. Look up the claim status
 grep -nE "^### CLM-[0-9]+" docs/CLAIMS.md | head -50
 
@@ -285,13 +298,15 @@ tests/                            # pytest suite + D.4 byte-stable regression
 verification_outputs/                # byte-addressable headline evidence (gitignored)
 tnnls_submission/                 # TNNLS submission package (7 files)
 docs/                             # paper drafts + audit records
+├── PAPER-EVIDENCE.md              # ← single cell-level evidence register
+├── paper-evidence.json            # ← its machine-readable source
 ├── drafts/                        # paper source
 ├── audit/                         # audit trail (per-increment records)
 ├── api/                           # mkdocstrings auto-generated
 └── ...
 data/                             # 9 vendored upstream repos (DO NOT MODIFY)
 eaai_submission/                  # historical EAAI submission (archive)
-todo/                             # active root plans + governance
+todo.json                         # management surface (gaps, execution order, gates)
 tools/                            # paper-metric + sweep scripts
 .codex/skills/                    # Skill flowa-paper-evidence / experiment-sweep / research-audit
 .claude/workflows/                # legacy experiment-driver JS workflows (do not delete)
@@ -316,4 +331,5 @@ first. Per `flowa-research-audit`: prefer existing tools.
 
 ---
 
-_Last updated: 2026-10-11 (documentation-management consolidation — management surface `todo/WAVES.md`, map `docs/README.md`)._
+_Last updated: 2026-10-27 (paper-evidence consolidation — single register
+`docs/PAPER-EVIDENCE.md`; management surface `todo.json`, map `docs/README.md`)._

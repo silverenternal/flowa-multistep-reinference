@@ -1,10 +1,16 @@
 # Documentation map for `flowa-multistep-reinference`
 
-> **Paper A is ready for TNNLS submission (updated 2026-10-12).**
-> Paper PDF: [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf) — 11 pages, IEEEtran-journal double-column, sha256 `a9883fc9c8356c8093c2ee983fd782496aa5f9647456f938f6b21a5793f22a5d`.
-> Headline verdicts: **4 STRONG + 1 TIE + 6 PARTIAL/SUPPLEMENTARY** across the 11 cells.
-> Acceptance gates ALL PASS: D.4 30/30 · contracts 195/195 · ruff 0 · claims no drift · mkdocs 0 warnings · vendored `data/` untouched · data integrity 6/149/0 · reproducibility 12/12. The separate readiness verifier (`tools/verify_submission_readiness.py`) additionally checks `r1_r6_sha` / `framework_n1000` and two doc-drift gates — `k1_rc5` (the K1 disclosure-wording gate, pointed at the live manuscript) and `drift_33` (the historical pre-expansion D.4 `33/33` count, which survives only in historical records) — and now passes **all** of them (`READY_WITH_SKIPS: mypy_0`, exit 0).
-> **Management surface:** [`../todo.json`](../todo.json) — the single current-state record (gates, evidence ledger, LineageFlow real-forward saga, open gaps, assessment). Replaced the retired `todo/` directory on 2026-10-13.
+> **Paper A is frozen at the TNNLS v3.1 package (2026-10-18).** Paper PDF:
+> [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf) — 12 pages,
+> IEEEtran-journal double-column, sha256
+> `f153903f3d401f9dbd65afcaea8caac7723aa083828b28c74a64886b6afb1da8`.
+> **Current evidence state:** [`PAPER-EVIDENCE.md`](PAPER-EVIDENCE.md) is the
+> single cell-level register (verdict, N/seeds, artifact, audit) and is
+> generated from [`paper-evidence.json`](paper-evidence.json). It is current;
+> the frozen manuscript and the 2026-10-19 evidence-grade table are historical.
+> Where the two differ, the register wins and the difference is the v3.2
+> refresh work, not a silent edit.
+> **Management surface:** [`../todo.json`](../todo.json) — the single current-state record (gates, evidence ledger, open gaps). Replaced the retired `todo/` directory on 2026-10-13.
 > **Submission package:** [`../tnnls_submission/`](../tnnls_submission/) — 7 core files with real SHA-256 (the cover letter still needs its `[USER TO FILL]` fields).
 
 This page is the discoverable entry point for the `docs/` tree. Every entry
@@ -74,10 +80,11 @@ archival trace.
 
 | Doc | Read it for |
 | --- | --- |
+| [`PAPER-EVIDENCE.md`](PAPER-EVIDENCE.md) | **Current cell-level evidence register** (generated from [`paper-evidence.json`](paper-evidence.json)): one row per paper cell with its verdict, N/seeds, artifact, audit, and paper anchor. Read this before any other evidence table. |
 | [`CONSOLIDATED_RESULTS.md`](CONSOLIDATED_RESULTS.md) | **Single source of truth** for every measured framework evidence record: algorithm uplifts, SOTA 2-D + CIFAR-10 verifications, toy comparisons, defensive engineering. |
 | [`CLAIMS.md`](CLAIMS.md) | Claim ledger (governance document) — every substantive claim, with `Asserted by` / `Disputed by` references verified by `tools/check_claims_consistency.py`. |
 | [METRIC_LEDGER.md](METRIC_LEDGER.md) | Per-metric provenance: definition, source artifact, and canonical value for each reported number. |
-| [`headline-evidence/`](headline-evidence/) | Per-cell byte-addressable evidence bundle (one `SOURCE.md` per headline cell) — the reviewer re-verification surface. |
+| [`headline-evidence/`](headline-evidence/) | Per-cell byte-addressable evidence bundle (one `SOURCE.md` per headline cell) — the reviewer re-verification surface. Uses the **Wave-135 cell numbering**; use [`PAPER-EVIDENCE.md`](PAPER-EVIDENCE.md) for the canonical Wave-310 mapping. |
 | [`ABLATION.md`](ABLATION.md) | The 2-D RF ablation grid: canonical configurations × targets, each run with fixed seed / rounds / RK4 steps. |
 | [`CONDITIONS.md`](CONDITIONS.md) | Operating-regime conditions and the Pareto cells counted by the honest-negative-surface gate. |
 | [`benchmark-uplifts.md`](benchmark-uplifts.md) | Round-1 algorithm-uplift benchmark (before/after). |
@@ -151,8 +158,15 @@ Rules for keeping the tree navigable. They apply to any new document.
 | If the document is… | Put it in | Examples |
 |---|---|---|
 | Reviewer-facing reference or a source of truth | `docs/` (top level or a topic dir) and register it in this map | specs, theory, gate docs |
+| A cell-level evidence verdict | [`paper-evidence.json`](paper-evidence.json), then regenerate [`PAPER-EVIDENCE.md`](PAPER-EVIDENCE.md) | WIN / OPEN / BLOCKED rows |
 | A per-increment working record | `docs/audit/` (topic-clustered) | close-out notes, sweep records |
 | Project-level management state | [`../todo.json`](../todo.json) | status, gates, gaps, assessment |
+
+**One register, no parallel tables.** A new per-cell verdict goes into
+`paper-evidence.json` (with an artifact, an audit, and a quote that the
+validator checks) and is rendered into `PAPER-EVIDENCE.md`. Do **not** open a
+new standalone evidence table: that is how the frozen manuscript, `CLAIMS.md`,
+the 2026-10-19 evidence-grade table, and `todo.json` drifted apart.
 
 **Naming.** New management and map documents are written at the level of
 **project phases**, not individual work increments — do **not** introduce

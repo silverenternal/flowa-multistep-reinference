@@ -1,5 +1,10 @@
 # FlowA: Paper-Quantity-Driven Re-Inference for Frozen Flow Matching Checkpoints
 
+> **Historical working draft — not the manuscript.** The live manuscript is
+> [`paper-A-final.md`](paper-A-final.md); the cell-level evidence behind it is
+> [`../PAPER-EVIDENCE.md`](../PAPER-EVIDENCE.md). This file is retained as the
+> flattened intermediate that fed the final and is not compiled.
+
 ---
 
 ## Abstract

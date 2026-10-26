@@ -79,6 +79,7 @@ nav:
   - Testing: TESTING_STRATEGY.md
   - Acceptance gates: GATES.md
   - Results & records:
+      - Paper evidence register (current cell verdicts): PAPER-EVIDENCE.md
       - Metric ledger (single source of truth): METRIC_LEDGER.md
       - Consolidated experimental results: CONSOLIDATED_RESULTS.md
       - Wave-6 reproducibility record: reproducibility_record.md
@@ -199,6 +200,7 @@ not_in_nav: |
   audit/upstream-modifications.md
   audit/jmaa-theory-applications.md
   audit/scheduler-per-cell-summary.md
+  audit/paper-evidence-register-2026-10-27.md
   audit/wave281/p-partial-evidence.md
   audit/wave289-p1-honest-reframe.md
   audit/wave290-p1-bottleneck-confirmed.md

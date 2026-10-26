@@ -1,5 +1,11 @@
 # Paper v3.2 — data refresh checklist
 
+> **Entry point moved (2026-10-27).** The current cell-level verdicts are in
+> [`../PAPER-EVIDENCE.md`](../PAPER-EVIDENCE.md). This file remains the
+> per-table refresh checklist (which manuscript table reads which artifact);
+> its §9 blockers predate GAP-79/80/81, so read §9 against `todo.json`, not as
+> the current state.
+
 **Date:** 2026-10-24
 **Author:** paper-refresh agent (USER AUTHORIZED, NO PUSH)
 **Status:** prepared while GAP-69 seeds 43/44 are still generating (ETA 2026-10-25 ~04:30 local). **No number in this file is a result**; it is the map from each published number to the artifact that will regenerate it.

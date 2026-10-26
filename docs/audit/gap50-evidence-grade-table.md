@@ -1,5 +1,10 @@
 # GAP-50 — evidence-grade table (status, N, seeds, CI, artifact)
 
+> **Superseded as the entry point (2026-10-27).** The current register is
+> [`../PAPER-EVIDENCE.md`](../PAPER-EVIDENCE.md). This page is the 2026-10-19
+> snapshot and is kept because its per-row reasoning is still the audit trail;
+> it does not know about GAP-79 / GAP-80 / GAP-81 / GAP-84.
+
 **Date:** 2026-10-19
 **Author:** GAP-50 agent (USER AUTHORIZED, NO PUSH)
 **Purpose:** one page that states, for every headline cell, **what was measured**,

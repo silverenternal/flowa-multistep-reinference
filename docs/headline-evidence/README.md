@@ -1,5 +1,12 @@
 # Tier-1 SCI Submission: Headline Evidence Collection
 
+> **Read the current register first.** This directory uses the **Wave-135**
+> cell numbering (R1=LineageFlow HMMER, R2=FlowMol3, R3=CIFAR, R4=Two Moons,
+> R5=Eight Gaussians, R6=MNIST). The manuscript and `CLM-060` use the
+> **Wave-310** numbering. The canonical current mapping and verdicts are in
+> [`../PAPER-EVIDENCE.md`](../PAPER-EVIDENCE.md); this page is the frozen
+> 2026-09 evidence bundle and is retained for provenance.
+
 **Date:** 2026-09-14 (original Wave 135 freeze) + 2026-09-23 (Wave 326 cross-doc-snapshot pointer)
 **Source:** Wave 135 (post-v1.0-paper-final freeze) + Wave 310 + Wave 322 final state
 **Freeze marker:** v1.0-paper-final tag at commit `39a65a7f`

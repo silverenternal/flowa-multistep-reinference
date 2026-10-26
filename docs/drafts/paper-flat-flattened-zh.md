@@ -1,5 +1,9 @@
 # FlowA:论文量化驱动的冻结流匹配检查点再推理
 
+> **历史工作稿,非当前论文。** 当前稿为 [`paper-A-final.md`](paper-A-final.md),
+> 证据总表为 [`../PAPER-EVIDENCE.md`](../PAPER-EVIDENCE.md)。本文件仅作双语
+> 溯源保留,不参与编译。
+
 > **WAVE 297 P3 — 标题重锚说明(根据 Wave 268 严格清理的追加说明)。** 标题保留"论文量化驱动"的传统叙事;Wave 297 P2 论文设计在 `docs/audit/wave297-p2-paper-design.md` §2.1 中建议重新锚定标题为 "FlowA: A Training-Free Re-Inference Framework for Frozen Flow Matching Checkpoints"(去掉"论文量化驱动";框架是主题,论文量化只是 §6 中的一项补充内容)。新标题**追加在下方**"## 新标题(Wave 297 P2 建议)"部分;传统标题按 Wave 268 严格清理(仅追加指令)逐字保留。重命名将由 Wave 297 P2 设计文档指定的 Wave 297 P4+ 论文编辑环节执行。
 
 ---

@@ -35,7 +35,7 @@
   "4. GAP-70-ADAPTER-KANZI-LATENT (P1, K7) — round 1 falsified the position blend; round 2 (tempered draw lam, pre-registered in docs/audit/gap70-r2-tempered-draw.md) is CODE COMPLETE and needs 7 cells x N=1000 (~4 h GPU). Behind GAP-79's confirmation, GAP-81 and GAP-71. Nothing depends on it.",
   "5. GAP-80-R5A-2D-WIN (P2) — R5a is a measured TIE with the time-coordinate fix (0.0844 vs 0.0783, +7.8 %, p=0.29). The only untested lever left is the record-scoped restart seed, which is a USER GATE (it changes the restart semantics of every R-level cell). No run until that decision.",
   "6. GAP-47-K1-PB-METRIC (P2, USER GATE) — blocked on data (no per-molecule PoseBusters verdicts, smiles_list[:200]); needs a pre-registered driver change before any run.",
-  "7. GAP-50-EVIDENCE-GRADE-TABLE (P2) — refresh after 1-3 land; every row WIN or OPEN. Insertion into the manuscript is user-gated.",
+  "7. GAP-50-EVIDENCE-GRADE-TABLE (P2) — REFRESHED 2026-10-27 into docs/PAPER-EVIDENCE.md (11 cells: 1 WIN / 7 OPEN / 1 BLOCKED / 2 SUPP; frontier measured on 1 of 7 R-level cells). Manuscript insertion remains user-gated.",
   "8. GAP-29-MANUSCRIPT (P2, user authorization) — blocked on GAP-84/78/79/81 numbers.",
   "9. GAP-15-VENUE (P1, user) — final journal choice; no agent work.",
   "10. GAP-51-PAPER-B-SPLIT (P2, user gate) — outline only.",
@@ -142,15 +142,15 @@
   {
    "id": "GAP-50-EVIDENCE-GRADE-TABLE",
    "priority": "P2",
-   "status": "DRAFT-COMPLETE-USER-GATED",
+   "status": "REFRESHED-2026-10-27 — single register landed; manuscript insertion still user-gated",
    "user_gated": true,
    "depends_on": "GAP-67/68/69/70/71 (the rows they move) + user authorization to touch the manuscript",
    "est_wall": "~0.5 h per refresh, no GPU",
    "gap": "Evidence homogeneity is disclosed in prose but never in one place: R1 single-seed, R5c retired as a headline, R6 counterfactual proxy, K1 saturated metric. A reviewer can therefore claim the framework's generality rests on heterogeneous evidence.",
    "acceptance": "One table (cell x seeds x checkpoint regime x live-vs-counterfactual x metric saturation x verdict) covering all headline cells, every number traceable to a committed artifact, refreshed after the adapter runs land. Insertion into docs/drafts/paper-A-final.* is user-gated.",
-   "agent_action": "1) Draft exists at docs/audit/gap50-evidence-grade-table.md. 2) Refresh the R1/R5b/R5c/K7 rows after the adapter runs. 3) Do not touch the manuscript without authorization.",
-   "evidence": "docs/audit/gap50-evidence-grade-table.md; docs/audit/gap57-equal-nfe-regime-ladder.md; docs/audit/gap64-r5c-operating-regime.md",
-   "deliverable": "A current evidence-grade table ready for insertion."
+   "agent_action": "1) Register lives at docs/PAPER-EVIDENCE.md, generated from docs/paper-evidence.json; validate with tools/paper_evidence.py --check and regenerate with --render. 2) Refresh a row by editing the JSON (artifact + audit + quote), then re-render; never hand-edit the markdown. 3) Do not touch the manuscript without authorization.",
+   "evidence": "docs/PAPER-EVIDENCE.md; docs/paper-evidence.json; tools/paper_evidence.py; docs/audit/gap50-evidence-grade-table.md; docs/audit/gap57-equal-nfe-regime-ladder.md; docs/audit/gap64-r5c-operating-regime.md",
+   "deliverable": "A current evidence-grade table (docs/PAPER-EVIDENCE.md) ready for insertion."
   },
   {
    "id": "GAP-29-MANUSCRIPT",
