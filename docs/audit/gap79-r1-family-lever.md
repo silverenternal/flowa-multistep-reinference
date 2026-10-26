@@ -437,3 +437,30 @@ this table is a measurement of F3, not of lever 3.** Two readings survive it:
 Round 2 re-runs §3.4 unchanged against the native target and writes
 `verification_outputs/gap79-r1-guidance/native/seed42/`; its §4.1 replaces the
 verdict above.
+
+### 3.9 The confirmation statistic (fixed before the confirmation exists)
+
+§3.5 says "a paired per-record CI on `intended_hit_evalue`". That sentence
+needs an operational definition before any N = 1000 data exists, because the
+choice of interval can decide the verdict. Fixed here, with the tool written
+and tested first (`tools/gap79_confirmation_report.py`, 6 tests):
+
+* **Pairing is by `qid`.** The generator seeds each record, so record `i` in
+  the control and record `i` in the drift arm share their prior draw and
+  differ only by the guidance. The tool refuses to run if the two arms do not
+  carry the same qid set or if a qid changes family.
+* **Two intervals, both reported.** `record_ci` is a percentile bootstrap over
+  the per-record paired indicator (10 000 resamples, stratified by seed) — the
+  literal §3.5 reading. `seed_ci` is a t interval across the three per-seed
+  differences (multiplier 4.3027 at df = 2) — the conservative reading, since
+  records inside a seed share the model and the prior.
+* **The verdict takes the weaker lower bound.** A family counts as improved
+  only if *both* lower bounds are above zero. Reporting both and taking the
+  weaker one removes the freedom to pick the statistic after seeing the
+  number; if the two disagree, the family does not count.
+* **A WIN** requires every family in {PF00072, PF02517, PF00183} to be
+  improved, PF00005's seed interval not to go negative, and the §3.4 diversity
+  guard to hold at every seed.
+
+This is an amendment to §3.5's wording, not to its bar: the bar is still
+"every family, CI excludes 0, three seeds, no top-ups".
