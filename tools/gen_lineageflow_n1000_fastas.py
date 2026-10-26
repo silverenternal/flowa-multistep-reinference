@@ -622,6 +622,33 @@ def _build_init_perturbations(
     return out
 
 
+def _build_restart_draw_perturbations(
+    family_ids: list[str],
+    *,
+    lam: float | None,
+    aa_vocab: int,
+) -> dict[str, Any] | None:
+    """GAP-70 round 2 — one :class:`TemperedFreshPerturbation` per family.
+
+    Returns ``None`` when ``lam is None`` so every pre-existing call path stays
+    byte-identical. ``lam = 1`` is the shipped D-004b draw and ``lam = 0`` is a
+    no-op restart; see ``docs/audit/gap70-r2-tempered-draw.md``.
+
+    The policy is family-independent (it draws from a random simplex, not from
+    a profile), but it is built per family because the adapter holds one
+    perturbation per family slot. The config hash is identical across families
+    by construction, and the manifest records it once.
+    """
+    if lam is None:
+        return None
+    from adaptive_reflow.algorithm.perturbation import (
+        TemperedFreshPerturbation,
+    )
+
+    policy = TemperedFreshPerturbation(lam=float(lam), aa_vocab=int(aa_vocab))
+    return {fid: policy for fid in family_ids}
+
+
 def _build_token_keep_weights(
     family_ids: list[str],
     *,
@@ -1469,6 +1496,20 @@ def main() -> None:
         ),
     )
     p.add_argument(
+        "--restart-draw-lambda",
+        type=float,
+        default=None,
+        help=(
+            "GAP-70 round 2 — how far the restart draw moves the state: "
+            "``fresh = (1 - lam) * state + lam * softmax(randn)``. ``1`` is "
+            "the shipped D-004b draw, ``0`` is a no-op restart. Default None "
+            "leaves every pre-existing call path byte-identical. Only the "
+            "framework arm changes, so the baseline stays record-paired. "
+            "Mutually exclusive with --init-profile (one perturbation slot). "
+            "See ``docs/audit/gap70-r2-tempered-draw.md``."
+        ),
+    )
+    p.add_argument(
         "--init-profile",
         choices=("off", "conservation"),
         default="off",
@@ -1684,6 +1725,32 @@ def main() -> None:
         profile_json=getattr(args, "profile_json", None),
         temperature=float(getattr(args, "init_temperature", 1.0)),
     )
+    # GAP-70 round 2 — how far the restart draw moves the state (default off).
+    # Shares the adapter's single ``perturbation`` slot with GAP-69's init
+    # policy, so the two cannot both be active; the guard below makes that an
+    # error rather than a silent precedence rule.
+    restart_draw_lambda = getattr(args, "restart_draw_lambda", None)
+    from adaptive_reflow.adapters.lineageflow import (  # type: ignore
+        LINEAGEFLOW_AA_VOCAB as _AA_VOCAB,
+    )
+
+    restart_perturbations = _build_restart_draw_perturbations(
+        family_ids,
+        lam=restart_draw_lambda,
+        aa_vocab=int(_AA_VOCAB),
+    )
+    if restart_perturbations is not None and init_perturbations is not None:
+        raise SystemExit(
+            "restart_draw_lambda_and_init_profile_are_mutually_exclusive"
+        )
+    # The adapter has one perturbation slot: whichever policy is active is what
+    # ``apply_restart_distribution`` calls. Merging here keeps every downstream
+    # call site (and the fallback guard) unchanged.
+    perturbation_policies = (
+        init_perturbations
+        if init_perturbations is not None
+        else restart_perturbations
+    )
     # GAP-70 (LineageFlow) — per-position keep weights (additive, default off).
     token_keep_weights = _build_token_keep_weights(
         family_ids,
@@ -1821,6 +1888,19 @@ def main() -> None:
             getattr(args, "token_keep_weights", "off")
         ),
         "token_keep_weights_is_active": bool(token_keep_weights is not None),
+        # GAP-70 round 2 — the restart draw's tempering. ``None`` (default)
+        # means the shipped D-004b draw; a number records exactly how far the
+        # draw moved the state, so a ``lam = 1`` cell cannot be mistaken for
+        # the shipped arm or for a ``lam = 0`` no-op.
+        "restart_draw_lambda": (
+            None if restart_draw_lambda is None
+            else float(restart_draw_lambda)
+        ),
+        "restart_draw_is_active": bool(restart_perturbations is not None),
+        "restart_draw_policy_config_hash": (
+            None if restart_perturbations is None
+            else str(next(iter(restart_perturbations.values())).config_hash())
+        ),
         # GAP-79 lever 3 — in-loop profile drift. ``weight = 0`` (default)
         # means the field was unguided; ``is_active`` records whether a spec
         # reached the adapter, so a no-op dose cannot be mistaken for a run.
@@ -1893,7 +1973,7 @@ def main() -> None:
         profile_residual_fn=profile_residual_fn,
         # GAP-69 — per-family profile-aware fresh-restart policy
         # (default None = the D-004b isotropic draw, byte-identical).
-        init_perturbations=init_perturbations,
+        init_perturbations=perturbation_policies,
         # GAP-70 — per-position restart blend (default None = scalar).
         token_keep_weights=token_keep_weights,
         # GAP-79 lever 3 — per-family in-loop profile drift (default None).
@@ -1909,7 +1989,7 @@ def main() -> None:
     # "profile" arm was pure noise). Fail closed instead of writing a manifest
     # that looks valid.
     _assert_no_profile_fallback(
-        init_perturbations,
+        perturbation_policies,
         fallback_counts,
         n=int(args.n),
         profile_guidance=profile_guidance,

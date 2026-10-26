@@ -978,6 +978,209 @@ def default_conservation_weighted_perturbation(
 
 
 # ---------------------------------------------------------------------------
+# GAP-70 round 2: TemperedFreshPerturbation (how far the restart draws)
+# ---------------------------------------------------------------------------
+
+
+class TemperedFreshPerturbation:
+    """The shipped fresh draw, tempered toward the state it replaces.
+
+    GAP-70's round-1 result was that the position-selective blend does not move
+    novelty: the novelty loss is a property of the restart operator itself
+    (``N_A = 46.6 %`` -> ``N_B = 0.8 %``), and the only remaining knob is *what
+    the restart draws*, not where it writes. This policy is that knob:
+
+        fresh[i] = (1 - lam) * x_saturated[i] + lam * simplex[i]
+
+    with ``simplex = softmax(randn(L, aa_vocab))`` on the amino-acid dims and the
+    canonical uniform share on the special dims — the same convention as the
+    adapter's ``_synthesize_random_simplex`` (D-004b), which is what makes
+    ``lam = 1`` the shipped draw rather than a new one.
+
+    The two ends of ``lam`` are already measured:
+
+    * ``lam = 0`` returns ``x_saturated`` unchanged, so the restart is a no-op
+      and the round loop merely continues the integration — the "no restart"
+      end.
+    * ``lam = 1`` is the shipped restart — the "current arm" end.
+
+    Every interior ``lam`` is therefore a point on the segment between two
+    measured arms. A point on a segment cannot be better than both of its ends,
+    so an interior ``lam`` can only win if the ``(novelty, validity)`` frontier
+    bulges above that chord. That is the hypothesis
+    ``docs/audit/gap70-r2-tempered-draw.md`` tests, and stating it this way
+    keeps the screen from being a search over a free parameter.
+
+    Because the adapter blends ``m * prior + (1 - m) * fresh`` afterwards, a
+    tempered draw is algebraically the same restart at a higher effective
+    memory fraction: ``m_eff = m + (1 - m) * (1 - lam)``. The policy is kept
+    separate from ``m`` on purpose — ``m`` is the schedule's quantity and is
+    pre-registered elsewhere, while ``lam`` is the draw's own knob.
+
+    Parameters
+    ----------
+    lam:
+        Mixing weight in ``[0, 1]`` toward the fresh simplex. ``1.0`` is the
+        shipped D-004b draw.
+    aa_vocab:
+        Number of leading columns that carry the amino-acid distribution
+        (LineageFlow: 20 of 33). The remaining columns keep the uniform share.
+    seed_offset:
+        Optional non-negative integer mixed into the seed. Default ``0``.
+    """
+
+    FAMILY: str = "tempered_fresh"
+
+    def __init__(
+        self,
+        *,
+        lam: float,
+        aa_vocab: int = 20,
+        seed_offset: int = 0,
+    ) -> None:
+        lam_f = float(lam)
+        if not math.isfinite(lam_f) or lam_f < 0.0 or lam_f > 1.0:
+            raise PerturbationConfigError(
+                f"lam must be finite and lie in [0, 1]; got {lam!r}"
+            )
+        if not isinstance(aa_vocab, int) or isinstance(aa_vocab, bool):
+            raise PerturbationConfigError(
+                f"aa_vocab: must be an integer, got {type(aa_vocab).__name__}"
+            )
+        if int(aa_vocab) < 1:
+            raise PerturbationConfigError(
+                f"aa_vocab: must be positive, got {aa_vocab!r}"
+            )
+        if not isinstance(seed_offset, int) or isinstance(seed_offset, bool):
+            raise PerturbationConfigError(
+                f"seed_offset: must be an integer, got {type(seed_offset).__name__}"
+            )
+        if int(seed_offset) < 0:
+            raise PerturbationConfigError(
+                f"seed_offset: must be non-negative, got {seed_offset!r}"
+            )
+        self._lam = lam_f
+        self._aa_vocab = int(aa_vocab)
+        self._seed_offset = int(seed_offset)
+        self._config_hash_value = hash_artifact(
+            {
+                "family": self.FAMILY,
+                "lam": float(self._lam),
+                "aa_vocab": int(self._aa_vocab),
+                "seed_offset": int(self._seed_offset),
+            }
+        )
+
+    # -- accessors ---------------------------------------------------------
+
+    @property
+    def family(self) -> str:
+        return self.FAMILY
+
+    @property
+    def lam(self) -> float:
+        return float(self._lam)
+
+    @property
+    def aa_vocab(self) -> int:
+        return int(self._aa_vocab)
+
+    @property
+    def seed_offset(self) -> int:
+        return int(self._seed_offset)
+
+    # -- PerturbationPolicy ------------------------------------------------
+
+    def propose(
+        self,
+        x_saturated: Any,
+        paper_quantities: Mapping[str, Any] | None,
+        t: float,
+    ) -> Any:
+        """Content-derived seed; see :meth:`propose_with_seed`."""
+        del paper_quantities
+        import numpy as _np
+
+        arr = _np.asarray(x_saturated)
+        blob = arr.tobytes() + repr(float(t)).encode("utf-8")
+        seed = int(hashlib.sha256(blob).hexdigest()[:8], 16)
+        return self.propose_with_seed(x_saturated, None, t, seed)
+
+    def propose_with_seed(
+        self,
+        x_saturated: Any,
+        paper_quantities: Mapping[str, Any] | None,
+        t: float,
+        seed: int,
+    ) -> Any:
+        """Return ``(1 - lam) * x_saturated + lam * fresh_simplex``.
+
+        ``paper_quantities`` and ``t`` are accepted for Protocol symmetry and
+        unused. ``x_saturated`` is never mutated. ``lam = 0`` returns the input
+        unchanged, so a caller can round-trip the no-restart arm through this
+        policy.
+        """
+        del paper_quantities, t
+        import numpy as _np
+
+        arr = _np.asarray(x_saturated, dtype=_np.float64)
+        if arr.ndim != 2:
+            raise PerturbationConfigError(
+                f"x_saturated must be 2-D (L, K); got shape {arr.shape!r}"
+            )
+        if self._lam == 0.0:
+            return arr.copy()
+        L, K = int(arr.shape[0]), int(arr.shape[1])
+        aa_dim = min(int(self._aa_vocab), K)
+        rng = np_random_default_rng(
+            (int(seed) + int(self._seed_offset)) & 0xFFFFFFFF
+        )
+        logits = rng.standard_normal((L, aa_dim))
+        logits = logits - logits.max(axis=-1, keepdims=True)
+        aa = _np.exp(logits)
+        aa = aa / aa.sum(axis=-1, keepdims=True)
+        simplex = _np.full((L, K), 1.0 / float(K), dtype=_np.float64)
+        simplex[:, :aa_dim] = aa
+        simplex = simplex / simplex.sum(axis=-1, keepdims=True)
+        lam = float(self._lam)
+        return _np.asarray(
+            (1.0 - lam) * arr + lam * simplex, dtype=_np.float64
+        )
+
+    # -- config round-trip (P1-1) -----------------------------------------
+
+    def config_hash(self) -> str:
+        return str(self._config_hash_value)
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict for this policy."""
+        return {
+            "family": self.FAMILY,
+            "lam": float(self._lam),
+            "aa_vocab": int(self._aa_vocab),
+            "seed_offset": int(self._seed_offset),
+        }
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> TemperedFreshPerturbation:
+        if not isinstance(config, dict):
+            raise TypeError(
+                f"config must be a dict, got {type(config).__name__}"
+            )
+        if str(config.get("family", cls.FAMILY)) != cls.FAMILY:
+            raise ValueError(
+                f"TemperedFreshPerturbation.from_config: bad family "
+                f"{config.get('family')!r} (expected {cls.FAMILY!r})"
+            )
+        return cls(
+            lam=float(config.get("lam", 1.0)),
+            aa_vocab=int(config.get("aa_vocab", 20)),
+            seed_offset=int(config.get("seed_offset", 0)),
+        )
+
+
+
+# ---------------------------------------------------------------------------
 # New implementation: PaperQuantityAttractorInversion (BRAI)
 # ---------------------------------------------------------------------------
 
@@ -1335,6 +1538,8 @@ def build_perturbation_from_config(
 
     * ``"uniform_fresh"`` → :class:`UniformFreshPerturbation`
     * ``"brai"`` → :class:`PaperQuantityAttractorInversion`
+    * ``"conservation_weighted"`` → :class:`ConservationWeightedPerturbation`
+    * ``"tempered_fresh"`` → :class:`TemperedFreshPerturbation`
 
     Mirrors :func:`adaptive_reflow.algorithm.integrator.build_integrator_from_config`
     so the perturbation surface can be round-tripped through JSON in
@@ -1352,6 +1557,8 @@ def build_perturbation_from_config(
         return PaperQuantityAttractorInversion.from_config(config)
     if family == ConservationWeightedPerturbation.FAMILY:
         return ConservationWeightedPerturbation.from_config(config)
+    if family == TemperedFreshPerturbation.FAMILY:
+        return TemperedFreshPerturbation.from_config(config)
     raise PerturbationConfigError(
         f"build_perturbation_from_config: unknown family {family!r}"
     )
@@ -1374,6 +1581,7 @@ __all__ = [
     "PaperQuantitiesPerturbationSnapshotProtocol",
     "PaperQuantityAttractorInversion",
     "PerturbationConfigError",
+    "TemperedFreshPerturbation",
     "PerturbationPolicy",
     "UniformFreshPerturbation",
     "build_perturbation_from_config",

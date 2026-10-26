@@ -70,6 +70,7 @@ PaperQuantitiesPerturbationSnapshotProtocol = (
 )
 PaperQuantityAttractorInversion = _perturbation_mod.PaperQuantityAttractorInversion
 ConservationWeightedPerturbation = _perturbation_mod.ConservationWeightedPerturbation
+TemperedFreshPerturbation = _perturbation_mod.TemperedFreshPerturbation
 PerturbationConfigError = _perturbation_mod.PerturbationConfigError
 PerturbationPolicy = _perturbation_mod.PerturbationPolicy
 UniformFreshPerturbation = _perturbation_mod.UniformFreshPerturbation
@@ -156,6 +157,7 @@ __all__ = [
     "ROTATION_POLICY_REGISTRY",
     "RotationPolicy",
     "RoundRobinRotationPolicy",
+    "TemperedFreshPerturbation",
     "Theorem1DynamicNoiseBias",
     "UniformFreshPerturbation",
     "build_perturbation_from_config",

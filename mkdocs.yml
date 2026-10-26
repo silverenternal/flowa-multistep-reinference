@@ -298,6 +298,7 @@ not_in_nav: |
   audit/gap71-image-spectral.md
   audit/gap70-kanzi-latent.md
   audit/gap70-lineageflow-position-blend.md
+  audit/gap70-r2-tempered-draw.md
   audit/gap74-conditional-mean-bound.md
   audit/gap78-dispersion-gate.md
   audit/gap79-r1-family-lever.md
