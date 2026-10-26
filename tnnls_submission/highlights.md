@@ -1,132 +1,55 @@
 # TNNLS Editor-Facing Highlights — FlowA
 
-## Wave 372 current highlights (supersede the historical list below)
+**Manuscript:** FlowA: Re-Inference Control for Frozen Flow-Matching Checkpoints
 
-**Editorial positioning, Wave 373:** FlowA changes both parts of the frozen-checkpoint sampling relation: its input is a feedback-driven blend, and its endpoint map becomes an iterated dynamical system. The velocity-field ODE remains unchanged. The two theorems provide testable stability and squared-error diagnostics for the observed regime boundaries without claiming to predict FID direction.
+Five highlights, each ≤ 25 words. They are the editor-facing summary and match
+the abstract of the current manuscript (`docs/drafts/paper-A-final.pdf`,
+2026-10-27 build).
 
-1. Frozen flow maps become an auditable feedback loop through four typed control ports and a hash-chained round ledger.
-2. Fixed-point convergence is proved when the memory-weighted endpoint-map Lipschitz constant is below one.
-3. An exact restart-blend squared-error identity is established; neither theorem determines the sign of Inception FID.
-4. Eleven cells include conditional CIFAR-10 single-round gains, multi-round regressions, and an MNIST checkpoint-setting reversal.
-5. The 2.5–10× NFE range is a trajectory-based extrapolation; directly measured Tier-1 speedup is 1.0×.
+1. Moving the control variable from step count to round boundary changes what a
+   frozen flow-matching sampler can reach.
+2. At equal NFE, re-inference lowers the MNIST FID plateau by 12.75% on the
+   least-trained checkpoint and returns a tie on three better-trained ones.
+3. Conditional contraction and an exact restart-blend squared-error identity are
+   proved; neither determines the sign of an FID change.
+4. Four typed control ports wrap five vendored checkpoints with zero upstream
+   edits, and every round is replayable from a hash-chained ledger.
+5. The 2.5–10× NFE range is a trajectory-based extrapolation; the directly
+   measured Tier-1 speedup is 1.0×.
 
-The former Theorem 4 convergence-rate and Theorem 5 FID-attenuation formulas in the frozen historical list below were withdrawn after the Wave 372 audit. The current manuscript and the five highlights above govern submission wording.
+**Withdrawn.** The former Theorem 4 convergence-rate bound
+(`VA ≤ C1·exp(-n/τ_residual) + C2·exp(-T/τ_velocity)`) and Theorem 5
+restart-blend attenuation bound (`VA_k ≤ (1-m)·ε_θ·1_{k=1} − (1-m)·σ_blend²·
+(k-1)·√(k/L_local)`) are **not** claims of this manuscript and appear in no
+editor-facing surface. They were withdrawn after the Wave 372 audit: the
+theorems the paper states are conditional contraction (under `mK < 1`) and an
+exact squared-error identity, neither of which bounds an FID change. Trail:
+[`docs/audit/wave372-manuscript-claim-audit.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave372-manuscript-claim-audit.md);
+see also the §IX limitation on the contraction hypothesis.
 
-**Status:** 5 highlights, each ≤ 25 words (Wave 356 P4 final polish; expanded from
-3 highlights at ≤ 85 chars to 5 highlights at ≤ 25 words so the editor-facing
-summary surfaces the framework innovations, the two formal theorems, the honest
-11-cell verdict distribution, and the camera-ready scope — see
-[`docs/audit/wave356-highlights-polish.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave356-highlights-polish.md)
-for the per-bullet word-count, character-count, cross-reference, and
-quantification audit).
+**Provenance (per highlight).**
 
----
+- **1–2** — `docs/drafts/paper-A-final.tex` Abstract, §I contribution (ii),
+  §VII-J; `docs/audit/paper-packaging-2026-10-27.md`;
+  `docs/audit/gap84-r5c-nfe-frontier-7rung.md`; figure
+  `docs/figures/fig_r5c_frontier.png`
+  (SHA-256 `f677c9b69a99f8f3be6617182c2290503040c18fd47bd4f0e44846395cc486f1`).
+- **3** — `docs/drafts/paper-A-final.tex` §VI-B, §VI-C (conditional contraction,
+  exact restart-blend identity); proofs in Appendix A.
+- **4** — `docs/drafts/paper-A-final.tex` §III-A (four-port surface), §III-E
+  (hash-chained ledger), §V-A (zero-line vendored integration).
+- **5** — `tnnls_submission/supplementary_bundle/headline_evidence/NFE_SPEEDUP_2P5_TO_10X_SOURCE.md`;
+  `verification_outputs/wave73_phase2_tier1_speedup.json`.
 
-## Highlight 1 — Framework innovations (paper §3.4)
-**Typed 4-port contract + capability-token handshake enable framework-agnostic
-multi-round re-inference with byte-stable evidence trail (Theorem 4 + paper §3.4).**
+**Cross-references.**
 
----
-
-## Highlight 2 — Theorem 4 convergence rate bound (paper §6.5 / §A.1)
-**Multi-round re-inference convergence rate bound: VA ≤ C1·exp(-n/τ_residual) +
-C2·exp(-T/τ_velocity), derived in Theorem 4 / paper §A.1.**
-
----
-
-## Highlight 3 — Theorem 5 R5b restart-blend attenuation bound (paper §6.6)
-**R5b restart-blend attenuation formal bound (Theorem 5): VA_k(m, ε_θ, L_local)
-≤ (1-m)·ε_θ·1_{k=1} − (1-m)·σ_blend²·(k-1)·√(k/L_local), derived in paper §6.6.**
-
----
-
-## Highlight 4 — Honest 11-cell verdict distribution (paper §5 / §7)
-**11 empirical cells validated with honest verdict distribution: 3 STRONG + 1
-CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only (paper §5 / §7, three generative
-domains).**
-
----
-
-## Highlight 5 — Camera-ready scope disclosed
-**Camera-ready scope disclosed: R6 live three-seed tier-aware run measured
-(scPerplexity $d_z=-0.84$, hard-tier pLDDT $d_z=+1.12$); R3 three-seed test at
-$N=1000$ measured (direction-consistent, not significant); 17 cover-letter USER
-placeholders (cover_letter.md §0).**
-
----
-
-## Highlight provenance
-
-- **Highlight 1:** Wave 355 P5 §3.4 capability-token handshake concrete SHA-256
-  example ([`docs/audit/wave355-capability-token-example.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave355-capability-token-example.md);
-  artifact
-  [`verification_outputs/wave355-capability-token-example/synthetic_continuous_capability_token.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave355-capability-token-example/synthetic_continuous_capability_token.json),
-  762 bytes, SHA-256 `584f8e02c3eda4fde2bfe1f65651cca6ec2cb9063eea42c70ce15c0ae8b619c8`)
-  + Wave 352 P4 framework code anchors
-  ([`docs/audit/wave352-framework-code-anchors.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave352-framework-code-anchors.md);
-  [`adaptive_reflow/universal/adapter.py:132`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/universal/adapter.py#L132)
-  `class AdapterCapabilities`) + paper §3.4 fail-closed-with-audit pattern.
-- **Highlight 2:** Wave 353 P1 §A.1 Theorem 4 derivation appendix
-  ([`docs/audit/wave353-a1-theorem4-derivation.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave353-a1-theorem4-derivation.md);
-  8-section proof extending the §6.5 sketch with BGV12 concentration inequality +
-  Grönwall Lipschitz-propagation bound + Sub-claim 4.1 regime-curve corollary) +
-  paper §6.5 Theorem 4 main-text statement (line 297).
-- **Highlight 3:** Wave 350 P1 §6.6 Theorem 5 closed-form attenuation bound
-  ([`docs/audit/wave350-thm5.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave350-thm5.md);
-  Eq. (6) at paper line 318) + Wave 351 P3 Theorem 5 numerical validation
-  against the Wave 350 P4 12-cell grid
-  ([`docs/audit/wave351-thm5-numerical.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave351-thm5-numerical.md);
-  L_local ≈ 0.3810 from finite-difference on synthetic RF CIFAR velocity field,
-  fitted eps_theta ≈ 0.0506 at canonical m=0.5) + Sub-claims 5.1–5.4 (k* ∈ (1,2)
-  Lipschitz-agnostic; first-round-only regime identification; m_max upper bound;
-  §10.9 partial close-out).
-- **Highlight 4:** Wave 326 crossdoc-metrics-snapshot +
-  Wave 306 11-cell alignment
-  ([`docs/audit/wave306-11-cell-alignment.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave306-11-cell-alignment.md);
-  11 rows × 17 columns audit-grade alignment table) + Wave 307 cross-cell data
-  archaeology synthesis
-  ([`docs/audit/wave307-archaeology-summary.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave307-archaeology-summary.md);
-  verdict distribution: R2 + R5b + R5c + R6 STRONG; R5a TIE; R1 + R3 + R5-legacy
-  + K1 + K4 + K5 + K7 PARTIAL/SUPP) + paper §5 (11-cell verdict distribution) +
-  §7 (boundary disclosure: matched-NFE=50 first-class honest negative).
-- **Highlight 5:** Wave 235 P4 FlowMol3 3-seed partial sweep
-  ([`docs/audit/wave235-p4-flowmol3-3seed.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave235-p4-flowmol3-3seed.md);
-  DGL 2.4.0+cu124 batched-path bug deferred to camera-ready) +
-  [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md)
-  §0 USER TO FILL 17 placeholders enumerated in
-  [`tnnls_submission/FILL_GUIDE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/FILL_GUIDE.md)
-  (1 authors block + 1 editor + 5 reviewers × {affiliation, email} + 3
-  corresponding-author fields) + camera-ready deferred list (R6 live GPU sweep,
-  R3 RDKit fix, FreqFlow + MM-FM integration, Wan2.2 N=1000 sweep).
-
-## Wave provenance
-
-- Wave 235 P1-P5: Top-4 high-leverage improvements
-- Wave 236 P1-P5: 24.6× wall-clock fix + final integration
-- Wave 237 P1-P2: Abstract trim to ≤250 words (extended to 328 in Wave 242 P3)
-- Wave 238 P1-P4: FlowMol3 per-seed diagnostic + journal decision TPAMI → TNNLS +
-  CUDA-graph verification + final pre-push
-- Wave 242 P1 (in flight): FlowMol3 3-seed NFE=250 single_mol rescue (DGL 2.4.0
-  batched-path bug workaround)
-- Wave 350 P1: §6.6 Theorem 5 closed-form attenuation bound (paper ADDITIVE)
-- Wave 351 P3: Theorem 5 numerical validation against Wave 350 P4 12-cell grid
-- Wave 352 P4: §3.4-§3.7 framework code-anchor cross-references
-- Wave 353 P1: §A.1 Theorem 4 full derivation appendix (paper ADDITIVE)
-- Wave 355 P5: §3.4 capability-token handshake concrete SHA-256 example
-- **Wave 356 P4 (this wave): 5-bullet final polish of highlights.md (≤ 25 words
-  per bullet, quantified, concrete cross-reference per bullet)**
-
-## Cross-references
-
-- [`docs/cover-letter-tnnls.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/cover-letter-tnnls.md)
-  §3 Insight — Paper-Quantity-Driven Scheduling
-- [`docs/drafts/abstract-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/abstract-final.md)
-  — 250-word TPAMI-envelope abstract
-- [`docs/internal/tnnls_submission_action_checklist.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/internal/tnnls_submission_action_checklist.md)
-  — TNNLS editorial requirements
-- [`tnnls_submission/MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md)
-  — package manifest
 - [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md)
-  §3.4 + §3.5 + §6.5 + §6.6 + §A.1 — paper source for all 5 highlights
-- [`docs/audit/wave356-highlights-polish.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave356-highlights-polish.md)
-  — this wave's 5-bullet polish audit
+  — manuscript source
+- [`docs/PAPER-EVIDENCE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/PAPER-EVIDENCE.md)
+  — cell-level evidence register
+- [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md)
+  — cover letter
+- [`tnnls_submission/MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md)
+  — package manifest and SHA-256 ledger
+- [`docs/audit/paper-packaging-2026-10-27.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/paper-packaging-2026-10-27.md)
+  — the packaging pass that produced this file

@@ -1,4 +1,4 @@
-# 2026-10-27 — Manuscript packaging pass (P1–P5)
+# 2026-10-27 — Manuscript packaging pass (P1–P7)
 
 **Increment:** `paper-packaging-2026-10-27`
 **Scope:** documentation and figure only. No sweep was launched, no model was
@@ -8,6 +8,8 @@ existed on disk before this pass.
 
 **Trigger:** user instruction — *"现在就先想想怎么包装论文吧"* — resolved through
 a two-question menu to **P1–P5 全做** and **标题改为 "Re-Inference Control"**.
+A follow-up instruction (*"可以的，这两点你都做一下"*) added **P6** (submission-package
+landmines) and **P7** (frontier-coverage disclosure).
 
 ---
 
@@ -65,6 +67,11 @@ a law, and the paper does not claim a within-checkpoint dose-response for it.
 | P5 | `.tex` Table III | scope column compressed to phrases; R5c row gains the absolute `(−3.12)` alongside `−12.75%` |
 | — | `.tex` | ten `\label{sec:…}` added; the intro's cross-references are now `\ref`-driven instead of literal |
 | — | title | "Geometry-Aware State-Intervention Reformulation for Frozen Flow-Matching Checkpoints" → **"Re-Inference Control for Frozen Flow-Matching Checkpoints"**; propagated to `MANIFEST.md`, `cover_letter.md` (subject + packaging note), `README.md`, `README.zh.md` (H1, Paper ID, BibTeX), `.tex` header |
+| P6 | `tnnls_submission/highlights.md` | rewritten as one five-bullet list matching the new abstract; the withdrawn Theorem 4 convergence-rate and Theorem 5 attenuation formulas are moved into an explicit **Withdrawn** block that states they appear in no editor-facing surface, with the Wave 372 audit trail |
+| P6 | `tnnls_submission/cover_letter.md` | the three stacked errata banners (Wave 372 correction, Wave 373 positioning) merged into one **Current manuscript** block; all disclosures retained (12 pages, `mK<1` scope, CIFAR 2/4 at N=1000 and 4 arms at N=200 with one at 0.117%, 2.5–10× extrapolation, 1.0× Tier-1) |
+| P7 | `.tex` §VII-A / `.md` §7.1 | new **Frontier coverage** paragraph: R5c carries the full grid; R6 has two matched NFE settings; R5b has one matched budget (NFE=50) across four arms; R3, R1, R2, R5a rest on one canonical budget each |
+| P7 | `.tex` §IX / `.md` L2 | scope sentence: only R5c carries a full (quality, NFE) grid; the other six R-level cells rest on a single-budget point comparison |
+| — | `.tex` §VIII | two typographic repairs: the long `tests/test_d4_regression_vectors.py` and `tools/check_claims_consistency.py` tokens were breaking justification, so they gained `\allowbreak` breakpoints and rephrased openings; the forced `\par\newpage` before Future Work was removed to hold 12 pages |
 
 ### 2.3 Figure provenance
 
@@ -129,24 +136,30 @@ Artifacts after the pass:
 
 | file | bytes | words | SHA-256 |
 |---|---|---|---|
-| `paper-A-final.md` | 223739 | 27361 | `60d8ca0c8d4f8a193ee04922af7cde93089937328058b1c87c1ae37e6d3c52ed` |
-| `paper-A-final.tex` | 73276 | — | `16a6c864d6dbcd5f638fbfbd747c9511b5ac5bd4cb8d51397a87df2f8a5d76e2` |
-| `paper-A-final.pdf` | 613629 | — | `740b1d8ce49dcd84f0fc537e09110e13a1be562892a468440881878c06d58658` |
+| `paper-A-final.md` | 224657 | 27513 | `03593e815b13e87f85a235fe4c5ced96990de62fb6720a8232a62df6c0007445` |
+| `paper-A-final.tex` | 74341 | — | `ce7a1320b6eae42ee631f2f1fccdc4b2276b78a7463cfda86664c61f1a1385b2` |
+| `paper-A-final.pdf` | 614403 | — | `660330c1fbf931143538f488fb3d2ed47b410e6eb8b44094938fc217571e6937` |
 
 ## 5. Unresolved
 
-1. **P6 not executed.** `tnnls_submission/highlights.md` still carries the
-   withdrawn Theorem 4 convergence-rate and Theorem 5 attenuation formulas as
-   Highlights 2 and 3 in its historical list, and `cover_letter.md` still opens
-   with three stacked errata banners before the pitch. Both are packaging
-   liabilities that an editor sees; neither was in the selected scope.
-2. **Six of seven R-level cells still lack a (quality, NFE) grid.** The
-   packaging pass makes R5c's frontier the visual anchor, which sharpens the
-   contrast with the cells that have only a point estimate. This is the same
-   structural gap recorded in `docs/audit/paper-refresh-2026-10-27.md` §6.
-3. **Page count is at 12 with the new figure.** The figure was set to
-   `0.88\textwidth` to hold 12 pages; a further full-page figure would push to
-   13.
+1. **The grid is disclosed, not measured.** P7 makes the coverage asymmetry
+   visible in the paper, but six of seven R-level cells still have no
+   (quality, NFE) grid. The packaging pass does not close that gap; only a
+   sweep does, and the user deferred new measurements until reviewer feedback
+   returns.
+2. **Four artifacts that look like grids are not usable.** Before writing the
+   coverage paragraph the existing candidates were checked:
+   `kanzi_nfe_scan_q4_2026.json` (6 rungs × 3 seeds) saturates at
+   `protein_sequence_validity_rate = 1.0` on both arms at every rung;
+   `flowmol3_fine_nfe_q4_2026.json` (6 rungs) reports the identical
+   `frac_valid_mols = 0.0734` for both arms at every rung;
+   `lineageflow_nfe_scan_paper_metric_q3_2026.json` processed 8 records and
+   returned 8/8 ties at saturation; and `nfe_curve_fair_w170_q3_2026.csv`
+   repeats a single baseline value across all five NFE points. None is
+   evidence of a frontier, and none was used.
+3. **Page count is at 12 with no slack.** Holding 12 pages required removing a
+   forced `\par\newpage` before Future Work; the new figure is set at
+   `0.88\textwidth`. Any further front-matter addition will push to 13.
 4. **Four historical banners still name the old title** (`MANIFEST.md` Wave 384
    banner, `submission_checklist.md` Wave 384 note, `SUBMISSION_READINESS.md`
    G31/G38 rows, and the `docs/audit/wave38*` records). Each is a dated
@@ -154,3 +167,9 @@ Artifacts after the pass:
    at the top of its file, so they were left as-is rather than rewritten. The
    MANIFEST page-count history now carries four values (8 / 10 / 11 / 12)
    behind the current banner.
+5. **The register does not carry the coverage field.** `docs/PAPER-EVIDENCE.md`
+   records each cell's `frontier` object but has no explicit
+   `frontier_grid` / `frontier_rungs` field, so the coverage statement exists
+   only as manuscript prose and as this audit. Adding it to
+   `docs/paper-evidence.json` is the natural next step if the coverage claim
+   needs to be machine-checked.

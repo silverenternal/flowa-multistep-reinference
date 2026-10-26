@@ -6,8 +6,8 @@
 > SHA-256 readings below are historical records. The manuscript is now titled
 > **"FlowA: Re-Inference Control for Frozen Flow-Matching Checkpoints"** and
 > the current build is **12 pages**, `docs/drafts/paper-A-final.pdf`, SHA-256
-> `740b1d8ce49dcd84f0fc537e09110e13a1be562892a468440881878c06d58658`
-> (613629 bytes, two `pdflatex` passes, zero overfull hboxes, zero
+> `660330c1fbf931143538f488fb3d2ed47b410e6eb8b44094938fc217571e6937`
+> (614403 bytes, two `pdflatex` passes, zero overfull hboxes, zero
 > undefined references). The verdict distribution is **3 STRONG + 1
 > CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only**. R3's three-seed test
 > and R6's live tier-aware run are now measured, so camera-ready items

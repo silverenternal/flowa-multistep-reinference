@@ -14,14 +14,21 @@
 > `tools/render_r5c_frontier_figure.py` from
 > `verification_outputs/gap84-mnist-frontier/`, SHA-256
 > `f677c9b69a99f8f3be6617182c2290503040c18fd47bd4f0e44846395cc486f1`,
-> 203323 bytes); Table III scope column compressed to phrases. Current
+> 203323 bytes); Table III scope column compressed to phrases; a
+> **frontier-coverage** paragraph in Sec. VII-A states which cells carry a (quality, NFE) grid
+> (R5c only), which carry a matched-budget contrast (R6 at two NFE settings,
+> R5b at NFE=50), and which rest on one canonical budget, with the
+> corresponding scope limit now stated in Sec. IX; `highlights.md` rebuilt as
+> a single five-bullet list (the withdrawn Theorem 4/5 formulas are marked
+> withdrawn and appear in no editor-facing surface); the cover letter's three
+> stacked errata banners merged into one current-manuscript block. Current
 > artifacts: `paper-A-final.md` =
-> `60d8ca0c8d4f8a193ee04922af7cde93089937328058b1c87c1ae37e6d3c52ed`
-> (223739 bytes, 27361 words); `paper-A-final.tex` =
-> `16a6c864d6dbcd5f638fbfbd747c9511b5ac5bd4cb8d51397a87df2f8a5d76e2`
-> (73276 bytes); `paper-A-final.pdf` =
-> `740b1d8ce49dcd84f0fc537e09110e13a1be562892a468440881878c06d58658`
-> (613629 bytes, **12 pages**, two `pdflatex` passes, zero overfull hboxes,
+> `03593e815b13e87f85a235fe4c5ced96990de62fb6720a8232a62df6c0007445`
+> (224657 bytes, 27513 words); `paper-A-final.tex` =
+> `ce7a1320b6eae42ee631f2f1fccdc4b2276b78a7463cfda86664c61f1a1385b2`
+> (74341 bytes); `paper-A-final.pdf` =
+> `660330c1fbf931143538f488fb3d2ed47b410e6eb8b44094938fc217571e6937`
+> (614403 bytes, **12 pages**, two `pdflatex` passes, zero overfull hboxes,
 > zero undefined references). The 2026-10-27 evidence-refresh banner below
 > (`85c90e5d…` / `a6fcee68…` / `a0a0d97f…`) is superseded on artifacts only;
 > its evidence statements remain current. Full trail:
