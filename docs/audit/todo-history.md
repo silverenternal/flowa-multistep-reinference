@@ -1587,3 +1587,43 @@ form — on `w16e1_5k` the framework is at or below the baseline at every NFE fr
 The frontier protocol (audit §0, §10) is now the required form for the remaining
 cells; the speed clause is only testable where the baseline is still descending,
 which is GAP-71 (R5b) and GAP-80 (R5a), not MNIST.
+
+---
+
+## 25. todo.json rewritten around acceptance (2026-10-27)
+
+The v7 `todo.json` (41,226 bytes, SHA-256
+`0d80e4219d6b4f74a8518e16b2bfadb1f5ebdd0d9a8695f6bf24f01c714d6dd6`) was
+retired verbatim to `docs/audit/todo-archive-2026-10-27.json` and replaced.
+Nothing in the archive was edited; every gap id it carried can still be read
+there.
+
+The rewrite changes what the file is *for*. The v7 file was a cell-by-cell
+mechanism ledger: eleven cells, each with an open gap whose acceptance test
+was "this cell wins". The new file is a **submission plan**: it keeps the win
+definition and the decision rule verbatim, but orders the work by what moves
+an acceptance decision rather than by which cell is still losing.
+
+Three things drove the reordering:
+
+1. **The paper is now packaged and submittable.** Front matter, figure set and
+   submission package were refreshed and repackaged on 2026-10-27
+   (`docs/audit/paper-packaging-2026-10-27.md`). What remains is evidence, not
+   prose.
+2. **The single largest reviewer objection is now known.** It is not "does the
+   method work" but "it only works on a checkpoint nobody would deploy": the
+   three better-trained MNIST checkpoints tie, and the one win is on the
+   least-trained. GAP-84 already recorded the mechanism reading — *the gain is
+   the baseline's distance to its own floor* — but on four checkpoints that
+   differ in architecture and training-set size as well as in training time.
+   That is a cross-section, not an identification.
+3. **Two things the paper says it cannot do, it already can.** GAP-78 measured
+   a contraction (κ) that predicts the sign of the R5c delta (12/12 weak
+   dominance at β = 0.3), and GAP-84 measured the distance-to-floor relation on
+   four points. Neither is in the manuscript, which instead says the theorems
+   "do not determine the sign of Inception FID". That sentence is true of the
+   theorems as stated and misleading about the evidence the repository holds.
+
+The carried-over items (GAP-70, 71, 79, 81, 80, 47, 50, 29, 15, 51, 20) keep
+their status and records; the new file lists them under `carried_over` with a
+one-line state and points here for detail.
