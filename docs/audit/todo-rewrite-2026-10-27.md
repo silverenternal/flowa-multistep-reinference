@@ -124,3 +124,18 @@ declares its own theory non-predictive while holding a predictive measurement).
    actual choice has to be made against what the existing `w16e1_*` checkpoints
    already are, so that the new family is comparable rather than merely
    parallel.
+4. **The P-NN CI check now passes vacuously.** `docs-validate.yml` verifies
+   that every `P<priority>-<n>` id declared under a `tasks` or `problems` key
+   is referenced from `ARCHITECTURE.md` / `docs/r17-survey/`. Neither v7 nor
+   v8 declares either key, so the check finds zero ids and exits 0 while
+   `docs/r17-survey/*.md` still cite `P-06`, `P-08`, `P-11`, `P-13..P-19`.
+   That drift predates this rewrite and was not introduced by it, but the
+   gate is not doing what its name says.
+5. **`ROADMAP.md` claimed to mirror `todo.json` and did not.** Its opening
+   sentence said the roadmap "tracks the items currently open in `todo.json`";
+   the items it lists (DTB-R0 fixtures, `ToyGaussianAdapter`, the synthetic
+   oracle) appear in neither v7 nor v8. The sentence now scopes the file as the
+   engineering roadmap and points at `todo.json` as authoritative. The listed
+   items were left untouched — they are real engineering work, just not the
+   submission plan.
+

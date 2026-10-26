@@ -1,9 +1,12 @@
 # Roadmap
 
-`flowa-multistep-reinference` is a single-maintainer research prototype. The
-roadmap below tracks the items currently open in `todo.json` and the
-planned governance work. Every entry is a one-line
-imperative with a target date and an ADR ID where one applies.
+`flowa-multistep-reinference` is a single-maintainer research prototype. This
+file is the **engineering** roadmap (fixtures, adapters, API freeze). The
+current submission plan — the ordered list of what moves an acceptance
+decision, with a pre-registered acceptance test per item — lives in
+[`todo.json`](todo.json) and supersedes this file wherever the two disagree.
+Every entry below is a one-line imperative with a target date and an ADR ID
+where one applies.
 
 The "Now / Next / Later" buckets are calendar quarters, not promises.
 They are reviewed at every release tag and updated when an item closes.
