@@ -125,6 +125,35 @@ SHARED_BATCH_ID: str = "wave191-p3"
 
 
 # ---------------------------------------------------------------------------
+# Provenance
+# ---------------------------------------------------------------------------
+
+
+def git_provenance() -> tuple[str | None, bool | None]:
+    """``(HEAD sha, tree dirty?)`` for the checkout this artifact was produced in.
+
+    Recorded per cell because ``commit_sha`` used to be the literal string
+    ``"PENDING"``: 540 of the 541 MNIST cells written before 2026-10-27 cannot be
+    tied to a code version. Returns ``(None, None)`` when git is unavailable
+    rather than failing the run — a missing sha is a caveat, not an error.
+    """
+    import subprocess
+
+    try:
+        sha = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=REPO_ROOT, capture_output=True, text=True, timeout=10, check=True,
+        ).stdout.strip()
+        status = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=REPO_ROOT, capture_output=True, text=True, timeout=10, check=True,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None, None
+    return (sha or None), bool(status.strip())
+
+
+# ---------------------------------------------------------------------------
 # Policy construction
 # ---------------------------------------------------------------------------
 
@@ -1127,6 +1156,7 @@ def main(argv: list[str] | None = None) -> int:
     # ------------------------------------------------------------------
     # 7. Assemble output JSON
     # ------------------------------------------------------------------
+    commit_sha, commit_dirty = git_provenance()
     if ckpt_is_smoke:
         honest_disclosure = (
             f"SMOKE CKPT USED: {ckpt_rel} ({ckpt_size} bytes, sha256={ckpt_sha256[:16]}) "
@@ -1186,7 +1216,8 @@ def main(argv: list[str] | None = None) -> int:
         "verdict": verdict,
         "r5_implication": r5,
         "wall_min": float(round(wall_total / 60.0, 2)),
-        "commit_sha": "PENDING",
+        "commit_sha": commit_sha,
+        "commit_dirty": commit_dirty,
         "alpha_bonferroni": float(0.05 / len(ARM_LABELS)),
         "n_chunks": int(args.k_chunks),
         "chunk_size": int(chunk_size),

@@ -282,11 +282,38 @@ correction pass:
 
 ## G. Recommended order, if the user authorises manuscript edits
 
-1. **A and A1–A3 together** — one protocol phrase, one caption paragraph and
-   one regenerated figure. No plateau number moves; two rung-4/5 numbers do.
-2. **C** — one sentence in §IX. No number moves, and it removes a limitation
-   that was doing the paper harm.
-3. **E** — one sentence in §VII. Adds a measurement already in the repo.
-4. **D** — the packaging decision. Requires a new figure and touches the
-   abstract, the per-cell table and §VII-B/D. Largest change, highest payoff,
-   and the only one that needs a rebuild of the 12-page layout.
+**Every item below makes the paper stronger, not weaker.** The test applied to
+each: does the edit move a verdict up, remove a self-inflicted limitation, or
+replace an unmeasured statement with a measured one?
+
+1. **A and A1–A3 together.** The paper already says "the three better-trained
+   checkpoints tie" (`paper-A-final.tex:487`, `:550`) and the abstract already
+   says "returns a tie on three better-trained checkpoints" (`:49`). In the run
+   the figure plots, two of those three are `LOSS`. Pointing the figure at the
+   capped run — the run the register already cites — makes the paper's existing
+   sentence true. Concretely:
+
+   | | uncapped (current figure) | capped (register) |
+   |---|---|---|
+   | R5c verdicts | 1 WIN, 1 TIE, **2 LOSS** | 1 WIN, **3 TIE** |
+   | NFE=4 penalty, 60k / production | +2.32 / +2.77 FID | **+0.50 / +0.38 FID** |
+   | plateau Δ, all four checkpoints | unchanged | unchanged |
+
+   No number in the body changes. The caption's 2.3–2.8 becomes 0.38–0.50, which
+   is below the one-FID floor and therefore reads as "the round boundary is
+   nearly free at this checkpoint", not as a cliff. A1's protocol phrase is a
+   correction of a false statement and is neutral to the result.
+
+2. **C.** One sentence in §IX. It deletes a limitation ("checkpoints differ in
+   architecture and training-set size") that the artifacts show is false, and it
+   stops listing a completed experiment as future work. Strictly additive
+   evidence, strictly subtractive limitation.
+
+3. **E.** One sentence in §VII. It answers an objection the paper itself raises
+   against prior work, with a measurement already on disk, and the answer
+   favours the reported operating point (β=0.30 is the measured optimum).
+
+4. **D.** The packaging decision. This is the only item that adds new evidence
+   to the body: two more checkpoints, a measured knee at 156–937 optimizer
+   steps, and a width contrast at matched budget. It requires a new figure, a
+   new table and a 12-page rebuild, so it is a separate decision.

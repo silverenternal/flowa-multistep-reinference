@@ -419,3 +419,21 @@ The R5c win is therefore a *quality-at-equal-NFE* win and a *higher plateau*,
 not an NFE saving. No current sentence claims the latter — this note exists so
 that no future edit adds one. It is the R5c-specific version of the scope
 paragraph's concession that the measured Tier-1 speedup is 1.0x.
+
+### 12.1 The same audit found a second, worse provenance hole: `commit_sha`
+
+`sweep_command` was wrong but at least varied. `commit_sha` did not: the field
+was the literal string `"PENDING"` at
+`scripts/wave191_p3_mnist_sweep.py:1189`, so **540 of the 541 MNIST cells cannot
+be tied to a code version at all**. One cell carries a real sha
+(`084e5836…`), which makes the problem easy to miss on a spot check.
+
+Fixed the same way: the driver now records `commit_sha` from `git rev-parse
+HEAD` and a new `commit_dirty` boolean from `git status --porcelain`, so an
+artifact produced on a dirty tree says so instead of silently claiming a clean
+commit. Both are `null` when git is unavailable — a missing sha is a caveat, not
+a failed run. Verified on a 20-sample NFE=4 cell: `commit_sha = d864b9e1…`,
+`commit_dirty = true` (the tree was dirty at the time).
+
+Artifacts written before the fix keep `"PENDING"`. Nothing is backfilled; the
+same rule as §12 — history is not rewritten, and the git log is the fallback.
