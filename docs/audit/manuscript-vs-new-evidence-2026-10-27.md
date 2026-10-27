@@ -277,6 +277,14 @@ correction pass:
   run-dependent (finding A).
 * The claim that `epochs2`'s only violation is rung 4 — GAP-90 §11 shows it
   disappears under the cap, which is the same mechanism as finding A.
+* **Every frontier artifact recomputes.** All 16 `frontier_*.json` files under
+  `gap84-*` and `gap90-*` were re-derived from their own `rungs` arrays:
+  `delta = framework − baseline`, `delta_rel = delta / |baseline|`,
+  `improvement = −delta_rel`, `baseline_plateau.value` = mean of the last two
+  rungs, and the dominance triple (`violations`, `strict_gain_rungs`,
+  `rungs_without_ci`) from `improvement_ci95` under the file's own
+  `margin` / `floor_units`. **Zero mismatches.** A reviewer can reproduce every
+  verdict in the paper from the JSON alone, without re-running the sampler.
 * "Per-cell recipes pin commands, seeds, environment, and checkpoint
   provenance" — checked against the replay path. **None of the 31 scripts in
   `reproduce/` hardcodes the repository root**; 19 derive it from
