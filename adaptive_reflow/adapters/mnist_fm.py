@@ -678,13 +678,34 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
             raise CapabilityMissingError(
                 "missing_native_state", context=state.native_state_digest
             )
-        beta, memory_fraction = memory_fraction_for(policy, ChannelName("x"))
         prior_value = prior_entry.get("x0", prior_entry.get("x"))
         if prior_value is None:
             raise CapabilityMissingError(
                 "missing_prior_value", context=str(prior_entry)
             )
-        prior_x0 = np.asarray(prior_value, dtype=np.float64).reshape(MNIST_FLAT_DIM)
+        return self.apply_restart_value(prior_value, state, policy)
+
+    def apply_restart_value(
+        self,
+        prior_x0: ArrayF64,
+        state: StateBundle,
+        policy: RestartPolicy,
+    ) -> StateBundle:
+        """Additive variant of :meth:`apply_restart_distribution`.
+
+        Identical blend, identical digest, identical provenance; the only
+        difference is that the prior endpoint is passed in directly instead of
+        being looked up in the 128-entry ``_native_states`` LRU. Batched GPU
+        integration holds a whole population's priors in a NumPy array, so the
+        LRU would evict them; nothing about the arithmetic changes.
+        """
+        ok, errs = validate_state_bundle(state)
+        if not ok:
+            raise CapabilityMissingError(
+                "validate_state_bundle", context=",".join(errs)
+            )
+        beta, memory_fraction = memory_fraction_for(policy, ChannelName("x"))
+        prior_x0 = np.asarray(prior_x0, dtype=np.float64).reshape(MNIST_FLAT_DIM)
         next_round = int(state.source_round) + 1
         restart_seed_blob = repr((str(policy.policy_hash), next_round)).encode("utf-8")
         restart_seed = int(hashlib.sha256(restart_seed_blob).hexdigest()[:8], 16)
@@ -944,6 +965,63 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
             detach_proof=True,
             native_state_digest=endpoint_digest,
             provenance=provenance,
+            capability_token=self.capabilities(),
+        )
+
+    def observe_endpoint_value(
+        self,
+        x_final: ArrayF64,
+        state: StateBundle,
+        *,
+        t_final: float = 1.0,
+    ) -> StateBundle:
+        """Register an endpoint produced **outside** the NumPy integrator.
+
+        Additive companion to :meth:`observe_endpoint` for batched GPU
+        integration (:mod:`adaptive_reflow.adapters.mnist_fm_torch`): the
+        caller already holds the final state, so no trajectory is stored
+        and none is needed. Everything the next round reads — ``x0``,
+        ``source_round``, the provenance chain — is identical to what
+        :meth:`observe_endpoint` produces.
+
+        The digest payload uses a distinct ``kind`` (``"endpoint_value"``)
+        so a value-registered endpoint can never collide with a
+        trajectory-derived one. Nothing outside this run reads the digest,
+        so the distinction is bookkeeping, not semantics.
+        """
+        ok, errs = validate_state_bundle(state)
+        if not ok:
+            raise CapabilityMissingError(
+                "validate_state_bundle", context=",".join(errs)
+            )
+        value = np.asarray(x_final, dtype=np.float64).reshape(MNIST_FLAT_DIM)
+        endpoint_digest = digest_state(
+            {
+                "kind": "endpoint_value",
+                "src_digest": state.native_state_digest,
+                "x_final_head": [float(value[i]) for i in range(8)],
+                "t_final": float(t_final),
+            }
+        )
+        self._native_states.put(
+            endpoint_digest,
+            {
+                "x": np.asarray(value, dtype=np.float64),
+                "x0": np.asarray(value, dtype=np.float64),
+                "t": float(t_final),
+            },
+        )
+        return StateBundle(
+            channels=dict(state.channels),
+            masks=dict(state.masks),
+            batch_id=str(state.batch_id),
+            sample_id=str(state.sample_id),
+            reference_frame=str(state.reference_frame),
+            normalization=str(state.normalization),
+            source_round=int(state.source_round) + 1,
+            detach_proof=True,
+            native_state_digest=endpoint_digest,
+            provenance=tuple(state.provenance) + ("mnist_fm_observed",),
             capability_token=self.capabilities(),
         )
 

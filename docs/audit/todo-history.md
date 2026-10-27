@@ -1679,3 +1679,46 @@ written and are corrected in place:
   now the measured split (III 2,152 words; III–VI 3,788 over about 5.5 pages).
 * **GAP-92's original "same runs" claim** is corrected as recorded above: κ is
   at NFE=50, the delta at rungs 100–200.
+
+---
+
+## 27. GPU backend for the MNIST sampler, and GAP-90 executed (2026-10-27)
+
+**Trigger.** The user rejected the CPU-concurrency plan outright: *"能拿gpu加速
+的地方你为什么要拿cpu并发，这太慢了"*. The measurement agreed — the canonical
+MNIST path integrates a 20-tensor UNet one sample at a time in NumPy float64 at
+2.35 ms per forward, so an NFE=200 cell is 96 minutes and the GAP-90 grid is 19
+core-hours.
+
+**Built.** `adaptive_reflow/adapters/mnist_fm_torch.py` — a torch port of the
+velocity field plus a batched RK4 — with two additive adapter methods
+(`apply_restart_value`, `observe_endpoint_value`) and a
+`--backend {numpy,torch}` flag on the sweep driver. Default stays `numpy` and
+the numpy branch is byte-identical to the historical loop (verified: 4/4 arms
+`array_equal` before and after the edit).
+
+**Validated.** `tests/test_mnist_fm_torch_parity.py` (3 tests: forward 4.0e-15,
+RK4 8.9e-16, restart exact). End to end, the recorded cell
+`gap84-mnist-frontier/production_nfe50_s42` reproduces at **26.75 s versus
+26.78 min (60x)** with FID agreement to 1.3e-7.
+
+**Two traps found on the way.** The `_native_states` LRU is 128 entries and a
+population-sized batch overflows it (`KeyError: 'x0'` at N=1000 after passing at
+N=32); and `apply_restart_distribution` reads the prior from that LRU, so the
+batched path needed the value-passing variant rather than a bigger cache.
+
+**GAP-90 executed.** 42/42 cells, 0 failures, 11 min 47 s on `cuda:0`.
+`epochs2` plateau Δ −0.0037 FID (LOSS, entirely rung 4); `w8e3` Δ −0.2360
+(TIE on the paper's 1-FID floor, WIN on a 1 % relative floor). The gain
+collapses to zero between 156 and 937 optimizer steps.
+
+**GAP-91 executed in-family.** `framework = 2.450 + 0.7788 * baseline`,
+R² = 0.9978, LOO MAE 0.331 FID. The pre-registered cross-family hold-out is
+**not met** (R5b's generator is broken, R2 has no grid), so the manuscript
+keeps "orders" and does not get "predicts".
+
+**CIFAR amendment.** A diagnostic on `cifar10_rf.pth` produced a collapsed
+population (`sd = 0.098`, range `[-0.685, 0.611]`) and FID 247.2 / 215.3 /
+198.3 / 184.6 at N = 200 / 500 / 1000 / 2000. The small-N covariance bias is
+real but is not the explanation; the generator is. GAP-94's premise is amended:
+diagnose the checkpoint before buying a new one.

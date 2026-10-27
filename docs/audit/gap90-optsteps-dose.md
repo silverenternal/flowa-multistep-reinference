@@ -164,3 +164,126 @@ Otherwise the relation is reported as descriptive only, and the manuscript says
 
 **Why the hold-out matters.** A monotone relation fitted on five points of one
 family is an index, not a lever. The hold-out is what distinguishes the two.
+
+---
+
+## 9. Result (2026-10-27) — 42/42 cells, 0 failures, 11 min 47 s
+
+**Run.** `reproduce/gap84_mnist_frontier.sh --ckpts epochs2,w8e3 --seeds
+42,43,44 --nfes 4,5,10,25,50,100,200 --jobs 4 --longest-first --backend torch
+--torch-device cuda:0`. METADATA at
+`verification_outputs/gap90-optsteps-dose/METADATA.txt`; 42 cells, 0 skipped,
+0 failed, `GRID_DONE 2026-10-27T03:12:47Z`. No training.
+
+Protocol is byte-comparable with GAP-84: same flags, same 7 rungs, N=1000, the
+same `--min-steps-per-round 1` the paper's Figure 1 was produced with. The
+integration moved to GPU (`docs/audit/mnist-gpu-backend.md`, 60x, parity 4e-15
+per sample and 1.3e-7 on a recorded FID), which is the only difference.
+
+### 9.1 Per-rung FID (mean over seeds 42/43/44)
+
+**`epochs2`** — 1,874 optimizer steps, width 16, 60k images, 2 epochs
+
+| NFE | 4 | 5 | 10 | 25 | 50 | 100 | 200 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| baseline | 11.4612 | 11.4419 | 11.4351 | 11.4421 | 11.4455 | 11.4474 | 11.4483 |
+| framework | 14.3215 | 11.7249 | 11.4469 | 11.4379 | 11.4407 | 11.4428 | 11.4454 |
+| Δ | **+2.8603** | +0.2830 | +0.0118 | −0.0042 | −0.0048 | −0.0045 | −0.0029 |
+
+**`w8e3`** — 2,811 optimizer steps, width 8, 60k images, 3 epochs
+
+| NFE | 4 | 5 | 10 | 25 | 50 | 100 | 200 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| baseline | 11.9845 | 11.9792 | 11.9830 | 11.9944 | 11.9996 | 12.0025 | 12.0039 |
+| framework | 12.0799 | 11.7694 | 11.7425 | 11.7513 | 11.7618 | 11.7677 | 11.7666 |
+| Δ | +0.0954 | −0.2098 | −0.2405 | −0.2431 | −0.2378 | −0.2348 | −0.2373 |
+
+### 9.2 Verdicts, under both floor rules
+
+| checkpoint | plateau Δ | rel. | 1-FID absolute floor | 1 % relative floor | strict rungs |
+|---|---:|---:|---|---|---:|
+| `epochs2` | −0.0037 | −0.03 % | **LOSS** (rung 4 violates) | LOSS | 0 |
+| `w8e3` | −0.2360 | −1.97 % | **TIE** | **WIN** | 0 |
+
+Both readings are reported because they disagree, and that disagreement is the
+finding: `w8e3` clears a relative 1 % margin on a baseline that is 2 FID worse,
+while moving the absolute number by a quarter of a FID. The paper's rule is the
+absolute floor, so **under the paper's rule neither new checkpoint wins**.
+
+`epochs2`'s LOSS is entirely rung 4. At NFE=4 the four-round allocator is
+forced to `[1,1,1,1]`, which is the same structural penalty the width-16
+checkpoints already show in Figure 1 (+2.77 FID on `production`, +2.86 here).
+Every rung from 10 to 200 is inside ±0.005 FID.
+
+### 9.3 Against the pre-registered acceptance clauses
+
+| clause | verdict |
+|---|---|
+| (a) plateau gain non-increasing across 78/156/937/1,874/2,811 | **FAILS strictly.** Gains 3.1206, 1.0036, −0.0150, 0.0037, 0.0335; the third step rises by 0.019 FID. The violation is 50x below the 1.0 FID floor, so the relation is "flat, not monotone" at the converged end. |
+| (a) OLS slope of Δ on log10(steps), 95 % CI excluding 0 | **PASSES.** slope +1.744, CI [+0.227, +3.260], R² = 0.773, n = 5, t₃ = 2.776. |
+| (b) 78-step point reproduces the GAP-84 WIN | **PASSES.** Figure 1 unchanged; the torch backend reproduced the recorded NFE=50 cell to 1.3e-7. |
+| (c) `w8e3` and `production` within 1 FID at 2,811 steps | **PASSES** (0.203 FID apart) — but the two verdicts differ, so the clause was too weak to be informative. |
+| (d) the three 60k points all sit inside the floor | **PASSES.** 937 → +0.015, 1,874 → −0.004, 2,811 → −0.034. |
+
+The honest summary: **the gain collapses to zero somewhere between 156 and 937
+optimizer steps and stays there.** The pre-registered "monotone decrease" is
+too strong a claim for five points whose last three are all inside the floor;
+what the data support is a threshold, not a slope.
+
+### 9.4 The width result was not in the hypothesis
+
+At the same 2,811 optimizer steps, width 8 gains 0.236 FID and width 16 gains
+0.034. Under the absolute floor both are TIE, but the ratio is 7x and it points
+at the baseline, not the step count: `w8e3`'s baseline plateau is 12.00 versus
+`production`'s 9.99. The predictor in §10 uses baseline quality rather than
+steps for exactly this reason.
+
+---
+
+## 10. GAP-91 result — the predictor is a contraction of baseline quality
+
+The pre-registered fit (Δ on log steps) works but explains 77 % of the
+variance. Regressing the **framework plateau on the baseline plateau** is much
+tighter, and it is the form the mechanism predicts (a restart that contracts
+toward a floor should map a wide baseline range onto a narrower framework
+range):
+
+```
+framework_plateau = 2.450 + 0.7788 * baseline_plateau
+slope 95 % CI [0.7282, 0.8293]   R^2 = 0.9978   n = 6
+```
+
+Six points: (24.4839, 21.3633), (16.9537, 15.9501), (12.0032, 11.7672),
+(11.4478, 11.4441), (11.3795, 11.3945), (9.9938, 9.9603).
+
+The slope is significantly below 1, so the framework **compresses the quality
+spread to 78 % of the baseline's**. Leave-one-out over the six points predicts
+the held-out framework plateau with **MAE = 0.331 FID**, a third of the 1.0 FID
+floor:
+
+| held out | actual Δ | predicted Δ | error |
+|---|---:|---:|---:|
+| `w16e1_5k` | −3.1206 | −2.1438 | +0.977 |
+| `w16e1_10k` | −1.0036 | −1.3797 | −0.376 |
+| `w16e1_60k` | +0.0150 | −0.0912 | −0.106 |
+| `epochs2` | −0.0037 | −0.1050 | −0.101 |
+| `production` | −0.0335 | +0.3528 | +0.386 |
+| `w8e3` | −0.2360 | −0.1973 | +0.039 |
+
+**The pre-registered hold-out clause is NOT met.** It required a second model
+family (R2 Kanzi or R5b CIFAR) with a usable multi-rung baseline; R5b's
+generator is currently broken (§6 of `mnist-gpu-backend.md`) and R2 has no
+grid. So the relation is a **within-family, leave-one-out predictive fit**, and
+the manuscript must say "orders" rather than "predicts" until a cross-family
+hold-out exists. That is a smaller claim than GAP-91 asked for and it is the
+honest one.
+
+Two cautions that belong next to the R²:
+
+* Regressing `framework` on `baseline` avoids the mathematical coupling that
+  regressing Δ on baseline would induce (Δ = framework − baseline contains
+  −baseline by construction). The slope CI here is on the non-coupled form.
+* The x-range is 10.0 to 24.5 FID. Nothing here says the line holds below 10,
+  and `production` already sits 1.1 FID below the implied fixed point
+  (2.450 / (1 − 0.7788) = 11.08), so "contraction toward a floor" is a
+  description of the measured range, not a mechanism claim.

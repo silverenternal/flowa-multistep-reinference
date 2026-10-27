@@ -31,6 +31,8 @@
 #   reproduce/gap84_mnist_frontier.sh [--n-samples N] [--out DIR]
 #       [--ckpts a,b,c] [--seeds 42,43] [--nfes 3,10,50] [--jobs 4] [--beta 0.3]
 #       [--min-steps-per-round K]   # GAP-84b cap; default 1 = legacy allocation
+#       [--longest-first]           # schedule the largest NFE rung first
+#       [--backend numpy|torch] [--torch-device cuda:0] [--torch-dtype float64]
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -45,6 +47,18 @@ BETA=0.3
 # GAP-84b/§8 policy: cap the round count so every round keeps >= this many
 # steps. Default 1 is the pre-GAP-84b allocation, bit-identical.
 MIN_STEPS=1
+# Longest-first scheduling. Default off so a reproduction of an existing grid
+# keeps its historical cell order; turning it on only reorders independent
+# cells and cannot change a number.
+LONGEST_FIRST=0
+# Integration backend. ``numpy`` (default) is the historical per-sample float64
+# path; ``torch`` batches the same RK4 over the population on a GPU. The torch
+# path is validated to float64 round-off against numpy (see
+# docs/audit/gap90-optsteps-dose.md) and is ~60x faster per cell.
+BACKEND=numpy
+TORCH_DEVICE=cuda:0
+TORCH_DTYPE=float64
+PY=python3
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -56,10 +70,18 @@ while [[ $# -gt 0 ]]; do
     --jobs)      JOBS="$2"; shift 2 ;;
     --beta)      BETA="$2"; shift 2 ;;
     --min-steps-per-round) MIN_STEPS="$2"; shift 2 ;;
+    --longest-first) LONGEST_FIRST=1; shift ;;
+    --backend)   BACKEND="$2"; shift 2 ;;
+    --torch-device) TORCH_DEVICE="$2"; shift 2 ;;
+    --torch-dtype)  TORCH_DTYPE="$2"; shift 2 ;;
     -h|--help)   sed -n '2,30p' "$0"; exit 0 ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
 done
+
+if [[ "$BACKEND" == "torch" && -x ".venvs/flowmol3_venv/bin/python3" ]]; then
+  PY=".venvs/flowmol3_venv/bin/python3"
+fi
 
 mkdir -p "$OUT"
 {
@@ -67,6 +89,7 @@ mkdir -p "$OUT"
   echo "n_samples=$N out=$OUT ckpts=${CKPTS[*]} seeds=${SEEDS[*]} nfes=${NFES[*]} jobs=$JOBS beta=$BETA min_steps=$MIN_STEPS"
   echo "nproc=$(nproc) load=$(cut -d' ' -f1-3 /proc/loadavg)"
   echo "flags=--equal-total-nfe --beta-schedule equal_budget --restart-t0-mode memory --mean-preserve --seed-keyed-prior --shared-prior --n-rounds 4 --min-steps-per-round $MIN_STEPS"
+  echo "backend=$BACKEND torch_device=$TORCH_DEVICE torch_dtype=$TORCH_DTYPE python=$PY"
   echo "resume_key=sweep_summary.json"
 } | tee "$OUT/METADATA.txt"
 
@@ -76,6 +99,8 @@ ckpt_path() {
     w16e1_5k)   echo data/mnist_fm/w16e1_5k.ckpt.npz ;;
     w16e1_10k)  echo data/mnist_fm/w16e1_10k.ckpt.npz ;;
     w16e1_60k)  echo data/mnist_fm/w16e1.ckpt.npz ;;
+    epochs2)    echo data/mnist_fm/epochs2.ckpt.npz ;;
+    w8e3)       echo data/mnist_fm/w8e3.ckpt.npz ;;
     *) echo "unknown ckpt: $1" >&2; exit 2 ;;
   esac
 }
@@ -90,7 +115,7 @@ run_one() {
   mkdir -p "$cell"
   echo "[gap84] start $cell $(date -u +%FT%TZ)"
   if OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
-    python3 scripts/wave191_p3_mnist_sweep.py \
+    "$PY" scripts/wave191_p3_mnist_sweep.py \
       --ckpt "$(ckpt_path "$ck")" \
       --n-samples "$N" --seed "$sd" \
       --total-nfe "$nfe" --n-rounds 4 \
@@ -98,7 +123,9 @@ run_one() {
       --beta-framework "$BETA" --restart-t0-mode memory \
       --min-steps-per-round "$MIN_STEPS" \
       --mean-preserve --seed-keyed-prior --shared-prior \
-      --output-dir "$cell" > "$cell/run.log" 2>&1; then
+      --output-dir "$cell" \
+      --backend "$BACKEND" --torch-device "$TORCH_DEVICE" --torch-dtype "$TORCH_DTYPE" \
+      > "$cell/run.log" 2>&1; then
     echo "[gap84] done  $cell $(date -u +%FT%TZ)"
   else
     echo "[gap84] FAIL  $cell (see $cell/run.log)" >&2
@@ -108,12 +135,19 @@ run_one() {
 }
 export -f run_one
 export -f ckpt_path
-export OUT N BETA MIN_STEPS
+export OUT N BETA MIN_STEPS BACKEND TORCH_DEVICE TORCH_DTYPE PY
 
 : > "$OUT/jobs.txt"
+if [[ "$LONGEST_FIRST" == "1" ]]; then
+  # Cost is linear in NFE, so the largest rung dominates a cell's wall time.
+  # Start it first and let the pool drain the cheap cells into the tail.
+  mapfile -t NFES_SORTED < <(printf '%s\n' "${NFES[@]}" | sort -rn)
+else
+  NFES_SORTED=("${NFES[@]}")
+fi
 for ck in "${CKPTS[@]}"; do
   for sd in "${SEEDS[@]}"; do
-    for nfe in "${NFES[@]}"; do
+    for nfe in "${NFES_SORTED[@]}"; do
       printf '%s %s %s\n' "$ck" "$sd" "$nfe" >> "$OUT/jobs.txt"
     done
   done

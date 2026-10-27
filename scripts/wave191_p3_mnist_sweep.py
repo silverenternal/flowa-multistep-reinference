@@ -385,6 +385,7 @@ def run_baseline(
     shared_prior: bool = False,
     num_steps: int = BASELINE_NUM_STEPS,
     batch_suffix: str = "",
+    backend: Any | None = None,
 ) -> np.ndarray:
     """Generate ``n_samples`` baseline endpoints (1 round × ``num_steps``, beta=0).
 
@@ -392,26 +393,45 @@ def run_baseline(
     the framework arms (``SHARED_BATCH_ID``) instead of the arm-keyed
     ``wave191-p3-baseline`` key, so the comparison is paired.
 
+    ``backend`` (additive, default ``None``) is a
+    :class:`~adaptive_reflow.adapters.mnist_fm_torch.TorchMnistVelocity`. When
+    supplied the per-sample loop is replaced by one batched RK4 over the whole
+    population; the ``x0`` draws are still produced by
+    :meth:`MnistFmAdapter.build_initial_state`, so the prior is bit-identical
+    to the NumPy path and only the integration moves to the GPU.
+
     Returns ``(n_samples, 784)`` float64 endpoints.
     """
     batch_id = (SHARED_BATCH_ID if shared_prior else "wave191-p3-baseline") + str(batch_suffix)
     samples = np.empty((int(n_samples), MNIST_FM_FLAT_DIM), dtype=np.float64)
     t0 = time.perf_counter()
-    for i in range(int(n_samples)):
-        bundle = adapter.build_initial_state(batch_id=batch_id, sample_id=f"s{i:05d}")
-        # No restart (beta=0); the policy doesn't matter — solve_ode uses the bundle's x0.
-        condition = ODEConditionDelta(
-            delta_spec={"t0": 0.0, "t1": 1.0, "num_steps": int(num_steps)},
-            source="wave191_p3_baseline",
-            target_round=0,
-            calibration_artifact_hash="cal-wave191-p3",
+    if backend is not None:
+        priors = np.empty((int(n_samples), MNIST_FM_FLAT_DIM), dtype=np.float64)
+        for i in range(int(n_samples)):
+            bundle = adapter.build_initial_state(batch_id=batch_id, sample_id=f"s{i:05d}")
+            entry = adapter._native_states.get(bundle.native_state_digest, {})
+            priors[i] = np.asarray(entry["x0"], dtype=np.float64).reshape(MNIST_FM_FLAT_DIM)
+        samples = backend.numpy(
+            backend.integrate_rk4(
+                priors, t0=0.0, t1=1.0, num_steps=int(num_steps),
+            )
         )
-        trace = adapter.solve_ode(bundle, condition, seed=int(seed) + i)
-        # Use the framework's observe_endpoint to fold the trajectory into an x0-bearing
-        # endpoint bundle, then read x0 (the final sample).
-        endpoint_bundle = adapter.observe_endpoint(trace, bundle)
-        entry = adapter._native_states.get(endpoint_bundle.native_state_digest, {})
-        samples[i] = np.asarray(entry["x0"], dtype=np.float64).reshape(MNIST_FM_FLAT_DIM)
+    else:
+        for i in range(int(n_samples)):
+            bundle = adapter.build_initial_state(batch_id=batch_id, sample_id=f"s{i:05d}")
+            # No restart (beta=0); the policy doesn't matter — solve_ode uses the bundle's x0.
+            condition = ODEConditionDelta(
+                delta_spec={"t0": 0.0, "t1": 1.0, "num_steps": int(num_steps)},
+                source="wave191_p3_baseline",
+                target_round=0,
+                calibration_artifact_hash="cal-wave191-p3",
+            )
+            trace = adapter.solve_ode(bundle, condition, seed=int(seed) + i)
+            # Use the framework's observe_endpoint to fold the trajectory into an x0-bearing
+            # endpoint bundle, then read x0 (the final sample).
+            endpoint_bundle = adapter.observe_endpoint(trace, bundle)
+            entry = adapter._native_states.get(endpoint_bundle.native_state_digest, {})
+            samples[i] = np.asarray(entry["x0"], dtype=np.float64).reshape(MNIST_FM_FLAT_DIM)
     elapsed = time.perf_counter() - t0
     if verbose:
         print(
@@ -439,6 +459,7 @@ def run_framework_arm(
     restart_noise_scale: float = 1.0,
     mean_preserve: bool = False,
     restart_t0: float | None = None,
+    backend: Any | None = None,
 ) -> tuple[np.ndarray, dict[str, int]]:
     """Generate ``n_samples`` framework-arm endpoints (4 rounds × num_steps_per_round[r], beta=beta).
 
@@ -488,12 +509,25 @@ def run_framework_arm(
     )
     total_nfe = int(sum(num_steps_per_round))
     t0 = time.perf_counter()
-    for i in range(int(n_samples)):
-        # Round 0: build initial state (fresh Gaussian x0)
-        bundle = adapter.build_initial_state(
-            batch_id=round0_batch_id, sample_id=f"s{i:05d}",
-        )
-        # Subsequent rounds: apply_restart_distribution with beta
+    if backend is not None:
+        # Batched backend: the prior, the restart blend and the schedule are
+        # still produced by the adapter (same seeds, same digests), but the ODE
+        # is integrated for the whole population in one call and the priors are
+        # held in a NumPy array rather than in the adapter's 128-entry LRU.
+        bundles = []
+        priors = np.empty((int(n_samples), MNIST_FM_FLAT_DIM), dtype=np.float64)
+        for i in range(int(n_samples)):
+            # Build and read in the same iteration: the adapter's state cache is
+            # an LRU of 128, so a population-sized batch must not rely on it
+            # holding more than the entry it just produced.
+            b = adapter.build_initial_state(
+                batch_id=round0_batch_id, sample_id=f"s{i:05d}",
+            )
+            bundles.append(b)
+            priors[i] = np.asarray(
+                adapter._native_states.get(b.native_state_digest, {})["x0"],
+                dtype=np.float64,
+            ).reshape(MNIST_FM_FLAT_DIM)
         for r in range(int(cycle_length)):
             t_start = 0.0
             if r > 0:
@@ -501,40 +535,81 @@ def run_framework_arm(
                     float(beta), int(r), int(cycle_length), str(beta_schedule),
                 )
                 policy = make_policy(arm=arm_name, beta=beta_r, round_idx=int(r))
-                bundle = adapter.apply_restart_distribution(bundle, policy)
+                next_priors = np.empty_like(priors)
+                for j, b in enumerate(bundles):
+                    nb = adapter.apply_restart_value(priors[j], b, policy)
+                    next_priors[j] = np.asarray(
+                        adapter._native_states.get(nb.native_state_digest, {})["x0"],
+                        dtype=np.float64,
+                    ).reshape(MNIST_FM_FLAT_DIM)
+                    bundles[j] = nb
+                priors = next_priors
                 if str(restart_t0_mode) == "memory":
-                    # GAP-56: the blend ``m*x1 + (1-m)*x0`` is the path state at
-                    # t = m, so the round must integrate [m, 1], not [0, 1].
                     t_start = 1.0 - float(beta_r)
+                if restart_t0 is not None:
+                    t_start = float(restart_t0)
             num_steps = int(num_steps_per_round[r])
-            condition = ODEConditionDelta(
-                delta_spec={
-                    "t0": float(t_start),
-                    "t1": 1.0,
-                    "num_steps": int(num_steps),
-                },
-                source=f"wave191_p3_{arm_name}",
-                target_round=int(r),
-                calibration_artifact_hash="cal-wave191-p3",
-            )
-            seed_for_round = int(seed_offset) + i + r * 1_000_003
-            trace = adapter.solve_ode(bundle, condition, seed=seed_for_round)
-            # Use the framework's observe_endpoint to fold the trajectory
-            # into an x0-bearing endpoint bundle (this is the canonical
-            # round-to-round handoff the framework expects).
-            bundle = adapter.observe_endpoint(trace, bundle)
-            if round0_samples is not None and r == 0:
-                # GAP-76: keep the single-pass endpoint of the same run so the
-                # final cloud can be anchored to its centroid (reference-free).
-                round0_entry = adapter._native_states.get(
-                    bundle.native_state_digest, {}
+            endpoints = backend.numpy(
+                backend.integrate_rk4(
+                    priors, t0=float(t_start), t1=1.0, num_steps=num_steps,
                 )
-                round0_samples[i] = np.asarray(
-                    round0_entry["x0"], dtype=np.float64
-                ).reshape(MNIST_FM_FLAT_DIM)
-        # Last round's endpoint x0 is the final sample.
-        entry = adapter._native_states.get(bundle.native_state_digest, {})
-        samples[i] = np.asarray(entry["x0"], dtype=np.float64).reshape(MNIST_FM_FLAT_DIM)
+            )
+            bundles = [
+                adapter.observe_endpoint_value(endpoints[j], b)
+                for j, b in enumerate(bundles)
+            ]
+            priors = endpoints
+            if round0_samples is not None and r == 0:
+                round0_samples[:] = endpoints
+        samples = priors
+    else:
+        for i in range(int(n_samples)):
+            # Round 0: build initial state (fresh Gaussian x0)
+            bundle = adapter.build_initial_state(
+                batch_id=round0_batch_id, sample_id=f"s{i:05d}",
+            )
+            # Subsequent rounds: apply_restart_distribution with beta
+            for r in range(int(cycle_length)):
+                t_start = 0.0
+                if r > 0:
+                    beta_r = beta_for_round(
+                        float(beta), int(r), int(cycle_length), str(beta_schedule),
+                    )
+                    policy = make_policy(arm=arm_name, beta=beta_r, round_idx=int(r))
+                    bundle = adapter.apply_restart_distribution(bundle, policy)
+                    if str(restart_t0_mode) == "memory":
+                        # GAP-56: the blend ``m*x1 + (1-m)*x0`` is the path state at
+                        # t = m, so the round must integrate [m, 1], not [0, 1].
+                        t_start = 1.0 - float(beta_r)
+                num_steps = int(num_steps_per_round[r])
+                condition = ODEConditionDelta(
+                    delta_spec={
+                        "t0": float(t_start),
+                        "t1": 1.0,
+                        "num_steps": int(num_steps),
+                    },
+                    source=f"wave191_p3_{arm_name}",
+                    target_round=int(r),
+                    calibration_artifact_hash="cal-wave191-p3",
+                )
+                seed_for_round = int(seed_offset) + i + r * 1_000_003
+                trace = adapter.solve_ode(bundle, condition, seed=seed_for_round)
+                # Use the framework's observe_endpoint to fold the trajectory
+                # into an x0-bearing endpoint bundle (this is the canonical
+                # round-to-round handoff the framework expects).
+                bundle = adapter.observe_endpoint(trace, bundle)
+                if round0_samples is not None and r == 0:
+                    # GAP-76: keep the single-pass endpoint of the same run so the
+                    # final cloud can be anchored to its centroid (reference-free).
+                    round0_entry = adapter._native_states.get(
+                        bundle.native_state_digest, {}
+                    )
+                    round0_samples[i] = np.asarray(
+                        round0_entry["x0"], dtype=np.float64
+                    ).reshape(MNIST_FM_FLAT_DIM)
+            # Last round's endpoint x0 is the final sample.
+            entry = adapter._native_states.get(bundle.native_state_digest, {})
+            samples[i] = np.asarray(entry["x0"], dtype=np.float64).reshape(MNIST_FM_FLAT_DIM)
     if round0_samples is not None:
         # GAP-76 centroid anchoring: a pure translation, so the covariance is
         # unchanged and only the first moment moves.
@@ -715,6 +790,24 @@ def main(argv: list[str] | None = None) -> int:
                              "measured (36/36 cells, worth the whole regression). "
                              "Default off = byte-identical legacy path.")
     parser.add_argument("--quiet", action="store_true")
+    parser.add_argument("--backend", choices=("numpy", "torch"), default="numpy",
+                        help="Integration backend. 'numpy' (default) is the "
+                             "historical per-sample float64 path and is "
+                             "byte-identical to every recorded cell. 'torch' "
+                             "batches the same RK4 over the population on a GPU; "
+                             "the prior, the restart blend and the schedule are "
+                             "still produced by the adapter, so only the "
+                             "integration moves. Validated to float64 round-off "
+                             "against the NumPy path "
+                             "(tests/test_mnist_fm_torch_parity.py).")
+    parser.add_argument("--torch-device", default="cuda:0",
+                        help="Device for --backend torch (default cuda:0).")
+    parser.add_argument("--torch-dtype", choices=("float64", "float32"),
+                        default="float64",
+                        help="Dtype for --backend torch. float64 (default) "
+                             "reproduces the recorded NumPy artifacts; float32 "
+                             "is ~17x faster and must not be compared against a "
+                             "float64 cell.")
     args = parser.parse_args(argv)
 
     n_rounds = int(args.n_rounds)
@@ -826,6 +919,18 @@ def main(argv: list[str] | None = None) -> int:
     # 3. Generate samples for baseline + 3 framework arms
     # ------------------------------------------------------------------
     t_total = time.perf_counter()
+    backend: Any | None = None
+    if str(args.backend) == "torch":
+        from adaptive_reflow.adapters.mnist_fm_torch import TorchMnistVelocity
+
+        backend = TorchMnistVelocity(
+            str(ckpt_path),
+            device=str(args.torch_device),
+            dtype=str(args.torch_dtype),
+        )
+        if not args.quiet:
+            print(f"[wave191-p3] backend=torch device={args.torch_device} "
+                  f"dtype={args.torch_dtype}", flush=True)
     if not args.quiet:
         print(f"[wave191-p3] generating baseline ({n_samples} samples) ...")
     adapter_baseline = MnistFmAdapter(
@@ -839,6 +944,7 @@ def main(argv: list[str] | None = None) -> int:
         shared_prior=bool(args.shared_prior),
         num_steps=int(baseline_steps),
         batch_suffix=batch_suffix,
+        backend=backend,
     )
 
     arm_samples: dict[str, np.ndarray] = {}
@@ -868,6 +974,7 @@ def main(argv: list[str] | None = None) -> int:
             restart_t0=(
                 None if args.restart_t0 is None else float(args.restart_t0)
             ),
+            backend=backend,
         )
         arm_samples[name] = s
         arm_telemetry[name] = tel

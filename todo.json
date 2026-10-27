@@ -52,8 +52,8 @@
   "timing_risk": "TNNLS first review can take 6-12 months. Waiting for reviewer feedback before running GAP-90 therefore risks an 18-24 month total cycle, which is why GAP-90 is ordered first."
  },
  "execution_order": [
-  "1. GAP-90-OPTSTEPS-DOSE-CONTROLLED (P0) - the identification experiment. No training: measure the frontier on the two existing checkpoints (epochs2, w8e3) that complete a clean optimizer-step dose and a width control. A few hours on one GPU. Nothing else moves the acceptance estimate as much.",
-  "2. GAP-91-FLOOR-DISTANCE-LAW (P0, depends on GAP-90) - turn the measured relation into an out-of-sample predictor, or reject it.",
+  "1. GAP-90-OPTSTEPS-DOSE-CONTROLLED (P0) - EXECUTED 2026-10-27. 42/42 cells, 11m47s on cuda:0. Result: the gain collapses to zero between 156 and 937 optimizer steps. See docs/audit/gap90-optsteps-dose.md section 9.",
+  "2. GAP-91-FLOOR-DISTANCE-LAW (P0) - EXECUTED IN-FAMILY 2026-10-27. fw = 2.450 + 0.7788*base, R2 0.998, LOO MAE 0.331 FID; cross-family hold-out still missing, so 'orders' not 'predicts'.",
   "3. GAP-92-KAPPA-BRIDGE-INTO-PAPER (P1, no GPU) - GAP-78 already measured a contraction that orders the sign; the manuscript currently says no such thing exists. Put the measured relation in, with its scope.",
   "4. GAP-93-CONVERGED-CHECKPOINT-LEVER (P1) - production is a near-miss (-0.50 FID, CI [-0.9996, +0.0025]) not a wall. One pre-registered mechanism change.",
   "5. GAP-94-STANDARD-BENCHMARK (P1, USER GATE) - one competitive image benchmark at matched NFE. Needs a decision on model access and compute.",
@@ -66,33 +66,35 @@
   {
    "id": "GAP-90-OPTSTEPS-DOSE-CONTROLLED",
    "priority": "P0",
-   "status": "PRE-REGISTERED 2026-10-27 - re-scoped to two existing checkpoints; awaiting GPU",
+   "status": "EXECUTED 2026-10-27 - 42/42 cells, 0 failures, 11m47s on cuda:0 (torch backend)",
    "gap": "The paper's central claim is that the gain from re-inference is checkpoint-conditional. The evidence is four MNIST checkpoints presented as a cross-section that differs in architecture, training-set size and training time at once. That framing was wrong on the facts: 5k/10k/60k is a clean training-set dose at fixed width and fixed epoch count, and 60k/epochs2/production is a clean epoch dose at fixed width and fixed training set. Only two of the five dose points have a frontier measurement. A reviewer can accept every number and still reject the inference because the middle of the curve is unmeasured.",
    "design_hypothesis": "Under a controlled axis - same architecture, same training set, only the optimizer-step budget varies - the framework's plateau gain decreases monotonically with training completeness, because the gain is the baseline's distance to its own floor (GAP-84 reading). Pre-registered predictions: plateau delta near 0 at 1,874 steps and near 0 at 2,811 steps for both widths; the OLS slope of delta on log(optimizer steps) is positive (gain shrinks as steps grow) with a 95% CI excluding 0; a width-8 checkpoint at production's 2,811 steps agrees with production within 1 FID.",
    "research": "1) No training. Measure the frontier on the two checkpoints that never received one: epochs2 (1,874 steps, width 16) and w8e3 (2,811 steps, width 8). 2) Protocol identical to GAP-84 so the points are comparable: N=1000 per arm, sampling seeds 42/43/44, rungs {4,5,10,25,50,100,200}, --min-steps-per-round 2, headline arm evidence_driven, plateau = mean of the last two rungs, floor rule 1 FID absolute with the 1% relative rule reported alongside, verdict via tools/frontier_report.py unmodified. 3) Combine with GAP-84's four points into one five-level dose curve in optimizer steps plus a two-width comparison at 2,811 steps.",
    "acceptance": "All four clauses, or the law is rejected and the manuscript keeps its current hypothesis wording. (a) Across the five optimizer-step levels (78, 156, 937, 1,874, 2,811) the plateau gain is non-increasing and the OLS slope of delta on log(steps) has a 95% CI excluding 0. (b) The 78-step point reproduces the GAP-84 WIN (7/7 strict rungs, plateau CI clearing the floor) - a pipeline consistency check, not new evidence. (c) At 2,811 steps w8e3 and production differ by less than 1 FID in plateau gain. (d) The three 60,000-image points (937/1,874/2,811) all sit inside the floor.",
    "est_wall": "a few hours on cuda:0; 84 N=1000 cells (2 checkpoints x 7 rungs x 3 seeds x 2 arms); no training",
-   "agent_action": "Read docs/audit/gap90-optsteps-dose.md first - it is the committed pre-registration and supersedes the epoch-training design. Then run the two frontier sweeps, tools/frontier_report.py per checkpoint, then record.",
+   "agent_action": "Done. docs/audit/gap90-optsteps-dose.md section 9 holds the per-rung tables, both floor verdicts and the clause-by-clause verdict; section 10 holds the GAP-91 fit. Artifacts: verification_outputs/gap90-optsteps-dose/ (42 cells + frontier_{epochs2,w8e3}_evidence_driven{,_absfloor}.json).",
    "blocks": [
     "GAP-91-FLOOR-DISTANCE-LAW",
     "GAP-96-MANUSCRIPT-COMPRESSION"
    ],
-   "record": "docs/audit/gap90-optsteps-dose.md; verification_outputs/gap90-optsteps-dose/"
+   "record": "docs/audit/gap90-optsteps-dose.md; verification_outputs/gap90-optsteps-dose/",
+   "result": "Plateau delta by optimizer-step budget: 78 -> -3.1206 FID (WIN), 156 -> -1.0036 (TIE), 937 -> +0.0150 (TIE), 1874 -> -0.0037 (LOSS on rung 4 only), 2811 width-16 -> -0.0335 (TIE), 2811 width-8 -> -0.2360 (TIE on the 1-FID floor, WIN on a 1% relative floor). The gain collapses to zero between 156 and 937 steps and stays inside the floor. Pre-registered clause (a) monotonicity FAILS strictly (the third step rises by 0.019 FID, 50x below the floor); the OLS slope of delta on log10(steps) PASSES (+1.744, CI [+0.227,+3.260], R2=0.773). Clauses (b), (c), (d) pass. The width-8 result at matched 2,811 steps (0.236 vs 0.034) is not explained by step count and points at baseline quality."
   },
   {
    "id": "GAP-91-FLOOR-DISTANCE-LAW",
    "priority": "P0",
-   "status": "PRE-REGISTERED 2026-10-27 - blocked on GAP-90 data",
+   "status": "EXECUTED IN-FAMILY 2026-10-27 - cross-family hold-out NOT met, relation reported as descriptive",
    "gap": "GAP-84 recorded that the gain tracks the baseline's distance to its own floor, but only as a description of four points. A description is a caveat; a predictor is a result.",
    "design_hypothesis": "The plateau gain is a function of the baseline plateau's distance to the checkpoint family's floor, and that function predicts the sign and rough size on a checkpoint family it was not fitted on.",
    "research": "Fit the relation on the GAP-90 five points plus the four GAP-84 checkpoints; hold out one family (Kanzi reconstruction, or CIFAR-10 FID) and test the prediction there. Report the fit, the held-out error, and the sign agreement.",
    "acceptance": "Out-of-sample sign correct on every held-out checkpoint AND |predicted - observed| below 1 FID, the paper's floor unit. Otherwise the relation is reported as descriptive only and the paper says so.",
    "est_wall": "no GPU; re-analysis of existing artifacts plus one held-out cell",
-   "agent_action": "Write the fit and the held-out protocol into the GAP-90 audit as a second section; do not open a separate artifact tree.",
+   "agent_action": "Done as far as the data allow. docs/audit/gap90-optsteps-dose.md section 10 records the fit, the LOO table, the two cautions (non-coupled regression form; x-range 10.0-24.5 with production below the implied fixed point). Do not promote to a cross-family law without a hold-out.",
    "blocks": [
     "GAP-96-MANUSCRIPT-COMPRESSION"
    ],
-   "record": "docs/audit/gap90-optsteps-dose.md section 8"
+   "record": "docs/audit/gap90-optsteps-dose.md section 8",
+   "result": "framework_plateau = 2.450 + 0.7788 * baseline_plateau; slope CI [0.7282, 0.8293], R2 = 0.9978, n = 6. The framework compresses the quality spread to 78% of the baseline's. Leave-one-out MAE = 0.331 FID, a third of the 1.0 FID floor. The pre-registered hold-out required a second model family; R5b's generator is broken and R2 has no grid, so the acceptance clause is NOT met and the manuscript must say 'orders', not 'predicts'."
   },
   {
    "id": "GAP-92-KAPPA-BRIDGE-INTO-PAPER",
@@ -103,7 +105,7 @@
    "research": "Computed kappa per checkpoint from the existing GAP-78 diagnostics and tabulated it against the GAP-84 seven-rung plateau delta for the four measured checkpoints. Scope stated in the paper: MNIST FM at beta=0.3 under one floor rule. The GAP-90 checkpoints are added to the table when GAP-90 runs, not before.",
    "acceptance": "MET: a table with four checkpoints and a manuscript paragraph whose every clause is backed by a number in that table. The paragraph does not claim the theorem predicts FID - only that the measured kappa orders it on this family. n=4, non-significant ordering and the unidentified threshold are all stated in the text.",
    "est_wall": "no GPU; one re-analysis plus a manuscript edit",
-   "agent_action": "Done. docs/audit/gap92-kappa-bridge.md holds the numbers and the three honesty limits; paper-A-final.tex section VI-D and paper-A-final.md section 6.7 hold the text.",
+   "agent_action": "Done. docs/audit/gap92-kappa-bridge.md holds the numbers and the three honesty limits; paper-A-final.tex section VI-D and paper-A-final.md section 6.7 hold the text. The GAP-90 checkpoints are NOT added to the kappa table: kappa was never computed for epochs2 or w8e3, and the table stays a four-point diagnostic.",
    "blocks": [
     "GAP-96-MANUSCRIPT-COMPRESSION"
    ],
