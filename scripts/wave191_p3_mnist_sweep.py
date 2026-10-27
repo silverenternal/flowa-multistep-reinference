@@ -61,6 +61,7 @@ from adaptive_reflow.adapters.mnist_fm import (  # noqa: E402
 )
 from adaptive_reflow.adapters.mnist_fm_train import (  # noqa: E402
     _load_mnist_offline,
+    load_weights,
 )
 from adaptive_reflow.algorithm.scheduler import (  # noqa: E402
     CodimensionSheetScheduler,
@@ -123,10 +124,30 @@ ARM_SEED_OFFSETS: dict[str, int] = {
 #: restart-blend mechanism — the intended paired design.
 SHARED_BATCH_ID: str = "wave191-p3"
 
+#: Basenames known to be the 6k-image 1-epoch smoke materialization
+#: (`tools/materialize_mnist_fm.py`). Every other checkpoint's recipe has to be
+#: looked up rather than assumed; see ``ckpt_is_smoke`` in ``main``.
+SMOKE_CKPT_BASENAMES: frozenset[str] = frozenset({"mnist_fm.npz"})
+
 
 # ---------------------------------------------------------------------------
 # Provenance
 # ---------------------------------------------------------------------------
+
+
+def classify_checkpoint(basename: str, width: int) -> bool | None:
+    """Is this checkpoint the 6k-image 1-epoch smoke materialization?
+
+    Tri-state because the file cannot always say. The smoke recipe and the
+    `w8e3` recipe are both width 8 and 22,481 vs 22,654 bytes, so a size rule
+    mislabels one of them; the old rule called all 42 `w8e3` cells smoke and
+    wrote "epochs=1, 6,000 images" into their disclosure. ``True`` is reserved
+    for the documented smoke artifact, ``False`` for a width the production
+    recipe alone uses, and ``None`` for "the file does not say".
+    """
+    if basename in SMOKE_CKPT_BASENAMES:
+        return True
+    return False if width >= 16 else None
 
 
 def git_provenance() -> tuple[str | None, bool | None]:
@@ -887,9 +908,19 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit(f"checkpoint_not_found:{ckpt_path}")
     ckpt_size = int(ckpt_path.stat().st_size)
     ckpt_sha256 = hashlib.sha256(ckpt_path.read_bytes()).hexdigest()
-    # Smoke ckpt is ~22 KB (small base_channels=8 weights); production 3-epoch
-    # base_channels=16 ckpt is ~75 KB. Threshold of 50 KB cleanly separates.
-    ckpt_is_smoke = ckpt_size < 50_000
+    # Width is read from the weights, not guessed from the file size.
+    ckpt_width = int(load_weights(ckpt_path)[0].shape[0])
+    # Whether the checkpoint is the *smoke materialization* is NOT decidable from
+    # the file: the 6k-image 1-epoch smoke recipe and the 60k-image 3-epoch w8e3
+    # recipe are both width 8 and land within 200 bytes of each other (22,481 vs
+    # 22,654). Until 2026-10-27 this field was ``size < 50_000``, which flagged
+    # all 42 w8e3 cells as smoke and wrote a disclosure claiming epochs=1 and
+    # 6,000 images for a checkpoint trained on 60,000. The flag is now tri-state:
+    # False for width 16 (only the production recipe has that width here), None
+    # for width 8 (undecidable from the file), True only for the documented smoke
+    # artifact. The recorded recipe lives in
+    # verification_outputs/gap35-mnist-regime/aggregate.json.
+    ckpt_is_smoke: bool | None = classify_checkpoint(ckpt_path.name, ckpt_width)
     try:
         ckpt_rel = str(ckpt_path.resolve().relative_to(REPO_ROOT))
     except ValueError:  # pragma: no cover - out-of-tree ckpt
@@ -902,7 +933,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if not args.quiet:
         print(f"[wave191-p3] ckpt={ckpt_path} sha256={ckpt_sha256[:16]} "
-              f"size={ckpt_size} bytes smoke={ckpt_is_smoke}")
+              f"size={ckpt_size} bytes width={ckpt_width} smoke={ckpt_is_smoke}")
         print(f"[wave191-p3] N={n_samples} NFE={BASELINE_NUM_STEPS} rounds={n_rounds} "
               f"framework-max-num-steps={FRAMEWORK_MAX_NUM_STEPS}")
 
@@ -1118,46 +1149,48 @@ def main(argv: list[str] | None = None) -> int:
     # ------------------------------------------------------------------
     # 6. R5 implication
     # ------------------------------------------------------------------
+    # Until 2026-10-27 every branch opened with a hardcoded parenthetical
+    # describing the smoke recipe (1 epoch, base_channels=8, 6k images) and
+    # closed by claiming the cell STRENGTHENED or REPLACED the R5 -15.01%
+    # headline. Both were written
+    # when the smoke checkpoint was the only one, and both are false for a
+    # width-16 production cell. The text now names the checkpoint by its measured
+    # width and reports only what this cell measured; the cross-protocol claim is
+    # left to the R5c frontier, which is where it is actually made.
+    ckpt_desc = f"N={n_samples}, width={ckpt_width}"
     if verdict == "framework_wins":
         r5 = (
-            f"Wave 191 P3 MNIST FM (N={n_samples}, smoke model 1-epoch base_channels=8) "
-            f"at matched NFE=50 confirms the framework BEATS the single-pass baseline "
-            f"(best arm {best_name} FID={best_fid:.4f} vs baseline {baseline_fid:.4f}, "
-            f"Δ={best_delta:+.2f}% Bonferroni p={min(best_p * 3, 1.0):.4f}). "
-            f"This MATCHES the Wave 128 CIFAR-10 RF -44.17% claim at matched NFE and "
-            f"STRENGTHENS the R5 MNIST FID -15.01% headline: the framework's MNIST value-add "
-            f"is robust to (1) the smoke-trained model and (2) the integer-NFE matched "
-            f"protocol. The paper's R5 claim stands."
+            f"Wave 191 P3 MNIST FM ({ckpt_desc}) at matched NFE=50: the best "
+            f"framework arm beats the single-pass baseline "
+            f"({best_name} FID={best_fid:.4f} vs baseline {baseline_fid:.4f}, "
+            f"Δ={best_delta:+.2f}%, Bonferroni p={min(best_p * 3, 1.0):.4f}). "
+            f"Best of {len(ARM_LABELS)} arms, so this is a max-statistic under the "
+            f"Bonferroni correction, not a claim about the headline arm alone. A "
+            f"single-budget point comparison; it does not establish frontier "
+            f"dominance."
         )
     elif verdict == "baseline_wins":
         r5 = (
-            f"Wave 191 P3 MNIST FM (N={n_samples}, smoke model 1-epoch base_channels=8) "
-            f"at matched NFE=50 shows the single-pass baseline WINS "
-            f"(best framework arm {best_name} FID={best_fid:.4f} vs baseline {baseline_fid:.4f}, "
-            f"Δ={best_delta:+.2f}% Bonferroni p={min(best_p * 3, 1.0):.4f}). "
-            f"This REPLACES the R5 MNIST FM FID -15.01% headline at matched NFE: the "
-            f"framework's MNIST value-add is NOT about better inference at fixed NFE — "
-            f"the paper claim scope should be tightened to 'comparable quality at fewer "
-            f"NFEs' (cross-budget) rather than 'framework beats baseline' (matched-NFE). "
-            f"The Wave 191 P2 CIFAR-10 RF verdict (baseline_wins at matched NFE) is "
-            f"now REPLICATED on MNIST FM."
+            f"Wave 191 P3 MNIST FM ({ckpt_desc}) at matched NFE=50: the single-pass "
+            f"baseline beats the best framework arm "
+            f"({best_name} FID={best_fid:.4f} vs baseline {baseline_fid:.4f}, "
+            f"Δ={best_delta:+.2f}%, Bonferroni p={min(best_p * 3, 1.0):.4f}). "
+            f"A single-budget point comparison; the NFE grid, not this cell, is "
+            f"what decides the R5c verdict."
         )
     else:
         r5 = (
-            f"Wave 191 P3 MNIST FM (N={n_samples}, smoke model 1-epoch base_channels=8) "
-            f"at matched NFE=50 returns verdict TIE — best framework arm {best_name} "
-            f"FID={best_fid:.4f} vs baseline {baseline_fid:.4f}, Δ={best_delta:+.2f}% "
-            f"(not Bonferroni-significant). The R5 MNIST FM FID -15.01% headline is "
-            f"NOT replaced at matched NFE — but the cross-budget claim (Wave 128 "
-            f"paradigm) is unaffected. Both arms produce comparable quality; the "
-            f"framework's MNIST value-add at matched NFE is statistical parity."
+            f"Wave 191 P3 MNIST FM ({ckpt_desc}) at matched NFE=50 returns a tie: "
+            f"best framework arm {best_name} FID={best_fid:.4f} vs baseline "
+            f"{baseline_fid:.4f}, Δ={best_delta:+.2f}% (not Bonferroni-significant). "
+            f"A single-budget point comparison; it says nothing about the plateau."
         )
 
     # ------------------------------------------------------------------
     # 7. Assemble output JSON
     # ------------------------------------------------------------------
     commit_sha, commit_dirty = git_provenance()
-    if ckpt_is_smoke:
+    if ckpt_is_smoke is True:
         honest_disclosure = (
             f"SMOKE CKPT USED: {ckpt_rel} ({ckpt_size} bytes, sha256={ckpt_sha256[:16]}) "
             f"was materialized via tools/materialize_mnist_fm.py with epochs=1, "
@@ -1168,10 +1201,23 @@ def main(argv: list[str] | None = None) -> int:
             f"is valid because both arms use the same model. The smoke model is "
             f"a pragmatic time-budget choice within the 1-2 h Wave 191 P3 budget."
         )
+    elif ckpt_is_smoke is False:
+        honest_disclosure = (
+            f"Width-{ckpt_width} checkpoint: {ckpt_rel} ({ckpt_size} bytes, "
+            f"sha256={ckpt_sha256[:16]}). Width is read from the weight shapes; "
+            f"the file carries no training metadata, so the epoch count and "
+            f"training-set size are not asserted here."
+        )
     else:
         honest_disclosure = (
-            f"Production ckpt used: {ckpt_rel} ({ckpt_size} bytes, "
-            f"sha256={ckpt_sha256[:16]}); 3-epoch base_channels=16 recipe."
+            f"Width-{ckpt_width} checkpoint: {ckpt_rel} ({ckpt_size} bytes, "
+            f"sha256={ckpt_sha256[:16]}). The file carries no training metadata, "
+            f"and at this size it is consistent with either the 6k-image 1-epoch "
+            f"smoke materialization (22,481 bytes) or the 60k-image 3-epoch w8e3 "
+            f"recipe (22,654 bytes); both are width 8. The recipe that applies is "
+            f"recorded per checkpoint in "
+            f"verification_outputs/gap35-mnist-regime/aggregate.json, not in this "
+            f"file, so this artifact does not claim one."
         )
 
     out: dict[str, Any] = {
@@ -1238,7 +1284,12 @@ def main(argv: list[str] | None = None) -> int:
         "checkpoint": str(ckpt_rel),
         "checkpoint_sha256": ckpt_sha256,
         "checkpoint_size_bytes": int(ckpt_size),
-        "checkpoint_is_smoke_materialization": bool(ckpt_is_smoke),
+        "checkpoint_width": int(ckpt_width),
+        # Tri-state since 2026-10-27: False (width >= 16, production recipe),
+        # None (width 8 — the file cannot distinguish the 6k smoke recipe from
+        # the 60k w8e3 recipe), True (explicitly the smoke artifact). The old
+        # ``size < 50_000`` rule called every w8e3 cell a smoke materialization.
+        "checkpoint_is_smoke_materialization": ckpt_is_smoke,
         "n_samples_requested": int(args.n_samples),
         "n_samples_used": int(n_samples),
         "n_samples_was_capped": bool(n_samples_was_capped),

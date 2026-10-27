@@ -437,3 +437,52 @@ a failed run. Verified on a 20-sample NFE=4 cell: `commit_sha = d864b9e1…`,
 
 Artifacts written before the fix keep `"PENDING"`. Nothing is backfilled; the
 same rule as §12 — history is not rewritten, and the git log is the fallback.
+
+### 12.2 A third defect, and this one touches GAP-90's own argument: `w8e3` was labelled a smoke checkpoint
+
+`sweep_command` was wrong and `commit_sha` was empty. The third field is worse
+because it is *interpretive*: `checkpoint_is_smoke_materialization` was
+`ckpt_size < 50_000`, and `w8e3.ckpt.npz` is 22,654 bytes. So all 42 `w8e3`
+cells in `gap90-optsteps-dose/` carry
+
+```
+"checkpoint_is_smoke_materialization": true
+honest_disclosure: "SMOKE CKPT USED: ... was materialized ... with epochs=1,
+                    base_channels=8, max_train_images=6000"
+```
+
+The checkpoint is width 8, **3 epochs, 60,000 images, 2,811 optimizer steps**
+(`gap35-mnist-regime/aggregate.json`). The disclosure is false in every clause
+that matters, and it is the one field a reader would use to check whether the
+width contrast is budget-matched. §10 and the manuscript's width argument rest
+on `w8e3` being at production's step count; the artifact said the opposite.
+
+Why a size rule could not work: the genuine smoke artifact is 22,481 bytes and
+`w8e3` is 22,654 bytes. They are 173 bytes apart and both width 8. No size
+threshold separates them.
+
+**Fix.** The width is now read from the weights (`down1_w.shape[0]`) instead of
+being inferred, and the smoke flag is tri-state via
+`classify_checkpoint(basename, width)`:
+
+| input | flag |
+|---|---|
+| `mnist_fm.npz` (the documented smoke artifact) | `True` |
+| width >= 16 (production recipe) | `False` |
+| width 8, any other name | **`None`** — the file does not say |
+
+`honest_disclosure` now asserts only what the file supports: path, size, sha256,
+width. It states the epoch count and image count only for the smoke artifact,
+and for width 8 it says the file is consistent with either recipe and points at
+`gap35-mnist-regime/aggregate.json` for the answer.
+
+`r5_implication` had the same disease: every branch opened by calling the
+checkpoint a smoke model and closed by claiming the cell "STRENGTHENS" or
+"REPLACES" the R5 -15.01% headline. Those clauses are gone; the text now names
+the measured width, names the best arm, and says explicitly that a single-budget
+point comparison does not establish frontier dominance.
+
+Artifacts written before the fix keep the false flag. The GAP-90 numbers do not
+depend on it — they depend on `gap35-mnist-regime/aggregate.json`, which was
+right all along — but anyone re-reading the `w8e3` artifacts should ignore their
+`honest_disclosure` and use the regime table.
