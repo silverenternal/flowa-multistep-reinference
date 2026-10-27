@@ -36,6 +36,7 @@ import hashlib
 import json
 import math
 import os
+import shlex
 import sys
 import time
 import warnings
@@ -1210,10 +1211,17 @@ def main(argv: list[str] | None = None) -> int:
         "n_samples_requested": int(args.n_samples),
         "n_samples_used": int(n_samples),
         "n_samples_was_capped": bool(n_samples_was_capped),
-        "sweep_command": (
-            f"python scripts/wave191_p3_mnist_sweep.py --n-samples {int(args.n_samples)} "
-            f"--output-dir verification_outputs/wave191-p3-mnist-n1000 --seed {int(args.seed)}"
-        ),
+        # The real invocation, not a template. Until 2026-10-27 this field was a
+        # hardcoded string that named a fixed --output-dir and --seed and
+        # dropped every other flag, so 370 of the 376 distinct MNIST cells in
+        # this repository describe a command they were not run with. Artifacts
+        # written before the fix keep the wrong string (history is not
+        # rewritten); METADATA.txt and reproduce/*.sh are authoritative for
+        # those. Every artifact written after it carries its own argv.
+        "sweep_command": shlex.join([sys.executable, *sys.argv]),
+        "backend": str(args.backend),
+        "torch_device": str(args.torch_device) if str(args.backend) == "torch" else None,
+        "torch_dtype": str(args.torch_dtype) if str(args.backend) == "torch" else None,
         "postprocessor": "scripts/wave191_p3_mnist_sweep.py",
         "per_arm_n_features": {k: int(n_samples) for k in ["baseline", *ARM_LABELS]},
         "honest_disclosure": honest_disclosure,

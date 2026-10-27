@@ -55,14 +55,7 @@ from adaptive_reflow.adapters.mnist_fm_train import (
     load_weights,
 )
 
-__all__ = ["TorchMnistVelocity", "torch_available"]
-
-
-def torch_available() -> bool:
-    """Return ``True`` iff :mod:`torch` is importable in this interpreter."""
-    import importlib.util
-
-    return importlib.util.find_spec("torch") is not None
+__all__ = ["TorchMnistVelocity"]
 
 
 class TorchMnistVelocity:
