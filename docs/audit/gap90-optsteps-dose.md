@@ -271,12 +271,17 @@ floor:
 | `w8e3` | −0.2360 | −0.1973 | +0.039 |
 
 **The pre-registered hold-out clause is NOT met.** It required a second model
-family (R2 Kanzi or R5b CIFAR) with a usable multi-rung baseline; R5b's
-generator is currently broken (§6 of `mnist-gpu-backend.md`) and R2 has no
-grid. So the relation is a **within-family, leave-one-out predictive fit**, and
-the manuscript must say "orders" rather than "predicts" until a cross-family
-hold-out exists. That is a smaller claim than GAP-91 asked for and it is the
-honest one.
+family (R2 Kanzi or R5b CIFAR) with a usable multi-rung baseline. Neither has
+one: R2 has no NFE grid, and R5b contrasts round counts at a single NFE=50
+budget (`reproduce/06_R5b_CIFAR_n_rounds1.sh`), so there is no baseline curve to
+evaluate the law against. (An earlier draft of this paragraph said the R5b
+generator was "broken"; that was wrong — the checkpoint loads `strict=True` and
+the low FID is NFE=2 under-integration. Corrected in §6 of
+`mnist-gpu-backend.md` and §1a of `gap94-standard-benchmark.md`. The reason the
+hold-out is missing is the missing grid, not a broken model.) So the relation is
+a **within-family, leave-one-out predictive fit**, and the manuscript must say
+"orders" rather than "predicts" until a cross-family hold-out exists. That is a
+smaller claim than GAP-91 asked for and it is the honest one.
 
 Two cautions that belong next to the R²:
 
@@ -366,3 +371,51 @@ The two CIFAR post-processors (`scripts/wave191_p2_fastfid.py`,
 `scripts/wave191_p2_postprocess.py`) carry the same shape of string, but there
 it documents the *upstream* sweep those files consumed rather than their own
 argv, so it was left alone.
+
+---
+
+## 13. Two axes checked on the six-point grid and **not** claimable (2026-10-27, CPU)
+
+Both were checked on the artifacts already on disk; neither needed a run. They
+are recorded so that a later pass does not re-derive them, and so that neither
+is quoted as a result.
+
+### 13.1 Seed-to-seed variance is not reduced by the framework
+
+For every checkpoint x rung cell in `gap84-cap-frontier/` (4 checkpoints) and
+`gap90-optsteps-dose/` (`epochs2`, `w8e3`) the sd across seeds 42/43/44 of the
+FID was compared between arms:
+
+| statistic | value |
+|---|---|
+| cells | 42 |
+| median sd ratio (framework / baseline) | **1.148** |
+| mean / min / max | 1.099 / 0.113 / 2.552 |
+| cells with framework sd lower | 17 / 42 |
+
+So the loop does not make the sampler more stable across seeds; if anything the
+FID is slightly noisier, and the variance argument must not be made. The one
+large exception is `epochs2` at rungs 5-200, where the framework sd is
+0.004-0.007 against a baseline 0.032 (ratio 0.11-0.21): the three seeds land
+within 0.011 FID of each other. Its within-run chunk spread is unchanged
+(`fid_chunks_std` 1.12-1.36), so this is not diversity collapse, and it does not
+generalise (`production` runs the other way at ratio 1.63). Unexplained, and not
+a paper claim.
+
+### 13.2 The speed ratio is a cost on R5c, not a saving
+
+`tools/frontier_report.py` records `speed.nfe_to_baseline_plateau`,
+`speed.baseline_plateau_nfe` and their ratio, where "plateau" is the baseline's
+own 100-200 rung mean. On all six checkpoints `baseline_plateau_nfe = 4`,
+because the MNIST baseline is already converged at 4 NFE (§0.2b of
+`gap84-inference-frontier.md`: the same measurement that makes rung 4 the lowest
+realisable one). The resulting ratios are 1.0 (`w16e1_5k`, `w8e3`), 1.25
+(`w16e1_10k`) and 2.5 (`w16e1_60k`, `production`, `epochs2`).
+
+Read correctly: the framework **never reaches the baseline's plateau in fewer
+NFE** on this family. The 1.0 entries are trivial — the framework is already
+better than the baseline plateau at rung 4, so the search returns the first rung.
+The R5c win is therefore a *quality-at-equal-NFE* win and a *higher plateau*,
+not an NFE saving. No current sentence claims the latter — this note exists so
+that no future edit adds one. It is the R5c-specific version of the scope
+paragraph's concession that the measured Tier-1 speedup is 1.0x.
