@@ -277,6 +277,15 @@ correction pass:
   run-dependent (finding A).
 * The claim that `epochs2`'s only violation is rung 4 — GAP-90 §11 shows it
   disappears under the cap, which is the same mechanism as finding A.
+* "Per-cell recipes pin commands, seeds, environment, and checkpoint
+  provenance" — checked against the replay path. **None of the 31 scripts in
+  `reproduce/` hardcodes the repository root**; 19 derive it from
+  `BASH_SOURCE` and the rest are cwd-relative from the repo root. The only two
+  absolute paths are a `${MMSEQS:-…}` default for the external mmseqs binary
+  (`gap70_position_blend.sh`, `gap70_tempered_draw.sh`), which the environment
+  can override. (The 86 one-off analysis scripts under `scripts/` do hardcode
+  `/home/hugo/...`; they are not on the replay path, so this does not affect the
+  claim, but it does mean they will not run from a fresh clone.)
 
 ---
 
