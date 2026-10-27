@@ -125,6 +125,14 @@ native sm_120 venv (`hidream_venv`, `lumina_venv` or `wan2_2_venv`, all torch
 2.7.0+cu128) is materially faster is **unverified** — one bounded benchmark,
 deferred because the GPU was not available.
 
+**Expected red cells under system `python3`.** `python3 -m pytest tests/ -q`
+leaves exactly 12 failures, all in `tests/test_tools/test_paper_metrics.py`,
+because `tools/paper_metrics.py` needs torch and system `python3` has none. They
+are 15/15 green under `.venvs/flowmol3_venv/bin/python -m pytest
+tests/test_tools/test_paper_metrics.py -q`. Measured 2026-10-27: 12 failed,
+5494 passed, 180 skipped, 12 xfailed in 15m00s. Any other red cell is a
+regression.
+
 Notes on the matrix:
 
 - The five **GPU model venvs** (flowmol3, hidream, lumina, wan2_2,
