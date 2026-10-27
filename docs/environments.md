@@ -103,6 +103,28 @@ not have to grep.
 | `.venvs/image_reward_venv` | ImageReward (BLIP + MedBLIP reward model) | Tier-2 image-eval: BLIP-anchored reward score | `source .venvs/image_reward_venv/bin/activate` | `python tools/run_image_eval.py --image-reward-binary .venvs/image_reward_venv/bin/python …` |
 | `.venvs/dpg_venv` | DPG / MiniCPM-V judge model | dp-not-diffusion judge model (NOT YET PROVISIONED — see `docs/r17-survey/dpg-bench-judge-decision.md`) | (none — install deferred) | reserved for `tools/run_dpg_bench_metric()` once Q1 in `dpg-bench-judge-decision.md` is resolved |
 
+**MNIST FM has two backends and no venv of its own.** The canonical MNIST
+adapter is NumPy and needs nothing beyond system `python3`; `--backend numpy` is
+the default and produced every artifact before 2026-10-27. The optional GPU
+backend (`adaptive_reflow/adapters/mnist_fm_torch.py`) needs torch, so it
+**borrows** `.venvs/flowmol3_venv`:
+
+```bash
+.venvs/flowmol3_venv/bin/python scripts/wave191_p3_mnist_sweep.py \
+    --backend torch --torch-device cuda:0 --torch-dtype float64 ...
+```
+
+It is not a FlowMol3 dependency and imports no FlowMol3 code. Parity with the
+NumPy path is gated by `tests/test_mnist_fm_torch_parity.py`, which skips when
+torch is absent.
+
+Open question recorded 2026-10-27: `flowmol3_venv` ships torch 2.2.0+cu121 whose
+maximum arch is sm_90, while both GPUs are sm_120, so the backend's kernels are
+PTX-JIT'd. Measured 24.1 ms per `(1000, 784)` forward in float64. Whether a
+native sm_120 venv (`hidream_venv`, `lumina_venv` or `wan2_2_venv`, all torch
+2.7.0+cu128) is materially faster is **unverified** — one bounded benchmark,
+deferred because the GPU was not available.
+
 Notes on the matrix:
 
 - The five **GPU model venvs** (flowmol3, hidream, lumina, wan2_2,

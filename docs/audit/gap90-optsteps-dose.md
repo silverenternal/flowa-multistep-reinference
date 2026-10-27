@@ -287,3 +287,82 @@ Two cautions that belong next to the R²:
   and `production` already sits 1.1 FID below the implied fixed point
   (2.450 / (1 − 0.7788) = 11.08), so "contraction toward a floor" is a
   description of the measured range, not a mechanism claim.
+
+---
+
+## 11. Audit correction (2026-10-27, CPU) — the `epochs2` LOSS is a rung-4 allocation artifact
+
+Section 9.2 reported `epochs2` as LOSS under the 1-FID absolute floor. That
+verdict came from a single rung: at NFE=4 the four-round equal-budget allocator
+is forced to `[1,1,1,1]`, which is the same structural penalty the width-16
+checkpoints already show in Figure 1. GAP-84b introduced
+`--min-steps-per-round 2` precisely to remove it, and the paper's own cap
+re-report (`verification_outputs/gap84-cap-frontier/`) is produced with it.
+
+The two affected rungs were re-run on CPU with the cap, N=1000, seeds 42/43/44,
+numpy backend (`verification_outputs/gap90-rung4-cap/`,
+`verification_outputs/gap90-rung5-cap/`):
+
+| checkpoint | rung | uncapped Δ | capped Δ |
+|---|---:|---:|---:|
+| `epochs2` | 4 | +2.8603 | **+0.5408** |
+| `w8e3` | 4 | +0.0954 | +0.0287 |
+| `epochs2` | 5 | +0.2830 | +0.5611 |
+| `w8e3` | 5 | −0.2098 | +0.0360 |
+
+A frontier rebuilt with the capped rungs 4 and 5 and the uncapped rungs 10–200
+(`verification_outputs/gap90-optsteps-dose-cap/`, symlinks, no copies):
+
+| checkpoint | uncapped verdict | capped verdict | plateau Δ |
+|---|---|---|---:|
+| `epochs2` | LOSS (violations `[4]`) | **TIE (no violations)** | −0.0037 |
+| `w8e3` | TIE | **TIE** | −0.2360 |
+
+Note that the cap makes rung 5 *worse* on both checkpoints: it collapses the
+allocation from `[2,1,1,1]` to two rounds, and two rounds of `beta=0.3` restart
+cost more than they recover. The cap is a fix for the NFE=4 degeneracy, not a
+general improvement — at rung 5 it trades one artifact for another. Neither
+capped rung-5 delta reaches the 1-FID floor, so the verdict is unaffected, but
+the uncapped value is the more faithful reading of what the framework does at
+NFE=5.
+
+**The corrected statement for the manuscript is 1 WIN / 5 TIE, not 1 WIN / 1
+LOSS / 4 TIE.** The plateau numbers are untouched — the cap only changes rungs
+4 and 5, and the plateau is the mean of rungs 100 and 200.
+
+This also removes the only place where the GAP-90 result could have been read as
+"the framework hurts a checkpoint": under the protocol the paper actually uses
+for its verdicts, no checkpoint regresses.
+
+---
+
+## 12. Provenance defect found during this audit (fixed)
+
+`sweep_command` in every `sweep_summary.json` was a **hardcoded template**:
+
+```
+python scripts/wave191_p3_mnist_sweep.py --n-samples {n} \
+  --output-dir verification_outputs/wave191-p3-mnist-n1000 --seed {seed}
+```
+
+It named a fixed output directory and seed and dropped `--total-nfe`,
+`--beta-framework`, `--min-steps-per-round`, `--mean-preserve`, `--backend` and
+every other flag. **370 of the 376 distinct MNIST sweep cells in this repository
+therefore describe a command they were not run with** (529 of 541
+`sweep_summary.json` files with `schema_version =
+wave191_p3_mnist_n1000_v1`; the gap between the two counts is directory
+symlinks, chiefly `gap90-optsteps-dose-cap/`). The six exceptions are the
+`gap90-rung5-cap/` cells, written after the fix. Counted by resolving
+`os.path.realpath` over `verification_outputs/**/*.json` and testing the
+`sweep_command` field for the template's fixed `--output-dir`.
+
+Fixed in `scripts/wave191_p3_mnist_sweep.py`: the field is now
+`shlex.join([sys.executable, *sys.argv])`, and the summary additionally records
+`backend`, `torch_device` and `torch_dtype`. Artifacts written before the fix
+keep the wrong string — history is not rewritten — and `METADATA.txt` plus
+`reproduce/*.sh` remain authoritative for them.
+
+The two CIFAR post-processors (`scripts/wave191_p2_fastfid.py`,
+`scripts/wave191_p2_postprocess.py`) carry the same shape of string, but there
+it documents the *upstream* sweep those files consumed rather than their own
+argv, so it was left alone.
