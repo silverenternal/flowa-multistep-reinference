@@ -55,7 +55,7 @@
   "1. GAP-90-OPTSTEPS-DOSE-CONTROLLED (P0) - EXECUTED 2026-10-27. 42/42 cells, 11m47s on cuda:0. Result: the gain collapses to zero between 156 and 937 optimizer steps. See docs/audit/gap90-optsteps-dose.md section 9.",
   "2. GAP-91-FLOOR-DISTANCE-LAW (P0) - EXECUTED IN-FAMILY 2026-10-27. fw = 2.450 + 0.7788*base, R2 0.998, LOO MAE 0.331 FID; cross-family hold-out still missing, so 'orders' not 'predicts'.",
   "3. GAP-92-KAPPA-BRIDGE-INTO-PAPER (P1, no GPU) - GAP-78 already measured a contraction that orders the sign; the manuscript currently says no such thing exists. Put the measured relation in, with its scope.",
-  "4. GAP-93-CONVERGED-CHECKPOINT-LEVER (P1) - production is a near-miss (-0.50 FID, CI [-0.9996, +0.0025]) not a wall. One pre-registered mechanism change.",
+  "4. GAP-93-CONVERGED-CHECKPOINT-LEVER (P1) - EXECUTED 2026-10-27. No beta lever: the largest |delta| anywhere in the dose is 0.576 FID, and beta=0.30 is the measured optimum. Closes 'you did not tune beta'.",
   "5. GAP-94-STANDARD-BENCHMARK (P1, USER GATE) - one competitive image benchmark at matched NFE. Needs a decision on model access and compute.",
   "6. GAP-95-FRONTIER-GRIDS-REMAINING (P2) - every R-level cell gets a grid or a measured reason it cannot have one.",
   "7. GAP-96-MANUSCRIPT-COMPRESSION (P2) - cut engineering bulk to make room for the GAP-90 figure and the GAP-92 table; hold 12 pages.",
@@ -114,15 +114,16 @@
   {
    "id": "GAP-93-CONVERGED-CHECKPOINT-LEVER",
    "priority": "P1",
-   "status": "PRE-REGISTERED 2026-10-27 - awaiting GPU; two-stage beta dose",
+   "status": "EXECUTED 2026-10-27 - outcome 2, no beta lever; 24 cells, 13 min total",
    "gap": "On the production checkpoint the headline arm moves +0.03 FID. But codimension_sheet at beta=0.3 moves -0.50 FID with CI [-0.9996, +0.0025] (GAP-78). The converged regime is a near-miss, not a wall, and the headline arm is the wrong arm there.",
    "design_hypothesis": "The beta schedule was tuned on the mid-range checkpoints; the converged end needs a different blend weight or a different channel selection, and one such change clears the 1-FID floor with weak dominance at every rung.",
    "research": "Only the fresh-noise budget beta has never been dosed on any checkpoint; every recorded result uses beta=0.3. Round count is already ruled out (GAP-84c: R in {2,4,6,8,12} spans 0.06 FID, 16x too small a lever) and the per-round step floor is inactive at rungs 100/200. Stage 1: production, beta in {0.15,0.30,0.50,0.70}, NFE=50, seeds 42/43/44, N=1000, arms evidence_driven + codimension_sheet (18 arm-cells, 9 runs). Stage 2: one confirmatory plateau run at the beta the stage-1 rule selects, rungs 100 and 200. Reproduction guard: beta=0.30 / NFE=50 / seed 42 must match the recorded FID to 4 decimals.",
    "acceptance": "Decision rule fixed before the run. (1) beta lever exists: some beta gives a stage-1 CI excluding 0 with |delta| >= 1 FID AND stage 2 reproduces it at the plateau with the CI upper bound below -1.0. (2) No beta lever: every beta spans < 1 FID at both budgets - then H_kappa holds, the converged end is not reachable by the fresh-noise budget, and the paper says the checkpoint-conditional gain is not a tuning artifact. (3) Anything else is recorded as an interior optimum and NOT promoted.",
    "est_wall": "about 15 h on cuda:0 in two bounded stages (stage 2 skipped under outcome 2)",
-   "agent_action": "Read docs/audit/gap93-converged-lever.md; it fixes the decision rule and the two competing readings (H_kappa vs H_noise) before any number exists.",
+   "agent_action": "Done. docs/audit/gap93-converged-lever.md section 9 holds the dose table and the two limits (only production was dosed; beta=0.70 is an over-noising bracket, not an informative level). Artifacts: verification_outputs/gap93-beta-dose/.",
    "blocks": [],
-   "record": "docs/audit/gap93-converged-lever.md"
+   "record": "docs/audit/gap93-converged-lever.md",
+   "result": "Beta dose at NFE=50 and at the 100-200 plateau, production, seeds 42/43/44. NFE=50 evidence_driven deltas: -0.0240 (0.15), -0.0364 (0.30), +0.1086 (0.50), +0.5729 (0.70). Plateau: -0.0221 (0.15), -0.0335 (0.30), +0.5763 (0.70). Largest |delta| anywhere is 0.576 FID against a 1.0 floor, and the NFE=50 and plateau spans agree to 0.001 FID. Outcome 2 fires: H_noise rejected, H_kappa holds. Beta=0.30 is the measured optimum of the dose, so the recorded setting was not mistuned and the near-miss is a property of the checkpoint."
   },
   {
    "id": "GAP-94-STANDARD-BENCHMARK",

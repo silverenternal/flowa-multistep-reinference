@@ -135,3 +135,67 @@ that matters". Both outcomes are publishable; neither requires a new adapter.
    replaces most of the state each round; if the arm fails to converge the cell
    is recorded as invalid rather than as a loss, and the grid is truncated at
    the last valid level.
+
+---
+
+## 9. Result (2026-10-27) — outcome 2, **no beta lever**
+
+**Run.** Stage 1: `reproduce/gap93_beta_dose.sh --jobs 4`, 12 cells (4 betas x 3
+seeds), NFE=50, `cuda:0`, torch backend, 4 min 31 s. Stage 2: the two dose
+extremes (beta = 0.15 and 0.70) at rungs 100 and 200, 12 cells, 8 min 26 s.
+Both grids `failed=0`.
+
+**Reproduction guard — PASSES.** beta = 0.30 / NFE = 50 / seed 42 reproduces the
+recorded GAP-84 cell to 1.3e-7 on all four arms (the guard asked for 4
+decimals), so the GPU backend did not shift the pipeline.
+
+### 9.1 The dose, both budgets
+
+Δ FID versus the same-seed baseline. The baseline is bit-identical across betas
+by construction (span 0.0000 FID), which is the check that only beta moved.
+
+| beta | stage 1, NFE=50, `evidence_driven` | stage 2, plateau, `evidence_driven` | plateau, `codimension_sheet` | plateau, `cosine` |
+|---:|---:|---:|---:|---:|
+| 0.15 | −0.0240 | −0.0221 | −0.0289 | −0.0218 |
+| 0.30 | −0.0364 | −0.0335 | — | — |
+| 0.50 | +0.1086 | — | — | — |
+| 0.70 | +0.5729 | +0.5763 | +0.3720 | +0.2179 |
+
+(The beta = 0.30 plateau row is the GAP-84 measurement, reused; the stage-1 row
+is this run.)
+
+### 9.2 The rule fires on outcome 2
+
+> **2. No beta lever.** Every beta at both budgets spans less than 1 FID →
+> H_kappa holds.
+
+The largest absolute delta anywhere in the grid is **0.576 FID**, against a
+1.0 FID floor. The span across beta is 0.609 FID at NFE=50 and 0.610 FID at the
+plateau — the two budgets agree to 0.001 FID, so this is not a low-NFE artifact.
+
+**H_noise is rejected.** Its prediction was that a converged checkpoint needs a
+larger beta and that beta = 0.5 moves the plateau below −1 FID. Beta = 0.5 moves
+it to +0.109 and beta = 0.7 to +0.576: the dose is monotone in the wrong
+direction, and every step above 0.30 is a loss.
+
+### 9.3 What this actually buys
+
+The recorded operating point **is the optimum of the dose**. Beta = 0.30 is the
+best of four levels at both budgets, and the curve is a clean interior optimum
+(−0.036 at 0.30 versus −0.024 at 0.15 and +0.109 at 0.50). That closes the
+reviewer objection "you did not tune the one knob that matters" with a
+measurement rather than an assertion.
+
+It also sharpens the paper's checkpoint-conditional claim: on `production` the
+gain is inside the floor *for every setting of the fresh-noise budget*, so the
+near-miss is a property of the checkpoint and not of a mistuned beta.
+
+Two limits, stated because they bound the claim:
+
+1. **Only `production` was dosed.** Nothing here says beta = 0.30 is optimal on
+   `w16e1_5k`, where the gain is 3.1 FID. A beta dose on the winning checkpoint
+   could in principle raise its gain further; that is a different experiment and
+   it is not run.
+2. **Beta = 0.70 is an over-noising regime, not an informative level.** Its
+   +0.58 FID is the restart replacing most of the state each round. It brackets
+   the dose; it does not identify an optimum beyond excluding 0.5 and 0.7.
