@@ -248,6 +248,7 @@ def test_run_cell_passes_sampled_molecules_for_flowmol3() -> None:
         force_mode: str = "synthetic",
         restart_min_nfe: int | None = None,
         nfe_budget: int | None = None,
+        **kwargs: Any,
     ) -> tuple[Any, str]:
         return adapter, "synthetic"
 
@@ -359,6 +360,7 @@ def test_run_cell_handles_missing_export_sampled_molecules() -> None:
         force_mode: str = "synthetic",
         restart_min_nfe: int | None = None,
         nfe_budget: int | None = None,
+        **kwargs: Any,
     ) -> tuple[Any, str]:
         return adapter, "synthetic"
 

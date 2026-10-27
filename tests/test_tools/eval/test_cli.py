@@ -117,6 +117,7 @@ def test_run_real_ckpt_eval_n_molecules_flag() -> None:
         restart_min_nfe: int | None = None,
         nfe_budget: int | None = None,
         n_molecules: int = 1,
+        **kwargs: Any,
     ) -> tuple[Any, str]:
         return adapter, "synthetic"
 
