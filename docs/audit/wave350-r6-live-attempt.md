@@ -79,11 +79,24 @@ The foldability_omegafold.py driver runs the OmegaFold fold stage + parses pLDDT
 | Item | Path | Status |
 |---|---|---|
 | 30 PDB files | `verification_outputs/wave350-r6-live-smoke/pdb/q{0..29}.pdb` | **WRITTEN** (consolidated from `omegafold_shards/shard_00/pdb/`) |
-| `foldability.jsonl` (30 records) | `verification_outputs/wave350-r6-live-smoke/foldability.jsonl` | **WRITTEN** (sha256 `e7fbee8ae9d868d65460b3335fe01a5098633c2208aa2bcf6e66b72ab504990b`) |
+| `foldability.jsonl` (30 records) | `verification_outputs/wave350-r6-live-smoke/foldability.jsonl` | **WRITTEN** (sha256 `e7fbee8ae9d868d65460b3335fe01a5098633c2208aa2bcf6e66b72ab504990b` at run time; see the note below) |
 | `summary.json` | `verification_outputs/wave350-r6-live-smoke/summary.json` | **WRITTEN** (`n_total=30, n_with_plddt=30, plddt_mean_mean=41.18, plddt_mean_median=37.23, plddt_mean_p10=29.08, plddt_mean_p90=58.84`) |
 | `queries.fasta` (30 records) | `verification_outputs/wave350-r6-live-smoke/queries.fasta` | **WRITTEN** |
 | `inputs.json` | `verification_outputs/wave350-r6-live-smoke/inputs.json` | **WRITTEN** |
 | `smoke.log` | `verification_outputs/wave350-r6-live-smoke/smoke.log` | **WRITTEN** (full OmegaFold predict-progress log + foldability driver log) |
+
+**Hash note (2026-10-27).** The `foldability.jsonl` hash above is the value
+recorded at run time. The file on disk now hashes to
+`c077413243dcefbe24a22dc565127d705e1f8f08525c6a376f66f3423ff906c6`; the
+content is the one described — 30 records, and `summary.json` still reports
+`n_total=30, plddt_mean_mean=41.18035511309553, plddt_mean_median=37.2309022556391,
+plddt_mean_p10=29.08273387096774, plddt_mean_p90=58.84257372881356`, matching
+the table above. The JSONL was rewritten during the PDB consolidation
+(`pdb_path` points into `/tmp/w350-r6-smoke/`), which changes bytes without
+changing values. `verification_outputs/` is gitignored, so the original bytes
+are not recoverable and the run-time hash cannot be re-derived; §3.5's
+byte-identity check against the Wave 161 baseline is the evidence that the
+values did not move.
 
 ### 3.4 Wall time
 

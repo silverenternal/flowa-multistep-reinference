@@ -1722,3 +1722,75 @@ population (`sd = 0.098`, range `[-0.685, 0.611]`) and FID 247.2 / 215.3 /
 198.3 / 184.6 at N = 200 / 500 / 1000 / 2000. The small-N covariance bias is
 real but is not the explanation; the generator is. GAP-94's premise is amended:
 diagnose the checkpoint before buying a new one.
+
+## 28. Provenance audit, the GAP-91 hold-out, and three disclosed hash drifts (2026-10-27)
+
+CPU-only session. No GPU, no frozen surface touched.
+
+**§27's CIFAR sentence is superseded.** It says the diagnostic "produced a
+collapsed population … the generator is [the explanation]". The corrected
+reading is NFE=2 under-integration: the checkpoint loads `strict=True`, the
+generated dispersion rises 0.076 → 0.470 as NFE goes 1 → 50 against a reference
+0.5024, and FID is 34.9 at NFE=50. See `mnist-gpu-backend.md` §6 and
+`gap94-standard-benchmark.md` §1a. The same correction replaces §27's reason for
+the missing GAP-91 hold-out: R5b has no NFE grid, not a broken model.
+
+**Three provenance defects in the MNIST sweep driver, all fixed.**
+
+| field | defect | scope | fix |
+|---|---|---|---|
+| `sweep_command` | hardcoded template naming a fixed `--output-dir` and `--seed` | 370 of 376 distinct cells | `shlex.join([sys.executable, *sys.argv])` |
+| `commit_sha` | literal `PENDING` | 540 of 541 cells, plus three other drivers | `tools/provenance.git_provenance()` + `commit_dirty` |
+| `checkpoint_is_smoke_materialization` | `size < 50_000`, so every 22,654-byte `w8e3` cell claimed to be the 6k-image smoke model | 42 cells | width read from the weights; tri-state `classify_checkpoint()` |
+
+The third is the one that mattered: GAP-90's width contrast rests on `w8e3`
+being at production's 2,811 steps, and the artifact's own disclosure said
+epochs=1, 6,000 images. The numbers were never wrong — `gap35-mnist-regime/
+aggregate.json` was right all along — but the artifact contradicted the argument
+it was cited for. `r5_implication` had the same disease and no longer calls
+every checkpoint a smoke model or claims each cell "STRENGTHENS" a headline.
+
+**GAP-91 gains a real out-of-sample check.** Fitting on the four original GAP-84
+checkpoints only, `framework = 2.411865 + 0.780448 * baseline` (R² 0.99758,
+slope CI [0.7050, 0.8559]), predicts the two checkpoints measured a day later to
+MAE **0.055 FID** (errors −0.098 and +0.013), against 0.331 for LOO. Both
+held-out errors are smaller than the four training residuals. Limits recorded
+with it: the fit is retrospective, both held-out baselines sit inside the
+training range so it is interpolation, and the 95 % prediction interval at n=4
+is ±1.0 FID — accuracy is not power, which is why "predicts" still stays out of
+the manuscript. `tools/gap91_holdout.py` reproduces it.
+
+**Two axes checked and not claimable.** Seed-to-seed sd is not reduced by the
+framework (median ratio 1.148, 17/42 cells lower). The R5c speed ratio is a cost
+(1.0–2.5×) because the MNIST baseline is already converged at NFE=4, so the win
+is quality-at-equal-NFE, not an NFE saving. Both are written down in
+`gap90-optsteps-dose.md` §13 so neither gets quoted later.
+
+**Every frontier artifact recomputes.** All 16 `frontier_*.json` under `gap84-*`
+and `gap90-*` re-derive exactly from their own rungs: `delta`, `delta_rel`,
+`improvement`, plateau value, and the dominance triple under each file's own
+margin and floor. Zero mismatches.
+
+**Three data-provenance drifts, now disclosed.** `check_data_provenance.py`
+reports 3 of 108 citations out of date. All three are the same shape — a
+document quoting a hash that has since moved:
+
+* `wave363-k1-recipe.md` — already disclosed in its §2.2 (self-referential
+  SHA256SUMS line, stale after the Wave 308 migration).
+* `wave363-k4-recipe.md` — same self-hash paradox, previously **undisclosed**;
+  now states that `906420fb…` is the ledger's own line 2, not the file's hash
+  (on-disk `6ea0b3cb…`), and that the per-file lines it relies on are not
+  self-referential.
+* `wave350-r6-live-attempt.md` — the run-time hash `e7fbee8a…` differs from the
+  on-disk `c0774132…`; content is unchanged (30 records, `summary.json` stats
+  match), the JSONL was rewritten during PDB consolidation, and
+  `verification_outputs/` is gitignored so the original bytes are not
+  recoverable. §3.5's byte-identity check against the Wave 161 baseline is what
+  establishes the values did not move.
+
+**Test hygiene.** Three `tests/test_tools/eval/` stubs declared the pre-GAP-40
+`_resolve_adapter` signature and died with `TypeError` before asserting; they now
+take `**kwargs` and the directory is 52/52. Full suite on system `python3`:
+12 failed, 5500 passed, 180 skipped, 12 xfailed — all 12 failures are
+`test_paper_metrics.py`, which needs torch and is 15/15 green under
+`flowmol3_venv`. That expectation is now written into `docs/environments.md`.
