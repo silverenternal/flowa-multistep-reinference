@@ -493,3 +493,60 @@ The same literal was in three more drivers — `scripts/wave191_p2_fastfid.py`,
 to MNIST. All four now call `tools/provenance.git_provenance()`, and
 `tests/test_gap90_provenance_fields.py` fails if the literal reappears in any
 file under `scripts/` or `tools/`.
+
+---
+
+## 14. GAP-91 addendum (2026-10-27, CPU) — the law holds on the two checkpoints added after the four
+
+Section 10 reports a six-point fit and a leave-one-out MAE of 0.331 FID. LOO is
+in-sample by construction: every fold still trains on the two GAP-90 points. A
+stronger check is available for free, because the two checkpoints arrived a day
+after the other four — fit on the original four, then predict `epochs2` and
+`w8e3` without letting them touch the coefficients.
+
+**Fit on the four GAP-84 checkpoints only** (`python3 tools/gap91_holdout.py`
+reproduces every number in this section from the frontier artifacts):
+
+```
+framework_plateau = 2.411865 + 0.780448 * baseline_plateau
+slope 95% CI [0.7050, 0.8559]   R^2 = 0.99758   residual sd = 0.310   n = 4
+```
+
+Compare the six-point fit of §10: `2.450 + 0.7788 * baseline`, slope CI
+[0.7282, 0.8293], R² = 0.9978. Adding the two points moves the intercept by
+0.038 and the slope by 0.0016.
+
+**Predictions, with the two points excluded from the fit:**
+
+| held out | baseline plateau | actual fw plateau | predicted | error | 95 % prediction interval |
+|---|---:|---:|---:|---:|---:|
+| `epochs2` | 11.4478 | 11.4441 | 11.3463 | **−0.098** | [10.332, 12.361] |
+| `w8e3` | 12.0032 | 11.7672 | 11.7797 | **+0.013** | [10.778, 12.781] |
+
+Hold-out MAE **0.055 FID**, against a 1.0 FID floor and against 0.331 for LOO.
+For comparison, the four training residuals are −0.157 / +0.307 / +0.102 /
+−0.251: the two held-out errors are *smaller* than the training residuals, so
+the fit is not overfitted to the original four.
+
+**Three limits, stated because they bound what this licenses.**
+
+1. **It is not a pre-registered prediction.** The fit is made now, after both
+   points exist; the hold-out is by exclusion, not by having committed to a
+   number in advance. It is an out-of-sample check of the *functional form*, not
+   a forecast.
+2. **It is interpolation in baseline quality, not extrapolation.** Both held-out
+   baselines (11.45, 12.00) lie inside the training range [9.99, 24.48]. Nothing
+   here says the line extends below 10 FID, where §10 already notes `production`
+   sits 1.1 FID under the implied fixed point (10.985 from four points, 11.08
+   from six).
+3. **The prediction interval is as wide as the floor.** At n = 4 with
+   residual sd 0.31 and t = 2.776, the 95 % interval is ±1.0 FID. The point
+   predictions are accurate to a tenth of a FID; the *statistical* resolution is
+   not better than the decision rule. Accuracy is not power.
+
+**What this licenses in the manuscript.** Within the MNIST family and inside the
+measured baseline range, the relation fitted on four checkpoints transfers to
+two checkpoints added later, to 0.06 FID. That is a stronger sentence than
+"orders the observed deltas" and a weaker one than "predicts" unqualified: the
+cross-family hold-out of §10 is still missing, and the interval above is the
+reason the word "predicts" stays out of the paper.
