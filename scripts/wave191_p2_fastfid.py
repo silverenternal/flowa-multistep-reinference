@@ -14,12 +14,18 @@ from __future__ import annotations
 
 import json
 import math
+import sys
 from pathlib import Path
 
 import numpy as np
 import torch
 
 REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.provenance import git_provenance  # noqa: E402
+
 SWEEP_DIR = REPO_ROOT / "verification_outputs" / "wave191-p2-cifar10-n1000"
 OUTPUT_JSON = REPO_ROOT / "verification_outputs" / "wave191-p2-cifar10-n1000.json"
 REF_FEATURES_PATH = REPO_ROOT / "data" / "cifar10_inception_features.npz"
@@ -262,6 +268,7 @@ def main() -> int:
     # Baseline took 34s.
     wall_min = int((34.0 + 910.9 + 912.2 + 899.6 + 897.3) / 60) + 1
 
+    commit_sha, commit_dirty = git_provenance()
     out: dict = {
         "target": "cifar10_rf",
         "n_records": int(n_total),
@@ -272,7 +279,8 @@ def main() -> int:
         "verdict": verdict,
         "r5_implication": r5,
         "wall_min": wall_min,
-        "commit_sha": "PENDING",
+        "commit_sha": commit_sha,
+        "commit_dirty": commit_dirty,
         "alpha_bonferroni": 0.05 / len(FRAMEWORK_ARMS),
         "alpha_bonferroni_value": 0.05 / len(FRAMEWORK_ARMS),
         "n_chunks": int(K_CHUNKS),

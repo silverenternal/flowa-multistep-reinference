@@ -47,6 +47,11 @@ import numpy as np
 import scipy.stats
 
 REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.provenance import git_provenance  # noqa: E402
+
 OUT_DIR = REPO_ROOT / "verification_outputs"
 
 # Wave 198 P3 family: 3 difficulty tiers x 2 metrics = 6 cells per dataset
@@ -542,6 +547,7 @@ def main() -> int:
 
     # ---- Compact JSON summary (for the workflow harness) ----
     overall = {r["metric"]: r for r in results if r["tier"] == "overall"}
+    commit_sha, commit_dirty = git_provenance()
     json_summary = {
         "k6_per_record_naive_pLDDT_hard_d_z": float(
             [r for r in results if r["tier"] == "hard" and r["metric"] == "plddt_mean"][0]["naive"]["cohens_d_z"]
@@ -570,7 +576,8 @@ def main() -> int:
         ),
         "csv_path": "verification_outputs/wave203-p3-k6-cluster-robust.csv",
         "json_path": "verification_outputs/wave203-p3-k6-cluster-robust.json",
-        "commit_sha": "PENDING",
+        "commit_sha": commit_sha,
+        "commit_dirty": commit_dirty,
     }
 
     # Full JSON

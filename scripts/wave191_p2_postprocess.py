@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import math
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,11 @@ import numpy as np
 import torch
 
 REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.provenance import git_provenance  # noqa: E402
+
 SWEEP_DIR = REPO_ROOT / "verification_outputs" / "wave191-p2-cifar10-n1000"
 OUTPUT_JSON = REPO_ROOT / "verification_outputs" / "wave191-p2-cifar10-n1000.json"
 REF_NPZ = REPO_ROOT / "data" / "cifar10_test_ref.npz"
@@ -320,6 +326,7 @@ def main() -> int:
             f"baseline) but on the cross-budget axis (where the Wave 128 -44.17% lives)."
         )
 
+    commit_sha, commit_dirty = git_provenance()
     out: dict[str, Any] = {
         "target": "cifar10_rf",
         "n_records": int(n_total),
@@ -332,7 +339,8 @@ def main() -> int:
         "verdict": verdict,
         "r5_implication": r5,
         "wall_min": int(summary.get("wall_clock_s", 0) / 60.0),
-        "commit_sha": "PENDING",
+        "commit_sha": commit_sha,
+        "commit_dirty": commit_dirty,
         "alpha_bonferroni": 0.05 / len(ARM_FILES),
         "alpha_bonferroni_value": 0.05 / len(ARM_FILES),
         "n_chunks": int(K_CHUNKS),

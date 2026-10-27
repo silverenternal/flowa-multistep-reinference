@@ -88,6 +88,7 @@ from adaptive_reflow.universal.state import (  # noqa: E402
     ODEConditionDelta,
     StateBundle,
 )
+from tools.provenance import git_provenance  # noqa: E402
 
 SCHEMA_VERSION: str = "wave191_p3_mnist_n1000_v1"
 
@@ -148,30 +149,6 @@ def classify_checkpoint(basename: str, width: int) -> bool | None:
     if basename in SMOKE_CKPT_BASENAMES:
         return True
     return False if width >= 16 else None
-
-
-def git_provenance() -> tuple[str | None, bool | None]:
-    """``(HEAD sha, tree dirty?)`` for the checkout this artifact was produced in.
-
-    Recorded per cell because ``commit_sha`` used to be the literal string
-    ``"PENDING"``: 540 of the 541 MNIST cells written before 2026-10-27 cannot be
-    tied to a code version. Returns ``(None, None)`` when git is unavailable
-    rather than failing the run — a missing sha is a caveat, not an error.
-    """
-    import subprocess
-
-    try:
-        sha = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            cwd=REPO_ROOT, capture_output=True, text=True, timeout=10, check=True,
-        ).stdout.strip()
-        status = subprocess.run(
-            ["git", "status", "--porcelain"],
-            cwd=REPO_ROOT, capture_output=True, text=True, timeout=10, check=True,
-        ).stdout
-    except (OSError, subprocess.SubprocessError):
-        return None, None
-    return (sha or None), bool(status.strip())
 
 
 # ---------------------------------------------------------------------------

@@ -486,3 +486,10 @@ Artifacts written before the fix keep the false flag. The GAP-90 numbers do not
 depend on it — they depend on `gap35-mnist-regime/aggregate.json`, which was
 right all along — but anyone re-reading the `w8e3` artifacts should ignore their
 `honest_disclosure` and use the regime table.
+
+The same literal was in three more drivers — `scripts/wave191_p2_fastfid.py`,
+`scripts/wave191_p2_postprocess.py` (both CIFAR R5b) and
+`scripts/wave203_p3_k6_cluster_robust.py` (R6) — so the defect was not specific
+to MNIST. All four now call `tools/provenance.git_provenance()`, and
+`tests/test_gap90_provenance_fields.py` fails if the literal reappears in any
+file under `scripts/` or `tools/`.

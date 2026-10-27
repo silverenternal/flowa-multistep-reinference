@@ -71,3 +71,18 @@ def test_r5_text_no_longer_hardcodes_the_smoke_recipe() -> None:
     assert "REPLACES the R5 MNIST FM FID" not in source
     # The size rule that mislabelled w8e3 must not come back.
     assert "ckpt_is_smoke = ckpt_size < 50_000" not in source
+
+
+def test_no_driver_records_a_pending_commit_sha() -> None:
+    """Every writer of a result artifact must fill commit_sha with a real value.
+
+    Four drivers hardcoded the literal `"PENDING"` until 2026-10-27; they now
+    all call `tools.provenance.git_provenance()`.
+    """
+    offenders = []
+    for directory in ("scripts", "tools"):
+        for path in (REPO_ROOT / directory).glob("*.py"):
+            text = path.read_text()
+            if '"commit_sha": "PENDING"' in text or "'commit_sha': 'PENDING'" in text:
+                offenders.append(str(path.relative_to(REPO_ROOT)))
+    assert offenders == [], offenders
