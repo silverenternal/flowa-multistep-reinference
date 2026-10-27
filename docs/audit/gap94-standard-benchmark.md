@@ -18,41 +18,59 @@ small-data generation.
 The question this memo answers is whether the gap can be closed cheaply enough
 to be worth the delay.
 
-## 1a. Amendment (2026-10-27) — the premise is wrong: the generator is broken, not (proven to be) the checkpoint
+## 1a. Amendment (2026-10-27) — the 447.9 is an NFE=2 artifact, but the checkpoint still is not competitive
 
-This memo was written on the reading "the checkpoint is at FID 448, so it
-cannot be a competitive benchmark". A diagnostic run on `cuda:0` the same day
-shows that the FID number is not a property of the checkpoint alone, and that
-the generator is producing a collapsed population:
+This memo was written on the reading "the checkpoint is at FID 448, so it cannot
+be a competitive benchmark". Diagnostics on `cuda:0` the same day split that
+statement into three parts, and only the last one survives.
 
-* `cifar10_rf.pth`, NFE=2, seed 0, N=2000 generated in 24.5 s.
-* Sample statistics: `mean = -0.052`, **`sd = 0.098`**, range `[-0.685, 0.611]`.
-  Real CIFAR-10 in `[-1, 1]` has `sd` roughly three times that and uses the
-  full range. A near-constant output cloud is what a collapsed or
-  mis-integrated sampler looks like, not what a converged RF model looks like.
-* FID on that single fixed population, subsampled so N is the only variable:
+**The checkpoint loads correctly.** `cifar10_rf.pth` is detected as a gnobitab
+1-RF checkpoint (565 keys, `all_modules.*` prefix) and
+`load_gnobitab_rf_cifar_unet` loads it with `strict=True`. There is no silent
+random-weight path here; the earlier suspicion that `strict=False` was hiding a
+mismatch is wrong.
 
-  | N | 200 | 500 | 1000 | 2000 |
-  |---|---:|---:|---:|---:|
-  | FID | 247.19 | 215.34 | 198.29 | 184.56 |
+**The samples are not collapsed — the integration was under-resolved.** The
+reference `cifar10_test_ref.npz` has `sd = 0.5024`. Generated populations of
+256 samples at seed 0:
 
-  The number falls with N, as the 2048-dimensional covariance bias predicts,
-  but it converges nowhere near the published 2.21. **The small-N bias is not
-  the explanation.** (The R5b cells that report 447.9 also use N=200 with a
-  2048-dim feature covariance, so they carry both defects at once.)
+| NFE | 1 | 2 | 4 | 10 | 50 |
+|---|---:|---:|---:|---:|---:|
+| generated `sd` | 0.0764 | 0.0987 | 0.1880 | 0.3373 | **0.4696** |
 
-Consequence for this memo: option B is no longer "acquire a better checkpoint".
-The first task is to find out why the existing checkpoint generates a collapsed
-cloud — time direction, the `t` convention in `batched_inference`, the
-normalisation of the reference `cifar10_test_ref.npz`, or a state-dict load
-that is silently non-strict (`_load_torch_unet` passes `strict=False`). Until
-that is answered, no CIFAR FID in this repository — including the 447.9 the
-memo quotes — should be compared to the literature, and the R5b relative
-deltas (−1.6 % to −2.5 %) are only interpretable as within-run comparisons.
+At NFE=50 the cloud is within 7 % of the reference's dispersion. At NFE=2 — the
+setting every R5b cell uses — it is at a fifth of it. Two Euler steps from pure
+noise is simply not enough for this checkpoint, and that, not a broken model, is
+what the 447.9 measures.
 
-This does not change the recommendation ordering (B before A), but it changes
-option B's first step from "buy a checkpoint" to "diagnose the existing one",
-which is cheaper and is a prerequisite for either option.
+**The FID is still not competitive at any tested step count.** N=1000, seed 0,
+same reference:
+
+| NFE | 2 (N=2000 population, subsampled) | 10 | 50 |
+|---|---:|---:|---:|
+| FID | 184.56 (N=2000) | 45.01 | **34.92** |
+
+The published 1-RF number for this model family is FID 4.3 at one step and 2.21
+for the 2-RF reflowed variant. So the gap to the literature is roughly **8x at
+NFE=50**, and it is not explained by any of the three things this memo could
+cheaply test (load, dispersion, small-N bias — the last is worth ~2 FID at
+N=1000, d=2048).
+
+Consequences, in order of importance:
+
+1. **Every R5b relative delta is measured at an operating point where the
+   baseline is not converged.** −1.6 % to −2.5 % on a 450 FID baseline is a
+   comparison between two under-integrated samplers. The relative deltas are
+   internally valid; they are not evidence about converged generation.
+2. **The 447.9 quoted in §2 of this memo must not be used as a model property.**
+   It is a (checkpoint, NFE=2, N=200) triple.
+3. **Option B is still the right shape, but its first step changes again**: not
+   "buy a checkpoint" and not "the generator is broken", but "find the 8x". The
+   remaining candidates are the sampler's time convention in
+   `RFVelocityUNet`'s `t * 999` fold, the InceptionV3 weight family
+   (`pytorch_fid` TF-port vs torchvision IMAGENET1K_V1 — the repo has both and
+   they are not comparable), and whether this checkpoint is 1-RF rather than
+   2-RF. That is one bounded diagnostic, not a GPU-week.
 
 ## 2. What the repository already has, and why it does not answer the objection
 

@@ -143,16 +143,16 @@ A full NFE=200 arm (N=1000, 4 RK4 stages) takes **21.0 s** on `cuda:0` versus
 
 ## 6. What this does not fix
 
-* **The CIFAR path is still broken, and it is not a speed problem.** A
-  diagnostic on `cifar10_rf.pth` at NFE=2 generated 2,000 samples with
-  `sd = 0.098` and range `[-0.685, 0.611]` — a collapsed cloud, where real
-  CIFAR in `[-1, 1]` has `sd` roughly three times that. FID on that population
-  is 247.2 at N=200, 215.3 at N=500, 198.3 at N=1000 and 184.6 at N=2000. The
-  number falls with N but nowhere near the published 2.21, so **the small-N
-  covariance bias is not the whole story** — the samples themselves are wrong.
-  This makes GAP-94's premise ("the checkpoint is at FID 447.9") imprecise: the
-  checkpoint has not been shown to be the problem, and the generator has.
-  Recorded in `docs/audit/gap94-standard-benchmark.md` as an amendment.
+* **The CIFAR path is not a speed problem, and it is not the model either.**
+  A diagnostic on `cifar10_rf.pth` found the checkpoint loading correctly
+  (`strict=True`, gnobitab 1-RF topology) and the generated dispersion rising
+  with the step count: `sd` 0.076 / 0.099 / 0.188 / 0.337 / **0.470** at NFE
+  1 / 2 / 4 / 10 / 50, against a reference `sd` of 0.5024. So the 447.9 that
+  R5b reports is an **NFE=2 under-integration artifact**, not a collapsed
+  model. It is still not competitive: FID at N=1000 is 45.0 at NFE=10 and
+  **34.9 at NFE=50**, roughly 8x the published 1-RF number, and that residual
+  is unexplained. Full amendment in `docs/audit/gap94-standard-benchmark.md`
+  section 1a.
 * **No non-MNIST adapter was touched.** The 60x is specific to the NumPy MNIST
   UNet. LineageFlow / Kanzi / FlowMol3 already run on their own torch stacks.
 * **`_integrate_rk4` still stores the full trajectory** for the NumPy path. It
