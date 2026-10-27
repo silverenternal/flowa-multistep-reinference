@@ -263,8 +263,11 @@ correction pass:
 * `w16e1_60k` +0.0150 and production −0.0335 — same file.
 * The kappa table's four rows and the statement that kappa is computed at
   NFE=50 while the delta is at the 100–200 plateau — `gap92-kappa-bridge.md`.
-* "Only R5c carries a full (quality, NFE) grid" — R6 has two matched settings,
-  R5b one budget, R1/R2/R3/R5a one each (`reproduce/*.sh`).
+* "Only R5c carries a full (quality, NFE) grid" — no other R-level headline
+  artifact sweeps NFE. R6's 20-cell grid varies `easy_factor` / `hard_intensity`
+  at fixed budget (`wave235-p3-r6-uplift.json`); R5b contrasts round counts at a
+  single budget (`06_R5b_CIFAR_n_rounds1.sh`, `wave235-p1-r5b-fix.json`); and
+  R1/R2/R3/R5a report one budget each.
 * "weakly dominant at all seven rungs and gains strictly at 7/7" on
   `w16e1_5k` — `dominance.strict_gain_rungs = [4,5,10,25,50,100,200]`,
   `violations = []`, in both runs.
