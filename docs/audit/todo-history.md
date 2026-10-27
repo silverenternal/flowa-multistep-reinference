@@ -1794,3 +1794,26 @@ take `**kwargs` and the directory is 52/52. Full suite on system `python3`:
 12 failed, 5500 passed, 180 skipped, 12 xfailed — all 12 failures are
 `test_paper_metrics.py`, which needs torch and is 15/15 green under
 `flowmol3_venv`. That expectation is now written into `docs/environments.md`.
+
+**Integrity sweep: 34 mismatches, 0 unexplained.** `check_data_integrity.py`
+reports 233 files across 15 ledgers with 34 mismatches. Classified:
+
+| class | count | what it is |
+|---|---:|---|
+| `unlisted` | 33 | 30 raw `*_samples.npz` arrays (5 arms × 2 tasks × 3 seeds in `gap32-headtohead`), plus `gap36-ablation-matrix/METADATA.json` and two `wave349-r1-3seed-gpu` seed manifests. The ledgers cover summary artifacts, not raw sample arrays. Never listed ≠ modified. |
+| `modified` | 1 | `r3_n1000_3seed_fixed_q4_2026/wave338-p5-r3-n1000-paired.json` |
+
+The single `modified` file is the GAP-27 CI correction, and it is documented in
+commit `40d6bb55`: the seed-level interval was computed with a normal 1.96
+multiplier while reporting df = 2, which made it ~2.2× too narrow. The on-disk
+file now carries `ci_95_t_crit = 4.30265` and `ci_95_low/high` of
+−0.2709 / +0.1956 at NFE=250, matching the commit message; no point estimate, t,
+p or verdict changed. The directory's `SHA256SUMS` was never regenerated, so the
+ledger still lists the pre-correction hash `2737f2cc…` against the corrected
+file `4da44c2f…`.
+
+The ledger is deliberately **not** regenerated. Same rule as the two
+`sweep_command`/`commit_sha` fixes: the ledger is a record of what the file was
+when the record was written, and rewriting it would erase the fact that a
+correction happened. The correction is traceable through git and through
+`ci_95_note` inside the JSON itself, which names GAP-27.
