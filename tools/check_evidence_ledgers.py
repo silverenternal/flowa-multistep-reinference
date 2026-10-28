@@ -35,7 +35,22 @@ LEDGER_NAME = "SHA256SUMS"
 LINE = re.compile(r"^([0-9a-f]{64})\s+\*?(.+)$")
 
 # (ledger path relative to repo root, kind, subject) -> reason
-KNOWN_ISSUES: dict[tuple[str, str, str], str] = {}
+KNOWN_ISSUES: dict[tuple[str, str, str], str] = {
+    (
+        "verification_outputs/wave349-r1-3seed-gpu/SHA256SUMS",
+        "not_a_ledger",
+        "",
+    ): (
+        "intentional: this file is the human-readable aggregator that the "
+        "manuscript §3.5.1 and SUBMISSION_READINESS pin byte-for-byte "
+        "(2642 B, 28aafe1c…), with a markdown preamble plus a "
+        "`<sha256>  <filename>` table. `sha256sum --check` therefore finds no "
+        "parsable line. The recipe in docs/audit/wave353-ledger-examples.md was "
+        "corrected on 2026-10-29 to verify the two manifest hashes and the "
+        "aggregator hash instead of running --check. Renaming the file would "
+        "invalidate the manuscript anchor, so the name stays."
+    ),
+}
 
 
 def _verify(ledger: Path) -> tuple[str, int, list[str]]:

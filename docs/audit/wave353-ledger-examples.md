@@ -50,9 +50,19 @@ re-verification.
 
 ```bash
 cd verification_outputs/wave349-r1-3seed-gpu
-sha256sum --check SHA256SUMS     # both manifests must print OK
-sha256sum SHA256SUMS             # must equal 28aafe1c95195c0a2daa727150e4ea42651daa49cd5872443a81b88cfed15be2
+# The aggregator is a markdown note with a hash table, not a sha256sum-format
+# ledger, so verify the two manifests by value and the aggregator by hash.
+sha256sum seed42_manifest.json seed44_manifest.json
+#   0861e4b1…  seed42_manifest.json
+#   cc4390bc…  seed44_manifest.json
+sha256sum SHA256SUMS
+#   must equal 28aafe1c95195c0a2daa727150e4ea42651daa49cd5872443a81b88cfed15be2
 ```
+
+*(2026-10-29 correction: this block previously said `sha256sum --check SHA256SUMS`
+"must print OK". That cannot work — the file's hashes are in a markdown table,
+so `--check` answers "no properly formatted checksum lines found". The file's
+bytes, size and hash are unchanged; only the recipe was wrong.)*
 
 A regenerated manifest whose bytes diverge (different seed, different family
 partition, non-empty fallback) fails step 1; a hand-edited wrapper that

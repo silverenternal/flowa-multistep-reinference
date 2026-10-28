@@ -57,11 +57,16 @@ stale. Worth noting because this is the file that carries R3's headline: a
 reviewer running `sha256sum --check` there gets a FAILED line on the headline
 artifact with no explanation.
 
-**Misnamed — `verification_outputs/wave349-r1-3seed-gpu/SHA256SUMS`.**
+**Not a checksum list — `verification_outputs/wave349-r1-3seed-gpu/SHA256SUMS`.**
 The file is a markdown evidence note (per-seed fallback counts, manifest SHAs,
-cross-references). `sha256sum --check` answers *"no properly formatted checksum
-lines found"*. Its two pinned manifest hashes **do** match, so the content is
-sound; the name is wrong. Rename to `EVIDENCE.md` and add a real ledger.
+cross-references) with its hashes inside a table, so `sha256sum --check` answers
+*"no properly formatted checksum lines found"*. That is by design: the
+manuscript §3.5.1 and `SUBMISSION_READINESS.md` pin the file byte-for-byte
+(2642 B, `28aafe1c…`), so renaming or reformatting it would invalidate a paper
+anchor. The defect was in `docs/audit/wave353-ledger-examples.md`, whose recipe
+told reviewers to run `--check` and expect OK; that recipe is now corrected to
+verify the two manifest hashes by value and the aggregator by hash. The checker
+carries this one file as a documented `not_a_ledger`.
 
 ## 4. Figures — 5/5 pinned assets exact
 
@@ -84,9 +89,10 @@ The five ASCII-era companion figures referenced by name
 
 - `tools/check_recipe_hashes.py` — 71 rows, 0 known-stale, 0 unknown.
   Resolves both path conventions; exits non-zero on any new drift.
-- `tools/check_evidence_ledgers.py` — 19 ledgers (10 clean, 9 self-line-only),
-  0 known issues, 0 unknown. Separates the expected self-line failure from real
-  drift, and flags a `SHA256SUMS` that is not a checksum list.
+- `tools/check_evidence_ledgers.py` — 19 ledgers (9 clean, 9 self-line-only,
+  1 documented `not_a_ledger`), 0 unknown. Separates the expected self-line
+  failure from real drift, and flags a `SHA256SUMS` that is not a checksum
+  list so the reason has to be written down.
 - `tests/test_recipe_hashes.py` (3) and `tests/test_evidence_ledgers.py` (3) —
   both fail if an exemption outlives the issue it covers.
 
@@ -99,10 +105,11 @@ that described them.
   `fd5d876a…`, the file's current hash. 68/68 lines match.
 - `verification_outputs/r3_n1000_3seed_fixed_q4_2026/SHA256SUMS` — the
   `wave338-p5-r3-n1000-paired.json` line now carries `4da44c2f…`. 13/13 match.
-- `verification_outputs/wave349-r1-3seed-gpu/` — the markdown note was renamed
-  to `EVIDENCE.md` and a real two-line `SHA256SUMS` was written over the two
-  manifests it pins. (This directory is untracked, so the rename is on-disk
-  only; the note was never in the submission tree.)
+- `verification_outputs/wave349-r1-3seed-gpu/SHA256SUMS` — **left byte-identical.**
+  An earlier attempt renamed it to `EVIDENCE.md` and wrote a real ledger; that
+  was reverted because the manuscript §3.5.1 and `SUBMISSION_READINESS.md` pin
+  this exact path, size and hash. The wrong `sha256sum --check` recipe in
+  `docs/audit/wave353-ledger-examples.md` was corrected instead.
 - `paper-data/K4_k5_lineageflow_hmmer/REPRODUCIBILITY_RECIPE.md` — the
   self-referential `SHA256SUMS` row was deleted and the surrounding sentence
   now says "run it rather than comparing a pinned hash of the ledger itself",

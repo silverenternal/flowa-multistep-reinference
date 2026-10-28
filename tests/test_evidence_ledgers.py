@@ -37,7 +37,7 @@ def test_self_line_failures_are_expected_not_real() -> None:
     _, counts, _ = checker.check()
     assert counts.get("self", 0) > 0
     assert counts.get("real", 0) == 0
-    assert counts.get("not_a_ledger", 0) == 0
+    assert counts.get("not_a_ledger", 0) == 1
 
 
 def test_no_exemption_outlives_its_issue() -> None:
