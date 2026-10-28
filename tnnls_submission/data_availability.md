@@ -173,8 +173,9 @@ Wave 262 P2 verify
 The manuscript's headline numbers are reproduced from byte-stable artifacts at
 [verification_outputs/](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs).
 Reviewers re-verify in four steps. Step 2 + 3 use the `reproduce/`
-directory's per-cell one-click scripts (R1–R6, one per cell) plus a
-`verify_all_headlines.sh` master verifier that runs all cells serially.
+directory's per-cell one-click scripts (one per R-level cell, with a second
+recipe-level verifier for R6 and an aggregate verifier for all eleven cells)
+plus a `verify_all_headlines.sh` master verifier that runs them serially.
 
 1. **Activate the appropriate sidecar venv** — never mix model environments
    ([`docs/environments.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/environments.md)):
@@ -209,11 +210,13 @@ directory's per-cell one-click scripts (R1–R6, one per cell) plus a
    ```bash
    bash reproduce/01_R1_LineageFlow.sh        # R1: HMMER N=1000
    bash reproduce/02_R2_Kanzi.sh              # R2: Kanzi RMSD N=1000
-   bash reproduce/03_R3_FlowMol3.sh           # R3: FlowMol3 fg_dev N=200
-   bash reproduce/04_R4_2D_TwoMoons.sh        # R4: 2D Two Moons W2
+   bash reproduce/03_R3_FlowMol3.sh           # R3: FlowMol3 fg_dev, N=1000 x 3 seeds
+   bash reproduce/04_R4_2D_TwoMoons.sh        # R4: 2D Two Moons W2 (SOTA + ablation)
    bash reproduce/05_R5_2D_EightGaussians.sh  # R5: 2D Eight Gaussians W2
    bash reproduce/06_R5b_CIFAR_n_rounds1.sh   # R5b: CIFAR-10 matched-NFE=50
-   bash reproduce/07_R6_MNIST_TierAware.sh    # R6: MNIST FM tier-aware
+   bash reproduce/07_R6_MNIST_TierAware.sh    # R6: LineageFlow k6, live tier-aware
+   bash reproduce/08_verify_R6_recipe.sh      # R6: recipe-level SHA-256 chain
+   bash reproduce/09_verify_all_cell_recipes.sh  # all 11 cells, one command
    ```
 
    Each per-cell script verifies the headline from the byte-stable
@@ -223,11 +226,11 @@ directory's per-cell one-click scripts (R1–R6, one per cell) plus a
    script; uncomment for an end-to-end re-run (cells range from 30 min
    GPU to 50 h CPU).
 
-4. **Verify all 7 R-level headlines** with one command:
+4. **Verify all 7 R-level cells (8 scripts)** with one command:
 
    ```bash
    bash reproduce/verify_all_headlines.sh
-   # Expected: "OK: All 7/7 R-level headlines verified"
+   # Expected: "OK: All 8/8 R-level headlines verified"
    # On failure, exits non-zero and prints the failing cell(s).
    ```
 
