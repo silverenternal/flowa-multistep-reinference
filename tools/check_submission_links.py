@@ -13,10 +13,16 @@ targets are classified as:
 Template links (``<path>``, ``<file>``, ``...``) are ignored: they are prose,
 not links.
 
+Exit status is 0 only when no ``absent`` target remains (``archived`` and
+``elsewhere`` are reported but tolerated — those are basename matches, not
+proof the link is right, so a reviewer should still repoint them).  Pass
+``--no-strict`` to get the historical always-zero behaviour.
+
 Usage
 -----
     python3 tools/check_submission_links.py
     python3 tools/check_submission_links.py --json
+    python3 tools/check_submission_links.py --no-strict
 """
 from __future__ import annotations
 
@@ -32,6 +38,10 @@ LINK_RE = re.compile(
     r"https://github\.com/silverenternal/flowa-multistep-reinference"
     r"/blob/main/([^\)\s]+)"
 )
+
+#: Targets allowed to stay absent.  Keep empty; an entry here must name a
+#: real reason in the comment and be removed once the file lands.
+KNOWN_ABSENT: frozenset[tuple[str, str]] = frozenset()
 
 
 def _is_template(path: str) -> bool:
@@ -91,15 +101,26 @@ def collect() -> list[dict]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", action="store_true")
+    parser.add_argument(
+        "--no-strict",
+        action="store_true",
+        help="always exit 0 (pre-2026-10-29 behaviour)",
+    )
     args = parser.parse_args(argv)
 
     rows = collect()
+    counts: dict[str, int] = {}
+    for row in rows:
+        counts[row["status"]] = counts.get(row["status"], 0) + 1
+    unexempt = [
+        row
+        for row in rows
+        if row["status"] == "absent"
+        and (row["source"], row["target"]) not in KNOWN_ABSENT
+    ]
     if args.json:
         print(json.dumps(rows, indent=1))
     else:
-        counts: dict[str, int] = {}
-        for row in rows:
-            counts[row["status"]] = counts.get(row["status"], 0) + 1
         for status in ("absent", "elsewhere", "archived"):
             for row in rows:
                 if row["status"] != status:
@@ -114,6 +135,14 @@ def main(argv: list[str] | None = None) -> int:
             + " "
             + " ".join(f"{k}={v}" for k, v in sorted(counts.items()))
         )
+        if unexempt:
+            print(
+                f"FAIL: {len(unexempt)} absent link target(s) with no "
+                "KNOWN_ABSENT exemption",
+                file=sys.stderr,
+            )
+    if unexempt and not args.no_strict:
+        return 1
     return 0
 
 

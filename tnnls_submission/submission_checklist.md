@@ -106,8 +106,8 @@
 - [`tnnls_submission/figures.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/figures.md) — 5 ASCII architecture diagrams
 - [`tnnls_submission/data_availability.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/data_availability.md) — Data availability statement
 - [`docs/internal/tnnls_submission_action_checklist.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/internal/tnnls_submission_action_checklist.md) — canonical TNNLS action checklist (Wave 238 P3)
-- [`docs/audit/wave238-p3-journal-decision.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave238-p3-journal-decision.md) — Wave 238 P3 journal decision (TPAMI → TNNLS)
-- [`docs/audit/wave238-p4-final-verify.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave238-p4-final-verify.md) — Wave 238 P4 final pre-push verification
+- [`docs/audit/wave238-p3-journal-decision.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/engineering/p3-journal-decision.md) — Wave 238 P3 journal decision (TPAMI → TNNLS)
+- [`docs/audit/wave238-p4-final-verify.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/audit-by-wave/wave238-p4-final-verify.md) — Wave 238 P4 final pre-push verification
 - [`docs/audit/wave356-submission-checklist-review.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave356-submission-checklist-review.md) — Wave 356 P3 final pre-submission audit summary (PASS/PENDING/N/A + camera-ready scope enumeration)
 
 ---

@@ -54,8 +54,8 @@ explicitly set to 1 to verify byte-stable reproduction.
 Reviewers can verify byte-identity via the Wave 262 P2 verify audit
 ([`docs/audit/wave262-p2-verify.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave262-p2-verify.md)): md5 of every vendored file matches
 its upstream reference. The full upstream-modifications audit trail is in
-[`docs/audit/wave261-p1-inventory.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave261-p1-inventory.md) + [`wave261-p5-final-audit.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave261-p5-final-audit.md) +
-[`wave262-p1-revert-all.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave262-p1-revert-all.md) + [`wave262-p3-rerun.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave262-p3-rerun.md).
+[`docs/audit/wave261-p1-inventory.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/audit-by-wave/wave261-p1-inventory.md) + [`wave261-p5-final-audit.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/audit-by-wave/wave261-p5-final-audit.md) +
+[`wave262-p1-revert-all.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/sweep_eval/p1-revert-all.md).
 
 ## Data availability
 
