@@ -224,16 +224,6 @@ def _assign_tiers(baseline: np.ndarray, low: float, high: float) -> np.ndarray:
     return tier
 
 
-def _per_tier_diff(baseline: np.ndarray, framework: np.ndarray,
-                   tier: np.ndarray) -> dict[str, np.ndarray]:
-    """Return {label: framework_minus_baseline per record in that tier}."""
-    return {
-        "easy": framework_minus_baseline(framework, baseline)[tier == 0],
-        "medium": framework_minus_baseline(framework, baseline)[tier == 1],
-        "hard": framework_minus_baseline(framework, baseline)[tier == 2],
-    }
-
-
 def framework_minus_baseline(f: np.ndarray, b: np.ndarray) -> np.ndarray:
     return f - b
 
