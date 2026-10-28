@@ -1869,3 +1869,10 @@ and is a separate reporting error.
 `power_gain_factor` is a p-value ratio, not a power. It is now ~1e92, which is
 absurd on its face; the generated audit doc says so, and it is the sentence to
 drop if the submission is revised.
+
+**The other four procedures are correct.** TOST (16 rows: both one-sided
+p-values, the max, df, margin and BF01) and BF01 (16 rows: t and the BIC
+approximation) recompute with zero mismatches. The DerSimonian-Laird summary
+(pooled d, SE, CI, tau², I², Q) reproduces from the CSV's per-study d/SE to CSV
+rounding, and the R5b non-inferiority p = 0.998497 corresponds exactly to
+t = -4.0227 at df = 9 with se = 33.345/sqrt(10). Only the JT variance was wrong.

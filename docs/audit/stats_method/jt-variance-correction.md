@@ -140,7 +140,26 @@ generated audit doc now says so. The column is retained because the
 submission cites it; if the submission is revised, this is the sentence to
 drop rather than renumber.
 
-## 8. Reproduction
+## 8. The other four procedures recompute from their published columns
+
+Checked in the same pass, because a wrong variance in one function raises the
+question of the others. All four are correct.
+
+| procedure | rows | check | result |
+|---|---:|---|---|
+| TOST (`wave234-p2-tost.csv`) | 16 | `p_lower`, `p_upper`, `p_tost = max`, `df = n-1`, `margin = 0.1 sd`, `bf01` | 0 mismatches |
+| BF01 (`wave234-p4-bf01.csv`) | 16 | `t = mean / (sd/sqrt(n))`, `bf01 = sqrt(n)(1+t^2/(n-1))^(-n/2)` | 0 mismatches |
+| DerSimonian-Laird (`wave234-p5-meta-summary.json`) | 12 | pooled d, SE, CI, `tau^2`, `I^2`, `Q` from the CSV's `d`/`SE` | matches to CSV rounding (Q differs 0.011, 4e-6 relative, because `d` and `SE` are stored to 6 decimals) |
+| Non-inferiority (`wave234-p6-ni-test.csv`) | 1 | `p = 0.998497` at `t = -4.0227`, `df = 9`, `se = 33.345/sqrt(10)` | exact |
+
+The NI driver builds a synthetic per-pair array before calling the helper, but
+the helper uses only `diff.mean()` and the passed `sd`, so the array's spread is
+irrelevant and the mean is exact for the even `n` used here. The construction
+contains one dead line (`diff + (sd_diff - 0.0) * 0.0`); it is harmless and was
+left alone.
+
+## 9. Reproduction
+
 
 ```
 python3 -m pytest tests/test_stats_equivalence.py -q     # 24 passed
