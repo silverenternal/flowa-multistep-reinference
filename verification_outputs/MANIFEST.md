@@ -599,7 +599,7 @@ Files in this section: 4
 
 | Path (relative to workspace) | Size (bytes) | SHA-256 |
 |---|---|---|
-| `verification_outputs/wave234-p3-jonckheere.csv` | 278 | `003f33f4b87b7b3e5a67c41d0fa9e61a29434ad728216b509d0bf98dc6cf4ac0` |
+| `verification_outputs/wave234-p3-jonckheere.csv` | 276 | `8a27a7085659751829bb89535794c2ef60d210bc3ad12f4056ebb827b4e75224` |
 | `verification_outputs/wave234-p4-bf01.csv` | 2349 | `e531da9f717047efdd3d1ccdc72d77f2f257c17134fe8630c29b23074e36791a` |
 | `verification_outputs/wave234-p6-ni-test.csv` | 377 | `8db5f339eea1e91c3aaeddfa635542fb955c6f7ac4e68554184db9e64194ba90` |
 | `verification_outputs/wave246-p4-subgroup-meta.json` | 2764 | `e0147ab7101b96015d65dfba28ef320533878495438d20dfbb6a6fe03871593b` |

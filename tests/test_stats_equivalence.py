@@ -18,6 +18,7 @@ fallback path so this gate runs even without optional dependencies.
 """
 from __future__ import annotations
 
+import itertools
 import math
 
 import numpy as np
@@ -29,6 +30,8 @@ from adaptive_reflow.stats.equivalence import (
     JonckheereResult,
     MetaAnalysisResult,
     NonInferiorityResult,
+    _jonckheere_terpstra_statistic,
+    _jonckheere_variance,
     bf01_paired,
     has_pingouin,
     has_statsmodels,
@@ -187,6 +190,98 @@ def test_jonckheere_terpstra_balanced_groups_shows_no_trend() -> None:
 def test_jonckheere_terpstra_requires_two_groups() -> None:
     with pytest.raises(ValueError):
         jonckheere_terpstra([[1.0, 2.0]])
+
+
+# ---------------------------------------------------------------------------
+# Jonckheere-Terpstra: tie convention and null variance against exact
+# enumeration of the permutation null
+# ---------------------------------------------------------------------------
+
+
+def _brute_u(groups: list[list[float]]) -> float:
+    u = 0.0
+    for i in range(len(groups)):
+        for j in range(i + 1, len(groups)):
+            for a in groups[i]:
+                for b in groups[j]:
+                    if b > a:
+                        u += 1.0
+                    elif b == a:
+                        u += 0.5
+    return u
+
+
+def _exact_permutation_variance(
+    values: list[float], sizes: list[int]
+) -> float:
+    us = []
+    for perm in itertools.permutations(values):
+        offset = 0
+        groups = []
+        for size in sizes:
+            groups.append(list(perm[offset : offset + size]))
+            offset += size
+        us.append(_brute_u(groups))
+    return float(np.var(us))
+
+
+@pytest.mark.parametrize(
+    ("values", "sizes"),
+    [
+        ([1.0, 2.0, 3.0, 4.0], [2, 2]),
+        ([1.0, 1.0, 2.0, 3.0], [2, 2]),
+        ([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [2, 2, 2]),
+        ([1.0, 1.0, 2.0, 2.0, 3.0, 3.0], [2, 2, 2]),
+        ([1.0, 2.0, 3.0, 4.0, 5.0], [2, 1, 2]),
+        ([1.0, 1.0, 1.0, 2.0], [1, 1, 1, 1]),
+    ],
+)
+def test_jonckheere_variance_matches_exact_enumeration(
+    values: list[float], sizes: list[int]
+) -> None:
+    """The asymptotic variance must equal the exact permutation variance.
+
+    This is the regression that caught the pre-2026-10-28 formula, which
+    applied Kendall's S variance to U without the factor 4 and used
+    within-group *value* ties in place of the group sizes.  It was 5.2x
+    too large on the two-group/two-observation case and 4.5x too large
+    on the Wave 234 data.
+    """
+    offset = 0
+    groups = []
+    for size in sizes:
+        groups.append(values[offset : offset + size])
+        offset += size
+    exact = _exact_permutation_variance(values, sizes)
+    assert math.isclose(_jonckheere_variance(groups), exact, rel_tol=1e-12)
+
+
+def test_jonckheere_statistic_counts_ties_as_half() -> None:
+    # Two tied cross-group pairs: (1,1) and (2,2), plus (1,2) and (2,1).
+    # Strict wins: 1; ties: 2 -> U = 1 + 2*0.5 = 2.
+    assert _jonckheere_terpstra_statistic([[1.0, 2.0], [1.0, 2.0]]) == 2.0
+    # A full tie between groups contributes 0.5 per pair, not 1.
+    assert _jonckheere_terpstra_statistic([[5.0], [5.0]]) == 0.5
+    # No ties: plain Mann-Whitney count.
+    assert _jonckheere_terpstra_statistic([[1.0, 2.0], [3.0, 4.0]]) == 4.0
+
+
+def test_jonckheere_no_tie_variance_closed_form() -> None:
+    """No ties: Var(U) = [N^2(2N+3) - sum n_i^2 (2n_i+3)] / 72."""
+    for sizes in ([2, 2], [2, 2, 2], [2, 1, 2], [5, 7, 6]):
+        values = list(range(1, sum(sizes) + 1))
+        offset = 0
+        groups = []
+        for size in sizes:
+            groups.append([float(v) for v in values[offset : offset + size]])
+            offset += size
+        n = sum(sizes)
+        expected = (
+            n * n * (2 * n + 3) - sum(s * s * (2 * s + 3) for s in sizes)
+        ) / 72.0
+        assert math.isclose(
+            _jonckheere_variance(groups), expected, rel_tol=1e-12
+        )
 
 
 # ---------------------------------------------------------------------------

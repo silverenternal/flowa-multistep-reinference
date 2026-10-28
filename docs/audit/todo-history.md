@@ -1817,3 +1817,55 @@ The ledger is deliberately **not** regenerated. Same rule as the two
 when the record was written, and rewriting it would erase the fact that a
 correction happened. The correction is traceable through git and through
 `ci_95_note` inside the JSON itself, which names GAP-27.
+
+## 29. The JT variance was Kendall's S variance, not the JT variance (2026-10-28)
+
+CPU-only. The two Jonckheere-Terpstra p-values quoted by the submission move by
+72 and 80 orders of magnitude, in the paper's favour.
+
+`adaptive_reflow/stats/equivalence.py` computed
+
+```python
+var_u = (n*(n-1)*(2*n+5) - sum_t1 + sum_t2) / 18.0
+```
+
+That is Kendall's `S` variance applied to the JT `U` without the factor four
+relating them (`U = (S + C) / 2`), with within-group *value* ties in place of
+the group sizes and with the wrong sign on the tie term. The statistic also
+counted a tied cross-group pair as a full win instead of 0.5.
+
+The smallest counterexample is two groups of two: exact enumeration over all
+six assignments gives `Var(U) = 1.667`, the old formula gives `8.667`. Ten
+cases including ties and unequal group sizes were enumerated; the corrected
+formula matches all ten exactly and is pinned by
+`tests/test_stats_equivalence.py`.
+
+Impact on the Wave 234 P3 cells (same frozen inputs, `U` unchanged because the
+data contain no cross-group ties):
+
+| cell | z old | z new | p old | p new |
+|---|---:|---:|---:|---:|
+| R2 Kanzi | +9.743 | **+20.673** | 9.855e-23 | **3.017e-95** |
+| R6 k6 | +10.264 | **+21.778** | 5.114e-25 | **1.863e-105** |
+
+The permutation p-value is still 1e-4 (the floor) and the verdict is still
+`monotone_confirmed = True`; that test never used the variance.
+
+`verification_outputs/wave234-p3-jonckheere.csv` was regenerated. Only
+`power_gain_factor` changes, because it is `pairwise_max_p / jt_p_asymptotic`.
+Its hash was updated in `verification_outputs/MANIFEST.md`,
+`docs/METRIC_LEDGER.md` and `docs/METRIC_LEDGER.json`. The full metric ledger
+was **not** rebuilt: a rebuild produces a 117-line diff from unrelated drift,
+so only the one hash was changed.
+
+**Not edited (frozen submission surfaces).** `tnnls_submission/tables.md`,
+`submission_checklist.md`, `cover_letter.md`, `docs/drafts/methods-why-per-record.md`
+and `docs/audit/wave356-submission-checklist-review.md` still quote the old
+p-values and `power gain ~1e20`. Those numbers are conservative, not false, so
+nothing needs retracting; updating them needs authorisation. The negative `z`
+in `tables.md` (`-10.0`, `-10.7`) matches neither the old code nor the new one
+and is a separate reporting error.
+
+`power_gain_factor` is a p-value ratio, not a power. It is now ~1e92, which is
+absurd on its face; the generated audit doc says so, and it is the sentence to
+drop if the submission is revised.

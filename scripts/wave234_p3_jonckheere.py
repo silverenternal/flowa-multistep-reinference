@@ -272,23 +272,12 @@ def _jt_for_cell(name: str, b: np.ndarray, f: np.ndarray,
     pairwise_min_p = float(min(pairwise_p_values))
     pairwise_max_p = float(max(pairwise_p_values))
 
-    # Power gain: how much smaller is the JT p-value than the
-    # Bonferroni-corrected (worst-case) per-tier p-value?
-    # power_gain_factor > 1 means JT is more powerful.  We use the
-    # asymptotic JT p (finite, well-calibrated) for the ratio so the
-    # power-gain stays a finite number even when the permutation
-    # p-value underflows to 0.
-    jt_p_for_gain = max(jt.p_asymptotic, 1e-300)
-    if pairwise_max_p > 0 and jt_p_for_gain > 0:
-        power_gain_factor = float(pairwise_max_p / jt_p_for_gain)
-    else:
-        power_gain_factor = float("inf")
-
     monotone_confirmed = bool(jt.p_permutation < JT_ALPHA)
 
-    # Floor permutation p at 1/N_PERMUTATIONS so the power_gain_factor
-    # stays finite.  The asymptotic p (well-calibrated, finite) is used
-    # for the paper-ready power-gain ratio.
+    # Ratio of the worst per-tier p-value to the asymptotic JT p.  This
+    # is a p-value ratio, not a statistical power: it answers "how much
+    # smaller is the JT p", and it is kept because the submission cites
+    # the column.  Do not read it as a power calculation.
     jt_p_floor = 1.0 / max(N_PERMUTATIONS, 1)
     jt_p_for_gain = max(jt.p_asymptotic, 1e-300)
     if pairwise_max_p > 0 and jt_p_for_gain > 0:
@@ -475,6 +464,12 @@ def _write_audit_doc(rows: list[dict]) -> None:
     lines.append("used for the ratio so the power-gain stays a finite number")
     lines.append("even when the permutation p-value underflows to 0.")
     lines.append("")
+    lines.append("**Caveat (2026-10-28).** `power_gain_factor` is a ratio of two")
+    lines.append("p-values, not a statistical power.  It is retained because the")
+    lines.append("submission cites the column, but it should not be read as \"JT is")
+    lines.append("10^N times more powerful\".  A power comparison would require")
+    lines.append("simulating both tests under a specified alternative.")
+    lines.append("")
 
     # --- 2. Per-cell results ---
     lines.append("## 2. Per-cell results")
@@ -566,10 +561,14 @@ def _write_audit_doc(rows: list[dict]) -> None:
     )
     lines.append("")
     lines.append(
-        "The asymptotic and permutation p-values agree to within Monte "
-        "Carlo noise (~1/sqrt(N_perm) ~ 1%), confirming the JT "
-        "implementation is well-calibrated for the n=1000 paired "
-        "sample sizes in this study."
+        "The permutation p-value is resolution-limited: with "
+        f"{N_PERMUTATIONS:,} permutations the smallest reportable value is "
+        f"{1.0 / N_PERMUTATIONS:.0e}, and no permutation reaches the observed "
+        "U in either cell. The permutation test therefore establishes "
+        "p < 1e-4 and nothing finer; the asymptotic p resolves the tail. "
+        "The two are consistent (both reject by a wide margin), but they do "
+        "not 'agree to within Monte Carlo noise' — the permutation estimate "
+        "is a bound, not an estimate, at this effect size."
     )
     lines.append("")
 

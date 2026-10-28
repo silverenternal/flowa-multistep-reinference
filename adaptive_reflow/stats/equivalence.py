@@ -410,29 +410,91 @@ def meta_random_effects(
 
 def _jonckheere_terpstra_statistic(groups: Sequence[Sequence[float]]) -> float:
     """Compute the JT ``U`` statistic (sum of Mann-Whitney counts across
-    all pairs of groups with ``i < j``)."""
+    all pairs of groups with ``i < j``).
+
+    Ties are counted as ``0.5``, which is the definition the asymptotic
+    variance below is derived for.  Counting a tied cross-group pair as a
+    full win (the pre-2026-10-28 behaviour) biases ``U`` upward by half
+    the number of such pairs.
+    """
+    k = len(groups)
     pooled: list[tuple[float, int]] = []
     for i, grp in enumerate(groups):
         for x in grp:
             pooled.append((float(x), i))
     pooled.sort(key=lambda t: t[0])
-    n = len(pooled)
 
-    # rankdata with average ties (default for scipy.rankdata)
-    values = np.array([t[0] for t in pooled], dtype=float)
-    _scipy_stats.rankdata(values, method="average")
-
-    # cumulative count per group (in rank order)
-    counts: NDArray[np.float64] = np.zeros(len(groups), dtype=float)
+    # Walk the pooled values in ascending order, one tie class at a time.
+    # ``below[j]`` is the number of group-j observations strictly below
+    # the current value; a tie class with ``count[j]`` members then
+    # contributes ``count[j] * below[i]`` strict wins to U_ij and
+    # ``0.5 * count[i] * count[j]`` ties.
+    below: NDArray[np.float64] = np.zeros(k, dtype=float)
     u_total = 0.0
-    for idx in range(n):
-        g = pooled[idx][1]
-        # add count from all earlier-ranked points in groups with
-        # smaller index (i.e. group < g)
-        for j in range(g):
-            u_total += counts[j]
-        counts[g] += 1
+    n = len(pooled)
+    start = 0
+    while start < n:
+        end = start + 1
+        value = pooled[start][0]
+        while end < n and pooled[end][0] == value:
+            end += 1
+        count: NDArray[np.float64] = np.zeros(k, dtype=float)
+        for idx in range(start, end):
+            count[pooled[idx][1]] += 1.0
+        for i in range(k):
+            for j in range(i + 1, k):
+                # count[j] * below[i]: group-j members at this value beat
+                # every group-i member strictly below it.
+                # 0.5 * count[i] * count[j]: tied cross-group pairs.
+                u_total += count[j] * below[i] + 0.5 * count[i] * count[j]
+        below += count
+        start = end
     return float(u_total)
+
+
+def _jonckheere_variance(groups: Sequence[Sequence[float]]) -> float:
+    """Exact null variance of :func:`_jonckheere_terpstra_statistic`.
+
+    The JT statistic satisfies ``U = (S + C) / 2``, where ``C`` is a
+    constant and ``S`` is the Kendall ``S`` between the group label and
+    the value.  So ``Var(U) = Var(S) / 4``, with the usual
+    tie-corrected Kendall variance::
+
+        Var(S) = [N(N-1)(2N+5) - sum_t t(t-1)(2t+5)
+                                 - sum_i n_i(n_i-1)(2n_i+5)] / 18
+               + [sum_t t(t-1)(t-2)][sum_i n_i(n_i-1)(n_i-2)]
+                 / [9 N(N-1)(N-2)]
+               + [sum_t t(t-1)][sum_i n_i(n_i-1)] / [2 N(N-1)]
+
+    with ``t`` the sizes of tied *value* classes and ``n_i`` the group
+    sizes (the group label is tied inside each group).  The previous
+    implementation applied the Kendall variance to ``U`` directly and
+    used within-group *value* ties in place of the group sizes, which
+    inflated the variance by 4.5x on the Wave 234 data and by 5.2x on a
+    two-group/two-observation textbook case.
+
+    Validated against exact enumeration of the permutation null in
+    ``tests/test_stats_equivalence.py``.
+    """
+    n_i = np.asarray([len(g) for g in groups], dtype=float)
+    n = int(n_i.sum())
+    values = np.concatenate([np.asarray(g, dtype=float) for g in groups])
+    _, counts = np.unique(values, return_counts=True)
+    t = counts[counts > 1].astype(float)
+
+    sum_t1 = float(np.sum(t * (t - 1) * (2 * t + 5)))
+    sum_t2 = float(np.sum(t * (t - 1) * (t - 2)))
+    sum_t3 = float(np.sum(t * (t - 1)))
+
+    sum_u1 = float(np.sum(n_i * (n_i - 1) * (2 * n_i + 5)))
+    sum_u2 = float(np.sum(n_i * (n_i - 1) * (n_i - 2)))
+    sum_u3 = float(np.sum(n_i * (n_i - 1)))
+
+    var_s = (n * (n - 1) * (2 * n + 5) - sum_t1 - sum_u1) / 18.0
+    if n > 2:
+        var_s += sum_t2 * sum_u2 / (9.0 * n * (n - 1) * (n - 2))
+    var_s += sum_t3 * sum_u3 / (2.0 * n * (n - 1))
+    return float(var_s / 4.0)
 
 
 def jonckheere_terpstra(
@@ -462,13 +524,12 @@ def jonckheere_terpstra(
     Notes
     -----
     The asymptotic p-value uses the normal approximation with the
-    standard variance correction for ties (see ``scipy.stats``.
-    ``JonckheereTerpstra`` is not exposed in the public SciPy API as
-    of 1.18, so we implement it here). With ties the variance is
-    corrected using the standard ``tie_correction`` factor::
-
-        Var(U) = (n*(n-1)*(2*n+5) - sum_i t_i*(t_i-1)*(2*t_i+5)
-                  + sum_j u_j*(u_j-1)*(u_j+5)/2) / 18
+    standard variance correction for ties.  ``scipy.stats`` does not
+    expose a Jonckheere-Terpstra test as of 1.18, so it is implemented
+    here.  ``U`` counts a tied cross-group pair as ``0.5``; the variance
+    is ``Var(S) / 4`` where ``S`` is the tie-corrected Kendall ``S``
+    between the group label and the value (see
+    :func:`_jonckheere_variance`).
     """
     if len(groups) < 2:
         raise ValueError(f"need >= 2 groups (got {len(groups)})")
@@ -476,7 +537,6 @@ def jonckheere_terpstra(
     if any(s == 0 for s in sizes):
         raise ValueError("all groups must be non-empty")
     n_total = int(sum(sizes))
-    str(n_total)
     n = n_total
 
     # (a) U statistic
@@ -487,28 +547,7 @@ def jonckheere_terpstra(
     sum_n2 = sum(s * s for s in sizes)
     mean_u = (n * n - sum_n2) / 4.0
 
-    # variance: build tie-correction sums on the pooled ranks
-    pooled = np.concatenate([np.asarray(g, dtype=float) for g in groups])
-    _scipy_stats.rankdata(pooled, method="average")
-
-    # Tie correction term 1: over all ties
-    _, counts = np.unique(pooled, return_counts=True)
-    t_ties = counts[counts > 1]
-    sum_t1 = int(np.sum(t_ties * (t_ties - 1) * (2 * t_ties + 5)))
-
-    # Tie correction term 2: over within-group ties
-    sum_t2 = 0
-    offset = 0
-    for s in sizes:
-        seg = pooled[offset : offset + s]
-        _, c2 = np.unique(seg, return_counts=True)
-        u_ties = c2[c2 > 1]
-        sum_t2 += int(np.sum(u_ties * (u_ties - 1) * (u_ties + 5)))
-        offset += s
-
-    var_u = (
-        n * (n - 1) * (2 * n + 5) - sum_t1 + sum_t2
-    ) / 18.0
+    var_u = _jonckheere_variance(groups)
     if var_u <= 0:
         var_u = 1e-12
 
@@ -518,6 +557,7 @@ def jonckheere_terpstra(
     # (c) Permutation p-value (optional, off by default)
     if n_permutations > 0:
         rng = np.random.default_rng(seed)
+        pooled = np.concatenate([np.asarray(g, dtype=float) for g in groups])
         pooled_arr = pooled.copy()
         ge = 0
         ge_total = 0

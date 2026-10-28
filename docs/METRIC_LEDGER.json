@@ -2348,7 +2348,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "verification_outputs/wave234-p3-jonckheere.csv",
-      "source_artifact_sha256": "003f33f4b87b7b3e5a67c41d0fa9e61a29434ad728216b509d0bf98dc6cf4ac0",
+      "source_artifact_sha256": "8a27a7085659751829bb89535794c2ef60d210bc3ad12f4056ebb827b4e75224",
       "source_line": "",
       "section_ref": "verification_outputs/wave234-p3-jonckheere.csv",
       "notes": "Jonckheere-Terpstra trend test on tier-aware R2 + R6 cells. n_data_rows=2."
