@@ -1909,3 +1909,15 @@ error made in 2026-09.
 they live under `docs/ARCHIVE/audit-by-wave/`, and cites
 `wave262-p1-revert-all.md` and `wave262-p3-rerun.md`, which do not exist under
 any name. Fixing those needs an edit to the submission text.
+
+**Submission link rot: 40 of 253 links do not resolve.** Resolved every
+`github.com/.../blob/main/<path>` link in `tnnls_submission/*.md` against the
+tree. 213 resolve; 20 point at a file moved into `docs/ARCHIVE/` by the Wave 266
+reorganisation (pure prefix fix), 1 points at `adaptive_reflow/profile_residual.py`
+instead of `adaptive_reflow/adapters/profile_residual.py`, and 19 name a file
+that does not exist under any name (four have a plausible different-name
+candidate, twelve have none). `tools/check_submission_links.py` reproduces the
+classification and `docs/audit/submission-link-rot.md` gives the exact mapping.
+None of the missing files carries a number the paper relies on, so this is a
+credibility problem rather than a claim problem. The 21 mechanical fixes are a
+one-line rewrite of the frozen submission and need authorisation.
