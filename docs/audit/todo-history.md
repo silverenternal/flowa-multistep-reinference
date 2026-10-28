@@ -2009,3 +2009,35 @@ fails on any future drift, including a new per-cell script the master skips.
 Four stale lines remain in `tnnls_submission/data_availability.md` (the
 `03`/`07` one-line comments, the 01-07 list missing `08`/`09`, and
 `Expected: All 7/7`) and need authorisation.
+
+**Evidence pins: 72 recipe hashes, 19 ledgers, 5 figure assets.** Every
+`| path | sha256 |` row in the ten `paper-data/**/*REPRODUCIBILITY_RECIPE.md`
+files was recomputed. 60 match from the repo root; 11 are written relative to
+`paper-data/` (R2, R5a) and match once that root is tried — a copy-paste
+inconsistency, not a hash defect. One is stale:
+`K4_k5_lineageflow_hmmer/REPRODUCIBILITY_RECIPE.md` pins `906420fb…` for
+`verification_outputs/wave280-p-k4k5/SHA256SUMS`, which is now `6ea0b3cb…`
+after Wave 308 migrated the sweep out of `/tmp`. The ledger itself is healthy
+(43 OK + the documented self-line). The fix is to drop that row, not to paste
+the new value: a hash list cannot pin its own hash inside the doc describing it.
+
+All 19 `SHA256SUMS` files were run. 7 clean, 9 fail only on their own line
+(expected, and documented per-ledger), 2 stale, 1 misnamed:
+`paper-data/SHA256SUMS` still pins the pre-rewrite `headline-evidence/README.md`
+(both frozen in the Wave 328 packaging commit, README rewritten without
+regenerating the ledger), and
+`r3_n1000_3seed_fixed_q4_2026/SHA256SUMS` pins the pre-`40d6bb55` version of
+`wave338-p5-r3-n1000-paired.json` — the headline R3 artifact, so a reviewer
+gets a bare FAILED line there. The JSON on disk is the corrected one and is
+what `reproduce/03` now verifies. `wave349-r1-3seed-gpu/SHA256SUMS` is a
+markdown evidence note, not a checksum file ("no properly formatted checksum
+lines found"); its two manifest hashes do match.
+
+`tnnls_submission/figures.md` pins five PNGs with SHA-256 and byte counts: all
+five match exactly, and the five ASCII-era companion figures all exist.
+
+`tools/check_recipe_hashes.py` (72 rows, 1 known-stale) and
+`tools/check_evidence_ledgers.py` (19 ledgers, 3 known) are the reproducible
+forms; two test files fail on any new drift and on an exemption that outlives
+its issue. No hash, number or claim was modified — regenerating a ledger
+rewrites a frozen evidence file, so that needs authorisation.
