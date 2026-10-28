@@ -1949,3 +1949,22 @@ table row could not be reproduced from its own artifact. The driver now
 persists `jt_z`, `jt_p_permutation_raw` and `jt_p_asymptotic`; the regenerated
 CSV gives z = 20.673 / p = 3.017e-95 (R2) and z = 21.778 / p = 1.863e-105 (R6),
 matching the post-fix variance. Every previously stored column is unchanged.
+
+**Submission manifest: the manuscript rows are current, the package rows are
+not.** 27 `| file | bytes | sha256 |` rows. The table's three manuscript rows
+record the Wave 331 build (`c6978764…` / 213574 B for the `.md`), but the
+2026-10-27 packaging addendum at the top of the same file declares the current
+values (`b66ea07a…` / 226324 B) and says it supersedes every reading that
+differs. All three addendum hashes match the bytes on disk exactly, so the
+manifest is self-consistent under its own precedence rule. The other seven
+package documents are not covered by any addendum and have no current hash
+anywhere: `README.md`, `cover_letter.md`, `highlights.md` (table 9098 B, actual
+3422 B — the five-bullet rewrite), `tables.md`, `figures.md`,
+`submission_checklist.md` and `MANIFEST.md` itself. The last is unsatisfiable by
+construction: writing the hash into the file changes the file, so that row has
+to move to an external `SHA256SUMS`. `paper-flat-ieeetran.{pdf,tex}` are absent
+but correctly marked SUPERSEDED / do-not-upload. Three files are listed twice
+(`paper-A-final.{md,tex,pdf}`, `cover_letter.md`) and a refresh has to update
+both copies. `tools/check_submission_manifest.py` resolves every row, checks the
+addendum artifacts separately, and carries the 13 stale rows as `KNOWN_STALE`
+until the frozen manifest is refreshed.
