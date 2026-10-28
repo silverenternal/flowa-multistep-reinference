@@ -1876,3 +1876,36 @@ approximation) recompute with zero mismatches. The DerSimonian-Laird summary
 (pooled d, SE, CI, tau², I², Q) reproduces from the CSV's per-study d/SE to CSV
 rounding, and the R5b non-inferiority p = 0.998497 corresponds exactly to
 t = -4.0227 at df = 9 with se = 33.345/sqrt(10). Only the JT variance was wrong.
+
+## 30. Vendored-upstream integrity: 25/25 MD5s match, and the cited audit was missing (2026-10-28)
+
+CPU-only. `tnnls_submission/data_availability.md` says the nine files reverted
+at Wave 262 are bytewise identical to upstream and tells reviewers to verify
+via `docs/audit/wave262-p2-verify.md`. **That file did not exist.** Neither did
+`verification_outputs/wave261-p3-md5-table.json` or
+`docs/audit/wave261-p3-md5-verify.py`, which the archived audits reference.
+
+Reconstructed the table from the surviving records
+(`wave261-p1-inventory.md` §2.1-2.9, `wave261-p5-final-audit.md`,
+`wave262-p4-paper-update.md`, `upstream-modifications.md`) and recomputed every
+hash from the bytes on disk:
+
+**25 files checked, 0 missing, 0 mismatched.** That covers the nine reverted
+files (three FlowMol3, five LineageFlow, plus `metrics.py`), the canonical
+metric files of FlowMol3, and the files the adapters import from HiDream-I1,
+Lumina-Image-2.0, ProtBFN/AbBFN, Wan2.2, Kanzi and FreqFlow. The pre-revert
+FlowMol3 hashes (`5865bc02…`, `d3a01491…`, `604f1faa…`) are gone, which is what
+the revert was for.
+
+`tools/check_vendored_md5.py` is the reproducible form (table + exit status);
+`tests/test_vendored_md5.py` runs it and skips when the trees are absent.
+`docs/audit/wave262-p2-verify.md` now exists at the cited path and records the
+method and its limit: it compares today's bytes against the recorded values, it
+does **not** re-fetch the nine upstream commits, so it cannot catch a recording
+error made in 2026-09.
+
+**Three more stale links, not repaired.** `data_availability.md` also cites
+`wave261-p1-inventory.md` and `wave261-p5-final-audit.md` at `docs/audit/` when
+they live under `docs/ARCHIVE/audit-by-wave/`, and cites
+`wave262-p1-revert-all.md` and `wave262-p3-rerun.md`, which do not exist under
+any name. Fixing those needs an edit to the submission text.
