@@ -5,13 +5,16 @@
 # Cell:        R5b
 # Model:       CIFAR-10 Rectified Flow (n_rounds=1)
 # Metric:      FID (lower is better)
-# Expected:    framework_WINS on all 4 schedulers
+# Expected:    framework_WINS on all 4 schedulers at n_rounds=1
 #                cosineanneal     Delta FID = -1.60%, d_z = +4.37
 #                codimensionsheet Delta FID = -2.53%, d_z = +4.73
 #                evidencedriven   Delta FID = -0.12%, d_z = +4.63
 #                freetraj         Delta FID = -0.66%, d_z = +4.51
-#              headline Delta FID range: -2.53% to -0.66%
-# Verification: verification_outputs/wave235-p1-r5b-fix.json (key: rounds1)
+#              headline Delta FID range: -2.53% to -0.12%
+#              AND the reversal at n_rounds>=2 that makes the cell CONDITIONAL:
+#                n_rounds=10 cosineanneal Delta FID = +30.19% (framework WORSE)
+# Verification: verification_outputs/wave235-p1-r5b-fix.json
+#               keys: rounds1 (the win) + no_final_restart_n10 (the reversal)
 #
 # Wallclock historical: ~30 min GPU (3 seeds x 4 schedulers).
 #
@@ -97,6 +100,27 @@ pct_min, pct_max = min(delta_pcts), max(delta_pcts)
 dz_min, dz_max   = min(dz_list), max(dz_list)
 print(f"R5b reproduced: n_rounds=1 framework_WINS on 4/4 schedulers "
       f"(Delta FID range {pct_min:.2f}% to {pct_max:.2f}%; d_z range {dz_min:.2f} to {dz_max:.2f})")
+
+# --- the reversal that makes R5b CONDITIONAL, not STRONG ---------------------
+# paper-A-final.md §7.2: the strong reading holds only at n_rounds=1 and
+# reverses for n_rounds>=2. That reversal is what the label rests on, so it is
+# asserted here rather than left to prose.
+rev = d["no_final_restart_n10"]
+rev_pct = float(rev["results"]["cosineanneal"]["delta_pct"])
+rev_rounds = int(rev["n_rounds"])
+if rev_rounds < 2:
+    print(f"R5b FAIL: reversal arm has n_rounds={rev_rounds} (expected >=2)")
+    sys.exit(1)
+if rev_pct <= 0:
+    print(f"R5b FAIL: reversal arm delta_pct={rev_pct} is not a regression; "
+          f"R5b would not be CONDITIONAL")
+    sys.exit(1)
+if not math.isclose(rev_pct, 30.19, abs_tol=0.05):
+    print(f"R5b FAIL: reversal arm delta_pct={rev_pct} (expected +30.19)")
+    sys.exit(1)
+print(f"R5b reproduced [CONDITIONAL basis]: n_rounds={rev_rounds} cosineanneal "
+      f"reverses to {rev_pct:+.2f}% (framework WORSE), so the n_rounds=1 win "
+      f"is protocol-conditional")
 PY
 
 # -----------------------------------------------------------------------------
@@ -110,5 +134,5 @@ PY
 # External deps: CIFAR-10 reference features (data/rf_reference_features/).
 # =============================================================================
 
-echo "OK R5b reproduced: framework_WINS on 4/4 schedulers (Delta FID range -2.53% to -0.12% across cosineanneal/codimensionsheet/evidencedriven/freetraj)"
+echo "OK R5b reproduced: n_rounds=1 framework_WINS on 4/4 schedulers (Delta FID -2.53% to -0.12%); n_rounds=10 reverses to +30.19% (CONDITIONAL)"
 exit 0

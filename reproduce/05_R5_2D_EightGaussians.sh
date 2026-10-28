@@ -2,18 +2,18 @@
 # =============================================================================
 # 05_R5_2D_EightGaussians.sh — Reproduce R5 (2D FM ablation, Eight Gaussians)
 #
-# Cell:        R5
-# Model:       2D FM ablation (synthetic)
+# Cell:        R5 (Wave-135 numbering; no canonical Wave-310 cell)
+# Model:       2D rectified flow (Liu 2022, CosineAnnealScheduler)
 # Metric:      Wasserstein-2 (W2, lower is better)
 # Expected:    baseline 0.6606 -> framework 0.5919  (Delta = -10.40%, framework_WINS)
 # Verification: verification_outputs/g1_deep_dive_q3_2026.json
-#               row: twodim_fm_2d_eight_gaussians
+#               row: rectified_flow_2d_sota_eight_gaussians
 #
-# NOTE (Wave 308 cosmetic fix): prior script had a typo (baseline=2.31,
-# framework=0.76, delta=-67.10%) that did NOT match the canonical Wave 158
-# headline (baseline=0.6606, framework=0.5919, delta=-10.40%) at
-# `verification_outputs/wave158-p6-r-level-headline-summary.{csv,json}`. The
-# numbers below now match the canonical headline.
+# NOTE (2026-10-29): the Wave 308 "cosmetic fix" updated the expected numbers to
+# the canonical 0.6606 / 0.5919 but left the row key on `twodim_fm_2d_eight_gaussians`,
+# which is the 2D FM ABLATION row (2.31 -> 0.76, -67.10%). The script therefore
+# failed from Wave 308 until now (baseline=2.31, expected 0.6606) and the -10.40%
+# headline was never actually verified. Key corrected; the numbers were already right.
 #
 # Wallclock historical: ~1 min/arm CPU.
 #
@@ -56,7 +56,7 @@ with open(sys.argv[1]) as f:
     d = json.load(f)
 
 rows = {row["row"]: row for row in d["analysis"]["per_cell_breakdown"]}
-row = rows["twodim_fm_2d_eight_gaussians"]
+row = rows["rectified_flow_2d_sota_eight_gaussians"]
 
 expected_baseline = 0.6606
 expected_framework = 0.5919

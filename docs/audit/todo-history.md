@@ -1971,3 +1971,41 @@ but correctly marked SUPERSEDED / do-not-upload. Three files are listed twice
 both copies. `tools/check_submission_manifest.py` resolves every row, checks the
 addendum artifacts separately, and carries the 13 stale rows as `KNOWN_STALE`
 until the frozen manifest is refreshed.
+
+**`reproduce/`: one script had been failing since Wave 308 and two were green
+on the wrong number.** `data_availability.md` sends reviewers to
+`reproduce/0[1-7]_*.sh` + `verify_all_headlines.sh`, but nothing in the test
+suite ever ran them. On 2026-10-29 the master reported `8/9` with
+`05_R5_2D_EightGaussians.sh` failing (`baseline=2.31, expected 0.6606`).
+
+- **05** looked up `twodim_fm_2d_eight_gaussians` (the 2D FM ablation,
+  2.31 -> 0.76) while asserting the `rectified_flow_2d_sota_eight_gaussians`
+  values (0.6606 -> 0.5919, -10.40%). Wave 308 changed the numbers but not the
+  row key, so the CLM-039 headline was never verified by its own script.
+- **04** asserted only the ablation (2.85 -> 0.62, -78.25%), which the paper
+  calls a separate experiment, leaving the canonical two_moons -7.28%
+  (0.5029 -> 0.4663) unverified. Both rows are now asserted and labelled.
+- **03** asserted the N=200 REOS proxy (`d_z=-0.285`, `p=8.03e-05`) and printed
+  `framework_WINS, Bonf-sig < 1e-4` — a verdict the paper retired at Wave 338.
+  R3 is PARTIAL on the three-seed fg_dev test (`mean -0.0377`, `p=0.559`,
+  `d_z=-0.401`), which is now asserted first, including `bonf_sig == False`.
+- **07** was labelled "MNIST FM" (R6 is LineageFlow k6) and asserted only the
+  counterfactual grid cell as "the headline". The live headline is now checked
+  (scPerplexity -0.8393 at n=3000, pooled pLDDT +0.1466, hard-tier pLDDT
+  +1.1211 at n=990, the last from `gap30-r6-fresh-tier/as-designed`
+  `pooled_per_tier.fresh.hard` — previously only in a markdown table), with the
+  counterfactual relabelled as design validation.
+- **06** verified the n_rounds=1 win and not the n_rounds=10 reversal
+  (+30.19%) that is the entire basis of the CONDITIONAL label. Added.
+- **verify_all_headlines.sh** globbed `reproduce/[0-9]*.sh`, which also matches
+  the unrelated `09_verify_all_cell_recipes.sh`, hence `8/9` and a hardcoded
+  `[i/7]`. Now an explicit 01-08 array with a computed denominator: `8/8`.
+
+No number changed anywhere: every corrected assertion was already satisfied by
+its artifact; the defects were in which row was read and what it was called.
+`tests/test_reproduce_scripts.py` (4 tests, 1.3 s) now runs both masters and
+fails on any future drift, including a new per-cell script the master skips.
+
+Four stale lines remain in `tnnls_submission/data_availability.md` (the
+`03`/`07` one-line comments, the 01-07 list missing `08`/`09`, and
+`Expected: All 7/7`) and need authorisation.
