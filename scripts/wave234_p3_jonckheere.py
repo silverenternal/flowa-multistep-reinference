@@ -57,11 +57,14 @@ For each cell:
      tests ``hard > medium > easy``.
   5. Read the 3 per-tier p-values from the Wave 233 P3 CSV and compute
      pairwise_min_p (most significant per-tier) and power_gain_factor
-     = max(3 per-tier p-values) / jt_p_value.  The max captures the
+     = max(3 per-tier p-values) / jt_p_asymptotic.  The max captures the
      Bonferroni bottleneck (the worst-case per-tier p-value that a
      Bonferroni-corrected set of 3 comparisons would need to clear).
-     A power_gain_factor > 1 means JT is more powerful than the
-     Bonferroni-corrected 3-pairwise alternative.
+     A power_gain_factor > 1 means JT reaches a smaller p than the
+     Bonferroni-corrected 3-pairwise alternative.  It is a ratio of two
+     p-values, NOT a statistical power calculation -- do not quote it as
+     one, and note that it grows without bound as jt_p_asymptotic
+     underflows further.
 
 Outputs
 -------
@@ -368,7 +371,9 @@ def main() -> int:
         # the cited CSV could not back its own table row.
         "jt_statistic", "jt_z", "jt_p_value", "jt_p_permutation_raw",
         "jt_p_asymptotic",
-        "pairwise_min_p", "power_gain_factor",
+        # power_gain_factor is pairwise_max_p / jt_p_asymptotic; both inputs
+        # have to be in the file for the ratio to be checkable at all.
+        "pairwise_min_p", "pairwise_max_p", "power_gain_factor",
         "monotone_confirmed",
     ]
     with OUT_CSV.open("w", newline="") as fh:
@@ -531,9 +536,9 @@ def _write_audit_doc(rows: list[dict]) -> None:
         f"**R2 Kanzi (RMSD; lower is better):** JT statistic = "
         f"{r2_row['jt_statistic']:.1f}, JT asymptotic p = "
         f"{r2_row['jt_p_asymptotic']:.3e}, JT permutation p (floored at "
-        f"1/N_perm) = {r2_row['jt_p_value']:.3e}, power gain = "
-        f"{_fmt_pgain(r2_row['power_gain_factor'])} vs the worst-case "
-        f"Bonferroni pairwise comparison.  Monotone confirmed: "
+        f"1/N_perm) = {r2_row['jt_p_value']:.3e}, p-ratio vs the worst-case "
+        f"Bonferroni pairwise = "
+        f"{_fmt_pgain(r2_row['power_gain_factor'])}.  Monotone confirmed: "
         f"{'**YES**' if r2_row['monotone_confirmed'] else 'no'}."
     )
     lines.append("")
@@ -541,9 +546,9 @@ def _write_audit_doc(rows: list[dict]) -> None:
         f"**R6 k6 (pLDDT; higher is better):** JT statistic = "
         f"{r6_row['jt_statistic']:.1f}, JT asymptotic p = "
         f"{r6_row['jt_p_asymptotic']:.3e}, JT permutation p (floored at "
-        f"1/N_perm) = {r6_row['jt_p_value']:.3e}, power gain = "
-        f"{_fmt_pgain(r6_row['power_gain_factor'])} vs the worst-case "
-        f"Bonferroni pairwise comparison.  Monotone confirmed: "
+        f"1/N_perm) = {r6_row['jt_p_value']:.3e}, p-ratio vs the worst-case "
+        f"Bonferroni pairwise = "
+        f"{_fmt_pgain(r6_row['power_gain_factor'])}.  Monotone confirmed: "
         f"{'**YES**' if r6_row['monotone_confirmed'] else 'no'}."
     )
     lines.append("")

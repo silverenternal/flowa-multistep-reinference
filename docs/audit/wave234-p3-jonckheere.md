@@ -96,9 +96,9 @@ largest (the Bonferroni-corrected bottleneck).
 
 The monotone pattern **hard > medium > easy** in framework uplift is confirmed by the Jonckheere-Terpstra trend test on BOTH cells.
 
-**R2 Kanzi (RMSD; lower is better):** JT statistic = 269430.0, JT asymptotic p = 3.017e-95, JT permutation p (floored at 1/N_perm) = 1.000e-04, power gain = ~8.13e+92x vs the worst-case Bonferroni pairwise comparison.  Monotone confirmed: **YES**.
+**R2 Kanzi (RMSD; lower is better):** JT statistic = 269430.0, JT asymptotic p = 3.017e-95, JT permutation p (floored at 1/N_perm) = 1.000e-04, p-ratio vs the worst-case Bonferroni pairwise = ~8.13e+92x.  Monotone confirmed: **YES**.
 
-**R6 k6 (pLDDT; higher is better):** JT statistic = 274924.0, JT asymptotic p = 1.863e-105, JT permutation p (floored at 1/N_perm) = 1.000e-04, power gain = ~3.82e+100x vs the worst-case Bonferroni pairwise comparison.  Monotone confirmed: **YES**.
+**R6 k6 (pLDDT; higher is better):** JT statistic = 274924.0, JT asymptotic p = 1.863e-105, JT permutation p (floored at 1/N_perm) = 1.000e-04, p-ratio vs the worst-case Bonferroni pairwise = ~3.82e+100x.  Monotone confirmed: **YES**.
 
 This converts three independent tier findings (one per tier, each requiring Bonferroni-corrected alpha = 0.05/3 = 0.0167) into a single structural finding: the framework uplift varies monotonically with baseline difficulty across the 3-tier stratification on BOTH cell types.
 

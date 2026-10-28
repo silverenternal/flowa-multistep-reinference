@@ -50,7 +50,7 @@
 ### Statistical methods (Wave 234 P5)
 
 - [x] **TOST equivalence testing** at α=0.05 (0.1 SD margin): 14/16 cells in 0.1 SD band; 9/16 BF01 ≥ 10 (Wagenmakers threshold).
-- [x] **Jonckheere-Terpstra ordered test:** R2 Kanzi p = 9.86 × 10⁻²³, R6 k6 p = 5.11 × 10⁻²⁵ (monotone hard > medium > easy).
+- [x] **Jonckheere-Terpstra ordered test:** R2 Kanzi z = +20.673, p = 3.017 × 10⁻⁹⁵; R6 k6 z = +21.778, p = 1.863 × 10⁻¹⁰⁵ (monotone hard > medium > easy).
 - [x] **DerSimonian-Laird random-effects meta-analysis:** pooled d_z = +1.117, I² = 99.60%, k = 12 studies.
 - [x] **Non-inferiority test (R5b CIFAR-10 RF, 10% FID margin):** multi-round p_NI = 0.9985 (fail; first-class boundary disclosure); n_rounds=1 (Wave 235 P1) structurally eliminates the regression at ΔFID ∈ [-2.53%, -0.66%] on 3/4 schedulers.
 

@@ -808,18 +808,17 @@ reported for the power-gain ratio.
 **Result.** The monotone `hard > medium > easy` pattern in
 framework uplift is **confirmed on both protein cells** —
 **R2 Kanzi (RMSD, lower-better)**: JT statistic = 269430,
-asymptotic $p = 9.855 \times 10^{-23}$, power gain $\approx
-2.49 \times 10^{20}$x vs the worst-case Bonferroni pairwise
-comparison. **R6 k6 (pLDDT, higher-better)**: JT statistic =
-274924, asymptotic $p = 5.114 \times 10^{-25}$, power gain
-$\approx 1.39 \times 10^{20}$x. The asymptotic and permutation
-p-values agree to within Monte Carlo noise (~1%), confirming
-the JT implementation is well-calibrated for n = 1000 paired
-samples. This converts three independent tier findings (each
-Bonferroni-corrected at $\alpha = 0.05/3 = 0.0167$) into a
-**single structural finding**: the framework's tier-aware uplift
-varies monotonically with baseline difficulty across the 3-tier
-stratification on both cell types. Audit doc:
+$z = +20.673$, asymptotic $p = 3.017 \times 10^{-95}$.
+**R6 k6 (pLDDT, higher-better)**: JT statistic =
+274924, $z = +21.778$, asymptotic $p = 1.863 \times 10^{-105}$.
+The permutation test (10,000 draws) floors at $10^{-4}$ and
+confirms the direction on both cells; the asymptotic $z$ carries
+the magnitude, so the two are consistent in sign but not
+comparable in resolution. This converts three independent tier
+findings (each Bonferroni-corrected at $\alpha = 0.05/3 = 0.0167$)
+into a **single structural finding**: the framework's tier-aware
+uplift varies monotonically with baseline difficulty across the
+3-tier stratification on both cell types. Audit doc:
 `docs/audit/wave234-p3-jonckheere.md`. CSV:
 `verification_outputs/wave234-p3-jonckheere.csv`.
 
@@ -921,8 +920,10 @@ the §MS.10.6 per-record paired-$t$ verdict distribution:
    findings present as three independent tests (one per tier,
    each Bonferroni-corrected at $\alpha = 0.0167$). JT pools the
    three tests into a single structural finding (monotone
-   `hard > medium > easy` in framework uplift) with power gain
-   $\sim 10^{20}$x vs the worst-case Bonferroni pairwise.
+   `hard > medium > easy` in framework uplift), reaching
+   $p = 3.0 \times 10^{-95}$ on R2 and $1.9 \times 10^{-105}$
+   on R6 against a worst-case per-tier $p$ of $2.5 \times 10^{-2}$
+   and $7.1 \times 10^{-5}$ respectively.
 
 3. **Single-cell regression disclosure** (P6). The §7 cover-letter
    matched-NFE = 50 R5b regression is disclosed as a first-class
@@ -946,7 +947,7 @@ audience expects.
 - `docs/audit/wave234-p2-tost.md` — TOST audit (16 cells;
   0/16 strict equivalence; 14/16 in-band; 9/16 BF01 >= 10).
 - `docs/audit/wave234-p3-jonckheere.md` — JT audit (R2 + R6;
-  monotone confirmed; power gain ~10^20x).
+  monotone confirmed; z = +20.673 / +21.778).
 - `docs/audit/wave234-p4-bf01.md` — BF01 audit (16 cells;
   9/16 strong H0; 2/16 extreme alternative).
 - `docs/audit/wave234-p5-meta-analysis.md` — meta-analysis audit

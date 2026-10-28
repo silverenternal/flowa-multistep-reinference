@@ -416,13 +416,13 @@ $\text{mean(easy)} \le \text{mean(medium)} \le \text{mean(hard)}$
 across the three Wave 233 P3 tiers. On both protein cells,
 the monotone `hard > medium > easy` pattern in framework
 uplift is **confirmed**: R2 Kanzi (RMSD) JT statistic =
-269430, asymptotic $p = 9.855 \times 10^{-23}$, power gain
-$\approx 2.49 \times 10^{20}$x vs the worst-case Bonferroni
-pairwise; R6 k6 (pLDDT) JT statistic = 274924, asymptotic
-$p = 5.114 \times 10^{-25}$, power gain $\approx 1.39 \times
-10^{20}$x. Three independent tier findings (each Bonferroni-
-corrected at $\alpha = 0.0167$) are pooled into a single
-structural finding.
+269430, $z = +20.673$, asymptotic $p = 3.017 \times 10^{-95}$;
+R6 k6 (pLDDT) JT statistic = 274924, $z = +21.778$,
+asymptotic $p = 1.863 \times 10^{-105}$. The 10,000-draw
+permutation test floors at $10^{-4}$ and confirms direction;
+the asymptotic $z$ carries the magnitude. Three independent
+tier findings (each Bonferroni-corrected at $\alpha = 0.0167$)
+are pooled into a single structural finding.
 
 **P4 — BF01 (Bayes factor for H0)** (audit:
 [`docs/audit/wave234-p4-bf01.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave234-p4-bf01.md); CSV:

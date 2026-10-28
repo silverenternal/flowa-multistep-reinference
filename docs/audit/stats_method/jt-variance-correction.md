@@ -111,9 +111,10 @@ changes, because it is `pairwise_max_p / jt_p_asymptotic`.
 * The qualitative claim — a monotone hard > medium > easy trend — is
   unaffected. The correction makes the evidence stronger, not different.
 
-## 6. Downstream text that still quotes the old numbers (not edited)
+## 6. Downstream text that quoted the old numbers (all corrected 2026-10-29)
 
-These are frozen submission surfaces and were left alone:
+These were frozen submission surfaces when this audit was written; they were
+corrected after authorisation. The table records what each one said.
 
 | file | line | what it says | status |
 |---|---|---|---|
@@ -123,9 +124,15 @@ These are frozen submission surfaces and were left alone:
 | `docs/drafts/methods-why-per-record.md` | 811-814, 924, 949 | old p-values and `~10^20x` | stale |
 | `docs/audit/wave356-submission-checklist-review.md` | 89 | old p-values | stale |
 
-Updating them requires explicit authorisation. Until then the submission
-**understates** the evidence: it claims `p < 1e-22` where the corrected value
-is `p < 1e-94`. No claim is false, so nothing needs to be retracted.
+**Resolution (2026-10-29).** All five were updated: `tables.md` and
+`submission_checklist.md` now quote `z = +20.673 / p = 3.017e-95` and
+`z = +21.778 / p = 1.863e-105`; `cover_letter.md`,
+`docs/cover-letter-tnnls.md` and `methods-why-per-record.md` drop the
+`power_gain` figure and say the permutation test floors at `1e-4` while the
+asymptotic `z` carries the magnitude. `wave356-submission-checklist-review.md`
+is a historical review record and is left verbatim. The submission had
+**understated** the evidence (`p < 1e-22` where the corrected value is
+`p < 1e-94`); no claim was false, so nothing was retracted.
 
 The negative `z` in `tables.md` is a separate inconsistency. The code has
 always returned a positive `z` for the increasing trend; the table's `-10.0`
