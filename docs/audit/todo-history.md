@@ -1938,6 +1938,9 @@ a v1-scale artifact, and the artifact's four deltas are all negative, not 3/4.
 Table 4 mixes Wave 238 wall-clocks with Wave 236 ratios (the re-measured ratio
 is 1.30, not 1.26). Table 5's pytest literal and 328-word abstract both predate
 Wave 244 P3; the abstract of record is 167 words in `paper-A-final.md`.
+The 2026-10-28 full run is 5513 passed / 180 skipped / 12 xfailed with the
+12 torch-dependent `test_paper_metrics.py` tests excluded (they fail on this
+CPU box with `ModuleNotFoundError: torch`).
 **The manuscript and cover letter are correct** — this is an inventory defect,
 not a claim defect. `tools/check_tables_inventory.py` recomputes all 27 cells
 and carries the 14 as `KNOWN_DRIFT` until the frozen file is corrected.

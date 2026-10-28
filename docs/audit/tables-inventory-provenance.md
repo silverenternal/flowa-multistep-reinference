@@ -163,9 +163,11 @@ is the same in both runs, so only `ratio_after` is affected.
 
 ## 5. Table 5 — two stale numbers
 
-- **Pytest:** the row says `5155 passed / 196 skipped`. The last full run
-  recorded before this audit was `5505 passed / 180 skipped / 12 xfailed`.
-  A count that moves with every commit should be a pointer to the run, not a
+- **Pytest:** the row says `5155 passed / 196 skipped`. The full run on
+  2026-10-28 gives `5513 passed / 180 skipped / 12 xfailed / 0 failed` once the
+  12 tests in `tests/test_tools/test_paper_metrics.py` that need `torch` are
+  excluded (they fail on this CPU box with `ModuleNotFoundError: torch`). A
+  count that moves with every commit should be a pointer to the run, not a
   literal.
 - **Abstract word count:** the row says `328 words` and cites
   `docs/drafts/abstract-final.md`. That file states in its own header that it
