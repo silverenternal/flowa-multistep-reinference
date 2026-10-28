@@ -363,7 +363,12 @@ def main() -> int:
     # -- Write CSV --
     fieldnames = [
         "cell", "n_easy", "n_medium", "n_hard",
-        "jt_statistic", "jt_p_value", "pairwise_min_p", "power_gain_factor",
+        # jt_z and jt_p_asymptotic are what Table 3 of the submission quotes;
+        # they were computed but not persisted until the 2026-10-28 audit, so
+        # the cited CSV could not back its own table row.
+        "jt_statistic", "jt_z", "jt_p_value", "jt_p_permutation_raw",
+        "jt_p_asymptotic",
+        "pairwise_min_p", "power_gain_factor",
         "monotone_confirmed",
     ]
     with OUT_CSV.open("w", newline="") as fh:

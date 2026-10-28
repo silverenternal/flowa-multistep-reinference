@@ -1921,3 +1921,31 @@ classification and `docs/audit/submission-link-rot.md` gives the exact mapping.
 None of the missing files carries a number the paper relies on, so this is a
 credibility problem rather than a claim problem. The 21 mechanical fixes are a
 one-line rewrite of the frozen submission and need authorisation.
+
+**Internal table inventory: 14 of 27 machine-checkable cells do not reproduce.**
+`tnnls_submission/tables.md` promises byte-addressable provenance. Checking each
+row against the artifact it cites: Table 3's TOST / BF01 / meta / NI rows all
+recompute exactly, and Table 1's R3 / R5c rows match. Table 2's three
+`framework_WINS` rows quote the **Wave 229 bootstrap** magnitudes with the sign
+dropped (`+0.145 / +2.103 / +0.704`); the Wave 230 CSV it cites says
+`−0.990 / −0.975 / −0.068`, and the third cell is UNDERPOWERED there. The
+summary counts follow (`14/16` → 11/16 bounded, `3/16` → 2/16 significant,
+range `[0.145, 2.103]` → `[0.975, 0.990]`). Table 1's R2 row carries FlowMol3's
+`fg_dev` (0.6146) as a Kanzi RMSD, plus an unattributed 0.5941; Kanzi's real
+pair is 0.9028 → 0.8838. R4/R5 cite two directories that do not exist (the
+values are in `g1_deep_dive_q3_2026.json`). R5b quotes the v2 FID pair against
+a v1-scale artifact, and the artifact's four deltas are all negative, not 3/4.
+Table 4 mixes Wave 238 wall-clocks with Wave 236 ratios (the re-measured ratio
+is 1.30, not 1.26). Table 5's pytest literal and 328-word abstract both predate
+Wave 244 P3; the abstract of record is 167 words in `paper-A-final.md`.
+**The manuscript and cover letter are correct** — this is an inventory defect,
+not a claim defect. `tools/check_tables_inventory.py` recomputes all 27 cells
+and carries the 14 as `KNOWN_DRIFT` until the frozen file is corrected.
+
+**One code fix came out of it.** `wave234-p3-jonckheere.csv` did not store the
+`jt_z` or the asymptotic p that Table 3 quotes — the driver computed both and
+then wrote only the U statistic and the permutation p (floored at 1e-4), so the
+table row could not be reproduced from its own artifact. The driver now
+persists `jt_z`, `jt_p_permutation_raw` and `jt_p_asymptotic`; the regenerated
+CSV gives z = 20.673 / p = 3.017e-95 (R2) and z = 21.778 / p = 1.863e-105 (R6),
+matching the post-fix variance. Every previously stored column is unchanged.
