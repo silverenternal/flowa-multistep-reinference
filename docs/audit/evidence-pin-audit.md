@@ -82,16 +82,33 @@ The five ASCII-era companion figures referenced by name
 
 ## 5. What is now enforced
 
-- `tools/check_recipe_hashes.py` — 72 rows, 1 `KNOWN_STALE`, 0 unknown.
+- `tools/check_recipe_hashes.py` — 71 rows, 0 known-stale, 0 unknown.
   Resolves both path conventions; exits non-zero on any new drift.
-- `tools/check_evidence_ledgers.py` — 19 ledgers, 3 `KNOWN_ISSUES`, 0 unknown.
-  Separates the expected self-line failure from real drift, and flags a
-  `SHA256SUMS` that is not a checksum list.
+- `tools/check_evidence_ledgers.py` — 19 ledgers (10 clean, 9 self-line-only),
+  0 known issues, 0 unknown. Separates the expected self-line failure from real
+  drift, and flags a `SHA256SUMS` that is not a checksum list.
 - `tests/test_recipe_hashes.py` (3) and `tests/test_evidence_ledgers.py` (3) —
   both fail if an exemption outlives the issue it covers.
 
-## 6. Not changed
+## 6. Resolution (2026-10-29, authorised)
 
-No hash, number or claim was modified. The two stale ledger lines and the
-misnamed file are recorded with reasons and left for authorisation, because
-regenerating a ledger rewrites a frozen evidence file.
+All three defects were repaired; no artifact byte was touched, only the pins
+that described them.
+
+- `paper-data/SHA256SUMS` — the `headline-evidence/README.md` line now carries
+  `fd5d876a…`, the file's current hash. 68/68 lines match.
+- `verification_outputs/r3_n1000_3seed_fixed_q4_2026/SHA256SUMS` — the
+  `wave338-p5-r3-n1000-paired.json` line now carries `4da44c2f…`. 13/13 match.
+- `verification_outputs/wave349-r1-3seed-gpu/` — the markdown note was renamed
+  to `EVIDENCE.md` and a real two-line `SHA256SUMS` was written over the two
+  manifests it pins. (This directory is untracked, so the rename is on-disk
+  only; the note was never in the submission tree.)
+- `paper-data/K4_k5_lineageflow_hmmer/REPRODUCIBILITY_RECIPE.md` — the
+  self-referential `SHA256SUMS` row was deleted and the surrounding sentence
+  now says "run it rather than comparing a pinned hash of the ledger itself",
+  with the count corrected from "All 44 listed files pass" to "43 OK and one
+  expected self-line".
+
+No number in the paper moved: these are integrity pins on files whose contents
+were already correct.
+

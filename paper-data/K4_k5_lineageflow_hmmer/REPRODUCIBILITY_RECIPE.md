@@ -45,14 +45,13 @@ All 3 seeds evaluated without error (`status=1.0` per JSON `per_seed[*].baseline
 
 ## (b) Evidence Chain + SHA-256 Anchors
 
-The K4+K5 evidence chain lives entirely at `verification_outputs/wave280-p-k4k5/` (mirrored via symlinks at `paper-data/K4_k5_lineageflow_hmmer/`). The SHA-256 ledger at `verification_outputs/wave280-p-k4k5/SHA256SUMS` was verified at recipe authorship (2026-09-27). All 44 listed files pass `sha256sum --check`; the lone `SHA256SUMS: FAILED` line is the canonical self-referential hash (the file's own hash line does not match the file content when the line is included — this is expected behaviour, not a corruption).
+The K4+K5 evidence chain lives entirely at `verification_outputs/wave280-p-k4k5/` (mirrored via symlinks at `paper-data/K4_k5_lineageflow_hmmer/`). The SHA-256 ledger at `verification_outputs/wave280-p-k4k5/SHA256SUMS` was first written at recipe authorship (2026-09-27) and regenerated when Wave 308 migrated the sweep outputs out of `/tmp`; run it rather than comparing a pinned hash of the ledger itself. `sha256sum --check` gives 43 OK and one `SHA256SUMS: FAILED` line, which is the canonical self-referential entry (a file's own hash line cannot match the file that contains it) and is expected behaviour, not corruption. The 43 artifact hashes below are unchanged across both generations.
 
 ### Canonical summary (Wave 280 P 3-seed × N=100 paired sweep)
 
 | File | SHA-256 |
 |---|---|
 | `verification_outputs/wave280-p-k4k5/summary_n100.json` | `f382c79a209c29fe5115d83fc646d0321102a8f11176eb6aeac959410ddc71a3` |
-| `verification_outputs/wave280-p-k4k5/SHA256SUMS` | `906420fb95c24cd316ba904102b2e21c69f82f6ab358d0be9ff009ca6a0c4f4a` |
 | `verification_outputs/wave280-p-k4k5/seed42/fasta/manifest.json` | `12f5c662dd482fba8b6315f396db5c75e7c949e3f8ad4aa6c6ab67b535c31690` |
 | `verification_outputs/wave280-p-k4k5/seed42/fasta/baseline_n100.fasta` | `dcac1e6894b0243c4394682f4dfca326f7b421508af1c4bf780209dbf45ca7ec` |
 | `verification_outputs/wave280-p-k4k5/seed42/fasta/framework_n100.fasta` | `01c0fce0b48f158966474875951db3de5d422ad9b1872f9779d9a7d76ec751c5` |

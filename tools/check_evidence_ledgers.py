@@ -35,37 +35,7 @@ LEDGER_NAME = "SHA256SUMS"
 LINE = re.compile(r"^([0-9a-f]{64})\s+\*?(.+)$")
 
 # (ledger path relative to repo root, kind, subject) -> reason
-KNOWN_ISSUES: dict[tuple[str, str, str], str] = {
-    (
-        "paper-data/SHA256SUMS",
-        "real",
-        "headline-evidence/README.md",
-    ): (
-        "the ledger was frozen at the Wave 328 packaging commit and the README "
-        "was rewritten in the same commit without regenerating it. The README "
-        "carries no number the paper uses; regenerating the ledger is the fix."
-    ),
-    (
-        "verification_outputs/r3_n1000_3seed_fixed_q4_2026/SHA256SUMS",
-        "real",
-        "wave338-p5-r3-n1000-paired.json",
-    ): (
-        "commit 40d6bb55 (GAP-27-R3-POWER, seed-level CI defect fix) rewrote the "
-        "paired JSON after the ledger was written. The JSON on disk is the "
-        "corrected one and is what reproduce/03_R3_FlowMol3.sh verifies; the "
-        "ledger line is stale, not the artifact."
-    ),
-    (
-        "verification_outputs/wave349-r1-3seed-gpu/SHA256SUMS",
-        "not_a_ledger",
-        "",
-    ): (
-        "the file is a markdown evidence note, not a checksum list: "
-        "`sha256sum --check` answers 'no properly formatted checksum lines "
-        "found'. Its two manifest hashes do match; the file should be renamed "
-        "(e.g. EVIDENCE.md) and a real ledger added."
-    ),
-}
+KNOWN_ISSUES: dict[tuple[str, str, str], str] = {}
 
 
 def _verify(ledger: Path) -> tuple[str, int, list[str]]:

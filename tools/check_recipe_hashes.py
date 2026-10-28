@@ -32,19 +32,7 @@ RECIPE_GLOB = "**/*REPRODUCIBILITY_RECIPE.md"
 ROW = re.compile(r"^\|\s*`([^`]+)`\s*\|\s*`([0-9a-f]{64})`\s*\|", re.M)
 
 # (recipe file name, path, pinned hash) -> reason
-KNOWN_STALE: dict[tuple[str, str, str], str] = {
-    (
-        "REPRODUCIBILITY_RECIPE.md",
-        "verification_outputs/wave280-p-k4k5/SHA256SUMS",
-        "906420fb95c24cd316ba904102b2e21c69f82f6ab358d0be9ff009ca6a0c4f4a",
-    ): (
-        "the ledger was regenerated when Wave 308 migrated the sweep outputs out "
-        "of /tmp; the recipe still pins the pre-migration bytes. The ledger itself "
-        "is healthy: `sha256sum --check` gives 43 OK + the documented self-line. "
-        "A file that lists hashes cannot usefully pin its own hash inside the doc "
-        "that describes it, so the row should become a note, not a new number."
-    ),
-}
+KNOWN_STALE: dict[tuple[str, str, str], str] = {}
 
 
 def _resolve(path: str) -> Path | None:
