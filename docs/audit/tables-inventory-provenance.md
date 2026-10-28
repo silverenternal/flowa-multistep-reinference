@@ -192,17 +192,20 @@ gates that the chain re-checks; they are fine.
 ## 7. Reproduction
 
 ```
-python3 tools/check_tables_inventory.py          # 27 checks, 14 known, 0 unknown
+python3 tools/check_tables_inventory.py          # 33 checks, 0 known, 0 unknown
 python3 -m pytest tests/test_tables_inventory.py -q
 ```
 
-The checker recomputes each quantity from the cited artifact's own columns. The
-14 current disagreements are listed in `KNOWN_DRIFT` so the run exits 0 while
-the frozen file is pending; any *new* drift fails immediately, and
+The checker recomputes each quantity from the cited artifact's own columns.
+`KNOWN_DRIFT` is now empty — all fourteen rows were corrected on 2026-10-29
+(§9). Any new drift fails immediately, and
 `test_known_drift_list_stays_honest` fails if an entry is left behind after the
 row is corrected.
 
 ## 8. Authorisation required
+
+**Superseded by §9 — every item below was authorised and applied on
+2026-10-29.** The list is kept verbatim as the record of what was asked for.
 
 `tnnls_submission/tables.md` is frozen. The following edits are one-line
 changes per row and would make the inventory reproduce from its artifacts:
@@ -217,3 +220,28 @@ changes per row and would make the inventory reproduce from its artifacts:
 6. Table 4: pick one run for the whole row.
 7. Table 5: replace the pytest literal with a pointer; point the abstract row at
    `paper-A-final.md` and quote 167 words.
+
+## 9. Resolution (2026-10-29, authorised)
+
+Every row now reproduces from the artifact it cites; `tools/check_tables_inventory.py`
+runs 33 checks with 0 known and 0 unknown drift. No claim status or paper
+number moved — each correction replaced a mis-sourced or superseded reading
+with the value its own artifact already contained.
+
+| # | Row | Was | Now |
+|---|---|---|---|
+| 1 | Table 2, three `d_z` | `+0.145 / +2.103 / +0.704` (Wave 229 bootstrap, sign dropped) | `−0.9901 / −0.9746 / −0.0684` (Wave 230 per-record; the third is UNDERPOWERED) |
+| 2 | Table 2 summary | `14/16` bounded, `3/16` significant, range `[0.145, 2.103]` | `11/16` bounded, `2/16` significant, range `[0.975, 0.990]` |
+| 3 | Table 1 R2 | `0.6146 → 0.5941`, `d_z +0.3927` | `0.9028 → 0.8838`, `d_z −0.0990`, p = 0.0018 |
+| 4 | Table 1 R4/R5 links | two directories that never existed | `g1_deep_dive_q3_2026.json`, rows named in the cell |
+| 5 | Table 1 R5b | `218.87 → 122.18` (v2 FID) | `454.39` baseline + per-scheduler ΔFID; 4/4 at N=200, 2/4 at N=1000, 4/4 regress multi-round |
+| 6 | Table 3 JT ×2 | `z = −10.0 / p = 9.86e-23`, `z = −10.7 / p = 5.11e-25` | `z = +20.673 / p = 3.017e-95`, `z = +21.778 / p = 1.863e-105` |
+| 7 | Table 3 BF01 label | "TOST equivalence" | "Bayes factor (BF01, BIC approximation)" |
+| 8 | Table 4 | 7.94/1.87 s (Wave 238) with 3.40/1.26× (Wave 236) and 4.24× | one run: 7.81/1.81 s, 3.40/1.26×, 4.31×; the Wave 238 re-measurement is quoted separately |
+| 9 | Table 5 abstract | "328 words" → `abstract-final.md` | "167 words" → `paper-A-final.md` |
+| 10 | Table 5 pytest | `5155 passed / 196 skipped` literal | `5513 / 180 / 12 xfailed` with the run date and the torch exclusion, pointing at this audit |
+
+Two downstream copies were also corrected: the R4/R5 artifact paths in
+`docs/audit/engineering/headline-evidence.md` (additive note, historical body
+untouched) and the `reproduce/04`/`05` scripts, which had been reading the
+ablation rows.

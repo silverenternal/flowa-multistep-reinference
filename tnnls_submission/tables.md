@@ -1,14 +1,15 @@
 # TNNLS Submission Tables
 
-> **Authority note (2026-10-27).** The manuscript's own tables are the
+> **Authority note (2026-10-29).** The manuscript's own tables are the
 > submission tables: Table III (`paper-A-final.tex`, main-cell evidence)
 > and the §7.9 four-checkpoint frontier table. The cell-level register
 > is [`docs/PAPER-EVIDENCE.md`](../docs/PAPER-EVIDENCE.md). The tables
 > below are an internal inventory that accumulated across waves; where
-> a row here disagrees with the manuscript, the manuscript wins. Two
-> known historical mismatches are flagged inline: Table 1's R1 row is
-> the synthetic-velocity-field basis (the real-ckpt basis gives
-> 158 → 271), and Table 1's R6 row was mislabelled as MNIST FM.
+> a row here disagrees with the manuscript, the manuscript wins. Every
+> cell below was recomputed from the artifact it cites on 2026-10-29
+> (`tools/check_tables_inventory.py`); the one basis fork that remains
+> is flagged inline: Table 1's R1 row is the synthetic-velocity-field
+> basis (the real-ckpt basis gives 158 → 271).
 
 **Status:** TNNLS paper-ready tables (5 main tables). All data sourced from [`verification_outputs/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs) with byte-addressable provenance.
 
@@ -19,30 +20,30 @@
 | # | Model | Metric | Baseline | Framework | Δ | Paper § | Verification |
 |---|---|---|---:|---:|---:|---|---|
 | R1 | LineageFlow (ICML 2026 protein FM) | `hmmscan_total_hits` N=1000 | 158 | 342 | **+116.46%** (p<1e-10) | §7.6.1 | [`verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026) — *synthetic-velocity-field basis; the real-ckpt basis gives 158 → 271 (+71.5%), and the manuscript quotes the single-seed d_z = +0.182 reading* |
-| R2 | Kanzi (molecular DAE inv-proj) | `RMSD` N=1000 | 0.6146 | 0.5941 | **d_z +0.3927** (medium-effect) | §7.6.2 | [`verification_outputs/wave235-p2-r2-uplift.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p2-r2-uplift.json) — *counterfactual sensitivity; the manuscript's primary R2 number is d_z = −0.0990* |
+| R2 | Kanzi (molecular DAE inv-proj) | `RMSD` N=1000 | 0.9028 | 0.8838 | **d_z −0.0990** (p = 0.0018, Bonf-sig) | §7.2 | [`verification_outputs/wave218-p3-kanzi-framework-wins.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave218-p3-kanzi-framework-wins.json) — *index-matched two-sample t, mean diff −0.0190 Å; the Wave 235 counterfactual sensitivity (d_z +0.3927) is not the R2 headline* |
 | R3 | FlowMol3 (ICML 2026 mol FM) | `fg_dev`, N=1000 per arm, NFE=250, 3 seeds | — | mean diff −0.0377 | **p = 0.559, d_z = −0.401** (not significant) | §7.2 / §7.9 | [`verification_outputs/r3_n1000_3seed_fixed_q4_2026/wave338-p5-r3-n1000-paired.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/r3_n1000_3seed_fixed_q4_2026/wave338-p5-r3-n1000-paired.json) |
-| R4 | 2D Two Moons (Liu 2022) | `W₂` | 0.5029 | 0.4663 | **−7.28%** | §7.6.4 | [`verification_outputs/r4_2d_two_moons_w2_m7p28pct/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs/r4_2d_two_moons_w2_m7p28pct) |
-| R5 | 2D Eight Gaussians (Liu 2022) | `W₂` | 0.6606 | 0.5919 | **−10.40%** | §7.6.5 | [`verification_outputs/r5_2d_eight_gaussians_w2_m10p40pct/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs/r5_2d_eight_gaussians_w2_m10p40pct) |
-| R5b | CIFAR-10 Rectified Flow | `FID` (matched-NFE=50) | 218.87 | 122.18 (batched, n_rounds=1) | **−2.53% to −0.66%** on 3/4 schedulers (n_rounds=1 framework-WINS) | §7.6.7 | [`verification_outputs/wave235-p1-r5b-fix.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p1-r5b-fix.json) |
+| R4 | 2D Two Moons (Liu 2022) | `W₂` | 0.5029 | 0.4663 | **−7.28%** | §7.6.4 | [`verification_outputs/g1_deep_dive_q3_2026.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/g1_deep_dive_q3_2026.json) — row `rectified_flow_2d_sota_two_moons` |
+| R5 | 2D Eight Gaussians (Liu 2022) | `W₂` | 0.6606 | 0.5919 | **−10.40%** | §7.6.5 | [`verification_outputs/g1_deep_dive_q3_2026.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/g1_deep_dive_q3_2026.json) — row `rectified_flow_2d_sota_eight_gaussians` |
+| R5b | CIFAR-10 Rectified Flow | `FID` (matched-NFE=50, n_rounds=1) | 454.39 (N=200, seed 42) | ΔFID −1.60 / −2.53 / −0.12 / −0.66% (4 schedulers) | **CONDITIONAL**: 4/4 negative at N=200; **2/4** at N=1000 (baseline 48.4059); 4/4 regress at n_rounds=2 and 20 | §7.2 / §7.7 | [`wave235-p1-r5b-fix.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p1-r5b-fix.json) + [`wave247-p3-r5b-n1000-n1/summary.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave247-p3-r5b-n1000-n1/summary.json) |
 | R5c | MNIST FM, four checkpoints × 7 NFE rungs | `FID` plateau (mean of last two rungs) | 24.4839 (`w16e1_5k`) | 21.3632 (`w16e1_5k`) | **−12.75%**, 7/7 strict-gain rungs (WIN); TIEs on `w16e1_10k` / `w16e1_60k` / `production` | §7.2 / §7.9 | [`verification_outputs/gap84-cap-frontier/frontier_w16e1_5k.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/gap84-cap-frontier/frontier_w16e1_5k.json) |
 | R6 | Kanzi k6 foldability (live tier-aware) | scPerplexity / pLDDT, n=3000 | — | scPerplexity d_z −0.8393; hard-tier pLDDT d_z +1.1211 | **pooled pLDDT d_z +0.1466** (below the +0.2235 bar) | §7.2 / §7.6 | [`verification_outputs/gap31-r6-live-uplift/gap31_summary.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/gap31-r6-live-uplift/gap31_summary.json) |
 
-**R5b Wave 235 P1 reversal:** R5b CIFAR-10 RF was REGRESSES (+24-31% ΔFID) under batched-path n_rounds=10, but framework-WINS at n_rounds=1 with ΔFID ∈ [-2.53%, -0.66%] on 3/4 schedulers. This is a **conditional boundary**, not a fundamental regression.
+**R5b round-count boundary:** at N=200, seed 42, n_rounds=1 all four schedulers sit below the 454.385 baseline (ΔFID −1.60 / −2.53 / −0.12 / −0.66%), but at N=1000 only EvidenceDriven and FreeTraj improve while Cosine and CodimensionSheet regress (baseline 48.4059), and both multi-round sweeps regress on 4/4 (n_rounds=2: +9.77 … +16.62%; n_rounds=20: +24.46 … +30.65%). The cell is a protocol-dependent single-round opportunity plus a measured multi-round boundary — not a 4/4 replicated win at N=1000 (paper §7.7).
 
-**R5b Wave 235 P1 details:** Wave 235 P1 ran 5 configurations (original, n_rounds=2, --no-final-restart, n_rounds=1, combined) on CodimensionSheetScheduler / CosineAnnealScheduler / EvidenceDrivenScheduler / FreeTrajScheduler. n_rounds=1 produced framework-WINS on 3/4 schedulers; the new --no-final-restart CLI flag was added (Wave 235 P1 commit `f7b294a`).
+**R5b Wave 235 P1 details:** Wave 235 P1 ran 5 configurations (original, n_rounds=2, --no-final-restart, n_rounds=1, combined) on CodimensionSheetScheduler / CosineAnnealScheduler / EvidenceDrivenScheduler / FreeTrajScheduler. n_rounds=1 is negative on 4/4 schedulers at N=200 (2/4 at N=1000); the new --no-final-restart CLI flag was added (Wave 235 P1 commit `f7b294a`).
 
 ---
 
 ## Table 2 — 4-Arm Head-to-Head Per-Record Paired-t (Wave 230 + Wave 234)
 
-| Cell | Baseline | Framework | d_z | p_raw | Verdict | Source |
+| Cell | Baseline | Framework | d_z | p_bonf | Verdict | Source |
 |---|---:|---:|---:|---:|---|---|
-| vanilla scPerplexity NFE50 | (Wave 230 P2) | (Wave 230 P2) | +0.145 | (Bonf-sig) | framework_WINS | [`verification_outputs/wave230-p2-real-4arm-per-record.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave230-p2-real-4arm-per-record.csv) |
-| vanilla scPerplexity NFE100 | (Wave 230 P2) | (Wave 230 P2) | +2.103 | (Bonf-sig) | framework_WINS | [`verification_outputs/wave230-p2-real-4arm-per-record.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave230-p2-real-4arm-per-record.csv) |
-| abcache scPerplexity NFE50 | (Wave 230 P2) | (Wave 230 P2) | +0.704 | (Bonf-sig) | framework_WINS | [`verification_outputs/wave230-p2-real-4arm-per-record.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave230-p2-real-4arm-per-record.csv) |
-| (other 13 cells) | (Wave 230 P2) | (Wave 230 P2) | <0.07 | >0.05 | UNDERPOWERED | [`verification_outputs/wave230-p2-real-4arm-per-record.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave230-p2-real-4arm-per-record.csv) |
+| vanilla scPerplexity NFE50 | (Wave 230 P2) | (Wave 230 P2) | **−0.9901** | 3.54e-45 | SUPPORTED | [`verification_outputs/wave230-p2-real-4arm-per-record.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave230-p2-real-4arm-per-record.csv) |
+| vanilla scPerplexity NFE100 | (Wave 230 P2) | (Wave 230 P2) | **−0.9746** | 3.64e-44 | SUPPORTED | [`verification_outputs/wave230-p2-real-4arm-per-record.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave230-p2-real-4arm-per-record.csv) |
+| abcache scPerplexity NFE50 | (Wave 230 P2) | (Wave 230 P2) | −0.0684 | 1.00 | UNDERPOWERED | [`verification_outputs/wave230-p2-real-4arm-per-record.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave230-p2-real-4arm-per-record.csv) |
+| (other 13 cells) | (Wave 230 P2) | (Wave 230 P2) | \|d_z\| ≤ 0.094 | 1.00 | UNDERPOWERED | [`verification_outputs/wave230-p2-real-4arm-per-record.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave230-p2-real-4arm-per-record.csv) |
 
-**Summary:** 14/16 cells granularity-bounded (|d_z| < 0.07); 3/16 Bonferroni-significant (|d_z| ∈ [0.145, 2.103]).
+**Summary:** 11/16 cells granularity-bounded (|d_z| < 0.07); 2/16 Bonferroni-significant (|d_z| ∈ [0.975, 0.990]). scPerplexity is lower-is-better, so a framework win is a negative d_z. The Wave 229 bootstrap projection (−2.082 / −2.103 / −0.145) is a different estimator and is not quoted here.
 
 ---
 
@@ -51,9 +52,9 @@
 | Method | Cell | Statistic | p-value | Verdict | Source |
 |---|---|---|---:|---|---|
 | TOST equivalence (α=0.05, 0.1 SD margin) | 16 cells | max(p1, p2) | (per cell) | 0/16 actively equivalent; 14/16 in 0.1 SD band | [`verification_outputs/wave234-p2-tost.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p2-tost.csv) |
-| TOST equivalence | 16 cells | max(p1, p2) | (per cell) | 9/16 BF01 ≥ 10 (Wagenmakers threshold) | [`verification_outputs/wave234-p4-bf01.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p4-bf01.csv) |
-| Jonckheere-Terpstra ordered test | R2 Kanzi | z = -10.0 | **9.86 × 10⁻²³** | monotone hard > medium > easy | [`verification_outputs/wave234-p3-jonckheere.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p3-jonckheere.csv) |
-| Jonckheere-Terpstra ordered test | R6 k6 | z = -10.7 | **5.11 × 10⁻²⁵** | monotone hard > medium > easy | [`verification_outputs/wave234-p3-jonckheere.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p3-jonckheere.csv) |
+| Bayes factor (BF01, BIC approximation) | 16 cells | BF01 | (per cell) | 9/16 BF01 ≥ 10 (Wagenmakers threshold) | [`verification_outputs/wave234-p4-bf01.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p4-bf01.csv) |
+| Jonckheere-Terpstra ordered test | R2 Kanzi | z = +20.673 | **3.017 × 10⁻⁹⁵** | monotone hard > medium > easy | [`verification_outputs/wave234-p3-jonckheere.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p3-jonckheere.csv) — `jt_z` / `jt_p_asymptotic` columns |
+| Jonckheere-Terpstra ordered test | R6 k6 | z = +21.778 | **1.863 × 10⁻¹⁰⁵** | monotone hard > medium > easy | [`verification_outputs/wave234-p3-jonckheere.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p3-jonckheere.csv) — `jt_z` / `jt_p_asymptotic` columns |
 | DerSimonian-Laird random-effects meta | k=12 studies | pooled d_z = +1.117 | (95% CI [+0.645, +1.589]) | I² = 99.60% | [`verification_outputs/wave234-p5-meta-summary.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p5-meta-summary.json) |
 | Non-inferiority test (10% FID margin) | R5b CIFAR-10 RF (multi-round) | p_NI = 0.9985 | (fail margin) | REGRESSES first-class boundary disclosure | [`verification_outputs/wave234-p6-ni-test.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p6-ni-test.csv) |
 | Non-inferiority test (10% FID margin) | R5b CIFAR-10 RF (n_rounds=1) | (Wave 235 P1) | (passes) | n_rounds=1 structural elimination | [`verification_outputs/wave235-p1-r5b-fix.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p1-r5b-fix.json) |
@@ -64,9 +65,11 @@
 
 | Configuration | Wallclock (s) | Framework/Baseline Ratio | Speedup |
 |---|---:|---:|---:|
-| **Before CUDA-graph (matched-NFE=50, BATCH=64, n_rounds=4)** | 7.94 | 3.40× | (baseline) |
-| **After CUDA-graph (matched-NFE=50, BATCH=64, n_rounds=4)** | 1.87 | 1.26× | **4.24× speedup** |
+| **Before CUDA-graph (matched-NFE=50, BATCH=64, n_rounds=4)** | 7.81 | 3.40× | (baseline) |
+| **After CUDA-graph (matched-NFE=50, BATCH=64, n_rounds=4)** | 1.81 | 1.26× | **4.31× speedup** |
 | Closes 76.8% of framework/baseline wall-clock gap | — | — | — |
+
+Both rows are the same run (`verification_outputs/wave236-p2-wallclock.json`). The Wave 238 P2 re-measurement is recorded in the same file under `re_measurement_wave238_p2`: 7.94 s → 1.87 s, 4.24×, `ratio_after = 1.30`. Quoting one run's seconds against the other run's ratio (as an earlier revision of this table did) is not a valid comparison.
 
 **Implementation:** [`adaptive_reflow/framework/cuda_graph_capture.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/framework/cuda_graph_capture.py) (CudaGraphVelocityFieldCache + captured_velocity_field wrapper); env-var gated `ADAPTIVE_REFLOW_CUDA_GRAPH`. Wired into `_torch_velocity_field` and `_batched_torch_velocity_field` in [`adaptive_reflow/adapters/rectified_flow_cifar.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/adapters/rectified_flow_cifar.py). **D.4 30/30 PASS preserved in both modes** (default-off vs env-var-on).
 
@@ -81,10 +84,10 @@
 | D.4 byte-stable regression | **30/30 PASS** | [`tests/test_d4_regression_vectors.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tests/test_d4_regression_vectors.py) |
 | mkdocs build --strict | **0 warnings** | [mkdocs.yml](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/mkdocs.yml) |
 | claims_consistency | **No drift** | [`tools/check_claims_consistency.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tools/check_claims_consistency.py) |
-| Abstract word count | **328 words** (Wave 242 P3 — extended from 250 in Wave 237 P1) | [`docs/drafts/abstract-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/abstract-final.md) |
+| Abstract word count | **167 words** (abstract of record in `paper-A-final.md`; the 328-word draft is the historical `abstract-final.md`) | [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) |
 | Ruff lint (4-directory scope) | **0 findings** | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
 | Mypy type-check | **0 errors** | `mypy adaptive_reflow/` |
-| Pytest | **5155 passed / 196 skipped** | `pytest tests/` |
+| Pytest | **5513 passed / 180 skipped / 12 xfailed** (2026-10-28 run, 12 torch-dependent `test_paper_metrics.py` tests excluded on the CPU box) | [`docs/audit/tables-inventory-provenance.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/tables-inventory-provenance.md) |
 
 ---
 

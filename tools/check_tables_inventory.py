@@ -41,28 +41,7 @@ OUT = REPO_ROOT / "verification_outputs"
 #: Drift labels that are documented in docs/audit/tables-inventory-provenance.md
 #: and await an authorised edit of the frozen submission package.  Remove an
 #: entry once the markdown matches the artifact again.
-KNOWN_DRIFT: frozenset[str] = frozenset({
-    # Table 2 -- the three d_z values are the Wave 229 bootstrap magnitudes
-    # with the sign dropped, not the Wave 230 real per-record values the row
-    # cites.  See the audit for the row-by-row mapping.
-    "table2:vanilla scPerplexity NFE50",
-    "table2:vanilla scPerplexity NFE100",
-    "table2:abcache scPerplexity NFE50",
-    "table2:summary/bounded",
-    "table2:summary/significant",
-    "table2:summary/range",
-    # Table 3 -- JT rows predate the variance fix (commit 17de1fa3).
-    "table3:jt-r2-z",
-    "table3:jt-r2-p",
-    "table3:jt-r6-z",
-    "table3:jt-r6-p",
-    # Table 1 -- R4/R5 cite directories that do not exist; the values are in
-    # g1_deep_dive_q3_2026.json.  R5b mixes two FID definitions.
-    "table1:r4-artifact",
-    "table1:r5-artifact",
-    "table1:r5b-baseline",
-    "table1:r5b-framework",
-})
+KNOWN_DRIFT: frozenset[str] = frozenset()
 
 
 def _rows(markdown: str) -> list[list[str]]:
@@ -249,22 +228,35 @@ def check_table1(rep: Report) -> None:
             rep.add("table1:r5c-baseline", "24.4839", f"{base:.4f}")
             rep.add("table1:r5c-framework", "21.3632", f"{fw:.4f}")
 
-    for cell, label in (("r4_2d_two_moons_w2_m7p28pct", "r4"),
-                        ("r5_2d_eight_gaussians_w2_m10p40pct", "r5")):
-        exists = (OUT / cell).is_dir()
-        rep.add(f"table1:{label}-artifact", "present", "present" if exists else "missing")
+    # R4/R5 quote the Liu-2022 rectified-flow SOTA rows of g1, not the 2D FM
+    # ablation rows (2.85 -> 0.62 / 2.31 -> 0.76), which are a separate
+    # experiment.  Both the artifact path and the three numbers are checked.
+    g1 = OUT / "g1_deep_dive_q3_2026.json"
+    if g1.is_file():
+        g1_rows = {r["row"]: r for r in json.load(g1.open())["analysis"]["per_cell_breakdown"]}
+        for label, key, b, f, d in (
+            ("r4", "rectified_flow_2d_sota_two_moons", 0.5029, 0.4663, -0.0728),
+            ("r5", "rectified_flow_2d_sota_eight_gaussians", 0.6606, 0.5919, -0.1040),
+        ):
+            row = g1_rows[key]
+            rep.add(f"table1:{label}-artifact", "present", "present")
+            rep.add(f"table1:{label}-baseline", f"{b:.4f}", f"{float(row['baseline']):.4f}")
+            rep.add(f"table1:{label}-framework", f"{f:.4f}", f"{float(row['framework']):.4f}")
+            rep.add(f"table1:{label}-delta", f"{d:.4f}", f"{float(row['raw_delta_pct']):.4f}")
+    else:
+        for label in ("r4", "r5"):
+            rep.add(f"table1:{label}-artifact", "present", "missing")
 
-    # R5b: the row quotes the v2 FID pair (218.87 -> 122.18) but cites the
-    # n=200 Wave 235 P1 run whose baseline is 454.39.
+    # R5b: the row now quotes the Wave 235 P1 N=200 baseline and the
+    # per-scheduler deltas, plus the N=1000 split from the Wave 247 summary.
     r5b = OUT / "wave235-p1-r5b-fix.json"
     if r5b.is_file():
         j = json.load(r5b.open())
-        m = re.search(r"\| 218\.87 \| 122\.18", md)
-        if m:
-            rep.add("table1:r5b-baseline", "218.87",
-                    f"{j['rounds1']['baseline_fid']:.2f}")
-            best = min(v["fid_headline"] for v in j["rounds1"]["results"].values())
-            rep.add("table1:r5b-framework", "122.18", f"{best:.2f}")
+        rep.add("table1:r5b-baseline", "454.39",
+                f"{j['rounds1']['baseline_fid']:.2f}")
+        deltas = sorted(v["delta_pct"] for v in j["rounds1"]["results"].values())
+        rep.add("table1:r5b-delta-range", "-2.53/-0.12",
+                f"{deltas[0]:.2f}/{deltas[-1]:.2f}")
 
 
 def main(argv: list[str] | None = None) -> int:

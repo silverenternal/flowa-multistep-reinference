@@ -1,10 +1,10 @@
 """Guard ``tnnls_submission/tables.md`` against its cited artifacts.
 
 The table file promises byte-addressable provenance.  ``tools/check_tables_inventory.py``
-tests that promise for the machine-checkable rows; this test runs it and
-fails if a *new* drift appears (the drifts documented in
-``docs/audit/tables-inventory-provenance.md`` are carried in the tool's
-``KNOWN_DRIFT`` set and do not fail until the frozen file is corrected).
+tests that promise for the machine-checkable rows; this test runs it and fails
+if any drift appears.  ``KNOWN_DRIFT`` is now empty: the 14 rows documented in
+``docs/audit/tables-inventory-provenance.md`` were corrected on 2026-10-29, and
+the second test below keeps the exemption set from being re-populated silently.
 
 Skipped when ``verification_outputs/`` is absent (source-only checkout).
 """

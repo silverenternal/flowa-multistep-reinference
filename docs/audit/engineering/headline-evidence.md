@@ -5,6 +5,15 @@
 **Scope:** 7 atomic Phases (1-6 by prior agents + this Phase 7 final synthesis)
 **Constraint:** NO push. NO source code changes. ADDITIVE only.
 
+> **2026-10-29 ADDITIVE note (historical record, no rewrite).** Two of the ten
+> planned subdirectories were never materialized: `r4_2d_two_moons_w2_m7p28pct/`
+> and `r5_2d_eight_gaussians_w2_m10p40pct/` do not exist on disk. The numbers
+> quoted for them (0.5029 → 0.4663 and 0.6606 → 0.5919) are real and live in
+> `verification_outputs/g1_deep_dive_q3_2026.json` under the rows
+> `rectified_flow_2d_sota_two_moons` and `rectified_flow_2d_sota_eight_gaussians`.
+> `tnnls_submission/tables.md` was repointed there on 2026-10-29;
+> `docs/audit/engineering/p3-number-verification.md` already records the gap.
+
 > **Why this exists:** Wave 135 is the **headline-evidence collection** wave that consolidates every experimentally strong data point that supports the Tier-1 SCI submission headline into a single, easy-to-cite source-of-truth directory `docs/headline-evidence/`. Each subdirectory contains a `SOURCE.md` (or `source_audit.md`) pointing at the underlying sweep JSON + the audit doc that establishes provenance, plus symlinks to the canonical on-disk files in `verification_outputs/` and `docs/audit/`. This Phase 7 final close writes the audit doc, appends baseline-audit §R.25, appends CONSOLIDATED §15.34, and commits. **No measurement delta. No algorithm activation. No end-to-end N>=1000 sweep. The Wave 131 ruff-0 / D.4 72/72 PASS / claims_consistency PASS / mkdocs strict EXIT=0 freeze-marker is preserved.**
 
 ---
