@@ -39,7 +39,7 @@ def _run(script: Path) -> subprocess.CompletedProcess[str]:
 def test_master_headline_verifier_passes() -> None:
     proc = _run(MASTER)
     assert proc.returncode == 0, proc.stdout[-3000:] + proc.stderr[-3000:]
-    assert "OK: All 8/8 R-level headlines verified" in proc.stdout
+    assert "OK: All 8/8 reproduction checks verified" in proc.stdout
 
 
 def test_master_does_not_count_the_other_master() -> None:

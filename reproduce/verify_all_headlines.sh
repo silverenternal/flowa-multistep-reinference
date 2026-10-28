@@ -10,7 +10,7 @@
 #   bash reproduce/verify_all_headlines.sh
 #
 # EXPECTED OUTPUT:
-#   "OK: All 8/8 R-level headlines verified"
+#   "OK: All 8/8 reproduction checks verified"
 #
 # This script is safe to invoke in CI; each per-cell script verifies the
 # headline from the byte-stable verification_outputs/ artefact and prints
@@ -56,15 +56,15 @@ done
 
 echo
 echo "================================================================"
-echo "  Summary: ${n_pass}/${n_total} R-level cells verified"
+echo "  Summary: ${n_pass}/${n_total} reproduction checks verified (7 R-level cells + the R6 recipe check)"
 if [ "${n_fail}" -gt 0 ]; then
   echo "  FAILED cells:"
   for f in "${failed[@]}"; do
     echo "    - ${f}"
   done
-  echo "FAIL: ${n_fail} of ${n_total} cells failed verification"
+  echo "FAIL: ${n_fail} of ${n_total} checks failed verification"
   exit 1
 fi
-echo "OK: All ${n_pass}/${n_total} R-level headlines verified"
+echo "OK: All ${n_pass}/${n_total} reproduction checks verified"
 echo "================================================================"
 exit 0

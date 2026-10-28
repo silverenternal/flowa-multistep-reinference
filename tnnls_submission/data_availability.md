@@ -88,7 +88,7 @@ All headline numbers in the manuscript are sourced from byte-addressable per-rec
 - **D.4 byte-stable regression vectors:** 30/30 PASS preserved (Wave 238 P4 + Wave 242 P4)
 - **mkdocs build:** 0 warnings
 - **claims_consistency:** no drift
-- **Pytest:** 5155 passed / 196 skipped
+- **Pytest:** 5528 passed / 180 skipped / 12 xfailed (2026-10-29 CPU run, 12 torch-dependent `test_paper_metrics.py` tests excluded)
 
 ## Checkpoint availability
 
@@ -226,12 +226,13 @@ plus a `verify_all_headlines.sh` master verifier that runs them serially.
    script; uncomment for an end-to-end re-run (cells range from 30 min
    GPU to 50 h CPU).
 
-4. **Verify all 7 R-level cells (8 scripts)** with one command:
+4. **Verify all 8 reproduction checks (7 R-level cells + the R6 recipe
+   check)** with one command:
 
    ```bash
    bash reproduce/verify_all_headlines.sh
-   # Expected: "OK: All 8/8 R-level headlines verified"
-   # On failure, exits non-zero and prints the failing cell(s).
+   # Expected: "OK: All 8/8 reproduction checks verified"
+   # On failure, exits non-zero and prints the failing check(s).
    ```
 
    Then run the engineering gates (must all exit 0):

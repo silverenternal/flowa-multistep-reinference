@@ -14,6 +14,7 @@ from tools.check_submission_manifest import (
     MANIFEST,
     REPO_ROOT,
     check_artifacts,
+    check_ledger,
     check_rows,
 )
 
@@ -41,3 +42,15 @@ def test_packaging_addendum_artifacts_match_disk() -> None:
     assert check_artifacts() == [(rel, "ok") for rel, _, _ in CURRENT_ARTIFACTS]
     for rel, _sha, _size in CURRENT_ARTIFACTS:
         assert (REPO_ROOT / rel).is_file(), rel
+
+
+def test_sha256sums_ledger_matches_tree() -> None:
+    """`SHA256SUMS` is the only place MANIFEST.md's own digest can live."""
+    bad = [(name, status) for name, status in check_ledger() if status != "ok"]
+    assert bad == [], bad
+
+
+def test_manifest_carries_no_self_hash() -> None:
+    """A self-referential row is stale by construction; it must stay hash-free."""
+    self_rows = [s for n, s in check_rows() if n == "MANIFEST.md"]
+    assert self_rows == [], self_rows

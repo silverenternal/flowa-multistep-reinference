@@ -21,7 +21,7 @@
 
 - [x] **Manuscript ≤ 14 pages** (TNNLS main-track limit) excluding refs + supplementary — [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) typeset to double-column TNNLS format via `site/build_pdf/`. Current build 11 pages (well within the ≤ 14 limit).
 - [x] **Cover letter uploaded to Editorial Manager** — [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md) (snapshot of [`docs/cover-letter-tnnls.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/cover-letter-tnnls.md)). All 11 USER ACTION placeholders filled before upload.
-- [x] **Highlights (3 bullets, 85-char each)** — [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md).
+- [x] **Highlights (5 bullets, ≤ 25 words each)** — [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md).
 - [x] **Anonymized** — no author / institution / acknowledgement visible in [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md), [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md), or supplementary.
 
 ### Reviewer-proof guarantees
@@ -36,10 +36,10 @@
 - [x] **D.4 byte-stable regression:** 30/30 PASS (Wave 238 P4 + Wave 242 P4 re-verified)
 - [x] **mkdocs build --strict:** 0 warnings (Wave 238 P4 + Wave 242 P4)
 - [x] **claims_consistency:** no drift (Wave 238 P4 + Wave 242 P4)
-- [x] **Abstract word count:** 328 words (Wave 242 P3 — TNNLS allows up to 250; reviewer can request trim if needed)
+- [x] **Abstract word count:** 167 words (2026-10-27 packaging addendum; TNNLS allows up to 250). The 328-word Wave 242 P3 reading is historical.
 - [x] **Ruff lint (4-directory scope):** 0 findings across [`adaptive_reflow/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/adaptive_reflow), [`tests/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tests), [`scripts/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/scripts), [`tools/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tools)
 - [x] **Mypy type-check:** 0 errors
-- [x] **Pytest:** 5155 passed / 196 skipped
+- [x] **Pytest:** 5528 passed / 180 skipped / 12 xfailed (2026-10-29 CPU run, 12 torch-dependent `test_paper_metrics.py` tests excluded)
 
 ### Tier-3 cells (12 of 12)
 
@@ -127,11 +127,11 @@
 | 4 | claims consistency PASS | **PASS** | `python3 tools/check_claims_consistency.py` → no drift (61 active + 2 deprecated claims) |
 | 5 | 17 USER_TO_FILL placeholders documented | **PASS** (documented in FILL_GUIDE.md) | `tnnls_submission/FILL_GUIDE.md` documents 17 fillable fields (1 author + 1 editor + 5 reviewers × {affiliation, email} + 3 corresponding-author); 31 grep hits = 17 distinct fields + 14 documentation-pointer occurrences |
 | 6 | MANIFEST.md SHA-256 ledger current | **PENDING** (displayed SHA stale; per MANIFEST self-reference note intentional) | MANIFEST row 23 displays `f93c7df70be...` (46891 bytes) but `sha256sum tnnls_submission/MANIFEST.md` computes `5c593ed8b01b76c...` (47820 bytes); per MANIFEST self-reference note the displayed SHA is "the hash of the bytes BEFORE this very SHA-row was added"; final rehash is the freeze-marker step |
-| 7 | paper.pdf page count ≤ 14 | **PASS** | `pdfinfo docs/drafts/paper-A-final.pdf` → 11 pages |
+| 7 | paper.pdf page count ≤ 14 | **PASS** | `pdfinfo docs/drafts/paper-A-final.pdf` → 12 pages (2026-10-29 reading) |
 | 8 | supplementary submittable | **PASS** | `tnnls_submission/supplementary_bundle.zip` (148 MB) + `tnnls_submission/supplementary/README.md` byte-stable; 40 entries |
 | 9 | cover letter submittable | **PENDING** (17 USER_TO_FILL placeholders un-filled) | `grep -c "USER TO FILL" tnnls_submission/cover_letter.md` → 31 hits; per FILL_GUIDE.md §168 the 17 actual fillable fields should show no `[USER TO FILL: ...]` strings after user fills them; user-gated per `cover_letter_FILL_AUTOFILL.json` scaffolding |
 | 10 | data_availability.md submittable | **PASS** | SHA `eb410e1fd8a60b6f93d9e2dd7ba391c9a3b31e7ff79d64afbdfde52f70de2692` (10035 bytes) |
-| 11 | highlights submittable | **PASS** | SHA `1655ae5e380322d6ec2467512ea1196b73ce70000d955a5a68fbd6b57c75ff99` (2350 bytes); 3 TNNLS editor-facing highlights each ≤ 85 chars (Wave 356 P4 5-bullet polish is camera-ready variant at `tnnls_submission/highlights_v2.md`) |
+| 11 | highlights submittable | **PASS** | 5 TNNLS editor-facing highlights, each ≤ 25 words; live SHA-256 in [`MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md) row `highlights.md` and in `SHA256SUMS`. The earlier `1655ae5e…` (2350 bytes, 3 bullets ≤ 85 chars) reading and the `highlights_v2.md` variant it pointed at are both historical — that file does not exist. |
 | 12 | Lean 4 verification 28/28 PASS + 4 new stubs | **PENDING** (PENDING_MATHLIB_CACHE; build fails) | `cd formal && lake build FlowA.Theorem5Subclaim53` → "error: no such file or directory" for `Mathlib.Analysis.SpecialFunctions.ExpLog`; per Wave 354 P5 audit 4 stubs (Thm 4.1 + 5.1 + 5.2 + 5.3) authored with 15 sorry sites total; "28/28 PASS" claim does NOT match actual state (4 stubs only, no proofs, Mathlib v4.34.1 precompilation incomplete) |
 | 13 | Wave 260 vendored byte-identical preserved | **PASS** | FlowMol3 `77cae22174b7792b0e25e9e0414038420736d841`; LineageFlow `ccef84adff421fcb6b855285bc1860e1f9a94f59`; Kanzi `cfed9cf4be06a98bd2ce5f8492e20c0b9fa0d41b` — all match MANIFEST pins |
 | 14 | NO-PUSH policy honoured | **PASS** | no `git push` since Wave 242 freeze; Wave 343-356 commits carry `(USER AUTHORIZED, NO PUSH)` footer per `todo/PUSH-READY.md` |

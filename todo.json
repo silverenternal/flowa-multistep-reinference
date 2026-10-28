@@ -5,7 +5,7 @@
  "submission_objective": "Publish in a CAS tier-1 (中科院一区) journal, TNNLS first. The paper is packaged and submittable as of 2026-10-27 (12 pages, 0 overfull, 3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only). What it lacks is not prose but one piece of evidence: the central claim is currently a four-point cross-section, and the reviewer's first objection is already known. The plan below exists to convert that cross-section into an identification, then to put it in the paper.",
  "win_definition": "A cell wins only if BOTH hold. (1) POINT WIN: at the cell's canonical protocol (same checkpoint, same N, same seeds), the framework's metric is better with the paired 95% CI excluding 0 and clearing the cell's alpha. (2) FRONTIER DOMINANCE: over the NFE grid, the framework's (quality, NFE) curve lies at or below the baseline's at every grid point, and the framework's plateau is better than the baseline's plateau. (2) is the load-bearing one: flow-matching inference saturates with steps, so 'the baseline with more steps' is NOT a valid control and NOT a threat -- the baseline's ceiling is fixed by its own inference protocol. The framework's claim is that it raises that ceiling AND reaches a given quality at fewer NFE. Both halves are measured, not asserted.",
  "frontier_protocol": "Per model: baseline and framework on the SAME checkpoint, prior, seed policy and N, swept over NFE in {10, 25, 50, 100, 200} (extended upward until the baseline plateaus for two consecutive points). Report per-NFE paired deltas with CIs, the plateau estimate (mean of the last two grid points), and the dominance verdict. A cell whose baseline does not plateau on the grid has an unfinished ceiling measurement, not a win.",
- "updated_at": "2026-10-28",
+ "updated_at": "2026-10-29",
  "history": "docs/audit/todo-history.md",
  "archive": "docs/audit/todo-archive-2026-10-27.json",
  "no_push": true,
@@ -26,9 +26,12 @@
   "python3 tools/check_docs_against_code.py",
   "python3 -m pytest tests/test_d4_regression_vectors.py tests/test_adapters/test_regression_vectors.py -q",
   "ruff check adaptive_reflow/ tests/",
-  "mkdocs build --strict"
+  "mkdocs build --strict",
+  "python3 tools/check_submission_manifest.py",
+  "python3 tools/check_submission_links.py",
+  "python3 tools/check_data_integrity.py"
  ],
- "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 15 known failures (3 stale eval stubs; 12 order-dependent test_paper_metrics cases). docs-vs-code verifies 3371 claims since the 2026-10-27 packaging pass.",
+ "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 5528 passed / 180 skipped / 12 xfailed / 0 failed on 2026-10-29, excluding the 12 torch-dependent test_paper_metrics cases (no torch in the system interpreter). docs-vs-code verifies 3375 claims since the 2026-10-27 packaging pass. The three package-integrity checkers were added to the chain on 2026-10-29 after an audit found that nothing was running them: the MANIFEST had 13 stale rows, 41 of 256 submission links were dead, and 33 ledger mismatches had accumulated unnoticed.",
  "venue_assessment": {
   "note": "Judgment, not measurement. Recorded so the ordering below can be argued with.",
   "target": "IEEE TNNLS (中科院大类 计算机科学 1区; IF 10.2 for 2024; JCR Q1)",

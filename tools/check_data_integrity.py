@@ -176,6 +176,14 @@ def _verify_subdir(subdir: Path) -> tuple[int, tuple[Mismatch, ...]]:
     # be listed in the ledger (the ledger is supposed to enumerate every
     # artifact). Walk only the *git-tracked* view via ``rglob``; we treat
     # hidden files / the ledger itself as auto-skip.
+    #
+    # A ledger that parses to zero entries is not a checksum list at all --
+    # ``verification_outputs/wave349-r1-3seed-gpu/SHA256SUMS`` is a markdown
+    # aggregator pinned byte-for-byte by the manuscript.  It is already
+    # surfaced through ``empty_ledgers``, so demanding per-file lines from it
+    # here would only double-report the same defect.
+    if file_count == 0:
+        return file_count, tuple(mismatches)
     for on_disk in subdir.rglob("*"):
         if not on_disk.is_file():
             continue
@@ -249,7 +257,8 @@ def _format_report(result: IntegrityResult) -> str:
     out.append(f"- Mismatches: **{len(result.mismatches)}**")
     if result.empty_ledgers:
         out.append(
-            "- Empty ledgers (no entries; consider removing): "
+            "- Ledgers with no checksum lines (not verified here; see "
+            "`tools/check_evidence_ledgers.py`): "
             + ", ".join(result.empty_ledgers)
         )
     out.append("")

@@ -152,7 +152,7 @@ boundary statement rather than as a hidden caveat.
 SHA-256-pinned source-code archive (`5b21cca`), a Docker recipe
 (`flowa:tnnls-v3.0`), Zenodo deposits for code + per-record CSVs,
 a D.4 byte-stable regression suite at **30/30 PASS**, a
-hash-chained transition log spanning 5155 pytest tests, and a
+hash-chained transition log spanning 5528 pytest tests, and a
 **5-gate CI** (`ruff`, `mkdocs`, `claims`, `vendored`, `D.4`)
 that is green on every push. The framework is reconstructed
 around three typed-systems primitives — **typed contracts**
@@ -1010,7 +1010,7 @@ The submission is accompanied by:
   repository, SHA-256-pinned at the freeze-marker commit
   `5b21cca` and re-pinned at the Wave 332 DeepSeek-final-pass
   commit `176c6d4`. The repository includes the full
-  [`adaptive_reflow/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/adaptive_reflow) framework code, 5155 pytest tests, the
+  [`adaptive_reflow/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/adaptive_reflow) framework code, 5528 pytest tests, the
   **D.4 byte-stable regression suite at 30/30 PASS**, the Wave
   190/195/196/198/203 statistical scripts, every R-cell config
   YAML, `pyproject.toml` + `uv.lock`, `README.md`, `QUICKSTART.md`,
@@ -1236,7 +1236,7 @@ hugo@example.com
 **Submission package manifest** (for editorial reference):
 
 1. Manuscript PDF ([`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md)
-   typeset to double-column 11-page TNNLS format).
+   typeset to double-column 12-page TNNLS format).
 2. Supplementary PDF (S1–S8: Theorem 1 derivation, per-record
    tables, hp-sensitivity sweep, 4-arm per-seed margin table,
    honest negatives, Theorem 1 source paper, cluster-robust

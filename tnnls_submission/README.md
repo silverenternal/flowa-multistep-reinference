@@ -14,7 +14,7 @@ tnnls_submission/
 ├── MANIFEST.md                ← file-by-file SHA-256 ledger
 ├── cover_letter.md            ← EDITOR-FACING — fill placeholders first
 ├── FILL_GUIDE.md              ← how to fill `cover_letter.md` placeholders
-├── highlights.md              ← 3 highlights (≤ 85 chars each)
+├── highlights.md              ← 5 highlights (≤ 25 words each)
 ├── tables.md                  ← 5 TNNLS paper tables
 ├── figures.md                 ← ASCII architecture diagrams
 ├── data_availability.md       ← Zenodo DOI + per-record CSV provenance
@@ -101,7 +101,7 @@ Select: **"Regular Paper"** (TNNLS treats the manuscript as a regular research a
 - If ScholarOne only accepts PDF: `pandoc -o cover_letter.pdf tnnls_submission/cover_letter.md --pdf-engine=xelatex -V geometry:margin=1in -V fontsize=11pt`.
 
 ### Step 6 — Highlights
-- Paste the three bullets from [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md) (each ≤ 85 chars) into the "Manuscript Highlights" field. **Each highlight on its own line.**
+- Paste the five bullets from [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md) (each ≤ 25 words) into the "Manuscript Highlights" field. **Each highlight on its own line.**
 
 ### Step 7 — Suggested Reviewers / Associate Editor / COI
 - Suggested Associate Editor: copy from cover letter §9.
@@ -137,7 +137,7 @@ Select: **"Regular Paper"** (TNNLS treats the manuscript as a regular research a
 | Editorial Manager complains about "non-standard manuscript type" | Select "Regular Paper", not "Survey" or "Correspondence" |
 | PDF rejected for "missing embedded fonts" | Recompile with `\usepackage[T1]{fontenc}` (already in the IEEEtran template) |
 | Cover-letter PDF exceeds 1 MB | Convert from `.md` to PDF; if still too large, drop the S1–S8 supplementary-listing appendix (it duplicates the supplementary README) |
-| Highlights length check fails | Each highlight MUST be ≤ 85 chars; check with `awk '{print length, $0}' tnnls_submission/highlights.md` |
+| Highlights length check fails | Each highlight MUST be ≤ 25 words; check with `awk '/^[0-9]\./ {print NF-1, $0}' tnnls_submission/highlights.md` (the count excludes the leading `N.`) |
 | ScholarOne rejects 5+ supplementary files | Upload only the README index; the index hyperlinks every byte-addressable artifact |
 
 ---

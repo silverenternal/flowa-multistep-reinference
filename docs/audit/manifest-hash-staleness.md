@@ -99,3 +99,28 @@ Refreshing seven size/SHA pairs plus the three table rows (and deciding what to
 do about the self-referential row) is a mechanical edit of
 `tnnls_submission/MANIFEST.md`. It changes no number the paper cites and no
 claim; it only makes the integrity table verifiable again.
+
+---
+
+## 8. Resolution (2026-10-29) — authorised, and closed
+
+The refresh in §7 was authorised and executed. All 13 stale rows now match
+disk; `KNOWN_STALE` is `frozenset()` and `test_known_stale_list_stays_honest`
+still passes because nothing is stale.
+
+The self-referential row was resolved by **removing the hash, not by chasing
+it**: `MANIFEST.md`'s row is now `— | see SHA256SUMS`, and the authoritative
+digest lives in the new sibling `tnnls_submission/SHA256SUMS` ledger (23 files,
+`sha256sum -c` clean). `tools/check_submission_manifest.py` gained a
+`check_ledger()` pass that requires the ledger to cover `MANIFEST.md` and every
+row that still carries a hash, so the table and the ledger cannot diverge.
+
+The row count moved 27 → 26 for the same reason: the manifest's own row no
+longer matches the `| name | bytes | sha256 |` pattern.
+
+The `sha256sum -- *.md` recipe quoted in §4 was also wrong in a second way —
+it omits the manuscript triple, the five figure assets and the zip — and has
+been replaced by `sha256sum -c SHA256SUMS` in `MANIFEST.md`, `AGENTS.md` and
+`tnnls_submission/data_availability.md`.
+
+Full record: `docs/audit/submission-package-refresh.md`.

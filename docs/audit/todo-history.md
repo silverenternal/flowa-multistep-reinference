@@ -2041,3 +2041,52 @@ five match exactly, and the five ASCII-era companion figures all exist.
 forms; two test files fail on any new drift and on an exemption that outlives
 its issue. No hash, number or claim was modified — regenerating a ledger
 rewrites a frozen evidence file, so that needs authorisation.
+
+## 31. The submission package's integrity anchor could not be verified (2026-10-29)
+
+CPU-only. `tnnls_submission/MANIFEST.md` is the reviewer's SHA-256 anchor, and
+two of its properties made it unverifiable. It carried **its own hash** — a
+file cannot contain its own digest, so every self-referential value in its
+history was stale by construction, and the row's own prose conceded this
+("the displayed SHA is the hash of the bytes BEFORE this very SHA-row was
+added"). And the documented re-verification recipe was
+`cd tnnls_submission && sha256sum -- *.md`, which omits the manuscript triple,
+the five figure assets and the supplementary zip, and could never compare
+against a markdown table anyway.
+
+Nine unique rows were stale behind a `KNOWN_STALE` exemption (13 table rows,
+because the manuscript triple appears in two tables); `data_availability.md`
+was the one row with no exemption, so it was the only hard failure the checker
+reported. `check_submission_manifest.py` now exits 1 on any stale row, keeps
+`KNOWN_STALE` empty, and verifies a new `tnnls_submission/SHA256SUMS` ledger
+that pins all 23 packaged files including `MANIFEST.md` itself.
+
+The prose had rotted alongside the hashes. The package claimed
+`5155 passed / 196 skipped` (measured: 5528 / 180 / 12 xfailed), a 328-word
+abstract (167), 3 highlights at ≤ 85 chars (5 at ≤ 25 words, and the
+`highlights_v2.md` "camera-ready variant" it pointed at does not exist),
+10/11/14-page builds (12, per `pdfinfo`), and `reproduce/0[1-7]_*.sh`
+covering "all 7 R-level cells" (8 scripts: 7 cells plus the R6 recipe check —
+the master script now says "reproduction checks" rather than "R-level
+headlines", because it was counting eight of the former and calling them the
+latter).
+
+One gate was red for a reason that was fixable rather than exemptable:
+`tools/check_data_integrity.py` reported 33 mismatches. Thirty were `.npz`
+sample dumps under `gap32-headtohead/` and one was `gap36-ablation-matrix/
+METADATA.json` — all **git-tracked**, so "local scratch" was not an available
+excuse; the ledgers were simply incomplete. Appended the 31 entries. The
+remaining two were the `wave349-r1-3seed-gpu/SHA256SUMS` markdown aggregator
+that the manuscript pins byte-for-byte (`28aafe1c…`, 2642 B); it is left
+byte-identical, and the checker now skips the per-file cross-check for a
+ledger that parses to zero entries, because `empty_ledgers` already reports it
+and `check_evidence_ledgers.py` classifies it as `not_a_ledger` with a written
+reason. Result: 0 mismatches, 264 files across 15 ledgers (was 33 / 233).
+
+`tools/check_data_provenance.py` still reports 3 `orphan_sha` drifts, all in
+frozen per-wave audit records (`wave350-r6-live-attempt.md`,
+`wave363-k1-recipe.md`, `wave363-k4-recipe.md`). Those record what the
+artifacts hashed to at the time; rewriting them would falsify the trail.
+
+No number in `paper-A-final.*` moved. Full record:
+`docs/audit/submission-package-refresh.md`.

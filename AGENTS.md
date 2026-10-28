@@ -57,9 +57,11 @@ Translate **verified** results into publication evidence.
   - `UNDERPOWERED`      — too few records to call
   - `REGRESSES`         — framework hurts the metric
   - `DEFERRED`          — env-blocked or compute-deferred
-- When you change `tnnls_submission/*`, update the SHA-256 column in
-  `tnnls_submission/MANIFEST.md` AND `tnnls_submission/cover_letter.md`
-  (re-run `cd tnnls_submission && sha256sum -- *.md`).
+- When you change `tnnls_submission/*`, regenerate and verify the package
+  ledger: `cd tnnls_submission && sha256sum -c SHA256SUMS` after rebuilding
+  it (recipe in `MANIFEST.md` §"SHA-256 rehash procedure"). `MANIFEST.md`
+  carries per-file size + SHA-256 rows, but its own row is hash-free by
+  construction — this file's digest lives only in `SHA256SUMS`.
 - When you change `docs/CLAIMS.md`, run `python tools/check_claims_consistency.py`
   to verify no drift.
 - Preserve caveats: metric-definition gaps, CPU/GPU differences, user-gated
@@ -204,8 +206,8 @@ python3 -m pytest tests/ -q
 # mypy type-check (target: 0 errors; current state documented in CLM-024)
 mypy adaptive_reflow/
 
-# TNNLS submission package SHA-256 (must match MANIFEST)
-cd tnnls_submission && sha256sum -- *.md
+# TNNLS submission package SHA-256 (must match MANIFEST + SHA256SUMS)
+cd tnnls_submission && sha256sum -c SHA256SUMS
 ```
 
 ### 4.2 Paper-write workflow (template reference)

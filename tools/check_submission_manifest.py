@@ -10,17 +10,20 @@ Two exceptions are understood by the checker:
 * Rows whose description says ``SUPERSEDED`` or ``archived for historical``
   are historical artifacts that are allowed to be absent.
 * ``MANIFEST.md`` cannot carry its own hash (writing the hash changes the
-  file), so that row is reported separately and never counted as drift.
+  file).  Its row is deliberately hash-free and points at the sibling
+  ``SHA256SUMS`` ledger, which the checker verifies separately.
 
-``KNOWN_STALE`` lists the rows that are currently out of date and are
-documented in ``docs/audit/manifest-hash-staleness.md``.  They do not fail
-the run while the frozen package awaits an authorised refresh; anything
-else does.
+``KNOWN_STALE`` lists rows that are out of date and awaiting an authorised
+refresh.  It is empty as of 2026-10-29; anything stale now fails the run.
 
 The 2026-10-27 packaging addendum at the top of the manifest declares the
 current hashes of the three manuscript artifacts.  Those three are checked
-against the addendum rather than the (older) table row, because the
-addendum states that it supersedes every reading that differs.
+against the addendum as well as against their table rows, so an addendum
+that drifts from the table is reported rather than silently preferred.
+
+``SHA256SUMS`` is the authoritative ledger (a file cannot carry its own
+hash).  The checker requires it to cover ``MANIFEST.md`` and every table row,
+and to agree with the working tree.
 
 Usage
 -----
@@ -41,20 +44,7 @@ MANIFEST = PKG / "MANIFEST.md"
 
 #: Rows that are stale today and await an authorised refresh of the frozen
 #: manifest.  Delete an entry once the row matches again.
-KNOWN_STALE: frozenset[str] = frozenset({
-    "README.md",
-    "cover_letter.md",
-    "highlights.md",
-    "tables.md",
-    "figures.md",
-    "submission_checklist.md",
-    # The table rows for the three manuscript artifacts predate the
-    # 2026-10-27 packaging addendum; the addendum is authoritative and is
-    # checked separately below.
-    "../docs/drafts/paper-A-final.md",
-    "../docs/drafts/paper-A-final.tex",
-    "../docs/drafts/paper-A-final.pdf",
-})
+KNOWN_STALE: frozenset[str] = frozenset()
 
 #: (path relative to the repo root, sha256, bytes) from the packaging addendum.
 CURRENT_ARTIFACTS: tuple[tuple[str, str, int], ...] = (
@@ -110,6 +100,41 @@ def check_artifacts() -> list[tuple[str, str]]:
     return out
 
 
+def check_ledger() -> list[tuple[str, str]]:
+    """Verify ``tnnls_submission/SHA256SUMS`` against the tree.
+
+    A file cannot carry its own hash, so ``MANIFEST.md`` is pinned only here.
+    Every other row that has a hash in the manifest must also appear in the
+    ledger, otherwise the two surfaces can drift apart.
+    """
+    ledger = PKG / "SHA256SUMS"
+    if not ledger.is_file():
+        return [("SHA256SUMS", "MISSING")]
+    out: list[tuple[str, str]] = []
+    covered: set[str] = set()
+    for line in ledger.read_text().splitlines():
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        sha, _, name = line.partition("  ")
+        name = name.strip()
+        if not name:
+            out.append((line, "MALFORMED"))
+            continue
+        covered.add(name)
+        path = (PKG / name).resolve()
+        if not path.is_file():
+            out.append((name, "MISSING"))
+            continue
+        got, _ = _sha(path)
+        out.append((name, "ok" if got == sha else "DRIFT"))
+    if "MANIFEST.md" not in covered:
+        out.append(("MANIFEST.md", "NOT_IN_LEDGER"))
+    for name, status in check_rows():
+        if status == "ok" and name not in covered:
+            out.append((name, "NOT_IN_LEDGER"))
+    return out
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--quiet", action="store_true")
@@ -121,6 +146,7 @@ def main(argv: list[str] | None = None) -> int:
 
     rows = check_rows()
     arts = check_artifacts()
+    ledger = check_ledger()
 
     unknown: list[tuple[str, str]] = []
     stale = 0
@@ -143,13 +169,16 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{rel.ljust(46)}  {status}  (packaging addendum)")
 
     art_bad = [a for a in arts if a[1] != "ok"]
+    ledger_bad = [a for a in ledger if a[1] != "ok"]
     print(f"\nrows={len(rows)} known_stale={stale} unknown={len(unknown)} "
-          f"addendum_drift={len(art_bad)}")
+          f"addendum_drift={len(art_bad)} ledger_drift={len(ledger_bad)}")
     for name, status in unknown:
         print(f"  {status}  {name}", file=sys.stderr)
     for rel, status in art_bad:
         print(f"  addendum {status}  {rel}", file=sys.stderr)
-    return 0 if not unknown and not art_bad else 1
+    for name, status in ledger_bad:
+        print(f"  ledger {status}  {name}", file=sys.stderr)
+    return 0 if not unknown and not art_bad and not ledger_bad else 1
 
 
 if __name__ == "__main__":

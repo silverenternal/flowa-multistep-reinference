@@ -28,7 +28,7 @@
 | 3 | ruff lint (4-directory scope) | **PASS** | `ruff check adaptive_reflow/ tests/ scripts/ tools/` → All checks passed! |
 | 4 | mkdocs build --strict | **PASS** | `mkdocs build --strict` → exit code 0; documentation built in ~24s; no errors, no warnings that fail the build |
 | 5 | Lean 4 BUILD_PASS for 4 stub files | **PASS** | `formal/FlowA/{Theorem4Subclaim41,Theorem5Subclaim51,Theorem5Subclaim52,Theorem5Subclaim53}.lean` all BUILD_PASS (per Wave 357 P2 audit); 3 of 15 originally-present sorry sites discharged; 12 remaining with TODO comments |
-| 6 | Paper ≤ 14 pages | **PASS** | `pdfinfo docs/drafts/paper-A-final.pdf` → Pages: 11 (IEEEtran-journal double-column, 612 × 792 pts); SHA-256 `461ee92e80c1e1808c87db3f4645db5c5400eb0bbd25e3c4ccfd3e74bd0ac274` (446705 bytes; Wave 385 current build — two figures added to the Wave 384 retitled "Geometry-Aware State-Intervention Reformulation" build; historical Wave 356 P1 reading was 14 pages) |
+| 6 | Paper ≤ 14 pages | **PASS** | `pdfinfo docs/drafts/paper-A-final.pdf` → Pages: 12 (IEEEtran-journal double-column, 612 × 792 pts); SHA-256 `461ee92e80c1e1808c87db3f4645db5c5400eb0bbd25e3c4ccfd3e74bd0ac274` (446705 bytes; Wave 385 current build — two figures added to the Wave 384 retitled "Geometry-Aware State-Intervention Reformulation" build; historical Wave 356 P1 reading was 14 pages) |
 | 7 | Capability-token SHA anchored | **PASS** | `synthetic_continuous_capability_token.json` SHA-256 = `584f8e02c3eda4fde2bfe1f65651cca6ec2cb9063eea42c70ce15c0ae8b619c8` (762 bytes; `docs/drafts/paper-A-final.md` §3.4.2 byte-stable anchor at `verification_outputs/wave355-capability-token-example/`) |
 | 8 | Hash-chained ledger SHA anchored | **PASS** | `SHA256SUMS` (3-seed aggregator at `verification_outputs/wave349-r1-3seed-gpu/`) SHA-256 = `28aafe1c95195c0a2daa727150e4ea42651daa49cd5872443a81b88cfed15be2` (2642 bytes; `docs/drafts/paper-A-final.md` §3.5.1 byte-stable anchor; per-file column binds seed42 + seed44 manifests via `0861e4b1…` + `d71e76e2…`) |
 | 9 | 5 Lemmas ACTIVE | **PASS** | Lemmas 1/2/3 (§6.2 / §6.3 / §6.4) ACTIVE per Wave 311 + Wave 322; Lemma 4 / Lemma 5 (Sub-claim 4.1 + Sub-claim 5.1) ACTIVE per Wave 350 P1 / Wave 354 P3 |
@@ -214,7 +214,7 @@ All 7 cross-cutting invariants observed at Wave 365 P1 audit time.
 
 - `tnnls_submission/MANIFEST.md` — 7-file package manifest with SHA-256 + size + role (preserved unchanged).
 - `tnnls_submission/cover_letter.md` — cover letter (17 USER_TO_FILL placeholders preserved verbatim per Wave 364 G32 date-refresh only).
-- `tnnls_submission/highlights.md` — 3 TNNLS editor-facing highlights each ≤ 85 chars.
+- `tnnls_submission/highlights.md` — 5 TNNLS editor-facing highlights each ≤ 25 words.
 - `tnnls_submission/tables.md` — 5 paper-ready tables.
 - `tnnls_submission/figures.md` — 5 ASCII architecture diagrams.
 - `tnnls_submission/data_availability.md` — Data availability statement.
