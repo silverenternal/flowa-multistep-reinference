@@ -58,7 +58,7 @@ FlowMol3 closure + the new verdict label.
 | `tests/test_tools/test_run_real_ckpt_eval.py` | MODIFIED | 1 new test (--n-molecules plumbing) |
 | `tools/wave74_smoke_env_axes.py` | NEW | xtb + energy_dist.npz smoke (~60 LOC) |
 | `data/FlowMol3/repo/data/geom_5_kekulized/energy_dist.npz` | NEW | 3,688 bytes, sourced from `data/geom/` |
-| `docs/paper-draft.md` | MODIFIED | §7.5 additive Wave 74 paragraph (F1-F5 closure) |
+| `docs/ARCHIVE/legacy-paper/paper-draft.md` | MODIFIED | §7.5 additive Wave 74 paragraph (F1-F5 closure) |
 | `docs/push-ready-summary.md` | MODIFIED | Wave 74 Phase 6 additive section (this phase) |
 
 ### Wave 74 Phase 6 honest caveats (carried forward)
@@ -496,7 +496,7 @@ The locked-in constraint from the user's task brief is **NO push**. The repo has
 
 | Path | Status | Notes |
 |---|---|---|
-| `docs/paper-draft.md` | (MODIFIED in earlier Wave 72 commits) | §1 499-word replacement (commit 119a9e2), §8.3 Table 14 cells + §8.6 Tier 3 + §8.7 Discussion (commit d555383) |
+| `docs/ARCHIVE/legacy-paper/paper-draft.md` | (MODIFIED in earlier Wave 72 commits) | §1 499-word replacement (commit 119a9e2), §8.3 Table 14 cells + §8.6 Tier 3 + §8.7 Discussion (commit d555383) |
 | `docs/audit/wave72-phase1-audit.md` | (NEW in commit before Phase 2) | Phase 1 READ-ONLY audit |
 | `docs/audit/wave72-phase2-section1.md` | (NEW in commit 119a9e2) | §1 replacement audit |
 | `docs/audit/wave72-phase3-ablation.md` | (NEW in commit a8bef26) | Heuristic ablation audit |
@@ -554,7 +554,7 @@ But this is **NOT** executed in Wave 72 Phase 6.
 | Path | Status | Phase | Notes |
 |---|---|---|---|
 | `docs/audit/wave72-phase1-audit.md` | NEW | Phase 1 | READ-ONLY audit + Phase 2/4/6 edit plans |
-| `docs/paper-draft.md` | MODIFIED | Phase 2 + Phase 4 | §1 499-word replacement (commit 119a9e2); §8.3 + §8.6 + §8.7 (commit d555383) |
+| `docs/ARCHIVE/legacy-paper/paper-draft.md` | MODIFIED | Phase 2 + Phase 4 | §1 499-word replacement (commit 119a9e2); §8.3 + §8.6 + §8.7 (commit d555383) |
 | `docs/audit/wave72-phase2-section1.md` | NEW | Phase 2 | §1 replacement audit (commit 119a9e2) |
 | `docs/audit/wave72-phase3-ablation.md` | NEW | Phase 3 | Heuristic ablation audit (commit a8bef26) |
 | `verification_outputs/heuristic_ablation_memory_fraction_q4_2026.json` | NEW | Phase 3 | 5-value m sweep via indirect evidence |
@@ -610,7 +610,7 @@ Per the Wave 71 closure pattern: `adaptive_reflow/adapters/hidream_i1.py`, `tool
     "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/heuristic_ablation_nfe_threshold_q4_2026.json"
   ],
   "files_modified": [
-    "/home/hugo/codes/flowa-multistep-reinference/docs/paper-draft.md",
+    "/home/hugo/codes/flowa-multistep-reinference/docs/ARCHIVE/legacy-paper/paper-draft.md",
     "/home/hugo/codes/flowa-multistep-reinference/docs/CONSOLIDATED_RESULTS.md"
   ],
   "commit_sha": null,
@@ -695,7 +695,7 @@ paper-metric comparison (Phase 4), and updating the paper §1 abstract +
 | `docs/audit/wave75-phase4-framework-paper.md` | NEW | Phase 4 framework paper-metric comparison audit doc |
 | `docs/audit/wave75-phase5-paper-update.md` | NEW | Phase 5 paper-writeup audit doc |
 | `docs/audit/wave75-phase6-final.md` | NEW | Final synthesis doc (this phase) |
-| `docs/paper-draft.md` | MODIFIED | §7.5 Wave 75 paragraph (+39 lines) + §1 abstract paragraph (iii) (+6 lines); zero deletion of Wave 73/74 text |
+| `docs/ARCHIVE/legacy-paper/paper-draft.md` | MODIFIED | §7.5 Wave 75 paragraph (+39 lines) + §1 abstract paragraph (iii) (+6 lines); zero deletion of Wave 73/74 text |
 | `docs/push-ready-summary.md` | MODIFIED | Wave 75 Phase 6 additive section (this phase) |
 
 ### Wave 75 Phase 6 honest caveats (carried forward)
@@ -822,7 +822,7 @@ Key additions to this `push-ready-summary.md`:
 | `tools/upstream_eval.py` | NEW | Per-model upstream-eval subprocess shims (3 runner functions, ~410 LOC) |
 | `tests/test_tools/test_upstream_eval.py` | NEW | 8 unit tests covering 3 runners + module surface (~360 LOC) |
 | `tools/run_real_ckpt_eval.py` | MODIFIED | +4 CLI flags + 2 helpers + upstream-eval block in `_run_cell` |
-| `docs/paper-draft.md` | MODIFIED (ADDITIVE) | §1 abstract (clause (iv)) + §7.3 Kanzi + §7.4 LineageFlow + §7.5 FlowMol3 + §7.6 Tier 3 honest verdict + §5.7 Limitations (item #11) |
+| `docs/ARCHIVE/legacy-paper/paper-draft.md` | MODIFIED (ADDITIVE) | §1 abstract (clause (iv)) + §7.3 Kanzi + §7.4 LineageFlow + §7.5 FlowMol3 + §7.6 Tier 3 honest verdict + §5.7 Limitations (item #11) |
 | `docs/push-ready-summary.md` | MODIFIED | Wave 79 Phase 6 additive section (this phase) |
 | `data/kanzi_upstream/` | NEW | 6.0 MB clone of `https://github.com/rdilip/kanzi.git` |
 | `verification_outputs/kanzi_upstream_baseline_q4_2026.json` | NEW | Kanzi baseline run; upstream Kabsch RMSD = 1.40 Å (n=2) |
@@ -945,7 +945,7 @@ to N=1000 per arm. Key additions to this `push-ready-summary.md`:
 | `docs/audit/wave80-phase2-install.md` | NEW (already committed by Wave 80 Agent B) | HMMER + MMseqs2 + Pfam-A.hmm + Kanzi N=1000 coord extractor + 7-test suite |
 | `docs/audit/wave80-phase3-verify.md` | NEW (already committed by Wave 80 Agent C) | End-to-end smoke at N=32 Kanzi + adapter-bug root cause analysis |
 | `docs/audit/wave80-phase4-final.md` | NEW | this phase's synthesis doc (per-model per-metric verdict + D.4/G-MASTER/mkdocs verification + honest caveats) |
-| `docs/paper-draft.md` | MODIFIED (ADDITIVE) | §7.3 Kanzi + §7.4 LineageFlow + §7.6 Tier 3 honest verdict — Wave 80 additive paragraphs + per-paper-claim status table update |
+| `docs/ARCHIVE/legacy-paper/paper-draft.md` | MODIFIED (ADDITIVE) | §7.3 Kanzi + §7.4 LineageFlow + §7.6 Tier 3 honest verdict — Wave 80 additive paragraphs + per-paper-claim status table update |
 | `docs/push-ready-summary.md` | MODIFIED | Wave 80 Phase 4 additive section (this phase) |
 | `tools/extract_ca_coords_for_kanzi.py` | NEW (already committed by Wave 80 Agent B) | N=1000 per-arm Cα coord extractor (250 variants × 4 demo PDBs) |
 | `tests/test_tools/test_extract_ca_coords_for_kanzi.py` | NEW (already committed by Wave 80 Agent B) | 7 unit tests covering N=1000 reviewer-proof guarantee |
@@ -1033,7 +1033,7 @@ Wave 81 is the **LineageFlow N=1000 paper-metric reproduction wave**. Phases 1�
 | `docs/audit/wave81-phase1-audit.md` | NEW (already committed by Wave 81 Agent A in `1392bea`) | READ-ONLY audit of `_StubLineageFlow.forward` signature mismatch |
 | `docs/audit/wave81-phase3-sweep.md` | NEW (committed by Wave 81 Agent C; not pushed) | N=1000 sweep audit doc + scale-up path |
 | `docs/audit/wave81-phase4-final.md` | NEW (this phase) | Wave 81 final synthesis + paper-update audit + D.4/G-MASTER/mkdocs verification |
-| `docs/paper-draft.md` | MODIFIED (ADDITIVE, this phase) | §7.4 LineageFlow + §7.6 Tier 3 honest verdict — Wave 81 additive paragraphs + per-paper-claim status table update |
+| `docs/ARCHIVE/legacy-paper/paper-draft.md` | MODIFIED (ADDITIVE, this phase) | §7.4 LineageFlow + §7.6 Tier 3 honest verdict — Wave 81 additive paragraphs + per-paper-claim status table update |
 | `docs/push-ready-summary.md` | MODIFIED (this phase) | Wave 81 Phase 4 additive section |
 | `verification_outputs/lineageflow_n1000_baseline_q4_2026.json` | NEW (Wave 81 Agent C; not committed) | Raw sweep JSON (partial: 1 cell) |
 | `verification_outputs/lineageflow_n1000_framework_q4_2026.json` | NEW (Wave 81 Agent C; not committed) | Raw sweep JSON (partial: 1 cell) |
@@ -1125,7 +1125,7 @@ Wave 82 is the **FlowMol3 N=1000 paper-metric reproduction wave**. Phases 1–4 
 | `docs/audit/wave82-phase1-audit.md` | NEW (committed in `1950134`) | READ-ONLY audit of PB-xtb pipeline gap |
 | `docs/audit/wave82-phase3-sweep.md` | NEW (committed by Wave 82 Agent C; not pushed) | N=1000 sweep audit doc |
 | `docs/audit/wave82-phase4-final.md` | NEW (this phase) | Wave 82 final synthesis + paper-update audit + D.4/G-MASTER/mkdocs verification |
-| `docs/paper-draft.md` | MODIFIED (ADDITIVE, this phase) | §7.5 FlowMol3 + §7.6 honest verdict — Wave 82 additive paragraphs + per-paper-claim status table update |
+| `docs/ARCHIVE/legacy-paper/paper-draft.md` | MODIFIED (ADDITIVE, this phase) | §7.5 FlowMol3 + §7.6 honest verdict — Wave 82 additive paragraphs + per-paper-claim status table update |
 | `docs/push-ready-summary.md` | MODIFIED (this phase) | Wave 82 Phase 4 additive section |
 | `verification_outputs/flowmol3_n1000_baseline_q4_2026.json` | NEW (Wave 82 Agent C; not committed) | Baseline arm raw sweep JSON (999 mols) |
 | `verification_outputs/flowmol3_n1000_framework_q4_2026.json` | NEW (Wave 82 Agent C; not committed) | Framework arm raw sweep JSON (1000 mols) |
@@ -1174,7 +1174,7 @@ Wave 83 Agent D closes the **Wave 80 N=1000 Kanzi production sweep deferred** st
 - `verification_outputs/kanzi_n1000_coords.txt` (NEW, 2000 lines = 1000 records)
 - `verification_outputs/kanzi_n1000_manifest.json` (NEW, Wave 80 Agent B extractor manifest)
 - `verification_outputs/kanzi_n1000_paper_metrics/kanzi_n1000_paper_metrics.json` (NEW, this wave's output, N=200 baseline arm)
-- `docs/paper-draft.md` §7.3 + §7.6 (MODIFIED, ADDITIVE Wave 83 paragraphs)
+- `docs/ARCHIVE/legacy-paper/paper-draft.md` §7.3 + §7.6 (MODIFIED, ADDITIVE Wave 83 paragraphs)
 - `docs/audit/wave83-phase4-final.md` (NEW, this wave's final synthesis)
 - `docs/push-ready-summary.md` (MODIFIED, this section)
 
@@ -1230,7 +1230,7 @@ Wave 84 Agent C closes the **last 2 LineageFlow paper-metric blockers** (`foldab
 
 **Files (Wave 84 Agent C — this commit):**
 - `docs/audit/wave84-phase3-final.md` (NEW, ~270 lines) — final synthesis doc with per-model per-metric verdict + per-paper-claim FINAL status table + D.4 / G-MASTER / mkdocs verification + honest caveats
-- `docs/paper-draft.md` (MODIFIED, ADDITIVE) — §7.4 LineageFlow + §7.6 Tier 3 honest verdict with Wave 84 N=5 smoke foldability + self_consistency paragraphs + per-paper-claim FINAL status table update
+- `docs/ARCHIVE/legacy-paper/paper-draft.md` (MODIFIED, ADDITIVE) — §7.4 LineageFlow + §7.6 Tier 3 honest verdict with Wave 84 N=5 smoke foldability + self_consistency paragraphs + per-paper-claim FINAL status table update
 - `docs/push-ready-summary.md` (MODIFIED, this section)
 
 **Per-paper-claim FINAL status update (Wave 84 vs Wave 83):**
@@ -1358,7 +1358,7 @@ Wave 87 closes **FlowMol3 PHASE-4** by (1) confirming the brief's `pb_validity_p
 | `verification_outputs/flowmol3_n1000_baseline_wave87_q4_2026.json` | NEW | Agent C | Baseline arm raw sweep (999 mols) |
 | `verification_outputs/flowmol3_n1000_framework_wave87_q4_2026.json` | NEW | Agent C | Framework arm raw sweep (1000 mols) |
 | `verification_outputs/flowmol3_n1000_sweep_wave87_q4_2026.json` | NEW | Agent C | Sweep summary (per-arm metrics, deltas, verdicts, statistical_power_at_n1000, sweep_wallclock_s) |
-| `docs/paper-draft.md` | MODIFIED (ADDITIVE) | Agent D | §7.5 Wave 87 N=1000 sweep paragraph + verdict evolution table; §7.6 Wave 87 honest verdict + per-paper-claim status table; §5.7 item 12 Wave 87 Agent A + Agent B credit |
+| `docs/ARCHIVE/legacy-paper/paper-draft.md` | MODIFIED (ADDITIVE) | Agent D | §7.5 Wave 87 N=1000 sweep paragraph + verdict evolution table; §7.6 Wave 87 honest verdict + per-paper-claim status table; §5.7 item 12 Wave 87 Agent A + Agent B credit |
 | `docs/audit/wave87-phase4-final.md` | NEW | Agent D | Final synthesis + D.4/G-MASTER/mkdocs verification + UFF-vs-xtb comparison table + paper-update summary |
 | `docs/push-ready-summary.md` | MODIFIED (this section) | Agent D | Wave 87 Agent D additive section |
 
@@ -1433,7 +1433,7 @@ Wave 88 closes the Kanzi framework-arm N=1000 paper-metric question with a **str
 | `docs/audit/wave88-phase2-sweep.md` | NEW (Wave 88 Agent B) | Agent B | F-1 through F-7 sweep + framework liveness N=100 + D.4 verify |
 | `/tmp/wave88/framework_liveness_n100.json` | NEW (gitignored) | Agent B | F-1 N=100 paired framework-vs-baseline probe |
 | `docs/audit/wave88-phase3-final.md` | NEW (this wave) | Agent C | Final synthesis + per-paper-claim FINAL status + D.4/G-MASTER/mkdocs verification + audit trail + missing-JSON disclosure |
-| `docs/paper-draft.md` | MODIFIED (ADDITIVE) | Agent C | §7.3 Wave 88 paragraph (3 findings + framework liveness + per-paper-claim FINAL status); §7.6 Wave 88 paragraph (per-paper-claim cross-model table + §7.6 verdict refinement); §5.7 limitation #11 Wave 88 refinement (Wave 79 caveat NOT_MEASURABLE) |
+| `docs/ARCHIVE/legacy-paper/paper-draft.md` | MODIFIED (ADDITIVE) | Agent C | §7.3 Wave 88 paragraph (3 findings + framework liveness + per-paper-claim FINAL status); §7.6 Wave 88 paragraph (per-paper-claim cross-model table + §7.6 verdict refinement); §5.7 limitation #11 Wave 88 refinement (Wave 79 caveat NOT_MEASURABLE) |
 | `docs/push-ready-summary.md` | MODIFIED (this section) | Agent C | Wave 88 Phase 3 additive section |
 
 ### Wave 88 Phase 3 honest caveats (carried forward + Wave 88 additions)
@@ -1539,7 +1539,7 @@ Wave 89 closes the **Tier 3 paper-metric reproduction** across all three 2026 SO
 | Path | Status | Agent | Purpose |
 |---|---|---|---|
 | `docs/audit/wave89-phase1-final.md` | NEW (this wave) | Wave 89 Agent | Wave 89 final synthesis + per-model per-paper-metric numbers + D.4/G-MASTER/mkdocs verification + Wave 73-74 vs Wave 86-88 comparison table + per-paper-claim FINAL status table |
-| `docs/paper-draft.md` | MODIFIED (ADDITIVE) | Wave 89 Agent | §7.4 Wave 86 LineageFlow N=1000 framework-arm paragraph + per-paper-claim status table; §7.6 Wave 89 FINAL consolidated verdict + per-paper-claim status table; §5.7 limitation #13 Wave 89 final synthesis; §5.3 §5 Discussion Wave 86-88 framing; §1 abstract Wave 86-88 paper-metric framing |
+| `docs/ARCHIVE/legacy-paper/paper-draft.md` | MODIFIED (ADDITIVE) | Wave 89 Agent | §7.4 Wave 86 LineageFlow N=1000 framework-arm paragraph + per-paper-claim status table; §7.6 Wave 89 FINAL consolidated verdict + per-paper-claim status table; §5.7 limitation #13 Wave 89 final synthesis; §5.3 §5 Discussion Wave 86-88 framing; §1 abstract Wave 86-88 paper-metric framing |
 | `docs/push-ready-summary.md` | MODIFIED (this section) | Wave 89 Agent | Wave 89 additive section (FINAL per-paper-claim status + D.4/G-MASTER/mkdocs verification + Wave 86-88 cumulative state + caveats) |
 
 ### Wave 89 honest caveats (carried forward + Wave 89 additions)
@@ -1557,7 +1557,7 @@ Wave 89 closes the **Tier 3 paper-metric reproduction** across all three 2026 SO
 6. **Wave 86 / Wave 87 / Wave 88 byte-stability preserved.** Wave 86 D.4 72/72 PASS, Wave 87 D.4 72/72 PASS, Wave 88 D.4 72/72 PASS, Wave 89 D.4 72/72 PASS — all 6 audit pitfalls are addressed via code fixes (Wave 86 Pitfall #1 + #2 + #3) or paper documentation (Wave 87 Pitfall #6) or honest disclosure (Wave 88 Pitfall #4 + #5). **Net Wave 86-89 LOC: minimal (Wave 86 Pitfall #1 + #2 + #3 fixes + Wave 87 docstring clarification + Wave 88 retractions in paper-draft.md only — no test pipeline modifications, no adapter modifications).**
 
 7. **Wave 89 LOC summary** (this paper + audit + push-ready update):
-   - `docs/paper-draft.md`: ~+150 LOC (Wave 86 LineageFlow N=1000 paragraph + per-paper-claim status; Wave 89 §7.6 FINAL consolidated verdict + per-paper-claim status table; §5.7 limitation #13 Wave 89 final synthesis; §5.3 Wave 86-88 framing; §1 abstract Wave 86-88 paper-metric framing).
+   - `docs/ARCHIVE/legacy-paper/paper-draft.md`: ~+150 LOC (Wave 86 LineageFlow N=1000 paragraph + per-paper-claim status; Wave 89 §7.6 FINAL consolidated verdict + per-paper-claim status table; §5.7 limitation #13 Wave 89 final synthesis; §5.3 Wave 86-88 framing; §1 abstract Wave 86-88 paper-metric framing).
    - `docs/audit/wave89-phase1-final.md`: +~700 LOC (NEW this file).
    - `docs/push-ready-summary.md`: +~250 LOC (NEW Wave 89 Agent section).
    - **Net Wave 89 Agent LOC: ~1100 LOC (all docs, no code).**
@@ -1614,7 +1614,7 @@ Wave 91 Phase 5 is the **final synthesis pass** for the Wave 91 W2 fix (Kanzi la
 | Path | Status | Notes |
 |---|---|---|
 | `docs/audit/wave91-phase5-final.md` | NEW | Final synthesis doc (this phase) |
-| `docs/paper-draft.md` | MODIFIED (ADDITIVE) | §7.3 Kanzi Wave 91 paragraph (6-metric table + verdict + statistical-power + TIED_BY_DESIGN explanation) |
+| `docs/ARCHIVE/legacy-paper/paper-draft.md` | MODIFIED (ADDITIVE) | §7.3 Kanzi Wave 91 paragraph (6-metric table + verdict + statistical-power + TIED_BY_DESIGN explanation) |
 | `docs/push-ready-summary.md` | MODIFIED | Wave 91 Phase 5 additive section (this phase) |
 | `tools/kanzi_latent_to_coord.py` | (committed by Wave 91 Phase 2 in `dfe0f4e`) | Standalone bridge module (~150 LOC) |
 | `tests/test_tools/test_kanzi_latent_to_coord.py` | (committed by Wave 91 Phase 2 in `dfe0f4e`) | 4 unit tests (all PASS) |
@@ -1689,7 +1689,7 @@ Wave 93 Phase 1 committed `tools/statistical_power_analysis.py` (commit `e69ffd8
 | REGRESSES (strict) | 0/12 | (not surfaced in Wave 89 headline) | Script precedence flags UNDERPOWERED ahead of REGRESSES for the `pb_validity_pct` cell — Wave 89 hid the real ~10pp REGRESS inside the "2/12 framework_improves" headline |
 | NOT_SIGNIFICANT | 0/12 | n/a | Fallback verdict never fires because all `|Δ| ≥ 1pp` cells fall below the 1pp power floor |
 
-### Honest verdict reframe — Wave 93 reading (per §7.6 Wave 93 paragraph in `docs/paper-draft.md`)
+### Honest verdict reframe — Wave 93 reading (per §7.6 Wave 93 paragraph in `docs/ARCHIVE/legacy-paper/paper-draft.md`)
 
 > **Framework improves 1/12 paper-metric cells at Bonferroni α=0.05** (LineageFlow
 > `hmmscan_total_hits` +184 hits, +116%, p_bonf=0); **ties 8/12 by saturation /
@@ -1725,7 +1725,7 @@ PoseBusters axis due to the Wave 87 Agent A UFF-vs-xtb definitional gap).
 |---|---|---|
 | `verification_outputs/power_analysis/per_cell.csv` | NEW (this wave) | 12-row CSV, header + 12 data rows |
 | `docs/audit/wave93-phase2-final.md` | NEW (this wave) | Per-cell audit trail + methodology + comparison vs Wave 89 + D.4/G-MASTER/mkdocs verification |
-| `docs/paper-draft.md` | MODIFIED (ADDITIVE) | §7.6 Wave 93 paragraph + 12-row per-cell verdict table (inserted just before §7.7 NFE-aware section) |
+| `docs/ARCHIVE/legacy-paper/paper-draft.md` | MODIFIED (ADDITIVE) | §7.6 Wave 93 paragraph + 12-row per-cell verdict table (inserted just before §7.7 NFE-aware section) |
 | `docs/push-ready-summary.md` | MODIFIED (this section) | Wave 93 Agent B addendum |
 
 ### Wave 93 Agent B vs Wave 89 verdict comparison (the key takeaway)

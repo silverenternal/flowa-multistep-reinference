@@ -1921,7 +1921,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Status: ACTIVE
 - Date: 2026-09-18
 - Source:
-  [`docs/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.26 (Wave 180 P4
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.26 (Wave 180 P4
   ADDITIVE on §10.20-§10.25),
   [`docs/audit/sweep_eval/p1-setup.md`](audit/sweep_eval/p1-setup.md)
   (Fast-DLLM setup + continuous-FM analog solver),
@@ -1934,7 +1934,7 @@ no CLM status label, and no asserted-by reference is changed.
   (2-row × 9-col 3-arm table),
   [`verification_outputs/wave180-p2-fastdllm-summary.csv`](../verification_outputs/wave180-p2-fastdllm-summary.csv)
   (6-row Fast-DLLM per-seed summary),
-  [`docs/paper-draft.md` §10.26 (c) results table](ARCHIVE/legacy-paper/paper-draft.md)
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.26 (c) results table](ARCHIVE/legacy-paper/paper-draft.md)
   (3-arm comparison table).
 - Disputed by: —
 - Statement: On the R6 task (LineageFlow protein re-inference,
@@ -1974,7 +1974,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Evidence:
   [`verification_outputs/wave180-p3-three-arm-comparison.csv`](../verification_outputs/wave180-p3-three-arm-comparison.csv),
   [`verification_outputs/wave180-p2-fastdllm-summary.csv`](../verification_outputs/wave180-p2-fastdllm-summary.csv),
-  [`docs/paper-draft.md` §10.26 (c) results table](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.26 (c) results table](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/audit/reproducibility/p3-comparison.md` §3 Win analysis](audit/reproducibility/p3-comparison.md).
 
 
@@ -1983,7 +1983,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Status: ACTIVE
 - Date: 2026-09-18
 - Source:
-  [`docs/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.28 (Wave 184 P5
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.28 (Wave 184 P5
   ADDITIVE on §10.20-§10.26),
   [`docs/audit/engineering/p1-setup-w184.md`](audit/engineering/p1-setup-w184.md)
   (n_rounds ladder setup + byte-stability prediction),
@@ -1998,7 +1998,7 @@ no CLM status label, and no asserted-by reference is changed.
   (12 rows × 7 cols per-model Δ-vs-baseline table),
   [`verification_outputs/wave184-p3-eval-summary.csv`](../verification_outputs/wave184-p3-eval-summary.csv)
   (12 rows × 15 cols per-cell eval summary),
-  [`docs/paper-draft.md` §10.28 (c) per-model ablation table](ARCHIVE/legacy-paper/paper-draft.md).
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.28 (c) per-model ablation table](ARCHIVE/legacy-paper/paper-draft.md).
 - Disputed by: —
 - Statement: The Wave 184 n_rounds ablation (2 models × 6 variants
   × N=30 = 360 records, NFE=100 fixed, n_rounds ∈ {1, 2, 3, 5, 7})
@@ -2049,7 +2049,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Evidence:
   [`verification_outputs/wave184-p4-ablation-table.csv`](../verification_outputs/wave184-p4-ablation-table.csv),
   [`verification_outputs/wave184-p3-eval-summary.csv`](../verification_outputs/wave184-p3-eval-summary.csv),
-  [`docs/paper-draft.md` §10.28 (c) per-model ablation table](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.28 (c) per-model ablation table](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/audit/algorithm_4arm/p4-aggregate.md` §3 Critical isolation question](audit/algorithm_4arm/p4-aggregate.md).
 
 
@@ -2058,7 +2058,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Status: ACTIVE
 - Date: 2026-09-18
 - Source:
-  [`docs/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.27 (Wave 181 P4
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.27 (Wave 181 P4
   ADDITIVE on §10.20-§10.26),
   [`docs/audit/sweep_eval/p1-setup-w181.md`](audit/sweep_eval/p1-setup-w181.md)
   (AB-Cache setup + continuous-FM analog solver),
@@ -2071,7 +2071,7 @@ no CLM status label, and no asserted-by reference is changed.
   (2-row × 11-col 4-arm table),
   [`verification_outputs/wave181-p2-abcache-summary.csv`](../verification_outputs/wave181-p2-abcache-summary.csv)
   (8-row AB-Cache per-seed summary),
-  [`docs/paper-draft.md` §10.27 (c) results table](ARCHIVE/legacy-paper/paper-draft.md)
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.27 (c) results table](ARCHIVE/legacy-paper/paper-draft.md)
   (4-arm comparison table).
 - Disputed by: —
 - Statement: On the R6 task (LineageFlow protein re-inference,
@@ -2129,7 +2129,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Evidence:
   [`verification_outputs/wave181-p3-four-arm-comparison.csv`](../verification_outputs/wave181-p3-four-arm-comparison.csv),
   [`verification_outputs/wave181-p2-abcache-summary.csv`](../verification_outputs/wave181-p2-abcache-summary.csv),
-  [`docs/paper-draft.md` §10.27 (c) results table](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.27 (c) results table](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/audit/algorithm_4arm/p3-comparison.md` §"Findings" + §"Verdict"](audit/algorithm_4arm/p3-comparison.md).
 
 ## CLM-051: Wave 183 — Finer NFE curve resolves anti-resonance at kanzi NFE=100 (CONFIRMED) and saturation boundaries (lineageflow saturates at NFE=500, kanzi does not saturate in [10, 500]); framework wins both metrics at 10/18 (model,NFE) cells with both-models intersection at NFE=75 only {#CLM-051}
@@ -2137,7 +2137,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Status: ACTIVE
 - Date: 2026-09-18
 - Source:
-  [`docs/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.29 (Wave 183 P5
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.29 (Wave 183 P5
   ADDITIVE on §10.20-§10.28),
   [`docs/audit/engineering/p1-setup.md`](audit/engineering/p1-setup.md)
   (9-NFE-point ladder setup verification),
@@ -2157,7 +2157,7 @@ no CLM status label, and no asserted-by reference is changed.
   [`verification_outputs/wave183-p4-figure-pLDDT-finer.png`](../verification_outputs/wave183-p4-figure-pLDDT-finer.png),
   [`verification_outputs/wave183-p4-figure-scPerplexity-finer.png`](../verification_outputs/wave183-p4-figure-scPerplexity-finer.png),
   [`verification_outputs/wave183-p4-figure-deltas-finer.png`](../verification_outputs/wave183-p4-figure-deltas-finer.png),
-  [`docs/paper-draft.md` §10.29 (c)+(d)+(e)+(f)](ARCHIVE/legacy-paper/paper-draft.md).
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.29 (c)+(d)+(e)+(f)](ARCHIVE/legacy-paper/paper-draft.md).
 - Disputed by: —
 - Statement: The Wave 183 finer-NFE-curve evaluation (2 models ×
   9 NFE × 2 arms × N=30 = 1080 records, NFE ∈ {10, 25, 50, 75,
@@ -2211,7 +2211,7 @@ no CLM status label, and no asserted-by reference is changed.
   [`verification_outputs/wave183-p4-figure-pLDDT-finer.png`](../verification_outputs/wave183-p4-figure-pLDDT-finer.png),
   [`verification_outputs/wave183-p4-figure-scPerplexity-finer.png`](../verification_outputs/wave183-p4-figure-scPerplexity-finer.png),
   [`verification_outputs/wave183-p4-figure-deltas-finer.png`](../verification_outputs/wave183-p4-figure-deltas-finer.png),
-  [`docs/paper-draft.md` §10.29 (c)+(d)+(e)+(f)](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.29 (c)+(d)+(e)+(f)](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/audit/sweep_eval/p4-aggregate-w183.md` §"Saturation boundary" + §"kanzi NFE sweet spots" + §"Wave 184 cross-check"](audit/sweep_eval/p4-aggregate-w183.md).
 
 ## CLM-052: Wave 185 — Theorem 1's BL-convergence bound is tight on framework self-convergence but uniformly too tight (25×–7,522×) for framework-vs-baseline on protein; the bound's claim scope is relocated to framework self-distance (NOT framework-vs-baseline value-add) {#CLM-052}
@@ -2219,7 +2219,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Status: ACTIVE
 - Date: 2026-09-18
 - Source:
-  [`docs/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §11.1 (Wave 185 P5
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §11.1 (Wave 185 P5
   ADDITIVE on §2.8.1),
   [`docs/audit/algorithm_4arm/p1-design.md`](audit/algorithm_4arm/p1-design.md)
   (BL-bound tightness measurement design),
@@ -2241,7 +2241,7 @@ no CLM status label, and no asserted-by reference is changed.
   (log-log overlay of empirical vs theoretical),
   [`verification_outputs/wave185-p4-figure-tightness-ratio.png`](../verification_outputs/wave185-p4-figure-tightness-ratio.png)
   (per-model `τ` vs NFE),
-  [`docs/paper-draft.md` §11.1 (a)–(f)](ARCHIVE/legacy-paper/paper-draft.md).
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §11.1 (a)–(f)](ARCHIVE/legacy-paper/paper-draft.md).
 - Disputed by: —
 - Statement: Wave 185 measures both the empirical BL distance
   (energy-distance proxy on the pLDDT axis, 12 cells × n=30/90
@@ -2294,7 +2294,7 @@ no CLM status label, and no asserted-by reference is changed.
   [`verification_outputs/wave185-p3-tightness.csv`](../verification_outputs/wave185-p3-tightness.csv),
   [`verification_outputs/wave185-p4-figure-bl-tightness.png`](../verification_outputs/wave185-p4-figure-bl-tightness.png),
   [`verification_outputs/wave185-p4-figure-tightness-ratio.png`](../verification_outputs/wave185-p4-figure-tightness-ratio.png),
-  [`docs/paper-draft.md` §11.1 (a)–(f)](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §11.1 (a)–(f)](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/audit/sweep_eval/p3-tightness.md` §"Critical analysis" + §"Why the bound is too tight"](audit/sweep_eval/p3-tightness.md).
 
 ## CLM-053: Wave 182 — FlowA wins on both metrics vs all four baselines (vanilla + Fast-DLLM + AB-Cache + LeDiFlow) at both NFE settings on the R6 task (LineageFlow protein re-inference); FlowA exploits per-token paper quantities (selection_ratio / e_rho) while LeDiFlow exploits a learned per-family prior shift — paper-quantity-driven vs learned-distribution-guided {#CLM-053}
@@ -2302,7 +2302,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Status: ACTIVE
 - Date: 2026-09-18
 - Source:
-  [`docs/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.30 (Wave 182 P4
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.30 (Wave 182 P4
   ADDITIVE on §10.20-§10.29),
   [`docs/audit/sweep_eval/p1-setup-w182.md`](audit/sweep_eval/p1-setup-w182.md)
   (LeDiFlow setup + continuous-FM analog solver),
@@ -2315,7 +2315,7 @@ no CLM status label, and no asserted-by reference is changed.
   (2-row × 13-col 5-arm table),
   [`verification_outputs/wave182-p2-lediflow-summary.csv`](../verification_outputs/wave182-p2-lediflow-summary.csv)
   (8-row LeDiFlow per-seed summary),
-  [`docs/paper-draft.md` §10.30 (c) results table](ARCHIVE/legacy-paper/paper-draft.md)
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.30 (c) results table](ARCHIVE/legacy-paper/paper-draft.md)
   (5-arm comparison table).
 - Disputed by: —
 - Statement: On the R6 task (LineageFlow protein re-inference,
@@ -2400,7 +2400,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Evidence:
   [`verification_outputs/wave182-p3-five-arm-comparison.csv`](../verification_outputs/wave182-p3-five-arm-comparison.csv),
   [`verification_outputs/wave182-p2-lediflow-summary.csv`](../verification_outputs/wave182-p2-lediflow-summary.csv),
-  [`docs/paper-draft.md` §10.30 (c) results table](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.30 (c) results table](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/audit/sweep_eval/p3-comparison.md` §4.1 + §5](audit/sweep_eval/p3-comparison.md).
 
 ## CLM-054: Wave 186 — Hyperparameter sensitivity envelope is robust (1 baseline + 17 perturbations, NFE=100, lineageflow synthetic); robust region = full tested envelope on β / restart_min_nfe / NFE_REF axes (byte-stable to ~4dp), and seed-ensemble mean wins both metrics (+0.96 pLDDT, −1.69 scPerplexity at N=150) {#CLM-054}
@@ -2408,7 +2408,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Status: ACTIVE
 - Date: 2026-09-18
 - Source:
-  [`docs/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.31 (Wave 186 P5
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.31 (Wave 186 P5
   ADDITIVE on §10.20-§10.30),
   [`docs/audit/sweep_eval/p1-setup-w186.md`](audit/sweep_eval/p1-setup-w186.md)
   (sensitivity-analysis protocol + audit JSON commit_sha pinning),
@@ -2433,7 +2433,7 @@ no CLM status label, and no asserted-by reference is changed.
   [`plots/wave186-p4-seed.png`](../plots/wave186-p4-seed.png),
   [`tools/aggregate_wave186_p4.py`](../tools/aggregate_wave186_p4.py)
   (deterministic aggregator + plotter),
-  [`docs/paper-draft.md` §10.31 (b) per-cell results table](ARCHIVE/legacy-paper/paper-draft.md)
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.31 (b) per-cell results table](ARCHIVE/legacy-paper/paper-draft.md)
   (18-row × 7-col aggregation table).
 - Disputed by: —
 - Statement: On the R6 task (lineageflow synthetic protein re-
@@ -2509,7 +2509,7 @@ no CLM status label, and no asserted-by reference is changed.
   [`plots/wave186-p4-nfe_ref.png`](../plots/wave186-p4-nfe_ref.png),
   [`plots/wave186-p4-seed.png`](../plots/wave186-p4-seed.png),
   [`tools/aggregate_wave186_p4.py`](../tools/aggregate_wave186_p4.py),
-  [`docs/paper-draft.md` §10.31 (b) + (c) tables](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.31 (b) + (c) tables](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/audit/sweep_eval/p4-aggregation.md` §3 + §4 + §5](audit/sweep_eval/p4-aggregation.md).
 
 ## CLM-055: Wave 189 P2 — post-cd70821 2D framework sweep confirms no-significant-difference on both targets (N=3 seeds × 5 rounds × NFE=100, PaperRatioAdaptiveScheduler); baseline competitive on `two_moons` (Δ = −3.16%, p = 0.685), framework narrowly wins on `eight_gaussians` (Δ = +2.87%, p = 0.504); formalises Wave 188 P5 inversion disclosure as a quantitative ground-truth measurement {#CLM-055}
@@ -2517,7 +2517,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Status: ACTIVE
 - Date: 2026-09-18
 - Source:
-  [`docs/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.32 (b) Wave 189
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.32 (b) Wave 189
   post-cd70821 2D framework sweep table,
   [`docs/audit/sweep_eval/p2-post-cd70821-2d-sweep.md`](audit/sweep_eval/p2-post-cd70821-2d-sweep.md)
   (3 seeds × 5 rounds × NFE=100 sweep, commit_sha-pinned JSON,
@@ -2576,7 +2576,7 @@ no CLM status label, and no asserted-by reference is changed.
   [`verification_outputs/wave189-p2-post-cd70821-eight_gaussians.json`](../verification_outputs/wave189-p2-post-cd70821-eight_gaussians.json),
   `scripts/wave189_p2_post_cd70821_2d_sweep.py`,
   `tools/aggregate_wave189_p2.py`,
-  [`docs/paper-draft.md` §10.32 (b) post-cd70821 2D sweep table](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.32 (b) post-cd70821 2D sweep table](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/audit/sweep_eval/p2-post-cd70821-2d-sweep.md` §3 + §4](audit/sweep_eval/p2-post-cd70821-2d-sweep.md).
 
 ## CLM-056: Wave 189 P3 — FreqFlowAdapter is synthetic-only as of 2026-09-05 (no public `nnet_ema.pth` release; verified missing on GitHub + HF Hub + PyPI); paper's "5 adapters" wording adjusted to "4 real-ckpt + 1 synthetic-skeleton (FreqFlow; no public ckpt released)" with explicit disclosure {#CLM-056}
@@ -2584,7 +2584,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Status: ACTIVE
 - Date: 2026-09-18
 - Source:
-  [`docs/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.32 (d) Wave 189 P3
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.32 (d) Wave 189 P3
   FreqFlow real-vs-synthetic disclosure,
   [`docs/audit/freqflow/p3-freqflow-honest-disclosure.md`](audit/freqflow/p3-freqflow-honest-disclosure.md)
   (synthetic-mode sweep driver, commit_sha-pinned JSON, `6351530`),
@@ -2652,7 +2652,7 @@ no CLM status label, and no asserted-by reference is changed.
   [`scripts/wave189_p3_freqflow_synth_sweep.py`](../scripts/wave189_p3_freqflow_synth_sweep.py),
   [`data/freqflow_ckpt/README.md`](../data/freqflow_ckpt/README.md),
   [`docs/models/freqflow.model_card.md`](models/freqflow.model_card.md) §0,
-  [`docs/paper-draft.md` §10.32 (d) FreqFlow disclosure table](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.32 (d) FreqFlow disclosure table](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/audit/freqflow/p3-freqflow-honest-disclosure.md` §3 + §4](audit/freqflow/p3-freqflow-honest-disclosure.md).
 
   **Wave 206 P5 additively extends** (per TPAMI-6-WEEK-PLAN §W2.6
@@ -2694,7 +2694,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Status: ACTIVE
 - Date: 2026-09-18
 - Source:
-  [`docs/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.33 (b) Wave 190 P2
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.33 (b) Wave 190 P2
   kanzi n=30 paired-sweep table,
   [`docs/audit/kanzi/p2-kanzi-n30-sweep.md`](audit/kanzi/p2-kanzi-n30-sweep.md)
   (30 seeds × 5 rounds × NFE=1000 ablation, commit_sha-pinned
@@ -2793,7 +2793,7 @@ no CLM status label, and no asserted-by reference is changed.
   (paired t-test + Bonferroni + Cohen's d_z postprocessor),
   `data/kanzi_ckpt/README.md`
   (upstream-availability probe transcript),
-  [`docs/paper-draft.md` §10.33 (b) Wave 190 P2 Theorem 1 ablation table](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.33 (b) Wave 190 P2 Theorem 1 ablation table](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/audit/kanzi/p2-kanzi-n30-sweep.md` §2 + §3](audit/kanzi/p2-kanzi-n30-sweep.md).
 
 - **Wave 214 P3 update (2026-09-21) — user-directed verdict
@@ -2843,7 +2843,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Status: ACTIVE
 - Date: 2026-09-18
 - Source:
-  [`docs/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.33 (c) + §10.33 (d)
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md`](ARCHIVE/legacy-paper/paper-draft.md) §10.33 (c) + §10.33 (d)
   Wave 190 P3 lineageflow n=30 + cross-adapter cross-validation
   tables,
   [`docs/audit/lineageflow/p3-lineageflow-n30-sweep.md`](audit/lineageflow/p3-lineageflow-n30-sweep.md)
@@ -2943,7 +2943,7 @@ no CLM status label, and no asserted-by reference is changed.
   (paired-sweep driver),
   [`scripts/wave190_p3_postprocess.py`](../scripts/wave190_p3_postprocess.py)
   (paired t-test + Bonferroni + Cohen's d_z postprocessor),
-  [`docs/paper-draft.md` §10.33 (c) + §10.33 (d)](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.33 (c) + §10.33 (d)](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/audit/lineageflow/p3-lineageflow-n30-sweep.md` §2 + §3 + §4](audit/lineageflow/p3-lineageflow-n30-sweep.md),
   [`docs/audit/kanzi/p2-kanzi-n30-sweep.md` §2 + §3](audit/kanzi/p2-kanzi-n30-sweep.md).
 
@@ -2953,7 +2953,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Wave 280 P status addendum: PROVISIONAL → ACTIVE upgrade on the production-ckpt evidence row per `docs/audit/mnist/wave280-p-r5c-sweep-result.md` (3 seeds × N=200 paired chunk-FID t-test; Bonferroni-corrected p_bonf=0.0133 at α=0.05/3=0.0167; Cohen's d_z per seed = [+1.55, +1.33, +1.02], all > 0.8 medium-effect threshold; per-seed verdict=baseline_wins at matched NFE=50 on the production ckpt with delta_pct = +10.37% per `docs/audit/mnist/wave280-p-r5c-sweep-result.md` §3.6). The framework-vs-baseline direction flips from smoke ckpt (framework_wins −28.43%) to production ckpt (baseline_wins +10.37%) at matched NFE=50, consistent with the Wave 191 P2 CIFAR-10 RF "baseline_wins at matched NFE" finding. The strong-significance verdict (Bonferroni-significant in 2/3 seeds at α=0.0167) qualifies as a strong claim per the user's "显著性分析类型的指标也要强" directive (significance metric is strong even when direction is opposite to framework wins). The original Wave 191 P3 smoke-ckpt claim remains ACTIVE-on-smoke-ckpt; the production-ckpt evidence row is the ACTIVE counterpart. The PROVISIONAL → ACTIVE upgrade follows the Wave 268 additive-status history rule (old status history preserved in the ledger + this addendum appended; no removal).
 - Date: 2026-09-18
 - Source:
-  [`docs/paper-draft.md` §10.34 (c) + §10.34 (d)](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.34 (c) + §10.34 (d)](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.87 (Wave 191 P3 MNIST FM smoke-ckpt N=1000 reading)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.77 (Wave 191 P3 MNIST FM smoke-ckpt N=1000 audit row)](baseline-audit-report.md),
   [`verification_outputs/wave191-p3-mnist-n1000.json`](../verification_outputs/wave191-p3-mnist-n1000.json)
@@ -3021,7 +3021,7 @@ no CLM status label, and no asserted-by reference is changed.
   production recipe BLOCKED on time budget),
   [`tools/materialize_mnist_fm.py`](../tools/materialize_mnist_fm.py)
   (smoke-materialisation tool),
-  [`docs/paper-draft.md` §10.34 (c) + §10.34 (d)](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.34 (c) + §10.34 (d)](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.87 (Wave 191 P3 MNIST FM N=1000 row)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.77 (Wave 191 P3 MNIST FM N=1000 row)](baseline-audit-report.md).
 
@@ -3039,7 +3039,7 @@ no CLM status label, and no asserted-by reference is changed.
 - **R1 3-seed real-ckpt materialization addendum (additive per Wave 268 strict-clean, USER AUTHORIZED, NO PUSH):** a fresh zero-fallback 3-seed N=1000-per-arm materialization of the R1 cell (`hmmscan_total_hits`) now exists at `verification_outputs/r1_3seed_real_ckpt_q4_2026/` (gitignored; force-added 10 artifacts: 3 manifests + 6 hit tables + `summary.json`; `SHA256SUMS` 10/10 OK). The framework arm uses the **real-ckpt (torch) basis** (`force_mode="auto"` per Wave 349 P4 → ESM-2 + flow head, ckpt `data/lineageflow/lineageflow-rp55.ckpt`), NOT the untrained synthetic velocity field that produced the Wave 158 canonical headline. Protocol: `--n 1000 --upstream-eval-len-bias short` (30–150 AA) `--nfe 10 --n-rounds 3 --temperature 1.0`, `cosine` scheduler; `framework_fallback_per_family_count = {}` on all 3 seeds (zero fallback). **Per-seed results** (per-record paired $t$, $df=999$): seed 42 = 158 → 271 (+113, +71.52 %, $d_z=+0.164$, $p=2.45\times10^{-7}$); seed 43 = 159 → 213 (+54, +33.96 %, $d_z=+0.086$, $p=6.73\times10^{-3}$); seed 44 = 174 → 230 (+56, +32.18 %, $d_z=+0.081$, $p=1.10\times10^{-2}$) — **all 3 seeds direction-consistent framework-WINS**. **Aggregation**: seed-level pooled $t$ on the 3 totals ($n=3$, $df=2$) gives $t=3.843$, $p_\text{two}=0.0615$, $d_z=+2.219$ (inflated by small-$n$ seed variance), $p_{\text{Bonf},k=7}=0.431$ NOT significant; DerSimonian–Laird random-effects meta of the 3 per-seed $d_z$ gives $d_\text{pooled}=+0.110$, $z=4.073$, $p_\text{two}=4.635\times10^{-5}$, $p_{\text{Bonf},k=7}=3.244\times10^{-4}$ **significant**, $I^2=54.13\%$. **Verdict:** the pre-registered STRONG bar (3-seed pooled ∧ $d_z>0.8$ ∧ Bonferroni-significant ∧ direction-consistent) is **NOT met** — the honest pooled effect $d_z=+0.110$ is well below 0.8 — so **R1 status remains PARTIAL** (no promotion). **Basis fork (load-bearing disclosure):** the canonical Wave 158 headline (158 → 342, +116 %, $d_z=+0.182$) is a **synthetic-velocity-field** number; the baseline arm is byte-identical between the two bases (seed-42 baseline FASTA sha256 `4ef0ec94…`, 158 hits == Wave 158) but the framework arm differs (real-ckpt 271 vs synthetic 342 on seed 42; framework is deterministic in both modes). This addendum records the new run and the fork; **no existing number, status label, or verdict is changed** — the Wave 308 P1 `PARTIAL / single-seed-disclosed` demotion and the Wave 280 P invalidated-pool reading are preserved verbatim above. Audit doc: [`docs/audit/r1-3seed-real-ckpt-materialize.md`](audit/r1-3seed-real-ckpt-materialize.md).
 - Date: 2026-09-19 (claim content frozen; Wave 326 cross-doc-snapshot pointer appended 2026-09-23; Wave 352 P5 n=10 paired-t confirmation addendum appended 2026-09-25; Wave 357 P4 K4 Kanzi decision-metric saturation camera-ready scope documentation addendum appended 2026-09-25; R2 deployed-path basis clarification appended 2026-10-12; R2 index-matched two-sample label addendum appended 2026-10-12; R1 3-seed real-ckpt materialization addendum appended 2026-10-12)
 - Source:
-  [`docs/paper-draft.md` §10.35 (b) Table A — R-level power analysis](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.35 (b) Table A — R-level power analysis](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P2 R-level power analysis)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.78 (Wave 195 P2 R-level power analysis)](baseline-audit-report.md),
   [`docs/INSIGHTS.md` §7.7 (Wave 195 — strict per-cell power analysis)](INSIGHTS.md),
@@ -3167,7 +3167,7 @@ no CLM status label, and no asserted-by reference is changed.
   `min_effect_size`),
   [`docs/audit/stats_method/p2-r-level-power.md` §3 + §4](audit/stats_method/p2-r-level-power.md)
   (per-cell data + key observations),
-  [`docs/paper-draft.md` §10.35 (b) Table A — R-level power analysis](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.35 (b) Table A — R-level power analysis](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P2 R-level power row)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.78 (Wave 195 P2 R-level power row)](baseline-audit-report.md).
 - R3 fg_dev cell Wave 208 P2 update (additive reference): the R3 UNDERPOWERED verdict (p_bonf=0.028 framework-WINS by −0.0235) is preserved verbatim; the Wave 208 P2 1-seed per-record sanity check on the canonical Wave 87 byte-stable reference (see CLM-068 final paragraph and audit doc [`docs/audit/flowmol3/p2-flowmol3-dgl-fix-or-sanity.md`](audit/flowmol3/p2-flowmol3-dgl-fix-or-sanity.md)) confirms **direction-consistent** framework value-add on per-record REOS Glaxo+Dundee flag count (n=200 paired, mean diff = −0.360 per mol, 95% CI [−0.535, −0.185], t = −4.027, df = 199, p = 8.03e-05, Cohen's d_z = −0.285) — per-record proxy for fg_dev points the same way as the aggregate fg_dev framework-WINS. The fresh 3-seed re-run remains blocked on the Wave 109.C §5 code fix; the camera-ready deferred-list item is the `_solve_ode_upstream_batch` per-mol prior tiling fix.
@@ -3178,15 +3178,15 @@ no CLM status label, and no asserted-by reference is changed.
 - Status: ACTIVE
 - Wave 280 P status addendum: R6 tier-aware 3-seed sweep evidence (per `docs/audit/wave280-p-r6-sweep-result.md`): the R6 pLDDT tier-aware weak-metric remediation vector (`--tier-aware-n-cap 0.5` flag in `tools/eval/cli.py` wired through `_make_framework_policy` to `TierAwareCodimensionSheetScheduler` per `docs/audit/algorithm_4arm/p-r6-impl.md`) has been end-to-end validated with 3 seeds × N=200 paired records per the user's "3 seed 够了" + "sweep 改进也应该做" + "弱指标变成强指标" directives. The Wave 225 P4 counterfactual validation (`overall d_z +0.071 → +0.224`, easy-tier `d_z -0.998 → -0.499` per Wave 225 P4 historical 1-shot full N=1000 reading) is now **replicated on 3-seed-pooled subsamples**: **overall pLDDT `d_z` lifts from +0.0336 (uniform Wave 161 frozen arm) to +0.1962 (tier-aware counterfactual, +0.1627 delta)**; **per-tier aggregate (across 3 seeds)**: hard tier `d_z = +1.1895 ± 0.1541, p_bonf (M=3) = 2.741e-12, SUPPORTED on 3/3 seeds**; medium tier `d_z = +0.2006 ± 0.1413, p_bonf (M=3) = 6.793e-01, SUPPORTED on 1/3 seeds + UNDERPOWERED on 2/3`; easy tier `d_z = -0.5439 ± 0.0963, p_bonf (M=3) = 7.419e-04, REGRESSES on 3/3 seeds** (counterfactual halves the magnitude but framework still underperforms baseline on easy tier); cluster-robust verdict distribution across 9 (tier, seed) cells: **4 SUPPORTED + 3 REGRESSES + 2 UNDERPOWERED = 9 (7/9 reach Bonferroni significance in at least one direction on at least one seed)**. Per the Wave 22 metric-rev3 rubric + the user's "显著性分析类型的指标也要强" directive, the R6 row moves from `outcome=regression` (Wave 198 P2 overall pLDDT d_z=+0.071 p_bonf=0.18 NOT-significant at strict Bonferroni) to **`outcome=PARTIAL_SUPPORTED` (hard + medium SUPPORTED, easy still REGRESSES on all 3 seeds)** per `docs/audit/wave280-p-r6-sweep-result.md` §4 — the headline status is PARTIAL not full STRONG because the easy-tier remediation does not yet eliminate it (it halves it from −12.55 to ~−6.5 pLDDT). The Wave 225 P10 final synthesis verdict distribution (5 WINS / 1 TIE / 1 REGRESSES across the R-level primary family) is preserved verbatim; the Wave 280 P R6 addendum is an **additive evidence row** in the metric ledger that the R6 tier-aware counterfactual uplifts overall pLDDT `d_z` from +0.071 → +0.196 with hard-tier 3/3 SUPPORTED + easy-tier 3/3 REGRESSES; the Wave 198 P4 final-status (per-record + per-difficulty-tier granularity supersedes Wave 197 P3 honest finding) is preserved verbatim on the k6_foldability_w161 arm; Wave 199 P4 cross-adapter CONFIRMED-on-2-adapters annotation is preserved verbatim (Wave 204 P2 lineageflow arm preserved); the Wave 225 P10 final synthesis R-level verdict table is preserved verbatim (the Wave 280 P R6 addendum does NOT change any R-level cell number, only adds the tier-aware counterfactual evidence row that the user's directive "sweep 改进也应该做" mandated).
 - Date: 2026-09-21 (Wave 208 P1 additively annotated — DeepSeek P1 methodology reframing of the 14/16 UNDERPOWERED cells: per-seed required-N table (d=0.2 → 365 seeds, d=0.5 → 63 seeds at Bonferroni α=0.003125) + per-record power table (scPerplexity power=1.000 with d_z=-1.077, pLDDT power=0.235 with d_z=+0.071 at N=1000); the 14/16 UNDERPOWERED verdict is preserved verbatim but is now explicitly framed as the correct statistical conclusion at per-seed granularity (bounded by seed-to-seed variance, not framework inefficacy); 4-arm per-seed (n=30) is EXPLORATORY, R6 per-record (n=1000) is CONFIRMATORY; artifacts at `verification_outputs/wave208-p1-4arm-power-analysis.{csv,json}` and audit doc at `docs/audit/algorithm_4arm/p1-4arm-power-analysis.md`; **Wave 199 P4 final-status annotation** preserved verbatim with the LineageFlow PENDING annotation; **Wave 201 P7 additively annotated** with `+ Wave 201 P2/P3/P5/P6/P7 eval pipeline plumbing ready (22-min projected N=1000 sweep wall time vs Wave 84 >40 h estimate, but the N=1000 sweep itself is STILL BLOCKED-ON-DATA per Wave 200 P2 underlying blockers — torch 1.13.1 vs Blackwell sm_120 + Python 3.10 venv constraint; cross-adapter CONFIRMED-on-2-adapters claim is NOT asserted because the LineageFlow N=1000 paired data is not on disk)` — the k6 arm is preserved verbatim as the single-adapter ground truth)
-- Wave 310 status addendum (R6 tier-aware counterfactual surfaced in paper body): per the Wave 310 paper-edit pass at `docs/drafts/paper-flat-flattened.md` (commit `7a135ee` Wave 310 R1 data provenance + cross-doc propagation), the **Wave 233 P3 tier-aware-arm counterfactual d_z = +0.2235 (Bonferroni-significant at α = 0.05)** is now surfaced in paper body via 5 edits to `docs/drafts/paper-flat-flattened.md`: §3.3 Table 3.2 R6 row `+0.2235 (tier-aware counterfactual d_z, Wave 233 P3 ... Bonf-sig)` + §7.1 Table 7.1 row 8 counterfactual-lift parenthetical + §7.4 framework-not-theory verdict paragraph line 697 + §3.3 R6 paragraph (line 339) "R6 tier-aware upgrade" disclosure + §7.1 row 7 §7.1.7 column additive parenthetical. The uniform-arm naive d_z = +0.071 (Wave 161 frozen, UNDERPOWERED at R-level α = 0.007143) and the cluster-robust d_z = +0.333 (cluster p = 5.53e-01, UNDERPOWERED at strict α_cluster = 0.00208) are preserved verbatim as the **supplementary** uniform-arm reading; the tier-aware-arm counterfactual d_z = +0.2235 (raw p_after = 2.978e-12, Bonferroni-corrected p_bonf_tier-aware = 1.79e-11 against R6_k6 per-tier family α = 0.05/6 = 0.008333) is the **paper-level upgrade** on the R6 headline cell. The tier-aware counterfactual is a mathematical proxy on the frozen Wave 161 paired diff via the `TierAwareCodimensionSheetScheduler` wrapper (`adaptive_reflow/algorithm/scheduler/tier_aware.py:158`, `easy_tier_nfe_reduction_factor=0.5` on `baseline_pLDDT > 46.13`), NOT a live GPU re-run (per `verification_outputs/wave233-p3-tier-aware-r6.json` honest_disclosure + Wave 209 P1 A3 methodology); the `TierAwareCodimensionSheetScheduler` class itself is fully implemented and reachable via the `build_scheduler` registry key `tier_aware_codimension`. Per-tier breakdown on the tier-aware arm (verified across the 2 edits to §7.1 Table 7.1 row 8 counterfactual-lift parenthetical + §3.3 R6 paragraph "R6 tier-aware upgrade" disclosure): hard `d_z = +1.189` unchanged (cluster p = 1.28e-02 marginally above α_cluster = 0.00208, unchanged because easy-tier factor does not apply above the 67th-percentile boundary); medium `d_z = +0.218` unchanged (cluster p = 0.260 NOT-SIG, unchanged because medium tier also escapes the easy-tier factor); easy `d_z = -0.499` (halved regression from the uniform-arm `-0.998`, an absolute −6.27 pLDDT regression-halving on the easy tier). The SELECTIVE-pLDDT / UNIVERSAL-scPerplexity framing on the uniform arm is CONFIRMED (per-tier cancellation pattern unchanged); the tier-aware arm upgrades the overall pLDDT headline from UNDERPOWERED (cluster-robust p = 0.553) to Bonferroni-significant at α = 0.05. The CLM-073 R6 20-cell grid-search uplift to d_z = +0.6467 (best cell `easy_factor=0.0, hard_intensity=3.0`) is preserved verbatim as a separate sensitivity-analysis disclosure at §3.5; the Wave 233 P3 d_z = +0.2235 tier-aware counterfactual is the canonical primary paper-body upgrade (the Wave 235 P3 grid-search is the sensitivity analysis). Sources: `verification_outputs/wave225-p4-k6-tier-aware.json` + `verification_outputs/wave233-p3-tier-aware-r6.json` + `verification_outputs/wave235-p3-r6-uplift.json`; audit doc at `docs/audit/wave233-p3-tier-aware.md` (does not exist as a top-level doc but the cross-reference in `docs/cover-letter-tnnls.md` line 287 + `docs/audit/INDEX.md` line 326 → `docs/audit/engineering/p3-tier-aware.md` is the canonical Wave 233 P3 audit doc; the `docs/audit/wave310-r6-tier-aware-upgrade.md` doc is the Wave 310 cross-doc-propagation audit doc per Wave 310 task directive §3). **No CLM-061 R-level cell number is changed**; the Wave 310 addendum is an **additive evidence row** documenting that the R6 tier-aware counterfactual is now surfaced in paper body (was previously only documented in `docs/CLAIMS.md` CLM-067 + `docs/audit/wave225-p4-cluster-robust.md` + the cover letter P3 paragraph). The Wave 198 P4 final-status (per-record + per-difficulty-tier granularity supersedes Wave 197 P3 honest finding) is preserved verbatim on the k6_foldability_w161 arm; Wave 199 P4 cross-adapter CONFIRMED-on-2-adapters annotation is preserved verbatim (Wave 204 P2 lineageflow arm preserved); Wave 280 P R6 3-seed tier-aware addendum is preserved verbatim.
+- Wave 310 status addendum (R6 tier-aware counterfactual surfaced in paper body): per the Wave 310 paper-edit pass at `docs/drafts/paper-flat-flattened.ARCHIVED-2026-09-23.md` (commit `7a135ee` Wave 310 R1 data provenance + cross-doc propagation), the **Wave 233 P3 tier-aware-arm counterfactual d_z = +0.2235 (Bonferroni-significant at α = 0.05)** is now surfaced in paper body via 5 edits to `docs/drafts/paper-flat-flattened.ARCHIVED-2026-09-23.md`: §3.3 Table 3.2 R6 row `+0.2235 (tier-aware counterfactual d_z, Wave 233 P3 ... Bonf-sig)` + §7.1 Table 7.1 row 8 counterfactual-lift parenthetical + §7.4 framework-not-theory verdict paragraph line 697 + §3.3 R6 paragraph (line 339) "R6 tier-aware upgrade" disclosure + §7.1 row 7 §7.1.7 column additive parenthetical. The uniform-arm naive d_z = +0.071 (Wave 161 frozen, UNDERPOWERED at R-level α = 0.007143) and the cluster-robust d_z = +0.333 (cluster p = 5.53e-01, UNDERPOWERED at strict α_cluster = 0.00208) are preserved verbatim as the **supplementary** uniform-arm reading; the tier-aware-arm counterfactual d_z = +0.2235 (raw p_after = 2.978e-12, Bonferroni-corrected p_bonf_tier-aware = 1.79e-11 against R6_k6 per-tier family α = 0.05/6 = 0.008333) is the **paper-level upgrade** on the R6 headline cell. The tier-aware counterfactual is a mathematical proxy on the frozen Wave 161 paired diff via the `TierAwareCodimensionSheetScheduler` wrapper (`adaptive_reflow/algorithm/scheduler/tier_aware.py:158`, `easy_tier_nfe_reduction_factor=0.5` on `baseline_pLDDT > 46.13`), NOT a live GPU re-run (per `verification_outputs/wave233-p3-tier-aware-r6.json` honest_disclosure + Wave 209 P1 A3 methodology); the `TierAwareCodimensionSheetScheduler` class itself is fully implemented and reachable via the `build_scheduler` registry key `tier_aware_codimension`. Per-tier breakdown on the tier-aware arm (verified across the 2 edits to §7.1 Table 7.1 row 8 counterfactual-lift parenthetical + §3.3 R6 paragraph "R6 tier-aware upgrade" disclosure): hard `d_z = +1.189` unchanged (cluster p = 1.28e-02 marginally above α_cluster = 0.00208, unchanged because easy-tier factor does not apply above the 67th-percentile boundary); medium `d_z = +0.218` unchanged (cluster p = 0.260 NOT-SIG, unchanged because medium tier also escapes the easy-tier factor); easy `d_z = -0.499` (halved regression from the uniform-arm `-0.998`, an absolute −6.27 pLDDT regression-halving on the easy tier). The SELECTIVE-pLDDT / UNIVERSAL-scPerplexity framing on the uniform arm is CONFIRMED (per-tier cancellation pattern unchanged); the tier-aware arm upgrades the overall pLDDT headline from UNDERPOWERED (cluster-robust p = 0.553) to Bonferroni-significant at α = 0.05. The CLM-073 R6 20-cell grid-search uplift to d_z = +0.6467 (best cell `easy_factor=0.0, hard_intensity=3.0`) is preserved verbatim as a separate sensitivity-analysis disclosure at §3.5; the Wave 233 P3 d_z = +0.2235 tier-aware counterfactual is the canonical primary paper-body upgrade (the Wave 235 P3 grid-search is the sensitivity analysis). Sources: `verification_outputs/wave225-p4-k6-tier-aware.json` + `verification_outputs/wave233-p3-tier-aware-r6.json` + `verification_outputs/wave235-p3-r6-uplift.json`; audit doc at `docs/audit/wave233-p3-tier-aware.md` (does not exist as a top-level doc but the cross-reference in `docs/cover-letter-tnnls.md` line 287 + `docs/audit/INDEX.md` line 326 → `docs/audit/engineering/p3-tier-aware.md` is the canonical Wave 233 P3 audit doc; the `docs/audit/wave310-r6-tier-aware-upgrade.md` doc is the Wave 310 cross-doc-propagation audit doc per Wave 310 task directive §3). **No CLM-061 R-level cell number is changed**; the Wave 310 addendum is an **additive evidence row** documenting that the R6 tier-aware counterfactual is now surfaced in paper body (was previously only documented in `docs/CLAIMS.md` CLM-067 + `docs/audit/wave225-p4-cluster-robust.md` + the cover letter P3 paragraph). The Wave 198 P4 final-status (per-record + per-difficulty-tier granularity supersedes Wave 197 P3 honest finding) is preserved verbatim on the k6_foldability_w161 arm; Wave 199 P4 cross-adapter CONFIRMED-on-2-adapters annotation is preserved verbatim (Wave 204 P2 lineageflow arm preserved); Wave 280 P R6 3-seed tier-aware addendum is preserved verbatim.
 - Wave 311 status addendum (R6 tier-aware-arm d_z = +0.2235 cross-referenced from Path A Lemma 1 — protocol composition closure): per the Wave 311 Path A Lemma 1 audit doc at `docs/audit/wave311-path-a-lemma-1.md` (formal statement + 4-step proof sketch + source-code anchors), the R6 tier-aware-arm counterfactual d_z = +0.2235 (Wave 233 P3) is the canonical empirical reading that motivates **Lemma 1 (Protocol Composition Closure)**: the tier-aware wrapper `TierAwareCodimensionSheetScheduler` (`adaptive_reflow/algorithm/scheduler/tier_aware.py:158`) is precisely a composition A∘B that satisfies the three scheduler-properties (cache coherence + idempotence + monotonicity) provided the wrapper's cache-write schedule is monotonically contained in the inner scheduler's cache-read schedule (hypothesis (i)) and the wrapper's idempotence radius is at least as large as the inner scheduler's monotonicity window (hypothesis (ii)). The R6 tier-aware-arm d_z = +0.2235 Bonferroni-significance is the empirical verification that the composition holds on the canonical A∘B instance; the lemma guarantees that future tier-aware wrappers do not silently break cache coherence or monotonicity, surfacing as audit-doc drift on the wrapper's `__init__` / `sample` boundary. The Path A Lemma 1 cross-reference is **additive**: the Wave 310 R6 tier-aware counterfactual d_z = +0.2235 Bonferroni-significance is preserved verbatim on the R6 headline cell, and the Path A Lemma 1 audit doc adds the formal closure-result context. **No CLM-061 R-level cell number is changed.** Sources: `docs/audit/wave311-path-a-lemma-1.md` (Lemma 1 Path A audit doc) + `docs/audit/wave311-d1-review.md` (Wave 311 D+1 self-review) + `docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md` (paper-body insertion form of Lemma 1).
 - Source:
-  [`docs/paper-draft.md` §10.35 (c) Table B — 4-arm head-to-head power analysis](ARCHIVE/legacy-paper/paper-draft.md),
-  [`docs/paper-draft.md` §10.36 — Wave 196 P4 verdict upgrade](ARCHIVE/legacy-paper/paper-draft.md),
-  [`docs/paper-draft.md` §10.37 — Wave 197 P3 root-cause analysis (final status)](ARCHIVE/legacy-paper/paper-draft.md),
-  [`docs/paper-draft.md` §10.38 — Wave 198 P2 + P3 per-record + difficult-seed supersession](ARCHIVE/legacy-paper/paper-draft.md),
-  [`docs/paper-draft.md` §10.39 — Wave 199 P2 + P3 LineageFlow per-record + difficult-seed stratification: BLOCKED-ON-DATA, honest status of cross-adapter consistency claim](ARCHIVE/legacy-paper/paper-draft.md),
-  [`docs/paper-draft.md` §10.41 — Wave 201 P7 eval pipeline speedup (per-GPU oversubscription + LPT sharding + auto-detect + `--gpus` propagation) + LineageFlow N=1000 sweep STILL BLOCKED-ON-DATA per Wave 200 P2 but pipeline plumbing ready](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.35 (c) Table B — 4-arm head-to-head power analysis](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.36 — Wave 196 P4 verdict upgrade](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.37 — Wave 197 P3 root-cause analysis (final status)](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.38 — Wave 198 P2 + P3 per-record + difficult-seed supersession](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.39 — Wave 199 P2 + P3 LineageFlow per-record + difficult-seed stratification: BLOCKED-ON-DATA, honest status of cross-adapter consistency claim](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.41 — Wave 201 P7 eval pipeline speedup (per-GPU oversubscription + LPT sharding + auto-detect + `--gpus` propagation) + LineageFlow N=1000 sweep STILL BLOCKED-ON-DATA per Wave 200 P2 but pipeline plumbing ready](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P3 4-arm power analysis)](CONSOLIDATED_RESULTS.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.89 (Wave 196 P4 verdict upgrade)](CONSOLIDATED_RESULTS.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.90 (Wave 197 P4 final-status)](CONSOLIDATED_RESULTS.md),
@@ -3393,7 +3393,7 @@ no CLM status label, and no asserted-by reference is changed.
   `min_effect_size = 0.01`),
   [`docs/audit/algorithm_4arm/p3-4arm-power.md`](audit/algorithm_4arm/p3-4arm-power.md)
   (Wave 195 P3 audit doc),
-  [`docs/paper-draft.md` §10.35 (c) Table B — 4-arm head-to-head power analysis](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.35 (c) Table B — 4-arm head-to-head power analysis](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P3 4-arm power row)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.78 (Wave 195 P3 4-arm power row)](baseline-audit-report.md).
 
@@ -3402,7 +3402,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Status: ACTIVE
 - Date: 2026-09-19
 - Source:
-  [`docs/paper-draft.md` §10.35 (d) Table C — Theorem 1 load-bearing power analysis](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.35 (d) Table C — Theorem 1 load-bearing power analysis](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P4 Theorem 1 power analysis)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.78 (Wave 195 P4 Theorem 1 power analysis)](baseline-audit-report.md),
   [`docs/INSIGHTS.md` §7.7 (Wave 195 — strict per-cell power analysis)](INSIGHTS.md),
@@ -3531,7 +3531,7 @@ no CLM status label, and no asserted-by reference is changed.
   `min_effect_size_l2 = 1.0`, `min_effect_size_ds = 0.01`),
   [`docs/audit/algorithm_4arm/p4-theorem1-power.md`](audit/algorithm_4arm/p4-theorem1-power.md)
   (Wave 195 P4 audit doc),
-  [`docs/paper-draft.md` §10.35 (d) Table C — Theorem 1 load-bearing power analysis](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.35 (d) Table C — Theorem 1 load-bearing power analysis](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.88 (Wave 195 P4 Theorem 1 power row)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.78 (Wave 195 P4 Theorem 1 power row)](baseline-audit-report.md).
 
@@ -3555,7 +3555,7 @@ no CLM status label, and no asserted-by reference is changed.
   (Wave 196 P4 audit doc — §2.2 R2 honest interpretation),
   [`docs/audit/kanzi/p3-kanzi-n1000-framework-inv-proj.md`](audit/kanzi/p3-kanzi-n1000-framework-inv-proj.md)
   (Wave 196 P3 audit doc — paired N=1000 fresh re-verify spec),
-  [`docs/paper-draft.md` §10.36 — Wave 196 P4 verdict upgrade](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.36 — Wave 196 P4 verdict upgrade](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.89 (Wave 196 P4 verdict upgrade)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.79 (Wave 196 P4 verdict upgrade)](baseline-audit-report.md).
 - Asserted by:
@@ -3610,7 +3610,7 @@ no CLM status label, and no asserted-by reference is changed.
   (Wave 196 P4 aggregate tool — re-uses Wave 196 P2 paired machinery),
   [`docs/audit/engineering/p4-table-aggregate.md` §3](audit/engineering/p4-table-aggregate.md)
   (Wave 196 P4 audit doc — Table B upgrade summary),
-  [`docs/paper-draft.md` §10.36 — Wave 196 P4 verdict upgrade](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.36 — Wave 196 P4 verdict upgrade](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.89 (Wave 196 P5 verdict upgrade)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.79 (Wave 196 P5 verdict upgrade)](baseline-audit-report.md).
 - Asserted by:
@@ -3648,7 +3648,7 @@ no CLM status label, and no asserted-by reference is changed.
 - Status: ACTIVE
 - Date: 2026-09-19
 - Source:
-  [`docs/paper-draft.md` §10.41 (Wave 201 P7 eval pipeline speedup + LineageFlow N=1000 sweep STILL BLOCKED-ON-DATA but pipeline plumbing ready)](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.41 (Wave 201 P7 eval pipeline speedup + LineageFlow N=1000 sweep STILL BLOCKED-ON-DATA but pipeline plumbing ready)](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.94 (Wave 201 P7 eval pipeline speedup)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.84 (Wave 201 P7 eval pipeline speedup)](baseline-audit-report.md),
   [`docs/INSIGHTS.md` §7.13 (Wave 201 P7 eval pipeline speedup)](INSIGHTS.md),
@@ -3683,8 +3683,8 @@ no CLM status label, and no asserted-by reference is changed.
 - Source:
   [`docs/tables/wave203-p4-standardized-stats.md`](../docs/tables/wave203-p4-standardized-stats.md)
   (Wave 203 P4 audit-grade 12-row table),
-  [`docs/paper-draft.md` §10.42 (Wave 203 P4 paper section)](ARCHIVE/legacy-paper/paper-draft.md),
-  [`docs/paper-draft.md` §5.7 (this Wave 203 P4 addition: reviewer-risk pre-empted items #1-#5)](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.42 (Wave 203 P4 paper section)](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §5.7 (this Wave 203 P4 addition: reviewer-risk pre-empted items #1-#5)](ARCHIVE/legacy-paper/paper-draft.md),
   [`docs/CONSOLIDATED_RESULTS.md` §15.96 (Wave 203 P4)](CONSOLIDATED_RESULTS.md),
   [`docs/baseline-audit-report.md` §R.86 (Wave 203 P4)](baseline-audit-report.md),
   [`docs/INSIGHTS.md` §7.15 (Wave 203 P4)](INSIGHTS.md),
@@ -3699,15 +3699,15 @@ no CLM status label, and no asserted-by reference is changed.
   [`docs/audit/algorithm_4arm/p6-boundary-framing.md`](../docs/audit/algorithm_4arm/p6-boundary-framing.md)
   (Wave 208 P6 ADDITIVE — unified three-sentence boundary format: (a) boundary statement, (b) experimental evidence with d_z + p + n, (c) scope-of-applicability — applied to R5b REGRESSES, R5a TIE, R3 UNDERPOWERED; numbers pulled verbatim from Wave 196 P4 Table A JSON; paper-text template provided for §10.x Limitations / Boundary characterization reproduction; CLM-040 / CLM-039 / CLM-056 boundary disclosures preserved verbatim).
 - Asserted by:
-  `docs/tables/wave203-p4-standardized-stats.md` (Table 1: 12-row audit-grade table) + `docs/paper-draft.md` §10.42 (a)-(g) (paper-text reproduction of Table 1 + Bonferroni families + cluster-robust + bug fixes + reviewer-risk mitigation + acceptance gates) + `docs/audit/algorithm_4arm/p6-boundary-framing.md` (Wave 208 P6 ADDITIVE — unified R5b/R5a/R3 three-sentence boundary framing).
+  `docs/tables/wave203-p4-standardized-stats.md` (Table 1: 12-row audit-grade table) + `docs/ARCHIVE/legacy-paper/paper-draft.md` §10.42 (a)-(g) (paper-text reproduction of Table 1 + Bonferroni families + cluster-robust + bug fixes + reviewer-risk mitigation + acceptance gates) + `docs/audit/algorithm_4arm/p6-boundary-framing.md` (Wave 208 P6 ADDITIVE — unified R5b/R5a/R3 three-sentence boundary framing).
 - Disputed by: —
 - Statement: Per the DeepSeek reviewer audit (received 2026-09-20), every head claim in the paper is now reported with audit-grade standardized statistics: (n_paired, mean_diff, sd_diff, t, df, p_raw, CI95_low, CI95_high, Cohen's d_z, test_type, family, α_bonferroni, bonf_sig). The 12-row audit-grade table is at `docs/tables/wave203-p4-standardized-stats.md` Table 1. DeepSeek's d_z/p recomputation audit identified 1 apparent inconsistency (k6 hard pLDDT d_z = +1.189 vs p = 4.82e-65 was computed as if df=999 instead of N=1000); after reconciliation the audit's recomputation used the Gaussian tail instead of Student's t — the original Wave 198 P3 p-values are CONSISTENT with the t-statistics when the correct t-table is used. The 2 prior p-value reporting bugs found and fixed in this Wave 203 P4 are: (i) Wave 196 P2 (4-arm N=30) reported t = 16.057 without matching df = 29 / 95% CI — both added; (ii) Wave 195 R5c (MNIST FM NFE=50 FID) reported p_raw = 1.32e-11 in the R-level table but the §7.4 per-paper-claim headline quoted a different family α — the explicit pre-registered family (R-level primary, α = 0.007143) is now added. CLM-057 (kanzi L2 endpoint movement) d_z = -30.15 triggers the §5.7 item #5 audit checklist (extreme paired-diff SD on n = 30 records implies near-zero variance — biologically implausible); the §5.7 item #5 audit checklist was **completed in Wave 214 P1+P2+P3**: the byte-stability concern was traced to a source-code regression (Wave 178 P2+P3 + Wave 196 P3 patch) that bypassed the Wave 95.P3.B trained-inverse bridge; the regression was fixed by Wave 214 P2 (bridge restored in `tools/_kanzi_sweep_runner.py:_synthesize_x_final_real` lines 414-491); the framework_inv_proj arm is now byte-stable against Wave 127 (0.8798 Å) per the N=10 smoke test (0.8758 Å, Δ = −0.004, well inside σ = 0.136 / √10 ≈ 0.043 SEM); CLM-057 status: **ACTIVE** (PROVISIONAL flag removed in Wave 214 P3); see `docs/audit/kanzi/p1-kanzi-byte-stability-regression.md`, `docs/audit/kanzi/p2-kanzi-rerun.md`, `docs/audit/paper_claims/p3-clm057-update.md`.
 - Evidence:
   [`docs/tables/wave203-p4-standardized-stats.md`](../docs/tables/wave203-p4-standardized-stats.md)
   (Wave 203 P4 audit-grade 12-row table — Table 1),
-  [`docs/paper-draft.md` §10.42 (a)-(g)](ARCHIVE/legacy-paper/paper-draft.md)
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.42 (a)-(g)](ARCHIVE/legacy-paper/paper-draft.md)
   (Wave 203 P4 paper section),
-  [`docs/paper-draft.md` §5.7 (items #1-#5 reviewer-risk pre-empted)](ARCHIVE/legacy-paper/paper-draft.md)
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §5.7 (items #1-#5 reviewer-risk pre-empted)](ARCHIVE/legacy-paper/paper-draft.md)
   (Wave 203 P4 §5.7 additions).
 
 ## CLM-067: Wave 203 P3 + P4 — Cluster-robust replication of k6 per-record verdict (DeepSeek audit response) — Pfam family as cluster unit (4 clusters × 250 records = 1000 records), cluster-level df = 3, ICC = 0.04-0.19, N_eff_design_effect = 20-90; 8-cell verdict distribution (4 tiers × 2 metrics) is **5 cluster-robust SUPPORTED + 1 cluster-robust REGRESSES-by-direction + 2 cluster-robust UNDERPOWERED/NOT-SIG** — specifically: overall scPerplexity SUPPORTED (cluster p = 4.02e-03); hard pLDDT SUPPORTED (cluster p = 1.28e-02, borderline vs strict 6-tier × 4-cluster Bonferroni α = 0.00208); hard scPerplexity SUPPORTED (cluster p = 9.61e-03); medium scPerplexity SUPPORTED (cluster p = 1.97e-03); easy pLDDT REGRESSES-by-direction (cluster p = 3.73e-03); easy scPerplexity SUPPORTED (cluster p = 4.96e-03); overall pLDDT UNDERPOWERED (cluster p = 5.53e-01); medium pLDDT NOT-SIG (cluster p = 2.60e-01) — headline implication: scPerplexity framework-WINS is cluster-robust across all tiers and overall; pLDDT framework-uplift is per-tier (hard SUPPORTED, easy REGRESSES-by-direction, medium NOT-SIG, overall UNDERPOWERED) — the per-tier reframing is the reviewer-side audit-grounded conclusion; cross-adapter confirmation on LineageFlow remains BLOCKED-ON-DATA (Wave 199 P3) {#CLM-067}
@@ -3721,8 +3721,8 @@ no CLM status label, and no asserted-by reference is changed.
   (Wave 203 P3 cluster-robust CSV mirror),
   [`docs/tables/wave203-p4-standardized-stats.md`](../docs/tables/wave203-p4-standardized-stats.md)
   (Table 3: cluster-robust 8-cell verdict summary),
-  [`docs/paper-draft.md` §10.42 (d) cluster-robust analysis](ARCHIVE/legacy-paper/paper-draft.md),
-  [`docs/paper-draft.md` §5.7 item #3 (cluster-robust independence)](ARCHIVE/legacy-paper/paper-draft.md)
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.42 (d) cluster-robust analysis](ARCHIVE/legacy-paper/paper-draft.md),
+  [`docs/ARCHIVE/legacy-paper/paper-draft.md` §5.7 item #3 (cluster-robust independence)](ARCHIVE/legacy-paper/paper-draft.md)
   (Wave 203 P4 §5.7 additions).
 - Asserted by:
   `verification_outputs/wave203-p3-k6-cluster-robust.json` (Wave 203 P3 cluster-robust JSON — ICC one-way ANOVA + cluster t-statistic + Wilcoxon signed-rank + design-effect N_eff).
@@ -3975,7 +3975,7 @@ Per user directive on deeper innovation digging. The framework's audit disciplin
 - Status: ACTIVE
 ## CLM-085: Wave 311 Path A — Lemma 1 (Protocol Composition Closure) — §6 Framework Properties. The composition `A ∘ B` of two `SchedulerProtocol`-conformant schedulers satisfies the three scheduler-properties (cache coherence + idempotence + monotonicity) provided (i) `A`'s cache-write schedule is monotonically contained in `B`'s cache-read schedule and (ii) `A`'s idempotence radius is at least as large as `B`'s monotonicity window. Canonical A∘B instance: `TierAwareCodimensionSheetScheduler` wrapping `CodimensionSheetScheduler` (`adaptive_reflow/algorithm/scheduler/tier_aware.py:158`). {#CLM-085}
 
-`adaptive_reflow/algorithm/scheduler/protocols.py:157` — `SchedulerProtocol` runtime_checkable Protocol class (the abstract type A and B conform to). `adaptive_reflow/algorithm/scheduler/protocols.py:191` — `SchedulerProtocol.sample` signature (the canonical wrapper entry point invoked by Step 1). `adaptive_reflow/algorithm/scheduler/tier_aware.py:158` — `TierAwareCodimensionSheetScheduler` class declaration (canonical A∘B composition). `adaptive_reflow/algorithm/scheduler/tier_aware.py:204` — `easy_tier_nfe_reduction_factor: float = 1.0` parameter (Step 3 safe no-op anchor). `adaptive_reflow/algorithm/scheduler/tier_aware.py:453` — `TierAwareCodimensionSheetScheduler.sample` (Step 1 write-before-read order proof). `adaptive_reflow/algorithm/scheduler/tier_aware.py:540` — `TierAwareCodimensionSheetScheduler.reset` (Step 2 idempotence-preserving boundary). `adaptive_reflow/algorithm/policy_driver.py:181` — `PolicyDriverProtocol` (sister protocol; referenced for context, not invoked by Lemma 1). `adaptive_reflow/framework/paper_quantities_cache.py:139` — `_LazyMemoCachedEvaluationCost` class declaration (Step 1 cache-coherence slot). `adaptive_reflow/framework/paper_quantities_cache.py:165` — `_LazyMemoCachedEvaluationCost._NOT_COMPUTED` sentinel (Step 1). `adaptive_reflow/framework/paper_quantities_cache.py:173` — `_LazyMemoCachedEvaluationCost.get` (Step 1 read contract). `adaptive_reflow/framework/paper_quantities_cache.py:430` — `PaperQuantitiesCache.get` site-aware dispatch (Step 1). `adaptive_reflow/framework/paper_quantities_cache.py:551` — `PaperQuantitiesCache.clear` (Step 2 idempotence-preserving boundary). Paper landing: §6 Framework Properties ¶2 + ¶3 + ¶4 (Wave 311 P3 + Wave 303 Path A); insertion line range: `docs/drafts/paper-flat-flattened.md` §6 Framework Properties line 1391-1422; paper-body insertion form at `docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md` (140-line lemma statement + 4-step proof sketch + 13 source-code anchors). Wave-doc anchors: `docs/audit/wave311-path-a-lemma-1.md` (Lemma 1 Path A audit doc) + `docs/audit/wave311-d1-review.md` (Wave 311 D+1 self-review of Wave 310 paper changes; line-number anchor audit doc that motivates this lemma). Path A context: the canonical A∘B instance is the Wave 310 R6 tier-aware upgrade that lifted tier-aware overall pLDDT d_z from +0.071 to +0.2235 (Bonferroni-significant on k=6, α=0.008333, per §3.3 Table 3.2 R6 row line 324 in `docs/drafts/paper-flat-flattened.md`); the lemma guarantees the tier-aware wrapper does not invalidate any property the inner scheduler guarantees. Closest prior art: type-theoretic composition closure (Pierce, "Types and Programming Languages", Chapter 11) — closed under sequential composition given per-component contract satisfaction; Process Algebra CCS composition closure (Milner, "A Calculus of Communicating Systems", 1980) — labelled-transition-system composition is closed under parallel/sequential composition given per-channel protocol satisfaction. What is genuinely new: scheduler-property composition closure with cache-coherence + idempotence + monotonicity as the three properties, anchored at `_LazyMemoCachedEvaluationCost` (cache coherence) + `PaperQuantitiesCache.clear` (idempotence boundary) + `easy_tier_nfe_reduction_factor=1.0` (monotonicity no-op). Why a reviewer would value it: the lemma is the closure result that the Wave 310 R6 tier-aware upgrade (`d_z = +0.2235` Bonferroni-significant) implicitly relies on; a future wrapper that silently breaks cache coherence would surface as audit-doc drift on the wrapper's `__init__` / `sample` boundary, not as a state-machine violation. Lemmas 2 (state-machine byte-determinism) and 3 (ledger tamper-evidence) are slated for Wave 312 / Wave 313 insertions as the second + third Path A lemmas of the §6 Framework Properties rename. D.4 30/30 PASS preserved; ruff 0; mkdocs 0 warnings; vendored NOT touched.
+`adaptive_reflow/algorithm/scheduler/protocols.py:157` — `SchedulerProtocol` runtime_checkable Protocol class (the abstract type A and B conform to). `adaptive_reflow/algorithm/scheduler/protocols.py:191` — `SchedulerProtocol.sample` signature (the canonical wrapper entry point invoked by Step 1). `adaptive_reflow/algorithm/scheduler/tier_aware.py:158` — `TierAwareCodimensionSheetScheduler` class declaration (canonical A∘B composition). `adaptive_reflow/algorithm/scheduler/tier_aware.py:204` — `easy_tier_nfe_reduction_factor: float = 1.0` parameter (Step 3 safe no-op anchor). `adaptive_reflow/algorithm/scheduler/tier_aware.py:453` — `TierAwareCodimensionSheetScheduler.sample` (Step 1 write-before-read order proof). `adaptive_reflow/algorithm/scheduler/tier_aware.py:540` — `TierAwareCodimensionSheetScheduler.reset` (Step 2 idempotence-preserving boundary). `adaptive_reflow/algorithm/policy_driver.py:181` — `PolicyDriverProtocol` (sister protocol; referenced for context, not invoked by Lemma 1). `adaptive_reflow/framework/paper_quantities_cache.py:139` — `_LazyMemoCachedEvaluationCost` class declaration (Step 1 cache-coherence slot). `adaptive_reflow/framework/paper_quantities_cache.py:165` — `_LazyMemoCachedEvaluationCost._NOT_COMPUTED` sentinel (Step 1). `adaptive_reflow/framework/paper_quantities_cache.py:173` — `_LazyMemoCachedEvaluationCost.get` (Step 1 read contract). `adaptive_reflow/framework/paper_quantities_cache.py:430` — `PaperQuantitiesCache.get` site-aware dispatch (Step 1). `adaptive_reflow/framework/paper_quantities_cache.py:551` — `PaperQuantitiesCache.clear` (Step 2 idempotence-preserving boundary). Paper landing: §6 Framework Properties ¶2 + ¶3 + ¶4 (Wave 311 P3 + Wave 303 Path A); insertion line range: `docs/drafts/paper-flat-flattened.ARCHIVED-2026-09-23.md` §6 Framework Properties line 1391-1422; paper-body insertion form at `docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md` (140-line lemma statement + 4-step proof sketch + 13 source-code anchors). Wave-doc anchors: `docs/audit/wave311-path-a-lemma-1.md` (Lemma 1 Path A audit doc) + `docs/audit/wave311-d1-review.md` (Wave 311 D+1 self-review of Wave 310 paper changes; line-number anchor audit doc that motivates this lemma). Path A context: the canonical A∘B instance is the Wave 310 R6 tier-aware upgrade that lifted tier-aware overall pLDDT d_z from +0.071 to +0.2235 (Bonferroni-significant on k=6, α=0.008333, per §3.3 Table 3.2 R6 row line 324 in `docs/drafts/paper-flat-flattened.ARCHIVED-2026-09-23.md`); the lemma guarantees the tier-aware wrapper does not invalidate any property the inner scheduler guarantees. Closest prior art: type-theoretic composition closure (Pierce, "Types and Programming Languages", Chapter 11) — closed under sequential composition given per-component contract satisfaction; Process Algebra CCS composition closure (Milner, "A Calculus of Communicating Systems", 1980) — labelled-transition-system composition is closed under parallel/sequential composition given per-channel protocol satisfaction. What is genuinely new: scheduler-property composition closure with cache-coherence + idempotence + monotonicity as the three properties, anchored at `_LazyMemoCachedEvaluationCost` (cache coherence) + `PaperQuantitiesCache.clear` (idempotence boundary) + `easy_tier_nfe_reduction_factor=1.0` (monotonicity no-op). Why a reviewer would value it: the lemma is the closure result that the Wave 310 R6 tier-aware upgrade (`d_z = +0.2235` Bonferroni-significant) implicitly relies on; a future wrapper that silently breaks cache coherence would surface as audit-doc drift on the wrapper's `__init__` / `sample` boundary, not as a state-machine violation. Lemmas 2 (state-machine byte-determinism) and 3 (ledger tamper-evidence) are slated for Wave 312 / Wave 313 insertions as the second + third Path A lemmas of the §6 Framework Properties rename. D.4 30/30 PASS preserved; ruff 0; mkdocs 0 warnings; vendored NOT touched.
 
 ## CLM-086: Wave 322 Path A — Lemma 2 (State-Machine Byte-Determinism) — §6 Framework Properties. Two `StateMachine[TState, TEvent]` instances initialised identically (same `initial`, same `_transitions` list, same `_regions` / `_parallel` maps, same `_history_kind` and history snapshots, same `_strict_guards` flag, same `_log` cleared, `_counter = 0`) produce **byte-identical** `TransitionLog` tuples for any finite event sequence dispatched through either `send(event, payload)` or `asend(event, payload)`. Equivalently, the dataclass field-by-field equality at `tests/test_contracts/test_state_machine.py:624` and the JSON serialisation via `dataclasses.asdict(...)` then `json.dumps(...)` are byte-identical across the two machines. The proof proceeds in 4 cases that cover every dispatch path reachable from `send` / `asend`: **Case A (priority tiebreak)** at `state_machine.py:808-856` (sync `_try_pick_sync`) + `state_machine.py:971-1003` (async `_try_pick_async`) — both sort `indexed = list(enumerate(candidates))` by the integer pair `(-priority, registration_index)` (no FP, no RNG); the pure-guard contract at `state_machine.py:46-48` (no FP / I/O / RNG) selects the same transition. **Case B (history)** at `state_machine.py:680-694` (`_update_history`) + `state_machine.py:711-740` (`_restore_history`) — pure functions of immutable `TState` identifiers and the regions-dict iteration order (deterministic at registration). **Case C (parallel regions, sync)** at `state_machine.py:767-775` (`_dispatch_sync`) — iterates `self._parallel.get(state).values()` in CPython 3.11+ insertion order; both machines share the same `Mapping[str, StateMachine]` initialiser so sub-dispatch reduces to Case A by induction. **Case D (asyncio.gather, async)** at `state_machine.py:924-955` (`_dispatch_async`) — builds `coros` deterministically from the same parallel-region insertion order and awaits `asyncio.gather(*coros)` at line 941 (no `ensure_future`, no side-effects, no `return_exceptions=...`); awaits resolve in list order on a single-threaded event loop. The 4 cases cover all dispatch paths because `state_machine.py:757` (sync) and `state_machine.py:924` (async) are the only two entry points and the JSON serialisation of the `@dataclass(frozen=True)` `TransitionLog` at `state_machine.py:133-185` (fields are `int | str | tuple[str, ...] | None | bool`) is deterministic given identical state. **Status: ACTIVE (Wave 322 — was PLACEHOLDER in Wave 311).** Paper landing: §6 Framework Properties ¶5 line 1408 (was Wave 311 placeholder `[TO BE ADDED in Wave 312: State machine byte-determinism]`; now full formal statement + 4-case proof sketch — word count ~330). Wave-doc anchors: `docs/audit/wave322-path-a-lemmas-2-3.md` (Wave 322 Lemma 2 + Lemma 3 combined Path A audit doc) + `docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md` (paper-body insertion form of Lemma 2) + `docs/audit/wave311-d1-review.md` (Wave 311 D+1 self-review; updated in Wave 322 to note placeholder closure). D.4 30/30 PASS preserved; ruff 0; mkdocs 0 warnings; vendored NOT touched. {#CLM-086}
 
@@ -3985,7 +3985,7 @@ Per user directive on deeper innovation digging. The framework's audit disciplin
 
 `adaptive_reflow/frame/ledger_chain.py:113-218` — append-only hash chain (full-proof anchor for Lemma 3 tamper-evidence stack). `adaptive_reflow/frame/ledger_chain.py:98-110` — `_recompute(row)` hash-chain collision-resistance anchor. `adaptive_reflow/frame/ledger_chain.py:170-171` — O(1) amortised row-hash-per-append anchor. `adaptive_reflow/frame/ledger_chain.py:185-191` — anchor invariant enforcement. `adaptive_reflow/frame/ledger_chain.py:192-198` — linkage invariant enforcement. `adaptive_reflow/frame/ledger_chain.py:199-204` — round monotonicity enforcement. `adaptive_reflow/frame/ledger_chain.py:206-213` — row-hash integrity enforcement. `adaptive_reflow/frame/ledger_chain.py:228-244` — `verify_incremental()` tamper-detection anchor. `adaptive_reflow/frame/ledger_chain.py:245-261` — `verify_full()` tamper-detection anchor. `adaptive_reflow/frame/ledger_chain.py:295+` — `ParallelLedgerChain` parallel-append safety anchor. `adaptive_reflow/frame/engine.py:455-489` — `compute_ledger_row_hash` (deterministic SHA-256 row hash; commits every record field plus previous row's hash). `adaptive_reflow/frame/engine.py:542-613` — `verify_ledger_chain` (audit-replay entry point; same invariants as `LedgerChain.append`). `adaptive_reflow/frame/engine.py:492-539` — `build_ledger_row` (P0-8 ledger-row constructor). `tests/test_frame/test_ledger_chain.py` — 32x reduction per-row verification cost assertion. Closest prior art: hash-chained ledger rows (CLM-078) — SHA-256 chain over canonical row fields detects tampering at append time with one hash computation per row, closing the gap between Git packfile's O(R) per-check re-walk and MLflow's lack of cryptographic chaining. What is genuinely new: ledger tamper-evidence proof that the append-only hash chain detects any post-hoc tampering with O(1) amortised verification, anchored at the 3-case proof (tail tamper + mid-chain tamper + insert/delete) + the fail-closed boundary at `LedgerChain.append` + SHA-256 collision-resistance edge case at probability $\leq 2^{-128}$. Why a reviewer would value it: the tamper-evidence property is what makes the framework's audit trail a collision-resistant cryptographic commitment to the per-round decision history — a post-hoc tamper of any row breaks `verify_ledger_chain` at the FIRST mismatching index. Lemmas 1 (CLM-085) and 2 (CLM-086) preserve the Path A lemma trio. D.4 30/30 PASS preserved; ruff 0; mkdocs 0 warnings; vendored NOT touched.
 
-## CLM-088: Wave 322 Path A — §6 Framework Properties formally verified — all 3 Path A lemmas ACTIVE. The framework's three Path A lemmas are simultaneously **ACTIVE** in the canonical Claims ledger as of Wave 322 (2026-09-23): **Lemma 1 (CLM-085, Wave 311 ACTIVE)** — protocol composition closure; **Lemma 2 (CLM-086, Wave 322 ACTIVE — was PLACEHOLDER in Wave 311)** — state-machine byte-determinism; **Lemma 3 (CLM-087, Wave 322 ACTIVE — was PLACEHOLDER in Wave 311)** — ledger tamper-evidence via hash chain. Together these three lemmas formally verify the §6 Framework Properties framing of `docs/drafts/paper-flat-flattened.md` line 1391+: (i) protocol composition closure — the four-protocol composition layer (`SchedulerProtocol`, `PolicyDriverProtocol`, `MergeOperatorProtocol`, `RestartBlenderProtocol`) is closed under sequential composition given per-component contract satisfaction; (ii) state-machine byte-determinism — two `StateMachine[TState, TEvent]` instances initialised identically produce byte-identical `TransitionLog` tuples for any finite event sequence dispatched through `send` / `asend`; (iii) ledger tamper-evidence — the append-only hash chain detects any post-hoc tampering with verification failure on the FIRST mismatching index (modulo SHA-256 collision resistance, probability $\leq 2^{-128}$). The framework is therefore elevated from "code that happens to work" to a typed-contracts architecture whose three load-bearing component boundaries are formally verified at the byte-stability + cryptographic-commitment layer. Wave 296 P7 FID $\Delta = 0\%$ empirical reading (`enable_full_jmaa_theory=False` vs `True`) remains the empirical evidence that the framework is module-independent of JMAA Theorem 1 (Paper B companion lens). **Status: ACTIVE (Wave 322 COMPLETE — Wave 311 PARTIAL-APPLY closed by Wave 322).** Cross-doc anchors: `docs/audit/wave322-path-a-lemmas-2-3.md` (Wave 322 combined Lemma 2 + Lemma 3 audit doc) + `docs/audit/wave311-path-a-lemma-1.md` (Lemma 1 Path A audit doc) + `docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md` (paper-body insertion form of all 3 lemmas) + `docs/drafts/paper-flat-flattened.md` §6 Framework Properties line 1391-1422 (paper-body §6 with all 3 lemmas inserted at lines 1400 / 1408 / 1410). D.4 30/30 PASS preserved; ruff 0; mkdocs 0 warnings; vendored NOT touched. {#CLM-088}
+## CLM-088: Wave 322 Path A — §6 Framework Properties formally verified — all 3 Path A lemmas ACTIVE. The framework's three Path A lemmas are simultaneously **ACTIVE** in the canonical Claims ledger as of Wave 322 (2026-09-23): **Lemma 1 (CLM-085, Wave 311 ACTIVE)** — protocol composition closure; **Lemma 2 (CLM-086, Wave 322 ACTIVE — was PLACEHOLDER in Wave 311)** — state-machine byte-determinism; **Lemma 3 (CLM-087, Wave 322 ACTIVE — was PLACEHOLDER in Wave 311)** — ledger tamper-evidence via hash chain. Together these three lemmas formally verify the §6 Framework Properties framing of `docs/drafts/paper-flat-flattened.ARCHIVED-2026-09-23.md` line 1391+: (i) protocol composition closure — the four-protocol composition layer (`SchedulerProtocol`, `PolicyDriverProtocol`, `MergeOperatorProtocol`, `RestartBlenderProtocol`) is closed under sequential composition given per-component contract satisfaction; (ii) state-machine byte-determinism — two `StateMachine[TState, TEvent]` instances initialised identically produce byte-identical `TransitionLog` tuples for any finite event sequence dispatched through `send` / `asend`; (iii) ledger tamper-evidence — the append-only hash chain detects any post-hoc tampering with verification failure on the FIRST mismatching index (modulo SHA-256 collision resistance, probability $\leq 2^{-128}$). The framework is therefore elevated from "code that happens to work" to a typed-contracts architecture whose three load-bearing component boundaries are formally verified at the byte-stability + cryptographic-commitment layer. Wave 296 P7 FID $\Delta = 0\%$ empirical reading (`enable_full_jmaa_theory=False` vs `True`) remains the empirical evidence that the framework is module-independent of JMAA Theorem 1 (Paper B companion lens). **Status: ACTIVE (Wave 322 COMPLETE — Wave 311 PARTIAL-APPLY closed by Wave 322).** Cross-doc anchors: `docs/audit/wave322-path-a-lemmas-2-3.md` (Wave 322 combined Lemma 2 + Lemma 3 audit doc) + `docs/audit/wave311-path-a-lemma-1.md` (Lemma 1 Path A audit doc) + `docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md` (paper-body insertion form of all 3 lemmas) + `docs/drafts/paper-flat-flattened.ARCHIVED-2026-09-23.md` §6 Framework Properties line 1391-1422 (paper-body §6 with all 3 lemmas inserted at lines 1400 / 1408 / 1410). D.4 30/30 PASS preserved; ruff 0; mkdocs 0 warnings; vendored NOT touched. {#CLM-088}
 
 ---
 
@@ -3993,7 +3993,7 @@ Per user directive on deeper innovation digging. The framework's audit disciplin
 
 ---
 
-**§6 Framework Properties bucket summary (post-Wave 322 Path A COMPLETE, 2026-09-23):** §6 of `docs/drafts/paper-flat-flattened.md` is renamed from "Theoretical Lenses" to "Framework Properties" per the Wave 311 task directive. The §6 Framework Properties framing elevates the framework from "code that happens to work" to a typed-contracts architecture whose component boundaries are formally verified at the byte-stability + cryptographic-commitment layer. The framing is anchored at Wave 296 P7 FID Δ=0% as the empirical reading that the framework's module-independence extends to its theoretical companion lens (10 of 11 headline cells instantiate `CosineAnnealScheduler`, the baseline that ignores all four paper quantities; 15 of 16 enumerated Theorem 1 application sites are dormant under the cosine baseline per Wave 292 P1). The §6 Framework Properties rename ships **3 Path A lemmas as the formal primary contribution — all ACTIVE as of Wave 322** (CLM-088): **Lemma 1 (CLM-085, Wave 311 ACTIVE)** — protocol composition closure (full proof sketch + 13 source-code anchors, paper-body insertion form at `docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md`); **Lemma 2 (CLM-086, Wave 322 ACTIVE — was Wave 311 PLACEHOLDER)** — state-machine byte-determinism (full 4-case proof sketch: priority tiebreak + history + parallel regions + asyncio.gather, full-proof anchor at `adaptive_reflow/contracts/state_machine.py:386 + 808-856 + 680-740 + 767-775 + 924-955`); **Lemma 3 (CLM-087, Wave 322 ACTIVE — was Wave 311 PLACEHOLDER)** — ledger tamper-evidence via hash chain (full 3-case proof sketch: tail tamper + mid-chain tamper + insert/delete, full-proof anchor at `adaptive_reflow/frame/ledger_chain.py:113-218` + `engine.py:455-489`). Word counts: Lemma 1 ~550; Lemma 2 ~330; Lemma 3 ~310; §6 final word count 1765 (within target 1500-2000). JMAA Theorem 1 is demoted to one theoretical companion lens (`docs/theory/theorem-1-self-contained.md` Paper B companion); the framework is **module-independent** of the theorem. Path A context (Lemma 1): the canonical A∘B instance is `TierAwareCodimensionSheetScheduler` wrapping `CodimensionSheetScheduler` (`adaptive_reflow/algorithm/scheduler/tier_aware.py:158`) — the R6 upgrade from Wave 310 that lifted tier-aware overall pLDDT d_z from +0.071 to +0.2235 (Bonferroni-significant on k=6, α=0.008333, per §3.3 Table 3.2 R6 row line 324 in `docs/drafts/paper-flat-flattened.md`); the lemma guarantees the tier-aware wrapper does not invalidate any property the inner scheduler guarantees. Wave 322 cross-doc propagation closes the Wave 311 PARTIAL-APPLY state by upgrading CLM-086 + CLM-087 from PLACEHOLDER to ACTIVE, adding CLM-088 as the meta-claim, and updating the §6 Framework Properties bucket summary to reflect all 3 lemmas ACTIVE. Cross-doc anchors: `docs/audit/wave322-path-a-lemmas-2-3.md` (Wave 322 combined Lemma 2 + Lemma 3 audit doc) + `docs/audit/wave311-path-a-lemma-1.md` (Lemma 1 Path A audit doc) + `docs/audit/wave311-d1-review.md` (Wave 311 D+1 self-review; updated in Wave 322 to note placeholder closure) + `docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md` (paper-body insertion form of all 3 lemmas) + `docs/drafts/paper-flat-flattened.md` §6 Framework Properties line 1391-1422 (paper-body §6 with Lemma 1 at line 1400, Lemma 2 at line 1408, Lemma 3 at line 1410). Reviewer-resilience ranking (post-Wave 322 COMPLETE): #1 protocol composition closure (Lemma 1, full proof sketch), #2 state-machine byte-determinism (Lemma 2, full 4-case proof), #3 ledger tamper-evidence (Lemma 3, full 3-case proof).
+**§6 Framework Properties bucket summary (post-Wave 322 Path A COMPLETE, 2026-09-23):** §6 of `docs/drafts/paper-flat-flattened.ARCHIVED-2026-09-23.md` is renamed from "Theoretical Lenses" to "Framework Properties" per the Wave 311 task directive. The §6 Framework Properties framing elevates the framework from "code that happens to work" to a typed-contracts architecture whose component boundaries are formally verified at the byte-stability + cryptographic-commitment layer. The framing is anchored at Wave 296 P7 FID Δ=0% as the empirical reading that the framework's module-independence extends to its theoretical companion lens (10 of 11 headline cells instantiate `CosineAnnealScheduler`, the baseline that ignores all four paper quantities; 15 of 16 enumerated Theorem 1 application sites are dormant under the cosine baseline per Wave 292 P1). The §6 Framework Properties rename ships **3 Path A lemmas as the formal primary contribution — all ACTIVE as of Wave 322** (CLM-088): **Lemma 1 (CLM-085, Wave 311 ACTIVE)** — protocol composition closure (full proof sketch + 13 source-code anchors, paper-body insertion form at `docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md`); **Lemma 2 (CLM-086, Wave 322 ACTIVE — was Wave 311 PLACEHOLDER)** — state-machine byte-determinism (full 4-case proof sketch: priority tiebreak + history + parallel regions + asyncio.gather, full-proof anchor at `adaptive_reflow/contracts/state_machine.py:386 + 808-856 + 680-740 + 767-775 + 924-955`); **Lemma 3 (CLM-087, Wave 322 ACTIVE — was Wave 311 PLACEHOLDER)** — ledger tamper-evidence via hash chain (full 3-case proof sketch: tail tamper + mid-chain tamper + insert/delete, full-proof anchor at `adaptive_reflow/frame/ledger_chain.py:113-218` + `engine.py:455-489`). Word counts: Lemma 1 ~550; Lemma 2 ~330; Lemma 3 ~310; §6 final word count 1765 (within target 1500-2000). JMAA Theorem 1 is demoted to one theoretical companion lens (`docs/theory/theorem-1-self-contained.md` Paper B companion); the framework is **module-independent** of the theorem. Path A context (Lemma 1): the canonical A∘B instance is `TierAwareCodimensionSheetScheduler` wrapping `CodimensionSheetScheduler` (`adaptive_reflow/algorithm/scheduler/tier_aware.py:158`) — the R6 upgrade from Wave 310 that lifted tier-aware overall pLDDT d_z from +0.071 to +0.2235 (Bonferroni-significant on k=6, α=0.008333, per §3.3 Table 3.2 R6 row line 324 in `docs/drafts/paper-flat-flattened.ARCHIVED-2026-09-23.md`); the lemma guarantees the tier-aware wrapper does not invalidate any property the inner scheduler guarantees. Wave 322 cross-doc propagation closes the Wave 311 PARTIAL-APPLY state by upgrading CLM-086 + CLM-087 from PLACEHOLDER to ACTIVE, adding CLM-088 as the meta-claim, and updating the §6 Framework Properties bucket summary to reflect all 3 lemmas ACTIVE. Cross-doc anchors: `docs/audit/wave322-path-a-lemmas-2-3.md` (Wave 322 combined Lemma 2 + Lemma 3 audit doc) + `docs/audit/wave311-path-a-lemma-1.md` (Lemma 1 Path A audit doc) + `docs/audit/wave311-d1-review.md` (Wave 311 D+1 self-review; updated in Wave 322 to note placeholder closure) + `docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md` (paper-body insertion form of all 3 lemmas) + `docs/drafts/paper-flat-flattened.ARCHIVED-2026-09-23.md` §6 Framework Properties line 1391-1422 (paper-body §6 with Lemma 1 at line 1400, Lemma 2 at line 1408, Lemma 3 at line 1410). Reviewer-resilience ranking (post-Wave 322 COMPLETE): #1 protocol composition closure (Lemma 1, full proof sketch), #2 state-machine byte-determinism (Lemma 2, full 4-case proof), #3 ledger tamper-evidence (Lemma 3, full 3-case proof).
 
 ---
 
@@ -4026,7 +4026,7 @@ Per the user directive "我们把 flow matching 这类模型的推理框架重�
 - `docs/audit/wave297-p5-empirical-rewritten.md` (P5 — §7 + §8 prose)
 - `docs/audit/wave297-p6-limitations-rewritten.md` (P6 — §9 + §10 prose)
 - `docs/audit/wave297-p7-readme-updated.md` (P7 — README + CLAIMS reframing; this addendum's origin)
-- `docs/drafts/paper-flat-flattened.md` (paper source, post-Wave-297 W297-P3-P6 prose)
+- `docs/drafts/paper-flat-flattened.ARCHIVED-2026-09-23.md` (paper source, post-Wave-297 W297-P3-P6 prose)
 
 **INVARIANTS preserved:**
 - D.4 byte-stable 30/30 PASS (no code edited).

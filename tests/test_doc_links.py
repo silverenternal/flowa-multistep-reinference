@@ -44,3 +44,25 @@ def test_frozen_entries_point_at_real_files() -> None:
     """An exemption for a path that no longer exists silently widens the gate."""
     missing = [s for s in checker.FROZEN if not (ROOT / s).is_file()]
     assert missing == [], missing
+
+
+def test_live_docs_do_not_reference_archived_drafts() -> None:
+    """`docs/paper-draft.md` was archived; live prose must point at the copy.
+
+    It is not a markdown link, so the scanner above cannot see it: the
+    reference sits inside inline code, which is exactly where 352 of them
+    accumulated before the 2026-10-29 sweep.
+    """
+    stale_names = ("docs/paper-draft.md", "docs/drafts/paper-flat-flattened.md")
+    live = [
+        p
+        for p in list((ROOT / "docs").glob("*.md")) + [ROOT / "supplementary.md"]
+        if p.is_file()
+    ]
+    stale = [
+        f"{p.relative_to(ROOT)}: {name}"
+        for p in live
+        for name in stale_names
+        if name in p.read_text(encoding="utf-8")
+    ]
+    assert stale == [], stale

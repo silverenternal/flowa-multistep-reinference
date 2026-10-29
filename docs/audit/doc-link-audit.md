@@ -222,9 +222,11 @@ and `docs/drafts/paper-flat-flattened.md` →
 — and the section numbers the surrounding prose cites (§7.6.6 and friends)
 remain valid in the archived copy.
 
-**Not done here, deliberately.** 62 of the 352 occurrences are in
-`docs/CLAIMS.md`, the frozen governance surface; the rest are spread across
-documents whose prose cites those sections as live evidence. Repointing them
-is a one-line-per-occurrence edit with no effect on any number, but it is an
-editorial decision about how the frozen claim register should refer to a
-superseded manuscript, so it is recorded rather than performed.
+**Resolution (2026-10-29, authorised).** All 352 were repointed — 342 for
+`paper-draft.md`, 10 for `paper-flat-flattened.md` — including the 62 in
+`docs/CLAIMS.md`. The edit is path-only: the section numbers the surrounding
+prose cites are unchanged, because the archived copy is the same document.
+`docs-vs-code` stays at 3370 verified claims (its extractor scopes to
+non-ARCHIVE paths, so the repointed targets moved out of its scan rather than
+out of existence); `check_doc_links` and `check_claims_consistency` are
+unchanged. No number, claim, status label, or verdict moved.

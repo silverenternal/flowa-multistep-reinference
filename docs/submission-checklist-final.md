@@ -33,7 +33,7 @@
 ## D. Reviewer-facing docs
 - [ ] docs/headline-evidence/ (10 subdirs + 31 symlinks + 7 SOURCE.md)
 - [ ] README.md (Tier-1 SCI submission pointer, freeze SHA 0ef6465)
-- [ ] docs/paper-draft.md §10.4 (8 honest negatives + provenance discipline)
+- [ ] docs/ARCHIVE/legacy-paper/paper-draft.md §10.4 (8 honest negatives + provenance discipline)
 - [ ] docs/INSIGHTS.md (A- self-assessment post-Wave 137)
 - [ ] docs/GATES.md (D.4 72/72 PASS, pytest 5155 current-state)
 

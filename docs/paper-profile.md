@@ -221,7 +221,7 @@ selection_ratio 0.8061 → 0.9896（JMAA Theorem 1 的 C-g 量在 LineageFlow sy
 
 | 文件 | 内容 |
 |---|---|
-| `docs/paper-draft.md` | 主稿（6700+ 行）|
+| `docs/ARCHIVE/legacy-paper/paper-draft.md` | 主稿（6700+ 行）|
 | `docs/CONSOLIDATED_RESULTS.md` | §15.x 所有 wave 累积 |
 | `docs/baseline-audit-report.md` | §R.x baseline audit trail |
 | `docs/CLAIMS.md` | 39 active claims |

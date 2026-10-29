@@ -1583,7 +1583,7 @@ The 4 optimizations are:
    optimization actually shards across GPUs.
 
 Cross-references: [CLM-065](CLAIMS.md#CLM-065) (NEW claim — eval
-pipeline speedup) + [`docs/paper-draft.md` §10.41](ARCHIVE/legacy-paper/paper-draft.md)
+pipeline speedup) + [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.41](ARCHIVE/legacy-paper/paper-draft.md)
 + [`docs/CONSOLIDATED_RESULTS.md` §15.94](CONSOLIDATED_RESULTS.md)
 + [`docs/baseline-audit-report.md` §R.84](baseline-audit-report.md)
 + [`docs/INSIGHTS.md` §7.13](INSIGHTS.md) +
