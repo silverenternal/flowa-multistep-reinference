@@ -92,7 +92,7 @@ fixtures in `tests/test_adversarial/`. To add a new one:
 
 The protocol surface is `FlowMatchingODEAdapter` in
 `adaptive_reflow.universal.adapter`. The full recipe is in
-**[ARCHITECTURE.md §5](ARCHITECTURE.md)** and the worked example is
+**[ARCHITECTURE.md §5](docs/ARCHITECTURE.md)** and the worked example is
 `ToyLinearAdapter` under `adaptive_reflow/adapters/`. The short form:
 
 1. Subclass `FlowMatchingODEAdapter` and implement the eight-method

@@ -97,7 +97,7 @@ Concretely: the paper's posterior is `P(X | F_g(X) = 0)` — the *conditional* d
 ## 5a. Algorithm uplift results
 
 The algorithm layer uplifts surveyed in
-[`docs/algorithm-uplift-plan.md`](algorithm-uplift-plan.md) (5 P0 +
+[`docs/ARCHIVE/algorithm-uplift/algorithm-uplift-plans.md`](ARCHIVE/algorithm-uplift/algorithm-uplift-plans.md) (5 P0 +
 9 P1 + 24 P2 = 38 candidate uplifts across 17 algorithm classes + 1
 runner integration) are measured quantitatively in
 [`docs/benchmark-uplifts.md`](benchmark-uplifts.md). Headline
@@ -126,7 +126,7 @@ table.
 ## Algorithm depth uplift results
 
 The second, deeper uplift pass is planned in
-[`docs/algorithm-deep-uplift-plan.md`](algorithm-deep-uplift-plan.md)
+[`docs/ARCHIVE/algorithm-uplift/algorithm-uplift-plans.md`](ARCHIVE/algorithm-uplift/algorithm-uplift-plans.md)
 (inventory of **~140 algorithms**, **18 SOTA papers** surveyed) and
 measured in
 [`docs/benchmark-deep-uplifts.md`](benchmark-deep-uplifts.md):
@@ -164,7 +164,7 @@ swappable without the reproducibility surface changing shape.
 ## Algorithm depth uplift Round 2 results
 
 The third, deepest pass is planned in
-[`docs/algorithm-round2-uplift-plan.md`](algorithm-round2-uplift-plan.md)
+[`docs/ARCHIVE/algorithm-uplift/algorithm-uplift-plans.md`](ARCHIVE/algorithm-uplift/algorithm-uplift-plans.md)
 (inventory of **~165 algorithms** after Round-1, **17 fresh SOTA
 papers** surveyed on top of Round-1's 30, ~47 unique external
 SOTA works cited) and measured in
@@ -186,7 +186,7 @@ mypy **33 -> 0**, ruff **32 -> 0**, across 118 source files
 
 ## R3 adversarial fixes (Round-3 uplift)
 
-The R3 adversarial survey ([docs/r3-survey/05-verified-findings.md](r3-survey/05-verified-findings.md))
+The R3 adversarial survey ([docs/r3-survey/05-verified-findings.md](ARCHIVE/docs-survey/r3-survey/05-verified-findings.md))
 read-only verified **17** findings against the shipped framework and
 refuted **5** [CLM-031]. The P0 paper-correctness fixes restore the
 documented fail-closed semantics: `BoundedMergeOperator.merge` now

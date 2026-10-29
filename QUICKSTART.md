@@ -4,7 +4,7 @@ This page is a five-minute on-ramp: install, run the tests, walk one round
 against the canonical hello-world adapter, capture a golden, run the docs
 scanner, then move on.
 
-For the *what* and the *why*, see [`ARCHITECTURE.md`](ARCHITECTURE.md). For
+For the *what* and the *why*, see [`ARCHITECTURE.md`](docs/ARCHITECTURE.md). For
 common questions, see [`FAQ.md`](FAQ.md). For the deeper walk-through of a
 round, see [`TUTORIAL.md`](TUTORIAL.md).
 
@@ -205,7 +205,7 @@ that referenced it.
 | You want to… | Read |
 | --- | --- |
 | Walk one round end-to-end, hands-on | [`TUTORIAL.md`](TUTORIAL.md) |
-| Understand the package layout, dependency DAG, governance invariants | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
+| Understand the package layout, dependency DAG, governance invariants | [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | Look up a quick "why is X this way?" | [`FAQ.md`](FAQ.md) |
 | Trace a load-bearing boundary decision back to its rationale | [`docs/adr/`](docs/adr/) |
 | Add a new model family (latent FM, discrete CTMC FM, audio FM, …) | [`docs/ADAPTER_INTERFACE_SPEC.md`](docs/ADAPTER_INTERFACE_SPEC.md) |
@@ -378,8 +378,8 @@ Cumulative wall-clock (single host):
 
 | You want to…                                                    | Read |
 | ------------------------------------------------------------ | ---- |
-| Skim the full Tier-1 paper draft                             | [`docs/paper-draft.md`](docs/paper-draft.md) |
-| Read the NeurIPS-camera-ready version (§1–§10)               | [`docs/paper-final-neurips.md`](docs/paper-final-neurips.md) (PDF mirror: `docs/paper-final-neurips.pdf`) |
+| Skim the full Tier-1 paper draft                             | [`docs/paper-draft.md`](docs/ARCHIVE/legacy-paper/paper-draft.md) |
+| Read the NeurIPS-camera-ready version (§1–§10)               | [`docs/paper-final-neurips.md`](docs/ARCHIVE/legacy-paper/paper-final-neurips.md) (PDF mirror: `docs/paper-final-neurips.pdf`) |
 | See the project README + scope statement                     | [`README.md`](README.md) |
 | Walk the six R.N headline numbers + per-R.N source-of-truth  | [`docs/headline-evidence/README.md`](docs/headline-evidence/README.md) |
 | Inspect the per-component ablation matrix cited in §Ablations | [`docs/ABLATION.md`](docs/ABLATION.md) |

@@ -475,7 +475,7 @@ This ADR was originally described in the Workflow K task brief as
 "ADR-0006" (to group it numerically with ADR-0010 / ADR-0011 /
 ADR-0013, the algorithm-layer decisions it builds on). The
 audit identified a slug collision with the existing
-[ADR-0006](0006-engine-wraps-adapter-pattern.md)
+[ADR-0006](../ARCHIVE/adr/0006-engine-wraps-adapter-pattern.md)
 ("Engine-wraps-adapter pattern") — two ADRs sharing the number
 `6` would be a documentation-reader trap. The audit
 recommended the safer allocation `0014` (next free monotonic

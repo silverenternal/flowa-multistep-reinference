@@ -268,7 +268,7 @@ of the unresolved reference.
 | --- | --- |
 | Plug your own SOTA flow-matching model into the engine | [`PLUG_IN_YOUR_MODEL.md`](./PLUG_IN_YOUR_MODEL.md) |
 | Choose a different scheduler, driver, merge operator, or blender | [`ALGORITHMS.md`](./ALGORITHMS.md) |
-| Understand the package layout, dependency DAG, governance invariants | [`ARCHITECTURE.md`](../ARCHITECTURE.md) |
+| Understand the package layout, dependency DAG, governance invariants | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
 | Implement the 8-method Protocol surface from scratch | [`ADAPTER_INTERFACE_SPEC.md`](./ADAPTER_INTERFACE_SPEC.md) |
 | Run the four-scheduler ablation against your checkpoint | [`r4-survey/07-sota-experiment-protocol.md`](./r4-survey/07-sota-experiment-protocol.md) |
 | Look up "why is X this way?" | [`FAQ.md`](../FAQ.md) |

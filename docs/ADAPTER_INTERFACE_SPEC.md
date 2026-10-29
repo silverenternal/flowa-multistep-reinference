@@ -105,7 +105,7 @@ These hold for **every** method:
 | Methods MUST NOT raise on well-formed inputs | Errors are protocol-level events, raised via `CapabilityMissingError` / `CapabilityMismatchError` only. |
 | Methods MUST be deterministic for fixed inputs + seed | R7 round-to-round paired evaluation. |
 | `StateBundle` returned by every method MUST satisfy `validate_state_bundle` | Engine-side fail-closed invariants. |
-| Methods MUST NOT import `torch` | Stdlib-only contract; see [ARCHITECTURE.md §3](../ARCHITECTURE.md) governance invariants. |
+| Methods MUST NOT import `torch` | Stdlib-only contract; see [ARCHITECTURE.md §3](ARCHITECTURE.md) governance invariants. |
 
 ### 2.2 Adapter-side extensions (NOT in the Protocol)
 
@@ -1011,7 +1011,7 @@ class ToyLinearAdapter(FlowMatchingODEAdapter):
 
 ## 15. See also
 
-- [ARCHITECTURE.md](../ARCHITECTURE.md) — layered structure, dependency
+- [ARCHITECTURE.md](ARCHITECTURE.md) — layered structure, dependency
   direction, governance invariants.
 - [CONTRACTS.md](../CONTRACTS.md) — typed contracts (frozen dataclasses).
 - [DESIGN_BOUNDARY.md](../DESIGN_BOUNDARY.md) — non-claim boundary.

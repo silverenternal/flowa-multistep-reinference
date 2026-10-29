@@ -101,7 +101,7 @@ The decision is confirmed when:
 
 ## More Information
 
-* [ARCHITECTURE.md §5.5](../../ARCHITECTURE.md) — the
+* [ARCHITECTURE.md §5.5](../ARCHITECTURE.md) — the
   per-round contract that the seven steps implement.
 * [docs/PERFORMANCE_BUDGETS.md](../PERFORMANCE_BUDGETS.md) — the
   `engine_round_loop_us_p95` budget that gates the seven-step call

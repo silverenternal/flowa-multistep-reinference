@@ -6,10 +6,10 @@ together, and *what bars* (mutation score, benchmark budgets, doc
 verification) a change has to clear before it merges.
 
 For the *what* the project is, see
-[ARCHITECTURE.md](../ARCHITECTURE.md). For the *hostile cases* the
+[ARCHITECTURE.md](ARCHITECTURE.md). For the *hostile cases* the
 adversarial layer exists to catch, see
 [DESIGN_BOUNDARY.md](../DESIGN_BOUNDARY.md). For current metrics, see
-[FINAL_STATUS.md](../FINAL_STATUS.md).
+[FINAL_STATUS.md](ARCHIVE/top-level/FINAL_STATUS.md).
 
 ---
 
@@ -226,7 +226,7 @@ ticket; a failing bench-regression is a same-day fix.
    / gate equality rather than re-implementing the predicate.
 4. **Mark slow tests with `@pytest.mark.slow`** so `cpu-tests.yml`
    (`-m "not slow and not benchmark"`) keeps the PR loop fast.
-5. **Update [ARCHITECTURE.md](../ARCHITECTURE.md)** if the change
+5. **Update [ARCHITECTURE.md](ARCHITECTURE.md)** if the change
    introduces a new public symbol; the doc scanner will refuse to
    merge otherwise.
 6. **Run the full gate locally before pushing**:
@@ -258,7 +258,7 @@ either (a) an equivalent mutant (no behaviour change possible) or
 as a follow-up and blocks the PR that introduced it. Nightly score
 trend is captured in the `mutation-report` artifact from
 `.github/workflows/mutation-nightly.yml`; the current snapshot is in
-[FINAL_STATUS.md](../FINAL_STATUS.md), and a sustained drop below
+[FINAL_STATUS.md](ARCHIVE/top-level/FINAL_STATUS.md), and a sustained drop below
 the targets above is a release blocker.
 
 ## 8. Paper-grounded invariants under test

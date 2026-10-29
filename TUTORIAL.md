@@ -12,7 +12,7 @@ runs in plain Python 3.12 with no `torch`, no `numpy`, no I/O, no
 network. If a snippet appears to use a third-party library, it is a
 type-hint only and is not imported at runtime.
 
-For project-wide context see [ARCHITECTURE.md](ARCHITECTURE.md). For
+For project-wide context see [ARCHITECTURE.md](docs/ARCHITECTURE.md). For
 the test-layer catalogue see [docs/TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md).
 For the Protocol surface see
 [docs/ADAPTER_INTERFACE_SPEC.md](docs/ADAPTER_INTERFACE_SPEC.md). For
@@ -335,7 +335,7 @@ contracts + universal core in the nightly Linux job
 deferred to upstream issue 397; the Linux job captures the canonical
 score and uploads the report as the `mutmut-report` artifact.
 
-To read [`mutmut_results.txt`](mutmut_results.txt):
+To read `mutmut_results.txt`:
 
 ```
 # Mutant id, status, surviving because...

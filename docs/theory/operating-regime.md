@@ -288,7 +288,7 @@ Per the task spec §"What we DON'T know", the following are
 **Status:** **Resolved** (Wave 31 Agent A — F-5 wire ratio to n_cap).
 
 **Background.** Wave 29 Agent A's theory ↔ implementation audit
-([`docs/audit/theory-implementation-gap.md`](../audit/theory-implementation-gap.md),
+([`docs/audit/theory-implementation-gap.md`](../ARCHIVE/audit-by-wave/theory-implementation-gap.md),
 "F-5") classified the `CodimensionSheetScheduler.n_cap` driver as
 the only clean algorithm-level regression at matched NFE:
 
@@ -330,7 +330,7 @@ now paper-aligned per ADR-0013.
 
 **Cross-references:**
 
-* [`docs/audit/theory-implementation-gap.md`](../audit/theory-implementation-gap.md)
+* [`docs/audit/theory-implementation-gap.md`](../ARCHIVE/audit-by-wave/theory-implementation-gap.md)
   §F-5 — the Wave 29 Agent A finding (audit source).
 * [`docs/adr/0013-posterior-selection-drives-algorithm.md`](../adr/0013-posterior-selection-drives-algorithm.md)
   — the paper-quantity naming ADR whose naming convention is now

@@ -44,3 +44,35 @@ def test_no_exemption_outlives_its_issue() -> None:
     errors, _, _ = checker.check()
     stale = [e for e in errors if "exemption no longer matches" in e]
     assert stale == [], stale
+
+
+def test_paper_data_manifest_rows_match_disk() -> None:
+    """`paper-data/MANIFEST.md` duplicates the ledger's hashes; both must hold."""
+    sys.path.insert(0, str(ROOT / "tools"))
+    import check_paper_data_manifest as manifest
+
+    bad = [(n, s) for n, s in manifest.check() if s != "ok"]
+    assert bad == [], bad
+
+
+def test_readme_artifact_hashes_match_disk() -> None:
+    """Both root READMEs must quote the *current* manuscript digests."""
+    import check_artifact_hashes as artifacts
+
+    records = artifacts.scan()
+    stale = [r for r in records if r["status"] != "ok"]
+    assert stale == [], stale
+    cited = {r["artifact"] for r in records}
+    assert set(artifacts.REQUIRED_CITED) <= cited, cited
+
+
+def test_artifact_hash_checker_catches_a_stale_token(tmp_path, monkeypatch) -> None:
+    import check_artifact_hashes as artifacts
+
+    (tmp_path / "README.md").write_text(
+        f"| PDF | `docs/drafts/paper-A-final.pdf` | `{'0' * 64}` |\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(artifacts, "REPO_ROOT", tmp_path)
+    records = artifacts.scan()
+    assert [r["status"] for r in records] == ["stale"]

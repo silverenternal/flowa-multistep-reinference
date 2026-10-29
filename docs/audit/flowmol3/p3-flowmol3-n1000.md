@@ -26,7 +26,7 @@ batch0:DGLError:Expect number of features to match number of nodes
 
 The 100× ratio (2000 nodes vs 20 features) is the
 `_solve_ode_upstream_batch` prior-shape mismatch documented in
-[`docs/audit/wave109-c-flowmol3-n1000.md`](wave109-c-flowmol3-n1000.md) §2:
+`docs/audit/wave109-c-flowmol3-n1000.md` §2:
 the v2 adapter passes per-mol `(x_0, a_0, c_0, e_0)` tensors with shape
 `(n_atoms, ...)` but the upstream `FlowMol.sample` constructs a batched
 DGL graph with `num_nodes = batch_size * n_atoms_per_mol` and expects
@@ -104,7 +104,7 @@ Single-seed audit row written to:
 
 ## 3. Cross-reference with Wave 195 P2 (R3 row)
 
-Per [`docs/audit/wave195-p2-r-level-power.md`](wave195-p2-r-level-power.md)
+Per `docs/audit/wave195-p2-r-level-power.md`
 §2.3 (R3 row in 8-row R-level table):
 
 | Wave 195 P2 R3 row | Value |
@@ -160,7 +160,7 @@ The DGL 2.4.0 regression is documented but unfixed. Suggested fix
 3. **Re-run** `tools/wave87_n1000_sweep.py` with seed sweep {42, 43, 44}
    on a clean GPU (~30 min wall time per seed × 3 seeds = ~90 min total).
 
-The Wave 110 plan in [`docs/audit/wave110-final-synthesis.md`](wave110-final-synthesis.md)
+The Wave 110 plan in [`docs/audit/wave110-final-synthesis.md`](../../ARCHIVE/audit-by-wave/wave110-final-synthesis.md)
 focused on Kanzi N=1000 (Bug 1 + Bug 2 fixes); FlowMol3 DGL batched path
 was not in scope. The next Wave 206 P3 follow-up (or a dedicated Wave
 211.A) should land the FlowMol3 DGL fix and re-run the 3-seed sweep.
@@ -179,7 +179,7 @@ was not in scope. The next Wave 206 P3 follow-up (or a dedicated Wave
 **Honest disclosure**: The FlowMol3 R3 fg_dev headline effect
 (framework wins by −0.0235, 4σ) is byte-stable across Wave 82 and
 Wave 87 (verified in §1.3) and is preserved verbatim in
-[`docs/CLAIMS.md`](../CLAIMS.md) §CLM-060 R3 row. The Wave 206 P3
+[`docs/CLAIMS.md`](../../CLAIMS.md) §CLM-060 R3 row. The Wave 206 P3
 3-seed pooled SD upgrade was blocked by the Wave 109.C DGL
 regression; the 1-seed byte-stable reference is reused as a
 temporary substitute. The fix path (§5) is on the camera-ready

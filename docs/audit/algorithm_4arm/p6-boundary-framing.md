@@ -229,7 +229,7 @@ formatting reference, not a number change.
 
 **Add to CLM-066 source list** (`docs/CLAIMS.md` §CLM-066 source list):
 
-> [`docs/audit/wave208-p6-boundary-framing.md`](../docs/audit/wave208-p6-boundary-framing.md)
+> `docs/audit/wave208-p6-boundary-framing.md`
 > (Wave 208 P6 unified R5b/R5a/R3 boundary framing — three-sentence
 > format: (a) boundary statement, (b) experimental evidence with d_z +
 > p + n, (c) scope-of-applicability — applied to R5b REGRESSES,

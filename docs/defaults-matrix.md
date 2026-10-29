@@ -35,7 +35,7 @@ Each column maps to a single first-class implementation in
 
 | Axis | Module | Implementations |
 | --- | --- | --- |
-| Scheduler | [`adaptive_reflow/algorithm/scheduler.py`](../adaptive_reflow/algorithm/scheduler.py) + [`adaptive_reflow/algorithm/sequential.py`](../adaptive_reflow/algorithm/sequential.py) | `CosineAnnealScheduler`, `ConstantScheduler`, `LinearScheduler`, `ExponentialScheduler`, `PolynomialScheduler`, `SigmoidScheduler`, `ConvergenceAdaptiveScheduler`, `CodimensionSheetScheduler`, `SequentialScheduler` |
+| Scheduler | [`adaptive_reflow/algorithm/scheduler/`](../adaptive_reflow/algorithm/scheduler/__init__.py) + [`adaptive_reflow/algorithm/sequential.py`](../adaptive_reflow/algorithm/sequential.py) | `CosineAnnealScheduler`, `ConstantScheduler`, `LinearScheduler`, `ExponentialScheduler`, `PolynomialScheduler`, `SigmoidScheduler`, `ConvergenceAdaptiveScheduler`, `CodimensionSheetScheduler`, `SequentialScheduler` |
 | PolicyDriver | [`adaptive_reflow/algorithm/policy_driver.py`](../adaptive_reflow/algorithm/policy_driver.py) | `ScheduleDerivedPolicyDriver` (`schedule_derived`), `ConstantPolicyDriver` (`constant`), `AdaptivePolicyDriver` (`adaptive`) |
 | MergeOperator | [`adaptive_reflow/algorithm/merge_operator.py`](../adaptive_reflow/algorithm/merge_operator.py) | `BoundedMergeOperator` (`bounded`), `IdentityOperator` (`identity`), `EMAOperator` (`ema`) |
 | Blender | [`adaptive_reflow/algorithm/blender.py`](../adaptive_reflow/algorithm/blender.py) | `LinearBlender` (`linear`), `DistanceDecayBlender` (`distance_decay`) |
@@ -171,7 +171,7 @@ schedule" for the per-`cycle_length` decision tree.
 * [`docs/adr/0013-posterior-selection-drives-algorithm.md`](adr/0013-posterior-selection-drives-algorithm.md)
   — the paper-grounded algorithm-layer ADR; rationale for
   `CodimensionSheetScheduler` and `DistanceDecayBlender`.
-* [`adaptive_reflow/algorithm/scheduler.py`](../adaptive_reflow/algorithm/scheduler.py)
+* [`adaptive_reflow/algorithm/scheduler/`](../adaptive_reflow/algorithm/scheduler/__init__.py)
   — the `SchedulerProtocol` implementations.
 * [`adaptive_reflow/algorithm/sequential.py`](../adaptive_reflow/algorithm/sequential.py)
   — the `SequentialScheduler` implementation (P1-2).

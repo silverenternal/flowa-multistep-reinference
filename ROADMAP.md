@@ -30,7 +30,7 @@ wired into a default path are labelled inline.
 - [ ] Update reader docs (`README.md`, `ARCHITECTURE.md` §5) to reflect
       the ToyGaussianAdapter recipe by 2026-09-30 [ADR-0003]
 - [x] Algorithm depth uplift — implemented 2026-08-29. Phase 1 of
-      [`docs/algorithm-deep-uplift-plan.md`](docs/algorithm-deep-uplift-plan.md)
+      [`docs/ARCHIVE/algorithm-uplift/algorithm-uplift-plans.md`](docs/ARCHIVE/algorithm-uplift/algorithm-uplift-plans.md)
       inventoried **~140 algorithms** across `adaptive_reflow/` and
       `tools/` and researched **18 SOTA papers** (W2 estimators,
       diffusion ODE solvers, coverage / energy metrics, noise
@@ -54,7 +54,7 @@ wired into a default path are labelled inline.
       rather than tuned to pass.
 - [x] Algorithm depth uplift Round 2 — implemented 2026-08-29.
       Phase 1 of
-      [`docs/algorithm-round2-uplift-plan.md`](docs/algorithm-round2-uplift-plan.md)
+      [`docs/ARCHIVE/algorithm-uplift/algorithm-uplift-plans.md`](docs/ARCHIVE/algorithm-uplift/algorithm-uplift-plans.md)
       re-inventoried **~165 algorithms** after Round-1 and surveyed
       **17 fresh SOTA papers** ([M]-tagged) covering SDE / stochastic
       solvers, OT / W2 estimators, EDM preconditioners, KDE-density
@@ -89,7 +89,7 @@ wired into a default path are labelled inline.
       **2663**, claims sync clean (20 active / 0 provisional /
       2 deprecated, no drift), mkdocs `--strict` clean.
 - [x] Algorithm layer uplift — implemented 2026-08-29. Phase 1 of
-      [`docs/algorithm-uplift-plan.md`](docs/algorithm-uplift-plan.md)
+      [`docs/ARCHIVE/algorithm-uplift/algorithm-uplift-plans.md`](docs/ARCHIVE/algorithm-uplift/algorithm-uplift-plans.md)
       surveyed **38 candidate uplifts** across 17 algorithm classes +
       1 runner integration (5 P0, 9 P1, 24 P2). Phase 2 implemented
       the 5 P0 + 9 P1 + 13 of 24 P2 items behind regression tests

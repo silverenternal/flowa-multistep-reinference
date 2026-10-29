@@ -103,9 +103,9 @@ documented in supplementary.md `+ the per-R SOURCE.md files.
 ## Figures (Wave 143 Kim2025-aligned footprint)
 
 The paper-bound figures for the Tier-1 SCI submission live under
-[`docs/figures/`](../../figures/README.md). Below is the index with
+[`docs/figures/`](../figures). Below is the index with
 one-line descriptions; full captions + per-figure generator paths live in
-[`docs/figures/README.md`](../../figures/README.md).
+[`docs/figures/README.md`](../figures/README.md).
 
 ### Main-paper figures (8, matplotlib-rendered)
 
@@ -141,7 +141,7 @@ Total: **17 figures (8 main + 9 appendix)**. All regenerable from
 ## Tables (Wave 143 Kim2025-aligned footprint)
 
 The 8 numbered main-paper tables (A–H) live in
-[`docs/paper-draft.md` §7.6.6](../../paper-draft.md) (per-cell Tier 3 + Tier 1 + Tier 2
+[`docs/paper-draft.md` §7.6.6](../ARCHIVE/legacy-paper/paper-draft.md) (per-cell Tier 3 + Tier 1 + Tier 2
 consolidation, Kim2025-aligned count). Below is the index with
 one-line descriptions; full per-cell data + source JSON lives in
 `docs/paper-draft.md` §7.6.6.

@@ -729,7 +729,7 @@ forward-fold check that produces the designability metric) +
 a Tm-align / protein-structure-alignment stack (produces the
 scRMSD metric against native structures). Both metrics together
 gate the Phase-4 acceptance table at
-[`todo/PHASE-4-model-integration-iteration.md`](./todo/PHASE-4-model-integration-iteration.md)
+`todo/PHASE-4-model-integration-iteration.md`
 (``Kanzi → designability ≥ +0.01 OR scRMSD ≤ -0.05 Å``).
 
 This adapter is a **genuine plug-in candidate**: the surface

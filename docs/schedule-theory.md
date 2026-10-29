@@ -23,10 +23,10 @@ memory_fraction(r) = 1 − n_cap(r).
 ```
 
 This is the closed form
-[`adaptive_reflow.schedule.cosine.n_cap_for_round`](../../adaptive_reflow/schedule/cosine.py)
+[`adaptive_reflow.schedule.cosine.n_cap_for_round`](../adaptive_reflow/schedule/cosine.py)
 and the constant-time closed form consumed by every
 `SchedulerProtocol` implementation in
-[`adaptive_reflow.algorithm.scheduler`](../../adaptive_reflow/algorithm/scheduler.py).
+[`adaptive_reflow.algorithm.scheduler`](../adaptive_reflow/algorithm/scheduler/__init__.py).
 
 ## 2. Analogy to Nichol-Dhariwal (arXiv:2102.09672)
 
@@ -125,9 +125,9 @@ so a high-capacity round (large `n_cap`) carries a low memory
 fraction (lots of fresh noise, exploratory); a low-capacity round
 (small `n_cap`) carries a high memory fraction (preserve the prior,
 refine). This is the engine-side override
-[`_policy_with_schedule_beta`](../../adaptive_reflow/frame/engine.py)
+[`_policy_with_schedule_beta`](../adaptive_reflow/frame/engine.py)
 and the driver-side override
-[`ScheduleDerivedPolicyDriver.compute_policy`](../../adaptive_reflow/algorithm/policy_driver.py).
+[`ScheduleDerivedPolicyDriver.compute_policy`](../adaptive_reflow/algorithm/policy_driver.py).
 
 The closed form is byte-identical across both paths; ADR-0010 documents
 the canonical chain (`scheduler → driver → runner → engine → adapter`)
@@ -156,7 +156,7 @@ forward / reverse (denoising) steps under the cosine capacity profile.
   Section 5.2 (forward noise injection) and Section 5.3 (sampling).
 * [`docs/adr/0010-cosine-driven-memory-fraction.md`](adr/0010-cosine-driven-memory-fraction.md)
   — the framework's canonical schedule wiring.
-* [`adaptive_reflow/algorithm/scheduler.py`](../adaptive_reflow/algorithm/scheduler.py) —
+* [`adaptive_reflow/algorithm/scheduler/`](../adaptive_reflow/algorithm/scheduler/__init__.py) —
   the `SchedulerProtocol` definition and all concrete schedulers.
 * [`adaptive_reflow/schedule/cosine.py`](../adaptive_reflow/schedule/cosine.py) —
   the closed-form `n_cap_for_round` helper.
@@ -165,7 +165,7 @@ forward / reverse (denoising) steps under the cosine capacity profile.
 
 The framework ships nine registered `SchedulerProtocol` implementations
 (`SCHEDULER_REGISTRY` in
-[`adaptive_reflow/algorithm/scheduler.py`](../adaptive_reflow/algorithm/scheduler.py)
+[`adaptive_reflow/algorithm/scheduler/`](../adaptive_reflow/algorithm/scheduler/__init__.py)
 plus [`adaptive_reflow/algorithm/sequential.py`](../adaptive_reflow/algorithm/sequential.py));
 the table below lists the **closed form for `n_cap(r)`** of every
 implementation that has one. `SequentialScheduler` is excluded
@@ -176,13 +176,13 @@ because its `n_cap(r)` is the dispatch of its sub-scheduler's
 | Family | Class | Closed form `n_cap(r)` | Monotone? | `n_min`/`n_max`? | Reference |
 | --- | --- | --- | :---: | --- | --- |
 | `cosine` | `CosineAnnealScheduler` | `n_min + 0.5 * (n_max - n_min) * (1 + cos(pi * r / (L - 1)))` | yes | yes | [§1](#1-the-closed-form), [CLM-005] |
-| `constant` | `ConstantScheduler` | `n_cap` (constant across `r`) | n/a | n/a (config) | [`scheduler.py:478`](../adaptive_reflow/algorithm/scheduler.py) |
-| `linear` | `LinearScheduler` | `n_min + (n_max - n_min) * r / (L - 1)` | yes (slope ≥ 0) | yes | [`scheduler.py:672`](../adaptive_reflow/algorithm/scheduler.py) |
-| `exponential` | `ExponentialScheduler` | `n_max * exp(-alpha * r)` | yes | `n_min = 0` implicit | [`scheduler.py:882`](../adaptive_reflow/algorithm/scheduler.py) |
-| `polynomial` | `PolynomialScheduler` | `n_min + (n_max - n_min) * (1 - u_r ** power)` where `u_r = r / max(L - 1, 1)` | yes if `n_max > n_min` | yes | [`scheduler.py:1103`](../adaptive_reflow/algorithm/scheduler.py) |
-| `sigmoid` | `SigmoidScheduler` | `n_min + (n_max - n_min) * sigmoid(steepness * (u_r - midpoint))` | yes (when `steepness > 0`) | yes | [`scheduler.py:1340`](../adaptive_reflow/algorithm/scheduler.py) |
-| `convergence_adaptive` | `ConvergenceAdaptiveScheduler` | `base.sample(r) + shift(r)` where `shift(r)` is the PID-lite output | inherited from `base` | inherited from `base` | [`scheduler.py:1593`](../adaptive_reflow/algorithm/scheduler.py), ADR-0012 |
-| `codimension_sheet` | `CodimensionSheetScheduler` | `n_min + (n_max - n_min) * ratio(r)` where `ratio(r) = sheet(r) / (sheet(r) + cell(r))` with `sheet = 1 / max(n_cap_base, eps_implicit)` and `cell = (1 - n_cap_base)^2 / eps_implicit^2` [CLM-006] | inherited from base | inherited | [`scheduler.py:2053`](../adaptive_reflow/algorithm/scheduler.py), ADR-0013 |
+| `constant` | `ConstantScheduler` | `n_cap` (constant across `r`) | n/a | n/a (config) | [`scheduler/simple.py`](../adaptive_reflow/algorithm/scheduler/simple.py) |
+| `linear` | `LinearScheduler` | `n_min + (n_max - n_min) * r / (L - 1)` | yes (slope ≥ 0) | yes | [`scheduler/simple.py`](../adaptive_reflow/algorithm/scheduler/simple.py) |
+| `exponential` | `ExponentialScheduler` | `n_max * exp(-alpha * r)` | yes | `n_min = 0` implicit | [`scheduler/simple.py`](../adaptive_reflow/algorithm/scheduler/simple.py) |
+| `polynomial` | `PolynomialScheduler` | `n_min + (n_max - n_min) * (1 - u_r ** power)` where `u_r = r / max(L - 1, 1)` | yes if `n_max > n_min` | yes | [`scheduler/simple.py`](../adaptive_reflow/algorithm/scheduler/simple.py) |
+| `sigmoid` | `SigmoidScheduler` | `n_min + (n_max - n_min) * sigmoid(steepness * (u_r - midpoint))` | yes (when `steepness > 0`) | yes | [`scheduler/simple.py`](../adaptive_reflow/algorithm/scheduler/simple.py) |
+| `convergence_adaptive` | `ConvergenceAdaptiveScheduler` | `base.sample(r) + shift(r)` where `shift(r)` is the PID-lite output | inherited from `base` | inherited from `base` | [`scheduler/adaptive.py`](../adaptive_reflow/algorithm/scheduler/adaptive.py), ADR-0012 |
+| `codimension_sheet` | `CodimensionSheetScheduler` | `n_min + (n_max - n_min) * ratio(r)` where `ratio(r) = sheet(r) / (sheet(r) + cell(r))` with `sheet = 1 / max(n_cap_base, eps_implicit)` and `cell = (1 - n_cap_base)^2 / eps_implicit^2` [CLM-006] | inherited from base | inherited | [`scheduler/adaptive.py`](../adaptive_reflow/algorithm/scheduler/adaptive.py), ADR-0013 |
 
 All eight closed forms are **pure** with respect to their arguments:
 two calls with identical inputs return equal `ScheduleSample` objects.
@@ -206,7 +206,7 @@ geometric progression lacks on small cycles (see [§4](#4-why-cosine-and-not-edm
 | --- | --- | --- | :---: | --- |
 | **Nichol-Dhariwal cosine** (arXiv:2102.09672, eq. 8) | `alpha_bar(t) = cos^2((t/T + s) / (1 + s) * pi/2)`; `beta_diff(t) = 1 - alpha_bar(t)/alpha_bar(t-1)` | `n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 + cos(pi * r / (L - 1)))` | **Yes** (functional form: half-cosine scaled into `[0, 1]`; offset `s = 0`) | [§2](#2-analogy-to-nichol-dhariwal-arxiv210209672) |
 | **Karras EDM rho-spacing** (arXiv:2206.00364, §5.2) | `sigma(t) = t` (polynomial); geometric progression `sigma_i = (sigma_max^(1/rho) + i/(N-1) * (sigma_min^(1/rho) - sigma_max^(1/rho)))^rho` | `n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 + cos(pi * r / (L - 1)))` | **No** (different functional form); cosine is the framework's chosen replacement, not a port | [§3](#3-analogy-to-karras-edm-arxiv220600364), [§4](#4-why-cosine-and-not-edms-polynomial) |
-| **SD3 exponential shift** (Esser et al. 2024, §"Shifted schedules") | `sigma(t) = sigma_max * t` shifted so `log(sigma(t)/sigma_max) = -gamma * log(t)` (rectified flow-style log-shift) | `n_cap(r) = n_max * exp(-alpha * r)` | **No** (different parameterisation); the exponential family is a framework analogue, not a port | [`scheduler.py:882`](../adaptive_reflow/algorithm/scheduler.py) |
+| **SD3 exponential shift** (Esser et al. 2024, §"Shifted schedules") | `sigma(t) = sigma_max * t` shifted so `log(sigma(t)/sigma_max) = -gamma * log(t)` (rectified flow-style log-shift) | `n_cap(r) = n_max * exp(-alpha * r)` | **No** (different parameterisation); the exponential family is a framework analogue, not a port | [`scheduler.py:882`](../adaptive_reflow/algorithm/scheduler/__init__.py) |
 
 The "Identical?" column reflects whether the framework's closed form
 is **byte-equivalent** to the field standard. The cosine is identical
@@ -342,7 +342,7 @@ decision tree is the algorithmically-derived branching.
   defaults matrix (heuristic guide, not a hard guarantee).
 * [`docs/sequential-protocol.md`](sequential-protocol.md) — the
   `SequentialScheduler` reference.
-* [`adaptive_reflow/algorithm/scheduler.py`](../adaptive_reflow/algorithm/scheduler.py) —
+* [`adaptive_reflow/algorithm/scheduler/`](../adaptive_reflow/algorithm/scheduler/__init__.py) —
   the `SchedulerProtocol` definition and all concrete schedulers.
 * [`adaptive_reflow/algorithm/sequential.py`](../adaptive_reflow/algorithm/sequential.py) —
   the `SequentialScheduler` implementation (P1-2).

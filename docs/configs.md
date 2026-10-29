@@ -21,7 +21,7 @@ bash tools/lineageflow_n1000_gpu_sweep.sh configs/runs/lineageflow_n1000_gpu.yam
 Profiles are the new default surface; CLI flags remain the override surface.
 
 **Schema:** see [`tools/eval/config.py`](../configs/runs/) and the schema
-walkthrough in [`docs/audit/wave111-b-config-scattering-audit.md`](audit/wave111-b-config-scattering-audit.md) §2.
+walkthrough in `docs/audit/wave111-b-config-scattering-audit.md` §2.
 
 ---
 
@@ -38,9 +38,9 @@ paper-metric sweep (`force_mode: synthetic`, `pb_engine: uff`, 1 mol/record,
 **Motivation.** Wave 111.0 Reviewer A (F-A002, F-A004), Reviewer B
 (F-B001, F-B003, F-B004, F-B005, F-B007, F-B008), Reviewer C (F-C001/RC-1).
 
-- [Wave 111.0 Reviewer A — sweep driver architecture audit](audit/wave111-a-sweep-driver-audit.md)
-- [Wave 111.0 Reviewer B — configuration scattering audit](audit/wave111-b-config-scattering-audit.md)
-- [Wave 111.0 Reviewer C — GPU utilization audit](audit/wave111-c-gpu-utilization-audit.md)
+- [Wave 111.0 Reviewer A — sweep driver architecture audit](ARCHIVE/audit-by-wave/wave111-a-sweep-driver-audit.md)
+- Wave 111.0 Reviewer B — configuration scattering audit
+- [Wave 111.0 Reviewer C — GPU utilization audit](ARCHIVE/audit-by-wave/wave111-c-gpu-utilization-audit.md)
 
 ### 2. `kanzi_n1000_framework.yaml` — Kanzi N=1000 framework arm
 
@@ -55,9 +55,9 @@ PARTIAL Wave 110.C run that Bug 2 (Wave 110.B) put back in flight.
 (`--pb-engine` flag contradiction) and F-C002 / RC-2 (placeholder
 framework-arm `torch.zeros_like` return → fail-fast in C-2).
 
-- [Wave 111.0 Reviewer A](audit/wave111-a-sweep-driver-audit.md)
-- [Wave 111.0 Reviewer B](audit/wave111-b-config-scattering-audit.md)
-- [Wave 111.0 Reviewer C](audit/wave111-c-gpu-utilization-audit.md)
+- [Wave 111.0 Reviewer A](ARCHIVE/audit-by-wave/wave111-a-sweep-driver-audit.md)
+- Wave 111.0 Reviewer B
+- [Wave 111.0 Reviewer C](ARCHIVE/audit-by-wave/wave111-c-gpu-utilization-audit.md)
 - [Wave 110.B — Bug 2 fix (force_mode=real in KanziAdapter construction)](https://github.com/hugo/flowa-multistep-reinference/commit/4f7e3c7)
 
 ### 3. `flowmol3_n1000_paper.yaml` — FlowMol3 N=1000 paper-metric (PB-xtb)
@@ -71,8 +71,8 @@ paper-metric sweep (`force_mode: real`, `pb_engine: xtb`, `nfe_budgets:
 **Motivation.** Wave 111.0 Reviewer B (F-B001, F-B004 per-model NFE
 default = `250` for FlowMol3 vs `100` for Kanzi, F-B008 `paper_metrics`).
 
-- [Wave 111.0 Reviewer A](audit/wave111-a-sweep-driver-audit.md)
-- [Wave 111.0 Reviewer B](audit/wave111-b-config-scattering-audit.md)
+- [Wave 111.0 Reviewer A](ARCHIVE/audit-by-wave/wave111-a-sweep-driver-audit.md)
+- Wave 111.0 Reviewer B
 
 ### 4. `lineageflow_n1000_gpu.yaml` — LineageFlow N=1000 GPU framework-vs-baseline
 
@@ -87,14 +87,14 @@ hardcoded shell constants) and F-A007-equivalent lineageflow path.
 **Motivation.** Wave 111.0 Reviewer A (F-A006 shell hardcodes) + Wave
 112.D-3 shell-wrapper migration commit (Wave 112.C-7).
 
-- [Wave 111.0 Reviewer A](audit/wave111-a-sweep-driver-audit.md)
-- [Wave 111.0 Reviewer B](audit/wave111-b-config-scattering-audit.md)
+- [Wave 111.0 Reviewer A](ARCHIVE/audit-by-wave/wave111-a-sweep-driver-audit.md)
+- Wave 111.0 Reviewer B
 
 ---
 
 ## See also
 
-- **Plan + schema walkthrough:** [`docs/audit/wave111-data-linkage-plan.md`](audit/wave111-data-linkage-plan.md) §4.
-- **Closure:** [`docs/audit/wave111-data-linkage-closure.md`](audit/wave111-data-linkage-closure.md) — C-1..C-9 commit SHAs and finding-to-commit map.
+- **Plan + schema walkthrough:** `docs/audit/wave111-data-linkage-plan.md` §4.
+- **Closure:** `docs/audit/wave111-data-linkage-closure.md` — C-1..C-9 commit SHAs and finding-to-commit map.
 - **Adapter glue:** `tools/_kanzi_sweep_runner.py` (Wave 105 P1-A) consumes the profile values for `adapter_*` and `output_filename` keys.
 - **Canonical CLI:** `tools/eval/cli.py` (Wave 112.C-4) is the only driver required to consume a profile; sweep wrappers read the same YAML via shared helpers.

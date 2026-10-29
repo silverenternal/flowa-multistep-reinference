@@ -328,7 +328,7 @@ state-report).
   [`docs/ALGORITHMS.md`](../ALGORITHMS.md)
   — Hyperparameter-Free Framework Principle (DERIV-001) section.
 - **Paper draft:**
-  [`docs/paper-draft.md`](../paper-draft.md)
+  [`docs/paper-draft.md`](../ARCHIVE/legacy-paper/paper-draft.md)
   — Section 4 (to be updated with algorithm-correctness-evidence
   cross-reference).
 - **Known problems inventory:**

@@ -166,16 +166,16 @@ code MUST be added in three places to satisfy the policy:
   adversarial-test catalogue that consumes the audit codes.
 * [DESIGN_BOUNDARY.md §3](../../DESIGN_BOUNDARY.md) — the six
   hostile cases, each with its expected audit code.
-* [ARCHITECTURE.md §4.1](../../ARCHITECTURE.md) — the curated
+* [ARCHITECTURE.md §4.1](../ARCHITECTURE.md) — the curated
   public surface of `contracts/`.
 * [ROADMAP.md](../../ROADMAP.md) — the Now-bucket entry that closes
   DTB-R0 §3 case 2 and case 5 by 2026-09-15.
-* [docs/adr/0006](0006-engine-wraps-adapter-pattern.md) — the
+* [docs/adr/0006](../ARCHIVE/adr/0006-engine-wraps-adapter-pattern.md) — the
   `_safe_adapter_call` wrapper that emits `ERR_ADAPTER_RAISED`.
-* [docs/adr/0007](0007-prev-anchored-bounded-merge.md) — the
+* [docs/adr/0007](../ARCHIVE/adr/0007-prev-anchored-bounded-merge.md) — the
   `prev` anchoring rule that emits `ERR_PREV_REQUIRED` /
   `MERGE_PREV_ANCHORED_TO_LAST_EMITTED`.
-* [docs/adr/0008](0008-claim-gate-deferral-placeholder.md) — the
+* [docs/adr/0008](../ARCHIVE/adr/0008-claim-gate-deferral-placeholder.md) — the
   deferral placeholder for the R7 claim-gate decision helper.
 * [docs/adr/0009](0009-mixer-rms-precondition.md) — the
   RMS-precondition rule that emits `MIXER_RMS_PRECEDENCE_FAIL`.

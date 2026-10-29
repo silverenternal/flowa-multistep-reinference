@@ -397,7 +397,7 @@ This ADR was originally described in the Workflow K task brief as
 "ADR-0007" (to group it numerically with the FID-JMAA workflow's
 Phase-4 deliverables). The audit identified a slug collision with the
 existing
-[ADR-0007](0007-prev-anchored-bounded-merge.md)
+[ADR-0007](../ARCHIVE/adr/0007-prev-anchored-bounded-merge.md)
 ("Prev-anchored bounded merge") — two ADRs sharing the number `7`
 would be a documentation-reader trap. The audit recommended the
 safer allocation `0015` (next free monotonic prefix after the

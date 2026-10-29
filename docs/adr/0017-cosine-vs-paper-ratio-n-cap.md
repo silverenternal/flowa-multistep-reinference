@@ -339,7 +339,7 @@ The decision is enforced by:
 * `docs/baseline-audit-report.md` §C.5 (additive update) — the C.5
   failure-mode-characterisation section gains a cross-reference to
   the new F-5 limitation section in `operating-regime.md`.
-* [`docs/audit/theory-implementation-gap.md`](../audit/theory-implementation-gap.md)
+* [`docs/audit/theory-implementation-gap.md`](../ARCHIVE/audit-by-wave/theory-implementation-gap.md)
   §F-5 — the Wave 29 Agent A finding is preserved verbatim; this
   ADR documents the **decision**, not the audit.
 * No code changes — the `n_cap` driver remains
@@ -363,7 +363,7 @@ The decision is enforced by:
   every `σ ∈ [0, 0.5]` under matched conditions on both synthetic
   targets. The §"F-5 limitation" section (added by this ADR)
   cross-references the architectural choice documented here.
-* [docs/audit/theory-implementation-gap.md](../audit/theory-implementation-gap.md)
+* [docs/audit/theory-implementation-gap.md](../ARCHIVE/audit-by-wave/theory-implementation-gap.md)
   §F-5 + §4 (per-target regression attribution table) — the Wave 29
   Agent A finding that names F-5 as the only clean algorithm-level
   regression at matched NFE and attributes `twodim_fm` regression to

@@ -949,7 +949,7 @@ oracle (P-13) under both closed-form and fallback paths.
 
 ## See also
 
-- [`ARCHITECTURE.md`](../ARCHITECTURE.md) — the four-layer model and
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — the four-layer model and
   the four feedback loops.
 - [`TUTORIAL.md`](./TUTORIAL.md) — fast on-ramp (5–10 minutes).
 - the **Plug In Your Model** page — bring your own SOTA checkpoint.

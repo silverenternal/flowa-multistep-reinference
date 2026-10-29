@@ -16,7 +16,7 @@ The implementation lives at
 the per-round behaviour round-trip is pinned by
 [`tests/test_algorithm/test_sequential.py`](../tests/test_algorithm/test_sequential.py);
 the family is registered in
-[`SCHEDULER_REGISTRY`](../adaptive_reflow/algorithm/scheduler.py) under
+[`SCHEDULER_REGISTRY`](../adaptive_reflow/algorithm/scheduler/protocols.py) under
 the key `"sequential"`.
 
 ## 1. The closed form
@@ -180,7 +180,7 @@ Do **not** use `SequentialScheduler` when:
 ## 5. Protocol surface
 
 `SequentialScheduler` conforms to
-[`SchedulerProtocol`](../adaptive_reflow/algorithm/scheduler.py). The
+[`SchedulerProtocol`](../adaptive_reflow/algorithm/scheduler/protocols.py). The
 eight required methods are implemented as follows:
 
 | Method | Behaviour |
@@ -198,14 +198,14 @@ eight required methods are implemented as follows:
 
 * [`adaptive_reflow/algorithm/sequential.py`](../adaptive_reflow/algorithm/sequential.py)
   — the implementation (220+ lines incl. the dispatcher).
-* [`adaptive_reflow/algorithm/scheduler.py`](../adaptive_reflow/algorithm/scheduler.py)
+* [`adaptive_reflow/algorithm/scheduler/`](../adaptive_reflow/algorithm/scheduler/__init__.py)
   — the `SchedulerProtocol` definition and the `SCHEDULER_REGISTRY`
   entry under `"sequential"`.
 * [`tests/test_algorithm/test_sequential.py`](../tests/test_algorithm/test_sequential.py)
   — the regression suite (16+ tests covering construction,
   trajectory, reset, noise injection, config round-trip, nested
   chains, and dispatcher routing).
-* [`docs/adr/0012-schedule-family-survey.md`](adr/0012-schedule-family-survey.md)
+* [`docs/adr/0012-noise-schedule-survey.md`](adr/0012-noise-schedule-survey.md)
   — the ADR that surveys schedule families and accepts
   `SequentialScheduler` as the multi-phase composition primitive.
 * [`docs/distinguishing-from-reflow.md`](distinguishing-from-reflow.md)

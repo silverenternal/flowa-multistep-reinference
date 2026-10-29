@@ -4,10 +4,10 @@
 **Date:** 2026-09-12
 **Mode:** AUDIT-ONLY (cites existing commits; no source changes in this doc)
 **Inputs:**
-- [`docs/audit/wave111-a-sweep-driver-audit.md`](wave111-a-sweep-driver-audit.md) (F-A001..F-A010)
-- [`docs/audit/wave111-b-config-scattering-audit.md`](wave111-b-config-scattering-audit.md) (F-B001..F-B008)
-- [`docs/audit/wave111-c-gpu-utilization-audit.md`](wave111-c-gpu-utilization-audit.md) (F-C001..F-C004)
-- [`docs/audit/wave111-data-linkage-plan.md`](wave111-data-linkage-plan.md) (9-commit plan)
+- [`docs/audit/wave111-a-sweep-driver-audit.md`](../../ARCHIVE/audit-by-wave/wave111-a-sweep-driver-audit.md) (F-A001..F-A010)
+- `docs/audit/wave111-b-config-scattering-audit.md` (F-B001..F-B008)
+- [`docs/audit/wave111-c-gpu-utilization-audit.md`](../../ARCHIVE/audit-by-wave/wave111-c-gpu-utilization-audit.md) (F-C001..F-C004)
+- `docs/audit/wave111-data-linkage-plan.md` (9-commit plan)
 
 ---
 
@@ -223,7 +223,7 @@ CUDA, the framework arm actually runs on GPU.
 
 ## 4. Finding-to-commit map (22/22 closed)
 
-Per [`docs/audit/wave111-data-linkage-plan.md` §9](wave111-data-linkage-plan.md):
+Per `docs/audit/wave111-data-linkage-plan.md` §9:
 
 ### F-A (sweep-driver architecture) — 10 findings
 
@@ -346,7 +346,7 @@ counted separately under "W112.C-8").
 
 All 8 commits cited above verified with `git rev-parse --verify <sha>`
 (see §1 table). Original Wave 111 plan:
-[`docs/audit/wave111-data-linkage-plan.md`](wave111-data-linkage-plan.md)
+`docs/audit/wave111-data-linkage-plan.md`
 (HEAD = `7050128` from Wave 110.D).
 
 ---

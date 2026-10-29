@@ -60,7 +60,7 @@ reproducible failures:
   baseline audit uses the actual BatchedTrajectoryRunner name.
 
 The Kanzi recovery experiment is documented in
-[the bridge follow-up](kanzi-inv-proj-bridge-followup-2026-09-13.md).
+[the bridge follow-up](../ARCHIVE/audit-by-wave/kanzi-inv-proj-bridge-followup-2026-09-13.md).
 
 ### Whole-suite verification and numerical environment
 

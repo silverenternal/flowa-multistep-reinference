@@ -99,9 +99,9 @@ The decision is confirmed when:
 
 ## More Information
 
-* [ARCHITECTURE.md §0](../../ARCHITECTURE.md) — the canonical
+* [ARCHITECTURE.md §0](../ARCHITECTURE.md) — the canonical
   universal/molecular narrative.
-* [ARCHITECTURE.md §3](../../ARCHITECTURE.md) — the dependency
+* [ARCHITECTURE.md §3](../ARCHITECTURE.md) — the dependency
   direction rules.
 * [docs/TESTING_STRATEGY.md §2.1](../TESTING_STRATEGY.md) — the
   universal-test-layer summary.

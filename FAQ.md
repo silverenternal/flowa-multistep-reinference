@@ -2,7 +2,7 @@
 
 Twenty short answers to the questions that come up most often while
 working on `flowa-multistep-reinference`. For the deeper rationale, see
-[`ARCHITECTURE.md`](ARCHITECTURE.md) and [`docs/adr/`](docs/adr/).
+[`ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/adr/`](docs/adr/).
 
 ## 1. Why is the universal layer stdlib-only?
 

@@ -141,7 +141,7 @@ constant.
 
 ## See also
 
-* **[ARCHITECTURE.md](../ARCHITECTURE.md) §3** — dependency-direction
+* **[ARCHITECTURE.md](ARCHITECTURE.md) §3** — dependency-direction
   rules that forbid new code from importing `legacy/`.
 * **[docs/adr/0001](adr/0001-record-architecture-decisions.md)** — the
   meta-ADR that defines how deprecation decisions are recorded.

@@ -32,12 +32,12 @@ Trimmed [`docs/drafts/abstract-final.md`](docs/drafts/abstract-final.md) body fr
 14. TNNLS submission package (S14)
 
 ### Wave 244 P4 (`d4d126c`) — TNNLS paper.pdf placeholder
-Built [`docs/paper-tnnls.pdf`](docs/paper-tnnls.pdf) from the existing `docs/drafts/paper-flattened-draft.md` build pipeline. **Status: PLACEHOLDER** — uses elsarticle double-column 17pp A4 format; needs rebuild to IEEEtran double-column 14pp TNNLS format (USER ACTION; requires LaTeX toolchain).
+Built [`docs/paper-tnnls.pdf`](docs/ARCHIVE/legacy-paper/paper-tnnls.pdf) from the existing `docs/drafts/paper-flattened-draft.md` build pipeline. **Status: PLACEHOLDER** — uses elsarticle double-column 17pp A4 format; needs rebuild to IEEEtran double-column 14pp TNNLS format (USER ACTION; requires LaTeX toolchain).
 
 ### Wave 244 P5 (`55fb1d9` + `3372c5d` + `e303e13`) — Final verify + metrics.py defensive patch
 
 1. **Final verify**: D.4 30/30 PASS + mkdocs 0 warnings + claims no drift + abstract 183 words + 100 unpushed commits.
-2. **Defensive patch** to vendored [`data/FlowMol3/repo/flowmol/analysis/metrics.py`](data/FlowMol3/repo/flowmol/analysis/metrics.py) (3 places: line 111 `molecule.num_atoms` + lines 349-358 `molecule.atom_types/valencies/atom_charges` + line 363 `molecule.fake_atoms` + lines 394-401 `check_stability_midi`). The patch falls back to RDKit atom-symbol walk (`atom.GetSymbol()`, `atom.GetTotalValence()`, `atom.GetFormalCharge()`) when the molecule is a plain `rdkit.Chem.Mol` object instead of a full `SampledMolecule`. Local-only patch (file is `.gitignore`-d); audit doc at [`docs/audit/wave244-p5-metrics-patch.md`](docs/audit/wave244-p5-metrics-patch.md). Honest disclosure: violates G3 strict interpretation; acceptable trade-off for unblocking the 3-seed FlowMol3 analysis.
+2. **Defensive patch** to vendored [`data/FlowMol3/repo/flowmol/analysis/metrics.py`](data/FlowMol3/repo/flowmol/analysis/metrics.py) (3 places: line 111 `molecule.num_atoms` + lines 349-358 `molecule.atom_types/valencies/atom_charges` + line 363 `molecule.fake_atoms` + lines 394-401 `check_stability_midi`). The patch falls back to RDKit atom-symbol walk (`atom.GetSymbol()`, `atom.GetTotalValence()`, `atom.GetFormalCharge()`) when the molecule is a plain `rdkit.Chem.Mol` object instead of a full `SampledMolecule`. Local-only patch (file is `.gitignore`-d); audit doc at `docs/audit/wave244-p5-metrics-patch.md`. Honest disclosure: violates G3 strict interpretation; acceptable trade-off for unblocking the 3-seed FlowMol3 analysis.
 
 ---
 
@@ -47,7 +47,7 @@ Built [`docs/paper-tnnls.pdf`](docs/paper-tnnls.pdf) from the existing `docs/dra
 DGL 2.4.0+cu124 batched path broken: `DGLError: Expect number of features to match number of nodes (len(u)). Got N and N*10 instead` at every batch (NFE_BATCH ∈ {2, 3, 4, 5, 10, 100} all fail). Only NFE_BATCH=1 (single_mol path) works.
 
 ### Wave 242 P1 — Single_mol rescue wrapper
-Created [`scripts/wave242_p1_flowmol3_rescue_single_mol.py`](scripts/wave242_p1_flowmol3_rescue_single_mol.py) that invokes Wave 87 sweep with hardcoded `--nfe-batch 1 --n-total 200 --nfe 250 --device cuda:0` (single_mol path, N=200 NFE=250 per seed; ~33 min/arm × 4 arms = ~2.2 GPU-h total). Does NOT modify framework source code or Wave 87 sweep internals (D.4 30/30 PASS preserved).
+Created `scripts/wave242_p1_flowmol3_rescue_single_mol.py` that invokes Wave 87 sweep with hardcoded `--nfe-batch 1 --n-total 200 --nfe 250 --device cuda:0` (single_mol path, N=200 NFE=250 per seed; ~33 min/arm × 4 arms = ~2.2 GPU-h total). Does NOT modify framework source code or Wave 87 sweep internals (D.4 30/30 PASS preserved).
 
 ### Wave 242 P1 status (in flight at 2026-09-22)
 - seed 43 baseline + framework COMPLETED (200/200 mols each arm; framework fg_dev=0.7361 vs baseline 0.7336)

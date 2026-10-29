@@ -414,7 +414,7 @@ This ADR was originally described in the Workflow K task brief as
 "ADR-0008" (to group it numerically with the FID-JMAA workflow's
 Phase-4 deliverables and the `TheoremAlignedFID` decision). The
 audit identified a slug collision with the existing
-[ADR-0008](0008-claim-gate-deferral-placeholder.md)
+[ADR-0008](../ARCHIVE/adr/0008-claim-gate-deferral-placeholder.md)
 ("Claim-gate deferral placeholder") — two ADRs sharing the number
 `8` would be a documentation-reader trap. The audit recommended the
 safer allocation `0016` (next free monotonic prefix after the

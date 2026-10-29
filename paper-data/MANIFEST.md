@@ -118,7 +118,7 @@ Per-sub-directory counts (from `paper-data/SHA256SUMS`):
 | `R5b_cifar10_rf/freetraj_samples.npz` | `ac68231c7f0628ee38a9bf279b0ab8204e8f5c85536eb48706aa851a2592e806` |
 | `R5b_cifar10_rf/per_round_metrics.csv` | `7b0f99e18597b2f1358c6244e9dcd4d15a9cbb664c7965afec2b0d7f5fadc17f` |
 | `R5b_cifar10_rf/wave191-p2-cifar10-n1000.json` | `a3c5bea08e44018eabaa6e8332ac7de211de70f48607cf983143b87302d5b0dd` |
-| `R5b_cifar10_rf/wave235-p1-r5b-fix.csv` | `32d72a9bf00b3f7e9a2d27fda34866c2582a00959a950f232484b24e96e86106` |
+| `R5b_cifar10_rf/wave235-p1-r5b-fix.csv` | `6829631549b51c4152c1356ac1a5cebfd6dd1d7b36c5cd784f4544e69f7fcb4f` |
 | `R5b_cifar10_rf/wave235-p1-r5b-fix.json` | *(in `SHA256SUMS`; see `verification_outputs/MANIFEST.md`)* |
 
 ### R5c MNIST FM (8 files)
@@ -139,11 +139,11 @@ Per-sub-directory counts (from `paper-data/SHA256SUMS`):
 | Path | SHA-256 |
 |---|---|
 | `R6_lineageflow_k6/baseline_foldability.jsonl` | `164825057a413af6f4d27a53b3ca519484f5c36019dafaa6c14e33dc823e4261` |
-| `R6_lineageflow_k6/baseline_foldability_summary.json` | `5d483e3f4619dd9ebb26f3644e68b3e9522579ceed4240b447880a19ace23e20` |
+| `R6_lineageflow_k6/baseline_foldability_summary.json` | `7dc407880063760bd36806518dfbf9f81f7057729fd1ce0a69dafbf906bd0e3d` |
 | `R6_lineageflow_k6/framework_foldability.jsonl` | `b608edfb0f13a39bde5a06c3d16ccc94aa98f90db5434411cefe2f647574fc85` |
-| `R6_lineageflow_k6/framework_foldability_summary.json` | `e96b1e2592a36d25a29658df9258fd408be454aa1ac2bd09f13e1d44f35c3aad` |
+| `R6_lineageflow_k6/framework_foldability_summary.json` | `0aa63c652c6a6ba1bcd5dddfd89c5183efbd76d00dae3557ff1db838a1350269` |
 | `R6_lineageflow_k6/wave225-p4-k6-tier-aware.csv` | `634d9f03c77a7ee95c860b8099dab42dfe6aa9b99cec8b332df9603c32e8ad32` |
-| `R6_lineageflow_k6/wave225-p4-k6-tier-aware.json` | `03edaa21fed42bb4e267bfbfb403913c4289d5c03f67d06276424fe5a763dadb` |
+| `R6_lineageflow_k6/wave225-p4-k6-tier-aware.json` | `33b3ffd1b91ec85c20118ac8258551cbd98d026c6d878e39d35fae2dc8b95063` |
 | `R6_lineageflow_k6/wave233-p3-tier-aware-r6.csv` | `634d9f03c77a7ee95c860b8099dab42dfe6aa9b99cec8b332df9603c32e8ad32` |
 | `R6_lineageflow_k6/wave233-p3-tier-aware-r6.json` | `9a0c3eacc847c29a2844fb2ce4dc36f94def244ecbd4b4978fc0c1deeaf15851` |
 | `R6_lineageflow_k6/wave235-p3-r6-uplift.csv` | `a3397fae974aff1c9fb6dc75d6b7115a94dbad1ee4a16d85fe973520819a95c6` |
@@ -182,7 +182,7 @@ Per-sub-directory counts (from `paper-data/SHA256SUMS`):
 
 | Path | SHA-256 |
 |---|---|
-| `headline-evidence/README.md` | `333af11ef5eabbf14f60348b5adc900c1facef2dadfeda9d0bf20956756f8120` |
+| `headline-evidence/README.md` | `ae62063caefe55d43f893b4eb4904b3f589732f0ad7f7db3f21055ffa8f0a26e` |
 
 *(Sub-directories `r1_lineageflow_hmmer/`, `r2_flowmol3_fgdev/`, `r3_cifar_rf_v2_fid/`, `r4_2d_two_moons/`, `r5_2d_eight_gaussians/`, `r6_mnist_fm/`, `composite_axis_byte_stable/`, `byte_reproducibility_evidence/`, `kanzi_n1000_byte_reproducible/`, `nfe_speedup_2p5_to_10x/` are symlinks to `docs/headline-evidence/` sub-directories; their internal SOURCE.md files are enumerated at freeze time and preserved as-is.)*
 

@@ -108,11 +108,11 @@ The decision is enforced by:
 
 ## More Information
 
-* [ARCHITECTURE.md §3](../../ARCHITECTURE.md) — the full dependency
+* [ARCHITECTURE.md §3](../ARCHITECTURE.md) — the full dependency
   direction rules.
-* [ARCHITECTURE.md §4.1](../../ARCHITECTURE.md) — the canonical
+* [ARCHITECTURE.md §4.1](../ARCHITECTURE.md) — the canonical
   re-export surface of `contracts/`.
 * [docs/adr/0003](0003-universal-vs-molecular-split.md) — the next
   decision down the DAG.
-* [FINAL_STATUS.md §4](../../FINAL_STATUS.md) — the documented
+* [FINAL_STATUS.md §4](../ARCHIVE/top-level/FINAL_STATUS.md) — the documented
   `mypy --strict` noise in the molecular re-export shim.

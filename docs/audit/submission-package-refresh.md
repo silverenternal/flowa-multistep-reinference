@@ -163,3 +163,54 @@ docs/cover-letter-tnnls.md                      pytest count
 verification_outputs/gap32-headtohead/SHA256SUMS   +30 entries
 verification_outputs/gap36-ablation-matrix/SHA256SUMS  +1 entry
 ```
+
+---
+
+## 6. Follow-on (2026-10-29): the root READMEs were the last unverified hash surface
+
+§1–§5 fixed the *package's* integrity anchor. The two root READMEs carried a
+second, independent copy of the same facts, and nothing checked it — the
+readiness verifier's claims scanner is scoped to `docs/` on purpose (its own
+docstring says the root READMEs are outside), so the copies could drift freely.
+
+They had. Both `README.md` and `README.zh.md` still quoted the **2026-10-12
+manuscript-consistency pass #11** artifacts:
+
+| | README (stale) | on disk / `MANIFEST.md` |
+|---|---|---|
+| `paper-A-final.md` | `0586a564…`, 25,959 words | `b66ea07a…`, 27,809 words, 226,324 B |
+| `paper-A-final.pdf` | `a9883fc9…`, 11 pages, 460,079 B | `8b94570c…`, 12 pages, 615,789 B |
+
+`README.md` even contradicted itself: its `Last updated` line already said
+*12 pages* while the artifact table three lines later said *11*. The
+2026-10-27 packaging rebuild that moved the PDF to 12 pages updated
+`MANIFEST.md` and never reached the READMEs.
+
+Re-measured rather than copied: `sha256sum` and `wc -c -w` on both drafts, and
+`pdfinfo` on the PDF, all agree with `MANIFEST.md`. The READMEs were corrected
+to the measured values — **no metric, claim, status label, or verdict moved;
+only the digest/count annotations on the artifact rows**.
+
+To stop it recurring, `tools/check_artifact_hashes.py` requires every 64-hex
+token on a README line that names an artifact to equal the file's real digest,
+and requires `paper-A-final.md` and `paper-A-final.pdf` to be cited at all.
+`tests/test_evidence_ledgers.py` pins both directions (green today, and a
+stale token is caught). The gate is the 12th entry in the `todo.json` chain.
+
+Deliberately **not** touched: `tnnls_submission/submission_checklist.md` and
+`SUBMISSION_READINESS.md` still carry `a9883fc9…` / `0586a564…` — those are
+dated historical annotations ("verified … at sha256 …", "Superseded
+2026-10-12"), not current claims, and the package is frozen at
+`v3.0-tnnls-ready`. `MANIFEST.md`'s 2026-10-27 addendum is the current
+reading and already says so.
+
+## 7. Follow-on (2026-10-29): the suite count moved again
+
+Adding the two tests above (and the four in `tests/test_doc_links.py` that the
+first full run of this round collected) took the suite from **5528** to
+**5535** passed / 180 skipped / 12 xfailed. Eight surfaces assert that number
+(`tnnls_submission/{cover_letter,figures,tables,data_availability,submission_checklist}.md`,
+`docs/{RELEASE-NOTES,code-release-checklist,cover-letter-tnnls}.md`); all eight
+were bumped, the five package rows re-hashed in `MANIFEST.md`, and
+`SHA256SUMS` regenerated — `sha256sum -c` 23/23 OK, `check_submission_manifest`
+`ledger_drift=0`. No metric, claim, status label, or verdict moved.

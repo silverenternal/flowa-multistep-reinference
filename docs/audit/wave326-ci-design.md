@@ -4,7 +4,7 @@
 **Author:** Wave 326 CI redesign agent
 **Status:** ACTIVE — additive CI files for TNNLS pre-push readiness
 **Scope:** CI tiered architecture (pre-commit → PR CI → weekly → end-of-wave)
-**Source-of-truth anchor:** [`docs/CONTRIBUTING.md`](../CONTRIBUTING.md) §2 + §5 + [`docs/audit/wave287-p-ci-hardening.md`](wave287-p-ci-hardening.md) + Wave 326 final-metrics snapshot.
+**Source-of-truth anchor:** [`docs/CONTRIBUTING.md`](../../CONTRIBUTING.md) §2 + §5 + [`docs/audit/wave287-p-ci-hardening.md`](wave287-p-ci-hardening.md) + Wave 326 final-metrics snapshot.
 
 ---
 

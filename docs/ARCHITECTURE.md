@@ -12,9 +12,9 @@ matching impl, `adapters/toy_gaussian.py` as the second, non-molecular
 domain) plus the legacy `adapters/toy_linear.py` worked example. DTB-R0
 §3 hostile-case 2 (monotonic uncertainty / stability collapse) and
 case 5 (source revocation) are now **hard gates** — the audit codes
-[`AUDIT_STABILITY_COLLAPSE`](adaptive_reflow/frame/channel_rule.py)
+[`AUDIT_STABILITY_COLLAPSE`](../adaptive_reflow/frame/channel_rule.py)
 and
-[`AUDIT_SOURCE_REVOKED`](adaptive_reflow/contracts/validators.py)
+[`AUDIT_SOURCE_REVOKED`](../adaptive_reflow/contracts/validators.py)
 are re-exported from the public `__init__.py` and indexed by the
 doc-drift scanner. **Phase-4 status update:** the R3/R11 code review (52 findings) identified and triaged; P0/P1 fix plan published ([CLM-041](CLAIMS.md#CLM-041), [CLM-042](CLAIMS.md#CLM-042)). The r16 governance audit fix train closed six P0 paper-math + CI-gate items and landed the `algorithm/` package enumeration here ([CLM-044](CLAIMS.md#CLM-044)), the `e_rho / 4` derivation notes ([CLM-045](CLAIMS.md#CLM-045)), the paper-math `eps` scaling flags + NaN/inf safety boundary on `EvidenceScaleGapMetric` ([CLM-046](CLAIMS.md#CLM-046)), and the stress-nightly / cpu-tests / [test]-extra / Python-matrix CI hygiene fixes ([CLM-047](CLAIMS.md#CLM-047)). The Phase-4 audit introduced no gate regression but catalogued one P0 doc-drift risk ([CLM-042](CLAIMS.md#CLM-042) `CLM-025` raise-vs-return compatibility under the proposed P0-3 fix).
 Top-level flat modules and the in-tree `.py` files
@@ -833,7 +833,7 @@ from adaptive_reflow.molecular import (
 
 ## 5. Adapter Protocol — how to add a new model
 
-> **Authoritative spec**: [`docs/ADAPTER_INTERFACE_SPEC.md`](docs/ADAPTER_INTERFACE_SPEC.md)
+> **Authoritative spec**: [`docs/ADAPTER_INTERFACE_SPEC.md`](ADAPTER_INTERFACE_SPEC.md)
 > covers the full Protocol surface, capability handshake, mixer/envelope/evaluator
 > registration, per-round lifecycle, fail-closed failure modes, hard rules,
 > versioning, and a worked `ToyLinearAdapter` example. This section is the
@@ -1218,7 +1218,7 @@ constraint rather than re-deriving it from the code:
 * **Hyperparameter-Free Framework Principle** ([ADR-0014](adr/0014-hyperparameter-free-framework-principle.md),
   DERIV-001; Workflow K brief referenced this decision as
   "ADR-0006" — see
-  [ADR-0006 pointer](adr/0006-hyperparameter-free-framework-principle.md)
+  [ADR-0006 pointer](adr/0014-hyperparameter-free-framework-principle.md)
   for the slug-collision note) — every framework
   hyperparameter in `adaptive_reflow/algorithm/` MUST trace
   to one (or more) of five authorized sources (paper
@@ -1240,7 +1240,7 @@ constraint rather than re-deriving it from the code:
 * **Theorem-aligned FID + per-round harness pattern**
   ([ADR-0015](adr/0015-theorem-aligned-fid-per-round-pattern.md);
   Workflow K brief referenced this decision as "ADR-0007" — see
-  [ADR-0007 pointer](adr/0007-theorem-aligned-fid-per-round-pattern.md)
+  [ADR-0007 pointer](adr/0015-theorem-aligned-fid-per-round-pattern.md)
   for the slug-collision note) — the canonical image-side FID
   surface consumes the four paper quantities `(A_g, B_g, C_g,
   e_rho)` per round and emits one `FIDPerRoundResult` per round
@@ -1263,7 +1263,7 @@ constraint rather than re-deriving it from the code:
 * **Regime-aware eps selector (opt-in Lemma 4 enforcement)**
   ([ADR-0016](adr/0016-regime-aware-eps-selector.md); Workflow K
   brief referenced this decision as "ADR-0008" — see
-  [ADR-0008 pointer](adr/0008-regime-aware-eps-selector.md)
+  [ADR-0008 pointer](adr/0016-regime-aware-eps-selector.md)
   for the slug-collision note) — the scheduler-side
   enforcement for the Lemma 4 regime
   `eps^2 < e_rho / log(2)` that ADR-0015 *diagnoses*. The
@@ -1310,9 +1310,9 @@ constraint rather than re-deriving it from the code:
    Protocol is satisfiable by a non-molecular mixer.
 8. **Hard gates for DTB-R0 §3 case 2 / case 5**
    (`tests/test_adversarial/test_hostile_cases.py`) — the audit codes
-   [`AUDIT_STABILITY_COLLAPSE`](adaptive_reflow/frame/channel_rule.py)
+   [`AUDIT_STABILITY_COLLAPSE`](../adaptive_reflow/frame/channel_rule.py)
    (= `perturbation_stability_below_threshold`) and
-   [`AUDIT_SOURCE_REVOKED`](adaptive_reflow/contracts/validators.py)
+   [`AUDIT_SOURCE_REVOKED`](../adaptive_reflow/contracts/validators.py)
    (= `source_revoked`) are now **hard gates**, not xfail markers. The
    adversarial layer asserts they appear in `audit_reason` and
    `blocker_codes` on the failing path; both constants are re-exported
@@ -1336,9 +1336,9 @@ the contracts themselves rather than around empirical model behaviour.
 The full single-source-of-truth for *what* we test, *how* the layers
 fit together, and *what bars* (mutation score, benchmark budgets, doc
 verification) a change has to clear before it merges is
-**[docs/TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md)**. The kernel
+**[docs/TESTING_STRATEGY.md](TESTING_STRATEGY.md)**. The kernel
 performance budgets are documented separately in
-**[docs/PERFORMANCE_BUDGETS.md](docs/PERFORMANCE_BUDGETS.md)**. This
+**[docs/PERFORMANCE_BUDGETS.md](PERFORMANCE_BUDGETS.md)**. This
 sub-section is the index that points to them from the governance doc.
 
 The test surface is organised in **six cooperating layers**, each of
@@ -1356,7 +1356,7 @@ which catches a different class of defect:
 ### Synthetic evaluator oracle (DTB-R7 / DTB-R8)
 
 The DTB-R7 / DTB-R8 evaluation leg is exercised on CPU through
-[`SyntheticEvaluator`](adaptive_reflow/eval/synthetic_oracle.py) — a
+[`SyntheticEvaluator`](../adaptive_reflow/eval/synthetic_oracle.py) — a
 deterministic closed-form evaluator whose four primary diagnostics
 (`raw_score`, `bounded_score`, `calibration_lower_bound`,
 `perturbation_stability_lower_bound`) are pure closed-form functions of
@@ -1459,7 +1459,7 @@ pair the merge bar requires.
 
 ### Conventions for adding a new test
 
-See [docs/TESTING_STRATEGY.md §6](docs/TESTING_STRATEGY.md) for the
+See [docs/TESTING_STRATEGY.md §6](TESTING_STRATEGY.md) for the
 full convention. The short form:
 
 1. Pick the layer that matches the defect class.
@@ -1512,12 +1512,12 @@ recorded here first.
 
 | Governance artefact | Path | Purpose |
 |---|---|---|
-| Roadmap | [`ROADMAP.md`](ROADMAP.md) | Now / Next / Later buckets; entry for every DTB-R0/R1/.../DTB-RFG task in `todo.json`; target dates; ADR cross-references. |
-| Contributing | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Four workflows the maintainer runs on every change (hostile-case test, adapter, mutation test, docs scanner); local pre-push gate. |
-| Security | [`SECURITY.md`](SECURITY.md) | Single-maintainer scope; explicit "no security-sensitive surface" claim; reporting channel for build / supply-chain defects. |
-| Code ownership | [`CODEOWNERS`](CODEOWNERS) | GitHub code-owner routing. Load-bearing boundaries (`contracts/`, `universal/`, `frame/engine.py`, public `__init__.py` files, the doc scanner, the docs governance tree) are pinned explicitly. |
-| Deprecation policy | [`docs/DEPRECATION.md`](docs/DEPRECATION.md) | Versioned deprecation table for every `adaptive_reflow.legacy/*` module; quarantine mechanics; sunset / removal convention. |
-| ADRs | [`docs/adr/`](docs/adr/) | Architectural decisions (MADR 4.0). The fourteen shipped today cover (1) the meta-format, (2) the typed-contracts core boundary, (3) the universal / molecular split, (4) the seven-step engine order, (5) the fail-closed audit-code policy, (6) the engine-wraps-adapter pattern, (7) the prev-anchored bounded merge, (8) the claim-gate deferral placeholder, (9) the mixer RMS-precondition, (10) the cosine-driven memory fraction, (11) the four-axis algorithm abstractions, (12) the noise-schedule survey, (13) the posterior-selection-driven algorithm layer, and (14) the Hyperparameter-Free Framework Principle (DERIV-001 — every framework hyperparameter traces to a paper quantity, local curvature, mathematical invariant, information-geometry identity, or generic convergence theorem). Workflow K also shipped three brief-slot pointer stubs at the `0006`/`0007`/`0008` slug slots ([ADR-0006](adr/0006-hyperparameter-free-framework-principle.md), [ADR-0007](adr/0007-theorem-aligned-fid-per-round-pattern.md), [ADR-0008](adr/0008-regime-aware-eps-selector.md)) that forward to the canonical allocations `0014`/`0015`/`0016` to avoid slug collisions with the pre-existing ADRs that own those slots. New load-bearing decisions follow the same template. |
+| Roadmap | [`ROADMAP.md`](../ROADMAP.md) | Now / Next / Later buckets; entry for every DTB-R0/R1/.../DTB-RFG task in `todo.json`; target dates; ADR cross-references. |
+| Contributing | [`CONTRIBUTING.md`](../CONTRIBUTING.md) | Four workflows the maintainer runs on every change (hostile-case test, adapter, mutation test, docs scanner); local pre-push gate. |
+| Security | [`SECURITY.md`](../SECURITY.md) | Single-maintainer scope; explicit "no security-sensitive surface" claim; reporting channel for build / supply-chain defects. |
+| Code ownership | [`CODEOWNERS`](../CODEOWNERS) | GitHub code-owner routing. Load-bearing boundaries (`contracts/`, `universal/`, `frame/engine.py`, public `__init__.py` files, the doc scanner, the docs governance tree) are pinned explicitly. |
+| Deprecation policy | [`docs/DEPRECATION.md`](DEPRECATION.md) | Versioned deprecation table for every `adaptive_reflow.legacy/*` module; quarantine mechanics; sunset / removal convention. |
+| ADRs | [`docs/adr/`](adr) | Architectural decisions (MADR 4.0). The fourteen shipped today cover (1) the meta-format, (2) the typed-contracts core boundary, (3) the universal / molecular split, (4) the seven-step engine order, (5) the fail-closed audit-code policy, (6) the engine-wraps-adapter pattern, (7) the prev-anchored bounded merge, (8) the claim-gate deferral placeholder, (9) the mixer RMS-precondition, (10) the cosine-driven memory fraction, (11) the four-axis algorithm abstractions, (12) the noise-schedule survey, (13) the posterior-selection-driven algorithm layer, and (14) the Hyperparameter-Free Framework Principle (DERIV-001 — every framework hyperparameter traces to a paper quantity, local curvature, mathematical invariant, information-geometry identity, or generic convergence theorem). Workflow K also shipped three brief-slot pointer stubs at the `0006`/`0007`/`0008` slug slots ([ADR-0006](adr/0014-hyperparameter-free-framework-principle.md), [ADR-0007](adr/0015-theorem-aligned-fid-per-round-pattern.md), [ADR-0008](adr/0016-regime-aware-eps-selector.md)) that forward to the canonical allocations `0014`/`0015`/`0016` to avoid slug collisions with the pre-existing ADRs that own those slots. New load-bearing decisions follow the same template. |
 | Hands-on walk-through | [`TUTORIAL.md`](TUTORIAL.md) | Step-by-step tutorial: mental model, the seven-step engine round, writing an adapter, hostile-case tests, golden snapshots, property-based tests, mutation testing, performance budgets, contributing. |
 
 ### 10.1 Where to look first
@@ -1531,9 +1531,9 @@ recorded here first.
 | "How do I add a hostile-case test?" | `TUTORIAL.md` §4, then `CONTRIBUTING.md` §1 |
 | "Why did we choose seven steps, not six or eight?" | ADR-0004 |
 | "Why is this `AUDIT_*` constant where it is?" | ADR-0005, then `tools/check_docs_against_code.py` |
-| "Why does the framework not have hand-set magic numbers?" | ADR-0014 (DERIV-001 Hyperparameter-Free Framework Principle; brief-slot pointer at [ADR-0006](adr/0006-hyperparameter-free-framework-principle.md)), then `docs/ALGORITHMS.md` §"Hyperparameter-Free Framework Principle (DERIV-001)" |
-| "Why does FID consume `(A_g, B_g, C_g, e_rho)` per round, not just `value`?" | ADR-0015 (Theorem-aligned FID + per-round harness pattern; brief-slot pointer at [ADR-0007](adr/0007-theorem-aligned-fid-per-round-pattern.md)), then [`docs/r17-survey/algorithm-correctness-evidence.md`](r17-survey/algorithm-correctness-evidence.md) §5 |
-| "How does the framework prevent the scheduler's `eps` from leaving the Lemma 4 regime?" | ADR-0016 (Regime-aware eps selector; brief-slot pointer at [ADR-0008](adr/0008-regime-aware-eps-selector.md)), then `adaptive_reflow/algorithm/scheduler/regime_selector.py` and `tests/test_algorithm/test_regime_selector.py` |
+| "Why does the framework not have hand-set magic numbers?" | ADR-0014 (DERIV-001 Hyperparameter-Free Framework Principle; brief-slot pointer at [ADR-0006](adr/0014-hyperparameter-free-framework-principle.md)), then `docs/ALGORITHMS.md` §"Hyperparameter-Free Framework Principle (DERIV-001)" |
+| "Why does FID consume `(A_g, B_g, C_g, e_rho)` per round, not just `value`?" | ADR-0015 (Theorem-aligned FID + per-round harness pattern; brief-slot pointer at [ADR-0007](adr/0015-theorem-aligned-fid-per-round-pattern.md)), then [`docs/r17-survey/algorithm-correctness-evidence.md`](r17-survey/algorithm-correctness-evidence.md) §5 |
+| "How does the framework prevent the scheduler's `eps` from leaving the Lemma 4 regime?" | ADR-0016 (Regime-aware eps selector; brief-slot pointer at [ADR-0008](adr/0016-regime-aware-eps-selector.md)), then `adaptive_reflow/algorithm/scheduler/regime_selector.py` and `tests/test_algorithm/test_regime_selector.py` |
 | "When is the next feature landing?" | `ROADMAP.md` |
 | "Is there a security boundary I need to respect?" | `SECURITY.md` |
 | "Who reviews PRs against the contracts layer?" | `CODEOWNERS` |
@@ -1583,13 +1583,13 @@ The 4 optimizations are:
    optimization actually shards across GPUs.
 
 Cross-references: [CLM-065](CLAIMS.md#CLM-065) (NEW claim — eval
-pipeline speedup) + [`docs/paper-draft.md` §10.41](paper-draft.md)
+pipeline speedup) + [`docs/paper-draft.md` §10.41](ARCHIVE/legacy-paper/paper-draft.md)
 + [`docs/CONSOLIDATED_RESULTS.md` §15.94](CONSOLIDATED_RESULTS.md)
 + [`docs/baseline-audit-report.md` §R.84](baseline-audit-report.md)
 + [`docs/INSIGHTS.md` §7.13](INSIGHTS.md) +
-[`docs/audit/wave201-p2-foldability-sc-workers-per-gpu.md`](audit/wave201-p2-foldability-sc-workers-per-gpu.md)
+`docs/audit/wave201-p2-foldability-sc-workers-per-gpu.md`
 +
-[`docs/audit/wave201-p3-run-foldability-propagate-workers-per-gpu.md`](audit/wave201-p3-run-foldability-propagate-workers-per-gpu.md)
+`docs/audit/wave201-p3-run-foldability-propagate-workers-per-gpu.md`
 +
 [`tools/run_lineageflow_n1000_foldability_omegafold.py`](../tools/run_lineageflow_n1000_foldability_omegafold.py)
 (Wave 201 P5 + P6 + P7 diff) +

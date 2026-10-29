@@ -84,3 +84,24 @@ frozen surface and needs authorisation. The 19 absent links need a decision per
 link: repoint, or drop the sentence. Dropping is often right — a reviewer who
 clicks a dead link learns nothing, and the underlying result is usually already
 in `verification_outputs/`.
+
+---
+
+## 6. Resolution (2026-10-29) — authorised, and closed
+
+The refresh in §5 was authorised. All 40 broken targets were repaired:
+20 moved into `docs/ARCHIVE/` by the Wave 266 reorganisation (prefix
+rewrite), 10 re-pointed by topic into the reorganised
+`docs/audit/{engineering,stats_method,algorithm_4arm,sweep_eval}/` files,
+5 re-pointed to the document that actually covers the subject, and 1 — the
+Wave 242 rescue script — was never committed, so the hyperlink was removed and
+the sentence now says so.
+
+`tools/check_submission_links.py` now exits 1 on any absent target
+(`KNOWN_ABSENT` is empty) instead of always exiting 0, and
+`tests/test_submission_links.py` pins `absent=0`.
+
+`links=242 absent=0 ok=242`.
+
+The same audit was then run across the rest of the documentation tree —
+see `docs/audit/doc-link-audit.md`.
