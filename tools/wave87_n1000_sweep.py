@@ -46,7 +46,7 @@ from typing import Any
 import numpy as np
 
 # Make the project + upstream FlowMol3 repo importable.
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "data" / "FlowMol3" / "repo"))
 

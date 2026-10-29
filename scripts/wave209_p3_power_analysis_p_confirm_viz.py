@@ -42,7 +42,7 @@ try:
 except ImportError:
     HAS_MIXEDLM = False
 
-ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "verification_outputs"
 DOC_DIR = ROOT / "docs/audit"
 K6_BASELINE = ROOT / "verification_outputs/k6_foldability_n1000_w161_q3_2026/baseline/foldability"

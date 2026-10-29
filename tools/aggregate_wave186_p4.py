@@ -34,7 +34,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 P3_CSV = REPO_ROOT / "verification_outputs" / "wave186-p3-eval-summary.csv"
 P4_CSV = REPO_ROOT / "verification_outputs" / "wave186-p4-aggregation.csv"
 PLOTS_DIR = REPO_ROOT / "plots"

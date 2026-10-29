@@ -86,7 +86,7 @@ from pathlib import Path
 
 import numpy as np
 
-REPO = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO = Path(__file__).resolve().parents[2]
 OUT_DIR = REPO / "verification_outputs" / "wave351-p3-thm5-numerical"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 

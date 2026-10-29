@@ -41,7 +41,7 @@ from pathlib import Path
 import numpy as np
 from scipy import stats as _scipy_stats
 
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_CSV = REPO_ROOT / "verification_outputs" / "wave230-p2-real-4arm-per-record.csv"
 OUT_CSV = REPO_ROOT / "verification_outputs" / "wave246-p3-tost-sensitivity.csv"
 OUT_AUDIT = REPO_ROOT / "docs" / "audit" / "wave246-p3-tost-sensitivity.md"

@@ -38,7 +38,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "verification_outputs"
 DOC_DIR = ROOT / "docs" / "audit"
 

@@ -20,7 +20,7 @@ import json
 import os
 from pathlib import Path
 
-ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "verification_outputs" / "wave225-p3-r3-cross-seed.csv"
 OUT_JSON = ROOT / "verification_outputs" / "wave225-p3-r3-cross-seed.json"
 

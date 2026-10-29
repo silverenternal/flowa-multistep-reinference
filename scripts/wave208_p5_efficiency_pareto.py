@@ -35,7 +35,7 @@ from pathlib import Path
 
 import torch
 
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = REPO_ROOT / "verification_outputs"
 NFE_GRID = [10, 20, 50, 100, 200, 500]
 GPU_DEVICE = 1  # RTX 5090

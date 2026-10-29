@@ -30,7 +30,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 PYTHON_BIN = "/home/hugo/codes/flowa-multistep-reinference/.venvs/lineageflow_venv/bin/python"
 
 ARMS = ["vanilla", "fastdllm", "abcache", "lediflow", "flowa"]

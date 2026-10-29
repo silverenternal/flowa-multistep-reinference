@@ -66,12 +66,11 @@ _LOGGER = logging.getLogger(__name__)
 # (r17/P-21 / flowmol3_upstream_shim / flowmol3_v2_adapter) already locks.
 # ---------------------------------------------------------------------------
 
-FLOWMOL3_UPSTREAM_REPO: str = (
-    "/home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/repo"
-)
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+FLOWMOL3_UPSTREAM_REPO: str = str(_REPO_ROOT / "data/FlowMol3/repo")
 FLOWMOL3_PINNED_COMMIT: str = "77cae22174b7792b0e25e9e0414038420736d841"
-FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR: str = (
-    "/home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/repo/data/geom_5_kekulized"
+FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR: str = str(
+    _REPO_ROOT / "data/FlowMol3/repo/data/geom_5_kekulized"
 )
 
 

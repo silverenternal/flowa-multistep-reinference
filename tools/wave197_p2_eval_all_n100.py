@@ -15,7 +15,7 @@ import sys
 import time
 from pathlib import Path
 
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 LINEAGEFLOW_EVAL_DIR = REPO_ROOT / "data" / "lineageflow_upstream"
 EVAL_BIN_PYTHON = "/home/hugo/.conda/envs/omegafold_py310/bin/python"
 OMEGAFOLD_BIN = "/home/hugo/.conda/envs/omegafold_py310/bin/omegafold"

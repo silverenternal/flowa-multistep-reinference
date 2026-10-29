@@ -342,9 +342,10 @@ if __name__ == "__main__":
     # the resulting FG-dev. Saves the result to /tmp/eq4_smoke_output.json.
     import sys
 
-    nci_path = (
-        "/home/hugo/codes/flowa-multistep-reinference/.venvs/"
-        "flowmol3_venv/lib/python3.12/site-packages/rdkit/Data/NCI/first_5K.smi"
+    _REPO_ROOT = Path(__file__).resolve().parents[2]
+    nci_path = str(
+        _REPO_ROOT
+        / ".venvs/flowmol3_venv/lib/python3.12/site-packages/rdkit/Data/NCI/first_5K.smi"
     )
 
     def _load_nci(path: str, n: int, start: int = 0) -> list[str]:

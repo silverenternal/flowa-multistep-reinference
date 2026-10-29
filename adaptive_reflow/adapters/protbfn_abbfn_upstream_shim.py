@@ -51,13 +51,13 @@ import logging
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 _LOGGER = logging.getLogger(__name__)
 
-PROTBFN_UPSTREAM_REPO: str = (
-    "/home/hugo/codes/flowa-multistep-reinference/data/protbfn_abbfn/repo"
-)
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+PROTBFN_UPSTREAM_REPO: str = str(_REPO_ROOT / "data/protbfn_abbfn/repo")
 
 _UPSTREAM_IMPORT_ERROR: BaseException | None = None
 _UPSTREAM_GET_TRANSFORMER_FN: Callable[..., Any] | None = None

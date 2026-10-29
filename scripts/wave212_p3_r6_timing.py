@@ -42,7 +42,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = REPO_ROOT / "scripts"
 OUT_DIR = REPO_ROOT / "verification_outputs"
 PYTHON_BIN = REPO_ROOT / ".venvs" / "lineageflow_venv" / "bin" / "python"
@@ -70,7 +70,7 @@ import sys, time, json
 
 import numpy as np
 
-sys.path.insert(0, "/home/hugo/codes/flowa-multistep-reinference")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 # Pin to GPU 0 (RTX PRO 6000) per Wave 212 P3 brief.
 import torch
@@ -156,7 +156,7 @@ import sys, time, json
 
 import numpy as np
 
-sys.path.insert(0, "/home/hugo/codes/flowa-multistep-reinference")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import torch
 torch.cuda.set_device(0)

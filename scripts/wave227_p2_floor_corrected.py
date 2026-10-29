@@ -28,7 +28,7 @@ import json
 import math
 from pathlib import Path
 
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 W196 = REPO_ROOT / "verification_outputs" / "wave196-p2-4arm-paired.csv"
 W226_P1 = REPO_ROOT / "verification_outputs" / "wave226-p1-a-g-values.csv"
 W202 = REPO_ROOT / "verification_outputs" / "wave202-p5-lineageflow-per-record.csv"

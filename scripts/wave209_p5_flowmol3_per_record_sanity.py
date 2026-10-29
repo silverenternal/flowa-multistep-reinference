@@ -24,7 +24,7 @@ import json
 import sys
 from pathlib import Path
 
-REPO = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = REPO / "verification_outputs"
 SANITY_JSON = OUTPUT_DIR / "wave208-p2-flowmol3-sanity.json"
 SANITY_CSV = OUTPUT_DIR / "wave208-p2-flowmol3-sanity.csv"

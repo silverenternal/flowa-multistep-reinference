@@ -87,7 +87,7 @@ Both rows are the same run (`verification_outputs/wave236-p2-wallclock.json`). T
 | Abstract word count | **167 words** (abstract of record in `paper-A-final.md`; the 328-word draft is the historical `abstract-final.md`) | [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) |
 | Ruff lint (4-directory scope) | **0 findings** | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
 | Mypy type-check | **0 errors** | `mypy adaptive_reflow/` |
-| Pytest | **5538 passed / 180 skipped / 12 xfailed** (2026-10-29 run, 12 torch-dependent `test_paper_metrics.py` tests excluded on the CPU box) | [`docs/audit/tables-inventory-provenance.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/tables-inventory-provenance.md) |
+| Pytest | **5540 passed / 180 skipped / 12 xfailed** (2026-10-29 run, 12 torch-dependent `test_paper_metrics.py` tests excluded on the CPU box) | [`docs/audit/tables-inventory-provenance.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/tables-inventory-provenance.md) |
 
 ---
 

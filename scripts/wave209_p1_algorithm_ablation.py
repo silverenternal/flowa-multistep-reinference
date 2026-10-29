@@ -36,7 +36,7 @@ from typing import Any
 import numpy as np
 import scipy.stats
 
-ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "verification_outputs"
 K6_BASELINE = (
     ROOT

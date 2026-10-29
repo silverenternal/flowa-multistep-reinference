@@ -37,7 +37,7 @@ import numpy as np
 import scipy.stats
 
 # Make the project + upstream FlowMol3 repo importable.
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "data" / "FlowMol3" / "repo"))
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")

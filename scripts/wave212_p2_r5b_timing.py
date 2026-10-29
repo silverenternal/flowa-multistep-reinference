@@ -51,7 +51,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = REPO_ROOT / "scripts"
 OUT_DIR = REPO_ROOT / "verification_outputs"
 PYTHON_BIN = REPO_ROOT / ".venvs" / "kanzi_venv" / "bin" / "python"
@@ -79,7 +79,7 @@ import sys, time, json
 
 import numpy as np
 
-sys.path.insert(0, "/home/hugo/codes/flowa-multistep-reinference")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from adaptive_reflow.adapters.rectified_flow_cifar import RectifiedFlowCIFARAdapter
 
 DEVICE = sys.argv[1]
@@ -144,7 +144,7 @@ import sys, time, json
 
 import numpy as np
 
-sys.path.insert(0, "/home/hugo/codes/flowa-multistep-reinference")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from adaptive_reflow.adapters.rectified_flow_cifar import RectifiedFlowCIFARAdapter
 from adaptive_reflow.algorithm.scheduler.simple import (
     default_cosine_scheduler,

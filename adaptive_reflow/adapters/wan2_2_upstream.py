@@ -44,7 +44,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-WAN22_REPO_PATH: str = "/home/hugo/codes/flowa-multistep-reinference/data/wan2_2/repo"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+WAN22_REPO_PATH: str = str(_REPO_ROOT / "data/wan2_2/repo")
 
 # Ensure the upstream repo is on sys.path. Done at module import so
 # downstream ``from wan.text2video import WanT2V`` works without each

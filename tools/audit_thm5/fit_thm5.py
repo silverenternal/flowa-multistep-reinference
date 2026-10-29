@@ -103,7 +103,7 @@ import math
 import sys
 from pathlib import Path
 
-REPO = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO = Path(__file__).resolve().parents[2]
 LIP_PATH = REPO / "verification_outputs" / "wave351-p3-thm5-numerical" / "lipschitz_estimate.json"
 OUT_DIR = REPO / "verification_outputs" / "wave351-p3-thm5-numerical"
 OUT_DIR.mkdir(parents=True, exist_ok=True)

@@ -36,7 +36,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "verification_outputs"
 CSV_PATH = OUT_DIR / "wave208-p4-cross-adapter-ablation.csv"
 JSON_PATH = OUT_DIR / "wave208-p4-cross-adapter-ablation.json"

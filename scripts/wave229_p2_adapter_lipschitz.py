@@ -53,7 +53,7 @@ REPO_ROOT_PATH = str(Path(__file__).resolve().parent.parent)
 if REPO_ROOT_PATH not in sys.path:
     sys.path.insert(0, REPO_ROOT_PATH)
 
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = REPO_ROOT / "scripts"
 OUT_DIR = REPO_ROOT / "verification_outputs"
 AUDIT_DIR = REPO_ROOT / "docs" / "audit"

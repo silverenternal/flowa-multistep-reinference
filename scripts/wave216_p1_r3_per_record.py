@@ -77,7 +77,7 @@ import numpy as np
 from rdkit import Chem
 from scipy import stats
 
-REPO = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = REPO / "verification_outputs"
 DOCS_DIR = REPO / "docs/audit"
 OUTPUT_DIR.mkdir(exist_ok=True)

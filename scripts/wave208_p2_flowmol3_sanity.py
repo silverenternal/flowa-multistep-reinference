@@ -34,7 +34,7 @@ from rdkit import Chem
 from rdkit.Chem import QED, AllChem, Crippen, Descriptors
 from scipy import stats
 
-REPO = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = REPO / "verification_outputs"
 OUTPUT_DIR.mkdir(exist_ok=True)
 

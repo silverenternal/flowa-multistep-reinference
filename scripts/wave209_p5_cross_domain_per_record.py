@@ -20,7 +20,7 @@ direction-consistency rule.
 import csv
 from pathlib import Path
 
-REPO = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = REPO / "verification_outputs"
 
 # Load the three raw source CSVs.

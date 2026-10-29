@@ -32,7 +32,7 @@ from pathlib import Path
 
 warnings.filterwarnings("ignore")
 
-REPO = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO = Path(__file__).resolve().parents[1]
 OUT_DIR = REPO / "verification_outputs"
 
 # Force CUDA device 0 (RTX PRO 6000 Blackwell).

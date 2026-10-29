@@ -30,7 +30,7 @@ import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
-REPO = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO = Path(__file__).resolve().parents[1]
 SRC = REPO / "verification_outputs" / "wave190-p2-kanzi-n30.json"
 DST_CANON = REPO / "verification_outputs" / "wave190-p2-kanzi-n30.json"
 DST_TMP = Path("/tmp/w190_p2/wave190-p2-kanzi-n30-summary.json")

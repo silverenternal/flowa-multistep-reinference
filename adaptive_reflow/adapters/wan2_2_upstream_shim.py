@@ -29,11 +29,13 @@ from __future__ import annotations
 import logging
 import sys
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 _LOGGER = logging.getLogger(__name__)
 
-WAN_UPSTREAM_REPO: str = "/home/hugo/codes/flowa-multistep-reinference/data/wan2_2/repo"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+WAN_UPSTREAM_REPO: str = str(_REPO_ROOT / "data/wan2_2/repo")
 
 _UPSTREAM_IMPORT_ERROR: BaseException | None = None
 _UPSTREAM_WANT2V_CLS: Any = None

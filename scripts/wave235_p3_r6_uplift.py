@@ -56,7 +56,7 @@ from pathlib import Path
 import numpy as np
 import scipy.stats
 
-REPO = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO = Path(__file__).resolve().parents[1]
 OUT_DIR = REPO / "verification_outputs"
 DOCS_DIR = REPO / "docs" / "audit"
 

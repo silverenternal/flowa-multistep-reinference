@@ -21,7 +21,7 @@ import math
 from datetime import UTC, datetime
 from pathlib import Path
 
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = REPO_ROOT / "verification_outputs"
 OUT_PATH_CSV = OUT_DIR / "wave229-p4-wall-clock-matched.csv"
 OUT_PATH_JSON = OUT_DIR / "wave229-p4-wall-clock-matched.json"

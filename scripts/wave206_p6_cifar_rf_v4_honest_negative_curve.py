@@ -60,7 +60,7 @@ import time
 from datetime import UTC, datetime, timezone
 from pathlib import Path
 
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 OUT_DIR = REPO_ROOT / "verification_outputs"

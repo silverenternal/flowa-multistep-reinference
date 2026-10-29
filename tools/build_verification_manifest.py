@@ -27,8 +27,9 @@ import os
 import subprocess
 import sys
 from collections import OrderedDict
+from pathlib import Path
 
-WORKDIR = "/home/hugo/codes/flowa-multistep-reinference"
+WORKDIR = str(Path(__file__).resolve().parents[1])
 
 
 # ---------------------------------------------------------------------------

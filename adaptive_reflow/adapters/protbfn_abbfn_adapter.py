@@ -183,8 +183,9 @@ Mode = Literal["torch", "synthetic", "upstream_jax"]
 #: Default upstream-jax weights directory (real ProtBFN / AbBFN
 #: checkpoint trees). The ``upstream_jax`` mode resolves this when the
 #: caller did not pass an explicit ``checkpoint_path``.
-PROTBFN_UPSTREAM_DEFAULT_WEIGHTS_ROOT: str = (
-    "/home/hugo/codes/flowa-multistep-reinference/data/protbfn_abbfn/weights_real"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+PROTBFN_UPSTREAM_DEFAULT_WEIGHTS_ROOT: str = str(
+    _REPO_ROOT / "data/protbfn_abbfn/weights_real"
 )
 
 #: Audit tag emitted when the trajectory was produced via the

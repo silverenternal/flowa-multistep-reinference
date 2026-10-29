@@ -33,7 +33,8 @@ from typing import Any
 
 _LOGGER = logging.getLogger(__name__)
 
-HIDREAM_UPSTREAM_REPO: str = "/home/hugo/codes/flowa-multistep-reinference/data/HiDream-I1/repo"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+HIDREAM_UPSTREAM_REPO: str = str(_REPO_ROOT / "data/HiDream-I1/repo")
 
 _UPSTREAM_IMPORT_ERROR: BaseException | None = None
 _UPSTREAM_PIPELINE_CLS: Any = None

@@ -38,7 +38,7 @@ from pathlib import Path
 import numpy as np
 import scipy.stats
 
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = REPO_ROOT / "verification_outputs"
 
 # This Wave 206 P2 sweep output (may be partial)

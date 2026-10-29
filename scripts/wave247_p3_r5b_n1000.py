@@ -34,7 +34,7 @@ from pathlib import Path
 import numpy as np
 import scipy.stats
 
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 PYTHON_BIN = REPO_ROOT / ".venvs" / "flowmol3_venv" / "bin" / "python"

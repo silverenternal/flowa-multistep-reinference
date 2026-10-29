@@ -104,9 +104,9 @@ _LOGGER = logging.getLogger(__name__)
 #: back to the RDKit-bundled NCI ``first_5K.smi`` proxy (4,991
 #: molecules); the choice is surfaced in every JSON output's
 #: ``stderr_notes`` so a downstream consumer can branch on it.
-DEFAULT_GEOM_DRUGS_TRAIN_REFERENCE_PATH: str = (
-    "/home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/"
-    "references/geom_drugs_train.smi"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_GEOM_DRUGS_TRAIN_REFERENCE_PATH: str = str(
+    _REPO_ROOT / "data/FlowMol3/references/geom_drugs_train.smi"
 )
 
 #: Default reference SMILES file used when the caller does not supply
@@ -119,9 +119,9 @@ DEFAULT_GEOM_DRUGS_TRAIN_REFERENCE_PATH: str = (
 def _resolve_default_reference_path() -> str:
     if Path(DEFAULT_GEOM_DRUGS_TRAIN_REFERENCE_PATH).exists():
         return DEFAULT_GEOM_DRUGS_TRAIN_REFERENCE_PATH
-    return (
-        "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/"
-        "lib/python3.12/site-packages/rdkit/Data/NCI/first_5K.smi"
+    return str(
+        _REPO_ROOT
+        / ".venvs/flowmol3_venv/lib/python3.12/site-packages/rdkit/Data/NCI/first_5K.smi"
     )
 
 

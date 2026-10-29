@@ -46,7 +46,7 @@ from pathlib import Path
 import numpy as np
 import scipy.stats
 
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = REPO_ROOT / "verification_outputs"
 
 # Canonical Wave 87 byte-stable FlowMol3 N=1000 sweep at seed=42 NFE=250

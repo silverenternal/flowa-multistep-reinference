@@ -50,12 +50,15 @@ from typing import Any
 # Resolution helpers
 # ---------------------------------------------------------------------------
 
+#: Repository root, resolved from this file so a clone works anywhere.
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
 #: Absolute path to the upstream HiDream-I1 repository. Mirrors the
 #: layout the framework uses everywhere else (``data/<model>/repo``).
 UPSTREAM_REPO: Path = Path(
     os.environ.get(
         "HIDREAM_I1_REPO",
-        "/home/hugo/codes/flowa-multistep-reinference/data/HiDream-I1/repo",
+        str(_REPO_ROOT / "data/HiDream-I1/repo"),
     )
 )
 

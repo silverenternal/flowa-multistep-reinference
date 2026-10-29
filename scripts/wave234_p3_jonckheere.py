@@ -81,7 +81,7 @@ from pathlib import Path
 
 import numpy as np
 
-REPO = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO = Path(__file__).resolve().parents[1]
 
 # Ensure the project root is on sys.path so the in-tree
 # ``adaptive_reflow`` package is importable when this script is invoked

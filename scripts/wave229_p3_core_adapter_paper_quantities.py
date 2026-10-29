@@ -38,7 +38,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-REPO_ROOT = Path("/home/hugo/codes/flowa-multistep-reinference")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = REPO_ROOT / "scripts"
 OUT_DIR = REPO_ROOT / "verification_outputs"
 AUDIT_DIR = REPO_ROOT / "docs" / "audit"
