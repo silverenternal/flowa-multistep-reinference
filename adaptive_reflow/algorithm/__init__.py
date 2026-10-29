@@ -417,7 +417,6 @@ __all__ = [
     "default_bounded_merge_operator",
     "default_categorical_blender",
     "default_continuous_fm_dynamics",
-    "default_codimension_sheet_scheduler",
     "default_cosine_scheduler",
     "default_paper_ratio_scheduler",
     "default_ctmc_dynamics",

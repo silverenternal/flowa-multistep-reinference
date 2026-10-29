@@ -55,7 +55,9 @@ verifies the structural typing at import time.
   (real integration) FlowMol3 adapter both first-class via a single
   structural Protocol (see :class:`AdapterObservationProtocol` for the
   underlying typed ``observe(...)`` method).
-* :class:`AdapterCompliance` -- aggregate Protocol set enforcement.
+* :func:`implements` / :func:`assert_adapter_compliance` -- the
+  aggregate Protocol-set enforcement that replaced the planned
+  ``AdapterCompliance`` class (which never shipped).
 
 **Stdlib-only, no torch, no numpy.**
 """
@@ -100,7 +102,6 @@ __all__ = [
     "ObservationKind",
     "ObservationResult",
     "FlowMatchingODEAdapterWithObservation",
-    "AdapterCompliance",  # noqa: F822
     "implements",
     "assert_adapter_compliance",
     "MissingProtocolError",
@@ -754,7 +755,7 @@ class FlowMatchingODEAdapterWithObservation(Protocol):
 
 
 # ---------------------------------------------------------------------------
-# AdapterCompliance: aggregate Protocol set + implements decorator
+# Protocol-set enforcement: ``implements`` + ``assert_adapter_compliance``
 # ---------------------------------------------------------------------------
 
 

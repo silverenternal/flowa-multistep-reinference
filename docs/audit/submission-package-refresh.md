@@ -206,11 +206,12 @@ reading and already says so.
 
 ## 7. Follow-on (2026-10-29): the suite count moved again
 
-The day's audit rounds added twelve tests (five in `tests/test_doc_links.py`,
+The day's audit rounds added thirteen tests (five in `tests/test_doc_links.py`,
 two here, three in `tests/test_evidence_ledgers.py` for the `SOURCE.md` and
 `verification_outputs/MANIFEST.md` hash surfaces, two in
-`tests/test_portability.py`), taking the suite from
-**5528** to **5540** passed / 180 skipped / 12 xfailed. Eight surfaces assert that number
+`tests/test_portability.py`, one in `tests/test_public_api.py`), taking the
+suite from
+**5528** to **5541** passed / 180 skipped / 12 xfailed. Eight surfaces assert that number
 (`tnnls_submission/{cover_letter,figures,tables,data_availability,submission_checklist}.md`,
 `docs/{RELEASE-NOTES,code-release-checklist,cover-letter-tnnls}.md`); all eight
 were bumped, the five package rows re-hashed in `MANIFEST.md`, and
