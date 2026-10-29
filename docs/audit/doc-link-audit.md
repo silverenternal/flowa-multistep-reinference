@@ -186,3 +186,45 @@ not mechanical fixes, so it is left as found and recorded here.
 272 lines rewritten in place across 30 markdown files (equal add/remove — no
 line was added or removed); `paper-data/SHA256SUMS` (1 line);
 `paper-data/MANIFEST.md` (5 rows); `todo.json` (2 gate-chain entries).
+
+### 7.1 A second, larger class: dead paths in backticks
+
+The repair above covered markdown links — the ones that render as clickable
+404s. A broader scan of backticked paths (`docs/…`, `tools/…`, `paper-data/…`
+inside inline code) finds **4,290** occurrences whose target does not exist.
+The overwhelming majority sit inside `docs/audit/` wave records, which quote a
+path as it stood at the time; rewriting those would falsify the trail, so they
+stay.
+
+The actionable subset is the live, reviewer-facing documents that still point
+at `docs/paper-draft.md`, which commit `941c361a` archived into
+`docs/ARCHIVE/legacy-paper/paper-draft.md` (and which
+`docs/ARCHIVE/legacy-paper/INDEX.md` already marks "superseded by
+`paper-A-final.md`"):
+
+| document | `docs/paper-draft.md` | `docs/drafts/paper-flat-flattened.md` |
+|---|---:|---:|
+| `docs/CONSOLIDATED_RESULTS.md` | 173 | 0 |
+| `docs/baseline-audit-report.md` | 68 | 0 |
+| `docs/CLAIMS.md` | 52 | 10 |
+| `docs/INSIGHTS.md` | 18 | 0 |
+| `docs/push-ready-summary.md` | 18 | 0 |
+| `supplementary.md` | 9 | 0 |
+| `docs/ARCHITECTURE.md` | 1 | 0 |
+| `docs/paper-profile.md` | 1 | 0 |
+| `docs/submission-checklist-final.md` | 1 | 0 |
+| `docs/算法实现说明.md` | 1 | 0 |
+| **total** | **342** | **10** |
+
+The fix is mechanical — `docs/paper-draft.md` → `docs/ARCHIVE/legacy-paper/paper-draft.md`
+and `docs/drafts/paper-flat-flattened.md` →
+`docs/drafts/paper-flat-flattened.ARCHIVED-2026-09-23.md`, both of which exist
+— and the section numbers the surrounding prose cites (§7.6.6 and friends)
+remain valid in the archived copy.
+
+**Not done here, deliberately.** 62 of the 352 occurrences are in
+`docs/CLAIMS.md`, the frozen governance surface; the rest are spread across
+documents whose prose cites those sections as live evidence. Repointing them
+is a one-line-per-occurrence edit with no effect on any number, but it is an
+editorial decision about how the frozen claim register should refer to a
+superseded manuscript, so it is recorded rather than performed.
