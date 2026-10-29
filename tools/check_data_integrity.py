@@ -29,6 +29,7 @@ allowed writer.
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -60,6 +61,13 @@ class Mismatch:
     detail: str  # human-readable detail
 
 
+MANIFEST_ROW_RE = re.compile(
+    r"^\| `(verification_outputs/[^`]+)` \| (\d+) \| `([0-9a-f]{64})` \|$",
+    re.MULTILINE,
+)
+"""One row of ``verification_outputs/MANIFEST.md``: path | size | sha256."""
+
+
 @dataclass(frozen=True)
 class IntegrityResult:
     """Aggregate result of the integrity sweep."""
@@ -68,6 +76,7 @@ class IntegrityResult:
     verified_files: int = 0
     mismatches: tuple[Mismatch, ...] = field(default_factory=tuple)
     empty_ledgers: tuple[str, ...] = field(default_factory=tuple)
+    manifest_rows: int = 0
 
 
 # ---------------------------------------------------------------------------
@@ -203,6 +212,45 @@ def _verify_subdir(subdir: Path) -> tuple[int, tuple[Mismatch, ...]]:
     return file_count, tuple(mismatches)
 
 
+def _verify_manifest(root: Path) -> tuple[int, tuple[Mismatch, ...]]:
+    """Verify the flat catalogue at ``<root>/MANIFEST.md``.
+
+    The per-directory ``SHA256SUMS`` ledgers above cover 264 files; the
+    catalogue covers the 439 evidence files that back a headline number and
+    were tracked on 2026-09-22.  It is the surface a reviewer is told to
+    check first, so a stale row there is a defect even when every ledger is
+    green -- two rows had drifted when this check was added.
+    """
+    manifest = root / "MANIFEST.md"
+    if not manifest.is_file():
+        return 0, ()
+    label = (
+        str(manifest.relative_to(REPO_ROOT))
+        if manifest.is_absolute()
+        else str(manifest)
+    )
+    rows = 0
+    mismatches: list[Mismatch] = []
+    for rel, _size, sha in MANIFEST_ROW_RE.findall(
+        manifest.read_text(encoding="utf-8")
+    ):
+        rows += 1
+        path = root / rel[len("verification_outputs/") :]
+        if not path.is_file():
+            mismatches.append(Mismatch(subdir=label, kind="manifest_missing", detail=rel))
+            continue
+        actual = _sha256_of(path)
+        if actual != sha:
+            mismatches.append(
+                Mismatch(
+                    subdir=label,
+                    kind="manifest_modified",
+                    detail=f"{rel}: manifest {sha[:12]}..., on disk {actual[:12]}...",
+                )
+            )
+    return rows, tuple(mismatches)
+
+
 def verify(root: Path = DEFAULT_ROOT) -> IntegrityResult:
     """Run the integrity sweep against ``root``.
 
@@ -234,11 +282,15 @@ def verify(root: Path = DEFAULT_ROOT) -> IntegrityResult:
             empty_ledgers.append(str(subdir.relative_to(REPO_ROOT)))
         total_files += file_count
         all_mismatches.extend(mismatches)
+    manifest_rows, manifest_mismatches = _verify_manifest(root)
+    total_files += manifest_rows
+    all_mismatches.extend(manifest_mismatches)
     return IntegrityResult(
         verified_directories=dirs_with_ledger,
         verified_files=total_files,
         mismatches=tuple(all_mismatches),
         empty_ledgers=tuple(empty_ledgers),
+        manifest_rows=manifest_rows,
     )
 
 

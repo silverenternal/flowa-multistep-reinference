@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-22
 
-This manifest enumerates every file that is git-tracked under `verification_outputs/` (439 files) with its SHA-256 hash, byte size, R-cell grouping, and a one-line description of what headline number it backs.
+This manifest catalogues the **439 evidence files that back a headline number** — the set that was git-tracked under `verification_outputs/` when it was generated — with each file's SHA-256, byte size, R-cell grouping, and a one-line description of the number it backs. It is a curated catalogue, not an exhaustive listing: the tree has since grown well past it, and every later increment ships its own per-directory `SHA256SUMS`, which `tools/check_data_integrity.py` verifies. Rows here are checked too — a stale row is a defect even when every ledger is green.
 
 Reviewers can verify the headline numbers claimed in the paper by re-computing each SHA-256:
 
@@ -514,7 +514,7 @@ Files in this section: 24
 | `verification_outputs/wave216-p4-r6-uplift.csv` | 1501 | `3f0b8210a265e22a9df78cd799c569b0d351846cec6dbad743d7d06981dbc7b6` |
 | `verification_outputs/wave216-p4-r6-uplift.json` | 7250 | `9bf0d5f5761bf6db7365ca1aa8e13244b691ba7a0a9985b7599e954433d89dad` |
 | `verification_outputs/wave225-p4-k6-tier-aware.csv` | 1314 | `634d9f03c77a7ee95c860b8099dab42dfe6aa9b99cec8b332df9603c32e8ad32` |
-| `verification_outputs/wave225-p4-k6-tier-aware.json` | 9728 | `03edaa21fed42bb4e267bfbfb403913c4289d5c03f67d06276424fe5a763dadb` |
+| `verification_outputs/wave225-p4-k6-tier-aware.json` | 9728 | `33b3ffd1b91ec85c20118ac8258551cbd98d026c6d878e39d35fae2dc8b95063` |
 | `verification_outputs/wave225-p5-kanzi-tier-aware.csv` | 1163 | `04ab988d7ae69c0d81ef60865613cb34d2041e530f127abf8a1e16f89c245fa8` |
 | `verification_outputs/wave225-p5-kanzi-tier-aware.json` | 8813 | `a65fefced803d31557766aa0346a2b48bdcf287d7825d8ef023dcafcb2f7f635` |
 | `verification_outputs/wave228-p1-4arm-per-record-coverage.csv` | 5113 | `04277c8b85713bc7cc3cbab1b267386f42e96a9d5605c7f7347cdb142f20bc97` |
@@ -599,7 +599,7 @@ Files in this section: 4
 
 | Path (relative to workspace) | Size (bytes) | SHA-256 |
 |---|---|---|
-| `verification_outputs/wave234-p3-jonckheere.csv` | 276 | `8a27a7085659751829bb89535794c2ef60d210bc3ad12f4056ebb827b4e75224` |
+| `verification_outputs/wave234-p3-jonckheere.csv` | 276 | `199193bdcb084f177a02c87da6e6a5d2b81d2872a2962a230b7f7077b0cc0e93` |
 | `verification_outputs/wave234-p4-bf01.csv` | 2349 | `e531da9f717047efdd3d1ccdc72d77f2f257c17134fe8630c29b23074e36791a` |
 | `verification_outputs/wave234-p6-ni-test.csv` | 377 | `8db5f339eea1e91c3aaeddfa635542fb955c6f7ac4e68554184db9e64194ba90` |
 | `verification_outputs/wave246-p4-subgroup-meta.json` | 2764 | `e0147ab7101b96015d65dfba28ef320533878495438d20dfbb6a6fe03871593b` |

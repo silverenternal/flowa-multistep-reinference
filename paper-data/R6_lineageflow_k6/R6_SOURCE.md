@@ -8,12 +8,12 @@
 
 | File | Description | SHA-256 anchor |
 |---|---|---|
-| `baseline_foldability_summary.json` | Wave 161 baseline k6 foldability summary | `5d483e3f4619dd9ebb26f3644e68b3e9522579ceed4240b447880a19ace23e20` |
+| `baseline_foldability_summary.json` | Wave 161 baseline k6 foldability summary | `7dc407880063760bd36806518dfbf9f81f7057729fd1ce0a69dafbf906bd0e3d` |
 | `baseline_foldability.jsonl` | Wave 161 baseline per-record foldability | `164825057a413af6f4d27a53b3ca519484f5c36019dafaa6c14e33dc823e4261` |
-| `framework_foldability_summary.json` | Wave 161 framework k6 foldability summary | `e96b1e2592a36d25a29658df9258fd408be454aa1ac2bd09f13e1d44f35c3aad` |
+| `framework_foldability_summary.json` | Wave 161 framework k6 foldability summary | `0aa63c652c6a6ba1bcd5dddfd89c5183efbd76d00dae3557ff1db838a1350269` |
 | `framework_foldability.jsonl` | Wave 161 framework per-record foldability | `b608edfb0f13a39bde5a06c3d16ccc94aa98f90db5434411cefe2f647574fc85` |
 | `wave225-p4-k6-tier-aware.csv` | Wave 225 P4 tier-aware counterfactual CSV | `634d9f03c77a7ee95c860b8099dab42dfe6aa9b99cec8b332df9603c32e8ad32` |
-| `wave225-p4-k6-tier-aware.json` | Wave 225 P4 tier-aware counterfactual JSON | `03edaa21fed42bb4e267bfbfb403913c4289d5c03f67d06276424fe5a763dadb` |
+| `wave225-p4-k6-tier-aware.json` | Wave 225 P4 tier-aware counterfactual JSON | `33b3ffd1b91ec85c20118ac8258551cbd98d026c6d878e39d35fae2dc8b95063` |
 | `wave233-p3-tier-aware-r6.csv` | Wave 233 P3 R6-specific tier-aware CSV | `634d9f03c77a7ee95c860b8099dab42dfe6aa9b99cec8b332df9603c32e8ad32` |
 | `wave233-p3-tier-aware-r6.json` | Wave 233 P3 R6-specific tier-aware JSON | `9a0c3eacc847c29a2844fb2ce4dc36f94def244ecbd4b4978fc0c1deeaf15851` |
 | `wave235-p3-r6-uplift.csv` | Wave 235 P3 R6 uplift breakdown CSV | `a3397fae974aff1c9fb6dc75d6b7115a94dbad1ee4a16d85fe973520819a95c6` |

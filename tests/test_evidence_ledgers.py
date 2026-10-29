@@ -53,6 +53,17 @@ def test_paper_data_manifest_rows_match_disk() -> None:
 
     bad = [(n, s) for n, s in manifest.check() if s != "ok"]
     assert bad == [], bad
+    assert len(manifest.check()) >= 50
+
+
+def test_paper_data_source_tables_match_disk() -> None:
+    """The per-cell SOURCE.md tables are a third copy of the same hashes."""
+    sys.path.insert(0, str(ROOT / "tools"))
+    import check_paper_data_manifest as manifest
+
+    bad = [(r, n, s) for r, n, s in manifest.check_sources() if s != "ok"]
+    assert bad == [], bad
+    assert len(manifest.check_sources()) >= 100
 
 
 def test_readme_artifact_hashes_match_disk() -> None:
@@ -76,3 +87,13 @@ def test_artifact_hash_checker_catches_a_stale_token(tmp_path, monkeypatch) -> N
     monkeypatch.setattr(artifacts, "REPO_ROOT", tmp_path)
     records = artifacts.scan()
     assert [r["status"] for r in records] == ["stale"]
+
+
+def test_verification_manifest_rows_match_disk() -> None:
+    """The flat catalogue reviewers check first must agree with the tree."""
+    import check_data_integrity as integrity
+
+    result = integrity.verify()
+    assert result.manifest_rows >= 400, result.manifest_rows
+    bad = [m for m in result.mismatches if m.kind.startswith("manifest_")]
+    assert bad == [], bad

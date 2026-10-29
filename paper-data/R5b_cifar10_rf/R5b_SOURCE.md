@@ -14,7 +14,7 @@
 | `cosineanneal_samples.npz` | CIFAR-10 RF cosine-anneal arm N=1000 | `ff2b1e822d311925f2a78bc590019c247f3b2bca3cdacd1530e9fa9bc391f062` |
 | `codimensionsheet_samples.npz` | CIFAR-10 RF codimension-sheet arm N=1000 | `49f22d5543b31fa2259c6be3287122531289a1debd90d0aa490f0876a2df67f1` |
 | `evidencedriven_samples.npz` | CIFAR-10 RF evidence-driven arm N=1000 | `252a71a96d64a09867703db7b2e04e3687feb828f08828ad06580ee24c0a05a6` |
-| `wave235-p1-r5b-fix.csv` | Wave 235 P1 reversal evidence CSV | `32d72a9bf00b3f7e9a2d27fda34866c2582a00959a950f232484b24e96e86106` |
+| `wave235-p1-r5b-fix.csv` | Wave 235 P1 reversal evidence CSV | `6829631549b51c4152c1356ac1a5cebfd6dd1d7b36c5cd784f4544e69f7fcb4f` |
 | `wave235-p1-r5b-fix.json` | Wave 235 P1 reversal evidence JSON | (see `paper-data/MANIFEST.md`) |
 | `per_round_metrics.csv` | Per-round (n_rounds=1..4) FID summary | `7b0f99e18597b2f1358c6244e9dcd4d15a9cbb664c7965afec2b0d7f5fadc17f` |
 | `comparison.md` | CIFAR N=200 NFE=50 EMA-corrected comparison | `e51720f3f872e142b95912264107340105be70bd503c8a68bd3dcb48ad0a617d` |

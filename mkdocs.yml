@@ -218,6 +218,7 @@ not_in_nav: |
   audit/evidence-pin-audit.md
   audit/submission-package-refresh.md
   audit/doc-link-audit.md
+  audit/evidence-hash-surfaces.md
   audit/mnist-gpu-backend.md
   audit/wave281/p-partial-evidence.md
   audit/wave289-p1-honest-reframe.md
