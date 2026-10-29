@@ -141,7 +141,6 @@ def test_upstream_eval_lineageflow_smoke() -> None:
         assert "--metrics" in call_args
 
 
-@pytest.mark.xfail(reason="asserts the pre-Wave-275 --pfam-fastas-dir CLI contract of the vendored upstream; see docs/audit/xfail-triage.md")
 def test_upstream_eval_lineageflow_passes_hmmdb_target_db_pfam_fastas_dir_and_bins() -> None:
     """Wave 81 — wrapper must pass --hmmdb + --target-db + --pfam-fastas-dir
     + --hmmscan + --mmseqs to the orchestrator so the ``family_validity``
@@ -186,7 +185,14 @@ def test_upstream_eval_lineageflow_passes_hmmdb_target_db_pfam_fastas_dir_and_bi
         j = call_args.index("--target-db")
         assert call_args[j + 1].endswith("pfam_holdout_targetDB")
         k = call_args.index("--pfam-fastas-dir")
-        assert call_args[k + 1].endswith("pfam_fastas_clean")
+        # Wave 275 K7 replaced the vendored ``pfam_fastas_clean/`` placeholder
+        # with a synthesized tempdir (prefix ``lineageflow_k7_pfam_``) so the
+        # orchestrator's ``_require_path`` check passes without touching the
+        # vendored tree. Either value satisfies the contract; what must not
+        # happen is the flag going missing.
+        assert call_args[k + 1].endswith("pfam_fastas_clean") or (
+            "lineageflow_k7_pfam_" in call_args[k + 1]
+        )
 
 
 def test_upstream_eval_lineageflow_default_metrics_restricted_to_unblocked_two() -> None:
@@ -235,7 +241,6 @@ def test_upstream_eval_lineageflow_default_metrics_restricted_to_unblocked_two()
         )
 
 
-@pytest.mark.xfail(reason="asserts the pre-Wave-275 --pfam-fastas-dir CLI contract of the vendored upstream; see docs/audit/xfail-triage.md")
 def test_upstream_eval_lineageflow_none_kwargs_skip_arg() -> None:
     """Wave 81 — passing ``None`` for any of ``hmmdb`` / ``target_db`` /
     ``pfam_fastas_dir`` / ``hmmscan`` / ``mmseqs`` must skip the
@@ -267,9 +272,32 @@ def test_upstream_eval_lineageflow_none_kwargs_skip_arg() -> None:
         call_args = _mock_run.call_args.args[0]
         assert "--hmmdb" not in call_args
         assert "--target-db" not in call_args
-        assert "--pfam-fastas-dir" not in call_args
         assert "--hmmscan" not in call_args
         assert "--mmseqs" not in call_args
+        # Since Wave 275 K7 the ``--pfam-fastas-dir`` value is synthesized
+        # from a tempdir whenever ``restrict_novelty_to_target_db`` is on
+        # (the default), so ``None`` no longer suppresses the flag.
+        k = call_args.index("--pfam-fastas-dir")
+        assert "lineageflow_k7_pfam_" in call_args[k + 1]
+
+        # The documented escape hatch still restores the "None omits it"
+        # behaviour, and that is what this test is really about.
+        with mock.patch.object(
+            upstream.subprocess, "run", return_value=fake_proc,
+        ) as _mock_run2:
+            upstream.run_lineageflow_upstream_eval(
+                fasta_path=str(fasta_path),
+                output_dir=str(outdir),
+                hmmdb=None,
+                target_db=None,
+                pfam_fastas_dir=None,
+                hmmscan=None,
+                mmseqs=None,
+                restrict_novelty_to_target_db=False,
+            )
+        call_args2 = _mock_run2.call_args.args[0]
+        assert "--pfam-fastas-dir" not in call_args2
+        assert "--hmmdb" not in call_args2
 
 
 def test_upstream_eval_lineageflow_subprocess_failure() -> None:

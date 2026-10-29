@@ -2,8 +2,9 @@
 
 **Date:** 2026-10-29
 **Scope:** the 12 `xfailed` tests in `tests/test_tools/`.
-**Status:** reasons corrected; no test deleted; counts unchanged. No metric,
-claim, status label, or verdict moved; no GPU was used.
+**Status:** reasons corrected, then resolved — ten deleted, two retargeted;
+zero xfails remain. No metric, claim, status label, or verdict moved; no GPU
+was used.
 
 ---
 
@@ -46,13 +47,13 @@ They assert that the upstream eval command line carries
 `--pfam-fastas-dir …/pfam_fastas_clean`. The contract moved at Wave 275 and the
 argument no longer ends with that path.
 
-## 3. Why they were not repaired here
+## 3. Why they could not be repaired in place
 
 The tested module is a **byte-identical vendored tree** pinned by commit
 `ccef84ad…` and enforced by submission-checklist row 13. Editing it to satisfy
 the tests is not available.
 
-That leaves two real options, both editorial:
+That left two real options, both editorial:
 
 1. **Retarget** the ten worker tests at
    `tools/run_lineageflow_n1000_foldability_omegafold.py`, which is where the
@@ -61,12 +62,13 @@ That leaves two real options, both editorial:
 2. **Delete** the twelve. They cannot pass, and a test that can never pass is
    not a test.
 
-Neither was chosen unilaterally: option 1 rewrites a thousand lines of
-subprocess-mocking tests against a different module, and option 2 lowers the
-counted suite size — both are decisions about what the suite is for, not
-mechanical fixes.
+Neither was a mechanical fix, so both were put to the user rather than chosen
+unilaterally: option 1 rewrites a thousand lines of subprocess-mocking tests
+against a different module, and option 2 lowers the counted suite size. The
+user asked for both halves — retarget where the contract still exists, delete
+where it does not.
 
-## 4. What changed
+## 4. What changed (pass 1 — reasons)
 
 The twelve reason strings now say what is actually true and point here:
 
@@ -78,7 +80,51 @@ asserts the pre-Wave-275 --pfam-fastas-dir CLI contract of the vendored
 upstream; see docs/audit/xfail-triage.md
 ```
 
-Counts are unchanged (`12 xfailed`), so no other surface moved.
+## 4a. What changed (pass 2 — resolution)
+
+**Ten deleted, ten replacements written.** The ten tests in
+`tests/test_tools/test_workers_per_gpu.py` that imported the vendored
+`foldability_omegafold.py` and asserted a `workers_per_gpu=` keyword were
+removed (689 lines). The file's docstring now records the history and keeps
+the three tests that never depended on the removed patch — the vendored
+script's own default and its two length-balanced sharding helpers.
+
+The capability they were reaching for is still tested, at the module that
+actually owns it. `tests/test_tools/test_gpu_workers_detect.py` (new, 10
+tests) pins `_detect_gpu_workers()` in
+`tools/run_lineageflow_n1000_foldability_omegafold.py`:
+`max(1, min(4, floor(free_gb / 4)))` over the *most-constrained* GPU, with
+a default of 1 whenever `nvidia-smi` is missing, exits non-zero, prints
+nothing, or prints rows that do not parse. This is the code the R1
+wall-clock evidence runs on, so pinning it is strictly more useful than the
+old assertions about a flag that no longer exists.
+
+While writing those tests the wrapper's docstring heuristic table was found
+to be missing its 12–16 GB row (it claimed 8–16 GB → 2 workers, while the
+formula returns 3 for anything ≥ 12 GB). The table was corrected and the
+formula named as the source of truth.
+
+**Two retargeted, none deleted.** In `tests/test_tools/test_upstream_eval.py`
+both `xfail` markers were removed:
+
+- The `--pfam-fastas-dir` assertion now accepts either the vendored
+  `pfam_fastas_clean/` directory or the Wave-275 synthesized tempdir whose
+  basename starts `lineageflow_k7_pfam_`.
+- The `kwargs=None` test asserted that omitting `kwargs` omits the flag.
+  Under K7 that is no longer true — the K7 holdout tempdir is created by
+  default — so the test now asserts the flag *is* present by default, and
+  adds a second call with `restrict_novelty_to_target_db=False` to pin the
+  behaviour the old assertion was reaching for.
+
+Both files pass: `28 passed` across the three files, `15 passed / 0 xfailed`
+for `test_upstream_eval.py` alone.
+
+## 4b. What did not change
+
+No metric, claim, status label, or verdict was touched. `docs/CLAIMS.md` was
+not edited. The deleted tests asserted a code path that no longer exists in
+the tree, so removing them removes no live coverage; the ten replacements
+cover the path that replaced it.
 
 ## 5. Skips are not in this class
 
@@ -90,6 +136,32 @@ package in its reason, so none of them can rot the way these xfails did.
 
 | Gate | Result |
 |---|---|
-| `pytest tests/test_tools/test_workers_per_gpu.py tests/test_tools/test_upstream_eval.py -rx` | 16 passed, 12 xfailed, reasons as above |
-| `ruff check tests/` | 0 findings |
+| `pytest tests/test_tools/test_workers_per_gpu.py tests/test_tools/test_upstream_eval.py tests/test_tools/test_gpu_workers_detect.py -q` | 28 passed, 0 xfailed |
+| `pytest tests/test_tools/test_upstream_eval.py -q` | 15 passed, 0 xfailed (was 13 passed / 2 xfailed) |
+| full `pytest tests/ --ignore=tests/test_tools/test_paper_metrics.py` (CPU) | **5553 passed / 180 skipped / 0 xfailed** in 646 s (was 5541 / 180 / 12) |
+| `ruff check tests/ tools/` | 0 findings |
 | 12-entry `todo.json` gate chain | all rc=0 |
+| `mkdocs build --strict` | exit 0 |
+
+The arithmetic of the new total: 5541 passed + 10 new tests + 2 tests that
+stopped being xfailed = 5553; xfailed 12 − 10 deleted − 2 retargeted = 0;
+skips unchanged at 180. Collected count is unchanged at 5733 because the ten
+deletions and ten additions cancel.
+
+## 7. Surfaces updated
+
+The suite size appears on eleven live surfaces. All were updated in the same
+commit, together with the `12 xfailed` clause:
+
+`docs/code-release-checklist.md`, `docs/RELEASE-NOTES.md`,
+`docs/environments.md` (also refreshed from the 2026-10-27 measurement:
+5500 → 5553, 12m17s → 10m46s), `docs/cover-letter-tnnls.md` (×2),
+`tnnls_submission/cover_letter.md` (×2), `tnnls_submission/data_availability.md`,
+`tnnls_submission/submission_checklist.md`, `tnnls_submission/tables.md`,
+`tnnls_submission/figures.md` (ASCII box, width-preserving 4→4 digit swap),
+`tnnls_submission/MANIFEST.md` (×2, one of which was still on 5528), and
+`todo.json`'s `gate_note`.
+
+Historical audit records that quote the old numbers were **not** rewritten:
+they are dated measurements, and changing them would falsify the record.
+

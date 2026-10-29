@@ -46,11 +46,12 @@ def _detect_gpu_workers() -> int:
     Formula (Wave 201 P5):
         workers_per_gpu = max(1, min(4, floor(min_free_GPU_mem_GB / 4)))
 
-    Heuristic:
-        >=16 GB free  -> 4 workers per GPU
-        8-16 GB free  -> 2 workers per GPU
-        4-8 GB free   -> 1 worker per GPU
-        <4 GB / none  -> 1 worker per GPU (safe floor)
+    Heuristic (the table and the formula agree; the table is derived):
+        >=16 GB free   -> 4 workers per GPU
+        12-16 GB free  -> 3 workers per GPU
+        8-12 GB free   -> 2 workers per GPU
+        4-8 GB free    -> 1 worker per GPU
+        <4 GB / none   -> 1 worker per GPU (safe floor)
 
     Returns:
         1..4 inclusive. Never raises — on any failure (nvidia-smi missing,
