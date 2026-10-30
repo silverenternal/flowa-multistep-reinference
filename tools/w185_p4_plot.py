@@ -16,6 +16,7 @@ proxy on protein, per Wave 185 P1 §2.1). CIs are the percentile-bootstrap
 from __future__ import annotations
 
 import csv
+import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -206,4 +207,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        raise SystemExit(0)
     main()

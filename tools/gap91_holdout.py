@@ -15,6 +15,7 @@ Reads the frontier artifacts and prints the fit, the two predictions with their
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -110,4 +111,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        raise SystemExit(0)
     raise SystemExit(main())

@@ -35,6 +35,7 @@ analytical projection and the Wave 58 numbers side-by-side.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 DEFAULT_THRESHOLD: int = 10
@@ -281,4 +282,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        raise SystemExit(0)
     main()

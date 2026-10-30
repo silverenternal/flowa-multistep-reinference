@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 
 from tools._figures_common import OUT_DIR, plt, save_figure
 
@@ -437,5 +438,8 @@ def main() -> str:
 
 
 if __name__ == "__main__":
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        raise SystemExit(0)
     p = main()
     print(f"wrote {p}")

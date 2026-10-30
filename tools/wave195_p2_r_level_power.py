@@ -33,6 +33,7 @@ from __future__ import annotations
 # OpenBLAS oversubscription thrashes L2 cache on small matmuls and
 # OMP scheduling overhead exceeds matmul compute for n<=100 paired seeds).
 import os
+import sys
 
 for _k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(_k, "8")
@@ -782,4 +783,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        raise SystemExit(0)
     raise SystemExit(main())

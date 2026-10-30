@@ -68,7 +68,7 @@ CLUSTERS: tuple[tuple[str, str, str, tuple[str, ...]], ...] = (
     ("web_research", "Web research 2026 (FM literature surveys)", "any",
      ("web-research", "web_research", "literature-survey")),
     ("engineering", "Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree)", "name",
-     ("ruff", "mypy", "mkdocs", "pytest", "ci-", "inventory", "doc-link", "manifest",
+     ("ruff", "mypy", "mkdocs", "pytest", "ci-", "cli", "inventory", "doc-link", "manifest",
       "sha256", "portab", "clone", "readiness", "release-notes", "repo-docs",
       "working-tree", "byte-stable", "docstring")),
     ("reproducibility", "Reproducibility (reproducibility-record, preregistration, reproduce-script)", "name",

@@ -49,7 +49,7 @@ preserved for the per-wave audit trail.
 | `protbfn_abbfn` | ProtBFN-AbBFN (antibody / protein BFN) | 0 | 0 | 0 |
 | `wan2_2` | Wan2.2 video (video diffusion) | 0 | 0 | 0 |
 | `web_research` | Web research 2026 (FM literature surveys) | 1 | 0 | 1 |
-| `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 125 | 76 | 49 |
+| `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 126 | 76 | 50 |
 | `reproducibility` | Reproducibility (reproducibility-record, preregistration, reproduce-script) | 13 | 6 | 7 |
 | `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 27 | 9 | 18 |
 | `push_state` | Push state (push-ready, freeze, release, submission) | 10 | 6 | 4 |
@@ -59,7 +59,7 @@ preserved for the per-wave audit trail.
 | `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 49 | 26 | 23 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
 | `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 111 | 32 | 79 |
-| **TOTAL** | — | **618** | **348** | **270** |
+| **TOTAL** | — | **619** | **348** | **271** |
 
 ---
 
@@ -231,7 +231,7 @@ Web research 2026 (FM literature surveys). This cluster is part of the project's
 
 ### Cluster: `engineering` — Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree)
 
-**Files: 125** (active: 76, historical: 49)
+**Files: 126** (active: 76, historical: 50)
 
 Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This cluster is part of the project's audit surface for engineering.
 
@@ -314,8 +314,9 @@ Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This 
 - `wave364-g38.md`
 - `wave384-project-audit.md`
 
-**Historical (49 files, not cited by reviewer-facing surfaces):**
+**Historical (50 files, not cited by reviewer-facing surfaces):**
 
+- `cli-help-guard.md`
 - `clone-reproducibility.md`
 - `doc-link-audit.md`
 - `docs-inventory-2026-10-21.md`

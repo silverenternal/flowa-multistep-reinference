@@ -15,6 +15,7 @@ from __future__ import annotations
 # Per Wave 210 P4 DO-2: pin OpenBLAS/MKL thread count to 8 to avoid
 # oversubscription thrash on small matmuls.
 import os
+import sys
 
 for _k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(_k, "8")
@@ -456,6 +457,9 @@ def main() -> dict[str, Any]:
 
 
 if __name__ == "__main__":
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        raise SystemExit(0)
     out = main()
     print(json.dumps(out["headline_n10"], indent=2))
     print(f"\nDL meta: k={out['dersimonian_laird_meta']['k']}, "

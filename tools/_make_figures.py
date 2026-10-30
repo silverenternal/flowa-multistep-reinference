@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import math
 import os
+import sys
 
 import matplotlib.patches as mpatches
 
@@ -425,4 +426,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        raise SystemExit(0)
     main()

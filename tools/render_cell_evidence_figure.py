@@ -30,6 +30,7 @@ Usage:
 from __future__ import annotations
 
 import os
+import sys
 
 import matplotlib
 
@@ -141,6 +142,9 @@ def render(out_path: str) -> None:
 
 
 if __name__ == "__main__":
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        raise SystemExit(0)
     out = os.path.join(os.path.dirname(__file__),
                        "..", "docs", "figures",
                        "fig9_cell_evidence_comparison.png")

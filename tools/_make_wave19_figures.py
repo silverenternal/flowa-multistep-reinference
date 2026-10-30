@@ -11,6 +11,7 @@ mkdocs and most PDF backends.
 from __future__ import annotations
 
 import os
+import sys
 import textwrap
 
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "docs", "figures")
@@ -319,4 +320,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        raise SystemExit(0)
     main()
