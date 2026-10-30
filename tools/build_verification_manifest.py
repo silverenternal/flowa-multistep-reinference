@@ -18,6 +18,14 @@ engineering gates, other).
 Descriptions in the manifest stay free of wave numbers; file paths keep
 their historical wave numbers (they are git-tracked and renaming them
 would break git history).
+
+**The non-zero exit is intentional.**  The tracked set is now 41,668 files
+(10 GB) because four GPU sweep directories hold per-record FASTA/PDB
+artifacts; the category rules cover 513 of them, so the run ends with
+``WARNING: 41155 unclassified files`` and exit 1.  That is the tool telling
+you the catalogue is incomplete, not a crash.  ``verification_outputs/
+MANIFEST.md`` is a curated 439-row catalogue as a result -- see the note at
+the end of that file.
 """
 
 from __future__ import annotations
