@@ -10,7 +10,7 @@
 > the frozen manuscript and the 2026-10-19 evidence-grade table are historical.
 > Where the two differ, the register wins and the difference is the v3.2
 > refresh work, not a silent edit.
-> **Management surface:** [`../todo.json`](../todo.json) — the single current-state record (gates, evidence ledger, open gaps). Replaced the retired `todo/` directory on 2026-10-13.
+> **Management surface:** [`../todo.json`](../todo.json) — the single current-state record (gates, evidence ledger, open gaps). Replaced the retired `todo/` directory on 2026-10-13. A `todo/…` path still quoted in an older page records *where something was filed at the time*; it is not a live path. The full account is [`audit/todo-surface-reset.md`](audit/todo-surface-reset.md) §8.
 > **Submission package:** [`../tnnls_submission/`](../tnnls_submission/) — 7 core files with real SHA-256 (the cover letter still needs its `[USER TO FILL]` fields).
 
 This page is the discoverable entry point for the `docs/` tree. Every entry

@@ -144,6 +144,16 @@ the `MANIFEST.md` packaging banner and rows, `SHA256SUMS`,
 `README.zh.md` were all updated to the new `paper-A-final.{md,tex,pdf}`
 digests and the new markdown word count (27 347, was 27 809).
 
+**One word later removed.** A follow-up commit (`24f05bac` → the
+`todo/`-retirement pass) deleted one word from §10.5: the sentence
+"CLM-073 + the `todo/RISK-REGISTER.md` R-019 deferred items" became
+"CLM-073 and the R-019 deferred items", because the register it named was
+retired on 2026-10-13. The manuscript markdown is therefore 224 407 bytes
+/ 27 346 words / `46e42307…` rather than 224 429 / 27 347 / `417f3183…`;
+the `.tex` and the PDF are untouched (the string appears in neither), so
+only the `.md` digest moved. The digests quoted in this paragraph are the
+ones the compression commit produced.
+
 One stale reading was corrected at the same time: `SUBMISSION_READINESS.md`
 row 6 still quoted a 446 705-byte / `461ee92e…` PDF that no longer existed
 at HEAD. It now quotes the real artifact.

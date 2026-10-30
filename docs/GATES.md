@@ -1,24 +1,35 @@
 # Acceptance gates — rendered gate chain
 
-**Date:** 2026-09-05
-**Source of truth:** `todo/GATES.md` (canonical, BINDING)
-**Status:** This page renders the gate chain for human readers. The
-binding definition lives in `todo/GATES.md`. Edits to gate semantics
-belong in `todo/GATES.md`; this file mirrors the public-facing portion.
+**Date:** 2026-09-05 (master-chain section frozen; refreshed 2026-10-30)
+**Source of truth:** `todo.json` — `gate_chain` (the 20 live commands, run
+in that order) and `gate_note` (why each entry exists, with the incident
+that added it). The `todo/` tree this page used to cite was retired on
+2026-10-13 (`bd9055c3`): its thirteen files were consolidated into
+`todo.json`, and the parts of the gate definitions that survived are
+reproduced below rather than left as a dangling pointer.
+**Status:** This page is the surviving record of the historical master
+chain (`G-MASTER-*`, `G-FRAMEWORK-HEALTH`, `G-OPS-*`). The **binding**
+day-to-day list is `todo.json` → `gate_chain`; the master chain below is
+the governance layer it descended from, not a second list to run.
 
 Per user directive (2026-09-05):
 > "todo目录下的所有任务都要有验收门槛，没过门槛就禁止进入下一步任务"
 > (translation: every task in `todo/` must have an acceptance gate; if a
 > gate is not passed, the next task is blocked from starting.)
 
+The directory that directive named is gone; the rule is not. It survives
+as `todo.json` → `gate_chain`: every increment must leave all twenty
+commands at exit 0 before the next one starts.
+
 A gate is **passed** only when its verification step returns 0; otherwise
 the downstream task is **blocked**.
 
 ## Master chain (top-level gates)
 
-The canonical gate chain (G-MASTER-PHASE-1 through G-MASTER-PAPER,
+The canonical master chain (G-MASTER-PHASE-1 through G-MASTER-PAPER,
 G-MASTER-CAPABILITY, G-FRAMEWORK-HEALTH, plus cross-cutting
-G-OPS-* operational gates) is defined in `todo/GATES.md`.
+G-OPS-* operational gates) is defined here — this table is now its only
+surviving copy.
 
 **Headline gates:**
 
@@ -80,23 +91,35 @@ jq '.metrics | {G1: .G1.verdict, G3: .G3.verdict, G4: .G4.verdict, G6: .G6.verdi
 
 **Block rule:** if any HARD condition fails, `G-MASTER-PAPER` is BLOCKED.
 
-Full metric definitions: `todo/framework-capability-metrics.md`.
-Source definition: `todo/framework-internal-metrics-rev3-plan.md` §7.1.
-Integration rationale: `todo/framework-freeze-checklist.md` MUST-4.
+Metric definitions: the five HARD and two SOFT targets are stated in full
+in the two tables above, which are the surviving copy. The three
+`todo/` files that once expanded them (`framework-capability-metrics.md`,
+`framework-internal-metrics-rev3-plan.md` §7.1,
+`framework-freeze-checklist.md` MUST-4) were retired with the rest of the
+tree on 2026-10-13. The tool they gate is still live:
+`tools/capability_audit.py`, with results under
+`verification_outputs/capability_audit_*.json`.
 
 ## D.4 byte-stable regression vectors (single source of truth)
 
 **Gate:** D.4 pinned regression vectors — **72/72 PASS** at HEAD as of 2026-09-14
 (commit `5677cf2`, Wave 149 final close; ruff-frozen code). The total breaks
-down as 33 tests in `tests/test_d4_regression_vectors.py` + 39 tests in
+down as 30 tests in `tests/test_d4_regression_vectors.py` + 42 tests in
 `tests/test_adapters/test_regression_vectors.py` = **72** tests, all PASS
 per `pytest tests/ -k "d4" -q`.
 
+The per-file split was re-counted with `pytest --collect-only` on 2026-10-30:
+30 + 42 = 72. Earlier revisions of this page (and of the constant comment in
+`tools/verify_submission_readiness.py`) attributed the same total as 33 + 39;
+neither file has changed since `b88b32f6` / `1ce8e3a2`, so that attribution
+was a miscount, not a reorganisation. The **total**, which is what the gate
+asserts (`D4_EXPECTED_PASS_COUNT = 72`), has been correct throughout.
+
 | Test surface | Test count | Status | Last green |
 |---|---:|---|---|
-| `tests/test_d4_regression_vectors.py` | 33 | PASS | commit `f97ec1c` (Wave 106.C.2) |
-| `tests/test_adapters/test_regression_vectors.py` | 39 | PASS | commit `f97ec1c` (Wave 106.C.2) |
-| **Total** | **72** | **PASS** | commit `f97ec1c` |
+| `tests/test_d4_regression_vectors.py` | 30 | PASS | `--collect-only` 2026-10-30 |
+| `tests/test_adapters/test_regression_vectors.py` | 42 | PASS | `--collect-only` 2026-10-30 |
+| **Total** | **72** | **PASS** | `--collect-only` 2026-10-30 |
 
 **Verification command:**
 ```bash
@@ -108,68 +131,82 @@ PYTHONPATH=. python -m pytest tests/test_d4_regression_vectors.py \
 (used in cover_letter.md, submission_checklist.md, supplementary.md
 S6.3, the README §Tests section, and many downstream docs prior to
 Wave 149 Agent 6) referred to the Wave 38-39 first-batch regression
-subset ONLY (i.e., just `tests/test_d4_regression_vectors.py` = 33
-tests). The current **72/72** figure includes the Wave 32 batches
-2/3/4 + Wave 33 batch 2/3 additions (`tests/test_adapters/test_regression_vectors.py`
-= 39 tests, commit `40d979c` and subsequent). Wave 106.C.3 unified
+subset ONLY (i.e., just `tests/test_d4_regression_vectors.py`, quoted as
+33 tests at the time; it collects 30 — see the correction above). The
+current **72/72** figure includes the Wave 32 batches 2/3/4 + Wave 33
+batch 2/3 additions (`tests/test_adapters/test_regression_vectors.py`,
+42 tests, commit `40d979c` and subsequent). Wave 106.C.3 unified
 the wording to "D.4 pinned regression vectors 72/72 PASS" with a
 historical caveat for the legacy "33/33" figure; Wave 149 Agent 6
 extended this standardization to all 73 non-archived docs/ files
 (see `docs/audit/wave149-close.md`).
 
 **D.4 vs full pytest — important distinction:** The full pytest suite
-(`pytest tests/ -q`) collects **5155 tests / 5012 pass** (post-Wave-131
-ruff-frozen code; legacy 4591/2165 = pre-Wave-31 test suite).
-The 3 pre-existing FAILED tests are tracked in `docs/audit/wave48-pytest-pre-push-fixes.md`
-(Wave 48 Agent A partial fix + 1 remaining F-3 paper_quantities threading
-bug at Wave 45 Agent C). The 3 FAILED tests are unrelated to the
-framework's algorithm logic:
-1. `tests/test_adapters/test_exp2_stochastic_fm_repro.py::test_exp2_stochastic_fm_w2_ratio_reproduces_25pct_reduction`
-3. `tests/test_tools/test_check_docs_against_code.py::test_no_false_positives_on_current_repo`
-4. `tests/test_tools/test_check_docs_against_code.py::test_self_test_quiet_mode_returns_zero_exit`
+(`pytest tests/ -q`) reported **5610 passed / 180 skipped / 0 failed** on
+2026-10-30 (`todo.json` → `gate_note`; the post-Wave-131 ruff-frozen
+figures quoted here previously — 5155 collected / 5012 passed — are
+superseded). D.4 is the 72-test pinned subset that must stay green on
+every change; the full suite is run per change but is not the gate.
+
+The three failures this page used to list as pre-existing are all gone,
+and none of them are failures today:
+
+| Formerly listed failure | State on 2026-10-30 |
+|---|---|
+| `test_exp2_stochastic_fm_w2_ratio_reproduces_25pct_reduction` | **file deleted** in Wave 33 (`9c10d212`, "StochFM delete") — the listing outlived the test |
+| `test_check_docs_against_code.py::test_self_test_quiet_mode_returns_zero_exit` | **test no longer exists** in that module |
+| `test_check_docs_against_code.py::test_no_false_positives_on_current_repo` | **1 passed** (re-run 2026-10-30) |
+
+`tests/test_tools/test_paper_metrics.py`'s 12 former failures were an
+import-order defect in the mock rather than a torch dependency, fixed on
+2026-10-30 (`docs/audit/pytest-order-dependence.md`). The Wave 48 record
+of the original three remains at `docs/audit/wave48-pytest-pre-push-fixes.md`
+as history.
 
 **Wave 149 Agent 6 wording standardization extension** — every non-archived
 doc surface (cover letter, submission_checklist, supplementary §S6.3,
 README §Tests, baseline-audit-report.md, CONSOLIDATED_RESULTS.md,
 INSIGHTS.md, paper-draft.md, paper-final-neurips.md, all audit/*.md from
 Wave 100+) now states "D.4 pinned regression vectors 72/72 PASS" with a
-historical caveat for the legacy "33/33" figure. The 3 FAILED pytest
-tests are pre-existing + unrelated to the framework.
+historical caveat for the legacy "33/33" figure.
 
 ## Cross-cutting operational gates
 
-`G-OPS-PUSH`, `G-OPS-CLEAN-WORKING-TREE`, and `G-OPS-TODO-LOG-UPDATED`
-govern release hygiene — see `todo/GATES.md` for verification commands.
+`G-OPS-PUSH` (the NO-PUSH policy — every agent commits, no agent pushes),
+`G-OPS-CLEAN-WORKING-TREE`, and `G-OPS-TODO-LOG-UPDATED` govern release
+hygiene. Their verification commands and current policy live in
+`todo.json` → `no_push`, `commit_footer` and `recording_policy`.
 
 ## Per-task gate references
 
-Each file in `todo/` has an "Acceptance gate" section that references
-the master gates. The full cross-reference table is in `todo/GATES.md`.
+Every task on the execution order in `todo.json` → `execution_order`
+carries the gate it must clear. The cross-reference table that used to
+live in `todo/GATES.md` was not carried over when the tree was retired;
+`todo.json` → `gate_note` records the incident behind each surviving
+gate, which is the part that still has explanatory value.
 
 ## Enforcement
 
-The gates in `todo/GATES.md` are **BINDING**. Before starting any per-task
-work, the executor (Claude or human) must check the gate's verification
-commands. If verification fails, the task is blocked and **must not start**.
+The gates are **BINDING**. Before starting any increment, the executor
+(agent or human) runs `todo.json` → `gate_chain` in order. If a command
+returns non-zero, the increment is blocked and **must not start**.
 
-If a gate fails, the executor appends to `lessons-learned.md` with the
-failure mode + fix + the new gate the failure revealed, so the master
-chain evolves.
+If a gate fails, the failure mode, the fix and the new gate it revealed
+are written into the increment's `docs/audit/<increment>-*.md` note and,
+if the gate itself changes, into `todo.json` → `gate_note`.
 
 ## See also
 
-- **Canonical gate definitions** — `todo/GATES.md`
-- **Framework capability metrics (group G)** — `todo/framework-capability-metrics.md`
-- **Framework-internal metrics rev 2** — `todo/framework-internal-metrics.md`
-- **Framework-internal metrics rev 3 plan** — `todo/framework-internal-metrics-rev3-plan.md` §7.1 (G-MASTER-CAPABILITY definition)
-- **Framework freeze checklist** — `todo/framework-freeze-checklist.md` (MUST-4 = G-MASTER-CAPABILITY audit)
+- **Live gate list** — `todo.json` → `gate_chain` / `gate_note`
+- **Master chain + capability metrics (group G)** — this page, above
+  (the `todo/` files that expanded it were retired 2026-10-13)
 - **CONSOLIDATED_RESULTS** — `docs/CONSOLIDATED_RESULTS.md` (empirical evidence)
 - **CONDITIONS.md** — `docs/CONDITIONS.md` (Pareto plots for G.6 honest-negative surface)
 
 ## Paper grounding
 
-The gate chain above (whose definitions live in `todo/GATES.md`) is
-ultimately a check on whether the framework's implementations of the
+The gate chain above (whose live definition is `todo.json` → `gate_chain`)
+is ultimately a check on whether the framework's implementations of the
 underlying JMAA paper (Li 2026) remain correct across edits. The
 load-bearing gates in the chain reference the paper as follows:
 

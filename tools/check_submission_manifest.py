@@ -59,7 +59,7 @@ KNOWN_ABSENT: frozenset[str] = frozenset({"supplementary_bundle.zip"})
 #: (path relative to the repo root, sha256, bytes) from the packaging addendum.
 CURRENT_ARTIFACTS: tuple[tuple[str, str, int], ...] = (
     ("docs/drafts/paper-A-final.md",
-     "417f31836240760b60ceae7e274c9b3c705b661b395f258b64b18f605d6a3ea4", 224429),
+     "46e423078cd42b10c5c7f31a633d2edafa5d6d448f1d0810dd5df5d5dceb66df", 224407),
     ("docs/drafts/paper-A-final.tex",
      "e28dca14db086d0e235f167aaacd909d6d3a67a12978726bbf48604301c998df", 74243),
     ("docs/drafts/paper-A-final.pdf",

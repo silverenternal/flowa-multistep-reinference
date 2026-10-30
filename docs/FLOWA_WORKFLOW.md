@@ -4,7 +4,7 @@
 
 ## 推荐循环
 
-1. **定位问题**：从 `todo/WAVES.md`（整合治理面）、`docs/CLAIMS.md` 和相关 audit 确认目标、当前结论和缺口。
+1. **定位问题**：从 `todo.json`（`open_gaps` / `gate_chain` / `execution_order`，2026-10-13 起取代已退役的 `todo/` 目录）、`docs/CLAIMS.md` 和相关 audit 确认目标、当前结论和缺口。
 2. **审计与设计**：确认代码路径、配置、适配器能力、sidecar venv、GPU 资源和验收指标。
 3. **最小实现**：只修改完成该增量所需的文件，先做 focused smoke test。
 4. **受控实验**：固定 seed、N、环境和输出目录；保存 JSON/JSONL 原始结果与命令元数据。

@@ -115,7 +115,7 @@ this as a raise rather than silently reporting a (potentially
 misleading) `within_bound = True`. The flag `enforce_f_side = False`
 disables the F-side pre-check for audit-only callers.
 
-## Out of scope (per `todo/algo-improvement-rate-bound.md`)
+## Out of scope (per the retired `algo-improvement-rate-bound` task spec)
 
 * Tighter explicit constants (the synchronous coupling is not the
   optimal coupling; the optimal constant may be smaller but requires
@@ -148,7 +148,9 @@ disables the F-side pre-check for audit-only callers.
 * `docs/baseline-audit-report.md` A.0 — paper-statement inventory
   (this entry closes gap G4: "Theorem 1 explicit rate constant
   `BL = O(some explicit eps power)`").
-* `todo/algo-improvement-rate-bound.md` — task spec.
-* `todo/framework-internal-metrics.md` A.3 — "Explicit theorems
-  exposed as framework surface (dataclass + checker + tests + must-fail
-  fixture + equation citation)" = 2 by Wave 13 B (rate bound adds second).
+* `todo.json` → `gate_chain` / `deferred` — task spec and current gate
+  state (the per-task `todo/` files named here previously were retired on
+  2026-10-13). The A.3 metric this entry was written against ("explicit
+  theorems exposed as framework surface: dataclass + checker + tests +
+  must-fail fixture + equation citation") is still the acceptance test;
+  the rate bound is its second instance.

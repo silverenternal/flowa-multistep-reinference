@@ -165,6 +165,6 @@ particular:
   modules that bypassed Proposition 3's assembly invariant are
   candidates for deprecation.
 
-The full paper-statement inventory is `docs/theory/PAPER_INVENTORY.md`
-(A.0); the deprecation policy here applies to *implementations* of
+The full paper-statement inventory is `docs/baseline-audit-report.md` §A.0;
+the deprecation policy here applies to *implementations* of
 those statements, not to the statements themselves.

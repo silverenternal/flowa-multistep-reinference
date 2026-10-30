@@ -226,7 +226,7 @@ results (mirrored in the verification log):
 ## Paper grounding (the release artefact carries an inventory)
 
 The release ships the framework's paper-statement inventory
-(`docs/theory/PAPER_INVENTORY.md`, A.0) and the per-equation citation
+(`docs/baseline-audit-report.md` §A.0) and the per-equation citation
 checker (`tools/check_doc_paper_refs.py`, E.2). Concretely:
 
 * **Theorem 1** (BL-convergence of `mu_{g,eps}` to `nu_g`, `paper section 3.1`)

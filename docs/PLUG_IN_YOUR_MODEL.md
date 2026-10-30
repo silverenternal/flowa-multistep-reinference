@@ -728,9 +728,11 @@ an ESMFold evaluation pipeline (≈3 B params, slow; runs the
 forward-fold check that produces the designability metric) +
 a Tm-align / protein-structure-alignment stack (produces the
 scRMSD metric against native structures). Both metrics together
-gate the Phase-4 acceptance table at
-`todo/PHASE-4-model-integration-iteration.md`
-(``Kanzi → designability ≥ +0.01 OR scRMSD ≤ -0.05 Å``).
+gate the Phase-4 acceptance criterion
+(``Kanzi → designability ≥ +0.01 OR scRMSD ≤ -0.05 Å``), which is
+stated inline here; the planning document that carried it
+(`todo/PHASE-4-model-integration-iteration.md`) was retired on
+2026-10-13.
 
 This adapter is a **genuine plug-in candidate**: the surface
 (``KanziAdapter`` + ``KanziCapabilities`` + per-family defaults +

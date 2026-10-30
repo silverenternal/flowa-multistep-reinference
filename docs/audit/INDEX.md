@@ -51,15 +51,15 @@ preserved for the per-wave audit trail.
 | `web_research` | Web research 2026 (FM literature surveys) | 1 | 0 | 1 |
 | `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 126 | 75 | 51 |
 | `reproducibility` | Reproducibility (reproducibility-record, preregistration, reproduce-script) | 14 | 6 | 8 |
-| `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 27 | 9 | 18 |
+| `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 27 | 10 | 17 |
 | `push_state` | Push state (push-ready, freeze, release, submission) | 10 | 6 | 4 |
 | `algorithm_4arm` | Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency) | 39 | 18 | 21 |
-| `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 108 | 90 | 18 |
+| `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 109 | 90 | 19 |
 | `stats_method` | Statistical methodology (R5/R6, p-value, bonferroni, TOST) | 43 | 20 | 23 |
 | `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 49 | 26 | 23 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
 | `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 113 | 32 | 81 |
-| **TOTAL** | — | **623** | **346** | **277** |
+| **TOTAL** | — | **624** | **347** | **277** |
 
 ---
 
@@ -399,7 +399,7 @@ Reproducibility (reproducibility-record, preregistration, reproduce-script). Thi
 
 ### Cluster: `data_packaging` — Data packaging + manifest (sha256, csv, metric-ledger)
 
-**Files: 27** (active: 9, historical: 18)
+**Files: 27** (active: 10, historical: 17)
 
 Data packaging + manifest (sha256, csv, metric-ledger). This cluster is part of the project's audit surface for data_packaging.
 
@@ -409,13 +409,14 @@ Data packaging + manifest (sha256, csv, metric-ledger). This cluster is part of 
 - `tier1-metric-alignment.md`
 - `paper-packaging-2026-10-27.md`
 - `todo-history.md`
+- `todo-surface-reset.md`
 - `wave297-p6-limitations-rewritten.md`
 - `wave326-final-metrics-table.md`
 - `wave328-freeze-survey.md`
 - `wave331-data-fix.md`
 - `wave344-supplementary-bundle.md`
 
-**Historical (18 files, not cited by reviewer-facing surfaces):**
+**Historical (17 files, not cited by reviewer-facing surfaces):**
 
 - `data-linkage-closure.md`
 - `data-linkage-plan.md`
@@ -426,7 +427,6 @@ Data packaging + manifest (sha256, csv, metric-ledger). This cluster is part of 
 - `evidence-hash-surfaces.md`
 - `evidence-pin-audit.md`
 - `r3-env-investigation.md`
-- `todo-surface-reset.md`
 - `wave275-p1-state-inventory.md`
 - `wave275-p2-metric-ledger.md`
 - `wave327-revised-q1-assessment.md`
@@ -517,7 +517,7 @@ Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency). This cluster
 
 ### Cluster: `sweep_eval` — Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability)
 
-**Files: 108** (active: 90, historical: 18)
+**Files: 109** (active: 90, historical: 19)
 
 Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability). This cluster is part of the project's audit surface for sweep_eval.
 
@@ -614,8 +614,9 @@ Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability). This cluste
 - `wave353-h2h-ablation-refs.md`
 - `wave357-k5-k6-camera-ready.md`
 
-**Historical (18 files, not cited by reviewer-facing surfaces):**
+**Historical (19 files, not cited by reviewer-facing surfaces):**
 
+- `docs-gate-repoint.md`
 - `provenance-gate.md`
 - `b-config-scattering-audit.md`
 - `framework-synth-sweep.md`

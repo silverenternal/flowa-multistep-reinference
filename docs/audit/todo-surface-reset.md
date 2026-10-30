@@ -142,3 +142,72 @@ rewritten again:
 `GAP-15-VENUE` is marked `PARKED` (user: "投到哪家先不管"); `GAP-20-COVERLETTER`
 stays user-gated. No frozen surface was touched; the numbers in the evidence
 ledger are unchanged.
+
+---
+
+## 8. Addendum (2026-10-30) — §2's "no other live surface" claim was wrong
+
+**Observed.** §2 above states: *"No other live surface references the deleted
+tree. Historical audit docs under `docs/audit/` mention `todo/` paths in prose;
+they are historical records … and are not gate-checked."* The first sentence is
+false. A repo-wide scan on 2026-10-30 (`todo/` followed by a path segment, over
+every tracked `*.md`) finds **822 citations of the retired tree**:
+
+| Area | Files | Citations |
+|---|---:|---:|
+| `docs/`, excluding `docs/audit/` and `docs/ARCHIVE/` | 24 | 176 |
+| `docs/audit/` (per-increment records) | 75 | 305 |
+| `docs/ARCHIVE/` | 90 | 308 |
+| outside `docs/` (legacy root checklists, `tnnls_submission/`, skills) | 13 | 33 |
+
+The 2026-10-13 pass repointed five pointers in `docs/README.md` and one in
+`docs/RELEASE-NOTES.md` and concluded the rest were audit-only. It did not scan
+`docs/` outside `audit/`, where `docs/baseline-audit-report.md` alone carries 80
+citations and `docs/CONSOLIDATED_RESULTS.md` 45.
+
+**Why the rest were not rewritten.** Of the 176 live-doc citations, 11 are
+deliberate mentions of the retirement itself (`docs/GATES.md` 5,
+`docs/README.md` 2, and one each in `docs/FLOWA_WORKFLOW.md`,
+`docs/INSIGHTS.md`, `docs/PLUG_IN_YOUR_MODEL.md`,
+`docs/theory/theorem1_rate_bound.md`). The other 162, across 17 files, are
+**provenance**: "spec source: `todo/framework-capability-metrics.md` §G.1",
+"task spec: `todo/algo-improvement-failure-modes.md`", "the Wave 19 analysis
+note in `todo/models/freqflow.md`". They record *where a decision's reasoning
+was filed at the time*, which is the same class of statement as a commit hash.
+Rewriting them would assert that the reasoning was filed somewhere it never
+was; deleting them would erase the provenance. The provenance rule
+(AGENTS.md §3 #2, additive is the rule) keeps them. The repointing pass below
+moved three of the 176 into the "deliberate mention" column, leaving 173.
+
+**Repointed instead** — the citations a reader would *follow to find current
+state*, which are not provenance:
+
+| File | Was | Now |
+|---|---|---|
+| `docs/FLOWA_WORKFLOW.md` | step 1: read `todo/WAVES.md` | `todo.json` → `open_gaps` / `gate_chain` / `execution_order` |
+| `docs/INSIGHTS.md` | "camera-ready scope is bounded per todo/STATUS.md" | `todo.json` → `deferred` (each entry now carries a `re_entry` condition) |
+| `docs/PLUG_IN_YOUR_MODEL.md` | "the Phase-4 acceptance table at `todo/PHASE-4-…`" | the criterion stated inline, with the retirement noted |
+| `docs/theory/theorem1_rate_bound.md` | `todo/algo-improvement-rate-bound.md`, `todo/framework-internal-metrics.md` A.3 | `todo.json` → `gate_chain` / `deferred`, A.3 criterion restated |
+| `docs/drafts/paper-A-final.md:881` | "CLM-073 + the `todo/RISK-REGISTER.md` R-019 deferred items" | "CLM-073 and the R-019 deferred items" (the register that carried them is retired; §2 already flagged this link) |
+| `docs/GATES.md` | 18 citations of `todo/GATES.md` and four sibling files as "canonical, BINDING" | `todo.json` → `gate_chain` / `gate_note`, with the master chain marked as the surviving historical copy |
+
+The manuscript edit is markdown-only: the string does not appear in
+`paper-A-final.tex` and `pdftotext` finds no occurrence, so the PDF is
+unchanged and only the `.md` digest moves.
+
+**Two phantom paths, unrelated to `todo/`.** `docs/RELEASING.md:229` and
+`docs/DEPRECATION.md:168` both cited `docs/theory/PAPER_INVENTORY.md` as the
+A.0 inventory. That file has never existed in any branch (`git log --all` is
+empty for it); the inventory is `docs/baseline-audit-report.md` §A.0. Both
+citations now point there.
+
+**Policy for the remaining 162.** A `todo/…` citation in a live doc is read as
+*"filed here before 2026-10-13"*, not as a live path. `docs/README.md` says so
+at the top of the doc map; this section is the long form.
+
+**Verification.** `python3 tools/check_doc_links.py` → `checked=1156 broken=2
+ambiguous=1 archived=1` (all four inside the frozen
+`supplementary_bundle/headline_evidence/README.md`, unchanged);
+`mkdocs build --strict` exit 0; `python3 tools/check_docs_against_code.py` no
+new miss.
+
