@@ -26,6 +26,14 @@ Deliberately out of scope, with reasons:
   (``docs/audit/wave233-p3-tier-aware.md``) is provenance, not a live pointer,
   so tokens whose path starts with either prefix are skipped.
 
+The check is run in a clean clone as well as in the working tree, because the
+two disagree: ``data/`` and ``verification_outputs/`` are gitignored, so a
+token can resolve here and resolve to nothing on a reviewer's checkout.  The
+two model checkpoints named in the docs are genuinely not distributed (10.5 GB
+and 68 MB) and are exempted only while they are actually absent -- the same
+conditional exemption ``check_submission_links.py`` uses for its one absent
+target.
+
 Usage
 -----
     python3 tools/check_reviewer_pointers.py
@@ -54,6 +62,21 @@ SURFACES: tuple[str, ...] = (
 
 #: Tokens under these prefixes are historical citations, not live pointers.
 EXEMPT_PREFIXES: tuple[str, ...] = ("docs/audit/", "docs/drafts/")
+
+#: Weights the repository deliberately does not carry, so a fresh clone cannot
+#: resolve them.  The exemption applies only while the file is genuinely
+#: absent: if it exists on disk it must still be checked like any other path.
+DECLARED_ABSENT: frozenset[str] = frozenset({
+    "data/flowmol3/weights_real/checkpoints/last.ckpt",   # 68 MB
+    "data/lineageflow/lineageflow-rp55.ckpt",             # 10.5 GB
+})
+
+
+def known_absent() -> frozenset[str]:
+    """Return the declared-absent tokens that are genuinely absent."""
+    return frozenset(
+        token for token in DECLARED_ABSENT if not (REPO_ROOT / token).exists()
+    )
 
 #: Directory prefixes that name a location inside this checkout.
 PATH_PREFIXES: tuple[str, ...] = (
@@ -85,13 +108,14 @@ def surfaces() -> list[Path]:
 
 def collect() -> list[dict[str, str]]:
     """Return one row per dead pointer."""
+    absent = known_absent()
     rows: list[dict[str, str]] = []
     for doc in surfaces():
         text = doc.read_text(encoding="utf-8", errors="replace")
         for lineno, line in enumerate(text.splitlines(), 1):
             for match in TOKEN_RE.finditer(line):
                 raw = match.group("path").rstrip(".,;:")
-                if raw.startswith(EXEMPT_PREFIXES):
+                if raw.startswith(EXEMPT_PREFIXES) or raw in absent:
                     continue
                 if (REPO_ROOT / raw).exists():
                     continue
@@ -105,13 +129,14 @@ def collect() -> list[dict[str, str]]:
 
 def count_pointers() -> int:
     """Return the number of in-scope pointers examined."""
+    absent = known_absent()
     total = 0
     for doc in surfaces():
         text = doc.read_text(encoding="utf-8", errors="replace")
         for line in text.splitlines():
             for match in TOKEN_RE.finditer(line):
                 raw = match.group("path").rstrip(".,;:")
-                if raw.startswith(EXEMPT_PREFIXES):
+                if raw.startswith(EXEMPT_PREFIXES) or raw in absent:
                     continue
                 total += 1
     return total

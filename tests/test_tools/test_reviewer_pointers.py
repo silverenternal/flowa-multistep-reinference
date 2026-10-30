@@ -76,6 +76,23 @@ def test_changelog_is_not_a_surface(tool) -> None:
     assert "CHANGELOG.md" not in tool.SURFACES
 
 
+def test_declared_absent_weight_is_exempt_only_while_absent(tool, sandbox) -> None:
+    """A 10.5 GB checkpoint is exempt when absent, checked when present."""
+    token = "data/lineageflow/lineageflow-rp55.ckpt"
+    (sandbox / "README.md").write_text(f"Weights at `{token}`.\n", encoding="utf-8")
+
+    assert token in tool.known_absent()
+    assert tool.count_pointers() == 0
+
+    weights = sandbox / "data" / "lineageflow"
+    weights.mkdir(parents=True)
+    (weights / "lineageflow-rp55.ckpt").write_text("", encoding="utf-8")
+
+    assert token not in tool.known_absent()
+    assert tool.count_pointers() == 1
+    assert tool.collect() == []
+
+
 def test_symbols_and_globs_are_not_paths(tool, sandbox) -> None:
     """Only tokens with a known extension are treated as paths."""
     (sandbox / "README.md").write_text(
