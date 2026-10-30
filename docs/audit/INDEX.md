@@ -58,8 +58,8 @@ preserved for the per-wave audit trail.
 | `stats_method` | Statistical methodology (R5/R6, p-value, bonferroni, TOST) | 43 | 21 | 22 |
 | `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 49 | 26 | 23 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
-| `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 108 | 32 | 76 |
-| **TOTAL** | — | **613** | **347** | **266** |
+| `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 109 | 32 | 77 |
+| **TOTAL** | — | **614** | **347** | **267** |
 
 ---
 
@@ -804,7 +804,7 @@ Final-verify (per-wave close-out, pre-push hygiene). This cluster is part of the
 
 ### Cluster: `governance` — Governance (scope, audit, gap, condition, placeholder, cross-cutting)
 
-**Files: 108** (active: 32, historical: 76)
+**Files: 109** (active: 32, historical: 77)
 
 Governance (scope, audit, gap, condition, placeholder, cross-cutting). This cluster is part of the project's audit surface for governance.
 
@@ -843,7 +843,7 @@ Governance (scope, audit, gap, condition, placeholder, cross-cutting). This clus
 - `wave361-consolidated-results-index.md`
 - `wave375-image-feedback-path.md`
 
-**Historical (76 files, not cited by reviewer-facing surfaces):**
+**Historical (77 files, not cited by reviewer-facing surfaces):**
 
 - `audit-index-refresh.md`
 - `empirical-conditions.md`
@@ -905,6 +905,7 @@ Governance (scope, audit, gap, condition, placeholder, cross-cutting). This clus
 - `gap95-frontier-grids.md`
 - `gap96-manuscript-compression.md`
 - `governance-refresh-post-push.md`
+- `vendored-pristine-gate.md`
 - `wave275-p3-flatten.md`
 - `p-partial-evidence.md`
 - `wave288-p1-honest-progress-summary.md`

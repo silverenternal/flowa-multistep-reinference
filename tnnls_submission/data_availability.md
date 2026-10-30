@@ -17,14 +17,17 @@ The FlowA framework is open-source under the project's existing license (see `LI
 
 All vendored upstream repositories (FlowMol3, LineageFlow, Kanzi,
 ProtBFN-AbBFN, GraphBFN, Lumina-Image-2.0, HiDream-I1, Wan2.2, FreqFlow
-— total 9) were initially inspected for modifications. 8 files had been
+— total 9) were initially inspected for modifications. 9 files had been
 silently patched during internal development (Wave 68 / Wave 166 / Wave 168
-etc.). Per user academic-integrity directive (2026-09-22), ALL 8 files were
+etc.). Per user academic-integrity directive (2026-09-22), ALL 9 files were
 reverted to their upstream commit-hash versions (FlowMol3 commit `77cae22`,
 LineageFlow commit `ccef84a`). The framework now ships unmodified vendored
-code.
+code. `tools/check_vendored_pristine.py` re-verifies this on the authoring
+machine: it fails if any vendored code tree has a modified tracked file, if a
+pinned repository is off its commit, or if any of the nine files below differs
+from its pin.
 
-The 8 reverted files and their upstream commits are:
+The 9 reverted files and their upstream commits are:
 
 | # | Repository | File | Upstream commit |
 |---|------------|------|------------------|
@@ -88,7 +91,7 @@ All headline numbers in the manuscript are sourced from byte-addressable per-rec
 - **D.4 byte-stable regression vectors:** 30/30 PASS preserved (Wave 238 P4 + Wave 242 P4)
 - **mkdocs build:** 0 warnings
 - **claims_consistency:** no drift
-- **Pytest:** 5565 passed / 180 skipped / 0 xfailed (2026-10-29 CPU run, 12 torch-dependent `test_paper_metrics.py` tests excluded)
+- **Pytest:** 5571 passed / 180 skipped / 0 xfailed (2026-10-29 CPU run, 12 torch-dependent `test_paper_metrics.py` tests excluded)
 
 ## Checkpoint availability
 

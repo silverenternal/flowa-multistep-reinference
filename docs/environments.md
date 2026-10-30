@@ -130,7 +130,7 @@ leaves exactly 12 failures, all in `tests/test_tools/test_paper_metrics.py`,
 because `tools/paper_metrics.py` needs torch and system `python3` has none. They
 are 15/15 green under `.venvs/flowmol3_venv/bin/python -m pytest
 tests/test_tools/test_paper_metrics.py -q`. Measured 2026-10-29: 12 failed,
-5565 passed, 180 skipped, 0 xfailed in 9m40s. Any other red cell is a
+5571 passed, 180 skipped, 0 xfailed in 10m25s. Any other red cell is a
 regression.
 
 Notes on the matrix:
