@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "arm": "framework",
+  "n_target": 200,
+  "n_sampled": 200,
+  "n_smiles": 0,
+  "n_errors": 0,
+  "n_dropped": 0,
+  "errors_sample": [],
+  "wallclock_s": 1806.194,
+  "load_seconds": 0.295,
+  "perturbation_sigma": 0.05,
+  "seed_base": 44,
+  "nfe": 250,
+  "nfe_batch": 1,
+  "device": "cuda:0",
+  "weights_path": "/home/hugo/codes/flowa-multistep-reinference/data/flowmol3/weights_real/checkpoints/last.ckpt",
+  "smiles_list": [],
+  "timestamp": "2026-09-22T01:15:25+0800"
+}

@@ -1,0 +1,7 @@
+wave,model,cell,metric,n_eff,baseline_mean,framework_mean,mean_diff,sd_diff,se_diff,ci_95_low,ci_95_high,t_statistic,df,p_ttest,d_z,p_wilcoxon,direction_consistent_with_headline_framework_wins,data_truncation_disclosed
+208 P2,flowmol3,R3_per_record,qed,200,0.517466,0.588678,0.071212,0.154885,0.010952,0.049746,0.092678,6.502160,199,6.25003e-10,0.459772,1.1851e-08,True,yes_200_record_cap_at_wave87_sweep
+208 P2,flowmol3,R3_per_record,logp,200,0.406081,1.043784,0.637703,1.301818,0.092052,0.457280,0.818126,6.927605,199,5.79652e-11,0.489856,3.51628e-10,True,yes_200_record_cap_at_wave87_sweep
+208 P2,flowmol3,R3_per_record,n_atoms,200,8.435000,10.800000,2.365000,2.789387,0.197239,1.978411,2.751589,11.990503,199,2.75753e-25,0.847857,5.25079e-20,True,yes_200_record_cap_at_wave87_sweep
+208 P2,flowmol3,R3_per_record,n_rings,200,0.360000,0.675000,0.315000,0.676805,0.047857,0.221200,0.408800,6.582060,199,4.02632e-10,0.465422,2.23555e-09,True,yes_200_record_cap_at_wave87_sweep
+208 P2,flowmol3,R3_per_record,reos_n_flags,200,0.815000,0.455000,-0.360000,1.264275,0.089398,-0.535220,-0.184780,-4.026946,199,8.03285e-05,-0.284748,0.000150049,True,yes_200_record_cap_at_wave87_sweep
+208 P2,flowmol3,R3_per_record,reos_fg_contrib_proxy,200,0.039305,0.018131,-0.021175,0.071952,0.005088,-0.031147,-0.011203,-4.161898,199,4.69553e-05,-0.294291,0.000122879,True,yes_200_record_cap_at_wave87_sweep

@@ -2,8 +2,8 @@
 
 `flowa-multistep-reinference` is a single-maintainer research project. The
 contract layer *is* the product; empirical model behaviour is deliberately
-out of scope. This file describes the development workflow, the six pre-merge
-gates, and the per-change recipes the maintainer runs on every PR.
+out of scope. This file describes the development workflow, the seven
+pre-merge gates, and the per-change recipes the maintainer runs on every PR.
 
 Read **[docs/TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md)** before
 opening a PR. The test layer conventions, marker rules, and the
@@ -37,9 +37,9 @@ library is required for the typed-contracts core. The optional
 opt-in model-family adapters; install them only when you actually touch
 those modules.
 
-## 2. The six pre-merge gates
+## 2. The seven pre-merge gates
 
-Every push to `main` and every PR runs the six gates below via
+Every push to `main` and every PR runs the gates below via
 `.github/workflows/ci.yml`. They must all be green before a change merges.
 
 | # | Gate                            | Local command                                                                                              | What it checks                                                                  |
@@ -50,6 +50,7 @@ Every push to `main` and every PR runs the six gates below via
 | 4 | `check_docs_against_code`       | `PYTHONPATH=. python tools/check_docs_against_code.py`                                                     | Every inline-symbol / code-block / path claim in the governance docs resolves to a real public symbol. |
 | 5 | `check_claims_consistency`      | `python tools/check_claims_consistency.py`                                                                 | Every `Asserted by` / `Disputed by` reference in `docs/CLAIMS.md` resolves; ACTIVE claims cross-referenced from at least one governance surface. |
 | 6 | `mkdocs build --strict`         | `mkdocs build --strict`                                                                                    | Auto-generated API reference renders cleanly; no broken internal links or unresolved mkdocstrings directives. |
+| 7 | `package integrity`             | `python tools/paper_evidence.py --check` then the seven `tools/check_*.py` gates listed in `todo.json`       | Every number the paper quotes still resolves to a tracked artifact containing it; package MANIFEST rows, submission links, data ledgers, doc links, paper-data rows, quoted artifact hashes and tracked symlinks all verify on a bare clone. |
 
 The slow / benchmark / stress markers are intentionally excluded from
 the PR-loop pytest gate so the wall-clock stays bounded; they are covered
@@ -59,7 +60,7 @@ by the dedicated nightly / weekly jobs (see §5).
 
 1. **Branch off `main`.** One logical change per PR; refactors land
    separately from feature work.
-2. **Run the six gates locally** (§2). A CI run that fails a gate
+2. **Run the seven gates locally** (§2). A CI run that fails a gate
    locally-passing change is a CI bug; file it in the PR description.
 3. **Push and open the PR.** GitHub Actions runs `ci.yml` automatically;
    the badge in `README.md` reports the status. Branch protection

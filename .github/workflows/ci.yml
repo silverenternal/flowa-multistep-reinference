@@ -1,6 +1,6 @@
 # GitHub Actions CI for flowa-multistep-reinference.
 #
-# Runs the project's six pre-merge gates on every push to ``main`` and on
+# Runs the project's pre-merge gates on every push to ``main`` and on
 # every pull request targeting ``main``. ``workflow_dispatch`` is wired so a
 # maintainer can re-run the gate suite without a push.
 #
@@ -25,8 +25,13 @@
 #   6. mkdocs       -- ``mkdocs build --strict`` renders the auto-generated
 #                     API reference; a broken internal link or unresolved
 #                     mkdocstrings reference fails the build.
+#   7. integrity    -- the eight package/evidence checkers under ``tools/``
+#                     (paper-evidence register, submission MANIFEST + links,
+#                     data ledgers, doc links, paper-data rows, quoted
+#                     artifact hashes, clone-safe symlinks). Each one exists
+#                     because its surface drifted unnoticed once.
 #
-# The six gates are split across two jobs (``lint-types`` for the static
+# The gates are split across two jobs (``lint-types`` for the static
 # checks that don't need the test runner, and ``test-docs`` for pytest +
 # mkdocs). Both jobs run in parallel and must be green before a PR merges.
 
@@ -123,6 +128,29 @@ jobs:
         # README / ARCHITECTURE).
         run: python tools/check_claims_consistency.py
 
+      - name: Gate 7 -- package and evidence integrity
+        # Seven checkers that each exist because their surface drifted
+        # unnoticed at least once (todo.json gate_note records the
+        # reason). They were written over 2026-10-29 and were wired into
+        # no CI job, so the drift they catch was still free to recur;
+        # this step is what makes them gates. Every one is stdlib-only
+        # and reads tracked files, so no install beyond Python is
+        # needed, and all seven finish in under 20 s together.
+        #
+        # ``check_submission_links`` exempts exactly one target
+        # (the 68 MB FlowMol3 checkpoint, which is deliberately not
+        # distributed) and only while it is genuinely absent, so the
+        # step behaves the same on a runner as on a developer box.
+        run: |
+          PYTHONPATH=. python tools/paper_evidence.py --check
+          PYTHONPATH=. python tools/check_submission_manifest.py
+          PYTHONPATH=. python tools/check_submission_links.py
+          PYTHONPATH=. python tools/check_data_integrity.py
+          PYTHONPATH=. python tools/check_doc_links.py
+          PYTHONPATH=. python tools/check_paper_data_manifest.py
+          PYTHONPATH=. python tools/check_artifact_hashes.py
+          PYTHONPATH=. python tools/check_clone_integrity.py
+
   # Test + docs build. Runs the pytest suite (slow / benchmark excluded)
   # and the mkdocs --strict build. Same runner pool as ``lint-types``
   # but a separate job so a mypy regression cannot mask a pytest
@@ -181,12 +209,14 @@ jobs:
             --no-header -q
 
       - name: Strip untracked symlink targets from docs/
-        # Wave 273 P2: the docs/ tree contains tracked symlinks whose
-        # targets live under verification_outputs/ (a gitignored artifact
-        # tree). On CI runners those targets are absent; ``mkdocs build``
-        # fails when ``shutil.copyfile`` cannot resolve them. Strip the
-        # dangling symlinks locally before the strict build so the gate
-        # succeeds without altering the source tree. Targets:
+        # Wave 273 P2 added this because the docs/ tree contains tracked
+        # symlinks into verification_outputs/, a gitignored artifact tree
+        # that used to be absent on a runner; ``mkdocs build`` fails when
+        # ``shutil.copyfile`` cannot resolve one. Since 2026-10-29 both
+        # targets named below are force-added, so on a current clone this
+        # is a no-op. It is kept as a safety net for any link added later
+        # without its target; ``check_clone_integrity`` (Gate 7) is the
+        # gate that now fails loudly instead. Targets:
         #   docs/headline-evidence/composite_axis_byte_stable/kanzi_nfe_scan_q4_2026.json
         #   docs/headline-evidence/composite_axis_byte_stable/lineageflow_v2_aggregated_q4_2026.json
         run: |

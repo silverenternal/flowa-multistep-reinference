@@ -222,6 +222,7 @@ not_in_nav: |
   audit/portable-paths.md
   audit/public-api-surface.md
   audit/xfail-triage.md
+  audit/clone-reproducibility.md
   audit/mnist-gpu-backend.md
   audit/wave281/p-partial-evidence.md
   audit/wave289-p1-honest-reframe.md

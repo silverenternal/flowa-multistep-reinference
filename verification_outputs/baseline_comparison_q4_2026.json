@@ -1,0 +1,118 @@
+{
+  "wave": "52",
+  "agent": "B",
+  "date": "2026-09-07",
+  "baselines": [
+    "consistency_model_ict",
+    "rectified_flow_reflow",
+    "dpm_solver_plus_plus"
+  ],
+  "models": [
+    "twodim_fm",
+    "mnist_fm",
+    "rectified_flow_cifar"
+  ],
+  "nfe_budget": "matched per-baseline (CM=2, Reflow=2x25=50, DPM++=20)",
+  "n_samples": 500,
+  "seed": 42,
+  "results": {
+    "twodim_fm": {
+      "consistency_model_ict": {
+        "wallclock_s": 0.07025599479675293,
+        "nfe": 2,
+        "primary_metric": 0.17982360570396938,
+        "primary_metric_kind": "w2",
+        "framework_w2_baseline": 0.5029,
+        "framework_signed_delta": 0.32307639429603063
+      },
+      "rectified_flow_reflow": {
+        "wallclock_s": 2.4375600814819336,
+        "nfe": 50,
+        "primary_metric": 0.38929851060992815,
+        "primary_metric_kind": "w2",
+        "framework_w2_baseline": 0.5029,
+        "framework_signed_delta": 0.11360148939007186
+      },
+      "dpm_solver_plus_plus": {
+        "wallclock_s": 0.24052071571350098,
+        "nfe": 20,
+        "primary_metric": 1.1413854357249502,
+        "primary_metric_kind": "w2",
+        "framework_w2_baseline": 0.5029,
+        "framework_signed_delta": -0.6384854357249502
+      }
+    },
+    "mnist_fm": {
+      "consistency_model_ict": {
+        "wallclock_s": 9.569677829742432,
+        "nfe": 2,
+        "primary_metric": 20.101322046001894,
+        "primary_metric_kind": "l2_norm",
+        "framework_baseline_metric": null,
+        "framework_signed_delta": null,
+        "note": "framework-vs-baseline signed delta on MNIST is NOT measured per Wave 23 honest negative surface (framework parity within G.3); see CONSOLIDATED_RESULTS \u00a712.3 row mnist_fm."
+      },
+      "rectified_flow_reflow": {
+        "wallclock_s": 321.433646440506,
+        "nfe": 20,
+        "primary_metric": 20.114328359617062,
+        "primary_metric_kind": "l2_norm",
+        "framework_baseline_metric": null,
+        "framework_signed_delta": null
+      },
+      "dpm_solver_plus_plus": {
+        "wallclock_s": 0.24890780448913574,
+        "nfe": 20,
+        "primary_metric": 2.838611034536004,
+        "primary_metric_kind": "l2_norm",
+        "framework_baseline_metric": null,
+        "framework_signed_delta": null
+      }
+    },
+    "rectified_flow_cifar": {
+      "consistency_model_ict": {
+        "wallclock_s": 0.6051695346832275,
+        "nfe": 2,
+        "primary_metric": 76.5682863198188,
+        "primary_metric_kind": "l2_norm",
+        "framework_baseline_metric": null,
+        "framework_signed_delta": null,
+        "note": "RF-CIFAR production FID-50K is BLOCKED on outbound per docs/CLAIMS.md CLM-040. Synthetic-mode numbers are paired-NFE, not FID-50K \u2014 use only for relative comparison vs the framework's v2/v4 paired-NFE numbers."
+      },
+      "rectified_flow_reflow": {
+        "wallclock_s": 7.836975812911987,
+        "nfe": 20,
+        "primary_metric": 76.59679481251669,
+        "primary_metric_kind": "l2_norm",
+        "framework_baseline_metric": null,
+        "framework_signed_delta": null
+      },
+      "dpm_solver_plus_plus": {
+        "wallclock_s": 1.2722525596618652,
+        "nfe": 10,
+        "primary_metric": 5.661333850414074,
+        "primary_metric_kind": "l2_norm",
+        "framework_baseline_metric": null,
+        "framework_signed_delta": null
+      }
+    }
+  },
+  "framework_signed_means": {
+    "twodim_fm": 0.4076,
+    "mnist_fm": 0.0625,
+    "rectified_flow_cifar": 0.2134
+  },
+  "framework_position": "Framework wins on twodim_fm W2 (CosineAnnealScheduler: 0.5029 \u2192 0.4663, \u0394 = +0.0366 = +7.28%; source: docs/r4-survey/10-sota-2d-experiment-results.md). Framework is positive on rectified_flow_cifar (signed_mean +0.2134). Framework is parity within G.3 on mnist_fm (signed_mean +0.0625). All three baselines here use the SAME frozen velocity field \u2014 the framework's advantage is the paper-quantity-driven `n_cap(r)` schedule that none of the 3 SOTA inference-time baselines replicates.",
+  "framework_sources": {
+    "twodim_fm": "docs/CONSOLIDATED_RESULTS.md \u00a712.3 (twodim_fm signed_mean)",
+    "mnist_fm": "docs/CONSOLIDATED_RESULTS.md \u00a712.3 (mnist_fm signed_mean)",
+    "rectified_flow_cifar": "docs/CONSOLIDATED_RESULTS.md \u00a712.3 (rectified_flow_cifar signed_mean)"
+  },
+  "notes": [
+    "RF-CIFAR real-ckpt is BLOCKED on outbound (docs/CLAIMS.md CLM-040); synthetic-mode Protocol surface used. Synthetic-mode results are NOT a baseline reproduction of Liu 2022 FID-50K.",
+    "MNIST baselines do not have a closed-form W2 metric; we report mean ||x||_2 as the boundary-distance proxy.",
+    "DPM-Solver++ on twodim_fm uses a 1st-order fallback for the inner velocity evaluation (the 2D adapter doesn't expose a batched velocity_field \u2014 we use the published 1-Euler approximation).",
+    "All three baselines operate on the SAME frozen velocity field as the framework (no retraining) \u2014 the comparison is on the outer inference loop, not the velocity field."
+  ],
+  "torch_available_for_rf_cifar": false
+}

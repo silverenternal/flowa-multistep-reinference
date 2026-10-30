@@ -1,0 +1,147 @@
+{
+  "wave": "206 P6",
+  "task": "CIFAR-10 RF v4 honest-negative multi-NFE curve",
+  "timestamp_utc": "2026-09-20T18:29:29.000059+00:00",
+  "schema": "wave206_p6_cifar_rf_v4_honest_negative_curve.v1",
+  "protocol": "v4 (--match-nfe sample, n_rounds=20, framework_samples=N)",
+  "nfe_points": [
+    10,
+    20,
+    30,
+    50,
+    100,
+    200,
+    500
+  ],
+  "n_records_per_nfe_full_sweep": 500,
+  "n_records_per_nfe_pilot": 30,
+  "framework_minus_baseline_pct_by_nfe": {
+    "10": null,
+    "20": null,
+    "30": null,
+    "50": 26.28,
+    "100": null,
+    "200": null,
+    "500": null
+  },
+  "nfe_50_regression_pct": 24.46,
+  "nfe_50_regression_pct_max": 30.65,
+  "nfe_50_p_value": 9.17e-05,
+  "nfe_50_bonferroni_significant_in_wrong_direction": true,
+  "cosine_ramp_effective_nfe_halving_confirmed": true,
+  "cosine_ramp_effective_nfe_formula": "NFE / 2 (cosine trapezoidal average over cycle_length=n_rounds rounds)",
+  "cosine_ramp_effective_nfe_by_nfe": {
+    "10": 5.0,
+    "20": 10.0,
+    "30": 15.0,
+    "50": 25.0,
+    "100": 50.0,
+    "200": 100.0,
+    "500": 250.0
+  },
+  "per_scheduler_by_nfe": {
+    "CosineAnnealScheduler": {
+      "10": null,
+      "20": null,
+      "30": null,
+      "50": 24.89,
+      "100": null,
+      "200": null,
+      "500": null
+    },
+    "CodimensionSheetScheduler": {
+      "10": null,
+      "20": null,
+      "30": null,
+      "50": 25.13,
+      "100": null,
+      "200": null,
+      "500": null
+    },
+    "EvidenceDrivenScheduler": {
+      "10": null,
+      "20": null,
+      "30": null,
+      "50": 24.46,
+      "100": null,
+      "200": null,
+      "500": null
+    },
+    "FreeTrajScheduler": {
+      "10": null,
+      "20": null,
+      "30": null,
+      "50": 30.65,
+      "100": null,
+      "200": null,
+      "500": null
+    }
+  },
+  "nfe_50_audit_row": {
+    "n_paired": 500,
+    "mean_diff": 16.81,
+    "sd_diff": NaN,
+    "t_statistic": NaN,
+    "df": NaN,
+    "p_value_raw": 9.17e-05,
+    "ci_95_low": NaN,
+    "ci_95_high": NaN,
+    "cohens_d_z": NaN,
+    "bonf_sig": true,
+    "clm_060_r5b_ref": "CLM-060 R5b row: framework REGRESSES +20.21% FID at matched NFE=50, p_bonf=9.17e-5"
+  },
+  "source_a_table_9_load_bearing_n500_v4": {
+    "n": 500,
+    "nfe": 50,
+    "baseline_fid": 83.0866,
+    "framework_fids": {
+      "CosineAnnealScheduler": 103.7695,
+      "CodimensionSheetScheduler": 103.9633,
+      "EvidenceDrivenScheduler": 103.4062,
+      "FreeTrajScheduler": 108.55
+    },
+    "framework_pct_min": 24.46,
+    "framework_pct_max": 30.65,
+    "delta_pct_by_scheduler": {
+      "CosineAnnealScheduler": 24.89,
+      "CodimensionSheetScheduler": 25.13,
+      "EvidenceDrivenScheduler": 24.46,
+      "FreeTrajScheduler": 30.65
+    },
+    "inception_features": "pre-EMA-fix (Liu 2022 published-style)",
+    "total_wall_s": 2643.15
+  },
+  "source_b_n200_ema_corrected_secondary": {
+    "n": 200,
+    "nfe": 50,
+    "baseline_fid": 130.13931950907647,
+    "framework_fids": {
+      "CosineAnnealScheduler": 424.4348264096379,
+      "CodimensionSheetScheduler": 418.02749174264807,
+      "EvidenceDrivenScheduler": 422.4732077948943,
+      "FreeTrajScheduler": 421.06415476781837
+    },
+    "inception_features": "current inceptionv3_tfport (post-Wave-127 EMA-corrected)"
+  },
+  "source_c_wave191_n1000_chunked_secondary": {
+    "n": 1000,
+    "nfe": 50,
+    "baseline_fid": 415.8284956527973,
+    "framework_fids_by_arm": {
+      "cosine": 500.19908411966566,
+      "codimension_sheet": 500.1179675060829,
+      "evidence_driven": 499.8296177396399
+    },
+    "inception_features": "inception chunked FID"
+  },
+  "bonf_k": 7,
+  "alpha_bonferroni": 0.0071428571428571435,
+  "status": "PILOT_COMPLETE_full_sweep_queued",
+  "pilot_run_status": "ran_all_4_schedulers_n30_nfe50_on_gpu_1",
+  "full_sweep_status": "DEFERRED_see_/tmp/wave206_p6_full_sweep.sh",
+  "full_sweep_resource_guard": "MUST NOT launch while Wave 209 P6 R5a is running on GPU 0; queued to run after Wave 209 P6 R5a completes; estimated ~7.5 GPU-hours on RTX 5090",
+  "audit_doc": "docs/audit/wave206-p6-cifar-rf-v4-honest-negative-curve.md",
+  "script": "scripts/wave206_p6_cifar_rf_v4_honest_negative_curve.py",
+  "clm_added": "CLM-070 (Wave 206 P6 honest-negative multi-NFE curve first-class disclosure)",
+  "clm_crosslink_to_clm_059": "CLM-059 is MNIST FM; not modified; cross-link added to CLM-060 R5b row"
+}

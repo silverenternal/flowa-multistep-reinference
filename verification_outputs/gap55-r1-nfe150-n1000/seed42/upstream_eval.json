@@ -1,0 +1,68 @@
+{
+  "run_dir": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap55-r1-nfe150-n1000/seed42",
+  "length_bias": "short",
+  "metrics_requested": [
+    "family_validity",
+    "novelty"
+  ],
+  "arms": {
+    "baseline": {
+      "fasta": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap55-r1-nfe150-n1000/seed42/baseline.fasta",
+      "wall_s": 441.7769779069931,
+      "metrics": {
+        "status": 1.0,
+        "family_validity__n_total": 1000.0,
+        "family_validity__missing_family_headers": 0.0,
+        "family_validity__hmmscan_total_hits": 158.0,
+        "family_validity__hmmscan_unique_queries": 145.0,
+        "family_validity__coverage_any_hit": 0.145,
+        "family_validity__top1_family_accuracy": 0.0,
+        "family_validity__topk_contains_intended": 0.0,
+        "family_validity__topk_family": 10.0,
+        "family_validity__intended_hit_rate_evalue": 0.0,
+        "family_validity__evalue_threshold": 0.001,
+        "family_validity__score_margin_mean": 2.336363636363636,
+        "family_validity__score_margin_median": 1.6999999999999993,
+        "novelty__n_total": 1000.0,
+        "novelty__missing_family_headers": 0.0,
+        "novelty__n_with_family": 1000.0,
+        "metric_kind": "family_validity+foldability+self_consistency+novelty",
+        "upstream_orchestrator": "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/evaluate_all.py",
+        "length_bias": "short",
+        "sweep_n_records_actual": 0,
+        "sweep_n_records_requested": 1000,
+        "sweep_n_records_match": false,
+        "sweep_name": "run_lineageflow_upstream_eval"
+      }
+    },
+    "framework": {
+      "fasta": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap55-r1-nfe150-n1000/seed42/framework.fasta",
+      "wall_s": 349.9398728979868,
+      "metrics": {
+        "status": 1.0,
+        "family_validity__n_total": 1000.0,
+        "family_validity__missing_family_headers": 0.0,
+        "family_validity__hmmscan_total_hits": 275.0,
+        "family_validity__hmmscan_unique_queries": 230.0,
+        "family_validity__coverage_any_hit": 0.23,
+        "family_validity__top1_family_accuracy": 0.0,
+        "family_validity__topk_contains_intended": 0.0,
+        "family_validity__topk_family": 10.0,
+        "family_validity__intended_hit_rate_evalue": 0.0,
+        "family_validity__evalue_threshold": 0.001,
+        "family_validity__score_margin_mean": 2.223684210526316,
+        "family_validity__score_margin_median": 1.7000000000000002,
+        "novelty__n_total": 1000.0,
+        "novelty__missing_family_headers": 0.0,
+        "novelty__n_with_family": 1000.0,
+        "metric_kind": "family_validity+foldability+self_consistency+novelty",
+        "upstream_orchestrator": "/home/hugo/codes/flowa-multistep-reinference/data/lineageflow_upstream/evaluation/evaluate_all.py",
+        "length_bias": "short",
+        "sweep_n_records_actual": 0,
+        "sweep_n_records_requested": 1000,
+        "sweep_n_records_match": false,
+        "sweep_name": "run_lineageflow_upstream_eval"
+      }
+    }
+  }
+}

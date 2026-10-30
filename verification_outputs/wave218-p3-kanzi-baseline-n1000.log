@@ -1,0 +1,6 @@
+[wave83] loading DAE from data/kanzi_ckpt/cleaned_model.pt ...
+[wave83] DAE loaded in 0.7 s
+[wave83] vocab_size=1000, n_decoder=512
+[wave83] processed 1000 records in 1086.1 s (1.086 s/rec)
+[wave83] wrote verification_outputs/wave218-p3-kanzi-baseline-n1000/kanzi_n1000_paper_metrics.json
+[wave83] framework-arm reconstruction RMSD: mean=0.9028 Å, std=0.1370 Å, n=1000

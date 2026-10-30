@@ -1,0 +1,14 @@
+[r5a] seed 42: baseline 0.06343 | convex_policy +928.39 % convex_record +166.41 % vp_record +129.35 % (52.5s)
+[r5a] seed 43: baseline 0.06267 | convex_policy +1890.77 % convex_record +311.03 % vp_record +290.43 % (29.2s)
+[r5a] seed 44: baseline 0.07000 | convex_policy +1360.02 % convex_record +217.24 % vp_record +177.87 % (43.0s)
+[r5a] seed 45: baseline 0.10241 | convex_policy +1174.29 % convex_record +105.66 % vp_record +76.56 % (34.6s)
+[r5a] seed 46: baseline 0.07855 | convex_policy +2002.68 % convex_record +207.57 % vp_record +168.45 % (26.1s)
+[r5a] seed 47: baseline 0.07779 | convex_policy +2206.81 % convex_record +180.82 % vp_record +156.39 % (30.1s)
+[r5a] seed 48: baseline 0.09075 | convex_policy +1124.36 % convex_record +183.60 % vp_record +155.41 % (29.2s)
+[r5a] seed 49: baseline 0.08207 | convex_policy +1788.07 % convex_record +214.17 % vp_record +191.46 % (26.6s)
+[r5a] seed 50: baseline 0.07156 | convex_policy +1273.54 % convex_record +187.50 % vp_record +150.41 % (45.7s)
+[r5a] seed 51: baseline 0.08354 | convex_policy +1680.37 % convex_record +210.63 % vp_record +179.42 % (31.0s)
+[r5a] restart/convex_policy: 1.28042 vs baseline 0.07828; t=11.025 p=0.0000; var_ratio=0.062
+[r5a] restart/convex_record: 0.22998 vs baseline 0.07828; t=16.258 p=0.0000; var_ratio=0.914
+[r5a] restart/vp_record: 0.20594 vs baseline 0.07828; t=12.446 p=0.0000; var_ratio=0.995
+[r5a] wrote verification_outputs/gap80-r5a-restart/r5a_restart.json

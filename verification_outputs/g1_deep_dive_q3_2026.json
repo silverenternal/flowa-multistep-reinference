@@ -1,0 +1,276 @@
+{
+  "tool": "tools/g1_deep_dive.py",
+  "input": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/capability_audit_q3_2026.json",
+  "timestamp": "2026-09-04T23:39:11.769841+00:00",
+  "spec_target_g1": "+0.05",
+  "spec_mean_from_input": -0.218,
+  "analysis": {
+    "n_cells": 10,
+    "n_models": 4,
+    "per_cell_breakdown": [
+      {
+        "row": "twodim_fm_2d_ablation",
+        "model_family": "twodim_fm",
+        "metric_name": "W2_two_moons",
+        "baseline": 2.85,
+        "framework": 0.62,
+        "raw_delta_pct": -0.782456,
+        "signed_delta_pct": 0.782456,
+        "framework_wins": true,
+        "framework_loses": false,
+        "framework_ties": false,
+        "source": "CONSOLIDATED_RESULTS §4.1",
+        "note": "2D FM ablation: single_pass -> multi_round_no_restart (best head-to-head)",
+        "metric_direction": "lower_is_better"
+      },
+      {
+        "row": "twodim_fm_2d_eight_gaussians",
+        "model_family": "twodim_fm",
+        "metric_name": "W2_eight_gaussians",
+        "baseline": 2.31,
+        "framework": 0.76,
+        "raw_delta_pct": -0.670996,
+        "signed_delta_pct": 0.670996,
+        "framework_wins": true,
+        "framework_loses": false,
+        "framework_ties": false,
+        "source": "CONSOLIDATED_RESULTS §4.2",
+        "note": "2D FM ablation: single_pass -> multi_round_no_restart (best head-to-head)",
+        "metric_direction": "lower_is_better"
+      },
+      {
+        "row": "rectified_flow_2d_sota_two_moons",
+        "model_family": "twodim_fm",
+        "metric_name": "W2_two_moons",
+        "baseline": 0.5029,
+        "framework": 0.4663,
+        "raw_delta_pct": -0.072778,
+        "signed_delta_pct": 0.072778,
+        "framework_wins": true,
+        "framework_loses": false,
+        "framework_ties": false,
+        "source": "CONSOLIDATED_RESULTS §5",
+        "note": "2D RF SOTA (Liu 2022): EvidenceDrivenScheduler (3 seeds, 20 rounds, 1000 samples/round)",
+        "metric_direction": "lower_is_better"
+      },
+      {
+        "row": "rectified_flow_2d_sota_eight_gaussians",
+        "model_family": "twodim_fm",
+        "metric_name": "W2_eight_gaussians",
+        "baseline": 0.6606,
+        "framework": 0.5919,
+        "raw_delta_pct": -0.103996,
+        "signed_delta_pct": 0.103996,
+        "framework_wins": true,
+        "framework_loses": false,
+        "framework_ties": false,
+        "source": "CONSOLIDATED_RESULTS §5",
+        "note": "2D RF SOTA (Liu 2022): CosineAnnealScheduler",
+        "metric_direction": "lower_is_better"
+      },
+      {
+        "row": "rectified_flow_cifar_v3_matched_nfe",
+        "model_family": "rectified_flow_cifar",
+        "metric_name": "FID_cifar10",
+        "baseline": 218.87,
+        "framework": 222.16,
+        "raw_delta_pct": 0.015032,
+        "signed_delta_pct": -0.015032,
+        "framework_wins": false,
+        "framework_loses": true,
+        "framework_ties": false,
+        "source": "CONSOLIDATED_RESULTS §6 v3",
+        "note": "CIFAR-10 RF v3 matched NFE=2 (cosine ramp) - PARITY (within noise)",
+        "metric_direction": "lower_is_better"
+      },
+      {
+        "row": "rectified_flow_cifar_v2_avg_nfe",
+        "model_family": "rectified_flow_cifar",
+        "metric_name": "FID_cifar10",
+        "baseline": 218.87,
+        "framework": 122.18,
+        "raw_delta_pct": -0.441769,
+        "signed_delta_pct": 0.441769,
+        "framework_wins": true,
+        "framework_loses": false,
+        "framework_ties": false,
+        "source": "CONSOLIDATED_RESULTS §6 v2",
+        "note": "CIFAR-10 RF v2 NFE-averaged (NOT fair comparison; baseline 2-NFE vs framework avg 5-NFE)",
+        "metric_direction": "lower_is_better"
+      },
+      {
+        "row": "mnist_fm_localized_noise",
+        "model_family": "mnist_fm",
+        "metric_name": "FID_mnist",
+        "baseline": 409.18,
+        "framework": 347.75,
+        "raw_delta_pct": -0.15013,
+        "signed_delta_pct": 0.15013,
+        "framework_wins": true,
+        "framework_loses": false,
+        "framework_ties": false,
+        "source": "CONSOLIDATED_RESULTS §7.2",
+        "note": "MNIST FM CristianLazoQuispe flow_model_localized_noise.pth (Heun NFE=100 vs Euler)",
+        "metric_direction": "lower_is_better"
+      },
+      {
+        "row": "mnist_fm_v1",
+        "model_family": "mnist_fm",
+        "metric_name": "FID_mnist",
+        "baseline": 143.4,
+        "framework": 147.0,
+        "raw_delta_pct": 0.025105,
+        "signed_delta_pct": -0.025105,
+        "framework_wins": false,
+        "framework_loses": true,
+        "framework_ties": false,
+        "source": "CONSOLIDATED_RESULTS §7.2",
+        "note": "MNIST FM CristianLazoQuispe flow_model.pth (RF, 100 epochs) - Wave 28 Agent A canonical-extractor re-measurement: torchvision IMAGENET1K_V1 + aux_logits=True + transform_input=False + fc=Identity (see tools/run_image_eval.py:load_inception_for_fid). Both arms measured in the canonical IMAGENET1K_V1 feature space; FID gap collapses to parity (Heun ≈ Euler at NFE=100). Previous 443.18 reading was the 2fb3dc0 TF-port regression. cell_value = -0.0251, within G.3 >= -0.03 target.",
+        "metric_direction": "lower_is_better"
+      },
+      {
+        "row": "lineageflow_family_validity",
+        "model_family": "lineageflow",
+        "metric_name": "family_validity",
+        "baseline": 1.0,
+        "framework": 1.0,
+        "raw_delta_pct": 0.0,
+        "signed_delta_pct": 0.0,
+        "framework_wins": false,
+        "framework_loses": false,
+        "framework_ties": true,
+        "source": "CONSOLIDATED_RESULTS §7.3",
+        "note": "LineageFlow: SATURATION TIE at 1.0000 (32/32 valid both arms); secondary metrics +0.23% avg_log_likelihood",
+        "metric_direction": "higher_is_better"
+      },
+      {
+        "row": "lineageflow_avg_log_likelihood",
+        "model_family": "lineageflow",
+        "metric_name": "avg_log_likelihood",
+        "baseline": -1.8478,
+        "framework": -1.8434,
+        "raw_delta_pct": 0.002381,
+        "signed_delta_pct": 0.002381,
+        "framework_wins": true,
+        "framework_loses": false,
+        "framework_ties": false,
+        "source": "CONSOLIDATED_RESULTS §7.3",
+        "note": "LineageFlow: secondary metric +0.23% (sharper per-position categorical)",
+        "metric_direction": "higher_is_better"
+      }
+    ],
+    "raw_mean_delta_pct": -0.218,
+    "signed_mean_delta_pct": 0.2184,
+    "signed_median_delta_pct": 0.0884,
+    "trimmed_mean_drop_1": 0.1784,
+    "trimmed_mean_drop_2": 0.1285,
+    "winsorized_mean_10pct": 0.2184,
+    "mean_without_worst_1": 0.2455,
+    "mean_without_worst_2": 0.2781,
+    "mean_without_mnist_v1_outlier": 0.2455,
+    "top_3_contributors_by_abs_signed_delta": [
+      {
+        "row": "twodim_fm_2d_ablation",
+        "model_family": "twodim_fm",
+        "metric_name": "W2_two_moons",
+        "signed_delta_pct": 0.782456,
+        "raw_delta_pct": -0.782456,
+        "framework_wins": true
+      },
+      {
+        "row": "twodim_fm_2d_eight_gaussians",
+        "model_family": "twodim_fm",
+        "metric_name": "W2_eight_gaussians",
+        "signed_delta_pct": 0.670996,
+        "raw_delta_pct": -0.670996,
+        "framework_wins": true
+      },
+      {
+        "row": "rectified_flow_cifar_v2_avg_nfe",
+        "model_family": "rectified_flow_cifar",
+        "metric_name": "FID_cifar10",
+        "signed_delta_pct": 0.441769,
+        "raw_delta_pct": -0.441769,
+        "framework_wins": true
+      }
+    ],
+    "n_wins": 7,
+    "n_losses": 2,
+    "n_ties": 1,
+    "win_rows": [
+      "twodim_fm_2d_ablation",
+      "twodim_fm_2d_eight_gaussians",
+      "rectified_flow_2d_sota_two_moons",
+      "rectified_flow_2d_sota_eight_gaussians",
+      "rectified_flow_cifar_v2_avg_nfe",
+      "mnist_fm_localized_noise",
+      "lineageflow_avg_log_likelihood"
+    ],
+    "loss_rows": [
+      "rectified_flow_cifar_v3_matched_nfe",
+      "mnist_fm_v1"
+    ],
+    "tie_rows": [
+      "lineageflow_family_validity"
+    ],
+    "per_family_stats": {
+      "lineageflow": {
+        "n_cells": 2,
+        "signed_mean": 0.0012,
+        "signed_median": 0.0012,
+        "raw_mean": 0.0012,
+        "rows": [
+          "lineageflow_family_validity",
+          "lineageflow_avg_log_likelihood"
+        ],
+        "all_wins": true,
+        "any_loss": false
+      },
+      "mnist_fm": {
+        "n_cells": 2,
+        "signed_mean": 0.0625,
+        "signed_median": 0.0625,
+        "raw_mean": -0.0625,
+        "rows": [
+          "mnist_fm_localized_noise",
+          "mnist_fm_v1"
+        ],
+        "all_wins": false,
+        "any_loss": true
+      },
+      "rectified_flow_cifar": {
+        "n_cells": 2,
+        "signed_mean": 0.2134,
+        "signed_median": 0.2134,
+        "raw_mean": -0.2134,
+        "rows": [
+          "rectified_flow_cifar_v3_matched_nfe",
+          "rectified_flow_cifar_v2_avg_nfe"
+        ],
+        "all_wins": false,
+        "any_loss": true
+      },
+      "twodim_fm": {
+        "n_cells": 4,
+        "signed_mean": 0.4076,
+        "signed_median": 0.3875,
+        "raw_mean": -0.4076,
+        "rows": [
+          "twodim_fm_2d_ablation",
+          "twodim_fm_2d_eight_gaussians",
+          "rectified_flow_2d_sota_two_moons",
+          "rectified_flow_2d_sota_eight_gaussians"
+        ],
+        "all_wins": true,
+        "any_loss": false
+      }
+    },
+    "interpretation": {
+      "spec_mean_passes_g1_target_+0.05": false,
+      "signed_mean_passes_+0.05": true,
+      "trimmed_mean_passes_+0.05": true,
+      "winsorized_mean_passes_+0.05": true,
+      "note": "The spec-literal G.1 mean (-0.0114) fails the +0.05 target. Sign-normalized mean flips the sign (the spec mixes lower-is-better and higher-is-better metrics, so a single mean conflates wins and losses). Robust statistics (trimmed mean, winsorized mean, drop-worst-N) are reported so the reviewer can see the value surface without the MNIST v1 outlier."
+    }
+  }
+}

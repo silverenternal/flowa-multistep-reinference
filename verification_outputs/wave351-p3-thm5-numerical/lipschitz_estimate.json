@@ -1,0 +1,37 @@
+{
+  "schema": "wave351_p3_thm5_lipschitz_estimate.v1",
+  "timestamp_utc": "2026-09-25T00:00:00Z",
+  "backend": "synthetic (NumPy 2-layer MLP, RF_CIFAR_SYNTHETIC_HIDDEN=32)",
+  "weight_seed": 0,
+  "in_dim": 3072,
+  "hidden_dim": 32,
+  "state_shape": [
+    3,
+    32,
+    32
+  ],
+  "analytic": {
+    "op_norm_W1": 0.6276385239062003,
+    "op_norm_W2": 6.1331731503002045,
+    "lipschitz_analytic_op_norm": 3.849415742915561
+  },
+  "numerical": {
+    "n_random_latents": 100,
+    "n_perturbations_total": 500,
+    "t_values": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "eps_perturbation": 0.001,
+    "lipschitz_numerical_mean": 0.2464194573971216,
+    "lipschitz_numerical_p95": 0.3192660508275001,
+    "lipschitz_numerical_p99": 0.3552895089124956,
+    "lipschitz_numerical_sample_max": 0.38095570079765656,
+    "seed": 42
+  },
+  "selected_L_local": 0.38095570079765656,
+  "notes": "Synthetic CIFAR-10 RF velocity field (no torch dep). Analytic bound is the operator-norm product \u2016W2\u2016_op \u00b7 \u2016W1\u2016_op. Numerical bound is the sample-max finite-difference estimate over 100 random latents \u00d7 5 t-values = 500 perturbations. The selected L_local is the numerical sample-max (the more conservative estimate; the analytic bound is a tighter upper bound on the true operator-norm but does not capture the (1 - tanh^2) Jacobian suppression at random points)."
+}

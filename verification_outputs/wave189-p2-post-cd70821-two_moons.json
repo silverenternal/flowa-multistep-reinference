@@ -1,0 +1,18 @@
+{
+  "target": "two_moons",
+  "baseline_w2_mean": 0.07360607345922822,
+  "baseline_w2_std": 0.005521802335887173,
+  "framework_w2_mean": 0.07593021680581258,
+  "framework_w2_std": 0.004537072995441206,
+  "framework_scheduler": "PaperRatioAdaptiveScheduler",
+  "delta_abs": -0.002324143346584359,
+  "delta_pct": -3.1575429001409043,
+  "p_value": 0.68503829122346,
+  "bonferroni_alpha": 0.025,
+  "bonferroni_significant": false,
+  "n_records": 3,
+  "n_samples": 1000,
+  "n_rounds": 5,
+  "n_seeds": 3,
+  "nfe": 100
+}

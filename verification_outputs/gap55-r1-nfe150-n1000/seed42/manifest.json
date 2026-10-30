@@ -1,0 +1,49 @@
+{
+  "n": 1000,
+  "seed": 42,
+  "min_len": 30,
+  "max_len": 150,
+  "family_ids": [
+    "PF00005.27",
+    "PF00072.24",
+    "PF00183.19",
+    "PF02517.18"
+  ],
+  "nfe_per_record": 150,
+  "n_rounds": 3,
+  "temperature": 1.0,
+  "beta_base": 0.5,
+  "beta_override": null,
+  "restart_min_nfe": 5,
+  "nfe_ref": 50,
+  "effective_n_rounds": 3,
+  "scheduler_name": "cosine",
+  "restart_from_endpoint": false,
+  "tier_aware_n_cap": 1.0,
+  "tier_aware_baseline_metrics_n": 0,
+  "upstream_eval_len_bias": "short",
+  "lineageflow_prior_mix": 0.0,
+  "classifier_aware_restart": false,
+  "classifier_alpha": 1.0,
+  "classifier_bias_mode": "centered",
+  "start_index": 200,
+  "baseline_per_family_count": {
+    "PF00005.27": 200,
+    "PF00072.24": 200,
+    "PF00183.19": 200,
+    "PF02517.18": 200
+  },
+  "framework_per_family_count": {
+    "PF00005.27": 200,
+    "PF00072.24": 200,
+    "PF00183.19": 200,
+    "PF02517.18": 200
+  },
+  "framework_fallback_per_family_count": {},
+  "per_family_count": {
+    "PF00005.27": 200,
+    "PF00072.24": 200,
+    "PF00183.19": 200,
+    "PF02517.18": 200
+  }
+}

@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "wave": 41,
+  "agent": "B",
+  "task": "lineageflow_upstream_real_ckpt_numerical_forward",
+  "date": "2026-09-05",
+  "status": "success",
+  "checkpoint": {
+    "path": "data/lineageflow/lineageflow-rp55.ckpt",
+    "size_bytes": 10509468119,
+    "sha256": "f0b4b25e626878be5c26da9e65d44c2e1551a076652d416f955b1357cde54a2b",
+    "sha256_expected": "f0b4b25e626878be5c26da9e65d44c2e1551a076652d416f955b1357cde54a2b",
+    "sha256_match": true,
+    "sha256_source": "todo/models/lineageflow.md",
+    "state_dict_tensors": 576
+  },
+  "upstream": {
+    "repo": "https://github.com/Jinx-byebye/LineageFlow",
+    "commit": "ccef84adff421fcb6b855285bc1860e1f9a94f59",
+    "clone_path": "data/lineageflow_upstream",
+    "pip_installable": false,
+    "install_method": "sys.path insert (no setup.py / pyproject.toml upstream)",
+    "checkpoint_compat_shim": "inference.inference._install_checkpoint_compat fabricates core.sampler.SamplerConfig for safe-globals unpickling; this is the same shim Wave 39 Agent B mirrored into adaptive_reflow/adapters/lineageflow.py"
+  },
+  "environment": {
+    "python": "3.12.13",
+    "platform": "Linux-7.0.9-hardened1-1-hardened-x86_64-with-glibc2.43",
+    "torch_version": "2.5.1+cpu",
+    "numpy_version": "2.5.2",
+    "cuda_available": false,
+    "device_used": "cpu",
+    "venv": ".venvs/lineageflow_venv",
+    "requirements": "requirements-lineageflow.txt"
+  },
+  "model": {
+    "class": "models.model.LineageFlowClassifier",
+    "config_class": "models.model.FlowTransformerConfig",
+    "config": {
+      "pretrained_model_name": "facebook/esm2_t33_650M_UR50D",
+      "aa_vocab": 20,
+      "use_esm_token_embedding_expectation": true,
+      "family_embed_dim": 0,
+      "use_prior_weight_channel": false,
+      "alpha_min": 0.0,
+      "alpha_max": 16.0,
+      "normalize_time": true
+    },
+    "param_count": 657626281,
+    "build_seconds": 2.85,
+    "ckpt_load_seconds": 6.02,
+    "state_dict_loaded": true,
+    "strict": false,
+    "missing_keys": 0,
+    "unexpected_keys": 0,
+    "first_5_missing": [],
+    "first_5_unexpected": [],
+    "flow_head_weights_loaded": true,
+    "ckpt_keys_matched": 576
+  },
+  "forward_pass": {
+    "batch_size": 4,
+    "sequence_length": 64,
+    "aa_vocab": 20,
+    "t": 1.0,
+    "input_shape": [
+      4,
+      64,
+      20
+    ],
+    "output_shape": [
+      4,
+      64,
+      20
+    ],
+    "elapsed_seconds": 11.142,
+    "logits_min": -2.107358694076538,
+    "logits_max": 4.610158920288086,
+    "logits_mean": -0.1457744377617928,
+    "logits_std": 0.99513850218701,
+    "has_nan": false,
+    "has_inf": false
+  },
+  "wave33_metric": {
+    "name": "per_position_mean_entropy",
+    "provenance": "P2-W33-C; formula matches tools/run_controlled_audit._per_position_entropy",
+    "value": 2.266095558934879,
+    "upper_bound_log_K": 2.995732273553991,
+    "saturated": false
+  },
+  "vector_field": {
+    "fn": "inference.inference.compute_family_vector_field",
+    "elapsed_seconds": 0.782,
+    "shape": [
+      4,
+      64,
+      20
+    ],
+    "abs_mean": 0.003252050770200654,
+    "abs_max": 0.08982236683368683,
+    "simplex_tangency_max_abs_row_sum": 1.770968083292246e-08,
+    "has_nan": false
+  },
+  "ode_integration": {
+    "fn": "inference.inference.integrate_base_flow",
+    "method": "euler",
+    "steps": 8,
+    "t0": 1.0,
+    "t1": 4.0,
+    "elapsed_seconds": 33.62,
+    "network_calls": 8,
+    "endpoint_shape": [
+      4,
+      64,
+      20
+    ],
+    "simplex_entropy_start": 2.565861203123572,
+    "simplex_entropy_end": 2.415160785105375,
+    "simplex_entropy_delta": -0.150700418018197,
+    "simplex_residual_max_abs": 1.457519829273224e-07,
+    "endpoint_min": 0.0004594353085849434,
+    "endpoint_max": 0.6055758595466614,
+    "has_nan": false,
+    "has_inf": false
+  },
+  "determinism": {
+    "seed": 42,
+    "eval_mode": true,
+    "identical_across_two_forward_calls": true,
+    "method": "torch.equal(aa_logits_call1, aa_logits_call2)"
+  },
+  "limitations": [
+    "The family prior alpha_h is SYNTHETIC. Upstream ships family priors and gap rates as separate JSON assets (--prior / --gap) that are not part of the released checkpoint and are not in this repo. The prior here is a smooth Dirichlet-style array with concentration 10, used only so the vector-field and ODE paths can be exercised end to end.",
+    "No family_validity / foldability / self-consistency score is computed. Those need HMMER, OmegaFold, MMseqs2 and ESM-IF, none of which are installed in this sidecar.",
+    "The integration covers t0=1.0 -> t1=4.0 with 8 Euler steps, not the paper's t_max=16.0 with 200+200 steps. This is a numerical smoke of the real solver on CPU, not a sampling-quality run.",
+    "CPU only. No CUDA kernels were exercised."
+  ]
+}

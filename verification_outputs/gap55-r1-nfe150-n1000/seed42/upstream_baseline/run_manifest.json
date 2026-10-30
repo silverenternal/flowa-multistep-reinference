@@ -1,0 +1,15 @@
+{
+  "outdir": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap55-r1-nfe150-n1000/seed42/upstream_baseline",
+  "paths": {
+    "family_validity_json": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap55-r1-nfe150-n1000/seed42/upstream_baseline/family_validity.json",
+    "family_validity_per_seq": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap55-r1-nfe150-n1000/seed42/upstream_baseline/family_validity_per_seq.jsonl",
+    "family_validity_log": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap55-r1-nfe150-n1000/seed42/upstream_baseline/family_validity.log",
+    "novelty_json": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap55-r1-nfe150-n1000/seed42/upstream_baseline/novelty.json",
+    "novelty_per_seq": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap55-r1-nfe150-n1000/seed42/upstream_baseline/novelty_per_seq.jsonl",
+    "novelty_log": "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/gap55-r1-nfe150-n1000/seed42/upstream_baseline/novelty.log"
+  },
+  "metrics": [
+    "family_validity",
+    "novelty"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "increment": "gap55-r1-nfe150-n1000",
+  "date_utc": "2026-10-19",
+  "device": "cuda:0 (lineageflow_venv)",
+  "gpu_id": 0,
+  "command": "HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 CUDA_VISIBLE_DEVICES=0 .venvs/lineageflow_venv/bin/python tools/gen_lineageflow_n1000_fastas.py --n 1000 --seed 42 --start-index 200 --nfe 150 --n-rounds 3 --restart-min-nfe 5 --upstream-eval-len-bias short --temperature 1.0 --outdir verification_outputs/gap55-r1-nfe150-n1000/seed42",
+  "seed": 42,
+  "n_target": 1000,
+  "n_reused_prefix": 200,
+  "prefix_source": "verification_outputs/legacy-gap40-42/gap41b-nfe150/premise/seed42_nfe150_legacy",
+  "prefix_justification": "same seed/flags/NFE; per-record RNG is keyed on seed+i and independent of n, so records 0..199 are byte-identical",
+  "nfe": 150,
+  "n_rounds": 3,
+  "restart_min_nfe": 5,
+  "beta_scale": "min(1, 50/150) = 0.333 (canonical driver behaviour; see GAP-41b caveat)",
+  "wall_budget_h": 8,
+  "max_records": 1000,
+  "output_dir": "verification_outputs/gap55-r1-nfe150-n1000"
+}

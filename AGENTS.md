@@ -210,6 +210,27 @@ mypy adaptive_reflow/
 cd tnnls_submission && sha256sum -c SHA256SUMS
 ```
 
+**Integrity checkers.** CI enforces ruff, mypy, `check_docs_against_code`,
+`check_claims_consistency`, pytest and `mkdocs build --strict`; the D.4 and
+SHA-256 commands above are pre-submission steps you run locally. The full chain
+is longer still — `todo.json`'s `gate_chain` is the authoritative list (14
+entries as of 2026-10-29). The eight below all exit 0 and all take under 20 s:
+
+```bash
+python3 tools/paper_evidence.py --check      # every cell's artifact + quoted number
+python3 tools/check_submission_manifest.py   # MANIFEST.md rows + SHA256SUMS
+python3 tools/check_submission_links.py      # every link in tnnls_submission/
+python3 tools/check_data_integrity.py        # verification_outputs/ ledgers
+python3 tools/check_doc_links.py             # every relative link in docs/
+python3 tools/check_paper_data_manifest.py   # paper-data/ MANIFEST + SOURCE
+python3 tools/check_artifact_hashes.py       # digests quoted in READMEs
+python3 tools/check_clone_integrity.py       # tracked symlinks resolve on a clone
+```
+
+Each one exists because its surface drifted unnoticed at least once; the
+reason is recorded in `todo.json`'s `gate_note`. Run them before any commit
+that touches `docs/`, `paper-data/`, `tnnls_submission/` or `verification_outputs/`.
+
 ### 4.2 Paper-write workflow (template reference)
 
 ```bash

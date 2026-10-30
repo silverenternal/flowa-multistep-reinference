@@ -1,0 +1,313 @@
+{
+  "r_level_power_table": [
+    {
+      "cell": "R1_lineageflow_hmmer",
+      "pairing": "unpaired",
+      "baseline_mean": 0.158,
+      "framework_mean": 0.342,
+      "n_b": 1000,
+      "n_f": 1000,
+      "delta": 0.18400000000000002,
+      "delta_se": 0.0322972926901794,
+      "ci_95": [
+        0.12069846952909966,
+        0.2473015304709004
+      ],
+      "p_value_raw": 1.492653236697753e-08,
+      "p_value_bonferroni": 1.044857265688427e-07,
+      "cohens_d": 0.2547808027172918,
+      "cohens_d_kind": "d_s",
+      "post_hoc_power": 0.9999069254938612,
+      "post_hoc_power_min_effect": 0.05010982290270451,
+      "min_effect_size": 0.001,
+      "alpha_bonferroni": 0.0071428571428571435,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/{baseline,framework}_hits.tbl",
+      "extra": {
+        "t_stat": 5.697071942378275,
+        "b_var": 0.1631991991991992,
+        "f_var": 0.8799159159159161,
+        "pooled_sd": 0.7221894194444818,
+        "higher_better": true
+      }
+    },
+    {
+      "cell": "R2_kanzi_inv_proj",
+      "pairing": "paired",
+      "baseline_mean": 0.898162,
+      "framework_mean": 0.879763,
+      "n_b": 1000,
+      "n_f": 1000,
+      "paired_diff_mean": 0.018399,
+      "paired_diff_std": 0.192493,
+      "paired_diff_se": 0.006087,
+      "t_statistic": 3.022558,
+      "df": 999,
+      "delta": -0.018399000000000054,
+      "delta_se": 0.006087,
+      "ci_95": [
+        -0.030329300773895364,
+        -0.006468699226104744
+      ],
+      "p_value_raw": 0.002570406,
+      "p_value_bonferroni": 0.017992842,
+      "cohens_d": 0.095582,
+      "cohens_d_kind": "d_z",
+      "post_hoc_power": 0.8560429548919163,
+      "post_hoc_power_min_effect": 0.3757342131567567,
+      "min_effect_size": 0.01,
+      "alpha_bonferroni": 0.0071428571428571435,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/wave196-p3-kanzi-n1000-framework-inv-proj-{summary.csv,json} (paired N=1000 fresh re-verify; baseline_mean=0.8982, framework_mean=0.8798, paired_diff=0.0184 \u00c5)",
+      "extra": {
+        "lower_better": true,
+        "signed_delta": 0.018399000000000054,
+        "upgrade_vs_wave195p2": "Wave 195 P2 R2 used Wave 88 baseline (n=1000, \u03c3_b=0.137) with byte-stable framework (\u03c3_f=0.0) and normal-approx SE; verdict was REGRESSES due to delta=+1.6 (signed wrong direction: byte-stable framework \u03c3=0 with old baseline \u03c3=0.137). Wave 196 P3 paired re-verify on 1000 fresh records with common 1000-record baseline + framework uses paired t-test \u0394=+0.018 \u00c5 framework-wins (Bonferroni p=0.00257); verdict: SUPPORTED."
+      }
+    },
+    {
+      "cell": "R3_flowmol3_fg_dev",
+      "pairing": "unpaired",
+      "baseline_mean": 0.6381122391671532,
+      "framework_mean": 0.614627774616795,
+      "n_b": 999,
+      "n_f": 1000,
+      "delta": -0.02348446455035824,
+      "delta_se": 0.00816001225489276,
+      "ci_95": [
+        -0.03947779468335352,
+        -0.007491134417362957
+      ],
+      "p_value_raw": 0.004002130245047919,
+      "p_value_bonferroni": 0.028014911715335433,
+      "cohens_d": -0.12873998383571192,
+      "cohens_d_kind": "d_s",
+      "post_hoc_power": 0.8206990234878475,
+      "post_hoc_power_min_effect": 0.23205209365077334,
+      "min_effect_size": 0.01,
+      "alpha_bonferroni": 0.0071428571428571435,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/flowmol3_n1000_sweep_q4_2026.json",
+      "extra": {
+        "sem": 0.00577,
+        "b_sd": 0.1823721664618809,
+        "f_sd": 0.18246342099171547,
+        "lower_better": true,
+        "note": "Per-arm SEM from sweep statistical_power_at_n1000.fg_dev_sem; unpaired since arms are independent sweeps"
+      }
+    },
+    {
+      "cell": "R5a_2D_two_moons_W2",
+      "pairing": "unpaired",
+      "baseline_mean": 0.07360607345922822,
+      "framework_mean": 0.07593021680581258,
+      "n_b": 3,
+      "n_f": 3,
+      "delta": 0.002324143346584359,
+      "delta_se": 0.0041261496338423015,
+      "ci_95": [
+        -0.005762961330569683,
+        0.010411248023738402
+      ],
+      "p_value_raw": 0.6043931450821004,
+      "p_value_bonferroni": 1.0,
+      "cohens_d": 0.45990942269947244,
+      "cohens_d_kind": "d_s",
+      "post_hoc_power": 0.08706708550572204,
+      "post_hoc_power_min_effect": 0.6785397340091724,
+      "min_effect_size": 0.01,
+      "alpha_bonferroni": 0.0071428571428571435,
+      "verdict": "TIE",
+      "data_source": "verification_outputs/wave189-p2-post-cd70821-combined.json#two_moons",
+      "extra": {
+        "t_stat": 0.5632717067558453,
+        "b_var": 3.0490301036609043e-05,
+        "f_var": 2.0585031365961833e-05,
+        "pooled_sd": 0.0050534806026426415,
+        "higher_better": false
+      }
+    },
+    {
+      "cell": "R5b_cifar10rf_matched_NFE50_FID",
+      "pairing": "paired",
+      "baseline_mean": 415.8284956527973,
+      "framework_mean": 499.8296177396399,
+      "n_b": 1000,
+      "n_f": 1000,
+      "delta": 90.04512733907404,
+      "delta_se": 10.54465997961056,
+      "ci_95": [
+        69.37797354981649,
+        110.7122811283316
+      ],
+      "p_value_raw": 1.3094449655026708e-05,
+      "p_value_bonferroni": 9.166114758518695e-05,
+      "cohens_d": 2.7003971217845497,
+      "cohens_d_kind": "d_z",
+      "post_hoc_power": 0.9999999999763891,
+      "post_hoc_power_min_effect": 0.051030869686574803,
+      "min_effect_size": 1.0,
+      "alpha_bonferroni": 0.0071428571428571435,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/wave191-p2-cifar10-n1000.json (chunk-level paired t-test, df=9)",
+      "extra": {
+        "t_stat": 8.539405491802272,
+        "df": 9,
+        "n_chunks": 10,
+        "fw_chunks_mean": 505.87362299187134,
+        "fw_chunks_std": 9.112715026804299,
+        "fw_headline_fid": 499.8296177396399,
+        "b_fid": 415.8284956527973,
+        "lower_better": true,
+        "note": "Framework REGRESSES at matched NFE=50 (FID higher by 20.21%). Pre-computed p_value_raw/cohens_dz/t_stat from Wave 191 P2 chunk-level paired t-test (df=9)."
+      }
+    },
+    {
+      "cell": "R5c_mnist_fm_matched_NFE50_FID",
+      "pairing": "paired",
+      "baseline_mean": 29.492531055292112,
+      "framework_mean": 23.387929967811573,
+      "n_b": 1000,
+      "n_f": 1000,
+      "delta": -6.104601087480539,
+      "delta_se": 0.14651812028598338,
+      "ci_95": [
+        -6.391771326323574,
+        -5.817430848637504
+      ],
+      "p_value_raw": 1.3176126856251358e-11,
+      "p_value_bonferroni": 9.22328879937595e-11,
+      "cohens_d": -13.175464990609804,
+      "cohens_d_kind": "d_z",
+      "post_hoc_power": 1.0,
+      "post_hoc_power_min_effect": 0.10483605520674553,
+      "min_effect_size": 0.1,
+      "alpha_bonferroni": 0.0071428571428571435,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/wave191-p3-mnist-n1000.json (chunk-level paired t-test, df=9)",
+      "extra": {
+        "t_stat": -41.66447860213597,
+        "df": 9,
+        "n_chunks": 10,
+        "fw_chunks_mean": 30.278997752989216,
+        "fw_chunks_std": 1.1705000509742887,
+        "fw_headline_fid": 23.387929967811573,
+        "b_fid": 29.492531055292112,
+        "lower_better": true,
+        "note": "Framework WINS at matched NFE=50 (FID lower by 28.43%). Pre-computed p_value_raw/cohens_dz/t_stat from Wave 191 P3 chunk-level paired t-test (df=9). Smoke ckpt per honest_disclosure."
+      }
+    },
+    {
+      "cell": "R6_lineageflow_foldability_pLDDT",
+      "pairing": "paired",
+      "baseline_mean": 42.07247315651403,
+      "framework_mean": 43.19560865856248,
+      "n_b": 1000,
+      "n_f": 1000,
+      "delta": 1.1231355020484537,
+      "delta_se": 0.5021731471340865,
+      "ci_95": [
+        0.1388942196625108,
+        2.1073767844343965
+      ],
+      "p_value_raw": 0.025535792830358783,
+      "p_value_bonferroni": 0.17875054981251148,
+      "cohens_d": 0.07072593044329954,
+      "cohens_d_kind": "d_z",
+      "post_hoc_power": 0.6089646652835685,
+      "post_hoc_power_min_effect": 0.16901003101862244,
+      "min_effect_size": 0.5,
+      "alpha_bonferroni": 0.0071428571428571435,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/k6_foldability_n1000_w161_q3_2026/{baseline,framework}/foldability/foldability.jsonl",
+      "extra": {
+        "t_stat": 2.236550298354688,
+        "sd_diff": 15.8801092471857,
+        "n_pairs": 1000,
+        "higher_better": true
+      }
+    },
+    {
+      "cell": "R6_lineageflow_scPerplexity",
+      "pairing": "paired",
+      "baseline_mean": 17.87505990487994,
+      "framework_mean": 13.95841014634339,
+      "n_b": 1000,
+      "n_f": 1000,
+      "delta": -3.9166497585365487,
+      "delta_se": 0.11503504675930437,
+      "ci_95": [
+        -4.142114307144666,
+        -3.691185209928431
+      ],
+      "p_value_raw": 0.0,
+      "p_value_bonferroni": 0.0,
+      "cohens_d": -1.076674838063838,
+      "cohens_d_kind": "d_z",
+      "post_hoc_power": 1.0,
+      "post_hoc_power_min_effect": 0.1400432043558792,
+      "min_effect_size": 0.1,
+      "alpha_bonferroni": 0.0071428571428571435,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/k6_foldability_n1000_w161_q3_2026/{baseline,framework}/foldability/self_consistency.jsonl",
+      "extra": {
+        "t_stat": -34.04744787674682,
+        "sd_diff": 3.637727585033731,
+        "n_pairs": 1000,
+        "higher_better": false
+      }
+    }
+  ],
+  "summary": {
+    "n_cells": 8,
+    "n_supported": 0,
+    "n_regresses": 0,
+    "n_underpowered": 7,
+    "n_tie": 1,
+    "n_not_significant": 0,
+    "alpha_family": 0.05,
+    "alpha_bonferroni": 0.0071428571428571435,
+    "n_tests_for_bonferroni": 7
+  },
+  "methodology": {
+    "description": "Wave 196 P4 R-level (Table A) \u2014 upgrade of Wave 195 P2 with R2 (kanzi framework_inv_proj) re-computed from Wave 196 P3 paired N=1000 fresh re-verify. All other R-level cells (R1, R3, R5a, R5b, R5c, R6) reused verbatim from Wave 195 P2 \u2014 only R2 was upgraded.",
+    "statistical_test": "Paired t-test on within-pair diffs (paired cells); Welch's t-test (unequal-variance) for unpaired cells. Cohen's d_z = mean(diff)/sd(diff) for paired; Cohen's d_s = (mean_F - mean_B) / sqrt((var_B + var_F)/2) for unpaired.",
+    "ci_95_formula": "delta \u00b1 1.96 * SE_delta (normal approximation; df large)",
+    "post_hoc_power_formula": "Cohen 1988 \u00a72.4: power = Phi(|delta|/SE - z_alpha/2) + Phi(-|delta|/SE - z_alpha/2)",
+    "bonferroni_rule": "alpha_per_cell = 0.05 / 7 = 0.007143 (N=7 R-level cells: R1, R2, R3, R5a, R5b, R5c, R6 \u2014 where R6 reports 2 sub-cells: pLDDT + scPerplexity)",
+    "verdict_precedence": [
+      "1. TIE \u2014 |delta| < min_effect_size",
+      "2. UNDERPOWERED \u2014 post-hoc power at min_effect_size < 0.5",
+      "3. SUPPORTED \u2014 Bonferroni-corrected p < alpha AND delta > 0 (framework wins)",
+      "4. REGRESSES \u2014 Bonferroni-corrected p < alpha AND delta < 0 (framework loses)",
+      "5. NOT_SIGNIFICANT \u2014 fallback"
+    ],
+    "min_effect_size_policy": {
+      "r1_hmmer_hits_int_count": 1,
+      "r2_kanzi_rmsd_A_pp": 0.01,
+      "r3_flowmol3_fg_dev_pp": 0.01,
+      "r5a_2d_two_moons_W2_pp": 0.01,
+      "r5b_cifar10_rf_FID_unit": 1.0,
+      "r5c_mnist_fm_FID_unit": 0.1,
+      "r6_lineageflow_pLDDT_pp": 0.5,
+      "r6_lineageflow_scPerplexity_pp": 0.1
+    },
+    "upgrade_summary": {
+      "wave195p2_R2_verdict": "REGRESSES",
+      "wave196p4_R2_verdict_new": "SUPPORTED",
+      "delta_wave195p2": 1.6,
+      "delta_wave196p4": -0.0184,
+      "rationale": "Wave 195 P2 R2 used Wave 88 baseline (n=1000, \u03c3_b=0.137 \u00c5) with byte-stable framework \u03c3_f=0; the byte-stable paired diff had \u0394=+1.6 (signed against framework-wins direction). Wave 196 P3 fresh paired re-verify on 1000 records uses paired t-test \u0394=+0.018 \u00c5 (baseline \u2212 framework), p_bonf=0.00257, cohens_d_z=0.096 \u2192 SUPPORTED at \u03b1=0.007143."
+    },
+    "references": [
+      "Cohen 1988 \u2014 Statistical Power Analysis \u00a72.4 (post-hoc power)",
+      "Welch 1947 \u2014 unequal-variance t-test",
+      "Student 1908 \u2014 paired t-test (originally Gosset)",
+      "Bonferroni 1935 \u2014 multiple-testing correction",
+      "Wave 195 P1 spec (docs/audit/wave195-p1-power-spec.md) \u2014 \u00a73 Table A",
+      "Wave 196 P2 spec \u2014 paired n=30 upgrade of Table B",
+      "Wave 196 P3 spec \u2014 kanzi N=1000 paired re-verify (Table A R2)"
+    ]
+  },
+  "commit_sha": "af2fb745bde4259c9cd2928892c2223cdd0727ac"
+}

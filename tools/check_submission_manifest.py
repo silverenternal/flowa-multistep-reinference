@@ -46,6 +46,16 @@ MANIFEST = PKG / "MANIFEST.md"
 #: manifest.  Delete an entry once the row matches again.
 KNOWN_STALE: frozenset[str] = frozenset()
 
+#: Rows naming an artifact the repository deliberately does not carry, so a
+#: fresh clone cannot hash them.  The row still records the hash the packaging
+#: step must reproduce; the checker reports it as ``packaging-output`` rather
+#: than ``MISSING`` so the gate stays honest on a clone instead of going red.
+#:
+#: * ``supplementary_bundle.zip`` -- 148 MB archive built from ``paper-data/``
+#:   plus the sidecar ``SHA256SUMS``.  ``.gitignore`` keeps it out of the tree
+#:   (see its comment at line 93).  Verify it locally after rebuilding.
+KNOWN_ABSENT: frozenset[str] = frozenset({"supplementary_bundle.zip"})
+
 #: (path relative to the repo root, sha256, bytes) from the packaging addendum.
 CURRENT_ARTIFACTS: tuple[tuple[str, str, int], ...] = (
     ("docs/drafts/paper-A-final.md",
@@ -70,9 +80,12 @@ def check_rows() -> list[tuple[str, str]]:
     for name, size, sha, desc in ROW_RE.findall(MANIFEST.read_text()):
         path = (PKG / name).resolve()
         if not path.is_file():
-            status = ("superseded" if ("SUPERSEDED" in desc or
-                                       "archived for historical" in desc)
-                      else "MISSING")
+            if name in KNOWN_ABSENT:
+                status = "packaging-output"
+            else:
+                status = ("superseded" if ("SUPERSEDED" in desc or
+                                           "archived for historical" in desc)
+                          else "MISSING")
         else:
             got, nbytes = _sha(path)
             if got == sha and nbytes == int(size):
@@ -123,7 +136,8 @@ def check_ledger() -> list[tuple[str, str]]:
         covered.add(name)
         path = (PKG / name).resolve()
         if not path.is_file():
-            out.append((name, "MISSING"))
+            out.append((name, "packaging-output" if name in KNOWN_ABSENT
+                        else "MISSING"))
             continue
         got, _ = _sha(path)
         out.append((name, "ok" if got == sha else "DRIFT"))
@@ -169,7 +183,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{rel.ljust(46)}  {status}  (packaging addendum)")
 
     art_bad = [a for a in arts if a[1] != "ok"]
-    ledger_bad = [a for a in ledger if a[1] != "ok"]
+    ledger_bad = [a for a in ledger if a[1] not in ("ok", "packaging-output")]
     print(f"\nrows={len(rows)} known_stale={stale} unknown={len(unknown)} "
           f"addendum_drift={len(art_bad)} ledger_drift={len(ledger_bad)}")
     for name, status in unknown:

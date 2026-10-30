@@ -1,0 +1,549 @@
+{
+  "4arm_power_table": [
+    {
+      "cell": "fastdllm_pLDDT_NFE100",
+      "baseline_arm": "FastDLLM",
+      "framework_arm": "FlowA",
+      "metric": "pLDDT",
+      "nfe": 100,
+      "higher_better": true,
+      "pairing": "unpaired",
+      "baseline_mean": 36.90373908307509,
+      "framework_mean": 43.8284,
+      "n_b": 3,
+      "n_f": 3,
+      "delta": 6.924660916924914,
+      "delta_se": 1.2507423143840946,
+      "ci_95": [
+        4.473251026791815,
+        9.376070807058014
+      ],
+      "p_value_raw": 0.017999165326806916,
+      "p_value_bonferroni": 0.215989983921683,
+      "cohens_d_z": 4.520485073328023,
+      "post_hoc_power": 0.999825871979344,
+      "post_hoc_power_min_effect": 0.050007322548107365,
+      "min_effect_size": 0.01,
+      "alpha_bonferroni": 0.004166666666666667,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/wave180-p2-fastdllm-summary.csv + verification_outputs/wave179-p4-aggregation.csv",
+      "extra": {
+        "t_stat": 5.914985676069425,
+        "b_per_seed": [
+          36.24758646980817,
+          37.04466194450948,
+          37.41896883490763
+        ],
+        "f_per_seed_std": 2.0821,
+        "b_var": 0.3579286009726431,
+        "f_var": 4.33514041,
+        "pooled_sd": 1.5318402349743663,
+        "higher_better": true,
+        "n_records_per_arm": 90
+      }
+    },
+    {
+      "cell": "fastdllm_pLDDT_NFE200",
+      "baseline_arm": "FastDLLM",
+      "framework_arm": "FlowA",
+      "metric": "pLDDT",
+      "nfe": 200,
+      "higher_better": true,
+      "pairing": "unpaired",
+      "baseline_mean": 36.54867622187099,
+      "framework_mean": 43.6292,
+      "n_b": 3,
+      "n_f": 3,
+      "delta": 7.080523778129006,
+      "delta_se": 1.2622311582240364,
+      "ci_95": [
+        4.606596167845616,
+        9.554451388412396
+      ],
+      "p_value_raw": 0.012553128267350548,
+      "p_value_bonferroni": 0.15063753920820658,
+      "cohens_d_z": 4.580162213832528,
+      "post_hoc_power": 0.9998686582289589,
+      "post_hoc_power_min_effect": 0.050007189854322315,
+      "min_effect_size": 0.01,
+      "alpha_bonferroni": 0.004166666666666667,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/wave180-p2-fastdllm-summary.csv + verification_outputs/wave179-p4-aggregation.csv",
+      "extra": {
+        "t_stat": 5.965820255612666,
+        "b_per_seed": [
+          35.87304528920133,
+          36.32905230810273,
+          37.44393106830891
+        ],
+        "f_per_seed_std": 2.0314,
+        "b_var": 0.6530965303747766,
+        "f_var": 4.126585960000001,
+        "pooled_sd": 1.5459111375455539,
+        "higher_better": true,
+        "n_records_per_arm": 90
+      }
+    },
+    {
+      "cell": "fastdllm_scPerplexity_NFE100",
+      "baseline_arm": "FastDLLM",
+      "framework_arm": "FlowA",
+      "metric": "scPerplexity",
+      "nfe": 100,
+      "higher_better": false,
+      "pairing": "unpaired",
+      "baseline_mean": 14.351434337110549,
+      "framework_mean": 13.9297,
+      "n_b": 3,
+      "n_f": 3,
+      "delta": -0.4217343371105482,
+      "delta_se": 1.153401708069727,
+      "ci_95": [
+        -2.6823601446341945,
+        1.838891470413098
+      ],
+      "p_value_raw": 0.7397935378210455,
+      "p_value_bonferroni": 1.0,
+      "cohens_d_z": -0.29854702130349786,
+      "post_hoc_power": 0.0654519228368374,
+      "post_hoc_power_min_effect": 0.05000861067269509,
+      "min_effect_size": 0.01,
+      "alpha_bonferroni": 0.004166666666666667,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/wave180-p2-fastdllm-summary.csv + verification_outputs/wave179-p4-aggregation.csv",
+      "extra": {
+        "t_stat": -0.36651554270730186,
+        "b_per_seed": [
+          15.881101817553644,
+          14.791436710221701,
+          12.381764483556301
+        ],
+        "f_per_seed_std": 0.8857,
+        "b_var": 3.2065420105344913,
+        "f_var": 0.7844644900000001,
+        "pooled_sd": 1.412622826612697,
+        "higher_better": false,
+        "n_records_per_arm": 90
+      }
+    },
+    {
+      "cell": "fastdllm_scPerplexity_NFE200",
+      "baseline_arm": "FastDLLM",
+      "framework_arm": "FlowA",
+      "metric": "scPerplexity",
+      "nfe": 200,
+      "higher_better": false,
+      "pairing": "unpaired",
+      "baseline_mean": 14.522945763675253,
+      "framework_mean": 14.1092,
+      "n_b": 3,
+      "n_f": 3,
+      "delta": -0.4137457636752533,
+      "delta_se": 1.2005461973318439,
+      "ci_95": [
+        -2.766773072222184,
+        1.9392815448716774
+      ],
+      "p_value_raw": 0.7553578046432731,
+      "p_value_bonferroni": 1.0,
+      "cohens_d_z": -0.2813902556727666,
+      "post_hoc_power": 0.06371395756673386,
+      "post_hoc_power_min_effect": 0.05000794767926667,
+      "min_effect_size": 0.01,
+      "alpha_bonferroni": 0.004166666666666667,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/wave180-p2-fastdllm-summary.csv + verification_outputs/wave179-p4-aggregation.csv",
+      "extra": {
+        "t_stat": -0.3448854619271321,
+        "b_per_seed": [
+          16.033455919938962,
+          15.137997047877016,
+          12.397384323209781
+        ],
+        "f_per_seed_std": 0.8573,
+        "b_var": 3.5889702257838527,
+        "f_var": 0.7349632899999999,
+        "pooled_sd": 1.4703627980508505,
+        "higher_better": false,
+        "n_records_per_arm": 90
+      }
+    },
+    {
+      "cell": "abcache_pLDDT_NFE100",
+      "baseline_arm": "AB-Cache",
+      "framework_arm": "FlowA",
+      "metric": "pLDDT",
+      "nfe": 100,
+      "higher_better": true,
+      "pairing": "unpaired",
+      "baseline_mean": 39.89046666666667,
+      "framework_mean": 43.8284,
+      "n_b": 3,
+      "n_f": 3,
+      "delta": 3.9379333333333335,
+      "delta_se": 3.315614209229483,
+      "ci_95": [
+        -2.5605511033857047,
+        10.436417770052373
+      ],
+      "p_value_raw": 0.3304195925217231,
+      "p_value_bonferroni": 1.0,
+      "cohens_d_z": 0.9697476544881851,
+      "post_hoc_power": 0.22080003367700538,
+      "post_hoc_power_min_effect": 0.050001042001311044,
+      "min_effect_size": 0.01,
+      "alpha_bonferroni": 0.004166666666666667,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/wave181-p2-abcache-summary.csv + verification_outputs/wave179-p4-aggregation.csv",
+      "extra": {
+        "t_stat": 1.2012787221290635,
+        "b_per_seed": [
+          34.5282,
+          39.9109,
+          45.2323
+        ],
+        "f_per_seed_std": 2.0821,
+        "b_var": 28.644752343333355,
+        "f_var": 4.33514041,
+        "pooled_sd": 4.060781498266889,
+        "higher_better": true,
+        "n_records_per_arm": 90
+      }
+    },
+    {
+      "cell": "abcache_pLDDT_NFE200",
+      "baseline_arm": "AB-Cache",
+      "framework_arm": "FlowA",
+      "metric": "pLDDT",
+      "nfe": 200,
+      "higher_better": true,
+      "pairing": "unpaired",
+      "baseline_mean": 40.5691,
+      "framework_mean": 43.6292,
+      "n_b": 3,
+      "n_f": 3,
+      "delta": 3.0600999999999985,
+      "delta_se": 3.7798452239035747,
+      "ci_95": [
+        -4.348260505986745,
+        10.46846050598674
+      ],
+      "p_value_raw": 0.48776596451384746,
+      "p_value_bonferroni": 1.0,
+      "cohens_d_z": 0.661022089342744,
+      "post_hoc_power": 0.12780029127162595,
+      "post_hoc_power_min_effect": 0.050000801766954,
+      "min_effect_size": 0.01,
+      "alpha_bonferroni": 0.004166666666666667,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/wave181-p2-abcache-summary.csv + verification_outputs/wave179-p4-aggregation.csv",
+      "extra": {
+        "t_stat": 0.8174845883612406,
+        "b_per_seed": [
+          34.9313,
+          39.5284,
+          47.2476
+        ],
+        "f_per_seed_std": 2.0314,
+        "b_var": 38.73510379,
+        "f_var": 4.126585960000001,
+        "pooled_sd": 4.629346052629896,
+        "higher_better": true,
+        "n_records_per_arm": 90
+      }
+    },
+    {
+      "cell": "abcache_scPerplexity_NFE100",
+      "baseline_arm": "AB-Cache",
+      "framework_arm": "FlowA",
+      "metric": "scPerplexity",
+      "nfe": 100,
+      "higher_better": false,
+      "pairing": "unpaired",
+      "baseline_mean": 14.888600000000002,
+      "framework_mean": 13.9297,
+      "n_b": 3,
+      "n_f": 3,
+      "delta": -0.9589000000000016,
+      "delta_se": 0.921097848584322,
+      "ci_95": [
+        -2.764218609462601,
+        0.8464186094625974
+      ],
+      "p_value_raw": 0.3604544857845796,
+      "p_value_bonferroni": 1.0,
+      "cohens_d_z": -0.8500058627375283,
+      "post_hoc_power": 0.18041320463193225,
+      "post_hoc_power_min_effect": 0.0500135016866981,
+      "min_effect_size": 0.01,
+      "alpha_bonferroni": 0.004166666666666667,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/wave181-p2-abcache-summary.csv + verification_outputs/wave179-p4-aggregation.csv",
+      "extra": {
+        "t_stat": -1.0577874669669618,
+        "b_per_seed": [
+          15.8251,
+          15.4706,
+          13.3701
+        ],
+        "f_per_seed_std": 0.8857,
+        "b_var": 1.7607992499999994,
+        "f_var": 0.7844644900000001,
+        "pooled_sd": 1.1281098661034747,
+        "higher_better": false,
+        "n_records_per_arm": 90
+      }
+    },
+    {
+      "cell": "abcache_scPerplexity_NFE200",
+      "baseline_arm": "AB-Cache",
+      "framework_arm": "FlowA",
+      "metric": "scPerplexity",
+      "nfe": 200,
+      "higher_better": false,
+      "pairing": "unpaired",
+      "baseline_mean": 14.637866666666667,
+      "framework_mean": 14.1092,
+      "n_b": 3,
+      "n_f": 3,
+      "delta": -0.528666666666668,
+      "delta_se": 0.910486015512838,
+      "ci_95": [
+        -2.313186465499207,
+        1.2558531321658715
+      ],
+      "p_value_raw": 0.5948824272273325,
+      "p_value_bonferroni": 1.0,
+      "cohens_d_z": -0.47409242803214235,
+      "post_hoc_power": 0.08943081532005719,
+      "post_hoc_power_min_effect": 0.050013818251305735,
+      "min_effect_size": 0.01,
+      "alpha_bonferroni": 0.004166666666666667,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/wave181-p2-abcache-summary.csv + verification_outputs/wave179-p4-aggregation.csv",
+      "extra": {
+        "t_stat": -0.5873799754282589,
+        "b_per_seed": [
+          15.6663,
+          15.1028,
+          13.1445
+        ],
+        "f_per_seed_std": 0.8573,
+        "b_var": 1.751991063333332,
+        "f_var": 0.7349632899999999,
+        "pooled_sd": 1.115113077973111,
+        "higher_better": false,
+        "n_records_per_arm": 90
+      }
+    },
+    {
+      "cell": "lediflow_pLDDT_NFE100",
+      "baseline_arm": "LeDiFlow",
+      "framework_arm": "FlowA",
+      "metric": "pLDDT",
+      "nfe": 100,
+      "higher_better": true,
+      "pairing": "unpaired",
+      "baseline_mean": 39.45206666666667,
+      "framework_mean": 43.8284,
+      "n_b": 3,
+      "n_f": 3,
+      "delta": 4.376333333333335,
+      "delta_se": 3.2613998923434355,
+      "ci_95": [
+        -2.0158929948426083,
+        10.76855966150928
+      ],
+      "p_value_raw": 0.28283653430226247,
+      "p_value_bonferroni": 1.0,
+      "cohens_d_z": 1.095621917464156,
+      "post_hoc_power": 0.2687328123879955,
+      "post_hoc_power_min_effect": 0.050001076931682965,
+      "min_effect_size": 0.01,
+      "alpha_bonferroni": 0.004166666666666667,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/wave182-p2-lediflow-summary.csv + verification_outputs/wave179-p4-aggregation.csv",
+      "extra": {
+        "t_stat": 1.3572424895425093,
+        "b_per_seed": [
+          34.8977,
+          38.2625,
+          45.196
+        ],
+        "f_per_seed_std": 2.0821,
+        "b_var": 27.575047363333315,
+        "f_var": 4.33514041,
+        "pooled_sd": 3.994382791704703,
+        "higher_better": true,
+        "n_records_per_arm": 90
+      }
+    },
+    {
+      "cell": "lediflow_pLDDT_NFE200",
+      "baseline_arm": "LeDiFlow",
+      "framework_arm": "FlowA",
+      "metric": "pLDDT",
+      "nfe": 200,
+      "higher_better": true,
+      "pairing": "unpaired",
+      "baseline_mean": 39.53406666666667,
+      "framework_mean": 43.6292,
+      "n_b": 3,
+      "n_f": 3,
+      "delta": 4.0951333333333295,
+      "delta_se": 3.258980879729804,
+      "ci_95": [
+        -2.292351817241747,
+        10.482618483908407
+      ],
+      "p_value_raw": 0.3089379010654152,
+      "p_value_bonferroni": 1.0,
+      "cohens_d_z": 1.0259840387241064,
+      "post_hoc_power": 0.2415534677211044,
+      "post_hoc_power_min_effect": 0.05000107853100494,
+      "min_effect_size": 0.01,
+      "alpha_bonferroni": 0.004166666666666667,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/wave182-p2-lediflow-summary.csv + verification_outputs/wave179-p4-aggregation.csv",
+      "extra": {
+        "t_stat": 1.2705677876067625,
+        "b_per_seed": [
+          34.6837,
+          38.7825,
+          45.136
+        ],
+        "f_per_seed_std": 2.0314,
+        "b_var": 27.73628316333334,
+        "f_var": 4.126585960000001,
+        "pooled_sd": 3.9914201184123264,
+        "higher_better": true,
+        "n_records_per_arm": 90
+      }
+    },
+    {
+      "cell": "lediflow_scPerplexity_NFE100",
+      "baseline_arm": "LeDiFlow",
+      "framework_arm": "FlowA",
+      "metric": "scPerplexity",
+      "nfe": 100,
+      "higher_better": false,
+      "pairing": "unpaired",
+      "baseline_mean": 14.488366666666666,
+      "framework_mean": 13.9297,
+      "n_b": 3,
+      "n_f": 3,
+      "delta": -0.5586666666666655,
+      "delta_se": 1.1172641545807824,
+      "ci_95": [
+        -2.7484641708625905,
+        1.6311308375292595
+      ],
+      "p_value_raw": 0.650974799433852,
+      "p_value_bonferroni": 1.0,
+      "cohens_d_z": -0.40827356837808637,
+      "post_hoc_power": 0.07910118947734993,
+      "post_hoc_power_min_effect": 0.05000917670311026,
+      "min_effect_size": 0.01,
+      "alpha_bonferroni": 0.004166666666666667,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/wave182-p2-lediflow-summary.csv + verification_outputs/wave179-p4-aggregation.csv",
+      "extra": {
+        "t_stat": -0.5029807649665728,
+        "b_per_seed": [
+          15.5832,
+          15.3767,
+          12.5052
+        ],
+        "f_per_seed_std": 0.8857,
+        "b_var": 2.960373083333332,
+        "f_var": 0.7844644900000001,
+        "pooled_sd": 1.368363543312473,
+        "higher_better": false,
+        "n_records_per_arm": 90
+      }
+    },
+    {
+      "cell": "lediflow_scPerplexity_NFE200",
+      "baseline_arm": "LeDiFlow",
+      "framework_arm": "FlowA",
+      "metric": "scPerplexity",
+      "nfe": 200,
+      "higher_better": false,
+      "pairing": "unpaired",
+      "baseline_mean": 14.2828,
+      "framework_mean": 14.1092,
+      "n_b": 3,
+      "n_f": 3,
+      "delta": -0.17360000000000042,
+      "delta_se": 1.0186032430081238,
+      "ci_95": [
+        -2.170025670831624,
+        1.8228256708316228
+      ],
+      "p_value_raw": 0.8766828317309779,
+      "p_value_bonferroni": 1.0,
+      "cohens_d_z": -0.13915507085021436,
+      "post_hoc_power": 0.05333395851325349,
+      "post_hoc_power_min_effect": 0.05001104050143756,
+      "min_effect_size": 0.01,
+      "alpha_bonferroni": 0.004166666666666667,
+      "verdict": "UNDERPOWERED",
+      "data_source": "verification_outputs/wave182-p2-lediflow-summary.csv + verification_outputs/wave179-p4-aggregation.csv",
+      "extra": {
+        "t_stat": -0.16880568177009622,
+        "b_per_seed": [
+          15.4799,
+          14.8257,
+          12.5428
+        ],
+        "f_per_seed_std": 0.8573,
+        "b_var": 2.377694410000001,
+        "f_var": 0.7349632899999999,
+        "pooled_sd": 1.2475290978570401,
+        "higher_better": false,
+        "n_records_per_arm": 90
+      }
+    }
+  ],
+  "summary": {
+    "n_cells": 12,
+    "n_supported_flowa_wins": 0,
+    "n_regresses": 0,
+    "n_underpowered": 12,
+    "n_tie": 0,
+    "n_not_significant": 0,
+    "alpha_family": 0.05,
+    "alpha_bonferroni": 0.004166666666666667,
+    "n_tests_for_bonferroni": 12,
+    "n_baselines": 3,
+    "n_metrics": 2,
+    "n_nfe": 2
+  },
+  "methodology": {
+    "statistical_test": "Welch's t-test (unequal-variance two-sample). Each arm (Fast-DLLM / AB-Cache / LeDiFlow / FlowA / Vanilla) was evaluated as a separate experiment with its own ODE trajectory; AGG rows are cross-experiment aggregates, NOT within-seed paired diffs. Therefore paired t-test is not applicable; Welch's t-test is the correct choice.",
+    "unit_of_replication": "n = 3 seeds per arm (seeds {42, 43, 44}). For each arm \u00d7 (NFE, metric) cell we compute per-arm aggregate mean and SD across the 3 per-seed means. The spec's 'n=90' label refers to the underlying record count (3 seeds \u00d7 30 records/seed); the unit of replication for the t-test is n=3 (matches Wave 195 P2 R5a pattern for per-seed aggregates).",
+    "ci_95_formula": "delta \u00b1 1.96 * SE_delta (normal approximation; df small)",
+    "cohens_d_kind": "d_s (between-subject, pooled SD): d = (mean_F - mean_B) / sqrt((var_B + var_F) / 2)",
+    "post_hoc_power_formula": "Cohen 1988 \u00a72.4: power = Phi(|delta|/SE - z_alpha/2) + Phi(-|delta|/SE - z_alpha/2)",
+    "bonferroni_rule": "alpha_per_cell = 0.05 / 12 = 0.004167 (N=12 4-arm cells: 3 baselines \u00d7 2 NFE \u00d7 2 metrics)",
+    "verdict_precedence": [
+      "1. TIE \u2014 |delta| < min_effect_size (1pp floor)",
+      "2. UNDERPOWERED \u2014 post-hoc power at min_effect_size < 0.5",
+      "3. SUPPORTED \u2014 Bonferroni-corrected p < alpha AND delta > 0 (framework wins)",
+      "4. REGRESSES \u2014 Bonferroni-corrected p < alpha AND delta < 0 (framework loses)",
+      "5. NOT_SIGNIFICANT \u2014 fallback"
+    ],
+    "min_effect_size_policy": {
+      "pLDDT_pp": 0.01,
+      "scPerplexity_pp": 0.01
+    },
+    "references": [
+      "Cohen 1988 \u2014 Statistical Power Analysis \u00a72.4 (post-hoc power)",
+      "Welch 1947 \u2014 unequal-variance t-test",
+      "Bonferroni 1935 \u2014 multiple-testing correction",
+      "Hunter & Levine 2024 \u2014 modern power analysis for ML benchmarks",
+      "Wave 195 P1 spec (docs/audit/wave195-p1-power-spec.md) \u2014 \u00a73 Table B"
+    ]
+  },
+  "commit_sha": "76108b54a50a614901594491d339d41efec34d31"
+}

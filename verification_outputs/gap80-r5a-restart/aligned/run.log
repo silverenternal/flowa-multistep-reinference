@@ -1,0 +1,13 @@
+[r5a] seed 42: baseline 0.06343 | aligned_record +40.75 % aligned_policy +1250.30 % (43.4s)
+[r5a] seed 43: baseline 0.06267 | aligned_record +58.90 % aligned_policy +2040.22 % (19.0s)
+[r5a] seed 44: baseline 0.07000 | aligned_record +0.12 % aligned_policy +1388.20 % (18.7s)
+[r5a] seed 45: baseline 0.10241 | aligned_record -24.74 % aligned_policy +1226.40 % (19.3s)
+[r5a] seed 46: baseline 0.07855 | aligned_record +3.22 % aligned_policy +2020.59 % (18.6s)
+[r5a] seed 47: baseline 0.07779 | aligned_record +8.76 % aligned_policy +2281.17 % (18.8s)
+[r5a] seed 48: baseline 0.09075 | aligned_record -2.47 % aligned_policy +1100.62 % (18.6s)
+[r5a] seed 49: baseline 0.08207 | aligned_record +14.58 % aligned_policy +1798.99 % (19.7s)
+[r5a] seed 50: baseline 0.07156 | aligned_record +13.94 % aligned_policy +1019.68 % (18.6s)
+[r5a] seed 51: baseline 0.08354 | aligned_record -6.50 % aligned_policy +1687.74 % (25.4s)
+[r5a] restart/aligned_record: 0.08439 vs baseline 0.07828; t=1.131 p=0.2873; var_ratio=1.007
+[r5a] restart/aligned_policy: 1.30590 vs baseline 0.07828; t=11.198 p=0.0000; var_ratio=0.066
+[r5a] wrote verification_outputs/gap80-r5a-restart/aligned/r5a_restart.json

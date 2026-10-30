@@ -1,0 +1,16 @@
+{
+  "k_studies": 12,
+  "pooled_d_z": 1.1168578981151736,
+  "se_pooled": 0.2406451035814549,
+  "ci_95_lower": 0.6452021620396111,
+  "ci_95_upper": 1.588513634190736,
+  "I_squared_pct": 99.59551421074615,
+  "tau_squared": 0.647995701387359,
+  "cochran_q": 2719.5022154650633,
+  "cochran_q_p": 0.0,
+  "fixed_effect_pooled_d_z": 0.4258421922987005,
+  "heterogeneity_class": "high",
+  "method": "DerSimonian-Laird random-effects meta-analysis via adaptive_reflow.stats.equivalence.meta_random_effects",
+  "alpha": 0.05,
+  "sign_convention": "POSITIVE d means the FRAMEWORK improves over the baseline on the per-metric direction. Higher-better metrics (HMMER hits, pLDDT): framework > baseline => positive d. Lower-better metrics (FID, RMSD, scPerplexity, W2, REOS_n_flags): framework < baseline => positive d. Source artifacts use heterogeneous sign conventions; per-row notes in the audit CSV / audit doc record whether a sign flip was applied."
+}

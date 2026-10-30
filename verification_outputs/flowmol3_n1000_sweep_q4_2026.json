@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0.0",
+  "sweep_id": "wave82_agent_c_n1000",
+  "model": "flowmol3",
+  "checkpoint": "/home/hugo/codes/flowa-multistep-reinference/data/flowmol3/weights_real/checkpoints/last.ckpt",
+  "n_total_per_arm": 1000,
+  "nfe": 250,
+  "nfe_batch": 100,
+  "n_batches": 10,
+  "seed_base": 42,
+  "device": "cuda:0",
+  "paper_targets": {
+    "validity_pct": 0.999,
+    "pb_validity_pct": 0.919,
+    "fg_dev": 0.27,
+    "ood_ring_rate": 0.1
+  },
+  "baseline": {
+    "perturbation_sigma": 0.0,
+    "metrics": {
+      "validity_pct": 1.0,
+      "pb_validity_pct": 0.5285285285285285,
+      "fg_dev": 0.6381122391671532,
+      "ood_ring_rate": 0.013013013013013013,
+      "wallclock_s": 37.49
+    },
+    "n_sampled": 999,
+    "n_smiles": 1000,
+    "n_errors": 0,
+    "wallclock_sampling_s": 181.714,
+    "wallclock_metrics_s": 37.49,
+    "errors_sample": []
+  },
+  "framework": {
+    "perturbation_sigma": 0.05,
+    "metrics": {
+      "validity_pct": 1.0,
+      "pb_validity_pct": 0.429,
+      "fg_dev": 0.614627774616795,
+      "ood_ring_rate": 0.01,
+      "wallclock_s": 43.924
+    },
+    "n_sampled": 1000,
+    "n_smiles": 1000,
+    "n_errors": 0,
+    "wallclock_sampling_s": 196.826,
+    "wallclock_metrics_s": 43.924,
+    "errors_sample": []
+  },
+  "per_metric_delta_verdict": {
+    "validity_pct": {
+      "paper_target": 0.999,
+      "baseline": 1.0,
+      "framework": 1.0,
+      "delta": 0.0,
+      "baseline_dist_to_paper": 0.0010000000000000009,
+      "framework_dist_to_paper": 0.0010000000000000009,
+      "verdict": "tie_at_paper"
+    },
+    "pb_validity_pct": {
+      "paper_target": 0.919,
+      "baseline": 0.5285285285285285,
+      "framework": 0.429,
+      "delta": -0.0995285285285285,
+      "baseline_dist_to_paper": 0.39047147147147154,
+      "framework_dist_to_paper": 0.49000000000000005,
+      "verdict": "baseline_improves"
+    },
+    "fg_dev": {
+      "paper_target": 0.27,
+      "baseline": 0.6381122391671532,
+      "framework": 0.614627774616795,
+      "delta": -0.02348446455035824,
+      "baseline_dist_to_paper": 0.3681122391671532,
+      "framework_dist_to_paper": 0.34462777461679495,
+      "verdict": "framework_improves"
+    },
+    "ood_ring_rate": {
+      "paper_target": 0.1,
+      "baseline": 0.013013013013013013,
+      "framework": 0.01,
+      "delta": -0.0030130130130130127,
+      "baseline_dist_to_paper": 0.086986986986987,
+      "framework_dist_to_paper": 0.09000000000000001,
+      "verdict": "baseline_improves"
+    }
+  },
+  "statistical_power_at_n1000": {
+    "n_total_per_arm": 1000,
+    "fg_dev_sem": 0.00577,
+    "fg_dev_mdd_alpha0.05_power0.8": 0.016,
+    "ood_ring_rate_sem_at_p0.10": 0.00949,
+    "ood_ring_rate_mdd_alpha0.05_power0.8": 0.0263
+  },
+  "sweep_wallclock_s": 462.754,
+  "timestamp": "2026-09-08T20:59:10+0800"
+}

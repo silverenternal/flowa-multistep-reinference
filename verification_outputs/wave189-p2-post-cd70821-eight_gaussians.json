@@ -1,0 +1,18 @@
+{
+  "target": "eight_gaussians",
+  "baseline_w2_mean": 0.17641514890238544,
+  "baseline_w2_std": 0.01343758890840026,
+  "framework_w2_mean": 0.1713485842594782,
+  "framework_w2_std": 0.0026264684036113955,
+  "framework_scheduler": "PaperRatioAdaptiveScheduler",
+  "delta_abs": 0.005066564642907251,
+  "delta_pct": 2.8719555403434756,
+  "p_value": 0.504177866362152,
+  "bonferroni_alpha": 0.025,
+  "bonferroni_significant": false,
+  "n_records": 3,
+  "n_samples": 1000,
+  "n_rounds": 5,
+  "n_seeds": 3,
+  "nfe": 100
+}

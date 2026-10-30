@@ -1,0 +1,107 @@
+{
+  "two_moons": {
+    "target": "two_moons",
+    "n_samples": 1000,
+    "n_rounds": 5,
+    "n_seeds": 3,
+    "nfe": 100,
+    "scheduler": "PaperRatioAdaptiveScheduler",
+    "baseline_per_seed_w2": [
+      0.06902956057458323,
+      0.07204959995016039,
+      0.07973905985294104
+    ],
+    "baseline_w2_mean": 0.07360607345922822,
+    "baseline_w2_std": 0.005521802335887173,
+    "framework_per_seed_w2_tail5": [
+      0.0808781185839662,
+      0.07196504750172406,
+      0.07494748433174749
+    ],
+    "framework_per_round_per_seed": [
+      [
+        0.06902956057458323,
+        0.0776820417615823,
+        0.10950005273517122,
+        0.0765794126578103,
+        0.07159952519068392
+      ],
+      [
+        0.07204959995016039,
+        0.06523460247390217,
+        0.07569046703538375,
+        0.07017371627382253,
+        0.07667685177535144
+      ],
+      [
+        0.07973905985294104,
+        0.07945213943449857,
+        0.06694706966761635,
+        0.0902015956907118,
+        0.05839755701296967
+      ]
+    ],
+    "framework_w2_mean": 0.07593021680581258,
+    "framework_w2_std": 0.004537072995441206,
+    "delta_abs": -0.002324143346584359,
+    "delta_pct": -3.1575429001409043,
+    "p_value": 0.68503829122346,
+    "bonferroni_alpha": 0.025,
+    "bonferroni_significant": false,
+    "n_records": 3
+  },
+  "eight_gaussians": {
+    "target": "eight_gaussians",
+    "n_samples": 1000,
+    "n_rounds": 5,
+    "n_seeds": 3,
+    "nfe": 100,
+    "scheduler": "PaperRatioAdaptiveScheduler",
+    "baseline_per_seed_w2": [
+      0.17439729529844625,
+      0.16410060033957263,
+      0.19074755106913746
+    ],
+    "baseline_w2_mean": 0.17641514890238544,
+    "baseline_w2_std": 0.01343758890840026,
+    "framework_per_seed_w2_tail5": [
+      0.17152262537441193,
+      0.16863942363273518,
+      0.17388370377128745
+    ],
+    "framework_per_round_per_seed": [
+      [
+        0.17439729529844625,
+        0.15992376048884122,
+        0.20747286442718266,
+        0.15836825947959993,
+        0.15745094717798966
+      ],
+      [
+        0.16410060033957263,
+        0.1511139981751274,
+        0.18628107648747022,
+        0.18541552216180449,
+        0.1562859209997013
+      ],
+      [
+        0.19074755106913746,
+        0.17156873994896932,
+        0.1650220994773205,
+        0.17873907959961885,
+        0.16334104876139113
+      ]
+    ],
+    "framework_w2_mean": 0.1713485842594782,
+    "framework_w2_std": 0.0026264684036113955,
+    "delta_abs": 0.005066564642907251,
+    "delta_pct": 2.8719555403434756,
+    "p_value": 0.504177866362152,
+    "bonferroni_alpha": 0.025,
+    "bonferroni_significant": false,
+    "n_records": 3
+  },
+  "verdict": "tie",
+  "implication_for_paper": "Mixed result: framework wins one target and baseline wins the other; the Pareto claim does not survive uniformly.",
+  "commit_sha": "df23e43ee1b9399082693fd8b0c7279d2a000f7e"
+}

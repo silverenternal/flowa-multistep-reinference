@@ -1,0 +1,187 @@
+{
+  "schema": "wave247_p5_r5b_nfe_sweep_v1_partial",
+  "wave": "Wave 247 P5",
+  "task": "R5b CIFAR-10 RF n_rounds=1 NFE budget sweep (50/100/200) \u2014 PARTIAL: NFE=200 not run (subprocess timeout on NFE=100)",
+  "nfe_values_requested": [
+    50,
+    100,
+    200
+  ],
+  "nfe_values_completed": [
+    50,
+    100
+  ],
+  "n_samples": 200,
+  "n_rounds": 1,
+  "seed": 42,
+  "results": {
+    "50": {
+      "nfe": 50,
+      "headline_fids": {
+        "baseline": 447.8713235063466,
+        "CosineAnnealScheduler": 447.10693779105657,
+        "CodimensionSheetScheduler": 442.88865869548306,
+        "EvidenceDrivenScheduler": 453.85249180184576,
+        "FreeTrajScheduler": 451.36923415556953
+      },
+      "baseline_fid": 447.8713235063466,
+      "framework_arms": {
+        "CosineAnnealScheduler": {
+          "fid_headline": 447.10693779105657,
+          "delta_vs_baseline_fid_units": -0.7643857152900182,
+          "delta_vs_baseline_pct": -0.17067083226175483,
+          "per_sample_l2_sq_distance_mean": 378.59701149568093,
+          "per_sample_l2_sq_distance_std": 81.25717753908401,
+          "cohens_d_z": 4.6592439334184235,
+          "t_statistic": 65.891659610449,
+          "df": 199,
+          "p_value_raw": 4.108271680727679e-137,
+          "CI95_low": 367.33534124911967,
+          "CI95_high": 389.8586817422422,
+          "n_paired": 200
+        },
+        "CodimensionSheetScheduler": {
+          "fid_headline": 442.88865869548306,
+          "delta_vs_baseline_fid_units": -4.982664810863525,
+          "delta_vs_baseline_pct": -1.1125215099405485,
+          "per_sample_l2_sq_distance_mean": 373.81036981917583,
+          "per_sample_l2_sq_distance_std": 84.46881151154003,
+          "cohens_d_z": 4.425424758913606,
+          "t_statistic": 62.584957133173056,
+          "df": 199,
+          "p_value_raw": 7.235931603723413e-133,
+          "CI95_low": 362.1035898131345,
+          "CI95_high": 385.5171498252172,
+          "n_paired": 200
+        },
+        "EvidenceDrivenScheduler": {
+          "fid_headline": 453.85249180184576,
+          "delta_vs_baseline_fid_units": 5.981168295499174,
+          "delta_vs_baseline_pct": 1.3354657870642654,
+          "per_sample_l2_sq_distance_mean": 385.16794939520196,
+          "per_sample_l2_sq_distance_std": 80.04332563914637,
+          "cohens_d_z": 4.811993333855558,
+          "t_statistic": 68.05186234787455,
+          "df": 199,
+          "p_value_raw": 8.783185610412645e-140,
+          "CI95_low": 374.0745104389619,
+          "CI95_high": 396.261388351442,
+          "n_paired": 200
+        },
+        "FreeTrajScheduler": {
+          "fid_headline": 451.36923415556953,
+          "delta_vs_baseline_fid_units": 3.497910649222945,
+          "delta_vs_baseline_pct": 0.7810079515335118,
+          "per_sample_l2_sq_distance_mean": 380.6881137948348,
+          "per_sample_l2_sq_distance_std": 86.54148620723578,
+          "cohens_d_z": 4.398908898828286,
+          "t_statistic": 62.209966243666585,
+          "df": 199,
+          "p_value_raw": 2.2581484171838312e-132,
+          "CI95_low": 368.6940757316195,
+          "CI95_high": 392.68215185805013,
+          "n_paired": 200
+        }
+      },
+      "ref_features_path": "data/cifar10_inception_features.npz",
+      "n_samples": 200,
+      "n_rounds": 1,
+      "seed": 42
+    },
+    "100": {
+      "nfe": 100,
+      "headline_fids": {
+        "baseline": 443.73431564516494,
+        "CosineAnnealScheduler": 445.6800848530961,
+        "CodimensionSheetScheduler": 441.54620475703155,
+        "EvidenceDrivenScheduler": 446.0633671747512,
+        "FreeTrajScheduler": 443.4102190098133
+      },
+      "baseline_fid": 443.73431564516494,
+      "framework_arms": {
+        "CosineAnnealScheduler": {
+          "fid_headline": 445.6800848530961,
+          "delta_vs_baseline_fid_units": 1.9457692079311641,
+          "delta_vs_baseline_pct": 0.43849870053482887,
+          "per_sample_l2_sq_distance_mean": 377.77569580078125,
+          "per_sample_l2_sq_distance_std": 80.2100601196289,
+          "cohens_d_z": 4.709829356035259,
+          "t_statistic": 66.60704551768005,
+          "df": 199,
+          "p_value_raw": 5.2563447099411945e-138,
+          "CI95_low": 366.65914862450705,
+          "CI95_high": 388.89224297705545,
+          "n_paired": 200
+        },
+        "CodimensionSheetScheduler": {
+          "fid_headline": 441.54620475703155,
+          "delta_vs_baseline_fid_units": -2.1881108881333944,
+          "delta_vs_baseline_pct": -0.4931128404960079,
+          "per_sample_l2_sq_distance_mean": 370.3130798339844,
+          "per_sample_l2_sq_distance_std": 80.56076049804688,
+          "cohens_d_z": 4.596692950074153,
+          "t_statistic": 65.0070551205966,
+          "df": 199,
+          "p_value_raw": 5.3725071278252644e-136,
+          "CI95_low": 359.14792806502436,
+          "CI95_high": 381.4782316029444,
+          "n_paired": 200
+        },
+        "EvidenceDrivenScheduler": {
+          "fid_headline": 446.0633671747512,
+          "delta_vs_baseline_fid_units": 2.329051529586252,
+          "delta_vs_baseline_pct": 0.5248752344519357,
+          "per_sample_l2_sq_distance_mean": 381.51422119140625,
+          "per_sample_l2_sq_distance_std": 81.79048156738281,
+          "cohens_d_z": 4.664530809457297,
+          "t_statistic": 65.9664273284166,
+          "df": 199,
+          "p_value_raw": 3.310682825201255e-137,
+          "CI95_low": 370.17863877745555,
+          "CI95_high": 392.84980360535695,
+          "n_paired": 200
+        },
+        "FreeTrajScheduler": {
+          "fid_headline": 443.4102190098133,
+          "delta_vs_baseline_fid_units": -0.3240966353516228,
+          "delta_vs_baseline_pct": -0.07303844303328319,
+          "per_sample_l2_sq_distance_mean": 378.54962158203125,
+          "per_sample_l2_sq_distance_std": 83.57453155517578,
+          "cohens_d_z": 4.529485413054495,
+          "t_statistic": 64.05659701712767,
+          "df": 199,
+          "p_value_raw": 8.817298245480216e-135,
+          "CI95_low": 366.96678245458907,
+          "CI95_high": 390.13246070947343,
+          "n_paired": 200
+        }
+      },
+      "ref_features_path": "data/cifar10_inception_features.npz",
+      "n_samples": 200,
+      "n_rounds": 1,
+      "seed": 42
+    }
+  },
+  "verdict_per_nfe_scheduler": {
+    "50": {
+      "CosineAnnealScheduler": "framework_WINS",
+      "CodimensionSheetScheduler": "framework_WINS",
+      "EvidenceDrivenScheduler": "REGRESSES",
+      "FreeTrajScheduler": "REGRESSES"
+    },
+    "100": {
+      "CosineAnnealScheduler": "REGRESSES",
+      "CodimensionSheetScheduler": "framework_WINS",
+      "EvidenceDrivenScheduler": "REGRESSES",
+      "FreeTrajScheduler": "framework_WINS"
+    }
+  },
+  "win_extends_to_higher_nfe": false,
+  "best_delta_fid_pct": -1.1125215099405485,
+  "best_nfe_per_scheduler": {
+    "CosineAnnealScheduler": 50,
+    "CodimensionSheetScheduler": 50,
+    "EvidenceDrivenScheduler": 100,
+    "FreeTrajScheduler": 100
+  }
+}

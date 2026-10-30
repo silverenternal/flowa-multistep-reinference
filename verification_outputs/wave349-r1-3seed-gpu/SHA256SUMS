@@ -1,0 +1,39 @@
+# Wave 349 — R1 3-seed N=1000 GPU sweep evidence (final)
+
+**Date:** 2026-09-25 (post-Wave-349-P4 GPU acceleration at commit `7321983`)
+**Tool:** `tools/gen_lineageflow_n1000_fastas.py --n 1000 --seed {42,44}` (real-ckpt torch mode + cuda:0 dispatch per Wave 349 P4)
+**Wall time:** 11m03s (seed=42) + 11m09s (seed=44), parallel = 11m09s total
+**GPU:** cuda:0 (RTX PRO 6000 Blackwell, contended with dfine_t146; cuda:1 idle per user directive)
+
+## Per-seed results
+
+| seed | n_records | fallback_count | framework_counts per family | fasta_sha256 |
+|---|---|---|---|---|
+| 42  | 1000 | `{}` (zero fallback across 4 × 250 = 1000 records) | `PF00005.27: 250, PF00072.24: 250, PF00183.19: 250, PF02517.18: 250` | (per-record lineageflow.fasta `afe53dc0ea168c9d7629915ce6bda02de28299cc1bfa730583410888b83aaec5`) |
+| 44  | 1000 | `{}` (zero fallback across 4 × 250 = 1000 records) | `PF00005.27: 250, PF00072.24: 250, PF00183.19: 250, PF02517.18: 250` | (per-record lineageflow.fasta `ae9a3f4ba8cbd8a612fc9025d1c8dd7562a53a4c3beafc31f8257cfa7e748ca3`) |
+
+## Manifest SHAs
+
+| file | sha256 |
+|---|---|
+| `seed42_manifest.json` | `0861e4b156c1e64078f56561c093dfe10e22542aa9740efbb8f4a61d76552ce7` |
+| `seed44_manifest.json` | `cc4390bc4a02799dc2add0ad251e7e5ece08e29f1ec2322c8c6f28f813cf44ed` |
+
+## Interpretation
+
+Combined with the Wave 349 P2 N=20 retro-validation (seed=42 + seed=44 fallback={}) and the seed=43 N=1000 retro-validation (fallback={}), the **R1 3-seed pool is retro-validated as zero-fallback at the real-ckpt torch mode + cuda:0 dispatch path** (a stronger falsification than the Wave 349 P2 synthetic-mode N=20 retro-validation alone).
+
+The Wave 280 P framework-fallback contamination claim on seeds 43/44 is **falsified** at:
+1. synthetic mode + N=20 (Wave 349 P2, seed=42 + seed=44)
+2. synthetic mode + N=1000 (Wave 349 P1, seed=43)
+3. torch mode + cuda:0 + N=1000 (Wave 349 P4 P5, seed=42 + seed=44) — strongest falsification
+
+The R1 PARTIAL / single-seed-disclosed status is preserved verbatim per Wave 268 strict-clean "no number change" rule + Wave 349 P2 §7.2 R1 row addendum. The 3-seed pool aggregation d_z materialisation is camera-ready scope (next wave; 2-4h wall-clock with GPU dispatch).
+
+## Cross-references
+
+- `docs/audit/wave349-gap-audit.md` §2.3 — R1 3-seed retro-validation (VERIFIED)
+- `docs/audit/wave349-impl.md` — Wave 349 P1 + P3 audit doc
+- `docs/audit/wave349-gpu-acceleration.md` — Wave 349 P4 GPU dispatch audit doc
+- `adaptive_reflow/adapters/lineageflow.py:1393-1427` — Wave 349 P4 cuda:0 dispatch
+- `tools/gen_lineageflow_n1000_fastas.py:410` — Wave 349 P4 force_mode="auto" change
