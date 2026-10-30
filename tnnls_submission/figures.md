@@ -250,7 +250,7 @@
         │   ┌─────────────────────────▼───────────────────────────────┐  │
         │   │  Audit trail                                              │  │
         │   │  - D.4 byte-stable regression suite (30/30 PASS)          │  │
-        │   │  - 5558 pytest tests                                       │  │
+        │   │  - 5565 pytest tests                                       │  │
         │   │  - Hash-chained transition logs                            │  │
         │   │  - claims_consistency check                               │  │
         │   │  - mkdocs strict 0 warnings                                │  │

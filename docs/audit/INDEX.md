@@ -1,16 +1,32 @@
 # Project Audit Index
 
-> **Topic-cluster map of all `docs/audit/*.md` files.** Regenerated from on-disk layout (2026-10-11, Wave 384 documentation refresh). Reviewers can answer *"what does the project claim about X?"* by reading the cluster summary for X.
+> **Topic-cluster map of every `docs/audit/*.md` record.** Generated — do not
+> hand-edit. Refresh with `python3 tools/regen_audit_index.py`; the algorithm and
+> the frozen cluster boundaries are described in
+> [`INDEX_MAINTENANCE.md`](INDEX_MAINTENANCE.md). Reviewers can answer *"what does
+> the project claim about X?"* by reading the cluster summary for X.
 
-Audit files are organized into topic-cluster subdirectories (`docs/audit/<cluster>/waveNNN-*.md`). Wave filenames are preserved (so `git log --follow` continues to work and the per-wave audit trail is intact). Flat files at the top level are classified into clusters by filename + first-30-line keyword scan (see `cluster_order` in `/tmp/regen_index.py`).
+Records are grouped into 25 frozen topic clusters. A record
+under `docs/audit/<cluster>/` is listed by bare filename. Placement is a
+filename keyword scan; the five topic clusters may additionally read the
+first 40 lines, and the per-model clusters never do. The `GAP-NN` series
+goes to `governance` unless its filename names a model. Unmatched records
+fall back to `governance`.
 
-**Active surface** = one of the docs that are loaded by an external reviewer (`docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.md`, `docs/METRIC_LEDGER.md`, `docs/INSIGHTS.md`, `docs/ARCHITECTURE.md`, `docs/README.md`, `docs/cover-letter-tnnls.md`, `docs/push-ready-summary.md`, plus 13 other Tier-1 reviewer-facing docs and the 8 `tnnls_submission/*.md` package files). **Active** = a cluster file is cited from at least one active surface; **Historical** = not cited (preserved for the per-wave audit trail).
+**Active** = cited by at least one of the 18 reviewer-facing
+surfaces or any `tnnls_submission/*.md` file. **Historical** = not cited;
+preserved for the per-wave audit trail.
 
 ---
 
 ## How to use this index
 
-1. **Pick the cluster that matches your question** (CIFAR-10, Kanzi, LineageFlow, Algorithm / Theorem 1, Statistical methodology, …). 2. **Read the cluster summary** (one paragraph each, written without wave numbers — describes what the project actually claims and where the evidence lives). 3. **Open the active files first** (these are cited by reviewer-facing docs and are the canonical references). 4. **Historical files** preserve the per-wave audit trail and are useful for tracing the evolution of a result; skip them on a first read.
+1. **Pick the cluster that matches your question** (CIFAR-10, Kanzi,
+   LineageFlow, Algorithm / Theorem 1, Statistical methodology, ...).
+2. **Read the cluster summary** — one paragraph, written without wave numbers,
+   describing what the project claims and where the evidence lives.
+3. **Open the active records first** — those are cited by reviewer-facing docs.
+4. **Historical records** trace how a result evolved; skip them on a first read.
 
 ---
 
@@ -19,11 +35,11 @@ Audit files are organized into topic-cluster subdirectories (`docs/audit/<cluste
 | Cluster | Topic | Files | Active | Historical |
 |---------|-------|------:|------:|-----------:|
 | `cifar` | CIFAR-10 RF (Rectified Flow on CIFAR-10) | 7 | 5 | 2 |
-| `kanzi` | Kanzi (protein flow autoencoder) | 9 | 9 | 0 |
-| `flowmol3` | FlowMol3 (molecular 3D flow matching) | 5 | 3 | 2 |
-| `lineageflow` | LineageFlow (protein flow matching, HMMER + foldability + novelty) | 19 | 16 | 3 |
+| `kanzi` | Kanzi (protein flow autoencoder) | 10 | 9 | 1 |
+| `flowmol3` | FlowMol3 (molecular 3D flow matching) | 7 | 4 | 3 |
+| `lineageflow` | LineageFlow (protein flow matching, HMMER + foldability + novelty) | 23 | 17 | 6 |
 | `freqflow` | FreqFlow + MM-FM (frequency / multimodal flow) | 3 | 3 | 0 |
-| `mnist` | MNIST FM (MNIST flow matching) | 4 | 2 | 2 |
+| `mnist` | MNIST FM (MNIST flow matching) | 5 | 2 | 3 |
 | `brai` | BRAI perturbation (Bounded-Range Adaptive Integration) | 0 | 0 | 0 |
 | `2d_toy` | 2D toy FM (two-dim flow matching, 8gaussian) | 2 | 1 | 1 |
 | `self_flow` | Self-Flow ICML 2026 (image FM) | 0 | 0 | 0 |
@@ -33,17 +49,17 @@ Audit files are organized into topic-cluster subdirectories (`docs/audit/<cluste
 | `protbfn_abbfn` | ProtBFN-AbBFN (antibody / protein BFN) | 0 | 0 | 0 |
 | `wan2_2` | Wan2.2 video (video diffusion) | 0 | 0 | 0 |
 | `web_research` | Web research 2026 (FM literature surveys) | 1 | 0 | 1 |
-| `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 114 | 71 | 43 |
-| `reproducibility` | Reproducibility (reproducibility-record, preregistration, reproduce-script) | 13 | 5 | 8 |
-| `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 22 | 10 | 12 |
-| `push_state` | Push state (push-ready, freeze, release, submission) | 7 | 5 | 2 |
-| `algorithm_4arm` | Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency) | 34 | 19 | 15 |
-| `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 97 | 81 | 16 |
-| `stats_method` | Statistical methodology (R5/R6, p-value, bonferroni, TOST) | 41 | 15 | 26 |
-| `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 31 | 14 | 17 |
-| `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 35 | 22 | 13 |
-| `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 40 | 24 | 16 |
-| **TOTAL** | — | **509** | **306** | **203** |
+| `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 123 | 75 | 48 |
+| `reproducibility` | Reproducibility (reproducibility-record, preregistration, reproduce-script) | 13 | 6 | 7 |
+| `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 27 | 9 | 18 |
+| `push_state` | Push state (push-ready, freeze, release, submission) | 10 | 6 | 4 |
+| `algorithm_4arm` | Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency) | 39 | 18 | 21 |
+| `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 107 | 90 | 17 |
+| `stats_method` | Statistical methodology (R5/R6, p-value, bonferroni, TOST) | 43 | 21 | 22 |
+| `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 49 | 26 | 23 |
+| `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
+| `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 108 | 32 | 76 |
+| **TOTAL** | — | **613** | **347** | **266** |
 
 ---
 
@@ -55,90 +71,100 @@ Audit files are organized into topic-cluster subdirectories (`docs/audit/<cluste
 
 CIFAR-10 RF (Rectified Flow on CIFAR-10). This cluster is part of the project's audit surface for cifar.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `cifar-reference-availability.md` (372B, 2026-09-22)
-- `cifar-v4-audit.md` (7.2KB, 2026-09-22)
-- `p6-cifar-rf-v4-honest-negative-curve.md` (11.3KB, 2026-09-22)
-- `wave280-p-cifar-sweep-result.md` (15.6KB, 2026-09-22)
-- `wave286-p-cifar-resweep-aggregated.md` (17.5KB, 2026-09-22)
+- `cifar-reference-availability.md`
+- `cifar-v4-audit.md`
+- `p6-cifar-rf-v4-honest-negative-curve.md`
+- `wave280-p-cifar-sweep-result.md`
+- `wave286-p-cifar-resweep-aggregated.md`
 
 **Historical (2 files, not cited by reviewer-facing surfaces):**
 
-- `p-cifar10-impl.md` (11.2KB, 2026-09-22)
-- `wave275-p4-cifar10-proposal.md` (32.6KB, 2026-09-22)
+- `p-cifar10-impl.md`
+- `wave275-p4-cifar10-proposal.md`
 
 ---
 
 ### Cluster: `kanzi` — Kanzi (protein flow autoencoder)
 
-**Files: 9** (active: 9, historical: 0)
+**Files: 10** (active: 9, historical: 1)
 
 Kanzi (protein flow autoencoder). This cluster is part of the project's audit surface for kanzi.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `kanzi-fix.md` (3.8KB, 2026-09-22)
-- `kanzi-gpu-sweep.md` (30.0KB, 2026-09-22)
-- `kanzi-load-torch-fix.md` (5.0KB, 2026-09-22)
-- `kanzi-nfe-bug.md` (7.7KB, 2026-09-22)
-- `p1-kanzi-byte-stability-regression.md` (17.2KB, 2026-09-22)
-- `p2-kanzi-n30-sweep.md` (7.7KB, 2026-09-22)
-- `p2-kanzi-rerun.md` (7.1KB, 2026-09-22)
-- `p3-kanzi-n1000-framework-inv-proj.md` (10.5KB, 2026-09-22)
-- `p4-kanzi-full.md` (16.8KB, 2026-09-22)
+- `kanzi-fix.md`
+- `kanzi-gpu-sweep.md`
+- `kanzi-load-torch-fix.md`
+- `kanzi-nfe-bug.md`
+- `p1-kanzi-byte-stability-regression.md`
+- `p2-kanzi-n30-sweep.md`
+- `p2-kanzi-rerun.md`
+- `p3-kanzi-n1000-framework-inv-proj.md`
+- `p4-kanzi-full.md`
+
+**Historical (1 files, not cited by reviewer-facing surfaces):**
+
+- `gap70-kanzi-latent.md`
 
 ---
 
 ### Cluster: `flowmol3` — FlowMol3 (molecular 3D flow matching)
 
-**Files: 5** (active: 3, historical: 2)
+**Files: 7** (active: 4, historical: 3)
 
 FlowMol3 (molecular 3D flow matching). This cluster is part of the project's audit surface for flowmol3.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `c-flowmol3-n1000.md` (15.0KB, 2026-09-22)
-- `p2-flowmol3-dgl-fix-or-sanity.md` (11.1KB, 2026-09-22)
-- `p3-flowmol3-n1000.md` (7.9KB, 2026-09-22)
+- `c-flowmol3-n1000.md`
+- `p2-flowmol3-dgl-fix-or-sanity.md`
+- `p3-flowmol3-n1000.md`
+- `gap39-flowmol3-real-restart-blend.md`
 
-**Historical (2 files, not cited by reviewer-facing surfaces):**
+**Historical (3 files, not cited by reviewer-facing surfaces):**
 
-- `p-flowmol3-impl.md` (9.3KB, 2026-09-22)
-- `wave275-p4-flowmol3-proposal.md` (33.6KB, 2026-09-22)
+- `p-flowmol3-impl.md`
+- `gap68-flowmol3-channels.md`
+- `wave275-p4-flowmol3-proposal.md`
 
 ---
 
 ### Cluster: `lineageflow` — LineageFlow (protein flow matching, HMMER + foldability + novelty)
 
-**Files: 19** (active: 16, historical: 3)
+**Files: 23** (active: 17, historical: 6)
 
 LineageFlow (protein flow matching, HMMER + foldability + novelty). This cluster is part of the project's audit surface for lineageflow.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `b-lineageflow-n1000-gpu.md` (10.2KB, 2026-09-22)
-- `lineageflow-hmmer-poc.md` (4.7KB, 2026-09-22)
-- `lineageflow-nfe-scan.md` (2.2KB, 2026-09-22)
-- `p3-lineageflow-n30-sweep.md` (10.2KB, 2026-09-22)
-- `p5-lineageflow-regression.md` (10.4KB, 2026-09-22)
-- `data_packaging/hmmer-launch.md` (5.2KB, 2026-09-22)
-- `engineering/hmmer-collect.md` (7.8KB, 2026-09-22)
-- `engineering/hmmer-rederivation.md` (10.5KB, 2026-09-22)
-- `sweep_eval/hmmer-launch.md` (6.3KB, 2026-09-22)
-- `sweep_eval/novelty-diagnosis.md` (18.8KB, 2026-09-22)
-- `sweep_eval/novelty-fix.md` (15.6KB, 2026-09-22)
-- `sweep_eval/novelty-sweep-fixed.md` (14.0KB, 2026-09-22)
-- `sweep_eval/novelty-sweep.md` (13.5KB, 2026-09-22)
-- `sweep_eval/p1-pLDDT-inversion.md` (18.5KB, 2026-09-22)
-- `sweep_eval/p2-foldability-sc-workers-per-gpu.md` (3.9KB, 2026-09-22)
-- `sweep_eval/p3-run-foldability-propagate-workers-per-gpu.md` (5.9KB, 2026-09-22)
+- `hmmer-launch.md`
+- `hmmer-collect.md`
+- `hmmer-rederivation.md`
+- `gap70-lineageflow-position-blend.md`
+- `b-lineageflow-n1000-gpu.md`
+- `lineageflow-hmmer-poc.md`
+- `lineageflow-nfe-scan.md`
+- `p3-lineageflow-n30-sweep.md`
+- `p5-lineageflow-regression.md`
+- `hmmer-launch.md`
+- `novelty-diagnosis.md`
+- `novelty-fix.md`
+- `novelty-sweep-fixed.md`
+- `novelty-sweep.md`
+- `p1-pLDDT-inversion.md`
+- `p2-foldability-sc-workers-per-gpu.md`
+- `p3-run-foldability-propagate-workers-per-gpu.md`
 
-**Historical (3 files, not cited by reviewer-facing surfaces):**
+**Historical (6 files, not cited by reviewer-facing surfaces):**
 
-- `p-k7-impl.md` (6.1KB, 2026-09-22)
-- `p-lineageflow-impl.md` (10.1KB, 2026-09-22)
-- `wave275-p4-lineageflow-proposal.md` (24.1KB, 2026-09-22)
+- `gap40-lineageflow-classifier-aware-restart.md`
+- `gap69-lineageflow-profile.md`
+- `lineageflow-real-forward-fix.md`
+- `p-k7-impl.md`
+- `p-lineageflow-impl.md`
+- `wave275-p4-lineageflow-proposal.md`
 
 ---
 
@@ -148,29 +174,30 @@ LineageFlow (protein flow matching, HMMER + foldability + novelty). This cluster
 
 FreqFlow + MM-FM (frequency / multimodal flow). This cluster is part of the project's audit surface for freqflow.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `p3-freqflow-honest-disclosure.md` (12.6KB, 2026-09-22)
-- `p5-freqflow-n1000.md` (8.4KB, 2026-09-22)
-- `mm-fm-unblock-investigation.md` (10.0KB, 2026-09-21)
+- `p3-freqflow-honest-disclosure.md`
+- `p5-freqflow-n1000.md`
+- `mm-fm-unblock-investigation.md`
 
 ---
 
 ### Cluster: `mnist` — MNIST FM (MNIST flow matching)
 
-**Files: 4** (active: 2, historical: 2)
+**Files: 5** (active: 2, historical: 3)
 
 MNIST FM (MNIST flow matching). This cluster is part of the project's audit surface for mnist.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `wave280-p-r5c-sweep-result.md` (17.4KB, 2026-09-22)
-- `wf334-r5c-regime-curve.md` (12.2KB, 2026-09-23)
+- `wave280-p-r5c-sweep-result.md`
+- `wf334-r5c-regime-curve.md`
 
-**Historical (2 files, not cited by reviewer-facing surfaces):**
+**Historical (3 files, not cited by reviewer-facing surfaces):**
 
-- `p-mnist-impl.md` (10.6KB, 2026-09-22)
-- `wave275-p4-mnist-proposal.md` (39.9KB, 2026-09-23)
+- `mnist-gpu-backend.md`
+- `p-mnist-impl.md`
+- `wave275-p4-mnist-proposal.md`
 
 ---
 
@@ -180,13 +207,13 @@ MNIST FM (MNIST flow matching). This cluster is part of the project's audit surf
 
 2D toy FM (two-dim flow matching, 8gaussian). This cluster is part of the project's audit surface for 2d_toy.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `wave286-p-paper-quantity-ablation.md` (18.9KB, 2026-09-22)
+- `wave286-p-paper-quantity-ablation.md`
 
 **Historical (1 files, not cited by reviewer-facing surfaces):**
 
-- `wave282-p-cosine-vs-paper-controllers.md` (20.7KB, 2026-09-22)
+- `wave282-p-cosine-vs-paper-controllers.md`
 
 ---
 
@@ -198,629 +225,701 @@ Web research 2026 (FM literature surveys). This cluster is part of the project's
 
 **Historical (1 files, not cited by reviewer-facing surfaces):**
 
-- `INDEX_MAINTENANCE.md` (11.3KB, 2026-09-25)
+- `INDEX_MAINTENANCE.md`
 
 ---
 
 ### Cluster: `engineering` — Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree)
 
-**Files: 114** (active: 71, historical: 43)
+**Files: 123** (active: 75, historical: 48)
 
 Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This cluster is part of the project's audit surface for engineering.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `bridge-bug-design.md` (27.0KB, 2026-09-22)
-- `cli-pr-prep.md` (33.9KB, 2026-09-22)
-- `cli-verify.md` (11.8KB, 2026-09-22)
-- `doc-cleanup.md` (12.8KB, 2026-09-22)
-- `docstring-audit.md` (9.0KB, 2026-09-22)
-- `eval.md` (11.4KB, 2026-09-22)
-- `followup-w148.md` (8.8KB, 2026-09-22)
-- `followup.md` (8.4KB, 2026-09-22)
-- `headline-evidence.md` (9.7KB, 2026-09-22)
-- `impl.md` (11.5KB, 2026-09-22)
-- `inv-proj-final-fix.md` (19.4KB, 2026-09-22)
-- `mypy-fix.md` (8.4KB, 2026-09-22)
-- `number-consistency.md` (9.5KB, 2026-09-22)
-- `p1-setup-w184.md` (8.7KB, 2026-09-22)
-- `p1-setup.md` (15.1KB, 2026-09-22)
-- `p2-verify.md` (5.0KB, 2026-09-22)
-- `p3-integration.md` (13.1KB, 2026-09-22)
-- `p3-journal-decision.md` (12.0KB, 2026-09-22)
-- `p3-tier-aware.md` (11.5KB, 2026-09-22)
-- `p4-plot.md` (9.4KB, 2026-09-22)
-- `p4-table-aggregate.md` (12.3KB, 2026-09-22)
-- `p5-gates.md` (8.0KB, 2026-09-22)
-- `p5-results.md` (10.5KB, 2026-09-22)
-- `pdf-warning-fixes.md` (2.6KB, 2026-09-22)
-- `polish-execute.md` (10.1KB, 2026-09-22)
-- `pr1-application.md` (3.2KB, 2026-09-22)
-- `primitive-cli-design.md` (9.4KB, 2026-09-22)
-- `push-and-fix.md` (9.7KB, 2026-09-22)
-- `push-w156c.md` (6.7KB, 2026-09-22)
-- `push-w158.md` (5.1KB, 2026-09-22)
-- `push.md` (5.1KB, 2026-09-22)
-- `ruff-cleanup.md` (9.2KB, 2026-09-22)
-- `scripts-ruff-cleanup.md` (7.8KB, 2026-09-22)
-- `tier1-polish.md` (9.4KB, 2026-09-22)
-- `tmp-migration.md` (8.5KB, 2026-09-22)
-- `todo-refactor.md` (9.8KB, 2026-09-22)
-- `data_packaging/pdf-warning-zero.md` (3.7KB, 2026-09-22)
-- `engineering-audit-2026-09-13.md` (4.9KB, 2026-09-21)
-- `governance/pdf-warning-reduction.md` (5.3KB, 2026-09-22)
-- `paper_claims/pdf-warning-reduction.md` (3.2KB, 2026-09-22)
-- `wave268-strict-clean.md` (10.4KB, 2026-09-26)
-- `wave290-p4-benchmark-fixed.md` (19.8KB, 2026-09-23)
-- `wave291-p1-hypothesis-redesign.md` (26.8KB, 2026-09-23)
-- `wave296-p1-architecture.md` (40.0KB, 2026-09-23)
-- `wave296-p2-cache.md` (23.3KB, 2026-09-23)
-- `wave297-p3-intro-rewritten.md` (15.0KB, 2026-09-23)
-- `wave297-p4-framework-rewritten.md` (21.4KB, 2026-09-23)
-- `wave297-p5-empirical-rewritten.md` (39.0KB, 2026-09-23)
-- `wave297-p7-readme-updated.md` (11.5KB, 2026-09-23)
-- `wave306-11-cell-alignment.md` (27.4KB, 2026-09-23)
-- `wave306-fix-plan.md` (62.8KB, 2026-09-23)
-- `wave307-data-archaeology.md` (49.9KB, 2026-09-23)
-- `wave310-restoration-execution.md` (24.8KB, 2026-09-25)
-- `wave311-restoration-execution.md` (18.5KB, 2026-09-23)
-- `wave322-restoration-execution.md` (17.8KB, 2026-09-23)
-- `wave347-final-4-gap-fix.md` (18.1KB, 2026-09-25)
-- `wave348-link-fix.md` (15.7KB, 2026-09-25)
-- `wave349-gpu-acceleration.md` (10.3KB, 2026-09-25)
-- `wave349-impl.md` (24.3KB, 2026-09-25)
-- `wave350-r1-materialize-status.md` (16.9KB, 2026-09-25)
-- `wave351-thm5-numerical.md` (22.3KB, 2026-09-25)
-- `wave352-framework-code-anchors.md` (13.8KB, 2026-09-25)
-- `wave352-l-local-appendix.md` (20.5KB, 2026-09-25)
-- `wave355-capability-token-example.md` (9.6KB, 2026-09-25)
-- `wave356-data-availability-polish.md` (23.6KB, 2026-09-25)
-- `wave356-highlights-polish.md` (22.7KB, 2026-09-25)
-- `wave357-ruff-w292-fix.md` (18.5KB, 2026-09-25)
-- `wave358-figures-md-polish.md` (15.3KB, 2026-09-25)
-- `wave361-figures-sha-crosscheck.md` (23.0KB, 2026-09-25)
-- `wave364-g38.md` (14.3KB, 2026-09-26)
-- `wave384-project-audit.md` (14.1KB, 2026-10-11)
+- `pdf-warning-zero.md`
+- `docs-legacy-inventory.md`
+- `engineering-audit-2026-09-13.md`
+- `bridge-bug-design.md`
+- `cli-pr-prep.md`
+- `cli-verify.md`
+- `doc-cleanup.md`
+- `docstring-audit.md`
+- `followup-w148.md`
+- `followup.md`
+- `headline-evidence.md`
+- `impl.md`
+- `inv-proj-final-fix.md`
+- `mypy-fix.md`
+- `number-consistency.md`
+- `p1-setup-w184.md`
+- `p2-verify.md`
+- `p3-integration.md`
+- `p3-journal-decision.md`
+- `p3-tier-aware.md`
+- `p4-plot.md`
+- `p4-table-aggregate.md`
+- `p5-gates.md`
+- `p5-results.md`
+- `pdf-warning-fixes.md`
+- `polish-execute.md`
+- `pr1-application.md`
+- `primitive-cli-design.md`
+- `push-and-fix.md`
+- `push-w156c.md`
+- `push-w158.md`
+- `ruff-cleanup.md`
+- `scripts-ruff-cleanup.md`
+- `tier1-polish.md`
+- `tmp-migration.md`
+- `todo-refactor.md`
+- `pdf-warning-reduction.md`
+- `pdf-warning-reduction.md`
+- `project-state-inventory.md`
+- `tables-inventory-provenance.md`
+- `wave268-strict-clean.md`
+- `wave290-p4-benchmark-fixed.md`
+- `wave291-p1-hypothesis-redesign.md`
+- `wave296-p1-architecture.md`
+- `wave296-p2-cache.md`
+- `wave297-p3-intro-rewritten.md`
+- `wave297-p4-framework-rewritten.md`
+- `wave297-p5-empirical-rewritten.md`
+- `wave297-p7-readme-updated.md`
+- `wave306-11-cell-alignment.md`
+- `wave306-fix-plan.md`
+- `wave307-data-archaeology.md`
+- `wave310-restoration-execution.md`
+- `wave311-restoration-execution.md`
+- `wave322-restoration-execution.md`
+- `wave347-final-4-gap-fix.md`
+- `wave348-link-fix.md`
+- `wave349-gpu-acceleration.md`
+- `wave349-impl.md`
+- `wave350-r1-materialize-status.md`
+- `wave351-thm5-numerical.md`
+- `wave352-framework-code-anchors.md`
+- `wave352-l-local-appendix.md`
+- `wave353-conclusion-takeaways.md`
+- `wave355-capability-token-example.md`
+- `wave355-supplementary-polish.md`
+- `wave356-data-availability-polish.md`
+- `wave356-highlights-polish.md`
+- `wave357-ruff-w292-fix.md`
+- `wave358-figures-md-polish.md`
+- `wave361-figures-sha-crosscheck.md`
+- `wave363-all-cell-recipes.md`
+- `wave363-r1-recipe.md`
+- `wave364-g38.md`
+- `wave384-project-audit.md`
 
-**Historical (49 files, not cited by reviewer-facing surfaces):**
+**Historical (48 files, not cited by reviewer-facing surfaces):**
 
-- `c3-fix-summary.md` (14.4KB, 2026-09-22)
-- `p3-number-verification.md` (36.8KB, 2026-09-22)
-- `p5-ground-truth-corrections.md` (9.1KB, 2026-09-22)
-- `review-layer4-docs-config.md` (11.3KB, 2026-09-22)
-- `scheduler-per-cell-summary.md` (32.4KB, 2026-09-22)
-- `wave275-p4-overview.md` (22.7KB, 2026-09-22)
-- `wave279-plan-complete.md` (12.8KB, 2026-09-22)
-- `wave279-user-decisions.md` (5.6KB, 2026-09-22)
-- `wave287-p-ci-hardening.md` (9.9KB, 2026-09-22)
-- `wave287-p-test-coverage.md` (8.9KB, 2026-09-22)
-- `wave290-p2-driver-microfix.md` (17.4KB, 2026-09-23)
-- `wave290-p5-workflow-paused-status.md` (16.4KB, 2026-09-23)
-- `wave292-p2-config-genealogy.md` (37.1KB, 2026-09-23)
-- `wave293-p3-fix-applied.md` (13.9KB, 2026-09-23)
-- `wave296-p5-activation-log.md` (12.5KB, 2026-09-23)
-- `wave296-p6-backward-compat.md` (12.7KB, 2026-09-23)
-- `wave296-p7-fid-comparison.md` (10.8KB, 2026-09-23)
-- `wave299-final-verification.md` (34.6KB, 2026-09-23)
-- `wave301-day0-prompt.md` (18.1KB, 2026-09-23)
-- `wave301-day2-execution-plan.md` (46.5KB, 2026-09-23)
-- `wave301-day3-execution-plan.md` (45.7KB, 2026-09-23)
-- `wave302-p2-exp-b1-smoke.md` (19.4KB, 2026-09-23)
-- `wave308-d3-review.md` (25.7KB, 2026-09-23)
-- `wave326-ci-design.md` (17.0KB, 2026-09-23)
-- `wave326-ci-redesign-execution.md` (19.1KB, 2026-09-23)
-- `wave326-readme-update.md` (8.0KB, 2026-09-23)
-- `wave334-reviewer-prediction.md` (19.8KB, 2026-09-25)
-- `wave338-phase2-mechanism.md` (11.9KB, 2026-09-23)
-- `wave340-readme-update.md` (13.0KB, 2026-09-23)
-- `wave351-cover-letter-helper.md` (13.3KB, 2026-09-25)
-- `wave352-cover-letter-interactive.md` (18.1KB, 2026-09-25)
-- `wave353-a2-placeholder-fill.md` (18.7KB, 2026-09-25)
-- `wave353-conclusion-takeaways.md` (10.3KB, 2026-09-25)
-- `wave353-pseudocode-blocks.md` (12.3KB, 2026-09-25)
-- `wave355-supplementary-polish.md` (21.8KB, 2026-09-25)
-- `wave359-final-consolidated.md` (39.6KB, 2026-09-25)
-- `wave360-verification-outputs-xref.md` (13.6KB, 2026-09-25)
-- `wave363-all-cell-recipes.md` (29.3KB, 2026-09-26)
-- `wave363-k4-recipe.md` (11.9KB, 2026-09-26)
-- `wave363-k7-recipe.md` (9.8KB, 2026-09-26)
-- `wave363-r1-recipe.md` (16.5KB, 2026-09-26)
-- `wave364-g3.md` (20.8KB, 2026-09-26)
-- `wave364-g34.md` (14.9KB, 2026-09-26)
+- `clone-reproducibility.md`
+- `doc-link-audit.md`
+- `docs-inventory-2026-10-21.md`
+- `c3-fix-summary.md`
+- `p3-number-verification.md`
+- `p5-ground-truth-corrections.md`
+- `review-layer4-docs-config.md`
+- `manifest-hash-staleness.md`
+- `portable-paths.md`
+- `readiness-verifier-repoint.md`
+- `release-notes-v31-refresh.md`
+- `repo-docs-maintenance-2.md`
+- `repo-docs-maintenance.md`
+- `scheduler-per-cell-summary.md`
+- `wave275-p4-overview.md`
+- `wave279-plan-complete.md`
+- `wave279-user-decisions.md`
+- `wave287-p-ci-hardening.md`
+- `wave287-p-test-coverage.md`
+- `wave290-p2-driver-microfix.md`
+- `wave290-p5-workflow-paused-status.md`
+- `wave292-p2-config-genealogy.md`
+- `wave293-p3-fix-applied.md`
+- `wave296-p5-activation-log.md`
+- `wave296-p6-backward-compat.md`
+- `wave296-p7-fid-comparison.md`
+- `wave299-final-verification.md`
+- `wave301-day0-prompt.md`
+- `wave301-day2-execution-plan.md`
+- `wave301-day3-execution-plan.md`
+- `wave302-p2-exp-b1-smoke.md`
+- `wave308-d3-review.md`
+- `wave326-ci-design.md`
+- `wave326-ci-redesign-execution.md`
+- `wave326-readme-update.md`
+- `wave334-reviewer-prediction.md`
+- `wave338-phase2-mechanism.md`
+- `wave340-readme-update.md`
+- `wave351-cover-letter-helper.md`
+- `wave352-cover-letter-interactive.md`
+- `wave353-a2-placeholder-fill.md`
+- `wave353-pseudocode-blocks.md`
+- `wave359-final-consolidated.md`
+- `wave360-verification-outputs-xref.md`
+- `wave363-k4-recipe.md`
+- `wave363-k7-recipe.md`
+- `wave364-g3.md`
+- `wave364-g34.md`
 
 ---
 
 ### Cluster: `reproducibility` — Reproducibility (reproducibility-record, preregistration, reproduce-script)
 
-**Files: 13** (active: 5, historical: 8)
+**Files: 13** (active: 6, historical: 7)
 
 Reproducibility (reproducibility-record, preregistration, reproduce-script). This cluster is part of the project's audit surface for reproducibility.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `item4-tex-rewrite.md` (6.7KB, 2026-09-22)
-- `p3-comparison.md` (5.5KB, 2026-09-22)
-- `wave298-p3-reproducibility-innovations.md` (39.5KB, 2026-09-23)
-- `wave324-d5-review.md` (8.0KB, 2026-09-23)
-- `wave358-tables-md-polish.md` (22.0KB, 2026-09-25)
+- `item4-tex-rewrite.md`
+- `wave298-p3-reproducibility-innovations.md`
+- `wave324-d5-review.md`
+- `wave353-ledger-examples.md`
+- `wave358-tables-md-polish.md`
+- `wave366-p2-reproducibility-manifest.md`
 
-**Historical (8 files, not cited by reviewer-facing surfaces):**
+**Historical (7 files, not cited by reviewer-facing surfaces):**
 
-- `p5-experiment-setup.md` (19.4KB, 2026-09-22)
-- `p8-experiment-setup.md` (15.7KB, 2026-09-22)
-- `wave303-day0-prompt.md` (24.0KB, 2026-09-23)
-- `wave325-push-execution.md` (11.7KB, 2026-09-23)
-- `wave353-ledger-examples.md` (8.9KB, 2026-09-25)
-- `wave361-reproduce-scripts-verify.md` (14.3KB, 2026-09-25)
-- `wave363-p2-master-verifier.md` (23.4KB, 2026-09-26)
-- `wave366-p2-reproducibility-manifest.md` (16.4KB, 2026-09-26)
+- `reproduce-scripts-audit.md`
+- `p5-experiment-setup.md`
+- `p8-experiment-setup.md`
+- `wave303-day0-prompt.md`
+- `wave325-push-execution.md`
+- `wave361-reproduce-scripts-verify.md`
+- `wave363-p2-master-verifier.md`
 
 ---
 
 ### Cluster: `data_packaging` — Data packaging + manifest (sha256, csv, metric-ledger)
 
-**Files: 22** (active: 10, historical: 12)
+**Files: 27** (active: 9, historical: 18)
 
 Data packaging + manifest (sha256, csv, metric-ledger). This cluster is part of the project's audit surface for data_packaging.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `fasta-generation.md` (9.5KB, 2026-09-22)
-- `fix-design.md` (16.5KB, 2026-09-22)
-- `tier1-metric-alignment.md` (9.3KB, 2026-09-22)
-- `wave297-p6-limitations-rewritten.md` (39.1KB, 2026-09-23)
-- `wave326-final-metrics-table.md` (11.5KB, 2026-09-23)
-- `wave328-freeze-survey.md` (18.8KB, 2026-09-23)
-- `wave331-data-fix.md` (4.1KB, 2026-09-23)
-- `wave344-supplementary-bundle.md` (14.3KB, 2026-09-25)
-- `wave354-manifest-sha256-refresh.md` (15.0KB, 2026-09-25)
-- `wave355-final-sha256-refresh.md` (15.0KB, 2026-09-25)
+- `fix-design.md`
+- `tier1-metric-alignment.md`
+- `paper-packaging-2026-10-27.md`
+- `todo-history.md`
+- `wave297-p6-limitations-rewritten.md`
+- `wave326-final-metrics-table.md`
+- `wave328-freeze-survey.md`
+- `wave331-data-fix.md`
+- `wave344-supplementary-bundle.md`
 
-**Historical (13 files, not cited by reviewer-facing surfaces):**
+**Historical (18 files, not cited by reviewer-facing surfaces):**
 
-- `data-linkage-closure.md` (16.2KB, 2026-09-22)
-- `data-linkage-plan.md` (28.5KB, 2026-09-22)
-- `framework-inv-proj-re-run.md` (5.7KB, 2026-09-22)
-- `implementation-plan.md` (49.2KB, 2026-09-22)
-- `p1-data-gathering.md` (59.8KB, 2026-09-22)
-- `p5-metrics-patch.md` (6.4KB, 2026-09-22)
-- `wave275-p1-state-inventory.md` (20.4KB, 2026-09-22)
-- `wave275-p2-metric-ledger.md` (5.9KB, 2026-09-22)
-- `wave327-revised-q1-assessment.md` (29.8KB, 2026-09-23)
-- `wave342-readme-update.md` (12.8KB, 2026-09-25)
-- `wave355-verification-outputs-readme.md` (15.8KB, 2026-09-25)
-- `wave360-supplementary-bundle-verify.md` (6.3KB, 2026-09-25)
+- `data-linkage-closure.md`
+- `data-linkage-plan.md`
+- `framework-inv-proj-re-run.md`
+- `implementation-plan.md`
+- `p1-data-gathering.md`
+- `p5-metrics-patch.md`
+- `evidence-hash-surfaces.md`
+- `evidence-pin-audit.md`
+- `r3-env-investigation.md`
+- `todo-surface-reset.md`
+- `wave275-p1-state-inventory.md`
+- `wave275-p2-metric-ledger.md`
+- `wave327-revised-q1-assessment.md`
+- `wave342-readme-update.md`
+- `wave354-manifest-sha256-refresh.md`
+- `wave355-final-sha256-refresh.md`
+- `wave355-verification-outputs-readme.md`
+- `wave360-supplementary-bundle-verify.md`
 
 ---
 
 ### Cluster: `push_state` — Push state (push-ready, freeze, release, submission)
 
-**Files: 7** (active: 5, historical: 2)
+**Files: 10** (active: 6, historical: 4)
 
 Push state (push-ready, freeze, release, submission). This cluster is part of the project's audit surface for push_state.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `submission-polish.md` (9.7KB, 2026-09-22)
-- `submission-prep.md` (18.4KB, 2026-09-22)
-- `verify-submission-readiness.md` (10.4KB, 2026-09-22)
-- `wave356-submission-checklist-review.md` (23.6KB, 2026-09-25)
-- `wave358-submission-checklist-reaudit.md` (24.1KB, 2026-09-25)
+- `push-unblock-large-blob.md`
+- `submission-polish.md`
+- `submission-prep.md`
+- `verify-submission-readiness.md`
+- `wave356-submission-checklist-review.md`
+- `wave358-submission-checklist-reaudit.md`
 
-**Historical (2 files, not cited by reviewer-facing surfaces):**
+**Historical (4 files, not cited by reviewer-facing surfaces):**
 
-- `wave324-submission-prep.md` (11.5KB, 2026-09-23)
-- `wave365-submission-readiness.md` (23.6KB, 2026-09-26)
+- `submission-link-rot.md`
+- `submission-package-refresh.md`
+- `wave324-submission-prep.md`
+- `wave365-submission-readiness.md`
 
 ---
 
 ### Cluster: `algorithm_4arm` — Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency)
 
-**Files: 34** (active: 19, historical: 15)
+**Files: 39** (active: 18, historical: 21)
 
 Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency). This cluster is part of the project's audit surface for algorithm_4arm.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `p-r6-impl.md` (16.1KB, 2026-09-22)
-- `p1-4arm-power-analysis.md` (8.3KB, 2026-09-22)
-- `p1-design.md` (17.7KB, 2026-09-22)
-- `p2-eval-w182.md` (18.2KB, 2026-09-22)
-- `p2-eval.md` (17.5KB, 2026-09-22)
-- `p2-impl.md` (6.7KB, 2026-09-22)
-- `p2-progress.md` (6.8KB, 2026-09-22)
-- `p2-wallclock-fix.md` (12.2KB, 2026-09-22)
-- `p3-4arm-power.md` (14.6KB, 2026-09-22)
-- `p3-comparison.md` (3.2KB, 2026-09-22)
-- `p3-rerun.md` (8.8KB, 2026-09-22)
-- `p4-aggregate.md` (9.7KB, 2026-09-22)
-- `p4-theorem1-power.md` (19.6KB, 2026-09-22)
-- `p6-boundary-framing.md` (12.9KB, 2026-09-22)
-- `push.md` (4.1KB, 2026-09-22)
-- `theory-audit.md` (22.8KB, 2026-09-22)
-- `algorithm-gap-investigation.md` (25.3KB, 2026-09-21)
-- `wave311-path-a-lemma-1.md` (18.6KB, 2026-09-23)
-- `wave322-path-a-lemmas-2-3.md` (24.8KB, 2026-09-23)
+- `algorithm-gap-investigation.md`
+- `p-r6-impl.md`
+- `p1-4arm-power-analysis.md`
+- `p2-eval-w182.md`
+- `p2-impl.md`
+- `p2-progress.md`
+- `p2-wallclock-fix.md`
+- `p3-4arm-power.md`
+- `p3-rerun.md`
+- `p4-theorem1-power.md`
+- `p6-boundary-framing.md`
+- `p6-repo-naming.md`
+- `push.md`
+- `theory-audit.md`
+- `push.md`
+- `r1-3seed-real-ckpt-materialize.md`
+- `wave311-path-a-lemma-1.md`
+- `wave322-path-a-lemmas-2-3.md`
 
-**Historical (19 files, not cited by reviewer-facing surfaces):**
+**Historical (21 files, not cited by reviewer-facing surfaces):**
 
-- `p3-f-side-actual-values.md` (15.3KB, 2026-09-22)
-- `p3-post-hoc-sensitivity.md` (9.7KB, 2026-09-22)
-- `p6-repo-naming.md` (6.7KB, 2026-09-22)
-- `wave292-p3-crosscheck.md` (30.7KB, 2026-09-23)
-- `wave293-p1-locate-sign.md` (19.2KB, 2026-09-23)
-- `wave294-p2-medium-fixed.md` (11.9KB, 2026-09-23)
-- `wave296-p3-a-class-wired.md` (20.5KB, 2026-09-23)
-- `wave296-p4-b-class-wired.md` (22.5KB, 2026-09-23)
-- `wave300-p3-resolution-plan.md` (27.5KB, 2026-09-23)
-- `wave302-p5-codim-deep-dive.md` (15.1KB, 2026-09-23)
-- `wave303-day0-14-plan.md` (69.0KB, 2026-09-23)
-- `wave336-r5b-mechanism.md` (20.6KB, 2026-09-23)
-- `wave353-limitations-vendor-note.md` (14.6KB, 2026-09-25)
-- `wave357-lean-sorry-discharge.md` (41.5KB, 2026-09-25)
-- `wave379-mechanism-synthesis.md` (6.2KB, 2026-09-27)
+- `p3-f-side-actual-values.md`
+- `p3-post-hoc-sensitivity.md`
+- `mechanism-core-driver.md`
+- `plan-2026-10-23-win-requirement.md`
+- `public-api-surface.md`
+- `r1-d004-remeasure.md`
+- `r1-d004b-attribution.md`
+- `r1-d004b-remeasure.md`
+- `todo-rewrite-2026-10-27.md`
+- `wave292-p3-crosscheck.md`
+- `wave293-p1-locate-sign.md`
+- `wave294-p2-medium-fixed.md`
+- `wave296-p3-a-class-wired.md`
+- `wave296-p4-b-class-wired.md`
+- `wave300-p3-resolution-plan.md`
+- `wave302-p5-codim-deep-dive.md`
+- `wave303-day0-14-plan.md`
+- `wave336-r5b-mechanism.md`
+- `wave353-limitations-vendor-note.md`
+- `wave357-lean-sorry-discharge.md`
+- `wave379-mechanism-synthesis.md`
 
 ---
 
 ### Cluster: `sweep_eval` — Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability)
 
-**Files: 97** (active: 81, historical: 16)
+**Files: 107** (active: 90, historical: 17)
 
 Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability). This cluster is part of the project's audit surface for sweep_eval.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `cross-model-nfe-curve.md` (9.1KB, 2026-09-22)
-- `cuda-fix-sweep-recovery.md` (25.4KB, 2026-09-22)
-- `dispatch-verification.md` (12.2KB, 2026-09-22)
-- `eval-w174.md` (13.3KB, 2026-09-22)
-- `eval.md` (11.3KB, 2026-09-22)
-- `fair-fasta-generation.md` (10.6KB, 2026-09-22)
-- `fasta-generation.md` (7.4KB, 2026-09-22)
-- `finish.md` (5.5KB, 2026-09-22)
-- `gpu-verify.md` (9.7KB, 2026-09-22)
-- `headline-evidence-audit.md` (13.1KB, 2026-09-22)
-- `item1-ablation.md` (8.9KB, 2026-09-22)
-- `item2-hp-sweep.md` (7.7KB, 2026-09-22)
-- `k1-rc5-launch-w156.md` (13.9KB, 2026-09-22)
-- `k1-rc5-launch.md` (8.2KB, 2026-09-22)
-- `k1-rc5-preflight.md` (6.7KB, 2026-09-22)
-- `k1-rerun.md` (11.0KB, 2026-09-22)
-- `k6-sweep-launch.md` (11.6KB, 2026-09-22)
-- `k6-verification.md` (8.8KB, 2026-09-22)
-- `n-rounds-flag.md` (6.5KB, 2026-09-22)
-- `nfe-curve.md` (14.4KB, 2026-09-22)
-- `nfe-flag.md` (7.9KB, 2026-09-22)
-- `nfe-real.md` (10.3KB, 2026-09-22)
-- `omegafold-provisioning.md` (14.3KB, 2026-09-22)
-- `p1-design-w178.md` (21.9KB, 2026-09-22)
-- `p1-design-w179.md` (11.3KB, 2026-09-22)
-- `p1-design.md` (10.7KB, 2026-09-22)
-- `p1-investigation.md` (12.2KB, 2026-09-22)
-- `p1-revert-all.md` (5.7KB, 2026-09-22)
-- `p1-setup-w181.md` (13.2KB, 2026-09-22)
-- `p1-setup-w182.md` (14.8KB, 2026-09-22)
-- `p1-setup-w186.md` (5.1KB, 2026-09-22)
-- `p1-setup.md` (10.2KB, 2026-09-22)
-- `p2-empirical-bl.md` (11.9KB, 2026-09-22)
-- `p2-eval.md` (13.8KB, 2026-09-22)
-- `p2-fasta-generation.md` (8.9KB, 2026-09-22)
-- `p2-generate-w183.md` (20.0KB, 2026-09-22)
-- `p2-generate-w184.md` (10.7KB, 2026-09-22)
-- `p2-generate.md` (10.3KB, 2026-09-22)
-- `p2-post-cd70821-2d-sweep.md` (7.9KB, 2026-09-22)
-- `p3-comparison.md` (8.5KB, 2026-09-22)
-- `p3-eval-w183.md` (18.3KB, 2026-09-22)
-- `p3-eval-w184.md` (9.0KB, 2026-09-22)
-- `p3-eval-w186.md` (11.9KB, 2026-09-22)
-- `p3-eval.md` (10.8KB, 2026-09-22)
-- `p3-fasta-ladder.md` (6.2KB, 2026-09-22)
-- `p3-sanity.md` (9.5KB, 2026-09-22)
-- `p3-tightness.md` (15.2KB, 2026-09-22)
-- `p4-aggregate-w183.md` (7.0KB, 2026-09-22)
-- `p4-aggregate.md` (16.4KB, 2026-09-22)
-- `p4-aggregation.md` (13.6KB, 2026-09-22)
-- `p4-cross-adapter-ablation.md` (11.9KB, 2026-09-22)
-- `p4-nfe-curve-w168.md` (12.8KB, 2026-09-22)
-- `p4-nfe-curve.md` (12.0KB, 2026-09-22)
-- `p5-plot.md` (7.7KB, 2026-09-22)
-- `p6-e2e-eval.md` (7.8KB, 2026-09-22)
-- `p6-paper.md` (5.5KB, 2026-09-22)
-- `rc4-ablation-fix.md` (5.6KB, 2026-09-22)
-- `restart-blend-analysis.md` (12.9KB, 2026-09-22)
-- `restart-over-application.md` (11.9KB, 2026-09-22)
-- `shape-fix-resweep.md` (22.1KB, 2026-09-22)
-- `sweeps-collect.md` (6.2KB, 2026-09-22)
-- `validation-experiment.md` (17.3KB, 2026-09-22)
-- `w2-n1000-reruns.md` (21.6KB, 2026-09-22)
-- `wave280-p-k1-sweep-result.md` (18.6KB, 2026-09-22)
-- `wave280-p-k4k5-sweep-result.md` (11.2KB, 2026-09-22)
-- `wave280-p-k7-sweep-result.md` (7.6KB, 2026-09-22)
-- `wave280-p-r1-sweep-result.md` (11.1KB, 2026-09-22)
-- `wave280-p-r3-sweep-result.md` (6.7KB, 2026-09-22)
-- `wave280-p-r6-sweep-result.md` (12.5KB, 2026-09-22)
-- `wave286-p-fid-gpu-fix.md` (8.1KB, 2026-09-22)
-- `wave286-p-fid-gpu-verify.md` (11.8KB, 2026-09-22)
-- `wave290-p1-bottleneck-confirmed.md` (18.1KB, 2026-09-23)
-- `wave290-p3-batched-harness.md` (13.0KB, 2026-09-23)
-- `wave291-p3-1seed-results.md` (6.2KB, 2026-09-23)
-- `wave291-p5-3seed-results.md` (9.7KB, 2026-09-23)
-- `wave307-archaeology-summary.md` (19.7KB, 2026-09-23)
-- `wave311-d1-review.md` (21.9KB, 2026-09-23)
-- `wave338-p5-r3-dgl-fix-and-sweep.md` (11.5KB, 2026-09-23)
-- `wave350-thm5.md` (14.3KB, 2026-09-25)
-- `wave353-h2h-ablation-refs.md` (13.4KB, 2026-09-25)
-- `wave357-k5-k6-camera-ready.md` (22.8KB, 2026-09-25)
+- `p1-design.md`
+- `p2-eval.md`
+- `p3-comparison.md`
+- `p4-aggregate.md`
+- `fasta-generation.md`
+- `eval.md`
+- `p1-setup.md`
+- `r2-terminology-unification.md`
+- `p3-comparison.md`
+- `cross-model-nfe-curve.md`
+- `cuda-fix-sweep-recovery.md`
+- `dispatch-verification.md`
+- `eval-w174.md`
+- `eval.md`
+- `fair-fasta-generation.md`
+- `fasta-generation.md`
+- `finish.md`
+- `gpu-verify.md`
+- `headline-evidence-audit.md`
+- `item1-ablation.md`
+- `item2-hp-sweep.md`
+- `k1-rc5-launch-w156.md`
+- `k1-rc5-launch.md`
+- `k1-rc5-preflight.md`
+- `k1-rerun.md`
+- `k6-sweep-launch.md`
+- `k6-verification.md`
+- `n-rounds-flag.md`
+- `nfe-curve.md`
+- `nfe-flag.md`
+- `nfe-real.md`
+- `omegafold-provisioning.md`
+- `p1-design-w178.md`
+- `p1-design-w179.md`
+- `p1-design.md`
+- `p1-investigation.md`
+- `p1-revert-all.md`
+- `p1-setup-w181.md`
+- `p1-setup-w182.md`
+- `p1-setup-w186.md`
+- `p1-setup.md`
+- `p2-empirical-bl.md`
+- `p2-eval.md`
+- `p2-fasta-generation.md`
+- `p2-generate-w183.md`
+- `p2-generate-w184.md`
+- `p2-generate.md`
+- `p2-post-cd70821-2d-sweep.md`
+- `p3-comparison.md`
+- `p3-eval-w183.md`
+- `p3-eval-w184.md`
+- `p3-eval-w186.md`
+- `p3-eval.md`
+- `p3-fasta-ladder.md`
+- `p3-sanity.md`
+- `p3-tightness.md`
+- `p4-aggregate-w183.md`
+- `p4-aggregate.md`
+- `p4-aggregation.md`
+- `p4-cross-adapter-ablation.md`
+- `p4-nfe-curve-w168.md`
+- `p4-nfe-curve.md`
+- `p5-plot.md`
+- `p6-e2e-eval.md`
+- `p6-paper.md`
+- `rc4-ablation-fix.md`
+- `restart-blend-analysis.md`
+- `restart-over-application.md`
+- `shape-fix-resweep.md`
+- `sweeps-collect.md`
+- `validation-experiment.md`
+- `w2-n1000-reruns.md`
+- `wave280-p-k1-sweep-result.md`
+- `wave280-p-k4k5-sweep-result.md`
+- `wave280-p-k7-sweep-result.md`
+- `wave280-p-r1-sweep-result.md`
+- `wave280-p-r3-sweep-result.md`
+- `wave280-p-r6-sweep-result.md`
+- `wave286-p-fid-gpu-fix.md`
+- `wave286-p-fid-gpu-verify.md`
+- `wave290-p1-bottleneck-confirmed.md`
+- `wave290-p3-batched-harness.md`
+- `wave291-p3-1seed-results.md`
+- `wave291-p5-3seed-results.md`
+- `wave307-archaeology-summary.md`
+- `wave311-d1-review.md`
+- `wave338-p5-r3-dgl-fix-and-sweep.md`
+- `wave350-thm5.md`
+- `wave353-h2h-ablation-refs.md`
+- `wave357-k5-k6-camera-ready.md`
 
 **Historical (17 files, not cited by reviewer-facing surfaces):**
 
-- `b-config-scattering-audit.md` (19.3KB, 2026-09-22)
-- `framework-synth-sweep.md` (10.5KB, 2026-09-22)
-- `k1-rc5-3arm-preflight.md` (8.4KB, 2026-09-22)
-- `p1-restore-r4-r5.md` (9.2KB, 2026-09-22)
-- `p5-doc-consolidation.md` (20.2KB, 2026-09-22)
-- `wave287-p-adversarial-sweep.md` (8.5KB, 2026-09-22)
-- `wave291-p2-sweep-driver.md` (12.8KB, 2026-09-23)
-- `wave291-p4-regime-analysis.md` (16.6KB, 2026-09-23)
-- `wave293-p4-related-docs.md` (12.6KB, 2026-09-23)
-- `wave301-day1-execution-plan.md` (38.7KB, 2026-09-23)
-- `wave302-p1-regime-sweep-design.md` (30.4KB, 2026-09-23)
-- `wave330-zh-review-version.md` (4.0KB, 2026-09-23)
-- `wave356-archive-cleanup.md` (7.6KB, 2026-09-25)
-- `wave359-k1-rc5-drift33-fix.md` (13.7KB, 2026-09-25)
-- `wave359-lean-build-verify.md` (22.8KB, 2026-09-25)
-- `wave363-k1-recipe.md` (16.4KB, 2026-09-26)
+- `b-config-scattering-audit.md`
+- `framework-synth-sweep.md`
+- `k1-rc5-3arm-preflight.md`
+- `p1-restore-r4-r5.md`
+- `p5-doc-consolidation.md`
+- `wave287-p-adversarial-sweep.md`
+- `wave291-p2-sweep-driver.md`
+- `wave291-p4-regime-analysis.md`
+- `wave293-p4-related-docs.md`
+- `wave301-day1-execution-plan.md`
+- `wave302-p1-regime-sweep-design.md`
+- `wave330-zh-review-version.md`
+- `wave356-archive-cleanup.md`
+- `wave359-k1-rc5-drift33-fix.md`
+- `wave359-lean-build-verify.md`
+- `wave363-k1-recipe.md`
+- `xfail-triage.md`
 
 ---
 
 ### Cluster: `stats_method` — Statistical methodology (R5/R6, p-value, bonferroni, TOST)
 
-**Files: 41** (active: 15, historical: 26)
+**Files: 43** (active: 21, historical: 22)
 
 Statistical methodology (R5/R6, p-value, bonferroni, TOST). This cluster is part of the project's audit surface for stats_method.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `p1-power-spec.md` (30.2KB, 2026-09-22)
-- `p1-r3-uplift.md` (12.1KB, 2026-09-22)
-- `p1-r5c-underflow-fix.md` (5.4KB, 2026-09-22)
-- `p2-r-level-power.md` (19.0KB, 2026-09-22)
-- `p3-r3-cross-seed.md` (5.7KB, 2026-09-22)
-- `p4-r-level-refresh.md` (7.6KB, 2026-09-22)
-- `pr2-application.md` (17.7KB, 2026-09-22)
-- `wave310-r6-tier-aware-upgrade.md` (14.1KB, 2026-09-23)
-- `wave350-r5b-figure.md` (15.9KB, 2026-09-25)
-- `wave350-r6-live-attempt.md` (20.6KB, 2026-09-25)
-- `wave351-r3-vendor-fix-status.md` (20.0KB, 2026-09-25)
-- `wave351-r5a-n10.md` (11.2KB, 2026-09-25)
-- `wave352-claims-r5a-update.md` (18.3KB, 2026-09-25)
-- `wave357-r3-rdkit-blocker-doc.md` (28.5KB, 2026-09-25)
-- `wave357-r6-gpu-scope.md` (40.7KB, 2026-09-25)
+- `p1-power-spec.md`
+- `p1-r3-uplift.md`
+- `p1-r5b-fix.md`
+- `p1-r5c-underflow-fix.md`
+- `p2-r-level-power.md`
+- `p2-r2-re-audit.md`
+- `p3-r3-cross-seed.md`
+- `p3-r6-uplift.md`
+- `p4-r-level-refresh.md`
+- `p6-non-inferiority.md`
+- `pr2-application.md`
+- `wave234-p3-jonckheere.md`
+- `wave310-r6-tier-aware-upgrade.md`
+- `wave350-r5b-figure.md`
+- `wave350-r6-live-attempt.md`
+- `wave351-r3-vendor-fix-status.md`
+- `wave351-r5a-n10.md`
+- `wave352-claims-r5a-update.md`
+- `wave357-r3-rdkit-blocker-doc.md`
+- `wave362-r6-recipe.md`
+- `wave363-r2-recipe.md`
 
-**Historical (29 files, not cited by reviewer-facing surfaces):**
+**Historical (22 files, not cited by reviewer-facing surfaces):**
 
-- `p1-fix-r2-numbers.md` (9.4KB, 2026-09-22)
-- `p1-r5b-fix.md` (11.5KB, 2026-09-22)
-- `p2-r2-re-audit.md` (14.1KB, 2026-09-22)
-- `p3-r3-re-audit.md` (19.0KB, 2026-09-22)
-- `p3-r6-uplift.md` (8.5KB, 2026-09-22)
-- `p4-r6-re-audit.md` (22.5KB, 2026-09-22)
-- `p6-non-inferiority.md` (3.7KB, 2026-09-22)
-- `wave275-p4-r6-proposal.md` (25.8KB, 2026-09-22)
-- `wave302-p4-r6-replication.md` (11.4KB, 2026-09-23)
-- `wave347-r5a-ds-aggregation-clarification.md` (15.7KB, 2026-09-25)
-- `wave352-r6-status.md` (17.2KB, 2026-09-25)
-- `wave354-r5b-figure-verify.md` (19.0KB, 2026-09-25)
-- `wave359-r6-gpu-scope-cuda0.md` (35.7KB, 2026-09-25)
-- `wave361-r-level-inventory-refresh.md` (26.1KB, 2026-09-25)
-- `wave361-r6-forensic-evidence-chain.md` (13.7KB, 2026-09-26)
-- `wave361-r6-launch-attempt.md` (8.2KB, 2026-09-25)
-- `wave361-r6-launch-discrepancy.md` (8.8KB, 2026-09-25)
-- `wave362-p1-r6-recipe.md` (16.0KB, 2026-09-26)
-- `wave362-p2-verify-r6-recipe.md` (18.4KB, 2026-09-26)
-- `wave362-r6-recipe.md` (31.8KB, 2026-09-26)
-- `wave363-r2-recipe.md` (17.6KB, 2026-09-26)
-- `wave363-r3-recipe.md` (27.0KB, 2026-09-26)
-- `wave363-r5a-recipe.md` (18.3KB, 2026-09-26)
-- `wave363-r5b-recipe.md` (14.3KB, 2026-09-26)
-- `wave363-r5c-recipe.md` (17.6KB, 2026-09-26)
-- `wave364-p1-gap-selection-memo.md` (26.9KB, 2026-09-26)
+- `jt-variance-correction.md`
+- `p1-fix-r2-numbers.md`
+- `p3-r3-re-audit.md`
+- `p4-r6-re-audit.md`
+- `wave275-p4-r6-proposal.md`
+- `wave302-p4-r6-replication.md`
+- `wave347-r5a-ds-aggregation-clarification.md`
+- `wave352-r6-status.md`
+- `wave354-r5b-figure-verify.md`
+- `wave357-r6-gpu-scope.md`
+- `wave359-r6-gpu-scope-cuda0.md`
+- `wave361-r-level-inventory-refresh.md`
+- `wave361-r6-forensic-evidence-chain.md`
+- `wave361-r6-launch-attempt.md`
+- `wave361-r6-launch-discrepancy.md`
+- `wave362-p1-r6-recipe.md`
+- `wave362-p2-verify-r6-recipe.md`
+- `wave363-r3-recipe.md`
+- `wave363-r5a-recipe.md`
+- `wave363-r5b-recipe.md`
+- `wave363-r5c-recipe.md`
+- `wave364-p1-gap-selection-memo.md`
 
 ---
 
 ### Cluster: `paper_claims` — Paper + claims (paper packaging, claim audit, paper-update)
 
-**Files: 31** (active: 14, historical: 17)
+**Files: 49** (active: 26, historical: 23)
 
 Paper + claims (paper packaging, claim audit, paper-update). This cluster is part of the project's audit surface for paper_claims.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `agent3-pdf-generation.md` (6.8KB, 2026-09-22)
-- `d-paper-package-update.md` (10.8KB, 2026-09-22)
-- `p3-clm057-update.md` (13.3KB, 2026-09-22)
-- `wave297-p2-paper-design.md` (33.2KB, 2026-09-23)
-- `wave309-paper-a-restoration-plan.md` (31.7KB, 2026-09-25)
-- `wave323-typeset-execution.md` (14.5KB, 2026-09-23)
-- `wave343-paper-fixes.md` (18.0KB, 2026-09-25)
-- `wave345-cross-doc-fixes.md` (51.0KB, 2026-09-25)
-- `wave353-a1-theorem4-derivation.md` (17.1KB, 2026-09-25)
-- `wave354-p5-lean-subclaim-stubs.md` (25.0KB, 2026-09-25)
-- `wave355-claims-deep-audit.md` (20.2KB, 2026-09-25)
-- `wave356-pdf-rebuild.md` (16.6KB, 2026-09-25)
-- `wave360-claims-status-summary.md` (10.9KB, 2026-09-25)
-- `wave372-manuscript-claim-audit.md` (6.0KB, 2026-09-27)
+- `manuscript-defect-review-2.md`
+- `manuscript-defect-review-3.md`
+- `manuscript-defect-review-4.md`
+- `manuscript-defect-review-5.md`
+- `manuscript-defect-review-6.md`
+- `manuscript-defect-review-7.md`
+- `manuscript-defect-review-8.md`
+- `manuscript-defect-review-9.md`
+- `manuscript-defect-review.md`
+- `agent3-pdf-generation.md`
+- `d-paper-package-update.md`
+- `p3-clm057-update.md`
+- `wave297-p2-paper-design.md`
+- `wave309-paper-a-restoration-plan.md`
+- `wave323-typeset-execution.md`
+- `wave343-paper-fixes.md`
+- `wave345-cross-doc-fixes.md`
+- `wave353-a1-theorem4-derivation.md`
+- `wave354-p5-lean-subclaim-stubs.md`
+- `wave354-paper-final-polish.md`
+- `wave355-claims-deep-audit.md`
+- `wave356-pdf-rebuild.md`
+- `wave360-claims-status-summary.md`
+- `wave364-paper-polish-gaps.md`
+- `wave372-manuscript-claim-audit.md`
+- `wave385-figures.md`
 
-**Historical (20 files, not cited by reviewer-facing surfaces):**
+**Historical (23 files, not cited by reviewer-facing surfaces):**
 
-- `p4-paper-updates.md` (20.2KB, 2026-09-22)
-- `p6-paper-polish-audit.md` (6.9KB, 2026-09-22)
-- `wave293-p2-verify-direction.md` (10.9KB, 2026-09-23)
-- `wave294-p3-low-paper-fixed.md` (9.6KB, 2026-09-23)
-- `wave297-p1-paper-inventory.md` (19.5KB, 2026-09-23)
-- `wave298-p7-paper-append.md` (20.5KB, 2026-09-23)
-- `wave298-p8-claims-updated.md` (15.8KB, 2026-09-23)
-- `wave299-paper-a-outline.md` (25.1KB, 2026-09-23)
-- `wave299-paper-b-deferred.md` (17.2KB, 2026-09-23)
-- `wave323-d3-review.md` (12.3KB, 2026-09-23)
-- `wave328-freeze-manifest.md` (12.0KB, 2026-09-23)
-- `wave342-claims-fixes.md` (18.7KB, 2026-09-25)
-- `wave353-claims-consolidation.md` (13.0KB, 2026-09-25)
-- `wave354-paper-final-polish.md` (18.5KB, 2026-09-25)
-- `wave364-g31.md` (12.8KB, 2026-09-26)
-- `wave364-g32.md` (15.7KB, 2026-09-26)
-- `wave364-paper-polish-gaps.md` (7.1KB, 2026-09-26)
+- `cover-letter-fill-draft.md`
+- `manuscript-citation-integrity.md`
+- `manuscript-vs-new-evidence-2026-10-27.md`
+- `paper-evidence-register-2026-10-27.md`
+- `paper-refresh-2026-10-27.md`
+- `paper-v32-data-refresh.md`
+- `paper-v32-rewrite-preview.md`
+- `paper-v32-verify-only-pass.md`
+- `p4-paper-updates.md`
+- `p6-paper-polish-audit.md`
+- `wave293-p2-verify-direction.md`
+- `wave294-p3-low-paper-fixed.md`
+- `wave297-p1-paper-inventory.md`
+- `wave298-p7-paper-append.md`
+- `wave298-p8-claims-updated.md`
+- `wave299-paper-a-outline.md`
+- `wave299-paper-b-deferred.md`
+- `wave323-d3-review.md`
+- `wave328-freeze-manifest.md`
+- `wave342-claims-fixes.md`
+- `wave353-claims-consolidation.md`
+- `wave364-g31.md`
+- `wave364-g32.md`
 
 ---
 
 ### Cluster: `final_verify` — Final-verify (per-wave close-out, pre-push hygiene)
 
-**Files: 35** (active: 22, historical: 13)
+**Files: 36** (active: 23, historical: 13)
 
 Final-verify (per-wave close-out, pre-push hygiene). This cluster is part of the project's audit surface for final_verify.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `close-remaining-debt.md` (26.9KB, 2026-09-22)
-- `close-w150.md` (7.3KB, 2026-09-22)
-- `close-w151.md` (9.9KB, 2026-09-22)
-- `close-w152.md` (12.4KB, 2026-09-22)
-- `close-w153.md` (14.2KB, 2026-09-22)
-- `close-w154b.md` (20.3KB, 2026-09-22)
-- `close-w155.md` (11.2KB, 2026-09-22)
-- `close-w156c.md` (19.4KB, 2026-09-22)
-- `close-w157.md` (11.0KB, 2026-09-22)
-- `close-w158.md` (19.7KB, 2026-09-22)
-- `close-w159.md` (15.8KB, 2026-09-22)
-- `close-w160.md` (18.8KB, 2026-09-22)
-- `close.md` (12.8KB, 2026-09-22)
-- `final-synthesis.md` (15.7KB, 2026-09-22)
-- `finish-line.md` (18.9KB, 2026-09-22)
-- `p10-final-synthesis.md` (16.1KB, 2026-09-22)
-- `pre-freeze-hygiene.md` (15.3KB, 2026-09-22)
-- `status-reconciliation-2026-09-13.md` (467B, 2026-09-22)
-- `todo-status-reconciliation-2026-09-13.md` (432B, 2026-09-21)
-- `wave297-final.md` (13.2KB, 2026-09-23)
-- `wave298-final.md` (19.8KB, 2026-09-23)
-- `wave352-sec10-9-close-out.md` (22.1KB, 2026-09-25)
+- `close-remaining-debt.md`
+- `close-w150.md`
+- `close-w151.md`
+- `close-w152.md`
+- `close-w153.md`
+- `close-w154b.md`
+- `close-w155.md`
+- `close-w156c.md`
+- `close-w157.md`
+- `close-w158.md`
+- `close-w159.md`
+- `close-w160.md`
+- `close.md`
+- `final-synthesis.md`
+- `finish-line.md`
+- `p10-final-synthesis.md`
+- `pre-freeze-hygiene.md`
+- `status-reconciliation-2026-09-13.md`
+- `todo-status-reconciliation-2026-09-13.md`
+- `wave262-p2-verify.md`
+- `wave297-final.md`
+- `wave298-final.md`
+- `wave352-sec10-9-close-out.md`
 
-**Historical (15 files, not cited by reviewer-facing surfaces):**
+**Historical (13 files, not cited by reviewer-facing surfaces):**
 
-- `p5-final-verify.md` (4.7KB, 2026-09-22)
-- `w276-final.md` (17.4KB, 2026-09-22)
-- `wave277-final.md` (10.3KB, 2026-09-22)
-- `wave278-final.md` (9.2KB, 2026-09-22)
-- `wave280-final.md` (23.2KB, 2026-09-22)
-- `wave286-final.md` (28.7KB, 2026-09-22)
-- `wave287-final.md` (5.9KB, 2026-09-22)
-- `wave291-final.md` (22.0KB, 2026-09-23)
-- `wave292-final.md` (9.7KB, 2026-09-23)
-- `wave293-final.md` (10.5KB, 2026-09-23)
-- `wave294-final.md` (18.1KB, 2026-09-23)
-- `wave300-final.md` (27.0KB, 2026-09-23)
-- `wave302-final.md` (24.9KB, 2026-09-23)
+- `p5-final-verify.md`
+- `w276-final.md`
+- `wave277-final.md`
+- `wave278-final.md`
+- `wave280-final.md`
+- `wave286-final.md`
+- `wave287-final.md`
+- `wave291-final.md`
+- `wave292-final.md`
+- `wave293-final.md`
+- `wave294-final.md`
+- `wave300-final.md`
+- `wave302-final.md`
 
 ---
 
 ### Cluster: `governance` — Governance (scope, audit, gap, condition, placeholder, cross-cutting)
 
-**Files: 40** (active: 24, historical: 16)
+**Files: 108** (active: 32, historical: 76)
 
 Governance (scope, audit, gap, condition, placeholder, cross-cutting). This cluster is part of the project's audit surface for governance.
 
-**Active (cited by ≥1 reviewer-facing surface):**
+**Active (cited by at least one reviewer-facing surface):**
 
-- `evidence-freetraj-blocker.md` (665B, 2026-09-22)
-- `layer1-adapters-status.md` (690B, 2026-09-22)
-- `p2-real-state-shape.md` (6.6KB, 2026-09-22)
-- `p3-build-initial-state.md` (12.3KB, 2026-09-22)
-- `p3-root-cause.md` (12.1KB, 2026-09-22)
-- `p4-velocity-field-noop.md` (12.4KB, 2026-09-22)
-- `EPSILON_DIRECTION.md` (17.6KB, 2026-09-21)
-- `PHASE4_DOCSTRING_AUDIT.md` (12.6KB, 2026-09-21)
-- `empirical-conditions.md` (16.0KB, 2026-09-21)
-- `framework-model-gap-cpu-2026-09-13.md` (713B, 2026-09-21)
-- `jmaa-theory-applications.md` (6.0KB, 2026-09-22)
-- `todo-six-plan-status-2026-09-13.md` (785B, 2026-09-21)
-- `wave287-p-scheduler-codepath-audit.md` (28.7KB, 2026-09-22)
-- `wave289-p1-honest-reframe.md` (18.2KB, 2026-09-23)
-- `wave292-p1-pipeline-inventory.md` (40.0KB, 2026-09-23)
-- `wave298-p1-code-innovations.md` (29.7KB, 2026-09-23)
-- `wave298-p2-methodology-innovations.md` (30.9KB, 2026-09-23)
-- `wave298-p6-deep-innovations.md` (40.4KB, 2026-09-23)
-- `wave326-crossdoc-metrics-snapshot.md` (20.6KB, 2026-09-23)
-- `wave346-byte-page-fix.md` (8.7KB, 2026-09-25)
-- `wave349-gap-audit.md` (14.4KB, 2026-09-25)
-- `wave357-k4-saturation-scope.md` (29.6KB, 2026-09-25)
-- `wave361-consolidated-results-index.md` (5.1KB, 2026-09-25)
-- `wave375-image-feedback-path.md` (8.6KB, 2026-09-27)
+- `EPSILON_DIRECTION.md`
+- `PHASE4_DOCSTRING_AUDIT.md`
+- `framework-model-gap-cpu-2026-09-13.md`
+- `gap14-novelty-differentiation.md`
+- `gap19-q1-odds-alignment.md`
+- `gap23-r2-paired-comparison-invalid.md`
+- `gap31-r6-live-uplift.md`
+- `gap79-r1-family-lever.md`
+- `gap80-r5a-harness.md`
+- `gap81-r3-sigma-dose.md`
+- `gap84-inference-frontier.md`
+- `gap92-kappa-bridge.md`
+- `evidence-freetraj-blocker.md`
+- `layer1-adapters-status.md`
+- `p2-real-state-shape.md`
+- `p3-build-initial-state.md`
+- `p3-root-cause.md`
+- `p4-velocity-field-noop.md`
+- `jmaa-theory-applications.md`
+- `todo-six-plan-status-2026-09-13.md`
+- `wave287-p-scheduler-codepath-audit.md`
+- `wave289-p1-honest-reframe.md`
+- `wave292-p1-pipeline-inventory.md`
+- `wave298-p1-code-innovations.md`
+- `wave298-p2-methodology-innovations.md`
+- `wave298-p6-deep-innovations.md`
+- `wave326-crossdoc-metrics-snapshot.md`
+- `wave346-byte-page-fix.md`
+- `wave349-gap-audit.md`
+- `wave357-k4-saturation-scope.md`
+- `wave361-consolidated-results-index.md`
+- `wave375-image-feedback-path.md`
 
-**Historical (20 files, not cited by reviewer-facing surfaces):**
+**Historical (76 files, not cited by reviewer-facing surfaces):**
 
-- `wave275-p3-flatten.md` (5.6KB, 2026-09-22)
-- `wave281/p-partial-evidence.md` (1.5KB, 2026-09-22)
-- `wave288-p1-honest-progress-summary.md` (51.1KB, 2026-09-23)
-- `wave294-p1-re-inventory.md` (18.3KB, 2026-09-23)
-- `wave294-p4-cross-verify.md` (24.0KB, 2026-09-23)
-- `wave297-p8-cross-verify.md` (45.2KB, 2026-09-23)
-- `wave298-p4-engineering-innovations.md` (35.0KB, 2026-09-23)
-- `wave298-p5-literature-compare.md` (34.3KB, 2026-09-23)
-- `wave335-self-check-verification.md` (17.1KB, 2026-09-23)
-- `wave337-final-self-check-report.md` (14.5KB, 2026-09-23)
-- `wave338-h7-cleanup.md` (10.0KB, 2026-09-23)
-- `wave339-b6-fixes.md` (9.6KB, 2026-09-23)
-- `wave339-h8-fixes.md` (6.3KB, 2026-09-23)
-- `wave341-deep-audit.md` (52.5KB, 2026-09-25)
-- `wave341-readme-cosine-vs-codim.md` (23.0KB, 2026-09-25)
-- `wave380-mechanism-restructure.md` (1.7KB, 2026-09-27)
+- `audit-index-refresh.md`
+- `empirical-conditions.md`
+- `gap01-r6-live-wiring.md`
+- `gap02-r3-n1000-resolved.md`
+- `gap04-r5b-rounds.md`
+- `gap09-reinference-diagnostic.md`
+- `gap12-tuned-baseline.md`
+- `gap15-venue-fit.md`
+- `gap16-deferred-triage.md`
+- `gap17-k2k6-disclosure.md`
+- `gap23-r2-paired-comparison-fix.md`
+- `gap24-boundary-law.md`
+- `gap25-r1-blend-isolation.md`
+- `gap26-r5b-regime.md`
+- `gap27-r3-power.md`
+- `gap28-r6-faithful.md`
+- `gap30-r6-fresh-tier.md`
+- `gap32-headtohead.md`
+- `gap34-r1-init-dose.md`
+- `gap35-cross-domain.md`
+- `gap36-ablation-matrix.md`
+- `gap37-statistical-power.md`
+- `gap38-shared-prior-thorough.md`
+- `gap41-r1-tier-aware-ncap.md`
+- `gap41b-r1-nfe-fidelity.md`
+- `gap42-scheduler-budget-conservation.md`
+- `gap43-blend-positive-preregistration.md`
+- `gap43-blend-positive-run.md`
+- `gap44-p2-1-profile-residual.md`
+- `gap45-r1-blend-off-wiring.md`
+- `gap46-r5b-memory-fraction.md`
+- `gap48-k7-two-arm-novelty.md`
+- `gap49-compute-accounting.md`
+- `gap50-evidence-grade-table.md`
+- `gap52-charge-channel-preregistration.md`
+- `gap52-charge-channel-run.md`
+- `gap53-initial-condition-contraction.md`
+- `gap55-code-level-hardening.md`
+- `gap56-restart-t0-defect.md`
+- `gap57-equal-nfe-regime-ladder.md`
+- `gap58-r1-beta1-powered.md`
+- `gap60-validity-novelty-tradeoff.md`
+- `gap64-r5c-operating-regime.md`
+- `gap65-dispersion-selector.md`
+- `gap67-covariance-preservation.md`
+- `gap70-r2-tempered-draw.md`
+- `gap71-image-spectral.md`
+- `gap72-r5c-mean-shift.md`
+- `gap73-r5c-statistic.md`
+- `gap74-conditional-mean-bound.md`
+- `gap75-r5c-n1000-table.md`
+- `gap76-restart-mean-bias.md`
+- `gap77-restart-mechanism.md`
+- `gap78-dispersion-gate.md`
+- `gap90-optsteps-dose.md`
+- `gap93-converged-lever.md`
+- `gap94-standard-benchmark.md`
+- `gap95-frontier-grids.md`
+- `gap96-manuscript-compression.md`
+- `governance-refresh-post-push.md`
+- `wave275-p3-flatten.md`
+- `p-partial-evidence.md`
+- `wave288-p1-honest-progress-summary.md`
+- `wave294-p1-re-inventory.md`
+- `wave294-p4-cross-verify.md`
+- `wave297-p8-cross-verify.md`
+- `wave298-p4-engineering-innovations.md`
+- `wave298-p5-literature-compare.md`
+- `wave335-self-check-verification.md`
+- `wave337-final-self-check-report.md`
+- `wave338-h7-cleanup.md`
+- `wave339-b6-fixes.md`
+- `wave339-h8-fixes.md`
+- `wave341-deep-audit.md`
+- `wave341-readme-cosine-vs-codim.md`
+- `wave380-mechanism-restructure.md`
 
 ---
-
-## Maintenance
-
-- **New audit file?** Place it under `docs/audit/<cluster>/waveNNN-*.md`; the cluster is determined by filename keyword scan (see `cluster_order` in `/tmp/regen_index.py`). Files at the top level are classified by filename + first-30-line content scan.
-- **Active vs Historical flag?** Re-run citation-grep against the active surfaces list (see `ACTIVE_SURFACES` + `TNNLS_SURFACES` in `/tmp/regen_index.py`).
-- **Cluster boundaries are heuristic.** If a file lands in the wrong cluster because its filename is generic, the filename keyword was the primary signal — content keywords were the fallback. Inspect the first 30 lines of the file to confirm.
-
-_This file complements the per-wave `INDEX.md` table. The per-wave table is authoritative for *"what did Wave N do?"*; this topic-cluster index is authoritative for *"what does the project claim about X?"._
-
----
-
-## Addendum (2026-10-21) — 25 orphaned flat files moved to `docs/ARCHIVE/audit-orphans/`
-
-A reference-graph scan (every `.md`/`.py`/`.yml`/`.sh`/`.json`/`.tex` in the repo,
-inbound `audit/<name>.md` links counted) found **38 audit records with no inbound
-reference at all**. Of those, 25 are 2026-09 paper-polish and cover-letter notes
-whose content was absorbed into `paper-A-final.*`; they are now in
-`docs/ARCHIVE/audit-orphans/` and have been removed from the cluster listings
-above (counts re-derived from the remaining bullets, not hand-adjusted):
-
-| cluster | files moved |
-|---|---:|
-| `engineering` | 6 |
-| `governance` | 5 |
-| `algorithm_4arm` | 4 |
-| `stats_method` | 3 |
-| `paper_claims` | 3 |
-| `final_verify` | 2 |
-| `data_packaging` | 1 |
-| `sweep_eval` | 1 |
-
-The other 13 orphans stay in place: `gap49-compute-accounting.md`,
-`gap56-restart-t0-defect.md`, `gap60-validity-novelty-tradeoff.md`,
-`gap46-r5b-memory-fraction.md`, `gap15-venue-fit.md`, `gap16-deferred-triage.md`,
-`manuscript-citation-integrity.md`, `repo-docs-maintenance-2.md`,
-`todo-surface-reset.md`, `wave326-ci-redesign-execution.md`,
-`wave330-zh-review-version.md`, `wave379-mechanism-synthesis.md`,
-`wave380-mechanism-restructure.md`. These are recent and load-bearing; the fix
-is to cite them, not to archive them. `docs/audit/todo-history.md` sections
-10-13 now cite the first four.
-
-Also corrected here: `docs/paper-draft.md` is no longer an "active surface"
-(it moved to `docs/ARCHIVE/legacy-paper/` on the same date).
-
-**Known limitation (pre-existing, not introduced here):** this index lists 484
-of the 558 audit records on disk. The generator (`/tmp/regen_index.py`, Wave 347)
-was never committed, so the listing cannot be regenerated reproducibly. Treat
-the index as a reading guide, not as a completeness proof; `ls docs/audit/` is
-authoritative.

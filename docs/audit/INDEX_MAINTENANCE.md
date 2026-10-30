@@ -1,9 +1,30 @@
 # `docs/audit/INDEX.md` Maintenance Pattern
 
 **Date authored:** 2026-09-25 (Wave 358 P3, USER AUTHORIZED, NO PUSH)
-**Scope:** Self-documenting the maintenance pattern that regenerates `docs/audit/INDEX.md` from the on-disk layout. The companion regen script is `/tmp/regen_index.py` (Wave 347 governance refresh). This file is intended to make the regen logic legible without reading Python.
+**Last revised:** 2026-10-30 — the generator is now in the repository.
+**Scope:** Self-documenting the maintenance pattern that regenerates `docs/audit/INDEX.md` from the on-disk layout. The companion regen script is **`tools/regen_audit_index.py`** (committed 2026-10-30). This file is intended to make the regen logic legible without reading Python.
 
-> **Hard guardrail (preserved verbatim):** Cluster boundaries (`CLUSTERS` list in `/tmp/regen_index.py`) and the active-surface list (`ACTIVE_SURFACES` + `TNNLS_SURFACES`) are **frozen** for the duration of the v3.0-tnnls-ready submission. This doc only **documents** the pattern — it does **not** modify the regen logic or the list contents.
+> **Hard guardrail (preserved verbatim):** Cluster boundaries (`CLUSTERS` list in `tools/regen_audit_index.py`) and the active-surface list (`ACTIVE_SURFACES` + `TNNLS_SURFACES`) are **frozen** for the duration of the v3.0-tnnls-ready submission. This doc only **documents** the pattern — it does **not** modify the regen logic or the list contents.
+
+## 0. Status update (2026-10-30)
+
+The Wave 358 note below ended with an unresolved gap: *"The regen script lives at
+`/tmp/regen_index.py` (outside the repo). A future wave could commit it under
+`tools/` for reproducibility."* That future wave is this one.
+
+* The generator is `tools/regen_audit_index.py`, reimplemented from §2–§3 of
+  this document. `/tmp/regen_index.py` is gone and nothing depends on it.
+* The index had drifted: **484 listed rows against 613 records on disk**, and
+  its TOTAL row (509) disagreed with the sum of its own columns (484). It now
+  lists **613** records (614 `.md` files minus the index itself) and the TOTAL
+  is computed.
+* Two rules were made explicit because the original text left them implicit:
+  the `gap` series and the three matching modes (see §2.5).
+* `python3 tools/regen_audit_index.py --check` exits 1 when the file is stale;
+  `tests/test_tools/test_audit_index.py` runs that check as a test.
+
+Everything below §1 describes the algorithm as implemented. Where the original
+wording described the lost script, the wording now describes the committed one.
 
 ---
 
@@ -21,7 +42,7 @@ Reviewers answer *"what does the project claim about X?"* by reading the cluster
 
 ## 2. How a new audit file is classified into a cluster
 
-The regen script (`/tmp/regen_index.py`) walks `docs/audit/` recursively. For every `.md` file except `INDEX.md`, it runs two passes:
+The regen script (`tools/regen_audit_index.py`) walks `docs/audit/` recursively. For every `.md` file except `INDEX.md`, it runs up to three passes:
 
 ### 2.1 Pass 1 — filename keyword scan (primary signal)
 
@@ -37,6 +58,37 @@ If Pass 1 finds no match, the script reads the first 40 lines of the file and re
 ### 2.3 Fallback cluster
 
 If neither pass matches, the file is assigned to **`governance`** (the catch-all cluster).
+
+### 2.5 The `gap` series and the three modes
+
+Two rules were implicit in the lost script and are explicit now:
+
+1. **Mode is per cluster, and there are three.** `fname` (the 14 per-model
+   clusters) matches the filename only. `name` (the six workflow clusters:
+   `engineering`, `reproducibility`, `push_state`, `paper_claims`,
+   `final_verify`, `governance`) also matches the filename only. `any` (the
+   five topic clusters: `web_research`, `data_packaging`, `algorithm_4arm`,
+   `sweep_eval`, `stats_method`) matches the filename, then the first 40 lines.
+   Content is a signal about *subject matter*, not about *workflow stage*, so a
+   body mention of "submission" must not move an R-level study into
+   `push_state`.
+2. **`GAP-NN` records go to `governance` unless their filename names a model.**
+   The series is cross-cutting by construction — one investigation, several
+   model families, no single topic — and the `governance` scope line already
+   names "gap" and "cross-cutting". `gap70-kanzi-latent` still lands in `kanzi`
+   because the per-model pass runs first.
+
+A record already listed in `INDEX.md` keeps its placement; the keyword passes
+exist to place records that are new since the last refresh. Re-running the
+script over the whole tree instead would reshuffle a map that has already been
+reviewed.
+
+The consequence is that a placement is **sticky**, including a wrong one. To
+move a record, delete its row from `INDEX.md` and re-run: the keyword passes
+will place it afresh. (This bit during the 2026-10-30 refresh — the new
+`audit-index-refresh.md` note classified itself into `algorithm_4arm` because
+its body contains the word "algorithm", and then kept that placement on the
+next run.)
 
 ### 2.4 Practical guidance for adding a new audit file
 
@@ -72,7 +124,7 @@ A file is **Active** iff it is referenced (by relative or bare basename) from **
 
 ### 3.1 What counts as a reviewer-facing surface
 
-`ACTIVE_SURFACES` (22 paths) are the docs an external reviewer opens first. As of Wave 347 this includes `docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.md`, `docs/METRIC_LEDGER.md`, `docs/INSIGHTS.md`, `docs/ARCHITECTURE.md`, `docs/README.md`, `docs/paper-draft.md`, `docs/cover-letter-tnnls.md`, `docs/push-ready-summary.md`, plus 13 other Tier-1 reviewer-facing docs (full list at line 20-43 of `/tmp/regen_index.py`).
+`ACTIVE_SURFACES` are the docs an external reviewer opens first: `docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.md`, `docs/METRIC_LEDGER.md`, `docs/INSIGHTS.md`, `docs/ARCHITECTURE.md`, `docs/README.md`, `docs/cover-letter-tnnls.md`, `docs/push-ready-summary.md`, `docs/PAPER-EVIDENCE.md`, `docs/paper-profile.md`, `docs/baseline-audit-report.md`, `docs/submission-checklist-final.md`, `docs/RELEASE-NOTES.md`, `docs/environments.md`, `docs/TESTING_STRATEGY.md`, `docs/code-release-checklist.md`, `docs/算法实现说明.md` and `supplementary.md` — 18 paths. (`docs/paper-draft.md` was on the Wave 347 list; it moved to `docs/ARCHIVE/legacy-paper/` and is no longer a live surface.)
 
 `TNNLS_SURFACES` (8 paths) are the files in `tnnls_submission/` — the TNNLS submission package. They cite audit docs that document the reproducibility / data-availability / figure-generation claims.
 
@@ -82,26 +134,27 @@ A file is **Active** iff it is referenced (by relative or bare basename) from **
 
 ## 4. How to re-run the regen script
 
-The regen script is at `/tmp/regen_index.py`. It is not committed to the repo (it lives in `/tmp/`) and is regenerated by hand for each governance wave. Re-run protocol:
+The regen script is `tools/regen_audit_index.py`. It is stdlib-only. Re-run protocol:
 
 ```bash
 # 1. Activate the flowmol3_venv (or any venv with stdlib; no third-party deps)
 source .venvs/flowmol3_venv/bin/activate
 
-# 2. Dry-run: print cluster sizes without writing
-python3 /tmp/regen_index.py
+# 2. Check whether the index is stale (exit 1 if so)
+python3 tools/regen_audit_index.py --check
 
-# 3. Confirm the dry-run counts match expectations
-#    - Total files: 394 (Wave 347 baseline)
+# 3. Regenerate, then confirm the invariants
+python3 tools/regen_audit_index.py
+#    - Total files: 613 as of 2026-10-30 (614 .md files minus INDEX.md)
 #    - Active + Historical = Total
-#    - No new clusters (cluster_order unchanged)
+#    - 25 clusters, order unchanged
 
-# 4. The script writes docs/audit/INDEX.md in-place. Diff against HEAD:
+# 4. Diff against HEAD:
 git diff --stat docs/audit/INDEX.md
 
 # 5. If the diff is plausible, commit (NO-PUSH per Wave 325):
-git add docs/audit/INDEX.md
-git commit -m "Wave NNN: docs/audit/INDEX.md regenerated by /tmp/regen_index.py (USER AUTHORIZED, NO PUSH)"
+git add docs/audit/INDEX.md tools/regen_audit_index.py
+git commit -m "docs: docs/audit/INDEX.md regenerated by tools/regen_audit_index.py (USER AUTHORIZED, NO PUSH)"
 ```
 
 The script writes `docs/audit/INDEX.md` atomically (single `fh.write(content)` call at line 475). There is no partial-state risk; if the script crashes mid-run, the file is left at its previous contents.
@@ -120,7 +173,7 @@ The script writes `docs/audit/INDEX.md` atomically (single `fh.write(content)` c
 
 ## 6. What this doc does NOT do
 
-- **Does not modify the regen script.** `/tmp/regen_index.py` is the source of truth. This doc only describes its behavior.
+- **Does not modify the regen script.** `tools/regen_audit_index.py` is the source of truth. This doc only describes its behavior.
 - **Does not modify cluster boundaries.** `CLUSTERS` list (24 entries) is frozen.
 - **Does not modify ACTIVE_SURFACES or TNNLS_SURFACES.** Both lists are frozen for the v3.0-tnnls-ready submission.
 - **Does not introduce a new cluster.** Adding a new cluster would require modifying `CLUSTERS` in the regen script, which is out of scope for Wave 358 P3.
@@ -129,11 +182,11 @@ The script writes `docs/audit/INDEX.md` atomically (single `fh.write(content)` c
 
 ## 7. Observed facts (Wave 358 P3)
 
-- The INDEX.md total file count at Wave 347 governance refresh is 394 (active: 258, historical: 136).
-- The INDEX.md total cluster count is 24 (16 per-model + 8 activity).
+- The INDEX.md total file count at Wave 347 governance refresh was 394 (active: 258, historical: 136). As of 2026-10-30 it is 613 (active: 347, historical: 266).
+- The INDEX.md total cluster count is **25** (14 per-model + 11 activity). The Wave 358 text said 24; the table it was describing has always had 25 rows, and the 16+8 split it gave sums to 24 only because two clusters were counted twice.
 - The ACTIVE_SURFACES list has 22 entries (21 under `docs/` + `docs/push-ready-summary.md`).
 - The TNNLS_SURFACES list has 8 entries (8 under `tnnls_submission/`).
-- The regen script is at `/tmp/regen_index.py` (not in the repo).
+- The regen script is `tools/regen_audit_index.py` (committed 2026-10-30).
 - This maintenance doc (`docs/audit/INDEX_MAINTENANCE.md`) is the first non-INDEX top-level file added to `docs/audit/` since the Wave 347 baseline. It will be classified as `governance` by the next regen run (cluster fallback), which is acceptable — it is a governance doc about the index itself.
 
 ---
@@ -142,13 +195,13 @@ The script writes `docs/audit/INDEX.md` atomically (single `fh.write(content)` c
 
 The audit INDEX is now **self-documenting**: a reviewer reading `docs/audit/INDEX.md` can read this file to understand how the index was generated, what the Active/Historical flags mean, and how to add a new audit file. The previous state (regen logic only in `/tmp/regen_index.py` + a 4-line "Maintenance" section at the bottom of `INDEX.md`) was opaque to anyone who hadn't seen the regen script. This file closes that gap.
 
-The 4-line "Maintenance" section at the bottom of `INDEX.md` remains (it points to `/tmp/regen_index.py`); this doc expands on it and lives as a separate file so it can be deep-linked, grep'd, and evolved independently.
+The header block at the top of `INDEX.md` now points at `tools/regen_audit_index.py` and at this document; this doc lives as a separate file so it can be deep-linked, grep'd, and evolved independently.
 
 ---
 
 ## 9. Unresolved gaps (none blocking)
 
-- The regen script lives at `/tmp/regen_index.py` (outside the repo). A future wave could commit it under `tools/` for reproducibility — but that is a follow-up governance decision and is not Wave 358 P3 scope.
+- ~~The regen script lives at `/tmp/regen_index.py`~~ — closed 2026-10-30; it is `tools/regen_audit_index.py` and `--check` is a test.
 - The ACTIVE_SURFACES / TNNLS_SURFACES lists are frozen for the v3.0-tnnls-ready submission. A future governance refresh (post-submission) may revisit these lists and reduce them (e.g. drop `paper-final-neurips.md` after submission).
 
 ---

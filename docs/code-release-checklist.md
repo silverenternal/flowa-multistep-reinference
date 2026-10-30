@@ -53,7 +53,7 @@ All of the following PASS at the tag commit:
 - `pytest tests/ -k "d4"` → `33 passed, 31 skipped, 4979 deselected, 9 warnings`
   (D.4 byte-stable regression set; the 31 skips are torch/pandas environmental
   skips documented in `tests/conftest.py`, not regressions)
-- `pytest tests/ -q` → `5558 passed, 180 skipped, 0 xfailed, 0 failed`
+- `pytest tests/ -q` → `5565 passed, 180 skipped, 0 xfailed, 0 failed`
 - `python tools/check_claims_consistency.py` → `No drift detected.`
   (39 ACTIVE, 2 DEPRECATED, 0 drift; CLM-040 stays PROVISIONAL per its
   `Disputed by` citation — this is the expected steady state)
