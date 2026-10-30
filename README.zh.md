@@ -4,16 +4,16 @@
 
 [![CI](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml/badge.svg)](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml)
 [![D.4 byte-stable](https://img.shields.io/badge/D.4-30%2F30%20PASS-brightgreen)](#submission-gates-verified-at-final-pre-push) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/LICENSE)
-[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](#installation--安装)
-[![PyTorch 2.7](https://img.shields.io/badge/torch-2.7%2Bcu128-orange.svg)](#installation--安装)
-[![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)](#tnnls-submission-package--tnnls-投稿材料)
-[![Adapters](https://img.shields.io/badge/adapters-16-orange.svg)](#repository-structure--仓库结构)
-[![5-gate PASS](https://img.shields.io/badge/5--gate-PASS-brightgreen.svg)](#submission-gates-verified-at-final-pre-push--终版前推送时验证)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](#installation)
+[![PyTorch 2.7](https://img.shields.io/badge/torch-2.7%2Bcu128-orange.svg)](#installation)
+[![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)](#tnnls-submission-package-tnnls)
+[![Adapters](https://img.shields.io/badge/adapters-16-orange.svg)](#repository-structure)
+[![5-gate PASS](https://img.shields.io/badge/5--gate-PASS-brightgreen.svg)](#submission-gates-verified-at-final-pre-push)
 [![mkdocs strict](https://img.shields.io/badge/mkdocs--strict-0%20warnings-success.svg)](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/mkdocs.yml)
 
 **Last updated / 最近更新:** 2026-10-27（全门 PASS；`docs/PAPER-EVIDENCE.md` 是 cell 级证据的唯一来源）。手稿 = `docs/drafts/paper-A-final.pdf`（12 页，IEEEtran；已改题为 *Re-Inference Control for Frozen Flow-Matching Checkpoints*，并围绕单一主张重新包装——控制变量是轮边界，不是步数）。项目状态与历史：[`todo.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/todo.json)。论文 A 已准备 TNNLS 投稿。
 
-**Scheduler scope of this README / 本 README 的调度器适用范围:** All 7 headline numbers in the [Headline Results](#headline-results--头条结果) section were produced under `CosineAnnealScheduler` (the controller that ignores all 4 paper quantities). `CodimensionSheetScheduler` 和其他 paper-quantity-grounded 控制器 (`PaperRatioAdaptiveScheduler`、`EvidenceDrivenScheduler`、`ConvergenceAdaptiveScheduler`) 均为研究阶段；详见 [`docs/ALGORITHMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ALGORITHMS.md) 与 [`docs/CLAIMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md) 中汇总的 pipeline inventory。
+**Scheduler scope of this README / 本 README 的调度器适用范围:** All 7 headline numbers in the [Headline Results](#headline-results) section were produced under `CosineAnnealScheduler` (the controller that ignores all 4 paper quantities). `CodimensionSheetScheduler` 和其他 paper-quantity-grounded 控制器 (`PaperRatioAdaptiveScheduler`、`EvidenceDrivenScheduler`、`ConvergenceAdaptiveScheduler`) 均为研究阶段；详见 [`docs/ALGORITHMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ALGORITHMS.md) 与 [`docs/CLAIMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md) 中汇总的 pipeline inventory。
 
 **Narrative framing / 叙事定位:** 论文叙事以**类型化契约框架**（将流匹配推理重构为跨三个域的多轮再推理层，具有四端口控制面）和**11 个 R+K 单元上的系统性实证显著性**为引领。伴生论文定理 1 + 引理 2-5 定位为**一个理论透镜**（而非框架的本体），置于论文 §6，伴以 CodimensionSheetScheduler 在 R6 上的部分验证，并提供 `PaperQuantitiesCache` opt-in flag 以激活全部 16 站点。标题去除 "Paper-Quantity-Driven"；框架重构本身成为头条。详见 [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) 的当前结构。
 
@@ -23,44 +23,44 @@
 
 ### Quick Navigation / 快速导航
 
-- [Paper A Submission Status / 论文 A 投稿状态](#paper-a-submission-status--论文-a-投稿状态) — TNNLS 投稿包 + 最终指标快照
-- [Complete Inventory: Innovations & Experiments / 完整盘点：创新点与实验](#complete-inventory-innovations--experiments--完整盘点创新点与实验) — 构建了什么 + 每个实验测出了什么 的唯一整合视图
-- [Final Empirical Metrics / 最终实证指标](#final-empirical-metrics-11-cells--最终实证指标-11-单元) — 3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only（最终）
-- [Headline Results / 头条结果](#headline-results--头条结果) — 七个 R-level 单元 + 四个 K-cell 概览
-- [Deep Innovations / 深度创新](#deep-innovations--深度创新) — 七项真正新颖的首要贡献
-- [Architecture / 架构](#architecture--架构) — 类型化四端口控制面 + 13 调度器（9 基线 + 4 论文量驱动控制器）
-- [Installation / 安装](#installation--安装) — 三个 venv (FlowMol3 / LineageFlow / Kanzi)
-- [Quick Start / 快速开始](#quick-start--快速开始) — 一键验证投稿门槛
-- [Reproducing the Paper / 复现论文](#reproducing-the-paper--复现论文) — 每单元脚本与期望输出
-- [Reproducibility / 可复现性](#reproducibility--可复现性) — 5-gate 不变量 + D.4 30/30 + 最终推送前快照
-- [Submission Gates / 投稿门禁](#submission-gates-verified-at-final-pre-push--终版前推送时验证) — D.4、mkdocs、claims、pytest、ruff、mypy
-- [Citation / 引用](#citation--引用) — TNNLS 投稿 BibTeX 条目
+- [Paper A Submission Status / 论文 A 投稿状态](#paper-a-submission-status-a) — TNNLS 投稿包 + 最终指标快照
+- [Complete Inventory: Innovations & Experiments / 完整盘点：创新点与实验](#complete-inventory-innovations-experiments) — 构建了什么 + 每个实验测出了什么 的唯一整合视图
+- [Final Empirical Metrics / 最终实证指标](#final-empirical-metrics-11-cells-11) — 3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only（最终）
+- [Headline Results / 头条结果](#headline-results) — 七个 R-level 单元 + 四个 K-cell 概览
+- [Deep Innovations / 深度创新](#deep-innovations) — 七项真正新颖的首要贡献
+- [Architecture / 架构](#architecture) — 类型化四端口控制面 + 13 调度器（9 基线 + 4 论文量驱动控制器）
+- [Installation / 安装](#installation) — 三个 venv (FlowMol3 / LineageFlow / Kanzi)
+- [Quick Start / 快速开始](#quick-start) — 一键验证投稿门槛
+- [Reproducing the Paper / 复现论文](#reproducing-the-paper) — 每单元脚本与期望输出
+- [Reproducibility / 可复现性](#reproducibility) — 5-gate 不变量 + D.4 30/30 + 最终推送前快照
+- [Submission Gates / 投稿门禁](#submission-gates-verified-at-final-pre-push) — D.4、mkdocs、claims、pytest、ruff、mypy
+- [Citation / 引用](#citation) — TNNLS 投稿 BibTeX 条目
 - [English README](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/README.md) — 双语 README
 
 ---
 
 ## Contents / 目录
 
-- [Paper A Submission Status / 论文 A 投稿状态](#paper-a-submission-status--论文-a-投稿状态)
-- [Complete Inventory: Innovations & Experiments / 完整盘点：创新点与实验](#complete-inventory-innovations--experiments--完整盘点创新点与实验)
-- [Final Empirical Metrics / 最终实证指标](#final-empirical-metrics-11-cells--最终实证指标-11-单元)
-- [Headline Results / 头条结果](#headline-results--头条结果)
-- [Deep Innovations / 深度创新](#deep-innovations--深度创新)
-- [Architecture / 架构](#architecture--架构)
-- [Installation / 安装](#installation--安装)
-- [Quick Start / 快速开始](#quick-start--快速开始)
-- [Reproducing the Paper / 复现论文](#reproducing-the-paper--复现论文)
-- [Reproducibility / 可复现性](#reproducibility--可复现性)
-- [Environment Setup (Docker) / 环境搭建](#environment-setup-docker-recommended--推荐-docker)
-- [Repository Structure / 仓库结构](#repository-structure--仓库结构)
-- [Submission Gates / 提交门禁](#submission-gates-verified-at-final-pre-push--终版前推送时验证)
-- [Data and Model Availability / 数据与模型可用性](#data-and-model-availability--数据与模型可用性)
-- [Numerical Stability / 数值稳定性](#numerical-stability--数值稳定性)
-- [TNNLS Submission Package / TNNLS 投稿材料](#tnnls-submission-package--tnnls-投稿材料)
-- [Citation / 引用](#citation--引用)
-- [License / 许可](#license--许可)
-- [Acknowledgements / 致谢](#acknowledgements--致谢)
-- [Contact / 联系](#contact--联系)
+- [Paper A Submission Status / 论文 A 投稿状态](#paper-a-submission-status-a)
+- [Complete Inventory: Innovations & Experiments / 完整盘点：创新点与实验](#complete-inventory-innovations-experiments)
+- [Final Empirical Metrics / 最终实证指标](#final-empirical-metrics-11-cells-11)
+- [Headline Results / 头条结果](#headline-results)
+- [Deep Innovations / 深度创新](#deep-innovations)
+- [Architecture / 架构](#architecture)
+- [Installation / 安装](#installation)
+- [Quick Start / 快速开始](#quick-start)
+- [Reproducing the Paper / 复现论文](#reproducing-the-paper)
+- [Reproducibility / 可复现性](#reproducibility)
+- [Environment Setup (Docker) / 环境搭建](#environment-setup-docker-recommended-docker)
+- [Repository Structure / 仓库结构](#repository-structure)
+- [Submission Gates / 提交门禁](#submission-gates-verified-at-final-pre-push)
+- [Data and Model Availability / 数据与模型可用性](#data-and-model-availability)
+- [Numerical Stability / 数值稳定性](#numerical-stability)
+- [TNNLS Submission Package / TNNLS 投稿材料](#tnnls-submission-package-tnnls)
+- [Citation / 引用](#citation)
+- [License / 许可](#license)
+- [Acknowledgements / 致谢](#acknowledgements)
+- [Contact / 联系](#contact)
 
 ---
 
@@ -127,7 +127,7 @@
 
 两层：**11 个头条单元**（论文 §7.2/§7.11）与**封闭缺口调查（GAP-24 … GAP-31）**——后者对前者进行压力测试、精化或重锚。
 
-**2.1 — 11 个头条单元。** 权威裁决分布 **3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only**；完整表见 [最终实证指标](#final-empirical-metrics-11-cells--最终实证指标-11-单元)。每单元达到的效果：
+**2.1 — 11 个头条单元。** 权威裁决分布 **3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only**；完整表见 [最终实证指标](#final-empirical-metrics-11-cells-11)。每单元达到的效果：
 
 | 单元 | 模型 / 指标 | 达到的效果 |
 |---|---|---|

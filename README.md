@@ -34,7 +34,7 @@ verdict holds globally.
 ### Quick Navigation
 
 - [Paper A Submission Status](#paper-a-submission-status) — TNNLS submission package + final metrics snapshot
-- [Complete Inventory: Innovations & Experiments](#complete-inventory-innovations--experiments) — the single consolidated view of what was built and what every experiment measured
+- [Complete Inventory: Innovations & Experiments](#complete-inventory-innovations-experiments) — the single consolidated view of what was built and what every experiment measured
 - [Final Empirical Metrics](#final-empirical-metrics-11-cells) — 3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only (final)
 - [Headline Results](#headline-results) — seven R-level cells + four K-cells at a glance
 - [Deep Innovations](#deep-innovations) — seven genuinely novel primary contributions
@@ -52,7 +52,7 @@ verdict holds globally.
 ## Contents
 
 - [Paper A Submission Status](#paper-a-submission-status)
-- [Complete Inventory: Innovations & Experiments](#complete-inventory-innovations--experiments)
+- [Complete Inventory: Innovations & Experiments](#complete-inventory-innovations-experiments)
 - [Final Empirical Metrics (11 cells)](#final-empirical-metrics-11-cells)
 - [Headline Results](#headline-results)
 - [Deep Innovations](#deep-innovations)

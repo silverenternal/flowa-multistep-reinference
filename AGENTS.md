@@ -213,8 +213,8 @@ cd tnnls_submission && sha256sum -c SHA256SUMS
 **Integrity checkers.** CI enforces ruff, mypy, `check_docs_against_code`,
 `check_claims_consistency`, pytest and `mkdocs build --strict`; the D.4 and
 SHA-256 commands above are pre-submission steps you run locally. The full chain
-is longer still — `todo.json`'s `gate_chain` is the authoritative list (16
-entries as of 2026-10-30). The ten below all exit 0 and all take under 20 s:
+is longer still — `todo.json`'s `gate_chain` is the authoritative list (17
+entries as of 2026-10-30). The eleven below all exit 0 and all take under 20 s:
 
 ```bash
 python3 tools/paper_evidence.py --check      # every cell's artifact + quote, and the rendered surface
@@ -227,6 +227,7 @@ python3 tools/check_artifact_hashes.py       # digests quoted in READMEs
 python3 tools/check_clone_integrity.py       # tracked symlinks resolve on a clone
 python3 tools/regen_audit_index.py --check   # docs/audit/INDEX.md matches the audit tree
 python3 tools/check_vendored_pristine.py     # data/ upstream trees still match their pins
+python3 tools/check_doc_anchors.py           # every page.md#anchor resolves to a heading
 ```
 
 Each one exists because its surface drifted unnoticed at least once; the

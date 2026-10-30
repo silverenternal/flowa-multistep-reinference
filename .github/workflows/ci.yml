@@ -25,7 +25,7 @@
 #   6. mkdocs       -- ``mkdocs build --strict`` renders the auto-generated
 #                     API reference; a broken internal link or unresolved
 #                     mkdocstrings reference fails the build.
-#   7. integrity    -- the ten package/evidence checkers under ``tools/``
+#   7. integrity    -- the eleven package/evidence checkers under ``tools/``
 #                     (paper-evidence register, submission MANIFEST + links,
 #                     data ledgers, doc links, paper-data rows, quoted
 #                     artifact hashes, clone-safe symlinks). Each one exists
@@ -152,6 +152,7 @@ jobs:
           PYTHONPATH=. python tools/check_clone_integrity.py
           PYTHONPATH=. python tools/regen_audit_index.py --check
           PYTHONPATH=. python tools/check_vendored_pristine.py
+          PYTHONPATH=. python tools/check_doc_anchors.py
 
   # Test + docs build. Runs the pytest suite (slow / benchmark excluded)
   # and the mkdocs --strict build. Same runner pool as ``lint-types``

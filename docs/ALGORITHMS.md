@@ -165,8 +165,8 @@ to drive the next round's `n_cap`. The scheduler reads
 publishes) and updates `n_cap` toward a target. Use it when you have
 a stable, low-noise per-round metric.
 
-**Paper grounding.** Self-reflexive loop (Loop 1 in
-[`README.md`](../README.md#the-four-feedback-loops)). No external paper.
+**Paper grounding.** Self-reflexive loop (Loop 1 of the four-loop composition
+in [`算法实现说明.md`](算法实现说明.md#6-4-loop-compositionpaper-math)). No external paper.
 
 **Sample.**
 
