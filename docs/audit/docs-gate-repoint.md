@@ -176,11 +176,12 @@ just no longer decides anything.
 
 ## 4. Unresolved
 
-- **`tools/check_doc_paper_refs.py` is still not in `todo.json` →
-  `gate_chain`.** It now exits 0 honestly and runs in under a second, so wiring
-  it is a one-line change — but that changes the chain length quoted in
-  AGENTS.md §4.1 and in `gate_note`, which is a governance decision rather than
-  a fix.
+- **`tools/check_doc_paper_refs.py` was wired into the chain** (user
+  decision, 2026-10-30): `todo.json` → `gate_chain` 20 → 21, `gate_note`
+  extended, `AGENTS.md` §4.1 "twenty entries / fourteen checkers" →
+  "twenty-one / fifteen", `.github/workflows/ci.yml` Gate 7 gains the command,
+  and `docs/GATES.md` counts updated. It runs in under a second, so the chain's
+  "all under 20 s" claim still holds.
 - **The doc ratio is 0.818 and will stay there.** Eight top-level pages
   (`CONTRIBUTING-cover-letter.md`, `FLOWA_WORKFLOW.md`, `README.md`,
   `capability_g1_analysis.md`, `code-release-checklist.md`, `configs.md`,

@@ -1,7 +1,7 @@
 # Acceptance gates — rendered gate chain
 
 **Date:** 2026-09-05 (master-chain section frozen; refreshed 2026-10-30)
-**Source of truth:** `todo.json` — `gate_chain` (the 20 live commands, run
+**Source of truth:** `todo.json` — `gate_chain` (the 21 live commands, run
 in that order) and `gate_note` (why each entry exists, with the incident
 that added it). The `todo/` tree this page used to cite was retired on
 2026-10-13 (`bd9055c3`): its thirteen files were consolidated into
@@ -18,7 +18,7 @@ Per user directive (2026-09-05):
 > gate is not passed, the next task is blocked from starting.)
 
 The directory that directive named is gone; the rule is not. It survives
-as `todo.json` → `gate_chain`: every increment must leave all twenty
+as `todo.json` → `gate_chain`: every increment must leave all twenty-one
 commands at exit 0 before the next one starts.
 
 A gate is **passed** only when its verification step returns 0; otherwise
