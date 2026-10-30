@@ -83,6 +83,42 @@ fourteen checkers) and CI Gate 7.
   `docs/audit/<cluster>/` (e.g. `docs/audit/engineering/`, `stats_method/`)
   are not scanned, so the 108 citations are the `wave*` subset, not the whole
   audit tree. Widening the glob would need the same disclosure rule applied to
-  a much larger set; not attempted here.
+  a much larger set; not attempted here. **Closed 2026-10-30 — see §6.**
 - A document could in principle carry an unrelated copy of the current hash
   within 40 lines. The window is a heuristic, not a proof.
+
+---
+
+## 6. Addendum (2026-10-30) — the scan is recursive
+
+The limitation in §5 is closed. `verify()` now walks
+`audit_dir.rglob("*.md")` instead of `audit_dir.glob("wave*.md")`, because
+increments have filed under topic clusters since October: 243 top-level
+`wave*.md` against 625 audit records in total.
+
+| Reading | Before | After |
+|---|---:|---:|
+| citations parsed | 108 | **127** |
+| unique paths cited | 66 | **83** |
+| drifts | 0 | **0** |
+| disclosed | 3 | **3** |
+| not checkable | — | **8** |
+
+The eight new non-results are not new drift; they are citations that cannot be
+resolved to one file *by construction*, and §5's fear ("a much larger set")
+did not materialise because they are only two shapes:
+
+- **directory citations** — `close-w158.md:201-202` cite a whole run directory
+  with a sha256 (`verification_outputs/lineageflow_hmmer_real_n1000_…/`);
+- **elided paths** — `k6-verification.md:92-98` abbreviate the tree as
+  `verification_outputs/.../baseline/summary.json`.
+
+Both are now counted in `ProvenanceResult.unverifiable` and printed under
+"Not checkable (not a failure)", rather than reported as `missing_file`. The
+alternative — resolving `...` literally — would have manufactured eight false
+drifts.
+
+The disclosure heuristic (§5, second bullet) is unchanged, and the three
+disclosed citations are the same three as before: widening the scan added no
+drift and no new disclosure.
+

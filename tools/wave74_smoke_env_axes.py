@@ -18,6 +18,13 @@ from pathlib import Path
 if {"-h", "--help"} & set(sys.argv[1:]):
     print(__doc__)
     raise SystemExit(0)
+if len(sys.argv) > 1:
+    print(
+        f"{sys.argv[0]}: this driver takes no arguments; "
+        f"got {sys.argv[1:]}. Its parameters are fixed in the source.",
+        file=sys.stderr,
+    )
+    raise SystemExit(2)
 
 # Make sure xtb is on $PATH for the test
 os.environ["PATH"] = "/home/hugo/xtb_prefix/bin:" + os.environ.get("PATH", "")

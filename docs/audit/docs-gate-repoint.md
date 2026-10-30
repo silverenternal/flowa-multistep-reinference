@@ -212,7 +212,7 @@ just no longer decides anything.
 | `check_doc_anchors.py` | 101 fragment links resolve |
 | `check_reviewer_pointers.py` | `checked=634 dead=0` |
 | `check_recipe_flags.py` | 0 problems |
-| `check_data_provenance.py` | `citations=108 paths=66 drifts=0 disclosed=3` |
+| `check_data_provenance.py` | `citations=108 paths=66 drifts=0 disclosed=3` (108 at this commit; **127 / 83 / 0 / 3 / 8 not-checkable** after the scan was widened the same day — `provenance-gate.md` §6) |
 | `check_claims_consistency.py` | No drift detected |
 | `paper_evidence.py --check` | 11 cells verified |
 | `regen_audit_index.py --check` | regenerated (one record promoted historical → active by the new `docs/README.md` link) |

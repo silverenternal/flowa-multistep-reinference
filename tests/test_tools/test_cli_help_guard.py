@@ -18,6 +18,15 @@ statement of the block -- and once dynamically, on a copy of a driver run
 inside ``tmp_path`` so a regression fails the test instead of rewriting a
 figure in the repository.
 
+A driver that reads no arguments at all also cannot honour one, so the guard
+is followed by a rejection: any argument other than ``-h``/``--help`` exits 2
+with a message instead of running the default configuration.  Before that,
+``--seed 7`` on such a driver ran the analysis and rewrote its evidence --
+the same failure as ``--help``, one flag over.  Drivers that genuinely read
+``sys.argv`` (``run_real_ckpt_eval``, the three that take a list of paths) are
+not touched: they have their own argument handling, and rejecting their flags
+would break them.
+
 A second class surfaced on the same day: modules that do their work at
 *module level*, with no ``__main__`` block at all.
 ``tools/build_verification_manifest.py --help`` regenerated the git-tracked
@@ -233,3 +242,69 @@ def test_both_help_spellings_are_honoured(tmp_path, flag) -> None:
     )
     assert proc.returncode == 0
     assert "Render the R5c" in proc.stdout
+
+
+# ---------------------------------------------------------------------------
+# Unknown flags on a driver that reads no arguments
+# ---------------------------------------------------------------------------
+
+_REJECTION_MARKER = "this driver takes no arguments"
+
+
+def test_a_driver_that_ignores_argv_rejects_a_flag(tmp_path) -> None:
+    """``--seed 7`` must exit 2 and write nothing, not run the default."""
+    script = tmp_path / "fixed.py"
+    script.write_text(
+        '"""Doc."""\n\nimport sys\n\n\n'
+        'def main() -> int:\n'
+        '    open("ran.txt", "w").write("y")\n'
+        "    return 0\n\n\n"
+        'if __name__ == "__main__":\n'
+        '    if {"-h", "--help"} & set(sys.argv[1:]):\n'
+        "        print(__doc__)\n"
+        "        raise SystemExit(0)\n"
+        "    if len(sys.argv) > 1:\n"
+        "        print("
+        'f"{sys.argv[0]}: ' + _REJECTION_MARKER + '; "'
+        'f"got {sys.argv[1:]}.", file=sys.stderr)\n'
+        "        raise SystemExit(2)\n"
+        "    raise SystemExit(main())\n",
+        encoding="utf-8",
+    )
+    flag = subprocess.run(
+        [sys.executable, str(script), "--seed", "7"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert flag.returncode == 2, flag.stdout + flag.stderr
+    assert _REJECTION_MARKER in flag.stderr
+    assert not (tmp_path / "ran.txt").exists()
+
+    help_run = subprocess.run(
+        [sys.executable, str(script), "--help"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert help_run.returncode == 0
+    assert "Doc." in help_run.stdout
+    assert not (tmp_path / "ran.txt").exists()
+
+
+def test_the_rejection_covers_the_drivers_that_read_no_arguments() -> None:
+    """The rejection is present where the guard is, and it is not vacuous."""
+    guarded: list[str] = []
+    rejecting: list[str] = []
+    for root in (TOOLS, SCRIPTS):
+        for path in sorted(root.glob("*.py")):
+            src = path.read_text(encoding="utf-8")
+            if '"--help"} & set(sys.argv[1:])' not in src:
+                continue
+            guarded.append(path.name)
+            if _REJECTION_MARKER in src:
+                rejecting.append(path.name)
+    assert len(rejecting) >= 40
+    # Every rejecting driver also honours --help; a rejection without the
+    # guard would make `--help` exit 2.
+    assert set(rejecting) <= set(guarded)

@@ -122,3 +122,60 @@ suite now covers 100+ drivers with a `__main__` guard and the module-level
 class, and `tests/test_tools/test_cli_help_guard.py` grew from 6 to 9 cases
 (module-level guard accepted, module-level guard after the work reported, a
 bare script with no `__main__` block reported).
+
+## 7. Third pass (2026-10-30) — the flags that are not `--help`
+
+§5 recorded that "every other flag is still ignored, so
+`python3 tools/wave195_p2_r_level_power.py --seed 7` silently runs the default
+configuration". That is the same failure as the one §1 describes, one flag
+over: a silent run that rewrites evidence. It is now closed for the drivers
+where it can be closed safely.
+
+**The predicate.** A driver "reads no arguments" iff the only use of
+`sys.argv` in the file is the help guard itself. 44 of the 51 guarded drivers
+match: the `wave19x`/`wave2xx` power and aggregation analyses, the figure
+renderers, `build_verification_manifest`, `check_doc_anchors`,
+`check_vendored_pristine`, the `gap4x` analyses and the three real-checkpoint
+runners. Each now carries, immediately after the guard:
+
+```python
+    if len(sys.argv) > 1:
+        print(
+            f"{sys.argv[0]}: this driver takes no arguments; "
+            f"got {sys.argv[1:]}. Its parameters are fixed in the source.",
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
+```
+
+`python3 tools/wave195_p2_r_level_power.py --seed 7` now exits 2 and writes
+nothing; `--help` still exits 0.
+
+**The seven that are not touched.** `run_real_ckpt_eval.py` passes
+`sys.argv[1:]` into `main()` and parses its own flags (`--composite-metric`);
+`r3_reaggregate_paired_ci.py` and three others take `sys.argv` as a list of
+paths; `check_recipe_flags.py` uses argparse. Rejecting their flags would
+break working invocations, and they already fail loudly on an unknown flag
+rather than ignoring it.
+
+**Why not a real CLI.** Making 44 drivers configurable is a different change
+with a different risk: their parameters are the ones their audit records
+document, and a flag surface invites re-running an analysis at a seed or N
+that the recorded verdict was not computed at. Rejecting the flag keeps the
+record and the code aligned.
+
+**Test.** `tests/test_tools/test_cli_help_guard.py` grew from 9 to 11 cases: a
+synthetic driver that ignores argv must exit 2 on `--seed 7` with no file
+written and still exit 0 on `--help`; and at least 40 drivers must carry the
+rejection, with every rejecting driver also carrying the help guard (a
+rejection without the guard would make `--help` exit 2).
+
+**One mistake worth recording.** The first insertion pass put the block
+*inside* the `if {"-h", "--help"}` branch, inheriting the `raise
+SystemExit(0)`'s indentation, so it was unreachable — and the smoke test then
+ran `wave195_p2_r_level_power.py --seed 7` for real, rewriting
+`verification_outputs/wave195-p2-r-level-power.{csv,json}`. Both were restored
+with `git checkout --` and the block was re-inserted at the guard's own
+indentation. The lesson is the same one §6 records: a guard that is placed
+after the work is not a guard, and "it exited 0" is not evidence that the
+guard fired.

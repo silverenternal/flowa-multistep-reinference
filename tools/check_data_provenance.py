@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI: walk every ``docs/audit/wave*.md`` and cross-check the sha256
+"""CLI: walk every ``docs/audit/**/*.md`` and cross-check the sha256
 references inside.
 
 The audit docs are the project's "evidence ledger" -- every R-cell /
@@ -48,7 +48,21 @@ REPO_ROOT: Path = Path(__file__).resolve().parent.parent
 """Resolved repo root (one level above ``tools/``)."""
 
 AUDIT_DIR: Path = REPO_ROOT / "docs" / "audit"
-"""Where the per-wave audit docs live. ``wave*.md`` glob is the source set."""
+"""Where the audit docs live. Every ``*.md`` below it is scanned.
+
+The scan is recursive: since 2026-10 the increments file under topic
+clusters (``docs/audit/kanzi/``, ``docs/audit/sweep_eval/``,
+``docs/audit/engineering/``, …) rather than at the top level, so a
+``wave*.md`` glob would skip everything recent.
+"""
+
+UNVERIFIABLE_MARKERS: tuple[str, ...] = ("...", "…")
+"""Substrings that mark a path as elided in prose, hence not checkable.
+
+Audit notes abbreviate long trees as ``verification_outputs/.../summary.json``.
+Resolving that literally reports a missing file that was never claimed to
+exist, so such citations are counted separately instead of failing.
+"""
 
 # Match a 64-hex-char sha256 anywhere in the doc body. We deliberately
 # do *not* require a ``sha256:`` prefix because the audit docs use a
@@ -100,6 +114,9 @@ class ProvenanceResult:
     #: Stale citations the same document has already reconciled by recording
     #: the current on-disk hash.  Reported, but not a failure.
     disclosed: tuple[Drift, ...] = field(default_factory=tuple)
+    #: Citations whose path is elided (``...``) or names a directory, so no
+    #: single file can be hashed.  Reported, but not a failure.
+    unverifiable: tuple[Citation, ...] = field(default_factory=tuple)
 
 
 # ---------------------------------------------------------------------------
@@ -204,6 +221,13 @@ def _resolve_sha_to_file(target: Path, expected_sha: str) -> bool:
     return _sha256_of(target) == expected_sha
 
 
+def _is_unverifiable(path: str) -> bool:
+    """True if ``path`` cannot be resolved to one file by construction."""
+    if path.endswith("/"):
+        return True
+    return any(marker in path for marker in UNVERIFIABLE_MARKERS)
+
+
 def verify(
     audit_dir: Path = AUDIT_DIR, repo_root: Path = REPO_ROOT
 ) -> ProvenanceResult:
@@ -216,15 +240,19 @@ def verify(
         return ProvenanceResult(citations=())
     drifts: list[Drift] = []
     disclosed: list[Drift] = []
+    unverifiable: list[Citation] = []
     citations: list[Citation] = []
     cited_paths: set[str] = set()
     cited_shas: set[str] = set()
-    for doc in sorted(audit_dir.glob("wave*.md")):
+    for doc in sorted(audit_dir.rglob("*.md")):
         doc_text = doc.read_text(encoding="utf-8")
         for citation in _extract_citations(doc, repo_root):
             citations.append(citation)
             cited_paths.add(citation.path)
             cited_shas.add(citation.sha256)
+            if _is_unverifiable(citation.path):
+                unverifiable.append(citation)
+                continue
             target = repo_root / citation.path
             if not target.is_file():
                 drifts.append(
@@ -260,6 +288,7 @@ def verify(
         cited_paths=frozenset(cited_paths),
         cited_shas=frozenset(cited_shas),
         disclosed=tuple(disclosed),
+        unverifiable=tuple(unverifiable),
     )
 
 
@@ -277,6 +306,12 @@ def _format_report(result: ProvenanceResult) -> str:
     out.append(f"- Unique paths cited: **{len(result.cited_paths)}**")
     out.append(f"- Unique sha256s cited: **{len(result.cited_shas)}**")
     out.append(f"- Drifts: **{len(result.drifts)}**")
+    if result.unverifiable:
+        out.append(
+            f"- Not checkable: **{len(result.unverifiable)}** "
+            "(path is elided with `...` or names a directory, so no single "
+            "file can be hashed)"
+        )
     if result.disclosed:
         out.append(
             f"- Disclosed stale citations: **{len(result.disclosed)}** "
@@ -301,6 +336,12 @@ def _format_report(result: ProvenanceResult) -> str:
         out.append("")
         for d in result.disclosed:
             out.append(f"- **{d.doc}**: {d.detail}")
+    if result.unverifiable:
+        out.append("")
+        out.append("## Not checkable (not a failure)")
+        out.append("")
+        for c in result.unverifiable:
+            out.append(f"- **{c.doc}:{c.line}**: `{c.path}`")
     out.append("")
     return "\n".join(out)
 
@@ -313,9 +354,10 @@ def _format_report(result: ProvenanceResult) -> str:
 def _parse_args(argv: Iterable[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Walk docs/audit/wave*.md, extract every (sha256, path) "
-            "citation, and verify the path resolves to a file with "
-            "matching sha256."
+            "Walk every docs/audit/**/*.md, extract each (sha256, path) "
+            "citation, and verify the path resolves to a file with a "
+            "matching sha256.  Elided paths (``...``) and directory "
+            "citations are counted as not checkable, not as drift."
         )
     )
     parser.add_argument(
@@ -342,7 +384,8 @@ def main(argv: list[str] | None = None) -> int:
     summary = (
         f"provenance: citations={len(result.citations)} "
         f"paths={len(result.cited_paths)} drifts={n_drifts} "
-        f"disclosed={len(result.disclosed)}"
+        f"disclosed={len(result.disclosed)} "
+        f"notcheckable={len(result.unverifiable)}"
     )
     if args.quiet:
         print(summary)

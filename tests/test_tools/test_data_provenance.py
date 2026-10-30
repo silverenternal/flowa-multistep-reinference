@@ -1,6 +1,6 @@
 """The provenance checker must fail an unexplained stale hash and only that.
 
-``tools/check_data_provenance.py`` walks ``docs/audit/wave*.md``, pairs each
+``tools/check_data_provenance.py`` walks every ``docs/audit/**/*.md``, pairs each
 cited sha256 with the ``verification_outputs/`` path beside it, and compares
 the pair against the file on disk.  It was written in Wave 342 and never wired
 into the gate chain, because three citations are stale *and* reconciled: the
@@ -115,4 +115,33 @@ def test_help_is_a_dry_run(flag) -> None:
         timeout=60,
     )
     assert proc.returncode == 0, proc.stderr
-    assert "docs/audit/wave*.md" in proc.stdout
+    assert "docs/audit/**/*.md" in proc.stdout
+
+
+def test_a_directory_citation_is_not_a_drift(tree) -> None:
+    """A run directory cited with a sha256 cannot be hashed -- report, don't fail."""
+    _write(tree, "Cites `verification_outputs/demo/` sha256 `" + CURRENT + "`.\n")
+    result = _verify(tree)
+    assert result.drifts == ()
+    assert len(result.unverifiable) == 1
+    assert result.unverifiable[0].path.endswith("/")
+
+
+def test_an_elided_path_is_not_a_drift(tree) -> None:
+    """``verification_outputs/.../x.json`` is an abbreviation, not a path."""
+    _write(tree, "Cites `verification_outputs/.../demo/result.json` sha256 `" + CURRENT + "`.\n")
+    result = _verify(tree)
+    assert result.drifts == ()
+    assert len(result.unverifiable) == 1
+
+
+def test_a_cluster_record_is_scanned(tree) -> None:
+    """Records under docs/audit/<cluster>/ are inside the scan now."""
+    cluster = tree / "docs" / "audit" / "sweep_eval"
+    cluster.mkdir()
+    (cluster / "k6-verification.md").write_text(
+        f"Cites `{ARTIFACT}` sha256 `{STALE}`.\n", encoding="utf-8"
+    )
+    result = _verify(tree)
+    assert len(result.drifts) == 1
+    assert result.drifts[0].doc.endswith("k6-verification.md")
