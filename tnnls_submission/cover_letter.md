@@ -315,7 +315,7 @@ d_z ≥ +0.3 is **NOT met** — the easy-tier regression is halved
 finer stratification or a larger reduction factor. R2 Kanzi
 RMSD d_z lifts from -0.099 to **+0.046** (sign flip; R2 d_z ≥
 -0.3 threshold MET), confirming the qualitative improvement
-at the easy tier. See [`docs/audit/wave233-p3-tier-aware.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/engineering/p3-tier-aware.md)
+at the easy tier. See [`docs/audit/engineering/p3-tier-aware.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/engineering/p3-tier-aware.md)
 for full method and results.
 
 **P5 — CIFAR RF n_rounds=2 override reduces R5b magnitude but
@@ -454,7 +454,7 @@ the pooled estimate is firmly positive in the direction-
 inconclusive regime.
 
 **P6 — Non-inferiority test** (audit:
-[`docs/audit/wave234-p6-non-inferiority.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/stats_method/p6-non-inferiority.md); CSV:
+[`docs/audit/stats_method/p6-non-inferiority.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/stats_method/p6-non-inferiority.md); CSV:
 [`verification_outputs/wave234-p6-non-inferiority.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p6-non-inferiority.csv)).
 One-sided non-inferiority test (Schuirmann 1987 / ICH E9
 framework) on R5b CIFAR-10 Rectified Flow at matched NFE=50
@@ -508,7 +508,7 @@ honest disclosure of an outstanding gap.
 
 **P1 — R5b CIFAR-10 RF `n_rounds=1` structurally eliminates
 the regression.** Wave 235 P1 (audit:
-[`docs/audit/wave235-p1-r5b-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/stats_method/p1-r5b-fix.md); CSV:
+[`docs/audit/stats_method/p1-r5b-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/stats_method/p1-r5b-fix.md); CSV:
 [`verification_outputs/wave235-p1-r5b-fix.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p1-r5b-fix.csv)) introduces
 two counterfactual configurations on the existing
 `RectifiedFlowCIFARAdapter`: `--no-final-restart` (skip the
@@ -563,7 +563,7 @@ new `hard_tier_nfe_intensity` parameter on the
 
 **P3 — R6 k6 tier-aware grid-search LARGE overall uplift
 with easy-tier regression eliminated.** Wave 235 P3 (audit:
-[`docs/audit/wave235-p3-r6-uplift.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/stats_method/p3-r6-uplift.md); CSV:
+[`docs/audit/stats_method/p3-r6-uplift.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/stats_method/p3-r6-uplift.md); CSV:
 [`verification_outputs/wave235-p3-r6-uplift.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p3-r6-uplift.csv)) grid-searches
 `(easy_factor ∈ {0.0, 0.1, 0.25, 0.5, 0.75}) × (hard_intensity ∈
 {1.0, 1.5, 2.0, 3.0})` with 5×4 = 20 cells at N=1000 paired
@@ -637,7 +637,7 @@ claim retraction.
 
 ### §R6.5 Wave 236 P2 — 24.6× → 1.26× wall-clock closure via CUDA-graph capture
 
-Wave 236 P2 (audit: [`docs/audit/wave236-p2-wallclock-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/algorithm_4arm/p2-wallclock-fix.md);
+Wave 236 P2 (audit: [`docs/audit/algorithm_4arm/p2-wallclock-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/algorithm_4arm/p2-wallclock-fix.md);
 CSV/JSON: [`verification_outputs/wave236-p2-cuda-graph-wall-clock.{csv,json}`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs))
 implements the **CUDA-graph capture** path recommended by Wave
 217 P3 Option A and Wave 233 P6 §5 — the remaining 99.8 %
@@ -1081,7 +1081,7 @@ will land on the canonical source tree; the descriptive repository
 name is preserved intentionally to keep the URL self-documenting
 about the method's *behaviour* (paper-quantity-driven multi-step
 re-inference) rather than its *identity* (**FlowA**). The audit
-record for this naming decision is [`docs/audit/wave213-p6-repo-naming.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/algorithm_4arm/p6-repo-naming.md).
+record for this naming decision is [`docs/audit/algorithm_4arm/p6-repo-naming.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/algorithm_4arm/p6-repo-naming.md).
 
 ## §9 Suggested Associate Editor and Reviewers
 

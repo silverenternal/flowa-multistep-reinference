@@ -21,10 +21,14 @@ Deliberately out of scope, with reasons:
 
 * ``CHANGELOG.md`` -- append-only history; an entry naming a file that was
   later deleted is a true statement about that release.
-* ``docs/audit/`` and ``docs/drafts/`` -- audit records and working drafts
-  cite artefacts as they stood at the time.  A citation into those trees
-  (``docs/audit/wave233-p3-tier-aware.md``) is provenance, not a live pointer,
-  so tokens whose path starts with either prefix are skipped.
+
+Citations *into* ``docs/audit/`` and ``docs/drafts/`` are **not** exempt.  A
+reviewer-facing document that names ``docs/audit/...`` is promising the reader
+a record they can open, and the audit tree is reorganised into topic clusters
+(``docs/audit/engineering/``, ``docs/audit/stats_method/``, ...) and archived
+into ``docs/ARCHIVE/`` often enough that ten such citations had gone stale in
+the submission package.  The exemption was removed on 2026-10-30; the ten were
+repointed at the record that actually holds the claim.
 
 The check is run in a clean clone as well as in the working tree, because the
 two disagree: ``data/`` and ``verification_outputs/`` are gitignored, so a
@@ -59,9 +63,6 @@ SURFACES: tuple[str, ...] = (
     "docs/README.md",
     "docs/PAPER-EVIDENCE.md",
 )
-
-#: Tokens under these prefixes are historical citations, not live pointers.
-EXEMPT_PREFIXES: tuple[str, ...] = ("docs/audit/", "docs/drafts/")
 
 #: Weights the repository deliberately does not carry, so a fresh clone cannot
 #: resolve them.  The exemption applies only while the file is genuinely
@@ -115,7 +116,7 @@ def collect() -> list[dict[str, str]]:
         for lineno, line in enumerate(text.splitlines(), 1):
             for match in TOKEN_RE.finditer(line):
                 raw = match.group("path").rstrip(".,;:")
-                if raw.startswith(EXEMPT_PREFIXES) or raw in absent:
+                if raw in absent:
                     continue
                 if (REPO_ROOT / raw).exists():
                     continue
@@ -136,7 +137,7 @@ def count_pointers() -> int:
         for line in text.splitlines():
             for match in TOKEN_RE.finditer(line):
                 raw = match.group("path").rstrip(".,;:")
-                if raw.startswith(EXEMPT_PREFIXES) or raw in absent:
+                if raw in absent:
                     continue
                 total += 1
     return total

@@ -31,7 +31,7 @@ see also the §IX limitation on the contraction hypothesis.
 
 - **1–2** — `docs/drafts/paper-A-final.tex` Abstract, §I contribution (ii),
   §VII-J; `docs/audit/paper-packaging-2026-10-27.md`;
-  `docs/audit/gap84-r5c-nfe-frontier-7rung.md`; figure
+  `docs/audit/gap84-inference-frontier.md`; figure
   `docs/figures/fig_r5c_frontier.png`
   (SHA-256 `f677c9b69a99f8f3be6617182c2290503040c18fd47bd4f0e44846395cc486f1`).
 - **3** — `docs/drafts/paper-A-final.tex` §VI-B, §VI-C (conditional contraction,

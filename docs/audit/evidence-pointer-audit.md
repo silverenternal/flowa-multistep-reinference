@@ -165,3 +165,44 @@ would be attributed to the wrong sweep.
 spirit: resolve against an authority (`docs/audit/INDEX.md` for audit records,
 the tree for artifacts) and only when the successor is confirmed. The residual
 counts are 159 audit citations and 28 evidence pointers.
+
+---
+
+## 7. Closing the gap (2026-10-30)
+
+Re-measuring with the checker's prefix exemption removed gave **10 dead**, not
+159 — the earlier count was taken before the 110-citation repoint and was never
+refreshed. All ten were in `tnnls_submission/`, and nine were a different shape
+from the one this audit had been chasing: the markdown **href was correct** and
+the backticked **label** still carried the pre-cluster path.
+
+| Label (dead) | Href (live) |
+|---|---|
+| `docs/audit/wave233-p3-tier-aware.md` | `docs/audit/engineering/p3-tier-aware.md` |
+| `docs/audit/wave234-p6-non-inferiority.md` | `docs/audit/stats_method/p6-non-inferiority.md` |
+| `docs/audit/wave235-p1-r5b-fix.md` | `docs/audit/stats_method/p1-r5b-fix.md` |
+| `docs/audit/wave235-p3-r6-uplift.md` | `docs/audit/stats_method/p3-r6-uplift.md` |
+| `docs/audit/wave236-p2-wallclock-fix.md` | `docs/audit/algorithm_4arm/p2-wallclock-fix.md` |
+| `docs/audit/wave213-p6-repo-naming.md` | `docs/audit/algorithm_4arm/p6-repo-naming.md` |
+| `docs/audit/wave238-p3-journal-decision.md` | `docs/audit/engineering/p3-journal-decision.md` |
+| `docs/audit/wave280-p-framework-fallback-contamination.md` | `docs/audit/r1-3seed-real-ckpt-materialize.md` |
+
+The tenth, `docs/audit/gap84-r5c-nfe-frontier-7rung.md` in
+`tnnls_submission/highlights.md`, named a record that never existed. Its
+successor is `docs/audit/gap84-inference-frontier.md`, confirmed by reading it:
+line 313 states the seven rungs (4, 5, 10, 25, 50, 100, 200) and the 84-cell
+grid the highlight describes.
+
+`EXEMPT_PREFIXES` is gone. The checker now resolves citations into
+`docs/audit/` and `docs/drafts/` like any other path, so a future
+reorganisation that strands a citation fails the gate instead of accumulating.
+Coverage went from 377 checked pointers to 645; `dead=0`.
+
+`tests/test_tools/test_reviewer_pointers.py` flipped the old
+`test_audit_and_draft_citations_are_exempt` into
+`test_a_dead_audit_citation_is_reported` plus
+`test_a_live_audit_citation_is_accepted`.
+
+**Still open, deliberately:** the 27 never-committed artifacts and the one
+honest-negative record from §6. Those are not audit citations and they have no
+successor; they stay as recorded.

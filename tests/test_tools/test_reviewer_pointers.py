@@ -61,14 +61,34 @@ def test_live_pointer_is_accepted(tool, sandbox) -> None:
     assert tool.main(["--quiet"]) == 0
 
 
-def test_audit_and_draft_citations_are_exempt(tool, sandbox) -> None:
-    """A citation into the audit tree is provenance, not a live pointer."""
+def test_a_dead_audit_citation_is_reported(tool, sandbox) -> None:
+    """A citation into the audit tree promises a record the reader can open.
+
+    Ten such citations had gone stale in ``tnnls_submission/`` because the
+    audit tree was reorganised into topic clusters and the link *label* kept
+    the old path.  The prefix is no longer exempt (2026-10-30).
+    """
     (sandbox / "README.md").write_text(
         "Per `docs/audit/wave233-p3-tier-aware.md` and `docs/drafts/gone.md`.\n",
         encoding="utf-8",
     )
+    dead = tool.collect()
+    assert [row["target"] for row in dead] == [
+        "docs/audit/wave233-p3-tier-aware.md",
+        "docs/drafts/gone.md",
+    ]
+    assert tool.count_pointers() == 2
+
+
+def test_a_live_audit_citation_is_accepted(tool, sandbox) -> None:
+    record = sandbox / "docs" / "audit" / "engineering" / "p3-tier-aware.md"
+    record.parent.mkdir(parents=True)
+    record.write_text("# record\n", encoding="utf-8")
+    (sandbox / "README.md").write_text(
+        "Per `docs/audit/engineering/p3-tier-aware.md`.\n", encoding="utf-8"
+    )
     assert tool.collect() == []
-    assert tool.count_pointers() == 0
+    assert tool.count_pointers() == 1
 
 
 def test_changelog_is_not_a_surface(tool) -> None:
