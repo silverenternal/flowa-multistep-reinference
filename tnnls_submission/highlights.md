@@ -21,7 +21,7 @@ the abstract of the current manuscript (`docs/drafts/paper-A-final.pdf`,
 (`VA ≤ C1·exp(-n/τ_residual) + C2·exp(-T/τ_velocity)`) and Theorem 5
 restart-blend attenuation bound (`VA_k ≤ (1-m)·ε_θ·1_{k=1} − (1-m)·σ_blend²·
 (k-1)·√(k/L_local)`) are **not** claims of this manuscript and appear in no
-editor-facing surface. They were withdrawn after the Wave 372 audit: the
+editor-facing surface. They were withdrawn after the audit: the
 theorems the paper states are conditional contraction (under `mK < 1`) and an
 exact squared-error identity, neither of which bounds an FID change. Trail:
 [`docs/audit/wave372-manuscript-claim-audit.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave372-manuscript-claim-audit.md);

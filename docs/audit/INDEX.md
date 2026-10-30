@@ -49,17 +49,17 @@ preserved for the per-wave audit trail.
 | `protbfn_abbfn` | ProtBFN-AbBFN (antibody / protein BFN) | 0 | 0 | 0 |
 | `wan2_2` | Wan2.2 video (video diffusion) | 0 | 0 | 0 |
 | `web_research` | Web research 2026 (FM literature surveys) | 1 | 0 | 1 |
-| `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 126 | 76 | 50 |
+| `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 126 | 75 | 51 |
 | `reproducibility` | Reproducibility (reproducibility-record, preregistration, reproduce-script) | 14 | 6 | 8 |
 | `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 27 | 9 | 18 |
 | `push_state` | Push state (push-ready, freeze, release, submission) | 10 | 6 | 4 |
 | `algorithm_4arm` | Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency) | 39 | 18 | 21 |
 | `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 108 | 90 | 18 |
-| `stats_method` | Statistical methodology (R5/R6, p-value, bonferroni, TOST) | 43 | 21 | 22 |
+| `stats_method` | Statistical methodology (R5/R6, p-value, bonferroni, TOST) | 43 | 20 | 23 |
 | `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 49 | 26 | 23 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
-| `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 112 | 32 | 80 |
-| **TOTAL** | — | **622** | **348** | **274** |
+| `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 113 | 32 | 81 |
+| **TOTAL** | — | **623** | **346** | **277** |
 
 ---
 
@@ -231,7 +231,7 @@ Web research 2026 (FM literature surveys). This cluster is part of the project's
 
 ### Cluster: `engineering` — Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree)
 
-**Files: 126** (active: 76, historical: 50)
+**Files: 126** (active: 75, historical: 51)
 
 Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This cluster is part of the project's audit surface for engineering.
 
@@ -297,7 +297,6 @@ Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This 
 - `wave348-link-fix.md`
 - `wave349-gpu-acceleration.md`
 - `wave349-impl.md`
-- `wave350-r1-materialize-status.md`
 - `wave351-thm5-numerical.md`
 - `wave352-framework-code-anchors.md`
 - `wave352-l-local-appendix.md`
@@ -314,7 +313,7 @@ Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This 
 - `wave364-g38.md`
 - `wave384-project-audit.md`
 
-**Historical (50 files, not cited by reviewer-facing surfaces):**
+**Historical (51 files, not cited by reviewer-facing surfaces):**
 
 - `cli-help-guard.md`
 - `clone-reproducibility.md`
@@ -356,6 +355,7 @@ Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This 
 - `wave334-reviewer-prediction.md`
 - `wave338-phase2-mechanism.md`
 - `wave340-readme-update.md`
+- `wave350-r1-materialize-status.md`
 - `wave351-cover-letter-helper.md`
 - `wave352-cover-letter-interactive.md`
 - `wave353-a2-placeholder-fill.md`
@@ -639,7 +639,7 @@ Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability). This cluste
 
 ### Cluster: `stats_method` — Statistical methodology (R5/R6, p-value, bonferroni, TOST)
 
-**Files: 43** (active: 21, historical: 22)
+**Files: 43** (active: 20, historical: 23)
 
 Statistical methodology (R5/R6, p-value, bonferroni, TOST). This cluster is part of the project's audit surface for stats_method.
 
@@ -658,7 +658,6 @@ Statistical methodology (R5/R6, p-value, bonferroni, TOST). This cluster is part
 - `pr2-application.md`
 - `wave234-p3-jonckheere.md`
 - `wave310-r6-tier-aware-upgrade.md`
-- `wave350-r5b-figure.md`
 - `wave350-r6-live-attempt.md`
 - `wave351-r3-vendor-fix-status.md`
 - `wave351-r5a-n10.md`
@@ -667,7 +666,7 @@ Statistical methodology (R5/R6, p-value, bonferroni, TOST). This cluster is part
 - `wave362-r6-recipe.md`
 - `wave363-r2-recipe.md`
 
-**Historical (22 files, not cited by reviewer-facing surfaces):**
+**Historical (23 files, not cited by reviewer-facing surfaces):**
 
 - `jt-variance-correction.md`
 - `p1-fix-r2-numbers.md`
@@ -676,6 +675,7 @@ Statistical methodology (R5/R6, p-value, bonferroni, TOST). This cluster is part
 - `wave275-p4-r6-proposal.md`
 - `wave302-p4-r6-replication.md`
 - `wave347-r5a-ds-aggregation-clarification.md`
+- `wave350-r5b-figure.md`
 - `wave352-r6-status.md`
 - `wave354-r5b-figure-verify.md`
 - `wave357-r6-gpu-scope.md`
@@ -809,7 +809,7 @@ Final-verify (per-wave close-out, pre-push hygiene). This cluster is part of the
 
 ### Cluster: `governance` — Governance (scope, audit, gap, condition, placeholder, cross-cutting)
 
-**Files: 112** (active: 32, historical: 80)
+**Files: 113** (active: 32, historical: 81)
 
 Governance (scope, audit, gap, condition, placeholder, cross-cutting). This cluster is part of the project's audit surface for governance.
 
@@ -848,7 +848,7 @@ Governance (scope, audit, gap, condition, placeholder, cross-cutting). This clus
 - `wave361-consolidated-results-index.md`
 - `wave375-image-feedback-path.md`
 
-**Historical (80 files, not cited by reviewer-facing surfaces):**
+**Historical (81 files, not cited by reviewer-facing surfaces):**
 
 - `audit-index-refresh.md`
 - `doc-anchor-audit.md`
@@ -912,6 +912,7 @@ Governance (scope, audit, gap, condition, placeholder, cross-cutting). This clus
 - `gap95-frontier-grids.md`
 - `gap96-manuscript-compression.md`
 - `governance-refresh-post-push.md`
+- `increment-id-compression.md`
 - `retired-prefix-citations.md`
 - `vendored-pristine-gate.md`
 - `wave275-p3-flatten.md`

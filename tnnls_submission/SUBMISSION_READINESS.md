@@ -1,21 +1,21 @@
 # TNNLS Submission Readiness — FlowA (single-source consolidation)
 
 **Date:** 2026-09-27
-**Author:** Wave 365 P1 submission-readiness consolidation agent (USER AUTHORIZED, NO PUSH)
+**Author:** submission-readiness consolidation agent (USER AUTHORIZED, NO PUSH)
 **Status:** ACTIVE — single-source consolidation doc for the TNNLS submission state.
-**Trigger:** Wave 365 P1 task brief — author `tnnls_submission/SUBMISSION_READINESS.md` as the canonical single-source for TNNLS submission state, consolidating the 7-gate state from `tnnls_submission/submission_checklist.md` + the Q1 acceptance-probability disclosure from `docs/drafts/paper-A-final.md` §11.1 + the final 11-cell verdict distribution from `docs/CONSOLIDATED_RESULTS.md` §15.103 + the reproducibility-traceability layer from `docs/audit/wave362-r6-recipe.md` + `docs/audit/wave363-all-cell-recipes.md` + `docs/audit/wave364-paper-polish-gaps.md`.
+**Trigger:** task brief — author `tnnls_submission/SUBMISSION_READINESS.md` as the canonical single-source for TNNLS submission state, consolidating the 7-gate state from `tnnls_submission/submission_checklist.md` + the Q1 acceptance-probability disclosure from `docs/drafts/paper-A-final.md` §11.1 + the final 11-cell verdict distribution from `docs/CONSOLIDATED_RESULTS.md` §15.103 + the reproducibility-traceability layer from `docs/audit/wave362-r6-recipe.md` + `docs/audit/wave363-all-cell-recipes.md` + `docs/audit/wave364-paper-polish-gaps.md`.
 **Scope:** ADDITIVE — (1) one new submission-readiness doc (`tnnls_submission/SUBMISSION_READINESS.md`); (2) NO edits to any existing `tnnls_submission/*.md` file; (3) NO edits to `docs/drafts/paper-A-final.md`, `docs/CONSOLIDATED_RESULTS.md`, or any `docs/audit/*.md` file.
 **Hard-rule compliance:** AGENTS.md §3 hard guardrails (1, 2, 3, 4, 5, 6, 7) — vendored upstream untouched; no destructive edits (single new doc, no edits to existing files); NO-PUSH policy (commit-only; no `git push`); honest uncertainty preserved (per-cell status labels preserved verbatim from §15.103); TNNLS submission freeze preserved (no edits to any existing `tnnls_submission/*.md` file); per-phase audit doc (this file follows the observed-facts / interpretation / gaps pattern); stricter-cleaner path chosen (single consolidation doc over multi-section rewrite).
 
 **Out of scope (deliberately):**
-- No edits to `tnnls_submission/MANIFEST.md` — SHA-256 column is preserved unchanged; this new doc does NOT enter the MANIFEST ledger (per Wave 365 P1 task brief: ADDITIVE only, no existing `tnnls_submission/*.md` file modified).
+- No edits to `tnnls_submission/MANIFEST.md` — SHA-256 column is preserved unchanged; this new doc does NOT enter the MANIFEST ledger (task brief: ADDITIVE only, no existing `tnnls_submission/*.md` file modified).
 - No edits to `tnnls_submission/cover_letter.md` — 17 USER_TO_FILL placeholders preserved verbatim (31 grep hits).
-- No edits to `tnnls_submission/highlights.md`, `tnnls_submission/tables.md`, `tnnls_submission/figures.md`, `tnnls_submission/data_availability.md`, `tnnls_submission/submission_checklist.md` — all byte-identical to Wave 364 baseline.
-- No edits to `docs/drafts/paper-A-final.md` — §11.1 honest-verdict paragraph preserved verbatim. (The Q1 acceptance-probability disclosure formerly cited here was removed from the manuscript at Wave 370; this doc no longer asserts one — see §5.)
+- No edits to `tnnls_submission/highlights.md`, `tnnls_submission/tables.md`, `tnnls_submission/figures.md`, `tnnls_submission/data_availability.md`, `tnnls_submission/submission_checklist.md` — all byte-identical to the prior baseline.
+- No edits to `docs/drafts/paper-A-final.md` — §11.1 honest-verdict paragraph preserved verbatim. (The Q1 acceptance-probability disclosure formerly cited here was removed from the manuscript; this doc no longer asserts one — see §5.)
 - No edits to `docs/CONSOLIDATED_RESULTS.md` §15.103 — final 11-cell verdict distribution cited here verbatim.
-- No edits to any `docs/audit/*.md` file — Wave 362 / 363 / 364 audit docs cited here verbatim.
-- No edits to any vendored upstream repo (the 9 vendored repos in `data/` remain byte-identical to upstream pinned commits per Wave 260 hard-guardrail #1).
-- No `git push` (per Wave 325 NO-PUSH policy + AGENTS.md §3 guardrail #3).
+- No edits to any `docs/audit/*.md` file — the audit docs cited here verbatim.
+- No edits to any vendored upstream repo (the 9 vendored repos in `data/` remain byte-identical to upstream pinned commits per hard-guardrail #1).
+- No `git push` (per the NO-PUSH policy + AGENTS.md §3 guardrail #3).
 
 ---
 
@@ -27,18 +27,18 @@
 | 2 | Claims consistency | **PASS** | `python3 tools/check_claims_consistency.py` → no drift (61 active + 0 provisional + 2 deprecated; CLM-040 forced PROVISIONAL by Disputed-by citation, pre-existing) |
 | 3 | ruff lint (4-directory scope) | **PASS** | `ruff check adaptive_reflow/ tests/ scripts/ tools/` → All checks passed! |
 | 4 | mkdocs build --strict | **PASS** | `mkdocs build --strict` → exit code 0; documentation built in ~24s; no errors, no warnings that fail the build |
-| 5 | Lean 4 BUILD_PASS for 4 stub files | **PASS** | `formal/FlowA/{Theorem4Subclaim41,Theorem5Subclaim51,Theorem5Subclaim52,Theorem5Subclaim53}.lean` all BUILD_PASS (per Wave 357 P2 audit); 3 of 15 originally-present sorry sites discharged; 12 remaining with TODO comments |
-| 6 | Paper ≤ 14 pages | **PASS** | `pdfinfo docs/drafts/paper-A-final.pdf` → Pages: 12 (IEEEtran-journal double-column, 612 × 792 pts); SHA-256 `461ee92e80c1e1808c87db3f4645db5c5400eb0bbd25e3c4ccfd3e74bd0ac274` (446705 bytes; Wave 385 current build — two figures added to the Wave 384 retitled "Geometry-Aware State-Intervention Reformulation" build; historical Wave 356 P1 reading was 14 pages) |
+| 5 | Lean 4 BUILD_PASS for 4 stub files | **PASS** | `formal/FlowA/{Theorem4Subclaim41,Theorem5Subclaim51,Theorem5Subclaim52,Theorem5Subclaim53}.lean` all BUILD_PASS (per the audit); 3 of 15 originally-present sorry sites discharged; 12 remaining with TODO comments |
+| 6 | Paper ≤ 14 pages | **PASS** | `pdfinfo docs/drafts/paper-A-final.pdf` → Pages: 12 (IEEEtran-journal double-column, 612 × 792 pts); SHA-256 `461ee92e80c1e1808c87db3f4645db5c5400eb0bbd25e3c4ccfd3e74bd0ac274` (446705 bytes; current build — two figures added to the retitled "Geometry-Aware State-Intervention Reformulation" build; the earlier reading was 14 pages) |
 | 7 | Capability-token SHA anchored | **PASS** | `synthetic_continuous_capability_token.json` SHA-256 = `584f8e02c3eda4fde2bfe1f65651cca6ec2cb9063eea42c70ce15c0ae8b619c8` (762 bytes; `docs/drafts/paper-A-final.md` §3.4.2 byte-stable anchor at `verification_outputs/wave355-capability-token-example/`) |
 | 8 | Hash-chained ledger SHA anchored | **PASS** | `SHA256SUMS` (3-seed aggregator at `verification_outputs/wave349-r1-3seed-gpu/`) SHA-256 = `28aafe1c95195c0a2daa727150e4ea42651daa49cd5872443a81b88cfed15be2` (2642 bytes; `docs/drafts/paper-A-final.md` §3.5.1 byte-stable anchor; per-file column binds seed42 + seed44 manifests via `0861e4b1…` + `d71e76e2…`) |
-| 9 | 5 Lemmas ACTIVE | **PASS** | Lemmas 1/2/3 (§6.2 / §6.3 / §6.4) ACTIVE per Wave 311 + Wave 322; Lemma 4 / Lemma 5 (Sub-claim 4.1 + Sub-claim 5.1) ACTIVE per Wave 350 P1 / Wave 354 P3 |
-| 10 | Theorem 4 closed-form | **PASS** | Theorem 4 (§6.5) closed-form rate bound `E[‖x_T − x_target‖²] ≤ C₁ exp(−n_rounds/τ_residual) + C₂ exp(−T/τ_velocity)` with full derivation in §A.1 (8-section proof sketch + Sub-claim 4.1 regime-curve corollary); per Wave 353 P1 ADDITIVE |
-| 11 | Theorem 5 closed-form | **PASS** | Theorem 5 (§6.6) closed-form attenuation bound on the per-round restart-blend operator; predicts §7.6 R5b conditional boundary (4/4 schedulers WINS at k=1, 4/4 schedulers REGRESSES at k≥2); per Wave 350 P1 + Wave 354 P3 + Wave 364 G3 wording close |
-| 12 | R6 reproducibility recipe (Wave 362) | **PASS** | `paper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md` (SHA `a5ce94a0…`, 11567 bytes) + `reproduce/08_verify_R6_recipe.sh` (SHA `ba98ec6066…`, 7975 bytes); single-command bash verifier exits 0 with 5/5 step-level checks (Wave 161 frozen substrate SHA + Wave 233 P3 JSON SHA + Wave 235 P3 JSON SHA + d_z reproduction + best-cell verification); see `docs/audit/wave362-r6-recipe.md` |
-| 13 | 9 per-cell reproducibility recipes (Wave 363) | **PASS** | 9 per-cell `paper-data/<cell>/REPRODUCIBILITY_RECIPE.md` files (R1, R2, R3, R5a, R5b, R5c, K1, K4, K7) + 1 master verifier `reproduce/09_verify_all_cell_recipes.sh` (539 lines, SHA `97f6227e…`); all 11 cells PASS in ~5s wall time (verified 2026-09-26T21:42:09Z); see `docs/audit/wave363-all-cell-recipes.md` |
-| 14 | 8 ADDITIVE gap closures (Wave 364) | **PASS** | G3 (Theorem 5 over-prediction wording, `292c7a0`) + G11 (R5b honest framing, `6204d6f`) + G15 (Bibliography 8 entries, `2ef92c6`) + G20 (Lemma numbering reconciliation, `4ac279c`) + G31 (Verdict-distribution canonical, `255bdc8`) + G32 (Cover letter date refresh, `3227090`) + G34 (Strict-clean rule definition, `101370d`) + G38 (Page count recheck, `fea3aa`); 0 lines of existing prose modified (verified by git diff); see `docs/audit/wave364-paper-polish-gaps.md` |
+| 9 | 5 Lemmas ACTIVE | **PASS** | Lemmas 1/2/3 (§6.2 / §6.3 / §6.4) ACTIVE; Lemma 4 / Lemma 5 (Sub-claim 4.1 + Sub-claim 5.1) ACTIVE |
+| 10 | Theorem 4 closed-form | **PASS** | Theorem 4 (§6.5) closed-form rate bound `E[‖x_T − x_target‖²] ≤ C₁ exp(−n_rounds/τ_residual) + C₂ exp(−T/τ_velocity)` with full derivation in §A.1 (8-section proof sketch + Sub-claim 4.1 regime-curve corollary); derived in the additive derivation pass |
+| 11 | Theorem 5 closed-form | **PASS** | Theorem 5 (§6.6) closed-form attenuation bound on the per-round restart-blend operator; predicts §7.6 R5b conditional boundary (4/4 schedulers WINS at k=1, 4/4 schedulers REGRESSES at k≥2); per the G3 wording close |
+| 12 | R6 reproducibility recipe | **PASS** | `paper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md` (SHA `a5ce94a0…`, 11567 bytes) + `reproduce/08_verify_R6_recipe.sh` (SHA `ba98ec6066…`, 7975 bytes); single-command bash verifier exits 0 with 5/5 step-level checks (frozen-substrate SHA + counterfactual JSON SHAs + d_z reproduction + best-cell verification); see `docs/audit/wave362-r6-recipe.md` |
+| 13 | 9 per-cell reproducibility recipes | **PASS** | 9 per-cell `paper-data/<cell>/REPRODUCIBILITY_RECIPE.md` files (R1, R2, R3, R5a, R5b, R5c, K1, K4, K7) + 1 master verifier `reproduce/09_verify_all_cell_recipes.sh` (539 lines, SHA `97f6227e…`); all 11 cells PASS in ~5s wall time (verified 2026-09-26T21:42:09Z); see `docs/audit/wave363-all-cell-recipes.md` |
+| 14 | 8 ADDITIVE gap closures | **PASS** | G3 (Theorem 5 over-prediction wording, `292c7a0`) + G11 (R5b honest framing, `6204d6f`) + G15 (Bibliography 8 entries, `2ef92c6`) + G20 (Lemma numbering reconciliation, `4ac279c`) + G31 (Verdict-distribution canonical, `255bdc8`) + G32 (Cover letter date refresh, `3227090`) + G34 (Strict-clean rule definition, `101370d`) + G38 (Page count recheck, `fea3aa`); 0 lines of existing prose modified (verified by git diff); see `docs/audit/wave364-paper-polish-gaps.md` |
 
-**Pass count: 14.** All 14 PASS items verified at Wave 365 P1 audit time (D.4 + claims + ruff + mkdocs strict + pdfinfo + sha256sum all match expected anchors).
+**Pass count: 14.** All 14 PASS items verified at audit time (D.4 + claims + ruff + mkdocs strict + pdfinfo + sha256sum all match expected anchors).
 
 ---
 
@@ -47,19 +47,19 @@
 | # | Item | Type | Camera-ready scope? | Blocker |
 |---|------|------|---------------------|---------|
 | 1 | 17 USER_TO_FILL placeholders in `tnnls_submission/cover_letter.md` (31 grep hits = 17 distinct fields + 14 documentation-pointer occurrences) | User-gated | YES (ScholarOne upload-gate) | Yes (ScholarOne upload-gate; user action required at submission time) |
-| 2 | R3 FlowMol3 fg_dev N=1000 sweep (RDKit 2026.03.5 environment blocker; Wave 351 P3 success rate 36.7% vs canonical 99.9%) | Env-dependent | YES (camera-ready scope per §10.1) | No (camera-ready scope; honest-disclosure already accepted per §11.1 (b)) |
-| 3 | R6 Kanzi k6 foldability live GPU 3-seed × N=1000 paired full-stack re-verification (env-unblocked by Wave 350 P3 Kanzi ckpt verification; bounded by GPU budget) | Camera-ready (90-135 min wall on RTX PRO 6000 Blackwell / RTX 5090) | YES (camera-ready scope per §10.5) | No (camera-ready scope; honest-disclosure already accepted per §11.1 (b); CLM-073 / R-019 deferred item) |
+| 2 | R3 FlowMol3 fg_dev N=1000 sweep (RDKit 2026.03.5 environment blocker; measured success rate 36.7% vs canonical 99.9%) | Env-dependent | YES (camera-ready scope per §10.1) | No (camera-ready scope; honest-disclosure already accepted per §11.1 (b)) |
+| 3 | R6 Kanzi k6 foldability live GPU 3-seed × N=1000 paired full-stack re-verification (env-unblocked by the Kanzi checkpoint verification; bounded by GPU budget) | Camera-ready (90-135 min wall on RTX PRO 6000 Blackwell / RTX 5090) | YES (camera-ready scope per §10.5) | No (camera-ready scope; honest-disclosure already accepted per §11.1 (b); CLM-073 / R-019 deferred item) |
 | 4 | Lean 4 12/15 sorry (12 sorry sites remaining with TODO comments documenting future-proof effort across 4 stub files: `Theorem4Subclaim41.lean` 5 sites, `Theorem5Subclaim51.lean` 5 sites, `Theorem5Subclaim52.lean` 7 sites, `Theorem5Subclaim53.lean` 5 sites) | Camera-ready (multi-week Lean 4 prover effort) | YES (camera-ready scope; "28/28 PASS" claim still does not match actual state — 4 stubs only with 12 sorry sites; Mathlib v4.34.1 precompilation incomplete for downstream theorems) | No (camera-ready scope, NOT ScholarOne upload-gate) |
-| 5 | K2 (CIFAR-10 v4 N=500 cosine ramp PROTOCOL_MISMATCH) + K6 (Wan2.2 N=1000 sweep) per-cell sweeps | Camera-ready (env-blocked) | YES (camera-ready scope) | No (camera-ready scope; honest-disclosure already accepted; env-blocked per Wave 146 + Wave 357 P6) |
-| 6 | 31 minor reviewer-facing gaps (deferred per Wave 364 §5; 1 user-gated + 3 env-blocked + 8 out-of-scope + 16 low-impact camera-ready polish + 3 misc) | Camera-ready polish | YES (deferred per Wave 364 §5) | No (deferred per Wave 268 strict-clean rule; honest-disclosure preserved verbatim) |
+| 5 | K2 (CIFAR-10 v4 N=500 cosine ramp PROTOCOL_MISMATCH) + K6 (Wan2.2 N=1000 sweep) per-cell sweeps | Camera-ready (env-blocked) | YES (camera-ready scope) | No (camera-ready scope; honest-disclosure already accepted; env-blocked) |
+| 6 | 31 minor reviewer-facing gaps (deferred; 1 user-gated + 3 env-blocked + 8 out-of-scope + 16 low-impact camera-ready polish + 3 misc) | Camera-ready polish | YES (deferred) | No (deferred per the strict-clean rule; honest-disclosure preserved verbatim) |
 
 **Pending count: 6.** None of the 6 PENDING items block the main-track submission freeze. PENDING #1 (USER_TO_FILL) is the only ScholarOne upload-gate item; the other 5 are camera-ready scope (PENDING #2 R3 RDKit env blocker + PENDING #3 R6 live-GPU 3-seed + PENDING #4 Lean 4 partial closure + PENDING #5 K2/K6 env-blocked per-cell sweeps + PENDING #6 31 minor reviewer-facing gaps).
 
 ---
 
-## 3. Reviewer-facing risks (8 closed in Wave 364 + 31 explicitly DEFERRED + breakdown)
+## 3. Reviewer-facing risks (8 closed + 31 explicitly DEFERRED + breakdown)
 
-### 3.1 Risks closed in Wave 364 (8 / 39)
+### 3.1 Risks closed (8 / 39)
 
 | Gap | Severity | File | Commit | Closure description |
 |---|---|---|---|---|
@@ -69,7 +69,7 @@
 | **G20** (Lemma numbering reconciliation) | Medium | `docs/drafts/paper-A-final.md` §6 preamble | `4ac279c` | Lemma numbering reconciliation between paper §6 and supplementary §S1 |
 | **G31** (Verdict-distribution canonical) | Low | `docs/drafts/paper-A-final.md` §7.2 / §11.1 | `255bdc8` (superseded 2026-10-27) | Canonical 11-cell verdict distribution statement — **current reading `3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only`**; the `4 STRONG + 1 TIE + 6 PARTIAL/SUPP` label above is the pre-refresh record |
 | **G32** (Cover letter date refresh) | Low | `tnnls_submission/cover_letter.md` §0 | `3227090` | Cover letter date refreshed to 2026-09-25 (17 USER_TO_FILL placeholders preserved verbatim) |
-| **G34** (Strict-clean rule definition) | Low | `docs/drafts/paper-A-final.md` + `docs/audit/wave268-strict-clean.md` | `101370d` | Strict-clean rule definition footnote (Wave 268 directive preservation) |
+| **G34** (Strict-clean rule definition) | Low | `docs/drafts/paper-A-final.md` + `docs/audit/wave268-strict-clean.md` | `101370d` | Strict-clean rule definition footnote (directive preservation) |
 | **G38** (Page count recheck) | Low | `tnnls_submission/submission_checklist.md` §1 / §3 | `fea3aa` (superseded 2026-10-27) | Page count recheck annotation — **current reading `Pages: 12 ≤ 14`** per `pdfinfo` against the 2026-10-27 packaging build at SHA `8b94570c…` / 615789 bytes (κ-gate subsection added; still 12 pages); the `11` and `10` readings above are historical |
 
 ### 3.2 Risks explicitly DEFERRED (31 / 39)
@@ -88,29 +88,29 @@ Per `docs/audit/wave364-paper-polish-gaps.md` §5:
 
 #### 3.2.3 Out of scope (paper status preserved verbatim)
 
-- **G4, G7** R6/R2 counterfactual treated as STRONG — preserves Wave 310 STRONG status + Wave 357 P5 scope disclosure.
-- **G5, G10** R3 projected from N=200 ACTUAL — preserves Wave 268 strict-clean + Wave 357 P3 honest disclosure.
-- **G6** Paper B companion ambiguity — preserves Wave 351-352 §3.7 dependency disclosure.
-- **G12** TOST "practical equivalence" interpretation — preserves Wave 234 P2 statistical methodology.
-- **G14** R6 pre-registration gap — preserves Wave 225 P4 + Wave 233 P3 counterfactual methodology.
-- **G19** Cross-domain heterogeneity — preserves Wave 234 P2 statistical methods.
-- **G22** Theorem 4 self-convergence vs value-add scope localization — preserves Wave 185 P5 disclosure.
-- **G24** Solver comparison — preserves Wave 236 P2 CUDA-graph fix scope.
+- **G4, G7** R6/R2 counterfactual treated as STRONG — preserves the STRONG status + the scope disclosure.
+- **G5, G10** R3 projected from N=200 ACTUAL — preserves the strict-clean rule + the honest disclosure.
+- **G6** Paper B companion ambiguity — preserves the §3.7 dependency disclosure.
+- **G12** TOST "practical equivalence" interpretation — preserves the statistical methodology.
+- **G14** R6 pre-registration gap — preserves the counterfactual methodology.
+- **G19** Cross-domain heterogeneity — preserves the statistical methods.
+- **G22** Theorem 4 self-convergence vs value-add scope localization — preserves the disclosure.
+- **G24** Solver comparison — preserves the CUDA-graph fix scope.
 
 #### 3.2.4 Low-impact (deferred to camera-ready polish)
 
-- **G1, G16, G17, G18, G21, G25-G30, G33, G35-G37, G39** — 16 minor disclosure / consistency / formatting gaps; deferred per Wave 268 strict-clean rule.
+- **G1, G16, G17, G18, G21, G25-G30, G33, G35-G37, G39** — 16 minor disclosure / consistency / formatting gaps; deferred per the strict-clean rule.
 
 ### 3.3 Risk breakdown (total 39 = 8 closed + 31 deferred)
 
-| Severity | Closed in Wave 364 | Deferred (camera-ready) | Total |
+| Severity | Closed | Deferred (camera-ready) | Total |
 |---|---|---|---|
 | High | 1 (G3) | 0 | 1 |
 | Medium | 3 (G11, G15, G20) | 0 | 3 |
 | Low | 4 (G31, G32, G34, G38) | 31 (G2, G8, G9, G23, G4, G5, G6, G7, G10, G12, G14, G19, G22, G24, G1, G16, G17, G18, G21, G25-G30, G33, G35-G37, G39) | 35 |
 | **Total** | **8** | **31** | **39** |
 
-All 31 explicitly DEFERRED gaps are bounded by either (a) user action, (b) environment setup, (c) honest-disclosure preservation per Wave 268 strict-clean rule, or (d) low-impact camera-ready polish. None of the 31 deferred gaps over-claim any number, status label, or framework property.
+All 31 explicitly DEFERRED gaps are bounded by either (a) user action, (b) environment setup, (c) honest-disclosure preservation per the strict-clean rule, or (d) low-impact camera-ready polish. None of the 31 deferred gaps over-claim any number, status label, or framework property.
 
 ---
 
@@ -118,12 +118,12 @@ All 31 explicitly DEFERRED gaps are bounded by either (a) user action, (b) envir
 
 | # | Item | Wall-time estimate | Blocker | Env path | Source |
 |---|------|---------------------|---------|----------|--------|
-| 1 | 17 USER_TO_FILL placeholders in `tnnls_submission/cover_letter.md` | User action (~10-15 min) | Yes (ScholarOne upload-gate) | N/A (user-gated; per `tnnls_submission/FILL_GUIDE.md` + `cover_letter_FILL_AUTOFILL.json` scaffolding) | Wave 358 P4 PENDING #2 + Wave 357 P3 USER_TO_FILL scaffolding |
-| 2 | R3 FlowMol3 fg_dev N=1000 sweep | ~30 min wall on RTX PRO 6000 Blackwell | No (camera-ready scope; honest-disclosure already accepted) | Re-pin RDKit 2026.03.5 + run `scripts/wave338_p5_r3_n1000_paired.py --n-total 1000 --nfe 250 --seeds 42 43 44 --device cuda:0` | Wave 351 P3 + Wave 357 P3; paper §10.1 |
-| 3 | R6 Kanzi k6 foldability live GPU 3-seed × N=1000 paired full-stack re-verification | ~90-135 min wall on RTX PRO 6000 Blackwell (or ~4-6 h on RTX 5090) | No (camera-ready scope; honest-disclosure already accepted) | Live 3-seed × N=1000 paired foldability sweep on `cuda:0` (per Wave 357 P5 §10.5 + Wave 359 P3 cuda:0 ONLY HARD CONSTRAINT) | Wave 357 P5 §10.5 + Wave 359 P3; paper §10.5; CLM-073 / R-019 |
-| 4 | Lean 4 sorry discharge (12 remaining) | Multi-week Lean 4 prover effort | No (camera-ready scope; NOT ScholarOne upload-gate) | Complete Mathlib v4.34.1 precompilation + discharge 12 sorry sites across `Theorem4Subclaim41.lean` (5) + `Theorem5Subclaim51.lean` (5) + `Theorem5Subclaim52.lean` (7) + `Theorem5Subclaim53.lean` (5) — 22 total sites per current count; per Wave 357 P2 audit 15 sites originally with 3 discharged = 12 remaining per Wave 358 P4 reaudit, plus 7 additional sites added by later polish) | Wave 357 P2 + Wave 358 P4 |
-| 5 | K2 (CIFAR-10 v4 N=500 cosine ramp PROTOCOL_MISMATCH) + K6 (Wan2.2 N=1000 sweep) per-cell sweeps | K2 ~60 min wall on cuda:0 + K6 multi-hour on cuda:0 | No (camera-ready scope; env-blocked) | Resolve PROTOCOL_MISMATCH for K2 + Wan2.2 env-blocker for K6; per Wave 146 + Wave 357 P6 | Wave 146 + Wave 357 P6 |
-| 6 | 31 minor reviewer-facing gaps (Wave 364 §5 DEFERRED) | Low-impact polish; ~1-2 hours cumulative | No (camera-ready scope; deferred per Wave 268 strict-clean rule) | G1 / G16-G18 / G21 / G25-G30 / G33 / G35-G37 / G39: minor disclosure / consistency / formatting; user-gated + env-blocked items (G2 / G8 / G9 / G23) covered by items #1 / #4 / #5 above | Wave 364 §5 |
+| 1 | 17 USER_TO_FILL placeholders in `tnnls_submission/cover_letter.md` | User action (~10-15 min) | Yes (ScholarOne upload-gate) | N/A (user-gated; per `tnnls_submission/FILL_GUIDE.md` + `cover_letter_FILL_AUTOFILL.json` scaffolding) | PENDING #2 + USER_TO_FILL scaffolding |
+| 2 | R3 FlowMol3 fg_dev N=1000 sweep | ~30 min wall on RTX PRO 6000 Blackwell | No (camera-ready scope; honest-disclosure already accepted) | Re-pin RDKit 2026.03.5 + run `scripts/wave338_p5_r3_n1000_paired.py --n-total 1000 --nfe 250 --seeds 42 43 44 --device cuda:0` | paper §10.1 |
+| 3 | R6 Kanzi k6 foldability live GPU 3-seed × N=1000 paired full-stack re-verification | ~90-135 min wall on RTX PRO 6000 Blackwell (or ~4-6 h on RTX 5090) | No (camera-ready scope; honest-disclosure already accepted) | Live 3-seed × N=1000 paired foldability sweep on `cuda:0` (per §10.5; cuda:0 ONLY HARD CONSTRAINT) | paper §10.5; CLM-073 / R-019 |
+| 4 | Lean 4 sorry discharge (12 remaining) | Multi-week Lean 4 prover effort | No (camera-ready scope; NOT ScholarOne upload-gate) | Complete Mathlib v4.34.1 precompilation + discharge 12 sorry sites across `Theorem4Subclaim41.lean` (5) + `Theorem5Subclaim51.lean` (5) + `Theorem5Subclaim52.lean` (7) + `Theorem5Subclaim53.lean` (5) — 22 total sites per current count; per the audit 15 sites originally with 3 discharged = 12 remaining per the re-audit, plus 7 additional sites added by later polish) | — |
+| 5 | K2 (CIFAR-10 v4 N=500 cosine ramp PROTOCOL_MISMATCH) + K6 (Wan2.2 N=1000 sweep) per-cell sweeps | K2 ~60 min wall on cuda:0 + K6 multi-hour on cuda:0 | No (camera-ready scope; env-blocked) | Resolve PROTOCOL_MISMATCH for K2 + Wan2.2 env-blocker for K6; env-blocked) | — |
+| 6 | 31 minor reviewer-facing gaps (DEFERRED) | Low-impact polish; ~1-2 hours cumulative | No (camera-ready scope; deferred per the strict-clean rule) | G1 / G16-G18 / G21 / G25-G30 / G33 / G35-G37 / G39: minor disclosure / consistency / formatting; user-gated + env-blocked items (G2 / G8 / G9 / G23) covered by items #1 / #4 / #5 above | §5 |
 
 **Total camera-ready wall-time estimate: ~5-7 hours of GPU wall time + ~1-2 hours of polish work + multi-week Lean 4 prover effort (Lean 4 is NOT a ScholarOne upload-gate item).** None of the 6 items block the main-track submission freeze.
 
@@ -131,25 +131,25 @@ All 31 explicitly DEFERRED gaps are bounded by either (a) user action, (b) envir
 
 ## 5. Venue fit — no self-assessed acceptance probability
 
-> **REMOVED 2026-10-12 (GAP-19; user-authorized).** Earlier revisions of this doc cited a self-assessed TNNLS Q1 acceptance-probability estimate (60-75%, Wave 351-352; up from a 45-60% Wave 238 baseline) attributed to `docs/drafts/paper-A-final.md` §11.1. That estimate was **deliberately removed from the manuscript at Wave 370** (`62154e0`, a user-authorized destructive rewrite). To stay aligned with the manuscript, this doc **no longer asserts any numeric acceptance probability**; the reviewer-facing strengths and risk factors below are retained as qualitative engineering notes only.
+> **REMOVED 2026-10-12 (GAP-19; user-authorized).** Earlier revisions of this doc cited a self-assessed TNNLS Q1 acceptance-probability estimate (60-75%; up from an earlier 45-60% baseline) attributed to `docs/drafts/paper-A-final.md` §11.1. That estimate was **deliberately removed from the manuscript** (`62154e0`, a user-authorized destructive rewrite). To stay aligned with the manuscript, this doc **no longer asserts any numeric acceptance probability**; the reviewer-facing strengths and risk factors below are retained as qualitative engineering notes only.
 
 ### 5.1 Reviewer-facing strengths (no probability attached)
 
 1. **R6 live tier-aware verdict** (scPerplexity pooled $d_z=-0.8393$ at $n=3000$; hard-tier pLDDT $d_z=+1.1211$ at $n=990$; the earlier counterfactual $d_z=+0.2235$ is retained as design validation; CLM-073 / R-019).
-2. **R5b conditional boundary** (n_rounds=1 framework-WINS, n_rounds≥2 framework-REGRESSES) — honestly framed per Wave 364 G11 close; preserves the §7.6 R5b mechanism paragraph.
+2. **R5b conditional boundary** (n_rounds=1 framework-WINS, n_rounds≥2 framework-REGRESSES) — honestly framed per the G11 close; preserves the §7.6 R5b mechanism paragraph.
 3. **R2 medium-effect uplift** ($d_z$ +0.047 → +0.3927, +743% lift) — Bonferroni-significant at $\alpha = 0.05/7$.
 4. **R6 allocation direction confirmed live** (scPerplexity wins on 3/3 seeds and all three tiers; hard tier 3/3 supported; easy tier 3/3 regresses, which is the allocation effect the tier-aware rule exploits).
-5. **24.6× wall-clock fix** (CUDA-graph capture 4.24× speedup closing 76.8% of framework/baseline wall-clock ratio 3.40× → 1.26×) — per Wave 236 P2.
-6. **Statistical methods upgrade** (TOST / JT / BF01 / DerSimonian-Laird meta / Non-Inferiority) — per Wave 234 P5.
-7. **FlowMol3 3-seed rescue** (R3 direction-consistent; Wave 242 P1 + Wave 357 P3) — preserves the §11.1 (b) honest-disclosure status.
-8. **Industry-leading reproducibility contract** (5-gate invariant enforcement + D.4 byte-stable 30/30 regression + Lean 4 formal-verification sidecar + SHA-256 manifest chain; vendored upstream byte-identical to pinned upstream commits FlowMol3 `77cae22` / LineageFlow `ccef84a` / Kanzi `cfed9cf`) — per Wave 268 strict-clean + Wave 357 P2.
-9. **Wave 353 POLISH layer** (8 reviewer-facing additions: P1 Theorem 4 derivation + P2 paper-quantity closed-form + P3 hash-chained ledger SHA-256 example + P4 Wave 183 finer-NFE figures + P5 pseudocode blocks + P6 vendor ckpt availability + P7 key-takeaways + P8 CLAIMS status table).
-10. **Wave 364 polish layer** (8 ADDITIVE gap closures G3 / G11 / G15 / G20 / G31 / G32 / G34 / G38; 0 lines of existing prose modified) — preserved verbatim per Wave 268 strict-clean rule.
+5. **24.6× wall-clock fix** (CUDA-graph capture 4.24× speedup closing 76.8% of framework/baseline wall-clock ratio 3.40× → 1.26×) — per the CUDA-graph fix.
+6. **Statistical methods upgrade** (TOST / JT / BF01 / DerSimonian-Laird meta / Non-Inferiority) — per the statistical upgrade.
+7. **FlowMol3 3-seed rescue** (R3 direction-consistent) — preserves the §11.1 (b) honest-disclosure status.
+8. **Industry-leading reproducibility contract** (5-gate invariant enforcement + D.4 byte-stable 30/30 regression + Lean 4 formal-verification sidecar + SHA-256 manifest chain; vendored upstream byte-identical to pinned upstream commits FlowMol3 `77cae22` / LineageFlow `ccef84a` / Kanzi `cfed9cf`) — per the strict-clean rule.
+9. **POLISH layer** (8 reviewer-facing additions: P1 Theorem 4 derivation + P2 paper-quantity closed-form + P3 hash-chained ledger SHA-256 example + P4 finer-NFE figures + P5 pseudocode blocks + P6 vendor ckpt availability + P7 key-takeaways + P8 CLAIMS status table).
+10. **Gap-closure polish layer** (8 ADDITIVE gap closures G3 / G11 / G15 / G20 / G31 / G32 / G34 / G38; 0 lines of existing prose modified) — preserved verbatim per the strict-clean rule.
 
 ### 5.2 Reviewer-risk factors (no probability attached)
 
 - **Pooled-pLDDT bar not met** (the live tier-aware run gives pooled pLDDT $d_z=+0.1466$, below the $+0.2235$ bar; the pLDDT gain is hard-tier only. The counterfactual construction is disclosed as the design-validation baseline in `paper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md §(d)` + paper §10.5 + CLM-073 + R-019).
-- **PARTIAL/SUPP cell honest-disclosure** (6 of 11 headline cells are PARTIAL/SUPP; the 4 SUPP-only K-cells are demoted to §10 supplementary; per Wave 308 P1 / P2 + Wave 306 demotions).
+- **PARTIAL/SUPP cell honest-disclosure** (6 of 11 headline cells are PARTIAL/SUPP; the 4 SUPP-only K-cells are demoted to §10 supplementary).
 - **Honest disclosure of matched-NFE image-domain regression** (CIFAR-10 RF at NFE=50 where framework regresses by 10.7%; first-class boundary disclosure, not a footnote; per §11.1 / §11.2 honest verdict).
 
 ---
@@ -158,15 +158,15 @@ All 31 explicitly DEFERRED gaps are bounded by either (a) user action, (b) envir
 
 | # | Invariant | Verification |
 |---|-----------|--------------|
-| 1 | **Vendored upstream byte-identical** | 9 vendored repos in `data/` (FlowMol3 `77cae22`, LineageFlow `ccef84a`, Kanzi `cfed9cf`, HiDream-I1, GraphBFN, Lumina-Image-2.0, ProtBFN-AbBFN, Wan2.2, FreqFlow) remain byte-identical to upstream pinned commits per Wave 260 hard-guardrail #1 + Wave 262 P1 revert lineage. Per `docs/audit/wave364-paper-polish-gaps.md` §6 invariant #1: PASS |
-| 2 | **NO-PUSH policy honoured** | No `git push` since Wave 242 freeze; all Wave 343-365 commits carry `(USER AUTHORIZED, NO PUSH)` footer per `todo.json` (`no_push` + `commit_footer`) + Wave 325 NO-PUSH policy. Per `docs/audit/wave358-submission-checklist-reaudit.md` + `docs/audit/wave356-submission-checklist-review.md` |
-| 3 | **17 USER_TO_FILL placeholders preserved** | 31 grep hits in `tnnls_submission/cover_letter.md` = 17 distinct fields + 14 documentation-pointer occurrences; preserved verbatim per Wave 348 §0 + Wave 351 P5 + Wave 352 P2 governance + Wave 364 G32 (date refresh only, 0 placeholders modified). Per `tnnls_submission/FILL_GUIDE.md` |
-| 4 | **ADDITIVE only** | No edits to any existing `tnnls_submission/*.md` file in Wave 365 P1; no edits to `docs/drafts/paper-A-final.md` / `docs/CONSOLIDATED_RESULTS.md` / any `docs/audit/*.md` file. Per Wave 364 §6 hard-guardrail #2 + Wave 268 strict-clean rule |
-| 5 | **Wave 268 strict-clean rule observed** | Current labels: `STRONG` (R2 / R5c frontier / R6 live) / `CONDITIONAL` (R5b) / `TIE` (R5a) / `PARTIAL` (R1 / R3) / `SUPP-only` (K1 / K4 / K5 / K7). No promotion of `UNDERPOWERED` / `DEFERRED` / `REGRESSES` / `NOT_SIGNIFICANT` to `SUPPORTED` by wording alone |
+| 1 | **Vendored upstream byte-identical** | 9 vendored repos in `data/` (FlowMol3 `77cae22`, LineageFlow `ccef84a`, Kanzi `cfed9cf`, HiDream-I1, GraphBFN, Lumina-Image-2.0, ProtBFN-AbBFN, Wan2.2, FreqFlow) remain byte-identical to upstream pinned commits per hard-guardrail #1 + the revert lineage. Per `docs/audit/wave364-paper-polish-gaps.md` §6 invariant #1: PASS |
+| 2 | **NO-PUSH policy honoured** | No `git push` since the freeze; every commit since carries the `(USER AUTHORIZED, NO PUSH)` footer per `todo.json` (`no_push` + `commit_footer`) + the NO-PUSH policy. Per `docs/audit/wave358-submission-checklist-reaudit.md` + `docs/audit/wave356-submission-checklist-review.md` |
+| 3 | **17 USER_TO_FILL placeholders preserved** | 31 grep hits in `tnnls_submission/cover_letter.md` = 17 distinct fields + 14 documentation-pointer occurrences; preserved verbatim per the §0 governance + the G32 date refresh (0 placeholders modified). Per `tnnls_submission/FILL_GUIDE.md` |
+| 4 | **ADDITIVE only** | No edits to any existing `tnnls_submission/*.md` file; no edits to `docs/drafts/paper-A-final.md` / `docs/CONSOLIDATED_RESULTS.md` / any `docs/audit/*.md` file. Per hard-guardrail #2 + the strict-clean rule |
+| 5 | **Strict-clean rule observed** | Current labels: `STRONG` (R2 / R5c frontier / R6 live) / `CONDITIONAL` (R5b) / `TIE` (R5a) / `PARTIAL` (R1 / R3) / `SUPP-only` (K1 / K4 / K5 / K7). No promotion of `UNDERPOWERED` / `DEFERRED` / `REGRESSES` / `NOT_SIGNIFICANT` to `SUPPORTED` by wording alone |
 | 6 | **Live R6 measurement disclosed** | The live tier-aware run (`verification_outputs/gap31-r6-live-uplift/`) is the R6 headline, and the counterfactual construction is retained as design validation in `paper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md §(d)` + `docs/drafts/paper-A-final.md` §10.5 + `docs/drafts/paper-A-final.md` §11.1 (b) + `docs/CLAIMS.md` CLM-073 + `docs/audit/wave350-r6-live-attempt.md` (the R6 live-GPU deferral that R-019 carried, after the `todo/` retirement). |
-| 7 | **5 Lemmas ACTIVE + 2 Theorems closed-form** | Lemmas 1/2/3 (Protocol Composition Closure / State-Machine Byte-Determinism / Ledger Tamper-Evidence) ACTIVE per Wave 311 + Wave 322; Lemma 4 / Lemma 5 (Sub-claim 4.1 / Sub-claim 5.1) ACTIVE per Wave 350 P1 / Wave 354 P3; Theorem 4 closed-form rate bound (§6.5 + §A.1) per Wave 353 P1; Theorem 5 closed-form attenuation bound (§6.6) per Wave 350 P1 + Wave 354 P3 + Wave 364 G3 |
+| 7 | **5 Lemmas ACTIVE + 2 Theorems closed-form** | Lemmas 1/2/3 (Protocol Composition Closure / State-Machine Byte-Determinism / Ledger Tamper-Evidence) ACTIVE; Lemma 4 / Lemma 5 (Sub-claim 4.1 / Sub-claim 5.1) ACTIVE; Theorem 4 closed-form rate bound (§6.5 + §A.1) derived in the additive derivation pass; Theorem 5 closed-form attenuation bound (§6.6) per the same pass + G3 |
 
-All 7 cross-cutting invariants observed at Wave 365 P1 audit time.
+All 7 cross-cutting invariants observed at audit time.
 
 ---
 
@@ -179,12 +179,12 @@ All 7 cross-cutting invariants observed at Wave 365 P1 audit time.
 | **Reviewer-facing risks closed** | 8 / 39 (G3 / G11 / G15 / G20 / G31 / G32 / G34 / G38) | §3.1 |
 | **Reviewer-facing risks DEFERRED** | 31 / 39 (1 user-gated + 3 env-blocked + 8 out-of-scope + 19 low-impact camera-ready polish) | §3.2 |
 | **Camera-ready wall-time** | ~5-7 hours GPU + ~1-2 hours polish + multi-week Lean 4 (non-blocking) | §4 |
-| **Self-assessed acceptance probability** | Not asserted — aligned with the manuscript (removed at Wave 370) | §5 |
+| **Self-assessed acceptance probability** | Not asserted — aligned with the manuscript (removed) | §5 |
 | **Cross-cutting invariants** | 7 / 7 observed | §6 |
 | **Vendored upstream** | 9 / 9 byte-identical | §6 invariant #1 |
-| **NO-PUSH policy** | honoured (0 pushes since Wave 242 freeze) | §6 invariant #2 |
+| **NO-PUSH policy** | honoured (0 pushes since the freeze) | §6 invariant #2 |
 | **17 USER_TO_FILL** | preserved verbatim (31 grep hits = 17 fields + 14 doc pointers) | §6 invariant #3 |
-| **Wave 268 strict-clean** | observed (every status label preserved verbatim) | §6 invariant #5 |
+| **Strict-clean rule** | observed (every status label preserved verbatim) | §6 invariant #5 |
 | **Lean 4 BUILD_PASS** | 4 / 4 stub files BUILD_PASS (12 / 15 sorry sites remaining with TODO comments) | §1 item #5 |
 | **Paper page count** | 14 / 14 ≤ 14 (TNNLS main-track limit OK) | §1 item #6 |
 | **Capability-token SHA** | `584f8e02c3eda4fde2bfe1f65651cca6ec2cb9063eea42c70ce15c0ae8b619c8` (762 bytes) | §1 item #7 |
@@ -206,34 +206,34 @@ All 7 cross-cutting invariants observed at Wave 365 P1 audit time.
 
 ## 8. Cross-references
 
-### 8.1 Wave 365 P1 deliverables
+### 8.1 Deliverables
 
 - `tnnls_submission/SUBMISSION_READINESS.md` (this file; ~200 lines; NEW) — canonical single-source for TNNLS submission state. ADDITIVE only; no existing `tnnls_submission/*.md` file modified.
 
-### 8.2 Existing tnnls_submission files (preserved byte-identical to Wave 364 baseline)
+### 8.2 Existing tnnls_submission files (preserved byte-identical to the prior baseline)
 
 - `tnnls_submission/MANIFEST.md` — 7-file package manifest with SHA-256 + size + role (preserved unchanged).
-- `tnnls_submission/cover_letter.md` — cover letter (17 USER_TO_FILL placeholders preserved verbatim per Wave 364 G32 date-refresh only).
+- `tnnls_submission/cover_letter.md` — cover letter (17 USER_TO_FILL placeholders preserved verbatim; date refresh only).
 - `tnnls_submission/highlights.md` — 5 TNNLS editor-facing highlights each ≤ 25 words.
 - `tnnls_submission/tables.md` — 5 paper-ready tables.
 - `tnnls_submission/figures.md` — 5 ASCII architecture diagrams.
 - `tnnls_submission/data_availability.md` — Data availability statement.
-- `tnnls_submission/submission_checklist.md` — 7-gate checklist with Wave 356 P3 + Wave 358 P4 + Wave 364 G38 ADDITIVE summaries.
+- `tnnls_submission/submission_checklist.md` — 7-gate checklist with the ADDITIVE summaries.
 - `tnnls_submission/FILL_GUIDE.md` — 17 fillable fields user-gated guide.
 - `tnnls_submission/cover_letter_FILL_AUTOFILL.json` — scaffolding for systematic filling.
 
 ### 8.3 Paper / claims / risk-register / governance surfaces (cited verbatim)
 
 - `docs/drafts/paper-A-final.md` §11.1 (honest verdict) + §11.2 (key takeaways) + §7.2 (11-cell verdict distribution) + §10.5 (R6 counterfactual disclosure) + §A.1 (Theorem 4 derivation) + §6.6 (Theorem 5 closed-form).
-- `docs/CONSOLIDATED_RESULTS.md` §15.103 (final 11-cell verdict distribution) + §15.104 (Wave 352 P5 R5a n=10 paired-t confirmation TIE_PERSISTS addendum) + §15.98 (R5b conditional boundary disclosure).
-- `docs/CLAIMS.md` CLM-059 (R5c REGIME-DEPENDENT), CLM-060 (R1 PARTIAL + K1 SUPP / UNDERPOWERED status addenda), CLM-068 (R3 direction-consistent addendum), CLM-069 (R4/R5/R3/R5c Wave 206 P4 refresh), CLM-072 (R5b conditional), CLM-073 (R6 tier-aware counterfactual).
+- `docs/CONSOLIDATED_RESULTS.md` §15.103 (final 11-cell verdict distribution) + §15.104 (R5a n=10 paired-t confirmation TIE_PERSISTS addendum) + §15.98 (R5b conditional boundary disclosure).
+- `docs/CLAIMS.md` CLM-059 (R5c REGIME-DEPENDENT), CLM-060 (R1 PARTIAL + K1 SUPP / UNDERPOWERED status addenda), CLM-068 (R3 direction-consistent addendum), CLM-069 (R4/R5/R3/R5c refresh), CLM-072 (R5b conditional), CLM-073 (R6 tier-aware counterfactual).
 - `docs/audit/wave350-r6-live-attempt.md` (R6 live GPU re-verification, deferred to camera-ready; carried R-019 after the `todo/` retirement).
 
-### 8.4 Wave 362 / 363 / 364 audit docs (cited verbatim)
+### 8.4 Supporting audit docs (cited verbatim)
 
-- `docs/audit/wave362-r6-recipe.md` — Wave 362 P3 R6 reproducibility recipe consolidation (R6 single-command bash verifier exits 0 with 5/5 step-level checks).
-- `docs/audit/wave363-all-cell-recipes.md` — Wave 363 P3 per-cell recipes + master verifier consolidation (all 11 cells PASS in ~5s wall time).
-- `docs/audit/wave364-paper-polish-gaps.md` — Wave 364 P10 8 ADDITIVE gap closures consolidation (G3 / G11 / G15 / G20 / G31 / G32 / G34 / G38; 0 lines of existing prose modified).
+- `docs/audit/wave362-r6-recipe.md` — R6 reproducibility recipe consolidation (R6 single-command bash verifier exits 0 with 5/5 step-level checks).
+- `docs/audit/wave363-all-cell-recipes.md` — per-cell recipes + master verifier consolidation (all 11 cells PASS in ~5s wall time).
+- `docs/audit/wave364-paper-polish-gaps.md` — 8 ADDITIVE gap closures consolidation (G3 / G11 / G15 / G20 / G31 / G32 / G34 / G38; 0 lines of existing prose modified).
 
 ### 8.5 Pre-submission gate verification (audit-time, 2026-09-27)
 
@@ -242,15 +242,15 @@ All 7 cross-cutting invariants observed at Wave 365 P1 audit time.
 - **ruff 0 findings**: `ruff check adaptive_reflow/ tests/ scripts/ tools/` → All checks passed!
 - **mkdocs build --strict PASS**: `mkdocs build --strict` → exit code 0; documentation built in 23.99s.
 
-All 4 pre-submission gates PASS at Wave 365 P1 audit time. The Wave 365 P1 consolidation doc does NOT touch any test/claims/markdown surface that the gates verify (only NEW file added; no edits to existing files).
+All 4 pre-submission gates PASS at audit time. This consolidation doc does NOT touch any test/claims/markdown surface that the gates verify (only NEW file added; no edits to existing files).
 
 ---
 
-## 9. Status rationale (Wave 365 P1 ADDITIVE)
+## 9. Status rationale (ADDITIVE)
 
-The FlowA TNNLS submission is submittable at the highest reproducibility standard for a 2026 paper: 14 task-listed PASS items + 6 PENDING items (1 ScholarOne upload-gate + 5 camera-ready scope) + 31 explicitly DEFERRED gaps (1 user-gated + 3 env-blocked + 8 out-of-scope + 19 low-impact camera-ready polish) + 7 cross-cutting invariants observed (vendored byte-identical + NO-PUSH + 17 USER_TO_FILL preserved + ADDITIVE only + Wave 268 strict-clean + counterfactual disclosed + 5 Lemmas ACTIVE + 2 Theorems closed-form). The submission-readiness doc is **strictly additive**: one new file (`tnnls_submission/SUBMISSION_READINESS.md`); zero edits to any existing `tnnls_submission/*.md` file or any other file in the repo. Per Wave 268 strict-clean rule + Wave 357 P5 + Wave 364 G32 hard-guardrails (NO-PUSH + ADDITIVE only + "do not change any PENDING to PASS without justification"), the existing PASS checkboxes + ADDITIVE summary tables are preserved unchanged.
+The FlowA TNNLS submission is submittable at the highest reproducibility standard for a 2026 paper: 14 task-listed PASS items + 6 PENDING items (1 ScholarOne upload-gate + 5 camera-ready scope) + 31 explicitly DEFERRED gaps (1 user-gated + 3 env-blocked + 8 out-of-scope + 19 low-impact camera-ready polish) + 7 cross-cutting invariants observed (vendored byte-identical + NO-PUSH + 17 USER_TO_FILL preserved + ADDITIVE only + strict-clean + counterfactual disclosed + 5 Lemmas ACTIVE + 2 Theorems closed-form). The submission-readiness doc is **strictly additive**: one new file (`tnnls_submission/SUBMISSION_READINESS.md`); zero edits to any existing `tnnls_submission/*.md` file or any other file in the repo. Per the strict-clean rule + the G32 hard-guardrails (NO-PUSH + ADDITIVE only + "do not change any PENDING to PASS without justification"), the existing PASS checkboxes + ADDITIVE summary tables are preserved unchanged.
 
-*Wave 365 P1 submission-readiness consolidation doc ADDITIVE section authored 2026-09-27; cross-references `docs/audit/wave362-r6-recipe.md` + `docs/audit/wave363-all-cell-recipes.md` + `docs/audit/wave364-paper-polish-gaps.md` + `docs/drafts/paper-A-final.md` §11.1 + `docs/CONSOLIDATED_RESULTS.md` §15.103 + `tnnls_submission/submission_checklist.md`. NO-PUSH + ADDITIVE only; no existing `tnnls_submission/*.md` file modified; 17 USER_TO_FILL placeholders preserved verbatim; 9 vendored upstream repos byte-identical.*
+*Submission-readiness consolidation doc ADDITIVE section authored 2026-09-27; cross-references `docs/audit/wave362-r6-recipe.md` + `docs/audit/wave363-all-cell-recipes.md` + `docs/audit/wave364-paper-polish-gaps.md` + `docs/drafts/paper-A-final.md` §11.1 + `docs/CONSOLIDATED_RESULTS.md` §15.103 + `tnnls_submission/submission_checklist.md`. NO-PUSH + ADDITIVE only; no existing `tnnls_submission/*.md` file modified; 17 USER_TO_FILL placeholders preserved verbatim; 9 vendored upstream repos byte-identical.*
 
 ---
 
@@ -258,7 +258,7 @@ The FlowA TNNLS submission is submittable at the highest reproducibility standar
 
 > **ADDITIVE — appended after the submission freeze; no existing line above is modified. §1 (14 PASS) and §2 (6 PENDING) are unchanged.**
 
-- **Push complete.** The 192-commit backlog was pushed to `origin/main` (`origin/main` = `0209002`) on 2026-10-11 under explicit user authorization — the first push since the Wave 325 NO-PUSH policy. §6 invariant #2 and §7's "NO-PUSH policy honoured (0 pushes since Wave 242)" describe the freeze-window state and are retained verbatim as historical record; the policy itself is unchanged (pushes remain user-gated).
+- **Push complete.** The 192-commit backlog was pushed to `origin/main` (`origin/main` = `0209002`) on 2026-10-11 under explicit user authorization — the first push since the NO-PUSH policy was adopted. §6 invariant #2 and §7's "NO-PUSH policy honoured (0 pushes since the freeze)" describe the freeze-window state and are retained verbatim as historical record; the policy itself is unchanged (pushes remain user-gated).
 - **Supplementary bundle is now out-of-band.** `tnnls_submission/supplementary_bundle.zip` (154,249,954 bytes / 147.1 MB) exceeds GitHub's 100 MB blob limit, so it was purged from local history and added to `.gitignore`; it is delivered out-of-band and verified against MANIFEST row 52 SHA-256 `d1b5ba24…` (file bytes unchanged). See `docs/audit/push-unblock-large-blob.md`. §8.2's MANIFEST note is unaffected (the ledger row is unchanged).
 - **Gate re-verification (2026-10-11).** pytest subset (`-m "not slow and not benchmark"`) `5055 passed / 171 skipped / 50 deselected / 12 xfailed / 0 failed`; `mypy --strict adaptive_reflow` → 0 errors in 230 files; ruff 0 findings; claims no-drift; `mkdocs build --strict` exit 0. The submission-readiness pass count (§1, 14 PASS) and pending count (§2, 6) are unchanged.
 
@@ -269,7 +269,7 @@ The FlowA TNNLS submission is submittable at the highest reproducibility standar
 > **ADDITIVE — appended after the submission freeze; no existing line above is modified. §1 (14 PASS) and §2 (6 PENDING) are unchanged.** Two §1 PASS rows cite content superseded by later manuscript / evidence revisions; the rows are retained verbatim under the freeze rule, and this section records the corrections for reviewer traceability.
 
 - **§1 row 8 (hash-chained ledger SHA anchored).** The per-file column's seed44 manifest digest `d71e76e2…` is superseded: the current `verification_outputs/wave349-r1-3seed-gpu/seed44_manifest.json` SHA-256 is `cc4390bc4a02799dc2add0ad251e7e5ece08e29f1ec2322c8c6f28f813cf44ed` (805 bytes), matching the same directory's `SHA256SUMS`, the paper's §3.5.1 byte-stable anchor, and `docs/audit/wave353-ledger-examples.md` + `docs/audit/wave363-r1-recipe.md`. The seed42 digest `0861e4b1…` is unchanged.
-- **§1 rows 10–11 (Theorem 4 / Theorem 5 closed-form).** These rows predate the manuscript's Wave 372 proof-scope correction (`docs/drafts/paper-A-final.md` §6): the previously stated residual-error exponential rate and the first-round-only FID sign bound are **not established** by the assumptions printed in the manuscript and are retracted there. The PASS status applies to the presence of the closed-form contraction/blend derivations (§A.1 / §6.6), not to the retracted rate/sign bounds; the empirical R5b round-count boundary remains a protocol-specific observation, not a theorem consequence.
+- **§1 rows 10–11 (Theorem 4 / Theorem 5 closed-form).** These rows predate the manuscript's proof-scope correction (`docs/drafts/paper-A-final.md` §6): the previously stated residual-error exponential rate and the first-round-only FID sign bound are **not established** by the assumptions printed in the manuscript and are retracted there. The PASS status applies to the presence of the closed-form contraction/blend derivations (§A.1 / §6.6), not to the retracted rate/sign bounds; the empirical R5b round-count boundary remains a protocol-specific observation, not a theorem consequence.
 - **§1 row 6 / §3.1 G38 (paper ≤ 14 pages).** The manuscript PDF was rebuilt after the defect-fix pass (still **11 pages**): current SHA-256 `8bc37858a7e6cbdfcc74dfd41f355f036433d0dfa75376b13482d91e6da5d9b5` (446703 bytes), superseding `461ee92e…` / 446705 bytes. The rows retain the earlier reading verbatim; the refreshed value is pinned in `tnnls_submission/MANIFEST.md` and the `README`/`todo` surfaces.
 
 *Manuscript-review correction addendum authored 2026-10-11; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §6 + §3.5.1 and `verification_outputs/wave349-r1-3seed-gpu/SHA256SUMS`.*
@@ -341,7 +341,7 @@ The FlowA TNNLS submission is submittable at the highest reproducibility standar
 
 - **§1 row 6 / §3.1 G38 (paper ≤ 14 pages).** The manuscript PDF was rebuilt after the seventh defect sweep (still **11 pages**): current SHA-256 `47f6eb0418d041b0dccdba68bcdf8b794c02e8a710368a8eaebe5e17f89ca732` (446788 bytes), superseding the §15/§16 reading `68b28acd…` / 446895 bytes. The `.tex` was edited (three `.tex`-only fixes), so — unlike pass #6 — the PDF is not byte-identical. The rows retain the earlier readings verbatim; the refreshed values are pinned in `tnnls_submission/MANIFEST.md` and the `README`/`todo` surfaces.
 - **Consistency corrections carried by this pass.** §7.4's 13-column audit-row tuple unwrapped from Markdown backticks (`` `(…)` `` → `\texttt{…}`, which had been rendering literal backticks in the PDF); §7.4's duplicated "as a reviewer-facing sensitivity check as a sensitivity analysis" reduced to a single clause; and the three previously-uncited floats (Figure 2 `fig:flowa-mechanism` + the §III.2 mechanism-to-evidence table + the §VII.1 main-cell evidence table) given `\label`s and in-text `\ref`s. **No metric or claim number changed; no status label moved.**
-- **Documented-not-fixed.** §8.10's honest-disclosure item #1 still reads "`paper.pdf` NOT regenerated post-Wave 356 P1" and refers to a `paper.pdf` filename that does not exist (the artifact is `paper-A-final.pdf`, rebuilt several times since Wave 356). It is a frozen Wave-366-P2 ADDITIVE block whose own text asserts additive-only provenance, so it is recorded rather than reworded. See `docs/audit/manuscript-defect-review-7.md`.
+- **Documented-not-fixed.** §8.10's honest-disclosure item #1 still reads "`paper.pdf` NOT regenerated" and refers to a `paper.pdf` filename that does not exist (the artifact is `paper-A-final.pdf`, rebuilt several times since). It is a frozen ADDITIVE block whose own text asserts additive-only provenance, so it is recorded rather than reworded. See `docs/audit/manuscript-defect-review-7.md`.
 
 *Manuscript-consistency pass #7 addendum authored 2026-10-12; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.tex` §7.4 / §III.2 / §VII.1 and `docs/audit/manuscript-defect-review-7.md`.*
 
@@ -352,7 +352,7 @@ The FlowA TNNLS submission is submittable at the highest reproducibility standar
 > **ADDITIVE — appended after the submission freeze; no existing line above is modified. §1 (14 PASS) and §2 (6 PENDING) are unchanged.**
 
 - **§1 row 6 / §3.1 G38 (paper ≤ 14 pages).** The manuscript PDF is unchanged by this pass (still **11 pages**, SHA-256 `47f6eb0418d041b0dccdba68bcdf8b794c02e8a710368a8eaebe5e17f89ca732`, 446788 bytes): the pass-#8 fixes are markdown-source-only, so the `.tex` build (hence the PDF) is byte-identical. The refreshed markdown value (`d83e283b…`, 212082 bytes) is pinned in `tnnls_submission/MANIFEST.md` and the `README`/`todo` surfaces.
-- **Consistency corrections carried by this pass (closes deferred items D2 + D3).** §6.1's stray unnumbered `### Three formal properties` heading removed (its text merged into the paragraph as a bold lead-in) — the manuscript's only unnumbered non-back-matter heading; and §8.10's honest-disclosure item #1 rewritten from the stale "`paper.pdf` NOT regenerated post-Wave 356 P1" wording (which named a non-existent `paper.pdf` artifact) to "**PDF regeneration status (corrected 2026-10-12).**" with an explicit `**Correction:**` note, retaining the additive-history enumeration. **No metric or claim number changed; no status label moved.**
+- **Consistency corrections carried by this pass (closes deferred items D2 + D3).** §6.1's stray unnumbered `### Three formal properties` heading removed (its text merged into the paragraph as a bold lead-in) — the manuscript's only unnumbered non-back-matter heading; and §8.10's honest-disclosure item #1 rewritten from the stale "`paper.pdf` NOT regenerated" wording (which named a non-existent `paper.pdf` artifact) to "**PDF regeneration status (corrected 2026-10-12).**" with an explicit `**Correction:**` note, retaining the additive-history enumeration. **No metric or claim number changed; no status label moved.**
 - **Documented-not-fixed.** The `.md` reading copy still carries internal `(Wave NNN …)` provenance labels in several headings (§3.4.2, §3.5.1, §7.8.1, §8.10, §9.4, §9.4.1, Bibliography) — part of the documented intentional `.md`/`.tex` divergence (the authoritative `.tex`/PDF headings are clean). Recorded rather than stripped. See `docs/audit/manuscript-defect-review-8.md`.
 
 *Manuscript-consistency pass #8 addendum authored 2026-10-12; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §6.1 / §8.10 and `docs/audit/manuscript-defect-review-8.md`.*
@@ -364,7 +364,7 @@ The FlowA TNNLS submission is submittable at the highest reproducibility standar
 > **This section records an IN-PLACE edit to §5 (the one exception to the "no existing line above is modified" convention of §10–§18), authorized by the user's GAP-19 decision "移除，与手稿对齐" (remove, align with the manuscript). §1 (14 PASS) and §2 (6 PENDING) are unchanged.**
 
 - **What changed.** §5 was retitled from "Q1 acceptance probability — 60-75%" to "Venue fit — no self-assessed acceptance probability", and the numeric estimate (60-75% / prior 45-60%) was removed from §5.1–§5.3; the reviewer-facing strengths and risk factors were retained as qualitative notes (§5.1 / §5.2). Downstream numeric references were removed: §1 line 14 (the "cited here verbatim" clause), the §7 summary-table row, the §7 single-line JSON key (`q1_acceptance_probability_pct` → `not_asserted`), §8.3, and §9.
-- **Why.** The manuscript's §11.1 acceptance-probability disclosure was **deliberately removed at Wave 370** (`62154e0`, a user-authorized destructive rewrite); `git log -S "60-75" -- docs/drafts/paper-A-final.md` confirms the manuscript no longer carries it. Three submission-facing surfaces had continued to cite the removed estimate, and two of them contradicted each other (60-75% here vs 50-65% in `submission_checklist.md`). Aligning the submission docs with the manuscript removes the false attribution and the internal contradiction.
+- **Why.** The manuscript's §11.1 acceptance-probability disclosure was **deliberately removed** (`62154e0`, a user-authorized destructive rewrite); `git log -S "60-75" -- docs/drafts/paper-A-final.md` confirms the manuscript no longer carries it. Three submission-facing surfaces had continued to cite the removed estimate, and two of them contradicted each other (60-75% here vs 50-65% in `submission_checklist.md`). Aligning the submission docs with the manuscript removes the false attribution and the internal contradiction.
 - **`submission_checklist.md`.** The parallel "Acceptance probability estimate" section was retitled to "Reviewer-facing strengths" and its "50-65%" line removed (its MANIFEST row-54 SHA refreshed accordingly).
 - **No metric or claim number changed; no status label moved.** The removal is of a self-assessed *meta*-projection, not of any §11 verdict, per-cell status, or paper quantity.
 

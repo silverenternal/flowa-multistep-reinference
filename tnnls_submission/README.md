@@ -121,7 +121,7 @@ Select: **"Regular Paper"** (TNNLS treats the manuscript as a regular research a
    # Copy the commit SHA and tag:
    git tag -a v3.0-tnnls-ready <SHA> -m "TNNLS submission freeze-marker (ScholarOne ID TNNLS-2026-XXXX)"
    ```
-3. **Push the tag** (DO NOT push to `origin/main` from a Wave 3+ script — push only the tag once Editorial Manager has acknowledged receipt):
+3. **Push the tag** (DO NOT push to `origin/main` from an automation script — push only the tag once Editorial Manager has acknowledged receipt):
    ```bash
    git push origin v3.0-tnnls-ready
    ```

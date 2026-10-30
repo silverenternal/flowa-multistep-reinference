@@ -69,7 +69,7 @@ Checkpoints" for consideration as a regular research paper in IEEE TNNLS.
 
 **Date:** 2026-09-21
 
-**Last internal draft refresh (post-Wave-358 P4 totals):** 2026-09-25 (last updated post-Wave-358 P4 totals; final submission date will be set at ScholarOne upload).
+**Last internal draft refresh:** 2026-09-25 (final submission date will be set at ScholarOne upload).
 
 **Suggested Associate Editor:** Prof. Ming Li, Department of ECE,
 University of Example (mli@example.edu) (see §9 below)
@@ -127,7 +127,7 @@ three. The bound is restated in §2 of the manuscript with full
 proof sketch and explicit computation of the four quantities, and
 is supported by S1 (Theorem 1 derivation appendix). Empirical
 Lipschitz constants $L_{\text{emp}}$ measured for the 12
-adapters (Wave 229 P2) span $L_{\text{emp}}^{\max} \in [0.684,
+adapters span $L_{\text{emp}}^{\max} \in [0.684,
 35.628]$ — a 52× range across the FM family — confirming
 varying velocity-field geometry per adapter. TNNLS's history of
 publishing methodological work at the intersection of neural-
@@ -191,7 +191,7 @@ witness**: for the 9 non-core adapters, the canonical witness
 $g(x) = (1 + 0.25\cdot\tanh(x))\cdot\sin(x)$ (Proposition 2
 family) under the framework default F-side profile $(d, c,
 \rho, \eta) = (1.0, 1.0, 0.1, 0.1)$ applies; for the **3 core
-adapters** (LineageFlow, Kanzi, FlowMol3 — Wave 229 P3,
+adapters** (LineageFlow, Kanzi, FlowMol3,
 [`docs/ARCHIVE/audit-by-wave/wave229-p3-core-adapter-paper-quantities.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/audit-by-wave/wave229-p3-core-adapter-paper-quantities.md)), the
 framework carries an **empirical residual profile** built from
 each adapter's documented residual distribution, yielding
@@ -199,7 +199,7 @@ adapter-specific $A_g$ within 15 % of the canonical witness
 (LineageFlow $A_g^{\text{emp}} = 0.860$, Kanzi $A_g^{\text{emp}} =
 0.746$, FlowMol3 $A_g^{\text{emp}} = 0.848$). $C_g$ and $e_\rho$
 match the canonical because (ρ, c, η) are framework defaults
-for all 12 adapters; $B_g^{\text{emp}} = 1.1697$ for all three core adapters (matching canonical; sin(s) modulation per Wave 230 P1 fixes the monotone-profile degeneracy). The paper quantities are computed via typed
+for all 12 adapters; $B_g^{\text{emp}} = 1.1697$ for all three core adapters (matching canonical; the sin(s) modulation fixes the monotone-profile degeneracy). The paper quantities are computed via typed
 evaluators in [`adaptive_reflow/theory/paper_quantities.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/theory/paper_quantities.py). The
 framework's value-add is the **scheduler architecture** —
 `CosineAnnealScheduler` (consumes $A_g$ → smoothing-ramp
@@ -212,8 +212,7 @@ local velocity-field geometry rather than depending on
 per-adapter paper-quantity overrides. The framework exposes
 `AdapterCapabilities.profile_residual_fn` in
 [`adaptive_reflow/adapters/profile_residual.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/adapters/profile_residual.py) as the future-extension
-point; the **3 core adapters exercise this hook today** (Wave
-229 P3) while the remaining 9 fall back to the canonical-witness
+point; the **3 core adapters exercise this hook today** while the remaining 9 fall back to the canonical-witness
 closed forms. The framework operates without retraining,
 distillation, or Reflow; stacks on Euler, Heun, DPM-Solver++,
 Dormand–Prince RK45, CTMC, and BFN solvers; and exposes the
@@ -291,24 +290,24 @@ UniPC). The combination of *training-free*, *cross-round
 allocation*, and *paper-quantity-driven stopping* is, we believe,
 new to the flow-matching re-inference literature.
 
-## §R4 Weak metric improvements — Wave 233 P3–P6 honest negatives
+## §R4 Weak metric improvements — honest negatives
 
 In line with our first-class boundary disclosure (cf. §7), we
-report three "weak metric improvements" from the Wave 233 follow-up
-work — areas where the framework's value-add is **directionally
+report three "weak metric improvements" from a dedicated follow-up
+study — areas where the framework's value-add is **directionally
 correct but not strong enough to close the load-bearing gap** at
 the current sample sizes or wall-clock budget. We surface them
 as scope statements rather than as refutations of the framework's
 contribution.
 
 **P3 — Tier-aware scheduler lifts R6 but does not reach d_z ≥ +0.3.**
-A `TierAwareCodimensionSheetScheduler` wrapper (Wave 233 P3,
-`easy_tier_nfe_reduction_factor=0.5` on the baseline-metric
+A `TierAwareCodimensionSheetScheduler` wrapper
+(`easy_tier_nfe_reduction_factor=0.5` on the baseline-metric
 quantile-stratified easy tier) was instantiated on the
-real-scheduler surface. Counterfactual (Wave 225 P4/P5/P9 +
-Wave 209 P1 A3 methodology, D.4 30/30 PASS preserved) shows
+real-scheduler surface. A counterfactual under the A3
+constant-offset methodology (D.4 30/30 PASS preserved) shows
 R6 k6 foldability pLDDT d_z lifted from +0.0707 (uniform arm,
-Wave 161 frozen) to **+0.2235** (Δd_z = +0.1527, Bonferroni-
+frozen reference data) to **+0.2235** (Δd_z = +0.1527, Bonferroni-
 significant at α = 0.05, p = 2.98 × 10⁻¹²). The load-bearing goal
 d_z ≥ +0.3 is **NOT met** — the easy-tier regression is halved
 (d_z -0.9982 → -0.4991) but the goal would require either a
@@ -319,12 +318,12 @@ at the easy tier. See [`docs/audit/engineering/p3-tier-aware.md`](https://github
 for full method and results.
 
 **P5 — CIFAR RF n_rounds=2 override reduces R5b magnitude but
-does not eliminate the regression (HONEST NEGATIVE).** The
-Wave 233 P5 adapter-specific scheduler override
+does not eliminate the regression (HONEST NEGATIVE).** An
+adapter-specific scheduler override
 (`RF_CIFAR_N_ROUNDS_OVERRIDE = 2`) reduces the R5b matched-NFE=50
-headline regression from ΔFID = +84.02 (+20.20%, Wave 195 P2) to
-ΔFID = +44.78 (+9.77%, Wave 225 P7 — reused; no new GPU sweep).
-The Wave 225 P9 matched-effective-NFE falsification stands:
+headline regression from ΔFID = +84.02 (+20.20%) to
+ΔFID = +44.78 (+9.77%; reused measurement, no new GPU sweep).
+The matched-effective-NFE falsification stands:
 at matched effective NFE=50 (framework nominal NFE=100,
 n_rounds=2, cosine ramp halving; baseline NFE=50, effective=50)
 the framework ΔFID = **+94.91 (+20.89%)** is **WORSE**, not
@@ -339,7 +338,7 @@ queued for camera-ready. D.4 byte-stable 30/30 PASS preserved.
 See [`docs/ARCHIVE/audit-by-wave/wave233-p5-r5b-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/audit-by-wave/wave233-p5-r5b-fix.md).
 
 **P6 — SHA-256 state-bundle cache saves negligible wall-clock
-(HONEST NEGATIVE).** The Wave 233 P6 digest cache
+(HONEST NEGATIVE).** The digest cache
 (`StateBundleDigestCache`, identity-keyed memoisation wrapper;
 `Engine(digest_cache=...)` parameter) is implemented cleanly
 and adds a useful `default_cache()` singleton. R5b CIFAR-10 RF
@@ -349,19 +348,19 @@ baseline = 2.294 s, framework_no_cache = 7.870 s, framework_with_cache = 7.923 s
 jitter floor). The cProfile re-analysis confirms **99.8% of wall
 time lives in the model forward chain** (`_gnobitab_ddpmpp.py:207 forward`); the
 SHA-256 digest + JSON-canonicalisation bucket (~12 s of 178 s
-R5b N=1000 overhead, per Wave 212 P6 §3) closes only at the
+R5b N=1000 overhead) closes only at the
 ~6.7% level — well below the run-to-run jitter. The 24.6× →
 <5× wall-clock target is **NOT achievable** through the SHA-256
 cache alone; **CUDA-graph capture or model kernel fusion**
-(Wave 212 P6 Path D) is required to close the remaining
+is required to close the remaining
 ~70% of the memory_swap / forward-chain gap. The cache is
 shipped because it is a clean abstraction (zero behavioral risk,
 D.4 30/30 PASS preserved) and a useful instrumentation surface
 (cache hit-rate / size stats), not because it solves the
 wall-clock problem. See [`docs/ARCHIVE/audit-by-wave/wave233-p6-wall-clock-opt.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/audit-by-wave/wave233-p6-wall-clock-opt.md).
 
-**Implication for the framework claim.** The three Wave 233
-P3–P6 follow-ups are **directionally consistent** with the
+**Implication for the framework claim.** The three
+follow-ups are **directionally consistent** with the
 framework's contribution (each lifts a metric or surfaces
 a clean abstraction surface) but **do not close the load-
 bearing gap** (R6 d_z ≥ +0.3, R5b regression, framework wall-
@@ -376,7 +375,7 @@ than being implicit unknowns. All three P3–P6 augmentations
 are byte-stable (D.4 30/30 PASS preserved; no framework-
 import-surface changes to the byte-stable regression vectors).
 
-## §R5 Statistical methods upgrade (Wave 234 P2–P6)
+## §R5 Statistical methods upgrade
 
 To strengthen the statistical narrative beyond the primary
 per-record paired-$t$ test, the manuscript integrates a
@@ -413,7 +412,7 @@ strict TOST equivalence.
 [`verification_outputs/wave234-p3-jonckheere.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p3-jonckheere.csv)). JT trend
 test against the ordered alternative
 $\text{mean(easy)} \le \text{mean(medium)} \le \text{mean(hard)}$
-across the three Wave 233 P3 tiers. On both protein cells,
+across the three difficulty tiers. On both protein cells,
 the monotone `hard > medium > easy` pattern in framework
 uplift is **confirmed**: R2 Kanzi (RMSD) JT statistic =
 269430, $z = +20.673$, asymptotic $p = 3.017 \times 10^{-95}$;
@@ -429,7 +428,7 @@ are pooled into a single structural finding.
 [`verification_outputs/wave234-p4-bf01.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p4-bf01.csv)). Wagenmakers
 (2007) BIC approximation closed form
 `BF01 = sqrt(n) * (1 + t^2 / (n-1)) ** (-n / 2)` on the
-Wave 230 P2 per-cell diff summaries. On 16 cells: 14/16
+per-cell diff summaries. On 16 cells: 14/16
 have BF01 ≥ 3 (moderate evidence for H0); 9/16 have BF01
 ≥ 10 (strong evidence for H0); 2/16 (vanilla scPerplexity
 at both NFE) have BF01 < 0.01 (extreme evidence for the
@@ -458,7 +457,7 @@ inconclusive regime.
 [`verification_outputs/wave234-p6-non-inferiority.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p6-non-inferiority.csv)).
 One-sided non-inferiority test (Schuirmann 1987 / ICH E9
 framework) on R5b CIFAR-10 Rectified Flow at matched NFE=50
-(Wave 191 P2 N=1000, best arm `evidence_driven`). Pre-
+(N=1000, best arm `evidence_driven`). Pre-
 specified margin = 0.10 · FID_baseline = 41.58 (typical
 image-FID regression budget; e.g. StyleGAN3 / DiT-XL cross-
 run reporting accepts ±10% FID as within-budget). Result:
@@ -476,8 +475,8 @@ framework schedulers.
 **Why this strengthens the §R4 honest-negative disclosure.**
 The §R4 disclosure frames three "weak metric improvements"
 (R6 d_z +0.1527 lift but goal d_z ≥ +0.3 not met; R5b
-matched-NFE=50 regression; wall-clock overhead). The Wave
-234 P2–P6 upgrade adds **formal pre-registered statistical
+matched-NFE=50 regression; wall-clock overhead). The
+statistical upgrade adds **formal pre-registered statistical
 tests** that convert each disclosure into a quantitatively
 rigorous claim: P3 (JT) certifies the R6/R2 monotone
 structural finding at $p < 10^{-22}$; P6 (non-inferiority)
@@ -493,11 +492,11 @@ effect absence). The five methods share a common backend
 typed function with audit-doc + CSV provenance, and all
 five preserve D.4 byte-stable 30/30 PASS.
 
-## §R6 Top-4 high-leverage improvements (Wave 235 P1–P4)
+## §R6 Top-4 high-leverage improvements
 
-In line with the §R4 / §R5 disclosure pattern, Wave 235
-P1–P4 closes **four high-leverage gaps** surfaced by the
-Wave 233 P3 augmentation layer and the Wave 234 P5
+In line with the §R4 / §R5 disclosure pattern, this section
+closes **four high-leverage gaps** surfaced by the
+tier-aware augmentation layer and the
 statistical upgrade. The four items — R5b CIFAR-10 RF
 structural elimination (P1), R2 Kanzi medium-effect uplift
 (P2), R6 k6 LARGE overall uplift with easy-tier regression
@@ -507,7 +506,7 @@ metric improvements" into **structural closes** plus one
 honest disclosure of an outstanding gap.
 
 **P1 — R5b CIFAR-10 RF `n_rounds=1` structurally eliminates
-the regression.** Wave 235 P1 (audit:
+the regression.** The study (audit:
 [`docs/audit/stats_method/p1-r5b-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/stats_method/p1-r5b-fix.md); CSV:
 [`verification_outputs/wave235-p1-r5b-fix.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p1-r5b-fix.csv)) introduces
 two counterfactual configurations on the existing
@@ -537,22 +536,22 @@ new flag is consumed by `_run_framework_state_chains(...)`
 which is NOT on the regression-vector audit path).
 
 **P2 — R2 Kanzi tier-aware grid-search medium-effect uplift.**
-Wave 235 P2 (audit: [`docs/ARCHIVE/audit-by-wave/wave235-p2-r2-uplift.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/audit-by-wave/wave235-p2-r2-uplift.md);
+The grid search (audit: [`docs/ARCHIVE/audit-by-wave/wave235-p2-r2-uplift.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/audit-by-wave/wave235-p2-r2-uplift.md);
 CSV: [`verification_outputs/wave235-p2-r2-uplift.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p2-r2-uplift.csv)) performs
 a 2-D counterfactual grid over
 `(easy_tier_nfe_reduction_factor, hard_tier_nfe_intensity)`
-with 5×4 = 20 cells at N=1000 paired (frozen Wave 214 P2 data;
-no live GPU run; Wave 225 P5 / Wave 233 P3 constant-offset
+with 5×4 = 20 cells at N=1000 paired (frozen reference data;
+no live GPU run; constant-offset
 methodology). Best cell `(easy_factor=0.0, hard_intensity=2.0)`
-achieves **d_z = +0.3927** (Δd_z = **+0.3462** over Wave 233
-P3 baseline +0.0465; $p = 4.933 \times 10^{-33}$, Bonferroni-
+achieves **d_z = +0.3927** (Δd_z = **+0.3462** over the
+uniform-tier baseline +0.0465; $p = 4.933 \times 10^{-33}$, Bonferroni-
 significant at α = 0.01667 for M=3). R2 moves from "small
-support" (Wave 233 P3) to **"moderate support"** (0.2 ≤ d_z
+support" to **"moderate support"** (0.2 ≤ d_z
 < 0.5 medium band) — sufficient to answer the reviewer's
 "is this practically significant?" question with **yes, in
 the medium-effect regime**. The trade-off is that reducing
 `easy_factor` to 0.0 cancels the easy-tier framework uplift
-(Wave 218 P3 uniform: d_z = -1.003, framework helps on
+(uniform arm: d_z = -1.003, framework helps on
 records where baseline struggles), so the framework's
 easy-tier contribution is now zero while the hard-tier
 contribution is amplified to d_z = +1.676. The counterfactual
@@ -562,16 +561,16 @@ new `hard_tier_nfe_intensity` parameter on the
 `TierAwareCodimensionSheetScheduler` wrapper.
 
 **P3 — R6 k6 tier-aware grid-search LARGE overall uplift
-with easy-tier regression eliminated.** Wave 235 P3 (audit:
+with easy-tier regression eliminated.** The grid search (audit:
 [`docs/audit/stats_method/p3-r6-uplift.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/stats_method/p3-r6-uplift.md); CSV:
 [`verification_outputs/wave235-p3-r6-uplift.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p3-r6-uplift.csv)) grid-searches
 `(easy_factor ∈ {0.0, 0.1, 0.25, 0.5, 0.75}) × (hard_intensity ∈
 {1.0, 1.5, 2.0, 3.0})` with 5×4 = 20 cells at N=1000 paired
-(frozen Wave 161 data; no live GPU run; Wave 225 P4 / Wave 233
-P3 constant-offset methodology). Best cell with **NO easy-tier
+(frozen reference data; no live GPU run; constant-offset
+methodology). Best cell with **NO easy-tier
 regression** `(easy_factor=0.0, hard_intensity=3.0)` achieves
-**overall_d_z = +0.6467** (Δd_z = **+0.4233** over Wave 233
-P3 baseline +0.2235; $p = 6.343 \times 10^{-78}$, Bonferroni-
+**overall_d_z = +0.6467** (Δd_z = **+0.4233** over the
+tier-aware baseline +0.2235; $p = 6.343 \times 10^{-78}$, Bonferroni-
 significant at α = 0.01667 for M=3). Per-tier d_z at the best
 cell: hard = **+3.5668**, medium = +0.2181, easy = +0.0000
 (easy-tier regression **ELIMINATED**). R6 transitions from
@@ -584,31 +583,31 @@ same `hard_tier_nfe_intensity` parameter on the
 `TierAwareCodimensionSheetScheduler` wrapper.
 
 **P4 — FlowMol3 3-seed expansion (HONEST DISCLOSURE on
-partial sweep).** Wave 235 P4 (audit:
+partial sweep).** The expansion (audit:
 [`docs/ARCHIVE/audit-by-wave/wave235-p4-flowmol3-3seed.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/audit-by-wave/wave235-p4-flowmol3-3seed.md); partial sweep
 artefacts at [`verification_outputs/wave235-p4-flowmol3-*.json`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs))
-expands the FlowMol3 R3 fg_dev evidence from 1 seed (Wave 87,
-seed=42, NFE=250, N=1000, per-record REOS d_z = -0.285,
+expands the FlowMol3 R3 fg_dev evidence from 1 seed
+(seed=42, NFE=250, N=1000, per-record REOS d_z = -0.285,
 direction-correct framework improvement) toward 3 seeds per
 DeepSeek's medium-high priority request. The DGL 2.4.0+cu124
-batched-path regression (Wave 109.C) was **NOT fixed** in
+batched-path regression was **NOT fixed** in
 this budget — both the DGL 2.3.x downgrade and the PyG
 replacement paths are out of scope for the 1-2 hour fix
-budget and would invalidate the Wave 87 byte-stable reference.
+budget and would invalidate the byte-stable reference.
 Fallback: single-mol partial sweep (`n_molecules=1`, NFE=100,
 N=500 per arm).
 
 | Seed | Arm | N | NFE | Status |
 |---|---|---:|---:|---|
-| 42 | Wave 87 reference | 1000 | 250 | byte-stable (already in canonical data) |
-| 43 | baseline + framework | 500 + 500 | 100 | complete (this wave) |
+| 42 | canonical reference | 1000 | 250 | byte-stable (already in canonical data) |
+| 43 | baseline + framework | 500 + 500 | 100 | complete |
 | 44 | baseline only | 499 | 100 | framework arm NOT RUN in this budget |
 
 The seed=44 framework arm is **NOT RUN** in this budget (the
 3-seed pooled per-record REOS paired-t could not be computed
 end-to-end). The strongest available evidence remains the
-seed=42 1-seed d_z = -0.285 (Wave 87); the seed=43 2-arm
-partial sweep at NFE=100 (vs Wave 87's NFE=250) is a
+seed=42 1-seed d_z = -0.285; the seed=43 2-arm
+partial sweep at NFE=100 (vs the reference NFE=250) is a
 **confounded** direction-consistency check (NFE mismatch
 acknowledged — the framework applies the same per-record
 perturbation regardless of NFE, so direction consistency
@@ -616,17 +615,17 @@ remains interpretable; magnitudes are not directly
 comparable). The full 3-seed pooled analysis is queued for
 the camera-ready deferred list once the DGL fix lands. D.4
 byte-stable 30/30 PASS preserved (no code modifications;
-the FlowMol3 v2 adapter and Wave 87 byte-stable data are
+the FlowMol3 v2 adapter and the byte-stable reference data are
 unchanged).
 
-**Implication for the §R4 disclosure.** Wave 235 P1–P4
-converts three of the §R4 "weak metric improvements" into
+**Implication for the §R4 disclosure.** These four items
+convert three of the §R4 "weak metric improvements" into
 **structural closes** (R5b fixed at `n_rounds=1`; R2 medium-
 effect uplift +0.3462; R6 LARGE overall uplift +0.4233 with
 easy-tier regression eliminated) plus one honest disclosure
 (FlowMol3 3-seed partial sweep, DGL fix deferred). All four
-items are additive to the §2.7.1 tier-aware baseline (Wave
-233 P3) and preserve the D.4 byte-stable regression suite at
+items are additive to the §2.7.1 tier-aware baseline
+and preserve the D.4 byte-stable regression suite at
 **30/30 PASS**. The R5b boundary disclosure is now **conditional
 on `n_rounds > 1`**; the R6 monotone pattern is now backed by
 a counterfactual grid that lifts the load-bearing goal from
@@ -635,12 +634,12 @@ support is now in the medium-effect band. The FlowMol3 3-seed
 gap is a documented camera-ready deferred item, not a paper
 claim retraction.
 
-### §R6.5 Wave 236 P2 — 24.6× → 1.26× wall-clock closure via CUDA-graph capture
+### §R6.5 — 24.6× → 1.26× wall-clock closure via CUDA-graph capture
 
-Wave 236 P2 (audit: [`docs/audit/algorithm_4arm/p2-wallclock-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/algorithm_4arm/p2-wallclock-fix.md);
+The measurement (audit: [`docs/audit/algorithm_4arm/p2-wallclock-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/algorithm_4arm/p2-wallclock-fix.md);
 CSV/JSON: [`verification_outputs/wave236-p2-cuda-graph-wall-clock.{csv,json}`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs))
-implements the **CUDA-graph capture** path recommended by Wave
-217 P3 Option A and Wave 233 P6 §5 — the remaining 99.8 %
+implements the **CUDA-graph capture** path recommended by the
+prior profiling study — the remaining 99.8 %
 model-forward-chain gap that the SHA-256 cache (§R4 P6) could
 not touch. The new `CudaGraphVelocityFieldCache` (file:
 [`adaptive_reflow/framework/cuda_graph_capture.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/framework/cuda_graph_capture.py)) is gated by
@@ -670,7 +669,7 @@ BATCH=64):**
 | framework / baseline ratio, graph | **1.26×** |
 
 The framework / baseline wall-clock ratio drops from **3.40× →
-1.26×** at BATCH=64; extrapolated to the Wave 209 P8 N=1000
+1.26×** at BATCH=64; extrapolated to the N=1000
 per-record harness (24.60× anchor), the same ~75 % relative
 closure yields a **~6× ratio**, well inside the <5× target
 band. The cache hits ~250× replay / capture ratio across the
@@ -678,8 +677,7 @@ framework workload (2 keys: `chunk_size=32` warmup +
 `chunk_size=1` inner loop). The remaining ~23 % of framework
 wall-clock is genuine model compute (kernel-side cuDNN conv
 work) that CUDA graphs cannot touch; closing it requires
-`torch.compile(mode="reduce-overhead")` kernel fusion (Wave
-217 P3 Option B), deferred for the camera-ready cycle.
+`torch.compile(mode="reduce-overhead")` kernel fusion, deferred for the camera-ready cycle.
 
 **Byte-stability guarantee.** D.4 30/30 PASS in both modes
 (env-var off = legacy eager; env-var on = captured graph
@@ -697,14 +695,14 @@ the headline wall-clock fix. The remaining ~23 % of framework
 wall-clock is disclosed as a future-work item (`torch.compile`
 kernel fusion, camera-ready deferred).
 
-### §R6.6 Wave 238 P2 — CUDA-graph measurement-conditions disclosure
+### §R6.6 — CUDA-graph measurement-conditions disclosure
 
 The 4.31× framework speedup and the 1.26× framework/baseline
 ratio reported above are **not** measured on the 24.6× per-record
-N=1000 anchor harness used in Wave 209 P8. The Wave 236 P2
-harness (re-measured at HEAD in Wave 238 P2 to **4.24× speedup
+N=1000 anchor harness. The reported
+harness (re-measured at HEAD to **4.24× speedup
 at 1.30× framework/baseline ratio**, within ±2 % of the original
-Wave 236 P2 numbers under current RTX 5090 contention) is a
+figures under current RTX 5090 contention) is a
 matched-NFE = 50 / `BATCH=64` / `n_rounds=4` framework runner on
 `cuda:1`, NOT a per-record N=1000 harness. The two harnesses
 differ in batch size (BATCH=64 lets the framework batch inner
@@ -712,7 +710,7 @@ calls; N=1000 forces a tighter inner loop), so the absolute
 framework/baseline ratio differs between them. The relative
 closure (~76 % of framework wall-clock gap closed) is the
 comparable quantity across both harnesses; extrapolating to the
-N=1000 anchor (Wave 209 P8) yields a ~6× framework/baseline
+N=1000 anchor yields a ~6× framework/baseline
 ratio at BATCH=64, well inside the <5× target band. The CUDA
 graph is opt-in via the env var `ADAPTIVE_REFLOW_CUDA_GRAPH`
 (default OFF, preserving the legacy eager path used for
@@ -734,14 +732,14 @@ disclosed with an explicit verdict distribution rather than a
 1 TIE (main) + 2 PARTIAL + 4 SUPP-only** = 11 cells. The full audit-grade alignment between
 paper-claimed and actual-deployed numbers (per-cell d_z, p,
 p_bonf, n, N) is documented in [`docs/audit/wave306-11-cell-alignment.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave306-11-cell-alignment.md)
-(11 rows × 17 columns) and corroborated by the Wave 307
+(11 rows × 17 columns) and corroborated by the
 cross-cell data archaeology synthesis
 ([`docs/audit/wave307-archaeology-summary.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave307-archaeology-summary.md)). The headline
 distribution, anchored at [`docs/audit/wave326-crossdoc-metrics-snapshot.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave326-crossdoc-metrics-snapshot.md),
 distributes as:
 
 - **STRONG (main, 3 cells):** R2 Kanzi RMSD deployed index-matched two-sample t
-  d_z = −0.0990 (Wave 218 P3, framework-WINS); R5c MNIST FM
+  d_z = −0.0990 (framework-WINS); R5c MNIST FM
   checkpoint-conditional NFE frontier — on `w16e1_5k` the seven-rung
   sweep lowers the FID plateau from 24.4839 to 21.3632 (−12.75 %,
   weakly dominant at 7/7 rungs), with TIEs on the three better-trained
@@ -752,19 +750,19 @@ distributes as:
   `n_rounds=1` (3/4 schedulers enter the framework-WINS regime,
   ΔFID −1.60 % to −2.53 %); the multi-round readings regress.
 - **TIE (main, 1 cell):** R5a 2D Two Moons paper R-level d_s =
-  +0.460 at n = 3 paired seeds (Wave 189 P2 / CLM-055
+  +0.460 at n = 3 paired seeds (CLM-055
   PaperRatioAdaptiveScheduler; honest disclosure of the post-`cd70821`
   ReLU-activation fix that eliminates the pre-fix −7.28 % artifact).
-- **PARTIAL (2 cells):** R1 LineageFlow HMMER (Wave 308
-  P1 single-seed-disclosed demotion; seed-43/44 100 % framework
+- **PARTIAL (2 cells):** R1 LineageFlow HMMER (single-seed-disclosed
+  demotion; seed-43/44 100 % framework
   fallback rate); R3 FlowMol3 fg_dev (three-seed test at N=1000 per
   arm: mean −0.0377, p = 0.559 — direction-consistent, not significant).
-- **SUPP-only (4 cells):** K1 FlowMol3 RDKit-validity (Wave 308 P2
-  demotion to §10 supplementary, p_bonf = 0.5676 at K-level
-  α = 0.0125); K4 + K5 LineageFlow HMMER (Wave 306 demotion;
+- **SUPP-only (4 cells):** K1 FlowMol3 RDKit-validity (demotion to
+  §10 supplementary, p_bonf = 0.5676 at K-level
+  α = 0.0125); K4 + K5 LineageFlow HMMER (demotion;
   K4 hit-count powered, K5 paired-delta Bonferroni-FAIL); K7
-  LineageFlow novelty (Wave 306 direction-INVERTED demotion per
-  Wave 166 P3 — framework 12.6 × LESS Pfam-novel than baseline
+  LineageFlow novelty (direction-INVERTED demotion —
+  framework 12.6 × LESS Pfam-novel than baseline
   at the corrected Rost 1999 twilight-zone 30 % threshold).
 
 The headline empirical findings are reported in three audit-grade
@@ -781,8 +779,8 @@ weakly dominant at every rung, while the three better-trained
 checkpoints tie. The earlier single-budget reading compared
 framework arms at 25–48 steps against a 50-step baseline, so its
 positive Δ FID at the better-trained checkpoints mixed a budget
-penalty with a checkpoint effect. **Wave 306 / Wave 307 deep
-investigation transparency:** all three investigations are READ-ONLY
+penalty with a checkpoint effect. **Investigation
+transparency:** all three investigations are READ-ONLY
 synthesis docs (no silent re-writing of headline numbers); every
 audit-claimed discrepancy is cross-checked against canonical
 git-tracked data ([`verification_outputs/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs)), every claim of "data
@@ -814,20 +812,20 @@ d_z = −0.8393 (diff −3.6823), sign-consistent on 3/3 seeds and all
 three difficulty tiers, and hard-tier pLDDT d_z = +1.1211 (n = 990).
 The pooled pLDDT is d_z = +0.1466 and does not reach the +0.2235
 bar. The earlier counterfactual construction — d_z = +0.2235 via
-Wave 225 P4 + Wave 233 P3 REDUCED_INTENSITY_FACTOR = 0.5 per-record
-diff shift per Wave 209 P1 A3 methodology, and the d_z = +0.6467
-5 × 4 grid search (Wave 235 P3) over
+REDUCED_INTENSITY_FACTOR = 0.5 per-record
+diff shift under the A3 methodology, and the d_z = +0.6467
+5 × 4 grid search over
 `(easy_tier_nfe_reduction_factor, hard_tier_nfe_intensity)` — is
-retained as the design-validation baseline on the frozen Wave 161
+retained as the design-validation baseline on the frozen
 `foldability.jsonl` data.
 
-**R3 4-arm head-to-head verdict (Wave 230 P2, real per-record).**
+**R3 4-arm head-to-head verdict (real per-record).**
 The 4-arm per-record paired-$t$ sweep across 16 cells (4 baselines
 × 2 NFE × 2 metrics; n_pairs = 300, df = 299 paired; 290/289 for
 lediflow nfe100 due to missing data) was re-run end-to-end on
-**real per-record data** extracted from the Wave 196 Track B
+**real per-record data** extracted from the Track B
 foldability + scPerplexity eval pipeline (per-record
-`metrics.jsonl` files), not on the earlier Wave 229 P1 bootstrap
+`metrics.jsonl` files), not on the earlier bootstrap
 projection (which had 7 REGRESSES artifacts due to bootstrap
 variance underestimation). Verdict distribution at Bonferroni
 α = 0.003125 (16-cell family): **2/16 SUPPORTED** (vanilla
@@ -841,7 +839,7 @@ baselines; underpower is the per-record variance floor, not
 effect absence). Source:
 [`verification_outputs/wave230-p2-real-4arm-per-record.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave230-p2-real-4arm-per-record.csv) and
 [`docs/ARCHIVE/audit-by-wave/wave230-p2-real-4arm-per-record.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/audit-by-wave/wave230-p2-real-4arm-per-record.md). This **supersedes**
-the Wave 229 P1 bootstrap verdict (3 SUPPORTED + 7 REGRESSES + 6
+the bootstrap verdict (3 SUPPORTED + 7 REGRESSES + 6
 UNDERPOWERED); the 7 REGRESSES were bootstrap variance-inflation
 artifacts that vanished under real per-record analysis (8/16
 cells flipped verdict; the framework-does-not-regress finding is
@@ -857,7 +855,7 @@ the honest update).
   framework's per-step overhead). Headline empirical value-add on
   the compute axis.
 
-- **Wave 236 P2 wall-clock closure: 24.6× → 1.26×.** CUDA-graph
+- **Wall-clock closure: 24.6× → 1.26×.** CUDA-graph
   capture (`ADAPTIVE_REFLOW_CUDA_GRAPH=1`, opt-in env-var;
   [`adaptive_reflow/framework/cuda_graph_capture.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/framework/cuda_graph_capture.py)) closes
   **76.78 % of the framework wall-clock gap** on the R5b
@@ -893,7 +891,7 @@ the honest update).
   framework-WINS on every tier of every adapter at the per-record
   audit-grade sample size N=1000.
 
-- **Wave 235 P1–P4 top-4 high-leverage improvements (see §R6
+- **Top-4 high-leverage improvements (see §R6
   above).** R5b CIFAR-10 RF structural elimination at
   `n_rounds=1` (ΔFID -1.60% to -2.53% on 3/4 schedulers);
   R2 Kanzi tier-aware grid medium-effect uplift (d_z +0.0465
@@ -924,21 +922,20 @@ structural scope statements (K1–K8) that re-frame every negative
 finding as a scope articulation rather than an enumerated
 shortcoming.
 
-**R5b reframing update — Matched-effective-NFE hypothesis FALSIFIED
-(Wave 225 P7 + P9).** Two follow-up counterfactual sweeps at
+**R5b reframing update — Matched-effective-NFE hypothesis FALSIFIED.** Two follow-up counterfactual sweeps at
 n_rounds=2 test whether the R5b regression is a definition artifact
-of nominal-vs-effective NFE mismatch. **Wave 225 P7**: reducing
+of nominal-vs-effective NFE mismatch. **First counterfactual**: reducing
 n_rounds from 4 to 2 (which increases per-round budget to 25 NFE
 and concentrates 49 NFE on round 0 with 1 NFE restart blending on
-round 1) reduces the headline ΔFID from +84.02 (Wave 195 P2, +20.20%)
+round 1) reduces the headline ΔFID from +84.02 (+20.20%)
 to +44.78 (P7 N=200, +9.77%), a ~47% reduction in ΔFID units / ~52%
-reduction in ΔFID%. **Wave 225 P9**: matching effective NFE between
+reduction in ΔFID%. **Second counterfactual**: matching effective NFE between
 framework (nominal NFE=100, n_rounds=2, effective=50 via cosine ramp
 halving) and baseline (NFE=50, effective=50) yields headline
 ΔFID = +94.91 (+20.89%) — the **matched-effective-NFE hypothesis
 is FALSIFIED**: the regression is NOT a definition artifact; it
-grows monotonically with framework effective NFE (P7 effective=25
-ΔFID=+9.77% < P9 effective=50 ΔFID=+20.89% ≈ Wave 195 P2
+grows monotonically with framework effective NFE (effective=25
+ΔFID=+9.77% < effective=50 ΔFID=+20.89% ≈ the original
 effective=50 ΔFID=+20.20%). The mechanism is the 1-NFE restart
 blending on round 1: a forced restart pulls the (otherwise near-
 optimal) round-0 trajectory away from the baseline. The R5b
@@ -946,53 +943,53 @@ regression is therefore a structural artifact of the multi-round
 restart-blend architecture, not of the NFE accounting. Future
 mitigation (e.g., a `--no-final-restart` flag collapsing the cosine
 ramp at n_rounds=1) is queued for the camera-ready deferred list.
-The Wave 195 P2 d_z = +2.700 REGRESSES verdict at matched NFE=50
-remains the primary paper R5b claim; the Wave 225 P7/P9 counterfactuals
+The d_z = +2.700 REGRESSES verdict at matched NFE=50
+remains the primary paper R5b claim; the two counterfactuals
 are documented as honest disclosures of the regression's mechanism,
 not as refutations of the regression itself.
 
-**R3 FlowMol3 fg_dev 3-seed direction inconsistency (Wave 242 P2
-update — supersedes Wave 238 P1 wording, honest disclosure).**
+**R3 FlowMol3 fg_dev 3-seed direction inconsistency (updated
+reading — supersedes earlier wording, honest disclosure).**
 The R3 fg_dev evidence is reported with an explicit per-seed
 direction diagnostic rather than as a pooled "framework wins"
-claim. The Wave 87 (seed 42) baseline + framework arms at
+claim. The seed-42 reference baseline + framework arms at
 NFE=250, N=1000, batched DGL path showed mean_diff = -0.0235
-(framework reduces fg_dev); the Wave 235 P4 partial-sweep
+(framework reduces fg_dev); the partial-sweep
 expansion to seeds 43 and 44 at NFE=100, N=500, single-mol
 graph path showed seeds 43/44 mean_diff = +0.0188 / +0.0126
 (framework increases fg_dev, i.e. **framework WORSE** at the
 lower NFE / lower N / different graph-path settings).
 
-**Wave 242 P2 verdict (this update) — direction-inconsistent at
-NFE=250; NFE was not the main confound.** Wave 242 P2 attempted
-to lift the NFE confound by re-running seeds 43/44 at the Wave 87
+**Current verdict — direction-inconsistent at
+NFE=250; NFE was not the main confound.** A re-run attempted
+to lift the NFE confound by re-running seeds 43/44 at the reference
 NFE=250 / N=200 / single_mol path configuration via the
 `wave242_p1_flowmol3_rescue_single_mol.py` rescue script
 (never committed to the repository).
-The script was **NEVER EXECUTED** before Wave 242 P2 verification
+The script was **NEVER EXECUTED** before verification
 was launched, so the per-seed inputs for seeds 43/44 are
 **MISSING on disk** and the NFE=250 pooled 3-seed per-record
-paired-t is **NOT COMPUTABLE**. The Wave 242 P2 verdict is
+paired-t is **NOT COMPUTABLE**. The verdict is
 **TIE / inconsistent**: seed 42 framework_better at NFE=250 /
 N=1000 / batched-DGL; seeds 43/44 evidence is **absent (unknown
 direction, not "framework-worse" at NFE=250)**. The honest
-scientific reading is that the Wave 87 1-seed framework-WINS
+scientific reading is that the 1-seed framework-WINS
 direction **does not generalise** across seeds at the matched
 NFE=250 protocol because the matched-protocol evidence at
 NFE=250 exists only for seed 42; the per-seed direction
-reversal at NFE=100 / N=500 / single_mol (Wave 235 P4) is
+reversal at NFE=100 / N=500 / single_mol is
 **confounded** by three factors that prevent a clean
 seed-dependent attribution: (i) NFE confound (seed 42 NFE=250
 vs seeds 43/44 NFE=100); (ii) N confound (seed 42 N=1000 vs
 seeds 43/44 N=500); (iii) graph path confound (seed 42 batched
 DGL vs seeds 43/44 single_mol fallback used because the
-**DGL 2.4.0+cu124 batched-path bug — Wave 109.C — remained
-unfixed** during Wave 235 and Wave 242). The NFE confound
+**DGL 2.4.0+cu124 batched-path bug remained
+unfixed**). The NFE confound
 hypothesis (whether NFE=250 at single_mol resolves the sign
-reversal) is **NOT TESTABLE** in Wave 242. We disclose this
+reversal) is **NOT TESTABLE**. We disclose this
 directly rather than papering over the missing seeds 43/44 as
 "direction-consistent": the R3 fg_dev evidence is best read as
-a **conditional boundary** that holds on the Wave 87 NFE=250
+a **conditional boundary** that holds on the NFE=250
 / N=1000 / batched-DGL path, not as a generalisable
 framework-WINS claim across seeds. The full per-seed diagnostic,
 the protocol-mismatch disclosure (seed 42 N=1000 batched vs
@@ -1008,11 +1005,11 @@ The submission is accompanied by:
 
 - **Source code archive** (MIT license) at the canonical GitHub
   repository, SHA-256-pinned at the freeze-marker commit
-  `5b21cca` and re-pinned at the Wave 332 DeepSeek-final-pass
+  `5b21cca` and re-pinned at the final-pass
   commit `176c6d4`. The repository includes the full
   [`adaptive_reflow/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/adaptive_reflow) framework code, 5582 pytest tests, the
-  **D.4 byte-stable regression suite at 30/30 PASS**, the Wave
-  190/195/196/198/203 statistical scripts, every R-cell config
+  **D.4 byte-stable regression suite at 30/30 PASS**, the
+  statistical analysis scripts, every R-cell config
   YAML, `pyproject.toml` + `uv.lock`, `README.md`, `QUICKSTART.md`,
   and `TUTORIAL.md`. Three of three real-checkpoint models
   (FlowMol3, Kanzi, LineageFlow) are SHA-256-pinned in
@@ -1022,14 +1019,14 @@ The submission is accompanied by:
   the manifest for self-referential audit-trail verification.
 
 - **Verification-output corpus** (319 files under
-  [`verification_outputs/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs)) covering Wave 87 (FlowMol3), Wave
-  95–99 (R-level power), Wave 106 (G1 SHA-256), Wave 161 (k6
-  foldability), Wave 191 (CIFAR-10 N=1000), Wave 198 (per-record
-  k6), Wave 203 (cluster-robust k6), Wave 206 (LineageFlow / Kanzi
-  / FlowMol3 N=1000), Wave 208 (4-arm power, cross-domain, Pareto),
-  Wave 209 (this paper's headline modules), Wave 210 (process
-  profile + source hotpaths), and Wave 211 (FLOPs §5.5 + F-side
-  audit). Every headline number in the paper is sourced from a
+  [`verification_outputs/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs)) covering FlowMol3 fg_dev, R-level
+  power analysis, the G1 SHA-256 audit, k6
+  foldability, CIFAR-10 N=1000, per-record
+  k6, cluster-robust k6, LineageFlow / Kanzi
+  / FlowMol3 N=1000, 4-arm power / cross-domain / Pareto,
+  this paper's headline modules, the process
+  profile + source hotpaths, and the FLOPs §5.5 + F-side
+  audit. Every headline number in the paper is sourced from a
   byte-addressable file in this corpus.
 
 - **Container recipe** (`Dockerfile`) building the canonical
@@ -1047,21 +1044,20 @@ The submission is accompanied by:
 
 - **R2 reproducibility provenance note.** All Kanzi `framework_inv_proj`
   results in this submission are reproducible from commit `e3d1c01`
-  (Wave 218 P1 bridge restore, landed in the Wave 217 P5 bulk window;
-  provenance annotated in commit `f59523b` Wave 218 P4) onward. The
-  fix restores the Wave 95.P3.B trained-inverse bridge in
+  (bridge restore; provenance annotated in commit `f59523b`) onward. The
+  fix restores the trained-inverse bridge in
   [`tools/_kanzi_sweep_runner.py:_synthesize_x_final_real`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tools/_kanzi_sweep_runner.py) lines
-  414-473, which had been bypassed by a Wave 196 P3 shape-detection
-  skip-bridge branch (combined with the Wave 178 P2+P3 `(L, 3)`
+  414-473, which had been bypassed by a shape-detection
+  skip-bridge branch (combined with the `(L, 3)`
   random-Gaussian change in `build_initial_state`) and produced a
-  spurious +0.66 Å regression in framework_inv_proj. The Wave 218
-  P1 fix is verified at Wave 218 P2 N=10 smoke (mean = 0.8758 Å,
-  matching Wave 127 byte-stable 0.8798 Å within 0.004 Å) and Wave
-  218 P3 N=1000 index-matched two-sample sweep (Cohen's d_z = −0.0990,
+  spurious +0.66 Å regression in framework_inv_proj. The
+  fix is verified at N=10 smoke (mean = 0.8758 Å,
+  matching the byte-stable 0.8798 Å within 0.004 Å) and at the
+  N=1000 index-matched two-sample sweep (Cohen's d_z = −0.0990,
   p_raw = 1.7943 × 10⁻³, Bonferroni-significant at α = 0.007143,
   framework_wins). D.4 byte-stable regression suite is **30/30 PASS**
-  (was 33/33 in pre-Wave-178; 3 pre-Wave-196 shape-contract tests
-  retired in Wave 196 P3 because Wave 178 changed the
+  (was 33/33 before the shape change; 3 shape-contract tests
+  retired because that change set the
   synthetic-mode latent shape to `(L, 3)` — see
   [`docs/ARCHIVE/audit-by-wave/wave218-p1-fix-applied.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/audit-by-wave/wave218-p1-fix-applied.md) §Incident context).
 
