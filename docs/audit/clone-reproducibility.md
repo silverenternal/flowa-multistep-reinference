@@ -142,6 +142,24 @@ the quote lives inside the artifact that was not there. Adding the four paths
 The checker is now entry 14 of the gate chain, immediately after
 `check_docs_against_code.py`.
 
+## 4b. The register's markdown was not gated either
+
+`--check` validated the register's paths and quotes and said nothing about
+`docs/PAPER-EVIDENCE.md` — the file a reviewer actually reads. That file is
+generated from the register, so the two could drift the same way the audit
+index had: the source is checked, the surface is not.
+
+It was in sync when this was found, which is luck rather than a property. The
+check now renders the register in memory and requires the committed markdown to
+be byte-identical, failing with the command that fixes it. The comparison only
+runs when `--json` points at the real register, so an alternate register can
+still be validated on its own.
+
+`tests/test_tools/test_paper_evidence_register.py` (6 tests) pins it: the real
+register passes, the committed surface matches a fresh render, a stale surface
+and a missing surface are both reported, render-then-check round-trips, and the
+render is deterministic.
+
 ## 5. The new gate
 
 `tools/check_clone_integrity.py` walks `git ls-files --stage` for mode

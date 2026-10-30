@@ -304,6 +304,22 @@ def render(register: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def check_markdown(register: dict, path: Path) -> list[str]:
+    """The markdown surface must be byte-identical to a fresh render.
+
+    ``docs/PAPER-EVIDENCE.md`` is generated, but until 2026-10-30 nothing
+    compared it with its source: ``--check`` validated the register's paths and
+    quotes and said nothing about the file a reviewer actually reads, so the
+    two could drift silently.  This is the same defect class as a hand-edited
+    generated index.
+    """
+    if not path.is_file():
+        return [f"{path} does not exist; run --render --out {path}"]
+    if path.read_text(encoding="utf-8") != render(register):
+        return [f"{path} is stale against the register; run --render --out {path}"]
+    return []
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="validate the register")
@@ -315,10 +331,15 @@ def main(argv: list[str] | None = None) -> int:
     register = load(Path(args.json))
     errors = validate(register)
     if args.check:
+        if Path(args.json).resolve() == DEFAULT_JSON.resolve():
+            errors = errors + check_markdown(register, Path(args.out))
         for error in errors:
             print(f"FAIL {error}")
         if not errors:
-            print(f"OK {args.json}: {len(register['cells'])} cells, all paths and quotes verified")
+            print(
+                f"OK {args.json}: {len(register['cells'])} cells, all paths and quotes "
+                f"verified; {Path(args.out).name} matches a fresh render"
+            )
         return 1 if errors else 0
 
     if args.render:

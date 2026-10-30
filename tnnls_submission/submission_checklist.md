@@ -39,7 +39,7 @@
 - [x] **Abstract word count:** 167 words (2026-10-27 packaging addendum; TNNLS allows up to 250). The 328-word Wave 242 P3 reading is historical.
 - [x] **Ruff lint (4-directory scope):** 0 findings across [`adaptive_reflow/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/adaptive_reflow), [`tests/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tests), [`scripts/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/scripts), [`tools/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tools)
 - [x] **Mypy type-check:** 0 errors
-- [x] **Pytest:** 5571 passed / 180 skipped / 0 xfailed (2026-10-29 CPU run, 12 torch-dependent `test_paper_metrics.py` tests excluded)
+- [x] **Pytest:** 5577 passed / 180 skipped / 0 xfailed (2026-10-29 CPU run, 12 torch-dependent `test_paper_metrics.py` tests excluded)
 
 ### Tier-3 cells (12 of 12)
 

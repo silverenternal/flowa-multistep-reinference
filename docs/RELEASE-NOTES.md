@@ -73,7 +73,7 @@ Validated across **six R-level cells** spanning protein (LineageFlow), molecular
 | mkdocs build --strict | **0 warnings** |
 | Claims consistency | **no drift** |
 | Abstract word count | **183 words** |
-| Pytest | **5571 passed / 180 skipped / 0 xfailed** |
+| Pytest | **5577 passed / 180 skipped / 0 xfailed** |
 | Ruff lint (4-directory scope) | **0 findings** |
 | Mypy type-check | **0 errors** |
 | TNNLS submission package | **7 files** with real SHA-256 |
