@@ -59,11 +59,11 @@ KNOWN_ABSENT: frozenset[str] = frozenset({"supplementary_bundle.zip"})
 #: (path relative to the repo root, sha256, bytes) from the packaging addendum.
 CURRENT_ARTIFACTS: tuple[tuple[str, str, int], ...] = (
     ("docs/drafts/paper-A-final.md",
-     "b66ea07a70a9ddae7a9d43e708625b2320424c4a3d4957b79862454e5b22b97a", 226324),
+     "417f31836240760b60ceae7e274c9b3c705b661b395f258b64b18f605d6a3ea4", 224429),
     ("docs/drafts/paper-A-final.tex",
-     "0847cd1e394387b05514b061c0657214e2deeba148d0fc5842607df050153309", 74254),
+     "e28dca14db086d0e235f167aaacd909d6d3a67a12978726bbf48604301c998df", 74243),
     ("docs/drafts/paper-A-final.pdf",
-     "8b94570ccb9a8a8619e90039b7563b5028d53c9d47130cd2df3b401dde418e9d", 615789),
+     "ef9b401d664c2d911b233178296060b598b4fa6f5a87a516b42f893ee51d8e3c", 615789),
 )
 
 ROW_RE = re.compile(r"^\| `([^`]+)` \| (\d+) \| `([0-9a-f]{64})` \| (.*?) \|$", re.M)

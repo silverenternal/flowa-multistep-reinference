@@ -100,19 +100,59 @@ Three independent checks per file:
 `tnnls_submission/SHA256SUMS` was regenerated (`sha256sum -c` → 22 OK)
 and the `MANIFEST.md` rows for every edited file were refreshed.
 
-## What was not compressed, and why
+## The manuscript sources
 
-**`docs/drafts/paper-A-final.md` carries 44 identifiers, 9 of them in
-headings** (e.g. `#### 3.5.1 Concrete SHA-256 ledger example (Wave 349 R1
-3-seed GPU artifact)`). The compiled manuscript
-`paper-A-final.tex` carries exactly one, and it is inside a LaTeX comment
-(`% IEEEtran-journal typeset for TNNLS submission (Wave 331)`), so the
-PDF a reviewer receives contains **zero** visible identifiers. Editing the
-markdown reading copy would either leave it inconsistent with the PDF or
-require a PDF rebuild, which changes `paper-A-final.pdf`'s SHA-256 and
-page count and cascades through `MANIFEST.md`, `SUBMISSION_READINESS.md`
-and `tables.md`. That is a manuscript-freeze decision, not a documentation
-edit, so it is left open and recorded here rather than taken unilaterally.
+`docs/drafts/paper-A-final.md` carried **171** identifiers (44 lines, 9 of
+them headings such as `#### 3.5.1 Concrete SHA-256 ledger example (Wave 349
+R1 3-seed GPU artifact)`); `paper-A-final.tex` carried one, inside a LaTeX
+comment. Both were compressed under the same rule, and the PDF was rebuilt.
+
+The markdown file is dense enough that exact-substring replacement was not
+practical, so a single token pattern was used instead:
+
+```
+Wave[- ]?\d+(?:\.\w+)?(?:\s*[PG]\d+)?(?:\s*[PG](?=\s))?
+    (?:[–-]P?\d+)?(?:\s*\+\s*P?\d+[A-Za-z]*)?(?:/\s*\d+[A-Za-z]?)*
+```
+
+The range group requires the letter (`–P6`), never a bare number, so
+`Wave 236 P2 — 24.6×` cannot be truncated to `.6×`; the `+` and `/` groups
+exist for the compound forms that really occur (`Wave 156+156c`,
+`Wave 127/131/132/152`, `Wave 349 P1 + P3`). The pattern was validated by
+printing all 171 matches before applying anything: none contained a decimal
+point. After deletion the numeric multiset is **identical** to the
+pre-edit file with the same pattern normalised — zero deltas in either
+direction, not merely "no unexplained delta".
+
+Twenty-three grammatical artifacts from the deletion were then repaired by
+hand (`**Proof-scope correction ().**` → `**Proof-scope correction.**`,
+`* ADDITIVE footnote` → `*ADDITIVE footnote`, `the ** LineageFlow HMMER
+K4**` → `**LineageFlow HMMER K4**`, `(+ + + + + + + + + +).` → removed,
+`per)` → `)`, `per + CLM-056` → `per CLM-056`, and so on). A final scan for
+double spaces, space-before-punctuation, `per)`/`per;`, `+ +` and `(` +
+space finds nothing outside code blocks and LaTeX.
+
+**Rebuild.** `pdflatex -interaction=nonstopmode -halt-on-error` twice in
+`docs/drafts/`. Result: **12 pages** (unchanged), 615789 bytes (unchanged),
+**0 overfull hboxes**, 0 undefined references, and `pdftotext` reports
+**zero** occurrences of the identifier in the delivered PDF.
+
+The PDF's SHA-256 necessarily changed (pdflatex embeds a creation date), so
+the three `CURRENT_ARTIFACTS` entries in `tools/check_submission_manifest.py`,
+the `MANIFEST.md` packaging banner and rows, `SHA256SUMS`,
+`submission_checklist.md`, `SUBMISSION_READINESS.md`, `README.md` and
+`README.zh.md` were all updated to the new `paper-A-final.{md,tex,pdf}`
+digests and the new markdown word count (27 347, was 27 809).
+
+One stale reading was corrected at the same time: `SUBMISSION_READINESS.md`
+row 6 still quoted a 446 705-byte / `461ee92e…` PDF that no longer existed
+at HEAD. It now quotes the real artifact.
+
+## What was deliberately not compressed
 
 `tnnls_submission/FILL_GUIDE.md` keeps one occurrence because it is a
 literal example commit message a user is meant to copy.
+`docs/audit/wave385-figures.md` and the superseded-artifact banners inside
+`MANIFEST.md` keep theirs because they are historical records of what a
+given build's hash was; rewriting them would make the record claim a hash
+that never existed.
