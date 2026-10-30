@@ -134,7 +134,7 @@
 | 11 | highlights submittable | **PASS** | 5 TNNLS editor-facing highlights, each ≤ 25 words; live SHA-256 in [`MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md) row `highlights.md` and in `SHA256SUMS`. The earlier `1655ae5e…` (2350 bytes, 3 bullets ≤ 85 chars) reading and the `highlights_v2.md` variant it pointed at are both historical — that file does not exist. |
 | 12 | Lean 4 verification 28/28 PASS + 4 new stubs | **PENDING** (PENDING_MATHLIB_CACHE; build fails) | `cd formal && lake build FlowA.Theorem5Subclaim53` → "error: no such file or directory" for `Mathlib.Analysis.SpecialFunctions.ExpLog`; per Wave 354 P5 audit 4 stubs (Thm 4.1 + 5.1 + 5.2 + 5.3) authored with 15 sorry sites total; "28/28 PASS" claim does NOT match actual state (4 stubs only, no proofs, Mathlib v4.34.1 precompilation incomplete) |
 | 13 | Wave 260 vendored byte-identical preserved | **PASS** | FlowMol3 `77cae22174b7792b0e25e9e0414038420736d841`; LineageFlow `ccef84adff421fcb6b855285bc1860e1f9a94f59`; Kanzi `cfed9cf4be06a98bd2ce5f8492e20c0b9fa0d41b` — all match MANIFEST pins |
-| 14 | NO-PUSH policy honoured | **PASS** | no `git push` since Wave 242 freeze; Wave 343-356 commits carry `(USER AUTHORIZED, NO PUSH)` footer per `todo/PUSH-READY.md` |
+| 14 | NO-PUSH policy honoured | **PASS** | no `git push` since Wave 242 freeze; Wave 343-356 commits carry `(USER AUTHORIZED, NO PUSH)` footer per `todo.json` (`no_push` + `commit_footer`) |
 
 ### Wave 356 P3 observed-state table (4 honest-disclosure PENDING items, not on task list but disclosed in existing "Honest disclosures" subsection)
 

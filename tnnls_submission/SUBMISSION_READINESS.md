@@ -159,11 +159,11 @@ All 31 explicitly DEFERRED gaps are bounded by either (a) user action, (b) envir
 | # | Invariant | Verification |
 |---|-----------|--------------|
 | 1 | **Vendored upstream byte-identical** | 9 vendored repos in `data/` (FlowMol3 `77cae22`, LineageFlow `ccef84a`, Kanzi `cfed9cf`, HiDream-I1, GraphBFN, Lumina-Image-2.0, ProtBFN-AbBFN, Wan2.2, FreqFlow) remain byte-identical to upstream pinned commits per Wave 260 hard-guardrail #1 + Wave 262 P1 revert lineage. Per `docs/audit/wave364-paper-polish-gaps.md` §6 invariant #1: PASS |
-| 2 | **NO-PUSH policy honoured** | No `git push` since Wave 242 freeze; all Wave 343-365 commits carry `(USER AUTHORIZED, NO PUSH)` footer per `todo/PUSH-READY.md` + Wave 325 NO-PUSH policy. Per `docs/audit/wave358-submission-checklist-reaudit.md` + `docs/audit/wave356-submission-checklist-review.md` |
+| 2 | **NO-PUSH policy honoured** | No `git push` since Wave 242 freeze; all Wave 343-365 commits carry `(USER AUTHORIZED, NO PUSH)` footer per `todo.json` (`no_push` + `commit_footer`) + Wave 325 NO-PUSH policy. Per `docs/audit/wave358-submission-checklist-reaudit.md` + `docs/audit/wave356-submission-checklist-review.md` |
 | 3 | **17 USER_TO_FILL placeholders preserved** | 31 grep hits in `tnnls_submission/cover_letter.md` = 17 distinct fields + 14 documentation-pointer occurrences; preserved verbatim per Wave 348 §0 + Wave 351 P5 + Wave 352 P2 governance + Wave 364 G32 (date refresh only, 0 placeholders modified). Per `tnnls_submission/FILL_GUIDE.md` |
 | 4 | **ADDITIVE only** | No edits to any existing `tnnls_submission/*.md` file in Wave 365 P1; no edits to `docs/drafts/paper-A-final.md` / `docs/CONSOLIDATED_RESULTS.md` / any `docs/audit/*.md` file. Per Wave 364 §6 hard-guardrail #2 + Wave 268 strict-clean rule |
 | 5 | **Wave 268 strict-clean rule observed** | Current labels: `STRONG` (R2 / R5c frontier / R6 live) / `CONDITIONAL` (R5b) / `TIE` (R5a) / `PARTIAL` (R1 / R3) / `SUPP-only` (K1 / K4 / K5 / K7). No promotion of `UNDERPOWERED` / `DEFERRED` / `REGRESSES` / `NOT_SIGNIFICANT` to `SUPPORTED` by wording alone |
-| 6 | **Live R6 measurement disclosed** | The live tier-aware run (`verification_outputs/gap31-r6-live-uplift/`) is the R6 headline, and the counterfactual construction is retained as design validation in `paper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md §(d)` + `docs/drafts/paper-A-final.md` §10.5 + `docs/drafts/paper-A-final.md` §11.1 (b) + `docs/CLAIMS.md` CLM-073 + `todo/RISK-REGISTER.md` R-019. |
+| 6 | **Live R6 measurement disclosed** | The live tier-aware run (`verification_outputs/gap31-r6-live-uplift/`) is the R6 headline, and the counterfactual construction is retained as design validation in `paper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md §(d)` + `docs/drafts/paper-A-final.md` §10.5 + `docs/drafts/paper-A-final.md` §11.1 (b) + `docs/CLAIMS.md` CLM-073 + `docs/audit/wave350-r6-live-attempt.md` (the R6 live-GPU deferral that R-019 carried, after the `todo/` retirement). |
 | 7 | **5 Lemmas ACTIVE + 2 Theorems closed-form** | Lemmas 1/2/3 (Protocol Composition Closure / State-Machine Byte-Determinism / Ledger Tamper-Evidence) ACTIVE per Wave 311 + Wave 322; Lemma 4 / Lemma 5 (Sub-claim 4.1 / Sub-claim 5.1) ACTIVE per Wave 350 P1 / Wave 354 P3; Theorem 4 closed-form rate bound (§6.5 + §A.1) per Wave 353 P1; Theorem 5 closed-form attenuation bound (§6.6) per Wave 350 P1 + Wave 354 P3 + Wave 364 G3 |
 
 All 7 cross-cutting invariants observed at Wave 365 P1 audit time.
@@ -227,7 +227,7 @@ All 7 cross-cutting invariants observed at Wave 365 P1 audit time.
 - `docs/drafts/paper-A-final.md` §11.1 (honest verdict) + §11.2 (key takeaways) + §7.2 (11-cell verdict distribution) + §10.5 (R6 counterfactual disclosure) + §A.1 (Theorem 4 derivation) + §6.6 (Theorem 5 closed-form).
 - `docs/CONSOLIDATED_RESULTS.md` §15.103 (final 11-cell verdict distribution) + §15.104 (Wave 352 P5 R5a n=10 paired-t confirmation TIE_PERSISTS addendum) + §15.98 (R5b conditional boundary disclosure).
 - `docs/CLAIMS.md` CLM-059 (R5c REGIME-DEPENDENT), CLM-060 (R1 PARTIAL + K1 SUPP / UNDERPOWERED status addenda), CLM-068 (R3 direction-consistent addendum), CLM-069 (R4/R5/R3/R5c Wave 206 P4 refresh), CLM-072 (R5b conditional), CLM-073 (R6 tier-aware counterfactual).
-- `todo/RISK-REGISTER.md` R-019 (R6 live GPU re-verification deferred item).
+- `docs/audit/wave350-r6-live-attempt.md` (R6 live GPU re-verification, deferred to camera-ready; carried R-019 after the `todo/` retirement).
 
 ### 8.4 Wave 362 / 363 / 364 audit docs (cited verbatim)
 

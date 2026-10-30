@@ -121,3 +121,21 @@ def test_symbols_and_globs_are_not_paths(tool, sandbox) -> None:
         encoding="utf-8",
     )
     assert tool.collect() == []
+
+
+def test_the_retired_todo_directory_is_still_checked(tool, sandbox) -> None:
+    """A prefix that no longer exists is the one that most needs checking.
+
+    ``todo/`` was retired on 2026-10-13 and six citations into it survived in
+    ``tnnls_submission/`` -- the prefix was simply not in ``PATH_PREFIXES``, so
+    nothing looked.  It is in the tuple now.
+    """
+    assert "todo" in tool.PATH_PREFIXES
+    (sandbox / "README.md").write_text(
+        "Policy per `todo/PUSH-READY.md` and `todo/RISK-REGISTER.md`.\n",
+        encoding="utf-8",
+    )
+    assert [row["target"] for row in tool.collect()] == [
+        "todo/PUSH-READY.md",
+        "todo/RISK-REGISTER.md",
+    ]

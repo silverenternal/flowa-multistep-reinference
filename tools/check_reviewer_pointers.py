@@ -79,10 +79,14 @@ def known_absent() -> frozenset[str]:
         token for token in DECLARED_ABSENT if not (REPO_ROOT / token).exists()
     )
 
-#: Directory prefixes that name a location inside this checkout.
+#: Directory prefixes that name a location inside this checkout.  ``todo`` is
+#: here because the directory was retired on 2026-10-13 and six citations into
+#: it survived in the submission package; a prefix that no longer exists is
+#: exactly the one that needs checking.
 PATH_PREFIXES: tuple[str, ...] = (
     "adaptive_reflow", "configs", "data", "docs", "paper-data", "reproduce",
-    "scripts", "tests", "tnnls_submission", "tools", "verification_outputs",
+    "scripts", "tests", "tnnls_submission", "todo", "tools",
+    "verification_outputs",
 )
 
 #: Extensions that make a bare token a path rather than a symbol.
