@@ -170,7 +170,7 @@ prediction**, not an empirical result. The harness stub
   `docs/paper-draft.md` §4,
   `docs/PLUG_IN_YOUR_MODEL.md` §Self-Flow,
   `docs/CONSOLIDATED_RESULTS.md` §2,
-  `docs/CLAIMS.md` (Self-Flow claim ledger entry pending Wave 9).
+  `docs/CLAIMS.md` (no Self-Flow claim ledger entry yet).
 
 ## 8. Known Failure Modes
 

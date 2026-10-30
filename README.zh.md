@@ -154,7 +154,7 @@
 | **GAP-28** R6 faithful 层级 | faithful easy-tier 方向能否修复 R6？ | **确定性 null**：faithful +0.1104 < as-designed +0.1466 < 门槛 +0.2235；easy-tier 回归随 β_easy *单调递增* |
 | **GAP-30** R6 层级定位 | 冻结层级来源是否是残差？ | 正确定位的新鲜层级 3 种子 live 重跑：as-designed **+0.1604**（较 +0.1466 上升，仍 < 门槛）；层级隔离精确（330/330/种子）；easy 层级是唯一不同组（hard/medium 字节相同） |
 
-**2.3 — live R6 提升（GAP-31，最新）。** 冻结的 R6 `+0.2235` 头条是冻结 Wave-161 配对差上的*已披露反事实代理*，**非** live GPU 运行（wrapper 的 `+0.2235` 是 `easy_tier_nfe_reduction_factor=0.5` 下的逐记录 diff 均值位移）。live 重跑证伪了 50% easy-tier 削减（live 削减 ≈ 32%）。GAP-31 在种子匹配臂上给出三个 **live、非反事实**测量：
+**2.3 — live R6 提升（GAP-31，最新）。** 冻结的 R6 `+0.2235` 头条是冻结的配对差上的*已披露反事实代理*，**非** live GPU 运行（wrapper 的 `+0.2235` 是 `easy_tier_nfe_reduction_factor=0.5` 下的逐记录 diff 均值位移）。live 重跑证伪了 50% easy-tier 削减（live 削减 ≈ 32%）。GAP-31 在种子匹配臂上给出三个 **live、非反事实**测量：
 
 | 轴 | 测量 | live 效果（3 种子 pooled） |
 |---|---|---|

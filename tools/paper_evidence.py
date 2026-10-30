@@ -173,7 +173,7 @@ def _cell_table(register: dict[str, Any]) -> list[str]:
 
 def _taxonomy_table(register: dict[str, Any]) -> list[str]:
     lines = [
-        "| canonical | Wave-135 alias | `paper-data/` directory | model | metric |",
+        "| canonical | earlier alias | `paper-data/` directory | model | metric |",
         "|---|---|---|---|---|",
     ]
     for row in register["taxonomy_map"]:
@@ -262,8 +262,8 @@ def render(register: dict[str, Any]) -> str:
         "## Cell numbering across the historical surfaces",
         "",
         "The same cell has carried up to three names. The canonical column is the",
-        "Wave-310 numbering used by the manuscript and `CLM-060`; the other two are",
-        "kept only so old records remain traceable.",
+        "numbering used by the manuscript and `CLM-060`; the other two are kept",
+        "only so old records remain traceable.",
         "",
         *_taxonomy_table(register),
         "",

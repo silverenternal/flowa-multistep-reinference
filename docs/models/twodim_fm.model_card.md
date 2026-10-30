@@ -78,7 +78,7 @@ load-bearing result. `selection_ratio` is schedule-independent by
 construction at fixed noise scale and does **not** reflect the
 framework's value-add. The C.5 noise-injection sweep
 (`sigma ∈ {0.0, 0.01, 0.05, 0.10, 0.20, 0.50}`,
-`docs/CONDITIONS.md` Wave 17 Phase 3 addendum) reports an **honest
+`docs/CONDITIONS.md` C.5 addendum) reports an **honest
 negative result**: framework regresses at every sigma level on these
 2D targets (uplift +45 % to +190 %, framework WORSE than RK4 baseline).
 The regression is structural — see `docs/theory/operating-regime.md`
@@ -143,7 +143,7 @@ separation).
   `docs/r4-survey/10-sota-2d-experiment-results.md`,
   `docs/CLAIMS.md` CLM-032,
   `docs/ABLATION.md` §3,
-  `docs/CONDITIONS.md` Wave 17 Phase 3.
+  `docs/CONDITIONS.md` C.5.
 
 ## 8. Known Failure Modes
 

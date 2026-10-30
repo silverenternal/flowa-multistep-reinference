@@ -2,7 +2,7 @@
  "schema": "paper_evidence_register.v1",
  "as_of": "2026-10-27",
  "basis": "todo.json win_definition: a cell wins only if (1) the point estimate is better with a paired 95% CI excluding 0 at the cell's alpha AND (2) the (quality, NFE) frontier dominates at every rung with a better plateau. TIE is not a win.",
- "canonical_taxonomy": "Wave-310 (paper §7.2 / CLAIMS CLM-060). The Wave-135 headline-evidence numbering and the paper-data directory names are historical aliases; see taxonomy_map.",
+ "canonical_taxonomy": "Canonical numbering (paper §7.2 / CLAIMS CLM-060). The earlier headline-evidence numbering and the paper-data directory names are historical aliases; see taxonomy_map.",
  "taxonomy_map": [
   {
    "canonical": "R1",

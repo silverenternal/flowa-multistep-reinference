@@ -15,7 +15,7 @@ surface is historical**.
 
 **Win rule.** todo.json win_definition: a cell wins only if (1) the point estimate is better with a paired 95% CI excluding 0 at the cell's alpha AND (2) the (quality, NFE) frontier dominates at every rung with a better plateau. TIE is not a win.
 
-**Canonical numbering.** Wave-310 (paper §7.2 / CLAIMS CLM-060). The Wave-135 headline-evidence numbering and the paper-data directory names are historical aliases; see taxonomy_map.
+**Canonical numbering.** Canonical numbering (paper §7.2 / CLAIMS CLM-060). The earlier headline-evidence numbering and the paper-data directory names are historical aliases; see taxonomy_map.
 
 ## Status at a glance
 
@@ -60,10 +60,10 @@ surface is historical**.
 ## Cell numbering across the historical surfaces
 
 The same cell has carried up to three names. The canonical column is the
-Wave-310 numbering used by the manuscript and `CLM-060`; the other two are
-kept only so old records remain traceable.
+numbering used by the manuscript and `CLM-060`; the other two are kept
+only so old records remain traceable.
 
-| canonical | Wave-135 alias | `paper-data/` directory | model | metric |
+| canonical | earlier alias | `paper-data/` directory | model | metric |
 |---|---|---|---|---|
 | **R1** | R1 | K4_k5_lineageflow_hmmer (R1 recipe) | LineageFlow | `hmmscan_total_hits` |
 | **R2** | R2 | R2_kanzi_rmsd | Kanzi | `reconstruction_kabsch_rmsd_A` |

@@ -170,7 +170,7 @@ investigations (GAP-24 … GAP-31)** that stress-test, refine, or re-anchor them
 | **GAP-28** R6 faithful tier | does the faithful easy-tier direction fix R6? | **Definitive null**: faithful +0.1104 < as-designed +0.1466 < bar +0.2235; the easy-tier regression is monotone *increasing* in β_easy |
 | **GAP-30** R6 tier-targeting | was the frozen tier source the residual? | Correctly-targeted fresh-tier 3-seed live re-run: as-designed **+0.1604** (↑ from +0.1466, still < bar); tier isolation exact (330/330/seed); the easy tier is the only group that differs (hard/medium byte-identical) |
 
-**2.3 — The live R6 uplift (GAP-31, newest).** The frozen R6 `+0.2235` headline is a *disclosed counterfactual proxy* on the frozen Wave-161 paired diff, **not** a live GPU run (the wrapper's `+0.2235` is a per-record diff-mean shift at `easy_tier_nfe_reduction_factor=0.5`). The live re-runs refute the 50% easy-tier cut (live cut ≈ 32%). GAP-31 supplies three **live, non-counterfactual** measurements on the seed-matched arms:
+**2.3 — The live R6 uplift (GAP-31, newest).** The frozen R6 `+0.2235` headline is a *disclosed counterfactual proxy* on the frozen paired diff, **not** a live GPU run (the wrapper's `+0.2235` is a per-record diff-mean shift at `easy_tier_nfe_reduction_factor=0.5`). The live re-runs refute the 50% easy-tier cut (live cut ≈ 32%). GAP-31 supplies three **live, non-counterfactual** measurements on the seed-matched arms:
 
 | axis | measurement | live effect (3-seed pooled) |
 |---|---|---|

@@ -6,8 +6,8 @@
 surface is fully wired and tested in `synthetic` mode; the production
 `torch` mode is **DEFERRED** — upstream has not published a checkpoint
 anywhere (no GitHub releases, no HF Hub releases, no PyPI package).
-**Last updated:** 2026-09-05 (Wave 36 Agent B, PHASE-4; post-Wave-36 user
-directive marked `DEFERRED_no_upstream_ckpt`).
+**Last updated:** 2026-09-05 (PHASE-4; the user directive of that date
+marked `DEFERRED_no_upstream_ckpt`).
 **F.4 gate:** PASS (≥ 0.8 per-model target met).
 **PHASE-4 real-ckpt gate:** **DEFERRED — no public weights, no upstream
 ckpt anywhere** (§6). Adapter file remains registered for the D.5 conformance
@@ -15,14 +15,14 @@ battery synthetic-mode coverage (8 checks pass).
 
 ---
 
-## 0. Real-checkpoint state (Wave 36 Agent B)
+## 0. Real-checkpoint state
 
 **Verdict: `nnet_ema.pth` does not exist publicly. No FID number is
 claimed, reproduced, or estimated for FreqFlow.**
 
 Probed 2026-09-05 from the GPU host (network reachable; `github.com`
 returned HTTP 200, so this is a genuine absence, not a sandbox block —
-contrast the Wave 19 analysis note in `todo/models/freqflow.md`, which
+contrast the earlier analysis note in `todo/models/freqflow.md`, which
 flagged GitHub as TCP-blocked from the sandbox):
 
 | Probe | Result |
@@ -38,8 +38,8 @@ flagged GitHub as TCP-blocked from the sandbox):
 The upstream README's inference recipe reads
 `--nnet_path=/path/to/nnet_ema.pth`. That is a **placeholder in the
 authors' own command line**, not a download URL — which is why the
-Wave 19 analysis recorded the weights URL as "conditional". Wave 36
-resolves that condition to **negative**.
+The earlier analysis recorded the weights URL as "conditional". The
+probe below resolves that condition to **negative**.
 
 ### What was downloaded
 
@@ -128,7 +128,7 @@ as a FreqFlow measurement anywhere in this repository.
 |---|---|---|
 | Paper FID (ImageNet-256, 50 NFE Euler) | 1.38 | Ren et al. 2026, upstream README |
 | Paper improvement over DiT / SiT | 0.79 / 0.58 FID | upstream README |
-| Params | ≈675 M | Wave 19 analysis (two-branch SiT-XL/2) |
+| Params | ≈675 M | architecture analysis (two-branch SiT-XL/2) |
 | Framework-reproduced FID | **not measured** | no checkpoint (§0) |
 | Framework Δ vs baseline | **not measured** | no checkpoint (§0) |
 
@@ -231,7 +231,7 @@ the honest representation of §0.
 - Adapter: `adaptive_reflow/adapters/freqflow.py`
 - Tests: `tests/test_adapters/test_freqflow.py` (synthetic surface),
   `tests/test_adapters/test_freqflow_real_ckpt.py` (checkpoint contract)
-- Wave 19 analysis: `todo/models/freqflow.md`
+- Earlier analysis: `todo/models/freqflow.md`
 - Landing zone + probe transcript: `data/freqflow_ckpt/README.md`
 - Lessons: `todo/lessons-learned.md` (LL-001 ckpt + upstream both
   required; LL-002 saturation invalidates comparison)

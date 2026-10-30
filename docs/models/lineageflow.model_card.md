@@ -3,7 +3,7 @@
 **Schema:** Mitchell/Gebru, 8 required fields (F.4 metric).
 **Adapter key:** `lineageflow`
 **Card status:** COMPLETE (8/8 fields populated; production torch-mode
-ckpt loading is **UNBLOCKED** via the Wave 39 5-LOC `_install_checkpoint_compat`
+ckpt loading is **UNBLOCKED** via a 5-LOC `_install_checkpoint_compat`
 shim — mirrors upstream `_install_checkpoint_compat()` in
 `inference/inference.py:39-59`). **The real forward pass now runs in the
 adapter**: the upstream source tree is vendored at
@@ -71,15 +71,14 @@ published checkpoint with the shim installed and confirms the encoder
 - **Held-out reference.** Per-paper Pfam held-out families.
 - **Evaluator.** `family_validity` (the paper's headline metric,
   ≈ 95.3 %), `avg_log_likelihood`, `amino_acid_diversity`.
-- **Sample budget.** n=32 at seed=42 (Wave 10 R2 protocol,
-  synthetic mode); n≥256 for the real-ckpt headline.
+- **Sample budget.** n=32 at seed=42 (synthetic mode); n≥256 for the real-ckpt headline.
 - **Why this is the right eval.** `family_validity` is the
   paper's own metric; framework-vs-baseline comparison is
   the natural framework value-add claim.
 - **Real-ckpt numbers (D-004, 2026-10-12).** The real forward pass now runs
   (see §2 / §8), but the adapter's `alpha_h` **family prior is synthetic**
   (upstream ships it as a separate JSON asset that is not vendored), so no
-  family-specific `family_validity` claim follows yet. The Wave 10 R2 numbers
+  family-specific `family_validity` claim follows yet. The synthetic-mode numbers
   below are on the synthetic velocity field and saturate at the validity
   ceiling (1.0 vs 1.0, delta 0 %). The real-ckpt basis is a **different**
   model from the canonical R1 headline (see
@@ -87,20 +86,20 @@ published checkpoint with the shim installed and confirms the encoder
 
 ## 4. Quantitative Analyses
 
-| Metric | Paper headline | Wave 10 R2 (synthetic, n=32) | Framework vs baseline (synthetic) | Source |
+| Metric | Paper headline | Synthetic (n=32) | Framework vs baseline (synthetic) | Source |
 |---|---:|---:|---:|---|
 | `family_validity` | 95.3 % | 1.0000 | 1.0000 (Δ = +0.0 %) | `docs/PLUG_IN_YOUR_MODEL.md` §LineageFlow |
 | `avg_log_likelihood` | n/a | (paper baseline) | **+0.23 %** | `docs/PLUG_IN_YOUR_MODEL.md` §LineageFlow |
 | `amino_acid_diversity` | n/a | (paper baseline) | **+0.09 %** | `docs/PLUG_IN_YOUR_MODEL.md` §LineageFlow |
 
-Honest framing (per `docs/PLUG_IN_YOUR_MODEL.md` §LineageFlow + Wave
-10 follow-up): the **synthetic velocity field gives
+Honest framing (per `docs/PLUG_IN_YOUR_MODEL.md` §LineageFlow and the
+follow-up analysis): the **synthetic velocity field gives
 `family_validity = 1.0` in BOTH arms**, so the baseline-vs-framework
 comparison is meaningless on the saturation ceiling (no signal).
 The framework shows small positive uplifts on secondary metrics
 (`avg_log_likelihood` +0.23 %, `amino_acid_diversity` +0.09 %),
 but `family_validity` ties at the saturation ceiling. **Claim
-verdict (Wave 10, protein axis): PARTIAL support** — framework
+verdict (protein axis): PARTIAL support** — framework
 ties at saturation on the synthetic surface. The **real-ckpt verdict is
 now obtainable** (D-004, 2026-10-12: the real forward pass runs in the
 adapter); a real-ckpt re-run on the 3-seed basis is recorded additively in
@@ -138,8 +137,8 @@ PARTIAL). R3 (`docs/baseline-audit-report.md` §F.2) remains
 
 ## 6. Caveats
 
-- **Production torch-mode: ckpt loading UNBLOCKED via 5-LOC shim (Wave 39).**
-  Wave 39 Agent B added `_install_checkpoint_compat()` to
+- **Production torch-mode: ckpt loading UNBLOCKED via a 5-LOC shim.**
+  The adapter adds `_install_checkpoint_compat()` to
   `adaptive_reflow/adapters/lineageflow.py` (mirrors upstream's own
   `_install_checkpoint_compat()` in
   `inference/inference.py:39-59`). The shim installs an empty
@@ -165,7 +164,7 @@ PARTIAL). R3 (`docs/baseline-audit-report.md` §F.2) remains
   is not vendored), and the adapter uses the base-flow vector field rather
   than the upstream intervention/mutation sampler
   (`generate_with_intervention`).
-- **HF ckpt is 10× larger than Wave 9 R3 estimate.** Wave 9 R3
+- **HF ckpt is 10× larger than the earlier estimate.** That estimate
   reported "sub-GB"; the actual ckpt is 9.788 GB on disk.
 - **Synthetic-mode is not a baseline reproduction.** When
   `torch` is missing or `core` is unavailable, the adapter
@@ -218,9 +217,8 @@ PARTIAL). R3 (`docs/baseline-audit-report.md` §F.2) remains
 
 ## 8. Known Failure Modes
 
-- **Wave 39 (PHASE-4 unblock): ckpt loading is now UNBLOCKED.**
-  The 5-LOC `_install_checkpoint_compat()` shim (added by Wave 39
-  Agent B) mirrors the upstream's own shim and resolves the
+- **PHASE-4 unblock: ckpt loading is now UNBLOCKED.**
+  The 5-LOC `_install_checkpoint_compat()` shim mirrors the upstream's own shim and resolves the
   `core.sampler.SamplerConfig` pickle reference. **End-to-end
   verified** by
   `tests/test_adapters/test_lineageflow.py::test_shim_unblocks_torch_load_on_real_ckpt`
@@ -228,7 +226,7 @@ PARTIAL). R3 (`docs/baseline-audit-report.md` §F.2) remains
   tensor shape = `(33, 1280)` matches the paper). The full
   forward pass now runs end-to-end in the adapter (D-004, 2026-10-12).
 - **Upstream `core` runtime — now vendored (D-004).** The ckpt
-  pickle references `core.sampler.SamplerConfig` (shimmed, Wave 39) and
+  pickle references `core.sampler.SamplerConfig` (shimmed) and
   the upstream `core` / `models.model` / `inference.inference` modules,
   which are vendored at `data/lineageflow_upstream/`. The real forward
   pass runs; the residual limitation is that the `alpha_h` family prior

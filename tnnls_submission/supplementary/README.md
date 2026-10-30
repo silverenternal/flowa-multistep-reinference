@@ -3,7 +3,7 @@
 **Venue:** IEEE Transactions on Neural Networks and Learning Systems (TNNLS)
 **Manuscript:** FlowA: Training-Free, Paper-Quantity-Driven Re-Inference for Flow-Matching Checkpoints
 **Submitted:** pending (cover-letter USER ACTION placeholders to be filled)
-**Freeze-marker commit:** Wave 343 + Wave 344 HEAD (`paper-A-final.{md,tex,pdf}` 14 pp., 2026-09-25; Wave 343 paper bibliography fix added BGV12 + Villani 2003 + RMSPreserving disposition)
+**Freeze marker:** `paper-A-final.{md,tex,pdf}`, 12 pp., 2026-09-25 (the final bibliography fix added BGV12 + Villani 2003 + the RMSPreserving disposition)
 **Final tag (to push):** `v3.0-tnnls-ready`
 
 This README indexes every artifact that the manuscript sources a
@@ -77,7 +77,7 @@ inspecting the bytes:
 | R5c MNIST FM N=1000 (smoke) | [`verification_outputs/wave191-p3-mnist-n1000.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave191-p3-mnist-n1000.json) | JSON |
 | R5b n_rounds=1 framework-WINS | [`verification_outputs/wave247-p3-r5b-n1000-n1.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave247-p3-r5b-n1000-n1.json) / [`.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave247-p3-r5b-n1000-n1.csv) | JSON/CSV |
 
-### C.2 Wave 280 P-sweep outputs (power + per-cell effect)
+### C.2 Power-sweep outputs (effect size per cell)
 
 | P | Cell / axis | File |
 |---|---|---|
@@ -89,7 +89,7 @@ inspecting the bytes:
 | K7 (novelty pctid) | direction | [`verification_outputs/wave280-p-k7/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs/wave280-p-k7) |
 | CIFAR sweep | NFE50 head-to-head | [`verification_outputs/wave280-p-cifar/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs/wave280-p-cifar) (cross-check) |
 
-### C.3 Statistical methods (Wave 234 P2-P6 + Wave 295 follow-ups)
+### C.3 Statistical methods (including the follow-up corrections)
 
 | Method | Path |
 |---|---|
@@ -98,9 +98,9 @@ inspecting the bytes:
 | BF01 (Bayes factor for H0) | [`verification_outputs/wave234-p4-bf01.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p4-bf01.csv) |
 | DerSimonian-Laird meta-analysis | [`verification_outputs/wave234-p5-meta-summary.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p5-meta-summary.json) (+ [`wave234-p5-meta-analysis.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p5-meta-analysis.csv)) |
 | Non-inferiority test (R5b) | [`verification_outputs/wave234-p6-ni-test.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave234-p6-ni-test.csv) |
-| Real 4-arm per-record (Wave 230 P2) | [`verification_outputs/wave230-p2-real-4arm-per-record.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave230-p2-real-4arm-per-record.csv) |
+| Real 4-arm per-record | [`verification_outputs/wave230-p2-real-4arm-per-record.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave230-p2-real-4arm-per-record.csv) |
 
-### C.4 Wave 235 top-4 high-leverage improvements
+### C.4 Top-4 high-leverage improvements
 
 | P | Cell | File |
 |---|---|---|
@@ -109,7 +109,7 @@ inspecting the bytes:
 | P3 (R6 LARGE overall) | K6 foldability overall uplift | [`verification_outputs/wave235-p3-r6-uplift.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p3-r6-uplift.csv) / [`.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p3-r6-uplift.json) |
 | P4 (FlowMol3 3-seed) | direction diagnostic | [`verification_outputs/wave235-p4-flowmol3-seed{42,43,44}*.json`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs) (partial) |
 
-### C.5 Wall-clock CUDA-graph capture (Wave 236 P2 / 238 P2)
+### C.5 Wall-clock CUDA-graph capture
 
 | File | Description |
 |---|---|
@@ -119,16 +119,15 @@ inspecting the bytes:
 ### C.6 R1 hits.tbl files (data provenance)
 
 Per-seed HMMER `.tbl` files underlying the R1 LineageFlow headline.
-Both files are byte-stable across the Wave 158 baseline + Wave 158
-framework arm and the Wave 310 P1 tier-aware upgrade.
+Both files are byte-stable across the baseline and framework arms
+and the later tier-aware upgrade.
 
 - [`verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/baseline_hits.tbl`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/baseline_hits.tbl)
 - [`verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/framework_hits.tbl`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/framework_hits.tbl)
 
 ### C.7 K7 (novelty pctid) direction files
 
-Direction-consistency verification under the Wave 297 novelty
-fraction axis. Reviewers can rerun the analysis script and confirm
+Direction-consistency verification under the novelty fraction axis. Reviewers can rerun the analysis script and confirm
 direction:
 
 - [`verification_outputs/novelty_pctid_w166_q3_2026/novelty_results.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/novelty_pctid_w166_q3_2026/novelty_results.json)
@@ -146,7 +145,7 @@ commit):
 |---|---|
 | [`adaptive_reflow/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/adaptive_reflow) | Framework core (theory, schedulers, adapters, framework glue) |
 | [`adaptive_reflow/theory/paper_quantities.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/theory/paper_quantities.py) | Typed evaluators for $(A_g, B_g, C_g, e_\rho)$ (Theorem 1) |
-| [`adaptive_reflow/framework/cuda_graph_capture.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/framework/cuda_graph_capture.py) | CUDA-graph velocity-field cache (Wall-clock fix Wave 236 P2) |
+| [`adaptive_reflow/framework/cuda_graph_capture.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/framework/cuda_graph_capture.py) | CUDA-graph velocity-field cache (the wall-clock fix) |
 | [`adaptive_reflow/framework/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/adaptive_reflow/framework) | Schedulers (`CosineAnnealScheduler`, `CodimensionSheetScheduler`, `BoundedMergeOperator`, `EvidenceDrivenScheduler`) |
 | [`adaptive_reflow/contracts.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/contracts.py) | Adapter Capability + Adapter Protocol contract surface (typed) |
 | [`adaptive_reflow/profile_residual.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/profile_residual.py) | `AdapterCapabilities.profile_residual_fn` extension point |
@@ -159,16 +158,16 @@ commit):
 
 Three self-contained proofs are inserted into §6 of the manuscript:
 
-- **Lemma 1** (Path A, Wave 311) — Protocol composition closure: any
+- **Lemma 1** (Path A) — Protocol composition closure: any
   pair of paper-quantity-driven schedulers composed via
   `BoundedMergeOperator` yields a closed protocol. Source:
   [`docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/inserted-lemmas/paper-adaptive_reflow-lemmas-paper-props.md)
   (`lem-1` block).
-- **Lemma 2** (Path A, Wave 322) — State-machine byte-determinism:
+- **Lemma 2** (Path A) — State-machine byte-determinism:
   every `StateBundle` is byte-stable under `SolverStep` ∘
   `SchedulerStep` for any of the four FlowA schedulers. Source: same
   file (`lem-2` block).
-- **Lemma 3** (Path A, Wave 322) — Ledger tamper-evidence: the hash-
+- **Lemma 3** (Path A) — Ledger tamper-evidence: the hash-
   chained transition log detects any post-hoc edit outside the
   redaction envelope. Source: same file (`lem-3` block).
 
@@ -188,15 +187,15 @@ proof sketches; the source markdown (above) carries the full proofs.
 - [`tnnls_submission/README.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/README.md) — ScholarOne upload instructions
 - [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md) — cover letter (17 USER placeholders — see `FILL_GUIDE.md`)
 - [`tnnls_submission/FILL_GUIDE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/FILL_GUIDE.md) — fill-guide for cover-letter placeholders
-- [`docs/drafts/paper-A-final.{tex,pdf}`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/drafts) — 11-page IEEEtran-typeset manuscript (TNNLS-ready)
+- [`docs/drafts/paper-A-final.{tex,pdf}`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/drafts) — 12-page IEEEtran-typeset manuscript (TNNLS-ready)
 - [`docs/drafts/paper-A-final.aux`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.aux) / [`.log`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.log) — typeset diagnostic logs (compile-clean)
 
-## G. Review-reproducibility bundle (Wave 344 — single-archive package)
+## G. Review-reproducibility bundle (single-archive package)
 
-To make reviewer reproducibility a single-file transfer, this Wave
-packaged the per-cell headline artifacts, the headline-evidence
-SOURCE.md provenance, and the most consequential Wave 339 + Wave 343
-audit docs into one archive:
+To make reviewer reproducibility a single-file transfer, this
+bundle packages the per-cell headline artifacts, the headline-evidence
+SOURCE.md provenance, and the most consequential audit documents into
+one archive:
 
 **Archive:** `tnnls_submission/supplementary_bundle.zip` (distributed out-of-band — the 147 MB archive exceeds GitHub's 100 MB blob limit and is intentionally not tracked in git; verify against the SHA-256 below)
 - **Size:** 148 MB (compressed)
@@ -210,7 +209,7 @@ audit docs into one archive:
 |---|---|---|
 | `headline_artifacts/` | 11 entries (8 files + 3 subdirs) | 6 headline artifacts copied verbatim from `verification_outputs/`: R2 `wave218-p3-kanzi-framework-wins.{json,csv}`, R5c `wave191-p3-mnist-n1000.json`, R6 `wave233-p3-tier-aware-r6.{json,csv}`, R5b `wave247-p3-r5b-n1000-n1/` (with `inception_feats_cache/`), R1 `lineageflow_hmmer_real_n1000_w158_q3_2026/` (`baseline_hits.tbl` + `framework_hits.tbl`), K7 `novelty_pctid_w166_q3_2026/` (`novelty_results.json` + `novelty_results_full.json` + baseline/framework `.m8` files) |
 | `headline_evidence/` | 11 files | 10 per-cell `SOURCE.md` provenance files (R1, R2, R3, R4, R5, R5c, R6, Kanzi N=1000, composite axis, NFE 2.5–10×) + hub `README.md`, all dereferenced from the symlinks under `paper-data/headline-evidence/` so reviewers do not need to resolve any path outside the archive |
-| `audit_docs/` | 3 files | `wave306-11-cell-alignment.md` (the 11-cell alignment audit), `wave339-b6-fixes.md` (Wave 339 final-polish upstream fix), `wave343-paper-fixes.md` (Wave 343 paper bibliography fix for BGV12 + Villani 2003) |
+| `audit_docs/` | 3 files | `wave306-11-cell-alignment.md` (the 11-cell alignment audit), `wave339-b6-fixes.md` (the final-polish upstream fix), `wave343-paper-fixes.md` (the paper bibliography fix for BGV12 + Villani 2003) |
 | `SHA256SUMS` | 1 file | sidecar with sorted SHA-256 (40 entries, excludes self) |
 
 **Sidecar integrity file:** [`tnnls_submission/supplementary_bundle/SHA256SUMS`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/supplementary_bundle/SHA256SUMS) (40 lines, lowercase sorted, two-space separator, relative paths from archive root; format matches `paper-data/SHA256SUMS`). Reviewers re-verify with:
@@ -222,15 +221,15 @@ cd supplementary_bundle && sha256sum -c SHA256SUMS
 The archive is rebuilt only at Wave boundaries; the ZIP SHA above is
 the current freeze-state hash. Future edits to any in-bundle file
 require regenerating the archive + sidecar + updating the SHA above
-(per Wave 344 traceability convention).
+(per the bundle's traceability convention).
 
-**Per-file SHA-256 (Wave 360 cross-reference):** the per-file SHA-256
+**Per-file SHA-256 (cross-reference):** the per-file SHA-256
 column for every in-bundle file is the sidecar
 [`supplementary_bundle/SHA256SUMS`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/supplementary_bundle/SHA256SUMS)
 above (40 entries, sorted lowercase, excludes self). Reviewers verify
 any single file by reading the matching line in the sidecar, or
 batch-verify all 40 with `cd supplementary_bundle && sha256sum -c SHA256SUMS`
-(40/40 OK at Wave 360 verify; see
+(40/40 OK at the last verification; see
 [`docs/audit/wave360-supplementary-bundle-verify.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave360-supplementary-bundle-verify.md)).
 
 **Why the bundle is additive** (per AGENTS.md §3 hard-guardrail #2 "no

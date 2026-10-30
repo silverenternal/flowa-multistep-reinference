@@ -23,9 +23,9 @@ torch 2.2.1+cpu).
   metrics (frac_valid_mols, reos_cum_dev, fix_a_fg_reos_cum_dev,
   upstream_flag_rate, upstream_ood_rate, upstream_avg_num_components)
   and provides the framework-vs-baseline pair for the 80 GB OOM
-  defense + Wave 17 reproduction record.
+  defense and its reproduction record.
 - **Primary users.** Paper authors writing the
-  `docs/paper-draft.md` §4 molecular record; Wave 6 R4 / R5
+  `docs/paper-draft.md` §4 molecular record; R4 / R5
   reproducibility auditors; users running
   `tools/run_sota_flowmol3_v2_adapter_experiment.py`.
 - **Out-of-scope uses.** Pocket-conditioned molecule generation
@@ -131,14 +131,15 @@ sidecar is rebuilt.
   which is not installed in this sandbox. Rebuild sidecar or run
   on a Python 3.11 host with dgl 2.1.0 to reproduce R5.
 - **80 GB OOM defended.** The headline NFE=250 N=5000 run was
-  protected by Wave 17 OOM defenses:
+  protected by the OOM defenses:
   `subprocess.Popen + preexec_fn (RLIMIT_AS + setsid) + 1s RSS
   polling + two-step kill (SIGTERM → SIGKILL)`, stream SMILES
   reference loaders (avoid double-materialising the GEOM-DRUGS
   ≈ 1 M SMILES reference), LRU-bounded synthetic-weights cache.
 - **Synthetic-mode cache bounds.** `_numpy_random_init_weights`
-  is `lru_cache(maxsize=8)`; was unbounded per-instance dict before
-  Wave 17. Default still uses the unbounded path on legacy callers.
+  is `lru_cache(maxsize=8)`; was an unbounded per-instance dict
+  before the defenses landed. Default still uses the unbounded path on
+  legacy callers.
 - **Pocket conditioning is a non-claim boundary.**
   `has_condition_injection=False` — FlowMol3 is admitted as
   `admitted_unconditional_only`. Pocket-conditioned efficacy is
@@ -186,7 +187,7 @@ sidecar is rebuilt.
   stays inside the adapter. A future change to the engine
   channel vocabulary would require an adapter refresh.
 - **OOM risk on large N.** N=5000 at NFE=250 hit 80 GB before
-  Wave 17 OOM defenses. N≥200 now runs in a subprocess with
+  the OOM defenses landed. N≥200 now runs in a subprocess with
   RLIMIT_AS; smaller N (≤ 200) can run in-process.
 - **Stream SMILES loader required.** Without the stream-loaders
   (`fg_deviation.py`, `flowmol3_eq4_fg_deviation.py`,
