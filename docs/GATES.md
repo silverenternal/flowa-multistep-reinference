@@ -142,7 +142,7 @@ extended this standardization to all 73 non-archived docs/ files
 (see `docs/audit/wave149-close.md`).
 
 **D.4 vs full pytest — important distinction:** The full pytest suite
-(`pytest tests/ -q`) reported **5610 passed / 180 skipped / 0 failed** on
+(`pytest tests/ -q`) reported **5636 passed / 180 skipped / 0 failed** on
 2026-10-30 (`todo.json` → `gate_note`; the post-Wave-131 ruff-frozen
 figures quoted here previously — 5155 collected / 5012 passed — are
 superseded). D.4 is the 72-test pinned subset that must stay green on

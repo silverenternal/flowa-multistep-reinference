@@ -10,6 +10,12 @@ These tests pin the checker's two failure modes and the two things it must not
 confuse: a flag registered through ``tools._sota_common.add_sota_common_args``
 is real even though the driver never calls ``add_argument("--output-dir")``,
 and a commented-out recipe line is exactly the text that has to be checked.
+
+The same defect recurred in prose on 2026-10-30, in the two experiment-setup
+records that tell a reviewer which command re-runs which cell: five of their
+six commands named a driver that has never existed or flags no driver accepts.
+The checker reads those records too, and checks that a cited
+``bash reproduce/x.sh`` is a real file.
 """
 
 from __future__ import annotations
@@ -124,3 +130,51 @@ def test_help_is_a_dry_run(flag) -> None:
     )
     assert proc.returncode == 0, proc.stderr
     assert "shell recipe" in proc.stdout
+
+
+# ---------------------------------------------------------------------------
+# The reviewer-facing records under docs/audit/reproducibility/
+# ---------------------------------------------------------------------------
+
+RECORD = "docs/audit/reproducibility/p5-experiment-setup.md"
+
+
+def _doc_tree(tmp_path: pathlib.Path, record_body: str) -> pathlib.Path:
+    (tmp_path / "reproduce").mkdir()
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "tools").mkdir()
+    (tmp_path / "tools" / "drv.py").write_text(DRIVER, encoding="utf-8")
+    (tmp_path / "reproduce" / "01_cell.sh").write_text("#!/bin/bash\n", encoding="utf-8")
+    record = tmp_path / RECORD
+    record.parent.mkdir(parents=True)
+    record.write_text(record_body, encoding="utf-8")
+    return tmp_path
+
+
+def test_a_record_naming_a_missing_driver_is_reported(tmp_path) -> None:
+    root = _doc_tree(tmp_path, "```bash\npython tools/absent.py --n 1\n```\n")
+    problems = check_recipe_flags.check(root)
+    assert len(problems) == 1
+    assert "no such driver" in problems[0]
+
+
+def test_a_record_naming_a_flag_the_driver_lacks_is_reported(tmp_path) -> None:
+    root = _doc_tree(tmp_path, "```bash\npython tools/drv.py --nfe 50\n```\n")
+    problems = check_recipe_flags.check(root)
+    assert len(problems) == 1
+    assert "--nfe" in problems[0]
+
+
+def test_a_record_naming_a_real_command_is_clean(tmp_path) -> None:
+    root = _doc_tree(
+        tmp_path,
+        "```bash\nbash reproduce/01_cell.sh\npython tools/drv.py --n 1 --outdir /tmp/x\n```\n",
+    )
+    assert check_recipe_flags.check(root) == []
+
+
+def test_a_record_naming_a_missing_recipe_is_reported(tmp_path) -> None:
+    root = _doc_tree(tmp_path, "```bash\nbash reproduce/99_absent.sh\n```\n")
+    problems = check_recipe_flags.check(root)
+    assert len(problems) == 1
+    assert "no such script" in problems[0]

@@ -234,6 +234,7 @@ not_in_nav: |
   audit/retired-prefix-citations.md
   audit/provenance-gate.md
   audit/increment-id-compression.md
+  audit/repro-command-audit.md
   audit/docs-gate-repoint.md
   audit/mnist-gpu-backend.md
   audit/wave281/p-partial-evidence.md

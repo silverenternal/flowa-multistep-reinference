@@ -21,8 +21,19 @@ Usage::
     python3 tools/check_recipe_flags.py            # report, exit 1 on problems
     python3 tools/check_recipe_flags.py --verbose  # also list every command
 
-Scope: shell scripts only (``*.sh``).  Python drivers that shell out are not
-scanned; the recipe scripts are the surface a reviewer reads.
+Scope: every ``*.sh`` under ``reproduce/`` and ``scripts/``, the two
+experiment-setup records under ``docs/audit/reproducibility/``, and the
+per-cell ``paper-data/*/REPRODUCIBILITY_RECIPE.md``.  Those are the surfaces
+that tell a reviewer which command re-runs which headline cell.  Python
+drivers that shell out are not scanned.
+
+The markdown scan was added on 2026-10-30, when the same defect turned up
+there in a worse form: five of the six commands in those records named
+something that did not exist -- ``tools/run_cifar10_rf.py``,
+``tools/flowmol3_n1000_sweep.py``, ``tools/run_kanzi_inv_proj.py`` (none of
+which has ever been in ``tools/``) and a five-flag call to
+``run_lineageflow_n1000_foldability_omegafold.py`` that accepts none of them.
+Only the 2D cell's command was real.
 """
 from __future__ import annotations
 
@@ -37,12 +48,25 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 #: Directories whose ``*.sh`` files are scanned.
 SHELL_DIRS: tuple[str, ...] = ("reproduce", "scripts")
 
+#: Globs whose markdown command blocks are read by reviewers exactly like the
+#: shell recipes: the two experiment-setup records, and the per-cell recipe
+#: that ships inside ``paper-data/``.
+DOC_GLOBS: tuple[str, ...] = (
+    "docs/audit/reproducibility/*.md",
+    "paper-data/*/*REPRODUCIBILITY_RECIPE.md",
+)
+
 #: ``python tools/foo.py ...`` optionally behind a venv path or a leading
 #: ``#`` (the recipe commands are commented out until the reader uncomments).
 _INVOCATION = re.compile(
     r"^\s*#?\s*(?:\S*python\S*\s+)((?:tools|scripts)/[\w/]+\.py)\b(.*)$"
 )
 _FLAG = re.compile(r"--[A-Za-z0-9][\w-]*")
+
+#: ``bash reproduce/01_R1_LineageFlow.sh`` -- the one-click recipes are cited
+#: by name in the records, so a renamed recipe is the same defect as a
+#: renamed flag.
+_SHELL_CALL = re.compile(r"^\s*(?:bash|sh|\./)\s+((?:reproduce|scripts)/[\w./-]+\.sh)\b")
 
 #: Flags registered by ``tools._sota_common.add_sota_common_args``.  ``--seed``
 #: is suppressed by the three callers that pass ``include_seed=False``; the
@@ -102,28 +126,53 @@ def _invocations(script: pathlib.Path) -> list[tuple[int, str, list[str]]]:
     return out
 
 
+def _sources(repo_root: pathlib.Path) -> list[pathlib.Path]:
+    """Every file the checker reads, shell recipes first then the records."""
+    out: list[pathlib.Path] = []
+    for directory in SHELL_DIRS:
+        out.extend(sorted((repo_root / directory).glob("*.sh")))
+    for pattern in DOC_GLOBS:
+        out.extend(sorted(repo_root.glob(pattern)))
+    return out
+
+
+def _shell_calls(script: pathlib.Path) -> list[tuple[int, str]]:
+    """``(line_no, target)`` for each ``bash reproduce/x.sh`` line in ``script``."""
+    out: list[tuple[int, str]] = []
+    for index, line in enumerate(script.read_text(encoding="utf-8").splitlines()):
+        match = _SHELL_CALL.match(line)
+        if match is not None:
+            out.append((index + 1, match.group(1)))
+    return out
+
+
 def check(repo_root: pathlib.Path = REPO_ROOT) -> list[str]:
     """Return one message per problem; an empty list means the recipes are clean."""
     problems: list[str] = []
     cache: dict[pathlib.Path, set[str]] = {}
-    for directory in SHELL_DIRS:
-        for script in sorted((repo_root / directory).glob("*.sh")):
-            for line_no, target, flags in _invocations(script):
-                target_path = repo_root / target
-                if not target_path.is_file():
-                    problems.append(
-                        f"{script.relative_to(repo_root)}:{line_no}: "
-                        f"no such driver {target}"
-                    )
-                    continue
-                if target_path not in cache:
-                    cache[target_path] = _accepted_flags(target_path)
-                unknown = [f for f in flags if f not in cache[target_path]]
-                if unknown:
-                    problems.append(
-                        f"{script.relative_to(repo_root)}:{line_no}: "
-                        f"{target} does not accept {sorted(set(unknown))}"
-                    )
+    for script in _sources(repo_root):
+        for line_no, target in _shell_calls(script):
+            if not (repo_root / target).is_file():
+                problems.append(
+                    f"{script.relative_to(repo_root)}:{line_no}: "
+                    f"no such script {target}"
+                )
+        for line_no, target, flags in _invocations(script):
+            target_path = repo_root / target
+            if not target_path.is_file():
+                problems.append(
+                    f"{script.relative_to(repo_root)}:{line_no}: "
+                    f"no such driver {target}"
+                )
+                continue
+            if target_path not in cache:
+                cache[target_path] = _accepted_flags(target_path)
+            unknown = [f for f in flags if f not in cache[target_path]]
+            if unknown:
+                problems.append(
+                    f"{script.relative_to(repo_root)}:{line_no}: "
+                    f"{target} does not accept {sorted(set(unknown))}"
+                )
     return problems
 
 
@@ -135,10 +184,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.verbose:
-        for directory in SHELL_DIRS:
-            for script in sorted((REPO_ROOT / directory).glob("*.sh")):
-                for line_no, target, flags in _invocations(script):
-                    print(f"{script.relative_to(REPO_ROOT)}:{line_no}  {target}  {flags}")
+        for script in _sources(REPO_ROOT):
+            for line_no, target, flags in _invocations(script):
+                print(f"{script.relative_to(REPO_ROOT)}:{line_no}  {target}  {flags}")
 
     problems = check()
     for problem in problems:

@@ -230,7 +230,7 @@ python3 tools/regen_audit_index.py --check   # docs/audit/INDEX.md matches the a
 python3 tools/check_vendored_pristine.py     # data/ upstream trees still match their pins
 python3 tools/check_doc_anchors.py           # every page.md#anchor resolves to a heading
 python3 tools/check_reviewer_pointers.py     # every backticked path in the reviewer-facing docs exists
-python3 tools/check_recipe_flags.py          # every flag in a reproduce/*.sh command exists on its driver
+python3 tools/check_recipe_flags.py          # every flag/recipe a reproduction surface cites exists
 python3 tools/check_data_provenance.py       # every sha256 cited in an audit record matches the file it names
 ```
 

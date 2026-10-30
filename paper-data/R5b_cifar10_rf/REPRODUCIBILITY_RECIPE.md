@@ -129,30 +129,35 @@ The R5b evidence is **GPU-regeneratable** via the three sweep scripts. Environme
 # Activate the FlowMol3 venv (NEVER mix with Kanzi/LineageFlow venvs)
 source .venvs/flowmol3_venv/bin/activate
 
-# ---- (1) n_rounds=1 reversal sweep (Wave 235 P1) ----
-python3 scripts/wave235_p1_r5b_fix_sweep.py \
-    --config rounds1 \
-    --n-records 200 \
-    --seed 42 \
-    --output-dir verification_outputs/wave235-p1-r5b-rounds1-n200
+# ---- (1) n_rounds=1 reversal sweep ----
+# Parameters are fixed in the script. --skip-runs re-evaluates from the
+# artifacts already in verification_outputs/ without touching the GPU.
+python3 scripts/wave235_p1_r5b_fix_sweep.py --device cuda:1
 # expected wall-clock: ~10 min on RTX 5090; output JSON: wave235-p1-r5b-fix.json (key "rounds1")
 
-# ---- (2) n_rounds=2 reduced-rounds counterfactual (Wave 225 P7) ----
-python3 scripts/wave225_p7_r5b_reduced_rounds.py \
-    --n-records 200 \
-    --seed 42 \
-    --output-dir verification_outputs/wave225-p7-r5b-rounds2-n200
+# ---- (2) n_rounds=2 reduced-rounds counterfactual ----
+# Takes no arguments: the sample size, the seed and the output paths are
+# constants at the top of the script.
+python3 scripts/wave225_p7_r5b_reduced_rounds.py
 # expected wall-clock: ~10 min on RTX 5090; output JSON: wave225-p7-r5b-reduced-rounds.json
 
-# ---- (3) n_rounds=20 honest-negative multi-NFE curve (Wave 206 P6) ----
-python3 scripts/wave206_p6_cifar_rf_v4_honest_negative_curve.py \
-    --full \
-    --nfe-list 10 20 30 50 100 200 500 \
-    --n-records-per-nfe 500 \
-    --output-dir /tmp/wave206_p6_full_sweep
+# ---- (3) n_rounds=20 honest-negative multi-NFE curve ----
+# --full is the only mode flag; the seven-point NFE ladder and N=500 are
+# constants in the script.
+python3 scripts/wave206_p6_cifar_rf_v4_honest_negative_curve.py --full --device cuda
 # expected wall-clock: ~7.5 GPU-hours on RTX 5090; output JSON: wave206-p6-honest-negative-curve.json
-# DEFERRED per CLM-070 (Wave 209 P6 R5a GPU-0 resource-conflict directive)
+# DEFERRED per CLM-070 (GPU-0 resource-conflict directive)
 ```
+
+
+> **Corrected 2026-10-30.** The three commands above used to pass flags none of
+> these scripts accepts — `--config`, `--n-records`, `--seed` and
+> `--output-dir` on the first (it takes `--device` and `--skip-runs`), the
+> same four on the second (it takes no arguments at all), and `--nfe-list` /
+> `--n-records-per-nfe` / `--output-dir` on the third (it takes `--full`,
+> `--pilot`, `--device`, `--n-records`). A reader who copied them got a
+> default-configuration run, not the sweep the command named. The wall-clock
+> figures and the output filenames are unchanged.
 
 External dependencies: CIFAR-10 RF reference features at `data/rf_reference_features/`; InceptionV3 TF-port weights (post-Wave-127 EMA-corrected for Source-B reading; pre-EMA-fix Liu 2022 published-style for the Source-A reading in `wave206-p6-honest-negative-curve.json`).
 

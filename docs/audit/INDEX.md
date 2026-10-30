@@ -54,12 +54,12 @@ preserved for the per-wave audit trail.
 | `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 27 | 10 | 17 |
 | `push_state` | Push state (push-ready, freeze, release, submission) | 10 | 6 | 4 |
 | `algorithm_4arm` | Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency) | 39 | 18 | 21 |
-| `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 109 | 90 | 19 |
+| `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 110 | 90 | 20 |
 | `stats_method` | Statistical methodology (R5/R6, p-value, bonferroni, TOST) | 43 | 20 | 23 |
 | `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 49 | 26 | 23 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
 | `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 113 | 32 | 81 |
-| **TOTAL** | — | **624** | **347** | **277** |
+| **TOTAL** | — | **625** | **347** | **278** |
 
 ---
 
@@ -517,7 +517,7 @@ Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency). This cluster
 
 ### Cluster: `sweep_eval` — Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability)
 
-**Files: 109** (active: 90, historical: 19)
+**Files: 110** (active: 90, historical: 20)
 
 Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability). This cluster is part of the project's audit surface for sweep_eval.
 
@@ -614,10 +614,11 @@ Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability). This cluste
 - `wave353-h2h-ablation-refs.md`
 - `wave357-k5-k6-camera-ready.md`
 
-**Historical (19 files, not cited by reviewer-facing surfaces):**
+**Historical (20 files, not cited by reviewer-facing surfaces):**
 
 - `docs-gate-repoint.md`
 - `provenance-gate.md`
+- `repro-command-audit.md`
 - `b-config-scattering-audit.md`
 - `framework-synth-sweep.md`
 - `k1-rc5-3arm-preflight.md`

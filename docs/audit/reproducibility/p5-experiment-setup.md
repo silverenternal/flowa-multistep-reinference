@@ -316,56 +316,102 @@ Per `verification_outputs/wave209-p4-memory.csv` and the
 
 ## 6. Reproducibility commands
 
-Reviewers can re-run the headline cells with the following commands:
+Every cell has a one-click recipe under `reproduce/`; each recipe verifies the
+headline from the byte-stable `verification_outputs/` artifacts and carries
+the live re-run command -- commented out -- in its Step 5, because the sweeps
+are hours to days of compute. `bash reproduce/09_verify_all_cell_recipes.sh`
+runs the whole set.
+
+| Cell | Recipe |
+|---|---|
+| R1 LineageFlow HMMER | `bash reproduce/01_R1_LineageFlow.sh` |
+| R2 Kanzi inv-proj | `bash reproduce/02_R2_Kanzi.sh` |
+| R3 FlowMol3 | `bash reproduce/03_R3_FlowMol3.sh` |
+| R4 / R5a 2D Two Moons | `bash reproduce/04_R4_2D_TwoMoons.sh` |
+| R5b CIFAR-10 RF | `bash reproduce/06_R5b_CIFAR_n_rounds1.sh` |
+| R6 LineageFlow k6 foldability | `bash reproduce/07_R6_MNIST_TierAware.sh` |
 
 ### 6.1 R6 k6 foldability (audit-grade sample size)
 
 ```bash
-source .venvs/lineageflow_venv/bin/activate
-python tools/run_lineageflow_n1000_foldability_omegafold.py \
-    --nfe-baseline 50 --nfe-framework 150 --n-rounds 3 \
-    --n-paired 1000 --seeds 42 43 44 45 46 47
+bash reproduce/07_R6_MNIST_TierAware.sh
 ```
+
+The recipe verifies the frozen substrate, the tier-aware counterfactual and
+the grid-search uplift by SHA-256, then re-derives the pooled `d_z` from the
+stored per-record foldability records. The live re-run is
+`tools/run_lineageflow_n1000_foldability_omegafold.py`, which takes
+`--output-dir`, `--fasta` / `--baseline-fasta` / `--framework-fasta`,
+`--gpus`, `--max-seqs` and `--skip-fold` / `--skip-sc`; it does not take an
+NFE setting or a seed count.
 
 ### 6.2 R5b CIFAR-10 RF matched-NFE=50 (boundary cell)
 
 ```bash
-source .venvs/lineageflow_venv/bin/activate
-python tools/run_cifar10_rf.py --nfe 50 --n-rounds 4 \
-    --n-samples 1000 --chunk-size 100
+bash reproduce/06_R5b_CIFAR_n_rounds1.sh
 ```
+
+The live re-run threads one seed per process through `WAVE247_SEED` (the
+driver has no `--n-seeds`), so the 3-seed sweep is a shell loop over
+`tools/run_sota_cifar_experiment.py --n-rounds 1 --output-dir ...`; the
+reversal arm is the same call with `--n-rounds 10 --no-final-restart`.
 
 ### 6.3 R3 FlowMol3 (byte-stable seed 42)
 
 ```bash
-source .venvs/flowmol3_venv/bin/activate
-python tools/flowmol3_n1000_sweep.py --seed 42 --nfe 250 \
-    --n-samples 1000
+bash reproduce/03_R3_FlowMol3.sh
 ```
+
+The live re-run is `tools/wave87_n1000_sweep.py --nfe 250 --n-total 1000
+--nfe-batch 100`, followed by `scripts/wave216_p1_r3_per_record.py` for the
+paired per-record table.
 
 ### 6.4 R5a Two Moons (per-seed)
 
 ```bash
-source .venvs/lineageflow_venv/bin/activate
-python tools/run_sota_2d_experiment.py --target two_moons \
-    --n-seeds 7 --n-samples 1000 --n-rounds 5
+bash reproduce/04_R4_2D_TwoMoons.sh
 ```
+
+The live re-run is `tools/run_sota_2d_experiment.py --target two_moons
+--n-seeds 3 --n-samples 1000 --n-rounds 5`, after
+`tools/materialize_twodim_fm.py`.
 
 ### 6.5 R2 Kanzi inv-proj
 
 ```bash
-source .venvs/kanzi_venv/bin/activate
-python tools/run_kanzi_inv_proj.py --nfe 50 --n-rounds 3 \
-    --n-paired 1000 --seeds 42 43 44
+bash reproduce/02_R2_Kanzi.sh
 ```
+
+The live re-run is two arms --
+`tools/sweep_kanzi_n1000_framework_paper_metrics.py` and
+`tools/sweep_kanzi_n1000_paper_metrics.py`, each with `--output-dir` -- then
+`scripts/wave218_p3_paired_ttest.py` for the paired test.
 
 ### 6.6 R1 LineageFlow HMMER
 
 ```bash
-source .venvs/lineageflow_venv/bin/activate
-python tools/run_lineageflow_real_ckpt.py --nfe 50 --n-rounds 3 \
-    --n-paired 1000 --seeds 42 43 44 45 46 47
+bash reproduce/01_R1_LineageFlow.sh
 ```
+
+The headline metric is `hmmscan_total_hits`, so the live pipeline is three
+steps, all of them written out in the recipe's Step 5: generate 1000 FASTA
+per arm with `tools/gen_lineageflow_n1000_fastas.py --n 1000 --seed 42
+--nfe 150 --n-rounds 3 --restart-min-nfe 5`, scan both arms with the external
+`hmmscan` binary against `Pfam-A.hmm`, then score with
+`tools/r1_d004_analysis.py`. It takes ~30-50 h CPU.
+`tools/run_lineageflow_real_ckpt.py` is a separate CPU smoke of the real
+forward pass and takes no arguments -- its parameters are fixed in the source.
+
+> Corrected 2026-10-30. Five of the six commands in this section named
+> something that does not exist: `tools/run_cifar10_rf.py`,
+> `tools/flowmol3_n1000_sweep.py` and `tools/run_kanzi_inv_proj.py` were never
+> in `tools/`, and
+> `run_lineageflow_n1000_foldability_omegafold.py --nfe-baseline/--nfe-framework/--n-rounds/--n-paired/--seeds`
+> invented flags that driver does not accept (it takes `--output-dir`,
+> `--fasta`, `--gpus`, `--max-seqs`, `--skip-fold`/`--skip-sc`). Only §6.4
+> named a driver and flags that both exist. Every command above is now taken
+> from the corresponding `reproduce/*.sh`, which `tools/check_recipe_flags.py`
+> checks against the drivers, so the two cannot drift apart silently again.
 
 ### 6.7 D.4 byte-stable regression gate
 
