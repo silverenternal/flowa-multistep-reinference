@@ -49,7 +49,7 @@ preserved for the per-wave audit trail.
 | `protbfn_abbfn` | ProtBFN-AbBFN (antibody / protein BFN) | 0 | 0 | 0 |
 | `wan2_2` | Wan2.2 video (video diffusion) | 0 | 0 | 0 |
 | `web_research` | Web research 2026 (FM literature surveys) | 1 | 0 | 1 |
-| `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 123 | 75 | 48 |
+| `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 125 | 76 | 49 |
 | `reproducibility` | Reproducibility (reproducibility-record, preregistration, reproduce-script) | 13 | 6 | 7 |
 | `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 27 | 9 | 18 |
 | `push_state` | Push state (push-ready, freeze, release, submission) | 10 | 6 | 4 |
@@ -58,8 +58,8 @@ preserved for the per-wave audit trail.
 | `stats_method` | Statistical methodology (R5/R6, p-value, bonferroni, TOST) | 43 | 21 | 22 |
 | `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 49 | 26 | 23 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
-| `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 110 | 32 | 78 |
-| **TOTAL** | — | **615** | **347** | **268** |
+| `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 111 | 32 | 79 |
+| **TOTAL** | — | **618** | **348** | **270** |
 
 ---
 
@@ -231,7 +231,7 @@ Web research 2026 (FM literature surveys). This cluster is part of the project's
 
 ### Cluster: `engineering` — Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree)
 
-**Files: 123** (active: 75, historical: 48)
+**Files: 125** (active: 76, historical: 49)
 
 Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This cluster is part of the project's audit surface for engineering.
 
@@ -276,6 +276,7 @@ Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This 
 - `pdf-warning-reduction.md`
 - `pdf-warning-reduction.md`
 - `project-state-inventory.md`
+- `pytest-order-dependence.md`
 - `tables-inventory-provenance.md`
 - `wave268-strict-clean.md`
 - `wave290-p4-benchmark-fixed.md`
@@ -313,7 +314,7 @@ Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This 
 - `wave364-g38.md`
 - `wave384-project-audit.md`
 
-**Historical (48 files, not cited by reviewer-facing surfaces):**
+**Historical (49 files, not cited by reviewer-facing surfaces):**
 
 - `clone-reproducibility.md`
 - `doc-link-audit.md`
@@ -323,6 +324,7 @@ Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This 
 - `p5-ground-truth-corrections.md`
 - `review-layer4-docs-config.md`
 - `manifest-hash-staleness.md`
+- `portability-prefix-audit.md`
 - `portable-paths.md`
 - `readiness-verifier-repoint.md`
 - `release-notes-v31-refresh.md`
@@ -804,7 +806,7 @@ Final-verify (per-wave close-out, pre-push hygiene). This cluster is part of the
 
 ### Cluster: `governance` — Governance (scope, audit, gap, condition, placeholder, cross-cutting)
 
-**Files: 110** (active: 32, historical: 78)
+**Files: 111** (active: 32, historical: 79)
 
 Governance (scope, audit, gap, condition, placeholder, cross-cutting). This cluster is part of the project's audit surface for governance.
 
@@ -843,11 +845,12 @@ Governance (scope, audit, gap, condition, placeholder, cross-cutting). This clus
 - `wave361-consolidated-results-index.md`
 - `wave375-image-feedback-path.md`
 
-**Historical (78 files, not cited by reviewer-facing surfaces):**
+**Historical (79 files, not cited by reviewer-facing surfaces):**
 
 - `audit-index-refresh.md`
 - `doc-anchor-audit.md`
 - `empirical-conditions.md`
+- `evidence-pointer-audit.md`
 - `gap01-r6-live-wiring.md`
 - `gap02-r3-n1000-resolved.md`
 - `gap04-r5b-rounds.md`

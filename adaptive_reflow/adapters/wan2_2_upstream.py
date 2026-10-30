@@ -13,9 +13,9 @@ This module exposes:
 Implementation notes
 --------------------
 
-* The upstream repo path is hard-coded as
-  ``/home/hugo/codes/flowa-multistep-reinference/data/wan2_2/repo``
-  and inserted into ``sys.path`` at module import time. We deliberately
+* The upstream repo path is resolved from this file's location
+  (``data/wan2_2/repo`` under the checkout root) and inserted into
+  ``sys.path`` at module import time. We deliberately
   do NOT install the upstream package via pip — the upstream
   ``pyproject.toml`` pulls in ``flash_attn`` (source build, 10-40 min)
   and other unmaintained constraints.

@@ -331,7 +331,7 @@ sample-difficulty stratification scope statement.
   (Wave 208 P2 1-seed per-record sanity on Wave 87 byte-stable data).
 - **Cross-adapter ablation:** `docs/audit/wave208-p4-cross-adapter-ablation.md`
   (Wave 208 P4 CLM-057 cross-adapter status upgrade).
-- **Efficiency + Pareto:** `docs/audit/wave208-p5-efficiency-pareto.md`
+- **Efficiency + Pareto:** `docs/ARCHIVE/audit-by-wave/wave208-p5-efficiency-pareto.md`
   (Wave 208 P5 per-R-level wall-clock + memory + R5b Pareto CSV).
 - **Flattened draft (K1–K8 verbatim):** `docs/drafts/paper-flattened-draft.md` §4.
 - **Results draft (this Wave):** `docs/drafts/results-flattened-draft.md`

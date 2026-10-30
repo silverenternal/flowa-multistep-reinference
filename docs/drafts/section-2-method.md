@@ -234,7 +234,7 @@ non-zero noise floor.
 ### 2.3.5 $A_g$ vs $L_{\text{emp}}$ — distinct quantities in the bound
 
 A reviewer reading §2.3.1 alongside the Wave 229 P2 empirical
-Lipschitz constants (`docs/audit/wave229-p2-adapter-lipschitz.md`)
+Lipschitz constants (`docs/ARCHIVE/audit-by-wave/wave229-p2-adapter-lipschitz.md`)
 may ask: **"if the per-seed variance bound uses $A_g = 0.8549$
 but the empirical Lipschitz constant can be 35.63, is the bound
 meaningful?"** The answer is **yes**, because $A_g$ and
@@ -271,7 +271,7 @@ parts of the bound**.
 | $L_{\text{emp}}$ | Local truncation of RK45 / DPM-Solver++ / Heun | Order-$p$ global error: $O(L_{\text{emp}} \cdot \text{dt}^p)$ |
 
 **Theoretical justification.** See
-`docs/audit/wave230-p3-l-emp-vs-a-g.md` for the full distinction:
+`docs/ARCHIVE/audit-by-wave/wave230-p3-l-emp-vs-a-g.md` for the full distinction:
 $A_g$ is the F-side family Lipschitz constant of the canonical
 witness $g(x) = (1 + 0.25\cdot\tanh(x))\cdot\sin(x)$, controlling
 the asymptotic BL-distance growth ($e^{A_g\cdot t}$ factor in
@@ -340,7 +340,7 @@ captures per-adapter geometry; the closed-form $A_g$ is the
 **family** coefficient that controls the asymptotic bound.
 
 Full mathematical decomposition is in
-`docs/audit/wave230-p3-l-emp-vs-a-g.md` (Wave 230 P3 audit,
+`docs/ARCHIVE/audit-by-wave/wave230-p3-l-emp-vs-a-g.md` (Wave 230 P3 audit,
 closes the DeepSeek flag).
 
 ---
@@ -671,7 +671,7 @@ remains **REGRESSES (boundary)** at the Wave 195 P2 d_z = +2.700
 matched nominal NFE=50 (ΔFID = +20.20%, Bonferroni-sig at α =
 0.00714). Future mitigation `--no-final-restart` flag (disabling
 the 1-NFE round-1 restart blending) is queued for camera-ready.
-See `docs/audit/wave233-p5-r5b-fix.md` for full counterfactual
+See `docs/ARCHIVE/audit-by-wave/wave233-p5-r5b-fix.md` for full counterfactual
 methodology and the Wave 225 P9 matched-effective-NFE
 falsification.
 
@@ -718,7 +718,7 @@ The cProfile attribution confirms **99.8% of wall time lives in
 the model forward chain** (`_gnobitab_ddpmpp.py:207 forward` +
 CUDA conv kernels); the cache saves at most a few milliseconds
 per round, invisible against the ~50 ms jitter floor.
-See `docs/audit/wave233-p6-wall-clock-opt.md` for full cProfile
+See `docs/ARCHIVE/audit-by-wave/wave233-p6-wall-clock-opt.md` for full cProfile
 + wall-clock harness details.
 
 **Update (Wave 236 P2).** The remaining 99.8 % model-forward-chain
@@ -892,7 +892,7 @@ specific data patterns:
   empirical observation. **No §15.X section pre-registered the
   ordering before Wave 234 P3 ran the JT test**; the ordering is
   therefore exploratory. The audit doc
-  `docs/audit/wave246-p3-jt-hypothesis-justification.md` documents
+  `docs/ARCHIVE/audit-by-wave/wave246-p3-jt-hypothesis-justification.md` documents
   the pre-registration search and the data observation that
   motivated the ordering in detail.
 
@@ -993,7 +993,7 @@ typed, byte-stable function in
   paired-difference summaries that the paired-$t$ uses.
   Used to convert the §MS.10.6 14/16 UNDERPOWERED cells into
   a quantitative "practical equivalence" claim
-  (`docs/audit/wave234-p4-bf01.md`).
+  (`docs/ARCHIVE/audit-by-wave/wave234-p4-bf01.md`).
 
 - **Random-effects meta-analysis (DerSimonian-Laird 1986).**
   Implemented as `meta_random_effects(...)`. Pools K
@@ -1004,7 +1004,7 @@ typed, byte-stable function in
   heterogeneity, and a fixed-effect reference. Used to
   quantify the cross-domain pooled effect across the
   K = 12 audited cells
-  (`docs/audit/wave234-p5-meta-analysis.md`).
+  (`docs/ARCHIVE/audit-by-wave/wave234-p5-meta-analysis.md`).
 
 - **Non-inferiority test (Schuirmann 1987 / ICH E9 1998).**
   Implemented as `non_inferiority(...)`. One-sided test of
@@ -1191,7 +1191,7 @@ value-add plays out at runtime. The studies are:
   paper-quantity quantity bound on the FM ODE flow, while L_emp
   is the empirical Lipschitz constant of the *network*; the two
   are complementary, not substitutable (Wave 229 P2,
-  `docs/audit/wave229-p2-adapter-lipschitz.md`).
+  `docs/ARCHIVE/audit-by-wave/wave229-p2-adapter-lipschitz.md`).
 
 - **Wave 229 P3** — core-adapter paper quantities from empirical
   residual profiles for the **3 core adapters** (LineageFlow,
@@ -1208,7 +1208,7 @@ value-add plays out at runtime. The studies are:
   witness and an empirical residual profile. This is the
   "**mixed: canonical + 3 adapter-specific**" paper-quantity
   regime that the cover letter and the §MS.10 paragraph
-  articulate (Wave 229 P3, `docs/audit/wave229-p3-core-adapter-paper-quantities.md`).
+  articulate (Wave 229 P3, `docs/ARCHIVE/audit-by-wave/wave229-p3-core-adapter-paper-quantities.md`).
 
 - **Wave 230 P2** — real per-record 4-arm paired analysis
   (df = 299 paired; supersedes Wave 229 P1 bootstrap). Real
@@ -1241,7 +1241,7 @@ value-add plays out at runtime. The studies are:
   inflation.
 
   Source: `verification_outputs/wave230-p2-real-4arm-per-record.csv`
-  + `docs/audit/wave230-p2-real-4arm-per-record.md`. No GPU sweep
+  + `docs/ARCHIVE/audit-by-wave/wave230-p2-real-4arm-per-record.md`. No GPU sweep
   required (CPU-only data extraction; ~10 s wall time).
 
 **Implication for the framework claim.** The §2.5 disclosure
@@ -1262,7 +1262,7 @@ regression suite remains **30/30 PASS** (no framework-import-
 surface changes in Wave 229 P1–P3 or Wave 230 P2).
 
 The "Profile residual F" field in `AdapterCapabilities` and the
-`profile_residual_fn` protocol (`adaptive_reflow/profile_residual.py`)
+`profile_residual_fn` protocol (`adaptive_reflow/adapters/profile_residual.py`)
 are the sanctioned future-extension points for the remaining 9
 adapters; no adapter currently declares `profile_residual_fn`,
 and `tools/eval/framework.py:240–280` / `adaptive_reflow/
@@ -1270,7 +1270,7 @@ algorithm/runner/runner.py:1172–1214` fall back to legacy
 closed forms that do not compute a per-adapter g(s). The 3 core
 adapters exercise `profile_residual_fn` via the empirical residual
 sampling scheme documented in
-`docs/audit/wave229-p3-core-adapter-paper-quantities.md` §"Method".
+`docs/ARCHIVE/audit-by-wave/wave229-p3-core-adapter-paper-quantities.md` §"Method".
 
 ---
 
@@ -1702,7 +1702,7 @@ asymmetries; and the §2.13 limitations paragraph documents
 the R3 single-seed boundary. The high $I^2$ is therefore
 **information, not noise**: it confirms that the framework's
 value-add is domain-specific and must be reported on a
-per-cell basis. See `docs/audit/wave234-p5-meta-analysis.md`
+per-cell basis. See `docs/ARCHIVE/audit-by-wave/wave234-p5-meta-analysis.md`
 for the Wave 234 P5 raw outputs and the §2.12.5 matrix above
 for the per-cell experimental setting.
 
@@ -1738,7 +1738,7 @@ significant at α = 0.05/7 = 0.00714).
 
 **Wave 242 P2 verdict — direction-inconsistent; NFE was not
 the main confound.** Wave 242 P2 (`verification_outputs/wave242-p2-flowmol3-direction.csv`;
-audit `docs/audit/wave242-p2-flowmol3-direction.md`) attempted to
+audit `docs/ARCHIVE/audit-by-wave/wave242-p2-flowmol3-direction.md`) attempted to
 disambiguate the NFE confound by re-running seeds 43/44 at
 NFE=250 / N=200 / single_mol path. The Wave 242 P1 rescue
 script (`scripts/wave242_p1_flowmol3_rescue_single_mol.py`,
@@ -1789,7 +1789,7 @@ in the FlowMol3 R3 fg_dev paragraph (with the protocol-mismatch
 caveat), and §2.12.4 above reproduces the Wave 235 P4 per-seed
 fg_dev table. Both are kept in sync with this paragraph and
 with the `verification_outputs/wave242-p2-flowmol3-direction.csv`
-+ `docs/audit/wave242-p2-flowmol3-direction.md` provenance pair.
++ `docs/ARCHIVE/audit-by-wave/wave242-p2-flowmol3-direction.md` provenance pair.
 
 ---
 
@@ -1815,7 +1815,7 @@ the **graph-traversal-path confound** (batched DGL vs single_mol).
 |---|---:|---:|---|---:|---:|---:|---:|---|---|
 | 42 (Wave 87) | 1000 | 250 | batched DGL (n_molecules=100) | 0.6146 | 0.6381 | **−0.0235** | **−0.285** (per-record REOS) | **framework-WINS** | `verification_outputs/flowmol3_n1000_*_wave87_q4_2026.json` (Wave 87 byte-stable) |
 | 43 (Wave 242 P1) | 200 | 250 | single_mol (n_molecules=1) | 0.7361 | 0.7336 | **+0.00253** | n/a (aggregate only) | **framework slightly WORSE on aggregate** | `verification_outputs/wave242-p1-flowmol3-seed43-summary.json` |
-| 44 (Wave 242 P1 v3) | 200 | 250 | single_mol (n_molecules=1) | PENDING | PENDING | PENDING | PENDING | PENDING (Wave 245 P1 metrics-patch validation in flight at audit time; see `docs/audit/wave245-p1-metrics-patch-validation.md`) | Seed 44 retry v3 launched 2026-09-22 00:15 CST; PID 3524941 + 3524943; ~30 min remaining at audit save |
+| 44 (Wave 242 P1 v3) | 200 | 250 | single_mol (n_molecules=1) | PENDING | PENDING | PENDING | PENDING | PENDING (Wave 245 P1 metrics-patch validation in flight at audit time; see `docs/ARCHIVE/audit-by-wave/wave245-p1-metrics-patch-validation.md`) | Seed 44 retry v3 launched 2026-09-22 00:15 CST; PID 3524941 + 3524943; ~30 min remaining at audit save |
 
 **Explicit confound disclosure (Wave 246 P4 honest reading).** R3
 results are confounded by **NFE** (250 vs 100), **N** (1000 vs 500),
@@ -1849,7 +1849,7 @@ single_mol + N=200 (Wave 242 P1 seed 43), the aggregate fg_dev
 difference is statistically undetectable (mean_diff = +0.00253,
 well below the 3.6% MDD). The seed 44 retry is pending and will
 close the third-seed-confirmation leg of the Wave 242 P1 rescue
-(see `docs/audit/wave245-p1-metrics-patch-validation.md` for the
+(see `docs/ARCHIVE/audit-by-wave/wave245-p1-metrics-patch-validation.md` for the
 running status; **the seed 44 retry v3 must NOT be interrupted**).
 
 **R3 verdict change — abstract S12 (Wave 246 P4 update).** The

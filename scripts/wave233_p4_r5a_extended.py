@@ -23,8 +23,8 @@ Plus newly produced data:
 - docs/r4-survey/two_moons_FreeTrajScheduler_seed{10..29}.csv
 
 Writes:
-- /home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave233-p4-r5a-expanded.csv
-- /home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave233-p4-r5a-expanded.json
+- verification_outputs/wave233-p4-r5a-expanded.csv
+- verification_outputs/wave233-p4-r5a-expanded.json
 """
 
 from __future__ import annotations

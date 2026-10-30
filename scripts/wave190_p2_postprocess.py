@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Post-process the Wave 190 P2 n=30 kanzi sweep into the task-specific JSON.
 
-Reads /home/hugo/codes/flowa-multistep-reinference/verification_outputs/
-wave190-p2-kanzi-n30.json (the driver's native JSON) and computes the
-task-specific summary:
+Reads verification_outputs/wave190-p2-kanzi-n30.json (the driver's native
+JSON) and computes the task-specific summary:
 
 * Endpoint L2: mean, std, 95% CI for each of 3 arms (vanilla baseline
   endpoint has no L2-vs-itself, so for the baseline we report endpoint
@@ -15,9 +14,9 @@ task-specific summary:
 * Bonferroni-corrected at α=0.05/2=0.025 for the two primary axes.
 
 Output:
-* /home/hugo/codes/flowa-multistep-reinference/verification_outputs/
-  wave190-p2-kanzi-n30.json  (the canonical Wave 190 P2 path, overwritten
-  with the task-specific schema that wraps the raw sweep cells)
+* verification_outputs/wave190-p2-kanzi-n30.json  (the canonical Wave 190 P2
+  path, overwritten with the task-specific schema that wraps the raw sweep
+  cells)
 * /tmp/w190_p2/wave190-p2-kanzi-n30-summary.json  (same payload; the
   task spec mentioned --output-dir /tmp/w190_p2/ as a convenience path)
 """

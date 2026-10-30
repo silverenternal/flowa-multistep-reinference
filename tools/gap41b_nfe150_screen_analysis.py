@@ -9,8 +9,8 @@ Question: is the premise's seed-42 framework-vs-baseline +11 (N=200, NFE=150)
 direction-consistent 3/3, i.e. worth a decisive N=1000 run?
 
 CPU-only. Reads:
-  /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/premise/hits.txt          (seed 42)
-  /home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/nfe150_screen/hits.txt    (seeds 43/44)
+  verification_outputs/legacy-gap40-42/gap41b-nfe150/premise/hits.txt          (seed 42)
+  verification_outputs/legacy-gap40-42/gap41b-nfe150/nfe150_screen/hits.txt    (seeds 43/44)
 """
 from __future__ import annotations
 
@@ -18,8 +18,11 @@ import json
 import re
 from pathlib import Path
 
-PREMISE = Path("/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/premise")
-SCREEN = Path("/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/nfe150_screen")
+REPO_ROOT = Path(__file__).resolve().parents[1]
+_NFE150 = REPO_ROOT / "verification_outputs" / "legacy-gap40-42" / "gap41b-nfe150"
+
+PREMISE = _NFE150 / "premise"
+SCREEN = _NFE150 / "nfe150_screen"
 LINE = re.compile(
     r"^(?P<dir>[^:]+)/(?P<file>[^:]+):\s+total_hits=(?P<hits>\d+)\s+"
     r"records=(?P<records>\d+)\s+records_with_hits=(?P<ge1>\d+)\s+"

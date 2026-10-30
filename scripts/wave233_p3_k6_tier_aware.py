@@ -284,7 +284,7 @@ def _run_d4_test() -> dict:
     print("D.4 byte-stable regression vector gate (CRITICAL)")
     print("=" * 72)
     cmd = [
-        "/home/hugo/codes/flowa-multistep-reinference/.venvs/lineageflow_venv/bin/python",
+        str(REPO / ".venvs" / "lineageflow_venv" / "bin" / "python"),
         "-m", "pytest", D4_TEST_PATH, "-q", "--tb=no", "--no-header",
     ]
     proc = subprocess.run(cmd, cwd=str(REPO), capture_output=True, text=True)

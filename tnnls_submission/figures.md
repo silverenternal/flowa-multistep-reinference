@@ -7,7 +7,7 @@
 ## Figure 1 — FlowA Hexagonal-Layer Architecture
 
 > **PNG asset (canonical):** [`docs/figures/fig1_flowa_architecture.png`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/figures/fig1_flowa_architecture.png) (SHA-256 `45fc1ec15340c32b9cd86cb1dc6cd83b1fd8b8531b305528425f4d30962b8589`, 46455 bytes, 985×607) — companion architecture overview render of the same hexagonal-layer decomposition.
-> **Cross-references:** paper §3 Method (architecture overview); [`docs/drafts/paper-draft.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/legacy-paper/paper-draft.md) line 316 marker `<!-- FIG 1 -->`; [`docs/CONSOLIDATED_RESULTS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CONSOLIDATED_RESULTS.md) §15.7 (per-cell real-ckpt framework-vs-baseline framework-architecture context); [`docs/audit/wave328-freeze-survey.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave328-freeze-survey.md) Figure-1 row (Wave 328 freeze-survey figure inventory).
+> **Cross-references:** paper §3 Method (architecture overview); [`docs/ARCHIVE/legacy-paper/paper-draft.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/legacy-paper/paper-draft.md) line 316 marker `<!-- FIG 1 -->`; [`docs/CONSOLIDATED_RESULTS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CONSOLIDATED_RESULTS.md) §15.7 (per-cell real-ckpt framework-vs-baseline framework-architecture context); [`docs/audit/wave328-freeze-survey.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave328-freeze-survey.md) Figure-1 row (Wave 328 freeze-survey figure inventory).
 
 ```
                 ┌─────────────────────────────────────────────────┐
@@ -78,7 +78,7 @@
 ## Figure 2 — Re-Inference Dataflow
 
 > **PNG asset (canonical):** [`docs/figures/fig2_algorithm_flow.png`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/figures/fig2_algorithm_flow.png) (SHA-256 `d305c05a68f96446b769832b28c7726c59d65a4a56b9c8d35f7ab722ccc755b9`, 35813 bytes, 960×607) — companion re-inference-dataflow schematic showing one round with restart-blend operator.
-> **Cross-references:** paper §3 Method (re-inference loop schematic); [`docs/drafts/paper-draft.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/legacy-paper/paper-draft.md) line 451 marker `<!-- FIG 2 -->`; [`docs/CONSOLIDATED_RESULTS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CONSOLIDATED_RESULTS.md) §15.7 + §15.14 (algorithm-loop summary); [`docs/audit/wave328-freeze-survey.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave328-freeze-survey.md) Figure-2 row.
+> **Cross-references:** paper §3 Method (re-inference loop schematic); [`docs/ARCHIVE/legacy-paper/paper-draft.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/legacy-paper/paper-draft.md) line 451 marker `<!-- FIG 2 -->`; [`docs/CONSOLIDATED_RESULTS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CONSOLIDATED_RESULTS.md) §15.7 + §15.14 (algorithm-loop summary); [`docs/audit/wave328-freeze-survey.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave328-freeze-survey.md) Figure-2 row.
 
 ```
         ┌────────────────────────────────────────────────────────────────┐

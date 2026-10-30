@@ -125,13 +125,14 @@ native sm_120 venv (`hidream_venv`, `lumina_venv` or `wan2_2_venv`, all torch
 2.7.0+cu128) is materially faster is **unverified** — one bounded benchmark,
 deferred because the GPU was not available.
 
-**Expected red cells under system `python3`.** `python3 -m pytest tests/ -q`
-leaves exactly 12 failures, all in `tests/test_tools/test_paper_metrics.py`,
-because `tools/paper_metrics.py` needs torch and system `python3` has none. They
-are 15/15 green under `.venvs/flowmol3_venv/bin/python -m pytest
-tests/test_tools/test_paper_metrics.py -q`. Measured 2026-10-29: 12 failed,
-5582 passed, 180 skipped, 0 xfailed in 10m23s. Any other red cell is a
-regression.
+**No expected red cells under system `python3`.** `python3 -m pytest tests/ -q`
+is green: 5603 passed, 180 skipped, 0 failed (measured 2026-10-30, 10m34s).
+`tests/test_tools/test_paper_metrics.py` mocks the upstream `SampleAnalyzer`,
+so it needs no torch — until 2026-10-30 it failed 12/15 here because the mock
+only replaced `sys.modules` while `tools/paper_metrics.py` binds the upstream
+names at import time, which made the result depend on whether an earlier test
+had already imported the module (`docs/audit/pytest-order-dependence.md`). Any
+red cell now is a regression.
 
 Notes on the matrix:
 

@@ -48,14 +48,11 @@ from pathlib import Path
 
 import numpy as np
 
-DEFAULT_PKL = Path(
-    "/home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/repo/data/"
-    "geom_full_kekulized/train_reos_ring_counts.pkl"
-)
-DEFAULT_OUTDIR = Path(
-    "/home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/repo/data/"
-    "geom_full_kekulized"
-)
+REPO_ROOT = Path(__file__).resolve().parents[1]
+_DATA_DIR = REPO_ROOT / "data" / "FlowMol3" / "repo" / "data" / "geom_full_kekulized"
+
+DEFAULT_PKL = _DATA_DIR / "train_reos_ring_counts.pkl"
+DEFAULT_OUTDIR = _DATA_DIR
 
 
 def parse_args() -> argparse.Namespace:

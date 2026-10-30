@@ -9,7 +9,7 @@
 > **Current verdict (as of Wave 100):** Framework value is real and measured (Kanzi real ckpt now loads cleanly via the Wave 100 upstream-DAE fix: 44M params, velocity std=1.7078 on real input), but Kanzi paper-metric at the latest N=10 framework arm REGRESSES_BY_+0.86_Å (Bonferroni p=4.6e-7) due to the post-`project_out` bridge architecture — not a framework code regression.
 > Numbers: 27+80 algorithm uplifts all hit; 2D FM rel Δ 0.5% (parity); Kanzi composite_median +0.170 (`framework_improves`, 9/9 cells); Wave 92c framework RMSD 1.766 Å vs Wave 88 baseline 0.902 Å (N=10 vs N=1000); 4/6 paper-metric cells UNDERPOWERED at 1 pp detection (Wave 93 statistical power tool).
 > Status: Tier 3 N=1000 framework paper-metric verdict NOT yet measurable (synthetic endpoint at σ=1e-3 collapses all records to one codebook index; W2 reviewer weakness remains open).
-> See [`docs/audit/wave99b-n1000-verdict.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave99b-n1000-verdict.md) + [`wave100-kanzi-load-torch-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/kanzi-load-torch-fix.md) + [`wave95-phase3-kanzi-inverse-rerun.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave95-phase3-kanzi-inverse-rerun.md).
+> See [`docs/ARCHIVE/audit-waves-1-99/wave99b-n1000-verdict.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave99b-n1000-verdict.md) + [`wave100-kanzi-load-torch-fix.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/kanzi-load-torch-fix.md) + [`wave95-phase3-kanzi-inverse-rerun.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave95-phase3-kanzi-inverse-rerun.md).
 
 ## 1. TL;DR
 
@@ -259,7 +259,7 @@ Script changes committed: [`tools/experiments/run_mnist_migration.py`](https://g
 > **Current verdict (as of Wave 100):** Tier 1 toy framework comparison: 2D FM matches vanilla at parity (rel Δ 0.5%), MNIST -15% FID on one checkpoint (Heun NFE=100 vs Euler), `partial` on smol-rectified-flow ADM UNet; Tier 3 Kanzi composite_median = +0.170 (`framework_improves` on 9/9 cells).
 > Numbers: toy 2D W2 = 0.148 (parity), MNIST FID 347.75 vs 409.18 (-15%), Kanzi composite_median +0.170, Wave 95 phase-3 framework RMSD 3.178 Å (degenerate-synthetic-endpoint) vs Wave 88 baseline 0.902 Å.
 > Status: Tier 3 framework paper-metric at N=1000 not closed (W2 reviewer weakness); N=10 framework arm REGRESSES_BY_+0.86_Å at Bonferroni p=4.6e-7.
-> See [`docs/audit/wave95-phase3-kanzi-inverse-rerun.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave95-phase3-kanzi-inverse-rerun.md) + [`wave99b-n1000-verdict.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave99b-n1000-verdict.md).
+> See [`docs/ARCHIVE/audit-waves-1-99/wave95-phase3-kanzi-inverse-rerun.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave95-phase3-kanzi-inverse-rerun.md) + [`wave99b-n1000-verdict.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave99b-n1000-verdict.md).
 
 Two ultracode runs (`toy-fm-framework-validation` and `toy-fm-framework-validation-pretrained`),
 strict before/after at matched seed + NFE.
@@ -826,7 +826,7 @@ per-model sources: `phase4_q4_2026_kanzi.json`, `phase4_q4_2026_freqflow.json`)
 
 ## 14. Wave 40 Agent A — Kanzi real-ckpt framework-vs-baseline (sidecar venv)
 
-Companion audit: `docs/audit/wave40-kanzi-real-eval-results.md`.
+Companion audit: `docs/ARCHIVE/audit-waves-1-99/wave40-kanzi-real-eval-results.md`.
 Verification JSONs: `verification_outputs/kanzi_real_ckpt_eval_q4_2026.json`
 (full 9-cell report) and `verification_outputs/kanzi_real_ckpt_eval_q4_2026_kanzi.json`
 (per-model split).
@@ -945,7 +945,7 @@ Kanzi adapter and the eval runner as its disjoint scope.
 > **Current verdict (as of Wave 100):** §15 captures the Wave 86-93 Kanzi real-ckpt framework-vs-baseline close-out: Wave 88 baseline N=1000 RMSD = 0.902 Å, Wave 92c framework N=10 RMSD = 1.766 Å (Δ +0.86 Å, Bonferroni p=4.6e-7), 4/6 paper-metric cells UNDERPOWERED per the Wave 93 statistical-power tool.
 > Numbers: 6 cells × 2-arm Wave 92c framework-vs-baseline; framework-arm N=10 mean 1.766 Å ± 0.214, 95% CI [1.613, 1.919]; baseline-arm N=1000 mean 0.902 Å ± 0.137; 4 UNDERPOWERED + 2 TIE + 0 SUPPORTED + 0 REGRESSES (Wave 93 verdict precedence).
 > Status: W2 reviewer weakness ("framework paper-metric unverifiable at N=1000") NOT closed by Wave 99; framework arm at N=1000 has not been run on real Kanzi ckpt + paper metrics.
-> See [`docs/audit/wave99b-n1000-verdict.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave99b-n1000-verdict.md).
+> See [`docs/ARCHIVE/audit-waves-1-99/wave99b-n1000-verdict.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave99b-n1000-verdict.md).
 
 ### 15.1 What landed
 
@@ -1034,7 +1034,7 @@ The CLI plumbing worked end-to-end on the real 530 MB Kanzi checkpoint:
 
 Exit code: 0 (clean — verdict `TIE_AT_SATURATION` is in the OK bucket).
 JSON written to `verification_outputs/kanzi_real_force_mode_q4_2026.json`
-(gitignored). Full audit: `docs/audit/wave41-force-mode-real-results.md`.
+(gitignored). Full audit: `docs/ARCHIVE/audit-waves-1-99/wave41-force-mode-real-results.md`.
 
 ### 15.5 What's still unblocked (carried from §14.7)
 
@@ -1107,7 +1107,7 @@ disjoint-file-scope constraint and the "trivial 1-2 LOC only" guard.
 
 ## 16. Wave 41 paper-audit findings (Agent C)
 
-**Source:** `docs/audit/wave41-paper-audit.md` (Wave 41 Agent C,
+**Source:** `docs/ARCHIVE/audit-waves-1-99/wave41-paper-audit.md` (Wave 41 Agent C,
 2026-09-05). Pure documentation/audit; **no experiments re-run, no
 code touched**. Five concrete additions to `docs/ARCHIVE/legacy-paper/paper-draft.md`
 proposed, all referencing existing JSON / CSV / log artefacts.
@@ -1141,7 +1141,7 @@ Per-family summary (verbatim from §12.3):
 
 ### 16.3 Capability gates snapshot (for §5.1.1 insert)
 
-Source: `docs/audit/wave40-cold-clone-capability-audit.md` (third
+Source: `docs/ARCHIVE/audit-waves-1-99/wave40-cold-clone-capability-audit.md` (third
 consecutive identical reading).
 
 | Gate | Value | Target | Verdict | HARD/SOFT |
@@ -1196,7 +1196,7 @@ current draft.
 
 ## 15.7 Wave 42 Agent C — Tier 3 "real-ckpt framework vs baseline" synthesis
 
-**Source:** `docs/audit/wave42-tier3-synthesis.md` (this wave,
+**Source:** `docs/ARCHIVE/audit-waves-1-99/wave42-tier3-synthesis.md` (this wave,
 2026-09-05). Pure documentation/audit; **no experiments re-run, no
 code touched**. The Tier 3 claim under test:
 
@@ -1532,7 +1532,7 @@ NOT from this sweep):
 The metric is well above collapse and well below saturation —
 consistent with a trained ESM-2-650M flow head on a random simplex
 input at `t=1.0` (not mode-collapsed, not maxed-out). See
-`docs/audit/wave41-lineageflow-numerical-forward.md` §5 for the full
+`docs/ARCHIVE/audit-waves-1-99/wave41-lineageflow-numerical-forward.md` §5 for the full
 saturation check.
 
 **Reproducibility:**
@@ -1726,7 +1726,7 @@ python tools/run_real_ckpt_eval.py \
 - `verification_outputs/kanzi_real_metric_q4_2026.json` — NEW
 - `verification_outputs/lineageflow_real_metric_q4_2026.json` — NEW
   (stub; network-blocked)
-- `docs/audit/wave43-metric-layer-fix.md` — NEW
+- `docs/ARCHIVE/audit-waves-1-99/wave43-metric-layer-fix.md` — NEW
 - `docs/CONSOLIDATED_RESULTS.md` — APPEND §15.10 (this section)
 
 **No code change** to `adaptive_reflow/adapters/`,
@@ -1874,7 +1874,7 @@ bug; Wave 45 Agent C owns the fix (task #807-814).
   (gitignored under `verification_outputs/`).
 * `verification_outputs/lineageflow_real_metric_v2_q4_2026.json` —
   NEW (gitignored).
-* `docs/audit/wave44-tier3-final-eval.md` — NEW.
+* `docs/ARCHIVE/audit-waves-1-99/wave44-tier3-final-eval.md` — NEW.
 * `docs/CONSOLIDATED_RESULTS.md` — APPENDED §15.11 + §15.12.
 
 **No code change** to `adaptive_reflow/`, `tests/`, framework,
@@ -2078,7 +2078,7 @@ After Wave 45, the three remaining blockers are:
   updated; Kanzi verdict unchanged; LineageFlow unchanged).
 * `README.md` Tier 3 evidence section (wallclock characterization
   revised).
-* `docs/audit/wave45-final-eval.md` — NEW.
+* `docs/ARCHIVE/audit-waves-1-99/wave45-final-eval.md` — NEW.
 
 **No code change** to `adaptive_reflow/`, `tests/`, framework,
 scheduler, `tools/run_real_ckpt_eval.py`, or other adapters per the
@@ -2223,7 +2223,7 @@ Source: `verification_outputs/power_analysis/per_cell.csv`
 
 * `docs/ARCHIVE/legacy-paper/paper-draft.md` §7.6 — the additive Wave 93 paragraph +
   12-row table (inserted just before §7.7 NFE-aware section).
-* `docs/audit/wave93-phase2-final.md` — Wave 93 Agent B per-cell
+* `docs/ARCHIVE/audit-waves-1-99/wave93-phase2-final.md` — Wave 93 Agent B per-cell
   audit trail + methodology + Wave 89 comparison.
 * `verification_outputs/power_analysis/per_cell.csv` — source CSV
   for the 12-row table (12 data rows + 1 header).
@@ -2363,18 +2363,18 @@ additive Wave 96 paragraph — **NOT** touched by this digest
 * [`verification_outputs/wave96a_diagnose/*.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave96a_diagnose/*.json) (NEW, 3 trials)
 * [`verification_outputs/wave96c_verify/wave96c_diversity.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave96c_verify/wave96c_diversity.json) (NEW, A/B harness)
 * [`verification_outputs/kanzi_n1000_framework_paper_metrics_real_diverse/*.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/kanzi_n1000_framework_paper_metrics_real_diverse/*.json) (NEW, Wave 96.D N=10 framework sweep)
-* [`docs/audit/wave96a-collapse-diagnosis.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave96a-collapse-diagnosis.md) (NEW)
-* [`docs/audit/wave96c-fix-verification.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave96c-fix-verification.md) (NEW)
-* [`docs/audit/wave96d-resweep.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave96d-resweep.md) (NEW)
-* [`docs/audit/wave96e-final-synthesis.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave96e-final-synthesis.md) (NEW — this wave)
+* [`docs/ARCHIVE/audit-waves-1-99/wave96a-collapse-diagnosis.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave96a-collapse-diagnosis.md) (NEW)
+* [`docs/ARCHIVE/audit-waves-1-99/wave96c-fix-verification.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave96c-fix-verification.md) (NEW)
+* [`docs/ARCHIVE/audit-waves-1-99/wave96d-resweep.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave96d-resweep.md) (NEW)
+* [`docs/ARCHIVE/audit-waves-1-99/wave96e-final-synthesis.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave96e-final-synthesis.md) (NEW — this wave)
 * [`docs/ARCHIVE/legacy-paper/paper-draft.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/legacy-paper/paper-draft.md) §7.3 (ADDITIVE Wave 96 paragraph)
 * [`docs/CONSOLIDATED_RESULTS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CONSOLIDATED_RESULTS.md) §15.16 (this section, ADDITIVE)
-* [`docs/audit/wave93-phase2-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave93-phase2-final.md) 12-cell table Kanzi row (additive update — see §15.16.7)
+* [`docs/ARCHIVE/audit-waves-1-99/wave93-phase2-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave93-phase2-final.md) 12-cell table Kanzi row (additive update — see §15.16.7)
 * D.4 33/33 byte-stable regression PASS, G-MASTER 7/7 unchanged, mkdocs EXIT=0
 
 ### §15.16.7 Wave 93 12-cell table — Kanzi row additive update
 
-The Wave 93 12-cell verdict table ([`docs/audit/wave93-phase2-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave93-phase2-final.md)
+The Wave 93 12-cell verdict table ([`docs/ARCHIVE/audit-waves-1-99/wave93-phase2-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave93-phase2-final.md)
 §1, also rendered in §15.15.1 of this document) currently reads
 the `kanzi:reconstruction_kabsch_rmsd_A` row as:
 
@@ -2580,7 +2580,7 @@ it authors.
 | [`docs/ARCHIVE/legacy-paper/paper-draft.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/legacy-paper/paper-draft.md) (§5.6 + §5.7 + §5.8 — NEW subsections) | MODIFIED (additive) | +218 / -1 |
 | `README.md` ("Why this framework matters" rewrite) | MODIFIED | +43 / -16 |
 | [`docs/CONSOLIDATED_RESULTS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CONSOLIDATED_RESULTS.md) §17 (this section) | APPENDED | +~80 |
-| [`docs/audit/wave52-paper-rewrite-synthesis.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-paper-rewrite-synthesis.md) (NEW) | NEW | +~150 (audit trail) |
+| [`docs/ARCHIVE/audit-waves-1-99/wave52-paper-rewrite-synthesis.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-paper-rewrite-synthesis.md) (NEW) | NEW | +~150 (audit trail) |
 | **Wave 92 row** | | |
 | [`adaptive_reflow/adapters/kanzi.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/adaptive_reflow/adapters/kanzi.py) (Wave 92a, commit `73c6978`) | MODIFIED | 3 WRONG constants (vocab_size=512, hidden=1000, backbone) → ckpt `model_cfg` dynamic load (512/1000/backbone-dependent dims from SHA-256-verified ckpt) |
 | [`tools/upstream_eval.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tools/upstream_eval.py) (Wave 92b, commit `60dcbb7`) | MODIFIED | Kanzi branch honours `--upstream-n-samples` (mirror LineageFlow Wave 81 patch); emits `--output-jsonl` with mean / std / 95% CI |
@@ -2759,7 +2759,7 @@ verification output.
 > **Current verdict (as of Wave 100):** §18 NFE-adaptive framing (Wave 58 Agent 5) replaces "framework_improves" with "framework extends baseline saturation ceiling, NFE-aware"; Wave 95 phase-3.C retry showed NFE-aware framework at N=10 RMSD = 3.178 Å (degenerate-synthetic-endpoint, all records collapse to one codebook index) vs Wave 88 baseline 0.902 Å.
 > Numbers: §18.11 three-mode verdict classification (TIE 8/12, UNDERPOWERED 2/12, SUPPORTED 1/12, REGRESSES 1/12); §18.10 NFE scan extends-baseline-plateau framing (not yet N=1000-validated on real Kanzi paper-metric).
 > Status: ceiling-extension claim is not yet N=1000-validated; framework paper-metric remains REGRESSES_BY_+0.86_Å at the latest N=10 measurement.
-> See [`docs/audit/wave95-phase3-kanzi-inverse-rerun.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave95-phase3-kanzi-inverse-rerun.md) + [`wave99b-n1000-verdict.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave99b-n1000-verdict.md).
+> See [`docs/ARCHIVE/audit-waves-1-99/wave95-phase3-kanzi-inverse-rerun.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave95-phase3-kanzi-inverse-rerun.md) + [`wave99b-n1000-verdict.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave99b-n1000-verdict.md).
 
 Wave 54 Agent B is the **final paper-side digest** wave that
 consolidates the Wave 47 / Wave 49 / Wave 50 / Wave 52 / Wave 53
@@ -2965,7 +2965,7 @@ section is the §18-level history entry.
   per-cell verdict table.
 * **[`verification_outputs/power_analysis/per_cell.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/power_analysis/per_cell.csv)** — single
   source of truth for the 12-row verdict.
-* **[`docs/audit/wave93-phase2-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave93-phase2-final.md)** — Wave 93 Agent B audit
+* **[`docs/ARCHIVE/audit-waves-1-99/wave93-phase2-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave93-phase2-final.md)** — Wave 93 Agent B audit
   trail.
 
 ### §18.11.4 What this section defers to (Wave 92c in flight)
@@ -3115,7 +3115,7 @@ Agent B (3-baseline implementation + per-component ablation), and
 Agent C (LineageFlow Tier-3 baseline comparison on real ckpt) into
 a single per-model comparison table + per-cell composite comparison
 + framework-relative-position statement. The full audit doc lives
-at [`docs/audit/wave52-sota-baseline-comparison.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-sota-baseline-comparison.md); this section
+at [`docs/ARCHIVE/audit-waves-1-99/wave52-sota-baseline-comparison.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-sota-baseline-comparison.md); this section
 is the CONSOLIDATED_RESULTS digest.
 
 ### §19.1 Per-model comparison table (synthetic-mode Protocol surface)
@@ -3269,7 +3269,7 @@ python scripts/run_ablation_sweep.py \
 
 | Path | Change |
 |---|---|
-| [`docs/audit/wave52-sota-baseline-comparison.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-sota-baseline-comparison.md) | NEW — final integrated SOTA baseline comparison |
+| [`docs/ARCHIVE/audit-waves-1-99/wave52-sota-baseline-comparison.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-sota-baseline-comparison.md) | NEW — final integrated SOTA baseline comparison |
 | [`docs/CONSOLIDATED_RESULTS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CONSOLIDATED_RESULTS.md) §19 | APPENDED — this section |
 
 **NOT touched** (per disjoint-file-scope contract): `adaptive_reflow/`,
@@ -3278,20 +3278,20 @@ adapter, any verification output. **No code change.**
 
 ### §19.8 Cross-references
 
-* [`docs/audit/wave52-sota-baseline-comparison.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-sota-baseline-comparison.md) — this wave's
+* [`docs/ARCHIVE/audit-waves-1-99/wave52-sota-baseline-comparison.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-sota-baseline-comparison.md) — this wave's
   full audit doc (per-model comparison tables, per-cell composite
   decomposition, framework position).
-* [`docs/audit/wave52-sota-baselines-survey.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-sota-baselines-survey.md) — Agent A survey
+* [`docs/ARCHIVE/audit-waves-1-99/wave52-sota-baselines-survey.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-sota-baselines-survey.md) — Agent A survey
   that picks the 3 baselines (CM+iCT, RF+Reflow, DPMSolver++).
-* [`docs/audit/wave52-baseline-comparison-impl.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-baseline-comparison-impl.md) — Agent B
+* [`docs/ARCHIVE/audit-waves-1-99/wave52-baseline-comparison-impl.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-baseline-comparison-impl.md) — Agent B
   implementation + run + comparison (Tier 1 + Tier 2 synthetic-mode).
-* [`docs/audit/wave52-per-component-ablation.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-per-component-ablation.md) — Agent B 5-arm ×
+* [`docs/ARCHIVE/audit-waves-1-99/wave52-per-component-ablation.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-per-component-ablation.md) — Agent B 5-arm ×
   3-model per-component ablation.
-* [`docs/audit/wave52-lineageflow-baseline-comparison.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-lineageflow-baseline-comparison.md) — Agent C
+* [`docs/ARCHIVE/audit-waves-1-99/wave52-lineageflow-baseline-comparison.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-lineageflow-baseline-comparison.md) — Agent C
   3-baseline comparison on the real LineageFlow ckpt (Tier 3).
-* [`docs/audit/wave52-kanzi-composite.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-kanzi-composite.md) — Agent A Kanzi composite
+* [`docs/ARCHIVE/audit-waves-1-99/wave52-kanzi-composite.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-kanzi-composite.md) — Agent A Kanzi composite
   (3-term pure-flow scalar) on real ckpt.
-* [`docs/audit/wave52-kanzi-composite-ablation-synthesis.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-kanzi-composite-ablation-synthesis.md) —
+* [`docs/ARCHIVE/audit-waves-1-99/wave52-kanzi-composite-ablation-synthesis.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave52-kanzi-composite-ablation-synthesis.md) —
   Agent C cross-stream synthesis of A+B deliverables.
 * [`docs/CONSOLIDATED_RESULTS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CONSOLIDATED_RESULTS.md) §12.3 — per-family signed_mean
   (framework's per-cell composite on the synthetic-mode surface).
@@ -3325,7 +3325,7 @@ paper §1 contributions list.
   the upstream source for this table (Wave 93 close-out).
 * **[`docs/ARCHIVE/legacy-paper/paper-draft.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/legacy-paper/paper-draft.md) §7.6** — the Wave 93 paragraph + 12-row
   per-cell verdict table that backs the W4 reframing.
-* **[`docs/audit/wave93-phase2-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave93-phase2-final.md)** — Wave 93 Agent B audit
+* **[`docs/ARCHIVE/audit-waves-1-99/wave93-phase2-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave93-phase2-final.md)** — Wave 93 Agent B audit
   trail with per-cell methodology + Wave 89 comparison.
 * **`todo/planned/w3-n5000-paper-metric-sweep.md`** — Wave 92d
   OPT-IN plan that closes W3 at N=5000 if the user authorises the
@@ -3351,7 +3351,7 @@ paper §1 contributions list.
 ## §20. Wave 72 Phase 3 — Heuristic Ablation Sweep
 
 **Date:** 2026-09-08
-**Source:** [`docs/audit/wave72-phase3-ablation.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave72-phase3-ablation.md)
+**Source:** [`docs/ARCHIVE/audit-waves-1-99/wave72-phase3-ablation.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave72-phase3-ablation.md)
 **Verification outputs:** [`verification_outputs/heuristic_ablation_memory_fraction_q4_2026.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/heuristic_ablation_memory_fraction_q4_2026.json),
 [`verification_outputs/heuristic_ablation_nfe_threshold_q4_2026.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/heuristic_ablation_nfe_threshold_q4_2026.json)
 
@@ -3404,15 +3404,15 @@ Keep both defaults:
 
 ### §20.5 Cross-references
 
-* [`docs/audit/wave72-phase3-ablation.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave72-phase3-ablation.md) — this wave's full audit doc.
+* [`docs/ARCHIVE/audit-waves-1-99/wave72-phase3-ablation.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave72-phase3-ablation.md) — this wave's full audit doc.
 * [`verification_outputs/heuristic_ablation_memory_fraction_q4_2026.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/heuristic_ablation_memory_fraction_q4_2026.json)
   — 5-value m sweep + indirect-evidence table.
 * [`verification_outputs/heuristic_ablation_nfe_threshold_q4_2026.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/heuristic_ablation_nfe_threshold_q4_2026.json)
   — 15-cell NFE threshold sweep.
-* [`docs/audit/wave58-kanzi-nfe-scan.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave58-kanzi-nfe-scan.md) §1 — Kanzi composite byte-stability.
+* [`docs/ARCHIVE/audit-waves-1-99/wave58-kanzi-nfe-scan.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave58-kanzi-nfe-scan.md) §1 — Kanzi composite byte-stability.
 * [`verification_outputs/flowmol3_nfe_aware_q4_2026.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/flowmol3_nfe_aware_q4_2026.json) — Wave 61
   closed-form m(NFE) projection.
-* [`docs/audit/wave58-nfe-adaptive-gate-impl.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave58-nfe-adaptive-gate-impl.md) — gate implementation.
+* [`docs/ARCHIVE/audit-waves-1-99/wave58-nfe-adaptive-gate-impl.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave58-nfe-adaptive-gate-impl.md) — gate implementation.
 * `todo/wave58-nfe-adaptive-plan.md` §3 — heuristic design rationale.
 
 
@@ -3493,7 +3493,7 @@ internal composite axis) holds additively on the N=10 evidence.
 Exit code: 0 (clean). JSON written to
 [`verification_outputs/kanzi_n1000_framework_paper_metrics_diverse/kanzi_n1000_framework_paper_metrics.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/kanzi_n1000_framework_paper_metrics_diverse/kanzi_n1000_framework_paper_metrics.json)
 and per-record JSONL to `per_metric.jsonl`. Full audit:
-[`docs/audit/wave96e-n1000-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave96e-n1000-final.md).
+[`docs/ARCHIVE/audit-waves-1-99/wave96e-n1000-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave96e-n1000-final.md).
 
 ## §15.18 Wave 99.B — real N=1000 Kanzi verdict + statistical power analysis (Wave 99.A was docs-only)
 
@@ -3643,7 +3643,7 @@ refresh.
   Wave 96.E caveat and "Reproduce the Wave 83 N=200 baseline sweep:").
 - [`docs/CONSOLIDATED_RESULTS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CONSOLIDATED_RESULTS.md) §15.18 — this section (APPEND after
   §15.17 + fix duplicate §15.16 numbering bug).
-- [`docs/audit/wave93-phase2-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave93-phase2-final.md) §1 — APPEND Wave 99 row to the
+- [`docs/ARCHIVE/audit-waves-1-99/wave93-phase2-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave93-phase2-final.md) §1 — APPEND Wave 99 row to the
   Kanzi 12-cell table.
 
 ## §15.19 Wave 109.A — Kanzi N=1000 deterministic re-run attempt (additive, does NOT delete any §15 row above)
@@ -3709,7 +3709,7 @@ the framework's continuous-latent endpoint through the bridge.
 - [`docs/audit/flowmol3/c-flowmol3-n1000.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/flowmol3/c-flowmol3-n1000.md) — Wave 109.C FlowMol3 sibling attempt
 - [`docs/audit/lineageflow/b-lineageflow-n1000-gpu.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/lineageflow/b-lineageflow-n1000-gpu.md) — Wave 109.B LineageFlow sibling attempt
 - [`docs/audit/paper_claims/d-paper-package-update.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/paper_claims/d-paper-package-update.md) — Wave 109.D paper-package reconciliation summary
-- Full Wave 99.B audit: [`docs/audit/wave99b-n1000-verdict.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave99b-n1000-verdict.md).
+- Full Wave 99.B audit: [`docs/ARCHIVE/audit-waves-1-99/wave99b-n1000-verdict.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave99b-n1000-verdict.md).
 
 ### §15.20 Wave 115 Phase 4 — parse + analyze + paper §7.3 additive update (2026-09-12)
 
@@ -3854,7 +3854,7 @@ so the baseline arm's failure is silently swallowed (no
 - `/tmp/w115_analysis/power_analysis.json` (Phase 4 power analysis)
 - `/tmp/w115/baseline_seed42.log` (Phase 3 sweep failure traceback)
 - [`docs/ARCHIVE/legacy-paper/paper-draft.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/legacy-paper/paper-draft.md) §7.3 (Wave 115.P4 additive update — citation of bootstrap CIs + power numbers)
-- [`docs/audit/wave99b-n1000-verdict.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave99b-n1000-verdict.md) (Wave 99.B baseline for the power tool verdict precedence)
+- [`docs/ARCHIVE/audit-waves-1-99/wave99b-n1000-verdict.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave99b-n1000-verdict.md) (Wave 99.B baseline for the power tool verdict precedence)
 
 ### §15.21 Wave 120 Agent 6 — partial Kanzi N=1000 GPU re-sweep + Phase 2 BLOCKED → RESOLVED with PARTIAL data (2026-09-12)
 
@@ -4456,7 +4456,7 @@ Wave 139 is the **LineageFlow NFE scan paper-metric axis** wave that re-runs the
 - Camera-ready deferred list shrinks by 1 item (~~Wave 86 LineageFlow N=1000 HMMER raw JSON~~ removed)
 - NO push (Wave 11+ user-gated); ADDITIVE only; NO source code changes; NO experiments (the 8-cell JSON is a re-derivation of an existing sweep); single atomic Agent 5 commit.
 
-See [`docs/audit/lineageflow/lineageflow-nfe-scan.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/lineageflow/lineageflow-nfe-scan.md) (full Wave 139 audit trail) + [`docs/baseline-audit-report.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/baseline-audit-report.md) §R.29 (Wave 139 ledger row, inserted between §R.28 Wave 138 and §R.30 Wave 140) + [`verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json) (Phase 4 8-cell aggregated output) + [`docs/ARCHIVE/legacy-paper/paper-draft.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/legacy-paper/paper-draft.md) §10.4 Item K8 (RESOLVED by Wave 139) + [`docs/audit/wave86-phase3-sweep.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave86-phase3-sweep.md) §2 (R1 headline source) + [`docs/audit/push_state/submission-prep.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/push_state/submission-prep.md) (predecessor wave).
+See [`docs/audit/lineageflow/lineageflow-nfe-scan.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/lineageflow/lineageflow-nfe-scan.md) (full Wave 139 audit trail) + [`docs/baseline-audit-report.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/baseline-audit-report.md) §R.29 (Wave 139 ledger row, inserted between §R.28 Wave 138 and §R.30 Wave 140) + [`verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json) (Phase 4 8-cell aggregated output) + [`docs/ARCHIVE/legacy-paper/paper-draft.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/legacy-paper/paper-draft.md) §10.4 Item K8 (RESOLVED by Wave 139) + [`docs/ARCHIVE/audit-waves-1-99/wave86-phase3-sweep.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave86-phase3-sweep.md) §2 (R1 headline source) + [`docs/audit/push_state/submission-prep.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/push_state/submission-prep.md) (predecessor wave).
 
 ### §15.39 Wave 140 — Docstring audit refresh (2026-09-14)
 
@@ -9024,7 +9024,7 @@ references resolve to JSON/CSV evidence under `verification_outputs/`
 
 | section_id | headline_summary | verification_outputs_ref | audit_doc_ref |
 |---|---|---|---|
-| `## 15` (intro) | §15 captures the Wave 86-93 Kanzi real-ckpt framework-vs-baseline close-out: Wave 88 baseline N=1000 RMSD 0.902 Å, Wave 92c framework N=10 RMSD 1.766 Å (Δ +0.86 Å), 4/6 UNDERPOWERED | n/a (section header) | `docs/audit/wave99b-n1000-verdict.md` |
+| `## 15` (intro) | §15 captures the Wave 86-93 Kanzi real-ckpt framework-vs-baseline close-out: Wave 88 baseline N=1000 RMSD 0.902 Å, Wave 92c framework N=10 RMSD 1.766 Å (Δ +0.86 Å), 4/6 UNDERPOWERED | n/a (section header) | `docs/ARCHIVE/audit-waves-1-99/wave99b-n1000-verdict.md` |
 | `### 15.1` | Wave 41 Agent B delivered `--force-mode {synthetic,real,auto}` CLI plumbing; thread `force_mode` through `_resolve_adapter`, `_run_cell`, `build_report`, `main` | n/a (CLI plumbing) | `docs/ARCHIVE/audit-waves-1-99/wave41-force-mode-real-results.md` |
 | `### 15.2` | Per-cell real-ckpt framework vs baseline on Kanzi (9 cells, 3 seeds × 3 NFE); all 9 cells TIE_AT_SATURATION; `adapter_mode: torch` confirmed in every cell | `verification_outputs/kanzi_real_force_mode_q4_2026.json` | `docs/ARCHIVE/audit-waves-1-99/wave41-force-mode-real-results.md` |
 | `### 15.3` | Adapter layer + solve layer wired correctly to real ckpt; metric layer still returns synthetic-fallback ceiling (0.95) | n/a (analysis) | `docs/ARCHIVE/audit-waves-1-99/wave41-force-mode-real-results.md` |
@@ -9043,7 +9043,7 @@ references resolve to JSON/CSV evidence under `verification_outputs/`
 | `## 15.10` | Wave 43 Agent A `--metric-mode real` real-metric layer: Kanzi 3 cells `marker=computed`; LineageFlow EMPTY (ESM-2-650M HF download blocked) | `verification_outputs/kanzi_real_metric_q4_2026.json`, `verification_outputs/lineageflow_real_metric_q4_2026.json` | `docs/ARCHIVE/audit-waves-1-99/wave43-metric-layer-fix.md` (see also `wave54-flowmol3-real-metric-impl.md`) |
 | `## 15.11` | Wave 44 Agent B: `FlowMatchingODEAdapter.observe_token_indices(trace, paper_quantities)` Protocol method; closes Wave 43 finding that both arms ran same forward path with same seed | `verification_outputs/kanzi_real_metric_v2_q4_2026.json`, `verification_outputs/lineageflow_real_metric_v2_q4_2026.json` | `docs/ARCHIVE/audit-waves-1-99/wave44-metric-layer-via-trace.md` (see commit `0d47230`) |
 | `## 15.12` | Wave 44 Agent C Tier 3 final eval: Kanzi 9 cells TIE_AT_SATURATION, LineageFlow 1 cell RUN_ERROR (EsmModel dtype mismatch); `framework_wins = 0`; Tier 3 NOT closed | `verification_outputs/kanzi_real_metric_v2_q4_2026.json`, `verification_outputs/lineageflow_real_metric_v2_q4_2026.json` | `docs/ARCHIVE/audit-waves-1-99/wave44-tier3-final-eval.md` |
-| `## §15.13` | Wave 45 Agent H post-fix re-eval: Kanzi 9 cells TIE_AT_SATURATION (unchanged), LineageFlow 1 cell RUN_ERROR (pre-existing `_torch_velocity_field` dtype bug NOT fixed); wallclock ratio inverted (was 0.36× baseline → now 1.06-1.64×) | `verification_outputs/kanzi_real_metric_v2_q4_2026.json`, `verification_outputs/lineageflow_real_metric_v2_q4_2026.json` | `docs/audit/wave45-final-eval.md` |
+| `## §15.13` | Wave 45 Agent H post-fix re-eval: Kanzi 9 cells TIE_AT_SATURATION (unchanged), LineageFlow 1 cell RUN_ERROR (pre-existing `_torch_velocity_field` dtype bug NOT fixed); wallclock ratio inverted (was 0.36× baseline → now 1.06-1.64×) | `verification_outputs/kanzi_real_metric_v2_q4_2026.json`, `verification_outputs/lineageflow_real_metric_v2_q4_2026.json` | `docs/ARCHIVE/audit-waves-1-99/wave45-final-eval.md` |
 | `## §15.14` | Wave 91-93 summary: Kanzi latent→coord bridge (`dfe0f4e`+`8c5eaaf`+`2a4c46e`), Kanzi adapter constants fix (`73c6978`), Kanzi upstream N-samples patch (`60dcbb7`), statistical power analysis tool (`e69ffd8`) | `verification_outputs/power_analysis/per_cell.csv` | `docs/ARCHIVE/audit-waves-1-99/wave91-phase5-final.md`, `wave92a-kanzi-fix-constants.md`, `wave92c-n1000-sweep-real.md`, `wave93-phase2-final.md` |
 | `## §15.15` | Wave 91/92/93 per-paper-claim FINAL status table (12 cells): 1 SUPPORTED (LineageFlow `hmmscan_total_hits` +116%), 1 REGRESSES (`flowmol3:pb_validity_pct` −9.95pp), 2 UNDERPOWERED, 8 TIE | `verification_outputs/power_analysis/per_cell.csv`, `per_cell.json` | `docs/ARCHIVE/audit-waves-1-99/wave93-phase2-final.md` |
 | `## §15.16` | Wave 96 Kanzi framework endpoint collapse root-caused + fixed + re-measured: framework arm measurably WORSE by +0.864 Å on `reconstruction_kabsch_rmsd_A` after all 3 free wins | `verification_outputs/wave96e-n1000-final.csv` | `docs/ARCHIVE/audit-waves-1-99/wave96e-n1000-final.md`, `wave96a-collapse-diagnosis.md`, `wave96c-fix-verification.md`, `wave96d-resweep.md`, `wave96e-final-synthesis.md` |
@@ -9081,7 +9081,7 @@ references resolve to JSON/CSV evidence under `verification_outputs/`
 | `## §15.49` | Wave 152 empirical depth + reviewer artifacts (2026-09-14) | n/a (empirical) | `docs/audit/wave152-empirical-depth.md` |
 | `## §15.50` | Wave 153 submission readiness + reviewer friction (2026-09-15) | n/a (readiness) | `docs/audit/wave153-submission-readiness.md` |
 | `## §15.51` | Wave 154b sweep POC + push (2026-09-15) | `verification_outputs/wave154b-sweep-poc.csv` | `docs/audit/wave154b-sweep-poc.md` |
-| `## §15.52` | Wave 155 _make_adapter fix + README + push (2026-09-15) | n/a (fix + docs) | `docs/audit/wave155-make-adapter-fix.md` |
+| `## §15.52` | Wave 155 _make_adapter fix + README + push (2026-09-15) | n/a (fix + docs) | `docs/ARCHIVE/audit-by-wave/wave155-make-adapter-fix.md` |
 | `## §15.53` | Wave 156+156c K1 real-ckpt sweep + HMMER real-seq + paper ADDITIVE disclosure + close (2026-09-15) | `verification_outputs/wave156-k1-real-ckpt.csv` | `docs/audit/wave156-k1-real-ckpt.md` |
 | `## §15.54` | Wave 157 kanzi shape fix + K1 RC5 re-run (15/15 OK) + tools/ ruff cleanup (249 → 0) + close (2026-09-15) | `verification_outputs/wave157-k1-rc5-rerun.csv` | `docs/audit/wave157-kanzi-shape-fix.md` |
 | `## §15.55` | Wave 158 scripts/ ruff cleanup (34 → 0) + LineageFlow N=1000 HMMER R1 +116% re-derivation + push + close (2026-09-15) | `verification_outputs/lineageflow_n1000_hmmer_w158.csv` | `docs/audit/wave158-ruff-cleanup.md` |

@@ -463,7 +463,7 @@ for TPAMI submission pending Wave 218 P3 N=1000 sweep verdict on
 the R2 row — the R2 row is now **CLOSED** at framework_wins (Wave
 218 P3 d_z = -0.099, p_raw = 1.7943e-03, Bonferroni-significant at
 α = 0.007143; reproducible from commit `e3d1c01` which contains the
-Wave 218 P1 bridge restore, see `docs/audit/wave218-p1-fix-applied.md`).
+Wave 218 P1 bridge restore, see `docs/ARCHIVE/audit-by-wave/wave218-p1-fix-applied.md`).
 
 ---
 
@@ -902,15 +902,15 @@ Wave 211 disclosures are preserved verbatim.
 - **5-arm ablation (Table 3.4):** preserved verbatim from the
   flattened paper draft; the per-arm values are sourced from the
   cumulative-add ablation.
-- **Efficiency + Pareto:** `docs/audit/wave211-p1-efficiency-narrative.md`
+- **Efficiency + Pareto:** `docs/ARCHIVE/audit-by-wave/wave211-p1-efficiency-narrative.md`
   (per-R-level wall-clock + memory + FLOPs + matched-compute
   definition).
-- **Matched-compute definition:** `docs/audit/wave209-p4-matched-compute-definition.md`
+- **Matched-compute definition:** `docs/ARCHIVE/audit-by-wave/wave209-p4-matched-compute-definition.md`
   (canonical NFE-matched / cross-budget / wall-clock-matched
   protocol).
 - **Boundary framing:** `docs/audit/wave208-p6-boundary-framing.md`
   (unified R5b / R5a / R3 three-sentence boundary format).
-- **Theorem 1 self-contained audit:** `docs/audit/wave208-p3-theorem-1-self-contained.md`
+- **Theorem 1 self-contained audit:** `docs/ARCHIVE/audit-by-wave/wave208-p3-theorem-1-self-contained.md`
   (audit doc for the internal Theorem 1 restatement).
 - **Cross-adapter ablation:** `docs/audit/wave208-p4-cross-adapter-ablation.md`
   (CLM-057 cross-adapter status upgrade; entropy axis CONFIRMED on
@@ -922,7 +922,7 @@ Wave 211 disclosures are preserved verbatim.
   (per-seed → per-record reframing of the 14/16 UNDERPOWERED head-
   to-head verdict; methodological turning point for the 4-arm
   reframing).
-- **Six main claims + signature ordering:** `docs/audit/wave211-p2-six-main-claims.md`
+- **Six main claims + signature ordering:** `docs/ARCHIVE/audit-by-wave/wave211-p2-six-main-claims.md`
   (six contribution bullets + abstract first sentence + signature
   ordering + 4-arm reframing of per-seed analysis power).
 - **§2 Method restatement (Theorem 1):** `docs/audit/wave211-p3-f-side-actual-values.md`

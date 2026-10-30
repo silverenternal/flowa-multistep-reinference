@@ -226,6 +226,9 @@ not_in_nav: |
   audit/audit-index-refresh.md
   audit/vendored-pristine-gate.md
   audit/doc-anchor-audit.md
+  audit/pytest-order-dependence.md
+  audit/portability-prefix-audit.md
+  audit/evidence-pointer-audit.md
   audit/mnist-gpu-backend.md
   audit/wave281/p-partial-evidence.md
   audit/wave289-p1-honest-reframe.md

@@ -15,7 +15,8 @@ import re
 from collections import Counter
 from pathlib import Path
 
-PREMISE = Path("/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/premise")
+REPO_ROOT = Path(__file__).resolve().parents[1]
+PREMISE = REPO_ROOT / "verification_outputs" / "legacy-gap40-42" / "gap41b-nfe150" / "premise"
 LINE = re.compile(
     r"^(?P<dir>[^:]+)/(?P<file>[^:]+):\s+total_hits=(?P<hits>\d+)\s+"
     r"records=(?P<records>\d+)\s+records_with_hits=(?P<ge1>\d+)\s+"

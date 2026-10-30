@@ -3,9 +3,9 @@
 
 Reads the 18-cell Wave 186 P3 eval summary CSV and produces:
 
-1. /home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave186-p4-aggregation.csv
+1. verification_outputs/wave186-p4-aggregation.csv
 2. Four per-axis sensitivity plots under
-   /home/hugo/codes/flowa-multistep-reinference/plots/wave186-p4-<axis>.png
+   plots/wave186-p4-<axis>.png
 3. A machine-readable summary JSON printed to stdout for the harness to
    parse (robust_regions + framework_consistent_winner + commit_sha).
 

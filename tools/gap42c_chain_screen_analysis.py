@@ -23,7 +23,8 @@ import re
 import sys
 from pathlib import Path
 
-SCREEN = Path("/home/hugo/codes/flowa-multistep-reinference/verification_outputs/legacy-gap40-42/gap41b-nfe150/chain_screen")
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SCREEN = REPO_ROOT / "verification_outputs" / "legacy-gap40-42" / "gap41b-nfe150" / "chain_screen"
 LINE = re.compile(
     r"^(?P<dir>[^:]+)/(?P<file>[^:]+):\s+total_hits=(?P<hits>\d+)\s+"
     r"records=(?P<records>\d+)\s+records_with_hits=(?P<ge1>\d+)\s+"

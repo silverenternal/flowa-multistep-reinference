@@ -15,8 +15,8 @@ and computes the task-specific summary:
 * Bonferroni-corrected at α=0.05/2=0.025 for the two primary axes.
 
 Output:
-* ``/home/hugo/codes/flowa-multistep-reinference/verification_outputs/
-  wave190-p3-lineageflow-n30.json`` (canonical Wave 190 P3 path)
+* ``verification_outputs/wave190-p3-lineageflow-n30.json``
+  (canonical Wave 190 P3 path)
 * ``/tmp/w190_p3/wave190-p3-lineageflow-n30-summary.json`` (same payload;
   the task spec mentioned ``--output-dir /tmp/w190_p3/`` as the convenience
   path)

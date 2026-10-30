@@ -595,12 +595,12 @@ Wave 210 disclosures are preserved verbatim.
   every d_z / p / cluster-robust p cited in Tables 3.1–3.3).
 - **5-arm ablation:** `docs/drafts/paper-flattened-draft.md` §3.4
   (preserved verbatim from the Wave 207 P6 flattened draft).
-- **Efficiency + Pareto:** `docs/audit/wave208-p5-efficiency-pareto.md`
+- **Efficiency + Pareto:** `docs/ARCHIVE/audit-by-wave/wave208-p5-efficiency-pareto.md`
   (per-R-level wall-clock + memory + R5b Pareto CSV + matched-compute
   definition).
 - **Boundary framing:** `docs/audit/wave208-p6-boundary-framing.md`
   (Wave 208 P6 unified R5b / R5a / R3 three-sentence boundary format).
-- **Theorem 1 self-contained:** `docs/audit/wave208-p3-theorem-1-self-contained.md`
+- **Theorem 1 self-contained:** `docs/ARCHIVE/audit-by-wave/wave208-p3-theorem-1-self-contained.md`
   (Wave 208 P3 audit doc for the internal Theorem 1 restatement).
 - **Cross-adapter ablation:** `docs/audit/wave208-p4-cross-adapter-ablation.md`
   (Wave 208 P4 CLM-057 cross-adapter status upgrade; entropy axis

@@ -227,12 +227,34 @@ def _install_mock_flowmol(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     fake_module = types.ModuleType("adaptive_reflow.adapters.flowmol3_metrics_upstream")
     fake_module._UPSTREAM_MODULES = {"SampleAnalyzer": SampleAnalyzer, "SampledMolecule": _FakeSampledMolecule}
     fake_module.is_upstream_available = lambda: True
-    fake_module.FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR = (
-        "/home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/repo/data/geom_5_kekulized"
+    fake_module.FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR = str(
+        REPO_ROOT / "data" / "FlowMol3" / "repo" / "data" / "geom_5_kekulized"
     )
-    fake_module.FLOWMOL3_UPSTREAM_REPO = "/home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/repo"
+    fake_module.FLOWMOL3_UPSTREAM_REPO = str(REPO_ROOT / "data" / "FlowMol3" / "repo")
     fake_module.FLOWMOL3_PINNED_COMMIT = "77cae22174b7792b0e25e9e0414038420736d841"
     monkeypatch.setitem(sys.modules, "adaptive_reflow.adapters.flowmol3_metrics_upstream", fake_module)
+
+    # Swapping ``sys.modules`` only reaches a consumer that imports lazily.
+    # ``tools.paper_metrics`` binds four of these names at module level, so in a
+    # full run -- where some earlier test has already imported it -- the swap is
+    # invisible and ``is_upstream_available`` stays the real one, which returns
+    # False without torch.  Every helper then returns its 0.0 sentinel.  Patch
+    # the bound names too, so the fake is in force regardless of import order.
+    from tools import paper_metrics as _paper_metrics  # noqa: PLC0415
+
+    monkeypatch.setattr(_paper_metrics, "is_upstream_available", lambda: True, raising=False)
+    monkeypatch.setattr(
+        _paper_metrics,
+        "FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR",
+        fake_module.FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        _paper_metrics,
+        "FLOWMOL3_UPSTREAM_REPO",
+        fake_module.FLOWMOL3_UPSTREAM_REPO,
+        raising=False,
+    )
     return canned
 
 
@@ -264,7 +286,7 @@ def test_pb_validity_pct_subset_vs_full(monkeypatch: pytest.MonkeyPatch) -> None
     """Same input → ``full_pb`` (vendored YAML) is stricter than ``subset_pb``.
 
     The full path (``full_pb=True``, Wave 82 default) injects the
-    vendored ``data/FlowMol3/pb_config_with_energy_ratio.yaml`` via
+    vendored ``tools/pb_config_with_energy_ratio.yaml`` via
     ``analyzer.buster = PoseBusters(config=<yaml_dict>)``. The YAML
     has the ``energy_ratio`` module UNCOMMENTED with paper-tuned
     parameters (``threshold_energy_ratio=100.0``,
@@ -439,7 +461,7 @@ def test_aggregator_returns_all_4_metrics(monkeypatch: pytest.MonkeyPatch) -> No
 # Wave 82 closes the gap between the paper's ``pb_validity_pct = 0.919``
 # and our reported ``pb_valid ≈ 1.0`` (which lacked the energy_ratio
 # module). The fix: vendor a custom PoseBusters config at
-# ``data/FlowMol3/pb_config_with_energy_ratio.yaml`` with the energy_ratio
+# ``tools/pb_config_with_energy_ratio.yaml`` with the energy_ratio
 # module UNCOMMENTED and paper-tuned params
 # (``threshold_energy_ratio=100.0``,
 # ``ensemble_number_conformations=50``), then inject it via
@@ -455,7 +477,7 @@ def test_pb_validity_pct_uses_xtb_energy_ratio(
     """``full_pb=True`` injects the vendored YAML into ``analyzer.buster``.
 
     The Wave 82 vendored YAML
-    (``data/FlowMol3/pb_config_with_energy_ratio.yaml``) uncomments the
+    (``tools/pb_config_with_energy_ratio.yaml``) uncomments the
     PoseBusters ``energy_ratio`` module with upstream-tuned parameters
     (``threshold_energy_ratio=100.0``,
     ``ensemble_number_conformations=50``). Our
@@ -593,7 +615,7 @@ def test_pb_validity_pct_falls_back_to_uff_when_xtb_missing(
     """When the vendored YAML is missing, fall back to subset_pb (UFF).
 
     The vendored YAML at
-    ``data/FlowMol3/pb_config_with_energy_ratio.yaml`` is REQUIRED for
+    ``tools/pb_config_with_energy_ratio.yaml`` is REQUIRED for
     paper parity (energy_ratio UNCOMMENTED with paper-tuned params).
     When the file is missing on disk (e.g. incomplete Wave 82 Phase A
     vendoring), :func:`compute_pb_validity_pct` falls back to the

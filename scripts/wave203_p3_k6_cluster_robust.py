@@ -25,13 +25,13 @@ This script:
   6. Compares cluster-robust verdict with naive verdict.
 
 Inputs:
-  /home/hugo/codes/flowa-multistep-reinference/verification_outputs/
+  verification_outputs/
     k6_foldability_n1000_w161_q3_2026/{baseline,framework}/foldability/
       foldability.jsonl
       self_consistency.jsonl
 
 Outputs:
-  /home/hugo/codes/flowa-multistep-reinference/verification_outputs/
+  verification_outputs/
     wave203-p3-k6-cluster-robust.csv
     wave203-p3-k6-cluster-robust.json
 """

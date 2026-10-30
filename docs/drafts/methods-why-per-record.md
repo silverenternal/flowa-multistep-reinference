@@ -64,8 +64,8 @@ For the framework default F-side profile
 ($d = 1.0, c = 1.0, \rho = 0.1, \eta = 0.1$) on the canonical
 witness $g(x) = (1 + 0.25 \tanh x) \sin x$ (Proposition 2 family,
 `docs/audit/wave211-p3-f-side-actual-values.md` §4.3), the Wave 226
-P1 audit (`docs/audit/wave226-p1-a-g-values.md`) and the Wave 227 P1
-diagnostic (`docs/audit/wave227-p1-a-g-diagnostic.md`) report
+P1 audit (`docs/ARCHIVE/audit-by-wave/wave226-p1-a-g-values.md`) and the Wave 227 P1
+diagnostic (`docs/ARCHIVE/audit-by-wave/wave227-p1-a-g-diagnostic.md`) report
 
 | quantity | value | source |
 |---|---|---|
@@ -106,7 +106,7 @@ per-adapter empirical estimate. The per-adapter empirical work
 product is the per-record BL distance
 (`adaptive_reflow/theory/rate_bound.py::theorem1_bl_convergence_witness`,
 R6 R-level observable), not the $A_g$ coefficient itself; see §MS.10.5.1
-and `docs/audit/wave227-p1-a-g-diagnostic.md` §6 for the structural
+and `docs/ARCHIVE/audit-by-wave/wave227-p1-a-g-diagnostic.md` §6 for the structural
 distinction.
 
 ## §MS.10.2 Per-seed variance floor under the $A_g$ bound
@@ -163,7 +163,7 @@ bound on the full d-dim latent-space seed-to-seed variance** whereas
 scPerplexity is a 1-D projection of the output — in the realized
 1-D projection the seed-to-seed noise is far below the d-dim worst
 case, and the bound is **conservative** for these cells. See
-`docs/audit/wave227-p2-floor-corrected.md` §"Why the 2 SUPPORTED
+`docs/ARCHIVE/audit-by-wave/wave227-p2-floor-corrected.md` §"Why the 2 SUPPORTED
 cells count as inconsistent" for the original argument.
 
 **Numerical summary, 16-cell 4-arm (`verification_outputs/wave227-p2-floor-corrected.csv`):**
@@ -223,7 +223,7 @@ SUPPORTED for the vanilla scPerplexity arms at $|d_z| \approx 2.93
 / 2.99$ (consistent with $|d_z|$ exceeding the standard t-test
 MDD $\approx 0.73$, even though the variance-bound floor (MS.10.3)
 of $3.7522$ is a conservative worst-case that these cells sit
-below — see §MS.10.2 and `docs/audit/wave227-p2-floor-corrected.md`
+below — see §MS.10.2 and `docs/ARCHIVE/audit-by-wave/wave227-p2-floor-corrected.md`
 §"Why the 2 SUPPORTED cells count as inconsistent").
 
 This justifies the project's choice of **per-record analysis as the
@@ -269,7 +269,7 @@ budget.
    across all 12 adapters** because no adapter constructs a
    per-adapter $g_{\text{adapter}}$ and no adapter supplies a
    `profile_residual_fn` to the runner / scheduler / eval pipeline
-   (Wave 227 P1 diagnostic, `docs/audit/wave227-p1-a-g-diagnostic.md`).
+   (Wave 227 P1 diagnostic, `docs/ARCHIVE/audit-by-wave/wave227-p1-a-g-diagnostic.md`).
    The per-seed variance floor (MS.10.3) is therefore a **canonical
    bound** derived from a **canonical witness**, not a
    per-adapter-specific bound; adapters that override the F-side
@@ -313,7 +313,7 @@ per-adapter bound**, three structural facts must hold:
    bit-identical across all 12 adapters in
    `verification_outputs/wave226-p1-a-g-values.csv`). A $g$-swap
    changes $A_g$; a $(d, c, \rho, \eta)$-swap does not
-   (`docs/audit/wave227-p1-a-g-diagnostic.md` §2).
+   (`docs/ARCHIVE/audit-by-wave/wave227-p1-a-g-diagnostic.md` §2).
 
 3. **Adapter-specificity lives at the empirical BL-distance
    layer.** The framework's adapter-specific empirical signal is
@@ -342,7 +342,7 @@ $g_{\text{adapter}}(s)$ constructor that builds a residual profile
 from each adapter's posterior geometry and (b) wiring it into the
 `paper_quantities_provider` injection point; this is not implemented
 in any of the 12 adapter classes today (Wave 227 P1 diagnostic,
-`docs/audit/wave227-p1-a-g-diagnostic.md`).
+`docs/ARCHIVE/audit-by-wave/wave227-p1-a-g-diagnostic.md`).
 
 ### §MS.10.5.2 Framework value-add — scheduler architecture, not per-adapter paper quantities
 
@@ -512,7 +512,7 @@ length, family, difficulty; Wave 230 P2 §"Honest interpretation").
   (one paired diff per record; up to 300 paired records per cell).
 - **JSON summary:** `verification_outputs/wave230-p2-real-4arm-per-record.json`
   (rows + summary + methodology + verdict_precedence + references).
-- **Audit:** `docs/audit/wave230-p2-real-4arm-per-record.md`
+- **Audit:** `docs/ARCHIVE/audit-by-wave/wave230-p2-real-4arm-per-record.md`
   (Wave 230 P2 audit doc; supersedes the Wave 229 P1 bootstrap).
 - **Harness:** `tools/wave230_p2_real_4arm_per_record.py`
   (CPU-only; no fresh GPU sweep required — per-record data
@@ -574,7 +574,7 @@ reading of the 4-arm Table B.
 ## §MS.10.7 $A_g$ vs $L_{\text{emp}}$ — distinct quantities in the bound
 
 The Wave 229 P2 empirical measurement
-(`docs/audit/wave229-p2-adapter-lipschitz.md`) reports
+(`docs/ARCHIVE/audit-by-wave/wave229-p2-adapter-lipschitz.md`) reports
 $L_{\text{emp,max}}$ in the range $[0.6839, 35.6278]$ across
 the 12 framework adapters, while $A_g = 0.8549457422$ is
 identical across adapters. A reviewer reading §MS.10.2 alongside
@@ -668,7 +668,7 @@ scPerplexity; 0 REGRESSES — the Wave 229 P1 bootstrap's 7
 REGRESSES were bootstrap variance-inflation artifacts).
 
 Full mathematical decomposition is in
-`docs/audit/wave230-p3-l-emp-vs-a-g.md` (Wave 230 P3 audit,
+`docs/ARCHIVE/audit-by-wave/wave230-p3-l-emp-vs-a-g.md` (Wave 230 P3 audit,
 closes the DeepSeek flag).
 
 ---
@@ -709,16 +709,16 @@ closes the DeepSeek flag).
   ($\sigma_{\text{record}}^{\text{pLDDT}} = 15.177$,
   $\sigma_{\text{record}}^{\text{scPerplexity}} = 3.661$,
   Wave 227 P2 §Inputs).
-- `docs/audit/wave226-p1-a-g-values.md` — Wave 226 P1 audit on $A_g$
+- `docs/ARCHIVE/audit-by-wave/wave226-p1-a-g-values.md` — Wave 226 P1 audit on $A_g$
   (input to this paragraph).
-- `docs/audit/wave226-p2-methods-paragraph.md` — Wave 226 P2 audit
+- `docs/ARCHIVE/audit-by-wave/wave226-p2-methods-paragraph.md` — Wave 226 P2 audit
   establishing the $d = 512$ convention for §MS.10.2.
-- `docs/audit/wave226-p3-variance-bound.md` — Wave 226 P3
+- `docs/ARCHIVE/audit-by-wave/wave226-p3-variance-bound.md` — Wave 226 P3
   variance-bound audit (correct math, 14/16 consistent).
-- `docs/audit/wave227-p1-a-g-diagnostic.md` — Wave 227 P1
+- `docs/ARCHIVE/audit-by-wave/wave227-p1-a-g-diagnostic.md` — Wave 227 P1
   diagnostic: $A_g$ is canonical-witness, not per-adapter runtime
   (§MS.10.1, §MS.10.4 caveat 4, §MS.10.5.1).
-- `docs/audit/wave227-p2-floor-corrected.md` — Wave 227 P2 corrected
+- `docs/ARCHIVE/audit-by-wave/wave227-p2-floor-corrected.md` — Wave 227 P2 corrected
   per-seed floor (bit-identical to Wave 226 P3; source for the
   3.75 scPerplexity / 0.905 pLDDT numbers in §MS.10.2).
 - `docs/drafts/methods-stats-flattened-draft.md` §MS.2.4 (4-arm
@@ -791,7 +791,7 @@ three decimal places). However **14/16 cells have
 band), and **9/16 cells have BF01 >= 10** (Wagenmakers "strong
 evidence for H0"). The paper-ready claim is **practical
 equivalence** in 9-14/16 cells, not strict TOST equivalence.
-Audit doc: `docs/audit/wave234-p2-tost.md`. CSV:
+Audit doc: `docs/ARCHIVE/audit-by-wave/wave234-p2-tost.md`. CSV:
 `verification_outputs/wave234-p2-tost.csv`.
 
 ### §MS.10.8.2 Jonckheere-Terpstra monotone trend test (Wave 234 P3)
@@ -843,7 +843,7 @@ Bayesian evidence for the null** (Wagenmakers "strong evidence"
 threshold); the remaining 7 cells are inconclusive at BF01 ≥ 10
 but supported by the TOST in-band point estimate or by a
 decisive framework advantage. Audit doc:
-`docs/audit/wave234-p4-bf01.md`. CSV:
+`docs/ARCHIVE/audit-by-wave/wave234-p4-bf01.md`. CSV:
 `verification_outputs/wave234-p4-bf01.csv`.
 
 ### §MS.10.8.4 Random-effects meta-analysis (Wave 234 P5)
@@ -870,7 +870,7 @@ estimate is firmly positive). Cross-domain consistency narrative:
 framework wins on the high-signal cells, ties on the noisy ones,
 loses on the single CIFAR-matched-NFE FID cell where the
 framework's adaptive schedule consumes more compute at fixed
-NFE. Audit doc: `docs/audit/wave234-p5-meta-analysis.md`.
+NFE. Audit doc: `docs/ARCHIVE/audit-by-wave/wave234-p5-meta-analysis.md`.
 Outputs: `verification_outputs/wave234-p5-meta-analysis.csv` +
 `verification_outputs/wave234-p5-meta-summary.json`.
 
@@ -944,13 +944,13 @@ audience expects.
 
 ### §MS.10.8.7 Cross-references
 
-- `docs/audit/wave234-p2-tost.md` — TOST audit (16 cells;
+- `docs/ARCHIVE/audit-by-wave/wave234-p2-tost.md` — TOST audit (16 cells;
   0/16 strict equivalence; 14/16 in-band; 9/16 BF01 >= 10).
 - `docs/audit/wave234-p3-jonckheere.md` — JT audit (R2 + R6;
   monotone confirmed; z = +20.673 / +21.778).
-- `docs/audit/wave234-p4-bf01.md` — BF01 audit (16 cells;
+- `docs/ARCHIVE/audit-by-wave/wave234-p4-bf01.md` — BF01 audit (16 cells;
   9/16 strong H0; 2/16 extreme alternative).
-- `docs/audit/wave234-p5-meta-analysis.md` — meta-analysis audit
+- `docs/ARCHIVE/audit-by-wave/wave234-p5-meta-analysis.md` — meta-analysis audit
   (K = 12; pooled d = +1.117; I^2 = 99.60%).
 - `docs/audit/wave234-p6-non-inferiority.md` — non-inferiority
   audit (R5b; p_NI = 0.9985; verdict NOT non-inferior).

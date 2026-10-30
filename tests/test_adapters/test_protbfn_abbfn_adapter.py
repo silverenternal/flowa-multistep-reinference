@@ -44,6 +44,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+REPO_ROOT: Path = Path(__file__).resolve().parents[2]
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -710,9 +712,7 @@ def test_force_mode_upstream_jax_in_allowlist() -> None:
     )
 
     if is_upstream_available():
-        ckpt = Path(
-            "/home/hugo/codes/flowa-multistep-reinference/data/protbfn_abbfn/weights_real/ProtBFN"
-        )
+        ckpt = REPO_ROOT / "data" / "protbfn_abbfn" / "weights_real" / "ProtBFN"
         if ckpt.is_dir() and (ckpt / "tree_def.npy").is_file():
             a = ProtBFNAbBFNAdapter(
                 checkpoint_path=ckpt,

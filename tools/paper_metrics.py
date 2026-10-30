@@ -291,7 +291,7 @@ def compute_pb_validity_pct(
     """Compute ``pb_validity_pct`` per upstream ``SampleAnalyzer.analyze(posebusters=True)``.
 
     Paper path (``full_pb=True``, default): PoseBusters is invoked
-    with the vendored ``data/FlowMol3/pb_config_with_energy_ratio.yaml``
+    with the vendored ``tools/pb_config_with_energy_ratio.yaml``
     config (Wave 82 — energy_ratio module UNCOMMENTED with paper-tuned
     ``threshold_energy_ratio=100.0``, ``ensemble_number_conformations=50``).
     Paper value: ``0.919``.

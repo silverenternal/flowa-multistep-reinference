@@ -9,6 +9,15 @@ nothing and the adapter falls back.
 
 The fix was mechanical: ``Path(__file__).resolve().parents[N]``, which yields
 the identical absolute path here and the clone's path anywhere else.
+
+The first sweep matched the bare literal *with* its closing quote, so paths
+prefixed by the root — ``".../data/FlowMol3/repo"`` — survived in 22 files.
+The check now matches the prefix alone.
+
+Machine-local toolchain paths (``/home/hugo/xtb_prefix/bin/xtb``,
+``/home/hugo/.venv-flowmol311``, …) are deliberately out of scope: they name
+software installed on this host rather than this checkout, and each already
+has an env-var override or an ``is_file()`` guard.
 """
 
 from __future__ import annotations
@@ -20,7 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 SCANNED = ("adaptive_reflow", "tools", "scripts", "reproduce", "tests")
-LITERAL = '"/home/hugo/codes/flowa-multistep-reinference"'
+REPO_LITERAL = "/home/hugo/codes/flowa-multistep-reinference"
 
 
 def test_no_hardcoded_repo_root() -> None:
@@ -30,7 +39,7 @@ def test_no_hardcoded_repo_root() -> None:
         for path in (ROOT / top).rglob("*.py")
         if path.is_file() and path.resolve() != Path(__file__).resolve()
         for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
-        if LITERAL in line
+        if REPO_LITERAL in line
     ]
     assert hits == [], hits
 

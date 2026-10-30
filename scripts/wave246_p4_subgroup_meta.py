@@ -37,12 +37,10 @@ import csv
 import math
 from pathlib import Path
 
-META_CSV = Path(
-    "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave234-p5-meta-analysis.csv"
-)
-OUT_JSON = Path(
-    "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave246-p4-subgroup-meta.json"
-)
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+META_CSV = REPO_ROOT / "verification_outputs" / "wave234-p5-meta-analysis.csv"
+OUT_JSON = REPO_ROOT / "verification_outputs" / "wave246-p4-subgroup-meta.json"
 
 # Domain assignment by `study` (CSV column 1).
 # Keys are study identifiers (CSV column 1); values are domain labels.

@@ -53,7 +53,7 @@ E_RHO_CANONICAL = 0.0001  # exterior_gap_e_rho(rho=0.1, eta=0.1)
 HYPOTHESIS_REL_TOL = 0.15
 
 # D.4 byte-stable test invocation.
-D4_PYTEST_BIN = "/home/hugo/codes/flowa-multistep-reinference/.venvs/lineageflow_venv/bin/python"
+D4_PYTEST_BIN = str(REPO_ROOT / ".venvs" / "lineageflow_venv" / "bin" / "python")
 D4_PYTEST_CMD = [
     D4_PYTEST_BIN, "-m", "pytest",
     "tests/test_d4_regression_vectors.py",

@@ -429,7 +429,7 @@ def test_project_out_inv_closes_rmsd_gap(
     # PYTHONPATH — the test then degrades to a sanity check on
     # the trained inverse's metadata + weight shape).
     try:
-        sys.path.insert(0, "/home/hugo/codes/flowa-multistep-reinference/data/kanzi_upstream/src")
+        sys.path.insert(0, str(REPO_ROOT / "data" / "kanzi_upstream" / "src"))
         from kanzi.fsq import FSQ  # noqa: WPS433
     except ImportError:
         # Fall back to a shape-only smoke test (no real ckpt needed).
@@ -453,10 +453,7 @@ def test_project_out_inv_closes_rmsd_gap(
     # weights from the Wave 36 cleaned_model.pt ckpt. This guarantees
     # the test uses the EXACT same geometry the trained inverse was
     # fit against.
-    ckpt_path = (
-        "/home/hugo/codes/flowa-multistep-reinference/data/kanzi_ckpt/"
-        "cleaned_model.pt"
-    )
+    ckpt_path = str(REPO_ROOT / "data" / "kanzi_ckpt" / "cleaned_model.pt")
     blob = torch.load(ckpt_path, map_location="cpu", weights_only=False)
     state = blob.get("model", blob)
     if "state_dict" in state and isinstance(state["state_dict"], dict):

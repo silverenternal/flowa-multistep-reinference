@@ -18,8 +18,8 @@ Plus newly produced data:
 - /tmp/wave216_p2_r5a/two_moons_FreeTrajScheduler_seed{43,44,45}.csv
 
 Writes:
-- /home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave216-p2-r5a-extended.csv
-- /home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave216-p2-r5a-extended.json
+- verification_outputs/wave216-p2-r5a-extended.csv
+- verification_outputs/wave216-p2-r5a-extended.json
 """
 
 from __future__ import annotations

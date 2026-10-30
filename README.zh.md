@@ -376,8 +376,8 @@ Per-cell audit records under [`docs/audit/`](https://github.com/silverenternal/f
 | **D.4 byte-stable regression** | **30/30 PASS** | `tests/test_d4_regression_vectors.py` |
 | **Contracts test suite** | **195/195 PASS** | `tests/test_contracts*.py` |
 | **Data integrity** | **6/149/0** (datasets verified / bytes checked / mismatches) | `tools/check_data_integrity.py` |
-| **Reproducibility** | **12/12 PASS** | `tools/verify_reproducibility.py` |
-| **Byte-stable composite axis (3/3 Tier-3)** | Kanzi +0.1695, LineageFlow +0.2083, FlowMol3 +0.1182 | `verification_outputs/composite_axis_byte_stable/SOURCE.md` |
+| **Reproducibility** | **12/12 PASS** | `tools/verify_reproducibility_smoke.py` |
+| **Byte-stable composite axis (3/3 Tier-3)** | Kanzi +0.1695, LineageFlow +0.2083, FlowMol3 +0.1182 | `docs/headline-evidence/composite_axis_byte_stable/SOURCE.md` |
 | **Per-cell audit trail** | multi-phase self-contained `docs/audit/` records | `docs/audit/INDEX.md` |
 | **Source tree freeze** | `v3.1-internal-publishable` tag, vendored 8 repos UNMODIFIED | `docs/ARCHITECTURE.md` |
 | **Pytest** | 子集 green；全量运行给出 25 failed / 5166 passed / 145 skipped / 16 errors（环境/顺序相关；`tests/test_claims/` 隔离下 146/146 green）— 见 [`docs/audit/INDEX.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/INDEX.md) 的 `engineering` 簇 | `pytest tests/` |

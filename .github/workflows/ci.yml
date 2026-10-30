@@ -129,13 +129,13 @@ jobs:
         run: python tools/check_claims_consistency.py
 
       - name: Gate 7 -- package and evidence integrity
-        # Eight checkers that each exist because their surface drifted
+        # Twelve checkers that each exist because their surface drifted
         # unnoticed at least once (todo.json gate_note records the
-        # reason). They were written over 2026-10-29 and were wired into
-        # no CI job, so the drift they catch was still free to recur;
-        # this step is what makes them gates. Every one is stdlib-only
-        # and reads tracked files, so no install beyond Python is
-        # needed, and all seven finish in under 20 s together.
+        # reason). They were written over 2026-10-29/30 and were wired
+        # into no CI job, so the drift they catch was still free to
+        # recur; this step is what makes them gates. Every one is
+        # stdlib-only and reads tracked files, so no install beyond
+        # Python is needed, and all twelve finish in under 20 s together.
         #
         # ``check_submission_links`` exempts exactly one target
         # (the 68 MB FlowMol3 checkpoint, which is deliberately not
@@ -153,6 +153,7 @@ jobs:
           PYTHONPATH=. python tools/regen_audit_index.py --check
           PYTHONPATH=. python tools/check_vendored_pristine.py
           PYTHONPATH=. python tools/check_doc_anchors.py
+          PYTHONPATH=. python tools/check_reviewer_pointers.py
 
   # Test + docs build. Runs the pytest suite (slow / benchmark excluded)
   # and the mkdocs --strict build. Same runner pool as ``lint-types``

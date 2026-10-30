@@ -10,7 +10,7 @@ Reads:
 - /tmp/wave209_p6_r5a/two_moons_EvidenceDrivenScheduler_seed{0..3}.csv (partial)
 
 Writes:
-- /home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave209-p6-r5a-extended.csv
+- verification_outputs/wave209-p6-r5a-extended.csv
 """
 
 from __future__ import annotations
@@ -21,8 +21,10 @@ from pathlib import Path
 
 from scipy import stats
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
 OUTPUT_DIR = Path("/tmp/wave209_p6_r5a")
-DEST = Path("/home/hugo/codes/flowa-multistep-reinference/verification_outputs/wave209-p6-r5a-extended.csv")
+DEST = REPO_ROOT / "verification_outputs" / "wave209-p6-r5a-extended.csv"
 
 
 def per_seed_w2_tail(csv_path: Path, tail: int = 5) -> float:
