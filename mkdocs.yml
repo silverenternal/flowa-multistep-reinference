@@ -232,6 +232,7 @@ not_in_nav: |
   audit/cli-help-guard.md
   audit/recipe-flag-audit.md
   audit/retired-prefix-citations.md
+  audit/provenance-gate.md
   audit/mnist-gpu-backend.md
   audit/wave281/p-partial-evidence.md
   audit/wave289-p1-honest-reframe.md

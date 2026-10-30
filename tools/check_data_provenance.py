@@ -17,8 +17,13 @@ provenance contract machine-checkable:
   file or no file at all (already covered by ``orphan``; kept here for
   completeness).
 
-The verifier is read-only. It exits ``0`` iff every citation resolves.
-The summary line is always printed for CI consumption.
+The verifier is read-only. It exits ``0`` iff every citation resolves or has
+been **disclosed**: a stale citation whose document also records the current
+on-disk hash within ``RECONCILE_WINDOW`` lines, i.e. one the record has already
+reconciled (``verification_outputs/`` is gitignored, so a rewritten artifact
+cannot be restored to its cited bytes). Disclosed citations are printed under
+their own heading; they are not failures. The summary line is always printed
+for CI consumption.
 
 Usage::
 
@@ -92,6 +97,9 @@ class ProvenanceResult:
     drifts: tuple[Drift, ...] = field(default_factory=tuple)
     cited_paths: frozenset[str] = field(default_factory=frozenset)
     cited_shas: frozenset[str] = field(default_factory=frozenset)
+    #: Stale citations the same document has already reconciled by recording
+    #: the current on-disk hash.  Reported, but not a failure.
+    disclosed: tuple[Drift, ...] = field(default_factory=tuple)
 
 
 # ---------------------------------------------------------------------------
@@ -99,7 +107,7 @@ class ProvenanceResult:
 # ---------------------------------------------------------------------------
 
 
-def _extract_citations(audit_doc: Path) -> list[Citation]:
+def _extract_citations(audit_doc: Path, repo_root: Path = REPO_ROOT) -> list[Citation]:
     """Return all ``(sha, path)`` pairs cited in ``audit_doc``.
 
     The extractor is deliberately conservative: it only pairs a sha256
@@ -111,7 +119,7 @@ def _extract_citations(audit_doc: Path) -> list[Citation]:
     line get cross-paired (the docs format is "<path> sha256=abc123...
     + <other-path> sha256=def456... + <bare-path-with-no-sha>").
     """
-    rel_doc = str(audit_doc.relative_to(REPO_ROOT))
+    rel_doc = str(audit_doc.relative_to(repo_root))
     text = audit_doc.read_text(encoding="utf-8")
     citations: list[Citation] = []
     # Clause separators: " + " (typical inline list join), "; " (typical
@@ -154,6 +162,38 @@ def _extract_citations(audit_doc: Path) -> list[Citation]:
 # ---------------------------------------------------------------------------
 
 
+#: How far from a stale citation the reconciling hash may sit.  The three
+#: reconciled records in the tree put it 4-14 lines below ("Hash note").
+RECONCILE_WINDOW: int = 40
+
+
+def _reconciled_near(doc_text: str, line: int, current_sha: str) -> bool:
+    """True when ``doc_text`` records ``current_sha`` near ``line``.
+
+    A stale citation is not a defect when the same document has already
+    reconciled it: it names the run-time hash *and* the current one, and
+    explains why the bytes moved (``verification_outputs/`` is gitignored, so
+    a rewritten artifact cannot be restored to its cited bytes).  Proximity is
+    required so an unrelated hash elsewhere in a long record does not
+    silently excuse a stale citation.
+    """
+    lines = doc_text.splitlines()
+    lo = max(0, line - 1 - RECONCILE_WINDOW)
+    hi = min(len(lines), line + RECONCILE_WINDOW)
+    return any(current_sha in text for text in lines[lo:hi])
+
+
+def _sha256_of(path: Path) -> str:
+    """Return the lowercase hex sha256 of ``path``, read in 64 KiB chunks."""
+    import hashlib
+
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest().lower()
+
+
 def _resolve_sha_to_file(target: Path, expected_sha: str) -> bool:
     """Return True if ``target`` exists on disk and its sha256 matches
     ``expected_sha``. The function does NOT raise -- a missing file
@@ -161,16 +201,12 @@ def _resolve_sha_to_file(target: Path, expected_sha: str) -> bool:
     """
     if not target.is_file():
         return False
-    import hashlib
-
-    h = hashlib.sha256()
-    with target.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(65536), b""):
-            h.update(chunk)
-    return h.hexdigest().lower() == expected_sha
+    return _sha256_of(target) == expected_sha
 
 
-def verify(audit_dir: Path = AUDIT_DIR) -> ProvenanceResult:
+def verify(
+    audit_dir: Path = AUDIT_DIR, repo_root: Path = REPO_ROOT
+) -> ProvenanceResult:
     """Run the provenance sweep against ``audit_dir``.
 
     Returns a :class:`ProvenanceResult` aggregating every citation +
@@ -179,15 +215,17 @@ def verify(audit_dir: Path = AUDIT_DIR) -> ProvenanceResult:
     if not audit_dir.is_dir():
         return ProvenanceResult(citations=())
     drifts: list[Drift] = []
+    disclosed: list[Drift] = []
     citations: list[Citation] = []
     cited_paths: set[str] = set()
     cited_shas: set[str] = set()
     for doc in sorted(audit_dir.glob("wave*.md")):
-        for citation in _extract_citations(doc):
+        doc_text = doc.read_text(encoding="utf-8")
+        for citation in _extract_citations(doc, repo_root):
             citations.append(citation)
             cited_paths.add(citation.path)
             cited_shas.add(citation.sha256)
-            target = REPO_ROOT / citation.path
+            target = repo_root / citation.path
             if not target.is_file():
                 drifts.append(
                     Drift(
@@ -201,22 +239,27 @@ def verify(audit_dir: Path = AUDIT_DIR) -> ProvenanceResult:
                 )
                 continue
             if not _resolve_sha_to_file(target, citation.sha256):
-                drifts.append(
-                    Drift(
-                        kind="orphan_sha",
-                        doc=citation.doc,
-                        detail=(
-                            f"{citation.doc}:{citation.line} cites "
-                            f"sha256 {citation.sha256[:12]}... for "
-                            f"{citation.path} but the on-disk hash differs"
-                        ),
-                    )
+                detail = (
+                    f"{citation.doc}:{citation.line} cites "
+                    f"sha256 {citation.sha256[:12]}... for "
+                    f"{citation.path} but the on-disk hash differs"
                 )
+                current = _sha256_of(target)
+                if _reconciled_near(doc_text, citation.line, current):
+                    # The document has already reconciled the citation: it
+                    # records the run-time hash *and* the current one, and
+                    # explains why the bytes moved.  Reported, not failed --
+                    # ``verification_outputs/`` is gitignored, so a rewritten
+                    # artifact cannot be restored to its cited bytes.
+                    disclosed.append(Drift(kind="orphan_sha", doc=citation.doc, detail=detail))
+                else:
+                    drifts.append(Drift(kind="orphan_sha", doc=citation.doc, detail=detail))
     return ProvenanceResult(
         citations=tuple(citations),
         drifts=tuple(drifts),
         cited_paths=frozenset(cited_paths),
         cited_shas=frozenset(cited_shas),
+        disclosed=tuple(disclosed),
     )
 
 
@@ -234,14 +277,30 @@ def _format_report(result: ProvenanceResult) -> str:
     out.append(f"- Unique paths cited: **{len(result.cited_paths)}**")
     out.append(f"- Unique sha256s cited: **{len(result.cited_shas)}**")
     out.append(f"- Drifts: **{len(result.drifts)}**")
+    if result.disclosed:
+        out.append(
+            f"- Disclosed stale citations: **{len(result.disclosed)}** "
+            "(the document records the current hash and why the bytes moved)"
+        )
     out.append("")
-    if not result.drifts:
+    if not result.drifts and not result.disclosed:
         out.append("**All citations resolve to on-disk files with matching sha256.**")
+    elif not result.drifts:
+        out.append(
+            "**Every citation resolves or has been reconciled in place; "
+            "no unexplained drift.**"
+        )
     else:
         out.append("## Drifts")
         out.append("")
         for d in result.drifts:
             out.append(f"- **{d.doc}** (`{d.kind}`): {d.detail}")
+    if result.disclosed:
+        out.append("")
+        out.append("## Disclosed (not a failure)")
+        out.append("")
+        for d in result.disclosed:
+            out.append(f"- **{d.doc}**: {d.detail}")
     out.append("")
     return "\n".join(out)
 
@@ -282,7 +341,8 @@ def main(argv: list[str] | None = None) -> int:
     n_drifts = len(result.drifts)
     summary = (
         f"provenance: citations={len(result.citations)} "
-        f"paths={len(result.cited_paths)} drifts={n_drifts}"
+        f"paths={len(result.cited_paths)} drifts={n_drifts} "
+        f"disclosed={len(result.disclosed)}"
     )
     if args.quiet:
         print(summary)
