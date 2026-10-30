@@ -70,10 +70,28 @@ echo "R1 reproduced: baseline=${baseline_total} -> framework=${framework_total} 
 # -----------------------------------------------------------------------------
 # Step 5 — (Optional) Run command (UNCOMMENT TO RUN)
 #
-#   .venvs/lineageflow_venv/bin/python tools/run_lineageflow_n1000_foldability_omegafold.py \
-#     --n-samples 1000 \
-#     --seed 42 \
-#     --output-dir ${VOUT_DIR}
+# The headline metric is ``hmmscan_total_hits``, so the pipeline is three
+# steps: generate the two FASTA arms, scan both with HMMER, then score.
+#
+#   # 5a. Generate 1000 FASTA per arm (baseline + framework).  ``--nfe 150``
+#   #     matches the upstream LineageFlow released config (steps_base=100 +
+#   #     steps_final=50; see docs/audit/gap41b-r1-nfe-fidelity.md) and
+#   #     ``--restart-min-nfe 5`` opens the Wave 186 restart-blend gate.
+#   .venvs/lineageflow_venv/bin/python tools/gen_lineageflow_n1000_fastas.py \
+#     --n 1000 --seed 42 --nfe 150 --n-rounds 3 --restart-min-nfe 5 \
+#     --upstream-eval-len-bias short --temperature 1.0 \
+#     --outdir ${VOUT_DIR}/regen
+#
+#   # 5b. Scan both arms.  HMMER is an external binary, not a Python driver.
+#   hmmscan --tblout ${VOUT_DIR}/regen/baseline_hits.tbl \
+#     Pfam-A.hmm ${VOUT_DIR}/regen/baseline.fasta
+#   hmmscan --tblout ${VOUT_DIR}/regen/framework_hits.tbl \
+#     Pfam-A.hmm ${VOUT_DIR}/regen/framework.fasta
+#
+#   # 5c. Score: per-seed paired-t + 3-seed DerSimonian-Laird meta.
+#   .venvs/lineageflow_venv/bin/python tools/r1_d004_analysis.py \
+#     --root ${VOUT_DIR}/regen --out ${VOUT_DIR}/regen \
+#     --seeds 42 --n-per-seed 1000
 #
 # Wallclock: ~30-50h CPU (Wave 86 N=1000 sweep).
 # External deps: HMMER (bioconda), Pfam-A.hmm DB, LineageFlow ckpt.
@@ -84,16 +102,9 @@ echo "R1 reproduced: baseline=${baseline_total} -> framework=${framework_total} 
 # (`tools/gen_lineageflow_n1000_fastas.py:613`), `n_rounds` collapses to 1,
 # and the framework arm no longer chains the restart blend. This script
 # verifies the stored .tbl artifacts; it does NOT assert that today's code
-# regenerates them. The canonical re-run must open the gate:
-#
-#   .venvs/lineageflow_venv/bin/python tools/gen_lineageflow_n1000_fastas.py \
-#     --n 1000 --seed 42 --nfe 150 --n-rounds 3 --restart-min-nfe 5 \
-#     --upstream-eval-len-bias short --temperature 1.0 \
-#     --output-dir ${VOUT_DIR}/regen
-#
-# `--nfe 150` matches the upstream LineageFlow released config
-# (steps_base=100 + steps_final=50; see docs/audit/gap41b-r1-nfe-fidelity.md).
-# At N=200 the NFE=150 arm is +20.3 hits over baseline on 3/3 seeds.
+# regenerates them. The ``--nfe 150 --restart-min-nfe 5`` pair above is what
+# opens the gate again. At N=200 the NFE=150 arm is +20.3 hits over baseline
+# on 3/3 seeds.
 # =============================================================================
 
 echo "OK R1 reproduced: framework hmmscan_total_hits = ${framework_total} (expected 342)"

@@ -50,7 +50,7 @@ preserved for the per-wave audit trail.
 | `wan2_2` | Wan2.2 video (video diffusion) | 0 | 0 | 0 |
 | `web_research` | Web research 2026 (FM literature surveys) | 1 | 0 | 1 |
 | `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 126 | 76 | 50 |
-| `reproducibility` | Reproducibility (reproducibility-record, preregistration, reproduce-script) | 13 | 6 | 7 |
+| `reproducibility` | Reproducibility (reproducibility-record, preregistration, reproduce-script) | 14 | 6 | 8 |
 | `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 27 | 9 | 18 |
 | `push_state` | Push state (push-ready, freeze, release, submission) | 10 | 6 | 4 |
 | `algorithm_4arm` | Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency) | 39 | 18 | 21 |
@@ -59,7 +59,7 @@ preserved for the per-wave audit trail.
 | `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 49 | 26 | 23 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
 | `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 111 | 32 | 79 |
-| **TOTAL** | — | **619** | **348** | **271** |
+| **TOTAL** | — | **620** | **348** | **272** |
 
 ---
 
@@ -371,7 +371,7 @@ Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This 
 
 ### Cluster: `reproducibility` — Reproducibility (reproducibility-record, preregistration, reproduce-script)
 
-**Files: 13** (active: 6, historical: 7)
+**Files: 14** (active: 6, historical: 8)
 
 Reproducibility (reproducibility-record, preregistration, reproduce-script). This cluster is part of the project's audit surface for reproducibility.
 
@@ -384,8 +384,9 @@ Reproducibility (reproducibility-record, preregistration, reproduce-script). Thi
 - `wave358-tables-md-polish.md`
 - `wave366-p2-reproducibility-manifest.md`
 
-**Historical (7 files, not cited by reviewer-facing surfaces):**
+**Historical (8 files, not cited by reviewer-facing surfaces):**
 
+- `recipe-flag-audit.md`
 - `reproduce-scripts-audit.md`
 - `p5-experiment-setup.md`
 - `p8-experiment-setup.md`

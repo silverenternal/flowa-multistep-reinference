@@ -230,6 +230,7 @@ not_in_nav: |
   audit/portability-prefix-audit.md
   audit/evidence-pointer-audit.md
   audit/cli-help-guard.md
+  audit/recipe-flag-audit.md
   audit/mnist-gpu-backend.md
   audit/wave281/p-partial-evidence.md
   audit/wave289-p1-honest-reframe.md

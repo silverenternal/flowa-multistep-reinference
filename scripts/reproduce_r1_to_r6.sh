@@ -168,21 +168,13 @@ External dependencies (MUST be present):
     equivalent per Wave 86 sweep)
 
 # UNCOMMENT TO RUN:
-#   python tools/run_real_ckpt_eval.py \
-#     --model lineageflow \
-#     --ckpt data/lineageflow_ckpt/lineageflow_esm2_650M.pt \
-#     --n-samples 1000 \
-#     --nfe 50 \
-#     --output-dir verification_outputs/lineageflow_n1000_w152_q4_2026 \
-#     --metric-mode real \
-#     --seed 42 \
-#     --adapter-restart-rounds 3 \
-#     --adapter-num-steps 50 \
-#     --adapter-solver euler
-#   # Expected JSON output (transient; gitignored per Wave 149 P1):
-#   #   verification_outputs/lineageflow_n1000_w152_q4_2026/lineageflow_n1000_sweep.json
-#   # Expected headline numbers (sourced from Wave 86 audit doc, NOT the on-disk
-#   # Wave 81 N=2 JSON):
+#   # The headline metric is hmmscan_total_hits, so the pipeline is three
+#   # steps (generate the two FASTA arms -> hmmscan both -> score).  The
+#   # canonical, verified form of those three steps lives in one place:
+#   bash reproduce/01_R1_LineageFlow.sh      # Step 5 of that script
+#   #
+#   # Expected headline numbers (sourced from the Wave 86 audit doc, NOT the
+#   # on-disk Wave 81 N=2 JSON):
 #   #   baseline  hmmscan_total_hits = 158
 #   #   framework hmmscan_total_hits = 342   (Δ = +184, +116%, p < 1e-10)
 
@@ -209,14 +201,18 @@ External dependencies (MUST be present):
   - GPU: 16GB+ VRAM recommended (RTX PRO 6000 Blackwell historical)
 
 # UNCOMMENT TO RUN:
-#   python tools/flowmol3_n1000_sweep.py \
-#     --ckpt data/flowmol3_ckpt/cleaned_model.pt \
-#     --n-samples 1000 \
+#   .venvs/flowmol3_venv/bin/python tools/wave87_n1000_sweep.py \
+#     --weights-path data/flowmol3_ckpt/cleaned_model.pt \
+#     --n-total 1000 \
 #     --nfe 50 \
 #     --output-dir verification_outputs/flowmol3_n1000_w152_q4_2026 \
-#     --seed 42 \
-#     --adapter-num-steps 50 \
-#     --adapter-solver euler
+#     --seed-base 42
+#   # (2026-10-30) This block used to name `tools/flowmol3_n1000_sweep.py`,
+#   # which has never existed in this repository, with flags that match no
+#   # driver (`--ckpt`, `--n-samples`, `--seed`, `--adapter-num-steps`,
+#   # `--adapter-solver`). The FlowMol3 N=1000 driver is
+#   # `tools/wave87_n1000_sweep.py`, the same one `reproduce/03_R3_FlowMol3.sh`
+#   # invokes; its flags are `--weights-path`, `--n-total`, `--seed-base`.
 #   # Expected JSON output:
 #   #   verification_outputs/flowmol3_n1000_w152_q4_2026/flowmol3_n1000_sweep.json
 #   # Expected headline numbers (byte-stable across Waves 82-135-149-151):
@@ -354,22 +350,23 @@ External dependencies (MUST be present):
   - GPU: 8GB+ VRAM (FID math InceptionV3 reference features)
 
 # UNCOMMENT TO RUN:
-#   # Phase A — generate MNIST FM samples (baseline + framework, same seed):
+#   # Phase A — baseline arm: single-pass samples (20 Euler steps).
 #   python tools/generate_mnist_samples.py \
-#     --ckpt data/mnist_fm_ckpt/mnist_fm.pt \
+#     --weights data/mnist_fm.npz \
 #     --n-samples 1000 \
-#     --seed 42 \
-#     --arm baseline \
-#     --output-dir verification_outputs/mnist_fm_w152/baseline_samples
+#     --out /tmp/mnist_baseline.npz
+#   # Phase B — FID against the MNIST test reference.
 #   python tools/run_image_eval.py \
-#     --samples-dir verification_outputs/mnist_fm_w152/baseline_samples \
-#     --reference-stats data/mnist_reference_features/inception_stats.npz \
+#     --samples-dir <directory of 28x28 PNGs> \
 #     --output verification_outputs/mnist_fm_w152/baseline_fid_report.json \
 #     --device cuda:0
-#   # (and analogous framework arm call)
 #
-#   # Expected JSON output:
-#   #   verification_outputs/mnist_fm_w152/{baseline,framework}_fid_report.json
+#   # There is no committed end-to-end two-arm R6 driver: the framework arm is
+#   # produced by the multi-round engine through MnistFmAdapter, not by
+#   # generate_mnist_samples.py (which has no --arm flag).  The reproducibility
+#   # pointer recorded in SOURCE.md is the Wave 28 canonical-extractor run of
+#   # tools/run_image_eval.py — see that file for the exact extractor settings.
+#
 #   # Expected headline numbers:
 #   #   baseline  FID = 409.18
 #   #   framework FID = 347.75   (Δ = -15.01%)

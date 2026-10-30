@@ -126,10 +126,18 @@ PY
 # -----------------------------------------------------------------------------
 # Step 4 — (Optional) Run command (UNCOMMENT TO RUN)
 #
-#   .venvs/flowmol3_venv/bin/python tools/run_sota_cifar_experiment.py \
-#     --n-rounds 1 \
-#     --n-seeds 3
+# ``run_sota_cifar_experiment.py`` threads the seed through the ``WAVE247_SEED``
+# environment variable (it has no ``--n-seeds`` flag: one process is one seed),
+# so the 3-seed sweep is a shell loop.
 #
+#   for s in 42 43 44; do
+#     WAVE247_SEED="${s}" .venvs/flowmol3_venv/bin/python \
+#       tools/run_sota_cifar_experiment.py \
+#       --n-rounds 1 \
+#       --output-dir verification_outputs/r5b_cifar_nrounds1_seed${s}
+#   done
+#
+# The reversal arm is the same call with ``--n-rounds 10 --no-final-restart``.
 # Wallclock: ~30 min GPU (3 seeds x 4 schedulers x n_rounds=1).
 # External deps: CIFAR-10 reference features (data/rf_reference_features/).
 # =============================================================================
