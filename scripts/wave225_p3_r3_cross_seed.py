@@ -18,6 +18,7 @@ What this script CAN do (direction-consistency proxy):
 import csv
 import json
 import os
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -116,6 +117,9 @@ DIRECTION_CONSISTENCY_PCT_ACROSS_WAVES = 100.0 * N_WAVES_DIRECTION_CONSISTENT / 
 
 # Write CSV
 rows = []
+if {"-h", "--help"} & set(sys.argv[1:]):
+    print(__doc__)
+    raise SystemExit(0)
 for o in OBSERVATIONS:
     rows.append({
         "wave": o["source_wave"],

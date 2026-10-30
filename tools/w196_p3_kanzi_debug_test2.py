@@ -9,6 +9,10 @@ import numpy as np
 import torch
 from kanzi import DAE, kabsch_rmsd
 
+if {"-h", "--help"} & set(sys.argv[1:]):
+    print(__doc__)
+    raise SystemExit(0)
+
 dae = DAE.from_pretrained("data/kanzi_ckpt/cleaned_model.pt").eval()
 dae = dae.to("cuda")
 

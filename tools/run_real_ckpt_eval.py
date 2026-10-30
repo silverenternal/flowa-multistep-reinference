@@ -92,5 +92,8 @@ from tools.eval import (  # type: ignore  # noqa: F401
 )
 
 if __name__ == "__main__":  # pragma: no cover
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        raise SystemExit(0)
     os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")
     raise SystemExit(main(sys.argv[1:]))

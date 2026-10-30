@@ -29,4 +29,7 @@ sys.path.insert(0, str(REPO_ROOT))
 from tools.hf_pipeline import main as _hf_main  # noqa: E402
 
 if __name__ == "__main__":
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        raise SystemExit(0)
     raise SystemExit(_hf_main())

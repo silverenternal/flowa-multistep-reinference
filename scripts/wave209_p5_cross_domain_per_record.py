@@ -18,6 +18,7 @@ Framework moves toward the better side per the Wave 208 P2 / Wave 209 P2
 direction-consistency rule.
 """
 import csv
+import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -169,4 +170,7 @@ def main():
 
 
 if __name__ == "__main__":
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        raise SystemExit(0)
     main()

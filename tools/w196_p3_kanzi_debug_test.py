@@ -15,6 +15,9 @@ dae = dae.to("cuda")
 
 # Read first record from input file
 records = []
+if {"-h", "--help"} & set(sys.argv[1:]):
+    print(__doc__)
+    raise SystemExit(0)
 with open("verification_outputs/kanzi_n1000_coords.txt") as fh:
     for line in fh:
         line = line.strip()

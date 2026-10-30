@@ -29,6 +29,15 @@ import sys
 from collections import OrderedDict
 from pathlib import Path
 
+# The module has no ``main()``: every statement below runs at import, so
+# ``python3 tools/build_verification_manifest.py --help`` used to regenerate
+# ``verification_outputs/MANIFEST.md`` (a git-tracked evidence file) and then
+# exit 1 on the unclassified-file check.  Honour ``-h``/``--help`` before the
+# first side effect, like the drivers with a ``__main__`` block do.
+if {"-h", "--help"} & set(sys.argv[1:]):
+    print(__doc__)
+    raise SystemExit(0)
+
 WORKDIR = str(Path(__file__).resolve().parents[1])
 
 

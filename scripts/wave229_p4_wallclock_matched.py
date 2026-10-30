@@ -18,6 +18,7 @@ from __future__ import annotations
 import csv
 import json
 import math
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -293,4 +294,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        raise SystemExit(0)
     raise SystemExit(main())

@@ -83,3 +83,42 @@ silently runs the default configuration. Making each driver configurable is a
 different change, and the audit records that produced them already document
 the parameters they ran with. The guard exists to stop the silent-write
 failure mode, not to pretend the drivers have a CLI.
+
+## 6. Second pass (2026-10-30, same day) — six more modules, two of them writing
+
+Running `--help` across all of `tools/*.py` with system `python3` found seven
+failures that were not missing-dependency noise:
+
+| Module | What `--help` did |
+|---|---|
+| `tools/build_verification_manifest.py` | **regenerated the git-tracked `verification_outputs/MANIFEST.md`** (115 lines changed), then exited 1 on its unclassified-file check |
+| `tools/_make_wave143_appendix_figures.py` | ran the figure code and died on a missing `/tmp/figdata/*.npz` |
+| `tools/r3_reaggregate_paired_ci.py` | treated `--help` as a filename → `FileNotFoundError: '--help'` |
+| `tools/wave59_ab_comparison.py` | ran the A/B comparison (timed out at 30 s) |
+| `tools/verify_submission_readiness.py` | ran all 9 readiness gates (timed out at 30 s) |
+| `tools/run_real_ckpt_eval.py` | `TypeError: must be real number, not dict` — two `100% flow-component` strings in `--composite-metric`'s help, unescaped for argparse's `%` formatting |
+| `tools/w181_gen_abcache_fastas.py` | `ValueError: badly formed help string` — `` ``i % 6 != 0`` `` in a help string |
+
+The first five were invisible to the round-1 test for two reasons, both of
+which were defects in the test rather than in the drivers:
+
+- `_has_cli()` accepted any use of `sys.argv`, so the three drivers that read
+  `sys.argv` as a list of *paths* were exempted as if they parsed flags. It now
+  requires `parse_args(`.
+- Modules with no `__main__` block were skipped outright, even though their
+  bodies run on import. `build_verification_manifest.py` is exactly that shape,
+  and it rewrote a tracked file. Those modules now need the guard at module
+  level, before their first effectful statement. Underscore-prefixed modules
+  are exempt: `_sota_common`, `_figures_common` and `_kanzi_sweep_runner` are
+  imported by other drivers, and a guard there would fire on the *importer's*
+  argv.
+
+The last two are argparse `%`-formatting bugs: `help_string % params` runs even
+when the string has no placeholders, so a literal `100% flow` is parsed as a
+format spec. Both are escaped as `%%`.
+
+`MANIFEST.md` was restored with `git checkout --` immediately; the checker
+suite now covers 100+ drivers with a `__main__` guard and the module-level
+class, and `tests/test_tools/test_cli_help_guard.py` grew from 6 to 9 cases
+(module-level guard accepted, module-level guard after the work reported, a
+bare script with no `__main__` block reported).

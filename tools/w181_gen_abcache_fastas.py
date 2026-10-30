@@ -346,7 +346,7 @@ def main() -> None:
         help=(
             "AB-Cache periodic recompute interval (every Nth step "
             "after warmup, take a recompute step). Default 6 (mirrors "
-            "the paper's flux_our.py:928 ``i % 6 != 0`` check)."
+            "the paper's flux_our.py:928 ``i %% 6 != 0`` check)."
         ),
     )
     p.add_argument(

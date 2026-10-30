@@ -16,6 +16,13 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 
+# This module has no ``main()``; the figure code below runs at import and
+# writes into ``docs/figures``.  Honour ``-h``/``--help`` before that first
+# side effect so ``--help`` stays a dry run.
+if {"-h", "--help"} & set(sys.argv[1:]):
+    print(__doc__)
+    raise SystemExit(0)
+
 sys.path.insert(0, '.')
 
 # Output directory

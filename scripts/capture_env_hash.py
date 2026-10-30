@@ -112,6 +112,9 @@ def verify_env_hash(path: pathlib.Path) -> bool:
     return ok
 
 if __name__ == "__main__":
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        raise SystemExit(0)
     cmd = sys.argv[1] if len(sys.argv) > 1 else "capture"
     env_hash_path = pathlib.Path(__file__).resolve().parent.parent / "env_hash.txt"
     sidecar_path = env_hash_path.with_name("env_hash_host_fingerprint.json")

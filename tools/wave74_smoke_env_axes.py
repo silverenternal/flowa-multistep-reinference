@@ -15,6 +15,10 @@ import shutil
 import sys
 from pathlib import Path
 
+if {"-h", "--help"} & set(sys.argv[1:]):
+    print(__doc__)
+    raise SystemExit(0)
+
 # Make sure xtb is on $PATH for the test
 os.environ["PATH"] = "/home/hugo/xtb_prefix/bin:" + os.environ.get("PATH", "")
 
