@@ -1,0 +1,13 @@
+model,metric,n,baseline,framework,delta,delta_se,ci_95_lower,ci_95_upper,p_value_raw,p_value_bonferroni,power_to_detect_1pp,verdict
+flowmol3,validity_pct,1000,1,1,0,0,0,0,1,1,,TIE
+flowmol3,pb_validity_pct,1000,0.5285,0.429,-0.0995,0.0222294,-0.143069,-0.0559312,7.6036e-06,9.12432e-05,0.073488,UNDERPOWERED
+flowmol3,fg_dev,1000,0.6381,0.6146,-0.0235,0.0216286,-0.0658912,0.0188912,0.277247,1,0.0748279,UNDERPOWERED
+flowmol3,ood_ring_rate,1000,0.013,0.01,-0.003,0.0047677,-0.0123445,0.00634453,0.529196,1,0.5547,TIE
+lineageflow,hmmscan_total_hits,1000,158,342,184,0.595668,182.833,185.167,0,0,0.0500323,UNDERPOWERED
+lineageflow,coverage_any_hit,1000,0.145,0.123,-0.022,0.0152265,-0.0518434,0.00784337,0.1485,1,0.10069,UNDERPOWERED
+lineageflow,top1_family_type,1000,0,0,0,0,0,0,1,1,,TIE
+lineageflow,foldability_pLDDT,5,46.996,46.996,0,1.48614,-2.91279,2.91279,1,1,0.0500052,TIE
+kanzi,reconstruction_kabsch_rmsd_A,200,0.824,0.824,0,0.038082,-0.0746394,0.0746394,1,1,0.057936,TIE
+kanzi,codebook_entropy_bits,200,8.558,8.558,0,0.04279,-0.0838669,0.0838669,1,1,0.0562797,TIE
+kanzi,codebook_perplexity,200,376.87,376.87,0,1.88435,-3.69326,3.69326,1,1,0.0500032,TIE
+kanzi,codebook_js_distance,200,0.5603,0.5603,0,0.0496351,-0.0972829,0.0972829,1,1,0.0546627,TIE

@@ -112,3 +112,56 @@ matching claim text. They are not deleted, and the gate does not silently
 accept them — the exemption is by prefix and is stated in the gate's own
 docstring, so the residual count is a number in this record rather than an
 invisible assumption.
+
+## 6. The same check over the evidence tree (2026-10-30, later the same day)
+
+`check_reviewer_pointers.py` only sees paths that start with a repo-relative
+prefix and end in a known extension, and it only sees the reviewer-facing
+surfaces. Running the same resolution over every backticked
+`verification_outputs/...` token in the two READMEs, `CONSOLIDATED_RESULTS.md`,
+`INSIGHTS.md`, `CLAIMS.md`, `PAPER-EVIDENCE.md`, the paper draft and the
+submission package:
+
+| | count |
+|---|---:|
+| backticked evidence pointers | 437 |
+| that resolve to a file | 408 |
+| that resolve to nothing | **29** |
+
+Twenty-nine is small enough to look at one by one, and three things came out of
+doing that:
+
+**One was a wrong extension, not a missing file.** The Wave 93 §15.15 block
+named `power_analysis/per_cell.json`; the directory contains `per_cell.csv` and
+nothing else, and the CSV is the 12-row table the same section quotes (its
+header is `model,metric,n,baseline,framework,delta,delta_se,ci_95_lower,ci_95_upper,p_value_raw,p_value_bonferroni,power_to_detect_1pp,verdict`).
+The section now says the CSV is the only serialisation and the table row is
+marked `PLANNED` rather than `NEW`. `per_cell.csv` was force-added (1.2 KB) —
+it is the source for a number in the ledger and was not being shipped.
+
+**One is the honest-negative record.** `CLAIMS.md` cites
+`verification_outputs/wave188-p5-fix-1-cd70821-inversion.json` as the preserved
+Wave 188 P5 §4.2 reframe of the framework-vs-baseline inversion. That file is
+not in the tree and no file with its stem exists anywhere. It is left as a
+citation: the claim it supports is a *disclosure*, and deleting the citation
+would remove the pointer to a negative result, which is the one direction this
+round must not move.
+
+**The other twenty-seven are artifacts that were never committed.**
+`verification_outputs/` is gitignored (`.gitignore:64`); only artifacts that
+back a headline number are force-added, and the wave-era CSVs named in
+`CONSOLIDATED_RESULTS.md` were written into the working copy and never tracked.
+They cannot be repointed, because there is no file with that stem to repoint
+them at.
+
+Two of them look like renames — `kanzi_n1000_framework_paper_metrics_real/per_metric.json`
+against `kanzi_n1000_framework_paper_metrics/per_metric.json` on disk, and
+`kanzi_n1000_real_v2/per_metric.jsonl` against three `..._paper_metrics_*`
+directories — and both are left alone. The GAP-97 rule applies: a dead pointer
+is visibly dead, a pointer to a different run's file is not, and the values
+would be attributed to the wrong sweep.
+
+**GAP-97 now covers both classes.** Its acceptance criterion is unchanged in
+spirit: resolve against an authority (`docs/audit/INDEX.md` for audit records,
+the tree for artifacts) and only when the successor is confirmed. The residual
+counts are 159 audit citations and 28 evidence pointers.

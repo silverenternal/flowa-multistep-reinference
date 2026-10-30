@@ -2226,10 +2226,9 @@ Source: `verification_outputs/power_analysis/per_cell.csv`
 * `docs/ARCHIVE/audit-waves-1-99/wave93-phase2-final.md` — Wave 93 Agent B per-cell
   audit trail + methodology + Wave 89 comparison.
 * `verification_outputs/power_analysis/per_cell.csv` — source CSV
-  for the 12-row table (12 data rows + 1 header).
-* `verification_outputs/power_analysis/per_cell.json` — same data
-  in JSON form, machine-readable for `docs/ARCHIVE/legacy-paper/paper-draft.md` table
-  regeneration.
+  for the 12-row table (12 data rows + 1 header). The CSV is the only
+  serialisation: a `.json` twin was planned at Wave 93 and never produced
+  (checked 2026-10-30 — no file with that stem exists in the tree).
 
 ### §15.15.5 What this section defers to (Wave 92c in flight)
 
@@ -2941,7 +2940,7 @@ section is the §18-level history entry.
 | [`tools/statistical_power_analysis.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tools/statistical_power_analysis.py) (Wave 93 Phase 1, commit `e69ffd8`) | NEW | +~640 LOC (Bernoulli σ + 5% CV floor + Bonferroni + Cohen 1988 §2.4 post-hoc power + Wald z-test p-value) |
 | [`tests/test_tools/test_statistical_power_analysis.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tests/test_tools/test_statistical_power_analysis.py) (Wave 93 Phase 1) | NEW | +4 unit tests (Bernoulli σ propagation, Bonferroni correction, 5% CV floor, verdict precedence) |
 | [`verification_outputs/power_analysis/per_cell.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/power_analysis/per_cell.csv) (Wave 93 Phase 2) | NEW | 12-row CSV, header + 12 data rows (FlowMol3 4 + LineageFlow 4 + Kanzi 4) |
-| [`verification_outputs/power_analysis/per_cell.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/power_analysis/per_cell.json) (Wave 93 Phase 2) | NEW | same data in JSON form for table regeneration |
+| `verification_outputs/power_analysis/per_cell.json` (Wave 93 Phase 2) | PLANNED | never produced; the CSV is the only serialisation (noted 2026-10-30) |
 | [`docs/ARCHIVE/legacy-paper/paper-draft.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/ARCHIVE/legacy-paper/paper-draft.md) (§7.6 Wave 93 paragraph, ADDITIVE) | MODIFIED | +Wave 93 paragraph + 12-row table inserted just before §7.7 NFE-aware section |
 | [`docs/push-ready-summary.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/push-ready-summary.md) (Wave 93 Agent B addendum) | MODIFIED | Wave 93 Agent B addendum section |
 | [`docs/CONSOLIDATED_RESULTS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CONSOLIDATED_RESULTS.md) §15.14 + §15.15 + §18.11 (Wave 95 additive) | APPENDED | Wave 91-93 summary + 12-cell FINAL status table + §18 history entry |

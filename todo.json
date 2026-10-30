@@ -208,14 +208,14 @@
    "id": "GAP-97-AUDIT-CITATION-PROVENANCE",
    "priority": "P2",
    "status": "OPEN",
-   "gap": "159 backticked docs/audit/<name>.md citations (117 distinct) in the current docs resolve to no file; the records were renamed or consolidated and the citations were not repointed.",
+   "gap": "Dead provenance pointers in the current docs: 159 backticked docs/audit/<name>.md citations (117 distinct) and 28 backticked verification_outputs/ paths resolve to nothing. The audit records were renamed or consolidated; the evidence artifacts were written into a gitignored tree and never committed.",
    "design_hypothesis": "None; mechanical triage.",
    "research": "docs/audit/evidence-pointer-audit.md section 5 lists the counts and the triage rule; docs/audit/INDEX.md is the authority for what exists.",
-   "acceptance": "python3 tools/check_reviewer_pointers.py reports dead=0 with the docs/audit/ prefix exemption removed from EXEMPT_PREFIXES.",
+   "acceptance": "python3 tools/check_reviewer_pointers.py reports dead=0 with the docs/audit/ prefix exemption removed, and the 28 evidence pointers are either resolved against the tree or explicitly marked PLANNED.",
    "est_wall": "0",
    "agent_action": "Resolve only against docs/audit/INDEX.md and only when the successor record contains the cited claim; do not guess a successor, and do not delete a citation to make a count go down.",
    "blocks": [],
-   "record": "docs/audit/evidence-pointer-audit.md"
+   "record": "docs/audit/evidence-pointer-audit.md sections 5-6"
   }
  ],
  "carried_over": [
