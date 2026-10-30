@@ -362,13 +362,14 @@ def main(argv: list[str] | None = None) -> int:
             f"docs cite any anchor; target {args.target:.2f}, "
             f"{'met' if ratio_ok else 'not met'})"
         )
-        if non_ref:
+        if non_ref and not args.quiet:
             print(f"[info] no anchor: {', '.join(non_ref)}")
-        print(
-            "[info] This ratio is not the gate.  It measures the transpose of "
-            "E.2 and falls whenever docs/ gains a page with no theory "
-            "content.  Pass --ratio-gate to make it binding."
-        )
+        if not args.quiet:
+            print(
+                "[info] This ratio is not the gate.  It measures the transpose "
+                "of E.2 and falls whenever docs/ gains a page with no theory "
+                "content.  Pass --ratio-gate to make it binding."
+            )
     else:
         ratio_ok = True
 
