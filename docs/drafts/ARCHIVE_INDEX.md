@@ -2,7 +2,8 @@
 
 > **Catalog layer for archived + flattened-intermediate files.**
 > Wave 356 P5 — added as ADDITIVE catalog (no files deleted).
-> Generated: 2026-09-25; canonical hashes refreshed 2026-10-27.
+> Generated: 2026-09-25; canonical hashes refreshed 2026-10-31 (recomputed
+> from disk — the previous set predated the 2026-10-27 retitle).
 >
 > **Read this first.** The only live manuscript build surface is
 > `paper-A-final.*`. The cell-level evidence behind it is
@@ -22,11 +23,11 @@
 
 | File | Size (bytes) | SHA-256 | Role |
 |---|---:|---|---|
-| `paper-A-final.md`   | 216736 | `1bd6e93feb7871dd92eff88789fede3199ff44fc2d52683818ce6328ba6f7f5d` | Canonical prose (paper body) |
-| `paper-A-final.tex`  | 68358 | `ec3e38f9298343674045d213ebfc988b77817d59620f703259c90016811f8df3` | LaTeX source (IEEEtran) |
-| `paper-A-final.pdf`  | 461516 | `f153903f3d401f9dbd65afcaea8caac7723aa083828b28c74a64886b6afb1da8` | Rendered PDF (12 pages) |
-| `abstract-final.md`  |  13399 | `d4146d7094b28e955aba65dbcca4972930851caa4e3734fbcfab24398c799cc5` | Canonical 9-sentence abstract |
-| `results-final.md`   |  60937 | `3aa762d37c9a1bb57a61fcff56d9856267ed7e9065ed08fd7443211d77357144` | Canonical results / §3 / §4 |
+| `paper-A-final.md`   | 224407 | `46e423078cd42b10c5c7f31a633d2edafa5d6d448f1d0810dd5df5d5dceb66df` | Canonical prose (paper body) |
+| `paper-A-final.tex`   | 74243 | `e28dca14db086d0e235f167aaacd909d6d3a67a12978726bbf48604301c998df` | LaTeX source (IEEEtran) |
+| `paper-A-final.pdf`   | 615789 | `ef9b401d664c2d911b233178296060b598b4fa6f5a87a516b42f893ee51d8e3c` | Rendered PDF (12 pages) |
+| `abstract-final.md`   | 13943 | `eec1962e6efd3c7f924820df609121072ec163e4e2812b8e53f76b6a8202dabc` | Historical working abstract — NOT the abstract of record (that is §Abstract of `paper-A-final.md`, 167 words) |
+| `results-final.md`   | 61017 | `2e706ddcb2bd3b9f8137afa1005c3dbb3fab0f8631c5cbf5326e8101d27076a4` | Canonical results / §3 / §4 |
 | ~~`paper-flat-ieeetran.tex`~~ | 66293 | `c9f4a7d489289d8d15548e0c6af1851791444297ffa3e0475a075c8f49c86a05` | **MOVED 2026-10-21** to `docs/ARCHIVE/legacy-paper/`. The "still actively referenced by paper-build flow" note was stale: a repo-wide grep of `*.py`/`*.sh`/`*.yml` found zero tool references. |
 | ~~`paper-flat-ieeetran.pdf`~~ | 381510 | `d9133f5f9b8bbc9d056f1cc127ed307a820a208df07913acd682a8290d75877a` | **MOVED 2026-10-21** to `docs/ARCHIVE/legacy-paper/` with its `.aux`/`.out`/`.log` and the four `pdflatex-rerun*.log` iteration logs. |
 
