@@ -26,7 +26,7 @@ tnnls_submission/
 The **manuscript PDF and source** live one level up:
 
 ```
-[`docs/drafts/paper-A-final.pdf`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.pdf)   ← 12 pages, 461403 bytes (2026-10-27 current build, ready-to-submit)
+[`docs/drafts/paper-A-final.pdf`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.pdf)   ← 12 pages, 615789 bytes (2026-10-31 current build, ready-to-submit)
 [`docs/drafts/paper-A-final.tex`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.tex)   ← IEEEtran-journal source
 [`docs/drafts/paper-A-final.{aux,log,out}`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/drafts)
 ```
@@ -39,9 +39,13 @@ Walk through these in order; each step has a single command that produces one li
 
 1. **Cover letter placeholders are filled.**
    ```bash
-   grep -nE 'USER.TO.FILL' tnnls_submission/cover_letter.md | wc -l
+   python3 tools/render_cover_letter.py --validate | grep '^Summary:'
    ```
-   Expect: `14` (only the §0 documentation pointers + §0 convention text — see `FILL_GUIDE.md` §Verification checklist).
+   Expect: `17/17 markers gone; 0 still unfilled; 0 exemplar hits`. A
+   non-zero hit count lists each remaining exemplar with its line number.
+   (`grep 'USER TO FILL'` is not the check: §0 is the only place the phrase
+   appears once the letter is filled, so it cannot distinguish filled from
+   unfilled.)
 
 2. **SHA-256 ledger is current.**
    ```bash
@@ -53,7 +57,7 @@ Walk through these in order; each step has a single command that produces one li
    ```bash
    pdfinfo docs/drafts/paper-A-final.pdf | grep -E "Pages|File size"
    ```
-   Expect: `Pages: 11`, `File size: 446705 bytes`.
+   Expect: `Pages: 12`, `File size: 615789 bytes`.
 
 4. **Supplementary bundle index parses.**
    ```bash
