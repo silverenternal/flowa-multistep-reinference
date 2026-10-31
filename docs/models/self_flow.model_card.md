@@ -21,9 +21,10 @@ synthetic-mode Protocol surface is fully wired and tested).
   integrated into the framework, improves" claim as the **first**
   SOTA 2026 model integrated (image axis).
 - **Primary users.** Framework algorithm-layer developers; paper
-  authors writing the `docs/paper-draft.md` §4 SOTA-image record;
-  users running `tools/run_sota_self_flow_experiment.py` (currently
-  a stub returning `75` `EX_TEMPFAIL`).
+  authors writing the `docs/ARCHIVE/legacy-paper/paper-draft.md` §4
+  SOTA-image record; no SOTA harness ships for this adapter (the `75`
+  `EX_TEMPFAIL` stub described in earlier revisions was never
+  committed).
 - **Out-of-scope uses.** Other image resolutions (ImageNet-512,
   CIFAR-100), non-image modalities, downstream fine-tuning, or any
   production deployment. The adapter is gated on a CUDA host with
@@ -85,9 +86,9 @@ sandbox** — the 1.4 GB `selfflow_imagenet256.pt` checkpoint is not
 present and a CUDA host is not available. The synthetic-mode
 Protocol surface is fully wired (22 tests pass) so the head-line
 `+0% to +5%` framework uplift on ImageNet-256 is a **claim
-prediction**, not an empirical result. The harness stub
-`tools/run_sota_self_flow_experiment.py` returns `75`
-`EX_TEMPFAIL` until the ckpt + FID pipeline are available.
+prediction**, not an empirical result. No SOTA harness ships: the
+`75` `EX_TEMPFAIL` stub named in earlier revisions was never
+committed, and the ckpt + FID pipeline are still absent.
 
 ## 5. Ethical Considerations
 
@@ -131,9 +132,10 @@ prediction**, not an empirical result. The harness stub
   model so the Protocol conformance tests can run without the heavy
   dependency. **Synthetic-mode results must NOT be cited as
   baseline reproductions of Self-Flow.**
-- **Harness stub.** `tools/run_sota_self_flow_experiment.py` exits
-  with `75` `EX_TEMPFAIL`. The full harness depends on the
-  reference batch + CUDA host + InceptionV3 FID pipeline.
+- **No harness.** No SOTA harness ships for this adapter; the
+  `75` `EX_TEMPFAIL` stub named in earlier revisions was never
+  committed. A full harness would need the reference batch + CUDA
+  host + InceptionV3 FID pipeline.
 - **CFG 1.0 only.** The published Self-Flow checkpoint is
   guidance-distilled, so CFG 1.0 is the default. Higher CFG values
   are not supported.
@@ -167,7 +169,7 @@ prediction**, not an empirical result. The harness stub
   - **Proposition 3** (selection mechanism) — `BoundedMergeOperator`.
   - **Theorem 1 rate bound** — `adaptive_reflow/theory/rate_bound.py`.
 - **Cross-references:**
-  `docs/paper-draft.md` §4,
+  `docs/ARCHIVE/legacy-paper/paper-draft.md` §4,
   `docs/PLUG_IN_YOUR_MODEL.md` §Self-Flow,
   `docs/CONSOLIDATED_RESULTS.md` §2,
   `docs/CLAIMS.md` (no Self-Flow claim ledger entry yet).
@@ -204,5 +206,4 @@ prediction**, not an empirical result. The harness stub
 **See also:** `adaptive_reflow/adapters/self_flow.py`,
 `docs/PLUG_IN_YOUR_MODEL.md` §Self-Flow,
 `docs/CONSOLIDATED_RESULTS.md` §2,
-`tools/run_sota_self_flow_experiment.py` (stub),
 `tests/test_adapters/test_self_flow.py` (22/22 pass).

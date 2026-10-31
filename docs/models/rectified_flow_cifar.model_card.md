@@ -21,8 +21,8 @@ surface is fully wired and tested).
   ablation (cosine / codimension_sheet / evidence_driven /
   rf_1step_fixed).
 - **Primary users.** Paper authors writing the
-  `docs/paper-draft.md` §4 SOTA-CIFAR record; F.2 reproducibility
-  auditors; users running `tools/eval_rf_cifar.py` +
+  `docs/ARCHIVE/legacy-paper/paper-draft.md` §4 SOTA-CIFAR record;
+  F.2 reproducibility auditors; users running `tools/eval_rf_cifar.py` +
   `tools/run_rf_cifar_ablation.py`.
 - **Out-of-scope uses.** Other image datasets (CIFAR-100, ImageNet),
   non-image modalities, downstream fine-tuning, or any production
@@ -162,7 +162,7 @@ reproduction.
   - **Proposition 3** (selection mechanism) — `BoundedMergeOperator`.
   - **Theorem 1 rate bound** — `adaptive_reflow/theory/rate_bound.py`.
 - **Cross-references:**
-  `docs/paper-draft.md` §4.3,
+  `docs/ARCHIVE/legacy-paper/paper-draft.md` §4.3,
   `docs/r4-survey/20-cifar-experiment-v3-results.md`,
   `docs/r5-survey/02-sota-integration-plan.md`,
   `docs/CLAIMS.md` CLM-040 / CLM-041 / CLM-042,

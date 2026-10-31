@@ -162,9 +162,10 @@ theory is part of the project venv's universal layer and is hashed by
   version-pinning the weight revisions lives in each upstream shim's
   `CHECKPOINT_REV` constant, not here.
 - FlowMol3 upstream is imported via `flowmol3_upstream_shim.py`'s
-  sys.path injection of `tools/flowmol/`; that vendored copy is part of
-  the repo, not PyPI — its own `requirements.txt` is tracked
-  separately under `tools/flowmol/requirements.txt`.
+  sys.path injection of the vendored tree at `data/FlowMol3/repo`; it is
+  not a PyPI dependency, it is pinned by upstream commit in
+  `tnnls_submission/data_availability.md`, and it carries its own
+  `environment.yml` rather than a requirements file.
 
 ## Editing protocol
 

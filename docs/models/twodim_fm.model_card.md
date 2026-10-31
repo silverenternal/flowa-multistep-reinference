@@ -16,7 +16,7 @@
   (`two_moons`, `eight_gaussians`, `swiss_roll`, `pinwheel`, `checkerboard`,
   `gaussian_grid`).
 - **Primary users.** Framework algorithm-layer developers, paper authors
-  writing the `docs/paper-draft.md` §4.2 SOTA-2D record, baseline-audit F.2
+  writing the `docs/ARCHIVE/legacy-paper/paper-draft.md` §4.2 SOTA-2D record, baseline-audit F.2
   reproducibility runs, and the C.5 failure-mode / operating-regime
   characterisation sweep.
 - **Out-of-scope uses.** Production image generation, any non-2D data,
@@ -139,7 +139,7 @@ separation).
   - **Theorem 1 rate bound** — `adaptive_reflow/theory/rate_bound.py`
     (`docs/theory/theorem1_rate_bound.md`).
 - **Cross-references:**
-  `docs/paper-draft.md` §4.2,
+  `docs/ARCHIVE/legacy-paper/paper-draft.md` §4.2,
   `docs/r4-survey/10-sota-2d-experiment-results.md`,
   `docs/CLAIMS.md` CLM-032,
   `docs/ABLATION.md` §3,

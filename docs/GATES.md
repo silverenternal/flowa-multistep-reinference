@@ -139,7 +139,7 @@ batch 2/3 additions (`tests/test_adapters/test_regression_vectors.py`,
 the wording to "D.4 pinned regression vectors 72/72 PASS" with a
 historical caveat for the legacy "33/33" figure; Wave 149 Agent 6
 extended this standardization to all 73 non-archived docs/ files
-(see `docs/audit/wave149-close.md`).
+(see `docs/audit/final_verify/close.md`).
 
 **D.4 vs full pytest — important distinction:** The full pytest suite
 (`pytest tests/ -q`) reported **5636 passed / 180 skipped / 0 failed** on
@@ -160,8 +160,9 @@ and none of them are failures today:
 `tests/test_tools/test_paper_metrics.py`'s 12 former failures were an
 import-order defect in the mock rather than a torch dependency, fixed on
 2026-10-30 (`docs/audit/pytest-order-dependence.md`). The Wave 48 record
-of the original three remains at `docs/audit/wave48-pytest-pre-push-fixes.md`
-as history.
+of the original three was not carried into the flattened tree; the three
+were an import-order defect in the test's mock, and this sentence is what
+survives of that record.
 
 **Wave 149 Agent 6 wording standardization extension** — every non-archived
 doc surface (cover letter, submission_checklist, supplementary §S6.3,

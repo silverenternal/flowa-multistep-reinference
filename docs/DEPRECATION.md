@@ -12,8 +12,12 @@ Each row carries a `sunset_date:` field — the calendar date (ISO 8601
 `YYYY-MM-DD`) on which the deprecated API is officially end-of-life.
 A row with `sunset_date: TBD` does **not** satisfy the J.2
 deprecation-policy-compliance target (`>= 0.8` of deprecated APIs
-must carry a sunset date; rev 3 §2 J.2). The compliance ratio is
-machine-checkable via `tools/check_deprecation_policy.py` (Wave 24).
+must carry a sunset date; rev 3 §2 J.2). The ratio is read off the
+table below by hand — the `tools/check_deprecation_policy.py` checker
+that earlier revisions named here was never committed, so J.2 is not a
+wired gate. All nine current rows carry `sunset_date: TBD`, i.e. the
+ratio is 0/9 and the J.2 target of >= 0.8 is unmet until concrete
+dates are set.
 
 | Feature | Introduced version | Deprecated in | sunset_date: | Replacement | Removal version |
 |---------|-------------------:|---------------|--------------|------------|----------------:|
@@ -112,9 +116,10 @@ The quarantine therefore buys the migration window without:
 
 ## Compliance checker (rev 3 J.2 — Wave 24)
 
-The deprecation-policy compliance ratio is computed by
-`tools/check_deprecation_policy.py` (Wave 24). The tool scans this
-file, parses every Markdown table row, and reports:
+No checker ships. The procedure below is what one would do; it is
+recorded here so that the intended semantics are not lost, and because
+the ratio is currently read off the table by hand. A tool would scan
+this file, parse every Markdown table row, and report:
 
 * total deprecation rows
 * rows with `sunset_date:` set to a literal ISO 8601 date (compliant)
@@ -122,10 +127,10 @@ file, parses every Markdown table row, and reports:
 * compliance ratio = compliant / total
 * gate verdict: PASS if ratio >= 0.8, FAIL otherwise
 
-The tool exits non-zero on FAIL so the per-wave verify step can wire
-the J.2 gate into CI. Schema version is 1.0; future format changes
-must bump `schema_version` in this document and in the tool's
-constant.
+Such a tool would exit non-zero on FAIL so the per-wave verify step
+could wire the J.2 gate into CI; nothing does that today. Schema
+version is 1.0; future format changes must bump `schema_version` in
+this document.
 
 ## Update cadence
 

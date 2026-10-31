@@ -25,8 +25,8 @@ torch 2.2.1+cpu).
   and provides the framework-vs-baseline pair for the 80 GB OOM
   defense and its reproduction record.
 - **Primary users.** Paper authors writing the
-  `docs/paper-draft.md` §4 molecular record; R4 / R5
-  reproducibility auditors; users running
+  `docs/ARCHIVE/legacy-paper/paper-draft.md` §4 molecular record;
+  R4 / R5 reproducibility auditors; users running
   `tools/run_sota_flowmol3_v2_adapter_experiment.py`.
 - **Out-of-scope uses.** Pocket-conditioned molecule generation
   (non-claim boundary: `has_condition_injection=False`); other
@@ -169,7 +169,7 @@ sidecar is rebuilt.
   - **Proposition 3** (selection mechanism) — `BoundedMergeOperator`.
   - **Theorem 1 rate bound** — `adaptive_reflow/theory/rate_bound.py`.
 - **Cross-references:**
-  `docs/paper-draft.md` §4 molecular record,
+  `docs/ARCHIVE/legacy-paper/paper-draft.md` §4 molecular record,
   `docs/r17-survey/flowmol3-paper-parity.md`,
   `docs/baseline-audit-report.md` §F.2 R4 / R5,
   `docs/CLAIMS.md` CLM-040 (FlowMol3 §1.1.d),

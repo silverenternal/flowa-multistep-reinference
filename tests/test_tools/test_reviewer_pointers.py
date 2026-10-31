@@ -139,3 +139,68 @@ def test_the_retired_todo_directory_is_still_checked(tool, sandbox) -> None:
         "todo/PUSH-READY.md",
         "todo/RISK-REGISTER.md",
     ]
+
+
+def test_a_model_card_is_a_surface(tool, sandbox) -> None:
+    """The seven model cards are in the mkdocs nav; they were not checked.
+
+    Ten of their pointers named ``docs/paper-draft.md``, archived on 2026-08-28,
+    and five named SOTA harnesses that were never committed.  ``READER_GLOBS``
+    is what makes the next one fail instead of shipping.
+    """
+    cards = sandbox / "docs" / "models"
+    cards.mkdir(parents=True)
+    (cards / "demo.model_card.md").write_text(
+        "See `docs/paper-draft.md`.\n", encoding="utf-8"
+    )
+    assert [row["target"] for row in tool.collect()] == ["docs/paper-draft.md"]
+
+
+def test_prose_absent_is_exempt_only_for_its_own_document(tool, sandbox, monkeypatch) -> None:
+    """``(doc, token)`` is the key, so an exemption cannot leak across pages."""
+    monkeypatch.setattr(
+        tool, "PROSE_ABSENT", {("README.md", "todo/GATES.md"): ("used to live",)}
+    )
+    (sandbox / "README.md").write_text(
+        "The table that used to live in `todo/GATES.md`.\n", encoding="utf-8"
+    )
+    assert tool.collect() == []
+
+    (sandbox / "docs" / "GATES.md").write_text(
+        "The table lives in `todo/GATES.md`.\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(tool, "SURFACES", ("README.md", "docs/GATES.md"))
+    assert [row["target"] for row in tool.collect()] == ["todo/GATES.md"]
+
+
+def test_a_prose_absent_exemption_lapses_with_the_phrase(tool, sandbox, monkeypatch) -> None:
+    """The exemption is conditional on the prose, not on the token alone.
+
+    A path kept alive by "the record was retired" has to lose its exemption the
+    moment the sentence stops saying that -- otherwise the entry becomes a
+    permanent blind spot, which is the defect the gate exists to catch.
+    """
+    monkeypatch.setattr(
+        tool, "PROSE_ABSENT", {("README.md", "todo/GATES.md"): ("was never committed",)}
+    )
+    (sandbox / "README.md").write_text(
+        "The table in `todo/GATES.md` was never committed.\n", encoding="utf-8"
+    )
+    assert tool.collect() == []
+
+    (sandbox / "README.md").write_text(
+        "The table in `todo/GATES.md` is authoritative.\n", encoding="utf-8"
+    )
+    assert [row["target"] for row in tool.collect()] == ["todo/GATES.md"]
+
+
+def test_an_undelivered_checkpoint_is_exempt_only_while_absent(tool, sandbox) -> None:
+    """The model cards tell the reader where to drop a checkpoint they must fetch."""
+    token = "data/freqflow_ckpt/nnet_ema.pth"
+    (sandbox / "README.md").write_text(f"Place it at `{token}`.\n", encoding="utf-8")
+    assert tool.count_pointers() == 0
+
+    target = sandbox / token
+    target.parent.mkdir(parents=True)
+    target.write_text("", encoding="utf-8")
+    assert tool.count_pointers() == 1

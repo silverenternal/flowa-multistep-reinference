@@ -23,7 +23,7 @@ particular:
   venv and is part of the F.5 env_hash coverage.
 * **Lemma 2**, **Lemma 4**, **Lemma 5** (sheet evidence `A_g`,
   physical-complement suppression, root-cell packing) ground the
-  per-round scheduler choices (`adaptive_reflow/algorithm/scheduler.py`).
+  per-round scheduler choices (`adaptive_reflow/algorithm/scheduler/`).
 * **Proposition 3** (selection-mechanism display, `paper section 4.2`)
   grounds the per-round restart distribution.
 
@@ -365,8 +365,8 @@ The FlowMol3 ckpt at `weights_real/checkpoints/last.ckpt` is
 `epoch=17 step=1547236` from the Pitt pretrained model (not a locally
 re-trained model: it was never opened by any local training job —
 local training jobs would have been invoked via
-`python flowmol/train.py`, which is on disk in
-`data/FlowMol3/repo/flowmol/train.py`, but the framework never runs that
+`python train.py` from the vendored repo root, which is on disk at
+`data/FlowMol3/repo/train.py`, but the framework never runs that
 script).
 
 To prevent future "is this our weights or upstream's?" confusion, all

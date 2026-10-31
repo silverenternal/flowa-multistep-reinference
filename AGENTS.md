@@ -295,7 +295,7 @@ python3 -m pytest tests/test_d4_regression_vectors.py -q
 grep -RnE "CLM-[0-9]+|R[0-9]+" docs/CLAIMS.md docs/CONSOLIDATED_RESULTS.md | head -30
 
 # 2. Re-read what was claimed (paper §X) vs what code does
-$EDITOR docs/paper-draft.md       # the claim
+$EDITOR docs/drafts/paper-A-final.md  # the claim
 grep -RnE "def .*?" adaptive_reflow/  # the code
 
 # 3. Reproduce from existing artifact (NEVER re-run long sweep)

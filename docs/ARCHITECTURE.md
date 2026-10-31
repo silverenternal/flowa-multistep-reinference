@@ -1587,9 +1587,9 @@ pipeline speedup) + [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.41](ARCHIVE
 + [`docs/CONSOLIDATED_RESULTS.md` §15.94](CONSOLIDATED_RESULTS.md)
 + [`docs/baseline-audit-report.md` §R.84](baseline-audit-report.md)
 + [`docs/INSIGHTS.md` §7.13](INSIGHTS.md) +
-`docs/audit/wave201-p2-foldability-sc-workers-per-gpu.md`
+`docs/audit/sweep_eval/p2-foldability-sc-workers-per-gpu.md`
 +
-`docs/audit/wave201-p3-run-foldability-propagate-workers-per-gpu.md`
+`docs/audit/sweep_eval/p3-run-foldability-propagate-workers-per-gpu.md`
 +
 [`tools/run_lineageflow_n1000_foldability_omegafold.py`](../tools/run_lineageflow_n1000_foldability_omegafold.py)
 (Wave 201 P5 + P6 + P7 diff) +
@@ -1639,9 +1639,8 @@ both modes.
 DGL 2.4.0+cu124 batched path (`tools/wave87_n1000_sweep.py` default
 `nfe_batch=100`) is broken: `DGLError: Expect number of features to
 match number of nodes (len(u)). Got N and N*10 instead` at every
-batch. Only NFE_BATCH=1 (single_mol path) works. Wave 242 P1 adds
-`scripts/wave242_p1_flowmol3_rescue_single_mol.py` wrapper that
-invokes the Wave 87 sweep with hardcoded `--nfe-batch 1 --n-total
+batch. Only NFE_BATCH=1 (single_mol path) works. Wave 242 P1 ran the
+Wave 87 sweep with hardcoded `--nfe-batch 1 --n-total
 200 --nfe 250 --device cuda:0` (single_mol path, N=200 NFE=250 per
 seed; ~33 min/arm × 4 arms = ~2.2 GPU-h total). Does NOT modify
 framework source code or Wave 87 sweep internals (D.4 30/30 PASS

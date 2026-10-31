@@ -32,9 +32,9 @@ published checkpoint with the shim installed and confirms the encoder
   into the framework, improves" claim as the **second** SOTA 2026
   model (protein axis, distinct from Self-Flow image axis).
 - **Primary users.** Framework algorithm-layer developers; paper
-  authors writing the `docs/paper-draft.md` §4 protein record;
-  users running `tools/run_sota_lineageflow_experiment.py` once
-  the upstream `core` source repo is reconstructed.
+  authors writing the `docs/ARCHIVE/legacy-paper/paper-draft.md` §4
+  protein record; no SOTA harness ships for this adapter — one would
+  need the upstream `core` source repo reconstructed first.
 - **Out-of-scope uses.** Non-protein modalities, downstream
   structure prediction (use ESMFold / AlphaFold), production
   deployment.
@@ -208,7 +208,7 @@ PARTIAL). R3 (`docs/baseline-audit-report.md` §F.2) remains
   - **Proposition 3** (selection mechanism) — `BoundedMergeOperator`.
   - **Theorem 1 rate bound** — `adaptive_reflow/theory/rate_bound.py`.
 - **Cross-references:**
-  `docs/paper-draft.md` §4 protein record,
+  `docs/ARCHIVE/legacy-paper/paper-draft.md` §4 protein record,
   `docs/PLUG_IN_YOUR_MODEL.md` §LineageFlow,
   `docs/audit/lineageflow-real-forward-fix.md` (D-004),
   `docs/baseline-audit-report.md` §F.2 R3,

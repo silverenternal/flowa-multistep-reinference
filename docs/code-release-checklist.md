@@ -121,13 +121,15 @@ excluded from the v1.0.1-paper-final tag archive:
 5. Re-execute headline experiments:
 
    - Kanzi N=1000 `framework_inv_proj`:
-     `bash scripts/run_kanzi_n1000_framework_inv_proj_seed42.sh`
-     (or directly call
-     `tools/sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py` with the
-     CLI flags documented in
-     `docs/audit/wave131-pre-freeze-hygiene.md`)
+     `bash reproduce/02_R2_Kanzi.sh` — the wrapper script this section
+     used to name (`scripts/run_kanzi_n1000_framework_inv_proj_seed42.sh`)
+     was never committed. To drive the sweep directly, call
+     `tools/sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py`; its
+     flags are the ones in its own `--help`, and the run that produced the
+     frozen numbers is recorded in
+     `docs/headline-evidence/byte_reproducibility_evidence/wave131-pre-freeze-hygiene.md`.
    - FlowMol3 N=1000: same pattern;
-     `docs/audit/wave89-phase1-final.md` has the CLI flags
+     `docs/ARCHIVE/audit-waves-1-99/wave89-phase1-final.md` has the CLI flags
    - 2D SOTA: `python tools/run_sota_2d_experiment.py` (≈30 min CPU,
      Wall 1965.9 s historical)
 

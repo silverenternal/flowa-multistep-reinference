@@ -1,7 +1,7 @@
 """SOTA comparison harness — :class:`ReInferenceRunner` vs single-pass baseline.
 
 The script is the **standalone reproduction driver** for the paper's
-ONE claim (*docs/paper-plan.md* §"The ONE claim"): *a published SOTA
+ONE claim (*docs/ARCHIVE/top-level/paper-plan.md* §"The ONE claim"): *a published SOTA
 flow matching model, run through FlowA's multi-round re-inference loop,
 improves on the same model's single-pass baseline.* Given a user-supplied
 adapter class implementing the :class:`FlowMatchingODEAdapter` Protocol,
@@ -552,7 +552,7 @@ def _build_parser() -> argparse.ArgumentParser:
             "Standalone SOTA-comparison harness: runs a user-supplied "
             "FlowMatchingODEAdapter through FlowA's four-scheduler "
             "multi-round re-inference loop and compares against a "
-            "single-pass baseline. See docs/paper-plan.md for the "
+            "single-pass baseline. See docs/ARCHIVE/top-level/paper-plan.md for the "
             "ONE-claim protocol this harness supports."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,

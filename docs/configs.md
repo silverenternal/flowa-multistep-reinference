@@ -21,7 +21,7 @@ bash tools/lineageflow_n1000_gpu_sweep.sh configs/runs/lineageflow_n1000_gpu.yam
 Profiles are the new default surface; CLI flags remain the override surface.
 
 **Schema:** see [`tools/eval/config.py`](../configs/runs/) and the schema
-walkthrough in `docs/audit/wave111-b-config-scattering-audit.md` §2.
+walkthrough in `docs/audit/sweep_eval/b-config-scattering-audit.md` §2.
 
 ---
 
@@ -94,7 +94,7 @@ hardcoded shell constants) and F-A007-equivalent lineageflow path.
 
 ## See also
 
-- **Plan + schema walkthrough:** `docs/audit/wave111-data-linkage-plan.md` §4.
-- **Closure:** `docs/audit/wave111-data-linkage-closure.md` — C-1..C-9 commit SHAs and finding-to-commit map.
+- **Plan + schema walkthrough:** `docs/audit/data_packaging/data-linkage-plan.md` §4.
+- **Closure:** `docs/audit/data_packaging/data-linkage-closure.md` — C-1..C-9 commit SHAs and finding-to-commit map.
 - **Adapter glue:** `tools/_kanzi_sweep_runner.py` (Wave 105 P1-A) consumes the profile values for `adapter_*` and `output_filename` keys.
 - **Canonical CLI:** `tools/eval/cli.py` (Wave 112.C-4) is the only driver required to consume a profile; sweep wrappers read the same YAML via shared helpers.

@@ -408,8 +408,8 @@ samples per run, the published 2-D RF baseline result is:
 | EvidenceDrivenScheduler | Y₃ | Y₃ − X |
 | FreeTrajScheduler | Y₄ | Y₄ − X |
 
-The paper claim from `docs/paper-plan.md` §4 is *"framework *can*
-improve"*, not *"always improves"*. Honest reporting:
+The paper claim from `docs/ARCHIVE/top-level/paper-plan.md` §4 is
+*"framework *can* improve"*, not *"always improves"*. Honest reporting:
 
 - **≥ 1–2 of 4 schedulers beat the baseline** = publishable positive.
 - **All 4 ≥ baseline** = strong result (rare; report honestly).
@@ -552,9 +552,9 @@ A **skeleton adapter** is wired at
   class-label validation, restart-blending, export_trajectory,
   inject_forward_noise, Heun solver).
 
-Harness status: ``tools/run_sota_self_flow_experiment.py`` is a
-**stub** that documents the required CLI surface and exits with
-``75`` (EX_TEMPFAIL). The full harness depends on the published
+Harness status: **not authored.** No SOTA harness ships for this
+adapter; the ``75`` (EX_TEMPFAIL) stub named in earlier revisions was
+never committed. A full harness would need the published
 ImageNet-256 reference batch + a CUDA host + an InceptionV3 FID
 evaluation pipeline (3-channel 299x299 RGB normalization).
 

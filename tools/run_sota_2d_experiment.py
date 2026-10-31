@@ -1,7 +1,7 @@
 """SOTA 2D Rectified-Flow experiment — baseline vs FlowA framework.
 
 The ONE experiment that proves the paper claim
-(``docs/paper-plan.md`` §4.2): when a published SOTA flow matching
+(``docs/ARCHIVE/top-level/paper-plan.md`` §4.2): when a published SOTA flow matching
 model is run through FlowA's multi-round re-inference loop, the
 resulting sample-quality metrics improve over the same model's
 single-pass baseline.
@@ -922,7 +922,7 @@ def _write_summary_markdown(
     lines.append("## Paper claim")
     lines.append("")
     lines.append(
-        "**Claim** (``docs/paper-plan.md`` §4.2): when a published SOTA "
+        "**Claim** (``docs/ARCHIVE/top-level/paper-plan.md`` §4.2): when a published SOTA "
         "flow matching model is run through FlowA's multi-round re-inference "
         "loop, the resulting sample-quality metrics (here "
         "`selection_ratio` + W2) improve over the same model's single-pass "
