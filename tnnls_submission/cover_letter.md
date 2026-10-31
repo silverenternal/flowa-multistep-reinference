@@ -17,44 +17,37 @@
 > 0.117%. The 2.5–10× cross-budget NFE range is an extrapolation; the directly
 > measured Tier-1 speedup is 1.0×.
 
-## §0 USER ACTION REQUIRED — Fill These Placeholders Before Submitting
+## §0 USER ACTION REQUIRED — Replace the Exemplar Values Before Submitting
 
-This cover letter contains placeholders that **must be replaced by the
-corresponding author** before the TNNLS Editorial Manager submission.
-All placeholders are marked with the `[USER TO FILL: ...]` convention
-below, and they are also tagged inline so they can be located with
-`grep -n 'USER TO FILL' docs/cover-letter-tnnls.md`.
+This cover letter ships with the repository's `INTERACTIVE_DEFAULTS`
+**exemplar** values already substituted, so the letter body carries no
+`[USER TO FILL]` markers. The 17 fields that must be overridden are
+enumerated — with section, current value and rationale — in
+`tnnls_submission/cover_letter_FILL_AUTOFILL.json`. In outline:
 
-- `[USER TO FILL: Authors block]` — line 11 (§opening header). Replace
-  `[corresponding author and affiliations to be filled at submission]`
-  with the full author list, affiliations, and corresponding-author
-  email.
-- `[USER TO FILL: Suggested Associate Editor]` — line 16 (§opening
-  header) and line ~ (§9). Insert a TNNLS Associate Editor who
-  specialises in generative models / diffusion / flow matching /
+- **Authors block** (opening header) — full author list, affiliations and
+  the corresponding-author email.
+- **Suggested Associate Editor** (opening header and §9) — one TNNLS AE
+  specialising in generative models / diffusion / flow matching /
   learning-system theory.
-- `[USER TO FILL: Suggested Reviewers]` — line 19 (§opening header)
-  and §9. Five reviewers; replace both the
-  `reviewerN.<role>@[institution].edu` email placeholders and the
-  "to be confirmed at submission" affiliation hints with real names,
-  affiliations, and emails.
-- `[USER TO FILL: Reviewer 1 affiliation]` — §9.
-- `[USER TO FILL: Reviewer 2 affiliation]` — §9.
-- `[USER TO FILL: Reviewer 3 affiliation]` — §9.
-- `[USER TO FILL: Reviewer 4 affiliation]` — §9.
-- `[USER TO FILL: Reviewer 5 affiliation]` — §9.
-- `[USER TO FILL: Corresponding author name]` — §11 closing.
-- `[USER TO FILL: Corresponding author affiliation]` — §11 closing.
-- `[USER TO FILL: Corresponding author email]` — §11 closing.
+- **Suggested reviewers** (opening header and §9) — five reviewers, each
+  with a real affiliation and a real institutional email. The
+  `reviewerN.<role>@…` addresses and the "to be confirmed at submission"
+  hints are placeholders, and so are the named institutions attached to
+  them.
+- **Corresponding author** (closing signature, after §11) — name,
+  affiliation, email.
 
-After filling, run:
+None of the exemplar names or addresses are real. Before upload, replace
+all 17 values, delete this §0 section and the exemplar banner at the top of
+this file, then confirm that no exemplar survives:
 
 ```bash
-grep -n 'USER TO FILL' docs/cover-letter-tnnls.md
+grep -n 'example\.\(com\|edu\)\|univ-eiffel\.fr\|stanford\.edu\|meta\.com\|to be confirmed at submission\|University of Example\|MIT CSAIL\|Hugo Huang\|Ming Li' \
+  tnnls_submission/cover_letter.md
 ```
 
-The output must be empty before the cover letter is uploaded to the
-TNNLS Editorial Manager.
+The output must be empty.
 
 ---
 

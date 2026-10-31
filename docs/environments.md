@@ -126,7 +126,8 @@ native sm_120 venv (`hidream_venv`, `lumina_venv` or `wan2_2_venv`, all torch
 deferred because the GPU was not available.
 
 **No expected red cells under system `python3`.** `python3 -m pytest tests/ -q`
-is green: 5636 passed, 180 skipped, 0 failed (measured 2026-10-30, 9m46s).
+is green: 5650 passed, 180 skipped, 0 failed (measured 2026-10-31, 19m00s on a
+loaded CPU box; 9m46s on 2026-10-30).
 `tests/test_tools/test_paper_metrics.py` mocks the upstream `SampleAnalyzer`,
 so it needs no torch — until 2026-10-30 it failed 12/15 here because the mock
 only replaced `sys.modules` while `tools/paper_metrics.py` binds the upstream

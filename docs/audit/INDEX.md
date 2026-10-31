@@ -56,10 +56,10 @@ preserved for the per-wave audit trail.
 | `algorithm_4arm` | Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency) | 39 | 18 | 21 |
 | `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 111 | 90 | 21 |
 | `stats_method` | Statistical methodology (R5/R6, p-value, bonferroni, TOST) | 43 | 20 | 23 |
-| `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 49 | 26 | 23 |
+| `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 50 | 26 | 24 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
 | `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 113 | 32 | 81 |
-| **TOTAL** | — | **630** | **349** | **281** |
+| **TOTAL** | — | **631** | **349** | **282** |
 
 ---
 
@@ -703,7 +703,7 @@ Statistical methodology (R5/R6, p-value, bonferroni, TOST). This cluster is part
 
 ### Cluster: `paper_claims` — Paper + claims (paper packaging, claim audit, paper-update)
 
-**Files: 49** (active: 26, historical: 23)
+**Files: 50** (active: 26, historical: 24)
 
 Paper + claims (paper packaging, claim audit, paper-update). This cluster is part of the project's audit surface for paper_claims.
 
@@ -736,9 +736,10 @@ Paper + claims (paper packaging, claim audit, paper-update). This cluster is par
 - `wave372-manuscript-claim-audit.md`
 - `wave385-figures.md`
 
-**Historical (23 files, not cited by reviewer-facing surfaces):**
+**Historical (24 files, not cited by reviewer-facing surfaces):**
 
 - `cover-letter-fill-draft.md`
+- `gate-table-readings.md`
 - `manuscript-citation-integrity.md`
 - `manuscript-vs-new-evidence-2026-10-27.md`
 - `paper-evidence-register-2026-10-27.md`

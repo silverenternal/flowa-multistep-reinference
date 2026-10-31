@@ -82,8 +82,8 @@ verdict holds globally.
 | **Paper PDF** | [`docs/drafts/paper-A-final.pdf`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.pdf) (12 pages, IEEEtran-journal double-column typeset, sha256 `ef9b401d664c2d911b233178296060b598b4fa6f5a87a516b42f893ee51d8e3c`) |
 | **Paper draft** | [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) (27,346 words, §6 Framework Properties Lemmas 1–3 + Theorems 4–5 ACTIVE, sha256 `46e423078cd42b10c5c7f31a633d2edafa5d6d448f1d0810dd5df5d5dceb66df`) |
 | **Target venue** | IEEE TNNLS (Transactions on Neural Networks and Learning Systems) |
-| **Submission status** | **READY** — 9-gate ALL PASS at pre-push (D.4 30/30, contracts 195/195, ruff 0 errors, claims no drift, mkdocs strict 0 warnings, vendored NOT touched, data integrity 6/149/0 mismatches, reproducibility 12/12, PDF ≤14 pages); cover letter needs 17 USER_TO_FILL fields per [`tnnls_submission/FILL_GUIDE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/FILL_GUIDE.md). The separate readiness verifier (`tools/verify_submission_readiness.py`) also reports two **camera-ready-scope** doc-drift gates red (`k1_rc5`, `drift_33`) — documented, not submission blockers; see [`docs/audit/todo-history.md`](docs/audit/todo-history.md) §1.2 |
-| **Submission package** | [`tnnls_submission/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tnnls_submission) — 7 files with real SHA-256 (cover_letter.md, highlights.md, tables.md, figures.md, data_availability.md, submission_checklist.md, MANIFEST.md) |
+| **Submission status** | **READY** — 9-gate ALL PASS at pre-push (D.4 30/30, contracts 195/195, ruff 0 errors, claims no drift, mkdocs strict 0 warnings, vendored NOT touched, data integrity 15/703/0 mismatches, reproducibility 12/12, PDF ≤14 pages); the cover letter ships 17 exemplar identity fields that must be replaced before submission (§0 of the letter; field list in [`tnnls_submission/cover_letter_FILL_AUTOFILL.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter_FILL_AUTOFILL.json)). The separate readiness verifier (`tools/verify_submission_readiness.py`) reports **9/9 gates passed, 0 skips** |
+| **Submission package** | [`tnnls_submission/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tnnls_submission) — 13 files with real SHA-256 (cover_letter.md, cover_letter_FILL_AUTOFILL.json, data_availability.md, FILL_GUIDE.md, figures.md, highlights.md, MANIFEST.md, README.md, SHA256SUMS, submission_checklist.md, SUBMISSION_READINESS.md, tables.md, supplementary_bundle.zip) |
 | **H7 terminology cleanup** | **59 fixes, 0 residual jargon** |
 | **H8 abbreviations** | **5 defined at first use** (pLDDT, scPerplexity, RDKit, HSM, HMMER) |
 | **B6 cross-doc numbers** | **3 aligned to CLAIMS.md canonical** (R5b FID range, seeds 42/43/44, STRONG count breakdown) |
@@ -385,21 +385,21 @@ Per-cell audit records under [`docs/audit/`](https://github.com/silverenternal/f
 
 | Gate | State | Evidence |
 |---|---|---|
-| **9-gate pre-push (re-verified)** | **9/9 PASS** | D.4 30/30 + contracts 195/195 + ruff 0 + claims no drift + mkdocs 0 + vendored NOT touched + data integrity 6/149/0 + reproducibility 12/12 + PDF ≤14 |
+| **9-gate pre-push (re-verified)** | **9/9 PASS** | D.4 30/30 + contracts 195/195 + ruff 0 + claims no drift + mkdocs 0 + vendored NOT touched + data integrity 15/703/0 + reproducibility 12/12 + PDF ≤14 |
 | **D.4 byte-stable regression** | **30/30 PASS** | `tests/test_d4_regression_vectors.py` |
-| **Contracts test suite** | **195/195 PASS** | `tests/test_contracts*.py` |
-| **Data integrity** | **6/149/0** (datasets verified / bytes checked / mismatches) | `tools/check_data_integrity.py` |
+| **Contracts test suite** | **195/195 PASS** | `pytest tests/test_contracts/` |
+| **Data integrity** | **15/703/0** (checksum directories / files verified / mismatches) | `tools/check_data_integrity.py` |
 | **Reproducibility** | **12/12 PASS** | `tools/verify_reproducibility_smoke.py` |
 | **Byte-stable composite axis (3/3 Tier-3)** | Kanzi +0.1695, LineageFlow +0.2083, FlowMol3 +0.1182 | `docs/headline-evidence/composite_axis_byte_stable/SOURCE.md` |
 | **Per-cell audit trail** | multi-phase self-contained `docs/audit/` records | `docs/audit/INDEX.md` |
 | **Source tree freeze** | `v3.1-internal-publishable` tag, vendored 8 repos UNMODIFIED | `docs/ARCHITECTURE.md` |
-| **Pytest** | subset green; a full-suite run gave 25 failed / 5166 passed / 145 skipped / 16 errors (env/ordering-dependent; `tests/test_claims/` green 146/146 in isolation) — see the `engineering` cluster in [`docs/audit/INDEX.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/INDEX.md) | `pytest tests/` |
+| **Pytest** | **5650 passed / 180 skipped / 0 failed** (full `tests/` run, 2026-10-31; the earlier 25-failure reading was an import-order defect in one mock, fixed 2026-10-30) | `pytest tests/` |
 | **Ruff lint (4-directory scope)** | 0 findings | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
-| **Mypy type-check** | 0 errors in the canonical environment; **39** in the current sandbox (`mypy 2.3.1`, missing third-party stubs) — env-dependent, pre-existing | `mypy adaptive_reflow/` |
+| **Mypy type-check** | **0 errors in 232 files** (`--strict`, venv `mypy 2.3.1`) | `.venvs/flowmol3_venv/bin/python -m mypy --strict adaptive_reflow/` |
 | **Final paper sha256** | `46e423078cd42b10c5c7f31a633d2edafa5d6d448f1d0810dd5df5d5dceb66df` | `sha256sum docs/drafts/paper-A-final.md` |
 | **Final PDF sha256** | `ef9b401d664c2d911b233178296060b598b4fa6f5a87a516b42f893ee51d8e3c` (12 pages) | `sha256sum docs/drafts/paper-A-final.pdf` |
 
-> **Gate-scope note.** The "9-gate" row above is the project's hard-requirement acceptance set. The broader readiness verifier (`tools/verify_submission_readiness.py`, run in the reproducibility recipe below) additionally checks `r1_r6_sha`, `framework_n1000`, and two doc-drift gates (`k1_rc5` — the K1 disclosure-wording gate, now pointed at the live manuscript; `drift_33` — the historical pre-expansion D.4 `33/33` count, which survives only in historical records). This is a gate-scope difference, not a contradiction: see [`docs/audit/todo-history.md`](docs/audit/todo-history.md) §1.2.
+> **Gate-scope note.** The "9-gate" row above is the project's hard-requirement acceptance set. The readiness verifier (`tools/verify_submission_readiness.py`, run in the reproducibility recipe below) is a **separate nine-gate set with a different composition** — `d4_72`, `ruff_0`, `mypy_0`, `claims_pass`, `paper_warns`, `r1_r6_sha`, `k1_rc5`, `drift_33`, `framework_n1000`. Both sets are green with 0 skips as of 2026-10-31.
 
 **Reproducibility recipe:**
 
@@ -407,7 +407,8 @@ Per-cell audit records under [`docs/audit/`](https://github.com/silverenternal/f
 # 1. One-click verification of all 7 R-level headlines
 bash reproduce/verify_all_headlines.sh
 
-# 2. Submission-gate verification (5 gates)
+# 2. Submission-gate verification (9 gates: d4_72, ruff_0, mypy_0,
+#    claims_pass, paper_warns, r1_r6_sha, k1_rc5, drift_33, framework_n1000)
 python3 tools/verify_submission_readiness.py
 
 # 3. D.4 byte-stable regression suite
@@ -454,10 +455,10 @@ configs/                  # configuration presets
 ```
 reproduce/               # one-click reproduction scripts (this work)
 scripts/                  # experiment-driver + reproduction scripts
-tests/                    # 5155 pytest + D.4 byte-stable regression
+tests/                    # 5650 pytest + D.4 byte-stable regression
 tools/                    # paper-metric + sweep scripts
-verification_outputs/     # 487+ byte-addressable headline evidence
-tnnls_submission/         # TNNLS submission package (7 files)
+verification_outputs/     # 41,668 tracked evidence files
+tnnls_submission/         # TNNLS submission package (13 files + SHA256SUMS)
 docs/                     # paper drafts + audit trail
 eaai_submission/          # historical EAAI submission (archive)
 data/                     # vendored upstream checkpoints (8 repos, all unmodified)
@@ -471,12 +472,12 @@ data/                     # vendored upstream checkpoints (8 repos, all unmodifi
 |---|---|---|
 | D.4 byte-stable regression | **30/30 PASS** | `tests/test_d4_regression_vectors.py` |
 | mkdocs build --strict | **0 warnings** | `mkdocs.yml` |
-| claims consistency | **no drift** (61 ACTIVE + 2 DEPRECATED claims) | `tools/check_claims_consistency.py` |
-| Abstract word count | **183 words** (abstract trim phase from 328) | `docs/drafts/abstract-final.md` |
-| Pytest | **subset green** (full-suite is env/ordering-dependent; see the Reproducibility table) | `pytest tests/` |
+| claims consistency | **no drift** (61 ACTIVE + 2 DEPRECATED; CLM-040 forced PROVISIONAL by its `Disputed by` citation) | `tools/check_claims_consistency.py` |
+| Abstract word count | **167 words** (§Abstract of the manuscript; 193 before the 2026-10-27 retitle) | `docs/drafts/paper-A-final.md` |
+| Pytest | **5650 passed / 180 skipped / 0 failed** (full `tests/` run, 2026-10-31) | `pytest tests/` |
 | Ruff lint (4-directory scope) | **0 findings** | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
-| Mypy type-check | **0 errors** | `mypy adaptive_reflow/` |
-| TNNLS submission package | **7 files** with real SHA-256 | `tnnls_submission/MANIFEST.md` |
+| Mypy type-check | **0 errors in 232 files** (`--strict`, venv `mypy 2.3.1`) | `.venvs/flowmol3_venv/bin/python -m mypy --strict adaptive_reflow/` |
+| TNNLS submission package | **13 files + a 22-entry `SHA256SUMS`** | `tnnls_submission/MANIFEST.md` |
 
 ---
 

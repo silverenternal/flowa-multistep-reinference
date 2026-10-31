@@ -101,7 +101,7 @@ contract with its author, not a document to be rewritten underneath them.
 
 ```
 pdfinfo docs/drafts/paper-A-final.pdf            Pages: 12
-grep -c "USER.TO.FILL" cover_letter.md           14  (12 brackets, 11 in §0)
+render_cover_letter.py --validate               17/17 markers gone, 20 exemplar hits
 check_submission_manifest                        rows=26 drift=0 ledger_drift=0
 sha256sum -c SHA256SUMS                          22 OK
 22/22 gate chain                                 OK

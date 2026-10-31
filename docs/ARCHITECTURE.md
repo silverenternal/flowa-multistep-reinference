@@ -1539,51 +1539,44 @@ recorded here first.
 | "Who reviews PRs against the contracts layer?" | `CODEOWNERS` |
 ---
 
-## 11. Wave 201 eval pipeline speedup (governance cross-reference)
+## 11. Eval pipeline speedup (governance cross-reference)
 
-Wave 201 closes the **eval pipeline speedup** dimension on the
-LineageFlow foldability + self-consistency sweep via 4 additive
-per-GPU-oversubscription + sharding + auto-detection + GPU-
-propagation improvements (projected N=1000 sweep wall time ≈22 min
-vs Wave 84 >40 h estimate, ~110× speedup; LPT length-balanced
-sharding adds ~37% additional speedup over the round-robin N=4
-baseline). The 4 optimizations are CPU-only and GPU-agnostic; they
-unlock the next N=1000 sweep whenever the 2 underlying blockers
-(Wave 200 P2 torch 1.13.1 vs Blackwell sm_120 + Python 3.10 venv
-constraint) are unblocked. Wave 201 is the **eval pipeline
-optimization wave** that addresses the adaptive-layer
-(adapter-level) improvements angle flagged in the deferred-tasks
-ledger: rather than re-implementing the sweep from scratch, the
-existing pipeline can be made 2-3x faster.
+The **eval pipeline speedup** dimension on the LineageFlow foldability +
+self-consistency sweep closes with 4 additive per-GPU-oversubscription,
+sharding, auto-detection and GPU-propagation improvements (projected
+N=1000 sweep wall time ≈22 min vs a >40 h estimate, ~110× speedup; LPT
+length-balanced sharding adds ~37% over the round-robin N=4 baseline).
+The 4 optimizations are CPU-only and GPU-agnostic; they unlock the next
+N=1000 sweep whenever the 2 underlying blockers (torch 1.13.1 vs
+Blackwell sm_120 + the Python 3.10 venv constraint) are unblocked. The
+work addresses the adaptive-layer (adapter-level) angle flagged in the
+deferred-tasks ledger: rather than re-implementing the sweep from
+scratch, the existing pipeline can be made 2-3× faster.
 
 The 4 optimizations are:
 
-1. `--workers-per-gpu N` per-shard oversubscription (Wave 201 P2,
-   commit `095aa5d`) — each GPU spawns N concurrent OmegaFold /
-   ESM-IF subprocesses (default N=1, Wave 158 backward-compat),
-   hermetically unit-tested by 7 tests in
+1. `--workers-per-gpu N` per-shard oversubscription (commit `095aa5d`) —
+   each GPU spawns N concurrent OmegaFold / ESM-IF subprocesses (default
+   N=1, backward-compatible), hermetically unit-tested by 7 tests in
    `tests/test_tools/test_workers_per_gpu.py`.
 2. Top-level `--workers-per-gpu` propagation + length-balanced LPT
-   bin-packing sub-sharding (Wave 201 P3, commit `6e60951`) —
-   per-shard work distributed via LPT (≤4/3 makespan gap from LPT
-   optimal) instead of round-robin (≤30% skew on length-imbalanced
-   data); makespan skew on LineageFlow's 80-200 AA range drops from
-   ≤30% to ≤8%.
+   bin-packing sub-sharding (commit `6e60951`) — per-shard work
+   distributed via LPT (≤4/3 makespan gap from LPT optimal) instead of
+   round-robin (≤30% skew on length-imbalanced data); makespan skew on
+   LineageFlow's 80-200 AA range drops from ≤30% to ≤8%.
 3. Auto-detect workers-per-gpu from per-device free VRAM via
-   `nvidia-smi` (Wave 201 P5, commit `9f4bbde`) — formula
+   `nvidia-smi` (commit `9f4bbde`) — formula
    `max(1, min(4, floor(min_free_GPU_mem_GB / 4)))`; ≥16 GB → 4
    workers, 8-16 → 2 workers, <8 → 1 worker; never raises (returns 1
    on any failure).
 4. `--gpus` propagation to `run_foldability.py --fold-gpus` +
-   `--sc-gpus` (Wave 201 P6 — was missing from P5; this Wave 201 P7
-   commit lands the diff) — the P5 bug was that auto-workers was
-   computed but `--gpus` was never propagated, so the auto-workers
-   optimization silently no-op'd; this P6 fix threads `--gpus "0,1"`
-   through both fold and sc sub-calls so the auto-workers
-   optimization actually shards across GPUs.
+   `--sc-gpus` — the auto-workers value was computed but `--gpus` was
+   never propagated, so the optimization silently no-op'd; this fix
+   threads `--gpus "0,1"` through both fold and sc sub-calls so it
+   actually shards across GPUs.
 
-Cross-references: [CLM-065](CLAIMS.md#CLM-065) (NEW claim — eval
-pipeline speedup) + [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.41](ARCHIVE/legacy-paper/paper-draft.md)
+Cross-references: [CLM-065](CLAIMS.md#CLM-065) (eval pipeline speedup)
++ [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.41](ARCHIVE/legacy-paper/paper-draft.md)
 + [`docs/CONSOLIDATED_RESULTS.md` §15.94](CONSOLIDATED_RESULTS.md)
 + [`docs/baseline-audit-report.md` §R.84](baseline-audit-report.md)
 + [`docs/INSIGHTS.md` §7.13](INSIGHTS.md) +
@@ -1592,20 +1585,20 @@ pipeline speedup) + [`docs/ARCHIVE/legacy-paper/paper-draft.md` §10.41](ARCHIVE
 `docs/audit/sweep_eval/p3-run-foldability-propagate-workers-per-gpu.md`
 +
 [`tools/run_lineageflow_n1000_foldability_omegafold.py`](../tools/run_lineageflow_n1000_foldability_omegafold.py)
-(Wave 201 P5 + P6 + P7 diff) +
+(full diff) +
 [`tests/test_tools/test_workers_per_gpu.py`](../tests/test_tools/test_workers_per_gpu.py)
-(10 hermetic CPU-only tests). All 10 §10.41 (g) acceptance gates
-PASS; CLM-061 additively annotated with Wave 201 contribution but
+(10 hermetic CPU-only tests). All 10 §10.41 (g) acceptance gates PASS;
+CLM-061 is additively annotated with the eval-pipeline contribution but
 the data-side status is UNCHANGED (k6 CONFIRMED on real data;
-lineageflow N=1000 sweep STILL BLOCKED-ON-DATA per Wave 200 P2
-underlying blockers, but pipeline plumbing ready — the cross-adapter
-CONFIRMED-on-2-adapters claim is NOT asserted).
+lineageflow N=1000 sweep STILL BLOCKED-ON-DATA on the two blockers
+above, pipeline plumbing ready — the cross-adapter CONFIRMED-on-2-adapters
+claim is NOT asserted).
 
 ---
 
-## 12. Wave 235–242 architecture additions (tier-aware scheduler + CUDA-graph capture + FlowMol3 single_mol rescue)
+## 12. Architecture additions (tier-aware scheduler + CUDA-graph capture + FlowMol3 single_mol rescue)
 
-### 12.1 Tier-aware scheduler wrapper (Wave 233 P3)
+### 12.1 Tier-aware scheduler wrapper
 
 `adaptive_reflow/algorithm/scheduler/tier_aware.py` introduces
 `TierAwareCodimensionSheetScheduler`, a wrapper that stratifies the
@@ -1615,12 +1608,12 @@ incoming records into 3 tiers (easy / medium / hard) by quantile of
 hard-tier intensity multiplier. The wrapper delegates to the
 underlying `CodimensionSheetScheduler` and does NOT modify the
 underlying scheduler's algorithm — preserves byte-stable
-aggregation semantics (D.4 30/30 PASS preserved). Wave 235 P2-P3
-applied constant-offset counterfactual math (no source code change)
-to the Wave 233 P3 baseline to obtain R2 d_z +0.3927 (+743%) and
-R6 d_z +0.6467 (+189%) with easy-tier regression ELIMINATED.
+aggregation semantics (D.4 30/30 PASS preserved). A constant-offset
+counterfactual analysis (no source change) against that baseline gives
+R2 d_z +0.3927 (+743%) and R6 d_z +0.6467 (+189%) with easy-tier
+regression ELIMINATED.
 
-### 12.2 CUDA-graph capture (Wave 236 P2)
+### 12.2 CUDA-graph capture
 
 `adaptive_reflow/framework/cuda_graph_capture.py` introduces
 `CudaGraphVelocityFieldCache` + `captured_velocity_field` wrapper. On
@@ -1634,30 +1627,28 @@ n_rounds=4 (wallclock 7.94s → 1.87s; framework/baseline ratio 3.40×
 → 1.26×; closes 76.8% of the gap). D.4 30/30 PASS preserved in
 both modes.
 
-### 12.3 FlowMol3 single_mol rescue wrapper (Wave 242 P1)
+### 12.3 FlowMol3 single_mol rescue wrapper
 
 DGL 2.4.0+cu124 batched path (`tools/wave87_n1000_sweep.py` default
 `nfe_batch=100`) is broken: `DGLError: Expect number of features to
 match number of nodes (len(u)). Got N and N*10 instead` at every
-batch. Only NFE_BATCH=1 (single_mol path) works. Wave 242 P1 ran the
-Wave 87 sweep with hardcoded `--nfe-batch 1 --n-total
-200 --nfe 250 --device cuda:0` (single_mol path, N=200 NFE=250 per
-seed; ~33 min/arm × 4 arms = ~2.2 GPU-h total). Does NOT modify
-framework source code or Wave 87 sweep internals (D.4 30/30 PASS
-preserved). Wave 242 P1 seed 43 COMPLETED (seed 44 RUNNING as of
-2026-09-21 22:17 CST); Wave 243 P2-P4 queued for final
-direction-analysis + paper update + final pre-push.
+batch. Only NFE_BATCH=1 (single_mol path) works. The sweep was run
+with hardcoded `--nfe-batch 1 --n-total 200 --nfe 250 --device cuda:0`
+(single_mol path, N=200 NFE=250 per seed; ~33 min/arm × 4 arms = ~2.2
+GPU-h total). It does NOT modify framework source code or the sweep
+internals (D.4 30/30 PASS preserved). Seed 43 COMPLETED (seed 44
+RUNNING as of 2026-09-21 22:17 CST).
 
-### 12.4 --no-final-restart CLI flag (Wave 235 P1)
+### 12.4 --no-final-restart CLI flag
 
 `tools/run_sota_cifar_experiment.py` adds a `--no-final-restart` CLI
 flag that bypasses the final-restart blending in the R5b CIFAR
-multi-round sweep path. Used in Wave 235 P1 to falsify the
-DeepSeek hypothesis that "1-NFE forced restart blending" was the
-R5b structural cause (falsified: `--no-final-restart` at n_rounds=10
-makes regression worse, not better). The actual structural fix is
-n_rounds=1 (single-round sweep), where framework WINS on 3/4
-schedulers at ΔFID ∈ [-2.53%, -0.66%]. The flag is preserved on the
-runner path for future R5b tests but does NOT enter the
-regression-vector audit path (D.4 30/30 PASS preserved).
+multi-round sweep path. It was used to falsify the hypothesis that
+"1-NFE forced restart blending" was the R5b structural cause
+(falsified: `--no-final-restart` at n_rounds=10 makes regression worse,
+not better). The actual structural fix is n_rounds=1 (single-round
+sweep), where framework WINS on 3/4 schedulers at ΔFID ∈ [-2.53%,
+-0.66%]. The flag is preserved on the runner path for future R5b tests
+but does NOT enter the regression-vector audit path (D.4 30/30 PASS
+preserved).
 

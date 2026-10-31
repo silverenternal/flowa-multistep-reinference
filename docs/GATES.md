@@ -103,7 +103,7 @@ tree on 2026-10-13. The tool they gate is still live:
 ## D.4 byte-stable regression vectors (single source of truth)
 
 **Gate:** D.4 pinned regression vectors — **72/72 PASS** at HEAD as of 2026-09-14
-(commit `5677cf2`, Wave 149 final close; ruff-frozen code). The total breaks
+(commit `5677cf2`, ruff-frozen code). The total breaks
 down as 30 tests in `tests/test_d4_regression_vectors.py` + 42 tests in
 `tests/test_adapters/test_regression_vectors.py` = **72** tests, all PASS
 per `pytest tests/ -k "d4" -q`.
@@ -129,22 +129,21 @@ PYTHONPATH=. python -m pytest tests/test_d4_regression_vectors.py \
 
 **Historical "33/33 PASS" caveat:** The historical "33/33 PASS" figure
 (used in cover_letter.md, submission_checklist.md, supplementary.md
-S6.3, the README §Tests section, and many downstream docs prior to
-Wave 149 Agent 6) referred to the Wave 38-39 first-batch regression
-subset ONLY (i.e., just `tests/test_d4_regression_vectors.py`, quoted as
-33 tests at the time; it collects 30 — see the correction above). The
-current **72/72** figure includes the Wave 32 batches 2/3/4 + Wave 33
-batch 2/3 additions (`tests/test_adapters/test_regression_vectors.py`,
-42 tests, commit `40d979c` and subsequent). Wave 106.C.3 unified
-the wording to "D.4 pinned regression vectors 72/72 PASS" with a
-historical caveat for the legacy "33/33" figure; Wave 149 Agent 6
-extended this standardization to all 73 non-archived docs/ files
-(see `docs/audit/final_verify/close.md`).
+S6.3, the README §Tests section, and many downstream docs) referred to
+the first-batch regression subset ONLY (i.e., just
+`tests/test_d4_regression_vectors.py`, quoted as 33 tests at the time; it
+collects 30 — see the correction above). The current **72/72** figure
+includes the later batches added in
+`tests/test_adapters/test_regression_vectors.py` (42 tests, commit
+`40d979c` and subsequent). The wording was then unified to "D.4 pinned
+regression vectors 72/72 PASS" with a historical caveat for the legacy
+"33/33" figure, and that standardization was extended to all 73
+non-archived docs/ files (see `docs/audit/final_verify/close.md`).
 
 **D.4 vs full pytest — important distinction:** The full pytest suite
-(`pytest tests/ -q`) reported **5636 passed / 180 skipped / 0 failed** on
-2026-10-30 (`todo.json` → `gate_note`; the post-Wave-131 ruff-frozen
-figures quoted here previously — 5155 collected / 5012 passed — are
+(`pytest tests/ -q`) reported **5650 passed / 180 skipped / 0 failed** on
+2026-10-31 (`todo.json` → `gate_note`; the ruff-frozen figures quoted
+here previously — 5155 collected / 5012 passed — are
 superseded). D.4 is the 72-test pinned subset that must stay green on
 every change; the full suite is run per change but is not the gate.
 
@@ -153,22 +152,22 @@ and none of them are failures today:
 
 | Formerly listed failure | State on 2026-10-30 |
 |---|---|
-| `test_exp2_stochastic_fm_w2_ratio_reproduces_25pct_reduction` | **file deleted** in Wave 33 (`9c10d212`, "StochFM delete") — the listing outlived the test |
+| `test_exp2_stochastic_fm_w2_ratio_reproduces_25pct_reduction` | **file deleted** in `9c10d212` ("StochFM delete") — the listing outlived the test |
 | `test_check_docs_against_code.py::test_self_test_quiet_mode_returns_zero_exit` | **test no longer exists** in that module |
 | `test_check_docs_against_code.py::test_no_false_positives_on_current_repo` | **1 passed** (re-run 2026-10-30) |
 
 `tests/test_tools/test_paper_metrics.py`'s 12 former failures were an
 import-order defect in the mock rather than a torch dependency, fixed on
-2026-10-30 (`docs/audit/pytest-order-dependence.md`). The Wave 48 record
+2026-10-30 (`docs/audit/pytest-order-dependence.md`). The earlier record
 of the original three was not carried into the flattened tree; the three
 were an import-order defect in the test's mock, and this sentence is what
 survives of that record.
 
-**Wave 149 Agent 6 wording standardization extension** — every non-archived
-doc surface (cover letter, submission_checklist, supplementary §S6.3,
-README §Tests, baseline-audit-report.md, CONSOLIDATED_RESULTS.md,
-INSIGHTS.md, paper-draft.md, paper-final-neurips.md, all audit/*.md from
-Wave 100+) now states "D.4 pinned regression vectors 72/72 PASS" with a
+**Wording standardization extension** — every non-archived doc surface
+(cover letter, submission_checklist, supplementary §S6.3, README §Tests,
+baseline-audit-report.md, CONSOLIDATED_RESULTS.md, INSIGHTS.md,
+paper-draft.md, paper-final-neurips.md, and every audit/*.md written
+since the wording was unified) now states "D.4 pinned regression vectors 72/72 PASS" with a
 historical caveat for the legacy "33/33" figure.
 
 ## Cross-cutting operational gates

@@ -241,6 +241,7 @@ not_in_nav: |
   audit/reader-doc-pointers.md
   audit/readiness-drift-gate.md
   audit/submission-checklist-readings.md
+  audit/gate-table-readings.md
   audit/mnist-gpu-backend.md
   audit/wave281/p-partial-evidence.md
   audit/wave289-p1-honest-reframe.md

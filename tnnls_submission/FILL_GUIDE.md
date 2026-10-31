@@ -1,16 +1,25 @@
 # TNNLS Cover Letter — FILL GUIDE
 
-**Target file:** [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md)
-**Total `[USER TO FILL: …]` occurrences (per `grep -nE 'USER.TO.FILL'`):** 31
+**File to upload:** [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md)
 **Distinct fillable fields (unique content the user must write):** 17
   - 1 Authors block
-  - 1 Suggested Associate Editor (rendered at two lines: 56 header + 986 §9)
-  - 1 Suggested Reviewers header pointer (line 60) — replaced by "see §9 below" or a compact summary; the 10 reviewer detail placeholders live in §9
-  - 5 reviewers × {affiliation, email} = 10 placeholders in §9
-  - 3 Corresponding-author {name, affiliation, email} in §11
-**Remaining 14 grep hits are NOT user-fillable:**
-  - 11 occurrences in §0 (`## §0 USER ACTION REQUIRED`) are documentation pointers — they describe WHERE the placeholders live and do not need new content. Leave them as-is so future readers can re-locate placeholders.
-  - 3 occurrences in §0 (lines 7, 9, 36) are part of the "[USER TO FILL: …] convention" prose and the example `grep` command. Not fillable.
+  - 1 Suggested Associate Editor (rendered in two places: header and §9)
+  - 1 Suggested Reviewers header pointer — a compact "see §9 below"; the 10 reviewer detail fields live in §9
+  - 5 reviewers × {affiliation, email} = 10 fields in §9
+  - 3 Corresponding-author {name, affiliation, email} in the closing signature
+
+> **2026-10-31 state — read this before following the line numbers below.**
+> The line numbers in this guide were measured on
+> [`docs/cover-letter-tnnls.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/cover-letter-tnnls.md),
+> which still carries the 31 `[USER TO FILL: ...]` markers. The file to
+> upload, `tnnls_submission/cover_letter.md`, has those markers already
+> replaced by `INTERACTIVE_DEFAULTS` exemplar values, and it carries three
+> 2026-10-27 addenda that the source does not (the retitle, the
+> current-manuscript summary, and the mechanism addendum). **Do not
+> re-render from the source** — that would drop the addenda. Edit the 17
+> values in place, and locate them by section rather than by line number.
+> `python3 tools/render_cover_letter.py --validate` prints the current line
+> of every surviving exemplar.
 
 ---
 
@@ -146,32 +155,30 @@
 ## How to apply
 
 1. **Open** [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md) in your editor.
-2. **Locate each placeholder** with:
+2. **List what is still exemplar:**
    ```bash
-   grep -nE 'USER.TO.FILL' tnnls_submission/cover_letter.md
+   python3 tools/render_cover_letter.py --validate
    ```
-3. **Edit** only the 17 actual fillable fields (skip the §0 documentation pointers and the §0 convention/grep-example text):
-   - line 51 (Authors block)
-   - line 56 (Suggested Associate Editor header)
-   - line 60 (Suggested Reviewers header pointer)
-   - line 986 (Suggested Associate Editor §9)
-   - lines 1003, 1006 (Reviewer 1 aff + email)
-   - lines 1017, 1020 (Reviewer 2 aff + email)
-   - lines 1032, 1035 (Reviewer 3 aff + email)
-   - lines 1048, 1052 (Reviewer 4 aff + email)
-   - lines 1065, 1069 (Reviewer 5 aff + email)
-   - lines 1126, 1127, 1128 (Corresponding author name + affiliation + email)
-4. **Run the placeholders-must-be-empty gate:**
-   ```bash
-   grep -nE 'USER.TO.FILL' tnnls_submission/cover_letter.md | wc -l
-   ```
-   Expect: 14 (the §0 documentation pointers + §0 convention text; the 17 actual fillable fields should now show no `[USER TO FILL: ...]` strings — the text you replaced them with should be plain prose).
-5. **Re-hash the package** (since `cover_letter.md` changed):
+   Every line that still carries an `INTERACTIVE_DEFAULTS` value is printed
+   with its current line number. (The letter carries no `[USER TO FILL: ...]`
+   marker, so `grep` alone reports nothing useful — absence of a marker is
+   not evidence of a real value.)
+3. **Edit** the 17 fields by section:
+   - opening header — Authors block
+   - opening header and §9 — Suggested Associate Editor
+   - opening header — Suggested Reviewers pointer ("see §9 below")
+   - §9 — 5 reviewers × {affiliation, email}
+   - closing signature (after §11) — corresponding author {name, affiliation, email}
+4. **Re-run `--validate` until the summary reports zero exemplar hits.**
+5. **Delete §0** and the exemplar banner at the top of the file; both exist
+   only while the values are placeholders.
+6. **Re-hash the package** (since `cover_letter.md` changed):
    ```bash
    cd tnnls_submission && sha256sum -- *.md
    ```
-6. **Update** the SHA-256 column in [`tnnls_submission/MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md) (and the cover-letter header reference if any) for [`cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md).
-7. **Run the §0 documentation-mirror check** (optional but recommended): after filling, the §0 placeholder pointer list (lines 11, 15, 19, 24–31) may be left intact, OR you can update them to read "**[FILLED]**" so future readers don't grep a stale list. Either choice is acceptable as long as `grep -nE 'USER.TO.FILL' tnnls_submission/cover_letter.md` returns only the §0 documentation pointers and §0 convention text (14 hits), not 17.
+7. **Update** the SHA-256 and byte-size rows for `cover_letter.md` in
+   [`tnnls_submission/MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md)
+   (two tables) and its line in `tnnls_submission/SHA256SUMS`.
 8. **Commit:**
    ```bash
    git add tnnls_submission/cover_letter.md tnnls_submission/MANIFEST.md tnnls_submission/FILL_GUIDE.md

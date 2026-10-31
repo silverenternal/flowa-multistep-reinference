@@ -15,9 +15,11 @@ for the 3-step quickstart.
 Wave 360 P2 extension: adds `--dry-run` (prints the 17 default values from
 `tnnls_submission/cover_letter_FILL_AUTOFILL.json` without writing to
 either `cover_letter.md` OR `--output`) and `--validate` (reads the
-canonical `cover_letter.md`, reports which placeholders are still
-`[USER TO FILL: ...]` vs already filled; read-only) and a summary print
-at the end of `--interactive` mode showing filled / remaining / total.
+canonical `cover_letter.md`, reports which markers are still
+`[USER TO FILL: ...]`, and scans for the exemplar defaults themselves,
+because a rendered letter carries no marker whether or not its values are
+real; read-only) and a summary print at the end of `--interactive` mode
+showing filled / remaining / total.
 
 Important constraints
 ---------------------
@@ -170,6 +172,24 @@ FIELDS: list[tuple[str, str, str]] = [
 REQUIRED_FIELDS: tuple[str, ...] = tuple(key for key, _, _ in FIELDS)
 assert len(REQUIRED_FIELDS) == 17, (
     f"Expected exactly 17 fields per FILL_GUIDE.md; got {len(REQUIRED_FIELDS)}"
+)
+
+# Strings that only ever come from ``INTERACTIVE_DEFAULTS``.  A cover letter
+# that still contains any of them has not been filled, even though it may
+# carry no ``[USER TO FILL: ...]`` marker: the shipped letter substitutes the
+# exemplar values rather than leaving markers in place, so "no marker" is not
+# evidence of "real value".  ``--validate`` scans for these explicitly.
+EXEMPLAR_MARKERS: tuple[str, ...] = (
+    "example.com",
+    "example.edu",
+    "univ-eiffel.fr",
+    "stanford.edu",
+    "meta.com",
+    "to be confirmed at submission",
+    "University of Example",
+    "MIT CSAIL",
+    "Hugo Huang",
+    "Ming Li",
 )
 
 
@@ -474,7 +494,15 @@ def run_validate(
     *,
     output_stream=sys.stdout,
 ) -> int:
-    """Read the canonical cover letter and report unfilled placeholders.
+    """Read the canonical cover letter and report its fill state.
+
+    Two independent signals, because they can disagree:
+
+    * whether a ``[USER TO FILL: ...]`` marker survives (a rendered letter
+      carries none, filled or not);
+    * whether an ``INTERACTIVE_DEFAULTS`` exemplar string survives (the real
+      question — a rendered letter with exemplar identities looks exactly
+      like a rendered letter with real ones, minus this scan).
 
     Read-only: does NOT write to `cover_letter.md`. Does NOT require a TTY.
     Returns 0 always (informational only — useful as a pre-submit checklist
@@ -495,15 +523,18 @@ def run_validate(
     )
 
     n_unfilled = 0
-    n_filled = 0
+    n_marker_gone = 0
     for idx, (key, pattern, label) in enumerate(FIELDS, start=1):
         regex = _re.compile(pattern, _re.DOTALL)
         match = regex.search(canonical_text)
         if match is None:
-            # Placeholder no longer present in the file — already filled.
-            n_filled += 1
-            status = "[FILLED]"
-            evidence = "(placeholder pattern not found — assumed filled)"
+            # No marker.  That is NOT evidence that a real value is in place:
+            # the shipped letter substitutes the exemplar defaults, so the
+            # marker disappears the moment the file is rendered.  Report the
+            # marker state and let the exemplar scan below decide.
+            n_marker_gone += 1
+            status = "[MARKER GONE]"
+            evidence = "(no [USER TO FILL] marker; value not verified here)"
         else:
             # Placeholder still present — not yet filled.
             n_unfilled += 1
@@ -520,23 +551,50 @@ def run_validate(
             f"    {status} {evidence}\n\n"
         )
 
+    # Exemplar scan.  Absence of a marker says nothing about whether the value
+    # is real, so look for the defaults themselves.
+    lines = canonical_text.splitlines()
+    exemplar_hits: list[tuple[int, str, str]] = []
+    for lineno, line in enumerate(lines, start=1):
+        for marker in EXEMPLAR_MARKERS:
+            if marker in line:
+                exemplar_hits.append((lineno, marker, line.strip()[:100]))
+                break
+
     output_stream.write("=" * 72 + "\n")
     output_stream.write(
-        f"Summary: {n_filled}/{len(REQUIRED_FIELDS)} placeholders filled; "
-        f"{n_unfilled} still unfilled.\n"
+        f"Summary: {len(REQUIRED_FIELDS) - n_unfilled}/{len(REQUIRED_FIELDS)} "
+        f"markers gone; {n_unfilled} still unfilled; "
+        f"{len(exemplar_hits)} exemplar hits.\n"
     )
+    if n_marker_gone and not exemplar_hits:
+        output_stream.write(
+            "\nNo [USER TO FILL] marker and no exemplar default remains: the "
+            "17 fields appear to carry real values. Re-hash the submission "
+            "package before upload:\n"
+            "  cd tnnls_submission && sha256sum -- *.md\n"
+        )
+    if exemplar_hits:
+        output_stream.write(
+            f"\n{len(exemplar_hits)} line(s) still carry an exemplar default "
+            "from INTERACTIVE_DEFAULTS — these are not real identities:\n"
+        )
+        for lineno, marker, snippet in exemplar_hits:
+            output_stream.write(
+                f"  line {lineno}: {marker!r} — {snippet!r}\n"
+            )
+        output_stream.write(
+            "\nAction: replace every value listed above (see §0 of the "
+            "letter and `tnnls_submission/cover_letter_FILL_AUTOFILL.json`), "
+            "delete §0, then re-run this command until the summary reports "
+            "zero hits.\n"
+        )
     if n_unfilled > 0:
         output_stream.write(
             f"\nAction: run `python3 tools/render_cover_letter.py "
             f"--interactive` to fill the remaining "
             f"{n_unfilled} placeholder(s), OR inspect "
             f"`--dry-run` to see what the scaffolded defaults would be.\n"
-        )
-    else:
-        output_stream.write(
-            "\nAll 17 placeholders are filled. Re-hash the submission "
-            "package before upload:\n"
-            "  cd tnnls_submission && sha256sum -- *.md\n"
         )
     return 0
 
