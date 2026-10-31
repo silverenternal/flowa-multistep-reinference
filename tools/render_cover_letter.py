@@ -451,7 +451,7 @@ def run_dry_run(
 
     output_stream.write("=" * 72 + "\n")
     output_stream.write(
-        "TNNLS Cover Letter — --dry-run (Wave 360 P2)\n"
+        "TNNLS Cover Letter — --dry-run\n"
     )
     output_stream.write("=" * 72 + "\n\n")
     output_stream.write(
@@ -514,7 +514,7 @@ def run_validate(
 
     output_stream.write("=" * 72 + "\n")
     output_stream.write(
-        "TNNLS Cover Letter — --validate (Wave 360 P2)\n"
+        "TNNLS Cover Letter — --validate\n"
     )
     output_stream.write("=" * 72 + "\n\n")
     output_stream.write(
@@ -527,6 +527,15 @@ def run_validate(
     for idx, (key, pattern, label) in enumerate(FIELDS, start=1):
         regex = _re.compile(pattern, _re.DOTALL)
         match = regex.search(canonical_text)
+        # ``label`` carries the line number the marker sat on when this list
+        # was written.  The letter has been edited since, so the number is
+        # only trustworthy when the marker was actually found -- in that case
+        # report where it is now; otherwise report the section and nothing
+        # else rather than a stale line.
+        section = _re.search(r"\((§[^)]*)\)", label)
+        where = section.group(1) if section else label
+        if match is not None:
+            where = f"line {canonical_text.count(chr(10), 0, match.start()) + 1} {where}"
         if match is None:
             # No marker.  That is NOT evidence that a real value is in place:
             # the shipped letter substitutes the exemplar defaults, so the
@@ -546,7 +555,7 @@ def run_validate(
                 snippet = snippet[:77] + "..."
             evidence = f"still on disk as: {snippet!r}"
         output_stream.write(
-            f"--- {idx:2d}/{len(REQUIRED_FIELDS)} {label} ---\n"
+            f"--- {idx:2d}/{len(REQUIRED_FIELDS)} {where} ---\n"
             f"    key: {key}\n"
             f"    {status} {evidence}\n\n"
         )
@@ -739,7 +748,7 @@ def main(argv: list[str] | None = None) -> int:
         "--dry-run",
         action="store_true",
         help=(
-            "Wave 360 P2 — print the 17 default values from "
+            "Print the 17 default values from "
             "--autofill (default tnnls_submission/cover_letter_FILL_AUTOFILL.json) "
             "and exit. Read-only: does NOT write to cover_letter.md and "
             "does NOT write to --output. No TTY required. Use this to "
@@ -751,7 +760,7 @@ def main(argv: list[str] | None = None) -> int:
         "--validate",
         action="store_true",
         help=(
-            "Wave 360 P2 — read --canonical (default "
+            "Read --canonical (default "
             "tnnls_submission/cover_letter.md), count how many of the 17 "
             "placeholders are still [USER TO FILL: ...] vs already filled, "
             "and exit. Read-only: does NOT write to cover_letter.md. No TTY "
@@ -803,7 +812,7 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         default=Path("tnnls_submission/cover_letter_FILL_AUTOFILL.json"),
         help=(
-            "Wave 360 P2 — --dry-run reads defaults from this scaffold "
+            "Read defaults from this scaffold "
             "(default tnnls_submission/cover_letter_FILL_AUTOFILL.json, "
             "per Wave 354 P4). Ignored by --config, --interactive, "
             "--validate."
