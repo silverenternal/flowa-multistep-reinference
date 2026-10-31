@@ -41,7 +41,7 @@ preserved for the per-wave audit trail.
 | `freqflow` | FreqFlow + MM-FM (frequency / multimodal flow) | 3 | 3 | 0 |
 | `mnist` | MNIST FM (MNIST flow matching) | 5 | 2 | 3 |
 | `brai` | BRAI perturbation (Bounded-Range Adaptive Integration) | 0 | 0 | 0 |
-| `2d_toy` | 2D toy FM (two-dim flow matching, 8gaussian) | 2 | 1 | 1 |
+| `2d_toy` | 2D toy FM (two-dim flow matching, 8gaussian) | 3 | 1 | 2 |
 | `self_flow` | Self-Flow ICML 2026 (image FM) | 0 | 0 | 0 |
 | `hidream` | HiDream-I1 (image diffusion) | 0 | 0 | 0 |
 | `graphbfn` | GraphBFN (graph Bayesian flow network) | 0 | 0 | 0 |
@@ -59,7 +59,7 @@ preserved for the per-wave audit trail.
 | `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 51 | 26 | 25 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
 | `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 113 | 32 | 81 |
-| **TOTAL** | — | **634** | **349** | **285** |
+| **TOTAL** | — | **635** | **349** | **286** |
 
 ---
 
@@ -203,7 +203,7 @@ MNIST FM (MNIST flow matching). This cluster is part of the project's audit surf
 
 ### Cluster: `2d_toy` — 2D toy FM (two-dim flow matching, 8gaussian)
 
-**Files: 2** (active: 1, historical: 1)
+**Files: 3** (active: 1, historical: 2)
 
 2D toy FM (two-dim flow matching, 8gaussian). This cluster is part of the project's audit surface for 2d_toy.
 
@@ -211,8 +211,9 @@ MNIST FM (MNIST flow matching). This cluster is part of the project's audit surf
 
 - `wave286-p-paper-quantity-ablation.md`
 
-**Historical (1 files, not cited by reviewer-facing surfaces):**
+**Historical (2 files, not cited by reviewer-facing surfaces):**
 
+- `two-moons-figure-renders.md`
 - `wave282-p-cosine-vs-paper-controllers.md`
 
 ---

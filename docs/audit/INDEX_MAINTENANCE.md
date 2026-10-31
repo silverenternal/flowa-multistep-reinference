@@ -186,7 +186,7 @@ Counts below are a dated reading. The authoritative figures are the `TOTAL`
 row of the cluster map in `INDEX.md` and `len(ACTIVE_SURFACES)` in the
 generator; a number restated here is a snapshot, not a source.
 
-- The INDEX.md total file count at the 2026-09-25 governance refresh was 394 (active: 258, historical: 136). As of 2026-10-31 it is 634 (active: 349, historical: 285).
+- The INDEX.md total file count at the 2026-09-25 governance refresh was 394 (active: 258, historical: 136). It grows with every audit record, so the current figure is the `TOTAL` row of the cluster map rather than a number repeated here; that row is what `--check` compares against.
 - The INDEX.md total cluster count is **25** (14 per-model + 11 activity). Earlier text said 24; the table it was describing has always had 25 rows, and the 16+8 split it gave sums to 24 only because two clusters were counted twice.
 - The `ACTIVE_SURFACES` tuple has 18 entries: 17 under `docs/` plus `supplementary.md` at the repository root.
 - The TNNLS side is not a list. It is the glob `tnnls_submission/*.md`, which matches 10 files; a file added to that directory is a surface without any edit to the generator.
