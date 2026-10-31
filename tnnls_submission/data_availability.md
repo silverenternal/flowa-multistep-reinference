@@ -64,13 +64,13 @@ its upstream reference. The full upstream-modifications audit trail is in
 
 ### Per-record CSVs (verification artifacts)
 
-All headline numbers in the manuscript are sourced from byte-addressable per-record CSVs under [`verification_outputs/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs):
+All headline numbers in the manuscript are sourced from byte-addressable per-record CSVs under [`verification_outputs/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs) and [`docs/headline-evidence/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/headline-evidence):
 
 - **R1 LineageFlow HMMER N=1000:** [`verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026)
 - **R2 Kanzi RMSD N=1000:** [`verification_outputs/wave235-p2-r2-uplift.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p2-r2-uplift.json)
-- **R3 FlowMol3 fg_dev N=200 NFE=250:** [`verification_outputs/wave242-p1-flowmol3-seed{43,44}-*.json`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs) (in flight)
-- **R4 2D Two Moons W₂:** [`verification_outputs/r4_2d_two_moons_w2_m7p28pct/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs/r4_2d_two_moons_w2_m7p28pct)
-- **R5 2D Eight Gaussians W₂:** [`verification_outputs/r5_2d_eight_gaussians_w2_m10p40pct/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs/r5_2d_eight_gaussians_w2_m10p40pct)
+- **R3 FlowMol3 fg_dev, N=1000 per arm, NFE=250, seeds 42/43/44:** [`verification_outputs/r3_n1000_3seed_fixed_q4_2026/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs/r3_n1000_3seed_fixed_q4_2026)
+- **R4 2D Two Moons W₂:** [`docs/headline-evidence/r4_2d_two_moons_w2_m7p28pct/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/headline-evidence/r4_2d_two_moons_w2_m7p28pct)
+- **R5 2D Eight Gaussians W₂:** [`docs/headline-evidence/r5_2d_eight_gaussians_w2_m10p40pct/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/headline-evidence/r5_2d_eight_gaussians_w2_m10p40pct)
 - **R5b CIFAR-10 Rectified Flow matched-NFE=50:** [`verification_outputs/wave235-p1-r5b-fix.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p1-r5b-fix.json)
 - **R6 MNIST FM with tier-aware scheduler:** [`verification_outputs/wave235-p3-r6-uplift.json`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave235-p3-r6-uplift.json)
 

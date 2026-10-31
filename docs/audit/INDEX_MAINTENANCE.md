@@ -30,7 +30,7 @@ wording described the lost script, the wording now describes the committed one.
 
 ## 1. What INDEX.md actually is
 
-`docs/audit/INDEX.md` is a **topic-cluster map** of all `docs/audit/*.md` files (394 files across 25 clusters as of 2026-09-25; 633 as of 2026-10-31). It is **regenerated**, not hand-edited:
+`docs/audit/INDEX.md` is a **topic-cluster map** of all `docs/audit/*.md` files (394 files across 25 clusters as of 2026-09-25; the current total is the `TOTAL` row of the cluster map). It is **regenerated**, not hand-edited:
 
 - Per-wave audit files live in cluster subdirectories (`docs/audit/<cluster>/waveNNN-*.md`). Wave filenames are preserved (so `git log --follow` continues to work and the per-wave audit trail is intact).
 - Flat files at the top level (e.g. `docs/audit/EPSILON_DIRECTION.md`) are classified into clusters by filename + first-30-line content scan.
@@ -186,7 +186,7 @@ Counts below are a dated reading. The authoritative figures are the `TOTAL`
 row of the cluster map in `INDEX.md` and `len(ACTIVE_SURFACES)` in the
 generator; a number restated here is a snapshot, not a source.
 
-- The INDEX.md total file count at the 2026-09-25 governance refresh was 394 (active: 258, historical: 136). As of 2026-10-31 it is 633 (active: 349, historical: 284).
+- The INDEX.md total file count at the 2026-09-25 governance refresh was 394 (active: 258, historical: 136). As of 2026-10-31 it is 634 (active: 349, historical: 285).
 - The INDEX.md total cluster count is **25** (14 per-model + 11 activity). Earlier text said 24; the table it was describing has always had 25 rows, and the 16+8 split it gave sums to 24 only because two clusters were counted twice.
 - The `ACTIVE_SURFACES` tuple has 18 entries: 17 under `docs/` plus `supplementary.md` at the repository root.
 - The TNNLS side is not a list. It is the glob `tnnls_submission/*.md`, which matches 10 files; a file added to that directory is a surface without any edit to the generator.

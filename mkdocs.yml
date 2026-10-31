@@ -243,6 +243,7 @@ not_in_nav: |
   audit/submission-checklist-readings.md
   audit/gate-table-readings.md
   audit/figure-hash-gate.md
+  audit/data-availability-artifact-paths.md
   audit/metric-ledger-staleness.md
   audit/mnist-gpu-backend.md
   audit/wave281/p-partial-evidence.md

@@ -51,7 +51,7 @@ preserved for the per-wave audit trail.
 | `web_research` | Web research 2026 (FM literature surveys) | 1 | 0 | 1 |
 | `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 129 | 76 | 53 |
 | `reproducibility` | Reproducibility (reproducibility-record, preregistration, reproduce-script) | 14 | 6 | 8 |
-| `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 28 | 10 | 18 |
+| `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 29 | 10 | 19 |
 | `push_state` | Push state (push-ready, freeze, release, submission) | 11 | 7 | 4 |
 | `algorithm_4arm` | Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency) | 39 | 18 | 21 |
 | `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 111 | 90 | 21 |
@@ -59,7 +59,7 @@ preserved for the per-wave audit trail.
 | `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 51 | 26 | 25 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
 | `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 113 | 32 | 81 |
-| **TOTAL** | — | **633** | **349** | **284** |
+| **TOTAL** | — | **634** | **349** | **285** |
 
 ---
 
@@ -402,7 +402,7 @@ Reproducibility (reproducibility-record, preregistration, reproduce-script). Thi
 
 ### Cluster: `data_packaging` — Data packaging + manifest (sha256, csv, metric-ledger)
 
-**Files: 28** (active: 10, historical: 18)
+**Files: 29** (active: 10, historical: 19)
 
 Data packaging + manifest (sha256, csv, metric-ledger). This cluster is part of the project's audit surface for data_packaging.
 
@@ -419,8 +419,9 @@ Data packaging + manifest (sha256, csv, metric-ledger). This cluster is part of 
 - `wave331-data-fix.md`
 - `wave344-supplementary-bundle.md`
 
-**Historical (18 files, not cited by reviewer-facing surfaces):**
+**Historical (19 files, not cited by reviewer-facing surfaces):**
 
+- `data-availability-artifact-paths.md`
 - `data-linkage-closure.md`
 - `data-linkage-plan.md`
 - `framework-inv-proj-re-run.md`
