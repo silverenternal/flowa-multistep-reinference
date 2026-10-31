@@ -56,10 +56,10 @@ file (a whole-file hash gives the same answer with no location).
   as non-fatal build errors, which is what it should do. `docs/CLAIMS.md` is a
   frozen wording surface; correcting those rows is a claims edit, not a
   ledger edit, and this pass does not make one.
-* `5810 tests collected` (the ledger's live pytest row) is lower than the
-  `5650 passed / 180 skipped` outcome count by exactly the 20 items pytest
-  reports as skipped during collection: a module-level skip counts as a
-  skipped outcome but contributes no collected item. Both readings are
+* The ledger's live pytest row (`--collect-only`, `5813 tests collected`) is
+  lower than the outcome count in the same run (`5664 passed / 180 skipped`).
+  A module-level `pytest.importorskip` contributes a skipped outcome and no
+  collected item, so the two numbers are not expected to agree. Both are
   correct; they measure different things.
 
 ## 5. Verification

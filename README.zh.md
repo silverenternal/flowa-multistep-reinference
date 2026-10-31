@@ -380,7 +380,7 @@ Per-cell audit records under [`docs/audit/`](https://github.com/silverenternal/f
 | **Byte-stable composite axis (3/3 Tier-3)** | Kanzi +0.1695, LineageFlow +0.2083, FlowMol3 +0.1182 | `docs/headline-evidence/composite_axis_byte_stable/SOURCE.md` |
 | **Per-cell audit trail** | multi-phase self-contained `docs/audit/` records | `docs/audit/INDEX.md` |
 | **Source tree freeze** | `v3.1-internal-publishable` tag, vendored 8 repos UNMODIFIED | `docs/ARCHITECTURE.md` |
-| **Pytest** | **5650 passed / 180 skipped / 0 failed**（`tests/` 全量，2026-10-31；此前的 25-failed 读数是一个 mock 的 import 顺序缺陷，2026-10-30 已修） | `pytest tests/` |
+| **Pytest** | **5664 passed / 180 skipped / 0 failed**（`tests/` 全量，2026-10-31；此前的 25-failed 读数是一个 mock 的 import 顺序缺陷，2026-10-30 已修） | `pytest tests/` |
 | **Ruff lint (4-directory scope)** | 0 findings | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
 | **Mypy type-check** | **0 errors in 232 files** (`--strict`, venv `mypy 2.3.1`) | `.venvs/flowmol3_venv/bin/python -m mypy --strict adaptive_reflow/` |
 | **Final paper sha256** | `46e423078cd42b10c5c7f31a633d2edafa5d6d448f1d0810dd5df5d5dceb66df` | `sha256sum docs/drafts/paper-A-final.md` |
@@ -442,7 +442,7 @@ configs/                  # configuration presets
 ```
 reproduce/               # one-click reproduction scripts (this work)
 scripts/                  # experiment-driver + reproduction scripts
-tests/                    # 5650 pytest + D.4 byte-stable regression
+tests/                    # 5664 pytest + D.4 byte-stable regression
 tools/                    # paper-metric + sweep scripts
 verification_outputs/     # 41,668 tracked evidence files
 tnnls_submission/         # TNNLS submission package (13 files + SHA256SUMS)
@@ -461,7 +461,7 @@ data/                     # vendored upstream checkpoints (8 repos, all unmodifi
 | mkdocs build --strict | **0 warnings** | `mkdocs.yml` |
 | claims consistency | **no drift** (61 ACTIVE + 2 DEPRECATED；CLM-040 因 `Disputed by` 引用被强制判为 PROVISIONAL) | `tools/check_claims_consistency.py` |
 | Abstract word count | **167 words**（正文 §Abstract；2026-10-27 改标题前为 193） | `docs/drafts/paper-A-final.md` |
-| Pytest | **5650 passed / 180 skipped / 0 failed**（完整 `tests/`，2026-10-31） | `pytest tests/` |
+| Pytest | **5664 passed / 180 skipped / 0 failed**（完整 `tests/`，2026-10-31） | `pytest tests/` |
 | Ruff lint (4-directory scope) | **0 findings** | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
 | Mypy type-check | **0 errors in 232 files**（`--strict`，venv `mypy 2.3.1`） | `.venvs/flowmol3_venv/bin/python -m mypy --strict adaptive_reflow/` |
 | TNNLS submission package | **13 files + 22 行 `SHA256SUMS`** | `tnnls_submission/MANIFEST.md` |

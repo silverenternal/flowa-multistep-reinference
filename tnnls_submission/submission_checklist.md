@@ -39,7 +39,7 @@
 - [x] **Abstract word count:** 167 words (2026-10-27 packaging addendum; TNNLS allows up to 250). The earlier 328-word reading is historical.
 - [x] **Ruff lint (4-directory scope):** 0 findings across [`adaptive_reflow/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/adaptive_reflow), [`tests/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tests), [`scripts/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/scripts), [`tools/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tools)
 - [x] **Mypy type-check:** 0 errors
-- [x] **Pytest:** 5650 passed / 180 skipped / 0 failed (2026-10-31 CPU run; the 12 former `test_paper_metrics.py` failures were an import-order defect in the mock, not a torch dependency — fixed 2026-10-30)
+- [x] **Pytest:** 5664 passed / 180 skipped / 0 failed (2026-10-31 CPU run; the 12 former `test_paper_metrics.py` failures were an import-order defect in the mock, not a torch dependency — fixed 2026-10-30)
 
 ### Tier-3 cells (12 of 12)
 
