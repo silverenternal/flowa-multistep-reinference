@@ -30,9 +30,13 @@ Three separate causes:
    three NFE budgets, and `framework_rounds = 3`. The CSV is three seeds, five
    budgets, five rounds. A `--quick` run reproduces the committed PNG bytes
    exactly, which is how this was identified.
-2. **The framework arm's W₂ is not monotone in the round count.** At `σ = 0`,
-   three rounds gives 0.0850 and five rounds gives 0.1227. The five-round arm
-   is the one the paper's protocol names, and it is the one the CSV records.
+2. **The figure also used a different round count.** It rendered three
+   framework rounds; the CSV and the paper's protocol use five. At `σ = 0`
+   and seed 0, three rounds gives 0.0850 and five gives 0.1150. That
+   single-seed contrast is not a trend — the round-count probe under
+   "Unresolved" below shows W₂ is not monotone in the round count at `n = 3`
+   — but it does mean the figure and the table were not describing the same
+   arm.
 3. **The CSV itself no longer reproduces.** The baseline arm is byte-identical
    across the two months; the framework arm is not. The inference path under
    `_run_framework_arm` changed between 2026-09-05 and today, and no audit
@@ -141,11 +145,29 @@ head was spliced onto the existing tail.
    reproduces byte for byte, so the change is confined to the framework path
    (`_run_framework_arm` → `CodimensionSheetScheduler` +
    `BatchedTrajectoryRunner`), but the specific commit is unidentified.
-2. **The round-count sensitivity is unexplained.** `σ = 0` gives W₂ 0.0850 at
-   three rounds and 0.1227 at five. More rounds producing a worse endpoint is
-   the opposite of what the multi-round mechanism is for, and nothing in the
-   docs addresses it. This is the more interesting finding of the two and it
-   needs its own audit.
+2. **The round-count sensitivity is unresolved.** The shipped figure used
+   `framework_rounds = 3` and the CSV uses 5, so the round count was probed
+   directly: `two_moons`, `σ = 0`, seeds 0–2, `K ∈ {1, 2, 3, 4, 5, 8, 16}`.
+
+   | K | NFE | mean W₂ | sd | per-seed |
+   |---:|---:|---:|---:|---|
+   | 1 | 100 | 0.1103 | 0.0295 | 0.1441 / 0.0897 / 0.0971 |
+   | 2 | 200 | 0.1467 | 0.0245 | 0.1665 / 0.1543 / 0.1193 |
+   | 3 | 300 | 0.0907 | 0.0113 | 0.0850 / 0.1037 / 0.0833 |
+   | 4 | 400 | 0.1958 | 0.0449 | 0.1505 / 0.1966 / 0.2403 |
+   | 5 | 500 | 0.1227 | 0.0074 | 0.1150 / 0.1234 / 0.1297 |
+   | 8 | 800 | 0.1259 | 0.0130 | 0.1137 / 0.1396 / 0.1245 |
+   | 16 | 1600 | 0.1246 | 0.0088 | 0.1304 / 0.1289 / 0.1144 |
+
+   W₂ is not monotone in K: `K = 3` is the best cell and `K = 4` the worst,
+   with a gap of 1.6 pooled sd. At `n = 3` seeds that is not a resolvable
+   effect, and the seed spread is of the same size as the between-K spread.
+   What can be said is narrower than what this note said before the probe:
+   the 0.0850 / 0.1227 contrast that opened this investigation is a
+   single-seed (`K = 3`) versus three-seed (`K = 5`) comparison, so it is
+   not evidence that more rounds hurt. The round count's effect on this
+   target is unmeasured, and settling it needs a within-seed design with
+   more than three seeds rather than a re-read of the existing runs.
 3. **The two other `twodim_fm` readings are still separate.** The `−10.40%`
    and `−78.25%` ablation readings come from a different harness
    (`wave189-p2-sota-2d-rerun/`) at a different NFE convention. The refreshed
