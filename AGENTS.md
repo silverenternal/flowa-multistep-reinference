@@ -214,8 +214,8 @@ cd tnnls_submission && sha256sum -c SHA256SUMS
 **Integrity checkers.** CI enforces ruff, mypy, `check_docs_against_code`,
 `check_claims_consistency`, pytest and `mkdocs build --strict`; the D.4 and
 SHA-256 commands above are pre-submission steps you run locally. The full chain
-is longer still — `todo.json`'s `gate_chain` is the authoritative list (22
-entries as of 2026-10-31). The sixteen below all exit 0 and all take under 20 s:
+is longer still — `todo.json`'s `gate_chain` is the authoritative list (24
+entries as of 2026-10-31). The seventeen below all exit 0 and all take under 20 s:
 
 ```bash
 python3 tools/paper_evidence.py --check      # every cell's artifact + quote, and the rendered surface
@@ -234,10 +234,15 @@ python3 tools/check_reviewer_pointers.py     # every backticked path in the revi
 python3 tools/check_recipe_flags.py          # every flag/recipe a reproduction surface cites exists
 python3 tools/check_data_provenance.py       # every sha256 cited in an audit record matches the file it names
 python3 tools/check_tables_inventory.py      # every numeric cell in tnnls_submission/tables.md matches its artifact
+python3 tools/check_figure_hashes.py         # every figure digest in tnnls_submission/figures.md matches the file
 ```
 
 Each one exists because its surface drifted unnoticed at least once; the
-reason is recorded in `todo.json`'s `gate_note`. Run them before any commit
+reason is recorded in `todo.json`'s `gate_note`. One chain entry is
+deliberately not in that list: `tools/build_metric_ledger.py --check`
+re-runs the five engineering gates (mkdocs, pytest collection, ruff,
+claims, D.4) to compare `docs/METRIC_LEDGER.{md,json}` against a fresh
+render, so it takes about a minute rather than seconds. Run them before any commit
 that touches `docs/`, `paper-data/`, `tnnls_submission/` or `verification_outputs/`.
 
 ### 4.2 Paper-write workflow (template reference)

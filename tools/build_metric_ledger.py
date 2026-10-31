@@ -1420,6 +1420,7 @@ def _parse_args(argv: Iterable[str]) -> Any:
     suite.
     """
     quiet = False
+    check = False
     show_help = False
     for arg in argv:
         if arg in ("-h", "--help"):
@@ -1427,15 +1428,49 @@ def _parse_args(argv: Iterable[str]) -> Any:
             break
         if arg == "--quiet":
             quiet = True
+        if arg == "--check":
+            check = True
     if show_help:
         print(__doc__)
         raise SystemExit(0)
-    return _Args(quiet=quiet)
+    return _Args(quiet=quiet, check=check)
 
 
 @dataclass(frozen=True)
 class _Args:
     quiet: bool
+    check: bool = False
+
+
+def _drift(rendered: str, path: Path) -> list[str]:
+    """Return a short account of how ``rendered`` differs from ``path``.
+
+    Line counts alone are not enough: a refreshed digest on an otherwise
+    identical row is exactly the drift this check exists to catch, and it
+    changes no line count.
+    """
+    try:
+        shown = path.relative_to(REPO_ROOT)
+    except ValueError:
+        shown = path
+    if not path.exists():
+        return [f"{shown}: missing"]
+    on_disk = path.read_text(encoding="utf-8")
+    if on_disk == rendered:
+        return []
+    disk_lines = on_disk.splitlines()
+    new_lines = rendered.splitlines()
+    out = [
+        f"{shown}: {len(disk_lines)} lines on disk, "
+        f"{len(new_lines)} when regenerated"
+    ]
+    for i, (a, b) in enumerate(zip(disk_lines, new_lines, strict=False), start=1):
+        if a != b:
+            out.append(f"  first difference at line {i}:")
+            out.append(f"    disk: {a[:120]}")
+            out.append(f"    new:  {b[:120]}")
+            break
+    return out
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1444,6 +1479,16 @@ def main(argv: list[str] | None = None) -> int:
     # Write both outputs atomically (write to .tmp then rename).
     md_text = _render_markdown(result)
     json_text = _render_json(result)
+    if args.check:
+        drift = _drift(md_text, LEDGER_MD) + _drift(json_text, LEDGER_JSON)
+        if drift:
+            print("FAIL: the metric ledger is stale relative to its sources")
+            for line in drift:
+                print(line)
+            print("Regenerate with: python3 tools/build_metric_ledger.py")
+            return 1
+        print(f"OK: metric ledger is current ({len(result.metrics)} rows)")
+        return 0
     LEDGER_MD.write_text(md_text, encoding="utf-8")
     LEDGER_JSON.write_text(json_text, encoding="utf-8")
     if args.quiet:

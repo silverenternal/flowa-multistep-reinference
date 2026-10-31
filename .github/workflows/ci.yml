@@ -158,6 +158,8 @@ jobs:
           PYTHONPATH=. python tools/check_recipe_flags.py
           PYTHONPATH=. python tools/check_data_provenance.py
           PYTHONPATH=. python tools/check_tables_inventory.py
+          PYTHONPATH=. python tools/check_figure_hashes.py
+          PYTHONPATH=. python tools/build_metric_ledger.py --check
 
   # Test + docs build. Runs the pytest suite (slow / benchmark excluded)
   # and the mkdocs --strict build. Same runner pool as ``lint-types``
