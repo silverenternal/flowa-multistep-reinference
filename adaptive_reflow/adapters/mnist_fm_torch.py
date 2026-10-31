@@ -44,7 +44,7 @@ is compared against a float64 artifact.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -172,4 +172,4 @@ class TorchMnistVelocity:
     # -- convenience -----------------------------------------------------
     def numpy(self, x: Any) -> np.ndarray:
         """Detach a tensor to a float64 NumPy array."""
-        return np.asarray(x.detach().cpu().numpy(), dtype=np.float64)
+        return cast(np.ndarray, np.asarray(x.detach().cpu().numpy(), dtype=np.float64))

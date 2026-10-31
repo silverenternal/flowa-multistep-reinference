@@ -279,14 +279,14 @@ class CudaGraphVelocityFieldCache:
         # iterations so cuDNN benchmark settles on a fixed algorithm
         # (the third iteration is inside the capture block; the first
         # two on the side stream).
-        side_stream = torch.cuda.Stream(device=sample_x.device)
+        side_stream = torch.cuda.Stream(device=sample_x.device)  # type: ignore[no-untyped-call]
         side_stream.wait_stream(torch.cuda.current_stream())
         with torch.cuda.stream(side_stream):
             for _ in range(2):
                 _ = unet(static_input, static_t)
         torch.cuda.current_stream().wait_stream(side_stream)
         torch.cuda.synchronize()
-        graph_obj = torch.cuda.CUDAGraph()
+        graph_obj = torch.cuda.CUDAGraph()  # type: ignore[no-untyped-call]
         with torch.cuda.graph(graph_obj, stream=side_stream):
             static_output = unet(static_input, static_t)
         # Detach the output tensor from autograd — captured graphs do

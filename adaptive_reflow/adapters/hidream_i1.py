@@ -574,7 +574,7 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
 
     # 1. Scheduler — the local checkpoint ships FlowMatchLCMScheduler;
     #    keep it as-is so the published shift + sigma schedule is used.
-    scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(
+    scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(  # type: ignore[no-untyped-call]
         str(weights_path / "scheduler"),
     )
 
@@ -604,13 +604,13 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
     )
 
     # 4. Transformer (DiT) — 16 shard safetensors.
-    transformer = HiDreamImageTransformer2DModel.from_pretrained(
+    transformer = HiDreamImageTransformer2DModel.from_pretrained(  # type: ignore[no-untyped-call]
         str(weights_path / "transformer"),
         dtype=torch.bfloat16,
     )
 
     # 5. VAE (FLUX.1-AutoencoderKL).
-    vae = AutoencoderKL.from_pretrained(
+    vae = AutoencoderKL.from_pretrained(  # type: ignore[no-untyped-call]
         str(weights_path / "vae"),
         dtype=torch.bfloat16,
     )
@@ -641,6 +641,10 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
 
         NUM_LAYERS = 32
         HIDDEN_DIM = 4096
+        # ``register_parameter`` stores a Tensor; the class-level annotation
+        # pins the type so ``Module.__getattr__``'s ``Tensor | Module`` union
+        # does not leak into the ``device`` / ``dtype`` properties.
+        _dummy: torch.Tensor
 
         def __init__(self) -> None:
             super().__init__()

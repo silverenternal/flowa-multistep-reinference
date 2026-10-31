@@ -13,7 +13,7 @@ from pocket_modules.mechanisms.inference.adaptive_reflow import external_metric_
 try:
     import torch
 except Exception:  # pragma: no cover - optional dependency
-    torch = None
+    torch = None  # type: ignore[assignment]
 
 
 def require_torch() -> None:

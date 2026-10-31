@@ -907,8 +907,8 @@ class ConservationWeightedPerturbation:
 
         # Pad / truncate the profile onto the state's position axis. Positions
         # beyond ``span`` carry c = 0, i.e. the plain D-004b draw.
-        logp = _np.zeros((L, aa_dim), dtype=_np.float64)
-        cons = _np.zeros(L, dtype=_np.float64)
+        logp: Any = _np.zeros((L, aa_dim), dtype=_np.float64)
+        cons: Any = _np.zeros(L, dtype=_np.float64)
         n = min(L, int(self._logp.shape[0]))
         logp[:n] = self._logp[:n, :aa_dim]
         cons[:n] = self._conservation[:n]
@@ -929,7 +929,7 @@ class ConservationWeightedPerturbation:
         aa = _np.exp(logits)
         aa = aa / aa.sum(axis=-1, keepdims=True)
 
-        theta = _np.full((L, K), 1.0 / float(K), dtype=_np.float64)
+        theta: Any = _np.full((L, K), 1.0 / float(K), dtype=_np.float64)
         theta[:, :aa_dim] = aa
         theta = theta / theta.sum(axis=-1, keepdims=True)
         return _np.asarray(theta, dtype=_np.float64)
@@ -1139,7 +1139,7 @@ class TemperedFreshPerturbation:
         logits = logits - logits.max(axis=-1, keepdims=True)
         aa = _np.exp(logits)
         aa = aa / aa.sum(axis=-1, keepdims=True)
-        simplex = _np.full((L, K), 1.0 / float(K), dtype=_np.float64)
+        simplex: Any = _np.full((L, K), 1.0 / float(K), dtype=_np.float64)
         simplex[:, :aa_dim] = aa
         simplex = simplex / simplex.sum(axis=-1, keepdims=True)
         lam = float(self._lam)

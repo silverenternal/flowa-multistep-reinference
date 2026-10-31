@@ -99,7 +99,7 @@ import inspect
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, TypeAlias
+from typing import Any, Literal, TypeAlias, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -1244,7 +1244,9 @@ def _load_torch_model(weights_path: Path) -> Any:
             super().__init__()
             self._dae = dae
 
-        def forward(self, x: torch.Tensor, t: torch.Tensor, family: torch.Tensor = None) -> torch.Tensor:
+        def forward(
+            self, x: torch.Tensor, t: torch.Tensor, family: torch.Tensor | None = None
+        ) -> torch.Tensor:
             # Wave 113.A: Real backbone-coord migration. Replaces the
             # Wave 112.C-2 fail-fast placeholder (RC-2 option B) with the
             # two-call upstream pipeline:
@@ -1270,7 +1272,7 @@ def _load_torch_model(weights_path: Path) -> Any:
             # Shape-tolerant: upstream DAE.encode returns (s_BLD, c_BLD, idx_BL) but newer
             # versions may add a 4th element. Use indexed access on the codebook latent.
             z = _encode_result[1] if isinstance(_encode_result, tuple) else _encode_result
-            return self._dae.net(x, t, z_BLD=z)  # (B, L, 3) velocity field
+            return cast(torch.Tensor, self._dae.net(x, t, z_BLD=z))  # (B, L, 3) velocity field
 
     def _builder(p: Path) -> Any:
         """Build the real ``_KanziDAEShim`` from ``p`` (Wave 99 followup).

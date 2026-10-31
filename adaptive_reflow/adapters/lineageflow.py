@@ -566,7 +566,7 @@ def _synthesize_random_simplex(rng: np.random.Generator) -> ArrayF64:
     z = logits - logits.max(axis=-1, keepdims=True)
     aa = np.exp(z)
     aa = aa / aa.sum(axis=-1, keepdims=True)
-    theta = np.full((L, K), 1.0 / float(K), dtype=np.float64)
+    theta: Any = np.full((L, K), 1.0 / float(K), dtype=np.float64)
     theta[:, :aa_dim] = aa
     theta = theta / theta.sum(axis=-1, keepdims=True)
     return np.asarray(theta, dtype=np.float64).reshape(LINEAGEFLOW_STATE_SHAPE)
@@ -691,7 +691,7 @@ def _lineageflow_real_velocity_field(
             xt, tt, logits, alpha_h, pad_mask=pad_mask, gap_mask=gap_mask,
         )
 
-    v33 = np.zeros((L, int(LINEAGEFLOW_VOCAB_SIZE)), dtype=np.float64)
+    v33: Any = np.zeros((L, int(LINEAGEFLOW_VOCAB_SIZE)), dtype=np.float64)
     v33[:, :LINEAGEFLOW_AA_VOCAB] = (
         v20.squeeze(0).detach().cpu().numpy().astype(np.float64)
     )
@@ -1284,7 +1284,7 @@ def _install_checkpoint_compat() -> type:
             / "core"
         )
         if _upstream_core.is_dir():
-            core_mod.__path__ = [str(_upstream_core)]  # type: ignore[attr-defined]
+            core_mod.__path__ = [str(_upstream_core)]
         sys.modules["core"] = core_mod
     mod = types.ModuleType("core.sampler")
     class SamplerConfig:  # noqa: D401 - upstream-mandated empty shim
@@ -1638,9 +1638,9 @@ class ProfileGuidance:
         cons = np.asarray(self.conservation, dtype=np.float64)
         n_pos = min(L, int(prob.shape[0]))
         n_aa = min(K, int(prob.shape[1]))
-        p = np.zeros((L, K), dtype=np.float64)
+        p: Any = np.zeros((L, K), dtype=np.float64)
         p[:n_pos, :n_aa] = prob[:n_pos, :n_aa]
-        c = np.zeros(L, dtype=np.float64)
+        c: Any = np.zeros(L, dtype=np.float64)
         c[:n_pos] = cons[:n_pos]
         drift = float(self.weight) * c[:, None] * (p - arr_x)
         drift[:, n_aa:] = 0.0

@@ -49,7 +49,7 @@ preserved for the per-wave audit trail.
 | `protbfn_abbfn` | ProtBFN-AbBFN (antibody / protein BFN) | 0 | 0 | 0 |
 | `wan2_2` | Wan2.2 video (video diffusion) | 0 | 0 | 0 |
 | `web_research` | Web research 2026 (FM literature surveys) | 1 | 0 | 1 |
-| `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 126 | 75 | 51 |
+| `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 127 | 76 | 51 |
 | `reproducibility` | Reproducibility (reproducibility-record, preregistration, reproduce-script) | 14 | 6 | 8 |
 | `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 27 | 10 | 17 |
 | `push_state` | Push state (push-ready, freeze, release, submission) | 10 | 6 | 4 |
@@ -59,7 +59,7 @@ preserved for the per-wave audit trail.
 | `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 49 | 26 | 23 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
 | `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 113 | 32 | 81 |
-| **TOTAL** | — | **625** | **347** | **278** |
+| **TOTAL** | — | **626** | **348** | **278** |
 
 ---
 
@@ -231,7 +231,7 @@ Web research 2026 (FM literature surveys). This cluster is part of the project's
 
 ### Cluster: `engineering` — Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree)
 
-**Files: 126** (active: 75, historical: 51)
+**Files: 127** (active: 76, historical: 51)
 
 Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This cluster is part of the project's audit surface for engineering.
 
@@ -274,6 +274,7 @@ Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This 
 - `tmp-migration.md`
 - `todo-refactor.md`
 - `pdf-warning-reduction.md`
+- `mypy-gate-restoration.md`
 - `pdf-warning-reduction.md`
 - `project-state-inventory.md`
 - `pytest-order-dependence.md`

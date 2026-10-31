@@ -147,7 +147,7 @@ def _read_fasta_simple(path: str | Path) -> list[tuple[str, str]]:
 
         return [
             (str(rec.id), str(rec.seq))
-            for rec in SeqIO.parse(str(fasta_path), "fasta")
+            for rec in SeqIO.parse(str(fasta_path), "fasta")  # type: ignore[no-untyped-call]
         ]
     except ImportError:
         pass

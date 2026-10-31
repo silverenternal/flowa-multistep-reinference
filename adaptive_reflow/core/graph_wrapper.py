@@ -561,7 +561,7 @@ class DGLGraphBridge:
         nf = graph.ndata["h"].detach().cpu().numpy() if "h" in graph.ndata else np.zeros(
             (int(graph.num_nodes()), DEFAULT_NODE_FEATURE_DIM), dtype=np.float64
         )
-        ei = (
+        ei: NDArray[np.int64] = (
             torch.stack(graph.edges()).detach().cpu().numpy().astype(np.int64)
             if int(graph.num_edges()) > 0
             else np.zeros((2, 0), dtype=np.int64)

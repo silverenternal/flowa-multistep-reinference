@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import cast
 
 import numpy as np
 import torch
@@ -119,8 +120,9 @@ def apply_entropy_encoding(theta: torch.Tensor) -> torch.Tensor:
 
 def _inv_freq(qkv_size: int) -> torch.Tensor:
     """RoFormer inverse-frequency schedule for rotary embeddings."""
-    return 1.0 / (
-        UPPER_FREQ ** (torch.arange(0, qkv_size, 2, dtype=torch.float32) / qkv_size)
+    return cast(
+        "torch.Tensor",
+        1.0 / (UPPER_FREQ ** (torch.arange(0, qkv_size, 2, dtype=torch.float32) / qkv_size)),
     )
 
 
@@ -155,6 +157,11 @@ class MultiHeadAttention(nn.Module):
     attention output of shape ``(L, embed_dim)``.
     """
 
+    # ``register_buffer`` stores it as a Tensor; the class-level annotation
+    # pins the type so ``Module.__getattr__``'s ``Tensor | Module`` union does
+    # not leak into the rotary call sites.
+    inv_freq: torch.Tensor
+
     def __init__(self, num_heads: int, qkv_size: int) -> None:
         super().__init__()
         self.num_heads = num_heads
@@ -187,7 +194,7 @@ class MultiHeadAttention(nn.Module):
         out = torch.einsum("htT,Thd->thd", attn, v)
         # Concatenate heads: (L, num_heads * qkv_size)
         out = out.reshape(L, self.num_heads * self.qkv_size)
-        return self.mha_output(out)
+        return cast("torch.Tensor", self.mha_output(out))
 
 
 class SelfAttentionBlock(nn.Module):
@@ -244,7 +251,7 @@ class RobertaHead(nn.Module):
         x = self.fc1(x)
         x = gelu_exact(x)
         x = self.second_layer_norm(x)
-        return self.final_fc(x)
+        return cast("torch.Tensor", self.final_fc(x))
 
 
 # ---------------------------------------------------------------------------
@@ -307,7 +314,7 @@ class ProtBFNTransformer(nn.Module):
         x = self.emb_layer_norm_before(x)
         for layer in self.layers:
             x = layer(x)
-        return self.lm_head(x)
+        return cast("torch.Tensor", self.lm_head(x))
 
     @classmethod
     def load_from_pytree(
@@ -365,7 +372,7 @@ class ProtBFNTransformer(nn.Module):
         if missing:
             raise ValueError(f"missing_state_dict_keys:{missing}")
         model.eval()
-        return model  # type: ignore[no-any-return]
+        return model
 
 
 def _haiku_to_torch_key(haiku_name: str) -> str:

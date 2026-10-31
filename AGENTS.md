@@ -203,8 +203,9 @@ python3 tools/check_claims_consistency.py
 # pytest full (subset green; full-suite is env/ordering-dependent)
 python3 -m pytest tests/ -q
 
-# mypy type-check (target: 0 errors; current state documented in CLM-024)
-mypy adaptive_reflow/
+# mypy type-check (must print "Success: no issues found"; 0 errors in 232 files)
+# mypy is a dev dependency and is usually NOT on PATH — use a sidecar venv.
+.venvs/flowmol3_venv/bin/python -m mypy --strict adaptive_reflow/
 
 # TNNLS submission package SHA-256 (must match MANIFEST + SHA256SUMS)
 cd tnnls_submission && sha256sum -c SHA256SUMS

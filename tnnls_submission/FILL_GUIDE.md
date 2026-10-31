@@ -175,7 +175,7 @@
 8. **Commit:**
    ```bash
    git add tnnls_submission/cover_letter.md tnnls_submission/MANIFEST.md tnnls_submission/FILL_GUIDE.md
-   git commit -m "Wave 274 P3: fill cover_letter USER placeholders"
+   git commit -m "fill cover_letter USER placeholders"
    ```
 
 ---

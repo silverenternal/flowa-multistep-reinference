@@ -236,6 +236,7 @@ not_in_nav: |
   audit/increment-id-compression.md
   audit/repro-command-audit.md
   audit/docs-gate-repoint.md
+  audit/mypy-gate-restoration.md
   audit/mnist-gpu-backend.md
   audit/wave281/p-partial-evidence.md
   audit/wave289-p1-honest-reframe.md

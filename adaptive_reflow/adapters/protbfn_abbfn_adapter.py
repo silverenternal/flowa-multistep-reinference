@@ -1448,7 +1448,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                 logits = encoder(theta_t)
                 if hasattr(logits, "logits"):
                     logits = logits.logits
-                return (  # type: ignore[no-any-return]
+                return (
                     _torch.softmax(logits, dim=-1)
                     .detach()
                     .cpu()
@@ -1620,14 +1620,14 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         try:
             from Bio import Seq, SeqIO  # local import — biopython is in venv
         except Exception:
-            SeqIO = None
-            Seq = None
+            SeqIO = None  # type: ignore[assignment]
+            Seq = None  # type: ignore[assignment]
         if SeqIO is not None and out_dir is not None:
             out_root = Path(str(out_dir))
             out_root.mkdir(parents=True, exist_ok=True)
             fasta_records = []
             for i, (s, p, r) in enumerate(zip(seqs, perps, rep_scores, strict=False)):
-                rec = SeqIO.SeqRecord(
+                rec = SeqIO.SeqRecord(  # type: ignore[attr-defined]
                     Seq.Seq(s),
                     id=f"sample_{i}",
                     description=f"loss: {losses[i]:.2f}, perplexity: {p:.2f}, "
@@ -1636,7 +1636,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                 )
                 fasta_records.append(rec)
             if inpaint_argmax is not None:
-                rec_inpaint = SeqIO.SeqRecord(
+                rec_inpaint = SeqIO.SeqRecord(  # type: ignore[attr-defined]
                     Seq.Seq(mirror_sample_to_string(inpaint_argmax)),
                     id=f"{self._mechanism}-inpainted",
                     description=f"inpainted with AAR {aar}",
@@ -1801,7 +1801,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                             logits = logits.logits
                         # Apply softmax and project back to surface
                         # vocab if needed.
-                        net_full = (
+                        net_full: Any = (
                             torch.softmax(logits, dim=-1)
                             .detach()
                             .cpu()

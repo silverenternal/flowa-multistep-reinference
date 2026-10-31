@@ -479,35 +479,54 @@ def gate_ruff_0(report: GateReport) -> GateResult:
     )
 
 
+def _resolve_mypy() -> tuple[str, str]:
+    """Return ``(mypy_executable, where_it_came_from)``.
+
+    ``mypy`` is a dev dependency, so it is routinely absent from the
+    system interpreter while present in a sidecar venv. Looking only at
+    ``PATH`` made this gate report SKIPPED in an environment that could
+    run it — a gate that cannot see what it claims to check. Search
+    ``PATH`` first, then ``.venvs/*/bin/mypy``.
+    """
+    on_path = shutil.which("mypy")
+    if on_path:
+        return on_path, "PATH"
+    for candidate in sorted((REPO_ROOT / ".venvs").glob("*/bin/mypy")):
+        if candidate.is_file():
+            return str(candidate), f"sidecar venv {candidate.parent.parent.name}"
+    return "", "absent"
+
+
 def gate_mypy_0(report: GateReport) -> GateResult:
     """Gate 3: mypy --strict adaptive_reflow/ = 0 errors.
 
     Per docs/audit/wave149-mypy-fix.md mypy=0 was achieved with
-    ``mypy --strict adaptive_reflow/``. If mypy is not on PATH (e.g.
-    sandbox without mypy installed), the gate is reported as SKIPPED
-    rather than FAIL — the prior wave's mypy=0 state is preserved in
-    the audit doc and the ruff-frozen code preserves it.
+    ``mypy --strict adaptive_reflow/``. If no mypy executable can be
+    found on ``PATH`` or in a sidecar venv, the gate is reported as
+    SKIPPED rather than FAIL — the prior wave's mypy=0 state is
+    preserved in the audit doc and the ruff-frozen code preserves it.
     """
-    if not shutil.which("mypy"):
+    mypy, origin = _resolve_mypy()
+    if not mypy:
         return GateResult(
             name="mypy_0",
             passed=False,
             skipped=True,
-            detail="mypy not on PATH (sandbox without mypy); preserved from Wave 149 P5 audit",
+            detail="no mypy on PATH or in .venvs/*/bin; preserved from Wave 149 P5 audit",
         )
-    cmd = ["mypy", "--strict", "adaptive_reflow/"]
+    cmd = [mypy, "--strict", "adaptive_reflow/"]
     rc, stdout, stderr = run(cmd, timeout=600)
     combined = (stdout + "\n" + stderr).strip()
     if rc == 0 and ("Success: no issues found" in combined or combined == ""):
         return GateResult(
             name="mypy_0",
             passed=True,
-            detail="Success: no issues found in N files",
+            detail=f"Success: no issues found ({origin})",
         )
     return GateResult(
         name="mypy_0",
         passed=False,
-        detail=f"mypy exited with code {rc}",
+        detail=f"mypy exited with code {rc} ({origin})",
         error=combined.splitlines()[0][:200] if combined else "",
     )
 

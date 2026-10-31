@@ -381,3 +381,15 @@ The FlowA TNNLS submission is submittable at the highest reproducibility standar
 - **Build.** `pdflatex` × 3 passes, exit 0, 0 fatal errors, 0 Overfull hboxes; the added paragraph renders in the PDF (`pdftotext` confirms).
 
 *Novelty-differentiation addendum authored 2026-10-12 (GAP-14); ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/drafts/paper-A-final.md` §2.1 / `paper-A-final.tex` §2.1 and `docs/audit/gap14-novelty-differentiation.md`.*
+
+---
+
+## 21. Two stale disclosures retired: reading-copy wave labels, mypy skip (2026-10-31 ADDITIVE)
+
+> **ADDITIVE — appended after the submission freeze; no existing line above is modified. §1 (14 PASS) and §2 (6 PENDING) are unchanged.**
+
+- **§16 / §18 "Documented-not-fixed" is now closed.** Both sections record that the `.md` reading copy "still carries internal `(Wave NNN …)` provenance labels in several headings". That is no longer true: `grep -c Wave docs/drafts/paper-A-final.md` returns `0` and the same holds for `paper-A-final.tex`. The manuscript was rewritten for the 2026-10-27 build and the labels went with it; the disclosure outlived the defect. No heading, number, or claim was changed by this note — it only stops asserting a defect the artifact does not have.
+- **mypy gate re-verified and no longer skipped.** `tools/verify_submission_readiness.py` reported `READY_WITH_SKIPS: mypy_0` because it probed `PATH` only, and `mypy` is a dev dependency that lives in a sidecar venv. The gate now falls back to `.venvs/*/bin/mypy`; it found `.venvs/flowmol3_venv/bin/mypy` and **ran**: `mypy --strict adaptive_reflow/` → `Success: no issues found in 232 source files`. The verifier now prints `READY: all gates passed` (9/9, 0 skips). Making the gate able to run it exposed 50 real errors that the skip had been covering; all 50 are fixed in `adaptive_reflow/` (annotation-only, `cast` at `nn.Module.__call__` boundaries, and `# type: ignore` at third-party stub boundaries) — see `docs/audit/mypy-gate-restoration.md`. **No metric, claim number, per-cell status, or verdict changed.**
+- **`.md` / `.tex` / `.pdf` digests unchanged.** Neither item touches `docs/drafts/paper-A-final.{md,tex,pdf}`, so §20's readings still stand.
+
+*Stale-disclosure retirement authored 2026-10-31; ADDITIVE only; no existing `tnnls_submission/*.md` line modified; cross-references `docs/audit/mypy-gate-restoration.md` and `tools/verify_submission_readiness.py`.*

@@ -1628,10 +1628,10 @@ def _ctmc_real_velocity_field_ex(
         x_pred.cpu().numpy().astype(np.float64)
         - np.asarray(x, dtype=np.float64).reshape(n_atoms, 3)
     ) * inv_dt
-    c_pred_np = c_pred.cpu().numpy().astype(np.float64)
-    p_a_np = p_a.cpu().numpy().astype(np.float64)
-    p_c_np = p_c.cpu().numpy().astype(np.float64)
-    p_e_np = p_e.cpu().numpy().astype(np.float64)
+    c_pred_np: Any = c_pred.cpu().numpy().astype(np.float64)
+    p_a_np: Any = p_a.cpu().numpy().astype(np.float64)
+    p_c_np: Any = p_c.cpu().numpy().astype(np.float64)
+    p_e_np: Any = p_e.cpu().numpy().astype(np.float64)
     return (
         np.nan_to_num(v_x, nan=0.0, posinf=0.0, neginf=0.0),
         c_pred_np,
