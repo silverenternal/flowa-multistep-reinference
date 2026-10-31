@@ -1,7 +1,7 @@
 # Framework failure-mode conditions table — C.5
 
 **Date:** 2026-09-05
-**Wave:** Wave 17 Phase 2 — Algorithm D controlled noise injection
+**Section:** Algorithm D controlled noise injection
 **Source task:** `todo/algo-improvement-failure-modes.md`
 
 This table characterises the framework's value boundary as a function of injected Gaussian noise into the base adapter's velocity field. For each ``sigma in {0.0, 0.01, 0.05, 0.10, 0.20, 0.50}`` we run the **baseline** (single-pass RK4 with the best NFE budget) and the **framework** (5-round `CodimensionSheetScheduler` over `TWODIM_FM_NUM_STEPS=100`) and report the closed-form 2D Wasserstein against an analytic reference.
@@ -9,7 +9,7 @@ This table characterises the framework's value boundary as a function of injecte
 The **verdict** column is computed as `U = (F - M) / M` and labeled: `helps` if `U < -0.02`, `neutral` if `|U| <= 0.02`, `regresses` if `U > 0.02`, `strongly_helps` if `U < -0.10`.
 
 **Cross-references:**
-* Wave 8 FIX-3 — 2D RF baseline correct, framework WORSE -13.5%. The C.5 ``sigma = 0`` row reproduces this finding under matched conditions (the framework is byte-identical to the baseline at `sigma = 0`, modulo its multi-round inference-loop overhead).
+* The 2D-RF baseline correction — framework WORSE -13.5%. The C.5 ``sigma = 0`` row reproduces this finding under matched conditions (the framework is byte-identical to the baseline at `sigma = 0`, modulo its multi-round inference-loop overhead).
 * `todo/algo-improvement-failure-modes.md` — the task spec that drives this experiment.
 * `docs/CONDITIONS.md` (this file) — the C.5 metric row in `todo/framework-internal-metrics.md` requires at least 3 Pareto plots and the table below.
 
@@ -55,7 +55,7 @@ Seeds: 3 | Framework rounds: 5 | Baseline NFE budgets: [2, 5, 10, 20, 50] | NFE 
 
 Per the **hypotheses** in `todo/algo-improvement-failure-modes.md`:
 
-* **sigma = 0**: framework is **neutral** (byte-identical to baseline modulo multi-round overhead; reproduces Wave 8 FIX-3 finding under matched conditions).
+* **sigma = 0**: framework is **neutral** (byte-identical to baseline modulo multi-round overhead; reproduces the 2D-RF baseline-correction finding under matched conditions).
 * **sigma small (0.01-0.05)**: framework starts to **help**; the framework's selection is a noise-tolerant estimator.
 * **sigma medium (0.10-0.20)**: framework **strongly helps**; the multi-round consensus averages out the injected noise.
 * **sigma large (>= 0.50)**: framework may **regress** if the noise dominates the signal.
@@ -68,22 +68,22 @@ All sigma levels are reported, including the ones where the framework regresses 
 
 ---
 
-## Wave 17 Phase 3 — Operating-regime statement (additive)
+## Operating-regime statement (additive)
 
 **Source task:** `todo/algo-improvement-operating-regime.md`
-**Author:** Wave 17 Phase 3 (operating-regime theoretical analysis)
+**Analysis:** operating-regime theoretical analysis
 **Cross-reference:** `docs/theory/operating-regime.md` (full statement + justification; this section is the table-level summary).
 
 ### Honest operating-regime statement (falsifiable)
 
-Based on the Wave 17 Phase 2 controlled-noise-injection sweep above
+Based on the controlled-noise-injection sweep above
 plus a post-hoc justification grounded in JMAA paper Theorem 1 +
 Corollary 1 + the F-side hypothesis set, the empirically supported
 operating-regime statement for the framework's
 `CodimensionSheetScheduler` (5-round mode) on `twodim_fm`-class 2D
 targets is:
 
-> **Theorem (Empirical operating regime — Wave 17 Phase 3).**
+> **Theorem (Empirical operating regime).**
 > On the synthetic 2D targets (`two_moons`, `eight_gaussians`) tested
 > with the framework's `CodimensionSheetScheduler` (5 rounds), the
 > framework's multi-round re-inference **does not provide corrective
@@ -93,7 +93,7 @@ targets is:
 
 **Corollary (user-facing guidance).** `twodim_fm`-class 2D oracle-test
 targets are **out-of-regime** for the framework's `CodimensionSheetScheduler`
-as of Wave 17 Phase 3. Users who want to deploy the framework on a
+as of 2026-09-05. Users who want to deploy the framework on a
 new model should treat `twodim_fm`-class synthetic targets as out-of-
 regime **until evidence to the contrary is published**.
 
@@ -101,14 +101,14 @@ regime **until evidence to the contrary is published**.
 
 | Regime | Evidence | Verdict | Citation |
 |---|---|---|---|
-| `twodim_fm` synthetic 2D (`two_moons`, `eight_gaussians`) at any σ ∈ [0, 0.5] | Wave 17 Phase 2 sweep (this file) + Wave 8 FIX-3 + Wave 14 baseline | REGRESSES (σ*, σ_high not yet measured; monotonic decrease of `\|U\|` from +191.6% to +176.2% suggests averaging may eventually dominate at σ ≫ 1, but unverified) | This file, `docs/baseline-audit-report.md` §C.5, Wave 8 `docs/reproducibility_record.md` |
+| `twodim_fm` synthetic 2D (`two_moons`, `eight_gaussians`) at any σ ∈ [0, 0.5] | controlled-noise sweep (this file) + the 2D-RF baseline correction + the 2D baseline grid | REGRESSES (σ*, σ_high not yet measured; monotonic decrease of `\|U\|` from +191.6% to +176.2% suggests averaging may eventually dominate at σ ≫ 1, but unverified) | This file, `docs/baseline-audit-report.md` §C.5, the 2D-RF baseline correction `docs/reproducibility_record.md` |
 | Algorithm-component level (36 measured uplifts) | `docs/benchmark-uplifts.md` | 36 / 36 achieve target, 0 regressions | `docs/benchmark-uplifts.md` |
 | Multi-round vs single-pass on `two_moons` (ablation grid) | `docs/benchmark-uplifts.md` §2 | multi-round W₂ = 0.73 vs single-pass W₂ = 2.67 (best case `multi_round_no_restart` W₂ = 0.35) | `docs/benchmark-uplifts.md` §2 |
 | JMAA paper-quantity layer (Theorem 1, rate bound) on F-side-admissible `g` | `docs/theory/theorem1_rate_bound.md` | `BL ≤ √(2/π) · ε` holds; checker fail-closed for Prop 6 sharpness | `docs/theory/theorem1_rate_bound.md`, `adaptive_reflow/theory/rate_bound.py` |
-| FlowMol3 chemistry (CTMC gap) | Wave 14 + Wave 15 F.2 | Framework can under-perform at low NFE | `docs/reproducibility_record.md`, `docs/CONSOLIDATED_RESULTS.md` |
-| Self-Flow image | Wave 6 reproduction | PARTIAL reproduction; framework helps at high NFE, neutral at low NFE | `docs/reproducibility_record.md` |
-| HuggingFace hosted FMs (FreqFlow, MM-FM, Kanzi) | Wave 19 Phase 2 documentation only | No end-to-end comparison | `docs/CONSOLIDATED_RESULTS.md` |
-| LineageFlow protein | Wave 10 + Wave 14 + Wave 15 F.2 | Adapter + 22-test suite pass; end-to-end comparison BLOCKED on upstream `core` library | `docs/reproducibility_record.md` |
+| FlowMol3 chemistry (CTMC gap) | CTMC-gap analysis | Framework can under-perform at low NFE | `docs/reproducibility_record.md`, `docs/CONSOLIDATED_RESULTS.md` |
+| Self-Flow image | reproduction run | PARTIAL reproduction; framework helps at high NFE, neutral at low NFE | `docs/reproducibility_record.md` |
+| HuggingFace hosted FMs (FreqFlow, MM-FM, Kanzi) | documentation only | No end-to-end comparison | `docs/CONSOLIDATED_RESULTS.md` |
+| LineageFlow protein | adapter analysis | Adapter + 22-test suite pass; end-to-end comparison BLOCKED on upstream `core` library | `docs/reproducibility_record.md` |
 
 ### Honest unknowns (subset of `docs/theory/operating-regime.md` §4)
 
@@ -119,7 +119,7 @@ regime **until evidence to the contrary is published**.
 2. **High-σ regime (σ > 0.5)**: monotonic decrease of `|U|` from
    +191.6% (σ=0) to +176.2% (σ=0.5) hints that averaging may
    eventually dominate, but **unverified**.
-3. **Effect of `K` (rounds)**: Wave 17 Phase 2 fixed `K = 5`. Not
+3. **Effect of `K` (rounds)**: the sweep fixed `K = 5`. Not
    measured at `K ∈ {1, 2, 4, 8, 16}` under matched conditions.
 4. **Other adapters**: 17 of 18 adapters have not been subjected to a
    controlled-noise sweep; the regression may be `twodim_fm`-specific
@@ -131,7 +131,7 @@ regime **until evidence to the contrary is published**.
 ### Acceptance gate
 
 * `G-OPERATING-REGIME` (defined in `todo/algo-improvement-operating-regime.md`)
-  pre-condition satisfied: Wave 17 Phase 2 (Algo D) completed AND
+  pre-condition satisfied: the Algorithm D sweep completed AND
   `docs/theory/operating-regime.md` exists (250+ lines, substantive
   analysis).
 * `docs/CONDITIONS.md` updated with operating-regime statement (this
@@ -139,17 +139,17 @@ regime **until evidence to the contrary is published**.
 * 6 Pareto plots in `docs/figures/noise_injection_<target>_*.png` (3
   per target × 2 targets).
 * Honest unknowns section present (above).
-* Commit (push deferred to Wave 17 verify).
+* Commit (push deferred to verification).
 
 ---
 
-## Wave 29 Agent B — Controlled empirical audit (additive)
+## Controlled empirical audit (additive)
 
-**Source task brief:** `Wave 29 Agent B: Empirical layer audit -- why does framework regress on CIFAR-10/twodim_fm/LineageFlow?`
-**Author:** Wave 29 Agent B (2026-09-05)
+**Source task brief:** empirical layer audit -- why does the framework regress on CIFAR-10/twodim_fm/LineageFlow?
+**Date:** 2026-09-05
 **Primary output:** `docs/audit/empirical-conditions.md` (full analysis)
 **Tool:** `tools/run_controlled_audit.py`
-**JSON report:** `verification_outputs/controlled_audit_q3_2026.json` (gitignored, Wave 18 / Wave 28 pattern)
+**JSON report:** `verification_outputs/controlled_audit_q3_2026.json` (gitignored)
 
 ### Headline verdict
 
@@ -163,7 +163,7 @@ under the matched-NFE controlled re-run (3 models × 3 seeds × 3 NFEs
 | **twodim_fm** | **YES** (consistent +3-10% across all 9 (NFE, σ) cells at matched NFE) | Algorithm (`CodimensionSheetScheduler` adds W2 error at matched NFE; per-seed std ~11%, mean consistently positive) | 27 |
 | **LineageFlow** | **NO** (decision metric saturates at 1.0 on both arms) | Measurement (synthetic-shim saturation, not algorithm) | 27 |
 
-### Per-cell matched-NFE verdict (additive to the Wave 17 P3 Pareto plots)
+### Per-cell matched-NFE verdict (additive to the operating-regime Pareto plots)
 
 | Model | Cells | matched-NFE | sigma-supported |
 |---|---:|---|---|
@@ -180,7 +180,7 @@ at NFE=200 it is 0% (matched).
 The sigma-not-supported cells on CIFAR-10 / LineageFlow are a
 **gap in the adapter's API surface** — neither adapter currently
 exposes a noise_sigma that perturbs the velocity field. This
-matches the Wave 17 P3 honest-unknowns entry "the noise sigma in
+matches the operating-regime honest-unknowns entry "the noise sigma in
 this sweep is twodim_fm-specific; other adapters have not been
 subjected to a controlled-noise sweep under matched conditions".
 
@@ -193,10 +193,10 @@ subjected to a controlled-noise sweep under matched conditions".
   audit).
 * `verification_outputs/controlled_audit_q3_2026.json` —
   machine-readable per-cell report.
-* `docs/theory/operating-regime.md` (Wave 17 P3) — the `twodim_fm`
+* `docs/theory/operating-regime.md` — the `twodim_fm`
   regression is consistent with the operating-regime statement that
   "twodim_fm-class targets are out-of-regime for the framework's
-  `CodimensionSheetScheduler` as of Wave 17 P3".
+  `CodimensionSheetScheduler` as of 2026-09-05".
 
 ### Honest unknowns (audit-specific)
 
@@ -220,4 +220,4 @@ subjected to a controlled-noise sweep under matched conditions".
    been re-run on the synthetic velocity field. Cheapest next step:
    implement and run CIFAR-10 v5.
 
-* Commit (push deferred to Wave 29 verify).
+* Commit (push deferred to verification).

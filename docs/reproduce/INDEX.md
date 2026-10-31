@@ -1,6 +1,6 @@
 # `reproduce/` — One-Cell Script INDEX
 
-> **Wave:** 361 P1 (CPU-only documentation surface, NO GPU)
+> **Surface:** CPU-only documentation (no GPU)
 > **Date:** 2026-09-25
 > **Owning audit doc:** [`docs/audit/wave361-reproduce-scripts-verify.md`](../audit/wave361-reproduce-scripts-verify.md)
 > **Sibling guide:** [`docs/reproduce.md`](../reproduce.md) — the 5-step full Reproduction Guide (hardware, software, troubleshooting)
@@ -34,32 +34,32 @@ All 7 per-cell scripts verify the headline from a byte-stable `verification_outp
 
 ## 3. Per-cell audit docs (cross-reference)
 
-| R-cell | Audit doc | Wave source |
+| R-cell | Audit doc | Source |
 |---|---|---|
-| R1 (LineageFlow HMMER) | [`docs/audit/wave086-lineageflow-hmmer-n1000.md`](../audit/) (archived in `docs/ARCHIVE/audit-by-wave/`) + `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/SOURCE.md` (Wave 158 final) | Wave 86 N=1000 + Wave 158 byte-stable |
-| R2 (Kanzi paper-metric) | `docs/ARCHIVE/audit-by-wave/wave218-p3-n1000-verified.md` + `docs/headline-evidence/kanzi_n1000_byte_reproducible/source_audit.md` (Wave 131 retrospective) | Wave 218 P3 index-matched two-sample t + Wave 127 byte-reproducible anchor |
-| R3 (FlowMol3 per-record) | `docs/audit/wave360-claims-status-summary.md` (CLM-031) + Wave 87 N=1000 sweep evidence | Wave 87 N=1000 + Wave 216 P1 per-record |
-| R4 (2D Two Moons W₂) | [`docs/audit/wave189-p2-sota-2d-rerun.md`](../audit/) (Wave 189 P2 SOTA-rerun consolidation) + `docs/audit/wave351-r5a-n10.md` (Wave 351 P5 n=10 paired-t confirmation) | Wave 189 P2 + Wave 351 P5 |
-| R5 (2D Eight Gaussians W₂) | [`docs/audit/wave189-p2-sota-2d-rerun.md`](../audit/) + `docs/audit/wave351-r5a-n10.md` + `docs/audit/wave308-d3-review.md` (Wave 308 cosmetic fix: baseline 2.31 → 0.6606, framework 0.76 → 0.5919) | Wave 189 P2 + Wave 308 cosmetic fix |
-| R5b (CIFAR-10 RF n_rounds=1) | [`docs/audit/wave235-p1-r5b-fix.md`](../audit/) (Wave 235 P1 3-seed re-sweep) | Wave 235 P1 |
-| R6 (MNIST FM tier-aware) | [`docs/audit/wave235-p3-r6-uplift.md`](../audit/) (Wave 235 P3 counterfactual grid) + `docs/audit/wave233-p3-r6-baseline.md` (Wave 233 P3 baseline) | Wave 233 P3 baseline + Wave 235 P3 grid |
-| Master verifier | `reproduce/verify_all_headlines.sh` (no source citation; first appeared Wave 267) | Wave 267 |
+| R1 (LineageFlow HMMER) | [`docs/audit/wave086-lineageflow-hmmer-n1000.md`](../audit/) (archived in `docs/ARCHIVE/audit-by-wave/`) + `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/SOURCE.md` (final N=1000 run) | N=1000 sweep + byte-stable re-run |
+| R2 (Kanzi paper-metric) | `docs/ARCHIVE/audit-by-wave/wave218-p3-n1000-verified.md` + `docs/headline-evidence/kanzi_n1000_byte_reproducible/source_audit.md` (byte-reproducibility retrospective) | index-matched two-sample t + byte-reproducible anchor |
+| R3 (FlowMol3 per-record) | `docs/audit/wave360-claims-status-summary.md` (CLM-031) + N=1000 sweep evidence | N=1000 sweep + per-record audit |
+| R4 (2D Two Moons W₂) | [`docs/audit/wave189-p2-sota-2d-rerun.md`](../audit/) (SOTA-rerun consolidation) + `docs/audit/wave351-r5a-n10.md` (n=10 paired-t confirmation) | SOTA rerun + n=10 confirmation |
+| R5 (2D Eight Gaussians W₂) | [`docs/audit/wave189-p2-sota-2d-rerun.md`](../audit/) + `docs/audit/wave351-r5a-n10.md` + `docs/audit/wave308-d3-review.md` (cosmetic fix: baseline 2.31 → 0.6606, framework 0.76 → 0.5919) | SOTA rerun + cosmetic fix |
+| R5b (CIFAR-10 RF n_rounds=1) | [`docs/audit/wave235-p1-r5b-fix.md`](../audit/) (3-seed re-sweep) | 3-seed re-sweep |
+| R6 (MNIST FM tier-aware) | [`docs/audit/wave235-p3-r6-uplift.md`](../audit/) (counterfactual grid) + `docs/audit/wave233-p3-r6-baseline.md` (baseline run) | baseline run + counterfactual grid |
+| Master verifier | `reproduce/verify_all_headlines.sh` (no source citation) | — |
 
 ---
 
-## 4. Wave 127 N=1000 framework_inv_proj byte-stability anchor
+## 4. N=1000 framework_inv_proj byte-stability anchor
 
 The **R2 Kanzi cell** has an additional byte-stability anchor that predates the `reproduce/*.sh` package:
 
 | Anchor | Path | Provenance |
 |---|---|---|
-| Wave 127 N=1000 framework_inv_proj | `verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave127_q3_2026/kanzi_n1000_paper_metrics.json` | [`docs/headline-evidence/kanzi_n1000_byte_reproducible/SOURCE.md`](../headline-evidence/kanzi_n1000_byte_reproducible/SOURCE.md) (Wave 131 retrospective) |
-| Wave 131 byte-reproducibility appendix | (no separate audit doc; embedded in `source_audit.md`) | `docs/headline-evidence/kanzi_n1000_byte_reproducible/source_audit.md` |
-| Inv-proj sweep driver | `tools/sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py` | (executable; not referenced by any per-cell script — superseded by Wave 218 P3 index-matched two-sample t path) |
+| N=1000 framework_inv_proj | `verification_outputs/kanzi_n1000_framework_inv_proj_seed42_wave127_q3_2026/kanzi_n1000_paper_metrics.json` | [`docs/headline-evidence/kanzi_n1000_byte_reproducible/SOURCE.md`](../headline-evidence/kanzi_n1000_byte_reproducible/SOURCE.md) (byte-reproducibility retrospective) |
+| Byte-reproducibility appendix | (no separate audit doc; embedded in `source_audit.md`) | `docs/headline-evidence/kanzi_n1000_byte_reproducible/source_audit.md` |
+| Inv-proj sweep driver | `tools/sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py` | (executable; not referenced by any per-cell script — superseded by the index-matched two-sample t path) |
 
-The Wave 127 N=1000 framework_inv_proj headline is **framework mean_rmsd = 0.8798 ± 0.1364 Å (n=1000, deterministic)**, index-matched two-sample against **baseline_seed42 mean_rmsd = 0.9020 ± 0.1375 Å**, **delta = -0.0222 Å (TIES)**. Byte-reproducibility verified at delta = 0.00e+00 across Wave 127 + Wave 131 commits on the ruff-frozen code.
+The N=1000 framework_inv_proj headline is **framework mean_rmsd = 0.8798 ± 0.1364 Å (n=1000, deterministic)**, index-matched two-sample against **baseline_seed42 mean_rmsd = 0.9020 ± 0.1375 Å**, **delta = -0.0222 Å (TIES)**. Byte-reproducibility verified at delta = 0.00e+00 across both runs on the ruff-frozen code.
 
-The R2 per-cell script (`reproduce/02_R2_Kanzi.sh`) uses the **Wave 218 P3 index-matched two-sample t JSON** for the framework_WINS verdict (d_z = -0.0990, p = 0.0018, Bonf-sig), not the Wave 127 byte-reproducible path. The Wave 127 path is cross-referenced here for **per-record provenance**, not for runnable headline confirmation.
+The R2 per-cell script (`reproduce/02_R2_Kanzi.sh`) uses the **index-matched two-sample t JSON** for the framework_WINS verdict (d_z = -0.0990, p = 0.0018, Bonf-sig), not the byte-reproducible anchor. That anchor is cross-referenced here for **per-record provenance**, not for runnable headline confirmation.
 
 ---
 
@@ -88,13 +88,13 @@ To **re-execute** a cell (not just verify the headline), open the relevant `repr
 
 - `docs/reproduce.md` — full Reproduction Guide (hardware, software, 5-step recipe, troubleshooting)
 - `docs/audit/wave361-reproduce-scripts-verify.md` — this INDEX's owning audit doc
-- `docs/headline-evidence/kanzi_n1000_byte_reproducible/SOURCE.md` — Wave 127 byte-stability anchor provenance
+- `docs/headline-evidence/kanzi_n1000_byte_reproducible/SOURCE.md` — byte-stability anchor provenance
 - `docs/audit/wave189-p2-sota-2d-rerun.md` — R4 + R5 SOTA-rerun consolidation
-- `docs/audit/wave308-d3-review.md` — R5 cosmetic fix (Wave 308)
+- `docs/audit/wave308-d3-review.md` — R5 cosmetic fix
 - `docs/audit/wave360-claims-status-summary.md` — CLM-031 R3 cross-reference
 - `docs/CLAIMS.md` — 84 CLMs total (61 ACTIVE / 0 PROVISIONAL / 2 DEPRECATED + 1 verifier-forced PROVISIONAL on CLM-040)
-- `tnnls_submission/data_availability.md` — §9 "Reproduction instructions" (Wave 356 P2)
+- `tnnls_submission/data_availability.md` — §9 "Reproduction instructions"
 
 ---
 
-_Last updated: 2026-09-25 (Wave 361 P1 — CPU-only documentation surface)._
+_Last updated: 2026-09-25 (CPU-only documentation surface)._

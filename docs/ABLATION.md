@@ -1,6 +1,6 @@
-# Algorithm Uplift Ablation Study (Wave 14 C, v2 — refreshed Wave 15 F.2)
+# Algorithm Uplift Ablation Study (v2, refreshed 2026-09-05)
 
-> **What changed in v2**: Wave 14 C added a parametrized isolation test suite
+> **What changed in v2**: the v2 pass added a parametrized isolation test suite
 > (`tests/test_algo_uplifts/`, 36 uplift tests + 1 tag-histogram audit,
 > 37 total) and a structured ablation table. v2 replaces the v1 header's
 > 23-cell 2D-RF grid (kept below as historical context) with three tables
@@ -10,13 +10,13 @@
 > `docs/benchmark-uplifts.md` Section 1 (generator:
 > `tools/benchmark_uplifts.py`).
 
-**Test status** (last run, Wave 15 F.2 refresh on 2026-09-05): 36/36
+**Test status** (last run 2026-09-05): 36/36
 isolation tests + 1/1 tag audit = **37/37 PASSED** in 11.08s on
 `.venvs/flowmol3_venv`. Generator:
 `pytest tests/test_algo_uplifts/ --tb=short -q`. No GPU required.
 No env-var toggles added. No new pytest markers added.
 
-**Wave 15 F.2 R2 verdict: REPRODUCED** — `tools/run_ablation.py --out
+**R2 verdict: REPRODUCED** — `tools/run_ablation.py --out
 /tmp/wave15f2_r2/ABLATION_new.md` on current HEAD produces W2 / coverage
 values that are **byte-identical** to the v1 historical context table
 below (23/23 rows where the new run matches the historical table;
@@ -26,7 +26,7 @@ extend the new run, plus 4 extra rows for the
 `multi_round_cosine_anneal_identity_merge` configurations — both
 already referenced in v1 configurations but added back into the v1
 results table by the newer `tools/run_ablation.py`). Wall-clock: 96.8 s
-on a single CPU core (matches the recorded 96.4 s in Wave 14 C within
+on a single CPU core (matches the recorded 96.4 s of the first run within
 sampling noise). Generator:
 `.venvs/flowmol3_venv/bin/python tools/run_ablation.py --out /tmp/wave15f2_r2/ABLATION_new.md`.
 

@@ -32,8 +32,8 @@ The archive contains the full working tree at tag commit `0ef6465`, including:
   machines + 333 typed transitions
 - `tools/` — sweep drivers + `paper_metrics` + `run_sota_2d_experiment` +
   `run_rf_cifar_ablation` + `sota_wan2_2_video` placeholder
-- `configs/` — Wave 111 run-profile YAMLs
-- `tests/` — 5012 collected items: 4 typed-Protocol tests + property-based
+- `configs/` — run-profile YAMLs
+- `tests/` — 5650 passing tests (180 skipped): 4 typed-Protocol tests + property-based
   Hypothesis tests + D.4 regression + smoke + conformance
 - `data/` — vendored upstream checkpoints: Kanzi + LineageFlow + FlowMol3 +
   2D + MNIST + CIFAR-10 RF
@@ -61,7 +61,7 @@ All of the following PASS at the tag commit:
 - `verification_outputs/ckpt_sha256.json` → `4/4 PASS` (FlowMol3 +
   Kanzi `cleaned_model` + Kanzi `encoder` + LineageFlow)
 - Kanzi N=1000 `framework_inv_proj` byte-reproducible →
-  `delta = 0.00e+00` (10 decimal exact, Wave 131 + Wave 137)
+  `delta = 0.00e+00` (10 decimal exact)
 
 ## Release venues
 
@@ -79,8 +79,8 @@ All of the following PASS at the tag commit:
 These items live in the post-freeze development branch and are intentionally
 excluded from the v1.0.1-paper-final tag archive:
 
-- Out-of-repo: Claude workflow scripts (deleted Wave 137 Phase 5)
-- Out-of-repo: `/tmp/` transient workspace (deleted Wave 137 Phase 5)
+- Out-of-repo: Claude workflow scripts (deleted)
+- Out-of-repo: `/tmp/` transient workspace (deleted)
 - Out-of-repo: mypy 988 hand-fix (camera-ready, NOT in freeze)
 - Out-of-repo: N=5000-50000 trajectory expansion (camera-ready only)
 - Out-of-repo: PB-xtb pipeline closure (camera-ready only)
