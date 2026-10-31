@@ -514,7 +514,7 @@ available on the user's machine.
 
 ---
 
-## Plug-in candidate: Self-Flow (Wave 9)
+## Plug-in candidate: Self-Flow
 
 Self-Flow (Hila et al. 2026, arXiv:2603.06507) is a self-supervised
 dual-timestep flow-matching framework for scalable multi-modal
@@ -566,7 +566,7 @@ evaluation stack is available on the user's machine.
 
 ---
 
-## Plug-in candidate: LineageFlow (Wave 10)
+## Plug-in candidate: LineageFlow
 
 LineageFlow (ICML 2026, arXiv:2605.22252) is a Pfam-family phylogeny-aware
 protein flow-matching generator. The published checkpoint is an
@@ -604,7 +604,7 @@ The adapter ships at
 
 **Published ckpt status**: 9.788 GB `lineageflow-rp55.ckpt` on disk at
 `data/lineageflow/lineageflow-rp55.ckpt`, SHA-256-verified against HF
-metadata (the Wave 9 R3 "sub-GB" claim was wrong — actual file is 10×
+metadata (an earlier "sub-GB" estimate was wrong — actual file is 10×
 larger). **The ckpt only ships encoder + flow head**; a runnable
 generator also needs the upstream `core.sampler.SamplerConfig`
 runtime from the LineageFlow GitHub repo, which is currently
@@ -622,7 +622,7 @@ on the published weights can be published.
 uplifts on secondary metrics (`avg_log_likelihood` +0.23 %,
 `amino_acid_diversity` +0.09 %). See
 [`docs/CONSOLIDATED_RESULTS.md` §7.3](./CONSOLIDATED_RESULTS.md)
-for the full table. **Claim verdict (Wave 10, protein axis)**:
+for the full table. **Claim verdict (protein axis)**:
 **PARTIAL support** — framework ties at saturation on the synthetic
 surface; real-ckpt verdict open until the upstream `core` source
 repo is reconstructed.
@@ -672,7 +672,7 @@ repo is reconstructed.
 
 ---
 
-## Plug-in candidate: Kanzi (Wave 21)
+## Plug-in candidate: Kanzi
 
 Kanzi (Shah et al. 2026, ICLR 2026, ``arXiv:2510.00351``) is a
 two-stage **continuous-tokenizer flow autoencoder** for protein
@@ -811,8 +811,8 @@ Public surface:
   ``freq_magnitude`` channel and the ``frequency_mix`` knob).
 * ``default_freqflow_adapter`` — factory.
 
-Tasks satisfied: Wave 21 PHASE-3 priority 2 — FreqFlow CVPR 2026
-latent FM adapter (design-skeleton release; production baseline
+Scope: FreqFlow CVPR 2026 latent FM adapter (design-skeleton
+release; production baseline
 depends on user-supplied FreqFlow weights + a CUDA host with
 >= 32 GB HBM). 30 tests in
 `tests/test_adapters/test_freqflow.py` (smoke + 8 conformance

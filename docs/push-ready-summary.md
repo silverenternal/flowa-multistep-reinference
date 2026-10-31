@@ -1,7 +1,7 @@
 # Push-Ready Summary — Wave 72 closure + Wave 73 multi-tier story + Wave 74 FlowMol3 F1-F5 closure
 
 > **LEGACY (Wave 72-74, 2026-09-08) — not the current push status.** Superseded by
-> `../todo/PUSH-READY.md` and the live state in
+> [`todo.json`](../todo.json) (the consolidated project record) and the live state in
 > [`docs/audit/todo-history.md`](audit/todo-history.md). Retained for provenance only.
 
 **Date:** 2026-09-08

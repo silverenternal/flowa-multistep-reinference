@@ -76,7 +76,7 @@ Driver / hardware:
 | **ProtBFN / AbBFN** | HuggingFace `InstaDeepAI/protein-sequence-bfn` (6.4 MB) | `.venvs/protbfn_venv` | transformers + biopython; BFN refiner is framework-internal |
 | **GraphBFN** | N/A (HTTP 401 from HF; AlgoMole/GraphBFN GitHub-only) | — | deferred per P-10 |
 
-## Venv Activation Matrix (frozen 2026-09-11, Wave 102)
+## Venv Activation Matrix (frozen 2026-09-11)
 
 Eleven sidecar venvs plus the project venv (12 total). Each row
 identifies which venv a given workflow MUST be launched from; cross-

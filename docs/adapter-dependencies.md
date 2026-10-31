@@ -62,7 +62,7 @@ to import. Tracked via `requirements-lock.txt` only:
 - `transformers`, `accelerate`, `safetensors` — transitive of diffusers
 - Optional `ftfy` + `bs4` — caption preprocessing for VBench
 
-## kanzi / kanzi_adapter (Wave 21 PHASE-3)
+## kanzi / kanzi_adapter
 
 - `torch>=2.1` — Kanzi encoder forward + flow-head
 - `numpy>=2.0,<2.5` — already in framework core
@@ -73,11 +73,10 @@ to import. Tracked via `requirements-lock.txt` only:
   (optional; only exercised by ``run_real_ckpt_eval.py --model kanzi``
   when computing protein_sequence_validity_rate)
 
-## freqflow / freqflow_adapter (Wave 21 PHASE-3)
+## freqflow / freqflow_adapter
 
 > **PHASE-4 status (2026-09-05 user directive):** **DEFERRED_no_upstream_ckpt**.
-> Adapter file remains registered (Wave 36 Agent B fixed the missing-from-registry
-> bug) and the D.5 conformance battery synthetic-mode coverage (8 checks) is
+> Adapter file remains registered (the missing-from-registry bug is fixed) and the D.5 conformance battery synthetic-mode coverage (8 checks) is
 > complete. The real-ckpt forward path is **not buildable**: upstream
 > `nnet_ema.pth` does not exist publicly anywhere (no GitHub releases, no HF Hub
 > releases, no PyPI package; README's `--nnet_path=/path/to/nnet_ema.pth` is a
@@ -86,7 +85,7 @@ to import. Tracked via `requirements-lock.txt` only:
 > `tools/run_real_ckpt_eval.py:PHASE4_ACTIVE_MODELS`.
 
 - `torch>=2.1` — FreqFlow forward + frequency-domain head (registered, but not
-  loadable with a real ckpt — listed for future-wave unblock via sidecar venv)
+  loadable with a real ckpt — listed for a later unblock via sidecar venv)
 - `numpy>=2.0,<2.5` — already in framework core
 - `torchvision>=0.15,<1.0` — image pre/post-processing + canonical
   InceptionV3 (IMAGENET1K_V1) for FID computation per
@@ -94,10 +93,10 @@ to import. Tracked via `requirements-lock.txt` only:
 - `diffusers>=0.32` — optional; only required when FreqFlow is loaded
   via the HF Hub pipeline (deferred until upstream releases weights)
 
-## mm_fm / mm_fm_adapter (Wave 21 PHASE-3)
+## mm_fm / mm_fm_adapter
 
 > **PHASE-4 status (2026-09-05 user directive):** **DEFERRED_no_adapter_shipped**.
-> No shipped adapter file (Wave 21 M-agent + Wave 21.5 re-spawn both stalled).
+> No shipped adapter file (two build attempts stalled).
 > Future re-spawn with explicit 4-sub-agent scope-split is documented in
 > `docs/audit/mm-fm-unblock-investigation.md` but is NOT on the PHASE-4
 > critical path. Per 2026-09-05 user directive, MM-FM is classified as
@@ -108,7 +107,7 @@ to import. Tracked via `requirements-lock.txt` only:
 - `transformers` — text encoder + tokenizer (transitive of diffusers)
 - `safetensors` — weight loading (transitive)
 - `Pillow` — image I/O (transitive)
-- Wave 36 PHASE-4 eval reports MM-FM cells as
+- The real-ckpt eval reports MM-FM cells as
   ``DEFERRED_no_adapter_shipped`` in
   ``tools/run_real_ckpt_eval.py`` rather than fabricating numbers
 
@@ -173,13 +172,13 @@ theory is part of the project venv's universal layer and is hashed by
 2. Re-run: `python scripts/capture_env_hash.py capture`
 3. Commit `env_hash.txt` alongside the change.
 
-## HuggingFace Hub upload pipeline (Wave 38 / R-3)
+## HuggingFace Hub upload pipeline
 
 `tools/hf_pipeline.py` + the convenience wrapper
 `scripts/upload_model_card.py` upload each `docs/models/M.model_card.md`
 to a HuggingFace Hub `<user>/M` repo. This closes
 **Papers-with-Code ML Code Completeness Checklist item (d)** (F.7) and
-adds the YAML metadata block (F.8) per the Wave 32 Agent B audit.
+adds the YAML metadata block (F.8) per the F.4 schema audit.
 
 ### Pipeline deps
 
@@ -214,7 +213,7 @@ source of truth for `library_name`, `pipeline_tag`, `license`,
 
 1. Add a new model to `tools/hf_pipeline.py:MODEL_METADATA`.
 2. Author `docs/models/<model>.model_card.md` (Mitchell/Gebru 8 fields,
-   Wave 24 Agent A F.4 schema).
+   the F.4 model-card schema).
 3. Run the upload pipeline in `--upload-dry-run` first; verify the
    rendered README.md with `--render-only --output /tmp/<model>_README.md`
    and `git diff` (the local card is the source of truth).

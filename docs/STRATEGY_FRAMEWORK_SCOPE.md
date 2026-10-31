@@ -237,19 +237,17 @@ giving up paper-grounded validation.
 
 ---
 
-## Tier 3 partial-complete note (Wave 42 close, 2026-09-05)
+## Tier 3 partial-complete note (as of 2026-09-05)
 
 **Source:** `docs/audit/wave42-tier3-synthesis.md` and
-`docs/CONSOLIDATED_RESULTS.md` §15.7. Wave 42 Agent C
-synthesis.
+`docs/CONSOLIDATED_RESULTS.md` §15.7.
 
 Tier 3 (real-ckpt top-model framework-vs-baseline on Kanzi
-ICLR 2026 + LineageFlow ICML 2026) is **PARTIAL** as of Wave 42
-close:
+ICLR 2026 + LineageFlow ICML 2026) is **PARTIAL** as of 2026-09-05:
 
 - **Kanzi (ICLR 2026, arXiv:2510.00351) plumbing: COMPLETE.**
   `verification_outputs/kanzi_real_force_mode_q4_2026.json` is in
-  hand (Wave 42 Agent A, 9 cells = 3 seeds × 3 NFE budgets,
+  hand (9 cells = 3 seeds × 3 NFE budgets,
   `--force-mode real` end-to-end on the real 530 MB
   `data/kanzi_ckpt/cleaned_model.pt` checkpoint). All 9 cells land
   at the documented trivial reading (`synthetic_fallback` marker,
@@ -258,14 +256,13 @@ close:
   `protein_sequence_validity_rate` against a Pfam holdout
   requires the §15.5 items (3) + (4) infrastructure
   (ESM-2 weights + held-out FASTA), which is **out of scope for
-  the disjoint-file-scope Wave 42 agents**.
+  the disjoint-file-scope agents**.
 - **LineageFlow (ICML 2026, arXiv:2605.22252) plumbing: PENDING.**
   `verification_outputs/lineageflow_real_force_mode_q4_2026.json`
-  is missing at Wave 42 close. The forward-pass JSON (Wave 41
-  Agent B) is in hand and confirms the real 657.6 M-param model
+  is missing as of 2026-09-05. The forward-pass JSON is in hand and confirms the real 657.6 M-param model
   loads + the 8-step Euler integration on real weights succeeds.
   What is missing is the per-cell baseline-vs-framework JSON.
-  Wave 42 Agent B's task is `in_progress`; the expected CLI is
+  That task is `in_progress`; the expected CLI is
   generic (`tools/run_real_ckpt_eval.py --model lineageflow
   --force-mode real`).
 - **Tier 3 verdict:** `framework_improves_on_real_ckpt_top_models
@@ -284,10 +281,9 @@ SOTA-checkpoint extension. The framework's value claim is
 defensible without Tier 3 closure; Tier 3 is a **strengthening**
 of the claim, not a prerequisite.
 
-**What lands next (carried into the next wave):**
+**What lands next:**
 
-1. Land the LineageFlow per-cell JSON (Wave 42 B re-run /
-   re-spawn).
+1. Land the LineageFlow per-cell JSON (re-run).
 2. Unblock the Kanzi metric layer (ESM-2 + Pfam holdout
    infrastructure, §15.5 items 3+4).
 3. Fold the Kanzi + LineageFlow cells into
