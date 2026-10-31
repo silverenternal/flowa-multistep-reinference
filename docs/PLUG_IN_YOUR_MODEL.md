@@ -775,7 +775,7 @@ spatial, 1.0 = pure frequency).
   uses 50 NFE Euler by default; our framework's higher-order
   integrators (Heun / RK4 / DPM-Solver) may diverge from paper
   FID numbers if not carefully tuned (saturation check needed
-  per `lessons-learned.md` LL-002: at FID 1.38 we are near
+  per LL-002: at FID 1.38 we are near
   saturation relative to SiT baseline FID ~2.0).
 
 Three channels, mirroring the two-branch DiT structure:

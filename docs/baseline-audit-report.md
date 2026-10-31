@@ -1033,8 +1033,7 @@ no existing tests were changed.
     1.4 GB `selfflow_imagenet256.pt` + CUDA host + InceptionV3 FID pipeline.
     Harness stub exits `75 EX_TEMPFAIL`. Card populates all 8 fields; the
     headline framework uplift is a **claim prediction**, not an empirical
-    result, and the saturation regime is flagged (per
-    `docs/lessons-learned.md` LL-002).
+    result, and the saturation regime is flagged (LL-002).
   - **`flowmol3` (Dunn & Koes 2025):** production pipeline is live
     (Phase B N=1000 reproduces paper numbers bit-exactly per
     `docs/r17-survey/flowmol3-paper-parity.md`), but R5 framework-vs-baseline

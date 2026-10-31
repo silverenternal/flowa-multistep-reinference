@@ -249,7 +249,7 @@ otherwise.
 
 ## See also
 
-* `todo/models/kanzi.md` — the per-model analysis.
+* `todo/models/kanzi.md` — the per-model analysis (retired 2026-10-13).
 * `adaptive_reflow/adapters/kanzi.py` — adapter surface (with the
   real-ckpt path-resolver update).
 * `tests/test_adapters/test_kanzi.py` — synthetic-mode smoke tests

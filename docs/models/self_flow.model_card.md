@@ -177,7 +177,7 @@ prediction**, not an empirical result. The harness stub
 - **Saturation regime.** Self-Flow's headline FID 5.70 is near the
   saturation regime relative to SiT baseline FID ~2.0; the
   framework's value-add may not be observable at this saturation
-  (per `docs/lessons-learned.md` LL-002). Saturation check is
+  (LL-002). Saturation check is
   needed before any framework uplift claim is published.
 - **CFG-distilled checkpoint.** The published ckpt is
   guidance-distilled; CFG > 1.0 is not supported and re-enabling

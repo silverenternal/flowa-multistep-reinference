@@ -231,7 +231,7 @@ the honest representation of §0.
 - Adapter: `adaptive_reflow/adapters/freqflow.py`
 - Tests: `tests/test_adapters/test_freqflow.py` (synthetic surface),
   `tests/test_adapters/test_freqflow_real_ckpt.py` (checkpoint contract)
-- Earlier analysis: `todo/models/freqflow.md`
+- Earlier analysis: `todo/models/freqflow.md` (retired 2026-10-13).
 - Landing zone + probe transcript: `data/freqflow_ckpt/README.md`
-- Lessons: `todo/lessons-learned.md` (LL-001 ckpt + upstream both
-  required; LL-002 saturation invalidates comparison)
+- Lessons: LL-001 (ckpt + upstream both required); LL-002 (saturation
+  invalidates comparison).
