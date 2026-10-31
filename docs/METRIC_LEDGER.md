@@ -169,7 +169,7 @@ This ledger is the single machine-readable inventory of every metric the project
 | G-RUFF | ENGINEERING_GATE | Ruff lint — auto-computed at build time (4-dir scope) | PASS |  |  |  |  |  |  |  | adaptive_reflow/ |  | docs/GATES.md + AGENTS.md §4.1 | Live value: `All checks passed!`. verification command: `ruff check adaptive_reflow/ tests/ scripts/ tools/`. Source-of-truth surface: adaptive_reflow/. |
 | G-MKDOCS | ENGINEERING_GATE | mkdocs strict build — auto-computed at build time | PASS |  |  |  |  |  |  |  | mkdocs.yml | 18bf36399065933f9ce695be634e2b89fbc569659605370c6ee84d24c2db979c | docs/GATES.md + AGENTS.md §4.1 | Live value: `0 errors`. verification command: `mkdocs build --strict`. Source-of-truth surface: mkdocs.yml. |
 | G-CLAIMS_CONSISTENCY | ENGINEERING_GATE | Claims consistency — auto-computed at build time | PASS |  |  |  |  |  |  |  | docs/CLAIMS.md | 8f98bfc53381a4011b3d846655d291cda0249d9da74684771bc55124f05ad1e2 | docs/GATES.md + AGENTS.md §4.1 | Live value: `**No drift detected.**`. verification command: `python3 tools/check_claims_consistency.py`. Source-of-truth surface: docs/CLAIMS.md. |
-| G-PYTEST | ENGINEERING_GATE | Full pytest suite — auto-computed at build time | PASS |  |  |  |  |  |  |  | tests/ |  | docs/GATES.md + AGENTS.md §4.1 | Live value: `5813 tests collected`. verification command: `python3 -m pytest tests/ -q --co`. Source-of-truth surface: tests/. |
+| G-PYTEST | ENGINEERING_GATE | Full pytest suite — auto-computed at build time | PASS |  |  |  |  |  |  |  | tests/ |  | docs/GATES.md + AGENTS.md §4.1 | Live value: `5817 tests collected`. verification command: `python3 -m pytest tests/ -q --co`. Source-of-truth surface: tests/. |
 
 ## SWEEP280
 

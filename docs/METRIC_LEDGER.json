@@ -1847,7 +1847,7 @@
       "source_artifact_sha256": "",
       "source_line": "",
       "section_ref": "docs/GATES.md + AGENTS.md §4.1",
-      "notes": "Live value: `5813 tests collected`. verification command: `python3 -m pytest tests/ -q --co`. Source-of-truth surface: tests/."
+      "notes": "Live value: `5817 tests collected`. verification command: `python3 -m pytest tests/ -q --co`. Source-of-truth surface: tests/."
     },
     {
       "metric_id": "G-RUFF",

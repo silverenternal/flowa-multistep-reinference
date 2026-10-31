@@ -108,3 +108,53 @@ def test_main_exit_codes(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> 
     dirty.write_text(_row(1, "a.png", b"nope"), encoding="utf-8")
     assert module.main(["--figures", str(dirty), "--root", str(tmp_path)]) == 1
     assert "FAIL" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
+# Provenance column: a row's §N.N must be a heading in the manuscript
+# ---------------------------------------------------------------------------
+
+
+def _paper(tmp_path: Path, headings: tuple[str, ...] = ("4.2", "7.9")) -> Path:
+    paper = tmp_path / "paper.md"
+    paper.write_text(
+        "".join(f"### {h} Heading {h}\n\ntext\n\n" for h in headings),
+        encoding="utf-8",
+    )
+    return paper
+
+
+def _provenance_row(idx: int, section: str) -> str:
+    return (
+        f"| {idx} | `a.png` | `{'0' * 64}` | 5 | 10×10 | {section} | — |\n"
+    )
+
+
+def test_a_section_that_exists_passes(tmp_path: Path) -> None:
+    module = _load_module()
+    figures = _setup(tmp_path, _provenance_row(1, "§7.9 R5c frontier"), {"a.png": b"alpha"})
+    assert module.check_sections(figures, _paper(tmp_path)) == []
+
+
+def test_a_section_that_does_not_exist_fails(tmp_path: Path) -> None:
+    module = _load_module()
+    figures = _setup(tmp_path, _provenance_row(1, "§4.8 conditions"), {"a.png": b"alpha"})
+    problems = module.check_sections(figures, _paper(tmp_path))
+    assert [p.kind for p in problems] == ["section"]
+    assert "§4.8" in problems[0].detail
+
+
+def test_a_consolidated_results_handle_is_skipped(tmp_path: Path) -> None:
+    """``§15.x`` points at CONSOLIDATED_RESULTS.md, not at the manuscript."""
+    module = _load_module()
+    figures = _setup(tmp_path, _provenance_row(1, "§15.x data viz"), {"a.png": b"alpha"})
+    problems = module.check_sections(figures, _paper(tmp_path))
+    assert [p.kind for p in problems] == ["unparsed"]
+
+
+def test_no_section_claims_fails_closed(tmp_path: Path) -> None:
+    """A table with no provenance handles must not read as a clean check."""
+    module = _load_module()
+    figures = _setup(tmp_path, _provenance_row(1, "auxiliary diagnostic"), {"a.png": b"alpha"})
+    problems = module.check_sections(figures, _paper(tmp_path))
+    assert [p.kind for p in problems] == ["unparsed"]

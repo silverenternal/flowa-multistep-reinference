@@ -15,8 +15,17 @@ under one of the four tracked roots.  A row that resolves to nothing is a
 failure rather than a skip -- the table's whole purpose is to let an editor
 confirm they hold the shipped bytes.
 
-Fail-closed: if the table parses to zero rows, the check reports that and
-exits non-zero.  A regex that stops matching must not look like a clean table.
+It also checks the *provenance* column.  Every row says which part of the
+manuscript the figure belongs to, and nothing verified those claims: six rows
+cited ``§4.2`` for figures the manuscript never mentions (its §4.2 is "Nine
+baselines"), and one cited a §4.8 that does not exist.  A ``§N`` or ``§N.N``
+in that column must name a heading in ``docs/drafts/paper-A-final.md``.
+``§15.x`` handles are skipped -- they point at ``CONSOLIDATED_RESULTS.md``,
+not at the manuscript.
+
+Fail-closed: if the table parses to zero rows, or to zero section claims, the
+check reports that and exits non-zero.  A regex that stops matching must not
+look like a clean table.
 
 Usage
 -----
@@ -34,6 +43,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FIGURES_MD = REPO_ROOT / "tnnls_submission" / "figures.md"
+PAPER_MD = REPO_ROOT / "docs" / "drafts" / "paper-A-final.md"
 
 # Every figure row resolves under one of these.  ``docs/figures`` holds the
 # manuscript figures, ``paper-figures/`` the appendix/main renders, and
@@ -52,6 +62,16 @@ ROW_RE = re.compile(
     r"\|\s*(?P<size>\d+)\s*\|",
     re.M,
 )
+
+#: ``§N`` / ``§N.N`` handles in the provenance column.
+SECTION_REF_RE = re.compile(r"§\s*(\d+(?:\.\d+)*)")
+
+#: Numbered headings of the manuscript (``### 7.9 Title``).
+HEADING_RE = re.compile(r"^#{2,4}\s+(\d+(?:\.\d+)*)\s", re.M)
+
+#: First components whose handles are not manuscript sections.  ``§15.NN``
+#: points into ``docs/CONSOLIDATED_RESULTS.md``.
+NON_PAPER_PREFIXES: frozenset[str] = frozenset({"15"})
 
 
 class Problem:
@@ -162,6 +182,62 @@ def check(
     return problems
 
 
+def check_sections(
+    figures_md: Path = FIGURES_MD,
+    paper_md: Path = PAPER_MD,
+) -> list[Problem]:
+    """Every ``§N.N`` in the provenance column must be a manuscript heading."""
+    text = figures_md.read_text(encoding="utf-8")
+    headings = set(HEADING_RE.findall(paper_md.read_text(encoding="utf-8")))
+    if not headings:
+        return [
+            Problem(
+                "-",
+                str(paper_md),
+                "unparsed",
+                "no numbered headings matched; the manuscript format changed, "
+                "so this check verified nothing",
+            )
+        ]
+
+    problems: list[Problem] = []
+    checked = 0
+    for line in text.splitlines():
+        m = ROW_RE.match(line)
+        if m is None:
+            continue
+        cells = line.split("|")
+        if len(cells) < 7:
+            problems.append(
+                Problem(m.group("idx"), m.group("name"), "columns", "row has no provenance cell")
+            )
+            continue
+        for token in SECTION_REF_RE.findall(cells[6]):
+            if token.split(".")[0] in NON_PAPER_PREFIXES:
+                continue
+            checked += 1
+            if token not in headings:
+                problems.append(
+                    Problem(
+                        m.group("idx"),
+                        m.group("name"),
+                        "section",
+                        f"cites §{token}, which is not a heading in {paper_md.name}",
+                    )
+                )
+    if checked == 0:
+        problems.append(
+            Problem(
+                "-",
+                str(figures_md),
+                "unparsed",
+                "no provenance-column section claims matched; this check "
+                "verified nothing",
+            )
+        )
+    return problems
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", action="store_true", help="emit machine-readable output")
@@ -177,9 +253,16 @@ def main(argv: list[str] | None = None) -> int:
         default=REPO_ROOT,
         help="repository root the figure roots are resolved against",
     )
+    parser.add_argument(
+        "--paper",
+        type=Path,
+        default=PAPER_MD,
+        help="manuscript the provenance column is checked against",
+    )
     args = parser.parse_args(argv)
 
     problems = check(args.figures, root=args.root)
+    problems.extend(check_sections(args.figures, args.paper))
     rows = len(parse_rows(args.figures.read_text(encoding="utf-8")))
 
     if args.json:
