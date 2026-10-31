@@ -91,7 +91,7 @@ All headline numbers in the manuscript are sourced from byte-addressable per-rec
 - **D.4 byte-stable regression vectors:** 30/30 PASS preserved
 - **mkdocs build:** 0 warnings
 - **claims_consistency:** no drift
-- **Pytest:** 5582 passed / 180 skipped / 0 xfailed (2026-10-29 CPU run, 12 torch-dependent `test_paper_metrics.py` tests excluded)
+- **Pytest:** 5650 passed / 180 skipped / 0 failed (2026-10-31 CPU run)
 
 ## Checkpoint availability
 

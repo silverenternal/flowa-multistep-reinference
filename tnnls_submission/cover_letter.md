@@ -145,7 +145,7 @@ boundary statement rather than as a hidden caveat.
 SHA-256-pinned source-code archive (`5b21cca`), a Docker recipe
 (`flowa:tnnls-v3.0`), Zenodo deposits for code + per-record CSVs,
 a D.4 byte-stable regression suite at **30/30 PASS**, a
-hash-chained transition log spanning 5582 pytest tests, and a
+hash-chained transition log spanning 5650 pytest tests, and a
 **5-gate CI** (`ruff`, `mkdocs`, `claims`, `vendored`, `D.4`)
 that is green on every push. The framework is reconstructed
 around three typed-systems primitives — **typed contracts**
@@ -1000,7 +1000,7 @@ The submission is accompanied by:
   repository, SHA-256-pinned at the freeze-marker commit
   `5b21cca` and re-pinned at the final-pass
   commit `176c6d4`. The repository includes the full
-  [`adaptive_reflow/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/adaptive_reflow) framework code, 5582 pytest tests, the
+  [`adaptive_reflow/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/adaptive_reflow) framework code, 5650 pytest tests, the
   **D.4 byte-stable regression suite at 30/30 PASS**, the
   statistical analysis scripts, every R-cell config
   YAML, `pyproject.toml` + `uv.lock`, `README.md`, `QUICKSTART.md`,
