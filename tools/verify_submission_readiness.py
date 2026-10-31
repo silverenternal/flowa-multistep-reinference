@@ -181,23 +181,25 @@ R1_R6_ARTIFACTS: tuple[tuple[str, str], ...] = (
         "verification_outputs/baseline_comparison_q4_2026.json",
         "3e71ed24cc03025f90fbdcd28a6815f42b866903aad58f0d442bd6e3b8e0de75",
     ),
-    # R4 2D Two Moons W2 -7.28% (matched NFE 500, 3 seeds). CSVs.
+    # C.5 controlled-noise sweep on the two 2D targets (3 seeds, baseline
+    # NFE {2, 5, 10, 20, 50}, framework NFE 500). These are the sigma
+    # sweeps, not the matched-NFE ablation that produces the -7.28% /
+    # -10.40% readings -- those live in wave189-p2-sota-2d-rerun/.
     (
         "verification_outputs/noise_injection_two_moons_baseline.csv",
         "bcd1bb1ca17ecc53c9abf794f8404f678979c00c996b058e86b2548570aaa325",
     ),
     (
         "verification_outputs/noise_injection_two_moons_framework.csv",
-        "162406303bddbdf20792e841b9ed8616ec98ba259d855828b89ce9453b6d177b",
+        "cbf2b2223336ecc17b369c43af61aeff1665b55ba11a76e8aa4193da87613ea7",
     ),
-    # R5 2D Eight Gaussians W2 -10.40% (matched NFE 500, 3 seeds). CSVs.
     (
         "verification_outputs/noise_injection_eight_gaussians_baseline.csv",
         "3c928aa31babea6c818d227290a6bbce1259b2bd2649ea34a75a1d557eb3d85d",
     ),
     (
         "verification_outputs/noise_injection_eight_gaussians_framework.csv",
-        "51902d37c709774dbc156d7d7c4aabb2be9cf86a85a019f63ed16aa76c95886d",
+        "4f38cc20838c411581461aeea31f760c210bf6c7232411d08b5a7570b7e12ae6",
     ),
 )
 """12 on-disk R1-R6 evidence files cited in paper-draft.md §9 cross-link

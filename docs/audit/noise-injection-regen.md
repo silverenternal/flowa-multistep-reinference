@@ -118,6 +118,11 @@ head was spliced onto the existing tail.
   CSV digests, and the claim anchors that pointed at the σ sweep for readings
   it does not contain (`−10.40%` and `−78.25%` come from
   `verification_outputs/wave189-p2-sota-2d-rerun/`, not from this sweep).
+- `tools/verify_submission_readiness.py` — the same two digests in the
+  `r1_r6_sha` gate, plus the comments that labelled the CSVs
+  "R4 2D Two Moons W2 −7.28%" and "R5 2D Eight Gaussians W2 −10.40%". That
+  gate was the one checker that caught the regeneration, which is the
+  behaviour a pinned digest should have.
 
 ## Left alone, and why
 
