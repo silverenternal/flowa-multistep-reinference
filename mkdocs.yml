@@ -237,6 +237,7 @@ not_in_nav: |
   audit/repro-command-audit.md
   audit/docs-gate-repoint.md
   audit/mypy-gate-restoration.md
+  audit/tables-inventory-scope.md
   audit/mnist-gpu-backend.md
   audit/wave281/p-partial-evidence.md
   audit/wave289-p1-honest-reframe.md

@@ -6,10 +6,12 @@
 > is [`docs/PAPER-EVIDENCE.md`](../docs/PAPER-EVIDENCE.md). The tables
 > below are an internal inventory that accumulated across waves; where
 > a row here disagrees with the manuscript, the manuscript wins. Every
-> cell below was recomputed from the artifact it cites on 2026-10-29
-> (`tools/check_tables_inventory.py`); the one basis fork that remains
-> is flagged inline: Table 1's R1 row is the synthetic-velocity-field
-> basis (the real-ckpt basis gives 158 → 271).
+> numeric cell in Tables 1-4 is recomputed from the artifact it cites by
+> `tools/check_tables_inventory.py` (44 checks, 0 drift). Table 5 records
+> gate results rather than measurements, so its rows are dated snapshots,
+> not recomputable cells. The one basis fork that remains is flagged
+> inline: Table 1's R1 row is the synthetic-velocity-field basis (the
+> real-ckpt basis gives 158 → 271).
 
 **Status:** TNNLS paper-ready tables (5 main tables). All data sourced from [`verification_outputs/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs) with byte-addressable provenance.
 
@@ -86,8 +88,8 @@ Both rows are the same run (`verification_outputs/wave236-p2-wallclock.json`). T
 | claims_consistency | **No drift** | [`tools/check_claims_consistency.py`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tools/check_claims_consistency.py) |
 | Abstract word count | **167 words** (abstract of record in `paper-A-final.md`; the 328-word draft is the historical `abstract-final.md`) | [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) |
 | Ruff lint (4-directory scope) | **0 findings** | `ruff check adaptive_reflow/ tests/ scripts/ tools/` |
-| Mypy type-check | **0 errors** | `mypy adaptive_reflow/` |
-| Pytest | **5582 passed / 180 skipped / 0 xfailed** (2026-10-29 run, 12 torch-dependent `test_paper_metrics.py` tests excluded on the CPU box) | [`docs/audit/tables-inventory-provenance.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/tables-inventory-provenance.md) |
+| Mypy type-check | **0 errors in 232 files** | `.venvs/flowmol3_venv/bin/python -m mypy --strict adaptive_reflow/` |
+| Pytest | **5640 passed / 180 skipped / 0 failed** (2026-10-31 run on the CPU box) | [`docs/audit/tables-inventory-provenance.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/tables-inventory-provenance.md) |
 
 ---
 

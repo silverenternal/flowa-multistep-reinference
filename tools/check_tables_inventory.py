@@ -5,8 +5,10 @@ artifacts the table cites.
 ``tables.md`` opens with a promise: "All data sourced from
 ``verification_outputs/`` with byte-addressable provenance."  This script
 tests that promise for the rows that are machine-checkable -- the 4-arm
-paired-t table (Table 2), the statistical-methods table (Table 3) and the
-two Table 1 rows whose source is a JSON file.
+paired-t table (Table 2), the statistical-methods table (Table 3), the
+wall-clock table (Table 4) and the two Table 1 rows whose source is a JSON
+file.  Table 5 records gate results rather than measurements, so it is not
+recomputable here; its rows are dated snapshots.
 
 Each check reads the *cited artifact*, recomputes the quantity from the
 artifact's own columns, and compares it with what the markdown says.  A
@@ -259,6 +261,67 @@ def check_table1(rep: Report) -> None:
                 f"{deltas[0]:.2f}/{deltas[-1]:.2f}")
 
 
+# --------------------------------------------------------------------------
+# Table 4 -- CUDA-graph wall-clock
+# --------------------------------------------------------------------------
+def check_table4(rep: Report) -> None:
+    """Recompute the five wall-clock numbers and the four re-measurement ones.
+
+    Both rows of the table are the same run (``wave236-p2-wallclock.json``);
+    the re-measurement lives under ``re_measurement_wave238_p2`` in the same
+    file.  An earlier revision of the table quoted one run's seconds against
+    the other run's ratio, which is why every cell is pinned separately.
+
+    The row is located by its leading label, not by a regex over the whole
+    row: a regex would stop matching the moment a number changed, and the
+    check would then vanish instead of failing.
+    """
+    path = OUT / "wave236-p2-wallclock.json"
+    if not path.is_file():
+        rep.add("table4:artifact", "present", "missing")
+        return
+    d = json.load(path.open())
+    rep.add("table4:artifact", "present", "present")
+
+    rows = [c for c in _rows(TABLES.read_text()) if len(c) == 4]
+    before = next((c for c in rows if c[0].startswith("**Before CUDA-graph")), None)
+    after = next((c for c in rows if c[0].startswith("**After CUDA-graph")), None)
+    gap = next((c for c in rows if c[0].startswith("Closes ")), None)
+    re_measure = d["re_measurement_wave238_p2"]
+
+    for label, row, col, actual, places in (
+        ("table4:before-seconds", before, 1, d["wallclock_before_seconds"], 2),
+        ("table4:ratio-before", before, 2, d["framework_baseline_ratio_before"], 2),
+        ("table4:after-seconds", after, 1, d["wallclock_after_seconds"], 2),
+        ("table4:ratio-after", after, 2, d["framework_baseline_ratio_after"], 2),
+        ("table4:speedup", after, 3, d["speedup_factor"], 2),
+        ("table4:gap-closure", gap, 0, d["wallclock_gap_closure_pct"], 1),
+    ):
+        stated = _num(row[col]) if row is not None else None
+        if stated is None:
+            rep.add(label, "(row missing)", f"{actual:.{places}f}")
+        else:
+            rep.add(label, f"{stated:.{places}f}", f"{actual:.{places}f}")
+
+    # The re-measurement is quoted in the paragraph below the table, not in a
+    # row of its own: "7.94 s -> 1.87 s, 4.24x, ratio_after = 1.30".
+    md = TABLES.read_text()
+    m = re.search(
+        r"([\d.]+) s . ([\d.]+) s, ([\d.]+)×, `ratio_after = ([\d.]+)`", md
+    )
+    if m is None:
+        rep.add("table4:remeasurement", "(paragraph missing)", "present")
+    else:
+        rep.add("table4:remeas-before", m.group(1),
+                f"{re_measure['wallclock_before_seconds']:.2f}")
+        rep.add("table4:remeas-after", m.group(2),
+                f"{re_measure['wallclock_after_seconds']:.2f}")
+        rep.add("table4:remeas-speedup", m.group(3),
+                f"{re_measure['speedup_factor']:.2f}")
+        rep.add("table4:remeas-ratio-after", m.group(4),
+                f"{re_measure['framework_baseline_ratio_after']:.2f}")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--quiet", action="store_true")
@@ -272,6 +335,7 @@ def main(argv: list[str] | None = None) -> int:
     check_table2(rep)
     check_table3(rep)
     check_table1(rep)
+    check_table4(rep)
 
     if not args.quiet:
         rep.render()
