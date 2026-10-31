@@ -71,7 +71,29 @@ and R5 rows quote the CLM-039 readings against manuscript sections §7.6.4 and
 §7.6.5 that do not exist in `paper-A-final.tex`. That file is not affected by
 this finding: its own header declares it an internal inventory accumulated
 across waves, states that the manuscript wins where a row disagrees, and
-`tools/check_tables_inventory.py` recomputes each numeric cell from the
-artifact it cites. The two files disagree with the manuscript in the same way
+`tools/check_tables_inventory.py` recomputes the numeric cells of tables 2-4
+from the artifacts they cite. The two files disagree with the manuscript in the same way
 and for the same reason — old cell numbering — but only the data-availability
 statement presented itself as the artifact map for the manuscript's numbers.
+
+## One more dead URL, in the tables inventory
+
+The same URL sweep, run across all ten `tnnls_submission/*.md` files after the
+three repairs above (194 distinct repository URLs, one dead) found a fourth
+stale path, outside the data-availability statement:
+
+`tnnls_submission/tables.md` row T5 cites
+`verification_outputs/wave191-r5-n1000/`, which does not exist. The directory
+was renamed `verification_outputs/wave191-p3-mnist-n1000/` (4 tracked `.npz`
+files: one per scheduler arm).
+
+That row was **not** repointed. T5 describes three rows keyed on epochs 1 / 2
+/ 3, while the surviving directory holds one checkpoint's per-arm samples and
+no summary JSON. The manuscript's R5c is a different decomposition again —
+four checkpoints (`w16e1_5k`, `w16e1_10k`, `w16e1_60k`, production) crossed
+with seven NFE rungs, under `verification_outputs/gap84-cap-frontier/`.
+Repointing would substitute a directory that exists for one that supports the
+row, which is the failure this audit is about. `table1` and `table5` are also
+the two tables `tools/check_tables_inventory.py` does not recompute (it covers
+tables 2, 3 and 4; 44 checks, 0 drift), so nothing else would have caught
+either.
