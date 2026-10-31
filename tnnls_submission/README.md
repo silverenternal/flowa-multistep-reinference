@@ -141,7 +141,7 @@ Select: **"Regular Paper"** (TNNLS treats the manuscript as a regular research a
 | Editorial Manager complains about "non-standard manuscript type" | Select "Regular Paper", not "Survey" or "Correspondence" |
 | PDF rejected for "missing embedded fonts" | Recompile with `\usepackage[T1]{fontenc}` (already in the IEEEtran template) |
 | Cover-letter PDF exceeds 1 MB | Convert from `.md` to PDF; if still too large, drop the S1–S8 supplementary-listing appendix (it duplicates the supplementary README) |
-| Highlights length check fails | Each highlight MUST be ≤ 25 words; check with `awk '/^[0-9]\./ {print NF-1, $0}' tnnls_submission/highlights.md` (the count excludes the leading `N.`) |
+| Highlights length check fails | Each highlight MUST be ≤ 25 words. Check with `python3 -c "import re,pathlib;t=pathlib.Path('tnnls_submission/highlights.md').read_text();[print(i,len(b.strip().split(chr(10)*2)[0].split())) for i,b in enumerate(re.split(r'(?m)^\\d+\\.\\s+',t)[1:],1)]"` — one count per highlight, over the wrapped paragraph. A line-based `awk` undercounts: the highlights wrap, so it sees 13/13/9/11/10 where the real counts are 18/23/18/21/15. |
 | ScholarOne rejects 5+ supplementary files | Upload only the README index; the index hyperlinks every byte-addressable artifact |
 
 ---
