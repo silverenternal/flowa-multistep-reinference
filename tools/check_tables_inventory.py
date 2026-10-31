@@ -6,9 +6,12 @@ artifacts the table cites.
 ``verification_outputs/`` with byte-addressable provenance."  This script
 tests that promise for the rows that are machine-checkable -- the 4-arm
 paired-t table (Table 2), the statistical-methods table (Table 3), the
-wall-clock table (Table 4) and the two Table 1 rows whose source is a JSON
-file.  Table 5 records gate results rather than measurements, so it is not
-recomputable here; its rows are dated snapshots.
+wall-clock table (Table 4), the two Table 1 rows whose source is a JSON
+file, and the four R5c plateau rows of the manuscript's \u00a77.9 frontier
+table.  The reproduction-gate table (``## Table 5`` in ``tables.md``) records
+gate results rather than measurements, so it is not recomputable here; its
+rows are dated snapshots.  The *inventory* row ``T5`` is a different thing --
+it describes the \u00a77.9 table -- and is checked by :func:`check_table5`.
 
 Each check reads the *cited artifact*, recomputes the quantity from the
 artifact's own columns, and compares it with what the markdown says.  A
@@ -33,12 +36,15 @@ import argparse
 import csv
 import json
 import re
+import statistics
 import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TABLES = REPO_ROOT / "tnnls_submission" / "tables.md"
+PAPER_MD = REPO_ROOT / "docs" / "drafts" / "paper-A-final.md"
 OUT = REPO_ROOT / "verification_outputs"
+FRONTIER_DIR = OUT / "gap84-cap-frontier"
 
 #: Drift labels that are documented in docs/audit/tables-inventory-provenance.md
 #: and await an authorised edit of the frozen submission package.  Remove an
@@ -322,6 +328,68 @@ def check_table4(rep: Report) -> None:
                 f"{re_measure['framework_baseline_ratio_after']:.2f}")
 
 
+# --------------------------------------------------------------------------
+# Table 5 inventory row (T5) -- the manuscript's R5c frontier table
+# --------------------------------------------------------------------------
+_R5C_CHECKPOINTS: tuple[str, ...] = ("w16e1_5k", "w16e1_10k", "w16e1_60k", "production")
+
+
+def check_table5(rep: Report) -> None:
+    """Recompute the four R5c plateau rows of ``paper-A-final.md`` \u00a77.9.
+
+    The plateau is the mean of the last two rungs (100 and 200).  The JSON
+    carries ``baseline_plateau.value`` for the baseline arm and the per-rung
+    rows for both, so the framework plateau is averaged here rather than read.
+
+    ``tables.md``'s T5 row only describes this table; the numbers live in the
+    manuscript.  Checking the description instead of the numbers is what let
+    the row keep citing a directory that had been renamed, so the numbers are
+    what this reads.
+    """
+    if not PAPER_MD.is_file():
+        rep.add("table5:paper", "present", "missing")
+        return
+    text = PAPER_MD.read_text(encoding="utf-8")
+    marker = "### 7.9 "
+    if marker not in text:
+        rep.add("table5:section", "present", "missing")
+        return
+    section = text.split(marker, 1)[1].split("\n### ", 1)[0]
+    rows = [c for c in _rows(section) if len(c) == 7]
+    if not rows:
+        rep.add("table5:rows", "present", "missing")
+        return
+
+    for ck in _R5C_CHECKPOINTS:
+        row = next((c for c in rows if ck in c[0]), None)
+        path = FRONTIER_DIR / f"frontier_{ck}.json"
+        if row is None or not path.is_file():
+            rep.add(f"table5:{ck}", "present", "missing")
+            continue
+        d = json.load(path.open())
+        rungs = {r["nfe"]: r for r in d["rungs"]}
+        last = [rungs[n]["framework"] for n in (100, 200) if n in rungs]
+        if len(last) != 2:
+            rep.add(f"table5:{ck}:rungs", "2", str(len(last)))
+            continue
+        framework = statistics.mean(last)
+        baseline = d["baseline_plateau"]["value"]
+        rel = (framework - baseline) / baseline * 100.0
+        for col, label, value, places in (
+            (1, "baseline", baseline, 4),
+            (2, "framework", framework, 4),
+            (4, "rel", rel, 2),
+        ):
+            stated = _num(row[col])
+            rep.add(
+                f"table5:{ck}:{label}",
+                f"{stated:.{places}f}" if stated is not None else "none",
+                f"{value:.{places}f}",
+            )
+        rep.add(f"table5:{ck}:strict", row[5], f"{len(d['dominance']['strict_gain_rungs'])}/7")
+        rep.add(f"table5:{ck}:verdict", row[6].strip("* "), str(d["verdict"]))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--quiet", action="store_true")
@@ -336,6 +404,7 @@ def main(argv: list[str] | None = None) -> int:
     check_table3(rep)
     check_table1(rep)
     check_table4(rep)
+    check_table5(rep)
 
     if not args.quiet:
         rep.render()
