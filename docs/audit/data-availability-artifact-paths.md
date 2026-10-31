@@ -64,7 +64,14 @@ CLM-039 20-round best-of-scheduler measurements, which remain ACTIVE in
 about two different protocols.
 
 Renumbering those bullets, or dropping the Eight Gaussians row, is a claims
-decision rather than a path repair, so this pass stopped at the paths. The
-same divergence appears in `tnnls_submission/tables.md` Table 1, whose R4 and
-R5 rows quote the CLM-039 readings against manuscript sections §7.6.4 and
-§7.6.5 that do not exist in `paper-A-final.tex`.
+decision rather than a path repair, so this pass stopped at the paths.
+
+The same divergence appears in `tnnls_submission/tables.md` Table 1, whose R4
+and R5 rows quote the CLM-039 readings against manuscript sections §7.6.4 and
+§7.6.5 that do not exist in `paper-A-final.tex`. That file is not affected by
+this finding: its own header declares it an internal inventory accumulated
+across waves, states that the manuscript wins where a row disagrees, and
+`tools/check_tables_inventory.py` recomputes each numeric cell from the
+artifact it cites. The two files disagree with the manuscript in the same way
+and for the same reason — old cell numbering — but only the data-availability
+statement presented itself as the artifact map for the manuscript's numbers.
