@@ -981,6 +981,12 @@ def test_heun_wallclock_within_factor_of_euler() -> None:
     so the expected ratio is ~2.0. The lower bound is relaxed to 1.4x
     to absorb CI noise; the upper bound at 3.0x guards against a
     regression that doubles the work again (e.g. accidental third eval).
+
+    Each arm is timed as the *minimum* of several single calls rather
+    than the sum of a loop: a scheduler hiccup or another job on the
+    box only ever adds time, so the minimum is the estimate that does
+    not move when the machine is busy. Summing a loop made this test
+    fail under CPU contention while passing in isolation.
     """
     from adaptive_reflow.adapters.rectified_flow_cifar import (
         RF_CIFAR_INTEGRATOR_EULER,
@@ -990,6 +996,7 @@ def test_heun_wallclock_within_factor_of_euler() -> None:
 
     n_samples = 4
     n_steps = 20
+    reps = 7
 
     def _time(solver_kind: str) -> float:
         a = RectifiedFlowCIFARAdapter(
@@ -1001,10 +1008,12 @@ def test_heun_wallclock_within_factor_of_euler() -> None:
         )
         # Warmup: discard the first call (numpy / cache warmup).
         _ = a.batched_inference(n_samples=2, num_steps=n_steps, seed=0)
-        start = time.perf_counter()
-        for _ in range(3):
+        best = float("inf")
+        for _ in range(reps):
+            start = time.perf_counter()
             _ = a.batched_inference(n_samples=n_samples, num_steps=n_steps, seed=0)
-        return time.perf_counter() - start
+            best = min(best, time.perf_counter() - start)
+        return best
 
     t_euler = _time(RF_CIFAR_INTEGRATOR_EULER)
     t_heun = _time(RF_CIFAR_INTEGRATOR_HEUN)
