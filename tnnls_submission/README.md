@@ -49,9 +49,12 @@ Walk through these in order; each step has a single command that produces one li
 
 2. **SHA-256 ledger is current.**
    ```bash
-   cd tnnls_submission && sha256sum -- *.md supplementary/README.md
+   cd tnnls_submission && sha256sum -c SHA256SUMS && cd .. \
+     && python3 tools/check_submission_manifest.py
    ```
-   Cross-check the `MANIFEST.md` SHA-256 column matches.
+   Expect: every line `OK`, then `ledger_drift=0`. Do not use
+   `sha256sum -- *.md`: that prints digests without comparing them to
+   anything, so it passes whatever the files contain.
 
 3. **Manuscript compiles cleanly.**
    ```bash
@@ -67,9 +70,13 @@ Walk through these in order; each step has a single command that produces one li
 
 5. **Anonymous blind-review check** (paper has no author / institution visible):
    ```bash
-   grep -iE "hwei|university of|institute|department" docs/drafts/paper-A-final.{tex,pdf} | head -5
+   pdftotext docs/drafts/paper-A-final.pdf - | grep -iE "hwei|university of|institute|department"; \
+     grep -iE "hwei|university of|institute|department" docs/drafts/paper-A-final.tex
    ```
-   Expect: empty output (or only IEEEtran-journal boilerplate that the typesetter strips before upload).
+   Expect: empty output from both. The PDF must go through `pdftotext`
+   first — `grep` on the `.pdf` sees compressed streams and returns
+   nothing even for words that are on every page (`grep -c framework`
+   on the PDF is 0; the text has 46).
 
 ---
 
@@ -161,9 +168,9 @@ Select: **"Regular Paper"** (TNNLS treats the manuscript as a regular research a
 - [`tnnls_submission/FILL_GUIDE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/FILL_GUIDE.md) — detailed walkthrough for `cover_letter.md` placeholders
 - [`tnnls_submission/supplementary/README.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/supplementary/README.md) — supplementary bundle index (headline cells, audit docs, verification outputs)
 - [`tnnls_submission/data_availability.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/data_availability.md) — Zenodo DOIs + per-record CSV provenance
-- [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md) — 3 TNNLS highlights, provenance-traced
+- [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md) — 5 TNNLS highlights, provenance-traced
 - [`tnnls_submission/tables.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/tables.md) — 5 paper-ready tables (R1-R6 + 4-arm H2H + statistical + wall-clock + reproducibility)
-- [`tnnls_submission/figures.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/figures.md) — ASCII architecture diagrams
+- [`tnnls_submission/figures.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/figures.md) — ASCII architecture diagrams + a 37-row SHA-256-pinned figure catalog
 - [`tnnls_submission/submission_checklist.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/submission_checklist.md) — D.4 + mkdocs + claims + pytest + acceptance gates
 - [`docs/audit/wave324-d5-review.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave324-d5-review.md) — final D+5 review (ready-to-submit verdict, 9 CRITICAL fixes already applied)
 - [`docs/audit/wave323-typeset-execution.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave323-typeset-execution.md) — IEEEtran-journal typeset execution
