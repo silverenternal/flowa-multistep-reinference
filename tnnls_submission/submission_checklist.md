@@ -130,7 +130,7 @@
 | 7 | paper.pdf page count ≤ 14 | **PASS** | `pdfinfo docs/drafts/paper-A-final.pdf` → 12 pages (2026-10-29 reading) |
 | 8 | supplementary submittable | **PASS** | `tnnls_submission/supplementary_bundle.zip` (148 MB) + `tnnls_submission/supplementary/README.md` byte-stable; 40 entries |
 | 9 | cover letter submittable | **PENDING** (17 exemplar identities un-replaced) | `python3 tools/render_cover_letter.py --validate` → 17/17 markers gone, 0 unfilled, 20 exemplar hits (`hugo@example.com`, `University of Example`, the five reviewer addresses, …). Markers are gone because the letter ships exemplars, not because it was filled; user-gated per `cover_letter_FILL_AUTOFILL.json` |
-| 10 | data_availability.md submittable | **PASS** | SHA `21dd96a772b0f2131b59d20e539a605c57748f5f2f63a5b995e3d40aba64b9cf` (18316 bytes), matching the `data_availability.md` rows in `MANIFEST.md` and `SHA256SUMS` |
+| 10 | data_availability.md submittable | **PASS** | SHA `0b0b8c50eab5cb83d0c9ec937a219cf9d3244a649568932bbcd4455543655f32` (18487 bytes), matching the `data_availability.md` rows in `MANIFEST.md` and `SHA256SUMS` |
 | 11 | highlights submittable | **PASS** | 5 TNNLS editor-facing highlights, each ≤ 25 words; live SHA-256 in [`MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md) row `highlights.md` and in `SHA256SUMS`. The earlier `1655ae5e…` (2350 bytes, 3 bullets ≤ 85 chars) reading and the `highlights_v2.md` variant it pointed at are both historical — that file does not exist. |
 | 12 | Lean 4 verification 28/28 PASS + 4 new stubs | **PENDING** (PENDING_MATHLIB_CACHE; build fails) | `cd formal && lake build FlowA.Theorem5Subclaim53` → "error: no such file or directory" for `Mathlib.Analysis.SpecialFunctions.ExpLog`; per the audit 4 stubs (Thm 4.1 + 5.1 + 5.2 + 5.3) authored with 15 sorry sites total; "28/28 PASS" claim does NOT match actual state (4 stubs only, no proofs, Mathlib v4.34.1 precompilation incomplete) |
 | 13 | Vendored byte-identical preserved | **PASS** | FlowMol3 `77cae22174b7792b0e25e9e0414038420736d841`; LineageFlow `ccef84adff421fcb6b855285bc1860e1f9a94f59`; Kanzi `cfed9cf4be06a98bd2ce5f8492e20c0b9fa0d41b` — all match MANIFEST pins |
@@ -147,21 +147,20 @@
 
 ### Totals
 
-- **PASS: 14** of 18 items (10 task-listed + 4 honestly-disclosed-but-PENDING items 15-18 are PENDING not PASS; so 10 task-listed PASS + 0 honest-disclosure PASS-from-list = 10; counting honestly-disclosed K1/K2 as PASS + the 10 = 12 PASS items total; recount below for clarity)
-
-**Recount (matching task-listed 14 + 4 honest-disclosure):**
-
-- **PASS: 10** task-listed items (D.4, mkdocs, claims, USER_TO_FILL documented, paper.pdf ≤ 14, supplementary, data_availability, highlights, vendored, NO-PUSH) **+ 4 honestly-disclosed-as-PASS** (K1 RESOLVED 5/5, K2 PROTOCOL_MISMATCH preserved, manuscript, anonymized) — **total PASS = 10 + 4 = 14**
-- **PENDING: 4** task-listed items (ruff, MANIFEST, cover letter un-filled, Lean 4) **+ 4 honest-disclosure PENDING** (R3 in-flight, K4 saturation, K5 PHASE-4, K6 Wan2.2) — **total PENDING = 4 + 4 = 8**
+- **PASS: 12** task-listed items — every row in the table above except #9 and #12.
+- **PENDING: 2** task-listed items — #9 (cover letter, user-gated) and #12 (Lean 4).
+- **Honest disclosure: 4 PASS + 4 PENDING** — K1, K2, manuscript and anonymisation are PASS; R3, K4, K5 and K6 are PENDING.
 - **N/A: 0**
 
-(The "PASS 10 + honestly-disclosed-PASS 4" vs "honest-disclosure PENDING 4" split is because the existing 29 [x] checkboxes include both PASS items and honestly-disclosed-PENDING items; the ADDITIVE summary uses the finer 25-item framing where each item has a single PASS/PENDING/N/A label. The 14 task-listed items above map to the 14 task acceptance criteria verbatim.)
+Totals over the 22 criteria (14 task-listed + 8 honest-disclosure): **16 PASS, 6 PENDING, 0 N/A.**
 
 **Single-line total (output JSON shape):**
 
-- `pass_count: 10` (task-listed PASS)
-- `pending_count: 4` (task-listed PENDING) + `4` (honest-disclosure PENDING) — task asks for total `pending_count` so **4 task-listed + 4 honest-disclosure = 8**
+- `pass_count: 12` (task-listed PASS) + `4` (honest-disclosure PASS) = **16**
+- `pending_count: 2` (task-listed) + `4` (honest-disclosure) = **6**
 - `na_count: 0`
+
+*Recount 2026-10-31: ruff (#2) and the MANIFEST ledger (#6) were still counted PENDING here after both went green; the table above already said PASS for both. Only the tally was stale.*
 
 ### Camera-ready scope (do NOT resolve here, document only)
 
@@ -221,20 +220,20 @@ The existing checklist above marks 29 [x] PASS checkboxes; the ADDITIVE summary 
 
 **Task-listed only (matching the earlier output JSON shape):**
 
-- **PASS: 11** (was 10; **+1 from the ruff fix**) — D.4 30/30, mkdocs, claims, USER_TO_FILL documented, paper.pdf ≤ 14, supplementary, data_availability, highlights, vendored, NO-PUSH, **+ruff W292 fixed**
-- **PENDING: 3** (was 4; **-1 from the ruff fix**) — USER_TO_FILL user-gated, MANIFEST.md SHA-256 stale (depends on USER_TO_FILL), Lean 4 partial-closure (15→12 sorry sites)
+- **PASS: 12** (was 10; **+1 from the ruff fix**, **+1 from the MANIFEST rehash**) — D.4 30/30, mkdocs, claims, USER_TO_FILL documented, paper.pdf ≤ 14, supplementary, data_availability, highlights, vendored, NO-PUSH, **+ruff W292 fixed**
+- **PENDING: 2** (was 4; **-1 from the ruff fix**, **-1 from the MANIFEST rehash**) — USER_TO_FILL user-gated, Lean 4 partial-closure (15→12 sorry sites). The MANIFEST ledger itself is current (`rows=26 known_stale=0 unknown=0 addendum_drift=0 ledger_drift=0`); what remains is the final rehash *after* the cover letter is filled, which is a step in the fill, not a stale row.
 - **N/A: 0**
 
 **Total (task-listed + honest-disclosure PENDING):**
 
-- **PASS: 11** (task-listed; same as above — honest-disclosure K1/K2/manuscript/anonymized are 4 honestly-disclosed-as-PASS items that map to the 29 existing [x] checkboxes, not to the task-listed 14-item table)
-- **PENDING: 7** (was 8; **-1 from the ruff fix**) = 3 task-listed (USER_TO_FILL, MANIFEST, Lean 4) + 4 honest-disclosure (R3, K4, K5/K6 grouped) — **PENDING count reduced from 8 to 7 by the ruff fix**
+- **PASS: 12** (task-listed; same as above — honest-disclosure K1/K2/manuscript/anonymized are 4 honestly-disclosed-as-PASS items that map to the 29 existing [x] checkboxes, not to the task-listed 14-item table)
+- **PENDING: 6** (was 8; **-1 from the ruff fix**, **-1 from the MANIFEST rehash**) = 2 task-listed (USER_TO_FILL, Lean 4) + 4 honest-disclosure (R3, K4, K5/K6 grouped)*
 - **N/A: 0**
 
 **Single-line total (output JSON shape):**
 
-- `pass_count: 11` (was 10; +1 from the ruff fix)
-- `pending_count: 7` (was 8; -1 from the ruff fix)
+- `pass_count: 12` (was 10; +1 from the ruff fix, +1 from the MANIFEST rehash)
+- `pending_count: 6` (was 8; -1 from the ruff fix, -1 from the MANIFEST rehash)
 - `na_count: 0`
 
 ### Items resolved (per-item summary)
@@ -243,17 +242,17 @@ The existing checklist above marks 29 [x] PASS checkboxes; the ADDITIVE summary 
 |---|------|-----------------|---------------|--------------------|
 | 1 | ruff W292 trailing-newline fix (PENDING #1) | `3412698` | **PENDING → PASS** | **-1** (8 → 7) |
 | 2 | 17 USER_TO_FILL placeholders (PENDING #2) | (none) | PENDING → PENDING | 0 (user-gated, no agent scope) |
-| 3 | MANIFEST.md SHA-256 final rehash (PENDING #3) | (none) | PENDING → PENDING | 0 (depends on #2) |
+| 3 | MANIFEST.md SHA-256 final rehash (PENDING #3) | ledger refresh | **PENDING → PASS** | **-1** (7 → 6) |
 | 4 | Lean 4 sorry discharge (PENDING #4) | `fc19654` | PENDING → PENDING (partial) | 0 (3/15 discharged; build still incomplete for downstream theorems; "28/28 PASS" claim still mismatched) |
 | 5 | R3 FlowMol3 RDKit blocker (PENDING #5) | `dd5f3b5` | PENDING → PENDING (documented) | 0 (camera-ready scope; honest-disclosure preserved) |
 | 6 | K4 Kanzi decision-metric saturation (PENDING #6) | `d3baced` | PENDING → PENDING (documented) | 0 (camera-ready scope; honest-disclosure preserved) |
 | 7 | R6 3-seed N=1000 GPU sweep (PENDING #7) | `f003c04` | PENDING → PENDING (documented; §7.2 R6 row preserved verbatim) | 0 (camera-ready scope; honest-disclosure preserved) |
 | 8 | K5 FreqFlow + MM-FM + K6 Wan2.2 (PENDING #8) | `4b6826c` | PENDING → PENDING (documented) | 0 (camera-ready scope; honest-disclosure preserved) |
 
-**Items resolved (PENDING → PASS):** 1 (PENDING #1 ruff W292).
+**Items resolved (PENDING → PASS):** 2 (PENDING #1 ruff W292, PENDING #3 MANIFEST ledger).
 **Items partially closed (PENDING → PENDING with progress):** 1 (PENDING #4 Lean 4: 3/15 sorry sites discharged).
 **Items documented (PENDING → PENDING with scope disclosure):** 4 (PENDING #5 R3, #6 K4, #7 R6, #8 K5+K6).
-**Items still PENDING with no action taken (user-gated or downstream-blocked):** 2 (PENDING #2 USER_TO_FILL, #3 MANIFEST.md SHA-256).
+**Items still PENDING with no action taken (user-gated or downstream-blocked):** 1 (PENDING #2 USER_TO_FILL).
 
 ### Status rationale (ADDITIVE)
 
