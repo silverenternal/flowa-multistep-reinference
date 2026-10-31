@@ -685,8 +685,18 @@ def gate_drift_33(report: GateReport) -> GateResult:
         text=True,
         check=False,
     )
-    # grep returns 1 when no matches found; treat as clean.
-    raw_hits = proc.stdout.splitlines() if proc.returncode in (0, 1) else []
+    # grep returns 1 when no matches found; that is clean.  Any other status
+    # means the scan itself failed (unreadable docs/, grep absent), and an
+    # empty result must not be read as "no drift" -- that is the mypy_0
+    # failure mode in a different gate.
+    if proc.returncode not in (0, 1):
+        return GateResult(
+            name="drift_33",
+            passed=False,
+            detail="drift scan did not run (grep failed), so this gate cannot pass",
+            error=(proc.stderr.strip() or f"grep exited {proc.returncode}")[:200],
+        )
+    raw_hits = proc.stdout.splitlines()
     # Exclude the Wave 149 audit trail (Wave 149 was the drift-fix wave).
     surviving = [
         line
