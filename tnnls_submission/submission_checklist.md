@@ -122,15 +122,15 @@
 | # | Acceptance criterion | Observed state | Evidence (one-liner) |
 |---|----------------------|----------------|----------------------|
 | 1 | D.4 30/30 PASS | **PASS** | `pytest tests/test_d4_regression_vectors.py -q` → 30 passed |
-| 2 | ruff 0 findings (4-dir scope) | **PENDING** (regression) | `ruff check adaptive_reflow/ tests/ scripts/ tools/` → 2 W292 errors in `tools/audit_thm5/{estimate_lipschitz.py:233, fit_thm5.py:371}` (introduced by later audits, NOT in the 0-finding baseline); CI-gate only, NOT a ScholarOne upload-gate |
+| 2 | ruff 0 findings (4-dir scope) | **PASS** | `ruff check adaptive_reflow/ tests/ scripts/ tools/` → All checks passed (the two W292 findings in `tools/audit_thm5/` quoted by the 2026-10-12 reading were fixed afterwards) |
 | 3 | mkdocs build --strict | **PASS** | exit code 0 |
 | 4 | claims consistency PASS | **PASS** | `python3 tools/check_claims_consistency.py` → no drift (61 active + 2 deprecated claims) |
 | 5 | 17 fillable fields documented | **PASS** (documented in FILL_GUIDE.md) | `tnnls_submission/FILL_GUIDE.md` documents 17 fields (1 author + 1 editor + 5 reviewers × {affiliation, email} + 3 corresponding-author). The 31 `[USER TO FILL: ...]` markers live in `docs/cover-letter-tnnls.md`; the uploadable `cover_letter.md` substitutes `INTERACTIVE_DEFAULTS` exemplars in their place |
-| 6 | MANIFEST.md SHA-256 ledger current | **PENDING** (displayed SHA stale; per MANIFEST self-reference note intentional) | MANIFEST row 23 displays `f93c7df70be...` (46891 bytes) but `sha256sum tnnls_submission/MANIFEST.md` computes `5c593ed8b01b76c...` (47820 bytes); per MANIFEST self-reference note the displayed SHA is "the hash of the bytes BEFORE this very SHA-row was added"; final rehash is the freeze-marker step |
+| 6 | MANIFEST.md SHA-256 ledger current | **PASS** | `python3 tools/check_submission_manifest.py` → rows=26 known_stale=0 unknown=0 addendum_drift=0 ledger_drift=0. MANIFEST cannot carry its own hash, so its digest lives in `SHA256SUMS` (22 entries, `sha256sum -c` all OK) |
 | 7 | paper.pdf page count ≤ 14 | **PASS** | `pdfinfo docs/drafts/paper-A-final.pdf` → 12 pages (2026-10-29 reading) |
 | 8 | supplementary submittable | **PASS** | `tnnls_submission/supplementary_bundle.zip` (148 MB) + `tnnls_submission/supplementary/README.md` byte-stable; 40 entries |
 | 9 | cover letter submittable | **PENDING** (17 exemplar identities un-replaced) | `python3 tools/render_cover_letter.py --validate` → 17/17 markers gone, 0 unfilled, 20 exemplar hits (`hugo@example.com`, `University of Example`, the five reviewer addresses, …). Markers are gone because the letter ships exemplars, not because it was filled; user-gated per `cover_letter_FILL_AUTOFILL.json` |
-| 10 | data_availability.md submittable | **PASS** | SHA `eb410e1fd8a60b6f93d9e2dd7ba391c9a3b31e7ff79d64afbdfde52f70de2692` (10035 bytes) |
+| 10 | data_availability.md submittable | **PASS** | SHA `3fe57469b2f32cbf53482d9dab9995c9695bba3cc715c81ba65f91b2455b8332` (18376 bytes), matching the `data_availability.md` rows in `MANIFEST.md` and `SHA256SUMS` |
 | 11 | highlights submittable | **PASS** | 5 TNNLS editor-facing highlights, each ≤ 25 words; live SHA-256 in [`MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md) row `highlights.md` and in `SHA256SUMS`. The earlier `1655ae5e…` (2350 bytes, 3 bullets ≤ 85 chars) reading and the `highlights_v2.md` variant it pointed at are both historical — that file does not exist. |
 | 12 | Lean 4 verification 28/28 PASS + 4 new stubs | **PENDING** (PENDING_MATHLIB_CACHE; build fails) | `cd formal && lake build FlowA.Theorem5Subclaim53` → "error: no such file or directory" for `Mathlib.Analysis.SpecialFunctions.ExpLog`; per the audit 4 stubs (Thm 4.1 + 5.1 + 5.2 + 5.3) authored with 15 sorry sites total; "28/28 PASS" claim does NOT match actual state (4 stubs only, no proofs, Mathlib v4.34.1 precompilation incomplete) |
 | 13 | Vendored byte-identical preserved | **PASS** | FlowMol3 `77cae22174b7792b0e25e9e0414038420736d841`; LineageFlow `ccef84adff421fcb6b855285bc1860e1f9a94f59`; Kanzi `cfed9cf4be06a98bd2ce5f8492e20c0b9fa0d41b` — all match MANIFEST pins |
@@ -201,6 +201,21 @@ The existing checklist above marks 29 [x] PASS checkboxes; the ADDITIVE summary 
 | 6 | K4 Kanzi decision-metric saturation (UNDERPOWERED / TIES_AT_ZERO) | DOCUMENTED: additional N=1000 sweep scope + audit doc; commit `d3baced` | **PENDING** (camera-ready scope; honest-disclosure accepted) | DOCUMENTED |
 | 7 | R6 Kanzi k6 3-seed N=1000 live GPU sweep (PARTIAL via tier-aware counterfactual; camera-ready deferred) | 2026-10-27 CLOSED: live tier-aware run, three seeds at N=1000 per seed (n=3000 pooled) — scPerplexity d_z=−0.8393, hard-tier pLDDT d_z=+1.1211, pooled pLDDT d_z=+0.1466 (`verification_outputs/gap31-r6-live-uplift/`) | **CLOSED** (measured live; pooled pLDDT remains below the +0.2235 bar) | DONE (2026-10-27) |
 | 8 | K5 FreqFlow + MM-FM integration (ENV_BLOCKED, PHASE-4 deferred) + K6 Wan2.2 N=1000 sweep (DEFERRED) | DOCUMENTED: camera-ready scope final disclosure; commit `4b6826c` | **PENDING** (camera-ready scope; honest-disclosure accepted) | DOCUMENTED |
+
+> **2026-10-31 update (additive; the accounting below is preserved as written).**
+> Two of the eight closure items have moved since it was recorded:
+>
+> - **Item 2 (cover-letter placeholders).** The letter carries no
+>   `[USER TO FILL]` markers — it ships `INTERACTIVE_DEFAULTS` exemplar values —
+>   so the "31 grep hits" reading is now 1, and that one is §0's own sentence
+>   saying the body has none. `python3 tools/render_cover_letter.py --validate`
+>   counts the exemplars instead of the markers: 20 hits, 0 unfilled. Still
+>   user-gated.
+> - **Item 3 (MANIFEST rehash).** Done, and it never depended on item 2:
+>   MANIFEST carries no self-hash row (it reads `—` / "see `SHA256SUMS`"),
+>   `SHA256SUMS` holds 22 entries and `sha256sum -c` passes, and
+>   `check_submission_manifest.py` reports rows=26 known_stale=0 unknown=0
+>   addendum_drift=0 ledger_drift=0.
 
 ### Totals (post-closure)
 
