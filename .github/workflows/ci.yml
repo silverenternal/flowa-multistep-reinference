@@ -100,11 +100,14 @@ jobs:
           python -m pip install ruff mypy
 
       - name: Gate 2 -- ruff check
-        # E/W/F/I/B/UP/SIM over adaptive_reflow/ + tests/. Per-file-ignores
-        # in pyproject.toml handle the __init__.py re-exports, the
-        # quarantined legacy/ tree, and the forward references inside
-        # contracts/ / universal/ / molecular/.
-        run: ruff check adaptive_reflow/ tests/
+        # E/W/F/I/B/UP/SIM over adaptive_reflow/ tests/ scripts/ tools/. The
+        # four-dir scope is what AGENTS.md and the METRIC_LEDGER row state;
+        # this step ran two dirs until 2026-10-31, so a finding in tools/ or
+        # scripts/ passed CI while the ledger claimed it was covered.
+        # Per-file-ignores in pyproject.toml handle the __init__.py
+        # re-exports, the quarantined legacy/ tree, and the forward
+        # references inside contracts/ / universal/ / molecular/.
+        run: ruff check adaptive_reflow/ tests/ scripts/ tools/
 
       - name: Gate 3 -- mypy --strict
         # Strict mode over the full adaptive_reflow tree. Per-module

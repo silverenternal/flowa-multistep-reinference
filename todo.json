@@ -27,7 +27,7 @@
   "python3 tools/check_doc_paper_refs.py",
   "python3 tools/paper_evidence.py --check",
   "python3 -m pytest tests/test_d4_regression_vectors.py tests/test_adapters/test_regression_vectors.py -q",
-  "ruff check adaptive_reflow/ tests/",
+  "ruff check adaptive_reflow/ tests/ scripts/ tools/",
   "mkdocs build --strict",
   "python3 tools/check_submission_manifest.py",
   "python3 tools/check_submission_links.py",
