@@ -135,7 +135,7 @@ boundary statement rather than as a hidden caveat.
 SHA-256-pinned source-code archive (`5b21cca`), a Docker recipe
 (`flowa:tnnls-v3.0`), Zenodo deposits for code + per-record CSVs,
 33 D.4 byte-stable regression vectors, and a hash-chained
-transition log spanning 5582 pytest tests. TNNLS's reproducibility
+transition log spanning 5668 pytest tests. TNNLS's reproducibility
 standards — increasingly emphasised in recent editorial guidance —
 are met at every layer of the release stack.
 
@@ -909,7 +909,7 @@ The submission is accompanied by:
 - **Source code archive** (MIT license) at the canonical GitHub
   repository, SHA-256-pinned at the freeze-marker commit
   `5b21cca`. The repository includes the full `adaptive_reflow/`
-  framework code, 5582 pytest tests, the 33 D.4 byte-stable
+  framework code, 5668 pytest tests, the 33 D.4 byte-stable
   regression vectors, the Wave 190/195/196/198/203 statistical
   scripts, every R-cell config YAML, `pyproject.toml` + `uv.lock`,
   `README.md`, `QUICKSTART.md`, and `TUTORIAL.md`. Three of three

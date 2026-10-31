@@ -41,11 +41,13 @@ Walk through these in order; each step has a single command that produces one li
    ```bash
    python3 tools/render_cover_letter.py --validate | grep '^Summary:'
    ```
-   Expect: `17/17 markers gone; 0 still unfilled; 0 exemplar hits`. A
-   non-zero hit count lists each remaining exemplar with its line number.
-   (`grep 'USER TO FILL'` is not the check: §0 is the only place the phrase
-   appears once the letter is filled, so it cannot distinguish filled from
-   unfilled.)
+   A submittable letter reports `17/17 markers gone; 0 still unfilled;
+   0 exemplar hits`. The letter as shipped reports **20 exemplar hits** —
+   those are the placeholder identities the renderer substitutes, and only
+   the corresponding author can replace them. Each hit is listed with its
+   line number. (`grep 'USER TO FILL'` is not the check: §0 is the only
+   place the phrase appears once the letter is rendered, so it cannot
+   distinguish filled from unfilled.)
 
 2. **SHA-256 ledger is current.**
    ```bash

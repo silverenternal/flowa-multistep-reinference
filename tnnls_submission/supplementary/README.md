@@ -24,7 +24,7 @@ headline number.
 
 Per-cell `SOURCE.md` files document the byte-stable chain from each
 headline number back to the originating sweep run. Every cell listed
-in [`docs/drafts/paper-A-final.tex`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.tex) Table II (R1–R6) has a
+in [`docs/drafts/paper-A-final.tex`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.tex) Table II (R1–R3, R5a–R5c, R6) has a
 matching entry under [`docs/headline-evidence/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/headline-evidence).
 
 | Cell | Domain | Path |
@@ -32,8 +32,8 @@ matching entry under [`docs/headline-evidence/`](https://github.com/silverentern
 | R1 | LineageFlow HMMER (protein FM) | [`docs/headline-evidence/r1_lineageflow_hmmer_p1e-10/SOURCE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/headline-evidence/r1_lineageflow_hmmer_p1e-10/SOURCE.md) |
 | R2 | Kanzi / FlowMol3 fg_dev (molecular FM) | [`docs/headline-evidence/r2_flowmol3_fgdev_4p05sigma/SOURCE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/headline-evidence/r2_flowmol3_fgdev_4p05sigma/SOURCE.md) |
 | R3 | CIFAR-10 RF v2 (image RF, FID −44.17%) | [`docs/headline-evidence/r3_cifar_rf_v2_fid_m44p17pct/SOURCE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/headline-evidence/r3_cifar_rf_v2_fid_m44p17pct/SOURCE.md) |
-| R4 | 2D Two Moons W₂ (−7.28%) | [`docs/headline-evidence/r4_2d_two_moons_w2_m7p28pct/SOURCE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/headline-evidence/r4_2d_two_moons_w2_m7p28pct/SOURCE.md) |
-| R5 | 2D Eight Gaussians W₂ (−10.40%) | [`docs/headline-evidence/r5_2d_eight_gaussians_w2_m10p40pct/SOURCE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/headline-evidence/r5_2d_eight_gaussians_w2_m10p40pct/SOURCE.md) |
+| R5a | 2D Two Moons W₂ (−7.28%; directory keeps its historical `r4_` prefix) | [`docs/headline-evidence/r4_2d_two_moons_w2_m7p28pct/SOURCE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/headline-evidence/r4_2d_two_moons_w2_m7p28pct/SOURCE.md) |
+| R5a companion | 2D Eight Gaussians W₂ (−10.40%; directory keeps its historical `r5_` prefix) | [`docs/headline-evidence/r5_2d_eight_gaussians_w2_m10p40pct/SOURCE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/headline-evidence/r5_2d_eight_gaussians_w2_m10p40pct/SOURCE.md) |
 | R5c | MNIST FM FID (−15.01%) | [`docs/headline-evidence/r6_mnist_fm_fid_m15p01pct/SOURCE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/headline-evidence/r6_mnist_fm_fid_m15p01pct/SOURCE.md) |
 | R6 | K6 foldability per-tier + scPerplexity | [`docs/headline-evidence/byte_reproducibility_evidence/SOURCE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/headline-evidence/byte_reproducibility_evidence/SOURCE.md) |
 | (composite) | Composite axis byte-stable | [`docs/headline-evidence/composite_axis_byte_stable/SOURCE.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/headline-evidence/composite_axis_byte_stable/SOURCE.md) |

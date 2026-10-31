@@ -141,7 +141,7 @@ regression vectors 72/72 PASS" with a historical caveat for the legacy
 non-archived docs/ files (see `docs/audit/final_verify/close.md`).
 
 **D.4 vs full pytest — important distinction:** The full pytest suite
-(`pytest tests/ -q`) reported **5664 passed / 180 skipped / 0 failed** on
+(`pytest tests/ -q`) reported **5668 passed / 180 skipped / 0 failed** on
 2026-10-31 (`todo.json` → `gate_note`; the ruff-frozen figures quoted
 here previously — 5155 collected / 5012 passed — are
 superseded). D.4 is the 72-test pinned subset that must stay green on

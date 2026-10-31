@@ -33,7 +33,7 @@ The archive contains the full working tree at tag commit `0ef6465`, including:
 - `tools/` — sweep drivers + `paper_metrics` + `run_sota_2d_experiment` +
   `run_rf_cifar_ablation` + `sota_wan2_2_video` placeholder
 - `configs/` — run-profile YAMLs
-- `tests/` — 5664 passing tests (180 skipped): 4 typed-Protocol tests + property-based
+- `tests/` — 5668 passing tests (180 skipped): 4 typed-Protocol tests + property-based
   Hypothesis tests + D.4 regression + smoke + conformance
 - `data/` — vendored upstream checkpoints: Kanzi + LineageFlow + FlowMol3 +
   2D + MNIST + CIFAR-10 RF
@@ -53,7 +53,7 @@ All of the following PASS at the tag commit:
 - `pytest tests/ -k "d4"` → `33 passed, 31 skipped, 4979 deselected, 9 warnings`
   (D.4 byte-stable regression set; the 31 skips are torch/pandas environmental
   skips documented in `tests/conftest.py`, not regressions)
-- `pytest tests/ -q` → `5664 passed, 180 skipped, 0 failed`
+- `pytest tests/ -q` → `5668 passed, 180 skipped, 0 failed`
 - `python tools/check_claims_consistency.py` → `No drift detected.`
   (39 ACTIVE, 2 DEPRECATED, 0 drift; CLM-040 stays PROVISIONAL per its
   `Disputed by` citation — this is the expected steady state)
