@@ -44,21 +44,21 @@ matching entry under [`docs/headline-evidence/`](https://github.com/silverentern
 ## B. Cross-doc audit trail (data provenance + restoration)
 
 These audit docs establish the chain of custody for every headline
-number; reviewers can trace each Table II/III cell back to its
-originating wave.
+number; reviewers can trace each Table II/III cell back to the
+record that established it.
 
-| Wave | Doc | Role |
-|---|---|---|
-| 297 | [`docs/audit/wave297-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave297-final.md) + [`wave297-p1..p8`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/audit) | Restored paper body (intro, framework, empirical) |
-| 298 | [`docs/audit/wave298-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave298-final.md) + [`wave298-p1..p8`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/audit) | 7 genuinely-novel innovations catalogue |
-| 306 | [`docs/audit/wave306-11-cell-alignment.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave306-11-cell-alignment.md) + [`wave306-fix-plan.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave306-fix-plan.md) | 11-cell alignment (R1–R6 + K1/K4/K5/K7) |
-| 307 | [`docs/audit/wave307-data-archaeology.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave307-data-archaeology.md) + [`wave307-archaeology-summary.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave307-archaeology-summary.md) | Data archaeology for all 11 cells |
-| 309 | [`docs/audit/wave309-paper-a-restoration-plan.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave309-paper-a-restoration-plan.md) | Restoration plan for paper-A cells |
-| 310 | [`docs/audit/wave310-r6-tier-aware-upgrade.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave310-r6-tier-aware-upgrade.md) + [`wave310-restoration-execution.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave310-restoration-execution.md) | R6 STRONG tier-aware upgrade + D2 restoration (R6 d_z +0.2235) |
-| 311 | [`docs/audit/wave311-d1-review.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave311-d1-review.md) + [`wave311-path-a-lemma-1.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave311-path-a-lemma-1.md) + [`wave311-restoration-execution.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave311-restoration-execution.md) | D+1 review + Path A Lemma 1 (protocol composition closure) |
-| 322 | [`docs/audit/wave322-path-a-lemmas-2-3.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave322-path-a-lemmas-2-3.md) + [`wave322-restoration-execution.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave322-restoration-execution.md) | Path A Lemma 2 (state-machine byte-determinism) + Lemma 3 (ledger tamper-evidence) — complete 3-lemma structure in §6 Framework Properties |
-| 323 | [`docs/audit/wave323-d3-review.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave323-d3-review.md) + [`wave323-typeset-execution.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave323-typeset-execution.md) | D+3 self-review + IEEEtran-journal typeset to TNNLS |
-| 324 | [`docs/audit/wave324-d5-review.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave324-d5-review.md) | Final D+5 review (this Wave) — 9 CRITICAL fixes, ready-to-submit verdict |
+| Record | Role |
+|---|---|
+| [`docs/audit/wave297-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave297-final.md) + [`wave297-p1..p8`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/audit) | Restored paper body (intro, framework, empirical) |
+| [`docs/audit/wave298-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave298-final.md) + [`wave298-p1..p8`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/audit) | 7 genuinely-novel innovations catalogue |
+| [`docs/audit/wave306-11-cell-alignment.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave306-11-cell-alignment.md) + [`wave306-fix-plan.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave306-fix-plan.md) | 11-cell alignment (R1–R6 + K1/K4/K5/K7) |
+| [`docs/audit/wave307-data-archaeology.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave307-data-archaeology.md) + [`wave307-archaeology-summary.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave307-archaeology-summary.md) | Data archaeology for all 11 cells |
+| [`docs/audit/wave309-paper-a-restoration-plan.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave309-paper-a-restoration-plan.md) | Restoration plan for paper-A cells |
+| [`docs/audit/wave310-r6-tier-aware-upgrade.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave310-r6-tier-aware-upgrade.md) + [`wave310-restoration-execution.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave310-restoration-execution.md) | R6 STRONG tier-aware upgrade + D2 restoration (R6 d_z +0.2235) |
+| [`docs/audit/wave311-d1-review.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave311-d1-review.md) + [`wave311-path-a-lemma-1.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave311-path-a-lemma-1.md) + [`wave311-restoration-execution.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave311-restoration-execution.md) | D+1 review + Path A Lemma 1 (protocol composition closure) |
+| [`docs/audit/wave322-path-a-lemmas-2-3.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave322-path-a-lemmas-2-3.md) + [`wave322-restoration-execution.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave322-restoration-execution.md) | Path A Lemma 2 (state-machine byte-determinism) + Lemma 3 (ledger tamper-evidence) — complete 3-lemma structure in §6 Framework Properties |
+| [`docs/audit/wave323-d3-review.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave323-d3-review.md) + [`wave323-typeset-execution.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave323-typeset-execution.md) | D+3 self-review + IEEEtran-journal typeset to TNNLS |
+| [`docs/audit/wave324-d5-review.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave324-d5-review.md) | Final D+5 review — 9 CRITICAL fixes, ready-to-submit verdict |
 
 ## C. Verification outputs — headline numbers
 
@@ -218,7 +218,7 @@ one archive:
 cd supplementary_bundle && sha256sum -c SHA256SUMS
 ```
 
-The archive is rebuilt only at Wave boundaries; the ZIP SHA above is
+The archive is rebuilt only at release boundaries; the ZIP SHA above is
 the current freeze-state hash. Future edits to any in-bundle file
 require regenerating the archive + sidecar + updating the SHA above
 (per the bundle's traceability convention).
