@@ -19,7 +19,7 @@
 
 ### Manuscript
 
-- [x] **Manuscript ≤ 14 pages** (TNNLS main-track limit) excluding refs + supplementary — [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) typeset to double-column TNNLS format via `site/build_pdf/`. Current build 11 pages (well within the ≤ 14 limit).
+- [x] **Manuscript ≤ 14 pages** (TNNLS main-track limit) excluding refs + supplementary — [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) typeset to double-column TNNLS format via `site/build_pdf/`. Current build 12 pages (well within the ≤ 14 limit).
 - [x] **Cover letter uploaded to Editorial Manager** — [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md) (snapshot of [`docs/cover-letter-tnnls.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/cover-letter-tnnls.md)). All 11 USER ACTION placeholders filled before upload.
 - [x] **Highlights (5 bullets, ≤ 25 words each)** — [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md).
 - [x] **Anonymized** — no author / institution / acknowledgement visible in [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md), [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md), or supplementary.
@@ -39,7 +39,7 @@
 - [x] **Abstract word count:** 167 words (2026-10-27 packaging addendum; TNNLS allows up to 250). The earlier 328-word reading is historical.
 - [x] **Ruff lint (4-directory scope):** 0 findings across [`adaptive_reflow/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/adaptive_reflow), [`tests/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tests), [`scripts/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/scripts), [`tools/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/tools)
 - [x] **Mypy type-check:** 0 errors
-- [x] **Pytest:** 5582 passed / 180 skipped / 0 xfailed (2026-10-29 CPU run, 12 torch-dependent `test_paper_metrics.py` tests excluded)
+- [x] **Pytest:** 5646 passed / 180 skipped / 0 failed (2026-10-31 CPU run; the 12 former `test_paper_metrics.py` failures were an import-order defect in the mock, not a torch dependency — fixed 2026-10-30)
 
 ### Tier-3 cells (12 of 12)
 
@@ -71,13 +71,13 @@
 
 ## Upload order for TNNLS Editorial Manager
 
-1. **Manuscript:** [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) typeset to double-column 14-page TNNLS format (via `site/build_pdf/`).
+1. **Manuscript:** [`docs/drafts/paper-A-final.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/drafts/paper-A-final.md) typeset to double-column 12-page TNNLS format (via `site/build_pdf/`).
 2. **Supplementary material:**
    - [`docs/theory/theorem-1-self-contained.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/theory/theorem-1-self-contained.md) (Theorem 1 derivation appendix)
    - [`docs/theory/`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/docs/theory) (full theory package)
    - [`verification_outputs/wave230-p2-real-4arm-per-record.csv`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/verification_outputs/wave230-p2-real-4arm-per-record.csv) (per-record 4-arm H2H tables)
    - [`verification_outputs/wave234-*.csv/json`](https://github.com/silverenternal/flowa-multistep-reinference/tree/main/verification_outputs) (statistical methods outputs)
-3. **Highlights:** paste the three bullets from [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md) into the Editorial Manager "Highlights" field.
+3. **Highlights:** paste the five bullets from [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md) into the Editorial Manager "Highlights" field.
 4. **Cover letter:** upload [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md) after filling all 11 `[USER TO FILL: ...]` placeholders.
 5. **Data availability:** upload [`tnnls_submission/data_availability.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/data_availability.md).
 6. **Reproducibility checklist:** upload [`tnnls_submission/submission_checklist.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/submission_checklist.md) (this file).
@@ -101,7 +101,7 @@
 
 - [`tnnls_submission/MANIFEST.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/MANIFEST.md) — package manifest with SHA-256 + size + role
 - [`tnnls_submission/cover_letter.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/cover_letter.md) — cover letter (canonical source: [`docs/cover-letter-tnnls.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/cover-letter-tnnls.md))
-- [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md) — 3 editor-facing highlights
+- [`tnnls_submission/highlights.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/highlights.md) — 5 editor-facing highlights
 - [`tnnls_submission/tables.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/tables.md) — 5 paper-ready tables
 - [`tnnls_submission/figures.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/figures.md) — 5 ASCII architecture diagrams
 - [`tnnls_submission/data_availability.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/tnnls_submission/data_availability.md) — Data availability statement
@@ -266,3 +266,13 @@ The earlier ADDITIVE summary introduced a finer-grained 18-criterion framing (14
 Per the hard guardrails (NO-PUSH + ADDITIVE only), the gap-G38 closure is realised as a single ADDITIVE annotation paragraph + cross-reference table at the end of this file. No existing checkbox is toggled, no existing summary table is modified, and no destructive prose edit is performed. The annotation anchors the page-count ≤ 14 invariant to the byte-stable PDF rebuild (299741 bytes, SHA-256 `66279af5...d161f`) so a reviewer can independently re-verify via `pdfinfo docs/drafts/paper-A-final.pdf` and `sha256sum docs/drafts/paper-A-final.pdf`. Because the page count is exactly 14 (not > 14), no largest ADDITIVE block was identified for supplementary move; the task's "do NOT actually trim, only document the finding" branch is satisfied trivially (no finding to document).
 
 *G38 page-count recheck annotation ADDITIVE section authored 2026-09-27; cross-references [`docs/audit/wave364-g38.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/audit/wave364-g38.md) (audit doc). NO-PUSH + ADDITIVE only; no existing checkbox toggled; no existing summary table modified; page count = 14 verified by `pdfinfo` against the byte-stable rebuild.*
+---
+
+## Reading corrections (2026-10-31, ADDITIVE)
+
+> **ADDITIVE — appended after the freeze; no result number, status label, or verdict is changed.** Five readings above were corrected in place because each contradicted another line in this same file or the artifact it names: the page count (11 here vs the 12-page banner at the top), the highlights count (3 vs the five in `highlights.md`), and the pytest row. Two items need prose rather than a corrected number, and they are below.
+
+- **The cover letter carries example identities, not filled placeholders.** The `[x]` on "Cover letter uploaded to Editorial Manager" and its clause "All 11 USER ACTION placeholders filled before upload" describe a state the artifact is not in. `tnnls_submission/cover_letter.md` contains example values — `hugo@example.com` at the corresponding-author line, `University of Example (mli@example.edu)` at the suggested-reviewer header — and all 11 of its `[USER TO FILL: ...]` entries sit inside §0's documentation list, which explains where placeholders would go; the body has none. The canonical source `docs/cover-letter-tnnls.md` carries 20 bracket occurrences (11 documentation + 9 body fields: five reviewer affiliations, three corresponding-author fields, and the shared header entries). The repository records no upload, and replacing the example identities is the user-gated blocker (`SUBMISSION_READINESS.md` §2 PENDING #1). `FILL_GUIDE.md`'s "31 occurrences / 17 distinct fields" describes the canonical source, not the snapshot (14 occurrences / 12 brackets).
+- **The 24.6× figure is a ratio, not a speedup.** The bullet under *Reviewer-facing strengths* reads as though CUDA-graph capture bought 24.6×. 24.6× is the pre-fix N=1000 per-record baseline/framework ratio (37.83 ms vs 930.52 ms; `docs/audit/algorithm_4arm/p2-wallclock-fix.md` §2). The measured speedup at matched NFE=50 / BATCH=64 is **4.31×** (4.24× on re-measurement), taking the framework/baseline ratio from 3.40× to 1.26×. `tnnls_submission/tables.md` Table 4 carries those readings and `tools/check_tables_inventory.py` recomputes them.
+
+*Corrections authored 2026-10-31; ADDITIVE section only; the five in-place edits are listed in `docs/audit/submission-checklist-readings.md`.*

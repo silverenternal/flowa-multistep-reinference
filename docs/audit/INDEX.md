@@ -52,14 +52,14 @@ preserved for the per-wave audit trail.
 | `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 129 | 76 | 53 |
 | `reproducibility` | Reproducibility (reproducibility-record, preregistration, reproduce-script) | 14 | 6 | 8 |
 | `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 27 | 10 | 17 |
-| `push_state` | Push state (push-ready, freeze, release, submission) | 10 | 6 | 4 |
+| `push_state` | Push state (push-ready, freeze, release, submission) | 11 | 7 | 4 |
 | `algorithm_4arm` | Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency) | 39 | 18 | 21 |
 | `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 111 | 90 | 21 |
 | `stats_method` | Statistical methodology (R5/R6, p-value, bonferroni, TOST) | 43 | 20 | 23 |
 | `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 49 | 26 | 23 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
 | `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 113 | 32 | 81 |
-| **TOTAL** | — | **629** | **348** | **281** |
+| **TOTAL** | — | **630** | **349** | **281** |
 
 ---
 
@@ -443,7 +443,7 @@ Data packaging + manifest (sha256, csv, metric-ledger). This cluster is part of 
 
 ### Cluster: `push_state` — Push state (push-ready, freeze, release, submission)
 
-**Files: 10** (active: 6, historical: 4)
+**Files: 11** (active: 7, historical: 4)
 
 Push state (push-ready, freeze, release, submission). This cluster is part of the project's audit surface for push_state.
 
@@ -453,6 +453,7 @@ Push state (push-ready, freeze, release, submission). This cluster is part of th
 - `submission-polish.md`
 - `submission-prep.md`
 - `verify-submission-readiness.md`
+- `submission-checklist-readings.md`
 - `wave356-submission-checklist-review.md`
 - `wave358-submission-checklist-reaudit.md`
 
