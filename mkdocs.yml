@@ -245,6 +245,7 @@ not_in_nav: |
   audit/figure-hash-gate.md
   audit/data-availability-artifact-paths.md
   audit/two-moons-figure-renders.md
+  audit/noise-injection-regen.md
   audit/metric-ledger-staleness.md
   audit/mnist-gpu-backend.md
   audit/wave281/p-partial-evidence.md

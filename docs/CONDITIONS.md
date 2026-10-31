@@ -1,7 +1,7 @@
 # Framework failure-mode conditions table — C.5
 
-**Date:** 2026-09-05
-**Section:** Algorithm D controlled noise injection
+**Date:** 2026-10-31
+**Experiment:** Algorithm D controlled noise injection
 **Source task:** `todo/algo-improvement-failure-modes.md`
 
 This table characterises the framework's value boundary as a function of injected Gaussian noise into the base adapter's velocity field. For each ``sigma in {0.0, 0.01, 0.05, 0.10, 0.20, 0.50}`` we run the **baseline** (single-pass RK4 with the best NFE budget) and the **framework** (5-round `CodimensionSheetScheduler` over `TWODIM_FM_NUM_STEPS=100`) and report the closed-form 2D Wasserstein against an analytic reference.
@@ -9,22 +9,22 @@ This table characterises the framework's value boundary as a function of injecte
 The **verdict** column is computed as `U = (F - M) / M` and labeled: `helps` if `U < -0.02`, `neutral` if `|U| <= 0.02`, `regresses` if `U > 0.02`, `strongly_helps` if `U < -0.10`.
 
 **Cross-references:**
-* The 2D-RF baseline correction — framework WORSE -13.5%. The C.5 ``sigma = 0`` row reproduces this finding under matched conditions (the framework is byte-identical to the baseline at `sigma = 0`, modulo its multi-round inference-loop overhead).
+* 2D-RF baseline correction — the framework was WORSE by 13.5% there. The C.5 ``sigma = 0`` row is the matched-condition check. The framework arm still runs its multi-round inference loop, so its W2 is not the baseline's; the row reports the measured gap rather than assuming the arms coincide.
 * `todo/algo-improvement-failure-modes.md` — the task spec that drives this experiment.
 * `docs/CONDITIONS.md` (this file) — the C.5 metric row in `todo/framework-internal-metrics.md` requires at least 3 Pareto plots and the table below.
 
 ## Target: `two_moons`
 
-Seeds: 3 | Framework rounds: 5 | Baseline NFE budgets: [2, 5, 10, 20, 50] | NFE per framework arm: 500 | Elapsed: 188.4s
+Seeds: 3 | Framework rounds: 5 | Baseline NFE budgets: [2, 5, 10, 20, 50] | NFE per framework arm: 500 | Elapsed: 99.3s
 
 | sigma | M(σ) (baseline best NFE) | F(σ) (framework) | U(σ) uplift | verdict |
 |---|---|---|---|---|
-| 0.00 | 0.1132 ± 0.0409 (NFE=5) | 0.3302 ± 0.0053 | +191.61% | `regresses` |
-| 0.01 | 0.1133 ± 0.0408 (NFE=50) | 0.3300 ± 0.0053 | +191.19% | `regresses` |
-| 0.05 | 0.1136 ± 0.0407 (NFE=50) | 0.3292 ± 0.0053 | +189.82% | `regresses` |
-| 0.10 | 0.1139 ± 0.0405 (NFE=50) | 0.3281 ± 0.0053 | +188.09% | `regresses` |
-| 0.20 | 0.1147 ± 0.0399 (NFE=50) | 0.3262 ± 0.0052 | +184.41% | `regresses` |
-| 0.50 | 0.1163 ± 0.0393 (NFE=50) | 0.3211 ± 0.0050 | +176.19% | `regresses` |
+| 0.00 | 0.1132 ± 0.0409 (NFE=5) | 0.1227 ± 0.0074 | +8.38% | `regresses` |
+| 0.01 | 0.1133 ± 0.0408 (NFE=50) | 0.1228 ± 0.0074 | +8.34% | `regresses` |
+| 0.05 | 0.1136 ± 0.0407 (NFE=50) | 0.1230 ± 0.0073 | +8.33% | `regresses` |
+| 0.10 | 0.1139 ± 0.0405 (NFE=50) | 0.1234 ± 0.0072 | +8.33% | `regresses` |
+| 0.20 | 0.1147 ± 0.0399 (NFE=50) | 0.1242 ± 0.0070 | +8.26% | `regresses` |
+| 0.50 | 0.1163 ± 0.0393 (NFE=50) | 0.1270 ± 0.0069 | +9.22% | `regresses` |
 
 ![sigma vs W2](figures/noise_injection_two_moons_sigma_vs_w2.png)
 
@@ -34,16 +34,16 @@ Seeds: 3 | Framework rounds: 5 | Baseline NFE budgets: [2, 5, 10, 20, 50] | NFE 
 
 ## Target: `eight_gaussians`
 
-Seeds: 3 | Framework rounds: 5 | Baseline NFE budgets: [2, 5, 10, 20, 50] | NFE per framework arm: 500 | Elapsed: 184.1s
+Seeds: 3 | Framework rounds: 5 | Baseline NFE budgets: [2, 5, 10, 20, 50] | NFE per framework arm: 500 | Elapsed: 79.8s
 
 | sigma | M(σ) (baseline best NFE) | F(σ) (framework) | U(σ) uplift | verdict |
 |---|---|---|---|---|
-| 0.00 | 0.2050 ± 0.0194 (NFE=10) | 0.4429 ± 0.0277 | +116.04% | `regresses` |
-| 0.01 | 0.2050 ± 0.0191 (NFE=10) | 0.4430 ± 0.0277 | +116.09% | `regresses` |
-| 0.05 | 0.2051 ± 0.0179 (NFE=10) | 0.4433 ± 0.0278 | +116.14% | `regresses` |
-| 0.10 | 0.2052 ± 0.0175 (NFE=5) | 0.4438 ± 0.0279 | +116.27% | `regresses` |
-| 0.20 | 0.2045 ± 0.0152 (NFE=10) | 0.4448 ± 0.0281 | +117.54% | `regresses` |
-| 0.50 | 0.2021 ± 0.0165 (NFE=10) | 0.4486 ± 0.0288 | +122.01% | `regresses` |
+| 0.00 | 0.2050 ± 0.0194 (NFE=10) | 0.2596 ± 0.0056 | +26.62% | `regresses` |
+| 0.01 | 0.2050 ± 0.0191 (NFE=10) | 0.2598 ± 0.0059 | +26.74% | `regresses` |
+| 0.05 | 0.2051 ± 0.0179 (NFE=10) | 0.2607 ± 0.0069 | +27.10% | `regresses` |
+| 0.10 | 0.2052 ± 0.0175 (NFE=5) | 0.2618 ± 0.0082 | +27.61% | `regresses` |
+| 0.20 | 0.2045 ± 0.0152 (NFE=10) | 0.2643 ± 0.0109 | +29.28% | `regresses` |
+| 0.50 | 0.2021 ± 0.0165 (NFE=10) | 0.2650 ± 0.0218 | +31.16% | `regresses` |
 
 ![sigma vs W2](figures/noise_injection_eight_gaussians_sigma_vs_w2.png)
 
@@ -53,20 +53,18 @@ Seeds: 3 | Framework rounds: 5 | Baseline NFE budgets: [2, 5, 10, 20, 50] | NFE 
 
 ## Interpretation
 
-Per the **hypotheses** in `todo/algo-improvement-failure-modes.md`:
+Across 12 (target, sigma) cells the framework's uplift `U = (F - M) / M` ranges from +8.26% to +31.16%, and the verdict set is `regresses`.
 
-* **sigma = 0**: framework is **neutral** (byte-identical to baseline modulo multi-round overhead; reproduces the 2D-RF baseline-correction finding under matched conditions).
-* **sigma small (0.01-0.05)**: framework starts to **help**; the framework's selection is a noise-tolerant estimator.
-* **sigma medium (0.10-0.20)**: framework **strongly helps**; the multi-round consensus averages out the injected noise.
-* **sigma large (>= 0.50)**: framework may **regress** if the noise dominates the signal.
+On `two_moons` the uplift rises from +8.38% at sigma=0.00 to +9.22% at sigma=0.50.
 
-The transition point `sigma*` (where the framework starts to help) is the **value boundary** the framework can publish.
+On `eight_gaussians` the uplift rises from +26.62% at sigma=0.00 to +31.16% at sigma=0.50.
+
+
+No cell is labelled `helps` or `strongly_helps`, so this run locates no transition point `sigma*`: on these targets the framework's multi-round arm does not reach the baseline's best single-pass W2 at any measured noise level.
 
 ## Negative-result policy
 
 All sigma levels are reported, including the ones where the framework regresses (no negative-result suppression).
-
----
 
 ## Operating-regime statement (additive)
 
@@ -93,15 +91,27 @@ targets is:
 
 **Corollary (user-facing guidance).** `twodim_fm`-class 2D oracle-test
 targets are **out-of-regime** for the framework's `CodimensionSheetScheduler`
-as of 2026-09-05. Users who want to deploy the framework on a
+as of 2026-10-31. Users who want to deploy the framework on a
 new model should treat `twodim_fm`-class synthetic targets as out-of-
 regime **until evidence to the contrary is published**.
+
+**Measurement refresh (2026-10-31).** The sweep was re-run after the
+framework arm's inference path changed. The baseline arm reproduces
+byte for byte; the framework arm does not. The pre-refresh table read
+`U(σ)` = +191.61% → +176.19% on `two_moons` and +116.04% → +122.01% on
+`eight_gaussians`; the refreshed table reads +8.38% → +9.22% and
++26.62% → +31.16%. Every cell is labelled `regresses` in both readings,
+so the verdict does not move. What does move is the trend: the
+pre-refresh uplift shrank as σ grew, and the refreshed uplift grows.
+The pre-refresh artifacts are preserved under
+`verification_outputs/noise-injection-pre-regen-2026-10-31/`; the change
+is recorded in `docs/audit/noise-injection-regen.md`.
 
 ### Regime summary table
 
 | Regime | Evidence | Verdict | Citation |
 |---|---|---|---|
-| `twodim_fm` synthetic 2D (`two_moons`, `eight_gaussians`) at any σ ∈ [0, 0.5] | controlled-noise sweep (this file) + the 2D-RF baseline correction + the 2D baseline grid | REGRESSES (σ*, σ_high not yet measured; monotonic decrease of `\|U\|` from +191.6% to +176.2% suggests averaging may eventually dominate at σ ≫ 1, but unverified) | This file, `docs/baseline-audit-report.md` §C.5, the 2D-RF baseline correction `docs/reproducibility_record.md` |
+| `twodim_fm` synthetic 2D (`two_moons`, `eight_gaussians`) at any σ ∈ [0, 0.5] | controlled-noise sweep (this file) + the 2D-RF baseline correction + the 2D baseline grid | REGRESSES (σ*, σ_high not yet measured; the uplift grows across the measured range, from +8.4% to +9.2% on `two_moons` and +26.6% to +31.2% on `eight_gaussians`, so no crossover is visible) | This file, `docs/baseline-audit-report.md` §C.5, the 2D-RF baseline correction `docs/reproducibility_record.md` |
 | Algorithm-component level (36 measured uplifts) | `docs/benchmark-uplifts.md` | 36 / 36 achieve target, 0 regressions | `docs/benchmark-uplifts.md` |
 | Multi-round vs single-pass on `two_moons` (ablation grid) | `docs/benchmark-uplifts.md` §2 | multi-round W₂ = 0.73 vs single-pass W₂ = 2.67 (best case `multi_round_no_restart` W₂ = 0.35) | `docs/benchmark-uplifts.md` §2 |
 | JMAA paper-quantity layer (Theorem 1, rate bound) on F-side-admissible `g` | `docs/theory/theorem1_rate_bound.md` | `BL ≤ √(2/π) · ε` holds; checker fail-closed for Prop 6 sharpness | `docs/theory/theorem1_rate_bound.md`, `adaptive_reflow/theory/rate_bound.py` |
@@ -116,9 +126,10 @@ regime **until evidence to the contrary is published**.
    was designed for `R → R²` settings where `g` is a 1-D curve. No
    adapter in the framework exposes such a velocity field; **no
    empirical evidence** for this regime.
-2. **High-σ regime (σ > 0.5)**: monotonic decrease of `|U|` from
-   +191.6% (σ=0) to +176.2% (σ=0.5) hints that averaging may
-   eventually dominate, but **unverified**.
+2. **High-σ regime (σ > 0.5)**: the uplift **grows** with σ on both
+   targets (+8.38% → +9.22% and +26.62% → +31.16%), so the sweep shows
+   no crossover anywhere in `σ ∈ [0, 0.5]`. Whether one exists at
+   `σ ≫ 1` is unmeasured.
 3. **Effect of `K` (rounds)**: the sweep fixed `K = 5`. Not
    measured at `K ∈ {1, 2, 4, 8, 16}` under matched conditions.
 4. **Other adapters**: 17 of 18 adapters have not been subjected to a

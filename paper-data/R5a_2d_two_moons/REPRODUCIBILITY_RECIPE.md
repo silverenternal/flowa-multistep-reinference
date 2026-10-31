@@ -95,11 +95,11 @@ The `paper-data/R5a_2d_two_moons/` folder carries 4 symlinked artefacts (per Wav
 | Path | SHA-256 |
 |---|---|
 | `R5a_2d_two_moons/noise_injection_two_moons_baseline.csv` | `bcd1bb1ca17ecc53c9abf794f8404f678979c00c996b058e86b2548570aaa325` |
-| `R5a_2d_two_moons/noise_injection_two_moons_framework.csv` | `162406303bddbdf20792e841b9ed8616ec98ba259d855828b89ce9453b6d177b` |
+| `R5a_2d_two_moons/noise_injection_two_moons_framework.csv` | `cbf2b2223336ecc17b369c43af61aeff1665b55ba11a76e8aa4193da87613ea7` |
 | `R5a_2d_two_moons/SOURCE.md` | `48cb5e6e4ab151ab227c0a94b4e354faa3d734379b56052cf91af5266ab13402` |
 | `R5a_2d_two_moons/two_moons_baseline_seed0.csv` | `32057caec570888de6b982dcc769f41d5f28da7d752b37c1aae55a76e65f9548` |
 
-These 4 files are the **2D FM ablation axis** artefacts (`-78.25% framework-WINS` at matched NFE on `R5_legacy` 2D FM framework-WINS line). The R-level W₂ reading uses the canonical `verification_outputs/wave189-p2-sota-2d-rerun/two_moons_*.csv` per-seed CSVs (n=3 seed ladder) plus the n=7 / n=10 / n=30 extensions — see `verification_outputs/MANIFEST.md` line 580 (Wave 209 P6 n=7) + line 583 (Wave 216 P2 n=10) + line 527 (Wave 233 P4 n=30).
+Two of these 4 files are the C.5 controlled-noise sweep (`noise_injection_two_moons_{baseline,framework}.csv`): a σ sweep at 3 seeds with the baseline on NFE `{2, 5, 10, 20, 50}` and the framework at 500 NFE. They are **not** the `-78.25% framework-WINS` artefact — in this sweep every σ cell reads `regresses` (see `docs/CONDITIONS.md`). The `-78.25%` reading lives on the separate 2D FM ablation axis in `verification_outputs/wave189-p2-sota-2d-rerun/`, and `two_moons_baseline_seed0.csv` above is its baseline seed-0 file. The R-level W₂ reading uses the canonical `verification_outputs/wave189-p2-sota-2d-rerun/two_moons_*.csv` per-seed CSVs (n=3 seed ladder) plus the n=7 / n=10 / n=30 extensions — see `verification_outputs/MANIFEST.md` line 580 (Wave 209 P6 n=7) + line 583 (Wave 216 P2 n=10) + line 527 (Wave 233 P4 n=30).
 
 ---
 

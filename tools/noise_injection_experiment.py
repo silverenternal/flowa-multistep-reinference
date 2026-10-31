@@ -45,6 +45,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import datetime
 import json
 import math
 import sys
@@ -408,6 +409,37 @@ def _summarise_by_nfe(
     return out
 
 
+def _verdict(uplift: float) -> str:
+    """Label a relative uplift ``U = (F - M) / M``.
+
+    The thresholds are the pre-registered ones from
+    ``todo/algo-improvement-failure-modes.md``: ``|U| <= 0.02`` is neutral,
+    ``U > 0.02`` regresses, ``U < -0.02`` helps and ``U < -0.10`` strongly
+    helps. Shared by the table writer and the interpretation so the prose
+    cannot drift from the column.
+    """
+    if uplift < -0.10:
+        return "strongly_helps"
+    if uplift < -0.02:
+        return "helps"
+    if uplift > 0.02:
+        return "regresses"
+    return "neutral"
+
+
+def _cell_uplift(
+    sweep: dict[str, Any],
+    sigma: float,
+) -> tuple[float, float, float, int]:
+    """Return ``(baseline_best_w2, baseline_std, framework_w2, best_nfe)``."""
+    cell_by_nfe = _summarise_by_nfe(sweep["baseline_rows"], sigma)
+    best_nfe = min(cell_by_nfe, key=lambda n: cell_by_nfe[n]["mean"])
+    m_sigma = cell_by_nfe[best_nfe]["mean"]
+    m_std = cell_by_nfe[best_nfe]["std"]
+    f_sigma = _summarise(sweep["framework_rows"], sigma)["mean"]
+    return m_sigma, m_std, f_sigma, best_nfe
+
+
 # ---------------------------------------------------------------------------
 # Output writers
 # ---------------------------------------------------------------------------
@@ -493,7 +525,10 @@ def _generate_plots(
     figures_dir.mkdir(parents=True, exist_ok=True)
     paths: dict[str, Path] = {}
 
-    sigma_x = list(NOISE_SIGMAS)
+    # Sigma is a categorical axis, not a continuous one: the levels are
+    # 0.00 / 0.01 / 0.05 / 0.10 / 0.20 / 0.50, which collide as numeric
+    # ticks (and sigma = 0 cannot be placed on a log scale at all).
+    sigma_x = list(range(len(NOISE_SIGMAS)))
 
     # --- Plot 1: sigma vs W2 ---
     fig, ax = plt.subplots(figsize=(7.0, 4.0))
@@ -531,13 +566,12 @@ def _generate_plots(
         label=f"framework ({DEFAULT_FRAMEWORK_ROUNDS} rounds)",
         capsize=3,
     )
-    ax.set_xscale("log")
     ax.set_xticks(sigma_x)
-    ax.set_xticklabels([f"{s:.2f}" for s in sigma_x])
-    ax.set_xlabel("noise_sigma (log scale)")
+    ax.set_xticklabels([f"{s:.2f}" for s in NOISE_SIGMAS])
+    ax.set_xlabel("noise_sigma")
     ax.set_ylabel("W2 to analytic reference (lower is better)")
     ax.set_title(
-        f"Wave 17 Phase 2 — C.5 noise injection on {target}\n"
+        f"C.5 controlled noise injection on {target}\n"
         f"(baseline NFE sweep vs framework multi-round)"
     )
     ax.legend(loc="best", fontsize=8)
@@ -668,7 +702,7 @@ def _generate_plots(
     ax.set_xlabel("NFE budget (log scale)")
     ax.set_ylabel("W2 to analytic reference")
     ax.set_title(
-        f"Wave 17 Phase 2 — Combined Pareto view on {target}\n"
+        f"Combined Pareto view on {target}\n"
         f"(red = baseline Pareto-front identifier)"
     )
     ax.legend(loc="best", fontsize=8)
@@ -702,10 +736,8 @@ def _write_conditions_md(
     lines: list[str] = []
     lines.append("# Framework failure-mode conditions table — C.5")
     lines.append("")
-    lines.append("**Date:** 2026-09-05")
-    lines.append(
-        "**Wave:** Wave 17 Phase 2 — Algorithm D controlled noise injection"
-    )
+    lines.append(f"**Date:** {datetime.date.today().isoformat()}")
+    lines.append("**Experiment:** Algorithm D controlled noise injection")
     lines.append("**Source task:** `todo/algo-improvement-failure-modes.md`")
     lines.append("")
     lines.append(
@@ -727,10 +759,11 @@ def _write_conditions_md(
     lines.append("")
     lines.append("**Cross-references:**")
     lines.append(
-        "* Wave 8 FIX-3 — 2D RF baseline correct, framework WORSE -13.5%. "
-        "The C.5 ``sigma = 0`` row reproduces this finding under matched "
-        "conditions (the framework is byte-identical to the baseline at "
-        "`sigma = 0`, modulo its multi-round inference-loop overhead)."
+        "* 2D-RF baseline correction — the framework was WORSE by 13.5% "
+        "there. The C.5 ``sigma = 0`` row is the matched-condition check. "
+        "The framework arm still runs its multi-round inference loop, so "
+        "its W2 is not the baseline's; the row reports the measured gap "
+        "rather than assuming the arms coincide."
     )
     lines.append(
         "* `todo/algo-improvement-failure-modes.md` — the task spec that "
@@ -762,23 +795,10 @@ def _write_conditions_md(
         )
         lines.append("|---|---|---|---|---|")
         for sigma in NOISE_SIGMAS:
-            # Best baseline W2 across NFE budgets at this sigma
-            cell_by_nfe = _summarise_by_nfe(sweep["baseline_rows"], sigma)
-            best_nfe = min(cell_by_nfe, key=lambda n: cell_by_nfe[n]["mean"])
-            m_sigma = cell_by_nfe[best_nfe]["mean"]
-            m_std = cell_by_nfe[best_nfe]["std"]
-            fw_cell = _summarise(sweep["framework_rows"], sigma)
-            f_sigma = fw_cell["mean"]
-            f_std = fw_cell["std"]
+            m_sigma, m_std, f_sigma, best_nfe = _cell_uplift(sweep, sigma)
+            f_std = _summarise(sweep["framework_rows"], sigma)["std"]
             uplift = (f_sigma - m_sigma) / m_sigma if m_sigma > 1e-12 else 0.0
-            if uplift < -0.10:
-                verdict = "strongly_helps"
-            elif uplift < -0.02:
-                verdict = "helps"
-            elif uplift > 0.02:
-                verdict = "regresses"
-            else:
-                verdict = "neutral"
+            verdict = _verdict(uplift)
             lines.append(
                 f"| {sigma:.2f} | {m_sigma:.4f} ± {m_std:.4f} (NFE={best_nfe}) "
                 f"| {f_sigma:.4f} ± {f_std:.4f} "
@@ -798,35 +818,61 @@ def _write_conditions_md(
         )
         lines.append("")
 
+    # Data-driven interpretation. The previous version restated the
+    # hypotheses the experiment was designed to test ("neutral at
+    # sigma = 0", "starts to help at small sigma") as if they were the
+    # result, and contradicted its own table for three months.
+    measured: list[tuple[str, float, float, str]] = []
+    for target in CANONICAL_TARGETS:
+        if target not in sweeps:
+            continue
+        for sigma in NOISE_SIGMAS:
+            m_sigma, _, f_sigma, _ = _cell_uplift(sweeps[target], sigma)
+            uplift = (f_sigma - m_sigma) / m_sigma if m_sigma > 1e-12 else 0.0
+            measured.append((target, float(sigma), uplift, _verdict(uplift)))
+
     lines.append("## Interpretation")
     lines.append("")
-    lines.append(
-        "Per the **hypotheses** in `todo/algo-improvement-failure-modes.md`:"
-    )
-    lines.append("")
-    lines.append(
-        "* **sigma = 0**: framework is **neutral** (byte-identical to "
-        "baseline modulo multi-round overhead; reproduces Wave 8 FIX-3 "
-        "finding under matched conditions)."
-    )
-    lines.append(
-        "* **sigma small (0.01-0.05)**: framework starts to **help**; "
-        "the framework's selection is a noise-tolerant estimator."
-    )
-    lines.append(
-        "* **sigma medium (0.10-0.20)**: framework **strongly helps**; "
-        "the multi-round consensus averages out the injected noise."
-    )
-    lines.append(
-        "* **sigma large (>= 0.50)**: framework may **regress** if the "
-        "noise dominates the signal."
-    )
-    lines.append("")
-    lines.append(
-        "The transition point `sigma*` (where the framework starts to "
-        "help) is the **value boundary** the framework can publish."
-    )
-    lines.append("")
+    if not measured:
+        lines.append("No cells were measured in this run.")
+        lines.append("")
+    else:
+        verdicts = sorted({v for *_, v in measured})
+        lo = min(u for _, _, u, _ in measured)
+        hi = max(u for _, _, u, _ in measured)
+        lines.append(
+            f"Across {len(measured)} (target, sigma) cells the framework's "
+            f"uplift `U = (F - M) / M` ranges from {lo:+.2%} to {hi:+.2%}, "
+            f"and the verdict set is {', '.join(f'`{v}`' for v in verdicts)}."
+        )
+        lines.append("")
+        for target in CANONICAL_TARGETS:
+            cells = [(s, u) for t, s, u, _ in measured if t == target]
+            if len(cells) < 2:
+                continue
+            (s0, u0), (s1, u1) = cells[0], cells[-1]
+            direction = "rises" if u1 > u0 else "falls"
+            lines.append(
+                f"On `{target}` the uplift {direction} from {u0:+.2%} at "
+                f"sigma={s0:.2f} to {u1:+.2%} at sigma={s1:.2f}."
+            )
+            lines.append("")
+        lines.append("")
+        if any(v in ("helps", "strongly_helps") for v in verdicts):
+            lines.append(
+                "A `helps` / `strongly_helps` cell exists, so the run "
+                "locates a transition point `sigma*` below which the "
+                "framework's multi-round arm beats the baseline's best "
+                "single-pass budget."
+            )
+        else:
+            lines.append(
+                "No cell is labelled `helps` or `strongly_helps`, so this "
+                "run locates no transition point `sigma*`: on these targets "
+                "the framework's multi-round arm does not reach the "
+                "baseline's best single-pass W2 at any measured noise level."
+            )
+        lines.append("")
     lines.append("## Negative-result policy")
     lines.append("")
     lines.append(
@@ -887,6 +933,17 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         "--skip-conditions-doc",
         action="store_true",
         help="Skip writing docs/CONDITIONS.md (only emit CSVs + plots).",
+    )
+    p.add_argument(
+        "--conditions-doc",
+        type=Path,
+        default=CONDITIONS_DOC,
+        help=(
+            "Where to write the C.5 conditions table (default: "
+            "docs/CONDITIONS.md, the page mkdocs publishes). Point this at "
+            "a scratch path when previewing a run: the file is rewritten on "
+            "every run."
+        ),
     )
     p.add_argument(
         "--figures-dir",
@@ -975,7 +1032,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not args.skip_conditions_doc:
         _write_conditions_md(
             sweeps,
-            CONDITIONS_DOC,
+            Path(args.conditions_doc),
             n_seeds=n_seeds,
             framework_rounds=framework_rounds,
         )
@@ -985,7 +1042,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(f"[noise_injection] plots:   {[str(p) for p in plot_paths]}")
     print(f"[noise_injection] json:    {json_path}")
     if not args.skip_conditions_doc:
-        print(f"[noise_injection] doc:     {CONDITIONS_DOC}")
+        print(f"[noise_injection] doc:     {Path(args.conditions_doc)}")
     return 0
 
 

@@ -213,8 +213,8 @@ The hashes in the tables above are the values present at Wave 328 freeze (2026-0
 |---|---|
 | R2 Kanzi RMSD: Baseline 0.9020 → Framework 0.8798, d_z=−0.0990 | `R2_kanzi_rmsd/wave218-p3-kanzi-framework-wins.csv` |
 | R3 FlowMol3 fg_dev: −0.0235 (4.05σ) Wave 87 seed=42 batched | `R3_flowmol3_fgdev/wave206-p3-flowmol3-n1000.csv` |
-| R5_legacy 2D Eight Gaussians: −10.40% | `R5_legacy_2d_eight_gaussians/noise_injection_eight_gaussians_*.csv` |
-| R5a 2D Two Moons: TIE at paper R-level (−78.25% from separate 2D FM ablation) | `R5a_2d_two_moons/noise_injection_two_moons_*.csv` |
+| R5_legacy 2D Eight Gaussians: −10.40% | `R5_legacy_2d_eight_gaussians/eight_gaussians_baseline_seed0.csv` (baseline arm; the framework arm is `verification_outputs/wave189-p2-sota-2d-rerun/eight_gaussians_PaperRatioAdaptiveScheduler_seed*.csv`). The `noise_injection_*` CSVs in the same folder are the separate C.5 σ sweep, in which every cell regresses. |
+| R5a 2D Two Moons: TIE at paper R-level (−78.25% from separate 2D FM ablation) | `R5a_2d_two_moons/two_moons_baseline_seed0.csv` (the −78.25% ablation arm; the framework counterpart is `verification_outputs/wave189-p2-sota-2d-rerun/two_moons_PaperRatioAdaptiveScheduler_seed*.csv`). The `noise_injection_*` CSVs are the separate C.5 σ sweep, in which every cell regresses. |
 | R5b CIFAR-10 RF: ΔFID −1.60% to −2.53% at n_rounds=1 | `R5b_cifar10_rf/wave191-p2-cifar10-n1000.json` + `wave235-p1-r5b-fix.csv` |
 | R5c MNIST FM: smoke ckpt STRONG; production ckpt direction-FLIPS | `R5c_mnist_fm/wave191-p3-mnist-n1000.json` + `R5c_mnist_fm/aggregate.json` |
 | R6 LineageFlow k6: tier-aware counterfactual d_z=+0.2235 | `R6_lineageflow_k6/wave225-p4-k6-tier-aware.json` + `R6_lineageflow_k6/wave235-p3-r6-uplift.json` |

@@ -1823,7 +1823,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "mkdocs.yml",
-      "source_artifact_sha256": "98de7d9f653412187bf0fe27c5a7a9f36823e3f5656c9d1b5daf600e8bcde4b7",
+      "source_artifact_sha256": "18bf36399065933f9ce695be634e2b89fbc569659605370c6ee84d24c2db979c",
       "source_line": "",
       "section_ref": "docs/GATES.md + AGENTS.md §4.1",
       "notes": "Live value: `0 errors`. verification command: `mkdocs build --strict`. Source-of-truth surface: mkdocs.yml."

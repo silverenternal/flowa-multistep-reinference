@@ -1683,22 +1683,22 @@ model families' sigma-sweeps land in `docs/CONDITIONS.md`).
   2. Added `_target_to_family` mapping: cells under `## Target: two_moons` and `## Target: eight_gaussians` are tagged with `__family = "twodim_fm"`.
   3. Per-family hns: `hns(F) = regressing_in_F / total_in_F` (or 0.0 if F has 0 cells).
   4. Equal-family-weight average across the integrated set (NOT cell-weighted): G.6 = mean(hns(F)) over F ∈ INTEGRATED.
-- **Evidence (12 Pareto cells from `docs/CONDITIONS.md` §"Target: two_moons" + §"Target: eight_gaussians"):**
+- **Evidence (12 Pareto cells from `docs/CONDITIONS.md` §"Target: two_moons" + §"Target: eight_gaussians"):** the percentages below were refreshed on 2026-10-31 with the re-run C.5 sweep; all 12 cells still read `regresses`, so `n_regressing = 12` and `hns = 1.0` are unchanged.
 
 | sigma | Target | Family | Verdict |
 |---|---|---|---|
-| 0.00 | two_moons | twodim_fm | regresses (+191.61% W2) |
-| 0.01 | two_moons | twodim_fm | regresses (+191.19%) |
-| 0.05 | two_moons | twodim_fm | regresses (+189.82%) |
-| 0.10 | two_moons | twodim_fm | regresses (+188.09%) |
-| 0.20 | two_moons | twodim_fm | regresses (+184.41%) |
-| 0.50 | two_moons | twodim_fm | regresses (+176.19%) |
-| 0.00 | eight_gaussians | twodim_fm | regresses (+116.04%) |
-| 0.01 | eight_gaussians | twodim_fm | regresses (+116.09%) |
-| 0.05 | eight_gaussians | twodim_fm | regresses (+116.14%) |
-| 0.10 | eight_gaussians | twodim_fm | regresses (+116.27%) |
-| 0.20 | eight_gaussians | twodim_fm | regresses (+117.54%) |
-| 0.50 | eight_gaussians | twodim_fm | regresses (+122.01%) |
+| 0.00 | two_moons | twodim_fm | regresses (+8.38% W2) |
+| 0.01 | two_moons | twodim_fm | regresses (+8.34%) |
+| 0.05 | two_moons | twodim_fm | regresses (+8.33%) |
+| 0.10 | two_moons | twodim_fm | regresses (+8.33%) |
+| 0.20 | two_moons | twodim_fm | regresses (+8.26%) |
+| 0.50 | two_moons | twodim_fm | regresses (+9.22%) |
+| 0.00 | eight_gaussians | twodim_fm | regresses (+26.62%) |
+| 0.01 | eight_gaussians | twodim_fm | regresses (+26.74%) |
+| 0.05 | eight_gaussians | twodim_fm | regresses (+27.10%) |
+| 0.10 | eight_gaussians | twodim_fm | regresses (+27.61%) |
+| 0.20 | eight_gaussians | twodim_fm | regresses (+29.28%) |
+| 0.50 | eight_gaussians | twodim_fm | regresses (+31.16%) |
 
 - **Why the pre-fix cell-weighted formula failed:** the original formula `hns = regressing / total cells = 14 / 20 = 0.70` was dominated by twodim_fm's 12 Pareto cells (12 / 20 = 60% of the denominator). The cell-weighted formula effectively asked "does the framework regress on most cells?" rather than "does the framework regress on most families?" — which is the right question for a generalization gate. The Wave 30 Agent A equal-family-weight stratification closes the gate by giving each integrated family equal weight regardless of cell count.
 - **Honest assessment:** the G.6 fail was a **metric artifact**, not a framework regression. The C.5 sweep on `twodim_fm` is expected to fail per the Wave 17 Phase 3 honest operating-regime statement (`twodim_fm`-class synthetic 2D targets are out-of-regime for the framework's `CodimensionSheetScheduler`). The Wave 30 Agent A family stratification is the spec change that surfaces the right answer: each family contributes its per-family hns (which honestly reports the twodim_fm out-of-regime limitation), and the equal-weight average reflects "does the framework regress on most families" rather than "does it regress on most cells".

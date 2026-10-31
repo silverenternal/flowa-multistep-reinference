@@ -63,29 +63,41 @@ regress when σ > σ_high
 
 with a transition point `σ*` defining the framework's **value boundary**.
 
-### 1.3 Empirically observed regime (Wave 17 Phase 2)
+### 1.3 Empirically observed regime (C.5 controlled-noise sweep)
 
-The Wave 17 Phase 2 controlled-noise-injection sweep
-(`docs/CONDITIONS.md`) measured `U(σ)` at `σ ∈ {0.0, 0.01, 0.05, 0.10,
-0.20, 0.50}` on two synthetic 2D targets with the framework's
-`CodimensionSheetScheduler` (5 rounds):
+The C.5 controlled-noise-injection sweep (`docs/CONDITIONS.md`) measured
+`U(σ)` at `σ ∈ {0.0, 0.01, 0.05, 0.10, 0.20, 0.50}` on two synthetic 2D
+targets with the framework's `CodimensionSheetScheduler` (5 rounds,
+3 seeds, baseline NFE budgets `{2, 5, 10, 20, 50}`, framework NFE 500):
 
 | σ     | `two_moons` U(σ)   | `eight_gaussians` U(σ) | verdict (`two_moons` / `eight_gaussians`) |
 |-------|--------------------|-------------------------|--------------------------------------------|
-| 0.00  | +191.61 %          | +116.04 %               | regresses / regresses                      |
-| 0.01  | +191.19 %          | +116.09 %               | regresses / regresses                      |
-| 0.05  | +189.82 %          | +116.14 %               | regresses / regresses                      |
-| 0.10  | +188.09 %          | +116.27 %               | regresses / regresses                      |
-| 0.20  | +184.41 %          | +117.54 %               | regresses / regresses                      |
-| 0.50  | +176.19 %          | +122.01 %               | regresses / regresses                      |
+| 0.00  | +8.38 %            | +26.62 %                | regresses / regresses                      |
+| 0.01  | +8.34 %            | +26.74 %                | regresses / regresses                      |
+| 0.05  | +8.33 %            | +27.10 %                | regresses / regresses                      |
+| 0.10  | +8.33 %            | +27.61 %                | regresses / regresses                      |
+| 0.20  | +8.26 %            | +29.28 %                | regresses / regresses                      |
+| 0.50  | +9.22 %            | +31.16 %                | regresses / regresses                      |
 
 The framework **regresses at every `σ` tested**, on **both** targets.
 There is no transition point `σ*`; there is no `[σ_low, σ_high]`
-window where the framework helps. The monotonically decreasing
-absolute W₂ (`M(σ)` is ~constant across `σ`, `F(σ)` decreases as `σ`
-grows) suggests the framework's *internal* re-inference loop is
-**drowning the signal in noise-canceled trajectory samples**, not
-exploiting it.
+window where the framework helps. The penalty is already present at
+`σ = 0` and barely moves as `σ` grows (it widens by under one point on
+`two_moons` and by five on `eight_gaussians`), so it is a property of
+the multi-round inference loop rather than of the injected noise: the
+loop **adds a roughly constant W₂ penalty** instead of cancelling the
+noise it was meant to average out.
+
+*Measurement note.* An earlier run of this sweep reported
++191.61 % → +176.19 % (`two_moons`) and +116.04 % → +122.01 %
+(`eight_gaussians`), with the uplift shrinking as `σ` grew. The
+framework arm's inference path changed between the two runs; the
+baseline arm reproduces byte for byte. Both readings label every cell
+`regresses`, so the verdict and the conclusion above are unchanged, but
+the trend reversed and the earlier "averaging may eventually dominate"
+hint no longer follows from the data. Pre-refresh artifacts are under
+`verification_outputs/noise-injection-pre-regen-2026-10-31/`; see
+`docs/audit/noise-injection-regen.md`.
 
 ### 1.4 Honest operating-regime statement (this document)
 
@@ -254,12 +266,12 @@ Per the task spec §"What we DON'T know", the following are
    velocity field). The paper's theoretical guarantees apply here, but
    we have **no empirical** evidence.
 
-2. **The exact regime boundary `σ*`**: the Wave 17 Phase 2 sweep did
-   not extend `σ` above `0.5`. The framework may cross over to "helps"
-   at `σ ≫ 1`, but we have not measured this. The monotonic decrease
-   of `|U(σ)|` (from +191.6 % at σ=0 to +176.2 % at σ=0.5) suggests
-   the regression **shrinks** as `σ` grows — a possible hint that
-   averaging begins to dominate at `σ ≫ 1`, but this is speculation.
+2. **The exact regime boundary `σ*`**: the sweep did not extend `σ`
+   above `0.5`. The framework may cross over to "helps" at `σ ≫ 1`, but
+   we have not measured this. The uplift **grows** across the measured
+   range (+8.38 % → +9.22 % on `two_moons`, +26.62 % → +31.16 % on
+   `eight_gaussians`), so there is no hint of a crossover inside
+   `σ ∈ [0, 0.5]`.
 
 3. **The effect of `K` (number of rounds)**: the Wave 17 Phase 2 sweep
    fixed `K = 5`. We have **no** measurement at `K ∈ {1, 2, 4, 8, 16}`

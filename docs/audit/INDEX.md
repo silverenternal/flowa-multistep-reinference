@@ -49,9 +49,9 @@ preserved for the per-wave audit trail.
 | `protbfn_abbfn` | ProtBFN-AbBFN (antibody / protein BFN) | 0 | 0 | 0 |
 | `wan2_2` | Wan2.2 video (video diffusion) | 0 | 0 | 0 |
 | `web_research` | Web research 2026 (FM literature surveys) | 1 | 0 | 1 |
-| `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 129 | 76 | 53 |
+| `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 129 | 75 | 54 |
 | `reproducibility` | Reproducibility (reproducibility-record, preregistration, reproduce-script) | 14 | 6 | 8 |
-| `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 29 | 10 | 19 |
+| `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 30 | 11 | 19 |
 | `push_state` | Push state (push-ready, freeze, release, submission) | 11 | 7 | 4 |
 | `algorithm_4arm` | Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency) | 39 | 18 | 21 |
 | `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 111 | 90 | 21 |
@@ -59,7 +59,7 @@ preserved for the per-wave audit trail.
 | `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 51 | 26 | 25 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
 | `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 113 | 32 | 81 |
-| **TOTAL** | — | **635** | **349** | **286** |
+| **TOTAL** | — | **636** | **349** | **287** |
 
 ---
 
@@ -232,7 +232,7 @@ Web research 2026 (FM literature surveys). This cluster is part of the project's
 
 ### Cluster: `engineering` — Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree)
 
-**Files: 129** (active: 76, historical: 53)
+**Files: 129** (active: 75, historical: 54)
 
 Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This cluster is part of the project's audit surface for engineering.
 
@@ -295,7 +295,6 @@ Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This 
 - `wave310-restoration-execution.md`
 - `wave311-restoration-execution.md`
 - `wave322-restoration-execution.md`
-- `wave347-final-4-gap-fix.md`
 - `wave348-link-fix.md`
 - `wave349-gpu-acceleration.md`
 - `wave349-impl.md`
@@ -315,7 +314,7 @@ Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This 
 - `wave364-g38.md`
 - `wave384-project-audit.md`
 
-**Historical (53 files, not cited by reviewer-facing surfaces):**
+**Historical (54 files, not cited by reviewer-facing surfaces):**
 
 - `cli-help-guard.md`
 - `clone-reproducibility.md`
@@ -359,6 +358,7 @@ Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree). This 
 - `wave334-reviewer-prediction.md`
 - `wave338-phase2-mechanism.md`
 - `wave340-readme-update.md`
+- `wave347-final-4-gap-fix.md`
 - `wave350-r1-materialize-status.md`
 - `wave351-cover-letter-helper.md`
 - `wave352-cover-letter-interactive.md`
@@ -403,7 +403,7 @@ Reproducibility (reproducibility-record, preregistration, reproduce-script). Thi
 
 ### Cluster: `data_packaging` — Data packaging + manifest (sha256, csv, metric-ledger)
 
-**Files: 29** (active: 10, historical: 19)
+**Files: 30** (active: 11, historical: 19)
 
 Data packaging + manifest (sha256, csv, metric-ledger). This cluster is part of the project's audit surface for data_packaging.
 
@@ -411,6 +411,7 @@ Data packaging + manifest (sha256, csv, metric-ledger). This cluster is part of 
 
 - `fix-design.md`
 - `tier1-metric-alignment.md`
+- `noise-injection-regen.md`
 - `paper-packaging-2026-10-27.md`
 - `todo-history.md`
 - `todo-surface-reset.md`
