@@ -889,6 +889,17 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="Skip writing docs/CONDITIONS.md (only emit CSVs + plots).",
     )
     p.add_argument(
+        "--figures-dir",
+        type=Path,
+        default=FIGURES_DIR,
+        help=(
+            "Where to write the Pareto plots (default: docs/figures, the tree "
+            "the paper references). Point this at a scratch directory when the "
+            "run is a smoke test: the plots are rewritten on every run, so "
+            "writing them into the tracked tree dirties the working copy."
+        ),
+    )
+    p.add_argument(
         "--skip-plots",
         action="store_true",
         help="Skip writing Pareto plots.",
@@ -925,7 +936,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         if not args.skip_plots:
             try:
-                paths = _generate_plots(target, sweep, FIGURES_DIR)
+                paths = _generate_plots(target, sweep, Path(args.figures_dir))
             except ModuleNotFoundError as exc:
                 if exc.name != "matplotlib":
                     raise

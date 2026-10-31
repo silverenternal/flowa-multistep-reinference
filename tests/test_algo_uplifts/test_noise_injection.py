@@ -281,6 +281,10 @@ def test_full_experiment_quick_smoke() -> None:
         "two_moons",
         "--out-dir",
         str(out_dir),
+        # The plots are rewritten on every run; without this the smoke test
+        # writes into docs/figures and leaves three tracked PNGs modified.
+        "--figures-dir",
+        str(out_dir / "figures"),
         "--skip-conditions-doc",
     ]
     t_start = time.time()
