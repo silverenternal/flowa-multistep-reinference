@@ -39,8 +39,8 @@ Three separate causes:
    arm.
 3. **The CSV itself no longer reproduces.** The baseline arm is byte-identical
    across the two months; the framework arm is not. The inference path under
-   `_run_framework_arm` changed between 2026-09-05 and today, and no audit
-   record covers that change.
+   `_run_framework_arm` changed twice on the day the CSV was written, and no
+   audit record covers either change. Both are bisected below.
 
 `docs/CONDITIONS.md` carried the consequences: its header prose claimed the
 framework was "byte-identical to the baseline at `sigma = 0`", its table said
@@ -139,13 +139,70 @@ head was spliced onto the existing tail.
 - `paper-data/*_SOURCE.md` describe the noise CSVs accurately ("baseline
   noise-injection sweep CSV") and needed no change.
 
+## Which change moved the framework arm
+
+Bisected. CPU only, in a detached `git worktree` under `/tmp`, so the working
+tree was never checked out to an old commit. The probe calls
+`_run_framework_arm("two_moons", 0.0, 5, seed)` for seeds 0–2 and reports the
+mean W₂; it reproduces the current CSV exactly (`0.11498652813900606` /
+`0.12344828077618251` / `0.12971672568990109`), and at `441f54f2` it
+reproduces the frozen CSV's seed-0 value to the last digit
+(`0.32676622586323734`).
+
+| Commit | Date | Change | mean W₂ at σ = 0 |
+|---|---|---|---|
+| `441f54f2` | 2026-09-05 | Wave 17 Phase 2 — the run that produced the CSV | 0.330199 |
+| `51130a76` | 2026-09-05 08:31 | Wave 31-C — `CodimensionSheetScheduler.n_cap` driven by the sheet-vs-cell ratio instead of the cosine ramp | 0.135968 |
+| `12365dfd` | 2026-09-05 10:26 | W33 Agent E — per-round diminishing `eps` schedule instead of a constant `eps` | 0.122717 |
+| `a81b3de2` | 2026-10-31 | HEAD — nothing further moved this arm | 0.122717 |
+
+Both transitions are step changes, not drifts: `8944a095` (parent of
+`51130a76`) returns 0.330199 and `51130a76` returns 0.135968; `9c10d212`
+(parent of `12365dfd`) returns 0.135968 and `12365dfd` returns 0.122717.
+
+One bisect point, without touching the working tree:
+
+```bash
+git worktree add --detach /tmp/wt 51130a76
+mkdir -p /tmp/wt/data && ln -sf "$PWD/data/twodim_fm_two_moons.npz" /tmp/wt/data/
+python3 -c "
+import importlib.util
+spec = importlib.util.spec_from_file_location('nie', '/tmp/wt/tools/noise_injection_experiment.py')
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+print('%.6f' % (sum(m._run_framework_arm('two_moons', 0.0, 5, s)['w2'] for s in (0, 1, 2)) / 3))
+"
+git worktree remove --force /tmp/wt
+```
+
+The `data/` symlink is needed because the 2D FM weights are untracked, so a
+fresh worktree has no `data/` directory at all; without it the adapter raises
+`weights_file_not_found`.
+
+So the CSV was generated once at Wave 17 and never regenerated through two
+scheduler changes made later the same day. The `**Date:** 2026-09-05` in the
+old `CONDITIONS.md` was the date of that one run, and by the end of that day
+the table described a scheduler that no longer existed. Nothing about the
+table's shape showed it: same six σ levels, same 18 rows, same `rounds = 5`,
+same NFE 500 — only the values were from a different operator.
+
+Neither change is a defect, and neither is a regression fix aimed at this
+sweep. `51130a76` makes `n_cap` follow the paper's sheet-vs-cell evidence
+balance (Lemma 2 / Corollary 1) instead of a generic cosine ramp; `12365dfd`
+realises Theorem 1's `eps → 0` limit as a per-round schedule instead of a
+constant. Both are the paper-aligned direction, and both were committed under
+Wave 31 / Wave 33 without re-running C.5.
+
+The direction of the finding is invariant across the three states. The
+baseline mean at σ = 0 is 0.1132 in all of them (the baseline arm is
+byte-identical across the two months), and the framework mean is 0.330 /
+0.136 / 0.123, i.e. +192% / +20% / +8%. Every state is `regresses`; what the
+two commits moved is the size of the penalty, not its sign. That is why the
+regime verdict and `hns` are unchanged by the refresh, and why the bisect does
+not reopen them.
+
 ## Unresolved
 
-1. **Which change moved the framework arm** was not bisected. The baseline arm
-   reproduces byte for byte, so the change is confined to the framework path
-   (`_run_framework_arm` → `CodimensionSheetScheduler` +
-   `BatchedTrajectoryRunner`), but the specific commit is unidentified.
-2. **The round-count sensitivity is unresolved.** The shipped figure used
+1. **The round-count sensitivity is unresolved.** The shipped figure used
    `framework_rounds = 3` and the CSV uses 5, so the round count was probed
    directly: `two_moons`, `σ = 0`, seeds 0–2, `K ∈ {1, 2, 3, 4, 5, 8, 16}`.
 
@@ -168,7 +225,7 @@ head was spliced onto the existing tail.
    not evidence that more rounds hurt. The round count's effect on this
    target is unmeasured, and settling it needs a within-seed design with
    more than three seeds rather than a re-read of the existing runs.
-3. **The two other `twodim_fm` readings are still separate.** The `−10.40%`
+2. **The two other `twodim_fm` readings are still separate.** The `−10.40%`
    and `−78.25%` ablation readings come from a different harness
    (`wave189-p2-sota-2d-rerun/`) at a different NFE convention. The refreshed
    C.5 sweep does not corroborate or contradict them; they remain a separate

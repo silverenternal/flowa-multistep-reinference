@@ -91,8 +91,11 @@ noise it was meant to average out.
 *Measurement note.* An earlier run of this sweep reported
 +191.61 % → +176.19 % (`two_moons`) and +116.04 % → +122.01 %
 (`eight_gaussians`), with the uplift shrinking as `σ` grew. The
-framework arm's inference path changed between the two runs; the
-baseline arm reproduces byte for byte. Both readings label every cell
+framework arm's inference path changed between the two runs — twice, in
+`51130a76` (`n_cap` moved from the cosine ramp to the sheet-vs-cell
+ratio) and `12365dfd` (per-round diminishing `eps`), both on the day the
+first CSV was written — while the baseline arm reproduces byte for byte.
+Both readings label every cell
 `regresses`, so the verdict and the conclusion above are unchanged, but
 the trend reversed and the earlier "averaging may eventually dominate"
 hint no longer follows from the data. Pre-refresh artifacts are under
