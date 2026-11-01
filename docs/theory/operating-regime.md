@@ -88,6 +88,19 @@ the multi-round inference loop rather than of the injected noise: the
 loop **adds a roughly constant W₂ penalty** instead of cancelling the
 noise it was meant to average out.
 
+*Why the penalty is constant.* Instrumenting the per-round endpoints
+(`K = 16`, `σ = 0`, both targets, three seeds) shows that W₂ against a
+fixed reference does not fall from round to round: the least-squares
+slope is positive in all six runs (+0.003 to +0.006 per round) with a
+round-to-round sd of 0.042–0.062. The round map therefore does not
+contract in the observable sense on these two analytic targets; the
+paper's contraction is conditional, and nothing measured here puts these
+cells inside that condition. The loop does not average the injected
+noise away and instead accumulates a small drift. The value the sweep
+reports is the last round's draw, which is why changing the round count
+moves it by ±0.04–0.06 without changing the verdict. Trace and numbers:
+`docs/audit/noise-injection-regen.md`.
+
 *Measurement note.* An earlier run of this sweep reported
 +191.61 % → +176.19 % (`two_moons`) and +116.04 % → +122.01 %
 (`eight_gaussians`), with the uplift shrinking as `σ` grew. The

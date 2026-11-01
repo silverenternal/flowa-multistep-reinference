@@ -7,7 +7,9 @@
 `paper-data/R5_legacy_2d_eight_gaussians/`, `tnnls_submission/figures.md` rows 27–32
 **Method:** CPU only. Three runs of the sweep driver (one `--quick` into
 scratch, one full into scratch, one full into the tracked tree), compared by
-digest and by table.
+digest and by table; then a `git bisect` in a detached worktree and a
+per-round instrumentation of the framework arm, both added after the first
+version of this note left two items unresolved.
 
 ## What was found
 
@@ -33,10 +35,10 @@ Three separate causes:
 2. **The figure also used a different round count.** It rendered three
    framework rounds; the CSV and the paper's protocol use five. At `σ = 0`
    and seed 0, three rounds gives 0.0850 and five gives 0.1150. That
-   single-seed contrast is not a trend — the round-count probe under
-   "Unresolved" below shows W₂ is not monotone in the round count at `n = 3`
-   — but it does mean the figure and the table were not describing the same
-   arm.
+   single-seed contrast is not a trend — the per-round trace under "Round
+   count" below shows the loop is a random walk, so both numbers are draws
+   from it — but it does mean the figure and the table were not describing
+   the same arm.
 3. **The CSV itself no longer reproduces.** The baseline arm is byte-identical
    across the two months; the framework arm is not. The inference path under
    `_run_framework_arm` changed twice on the day the CSV was written, and no
@@ -200,31 +202,80 @@ two commits moved is the size of the penalty, not its sign. That is why the
 regime verdict and `hns` are unchanged by the refresh, and why the bisect does
 not reopen them.
 
+## Round count: the loop does not contract
+
+The round-count probe left a shape that a re-read cannot explain. `two_moons`,
+`σ = 0`, seeds 0–2, `K ∈ {1, 2, 3, 4, 5, 8, 16}`:
+
+| K | NFE | mean W₂ | sd | per-seed |
+|---:|---:|---:|---:|---|
+| 1 | 100 | 0.1103 | 0.0295 | 0.1441 / 0.0897 / 0.0971 |
+| 2 | 200 | 0.1467 | 0.0245 | 0.1665 / 0.1543 / 0.1193 |
+| 3 | 300 | 0.0907 | 0.0113 | 0.0850 / 0.1037 / 0.0833 |
+| 4 | 400 | 0.1958 | 0.0449 | 0.1505 / 0.1966 / 0.2403 |
+| 5 | 500 | 0.1227 | 0.0074 | 0.1150 / 0.1234 / 0.1297 |
+| 8 | 800 | 0.1259 | 0.0130 | 0.1137 / 0.1396 / 0.1245 |
+| 16 | 1600 | 0.1246 | 0.0088 | 0.1304 / 0.1289 / 0.1144 |
+
+W₂ is not monotone in K: `K = 3` is the best cell and `K = 4` the worst, a gap
+of 1.6 pooled sd. At `n = 3` that is not a resolvable effect, but the
+non-monotonicity is not noise either — instrumenting the per-round endpoints
+settles it without more seeds.
+
+At `K = 16`, `σ = 0`, the W₂ of each round against the same reference, for both
+targets and all three seeds:
+
+| target | seed | round 0 | round 15 | mean | sd | slope / round |
+|---|---:|---:|---:|---:|---:|---:|
+| `two_moons` | 0 | 0.1441 | 0.1304 | 0.1403 | 0.0416 | **+0.0027** |
+| `two_moons` | 1 | 0.0897 | 0.1289 | 0.1354 | 0.0449 | **+0.0046** |
+| `two_moons` | 2 | 0.0971 | 0.1144 | 0.1337 | 0.0517 | **+0.0061** |
+| `eight_gaussians` | 0 | 0.2032 | 0.3040 | 0.2501 | 0.0541 | **+0.0033** |
+| `eight_gaussians` | 1 | 0.1691 | 0.2762 | 0.2408 | 0.0489 | **+0.0053** |
+| `eight_gaussians` | 2 | 0.1775 | 0.2629 | 0.2477 | 0.0619 | **+0.0053** |
+
+Six runs out of six drift *upward* and none trends down. The loop is a random
+walk with a slight positive slope, not a contraction, so the number the sweep
+reports is whichever draw the last round happens to land on, and `K` selects
+that draw. One `two_moons` seed-0 sequence shows the shape:
+
+```
+0.1441 0.1665 0.0962 0.0850 0.1115 0.1326 0.1546 0.1756
+0.1040 0.1331 0.0941 0.1364 0.2641 0.1507 0.1652 0.1304
+```
+
+That is the whole of the K anomaly. With a walk sd of 0.042, `K = 3` (0.091)
+and `K = 4` (0.196) differ by about 2.5 walk-sd — exactly what two draws from
+this walk look like. "K = 3 is the best cell and K = 4 the worst" is a
+statement about the last round, not about the round count.
+
+Two consequences, neither of which moves a paper claim:
+
+1. The C.5 framework column is a draw from this walk, not a converged value. It
+   is still the right number to report — it is what the shipped protocol (five
+   rounds) produces — but a different round count would move it by roughly
+   ±0.04–0.06 without changing anything about the method.
+2. This is the 2D analytic cell, where R5a is already a tie in the manuscript.
+   The paper's matched-NFE gains are on MNIST (Figure 1) and its round-count
+   sensitivity is CIFAR's (§7.7). The walk supplies a mechanism for the tie on
+   this target — the loop adds a small upward drift, so more rounds cannot pay
+   for themselves here — and says nothing about the other cells.
+
+**The error bar means what it says.** The three seeds share one noise
+realisation: `noise_seed` is the module constant `0xC0FFEE` for every seed, so
+at fixed σ all three inject the same Gaussian field and differ only in the base
+sampling. That could have made the published ± a sampling-only quantity
+dressed as a noise-condition error bar. It does not. Re-running `σ = 0.1`,
+`K = 5`, seed 0 with five different `noise_seed` values moves the final W₂ by
+0.0033 in range (sd 0.0012), below the published 0.0053, so the ± is dominated
+by sampling and is not understated by the shared field.
+
 ## Unresolved
 
-1. **The round-count sensitivity is unresolved.** The shipped figure used
-   `framework_rounds = 3` and the CSV uses 5, so the round count was probed
-   directly: `two_moons`, `σ = 0`, seeds 0–2, `K ∈ {1, 2, 3, 4, 5, 8, 16}`.
-
-   | K | NFE | mean W₂ | sd | per-seed |
-   |---:|---:|---:|---:|---|
-   | 1 | 100 | 0.1103 | 0.0295 | 0.1441 / 0.0897 / 0.0971 |
-   | 2 | 200 | 0.1467 | 0.0245 | 0.1665 / 0.1543 / 0.1193 |
-   | 3 | 300 | 0.0907 | 0.0113 | 0.0850 / 0.1037 / 0.0833 |
-   | 4 | 400 | 0.1958 | 0.0449 | 0.1505 / 0.1966 / 0.2403 |
-   | 5 | 500 | 0.1227 | 0.0074 | 0.1150 / 0.1234 / 0.1297 |
-   | 8 | 800 | 0.1259 | 0.0130 | 0.1137 / 0.1396 / 0.1245 |
-   | 16 | 1600 | 0.1246 | 0.0088 | 0.1304 / 0.1289 / 0.1144 |
-
-   W₂ is not monotone in K: `K = 3` is the best cell and `K = 4` the worst,
-   with a gap of 1.6 pooled sd. At `n = 3` seeds that is not a resolvable
-   effect, and the seed spread is of the same size as the between-K spread.
-   What can be said is narrower than what this note said before the probe:
-   the 0.0850 / 0.1227 contrast that opened this investigation is a
-   single-seed (`K = 3`) versus three-seed (`K = 5`) comparison, so it is
-   not evidence that more rounds hurt. The round count's effect on this
-   target is unmeasured, and settling it needs a within-seed design with
-   more than three seeds rather than a re-read of the existing runs.
+1. **The walk is not attributed.** It is measured for the codimension-sheet
+   scheduler on both 2D targets at 100 RK4 steps per round. Whether it is a
+   property of the scheduler, of the integrator on a 2D analytic field, or of
+   the C.5 protocol is not separated, and no other cell was instrumented.
 2. **The two other `twodim_fm` readings are still separate.** The `−10.40%`
    and `−78.25%` ablation readings come from a different harness
    (`wave189-p2-sota-2d-rerun/`) at a different NFE convention. The refreshed
