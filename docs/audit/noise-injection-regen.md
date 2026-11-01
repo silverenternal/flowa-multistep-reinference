@@ -234,10 +234,29 @@ targets and all three seeds:
 | `eight_gaussians` | 1 | 0.1691 | 0.2762 | 0.2408 | 0.0489 | **+0.0053** |
 | `eight_gaussians` | 2 | 0.1775 | 0.2629 | 0.2477 | 0.0619 | **+0.0053** |
 
-Six runs out of six drift *upward* and none trends down. The loop is a random
-walk with a slight positive slope, not a contraction, so the number the sweep
-reports is whichever draw the last round happens to land on, and `K` selects
-that draw. One `two_moons` seed-0 sequence shows the shape:
+None of the six contracts. The round-to-round sd is 0.042–0.062 and every
+slope is small (|slope| ≤ 0.007), so the number the sweep reports is whichever
+draw the last round happens to land on, and `K` selects that draw.
+
+The scheduler is not the cause. Repeating the run with the capacity ramp
+removed — same `K = 16`, `σ = 0`, `two_moons`, seed 0, four schedulers:
+
+| scheduler | mean W₂ | sd | slope / round |
+|---|---:|---:|---:|
+| `CodimensionSheetScheduler` (the C.5 arm) | 0.1403 | 0.0416 | +0.0027 |
+| `ConstantScheduler`, `n_cap = 0.5` | 0.1434 | 0.0392 | +0.0015 |
+| `ConstantScheduler`, `n_cap = 1.0` | 0.1373 | 0.0357 | −0.0006 |
+| `CosineAnnealScheduler` | 0.1315 | 0.0383 | +0.0024 |
+
+The sd stays at 0.036–0.042 with no ramp at all, and the slope changes sign
+between schedulers. What is robust is the absence of contraction, not the
+direction of the drift; the earlier reading of this trace as "an upward drift"
+was a property of the codimension scheduler alone and is withdrawn here. The
+walk is a property of the round loop — the restart blend plus the fresh prior
+draw each round plus 100 RK4 steps on a 2D analytic field — not of the
+capacity schedule.
+
+One `two_moons` seed-0 codim sequence shows the shape:
 
 ```
 0.1441 0.1665 0.0962 0.0850 0.1115 0.1326 0.1546 0.1756
@@ -258,8 +277,8 @@ Two consequences, neither of which moves a paper claim:
 2. This is the 2D analytic cell, where R5a is already a tie in the manuscript.
    The paper's matched-NFE gains are on MNIST (Figure 1) and its round-count
    sensitivity is CIFAR's (§7.7). The walk supplies a mechanism for the tie on
-   this target — the loop adds a small upward drift, so more rounds cannot pay
-   for themselves here — and says nothing about the other cells.
+   this target — with no contraction, rounds cannot pay for themselves here —
+   and says nothing about the other cells.
 
 **The error bar means what it says.** The three seeds share one noise
 realisation: `noise_seed` is the module constant `0xC0FFEE` for every seed, so
@@ -272,10 +291,10 @@ by sampling and is not understated by the shared field.
 
 ## Unresolved
 
-1. **The walk is not attributed.** It is measured for the codimension-sheet
-   scheduler on both 2D targets at 100 RK4 steps per round. Whether it is a
-   property of the scheduler, of the integrator on a 2D analytic field, or of
-   the C.5 protocol is not separated, and no other cell was instrumented.
+1. **The walk is not attributed below the loop.** It survives the removal of
+   the capacity ramp, so it is not the scheduler. Whether it is the restart
+   blend, the fresh prior draw each round, or the 100-step RK4 integration on a
+   2D analytic field is not separated, and no other cell was instrumented.
 2. **The two other `twodim_fm` readings are still separate.** The `−10.40%`
    and `−78.25%` ablation readings come from a different harness
    (`wave189-p2-sota-2d-rerun/`) at a different NFE convention. The refreshed
