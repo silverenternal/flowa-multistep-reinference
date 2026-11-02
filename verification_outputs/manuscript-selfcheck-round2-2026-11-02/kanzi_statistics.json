@@ -1,0 +1,41 @@
+{
+  "n_per_arm": 1000,
+  "baseline_mean_A": 0.9027630950167146,
+  "framework_mean_A": 0.8837987798290944,
+  "index_correlation": 0.04562788520555516,
+  "welch_independent_record_sensitivity": {
+    "difference_A": -0.018964315187620207,
+    "se_A": 0.0062005278934326655,
+    "df": 1996.8696736573886,
+    "t": -3.0585001008876036,
+    "p_two_sided": 0.002254022339077761,
+    "ci95_A": [
+      -0.031124497131114898,
+      -0.006804133244125515
+    ],
+    "p_bonferroni_7": 0.01577815637354433
+  },
+  "historical_index_difference_not_matched_input": {
+    "difference_A": -0.018964315187620207,
+    "se_A": 0.006057458883425223,
+    "df": 999.0,
+    "t": -3.130737748713654,
+    "p_two_sided": 0.001794328304115397,
+    "ci95_A": [
+      -0.03085111790367665,
+      -0.007077512471563763
+    ],
+    "d_z": -0.09900262042602999
+  },
+  "scope": "Different structure populations; baseline has four PDB templates. Record-level Welch does not establish template-generalized inference, matched input refinement, biological quality, or multi-round benefit.",
+  "sources": [
+    {
+      "path": "verification_outputs/wave218-p3-kanzi-baseline-n1000/kanzi_n1000_paper_metrics.json",
+      "sha256": "be03a0a9628e8ed6aa765d1a9a0398822e4b6ca74f89aa1b095fcc2f1314148b"
+    },
+    {
+      "path": "verification_outputs/wave214-p2-kanzi-framework-inv-proj-n1000/kanzi_n1000_framework_paper_metrics.json",
+      "sha256": "971aa2d1c72e7adb0ea24f1ab07be8b4d04541068b07956d236eff4f2d9b1b10"
+    }
+  ]
+}

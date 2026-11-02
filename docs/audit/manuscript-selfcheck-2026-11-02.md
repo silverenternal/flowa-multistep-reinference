@@ -1,6 +1,6 @@
-# 投稿论文审稿自查表（2026-11-02）
+# 投稿改进自查表（2026-11-02）
 
-完整保留45项；当前状态已更新至首轮源码核对与中文修订。原登记状态和发现保留在JSON的history。VERIFIED的范围是条目所列具体定义/文字/统计修正，不代表全部科学主张成立。
+完整保留45项；当前状态已更新至第二轮源码核对与中文修订。原登记状态和发现保留在JSON的history。VERIFIED的范围是条目所列具体定义/文字/统计修正，不代表全部科学主张成立。
 
 ## 状态规则
 
@@ -18,18 +18,18 @@
 | SC-02 | 篇幅与定位 | P0 | 中心主张是否可用一句话表述且被证据覆盖？ | VERIFIED |
 | SC-03 | 篇幅与定位 | P0 | 是方法论文还是软件框架论文？ | VERIFIED |
 | SC-04 | 创新性 | P0 | 是否仅为已有 restart sampling 加接口封装？ | REVISION_NEEDED |
-| SC-05 | 创新性 | P0 | 相比固定权重混合究竟新增什么？ | REVISION_NEEDED |
+| SC-05 | 创新性 | P0 | 相比固定权重混合究竟新增什么？ | EVIDENCE_GAP |
 | SC-06 | 创新性 | P0 | 首次性、普适性、全面占优是否有依据？ | VERIFIED |
 | SC-07 | 方法定义 | P0 | FlowA 主方法是否是确定且可复现的算法？ | VERIFIED |
 | SC-08 | 方法定义 | P0 | 反馈究竟读取什么信息？ | VERIFIED |
 | SC-09 | 方法定义 | P0 | 连续、离散、掩码和图通道的操作是否合法？ | EVIDENCE_LOCATED |
 | SC-10 | 方法定义 | P0 | 实际调用次数是否等于宣称预算？ | VERIFIED |
 | SC-11 | 方法定义 | P1 | 四接口与算法步骤、伪代码是否一一对应？ | VERIFIED |
-| SC-12 | 贡献与证据 | P0 | 各任务是否验证同一个机制？ | REVISION_NEEDED |
+| SC-12 | 贡献与证据 | P0 | 各任务是否验证同一个机制？ | VERIFIED |
 | SC-13 | 贡献与证据 | P0 | 各实验到底有没有真实多轮重启？ | EVIDENCE_LOCATED |
 | SC-14 | 贡献与证据 | P0 | 已有但未写入中文稿的证据有哪些？ | VERIFIED |
 | SC-15 | 主结果 | P0 | 优势集中一个 MNIST 检查点意味着什么？ | VERIFIED |
-| SC-16 | 主结果 | P0 | 是否有第二条独立可信的实证主线？ | EVIDENCE_LOCATED |
+| SC-16 | 主结果 | P0 | 是否有第二条独立可信的实证主线？ | EVIDENCE_GAP |
 | SC-17 | 主结果 | P0 | 训练充分性/检查点条件性是关联还是因果？ | VERIFIED |
 | SC-18 | 主结果 | P1 | WIN/TIE 与显著性、实用阈值、局部退化是否混淆？ | VERIFIED |
 | SC-19 | 理论 | P0 | 经典收缩与恒等式是否被包装成新理论？ | VERIFIED |
@@ -40,7 +40,7 @@
 | SC-24 | 比较公平性 | P1 | 是否拼接不同N、seed、checkpoint和evaluator？ | EVIDENCE_GAP |
 | SC-25 | 比较公平性 | P1 | 等 NFE 是否被写成等耗时或加速？ | VERIFIED |
 | SC-26 | 统计 | P0 | 独立运行次数、记录数和家族数是否混淆？ | EVIDENCE_LOCATED |
-| SC-27 | 统计 | P0 | Kanzi 索引匹配是否错误当作天然配对？ | EVIDENCE_GAP |
+| SC-27 | 统计 | P0 | Kanzi 索引匹配是否错误当作天然配对？ | VERIFIED |
 | SC-28 | 统计 | P1 | 三种子自举与家族相关性是否充分披露？ | EVIDENCE_LOCATED |
 | SC-29 | 统计 | P1 | 多重比较和效应阈值是否一致？ | REVISION_NEEDED |
 | SC-30 | 指标 | P1 | projection-FID 与标准 FID 是否混淆？ | VERIFIED |
@@ -100,12 +100,12 @@
 
 ### SC-05 — 相比固定权重混合究竟新增什么？
 
-- 类别 / 优先级 / 状态：创新性 / P0 / REVISION_NEEDED
+- 类别 / 优先级 / 状态：创新性 / P0 / EVIDENCE_GAP
 - 验收：给出唯一可辨的算法差异、代码路径和对应对照；不用多个功能同时变化的比较归因。
-- 本轮发现：源码确认主配置包含partial-time restart与batch质心平移；缺同协议逐组件归因，不能宣称自适应反馈独立贡献。
+- 本轮发现：已补质心组件的局部隔离，但固定混合、重启时间、调度与质心在主前沿βtot=.3下的同协议完整矩阵仍缺，无法从源码认定新增组件各自必要。
 - 验证范围：本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。
-- 入口：`adaptive_reflow/algorithm/policy_driver.py`；`adaptive_reflow/algorithm/blender/blender.py`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`
-- 下一步：按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。
+- 入口：`adaptive_reflow/algorithm/policy_driver.py`；`adaptive_reflow/algorithm/blender/blender.py`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`
+- 下一步：按本项剩余范围继续核对已有记录；不自动启动新的长时生成或训练。
 
 ### SC-06 — 首次性、普适性、全面占优是否有依据？
 
@@ -163,21 +163,21 @@
 
 ### SC-12 — 各任务是否验证同一个机制？
 
-- 类别 / 优先级 / 状态：贡献与证据 / P0 / REVISION_NEEDED
+- 类别 / 优先级 / 状态：贡献与证据 / P0 / VERIFIED
 - 验收：建立贡献→组件→实际比较臂→artifact 对应表；只验证集成的任务不得当作算法优势。
-- 本轮发现：已按任务/臂分层呈现；尚未把所有跨域路径核到足以证明同一机制，跨域不再作为统一组件因果证据。
+- 本轮发现：v3表A建立组件→实际比较臂→证据范围。Kanzi是不同来源结构的自编码往返；R6随机序列基线及低预算门控不支持同机制跨域验证；FlowMol3历史坐标扰动与GAP39全通道prior混合分列。验证范围为映射与稿件表述。
 - 验证范围：本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。
-- 入口：`docs/PAPER-EVIDENCE.md`；`docs/paper-evidence.json`；`paper-data`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`
-- 下一步：按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。
+- 入口：`docs/PAPER-EVIDENCE.md`；`docs/paper-evidence.json`；`paper-data`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`
+- 下一步：按本项剩余范围继续核对已有记录；不自动启动新的长时生成或训练。
 
 ### SC-13 — 各实验到底有没有真实多轮重启？
 
 - 类别 / 优先级 / 状态：贡献与证据 / P0 / EVIDENCE_LOCATED
 - 验收：逐格追踪实际启用的调度、restart、反馈与 no-op 路径；单轮不能证明多轮迭代价值。
-- 本轮发现：MNIST真实restart已核实且单轮不能证明多轮价值；其他headline任务的逐路径核查尚未全部闭合。
+- 本轮发现：MNIST端点多轮、Kanzi单次rollout、FlowMol3历史及GAP39一次solve已追踪。R6三份清单nfe10<门槛20，源码915行降一轮；历史清单未存生成提交/加载模式，不能据请求三轮当作实际三轮。其余扩展单元仍逐格保留核对。
 - 验证范围：本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。
-- 入口：`docs/audit/gap80-r5a-harness.md`；`docs/audit/gap95-frontier-grids.md`；`docs/PAPER-EVIDENCE.md`；`scripts/wave191_p3_mnist_sweep.py`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`
-- 下一步：按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。
+- 入口：`docs/audit/gap80-r5a-harness.md`；`docs/audit/gap95-frontier-grids.md`；`docs/PAPER-EVIDENCE.md`；`scripts/wave191_p3_mnist_sweep.py`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`
+- 下一步：按本项剩余范围继续核对已有记录；不自动启动新的长时生成或训练。
 
 ### SC-14 — 已有但未写入中文稿的证据有哪些？
 
@@ -199,12 +199,12 @@
 
 ### SC-16 — 是否有第二条独立可信的实证主线？
 
-- 类别 / 优先级 / 状态：主结果 / P0 / EVIDENCE_LOCATED
+- 类别 / 优先级 / 状态：主结果 / P0 / EVIDENCE_GAP
 - 验收：核对 live 蛋白结果及比较臂、指标、种子/家族限制，判断能否支撑第二主结果，不凭 pooled n 决定。
-- 本轮发现：R6 live指标作为第二领域点证据纳入，不提升为完整前沿；家族/训练重复有效性仍有限。
+- 本轮发现：已追到live R6评价与生成入口：baseline为家族偏置随机抽样，framework走适配器；live指标不等于匹配模型对照。R6清单和门控也不足以证实多轮。当前不存在已闭合的第二条同机制跨家族前沿主线，正文降为描述性结果。
 - 验证范围：本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。
-- 入口：`docs/audit/gap31-r6-live-uplift.md`；`docs/audit/gap95-frontier-grids.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`
-- 下一步：按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。
+- 入口：`docs/audit/gap31-r6-live-uplift.md`；`docs/audit/gap95-frontier-grids.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`
+- 下一步：先从既有匹配模型记录寻找独立同机制证据；没有则保留缺口，不以pooled记录数替代。
 
 ### SC-17 — 训练充分性/检查点条件性是关联还是因果？
 
@@ -264,10 +264,10 @@
 
 - 类别 / 优先级 / 状态：比较公平性 / P0 / REVISION_NEEDED
 - 验收：各臂列相同/变化因素；把solver、初始化、表示桥接、反馈、预算分离；不能归因的结果限缩解释。
-- 本轮发现：共享先验和等RK4调用已核；完整主臂同时改变多项操作，尚缺足够控制臂来独立归因。
+- 本轮发现：v3按任务分列变化因素，Kanzi桥接/样本来源、蛋白生成器不同、FlowMol3先验扰动均不再归因于端点多轮；MNIST已复算质心隔离，但主前沿完整组件归因仍缺。
 - 验证范围：本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。
-- 入口：`docs/PAPER-EVIDENCE.md`；`paper-data`；`adaptive_reflow/adapters`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`
-- 下一步：按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。
+- 入口：`docs/PAPER-EVIDENCE.md`；`paper-data`；`adaptive_reflow/adapters`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`
+- 下一步：按本项剩余范围继续核对已有记录；不自动启动新的长时生成或训练。
 
 ### SC-24 — 是否拼接不同N、seed、checkpoint和evaluator？
 
@@ -291,19 +291,19 @@
 
 - 类别 / 优先级 / 状态：统计 / P0 / EVIDENCE_LOCATED
 - 验收：每个CI/p/效应量写统计单位；pooled记录不替代种子重复，合成变体不替代独立结构。
-- 本轮发现：新稿明确seed/record/cluster概念并不以pooled n代表独立运行；跨域原始统计独立核查仍未全部完成。
+- 本轮发现：新增Kanzi索引相关.04563及四PDB×250变体，Welch仅作独立记录假设敏感性；消融以三个生成种子为单位。R6按qid对应不等于同一序列前后，pooled3000不作独立生成器重复。其他单元单位仍保留逐格核对。
 - 验证范围：本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。
-- 入口：`docs/audit/gap31-r6-live-uplift.md`；`docs/audit/kanzi/p3-kanzi-n1000-framework-inv-proj.md`；`docs/PAPER-EVIDENCE.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`
-- 下一步：按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。
+- 入口：`docs/audit/gap31-r6-live-uplift.md`；`docs/audit/kanzi/p3-kanzi-n1000-framework-inv-proj.md`；`docs/PAPER-EVIDENCE.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`
+- 下一步：按本项剩余范围继续核对已有记录；不自动启动新的长时生成或训练。
 
 ### SC-27 — Kanzi 索引匹配是否错误当作天然配对？
 
-- 类别 / 优先级 / 状态：统计 / P0 / EVIDENCE_GAP
+- 类别 / 优先级 / 状态：统计 / P0 / VERIFIED
 - 验收：追踪实际样本生成和相关性、检验实现及源均值；核对独立样本分析与dz命名，按正确单位重述；不预先认定旧检验正确。
-- 本轮发现：R2聚合文件所指wave218 baseline原始JSON在服务器不存在，不能重建原配对/独立检验；新稿暂不将其显著性列为新主证据。
+- 本轮发现：从0d070700恢复被9c28d52f删除的原baseline，SHA256 be03a0a9…，1000键完全匹配，均值及旧p=.001794精确复现。新增Welch p=.002254、CI[-.031124,-.006804]Å，七R级家族校正p=.01578。两臂测不同来源结构，索引差值不称同输入配对，dz只标历史。验证范围为来源、统计重算与正确解释；不认定天然总体因果获益。
 - 验证范围：本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。
-- 入口：`docs/audit/kanzi/p3-kanzi-n1000-framework-inv-proj.md`；`docs/PAPER-EVIDENCE.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`
-- 下一步：按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。
+- 入口：`docs/audit/kanzi/p3-kanzi-n1000-framework-inv-proj.md`；`docs/PAPER-EVIDENCE.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`
+- 下一步：已复算来源与统计；如要主张同输入优化，另需同输入或同生成器匹配设计，不通过改标签获得。
 
 ### SC-28 — 三种子自举与家族相关性是否充分披露？
 
@@ -318,10 +318,10 @@
 
 - 类别 / 优先级 / 状态：统计 / P1 / REVISION_NEEDED
 - 验收：定义检验家族、选择规则、校正次数、效应量和区间；区分探索与确认，缺失区间不补写。
-- 本轮发现：已将决策阈值和回归区间分开；所有历史检验家族、选择规则和校正仍需逐格核对，特别R2。
+- 本轮发现：Kanzi沿历史七R级家族报告校正p，明确不覆盖后续调参与多指标；消融12区间未作同时覆盖、仅探索描述。全项目选择路径及检验家族仍未统一闭合。
 - 验证范围：本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。
-- 入口：`docs/PAPER-EVIDENCE.md`；`docs/audit/gap84-inference-frontier.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`
-- 下一步：按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。
+- 入口：`docs/PAPER-EVIDENCE.md`；`docs/audit/gap84-inference-frontier.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`
+- 下一步：按本项剩余范围继续核对已有记录；不自动启动新的长时生成或训练。
 
 ### SC-30 — projection-FID 与标准 FID 是否混淆？
 
@@ -345,10 +345,10 @@
 
 - 类别 / 优先级 / 状态：指标 / P1 / EVIDENCE_GAP
 - 验收：核对坐标来源、单位、对齐、几何桥接、PoseBusters与RDKit的区别及逐记录存储完整性。
-- 本轮发现：Kanzi点读数保留为合成重建，原始基线缺失阻碍完整统计和几何协议重建；PoseBusters/RDKit不混称。
+- 本轮发现：Kanzi底层恢复并核对输入为4模板扰动、桥生成结构与各自自编码往返；两臂来源不同不称天然结构恢复。FlowMol3历史proxy及真实通道混合分列，PoseBusters逐分子verdict缺口仍未恢复。
 - 验证范围：本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。
-- 入口：`docs/audit/kanzi/p3-kanzi-n1000-framework-inv-proj.md`；`docs/audit/gap39-flowmol3-real-restart-blend.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`
-- 下一步：按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。
+- 入口：`docs/audit/kanzi/p3-kanzi-n1000-framework-inv-proj.md`；`docs/audit/gap39-flowmol3-real-restart-blend.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`
+- 下一步：按本项剩余范围继续核对已有记录；不自动启动新的长时生成或训练。
 
 ### SC-33 — 质量提升是否伴随新颖性/多样性损失？
 
@@ -363,10 +363,10 @@
 
 - 类别 / 优先级 / 状态：消融与机制 / P0 / EVIDENCE_LOCATED
 - 验收：盘点已有无反馈、固定混合、自适应控制、完整方法对照；相同协议才可拼成因果消融，不存在的格子标缺失。
-- 本轮发现：已定位mean_preserve对均值项的直接影响；不把它写成单独已验证组件收益，同协议完整归因矩阵仍未核齐。
+- 本轮发现：GAP76已有实际质心消融，不只是反事实。36比较从96个既有NPZ复算，协方差控制36/36；seed42仅6/12 Δ≤0未达到8/12预测。βtot=.5与主前沿.3不同，不能补成主前沿完整矩阵。
 - 验证范围：本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。
-- 入口：`adaptive_reflow/algorithm/policy_driver.py`；`docs/ABLATION.md`；`docs/audit/gap90-optsteps-dose.md`；`scripts/wave191_p3_mnist_sweep.py`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`
-- 下一步：按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。
+- 入口：`adaptive_reflow/algorithm/policy_driver.py`；`docs/ABLATION.md`；`docs/audit/gap90-optsteps-dose.md`；`scripts/wave191_p3_mnist_sweep.py`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`
+- 下一步：按本项剩余范围继续核对已有记录；不自动启动新的长时生成或训练。
 
 ### SC-35 — round数、beta、预算分配的解释是否被已有记录反驳？
 
@@ -417,10 +417,10 @@
 
 - 类别 / 优先级 / 状态：呈现与复现 / P2 / EVIDENCE_GAP
 - 验收：区分hash完整性、重放范围、实验有效性；补充精确命令环境、独立clone检查和匿名发布材料。
-- 本轮发现：发现GitHub原副本缺若干被引用前沿JSON，本轮将现存规范化前沿/输入纳入版本控制；完整原始运行及R2缺失源不能由此补造。
+- 本轮发现：恢复原Kanzi并纳入两臂1000记录，新增统计重算工具与SHA清单；消融提供派生表/24份运行汇总，96个服务器NPZ登记hash但未新发布。Git clone可重建统计/表格层，完整样本重生成及匿名材料层仍缺，未称完全复现。
 - 验证范围：本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。
-- 入口：`reproduce`；`paper-data`；`docs/environments.md`；`tools/check_clone_integrity.py`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`
-- 下一步：按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。
+- 入口：`reproduce`；`paper-data`；`docs/environments.md`；`tools/check_clone_integrity.py`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`
+- 下一步：按本项剩余范围继续核对已有记录；不自动启动新的长时生成或训练。
 
 ### SC-41 — 第一轮：主张与贡献是否锁定？
 
@@ -435,10 +435,10 @@
 
 - 类别 / 优先级 / 状态：三轮执行计划 / P1 / REVISION_NEEDED
 - 验收：围绕已核实证据扩写并同步协议、图表和引文；不以背景和工程功能凑篇幅。
-- 本轮发现：方法、相关工作与主结果已实质重写；逐模型引用与完整补充尚需下一轮完成。
+- 本轮发现：已生成v3，新增实际组件消融、Kanzi复算与任务路径映射，收紧跨域主张。完整相关工作匹配对照、全部上游引文及正式英文模板仍待后续。
 - 验证范围：本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。
-- 入口：`docs/audit/gap96-manuscript-compression.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`
-- 下一步：按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。
+- 入口：`docs/audit/gap96-manuscript-compression.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`
+- 下一步：按本项剩余范围继续核对已有记录；不自动启动新的长时生成或训练。
 
 ### SC-43 — 第三轮：是否按拒稿理由复查？
 

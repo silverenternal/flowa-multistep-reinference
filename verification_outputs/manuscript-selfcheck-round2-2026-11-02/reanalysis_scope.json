@@ -1,0 +1,12 @@
+{
+  "cells": 36,
+  "source_npz_files": 96,
+  "control_passed": 36,
+  "max_trace_difference": 7.105427357601002e-15,
+  "max_cross_difference": 7.815970093361102e-14,
+  "nonpositive_seed42": 6,
+  "nonpositive_all_seeds": 18,
+  "historical_report_max_delta_difference": 9.540542578179156e-08,
+  "sampling_or_training": false,
+  "statistics_scope": "3 generating seeds per checkpoint/arm; no simultaneous-CI correction; beta_total=.5 differs from main frontier .3"
+}
