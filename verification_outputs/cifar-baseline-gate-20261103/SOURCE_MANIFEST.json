@@ -1,0 +1,44 @@
+[
+  {
+    "path": "verification_outputs/cifar-baseline-gate-20261103/FORWARD_PARITY.json",
+    "bytes": 166,
+    "sha256": "1be6d271605f45a496f1b8449c7d783bb076e659fbc4897663b7688367baa262",
+    "tracked_for_replay": true
+  },
+  {
+    "path": "verification_outputs/cifar-baseline-gate-20261103/METADATA.json",
+    "bytes": 1942,
+    "sha256": "eda150b1d2d571649961e002452531d05a180e654553c3e568b971de64134fce",
+    "tracked_for_replay": true
+  },
+  {
+    "path": "verification_outputs/cifar-baseline-gate-20261103/REAL_REAL_CALIBRATION.json",
+    "bytes": 724,
+    "sha256": "04334aba3f22a9b02ddf8e8caba5315db2d228d9a7374fa9b13702babe9a1f40",
+    "tracked_for_replay": true
+  },
+  {
+    "path": "verification_outputs/cifar-baseline-gate-20261103/RESULT.json",
+    "bytes": 747,
+    "sha256": "99f2960d7b2741b9032a5fcc9590965b860dedf0e8396b933e577db86ab6c1ea",
+    "tracked_for_replay": true
+  },
+  {
+    "path": "verification_outputs/cifar-baseline-gate-20261103/baseline_samples.npz",
+    "bytes": 11316546,
+    "sha256": "4cc3dc5ccd654c793c26f295627955e284624f409bf0fa0d7cfddecd57946cac",
+    "tracked_for_replay": false
+  },
+  {
+    "path": "verification_outputs/cifar-baseline-gate-20261103/calibrate_fid.py",
+    "bytes": 1247,
+    "sha256": "555881805aaac669fc47f64e48796db3c1eb07aba64917c042d7e89c2b42344b",
+    "tracked_for_replay": true
+  },
+  {
+    "path": "verification_outputs/cifar-baseline-gate-20261103/tfport_features.npz",
+    "bytes": 80820735,
+    "sha256": "b327c8d049a8a05e6ce2ecfa1249c37a01b12d8ae143615987e42f91c8dfcc47",
+    "tracked_for_replay": false
+  }
+]

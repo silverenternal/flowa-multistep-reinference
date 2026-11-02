@@ -1,0 +1,23 @@
+{
+  "n": 1000,
+  "n_reference": 10000,
+  "n_skipped": 0,
+  "baseline_fid_tfport": 35.50453342283913,
+  "baseline_gate_pass": false,
+  "generation_wall_s": 28.3672428970458,
+  "total_wall_s": 76.94420420296956,
+  "forward_parity": {
+    "max_abs": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "pass": true,
+    "fir_extension": "unavailable stub; never called; reference fir=False",
+    "model_state_keys": 565
+  },
+  "feature_family": "pytorch_fid TF-port InceptionV3 2048 pool3; reference recomputed from same10k test images",
+  "legacy_cache_family": "torchvision.inception_v3.IMAGENET1K_V1.pool3",
+  "legacy_cache_compatible": false,
+  "scope": "Diagnostic, single seed; not a frontier or method win, not a reproduction of published50k FID."
+}

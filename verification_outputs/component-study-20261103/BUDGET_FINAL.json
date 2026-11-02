@@ -1,0 +1,8 @@
+{
+  "user_gpu_seconds_limit": 7200,
+  "sum_recorded_gpu_bearing_wall_seconds": 320.07331094902474,
+  "conservative_rounded_accounted_seconds": 360,
+  "remaining_unspent_seconds": 6840,
+  "no_further_gpu_jobs_this_round": true,
+  "cpu_only_calibration_and_reporting_excluded": true
+}

@@ -1,0 +1,36 @@
+{
+  "registered_utc": "2026-11-02T17:21:25.910043+00:00",
+  "command": [
+    "tools/cifar_baseline_gate_20261103.py",
+    "--official-source",
+    "/tmp/flowa-rf-official-20261103/ImageGeneration",
+    "--official-commit",
+    "5a1fd4dd3ea7db764ce370a84ce35f9c8b15fde6",
+    "--device",
+    "cuda:1",
+    "--out",
+    "verification_outputs/cifar-baseline-gate-20261103"
+  ],
+  "N": 1000,
+  "seed": 42,
+  "steps": 50,
+  "solver": "official Euler convention eps=.001, dt=1/S; no state clipping; only output clamp for features",
+  "device": "cuda:1",
+  "budget_wall_s": 1800,
+  "gate": "original Python model forward matches port within max_abs 1e-4 at 3 time labels; baseline TF-port FID<10 at N1000 vs fresh10k test reference before any framework comparisons",
+  "official_repository": "https://github.com/gnobitab/RectifiedFlow",
+  "official_commit": "5a1fd4dd3ea7db764ce370a84ce35f9c8b15fde6",
+  "official_code_sha256": {
+    "models/ncsnpp.py": "e8f08294d8f22687a53cbd4d2e271d5677db6c9c82936dcb81b5b790a7760f4f",
+    "models/layerspp.py": "55714531661209ede4c30df64f8660abcf21addc09d6ccf947911dd7e8e8da50",
+    "models/layers.py": "132b0c564d96c23448c2026cc1b19b8cafc484751f4a34a78ca56a25d01af7b5",
+    "sampling.py": "653407a258be0be930dad38871c234e0968892387d0130c7fed39646d6a2d8ed"
+  },
+  "weights": "/home/hugo/codes/flowa-multistep-reinference/data/cifar10_rf.pth",
+  "weights_sha256": "c29936c219f34800131c07b81a8da4862b0c0b6f4e5e50efea267d24eef1f2ec",
+  "reference_sha256": "01b4857db8f8c3ea2e20fcdf962216a6fe7f8563969ba7d0370e75220616aaa7",
+  "legacy_reference_features_sha256": "a3736bb7ff369f5a5b31b112fbaeb139cb48949c0076b36e40ecf198ae61d617",
+  "runner_sha256": "c70721eedd88e0522dbca1e555e06fda90583897203d2ba94f25c2c18a2a03d4",
+  "base_commit": "0900ec4dc231728a80202eee541330db8bc87df0",
+  "gpu_snapshot": "0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97340 MiB, 0 %\n1, NVIDIA GeForce RTX 5090, 32202 MiB, 0 %\n"
+}

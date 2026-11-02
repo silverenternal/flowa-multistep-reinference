@@ -1,0 +1,133 @@
+{
+  "checkpoint": "w16e1_5k",
+  "seed": 42,
+  "n": 1000,
+  "pilot_only": false,
+  "arms": {
+    "baseline": {
+      "projection_fid": 24.497662040564194,
+      "projection_kid": 1.188550813592646,
+      "actual_velocity_calls_per_sample": 200,
+      "integration_steps": [
+        50
+      ],
+      "n_processed": 1000,
+      "n_skipped": 0,
+      "generation_wall_s": 5.009925964055583,
+      "configuration": {
+        "rounds": 1
+      }
+    },
+    "full": {
+      "projection_fid": 21.362229647874223,
+      "projection_kid": 1.1924998009670071,
+      "actual_velocity_calls_per_sample": 200,
+      "integration_steps": [
+        25,
+        18,
+        6,
+        1
+      ],
+      "n_processed": 1000,
+      "n_skipped": 0,
+      "generation_wall_s": 5.080957138095982,
+      "configuration": {
+        "beta": 0.3,
+        "mean_preserve": true,
+        "restart_t0_mode": "memory",
+        "restart_t0": null,
+        "allocation": "scheduler"
+      }
+    },
+    "no_mean": {
+      "projection_fid": 20.847348816886736,
+      "projection_kid": 1.1005513390684634,
+      "actual_velocity_calls_per_sample": 200,
+      "integration_steps": [
+        25,
+        18,
+        6,
+        1
+      ],
+      "n_processed": 1000,
+      "n_skipped": 0,
+      "generation_wall_s": 5.025211749016307,
+      "configuration": {
+        "beta": 0.3,
+        "mean_preserve": false,
+        "restart_t0_mode": "memory",
+        "restart_t0": null,
+        "allocation": "scheduler"
+      }
+    },
+    "uniform_budget": {
+      "projection_fid": 21.379009596490015,
+      "projection_kid": 1.1927638641406855,
+      "actual_velocity_calls_per_sample": 200,
+      "integration_steps": [
+        13,
+        13,
+        12,
+        12
+      ],
+      "n_processed": 1000,
+      "n_skipped": 0,
+      "generation_wall_s": 5.056266264989972,
+      "configuration": {
+        "beta": 0.3,
+        "mean_preserve": true,
+        "restart_t0_mode": "memory",
+        "restart_t0": null,
+        "allocation": "uniform"
+      }
+    },
+    "no_mix_fixed_time": {
+      "projection_fid": 21.512150040352957,
+      "projection_kid": 1.1878616028948468,
+      "actual_velocity_calls_per_sample": 200,
+      "integration_steps": [
+        25,
+        18,
+        6,
+        1
+      ],
+      "n_processed": 1000,
+      "n_skipped": 0,
+      "generation_wall_s": 5.053008547984064,
+      "configuration": {
+        "beta": 0.0,
+        "mean_preserve": true,
+        "restart_t0_mode": "memory",
+        "restart_t0": 0.8879040017426006,
+        "allocation": "scheduler"
+      }
+    },
+    "zero_restart_time": {
+      "projection_fid": 19.95881809761788,
+      "projection_kid": 1.1849370647688238,
+      "actual_velocity_calls_per_sample": 200,
+      "integration_steps": [
+        25,
+        18,
+        6,
+        1
+      ],
+      "n_processed": 1000,
+      "n_skipped": 0,
+      "generation_wall_s": 5.063380467006937,
+      "configuration": {
+        "beta": 0.3,
+        "mean_preserve": true,
+        "restart_t0_mode": "zero",
+        "restart_t0": null,
+        "allocation": "scheduler"
+      }
+    }
+  },
+  "reproduction_guard": {
+    "baseline": 3.140459625683434e-08,
+    "framework": 9.441574633228811e-08
+  },
+  "wall_s": 35.2152263589669,
+  "completed_utc": "2026-11-02T17:17:01.907126+00:00"
+}

@@ -1,0 +1,59 @@
+{
+  "registered_utc": "2026-11-02T17:15:15.349469+00:00",
+  "registration_kind": "local prospective lock before pilot/scientific runs; not a public registry",
+  "user_budget_gpu_hours": 2,
+  "allocated_study_wall_limit_s": 1800,
+  "per_cell_wall_limit_s": 600,
+  "model": "project MNIST flow-matching frozen UNet",
+  "checkpoints": [
+    "w16e1_5k",
+    "production"
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "n_per_arm_seed": 1000,
+  "pilot_n": 64,
+  "pilot_use": "code/budget validation only; no scientific claims",
+  "total_integration_steps": 50,
+  "velocity_calls_per_sample": 200,
+  "rounds": 4,
+  "beta_total": 0.3,
+  "default_restart_time": 0.8879040017426006,
+  "shared_prior": true,
+  "seed_keyed_prior": true,
+  "dtype": "float64",
+  "backend": "TorchMnistVelocity",
+  "physical_gpu": 0,
+  "arms": [
+    "baseline",
+    "full",
+    "no_mean",
+    "uniform_budget",
+    "no_mix_fixed_time",
+    "zero_restart_time"
+  ],
+  "changes": {
+    "no_mean": "only final centroid translation disabled",
+    "uniform_budget": "only step allocation changed; first-round anchor changes as a mediated consequence",
+    "no_mix_fixed_time": "identity state mix; restart time held to full=.7**(1/3)",
+    "zero_restart_time": "same state mix and allocation; later integration starts at zero"
+  },
+  "all_framework_calls_use_same_arm_name": "evidence_driven; avoid changing arm-keyed random input policy",
+  "primary_metric": "projection-FID with existing fixed128D projection and full10k test reference",
+  "secondary_metric": "projection-KID degree3 polynomial U-statistic; fixed1000 reference subset rng20261103, exploratory, not Inception KID",
+  "primary_tests": "8 full-versus-component paired-seed contrasts (4 components x2 checkpoints), two-sided t df2 with Holm family correction; mean control-minus-full and raw/unadjusted CI also reported",
+  "effect_floor": "1 projection-FID unit; statistical evidence alone does not establish practical improvement or frontier win",
+  "reproduction_guard": "each scientific baseline/full at seed42/43/44 must match historical S50 same-checkpoint seed FID within1e-4; failure halts scientific interpretation",
+  "visual_selection": "first64 generated indices, same arms and seeds; no result-based selection",
+  "not_claimed": [
+    "full causal factorial interactions",
+    "closest original Restart benchmark",
+    "second model family frontier",
+    "CAS tier1 acceptance guarantee"
+  ],
+  "source_commit_base": "0900ec4dc231728a80202eee541330db8bc87df0",
+  "driver_sha256": "e9e442023fd5986f07a5e1e3ad8d05b57d4882f62f3870924671a7d87b41cd7f"
+}

@@ -20,7 +20,10 @@
     "live评价器不等同于匹配生成器对照；R6随机序列基线与门控限制已进入v3。",
     "第三轮纠正前稿“每轮至少两步”：legacy命名min_steps_per_round仅限制总轮数，实际权重分配可有一步轮次。",
     "第三轮定位旧GAP93的−.3648为百分比，绝对指标差为−.0364203；β=.5的高预算平台没有测。",
-    "原LineageFlow已提出rerouting，新增为直接相关工作；Kanzi书目按Dilip等原文，不沿用旧JSON的Shah标签。"
+    "原LineageFlow已提出rerouting，新增为直接相关工作；Kanzi书目按Dilip等原文，不沿用旧JSON的Shah标签。",
+    "第四轮主参数匹配消融显示质心保持与零时间重启的作用随检查点反向，不能沿用β=.5局部结果推定β=.3组件必要性。",
+    "独立CIFAR TF-port与旧torchvision特征缓存不兼容；N1000 real-real FID32.0719，初始<10门槛未校准且没有通过。",
+    "弱检查点projection-FID降低但探索性projection-KID上升；图像仍有明显形态缺陷，不能称全面感知质量改善。"
   ],
   "items": [
     {
@@ -155,12 +158,16 @@
         "docs/drafts/paper-A-zh-reviewed-2026-11-02.md",
         "docs/audit/manuscript-selfcheck-round2-2026-11-02.md",
         "docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md",
-        "verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json"
+        "verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json",
+        "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+        "docs/drafts/paper-A-zh-reviewed-round4-2026-11-03.md",
+        "verification_outputs/component-study-20261103/REPORT.json",
+        "verification_outputs/component-study-20261103/PROTOCOL.json"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
       "status": "EVIDENCE_GAP",
-      "finding": "已补质心组件的局部隔离，但固定混合、重启时间、调度与质心在主前沿βtot=.3下的同协议完整矩阵仍缺，无法从源码认定新增组件各自必要。",
-      "next_action": "按本项剩余范围继续核对已有记录；不自动启动新的长时生成或训练。",
+      "finding": "已完成主参数β=.3、两检查点×三种子×六臂、C200匹配组件矩阵；均匀预算差异远小于1单位，无法支持原调度的实用必要性。 该矩阵削弱组件必要性主张，未给出超越最接近方法的唯一创新性证据；创新性验收仍未闭合。",
+      "next_action": "继续检验其余检查点/多预算与交互；本项只验收局部组件对照，不验收新颖性或普适必要性。",
       "history": [
         {
           "round": "registration",
@@ -172,11 +179,17 @@
           "finding": "源码确认主配置包含partial-time restart与batch质心平移；缺同协议逐组件归因，不能宣称自适应反馈独立贡献。",
           "review_round": "round1-2026-11-02",
           "review_record": "docs/audit/manuscript-selfcheck-round1-2026-11-02.md"
+        },
+        {
+          "status": "EVIDENCE_GAP",
+          "finding": "已补质心组件的局部隔离，但固定混合、重启时间、调度与质心在主前沿βtot=.3下的同协议完整矩阵仍缺，无法从源码认定新增组件各自必要。",
+          "review_round": "round2-2026-11-02",
+          "review_record": "docs/audit/manuscript-selfcheck-round2-2026-11-02.md"
         }
       ],
-      "review_round": "round2-2026-11-02",
-      "review_record": "docs/audit/manuscript-selfcheck-round2-2026-11-02.md",
-      "verification_scope": "本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。"
+      "review_round": "round4-2026-11-03",
+      "review_record": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+      "verification_scope": "继续检验其余检查点/多预算与交互；本项只验收局部组件对照，不验收新颖性或普适必要性。"
     },
     {
       "id": "SC-06",
@@ -499,12 +512,16 @@
         "docs/drafts/paper-A-zh-reviewed-2026-11-02.md",
         "docs/audit/manuscript-selfcheck-round2-2026-11-02.md",
         "docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md",
-        "verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json"
+        "verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json",
+        "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+        "docs/drafts/paper-A-zh-reviewed-round4-2026-11-03.md",
+        "verification_outputs/component-study-20261103/REPORT.json",
+        "verification_outputs/component-study-20261103/PROTOCOL.json"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
       "status": "EVIDENCE_GAP",
-      "finding": "已追到live R6评价与生成入口：baseline为家族偏置随机抽样，framework走适配器；live指标不等于匹配模型对照。R6清单和门控也不足以证实多轮。当前不存在已闭合的第二条同机制跨家族前沿主线，正文降为描述性结果。",
-      "next_action": "先从既有匹配模型记录寻找独立同机制证据；没有则保留缺口，不以pooled记录数替代。",
+      "finding": "新增独立CIFAR官方网络逐点一致性零误差；N1000基线TF-port FID35.5045、初始<10门槛失败，real-real校准32.0719提示门槛失当。未生成方法比较，第二家族前沿仍缺。",
+      "next_action": "先锁定适合样本量的独立评价协议，再进行第二家族多预算匹配比较；不得把门槛失败改记通过。",
       "history": [
         {
           "round": "registration",
@@ -516,11 +533,17 @@
           "finding": "R6 live指标作为第二领域点证据纳入，不提升为完整前沿；家族/训练重复有效性仍有限。",
           "review_round": "round1-2026-11-02",
           "review_record": "docs/audit/manuscript-selfcheck-round1-2026-11-02.md"
+        },
+        {
+          "status": "EVIDENCE_GAP",
+          "finding": "已追到live R6评价与生成入口：baseline为家族偏置随机抽样，framework走适配器；live指标不等于匹配模型对照。R6清单和门控也不足以证实多轮。当前不存在已闭合的第二条同机制跨家族前沿主线，正文降为描述性结果。",
+          "review_round": "round2-2026-11-02",
+          "review_record": "docs/audit/manuscript-selfcheck-round2-2026-11-02.md"
         }
       ],
-      "review_round": "round2-2026-11-02",
-      "review_record": "docs/audit/manuscript-selfcheck-round2-2026-11-02.md",
-      "verification_scope": "本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。"
+      "review_round": "round4-2026-11-03",
+      "review_record": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+      "verification_scope": "先锁定适合样本量的独立评价协议，再进行第二家族多预算匹配比较；不得把门槛失败改记通过。"
     },
     {
       "id": "SC-17",
@@ -709,12 +732,16 @@
         "docs/drafts/paper-A-zh-reviewed-2026-11-02.md",
         "docs/audit/manuscript-selfcheck-round2-2026-11-02.md",
         "docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md",
-        "verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json"
+        "verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json",
+        "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+        "docs/drafts/paper-A-zh-reviewed-round4-2026-11-03.md",
+        "verification_outputs/component-study-20261103/REPORT.json",
+        "verification_outputs/component-study-20261103/PROTOCOL.json"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
-      "status": "REVISION_NEEDED",
-      "finding": "v3按任务分列变化因素，Kanzi桥接/样本来源、蛋白生成器不同、FlowMol3先验扰动均不再归因于端点多轮；MNIST已复算质心隔离，但主前沿完整组件归因仍缺。",
-      "next_action": "按本项剩余范围继续核对已有记录；不自动启动新的长时生成或训练。",
+      "status": "VERIFIED",
+      "finding": "主参数单因素矩阵识别局部干预效应：质心保持和重启起点作用随检查点反向，固定时间下取消混合效应小；不再归因于全部组件共同必要。",
+      "next_action": "验证范围为局部干预效应；交互项、训练重复与速度场误差因果解释仍未识别。",
       "history": [
         {
           "round": "registration",
@@ -726,11 +753,17 @@
           "finding": "共享先验和等RK4调用已核；完整主臂同时改变多项操作，尚缺足够控制臂来独立归因。",
           "review_round": "round1-2026-11-02",
           "review_record": "docs/audit/manuscript-selfcheck-round1-2026-11-02.md"
+        },
+        {
+          "status": "REVISION_NEEDED",
+          "finding": "v3按任务分列变化因素，Kanzi桥接/样本来源、蛋白生成器不同、FlowMol3先验扰动均不再归因于端点多轮；MNIST已复算质心隔离，但主前沿完整组件归因仍缺。",
+          "review_round": "round2-2026-11-02",
+          "review_record": "docs/audit/manuscript-selfcheck-round2-2026-11-02.md"
         }
       ],
-      "review_round": "round2-2026-11-02",
-      "review_record": "docs/audit/manuscript-selfcheck-round2-2026-11-02.md",
-      "verification_scope": "本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。"
+      "review_round": "round4-2026-11-03",
+      "review_record": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+      "verification_scope": "验证范围为局部干预效应；交互项、训练重复与速度场误差因果解释仍未识别。"
     },
     {
       "id": "SC-24",
@@ -1089,12 +1122,16 @@
         "docs/drafts/paper-A-zh-reviewed-2026-11-02.md",
         "docs/audit/manuscript-selfcheck-round2-2026-11-02.md",
         "docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md",
-        "verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json"
+        "verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json",
+        "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+        "docs/drafts/paper-A-zh-reviewed-round4-2026-11-03.md",
+        "verification_outputs/component-study-20261103/REPORT.json",
+        "verification_outputs/component-study-20261103/PROTOCOL.json"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
-      "status": "EVIDENCE_LOCATED",
-      "finding": "GAP76已有实际质心消融，不只是反事实。36比较从96个既有NPZ复算，协方差控制36/36；seed42仅6/12 Δ≤0未达到8/12预测。βtot=.5与主前沿.3不同，不能补成主前沿完整矩阵。",
-      "next_action": "按本项剩余范围继续核对已有记录；不自动启动新的长时生成或训练。",
+      "status": "VERIFIED",
+      "finding": "新增主参数完整配置、无质心、均匀分配、固定时间无混合、零时间重启及单轮基线，六单元全部无跳过、调用计数均C200，历史复现保护全部通过。",
+      "next_action": "本项关闭主参数局部矩阵缺口；完整因子交互、其他检查点及多预算不在本次验收范围。",
       "history": [
         {
           "round": "registration",
@@ -1106,11 +1143,17 @@
           "finding": "已定位mean_preserve对均值项的直接影响；不把它写成单独已验证组件收益，同协议完整归因矩阵仍未核齐。",
           "review_round": "round1-2026-11-02",
           "review_record": "docs/audit/manuscript-selfcheck-round1-2026-11-02.md"
+        },
+        {
+          "status": "EVIDENCE_LOCATED",
+          "finding": "GAP76已有实际质心消融，不只是反事实。36比较从96个既有NPZ复算，协方差控制36/36；seed42仅6/12 Δ≤0未达到8/12预测。βtot=.5与主前沿.3不同，不能补成主前沿完整矩阵。",
+          "review_round": "round2-2026-11-02",
+          "review_record": "docs/audit/manuscript-selfcheck-round2-2026-11-02.md"
         }
       ],
-      "review_round": "round2-2026-11-02",
-      "review_record": "docs/audit/manuscript-selfcheck-round2-2026-11-02.md",
-      "verification_scope": "本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。"
+      "review_round": "round4-2026-11-03",
+      "review_record": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+      "verification_scope": "本项关闭主参数局部矩阵缺口；完整因子交互、其他检查点及多预算不在本次验收范围。"
     },
     {
       "id": "SC-35",
@@ -1192,12 +1235,16 @@
         "docs/audit/manuscript-selfcheck-round3-2026-11-03.md",
         "docs/drafts/paper-A-zh-reviewed-round3-2026-11-03.md",
         "docs/audit/manuscript-literature-ledger-2026-11-03.md",
-        "verification_outputs/manuscript-selfcheck-round3-2026-11-03/sensitivity.json"
+        "verification_outputs/manuscript-selfcheck-round3-2026-11-03/sensitivity.json",
+        "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+        "docs/drafts/paper-A-zh-reviewed-round4-2026-11-03.md",
+        "verification_outputs/component-study-20261103/REPORT.json",
+        "verification_outputs/component-study-20261103/PROTOCOL.json"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
-      "status": "REVISION_NEEDED",
-      "finding": "v4新增敏感性表和指标来源表，保留两幅主图；h=2定义和β单位已同步。定性样本案例与完整匿名补充仍未完成。",
-      "next_action": "按本项限定范围保留已完成核对；剩余证据不足不通过改标签消除，先查现有材料，不自动启动长时采样。",
+      "status": "VERIFIED",
+      "finding": "新增事前保存前64索引中前8样本图，两个检查点六臂并列、seed42、统一显示范围；稿中明确碎片和形态缺陷，不以FID代替视觉质量。",
+      "next_action": "本项只验收不挑样本的定性展示；仍需独立任务指标或盲评，不把样本图当确认性质量证据。",
       "history": [
         {
           "round": "registration",
@@ -1209,11 +1256,17 @@
           "finding": "已增加六点含种子SD前沿图、三条受控轴图和方法/协议/证据表；定性样本案例、完整匿名补充仍未完成。",
           "review_round": "round1-2026-11-02",
           "review_record": "docs/audit/manuscript-selfcheck-round1-2026-11-02.md"
+        },
+        {
+          "status": "REVISION_NEEDED",
+          "finding": "v4新增敏感性表和指标来源表，保留两幅主图；h=2定义和β单位已同步。定性样本案例与完整匿名补充仍未完成。",
+          "review_round": "round3-2026-11-03",
+          "review_record": "docs/audit/manuscript-selfcheck-round3-2026-11-03.md"
         }
       ],
-      "review_round": "round3-2026-11-03",
-      "review_record": "docs/audit/manuscript-selfcheck-round3-2026-11-03.md",
-      "verification_scope": "本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。"
+      "review_round": "round4-2026-11-03",
+      "review_record": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+      "verification_scope": "本项只验收不挑样本的定性展示；仍需独立任务指标或盲评，不把样本图当确认性质量证据。"
     },
     {
       "id": "SC-38",
@@ -1295,12 +1348,16 @@
         "docs/audit/manuscript-selfcheck-round2-2026-11-02.md",
         "docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md",
         "verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json",
-        "verification_outputs/manuscript-selfcheck-round3-2026-11-03/thread_environment_check.json"
+        "verification_outputs/manuscript-selfcheck-round3-2026-11-03/thread_environment_check.json",
+        "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+        "docs/drafts/paper-A-zh-reviewed-round4-2026-11-03.md",
+        "verification_outputs/component-study-20261103/REPORT.json",
+        "verification_outputs/component-study-20261103/PROTOCOL.json"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
-      "status": "EVIDENCE_GAP",
-      "finding": "恢复原Kanzi并纳入两臂1000记录，新增统计重算工具与SHA清单；消融提供派生表/24份运行汇总，96个服务器NPZ登记hash但未新发布。Git clone可重建统计/表格层，完整样本重生成及匿名材料层仍缺，未称完全复现。 第三轮在限制BLAS/OpenMP线程后Lumina哈希回归不一致，恢复原环境通过；不扩大逐字节复现承诺。39次敏感性summary可从clone重聚合，未重新验证原始生成环境。",
-      "next_action": "按本项剩余范围继续核对已有记录；不自动启动新的长时生成或训练。",
+      "status": "VERIFIED",
+      "finding": "v5明确工程门禁、审计复算与科学有效性分开：36对保存特征指标可复算不能证明方法新颖或外部泛化；新增权重/特征发布层与服务器保留大文件边界清楚。",
+      "next_action": "验收表图/统计/特征指标重算层；未声称冷克隆可完整重生成所有历史样本。",
       "history": [
         {
           "round": "registration",
@@ -1318,11 +1375,17 @@
           "finding": "恢复原Kanzi并纳入两臂1000记录，新增统计重算工具与SHA清单；消融提供派生表/24份运行汇总，96个服务器NPZ登记hash但未新发布。Git clone可重建统计/表格层，完整样本重生成及匿名材料层仍缺，未称完全复现。",
           "review_round": "round2-2026-11-02",
           "review_record": "docs/audit/manuscript-selfcheck-round2-2026-11-02.md"
+        },
+        {
+          "status": "EVIDENCE_GAP",
+          "finding": "恢复原Kanzi并纳入两臂1000记录，新增统计重算工具与SHA清单；消融提供派生表/24份运行汇总，96个服务器NPZ登记hash但未新发布。Git clone可重建统计/表格层，完整样本重生成及匿名材料层仍缺，未称完全复现。 第三轮在限制BLAS/OpenMP线程后Lumina哈希回归不一致，恢复原环境通过；不扩大逐字节复现承诺。39次敏感性summary可从clone重聚合，未重新验证原始生成环境。",
+          "review_round": "round3-2026-11-03",
+          "review_record": "docs/audit/manuscript-selfcheck-round3-2026-11-03.md"
         }
       ],
-      "review_round": "round3-2026-11-03",
-      "review_record": "docs/audit/manuscript-selfcheck-round3-2026-11-03.md",
-      "verification_scope": "本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。"
+      "review_round": "round4-2026-11-03",
+      "review_record": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+      "verification_scope": "本项验收“审计不等于科学正确性”的明确表述及可重算层次；外部有效性仍见SC04/16。"
     },
     {
       "id": "SC-41",
@@ -1370,7 +1433,7 @@
       ],
       "evidence_type": "WORKFLOW",
       "status": "REVISION_NEEDED",
-      "finding": "新增中文v4，按源码更正预算cap、补敏感性和主要文献及metric定义。正式英文模板、定性图和缺失的公平对照仍未完成。",
+      "finding": "v5纳入主参数局部组件矩阵、固定索引定性图、探索性核距离和CIFAR评价校准；正式英文模板、完整匿名材料及公平对照仍未完成。",
       "next_action": "按本项限定范围保留已完成核对；剩余证据不足不通过改标签消除，先查现有材料，不自动启动长时采样。",
       "history": [
         {
@@ -1389,10 +1452,16 @@
           "finding": "已生成v3，新增实际组件消融、Kanzi复算与任务路径映射，收紧跨域主张。完整相关工作匹配对照、全部上游引文及正式英文模板仍待后续。",
           "review_round": "round2-2026-11-02",
           "review_record": "docs/audit/manuscript-selfcheck-round2-2026-11-02.md"
+        },
+        {
+          "status": "REVISION_NEEDED",
+          "finding": "新增中文v4，按源码更正预算cap、补敏感性和主要文献及metric定义。正式英文模板、定性图和缺失的公平对照仍未完成。",
+          "review_round": "round3-2026-11-03",
+          "review_record": "docs/audit/manuscript-selfcheck-round3-2026-11-03.md"
         }
       ],
-      "review_round": "round3-2026-11-03",
-      "review_record": "docs/audit/manuscript-selfcheck-round3-2026-11-03.md",
+      "review_round": "round4-2026-11-03",
+      "review_record": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
       "verification_scope": "本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。"
     },
     {
@@ -1476,5 +1545,5 @@
       "verification_scope": "本项列明的源码或稿件修正；不是整项外部有效性、创新性或审稿录用保证。"
     }
   ],
-  "latest_round": "round3-2026-11-03"
+  "latest_round": "round4-2026-11-03"
 }

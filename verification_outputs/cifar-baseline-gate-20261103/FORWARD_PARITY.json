@@ -1,0 +1,10 @@
+{
+  "max_abs": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "pass": true,
+  "fir_extension": "unavailable stub; never called; reference fir=False",
+  "model_state_keys": 565
+}

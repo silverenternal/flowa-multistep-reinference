@@ -1,0 +1,138 @@
+{
+  "jobs": [
+    {
+      "checkpoint": "w16e1_5k",
+      "seed": 42,
+      "exit_code": 0,
+      "wall_s": 37.313515501096845,
+      "argv": [
+        "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+        "tools/component_study_20261103.py",
+        "--checkpoint",
+        "w16e1_5k",
+        "--seed",
+        "42",
+        "--n",
+        "1000",
+        "--device",
+        "cuda:0",
+        "--protocol",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/component-study-20261103/PROTOCOL.json",
+        "--out",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/component-study-20261103/w16e1_5k_s42"
+      ]
+    },
+    {
+      "checkpoint": "w16e1_5k",
+      "seed": 43,
+      "exit_code": 0,
+      "wall_s": 37.41335635993164,
+      "argv": [
+        "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+        "tools/component_study_20261103.py",
+        "--checkpoint",
+        "w16e1_5k",
+        "--seed",
+        "43",
+        "--n",
+        "1000",
+        "--device",
+        "cuda:0",
+        "--protocol",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/component-study-20261103/PROTOCOL.json",
+        "--out",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/component-study-20261103/w16e1_5k_s43"
+      ]
+    },
+    {
+      "checkpoint": "w16e1_5k",
+      "seed": 44,
+      "exit_code": 0,
+      "wall_s": 37.37358387897257,
+      "argv": [
+        "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+        "tools/component_study_20261103.py",
+        "--checkpoint",
+        "w16e1_5k",
+        "--seed",
+        "44",
+        "--n",
+        "1000",
+        "--device",
+        "cuda:0",
+        "--protocol",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/component-study-20261103/PROTOCOL.json",
+        "--out",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/component-study-20261103/w16e1_5k_s44"
+      ]
+    },
+    {
+      "checkpoint": "production",
+      "seed": 42,
+      "exit_code": 0,
+      "wall_s": 37.567641256027855,
+      "argv": [
+        "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+        "tools/component_study_20261103.py",
+        "--checkpoint",
+        "production",
+        "--seed",
+        "42",
+        "--n",
+        "1000",
+        "--device",
+        "cuda:0",
+        "--protocol",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/component-study-20261103/PROTOCOL.json",
+        "--out",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/component-study-20261103/production_s42"
+      ]
+    },
+    {
+      "checkpoint": "production",
+      "seed": 43,
+      "exit_code": 0,
+      "wall_s": 37.41713796707336,
+      "argv": [
+        "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+        "tools/component_study_20261103.py",
+        "--checkpoint",
+        "production",
+        "--seed",
+        "43",
+        "--n",
+        "1000",
+        "--device",
+        "cuda:0",
+        "--protocol",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/component-study-20261103/PROTOCOL.json",
+        "--out",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/component-study-20261103/production_s43"
+      ]
+    },
+    {
+      "checkpoint": "production",
+      "seed": 44,
+      "exit_code": 0,
+      "wall_s": 37.818822524975985,
+      "argv": [
+        "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+        "tools/component_study_20261103.py",
+        "--checkpoint",
+        "production",
+        "--seed",
+        "44",
+        "--n",
+        "1000",
+        "--device",
+        "cuda:0",
+        "--protocol",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/component-study-20261103/PROTOCOL.json",
+        "--out",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/component-study-20261103/production_s44"
+      ]
+    }
+  ],
+  "conservative_gpu_bearing_wall_s": 243.1291067460552,
+  "budget_phase_s": 1800
+}

@@ -1,0 +1,25 @@
+{
+  "purpose": "Independent metric resolution diagnostic after initial numerical threshold failed; no framework outcome viewed or generated on CIFAR",
+  "permutation_seed": 20261103,
+  "feature_family": "TF-port InceptionV3",
+  "disjoint_real_splits": [
+    {
+      "real_A": 1000,
+      "real_B": 9000,
+      "fid": 32.07189203269235
+    },
+    {
+      "real_A": 2000,
+      "real_B": 8000,
+      "fid": 16.887021160861366
+    },
+    {
+      "real_A": 5000,
+      "real_B": 5000,
+      "fid": 10.477095668067932
+    }
+  ],
+  "generated1000_vs_real10000_fid": 35.50453342283913,
+  "wall_s": 22.15639200399164,
+  "note": "Real-real FID is a finite-sample calibration, not a quantity to subtract as an unbiased correction."
+}

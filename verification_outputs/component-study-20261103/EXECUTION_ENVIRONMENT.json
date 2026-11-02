@@ -1,0 +1,12 @@
+{
+  "record_kind": "post-run supplement; original metadata preserved",
+  "canonical_job_env": {
+    "OPENBLAS_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "PYTHONPATH": "/home/hugo/codes/flowa-multistep-reinference"
+  },
+  "evidence": "preserved run_study.py; does not claim full dependency lock",
+  "gpu0": "MNIST study",
+  "gpu1": "CIFAR diagnostic",
+  "pilot_wall_accounting": "pilot results wall_s; canonical outer job wall_s; overhead rounded up in total allowance"
+}

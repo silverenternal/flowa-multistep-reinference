@@ -1,0 +1,7 @@
+{
+  "user_budget_gpu_seconds": 7200,
+  "budget_tracking": "sum wall time of GPU-bearing jobs conservatively; no purchases",
+  "study_allocated_seconds": 1800,
+  "external_validation_max_remaining_seconds": 5400,
+  "started_registration_utc": "2026-11-02T17:15:15.349469+00:00"
+}

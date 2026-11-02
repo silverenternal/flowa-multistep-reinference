@@ -5,7 +5,7 @@
  "submission_objective": "Publish in a CAS tier-1 (中科院一区) journal, TNNLS first. The paper is packaged and submittable as of 2026-10-27 (12 pages, 0 overfull, 3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only). What it lacks is not prose but one piece of evidence: the central claim is currently a four-point cross-section, and the reviewer's first objection is already known. The plan below exists to convert that cross-section into an identification, then to put it in the paper.",
  "win_definition": "A cell wins only if BOTH hold. (1) POINT WIN: at the cell's canonical protocol (same checkpoint, same N, same seeds), the framework's metric is better with the paired 95% CI excluding 0 and clearing the cell's alpha. (2) FRONTIER DOMINANCE: over the NFE grid, the framework's (quality, NFE) curve lies at or below the baseline's at every grid point, and the framework's plateau is better than the baseline's plateau. (2) is the load-bearing one: flow-matching inference saturates with steps, so 'the baseline with more steps' is NOT a valid control and NOT a threat -- the baseline's ceiling is fixed by its own inference protocol. The framework's claim is that it raises that ceiling AND reaches a given quality at fewer NFE. Both halves are measured, not asserted.",
  "frontier_protocol": "Per model: baseline and framework on the SAME checkpoint, prior, seed policy and N, swept over NFE in {10, 25, 50, 100, 200} (extended upward until the baseline plateaus for two consecutive points). Report per-NFE paired deltas with CIs, the plateau estimate (mean of the last two grid points), and the dominance verdict. A cell whose baseline does not plateau on the grid has an unfinished ceiling measurement, not a win.",
- "updated_at": "2026-10-31",
+ "updated_at": "2026-11-03",
  "history": "docs/audit/todo-history.md",
  "archive": "docs/audit/todo-archive-2026-10-27.json",
  "no_push": true,
@@ -291,16 +291,29 @@
   "record": "docs/audit/manuscript-selfcheck-2026-11-02.md",
   "machine_record": "docs/audit/manuscript-selfcheck-2026-11-02.json",
   "items": 45,
-  "status": "ROUND3 completed: corrected round-cap semantics and percentage units; existing sensitivity and primary citations integrated",
+  "status": "ROUND4 completed: matched local component study; independent CIFAR forward parity and metric calibration; core scientific gaps remain",
   "scope": "All reviewer-plan items from the 2026-11-02 chat; inspect existing source and audit records first. GAP-90/91/92 omissions corrected in the checklist.",
   "push_authorization": "User explicitly authorized this synchronization on 2026-11-02; standing no_push remains unchanged.",
-  "latest_round": "docs/audit/manuscript-selfcheck-round3-2026-11-03.md",
-  "current_chinese_draft": "docs/drafts/paper-A-zh-reviewed-round3-2026-11-03.md",
+  "latest_round": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+  "current_chinese_draft": "docs/drafts/paper-A-zh-reviewed-round4-2026-11-03.md",
   "status_counts": {
-   "REVISION_NEEDED": 6,
-   "VERIFIED": 26,
-   "EVIDENCE_GAP": 6,
-   "EVIDENCE_LOCATED": 7
+   "REVISION_NEEDED": 4,
+   "VERIFIED": 30,
+   "EVIDENCE_GAP": 5,
+   "EVIDENCE_LOCATED": 6
+  },
+  "round4": {
+   "audit": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+   "draft": "docs/drafts/paper-A-zh-reviewed-round4-2026-11-03.md",
+   "user_budget_gpu_seconds": 7200,
+   "accounted_gpu_seconds": 360,
+   "component_matrix": "2 checkpoints x3 seeds x6 arms N1000 C200; local effects only",
+   "external_validation": "forward parity passes; absolute FID gate fails; metric calibration does not override failure",
+   "next_priority": [
+    "calibrated independent evaluation protocol",
+    "closest-method matched control",
+    "independent simplified-candidate validation"
+   ]
   }
  }
 }
