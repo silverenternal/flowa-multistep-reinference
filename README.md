@@ -4,6 +4,9 @@
 
 **Current research review (2026-11-03): submission readiness is unresolved.** This review supersedes the readiness and novelty assessments in the historical README snapshot below. Use the [current evidence register](docs/PAPER-EVIDENCE.md), [45-item reviewer checklist](docs/audit/manuscript-selfcheck-2026-11-02.md), and [Chinese v6 research draft](docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md). The original full configuration regresses in the new matched-call CIFAR study; historical protein/structure differences do not establish matched-generator/input mechanism wins. Related endpoint constructions also limit an originality claim. Frozen submission packages and old labels remain reproducibility records, rather than a current recommendation to submit or a guarantee of quality. Independent candidate results and remaining gaps are reported separately in the [round 5 audit](docs/audit/manuscript-selfcheck-round5-2026-11-03.md).
 
+Third-party source snapshots retain their declared terms and attribution; see the [source notices](verification_outputs/manuscript-selfcheck-round5-2026-11-03/third_party_notices/THIRD_PARTY_NOTICES.md). The project MIT license does not replace those notices.
+
+
 
 [![CI](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml/badge.svg)](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml)
 [![D.4 byte-stable](https://img.shields.io/badge/D.4-30%2F30%20PASS-brightgreen)](#submission-gates-verified-at-final-pre-push) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/LICENSE)

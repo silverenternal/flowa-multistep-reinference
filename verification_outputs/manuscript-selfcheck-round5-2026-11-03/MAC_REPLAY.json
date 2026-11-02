@@ -1,0 +1,75 @@
+{
+  "scientific_commit_replayed": "5edbd6c5d701f6764e91c134662e2ca8fb7b44ae",
+  "published_file_hashes_verified": 126,
+  "source_pins_verified": 11,
+  "reports": [
+    {
+      "study": "cifar-study-20261103",
+      "report": "/Users/hugolee/Documents/Codex/2026-11-02/ssh-home-hugo-codes-flowa-multistep/work/round5/cifar-study-20261103_mac_report.json",
+      "primary_score_witnesses": 60
+    },
+    {
+      "study": "cifar-consistent-candidate-20261103",
+      "report": "/Users/hugolee/Documents/Codex/2026-11-02/ssh-home-hugo-codes-flowa-multistep/work/round5/cifar-consistent-candidate-20261103_mac_report.json",
+      "primary_score_witnesses": 18
+    }
+  ],
+  "full_feature_replays": [
+    {
+      "study": "cifar-study-20261103",
+      "scipy": "1.18.1",
+      "numpy": "2.5.4",
+      "n_full_feature_pairs": 2,
+      "reference_kernel_abs_error": 0.0,
+      "checks": [
+        {
+          "arm": "baseline_euler",
+          "fid_tfport": 34.495324360484915,
+          "kid_unscaled": 0.003903605369162566,
+          "fid_abs_error": 2.390004698327175e-05,
+          "kid_abs_error": 0.0
+        },
+        {
+          "arm": "simple_euler",
+          "fid_tfport": 208.1860309671757,
+          "kid_unscaled": 0.13412743998492171,
+          "fid_abs_error": 1.91338932893359e-05,
+          "kid_abs_error": 0.0
+        }
+      ],
+      "scope": "CPU full-feature metric replay for predetermined designated cell/arms only. All canonical primary scores separately replay from published kernel witnesses."
+    },
+    {
+      "study": "cifar-consistent-candidate-20261103",
+      "scipy": "1.18.1",
+      "numpy": "2.5.4",
+      "n_full_feature_pairs": 3,
+      "reference_kernel_abs_error": 0.0,
+      "checks": [
+        {
+          "arm": "baseline_euler",
+          "fid_tfport": 32.857877925567664,
+          "kid_unscaled": 0.0016296530421864297,
+          "fid_abs_error": 2.4008649290863104e-05,
+          "kid_abs_error": 0.0
+        },
+        {
+          "arm": "consistent_two_round",
+          "fid_tfport": 32.89962862379082,
+          "kid_unscaled": 0.0017354291989328807,
+          "fid_abs_error": 2.3930254428705666e-05,
+          "kid_abs_error": 0.0
+        },
+        {
+          "arm": "ve_restart",
+          "fid_tfport": 32.48151719271897,
+          "kid_unscaled": 0.0007839702465761711,
+          "fid_abs_error": 2.399041534317803e-05,
+          "kid_abs_error": 0.0
+        }
+      ],
+      "scope": "CPU full-feature metric replay for predetermined designated cell/arms only. All canonical primary scores separately replay from published kernel witnesses."
+    }
+  ],
+  "scope": "All primary score witnesses/statistics and designated full-feature FID/KID only; no new GPU use or model generation on Mac."
+}

@@ -1,0 +1,13 @@
+{
+  "retrieved_date": "2026-11-03",
+  "files": {
+    "LICENSE-Restart-EDM.txt": {
+      "url": "https://raw.githubusercontent.com/NVlabs/edm/main/LICENSE.txt",
+      "sha256": "b7249043cca5e5c88f99730ddc40490a3284780dfe423b19f2c75bd5e2a8f03e"
+    },
+    "LICENSE-Apache-2.0.txt": {
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    }
+  }
+}

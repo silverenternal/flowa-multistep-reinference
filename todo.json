@@ -297,16 +297,16 @@
     "record": "docs/audit/manuscript-selfcheck-2026-11-02.md",
     "machine_record": "docs/audit/manuscript-selfcheck-2026-11-02.json",
     "items": 45,
-    "status": "ROUND5: independent matched-call validation and conditional held-out candidate; core novelty/external-confirmation gaps remain",
+    "status": "ROUND5 bounded validation, draft and science sync completed; novelty and wider positive confirmation remain unresolved",
     "scope": "All reviewer-plan items from the 2026-11-02 chat; inspect existing source and audit records first. GAP-90/91/92 omissions corrected in the checklist.",
     "push_authorization": "User explicitly authorized this synchronization on 2026-11-02; standing no_push remains unchanged.",
     "latest_round": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
     "current_chinese_draft": "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
     "status_counts": {
       "REVISION_NEEDED": 5,
-      "VERIFIED": 28,
+      "VERIFIED": 29,
       "EVIDENCE_GAP": 5,
-      "EVIDENCE_LOCATED": 7
+      "EVIDENCE_LOCATED": 6
     },
     "round4": {
       "audit": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
@@ -327,8 +327,9 @@
       "protocol": "verification_outputs/cifar-study-20261103/PROTOCOL.json",
       "candidate_protocol": "verification_outputs/cifar-consistent-candidate-20261103/PROTOCOL.json",
       "budget": "verification_outputs/cifar-study-20261103/GLOBAL_BUDGET_FINAL.json",
-      "sync_status": "pending final gates, GitHub push and Mac replay receipt",
-      "scientific_status": "not submission-ready on novelty grounds; no guarantee of Q1 acceptance"
+      "sync_status": "Scientific commit 5edbd6c5d701f6764e91c134662e2ca8fb7b44ae pushed to GitHub and pulled/replayed on Mac; final closure HEAD in Mac receipt",
+      "scientific_status": "not submission-ready on novelty grounds; no guarantee of Q1 acceptance",
+      "scientific_commit_replayed": "5edbd6c5d701f6764e91c134662e2ca8fb7b44ae"
     }
   },
   "historical_submission_objective_before_round5": "Publish in a CAS tier-1 (中科院一区) journal, TNNLS first. The paper is packaged and submittable as of 2026-10-27 (12 pages, 0 overfull, 3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only). What it lacks is not prose but one piece of evidence: the central claim is currently a four-point cross-section, and the reviewer's first objection is already known. The plan below exists to convert that cross-section into an identification, then to put it in the paper.",

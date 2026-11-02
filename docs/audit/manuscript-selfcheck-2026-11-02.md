@@ -58,7 +58,7 @@
 | SC-42 | 三轮执行计划 | P1 | 第二轮：方法、相关工作、主结果是否重写到位？ | REVISION_NEEDED |
 | SC-43 | 三轮执行计划 | P1 | 第三轮：是否按拒稿理由复查？ | EVIDENCE_LOCATED |
 | SC-44 | 投稿决策 | P1 | TNNLS是否仍是合理首投？ | EVIDENCE_LOCATED |
-| SC-45 | 记录与同步 | P0 | 是否完整记录全部上一轮审稿建议并同步源码？ | EVIDENCE_LOCATED |
+| SC-45 | 记录与同步 | P0 | 是否完整记录全部上一轮审稿建议并同步源码？ | VERIFIED |
 
 ## 逐项记录
 
@@ -505,9 +505,9 @@
 ### SC-45 是否完整记录全部上一轮审稿建议并同步源码？
 
 - 类别/优先级：记录与同步 / P0
-- 状态：EVIDENCE_LOCATED
+- 状态：VERIFIED
 - 验收：保存本表和JSON、注册todo入口、更新audit索引；提交并推送服务器现有源码/记录历史后，从GitHub获取本地正式副本并核对HEAD。
-- 发现：45项和各轮历史全部保留，新源码/证据/稿件待最终检查后提交GitHub并拉取Mac；完成同步后以独立回执核对HEAD及本地复算，不提前宣称本轮同步完成。
+- 发现：科学源码与证据提交5edbd6c5d701f6764e91c134662e2ca8fb7b44ae已从服务器推送GitHub并由Mac正式clone快进拉取；本地核对126个发布文件摘要、78个主分数及运行间统计、5个指定完整特征FID/KID。45项及历史全部保留。本项验收的是该科学提交的同步与限定复算，不表示所有历史模型在Mac重生成或整稿可投。记录闭环提交的最终HEAD另见Mac交付收据。
 - 验证范围：仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。
-- 下一步：最终门禁通过后提交并推送GitHub，从Mac正式clone拉取同一HEAD，复算核统计/指定特征并导出Word，以同步回执验收。
-- 证据：`todo.json`；`docs/audit/INDEX.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`
+- 下一步：保留本轮同步与复算回执；后续源码/证据改动须再次核对来源与Mac副本。
+- 证据：`todo.json`；`docs/audit/INDEX.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`verification_outputs/manuscript-selfcheck-round5-2026-11-03/MAC_REPLAY.json`
