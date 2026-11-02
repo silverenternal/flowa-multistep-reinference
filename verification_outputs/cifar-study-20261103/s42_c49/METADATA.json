@@ -1,0 +1,34 @@
+{
+  "started_utc": "2026-11-02T18:08:31.444945+00:00",
+  "argv": [
+    "tools/cifar_matched_frontier_20261103.py",
+    "--protocol",
+    "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-study-20261103/PROTOCOL.json",
+    "--out",
+    "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-study-20261103/s42_c49",
+    "--seed",
+    "42",
+    "--cost",
+    "49",
+    "--n",
+    "1000",
+    "--device",
+    "cuda:1"
+  ],
+  "protocol_sha256": "8383ea080a6f423e7eb44438223288c5558cce7e05286f93a374712064a7b2ef",
+  "base_commit": "af7955bda500270b775300c0d5210adc1c142f77",
+  "driver_sha256": "8297fd82d41c7638203488fd120f0dede1b37e32a120e86f8496c53312ed6073",
+  "n_planned": 1000,
+  "n_cap": 1000,
+  "seed": 42,
+  "cost": 49,
+  "device": "cuda:1",
+  "pilot_only": false,
+  "wall_cap_s": 1200,
+  "environment": "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+  "thread_env": {
+    "OPENBLAS_NUM_THREADS": "4",
+    "OMP_NUM_THREADS": "4"
+  },
+  "gpu_snapshot": "0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97340 MiB, 0 %\n1, NVIDIA GeForce RTX 5090, 32202 MiB, 0 %\n"
+}

@@ -1,0 +1,311 @@
+{
+  "scope": "All recorded files hashed; only tracked_for_replay=true files are published. Full original sample/feature archives retained on server, not falsely claimed in Git.",
+  "files": [
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/ACTIVATION.json",
+      "bytes": 221,
+      "sha256": "f3f87d0c7fc9bb257b04f223ba4449ffeeae963fbab999b9efdff78923ce26a5",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/FULL_FEATURE_REPLAY_SERVER.json",
+      "bytes": 850,
+      "sha256": "10fe413ed3adc149aa092a7211a787f12df4ce254652ad31ad3f0fe44514def5",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/PROTOCOL.json",
+      "bytes": 4807,
+      "sha256": "08930b5089ecf00c33b0500529961228ce0fa50669e1ffd9cb553796bafe0074",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/REPLAY_SELECTION.json",
+      "bytes": 461,
+      "sha256": "2c2e2a48f34dd4199bd79caf02826aa9626cf70a5e4460ef4a07bc473cf3a02e",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/REPORT.json",
+      "bytes": 12941,
+      "sha256": "26b846142eb3764d893487327ea5b04f4285ba861e4aa914bd1840e9c9b1eb29",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/RUN_LEDGER.json",
+      "bytes": 4000,
+      "sha256": "6e3235ae88b8d7762c3337f963db8753cd48c8a795ff01b66eeb28c88ca57231",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/metric_replay_features.npz",
+      "bytes": 22018381,
+      "sha256": "45c4b91d0678d85be29e406264106c6dfa345fee809f6febb0d9860974633f27",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/register_protocol.py",
+      "bytes": 4550,
+      "sha256": "eab619591c9e1dd236f33c13f9764c05c0dfe822dd8c08651ab099bbc6b5bc32",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/run_after_parent.py",
+      "bytes": 2902,
+      "sha256": "6444422de734185ced095d112938b89f7abff05d5154a38e07f6c78f3b257570",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s101_c199/METADATA.json",
+      "bytes": 1031,
+      "sha256": "5ebd872037c4c4c5620527569bf8b3dbfa3b60759b92566b2986b566eab2c1dd",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s101_c199/features.npz",
+      "bytes": 22018381,
+      "sha256": "45c4b91d0678d85be29e406264106c6dfa345fee809f6febb0d9860974633f27",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s101_c199/kid_witness.npz",
+      "bytes": 45626,
+      "sha256": "a9ddf50753016af92decb2a10d9951ee7c676ce94ff7fa910c59d39eefd00c0a",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s101_c199/preselected_images.npz",
+      "bytes": 1088419,
+      "sha256": "8fa2c654b2e6b1cb6856c55f1f1650d3953a38b51af9f6e22e01036d82c155a5",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s101_c199/raw_samples.npz",
+      "bytes": 33905161,
+      "sha256": "10363e0d0ca149681282a9059dad7a61b5ed0ee3afc7e77a2135828d35d3c250",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s101_c199/results.json",
+      "bytes": 2773,
+      "sha256": "2c9991d694b448b78203f3e9968a321c1ef5a71e56c83578e172dbc2bc039306",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s101_c199.log",
+      "bytes": 1632,
+      "sha256": "e6e856f8ff0569d6bd9c02f68c6b5901262ffc7b9b2f61a9d173f10ad516c7f9",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s101_c99/METADATA.json",
+      "bytes": 1028,
+      "sha256": "4ad0f73d5e786d2491e3c38a1e5de30107edd6087cf5c96ac25947fad61fdd10",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s101_c99/features.npz",
+      "bytes": 22025287,
+      "sha256": "6d97cd2bc925fa04e7cb28bd2e46b78d11f0f2f3ff5514db63af2556e9091b9d",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s101_c99/kid_witness.npz",
+      "bytes": 45626,
+      "sha256": "91313c1e093380c804cb063e40fb1e63c6f6701e70f13618aa69ca8e927041e8",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s101_c99/preselected_images.npz",
+      "bytes": 1088782,
+      "sha256": "4d9ae0a5ccc923897f6586ec50d02641e961e3cad0f18fe2abf0d27c7f4beb3b",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s101_c99/raw_samples.npz",
+      "bytes": 33912077,
+      "sha256": "cbaf3da97a8f4f4df83f3e5c667c1bf4bda9f96ef60b0befebe2093f94390a3d",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s101_c99/results.json",
+      "bytes": 2681,
+      "sha256": "07fc47919f90de3d9bae9262c6e9994751d00f52737e3e50ea67876d8eb28014",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s101_c99.log",
+      "bytes": 1538,
+      "sha256": "2887c2f2a911846db8b4b3f9182bcc57fdc0ccd4a14a8bc83ac53bec2c586809",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s102_c199/METADATA.json",
+      "bytes": 1032,
+      "sha256": "baad6aae4b4feec8ac9281bff48d664f21b00a8baba6d18cabd677b30eafeebc",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s102_c199/features.npz",
+      "bytes": 22018209,
+      "sha256": "c128288345647656a50ec7c2de62b3ff9d1c16e77b3ff13b000fc34860c0e654",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s102_c199/kid_witness.npz",
+      "bytes": 45674,
+      "sha256": "2a76bc74b335ec653f915603e670a3c9b2cc029ee455b7e91192a6d16bfdc3cd",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s102_c199/preselected_images.npz",
+      "bytes": 1085163,
+      "sha256": "c53f52b95118813881d898e1d6e61dcf8d27516df0db7d3b008c3e2c046266c4",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s102_c199/raw_samples.npz",
+      "bytes": 33916244,
+      "sha256": "74a85ef31635693d297a2a651d2794c9b7accfebb70a3e11b85ade459556db1c",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s102_c199/results.json",
+      "bytes": 2785,
+      "sha256": "0ca24324941451980d2f1307b017feef407e8da624dbf53b59637284a779ae35",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s102_c199.log",
+      "bytes": 1644,
+      "sha256": "32468106fe08bdae905040ffc24be07b81ef0ab34d6b7b3ba3dd10919f3d8d8c",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s102_c99/METADATA.json",
+      "bytes": 1028,
+      "sha256": "7a076700c6aa4ec7ebbd0d3bdba01044909e9b363d0b26c68f40728c2a2eee5a",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s102_c99/features.npz",
+      "bytes": 22015631,
+      "sha256": "92c5ab4fe35fe405f5b2e566ded72d263076ab7dd91017559128ffd8ad48d2ac",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s102_c99/kid_witness.npz",
+      "bytes": 45672,
+      "sha256": "21f921b312dd51891ec19a619fb7eb87507189757ac516a6f6e1b210ced431f7",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s102_c99/preselected_images.npz",
+      "bytes": 1085728,
+      "sha256": "1755ddf672e4f2effda89f1c0c3b25b1d1dfee2b70d8595b484b64e25a452cd1",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s102_c99/raw_samples.npz",
+      "bytes": 33924754,
+      "sha256": "9b28dbeaffe0e0dd14a75ab556f63b196fba5690c8d909ac5dbcd7952007e34f",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s102_c99/results.json",
+      "bytes": 2679,
+      "sha256": "048d94f0c5847cbf402fdc97339b785ef8ae09675a9e5d405d0c3c1022aac019",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s102_c99.log",
+      "bytes": 1536,
+      "sha256": "c60b26011c419c97f41e5bca7b2d97a695664ec314db75e4404334c347f776d6",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s103_c199/METADATA.json",
+      "bytes": 1031,
+      "sha256": "5da04686f807cfb098bc966233c166af87be7fef2b9253676268f406238ceba0",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s103_c199/features.npz",
+      "bytes": 22015436,
+      "sha256": "a0bc3b29ad17cf061476daca0cbb243565326949a7b7813e578d22e19a2c8073",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s103_c199/kid_witness.npz",
+      "bytes": 45601,
+      "sha256": "7cb9c7ebea684190ed1cdcf76f8b32d80d55c34727ad2a1e3765b58c61806e70",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s103_c199/preselected_images.npz",
+      "bytes": 1085410,
+      "sha256": "d3039617d0ad825d6de3047c68421f74951b659489fa4fa4713bef8b919661d4",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s103_c199/raw_samples.npz",
+      "bytes": 33942325,
+      "sha256": "039688806dfb8d2ef74d6317dd78d25e463498e691927bf0b6e5e733cf195716",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s103_c199/results.json",
+      "bytes": 2785,
+      "sha256": "20f25740076a29c1815b18036259d97167130da51b7dda9716b4033b56029d3f",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s103_c199.log",
+      "bytes": 1646,
+      "sha256": "1c56d958760a8745f56151fda07f9d55b1d6798ea3ea7daa80ce96e6417bf794",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s103_c99/METADATA.json",
+      "bytes": 1028,
+      "sha256": "a5c77ed4b39776bd945ae5c957eb4dbeb50045e9901398fa06a7b17d1b09a919",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s103_c99/features.npz",
+      "bytes": 22017381,
+      "sha256": "f5770c5838641457692f01f5bc7eec206e12da17b2b7f0b030aff36b20527011",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s103_c99/kid_witness.npz",
+      "bytes": 45656,
+      "sha256": "01a17ae0ecf23577eb76774935e2dcd80a460a55da94837192b2e4260ffa1dd9",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s103_c99/preselected_images.npz",
+      "bytes": 1085328,
+      "sha256": "ab799a8ec04d51162a4f775669cef2914ccee2fb6e31159d33b7bedce376c4aa",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s103_c99/raw_samples.npz",
+      "bytes": 33948127,
+      "sha256": "29175f90b1d4b5fe2d00f7f96b68de5dd8895257c22bc2233fa93a1d373f01c9",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s103_c99/results.json",
+      "bytes": 2679,
+      "sha256": "da6d579aab6adeb3aa96838c05086210ad91ad8e81767f2c918cb37a29f0fa1f",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-consistent-candidate-20261103/s103_c99.log",
+      "bytes": 1536,
+      "sha256": "cb0114f8fb58e54d55c4684a7f28f75a86351d6adf9af67cc3ef3cb348aeb832",
+      "tracked_for_replay": true
+    }
+  ]
+}

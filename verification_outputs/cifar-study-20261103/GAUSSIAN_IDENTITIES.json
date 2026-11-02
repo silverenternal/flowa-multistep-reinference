@@ -1,0 +1,244 @@
+{
+  "scope": "algebraic Gaussian identities/counterexamples only; finite parameter checks are not a proof and not new learned-model experimental evidence",
+  "rows": [
+    {
+      "target_variance": 0.25,
+      "memory": 0.2,
+      "independent_matched": {
+        "a": 0.12403473458920844,
+        "b": 0.49613893835683376,
+        "variance_after": 0.24999999999999992
+      },
+      "independent_zero_time": {
+        "a": 0.1,
+        "b": 0.4,
+        "variance_after": 0.16250000000000003
+      },
+      "deterministic_coupling_matched_time": {
+        "a": 0.11111111111111112,
+        "b": 0.4444444444444445,
+        "variance_after": 0.20061728395061731
+      }
+    },
+    {
+      "target_variance": 0.25,
+      "memory": 0.5,
+      "independent_matched": {
+        "a": 0.4472135954999579,
+        "b": 0.4472135954999579,
+        "variance_after": 0.24999999999999997
+      },
+      "independent_zero_time": {
+        "a": 0.25,
+        "b": 0.25,
+        "variance_after": 0.078125
+      },
+      "deterministic_coupling_matched_time": {
+        "a": 0.3333333333333333,
+        "b": 0.3333333333333333,
+        "variance_after": 0.1388888888888889
+      }
+    },
+    {
+      "target_variance": 0.25,
+      "memory": 0.8,
+      "independent_matched": {
+        "a": 0.894427190999916,
+        "b": 0.22360679774997894,
+        "variance_after": 0.25
+      },
+      "independent_zero_time": {
+        "a": 0.4,
+        "b": 0.09999999999999998,
+        "variance_after": 0.05
+      },
+      "deterministic_coupling_matched_time": {
+        "a": 0.6666666666666667,
+        "b": 0.16666666666666663,
+        "variance_after": 0.1388888888888889
+      }
+    },
+    {
+      "target_variance": 0.25,
+      "memory": 0.8879040017426006,
+      "independent_matched": {
+        "a": 0.9695704584040157,
+        "b": 0.12240621531424263,
+        "variance_after": 0.25
+      },
+      "independent_zero_time": {
+        "a": 0.4439520008713003,
+        "b": 0.05604799912869968,
+        "variance_after": 0.05241472297573848
+      },
+      "deterministic_coupling_matched_time": {
+        "a": 0.7984058958344452,
+        "b": 0.10079705208277734,
+        "variance_after": 0.16952303933437887
+      }
+    },
+    {
+      "target_variance": 1.0,
+      "memory": 0.2,
+      "independent_matched": {
+        "a": 0.24253562503633297,
+        "b": 0.9701425001453319,
+        "variance_after": 1.0
+      },
+      "independent_zero_time": {
+        "a": 0.2,
+        "b": 0.8,
+        "variance_after": 0.6800000000000002
+      },
+      "deterministic_coupling_matched_time": {
+        "a": 0.2,
+        "b": 0.8,
+        "variance_after": 0.6800000000000002
+      }
+    },
+    {
+      "target_variance": 1.0,
+      "memory": 0.5,
+      "independent_matched": {
+        "a": 0.7071067811865475,
+        "b": 0.7071067811865475,
+        "variance_after": 0.9999999999999998
+      },
+      "independent_zero_time": {
+        "a": 0.5,
+        "b": 0.5,
+        "variance_after": 0.5
+      },
+      "deterministic_coupling_matched_time": {
+        "a": 0.5,
+        "b": 0.5,
+        "variance_after": 0.5
+      }
+    },
+    {
+      "target_variance": 1.0,
+      "memory": 0.8,
+      "independent_matched": {
+        "a": 0.9701425001453319,
+        "b": 0.24253562503633289,
+        "variance_after": 1.0
+      },
+      "independent_zero_time": {
+        "a": 0.8,
+        "b": 0.19999999999999996,
+        "variance_after": 0.6800000000000002
+      },
+      "deterministic_coupling_matched_time": {
+        "a": 0.8,
+        "b": 0.19999999999999996,
+        "variance_after": 0.6800000000000002
+      }
+    },
+    {
+      "target_variance": 1.0,
+      "memory": 0.8879040017426006,
+      "independent_matched": {
+        "a": 0.9921247521801648,
+        "b": 0.12525364709838388,
+        "variance_after": 1.0
+      },
+      "independent_zero_time": {
+        "a": 0.8879040017426006,
+        "b": 0.11209599825739935,
+        "variance_after": 0.8009390291358471
+      },
+      "deterministic_coupling_matched_time": {
+        "a": 0.8879040017426006,
+        "b": 0.11209599825739935,
+        "variance_after": 0.8009390291358471
+      }
+    },
+    {
+      "target_variance": 4.0,
+      "memory": 0.2,
+      "independent_matched": {
+        "a": 0.44721359549995787,
+        "b": 1.7888543819998315,
+        "variance_after": 3.9999999999999987
+      },
+      "independent_zero_time": {
+        "a": 0.4,
+        "b": 1.6,
+        "variance_after": 3.2000000000000006
+      },
+      "deterministic_coupling_matched_time": {
+        "a": 0.3333333333333333,
+        "b": 1.3333333333333333,
+        "variance_after": 2.2222222222222223
+      }
+    },
+    {
+      "target_variance": 4.0,
+      "memory": 0.5,
+      "independent_matched": {
+        "a": 0.8944271909999159,
+        "b": 0.8944271909999159,
+        "variance_after": 3.9999999999999996
+      },
+      "independent_zero_time": {
+        "a": 1.0,
+        "b": 1.0,
+        "variance_after": 5.0
+      },
+      "deterministic_coupling_matched_time": {
+        "a": 0.6666666666666666,
+        "b": 0.6666666666666666,
+        "variance_after": 2.2222222222222223
+      }
+    },
+    {
+      "target_variance": 4.0,
+      "memory": 0.8,
+      "independent_matched": {
+        "a": 0.9922778767136675,
+        "b": 0.24806946917841682,
+        "variance_after": 3.9999999999999987
+      },
+      "independent_zero_time": {
+        "a": 1.6,
+        "b": 0.3999999999999999,
+        "variance_after": 10.400000000000002
+      },
+      "deterministic_coupling_matched_time": {
+        "a": 0.888888888888889,
+        "b": 0.22222222222222218,
+        "variance_after": 3.2098765432098766
+      }
+    },
+    {
+      "target_variance": 4.0,
+      "memory": 0.8879040017426006,
+      "independent_matched": {
+        "a": 0.9980136183678142,
+        "b": 0.12599710397279063,
+        "variance_after": 3.9999999999999987
+      },
+      "independent_zero_time": {
+        "a": 1.7758080034852013,
+        "b": 0.2241919965147987,
+        "variance_after": 12.66423831226968
+      },
+      "deterministic_coupling_matched_time": {
+        "a": 0.9406241005083252,
+        "b": 0.11875179898334966,
+        "variance_after": 3.553196783590166
+      }
+    }
+  ],
+  "zero_field_counterexample": {
+    "source_equals_target": "N(0,I)",
+    "training_coupling": "Y=Z",
+    "exact_velocity": "zero at all times",
+    "baseline_error": 0,
+    "memory": 0.8,
+    "one_step_variance": 0.6800000000000002,
+    "stationary_variance": 0.11111111111111108,
+    "state_contraction": 0.8,
+    "mean_preservation": "does not restore the shrunken covariance"
+  }
+}

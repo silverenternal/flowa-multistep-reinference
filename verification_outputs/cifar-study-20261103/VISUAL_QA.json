@@ -1,0 +1,10 @@
+{
+  "scope": "Source PNG visual inspection, not all Word-page rendering",
+  "first_curve_tick_overlap": "corrected by disabling automatic log minor ticks; only labels changed",
+  "new_figures_inspected": {
+    "docs/figures/review-cifar-matched-2026-11-03.png": "cbeb46f5fe833d9e705b98260d8e7c87a6fefd3069876a8eea0f82b20b85304b",
+    "docs/figures/review-cifar-preselected-2026-11-03.png": "75185334b879ce10ab042eaf297a07b062a946c8ccd316c62e651e47d16478a6",
+    "docs/figures/review-cifar-consistent-candidate-2026-11-03.png": "b7ae351b9851546646c6d5ebde68e9e0860c3cf83988767964ed27d736282165",
+    "docs/figures/review-cifar-candidate-preselected-2026-11-03.png": "031bcbf4a6314cf3fd4e12b5b592d34d4939cdd1f050d8751f46aee2292697d4"
+  }
+}

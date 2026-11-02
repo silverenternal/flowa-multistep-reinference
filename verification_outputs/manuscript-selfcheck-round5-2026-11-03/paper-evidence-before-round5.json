@@ -1,0 +1,479 @@
+{
+ "schema": "paper_evidence_register.v1",
+ "as_of": "2026-10-27",
+ "basis": "todo.json win_definition: a cell wins only if (1) the point estimate is better with a paired 95% CI excluding 0 at the cell's alpha AND (2) the (quality, NFE) frontier dominates at every rung with a better plateau. TIE is not a win.",
+ "canonical_taxonomy": "Canonical numbering (paper §7.2 / CLAIMS CLM-060). The earlier headline-evidence numbering and the paper-data directory names are historical aliases; see taxonomy_map.",
+ "taxonomy_map": [
+  {
+   "canonical": "R1",
+   "wave135": "R1",
+   "paper_data": "K4_k5_lineageflow_hmmer (R1 recipe)",
+   "model": "LineageFlow",
+   "metric": "hmmscan_total_hits"
+  },
+  {
+   "canonical": "R2",
+   "wave135": "R2",
+   "paper_data": "R2_kanzi_rmsd",
+   "model": "Kanzi",
+   "metric": "reconstruction_kabsch_rmsd_A"
+  },
+  {
+   "canonical": "R3",
+   "wave135": "R2",
+   "paper_data": "R3_flowmol3_fgdev",
+   "model": "FlowMol3",
+   "metric": "fg_dev"
+  },
+  {
+   "canonical": "R5a",
+   "wave135": "R4",
+   "paper_data": "R5a_2d_two_moons",
+   "model": "2D rectified flow",
+   "metric": "W2"
+  },
+  {
+   "canonical": "R5b",
+   "wave135": "R3",
+   "paper_data": "R5b_cifar10_rf",
+   "model": "CIFAR-10 rectified flow",
+   "metric": "FID"
+  },
+  {
+   "canonical": "R5c",
+   "wave135": "R6",
+   "paper_data": "R5c_mnist_fm",
+   "model": "MNIST flow matching",
+   "metric": "FID"
+  },
+  {
+   "canonical": "R6",
+   "wave135": "n/a (k6 sweep)",
+   "paper_data": "R6_lineageflow_k6",
+   "model": "LineageFlow k6",
+   "metric": "scPerplexity / pLDDT"
+  },
+  {
+   "canonical": "K1",
+   "wave135": "K1",
+   "paper_data": "K1_kanzi_algorithm",
+   "model": "FlowMol3",
+   "metric": "pb_validity"
+  },
+  {
+   "canonical": "K4",
+   "wave135": "K4",
+   "paper_data": "K4_k5_lineageflow_hmmer",
+   "model": "LineageFlow",
+   "metric": "hmmscan_total_hits (long-length bias)"
+  },
+  {
+   "canonical": "K5",
+   "wave135": "K5",
+   "paper_data": "K4_k5_lineageflow_hmmer",
+   "model": "LineageFlow",
+   "metric": "hmmscan_total_hits (uniform prior)"
+  },
+  {
+   "canonical": "K7",
+   "wave135": "K7",
+   "paper_data": "K7_lineageflow_novelty",
+   "model": "LineageFlow",
+   "metric": "novel fraction at pctid < 30%"
+  }
+ ],
+ "cells": [
+  {
+   "id": "R1",
+   "name": "LineageFlow HMMER hit count",
+   "model": "LineageFlow",
+   "metric": "hmmscan_total_hits",
+   "direction": "up",
+   "protocol": "N=1000 per arm, NFE=150, 3 rounds, seed 42 (single-seed); GAP-69 profile-init at seeds 42/43/44; GAP-79 dose screen at N=200, seed 42",
+   "point": {
+    "verdict": "WIN_SINGLE_SEED",
+    "effect": "+117 hits (158 -> 275, +74.1%); per-record +0.1170",
+    "ci95": "[+0.073, +0.160] (per-record bootstrap, seed 42)",
+    "p": "n/a (per-record bootstrap CI excludes 0)",
+    "n": 1000,
+    "seeds": 1,
+    "caveat": "Single seed. The 3-seed profile-init arm (GAP-69) fires on the aggregate (8.06-8.46x) but fails family identity: PF00072 and PF00183 sit at 0.79-0.80x of the init-only control in every seed. GAP-79 round-2 screen lifts all three target families at W0.5 (PF00072 23/50, PF00183 14/50, PF02517 5/50) with the guard unchanged at 8/50, but the N=1000 confirmation was stopped before it produced a verdict.",
+    "artifact": "verification_outputs/gap55-r1-nfe150-n1000/seed42/upstream_eval.json",
+    "audit": "docs/audit/gap79-r1-family-lever.md",
+    "quote": "275.0"
+   },
+   "frontier": {
+    "verdict": "UNMEASURED",
+    "grid": [],
+    "artifact": "docs/audit/gap84-inference-frontier.md",
+    "audit": "docs/audit/gap84-inference-frontier.md",
+    "quote": "No cell has a complete grid"
+   },
+   "cell_verdict": "OPEN",
+   "scope": "Point win is single-seed and metric-level (hit count); the family-identity half is still open.",
+   "next": "GAP-79 confirmation at W0.5, N=1000, seeds 42/43/44 (stopped 2026-10-27; restart when the GPU frees).",
+   "paper_anchor": "§7.2 R1; §7.11 R1 row",
+   "claim": "CLM-060 R1",
+   "paper_label": "PARTIAL"
+  },
+  {
+   "id": "R2",
+   "name": "Kanzi reconstruction RMSD",
+   "model": "Kanzi",
+   "metric": "reconstruction_kabsch_rmsd_A",
+   "direction": "down",
+   "protocol": "N=1000, index-matched two-sample, seed 42, byte-stable framework arm (sigma=0)",
+   "point": {
+    "verdict": "WIN",
+    "effect": "mean -0.01896 A (0.9020 -> 0.8798), d_z=-0.0990",
+    "ci95": "[-0.03085, -0.00708]",
+    "p": "0.001794 (raw; Bonferroni-significant at R-level alpha=0.007143)",
+    "n": 1000,
+    "seeds": 1,
+    "caveat": "Small effect. The comparison is index-matched, not paired (the two arms are statistically independent, corr ~ +0.02). Reconstruction is evaluated on synthetic input coordinates, not native structures.",
+    "artifact": "verification_outputs/wave218-p3-kanzi-framework-wins.json",
+    "audit": "docs/audit/kanzi/p3-kanzi-n1000-framework-inv-proj.md",
+    "quote": "\"d_z\": -0.09900262042602999"
+   },
+   "frontier": {
+    "verdict": "UNMEASURED",
+    "grid": [],
+    "artifact": "docs/audit/gap84-inference-frontier.md",
+    "audit": "docs/audit/gap84-inference-frontier.md",
+    "quote": "Kanzi"
+   },
+   "cell_verdict": "OPEN",
+   "scope": "Point win measured; the frontier half has no grid.",
+   "next": "Run a Kanzi (quality, NFE) grid on the same checkpoint and seed policy (GAP-84 protocol).",
+   "paper_anchor": "§7.2 R2; §7.11 R2 row",
+   "claim": "CLM-060 R2",
+   "paper_label": "STRONG"
+  },
+  {
+   "id": "R3",
+   "name": "FlowMol3 fragment deviation",
+   "model": "FlowMol3",
+   "metric": "fg_dev",
+   "direction": "down",
+   "protocol": "N=1000 per arm, NFE=250, seeds 42/43/44, paired across seeds",
+   "point": {
+    "verdict": "NOT_SIGNIFICANT",
+    "effect": "mean -0.03769 (d_z=-0.401)",
+    "ci95": "[-0.2709, +0.1956] (across-seed t, df=2)",
+    "p": "0.5589 (raw; alpha=0.007143)",
+    "n": 1000,
+    "seeds": 3,
+    "caveat": "The single-seed reading (-0.061, CI [-0.117,-0.001], p=0.043) does not survive the 3-seed test. The real restart blend moves the mean to -0.0548 but the SD grows (0.1526), so d_z stays -0.359.",
+    "artifact": "verification_outputs/r3_n1000_3seed_fixed_q4_2026/wave338-p5-r3-n1000-paired.json",
+    "audit": "docs/audit/gap39-flowmol3-real-restart-blend.md",
+    "quote": "\"mean_diff\": -0.03768736331195862"
+   },
+   "frontier": {
+    "verdict": "UNMEASURED",
+    "grid": [],
+    "artifact": "verification_outputs/flowmol3_fine_nfe_q4_2026.json",
+    "audit": "docs/audit/gap84-inference-frontier.md",
+    "quote": "framework arm was never applied"
+   },
+   "cell_verdict": "OPEN",
+   "scope": "Point estimate is direction-consistent but not significant at 3 seeds; the existing NFE ladder is a stub.",
+   "next": "GAP-81 sigma screen (6 cells x N=1000, seed 42), pre-registered in docs/audit/gap81-r3-sigma-dose.md.",
+   "paper_anchor": "§7.2 R3; §7.11 R3 row",
+   "claim": "CLM-068",
+   "paper_label": "PARTIAL"
+  },
+  {
+   "id": "R5a",
+   "name": "2D Two Moons Wasserstein-2",
+   "model": "2D rectified flow",
+   "metric": "W2",
+   "direction": "down",
+   "protocol": "N=1000 per arm, 10 seeds (42-51), NFE=150, 5 rounds, restart-capable driver",
+   "point": {
+    "verdict": "TIE",
+    "effect": "0.08439 vs baseline 0.07828 (delta +0.00611)",
+    "ci95": "paired t across seeds; CI includes 0",
+    "p": "0.2873",
+    "n": 1000,
+    "seeds": 10,
+    "caveat": "Measured on a real restart. The shipped restart operator is a 16x loss (1.2804 vs 0.0783); the aligned record-scoped, variance-preserving, integrate-from-memory arm is the 0.0844 reading. The old TIE was measured on a path that never restarted.",
+    "artifact": "verification_outputs/gap80-r5a-restart/aligned/r5a_restart.json",
+    "audit": "docs/audit/gap80-r5a-harness.md",
+    "quote": "\"p\": 0.287282358018507"
+   },
+   "frontier": {
+    "verdict": "UNMEASURED",
+    "grid": [],
+    "artifact": "docs/audit/gap84-inference-frontier.md",
+    "audit": "docs/audit/gap84-inference-frontier.md",
+    "quote": "No cell has a complete grid"
+   },
+   "cell_verdict": "OPEN",
+   "scope": "TIE is a loss under the standing rule.",
+   "next": "A mechanism lever that moves W2 beyond the 0.01 floor; the mode lever was falsified at 0.0034.",
+   "paper_anchor": "§7.2 R5a; §7.11 R5a row",
+   "claim": "CLM-060 R5a",
+   "paper_label": "TIE"
+  },
+  {
+   "id": "R5b",
+   "name": "CIFAR-10 rectified-flow FID",
+   "model": "CIFAR-10 rectified flow",
+   "metric": "FID",
+   "direction": "down",
+   "protocol": "N=1000, seed 42, NFE=50 matched budget, single round (production checkpoint)",
+   "point": {
+    "verdict": "MIXED",
+    "effect": "baseline 48.4059; EvidenceDriven 48.1669 (-0.49%), FreeTraj 48.2522 (-0.32%), Cosine 48.5668 (+0.33%), CodimensionSheet 48.6594 (+0.52%)",
+    "ci95": "not computed at the N=1000 single-round reading",
+    "p": "not computed",
+    "n": 1000,
+    "seeds": 1,
+    "caveat": "2 of 4 arms improve at N=1000, versus 4 of 4 at N=200. The N=200 and N=1000 baselines are different evaluator readings and must not be pooled.",
+    "artifact": "verification_outputs/wave247-p3-r5b-n1000-n1/summary.json",
+    "audit": "docs/audit/gap84-inference-frontier.md",
+    "quote": "\"fid\": 48.16690776088757"
+   },
+   "frontier": {
+    "verdict": "INCOMPLETE",
+    "grid": [
+     50,
+     100
+    ],
+    "artifact": "verification_outputs/wave247-p5-r5b-nfe-sweep-aggregate.json",
+    "audit": "docs/audit/gap84-inference-frontier.md",
+    "quote": "2 rungs; NFE 200 never ran"
+   },
+   "cell_verdict": "OPEN",
+   "scope": "Point reading is arm-dependent; the frontier has two rungs and the baseline is still descending.",
+   "next": "GAP-71 BEFORE arm (matched NFE, N=1000, 3 seeds) then the spectral arm; extend the grid past NFE=200.",
+   "paper_anchor": "§7.2 R5b; §7.7 NFE-matched boundary",
+   "claim": "CLM-070",
+   "paper_label": "CONDITIONAL"
+  },
+  {
+   "id": "R5c",
+   "name": "MNIST flow-matching FID",
+   "model": "MNIST flow matching",
+   "metric": "FID",
+   "direction": "down",
+   "protocol": "N=1000 per arm, 3 seeds, 4 checkpoints, NFE grid {4,5,10,25,50,100,200}, min 2 steps per round",
+   "point": {
+    "verdict": "WIN",
+    "effect": "w16e1_5k plateau 24.4839 -> 21.3632 (-3.1206, -12.75%); 10k 16.9537 -> 15.9501 (-5.92%, TIE); 60k 11.3795 -> 11.3945 (+0.13%, TIE); production 9.9938 -> 9.9603 (-0.34%, TIE)",
+    "ci95": "per-rung improvement CIs exclude 0 at every rung on w16e1_5k",
+    "p": "no p-value used for the frontier verdict",
+    "n": 1000,
+    "seeds": 3,
+    "caveat": "Checkpoint-conditional: the WIN is on w16e1_5k only (7/7 strict-gain rungs, per-rung CI lower bounds above the 1-FID floor). The other three checkpoints are TIEs, not losses. On w16e1_10k the plateau gain is 1.0036 FID as a point estimate but its 95% CI lower bound is 0.984 FID, and no rung's CI lower bound clears the floor.",
+    "artifact": "verification_outputs/gap84-cap-frontier/frontier_w16e1_5k.json",
+    "audit": "docs/audit/gap84-inference-frontier.md",
+    "quote": "\"verdict\": \"WIN\""
+   },
+   "frontier": {
+    "verdict": "WIN",
+    "grid": [
+     4,
+     5,
+     10,
+     25,
+     50,
+     100,
+     200
+    ],
+    "artifact": "verification_outputs/gap84-cap-frontier/frontier_w16e1_5k.json",
+    "audit": "docs/audit/gap84-inference-frontier.md",
+    "quote": "\"win\": true"
+   },
+   "cell_verdict": "WIN",
+   "scope": "w16e1_5k checkpoint only; the other three checkpoints are TIEs. This is the only cell with the frontier half measured.",
+   "next": "None required for the 5k WIN. The 10k cell clears the 1-FID floor as a point estimate (1.0036) but not at its CI lower bound (0.984); that is a checkpoint property, not a lever.",
+   "paper_anchor": "§7.2 R5c; §7.9 regime curve",
+   "claim": "CLM-059",
+   "paper_label": "STRONG"
+  },
+  {
+   "id": "R6",
+   "name": "LineageFlow k6 foldability",
+   "model": "LineageFlow k6",
+   "metric": "scPerplexity / pLDDT",
+   "direction": "down / up",
+   "protocol": "N=1000 per seed, 3 seeds (n=3000 pooled), live tier-aware scheduler",
+   "point": {
+    "verdict": "WIN",
+    "effect": "scPerplexity pooled d_z=-0.8393 (diff -3.6823); hard-tier pLDDT d_z=+1.1211 (n=990); pooled pLDDT d_z=+0.1466 (diff +2.6386)",
+    "ci95": "per-seed and pooled; sign consistent on 3/3 seeds and all three tiers for scPerplexity",
+    "p": "see docs/audit/gap31-r6-live-uplift.md",
+    "n": 3000,
+    "seeds": 3,
+    "caveat": "The pooled pLDDT does not reach the +0.2235 bar; the large pLDDT effect is hard-tier only. The scPerplexity axis is the uniform win.",
+    "artifact": "verification_outputs/gap31-r6-live-uplift/gap31_summary.json",
+    "audit": "docs/audit/gap31-r6-live-uplift.md",
+    "quote": "0.8393"
+   },
+   "frontier": {
+    "verdict": "UNMEASURED",
+    "grid": [],
+    "artifact": "verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json",
+    "audit": "docs/audit/gap84-inference-frontier.md",
+    "quote": "single rung"
+   },
+   "cell_verdict": "OPEN",
+   "scope": "Point win on scPerplexity and hard-tier pLDDT; the frontier half has no usable grid.",
+   "next": "Build a k6 (quality, NFE) grid on the same checkpoint and seed policy.",
+   "paper_anchor": "§7.2 R6; §7.6 cross-adapter replication",
+   "claim": "CLM-061 / CLM-073",
+   "paper_label": "STRONG"
+  },
+  {
+   "id": "K1",
+   "name": "FlowMol3 PoseBusters validity",
+   "model": "FlowMol3",
+   "metric": "pb_validity_pct",
+   "direction": "up",
+   "protocol": "N=1000 per arm, NFE=250, seeds 42/43/44, real restart blend",
+   "point": {
+    "verdict": "NOT_SIGNIFICANT",
+    "effect": "mean +0.1410 (+14.1 pp), d_z=+0.9205, 3/3 seeds favourable",
+    "ci95": "not computed across seeds in the artifact",
+    "p": "0.2519 (raw; alpha=0.0125 at K-level k=4)",
+    "n": 1000,
+    "seeds": 3,
+    "caveat": "Large effect but n=3 seeds cannot clear alpha. A per-record test is impossible from the stored artifacts: only the aggregate and smiles_list[:200] were persisted, and no per-molecule PoseBusters verdict exists.",
+    "artifact": "verification_outputs/gap39-flowmol3-real-restart-blend/summary.json",
+    "audit": "docs/audit/gap39-flowmol3-real-restart-blend.md",
+    "quote": "\"p_raw\": 0.2519086413108983"
+   },
+   "frontier": {
+    "verdict": "UNMEASURED",
+    "grid": [],
+    "artifact": "verification_outputs/gap39-flowmol3-real-restart-blend/summary.json",
+    "audit": "docs/audit/gap39-flowmol3-real-restart-blend.md",
+    "quote": "pb_validity_pct"
+   },
+   "cell_verdict": "BLOCKED",
+   "scope": "Blocked on data, not on code: the driver persists only aggregate pb_validity_pct plus smiles_list[:200].",
+   "next": "GAP-47: persist per-molecule PoseBusters verdicts and the full sample, then run the pre-registered per-record test (USER GATE).",
+   "paper_anchor": "§10.7 K1",
+   "claim": "CLM-060 K1",
+   "paper_label": "SUPP"
+  },
+  {
+   "id": "K4",
+   "name": "LineageFlow hit count, long-length bias",
+   "model": "LineageFlow",
+   "metric": "hmmscan_total_hits",
+   "direction": "up",
+   "protocol": "N=100 per seed, 3 seeds, NFE=50, --upstream-eval-len-bias long",
+   "point": {
+    "verdict": "POWERED",
+    "effect": "baseline 20/12/13, framework 22/14/13 (12-22 non-zero hits per 100 records)",
+    "ci95": "not computed at N=100",
+    "p": "not computed",
+    "n": 100,
+    "seeds": 3,
+    "caveat": "Metric-collection level only; N=100 is the sampling unit, not a paired per-record test.",
+    "artifact": "paper-data/K4_k5_lineageflow_hmmer/summary_n100.json",
+    "audit": "docs/audit/wave280-p-k4k5-sweep-result.md",
+    "quote": "\"hmmscan_total_hits\": 22.0"
+   },
+   "frontier": {
+    "verdict": "UNMEASURED",
+    "grid": [],
+    "artifact": "docs/audit/gap84-inference-frontier.md",
+    "audit": "docs/audit/gap84-inference-frontier.md",
+    "quote": "LineageFlow"
+   },
+   "cell_verdict": "SUPP",
+   "scope": "Supplementary metric-collection cell; not an R-level win claim.",
+   "next": "None; retained as a supplementary axis.",
+   "paper_anchor": "§10.7 K4",
+   "claim": "CLM-060 K4",
+   "paper_label": "SUPP"
+  },
+  {
+   "id": "K5",
+   "name": "LineageFlow hit-count delta, uniform prior",
+   "model": "LineageFlow",
+   "metric": "hmmscan_total_hits",
+   "direction": "up",
+   "protocol": "N=100 per seed, 3 seeds, NFE=50, --lineageflow-prior-mix 1.0",
+   "point": {
+    "verdict": "NOT_SIGNIFICANT",
+    "effect": "+1.33 hits (+8.9%), d_z=+1.15, 2/3 seeds positive",
+    "ci95": "not computed",
+    "p": "0.184 (raw); Bonferroni 0.734 at alpha=0.0125",
+    "n": 100,
+    "seeds": 3,
+    "caveat": "SUPPORTS-WITH-CAVEAT: the direction is visible but n=3 paired seeds (df=2) cannot clear alpha.",
+    "artifact": "paper-data/K4_k5_lineageflow_hmmer/summary_n100.json",
+    "audit": "docs/audit/wave280-p-k4k5-sweep-result.md",
+    "quote": "+8.9"
+   },
+   "frontier": {
+    "verdict": "UNMEASURED",
+    "grid": [],
+    "artifact": "docs/audit/gap84-inference-frontier.md",
+    "audit": "docs/audit/gap84-inference-frontier.md",
+    "quote": "LineageFlow"
+   },
+   "cell_verdict": "SUPP",
+   "scope": "Supplementary; not an R-level win claim.",
+   "next": "None; retained as a supplementary axis.",
+   "paper_anchor": "§10.7 K5",
+   "claim": "CLM-060 K5",
+   "paper_label": "SUPP"
+  },
+  {
+   "id": "K7",
+   "name": "LineageFlow Pfam novelty",
+   "model": "LineageFlow",
+   "metric": "novel fraction at pctid < 30%",
+   "direction": "up",
+   "protocol": "N=1000 per arm, mmseqs against the canonical 63.8M Pfam-A database, seed 42",
+   "point": {
+    "verdict": "LOSS",
+    "effect": "baseline 466/1000 (46.6%) vs framework 37/1000 (3.7%) novel; 12.6x less novel",
+    "ci95": "not computed",
+    "p": "not computed",
+    "n": 1000,
+    "seeds": 1,
+    "caveat": "Direction inverted relative to the original claim. The novelty collapse is already in the scalar control, so it belongs to the restart operator, not to the mask.",
+    "artifact": "verification_outputs/novelty_pctid_w166_q3_2026/novelty_results_full.json",
+    "audit": "docs/audit/gap70-lineageflow-position-blend.md",
+    "quote": "\"n_novel_total\": 466"
+   },
+   "frontier": {
+    "verdict": "UNMEASURED",
+    "grid": [],
+    "artifact": "docs/audit/gap84-inference-frontier.md",
+    "audit": "docs/audit/gap84-inference-frontier.md",
+    "quote": "saturated"
+   },
+   "cell_verdict": "OPEN",
+   "scope": "Measured loss; the lever (what the restart draws) is pre-registered but not run.",
+   "next": "GAP-70 round 2: tempered fresh draw, lambda in {0,0.1,0.2,0.35,0.5,0.75,1}, N=1000, seed 42, NFE=10 (7 cells).",
+   "paper_anchor": "§10.7 K7",
+   "claim": "CLM-060 K7",
+   "paper_label": "SUPP"
+  }
+ ],
+ "summary": {
+  "cells": 11,
+  "win": 1,
+  "open": 7,
+  "blocked": 1,
+  "supp": 2,
+  "frontier_measured_r_cells": 1,
+  "frontier_r_cells": 7,
+  "note": "One cell (R5c, w16e1_5k) satisfies both halves of the win definition. Seven cells have a point reading but no frontier grid; that is the single largest gap between the evidence base and the paper's claim.",
+  "paper_labels": {
+   "STRONG": 3,
+   "CONDITIONAL": 1,
+   "TIE": 1,
+   "PARTIAL": 2,
+   "SUPP": 4
+  },
+  "paper_label_note": "Paper-facing label used in §7.1/§7.2/§7.11. It is distinct from cell_verdict: cell_verdict is the strict two-half WIN gate (point WIN and frontier WIN); paper_label also admits CONDITIONAL, TIE and SUPP."
+ }
+}

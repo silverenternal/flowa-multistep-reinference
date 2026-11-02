@@ -1,0 +1,785 @@
+{
+  "scope": "All recorded files hashed; only tracked_for_replay=true files are published. Full original sample/feature archives retained on server, not falsely claimed in Git.",
+  "files": [
+    {
+      "path": "verification_outputs/cifar-study-20261103/ADDITIONAL_GPU_ACCOUNTING.json",
+      "bytes": 238,
+      "sha256": "5c2f4553601c3d2b5be91342fd14e36d3609592b30caa2b2c817eb5ae8a753f1",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/BRIDGE_PROFILE.json",
+      "bytes": 732,
+      "sha256": "ebb9dfee9a2032da41df928e0f26842e62706beed27b4db2c59f8d017ec68157",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/CROSS_BATCH_KID_DIAGNOSTIC.json",
+      "bytes": 13432,
+      "sha256": "42d70e8fafe7ce921764b7587527041d65d8ede2a47342c21c9206e95e069b2e",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/ENVIRONMENT.json",
+      "bytes": 635,
+      "sha256": "fa8491a15e84dd7d256fcf2ef42de1186ba265a41b52bd6e53471721aae165b4",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/FULL_FEATURE_REPLAY_SERVER.json",
+      "bytes": 657,
+      "sha256": "52e275f133424a75d134b71e78fcb06595cec0bf30f412234f01882d081770e3",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/GAUSSIAN_IDENTITIES.json",
+      "bytes": 6599,
+      "sha256": "d9674e0e727ed42bc007d784a62e42fdb2eda1a25b1e5d1f375deb33908e5206",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/GLOBAL_BUDGET_FINAL.json",
+      "bytes": 520,
+      "sha256": "a344a1d78d61d816fecb65995fce57e9e02b9a08a643e8ca612d6581c5655e5f",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/INFERENTIAL_SCOPE_REVIEW.json",
+      "bytes": 675,
+      "sha256": "c65ed94521c98f783394e5a2bf97c8d5fefac81dc22a4714b72f4ce1033fde62",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/PILOT_RUNTIME_GUARD.json",
+      "bytes": 187,
+      "sha256": "cfb351c41e0770e8463fe11d664919dbd2fe0289de1ccb77254853e7515271d8",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/POSTPROCESS_COMPLETE.json",
+      "bytes": 176,
+      "sha256": "6c296f155c73eca47b422be72f2408b1f21ef3ddbf542b95db3a8aec4aaf003d",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/POSTPROCESS_LOG.json",
+      "bytes": 8242,
+      "sha256": "669fe9047faa8e0b279ae53b3e67a63239655cfaa0451d4e9011800b5e1731fd",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/PROTOCOL.json",
+      "bytes": 6875,
+      "sha256": "8383ea080a6f423e7eb44438223288c5558cce7e05286f93a374712064a7b2ef",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/REFERENCE_STATISTICS.json",
+      "bytes": 1381,
+      "sha256": "c82e5b189c7a2f424674de0210b4b68ee8026ffe160169333acbc7e5c41bfd0a",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/REPLAY_SELECTION.json",
+      "bytes": 433,
+      "sha256": "531ea5a272ff255e6bdc43dd444a0148919318aa55f554f4455acd7b091baf50",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/REPORT.json",
+      "bytes": 44195,
+      "sha256": "eb3e6785694e0ccf244922b0b3137b6bd692862a4689b1a6a6bfc26b8dc60564",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/RUNTIME_AMENDMENT.json",
+      "bytes": 927,
+      "sha256": "c836ec3c677bad052c8898c9864df75afea005aa664f169e13cf6080b2b165da",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/RUN_LEDGER.json",
+      "bytes": 10050,
+      "sha256": "07c751963593cf875ff199ab60da5b3487069ab1071cb099d7350533272ce331",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/SAMPLER_PROFILE.json",
+      "bytes": 413,
+      "sha256": "fd7a34fd26e2bb8c07bf6ea4bcf6a6e8ecd224c76e5b6306294c0780cc88ea5d",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/STATISTICAL_SCOPE_ADDENDUM.json",
+      "bytes": 1189,
+      "sha256": "6258cdfc927fa8cc192cef9a9b068bf9e68c9b2eb6b65806dd76bdfc6a050fc8",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/VISUAL_QA.json",
+      "bytes": 738,
+      "sha256": "6c2583182611eeced95dc6e97699e0fb544610537cad927c82137d0752ac912e",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/WEIGHTS_LINEAGE_CHECK.json",
+      "bytes": 764,
+      "sha256": "80fd7abef0d4033061eecc55170a0579dcd6cebdebd8649184eedf7f05c846e9",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/check_euler_parity.py",
+      "bytes": 3134,
+      "sha256": "a44a0fbd7a61929c25cafd1f3960a89a9640230a71fce6332d0403edf6dabfbb",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/check_weights_lineage.py",
+      "bytes": 1963,
+      "sha256": "afc8a24ccea7fa6b2af33d8e20a95cbf97633b0dd4213aa8069d34408ecd28ed",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/euler_reference_parity/METADATA.json",
+      "bytes": 780,
+      "sha256": "3bfb933640db1b6f22c1832dc7e2c1d62b1987119eb8ca8822da52ef17a37099",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/euler_reference_parity/RESULT.json",
+      "bytes": 351,
+      "sha256": "af246461d90be06e7a0486a6bdd02f35795be2847fc3b966fd248c7c83cad5ec",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/metric_replay_features.npz",
+      "bytes": 14502076,
+      "sha256": "0f2b3c55da3aab552d51904489ab82c22358788a23d7fd3905327c674d133fde",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/pilot_n32_s42_c25/METADATA.json",
+      "bytes": 1151,
+      "sha256": "bc1a63fc29724246054baa068b7ed322436dee19feef2a73a5273f6258a5ec41",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/pilot_n32_s42_c25/features.npz",
+      "bytes": 1171039,
+      "sha256": "2d298743c1ca70815ee8e31258d3f405b860635b8ffa27c9730cf120497a80a7",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/pilot_n32_s42_c25/kid_witness.npz",
+      "bytes": 4705,
+      "sha256": "f687b7a77fd2c010e93a0ad46d43be6fbe60daeba00722f13ed97ee0980c41a5",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/pilot_n32_s42_c25/preselected_images.npz",
+      "bytes": 1790269,
+      "sha256": "e7d515e37cee18d89616585cc4279b330ff2143b47c3555b2db12fbcabdff911",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/pilot_n32_s42_c25/raw_samples.npz",
+      "bytes": 1790269,
+      "sha256": "e7d515e37cee18d89616585cc4279b330ff2143b47c3555b2db12fbcabdff911",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/pilot_n32_s42_c25/results.json",
+      "bytes": 2798,
+      "sha256": "bd02bfe5e22cd88bcb3c52b394025877e5ec8dd19e72f74159fe15f4ef2b19e2",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/pilot_n32_s42_c25.log",
+      "bytes": 1863,
+      "sha256": "e39b3af70e7879620fae9aaf23d50c2d359a07296a40117a8591a2d001a90151",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/prepare_reference.py",
+      "bytes": 1663,
+      "sha256": "b5e36e5d2db780a711beb156783c4db8d4986a0f56eea960b06643f45e61ee71",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/profile_bridge.py",
+      "bytes": 1843,
+      "sha256": "ef2e763072effa78f72432482009102117137156a63ef04a0ec7f3172a207266",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/profile_sampler.py",
+      "bytes": 1764,
+      "sha256": "89ec7dc5fde3a45500ed2de76c3455ac159a7c52968c1b6523623905daaf0a7e",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/reference_features.npz",
+      "bytes": 73476188,
+      "sha256": "0f97a1d85186471ee41e4847c2675faf25ea92515d3c18d1a01e6bb29afab518",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/register_protocol.py",
+      "bytes": 6808,
+      "sha256": "9e2b6de3045c6acf9fbdcc8d89251d627074c2b93b631f63bd582714f175012a",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/restart_source.py",
+      "bytes": 17745,
+      "sha256": "bec1b41555ad3b5f73c5d1b3f157ad6d466445529a71f396660631a22c21ae0f",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/rf_sampling_source.py",
+      "bytes": 5068,
+      "sha256": "653407a258be0be930dad38871c234e0968892387d0130c7fed39646d6a2d8ed",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/rf_training_source/CONTEXT.json",
+      "bytes": 1070,
+      "sha256": "ee50ca6dc84e24eadecce640994d9f2fed9b1e42e04c516fc11b32ef9db1126f",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/rf_training_source/cifar10_rf_gaussian_ddpmpp.py",
+      "bytes": 2002,
+      "sha256": "d69f5a100197f855717a8c7f0a8b8c17466da4422cdc670ca59dccde6b757912",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/rf_training_source/losses.py",
+      "bytes": 7411,
+      "sha256": "f59d42f90c982063498c5c6328d184bebb3258a79c8233a712cf06743b4ca5e8",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/rf_training_source/sde_lib.py",
+      "bytes": 3629,
+      "sha256": "8b608786153cd944d76d8d0ef331023405b1cf3440c79de7bbb6ed6b44543729",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/run_study_v1.py",
+      "bytes": 2433,
+      "sha256": "745a9f0b78cfdb2a8df87e70633b3cee1da39c8be6d432b374292b488b4074b0",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/run_study_v2.py",
+      "bytes": 3424,
+      "sha256": "cf1b2f2bc195df4e33f505ab52f8a6c6e495b39567c4682ef6e7eed36836bece",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c199/METADATA.json",
+      "bytes": 1152,
+      "sha256": "848d23d30754fa6484e3fd36d074fae14966994cda5da74ad784b5cac3389d93",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c199/features.npz",
+      "bytes": 36565997,
+      "sha256": "8471eb9dbc51094f1be693a402a0f1950a88609c589278ab7228db59405760bb",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c199/kid_witness.npz",
+      "bytes": 75563,
+      "sha256": "4433f936eaf2fc3f86af053e48129557ee78293b914ae6bc96aac0d3a2a11660",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c199/preselected_images.npz",
+      "bytes": 1789791,
+      "sha256": "4d5479b64e32735177493102bc71d2e5b91cd01a8c41716053006f78efad5c8c",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c199/raw_samples.npz",
+      "bytes": 56042417,
+      "sha256": "59637f0c389167ac989d28f851f91618af5ca478578d3e41bad89a88eece7f61",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c199/results.json",
+      "bytes": 4843,
+      "sha256": "9c3e270cf9c0a36944017b56f0aef3eaa6324a8d8ffaaf18df902ca5f81b00eb",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c199.log",
+      "bytes": 2660,
+      "sha256": "9aa6ca0d4da089c77ca7e6776e80892f28f3572f8fda98f8074d8bde18503e1b",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c25/METADATA.json",
+      "bytes": 1148,
+      "sha256": "a2d1eec14fc6fda6d4d2f42197e1c1fc08c6d465d3d6ada95b6446381ddc3af2",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c25/features.npz",
+      "bytes": 36495586,
+      "sha256": "98715a9e648090f80f84a858add8e149b2ea253b6193e4a63da1b061db616a08",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c25/kid_witness.npz",
+      "bytes": 75274,
+      "sha256": "df7960941c3b5c57d809c30977ba6b40a1faa919aeedabe748750101e48959fe",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c25/preselected_images.npz",
+      "bytes": 1790134,
+      "sha256": "00c31d2f5f631883bcfbf47ae8a60a410073e21a88c51ed94a8cca54d63a7230",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c25/raw_samples.npz",
+      "bytes": 56041810,
+      "sha256": "6379a012994610d5b4479358e39649e234a17b25e6580c6016bb36840c485944",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c25/results.json",
+      "bytes": 4667,
+      "sha256": "f25ed98c5561788e2b326188b039618dd7f299be0d6ef36315b61ac566e616d0",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c25.log",
+      "bytes": 2479,
+      "sha256": "b153d880d56cfed56f77551897ae7736374c0c1248047da9a43f7c06ce5985fb",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c49/METADATA.json",
+      "bytes": 1148,
+      "sha256": "a3776a988bf0d20d6bc12358a63df40c73dff3975f9b2f56f09d8b8c939c7f5a",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c49/features.npz",
+      "bytes": 36542894,
+      "sha256": "4b09239c97c9066bb29de2d2e68bd66879abfa47697c326cc142708bd892d3a8",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c49/kid_witness.npz",
+      "bytes": 75535,
+      "sha256": "8e75619e3250266ae96b49ca32a0ce88923ce975032f7a4a0eb55ae946bc284b",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c49/preselected_images.npz",
+      "bytes": 1790708,
+      "sha256": "133526b76b8cfca8a69444097e255e215895955537e664d6cb2ee9c07737855a",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c49/raw_samples.npz",
+      "bytes": 56072882,
+      "sha256": "8d424c77d802ace4356e93baa72af37b22d932b9b777fde7730e95f3eb4f492f",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c49/results.json",
+      "bytes": 4664,
+      "sha256": "13fd6542abdfc41e0e16c4a98c742f537b318b002a8b8e66e343a3f92cda92ab",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c49.log",
+      "bytes": 2476,
+      "sha256": "3a477c2ef10a1df4f8111bffeae23312a288f1d5745ee04297039146682be24d",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c99/METADATA.json",
+      "bytes": 1148,
+      "sha256": "a7b05207dfef1bae446c6a236691fe69e032b4adc558717e36fcfb11ee133ef9",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c99/features.npz",
+      "bytes": 36552877,
+      "sha256": "27d829c19792b56a59a0a75248c7e5315f25c803e8772dd3e204b18deb23a4ab",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c99/kid_witness.npz",
+      "bytes": 75597,
+      "sha256": "c6b454facfccc3de8b01d59b5addd24013d7b6e39f67e96ef8222ec2fee1c814",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c99/preselected_images.npz",
+      "bytes": 1789880,
+      "sha256": "e0957760221052fdbeb1000ab5c76897b2abe3534e7dfea19c1e6acf6f4d4a4a",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c99/raw_samples.npz",
+      "bytes": 56049526,
+      "sha256": "7d443715804a338cf94932c4bf4d5079b993b3473e4d7e45026c91d7d29c8264",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c99/results.json",
+      "bytes": 4693,
+      "sha256": "308efcd7d4cc4d2c692a15d62919b14d335a9c49e71d0acc373570c77d04ee87",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s42_c99.log",
+      "bytes": 2505,
+      "sha256": "73304c76b74c18ad147171b077ab7ce6414aa736da1ef4e90012d17f59882c81",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c199/METADATA.json",
+      "bytes": 1151,
+      "sha256": "d552f499e643f79a593d9a617cd384f6c49f12b9e2472a37b9d3a30155da6a11",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c199/features.npz",
+      "bytes": 36495333,
+      "sha256": "277a1f197c026c3fb495c636307b410d6d6d7a38287566d2094d9e9985217cd3",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c199/kid_witness.npz",
+      "bytes": 75369,
+      "sha256": "b2d27e83d6b47173b79076d339e2bbc4054774d042f70a5fb4fa77e259488da6",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c199/preselected_images.npz",
+      "bytes": 1791853,
+      "sha256": "4b76ca1a9a68bac6e73f1a32e386d5534fd0e76a342b1638f12b74b20f200843",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c199/raw_samples.npz",
+      "bytes": 56020019,
+      "sha256": "942870ad44681e96d917c28144cc34c926042ec0e7e36423cec110fe251d4a3f",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c199/results.json",
+      "bytes": 4861,
+      "sha256": "67f3f82799b23755215283f2c9595b5ce55e3c30047b9b4a8fb6679372ea181e",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c199.log",
+      "bytes": 2678,
+      "sha256": "92ab74542dfd4107a45f8ac603ee66e52cce501fafb0360296b05b750659f8cf",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c25/METADATA.json",
+      "bytes": 1149,
+      "sha256": "a54b10b4d6f20741b9bbbcc2b6975acc4be271756f92a3240482efd86c45976f",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c25/features.npz",
+      "bytes": 36433918,
+      "sha256": "b996908800ffb19979058ca885967f74c8e844f16a4b5553f20bbaa9467ad048",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c25/kid_witness.npz",
+      "bytes": 75031,
+      "sha256": "1bd88de8a95f6914d5ea885027bff481cd289bd4b4e29db3cc0a9b8f847e17b6",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c25/preselected_images.npz",
+      "bytes": 1790823,
+      "sha256": "c9aaed2160bf85369b0d6a93d3d35f5ee307d827c38490964092fa0fd53c7104",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c25/raw_samples.npz",
+      "bytes": 56025807,
+      "sha256": "104c25e12f7713c974a628c9e6da57383c6e6766e9448bf223160b66a4c308a6",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c25/results.json",
+      "bytes": 4675,
+      "sha256": "03617192f09cae5619b4d9d948d5d3073abb0c45d914cc75a0182dd55e828c31",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c25.log",
+      "bytes": 2487,
+      "sha256": "6f64268f4af424a43e08eb9de10d174d7265df2736768ff8296a410305c5f80d",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c49/METADATA.json",
+      "bytes": 1148,
+      "sha256": "06b93f64245e87b85edc542feec4e5c93edef831502a4efb8f54cbef8bbb223e",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c49/features.npz",
+      "bytes": 36464733,
+      "sha256": "75035061b54ca8c855991f02faa92d8c13e7b8f02f1a0d3d8fb5e48bee1dd003",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c49/kid_witness.npz",
+      "bytes": 75433,
+      "sha256": "48083b7c94d208f384e10ebf560dd5e586aaa1f8cef2850e1061dd6915d7b333",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c49/preselected_images.npz",
+      "bytes": 1792147,
+      "sha256": "a4c8aa432c04d349c638409e5693947e136d72a3e5b296871648df02da55ce70",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c49/raw_samples.npz",
+      "bytes": 56043940,
+      "sha256": "32cde6ab65e59c423a47db18f3b1cbad3deae54de30f3523cb99a3f19c33be08",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c49/results.json",
+      "bytes": 4684,
+      "sha256": "7d2189b4269630afa0f72cd837c96f6b211de6e08f898482be3c0bbbcd3eb110",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c49.log",
+      "bytes": 2496,
+      "sha256": "056a30352c0e941ed76283cfd26f1e49b6d83ceb96ba288aa0df8aeff65aceff",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c99/METADATA.json",
+      "bytes": 1149,
+      "sha256": "da8de17782d441803dc387c90c87100bd1eefd40ed21b856c457ba4398aabc04",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c99/features.npz",
+      "bytes": 36477430,
+      "sha256": "9ec8112f1fc4d7d39704e5d703227d701a30de60ad0a0bdb5344b778585d2443",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c99/kid_witness.npz",
+      "bytes": 75310,
+      "sha256": "b2b28691023ed631ba7f3e2e247e9dddfce442fe581215b9933dfb20f6dd036e",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c99/preselected_images.npz",
+      "bytes": 1792086,
+      "sha256": "c671b602866da9ca27e49d32f6e8d5b2af8e1d45645ea9ab213cb7757027e947",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c99/raw_samples.npz",
+      "bytes": 56027193,
+      "sha256": "5f5833571fd2e73f321ae281d080aa5b952be2fbaa1af6455ce6a3ae579a70e3",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c99/results.json",
+      "bytes": 4694,
+      "sha256": "d9f3ee1b9d9b4838ba64ddca649cc9f373d606ed4a475b8e9abfc51a20b0dc38",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s43_c99.log",
+      "bytes": 2506,
+      "sha256": "cb6f05f0f1639444f7b101b621ed66aee4085cee3036f5d92884b3b75ff491af",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c199/METADATA.json",
+      "bytes": 1151,
+      "sha256": "0d2b0f6db28bee96da6dea369201b034fdcad731bb919ff958d5be4dc822b897",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c199/features.npz",
+      "bytes": 36542810,
+      "sha256": "b015d228f3d5f70bbfd77f714295f71d64ec6e68c988c18e89267537008a496b",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c199/kid_witness.npz",
+      "bytes": 75362,
+      "sha256": "c3e2120e171a187beac40369efa6101ca6678efe09c0ad003a2f2b2d2915e694",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c199/preselected_images.npz",
+      "bytes": 1795179,
+      "sha256": "6c9f14aa1318ec0c791eb33f90150ed13fffa6e637df334f91509ecd55b99eb4",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c199/raw_samples.npz",
+      "bytes": 56009747,
+      "sha256": "3bd0ef3959b0e3279ee32521f42e5dbd88a5e6f9918bb6ffe8915cd8e24bee49",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c199/results.json",
+      "bytes": 4855,
+      "sha256": "b1999a7fb3fde81beeb62de9226bf781d5b6046dbe5713ee5f6a615bf1ee4f6a",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c199.log",
+      "bytes": 2672,
+      "sha256": "f9428b9b0b32774968c5728bf6a34cfed16b88bbcffeadf164603b826d5d7187",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c25/METADATA.json",
+      "bytes": 1148,
+      "sha256": "449e14793cbaed6254a44a984fd4377a4806cd6044614a52544cf9456d946a40",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c25/features.npz",
+      "bytes": 36501562,
+      "sha256": "f61548fbe1bf518fd00792b8a6670693f207c94fbf333ffa25ac567264a2a24e",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c25/kid_witness.npz",
+      "bytes": 75142,
+      "sha256": "8377e2c6398b173bd2757c83566299c1984b433625f451316012a57fb7a87168",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c25/preselected_images.npz",
+      "bytes": 1794744,
+      "sha256": "2f3d2c3b7cc79bcc1413827b383546c9c559ff18a752fc2e5da27d07ecf9d31d",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c25/raw_samples.npz",
+      "bytes": 56024857,
+      "sha256": "c2e6e4a6484d42b227859a85dc2275b102c889fe6861feb304e1631f4c984bf4",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c25/results.json",
+      "bytes": 4679,
+      "sha256": "95af81b79737164b5f074cb82e5da5313423473718d7d48673a87e2b7001ed74",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c25.log",
+      "bytes": 2491,
+      "sha256": "84538058fea006020c44e777bcc99cbbd96e808da5e6307395f82afddb8b2e26",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c49/METADATA.json",
+      "bytes": 1148,
+      "sha256": "789e4b7e19e01a63ca6760c7d5badab892e8a52f7bd3a3792e7184939b957fbf",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c49/features.npz",
+      "bytes": 36528817,
+      "sha256": "14d1ecc5cd50041cfe9c825b3e9fc03936ed4d93400f5a92bd73e1583a08bc33",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c49/kid_witness.npz",
+      "bytes": 75365,
+      "sha256": "5a056b127e0f5bdc167eb3e39394892365b22a82dc009d9987dcd64d3acc0d91",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c49/preselected_images.npz",
+      "bytes": 1796299,
+      "sha256": "ad4ecb715d0b8baa795a0f3c17c0f1b97b5ce6a530fcd0488adcdf6065bf7faa",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c49/raw_samples.npz",
+      "bytes": 56048620,
+      "sha256": "931ee0198ceef8a23855a02ee82206a692a2691d89794f44dd255377f7ccb1a7",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c49/results.json",
+      "bytes": 4692,
+      "sha256": "b7db0519f0a4b169b1d5deb44343bdf3cc210d0b909ead70b014c0cd6841084c",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c49.log",
+      "bytes": 2504,
+      "sha256": "087f3331a1e90882eb4127de312f3e2fa5ab20a2137a58e6b7ec1e6d75cf187c",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c99/METADATA.json",
+      "bytes": 1148,
+      "sha256": "a05cb8feba2ecb6d69dfb7496225f02bf09fd942008b28125bf4cf7d029460c9",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c99/features.npz",
+      "bytes": 36533695,
+      "sha256": "8d6cf8b948883ed0cd60d46f2341f8b61b7fc79bbcac03c87c6a02454b92f655",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c99/kid_witness.npz",
+      "bytes": 75360,
+      "sha256": "8bd7ff7c637984e834a4bb60784d3c9a8c0f25e900b9c739d21c6221f9fabdc1",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c99/preselected_images.npz",
+      "bytes": 1795741,
+      "sha256": "7298b0cfeecea9e6a91dbf5b63ddf5b75db28d3a448b534e403731781fa7e9d3",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c99/raw_samples.npz",
+      "bytes": 56020253,
+      "sha256": "a9c291b5f99e83bffd4ad3e566bc1fe8327ffc46aeabe7456963b572a8024582",
+      "tracked_for_replay": false
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c99/results.json",
+      "bytes": 4673,
+      "sha256": "b16d158510f2219499678288c0a3b3792e916bb0fa963a3a0cc2951f172cd0ec",
+      "tracked_for_replay": true
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/s44_c99.log",
+      "bytes": 2485,
+      "sha256": "c876fd9d6c7ab710baac2c62b070c5e7abd4aa41a9b97d69497c82b4edcec63c",
+      "tracked_for_replay": true
+    }
+  ]
+}

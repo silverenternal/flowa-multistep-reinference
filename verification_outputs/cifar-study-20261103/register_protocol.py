@@ -1,0 +1,46 @@
+from pathlib import Path
+from datetime import datetime,UTC
+import json,hashlib,subprocess
+r=Path('/home/hugo/codes/flowa-multistep-reinference');p=r/'verification_outputs/cifar-study-20261103'
+def sha(f):return hashlib.sha256((r/f).read_bytes()).hexdigest()
+assert not (p/'PROTOCOL.json').exists()
+s={'registered_utc':datetime.now(UTC).isoformat(),'kind':'local prospective lock before pilot and any method generation; not public registry',
+'base_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=r,text=True).strip(),
+'previous_gate':'N1000 FID<10 FAILED in cifar-baseline-gate-20261103; failure retained, not changed to pass',
+'protocol_amendment_rationale':'Independent real-real calibration FID32.07 at N1000 and approximately zero unbiased KID demonstrates the old absolute FID threshold was uncalibrated. This is a new relative-quality study with primary unbiased KID, no FID quality gate and no bias subtraction. It is not a reproduction of published50k FID.',
+'budget_user_total_gpu_s':7200,'prior_conservatively_accounted_gpu_s':360,'study_gpu_bearing_outer_wall_cap_s':6000,'per_cell_wall_cap_s':1200,
+'pilot':{'n':32,'seed':42,'cost':25,'use':'code/call-count/runtime validation only; exclude all pilot scores from scientific analysis'},
+'physical_gpu':1,'device':'cuda:1','dtype':'fp32 weights/network and Euler states; original VE sampler fp64 states; matmulTF32 false, cudnnTF32 true; inference mode',
+'environment':'.venvs/flowmol3_venv','threads':{'OPENBLAS_NUM_THREADS':'4','OMP_NUM_THREADS':'4'},
+'checkpoint':'existing official1RF EMA CIFAR DDPM++','weights_path':'data/cifar10_rf.pth','weights_sha256':sha('data/cifar10_rf.pth'),
+'driver_path':'tools/cifar_matched_frontier_20261103.py','driver_sha256':sha('tools/cifar_matched_frontier_20261103.py'),
+'metric_source_sha256':sha('tools/cifar_study_metrics_20261103.py'),
+'restart_repository':'https://github.com/Newbeeer/diffusion_restart_sampling','restart_commit':'8cbcb076330381216b2f60578bb6e381ce182683',
+'restart_source_path':'verification_outputs/cifar-study-20261103/restart_source.py','restart_source_sha256':sha('verification_outputs/cifar-study-20261103/restart_source.py'),
+'restart_loading':'extract original restart_sampler AST only, byte-preserved source; logger stub only; no sampler arithmetic edits',
+'restart_bridge':'linear FM X_t=(1-t)Z+tY, y=X_t/t, sigma=(1-t)/t; D(y,sigma)=t*y+(1-t)*v(t*y,t), t=1/(1+sigma). This is a derived RF interface, not original EDM checkpoint reproduction.',
+'cost_grid':[25,49,99,199],'seeds':[42,43,44],'n_per_arm_seed_cost':1000,'canonical_jobs':12,'arms':['baseline_euler','full_euler','simple_euler','ve_heun','ve_restart'],
+'baseline_euler':'official RF epsilon convention t=.001+u*.999, dt=1/C; no state clipping',
+'full_euler':'R4 beta_total.3, per-restart beta=1-.7**(1/3), scheduler allocation from existing MNIST helper; later u0=.7**(1/3); final global batch centroid anchored at first-round endpoint',
+'simple_euler':'R4 beta_total.3, uniform allocation, later u0=0, no centroid shift. Prospectively tests a candidate motivated by previous MNIST ablations; its combined interactions were not tested there.',
+'ve_heun':'original restart_sampler with no restart, rho7, sigma_max999,min.002, churn0, gamma0; 2*Nmain-1=C',
+'ve_restart':'same original sampler, restart_info {0:[3,2,.06,.30]} from original CIFAR VP preset; noise1, restart_gamma0, churn0; 2*Nmain-1+8=C. Nearest-node trigger from original implementation is retained.',
+'initial_policy':'numpy default_rng(seed) float32 Gaussian of shape1000x3x32x32 shared across all arms and costs. VE latents divided by999/1000 so initial physical x at t=.001 equals Euler x. No initial clipping.',
+'fresh_policy':'FM fresh rng SeedSequence([seed,1,round]); same for full/simple. Original VE randn_like draws rng SeedSequence([seed,2,batch_offset]); zero-coefficient draws retained. Original VE schedule differs from Euler; ve_heun separates solver/grid from restart.',
+'batch_size_generation':32,'batch_size_features':64,
+'feature_input':'only endpoint ((x+1)/2).clamp(0,1); same for all arms, clipping fractions retained',
+'reference_path':'verification_outputs/cifar-study-20261103/reference_features.npz','reference_sha256':sha('verification_outputs/cifar-study-20261103/reference_features.npz'),
+'reference_statistics':'verification_outputs/cifar-study-20261103/REFERENCE_STATISTICS.json','reference_statistics_sha256':sha('verification_outputs/cifar-study-20261103/REFERENCE_STATISTICS.json'),
+'feature_family':'pytorch_fid TF-port InceptionV3 pool3 2048D; same10k test reference; no old torchvision-cache mixing',
+'primary_metric':'unscaled polynomial degree3 KID MMD U-statistic, all10000 reference features and all1000 generated features; no random subsets or clipping negative KID',
+'primary_seed_statistic':'normalized trapezoidal area of KID over log(C), common4 costs; lower better',
+'primary_contrasts':[['full_euler','baseline_euler'],['simple_euler','baseline_euler'],['simple_euler','ve_restart'],['ve_restart','ve_heun']],
+'primary_inference':'paired seed differences, two-sided t df2; Holm correction across exactly4 area contrasts. Nominal95% seed-t CIs reported, not simultaneous. Practical reference=.001 unscaled KID; a scientific signal requires Holm p<.05 and nominalCI upper<-.001. No seed topups.',
+'secondary_metrics':'TF-port FID and clipping, wall time; FID remains sample biased, no subtraction. Full-versus-Restart descriptive, not add-on significance tests.',
+'frontier_rule':'No frontier WIN unless method-minus-baseline KID 4 Bonferroni95% seed-t upper bounds <=0 and upper-C99/199 paired improvement nominalCI upper<-.001; baseline plateau requires both |KID(C199)-KID(C99)|<=.001 and |FID(C199)-FID(C99)|<=1 for seed-mean levels. Failure means incomplete or unsupported, no automatic new rung.',
+'visual_selection':'first32 indices all arms saved; display first8 seed42 C199, without outcome selection',
+'execution_order':'seed42/43/44, each ascending costs25/49/99/199; five arms in fixed order; no result-based configuration changes',
+'stop_rules':'any nonfinite output, call mismatch, skipped record, source hash mismatch or wall limit aborts; preserve failures; no quality-based early stop or selecting best seed',
+'not_claimed':['original EDM-checkpoint Restart reproduction','universal winning configuration','training-seed replication','new general theorem','CAS tier1 acceptance guarantee'],
+'future_publication':'metadata/protocol/witness primary metric terms/all seed scores + preselected images; large raw pixels/features retained server with hashes; fixed seed42 C49 baseline/simple feature pair and full reference designated for independent Mac metric replay'}
+(p/'PROTOCOL.json').write_text(json.dumps(s,indent=2)+'\n');print(s['registered_utc'],s['driver_sha256'])

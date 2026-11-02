@@ -1,0 +1,18 @@
+{
+  "recorded_utc": "2026-11-02T18:05:49.201531+00:00",
+  "before_any_canonical_job": true,
+  "initial_runtime_guard": "FAILED; preserved",
+  "reason": "Initial single-batch pilot extrapolated cold-start initialization into every minibatch. Separate runtime-only warm model/bridge/original-sampler profiles measure <=.65s per25 calls, with no metric or model-selection use.",
+  "observed_max_warm25_call_s": 0.5199224259704351,
+  "conservative_per_arm_batch25_call_s": 0.65,
+  "per_canonical_job_cold_scoring_IO_reserve_s": 60,
+  "projected_study_s": 5330.330666338094,
+  "locked_study_cap_s": 6000,
+  "profiling_extra_budget_accounted_s": 120,
+  "user_total_cap_s": 7200,
+  "pass": true,
+  "scientific_protocol_unchanged": true,
+  "source_driver_unchanged": true,
+  "no_change_to_seeds_N_arms_noise_solver_metrics_or_hypotheses": true,
+  "protocol_sha256": "8383ea080a6f423e7eb44438223288c5558cce7e05286f93a374712064a7b2ef"
+}

@@ -1,0 +1,10 @@
+START 102 199 baseline_euler
+GENERATED baseline_euler {'velocity_calls_per_sample': 199, 'actual_calls_per_batch': [199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199], 'parts': [199], 'generation_wall_s': 101.7184088070644, 'raw_min': -1.0993887186050415, 'raw_max': 1.1481574773788452, 'clipped_fraction': 0.006426432291666667, 'n_processed': 1000, 'n_skipped': 0}
+START 102 199 consistent_two_round
+GENERATED consistent_two_round {'velocity_calls_per_sample': 199, 'actual_calls_per_batch': [199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199], 'parts': [153, 46], 'generation_wall_s': 110.27501834090799, 'raw_min': -1.1016685962677002, 'raw_max': 1.1261024475097656, 'clipped_fraction': 0.00540234375, 'n_processed': 1000, 'n_skipped': 0}
+START 102 199 ve_restart
+GENERATED ve_restart {'velocity_calls_per_sample': 199, 'actual_calls_per_batch': [199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199], 'parts': [199], 'generation_wall_s': 126.90964129299391, 'raw_min': -1.1032665967941284, 'raw_max': 1.1027268171310425, 'clipped_fraction': 0.008694010416666667, 'n_processed': 1000, 'n_skipped': 0}
+METRIC baseline_euler 0.0019565380174757507 33.26228901409718
+METRIC consistent_two_round 0.0019528633316632238 33.1605144573972
+METRIC ve_restart 0.0007842341791599594 32.501287881196504
+COMPLETE 391.57145578204654

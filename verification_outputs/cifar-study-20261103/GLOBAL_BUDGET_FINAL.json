@@ -1,0 +1,9 @@
+{
+  "user_limit_gpu_bearing_wall_s": 7200,
+  "conservatively_accounted_total_s": 6638,
+  "remaining_unspent_s": 562,
+  "accounting": "prior360 + runtime profiles120 + Euler parity60 + first-study pilot/canonical outer wall + optional holdout outer wall, rounded upward",
+  "no_purchases": true,
+  "no_further_gpu_jobs_authorized_by_this_protocol": true,
+  "scope": "GPU-bearing outer wall includes generation, feature extraction, CPU scoring and result IO, so is conservative; no claim of device-utilization billing."
+}

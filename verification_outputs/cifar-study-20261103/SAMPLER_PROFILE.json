@@ -1,0 +1,18 @@
+{
+  "rows": [
+    {
+      "noise_implementation": "numpy_copy",
+      "wall_s": 1.030769019969739
+    },
+    {
+      "noise_implementation": "torch_gpu",
+      "wall_s": 0.5005093559157103
+    },
+    {
+      "noise_implementation": "numpy_copy_repeat",
+      "wall_s": 0.5170957429800183
+    }
+  ],
+  "gpu_bearing_wall_s": 3.9318319510202855,
+  "scope": "runtime profiling; no score or configuration selection"
+}

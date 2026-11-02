@@ -246,7 +246,7 @@ def render(register: dict[str, Any]) -> str:
         f"{summary['blocked']} BLOCKED, {summary['supp']} SUPP (strict two-half gate).",
         f"- Paper labels: **{labels['STRONG']} STRONG + {labels['CONDITIONAL']} CONDITIONAL + "
         f"{labels['TIE']} TIE + {labels['PARTIAL']} PARTIAL + {labels['SUPP']} SUPP-only = "
-        f"{summary['cells']}** — the labels used in §7.1 / §7.2 / §7.11.",
+        f"{summary['cells']}** — current review grades; archived submission labels may differ.",
         f"- Frontier coverage: **{summary['frontier_measured_r_cells']} of "
         f"{summary['frontier_r_cells']} R-level cells** have a complete (quality, NFE) grid.",
         f"- {summary['note']}",

@@ -1,0 +1,75 @@
+{
+  "by_section": [
+    {
+      "heading": "摘要",
+      "characters": 367,
+      "cjk_characters": 266
+    },
+    {
+      "heading": "I. 引言",
+      "characters": 1085,
+      "cjk_characters": 945
+    },
+    {
+      "heading": "II. 相关工作与评价对象",
+      "characters": 2745,
+      "cjk_characters": 1825
+    },
+    {
+      "heading": "III. 方法与主实验实例",
+      "characters": 2201,
+      "cjk_characters": 1229
+    },
+    {
+      "heading": "IV. 随机边界核、目标保持与失效条件",
+      "characters": 2100,
+      "cjk_characters": 1116
+    },
+    {
+      "heading": "V. 数据、协议与统计",
+      "characters": 4112,
+      "cjk_characters": 2424
+    },
+    {
+      "heading": "VI. 结果",
+      "characters": 9012,
+      "cjk_characters": 3710
+    },
+    {
+      "heading": "VII. 讨论",
+      "characters": 827,
+      "cjk_characters": 649
+    },
+    {
+      "heading": "VIII. 结论",
+      "characters": 213,
+      "cjk_characters": 152
+    },
+    {
+      "heading": "附录 A. 历史跨域记录的比较对象与边界",
+      "characters": 4362,
+      "cjk_characters": 2290
+    },
+    {
+      "heading": "附录 B. 历史参数敏感性与输出平移",
+      "characters": 2093,
+      "cjk_characters": 863
+    },
+    {
+      "heading": "参考文献",
+      "characters": 4437,
+      "cjk_characters": 4
+    },
+    {
+      "heading": "内部复现索引（正式投稿前移入匿名补充材料）",
+      "characters": 2800,
+      "cjk_characters": 654
+    }
+  ],
+  "characters_with_whitespace": 36520,
+  "cjk_characters": 16204,
+  "captioned_tables": 17,
+  "figures": 8,
+  "references": 26,
+  "scope": "Chinese research draft counts do not establish English double-column page compliance."
+}

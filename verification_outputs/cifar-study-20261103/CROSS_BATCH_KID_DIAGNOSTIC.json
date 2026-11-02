@@ -1,0 +1,606 @@
+{
+  "status": "EXPLORATORY",
+  "scope": "Three independent generated batches; cross-batch self-kernel estimates the product of the per-output marginal even when centroid processing couples samples within a batch. Same fixed empirical reference, only3 batches; no added tests/CIs or replacement of registered primary scores.",
+  "rows": [
+    {
+      "cost": 25,
+      "arm": "baseline_euler",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.5180258760222518
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.5149843045773754
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.517226880281209
+        }
+      ],
+      "cross_batch_kid": 0.006939949315833527,
+      "mean_primary_within_batch_kid": 0.006949593520296116,
+      "cross_minus_within_self_term": -9.64420446281089e-06
+    },
+    {
+      "cost": 25,
+      "arm": "full_euler",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.5462699266323507
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.543719770265133
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.5489432976557687
+        }
+      ],
+      "cross_batch_kid": 0.018191247986481418,
+      "mean_primary_within_batch_kid": 0.018183397146407376,
+      "cross_minus_within_self_term": 7.850840073597709e-06
+    },
+    {
+      "cost": 25,
+      "arm": "simple_euler",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.3605890871539017
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.362734444675325
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.364564529814943
+        }
+      ],
+      "cross_batch_kid": 0.16137254304802928,
+      "mean_primary_within_batch_kid": 0.1613484189680352,
+      "cross_minus_within_self_term": 2.412407999408117e-05
+    },
+    {
+      "cost": 25,
+      "arm": "ve_heun",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.4679194525500978
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.461737037502185
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.4633911671889839
+        }
+      ],
+      "cross_batch_kid": 0.0018061129725732705,
+      "mean_primary_within_batch_kid": 0.0018493753809027957,
+      "cross_minus_within_self_term": -4.3262408329969304e-05
+    },
+    {
+      "cost": 25,
+      "arm": "ve_restart",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.4462374414423838
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.4413993284061122
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.4424549613418185
+        }
+      ],
+      "cross_batch_kid": 0.009116098542451212,
+      "mean_primary_within_batch_kid": 0.009137415916305791,
+      "cross_minus_within_self_term": -2.1317373854579102e-05
+    },
+    {
+      "cost": 49,
+      "arm": "baseline_euler",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.5038998244251918
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.5002535344575467
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.5028113141057435
+        }
+      ],
+      "cross_batch_kid": 0.004304019691860894,
+      "mean_primary_within_batch_kid": 0.004273369902668911,
+      "cross_minus_within_self_term": 3.0649789191983245e-05
+    },
+    {
+      "cost": 49,
+      "arm": "full_euler",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.531119433009943
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.5289874362061142
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.5306400601497276
+        }
+      ],
+      "cross_batch_kid": 0.012607770074147151,
+      "mean_primary_within_batch_kid": 0.012650619296812327,
+      "cross_minus_within_self_term": -4.284922266539759e-05
+    },
+    {
+      "cost": 49,
+      "arm": "simple_euler",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.3777813897313251
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.3836840221194715
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.3779300784637187
+        }
+      ],
+      "cross_batch_kid": 0.13475141110508204,
+      "mean_primary_within_batch_kid": 0.1348556705175552,
+      "cross_minus_within_self_term": -0.00010425941247294013
+    },
+    {
+      "cost": 49,
+      "arm": "ve_heun",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.4711094683778816
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.4656948870592106
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.4686612274115982
+        }
+      ],
+      "cross_batch_kid": 0.0007565302373553351,
+      "mean_primary_within_batch_kid": 0.0007940111185442689,
+      "cross_minus_within_self_term": -3.748088118893378e-05
+    },
+    {
+      "cost": 49,
+      "arm": "ve_restart",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.4579758097836917
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.457459658782619
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.4596242780029494
+        }
+      ],
+      "cross_batch_kid": 0.0005723589519996963,
+      "mean_primary_within_batch_kid": 0.0006048420779363184,
+      "cross_minus_within_self_term": -3.248312593662206e-05
+    },
+    {
+      "cost": 99,
+      "arm": "baseline_euler",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.4905306867745542
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.4867196163493583
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.4892348165361005
+        }
+      ],
+      "cross_batch_kid": 0.0025720935829638414,
+      "mean_primary_within_batch_kid": 0.0025756197822546234,
+      "cross_minus_within_self_term": -3.5261992907820172e-06
+    },
+    {
+      "cost": 99,
+      "arm": "full_euler",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.514730808245332
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.516821775844602
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.514726896228947
+        }
+      ],
+      "cross_batch_kid": 0.009637506176663369,
+      "mean_primary_within_batch_kid": 0.009665221992130935,
+      "cross_minus_within_self_term": -2.7715815467566074e-05
+    },
+    {
+      "cost": 99,
+      "arm": "simple_euler",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.3823840418914772
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.386977727215841
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.3817006109222858
+        }
+      ],
+      "cross_batch_kid": 0.12670663823767203,
+      "mean_primary_within_batch_kid": 0.126801800210254,
+      "cross_minus_within_self_term": -9.516197258196968e-05
+    },
+    {
+      "cost": 99,
+      "arm": "ve_heun",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.4727079153422369
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.4671821068195625
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.4698879263452622
+        }
+      ],
+      "cross_batch_kid": 0.0009349696888216741,
+      "mean_primary_within_batch_kid": 0.0009714104786446853,
+      "cross_minus_within_self_term": -3.644078982323329e-05
+    },
+    {
+      "cost": 99,
+      "arm": "ve_restart",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.469788394628145
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.4657342791659917
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.4678091135671365
+        }
+      ],
+      "cross_batch_kid": 0.0010255555044262898,
+      "mean_primary_within_batch_kid": 0.0010692238274461197,
+      "cross_minus_within_self_term": -4.3668323019385724e-05
+    },
+    {
+      "cost": 199,
+      "arm": "baseline_euler",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.4829552457947455
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.4784246554932228
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.48144622211215
+        }
+      ],
+      "cross_batch_kid": 0.0018277957075620854,
+      "mean_primary_within_batch_kid": 0.0018572393729301417,
+      "cross_minus_within_self_term": -2.9443665368056315e-05
+    },
+    {
+      "cost": 199,
+      "arm": "full_euler",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.5075970047332126
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.5090859826923906
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.5068896272334442
+        }
+      ],
+      "cross_batch_kid": 0.00823137842988908,
+      "mean_primary_within_batch_kid": 0.008286921576967199,
+      "cross_minus_within_self_term": -5.554314707811869e-05
+    },
+    {
+      "cost": 199,
+      "arm": "simple_euler",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.3855292155759549
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.3924324151111274
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.3855594501306945
+        }
+      ],
+      "cross_batch_kid": 0.12252702748086586,
+      "mean_primary_within_batch_kid": 0.12264944785439225,
+      "cross_minus_within_self_term": -0.00012242037352594437
+    },
+    {
+      "cost": 199,
+      "arm": "ve_heun",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.4731657448435065
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.4676670788304174
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.4702772659570593
+        }
+      ],
+      "cross_batch_kid": 0.0010116067839778253,
+      "mean_primary_within_batch_kid": 0.0010515181355588155,
+      "cross_minus_within_self_term": -3.9911351580768084e-05
+    },
+    {
+      "cost": 199,
+      "arm": "ve_restart",
+      "cross_batch_pairs": [
+        {
+          "seeds": [
+            42,
+            43
+          ],
+          "mean_kernel": 1.469293543395127
+        },
+        {
+          "seeds": [
+            42,
+            44
+          ],
+          "mean_kernel": 1.465751207681447
+        },
+        {
+          "seeds": [
+            43,
+            44
+          ],
+          "mean_kernel": 1.4704871249593747
+        }
+      ],
+      "cross_batch_kid": 0.0011921048055030248,
+      "mean_primary_within_batch_kid": 0.00128205185720498,
+      "cross_minus_within_self_term": -8.99470517021772e-05
+    }
+  ]
+}

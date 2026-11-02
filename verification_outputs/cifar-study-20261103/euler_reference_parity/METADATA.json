@@ -1,0 +1,17 @@
+{
+  "registered_utc": "2026-11-02T18:26:44.390735+00:00",
+  "argv": [
+    "/tmp/flowa-check-euler-parity.py"
+  ],
+  "device": "cuda:0",
+  "n": 2,
+  "seed": 20261103,
+  "steps": 25,
+  "wall_limit_s": 120,
+  "purpose": "Original Euler sampling-loop correctness; no metric or model selection",
+  "source_path": "/tmp/flowa-rf-official-20261103/ImageGeneration/sampling.py",
+  "source_sha256": "653407a258be0be930dad38871c234e0968892387d0130c7fed39646d6a2d8ed",
+  "runner_sha256": "a44a0fbd7a61929c25cafd1f3960a89a9640230a71fce6332d0403edf6dabfbb",
+  "environment": "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+  "gpu_snapshot": "0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97337 MiB, 0 %\n1, NVIDIA GeForce RTX 5090, 30732 MiB, 71 %\n"
+}

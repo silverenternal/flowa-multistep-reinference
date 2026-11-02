@@ -1,0 +1,17 @@
+{
+  "recorded_utc": "2026-11-02T18:25:23.494651+00:00",
+  "raw_path": "data/rectified_flow_cifar10.pth",
+  "clean_path": "data/cifar10_rf.pth",
+  "raw_sha256": "27d1463f573556765d380b1983664d24e00a194853e0778f5af18fcdf34500de",
+  "clean_sha256": "c29936c219f34800131c07b81a8da4862b0c0b6f4e5e50efea267d24eef1f2ec",
+  "parameters_compared": 564,
+  "parameters_bitwise_equal": 564,
+  "buffers_equal": {
+    "module.sigmas": true
+  },
+  "training_step": 800001,
+  "ema_num_updates": 800001,
+  "ema_decay": 0.999999,
+  "wall_cpu_s": 2.5507661050651222,
+  "scope": "Current cleaned inference tensors exactly match the available raw checkpoint EMA under the recorded extraction order. Does not independently authenticate remote download or reproduce published50k FID."
+}

@@ -1,0 +1,117 @@
+{
+  "initial_accounted_total_s": 4853,
+  "allocated_phase_s": 2000,
+  "phase_outer_s": 1784.9775900910608,
+  "jobs": [
+    {
+      "seed": 101,
+      "cost": 99,
+      "argv": [
+        "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+        "tools/cifar_consistent_candidate_20261103.py",
+        "--protocol",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/PROTOCOL.json",
+        "--out",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/s101_c99",
+        "--seed",
+        "101",
+        "--cost",
+        "99"
+      ],
+      "outer_wall_s": 224.8062637799885,
+      "exit_code": 0
+    },
+    {
+      "seed": 101,
+      "cost": 199,
+      "argv": [
+        "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+        "tools/cifar_consistent_candidate_20261103.py",
+        "--protocol",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/PROTOCOL.json",
+        "--out",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/s101_c199",
+        "--seed",
+        "101",
+        "--cost",
+        "199"
+      ],
+      "outer_wall_s": 379.17055311298463,
+      "exit_code": 0
+    },
+    {
+      "seed": 102,
+      "cost": 99,
+      "argv": [
+        "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+        "tools/cifar_consistent_candidate_20261103.py",
+        "--protocol",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/PROTOCOL.json",
+        "--out",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/s102_c99",
+        "--seed",
+        "102",
+        "--cost",
+        "99"
+      ],
+      "outer_wall_s": 208.56400570599362,
+      "exit_code": 0
+    },
+    {
+      "seed": 102,
+      "cost": 199,
+      "argv": [
+        "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+        "tools/cifar_consistent_candidate_20261103.py",
+        "--protocol",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/PROTOCOL.json",
+        "--out",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/s102_c199",
+        "--seed",
+        "102",
+        "--cost",
+        "199"
+      ],
+      "outer_wall_s": 392.69806231209077,
+      "exit_code": 0
+    },
+    {
+      "seed": 103,
+      "cost": 99,
+      "argv": [
+        "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+        "tools/cifar_consistent_candidate_20261103.py",
+        "--protocol",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/PROTOCOL.json",
+        "--out",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/s103_c99",
+        "--seed",
+        "103",
+        "--cost",
+        "99"
+      ],
+      "outer_wall_s": 193.4327090739971,
+      "exit_code": 0
+    },
+    {
+      "seed": 103,
+      "cost": 199,
+      "argv": [
+        "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+        "tools/cifar_consistent_candidate_20261103.py",
+        "--protocol",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/PROTOCOL.json",
+        "--out",
+        "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/s103_c199",
+        "--seed",
+        "103",
+        "--cost",
+        "199"
+      ],
+      "outer_wall_s": 386.3059961060062,
+      "exit_code": 0
+    }
+  ],
+  "complete": true,
+  "conservative_total_gpu_accounted_s": 6638
+}

@@ -1,0 +1,40 @@
+{
+  "original_unscoped_exit_code": 2,
+  "unscoped_output": "docs/PAPER-EVIDENCE.md:3: trailing whitespace.\n+**As of:** 2026-11-03  \nverification_outputs/cifar-study-20261103/restart_source.py:258: trailing whitespace.\n+            \nverification_outputs/cifar-study-20261103/rf_sampling_source.py:84: trailing whitespace.\n+      \nverification_outputs/cifar-study-20261103/rf_sampling_source.py:85: trailing whitespace.\n+      model_fn = mutils.get_model_fn(model, train=False) \nverification_outputs/cifar-study-20261103/rf_sampling_source.py:86: trailing whitespace.\n+      \nverification_outputs/cifar-study-20261103/rf_sampling_source.py:91: trailing whitespace.\n+        \nverification_outputs/cifar-study-20261103/rf_sampling_source.py:94: trailing whitespace.\n+        pred = model_fn(x, t*999) ### Copy from models/utils.py \nverification_outputs/cifar-study-20261103/rf_sampling_source.py:96: trailing whitespace.\n+        # convert to diffusion models if sampling.sigma_variance > 0.0 while perserving the marginal probability \nverification_outputs/cifar-study-20261103/rf_sampling_source.py:101: trailing whitespace.\n+      \nverification_outputs/cifar-study-20261103/rf_sampling_source.py:105: trailing whitespace.\n+  \nverification_outputs/cifar-study-20261103/rf_sampling_source.py:126: trailing whitespace.\n+      \nverification_outputs/cifar-study-20261103/rf_sampling_source.py:143: trailing whitespace.\n+      \nverification_outputs/cifar-study-20261103/rf_sampling_source.py:145: trailing whitespace.\n+  \nverification_outputs/cifar-study-20261103/rf_training_source/cifar10_rf_gaussian_ddpmpp.py:34: trailing whitespace.\n+  sampling.init_type = 'gaussian' \nverification_outputs/cifar-study-20261103/rf_training_source/losses.py:87: trailing whitespace.\n+    \nverification_outputs/cifar-study-20261103/rf_training_source/losses.py:105: trailing whitespace.\n+    target = batch - z0 \nverification_outputs/cifar-study-20261103/rf_training_source/losses.py:106: trailing whitespace.\n+    \nverification_outputs/cifar-study-20261103/rf_training_source/losses.py:108: trailing whitespace.\n+    score = model_fn(perturbed_data, t*999) ### Copy from models/utils.py \nverification_outputs/cifar-study-20261103/rf_training_source/losses.py:127: trailing whitespace.\n+    \nverification_outputs/cifar-study-20261103/rf_training_source/sde_lib.py:14: trailing whitespace.\n+      \nverification_outputs/cifar-study-20261103/rf_training_source/sde_lib.py:22: trailing whitespace.\n+            \nverification_outputs/cifar-study-20261103/rf_training_source/sde_lib.py:70: trailing whitespace.\n+      #print('NFE:', nfe) \nverification_outputs/cifar-study-20261103/rf_training_source/sde_lib.py:86: trailing whitespace.\n+      \nverification_outputs/cifar-study-20261103/rf_training_source/sde_lib.py:87: trailing whitespace.\n+      for i in range(N):  \nverification_outputs/cifar-study-20261103/rf_training_source/sde_lib.py:88: trailing whitespace.\n+        num_t = i / N * (self.T - eps) + eps      \nverification_outputs/cifar-study-20261103/rf_training_source/sde_lib.py:91: trailing whitespace.\n+        \nverification_outputs/cifar-study-20261103/rf_training_source/sde_lib.py:92: trailing whitespace.\n+        x = x.detach().clone() + pred * dt         \nverification_outputs/cifar-study-20261103/rf_training_source/sde_lib.py:97: trailing whitespace.\n+      n,c,h,w = batch.shape \nverification_outputs/cifar-study-20261103/rf_training_source/sde_lib.py:104: trailing whitespace.\n+          raise NotImplementedError(\"INITIALIZATION TYPE NOT IMPLEMENTED\") \nverification_outputs/cifar-study-20261103/rf_training_source/sde_lib.py:105: trailing whitespace.\n+      \nverification_outputs/cifar-study-20261103/rf_training_source/sde_lib.py:105: new blank line at EOF.\nverification_outputs/manuscript-selfcheck-round5-2026-11-03/authoring_sources/protocol_template.md:20: new blank line at EOF.\nverification_outputs/manuscript-selfcheck-round5-2026-11-03/authoring_sources/theory_template.md:32: new blank line at EOF.\n",
+  "exceptions": {
+    "docs/PAPER-EVIDENCE.md": {
+      "sha256": "7453f20665ac952a71be4e5c22183c2ead8c2bea14de5a97e7d8695f4c7121a8",
+      "reason": "Intentional Markdown hard break in generated surface"
+    },
+    "verification_outputs/cifar-study-20261103/restart_source.py": {
+      "sha256": "bec1b41555ad3b5f73c5d1b3f157ad6d466445529a71f396660631a22c21ae0f",
+      "reason": "Byte-preserved original upstream or exact authoring template"
+    },
+    "verification_outputs/cifar-study-20261103/rf_sampling_source.py": {
+      "sha256": "653407a258be0be930dad38871c234e0968892387d0130c7fed39646d6a2d8ed",
+      "reason": "Byte-preserved original upstream or exact authoring template"
+    },
+    "verification_outputs/cifar-study-20261103/rf_training_source/cifar10_rf_gaussian_ddpmpp.py": {
+      "sha256": "d69f5a100197f855717a8c7f0a8b8c17466da4422cdc670ca59dccde6b757912",
+      "reason": "Byte-preserved original upstream or exact authoring template"
+    },
+    "verification_outputs/cifar-study-20261103/rf_training_source/losses.py": {
+      "sha256": "f59d42f90c982063498c5c6328d184bebb3258a79c8233a712cf06743b4ca5e8",
+      "reason": "Byte-preserved original upstream or exact authoring template"
+    },
+    "verification_outputs/cifar-study-20261103/rf_training_source/sde_lib.py": {
+      "sha256": "8b608786153cd944d76d8d0ef331023405b1cf3440c79de7bbb6ed6b44543729",
+      "reason": "Byte-preserved original upstream or exact authoring template"
+    },
+    "verification_outputs/manuscript-selfcheck-round5-2026-11-03/authoring_sources/protocol_template.md": {
+      "sha256": "5b7a2d3ba39e116496b147406ef65ff2884143eabdf7ff27def1360e4bc933ab",
+      "reason": "Byte-preserved original upstream or exact authoring template"
+    },
+    "verification_outputs/manuscript-selfcheck-round5-2026-11-03/authoring_sources/theory_template.md": {
+      "sha256": "d3c8a0e49085718715c4fc603ecf9e285786031b5680116ca2214b3caec49594",
+      "reason": "Byte-preserved original upstream or exact authoring template"
+    }
+  },
+  "meaning": "No upstream or as-used template byte is normalized to make a cosmetic check pass. Generated evidence Markdown uses intentional two-space hard break. All24 mandatory gates passed independently.",
+  "project_diff_scope_exit_code": 0
+}

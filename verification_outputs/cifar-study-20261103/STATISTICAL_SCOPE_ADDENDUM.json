@@ -1,0 +1,15 @@
+{
+  "recorded_utc": "2026-11-02T18:29:29.660299+00:00",
+  "kind": "interpretation-only statistical scope clarification while fixed canonical study is running",
+  "unchanged": [
+    "all numeric metrics",
+    "primary four area contrasts",
+    "Holm family",
+    "seed set",
+    "sample count",
+    "all arms and integration schedules",
+    "practical thresholds"
+  ],
+  "clarification": "The polynomial KID U-statistic is unbiased for population MMD under iid generated rows. The full_euler global centroid correction couples its N outputs, so that iid unbiasedness cannot be asserted for that arm. The primary estimand is the expectation of the explicitly defined finite-batch score at fixed N1000, with three independent whole-generation runs as inferential units. No per-image p-values are used. Reference-set and training-seed uncertainty are not covered.",
+  "exploratory_cross_batch_diagnostic": "After all fixed jobs finish, compute generated self-kernel terms across pairs of independent seed batches, with no replacement of primary scores or new p-values. This checks per-output-marginal discrepancy without within-batch iid assumptions; only3 batches so no extra power claim."
+}

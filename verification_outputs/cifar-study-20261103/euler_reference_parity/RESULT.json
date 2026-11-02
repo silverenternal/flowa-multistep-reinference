@@ -1,0 +1,10 @@
+{
+  "n_processed": 2,
+  "n_skipped": 0,
+  "source_nfe": 25,
+  "our_velocity_calls": 25,
+  "max_abs_difference": 0.0,
+  "pass": true,
+  "gpu_bearing_wall_s": 5.457744588959031,
+  "scope": "Same exact model and initial physical states; original RF Euler source function vs new driver arithmetic. Supplements previous original-network forward parity."
+}

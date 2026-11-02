@@ -1,0 +1,11 @@
+{
+  "source_cell": "s101_c199",
+  "source_features_sha256": "45c4b91d0678d85be29e406264106c6dfa345fee809f6febb0d9860974633f27",
+  "features_file": "metric_replay_features.npz",
+  "arms": [
+    "baseline_euler",
+    "consistent_two_round",
+    "ve_restart"
+  ],
+  "scope": "Fixed source cell selection by preregistered seeds/cost, not favorable-score selection. First-study pair designated in protocol; candidate uses first fixed seed at highest locked cost."
+}

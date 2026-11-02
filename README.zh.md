@@ -2,11 +2,14 @@
 
 [English](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/README.md) | [中文](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/README.zh.md)
 
+**当前研究复核（2026-11-03）：投稿就绪状态尚未成立。** 本段取代下方历史快照中的投稿成熟度与创新性判断。请以[当前证据寄存器](docs/PAPER-EVIDENCE.md)、[完整45项自查表](docs/audit/manuscript-selfcheck-2026-11-02.md)及[中文v6研究稿](docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md)为准。新增CIFAR匹配调用研究中，原完整配置退化；历史蛋白/结构差值也不等于同生成器/同输入的机制优势。已有端点构造限制了独有创新的主张。冻结投稿包和旧等级保留用于历史复现，不作为当前建议立即投稿或质量保证。候选验证与剩余缺口见[第五轮审计](docs/audit/manuscript-selfcheck-round5-2026-11-03.md)。
+
+
 [![CI](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml/badge.svg)](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml)
 [![D.4 byte-stable](https://img.shields.io/badge/D.4-30%2F30%20PASS-brightgreen)](#submission-gates-verified-at-final-pre-push) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](#installation)
 [![PyTorch 2.7](https://img.shields.io/badge/torch-2.7%2Bcu128-orange.svg)](#installation)
-[![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)](#tnnls-submission-package-tnnls)
+[![Archived TNNLS package](https://img.shields.io/badge/historical%20package-TNNLS-lightgrey.svg)](#tnnls-submission-package-tnnls)
 [![Adapters](https://img.shields.io/badge/adapters-16-orange.svg)](#repository-structure)
 [![5-gate PASS](https://img.shields.io/badge/5--gate-PASS-brightgreen.svg)](#submission-gates-verified-at-final-pre-push)
 [![mkdocs strict](https://img.shields.io/badge/mkdocs--strict-0%20warnings-success.svg)](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/mkdocs.yml)
@@ -65,6 +68,9 @@
 ---
 
 ## Paper A Submission Status / 论文 A 投稿状态
+
+> 历史快照：本节旧等级及创新性/投稿成熟度判断为追溯记录；[2026-11-03复核](docs/audit/manuscript-selfcheck-round5-2026-11-03.md)及[当前证据表](docs/PAPER-EVIDENCE.md)取代这些旧判断。
+
 
 | Item / 项目 | Value / 值 |
 |---|---|
@@ -168,6 +174,9 @@
 
 ## Final Empirical Metrics (11 cells) / 最终实证指标 (11 单元)
 
+> 历史快照：本节旧等级及创新性/投稿成熟度判断为追溯记录；[2026-11-03复核](docs/audit/manuscript-selfcheck-round5-2026-11-03.md)及[当前证据表](docs/PAPER-EVIDENCE.md)取代这些旧判断。
+
+
 The 11 headline cells partition as **3 STRONG (main) + 1 CONDITIONAL (main) + 1 TIE (main) + 2 PARTIAL + 4 SUPP-only** (5 main cells + 6 non-main cells = 11 headline cells total). This is the canonical verdict distribution; cross-doc anchor at [`docs/METRIC_LEDGER.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/METRIC_LEDGER.md).
 11 个头条单元分为 **3 STRONG（主）+ 1 CONDITIONAL（主）+ 1 TIE（主）+ 2 PARTIAL + 4 SUPP-only**（5 主单元 + 6 非主单元 = 11 个头条单元）。此为权威裁决分布；跨文档锚点见 [`docs/METRIC_LEDGER.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/METRIC_LEDGER.md)。
 
@@ -239,6 +248,9 @@ The 11 headline cells partition as **3 STRONG (main) + 1 CONDITIONAL (main) + 1 
 ---
 
 ## Deep Innovations / 深度创新
+
+> 历史快照：本节旧等级及创新性/投稿成熟度判断为追溯记录；[2026-11-03复核](docs/audit/manuscript-selfcheck-round5-2026-11-03.md)及[当前证据表](docs/PAPER-EVIDENCE.md)取代这些旧判断。
+
 
 Beyond the empirical results, the framework ships seven **genuinely novel** primary contributions (the innovation inventory in [`docs/CLAIMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md) — CLM-078 … CLM-084). These are the paper's primary contributions (§3 Framework + §4 Scheduler Family), not just supporting engineering.
 超越实证结果，框架提供七项 **真正新颖的** 主要贡献（创新清单见 [`docs/CLAIMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md) — CLM-078 … CLM-084）。这些是论文的主要贡献（§3 框架 + §4 调度器族），不仅仅是支撑性工程。

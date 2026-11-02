@@ -1,0 +1,329 @@
+{
+ "schema_version": "flowa-state-v8",
+ "purpose": "Submission plan only: what moves an acceptance decision, in what order, and the pre-registered acceptance test for each. Cell-level mechanism state, closed gaps and the retired v7 ledger live in docs/audit/todo-history.md and docs/audit/todo-archive-2026-10-27.json. The win definition and the decision rule are carried over verbatim; what changed is the ordering rule: work is ranked by how much it moves an acceptance decision, not by which cell is still losing.",
+ "objective": "The framework must WIN on every model task: R1 (LineageFlow hmmscan hits), R2 (Kanzi RMSD), R3 (FlowMol3 fg_dev), R5a (2D FM W2), R5b (CIFAR FID), R5c (MNIST FID), R6 (LineageFlow scPerplexity/pLDDT), K1 (FlowMol3 pb_validity), K7 (LineageFlow novelty). A TIE is a loss. A LOSS is an open mechanism gap, not a boundary to be published. Every cell that is not a win today has a mechanism gap below whose acceptance test is that win.",
+ "submission_objective": "Publish in a CAS tier-1 (中科院一区) journal, TNNLS first. The paper is packaged and submittable as of 2026-10-27 (12 pages, 0 overfull, 3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only). What it lacks is not prose but one piece of evidence: the central claim is currently a four-point cross-section, and the reviewer's first objection is already known. The plan below exists to convert that cross-section into an identification, then to put it in the paper.",
+ "win_definition": "A cell wins only if BOTH hold. (1) POINT WIN: at the cell's canonical protocol (same checkpoint, same N, same seeds), the framework's metric is better with the paired 95% CI excluding 0 and clearing the cell's alpha. (2) FRONTIER DOMINANCE: over the NFE grid, the framework's (quality, NFE) curve lies at or below the baseline's at every grid point, and the framework's plateau is better than the baseline's plateau. (2) is the load-bearing one: flow-matching inference saturates with steps, so 'the baseline with more steps' is NOT a valid control and NOT a threat -- the baseline's ceiling is fixed by its own inference protocol. The framework's claim is that it raises that ceiling AND reaches a given quality at fewer NFE. Both halves are measured, not asserted.",
+ "frontier_protocol": "Per model: baseline and framework on the SAME checkpoint, prior, seed policy and N, swept over NFE in {10, 25, 50, 100, 200} (extended upward until the baseline plateaus for two consecutive points). Report per-NFE paired deltas with CIs, the plateau estimate (mean of the last two grid points), and the dominance verdict. A cell whose baseline does not plateau on the grid has an unfinished ceiling measurement, not a win.",
+ "updated_at": "2026-11-03",
+ "history": "docs/audit/todo-history.md",
+ "archive": "docs/audit/todo-archive-2026-10-27.json",
+ "no_push": true,
+ "commit_footer": "(USER AUTHORIZED, NO PUSH)",
+ "recording_policy": "Observations-only: write audit docs + todo.json + raw artifacts. Frozen CLAIMS.md / CONSOLIDATED_RESULTS.md / paper-A-final.* / tnnls_submission/** stay untouched without explicit user authorization.",
+ "decision_rule": "An experiment runs only if it can change a claim's STATUS or a metric's MAGNITUDE. More seeds, more draws or a larger N on an already-measured effect do not qualify: they buy confidence, not strength. When a cell is power-limited or negative, stop measuring and strengthen the adapter: study the domain (the upstream implementation, the metric's own definition, the field's validity rules), write the design hypothesis down, change the code, then make ONE pre-registered measurement. A tie is a loss and is treated as an open gap. Seed top-ups after a run are forbidden in every case; a cell's canonical seed set is fixed in its pre-registration before the first number exists.",
+ "research_protocol": [
+  "1) Read the upstream implementation of the state space being perturbed (channel geometry, latent geometry, embedding geometry) before proposing anything.",
+  "2) Read the metric's definition and the scorer, not just its name: what does it reward, and would it reward the change we are about to make for a trivial reason?",
+  "3) State the design hypothesis as a falsifiable sentence with the expected sign and rough size, in the audit doc, BEFORE touching code.",
+  "4) Change one mechanism at a time; keep the old arm runnable so the before/after is paired on the same seed and the same prior.",
+  "5) One confirmatory measurement at the cell's canonical N/NFE/seeds. No seed top-ups afterwards.",
+  "6) Never frame the control as 'the baseline with more steps'. Flow-matching inference saturates in the step count, so the baseline's ceiling is set by its own inference protocol; the correct control is the baseline at its plateau, and the claim to prove is (quality, NFE) frontier dominance plus a higher plateau."
+ ],
+ "gate_chain": [
+  "python3 tools/verify_submission_readiness.py",
+  "python3 tools/check_claims_consistency.py",
+  "python3 tools/check_docs_against_code.py",
+  "python3 tools/check_doc_paper_refs.py",
+  "python3 tools/paper_evidence.py --check",
+  "python3 -m pytest tests/test_d4_regression_vectors.py tests/test_adapters/test_regression_vectors.py -q",
+  "ruff check adaptive_reflow/ tests/ scripts/ tools/",
+  "mkdocs build --strict",
+  "python3 tools/check_submission_manifest.py",
+  "python3 tools/check_submission_links.py",
+  "python3 tools/check_data_integrity.py",
+  "python3 tools/check_doc_links.py",
+  "python3 tools/check_paper_data_manifest.py",
+  "python3 tools/check_artifact_hashes.py",
+  "python3 tools/check_clone_integrity.py",
+  "python3 tools/regen_audit_index.py --check",
+  "python3 tools/check_vendored_pristine.py",
+  "python3 tools/check_doc_anchors.py",
+  "python3 tools/check_reviewer_pointers.py",
+  "python3 tools/check_recipe_flags.py",
+  "python3 tools/check_data_provenance.py",
+  "python3 tools/check_tables_inventory.py",
+  "python3 tools/check_figure_hashes.py",
+  "python3 tools/build_metric_ledger.py --check"
+ ],
+ "gate_note": "The pytest entry is the fast canonical subset. Full pytest is run per change: 5668 passed / 180 skipped / 0 failed on 2026-10-31 under system python3 (12m17s; the count rose from 5636 on 2026-10-30 with four pointer-gate tests, two drift-gate tests, four cover-letter-validator tests, seven figure-hash tests, four ledger-drift tests and three highlight-limit tests). The flowmol3 venv collects 6267 and reports 6115 passed / 115 skipped / 23 failed / 16 errors: every failure is the Kanzi real-ckpt group failing on `ModuleNotFoundError: jaxtyping` plus two torchvision/tolerance cases, the condition documented in docs/audit/readiness-verifier-repoint.md, with tests/test_tools/test_paper_metrics.py included -- its 12 former failures were an import-order defect in the mock, not a torch dependency (docs/audit/pytest-order-dependence.md). docs-vs-code verifies 3371 claims since the 2026-10-27 packaging pass (the five path-claims lost to the doc-link repair are re-verified by check_doc_links, which resolves the same targets more strictly). The three package-integrity checkers were added to the chain on 2026-10-29 after an audit found that nothing was running them: the MANIFEST had 13 stale rows, 41 of 256 submission links were dead, and 33 ledger mismatches had accumulated unnoticed. check_doc_links, check_paper_data_manifest and check_artifact_hashes were added the same day for the same reason on other surfaces: 146 of 1153 relative doc links were broken, five paper-data MANIFEST rows were stale, and both root READMEs still quoted the superseded 2026-10-12 artifact digests. The same sweep then extended check_data_integrity to verification_outputs/MANIFEST.md (2 stale rows of 439; the file also claimed to list every tracked file when the tree holds 41,561) and check_paper_data_manifest to paper-data/*/SOURCE.md (4 stale rows of 110). Two entries were added on 2026-10-29 after a detached-worktree run (git worktree add --detach) showed that four of the six package-integrity checkers fail on a fresh clone: the paper-data and headline-evidence trees are symlinks into the gitignored verification_outputs/, and 29 of those targets had never been force-added. 107 evidence files (6.5 MB) were added, supplementary_bundle.zip and the 68 MB FlowMol3 checkpoint were exempted with written reasons, and check_clone_integrity now fails any tracked symlink that dangles. The fourteenth entry, tools/paper_evidence.py --check, verifies that every cell in docs/paper-evidence.json names an artifact that exists and contains the quoted number; it was wired nowhere at all -- not in this chain, not in CI, not in verify_submission_readiness -- and on the clone it failed on 4 of 11 cells (R1, R3, R5a, R5b) because their artifacts were untracked. Audit: docs/audit/clone-reproducibility.md. A fifteenth entry was added on 2026-10-30: docs/audit/INDEX.md is the topic-cluster map every reviewer uses to answer 'what does the project claim about X?', and it was generated by a script that lived in /tmp. It had drifted to 484 listed rows against 613 records on disk, and its own TOTAL row (509) disagreed with the sum of its columns (484). The generator is now tools/regen_audit_index.py, --check fails a stale index, and tests/test_tools/test_audit_index.py runs that check. Audit: docs/audit/audit-index-refresh.md. A sixteenth entry was added on 2026-10-30: AGENTS.md guardrail 1 says the vendored upstream trees must stay byte-identical, and nothing checked it because data/ is gitignored and no CI job can see it. tools/check_vendored_pristine.py fails on a modified tracked file in any of the eight vendored code trees, on a pinned repository being off its commit, or on any of the nine files data_availability.md discloses as patched-then-reverted differing from its pin; it SKIPs on a clone. The same pass corrected an 8-vs-9 count in that disclosure table. Audit: docs/audit/vendored-pristine-gate.md. On 2026-10-30 the paper-evidence check was widened: it now also requires docs/PAPER-EVIDENCE.md to be byte-identical to a fresh render of docs/paper-evidence.json. It validated the register and said nothing about the generated surface a reviewer reads, which is the same defect class as the hand-maintained audit index. Audit: docs/audit/clone-reproducibility.md section 4b. A seventeenth entry was added on 2026-10-30: check_doc_links resolves the file half of a relative link and drops the fragment, and mkdocs --strict does not compare fragments with heading ids, so 101 page.md#anchor links were checked by nothing. 37 pointed at no heading -- 34 in README.zh.md, whose TOC was written in the GitHub #english--中文 convention that the site's ASCII-only slugify does not produce, 2 in README.md, and 1 in ALGORITHMS.md pointing at a README section that no longer exists. check_doc_anchors renders each page with the same extension stack as mkdocs.yml and resolves every fragment; it SKIPs without the markdown package. Audit: docs/audit/doc-anchor-audit.md. 2026-10-30: check_reviewer_pointers.py added -- check_doc_links resolves markdown links and ignores inline code spans, so two dead evidence pointers sat in both READMEs (a renamed tool and a moved evidence directory) with nothing to catch them. 2026-10-30: check_recipe_flags.py added -- the reproduce/*.sh command blocks are commented out until a reader uncomments them, so nothing executed them and nothing noticed when a flag was renamed: seven commands named flags their driver did not accept (--n-seeds on the CIFAR driver that threads its seed through WAVE247_SEED, --output-dir on a driver that spells it --outdir, --ckpt/--arm on a driver with neither, and a nine-flag tools/run_real_ckpt_eval.py call against a six-flag CLI). It also scans docs/audit/reproducibility/*.md since 2026-10-30, where the same defect was worse: five of the six \"reviewers can re-run the headline cells with these commands\" commands named a driver that has never existed (tools/run_cifar10_rf.py, tools/flowmol3_n1000_sweep.py, tools/run_kanzi_inv_proj.py) or flags that driver does not take, and only the 2D cell's command was real. It checks cited `bash reproduce/x.sh` targets exist as well. 2026-10-30: check_data_provenance.py added -- it pairs every sha256 cited in docs/audit/**/*.md with the verification_outputs/ path beside it (recursive since 2026-10-30: the wave*.md glob covered 243 of 625 records, because increments file under topic clusters) and compares the pair against the file on disk. It was written in Wave 342 and wired nowhere, because three citations are stale and reconciled in place (the record names the run-time hash, then the current one, then says why the bytes moved; verification_outputs/ is gitignored, so the original bytes cannot come back). A stale citation is now a failure only when the same document does not record the current hash within 40 lines, so the gate can go green without going blind. Tests: tests/test_tools/test_data_provenance.py (11 cases). check_doc_paper_refs (E.2, added 2026-10-30) is the twenty-first entry and the only one that checks the docs tree against the paper rather than against itself: every numbered statement in the A.0 inventory (docs/baseline-audit-report.md §A.0.1, read from the Statement column, so the deliberately-unimplemented A.0.2 gaps do not enter) must be anchored by at least one doc outside the inventory. It previously measured the fraction of top-level docs citing any anchor -- the transpose of that proposition -- and had been failing at 0.818 since docs/ grew past 31 pages, which is why it sat outside the chain. The doc ratio is still printed as [info]; --ratio-gate restores the old behaviour. Current reading: 10/10 statements anchored. Entry 1 (verify_submission_readiness) now resolves mypy through PATH and then .venvs/*/bin/mypy, so the mypy_0 gate runs instead of skipping (2026-10-31). It had reported SKIPPED since the chain was written because mypy is a dev dependency and lives in .venvs/flowmol3_venv, not on PATH -- the skip covered 50 real errors while tnnls_submission/tables.md:89 and MANIFEST.md:231 asserted 0. All 50 are fixed; mypy --strict adaptive_reflow/ is 0 errors in 232 files and the verifier now prints READY: all gates passed with 0 skips (docs/audit/mypy-gate-restoration.md). Entry 22 (check_tables_inventory, 2026-10-31) closes the gap that let two rows of tnnls_submission/tables.md go stale: the checker had guarded 33 numeric cells in Tables 1-3 since 2026-10-29 but the file's authority note claimed every cell had been recomputed, and Tables 4-5 were outside it. Table 4 is now recomputed too (11 cells from wave236-p2-wallclock.json, located by row label rather than by a regex over the row, so a changed number fails instead of making the check disappear; 44 checks total). Table 5 records gate results, not measurements, so the note now says so instead of overclaiming, and its two stale rows were refreshed (pytest 5668 -> 5646 passed; the mypy command string now works). 2026-10-31: check_reviewer_pointers.py scope extended to READER_GLOBS (the seven model cards plus ARCHITECTURE, environments, configs, adapter-dependencies, DEPRECATION, PLUG_IN_YOUR_MODEL, GATES, code-release-checklist). Those pages sat in the same mkdocs navigation as the core surfaces but were never resolved, and 32 of their backticked paths were dead: 8 audit records renamed by the topic-cluster flatten, 10 files never committed in any branch (two SOTA harnesses, a deprecation checker, a Kanzi wrapper, one audit record), 11 citations to the archived docs/paper-draft.md, 3 plain path errors. Two more were invisible to the regex (a `bash <path>` and an unbackticked `$EDITOR <path>`) and were fixed by hand. Scope 638 -> 1016 tokens. PROSE_ABSENT keeps the nine pointers whose sentence says the target is gone, and the exemption is conditional on that sentence: each entry stores its justifying phrases and lapses when they are edited away, so it cannot become a permanent blind spot. baseline-audit-report.md and CONSOLIDATED_RESULTS.md stay out of scope (641 rows citing the waveNNN artefact of a measurement). Audit: docs/audit/reader-doc-pointers.md. Entry 1 also hardened gate 8 (drift_33) on 2026-10-31: it mapped every grep status other than 0 and 1 to an empty hit list, so a scan that could not run reported the same '0 unintended occurrences' as a scan that found nothing. It now fails closed and carries grep's stderr. Same shape as mypy_0 answering SKIPPED. Audit: docs/audit/readiness-drift-gate.md. 2026-10-31: the README gate table was re-read against the tools that produce its numbers. Six of eight rows were stale (pytest 5155/196, mypy 0 errors via a command that does not resolve on this box, 183-word abstract sourced from a file that declares itself superseded, 7 package files, data integrity 6/149/0) and one row's Verification cell, `tests/test_contracts*.py`, matched no file at all: pytest exits 0 with 'no tests ran', so a green gate executed nothing. The same pass repaired tools/render_cover_letter.py --validate, which reported '17/17 placeholders filled' from the absence of [USER TO FILL] markers alone -- the shipped letter substitutes exemplar values, so absence is the normal state of an unfilled letter; it now reports marker state and an exemplar scan separately (four tests in tests/test_tools/test_render_cover_letter_validate.py). tnnls_submission/FILL_GUIDE.md was retargeted: its line numbers were measured on docs/cover-letter-tnnls.md, and re-rendering from that source would have dropped the three 2026-10-27 addenda. Audit: docs/audit/gate-table-readings.md. 2026-10-31 (second pass): 36 iteration labels removed from docs/GATES.md and docs/ARCHITECTURE.md, and the same from docs/ABLATION.md, docs/CONDITIONS.md, docs/code-release-checklist.md and docs/reproduce/INDEX.md (including a table column literally named 'Wave source'). Commit hashes, dates and docs/audit/waveNNN-*.md paths are unchanged: those are addresses. docs/drafts/ARCHIVE_INDEX.md claimed its canonical hashes were 'refreshed 2026-10-27' while listing the pre-retitle values for all five surfaces; recomputed from disk, and abstract-final.md relabelled from 'canonical abstract' to 'historical working abstract'. Entry 23 (check_figure_hashes, 2026-10-31) closes the last unverified digest table in the package: tnnls_submission/figures.md pins 37 figure SHA-256 values and byte sizes, and the three existing hash checkers each stop short of it (check_artifact_hashes covers the two root READMEs, check_submission_manifest the tnnls_submission/ ledgers, check_paper_data_manifest paper-data/*/SOURCE.md). All 37 hold today. The checker is fail-closed twice over: a table that parses to zero rows reports 'unparsed' instead of a clean result, and a figure copied into two tracked roots with different bytes reports 'divergent' rather than accepting whichever copy happens to sort first. Tests: tests/test_tools/test_figure_hashes.py (7 cases). Audit: docs/audit/figure-hash-gate.md. Entry 24 (build_metric_ledger --check, 2026-10-31) closes the last generated surface with no freshness check. docs/METRIC_LEDGER.{md,json} is rendered from CLAIMS.md, INSIGHTS.md and the five live engineering gates, and it was 5 rows stale (133 on disk vs 138 when regenerated; CLAIM 80 vs 84, INSIGHT 18 vs 19), with every source_artifact_sha256 still pointing at the pre-edit CLAIMS.md. The comparison is on content, not shape: a refreshed digest on an otherwise identical row changes no line count, which is how the drift survived. Regenerated both files; --check fails on a missing file, a changed line, or a changed digest, and names the first difference. Tests: tests/test_tools/test_metric_ledger_check.py (4 cases). Audit: docs/audit/metric-ledger-staleness.md.",
+ "venue_assessment": {
+  "note": "Judgment, not measurement. Recorded so the ordering below can be argued with.",
+  "target": "IEEE TNNLS (中科院大类 计算机科学 1区; IF 10.2 for 2024; JCR Q1)",
+  "base_rate": "12-17% reported acceptance rate",
+  "estimate_as_submitted": "~25-30% eventual acceptance; ~10% first-round acceptance",
+  "estimate_after_gap90": "~40-45% eventual acceptance",
+  "drivers_against": [
+   "the only large effect is on a 5k-step MNIST checkpoint; three better-trained checkpoints tie",
+   "no competitive benchmark (MNIST FID 21-24; CIFAR-10 RF FID ~48)",
+   "clean cells have small effects (R2 d=-0.099, R1 d=+0.182, R3 d=-0.401 n.s.)",
+   "the stated theorems do not predict an FID sign, and the paper says so",
+   "engineering bulk (typed contracts, hash ledger, byte-stability) reads as systems work",
+   "6 of 7 R-level cells have no (quality, NFE) grid"
+  ],
+  "drivers_for": [
+   "the framing (control at the round boundary) is genuinely distinct from solver / distillation / alpha-blending",
+   "five checkpoint families across protein, molecule, image and toy",
+   "reproducibility is far above the norm (30/30 byte-stable vectors, hash-chained ledger, per-cell recipes)",
+   "R5c's matched-rung design is sound: same NFE, 7 rungs, 3 seeds, N=1000, dual plateau rule"
+  ],
+  "timing_risk": "TNNLS first review can take 6-12 months. Waiting for reviewer feedback before running GAP-90 therefore risks an 18-24 month total cycle, which is why GAP-90 is ordered first."
+ },
+ "execution_order": [
+  "1. GAP-90-OPTSTEPS-DOSE-CONTROLLED (P0) - EXECUTED 2026-10-27. 42/42 cells, 11m47s on cuda:0. Result: the gain collapses to zero between 156 and 937 optimizer steps. See docs/audit/gap90-optsteps-dose.md section 9.",
+  "2. GAP-91-FLOOR-DISTANCE-LAW (P0) - EXECUTED IN-FAMILY 2026-10-27. fw = 2.450 + 0.7788*base, R2 0.998, LOO MAE 0.331 FID; cross-family hold-out still missing, so 'orders' not 'predicts'.",
+  "3. GAP-92-KAPPA-BRIDGE-INTO-PAPER (P1, no GPU) - GAP-78 already measured a contraction that orders the sign; the manuscript currently says no such thing exists. Put the measured relation in, with its scope.",
+  "4. GAP-93-CONVERGED-CHECKPOINT-LEVER (P1) - EXECUTED 2026-10-27. No beta lever: the largest |delta| anywhere in the dose is 0.576 FID, and beta=0.30 is the measured optimum. Closes 'you did not tune beta'.",
+  "5. GAP-94-STANDARD-BENCHMARK (P1, USER GATE) - one competitive image benchmark at matched NFE. Needs a decision on model access and compute.",
+  "6. GAP-95-FRONTIER-GRIDS-REMAINING (P2) - every R-level cell gets a grid or a measured reason it cannot have one.",
+  "7. GAP-96-MANUSCRIPT-COMPRESSION (P2) - cut engineering bulk to make room for the GAP-90 figure and the GAP-92 table; hold 12 pages.",
+  "8. GAP-15-VENUE-AND-TIMING (P1, user) - submit now, or run GAP-90 first. The estimate above assumes GAP-90 runs first.",
+  "9. GAP-20-COVERLETTER-PLACEHOLDERS (P3, user only) - 17 identity fields."
+ ],
+ "open_gaps": [
+  {
+   "id": "GAP-90-OPTSTEPS-DOSE-CONTROLLED",
+   "priority": "P0",
+   "status": "EXECUTED 2026-10-27 - 42/42 cells, 0 failures, 11m47s on cuda:0 (torch backend)",
+   "gap": "The paper's central claim is that the gain from re-inference is checkpoint-conditional. The evidence is four MNIST checkpoints presented as a cross-section that differs in architecture, training-set size and training time at once. That framing was wrong on the facts: 5k/10k/60k is a clean training-set dose at fixed width and fixed epoch count, and 60k/epochs2/production is a clean epoch dose at fixed width and fixed training set. Only two of the five dose points have a frontier measurement. A reviewer can accept every number and still reject the inference because the middle of the curve is unmeasured.",
+   "design_hypothesis": "Under a controlled axis - same architecture, same training set, only the optimizer-step budget varies - the framework's plateau gain decreases monotonically with training completeness, because the gain is the baseline's distance to its own floor (GAP-84 reading). Pre-registered predictions: plateau delta near 0 at 1,874 steps and near 0 at 2,811 steps for both widths; the OLS slope of delta on log(optimizer steps) is positive (gain shrinks as steps grow) with a 95% CI excluding 0; a width-8 checkpoint at production's 2,811 steps agrees with production within 1 FID.",
+   "research": "1) No training. Measure the frontier on the two checkpoints that never received one: epochs2 (1,874 steps, width 16) and w8e3 (2,811 steps, width 8). 2) Protocol identical to GAP-84 so the points are comparable: N=1000 per arm, sampling seeds 42/43/44, rungs {4,5,10,25,50,100,200}, --min-steps-per-round 2, headline arm evidence_driven, plateau = mean of the last two rungs, floor rule 1 FID absolute with the 1% relative rule reported alongside, verdict via tools/frontier_report.py unmodified. 3) Combine with GAP-84's four points into one five-level dose curve in optimizer steps plus a two-width comparison at 2,811 steps.",
+   "acceptance": "All four clauses, or the law is rejected and the manuscript keeps its current hypothesis wording. (a) Across the five optimizer-step levels (78, 156, 937, 1,874, 2,811) the plateau gain is non-increasing and the OLS slope of delta on log(steps) has a 95% CI excluding 0. (b) The 78-step point reproduces the GAP-84 WIN (7/7 strict rungs, plateau CI clearing the floor) - a pipeline consistency check, not new evidence. (c) At 2,811 steps w8e3 and production differ by less than 1 FID in plateau gain. (d) The three 60,000-image points (937/1,874/2,811) all sit inside the floor.",
+   "est_wall": "a few hours on cuda:0; 84 N=1000 cells (2 checkpoints x 7 rungs x 3 seeds x 2 arms); no training",
+   "agent_action": "Done. docs/audit/gap90-optsteps-dose.md section 9 holds the per-rung tables, both floor verdicts and the clause-by-clause verdict; section 10 holds the GAP-91 fit. Artifacts: verification_outputs/gap90-optsteps-dose/ (42 cells + frontier_{epochs2,w8e3}_evidence_driven{,_absfloor}.json). Audit correction 2026-10-27 (section 11): re-ran rungs 4 and 5 with --min-steps-per-round 2 on CPU; epochs2 becomes TIE with no violations, so the correct headline is 1 WIN / 5 TIE. Section 12 records two provenance defects and their fixes: sweep_command (370 of 376 distinct cells carried a template string) and commit_sha (540 of 541 cells carried the literal 'PENDING'; now git rev-parse HEAD plus a commit_dirty flag, pinned by tests/test_gap90_provenance_fields.py). Section 12.2 records a third defect that touched GAP-90's own width argument: the size-based smoke flag labelled all 42 w8e3 cells as the 6k-image smoke materialization, contradicting the 2,811-step recipe the width contrast relies on; the flag is now tri-state and the width is read from the weights. Section 13 records two axes checked and not claimable: seed-to-seed sd is not reduced by the framework, and the R5c speed ratio is a cost (1.0-2.5x), not a saving.",
+   "blocks": [
+    "GAP-91-FLOOR-DISTANCE-LAW",
+    "GAP-96-MANUSCRIPT-COMPRESSION"
+   ],
+   "record": "docs/audit/gap90-optsteps-dose.md; verification_outputs/gap90-optsteps-dose/",
+   "result": "Plateau delta by optimizer-step budget: 78 -> -3.1206 FID (WIN), 156 -> -1.0036 (TIE), 937 -> +0.0150 (TIE), 1874 -> -0.0037 (TIE under the GAP-84b step cap; the uncapped LOSS is a rung-4 allocation artifact), 2811 width-16 -> -0.0335 (TIE), 2811 width-8 -> -0.2360 (TIE on the 1-FID floor, WIN on a 1% relative floor). The gain collapses to zero between 156 and 937 steps and stays inside the floor. Pre-registered clause (a) monotonicity FAILS strictly (the third step rises by 0.019 FID, 50x below the floor); the OLS slope of delta on log10(steps) PASSES (+1.744, CI [+0.227,+3.260], R2=0.773). Clauses (b), (c), (d) pass. The width-8 result at matched 2,811 steps (0.236 vs 0.034) is not explained by step count and points at baseline quality."
+  },
+  {
+   "id": "GAP-91-FLOOR-DISTANCE-LAW",
+   "priority": "P0",
+   "status": "EXECUTED IN-FAMILY 2026-10-27 - cross-family hold-out NOT met, relation reported as descriptive",
+   "gap": "GAP-84 recorded that the gain tracks the baseline's distance to its own floor, but only as a description of four points. A description is a caveat; a predictor is a result.",
+   "design_hypothesis": "The plateau gain is a function of the baseline plateau's distance to the checkpoint family's floor, and that function predicts the sign and rough size on a checkpoint family it was not fitted on.",
+   "research": "Fit the relation on the GAP-90 five points plus the four GAP-84 checkpoints; hold out one family (Kanzi reconstruction, or CIFAR-10 FID) and test the prediction there. Report the fit, the held-out error, and the sign agreement.",
+   "acceptance": "Out-of-sample sign correct on every held-out checkpoint AND |predicted - observed| below 1 FID, the paper's floor unit. Otherwise the relation is reported as descriptive only and the paper says so.",
+   "est_wall": "no GPU; re-analysis of existing artifacts plus one held-out cell",
+   "agent_action": "Done as far as the data allow. docs/audit/gap90-optsteps-dose.md section 10 records the fit, the LOO table, the two cautions (non-coupled regression form; x-range 10.0-24.5 with production below the implied fixed point). Do not promote to a cross-family law without a hold-out. Addendum 2026-10-27: tools/gap91_holdout.py reproduces the four-point fit and the two-point hold-out in section 14. Still not a cross-family law; the word 'predicts' stays out of the paper for the interval reason, not the fit reason.",
+   "blocks": [
+    "GAP-96-MANUSCRIPT-COMPRESSION"
+   ],
+   "record": "docs/audit/gap90-optsteps-dose.md section 8",
+   "result": "framework_plateau = 2.450 + 0.7788 * baseline_plateau; slope CI [0.7282, 0.8293], R2 = 0.9978, n = 6. The framework compresses the quality spread to 78% of the baseline's. Leave-one-out MAE = 0.331 FID, a third of the 1.0 FID floor. The pre-registered hold-out required a second model family; neither candidate has an NFE grid (R2 has none, R5b contrasts round counts at a single NFE=50 budget), so the acceptance clause is NOT met and the manuscript must say 'orders', not 'predicts'. ADDENDUM 2026-10-27 (section 14): a within-family out-of-sample check now exists. Fitting on the four original GAP-84 checkpoints only gives 2.411865 + 0.780448*base (R2 0.99758, slope CI [0.7050,0.8559]) and predicts the two checkpoints added a day later to MAE 0.055 FID (epochs2 -0.098, w8e3 +0.013), against 0.331 for LOO. Both held-out baselines lie inside the training range, so it is interpolation, and the 95% prediction interval at n=4 is +/-1.0 FID, so accuracy is not power. Reproduce: python3 tools/gap91_holdout.py."
+  },
+  {
+   "id": "GAP-92-KAPPA-BRIDGE-INTO-PAPER",
+   "priority": "P1",
+   "status": "EXECUTED 2026-10-27 - manuscript insertion done; no GPU",
+   "gap": "The manuscript states that the two theorems do not determine the sign of an FID change. That is true of the theorems as stated. But GAP-78 measured a contraction (kappa) that does order the sign - 12/12 weak dominance at beta=0.3 on the floor rule - and that measurement is not in the paper. A reviewer reads 'the theory does not predict' as 'the theory is decorative', which is worse than the truth.",
+   "design_hypothesis": "The measured contraction orders the sign of the plateau delta across checkpoints, even though the theorem alone does not. Reporting it converts the theory section from decoration into a diagnostic with a measured hit rate.",
+   "research": "Computed kappa per checkpoint from the existing GAP-78 diagnostics and tabulated it against the GAP-84 seven-rung plateau delta for the four measured checkpoints. Scope stated in the paper: MNIST FM at beta=0.3 under one floor rule. The GAP-90 checkpoints are added to the table when GAP-90 runs, not before.",
+   "acceptance": "MET: a table with four checkpoints and a manuscript paragraph whose every clause is backed by a number in that table. The paragraph does not claim the theorem predicts FID - only that the measured kappa orders it on this family. n=4, non-significant ordering and the unidentified threshold are all stated in the text.",
+   "est_wall": "no GPU; one re-analysis plus a manuscript edit",
+   "agent_action": "Done. docs/audit/gap92-kappa-bridge.md holds the numbers and the three honesty limits; paper-A-final.tex section VI-D and paper-A-final.md section 6.7 hold the text. The GAP-90 checkpoints are NOT added to the kappa table: kappa was never computed for epochs2 or w8e3, and the table stays a four-point diagnostic.",
+   "blocks": [
+    "GAP-96-MANUSCRIPT-COMPRESSION"
+   ],
+   "record": "docs/audit/gap92-kappa-bridge.md"
+  },
+  {
+   "id": "GAP-93-CONVERGED-CHECKPOINT-LEVER",
+   "priority": "P1",
+   "status": "EXECUTED 2026-10-27 - outcome 2, no beta lever; 24 cells, 13 min total",
+   "gap": "On the production checkpoint the headline arm moves +0.03 FID. But codimension_sheet at beta=0.3 moves -0.50 FID with CI [-0.9996, +0.0025] (GAP-78). The converged regime is a near-miss, not a wall, and the headline arm is the wrong arm there.",
+   "design_hypothesis": "The beta schedule was tuned on the mid-range checkpoints; the converged end needs a different blend weight or a different channel selection, and one such change clears the 1-FID floor with weak dominance at every rung.",
+   "research": "Only the fresh-noise budget beta has never been dosed on any checkpoint; every recorded result uses beta=0.3. Round count is already ruled out (GAP-84c: R in {2,4,6,8,12} spans 0.06 FID, 16x too small a lever) and the per-round step floor is inactive at rungs 100/200. Stage 1: production, beta in {0.15,0.30,0.50,0.70}, NFE=50, seeds 42/43/44, N=1000, arms evidence_driven + codimension_sheet (18 arm-cells, 9 runs). Stage 2: one confirmatory plateau run at the beta the stage-1 rule selects, rungs 100 and 200. Reproduction guard: beta=0.30 / NFE=50 / seed 42 must match the recorded FID to 4 decimals.",
+   "acceptance": "Decision rule fixed before the run. (1) beta lever exists: some beta gives a stage-1 CI excluding 0 with |delta| >= 1 FID AND stage 2 reproduces it at the plateau with the CI upper bound below -1.0. (2) No beta lever: every beta spans < 1 FID at both budgets - then H_kappa holds, the converged end is not reachable by the fresh-noise budget, and the paper says the checkpoint-conditional gain is not a tuning artifact. (3) Anything else is recorded as an interior optimum and NOT promoted.",
+   "est_wall": "about 15 h on cuda:0 in two bounded stages (stage 2 skipped under outcome 2)",
+   "agent_action": "Done. docs/audit/gap93-converged-lever.md section 9 holds the dose table and the two limits (only production was dosed; beta=0.70 is an over-noising bracket, not an informative level). Artifacts: verification_outputs/gap93-beta-dose/.",
+   "blocks": [],
+   "record": "docs/audit/gap93-converged-lever.md",
+   "result": "Beta dose at NFE=50 and at the 100-200 plateau, production, seeds 42/43/44. NFE=50 evidence_driven deltas: -0.0240 (0.15), -0.0364 (0.30), +0.1086 (0.50), +0.5729 (0.70). Plateau: -0.0221 (0.15), -0.0335 (0.30), +0.5763 (0.70). Largest |delta| anywhere is 0.576 FID against a 1.0 floor, and the NFE=50 and plateau spans agree to 0.001 FID. Outcome 2 fires: H_noise rejected, H_kappa holds. Beta=0.30 is the measured optimum of the dose, so the recorded setting was not mistuned and the near-miss is a property of the checkpoint."
+  },
+  {
+   "id": "GAP-94-STANDARD-BENCHMARK",
+   "priority": "P1",
+   "status": "USER GATED - premise amended 2026-10-27 after a diagnostic; nothing further run",
+   "gap": "The strongest image result is on a 5k-step MNIST checkpoint. In 2026 a generative-acceleration paper is read against ImageNet-256 / DiT / SD-class results, and this one has none. No amount of writing closes that.",
+   "design_hypothesis": "The same round-boundary lever operates on a competitive checkpoint; if it does not, the method's scope is structured and small-data generation, and the paper should say that instead of implying general acceleration.",
+   "research": "The repository's CIFAR checkpoint is at baseline FID 447.9 at NFE=50, so it cannot serve as a competitive benchmark. Option B (recommended): a properly trained CIFAR-10 flow-matching checkpoint at FID <= 10, then the existing frontier protocol; the adapter is a loader change because tools/run_sota_cifar_experiment.py and the InceptionV3-tfport cache already exist. Option A: an SD/DiT-class latent model at 256^2, which needs a new adapter, CFG handling and reference statistics.",
+   "acceptance": "Five or more rungs, 3 seeds, N>=1000, reported as a frontier (never a single point), same floor rule as R5c.",
+   "est_wall": "Option B about 1.5 GPU-days plus checkpoint acquisition; Option A 5-15 GPU-days",
+   "agent_action": "Do not start without the user. The premise changed: cifar10_rf.pth loads correctly (strict=True) and is under-integrated at NFE=2, not broken. FID at N=1000 is 45.0 at NFE=10 and 34.9 at NFE=50, ~8x the published 1-RF number. docs/audit/gap94-standard-benchmark.md section 1a holds the tables and the one bounded diagnostic that remains (time convention, Inception weight family, 1-RF vs 2-RF). Bring A / B / neither to the user.",
+   "blocks": [
+    "GAP-96-MANUSCRIPT-COMPRESSION"
+   ],
+   "record": "docs/audit/gap94-standard-benchmark.md"
+  },
+  {
+   "id": "GAP-95-FRONTIER-GRIDS-REMAINING",
+   "priority": "P2",
+   "status": "PRE-REGISTERED 2026-10-27 - baseline-only scans first",
+   "gap": "Six of seven R-level cells have no (quality, NFE) grid, which is the protocol the paper itself calls load-bearing. The packaging pass discloses this; it does not close it.",
+   "design_hypothesis": "For most of these cells the baseline does not descend across NFE, so a grid would be a flat line and the frontier claim is simply not available. Measuring that is the honest close, and it is cheaper than assuming it.",
+   "research": "Re-ranked by whether the baseline can descend and whether the verdict can change, which is not the gap-list order. Rank 1 R5b CIFAR (baseline FID 447.9 at NFE=50, nowhere near converged; the only cell where a grid can flip a REGRESSES verdict). Rank 2 R3 FlowMol3 (NFE=250, likely near-converged). Rank 3 R2 Kanzi. Rank 4 R1 LineageFlow (NFE=150 is fixed by upstream fidelity, so a grid trades config fidelity for a frontier). Rank 5 R5a Two Moons (analytic, likely converges in a few steps). Method: run the BASELINE ALONE across the rung set first; a cell is saturated when the baseline moves less than the cell's floor between the lowest and highest rung, and that measurement is the justification for a point-only verdict.",
+   "acceptance": "Every R-level cell has either a grid of five or more rungs or a recorded saturation measurement with the number that shows saturation. No cell closed by citing a degenerate flat artifact.",
+   "est_wall": "about 1 GPU-day for R5b; about 0.5 GPU-day for the four baseline-only scans; up to 3 more for grids that survive the scan",
+   "agent_action": "Read docs/audit/gap95-frontier-grids.md. Do not reuse kanzi_nfe_scan_q4_2026 (validity 1.0 both arms every rung), flowmol3_fine_nfe_q4_2026 (0.0734 both arms every rung), lineageflow_nfe_scan_paper_metric_q3_2026 (n=8, 8/8 saturated), or nfe_curve_fair_w170_q3_2026 (baseline constant across rungs). NOTE 2026-10-27: R5b's rank-1 status rests on a baseline that is under-integrated at NFE=2 (FID 184-247 at N=200-2000); see gap94-standard-benchmark.md section 1a before spending a day on that grid.",
+   "blocks": [],
+   "record": "docs/audit/gap95-frontier-grids.md"
+  },
+  {
+   "id": "GAP-96-MANUSCRIPT-COMPRESSION",
+   "priority": "P2",
+   "status": "UNBLOCKED 2026-10-31 - GAP-90 returned a number and the read-only build audit is done (docs/audit/gap96-manuscript-compression.md section 7: 12 pages, 0 overfull, shipped PDF current, VII-B now 1258 words). The cut itself edits the frozen manuscript and is user-gated.",
+   "gap": "The paper is at 12 pages with no slack, and the packaging pass already spent the slack it created (Figure 1, the kappa table, the frontier-coverage paragraph, section VI-D). Measured, the engineering surface is III-VI at about 5 pages plus VIII at about 1.5 - not the three pages this entry originally assumed. The GAP-90 figure needs about 0.35 page.",
+   "design_hypothesis": "Compressing the engineering surface to one page and one appendix recovers enough space for the epoch-dose figure and the kappa table without removing any claim, number or status label.",
+   "research": "Cut in this order, each with what must survive verbatim: (1) III-A typed-contracts architecture, 739 words (779 when the plan was written), move per-component prose into a component -> responsibility -> file table, recover about 0.3 page; (2) VII-B per-cell status, 1258 words (959 when the plan was written; now the largest block in the paper), keep only the scope boundary each cell cannot get from Table III, recover about 0.35 page; (3) VIII reproducibility, 428 words over six subsections, collapse to one gate -> command -> artifact -> expected-output table, recover about 0.3 page; (4) V adapter protocol, merge two subsections, recover about 0.15 page. Do NOT cut VI-A (414 words of load-bearing argument) unless 1-4 fall short.",
+   "acceptance": "12 pages held; 0 overfull hbox, 0 overfull vbox, 0 undefined references; no claim, number or status label removed (diff the CLM identifiers and cited numbers against the pre-compression build); check_claims_consistency.py exits 0; docs/check_docs_against_code.py still resolves every surviving identifier; the GAP-90 figure and the kappa table both present; paper-A-final.md in sync with the .tex.",
+   "est_wall": "half a day, after GAP-90",
+   "agent_action": "Typeset the GAP-90 figure at final size and measure before cutting to a target.",
+   "blocks": [],
+   "record": "docs/audit/gap96-manuscript-compression.md"
+  },
+  {
+   "id": "GAP-15-VENUE-AND-TIMING",
+   "priority": "P1",
+   "status": "USER GATE - decision, no agent work",
+   "gap": "Submit the current 12-page package now, or run GAP-90 first. The venue_assessment field records the estimate and why the order matters: TNNLS first review can take 6-12 months, so waiting for feedback before running the identification experiment risks an 18-24 month total cycle.",
+   "design_hypothesis": "Running GAP-90 first raises the eventual acceptance estimate from about 25-30% to about 40-45% for two days of GPU time.",
+   "research": "None. This is a scheduling decision.",
+   "acceptance": "A recorded decision with the date, in this file.",
+   "est_wall": "0",
+   "agent_action": "Present the two options and wait.",
+   "blocks": [],
+   "record": "todo.json"
+  },
+  {
+   "id": "GAP-20-COVERLETTER-PLACEHOLDERS",
+   "priority": "P3",
+   "status": "USER ONLY",
+   "gap": "17 identity fields in the cover letter are exemplar values and must be replaced before any real submission.",
+   "design_hypothesis": "None; mechanical.",
+   "research": "See tnnls_submission/FILL_GUIDE.md.",
+   "acceptance": "grep -n 'USER TO FILL' on the cover letter returns nothing.",
+   "est_wall": "0",
+   "agent_action": "Wait for the user.",
+   "blocks": [],
+   "record": "tnnls_submission/cover_letter.md section 0"
+  },
+  {
+   "id": "GAP-97-AUDIT-CITATION-PROVENANCE",
+   "priority": "P2",
+   "status": "CLOSED 2026-10-30",
+   "gap": "Dead provenance pointers in the reviewer-facing docs. Re-measured on 2026-10-30 with the docs/audit/ and docs/drafts/ prefix exemption removed: 10 dead, all in tnnls_submission/ (9 were link *labels* still carrying the pre-cluster path while the href already pointed at the right file; 1 named a record that never existed). The 159/117/28 counts in the original entry were measured before the 110-citation repoint and are superseded.",
+   "design_hypothesis": "None; mechanical triage.",
+   "research": "docs/audit/evidence-pointer-audit.md section 7 records the re-measurement; docs/audit/INDEX.md is the authority for what exists.",
+   "acceptance": "python3 tools/check_reviewer_pointers.py reports dead=0 with the prefix exemption removed -- met: checked=645 dead=0, and EXEMPT_PREFIXES no longer exists in the checker.",
+   "est_wall": "0",
+   "agent_action": "Closed. The checker now resolves citations into docs/audit/ and docs/drafts/ like any other path; a future reorganisation that strands a citation fails the gate.",
+   "blocks": [],
+   "record": "docs/audit/evidence-pointer-audit.md sections 5-7"
+  }
+ ],
+ "carried_over": [
+  {
+   "id": "GAP-79-R1-PER-FAMILY",
+   "status": "ROUND-2 SCREEN PASSES — LEVER 3 IS LIVE; CONFIRMATION RUNNING. With the native-span target (F3 fix 255f75c6) all three target families leave 0/50 at the first dose and saturate by W8: PF00072 0->23->47->50, PF00183 0->14",
+   "note": "Unchanged by this rewrite; the confirmation run is the only live GPU work outside GAP-90."
+  },
+  {
+   "id": "GAP-81-R3-FLOWMOL3-WIN",
+   "status": "RESTORED + RE-SCOPED + NUMBERS CORRECTED. This entry was dropped from the ledger by accident in 80e455de (GAP-78's closing edit consumed the GAP-81 header) and is restored here with three corrections found by reading the",
+   "note": "Unchanged."
+  },
+  {
+   "id": "GAP-71-ADAPTER-IMAGE-SPECTRAL",
+   "status": "CODE_COMPLETE — pre-registration + --require-matched-nfe guard + spectral_band_fraction landed (76d98304); verdict tool tools/gap71_cifar_matched_report.py landed (unmatched cells excluded, rule 3 checked on sample md5, ",
+   "note": "Code complete; the BEFORE arm has not run. Overlaps GAP-95 and GAP-94 - if either runs first, fold the arms."
+  },
+  {
+   "id": "GAP-70-ADAPTER-KANZI-LATENT",
+   "status": "ROUND 1 FALSIFIED THE POSITION BLEND; ROUND 2 CODE + PRE-REG DONE, NOT RUN. docs/audit/gap70-lineageflow-position-blend.md 4: NOT_THE_LEVER (N_A=46.6%, N_B=0.8%, N_C=1.5%; N_C-N_B=+0.70pp CI[-0.35,+1.67] p=0.167), and th",
+   "note": "Round 2 is code-complete and pre-registered, not run."
+  },
+  {
+   "id": "GAP-47-K1-PB-METRIC",
+   "status": "PLANNED — USER GATED (the gate is the K1 metric label in a frozen claim surface, not the analysis). Blocked on data, not on code: the per-record design the acceptance allows cannot be run from the stored artifacts. The R",
+   "note": "Blocked on data, user gated."
+  },
+  {
+   "id": "GAP-50-EVIDENCE-GRADE-TABLE",
+   "status": "REFRESHED-2026-10-27 — single register landed; manuscript insertion still user-gated",
+   "note": "Register is current; manuscript insertion is user gated."
+  },
+  {
+   "id": "GAP-51-PAPER-B-SPLIT",
+   "status": "PLANNED",
+   "note": "Outline only."
+  }
+ ],
+ "deferred": [
+  {
+   "id": "GAP-59-R1-THREE-SEED-N1000",
+   "why_deferred": "Adding seeds 43/44 at N=1000 cannot raise the +74.1% or the CI; it only buys a 3-seed label. Under the decision rule that is not a reason to spend 10 h GPU.",
+   "re_entry": "Only as the confirmatory run of GAP-69, and only if the profile-aware adapter beats the init-only arm at seed 42 by >= 15% with a CI excluding 0.",
+   "absorbed_into": "GAP-69-ADAPTER-LINAGEFLOW-PROTEIN"
+  },
+  {
+   "id": "GAP-62-R3-THREE-SEED",
+   "why_deferred": "Same reason: seeds 43/44 at N=1000 would raise power on a -0.061 effect, not the effect. If the effect is real, the adapter work in GAP-68 is what makes it large enough to clear the 0.00714 floor.",
+   "re_entry": "Only as the confirmatory run of GAP-81, on the class-preserving arm.",
+   "absorbed_into": "GAP-81-R3-FLOWMOL3-WIN"
+  },
+  {
+   "id": "GAP-61-MEMORY-ATTRIBUTION-WINNING-CELL",
+   "why_deferred": "Asking whether the memory term earns anything on the CURRENT adapter answers a question about a design we are about to replace. It also cannot raise any metric.",
+   "re_entry": "After GAP-67 and GAP-68 land: re-ask beta in {0, 1/6, 1} on the winning cell with the new operator. If the memory term still earns nothing there, restate Thm 4 as an operating-regime result rather than as the explanation of the gains.",
+   "absorbed_into": "GAP-67-BLEND-COVARIANCE-PRESERVATION"
+  },
+  {
+   "id": "GAP-66-R5B-EQUAL-BUDGET / GAP-63-R5B-N1000",
+   "why_deferred": "Not deferred as a question - folded as the BEFORE arm of GAP-71, so the matched-budget N=1000 baseline is measured once, next to the arm that is supposed to beat it, instead of in its own run.",
+   "re_entry": "Runs inside GAP-71 step (1).",
+   "absorbed_into": "GAP-71-ADAPTER-IMAGE-SPECTRAL"
+  }
+ ],
+ "manuscript_selfcheck_2026_11_02": {
+  "record": "docs/audit/manuscript-selfcheck-2026-11-02.md",
+  "machine_record": "docs/audit/manuscript-selfcheck-2026-11-02.json",
+  "items": 45,
+  "status": "ROUND4 completed: matched local component study; independent CIFAR forward parity and metric calibration; core scientific gaps remain",
+  "scope": "All reviewer-plan items from the 2026-11-02 chat; inspect existing source and audit records first. GAP-90/91/92 omissions corrected in the checklist.",
+  "push_authorization": "User explicitly authorized this synchronization on 2026-11-02; standing no_push remains unchanged.",
+  "latest_round": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+  "current_chinese_draft": "docs/drafts/paper-A-zh-reviewed-round4-2026-11-03.md",
+  "status_counts": {
+   "REVISION_NEEDED": 4,
+   "VERIFIED": 30,
+   "EVIDENCE_GAP": 5,
+   "EVIDENCE_LOCATED": 6
+  },
+  "round4": {
+   "audit": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
+   "draft": "docs/drafts/paper-A-zh-reviewed-round4-2026-11-03.md",
+   "user_budget_gpu_seconds": 7200,
+   "accounted_gpu_seconds": 360,
+   "component_matrix": "2 checkpoints x3 seeds x6 arms N1000 C200; local effects only",
+   "external_validation": "forward parity passes; absolute FID gate fails; metric calibration does not override failure",
+   "next_priority": [
+    "calibrated independent evaluation protocol",
+    "closest-method matched control",
+    "independent simplified-candidate validation"
+   ]
+  },
+  "round5_in_progress": {
+   "phase": "canonical CIFAR five-arm matched-call study running",
+   "protocol": "verification_outputs/cifar-study-20261103/PROTOCOL.json",
+   "runtime_amendment": "verification_outputs/cifar-study-20261103/RUNTIME_AMENDMENT.json",
+   "theory": "docs/audit/manuscript-boundary-kernel-2026-11-03.md",
+   "related_work": "docs/audit/manuscript-related-work-round5-2026-11-03.md",
+   "budget": "7200s total, prior360s+profiles120s+study outer cap6000s; no purchases",
+   "scientific_config": "five arms, N1000, seeds42/43/44, C25/49/99/199; no result-based change",
+   "goal": "User explicitly requested continuous goal-driven optimization with assistant-selected route"
+  }
+ }
+}

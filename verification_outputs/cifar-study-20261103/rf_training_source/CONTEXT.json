@@ -1,0 +1,20 @@
+{
+  "repository": "https://github.com/gnobitab/RectifiedFlow",
+  "commit": "5a1fd4dd3ea7db764ce370a84ce35f9c8b15fde6",
+  "files": [
+    {
+      "path": "verification_outputs/cifar-study-20261103/rf_training_source/cifar10_rf_gaussian_ddpmpp.py",
+      "sha256": "d69f5a100197f855717a8c7f0a8b8c17466da4422cdc670ca59dccde6b757912"
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/rf_training_source/losses.py",
+      "sha256": "f59d42f90c982063498c5c6328d184bebb3258a79c8233a712cf06743b4ca5e8"
+    },
+    {
+      "path": "verification_outputs/cifar-study-20261103/rf_training_source/sde_lib.py",
+      "sha256": "8b608786153cd944d76d8d0ef331023405b1cf3440c79de7bbb6ed6b44543729"
+    }
+  ],
+  "observation": "Non-reflow loss branch draws independent get_z0 Gaussian, then t*data+(1-t)*z0. Reflow branch consumes stored paired batch[0]/batch[1]. Published1RF config uses gaussian prior noise_scale1; class reflow_flag defaultsFalse.",
+  "scope": "Published code/config branch correspondence only; not a recovered full original training-run manifest."
+}

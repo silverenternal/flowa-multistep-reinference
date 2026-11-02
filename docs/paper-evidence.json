@@ -1,7 +1,7 @@
 {
  "schema": "paper_evidence_register.v1",
- "as_of": "2026-10-27",
- "basis": "todo.json win_definition: a cell wins only if (1) the point estimate is better with a paired 95% CI excluding 0 at the cell's alpha AND (2) the (quality, NFE) frontier dominates at every rung with a better plateau. TIE is not a win.",
+ "as_of": "2026-11-03",
+ "basis": "todo.json win_definition: a cell wins only if (1) the point estimate is better with a paired 95% CI excluding 0 at the cell's alpha AND (2) the (quality, NFE) frontier dominates at every rung with a better plateau. TIE is not a win. Current review distinguishes a measured difference from a matched-generator/input mechanism test. Historical packaging labels and raw point readings are preserved in the round5 snapshot, rather than treated as current quality guarantees.",
  "canonical_taxonomy": "Canonical numbering (paper §7.2 / CLAIMS CLM-060). The earlier headline-evidence numbering and the paper-data directory names are historical aliases; see taxonomy_map.",
  "taxonomy_map": [
   {
@@ -91,13 +91,13 @@
    "direction": "up",
    "protocol": "N=1000 per arm, NFE=150, 3 rounds, seed 42 (single-seed); GAP-69 profile-init at seeds 42/43/44; GAP-79 dose screen at N=200, seed 42",
    "point": {
-    "verdict": "WIN_SINGLE_SEED",
+    "verdict": "UNMEASURED",
     "effect": "+117 hits (158 -> 275, +74.1%); per-record +0.1170",
     "ci95": "[+0.073, +0.160] (per-record bootstrap, seed 42)",
     "p": "n/a (per-record bootstrap CI excludes 0)",
     "n": 1000,
     "seeds": 1,
-    "caveat": "Single seed. The 3-seed profile-init arm (GAP-69) fires on the aggregate (8.06-8.46x) but fails family identity: PF00072 and PF00183 sit at 0.79-0.80x of the init-only control in every seed. GAP-79 round-2 screen lifts all three target families at W0.5 (PF00072 23/50, PF00183 14/50, PF02517 5/50) with the guard unchanged at 8/50, but the N=1000 confirmation was stopped before it produced a verdict.",
+    "caveat": "2026-11-03 review: Historical hit counts remain a descriptive metric reading. The baseline is a family-biased random sequence generator, not matched single-pass sampling from the same frozen model; incremental mechanism win remains unmeasured. Single seed. The 3-seed profile-init arm (GAP-69) fires on the aggregate (8.06-8.46x) but fails family identity: PF00072 and PF00183 sit at 0.79-0.80x of the init-only control in every seed. GAP-79 round-2 screen lifts all three target families at W0.5 (PF00072 23/50, PF00183 14/50, PF02517 5/50) with the guard unchanged at 8/50, but the N=1000 confirmation was stopped before it produced a verdict.",
     "artifact": "verification_outputs/gap55-r1-nfe150-n1000/seed42/upstream_eval.json",
     "audit": "docs/audit/gap79-r1-family-lever.md",
     "quote": "275.0"
@@ -110,11 +110,36 @@
     "quote": "No cell has a complete grid"
    },
    "cell_verdict": "OPEN",
-   "scope": "Point win is single-seed and metric-level (hit count); the family-identity half is still open.",
-   "next": "GAP-79 confirmation at W0.5, N=1000, seeds 42/43/44 (stopped 2026-10-27; restart when the GPU frees).",
+   "scope": "Historical hit counts remain a descriptive metric reading. The baseline is a family-biased random sequence generator, not matched single-pass sampling from the same frozen model; incremental mechanism win remains unmeasured.",
+   "next": "A same-generator, same-budget comparison with family identity and novelty separated; do not reuse raw-sequence counts as a confirmed mechanism win.",
    "paper_anchor": "§7.2 R1; §7.11 R1 row",
    "claim": "CLM-060 R1",
-   "paper_label": "PARTIAL"
+   "paper_label": "PARTIAL",
+   "historical_review_snapshot": {
+    "point": {
+     "verdict": "WIN_SINGLE_SEED",
+     "effect": "+117 hits (158 -> 275, +74.1%); per-record +0.1170",
+     "ci95": "[+0.073, +0.160] (per-record bootstrap, seed 42)",
+     "p": "n/a (per-record bootstrap CI excludes 0)",
+     "n": 1000,
+     "seeds": 1,
+     "caveat": "Single seed. The 3-seed profile-init arm (GAP-69) fires on the aggregate (8.06-8.46x) but fails family identity: PF00072 and PF00183 sit at 0.79-0.80x of the init-only control in every seed. GAP-79 round-2 screen lifts all three target families at W0.5 (PF00072 23/50, PF00183 14/50, PF02517 5/50) with the guard unchanged at 8/50, but the N=1000 confirmation was stopped before it produced a verdict.",
+     "artifact": "verification_outputs/gap55-r1-nfe150-n1000/seed42/upstream_eval.json",
+     "audit": "docs/audit/gap79-r1-family-lever.md",
+     "quote": "275.0"
+    },
+    "frontier": {
+     "verdict": "UNMEASURED",
+     "grid": [],
+     "artifact": "docs/audit/gap84-inference-frontier.md",
+     "audit": "docs/audit/gap84-inference-frontier.md",
+     "quote": "No cell has a complete grid"
+    },
+    "paper_label": "PARTIAL",
+    "scope": "Point win is single-seed and metric-level (hit count); the family-identity half is still open.",
+    "protocol": "N=1000 per arm, NFE=150, 3 rounds, seed 42 (single-seed); GAP-69 profile-init at seeds 42/43/44; GAP-79 dose screen at N=200, seed 42"
+   },
+   "review_audit": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
   },
   {
    "id": "R2",
@@ -122,18 +147,18 @@
    "model": "Kanzi",
    "metric": "reconstruction_kabsch_rmsd_A",
    "direction": "down",
-   "protocol": "N=1000, index-matched two-sample, seed 42, byte-stable framework arm (sigma=0)",
+   "protocol": "Historical cross-source structure reconstruction, N1000 each; baseline four PDB templates with250 variants each. Matched same-input refinement is unmeasured.",
    "point": {
-    "verdict": "WIN",
-    "effect": "mean -0.01896 A (0.9020 -> 0.8798), d_z=-0.0990",
-    "ci95": "[-0.03085, -0.00708]",
-    "p": "0.001794 (raw; Bonferroni-significant at R-level alpha=0.007143)",
+    "verdict": "UNMEASURED",
+    "effect": "Historical recovered means0.9027630950 ->0.8837987798 A, difference-0.0189643152 A; not a matched same-input improvement",
+    "ci95": "Welch record-independence sensitivity[-0.031124,-0.006804] A; not template-cluster inference",
+    "p": "Welch sensitivity p=0.002254 under record independence; original index-paired p retained historically, not confirmation",
     "n": 1000,
     "seeds": 1,
-    "caveat": "Small effect. The comparison is index-matched, not paired (the two arms are statistically independent, corr ~ +0.02). Reconstruction is evaluated on synthetic input coordinates, not native structures.",
-    "artifact": "verification_outputs/wave218-p3-kanzi-framework-wins.json",
-    "audit": "docs/audit/kanzi/p3-kanzi-n1000-framework-inv-proj.md",
-    "quote": "\"d_z\": -0.09900262042602999"
+    "caveat": "Two structure-source populations, not paired input refinement; four baseline templates invalidate treating all synthetic variants as independent natural proteins.",
+    "artifact": "docs/audit/manuscript-selfcheck-round2-2026-11-02.md",
+    "audit": "docs/audit/manuscript-selfcheck-round2-2026-11-02.md",
+    "quote": "0.9027630950"
    },
    "frontier": {
     "verdict": "UNMEASURED",
@@ -143,11 +168,36 @@
     "quote": "Kanzi"
    },
    "cell_verdict": "OPEN",
-   "scope": "Point win measured; the frontier half has no grid.",
-   "next": "Run a Kanzi (quality, NFE) grid on the same checkpoint and seed policy (GAP-84 protocol).",
+   "scope": "Recovered/recomputed reconstruction scores compare different structure sources. Matched input quality improvement is unmeasured; old STRONG packaging grade is historical.",
+   "next": "Same-input or same-generator structural controls and template-level replication before claiming quality improvement.",
    "paper_anchor": "§7.2 R2; §7.11 R2 row",
    "claim": "CLM-060 R2",
-   "paper_label": "STRONG"
+   "paper_label": "PARTIAL",
+   "historical_review_snapshot": {
+    "point": {
+     "verdict": "WIN",
+     "effect": "mean -0.01896 A (0.9020 -> 0.8798), d_z=-0.0990",
+     "ci95": "[-0.03085, -0.00708]",
+     "p": "0.001794 (raw; Bonferroni-significant at R-level alpha=0.007143)",
+     "n": 1000,
+     "seeds": 1,
+     "caveat": "Small effect. The comparison is index-matched, not paired (the two arms are statistically independent, corr ~ +0.02). Reconstruction is evaluated on synthetic input coordinates, not native structures.",
+     "artifact": "verification_outputs/wave218-p3-kanzi-framework-wins.json",
+     "audit": "docs/audit/kanzi/p3-kanzi-n1000-framework-inv-proj.md",
+     "quote": "\"d_z\": -0.09900262042602999"
+    },
+    "frontier": {
+     "verdict": "UNMEASURED",
+     "grid": [],
+     "artifact": "docs/audit/gap84-inference-frontier.md",
+     "audit": "docs/audit/gap84-inference-frontier.md",
+     "quote": "Kanzi"
+    },
+    "paper_label": "STRONG",
+    "scope": "Point win measured; the frontier half has no grid.",
+    "protocol": "N=1000, index-matched two-sample, seed 42, byte-stable framework arm (sigma=0)"
+   },
+   "review_audit": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
   },
   {
    "id": "R3",
@@ -219,45 +269,105 @@
    "id": "R5b",
    "name": "CIFAR-10 rectified-flow FID",
    "model": "CIFAR-10 rectified flow",
-   "metric": "FID",
+   "metric": "TF-port FID (secondary) / unscaled KID (new primary study)",
    "direction": "down",
-   "protocol": "N=1000, seed 42, NFE=50 matched budget, single round (production checkpoint)",
+   "protocol": "New fixed1RF checkpoint study: N1000/arm, seeds42/43/44, actual C25/49/99/199, five arms, all10k test TF-port reference. Primary KID log-cost area Holm4; old torchvision-cache readings retained in historical snapshot.",
    "point": {
-    "verdict": "MIXED",
-    "effect": "baseline 48.4059; EvidenceDriven 48.1669 (-0.49%), FreeTraj 48.2522 (-0.32%), Cosine 48.5668 (+0.33%), CodimensionSheet 48.6594 (+0.52%)",
-    "ci95": "not computed at the N=1000 single-round reading",
-    "p": "not computed",
+    "verdict": "LOSS",
+    "effect": "At fixedC199 TF-port FID baseline33.03747451, full39.35217033 (secondary); primary full-minus-Euler KID area+0.00807787",
+    "ci95": "[0.007300319576536451, 0.008855422941570644] (primary area, nominal seed-t df2)",
+    "p": "Primary area Holm4 p=0.0010002215; not an additional corrected FID hypothesis test",
     "n": 1000,
-    "seeds": 1,
-    "caveat": "2 of 4 arms improve at N=1000, versus 4 of 4 at N=200. The N=200 and N=1000 baselines are different evaluator readings and must not be pooled.",
-    "artifact": "verification_outputs/wave247-p3-r5b-n1000-n1/summary.json",
-    "audit": "docs/audit/gap84-inference-frontier.md",
-    "quote": "\"fid\": 48.16690776088757"
+    "seeds": 3,
+    "caveat": "Fixed-N batch score, not published50k FID reproduction. Centroid couples full-arm rows; no iid-unbiased KID guarantee for that arm. Three generation seeds do not cover training/reference-set uncertainty.",
+    "artifact": "verification_outputs/cifar-study-20261103/REPORT.json",
+    "audit": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
+    "quote": "\"n_canonical_cells\": 12"
    },
    "frontier": {
     "verdict": "INCOMPLETE",
     "grid": [
-     50,
-     100
+     25,
+     49,
+     99,
+     199
     ],
-    "artifact": "verification_outputs/wave247-p5-r5b-nfe-sweep-aggregate.json",
-    "audit": "docs/audit/gap84-inference-frontier.md",
-    "quote": "2 rungs; NFE 200 never ran"
+    "artifact": "verification_outputs/cifar-study-20261103/REPORT.json",
+    "audit": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
+    "quote": "\"frontier_checks\"",
+    "caveat": "Four matched-call rungs measured; old canonical FID two-half win is not established. New protocol primary KID and operational plateau checks are distinct, and no automatic grid extension was performed."
    },
    "cell_verdict": "OPEN",
-   "scope": "Point reading is arm-dependent; the frontier has two rungs and the baseline is still descending.",
-   "next": "GAP-71 BEFORE arm (matched NFE, N=1000, 3 seeds) then the spectral arm; extend the grid past NFE=200.",
+   "scope": "A clean independent negative/mixed transfer study, not a positive quality mainline. Do not pool with old feature caches or promote KID hypotheses to canonical FID win.",
+   "next": "The separately locked two-round candidate stage is COMPLETE. Keep its results separate; resolve a distinct contribution and independent training/checkpoint validation before a general quality claim. No further GPU work in this protocol.",
    "paper_anchor": "§7.2 R5b; §7.7 NFE-matched boundary",
    "claim": "CLM-070",
-   "paper_label": "CONDITIONAL"
+   "paper_label": "PARTIAL",
+   "historical_review_snapshot": {
+    "point": {
+     "verdict": "MIXED",
+     "effect": "baseline 48.4059; EvidenceDriven 48.1669 (-0.49%), FreeTraj 48.2522 (-0.32%), Cosine 48.5668 (+0.33%), CodimensionSheet 48.6594 (+0.52%)",
+     "ci95": "not computed at the N=1000 single-round reading",
+     "p": "not computed",
+     "n": 1000,
+     "seeds": 1,
+     "caveat": "2 of 4 arms improve at N=1000, versus 4 of 4 at N=200. The N=200 and N=1000 baselines are different evaluator readings and must not be pooled.",
+     "artifact": "verification_outputs/wave247-p3-r5b-n1000-n1/summary.json",
+     "audit": "docs/audit/gap84-inference-frontier.md",
+     "quote": "\"fid\": 48.16690776088757"
+    },
+    "frontier": {
+     "verdict": "INCOMPLETE",
+     "grid": [
+      50,
+      100
+     ],
+     "artifact": "verification_outputs/wave247-p5-r5b-nfe-sweep-aggregate.json",
+     "audit": "docs/audit/gap84-inference-frontier.md",
+     "quote": "2 rungs; NFE 200 never ran"
+    },
+    "paper_label": "CONDITIONAL",
+    "scope": "Point reading is arm-dependent; the frontier has two rungs and the baseline is still descending.",
+    "protocol": "N=1000, seed 42, NFE=50 matched budget, single round (production checkpoint)"
+   },
+   "review_audit": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
+   "candidate_review": {
+    "status": "COMPLETE",
+    "artifact": "verification_outputs/cifar-consistent-candidate-20261103/REPORT.json",
+    "scope": "Separate configuration and generation-seed holdout; not original full arm, new training checkpoint, or complete frontier.",
+    "primary_contrasts": [
+     {
+      "arm": "consistent_two_round",
+      "baseline": "baseline_euler",
+      "mean": 0.00034426352793152454,
+      "nominal_ci95": [
+       -0.00038096412247011886,
+       0.001069491178333168
+      ],
+      "holm_p": 0.1778463836014972,
+      "clears_preregistered_practical_improvement": false
+     },
+     {
+      "arm": "consistent_two_round",
+      "baseline": "ve_restart",
+      "mean": 0.0016435373559862871,
+      "nominal_ci95": [
+       0.0009437076912455622,
+       0.002343367020727012
+      ],
+      "holm_p": 0.019304537479131165,
+      "clears_preregistered_practical_improvement": false
+     }
+    ]
+   }
   },
   {
    "id": "R5c",
    "name": "MNIST flow-matching FID",
    "model": "MNIST flow matching",
-   "metric": "FID",
+   "metric": "projection-FID (fixed128D pixel projection)",
    "direction": "down",
-   "protocol": "N=1000 per arm, 3 seeds, 4 checkpoints, NFE grid {4,5,10,25,50,100,200}, min 2 steps per round",
+   "protocol": "N=1000 per arm, 3 seeds, 4 checkpoints, NFE grid {4,5,10,25,50,100,200}, min 2 steps per round Historical nfe values4/5/10/25/50/100/200 denote RK4 steps S; actual velocity evaluations C=4S. Current grid field reports actual C.",
    "point": {
     "verdict": "WIN",
     "effect": "w16e1_5k plateau 24.4839 -> 21.3632 (-3.1206, -12.75%); 10k 16.9537 -> 15.9501 (-5.92%, TIE); 60k 11.3795 -> 11.3945 (+0.13%, TIE); production 9.9938 -> 9.9603 (-0.34%, TIE)",
@@ -273,24 +383,57 @@
    "frontier": {
     "verdict": "WIN",
     "grid": [
-     4,
-     5,
-     10,
-     25,
-     50,
+     16,
+     20,
+     40,
      100,
-     200
+     200,
+     400,
+     800
     ],
     "artifact": "verification_outputs/gap84-cap-frontier/frontier_w16e1_5k.json",
     "audit": "docs/audit/gap84-inference-frontier.md",
     "quote": "\"win\": true"
    },
    "cell_verdict": "WIN",
-   "scope": "w16e1_5k checkpoint only; the other three checkpoints are TIEs. This is the only cell with the frontier half measured.",
-   "next": "None required for the 5k WIN. The 10k cell clears the 1-FID floor as a point estimate (1.0036) but not at its CI lower bound (0.984); that is a checkpoint property, not a lever.",
+   "scope": "One checkpoint w16e1_5k satisfies the recorded projection-FID frontier rule among six inspected checkpoints; other five are TIE under that rule. This is not Inception FID or a general visual-quality guarantee. Main-parameter components have checkpoint-dependent signs.",
+   "next": "Do not extrapolate the projection metric win or regression to a different feature family. Independent CIFAR controls are now measured separately.",
    "paper_anchor": "§7.2 R5c; §7.9 regime curve",
    "claim": "CLM-059",
-   "paper_label": "STRONG"
+   "paper_label": "STRONG",
+   "historical_review_snapshot": {
+    "point": {
+     "verdict": "WIN",
+     "effect": "w16e1_5k plateau 24.4839 -> 21.3632 (-3.1206, -12.75%); 10k 16.9537 -> 15.9501 (-5.92%, TIE); 60k 11.3795 -> 11.3945 (+0.13%, TIE); production 9.9938 -> 9.9603 (-0.34%, TIE)",
+     "ci95": "per-rung improvement CIs exclude 0 at every rung on w16e1_5k",
+     "p": "no p-value used for the frontier verdict",
+     "n": 1000,
+     "seeds": 3,
+     "caveat": "Checkpoint-conditional: the WIN is on w16e1_5k only (7/7 strict-gain rungs, per-rung CI lower bounds above the 1-FID floor). The other three checkpoints are TIEs, not losses. On w16e1_10k the plateau gain is 1.0036 FID as a point estimate but its 95% CI lower bound is 0.984 FID, and no rung's CI lower bound clears the floor.",
+     "artifact": "verification_outputs/gap84-cap-frontier/frontier_w16e1_5k.json",
+     "audit": "docs/audit/gap84-inference-frontier.md",
+     "quote": "\"verdict\": \"WIN\""
+    },
+    "frontier": {
+     "verdict": "WIN",
+     "grid": [
+      4,
+      5,
+      10,
+      25,
+      50,
+      100,
+      200
+     ],
+     "artifact": "verification_outputs/gap84-cap-frontier/frontier_w16e1_5k.json",
+     "audit": "docs/audit/gap84-inference-frontier.md",
+     "quote": "\"win\": true"
+    },
+    "paper_label": "STRONG",
+    "scope": "w16e1_5k checkpoint only; the other three checkpoints are TIEs. This is the only cell with the frontier half measured.",
+    "protocol": "N=1000 per arm, 3 seeds, 4 checkpoints, NFE grid {4,5,10,25,50,100,200}, min 2 steps per round"
+   },
+   "review_audit": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
   },
   {
    "id": "R6",
@@ -300,13 +443,13 @@
    "direction": "down / up",
    "protocol": "N=1000 per seed, 3 seeds (n=3000 pooled), live tier-aware scheduler",
    "point": {
-    "verdict": "WIN",
+    "verdict": "UNMEASURED",
     "effect": "scPerplexity pooled d_z=-0.8393 (diff -3.6823); hard-tier pLDDT d_z=+1.1211 (n=990); pooled pLDDT d_z=+0.1466 (diff +2.6386)",
     "ci95": "per-seed and pooled; sign consistent on 3/3 seeds and all three tiers for scPerplexity",
     "p": "see docs/audit/gap31-r6-live-uplift.md",
     "n": 3000,
     "seeds": 3,
-    "caveat": "The pooled pLDDT does not reach the +0.2235 bar; the large pLDDT effect is hard-tier only. The scPerplexity axis is the uniform win.",
+    "caveat": "2026-11-03 review: live scoring does not establish a matched multi-round generation comparison. Baseline is family-biased random sequences; current nfe10<restart gate20 yields effective1round, and historical generation code/load metadata are incomplete. The pooled pLDDT does not reach the +0.2235 bar; the large pLDDT effect is hard-tier only. The scPerplexity axis is the uniform win.",
     "artifact": "verification_outputs/gap31-r6-live-uplift/gap31_summary.json",
     "audit": "docs/audit/gap31-r6-live-uplift.md",
     "quote": "0.8393"
@@ -319,11 +462,36 @@
     "quote": "single rung"
    },
    "cell_verdict": "OPEN",
-   "scope": "Point win on scPerplexity and hard-tier pLDDT; the frontier half has no usable grid.",
-   "next": "Build a k6 (quality, NFE) grid on the same checkpoint and seed policy.",
+   "scope": "Live proxy values are descriptive. Same frozen-generator multi-round improvement remains unmeasured; requested rounds do not prove executed rounds.",
+   "next": "Match the learned generator and effective restart execution at fixed actual calls, then independently validate proxy and novelty outcomes.",
    "paper_anchor": "§7.2 R6; §7.6 cross-adapter replication",
    "claim": "CLM-061 / CLM-073",
-   "paper_label": "STRONG"
+   "paper_label": "PARTIAL",
+   "historical_review_snapshot": {
+    "point": {
+     "verdict": "WIN",
+     "effect": "scPerplexity pooled d_z=-0.8393 (diff -3.6823); hard-tier pLDDT d_z=+1.1211 (n=990); pooled pLDDT d_z=+0.1466 (diff +2.6386)",
+     "ci95": "per-seed and pooled; sign consistent on 3/3 seeds and all three tiers for scPerplexity",
+     "p": "see docs/audit/gap31-r6-live-uplift.md",
+     "n": 3000,
+     "seeds": 3,
+     "caveat": "The pooled pLDDT does not reach the +0.2235 bar; the large pLDDT effect is hard-tier only. The scPerplexity axis is the uniform win.",
+     "artifact": "verification_outputs/gap31-r6-live-uplift/gap31_summary.json",
+     "audit": "docs/audit/gap31-r6-live-uplift.md",
+     "quote": "0.8393"
+    },
+    "frontier": {
+     "verdict": "UNMEASURED",
+     "grid": [],
+     "artifact": "verification_outputs/lineageflow_nfe_scan_paper_metric_q3_2026.json",
+     "audit": "docs/audit/gap84-inference-frontier.md",
+     "quote": "single rung"
+    },
+    "paper_label": "STRONG",
+    "scope": "Point win on scPerplexity and hard-tier pLDDT; the frontier half has no usable grid.",
+    "protocol": "N=1000 per seed, 3 seeds (n=3000 pooled), live tier-aware scheduler"
+   },
+   "review_audit": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
   },
   {
    "id": "K1",
@@ -466,14 +634,14 @@
   "supp": 2,
   "frontier_measured_r_cells": 1,
   "frontier_r_cells": 7,
-  "note": "One cell (R5c, w16e1_5k) satisfies both halves of the win definition. Seven cells have a point reading but no frontier grid; that is the single largest gap between the evidence base and the paper's claim.",
+  "note": "R5c w16e1_5k remains the only recorded canonical cell win, scoped to projection-FID. Independent matched-call CIFAR study is now measured under a separate primary-KID protocol. R1/R2/R6 matched-generator/input multi-round mechanism wins remain unmeasured despite historical descriptive scores.",
   "paper_labels": {
-   "STRONG": 3,
-   "CONDITIONAL": 1,
+   "STRONG": 1,
+   "CONDITIONAL": 0,
    "TIE": 1,
-   "PARTIAL": 2,
+   "PARTIAL": 5,
    "SUPP": 4
   },
-  "paper_label_note": "Paper-facing label used in §7.1/§7.2/§7.11. It is distinct from cell_verdict: cell_verdict is the strict two-half WIN gate (point WIN and frontier WIN); paper_label also admits CONDITIONAL, TIE and SUPP."
+  "paper_label_note": "Current review grades. Prior frozen submission grades remain historical in snapshots and are not silently rewritten."
  }
 }

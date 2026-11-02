@@ -1,0 +1,16 @@
+START 43 25 baseline_euler
+GENERATED baseline_euler {'velocity_calls_per_sample': 25, 'actual_calls_per_batch': [25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25], 'parts': [25], 'generation_wall_s': 14.721147788921371, 'raw_min': -1.075429916381836, 'raw_max': 1.0593374967575073, 'clipped_fraction': 0.0014544270833333334, 'n_processed': 1000, 'n_skipped': 0}
+START 43 25 full_euler
+GENERATED full_euler {'velocity_calls_per_sample': 25, 'actual_calls_per_batch': [25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25], 'parts': [12, 9, 3, 1], 'generation_wall_s': 14.295947170932777, 'raw_min': -1.0225372314453125, 'raw_max': 1.0217053890228271, 'clipped_fraction': 0.0001591796875, 'n_processed': 1000, 'n_skipped': 0}
+START 43 25 simple_euler
+GENERATED simple_euler {'velocity_calls_per_sample': 25, 'actual_calls_per_batch': [25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25], 'parts': [7, 6, 6, 6], 'generation_wall_s': 14.203323775087483, 'raw_min': -4.059520721435547, 'raw_max': 3.615708589553833, 'clipped_fraction': 0.8765589192708333, 'n_processed': 1000, 'n_skipped': 0}
+START 43 25 ve_heun
+GENERATED ve_heun {'velocity_calls_per_sample': 25, 'actual_calls_per_batch': [25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25], 'parts': [25], 'generation_wall_s': 16.17568195099011, 'raw_min': -1.2622151374816895, 'raw_max': 1.2675966024398804, 'clipped_fraction': 0.047278971354166664, 'n_processed': 1000, 'n_skipped': 0}
+START 43 25 ve_restart
+GENERATED ve_restart {'velocity_calls_per_sample': 25, 'actual_calls_per_batch': [25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25], 'parts': [25], 'generation_wall_s': 16.371113417088054, 'raw_min': -1.3390676975250244, 'raw_max': 1.262271761894226, 'clipped_fraction': 0.0893779296875, 'n_processed': 1000, 'n_skipped': 0}
+METRIC baseline_euler 0.007808780186219 37.41298555968683
+METRIC full_euler 0.019294629877296465 49.94018694361273
+METRIC simple_euler 0.1645181708879151 238.96274036111396
+METRIC ve_heun 0.0018416732124917345 34.029323282558266
+METRIC ve_restart 0.008267936656921382 40.74614257905165
+COMPLETE 43 25 151.63067042804323

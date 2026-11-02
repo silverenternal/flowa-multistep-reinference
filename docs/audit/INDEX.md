@@ -56,10 +56,10 @@ preserved for the per-wave audit trail.
 | `algorithm_4arm` | Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency) | 39 | 18 | 21 |
 | `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 111 | 90 | 21 |
 | `stats_method` | Statistical methodology (R5/R6, p-value, bonferroni, TOST) | 43 | 20 | 23 |
-| `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 57 | 26 | 31 |
+| `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 60 | 29 | 31 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
 | `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 113 | 32 | 81 |
-| **TOTAL** | — | **643** | **349** | **294** |
+| **TOTAL** | — | **646** | **352** | **294** |
 
 ---
 
@@ -708,7 +708,7 @@ Statistical methodology (R5/R6, p-value, bonferroni, TOST). This cluster is part
 
 ### Cluster: `paper_claims` — Paper + claims (paper packaging, claim audit, paper-update)
 
-**Files: 57** (active: 26, historical: 31)
+**Files: 60** (active: 29, historical: 31)
 
 Paper + claims (paper packaging, claim audit, paper-update). This cluster is part of the project's audit surface for paper_claims.
 
@@ -723,6 +723,9 @@ Paper + claims (paper packaging, claim audit, paper-update). This cluster is par
 - `manuscript-defect-review-8.md`
 - `manuscript-defect-review-9.md`
 - `manuscript-defect-review.md`
+- `manuscript-selfcheck-2026-11-02.md`
+- `manuscript-selfcheck-round2-2026-11-02.md`
+- `manuscript-selfcheck-round5-2026-11-03.md`
 - `agent3-pdf-generation.md`
 - `d-paper-package-update.md`
 - `p3-clm057-update.md`
@@ -746,10 +749,10 @@ Paper + claims (paper packaging, claim audit, paper-update). This cluster is par
 - `cover-letter-fill-draft.md`
 - `figure-hash-gate.md`
 - `gate-table-readings.md`
+- `manuscript-boundary-kernel-2026-11-03.md`
 - `manuscript-citation-integrity.md`
-- `manuscript-selfcheck-2026-11-02.md`
+- `manuscript-related-work-round5-2026-11-03.md`
 - `manuscript-selfcheck-round1-2026-11-02.md`
-- `manuscript-selfcheck-round2-2026-11-02.md`
 - `manuscript-selfcheck-round3-2026-11-03.md`
 - `manuscript-selfcheck-round4-2026-11-03.md`
 - `manuscript-selfcheck-validation-2026-11-02.md`

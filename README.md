@@ -2,11 +2,14 @@
 
 [English](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/README.md) | [中文](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/README.zh.md)
 
+**Current research review (2026-11-03): submission readiness is unresolved.** This review supersedes the readiness and novelty assessments in the historical README snapshot below. Use the [current evidence register](docs/PAPER-EVIDENCE.md), [45-item reviewer checklist](docs/audit/manuscript-selfcheck-2026-11-02.md), and [Chinese v6 research draft](docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md). The original full configuration regresses in the new matched-call CIFAR study; historical protein/structure differences do not establish matched-generator/input mechanism wins. Related endpoint constructions also limit an originality claim. Frozen submission packages and old labels remain reproducibility records, rather than a current recommendation to submit or a guarantee of quality. Independent candidate results and remaining gaps are reported separately in the [round 5 audit](docs/audit/manuscript-selfcheck-round5-2026-11-03.md).
+
+
 [![CI](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml/badge.svg)](https://github.com/silverenternal/flowa-multistep-reinference/actions/workflows/ci.yml)
 [![D.4 byte-stable](https://img.shields.io/badge/D.4-30%2F30%20PASS-brightgreen)](#submission-gates-verified-at-final-pre-push) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](#installation)
 [![PyTorch 2.7](https://img.shields.io/badge/torch-2.7%2Bcu128-orange.svg)](#installation)
-[![TNNLS](https://img.shields.io/badge/submission-TNNLS-green.svg)](#tnnls-submission-package)
+[![Archived TNNLS package](https://img.shields.io/badge/historical%20package-TNNLS-lightgrey.svg)](#tnnls-submission-package)
 [![Adapters](https://img.shields.io/badge/adapters-16-orange.svg)](#repository-structure)
 [![5-gate PASS](https://img.shields.io/badge/5--gate-PASS-brightgreen.svg)](#submission-gates-verified-at-final-pre-push)
 [![mkdocs strict](https://img.shields.io/badge/mkdocs--strict-0%20warnings-success.svg)](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/mkdocs.yml)
@@ -75,6 +78,9 @@ verdict holds globally.
 ---
 
 ## Paper A Submission Status
+
+> Historical snapshot: the labels and novelty/readiness assessments in this section are retained for traceability. The [2026-11-03 review](docs/audit/manuscript-selfcheck-round5-2026-11-03.md) and [current evidence register](docs/PAPER-EVIDENCE.md) supersede them.
+
 
 | Item | Value |
 |---|---|
@@ -184,6 +190,9 @@ investigations (GAP-24 … GAP-31)** that stress-test, refine, or re-anchor them
 
 ## Final Empirical Metrics (11 cells)
 
+> Historical snapshot: the labels and novelty/readiness assessments in this section are retained for traceability. The [2026-11-03 review](docs/audit/manuscript-selfcheck-round5-2026-11-03.md) and [current evidence register](docs/PAPER-EVIDENCE.md) supersede them.
+
+
 The 11 headline cells partition as **3 STRONG (main) + 1 CONDITIONAL (main) + 1 TIE (main) + 2 PARTIAL + 4 SUPP-only** = 11. This is the canonical verdict distribution; the cell-level register is [docs/PAPER-EVIDENCE.md](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/PAPER-EVIDENCE.md).
 
 | # | Cell | Metric | Verdict | Headline |
@@ -254,6 +263,9 @@ The 11 headline cells partition as **3 STRONG (main) + 1 CONDITIONAL (main) + 1 
 ---
 
 ## Deep Innovations
+
+> Historical snapshot: the labels and novelty/readiness assessments in this section are retained for traceability. The [2026-11-03 review](docs/audit/manuscript-selfcheck-round5-2026-11-03.md) and [current evidence register](docs/PAPER-EVIDENCE.md) supersede them.
+
 
 Beyond the empirical results, the framework ships seven **genuinely novel** primary contributions (the innovation inventory in [`docs/CLAIMS.md`](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/docs/CLAIMS.md) — CLM-078 … CLM-084). These are the paper's primary contributions (§3 Framework + §4 Scheduler Family), not just supporting engineering.
 

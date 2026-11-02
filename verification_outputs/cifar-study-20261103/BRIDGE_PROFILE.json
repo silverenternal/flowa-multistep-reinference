@@ -1,0 +1,31 @@
+{
+  "rows": [
+    {
+      "kind": "direct_async",
+      "wall_s": 0.4455276499502361,
+      "cuda_ms": 445.4209289550781
+    },
+    {
+      "kind": "direct_with_sync",
+      "wall_s": 0.44726104696746916,
+      "cuda_ms": 447.22906494140625
+    },
+    {
+      "kind": "bridge_GPU_scalar",
+      "wall_s": 0.5199224259704351,
+      "cuda_ms": 519.8851928710938
+    },
+    {
+      "kind": "bridge_CPU_scalar",
+      "wall_s": 0.49517842195928097,
+      "cuda_ms": 495.1392517089844
+    },
+    {
+      "kind": "direct_async_repeat",
+      "wall_s": 0.4436004899907857,
+      "cuda_ms": 443.55712890625
+    }
+  ],
+  "gpu_bearing_wall_s": 4.339083382044919,
+  "scope": "implementation runtime only, no metric/model-selection evidence"
+}

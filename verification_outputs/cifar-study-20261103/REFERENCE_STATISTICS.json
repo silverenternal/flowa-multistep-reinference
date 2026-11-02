@@ -1,0 +1,45 @@
+{
+  "source": "verification_outputs/cifar-baseline-gate-20261103/tfport_features.npz",
+  "source_sha256": "b327c8d049a8a05e6ce2ecfa1249c37a01b12d8ae143615987e42f91c8dfcc47",
+  "reference_sha256": "0f97a1d85186471ee41e4847c2675faf25ea92515d3c18d1a01e6bb29afab518",
+  "feature_family": "pytorch_fid TF-port InceptionV3 2048 pool3",
+  "reference_shape": [
+    10000,
+    2048
+  ],
+  "reference_self_kernel": 1.4519740938300245,
+  "real_real_diagnostics": [
+    {
+      "permutation_seed": 202611030,
+      "n_a": 1000,
+      "n_b": 9000,
+      "kid_unscaled": -7.10210599845773e-05
+    },
+    {
+      "permutation_seed": 202611031,
+      "n_a": 1000,
+      "n_b": 9000,
+      "kid_unscaled": 7.699586808174175e-05
+    },
+    {
+      "permutation_seed": 202611032,
+      "n_a": 1000,
+      "n_b": 9000,
+      "kid_unscaled": -4.021219341732163e-05
+    },
+    {
+      "permutation_seed": 202611033,
+      "n_a": 1000,
+      "n_b": 9000,
+      "kid_unscaled": -6.580525219845867e-05
+    },
+    {
+      "permutation_seed": 202611034,
+      "n_a": 1000,
+      "n_b": 9000,
+      "kid_unscaled": 6.076429701717956e-05
+    }
+  ],
+  "wall_cpu_s": 25.192362366011366,
+  "scope": "CPU metric calibration using real features only; before new pilot or method generation. Permutations are correlated, not five independent datasets. No FID-bias subtraction and no passing the previous <10 gate."
+}

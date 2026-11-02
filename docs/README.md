@@ -1,5 +1,7 @@
 # Documentation map for `flowa-multistep-reinference`
 
+> **2026-11-03 research review:** see the [Chinese v6 research draft](drafts/paper-A-zh-reviewed-round5-2026-11-03.md), [complete reviewer checklist](audit/manuscript-selfcheck-2026-11-02.md), and [round 5 audit](audit/manuscript-selfcheck-round5-2026-11-03.md). Current originality and external-confirmation gaps remain material; the frozen package below is a historical artifact, not a current submission-readiness finding.
+
 > **Paper A is frozen at the TNNLS v3.1 package (2026-10-18).** Paper PDF:
 > [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf) — 12 pages,
 > IEEEtran-journal double-column, sha256

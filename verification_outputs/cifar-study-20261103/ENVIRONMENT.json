@@ -1,0 +1,16 @@
+{
+  "recorded_utc": "2026-11-02T18:00:37.535642+00:00",
+  "python": "3.12.13 (main, Apr 14 2026, 14:29:00) [Clang 22.1.3 ]",
+  "numpy": "2.4.6",
+  "torch": "2.7.0+cu128",
+  "cuda": "12.8",
+  "cudnn": 90701,
+  "package_versions": {
+    "scipy": "1.18.1",
+    "torchvision": "0.22.0+cu128",
+    "pytorch-fid": "0.3.0"
+  },
+  "inception_weights_sha256": "6726825d0af5f729cebd5821db510b11b1cfad8faad88a03f1befd49fb9129b2",
+  "tf32_policy_from_protocol": "matmul False, cudnn True",
+  "scope": "Recorded during code pilot, no canonical scientific result existed; supplements per-cell metadata, not a claim of a complete environment lock"
+}

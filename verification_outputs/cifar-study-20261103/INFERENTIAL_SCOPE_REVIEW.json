@@ -1,0 +1,8 @@
+{
+  "timing": "post-first-study-results interpretation review, before candidate completion; not a preregistration amendment",
+  "registered_rule_unchanged": true,
+  "holm_null": "two-sided zero mean paired-seed area difference",
+  "practical_margin": "nominal CI cut at -0.001 for improvement, +0.001 for regression; these are not simultaneous confidence bounds at the practical margin",
+  "signflip": "all8 sign patterns are enumerated; valid reference interpretation requires exchangeable/symmetric paired-difference signs. Not design-based randomized assignment and not distribution-free inference under a mean-zero null alone.",
+  "no_new_hypotheses_or_gpu_jobs": true
+}

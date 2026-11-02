@@ -1,0 +1,25 @@
+{
+  "registered_utc": "2026-11-02T19:26:34.133460+00:00",
+  "argv": [
+    "tools/cifar_consistent_candidate_20261103.py",
+    "--protocol",
+    "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/PROTOCOL.json",
+    "--out",
+    "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/s102_c99",
+    "--seed",
+    "102",
+    "--cost",
+    "99"
+  ],
+  "n_planned": 1000,
+  "n_cap": 1000,
+  "seed": 102,
+  "cost": 99,
+  "device": "cuda:1",
+  "environment": "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+  "protocol_sha256": "08930b5089ecf00c33b0500529961228ce0fa50669e1ffd9cb553796bafe0074",
+  "driver_sha256": "b806d9217a69db2faf415ca9fbe575d5d40bc5dc131e06f733ba8d14f4b9c595",
+  "base_commit": "af7955bda500270b775300c0d5210adc1c142f77",
+  "wall_cap_s": 600,
+  "gpu_snapshot": "0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97340 MiB, 0 %\n1, NVIDIA GeForce RTX 5090, 32202 MiB, 0 %\n"
+}

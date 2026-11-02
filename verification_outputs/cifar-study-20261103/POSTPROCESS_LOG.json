@@ -1,0 +1,133 @@
+[
+  {
+    "argv": [
+      "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+      "tools/report_cifar_study_20261103.py",
+      "--root",
+      "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-study-20261103",
+      "--figures",
+      "docs/figures",
+      "--out",
+      "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-study-20261103/REPORT.json"
+    ],
+    "exit_code": 0,
+    "seconds": 2.2,
+    "output_tail": "[\n  {\n    \"arm\": \"full_euler\",\n    \"baseline\": \"baseline_euler\",\n    \"values\": [\n      0.007843110590004239,\n      0.007957262625200613,\n      0.008433240561955789\n    ],\n    \"mean\": 0.008077871259053548,\n    \"nominal_ci95\": [\n      0.007300319576536451,\n      0.008855422941570644\n    ],\n    \"p_two_sided\": 0.0005001107588923666,\n    \"df\": 2,\n    \"exploratory_exact_signflip_p\": 0.25,\n    \"holm_p\": 0.0010002215177847332,\n    \"clears_preregistered_practical_improvement\": false,\n    \"detectable_practical_regression\": true,\n    \"label_scope\": \"locked seed-level area comparison only; not universal or trained-seed inference\"\n  },\n  {\n    \"arm\": \"simple_euler\",\n    \"baseline\": \"baseline_euler\",\n    \"values\": [\n      0.13000901934539666,\n      0.13165711075386768,\n      0.13028605674635105\n    ],\n    \"mean\": 0.13065072894853846,\n    \"nominal_ci95\": [\n      0.1284584993263563,\n      0.13284295857072062\n    ],\n    \"p_two_sided\": 1.5207783164754719e-05,\n    \"df\": 2,\n    \"exploratory_exact_signflip_p\": 0.25,\n    \"holm_p\": 6.0831132659018875e-05,\n    \"clears_preregistered_practical_improvement\": false,\n    \"detectable_practical_regression\": true,\n    \"label_scope\": \"locked seed-level area comparison only; not universal or trained-seed inference\"\n  },\n  {\n    \"arm\": \"simple_euler\",\n    \"baseline\": \"ve_restart\",\n    \"values\": [\n      0.13122526050054434,\n      0.1336338575393765,\n      0.13149617280219592\n    ],\n    \"mean\": 0.13211843028070558,\n    \"nominal_ci95\": [\n      0.12884093256264692,\n      0.13539592799876424\n    ],\n    \"p_two_sided\": 3.3240208610769054e-05,\n    \"df\": 2,\n    \"exploratory_exact_signflip_p\": 0.25,\n    \"holm_p\": 9.972062583230716e-05,\n    \"clears_preregistered_practical_improvement\": false,\n    \"detectable_practical_regression\": true,\n    \"label_scope\": \"locked seed-level area comparison only; not universal or trained-seed inference\"\n  },\n  {\n    \"arm\": \"ve_restart\",\n    \"baseline\": \"ve_heun\",\n    \"values\": [\n      0.001223353049870707,\n      0.0009565703305752706,\n      0.0013936934410546215\n    ],\n    \"mean\": 0.0011912056071668663,\n    \"nominal_ci95\": [\n      0.000643881531526164,\n      0.0017385296828075687\n    ],\n    \"p_two_sided\": 0.011212199163606499,\n    \"df\": 2,\n    \"exploratory_exact_signflip_p\": 0.25,\n    \"holm_p\": 0.011212199163606499,\n    \"clears_preregistered_practical_improvement\": false,\n    \"detectable_practical_regression\": false,\n    \"label_scope\": \"locked seed-level area comparison only; not universal or trained-seed inference\"\n  }\n]\n"
+  },
+  {
+    "argv": [
+      "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+      "tools/cifar_cross_batch_diagnostic_20261103.py",
+      "--root",
+      "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-study-20261103",
+      "--out",
+      "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-study-20261103/CROSS_BATCH_KID_DIAGNOSTIC.json"
+    ],
+    "exit_code": 0,
+    "seconds": 5.2,
+    "output_tail": "20 cross-batch diagnostic rows; no new p-values\n"
+  },
+  {
+    "argv": [
+      "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+      "tools/report_cifar_candidate_20261103.py",
+      "--root",
+      "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103",
+      "--repository",
+      "/home/hugo/codes/flowa-multistep-reinference",
+      "--out",
+      "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/REPORT.json",
+      "--figure",
+      "docs/figures/review-cifar-consistent-candidate-2026-11-03.png"
+    ],
+    "exit_code": 0,
+    "seconds": 1.3,
+    "output_tail": "[\n  {\n    \"arm\": \"consistent_two_round\",\n    \"baseline\": \"baseline_euler\",\n    \"values\": [\n      0.0002172536259337219,\n      0.00013733859526166015,\n      0.0006781983625991916\n    ],\n    \"mean\": 0.00034426352793152454,\n    \"nominal_ci95\": [\n      -0.00038096412247011886,\n      0.001069491178333168\n    ],\n    \"p_two_sided\": 0.1778463836014972,\n    \"df\": 2,\n    \"exploratory_exact_signflip_p\": 0.25,\n    \"holm_p\": 0.1778463836014972,\n    \"clears_preregistered_practical_improvement\": false,\n    \"detectable_practical_regression\": false\n  },\n  {\n    \"arm\": \"consistent_two_round\",\n    \"baseline\": \"ve_restart\",\n    \"values\": [\n      0.001393037279076914,\n      0.0015890568280123585,\n      0.001948517960869589\n    ],\n    \"mean\": 0.0016435373559862871,\n    \"nominal_ci95\": [\n      0.0009437076912455622,\n      0.002343367020727012\n    ],\n    \"p_two_sided\": 0.009652268739565583,\n    \"df\": 2,\n    \"exploratory_exact_signflip_p\": 0.25,\n    \"holm_p\": 0.019304537479131165,\n    \"clears_preregistered_practical_improvement\": false,\n    \"detectable_practical_regression\": false\n  }\n]\n"
+  },
+  {
+    "argv": [
+      "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+      "/tmp/flowa-package-round5-evidence.py"
+    ],
+    "exit_code": 0,
+    "seconds": 1.8,
+    "output_tail": ""
+  },
+  {
+    "argv": [
+      "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+      "tools/replay_cifar_features_20261103.py",
+      "--repository",
+      "/home/hugo/codes/flowa-multistep-reinference",
+      "--study",
+      "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-study-20261103",
+      "--out",
+      "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-study-20261103/FULL_FEATURE_REPLAY_SERVER.json"
+    ],
+    "exit_code": 0,
+    "seconds": 36.0,
+    "output_tail": "Full-feature FID/KID replay PASS 2\n"
+  },
+  {
+    "argv": [
+      "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+      "tools/replay_cifar_features_20261103.py",
+      "--repository",
+      "/home/hugo/codes/flowa-multistep-reinference",
+      "--study",
+      "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103",
+      "--out",
+      "/home/hugo/codes/flowa-multistep-reinference/verification_outputs/cifar-consistent-candidate-20261103/FULL_FEATURE_REPLAY_SERVER.json"
+    ],
+    "exit_code": 0,
+    "seconds": 49.5,
+    "output_tail": "Full-feature FID/KID replay PASS 3\n"
+  },
+  {
+    "argv": [
+      "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+      "/tmp/flowa-package-round5-evidence.py",
+      "--seal"
+    ],
+    "exit_code": 0,
+    "seconds": 1.6,
+    "output_tail": "Selected 126 files 114.428532 MB; total accounted 6638\n"
+  },
+  {
+    "argv": [
+      "python3",
+      "/tmp/flowa-write-round5-audit.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0,
+    "output_tail": "Wrote result-grounded round5 audit\n"
+  },
+  {
+    "argv": [
+      "python3",
+      "/tmp/flowa-update-current-evidence.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0,
+    "output_tail": "{'STRONG': 1, 'CONDITIONAL': 0, 'TIE': 1, 'PARTIAL': 5, 'SUPP': 4}\n"
+  },
+  {
+    "argv": [
+      "python3",
+      "tools/paper_evidence.py",
+      "--render"
+    ],
+    "exit_code": 0,
+    "seconds": 0.1,
+    "output_tail": "wrote /home/hugo/codes/flowa-multistep-reinference/docs/PAPER-EVIDENCE.md\n"
+  },
+  {
+    "argv": [
+      "python3",
+      "/tmp/flowa-build-round5-manuscript.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0,
+    "output_tail": "/home/hugo/codes/flowa-multistep-reinference/docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md 36511 17 captioned tables\n"
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "scipy": "1.18.1",
+  "numpy": "2.4.6",
+  "n_full_feature_pairs": 2,
+  "reference_kernel_abs_error": 0.0,
+  "checks": [
+    {
+      "arm": "baseline_euler",
+      "fid_tfport": 34.4953482605319,
+      "kid_unscaled": 0.003903605369162566,
+      "fid_abs_error": 0.0,
+      "kid_abs_error": 0.0
+    },
+    {
+      "arm": "simple_euler",
+      "fid_tfport": 208.186050101069,
+      "kid_unscaled": 0.13412743998492171,
+      "fid_abs_error": 0.0,
+      "kid_abs_error": 0.0
+    }
+  ],
+  "scope": "CPU full-feature metric replay for predetermined designated cell/arms only. All canonical primary scores separately replay from published kernel witnesses."
+}
