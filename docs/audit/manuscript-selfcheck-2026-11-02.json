@@ -117,12 +117,13 @@
       "evidence": [
         "adaptive_reflow/algorithm/runner/runner.py",
         "adaptive_reflow/algorithm/policy_driver.py",
-        "adaptive_reflow/algorithm/scheduler/evidence_driven.py"
+        "adaptive_reflow/algorithm/scheduler/evidence_driven.py",
+        "scripts/wave191_p3_mnist_sweep.py"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
-      "status": "RECORDED",
-      "finding": "",
-      "next_action": "按所列证据核对，记录文件/符号/行号与实际运行；未核对不标通过。"
+      "status": "EVIDENCE_LOCATED",
+      "finding": "scripts/wave191_p3_mnist_sweep.py:473-651 定义主实验 run_framework_arm；memory模式在后续轮次从 t_start=1-beta_r 积分至1；mean_preserve模式以首轮终点样本均值平移最终样本。中文稿的固定完整流映射是简化表达，需按该实例补齐时间区间和batch级操作。",
+      "next_action": "将此源码观察与实际运行命令、backend、原始artifact及论文表述对应；完成全部验收条件后再标VERIFIED。"
     },
     {
       "id": "SC-08",
@@ -132,12 +133,13 @@
       "acceptance": "列出评价/标签/参考数据是否参与控制、调用时机和成本，区分事后评价与在线控制。",
       "evidence": [
         "adaptive_reflow/algorithm/evidence_driver.py",
-        "adaptive_reflow/algorithm/runner/runner.py"
+        "adaptive_reflow/algorithm/runner/runner.py",
+        "scripts/wave191_p3_mnist_sweep.py"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
-      "status": "RECORDED",
-      "finding": "",
-      "next_action": "按所列证据核对，记录文件/符号/行号与实际运行；未核对不标通过。"
+      "status": "EVIDENCE_LOCATED",
+      "finding": "scripts/wave191_p3_mnist_sweep.py:334-386 的调度预算在生成前通过 sched.sample 计算；该文件没有 record_round_feedback 调用。不能从 EvidenceDriven 名称推断此实验启用了在线PID反馈；仍需与通用 runner 的反馈路径和具体运行参数区分。",
+      "next_action": "将此源码观察与实际运行命令、backend、原始artifact及论文表述对应；完成全部验收条件后再标VERIFIED。"
     },
     {
       "id": "SC-09",
@@ -163,12 +165,14 @@
       "evidence": [
         "adaptive_reflow/algorithm/nfe_allocation.py",
         "adaptive_reflow/algorithm/solver.py",
-        "docs/audit/gap90-optsteps-dose.md"
+        "docs/audit/gap90-optsteps-dose.md",
+        "scripts/wave191_p3_mnist_sweep.py",
+        "adaptive_reflow/adapters/mnist_fm.py"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
-      "status": "RECORDED",
-      "finding": "",
-      "next_action": "按所列证据核对，记录文件/符号/行号与实际运行；未核对不标通过。"
+      "status": "EVIDENCE_LOCATED",
+      "finding": "scripts/wave191_p3_mnist_sweep.py:537 将 num_steps_per_round 求和记为 total_nfe；adaptive_reflow/adapters/mnist_fm.py:276-279 与309-312的RK4实现每步含四次速度场评价。已定位步数与函数评估数的口径风险，需继续核对实际backend与artifact，不预先判定整条比较不公平。",
+      "next_action": "将此源码观察与实际运行命令、backend、原始artifact及论文表述对应；完成全部验收条件后再标VERIFIED。"
     },
     {
       "id": "SC-11",
@@ -210,12 +214,13 @@
       "evidence": [
         "docs/audit/gap80-r5a-harness.md",
         "docs/audit/gap95-frontier-grids.md",
-        "docs/PAPER-EVIDENCE.md"
+        "docs/PAPER-EVIDENCE.md",
+        "scripts/wave191_p3_mnist_sweep.py"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
-      "status": "RECORDED",
-      "finding": "",
-      "next_action": "按所列证据核对，记录文件/符号/行号与实际运行；未核对不标通过。"
+      "status": "EVIDENCE_LOCATED",
+      "finding": "MNIST驱动的run_framework_arm真实调用restart操作；同时调度步数提前生成、末端可有mean-preserve平移。需要分别标注重启、在线反馈、预算调度和batch平移是否启用，不能合称一个已验证组件。",
+      "next_action": "将此源码观察与实际运行命令、backend、原始artifact及论文表述对应；完成全部验收条件后再标VERIFIED。"
     },
     {
       "id": "SC-14",
@@ -346,12 +351,13 @@
       "acceptance": "核对 κ 的计算定义、数据依赖、预算/调度臂和样本数；不得把经验协方差比等同于mK或因果规律。",
       "evidence": [
         "docs/audit/gap92-kappa-bridge.md",
-        "docs/audit/gap90-optsteps-dose.md"
+        "docs/audit/gap90-optsteps-dose.md",
+        "tools/gap78_observable_screen.py"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
       "status": "EVIDENCE_LOCATED",
-      "finding": "",
-      "next_action": "按所列证据核对，记录文件/符号/行号与实际运行；未核对不标通过。"
+      "finding": "tools/gap78_observable_screen.py:111-136 以投影特征协方差迹的比值计算contraction；实现为tr_fw/(tr_ref*rho)。这是经验分布离散度诊断，不是流映射Lipschitz常数mK的直接估计。",
+      "next_action": "将此源码观察与实际运行命令、backend、原始artifact及论文表述对应；完成全部验收条件后再标VERIFIED。"
     },
     {
       "id": "SC-23",
@@ -471,12 +477,13 @@
       "evidence": [
         "adaptive_reflow/adapters/mnist_fm.py",
         "adaptive_reflow/eval",
-        "docs/audit/gap84-inference-frontier.md"
+        "docs/audit/gap84-inference-frontier.md",
+        "adaptive_reflow/eval/mnist_fid.py"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
-      "status": "RECORDED",
-      "finding": "",
-      "next_action": "按所列证据核对，记录文件/符号/行号与实际运行；未核对不标通过。"
+      "status": "EVIDENCE_LOCATED",
+      "finding": "adaptive_reflow/eval/mnist_fid.py:90-109与203-214 定义像素空间的确定性高斯随机投影及参考样本特征；默认784→128，参考为MNIST测试集。它不是Inception特征FID；具体实验是否覆盖默认维度/种子仍需核对命令和artifact。",
+      "next_action": "将此源码观察与实际运行命令、backend、原始artifact及论文表述对应；完成全部验收条件后再标VERIFIED。"
     },
     {
       "id": "SC-31",
@@ -533,12 +540,13 @@
       "evidence": [
         "adaptive_reflow/algorithm/policy_driver.py",
         "docs/ABLATION.md",
-        "docs/audit/gap90-optsteps-dose.md"
+        "docs/audit/gap90-optsteps-dose.md",
+        "scripts/wave191_p3_mnist_sweep.py"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
-      "status": "RECORDED",
-      "finding": "",
-      "next_action": "按所列证据核对，记录文件/符号/行号与实际运行；未核对不标通过。"
+      "status": "EVIDENCE_LOCATED",
+      "finding": "scripts/wave191_p3_mnist_sweep.py:637-641 在mean_preserve启用时平移最终cloud，使均值等于首轮endpoint均值。消融应单独识别该batch级处理与重启/调度，不能把完整臂的收益直接归因于自适应反馈。",
+      "next_action": "将此源码观察与实际运行命令、backend、原始artifact及论文表述对应；完成全部验收条件后再标VERIFIED。"
     },
     {
       "id": "SC-35",

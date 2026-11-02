@@ -30,13 +30,13 @@ VERIFIED 需要证据逐项核对，本轮建立记录不宣称所有问题已�
 | SC-04 | 创新性 | P0 | 是否仅为已有 restart sampling 加接口封装？ | RECORDED |
 | SC-05 | 创新性 | P0 | 相比固定权重混合究竟新增什么？ | RECORDED |
 | SC-06 | 创新性 | P0 | 首次性、普适性、全面占优是否有依据？ | RECORDED |
-| SC-07 | 方法定义 | P0 | FlowA 主方法是否是确定且可复现的算法？ | RECORDED |
-| SC-08 | 方法定义 | P0 | 反馈究竟读取什么信息？ | RECORDED |
+| SC-07 | 方法定义 | P0 | FlowA 主方法是否是确定且可复现的算法？ | EVIDENCE_LOCATED |
+| SC-08 | 方法定义 | P0 | 反馈究竟读取什么信息？ | EVIDENCE_LOCATED |
 | SC-09 | 方法定义 | P0 | 连续、离散、掩码和图通道的操作是否合法？ | RECORDED |
-| SC-10 | 方法定义 | P0 | 实际调用次数是否等于宣称预算？ | RECORDED |
+| SC-10 | 方法定义 | P0 | 实际调用次数是否等于宣称预算？ | EVIDENCE_LOCATED |
 | SC-11 | 方法定义 | P1 | 四接口与算法步骤、伪代码是否一一对应？ | RECORDED |
 | SC-12 | 贡献与证据 | P0 | 各任务是否验证同一个机制？ | RECORDED |
-| SC-13 | 贡献与证据 | P0 | 各实验到底有没有真实多轮重启？ | RECORDED |
+| SC-13 | 贡献与证据 | P0 | 各实验到底有没有真实多轮重启？ | EVIDENCE_LOCATED |
 | SC-14 | 贡献与证据 | P0 | 已有但未写入中文稿的证据有哪些？ | EVIDENCE_LOCATED |
 | SC-15 | 主结果 | P0 | 优势集中一个 MNIST 检查点意味着什么？ | EVIDENCE_LOCATED |
 | SC-16 | 主结果 | P0 | 是否有第二条独立可信的实证主线？ | RECORDED |
@@ -53,11 +53,11 @@ VERIFIED 需要证据逐项核对，本轮建立记录不宣称所有问题已�
 | SC-27 | 统计 | P0 | Kanzi 索引匹配是否错误当作天然配对？ | RECORDED |
 | SC-28 | 统计 | P1 | 三种子自举与家族相关性是否充分披露？ | RECORDED |
 | SC-29 | 统计 | P1 | 多重比较和效应阈值是否一致？ | RECORDED |
-| SC-30 | 指标 | P1 | projection-FID 与标准 FID 是否混淆？ | RECORDED |
+| SC-30 | 指标 | P1 | projection-FID 与标准 FID 是否混淆？ | EVIDENCE_LOCATED |
 | SC-31 | 指标 | P1 | 蛋白代理指标能否代表结构/功能/家族覆盖？ | RECORDED |
 | SC-32 | 指标 | P1 | 合成重建与分子有效性定义是否准确？ | RECORDED |
 | SC-33 | 指标 | P1 | 质量提升是否伴随新颖性/多样性损失？ | RECORDED |
-| SC-34 | 消融与机制 | P0 | 哪些组件真的必要？ | RECORDED |
+| SC-34 | 消融与机制 | P0 | 哪些组件真的必要？ | EVIDENCE_LOCATED |
 | SC-35 | 消融与机制 | P1 | round数、beta、预算分配的解释是否被已有记录反驳？ | RECORDED |
 | SC-36 | 消融与机制 | P1 | 残差修正解释是否被误当成机制证明？ | RECORDED |
 | SC-37 | 呈现与复现 | P2 | 图表是否完整且可供判断？ | RECORDED |
@@ -128,20 +128,20 @@ VERIFIED 需要证据逐项核对，本轮建立记录不宣称所有问题已�
 
 ### SC-07 — FlowA 主方法是否是确定且可复现的算法？
 
-- 类别 / 优先级 / 状态：方法定义 / P0 / RECORDED
+- 类别 / 优先级 / 状态：方法定义 / P0 / EVIDENCE_LOCATED
 - 验收：锁定主方法实例，完整定义状态、反馈、调度、混合、停止和预算；可选框架配置另列。
 - 证据类型：SOURCE_AND_RECORDS
 - 入口：`adaptive_reflow/algorithm/runner/runner.py`；`adaptive_reflow/algorithm/policy_driver.py`；`adaptive_reflow/algorithm/scheduler/evidence_driven.py`
-- 本轮发现：已登记，待逐项核对。
+- 本轮发现：scripts/wave191_p3_mnist_sweep.py:473-651 定义主实验 run_framework_arm；memory模式在后续轮次从 t_start=1-beta_r 积分至1；mean_preserve模式以首轮终点样本均值平移最终样本。中文稿的固定完整流映射是简化表达，需按该实例补齐时间区间和batch级操作。
 - 下一步：按所列证据核对，记录文件/符号/行号与实际运行；未核对不标通过。
 
 ### SC-08 — 反馈究竟读取什么信息？
 
-- 类别 / 优先级 / 状态：方法定义 / P0 / RECORDED
+- 类别 / 优先级 / 状态：方法定义 / P0 / EVIDENCE_LOCATED
 - 验收：列出评价/标签/参考数据是否参与控制、调用时机和成本，区分事后评价与在线控制。
 - 证据类型：SOURCE_AND_RECORDS
 - 入口：`adaptive_reflow/algorithm/evidence_driver.py`；`adaptive_reflow/algorithm/runner/runner.py`
-- 本轮发现：已登记，待逐项核对。
+- 本轮发现：scripts/wave191_p3_mnist_sweep.py:334-386 的调度预算在生成前通过 sched.sample 计算；该文件没有 record_round_feedback 调用。不能从 EvidenceDriven 名称推断此实验启用了在线PID反馈；仍需与通用 runner 的反馈路径和具体运行参数区分。
 - 下一步：按所列证据核对，记录文件/符号/行号与实际运行；未核对不标通过。
 
 ### SC-09 — 连续、离散、掩码和图通道的操作是否合法？
@@ -155,11 +155,11 @@ VERIFIED 需要证据逐项核对，本轮建立记录不宣称所有问题已�
 
 ### SC-10 — 实际调用次数是否等于宣称预算？
 
-- 类别 / 优先级 / 状态：方法定义 / P0 / RECORDED
+- 类别 / 优先级 / 状态：方法定义 / P0 / EVIDENCE_LOCATED
 - 验收：核对求解器每步调用、round floor、取整和不可执行设置；报告真实 NFE 而非仅配置步数。
 - 证据类型：SOURCE_AND_RECORDS
 - 入口：`adaptive_reflow/algorithm/nfe_allocation.py`；`adaptive_reflow/algorithm/solver.py`；`docs/audit/gap90-optsteps-dose.md`
-- 本轮发现：已登记，待逐项核对。
+- 本轮发现：scripts/wave191_p3_mnist_sweep.py:537 将 num_steps_per_round 求和记为 total_nfe；adaptive_reflow/adapters/mnist_fm.py:276-279 与309-312的RK4实现每步含四次速度场评价。已定位步数与函数评估数的口径风险，需继续核对实际backend与artifact，不预先判定整条比较不公平。
 - 下一步：按所列证据核对，记录文件/符号/行号与实际运行；未核对不标通过。
 
 ### SC-11 — 四接口与算法步骤、伪代码是否一一对应？
@@ -182,11 +182,11 @@ VERIFIED 需要证据逐项核对，本轮建立记录不宣称所有问题已�
 
 ### SC-13 — 各实验到底有没有真实多轮重启？
 
-- 类别 / 优先级 / 状态：贡献与证据 / P0 / RECORDED
+- 类别 / 优先级 / 状态：贡献与证据 / P0 / EVIDENCE_LOCATED
 - 验收：逐格追踪实际启用的调度、restart、反馈与 no-op 路径；单轮不能证明多轮迭代价值。
 - 证据类型：SOURCE_AND_RECORDS
 - 入口：`docs/audit/gap80-r5a-harness.md`；`docs/audit/gap95-frontier-grids.md`；`docs/PAPER-EVIDENCE.md`
-- 本轮发现：已登记，待逐项核对。
+- 本轮发现：MNIST驱动的run_framework_arm真实调用restart操作；同时调度步数提前生成、末端可有mean-preserve平移。需要分别标注重启、在线反馈、预算调度和batch平移是否启用，不能合称一个已验证组件。
 - 下一步：按所列证据核对，记录文件/符号/行号与实际运行；未核对不标通过。
 
 ### SC-14 — 已有但未写入中文稿的证据有哪些？
@@ -267,7 +267,7 @@ VERIFIED 需要证据逐项核对，本轮建立记录不宣称所有问题已�
 - 验收：核对 κ 的计算定义、数据依赖、预算/调度臂和样本数；不得把经验协方差比等同于mK或因果规律。
 - 证据类型：SOURCE_AND_RECORDS
 - 入口：`docs/audit/gap92-kappa-bridge.md`；`docs/audit/gap90-optsteps-dose.md`
-- 本轮发现：已定位相关记录；不等于独立验收通过。
+- 本轮发现：tools/gap78_observable_screen.py:111-136 以投影特征协方差迹的比值计算contraction；实现为tr_fw/(tr_ref*rho)。这是经验分布离散度诊断，不是流映射Lipschitz常数mK的直接估计。
 - 下一步：按所列证据核对，记录文件/符号/行号与实际运行；未核对不标通过。
 
 ### SC-23 — 收益来自重启还是求解器、初值、额外计算？
@@ -335,11 +335,11 @@ VERIFIED 需要证据逐项核对，本轮建立记录不宣称所有问题已�
 
 ### SC-30 — projection-FID 与标准 FID 是否混淆？
 
-- 类别 / 优先级 / 状态：指标 / P1 / RECORDED
+- 类别 / 优先级 / 状态：指标 / P1 / EVIDENCE_LOCATED
 - 验收：追踪特征提取器、投影、参考集、样本量、随机种子与实现；不跨特征空间比较绝对值。
 - 证据类型：SOURCE_AND_RECORDS
 - 入口：`adaptive_reflow/adapters/mnist_fm.py`；`adaptive_reflow/eval`；`docs/audit/gap84-inference-frontier.md`
-- 本轮发现：已登记，待逐项核对。
+- 本轮发现：adaptive_reflow/eval/mnist_fid.py:90-109与203-214 定义像素空间的确定性高斯随机投影及参考样本特征；默认784→128，参考为MNIST测试集。它不是Inception特征FID；具体实验是否覆盖默认维度/种子仍需核对命令和artifact。
 - 下一步：按所列证据核对，记录文件/符号/行号与实际运行；未核对不标通过。
 
 ### SC-31 — 蛋白代理指标能否代表结构/功能/家族覆盖？
@@ -371,11 +371,11 @@ VERIFIED 需要证据逐项核对，本轮建立记录不宣称所有问题已�
 
 ### SC-34 — 哪些组件真的必要？
 
-- 类别 / 优先级 / 状态：消融与机制 / P0 / RECORDED
+- 类别 / 优先级 / 状态：消融与机制 / P0 / EVIDENCE_LOCATED
 - 验收：盘点已有无反馈、固定混合、自适应控制、完整方法对照；相同协议才可拼成因果消融，不存在的格子标缺失。
 - 证据类型：SOURCE_AND_RECORDS
 - 入口：`adaptive_reflow/algorithm/policy_driver.py`；`docs/ABLATION.md`；`docs/audit/gap90-optsteps-dose.md`
-- 本轮发现：已登记，待逐项核对。
+- 本轮发现：scripts/wave191_p3_mnist_sweep.py:637-641 在mean_preserve启用时平移最终cloud，使均值等于首轮endpoint均值。消融应单独识别该batch级处理与重启/调度，不能把完整臂的收益直接归因于自适应反馈。
 - 下一步：按所列证据核对，记录文件/符号/行号与实际运行；未核对不标通过。
 
 ### SC-35 — round数、beta、预算分配的解释是否被已有记录反驳？
@@ -486,3 +486,7 @@ VERIFIED 需要证据逐项核对，本轮建立记录不宣称所有问题已�
 ## 本轮验证
 
 验证命令与结果另见同目录的 manuscript-selfcheck-validation-2026-11-02.md；若某门禁有既有失败，明确记录，不伪称通过。
+
+## 首轮源码观察的范围
+
+本轮额外追踪MNIST驱动、通用runner入口、RK4阶段与投影评价器。SC-07/08/10/13/22/30/34记录了精确文件与行段；这些仅是源码观察和待核对问题，不是对实验收益、预算公平性或创新性的最终验收。没有为追求通过而修改算法或实验数字。
