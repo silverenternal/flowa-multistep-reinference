@@ -286,5 +286,13 @@
    "re_entry": "Runs inside GAP-71 step (1).",
    "absorbed_into": "GAP-71-ADAPTER-IMAGE-SPECTRAL"
   }
- ]
+ ],
+ "manuscript_selfcheck_2026_11_02": {
+  "record": "docs/audit/manuscript-selfcheck-2026-11-02.md",
+  "machine_record": "docs/audit/manuscript-selfcheck-2026-11-02.json",
+  "items": 45,
+  "status": "REGISTERED; evidence audit pending",
+  "scope": "All reviewer-plan items from the 2026-11-02 chat; inspect existing source and audit records first. GAP-90/91/92 omissions corrected in the checklist.",
+  "push_authorization": "User explicitly authorized this synchronization on 2026-11-02; standing no_push remains unchanged."
+ }
 }

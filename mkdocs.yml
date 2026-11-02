@@ -93,6 +93,8 @@ nav:
       - 06 — verification report: governance/06-verification-report.md
       - Audit index (topic-cluster): audit/INDEX.md
       - Audit INDEX maintenance: audit/INDEX_MAINTENANCE.md
+      - Manuscript self-check (2026-11-02): audit/manuscript-selfcheck-2026-11-02.md
+      - Manuscript self-check validation: audit/manuscript-selfcheck-validation-2026-11-02.md
       - Current audit records:
           - Engineering audit: audit/engineering-audit-2026-09-13.md
           - Framework/model gap CPU audit: audit/framework-model-gap-cpu-2026-09-13.md
