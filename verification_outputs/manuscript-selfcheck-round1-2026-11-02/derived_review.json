@@ -1,0 +1,117 @@
+{
+  "schema": "flowa_manuscript_review_round1",
+  "base_commit": "86dab3a8e2ac7cab9e50901d99328fd12b95115d",
+  "date": "2026-11-02",
+  "execution": "existing artifacts only; no training and no sampling",
+  "environment": "system python3; NumPy; separate designated flowmol3 venv for plotting and documentation",
+  "mnist_budget": {
+    "legacy_field": "nfe",
+    "actual_unit": "RK4 integration steps S",
+    "velocity_evaluations_per_step": 4,
+    "true_call_grid": [
+      16,
+      20,
+      40,
+      100,
+      200,
+      400,
+      800
+    ]
+  },
+  "frontiers": [
+    {
+      "checkpoint": "w16e1_5k",
+      "source": "verification_outputs/gap84-cap-frontier/frontier_w16e1_5k.json",
+      "sha256": "451235584a297228b789dc99db1dcfe553c67be71e6bc008ca8da0fe0c0262f8",
+      "baseline": 24.48387776064077,
+      "framework": 21.363228547492845,
+      "delta": -3.1206492131479244,
+      "verdict": "WIN"
+    },
+    {
+      "checkpoint": "w16e1_10k",
+      "source": "verification_outputs/gap84-cap-frontier/frontier_w16e1_10k.json",
+      "sha256": "2638d1d0e5cfca508d283ca8d6e585be85ac88ce193e328c850805ab7ed5f72c",
+      "baseline": 16.95374614579848,
+      "framework": 15.950122708816536,
+      "delta": -1.0036234369819432,
+      "verdict": "TIE"
+    },
+    {
+      "checkpoint": "w16e1_60k",
+      "source": "verification_outputs/gap84-cap-frontier/frontier_w16e1_60k.json",
+      "sha256": "eb513b781fb43409bb652435b57515bed71b59a93b0c612acc88e47118ecfb2a",
+      "baseline": 11.379498350658302,
+      "framework": 11.39449331956656,
+      "delta": 0.014994968908258244,
+      "verdict": "TIE"
+    },
+    {
+      "checkpoint": "epochs2",
+      "source": "verification_outputs/gap90-optsteps-dose-cap/frontier_epochs2_absfloor.json",
+      "sha256": "77182ef7797957334b30efb9b9a352c89dba94595a5dc645610fad8b667e1cfd",
+      "baseline": 11.447843468495142,
+      "framework": 11.444124977945322,
+      "delta": -0.00371849054982043,
+      "verdict": "TIE"
+    },
+    {
+      "checkpoint": "production",
+      "source": "verification_outputs/gap84-cap-frontier/frontier_production.json",
+      "sha256": "d400c619ce27a47565c99b62c9c250ad3ac008deebf5f7f5ba3610070b65c17d",
+      "baseline": 9.993808898501985,
+      "framework": 9.960306662612673,
+      "delta": -0.033502235889312004,
+      "verdict": "TIE"
+    },
+    {
+      "checkpoint": "w8e3",
+      "source": "verification_outputs/gap90-optsteps-dose-cap/frontier_w8e3_absfloor.json",
+      "sha256": "915110bcd03d5bd5d166e4a8728a7f84d646744498886387e652aeb555e82fda",
+      "baseline": 12.003195563632943,
+      "framework": 11.767167368873007,
+      "delta": -0.23602819475993542,
+      "verdict": "TIE"
+    }
+  ],
+  "regression": {
+    "n_train": 4,
+    "residual_df": 2,
+    "t975": 4.302652729749464,
+    "intercept": 2.411865200018447,
+    "slope": 0.7804483954708051,
+    "slope_ci95": [
+      0.6634568559803476,
+      0.8974399349612626
+    ],
+    "heldout": [
+      {
+        "checkpoint": "epochs2",
+        "prediction": 11.346316266606417,
+        "actual": 11.444124977945322,
+        "error": -0.09780871133890479,
+        "pi95": [
+          9.774319448278344,
+          12.91831308493449
+        ]
+      },
+      {
+        "checkpoint": "w8e3",
+        "prediction": 11.779739918178063,
+        "actual": 11.767167368873007,
+        "error": 0.012572549305055247,
+        "pi95": [
+          10.22709331232528,
+          13.332386524030845
+        ]
+      }
+    ],
+    "scope": "post-hoc within-family interpolation, not cross-family prediction"
+  },
+  "source_gap": {
+    "cell": "R2 Kanzi",
+    "missing_raw_baseline": "verification_outputs/wave218-p3-kanzi-baseline-n1000/kanzi_n1000_paper_metrics.json",
+    "can_recompute_original_test": false
+  },
+  "raw_artifacts_overwritten": false
+}

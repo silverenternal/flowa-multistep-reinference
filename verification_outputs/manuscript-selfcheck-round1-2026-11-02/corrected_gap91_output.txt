@@ -1,0 +1,17 @@
+fit on the 4 original checkpoints (w16e1_5k, w16e1_10k, w16e1_60k, production):
+  framework = 2.411865 + 0.780448 * baseline
+  slope 95% CI [0.6635, 0.8974]  R2 = 0.99758  residual sd = 0.310
+  fixed point  a / (1 - b) = 10.985 FID
+
+  training point  baseline    actual       fit    resid
+  w16e1_5k       24.4839   21.3632   21.5203  -0.1570
+  w16e1_10k      16.9537   15.9501   15.6434  +0.3067
+  w16e1_60k      11.3795   11.3945   11.2930  +0.1015
+  production      9.9938    9.9603   10.2115  -0.2512
+
+  held out      baseline    actual  predicted    error              95% PI
+  epochs2        11.4478   11.4441    11.3463  -0.0978 [ 9.774, 12.918]
+  w8e3           12.0032   11.7672    11.7797  +0.0126 [10.227, 13.332]
+
+  hold-out MAE = 0.0552 FID   max |error| = 0.0978 FID
+  training x-range [9.994, 24.484]; held-out baselines [11.448, 12.003] -> interpolation

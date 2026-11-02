@@ -1,15 +1,15 @@
 """GAP-91 hold-out — does the contraction law transfer to checkpoints added later?
 
-The six-point fit in ``docs/audit/gap90-optsteps-dose.md`` §10 is validated by
-leave-one-out, which is in-sample: every fold still trains on the two GAP-90
-checkpoints. This script fits on the four original GAP-84 checkpoints only and
+The six-point fit in ``docs/audit/gap90-optsteps-dose.md`` §10 has a
+within-family leave-one-out analysis. Each fold holds out its evaluated point,
+but it is not a cross-family validation. This script fits on the four original GAP-84 checkpoints only and
 predicts the two added afterwards, so neither touches the coefficients.
 
     python3 tools/gap91_holdout.py
 
 Reads the frontier artifacts and prints the fit, the two predictions with their
-95 % prediction intervals, and the fixed point. Numbers are the ones quoted in
-§14 of the GAP-90 audit.
+95 % prediction intervals, and the fixed point. The 2026-11-02 correction uses
+the df=2 t quantile; historical §14 intervals used df=4 and are too narrow.
 """
 
 from __future__ import annotations
@@ -47,7 +47,7 @@ CHECKPOINTS: dict[str, tuple[str, bool]] = {
 }
 
 #: t_{0.975} for df = 2, the prediction-interval multiplier at n = 4.
-T_975_DF2 = 2.776
+T_975_DF2 = 4.302652729749464
 
 
 def plateaus(rel: str) -> tuple[float, float]:
