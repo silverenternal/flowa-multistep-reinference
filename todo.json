@@ -291,16 +291,16 @@
   "record": "docs/audit/manuscript-selfcheck-2026-11-02.md",
   "machine_record": "docs/audit/manuscript-selfcheck-2026-11-02.json",
   "items": 45,
-  "status": "ROUND2 completed: historical Kanzi source recovered, statistics and existing centroid ablation recomputed; cross-task comparison limits integrated",
+  "status": "ROUND3 completed: corrected round-cap semantics and percentage units; existing sensitivity and primary citations integrated",
   "scope": "All reviewer-plan items from the 2026-11-02 chat; inspect existing source and audit records first. GAP-90/91/92 omissions corrected in the checklist.",
   "push_authorization": "User explicitly authorized this synchronization on 2026-11-02; standing no_push remains unchanged.",
-  "latest_round": "docs/audit/manuscript-selfcheck-round2-2026-11-02.md",
-  "current_chinese_draft": "docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md",
+  "latest_round": "docs/audit/manuscript-selfcheck-round3-2026-11-03.md",
+  "current_chinese_draft": "docs/drafts/paper-A-zh-reviewed-round3-2026-11-03.md",
   "status_counts": {
-   "REVISION_NEEDED": 7,
-   "VERIFIED": 24,
-   "EVIDENCE_GAP": 5,
-   "EVIDENCE_LOCATED": 9
+   "REVISION_NEEDED": 6,
+   "VERIFIED": 26,
+   "EVIDENCE_GAP": 6,
+   "EVIDENCE_LOCATED": 7
   }
  }
 }

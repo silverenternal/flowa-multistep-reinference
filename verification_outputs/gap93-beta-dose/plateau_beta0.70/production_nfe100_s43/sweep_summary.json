@@ -1,0 +1,206 @@
+{
+  "schema_version": "wave191_p3_mnist_n1000_v1",
+  "target": "mnist_fm",
+  "n_records": 1000,
+  "nfe": 100,
+  "baseline_nfe": 100,
+  "nfe_allocation_mode": "equal_total_budget",
+  "nfe_allocation_weights": "scheduler",
+  "beta_schedule": "equal_budget",
+  "restart_t0_mode": "memory",
+  "restart_noise_scale": 1.0,
+  "mean_preserve": true,
+  "restart_t0_override": null,
+  "seed_keyed_prior": true,
+  "prior_batch_suffix": "-s43",
+  "restart_t0_per_round": [
+    0.0,
+    0.6694329500821695,
+    0.6694329500821695,
+    0.6694329500821695
+  ],
+  "beta_total": 0.7,
+  "beta_per_round": [
+    0.3305670499178305,
+    0.3305670499178305,
+    0.3305670499178305,
+    0.3305670499178305
+  ],
+  "baseline_fid": 9.994081852266348,
+  "baseline_chunk_fids": [
+    18.873115657283016,
+    18.579221984877556,
+    19.34308664280929,
+    19.18893943635357,
+    17.927837610844293,
+    17.405946252120835,
+    20.22918257571972,
+    19.24358198670869,
+    20.30418456893971,
+    18.83892675741879
+  ],
+  "framework_arms": {
+    "cosine": {
+      "fid_headline": 10.194295316579321,
+      "fid_chunks_mean": 18.212296609724323,
+      "fid_chunks_std": 1.0506122948385181,
+      "delta_vs_baseline_pct": -4.112510877725666,
+      "p_value_raw": 1.981947221452174e-06,
+      "p_value_bonferroni": 5.9458416643565215e-06,
+      "bonferroni_significant": true,
+      "cohens_dz": -3.3936711968449584,
+      "t_stat": -10.731730611739698,
+      "df": 9,
+      "n_chunks": 10,
+      "chunk_fids": [
+        17.94834850543799,
+        17.87920676478523,
+        18.592471441534357,
+        18.52793112247182,
+        16.980280661905354,
+        16.51666784205944,
+        19.63747589412577,
+        18.045022069030395,
+        19.952556300725462,
+        18.04300549516742
+      ],
+      "per_round_num_steps": [
+        50,
+        37,
+        12,
+        1
+      ],
+      "total_nfe_per_sample": 100,
+      "beta": 0.5,
+      "telemetry": {
+        "total_nfe_per_sample": 100,
+        "wall_sec": 41.48693069801084
+      }
+    },
+    "codimension_sheet": {
+      "fid_headline": 10.385691483800777,
+      "fid_chunks_mean": 18.412430952247917,
+      "fid_chunks_std": 0.9627356051473798,
+      "delta_vs_baseline_pct": -3.058806339360194,
+      "p_value_raw": 1.9631185610435864e-07,
+      "p_value_bonferroni": 5.889355683130759e-07,
+      "bonferroni_significant": true,
+      "cohens_dz": -4.4496368595216405,
+      "t_stat": -14.070987236727069,
+      "df": 9,
+      "n_chunks": 10,
+      "chunk_fids": [
+        18.31774761612553,
+        18.078214739760625,
+        18.862728090469282,
+        18.52705073760312,
+        17.470506691634142,
+        16.622368762609028,
+        19.75029585519539,
+        18.459513271375847,
+        19.85107987065139,
+        18.184803887054848
+      ],
+      "per_round_num_steps": [
+        25,
+        25,
+        25,
+        25
+      ],
+      "total_nfe_per_sample": 100,
+      "beta": 0.5,
+      "telemetry": {
+        "total_nfe_per_sample": 100,
+        "wall_sec": 41.43131145600637
+      }
+    },
+    "evidence_driven": {
+      "fid_headline": 10.611318411883211,
+      "fid_chunks_mean": 18.70763396735412,
+      "fid_chunks_std": 1.0972238285919613,
+      "delta_vs_baseline_pct": -1.5045665580497618,
+      "p_value_raw": 0.00457049363088502,
+      "p_value_bonferroni": 0.013711480892655059,
+      "bonferroni_significant": true,
+      "cohens_dz": -1.1851434186909027,
+      "t_stat": -3.7477525570218218,
+      "df": 9,
+      "n_chunks": 10,
+      "chunk_fids": [
+        18.67938787931778,
+        18.41928506136623,
+        19.22029914496322,
+        18.9654006226881,
+        17.527928635135126,
+        16.628679482788186,
+        19.967222327465713,
+        18.904750585065656,
+        20.42428677983851,
+        18.339099154912667
+      ],
+      "per_round_num_steps": [
+        50,
+        37,
+        12,
+        1
+      ],
+      "total_nfe_per_sample": 100,
+      "beta": 0.5,
+      "telemetry": {
+        "total_nfe_per_sample": 100,
+        "wall_sec": 41.46989836600551
+      }
+    }
+  },
+  "best_arm": "cosine",
+  "verdict": "baseline_wins",
+  "r5_implication": "Wave 191 P3 MNIST FM (N=1000, smoke model 1-epoch base_channels=8) at matched NFE=50 shows the single-pass baseline WINS (best framework arm cosine FID=10.1943 vs baseline 9.9941, \u0394=-4.11% Bonferroni p=0.0000). This REPLACES the R5 MNIST FM FID -15.01% headline at matched NFE: the framework's MNIST value-add is NOT about better inference at fixed NFE \u2014 the paper claim scope should be tightened to 'comparable quality at fewer NFEs' (cross-budget) rather than 'framework beats baseline' (matched-NFE). The Wave 191 P2 CIFAR-10 RF verdict (baseline_wins at matched NFE) is now REPLICATED on MNIST FM.",
+  "wall_min": 2.75,
+  "commit_sha": "PENDING",
+  "alpha_bonferroni": 0.016666666666666666,
+  "n_chunks": 10,
+  "chunk_size": 100,
+  "statistical_test": "paired two-sided t-test (df=9) on chunk-level FIDs (k=10 disjoint chunks of 100 samples each, paired across arms and reference); Cohen's d_z on within-chunk diffs; Bonferroni correction across 3 arms (alpha=0.05/3=0.0167)",
+  "headline_fids": {
+    "baseline": 9.994081852266348,
+    "cosine": 10.194295316579321,
+    "codimension_sheet": 10.385691483800777,
+    "evidence_driven": 10.611318411883211
+  },
+  "summary_row_fids": {
+    "baseline": 9.994081852266348,
+    "CosineAnnealScheduler": 10.194295316579321,
+    "CodimensionSheetScheduler": 10.385691483800777,
+    "EvidenceDrivenScheduler": 10.611318411883211
+  },
+  "checkpoint": "data/mnist_fm/production.ckpt.npz",
+  "checkpoint_sha256": "27e2bb6c44758822749de004595b9e0543cfc3caf1bfa47641bedcee34f220aa",
+  "checkpoint_size_bytes": 75472,
+  "checkpoint_is_smoke_materialization": false,
+  "n_samples_requested": 1000,
+  "n_samples_used": 1000,
+  "n_samples_was_capped": false,
+  "sweep_command": "python scripts/wave191_p3_mnist_sweep.py --n-samples 1000 --output-dir verification_outputs/wave191-p3-mnist-n1000 --seed 43",
+  "postprocessor": "scripts/wave191_p3_mnist_sweep.py",
+  "per_arm_n_features": {
+    "baseline": 1000,
+    "cosine": 1000,
+    "codimension_sheet": 1000,
+    "evidence_driven": 1000
+  },
+  "honest_disclosure": "Production ckpt used: data/mnist_fm/production.ckpt.npz (75472 bytes, sha256=27e2bb6c44758822); 3-epoch base_channels=16 recipe.",
+  "arm_seed_offsets": {
+    "cosine": 0,
+    "codimension_sheet": 1000000,
+    "evidence_driven": 2000000
+  },
+  "shared_prior": true,
+  "shared_batch_id": "wave191-p3",
+  "framework_max_num_steps_per_round": 12,
+  "n_rounds": 4,
+  "n_rounds_requested": 4,
+  "min_steps_per_round": 1,
+  "beta_framework": 0.5,
+  "beta_baseline": 0.0,
+  "fid_metric": "framework-internal Fr\u00e9chet-projection over 784 -> 128 deterministic Gaussian random projection (seed=42); reference = MNIST test set (10K digits, same projection); MnistFrechetProjectionEvaluator (adaptive_reflow.eval.mnist_fid). This is NOT the literature InceptionV3 FID \u2014 the absolute numbers are framework-internal; the paired baseline-vs-arm comparison is valid since both arms use the same projection + reference."
+}

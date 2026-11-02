@@ -1,0 +1,11 @@
+start_utc=2026-10-27T03:20:16Z
+cell=production / MNIST FM / beta dose (GAP-93)
+n_samples=1000 nfe=50 seeds=42 43 44 betas=0.15 0.30 0.50 0.70
+backend=torch device=cuda:0 jobs=4
+pre_registration=docs/audit/gap93-converged-lever.md
+reproduction_guard=beta0.30_nfe50_s42 vs gap84-mnist-frontier/production_nfe50_s42
+[gap93] beta=0.15 2026-10-27T03:20:16Z
+[gap93] beta=0.30 2026-10-27T03:21:23Z
+[gap93] beta=0.50 2026-10-27T03:22:32Z
+[gap93] beta=0.70 2026-10-27T03:23:40Z
+[gap93] DOSE_DONE 2026-10-27T03:24:47Z

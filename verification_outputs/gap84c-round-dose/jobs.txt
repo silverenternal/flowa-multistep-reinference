@@ -1,0 +1,15 @@
+production 42 2
+production 42 4
+production 42 6
+production 42 8
+production 42 12
+production 43 2
+production 43 4
+production 43 6
+production 43 8
+production 43 12
+production 44 2
+production 44 4
+production 44 6
+production 44 8
+production 44 12

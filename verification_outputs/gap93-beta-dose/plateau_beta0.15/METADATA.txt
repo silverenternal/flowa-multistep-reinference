@@ -1,0 +1,8 @@
+start_utc=2026-10-27T03:25:33Z
+n_samples=1000 out=verification_outputs/gap93-beta-dose/plateau_beta0.15 ckpts=production seeds=42 43 44 nfes=100 200 jobs=4 beta=0.15 min_steps=1
+nproc=32 load=13.99 12.14 8.72
+flags=--equal-total-nfe --beta-schedule equal_budget --restart-t0-mode memory --mean-preserve --seed-keyed-prior --shared-prior --n-rounds 4 --min-steps-per-round 1
+backend=torch torch_device=cuda:0 torch_dtype=float64 python=.venvs/flowmol3_venv/bin/python3
+resume_key=sweep_summary.json
+[gap84] 6 cells, 4 concurrent
+[gap84] GRID_DONE 2026-10-27T03:31:48Z failed=0

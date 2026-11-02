@@ -1,0 +1,13 @@
+{
+  "initial_overrides": {
+    "OPENBLAS_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1"
+  },
+  "standard_environment": {
+    "OPENBLAS_NUM_THREADS": null,
+    "OMP_NUM_THREADS": null
+  },
+  "single_failed_case_recheck": "tests/test_adapters/test_regression_vectors.py::test_regression_vector_matches[lumina_image_2_0]",
+  "single_case_output_tail": ".                                                                        [100%]\n=============================== warnings summary ===============================\ntests/test_adapters/test_regression_vectors.py::test_regression_vector_matches[lumina_image_2_0]\n  /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/molecular/__init__.py:151: DeprecationWarning: RMSPreservingCoordinateMixer is deprecated; use EqualRmsCoordinateMixer\n    from .mixer import (\n\ntests/test_adapters/test_regression_vectors.py::test_regression_vector_matches[lumina_image_2_0]\n  /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/contracts/__init__.py:41: DeprecationWarning: adaptive_reflow.contracts.bundle.RoundResultBundle is deprecated; import MoleculeRoundResultBundle from adaptive_reflow.molecular.bundle instead.\n    value = getattr(_bundle_module, name)\n\ntests/test_adapters/test_regression_vectors.py::test_regression_vector_matches[lumina_image_2_0]\n  /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/contracts/__init__.py:41: DeprecationWarning: adaptive_reflow.contracts.bundle.validate_round_result_bundle is deprecated; import validate_molecule_round_result_bundle from adaptive_reflow.molecular.bundle instead.\n    value = getattr(_bundle_module, name)\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n1 passed, 3 warnings in 45.67s\n",
+  "scope": "Two thread environment overrides changed together. No regression fixture or sampler arithmetic edited. No claim about cross-environment byte identity."
+}

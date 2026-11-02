@@ -1,0 +1,7 @@
+{
+  "path": "scripts/wave191_p3_mnist_sweep.py",
+  "base_commit": "b6bb14518dbf2eb8085ecf7c26fc85bee0d2e982",
+  "same_AST_after_ignoring_docstrings_and_argparse_help": true,
+  "normalized_ast_sha256": "ec469b07fcc177361ddfc17e0a28d9e34a97557547a8aaf9485e912dd8d6d659",
+  "note": "Confirms the existing sampler computation was not edited; does not prove its scientific validity."
+}

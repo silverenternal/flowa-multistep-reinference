@@ -1,0 +1,15 @@
+{
+  "source": "verification_outputs/gap78-kappa-dose-n1000-3seed/r5c_report.json",
+  "percent_mean": -0.3647855525199987,
+  "absolute_mean": -0.036420268272384725,
+  "absolute_ci95": [
+    -0.07205056594681766,
+    -0.0007899705979517863
+  ],
+  "percent_ci95": [
+    -0.7236513970031004,
+    -0.005919708036897009
+  ],
+  "formula_source": "tools/gap78_r5c_report.py lines 73-74; each seed percent differs by baseline denominator",
+  "note": "Do not convert a mean percent using one seed baseline; aggregate absolute differences directly."
+}

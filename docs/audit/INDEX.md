@@ -51,15 +51,15 @@ preserved for the per-wave audit trail.
 | `web_research` | Web research 2026 (FM literature surveys) | 1 | 0 | 1 |
 | `engineering` | Engineering hygiene (ruff, mkdocs, pytest, byte-stable, CI, working-tree) | 129 | 75 | 54 |
 | `reproducibility` | Reproducibility (reproducibility-record, preregistration, reproduce-script) | 14 | 6 | 8 |
-| `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 30 | 11 | 19 |
+| `data_packaging` | Data packaging + manifest (sha256, csv, metric-ledger) | 31 | 11 | 20 |
 | `push_state` | Push state (push-ready, freeze, release, submission) | 11 | 7 | 4 |
 | `algorithm_4arm` | Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency) | 39 | 18 | 21 |
 | `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 111 | 90 | 21 |
 | `stats_method` | Statistical methodology (R5/R6, p-value, bonferroni, TOST) | 43 | 20 | 23 |
-| `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 55 | 26 | 29 |
+| `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 56 | 26 | 30 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
 | `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 113 | 32 | 81 |
-| **TOTAL** | — | **640** | **349** | **291** |
+| **TOTAL** | — | **642** | **349** | **293** |
 
 ---
 
@@ -403,7 +403,7 @@ Reproducibility (reproducibility-record, preregistration, reproduce-script). Thi
 
 ### Cluster: `data_packaging` — Data packaging + manifest (sha256, csv, metric-ledger)
 
-**Files: 30** (active: 11, historical: 19)
+**Files: 31** (active: 11, historical: 20)
 
 Data packaging + manifest (sha256, csv, metric-ledger). This cluster is part of the project's audit surface for data_packaging.
 
@@ -421,7 +421,7 @@ Data packaging + manifest (sha256, csv, metric-ledger). This cluster is part of 
 - `wave331-data-fix.md`
 - `wave344-supplementary-bundle.md`
 
-**Historical (19 files, not cited by reviewer-facing surfaces):**
+**Historical (20 files, not cited by reviewer-facing surfaces):**
 
 - `data-availability-artifact-paths.md`
 - `data-linkage-closure.md`
@@ -432,6 +432,7 @@ Data packaging + manifest (sha256, csv, metric-ledger). This cluster is part of 
 - `p5-metrics-patch.md`
 - `evidence-hash-surfaces.md`
 - `evidence-pin-audit.md`
+- `manuscript-literature-ledger-2026-11-03.md`
 - `metric-ledger-staleness.md`
 - `r3-env-investigation.md`
 - `wave275-p1-state-inventory.md`
@@ -707,7 +708,7 @@ Statistical methodology (R5/R6, p-value, bonferroni, TOST). This cluster is part
 
 ### Cluster: `paper_claims` — Paper + claims (paper packaging, claim audit, paper-update)
 
-**Files: 55** (active: 26, historical: 29)
+**Files: 56** (active: 26, historical: 30)
 
 Paper + claims (paper packaging, claim audit, paper-update). This cluster is part of the project's audit surface for paper_claims.
 
@@ -740,7 +741,7 @@ Paper + claims (paper packaging, claim audit, paper-update). This cluster is par
 - `wave372-manuscript-claim-audit.md`
 - `wave385-figures.md`
 
-**Historical (29 files, not cited by reviewer-facing surfaces):**
+**Historical (30 files, not cited by reviewer-facing surfaces):**
 
 - `cover-letter-fill-draft.md`
 - `figure-hash-gate.md`
@@ -749,6 +750,7 @@ Paper + claims (paper packaging, claim audit, paper-update). This cluster is par
 - `manuscript-selfcheck-2026-11-02.md`
 - `manuscript-selfcheck-round1-2026-11-02.md`
 - `manuscript-selfcheck-round2-2026-11-02.md`
+- `manuscript-selfcheck-round3-2026-11-03.md`
 - `manuscript-selfcheck-validation-2026-11-02.md`
 - `manuscript-vs-new-evidence-2026-10-27.md`
 - `paper-evidence-register-2026-10-27.md`

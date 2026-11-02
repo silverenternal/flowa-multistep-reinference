@@ -1,0 +1,77 @@
+{
+  "checked_date": "2026-11-03",
+  "primary_sources": [
+    {
+      "ref": 9,
+      "citation": "L. Liang et al., “LineageFlow: Flow Matching for High-Fidelity Family-Aware Protein Sequence Generation,” ICML, 2026; arXiv:2605.22252v2.",
+      "url": "https://arxiv.org/abs/2605.22252v2",
+      "supports": "原文rerouting及模型归属；不证明本项目加载了原文模型。"
+    },
+    {
+      "ref": 10,
+      "citation": "R. Dilip, E. Zhang, A. Varshney, and D. Van Valen, “Flow Autoencoders are Effective Protein Tokenizers,” arXiv:2510.00351, 2025.",
+      "url": "https://arxiv.org/abs/2510.00351",
+      "supports": "Kanzi原文；历史JSON中Shah/ICLR2026标签不作为本稿书目信息。"
+    },
+    {
+      "ref": 11,
+      "citation": "I. Dunn and D. R. Koes, “FlowMol3: Flow Matching for 3D De Novo Small-Molecule Generation,” arXiv:2508.12629, 2025.",
+      "url": "https://arxiv.org/abs/2508.12629",
+      "supports": "历史vendored版本的模型归属；不把新发布版本等同于旧代码。"
+    },
+    {
+      "ref": 12,
+      "citation": "R. Wu et al., “High-resolution de novo structure prediction from primary sequence,” bioRxiv, 2022, doi:10.1101/2022.07.21.500999.",
+      "url": "https://github.com/HeliXonProtein/OmegaFold",
+      "supports": "原生README citation与置信度输出说明；bioRxiv页面403。"
+    },
+    {
+      "ref": 13,
+      "citation": "C. Hsu et al., “Learning inverse folding from millions of predicted structures,” ICML, PMLR 162, pp. 8946–8970, 2022.",
+      "url": "https://proceedings.mlr.press/v162/hsu22a.html",
+      "supports": "ESM-IF的序列条件似然背景；实现token与截断规则另核源码。"
+    },
+    {
+      "ref": 14,
+      "citation": "M. Buttenschoen, G. M. Morris, and C. M. Deane, “PoseBusters: AI-based docking methods fail to generate physically valid poses or generalise to novel sequences,” Chemical Science, 2024, doi:10.1039/D3SC04185A.",
+      "url": "https://pubs.rsc.org/en/content/articlelanding/2024/sc/d3sc04185a",
+      "supports": "有效性检查背景；不据论文保证本项目启用了全部检查。"
+    },
+    {
+      "ref": 15,
+      "citation": "S. R. Eddy, “Accelerated Profile HMM Searches,” PLoS Computational Biology, vol. 7, no. 10, e1002195, 2011.",
+      "url": "https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1002195",
+      "supports": "HMMER来源，不能替代目标家族判定规则。"
+    },
+    {
+      "ref": 16,
+      "citation": "M. Steinegger and J. Söding, “MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets,” Nature Biotechnology, 2017, doi:10.1038/nbt.3988.",
+      "url": "https://www.nature.com/articles/nbt.3988",
+      "supports": "搜索工具来源，库版本和覆盖阈值仍需运行材料。"
+    },
+    {
+      "ref": 17,
+      "citation": "J. Mistry et al., “Pfam: The protein families database in 2021,” Nucleic Acids Research, vol. 49, no. D1, pp. D412–D419, 2021.",
+      "url": "https://academic.oup.com/nar/article/49/D1/D412/5943818",
+      "supports": "数据库来源，不把2021论文年份当作项目实际数据库release。"
+    },
+    {
+      "ref": 18,
+      "citation": "Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner, “Gradient-based learning applied to document recognition,” Proceedings of the IEEE, vol. 86, no. 11, pp. 2278–2324, 1998.",
+      "url": "https://bottou.org/papers/lecun-98h",
+      "supports": "作者原始文献页面；IEEE正文受JS检查限制。"
+    },
+    {
+      "ref": 19,
+      "citation": "A. Krizhevsky, “Learning Multiple Layers of Features from Tiny Images,” University of Toronto, Technical Report, 2009.",
+      "url": "https://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf",
+      "supports": "作者原始技术报告；数据归属，不承担生成基线指标。"
+    }
+  ],
+  "additional_related_source": {
+    "ref": 3,
+    "url": "https://arxiv.org/html/2306.14878v2",
+    "section": "Appendix B.2 Algorithm 2; C.1–C.2",
+    "scope": "Noise-kernel/restart interval and actual NFE; no matched comparison found in current project search."
+  }
+}

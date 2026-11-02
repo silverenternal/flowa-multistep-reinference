@@ -1,0 +1,7 @@
+start_utc=2026-10-25T10:13:14Z
+n_samples=1000 out=verification_outputs/gap84c-round-dose ckpts=production seeds=42 43 44 rounds=2 4 6 8 12 nfe=25 jobs=3 beta=0.3
+nproc=32 load=29.54 31.89 21.17
+flags=--equal-total-nfe --beta-schedule equal_budget --restart-t0-mode memory --mean-preserve --seed-keyed-prior --shared-prior --min-steps-per-round 2
+resume_key=sweep_summary.json
+[gap84c] 15 cells, 3 concurrent
+[gap84c] DOSE_DONE 2026-10-25T11:34:30Z failed=0
