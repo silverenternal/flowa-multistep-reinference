@@ -1,0 +1,14 @@
+GENERATED 201 1 0.5
+GENERATED 201 1 0.7
+GENERATED 201 1 0.8879040017426006
+Traceback (most recent call last):
+  File "/home/hugo/codes/flowa-multistep-reinference/tools/sweep_cifar_intermediate_20261103.py", line 385, in <module>
+    main()
+  File "/home/hugo/codes/flowa-multistep-reinference/tools/sweep_cifar_intermediate_20261103.py", line 379, in main
+    generate(args, protocol)
+  File "/home/hugo/codes/flowa-multistep-reinference/tools/sweep_cifar_intermediate_20261103.py", line 197, in generate
+    path=str(target.relative_to(ROOT)),
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hugo/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/pathlib.py", line 682, in relative_to
+    raise ValueError(f"{str(self)!r} is not in the subpath of {str(other)!r}")
+ValueError: 'verification_outputs/cifar-intermediate-path-20261103/raw/s201_r1.npz' is not in the subpath of '/home/hugo/codes/flowa-multistep-reinference'

@@ -1823,7 +1823,7 @@
       "arm": "",
       "nfe": "",
       "source_artifact_path": "mkdocs.yml",
-      "source_artifact_sha256": "f4a49c217e933f97df70944a10bea3c24e5ab0cb46c85ae2900c71a318beaac9",
+      "source_artifact_sha256": "b0c31b8886e2fa591b16cf904c5d223ff7cf7ffffe760c61c16109bf9ca1803d",
       "source_line": "",
       "section_ref": "docs/GATES.md + AGENTS.md §4.1",
       "notes": "Live value: `0 errors`. verification command: `mkdocs build --strict`. Source-of-truth surface: mkdocs.yml."
@@ -1847,7 +1847,7 @@
       "source_artifact_sha256": "",
       "source_line": "",
       "section_ref": "docs/GATES.md + AGENTS.md §4.1",
-      "notes": "Live value: `5863 tests collected`. verification command: `python3 -m pytest tests/ -q --co`. Source-of-truth surface: tests/."
+      "notes": "Live value: `5867 tests collected`. verification command: `python3 -m pytest tests/ -q --co`. Source-of-truth surface: tests/."
     },
     {
       "metric_id": "G-RUFF",

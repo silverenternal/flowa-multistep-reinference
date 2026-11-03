@@ -2,7 +2,7 @@
 
 > Latest originality increment: [round6 conditional theory and limitations](audit/manuscript-originality-round6-2026-11-03.md). Candidate novelty remains unresolved.
 
-> **2026-11-03 research review:** see the [Chinese v8 research draft](drafts/paper-A-zh-reviewed-round9-2026-11-03.md), [complete reviewer checklist](audit/manuscript-selfcheck-2026-11-02.md), and [round 5 audit](audit/manuscript-selfcheck-round5-2026-11-03.md). The [round8 rewrite](audit/manuscript-rewrite-round8-2026-11-03.md) integrates the conditional theory and cached diagnostics. Current originality and external-confirmation gaps remain material; the frozen package below is a historical artifact, not a current submission-readiness finding.
+> **2026-11-03 research review:** see the [Chinese v9 research draft](drafts/paper-A-zh-reviewed-round10-2026-11-03.md), [complete reviewer checklist](audit/manuscript-selfcheck-2026-11-02.md), and [round 5 audit](audit/manuscript-selfcheck-round5-2026-11-03.md). The [round8 rewrite](audit/manuscript-rewrite-round8-2026-11-03.md) integrates the conditional theory and cached diagnostics. Current originality and external-confirmation gaps remain material; the frozen package below is a historical artifact, not a current submission-readiness finding.
 
 > **Paper A is frozen at the TNNLS v3.1 package (2026-10-18).** Paper PDF:
 > [`drafts/paper-A-final.pdf`](drafts/paper-A-final.pdf) — 12 pages,

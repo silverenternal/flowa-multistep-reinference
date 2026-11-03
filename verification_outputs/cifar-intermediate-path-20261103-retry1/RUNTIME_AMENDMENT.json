@@ -1,0 +1,9 @@
+{
+  "reason": "After all first-cell generation, relative Path.relative_to(absolute ROOT) failed during index writing; no numerical/metric changes, first attempt excluded entirely",
+  "previous_attempt": "verification_outputs/cifar-intermediate-path-20261103",
+  "failed_outer_wall_seconds": 37.78068954497576,
+  "failed_GPU_charge_rounded_up_seconds": 40,
+  "release_unused_reservation": "Old500s value was a hard-cap reservation, not measured GPU use; original record preserved. Account40s for failed GPU-bearing process, reserve480s retry; total6638+40+480=7158 <=7200",
+  "previous_raw_preserved": true,
+  "no_new_model_metric_scores_inspected": true
+}

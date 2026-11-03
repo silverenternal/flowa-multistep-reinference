@@ -305,11 +305,11 @@
     "record": "docs/audit/manuscript-selfcheck-2026-11-02.md",
     "machine_record": "docs/audit/manuscript-selfcheck-2026-11-02.json",
     "items": 45,
-    "status": "ROUND9 path-identifiability controls and current TNNLS requirements added; originality remains unresolved",
+    "status": "ROUND10 real-checkpoint intermediate paths and fixed-suffix interventions complete; novelty/external prediction unresolved",
     "scope": "All reviewer-plan items from the 2026-11-02 chat; inspect existing source and audit records first. GAP-90/91/92 omissions corrected in the checklist.",
     "push_authorization": "User explicitly authorized this synchronization on 2026-11-02; standing no_push remains unchanged.",
-    "latest_round": "docs/audit/manuscript-supplement-round9-2026-11-03.md",
-    "current_chinese_draft": "docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md",
+    "latest_round": "docs/audit/manuscript-intermediate-round10-2026-11-03.md",
+    "current_chinese_draft": "docs/drafts/paper-A-zh-reviewed-round10-2026-11-03.md",
     "status_counts": {
       "REVISION_NEEDED": 5,
       "VERIFIED": 29,
@@ -379,20 +379,45 @@
       "author_requirements": "docs/audit/tnnls-author-requirements-2026-11-03.md",
       "originality": "Specific endpoint-indistinguishability construction added; not a new sampler or novelty certification",
       "sync_evidence": "Local round9 delivery receipt after GitHub push and Mac pull"
+    },
+    "round10": {
+      "audit": "docs/audit/manuscript-intermediate-round10-2026-11-03.md",
+      "draft": "docs/drafts/paper-A-zh-reviewed-round10-2026-11-03.md",
+      "artifacts": "verification_outputs/cifar-intermediate-path-20261103-retry1",
+      "intervention_cells": 36,
+      "controls": 18,
+      "samples_per_cohort": 128,
+      "generation_seeds": [
+        201,
+        202,
+        203
+      ],
+      "checkpoint_count": 1,
+      "resolutions": [
+        64,
+        128
+      ],
+      "GPU_added_conservative_seconds": 520,
+      "GPU_accounted_total_seconds": 7158,
+      "GPU_remaining_conservative_seconds": 42,
+      "GPU_bearing_process_actual_wall_seconds": 199.23942755989265,
+      "scientific_scope": "Real-model pathwise-versus-marginal distinction; no learned correction or quality advantage",
+      "sync_evidence": "Local round10 receipt after GitHub push, Mac pull and complete raw CPU replay"
     }
   },
   "historical_submission_objective_before_round5": "Publish in a CAS tier-1 (中科院一区) journal, TNNLS first. The paper is packaged and submittable as of 2026-10-27 (12 pages, 0 overfull, 3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only). What it lacks is not prose but one piece of evidence: the central claim is currently a four-point cross-section, and the reviewer's first objection is already known. The plan below exists to convert that cross-section into an identification, then to put it in the paper.",
   "current_research_review_2026_11_03": {
     "audit": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-    "draft": "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
+    "draft": "docs/drafts/paper-A-zh-reviewed-round10-2026-11-03.md",
     "readiness": "not yet established on scientific novelty and independent confirmation",
     "historical_objective_scope": "Cross-task WIN remains an aspiration, not an instruction to conceal negative results or change a failed acceptance rule.",
-    "budget": "7200 conservative GPU-bearing outer-wall seconds total; no additional GPU jobs after the two locked studies",
+    "budget": "User-authorized real-path follow-up within original7200s; conservatively7158s including failed attempt and full retry cap. No further GPU jobs this round.",
     "priority": [
-      "trace exact Bregman/OT prior art before claiming novelty",
-      "find observable coupling diagnostics without oracle constants",
-      "only then lock independent model intervention and budget"
+      "Assess specific novelty beyond existing marginal-matching and restart work",
+      "Define prospective diagnostic-to-action rules before any external experiment",
+      "Seek independent checkpoint and matched-total-call quality validation if future budget is authorized"
     ],
-    "latest_originality_audit": "docs/audit/manuscript-supplement-round9-2026-11-03.md"
+    "latest_originality_audit": "docs/audit/manuscript-intermediate-round10-2026-11-03.md",
+    "budget_before_round10": "7200 conservative GPU-bearing outer-wall seconds total; no additional GPU jobs after the two locked studies"
   }
 }

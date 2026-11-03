@@ -1,0 +1,36 @@
+{
+  "rows": [
+    {
+      "m": 0.5,
+      "true_mid_variance": 0.5000000000000001,
+      "own_chord_variance": 1.0,
+      "independent_chord_variance": 0.5000000000000001,
+      "own_output_variance": 1.9999999999999996,
+      "independent_output_variance": 1.0,
+      "own_paired_boundary_RMS": 0.2928932188134524,
+      "independent_paired_boundary_RMS": 0.541196100146197
+    },
+    {
+      "m": 0.7,
+      "true_mid_variance": 0.58,
+      "own_chord_variance": 1.0,
+      "independent_chord_variance": 0.58,
+      "own_output_variance": 1.7241379310344829,
+      "independent_output_variance": 1.0,
+      "own_paired_boundary_RMS": 0.23842268941360922,
+      "independent_paired_boundary_RMS": 0.3062544125054411
+    },
+    {
+      "m": 0.8879040017426006,
+      "true_mid_variance": 0.8009390291358472,
+      "own_chord_variance": 1.0,
+      "independent_chord_variance": 0.8009390291358472,
+      "own_output_variance": 1.2485344871742916,
+      "independent_output_variance": 1.0,
+      "own_paired_boundary_RMS": 0.10504802970447225,
+      "independent_paired_boundary_RMS": 0.11231734810814369
+    }
+  ],
+  "deterministic": true,
+  "scope": "Classical independent Gaussian RF example; calibration of pathwise versus marginal distinction, not a new theorem or real-model replication"
+}

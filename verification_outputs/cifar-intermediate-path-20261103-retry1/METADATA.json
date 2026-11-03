@@ -1,0 +1,32 @@
+{
+  "started_utc": "2026-11-03T07:47:19.856529+00:00",
+  "argv": [
+    "tools/sweep_cifar_intermediate_20261103.py",
+    "--protocol",
+    "verification_outputs/cifar-intermediate-path-20261103-retry1/PROTOCOL.json",
+    "--out",
+    "verification_outputs/cifar-intermediate-path-20261103-retry1",
+    "--phase",
+    "generate",
+    "--max-records",
+    "128",
+    "--seed",
+    "201"
+  ],
+  "protocol_sha256": "33ae7341db8fb671bc28534cd21b33517745335480292dd3618c6a8a77df9562",
+  "config": "verification_outputs/cifar-intermediate-path-20261103-retry1/PROTOCOL.json",
+  "seed_policy": [
+    201,
+    202,
+    203
+  ],
+  "n_per_cohort": 128,
+  "n_base_paths_planned": 1536,
+  "max_records_per_cohort": 128,
+  "device": "cuda:0",
+  "hard_outer_wall_seconds": 480,
+  "output_dir": "verification_outputs/cifar-intermediate-path-20261103-retry1",
+  "environment": "/home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python",
+  "base_commit": "05f608dd3d245fdf7c213734359e3edff069f02a",
+  "gpu_snapshot": "0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97337 MiB, 0 %\n1, NVIDIA GeForce RTX 5090, 25106 MiB, 10 %\n"
+}

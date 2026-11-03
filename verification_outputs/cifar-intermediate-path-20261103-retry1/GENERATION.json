@@ -1,0 +1,2123 @@
+{
+  "complete": true,
+  "files": [
+    {
+      "seed": 201,
+      "resolution": 1,
+      "path": "verification_outputs/cifar-intermediate-path-20261103-retry1/raw/s201_r1.npz",
+      "sha256": "5e0ff3fa341265386ec45326f2c4549c7b7fa15a72ae446182aa862bb3663ff1",
+      "bytes": 42161565
+    },
+    {
+      "seed": 201,
+      "resolution": 2,
+      "path": "verification_outputs/cifar-intermediate-path-20261103-retry1/raw/s201_r2.npz",
+      "sha256": "b6cd853ac16188092a26a2d2ae6791fa9a1547cd21bdf1b5be2c6a41c5ea3bf6",
+      "bytes": 42153827
+    },
+    {
+      "seed": 202,
+      "resolution": 1,
+      "path": "verification_outputs/cifar-intermediate-path-20261103-retry1/raw/s202_r1.npz",
+      "sha256": "a187a37d922a3cbe571bf3e10b30f40063b42cc1b561b9a42681012f6d1d30e4",
+      "bytes": 42127539
+    },
+    {
+      "seed": 202,
+      "resolution": 2,
+      "path": "verification_outputs/cifar-intermediate-path-20261103-retry1/raw/s202_r2.npz",
+      "sha256": "1aa478638d1ec9bebc87c2e1453fa5a4d72b1a85f01fa19f9000244fdba53403",
+      "bytes": 42113562
+    },
+    {
+      "seed": 203,
+      "resolution": 1,
+      "path": "verification_outputs/cifar-intermediate-path-20261103-retry1/raw/s203_r1.npz",
+      "sha256": "536f1390012fe58769d616aaa426596a28e95987e1a4602cf90e53814c620268",
+      "bytes": 42123081
+    },
+    {
+      "seed": 203,
+      "resolution": 2,
+      "path": "verification_outputs/cifar-intermediate-path-20261103-retry1/raw/s203_r2.npz",
+      "sha256": "f054e0dba511b3fabe5e851edd64a12512945d8f4a4356aff2dc1b99970197ed",
+      "bytes": 42110976
+    }
+  ],
+  "n_base_path_records_processed": 1536,
+  "n_base_path_records_planned": 1536,
+  "n_skipped": 0,
+  "actual_call_records": [
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 201,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 201,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 202,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 202,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 1,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 32
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 19
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 1,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 7
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "full_path",
+      "seed": 203,
+      "resolution": 2,
+      "n": 32,
+      "actual_calls": 128
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.5,
+      "n": 32,
+      "actual_calls": 64
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.7,
+      "n": 32,
+      "actual_calls": 38
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "true_path_replay",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "own_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    },
+    {
+      "kind": "independent_source_chord",
+      "seed": 203,
+      "resolution": 2,
+      "time": 0.8879040017426006,
+      "n": 32,
+      "actual_calls": 14
+    }
+  ],
+  "internal_wall_seconds": 159.03941406100057,
+  "framework": {
+    "python": "3.12.13 (main, Apr 14 2026, 14:29:00) [Clang 22.1.3 ]",
+    "torch": "2.7.0+cu128",
+    "device": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition"
+  },
+  "target": "Numerical endpoint law of this frozen model; not real CIFAR data distribution"
+}

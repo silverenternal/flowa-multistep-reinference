@@ -1,0 +1,43 @@
+{
+  "intermediate": {
+    "0.5": {
+      "own_minus_independent_min": 0.0011175038197122067,
+      "max": 0.003982060446590774,
+      "positive": 6,
+      "total": 6
+    },
+    "1.0": {
+      "own_minus_independent_min": 0.0003714847584423975,
+      "max": 0.000663117127010171,
+      "positive": 6,
+      "total": 6
+    },
+    "2.0": {
+      "own_minus_independent_min": 7.540845945075425e-05,
+      "max": 0.00010579509569019763,
+      "positive": 6,
+      "total": 6
+    }
+  },
+  "endpoint": {
+    "0.5": {
+      "own_minus_independent_min": 0.0015103584942174342,
+      "max": 0.009518296246869729,
+      "positive": 6,
+      "total": 6
+    },
+    "1.0": {
+      "own_minus_independent_min": 0.0004798898815780994,
+      "max": 0.0015570455734199573,
+      "positive": 6,
+      "total": 6
+    },
+    "2.0": {
+      "own_minus_independent_min": 0.00015141919791794578,
+      "max": 0.00020958238109392013,
+      "positive": 6,
+      "total": 6
+    }
+  },
+  "scope": "Descriptive primary-time comparison; six correlated seed-resolution cells, not six independent models or a significance test"
+}

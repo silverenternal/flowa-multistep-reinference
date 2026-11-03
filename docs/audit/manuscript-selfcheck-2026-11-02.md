@@ -1,6 +1,6 @@
 # 投稿改进自查表 2026年11月2日
 
-完整保留45项及各轮历史。第九轮补充中文v8路径可识别性与现行投稿要求；VERIFIED仅表示条目限定范围，原创性与独立有效性仍按具体缺口记录。
+完整保留45项及各轮历史。第十轮补充中文v9真实中间路径与边界干预；VERIFIED仅表示条目限定范围，原创性与独立有效性仍按具体缺口记录。
 
 ## 状态规则
 
@@ -85,6 +85,8 @@
 
 - 第九轮直接读取现行TNNLS官网：双匿名、常规超过10页每页200美元且正文总长最多15页；旧2012年13页口径为历史规则。解析路径控制已补充，实际神经流中间边缘与独立干预仍未完成。
 
+- 第十轮完成真实CIFAR检查点中间轨迹和固定后段边界干预：原噪声弦线逐样本更近但整体边缘更远；不据一般耦合反例判定独立刷新有害。含失败重跑保守GPU总核算7158/7200秒。
+
 ## 完整条目
 
 ### SC-01 当前中文稿是否具备完整投稿稿的论证密度？
@@ -150,12 +152,12 @@
 - 优先级：P0
 - 状态：EVIDENCE_GAP
 - 验收：与最接近原始论文逐项比较状态、反馈、训练需求、预算、重启方式；不能凭源码存在判定新颖性。
-- 发现：新增相同端点映射与联合分布、不同刷新输出的光滑流构造，36个CPU控制验证端点诊断不能替代真实中间边缘。路径自由度和Lipschitz传播已有经典基础；针对指定刷新核的构造未被确认为足够独立的新颖贡献。原有操作重合不变，原创充分性仍缺证据。
-- 下一步：先获取/验证实际中间边缘的可观测诊断；只有区分路径弯曲与配对改变并超出已有方法后才考虑独立干预。
-- 验证范围：本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。
-- 核查轮次：round9-2026-11-03
-- 本轮记录：docs/audit/manuscript-supplement-round9-2026-11-03.md
-- 证据：`docs/drafts/paper-A-final.md`；`docs/audit/gap94-standard-benchmark.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round3-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round3-2026-11-03.md`；`docs/audit/manuscript-literature-ledger-2026-11-03.md`；`verification_outputs/manuscript-selfcheck-round3-2026-11-03/sensitivity.json`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-originality-round6-2026-11-03.md`；`docs/audit/manuscript-endpoint-pairing-round7-2026-11-03.md`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`
+- 发现：已补一个真实CIFAR检查点的中间轨迹与受控边界替换，36个干预单元完整。主时刻原噪声弦线虽更贴近单轨迹，却比独立噪声弦线更偏离中间及接续边缘；三种子、两精度和三带宽方向一致。新增的是对象区分和诊断证据，CMM/CorrFlow已覆盖边缘匹配或部署分布议题；没有新采样器，原创充分性仍未验收。
+- 下一步：冻结本轮诊断作为机制证据；下一阶段先明确超出CMM/已有重启方法的可证伪预测，再考虑独立模型和匹配总调用的动作验证。
+- 验证范围：同一冻结真实模型的数值中间路径、受控边界替换和对象区分；非总体不变性、感知质量、新方法或独立泛化认证。
+- 核查轮次：round10-2026-11-03
+- 本轮记录：docs/audit/manuscript-intermediate-round10-2026-11-03.md
+- 证据：`docs/drafts/paper-A-final.md`；`docs/audit/gap94-standard-benchmark.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round3-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round3-2026-11-03.md`；`docs/audit/manuscript-literature-ledger-2026-11-03.md`；`verification_outputs/manuscript-selfcheck-round3-2026-11-03/sensitivity.json`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-originality-round6-2026-11-03.md`；`docs/audit/manuscript-endpoint-pairing-round7-2026-11-03.md`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`；`docs/audit/manuscript-intermediate-round10-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round10-2026-11-03.md`；`verification_outputs/cifar-intermediate-path-20261103-retry1/RESULTS.json`；`verification_outputs/cifar-intermediate-path-20261103-retry1/PROTOCOL.json`
 
 历史记录（逐轮原文保留）：
 
@@ -165,6 +167,7 @@
 - {"status": "EVIDENCE_GAP", "finding": "已补同RF权重、实际调用匹配的原始Restart函数与VE-Heun控制；Diamond Maps端点特例及NR-SMC状态更新存在直接重合，不能再把端点混合作为独有操作。完整系统的奖励/后验目标没有对照，原创贡献仍未充分建立。", "next_action": "先列与Diamond Maps/NR-SMC/Restart逐操作及目标的差异；若没有独立且有价值的可检验主张，改为条件分析定位，暂缓按新采样方法投稿。", "review_round": "round5-2026-11-03", "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"}
 - {"status": "EVIDENCE_GAP", "finding": "已排除首次重启/端点混合/双端点修正/MMD引导等重合。新增证明及100个CPU检查完成后，发现矩缺口恰为经典输运成本差，核心障碍命题降为背景机制引理，不作为主要原创贡献。锐下界和近似路径反例仍有直接经典推论风险；原创问题未解决。", "next_action": "追溯OT重排/Bregman差额和边缘保持理论；若已直接覆盖则降为引理；寻找可估计判别量及独立干预。", "review_round": "round6-2026-11-03", "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md"}
 - {"status": "EVIDENCE_GAP", "finding": "第七轮在12个既有CIFAR操作点各取固定256对端点，未发现有限循环单调性违例；不能确认全局凸梯度或预测质量。小批配对优化和有限单调性已有直接文献，诊断不作为新方法。核心原创性缺口仍在。", "next_action": "先获取/验证实际中间边缘的可观测诊断；只有区分路径弯曲与配对改变并超出已有方法后才考虑独立干预。", "review_round": "round7-2026-11-03", "review_record": "docs/audit/manuscript-endpoint-pairing-round7-2026-11-03.md", "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"}
+- {"status": "EVIDENCE_GAP", "finding": "新增相同端点映射与联合分布、不同刷新输出的光滑流构造，36个CPU控制验证端点诊断不能替代真实中间边缘。路径自由度和Lipschitz传播已有经典基础；针对指定刷新核的构造未被确认为足够独立的新颖贡献。原有操作重合不变，原创充分性仍缺证据。", "next_action": "先获取/验证实际中间边缘的可观测诊断；只有区分路径弯曲与配对改变并超出已有方法后才考虑独立干预。", "review_round": "round9-2026-11-03", "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md", "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"}
 
 ### SC-05 相比固定权重混合究竟新增什么？
 
@@ -172,12 +175,12 @@
 - 优先级：P0
 - 状态：EVIDENCE_GAP
 - 验收：给出唯一可辨的算法差异、代码路径和对应对照；不用多个功能同时变化的比较归因。
-- 发现：当前新增的是可检验的端点不可识别性分析，不是新的端点混合算法。无新神经模型干预或迁移收益，不能以控制数量替代独有方法证据。
-- 下一步：理论差异通过后才锁定实用修正；同等调用收益和新模型验证仍未完成。
-- 验证范围：本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。
-- 核查轮次：round9-2026-11-03
-- 本轮记录：docs/audit/manuscript-supplement-round9-2026-11-03.md
-- 证据：`adaptive_reflow/algorithm/policy_driver.py`；`adaptive_reflow/algorithm/blender/blender.py`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`；`docs/audit/manuscript-selfcheck-round4-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round4-2026-11-03.md`；`verification_outputs/component-study-20261103/REPORT.json`；`verification_outputs/component-study-20261103/PROTOCOL.json`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-originality-round6-2026-11-03.md`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`
+- 发现：本轮已完成同后段网格的真实边界状态干预，尚非前瞻诊断选择或独立模型预测验证；独立臂接近有限样本参照不能证明目标保持。未得到匹配总调用的质量收益或新部署决策，独有方法贡献仍缺证据。
+- 下一步：只有在独立检查点上预先锁定诊断到动作的规则，并取得匹配总调用的实际质量证据后，再评估方法贡献；本轮不再新增GPU。
+- 验证范围：同一冻结真实模型的数值中间路径、受控边界替换和对象区分；非总体不变性、感知质量、新方法或独立泛化认证。
+- 核查轮次：round10-2026-11-03
+- 本轮记录：docs/audit/manuscript-intermediate-round10-2026-11-03.md
+- 证据：`adaptive_reflow/algorithm/policy_driver.py`；`adaptive_reflow/algorithm/blender/blender.py`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`；`docs/audit/manuscript-selfcheck-round4-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round4-2026-11-03.md`；`verification_outputs/component-study-20261103/REPORT.json`；`verification_outputs/component-study-20261103/PROTOCOL.json`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-originality-round6-2026-11-03.md`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`；`docs/audit/manuscript-intermediate-round10-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round10-2026-11-03.md`；`verification_outputs/cifar-intermediate-path-20261103-retry1/RESULTS.json`；`verification_outputs/cifar-intermediate-path-20261103-retry1/PROTOCOL.json`
 
 历史记录（逐轮原文保留）：
 
@@ -187,6 +190,7 @@
 - {"status": "EVIDENCE_GAP", "finding": "已完成主参数β=.3、两检查点×三种子×六臂、C200匹配组件矩阵；均匀预算差异远小于1单位，无法支持原调度的实用必要性。 该矩阵削弱组件必要性主张，未给出超越最接近方法的唯一创新性证据；创新性验收仍未闭合。", "review_round": "round4-2026-11-03", "review_record": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md", "next_action": "继续检验其余检查点/多预算与交互；本项只验收局部组件对照，不验收新颖性或普适必要性。"}
 - {"status": "EVIDENCE_GAP", "finding": "主参数组件矩阵与独立零时间简化配置区分组件；后段时间匹配两轮候选另行留出验证。操作差异及经典误差界不足以证明相对固定混合/先前端点构造的新颖性。", "next_action": "以已有单因素矩阵判断哪些差异真实影响结果；仅对可识别的新差异设计最小控制，不把路径一致修正本身当新算子。", "review_round": "round5-2026-11-03", "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"}
 - {"status": "EVIDENCE_GAP", "finding": "固定调度本身的新颖性仍不足。本轮贡献候选转向训练耦合决定刷新合法性的机制分析，不再以增加混合权重或接口作为创新。", "next_action": "理论差异通过后才锁定实用修正；同等调用收益和新模型验证仍未完成。", "review_round": "round6-2026-11-03", "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md", "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"}
+- {"status": "EVIDENCE_GAP", "finding": "当前新增的是可检验的端点不可识别性分析，不是新的端点混合算法。无新神经模型干预或迁移收益，不能以控制数量替代独有方法证据。", "next_action": "理论差异通过后才锁定实用修正；同等调用收益和新模型验证仍未完成。", "review_round": "round9-2026-11-03", "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md", "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"}
 
 ### SC-06 首次性、普适性、全面占优是否有依据？
 
@@ -341,12 +345,12 @@
 - 优先级：P0
 - 状态：VERIFIED
 - 验收：纳入 GAP-90 六检查点、GAP-91 描述性拟合、GAP-92 κ诊断及 GAP-93剂量记录；明确其有限结论，不重跑已有实验。
-- 发现：中文v8新增IV-G的光滑流构造与双侧W2界、V-H协议、VI-K结果、图9和表XIV；旧19个表格对象保留，仅重排文献标签，原科学数据不变。
+- 发现：中文v9新增V-I、VI-L、图10与表XV，纳入真实中间路径而非只复用端点缓存；保留原20个表格对象、9图与全部旧数值，仅随新增文献重排引用。
 - 下一步：保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。
-- 验证范围：本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。
-- 核查轮次：round9-2026-11-03
-- 本轮记录：docs/audit/manuscript-supplement-round9-2026-11-03.md
-- 证据：`docs/audit/gap90-optsteps-dose.md`；`docs/audit/gap92-kappa-bridge.md`；`todo.json`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-rewrite-round8-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md`；`verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`
+- 验证范围：同一冻结真实模型的数值中间路径、受控边界替换和对象区分；非总体不变性、感知质量、新方法或独立泛化认证。
+- 核查轮次：round10-2026-11-03
+- 本轮记录：docs/audit/manuscript-intermediate-round10-2026-11-03.md
+- 证据：`docs/audit/gap90-optsteps-dose.md`；`docs/audit/gap92-kappa-bridge.md`；`todo.json`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-rewrite-round8-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md`；`verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`；`docs/audit/manuscript-intermediate-round10-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round10-2026-11-03.md`；`verification_outputs/cifar-intermediate-path-20261103-retry1/RESULTS.json`；`verification_outputs/cifar-intermediate-path-20261103-retry1/PROTOCOL.json`
 
 历史记录（逐轮原文保留）：
 
@@ -354,6 +358,7 @@
 - {"status": "VERIFIED", "finding": "新稿加入GAP-90六点/受控轴、GAP-91插值与修正区间、GAP-92κ诊断，并保留已有预注册失败和边界。", "review_round": "round1-2026-11-02", "review_record": "docs/audit/manuscript-selfcheck-round1-2026-11-02.md", "next_action": "按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。"}
 - {"status": "VERIFIED", "finding": "新稿加入GAP-90六点/受控轴、GAP-91插值与修正区间、GAP-92κ诊断，并保留已有预注册失败和边界。 第五轮复查：本项历史范围与未解决部分保留，独立图像研究不补填不同任务的缺口。", "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。", "review_round": "round5-2026-11-03", "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md", "verification_scope": "仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。"}
 - {"status": "VERIFIED", "finding": "第六轮凸梯度路径下的矩缺口、条件W2下界、SPD迹恒等式与近似路径反例已进入IV-D至F；100个CPU案例和第七轮12单元端点诊断已进入V-G、VI-I/J及讨论。数值结果及范围与原记录一致。", "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。", "review_round": "round8-2026-11-03", "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md", "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"}
+- {"status": "VERIFIED", "finding": "中文v8新增IV-G的光滑流构造与双侧W2界、V-H协议、VI-K结果、图9和表XIV；旧19个表格对象保留，仅重排文献标签，原科学数据不变。", "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。", "review_round": "round9-2026-11-03", "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md", "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"}
 
 ### SC-15 优势集中一个 MNIST 检查点意味着什么？
 
@@ -436,12 +441,12 @@
 - 优先级：P0
 - 状态：VERIFIED
 - 验收：明确经典工具与新增推导的边界；基础性质不单独承担创新性。
-- 发现：既有矩缺口仍标明经典OT关系；新增双侧W2界明确为标准Lipschitz推前推论。端点不可识别性为具体构造，不将一般路径自由度当作首次发现，也不以数值通过代替逐证明查新。
+- 发现：继续明确OT、Lipschitz推前、核双样本和理想RF边缘关系的既有基础。新增查新包含CMM累计边缘目标、CorrFlow残差修正与部署分布分析，不把“关注中间状态”或经典高斯对象区分写成首次。
 - 下一步：继续查新，不能将数值一致性等同于原创性。
-- 验证范围：本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。
-- 核查轮次：round9-2026-11-03
-- 本轮记录：docs/audit/manuscript-supplement-round9-2026-11-03.md
-- 证据：`docs/drafts/paper-A-final.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-originality-round6-2026-11-03.md`；`docs/audit/manuscript-rewrite-round8-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md`；`verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`
+- 验证范围：同一冻结真实模型的数值中间路径、受控边界替换和对象区分；非总体不变性、感知质量、新方法或独立泛化认证。
+- 核查轮次：round10-2026-11-03
+- 本轮记录：docs/audit/manuscript-intermediate-round10-2026-11-03.md
+- 证据：`docs/drafts/paper-A-final.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-originality-round6-2026-11-03.md`；`docs/audit/manuscript-rewrite-round8-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md`；`verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`；`docs/audit/manuscript-intermediate-round10-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round10-2026-11-03.md`；`verification_outputs/cifar-intermediate-path-20261103-retry1/RESULTS.json`；`verification_outputs/cifar-intermediate-path-20261103-retry1/PROTOCOL.json`
 
 历史记录（逐轮原文保留）：
 
@@ -450,6 +455,7 @@
 - {"status": "VERIFIED", "finding": "独立插值恒等式、Wasserstein耦合与偏差—收缩递推明确为基础工具；Restart已有误差/收缩竞争分析，不把重述经典性质当新理论。", "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。", "review_round": "round5-2026-11-03", "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"}
 - {"status": "VERIFIED", "finding": "新增四个条件命题均附逐步证明，并明确凸性、Bregman恒等式和W2耦合工具为经典内容；候选组合结论与原创性验收分开。", "next_action": "继续查新，不能将数值一致性等同于原创性。", "review_round": "round6-2026-11-03", "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md", "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"}
 - {"status": "VERIFIED", "finding": "正文将矩缺口与经典二次输运成本差明确等价，归为机制引理并引经典OT来源；条件W2下界附Minkowski和Lipschitz推前证明，不据此宣称已通过逐证明查新。", "next_action": "继续查新，不能将数值一致性等同于原创性。", "review_round": "round8-2026-11-03", "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md", "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"}
+- {"status": "VERIFIED", "finding": "既有矩缺口仍标明经典OT关系；新增双侧W2界明确为标准Lipschitz推前推论。端点不可识别性为具体构造，不将一般路径自由度当作首次发现，也不以数值通过代替逐证明查新。", "next_action": "继续查新，不能将数值一致性等同于原创性。", "review_round": "round9-2026-11-03", "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md", "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"}
 
 ### SC-20 定理假设是否覆盖实际算法？
 
@@ -457,12 +463,12 @@
 - 优先级：P0
 - 状态：VERIFIED
 - 验收：逐项对应固定fresh input、m、状态域、Lipschitz、精确/数值映射；变化参数或随机输入不直接套固定点结论。
-- 发现：端点不可识别性限于一般光滑可逆流族，不要求同一独立直线训练路径；已知训练概率路径时可缩小该类别。双侧界需精确后段映射及正有限正逆Lipschitz上界，未认证给CIFAR模型。
-- 下一步：建立可估计假设与实际模型对应，不从合成例子外推图像因果机制。
-- 验证范围：本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。
-- 核查轮次：round9-2026-11-03
-- 本轮记录：docs/audit/manuscript-supplement-round9-2026-11-03.md
-- 证据：`docs/drafts/paper-A-final.md`；`adaptive_reflow/algorithm/blender/blender.py`；`adaptive_reflow/algorithm/nfe_allocation.py`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-originality-round6-2026-11-03.md`；`docs/audit/manuscript-rewrite-round8-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md`；`verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`
+- 发现：真实CIFAR数值轨迹已采集并比较两精度；原噪声弦线更近单轨迹却更偏离经验边缘，独立臂在参照附近。该结果限制凸梯度直线路径理论的直接迁移，未认证神经流凸性、精确中间边缘、逆Lipschitz界或历史质量退化原因。
+- 下一步：将精确概率路径、数值轨迹边缘和训练插值严格分开；外部验证前不归因历史CIFAR退化。
+- 验证范围：同一冻结真实模型的数值中间路径、受控边界替换和对象区分；非总体不变性、感知质量、新方法或独立泛化认证。
+- 核查轮次：round10-2026-11-03
+- 本轮记录：docs/audit/manuscript-intermediate-round10-2026-11-03.md
+- 证据：`docs/drafts/paper-A-final.md`；`adaptive_reflow/algorithm/blender/blender.py`；`adaptive_reflow/algorithm/nfe_allocation.py`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-originality-round6-2026-11-03.md`；`docs/audit/manuscript-rewrite-round8-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md`；`verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`；`docs/audit/manuscript-intermediate-round10-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round10-2026-11-03.md`；`verification_outputs/cifar-intermediate-path-20261103-retry1/RESULTS.json`；`verification_outputs/cifar-intermediate-path-20261103-retry1/PROTOCOL.json`
 
 历史记录（逐轮原文保留）：
 
@@ -471,6 +477,7 @@
 - {"status": "VERIFIED", "finding": "独立训练耦合与正确物理时间为充分条件；逐轮不等参数的乘积—求和误差界对应数值误差，L和偏差未估计；全批质心配置不直接套理想样本核。", "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。", "review_round": "round5-2026-11-03", "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"}
 - {"status": "VERIFIED", "finding": "新命题限定确定性强凸梯度直线路径；近似梯度路径有显式误差项，强单调性单独不足。当前CIFAR训练路径、批次平移和积分误差未被命题覆盖。", "next_action": "建立可估计假设与实际模型对应，不从合成例子外推图像因果机制。", "review_round": "round6-2026-11-03", "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md", "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"}
 - {"status": "VERIFIED", "finding": "新增理论写明有限二阶矩、强凸C2势、可积性、固定终点、同源边缘及0<t<1条件；非梯度反例和有限端点非认证结论与正文相邻，未将这些假设认证给神经检查点。", "next_action": "建立可估计假设与实际模型对应，不从合成例子外推图像因果机制。", "review_round": "round8-2026-11-03", "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md", "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"}
+- {"status": "VERIFIED", "finding": "端点不可识别性限于一般光滑可逆流族，不要求同一独立直线训练路径；已知训练概率路径时可缩小该类别。双侧界需精确后段映射及正有限正逆Lipschitz上界，未认证给CIFAR模型。", "next_action": "建立可估计假设与实际模型对应，不从合成例子外推图像因果机制。", "review_round": "round9-2026-11-03", "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md", "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"}
 
 ### SC-21 是否越级推出目标分布或 FID 改善？
 
@@ -779,12 +786,12 @@
 - 优先级：P2
 - 状态：VERIFIED
 - 验收：方法图、可执行算法、逐任务协议表、主曲线不确定性、案例和完整状态表；图注自解释且可回溯源数据。
-- 发现：中文v8保留8幅已有图，新增可识别性图9；20个表格对象包含19张编号表和1张算法表。三种输出切片均展示，36例逐例记录可复算，不把合成控制写成图像生成质量。
+- 发现：中文v9共21个表格对象、20张编号表、10图、35条参考文献；新图完整展示预定三时刻、两分辨率与三生成种子均值±标准差，负超额读数保留且不当作负MMD或质量收益。
 - 下一步：保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。
-- 验证范围：本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。
-- 核查轮次：round9-2026-11-03
-- 本轮记录：docs/audit/manuscript-supplement-round9-2026-11-03.md
-- 证据：`docs/drafts/paper-A-final.md`；`tnnls_submission/figures.md`；`tnnls_submission/tables.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round3-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round3-2026-11-03.md`；`docs/audit/manuscript-literature-ledger-2026-11-03.md`；`verification_outputs/manuscript-selfcheck-round3-2026-11-03/sensitivity.json`；`docs/audit/manuscript-selfcheck-round4-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round4-2026-11-03.md`；`verification_outputs/component-study-20261103/REPORT.json`；`verification_outputs/component-study-20261103/PROTOCOL.json`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-rewrite-round8-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md`；`verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`
+- 验证范围：同一冻结真实模型的数值中间路径、受控边界替换和对象区分；非总体不变性、感知质量、新方法或独立泛化认证。
+- 核查轮次：round10-2026-11-03
+- 本轮记录：docs/audit/manuscript-intermediate-round10-2026-11-03.md
+- 证据：`docs/drafts/paper-A-final.md`；`tnnls_submission/figures.md`；`tnnls_submission/tables.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round3-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round3-2026-11-03.md`；`docs/audit/manuscript-literature-ledger-2026-11-03.md`；`verification_outputs/manuscript-selfcheck-round3-2026-11-03/sensitivity.json`；`docs/audit/manuscript-selfcheck-round4-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round4-2026-11-03.md`；`verification_outputs/component-study-20261103/REPORT.json`；`verification_outputs/component-study-20261103/PROTOCOL.json`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-rewrite-round8-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md`；`verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`；`docs/audit/manuscript-intermediate-round10-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round10-2026-11-03.md`；`verification_outputs/cifar-intermediate-path-20261103-retry1/RESULTS.json`；`verification_outputs/cifar-intermediate-path-20261103-retry1/PROTOCOL.json`
 
 历史记录（逐轮原文保留）：
 
@@ -794,6 +801,7 @@
 - {"status": "VERIFIED", "finding": "新增事前保存前64索引中前8样本图，两个检查点六臂并列、seed42、统一显示范围；稿中明确碎片和形态缺陷，不以FID代替视觉质量。", "review_round": "round4-2026-11-03", "review_record": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md", "next_action": "本项只验收不挑样本的定性展示；仍需独立任务指标或盲评，不把样本图当确认性质量证据。"}
 - {"status": "VERIFIED", "finding": "新增四项匹配调用差值曲线、五臂预定索引与独立候选图，完整表格保留全部成本与种子范围；图轴、区间与选择规则注明，最终Word图表另做原生核查。", "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。", "review_round": "round5-2026-11-03", "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md", "verification_scope": "仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。"}
 - {"status": "VERIFIED", "finding": "旧8幅图与18个Markdown表格完整保留；新增有限端点诊断表，编号按正文到附录连续排列。Word逐页排版验收及文件摘要写入本轮本地交付收据，不以表图数量证明科学结论。", "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。", "review_round": "round8-2026-11-03", "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md", "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"}
+- {"status": "VERIFIED", "finding": "中文v8保留8幅已有图，新增可识别性图9；20个表格对象包含19张编号表和1张算法表。三种输出切片均展示，36例逐例记录可复算，不把合成控制写成图像生成质量。", "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。", "review_round": "round9-2026-11-03", "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md", "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"}
 
 ### SC-38 文字是否像审计报告、反复重复限制？
 
@@ -820,12 +828,12 @@
 - 优先级：P2
 - 状态：REVISION_NEEDED
 - 验收：补齐直接相关原始文献、模型/数据/指标版本，逐条验证论断；不追求任意引用数量。
-- 发现：32条文献按首次出现重排，含真实AI辅助披露所用系统引用。官方作者须知有效地址、双匿名、10页收费阈值与15页上限已直接核对，旧2012年13页口径不再作现行规则。
+- 发现：补入并读取CMM v2、CorrFlow v1和Gretton核双样本原始论文/正式页面，35条文献按首次出现重排。预印本版本与方法差异明确，历史上游精确版本及最终书目仍待逐项核验。
 - 下一步：继续原始证明与引用追溯；科学主张稳定后统一稿件书目。
-- 验证范围：本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。
-- 核查轮次：round9-2026-11-03
-- 本轮记录：docs/audit/manuscript-supplement-round9-2026-11-03.md
-- 证据：`docs/drafts/paper-A-final.md`；`tnnls_submission/data_availability.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round3-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round3-2026-11-03.md`；`docs/audit/manuscript-literature-ledger-2026-11-03.md`；`verification_outputs/manuscript-selfcheck-round3-2026-11-03/sensitivity.json`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-originality-round6-2026-11-03.md`；`docs/audit/manuscript-rewrite-round8-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md`；`verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`
+- 验证范围：同一冻结真实模型的数值中间路径、受控边界替换和对象区分；非总体不变性、感知质量、新方法或独立泛化认证。
+- 核查轮次：round10-2026-11-03
+- 本轮记录：docs/audit/manuscript-intermediate-round10-2026-11-03.md
+- 证据：`docs/drafts/paper-A-final.md`；`tnnls_submission/data_availability.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round3-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round3-2026-11-03.md`；`docs/audit/manuscript-literature-ledger-2026-11-03.md`；`verification_outputs/manuscript-selfcheck-round3-2026-11-03/sensitivity.json`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-originality-round6-2026-11-03.md`；`docs/audit/manuscript-rewrite-round8-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md`；`verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`；`docs/audit/manuscript-intermediate-round10-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round10-2026-11-03.md`；`verification_outputs/cifar-intermediate-path-20261103-retry1/RESULTS.json`；`verification_outputs/cifar-intermediate-path-20261103-retry1/PROTOCOL.json`
 
 历史记录（逐轮原文保留）：
 
@@ -835,6 +843,7 @@
 - {"status": "REVISION_NEEDED", "finding": "新增流匹配路径、随机插值、Diamond Maps、NR-SMC及Coupled Guidance/ReCouple原始文献与具体关联定位，共26条；旧模型/数据库的精确版本及正式出版格式仍需最后核验，引用数量不作为验收。", "next_action": "逐项补精确模型/数据库版本和正式出版信息，投稿前按目标期刊格式核对；已验证原始文献不反复检索凑引用数。", "review_round": "round5-2026-11-03", "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"}
 - {"status": "REVISION_NEEDED", "finding": "新增Coupled Guidance、ReBridge-Flow、MMD Guidance与经典OT对照；候选命题还需逐定理查新，当前未宣称文献覆盖完整。", "next_action": "继续原始证明与引用追溯；科学主张稳定后统一稿件书目。", "review_round": "round6-2026-11-03", "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md", "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"}
 - {"status": "REVISION_NEEDED", "finding": "相关工作增加经典OT、小批耦合、有限循环单调性、ReBridge-Flow和MMD Guidance，参考文献共31条。新增来源使用原论文/正式会议页面；2026预印本注明版本，未写成同行评议定论。", "next_action": "继续原始证明与引用追溯；科学主张稳定后统一稿件书目。", "review_round": "round8-2026-11-03", "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md", "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"}
+- {"status": "REVISION_NEEDED", "finding": "32条文献按首次出现重排，含真实AI辅助披露所用系统引用。官方作者须知有效地址、双匿名、10页收费阈值与15页上限已直接核对，旧2012年13页口径不再作现行规则。", "next_action": "继续原始证明与引用追溯；科学主张稳定后统一稿件书目。", "review_round": "round9-2026-11-03", "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md", "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"}
 
 ### SC-40 审计可复现是否被当成科学正确性？
 
@@ -863,18 +872,19 @@
 - 优先级：P0
 - 状态：REVISION_NEEDED
 - 验收：完成SC-02/03/04/07/12，交付一句中心主张、三贡献与证据映射，再进行大段重写。
-- 发现：原创贡献收窄到刷新失配理论候选，完整证明/反例已形成；原创性、可部署性和独立干预仍未验收，贡献锁定未完成。
-- 下一步：以逐命题文献差异和实际可证伪预测作为下一轮门槛。
-- 验证范围：本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。
-- 核查轮次：round6-2026-11-03
-- 本轮记录：docs/audit/manuscript-originality-round6-2026-11-03.md
-- 证据：`todo.json`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-originality-round6-2026-11-03.md`
+- 发现：条件分析、端点不可识别性与真实边界干预已形成连贯证据；主张收窄为逐样本接近不足以判定边缘相容。原创充分性及外部预测仍未验收，不能因本轮实验完成就把贡献锁定记为通过。
+- 下一步：评估已有工作之外的具体主张与外部可检验性；本轮完成写作与单模型干预，不替代原创性验收。
+- 验证范围：同一冻结真实模型的数值中间路径、受控边界替换和对象区分；非总体不变性、感知质量、新方法或独立泛化认证。
+- 核查轮次：round10-2026-11-03
+- 本轮记录：docs/audit/manuscript-intermediate-round10-2026-11-03.md
+- 证据：`todo.json`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-originality-round6-2026-11-03.md`；`docs/audit/manuscript-intermediate-round10-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round10-2026-11-03.md`；`verification_outputs/cifar-intermediate-path-20261103-retry1/RESULTS.json`；`verification_outputs/cifar-intermediate-path-20261103-retry1/PROTOCOL.json`
 
 历史记录（逐轮原文保留）：
 
 - {"round": "registration", "status": "RECORDED", "finding": ""}
 - {"status": "VERIFIED", "finding": "中心主张、三层贡献和证据层级已在新版落实；方法/框架定位明确。", "review_round": "round1-2026-11-02", "review_record": "docs/audit/manuscript-selfcheck-round1-2026-11-02.md", "next_action": "按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。"}
 - {"status": "REVISION_NEEDED", "finding": "当前中心问题与实例已锁定，但前置SC-04的独有创新尚未建立；撤回此前整项VERIFIED，不能以完成写作组织代替原创性验收。", "next_action": "以SC-04/05的实质创新判断重新验收贡献锁定，完成写作组织不能使本项恢复整项通过。", "review_round": "round5-2026-11-03", "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"}
+- {"status": "REVISION_NEEDED", "finding": "原创贡献收窄到刷新失配理论候选，完整证明/反例已形成；原创性、可部署性和独立干预仍未验收，贡献锁定未完成。", "next_action": "以逐命题文献差异和实际可证伪预测作为下一轮门槛。", "review_round": "round6-2026-11-03", "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md", "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"}
 
 ### SC-42 第二轮：方法、相关工作、主结果是否重写到位？
 
@@ -882,12 +892,12 @@
 - 优先级：P1
 - 状态：REVISION_NEEDED
 - 验收：围绕已核实证据扩写并同步协议、图表和引文；不以背景和工程功能凑篇幅。
-- 发现：中文v8已补路径不可识别性命题、控制协议、结果、图表与AI辅助披露；另完成当前TNNLS投稿核对单。中文稿写作验收不等于英文双栏PDF、作者确认或原创充分性验收。
+- 发现：中文v9已整合真实轨迹协议、受控结果、对象区分与最新相关工作，未将单检查点诊断写成质量改善或新算法。英文模板、最终篇幅和匿名材料仍待处理。
 - 下一步：原创性门槛通过后再整合主稿，不通过则降为背景理论。
-- 验证范围：本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。
-- 核查轮次：round9-2026-11-03
-- 本轮记录：docs/audit/manuscript-supplement-round9-2026-11-03.md
-- 证据：`docs/audit/gap96-manuscript-compression.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`；`docs/audit/manuscript-selfcheck-round3-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round3-2026-11-03.md`；`docs/audit/manuscript-literature-ledger-2026-11-03.md`；`verification_outputs/manuscript-selfcheck-round3-2026-11-03/sensitivity.json`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-originality-round6-2026-11-03.md`；`docs/audit/manuscript-rewrite-round8-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md`；`verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`
+- 验证范围：同一冻结真实模型的数值中间路径、受控边界替换和对象区分；非总体不变性、感知质量、新方法或独立泛化认证。
+- 核查轮次：round10-2026-11-03
+- 本轮记录：docs/audit/manuscript-intermediate-round10-2026-11-03.md
+- 证据：`docs/audit/gap96-manuscript-compression.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round2-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-round2-2026-11-02.md`；`verification_outputs/manuscript-selfcheck-round2-2026-11-02/source_manifest.json`；`docs/audit/manuscript-selfcheck-round3-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round3-2026-11-03.md`；`docs/audit/manuscript-literature-ledger-2026-11-03.md`；`verification_outputs/manuscript-selfcheck-round3-2026-11-03/sensitivity.json`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-originality-round6-2026-11-03.md`；`docs/audit/manuscript-rewrite-round8-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md`；`verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json`；`docs/audit/manuscript-supplement-round9-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md`；`verification_outputs/path-identifiability-20261103/RESULTS.json`；`docs/audit/manuscript-intermediate-round10-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round10-2026-11-03.md`；`verification_outputs/cifar-intermediate-path-20261103-retry1/RESULTS.json`；`verification_outputs/cifar-intermediate-path-20261103-retry1/PROTOCOL.json`
 
 历史记录（逐轮原文保留）：
 
@@ -899,6 +909,7 @@
 - {"status": "REVISION_NEEDED", "finding": "v6按路径条件、原Restart控制与独立验证重写方法/理论/主结果，附录保留历史记录；原创性和正式英文投稿编排尚未完成，不把本轮扩充等同可投最终稿。", "next_action": "先完成创新定位决策和证据映射，再安排英文模板与投稿材料，中文v6作为研究稿保存。", "review_round": "round5-2026-11-03", "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"}
 - {"status": "REVISION_NEEDED", "finding": "新增第六轮中文问题段、候选贡献段与章节组织，保留v6主结果；未将尚未确立的新意写成完成版投稿摘要。", "next_action": "原创性门槛通过后再整合主稿，不通过则降为背景理论。", "review_round": "round6-2026-11-03", "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md", "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"}
 - {"status": "REVISION_NEEDED", "finding": "v7主稿已将第六/七轮研究写入方法条件、完整证明、实验协议、结果和讨论，并保留六检查点、组件、五臂及两轮候选数据。验收范围为本轮中文重写，不代表英文格式、创新性或投稿就绪通过。", "next_action": "原创性门槛通过后再整合主稿，不通过则降为背景理论。", "review_round": "round8-2026-11-03", "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md", "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"}
+- {"status": "REVISION_NEEDED", "finding": "中文v8已补路径不可识别性命题、控制协议、结果、图表与AI辅助披露；另完成当前TNNLS投稿核对单。中文稿写作验收不等于英文双栏PDF、作者确认或原创充分性验收。", "next_action": "原创性门槛通过后再整合主稿，不通过则降为背景理论。", "review_round": "round9-2026-11-03", "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md", "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"}
 
 ### SC-43 第三轮：是否按拒稿理由复查？
 

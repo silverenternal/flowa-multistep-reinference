@@ -1,0 +1,23 @@
+{
+  "checked_date": "2026-11-03",
+  "sources": [
+    {
+      "url": "https://arxiv.org/html/2610.34575",
+      "version": "v2",
+      "distinction": "Training cumulative marginals, not this frozen boundary-state intervention"
+    },
+    {
+      "url": "https://arxiv.org/html/2610.24750",
+      "version": "v1",
+      "distinction": "Trained refiner and deployment-law analysis, no common-benchmark superiority claimed"
+    },
+    {
+      "url": "https://www.jmlr.org/papers/v13/gretton12a.html",
+      "distinction": "Existing MMD statistic, not a novel metric"
+    },
+    {
+      "url": "https://www.cs.utexas.edu/~lqiang/rectflow/html/intro.html",
+      "distinction": "Training interpolation marginals versus learned endpoint coupling"
+    }
+  ]
+}

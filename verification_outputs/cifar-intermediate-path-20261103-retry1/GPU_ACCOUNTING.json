@@ -1,0 +1,29 @@
+{
+  "command": [
+    "timeout",
+    "--signal=TERM",
+    "--kill-after=5",
+    "480",
+    ".venvs/flowmol3_venv/bin/python",
+    "-u",
+    "tools/sweep_cifar_intermediate_20261103.py",
+    "--protocol",
+    "verification_outputs/cifar-intermediate-path-20261103-retry1/PROTOCOL.json",
+    "--out",
+    "verification_outputs/cifar-intermediate-path-20261103-retry1",
+    "--phase",
+    "generate",
+    "--max-records",
+    "128",
+    "--seed",
+    "201"
+  ],
+  "exit_code": 0,
+  "outer_wall_seconds": 161.4587380149169,
+  "retry_conservative_GPU_charge_seconds": 480,
+  "failed_attempt_conservative_GPU_seconds": 40,
+  "previous_conservative_GPU_seconds": 6638,
+  "total_conservative_GPU_seconds": 7158,
+  "user_GPU_cap_seconds": 7200,
+  "ended_utc": "2026-11-03T07:50:00.681822+00:00"
+}

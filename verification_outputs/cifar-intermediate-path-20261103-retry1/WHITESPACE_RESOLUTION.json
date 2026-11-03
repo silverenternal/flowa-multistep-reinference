@@ -1,0 +1,7 @@
+{
+  "initial_csv_sha256": "c392d346cbd84e900037811fe77425495c6e501c5db958cb7f06d6e0f767fbc8",
+  "final_csv_sha256": "81cbfd08f4eda49f4023360a69b50b1d2e8b5c20604e7dc31e53d17ea5949e43",
+  "change": "Only CRLF-to-LF normalization; CSV field values unchanged; writer now emits LF",
+  "all24_project_gates_passed_before_whitespace_failure": true,
+  "initial_failure_retained": "CHECKS.json"
+}
