@@ -1,0 +1,164 @@
+[
+  {
+    "command": ".venvs/flowmol3_venv/bin/python -m pytest tests/test_review_ot_refresh_20261103.py tests/test_review_ot_refresh_robust_20261103.py tests/test_boundary_kernel_review.py -q",
+    "exit_code": 0,
+    "seconds": 1.212,
+    "output_tail": "............                                                             [100%]\n=============================== warnings summary ===============================\ntests/test_review_ot_refresh_20261103.py::test_transport_lp_known_discrete_translation\n  /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/molecular/__init__.py:151: DeprecationWarning: RMSPreservingCoordinateMixer is deprecated; use EqualRmsCoordinateMixer\n    from .mixer import (\n\ntests/test_review_ot_refresh_20261103.py::test_transport_lp_known_discrete_translation\n  /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/contracts/__init__.py:41: DeprecationWarning: adaptive_reflow.contracts.bundle.RoundResultBundle is deprecated; import MoleculeRoundResultBundle from adaptive_reflow.molecular.bundle instead.\n    value = getattr(_bundle_module, name)\n\ntests/test_review_ot_refresh_20261103.py::test_transport_lp_known_discrete_translation\n  /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/contracts/__init__.py:41: DeprecationWarning: adaptive_reflow.contracts.bundle.validate_round_result_bundle is deprecated; import validate_molecule_round_result_bundle from adaptive_reflow.molecular.bundle instead.\n    value = getattr(_bundle_module, name)\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n12 passed, 3 warnings in 0.87s\n"
+  },
+  {
+    "command": "python3 tools/build_metric_ledger.py",
+    "exit_code": 0,
+    "seconds": 30.836,
+    "output_tail": "Wrote docs/METRIC_LEDGER.md (206 lines)\nWrote docs/METRIC_LEDGER.json (2922 lines)\nRows: total=138 CLAIM=84 HEADLINE=7 STATISTICAL=5 INSIGHT=19 ENGINEERING_GATE=5 SWEEP280=8 SWEEP286=4 SWEEP291=6\nNon-fatal build errors: 6\n  - CLAIM CLM-018 (line 388): status 'ACTIVE \u2014 INVERTED POST-cd70821 (see note)' is not one of ACTIVE/PROVISIONAL/DEPRECATED\n  - CLAIM CLM-022 (line 500): status 'ACTIVE \u2014 INVERTED POST-cd70821 (see note)' is not one of ACTIVE/PROVISIONAL/DEPRECATED\n  - CLAIM CLM-085 (line 3976): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED \u2014 defaulted to ACTIVE\n  - CLAIM CLM-086 (line 3980): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED \u2014 defaulted to ACTIVE\n  - CLAIM CLM-087 (line 3984): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED \u2014 defaulted to ACTIVE\n  - CLAIM CLM-088 (line 3988): status 'UNKNOWN' is not one of ACTIVE/PROVISIONAL/DEPRECATED \u2014 defaulted to ACTIVE\n"
+  },
+  {
+    "command": "python3 tools/verify_submission_readiness.py",
+    "exit_code": 0,
+    "seconds": 86.468,
+    "output_tail": "[ OK ] d4_72          : 72 passed, 0 failed (D.4 pinned regression vectors)\n[ OK ] ruff_0         : All checks passed!\n[ OK ] mypy_0         : Success: no issues found (PATH)\n[ OK ] claims_pass    : No drift detected (61 active claims)\n[ OK ] paper_warns    : 1 warning (\u226410 budget; 0 overfull + 1 LaTeX Warning)\n[ OK ] r1_r6_sha      : 10/10 R1-R6 files present + sha256 matches\n[ OK ] k1_rc5         : K1 disclosure wording confirms \"NOT-SIGNIFICANT at K-level\" + \"0.5676\"\n[ OK ] drift_33       : 0 unintended 33/33 occurrences outside Wave 149 audit trail (216 intentional historical docs verified)\n[ OK ] framework_n1000 : 2/2 Kanzi N=1000 sweep JSONs present (framework_inv_proj + framework_synth)\nREADY: all gates passed\n"
+  },
+  {
+    "command": "python3 tools/check_claims_consistency.py",
+    "exit_code": 0,
+    "seconds": 0.058,
+    "output_tail": "# Claims consistency report\n\n- Active claims: **61**\n- Provisional claims: **0**\n- Deprecated claims: **2**\n- Forced to PROVISIONAL by `Disputed by` citation: CLM-040\n- Cross-referenced from at least one governance surface: CLM-001, CLM-002, CLM-003, CLM-004, CLM-005, CLM-006, CLM-007, CLM-008, CLM-009, CLM-010, CLM-011, CLM-012, CLM-013, CLM-014, CLM-015, CLM-019, CLM-020, CLM-021, CLM-023, CLM-024, CLM-025, CLM-026, CLM-027, CLM-028, CLM-029, CLM-030, CLM-031, CLM-032, CLM-033, CLM-034, CLM-039, CLM-040, CLM-041, CLM-042, CLM-043, CLM-044, CLM-045, CLM-046, CLM-047, CLM-048, CLM-049, CLM-050, CLM-051, CLM-052, CLM-053, CLM-054, CLM-055, CLM-056, CLM-057, CLM-058, CLM-059, CLM-060, CLM-061, CLM-062, CLM-063, CLM-064, CLM-065, CLM-066, CLM-067, CLM-068, CLM-069\n\n**No drift detected.**\n\n"
+  },
+  {
+    "command": "python3 tools/check_docs_against_code.py",
+    "exit_code": 0,
+    "seconds": 2.684,
+    "output_tail": " 0016-regime-aware-eps-selector.md | 218 | `RegimeSelection` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 227 | `ConvergenceDiagnostic` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 234 | `EPS_REGIME_CLAMPED` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 235 | `EPS_REGIME_INFEASIBLE` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 235 | `EPS_REGIME_OK` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 258 | `CosineAnnealScheduler` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 260 | `EvidenceDrivenScheduler` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 261 | `CosineAnnealScheduler` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 265 | `EPS_REGIME_INFEASIBLE` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 270 | `EPS_REGIME_INFEASIBLE` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 279 | `ConvergenceDiagnostic` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 279 | `O_eps_holds` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 285 | `BLConvergenceEpsilonSchedule` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 300 | `TheoremAlignedFIDResult` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 301 | `ConvergenceDiagnostic` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 312 | `TheoremAlignedFIDReport` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 328 | `RegimeAwareEpsSelector` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 330 | `CosineAnnealRegimeSelector` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 331 | `ConvergenceAdaptiveRegimeSelector` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 332 | `EPS_REGIME_CLAMPED` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 332 | `EPS_REGIME_INFEASIBLE` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 332 | `EPS_REGIME_OK` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 333 | `REGIME_VIOLATION_WARNING` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 333 | `DEFAULT_REGIME_SLACK` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 334 | `EPS_FLOOR` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 336 | `EvidenceDrivenScheduler` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 354 | `ConvergenceDiagnostic` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 371 | `BLConvergenceEpsilonSchedule` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 395 | `RegimeAwareEpsSelector` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 397 | `CosineAnnealRegimeSelector` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 398 | `ConvergenceAdaptiveRegimeSelector` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 400 | `RegimeSelection` | inline-symbol | OK |\n| 0016-regime-aware-eps-selector.md | 401 | `EvidenceDrivenScheduler` | inline-symbol | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 33 | `n_cap` | code-block-symbol | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 35 | `n_cap` | code-block-symbol | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 43 | `n_cap` | code-block-symbol | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 39 | `adaptive_reflow/algorithm/scheduler/_core.py` | path | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 215 | `adaptive_reflow/algorithm/scheduler/_core.py` | path | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 378 | `adaptive_reflow/algorithm/scheduler/_core.py` | path | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 19 | `CodimensionSheetScheduler` | inline-symbol | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 75 | `ScheduleSample` | inline-symbol | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 153 | `CodimensionSheetScheduler` | inline-symbol | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 159 | `ScheduleSample` | inline-symbol | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 163 | `ScheduleSample` | inline-symbol | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 193 | `CodimensionSheetScheduler` | inline-symbol | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 237 | `ScheduleSample` | inline-symbol | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 286 | `ScheduleSample` | inline-symbol | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 320 | `OTEpsilonSchedule` | inline-symbol | OK |\n| 0017-cosine-vs-paper-ratio-n-cap.md | 379 | `CodimensionSheetScheduler` | inline-symbol | OK |\n\nOK: 3382 claims verified.\n"
+  },
+  {
+    "command": "python3 tools/check_doc_paper_refs.py",
+    "exit_code": 0,
+    "seconds": 2.602,
+    "output_tail": "A.0 statement      anchors  first doc                                           \n--------------------------  ----------------------------------------------------\nTheorem 1          923 in 169  docs/ABLATION.md                                    \nLemma 2            329 in  81  docs/ABLATION.md                                    \nLemma 3            271 in  66  docs/ABLATION.md                                    \nLemma 4            159 in  47  docs/ABLATION.md                                    \nLemma 5            127 in  57  docs/ABLATION.md                                    \nCorollary 1         81 in  26  docs/CLAIMS.md                                      \nProposition 2       12 in   5  docs/cover-letter-tnnls.md                          \nProposition 3      112 in  47  docs/ABLATION.md                                    \nProposition 6       12 in  10  docs/GATES.md                                       \nRemark 1             5 in   5  docs/audit/docs-gate-repoint.md                     \n\nPASS  E.2 statement coverage 10 / 10 A.0 statements anchored (universe: 839 docs, ARCHIVE/ and the inventory excluded)\n\n[info] doc ratio 0.818 (36 / 44 top-level docs cite any anchor; target 0.90, not met)\n[info] no anchor: CONTRIBUTING-cover-letter.md, FLOWA_WORKFLOW.md, README.md, capability_g1_analysis.md, code-release-checklist.md, configs.md, reproduce.md, submission-checklist-final.md\n[info] This ratio is not the gate.  It measures the transpose of E.2 and falls whenever docs/ gains a page with no theory content.  Pass --ratio-gate to make it binding.\n"
+  },
+  {
+    "command": "python3 tools/paper_evidence.py --check",
+    "exit_code": 0,
+    "seconds": 0.053,
+    "output_tail": "OK /home/hugo/codes/flowa-multistep-reinference/docs/paper-evidence.json: 11 cells, all paths and quotes verified; PAPER-EVIDENCE.md matches a fresh render\n"
+  },
+  {
+    "command": "python3 -m pytest tests/test_d4_regression_vectors.py tests/test_adapters/test_regression_vectors.py -q",
+    "exit_code": 0,
+    "seconds": 82.775,
+    "output_tail": "........................................................................ [100%]\n=============================== warnings summary ===============================\ntests/test_d4_regression_vectors.py::test_d4_first_batch_vector_file_present[flowmol3]\n  /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/molecular/__init__.py:151: DeprecationWarning: RMSPreservingCoordinateMixer is deprecated; use EqualRmsCoordinateMixer\n    from .mixer import (\n\ntests/test_d4_regression_vectors.py::test_d4_first_batch_vector_file_present[flowmol3]\n  /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/contracts/__init__.py:41: DeprecationWarning: adaptive_reflow.contracts.bundle.RoundResultBundle is deprecated; import MoleculeRoundResultBundle from adaptive_reflow.molecular.bundle instead.\n    value = getattr(_bundle_module, name)\n\ntests/test_d4_regression_vectors.py::test_d4_first_batch_vector_file_present[flowmol3]\n  /home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/contracts/__init__.py:41: DeprecationWarning: adaptive_reflow.contracts.bundle.validate_round_result_bundle is deprecated; import validate_molecule_round_result_bundle from adaptive_reflow.molecular.bundle instead.\n    value = getattr(_bundle_module, name)\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n72 passed, 3 warnings in 82.43s (0:01:22)\n"
+  },
+  {
+    "command": "ruff check adaptive_reflow/ tests/ scripts/ tools/",
+    "exit_code": 0,
+    "seconds": 0.013,
+    "output_tail": "All checks passed!\n"
+  },
+  {
+    "command": "mkdocs build --strict",
+    "exit_code": 0,
+    "seconds": 24.248,
+    "output_tail": "\n\u001b[31m \u2502  \u26a0  Warning from the Material for MkDocs team\u001b[0m\n\u001b[31m \u2502\u001b[0m\n\u001b[31m \u2502\u001b[0m  MkDocs 2.0, the underlying framework of Material for MkDocs,\n\u001b[31m \u2502\u001b[0m  will introduce backward-incompatible changes, including:\n\u001b[31m \u2502\u001b[0m\n\u001b[31m \u2502  \u00d7 \u001b[0mAll plugins will stop working \u2013 the plugin system has been removed\n\u001b[31m \u2502  \u00d7 \u001b[0mAll theme overrides will break \u2013 the theming system has been rewritten\n\u001b[31m \u2502  \u00d7 \u001b[0mNo migration path exists \u2013 existing projects cannot be upgraded\n\u001b[31m \u2502  \u00d7 \u001b[0mClosed contribution model \u2013 community members can't report bugs\n\u001b[31m \u2502  \u00d7 \u001b[0mCurrently unlicensed \u2013 unsuitable for production use\n\u001b[31m \u2502\u001b[0m\n\u001b[31m \u2502\u001b[0m  Our full analysis:\n\u001b[31m \u2502\u001b[0m\n\u001b[31m \u2502\u001b[0m  \u001b[4mhttps://squidfunk.github.io/mkdocs-material/blog/2026/02/18/mkdocs-2.0/\u001b[0m\n\u001b[0m\nINFO    -  Cleaning site directory\nINFO    -  Building documentation to directory: /home/hugo/codes/flowa-multistep-reinference/site\nINFO    -  mkdocstrings_handlers: Formatting signatures requires either Black or Ruff to be installed.\nINFO    -  Documentation built in 23.43 seconds\n"
+  },
+  {
+    "command": "python3 tools/check_submission_manifest.py",
+    "exit_code": 0,
+    "seconds": 0.556,
+    "output_tail": "README.md                                       ok\ncover_letter.md                                 ok\nFILL_GUIDE.md                                   ok\nhighlights.md                                   ok\ntables.md                                       ok\nfigures.md                                      ok\ndata_availability.md                            ok\nsubmission_checklist.md                         ok\nsupplementary/README.md                         ok\n../docs/drafts/paper-A-final.md                 ok\n../docs/drafts/paper-A-final.pdf                ok\n../docs/drafts/figure_r5c_regime_curve.png      ok\n../docs/figures/fig5_r5c_regime_curve.png       ok\n../docs/figures/fig9_cell_evidence_comparison.png  ok\n../docs/drafts/figure_r5b_conditional_grid.png  ok\n../verification_outputs/wave183-p4-figure-pLDDT-finer.png  ok\n../verification_outputs/wave183-p4-figure-scPerplexity-finer.png  ok\n../verification_outputs/wave183-p4-figure-deltas-finer.png  ok\n../docs/drafts/paper-A-final.tex                ok\n../docs/drafts/paper-flat-ieeetran.pdf          superseded\n../docs/drafts/paper-flat-ieeetran.tex          superseded\nsupplementary_bundle.zip                        ok\n../docs/drafts/paper-A-final.md                 ok\n../docs/drafts/paper-A-final.tex                ok\n../docs/drafts/paper-A-final.pdf                ok\ncover_letter.md                                 ok\n\ndocs/drafts/paper-A-final.md                    ok  (packaging addendum)\ndocs/drafts/paper-A-final.tex                   ok  (packaging addendum)\ndocs/drafts/paper-A-final.pdf                   ok  (packaging addendum)\n\nrows=26 known_stale=0 unknown=0 addendum_drift=0 ledger_drift=0\n"
+  },
+  {
+    "command": "python3 tools/check_submission_links.py",
+    "exit_code": 0,
+    "seconds": 0.048,
+    "output_tail": "\nlinks=234 ok=234\n"
+  },
+  {
+    "command": "python3 tools/check_data_integrity.py",
+    "exit_code": 0,
+    "seconds": 0.243,
+    "output_tail": "# Verification-output integrity report\n\n- Directories with SHA256SUMS: **15**\n- Files verified: **703**\n- Mismatches: **0**\n- Ledgers with no checksum lines (not verified here; see `tools/check_evidence_ledgers.py`): verification_outputs/wave349-r1-3seed-gpu\n\n**All ledgers match on-disk state.**\n\nVerified 15 directories, 703 files, 0 mismatches\n"
+  },
+  {
+    "command": "python3 tools/check_doc_links.py",
+    "exit_code": 0,
+    "seconds": 5.004,
+    "output_tail": "ambiguous      tnnls_submission/supplementary_bundle/headline_evidence/README.md  ->  ../../figures/README.md\n                 README.md, docs/README.md, tnnls_submission/README.md\narchived       tnnls_submission/supplementary_bundle/headline_evidence/README.md  ->  ../../paper-draft.md\n                 docs/ARCHIVE/legacy-paper/paper-draft.md\nchecked=1202 broken=2 ambiguous=1 archived=1\n"
+  },
+  {
+    "command": "python3 tools/check_paper_data_manifest.py",
+    "exit_code": 0,
+    "seconds": 0.229,
+    "output_tail": ".md:wave242-p2-flowmol3-direction.csv                 ok\npaper-data/R5a_2d_two_moons/REPRODUCIBILITY_RECIPE.md:R5a_2d_two_moons/noise_injection_two_moons_baseline.csv  ok\npaper-data/R5a_2d_two_moons/REPRODUCIBILITY_RECIPE.md:R5a_2d_two_moons/noise_injection_two_moons_framework.csv  ok\npaper-data/R5a_2d_two_moons/REPRODUCIBILITY_RECIPE.md:R5a_2d_two_moons/SOURCE.md                        ok\npaper-data/R5a_2d_two_moons/REPRODUCIBILITY_RECIPE.md:R5a_2d_two_moons/two_moons_baseline_seed0.csv     ok\npaper-data/R5b_cifar10_rf/R5b_SOURCE.md:wave191-p2-cifar10-n1000.json                     ok\npaper-data/R5b_cifar10_rf/R5b_SOURCE.md:baseline_samples.npz                              ok\npaper-data/R5b_cifar10_rf/R5b_SOURCE.md:freetraj_samples.npz                              ok\npaper-data/R5b_cifar10_rf/R5b_SOURCE.md:cosineanneal_samples.npz                          ok\npaper-data/R5b_cifar10_rf/R5b_SOURCE.md:codimensionsheet_samples.npz                      ok\npaper-data/R5b_cifar10_rf/R5b_SOURCE.md:evidencedriven_samples.npz                        ok\npaper-data/R5b_cifar10_rf/R5b_SOURCE.md:wave235-p1-r5b-fix.csv                            ok\npaper-data/R5b_cifar10_rf/R5b_SOURCE.md:per_round_metrics.csv                             ok\npaper-data/R5b_cifar10_rf/R5b_SOURCE.md:comparison.md                                     ok\npaper-data/R5b_cifar10_rf/REPRODUCIBILITY_RECIPE.md:verification_outputs/wave235-p1-r5b-fix.json      ok\npaper-data/R5b_cifar10_rf/REPRODUCIBILITY_RECIPE.md:verification_outputs/wave225-p7-r5b-reduced-rounds.json  ok\npaper-data/R5b_cifar10_rf/REPRODUCIBILITY_RECIPE.md:verification_outputs/wave206-p6-honest-negative-curve.json  ok\npaper-data/R5c_mnist_fm/R5c_SOURCE.md:wave191-p3-mnist-n1000.json                       ok\npaper-data/R5c_mnist_fm/R5c_SOURCE.md:baseline_samples.npz                              ok\npaper-data/R5c_mnist_fm/R5c_SOURCE.md:cosine_samples.npz                                ok\npaper-data/R5c_mnist_fm/R5c_SOURCE.md:codimension_sheet_samples.npz                     ok\npaper-data/R5c_mnist_fm/R5c_SOURCE.md:evidence_driven_samples.npz                       ok\npaper-data/R5c_mnist_fm/R5c_SOURCE.md:aggregate.json                                    ok\npaper-data/R5c_mnist_fm/REPRODUCIBILITY_RECIPE.md:verification_outputs/wave191-p3-mnist-n1000/baseline_samples.npz  ok\npaper-data/R5c_mnist_fm/REPRODUCIBILITY_RECIPE.md:verification_outputs/wave191-p3-mnist-n1000/cosine_samples.npz  ok\npaper-data/R5c_mnist_fm/REPRODUCIBILITY_RECIPE.md:verification_outputs/wave191-p3-mnist-n1000/codimension_sheet_samples.npz  ok\npaper-data/R5c_mnist_fm/REPRODUCIBILITY_RECIPE.md:verification_outputs/wave191-p3-mnist-n1000/evidence_driven_samples.npz  ok\npaper-data/R5c_mnist_fm/REPRODUCIBILITY_RECIPE.md:verification_outputs/wave280-p-r5c/aggregate.json  ok\npaper-data/R5c_mnist_fm/REPRODUCIBILITY_RECIPE.md:docs/figures/fig5_r5c_regime_curve.png            ok\npaper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md:verification_outputs/k6_foldability_n1000_w161_q3_2026/baseline/summary.json  ok\npaper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md:verification_outputs/k6_foldability_n1000_w161_q3_2026/framework/summary.json  ok\npaper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md:verification_outputs/k6_foldability_n1000_w161_q3_2026/baseline/foldability/foldability.jsonl  ok\npaper-data/R6_lineageflow_k6/R6_REPRODUCIBILITY_RECIPE.md:verification_outputs/k6_foldability_n1000_w161_q3_2026/framework/foldability/foldability.jsonl  ok\npaper-data/R6_lineageflow_k6/R6_SOURCE.md:baseline_foldability_summary.json                 ok\npaper-data/R6_lineageflow_k6/R6_SOURCE.md:baseline_foldability.jsonl                        ok\npaper-data/R6_lineageflow_k6/R6_SOURCE.md:framework_foldability_summary.json                ok\npaper-data/R6_lineageflow_k6/R6_SOURCE.md:framework_foldability.jsonl                       ok\npaper-data/R6_lineageflow_k6/R6_SOURCE.md:wave225-p4-k6-tier-aware.csv                      ok\npaper-data/R6_lineageflow_k6/R6_SOURCE.md:wave225-p4-k6-tier-aware.json                     ok\npaper-data/R6_lineageflow_k6/R6_SOURCE.md:wave233-p3-tier-aware-r6.csv                      ok\npaper-data/R6_lineageflow_k6/R6_SOURCE.md:wave233-p3-tier-aware-r6.json                     ok\npaper-data/R6_lineageflow_k6/R6_SOURCE.md:wave235-p3-r6-uplift.csv                          ok\npaper-data/R6_lineageflow_k6/R6_SOURCE.md:wave235-p3-r6-uplift.json                         ok\n\nrows=56 ok=56 bad=0 sources=110 source_bad=0\n"
+  },
+  {
+    "command": "python3 tools/check_artifact_hashes.py",
+    "exit_code": 0,
+    "seconds": 0.058,
+    "output_tail": "citations=8 stale=0 uncited=0\n"
+  },
+  {
+    "command": "python3 tools/check_clone_integrity.py",
+    "exit_code": 0,
+    "seconds": 0.259,
+    "output_tail": "\nok=139 build-output=0 exempt=0 broken=0\n"
+  },
+  {
+    "command": "python3 tools/regen_audit_index.py --check",
+    "exit_code": 0,
+    "seconds": 0.068,
+    "output_tail": "OK: docs/audit/INDEX.md is current (647 records)\n"
+  },
+  {
+    "command": "python3 tools/check_vendored_pristine.py",
+    "exit_code": 0,
+    "seconds": 0.055,
+    "output_tail": "OK: 20 checks across 8 vendored repositories, all pristine\nNOTE: data/hidream_i1/weights is a git tree that is not a vendored code repo; not checked\nNOTE: data/protbfn_abbfn/weights is a git tree that is not a vendored code repo; not checked\nNOTE: data/wan2_2/weights is a git tree that is not a vendored code repo; not checked\n"
+  },
+  {
+    "command": "python3 tools/check_doc_anchors.py",
+    "exit_code": 0,
+    "seconds": 0.024,
+    "output_tail": "SKIP: the markdown package is not installed (it ships with mkdocs)\n"
+  },
+  {
+    "command": "python3 tools/check_reviewer_pointers.py",
+    "exit_code": 0,
+    "seconds": 0.097,
+    "output_tail": "checked=1023 dead=0\n"
+  },
+  {
+    "command": "python3 tools/check_recipe_flags.py",
+    "exit_code": 0,
+    "seconds": 0.147,
+    "output_tail": "recipe-flag check: 0 problem(s)\n"
+  },
+  {
+    "command": "python3 tools/check_data_provenance.py",
+    "exit_code": 0,
+    "seconds": 0.455,
+    "output_tail": "# Data provenance report\n\n- Citations parsed: **128**\n- Unique paths cited: **84**\n- Unique sha256s cited: **78**\n- Drifts: **0**\n- Not checkable: **8** (path is elided with `...` or names a directory, so no single file can be hashed)\n- Disclosed stale citations: **3** (the document records the current hash and why the bytes moved)\n\n**Every citation resolves or has been reconciled in place; no unexplained drift.**\n\n## Disclosed (not a failure)\n\n- **docs/audit/wave350-r6-live-attempt.md**: docs/audit/wave350-r6-live-attempt.md:82 cites sha256 e7fbee8ae9d8... for verification_outputs/wave350-r6-live-smoke/foldability.jsonl but the on-disk hash differs\n- **docs/audit/wave363-k1-recipe.md**: docs/audit/wave363-k1-recipe.md:45 cites sha256 0c7ad2345163... for verification_outputs/wave280-p-k1/SHA256SUMS but the on-disk hash differs\n- **docs/audit/wave363-k4-recipe.md**: docs/audit/wave363-k4-recipe.md:16 cites sha256 906420fb95c2... for verification_outputs/wave280-p-k4k5/SHA256SUMS but the on-disk hash differs\n\n## Not checkable (not a failure)\n\n- **docs/audit/final_verify/close-w158.md:201**: `verification_outputs/lineageflow_hmmer_real_n1000_w156c_q3_2026/`\n- **docs/audit/final_verify/close-w158.md:202**: `verification_outputs/lineageflow_hmmer_real_n1000_w158_q3_2026/`\n- **docs/audit/sweep_eval/k6-verification.md:92**: `verification_outputs/.../baseline/summary.json`\n- **docs/audit/sweep_eval/k6-verification.md:93**: `verification_outputs/.../baseline/foldability/foldability.jsonl`\n- **docs/audit/sweep_eval/k6-verification.md:94**: `verification_outputs/.../baseline/foldability/self_consistency.jsonl`\n- **docs/audit/sweep_eval/k6-verification.md:96**: `verification_outputs/.../framework/summary.json`\n- **docs/audit/sweep_eval/k6-verification.md:97**: `verification_outputs/.../framework/foldability/foldability.jsonl`\n- **docs/audit/sweep_eval/k6-verification.md:98**: `verification_outputs/.../framework/foldability/self_consistency.jsonl`\n\nprovenance: citations=128 paths=84 drifts=0 disclosed=3 notcheckable=8\n"
+  },
+  {
+    "command": "python3 tools/check_tables_inventory.py",
+    "exit_code": 0,
+    "seconds": 0.056,
+    "output_tail": "t=         99.60  ok\ntable3:jt-r2-z                      stated=         +20.7  artifact=         +20.7  ok\ntable3:jt-r2-p                      stated=      3.02e-95  artifact=      3.02e-95  ok\ntable3:jt-r6-z                      stated=         +21.8  artifact=         +21.8  ok\ntable3:jt-r6-p                      stated=     1.86e-105  artifact=     1.86e-105  ok\ntable3:ni/p                         stated=        0.9985  artifact=        0.9985  ok\ntable1:r3-mean                      stated=       -0.0377  artifact=       -0.0377  ok\ntable1:r3-p                         stated=         0.559  artifact=         0.559  ok\ntable1:r3-dz                        stated=        -0.401  artifact=        -0.401  ok\ntable1:r5c-baseline                 stated=       24.4839  artifact=       24.4839  ok\ntable1:r5c-framework                stated=       21.3632  artifact=       21.3632  ok\ntable1:r4-artifact                  stated=       present  artifact=       present  ok\ntable1:r4-baseline                  stated=        0.5029  artifact=        0.5029  ok\ntable1:r4-framework                 stated=        0.4663  artifact=        0.4663  ok\ntable1:r4-delta                     stated=       -0.0728  artifact=       -0.0728  ok\ntable1:r5-artifact                  stated=       present  artifact=       present  ok\ntable1:r5-baseline                  stated=        0.6606  artifact=        0.6606  ok\ntable1:r5-framework                 stated=        0.5919  artifact=        0.5919  ok\ntable1:r5-delta                     stated=       -0.1040  artifact=       -0.1040  ok\ntable1:r5b-baseline                 stated=        454.39  artifact=        454.39  ok\ntable1:r5b-delta-range              stated=   -2.53/-0.12  artifact=   -2.53/-0.12  ok\ntable4:artifact                     stated=       present  artifact=       present  ok\ntable4:before-seconds               stated=          7.81  artifact=          7.81  ok\ntable4:ratio-before                 stated=          3.40  artifact=          3.40  ok\ntable4:after-seconds                stated=          1.81  artifact=          1.81  ok\ntable4:ratio-after                  stated=          1.26  artifact=          1.26  ok\ntable4:speedup                      stated=          4.31  artifact=          4.31  ok\ntable4:gap-closure                  stated=          76.8  artifact=          76.8  ok\ntable4:remeas-before                stated=          7.94  artifact=          7.94  ok\ntable4:remeas-after                 stated=          1.87  artifact=          1.87  ok\ntable4:remeas-speedup               stated=          4.24  artifact=          4.24  ok\ntable4:remeas-ratio-after           stated=          1.30  artifact=          1.30  ok\ntable5:w16e1_5k:baseline            stated=       24.4839  artifact=       24.4839  ok\ntable5:w16e1_5k:framework           stated=       21.3632  artifact=       21.3632  ok\ntable5:w16e1_5k:rel                 stated=        -12.75  artifact=        -12.75  ok\ntable5:w16e1_5k:strict              stated=           7/7  artifact=           7/7  ok\ntable5:w16e1_5k:verdict             stated=           WIN  artifact=           WIN  ok\ntable5:w16e1_10k:baseline           stated=       16.9537  artifact=       16.9537  ok\ntable5:w16e1_10k:framework          stated=       15.9501  artifact=       15.9501  ok\ntable5:w16e1_10k:rel                stated=         -5.92  artifact=         -5.92  ok\ntable5:w16e1_10k:strict             stated=           0/7  artifact=           0/7  ok\ntable5:w16e1_10k:verdict            stated=           TIE  artifact=           TIE  ok\ntable5:w16e1_60k:baseline           stated=       11.3795  artifact=       11.3795  ok\ntable5:w16e1_60k:framework          stated=       11.3945  artifact=       11.3945  ok\ntable5:w16e1_60k:rel                stated=          0.13  artifact=          0.13  ok\ntable5:w16e1_60k:strict             stated=           0/7  artifact=           0/7  ok\ntable5:w16e1_60k:verdict            stated=           TIE  artifact=           TIE  ok\ntable5:production:baseline          stated=        9.9938  artifact=        9.9938  ok\ntable5:production:framework         stated=        9.9603  artifact=        9.9603  ok\ntable5:production:rel               stated=         -0.34  artifact=         -0.34  ok\ntable5:production:strict            stated=           0/7  artifact=           0/7  ok\ntable5:production:verdict           stated=           TIE  artifact=           TIE  ok\n\nchecked=64 known_drift=0 unknown_drift=0\n"
+  },
+  {
+    "command": "python3 tools/check_figure_hashes.py",
+    "exit_code": 0,
+    "seconds": 0.057,
+    "output_tail": "OK: 37 figure rows match the files on disk\n"
+  },
+  {
+    "command": "python3 tools/build_metric_ledger.py --check",
+    "exit_code": 0,
+    "seconds": 30.085,
+    "output_tail": "OK: metric ledger is current (138 rows)\n"
+  },
+  {
+    "command": "git diff --check",
+    "exit_code": 0,
+    "seconds": 0.015,
+    "output_tail": ""
+  }
+]

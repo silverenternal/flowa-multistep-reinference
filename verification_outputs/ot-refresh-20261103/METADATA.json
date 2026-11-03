@@ -1,0 +1,31 @@
+{
+  "schema": "flowa-originality-cpu-v1",
+  "date": "2026-11-03",
+  "base_commit": "eede622330e8a8f6d49c46acd1d1a1d7e23bacf1",
+  "hypothesis": "For deterministic strongly convex gradient transport paths, every nontrivial source refresh with unchanged prior marginal and fixed target endpoint changes the target law even under exact flow; a Bregman moment deficit yields a positive W2 lower bound.",
+  "device": "CPU only; GPU ID/free memory not applicable; no torch/model calls",
+  "seed": 20261103,
+  "sampling": "No Monte Carlo: exact finite joint enumeration, analytic Gaussian moments and finite optimal transport LP",
+  "planned_records": 73,
+  "max_records": 73,
+  "wall_clock_budget_seconds": 180,
+  "grid": {
+    "nonlinear_finite": "36 = alpha[0.5,1.5] x quartic[0.1,0.5] x t[0.2,0.5,0.8] x prior-invariant Q[identity,independent,cyclic]; five fixed non-Gaussian atoms in R2, uniform mass",
+    "isotropic_gaussian": "27 = scale[0.5,1,2] x t[0.2,0.5,0.8] x source-correlation[0,0.5,0.9]",
+    "anisotropic_gaussian": "9 = B[diag(0.5,2),diag(1,3),rotated diag(0.4,1.7)] x t[0.2,0.5,0.8], source update 90-degree rotation",
+    "outside_assumption": "1: T=-I,t=0.25,independent Gaussian refresh; expected output variance2.5"
+  },
+  "acceptance": [
+    "All73 records processed, zero skipped; any discrepancy retained as failure",
+    "Bregman/intermediate-moment identity absolute error<1e-9 and lower energy inequality slack>=-1e-9",
+    "Finite-law W2 computed independently by linear programming is at least claimed bound minus1e-9",
+    "Gaussian isotropic lower bound matches analytic W2 within1e-10",
+    "SPD output trace deficit identity error<1e-9; do not require matrix covariance contraction",
+    "Identity refresh has zero deficit; outside-assumption example expands as predicted"
+  ],
+  "limits": "Checks support derivation and numerical implementation, not novelty, learned-image quality, inference significance, or applicability to independent-coupling CIFAR checkpoint.",
+  "command": ".venvs/flowmol3_venv/bin/python tools/review_ot_refresh_20261103.py --output-dir verification_outputs/ot-refresh-20261103 --max-records 73 --seed 20261103 --wall-seconds 180",
+  "captured_utc": "2026-11-03T02:16:22.861533+00:00",
+  "python": "3.14.7",
+  "preflight_failure": "Initial test incorrectly expected covariance-direction expansion for diag(.5,2),t=.5; observed maximum eigenvalue -0.0469169766. A test-only stronger anisotropy diag(.1,10) follows the analytic indefiniteness condition; locked73-case study grid unchanged and not yet run."
+}

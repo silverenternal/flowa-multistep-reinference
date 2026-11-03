@@ -1,5 +1,7 @@
 # FlowA：面向冻结 Flow-Matching 检查点的重推理控制
 
+**第六轮原创性攻关：** [条件证明、锐下界与近似路径反例](docs/audit/manuscript-originality-round6-2026-11-03.md)及100个CPU解析检查已完成；核心矩缺口已确认为经典输运成本差，障碍命题降为机制引理；其余候选仍有经典推论风险，原创性和神经模型干预仍未验收，不能据此升级投稿就绪状态。
+
 [English](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/README.md) | [中文](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/README.zh.md)
 
 **当前研究复核（2026-11-03）：投稿就绪状态尚未成立。** 本段取代下方历史快照中的投稿成熟度与创新性判断。请以[当前证据寄存器](docs/PAPER-EVIDENCE.md)、[完整45项自查表](docs/audit/manuscript-selfcheck-2026-11-02.md)及[中文v6研究稿](docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md)为准。新增CIFAR匹配调用研究中，原完整配置退化；历史蛋白/结构差值也不等于同生成器/同输入的机制优势。已有端点构造限制了独有创新的主张。冻结投稿包和旧等级保留用于历史复现，不作为当前建议立即投稿或质量保证。候选验证与剩余缺口见[第五轮审计](docs/audit/manuscript-selfcheck-round5-2026-11-03.md)。

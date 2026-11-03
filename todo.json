@@ -297,16 +297,16 @@
     "record": "docs/audit/manuscript-selfcheck-2026-11-02.md",
     "machine_record": "docs/audit/manuscript-selfcheck-2026-11-02.json",
     "items": 45,
-    "status": "ROUND5 bounded validation, draft and science sync completed; novelty and wider positive confirmation remain unresolved",
+    "status": "ROUND6 candidate theory verified analytically/CPU; novelty and independent intervention unresolved",
     "scope": "All reviewer-plan items from the 2026-11-02 chat; inspect existing source and audit records first. GAP-90/91/92 omissions corrected in the checklist.",
     "push_authorization": "User explicitly authorized this synchronization on 2026-11-02; standing no_push remains unchanged.",
-    "latest_round": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
+    "latest_round": "docs/audit/manuscript-originality-round6-2026-11-03.md",
     "current_chinese_draft": "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
     "status_counts": {
       "REVISION_NEEDED": 5,
-      "VERIFIED": 29,
+      "VERIFIED": 28,
       "EVIDENCE_GAP": 5,
-      "EVIDENCE_LOCATED": 6
+      "EVIDENCE_LOCATED": 7
     },
     "round4": {
       "audit": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
@@ -330,6 +330,15 @@
       "sync_status": "Scientific commit 5edbd6c5d701f6764e91c134662e2ca8fb7b44ae pushed to GitHub and pulled/replayed on Mac; final closure HEAD in Mac receipt",
       "scientific_status": "not submission-ready on novelty grounds; no guarantee of Q1 acceptance",
       "scientific_commit_replayed": "5edbd6c5d701f6764e91c134662e2ca8fb7b44ae"
+    },
+    "round6": {
+      "audit": "docs/audit/manuscript-originality-round6-2026-11-03.md",
+      "artifacts": "verification_outputs/ot-refresh-20261103",
+      "CPU_cases": 100,
+      "GPU_added_seconds": 0,
+      "GPU_accounted_total_seconds": 6638,
+      "novelty": "core deficit equals classical OT cost gap; no-go downgraded to mechanism lemma; originality remains unresolved",
+      "sync_status": "pending server gates and GitHub to Mac replay"
     }
   },
   "historical_submission_objective_before_round5": "Publish in a CAS tier-1 (中科院一区) journal, TNNLS first. The paper is packaged and submittable as of 2026-10-27 (12 pages, 0 overfull, 3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only). What it lacks is not prose but one piece of evidence: the central claim is currently a four-point cross-section, and the reviewer's first objection is already known. The plan below exists to convert that cross-section into an identification, then to put it in the paper.",
@@ -340,10 +349,10 @@
     "historical_objective_scope": "Cross-task WIN remains an aspiration, not an instruction to conceal negative results or change a failed acceptance rule.",
     "budget": "7200 conservative GPU-bearing outer-wall seconds total; no additional GPU jobs after the two locked studies",
     "priority": [
-      "distinguish contribution from existing endpoint constructions",
-      "interpret completed independent results without selective pooling",
-      "resolve training/path/batch and inferential scope",
-      "verify historical CAS category and institution rules before venue choice"
-    ]
+      "trace exact Bregman/OT prior art before claiming novelty",
+      "find observable coupling diagnostics without oracle constants",
+      "only then lock independent model intervention and budget"
+    ],
+    "latest_originality_audit": "docs/audit/manuscript-originality-round6-2026-11-03.md"
   }
 }

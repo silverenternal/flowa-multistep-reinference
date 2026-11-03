@@ -28,7 +28,9 @@
     "Diamond Maps与NR-SMC存在直接相关端点构造，不主张端点混合首次性。",
     "独立插值路径的理想目标保持不适用于任意训练耦合，收缩到错误分布的反例已进入正文。",
     "完整配置的批次质心处理耦合图像，标准iid KID无偏性不能直接套用；三个种子的参数p值另配符号翻转分辨率说明。",
-    "撤回SC-41整项VERIFIED：原创性前置项尚未完成；此前主观录用概率不作当前预测。"
+    "撤回SC-41整项VERIFIED：原创性前置项尚未完成；此前主观录用概率不作当前预测。",
+    "第六轮将高斯特例推广为凸梯度路径的Bregman缺口及W2下界候选；小非梯度误差可翻转符号，不能将强单调或接近OT当作充分假设。原创性仍待逐证明查新。",
+    "第六轮二次审查：矩缺口等于t(1−t)乘输运成本差；最优路径下非负性是经典OT最优性，障碍命题降级为机制引理，不包装为主要原创贡献。"
   ],
   "items": [
     {
@@ -156,12 +158,13 @@
         "docs/audit/manuscript-literature-ledger-2026-11-03.md",
         "verification_outputs/manuscript-selfcheck-round3-2026-11-03/sensitivity.json",
         "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md"
+        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
+        "docs/audit/manuscript-originality-round6-2026-11-03.md"
       ],
       "evidence_type": "SOURCE_AND_PRIMARY_LITERATURE",
       "status": "EVIDENCE_GAP",
-      "finding": "已补同RF权重、实际调用匹配的原始Restart函数与VE-Heun控制；Diamond Maps端点特例及NR-SMC状态更新存在直接重合，不能再把端点混合作为独有操作。完整系统的奖励/后验目标没有对照，原创贡献仍未充分建立。",
-      "next_action": "先列与Diamond Maps/NR-SMC/Restart逐操作及目标的差异；若没有独立且有价值的可检验主张，改为条件分析定位，暂缓按新采样方法投稿。",
+      "finding": "已排除首次重启/端点混合/双端点修正/MMD引导等重合。新增证明及100个CPU检查完成后，发现矩缺口恰为经典输运成本差，核心障碍命题降为背景机制引理，不作为主要原创贡献。锐下界和近似路径反例仍有直接经典推论风险；原创问题未解决。",
+      "next_action": "追溯OT重排/Bregman差额和边缘保持理论；若已直接覆盖则降为引理；寻找可估计判别量及独立干预。",
       "history": [
         {
           "round": "registration",
@@ -180,11 +183,18 @@
           "review_round": "round3-2026-11-03",
           "review_record": "docs/audit/manuscript-selfcheck-round3-2026-11-03.md",
           "next_action": "按本项限定范围保留已完成核对；剩余证据不足不通过改标签消除，先查现有材料，不自动启动长时采样。"
+        },
+        {
+          "status": "EVIDENCE_GAP",
+          "finding": "已补同RF权重、实际调用匹配的原始Restart函数与VE-Heun控制；Diamond Maps端点特例及NR-SMC状态更新存在直接重合，不能再把端点混合作为独有操作。完整系统的奖励/后验目标没有对照，原创贡献仍未充分建立。",
+          "next_action": "先列与Diamond Maps/NR-SMC/Restart逐操作及目标的差异；若没有独立且有价值的可检验主张，改为条件分析定位，暂缓按新采样方法投稿。",
+          "review_round": "round5-2026-11-03",
+          "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
         }
       ],
-      "review_round": "round5-2026-11-03",
-      "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-      "verification_scope": "仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。"
+      "review_round": "round6-2026-11-03",
+      "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
+      "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
     },
     {
       "id": "SC-05",
@@ -205,12 +215,13 @@
         "verification_outputs/component-study-20261103/REPORT.json",
         "verification_outputs/component-study-20261103/PROTOCOL.json",
         "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md"
+        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
+        "docs/audit/manuscript-originality-round6-2026-11-03.md"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
       "status": "EVIDENCE_GAP",
-      "finding": "主参数组件矩阵与独立零时间简化配置区分组件；后段时间匹配两轮候选另行留出验证。操作差异及经典误差界不足以证明相对固定混合/先前端点构造的新颖性。",
-      "next_action": "以已有单因素矩阵判断哪些差异真实影响结果；仅对可识别的新差异设计最小控制，不把路径一致修正本身当新算子。",
+      "finding": "固定调度本身的新颖性仍不足。本轮贡献候选转向训练耦合决定刷新合法性的机制分析，不再以增加混合权重或接口作为创新。",
+      "next_action": "理论差异通过后才锁定实用修正；同等调用收益和新模型验证仍未完成。",
       "history": [
         {
           "round": "registration",
@@ -235,11 +246,18 @@
           "review_round": "round4-2026-11-03",
           "review_record": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
           "next_action": "继续检验其余检查点/多预算与交互；本项只验收局部组件对照，不验收新颖性或普适必要性。"
+        },
+        {
+          "status": "EVIDENCE_GAP",
+          "finding": "主参数组件矩阵与独立零时间简化配置区分组件；后段时间匹配两轮候选另行留出验证。操作差异及经典误差界不足以证明相对固定混合/先前端点构造的新颖性。",
+          "next_action": "以已有单因素矩阵判断哪些差异真实影响结果；仅对可识别的新差异设计最小控制，不把路径一致修正本身当新算子。",
+          "review_round": "round5-2026-11-03",
+          "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
         }
       ],
-      "review_round": "round5-2026-11-03",
-      "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-      "verification_scope": "仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。"
+      "review_round": "round6-2026-11-03",
+      "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
+      "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
     },
     {
       "id": "SC-06",
@@ -787,12 +805,13 @@
         "docs/audit/manuscript-selfcheck-round1-2026-11-02.md",
         "docs/drafts/paper-A-zh-reviewed-2026-11-02.md",
         "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md"
+        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
+        "docs/audit/manuscript-originality-round6-2026-11-03.md"
       ],
       "evidence_type": "MATHEMATICS_AND_PRIMARY_LITERATURE",
       "status": "VERIFIED",
-      "finding": "独立插值恒等式、Wasserstein耦合与偏差—收缩递推明确为基础工具；Restart已有误差/收缩竞争分析，不把重述经典性质当新理论。",
-      "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。",
+      "finding": "新增四个条件命题均附逐步证明，并明确凸性、Bregman恒等式和W2耦合工具为经典内容；候选组合结论与原创性验收分开。",
+      "next_action": "继续查新，不能将数值一致性等同于原创性。",
       "history": [
         {
           "round": "registration",
@@ -805,11 +824,18 @@
           "review_round": "round1-2026-11-02",
           "review_record": "docs/audit/manuscript-selfcheck-round1-2026-11-02.md",
           "next_action": "按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。"
+        },
+        {
+          "status": "VERIFIED",
+          "finding": "独立插值恒等式、Wasserstein耦合与偏差—收缩递推明确为基础工具；Restart已有误差/收缩竞争分析，不把重述经典性质当新理论。",
+          "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。",
+          "review_round": "round5-2026-11-03",
+          "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
         }
       ],
-      "review_round": "round5-2026-11-03",
-      "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-      "verification_scope": "仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。"
+      "review_round": "round6-2026-11-03",
+      "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
+      "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
     },
     {
       "id": "SC-20",
@@ -824,12 +850,13 @@
         "docs/audit/manuscript-selfcheck-round1-2026-11-02.md",
         "docs/drafts/paper-A-zh-reviewed-2026-11-02.md",
         "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md"
+        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
+        "docs/audit/manuscript-originality-round6-2026-11-03.md"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
       "status": "VERIFIED",
-      "finding": "独立训练耦合与正确物理时间为充分条件；逐轮不等参数的乘积—求和误差界对应数值误差，L和偏差未估计；全批质心配置不直接套理想样本核。",
-      "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。",
+      "finding": "新命题限定确定性强凸梯度直线路径；近似梯度路径有显式误差项，强单调性单独不足。当前CIFAR训练路径、批次平移和积分误差未被命题覆盖。",
+      "next_action": "建立可估计假设与实际模型对应，不从合成例子外推图像因果机制。",
       "history": [
         {
           "round": "registration",
@@ -842,11 +869,18 @@
           "review_round": "round1-2026-11-02",
           "review_record": "docs/audit/manuscript-selfcheck-round1-2026-11-02.md",
           "next_action": "按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。"
+        },
+        {
+          "status": "VERIFIED",
+          "finding": "独立训练耦合与正确物理时间为充分条件；逐轮不等参数的乘积—求和误差界对应数值误差，L和偏差未估计；全批质心配置不直接套理想样本核。",
+          "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。",
+          "review_round": "round5-2026-11-03",
+          "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
         }
       ],
-      "review_round": "round5-2026-11-03",
-      "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-      "verification_scope": "仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。"
+      "review_round": "round6-2026-11-03",
+      "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
+      "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
     },
     {
       "id": "SC-21",
@@ -860,12 +894,13 @@
         "docs/audit/manuscript-selfcheck-round1-2026-11-02.md",
         "docs/drafts/paper-A-zh-reviewed-2026-11-02.md",
         "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md"
+        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
+        "docs/audit/manuscript-originality-round6-2026-11-03.md"
       ],
       "evidence_type": "MATHEMATICS_AND_RECORDS",
       "status": "VERIFIED",
-      "finding": "加入目标正态且速度场精确为零的耦合反例，以及错误时间导致方差偏离的反例；状态收缩不推出目标保持、W2不推出FID符号。",
-      "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。",
+      "finding": "W2下界仅为分布失配，不推出FID/KID方向；100个解析检查不是质量提升或有效统计样本。",
+      "next_action": "新增神经模型论证必须独立登记，保持原负结果。",
       "history": [
         {
           "round": "registration",
@@ -878,11 +913,18 @@
           "review_round": "round1-2026-11-02",
           "review_record": "docs/audit/manuscript-selfcheck-round1-2026-11-02.md",
           "next_action": "按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。"
+        },
+        {
+          "status": "VERIFIED",
+          "finding": "加入目标正态且速度场精确为零的耦合反例，以及错误时间导致方差偏离的反例；状态收缩不推出目标保持、W2不推出FID符号。",
+          "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。",
+          "review_round": "round5-2026-11-03",
+          "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
         }
       ],
-      "review_round": "round5-2026-11-03",
-      "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-      "verification_scope": "仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。"
+      "review_round": "round6-2026-11-03",
+      "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
+      "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
     },
     {
       "id": "SC-22",
@@ -1658,12 +1700,13 @@
         "docs/audit/manuscript-literature-ledger-2026-11-03.md",
         "verification_outputs/manuscript-selfcheck-round3-2026-11-03/sensitivity.json",
         "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md"
+        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
+        "docs/audit/manuscript-originality-round6-2026-11-03.md"
       ],
       "evidence_type": "SOURCE_AND_PRIMARY_LITERATURE",
       "status": "REVISION_NEEDED",
-      "finding": "新增流匹配路径、随机插值、Diamond Maps、NR-SMC及Coupled Guidance/ReCouple原始文献与具体关联定位，共26条；旧模型/数据库的精确版本及正式出版格式仍需最后核验，引用数量不作为验收。",
-      "next_action": "逐项补精确模型/数据库版本和正式出版信息，投稿前按目标期刊格式核对；已验证原始文献不反复检索凑引用数。",
+      "finding": "新增Coupled Guidance、ReBridge-Flow、MMD Guidance与经典OT对照；候选命题还需逐定理查新，当前未宣称文献覆盖完整。",
+      "next_action": "继续原始证明与引用追溯；科学主张稳定后统一稿件书目。",
       "history": [
         {
           "round": "registration",
@@ -1682,11 +1725,18 @@
           "review_round": "round3-2026-11-03",
           "review_record": "docs/audit/manuscript-selfcheck-round3-2026-11-03.md",
           "next_action": "按本项限定范围保留已完成核对；剩余证据不足不通过改标签消除，先查现有材料，不自动启动长时采样。"
+        },
+        {
+          "status": "REVISION_NEEDED",
+          "finding": "新增流匹配路径、随机插值、Diamond Maps、NR-SMC及Coupled Guidance/ReCouple原始文献与具体关联定位，共26条；旧模型/数据库的精确版本及正式出版格式仍需最后核验，引用数量不作为验收。",
+          "next_action": "逐项补精确模型/数据库版本和正式出版信息，投稿前按目标期刊格式核对；已验证原始文献不反复检索凑引用数。",
+          "review_round": "round5-2026-11-03",
+          "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
         }
       ],
-      "review_round": "round5-2026-11-03",
-      "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-      "verification_scope": "仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。"
+      "review_round": "round6-2026-11-03",
+      "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
+      "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
     },
     {
       "id": "SC-40",
@@ -1763,12 +1813,13 @@
         "docs/audit/manuscript-selfcheck-round1-2026-11-02.md",
         "docs/drafts/paper-A-zh-reviewed-2026-11-02.md",
         "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md"
+        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
+        "docs/audit/manuscript-originality-round6-2026-11-03.md"
       ],
       "evidence_type": "WORKFLOW",
       "status": "REVISION_NEEDED",
-      "finding": "当前中心问题与实例已锁定，但前置SC-04的独有创新尚未建立；撤回此前整项VERIFIED，不能以完成写作组织代替原创性验收。",
-      "next_action": "以SC-04/05的实质创新判断重新验收贡献锁定，完成写作组织不能使本项恢复整项通过。",
+      "finding": "原创贡献收窄到刷新失配理论候选，完整证明/反例已形成；原创性、可部署性和独立干预仍未验收，贡献锁定未完成。",
+      "next_action": "以逐命题文献差异和实际可证伪预测作为下一轮门槛。",
       "history": [
         {
           "round": "registration",
@@ -1781,11 +1832,18 @@
           "review_round": "round1-2026-11-02",
           "review_record": "docs/audit/manuscript-selfcheck-round1-2026-11-02.md",
           "next_action": "按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。"
+        },
+        {
+          "status": "REVISION_NEEDED",
+          "finding": "当前中心问题与实例已锁定，但前置SC-04的独有创新尚未建立；撤回此前整项VERIFIED，不能以完成写作组织代替原创性验收。",
+          "next_action": "以SC-04/05的实质创新判断重新验收贡献锁定，完成写作组织不能使本项恢复整项通过。",
+          "review_round": "round5-2026-11-03",
+          "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
         }
       ],
-      "review_round": "round5-2026-11-03",
-      "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-      "verification_scope": "仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。"
+      "review_round": "round6-2026-11-03",
+      "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
+      "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
     },
     {
       "id": "SC-42",
@@ -1805,12 +1863,13 @@
         "docs/audit/manuscript-literature-ledger-2026-11-03.md",
         "verification_outputs/manuscript-selfcheck-round3-2026-11-03/sensitivity.json",
         "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md"
+        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
+        "docs/audit/manuscript-originality-round6-2026-11-03.md"
       ],
       "evidence_type": "WORKFLOW",
       "status": "REVISION_NEEDED",
-      "finding": "v6按路径条件、原Restart控制与独立验证重写方法/理论/主结果，附录保留历史记录；原创性和正式英文投稿编排尚未完成，不把本轮扩充等同可投最终稿。",
-      "next_action": "先完成创新定位决策和证据映射，再安排英文模板与投稿材料，中文v6作为研究稿保存。",
+      "finding": "新增第六轮中文问题段、候选贡献段与章节组织，保留v6主结果；未将尚未确立的新意写成完成版投稿摘要。",
+      "next_action": "原创性门槛通过后再整合主稿，不通过则降为背景理论。",
       "history": [
         {
           "round": "registration",
@@ -1841,11 +1900,18 @@
           "review_round": "round4-2026-11-03",
           "review_record": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
           "next_action": "按本项限定范围保留已完成核对；剩余证据不足不通过改标签消除，先查现有材料，不自动启动长时采样。"
+        },
+        {
+          "status": "REVISION_NEEDED",
+          "finding": "v6按路径条件、原Restart控制与独立验证重写方法/理论/主结果，附录保留历史记录；原创性和正式英文投稿编排尚未完成，不把本轮扩充等同可投最终稿。",
+          "next_action": "先完成创新定位决策和证据映射，再安排英文模板与投稿材料，中文v6作为研究稿保存。",
+          "review_round": "round5-2026-11-03",
+          "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
         }
       ],
-      "review_round": "round5-2026-11-03",
-      "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-      "verification_scope": "仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。"
+      "review_round": "round6-2026-11-03",
+      "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
+      "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
     },
     {
       "id": "SC-43",
@@ -1931,12 +1997,13 @@
         "docs/drafts/paper-A-zh-reviewed-2026-11-02.md",
         "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
         "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
-        "verification_outputs/manuscript-selfcheck-round5-2026-11-03/MAC_REPLAY.json"
+        "verification_outputs/manuscript-selfcheck-round5-2026-11-03/MAC_REPLAY.json",
+        "docs/audit/manuscript-originality-round6-2026-11-03.md"
       ],
       "evidence_type": "WORKFLOW",
-      "status": "VERIFIED",
-      "finding": "科学源码与证据提交5edbd6c5d701f6764e91c134662e2ca8fb7b44ae已从服务器推送GitHub并由Mac正式clone快进拉取；本地核对126个发布文件摘要、78个主分数及运行间统计、5个指定完整特征FID/KID。45项及历史全部保留。本项验收的是该科学提交的同步与限定复算，不表示所有历史模型在Mac重生成或整稿可投。记录闭环提交的最终HEAD另见Mac交付收据。",
-      "next_action": "保留本轮同步与复算回执；后续源码/证据改动须再次核对来源与Mac副本。",
+      "status": "EVIDENCE_LOCATED",
+      "finding": "全部45项及既有历史保留，本轮源码/证明/逐条CPU证据已整理；GitHub推送及Mac回放待闭环。",
+      "next_action": "完成服务器检查、推送GitHub、Mac快进拉取与100案例回放后记录收据。",
       "history": [
         {
           "round": "registration",
@@ -1956,14 +2023,21 @@
           "review_round": "round5-2026-11-03",
           "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
           "next_action": "最终门禁通过后提交并推送GitHub，从Mac正式clone拉取同一HEAD，复算核统计/指定特征并导出Word，以同步回执验收。"
+        },
+        {
+          "status": "VERIFIED",
+          "finding": "科学源码与证据提交5edbd6c5d701f6764e91c134662e2ca8fb7b44ae已从服务器推送GitHub并由Mac正式clone快进拉取；本地核对126个发布文件摘要、78个主分数及运行间统计、5个指定完整特征FID/KID。45项及历史全部保留。本项验收的是该科学提交的同步与限定复算，不表示所有历史模型在Mac重生成或整稿可投。记录闭环提交的最终HEAD另见Mac交付收据。",
+          "next_action": "保留本轮同步与复算回执；后续源码/证据改动须再次核对来源与Mac副本。",
+          "review_round": "round5-sync-2026-11-03",
+          "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
         }
       ],
-      "review_round": "round5-sync-2026-11-03",
-      "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-      "verification_scope": "仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。"
+      "review_round": "round6-2026-11-03",
+      "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
+      "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
     }
   ],
-  "latest_round": "round5-2026-11-03",
+  "latest_round": "docs/audit/manuscript-originality-round6-2026-11-03.md",
   "sync_completed_against_scientific_commit": "5edbd6c5d701f6764e91c134662e2ca8fb7b44ae",
   "Mac_replay_record": "verification_outputs/manuscript-selfcheck-round5-2026-11-03/MAC_REPLAY.json"
 }

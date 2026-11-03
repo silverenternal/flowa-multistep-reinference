@@ -1,0 +1,17 @@
+{
+  "checks": 27,
+  "mandatory_gate_chain": 24,
+  "all_exit_codes_zero": true,
+  "targeted_tests": 12,
+  "D4_adapter_vectors": 72,
+  "full_environment_anchor_check": "passed, not default-python skip",
+  "disclosures": [
+    "Six historical nonfatal metric-ledger status warnings remain.",
+    "Default Python anchor checker skips without markdown; designated model environment actually checked anchors.",
+    "Legacy link checker diagnostics and deprecation warnings remain; engineering success is not novelty or manuscript readiness."
+  ],
+  "GPU_added_seconds": 0,
+  "GPU_accounted_total_seconds": 6638,
+  "GPU_budget_seconds": 7200,
+  "timestamp_utc": "2026-11-03T02:32:18.979460+00:00"
+}

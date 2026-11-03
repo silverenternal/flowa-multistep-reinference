@@ -1,5 +1,7 @@
 # FlowA: Re-Inference Control for Frozen Flow-Matching Checkpoints
 
+**Round 6 originality research:** [Conditional proofs, sharp lower bounds and approximate-path counterexamples](docs/audit/manuscript-originality-round6-2026-11-03.md) have100 CPU checks. The core deficit equals the classical OT cost gap and is downgraded to a mechanism lemma; practical model intervention and submission readiness remain unresolved.
+
 [English](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/README.md) | [中文](https://github.com/silverenternal/flowa-multistep-reinference/blob/main/README.zh.md)
 
 **Current research review (2026-11-03): submission readiness is unresolved.** This review supersedes the readiness and novelty assessments in the historical README snapshot below. Use the [current evidence register](docs/PAPER-EVIDENCE.md), [45-item reviewer checklist](docs/audit/manuscript-selfcheck-2026-11-02.md), and [Chinese v6 research draft](docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md). The original full configuration regresses in the new matched-call CIFAR study; historical protein/structure differences do not establish matched-generator/input mechanism wins. Related endpoint constructions also limit an originality claim. Frozen submission packages and old labels remain reproducibility records, rather than a current recommendation to submit or a guarantee of quality. Independent candidate results and remaining gaps are reported separately in the [round 5 audit](docs/audit/manuscript-selfcheck-round5-2026-11-03.md).
