@@ -1,0 +1,8 @@
+{
+  "tools/review_endpoint_pairing_20261103.py": "5354f00cf7561ae770bc2a06d2cbf344d7cf703fb0335a00f73935563a208131",
+  "tests/test_endpoint_pairing.py": "191d7a12cbcc5530190427ab0945e79e40e704d65ff53282faf8e5e8007bb302",
+  "docs/audit/manuscript-endpoint-pairing-round7-2026-11-03.md": "7ca6f79a8666acb27165ec265b010b9ccb0b3e00ba62aa9ea034f5dd6bf3d86f",
+  "verification_outputs/endpoint-pairing-20261103/METADATA.json": "8476d6e74f4d692a8aa247db0d8646d6b937546fffd65bd1bb156f9f18714562",
+  "verification_outputs/endpoint-pairing-20261103/cost_matrices.npz": "6d0e499a60bd3b5d3843ee5aa19f97eb0e3ce821b58502431a31206397f37fb7",
+  "verification_outputs/endpoint-pairing-20261103/RESULTS.json": "3c31ef23060d369e94f42b5a28aae1af551cfa0318140dbe1d760ad655e90c7a"
+}

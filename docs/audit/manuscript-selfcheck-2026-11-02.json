@@ -159,12 +159,13 @@
         "verification_outputs/manuscript-selfcheck-round3-2026-11-03/sensitivity.json",
         "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
         "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
-        "docs/audit/manuscript-originality-round6-2026-11-03.md"
+        "docs/audit/manuscript-originality-round6-2026-11-03.md",
+        "docs/audit/manuscript-endpoint-pairing-round7-2026-11-03.md"
       ],
       "evidence_type": "SOURCE_AND_PRIMARY_LITERATURE",
       "status": "EVIDENCE_GAP",
-      "finding": "已排除首次重启/端点混合/双端点修正/MMD引导等重合。新增证明及100个CPU检查完成后，发现矩缺口恰为经典输运成本差，核心障碍命题降为背景机制引理，不作为主要原创贡献。锐下界和近似路径反例仍有直接经典推论风险；原创问题未解决。",
-      "next_action": "追溯OT重排/Bregman差额和边缘保持理论；若已直接覆盖则降为引理；寻找可估计判别量及独立干预。",
+      "finding": "第七轮在12个既有CIFAR操作点各取固定256对端点，未发现有限循环单调性违例；不能确认全局凸梯度或预测质量。小批配对优化和有限单调性已有直接文献，诊断不作为新方法。核心原创性缺口仍在。",
+      "next_action": "先获取/验证实际中间边缘的可观测诊断；只有区分路径弯曲与配对改变并超出已有方法后才考虑独立干预。",
       "history": [
         {
           "round": "registration",
@@ -190,10 +191,17 @@
           "next_action": "先列与Diamond Maps/NR-SMC/Restart逐操作及目标的差异；若没有独立且有价值的可检验主张，改为条件分析定位，暂缓按新采样方法投稿。",
           "review_round": "round5-2026-11-03",
           "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
+        },
+        {
+          "status": "EVIDENCE_GAP",
+          "finding": "已排除首次重启/端点混合/双端点修正/MMD引导等重合。新增证明及100个CPU检查完成后，发现矩缺口恰为经典输运成本差，核心障碍命题降为背景机制引理，不作为主要原创贡献。锐下界和近似路径反例仍有直接经典推论风险；原创问题未解决。",
+          "next_action": "追溯OT重排/Bregman差额和边缘保持理论；若已直接覆盖则降为引理；寻找可估计判别量及独立干预。",
+          "review_round": "round6-2026-11-03",
+          "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md"
         }
       ],
-      "review_round": "round6-2026-11-03",
-      "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
+      "review_round": "round7-2026-11-03",
+      "review_record": "docs/audit/manuscript-endpoint-pairing-round7-2026-11-03.md",
       "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
     },
     {

@@ -116,8 +116,8 @@
 - 优先级：P0
 - 状态：EVIDENCE_GAP
 - 验收：与最接近原始论文逐项比较状态、反馈、训练需求、预算、重启方式；不能凭源码存在判定新颖性。
-- 发现：已排除首次重启/端点混合/双端点修正/MMD引导等重合。新增证明及100个CPU检查完成后，发现矩缺口恰为经典输运成本差，核心障碍命题降为背景机制引理，不作为主要原创贡献。锐下界和近似路径反例仍有直接经典推论风险；原创问题未解决。
-- 下一步：追溯OT重排/Bregman差额和边缘保持理论；若已直接覆盖则降为引理；寻找可估计判别量及独立干预。
+- 发现：第七轮在12个既有CIFAR操作点各取固定256对端点，未发现有限循环单调性违例；不能确认全局凸梯度或预测质量。小批配对优化和有限单调性已有直接文献，诊断不作为新方法。核心原创性缺口仍在。
+- 下一步：先获取/验证实际中间边缘的可观测诊断；只有区分路径弯曲与配对改变并超出已有方法后才考虑独立干预。
 - 验证范围：本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。
 - 证据：`docs/drafts/paper-A-final.md`；`docs/audit/gap94-standard-benchmark.md`；`docs/audit/manuscript-selfcheck-round1-2026-11-02.md`；`docs/drafts/paper-A-zh-reviewed-2026-11-02.md`；`docs/audit/manuscript-selfcheck-round3-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round3-2026-11-03.md`；`docs/audit/manuscript-literature-ledger-2026-11-03.md`；`verification_outputs/manuscript-selfcheck-round3-2026-11-03/sensitivity.json`；`docs/audit/manuscript-selfcheck-round5-2026-11-03.md`；`docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md`；`docs/audit/manuscript-originality-round6-2026-11-03.md`
 
@@ -127,6 +127,8 @@
 - {"status": "REVISION_NEEDED", "finding": "已核对Restart、FM/RF、DPM-Solver与一致性模型原始来源并增加比较表；同协议最接近方法数值对照仍缺。", "review_round": "round1-2026-11-02", "review_record": "docs/audit/manuscript-selfcheck-round1-2026-11-02.md"}
 - {"status": "EVIDENCE_GAP", "finding": "已补原Restart算法B.2与LineageFlow rerouting具体差异及原始引文；当前源码/记录中没有同检查点、同调用次数/评价器的匹配对照。操作差异不作为优越性证明。", "review_round": "round3-2026-11-03", "review_record": "docs/audit/manuscript-selfcheck-round3-2026-11-03.md", "next_action": "按本项限定范围保留已完成核对；剩余证据不足不通过改标签消除，先查现有材料，不自动启动长时采样。"}
 - {"status": "EVIDENCE_GAP", "finding": "已补同RF权重、实际调用匹配的原始Restart函数与VE-Heun控制；Diamond Maps端点特例及NR-SMC状态更新存在直接重合，不能再把端点混合作为独有操作。完整系统的奖励/后验目标没有对照，原创贡献仍未充分建立。", "next_action": "先列与Diamond Maps/NR-SMC/Restart逐操作及目标的差异；若没有独立且有价值的可检验主张，改为条件分析定位，暂缓按新采样方法投稿。", "review_round": "round5-2026-11-03", "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"}
+
+第七轮完整证据及前次记录见同名JSON历史与 docs/audit/manuscript-endpoint-pairing-round7-2026-11-03.md。
 
 ### SC-05 相比固定权重混合究竟新增什么？
 
