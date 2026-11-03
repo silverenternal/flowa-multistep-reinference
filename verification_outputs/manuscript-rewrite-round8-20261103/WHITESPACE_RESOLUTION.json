@@ -1,0 +1,7 @@
+{
+  "initial_check": "git diff --cached --check",
+  "initial_exit_code": 2,
+  "cause": "One extra blank line at end of generated checklist Markdown",
+  "resolution": "Strip trailing blank lines in generated Markdown and its archival generator; no manuscript or scientific value changed",
+  "final_exit_code": 0
+}

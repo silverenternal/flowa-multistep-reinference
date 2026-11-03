@@ -297,11 +297,11 @@
     "record": "docs/audit/manuscript-selfcheck-2026-11-02.md",
     "machine_record": "docs/audit/manuscript-selfcheck-2026-11-02.json",
     "items": 45,
-    "status": "ROUND7 cached endpoint pairing tested; diagnostic does not establish convexity, novelty or quality prediction",
+    "status": "ROUND8 complete Chinese manuscript rewrite; originality and formal English formatting remain separately unresolved",
     "scope": "All reviewer-plan items from the 2026-11-02 chat; inspect existing source and audit records first. GAP-90/91/92 omissions corrected in the checklist.",
     "push_authorization": "User explicitly authorized this synchronization on 2026-11-02; standing no_push remains unchanged.",
-    "latest_round": "docs/audit/manuscript-endpoint-pairing-round7-2026-11-03.md",
-    "current_chinese_draft": "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
+    "latest_round": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
+    "current_chinese_draft": "docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md",
     "status_counts": {
       "REVISION_NEEDED": 5,
       "VERIFIED": 29,
@@ -351,6 +351,17 @@
       "GPU_added_seconds": 0,
       "originality": "SC04/05 remain gaps; finite pairing is an existing OT tool",
       "sync_evidence": "Local round7 delivery receipt after GitHub pull and assignment replay"
+    },
+    "round8": {
+      "audit": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
+      "draft": "docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md",
+      "GPU_added_seconds": 0,
+      "preserved_original_tables": 18,
+      "tables_total": 19,
+      "figures": 8,
+      "references": 31,
+      "scope": "Writing and Word layout only; no scientific result promotion or new model generation",
+      "sync_evidence": "Local round8 delivery receipt after server GitHub push and Mac pull"
     }
   },
   "historical_submission_objective_before_round5": "Publish in a CAS tier-1 (中科院一区) journal, TNNLS first. The paper is packaged and submittable as of 2026-10-27 (12 pages, 0 overfull, 3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only). What it lacks is not prose but one piece of evidence: the central claim is currently a four-point cross-section, and the reviewer's first objection is already known. The plan below exists to convert that cross-section into an identification, then to put it in the paper.",

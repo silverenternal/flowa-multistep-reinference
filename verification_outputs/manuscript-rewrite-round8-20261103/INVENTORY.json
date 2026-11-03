@@ -1,0 +1,11 @@
+{
+  "base_commit": "29da2565af30a3829aa1a44ca6a6682f4c150e10",
+  "old_draft_sha256": "033b674c9803176b98586f3c8037545f3eb31d5369d99bce57f6227211ca487e",
+  "old_tables_preserved": 18,
+  "new_tables": 19,
+  "figures_preserved": 8,
+  "references": 31,
+  "characters": 42827,
+  "CJK_characters": 19265,
+  "GPU_added_seconds": 0
+}

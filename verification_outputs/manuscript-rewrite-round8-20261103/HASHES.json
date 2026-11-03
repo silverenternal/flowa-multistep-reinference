@@ -1,0 +1,23 @@
+{
+  "README.md": "f1ba11c9435252a5c005a8014d4c0ed3989f5fca4de47cb43e92e616bfeda688",
+  "README.zh.md": "eabd170ce77079a375d87397648b4dcfc6b948f21ea100a230fc56720b41d76f",
+  "docs/METRIC_LEDGER.json": "dc66ab99888d748c6c0be42e1744a61c44de7bc5f8ef90a37bc95d0cb16e4def",
+  "docs/METRIC_LEDGER.md": "69720cff85ec96293c234ed8a7361f582af5529b4a330b612a5a32faff0532d2",
+  "docs/README.md": "2edd36a31dce0d3efa63bb600e983bffff3839a4102e4963f57fd993249e57c2",
+  "docs/audit/INDEX.md": "133259d30ddf581f5f82580bf3f5a8fa2cad88f8a2d6deca51b683a5a00f171c",
+  "docs/audit/manuscript-rewrite-round8-2026-11-03.md": "146bf68d0fb46386dfa34f728893dc8a52611d2ce571b204dca78844433df29a",
+  "docs/audit/manuscript-selfcheck-2026-11-02.json": "d76d8259bfff3bfe09d8e83fb9d98076d12020bd985c5b1cfda102233d0f3bb3",
+  "docs/audit/manuscript-selfcheck-2026-11-02.md": "849eb2089c35dbb2eb3f7265a5b5b80c0f83ab525e6b18fe14fc57b32a7a7f01",
+  "docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md": "50964f971eb8c5566cf3678669242180c6c628913c722ad92cd37dcddee9fd74",
+  "mkdocs.yml": "7974efeee89f59c4882b31a537a85e47c787f1f74f51a71b96654f271eaa094b",
+  "todo.json": "1f7860de38e8b4798743f35d5378144c3ebb7fa7d813a67434acdc7a096824fc",
+  "verification_outputs/manuscript-rewrite-round8-20261103/CHECKS.json": "c76e671710791aa52b620b00be346a7f3e8a9a741b4ea6300aa9db338bbf40dc",
+  "verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json": "d458cd73c8996f780ec8d0c190fcd1071089f025866f007f9ec7a6938ab3620d",
+  "verification_outputs/manuscript-rewrite-round8-20261103/STRUCTURE_CHECKS.json": "e3bba4a9352301334dc5f356f1d0313709260033a00ada6471700ab49865a19c",
+  "verification_outputs/manuscript-rewrite-round8-20261103/WHITESPACE_RESOLUTION.json": "da695119941c8767c22f69a5ba1e0cb5c1f4dc053d1c50a7d929ec637b44064d",
+  "verification_outputs/manuscript-rewrite-round8-20261103/WORD_QA.json": "d86f727cb692e851fd69288c782d0a44b4c78270ea82e1616440192b40ed6e84",
+  "verification_outputs/manuscript-rewrite-round8-20261103/build_manuscript.py": "9412d6a1f209f3179d811839fc83ded5839edbd22014d5410b99fd6d21bd22ac",
+  "verification_outputs/manuscript-rewrite-round8-20261103/checklist-before-round8.json": "91638e035e7dde04acbdeb7e3cbb177de1eca447a96113251e80f4968c4a775e",
+  "verification_outputs/manuscript-rewrite-round8-20261103/export_manuscript.py": "3b1eb03f2ba3fd0d2adcd125f3784db8dd1bedb6d635ad5a88f6c7124da283d9",
+  "verification_outputs/manuscript-rewrite-round8-20261103/update_records.py": "eabfbe3d42ee9f823230ca37049d3a34dc9b444fe1d9807f3c838534426cea2f"
+}
