@@ -1,0 +1,37 @@
+[
+  {
+    "url": "https://cis.ieee.org/publications/t-neural-networks-and-learning-systems/tnnls",
+    "http_status": 200,
+    "retrieved_date": "2026-11-03",
+    "raw_html_sha256": "ac8e1dcc5ba673f4ec8f059cd3cee6d059c845b6a9b3fc512f0c76b93db24971",
+    "archiving_scope": "Digest and paraphrased requirements only; full copyright HTML retained locally"
+  },
+  {
+    "url": "https://cis.ieee.org/publications/t-neural-networks-and-learning-systems/tnnls-guidelines-for-paper-submission",
+    "http_status": 200,
+    "retrieved_date": "2026-11-03",
+    "raw_html_sha256": "b5db7ff9bd0271b1957f863673157acb849119e87d516fb45207a969df2ab0dc",
+    "archiving_scope": "Digest and paraphrased requirements only; full copyright HTML retained locally"
+  },
+  {
+    "url": "https://cis.ieee.org/publications/t-neural-networks-and-learning-systems/tnnls-types-of-contributions",
+    "http_status": 200,
+    "retrieved_date": "2026-11-03",
+    "raw_html_sha256": "eddabe5a963b3009d24a05fed080928070a5c2b0ea22c87e6c37b345fdace8b2",
+    "archiving_scope": "Digest and paraphrased requirements only; full copyright HTML retained locally"
+  },
+  {
+    "url": "https://cis.ieee.org/publications/t-neural-networks-and-learning-systems/tnnls-manuscript-submission",
+    "http_status": 200,
+    "retrieved_date": "2026-11-03",
+    "raw_html_sha256": "3566411edc584661c6b07f5a7413627dcab7ebae3f87af3931b39cbc13e32f75",
+    "archiving_scope": "Digest and paraphrased requirements only; full copyright HTML retained locally"
+  },
+  {
+    "url": "https://cis.ieee.org/publications/t-neural-networks-and-learning-systems/tnnls-page-charges",
+    "http_status": 200,
+    "retrieved_date": "2026-11-03",
+    "raw_html_sha256": "16c1c1a8400766e5d92fe5dda50e6a2f13eb51f5bd6077da6590fae51fdb0f7a",
+    "archiving_scope": "Digest and paraphrased requirements only; full copyright HTML retained locally"
+  }
+]

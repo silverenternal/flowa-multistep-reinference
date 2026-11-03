@@ -1,0 +1,36 @@
+{
+  "base_commit": "a80acdda4a4f0ca6bf2edbc859481c6323bd0d4c",
+  "timestamp_utc": "2026-11-03T04:02:32.602434+00:00",
+  "device": "CPU",
+  "selected_GPU": null,
+  "GPU_inventory_read_only": "0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97340 MiB\n1, NVIDIA GeForce RTX 5090, 32202 MiB",
+  "GPU_added_seconds": 0,
+  "command": ".venvs/flowmol3_venv/bin/python tools/review_path_identifiability_20261103.py --out verification_outputs/path-identifiability-20261103 --max-records 36 --wall-seconds 30 --seed 20261103",
+  "config": {
+    "m": [
+      0.2,
+      0.5,
+      0.8
+    ],
+    "sigma": [
+      0.5,
+      1.0,
+      2.0
+    ],
+    "rotation": [
+      0.0,
+      0.7
+    ],
+    "rho": [
+      0.0,
+      0.7
+    ]
+  },
+  "max_records": 36,
+  "Monte_Carlo_samples": 0,
+  "seed": 20261103,
+  "wall_cap_seconds": 30,
+  "output_dir": "verification_outputs/path-identifiability-20261103",
+  "source_sha256": "ea83b50c59d6d2d875f370bd4a79daad9b5f87e1264cf800eb48b4cc603a0969",
+  "protocol_timing": "Saved before formal execution, after deterministic unit preflight using the same grid; not a preregistered inferential study"
+}

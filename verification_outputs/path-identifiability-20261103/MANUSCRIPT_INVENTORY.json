@@ -1,0 +1,11 @@
+{
+  "base_commit": "a80acdda4a4f0ca6bf2edbc859481c6323bd0d4c",
+  "original_table_objects_preserved_except_citation_labels": 19,
+  "table_objects": 20,
+  "numbered_tables": 19,
+  "figures": 9,
+  "references": 32,
+  "original_result_values_unchanged": true,
+  "GPU_added_seconds": 0,
+  "source_sha256": "834ee0822c592b587d0aa2818574c6c74910632db6ceed9bde588f30db13f55b"
+}

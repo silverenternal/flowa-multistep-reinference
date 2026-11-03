@@ -56,10 +56,10 @@ preserved for the per-wave audit trail.
 | `algorithm_4arm` | Algorithm + 4-arm (Theorem 1, paper-quantity, A/B/C_g, efficiency) | 39 | 18 | 21 |
 | `sweep_eval` | Sweep / eval / ablation (N=1000/30/64 sweeps, novelty, foldability) | 111 | 90 | 21 |
 | `stats_method` | Statistical methodology (R5/R6, p-value, bonferroni, TOST) | 43 | 20 | 23 |
-| `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 63 | 31 | 32 |
+| `paper_claims` | Paper + claims (paper packaging, claim audit, paper-update) | 65 | 31 | 34 |
 | `final_verify` | Final-verify (per-wave close-out, pre-push hygiene) | 36 | 23 | 13 |
 | `governance` | Governance (scope, audit, gap, condition, placeholder, cross-cutting) | 113 | 32 | 81 |
-| **TOTAL** | — | **649** | **354** | **295** |
+| **TOTAL** | — | **651** | **354** | **297** |
 
 ---
 
@@ -708,7 +708,7 @@ Statistical methodology (R5/R6, p-value, bonferroni, TOST). This cluster is part
 
 ### Cluster: `paper_claims` — Paper + claims (paper packaging, claim audit, paper-update)
 
-**Files: 63** (active: 31, historical: 32)
+**Files: 65** (active: 31, historical: 34)
 
 Paper + claims (paper packaging, claim audit, paper-update). This cluster is part of the project's audit surface for paper_claims.
 
@@ -746,7 +746,7 @@ Paper + claims (paper packaging, claim audit, paper-update). This cluster is par
 - `wave372-manuscript-claim-audit.md`
 - `wave385-figures.md`
 
-**Historical (32 files, not cited by reviewer-facing surfaces):**
+**Historical (34 files, not cited by reviewer-facing surfaces):**
 
 - `cover-letter-fill-draft.md`
 - `figure-hash-gate.md`
@@ -759,6 +759,7 @@ Paper + claims (paper packaging, claim audit, paper-update). This cluster is par
 - `manuscript-selfcheck-round3-2026-11-03.md`
 - `manuscript-selfcheck-round4-2026-11-03.md`
 - `manuscript-selfcheck-validation-2026-11-02.md`
+- `manuscript-supplement-round9-2026-11-03.md`
 - `manuscript-vs-new-evidence-2026-10-27.md`
 - `paper-evidence-register-2026-10-27.md`
 - `paper-refresh-2026-10-27.md`
@@ -767,6 +768,7 @@ Paper + claims (paper packaging, claim audit, paper-update). This cluster is par
 - `paper-v32-verify-only-pass.md`
 - `p4-paper-updates.md`
 - `p6-paper-polish-audit.md`
+- `tnnls-author-requirements-2026-11-03.md`
 - `wave293-p2-verify-direction.md`
 - `wave294-p3-low-paper-fixed.md`
 - `wave297-p1-paper-inventory.md`

@@ -73,6 +73,14 @@
       "current_target": "TNNLS is a topic-fit candidate only; CAS stopped updates from2026 per official statement; verify2025 historical category and institution rules before claiming tier1",
       "judgment": "Not yet a hard-Q1-ready manuscript. Endpoint-construction overlap and limited external confirmation remain material.",
       "next_decision": "Resolve a distinct testable contribution, then recheck venue scope, historical2025 CAS category, institution recognition rules and latest accessible author instructions; do not infer acceptance odds from engineering gates."
+    },
+    "current_author_requirements_2026_11_03": {
+      "source": "docs/audit/tnnls-author-requirements-2026-11-03.md",
+      "review": "double-anonymous",
+      "regular_overlength_after_pages": 10,
+      "regular_max_pages_excluding_supplement": 15,
+      "author_portal": "https://ieee.atyponrex.com/journal/tnnls",
+      "historical_13_page_rule_not_current": true
     }
   },
   "execution_order": [
@@ -297,11 +305,11 @@
     "record": "docs/audit/manuscript-selfcheck-2026-11-02.md",
     "machine_record": "docs/audit/manuscript-selfcheck-2026-11-02.json",
     "items": 45,
-    "status": "ROUND8 complete Chinese manuscript rewrite; originality and formal English formatting remain separately unresolved",
+    "status": "ROUND9 path-identifiability controls and current TNNLS requirements added; originality remains unresolved",
     "scope": "All reviewer-plan items from the 2026-11-02 chat; inspect existing source and audit records first. GAP-90/91/92 omissions corrected in the checklist.",
     "push_authorization": "User explicitly authorized this synchronization on 2026-11-02; standing no_push remains unchanged.",
-    "latest_round": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
-    "current_chinese_draft": "docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md",
+    "latest_round": "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+    "current_chinese_draft": "docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md",
     "status_counts": {
       "REVISION_NEEDED": 5,
       "VERIFIED": 29,
@@ -362,6 +370,15 @@
       "references": 31,
       "scope": "Writing and Word layout only; no scientific result promotion or new model generation",
       "sync_evidence": "Local round8 delivery receipt after server GitHub push and Mac pull"
+    },
+    "round9": {
+      "audit": "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+      "draft": "docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md",
+      "CPU_controls": 36,
+      "GPU_added_seconds": 0,
+      "author_requirements": "docs/audit/tnnls-author-requirements-2026-11-03.md",
+      "originality": "Specific endpoint-indistinguishability construction added; not a new sampler or novelty certification",
+      "sync_evidence": "Local round9 delivery receipt after GitHub push and Mac pull"
     }
   },
   "historical_submission_objective_before_round5": "Publish in a CAS tier-1 (中科院一区) journal, TNNLS first. The paper is packaged and submittable as of 2026-10-27 (12 pages, 0 overfull, 3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only). What it lacks is not prose but one piece of evidence: the central claim is currently a four-point cross-section, and the reviewer's first objection is already known. The plan below exists to convert that cross-section into an identification, then to put it in the paper.",
@@ -376,6 +393,6 @@
       "find observable coupling diagnostics without oracle constants",
       "only then lock independent model intervention and budget"
     ],
-    "latest_originality_audit": "docs/audit/manuscript-originality-round6-2026-11-03.md"
+    "latest_originality_audit": "docs/audit/manuscript-supplement-round9-2026-11-03.md"
   }
 }

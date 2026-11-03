@@ -31,7 +31,8 @@
     "撤回SC-41整项VERIFIED：原创性前置项尚未完成；此前主观录用概率不作当前预测。",
     "第六轮将高斯特例推广为凸梯度路径的Bregman缺口及W2下界候选；小非梯度误差可翻转符号，不能将强单调或接近OT当作充分假设。原创性仍待逐证明查新。",
     "第六轮二次审查：矩缺口等于t(1−t)乘输运成本差；最优路径下非负性是经典OT最优性，障碍命题降级为机制引理，不包装为主要原创贡献。",
-    "第八轮已开始完整中文正文写作，新增解析与缓存结果不等于新增独立模型验证；写作完成与原创性、期刊格式验收分别记录。"
+    "第八轮已开始完整中文正文写作，新增解析与缓存结果不等于新增独立模型验证；写作完成与原创性、期刊格式验收分别记录。",
+    "第九轮直接读取现行TNNLS官网：双匿名、常规超过10页每页200美元且正文总长最多15页；旧2012年13页口径为历史规则。解析路径控制已补充，实际神经流中间边缘与独立干预仍未完成。"
   ],
   "items": [
     {
@@ -194,11 +195,14 @@
         "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
         "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
         "docs/audit/manuscript-originality-round6-2026-11-03.md",
-        "docs/audit/manuscript-endpoint-pairing-round7-2026-11-03.md"
+        "docs/audit/manuscript-endpoint-pairing-round7-2026-11-03.md",
+        "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+        "docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md",
+        "verification_outputs/path-identifiability-20261103/RESULTS.json"
       ],
       "evidence_type": "SOURCE_AND_PRIMARY_LITERATURE",
       "status": "EVIDENCE_GAP",
-      "finding": "第七轮在12个既有CIFAR操作点各取固定256对端点，未发现有限循环单调性违例；不能确认全局凸梯度或预测质量。小批配对优化和有限单调性已有直接文献，诊断不作为新方法。核心原创性缺口仍在。",
+      "finding": "新增相同端点映射与联合分布、不同刷新输出的光滑流构造，36个CPU控制验证端点诊断不能替代真实中间边缘。路径自由度和Lipschitz传播已有经典基础；针对指定刷新核的构造未被确认为足够独立的新颖贡献。原有操作重合不变，原创充分性仍缺证据。",
       "next_action": "先获取/验证实际中间边缘的可观测诊断；只有区分路径弯曲与配对改变并超出已有方法后才考虑独立干预。",
       "history": [
         {
@@ -232,11 +236,19 @@
           "next_action": "追溯OT重排/Bregman差额和边缘保持理论；若已直接覆盖则降为引理；寻找可估计判别量及独立干预。",
           "review_round": "round6-2026-11-03",
           "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md"
+        },
+        {
+          "status": "EVIDENCE_GAP",
+          "finding": "第七轮在12个既有CIFAR操作点各取固定256对端点，未发现有限循环单调性违例；不能确认全局凸梯度或预测质量。小批配对优化和有限单调性已有直接文献，诊断不作为新方法。核心原创性缺口仍在。",
+          "next_action": "先获取/验证实际中间边缘的可观测诊断；只有区分路径弯曲与配对改变并超出已有方法后才考虑独立干预。",
+          "review_round": "round7-2026-11-03",
+          "review_record": "docs/audit/manuscript-endpoint-pairing-round7-2026-11-03.md",
+          "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
         }
       ],
-      "review_round": "round7-2026-11-03",
-      "review_record": "docs/audit/manuscript-endpoint-pairing-round7-2026-11-03.md",
-      "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
+      "review_round": "round9-2026-11-03",
+      "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+      "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"
     },
     {
       "id": "SC-05",
@@ -258,11 +270,14 @@
         "verification_outputs/component-study-20261103/PROTOCOL.json",
         "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
         "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
-        "docs/audit/manuscript-originality-round6-2026-11-03.md"
+        "docs/audit/manuscript-originality-round6-2026-11-03.md",
+        "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+        "docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md",
+        "verification_outputs/path-identifiability-20261103/RESULTS.json"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
       "status": "EVIDENCE_GAP",
-      "finding": "固定调度本身的新颖性仍不足。本轮贡献候选转向训练耦合决定刷新合法性的机制分析，不再以增加混合权重或接口作为创新。",
+      "finding": "当前新增的是可检验的端点不可识别性分析，不是新的端点混合算法。无新神经模型干预或迁移收益，不能以控制数量替代独有方法证据。",
       "next_action": "理论差异通过后才锁定实用修正；同等调用收益和新模型验证仍未完成。",
       "history": [
         {
@@ -295,11 +310,19 @@
           "next_action": "以已有单因素矩阵判断哪些差异真实影响结果；仅对可识别的新差异设计最小控制，不把路径一致修正本身当新算子。",
           "review_round": "round5-2026-11-03",
           "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
+        },
+        {
+          "status": "EVIDENCE_GAP",
+          "finding": "固定调度本身的新颖性仍不足。本轮贡献候选转向训练耦合决定刷新合法性的机制分析，不再以增加混合权重或接口作为创新。",
+          "next_action": "理论差异通过后才锁定实用修正；同等调用收益和新模型验证仍未完成。",
+          "review_round": "round6-2026-11-03",
+          "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
+          "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
         }
       ],
-      "review_round": "round6-2026-11-03",
-      "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
-      "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
+      "review_round": "round9-2026-11-03",
+      "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+      "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"
     },
     {
       "id": "SC-06",
@@ -642,11 +665,14 @@
         "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
         "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
         "docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md",
-        "verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json"
+        "verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json",
+        "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+        "docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md",
+        "verification_outputs/path-identifiability-20261103/RESULTS.json"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
       "status": "VERIFIED",
-      "finding": "第六轮凸梯度路径下的矩缺口、条件W2下界、SPD迹恒等式与近似路径反例已进入IV-D至F；100个CPU案例和第七轮12单元端点诊断已进入V-G、VI-I/J及讨论。数值结果及范围与原记录一致。",
+      "finding": "中文v8新增IV-G的光滑流构造与双侧W2界、V-H协议、VI-K结果、图9和表XIV；旧19个表格对象保留，仅重排文献标签，原科学数据不变。",
       "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。",
       "history": [
         {
@@ -668,11 +694,19 @@
           "review_round": "round5-2026-11-03",
           "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
           "verification_scope": "仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。"
+        },
+        {
+          "status": "VERIFIED",
+          "finding": "第六轮凸梯度路径下的矩缺口、条件W2下界、SPD迹恒等式与近似路径反例已进入IV-D至F；100个CPU案例和第七轮12单元端点诊断已进入V-G、VI-I/J及讨论。数值结果及范围与原记录一致。",
+          "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。",
+          "review_round": "round8-2026-11-03",
+          "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
+          "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"
         }
       ],
-      "review_round": "round8-2026-11-03",
-      "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
-      "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"
+      "review_round": "round9-2026-11-03",
+      "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+      "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"
     },
     {
       "id": "SC-15",
@@ -862,11 +896,14 @@
         "docs/audit/manuscript-originality-round6-2026-11-03.md",
         "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
         "docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md",
-        "verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json"
+        "verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json",
+        "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+        "docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md",
+        "verification_outputs/path-identifiability-20261103/RESULTS.json"
       ],
       "evidence_type": "MATHEMATICS_AND_PRIMARY_LITERATURE",
       "status": "VERIFIED",
-      "finding": "正文将矩缺口与经典二次输运成本差明确等价，归为机制引理并引经典OT来源；条件W2下界附Minkowski和Lipschitz推前证明，不据此宣称已通过逐证明查新。",
+      "finding": "既有矩缺口仍标明经典OT关系；新增双侧W2界明确为标准Lipschitz推前推论。端点不可识别性为具体构造，不将一般路径自由度当作首次发现，也不以数值通过代替逐证明查新。",
       "next_action": "继续查新，不能将数值一致性等同于原创性。",
       "history": [
         {
@@ -895,11 +932,19 @@
           "review_round": "round6-2026-11-03",
           "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
           "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
+        },
+        {
+          "status": "VERIFIED",
+          "finding": "正文将矩缺口与经典二次输运成本差明确等价，归为机制引理并引经典OT来源；条件W2下界附Minkowski和Lipschitz推前证明，不据此宣称已通过逐证明查新。",
+          "next_action": "继续查新，不能将数值一致性等同于原创性。",
+          "review_round": "round8-2026-11-03",
+          "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
+          "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"
         }
       ],
-      "review_round": "round8-2026-11-03",
-      "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
-      "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"
+      "review_round": "round9-2026-11-03",
+      "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+      "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"
     },
     {
       "id": "SC-20",
@@ -918,11 +963,14 @@
         "docs/audit/manuscript-originality-round6-2026-11-03.md",
         "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
         "docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md",
-        "verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json"
+        "verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json",
+        "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+        "docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md",
+        "verification_outputs/path-identifiability-20261103/RESULTS.json"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
       "status": "VERIFIED",
-      "finding": "新增理论写明有限二阶矩、强凸C2势、可积性、固定终点、同源边缘及0<t<1条件；非梯度反例和有限端点非认证结论与正文相邻，未将这些假设认证给神经检查点。",
+      "finding": "端点不可识别性限于一般光滑可逆流族，不要求同一独立直线训练路径；已知训练概率路径时可缩小该类别。双侧界需精确后段映射及正有限正逆Lipschitz上界，未认证给CIFAR模型。",
       "next_action": "建立可估计假设与实际模型对应，不从合成例子外推图像因果机制。",
       "history": [
         {
@@ -951,11 +999,19 @@
           "review_round": "round6-2026-11-03",
           "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
           "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
+        },
+        {
+          "status": "VERIFIED",
+          "finding": "新增理论写明有限二阶矩、强凸C2势、可积性、固定终点、同源边缘及0<t<1条件；非梯度反例和有限端点非认证结论与正文相邻，未将这些假设认证给神经检查点。",
+          "next_action": "建立可估计假设与实际模型对应，不从合成例子外推图像因果机制。",
+          "review_round": "round8-2026-11-03",
+          "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
+          "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"
         }
       ],
-      "review_round": "round8-2026-11-03",
-      "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
-      "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"
+      "review_round": "round9-2026-11-03",
+      "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+      "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"
     },
     {
       "id": "SC-21",
@@ -1690,11 +1746,14 @@
         "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
         "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
         "docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md",
-        "verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json"
+        "verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json",
+        "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+        "docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md",
+        "verification_outputs/path-identifiability-20261103/RESULTS.json"
       ],
       "evidence_type": "SOURCE_AND_RECORDS",
       "status": "VERIFIED",
-      "finding": "旧8幅图与18个Markdown表格完整保留；新增有限端点诊断表，编号按正文到附录连续排列。Word逐页排版验收及文件摘要写入本轮本地交付收据，不以表图数量证明科学结论。",
+      "finding": "中文v8保留8幅已有图，新增可识别性图9；20个表格对象包含19张编号表和1张算法表。三种输出切片均展示，36例逐例记录可复算，不把合成控制写成图像生成质量。",
       "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。",
       "history": [
         {
@@ -1728,11 +1787,19 @@
           "review_round": "round5-2026-11-03",
           "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
           "verification_scope": "仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。"
+        },
+        {
+          "status": "VERIFIED",
+          "finding": "旧8幅图与18个Markdown表格完整保留；新增有限端点诊断表，编号按正文到附录连续排列。Word逐页排版验收及文件摘要写入本轮本地交付收据，不以表图数量证明科学结论。",
+          "next_action": "保留本项具体修正；新增实验或稿件改动若改变适用范围须重新验收。",
+          "review_round": "round8-2026-11-03",
+          "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
+          "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"
         }
       ],
-      "review_round": "round8-2026-11-03",
-      "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
-      "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"
+      "review_round": "round9-2026-11-03",
+      "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+      "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"
     },
     {
       "id": "SC-38",
@@ -1801,11 +1868,14 @@
         "docs/audit/manuscript-originality-round6-2026-11-03.md",
         "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
         "docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md",
-        "verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json"
+        "verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json",
+        "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+        "docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md",
+        "verification_outputs/path-identifiability-20261103/RESULTS.json"
       ],
       "evidence_type": "SOURCE_AND_PRIMARY_LITERATURE",
       "status": "REVISION_NEEDED",
-      "finding": "相关工作增加经典OT、小批耦合、有限循环单调性、ReBridge-Flow和MMD Guidance，参考文献共31条。新增来源使用原论文/正式会议页面；2026预印本注明版本，未写成同行评议定论。",
+      "finding": "32条文献按首次出现重排，含真实AI辅助披露所用系统引用。官方作者须知有效地址、双匿名、10页收费阈值与15页上限已直接核对，旧2012年13页口径不再作现行规则。",
       "next_action": "继续原始证明与引用追溯；科学主张稳定后统一稿件书目。",
       "history": [
         {
@@ -1840,11 +1910,19 @@
           "review_round": "round6-2026-11-03",
           "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
           "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
+        },
+        {
+          "status": "REVISION_NEEDED",
+          "finding": "相关工作增加经典OT、小批耦合、有限循环单调性、ReBridge-Flow和MMD Guidance，参考文献共31条。新增来源使用原论文/正式会议页面；2026预印本注明版本，未写成同行评议定论。",
+          "next_action": "继续原始证明与引用追溯；科学主张稳定后统一稿件书目。",
+          "review_round": "round8-2026-11-03",
+          "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
+          "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"
         }
       ],
-      "review_round": "round8-2026-11-03",
-      "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
-      "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"
+      "review_round": "round9-2026-11-03",
+      "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+      "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"
     },
     {
       "id": "SC-40",
@@ -1975,11 +2053,14 @@
         "docs/audit/manuscript-originality-round6-2026-11-03.md",
         "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
         "docs/drafts/paper-A-zh-reviewed-round8-2026-11-03.md",
-        "verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json"
+        "verification_outputs/manuscript-rewrite-round8-20261103/INVENTORY.json",
+        "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+        "docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md",
+        "verification_outputs/path-identifiability-20261103/RESULTS.json"
       ],
       "evidence_type": "WORKFLOW",
       "status": "REVISION_NEEDED",
-      "finding": "v7主稿已将第六/七轮研究写入方法条件、完整证明、实验协议、结果和讨论，并保留六检查点、组件、五臂及两轮候选数据。验收范围为本轮中文重写，不代表英文格式、创新性或投稿就绪通过。",
+      "finding": "中文v8已补路径不可识别性命题、控制协议、结果、图表与AI辅助披露；另完成当前TNNLS投稿核对单。中文稿写作验收不等于英文双栏PDF、作者确认或原创充分性验收。",
       "next_action": "原创性门槛通过后再整合主稿，不通过则降为背景理论。",
       "history": [
         {
@@ -2026,11 +2107,19 @@
           "review_round": "round6-2026-11-03",
           "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md",
           "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
+        },
+        {
+          "status": "REVISION_NEEDED",
+          "finding": "v7主稿已将第六/七轮研究写入方法条件、完整证明、实验协议、结果和讨论，并保留六检查点、组件、五臂及两轮候选数据。验收范围为本轮中文重写，不代表英文格式、创新性或投稿就绪通过。",
+          "next_action": "原创性门槛通过后再整合主稿，不通过则降为背景理论。",
+          "review_round": "round8-2026-11-03",
+          "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
+          "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"
         }
       ],
-      "review_round": "round8-2026-11-03",
-      "review_record": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
-      "verification_scope": "本轮中文稿的组织、条件陈述、来源和材料保留；不认证原创充分性、独立泛化或英文期刊格式。"
+      "review_round": "round9-2026-11-03",
+      "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+      "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"
     },
     {
       "id": "SC-43",
@@ -2079,11 +2168,14 @@
         "docs/audit/manuscript-selfcheck-round1-2026-11-02.md",
         "docs/drafts/paper-A-zh-reviewed-2026-11-02.md",
         "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md"
+        "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
+        "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+        "docs/drafts/paper-A-zh-reviewed-round9-2026-11-03.md",
+        "verification_outputs/path-identifiability-20261103/RESULTS.json"
       ],
       "evidence_type": "VENUE_GUIDELINES_AND_MANUSCRIPT",
       "status": "EVIDENCE_LOCATED",
-      "finding": "TNNLS仅保留主题方向候选；此前主观录用概率与旧分区/影响因子不再作当前判断。官方已宣布2026起不再更新分区表，应按2025历史版本、大类/小类及用户单位认定规则复核；本轮官网作者页面抓取受限，不能宣称2026最新全文已验收。当前不足以称硬一区稿。",
+      "finding": "已定位并直接读取现行TNNLS作者须知及5个官方页面，当前采用双匿名、IEEE Author Portal、常规10页收费阈值和15页最大长度。文章类型和主题适配可继续考察，但原创性、独立干预、英文编排及机构分区认可仍未据此通过；不将官网形式要求核对等同于首投合理性结论。",
       "next_action": "在核心科学缺口解决后，核对2025历史中科院大类/小类、单位适用规则及可获得的最新官网作者须知，再决定首投；不沿用旧录用概率。",
       "history": [
         {
@@ -2097,11 +2189,19 @@
           "review_round": "round1-2026-11-02",
           "review_record": "docs/audit/manuscript-selfcheck-round1-2026-11-02.md",
           "next_action": "按本轮发现中保留的缺口继续核对；已修正的表述不重复重跑实验。"
+        },
+        {
+          "status": "EVIDENCE_LOCATED",
+          "finding": "TNNLS仅保留主题方向候选；此前主观录用概率与旧分区/影响因子不再作当前判断。官方已宣布2026起不再更新分区表，应按2025历史版本、大类/小类及用户单位认定规则复核；本轮官网作者页面抓取受限，不能宣称2026最新全文已验收。当前不足以称硬一区稿。",
+          "next_action": "在核心科学缺口解决后，核对2025历史中科院大类/小类、单位适用规则及可获得的最新官网作者须知，再决定首投；不沿用旧录用概率。",
+          "review_round": "round5-2026-11-03",
+          "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
+          "verification_scope": "仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。"
         }
       ],
-      "review_round": "round5-2026-11-03",
-      "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
-      "verification_scope": "仅本项列出的实现、统计与稿件修正；剩余科学条件以发现及下一步为准。"
+      "review_round": "round9-2026-11-03",
+      "review_record": "docs/audit/manuscript-supplement-round9-2026-11-03.md",
+      "verification_scope": "本轮解析控制、文稿与官方规则核查；不认证原创充分性、真实神经流预测或最终投稿合规。"
     },
     {
       "id": "SC-45",
@@ -2164,7 +2264,7 @@
       "verification_scope": "本轮记录的条件证明、CPU数值检查与表达修正；不代表新颖性、神经模型外部验证或一区成熟度通过。"
     }
   ],
-  "latest_round": "docs/audit/manuscript-rewrite-round8-2026-11-03.md",
+  "latest_round": "docs/audit/manuscript-supplement-round9-2026-11-03.md",
   "sync_completed_against_scientific_commit": "5edbd6c5d701f6764e91c134662e2ca8fb7b44ae",
   "Mac_replay_record": "verification_outputs/manuscript-selfcheck-round5-2026-11-03/MAC_REPLAY.json"
 }
