@@ -1,0 +1,7 @@
+{
+  "science_commit": "e505feb88a6393a9823f1873dd170f14409be7c0",
+  "mac_replay": "MAC_REPLAY.json",
+  "timestamp_utc": "2026-11-03T02:33:23.834524+00:00",
+  "scope": "Science source and100 analytic checks replayed after GitHub pull; closure metadata commit verified separately in local receipt",
+  "source_and_results_unchanged_since_replay": true
+}

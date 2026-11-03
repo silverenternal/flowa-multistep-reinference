@@ -1998,12 +1998,13 @@
         "docs/audit/manuscript-selfcheck-round5-2026-11-03.md",
         "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
         "verification_outputs/manuscript-selfcheck-round5-2026-11-03/MAC_REPLAY.json",
-        "docs/audit/manuscript-originality-round6-2026-11-03.md"
+        "docs/audit/manuscript-originality-round6-2026-11-03.md",
+        "verification_outputs/ot-refresh-20261103/MAC_REPLAY.json"
       ],
       "evidence_type": "WORKFLOW",
-      "status": "EVIDENCE_LOCATED",
-      "finding": "全部45项及既有历史保留，本轮源码/证明/逐条CPU证据已整理；GitHub推送及Mac回放待闭环。",
-      "next_action": "完成服务器检查、推送GitHub、Mac快进拉取与100案例回放后记录收据。",
+      "status": "VERIFIED",
+      "finding": "完整45项及既有历史保留。科学提交e505feb88a6393a9823f1873dd170f14409be7c0已推送GitHub，Mac快进拉取且工作树干净；核对14个科学文件摘要，100案例CPU回放最大误差8.881784197001252e−16，容差1e−9。工程门禁在服务器通过，不宣称Mac执行全套或新增图像生成。",
+      "next_action": "本轮Word交付和最终闭环提交号见Mac收据；继续沿SC-04/05保留的原创性缺口推进。",
       "history": [
         {
           "round": "registration",
@@ -2030,6 +2031,13 @@
           "next_action": "保留本轮同步与复算回执；后续源码/证据改动须再次核对来源与Mac副本。",
           "review_round": "round5-sync-2026-11-03",
           "review_record": "docs/audit/manuscript-selfcheck-round5-2026-11-03.md"
+        },
+        {
+          "status": "EVIDENCE_LOCATED",
+          "finding": "全部45项及既有历史保留，本轮源码/证明/逐条CPU证据已整理；GitHub推送及Mac回放待闭环。",
+          "next_action": "完成服务器检查、推送GitHub、Mac快进拉取与100案例回放后记录收据。",
+          "review_round": "round6-2026-11-03",
+          "review_record": "docs/audit/manuscript-originality-round6-2026-11-03.md"
         }
       ],
       "review_round": "round6-2026-11-03",

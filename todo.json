@@ -304,9 +304,9 @@
     "current_chinese_draft": "docs/drafts/paper-A-zh-reviewed-round5-2026-11-03.md",
     "status_counts": {
       "REVISION_NEEDED": 5,
-      "VERIFIED": 28,
+      "VERIFIED": 29,
       "EVIDENCE_GAP": 5,
-      "EVIDENCE_LOCATED": 7
+      "EVIDENCE_LOCATED": 6
     },
     "round4": {
       "audit": "docs/audit/manuscript-selfcheck-round4-2026-11-03.md",
@@ -338,7 +338,10 @@
       "GPU_added_seconds": 0,
       "GPU_accounted_total_seconds": 6638,
       "novelty": "core deficit equals classical OT cost gap; no-go downgraded to mechanism lemma; originality remains unresolved",
-      "sync_status": "pending server gates and GitHub to Mac replay"
+      "sync_status": "Scientific commit e505feb88a6393a9823f1873dd170f14409be7c0 pushed to GitHub and pulled/replayed on Mac; final closure HEAD in local delivery receipt",
+      "scientific_commit_replayed": "e505feb88a6393a9823f1873dd170f14409be7c0",
+      "Mac_CPU_replay_cases": 100,
+      "Mac_max_numeric_error": 8.881784197001252e-16
     }
   },
   "historical_submission_objective_before_round5": "Publish in a CAS tier-1 (中科院一区) journal, TNNLS first. The paper is packaged and submittable as of 2026-10-27 (12 pages, 0 overfull, 3 STRONG + 1 CONDITIONAL + 1 TIE + 2 PARTIAL + 4 SUPP-only). What it lacks is not prose but one piece of evidence: the central claim is currently a four-point cross-section, and the reviewer's first objection is already known. The plan below exists to convert that cross-section into an identification, then to put it in the paper.",

@@ -1,0 +1,46 @@
+{
+  "date": "2026-11-03",
+  "scope": "Primary-source comparison; not exhaustive priority certificate",
+  "sources": [
+    {
+      "title": "Restart Sampling",
+      "url": "https://arxiv.org/abs/2306.14878",
+      "version": "v2",
+      "sections": "4.2",
+      "decision": "Restart and contraction analysis known"
+    },
+    {
+      "title": "Diamond Maps",
+      "url": "https://arxiv.org/html/2602.05993v3",
+      "version": "v3",
+      "sections": "4.2,5 Eq21-24",
+      "decision": "Standard-flow renoising known; preserve its independent-path assumptions"
+    },
+    {
+      "title": "Coupled Guidance for Flow Matching",
+      "url": "https://arxiv.org/html/2610.40109v1",
+      "version": "v1",
+      "sections": "3.3-3.4 Eq8-12",
+      "decision": "Endpoint coordination and coupling-shift error amplification known"
+    },
+    {
+      "title": "ReBridge-Flow",
+      "url": "https://arxiv.org/html/2609.00811",
+      "sections": "3 Eq2-4",
+      "decision": "Source-clean recoupling and algebraic bridge defect known in restoration"
+    },
+    {
+      "title": "MMD Guidance",
+      "url": "https://proceedings.mlr.press/v306/sani26a.html",
+      "publication": "ICML2026 PMLR306",
+      "decision": "Reference-distribution MMD guidance is not a distinct proposed invention"
+    },
+    {
+      "title": "Computational Optimal Transport",
+      "url": "https://arxiv.org/abs/1803.00567",
+      "version": "v4",
+      "decision": "Classical convex-gradient OT background; our own cost expansion identifies the no-go as a corollary risk, not a newly discovered optimality principle"
+    }
+  ],
+  "final_verdict": "Core path-moment deficit equals t(1-t) times quadratic transport cost gap. Downgraded to mechanism lemma. Lower bound/robust analysis retain direct-corollary novelty risk. SC04/05 remain open."
+}

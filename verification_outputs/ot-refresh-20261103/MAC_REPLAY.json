@@ -1,0 +1,12 @@
+{
+  "scientific_commit": "e505feb88a6393a9823f1873dd170f14409be7c0",
+  "source_file_hashes_verified": 14,
+  "cases_replayed": 100,
+  "max_numeric_error": 8.881784197001252e-16,
+  "row_tolerance_absolute": 1e-09,
+  "wall_seconds": 0.5044427919201553,
+  "GPU_used": false,
+  "scope": "Mac analytic CPU replay and hashes only; no image generation, novelty certificate or Mac full engineering suite",
+  "python": "3.12.14 (main, Aug 25 2026, 13:50:33) [Clang 22.1.3 ]",
+  "completed": true
+}
